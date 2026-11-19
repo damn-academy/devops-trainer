@@ -87,8 +87,8 @@ export const permModel = defineModel<P>({
     'A user types a command such as `cat /srv/www/index.html`. The system first walks the directories on the path, then picks one of the file’s three triads and answers by it: allow the action or refuse with `Permission denied`.',
   ),
   intro: bi(
-    'Схема соберётся у вас на глазах: сейчас на ней только пользователь и файл. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» над схемой. На каждом шаге подсвечен тот блок, который работает, облачко рядом с ним говорит, что он делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда пройдёте до ответа, выберите в «Параметрах» другого пользователя или другие права и пройдите проверку ещё раз.',
-    'The diagram builds itself as you go: now it shows only the user and the file. Press “Start: step forward”, then go on with “Step forward” above the diagram. At every step the block that is working is highlighted, the callout next to it says what it does, and the card on the line shows what is handed on.\n\nOnce you reach the answer, choose another user or other rights in “Parameters” and walk the check again.',
+    'Схема соберётся у вас на глазах, а сейчас на ней только пользователь и файл. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. На каждом шаге подсвечен тот блок, который работает, облачко рядом с ним говорит, что он делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда пройдёте до ответа, выберите в «Параметрах» другого пользователя или другие права и пройдите проверку ещё раз.',
+    'The diagram builds itself as you go: now it shows only the user and the file. Press “Start from the first step”, then go on with “Step forward” above the diagram. At every step the block that is working is highlighted, the callout next to it says what it does, and the card on the line shows what is handed on.\n\nOnce you reach the answer, choose another user or other rights in “Parameters” and walk the check again.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
@@ -307,8 +307,8 @@ export const permModel = defineModel<P>({
         id: 'answer',
         label: bi('ответ', 'answer'),
         caption: allowed
-          ? fmtb(bi('Система разрешила действие, и команда `{c}` выполняется. Для пользователя {w} это выглядит так, будто ничего особенного не произошло: команда просто сработала.', 'The system allowed the action and `{c}` runs. For {w} nothing special seems to happen: the command just works.'), { c: act.cmd, w: who.name })
-          : fmtb(bi('Отказ возвращается команде, и она печатает сообщение `Permission denied`. Сама команда ни в чём не виновата: решение приняла система.', 'The refusal goes back to the command, which prints `Permission denied`. The command did nothing wrong: the system decided.'), {}),
+          ? fmtb(bi('Система разрешила действие, и команда `{c}` выполняется. Для пользователя {w} это выглядит так, будто ничего особенного не произошло: команда сработала как обычно.', 'The system allowed the action and `{c}` runs. For {w} nothing special seems to happen: the command just works.'), { c: act.cmd, w: who.name })
+          : fmtb(bi('Отказ возвращается команде, и она печатает сообщение `Permission denied`. Сама команда ни в чём не виновата, потому что решение приняла система.', 'The refusal goes back to the command, which prints `Permission denied`. The command did nothing wrong: the system decided.'), {}),
         focus: ['e-answer', 'who'],
         reveal: ['e-answer'],
         tokens: [{ edge: 'e-answer', label: allowed ? act.okCard : 'Permission denied' }],
@@ -449,7 +449,7 @@ export const permModel = defineModel<P>({
         focus: ['e-o', 'to'],
         reveal: ['e-o', 'to'],
         tokens: [{ edge: 'e-o', label: asker }],
-        say: { to: fmtb(bi('Остаются права для всех остальных пользователей, {t}, и решать будут именно они.', 'The “others” triad {t} remains, and it alone decides.'), { t: p.o }) },
+        say: { to: fmtb(bi('Остаются права для всех остальных пользователей, {t}, и решение теперь зависит только от них.', 'The “others” triad {t} remains, and it alone decides.'), { t: p.o }) },
         states: { to: 'ok' },
       });
     const triad = p[d.triad];

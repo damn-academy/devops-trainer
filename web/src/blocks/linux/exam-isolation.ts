@@ -13,7 +13,7 @@ import { registerProgram } from '../../engine/terminal/shell';
 /** The batch job of the exam: it grows by 6 MiB a second and keeps a CPU half busy. */
 export const batchExport: ShellCommand = {
   name: 'batch-export',
-  summary: bi('учебная программа экзамена: ночная выгрузка, которая растёт в памяти', 'the exam’s lab program: a nightly export that grows in memory'),
+  summary: bi('Учебная программа экзамена, ночная выгрузка, которая занимает всё больше памяти', 'the exam’s lab program: a nightly export that grows in memory'),
   help: 'Usage: batch-export [--rows N]\nExport N rows of orders (default 5000000). A lab program of DevOps Trainer: it reads everything into memory first, so its resident memory grows by about 6 MiB a second until the export ends or something stops it. Run it as a service.',
   run(ctx) {
     ctx.err('batch-export: this is a long job; run it as the batch service (systemctl start batch)\n');
@@ -57,14 +57,14 @@ const MiB = 1024 * 1024;
 export const ISOLATION_EXAM: Exam = {
   id: 'linux.exam.isolation',
   block: 'linux',
-  title: bi('Учебный экзамен: соседи мешают друг другу', 'Learning exam: the neighbours get in each other’s way'),
+  title: bi('Учебный экзамен о соседних службах, которые мешают друг другу', 'A learning exam about neighbouring services that get in each other’s way'),
   intro: bi(
-    'Учебная контрольная после модуля об изоляции и лимитах: в протокол блока она не идёт, но показывает, уверенно ли вы обращаетесь с cgroups и systemd. Каждое задание начинается на своей копии сервера. Засчитывается состояние машины — файлы cgroup и свойства служб, а не набранные команды. Открыта только документация машины: `man`, `--help`, `help` и страницы systemd.',
-    'A learning check after the module on isolation and limits: it does not go into the block’s protocol, but it shows whether you have cgroups and systemd in hand. Each task starts on its own copy of the server. What counts is the state of the machine — the cgroup files and the services’ properties, not the commands you type. Only the machine’s documentation is open: `man`, `--help`, `help` and the systemd pages.',
+    'Это учебная контрольная после уроков об изоляции и лимитах. В итоговый протокол блока она не идёт, но показывает, уверенно ли вы обращаетесь с cgroups и systemd. Каждое задание начинается на своей копии сервера, и засчитывается состояние машины, то есть файлы cgroup и свойства служб, а не набранные команды. На экзамене открыта только документация машины: `man`, `--help`, `help` и страницы systemd.',
+    'This is a learning test after the lessons on isolation and limits. It does not go into the block’s final record, but it shows whether you handle cgroups and systemd with confidence. Each task starts on its own copy of the server, and what counts is the state of the machine, the cgroup files and the service properties, not the commands you typed. Only the machine’s documentation is open: `man`, `--help`, `help` and the systemd pages.',
   ),
   story: bi(
-    'На сервере живут две службы. Ночная выгрузка `batch` читает все заказы в память и съедает её вместе с процессором, а `api`, которым пользуются кассы, в это время отвечает медленно; прошлой ночью ядро спасало машину и убило именно `api`. Код выгрузки трогать нельзя — его пишет другая команда. Нужно, чтобы выгрузка жила в своих рамках, а `api` при нехватке памяти погибал последним.',
-    'Two services live on the server. The nightly export `batch` reads all the orders into memory and eats it along with the CPU, and `api`, which the tills use, answers slowly meanwhile; last night the kernel saved the machine and killed `api` of all things. The export’s code must not be touched — another team writes it. The export must live within its bounds, and `api` must be the last to die when memory runs short.',
+    'На сервере работают две службы. Ночная выгрузка `batch` читает все заказы в память и занимает всю память вместе с процессором, а служба `api`, которой пользуются кассы, в это время отвечает медленно. Прошлой ночью ядро, спасая машину, завершило как раз `api`. Код выгрузки трогать нельзя, потому что его пишет другая команда. Нужно сделать так, чтобы выгрузка работала в своих рамках, а `api` при нехватке памяти завершался последним.',
+    'The server runs two services. The nightly export `batch` reads all orders into memory and takes all the memory and the CPU, while `api`, which the tills use, answers slowly at that time. Last night the kernel, saving the machine, ended exactly `api`. The export’s code must not be touched, because another team writes it. You need the export to work within its own bounds, and `api` to be the last to be ended when memory runs out.',
   ),
   minutes: 35,
   pass: 0.7,
@@ -72,21 +72,21 @@ export const ISOLATION_EXAM: Exam = {
   explain: [
     {
       id: 'e1',
-      prompt: bi('Тимлид спрашивает: «Зачем лимит памяти, если на сервере её ещё много? И что случится с выгрузкой, когда она в лимит упрётся?»', 'The team lead asks: “Why a memory limit if the server still has plenty? And what happens to the export when it hits the limit?”'),
+      prompt: bi('Руководитель команды спрашивает: «Зачем лимит памяти, если на сервере её ещё много? И что случится с выгрузкой, когда она упрётся в лимит?»', 'The team lead asks: “Why a memory limit if the server still has plenty of memory? And what happens to the export when it hits the limit?”'),
       keyPoints: [
-        bi('без лимита при нехватке памяти OOM killer выбирает жертву по всей машине', 'without a limit, when memory runs short the OOM killer picks a victim across the whole machine'),
-        bi('с лимитом OOM срабатывает внутри группы выгрузки, соседи не страдают', 'with a limit the OOM fires inside the export’s group, the neighbours do not suffer'),
-        bi('`MemoryMax=` в unit пишет `memory.max` cgroup службы', '`MemoryMax=` in the unit writes the service cgroup’s `memory.max`'),
-        bi('убитую службу перезапустит `Restart=`, а `oom_kill` в `memory.events` это покажет', '`Restart=` restarts the killed service, and `oom_kill` in `memory.events` shows it'),
+        bi('без лимита при нехватке памяти OOM killer выбирает, какой процесс завершить, среди всех процессов машины', 'without a limit, when memory runs out, the OOM killer picks which process to end among all processes of the machine'),
+        bi('с лимитом OOM killer срабатывает внутри группы выгрузки, и соседние службы не страдают', 'with a limit the OOM killer acts inside the export’s group, and the neighbouring services do not suffer'),
+        bi('строка `MemoryMax=` в unit-файле записывает значение в файл `memory.max` группы службы', '`MemoryMax=` in the unit file writes the value into the service group’s `memory.max`'),
+        bi('завершённую службу перезапустит настройка `Restart=`, а счётчик `oom_kill` в `memory.events` покажет, что это случилось', '`Restart=` restarts the ended service, and the `oom_kill` counter in `memory.events` shows that it happened'),
       ],
     },
     {
       id: 'e2',
-      prompt: bi('«Чем `cpu.max` отличается от `CPUWeight=`, и что из них вы бы поставили выгрузке?»', '“How does `cpu.max` differ from `CPUWeight=`, and which of them would you give the export?”'),
+      prompt: bi('«Чем `cpu.max` отличается от `CPUWeight=`, и что из этого вы бы поставили выгрузке?»', '“How does `cpu.max` differ from `CPUWeight=`, and which of them would you give the export?”'),
       keyPoints: [
-        bi('`cpu.max` — жёсткий потолок: даже на пустой машине больше не дадут', '`cpu.max` is a hard ceiling: you get no more even on an idle machine'),
-        bi('вес делит процессор только при конкуренции', 'a weight divides the CPU only under contention'),
-        bi('ночью, когда `api` простаивает, выгрузка с весом работает быстрее', 'at night, when `api` is idle, an export with a weight runs faster'),
+        bi('`cpu.max` задаёт жёсткий потолок, и больше процессора не дадут даже на пустой машине', '`cpu.max` sets a hard ceiling, and no more CPU is given even on an idle machine'),
+        bi('вес делит процессор только тогда, когда службы за него соперничают', 'a weight divides the CPU only when services compete for it'),
+        bi('ночью, когда `api` простаивает, выгрузка с весом работает быстрее, чем с потолком', 'at night, when `api` is idle, the export with a weight runs faster than with a ceiling'),
       ],
     },
   ],
@@ -99,7 +99,7 @@ export const ISOLATION_EXAM: Exam = {
       setup: ISOLATION_SETUP,
       task: {
         id: 'mem',
-        prompt: bi('Ограничьте службу `batch` 64 мебибайтами памяти так, чтобы лимит пережил перезагрузку. Программу выгрузки и её строку запуска не меняйте; служба должна работать.', 'Limit the `batch` service to 64 MiB of memory so that the limit survives a reboot. Do not change the export program or its start line; the service must be running.'),
+        prompt: bi('Ограничьте службу `batch` 64 мебибайтами памяти так, чтобы лимит сохранялся после перезагрузки. Программу выгрузки и её строку запуска не меняйте, а служба должна продолжать работать.', 'Limit the `batch` service to 64 MiB of memory so that the limit survives a reboot. Do not change the export program or its start line, and the service must keep running.'),
         concepts: ['linux.cgroup', 'linux.unit', 'linux.oom'],
         check: {
           when: (f, s) => {
@@ -107,9 +107,9 @@ export const ISOLATION_EXAM: Exam = {
             return !!g && g.memory.max !== 'max' && g.memory.max <= 64 * MiB && active(f, 'batch.service') && !!sameProgram(f, s);
           },
           fail: [
-            { if: (f) => { const g = cg(f, 'batch.service'); return !!g && g.memory.max === 'max' && !!unit(f, 'batch.service')?.props.MemoryMax; }, say: bi('Настройка записана, но cgroup её ещё не видит: systemd перечитывает unit-файлы после `daemon-reload`, а лимит применится при перезапуске службы.', 'The setting is written, but the cgroup does not see it yet: systemd rereads unit files after `daemon-reload`, and the limit applies when the service restarts.') },
-            { if: (f) => { const g = cg(f, 'batch.service'); return !!g && g.memory.max === 'max'; }, say: bi('В cgroup службы `memory.max` всё ещё max. Лимит, записанный руками в `/sys`, systemd сбросит при перезапуске — лимит службы живёт в unit-файле.', '`memory.max` of the service’s cgroup is still max. A limit written into `/sys` by hand is reset by systemd at the restart — a service’s limit lives in its unit file.') },
-            { if: (f) => !active(f, 'batch.service'), say: bi('Лимит есть, но служба не работает. Посмотрите `systemctl status batch` и журнал.', 'The limit is there, but the service is not running. Look at `systemctl status batch` and the journal.') },
+            { if: (f) => { const g = cg(f, 'batch.service'); return !!g && g.memory.max === 'max' && !!unit(f, 'batch.service')?.props.MemoryMax; }, say: bi('Настройка записана, но группа cgroup её ещё не видит. systemd перечитывает unit-файлы после `daemon-reload`, а лимит вступит в силу, когда служба перезапустится.', 'The setting is written, but the cgroup does not see it yet. systemd rereads unit files after `daemon-reload`, and the limit takes effect when the service restarts.') },
+            { if: (f) => { const g = cg(f, 'batch.service'); return !!g && g.memory.max === 'max'; }, say: bi('В группе службы `memory.max` всё ещё равен max. Лимит, который записали вручную в `/sys`, systemd сбросит при перезапуске, потому что лимит службы должен храниться в unit-файле.', 'The service group’s `memory.max` is still max. A limit written into `/sys` by hand is reset by systemd at a restart, because a service’s limit must be kept in its unit file.') },
+            { if: (f) => !active(f, 'batch.service'), say: bi('Лимит задан, но служба не работает. Посмотрите `systemctl status batch` и журнал службы.', 'The limit is set, but the service is not running. Look at `systemctl status batch` and the service’s journal.') },
           ],
         },
       },
@@ -121,7 +121,7 @@ export const ISOLATION_EXAM: Exam = {
       setup: ISOLATION_SETUP,
       task: {
         id: 'pids',
-        prompt: bi('Выгрузка иногда порождает сотни потомков. Пусть у службы `batch` будет не больше 50 процессов и потоков, и пусть это тоже переживает перезагрузку.', 'The export sometimes spawns hundreds of children. Let the `batch` service have no more than 50 processes and threads, and let this survive a reboot too.'),
+        prompt: bi('Выгрузка иногда создаёт сотни дочерних процессов. Сделайте так, чтобы у службы `batch` было не больше 50 процессов и потоков и чтобы этот лимит тоже сохранялся после перезагрузки.', 'The export sometimes creates hundreds of child processes. Make `batch` have at most 50 processes and threads, and make this limit survive a reboot too.'),
         concepts: ['linux.cgroup', 'linux.unit'],
         check: { when: (f) => { const g = cg(f, 'batch.service'); return !!g && g.pids.max !== 'max' && g.pids.max <= 50 && active(f, 'batch.service'); } },
       },
@@ -133,7 +133,7 @@ export const ISOLATION_EXAM: Exam = {
       setup: ISOLATION_SETUP,
       task: {
         id: 'user',
-        prompt: bi('Выгрузке не нужен root. Пусть служба `batch` работает от отдельного системного пользователя без входа в систему.', 'The export does not need root. Let the `batch` service run as a separate system user who cannot log in.'),
+        prompt: bi('Выгрузке не нужны права root. Сделайте так, чтобы служба `batch` работала от отдельного системного пользователя, которому вход в систему запрещён.', 'The export does not need root. Make `batch` run as a separate system user who may not log in.'),
         concepts: ['linux.user', 'linux.unit', 'linux.root'],
         check: {
           when: (f) => {
@@ -143,8 +143,8 @@ export const ISOLATION_EXAM: Exam = {
             return !!acct && acct.uid > 0 && acct.uid < 1000 && /nologin|false/.test(acct.shell) && active(f, 'batch.service') && procs.length > 0 && procs.every((p) => p.uid === acct.uid);
           },
           fail: [
-            { if: (f) => !active(f, 'batch.service') && !!unit(f, 'batch.service')?.props.User && unit(f, 'batch.service')?.props.User !== 'root', say: bi('Служба не стартует: такого пользователя на машине, похоже, нет. systemd не создаёт его сам, если не попросить.', 'The service does not start: such a user does not seem to exist on the machine. systemd does not create one unless asked.') },
-            { if: (f) => { const u = unit(f, 'batch.service')?.props.User ?? ''; const acct = ((f.users ?? []) as { name: string; uid: number }[]).find((x) => x.name === u); return !!acct && acct.uid >= 1000; }, say: bi('Это обычная учётная запись с номером от 1000. Службам заводят системных пользователей: `useradd --system`.', 'This is an ordinary account with a number from 1000 up. Services get system users: `useradd --system`.') },
+            { if: (f) => !active(f, 'batch.service') && !!unit(f, 'batch.service')?.props.User && unit(f, 'batch.service')?.props.User !== 'root', say: bi('Служба не запускается, и похоже, что такого пользователя на машине нет. systemd сам его не создаёт, если об этом не попросить.', 'The service does not start, and it looks as if there is no such user on the machine. systemd does not create one unless asked.') },
+            { if: (f) => { const u = unit(f, 'batch.service')?.props.User ?? ''; const acct = ((f.users ?? []) as { name: string; uid: number }[]).find((x) => x.name === u); return !!acct && acct.uid >= 1000; }, say: bi('Это обычная учётная запись с номером от 1000, а для служб заводят системных пользователей командой `useradd --system`.', 'This is an ordinary account numbered from 1000, while services get system users created with `useradd --system`.') },
           ],
         },
       },
@@ -157,7 +157,7 @@ export const ISOLATION_EXAM: Exam = {
       setup: ISOLATION_SETUP,
       task: {
         id: 'weight',
-        prompt: bi('Жёсткий потолок процессора выгрузке не подходит: ночью машина свободна, и пусть выгрузка работает быстро. Нужно другое: когда `api` и `batch` спорят за процессор, `api` получает большую долю. В курсе этого не было — найдите директиву в `systemd.resource-control(5)`.', 'A hard CPU ceiling does not suit the export: at night the machine is free, and the export should run fast. Something else is needed: when `api` and `batch` compete for the CPU, `api` gets the larger share. The course did not show it — find the directive in `systemd.resource-control(5)`.'),
+        prompt: bi('Жёсткий потолок процессора выгрузке не подходит, потому что ночью машина свободна и выгрузка должна работать быстро. Нужно другое: когда `api` и `batch` соперничают за процессор, `api` должен получать большую долю. В курсе такой директивы не было, поэтому найдите её на странице `systemd.resource-control(5)`.', 'A hard CPU ceiling does not suit the export, because at night the machine is free and the export should run fast. Something else is needed: when `api` and `batch` compete for the CPU, `api` must get the bigger share. The course had no such directive, so find it on the page `systemd.resource-control(5)`.'),
         concepts: ['linux.cgroup'],
         check: { when: (f) => weight(f, 'batch.service') < weight(f, 'api.service') && active(f, 'batch.service') && active(f, 'api.service') && !/CPUQuota/.test(JSON.stringify(unit(f, 'batch.service')?.props ?? {})) },
         docStep: 5,
@@ -172,7 +172,7 @@ export const ISOLATION_EXAM: Exam = {
       setup: ISOLATION_SETUP,
       task: {
         id: 'oom',
-        prompt: bi('Если память всё-таки кончится на всей машине, `api` должен погибнуть последним. Скажите об этом ядру через unit службы `api`. Директиву ищите в `systemd.exec(5)`.', 'If memory does run out on the whole machine, `api` must be the last to die. Tell the kernel so through the `api` service’s unit. Look for the directive in `systemd.exec(5)`.'),
+        prompt: bi('Если память всё-таки кончится на всей машине, `api` должен завершиться последним. Сообщите об этом ядру через unit-файл службы `api`, а нужную директиву найдите на странице `systemd.exec(5)`.', 'If memory does run out on the whole machine, `api` must be the last to be ended. Tell the kernel so through `api`’s unit file, and find the directive on the page `systemd.exec(5)`.'),
         concepts: ['linux.oom'],
         check: { when: (f) => Number(unit(f, 'api.service')?.props.OOMScoreAdjust ?? 0) < 0 && active(f, 'api.service') },
         docStep: 5,
@@ -187,13 +187,13 @@ export const ISOLATION_EXAM: Exam = {
         id: 'linux.exam.q.global-oom',
         kind: 'mcq',
         concepts: ['linux.oom', 'linux.cgroup'],
-        prompt: bi('Прошлой ночью в `dmesg` была строка `Out of memory: Killed process 812 (web-demo)`, без слов «Memory cgroup». Что это значит?', 'Last night `dmesg` had the line `Out of memory: Killed process 812 (web-demo)`, without the words “Memory cgroup”. What does it mean?'),
+        prompt: bi('Прошлой ночью в выводе `dmesg` появилась строка `Out of memory: Killed process 812 (web-demo)`, и слов «Memory cgroup» в ней не было. Что это значит?', 'Last night `dmesg` got the line `Out of memory: Killed process 812 (web-demo)`, without the words “Memory cgroup”. What does it mean?'),
         options: [
-          { id: 'global', text: bi('Память кончилась на всей машине, и глобальный OOM killer выбрал `api`, хотя росла выгрузка', 'Memory ran out on the whole machine, and the global OOM killer picked `api` although the export was growing'), correct: true },
-          { id: 'limit', text: bi('`api` упёрся в свой лимит `memory.max`', '`api` hit its own `memory.max` limit'), why: bi('Тогда строка начиналась бы с `Memory cgroup out of memory`, и лимита у `api` не было.', 'Then the line would start with `Memory cgroup out of memory`, and `api` had no limit.') },
-          { id: 'bug', text: bi('В `api` утечка памяти: его и надо было убить', '`api` has a memory leak: it was the right one to kill'), why: bi('Глобальный OOM killer выбирает по размеру и `oom_score_adj`, а не по вине: жертвой мог стать любой крупный процесс.', 'The global OOM killer chooses by size and `oom_score_adj`, not by guilt: any large process could have been the victim.') },
+          { id: 'global', text: bi('Память кончилась на всей машине, и общий OOM killer выбрал `api`, хотя росла выгрузка', 'The whole machine ran out of memory, and the machine-wide OOM killer picked `api`, although it was the export that grew'), correct: true },
+          { id: 'limit', text: bi('Служба `api` упёрлась в свой лимит `memory.max`', '`api` hit its own `memory.max` limit'), why: bi('Нет, тогда строка начиналась бы со слов `Memory cgroup out of memory`, а лимита у `api` не было.', 'No, then the line would start with `Memory cgroup out of memory`, and `api` had no limit.') },
+          { id: 'bug', text: bi('В `api` утечка памяти, поэтому завершить нужно было его', '`api` has a memory leak, and it was the one that had to be ended'), why: bi('Нет, общий OOM killer выбирает процесс по размеру и по `oom_score_adj`, а не по вине, и жертвой мог стать любой крупный процесс.', 'No, the machine-wide OOM killer picks a process by size and `oom_score_adj`, not by guilt, and any large process could have been the victim.') },
         ],
-        explain: bi('Без лимитов вся машина — одна общая группа, и при нехватке памяти ядро спасает её, убивая самый «дорогой» процесс по оценке `oom_score`. Лимит выгрузки переносит этот выбор внутрь её собственной группы.', 'Without limits the whole machine is one shared group, and when memory runs short the kernel saves it by killing the “costliest” process by its `oom_score`. A limit on the export moves that choice inside its own group.'),
+        explain: bi('Без лимитов вся машина работает как одна общая группа, и при нехватке памяти ядро спасает её, завершая процесс, который оценка `oom_score` считает самым выгодным для завершения. Лимит выгрузки переносит этот выбор внутрь её собственной группы.', 'Without limits the whole machine works as one shared group, and when memory runs out, the kernel saves it by ending the process that `oom_score` rates as the best to end. A limit on the export moves this choice inside its own group.'),
       },
     },
   ],

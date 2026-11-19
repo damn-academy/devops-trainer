@@ -33,7 +33,7 @@ export const SSH_MACHINES: LabMachine[] = [
   { name: 'laptop', role: bi('ваш ноутбук', 'your laptop'), setup: ["printf 'Release 1.4.2: run the migrations first, then restart the app.\\n' > /root/release-notes.txt"] },
   {
     name: 'bastion',
-    role: bi('бастион, единственный вход', 'the bastion, the only way in'),
+    role: bi('бастион, единственный вход в сеть', 'the bastion, the only way into the network'),
     setup: [passwordUser('deploy', 'deploy-2026'), "printf 'AllowTcpForwarding yes\\n' > /etc/ssh/sshd_config.d/10-bastion.conf && rc-service sshd restart >/dev/null"],
   },
   {
@@ -60,96 +60,96 @@ export const SSH_TASKS: LabGoal[] = [
   {
     id: 'keygen',
     on: 'laptop',
-    prompt: bi('На `laptop` создайте пару ключей ed25519 в стандартном месте.', 'On `laptop`, create an ed25519 key pair in the standard place.'),
+    prompt: bi('Создайте на `laptop` пару ключей ed25519 в стандартном месте.', 'Create an ed25519 key pair on `laptop` in the standard place.'),
     check: { when: "files['/root/.ssh/id_ed25519'].mode='0600' && files['/root/.ssh/id_ed25519.pub'].type=f" },
     chips: 'ssh-keygen -t ed25519',
     docRef: obsd('ssh-keygen', 1),
-    hints: { H1: bi('Вопрос о пароле на ключ здесь можно пропустить клавишей Enter: на учебной машине это допустимо, на рабочем ноутбуке — нет.', 'The passphrase question may be skipped with Enter here: fine on a lab machine, not on a work laptop.') },
+    hints: { H1: bi('Вопрос о пароле на ключ здесь можно пропустить клавишей Enter. На учебной машине так делать допустимо, а на рабочем ноутбуке нельзя.', 'You may skip the passphrase question here with Enter. That is acceptable on a training machine, but not on a work laptop.') },
   },
   {
     id: 'bastion',
     on: 'laptop',
     prompt: bi(
-      'Отнесите открытый ключ на `bastion` пользователю `deploy` (пароль у него пока есть: `deploy-2026`) и убедитесь, что `ssh deploy@bastion` пускает без пароля.',
-      'Take the public key to `bastion` for the user `deploy` (he still has a password: `deploy-2026`) and make sure `ssh deploy@bastion` lets you in without one.',
+      'Отнесите открытый ключ на `bastion` пользователю `deploy`, у которого пока есть пароль `deploy-2026`, и убедитесь, что `ssh deploy@bastion` пускает без пароля.',
+      'Take the public key to `bastion` for the user `deploy`, who still has the password `deploy-2026`, and make sure `ssh deploy@bastion` lets you in without a password.',
     ),
     check: {
       when: "reach['bastion'].exit=0 && reach['bastion'].out~'bastion'",
       fail: [
-        { if: "reach['bastion'].out~'Host key verification failed'", say: bi('Клиент ещё не знает ключ хоста `bastion`. Подключитесь один раз руками и сверьте отпечаток: после «yes» он ляжет в `~/.ssh/known_hosts`.', 'The client does not know `bastion`’s host key yet. Connect once by hand and compare the fingerprint: after “yes” it goes into `~/.ssh/known_hosts`.') },
-        { if: "reach['bastion'].out~'Permission denied'", say: bi('Сервер не принял ключ: открытого ключа нет в `~deploy/.ssh/authorized_keys` на `bastion`, или у файла слишком открытые права.', 'The server did not accept the key: the public key is not in `~deploy/.ssh/authorized_keys` on `bastion`, or the file is too open.') },
+        { if: "reach['bastion'].out~'Host key verification failed'", say: bi('Клиент ещё не знает ключ хоста `bastion`. Подключитесь один раз вручную и сверьте отпечаток, и после ответа «yes» он попадёт в `~/.ssh/known_hosts`.', 'The client does not know `bastion`’s host key yet. Connect once by hand and check the fingerprint, and after “yes” it goes into `~/.ssh/known_hosts`.') },
+        { if: "reach['bastion'].out~'Permission denied'", say: bi('Сервер не принял ключ: либо открытого ключа нет в `~deploy/.ssh/authorized_keys` на `bastion`, либо у файла слишком открытые права.', 'The server did not accept the key: either the public key is not in `~deploy/.ssh/authorized_keys` on `bastion`, or the file’s permissions are too open.') },
       ],
     },
     chips: 'ssh-copy-id deploy@bastion',
     docRef: obsd('ssh-copy-id', 1),
     hints: {
-      H1: bi('`ssh-copy-id` спросит пароль один раз и допишет ключ в `authorized_keys` с правильными правами.', '`ssh-copy-id` asks for the password once and appends the key to `authorized_keys` with the right permissions.'),
-      H2: bi('Проверка: `ssh deploy@bastion hostname` должна напечатать `bastion` и ничего не спросить.', 'The check: `ssh deploy@bastion hostname` must print `bastion` and ask nothing.'),
+      H1: bi('Команда `ssh-copy-id` спросит пароль один раз и допишет ключ в `authorized_keys` с правильными правами.', '`ssh-copy-id` asks for the password once and appends the key to `authorized_keys` with the right permissions.'),
+      H2: bi('Чтобы проверить результат, выполните `ssh deploy@bastion hostname`, и команда должна напечатать `bastion`, ничего не спросив.', 'To check the result, run `ssh deploy@bastion hostname`, which must print `bastion` without asking anything.'),
     },
   },
   {
     id: 'jump',
     on: 'laptop',
     prompt: bi(
-      'Напрямую `app` вас не пустит: его sshd принимает подключения только с `bastion`. Положите свой ключ и на `app` (тот же пользователь и пароль), заходя через бастион.',
-      '`app` will not let you in directly: its sshd takes connections only from `bastion`. Put your key on `app` too (the same user and password), going through the bastion.',
+      'Напрямую `app` вас не пустит, потому что его sshd принимает подключения только с `bastion`. Положите свой ключ и на `app` для того же пользователя с тем же паролем, заходя туда через бастион.',
+      '`app` will not let you in directly, because its sshd accepts connections only from `bastion`. Put your key on `app` too, for the same user with the same password, going there through the bastion.',
     ),
     check: {
       when: "reach['jump'].exit=0 && reach['jump'].out~'app'",
-      fail: [{ if: "reach['jump'].out~'Permission denied'", say: bi('Бастион пропустил, а `app` не принял ключ: на `app` его ещё нет в `~deploy/.ssh/authorized_keys`.', 'The bastion let you through, but `app` did not accept the key: it is not in `~deploy/.ssh/authorized_keys` on `app` yet.') }, { if: "reach['jump'].out~'timed out'", say: bi('Подключение к `app` повисло: напрямую туда не пройти. Нужен прыжок через бастион — ключ `-J`.', 'The connection to `app` hung: there is no direct way. You need a jump through the bastion — the `-J` option.') }],
+      fail: [{ if: "reach['jump'].out~'Permission denied'", say: bi('Бастион вас пропустил, а `app` не принял ключ, потому что в `~deploy/.ssh/authorized_keys` на `app` его ещё нет.', 'The bastion let you through, but `app` did not accept the key, because it is not yet in `~deploy/.ssh/authorized_keys` on `app`.') }, { if: "reach['jump'].out~'timed out'", say: bi('Подключение к `app` зависло, потому что напрямую туда не пройти. Подключаться к `app` нужно через бастион, с флагом `-J`.', 'The connection to `app` hung, because you cannot get there directly. You need a jump through the bastion with `-J`.') }],
     },
     chips: 'ssh-copy-id -o ProxyJump=deploy@bastion deploy@app',
     docRef: { ...obsd('ssh', 1), label: 'ssh(1) · -J' },
     hints: {
-      H1: bi('`-J deploy@bastion` у `ssh` и `-o ProxyJump=deploy@bastion` у `ssh-copy-id` значат одно: сначала войти на бастион, а оттуда открыть путь дальше.', '`-J deploy@bastion` for `ssh` and `-o ProxyJump=deploy@bastion` for `ssh-copy-id` mean the same: log in to the bastion first and open the way on from there.'),
-      H2: bi('Проверка — `ssh -J deploy@bastion deploy@app hostname`: она должна напечатать `app` и ничего не спросить. Ключ хоста `app` клиент тоже запомнит при первом прыжке.', 'The check is `ssh -J deploy@bastion deploy@app hostname`: it must print `app` and ask nothing. The client remembers `app`’s host key on the first jump too.'),
+      H1: bi('Флаг `-J deploy@bastion` у `ssh` и `-o ProxyJump=deploy@bastion` у `ssh-copy-id` означают одно и то же: сначала войти на бастион, а оттуда открыть путь дальше.', '`-J deploy@bastion` for `ssh` and `-o ProxyJump=deploy@bastion` for `ssh-copy-id` mean the same thing: first log in to the bastion, then open the way on from there.'),
+      H2: bi('Для проверки выполните `ssh -J deploy@bastion deploy@app hostname`, и команда должна напечатать `app`, ничего не спросив. Ключ хоста `app` клиент тоже запомнит при первом входе через бастион.', 'To check, run `ssh -J deploy@bastion deploy@app hostname`, which must print `app` without asking anything. The client also remembers `app`’s host key on the first jump.'),
     },
   },
   {
     id: 'config',
     on: 'laptop',
     prompt: bi(
-      'Опишите обе машины в `~/.ssh/config` так, чтобы короткая команда `ssh app` сама входила пользователем `deploy` через бастион.',
-      'Describe both machines in `~/.ssh/config` so that the short command `ssh app` logs in as `deploy` through the bastion by itself.',
+      'Опишите обе машины в `~/.ssh/config` так, чтобы короткая команда `ssh app` сама входила на `app` пользователем `deploy` через бастион.',
+      'Describe both machines in `~/.ssh/config` so that the short command `ssh app` logs in to `app` as `deploy` through the bastion by itself.',
     ),
     check: {
       when: "reach['cfg'].out~'proxyjump' && reach['cfg'].out~'user deploy' && reach['app'].exit=0",
       fail: [
-        { if: "reach['cfg'].out~'proxyjump' && reach['app'].exit!=0", say: bi('Прыжок описан, но вход на `app` не проходит. Посмотрите `ssh -v app`: на каком шаге отказ — у бастиона или у `app`?', 'The jump is described, but the login to `app` fails. Look at `ssh -v app`: at which step is the refusal — at the bastion or at `app`?') },
-        { if: "reach['cfg'].out~'user root'", say: bi('Без `User` клиент входит под вашим местным именем, здесь это root. Укажите `User deploy`.', 'Without `User`, the client logs in under your local name, which is root here. Set `User deploy`.') },
+        { if: "reach['cfg'].out~'proxyjump' && reach['app'].exit!=0", say: bi('Переход через бастион описан, но вход на `app` не проходит. Посмотрите вывод `ssh -v app` и выясните, на каком шаге отказ, у бастиона или у `app`.', 'The way through the bastion is described, but the login to `app` fails. Look at `ssh -v app` and find at which step the refusal comes, at the bastion or at `app`.') },
+        { if: "reach['cfg'].out~'user root'", say: bi('Без строки `User` клиент входит под вашим местным именем, а здесь это root. Укажите `User deploy`.', 'Without `User` the client logs in under your local name, which is root here. Add `User deploy`.') },
       ],
     },
     docRef: obsd('ssh_config', 5),
     hints: {
-      H1: bi('Блок `Host bastion` с `User deploy`, блок `Host app` с `User deploy` и `ProxyJump bastion`. Адреса не нужны: имена машин уже есть в `/etc/hosts`.', 'A `Host bastion` block with `User deploy`, a `Host app` block with `User deploy` and `ProxyJump bastion`. No addresses are needed: the machine names are already in `/etc/hosts`.'),
-      H2: bi('Что клиент понял из файла, показывает `ssh -G app`: там видны итоговые `user` и `proxyjump`.', '`ssh -G app` shows what the client made of the file: the final `user` and `proxyjump` are there.'),
+      H1: bi('Нужны блок `Host bastion` со строкой `User deploy` и блок `Host app` со строками `User deploy` и `ProxyJump bastion`. Адреса указывать не нужно, потому что имена машин уже записаны в `/etc/hosts`.', 'You need a `Host bastion` block with `User deploy` and a `Host app` block with `User deploy` and `ProxyJump bastion`. No addresses are needed, because the machine names are already in `/etc/hosts`.'),
+      H2: bi('Что клиент понял из файла, показывает команда `ssh -G app`, в выводе которой видны итоговые значения `user` и `proxyjump`.', '`ssh -G app` shows what the client made of the file, with the final values of `user` and `proxyjump` in its output.'),
     },
   },
   {
     id: 'scp',
     on: 'app',
-    prompt: bi('Скопируйте `~/release-notes.txt` с `laptop` в домашний каталог `deploy` на `app`.', 'Copy `~/release-notes.txt` from `laptop` to `deploy`’s home directory on `app`.'),
+    prompt: bi('Скопируйте файл `~/release-notes.txt` с `laptop` в домашний каталог пользователя `deploy` на `app`.', 'Copy `~/release-notes.txt` from `laptop` into the home directory of `deploy` on `app`.'),
     check: { when: "files['/home/deploy/release-notes.txt'].text~'Release 1.4.2'" },
     chips: 'scp ~/release-notes.txt app:',
     docRef: obsd('scp', 1),
-    hints: { H1: bi('`scp` понимает имена из `~/.ssh/config`: путь на удалённой машине пишется после двоеточия, пустой путь — домашний каталог.', '`scp` understands the names from `~/.ssh/config`: the remote path goes after a colon, an empty path is the home directory.') },
+    hints: { H1: bi('Команда `scp` понимает имена из `~/.ssh/config`. Путь на удалённой машине пишется после двоеточия, а пустой путь означает домашний каталог.', '`scp` understands the names from `~/.ssh/config`. The path on the remote machine goes after a colon, and an empty path means the home directory.') },
   },
   {
     id: 'tunnel',
     on: 'laptop',
     prompt: bi(
-      'На `app` есть панель заказов, но она слушает только `127.0.0.1:8080` — снаружи её не видно. Поднимите в фоне туннель SSH так, чтобы на `laptop` она открывалась по `http://127.0.0.1:8080/`.',
-      '`app` has an orders panel, but it listens only on `127.0.0.1:8080` — nothing outside sees it. Bring up an SSH tunnel in the background so that on `laptop` it opens at `http://127.0.0.1:8080/`.',
+      'На `app` работает панель заказов, но она слушает только адрес `127.0.0.1:8080`, и снаружи её не видно. Запустите в фоне туннель SSH так, чтобы на `laptop` панель открывалась по адресу `http://127.0.0.1:8080/`.',
+      '`app` runs an orders panel, but it listens only on `127.0.0.1:8080`, and it is not visible from outside. Start an SSH tunnel in the background so that the panel opens on `laptop` at `http://127.0.0.1:8080/`.',
     ),
     check: {
       when: "listen[port=8080].proc=ssh && reach['tunnel'].out~'orders admin'",
-      fail: [{ if: "listen[port=8080].proc=ssh", say: bi('Туннель слушает, но панель не отвечает. Справа от `-L` стоит адрес с точки зрения `app`: там панель живёт на `localhost:8080`.', 'The tunnel listens, but the panel does not answer. The right side of `-L` is an address as `app` sees it: there the panel lives at `localhost:8080`.') }],
+      fail: [{ if: "listen[port=8080].proc=ssh", say: bi('Туннель слушает, но панель не отвечает. Справа от `-L` стоит адрес с точки зрения `app`, а там панель работает на `localhost:8080`.', 'The tunnel listens, but the panel does not answer. To the right of `-L` stands an address as `app` sees it, and there the panel runs on `localhost:8080`.') }],
     },
     chips: 'ssh -f -N -L 8080:localhost:8080 app',
     docRef: { ...obsd('ssh', 1), label: 'ssh(1) · -L' },
     hints: {
-      H1: bi('`-L местный:куда:порт` — «слушай у меня, отправляй туда от имени сервера»; `-N` — без оболочки, `-f` — уйти в фон.', '`-L local:where:port` — “listen here, send it there on the server’s behalf”; `-N` means no shell, `-f` go to the background.'),
-      H2: bi('Проверка — `curl -s http://127.0.0.1:8080/` на `laptop`.', 'The check is `curl -s http://127.0.0.1:8080/` on `laptop`.'),
+      H1: bi('В записи `-L 8080:localhost:8080` первое число задаёт номер, который туннель слушает на вашей машине, а остальная часть говорит, куда сервер передаёт подключения от своего имени. Флаг `-N` велит не запускать оболочку, а `-f` велит уйти в фон.', 'In `-L 8080:localhost:8080` the first number is the one the tunnel listens on at your machine, and the rest says where the server passes the connections on its own behalf. `-N` says not to start a shell, and `-f` to go to the background.'),
+      H2: bi('Для проверки выполните `curl -s http://127.0.0.1:8080/` на `laptop`.', 'To check, run `curl -s http://127.0.0.1:8080/` on `laptop`.'),
     },
   },
   {
@@ -158,12 +158,12 @@ export const SSH_TASKS: LabGoal[] = [
     beyond: true,
     docStep: 4,
     prompt: bi(
-      'Каждый `ssh app` проходит бастион заново и тратит на это секунды. Сделайте так, чтобы все сеансы к `app` шли через одно открытое подключение и оно жило ещё несколько минут после выхода. В уроке этого не было: ищите в `man ssh_config`.',
-      'Every `ssh app` goes through the bastion again and spends seconds on it. Make every session to `app` share one open connection, and keep it alive for a few minutes after you log out. The lesson did not show this: look in `man ssh_config`.',
+      'Каждая команда `ssh app` заново проходит через бастион и тратит на это секунды. Сделайте так, чтобы все сеансы к `app` шли через одно открытое подключение и чтобы это подключение сохранялось ещё несколько минут после выхода. В уроке об этом не рассказывалось, поэтому поищите способ на странице `man ssh_config`.',
+      'Every `ssh app` goes through the bastion anew and spends seconds on it. Make all sessions to `app` go through one open connection and keep that connection for a few more minutes after you leave. The lesson did not cover this, so look for the way in `man ssh_config`.',
     ),
     check: { when: (f) => /^controlmaster (auto|yes)/m.test(out(f, 'cfg')) && /^controlpath \S+/m.test(out(f, 'cfg')) && !/^controlpersist (no|0)$/m.test(out(f, 'cfg')) && /^controlpersist /m.test(out(f, 'cfg')) },
     docRef: obsd('ssh_config', 5),
-    hints: { H1: bi('Три настройки с одним общим началом имени.', 'Three settings whose names start the same way.') },
+    hints: { H1: bi('Вам нужны три настройки, имена которых начинаются одинаково.', 'You need three settings whose names start the same way.') },
     solutionTokens: ['ControlMaster', 'ControlPath', 'ControlPersist'],
   },
 ];
@@ -174,8 +174,8 @@ export const SSH_LAB: RealLabProps = {
   tasks: SSH_TASKS,
   watch: { mux: ['probe:cfg'] },
   intro: bi(
-    '### Три машины\n\n`laptop` (10.0.0.11) — ваш ноутбук, вы на нём root. `bastion` (10.0.0.12) — единственная машина, которую видно снаружи. `app` (10.0.0.13) — сервер приложения, к его sshd пускают только с бастиона. Все три — настоящие Alpine Linux с OpenSSH; вкладки над терминалом переключают машины, но работаете вы с `laptop`, как в жизни.',
-    '### Three machines\n\n`laptop` (10.0.0.11) is your laptop, you are root on it. `bastion` (10.0.0.12) is the only machine visible from outside. `app` (10.0.0.13) is the application server; its sshd lets in only connections from the bastion. All three are real Alpine Linux with OpenSSH; the tabs above the terminal switch machines, but you work from `laptop`, as in real life.',
+    '### Три машины лаборатории\n\nМашина `laptop` (10.0.0.11) служит вашим ноутбуком, и вы на ней работаете как root. Машина `bastion` (10.0.0.12) единственная видна снаружи. Машина `app` (10.0.0.13) служит сервером приложения, и к её sshd пускают только с бастиона. На всех трёх машинах работает настоящий Alpine Linux с OpenSSH. Вкладки над терминалом переключают машины, но работаете вы с `laptop`, как и в жизни.',
+    '### The three machines of the lab\n\n`laptop` (10.0.0.11) is your laptop, and you work on it as root. `bastion` (10.0.0.12) is the only machine visible from outside. `app` (10.0.0.13) is the application server, and its sshd lets in only connections from the bastion. All three run real Alpine Linux with OpenSSH. The tabs above the terminal switch machines, but you work on `laptop`, as in real life.',
   ),
 };
 
@@ -204,83 +204,83 @@ export const WEB_TASKS: LabGoal[] = [
     id: 'server',
     on: 'web',
     prompt: bi(
-      'На `web` опишите сайт магазина: файл `/etc/nginx/http.d/shop.conf` с блоком `server`, который слушает 80 и отдаёт файлы из `/srv/shop`. `nginx -t` должен сказать, что настройки в порядке.',
-      'On `web`, describe the shop’s site: a file `/etc/nginx/http.d/shop.conf` with a `server` block that listens on 80 and serves the files from `/srv/shop`. `nginx -t` must say the configuration is fine.',
+      'Опишите на машине `web` сайт магазина. Для этого создайте файл `/etc/nginx/http.d/shop.conf` с блоком `server`, который слушает номер 80 и отдаёт файлы из `/srv/shop`. Команда `nginx -t` должна сообщить, что настройки в порядке.',
+      'Describe the shop’s site on `web`. To do so, create `/etc/nginx/http.d/shop.conf` with a `server` block that listens on 80 and serves files from `/srv/shop`. `nginx -t` must report that the settings are fine.',
     ),
     check: {
       when: "files['/etc/nginx/http.d/shop.conf'].text~'/srv/shop' && reach['nginx-t'].exit=0",
-      fail: [{ if: "files['/etc/nginx/http.d/shop.conf'].exists=true && reach['nginx-t'].exit!=0", say: bi('`nginx -t` нашёл ошибку и назвал строку: чаще всего это пропущенная `;` или `}`.', '`nginx -t` found a mistake and named the line: most often a missing `;` or `}`.') }],
+      fail: [{ if: "files['/etc/nginx/http.d/shop.conf'].exists=true && reach['nginx-t'].exit!=0", say: bi('Команда `nginx -t` нашла ошибку и назвала строку, а чаще всего это пропущенный знак `;` или `}`.', '`nginx -t` found a mistake and named the line, and most often it is a missing `;` or `}`.') }],
     },
     docRef: { url: 'https://nginx.org/en/docs/http/ngx_http_core_module.html#server', label: 'nginx · server' },
     hints: {
-      H1: bi('Строки внутри `server { … }`: `listen 80;`, `server_name web;`, `root /srv/shop;`, `index index.html;`.', 'The lines inside `server { … }`: `listen 80;`, `server_name web;`, `root /srv/shop;`, `index index.html;`.'),
-      H2: bi("Можно так: `printf 'server {\\n listen 80;\\n server_name web;\\n root /srv/shop;\\n index index.html;\\n}\\n' > /etc/nginx/http.d/shop.conf`, затем `nginx -t`. Если до первого запуска он жалуется на `/run/nginx/nginx.pid` — это не ваша ошибка: каталог создаёт скрипт службы при старте, а синтаксис уже проверен строкой `syntax is ok`.", "One way: `printf 'server {\\n listen 80;\\n server_name web;\\n root /srv/shop;\\n index index.html;\\n}\\n' > /etc/nginx/http.d/shop.conf`, then `nginx -t`. If before the first start it complains about `/run/nginx/nginx.pid`, that is not your mistake: the service script creates the directory at start, and the line `syntax is ok` has already checked the syntax."),
+      H1: bi('Внутри `server { … }` должны стоять строки `listen 80;`, `server_name web;`, `root /srv/shop;` и `index index.html;`.', 'Inside `server { … }` there must be the lines `listen 80;`, `server_name web;`, `root /srv/shop;` and `index index.html;`.'),
+      H2: bi("Можно поступить так: `printf 'server {\\n listen 80;\\n server_name web;\\n root /srv/shop;\\n index index.html;\\n}\\n' > /etc/nginx/http.d/shop.conf`, а затем `nginx -t`. Если до первого запуска nginx жалуется на `/run/nginx/nginx.pid`, это не ваша ошибка: этот каталог создаёт скрипт службы при запуске, а синтаксис уже подтверждён строкой `syntax is ok`.", "You can do it like this: `printf 'server {\\n listen 80;\\n server_name web;\\n root /srv/shop;\\n index index.html;\\n}\\n' > /etc/nginx/http.d/shop.conf`, then `nginx -t`. If before the first start nginx complains about `/run/nginx/nginx.pid`, that is not your mistake: the service script creates that directory at start, and the syntax is already confirmed by `syntax is ok`."),
     },
   },
   {
     id: 'start',
     on: 'web',
-    prompt: bi('Запустите nginx сейчас и включите его в уровень запуска `default`, чтобы он поднимался после перезагрузки.', 'Start nginx now and add it to the `default` runlevel so that it comes up after a reboot.'),
+    prompt: bi('Запустите nginx сейчас и включите его в уровень запуска `default`, чтобы он запускался после перезагрузки.', 'Start nginx now and add it to the `default` runlevel so that it starts after a reboot.'),
     check: {
       when: "svc[name=nginx].state=started && svc[name=nginx].runlevels has default && listen[port=80].proc=nginx",
       fail: [
-        { if: 'svc[name=nginx].state=started', say: bi('Сейчас nginx работает, но после перезагрузки не поднимется: в уровне `default` его нет. Это делает `rc-update`.', 'nginx runs now, but it will not come up after a reboot: it is not in the `default` runlevel. `rc-update` does that.') },
-        { if: 'svc[name=nginx].runlevels has default', say: bi('Включён на будущее, но сейчас не запущен: `rc-update` не запускает службу, это делает `rc-service`.', 'Enabled for the future but not running now: `rc-update` does not start a service; `rc-service` does.') },
+        { if: 'svc[name=nginx].state=started', say: bi('Сейчас nginx работает, но после перезагрузки он не запустится, потому что в уровне `default` его нет. Добавляет службу в уровень команда `rc-update`.', 'nginx runs now, but it will not start after a reboot, because it is not in the `default` runlevel. `rc-update` adds a service to a runlevel.') },
+        { if: 'svc[name=nginx].runlevels has default', say: bi('Служба включена на будущее, но сейчас не запущена, потому что `rc-update` не запускает службу, а запускает её `rc-service`.', 'The service is enabled for the future but not running now, because `rc-update` does not start a service; `rc-service` does.') },
       ],
     },
     chips: 'rc-service nginx start && rc-update add nginx default',
     docRef: alpine('OpenRC', 'Alpine Wiki · OpenRC'),
-    hints: { H1: bi('Как `systemctl start` и `systemctl enable` — две отдельные команды: `rc-service … start` и `rc-update add … default`.', 'Like `systemctl start` and `systemctl enable` — two separate commands: `rc-service … start` and `rc-update add … default`.') },
+    hints: { H1: bi('Как `systemctl start` и `systemctl enable`, это две отдельные команды: `rc-service … start` и `rc-update add … default`.', 'Like `systemctl start` and `systemctl enable`, these are two separate commands: `rc-service … start` and `rc-update add … default`.') },
   },
   {
     id: 'neighbour',
     on: 'client',
-    prompt: bi('Убедитесь с машины `client`, что сайт открывается по имени: `curl http://web/` должен вернуть страницу магазина.', 'Make sure from `client` that the site opens by name: `curl http://web/` must return the shop’s page.'),
+    prompt: bi('Убедитесь с машины `client`, что сайт открывается по имени, то есть что `curl http://web/` возвращает страницу магазина.', 'Make sure from `client` that the site opens by name, that is, that `curl http://web/` returns the shop’s page.'),
     check: {
       when: "reach['page'].out~'The shop is open'",
-      fail: [{ if: "reach['page'].out~'404'", say: bi('Отвечает не ваш сайт, а `default.conf` из пакета: его блок помечен `default_server` и на всё говорит 404. nginx выбирает блок по имени сайта из запроса — дайте своему `server_name web;` или уберите `default.conf`.', 'It is not your site answering but the package’s `default.conf`: its block is marked `default_server` and says 404 to everything. nginx picks a block by the site name in the request — give yours `server_name web;` or remove `default.conf`.') }],
+      fail: [{ if: "reach['page'].out~'404'", say: bi('Отвечает не ваш сайт, а блок из файла `default.conf`, который поставил пакет. Этот блок помечен `default_server` и на любой запрос отвечает 404. nginx выбирает блок по имени сайта из запроса, поэтому задайте своему блоку `server_name web;` или уберите `default.conf`.', 'It is not your site answering but the block from `default.conf` the package installed. That block is marked `default_server` and answers every request with 404. nginx picks a block by the site name in the request, so give your block `server_name web;` or remove `default.conf`.') }],
     },
     chips: 'curl -s http://web/',
     hints: {
-      H1: bi('Переключитесь на вкладку `client`: проверка идёт с соседней машины, как у настоящего посетителя.', 'Switch to the `client` tab: the check runs from the neighbouring machine, as for a real visitor.'),
-      H2: bi('Если пришло 404, посмотрите `ls /etc/nginx/http.d/`: блоков `server` там два, и на 80 первым отвечает тот, что помечен `default_server`.', 'If you got a 404, look at `ls /etc/nginx/http.d/`: there are two `server` blocks, and on 80 the one marked `default_server` answers first.'),
+      H1: bi('Переключитесь на вкладку `client`, потому что проверять нужно с соседней машины, как это делает настоящий посетитель.', 'Switch to the `client` tab, because the check must come from the neighbouring machine, as a real visitor’s would.'),
+      H2: bi('Если пришёл ответ 404, посмотрите `ls /etc/nginx/http.d/`. Блоков `server` там два, и на номере 80 первым отвечает тот, что помечен `default_server`.', 'If the answer is 404, look at `ls /etc/nginx/http.d/`. There are two `server` blocks, and on 80 the one marked `default_server` answers first.'),
     },
   },
   {
     id: 'service',
     on: 'web',
     prompt: bi(
-      'Программа `/usr/local/bin/report` должна работать как служба OpenRC `report`: напишите `/etc/init.d/report`, запустите её и включите в уровень `default`.',
-      'The program `/usr/local/bin/report` must run as the OpenRC service `report`: write `/etc/init.d/report`, start it and add it to the `default` runlevel.',
+      'Программа `/usr/local/bin/report` должна работать как служба OpenRC `report`. Напишите скрипт `/etc/init.d/report`, запустите службу и включите её в уровень `default`.',
+      'The program `/usr/local/bin/report` must run as the OpenRC service `report`. Write `/etc/init.d/report`, start the service and add it to the `default` runlevel.',
     ),
     check: {
       when: "svc[name=report].state=started && svc[name=report].runlevels has default && reach['report'].exit=0",
       fail: [
-        { if: (f) => { const m = (f.files['/etc/init.d/report'] as { exists?: boolean; mode?: string } | undefined); return !!m?.exists && !!m.mode && !(Number(m.mode.slice(-3, -2)) & 1); }, say: bi('Скрипт службы должен быть исполняемым: `chmod +x /etc/init.d/report`.', 'The service script must be executable: `chmod +x /etc/init.d/report`.') },
-        { if: "svc[name=report].state=started && reach['report'].exit!=0", say: bi('OpenRC считает службу запущенной, а программы нет: без `command_background=true` OpenRC ждёт, что программа уйдёт в фон сама, а эта так не умеет.', 'OpenRC thinks the service started, but the program is not there: without `command_background=true` OpenRC expects the program to go to the background by itself, and this one cannot.') },
+        { if: (f) => { const m = (f.files['/etc/init.d/report'] as { exists?: boolean; mode?: string } | undefined); return !!m?.exists && !!m.mode && !(Number(m.mode.slice(-3, -2)) & 1); }, say: bi('Скрипт службы должен быть исполняемым, поэтому выполните `chmod +x /etc/init.d/report`.', 'The service script must be executable, so run `chmod +x /etc/init.d/report`.') },
+        { if: "svc[name=report].state=started && reach['report'].exit!=0", say: bi('OpenRC считает службу запущенной, а программы нет. Без строки `command_background=true` OpenRC ждёт, что программа уйдёт в фон сама, а эта программа так не умеет.', 'OpenRC thinks the service is running, but the program is not. Without `command_background=true` OpenRC expects the program to go to the background by itself, and this one cannot.') },
       ],
     },
     docRef: { url: 'https://github.com/OpenRC/openrc/blob/master/service-script-guide.md', label: 'OpenRC service script guide' },
     hints: {
-      H1: bi('Первая строка `#!/sbin/openrc-run`, дальше `command=/usr/local/bin/report`, `command_background=true` и `pidfile=/run/report.pid`.', 'The first line is `#!/sbin/openrc-run`, then `command=/usr/local/bin/report`, `command_background=true` and `pidfile=/run/report.pid`.'),
-      H2: bi('Не забудьте `chmod +x`, затем `rc-service report start` и `rc-update add report default`.', 'Do not forget `chmod +x`, then `rc-service report start` and `rc-update add report default`.'),
+      H1: bi('Первая строка скрипта выглядит как `#!/sbin/openrc-run`, а за ней идут `command=/usr/local/bin/report`, `command_background=true` и `pidfile=/run/report.pid`.', 'The script’s first line reads `#!/sbin/openrc-run`, followed by `command=/usr/local/bin/report`, `command_background=true` and `pidfile=/run/report.pid`.'),
+      H2: bi('Не забудьте выполнить `chmod +x`, а затем `rc-service report start` и `rc-update add report default`.', 'Do not forget `chmod +x`, then `rc-service report start` and `rc-update add report default`.'),
     },
   },
   {
     id: 'respawn',
     on: 'web',
     prompt: bi(
-      'Отчёт иногда падает ночью. Сделайте так, чтобы OpenRC сам поднимал его снова: проверка убьёт программу `kill -9` и подождёт несколько секунд.',
-      'The report sometimes dies at night. Make OpenRC bring it back by itself: the check kills the program with `kill -9` and waits a few seconds.',
+      'Отчёт иногда завершается с ошибкой ночью. Сделайте так, чтобы OpenRC сам запускал его снова. Проверка завершит программу командой `kill -9` и подождёт несколько секунд.',
+      'The report sometimes fails at night. Make OpenRC start it again by itself. The check ends the program with `kill -9` and waits a few seconds.',
     ),
     check: {
       when: "reach['respawn'].exit=0",
-      fail: [{ if: "files['/etc/init.d/report'].text~'supervise-daemon' && reach['respawn'].exit!=0", say: bi('Надзиратель указан, но после `kill -9` программа не вернулась. Служба перезапущена после правки скрипта? `rc-service report restart`.', 'The supervisor is set, but the program did not come back after `kill -9`. Was the service restarted after the script changed? `rc-service report restart`.') }],
+      fail: [{ if: "files['/etc/init.d/report'].text~'supervise-daemon' && reach['respawn'].exit!=0", say: bi('Надзирающий процесс указан, но после `kill -9` программа не вернулась. Проверьте, перезапустили ли вы службу после правки скрипта командой `rc-service report restart`.', 'The supervising process is set, but the program did not come back after `kill -9`. Check whether you restarted the service after editing the script with `rc-service report restart`.') }],
     },
     docRef: { url: 'https://github.com/OpenRC/openrc/blob/master/supervise-daemon-guide.md', label: 'supervise-daemon guide' },
     hints: {
-      H1: bi('Строка `supervisor=supervise-daemon` в скрипте службы — аналог `Restart=` в systemd. `command_background` и `pidfile` с ним не нужны.', 'The line `supervisor=supervise-daemon` in the service script is the counterpart of `Restart=` in systemd. `command_background` and `pidfile` are not needed with it.'),
-      H2: bi('После правки — `rc-service report restart`, иначе работает старый способ запуска.', 'After the edit, `rc-service report restart`; otherwise the old way of starting stays in effect.'),
+      H1: bi('Строка `supervisor=supervise-daemon` в скрипте службы соответствует `Restart=` в systemd, и строки `command_background` и `pidfile` с ней не нужны.', '`supervisor=supervise-daemon` in the service script corresponds to `Restart=` in systemd, and `command_background` and `pidfile` are not needed with it.'),
+      H2: bi('После правки выполните `rc-service report restart`, иначе служба продолжит работать по-старому.', 'After the edit run `rc-service report restart`, otherwise the service keeps running the old way.'),
     },
   },
   {
@@ -289,12 +289,12 @@ export const WEB_TASKS: LabGoal[] = [
     beyond: true,
     docStep: 4,
     prompt: bi(
-      'Мониторингу нужен адрес `http://web/health`, который отвечает кодом 200 и словом `ok` — без файла на диске. В уроке этого не было: ищите в документации модуля rewrite nginx.',
-      'Monitoring needs the address `http://web/health` answering with code 200 and the word `ok` — with no file on disk. The lesson did not show this: look in the documentation of nginx’s rewrite module.',
+      'Мониторингу нужен адрес `http://web/health`, который отвечает кодом 200 и словом `ok`, причём без файла на диске. В уроке об этом не рассказывалось, поэтому поищите способ в документации модуля rewrite в nginx.',
+      'Monitoring needs the address `http://web/health`, which answers with code 200 and the word `ok`, without a file on disk. The lesson did not cover this, so look in the documentation of nginx’s rewrite module.',
     ),
     check: { when: "reach['health'].out=~'^ok 200$'" },
     docRef: { url: 'https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return', label: 'nginx · rewrite' },
-    hints: { H1: bi('Отдельный `location` для одного точного пути.', 'A separate `location` for one exact path.') },
+    hints: { H1: bi('Вам нужен отдельный блок `location` для одного точного пути.', 'You need a separate `location` block for one exact path.') },
     solutionTokens: ['return 200', 'location = /health'],
   },
 ];
@@ -305,8 +305,8 @@ export const WEB_LAB: RealLabProps = {
   tasks: WEB_TASKS,
   watch: { respawn: ['probe:report'] },
   intro: bi(
-    '### Две машины\n\n`web` (10.0.0.11) станет сервером магазина, `client` (10.0.0.12) — его посетителем. На `web` уже есть страница `/srv/shop/index.html` и программа отчёта. Это Alpine Linux, поэтому службами здесь управляет OpenRC: `rc-service`, `rc-update`, `rc-status`.',
-    '### Two machines\n\n`web` (10.0.0.11) becomes the shop’s server, `client` (10.0.0.12) its visitor. `web` already has the page `/srv/shop/index.html` and the report program. This is Alpine Linux, so OpenRC manages the services here: `rc-service`, `rc-update`, `rc-status`.',
+    '### Две машины лаборатории\n\nМашина `web` (10.0.0.11) станет сервером магазина, а машина `client` (10.0.0.12) будет его посетителем. На `web` уже есть страница `/srv/shop/index.html` и программа отчёта. Это Alpine Linux, поэтому службами здесь управляет OpenRC командами `rc-service`, `rc-update` и `rc-status`.',
+    '### The two machines of the lab\n\n`web` (10.0.0.11) will become the shop’s server, and `client` (10.0.0.12) will be its visitor. `web` already has the page `/srv/shop/index.html` and the report program. This is Alpine Linux, so OpenRC manages the services here with `rc-service`, `rc-update` and `rc-status`.',
   ),
 };
 
@@ -331,41 +331,41 @@ export const INSTALL_TASKS: LabGoal[] = [
   {
     id: 'gpt',
     prompt: bi(
-      'Разметьте `/dev/sda` в GPT на три раздела: 2 МиБ для загрузчика (тип BIOS boot), 200 МиБ под `/boot` (Linux filesystem) и всё остальное под LVM (Linux LVM).',
-      'Partition `/dev/sda` as GPT with three partitions: 2 MiB for the boot loader (type BIOS boot), 200 MiB for `/boot` (Linux filesystem) and the rest for LVM (Linux LVM).',
+      'Разметьте диск `/dev/sda` в формате GPT на три раздела: 2 МиБ для загрузчика с типом BIOS boot, 200 МиБ под `/boot` с типом Linux filesystem и всё остальное под LVM с типом Linux LVM.',
+      'Partition `/dev/sda` as GPT into three partitions: 2 MiB for the boot loader with type BIOS boot, 200 MiB for `/boot` with type Linux filesystem, and the rest for LVM with type Linux LVM.',
     ),
     check: {
       when: "blk[name=sda1].parttype='BIOS boot' && blk[name=sda2].parttype='Linux filesystem' && blk[name=sda3].parttype='Linux LVM'",
-      fail: [{ if: "blk[name=sda1].parttype='Linux filesystem'", say: bi('Первый раздел получил тип по умолчанию. Для GRUB на диске GPT нужен маленький раздел типа BIOS boot — туда ляжет его вторая часть.', 'The first partition got the default type. GRUB on a GPT disk needs a small partition of type BIOS boot — its second stage goes there.') }],
+      fail: [{ if: "blk[name=sda1].parttype='Linux filesystem'", say: bi('Первый раздел получил тип по умолчанию, а для GRUB на диске GPT нужен маленький раздел типа BIOS boot, куда ляжет вторая часть загрузчика.', 'The first partition got the default type, while GRUB on a GPT disk needs a small BIOS boot partition for the second part of the loader.') }],
     },
     chips: "printf 'label: gpt\\n,2M,21686148-6449-6E6F-744E-656564454649\\n,200M,L\\n,,V\\n' | sfdisk /dev/sda",
     docRef: man('sfdisk', 8),
     hints: {
-      H1: bi('`sfdisk` читает разметку со стандартного входа: строка `label: gpt`, затем по строке на раздел — начало, размер, тип.', '`sfdisk` reads the layout from standard input: a line `label: gpt`, then one line per partition — start, size, type.'),
-      H2: bi('Короткие имена типов: `L` — Linux filesystem, `V` — Linux LVM. У BIOS boot короткого имени нет, только GUID `21686148-6449-6E6F-744E-656564454649`.', 'Short type names: `L` is Linux filesystem, `V` is Linux LVM. BIOS boot has no short name, only the GUID `21686148-6449-6E6F-744E-656564454649`.'),
+      H1: bi('Команда `sfdisk` читает разметку со стандартного ввода: сначала строку `label: gpt`, а затем по строке на каждый раздел с началом, размером и типом.', '`sfdisk` reads the layout from standard input: first the line `label: gpt`, then one line per partition with the start, size and type.'),
+      H2: bi('У типов есть короткие имена: `L` означает Linux filesystem, а `V` означает Linux LVM. У типа BIOS boot короткого имени нет, и его задают только номером GUID `21686148-6449-6E6F-744E-656564454649`.', 'The types have short names: `L` is Linux filesystem and `V` is Linux LVM. BIOS boot has no short name and is given only by the GUID `21686148-6449-6E6F-744E-656564454649`.'),
     },
   },
   {
     id: 'lvm',
-    prompt: bi('Сделайте на третьем разделе группу томов `vg0` и в ней логический том `root` на 640 МиБ.', 'Make a volume group `vg0` on the third partition and a logical volume `root` of 640 MiB in it.'),
+    prompt: bi('Создайте на третьем разделе группу томов `vg0`, а в ней логический том `root` размером 640 МиБ.', 'Create the volume group `vg0` on the third partition, and in it the logical volume `root` of 640 MiB.'),
     check: { when: "lvm.vgs[name=vg0].name=vg0 && lvm.lvs[name=root].vg=vg0" },
     chips: 'pvcreate /dev/sda3 && vgcreate vg0 /dev/sda3 && lvcreate -L 640M -n root vg0',
     docRef: man('lvcreate', 8),
-    hints: { H1: bi('Три шага снизу вверх: физический том (`pvcreate`), группа (`vgcreate`), логический том (`lvcreate`).', 'Three steps from the bottom up: a physical volume (`pvcreate`), a group (`vgcreate`), a logical volume (`lvcreate`).') },
+    hints: { H1: bi('Сделать нужно три шага снизу вверх: создать физический том (`pvcreate`), группу (`vgcreate`) и логический том (`lvcreate`).', 'You need three steps from the bottom up: create the physical volume (`pvcreate`), the group (`vgcreate`) and the logical volume (`lvcreate`).') },
   },
   {
     id: 'mkfs',
-    prompt: bi('Создайте ext4 на `/dev/sda2` и на `/dev/vg0/root`.', 'Create ext4 on `/dev/sda2` and on `/dev/vg0/root`.'),
+    prompt: bi('Создайте файловую систему ext4 на `/dev/sda2` и на `/dev/vg0/root`.', 'Create an ext4 file system on `/dev/sda2` and on `/dev/vg0/root`.'),
     check: { when: "blk[name=sda2].fstype=ext4 && blk[name='vg0-root'].fstype=ext4" },
     chips: 'mkfs.ext4 /dev/sda2 && mkfs.ext4 /dev/vg0/root',
     docRef: man('mke2fs', 8),
   },
   {
     id: 'mount',
-    prompt: bi('Смонтируйте будущий корень в `/mnt`, а раздел загрузки — в `/mnt/boot`.', 'Mount the future root at `/mnt`, and the boot partition at `/mnt/boot`.'),
+    prompt: bi('Смонтируйте будущий корень в `/mnt`, а раздел загрузки в `/mnt/boot`.', 'Mount the future root at `/mnt`, and the boot partition at `/mnt/boot`.'),
     check: {
       when: "mounts[target='/mnt'].fstype=ext4 && mounts[target='/mnt'].src~'vg0' && mounts[target='/mnt/boot'].src='/dev/sda2'",
-      fail: [{ if: "mounts[target='/mnt/boot'].src='/dev/sda2' && mounts[target='/mnt'].fstype!=ext4", say: bi('`/mnt/boot` смонтирован раньше `/mnt`: корень, смонтированный потом, закрыл его собой. Порядок — сначала корень, потом `mkdir /mnt/boot` и раздел загрузки.', '`/mnt/boot` was mounted before `/mnt`: the root mounted later covered it. The order is the root first, then `mkdir /mnt/boot` and the boot partition.') }],
+      fail: [{ if: "mounts[target='/mnt/boot'].src='/dev/sda2' && mounts[target='/mnt'].fstype!=ext4", say: bi('Каталог `/mnt/boot` смонтирован раньше `/mnt`, и корень, смонтированный потом, закрыл его собой. Сначала монтируют корень, потом создают каталог командой `mkdir /mnt/boot` и монтируют в него раздел загрузки.', '`/mnt/boot` was mounted before `/mnt`, and the root mounted later covered it. First mount the root, then create the directory with `mkdir /mnt/boot` and mount the boot partition into it.') }],
     },
     chips: 'mount -t ext4 /dev/vg0/root /mnt && mkdir -p /mnt/boot && mount -t ext4 /dev/sda2 /mnt/boot',
     docRef: { ...man('mount', 8), label: 'mount(8) · -t' },
@@ -374,37 +374,37 @@ export const INSTALL_TASKS: LabGoal[] = [
   {
     id: 'install',
     prompt: bi(
-      'Поставьте систему в `/mnt` с загрузчиком GRUB: `setup-disk` берёт пакеты из репозитория на носителе, пишет `fstab` и ставит загрузчик на диск, где лежит `/mnt/boot`.',
-      'Install the system into `/mnt` with the GRUB boot loader: `setup-disk` takes the packages from the repository on the media, writes `fstab` and puts the boot loader on the disk that holds `/mnt/boot`.',
+      'Установите систему в `/mnt` вместе с загрузчиком GRUB. Команда `setup-disk` берёт пакеты из репозитория на носителе, пишет `fstab` и ставит загрузчик на тот диск, где лежит `/mnt/boot`.',
+      'Install the system into `/mnt` together with the GRUB boot loader. `setup-disk` takes the packages from the media’s repository, writes `fstab` and installs the loader on the disk that holds `/mnt/boot`.',
     ),
     check: { when: "files['/mnt/boot/grub/grub.cfg'].type=f && files['/mnt/etc/fstab'].text~'UUID=' && files['/mnt/boot/vmlinuz-virt'].type=f" },
     chips: 'BOOTLOADER=grub setup-disk -m sys /mnt',
     docRef: alpine('Alpine_setup_scripts', 'Alpine Wiki · setup-disk'),
     hints: {
-      H1: bi('Режим `sys` — обычная установка на диск. Переменная `BOOTLOADER=grub` выбирает GRUB вместо syslinux. Установка идёт около минуты.', 'The `sys` mode is an ordinary install to disk. The variable `BOOTLOADER=grub` picks GRUB instead of syslinux. The install takes about a minute.'),
-      H2: bi('Потом посмотрите `cat /mnt/etc/fstab`: `/boot` записан по UUID, а корень — по имени `/dev/vg0/root`. Имена LVM не сдвигаются, как `/dev/sdb`, поэтому так можно.', 'Then look at `cat /mnt/etc/fstab`: `/boot` is written by UUID and the root by the name `/dev/vg0/root`. LVM names do not shift like `/dev/sdb`, so this is fine.'),
+      H1: bi('Режим `sys` означает обычную установку на диск, а переменная `BOOTLOADER=grub` выбирает GRUB вместо syslinux. Установка длится около минуты.', 'The `sys` mode is an ordinary install to disk, and `BOOTLOADER=grub` picks GRUB instead of syslinux. The install takes about a minute.'),
+      H2: bi('Потом посмотрите `cat /mnt/etc/fstab`. Раздел `/boot` записан там по UUID, а корень по имени `/dev/vg0/root`. Имена томов LVM не сдвигаются так, как `/dev/sdb`, поэтому так записывать можно.', 'Then look at `cat /mnt/etc/fstab`. `/boot` is written there by UUID, and the root by the name `/dev/vg0/root`. LVM volume names do not shift the way `/dev/sdb` does, so this is fine.'),
     },
   },
   {
     id: 'identity',
-    prompt: bi('Перед перезагрузкой дайте новой системе имя `shop-01` и пароль root — иначе войти в неё будет нечем.', 'Before the reboot, give the new system the name `shop-01` and a root password — otherwise there will be no way to log in.'),
+    prompt: bi('Перед перезагрузкой дайте новой системе имя `shop-01` и задайте пароль root, иначе войти в неё будет не с чем.', 'Before the reboot give the new system the name `shop-01` and set a root password, otherwise there is nothing to log in with.'),
     check: {
       when: (f) => /^shop-01\s*$/m.test(text(f, '/mnt/etc/hostname')) && /^root:\$/m.test(text(f, '/mnt/etc/shadow')),
-      fail: [{ if: (f) => /^root::/m.test(text(f, '/mnt/etc/shadow')), say: bi('У root новой системы пустой пароль. `chpasswd -R /mnt` или `chroot /mnt passwd` меняют его внутри новой системы, а не на носителе.', 'root of the new system has an empty password. `chpasswd -R /mnt` or `chroot /mnt passwd` change it inside the new system, not on the media.') }],
+      fail: [{ if: (f) => /^root::/m.test(text(f, '/mnt/etc/shadow')), say: bi('У root новой системы пустой пароль. Команды `chpasswd -R /mnt` и `chroot /mnt passwd` меняют его внутри новой системы, а не на носителе.', 'The new system’s root has an empty password. `chpasswd -R /mnt` and `chroot /mnt passwd` change it inside the new system, not on the media.') }],
     },
     hints: {
-      H1: bi('Имя машины лежит в `/mnt/etc/hostname`. Пароль: `chroot /mnt passwd` — команда выполнится так, будто корень уже новая система.', 'The machine name lives in `/mnt/etc/hostname`. The password: `chroot /mnt passwd` — the command runs as if the root were already the new system.'),
+      H1: bi('Имя машины хранится в `/mnt/etc/hostname`. Пароль задаёт команда `chroot /mnt passwd`, которая выполнится так, будто корнем уже стала новая система.', 'The host name is kept in `/mnt/etc/hostname`. `chroot /mnt passwd` sets the password, running as if the new system were already the root.'),
     },
   },
   {
     id: 'boot',
-    prompt: bi('Перезагрузите машину. Носителя больше нет: она должна загрузиться со своего диска через ваш загрузчик и встретить вас приглашением `shop-01 login:`.', 'Reboot the machine. The media is gone: it must boot from its own disk through your boot loader and greet you with `shop-01 login:`.'),
+    prompt: bi('Перезагрузите машину. Носителя больше нет, поэтому машина должна загрузиться со своего диска через ваш загрузчик и встретить вас приглашением `shop-01 login:`.', 'Reboot the machine. The media is gone, so the machine must boot from its own disk through your boot loader and greet you with `shop-01 login:`.'),
     check: {
       when: (f) => (f.env as { bootFrom?: string }).bootFrom === 'disk' && /shop-01 login:/.test(consoleText(f)),
-      fail: [{ if: (f) => (f.env as { bootFrom?: string }).bootFrom === 'disk' && /login:/.test(consoleText(f)), say: bi('Система загрузилась с диска, но имя другое: `/mnt/etc/hostname` перед перезагрузкой не содержал `shop-01`.', 'The system booted from its disk, but under another name: `/mnt/etc/hostname` did not hold `shop-01` before the reboot.') }],
+      fail: [{ if: (f) => (f.env as { bootFrom?: string }).bootFrom === 'disk' && /login:/.test(consoleText(f)), say: bi('Система загрузилась с диска, но имя у неё другое, потому что `/mnt/etc/hostname` перед перезагрузкой не содержал `shop-01`.', 'The system booted from the disk, but its name differs, because `/mnt/etc/hostname` did not hold `shop-01` before the reboot.') }],
     },
     chips: 'umount -R /mnt; reboot',
-    hints: { H1: bi('Если после `reboot` снова загрузился носитель, значит, в начале диска нет загрузочной записи: GRUB не встал. Посмотрите вывод `setup-disk`.', 'If the media boots again after `reboot`, the start of the disk has no boot record: GRUB did not get installed. Look at the output of `setup-disk`.') },
+    hints: { H1: bi('Если после `reboot` снова загрузился носитель, значит, в начале диска нет загрузочной записи и GRUB не установился. Посмотрите вывод `setup-disk`.', 'If the media boots again after `reboot`, the start of the disk has no boot record and GRUB was not installed. Look at the output of `setup-disk`.') },
   },
 ];
 
@@ -414,8 +414,8 @@ export const INSTALL_LAB: RealLabProps = {
   watch: { identity: ['/mnt/etc/hostname', '/mnt/etc/shadow'] },
   rows: 20,
   intro: bi(
-    '### Машина без системы\n\nУ машины `new` пустой диск `/dev/sda` на 2 ГиБ, а загрузилась она с установочного носителя Alpine Linux: это маленькая система в памяти и репозиторий пакетов в `/media/cdrom/apks`. Сеть не нужна. Всё, что вы сделаете с диском, — настоящее: после перезагрузки носителя не будет, и машина либо загрузится с диска, либо нет.',
-    '### A machine without a system\n\nThe machine `new` has a blank 2 GiB disk `/dev/sda`, and it has booted from Alpine Linux installer media: a small system in memory and a package repository in `/media/cdrom/apks`. No network is needed. Everything you do to the disk is real: after the reboot the media is gone, and the machine either boots from its disk or does not.',
+    '### Машина без системы\n\nУ машины `new` есть пустой диск `/dev/sda` размером 2 ГиБ, а загрузилась она с установочного носителя Alpine Linux, то есть с маленькой системы в памяти и репозитория пакетов в `/media/cdrom/apks`. Сеть для работы не нужна. Всё, что вы сделаете с диском, происходит по-настоящему: после перезагрузки носителя не будет, и машина либо загрузится с диска, либо нет.',
+    '### A machine without a system\n\n`new` has a blank 2 GiB disk `/dev/sda`, and it booted from Alpine Linux installer media, a small system in memory with a package repository in `/media/cdrom/apks`. No network is needed. Everything you do to the disk is real: after the reboot the media is gone, and the machine either boots from the disk or does not.',
   ),
 };
 
@@ -428,28 +428,28 @@ export const INSTALL_EXAM: RealLabProps = {
   watch: { layout: ['scope:blk'], volumes: ['scope:blk'], root: ['/mnt/etc/hostname', '/mnt/etc/shadow', '/mnt/etc/fstab', '/mnt/boot/grub/grub.cfg'], logs: ['/mnt/etc/fstab', 'scope:blk'] },
   rows: 20,
   intro: bi(
-    '### Учебный экзамен: сервер базы данных\n\nДиску новой машины `new` нужна такая разметка: GPT; загрузчик GRUB; отдельный `/boot`; всё остальное — группа томов `sys` с томом `root` не меньше 700 МиБ и томом `logs` на 200 МиБ, который в новой системе монтируется в `/var/log` по UUID. Имя машины — `db-01`, у root есть пароль. Засчитывается результат, путь любой; подсказок нет, открыта документация машины: `man`, `--help`. Таймер мягкий: время только записывается.',
-    '### Learning exam: a database server\n\nThe new machine `new` needs this disk layout: GPT; the GRUB boot loader; a separate `/boot`; all the rest is the volume group `sys` with a volume `root` of at least 700 MiB and a volume `logs` of 200 MiB, which the new system mounts at `/var/log` by UUID. The machine’s name is `db-01`, and root has a password. The result counts, any path is fine; there are no hints, the machine’s documentation is open: `man`, `--help`. The timer is soft: the time is only recorded.',
+    '### Учебный экзамен о сервере базы данных\n\nДиск новой машины `new` нужно разметить так: таблица GPT, загрузчик GRUB, отдельный раздел `/boot`, а всё остальное отдано группе томов `sys` с томом `root` не меньше 700 МиБ и томом `logs` на 200 МиБ. Том `logs` в новой системе монтируется в `/var/log` по UUID. Машина должна называться `db-01`, и у root должен быть пароль. Засчитывается результат, а путь к нему может быть любым. Подсказок нет, а из документации открыты `man` и `--help`. Таймер мягкий и только записывает время.',
+    '### A learning exam about a database server\n\nThe disk of the new machine `new` must be laid out like this: a GPT table, the GRUB boot loader, a separate `/boot`, and the rest given to the volume group `sys` with a `root` volume of at least 700 MiB and a `logs` volume of 200 MiB. In the new system `logs` is mounted at `/var/log` by UUID. The machine must be called `db-01`, and root must have a password. The result counts, and the way to it may be any. There are no hints, and the machine’s documentation is open: `man` and `--help`. The timer is soft and only records the time.',
   ),
   tasks: [
     {
       id: 'layout',
       weight: 2,
       critical: true,
-      prompt: bi('GPT с разделом BIOS boot, отдельным `/boot` и разделом LVM.', 'GPT with a BIOS boot partition, a separate `/boot` and an LVM partition.'),
+      prompt: bi('На диске записана таблица GPT с разделом BIOS boot, отдельным `/boot` и разделом LVM.', 'The disk has a GPT table with a BIOS boot partition, a separate `/boot` and an LVM partition.'),
       check: { when: (f) => blk(f).some((b) => b.parttype === 'BIOS boot') && blk(f).some((b) => b.parttype === 'Linux LVM') && blk(f).some((b) => b.type === 'part' && b.parttype === 'Linux filesystem' && b.fstype === 'ext4') },
     },
     {
       id: 'volumes',
       weight: 2,
-      prompt: bi('Группа `sys`: том `root` от 700 МиБ и том `logs` на 200 МиБ, оба с файловой системой.', 'The group `sys`: a volume `root` from 700 MiB and a volume `logs` of 200 MiB, both with a file system.'),
+      prompt: bi('В группе `sys` есть том `root` от 700 МиБ и том `logs` на 200 МиБ, и на обоих создана файловая система.', 'The group `sys` has a `root` volume of 700 MiB or more and a `logs` volume of 200 MiB, both with a file system.'),
       check: { when: (f) => (part(f, 'sys-root')?.size ?? 0) >= 700 * 1048576 && Math.abs((part(f, 'sys-logs')?.size ?? 0) - 200 * 1048576) <= 8 * 1048576 && !!part(f, 'sys-root')?.fstype && !!part(f, 'sys-logs')?.fstype },
     },
     {
       id: 'root',
       weight: 2,
       critical: true,
-      prompt: bi('Система установлена на `sys/root` с GRUB, имя `db-01`, у root есть пароль.', 'The system is installed on `sys/root` with GRUB, the name is `db-01`, root has a password.'),
+      prompt: bi('Система установлена на `sys/root` с загрузчиком GRUB, машина называется `db-01`, и у root есть пароль.', 'The system is installed on `sys/root` with GRUB, the machine is called `db-01`, and root has a password.'),
       check: { when: (f) => /^db-01\s*$/m.test(text(f, '/mnt/etc/hostname')) && /^root:\$/m.test(text(f, '/mnt/etc/shadow')) && /sys(-|\/)root/.test(text(f, '/mnt/etc/fstab')) && (f.files['/mnt/boot/grub/grub.cfg'] as { type?: string } | undefined)?.type === 'f' },
     },
     {
@@ -467,7 +467,7 @@ export const INSTALL_EXAM: RealLabProps = {
       id: 'boot',
       weight: 2,
       critical: true,
-      prompt: bi('Машина загружается со своего диска: `db-01 login:`.', 'The machine boots from its own disk: `db-01 login:`.'),
+      prompt: bi('Машина загружается со своего диска и показывает приглашение `db-01 login:`.', 'The machine boots from its own disk and shows `db-01 login:`.'),
       check: { when: (f) => (f.env as { bootFrom?: string }).bootFrom === 'disk' && /db-01 login:/.test(consoleText(f)) },
     },
   ],
@@ -503,62 +503,62 @@ export const DISK_TASKS: LabGoal[] = [
     id: 'culprit',
     on: 'app',
     prompt: bi(
-      '`df -h /srv/shop` показывает, что раздел почти полон, а `du -sh /srv/shop` насчитывает куда меньше. Найдите процесс, который держит открытым удалённый файл, и запишите его PID в `/root/culprit.txt`.',
-      '`df -h /srv/shop` shows the partition almost full, while `du -sh /srv/shop` counts far less. Find the process that holds a deleted file open and write its PID into `/root/culprit.txt`.',
+      'Команда `df -h /srv/shop` показывает, что раздел почти полон, а `du -sh /srv/shop` насчитывает намного меньше. Найдите процесс, который держит открытым удалённый файл, и запишите его PID в `/root/culprit.txt`.',
+      '`df -h /srv/shop` shows the partition is almost full, while `du -sh /srv/shop` counts far less. Find the process that holds a deleted file open and write its PID into `/root/culprit.txt`.',
     ),
     check: {
       when: (f) => {
         const pid = text(f, '/root/culprit.txt').trim();
         return /^\d+$/.test(pid) && out(f, 'holders').split('\n').map((x) => x.trim()).includes(pid);
       },
-      fail: [{ if: (f) => text(f, '/root/culprit.txt').trim() === '1', say: bi('PID 1 — это init, а его `/dev/console (deleted)` места не занимает: это устройство, а не файл на разделе. Ищите строку с `/srv/shop`.', 'PID 1 is init, and its `/dev/console (deleted)` takes no space: it is a device, not a file on the partition. Look for the line with `/srv/shop`.') }],
+      fail: [{ if: (f) => text(f, '/root/culprit.txt').trim() === '1', say: bi('Нет, PID 1 принадлежит init, а его `/dev/console (deleted)` места не занимает, потому что это устройство, а не файл на разделе. Ищите строку с `/srv/shop`.', 'No, PID 1 is init, and its `/dev/console (deleted)` takes no space, because it is a device, not a file on the partition. Look for the line with `/srv/shop`.') }],
     },
     chips: 'lsof +L1',
     docRef: { url: 'https://lsof.readthedocs.io/en/latest/manpage/', label: 'lsof(8) · +L' },
     hints: {
-      H1: bi('`lsof +L1` показывает открытые файлы, у которых не осталось ни одного имени: колонка NLINK — 0, в конце пометка `(deleted)`. Строки init с `/dev/console` не в счёт; тот же файл может держать и дочерний процесс агента, `sleep`, — он унаследовал дескриптор.', '`lsof +L1` shows open files with no name left: the NLINK column is 0, and `(deleted)` is at the end. The init lines with `/dev/console` do not count; the agent’s child, `sleep`, may hold the same file too — it inherited the descriptor.'),
-      H2: bi('Без lsof то же видно в `/proc`: `ls -l /proc/*/fd 2>/dev/null | grep deleted`.', 'Without lsof the same shows in `/proc`: `ls -l /proc/*/fd 2>/dev/null | grep deleted`.'),
+      H1: bi('Команда `lsof +L1` показывает открытые файлы, у которых не осталось ни одного имени: в колонке NLINK у них стоит 0, а в конце строки пометка `(deleted)`. Строки init с `/dev/console` не в счёт. Тот же файл может держать и дочерний процесс агента `sleep`, потому что он унаследовал дескриптор.', '`lsof +L1` shows open files that have no name left: NLINK is 0 for them, and the line ends with `(deleted)`. init’s lines with `/dev/console` do not count. The agent’s child process `sleep` may hold the same file too, because it inherited the descriptor.'),
+      H2: bi('Без lsof то же самое видно в `/proc` командой `ls -l /proc/*/fd 2>/dev/null | grep deleted`.', 'Without lsof the same shows in `/proc` with `ls -l /proc/*/fd 2>/dev/null | grep deleted`.'),
     },
   },
   {
     id: 'free',
     on: 'app',
     prompt: bi(
-      'Верните место: на `/srv/shop` должно быть свободно не меньше 60 МиБ. Заказы в `orders/` трогать нельзя, `legacy-agent` и `orders-app` должны продолжать работать. Кэш сборки удалять можно.',
-      'Get the space back: `/srv/shop` must have at least 60 MiB free. The orders in `orders/` must not be touched, and `legacy-agent` and `orders-app` must keep running. The build cache may be deleted.',
+      'Верните место, чтобы на `/srv/shop` было свободно не меньше 60 МиБ. Заказы в `orders/` трогать нельзя, а `legacy-agent` и `orders-app` должны продолжать работать. Кэш сборки удалять можно.',
+      'Get the space back so that `/srv/shop` has at least 60 MiB free. The orders in `orders/` must not be touched, and `legacy-agent` and `orders-app` must keep running. The build cache may be deleted.',
     ),
     check: {
       when: (f) => num(f, 'free') >= 60 * MiB && ordersIntact(f) && agentAlive(f) && ok(f, 'app'),
       fail: [
-        { if: (f) => !agentAlive(f), say: bi('Агент остановлен. Его место вернулось, но отчётность осталась без агента: файл можно обрезать через дескриптор процесса, не останавливая его.', 'The agent is stopped. Its space came back, but reporting lost the agent: the file can be truncated through the process’s descriptor without stopping it.') },
-        { if: (f) => !ordersIntact(f), say: bi('Заказов в `orders/` стало меньше: так место освобождать нельзя.', 'There are fewer orders in `orders/`: that is not a way to free space.') },
-        { if: (f) => num(f, 'free') >= 30 * MiB && num(f, 'free') < 60 * MiB, say: bi('Кэш удалён, но этого мало: основное место держит удалённый журнал агента.', 'The cache is gone, but that is not enough: the agent’s deleted log holds most of the space.') },
+        { if: (f) => !agentAlive(f), say: bi('Агент остановлен. Место вернулось, но отчётность осталась без агента, а файл можно было обрезать через дескриптор процесса, не останавливая его.', 'The agent was stopped. The space came back, but reporting lost its agent, while the file could have been truncated through the process’s descriptor without stopping it.') },
+        { if: (f) => !ordersIntact(f), say: bi('Заказов в `orders/` стало меньше, а освобождать место таким способом нельзя.', 'There are fewer orders in `orders/`, and space must not be freed that way.') },
+        { if: (f) => num(f, 'free') >= 30 * MiB && num(f, 'free') < 60 * MiB, say: bi('Кэш удалён, но этого мало, потому что основное место держит удалённый журнал агента.', 'The cache is deleted, but that is not enough, because the agent’s deleted log holds most of the space.') },
       ],
     },
     chips: ': > /proc/PID/fd/3',
     docRef: { url: 'https://man7.org/linux/man-pages/man5/proc_pid_fd.5.html', label: 'proc_pid_fd(5)' },
     hints: {
-      H1: bi('Удалённый файл живёт, пока открыт. `/proc/PID/fd/N` — путь к нему через дескриптор: записать туда пустоту — значит обрезать файл до нуля.', 'A deleted file lives while it is open. `/proc/PID/fd/N` is a path to it through the descriptor: writing nothing there truncates the file to zero.'),
-      H2: bi('Номер дескриптора — колонка FD у `lsof +L1` (`3w` значит дескриптор 3, открыт на запись).', 'The descriptor number is the FD column of `lsof +L1` (`3w` means descriptor 3, open for writing).'),
+      H1: bi('Удалённый файл продолжает существовать, пока он открыт. Путь `/proc/PID/fd/N` ведёт к нему через дескриптор, и если перенаправить туда пустой вывод командой `: >`, файл обрежется до нуля.', 'A deleted file goes on existing while it is open. `/proc/PID/fd/N` leads to it through the descriptor, and redirecting empty output there with `: >` truncates the file to zero.'),
+      H2: bi('Номер дескриптора стоит в колонке FD вывода `lsof +L1`, например `3w` означает дескриптор 3, открытый на запись.', 'The descriptor number is in the FD column of `lsof +L1`; for example, `3w` means descriptor 3, open for writing.'),
     },
   },
   {
     id: 'grow',
     on: 'app',
     prompt: bi(
-      'Чтобы запас был на будущее, увеличьте том `data/shop` и его файловую систему до 220 МиБ или больше — не отмонтируя `/srv/shop`. В группе `data` есть свободное место.',
-      'For room in the future, grow the volume `data/shop` and its file system to 220 MiB or more — without unmounting `/srv/shop`. The group `data` has free space.',
+      'Чтобы у раздела был запас на будущее, увеличьте том `data/shop` и его файловую систему до 220 МиБ или больше, не отмонтируя `/srv/shop`. В группе `data` есть свободное место.',
+      'To give the partition room for the future, grow the volume `data/shop` and its file system to 220 MiB or more without unmounting `/srv/shop`. The group `data` has free space.',
     ),
     check: {
       // ext4 keeps about 5% of a small volume for its own tables: a 220 MiB volume gives a file system of about 200 MiB.
       when: (f) => (part(f, 'data-shop')?.size ?? 0) >= 220 * 1048576 && num(f, 'size') >= 190 * MiB && ordersIntact(f),
-      fail: [{ if: (f) => (part(f, 'data-shop')?.size ?? 0) >= 220 * 1048576 && num(f, 'size') < 190 * MiB, say: bi('Том вырос, а файловая система — нет: `df` видит прежний размер. ext4 нужно растянуть на новый том, и это можно сделать на ходу.', 'The volume grew, but the file system did not: `df` sees the old size. ext4 must be stretched over the new volume, and that can be done live.') }],
+      fail: [{ if: (f) => (part(f, 'data-shop')?.size ?? 0) >= 220 * 1048576 && num(f, 'size') < 190 * MiB, say: bi('Том вырос, а файловая система нет, и `df` видит прежний размер. Файловую систему ext4 нужно растянуть на новый том, и это можно сделать на ходу.', 'The volume grew, but the file system did not, and `df` sees the old size. The ext4 file system must be stretched over the new volume, and this can be done live.') }],
     },
     chips: 'lvextend -r -L 220M data/shop',
     docRef: man('lvextend', 8),
     hints: {
-      H1: bi('`lvextend` растит том; ключ `-r` сразу растягивает и файловую систему на нём. Вручную это `resize2fs /dev/data/shop`.', '`lvextend` grows the volume; the `-r` option stretches the file system on it too. By hand it is `resize2fs /dev/data/shop`.'),
-      H2: bi('Сколько свободно в группе, показывает `vgs`.', '`vgs` shows how much the group has free.'),
+      H1: bi('Команда `lvextend` увеличивает том, а флаг `-r` сразу растягивает и файловую систему на нём. Вручную файловую систему растягивает команда `resize2fs /dev/data/shop`.', '`lvextend` grows the volume, and `-r` stretches the file system on it at once. By hand, `resize2fs /dev/data/shop` stretches the file system.'),
+      H2: bi('Сколько места свободно в группе, показывает команда `vgs`.', '`vgs` shows how much space is free in the group.'),
     },
   },
   {
@@ -567,12 +567,12 @@ export const DISK_TASKS: LabGoal[] = [
     beyond: true,
     docStep: 4,
     prompt: bi(
-      'ext4 по умолчанию держит 5 % блоков в запасе для root — на разделе с данными это пропавшие мегабайты. Уменьшите запас на `/dev/data/shop` до 1 %, не пересоздавая файловую систему. В уроке этого не было: ищите в документации e2fsprogs.',
-      'By default ext4 keeps 5% of its blocks in reserve for root — on a data partition those are lost megabytes. Cut the reserve on `/dev/data/shop` to 1% without recreating the file system. The lesson did not show this: look in the e2fsprogs documentation.',
+      'По умолчанию ext4 держит 5 % блоков в запасе для root, и на разделе с данными это пропавшие мегабайты. Уменьшите этот запас на `/dev/data/shop` до 1 %, не пересоздавая файловую систему. В уроке об этом не рассказывалось, поэтому поищите способ в документации e2fsprogs.',
+      'By default ext4 keeps 5 % of the blocks in reserve for root, and on a data partition those are lost megabytes. Cut this reserve on `/dev/data/shop` to 1 % without recreating the file system. The lesson did not cover this, so look in the e2fsprogs documentation.',
     ),
     check: { when: (f) => num(f, 'reserved') > 0 && num(f, 'reserved') <= 0.011 },
     docRef: man('tune2fs', 8),
-    hints: { H1: bi('Утилита, которая меняет настройки уже созданной ext4.', 'The tool that changes the settings of an ext4 that already exists.') },
+    hints: { H1: bi('Вам нужна утилита, которая меняет настройки уже созданной файловой системы ext4.', 'You need the tool that changes the settings of an existing ext4 file system.') },
     solutionTokens: ['tune2fs', '-m 1'],
   },
 ];
@@ -585,8 +585,8 @@ export const DISK_LAB: RealLabProps = {
   tasks: DISK_TASKS,
   watch: { culprit: ['probe:holders', '/root/culprit.txt'], free: ['probe:free', 'probe:orders', 'probe:agent', 'probe:app'], grow: ['probe:size', 'probe:orders', 'scope:blk'], reserved: ['probe:reserved'] },
   intro: bi(
-    '### Раздел магазина\n\nНа машине `app` раздел `/srv/shop` — логический том LVM `data/shop` на 120 МиБ, смонтированный по UUID из `/etc/fstab`. На нём заказы, кэш сборки и журналы. Работают две программы: `orders-app` и старый `legacy-agent`. Кто-то уже пытался освободить место командой `rm` — и место не вернулось.',
-    '### The shop’s partition\n\nOn the machine `app` the partition `/srv/shop` is the 120 MiB LVM logical volume `data/shop`, mounted by UUID from `/etc/fstab`. It holds the orders, the build cache and the logs. Two programs run: `orders-app` and the old `legacy-agent`. Someone has already tried to free space with `rm` — and the space did not come back.',
+    '### Раздел магазина\n\nНа машине `app` раздел `/srv/shop` лежит на логическом томе LVM `data/shop` размером 120 МиБ и монтируется по UUID из `/etc/fstab`. На нём хранятся заказы, кэш сборки и журналы. Работают две программы, `orders-app` и старый `legacy-agent`. Кто-то уже пытался освободить место командой `rm`, но место так и не вернулось.',
+    '### The shop’s partition\n\nOn `app`, `/srv/shop` is on the 120 MiB LVM logical volume `data/shop`, mounted by UUID from `/etc/fstab`. It holds the orders, the build cache and the logs. Two programs run, `orders-app` and the old `legacy-agent`. Somebody has already tried to free space with `rm`, and the space never came back.',
   ),
 };
 
@@ -602,8 +602,8 @@ export const DISK_EXAM_LAB: RealLabProps = {
   pass: 0.7,
   watch: { space: ['probe:free', 'probe:orders', 'probe:agent', 'probe:app'], cron: ['probe:cron', 'probe:app'], grow: ['probe:size', 'probe:orders', 'scope:blk'], reserved: ['probe:reserved'] },
   intro: bi(
-    '### Учебный экзамен в браузере: раздел заполнен\n\nТот же сюжет, что у экзамена на своей машине, но на настоящем Alpine Linux прямо во вкладке. Мониторинг сообщает: раздел `/srv/shop` на машине `app` почти полон, приложение заказов скоро перестанет писать. Освободите место, не потеряв заказов в `/srv/shop/orders`, найдите, кто продолжает заполнять раздел, и дайте разделу запас. `legacy-agent` ещё нужен отчётности. Подсказок нет, документация машины открыта: `man`, `--help`.',
-    '### Learning exam in the browser: the partition is full\n\nThe same story as the exam on your own machine, but on real Alpine Linux right in the tab. Monitoring reports: the partition `/srv/shop` on the machine `app` is almost full, and the orders application will soon stop writing. Free space without losing the orders in `/srv/shop/orders`, find who keeps filling the partition, and give the partition room. The `legacy-agent` is still needed by reporting. There are no hints; the machine’s documentation is open: `man`, `--help`.',
+    '### Учебный экзамен в браузере о разделе, который заполнился\n\nСюжет здесь тот же, что у экзамена на своей машине, но всё происходит на настоящем Alpine Linux в самой вкладке. Мониторинг сообщает, что раздел `/srv/shop` на машине `app` почти полон и приложение заказов скоро перестанет записывать данные. Освободите место, не потеряв заказов в `/srv/shop/orders`, найдите, кто продолжает заполнять раздел, и дайте разделу запас. Агент `legacy-agent` ещё нужен для отчётности. Подсказок нет, а из документации открыты `man` и `--help`.',
+    '### A learning exam in the browser about a partition that filled up\n\nThe story is the same as in the exam on your own machine, but everything happens on real Alpine Linux in the tab. Monitoring reports that `/srv/shop` on `app` is almost full and the orders application will soon stop writing data. Free the space without losing the orders in `/srv/shop/orders`, find who keeps filling the partition, and give it room. `legacy-agent` is still needed for reporting. There are no hints, and the machine’s documentation is open: `man` and `--help`.',
   ),
   tasks: [
     {
@@ -611,7 +611,7 @@ export const DISK_EXAM_LAB: RealLabProps = {
       on: 'app',
       weight: 35,
       critical: true,
-      prompt: bi('Карточка 1. На `/srv/shop` свободно не меньше 60 МиБ, заказы целы, `orders-app` и `legacy-agent` работают.', 'Card 1. `/srv/shop` has at least 60 MiB free, the orders are intact, `orders-app` and `legacy-agent` run.'),
+      prompt: bi('Карточка 1. На `/srv/shop` свободно не меньше 60 МиБ, заказы целы, а `orders-app` и `legacy-agent` работают.', 'Card 1. `/srv/shop` has at least 60 MiB free, the orders are intact, and `orders-app` and `legacy-agent` are running.'),
       check: { when: (f) => num(f, 'free') >= 60 * MiB && ordersIntact(f) && agentAlive(f) && ok(f, 'app') },
     },
     {
@@ -625,7 +625,7 @@ export const DISK_EXAM_LAB: RealLabProps = {
       id: 'grow',
       on: 'app',
       weight: 30,
-      prompt: bi('Карточка 3. Том `data/shop` и его файловая система — от 220 МиБ, без отмонтирования и без потери заказов.', 'Card 3. The volume `data/shop` and its file system are 220 MiB or more, without unmounting and without losing orders.'),
+      prompt: bi('Карточка 3. Том `data/shop` и его файловая система имеют размер от 220 МиБ, и при этом раздел не отмонтировали, а заказы не потеряли.', 'Card 3. The volume `data/shop` and its file system are 220 MiB or more, and the partition was not unmounted and no orders were lost.'),
       check: { when: (f) => (part(f, 'data-shop')?.size ?? 0) >= 220 * 1048576 && num(f, 'size') >= 190 * MiB && ordersIntact(f) },
     },
     {
@@ -633,7 +633,7 @@ export const DISK_EXAM_LAB: RealLabProps = {
       on: 'app',
       weight: 15,
       beyond: true,
-      prompt: bi('Карточка 4. Запас блоков для root на `/dev/data/shop` — не больше 1 %. Как это задать, в курсе не показано.', 'Card 4. The block reserve for root on `/dev/data/shop` is at most 1%. The course did not show how to set it.'),
+      prompt: bi('Карточка 4. Запас блоков для root на `/dev/data/shop` составляет не больше 1 %. Как это задать, в курсе не показано.', 'Card 4. The root block reserve on `/dev/data/shop` is at most 1 %. The course did not show how to set it.'),
       check: { when: (f) => num(f, 'reserved') > 0 && num(f, 'reserved') <= 0.011 },
       solutionTokens: ['tune2fs'],
     },
@@ -664,8 +664,8 @@ export const ACCESS_EXAM_LAB: RealLabProps = {
   pass: 0.7,
   watch: { sudo: ['probe:sudo', 'probe:visudo'], nopass: ['probe:sshd'], offer: ['probe:methods', 'probe:keyin'], allowgroups: ['probe:sshd'] },
   intro: bi(
-    '### Учебный экзамен в браузере: доступ для новой разработчицы\n\nТот же сюжет, что у экзамена на двух своих машинах, но на настоящем Alpine Linux во вкладке: `laptop` — ноутбук Марии (учётная запись `maria` там есть, ключей нет), `server` — сервер команды с группой `devs` и службой OpenRC `orders`. Марии нужен вход на `server` по ключу, общий каталог `/srv/releases`, где новые файлы сразу принадлежат группе `devs`, и право перезапускать `orders` — и только её. Вход по паролю пора запретить для всех, по SSH пускать только группу `devs`. Вы root на обеих машинах; от имени Марии на ноутбуке — `su - maria`. Подсказок нет, документация машин открыта.',
-    '### Learning exam in the browser: access for a new developer\n\nThe same story as the exam on two of your own machines, but on real Alpine Linux in the tab: `laptop` is Maria’s laptop (the account `maria` exists there, with no keys), `server` is the team’s server with the group `devs` and the OpenRC service `orders`. Maria needs a key login to `server`, a shared directory `/srv/releases` where new files belong to the group `devs` right away, and the right to restart `orders` — that one only. Password logins must be switched off for everyone, and SSH must let in only the group `devs`. You are root on both machines; as Maria on the laptop — `su - maria`. There are no hints; the machines’ documentation is open.',
+    '### Учебный экзамен в браузере о доступе для новой разработчицы\n\nСюжет здесь тот же, что у экзамена на двух своих машинах, но всё происходит на настоящем Alpine Linux во вкладке. Машина `laptop` служит ноутбуком Марии, и учётная запись `maria` на ней есть, а ключей нет. Машина `server` служит сервером команды с группой `devs` и службой OpenRC `orders`. Марии нужен вход на `server` по ключу, общий каталог `/srv/releases`, в котором новые файлы сразу принадлежат группе `devs`, и право перезапускать `orders`, причём только эту службу. Вход по паролю пора запретить для всех, а по SSH пускать только группу `devs`. Вы работаете как root на обеих машинах, а от имени Марии на ноутбуке можно войти командой `su - maria`. Подсказок нет, а документация машин открыта.',
+    '### A learning exam in the browser about access for a new developer\n\nThe story is the same as in the exam on two machines of your own, but everything happens on real Alpine Linux in the tab. `laptop` is Maria’s laptop, which has the account `maria` but no keys. `server` is the team’s server with the group `devs` and the OpenRC service `orders`. Maria needs key login to `server`, a shared directory `/srv/releases` where new files belong to `devs` at once, and the right to restart `orders`, and only that service. Password logins must be switched off for everyone, and SSH must let in only the group `devs`. You are root on both machines, and on the laptop you become Maria with `su - maria`. There are no hints, and the machines’ documentation is open.',
   ),
   tasks: [
     {
@@ -673,21 +673,21 @@ export const ACCESS_EXAM_LAB: RealLabProps = {
       on: 'laptop',
       weight: 20,
       critical: true,
-      prompt: bi('Карточка 1. На `server` есть `maria` с `/bin/bash` в группе `devs`, и с `laptop` она входит туда по ключу без вопросов.', 'Card 1. `server` has `maria` with `/bin/bash` in the group `devs`, and she logs in there from `laptop` with a key, with no questions.'),
+      prompt: bi('Карточка 1. На `server` есть пользователь `maria` с `/bin/bash` в группе `devs`, и с `laptop` она входит туда по ключу без вопросов.', 'Card 1. `server` has the user `maria` with `/bin/bash` in the group `devs`, and she logs in there from `laptop` with a key without questions.'),
       check: { when: "reach['keyin'].exit=0 && files['/home/maria/.ssh/known_hosts'].exists=true" },
     },
     {
       id: 'account',
       on: 'server',
       weight: 10,
-      prompt: bi('`maria` на `server`: оболочка `/bin/bash`, группа `devs`, `~/.ssh` закрыт от остальных.', '`maria` on `server`: the shell `/bin/bash`, the group `devs`, `~/.ssh` closed to others.'),
+      prompt: bi('У пользователя `maria` на `server` оболочка `/bin/bash`, группа `devs`, а каталог `~/.ssh` закрыт от остальных.', 'On `server`, `maria` has the shell `/bin/bash`, the group `devs`, and her `~/.ssh` is closed to others.'),
       check: { when: "users[name=maria].shell='/bin/bash' && groups[name=devs].members has maria && files['/home/maria/.ssh'].owner=maria && files['/home/maria/.ssh'].mode=~'00$'" },
     },
     {
       id: 'releases',
       on: 'server',
       weight: 20,
-      prompt: bi('Карточка 2. `/srv/releases`: группа `devs` читает и пишет, остальные — нет, новые файлы наследуют группу.', 'Card 2. `/srv/releases`: the group `devs` reads and writes, others do not, new files inherit the group.'),
+      prompt: bi('Карточка 2. Группа `devs` может читать каталог `/srv/releases` и писать в него, остальные не могут, а новые файлы получают группу каталога.', 'Card 2. The group `devs` can read and write `/srv/releases`, others cannot, and new files get the directory’s group.'),
       check: { when: "files['/srv/releases'].type=d && files['/srv/releases'].group=devs && files['/srv/releases'].mode=~'^2[0-7]70$'" },
     },
     {
@@ -695,21 +695,21 @@ export const ACCESS_EXAM_LAB: RealLabProps = {
       on: 'server',
       weight: 20,
       critical: true,
-      prompt: bi('Карточка 3. `maria` может без пароля выполнить `rc-service orders restart` через sudo — и больше ничего от имени root.', 'Card 3. `maria` may run `rc-service orders restart` through sudo without a password — and nothing else as root.'),
+      prompt: bi('Карточка 3. Пользователь `maria` может без пароля выполнить через sudo команду `rc-service orders restart`, и больше ничего от имени root.', 'Card 3. `maria` can run `rc-service orders restart` through sudo without a password, and nothing else as root.'),
       check: { when: (f) => /NOPASSWD:\s*\/sbin\/rc-service orders restart\s*$/m.test(out(f, 'sudo')) && !/\)\s*(NOPASSWD:\s*)?ALL\s*$/m.test(out(f, 'sudo')) && ok(f, 'visudo') },
     },
     {
       id: 'nopass',
       on: 'server',
       weight: 20,
-      prompt: bi('Карточка 4. Итоговые настройки sshd запрещают пароль и вход «с клавиатуры».', 'Card 4. sshd’s effective settings forbid passwords and keyboard-interactive logins.'),
+      prompt: bi('Карточка 4. Итоговые настройки sshd запрещают вход по паролю и вход «с клавиатуры».', 'Card 4. sshd’s final settings forbid password and “keyboard-interactive” logins.'),
       check: { when: (f) => /^passwordauthentication no$/m.test(out(f, 'sshd')) && /^kbdinteractiveauthentication no$/m.test(out(f, 'sshd')) },
     },
     {
       id: 'offer',
       on: 'laptop',
       weight: 5,
-      prompt: bi('`laptop` не видит у `server` способов входа по паролю, а Мария по-прежнему входит.', '`laptop` sees no password methods on `server`, and Maria still gets in.'),
+      prompt: bi('Машина `laptop` не видит у `server` способов войти по паролю, а Мария по-прежнему входит по ключу.', '`laptop` sees no password login methods on `server`, and Maria still logs in with her key.'),
       check: { when: (f) => /Permission denied \(/.test(out(f, 'methods')) && !/password|keyboard-interactive/.test(out(f, 'methods')) && ok(f, 'keyin') },
     },
     {
@@ -717,7 +717,7 @@ export const ACCESS_EXAM_LAB: RealLabProps = {
       on: 'server',
       weight: 5,
       beyond: true,
-      prompt: bi('Карточка 5. По SSH на `server` пускаются только члены группы `devs`. Директива — в `man sshd_config`.', 'Card 5. SSH on `server` lets in only members of the group `devs`. The directive is in `man sshd_config`.'),
+      prompt: bi('Карточка 5. По SSH на `server` пускают только участников группы `devs`, а нужную директиву ищите на странице `man sshd_config`.', 'Card 5. SSH on `server` lets in only members of the group `devs`, and the directive is on the page `man sshd_config`.'),
       check: { when: (f) => /^allowgroups (.* )?devs( |$)/m.test(out(f, 'sshd')) },
       solutionTokens: ['AllowGroups'],
     },
