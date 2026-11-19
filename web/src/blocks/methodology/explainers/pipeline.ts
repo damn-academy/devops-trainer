@@ -3,15 +3,21 @@
 // what turns it into continuous deployment, how batch size and automated
 // checks move the risk, and what rollback buys. The risk numbers come from
 // the flowlab model (engine/flowlab/sim.ts), so they match the simulator.
+//
+// Reading order: at the first step only the merged change and the working
+// site are on the picture. Each step of the pipeline appears when the change
+// reaches it and says in a callout what it does; the frame "continuous
+// integration" appears when the change leaves it. The last step shows what
+// happens if the deployment breaks the site: a rollback, or a hotfix when the
+// rollback is broken.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
-import type { ElementCard, Step } from '../../../core/types';
+import type { Step } from '../../../core/types';
 import { diagnoseMinutes, pFail, restoreMinutes } from '../../../engine/flowlab/sim';
+import { b, card, edge, fmtn, hiddenExcept, lastMetrics, node, nWord, type Bi } from './kit';
 
 type P = { build: string; last: string; automation: number; batch: number };
 
-const card = (what: Bi, who: Bi, extra: Partial<ElementCard> = {}): ElementCard => ({ what, who, ...extra });
 const FOWLER = { url: 'https://martinfowler.com/articles/continuousIntegration.html', label: 'Fowler › Continuous Integration' };
 const CD = { url: 'https://continuousdelivery.com/', label: 'continuousdelivery.com' };
 
@@ -37,76 +43,104 @@ export function pipeNumbers(p: P, rollback: boolean): PipeNumbers {
   return { leadHours, risk: Math.round(risk * 100), diagnose: diagnoseMinutes(p.batch, false, true), restore: restoreMinutes(rollback), deploysPerWeek: Math.round(((5 * CHANGES_PER_DAY) / p.batch) * 10) / 10 };
 }
 
+const ALL = ['merge', 'build', 'checks', 'staging', 'gate', 'batch', 'prod', 'prev', 'g-ci', 'e-build', 'e-checks', 'e-staging', 'e-gate', 'e-prod', 'e-deploy', 'e-rollback'];
+const H = (h: number) => nWord(h, ['час', 'часа', 'часов'], ['hour', 'hours']);
+const MIN = (m: number) => nWord(m, ['минуту', 'минуты', 'минут'], ['minute', 'minutes']);
+/** "10 изменений" in the genitive after "из": "партия из 1 изменения". */
+const CH = (n: number) => nWord(n, ['изменения', 'изменений', 'изменений'], ['change', 'changes']);
+const PIPE: [string, string] = ['Этот шаг выполняет конвейер, то есть сервер, который по описанию команды сам запускает сборку, проверки и выкладку.', 'The pipeline does this step: a server that runs the build, the checks and the deployment by itself, following the team’s description.'];
+
 export const pipelineModel = defineModel<P>({
   id: 'method.x.pipeline',
   block: 'methodology',
-  title: bi('Конвейер: от слияния до прода', 'The pipeline: from merge to production'),
-  summary: bi(
-    'Путь изменения после того, как разработчик слил его в общую ветку. Переключайте сборку, последний шаг, долю проверок машиной и размер партии; уберите откат.',
-    'The path of a change after a developer merged it into the shared branch. Switch the build, the last step, the share of machine checks and the batch size; remove the rollback.',
+  title: b('Конвейер: от слияния до рабочего сайта', 'The pipeline: from merge to production'),
+  summary: b(
+    'Путь одного изменения после того, как разработчик слил его в общую ветку: сборка, автоматические проверки, стенд, выпуск, партия и выкладка на рабочий сайт. Пунктирная рамка показывает, где заканчивается непрерывная интеграция. Под схемой считается, сколько часов изменение идёт до рабочего сайта, насколько рискованна одна выкладка, сколько выкладок бывает в неделю и сколько минут займёт восстановление, если выкладка сломает сайт.',
+    'The path of one change after a developer merged it into the shared branch: the build, the automated checks, staging, the release, the batch and the deployment to the working site. The dashed frame shows where continuous integration ends. Under the diagram you see how many hours the change takes to reach the working site, how risky one deployment is, how many deployments happen a week and how many minutes recovery takes if a deployment breaks the site.',
   ),
+  intro: b(
+    'Схема соберётся по шагам: сейчас на ней только слитое изменение и рабочий сайт. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Каждый шаг конвейера появляется, когда до него доходит изменение, и говорит в облачке, что он делает. Карточка на линии показывает, сколько времени изменение ждёт на этом переходе.\n\nПосле первого прохода переключите в «Параметрах» сборку на автоматическую, а выпуск на «конвейер сам», и посмотрите, как это меняет путь и название практики. Потом уменьшите число изменений в одной выкладке и следите за риском.',
+    'The diagram builds itself step by step: now it shows only the merged change and the working site. Press “Start: step forward”, then go on with “Step forward” under the diagram. Each step of the pipeline appears when the change reaches it and says in a callout what it does. The card on the line shows how long the change waits on that transition.\n\nAfter the first pass switch the build to automatic and the release to “the pipeline by itself” in “Parameters”, and see how this changes the path and the name of the practice. Then reduce the number of changes in one deployment and watch the risk.',
+  ),
+  legend: [
+    { mark: 'active', text: b('шаг, на котором изменение сейчас', 'the step the change is at now') },
+    { mark: 'say', text: b('что этот шаг делает', 'what that step does') },
+    { mark: 'token', text: b('сколько изменение ждёт на переходе', 'how long the change waits on a transition') },
+    { mark: 'dashed', text: b('рамка непрерывной интеграции', 'the frame of continuous integration') },
+    { mark: 'warn', text: b('долгое ожидание или высокий риск', 'a long wait or a high risk') },
+    { mark: 'ok', text: b('шаг пройден', 'step passed') },
+    { mark: 'err', text: b('выкладка сломала сайт', 'the deployment broke the site') },
+    { mark: 'icon:terminal', text: b('разработчик', 'a developer') },
+    { mark: 'icon:process', text: b('автоматические проверки', 'automated checks') },
+    { mark: 'icon:server', text: b('стенд и рабочий сайт', 'staging and the working site') },
+  ],
+  stopLabel: b('Сайт сломан', 'The site is broken'),
   concepts: ['method.ci', 'method.cdelivery', 'method.cdeployment', 'method.pipeline', 'method.rollback'],
   diagram: {
     width: 960,
-    height: 340,
+    height: 440,
     nodes: [
-      { id: 'merge', label: bi('Слияние', 'Merge'), sub: 'main', family: 'ci-source', x: 24, y: 72, w: 128, h: 56, card: card(bi('Разработчик сливает изменение в общую ветку — хотя бы раз в день, маленькими порциями.', 'A developer merges the change into the shared branch, at least daily, in small pieces.'), bi('Разработчик.', 'A developer.'), { doc: FOWLER }) },
-      { id: 'build', label: bi('Сборка', 'Build'), sub: '', family: 'ci-build', x: 200, y: 72, w: 128, h: 56, card: card(bi('Из исходного кода получают то, что можно запустить. Вручную — когда у кого-то дойдут руки; автоматически — сразу после слияния.', 'The source code is turned into something that can run. By hand: when someone gets round to it; automatically: right after the merge.'), bi('Человек или сервер сборки.', 'A person or a build server.')) },
-      { id: 'checks', label: bi('Автотесты', 'Automated tests'), sub: '', family: 'ci-test', x: 376, y: 72, w: 136, h: 56, card: card(bi('Проверки, которые выполняет машина за минуты. Что не проверяет машина, проверяет человек — часами.', 'Checks a machine runs in minutes. What the machine does not check, a person checks, in hours.'), bi('Сервер сборки; тесты пишут разработчики и тестировщики.', 'The build server; developers and testers write the tests.')) },
-      { id: 'staging', label: bi('Стенд', 'Staging'), sub: '', family: 'ci-deploy', x: 560, y: 72, w: 128, h: 56, card: card(bi('Копия прода для проверки: изменение выкладывают туда тем же способом, что и на прод.', 'A copy of production for checking: the change is deployed there the same way as to production.'), bi('Конвейер.', 'The pipeline.')) },
-      { id: 'gate', label: bi('Выпуск', 'Release'), sub: '', family: 'cp', shape: 'hex', x: 736, y: 72, w: 112, h: 56, card: card(bi('Последний шаг. Кнопка — непрерывная доставка: любое проверенное изменение можно выпустить в любой момент. Стрелка «сама» — непрерывное развёртывание.', 'The last step. A button means continuous delivery: any checked change can be released at any moment. An automatic arrow means continuous deployment.'), bi('Человек с кнопкой или сам конвейер.', 'A person with a button, or the pipeline itself.'), { doc: CD }) },
-      { id: 'prod', label: bi('Прод', 'Production'), sub: '', family: 'node', shape: 'rack', x: 736, y: 232, w: 112, h: 64, card: card(bi('Рабочая версия сайта. Выкладка везёт сюда партию изменений.', 'The working site. A deployment brings a batch of changes here.'), bi('Эксплуатация и конвейер.', 'Operations and the pipeline.')) },
-      { id: 'batch', label: bi('Партия', 'Batch'), sub: '', family: 'gauge', shape: 'buffer', x: 520, y: 240, w: 152, h: 48, card: card(bi('Изменения, которые уходят на прод за одну выкладку. Чем больше партия, тем выше риск и тем дольше искать виноватое изменение.', 'The changes that go to production in one deployment. The bigger the batch, the higher the risk and the longer it takes to find the faulty change.'), bi('Правило команды: как часто выкладываем.', 'A team rule: how often we deploy.')) },
+      node('merge', b('Слияние в main', 'Merge into main'), 'ci-source', [24, 56, 168, 60], card(['Разработчик сливает своё изменение в общую ветку, которая обычно называется main. При непрерывной интеграции это делают хотя бы раз в день и маленькими порциями.', 'A developer merges their change into the shared branch, usually called main. With continuous integration this happens at least daily and in small pieces.'], ['Сливает разработчик.', 'A developer merges.'], FOWLER), { icon: 'terminal' }),
+      node('build', b('Сборка', 'Build'), 'ci-build', [272, 56, 168, 60], card(['Из исходного кода получают то, что можно запустить. Если сборку запускают вручную, изменение ждёт, пока у кого-нибудь найдётся на это время, а автоматическая сборка начинается сразу после слияния.', 'The source code is turned into something that can run. If the build is started by hand, the change waits until someone gets round to it; an automatic build starts right after the merge.'], ['Собирает человек или сервер сборки.', 'A person or a build server builds it.']), { icon: 'container' }),
+      node('checks', b('Автотесты', 'Automated tests'), 'ci-test', [520, 56, 168, 60], card(['Здесь машина за минуты выполняет автоматические проверки. То, чего машина не проверяет, проверяет человек, и на это уходят часы.', 'Checks a machine runs in minutes. What the machine does not check, a person checks, and that takes hours.'], ['Тесты запускает сервер сборки, а пишут их разработчики и тестировщики.', 'The build server runs the tests; developers and testers write them.']), { icon: 'process' }),
+      node('staging', b('Стенд', 'Staging'), 'ci-deploy', [768, 56, 168, 60], card(['Стенд — это копия рабочего сайта для проверки. Изменение выкладывают на стенд тем же способом, каким потом выложат на рабочий сайт, поэтому сама выкладка тоже проходит проверку.', 'A copy of the working site for checking. The change is deployed to staging the same way it will later go to the working site, so the deployment itself is checked too.'], PIPE), { icon: 'server' }),
+      node('gate', b('Выпуск', 'Release'), 'cp', [768, 344, 168, 60], card(['Последний шаг перед рабочим сайтом. Если здесь кнопка и любое проверенное изменение можно выпустить в любой момент одним нажатием, это непрерывная доставка. Если кнопки нет и конвейер выпускает изменение сам, это непрерывное развёртывание.', 'The last step before the working site. If there is a button here and any checked change can be released at any moment with one press, that is continuous delivery. If there is no button and the pipeline releases the change itself, that is continuous deployment.'], ['Выпускает человек кнопкой или сам конвейер.', 'A person with a button, or the pipeline itself.'], CD), { icon: 'lock' }),
+      node('batch', b('Партия', 'Batch'), 'gauge', [400, 344, 176, 60], card(['Партию составляют изменения, которые уходят на рабочий сайт за одну выкладку. Чем больше партия, тем выше риск, что выкладка что-нибудь сломает, и тем дольше потом искать, какое изменение виновато.', 'The changes that go to the working site in one deployment. The bigger the batch, the higher the risk that the deployment breaks something, and the longer it takes to find the faulty change.'], ['Размер партии задаёт правило команды о том, как часто выкладывать.', 'A team rule on how often to deploy sets the batch size.']), { icon: 'folder', shape: 'buffer' }),
+      node('prod', b('Рабочий сайт', 'Working site'), 'node', [24, 344, 176, 60], card(['Рабочим сайтом называют версию сайта, которой пользуются покупатели. Каждая выкладка приносит сюда партию изменений.', 'The version of the site the customers use. Each deployment brings a batch of changes here.'], ['Сайт обслуживают эксплуатация и конвейер.', 'Operations and the pipeline look after it.']), { icon: 'server' }),
+      node('prev', b('Прошлая версия', 'Previous version'), 'store', [24, 216, 176, 56], card(['Здесь хранится предыдущая версия сайта, которая работала до выкладки. Конвейер хранит её, чтобы вернуть одной командой, если новая выкладка сломает сайт.', 'The version of the site that worked before the deployment. The pipeline keeps it so it can be put back with one command if the new deployment breaks the site.'], ['Версию хранит конвейер.', 'The pipeline keeps it.']), { icon: 'folder' }),
     ],
     edges: [
-      { id: 'e-build', from: 'merge', to: 'build', label: bi('ждём сборку', 'waiting for a build'), card: card(bi('Без автосборки изменение ждёт, пока сборку запустят руками.', 'Without automatic builds the change waits until someone starts a build by hand.'), bi('Никто: это ожидание.', 'Nobody: it is waiting.')) },
-      { id: 'e-checks', from: 'build', to: 'checks', label: bi('собрано', 'built'), card: card(bi('Собранное сразу проверяется.', 'What was built is checked at once.'), bi('Конвейер.', 'The pipeline.')) },
-      { id: 'e-staging', from: 'checks', to: 'staging', label: bi('проверки зелёные', 'checks are green'), card: card(bi('Дальше идёт только то, что прошло проверки. Красный результат чинят первым делом.', 'Only what passed the checks goes on. A red result is fixed first.'), bi('Конвейер.', 'The pipeline.'), { doc: FOWLER }) },
-      { id: 'e-gate', from: 'staging', to: 'gate', label: bi('готово к выпуску', 'ready to release'), card: card(bi('Изменение проверено на стенде и может уйти на прод.', 'The change is checked on staging and may go to production.'), bi('Конвейер.', 'The pipeline.')) },
-      { id: 'e-prod', from: 'gate', to: 'batch', via: [[792, 200], [596, 200]], label: bi('в партию', 'into the batch'), labelAt: 0.35, card: card(bi('Изменения копятся, пока не наберётся партия на выкладку.', 'Changes pile up until a batch for a deployment is collected.'), bi('Правило команды.', 'A team rule.')) },
-      { id: 'e-deploy', from: 'batch', to: 'prod', label: bi('выкладка', 'deployment'), card: card(bi('Партия уезжает на прод одной выкладкой.', 'The batch goes to production in one deployment.'), bi('Эксплуатация или конвейер.', 'Operations or the pipeline.')) },
-      { id: 'e-rollback', from: 'prod', to: 'staging', via: [[792, 320], [712, 320], [712, 100]], dashed: true, label: bi('откат', 'rollback'), labelAt: 0.3, card: card(bi('Если выкладка сломала сайт, прод возвращают к прошлой версии за минуты, а чинят потом.', 'When a deployment breaks the site, production is returned to the previous version in minutes, and the fix comes later.'), bi('Дежурный, одной командой или кнопкой.', 'The on-call engineer, with one command or button.')) },
+      edge('e-build', 'merge', 'build', b('ждёт сборки', 'waits for a build'), card(['По этой линии изменение ждёт между слиянием и сборкой. Без автоматической сборки оно лежит здесь, пока сборку не запустят вручную.', 'The time between the merge and the build. Without an automatic build the change waits here until someone starts the build by hand.'], ['Это ожидание никто не планирует: оно длится, пока сборку никто не запустил.', 'Nobody plans this wait: it lasts while nobody has started the build.'])),
+      edge('e-checks', 'build', 'checks', b('собрано', 'built'), card(['Собранное изменение сразу отправляется на проверку.', 'The built change goes to the checks at once.'], PIPE)),
+      edge('e-staging', 'checks', 'staging', b('проверки пройдены', 'checks passed'), card(['Дальше идёт только то, что прошло проверки. Если проверка не прошла, команда первым делом чинит её, а не сливает новое.', 'Only what passed the checks goes on. If a check failed, the team fixes it first instead of merging new work.'], PIPE, FOWLER)),
+      edge('e-gate', 'staging', 'gate', b('готово к выпуску', 'ready to release'), card(['Изменение проверено на стенде и может уйти на рабочий сайт.', 'The change is checked on staging and may go to the working site.'], PIPE)),
+      edge('e-prod', 'gate', 'batch', b('в партию', 'into the batch'), card(['Выпущенные изменения копятся, пока не наберётся партия на одну выкладку.', 'Released changes pile up until a batch for one deployment is collected.'], ['Так велит правило команды о выкладках.', 'The team’s deployment rule says so.'])),
+      edge('e-deploy', 'batch', 'prod', b('выкладка', 'deployment'), card(['Партия уходит на рабочий сайт одной выкладкой.', 'The batch goes to the working site in one deployment.'], ['Выкладывает эксплуатация или конвейер.', 'Operations or the pipeline deploys it.'])),
+      edge('e-rollback', 'prev', 'prod', b('откат', 'rollback'), card(['Если выкладка сломала сайт, дежурный за минуты возвращает на рабочий сайт прошлую версию, а причину ищут и чинят потом, спокойно.', 'If a deployment broke the site, the on-call engineer puts the previous version back on the working site in minutes, and the cause is found and fixed later, calmly.'], ['Откатывает дежурный, одной командой или кнопкой.', 'The on-call engineer rolls back with one command or button.'])),
     ],
     groups: [
-      { id: 'g-ci', label: bi('непрерывная интеграция', 'continuous integration'), around: ['merge', 'build', 'checks'], family: 'ci-build', dash: 'dash', pad: 12, card: card(bi('Заканчивается после автотестов: изменение слито, собрано и проверено машиной. До прода CI не доходит.', 'It ends after the automated tests: the change is merged, built and checked by a machine. CI does not reach production.'), bi('Вся команда: каждый сливает часто.', 'The whole team: everyone merges often.'), { doc: FOWLER }) },
+      { id: 'g-ci', label: b('непрерывная интеграция', 'continuous integration'), around: ['merge', 'build', 'checks'], family: 'ci-build', dash: 'dash', pad: 12, card: card(['Непрерывная интеграция заканчивается после автотестов: изменение слито, собрано и проверено машиной. До рабочего сайта она не доходит.', 'Continuous integration ends after the automated tests: the change is merged, built and checked by a machine. It does not reach the working site.'], ['Её делает вся команда: каждый сливает изменения часто.', 'The whole team does it: everyone merges often.'], FOWLER) },
     ],
   },
   params: [
     {
       id: 'build',
-      label: bi('Сборка', 'Build'),
+      group: b('Непрерывная интеграция', 'Continuous integration'),
+      label: b('Когда запускается сборка', 'When the build starts'),
       kind: 'choice',
       options: [
-        { id: 'manual', label: bi('вручную', 'by hand') },
-        { id: 'auto', label: bi('после каждого слияния', 'after every merge') },
+        { id: 'manual', label: b('вручную, когда у кого-нибудь найдётся время', 'by hand, when someone finds the time') },
+        { id: 'auto', label: b('сама после каждого слияния', 'by itself after every merge') },
       ],
       default: 'manual',
       near: 'build',
     },
+    { id: 'automation', group: b('Непрерывная интеграция', 'Continuous integration'), label: b('Какую долю проверок выполняет машина, %', 'Share of checks a machine runs, %'), kind: 'range', min: 0, max: 100, step: 20, default: 0, near: 'checks' },
     {
       id: 'last',
-      label: bi('Последний шаг', 'The last step'),
+      group: b('Выпуск на рабочий сайт', 'Release to the working site'),
+      label: b('Кто выпускает проверенное изменение', 'Who releases a checked change'),
       kind: 'choice',
       options: [
-        { id: 'button', label: bi('кнопка', 'a button') },
-        { id: 'auto', label: bi('сам', 'by itself') },
+        { id: 'button', label: b('человек, одной кнопкой', 'a person, with one button') },
+        { id: 'auto', label: b('конвейер сам', 'the pipeline by itself') },
       ],
       default: 'button',
       near: 'gate',
       predict: {
-        prompt: bi('Кнопку убрали: всё, что прошло проверки, уходит на прод само. Как это называется?', 'The button is gone: everything that passed the checks goes to production by itself. What is it called?'),
+        prompt: b('Вы меняете, кто выпускает проверенное изменение. Как называется практика, при которой каждое изменение, прошедшее проверки, уходит на рабочий сайт само, без нажатия кнопки?', 'You change who releases a checked change. What is the practice called in which every change that passed the checks goes to the working site by itself, without a button press?'),
         options: [
-          { id: 'deploy', text: bi('Непрерывное развёртывание', 'Continuous deployment') },
-          { id: 'delivery', text: bi('Непрерывная доставка', 'Continuous delivery') },
-          { id: 'ci', text: bi('Непрерывная интеграция', 'Continuous integration') },
+          { id: 'deploy', text: b('Непрерывное развёртывание', 'Continuous deployment') },
+          { id: 'delivery', text: b('Непрерывная доставка', 'Continuous delivery') },
+          { id: 'ci', text: b('Непрерывная интеграция', 'Continuous integration') },
         ],
         resolve: () => 'deploy',
       },
     },
-    { id: 'automation', label: bi('Доля проверок машиной, %', 'Share of checks done by machines, %'), kind: 'range', min: 0, max: 100, step: 20, unit: '%', default: 0, near: 'checks' },
     {
       id: 'batch',
-      label: bi('Изменений в одной выкладке', 'Changes per deployment'),
+      group: b('Выпуск на рабочий сайт', 'Release to the working site'),
+      label: b('Сколько изменений уходит на рабочий сайт за одну выкладку', 'Changes per deployment to the working site'),
       kind: 'range',
       min: 1,
       max: 20,
@@ -114,117 +148,217 @@ export const pipelineModel = defineModel<P>({
       default: 10,
       near: 'batch',
       predict: {
-        prompt: bi('Выкладываем по одному изменению вместо десяти. Что станет с риском одной выкладки?', 'We deploy one change at a time instead of ten. What happens to the risk of one deployment?'),
+        prompt: b('Вы меняете, сколько изменений уходит за одну выкладку, а доля проверок машиной остаётся прежней. Как это скажется на риске, что одна выкладка сломает сайт?', 'You change how many changes go out in one deployment, while the share of machine checks stays the same. How does this affect the risk that one deployment breaks the site?'),
         options: [
-          { id: 'down', text: bi('Упадёт в несколько раз', 'It falls several times over') },
-          { id: 'up', text: bi('Вырастет: выкладок больше', 'It grows: there are more deployments') },
-          { id: 'same', text: bi('Не изменится', 'It stays the same') },
+          { id: 'down', text: b('Чем меньше изменений в выкладке, тем ниже риск', 'The fewer changes in a deployment, the lower the risk') },
+          { id: 'same', text: b('Риск не зависит от того, сколько изменений в выкладке', 'The risk does not depend on how many changes are in a deployment') },
+          { id: 'up', text: b('Чем меньше изменений в выкладке, тем выше риск, ведь выкладок становится больше', 'The fewer changes in a deployment, the higher the risk, since there are more deployments') },
         ],
-        resolve: (prev, next) => ((next[next.length - 1].metrics?.risk ?? 0) < (prev[prev.length - 1].metrics?.risk ?? 0) ? 'down' : 'same'),
+        resolve: (prev, next) => {
+          const r0 = lastMetrics(prev).risk ?? 0;
+          const r1 = lastMetrics(next).risk ?? 0;
+          const n0 = prev.find((s) => s.id === 'deploy')?.values?.batch ?? '';
+          const n1 = next.find((s) => s.id === 'deploy')?.values?.batch ?? '';
+          if (r0 === r1) return 'same';
+          const fewer = parseInt(n1, 10) < parseInt(n0, 10);
+          return fewer === r1 < r0 ? 'down' : 'up';
+        },
       },
     },
   ],
   breaks: [
     {
       id: 'no-rollback',
-      label: bi('Убрать откат', 'Remove the rollback'),
-      remove: ['e-rollback'],
+      label: b('Отката нет: прошлую версию вернуть нельзя, сайт можно только чинить новой выкладкой', 'No rollback: the previous version cannot be put back, the site can only be fixed with a new deployment'),
+      remove: ['prev', 'e-rollback'],
       predict: {
-        prompt: bi('Отката нет. Выкладка сломала оплату. Что будет?', 'There is no rollback. A deployment broke the checkout. What happens?'),
+        prompt: b('Откатить выкладку нельзя, а очередная выкладка сломала оплату на рабочем сайте. Что будет дальше?', 'A deployment cannot be rolled back, and the latest one broke the checkout on the working site. What happens next?'),
         options: [
-          { id: 'hotfix', text: bi('Чинят на ходу хотфиксом: дольше, и это ещё одна, внеплановая выкладка', 'They fix it live with a hotfix: longer, and one more, unplanned deployment') },
-          { id: 'same', text: bi('Ничего: подождут своей очереди', 'Nothing: they just wait') },
+          { id: 'hotfix', text: b('Команда напишет срочное исправление и выложит его ещё раз: это дольше, и это вторая, внеплановая выкладка', 'The team writes an urgent fix and deploys it again: it takes longer, and it is a second, unplanned deployment') },
+          { id: 'same', text: b('Ничего особенного: исправление дождётся следующей плановой выкладки', 'Nothing special: the fix waits for the next planned deployment') },
         ],
-        resolve: () => 'hotfix',
+        resolve: (_p, next) => (next.some((s) => s.id === 'hotfix') ? 'hotfix' : 'same'),
       },
     },
   ],
   metrics: [
-    { id: 'lead', label: bi('от слияния до прода', 'merge to production'), unit: 'h' },
-    { id: 'risk', label: bi('риск выкладки', 'deployment risk'), unit: '%' },
-    { id: 'freq', label: bi('выкладок в неделю', 'deployments a week') },
-    { id: 'restore', label: bi('восстановление', 'recovery'), unit: 'min' },
+    { id: 'lead', label: b('от слияния до рабочего сайта, часов', 'merge to working site, hours') },
+    { id: 'risk', label: b('риск одной выкладки', 'risk of one deployment'), unit: '%' },
+    { id: 'freq', label: b('выкладок в неделю', 'deployments a week') },
+    { id: 'restore', label: b('восстановление после сбоя, минут', 'recovery after a failure, minutes') },
   ],
   run(p, broken): Step[] {
     const noRb = broken.has('no-rollback');
     const n = pipeNumbers(p, !noRb);
     const metrics = { lead: n.leadHours, risk: n.risk, freq: n.deploysPerWeek, restore: n.diagnose + n.restore };
-    const steps: Step[] = [
-      { id: 'merge', label: bi('слияние', 'merge'), caption: bi('Разработчик слил небольшое изменение в общую ветку. Дальше его путь до покупателей.', 'A developer merged a small change into the shared branch. Now its path to the customers.'), focus: ['merge'], states: { merge: 'on', 'e-rollback': noRb ? 'off' : 'on' }, values: { gate: p.last === 'auto' ? 'auto' : '[ Release ]', batch: `0 / ${p.batch}` }, fill: { batch: 0 } },
+    const humanHours = Math.round((1 - p.automation / 100) * 6 * 10) / 10;
+    const fillHours = Math.round(((p.batch - 1) / 2) * 4 * 10) / 10;
+    const steps: Step[] = [];
+    steps.push({
+      id: 'merge',
+      label: b('слияние', 'merge'),
+      caption: b('Разработчик слил небольшое изменение в общую ветку main. Слева внизу рабочий сайт, до которого это изменение должно дойти.', 'A developer merged a small change into the shared branch main. Bottom left is the working site the change has to reach.'),
+      focus: ['merge'],
+      say: { merge: b('Разработчик сливает небольшое изменение в общую ветку main.', 'A developer merges a small change into the shared branch main.') },
+      states: { ...hiddenExcept(ALL, 'merge', 'prod') },
+      values: { batch: `0 / ${p.batch}` },
+      fill: { batch: 0 },
+    });
+    steps.push(
       p.build === 'auto'
-        ? { id: 'build', label: bi('сборка', 'build'), caption: bi('Сборка запускается сама сразу после слияния: десять минут — и изменение собрано.', 'The build starts by itself right after the merge: ten minutes and the change is built.'), focus: ['e-build', 'build'], tokens: [{ edge: 'e-build', label: '0:10' }], values: { build: 'auto' }, states: { 'e-build': 'ok' } }
-        : { id: 'build', label: bi('ждём сборку', 'wait for build'), caption: bi('Сборку запускают руками, когда у кого-то дойдут руки: изменение ждёт день, а ошибки в нём ещё никто не видел.', 'The build is started by hand when someone gets round to it: the change waits a day, and nobody has seen its mistakes yet.'), focus: ['e-build', 'build'], tokens: [{ edge: 'e-build', label: '8:00' }], values: { build: 'manual' }, states: { 'e-build': 'warn' } },
-      {
-        id: 'checks',
-        label: bi('проверки', 'checks'),
-        caption: fmt(bi('Машина проверяет {a}% сценариев за минуты, остальное — человек, ещё {h} ч. Здесь заканчивается непрерывная интеграция: изменение слито, собрано и проверено.', 'The machine checks {a}% of the scenarios in minutes, a person does the rest in {h} more hours. Continuous integration ends here: the change is merged, built and checked.'), { a: p.automation, h: Math.round((1 - p.automation / 100) * 6 * 10) / 10 }),
-        focus: ['checks', 'g-ci'],
-        tokens: [{ edge: 'e-checks' }],
-        values: { checks: `${p.automation}% auto` },
-        states: { checks: 'ok' },
+        ? {
+            id: 'build',
+            label: b('сборка', 'build'),
+            caption: b('Сборка запускается сама сразу после слияния, и через десять минут изменение собрано. Если в нём есть ошибка, разработчик узнает о ней, пока ещё помнит, что делал.', 'The build starts by itself right after the merge, and ten minutes later the change is built. If it has a mistake, the developer learns about it while they still remember what they did.'),
+            focus: ['e-build', 'build'],
+            say: { build: b('Сборка запускается сама сразу после слияния и занимает десять минут.', 'The build starts by itself right after the merge and takes ten minutes.') },
+            tokens: [{ edge: 'e-build', label: b('10 мин', '10 min') }],
+            reveal: ['e-build', 'build'],
+            states: { 'e-build': 'ok' },
+          }
+        : {
+            id: 'build',
+            label: b('ждёт сборки', 'wait for build'),
+            caption: b('Сборку запускают вручную, когда у кого-нибудь найдётся время, и изменение ждёт её целый рабочий день. Всё это время ошибки в нём никто не видит.', 'The build is started by hand when someone gets round to it, and the change waits a whole working day for it. All that time nobody sees its mistakes.'),
+            focus: ['e-build', 'build'],
+            say: { build: b('Сборку запустят вручную только завтра, поэтому изменение ждёт восемь часов.', 'Someone will start the build by hand only tomorrow; the change waits eight hours.') },
+            tokens: [{ edge: 'e-build', label: b('8 ч', '8 h') }],
+            reveal: ['e-build', 'build'],
+            states: { 'e-build': 'warn' },
+          },
+    );
+    steps.push({
+      id: 'checks',
+      label: b('проверки', 'checks'),
+      caption:
+        p.automation === 100
+          ? b('Машина проверяет все сценарии за несколько минут, и ждать человека не нужно.', 'The machine checks all the scenarios in a few minutes, and nobody has to wait for a person.')
+          : p.automation === 0
+            ? fmtn(b('Машина не проверяет ничего: все сценарии проверяет человек, и на это уходит {h}.', 'The machine checks nothing: a person checks every scenario, which takes {h}.'), { h: H(humanHours) })
+            : fmtn(b('Машина за минуты проверяет {a} % сценариев, а остальные проверяет человек, и на это уходит ещё {h}.', 'The machine checks {a}% of the scenarios in minutes, and a person checks the rest, which takes {h} more.'), { a: p.automation, h: H(humanHours) }),
+      focus: ['e-checks', 'checks'],
+      say: {
+        checks: p.automation === 100 ? b('Машина проверяет все сценарии за несколько минут.', 'The machine checks every scenario in a few minutes.') : p.automation === 0 ? fmtn(b('Все сценарии проверяет человек, и это займёт {h}.', 'A person checks every scenario, which takes {h}.'), { h: H(humanHours) }) : fmtn(b('Машина проверяет {a} % сценариев, а остальные человек проверит за {h}.', 'The machine checks {a}% of the scenarios; a person checks the rest in {h}.'), { a: p.automation, h: H(humanHours) }),
       },
-      { id: 'staging', label: bi('стенд', 'staging'), caption: bi('Проверки зелёные — изменение выкладывают на стенд тем же способом, что и на прод.', 'The checks are green: the change goes to staging the same way it will go to production.'), focus: ['staging', 'e-staging'], tokens: [{ edge: 'e-staging' }], states: { staging: 'ok' } },
+      tokens: [{ edge: 'e-checks', label: b('сборка', 'build') }],
+      reveal: ['e-checks', 'checks'],
+      states: { build: 'ok', checks: humanHours >= 4 ? 'warn' : 'on' },
+    });
+    steps.push({
+      id: 'ci',
+      label: b('конец CI', 'end of CI'),
+      caption: b('Здесь заканчивается непрерывная интеграция. Изменение слито в общую ветку, собрано и проверено машиной, но до рабочего сайта ещё не дошло.', 'Continuous integration ends here. The change is merged into the shared branch, built and checked by a machine, but it has not reached the working site yet.'),
+      focus: ['g-ci', 'checks'],
+      say: { checks: b('Проверки пройдены, и на этом непрерывная интеграция заканчивается.', 'The checks passed: continuous integration ends here.') },
+      reveal: ['g-ci'],
+      states: { checks: 'ok' },
+    });
+    steps.push({
+      id: 'staging',
+      label: b('стенд', 'staging'),
+      caption: b('Конвейер выкладывает изменение на стенд тем же способом, каким потом выложит на рабочий сайт, и на стенде прогоняются проверки ещё раз.', 'The pipeline deploys the change to staging the same way it will later deploy it to the working site, and the checks run again on staging.'),
+      focus: ['e-staging', 'staging'],
+      say: { staging: b('Конвейер выкладывает изменение на стенд, копию рабочего сайта, и проверяет его там.', 'The pipeline deploys the change to staging, a copy of the working site, and checks it there.') },
+      tokens: [{ edge: 'e-staging', label: b('проверено', 'checked') }],
+      reveal: ['e-staging', 'staging'],
+    });
+    steps.push(
       p.last === 'auto'
-        ? { id: 'gate', label: bi('сам', 'auto'), caption: bi('Кнопки нет: всё, что прошло проверки, уходит дальше само. Это непрерывное развёртывание.', 'There is no button: everything that passed the checks moves on by itself. This is continuous deployment.'), focus: ['gate', 'e-gate'], tokens: [{ edge: 'e-gate' }], states: { gate: 'ok' } }
-        : { id: 'gate', label: bi('кнопка', 'button'), caption: bi('Изменение готово к выпуску в любой момент; выпускает человек одной кнопкой. Это непрерывная доставка: готовность есть всегда, решение — за человеком.', 'The change is ready to be released at any moment; a person releases it with one button. This is continuous delivery: always ready, a human decides.'), focus: ['gate', 'e-gate'], tokens: [{ edge: 'e-gate' }], states: { gate: 'wait' } },
-      {
-        id: 'batch',
-        label: bi('партия', 'batch'),
-        caption: p.batch === 1 ? bi('Партия из одного изменения: выкладка уходит сразу.', 'A batch of one change: the deployment goes at once.') : fmt(bi('Изменение ждёт, пока наберётся партия из {b}: в среднем ещё {h} ч.', 'The change waits until a batch of {b} is collected: {h} more hours on average.'), { b: p.batch, h: Math.round(((p.batch - 1) / 2) * 4 * 10) / 10 }),
-        focus: ['batch', 'e-prod'],
-        tokens: [{ edge: 'e-prod' }],
-        values: { batch: `${p.batch} / ${p.batch}` },
-        fill: { batch: 1 },
-      },
-      {
-        id: 'deploy',
-        label: bi('выкладка', 'deploy'),
-        caption: fmt(bi('Партия из {b} изм. уходит на прод. Риск, что выкладка сломает сайт, — {r}%. Путь от слияния до прода — {l} рабочих ч.', 'A batch of {b} changes goes to production. The risk that the deployment breaks the site is {r}%. From merge to production: {l} working hours.'), { b: p.batch, r: n.risk, l: n.leadHours }),
-        focus: ['e-deploy', 'prod'],
-        tokens: [{ edge: 'e-deploy', label: `×${p.batch}` }],
-        states: { prod: n.risk > 30 ? 'warn' : 'ok' },
-        values: { prod: `risk ${n.risk}%`, batch: `0 / ${p.batch}` },
-        fill: { batch: 0 },
-        metrics,
-      },
-    ];
+        ? {
+            id: 'gate-auto',
+            label: b('сам', 'auto'),
+            caption: b('Кнопки здесь нет, и всё, что прошло проверки, конвейер выпускает сам, без решения человека. Такая практика называется непрерывным развёртыванием.', 'There is no button: the pipeline releases everything that passed the checks by itself, without a human decision. This practice is called continuous deployment.'),
+            focus: ['e-gate', 'gate'],
+            say: { gate: b('Конвейер сам выпускает изменение, которое прошло проверки.', 'The pipeline itself releases the change that passed the checks.') },
+            tokens: [{ edge: 'e-gate', label: b('без ожидания', 'no wait') }],
+            reveal: ['e-gate', 'gate'],
+            states: { staging: 'ok', gate: 'ok' },
+          }
+        : {
+            id: 'gate-button',
+            label: b('кнопка', 'button'),
+            caption: b('Изменение готово к выпуску в любой момент, а выпускает его человек одной кнопкой, обычно в течение нескольких часов. Это непрерывная доставка: готовность есть всегда, а когда выпускать, решает человек.', 'The change is ready to be released at any moment, and a person releases it with one button, usually within a few hours. This is continuous delivery: it is always ready, and a person decides when to release.'),
+            focus: ['e-gate', 'gate'],
+            say: { gate: b('Изменение ждёт, пока человек нажмёт кнопку «Выпустить».', 'The change waits for a person to press “Release”.') },
+            tokens: [{ edge: 'e-gate', label: b('4 ч', '4 h') }],
+            reveal: ['e-gate', 'gate'],
+            states: { staging: 'ok', gate: 'wait' },
+          },
+    );
+    steps.push({
+      id: 'batch',
+      label: b('партия', 'batch'),
+      caption:
+        p.batch === 1
+          ? b('Партия состоит из одного изменения, поэтому выкладка уходит сразу и ничего не ждёт.', 'The batch is one change, so the deployment goes at once and waits for nothing.')
+          : fmtn(b('Выкладку делают, когда наберётся партия из {b}, поэтому изменение ждёт ещё в среднем {h}.', 'A deployment happens once a batch of {b} is collected, so the change waits {h} more on average.'), { b: CH(p.batch), h: H(fillHours) }),
+      focus: ['e-prod', 'batch'],
+      say: { batch: p.batch === 1 ? b('Партия из одного изменения уходит сразу.', 'A batch of one change goes at once.') : fmtn(b('Партия ждёт, пока в ней наберётся {b}.', 'The batch waits until it holds {b}.'), { b: nWord(p.batch, ['изменение', 'изменения', 'изменений'], ['change', 'changes']) }) },
+      tokens: [{ edge: 'e-prod', label: p.batch === 1 ? b('сразу', 'at once') : fmtn(b('{h} ч', '{h} h'), { h: fillHours }) }],
+      reveal: ['e-prod', 'batch'],
+      values: { batch: `${p.batch} / ${p.batch}` },
+      fill: { batch: 1 },
+      states: { batch: p.batch > 5 ? 'warn' : 'on' },
+    });
+    steps.push({
+      id: 'deploy',
+      label: b('выкладка', 'deploy'),
+      caption: fmtn(b('Партия из {b} уходит на рабочий сайт. Вероятность того, что эта выкладка сломает сайт, равна {r} %. От слияния до рабочего сайта изменение шло {l}.', 'A batch of {b} goes to the working site. The chance that this deployment breaks the site is {r}%. From the merge to the working site the change took {l}.'), { b: CH(p.batch), r: n.risk, l: H(n.leadHours) }),
+      focus: ['e-deploy', 'prod'],
+      say: { prod: fmtn(b('На рабочий сайт приходит партия из {b}, и с вероятностью {r} % она его сломает.', 'A batch of {b} arrives at the working site; the risk that it breaks the site is {r}%.'), { b: CH(p.batch), r: n.risk }) },
+      tokens: [{ edge: 'e-deploy', label: `×${p.batch}` }],
+      reveal: ['e-deploy'],
+      states: { prod: n.risk > 30 ? 'warn' : 'ok', batch: 'ok' },
+      values: { batch: `${p.batch} / ${p.batch}` },
+      fill: { batch: 0 },
+      metrics,
+    });
     if (noRb) {
       steps.push({
         id: 'hotfix',
-        label: bi('хотфикс', 'hotfix'),
-        caption: fmt(bi('Выкладка сломала оплату. Отката нет: ищут причину среди {b} изменений {d} мин, потом пишут исправление и выкладывают его ещё раз — {r} мин. Это вторая, внеплановая выкладка.', 'The deployment broke the checkout. There is no rollback: finding the cause among {b} changes takes {d} min, then a fix is written and deployed again, {r} min. That is a second, unplanned deployment.'), { b: p.batch, d: n.diagnose, r: n.restore }),
+        label: b('хотфикс', 'hotfix'),
+        caption: fmtn(b('Допустим, выкладка сломала оплату. Откатиться нельзя, поэтому команда {w}, а потом пишет срочное исправление и выкладывает его ещё раз, на что уходит ещё {r}. Получается вторая, внеплановая выкладка.', 'Suppose the deployment broke the checkout. There is no rollback, so the team spends {w}, then writes an urgent fix and deploys it again, {r} more. That makes a second, unplanned deployment.'), { w: p.batch === 1 ? fmtn(b('{d} ищет ошибку в единственном изменении', '{d} looking for the mistake in the only change'), { d: MIN(n.diagnose) }) : fmtn(b('{d} выясняет, какое из {b} виновато', '{d} working out which of the {b} is to blame'), { d: MIN(n.diagnose), b: CH(p.batch) }), r: MIN(n.restore) }),
         focus: ['prod'],
-        states: { prod: 'err', 'e-rollback': 'off' },
+        say: { prod: fmtn(b('Оплата сломана, и сайт починят новой выкладкой только через {t}.', 'The checkout is broken; a new deployment will fix the site only in {t}.'), { t: MIN(n.diagnose + n.restore) }) },
+        states: { prod: 'err' },
         metrics,
-        broken: { at: 'prod', message: `deploy #42 (hotfix, unplanned): fix for checkout\nrecovery: ${n.diagnose + n.restore} min`, caption: bi('без отката сайт чинят вперёд: дольше, с риском, и это ещё одна выкладка.', 'without a rollback the site is fixed forward: longer, risky, and one more deployment.') },
+        broken: { at: 'prod', message: `deploy #42 (hotfix, unplanned): fix for checkout\nrecovery: ${n.diagnose + n.restore} min`, caption: b('без отката сайт чинят новой выкладкой, а это дольше, рискованнее и добавляет ещё одну выкладку.', 'without a rollback the site is fixed with a new deployment: it takes longer, it is a new risk, and it is one more deployment.') },
       });
     } else {
       steps.push({
         id: 'rollback',
-        label: bi('если сбой', 'if it fails'),
-        caption: fmt(bi('Если выкладка сломает сайт: причину ищут среди {b} изменений {d} мин, а откатывают к прошлой версии за {r} мин и спокойно чинят потом.', 'If the deployment breaks the site: finding the cause among {b} changes takes {d} min, and rolling back to the previous version takes {r} min; the fix comes later, calmly.'), { b: p.batch, d: n.diagnose, r: n.restore }),
-        focus: ['e-rollback', 'staging'],
+        label: b('если сбой', 'if it fails'),
+        caption: fmtn(b('А если выкладка всё же сломает сайт, дежурный за {r} вернёт прошлую версию, и покупатели снова смогут платить. {w}', 'And if the deployment does break the site, the on-call engineer puts the previous version back in {r}, and the customers can pay again. {w}'), { w: p.batch === 1 ? fmtn(b('Ошибку в изменении найдут потом, спокойно, и на это уйдёт {d}.', 'The mistake in the change is found later, calmly; that takes {d}.'), { d: MIN(n.diagnose) }) : fmtn(b('Какое из {b} виновато, выяснят потом, спокойно, и на это уйдёт {d}.', 'Which of the {b} is to blame is worked out later, calmly; that takes {d}.'), { b: CH(p.batch), d: MIN(n.diagnose) }), r: MIN(n.restore) }),
+        focus: ['e-rollback', 'prev'],
+        say: { prev: fmtn(b('Прошлая версия хранится наготове, поэтому откат займёт {r}.', 'The previous version is kept ready: a rollback takes {r}.'), { r: MIN(n.restore) }) },
         tokens: [{ edge: 'e-rollback', label: 'v41' }],
-        states: { 'e-rollback': 'on' },
+        reveal: ['prev', 'e-rollback'],
         metrics,
       });
     }
     return steps;
   },
-  explainDelta(prev, next, change, a, b): Bi {
-    const m0 = prev[prev.length - 1].metrics ?? {};
-    const m1 = next[next.length - 1].metrics ?? {};
-    const v = { l0: m0.lead ?? 0, l1: m1.lead ?? 0, r0: m0.risk ?? 0, r1: m1.risk ?? 0, f1: m1.freq ?? 0, s0: m0.restore ?? 0, s1: m1.restore ?? 0 };
-    if (change.kind === 'break') return change.on ? fmt(bi('Без отката восстановление {s0} → {s1} мин: путь идёт через хотфикс, и появляется вторая, внеплановая выкладка.', 'Without rollback, recovery goes {s0} → {s1} min: the path goes through a hotfix, and a second, unplanned deployment appears.'), v) : bi('Откат вернулся: восстановление снова за минуты.', 'Rollback is back: recovery takes minutes again.');
+  explainDelta(prev, next, change, a, c): Bi {
+    const m0 = lastMetrics(prev);
+    const m1 = lastMetrics(next);
+    const v = { l0: m0.lead ?? 0, l1: H(m1.lead ?? 0), r0: m0.risk ?? 0, r1: m1.risk ?? 0, f1: m1.freq ?? 0, s0: m0.restore ?? 0, s1: MIN(m1.restore ?? 0) };
+    if (change.kind === 'break')
+      return change.on
+        ? fmtn(b('Без отката восстановление занимает {s1} вместо {s0}: сайт чинят срочным исправлением, и появляется вторая, внеплановая выкладка.', 'Without rollback recovery takes {s1} instead of {s0}: the site is fixed with an urgent fix, and a second, unplanned deployment appears.'), v)
+        : b('Откат вернулся, и сайт снова восстанавливают за минуты.', 'Rollback is back, and the site is again restored in minutes.');
     switch (change.id) {
       case 'build':
-        return b.build === 'auto' ? fmt(bi('Автосборка после слияния: ожидание «ждём сборку» исчезло, путь {l0} → {l1} ч. Ошибку видно через минуты, а не завтра.', 'Automatic build after the merge: the “waiting for a build” wait is gone, the path goes {l0} → {l1} h. A mistake shows up in minutes, not tomorrow.'), v) : fmt(bi('Сборка снова вручную: путь {l0} → {l1} ч.', 'Builds by hand again: the path goes {l0} → {l1} h.'), v);
+        return c.build === 'auto'
+          ? fmtn(b('Сборка теперь запускается сама после слияния, и ожидание сборки исчезло: путь до рабочего сайта занимает {l1} вместо {l0}. Ошибку видно через минуты, а не завтра.', 'The build now starts by itself after the merge, and the wait for a build is gone: the path to the working site takes {l1} instead of {l0}. A mistake shows up in minutes, not tomorrow.'), v)
+          : fmtn(b('Сборку снова запускают руками: путь до рабочего сайта занимает {l1} вместо {l0}.', 'The build is started by hand again: the path to the working site takes {l1} instead of {l0}.'), v);
       case 'last':
-        return b.last === 'auto' ? fmt(bi('Последний шаг сам: это уже непрерывное развёртывание. Путь {l0} → {l1} ч — ушло ожидание кнопки.', 'The last step goes by itself: this is continuous deployment now. The path goes {l0} → {l1} h: the wait for the button is gone.'), v) : bi('Снова кнопка: непрерывная доставка — выпустить можно в любой момент, решает человек.', 'A button again: continuous delivery — release is possible at any moment, a person decides.');
+        return c.last === 'auto'
+          ? fmtn(b('Конвейер теперь выпускает изменения сам, и это уже непрерывное развёртывание. Путь до рабочего сайта занимает {l1} вместо {l0}, потому что ожидание кнопки исчезло.', 'The pipeline now releases changes itself, and this is continuous deployment. The path to the working site takes {l1} instead of {l0}, because the wait for the button is gone.'), v)
+          : b('Выпуск снова идёт по кнопке, и это непрерывная доставка: выпустить изменение можно в любой момент, но решает человек.', 'A button again, and this is continuous delivery: a change can be released at any moment, but a person decides.');
       case 'automation':
-        return fmt(bi('Проверок машиной {x}% → {y}%: риск выкладки {r0}% → {r1}%, путь {l0} → {l1} ч.', 'Machine checks {x}% → {y}%: deployment risk {r0}% → {r1}%, the path {l0} → {l1} h.'), { x: a.automation as number, y: b.automation as number, ...v });
+        return fmtn(b('Машина теперь выполняет {y} % проверок вместо {x} %. Риск одной выкладки теперь {r1} % вместо {r0} %, а путь до рабочего сайта занимает {l1} вместо {l0}.', 'A machine now runs {y}% of the checks instead of {x}%. The risk of one deployment is {r1}% instead of {r0}%, the path to the working site {l1} instead of {l0}.'), { x: a.automation as number, y: c.automation as number, ...v });
       default:
-        return fmt(bi('Партия {x} → {y}: риск выкладки {r0}% → {r1}%, путь изменения {l0} → {l1} ч, выкладок в неделю {f1}. Меньше партия — и быстрее, и надёжнее.', 'Batch {x} → {y}: deployment risk {r0}% → {r1}%, the path of a change {l0} → {l1} h, {f1} deployments a week. A smaller batch is both faster and safer.'), { x: a.batch as number, y: b.batch as number, ...v });
+        return fmtn(b('Теперь в одну выкладку уходит {yy} вместо {x}. Риск выкладки теперь {r1} % вместо {r0} %, путь изменения до рабочего сайта занимает {l1} вместо {l0}, а выкладок в неделю становится {f1}. Чем меньше изменений уходит за один раз, тем быстрее они доходят до покупателей и тем реже что-нибудь ломают.', 'One deployment now holds {yy} instead of {x}. The deployment risk is {r1}% instead of {r0}%, the path of a change to the working site {l1} instead of {l0}, {f1} deployments a week. The fewer changes go out at once, the faster they reach the customers and the less often they break something.'), { x: a.batch as number, yy: nWord(c.batch as number, ['изменение', 'изменения', 'изменений'], ['change', 'changes']), ...v });
     }
   },
 });
