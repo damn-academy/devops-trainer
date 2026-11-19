@@ -11,7 +11,7 @@ import type { Mounted } from '../../core/types';
 import { byoMentor } from './mentor';
 import './ai.css';
 
-const TITLE = bi('Твоя нейросеть', 'Your AI');
+const TITLE = bi('Ваша нейросеть', 'Your AI');
 const ASK = bi('Спросить наставника', 'Ask the tutor');
 
 function lazyMount(el: HTMLElement, load: () => Promise<(el: HTMLElement) => Mounted>): Mounted {

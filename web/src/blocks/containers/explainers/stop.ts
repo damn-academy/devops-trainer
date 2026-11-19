@@ -31,7 +31,7 @@ export const stopModel = defineModel<P>({
   id: 'containers.stop',
   block: 'containers',
   title: bi('docker stop: сигналы и PID 1', 'docker stop: signals and PID 1'),
-  summary: bi('Почему одни контейнеры останавливаются мгновенно, а другие ровно через 10 секунд с кодом 137. Меняй то, чем является PID 1, — и смотри, какое из трёх условий сработало.', 'Why some containers stop at once and others after exactly 10 seconds with code 137. Change what PID 1 is and see which of the three conditions fired.'),
+  summary: bi('Почему одни контейнеры останавливаются мгновенно, а другие ровно через 10 секунд с кодом 137. Меняйте то, чем является PID 1, — и смотрите, какое из трёх условий сработало.', 'Why some containers stop at once and others after exactly 10 seconds with code 137. Change what PID 1 is and see which of the three conditions fired.'),
   concepts: ['docker.pid1'],
   diagram: {
     width: 960,

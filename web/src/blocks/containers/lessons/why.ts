@@ -92,7 +92,7 @@ export const whyLesson: Lesson = {
       kind: 'text',
       step: 'hook',
       body: bi(
-        'На сервере компании работают два приложения: старое, которому нужна библиотека libssl версии 1.1, и новое, которому нужна 3.0. Обе берут её из одного и того же каталога `/usr/lib`. Ставишь новую версию для нового приложения — падает старое. Откатываешь — не запускается новое. Разработчик разводит руками: «у меня работает». У него на ноутбуке своя система и свои версии.\n\nЭта глава отвечает на вопрос, который вы зададите себе сами: **почему одну и ту же программу на одном сервере удобнее запускать в контейнере, а не просто так?**',
+        'На сервере компании работают два приложения: старое, которому нужна библиотека libssl версии 1.1, и новое, которому нужна 3.0. Обе берут её из одного и того же каталога `/usr/lib`. Ставите новую версию для нового приложения — падает старое. Откатываете — не запускается новое. Разработчик разводит руками: «у меня работает». У него на ноутбуке своя система и свои версии.\n\nЭта глава отвечает на вопрос, который вы зададите себе сами: **почему одну и ту же программу на одном сервере удобнее запускать в контейнере, а не просто так?**',
         'A company server runs two applications: an old one that needs version 1.1 of the libssl library and a new one that needs 3.0. Both take it from the same `/usr/lib` directory. Install the new version for the new application and the old one falls over. Roll back and the new one does not start. The developer shrugs: “it works on my machine”. His laptop has its own system and its own versions.\n\nThis chapter answers a question you will ask yourself: **why is it more convenient to run a program in a container on a server, rather than just running it?**',
       ),
     },

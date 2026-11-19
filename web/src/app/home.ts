@@ -97,7 +97,7 @@ export function homePage(): Page {
         'ul.pillars',
         {},
         h('li', {}, h('strong', {}, t(bi('Учебник.', 'Textbook.'))), ' ', t(bi('Связная теория: термин появляется только после того, как его ввели.', 'Coherent theory: a term appears only after it has been introduced.'))),
-        h('li', {}, h('strong', {}, t(bi('Процессы.', 'Processes.'))), ' ', t(bi('Схемы, которые ты ведёшь сам: шаги, ручки, «сломай».', 'Diagrams you drive yourself: steps, knobs, “break it”.'))),
+        h('li', {}, h('strong', {}, t(bi('Процессы.', 'Processes.'))), ' ', t(bi('Схемы, которые вы ведёте сами: шаги, ручки, «сломайте».', 'Diagrams you drive yourself: steps, knobs, “break it”.'))),
         h('li', {}, h('strong', {}, t(bi('Документация.', 'Documentation.'))), ' ', t(bi('От «это отсюда» до экзамена, где открыта только она.', 'From “this is from” to an exam where it is all you have.'))),
       ),
       h(

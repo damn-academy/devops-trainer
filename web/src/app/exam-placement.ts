@@ -20,7 +20,7 @@ import './exam.css';
 
 const P = {
   lede: bi(
-    'Выбери уровень, который хочешь подтвердить. Задания идут по одному, первое — самое простое. Подсказок и наставника здесь нет. Перед каждым ответом отметь уверенность: верный ответ с пометкой «угадываю» не засчитывается — правильная догадка ещё не знание.',
+    'Выберите уровень, который хотите подтвердить. Задания идут по одному, первое — самое простое. Подсказок и наставника здесь нет. Перед каждым ответом отметьте уверенность: верный ответ с пометкой «угадываю» не засчитывается — правильная догадка ещё не знание.',
     'Choose the level you want to confirm. Tasks come one at a time, the first is the easiest. There are no hints and no mentor here. Before each answer mark how sure you are: a right answer marked “guessing” does not count — a lucky guess is not knowledge yet.',
   ),
   rules: bi(
@@ -43,7 +43,7 @@ const P = {
   gapsLine: bi('Темы, уроки по которым откроются и на твоём уровне:', 'Topics whose lessons open even at your level:'),
   details: bi('Подробности', 'Details'),
   guessedLine: bi('Верно, но с пометкой «угадываю» — не засчитано:', 'Right but marked “guessing” — not counted:'),
-  choose: bi('Уровень не понижается сам. Выбери, как идти дальше:', 'Your level is never lowered for you. Choose how to go on:'),
+  choose: bi('Уровень не понижается сам. Выберите, как идти дальше:', 'Your level is never lowered for you. Choose how to go on:'),
   lower: bi('Блок на уровне «{l}»', 'The block at “{l}”'),
   stay: bi('Остаться на уровне «{l}» с обязательными уроками по этим темам', 'Stay at “{l}” with the lessons on these topics required'),
   retake72: bi('Повторить проверку другим вариантом можно через 72 часа.', 'You can retake the check with another variant in 72 hours.'),

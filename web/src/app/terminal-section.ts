@@ -40,7 +40,7 @@ const TL = {
   sim: bi('в симуляторе', 'in the simulator'),
   passed: bi('Готово', 'Done'),
   nextHint: bi('Подсказка', 'Hint'),
-  noHints: bi('На этой ступени подсказок нет: ищи в документации.', 'No hints on this step: look it up in the documentation.'),
+  noHints: bi('На этой ступени подсказок нет: ищите в документации.', 'No hints on this step: look it up in the documentation.'),
   page: bi('Страница', 'Page'),
   step: bi('Документация', 'Documentation'),
   resetDone: bi('Машина возвращена к началу экрана', 'The machine is back at the start of this screen'),

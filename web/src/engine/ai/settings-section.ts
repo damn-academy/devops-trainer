@@ -13,7 +13,7 @@ import './ai.css';
 
 const T = {
   intro: bi(
-    'Наставник работает на твоей собственной нейросети. Запросы идут прямо из этого браузера к провайдеру, которого ты выберешь; сервер курса не видит ни ключа, ни вопросов. Весь курс обычно стоит меньше доллара.',
+    'Наставник работает на вашей собственной нейросети. Запросы идут прямо из этого браузера к провайдеру, которого вы выберете; сервер курса не видит ни ключа, ни вопросов. Весь курс обычно стоит меньше доллара.',
     'The tutor runs on your own AI. Requests go straight from this browser to the provider you choose; the course server sees neither the key nor the questions. The whole course usually costs less than a dollar.',
   ),
   provider: bi('Провайдер', 'Provider'),
@@ -21,12 +21,12 @@ const T = {
   install: bi('Скачать', 'Download'),
   url: bi('Адрес API', 'API address'),
   key: bi('Ключ API', 'API key'),
-  keySaved: bi('ключ сохранён — оставь поле пустым, чтобы не менять', 'a key is saved — leave empty to keep it'),
+  keySaved: bi('ключ сохранён — оставьте поле пустым, чтобы не менять', 'a key is saved — leave empty to keep it'),
   model: bi('Модель', 'Model'),
   load: bi('Загрузить список', 'Load the list'),
   loaded: bi('Моделей: {n}', 'Models: {n}'),
   remember: bi('Запомнить ключ на этом устройстве (в зашифрованном виде)', 'Remember the key on this device (encrypted)'),
-  rememberOff: bi('Выключи на общем компьютере: ключ будет жить в памяти до закрытия вкладки.', 'Switch off on a shared computer: the key lives in memory until the tab is closed.'),
+  rememberOff: bi('Выключите на общем компьютере: ключ будет жить в памяти до закрытия вкладки.', 'Switch off on a shared computer: the key lives in memory until the tab is closed.'),
   save: bi('Сохранить и проверить', 'Save and check'),
   checking: bi('Проверяю: короткий вопрос «ответь одним словом»…', 'Checking: a short “reply with one word” question…'),
   ok: bi('Работает: ответ «{text}» за {ms} мс{stream}.', 'Works: the answer “{text}” in {ms} ms{stream}.'),
@@ -35,21 +35,21 @@ const T = {
   forget: bi('Отключить и удалить ключ', 'Disconnect and delete the key'),
   forgotten: bi('Ключ и настройки удалены из этого браузера', 'The key and settings are deleted from this browser'),
   advice: bi(
-    'Совет: создай для курса отдельный ключ с лимитом расходов (у OpenRouter — лимит на ключ, у DeepSeek — небольшой предоплаченный баланс) и удали его, когда закончишь.',
+    'Совет: создайте для курса отдельный ключ с лимитом расходов (у OpenRouter — лимит на ключ, у DeepSeek — небольшой предоплаченный баланс) и удалите его, когда закончите.',
     'Advice: create a separate key for the course with a spending limit (OpenRouter has per-key limits, DeepSeek a small prepaid balance) and delete it when you finish.',
   ),
   storage: bi(
     'Как хранится ключ: в IndexedDB этого браузера, зашифрованный AES-GCM ключом, который браузер создал неизвлекаемым — его байты не отдаются даже самой странице. Ключ не попадает в файл прогресса и в синхронизацию. Главная защита — на странице нет ни одного чужого скрипта.',
     'How the key is stored: in this browser’s IndexedDB, encrypted with AES-GCM under a key the browser created as non-extractable — its bytes are not handed out even to the page itself. The key never goes into the progress file or sync. The main protection is that the page runs no third-party scripts at all.',
   ),
-  ollama: bi('Ollama по умолчанию отвечает только самой себе. Разреши ей адрес курса и перезапусти:', 'By default Ollama answers only itself. Allow the course address and restart it:'),
+  ollama: bi('Ollama по умолчанию отвечает только самой себе. Разрешите ей адрес курса и перезапустите:', 'By default Ollama answers only itself. Allow the course address and restart it:'),
   chrome: bi(
-    'Chrome спросит разрешение «Доступ к локальной сети» — нажми «Разрешить». Если отказал, разрешение включается в настройках сайта (значок слева от адреса). Safari запрещает HTTPS-страницам обращаться к http://localhost: для Ollama используй Chrome или Firefox.',
+    'Chrome спросит разрешение «Доступ к локальной сети» — нажмите «Разрешить». Если вы отказали, разрешение включается в настройках сайта (значок слева от адреса). Safari запрещает HTTPS-страницам обращаться к http://localhost: для Ollama используйте Chrome или Firefox.',
     'Chrome will ask for “Local network access” — press Allow. If you denied it, the permission is in the site settings (the icon left of the address). Safari forbids HTTPS pages to reach http://localhost: use Chrome or Firefox for Ollama.',
   ),
-  sees: bi('Что видит твоя нейросеть', 'What your AI sees'),
+  sees: bi('Что видит ваша нейросеть', 'What your AI sees'),
   seesIntro: bi(
-    'Вот из чего наставник собирает запрос прямо сейчас — слоями, от неизменного к изменчивому. Нажми на слой, чтобы увидеть его текст целиком, как он уйдёт провайдеру.',
+    'Вот из чего наставник собирает запрос прямо сейчас — слоями, от неизменного к изменчивому. Нажмите на слой, чтобы увидеть его текст целиком, как он уйдёт провайдеру.',
     'This is what the tutor builds a request from right now, layer by layer, from the fixed to the changing. Click a layer to see its full text exactly as it goes to the provider.',
   ),
   notInside: bi(

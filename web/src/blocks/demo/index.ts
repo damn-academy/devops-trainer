@@ -67,7 +67,7 @@ const quiz: QuizItem[] = [
     id: 'demo.q.shell',
     kind: 'multi',
     concepts: ['demo.pipe'],
-    prompt: bi('Что делает оболочка, когда видит в строке `|`? Отметь всё верное.', 'What does the shell do when it sees `|` in a line? Mark everything that is true.'),
+    prompt: bi('Что делает оболочка, когда видит в строке `|`? Отметьте всё верное.', 'What does the shell do when it sees `|` in a line? Mark everything that is true.'),
     options: [
       { id: 'pipe', text: bi('Просит ядро создать трубу', 'Asks the kernel to create a pipe'), correct: true },
       { id: 'both', text: bi('Запускает обе программы одновременно', 'Starts both programs at the same time'), correct: true },
@@ -79,7 +79,7 @@ const quiz: QuizItem[] = [
     id: 'demo.q.order',
     kind: 'order',
     concepts: ['demo.pipe'],
-    prompt: bi('Расставь шаги конвейера `ls | grep conf` по порядку.', 'Put the steps of the pipeline `ls | grep conf` in order.'),
+    prompt: bi('Расставьте шаги конвейера `ls | grep conf` по порядку.', 'Put the steps of the pipeline `ls | grep conf` in order.'),
     steps: [
       { id: 'parse', text: bi('Оболочка разбирает строку и находит |', 'The shell parses the line and finds |') },
       { id: 'pipe', text: bi('Оболочка создаёт трубу (pipe2)', 'The shell creates a pipe (pipe2)'), why: bi('Трубу нужно создать до запуска программ: обе должны получить её концы при fork.', 'The pipe must exist before the programs start: both inherit its ends at fork.') },
@@ -93,7 +93,7 @@ const quiz: QuizItem[] = [
     id: 'demo.q.fds',
     kind: 'match',
     concepts: ['demo.pipe'],
-    prompt: bi('Сопоставь номер дескриптора и его имя.', 'Match the descriptor number with its name.'),
+    prompt: bi('Сопоставьте номер дескриптора и его имя.', 'Match the descriptor number with its name.'),
     pairs: [
       { id: 'fd0', left: 'fd 0', right: 'stdin', why: bi('0 — вход: отсюда читает grep в конвейере.', '0 is input: grep reads from it in a pipeline.') },
       { id: 'fd1', left: 'fd 1', right: 'stdout', why: bi('1 — обычный вывод: его оболочка подключает к трубе.', '1 is normal output: the shell connects it to the pipe.') },
@@ -104,7 +104,7 @@ const quiz: QuizItem[] = [
     id: 'demo.q.fill',
     kind: 'fill-command',
     concepts: ['demo.pipe'],
-    prompt: bi('Допиши символ, чтобы увидеть только имена с «conf».', 'Fill in the character to see only the names with “conf”.'),
+    prompt: bi('Допишите символ, чтобы увидеть только имена с «conf».', 'Fill in the character to see only the names with “conf”.'),
     template: 'ls /srv/demo ___ grep conf',
     setup: lab,
     check: { stdout: /^alpha\.conf\ngamma\.conf\n?$/ },
@@ -135,7 +135,7 @@ const quiz: QuizItem[] = [
     id: 'demo.q.label',
     kind: 'label',
     concepts: ['demo.pipe'],
-    prompt: bi('Подпиши части конвейера.', 'Label the parts of the pipeline.'),
+    prompt: bi('Подпишите части конвейера.', 'Label the parts of the pipeline.'),
     diagram: {
       width: 600,
       height: 140,
@@ -174,11 +174,11 @@ const lesson: Lesson = {
       kind: 'text',
       step: 'hook',
       body: bi(
-        'Тимлид пишет в чат: «Глянь, какие конфиги лежат в `/srv/demo`, только без лишнего». В каталоге сотня файлов, а нужны три. Можно листать глазами — а можно попросить одну программу перечислить имена, а другую — оставить только нужные.',
+        'Тимлид пишет в чат: «Гляньте, какие конфиги лежат в `/srv/demo`, только без лишнего». В каталоге сотня файлов, а нужны три. Можно листать глазами — а можно попросить одну программу перечислить имена, а другую — оставить только нужные.',
         'Your team lead writes in the chat: “Check which configs are in `/srv/demo`, nothing else.” The directory holds a hundred files and you need three. You could scroll through them — or ask one program to list the names and another to keep only the ones you need.',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'demo.pipe', caption: bi('Пройди шаги стрелками или пробелом; нажми на любой элемент.', 'Step through with the arrow keys or space; click any element.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'demo.pipe', caption: bi('Пройдите шаги стрелками или пробелом; нажмите на любой элемент.', 'Step through with the arrow keys or space; click any element.') },
     {
       id: 'explain',
       kind: 'text',
@@ -199,7 +199,7 @@ const lesson: Lesson = {
       tasks: [
         {
           id: 'mkdir',
-          prompt: bi('Создай каталог `~/logs` и пустой файл `~/logs/app.log`.', 'Create the directory `~/logs` and an empty file `~/logs/app.log`.'),
+          prompt: bi('Создайте каталог `~/logs` и пустой файл `~/logs/app.log`.', 'Create the directory `~/logs` and an empty file `~/logs/app.log`.'),
           check: {
             when: "files['/home/learner/logs/app.log'].type=f",
             fail: [{ if: "files['/home/learner/logs'].type=d && !files['/home/learner/logs/app.log']", say: bi('Каталог уже есть, а файла в нём нет: его создаёт `touch`.', 'The directory exists, but the file is not there yet: `touch` creates it.') }],
@@ -214,7 +214,7 @@ const lesson: Lesson = {
         },
         {
           id: 'filter',
-          prompt: bi('Покажи из `/srv/demo` только имена, в которых есть `conf`.', 'Show only the names in `/srv/demo` that contain `conf`.'),
+          prompt: bi('Покажите из `/srv/demo` только имена, в которых есть `conf`.', 'Show only the names in `/srv/demo` that contain `conf`.'),
           check: {
             when: "term['main'][last].exit=0",
             stdout: /^alpha\.conf\ngamma\.conf\n?$/,
@@ -223,16 +223,16 @@ const lesson: Lesson = {
           chips: 'ls /srv/demo | grep conf',
           concepts: ['demo.pipe'],
           docRef: { page: 'man/grep.1', anchor: 'DESCRIPTION', line: 'prints each line' },
-          hints: { H1: bi('Одна программа перечисляет имена, другая оставляет нужные.', 'One program lists the names, another keeps the ones you need.'), H2: bi('Соедини `ls` и `grep` символом `|`.', 'Join `ls` and `grep` with `|`.') },
+          hints: { H1: bi('Одна программа перечисляет имена, другая оставляет нужные.', 'One program lists the names, another keeps the ones you need.'), H2: bi('Соедините `ls` и `grep` символом `|`.', 'Join `ls` and `grep` with `|`.') },
         },
         {
           id: 'status',
-          prompt: bi('Запусти конвейер, в котором `grep` ничего не найдёт, — так, чтобы его код завершения был 1.', 'Run a pipeline in which `grep` finds nothing, so that its exit code is 1.'),
+          prompt: bi('Запустите конвейер, в котором `grep` ничего не найдёт, — так, чтобы его код завершения был 1.', 'Run a pipeline in which `grep` finds nothing, so that its exit code is 1.'),
           check: { when: "term['main'][last].exit=1 && term['main'][last].out=''" },
           chips: 'ls /srv/demo | grep nothing',
           concepts: ['demo.exit-code'],
           docRef: { page: 'man/grep.1', anchor: 'EXIT STATUS', line: '1 if no lines' },
-          hints: { H1: bi('Ищи то, чего в именах точно нет.', 'Search for something that is certainly not in the names.') },
+          hints: { H1: bi('Ищите то, чего в именах точно нет.', 'Search for something that is certainly not in the names.') },
         },
       ],
     },
@@ -241,7 +241,7 @@ const lesson: Lesson = {
       kind: 'docs',
       step: 'explain',
       mode: 'anatomy',
-      prompt: bi('Страница руководства делится на разделы. В каком разделе `ls(1)` перечислены флаги? Нажми на него.', 'A manual page is divided into sections. In which section of `ls(1)` are the flags listed? Click it.'),
+      prompt: bi('Страница руководства делится на разделы. В каком разделе `ls(1)` перечислены флаги? Нажмите на него.', 'A manual page is divided into sections. In which section of `ls(1)` are the flags listed? Click it.'),
       ref: { page: 'man/ls.1' },
       answer: 'OPTIONS',
     },
@@ -250,17 +250,17 @@ const lesson: Lesson = {
       kind: 'docs',
       step: 'practice',
       mode: 'find',
-      prompt: bi('Найди в `ls(1)` флаг, который показывает номер inode, и выведи номер inode файла `/srv/demo/alpha.conf`.', 'Find the `ls(1)` flag that shows the inode number and print the inode number of `/srv/demo/alpha.conf`.'),
+      prompt: bi('Найдите в `ls(1)` флаг, который показывает номер inode, и выведите номер inode файла `/srv/demo/alpha.conf`.', 'Find the `ls(1)` flag that shows the inode number and print the inode number of `/srv/demo/alpha.conf`.'),
       ref: { page: 'man/ls.1', anchor: 'OPTIONS', line: '--inode' },
       terminal: {
         setup: lab,
         task: {
           id: 'inode',
-          prompt: bi('Выведи номер inode файла `/srv/demo/alpha.conf`.', 'Print the inode number of `/srv/demo/alpha.conf`.'),
+          prompt: bi('Выведите номер inode файла `/srv/demo/alpha.conf`.', 'Print the inode number of `/srv/demo/alpha.conf`.'),
           check: { stdout: /\b\d+ (\/srv\/demo\/)?alpha\.conf\b/ },
           docStep: 3,
           chips: 'ls -i /srv/demo/alpha.conf',
-          hints: { H1: bi('Номер inode — это свойство, которое показывает `ls` с нужным флагом.', 'The inode number is something `ls` shows with the right flag.'), H2: bi('Открой раздел OPTIONS и ищи слово inode.', 'Open the OPTIONS section and look for the word inode.') },
+          hints: { H1: bi('Номер inode — это свойство, которое показывает `ls` с нужным флагом.', 'The inode number is something `ls` shows with the right flag.'), H2: bi('Откройте раздел OPTIONS и ищите слово inode.', 'Open the OPTIONS section and look for the word inode.') },
         },
       },
     },
@@ -269,13 +269,13 @@ const lesson: Lesson = {
       kind: 'docs',
       step: 'practice',
       mode: 'find',
-      prompt: bi('Посчитай одной строкой, сколько имён в `/srv/demo` содержат `conf`: на экран должно попасть одно число.', 'With one line, count how many names in `/srv/demo` contain `conf`: a single number must reach the screen.'),
+      prompt: bi('Посчитайте одной строкой, сколько имён в `/srv/demo` содержат `conf`: на экран должно попасть одно число.', 'With one line, count how many names in `/srv/demo` contain `conf`: a single number must reach the screen.'),
       ref: { page: 'man/grep.1' },
       terminal: {
         setup: lab,
         task: {
           id: 'count',
-          prompt: bi('Выведи только число имён с `conf`.', 'Print only the number of names with `conf`.'),
+          prompt: bi('Выведите только число имён с `conf`.', 'Print only the number of names with `conf`.'),
           check: { stdout: /^2\n?$/ },
           docStep: 4,
           beyond: true,
@@ -283,7 +283,7 @@ const lesson: Lesson = {
         },
       },
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: quiz.map((q) => q.id) },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: quiz.map((q) => q.id) },
     {
       id: 'note',
       kind: 'callout',
@@ -302,7 +302,7 @@ const block: Block = {
   summary: bi('Скрытый блок ядра платформы: один урок со всеми видами экранов. Для разработчиков и проверки.', 'A hidden block of the platform core: one lesson with every kind of screen. For builders and QA.'),
   checklistStep: null,
   levels: {
-    beginner: bi('Терминал видишь впервые', 'First time in a terminal'),
+    beginner: bi('Терминал видите впервые', 'First time in a terminal'),
     intermediate: bi('Запускал команды по инструкции', 'Has run commands from instructions'),
     experienced: bi('Пишет конвейеры не задумываясь', 'Writes pipelines without thinking'),
   },
@@ -319,7 +319,7 @@ const block: Block = {
       concepts: ['demo.pipe'],
       kind: 'task',
       setup: lab,
-      task: { id: 'p2', prompt: bi('Покажи из `/srv/demo` только имена с `conf`.', 'Show only the names in `/srv/demo` with `conf`.'), check: { stdout: /^alpha\.conf\ngamma\.conf\n?$/ } },
+      task: { id: 'p2', prompt: bi('Покажите из `/srv/demo` только имена с `conf`.', 'Show only the names in `/srv/demo` with `conf`.'), check: { stdout: /^alpha\.conf\ngamma\.conf\n?$/ } },
     },
   ],
 };

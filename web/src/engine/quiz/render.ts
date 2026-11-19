@@ -20,16 +20,16 @@ export interface QuizCtx {
 }
 
 const Q = {
-  order: bi('Расставь по порядку: кнопками ↑ ↓ или клавишами', 'Put in order: with the ↑ ↓ buttons or the keys'),
-  match: bi('Сопоставь', 'Match'),
-  pick: bi('— выбери —', '— choose —'),
+  order: bi('Расставьте по порядку: кнопками ↑ ↓ или клавишами', 'Put in order: with the ↑ ↓ buttons or the keys'),
+  match: bi('Сопоставьте', 'Match'),
+  pick: bi('— выберите —', '— choose —'),
   output: bi('Вывод на самом деле', 'The actual output'),
-  yourAnswer: bi('Твой ответ', 'Your answer'),
-  bugline: bi('Нажми на строку с ошибкой', 'Click the line with the bug'),
+  yourAnswer: bi('Ваш ответ', 'Your answer'),
+  bugline: bi('Нажмите на строку с ошибкой', 'Click the line with the bug'),
   saved: bi('Ответ записан', 'Answer saved'),
   up: bi('Выше', 'Up'),
   down: bi('Ниже', 'Down'),
-  typeOutput: bi('Что напечатает команда? Впиши вывод', 'What will the command print? Type the output'),
+  typeOutput: bi('Что напечатает команда? Впишите вывод', 'What will the command print? Type the output'),
   slot: bi('Место', 'Slot'),
 };
 

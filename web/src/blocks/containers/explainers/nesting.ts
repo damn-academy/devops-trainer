@@ -19,7 +19,7 @@ export const nestingModel = defineModel<P>({
   id: 'containers.nesting',
   block: 'containers',
   title: bi('Сегодня: ВМ и контейнеры вкладывают друг в друга', 'Today: VMs and containers are nested in each other'),
-  summary: bi('Три башни, которые встречаются в работе каждый день. Выбери, что нужно запустить, — модель скажет, в какую башню и почему.', 'Three towers you meet at work every day. Choose what has to run and the model says which tower and why.'),
+  summary: bi('Три башни, которые встречаются в работе каждый день. Выберите, что нужно запустить, — модель скажет, в какую башню и почему.', 'Three towers you meet at work every day. Choose what has to run and the model says which tower and why.'),
   concepts: ['docker.container', 'docker.vm', 'docker.vm-vs-container'],
   diagram: {
     width: 960,

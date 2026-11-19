@@ -34,7 +34,7 @@ export const PROVIDERS: ProviderPreset[] = [
     defaultModel: 'deepseek-flash',
     keyUrl: 'https://platform.deepseek.com/api_keys',
     note: bi(
-      'Предоплаченный баланс — естественный лимит расходов: положи немного и не волнуйся о счёте. Если модели по умолчанию нет, нажми «Загрузить список» и выбери из того, что отдаёт API.',
+      'Предоплаченный баланс — естественный лимит расходов: положите немного и не волнуйтесь о счёте. Если модели по умолчанию нет, нажмите «Загрузить список» и выберите из того, что отдаёт API.',
       'A prepaid balance is a natural spending limit: top up a little and stop worrying about the bill. If the default model is not there, press “Load the list” and pick from what the API returns.',
     ),
     cost: bi('≈ $0,3–1 за весь курс', '≈ $0.3–1 for the whole course'),
@@ -62,7 +62,7 @@ export const PROVIDERS: ProviderPreset[] = [
     needsKey: true,
     defaultModel: 'gpt-4o-mini',
     keyUrl: 'https://platform.openai.com/api-keys',
-    note: bi('Создай для курса отдельный проектный ключ с лимитом расходов.', 'Create a separate project key with a spending limit for the course.'),
+    note: bi('Создайте для курса отдельный проектный ключ с лимитом расходов.', 'Create a separate project key with a spending limit for the course.'),
     cost: bi('≈ $0,5–2 за курс на малых моделях', '≈ $0.5–2 for the course on small models'),
   },
   {

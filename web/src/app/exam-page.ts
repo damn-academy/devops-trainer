@@ -28,7 +28,7 @@ export function examsOfBlock(blockId: string): Exam[] {
 }
 
 export const HONESTY = bi(
-  'Мы не следим за тобой и не проверяем, открыта ли у тебя другая вкладка. Экзамен проверяет состояние системы, а не текст: сервис либо отвечает, либо нет. Встроенный наставник здесь выключен, открыта только официальная документация — как на настоящей работе и на CKA. Выбери режим честно. «Экзамен» — ты работаешь только с документацией; так ты узнаешь, где ты на самом деле, и закроешь блок. «Тренировка» — с любыми помощниками; ты получишь полный разбор, но блок не закроется. Если нейросеть сделает задание за тебя, ты получишь зелёную галочку и не получишь умения, а на собеседовании тебя попросят сделать то же самое при всех. Оба режима нормальные: тренировка ничем не наказывается.',
+  'Мы не следим за вами и не проверяем, открыта ли у вас другая вкладка. Экзамен проверяет состояние системы, а не текст: сервис либо отвечает, либо нет. Встроенный наставник здесь выключен, открыта только официальная документация — как на настоящей работе и на CKA. Выберите режим честно. «Экзамен» — вы работаете только с документацией; так вы узнаете, где вы на самом деле, и закроете блок. «Тренировка» — с любыми помощниками; вы получите полный разбор, но блок не закроется. Если нейросеть сделает задание за вас, вы получите зелёную галочку и не получите умения, а на собеседовании вас попросят сделать то же самое при всех. Оба режима нормальные: тренировка ничем не наказывается.',
   'We do not watch you and do not check whether another tab is open. The exam checks the state of the system, not text: the service either answers or it does not. The built-in mentor is off here and only the official documentation is open — as at a real job and at the CKA. Choose the mode honestly. “Exam”: you work with the documentation only; this shows where you really are and closes the block. “Training”: any helpers you like; you get a full review, but the block does not close. If an AI does the task for you, you get a green tick and no skill, and at the interview you will be asked to do the same thing in front of people. Both modes are normal: training is never penalised.',
 );
 
@@ -48,7 +48,7 @@ const E = {
   passedBefore: bi('Экзамен уже сдан. Можно пройти его ещё раз новым вариантом.', 'The exam is already passed. You can take it again with a new variant.'),
   submit: bi('Сдать практику', 'Submit the practice'),
   explainH: bi('Два вопроса, как на собеседовании', 'Two questions, as at an interview'),
-  explainLede: bi('Ответь своими словами, затем отметь, какие пункты ты действительно назвал. В балл экзамена это не входит: это отметка «готовность к собеседованию».', 'Answer in your own words, then tick the points you really covered. This does not count towards the exam score: it is the interview-readiness mark.'),
+  explainLede: bi('Ответьте своими словами, затем отметьте, какие пункты вы действительно назвали. В балл экзамена это не входит: это отметка «готовность к собеседованию».', 'Answer in your own words, then tick the points you really covered. This does not count towards the exam score: it is the interview-readiness mark.'),
   points: bi('Ключевые пункты', 'Key points'),
   finish: bi('Завершить', 'Finish'),
   passed: bi('Экзамен сдан', 'Exam passed'),
@@ -57,10 +57,10 @@ const E = {
   threshold: bi('порог', 'threshold'),
   notCritical: bi('не все критические задания', 'not every critical task'),
   ready: bi('Готовность к собеседованию по блоку: отмечена.', 'Interview readiness for the block: marked.'),
-  notReady: bi('Готовность к собеседованию: пока нет — назови больше ключевых пунктов.', 'Interview readiness: not yet — cover more of the key points.'),
-  trail: bi('Где ты искал', 'Where you looked'),
-  noTrail: bi('Документацию во время экзамена не открывал.', 'No documentation was opened during the exam.'),
-  gaps: bi('Перед пересдачей повтори', 'Before the retake, review'),
+  notReady: bi('Готовность к собеседованию: пока нет — назовите больше ключевых пунктов.', 'Interview readiness: not yet — cover more of the key points.'),
+  trail: bi('Где вы искали', 'Where you looked'),
+  noTrail: bi('Документацию во время экзамена вы не открывали.', 'No documentation was opened during the exam.'),
+  gaps: bi('Перед пересдачей повторите', 'Before the retake, review'),
   toReview: bi('Серия повторения на 15 минут', 'A 15-minute review series'),
   protocol: bi('Скачать протокол', 'Download the protocol'),
   print: bi('Печать', 'Print'),
