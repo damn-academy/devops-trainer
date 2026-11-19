@@ -373,7 +373,7 @@ export const permModel = defineModel<P>({
         say: { srv: fmtb(bi('{o}, бита x в ней нет. Дальше не пройти.', '{o}; there is no x. No way through.'), { o: others('/srv', 'r--') }) },
         states: { srv: 'err', 'e-srv': 'err', result: 'err' },
         values: { srv: 'drwxr-xr-- root root', result: 'Permission denied' },
-        broken: { at: 'srv', message: `${act.cmd.split(' ')[0]}: /srv/www/${act.onDir ? '' : 'index.html'}: Permission denied`.replace('/: ', ': '), caption: bi('на каталоге /srv, ещё до файла. Так чаще всего и возникает ошибка 403, которую показывает веб-сервер: файл в порядке, а пройти к нему нельзя.', 'at the directory /srv, before the file: the most common reason for a web server’s 403.') },
+        broken: { at: 'srv', message: `${act.cmd.split(' ')[0]}: /srv/www/${act.onDir ? '' : 'index.html'}: Permission denied`.replace('/: ', ': '), caption: bi('на каталоге /srv, ещё до файла. Сам файл в порядке, но пройти к нему через каталог нельзя, и это самая частая причина отказа.', 'at the directory /srv, before the file. The file itself is fine, but you cannot pass through the directory to it, and that is the most common cause of a refusal.') },
       });
       answer(false);
       return steps;
