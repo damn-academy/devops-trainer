@@ -117,8 +117,8 @@ function lex(src: string): Tok[] {
 }
 
 const AGG = new Set(['sum', 'avg', 'min', 'max', 'count', 'topk', 'bottomk', 'stddev', 'group']);
-const FUNCS = new Set(['rate', 'irate', 'increase', 'delta', 'avg_over_time', 'max_over_time', 'min_over_time', 'sum_over_time', 'count_over_time', 'changes', 'resets', 'absent', 'absent_over_time', 'histogram_quantile', 'label_replace', 'abs', 'round', 'ceil', 'floor', 'time', 'vector', 'scalar', 'clamp_min', 'clamp_max', 'sort', 'sort_desc', 'timestamp']);
-const RANGE_FUNCS = new Set(['rate', 'irate', 'increase', 'delta', 'avg_over_time', 'max_over_time', 'min_over_time', 'sum_over_time', 'count_over_time', 'changes', 'resets', 'absent_over_time']);
+const FUNCS = new Set(['deriv', 'predict_linear', 'rate', 'irate', 'increase', 'delta', 'avg_over_time', 'max_over_time', 'min_over_time', 'sum_over_time', 'count_over_time', 'changes', 'resets', 'absent', 'absent_over_time', 'histogram_quantile', 'label_replace', 'abs', 'round', 'ceil', 'floor', 'time', 'vector', 'scalar', 'clamp_min', 'clamp_max', 'sort', 'sort_desc', 'timestamp']);
+const RANGE_FUNCS = new Set(['deriv', 'predict_linear', 'rate', 'irate', 'increase', 'delta', 'avg_over_time', 'max_over_time', 'min_over_time', 'sum_over_time', 'count_over_time', 'changes', 'resets', 'absent_over_time']);
 const PREC: Record<string, number> = { or: 1, and: 2, unless: 2, '==': 3, '!=': 3, '<': 3, '>': 3, '<=': 3, '>=': 3, '+': 4, '-': 4, '*': 5, '/': 5, '%': 5, '^': 6 };
 
 class Parser {
@@ -505,7 +505,14 @@ function call(n: Extract<Node, { t: 'call' }>, ctx: EvalCtx): Result {
   const { db, t } = ctx;
   const arg = (i: number) => evaluate(n.args[i], ctx);
   if (RANGE_FUNCS.has(n.fn)) {
-    if (n.args.length !== 1) throw new PromQLError(`expected 1 argument(s) in call to "${n.fn}", got ${n.args.length}`);
+    const want = n.fn === 'predict_linear' ? 2 : 1;
+    if (n.args.length !== want) throw new PromQLError(`expected ${want} argument(s) in call to "${n.fn}", got ${n.args.length}`);
+    let ahead = 0;
+    if (n.fn === 'predict_linear') {
+      const sc = arg(1);
+      if (sc.type !== 'scalar') throw new PromQLError(`expected type scalar in call to function "predict_linear", got ${sc.type}`);
+      ahead = sc.value;
+    }
     const a = n.args[0];
     if (!(a.t === 'sel' && a.range) && a.t !== 'sub') throw new PromQLError(`ranges only allowed for vector selectors`.replace(/.*/, `expected type range vector in call to function "${n.fn}", got instant vector`));
     const m = evaluate(a, ctx);
@@ -519,6 +526,23 @@ function call(n: Extract<Node, { t: 'call' }>, ctx: EvalCtx): Result {
       let v: number | null = null;
       const counter = isCounterName(db, s.labels.__name__);
       switch (n.fn) {
+        case 'deriv':
+        case 'predict_linear': {
+          // Simple linear regression over the window, time in seconds relative to the evaluation time.
+          if (pts.length < 2) break;
+          const xs = pts.map((p) => (p[0] - at) / 1000);
+          const mx = xs.reduce((a2, b2) => a2 + b2, 0) / xs.length;
+          const my = pts.reduce((a2, p) => a2 + p[1], 0) / pts.length;
+          let num = 0;
+          let den = 0;
+          pts.forEach((p, i) => {
+            num += (xs[i] - mx) * (p[1] - my);
+            den += (xs[i] - mx) ** 2;
+          });
+          const slope = den ? num / den : 0;
+          v = n.fn === 'deriv' ? slope : my - slope * mx + slope * ahead;
+          break;
+        }
         case 'rate':
           v = extrapolated(pts, at - range, at, true, true);
           break;

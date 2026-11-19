@@ -437,8 +437,74 @@ export interface PlayDef {
   hosts: string;
   gather_facts?: boolean;
   vars?: Vars;
+  roles?: (string | { role?: string; name?: string; vars?: Vars })[];
+  pre_tasks?: Record<string, unknown>[];
   tasks?: Record<string, unknown>[];
   handlers?: Record<string, unknown>[];
+}
+
+/** A role loaded from roles/<name>/: tasks, handlers, defaults (lowest precedence) and vars (high). */
+export interface RoleDef {
+  name: string;
+  dir: string;
+  tasks: Record<string, unknown>[];
+  handlers: Record<string, unknown>[];
+  defaults: Vars;
+  vars: Vars;
+  /** vars: given where the play calls the role. */
+  params: Vars;
+}
+
+function readYamlList(fs: FsApi, path: string, what: string): Record<string, unknown>[] {
+  for (const p of [path, path.replace(/\.yml$/, '.yaml')]) {
+    if (fs.stat(p)?.type !== 'f') continue;
+    let y: unknown;
+    try {
+      y = parseYaml(fs.readFile(p));
+    } catch (e) {
+      throw new PlaybookError(`Syntax Error while loading YAML.\n  ${(e as Error).message.split('\n')[0]}\n\nThe error appears to be in '${p}'.`);
+    }
+    if (y === null || y === undefined) return [];
+    if (!Array.isArray(y)) throw new PlaybookError(`The ${what} file ${p} must contain a list of tasks.`);
+    return y as Record<string, unknown>[];
+  }
+  return [];
+}
+
+function readYamlDict(fs: FsApi, path: string): Vars {
+  for (const p of [path, path.replace(/\.yml$/, '.yaml')]) {
+    if (fs.stat(p)?.type !== 'f') continue;
+    try {
+      const y = parseYaml(fs.readFile(p));
+      return y && typeof y === 'object' && !Array.isArray(y) ? (y as Vars) : {};
+    } catch (e) {
+      throw new PlaybookError(`Syntax Error while loading YAML.\n  ${(e as Error).message.split('\n')[0]}\n\nThe error appears to be in '${p}'.`);
+    }
+  }
+  return {};
+}
+
+/** Loads the roles of every play (and their meta dependencies), as ansible-playbook does before it runs. */
+export function loadRoles(fs: FsApi, base: string, plays: PlayDef[]): Map<PlayDef, RoleDef[]> {
+  const out = new Map<PlayDef, RoleDef[]>();
+  const load = (spec: string | { role?: string; name?: string; vars?: Vars }, chain: string[]): RoleDef[] => {
+    const name = typeof spec === 'string' ? spec : String(spec.role ?? spec.name ?? '');
+    const params = typeof spec === 'string' ? {} : spec.vars ?? {};
+    const dir = `${base}/roles/${name}`;
+    if (!name || fs.stat(dir)?.type !== 'd') throw new PlaybookError(`the role '${name}' was not found in ${base}/roles:/home/learner/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:${base}`);
+    if (chain.includes(name)) throw new PlaybookError(`Recursive role dependency: ${[...chain, name].join(' -> ')}`);
+    const meta = readYamlDict(fs, `${dir}/meta/main.yml`);
+    const deps = Array.isArray(meta.dependencies) ? (meta.dependencies as (string | { role?: string })[]).flatMap((d) => load(d, [...chain, name])) : [];
+    const tasks = readYamlList(fs, `${dir}/tasks/main.yml`, 'tasks');
+    const handlers = readYamlList(fs, `${dir}/handlers/main.yml`, 'handlers');
+    for (const t of [...tasks, ...handlers]) taskOf(t);
+    return [...deps, { name, dir, tasks, handlers, defaults: readYamlDict(fs, `${dir}/defaults/main.yml`), vars: readYamlDict(fs, `${dir}/vars/main.yml`), params }];
+  };
+  for (const p of plays) {
+    const seen = new Set<string>();
+    out.set(p, (p.roles ?? []).flatMap((r) => load(r, [])).filter((r) => (seen.has(r.name) ? false : (seen.add(r.name), true))));
+  }
+  return out;
 }
 
 export function parsePlaybook(text: string): PlayDef[] {
@@ -451,7 +517,8 @@ export function parsePlaybook(text: string): PlayDef[] {
   if (!Array.isArray(y)) throw new PlaybookError('A playbook must be a list of plays, got a dict instead');
   for (const p of y as PlayDef[]) {
     if (!p || typeof p !== 'object' || !('hosts' in p)) throw new PlaybookError("the field 'hosts' is required but was not set");
-    for (const t of [...(p.tasks ?? []), ...(p.handlers ?? [])]) taskOf(t);
+    for (const t of [...(p.pre_tasks ?? []), ...(p.tasks ?? []), ...(p.handlers ?? [])]) taskOf(t);
+    if (p.roles !== undefined && !Array.isArray(p.roles)) throw new PlaybookError("A malformed role declaration was encountered: 'roles' must be a list");
   }
   return y as PlayDef[];
 }
@@ -464,7 +531,7 @@ export interface RunRecord {
   playbook: string;
   check: boolean;
   at: number;
-  tasks: { task: string; module: string; host: string; status: Status; handler?: boolean }[];
+  tasks: { task: string; module: string; host: string; status: Status; handler?: boolean; role?: string }[];
   recap: Record<string, Record<'ok' | 'changed' | 'unreachable' | 'failed' | 'skipped' | 'rescued' | 'ignored', number>>;
 }
 
@@ -501,7 +568,9 @@ export async function runPlaybook(
   let anyFail = false;
   let unreach = false;
   const limit = o.limit ? new Set(matchHosts(inv, o.limit)) : null;
+  const roles = loadRoles(fs, base, plays);
   for (const play of plays) {
+    const playRoles = roles.get(play) ?? [];
     const all = matchHosts(inv, String(play.hosts)).filter((h) => !limit || limit.has(h));
     out(`\n${stars(`PLAY [${play.name ?? play.hosts}]`)}\n`);
     if (!all.length) {
@@ -512,18 +581,21 @@ export async function runPlaybook(
     for (const h of all) vars.set(h, { ...hostVars(fs, inv, invDir, h), ...(play.vars ?? {}), ...o.extraVars, ansible_check_mode: o.check });
     const notified = new Map<string, Set<string>>();
     const live = () => all.filter((h) => !dead.has(h));
-    const doTask = async (raw: Record<string, unknown>, label: string, handler: boolean, hostsFor: string[]) => {
+    const doTask = async (raw: Record<string, unknown>, label: string, handler: boolean, hostsFor: string[], role?: RoleDef) => {
       const t = taskOf(raw);
-      out(`\n${stars(`${handler ? 'RUNNING HANDLER' : 'TASK'} [${label}]`)}\n`);
+      out(`\n${stars(`${handler ? 'RUNNING HANDLER' : 'TASK'} [${role ? `${role.name} : ` : ''}${label}]`)}\n`);
+      const taskBase = role ? role.dir : base;
       for (const h of hostsFor) {
         const host = new Host(fs, h);
-        const v = vars.get(h)!;
+        const hv = vars.get(h)!;
+        // Role defaults lose to everything; role vars and role params beat inventory and play vars; -e beats all.
+        const v: Vars = role ? { ...role.defaults, ...hv, ...role.vars, ...role.params, ...o.extraVars } : hv;
         const meta = Host.exists(fs, h) ? host.db().meta : null;
         if (!meta || !meta.reachable) {
           const ip = String(v.ansible_host ?? meta?.ip ?? h);
           out(R(`fatal: [${h}]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: ${meta ? `ssh: connect to host ${ip} port 22: Connection timed out` : `ssh: Could not resolve hostname ${ip}: Name or service not known`}", "unreachable": true}`) + '\n');
           recap(h).unreachable++;
-          record.tasks.push({ task: label, module: t.module, host: h, status: 'unreachable', handler });
+          record.tasks.push({ task: label, module: t.module, host: h, status: 'unreachable', handler, ...(role ? { role: role.name } : {}) });
           dead.add(h);
           unreach = true;
           continue;
@@ -531,7 +603,7 @@ export async function runPlaybook(
         if (!meta.python && t.module !== 'raw') {
           out(R(`fatal: [${h}]: FAILED! => {"changed": false, "module_stderr": "/bin/sh: 1: /usr/bin/python3: not found\\n", "module_stdout": "", "msg": "The module failed to execute correctly, you probably need to set the interpreter.\\nSee stdout/stderr for the exact error", "rc": 127}`) + '\n');
           recap(h).failed++;
-          record.tasks.push({ task: label, module: t.module, host: h, status: 'failed', handler });
+          record.tasks.push({ task: label, module: t.module, host: h, status: 'failed', handler, ...(role ? { role: role.name } : {}) });
           dead.add(h);
           anyFail = true;
           continue;
@@ -578,7 +650,7 @@ export async function runPlaybook(
             hostFailed = true;
             break;
           }
-          const res = await MODULES[t.module]({ host, args, check: o.check || raw.check_mode === true, base, ctlFs: fs, vars: iv, registry });
+          const res = await MODULES[t.module]({ host, args, check: o.check || raw.check_mode === true, base: taskBase, ctlFs: fs, vars: iv, registry });
           if (raw.changed_when !== undefined) res.changed = evalWhen(raw.changed_when, { ...iv, ...res, result: res });
           if (raw.failed_when !== undefined) res.failed = evalWhen(raw.failed_when, { ...iv, ...res, result: res });
           results.push(res);
@@ -609,9 +681,10 @@ export async function runPlaybook(
           out((res.changed ? Y(`changed: [${h}]${tag}${shown}`) : G(`ok: [${h}]${tag}${shown}`)) + '\n');
         }
         const status: Status = hostFailed ? 'failed' : allSkipped || results.every((r) => r.skipped) ? 'skipped' : hostChanged ? 'changed' : 'ok';
-        record.tasks.push({ task: label, module: t.module, host: h, status, handler });
+        record.tasks.push({ task: label, module: t.module, host: h, status, handler, ...(role ? { role: role.name } : {}) });
         if (raw.register) {
           const reg = items.length > 1 || loopSrc !== undefined ? { changed: hostChanged, results } : { ...(results[0] ?? { changed: false }), changed: hostChanged };
+          hv[String(raw.register)] = reg;
           v[String(raw.register)] = reg;
         }
         if (status === 'failed') {
@@ -658,21 +731,24 @@ export async function runPlaybook(
           recap(h).ok++;
         }
       }
-      for (const raw of play.tasks ?? []) {
+      // Order of a play: pre_tasks, roles (each role's tasks), tasks.
+      const queue: { raw: Record<string, unknown>; role?: RoleDef }[] = [...(play.pre_tasks ?? []).map((raw) => ({ raw })), ...playRoles.flatMap((r) => r.tasks.map((raw) => ({ raw, role: r }))), ...(play.tasks ?? []).map((raw) => ({ raw }))];
+      for (const { raw, role } of queue) {
         const hs = live();
         if (!hs.length) break;
         const t = taskOf(raw);
-        await doTask(raw, t.name ?? `${t.module}`, false, hs);
+        await doTask(raw, t.name ?? `${t.module}`, false, hs, role);
       }
     } finally {
       // Handlers: once, at the end of the play, on hosts that notified them (and are alive, unless forced).
-      for (const hraw of play.handlers ?? []) {
+      const handlers: { raw: Record<string, unknown>; role?: RoleDef }[] = [...playRoles.flatMap((r) => r.handlers.map((raw) => ({ raw, role: r }))), ...(play.handlers ?? []).map((raw) => ({ raw }))];
+      for (const { raw: hraw, role } of handlers) {
         const hname = String(hraw.name ?? '');
         const listen = list(hraw.listen);
         const hosts = new Set<string>();
         for (const n of [hname, ...listen]) for (const h of notified.get(n) ?? []) hosts.add(h);
         const run = [...hosts].filter((h) => o.forceHandlers || !dead.has(h));
-        if (run.length) await doTask(hraw, hname, true, run);
+        if (run.length) await doTask(hraw, hname, true, run, role);
       }
     }
   }

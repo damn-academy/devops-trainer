@@ -10,7 +10,7 @@ import { evalRule, parseAm, parseRules, routeAlert } from './prom/alerts';
 import type { Result } from './prom/promql';
 import type { WorkbenchProps } from './workbench';
 
-const S = {
+export const S = {
   promOverview: { title: 'Prometheus — Overview', url: 'https://prometheus.io/docs/introduction/overview/' },
   dataModel: { title: 'Prometheus — Data model', url: 'https://prometheus.io/docs/concepts/data_model/' },
   metricTypes: { title: 'Prometheus — Metric types', url: 'https://prometheus.io/docs/concepts/metric_types/' },
@@ -28,7 +28,7 @@ const S = {
   ruHabrPromql: { title: 'Хабр — PromQL для начинающих', url: 'https://habr.com/ru/companies/otus/articles/769806/' },
   ruSre: { title: 'Хабр — SRE: мониторинг распределённых систем (перевод главы SRE Book)', url: 'https://habr.com/ru/companies/southbridge/articles/655303/' },
 };
-const src = (en: { title: string; url: string }[], ru: { title: string; url: string }[]): Sources => ({ en, ru });
+export const src = (en: { title: string; url: string }[], ru: { title: string; url: string }[]): Sources => ({ en, ru });
 
 export const concepts: Concept[] = [
   { id: 'obs.series', term: bi('временной ряд', 'time series'), forms: { ru: ['временного ряда', 'временные ряды', 'временных рядов', 'временным рядом'] }, short: bi('Последовательность пар «время, значение» для одного имени метрики с одним набором меток.', 'A sequence of "time, value" pairs for one metric name with one set of labels.'), introducedIn: 'monitoring.series' },
@@ -44,22 +44,23 @@ export const concepts: Concept[] = [
   { id: 'obs.quantile', term: bi('квантиль', 'quantile'), forms: { ru: ['квантиля', 'квантили', 'квантилей'], en: ['quantiles'] }, short: bi('Значение, ниже которого доля наблюдений φ: p99 — 99% запросов быстрее этого времени.', 'The value below which a share φ of observations falls: p99 means 99% of requests are faster than this.'), introducedIn: 'monitoring.histogram' },
   { id: 'obs.alert-rule', term: bi('правило алерта', 'alerting rule'), forms: { ru: ['правила алерта', 'правило алерта', 'правилом алерта'], en: ['alerting rules'] }, short: bi('Запрос PromQL с условием, который Prometheus вычисляет по расписанию; for задаёт, как долго условие должно держаться.', 'A PromQL query with a condition Prometheus evaluates on a schedule; for sets how long it must hold.'), introducedIn: 'monitoring.alerts', docRef: { page: 'web/prometheus.io/alerting/rules', anchor: 'defining' } },
   { id: 'obs.alertmanager', term: bi('Alertmanager', 'Alertmanager'), short: bi('Сервис, который получает алерты, выбирает получателя по меткам, группирует и гасит следствия.', 'A service that receives alerts, picks receivers by labels, groups them and mutes consequences.'), introducedIn: 'monitoring.alerts' },
+  { id: 'obs.use', term: bi('метод USE', 'USE method'), forms: { ru: ['метода USE', 'методу USE', 'методом USE'] }, short: bi('Три вопроса к ресурсу: Utilization (насколько занят), Saturation (сколько ждёт в очереди), Errors (ошибки).', 'Three questions to a resource: Utilization (how busy), Saturation (how much waits in the queue), Errors.'), introducedIn: 'monitoring.incident' },
   { id: 'obs.red', term: bi('метод RED', 'RED method'), forms: { ru: ['метода RED', 'методу RED'] }, short: bi('Три метрики сервиса глазами пользователя: Rate (запросы), Errors (ошибки), Duration (длительность).', 'Three metrics of a service as its user sees it: Rate (requests), Errors (errors), Duration (latency).'), introducedIn: 'monitoring.incident' },
 ];
 
 // ── helpers ──
 
-const vecOf = (r: Result) => (r.type === 'vector' ? r.data : []);
-const MON = '/home/learner/mon';
+export const vecOf = (r: Result) => (r.type === 'vector' ? r.data : []);
+export const MON = '/home/learner/mon';
 
-function rulesFire(text: string, incident: Incident): boolean | null {
+export function rulesFire(text: string, incident: Incident): boolean | null {
   const { groups, errors } = parseRules(text, 'rules.yml');
   if (errors.length || !groups.length) return null;
   const db = dataset(incident);
   return groups.some((g) => g.rules.some((r) => r.alert && evalRule(db, r, NOW - 30 * 60_000, NOW).points.at(-1)?.state === 'firing'));
 }
 
-const AM = `route:
+export const AM = `route:
   receiver: email
   group_by: [alertname, service]
   routes:
@@ -441,7 +442,7 @@ const incidentLesson: Lesson = {
   block: 'monitoring',
   title: bi('Инцидент: почему выросла латентность', 'An incident: why latency went up'),
   summary: bi('Каждое утверждение о причине подтверждается запросом. Сначала восстановить сервис, потом разбирать.', 'Every statement about the cause is backed by a query. Restore the service first, investigate after.'),
-  introduces: ['obs.red'],
+  introduces: ['obs.red', 'obs.use'],
   uses: ['obs.quantile', 'obs.rate', 'obs.aggregation', 'obs.alert-rule'],
   tier: 'core',
   minutes: 40,
@@ -452,8 +453,8 @@ const incidentLesson: Lesson = {
       kind: 'text',
       step: 'explain',
       body: bi(
-        'Когда приходит алерт, первое желание — угадать причину. Правило разбора другое: каждую гипотезу проверяют запросом, а результат запроса — это доказательство или опровержение.\n\nНачинают с того, что чувствует пользователь, — с метрик [[obs.red|RED]] сервиса: **Rate** (сколько запросов в секунду), **Errors** (какая доля из них с ошибкой), **Duration** (сколько они длятся, квантили). Затем сужают: по какой метке отклонение — по маршруту, по экземпляру, по версии? Если болен один экземпляр — смотрят его узел; если все экземпляры, но один маршрут — смотрят, что этот маршрут делает иначе и что менялось. Для ресурсов (пул соединений, CPU, диск) похожий вопрос «насколько занято» задаёт метод USE: Utilization, Saturation, Errors.\n\nИ главное правило дежурного: сначала восстановить сервис (откатить релиз, переключить трафик), а уже потом разбираться до конца. Время восстановления после неудачного развёртывания — одна из метрик DORA, и откат почти всегда быстрее исправления.',
-        'When an alert arrives, the first urge is to guess the cause. The rule of an investigation is different: every hypothesis is checked by a query, and the query result is proof or disproof.\n\nYou start from what the user feels, the [[obs.red|RED]] metrics of the service: **Rate** (requests per second), **Errors** (what share fails), **Duration** (how long they take, the quantiles). Then you narrow down: along which label is the deviation — route, instance, version? If one instance is sick, you look at its node; if all instances but one route, you look at what that route does differently and what changed. For resources (a connection pool, CPU, disk) a similar question, "how busy", is asked by the USE method: Utilization, Saturation, Errors.\n\nAnd the main rule of the on-call engineer: restore the service first (roll back the release, shift traffic), and only then investigate to the end. Time to restore service after a failed deployment is one of the DORA metrics, and a rollback is almost always faster than a fix.',
+        'Когда приходит алерт, первое желание — угадать причину. Правило разбора другое: каждую гипотезу проверяют запросом, а результат запроса — это доказательство или опровержение.\n\nНачинают с того, что чувствует пользователь, — с метрик [[obs.red|RED]] сервиса: **Rate** (сколько запросов в секунду), **Errors** (какая доля из них с ошибкой), **Duration** (сколько они длятся, квантили). Затем сужают: по какой метке отклонение — по маршруту, по экземпляру, по версии? Если болен один экземпляр — смотрят его узел; если все экземпляры, но один маршрут — смотрят, что этот маршрут делает иначе и что менялось. Для ресурсов (пул соединений, CPU, диск) похожий вопрос «насколько занято» задаёт [[obs.use|метод USE]]: Utilization, Saturation, Errors.\n\nИ главное правило дежурного: сначала восстановить сервис (откатить релиз, переключить трафик), а уже потом разбираться до конца. Время восстановления после неудачного развёртывания — одна из метрик DORA, и откат почти всегда быстрее исправления.',
+        'When an alert arrives, the first urge is to guess the cause. The rule of an investigation is different: every hypothesis is checked by a query, and the query result is proof or disproof.\n\nYou start from what the user feels, the [[obs.red|RED]] metrics of the service: **Rate** (requests per second), **Errors** (what share fails), **Duration** (how long they take, the quantiles). Then you narrow down: along which label is the deviation — route, instance, version? If one instance is sick, you look at its node; if all instances but one route, you look at what that route does differently and what changed. For resources (a connection pool, CPU, disk) a similar question, "how busy", is asked by the [[obs.use|USE method]]: Utilization, Saturation, Errors.\n\nAnd the main rule of the on-call engineer: restore the service first (roll back the release, shift traffic), and only then investigate to the end. Time to restore service after a failed deployment is one of the DORA metrics, and a rollback is almost always faster than a fix.',
       ),
     },
     {
@@ -506,7 +507,7 @@ export const block: Block = {
   id: 'monitoring',
   order: 100,
   title: bi('Мониторинг', 'Monitoring'),
-  summary: bi('Временные ряды и метки, типы метрик, Prometheus и scrape, PromQL: селекторы, rate, агрегация, гистограммы и квантили; алерты и Alertmanager; разбор инцидента по метрикам.', 'Time series and labels, metric types, Prometheus and the scrape, PromQL: selectors, rate, aggregation, histograms and quantiles; alerts and Alertmanager; investigating an incident with metrics.'),
+  summary: bi('Временные ряды и метки, типы метрик, Prometheus и scrape, PromQL: селекторы, rate, агрегация, гистограммы и квантили; алерты и Alertmanager; разбор инцидента по метрикам; журналы и LogQL, трейсы и передача контекста, метрики Kubernetes и метод USE.', 'Time series and labels, metric types, Prometheus and the scrape, PromQL: selectors, rate, aggregation, histograms and quantiles; alerts and Alertmanager; investigating an incident with metrics; logs and LogQL, traces and context propagation, Kubernetes metrics and the USE method.'),
   checklistStep: '07',
   levels: {
     beginner: bi('Не видел дашбордов', 'Has never seen a dashboard'),
