@@ -47,7 +47,7 @@ export const k8sExam: Exam = {
       setup: EXAM_SETUPS.store,
       task: {
         id: 'x-deploy',
-        prompt: bi('«Каталогу нужен свой сервис»: создайте в namespace `store` Deployment `catalog` из образа `trainer/web:1.1` на три реплики и Service `catalog` на порту 80. Под `client` из namespace `store` должен получать ответ по адресу `http://catalog`.', '“The catalogue needs its service”: in namespace `store` — a Deployment `catalog` from `trainer/web:1.1` with 3 replicas and a Service `catalog` on port 80. Pod `client` in `store` must get an answer from `http://catalog`.'),
+        prompt: bi('Пришла заявка «Каталогу нужен свой сервис». Создайте в namespace `store` Deployment `catalog` из образа `trainer/web:1.1` на три реплики и Service `catalog` на порту 80. Под `client` из namespace `store` должен получать ответ по адресу `http://catalog`.', 'The ticket says: “The catalogue needs its service”. In namespace `store` — a Deployment `catalog` from `trainer/web:1.1` with 3 replicas and a Service `catalog` on port 80. Pod `client` in `store` must get an answer from `http://catalog`.'),
         check: { when: "k8s.deployments[ns=store][name=catalog].ready=3 && k8s.deployments[ns=store][name=catalog].image='trainer/web:1.1' && k8s.reach[from='store/client'][to='catalog.store'].status=200" },
         concepts: ['k8s.deployment', 'k8s.service'],
       },
@@ -61,7 +61,7 @@ export const k8sExam: Exam = {
       setup: SERVICE_BROKEN,
       task: {
         id: 'x-svc-selector',
-        prompt: bi('«API платежей молчит»: Service `api` в namespace `prod` не отвечает. Почините его, не пересоздавая поды.', '“The payments API is silent”: Service `api` in namespace `prod` does not answer. Fix it without recreating the pods.'),
+        prompt: bi('Пришла заявка «API платежей молчит». Service `api` в namespace `prod` не отвечает. Почините его, не пересоздавая поды.', 'The ticket says: “The payments API is silent”. Service `api` in namespace `prod` does not answer. Fix it without recreating the pods.'),
         check: { when: (f, start) => reach(f, 'prod/client', 'api.prod') === 200 && (!start || podUids(f, 'prod', 'api-v2') === podUids(start, 'prod', 'api-v2')) },
         concepts: ['k8s.service', 'k8s.endpointslice'],
       },
@@ -75,7 +75,7 @@ export const k8sExam: Exam = {
       setup: EXAM_SETUPS.svcPort,
       task: {
         id: 'x-svc-port',
-        prompt: bi('«API платежей молчит»: Service `api` в namespace `prod` не отвечает. Почините его, не пересоздавая поды.', '“The payments API is silent”: Service `api` in namespace `prod` does not answer. Fix it without recreating the pods.'),
+        prompt: bi('Пришла заявка «API платежей молчит». Service `api` в namespace `prod` не отвечает. Почините его, не пересоздавая поды.', 'The ticket says: “The payments API is silent”. Service `api` in namespace `prod` does not answer. Fix it without recreating the pods.'),
         check: { when: (f, start) => reach(f, 'prod/client', 'api.prod') === 200 && (!start || podUids(f, 'prod', 'api') === podUids(start, 'prod', 'api')) },
         concepts: ['k8s.service'],
       },
@@ -87,14 +87,14 @@ export const k8sExam: Exam = {
       setup: EXAM_SETUPS.rollback,
       task: {
         id: 'x-rollback',
-        prompt: bi('«После выкатки сайт наполовину не работает»: Deployment `web` выкатили на новую версию, и она падает. Верните последнюю работавшую версию, не удаляя Deployment: все четыре пода должны быть готовы.', '“Half the site is down after the rollout”: Deployment `web` was rolled out to a new version, and it crashes. Bring back the last working version without deleting the Deployment: all 4 pods must be ready.'),
+        prompt: bi('Пришла заявка «После выкатки сайт наполовину не работает». Deployment `web` выкатили на новую версию, и она падает. Верните последнюю работавшую версию, не удаляя Deployment: все четыре пода должны быть готовы.', 'The ticket says: “Half the site is down after the rollout”. Deployment `web` was rolled out to a new version, and it crashes. Bring back the last working version without deleting the Deployment: all 4 pods must be ready.'),
         check: {
           when: (f, start) => {
             const d = k8s(f).deployments.find((x) => x.ns === 'default' && x.name === 'web');
             const uid = (x?: Facts) => (x ? obj(x, 'Deployment', 'default', 'web')?.metadata?.uid : undefined);
             return !!d && d.ready >= 4 && d.image === 'trainer/web:1.1' && (!start || uid(f) === uid(start));
           },
-          fail: [{ if: (f) => k8s(f).deployments.find((x) => x.name === 'web')?.image === 'trainer/web:1.0', say: bi('Версия 1.0 работает, но последняя работавшая версия — 1.1. Посмотрите историю выкаток.', '1.0 works, but the last working version is 1.1. Look at the rollout history.') }],
+          fail: [{ if: (f) => k8s(f).deployments.find((x) => x.name === 'web')?.image === 'trainer/web:1.0', say: bi('Версия 1.0 работает, но последней работавшей версией была 1.1. Посмотрите историю выкаток.', '1.0 works, but the last working version is 1.1. Look at the rollout history.') }],
         },
         concepts: ['k8s.revision', 'k8s.rolling-update'],
       },
@@ -106,7 +106,7 @@ export const k8sExam: Exam = {
       setup: EXAM_SETUPS.drain,
       task: {
         id: 'x-drain',
-        prompt: bi('«Плановая замена диска на worker-2»: выведите узел на обслуживание. Новых подов на нём быть не должно, рабочих подов из namespace `default` тоже, а у `web` при этом должно оставаться три готовых пода.', '“A planned disk replacement on worker-2”: take the node out for maintenance — no new pods may land on it, and no workload pods of namespace `default` may stay there. `web` must keep three ready pods meanwhile.'),
+        prompt: bi('Пришла заявка «Плановая замена диска на worker-2». Выведите узел на обслуживание. Новых подов на нём быть не должно, рабочих подов из namespace `default` тоже, а у `web` при этом должно оставаться три готовых пода.', 'The ticket says: “A planned disk replacement on worker-2”. Take the node out for maintenance — no new pods may land on it, and no workload pods of namespace `default` may stay there. `web` must keep three ready pods meanwhile.'),
         check: {
           when: (f) => {
             const k = k8s(f);
@@ -124,7 +124,7 @@ export const k8sExam: Exam = {
       setup: DNS_BROKEN,
       task: {
         id: 'x-dns',
-        prompt: bi('«Ничего не открывается по имени»: под `client` в namespace `shop` не может обратиться к `web` по имени, а по IP всё работает. Почините кластер.', '“Nothing opens by name”: pod `client` in `shop` cannot reach `web` by name. By IP everything works. Fix the cluster.'),
+        prompt: bi('Пришла заявка «Ничего не открывается по имени». Под `client` в namespace `shop` не может обратиться к `web` по имени, а по IP всё работает. Почините кластер.', 'The ticket says: “Nothing opens by name”. Pod `client` in `shop` cannot reach `web` by name. By IP everything works. Fix the cluster.'),
         check: { when: "k8s.reach[from='shop/client'][to='web.shop'].status=200" },
         concepts: ['k8s.cluster-dns'],
       },
@@ -136,7 +136,7 @@ export const k8sExam: Exam = {
       setup: EXAM_LIKE,
       task: {
         id: 'x-pending',
-        prompt: bi('«Отчёт аналитики не запускается»: под `report` в namespace `exam` не запускается. Добейтесь, чтобы он работал.', '“The analytics report does not start”: pod `report` in namespace `exam` does not start. Get it running.'),
+        prompt: bi('Пришла заявка «Отчёт аналитики не запускается». Под `report` в namespace `exam` не запускается. Добейтесь, чтобы он работал.', 'The ticket says: “The analytics report does not start”. Pod `report` in namespace `exam` does not start. Get it running.'),
         check: { when: 'k8s.pods[ns=exam][name=report].ready=true' },
         concepts: ['k8s.events', 'k8s.pod'],
       },
@@ -148,7 +148,7 @@ export const k8sExam: Exam = {
       setup: EXAM_SETUPS.config,
       task: {
         id: 'x-config',
-        prompt: bi('«Приветствие должно настраиваться без пересборки»: создайте ConfigMap `web-config` с ключом `GREETING=Hello` и подключите его к Deployment `web` как переменные окружения. Оба пода должны работать с новой настройкой.', '“The greeting must be configurable without a rebuild”: create a ConfigMap `web-config` with the key `GREETING=Hello` and attach it to Deployment `web` as environment variables. Both pods must run with the new setting.'),
+        prompt: bi('Пришла заявка «Приветствие должно настраиваться без пересборки». Создайте ConfigMap `web-config` с ключом `GREETING=Hello` и подключите его к Deployment `web` как переменные окружения. Оба пода должны работать с новой настройкой.', 'The ticket says: “The greeting must be configurable without a rebuild”. Create a ConfigMap `web-config` with the key `GREETING=Hello` and attach it to Deployment `web` as environment variables. Both pods must run with the new setting.'),
         check: {
           when: (f) => {
             const cm = obj(f, 'ConfigMap', 'default', 'web-config');
@@ -170,7 +170,7 @@ export const k8sExam: Exam = {
       setup: NETPOL_LAB,
       task: {
         id: 'x-netpol',
-        prompt: bi('«Платёжный сервис должен быть доступен только магазину»: в namespace `pay` пропускайте только поды из namespace `shop`, а из любого другого namespace не пропускайте. Политики пишите сами, удалять поды нельзя.', '“The payment service must be reachable by the shop only”: let into `pay` only pods from namespace `shop` (none from any other namespace). Write the policies yourself; deleting pods is not allowed.'),
+        prompt: bi('Пришла заявка «Платёжный сервис должен быть доступен только магазину». В namespace `pay` пропускайте только поды из namespace `shop`, а из любого другого namespace не пропускайте. Политики пишите сами, удалять поды нельзя.', 'The ticket says: “The payment service must be reachable by the shop only”. Let into `pay` only pods from namespace `shop` (none from any other namespace). Write the policies yourself; deleting pods is not allowed.'),
         check: { when: (f) => reach(f, 'shop/client', 'pay.pay') === 200 && reach(f, 'dev/client', 'pay.pay') !== 200 && k8s(f).pods.filter((p) => p.name === 'client').length >= 2 },
         docStep: 5,
         beyond: true,
@@ -186,7 +186,7 @@ export const k8sExam: Exam = {
       setup: EXAM_SETUPS.config,
       task: {
         id: 'x-grace',
-        prompt: bi('«Выкатка ждёт полминуты на каждом поде»: приложение `web` завершается за секунду, а Kubernetes ждёт его 30 секунд. Найдите в документации поле пода, которое задаёт это время, и поставьте 5 секунд в шаблоне Deployment `web`.', '“A rollout waits half a minute on every pod”: the `web` application exits in a second, but Kubernetes waits 30 seconds for it. Find in the documentation the pod field that sets this time and set 5 seconds in the template of Deployment `web`.'),
+        prompt: bi('Пришла заявка «Выкатка ждёт полминуты на каждом поде». Приложение `web` завершается за секунду, а Kubernetes ждёт его 30 секунд. Найдите в документации поле пода, которое задаёт это время, и поставьте 5 секунд в шаблоне Deployment `web`.', 'The ticket says: “A rollout waits half a minute on every pod”. The `web` application exits in a second, but Kubernetes waits 30 seconds for it. Find in the documentation the pod field that sets this time and set 5 seconds in the template of Deployment `web`.'),
         check: { when: 'k8s.objects[kind=Deployment][metadata.name=web].spec.template.spec.terminationGracePeriodSeconds=5' },
         docStep: 5,
         beyond: true,
@@ -197,7 +197,7 @@ export const k8sExam: Exam = {
   ],
   explain: [
     { id: 'loop', prompt: bi('Под удалили руками, а через секунду появился новый. Объясните, кто его создал и почему.', 'A pod was deleted by hand, and a second later a new one appeared. Explain who created it and why.'), keyPoints: [bi('ReplicaSet хранит желаемое число подов', 'The ReplicaSet holds the desired number of pods'), bi('контроллер ReplicaSet сравнивает желаемое с фактическим и создаёт недостающие поды', 'the ReplicaSet controller compares desired with actual and creates what is missing'), bi('контроллер смотрит на состояние, а не на события, и удаление для него — лишь новая разница', 'it looks at the state, not at events: the deletion is just a new difference')] },
-    { id: 'clusterip', prompt: bi('Где находится ClusterIP Service и что происходит с пакетом, отправленным на этот адрес?', 'Where does a Service ClusterIP "live", and what happens to a packet sent to it?'), keyPoints: [bi('ни на одном интерфейсе: только в правилах kube-proxy в ядре каждого узла', 'on no interface: only in kube-proxy’s rules in the kernel of every node'), bi('адрес назначения пакета заменяется на IP одного из готовых подов из EndpointSlice', 'the packet is DNATed to the IP of one of the ready pods from the EndpointSlice'), bi('в ответе адрес переводится обратно с помощью conntrack', 'the reply is translated back through conntrack')] },
+    { id: 'clusterip', prompt: bi('Где находится ClusterIP Service и что происходит с пакетом, отправленным на этот адрес?', 'Where does a Service ClusterIP "live", and what happens to a packet sent to it?'), keyPoints: [bi('ClusterIP не назначен ни одному интерфейсу и существует только в правилах kube-proxy в ядре каждого узла', 'on no interface: only in kube-proxy’s rules in the kernel of every node'), bi('адрес назначения пакета заменяется на IP одного из готовых подов из EndpointSlice', 'the packet is DNATed to the IP of one of the ready pods from the EndpointSlice'), bi('в ответе адрес переводится обратно с помощью conntrack', 'the reply is translated back through conntrack')] },
     { id: 'node', prompt: bi('Узел с тремя подами внезапно выключился. Расскажите, что и когда произойдёт.', 'A node with three pods suddenly powered off. Tell what will happen and when.'), keyPoints: [bi('kubelet перестаёт продлевать Lease, и примерно через 40–50 секунд узел становится NotReady', 'the kubelet stops renewing its Lease; after about 40–50 seconds the node is NotReady'), bi('узел получает запрет (taint), и через пять минут поды с него выселяют', 'the node gets a taint, and after 5 minutes its pods are evicted'), bi('ReplicaSet создаёт замену на других узлах, а одиночный под без хозяина не вернётся', 'the ReplicaSet creates replacements on other nodes; a lone pod with no owner does not come back')] },
   ],
 };

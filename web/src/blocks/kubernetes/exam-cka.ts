@@ -199,7 +199,7 @@ export const ckaExam: Exam = {
           },
           fail: [
             { if: (f) => !!obj(f, 'Service', 'default', 'web-public') && obj(f, 'Service', 'default', 'web-public')?.spec?.type !== 'NodePort', say: bi('Сервис есть, но он не типа NodePort, и снаружи к нему через узлы не обратиться.', 'The Service exists but is not a NodePort: nobody outside can reach it on the nodes.') },
-            { if: (f) => (k8s(f).services.find((x) => x.name === 'web-public')?.endpoints ?? 1) === 0, say: bi('У сервиса нет адресов подов: селектор не совпадает с метками подов web.', 'The Service has no endpoints: its selector does not match the labels of the web pods.') },
+            { if: (f) => (k8s(f).services.find((x) => x.name === 'web-public')?.endpoints ?? 1) === 0, say: bi('У сервиса нет адресов подов, потому что селектор не совпадает с метками подов web.', 'The Service has no endpoints: its selector does not match the labels of the web pods.') },
           ],
         },
         concepts: ['k8s.service', 'k8s.nodeport'],
@@ -222,7 +222,7 @@ export const ckaExam: Exam = {
             const ru = obj(f, 'Deployment', 'default', 'web')?.spec?.strategy?.rollingUpdate ?? {};
             return !!d && d.image === 'trainer/web:1.1' && d.ready >= 4 && d.updated >= 4 && String(ru.maxUnavailable) === '0' && String(ru.maxSurge) === '1' && sameObject(f, start, 'Deployment', 'default', 'web');
           },
-          fail: [{ if: (f) => dep(f, 'default', 'web')?.image === 'trainer/web:1.1' && String(obj(f, 'Deployment', 'default', 'web')?.spec?.strategy?.rollingUpdate?.maxUnavailable) !== '0', say: bi('Версия новая, но стратегия прежняя: maxUnavailable: 1 разрешает на время выкатки остаться без одного готового пода, а нужно, чтобы готовых подов не становилось меньше.', 'The version is new but the strategy is the old one: maxUnavailable: 1 lets the rollout go one ready pod short, and the ready count must never drop.') }],
+          fail: [{ if: (f) => dep(f, 'default', 'web')?.image === 'trainer/web:1.1' && String(obj(f, 'Deployment', 'default', 'web')?.spec?.strategy?.rollingUpdate?.maxUnavailable) !== '0', say: bi('Версия новая, но стратегия прежняя, и maxUnavailable: 1 разрешает на время выкатки остаться без одного готового пода, а нужно, чтобы готовых подов не становилось меньше.', 'The version is new but the strategy is the old one: maxUnavailable: 1 lets the rollout go one ready pod short, and the ready count must never drop.') }],
         },
         concepts: ['k8s.rolling-update'],
       },
@@ -243,7 +243,7 @@ export const ckaExam: Exam = {
             const d = dep(f, 'default', 'web');
             return !!d && d.image === 'trainer/web:1.0' && d.ready >= 4 && sameObject(f, start, 'Deployment', 'default', 'web');
           },
-          fail: [{ if: (f) => dep(f, 'default', 'web')?.image === 'trainer/web:1.1', say: bi('Это предыдущая ревизия, а не первая. Посмотрите историю выкаток: у отката есть флаг, который выбирает номер ревизии.', 'That is the previous revision, not the first. Look at the rollout history: the undo has a flag that picks the revision number.') }],
+          fail: [{ if: (f) => dep(f, 'default', 'web')?.image === 'trainer/web:1.1', say: bi('Это предыдущая ревизия, а не первая. Посмотрите историю выкаток и учтите, что у команды отката есть флаг, который выбирает номер ревизии.', 'That is the previous revision, not the first. Look at the rollout history: the undo has a flag that picks the revision number.') }],
         },
         concepts: ['k8s.revision'],
       },
@@ -267,7 +267,7 @@ export const ckaExam: Exam = {
             const pinned = pod?.spec?.nodeSelector?.disk === 'ssd' || JSON.stringify(pod?.spec?.affinity ?? {}).includes('"disk"');
             return node?.metadata?.labels?.disk === 'ssd' && pinned && p?.node === 'worker-1' && p.ready;
           },
-          fail: [{ if: (f) => !!obj(f, 'Pod', 'default', 'fast') && !obj(f, 'Pod', 'default', 'fast')?.spec?.nodeSelector && !obj(f, 'Pod', 'default', 'fast')?.spec?.affinity, say: bi('Под мог попасть на worker-1 случайно: в его spec ничто не привязывает его к метке disk=ssd.', 'The pod may have landed on worker-1 by chance: nothing in its spec ties it to the disk=ssd label.') }],
+          fail: [{ if: (f) => !!obj(f, 'Pod', 'default', 'fast') && !obj(f, 'Pod', 'default', 'fast')?.spec?.nodeSelector && !obj(f, 'Pod', 'default', 'fast')?.spec?.affinity, say: bi('Под мог попасть на worker-1 случайно, потому что в его spec ничто не привязывает его к метке disk=ssd.', 'The pod may have landed on worker-1 by chance: nothing in its spec ties it to the disk=ssd label.') }],
         },
         concepts: ['k8s.scheduler', 'k8s.label'],
       },
@@ -288,7 +288,7 @@ export const ckaExam: Exam = {
             const pods = ownedPods(f, 'kube-system', 'DaemonSet/node-agent').filter((p) => p.ready);
             return new Set(pods.map((p) => p.node)).size >= 3 && pods.some((p) => p.node === 'cp-1');
           },
-          fail: [{ if: (f) => ownedPods(f, 'kube-system', 'DaemonSet/node-agent').length > 0 && !ownedPods(f, 'kube-system', 'DaemonSet/node-agent').some((p) => p.node === 'cp-1'), say: bi('Агенты работают только на рабочих узлах: на cp-1 стоит запрет (taint) control-plane, и поды без разрешения на него туда не попадают.', 'The agents run on the workers only: cp-1 has the control-plane taint, and pods without a toleration for it do not go there.') }],
+          fail: [{ if: (f) => ownedPods(f, 'kube-system', 'DaemonSet/node-agent').length > 0 && !ownedPods(f, 'kube-system', 'DaemonSet/node-agent').some((p) => p.node === 'cp-1'), say: bi('Агенты работают только на рабочих узлах, потому что на cp-1 стоит запрет (taint) control-plane, и поды без разрешения на него туда не попадают.', 'The agents run on the workers only: cp-1 has the control-plane taint, and pods without a toleration for it do not go there.') }],
         },
         concepts: ['k8s.scheduler', 'k8s.node'],
       },
@@ -337,7 +337,7 @@ export const ckaExam: Exam = {
             const pods = k8s(f).pods.filter((p) => p.ns === 'default' && p.labels.app === 'cache' && p.ready);
             return mem === '300' && mebibytes(c?.resources?.limits?.memory) >= 300 && !!d && d.ready >= 1 && pods.some((p) => p.restarts === 0);
           },
-          fail: [{ if: (f) => (containers(obj(f, 'Deployment', 'default', 'cache'))[0]?.env ?? []).find((e: Obj) => e.name === 'MEM_MB')?.value !== '300', say: bi('Кэш перестал падать, потому что ему урезали память, но так он перестанет быть кэшем. Поднимите лимит, а не потребность.', 'The cache stopped crashing because its memory was cut, but then it is no longer a cache. Raise the limit, not the need.') }],
+          fail: [{ if: (f) => (containers(obj(f, 'Deployment', 'default', 'cache'))[0]?.env ?? []).find((e: Obj) => e.name === 'MEM_MB')?.value !== '300', say: bi('Кэш перестал падать, потому что ему урезали память, но так он перестанет быть кэшем. Увеличьте лимит, а не потребность.', 'The cache stopped crashing because its memory was cut, but then it is no longer a cache. Raise the limit, not the need.') }],
         },
         concepts: ['k8s.resources', 'k8s.crashloop'],
       },
@@ -442,7 +442,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-startup',
         prompt: bi(
-          'Новая версия каталога прогревает кэш 40 секунд, и проверка жизнеспособности перезапускает контейнер раньше, чем тот успевает ответить. Добейтесь, чтобы оба пода `catalog` стали готовы и больше не перезапускались. Проверку жизнеспособности не убирайте: после запуска она нужна.',
+          'Новая версия каталога прогревает кэш 40 секунд, и проверка жизнеспособности перезапускает контейнер раньше, чем тот успевает ответить. Добейтесь, чтобы оба пода `catalog` стали готовы и больше не перезапускались. Проверку жизнеспособности не убирайте, потому что после запуска она по-прежнему нужна.',
           'The new version of the catalogue warms its cache for 40 seconds, and the liveness probe kills it before it can answer. Get both `catalog` pods ready and no longer restarting. Do not remove the liveness probe: it is needed after the start.',
         ),
         check: {

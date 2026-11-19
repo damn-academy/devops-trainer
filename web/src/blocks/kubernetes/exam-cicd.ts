@@ -138,8 +138,8 @@ export const cicdExam: Exam = {
       task: {
         id: 'x-key-missing',
         prompt: bi(
-          '«Выкладка на staging красная с первого дня»: отправьте пустой коммит в main и прочитайте лог джобы `deploy_staging`. Администратор оставил ключ сервисного аккаунта в файле `~/deployer.kubeconfig`. Передайте его джобе так, как положено передавать ключ кластера, и добейтесь зелёной выкладки. В репозиторий ключ попасть не должен.',
-          '“The staging deployment has been red since day one”: push an empty commit to main and read the `deploy_staging` log. The administrator left the service account’s key in `~/deployer.kubeconfig`. Give it to the job the way a cluster key should be given and get a green deployment; the key must not get into the repository.',
+          'Пришла заявка «Выкладка на staging красная с первого дня». Отправьте пустой коммит в main и прочитайте лог джобы `deploy_staging`. Администратор оставил ключ сервисного аккаунта в файле `~/deployer.kubeconfig`. Передайте его джобе так, как положено передавать ключ кластера, и добейтесь зелёной выкладки. В репозиторий ключ попасть не должен.',
+          'The ticket says: “The staging deployment has been red since day one”. Push an empty commit to main and read the `deploy_staging` log. The administrator left the service account’s key in `~/deployer.kubeconfig`. Give it to the job the way a cluster key should be given and get a green deployment; the key must not get into the repository.',
         ),
         check: keyCheck,
         concepts: ['cicd.deploy-account'],
@@ -155,8 +155,8 @@ export const cicdExam: Exam = {
       task: {
         id: 'x-key-plain',
         prompt: bi(
-          '«Выкладка на staging красная с первого дня»: ключ сервисного аккаунта уже лежит в настройках проекта, а `deploy_staging` всё равно падает. Отправьте пустой коммит в main, прочитайте лог джобы и почините настройку так, чтобы выкладка стала зелёной. Исходный ключ лежит в файле `~/deployer.kubeconfig`.',
-          '“The staging deployment has been red since day one”: the service account’s key is already in the project settings, and `deploy_staging` still fails. Push an empty commit to main, read the job’s log and fix the setting so the deployment turns green. The original key is in `~/deployer.kubeconfig`.',
+          'Пришла заявка «Выкладка на staging красная с первого дня». Ключ сервисного аккаунта уже лежит в настройках проекта, а `deploy_staging` всё равно падает. Отправьте пустой коммит в main, прочитайте лог джобы и почините настройку так, чтобы выкладка стала зелёной. Исходный ключ лежит в файле `~/deployer.kubeconfig`.',
+          'The ticket says: “The staging deployment has been red since day one”. The service account’s key is already in the project settings, and `deploy_staging` still fails. Push an empty commit to main, read the job’s log and fix the setting so the deployment turns green. The original key is in `~/deployer.kubeconfig`.',
         ),
         check: keyCheck,
         concepts: ['cicd.deploy-account', 'cicd.variable'],
@@ -171,8 +171,8 @@ export const cicdExam: Exam = {
       task: {
         id: 'x-tag',
         prompt: bi(
-          '«На staging неделю работает одна и та же версия»: конвейер на main каждый раз зелёный, а `kubectl get deploy,rs -o wide` показывает старый образ. Сделайте так, чтобы каждый конвейер на main выкладывал образ именно своего коммита, и отправьте изменение.',
-          '“Staging has run the same version for a week”: the main pipeline is green every time, while `kubectl get deploy,rs -o wide` shows the old image. Make every main pipeline deploy the image of exactly its own commit, and push the change.',
+          'Пришла заявка «На staging неделю работает одна и та же версия». Конвейер на main каждый раз зелёный, а `kubectl get deploy,rs -o wide` показывает старый образ. Сделайте так, чтобы каждый конвейер на main выкладывал образ того коммита, на котором он запущен, и отправьте изменение.',
+          'The ticket says: “Staging has run the same version for a week”. The main pipeline is green every time, while `kubectl get deploy,rs -o wide` shows the old image. Make every main pipeline deploy the image of exactly its own commit, and push the change.',
         ),
         check: {
           when: (f) => deployOk(f) && !!tipImage(f) && webIn(f, 'staging')?.image === tipImage(f) && (ci(f)?.registry ?? []).some((r) => `${r.image}:${r.tag}` === tipImage(f)),
@@ -190,8 +190,8 @@ export const cicdExam: Exam = {
       task: {
         id: 'x-gate',
         prompt: bi(
-          '«Зелёный конвейер выложил сломанную версию»: разработчики переводят сайт на базовый образ `FROM trainer/web:2.0`, а он падает при запуске. Сначала сделайте конвейер честным: выкладка ждёт результата не дольше двух минут, при неудаче конвейер становится красным и сам возвращает staging к прежней версии. Потом отправьте смену базового образа в `Dockerfile`.',
-          '“A green pipeline deployed a broken version”: the developers move the site to the base `FROM trainer/web:2.0`, and it crashes on start. First make the pipeline honest: the deployment waits for the result for no more than two minutes, on failure the pipeline is red and returns staging to the previous version by itself. Then push the base change in the `Dockerfile`.',
+          'Пришла заявка «Зелёный конвейер выложил сломанную версию». Разработчики переводят сайт на базовый образ `FROM trainer/web:2.0`, а он падает при запуске. Сначала сделайте конвейер честным: выкладка ждёт результата не дольше двух минут, при неудаче конвейер становится красным и сам возвращает staging к прежней версии. Потом отправьте смену базового образа в `Dockerfile`.',
+          'The ticket says: “A green pipeline deployed a broken version”. The developers move the site to the base `FROM trainer/web:2.0`, and it crashes on start. First make the pipeline honest: the deployment waits for the result for no more than two minutes, on failure the pipeline is red and returns staging to the previous version by itself. Then push the base change in the `Dockerfile`.',
         ),
         check: {
           when: (f) => {
@@ -200,7 +200,7 @@ export const cicdExam: Exam = {
             return broken && jobOf(f, 'deploy_staging', { ref: 'main' })?.status === 'failed' && /:[0-9a-f]{8}$/.test(img) && img !== tipImage(f);
           },
           fail: [
-            { if: (f) => (mainTip(f)?.files.Dockerfile ?? '').includes('trainer/web:2.0') && deployOk(f), say: bi('Джоба зелёная, а поды падают: она закончилась сразу после set image и ничего не дождалась.', 'The job is green and the pods crash: it ended right after set image and waited for nothing.') },
+            { if: (f) => (mainTip(f)?.files.Dockerfile ?? '').includes('trainer/web:2.0') && deployOk(f), say: bi('Джоба зелёная, а поды падают, потому что джоба закончилась сразу после set image и ничего не дождалась.', 'The job is green and the pods crash: it ended right after set image and waited for nothing.') },
             { if: (f) => jobOf(f, 'deploy_staging', { ref: 'main' })?.status === 'failed' && webIn(f, 'staging')?.image === tipImage(f), say: bi('Конвейер красный, и это правильно, но на staging осталась сломанная версия. Откат должен запускаться сам и только при неудаче.', 'The pipeline is red, which is right, but the broken version stayed on staging. The rollback must start by itself, only on failure.') },
           ],
         },
@@ -215,8 +215,8 @@ export const cicdExam: Exam = {
       task: {
         id: 'x-production',
         prompt: bi(
-          '«Production только по кнопке»: в namespace `production` работает свой Deployment `web`. Добавьте в конвейер джобу `deploy_production` с окружением `production`, которая после staging выкладывает туда тот же образ коммита и ждёт результата, но запускается только вручную. Отправьте изменение, убедитесь, что production сам не обновился, и запустите выкладку.',
-          '“Production only by a button”: namespace `production` has its own Deployment `web`. Add a job `deploy_production` with the environment `production` to the pipeline that, after staging, deploys the same commit image there and waits for the result, but starts only by hand. Push the change, make sure production did not update by itself, and start the deployment.',
+          'Пришла заявка «Production только по кнопке». В namespace `production` работает свой Deployment `web`. Добавьте в конвейер джобу `deploy_production` с окружением `production`, которая после staging выкладывает туда тот же образ коммита и ждёт результата, но запускается только вручную. Отправьте изменение, убедитесь, что production сам не обновился, и запустите выкладку.',
+          'The ticket says: “Production only by a button”. Namespace `production` has its own Deployment `web`. Add a job `deploy_production` with the environment `production` to the pipeline that, after staging, deploys the same commit image there and waits for the result, but starts only by hand. Push the change, make sure production did not update by itself, and start the deployment.',
         ),
         check: {
           when: (f) => {
@@ -242,8 +242,8 @@ export const cicdExam: Exam = {
       task: {
         id: 'x-cause',
         prompt: bi(
-          '«Какой коммит в какой ревизии?»: дежурный хочет видеть в выводе `kubectl rollout history deployment/web` напротив каждой ревизии короткий хеш коммита, который её выложил, а не `<none>`. Сделайте так, чтобы конвейер сам записывал эту причину при каждой выкладке, и отправьте изменение. В уроке этого не было: найдите стандартную аннотацию Kubernetes для причины изменения.',
-          '“Which commit is in which revision?”: the on-call engineer wants `kubectl rollout history deployment/web` to show, against every revision, the short hash of the commit that deployed it instead of `<none>`. Make the pipeline record this cause by itself on every deployment, and push the change. The lesson did not show this: find the standard Kubernetes annotation for the cause of a change.',
+          'Пришла заявка «Какой коммит в какой ревизии?». Дежурный хочет видеть в выводе `kubectl rollout history deployment/web` напротив каждой ревизии короткий хеш коммита, который её выложил, а не `<none>`. Сделайте так, чтобы конвейер сам записывал эту причину при каждой выкладке, и отправьте изменение. В уроке об этом не рассказывали, поэтому найдите стандартную аннотацию Kubernetes для причины изменения.',
+          'The ticket says: “Which commit is in which revision?”. The on-call engineer wants `kubectl rollout history deployment/web` to show, against every revision, the short hash of the commit that deployed it instead of `<none>`. Make the pipeline record this cause by itself on every deployment, and push the change. The lesson did not show this: find the standard Kubernetes annotation for the cause of a change.',
         ),
         check: {
           when: (f) => {

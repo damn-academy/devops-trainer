@@ -50,8 +50,8 @@ export const ingressPathModel = defineModel<P>({
     'A request reaches a node port (directly or via a load balancer), then the ingress proxy that picks a Service by host and path, then the pod. The proxy has its own timeout, and 502, 503 and 504 often come from it.',
   ),
   intro: bi(
-    'Сейчас на схеме браузер пользователя и под приложения. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд»: участники между браузером и подом будут появляться, когда до них дойдёт запрос. Под схемой показан код ответа, который получит браузер. Потом увеличьте в «Параметрах» время ответа пода так, чтобы оно превысило таймаут прокси, и посмотрите, кто вернёт ошибку.',
-    'For now: the browser and the pod. Press “Start: step forward” and go on with “Step forward”: the hops appear as the request reaches them. The status code is shown under the diagram. Then raise the pod’s response time above the proxy timeout and see who returns the error.',
+    'Сейчас на схеме браузер пользователя и под приложения. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Участники между браузером и подом будут появляться, когда до них дойдёт запрос. Под схемой показан код ответа, который получит браузер. Потом увеличьте в «Параметрах» время ответа пода так, чтобы оно превысило таймаут прокси, и посмотрите, кто вернёт ошибку.',
+    'For now: the browser and the pod. Press “Start from the first step” and go on with “Step forward”: the hops appear as the request reaches them. The status code is shown under the diagram. Then raise the pod’s response time above the proxy timeout and see who returns the error.',
   ),
   legend: [
     ...LEGEND_BASE,
@@ -74,8 +74,8 @@ export const ingressPathModel = defineModel<P>({
       default: 'Cluster',
       group: bi('Как запрос входит в кластер', 'How the request enters'),
       options: [
-        { id: 'Cluster', label: bi('Cluster: на прокси на любом узле', 'Cluster: a proxy on any node') },
-        { id: 'Local', label: bi('Local: только на прокси на этом узле', 'Local: only a proxy on this node') },
+        { id: 'Cluster', label: bi('Cluster, то есть на прокси на любом узле', 'Cluster: a proxy on any node') },
+        { id: 'Local', label: bi('Local, то есть только на прокси на этом узле', 'Local: only a proxy on this node') },
       ],
       near: 'node',
       levels: ['intermediate', 'experienced'],
@@ -102,7 +102,7 @@ export const ingressPathModel = defineModel<P>({
       predict: {
         prompt: bi('Вы меняете время, за которое под готовит ответ, а таймаут прокси остаётся прежним. Какой ответ получит браузер?', 'You change the pod’s response time; the proxy timeout stays. What does the browser get?'),
         options: [
-          { id: 'ok', text: bi('200: страницу от приложения', '200 from the application') },
+          { id: 'ok', text: bi('Код 200 и страницу от приложения', '200 from the application') },
           { id: 'proxy', text: bi('504 Gateway Timeout от прокси', '504 from the proxy') },
           { id: 'app', text: bi('500 от приложения', '500 from the application') },
         ],
@@ -112,7 +112,7 @@ export const ingressPathModel = defineModel<P>({
     { id: 'timeout', label: bi('Сколько секунд прокси ждёт ответа пода', 'Seconds the proxy waits'), kind: 'range', min: 5, max: 60, step: 5, default: 30, near: 'proxy', group: bi('Время ответа', 'Timing') },
   ],
   breaks: [
-    { id: 'no-pods', label: bi('У Service web нет ни одного готового пода', 'Service web has no ready pods'), remove: ['e-pod'], layer: 'L7', boundary: 'network', predict: { prompt: bi('У Service web нет готовых подов, а прокси работает. Что получит браузер?', 'No ready pods. What does the browser get?'), options: [{ id: '503', text: bi('503 от прокси: отправить запрос некуда', '503 from the proxy') }, { id: 'timeout', text: bi('Долгое ожидание и тайм-аут соединения', 'A connection timeout') }], resolve: () => '503' } },
+    { id: 'no-pods', label: bi('У Service web нет ни одного готового пода', 'Service web has no ready pods'), remove: ['e-pod'], layer: 'L7', boundary: 'network', predict: { prompt: bi('У Service web нет готовых подов, а прокси работает. Что получит браузер?', 'No ready pods. What does the browser get?'), options: [{ id: '503', text: bi('Прокси ответит кодом 503, потому что отправить запрос некуда', '503 from the proxy') }, { id: 'timeout', text: bi('Долгое ожидание и тайм-аут соединения', 'A connection timeout') }], resolve: () => '503' } },
     { id: 'reset', label: bi('Приложение обрывает соединение посреди ответа', 'The application drops the connection mid-answer'), remove: ['e-svc'], layer: 'L7', boundary: 'network', predict: { prompt: bi('Приложение обрывает соединение посреди ответа. Что получит браузер?', 'The app drops the connection mid-answer. What does the browser get?'), options: [{ id: '502', text: bi('502 Bad Gateway от прокси', '502 from the proxy') }, { id: '500', text: bi('500 от приложения', '500 from the application') }], resolve: () => '502' } },
   ],
   metrics: [
@@ -225,14 +225,14 @@ export const ingressPathModel = defineModel<P>({
         say: { proxy: bi('Приложение оборвало соединение, и прокси отвечает браузеру 502.', 'The app dropped it; the proxy returns 502.') },
         states: { proxy: 'err' },
         metrics: { status: 502, seconds: 0 },
-        broken: { at: 'e-svc', message: 'HTTP/1.1 502 Bad Gateway\n\nBad Gateway', caption: bi('между прокси и подом. Код 502 — это прокси сообщает о том, кто стоит за ним, поэтому причину ищите в логах пода и в числе его перезапусков.', 'between proxy and pod: 502 is the proxy speaking about what is behind it; check the pod logs and restarts.') },
+        broken: { at: 'e-svc', message: 'HTTP/1.1 502 Bad Gateway\n\nBad Gateway', caption: bi('между прокси и подом. Кодом 502 прокси сообщает об ошибке того, кто стоит за ним, поэтому причину ищите в логах пода и в числе его перезапусков.', 'between proxy and pod: 502 is the proxy speaking about what is behind it; check the pod logs and restarts.') },
       });
       return s;
     }
     s.push({
       id: 'svc',
       label: 'Service',
-      caption: bi('Дальше путь обычный: ядро узла заменяет адрес Service на адрес пода, и запрос приходит в под web.', 'Then the usual path: the Service address becomes the pod address.'),
+      caption: bi('Дальше путь обычный, и ядро узла заменяет адрес Service на адрес пода, и запрос приходит в под web.', 'Then the usual path: the Service address becomes the pod address.'),
       focus: ['svc', 'e-pod'],
       reveal: ['e-pod'],
       tokens: [{ edge: 'e-pod', label: 'dst 10.42.1.15:80' }],
@@ -243,7 +243,7 @@ export const ingressPathModel = defineModel<P>({
       s.push({
         id: '504',
         label: '504',
-        caption: fmt(bi('Под готовит ответ {r} с, а прокси ждёт только {t} с. Прокси сдаётся первым и отвечает браузеру 504 Gateway Timeout. Приложение тут ни при чём: оно ещё работает над ответом, который уже никому не нужен.', 'The pod takes {r} s, the proxy waits {t} s: the proxy gives up and returns 504; the app is still working.'), { r: p.response, t: p.timeout }),
+        caption: fmt(bi('Под готовит ответ {r} с, а прокси ждёт только {t} с. Прокси сдаётся первым и отвечает браузеру 504 Gateway Timeout. Приложение тут ни при чём, потому что оно ещё работает над ответом, который уже никому не нужен.', 'The pod takes {r} s, the proxy waits {t} s: the proxy gives up and returns 504; the app is still working.'), { r: p.response, t: p.timeout }),
         focus: ['proxy'],
         say: { proxy: fmt(bi('Прокси ждал ответа {t} с, не дождался и отвечает браузеру 504.', 'The proxy waited {t} s and returns 504.'), { t: p.timeout }) },
         states: { proxy: 'warn', client: 'err' },
@@ -275,7 +275,7 @@ export const ingressPathModel = defineModel<P>({
       case 'api':
         return b.api === 'gateway' ? bi('С Gateway API путь тот же, но маршрут записан в HTTPRoute, а вход описывает объект Gateway.', 'Gateway API: the same path; the rule is an HTTPRoute.') : bi('С Ingress всё описано одним объектом; этот API заморожен, и новые возможности появляются в Gateway API.', 'Ingress: one object; frozen, new features go to Gateway API.');
       case 'entry':
-        return b.entry === 'lb' ? bi('Через балансировщик: у сайта один внешний адрес перед портами всех узлов.', 'Via a LoadBalancer: one external IP in front of the node ports.') : bi('Прямо на порт узла: это работает, но пользователю нужно знать адреса узлов.', 'Straight to the NodePort: the client must know the nodes.');
+        return b.entry === 'lb' ? bi('Запросы идут через балансировщик, и у сайта появляется один внешний адрес перед портами всех узлов.', 'Via a LoadBalancer: one external IP in front of the node ports.') : bi('Запросы идут напрямую на порт узла. Так тоже работает, но пользователю нужно знать адреса узлов.', 'Straight to the NodePort: the client must know the nodes.');
     }
     return bi('Путь пересчитан.', 'The path is recomputed.');
   },

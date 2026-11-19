@@ -49,7 +49,7 @@ const diagram = {
     edge('e-etcd', 'klet', 'etcd', bi('запускает', 'starts'), bi('Первым kubelet запускает etcd.', 'etcd first.'), START),
     edge('e-api', 'klet', 'api', bi('запускает', 'starts'), bi('Затем kubelet запускает API-сервер.', 'Then the API server.'), START, { via: [[575, 395], [575, 280]], labelAt: 0.6 }),
     edge('e-cms', 'klet', 'cms', bi('запускает', 'starts'), bi('И наконец два управляющих процесса.', 'And the two controllers.'), START, { via: [[460, 160]], labelAt: 0.4 }),
-    edge('e-store', 'api', 'etcd', 'TLS :2379', bi('API-сервер — единственный клиент etcd. Его сертификат apiserver-etcd-client подписан центром etcd.', 'The API server is etcd’s only client.'), bi('Соединяется kube-apiserver.', 'kube-apiserver.')),
+    edge('e-store', 'api', 'etcd', 'TLS :2379', bi('Кроме API-сервера, к etcd никто не обращается. Его сертификат apiserver-etcd-client подписан центром etcd.', 'The API server is etcd’s only client.'), bi('Соединяется kube-apiserver.', 'kube-apiserver.')),
     edge('e-watch', 'cms', 'api', 'TLS :6443', bi('controller-manager и scheduler обращаются к API со своими kubeconfig.', 'They talk to the API with their kubeconfigs.'), bi('Соединяются kube-controller-manager и kube-scheduler.', 'The controller-manager and scheduler.')),
     edge('e-net', 'cni', 'dns', bi('сеть подов', 'pod network'), bi('Без сетевого плагина у подов нет адресов, и CoreDNS не может запуститься.', 'Without a CNI CoreDNS cannot start.'), bi('Сеть даёт плагин.', 'The plugin.')),
   ],
@@ -66,8 +66,8 @@ export const kubeadmInitModel = defineModel<P>({
     'kubeadm writes files; the kubelet starts the control plane from them. The diagram walks the phases and shows where each forgotten preparation surfaces.',
   ),
   intro: bi(
-    'Сейчас на схеме только команда kubeadm init. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд»: каждый шаг — одна фаза init. Слева появятся файлы, которые kubeadm записывает, внизу kubelet, а справа поды, которые kubelet запускает из этих файлов. Счётчик под схемой показывает, сколько файлов уже записано. Потом включайте по одной поломки в блоке «Сломать» и смотрите, на какой фазе остановится init.',
-    'For now only kubeadm init. Press “Start: step forward” and go on with “Step forward”: each step is a phase. The files appear on the left, the kubelet at the bottom, the pods it starts on the right. Then switch on the breaks one at a time and see where init stops.',
+    'Сейчас на схеме только команда kubeadm init. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд», и каждый шаг покажет одну фазу init. Слева появятся файлы, которые kubeadm записывает, внизу kubelet, а справа поды, которые kubelet запускает из этих файлов. Счётчик под схемой показывает, сколько файлов уже записано. Потом включайте по одной поломки в блоке «Сломать» и смотрите, на какой фазе остановится init.',
+    'For now only kubeadm init. Press “Start from the first step” and go on with “Step forward”: each step is a phase. The files appear on the left, the kubelet at the bottom, the pods it starts on the right. Then switch on the breaks one at a time and see where init stops.',
   ),
   legend: [
     ...LEGEND_BASE,
@@ -89,7 +89,7 @@ export const kubeadmInitModel = defineModel<P>({
       default: false,
       near: 'cni',
       group: bi('После init', 'After init'),
-      predict: { prompt: bi('Вы меняете, установлен ли сетевой плагин подов. В каком состоянии будет CoreDNS после init?', 'You change whether a CNI is installed. What state is CoreDNS in after init?'), options: [{ id: 'pending', text: bi('Pending: ждёт сети подов', 'Pending') }, { id: 'running', text: bi('Running', 'Running') }], resolve: (_p, n) => (n.some((s) => s.values?.dns === 'Running') ? 'running' : 'pending') },
+      predict: { prompt: bi('Вы меняете, установлен ли сетевой плагин подов. В каком состоянии будет CoreDNS после init?', 'You change whether a CNI is installed. What state is CoreDNS in after init?'), options: [{ id: 'pending', text: bi('Pending, потому что под ждёт сети подов', 'Pending') }, { id: 'running', text: bi('Running', 'Running') }], resolve: (_p, n) => (n.some((s) => s.values?.dns === 'Running') ? 'running' : 'pending') },
     },
     {
       id: 'months',
@@ -102,7 +102,7 @@ export const kubeadmInitModel = defineModel<P>({
       near: 'pki',
       levels: ['intermediate', 'experienced'],
       group: bi('Время', 'Time'),
-      predict: { prompt: bi('Кластер не обновляли столько месяцев, сколько вы выбрали. Что ответит kubectl?', 'Not upgraded for the chosen months. What does kubectl answer?'), options: [{ id: 'x509', text: bi('Ошибку x509: срок сертификата истёк', 'An x509 error: expired') }, { id: 'ok', text: bi('Как обычно', 'As usual') }], resolve: (_p, n) => (n.some((s) => s.id === 'expired') ? 'x509' : 'ok') },
+      predict: { prompt: bi('Кластер не обновляли столько месяцев, сколько вы выбрали. Что ответит kubectl?', 'Not upgraded for the chosen months. What does kubectl answer?'), options: [{ id: 'x509', text: bi('Ошибку x509 о том, что срок сертификата истёк', 'An x509 error: expired') }, { id: 'ok', text: bi('Как обычно', 'As usual') }], resolve: (_p, n) => (n.some((s) => s.id === 'expired') ? 'x509' : 'ok') },
     },
     { id: 'renewed', label: bi('Сертификаты продлевали (kubeadm certs renew или обновление кластера)', 'Certificates were renewed'), kind: 'toggle', default: false, near: 'pki', levels: ['intermediate', 'experienced'], group: bi('Время', 'Time') },
   ],
@@ -139,7 +139,7 @@ export const kubeadmInitModel = defineModel<P>({
     s.push({
       id: 'preflight',
       label: 'preflight',
-      caption: bi('Первая фаза — проверки узла: загружены ли модули ядра br_netfilter и overlay, включена ли пересылка пакетов, свободны ли порты 6443, 2379–2380 и 10250, отвечает ли среда запуска контейнеров и выключен ли swap.', 'Preflight checks: kernel modules, ip_forward, free ports, the runtime, swap.'),
+      caption: bi('В первой фазе kubeadm проверяет узел: загружены ли модули ядра br_netfilter и overlay, включена ли пересылка пакетов, свободны ли порты 6443, 2379–2380 и 10250, отвечает ли среда запуска контейнеров и выключен ли swap.', 'Preflight checks: kernel modules, ip_forward, free ports, the runtime, swap.'),
       focus: ['kadm'],
       say: { kadm: bi('kubeadm проверяет, готов ли узел стать управляющим.', 'kubeadm checks the node is ready.') },
       states: only(ALL, 'kadm'),
@@ -149,7 +149,7 @@ export const kubeadmInitModel = defineModel<P>({
       s.push({
         id: 'fail',
         label: bi('стоп', 'stop'),
-        caption: bi('init останавливается раньше, чем записал хоть один файл. Это лучший вид ошибки: её причина понятна, а исправить её дёшево.', 'init stops before writing a file: the best kind of error, clear and cheap.'),
+        caption: bi('init останавливается, не успев записать ни одного файла. Такая ошибка лучше всех остальных, потому что её причина понятна, а исправить её дёшево.', 'init stops before writing a file: the best kind of error, clear and cheap.'),
         focus: ['kadm'],
         say: { kadm: bi('kubeadm видит, что пересылка пакетов выключена, и прекращает работу.', 'kubeadm sees forwarding off and stops.') },
         states: { kadm: 'err' },
@@ -183,7 +183,7 @@ export const kubeadmInitModel = defineModel<P>({
     s.push({
       id: 'manifests',
       label: 'manifests',
-      caption: bi('Фазы etcd и control-plane ничего не запускают: они только кладут четыре YAML-файла в каталог /etc/kubernetes/manifests.', 'etcd and control-plane start nothing: four YAML files in /etc/kubernetes/manifests.'),
+      caption: bi('Фазы etcd и control-plane ничего не запускают, а только кладут четыре YAML-файла в каталог /etc/kubernetes/manifests.', 'etcd and control-plane start nothing: four YAML files in /etc/kubernetes/manifests.'),
       focus: ['kadm', 'e-mf'],
       reveal: ['mf', 'e-mf'],
       tokens: [{ edge: 'e-mf', label: '4 × .yaml' }],
@@ -275,9 +275,9 @@ export const kubeadmInitModel = defineModel<P>({
     return s;
   },
   explainDelta(_prev, next, change, _a, b): Bi {
-    if (change.kind === 'break') return change.on ? bi('Подготовка узла пропущена: посмотрите, на какой фазе это всплывает и какое сообщение вы увидите.', 'A preparation step was skipped: see where it surfaces.') : bi('Узел снова подготовлен правильно.', 'The node is prepared correctly.');
+    if (change.kind === 'break') return change.on ? bi('Подготовка узла пропущена. Посмотрите, на какой фазе это всплывает и какое сообщение вы увидите.', 'A preparation step was skipped: see where it surfaces.') : bi('Узел снова подготовлен правильно.', 'The node is prepared correctly.');
     if (change.id === 'cni') return b.cni ? bi('С сетью подов CoreDNS запускается, и узел становится Ready.', 'With a pod network the node becomes Ready.') : bi('Без сети подов init завершается успешно, но кластер ещё не работает.', 'Without one init succeeds, but the cluster does not work yet.');
     const d = metric(next, 'days');
-    return d <= 0 ? bi('Сертификаты истекли: нужно выполнить kubeadm certs renew all и перезапустить статические поды.', 'Expired: kubeadm certs renew all and restart the static pods.') : fmt(bi('Сертификатам осталось {d} дней.', '{d} days left.'), { d });
+    return d <= 0 ? bi('Сертификаты истекли, и теперь нужно выполнить kubeadm certs renew all и перезапустить статические поды.', 'Expired: kubeadm certs renew all and restart the static pods.') : fmt(bi('Сертификатам осталось {d} дней.', '{d} days left.'), { d });
   },
 });

@@ -29,11 +29,11 @@ export function placementFor(quiz: QuizItem[]) {
         kind: 'mcq',
         prompt: bi('Чем образ отличается от контейнера?', 'How is an image different from a container?'),
         options: [
-          { id: 'right', text: bi('Образ — неизменяемый набор слоёв и настроек, а контейнер — процесс, запущенный из образа', 'An image is an immutable set of layers and settings; a container is a process started from it'), correct: true },
-          { id: 'proc', text: bi('Образ — запущенный процесс, а контейнер — файл на диске', 'An image is a running process, a container is a file on disk'), why: bi('Наоборот: образ лежит в хранилище и ничего не делает, пока из него не запустили контейнер.', 'The other way round: an image sits in storage and does nothing until a container is started from it.') },
+          { id: 'right', text: bi('Образ состоит из неизменяемых слоёв и настроек, а контейнер работает как процесс, запущенный из образа', 'An image is an immutable set of layers and settings; a container is a process started from it'), correct: true },
+          { id: 'proc', text: bi('Образ работает как запущенный процесс, а контейнер лежит файлом на диске', 'An image is a running process, a container is a file on disk'), why: bi('Всё наоборот, потому что образ лежит в хранилище и ничего не делает, пока из него не запустили контейнер.', 'The other way round: an image sits in storage and does nothing until a container is started from it.') },
           { id: 'same', text: bi('Это одно и то же', 'They are the same thing'), why: bi('Из одного образа можно запустить сколько угодно контейнеров, значит, это разные вещи.', 'You can start any number of containers from one image — so they are different things.') },
         ],
-        explain: bi('Без этого различия Kubernetes не объяснить: под ссылается на образ, а kubelet запускает из этого образа контейнеры.', 'Kubernetes cannot be explained without this distinction: a pod refers to an image, and the kubelet starts containers from it.'),
+        explain: bi('Без этого различия Kubernetes не объяснить, потому что под ссылается на образ, а kubelet запускает из этого образа контейнеры.', 'Kubernetes cannot be explained without this distinction: a pod refers to an image, and the kubelet starts containers from it.'),
       },
     },
     {
@@ -143,7 +143,7 @@ export function placementFor(quiz: QuizItem[]) {
       setup: EXAM_SETUPS.drain,
       task: {
         id: 'maint',
-        prompt: bi('Выведите `worker-2` на обслуживание: новых подов на нём быть не должно, рабочих подов из namespace `default` тоже, а у `web` всё это время должно быть три готовых пода.', 'Take `worker-2` out for maintenance: no new pods may land on it, no workload pods of `default` may stay, and `web` keeps three ready pods all along.'),
+        prompt: bi('Выведите `worker-2` на обслуживание так, чтобы новых подов на нём не было, рабочих подов из namespace `default` тоже, а у `web` всё это время должно быть три готовых пода.', 'Take `worker-2` out for maintenance: no new pods may land on it, no workload pods of `default` may stay, and `web` keeps three ready pods all along.'),
         check: {
           when: (f) => {
             const k = k8s(f);

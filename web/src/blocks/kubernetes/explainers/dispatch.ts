@@ -22,9 +22,9 @@ const diagram = {
   width: 960,
   height: 440,
   nodes: [
-    box('list', bi('Список: что должно работать', 'The list of what must run'), 'obj', 'doc', [24, 40, 270, 96], 'file', bi('Список пяти контейнеров, которые должны работать, и памяти, которая нужна каждому из них: два контейнера магазина shop по 512 МБ, два контейнера api по 1 ГБ и один контейнер cache на 2 ГБ. Всё остальное диспетчер выводит из этого списка.', 'Five containers that must run and the memory each needs: shop ×2 (512 MB), api ×2 (1 GB), cache (2 GB). Everything else the dispatcher derives from this list.'), bi('Список составляете вы, когда решаете, из чего состоит сервис.', 'You write the list when you decide what the service consists of.'), { sub: 'shop ×2 · api ×2 · cache' }),
-    box('hand', bi('Диспетчер: вы сами', 'Dispatcher: you'), 'user', 'box', [370, 52, 240, 72], 'user', bi('Человек с терминалом, который сам выбирает сервер для каждого контейнера, запускает его командой `docker run` и потом время от времени проверяет, что всё работает.', 'A person at a terminal who picks a server for each container, starts it with `docker run` and checks now and then that it works.'), bi('Эту работу делает дежурный инженер.', 'The on-call engineer does it.')),
-    box('bot', bi('Диспетчер: программа', 'Dispatcher: a program'), 'process', 'box', [370, 52, 240, 72], 'process', bi('Программа, которая делает те же три работы, что и человек: выбирает сервер по свободной памяти, каждые несколько секунд проверяет серверы и сверяет то, что работает, со списком.', 'A program doing the same three jobs: picks a server by free memory, checks the servers every few seconds and compares what runs with the list.'), bi('В следующих уроках такой программой будет Kubernetes.', 'In the next lessons this program is Kubernetes.')),
+    box('list', bi('Список того, что должно работать', 'The list of what must run'), 'obj', 'doc', [24, 40, 270, 96], 'file', bi('Список пяти контейнеров, которые должны работать, и памяти, которая нужна каждому из них: два контейнера магазина shop по 512 МБ, два контейнера api по 1 ГБ и один контейнер cache на 2 ГБ. Всё остальное диспетчер выводит из этого списка.', 'Five containers that must run and the memory each needs: shop ×2 (512 MB), api ×2 (1 GB), cache (2 GB). Everything else the dispatcher derives from this list.'), bi('Список составляете вы, когда решаете, из чего состоит сервис.', 'You write the list when you decide what the service consists of.'), { sub: 'shop ×2 · api ×2 · cache' }),
+    box('hand', bi('Диспетчер, то есть вы сами', 'The dispatcher, that is you'), 'user', 'box', [370, 52, 240, 72], 'user', bi('Человек с терминалом, который сам выбирает сервер для каждого контейнера, запускает его командой `docker run` и потом время от времени проверяет, что всё работает.', 'A person at a terminal who picks a server for each container, starts it with `docker run` and checks now and then that it works.'), bi('Эту работу делает дежурный инженер.', 'The on-call engineer does it.')),
+    box('bot', bi('Диспетчер-программа', 'The dispatcher program'), 'process', 'box', [370, 52, 240, 72], 'process', bi('Программа, которая делает те же три работы, что и человек: выбирает сервер по свободной памяти, каждые несколько секунд проверяет серверы и сверяет то, что работает, со списком.', 'A program doing the same three jobs: picks a server by free memory, checks the servers every few seconds and compares what runs with the list.'), bi('В следующих уроках такой программой будет Kubernetes.', 'In the next lessons this program is Kubernetes.')),
     box('s1', bi('Сервер 1, 4 ГБ', 'Server 1 · 4 GB'), 'node', 'rack', [24, 270, 280, 110], 'server', bi('Машина, на которой для контейнеров есть 4 ГБ памяти.', 'A machine with 4 GB of memory for containers.'), store, { sub: 'shop, api' }),
     box('s2', bi('Сервер 2, 4 ГБ', 'Server 2 · 4 GB'), 'node', 'rack', [340, 270, 280, 110], 'server', bi('Вторая машина с 4 ГБ памяти для контейнеров. Её можно выключить ручкой «Ночью выключается сервер 2».', 'The second machine with 4 GB; the knob “Server 2 goes down at night” turns it off.'), store, { sub: 'shop, api' }),
     box('s3', bi('Сервер 3, 4 ГБ', 'Server 3 · 4 GB'), 'node', 'rack', [656, 270, 280, 110], 'server', bi('Третья машина с 4 ГБ памяти для контейнеров.', 'The third machine with 4 GB of memory.'), store, { sub: 'cache' }),
@@ -49,8 +49,8 @@ export const dispatchModel = defineModel<P>({
     'Five containers must be placed on three servers so that each has enough memory, then a night failure of one server survived and a new shop version rolled out in the morning. The diagram shows a person and a program doing it and counts the minutes.',
   ),
   intro: bi(
-    'Сейчас на схеме только список того, что должно работать, и диспетчер, то есть вы сами. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд». Серверы появятся, когда диспетчер начнёт раскладывать контейнеры. Потом включите в «Параметрах» ночной сбой и выкатку новой версии, а напоследок поручите работу программе и сравните минуты под схемой.',
-    'For now the diagram shows only the list of what must run and the dispatcher, that is you. Press “Start: step forward”, then go on with “Step forward”. The servers appear when the dispatcher starts placing containers. Then turn on the night failure and the rollout in “Parameters”, and finally hand the job to a program and compare the minutes under the diagram.',
+    'Сейчас на схеме только список того, что должно работать, и диспетчер, то есть вы сами. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Серверы появятся, когда диспетчер начнёт раскладывать контейнеры. Потом включите в «Параметрах» ночной сбой и выкатку новой версии, а напоследок поручите работу программе и сравните минуты под схемой.',
+    'For now the diagram shows only the list of what must run and the dispatcher, that is you. Press “Start from the first step”, then go on with “Step forward”. The servers appear when the dispatcher starts placing containers. Then turn on the night failure and the rollout in “Parameters”, and finally hand the job to a program and compare the minutes under the diagram.',
   ),
   legend: [...LEGEND_BASE, mark('icon:file', 'список того, что должно работать', 'the list of what must run'), mark('icon:user', 'диспетчер-человек', 'the human dispatcher'), mark('icon:process', 'диспетчер-программа', 'the program'), mark('icon:server', 'сервер с памятью для контейнеров', 'a server with memory for containers'), mark('err', 'сервер выключен', 'the server is down')],
   stopLabel: bi('Работа остановилась', 'The work stopped'),
@@ -70,8 +70,8 @@ export const dispatchModel = defineModel<P>({
       predict: {
         prompt: bi('Теперь контейнеры раскладывает программа. Сколько из тех работ, что вы делали руками, ей нужно уметь, чтобы заменить вас полностью, в том числе ночью?', 'Now a program places the containers. How many of the jobs you did by hand must it do to replace you fully, at night too?'),
         options: [
-          { id: 'three', text: bi('Три: выбрать сервер, следить за серверами и помнить список', 'Three: pick a server, watch the servers, remember the list') },
-          { id: 'one', text: bi('Одну: запустить контейнеры, а дальше они работают сами', 'One: start the containers, then they run by themselves') },
+          { id: 'three', text: bi('Все три работы, то есть выбирать сервер, следить за серверами и помнить список', 'Three: pick a server, watch the servers, remember the list') },
+          { id: 'one', text: bi('Только одну, потому что контейнеры достаточно запустить, а дальше они работают сами', 'One: start the containers, then they run by themselves') },
         ],
         resolve: () => 'three',
       },
@@ -87,7 +87,7 @@ export const dispatchModel = defineModel<P>({
         prompt: bi('Ночью выключается сервер 2, на котором работали один контейнер shop и один контейнер api. Сколько контейнеров диспетчеру нужно запустить заново и где?', 'Server 2, which ran one shop and one api, goes down at night. How many containers must be started again, and where?'),
         options: [
           { id: 'two', text: bi('Два, на серверах 1 и 3, где хватает свободной памяти', 'Two, on servers 1 and 3, where there is free memory') },
-          { id: 'none', text: bi('Ни одного: контейнеры сами переедут на соседние серверы', 'None: the containers move to the neighbours by themselves') },
+          { id: 'none', text: bi('Ни одного, потому что контейнеры сами перезапустятся на соседних серверах', 'None: the containers move to the neighbours by themselves') },
         ],
         resolve: () => 'two',
       },
@@ -103,8 +103,8 @@ export const dispatchModel = defineModel<P>({
       predict: {
         prompt: bi('Список того, что должно работать, нигде не записан. Сможет ли диспетчер, человек или программа, разложить контейнеры по серверам?', 'The list of what must run is written down nowhere. Can the dispatcher, a person or a program, place the containers?'),
         options: [
-          { id: 'no', text: bi('Нет: неизвестно, какие контейнеры и сколько их запускать', 'No: nobody knows which containers to start and how many') },
-          { id: 'yes', text: bi('Да: программа сама найдёт на серверах образы и запустит их', 'Yes: a program finds the images on the servers and starts them') },
+          { id: 'no', text: bi('Нет, потому что неизвестно, какие контейнеры и сколько их запускать', 'No, because nobody knows which containers to start and how many') },
+          { id: 'yes', text: bi('Да, потому что программа сама найдёт на серверах образы и запустит их', 'Yes, because a program finds the images on the servers and starts them') },
         ],
         resolve: (_p, n) => (n.some((s) => s.broken) ? 'no' : 'yes'),
       },
@@ -125,7 +125,7 @@ export const dispatchModel = defineModel<P>({
       s.push({
         id: 'lost',
         label: bi('нет списка', 'no list'),
-        caption: bi('Диспетчер собирается разложить контейнеры, но списка того, что должно работать, нет: о нём помнили только люди, а записать его никто не успел. Поэтому неизвестно, какие контейнеры нужны и сколько их, и работа останавливается, не начавшись.', 'The dispatcher is about to place containers, but there is no list: only people remembered it. Nobody knows which containers are needed and how many, so the work stops before it starts.'),
+        caption: bi('Диспетчер собирается разложить контейнеры, но списка того, что должно работать, нет, потому что о нём помнили только люди, а записать его никто не успел. Поэтому неизвестно, какие контейнеры нужны и сколько их, и работа останавливается, не начавшись.', 'The dispatcher is about to place containers, but there is no list: only people remembered it. Nobody knows which containers are needed and how many, so the work stops before it starts.'),
         focus: [me],
         say: { [me]: bi('Диспетчер ищет список того, что должно работать, и не находит его.', 'The dispatcher looks for the list and finds none.') },
         states: { ...first, list: 'err' },
@@ -137,7 +137,7 @@ export const dispatchModel = defineModel<P>({
     s.push({
       id: 'list',
       label: bi('список', 'list'),
-      caption: bi('Всё начинается со списка: в нём пять контейнеров и память, которая нужна каждому. Всего контейнерам нужно 5 ГБ, а на трёх серверах есть 12 ГБ, так что место найдётся, если разложить контейнеры с умом.', 'It starts with the list: five containers and the memory each needs, 5 GB in all, while the three servers have 12 GB.'),
+      caption: bi('Всё начинается со списка, в котором записаны пять контейнеров и память, которая нужна каждому из них. Всего контейнерам нужно 5 ГБ, а на трёх серверах есть 12 ГБ, так что место найдётся, если разложить контейнеры с умом.', 'It starts with the list: five containers and the memory each needs, 5 GB in all, while the three servers have 12 GB.'),
       focus: ['list'],
       say: { list: bi('В списке два контейнера shop по 512 МБ, два контейнера api по 1 ГБ и один контейнер cache на 2 ГБ.', 'The list: shop ×2 at 512 MB, api ×2 at 1 GB, cache at 2 GB.') },
       states: first,
@@ -239,7 +239,7 @@ export const dispatchModel = defineModel<P>({
   explainDelta(prev, next, change, _a, b): Bi {
     if (change.kind === 'break')
       return change.on
-        ? bi('Списка больше нет, и диспетчер останавливается на первом же шаге: ему неизвестно, что запускать. Всё остальное держится на этом описании.', 'Without the list the dispatcher stops at the first step: it does not know what to start.')
+        ? bi('Списка больше нет, и диспетчер останавливается на первом же шаге, потому что ему неизвестно, что запускать. Всё остальное держится на этом описании.', 'Without the list the dispatcher stops at the first step: it does not know what to start.')
         : bi('Список снова записан, и диспетчер может разложить контейнеры.', 'The list is back; the containers can be placed.');
     if (change.id === 'who')
       return fmt(

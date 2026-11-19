@@ -31,14 +31,14 @@ const diagram = {
     box('api', 'kube-apiserver', 'cp', 'hex', [24, 40, 210, 56], 'server', bi('Единственный, кто пишет в etcd. На время восстановления его останавливают, чтобы он не писал в старую базу.', 'The only writer to etcd; stopped during a restore.'), bi('Работает статическим подом.', 'A static pod.'), { see: 'kubectl get --raw /readyz' }),
     box('etcd', 'etcd', 'store', 'box', [380, 40, 210, 56], 'database', bi('Работающий etcd. Данные он хранит в каталоге /var/lib/etcd и принимает соединения на порту 2379 только по TLS.', 'The running etcd: data in /var/lib/etcd, TLS-only on 2379.'), bi('Работает статическим подом по файлу etcd.yaml.', 'A static pod from etcd.yaml.'), { see: 'sudo crictl ps --name etcd', doc: D.etcdRecovery, sub: '/var/lib/etcd' }),
     box('ctl', 'etcdctl', 'user', 'pill', [380, 170, 210, 48], 'terminal', bi('Клиент работающего etcd. Команда snapshot save снимает снимок по сети, предъявляя сертификаты центра etcd.', 'The client of a running etcd: snapshot save over TLS.'), YOU, { see: 'etcdctl snapshot save --help' }),
-    box('snap', 'etcd-2026-11-18.db', 'store', 'doc', [716, 150, 220, 76], 'disk', bi('Файл снимка: все ключи /registry/… на момент снимка, номер ревизии и хеш. Храните копию вне узла.', 'Every /registry/… key at that moment, the revision and a hash; keep a copy off the node.'), bi('Файл пишет etcdctl snapshot save.', 'etcdctl snapshot save.'), { see: 'etcdutl snapshot status etcd-2026-11-18.db -w table' }),
-    box('utl', 'etcdutl', 'user', 'pill', [716, 290, 220, 48], 'terminal', bi('Утилита для файлов etcd. Команды status и restore работают без сервера, прямо с файлом.', 'Works on etcd files: status and restore need no server.'), YOU, { see: 'etcdutl snapshot restore --help' }),
+    box('snap', 'etcd-2026-11-18.db', 'store', 'doc', [716, 150, 220, 76], 'disk', bi('В файле снимка хранятся все ключи /registry/… на момент снимка, номер ревизии и хеш. Храните копию вне узла.', 'Every /registry/… key at that moment, the revision and a hash; keep a copy off the node.'), bi('Файл пишет etcdctl snapshot save.', 'etcdctl snapshot save.'), { see: 'etcdutl snapshot status etcd-2026-11-18.db -w table' }),
+    box('utl', 'etcdutl', 'user', 'pill', [716, 290, 220, 48], 'terminal', bi('Утилита для файлов etcd. Команды status и restore работают без сервера, напрямую с файлом.', 'Works on etcd files: status and restore need no server.'), YOU, { see: 'etcdutl snapshot restore --help' }),
     box('newdir', '/var/lib/etcd-restore', 'store', 'doc', [380, 290, 210, 70], 'folder', bi('Новый каталог данных, который создаёт restore. В уже существующий каталог restore писать отказывается.', 'A new data directory; restore refuses an existing one.'), bi('Создаёт etcdutl snapshot restore.', 'etcdutl snapshot restore.')),
-    box('mf', 'etcd.yaml', 'obj', 'doc', [24, 290, 210, 70], 'file', bi('Манифест статического пода etcd. Его том etcd-data — это hostPath на каталог данных: стоит поменять путь, и kubelet перезапустит etcd на других данных.', 'The etcd manifest: change the hostPath and the kubelet restarts etcd on other data.'), bi('Файл записал kubeadm init, а правите его вы.', 'Written by kubeadm init, edited by you.'), { see: 'sudo grep -A2 etcd-data /etc/kubernetes/manifests/etcd.yaml', doc: D.staticPods, sub: 'hostPath: /var/lib/etcd' }),
+    box('mf', 'etcd.yaml', 'obj', 'doc', [24, 290, 210, 70], 'file', bi('Манифест статического пода etcd. Его том etcd-data указывает через hostPath на каталог данных, поэтому стоит поменять путь, и kubelet перезапустит etcd на других данных.', 'The etcd manifest: change the hostPath and the kubelet restarts etcd on other data.'), bi('Файл записал kubeadm init, а правите его вы.', 'Written by kubeadm init, edited by you.'), { see: 'sudo grep -A2 etcd-data /etc/kubernetes/manifests/etcd.yaml', doc: D.staticPods, sub: 'hostPath: /var/lib/etcd' }),
   ],
   edges: [
     edge('e-write', 'api', 'etcd', 'TLS :2379', bi('API-сервер записывает в etcd каждое изменение объекта.', 'Every object change.'), bi('Пишет kube-apiserver.', 'kube-apiserver.')),
-    edge('e-save', 'ctl', 'etcd', bi('снять снимок', 'take a snapshot'), bi('Снимок по сети: нужны --cacert, --cert и --key из /etc/kubernetes/pki/etcd.', 'Needs --cacert, --cert, --key from pki/etcd.'), bi('etcdctl', 'etcdctl')),
+    edge('e-save', 'ctl', 'etcd', bi('снять снимок', 'take a snapshot'), bi('Снимок снимают по сети, и для этого нужны флаги --cacert, --cert и --key с файлами из /etc/kubernetes/pki/etcd.', 'Needs --cacert, --cert, --key from pki/etcd.'), bi('etcdctl', 'etcdctl')),
     edge('e-file', 'ctl', 'snap', bi('файл .db', '.db file'), bi('Снимок ложится в файл, а копию файла увозят с узла.', 'The snapshot goes into a file; a copy leaves the node.'), bi('etcdctl', 'etcdctl')),
     edge('e-read', 'snap', 'utl', bi('читает файл', 'reads the file'), bi('restore читает файл, а не сервер.', 'restore reads the file, not the server.'), bi('etcdutl', 'etcdutl')),
     edge('e-restore', 'utl', 'newdir', bi('новый каталог', 'new directory'), bi('restore создаёт новый каталог с новым идентификатором кластера etcd.', 'A new directory with a new cluster ID.'), bi('etcdutl', 'etcdutl')),
@@ -58,8 +58,8 @@ export const etcdRestoreModel = defineModel<P>({
     'Snapshot from the running etcd, restore from the file into a new directory, then point the static pod at it. Everything written after the snapshot is lost.',
   ),
   intro: bi(
-    'Сейчас на схеме API-сервер и работающий etcd. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд»: вы снимете снимок, кластер поработает ещё какое-то время, кто-то удалит namespace, и вы восстановитесь. Инструменты, файл снимка, новый каталог и манифест etcd появятся, когда до них дойдёт дело. Счётчики под схемой покажут, сколько объектов вернулось и сколько потеряно. Потом поменяйте в «Параметрах» инструмент и включите поломки.',
-    'For now: the API server and the running etcd. Press “Start: step forward” and go on with “Step forward”: you take a snapshot, the cluster works on, someone deletes a namespace, and you restore. The counters show objects back and lost. Then change the tool and switch on the breaks.',
+    'Сейчас на схеме API-сервер и работающий etcd. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». По ходу вы снимете снимок, кластер поработает ещё какое-то время, кто-то удалит namespace, и вы восстановитесь. Инструменты, файл снимка, новый каталог и манифест etcd появятся, когда до них дойдёт дело. Счётчики под схемой покажут, сколько объектов вернулось и сколько потеряно. Потом поменяйте в «Параметрах» инструмент и включите поломки.',
+    'For now: the API server and the running etcd. Press “Start from the first step” and go on with “Step forward”: you take a snapshot, the cluster works on, someone deletes a namespace, and you restore. The counters show objects back and lost. Then change the tool and switch on the breaks.',
   ),
   legend: [
     ...LEGEND_BASE,
@@ -83,7 +83,7 @@ export const etcdRestoreModel = defineModel<P>({
       default: 10,
       near: 'snap',
       group: bi('Снимок', 'The snapshot'),
-      predict: { prompt: bi('После снимка в кластер записали выбранное число объектов, а потом кластер восстановили из снимка. Что стало с этими объектами?', 'Objects were written after the snapshot, then you restored. Where are they?'), options: [{ id: 'lost', text: bi('Пропали: в снимке их нет', 'Gone: not in the snapshot') }, { id: 'merged', text: bi('Остались: etcd объединит старые и новые данные', 'Still there: etcd merges') }], resolve: () => 'lost' },
+      predict: { prompt: bi('После снимка в кластер записали выбранное число объектов, а потом кластер восстановили из снимка. Что стало с этими объектами?', 'Objects were written after the snapshot, then you restored. Where are they?'), options: [{ id: 'lost', text: bi('Пропали, потому что в снимке их нет', 'Gone: not in the snapshot') }, { id: 'merged', text: bi('Остались, потому что etcd объединит старые и новые данные', 'Still there: etcd merges') }], resolve: () => 'lost' },
     },
     {
       id: 'tool',
@@ -96,7 +96,7 @@ export const etcdRestoreModel = defineModel<P>({
         { id: 'etcdutl', label: bi('etcdutl snapshot restore', 'etcdutl snapshot restore') },
         { id: 'etcdctl', label: bi('etcdctl snapshot restore', 'etcdctl snapshot restore') },
       ],
-      predict: { prompt: bi('В etcd версии 3.6 вы выбрали другую команду восстановления. Что будет?', 'With etcd 3.6 you pick another restore command. What happens?'), options: [{ id: 'fail', text: bi('Ошибка: у этой программы такой команды нет', 'An error: no such command') }, { id: 'ok', text: bi('Восстановление пройдёт', 'It works') }], resolve: (_p, n) => (n.some((s) => s.broken) ? 'fail' : 'ok') },
+      predict: { prompt: bi('В etcd версии 3.6 вы выбрали другую команду восстановления. Что будет?', 'With etcd 3.6 you pick another restore command. What happens?'), options: [{ id: 'fail', text: bi('Команда завершится ошибкой, потому что у этой программы такой команды нет', 'An error: no such command') }, { id: 'ok', text: bi('Восстановление пройдёт', 'It works') }], resolve: (_p, n) => (n.some((s) => s.broken) ? 'fail' : 'ok') },
     },
     { id: 'stopApi', label: bi('API-сервер останавливают на время восстановления', 'The API server is stopped during the restore'), kind: 'toggle', default: true, near: 'api', levels: ['intermediate', 'experienced'], group: bi('Восстановление', 'The restore') },
   ],
@@ -127,7 +127,7 @@ export const etcdRestoreModel = defineModel<P>({
     s.push({
       id: 'save',
       label: bi('снимок', 'snapshot'),
-      caption: bi('Вы снимаете снимок с работающего etcd: etcdctl обращается на 127.0.0.1:2379 с сертификатами из /etc/kubernetes/pki/etcd и записывает файл.', 'etcdctl takes a snapshot over TLS and writes a file.'),
+      caption: bi('Вы снимаете снимок с работающего etcd. Программа etcdctl обращается на 127.0.0.1:2379 с сертификатами из /etc/kubernetes/pki/etcd и записывает файл.', 'etcdctl takes a snapshot over TLS and writes a file.'),
       focus: ['ctl', 'e-save', 'e-file'],
       reveal: ['ctl', 'e-save', 'e-file', 'snap'],
       tokens: [{ edge: 'e-file', label: '5.1 MB' }],
@@ -149,10 +149,10 @@ export const etcdRestoreModel = defineModel<P>({
     s.push({
       id: 'later',
       label: bi('позже', 'later'),
-      caption: fmt(bi('Кластер работает дальше, и после снимка в него записывают ещё {n} объектов. Потом случается беда: кто-то удаляет namespace с приложением.', 'The cluster goes on: {n} more objects. Then someone deletes a namespace.'), { n: p.after }),
+      caption: fmt(bi('Кластер работает дальше, и после снимка в него записывают ещё {n} объектов. Потом случается беда, и кто-то удаляет namespace с приложением.', 'The cluster goes on: {n} more objects. Then someone deletes a namespace.'), { n: p.after }),
       focus: ['api', 'e-write'],
       tokens: [{ edge: 'e-write', label: `+${p.after}` }],
-      say: { api: fmt(bi('API-сервер записывает в etcd ещё {n} объектов, а потом удаление namespace.', 'The API server writes {n} more objects, then a namespace deletion.'), { n: p.after }) },
+      say: { api: fmt(bi('API-сервер записывает в etcd ещё {n} объектов, а потом записывает удаление namespace.', 'The API server writes {n} more objects, then a namespace deletion.'), { n: p.after }) },
       metrics: zero,
     });
     s.push({
@@ -232,7 +232,7 @@ export const etcdRestoreModel = defineModel<P>({
     s.push({
       id: 'back',
       label: bi('API снова', 'API back'),
-      caption: fmt(bi('Вы возвращаете манифест API-сервера, и кластер снова отвечает. Удалённый namespace вернулся, а {n} объектов, записанных после снимка, пропали: контроллеры создадут заново то, что смогут, а остальное придётся применить ещё раз.', 'The API server is back; the namespace is back; {n} objects written after the snapshot are gone.'), { n: o.lost }),
+      caption: fmt(bi('Вы возвращаете манифест API-сервера, и кластер снова отвечает. Удалённый namespace вернулся, а {n} объектов, записанных после снимка, пропали. Контроллеры создадут заново то, что смогут, а остальное придётся применить ещё раз.', 'The API server is back; the namespace is back; {n} objects written after the snapshot are gone.'), { n: o.lost }),
       focus: ['api'],
       say: { api: bi('API-сервер снова работает и видит данные из снимка.', 'The API server runs again on the snapshot’s data.') },
       states: { api: 'ok' },
@@ -243,7 +243,7 @@ export const etcdRestoreModel = defineModel<P>({
   explainDelta(_prev, next, change, _a, b): Bi {
     if (change.kind === 'break') return change.on ? bi('Посмотрите, на каком шаге восстановление обрывается и что вам скажет инструмент.', 'See where the restore breaks and what the tool says.') : bi('Восстановление снова идёт по порядку.', 'The restore runs in order again.');
     if (change.id === 'after') return fmt(bi('Потеряно объектов: {n}. Чем реже снимки, тем больше потеря.', '{n} objects lost: rarer snapshots, bigger losses.'), { n: metric(next, 'lost') });
-    if (change.id === 'tool') return b.tool === 'etcdctl' ? bi('etcdctl работает с сервером, а с файлами работает etcdutl.', 'etcdctl talks to a server, etcdutl works with files.') : bi('etcdutl — правильный инструмент для файла снимка.', 'etcdutl is right for a snapshot file.');
+    if (change.id === 'tool') return b.tool === 'etcdctl' ? bi('etcdctl работает с сервером, а с файлами работает etcdutl.', 'etcdctl talks to a server, etcdutl works with files.') : bi('С файлом снимка правильно работать программой etcdutl.', 'etcdutl is right for a snapshot file.');
     return b.stopApi ? bi('Пока подменяют базу, писать в неё некому.', 'Nobody writes while the database is swapped.') : bi('Работающий API-сервер во время подмены базы становится источником странных ошибок.', 'A running API server during the swap causes strange errors.');
   },
 });
