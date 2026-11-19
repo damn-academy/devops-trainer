@@ -9,7 +9,7 @@
 // it does, and what it hands on travels along a line as a labelled card.
 
 import { defineModel } from '../../core/define';
-import { bi, fmt, type Bi } from '../../core/i18n';
+import { bi, fmt, t as tx, type Bi } from '../../core/i18n';
 import type { Step } from '../../core/types';
 import { card, hiddenExcept } from './explainers';
 
@@ -322,7 +322,7 @@ export const artifactsModel = defineModel<ArtP>({
     { mark: 'icon:disk', text: bi('хранилище, в котором лежат артефакты на сервере или кэш на раннере', 'storage: artifacts on the server or the cache on a runner') },
     { mark: 'icon:file', text: bi('файл с точными версиями зависимостей', 'the file with exact dependency versions') },
     { mark: 'warn', text: bi('кэш не нашёлся, и сборка идёт дольше', 'the cache was not found and the build takes longer') },
-    { mark: 'err', text: bi('здесь джоба упала', 'the job failed here') },
+    { mark: 'err', text: bi('здесь джоба завершилась с ошибкой', 'the job failed here') },
   ],
   stopLabel: bi('Пайплайн остановился', 'The pipeline stopped'),
   concepts: ['cicd.artifact', 'cicd.cache'],
@@ -335,7 +335,7 @@ export const artifactsModel = defineModel<ArtP>({
       { id: 'deploy', label: 'deploy #1', icon: 'container', work: 'dots', sub: 'runner-2', family: 'ci-deploy', shape: 'box', x: 760, y: 52, w: 176, h: 60, card: card(bi('Ещё одна джоба, которая может попасть на другой раннер. Ей тоже нужен каталог dist/, и получить его она тоже может только из артефактов.', 'One more job, maybe on another runner. It needs dist/ too, and again only through artifacts.'), bi('Джобу выполняет раннер.', 'A runner.')) },
       { id: 'art', label: bi('артефакты', 'artifacts'), icon: 'disk', sub: 'dist/', family: 'store', shape: 'buffer', x: 400, y: 190, w: 176, h: 60, card: card(bi('Хранилище на сервере. Раннер загружает сюда пути из `artifacts:paths` после успешной джобы, а джобы следующих стадий скачивают их перед своим скриптом, на каком бы раннере они ни оказались. Поэтому доставка гарантирована.', 'The forge storage. The runner uploads artifacts:paths here after a successful job; later-stage jobs download them before their script, whichever runner they land on. Delivery is guaranteed.'), bi('Хранилище ведёт сервер.', 'The forge.'), 'glab ci trace test', { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'artifacts' }) },
       { id: 'cache', label: bi('кэш на runner-1', 'cache on runner-1'), icon: 'disk', sub: 'npm-main', family: 'store', shape: 'buffer', x: 30, y: 190, w: 176, h: 60, card: card(bi('Локальная полка раннера, то есть архив каталога .npm/ под именем ключа. Её видит только этот раннер, если не настроен общий кэш, и стереть её могут в любой момент.', 'The runner’s local shelf: an archive of .npm/ under the key’s name. Only this runner sees it (unless a shared cache is set up), and it may be wiped at any moment.'), bi('Архив кладёт сюда gitlab-runner после успешной джобы.', 'gitlab-runner after a successful job.'), 'glab ci trace build', { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'cache' }) },
-      { id: 'lock', label: 'package-lock.json', icon: 'file', sub: 'unchanged', family: 'obj', shape: 'doc', x: 30, y: 330, w: 176, h: 56, card: card(bi('Список точных версий зависимостей. Ключ `cache:key:files` вычисляется из хэша этого файла, поэтому, когда файл меняется, кэш кладётся на новую полку.', 'The exact versions of the dependencies. The cache:key:files key is built from this file’s hash: a changed file means a new shelf.'), bi('Файл обновляет команда `npm install`, а в репозиторий он попадает коммитом.', 'npm install, in a commit.'), 'git log --oneline package-lock.json') },
+      { id: 'lock', label: 'package-lock.json', icon: 'file', sub: '', family: 'obj', shape: 'doc', x: 30, y: 330, w: 176, h: 56, card: card(bi('Список точных версий зависимостей. Ключ `cache:key:files` вычисляется из хэша этого файла, поэтому, когда файл меняется, кэш кладётся на новую полку.', 'The exact versions of the dependencies. The cache:key:files key is built from this file’s hash: a changed file means a new shelf.'), bi('Файл обновляет команда `npm install`, а в репозиторий он попадает коммитом.', 'npm install, in a commit.'), 'git log --oneline package-lock.json') },
       { id: 'b2', label: 'build #2', icon: 'container', work: 'spin', sub: 'runner-1', family: 'node', shape: 'rack', x: 400, y: 316, w: 176, h: 84, card: card(bi('Сборка следующего пайплайна. Перед скриптом раннер ищет кэш по ключу. Если кэш нашёлся, `npm ci` берёт пакеты с диска, а если нет, скачивает их из интернета.', 'The build of the next pipeline. Before the script the runner looks for the cache by key: found, and npm ci takes packages from disk; not found, and it downloads them.'), bi('Джобу выполняет раннер после следующего push.', 'A runner, on the next push.'), 'glab ci trace build') },
     ],
     edges: [
@@ -387,7 +387,7 @@ export const artifactsModel = defineModel<ArtP>({
         prompt: bi('Следующую сборку забрал runner-2, у которого нет полки с этим ключом. Что будет со сборкой?', 'The next build was taken by runner-2, which has no shelf with this key. What happens?'),
         options: [
           { id: 'slow', text: bi('Сборка пройдёт, но займёт больше времени', 'It passes, but slower') },
-          { id: 'fail', text: bi('Сборка упадёт, потому что зависимостей нет', 'It fails: no dependencies') },
+          { id: 'fail', text: bi('Сборка завершится с ошибкой, потому что зависимостей нет', 'It fails: no dependencies') },
         ],
         resolve: () => 'slow',
       },
@@ -422,8 +422,8 @@ export const artifactsModel = defineModel<ArtP>({
     },
   ],
   metrics: [
-    { id: 'npm1', label: bi('npm ci в build #1', 'npm ci in build #1'), unit: 's' },
-    { id: 'npm2', label: bi('npm ci в build #2', 'npm ci in build #2'), unit: 's' },
+    { id: 'npm1', label: bi('npm ci в build #1, с', 'npm ci in build #1, s') },
+    { id: 'npm2', label: bi('npm ci в build #2, с', 'npm ci in build #2, s') },
     { id: 'delivered', label: bi('джоб получили dist/', 'jobs that got dist/') },
   ],
   run(p, broken) {
@@ -437,7 +437,7 @@ export const artifactsModel = defineModel<ArtP>({
         focus: ['b1'],
         say: { b1: bi('Джоба build скачивает зависимости за 52 секунды и собирает сайт в каталог dist/ внутри своего контейнера.', 'The build job downloads the dependencies in 52 seconds and builds the site into dist/ inside its container.') },
         states: { ...hiddenExcept(ART_ALL, 'b1'), b1: 'ok' },
-        values: { b1: 'dist/ (local)' },
+        values: { b1: tx(bi('dist/ на раннере', 'dist/ (local)')) },
         metrics: { npm1: 52, npm2: 0, delivered: 0 },
       },
     ];
@@ -459,7 +459,7 @@ export const artifactsModel = defineModel<ArtP>({
         id: 'lost',
         label: inCache ? 'deploy #1' : 'test #1',
         caption: inCache
-          ? bi('Джоба deploy начинается на runner-2 с чистой копии репозитория. Полки runner-1 ей не видно, каталога dist/ нет, и выкладка падает.', 'deploy starts on runner-2 from a clean copy of the repository. It cannot see runner-1’s shelf, there is no dist/, and the deploy fails.')
+          ? bi('Джоба deploy начинается на runner-2 с чистой копии репозитория. Полки runner-1 ей не видно, каталога dist/ нет, и выкладка завершается с ошибкой.', 'deploy starts on runner-2 from a clean copy of the repository. It cannot see runner-1’s shelf, there is no dist/, and the deploy fails.')
           : bi('Контейнер сборки удалён вместе с dist/. Джоба test начинается с чистой копии репозитория, и каталога в ней нет, хотя раннер тот же.', 'The build container is deleted along with dist/. test starts from a clean copy of the repository: the directory is gone, although the runner is the same.'),
         focus: inCache ? ['deploy'] : ['t1'],
         reveal: inCache ? ['deploy'] : ['t1'],
@@ -515,7 +515,7 @@ export const artifactsModel = defineModel<ArtP>({
         tokens: [{ edge: 'e-key', label: p.key === 'branch' ? 'npm-main' : p.lockChanged ? 'b7d2e9…' : 'a3f1c0…' }],
         say: { lock: p.key === 'branch' ? bi('Ключ составлен из имени ветки, поэтому файл зависимостей на него не влияет, и ключ остаётся npm-main.', 'The key is made of the branch name, so the dependency file does not affect it and the key stays npm-main.') : p.lockChanged ? bi('Файл зависимостей изменился, поэтому ключ кэша, вычисленный из его хэша, тоже стал другим.', 'The dependency file changed, so the cache key computed from its hash changed too.') : bi('Файл зависимостей не изменился, поэтому ключ кэша остаётся прежним.', 'The dependency file did not change, so the cache key stays the same.') },
         states: { lock: p.lockChanged ? 'warn' : 'on' },
-        values: { lock: p.lockChanged ? 'changed' : 'unchanged' },
+        values: { lock: tx(p.lockChanged ? bi('изменился', 'changed') : bi('не менялся', 'unchanged')) },
         metrics: { npm1: 52, npm2: 0, delivered: 2 },
       },
     );
@@ -620,7 +620,7 @@ export const dagModel = defineModel<DagP>({
       { id: 'lint', label: 'lint', icon: 'container', work: 'dots', sub: '90 s', family: 'ci-build', shape: 'box', x: 40, y: 250, w: 168, h: 60, card: card(bi('Медленный линтер в той же стадии build. Тестам он не нужен, потому что им нужен только каталог dist/ из сборки.', 'A slow linter in the same build stage. The tests do not need it: they need only dist/ from build.'), bi('Джобу выполняет раннер.', 'A runner.')) },
       { id: 'test', label: 'test', icon: 'container', work: 'dots', sub: '30 s', family: 'ci-test', shape: 'box', x: 400, y: 60, w: 168, h: 60, card: card(bi('Тесты стадии test. Без needs они ждут всю стадию build вместе с линтером, а с `needs: [build]` ждут только сборку.', 'The tests of the test stage. Without needs they wait for the whole build stage, lint included; with needs: [build], only for build.'), bi('Джобу выполняет раннер.', 'A runner.'), 'glab ci view', { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'needs' }) },
       { id: 'deploy', label: 'deploy_staging', icon: 'container', work: 'dots', sub: '15 s', family: 'ci-deploy', shape: 'box', x: 740, y: 60, w: 192, h: 60, card: card(bi('Выкладка на тестовый стенд. С `needs: [test]` она стартует сразу после тестов.', 'The deploy. With needs: [test] it starts right after the tests.'), bi('Джобу выполняет раннер.', 'A runner.')) },
-      { id: 'clock', label: bi('весь пайплайн', 'whole pipeline'), icon: 'server', sub: '—', family: 'gauge', shape: 'buffer', x: 400, y: 250, w: 192, h: 60, card: card(bi('Время от создания пайплайна до конца последней джобы. В merge request столько ждёт ревьюер, прежде чем увидит результат проверок.', 'The time from the pipeline’s creation to the end of its last job. In a merge request it is how long the reviewer waits.'), bi('Время считает сервер.', 'The forge counts it.'), 'glab ci status') },
+      { id: 'clock', label: bi('весь пайплайн', 'whole pipeline'), icon: 'server', sub: '—', family: 'gauge', shape: 'buffer', x: 400, y: 250, w: 192, h: 60, card: card(bi('Время от создания пайплайна до конца последней джобы. Столько времени коллега, который проверяет merge request, ждёт, прежде чем увидит результат проверок.', 'The time from the pipeline’s creation to the end of its last job. In a merge request it is how long the reviewer waits.'), bi('Время считает сервер.', 'The forge counts it.'), 'glab ci status') },
     ],
     edges: [
       { id: 'e-bt', from: 'build', to: 'test', label: 'needs: [build]', card: card(bi('Явная зависимость: test стартует, как только build закончилась успешно, и скачивает артефакты только от неё.', 'An explicit dependency: test starts as soon as build succeeds and downloads artifacts only from it.'), bi('Зависимость записываете вы в `.gitlab-ci.yml`.', 'You, in .gitlab-ci.yml.'), undefined, { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'needs' }) },
@@ -646,7 +646,7 @@ export const dagModel = defineModel<DagP>({
         resolve: (_p, n) => (metric(n, 'testStart') <= 20 ? 'early' : 'same'),
       },
     },
-    { id: 'lint', label: bi('Сколько секунд идёт линтер', 'lint duration'), group: bi('Файл пайплайна', 'The pipeline file'), kind: 'range', min: 10, max: 180, step: 10, unit: 's', default: 90, near: 'lint' },
+    { id: 'lint', label: bi('Сколько секунд идёт линтер', 'lint duration'), group: bi('Файл пайплайна', 'The pipeline file'), kind: 'range', min: 10, max: 180, step: 10, default: 90, near: 'lint' },
     {
       id: 'runners',
       label: bi('Сколько раннеров свободно', 'Runners'),
@@ -683,8 +683,8 @@ export const dagModel = defineModel<DagP>({
     },
   ],
   metrics: [
-    { id: 'testStart', label: bi('test стартует на секунде', 'test starts at'), unit: 's' },
-    { id: 'total', label: bi('весь пайплайн', 'whole pipeline'), unit: 's' },
+    { id: 'testStart', label: bi('test стартует на секунде, с', 'test starts at, s') },
+    { id: 'total', label: bi('весь пайплайн, с', 'whole pipeline, s') },
   ],
   run(p, broken) {
     if (broken.has('needs-excluded')) {
@@ -723,7 +723,7 @@ export const dagModel = defineModel<DagP>({
         focus: ['build', 'lint'],
         say: { build: two ? bi('Сборка стартует на первом раннере, а линтер одновременно стартует на втором.', 'The build starts on the first runner while the linter starts on the second.') : bi('Сборка занимает единственный раннер, поэтому линтеру придётся подождать.', 'The build takes the only runner, so the linter has to wait.') },
         states: { ...hiddenExcept(DAG_ALL, 'build', 'lint'), build: 'on', lint: two ? 'on' : 'wait' },
-        values: { lint: `${p.lint} s`, clock: '0 s' },
+        values: { build: tx(bi('20 с', '20 s')), lint: tx(bi(`${p.lint} с`, `${p.lint} s`)), test: tx(bi('30 с', '30 s')), deploy: tx(bi('15 с', '15 s')), clock: tx(bi('0 с', '0 s')) },
         metrics: { testStart: 0, total: 0 },
       },
       {
@@ -765,7 +765,7 @@ export const dagModel = defineModel<DagP>({
         reveal: ['clock', 'e-clock'],
         say: { clock: fmt(bi('Сервер отмечает, что пайплайн закончился на {t}-й секунде.', 'The server marks that the pipeline ended at second {t}.'), { t: total }) },
         states: { clock: 'ok' },
-        values: { clock: `${total} s` },
+        values: { clock: tx(bi(`${total} с`, `${total} s`)) },
         metrics: { testStart: t.test[0], total },
       },
     ];
@@ -808,7 +808,7 @@ export const kubeDeployModel = defineModel<KdP>({
     { mark: 'icon:lock', text: bi('ключ доступа к кластеру', 'the cluster access key') },
     { mark: 'icon:process', text: bi('агент GitOps внутри кластера', 'the GitOps agent inside the cluster') },
     { mark: 'dashed', text: bi('джоба ждёт окончания выкладки', 'the job waits for the rollout to finish') },
-    { mark: 'warn', text: bi('Deployment не изменился, или новые поды падают, пока старые ещё работают', 'the Deployment did not change, or the new pods crash while the old ones still run') },
+    { mark: 'warn', text: bi('Deployment не изменился, или новые поды аварийно завершаются, пока старые ещё работают', 'the Deployment did not change, or the new pods crash while the old ones still run') },
     { mark: 'err', text: bi('здесь выкладка остановилась', 'the rollout stopped here') },
   ],
   stopLabel: bi('Выкладка остановилась', 'The rollout stopped'),
@@ -834,7 +834,7 @@ export const kubeDeployModel = defineModel<KdP>({
       { id: 'e-store', from: 'api', to: 'dep', label: bi('новая ревизия', 'new revision'), card: card(bi('API-сервер сохраняет изменённый объект, и контроллер Deployment узнаёт об изменении через подписку на изменения (watch).', 'The API server stores the changed object; the Deployment controller sees it through a watch.'), bi('Объект сохраняет API-сервер.', 'The API server.')) },
       { id: 'e-roll', from: 'dep', to: 'rsNew', via: [[866, 72]], label: bi('новый ReplicaSet', 'pod-template-hash'), labelAt: 0.4, card: card(bi('Новый шаблон пода получает новый хэш pod-template-hash, и для него создаётся новый ReplicaSet. Поды переходят на новую версию по одному, по правилам постепенного обновления.', 'A new pod template, a new hash, a new ReplicaSet. Pods move over one by one under the rolling update rules.'), bi('ReplicaSet создаёт контроллер Deployment.', 'The Deployment controller.'), 'kubectl get rs -l app=web') },
       { id: 'e-old', from: 'dep', to: 'rsOld', label: bi('уменьшение', 'scale down'), card: card(bi('Старый ReplicaSet уменьшается по мере того, как новые поды становятся готовыми.', 'The old ReplicaSet shrinks as the new pods become ready.'), bi('Число подов меняет контроллер Deployment.', 'The Deployment controller.')) },
-      { id: 'e-wait', from: 'rsNew', to: 'job', via: [[866, 140], [116, 140]], label: 'kubectl rollout status --timeout', labelAt: 0.5, dashed: true, card: card(bi('Джоба ждёт, пока выкладка закончится, и падает, если она не закончилась за отведённое время. Без этой строки джоба становится зелёной сразу после `kubectl set image`, что бы потом ни случилось с подами.', 'The job waits for the rollout to finish and fails if it did not finish in time. Without this line the job is green right after set image, whatever happens to the pods.'), bi('Ожидание запускает скрипт джобы.', 'The job script.'), 'kubectl rollout status deployment/web --timeout=120s') },
+      { id: 'e-wait', from: 'rsNew', to: 'job', via: [[866, 140], [116, 140]], label: 'kubectl rollout status --timeout', labelAt: 0.25, dashed: true, card: card(bi('Джоба ждёт, пока выкладка закончится, и завершается с ошибкой, если выкладка не закончилась за отведённое время. Без этой строки джоба становится зелёной сразу после `kubectl set image`, что бы потом ни случилось с подами.', 'The job waits for the rollout to finish and fails if it did not finish in time. Without this line the job is green right after set image, whatever happens to the pods.'), bi('Ожидание запускает скрипт джобы.', 'The job script.'), 'kubectl rollout status deployment/web --timeout=120s') },
       { id: 'e-commit', from: 'job', to: 'cfg', via: [[272, 100], [272, 310], [434, 310]], label: bi('коммит с тегом', 'git commit of the tag'), labelAt: 0.7, card: card(bi('В pull-модели джоба меняет одну строку в репозитории конфигурации и отправляет коммит. Ключа от кластера у CI нет вовсе.', 'In the pull model the job changes one line in the configuration repository and pushes a commit. CI has no cluster key at all.'), bi('Коммит отправляет скрипт джобы.', 'The job script.')) },
       { id: 'e-pull', from: 'agent', to: 'cfg', label: bi('чтение конфигурации', 'reads'), card: card(bi('Агент сам опрашивает репозиторий или получает уведомление о новом коммите и сравнивает записанное с тем, что работает в кластере.', 'The agent polls the repository by itself (or gets a webhook) and compares what is written with the cluster.'), bi('Репозиторий читает агент GitOps.', 'The GitOps agent.')) },
       { id: 'e-apply', from: 'agent', to: 'api', via: [[712, 290], [418, 290]], label: bi('применение разницы', 'applies'), labelAt: 0.4, card: card(bi('Найденную разницу агент применяет изнутри кластера под своим сервисным аккаунтом.', 'The agent applies the difference from inside the cluster with its own service account.'), bi('Изменения применяет агент GitOps.', 'The GitOps agent.')) },
@@ -893,10 +893,10 @@ export const kubeDeployModel = defineModel<KdP>({
   breaks: [
     {
       id: 'crash',
-      label: bi('Новая версия падает через три секунды после старта', 'The new image crashes on start'),
+      label: bi('Новая версия аварийно завершается через три секунды после старта', 'The new image crashes on start'),
       remove: ['e-old'],
       predict: {
-        prompt: bi('Новая версия падает через три секунды после старта. Какого цвета будет пайплайн?', 'The new version crashes three seconds after it starts. What colour will the pipeline be?'),
+        prompt: bi('Новая версия аварийно завершается через три секунды после старта. Какого цвета будет пайплайн?', 'The new version crashes three seconds after it starts. What colour will the pipeline be?'),
         options: [
           { id: 'red', text: bi('Пайплайн будет красным, если джоба ждёт окончания выкладки', 'Red, if the job waits for the rollout') },
           { id: 'green', text: bi('Пайплайн будет зелёным в любом случае', 'Green in any case') },
@@ -991,7 +991,7 @@ export const kubeDeployModel = defineModel<KdP>({
         focus: ['e-store', 'dep', 'e-roll', 'rsNew'],
         reveal: ['e-store', 'e-roll', 'rsNew', 'e-old'],
         tokens: [{ edge: 'e-roll', label: 'site:1a2b3c4d' }],
-        say: { rsNew: crash ? bi('Новые поды стартуют и через три секунды падают, поэтому старые поды продолжают работать.', 'The new pods start and crash three seconds later, so the old pods keep running.') : bi('Новый ReplicaSet запускает три пода новой версии, а старые поды уходят по одному.', 'The new ReplicaSet starts three pods of the new version while the old pods leave one by one.') },
+        say: { rsNew: crash ? bi('Новые поды стартуют и через три секунды аварийно завершаются, поэтому старые поды продолжают работать.', 'The new pods start and crash three seconds later, so the old pods keep running.') : bi('Новый ReplicaSet запускает три пода новой версии, а старые поды уходят по одному.', 'The new ReplicaSet starts three pods of the new version while the old pods leave one by one.') },
         states: { dep: 'ok', rsNew: crash ? 'err' : 'ok', rsOld: crash ? 'ok' : 'off' },
         values: { dep: 'image: site:1a2b3c4d', rsNew: crash ? '0/3 CrashLoopBackOff' : '3/3', rsOld: crash ? '2/3' : '0/3' },
         metrics: { newPods: crash ? 0 : 3, oldPods: crash ? 2 : 0, jobOk: 1 },
@@ -1002,7 +1002,7 @@ export const kubeDeployModel = defineModel<KdP>({
           label: 'Degraded',
           caption: bi('Пайплайн давно зелёный, потому что CI не знает, что произошло дальше. О поломке сообщает агент, который помечает приложение как Degraded, а откатывают её коммитом revert в репозиторий конфигурации.', 'The pipeline has long been green: CI does not know what happened next. The agent reports the breakage (the application is Degraded), and it is rolled back with a revert commit to the configuration repository.'),
           focus: ['agent', 'rsNew'],
-          say: { agent: bi('Агент видит, что новые поды падают, и помечает приложение как Degraded.', 'The agent sees the new pods crashing and marks the application as Degraded.') },
+          say: { agent: bi('Агент видит, что новые поды аварийно завершаются, и помечает приложение как Degraded.', 'The agent sees the new pods crashing and marks the application as Degraded.') },
           states: { agent: 'err' },
           metrics: { newPods: 0, oldPods: 2, jobOk: 1 },
           broken: { at: 'agent', message: 'web  Synced  Degraded  Back-off restarting failed container web in pod web-6mzdx…', caption: bi('В pull-модели состояние выкладки показывает агент, а откат выполняют коммитом в репозиторий конфигурации.', 'in the pull model the agent shows the rollout’s health, and a rollback is a commit.') },
@@ -1076,12 +1076,12 @@ export const kubeDeployModel = defineModel<KdP>({
       id: 'roll',
       label: 'rollout',
       caption: crash
-        ? bi('Новый ReplicaSet запускает поды, они стартуют и через три секунды падают. Старые поды ещё отвечают на запросы, но контроллер уже начал их убирать.', 'The new ReplicaSet brings up pods; they start and crash three seconds later. The old pods still serve requests, but the controller has already begun removing them.')
+        ? bi('Новый ReplicaSet запускает поды, они стартуют и через три секунды аварийно завершаются. Старые поды ещё отвечают на запросы, но контроллер уже начал их убирать.', 'The new ReplicaSet brings up pods; they start and crash three seconds later. The old pods still serve requests, but the controller has already begun removing them.')
         : bi('Новый шаблон пода получает новый хэш и новый ReplicaSet. Новые поды становятся готовыми, а старые уходят по одному.', 'A new template, a new pod-template-hash, a new ReplicaSet. New pods become ready, old ones leave one by one.'),
       focus: ['e-roll', 'rsNew', 'e-old', 'rsOld'],
       reveal: ['e-roll', 'rsNew', 'e-old'],
       tokens: [{ edge: 'e-roll', label: 'site:1a2b3c4d' }],
-      say: { rsNew: crash ? bi('Новые поды стартуют и через три секунды падают, и контроллер раз за разом их перезапускает.', 'The new pods start and crash three seconds later, and the controller restarts them again and again.') : bi('Новый ReplicaSet запускает три пода новой версии, а старые поды уходят по одному.', 'The new ReplicaSet starts three pods of the new version while the old pods leave one by one.') },
+      say: { rsNew: crash ? bi('Новые поды стартуют и через три секунды аварийно завершаются, и контроллер раз за разом их перезапускает.', 'The new pods start and crash three seconds later, and the controller restarts them again and again.') : bi('Новый ReplicaSet запускает три пода новой версии, а старые поды уходят по одному.', 'The new ReplicaSet starts three pods of the new version while the old pods leave one by one.') },
       states: { rsNew: crash ? 'err' : 'ok', rsOld: crash ? 'warn' : 'off' },
       values: { rsNew: crash ? '0/3 CrashLoopBackOff' : '3/3', rsOld: crash ? '2/3' : '0/3' },
       metrics: { newPods: crash ? 0 : 3, oldPods: crash ? 2 : 0, jobOk: p.wait ? 0 : 1 },
@@ -1094,7 +1094,7 @@ export const kubeDeployModel = defineModel<KdP>({
               label: bi('зелёная', 'green'),
               caption: bi('Джоба закончилась сразу после `kubectl set image` и стала зелёной. На тестовом стенде работает сломанная версия, а пайплайн сообщает, что всё в порядке.', 'The job ended right after set image and is green. A broken version is on staging, and the pipeline says all is well.'),
               focus: ['job', 'rsNew'],
-              say: { job: bi('Джоба не ждала окончания выкладки и завершилась успешно, хотя новые поды падают.', 'The job did not wait for the rollout and finished successfully, although the new pods are crashing.') },
+              say: { job: bi('Джоба не ждала окончания выкладки и завершилась успешно, хотя новые поды аварийно завершаются.', 'The job did not wait for the rollout and finished successfully, although the new pods are crashing.') },
               states: { job: 'ok', rsNew: 'err' },
               metrics: { newPods: 0, oldPods: 2, jobOk: 1 },
               broken: { at: 'rsNew', message: 'pod/web-6mzdx-dr9ck   0/1   CrashLoopBackOff   3   2m', caption: bi('Без `kubectl rollout status` пайплайн не знает, чем закончилась выкладка.', 'without rollout status the pipeline does not know how the rollout ended.') },
@@ -1115,7 +1115,7 @@ export const kubeDeployModel = defineModel<KdP>({
       steps.push({
         id: 'timeout',
         label: 'timeout',
-        caption: bi('Команда `kubectl rollout status` ждёт 120 секунд, но выкладка так и не заканчивается, поэтому джоба падает, и пайплайн становится красным.', 'kubectl rollout status waits 120 seconds, the rollout does not finish, the job fails. The pipeline is red.'),
+        caption: bi('Команда `kubectl rollout status` ждёт 120 секунд, но выкладка так и не заканчивается, поэтому джоба завершается с ошибкой, и пайплайн становится красным.', 'kubectl rollout status waits 120 seconds, the rollout does not finish, the job fails. The pipeline is red.'),
         focus: ['e-wait', 'job'],
         reveal: ['e-wait'],
         tokens: [{ edge: 'e-wait', label: bi('поды не готовы', 'pods not ready') }],
@@ -1133,7 +1133,7 @@ export const kubeDeployModel = defineModel<KdP>({
       focus: ['e-wait', 'job'],
       reveal: ['e-wait'],
       tokens: [{ edge: 'e-wait', label: '3/3 ready' }],
-      say: { job: bi('Джоба дождалась, пока все три новых пода станут готовыми, и завершилась успешно.', 'The job waited until all three new pods were ready and finished successfully.') },
+      say: { job: bi('Джоба дождалась готовности трёх новых подов и завершилась успешно.', 'The job waited until all three new pods were ready and finished successfully.') },
       states: { job: 'ok' },
       metrics: { newPods: 3, oldPods: 0, jobOk: 1 },
     });
@@ -1143,7 +1143,7 @@ export const kubeDeployModel = defineModel<KdP>({
     if (change.kind === 'break') {
       if (!change.on) return bi('Поломку убрали, и выкладка снова доходит до конца.', 'The break is removed: the rollout completes again.');
       if (change.id === 'forbidden') return b.mode === 'pull' ? bi('В pull-модели CI в кластер не обращается, поэтому права аккаунта deployer ему не нужны.', 'In the pull model CI does not go to the cluster: it does not need deployer’s rights.') : bi('API-сервер проверяет права аккаунта на каждое действие, и без права patch команда `kubectl set image` не выполняется.', 'The API server checks the account’s rights for every verb: no patch, no set image.');
-      return metric(next, 'jobOk') ? bi('Пайплайн зелёный, а новая версия падает, потому что CI не дождался результата выкладки.', 'The pipeline is green while the version crashes: CI did not wait for the result.') : bi('Команда `kubectl rollout status` превратила неудачную выкладку в красный пайплайн.', 'rollout status turned a failed rollout into a red pipeline.');
+      return metric(next, 'jobOk') ? bi('Пайплайн зелёный, а новая версия аварийно завершается, потому что CI не дождался результата выкладки.', 'The pipeline is green while the version crashes: CI did not wait for the result.') : bi('Команда `kubectl rollout status` превратила неудачную выкладку в красный пайплайн.', 'rollout status turned a failed rollout into a red pipeline.');
     }
     if (change.id === 'mode') return b.mode === 'pull' ? bi('В pull-модели CI только записывает тег коммитом, а кластер изнутри меняет агент, и ключа от кластера у CI нет.', 'Pull: CI only commits the tag, and the agent changes the cluster from inside. CI holds no cluster key.') : bi('В push-модели джоба сама обращается к API-серверу со своим ключом.', 'Push: the job goes to the API server itself with its own key.');
     if (change.id === 'tag') return b.tag === 'latest' ? bi('С тегом :latest текст Deployment не меняется, поэтому Kubernetes не видит новой версии.', 'With :latest the Deployment text does not change, so Kubernetes sees no new version.') : bi('Тег коммита меняет шаблон пода, и поэтому начинается выкладка.', 'A commit tag changes the pod template and so starts a rollout.');

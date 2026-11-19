@@ -34,7 +34,7 @@ export const CICD_TAB_EXAM: Exam = {
   kind: 'block',
   title: bi('Экзамен по CI/CD на настоящих машинах', 'CI/CD on real machines: deploying the site'),
   story: bi(
-    'Сайт кофейни теперь работает на виртуальной машине `web-1`, и новую версию на неё до сих пор копируют вручную. Тимлид хочет, чтобы выкладку делал пайплайн, причём проверка должна идти на каждой ветке, а выкладка только из `main`.',
+    'Сайт кофейни теперь работает на виртуальной машине `web-1`, и новую версию на неё до сих пор копируют вручную. Руководитель команды хочет, чтобы выкладку делал пайплайн, причём проверка должна идти на каждой ветке, а выкладка только из `main`.',
     'The café site now runs on the virtual machine `web-1`, and new versions are still copied there by hand. The team lead wants the pipeline to deploy: a check on every branch, a deployment only from `main`.',
   ),
   intro: bi(
@@ -94,7 +94,7 @@ export const CICD_TAB_EXAM: Exam = {
         prompt: bi('«Сломанная страница не должна попасть на `web-1`». Отправьте в `main` версию без `<h1>`. Пайплайн должен упасть на test, deploy не должен запуститься, а на `web-1` должна остаться release 2. Затем верните страницу.', '“A broken page must not reach `web-1`.” Push a version without `<h1>` to `main`: the pipeline fails at test, deploy does not run, `web-1` keeps release 2. Then restore the page.'),
         concepts: ['cicd.stage'],
         goals: [
-          { id: 'stopped', label: bi('есть пайплайн `main`, который упал на test, и deploy в нём пропущен', 'there is a `main` pipeline that failed at test with deploy skipped'), on: 'cloud', check: { when: (f) => sitePipes(f).some((p) => p.ref === 'main' && p.status === 'failed' && p.jobs.some((j) => j.stage === 'test' && j.status === 'failed') && p.jobs.some((j) => j.stage === 'deploy' && j.status === 'skipped')) } },
+          { id: 'stopped', label: bi('есть пайплайн `main`, который остановился с ошибкой на test, и deploy в нём пропущен', 'there is a `main` pipeline that failed at test with deploy skipped'), on: 'cloud', check: { when: (f) => sitePipes(f).some((p) => p.ref === 'main' && p.status === 'failed' && p.jobs.some((j) => j.stage === 'test' && j.status === 'failed') && p.jobs.some((j) => j.stage === 'deploy' && j.status === 'skipped')) } },
           { id: 'kept', label: bi('на `web-1` по-прежнему release 2', '`web-1` still serves release 2'), on: 'web-1', check: { when: "files['/var/www/site/index.html'].text ~ 'release 2'" } },
         ],
       },
@@ -102,6 +102,6 @@ export const CICD_TAB_EXAM: Exam = {
     { id: 'q-stages', weight: 1, kind: 'quiz', item: { ...(quiz.find((x) => x.id === 'cicd.q.stages-order') as QuizItem), id: 'cicd.exam.tab.q.stages' } },
   ],
   explain: [
-    { id: 'shell', prompt: bi('Тимлид спрашивает, чем раннер с исполнителем shell отличается от раннера с Docker и чем он опасен. Ответьте ему.', '“How does a runner with the shell executor differ from one with Docker, and what is risky about it?”'), keyPoints: [bi('джоба выполняется прямо на машине раннера без изоляции', 'the job runs right on the runner machine, without isolation'), bi('всё, что установила одна джоба, видит следующая', 'whatever one job installs, the next one sees'), bi('у джобы есть права пользователя раннера и его ключи', 'the job has the runner user’s rights and keys')] },
+    { id: 'shell', prompt: bi('Руководитель команды спрашивает, чем раннер с исполнителем shell отличается от раннера с Docker и чем он опасен. Ответьте ему.', '“How does a runner with the shell executor differ from one with Docker, and what is risky about it?”'), keyPoints: [bi('джоба выполняется прямо на машине раннера без изоляции', 'the job runs right on the runner machine, without isolation'), bi('всё, что установила одна джоба, видит следующая', 'whatever one job installs, the next one sees'), bi('у джобы есть права пользователя раннера и его ключи', 'the job has the runner user’s rights and keys')] },
   ],
 };

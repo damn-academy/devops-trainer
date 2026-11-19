@@ -24,7 +24,7 @@ const L = {
 const ICON: Record<string, string> = { success: '✓', failed: '✗', running: '◐', pending: '◯', manual: '▶', skipped: '»', created: '○', canceled: '⊘' };
 const STATUS: Record<string, ReturnType<typeof bi>> = {
   success: bi('успех', 'passed'),
-  failed: bi('упала', 'failed'),
+  failed: bi('с ошибкой', 'failed'),
   running: bi('идёт', 'running'),
   pending: bi('ждёт раннер', 'pending'),
   manual: bi('ручной запуск', 'manual'),

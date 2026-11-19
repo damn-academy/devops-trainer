@@ -257,7 +257,7 @@ export const CICD_EXAM: Exam = {
     'Four cards from the site team’s tracker. What the forge saw is checked: pipelines, jobs, variables, deployments, not the commands you type. There are no hints; only the GitLab CI keyword reference is open.',
   ),
   story: bi(
-    'Сайт кофейни переехал на forge, но пайплайна у него почти нет. Проверки запускают вручную, выкладка падает через раз, а на рабочий сервер версия попадает с каждым коммитом. Тимлид оставил четыре карточки и уехал за поставкой зерна.',
+    'Сайт кофейни переехал на forge, но пайплайна у него почти нет. Проверки запускают вручную, выкладка через раз завершается с ошибкой, а на рабочий сервер версия попадает с каждым коммитом. Руководитель команды оставил четыре карточки и уехал за поставкой зерна.',
     'The café site moved to the forge, but it has hardly any pipeline: checks are run by hand, the deployment fails every other time, and every commit goes straight to production. The team lead left four cards and went to collect a coffee delivery.',
   ),
   minutes: 60,
@@ -266,12 +266,12 @@ export const CICD_EXAM: Exam = {
   explain: [
     {
       id: 'e1',
-      prompt: bi('Тимлид спрашивает, что команда сейчас делает, Continuous Delivery или Continuous Deployment, и что нужно поменять, чтобы получилось наоборот. Ответьте ему.', '“Are we doing Continuous Delivery or Continuous Deployment now? What would we change to get the other one?”'),
+      prompt: bi('Руководитель команды спрашивает, что команда сейчас делает, Continuous Delivery или Continuous Deployment, и что нужно поменять, чтобы получилось наоборот. Ответьте ему.', '“Are we doing Continuous Delivery or Continuous Deployment now? What would we change to get the other one?”'),
       keyPoints: [bi('ручной шаг перед рабочим сервером означает Continuous Delivery', 'a manual step before production is Continuous Delivery'), bi('каждая версия готова к выпуску, а выпускать ли её, решает человек', 'every version is ready to release; releasing is a human decision'), bi('без when: manual рабочий сервер обновляется сам, и это Continuous Deployment', 'without when: manual production updates by itself: Continuous Deployment'), bi('две практики отличаются одной строкой в файле пайплайна', 'the difference is one line in the pipeline file')],
     },
     {
       id: 'e2',
-      prompt: bi('Тимлид спрашивает, чем ваш кэш отличается от артефакта и что будет, если кэш пропадёт. Ответьте ему.', '“How does your cache differ from the artifact, and what happens if the cache vanishes?”'),
+      prompt: bi('Руководитель команды спрашивает, чем ваш кэш отличается от артефакта и что будет, если кэш пропадёт. Ответьте ему.', '“How does your cache differ from the artifact, and what happens if the cache vanishes?”'),
       keyPoints: [bi('артефакт передаёт результат следующим джобам и обязан дойти', 'an artifact passes a result to later jobs and must arrive'), bi('кэш только ускоряет работу, и его наличие не гарантировано', 'a cache only speeds things up and is not guaranteed'), bi('без кэша сборка проходит, только медленнее', 'without the cache the build passes, only slower'), bi('кэш хранится у раннера под именем ключа', 'the cache lies on the runner under a key')],
     },
   ],
@@ -305,7 +305,7 @@ export const CICD_EXAM: Exam = {
       setup: projectSetup({ '.gitlab-ci.yml': BROKEN_ARTIFACT_CI }, { forge: [{ project: 'team/site', variables: token }] }),
       task: {
         id: 'artifact',
-        prompt: bi('Карточка 2. «Выкладка на тестовый стенд падает с сообщением `dist/index.html not found`, хотя сборка зелёная. Почините это и не меняйте скрипты джоб».', 'Card 2. “The staging deployment fails with `dist/index.html not found`, though the build is green. Fix it without changing the job scripts.”'),
+        prompt: bi('Карточка 2. «Выкладка на тестовый стенд завершается с ошибкой `dist/index.html not found`, хотя сборка зелёная. Почините это и не меняйте скрипты джоб».', 'Card 2. “The staging deployment fails with `dist/index.html not found`, though the build is green. Fix it without changing the job scripts.”'),
         check: { when: deliverOk },
       },
     },
