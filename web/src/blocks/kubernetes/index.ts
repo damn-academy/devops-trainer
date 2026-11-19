@@ -36,6 +36,9 @@ import { KUBEADM_LESSONS, stage2Quiz } from './lessons/f-kubeadm';
 import { placementFor } from './placement';
 import { R, S, src } from './sources';
 
+// The newer exams are a chunk of their own (see exams-extra.ts).
+const { EXTRA_EXAMS } = await import('./exams-extra');
+
 const quiz = [...whyQuiz, ...podQuiz, ...reconcileQuiz, ...deployQuiz, ...archQuiz, ...operatorQuiz, ...networkQuiz, ...serviceQuiz, ...dnsQuiz, ...ingressQuiz, ...netpolQuiz, ...troubleQuiz, ...configQuiz, ...healthQuiz, ...helmQuiz, ...realQuiz, ...stage2Quiz];
 const placement = placementFor(quiz);
 
@@ -95,6 +98,7 @@ const stage2: Block = {
   sources: src([S.k3s, S.kubeadm, S.etcdRecovery, S.skew], [R.installKubeadm, R.what]),
   docSources: ['kubernetes.io', 'help'],
   placement: placement.stage2,
+  exam: 'k8s-2.exam',
 };
 
 export default defineModule({
@@ -104,5 +108,5 @@ export default defineModule({
   quiz,
   explainers: [dispatchModel, reconcileModel, loopChainModel, rollingModel, schedulerModel, applyPathModel, nodeDownModel, podNetworkModel, servicePathModel, ndotsModel, ingressPathModel, netpolModel, kubeadmInitModel, tlsBootstrapModel, etcdRestoreModel, upgradeModel].map((m) => fromModel(m as never)),
   docs: STAGE2_DOCS,
-  exams: [k8sExam],
+  exams: [k8sExam, ...EXTRA_EXAMS],
 });
