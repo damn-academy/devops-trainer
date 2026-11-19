@@ -11,7 +11,7 @@
 
 import { defineModel } from '../../../core/define';
 import type { Step } from '../../../core/types';
-import { b, card, edge, fmtn, hiddenExcept, lastMetrics, node, nWord, type Bi } from './kit';
+import { b, card, edge, fmtn, hiddenExcept, lastMetrics, node, numIn, nWord, pctIn, type Bi } from './kit';
 
 type P = { slo: string; minutes: number; failing: number; earlier: number };
 
@@ -98,18 +98,18 @@ export const budgetModel = defineModel<P>({
     height: 440,
     nodes: [
       node('slo', b('Цель SLO', 'SLO target'), 'obj', [24, 48, 184, 64], card(['Цель надёжности говорит, какая доля оформлений заказа должна проходить успешно за 30 дней. Каждая следующая девятка в цели вдесятеро уменьшает допустимое время плохой работы.', 'The reliability target: what share of checkouts must succeed over 30 days. Each further nine in the target cuts the allowed time of bad service tenfold.'], ['Цель выбирает команда вместе с бизнесом.', 'The team chooses it together with the business.'], { url: 'https://sre.google/sre-book/service-level-objectives/', label: 'SRE book › SLOs' }), { icon: 'file', sub: '99.9%' }),
-      node('budget', b('Бюджет ошибок, минут', 'Error budget, minutes'), 'gauge', [328, 48, 248, 64], card(['Бюджет говорит, сколько минут плохой работы можно себе позволить за 30 дней, и считается по формуле (1 − SLO) × 30 дней. Эти минуты команда тратит на выкладки, эксперименты и сбои.', 'How many minutes of bad service are affordable in 30 days: (1 − SLO) × 30 days. The team spends these minutes on deployments, experiments and outages.'], ['Бюджет считается из цели, его никто не назначает отдельно.', 'It is derived from the target; nobody sets it separately.']), { icon: 'database', shape: 'buffer' }),
-      node('policy', b('Политика бюджета', 'Budget policy'), 'obj', [752, 48, 184, 64], card(['Договорённость о том, что делать, когда бюджет кончился. В примере из SRE Workbook она звучит так: если за четыре недели бюджет превышен, выпуски останавливают, пока сервис не вернётся к цели, и разрешают только исправления самых срочных проблем (их называют P0) и исправления безопасности.', 'An agreement on what to do when the budget is gone. In the SRE Workbook example: if the budget over four weeks is exceeded, releases stop until the service is back within the target; only P0 fixes and security fixes are allowed.'], ['Политику подписывают команда и бизнес.', 'The team and the business sign it.'], POLICY), { icon: 'file' }),
+      node('budget', b('Бюджет ошибок, минут', 'Error budget, minutes'), 'gauge', [328, 48, 232, 64], card(['Бюджет говорит, сколько минут плохой работы можно себе позволить за 30 дней, и считается по формуле (1 − SLO) × 30 дней. Эти минуты команда тратит на выкладки, эксперименты и сбои.', 'How many minutes of bad service are affordable in 30 days: (1 − SLO) × 30 days. The team spends these minutes on deployments, experiments and outages.'], ['Бюджет считается из цели, его никто не назначает отдельно.', 'It is derived from the target; nobody sets it separately.']), { icon: 'database', shape: 'buffer' }),
+      node('policy', b('Политика бюджета', 'Budget policy'), 'obj', [768, 48, 168, 64], card(['Договорённость о том, что делать, когда бюджет кончился. В примере из SRE Workbook она звучит так: если за четыре недели бюджет превышен, выпуски останавливают, пока сервис не вернётся к цели, и разрешают только исправления самых срочных проблем (их называют P0) и исправления безопасности.', 'An agreement on what to do when the budget is gone. In the SRE Workbook example: if the budget over four weeks is exceeded, releases stop until the service is back within the target; only P0 fixes and security fixes are allowed.'], ['Политику подписывают команда и бизнес.', 'The team and the business sign it.'], POLICY), { icon: 'file' }),
       node('outage', b('Сбой', 'Outage'), 'process', [24, 320, 200, 64], card(['Сбоем здесь называют минуты, когда часть запросов к сайту не проходит. Минута, в которую не проходит 10 % запросов, стоит десятую часть минуты полного простоя.', 'Minutes when part of the requests to the site fail. A minute in which 10% of requests fail costs a tenth of a minute of full downtime.'], ['Сбой вызывают выкладка с ошибкой, нагрузка или авария.', 'A faulty deployment, load or an accident causes it.']), { icon: 'server' }),
       node('burn', b('Скорость сжигания', 'Burn rate'), 'gauge', [324, 320, 192, 64], card(['Скорость сжигания показывает, во сколько раз быстрее нормы тратится бюджет, и равна доле ошибок, делённой на (1 − SLO). При скорости 1 бюджет закончится ровно к концу 30 дней.', 'How many times faster than normal the budget is being spent: the error ratio divided by (1 − SLO). At a rate of 1 the budget runs out exactly at the end of 30 days.'], ['Скорость считает система мониторинга.', 'The monitoring system computes it.'], ALERTING), { icon: 'process' }),
-      node('alert', b('Оповещение дежурному', 'Alert to on-call'), 'cp', [736, 320, 200, 64], card(['Правило оповещения решает, будить ли человека. По SRE Workbook срочное оповещение срабатывает при скорости 14,4 за последний час или 6 за последние 6 часов, а при скорости 1 за последние 3 дня заводится тикет на рабочее время.', 'The rule that decides whether to wake a person. By the SRE Workbook a page fires at a rate of 14.4 over the last hour or 6 over the last 6 hours, and a rate of 1 over the last 3 days opens a ticket for working hours.'], ['Правило настраивает команда в системе оповещений.', 'The team sets it up in the alerting system.'], ALERTING), { icon: 'user' }),
+      node('alert', b('Оповещение дежурному', 'Alert to on-call'), 'cp', [736, 320, 200, 64], card(['Правило оповещения решает, будить ли человека. По SRE Workbook срочное оповещение срабатывает при скорости 14,4 за последний час или 6 за последние 6 часов, а при скорости 1 за последние 3 дня заводится заявка, которую разберут в рабочее время.', 'The rule that decides whether to wake a person. By the SRE Workbook a page fires at a rate of 14.4 over the last hour or 6 over the last 6 hours, and a rate of 1 over the last 3 days opens a ticket for working hours.'], ['Правило настраивает команда в системе оповещений.', 'The team sets it up in the alerting system.'], ALERTING), { icon: 'user' }),
     ],
     edges: [
       edge('e-size', 'slo', 'budget', b('(1 − SLO) × 30 дней', '(1 − SLO) × 30 days'), card(['Из цели получается бюджет, и при цели 99,9 % он равен 43,2 минуты за 30 дней.', 'The target gives the budget, and at 99.9% it equals 43.2 minutes over 30 days.'], ['Бюджет получается из цели простой арифметикой, и вручную его никто не пересчитывает.', 'The budget follows from the target by plain arithmetic; nobody recomputes it by hand.'])),
       edge('e-spend', 'outage', 'budget', b('минуты × доля ошибок', 'minutes × error share'), card(['По этой линии сбой забирает из бюджета плохие минуты, и их столько, сколько получится, если умножить длительность сбоя на долю неуспешных запросов.', 'Along this line the outage takes bad minutes from the budget, as many as its duration multiplied by the share of failing requests.'], ['Минуты списывает мониторинг.', 'Monitoring deducts the minutes.'])),
       edge('e-burn', 'outage', 'burn', b('доля ошибок', 'error share'), card(['Мониторинг смотрит, какая доля запросов не проходит прямо сейчас, и делит её на допустимую долю.', 'Monitoring looks at what share of requests fails right now and divides it by the allowed share.'], ['Долю считает мониторинг по окнам времени.', 'Monitoring computes it over time windows.'])),
       edge('e-alert', 'burn', 'alert', b('выше порога?', 'above a threshold?'), card(['Скорость сравнивают с тремя порогами из SRE Workbook, которые равны 14,4, 6 и 1.', 'The rate is compared with three thresholds from the SRE Workbook, which are 14.4, 6 and 1.'], ['Скорость с порогами сравнивает правило оповещения.', 'The alerting rule compares the rate with the thresholds.'], ALERTING)),
-      edge('e-policy', 'budget', 'policy', b('превышен за 4 недели?', 'exceeded over 4 weeks?'), card(['Решение о заморозке выпусков принимают по остатку бюджета за последние четыре недели, а не по ощущению.', 'The release freeze is decided on what is left of the budget over the last four weeks, not on a feeling.'], ['Решение принимают команда и бизнес, следуя политике бюджета.', 'The team and the business decide, following the budget policy.'], POLICY)),
+      edge('e-policy', 'budget', 'policy', b('бюджет превышен?', 'budget exceeded?'), card(['Решение о заморозке выпусков принимают по остатку бюджета за последние четыре недели, а не по ощущению.', 'The release freeze is decided on what is left of the budget over the last four weeks, not on a feeling.'], ['Решение принимают команда и бизнес, следуя политике бюджета.', 'The team and the business decide, following the budget policy.'], POLICY), { labelAt: 0.3 }),
     ],
   },
   params: [
@@ -180,7 +180,7 @@ export const budgetModel = defineModel<P>({
     const cpu = broken.has('cpu-alert');
     const m = { budget: n.budget, bad: n.bad, burn: n.burn, left: n.left };
     const allowed = Math.round((1 - n.target) * 10000) / 100;
-    const sub = (x: number) => `${Math.max(0, r1(x))} / ${n.budget}`;
+    const sub = (x: number) => `${numIn(Math.max(0, r1(x)))} / ${numIn(n.budget)}`;
     const steps: Step[] = [
       {
         id: 'slo',
@@ -189,7 +189,7 @@ export const budgetModel = defineModel<P>({
         focus: ['slo'],
         say: { slo: fmtn(b('Цель требует, чтобы за 30 дней успешно проходили {s} оформлений заказа.', 'The target requires {s} of checkouts to succeed over 30 days.'), { s: pct(p.slo) }) },
         states: hiddenExcept(ALL, 'slo'),
-        values: { slo: `${p.slo}%`, budget: sub(n.budget - p.earlier) },
+        values: { slo: pctIn(Number(p.slo)), budget: sub(n.budget - p.earlier) },
         fill: { budget: 1 - p.earlier / Math.max(1e-9, n.budget) },
         metrics: { budget: n.budget, bad: 0, burn: 0, left: r1(n.budget - p.earlier) },
       },
@@ -241,7 +241,7 @@ export const budgetModel = defineModel<P>({
         say: { alert: b('Процессор загружен на 35 %, правило считает, что всё спокойно, и дежурного никто не будит.', 'The CPU is at 35%, the rule considers everything calm, and nobody wakes the on-call engineer.') },
         reveal: ['alert'],
         states: { burn: 'hidden', 'e-burn': 'hidden', 'e-alert': 'hidden', alert: 'off' },
-        values: { alert: 'CPU 35%' },
+        values: { alert: `CPU ${pctIn(35)}` },
         metrics: m,
         broken: { at: 'alert', message: 'ALERT HighCPU: inactive (cpu=35%)\ncheckout success: 90%', caption: b('показатель не описывает то, что видит покупатель, потому что процессор в норме, а заказы при этом не проходят.', 'the indicator does not describe what the customer sees, because the CPU is fine while orders fail.') },
       });
@@ -254,7 +254,7 @@ export const budgetModel = defineModel<P>({
         say: { burn: fmtn(b('Бюджет тратится в {r} быстрее нормы.', 'The budget is spent {r} faster than normal.'), { r: times(n.burn) }) },
         tokens: [{ edge: 'e-burn', label: pct(String(p.failing)) }],
         reveal: ['e-burn', 'burn'],
-        values: { burn: `${n.burn}×` },
+        values: { burn: `${numIn(n.burn)}×` },
         states: { burn: n.burn >= 6 ? 'err' : n.burn >= 1 ? 'warn' : 'on' },
         metrics: m,
       });
@@ -274,10 +274,10 @@ export const budgetModel = defineModel<P>({
           : n.alert === 'ticket'
             ? {
                 id: 'ticket',
-                label: b('тикет', 'ticket'),
-                caption: b('Скорость выше единицы, но ниже порогов срочного оповещения. Человека ночью не будят, а утром в рабочей очереди появится тикет.', 'The rate is above one but below the paging thresholds. Nobody is woken at night; in the morning a ticket appears in the work queue.'),
+                label: b('заявка', 'ticket'),
+                caption: b('Скорость выше единицы, но ниже порогов срочного оповещения. Человека ночью не будят, а утром в рабочей очереди появится заявка.', 'The rate is above one but below the paging thresholds. Nobody is woken at night; in the morning a ticket appears in the work queue.'),
                 focus: ['e-alert', 'alert'],
-                say: { alert: b('До порога срочного оповещения далеко, поэтому правило заводит тикет на утро.', 'The paging threshold is far away, so the rule opens a ticket for the morning.') },
+                say: { alert: b('До порога срочного оповещения далеко, поэтому правило заводит заявку на утро.', 'The paging threshold is far away, so the rule opens a ticket for the morning.') },
                 tokens: [{ edge: 'e-alert', label: `${n.burn}×` }],
                 reveal: ['e-alert', 'alert'],
                 states: { alert: 'warn' },
@@ -301,7 +301,7 @@ export const budgetModel = defineModel<P>({
       label: b('политика', 'policy'),
       caption: n.freeze
         ? fmtn(b('Бюджет за четыре недели превышен на {x}. По политике выпуски останавливают, пока сервис не вернётся к цели, и разрешают только исправления проблем P0 и исправления безопасности.', 'The four-week budget is exceeded by {x}. By the policy releases stop until the service is back within the target, and only P0 fixes and security fixes are allowed.'), { x: durAcc(-n.left) })
-        : fmtn(b('В бюджете осталось {l} из {b}. Бюджет не превышен, поэтому политика выкладки не запрещает, даже если минут осталось мало.', '{l} of {b} are left in the budget. The budget is not exceeded, so the policy does not forbid deployments, even when very few minutes are left.'), { l: dur(n.left), b: dur(n.budget) }),
+        : fmtn(b('В бюджете осталось {l} из {b}. Бюджет не превышен, поэтому политика бюджета не запрещает выкладывать изменения, даже если минут в нём осталось мало.', '{l} of {b} are left in the budget. The budget is not exceeded, so the policy does not forbid deployments, even when very few minutes are left.'), { l: dur(n.left), b: dur(n.budget) }),
       focus: ['e-policy', 'policy'],
       say: { policy: n.freeze ? b('Бюджет превышен, поэтому выпуски останавливают, кроме исправлений P0 и исправлений безопасности.', 'The budget is exceeded, so releases stop, except P0 fixes and security fixes.') : b('Бюджет не превышен, поэтому выкладывать изменения можно.', 'The budget is not exceeded, so changes may be deployed.') },
       tokens: [{ edge: 'e-policy', label: n.left < 0 ? fmtn(b('−{x} мин', '−{x} min'), { x: r1(-n.left) }) : fmtn(b('{x} мин', '{x} min'), { x: n.left }) }],

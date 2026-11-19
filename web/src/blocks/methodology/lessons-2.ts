@@ -249,7 +249,7 @@ export const agile: Lesson = {
       step: 'explain',
       title: bi('Scrum и Kanban вместе', 'Not “or” but “and”'),
       body: bi(
-        'Scrum задаёт ритм работы, ответственности и цели, а Kanban описывает, как работа движется внутри этого ритма. Авторы руководств отдельно объяснили, как их совмещать, в документе Kanban Guide for Scrum Teams. В нём сказано, что Scrum-команда может ограничивать WIP внутри спринта, следить за временем цикла и обещать сроки по SLE. Поэтому на собеседовании объясняйте, что Scrum служит фреймворком с событиями и ответственностями, Kanban служит стратегией управления потоком и одно не исключает другого.',
+        'Scrum задаёт ритм работы, ответственности и цели, а Kanban описывает, как работа движется внутри этого ритма. Авторы руководств отдельно объяснили, как их совмещать, в документе Kanban Guide for Scrum Teams. В нём сказано, что Scrum-команда может ограничивать WIP внутри спринта, следить за временем цикла и обещать сроки по SLE. Поэтому на собеседовании объясняйте, что Scrum служит набором правил с событиями и ответственностями, Kanban служит стратегией управления потоком и одно не исключает другого.',
         'Scrum sets the rhythm, the accountabilities and the goals; Kanban sets how work flows inside that rhythm. The authors of the guides described their compatibility separately, in the Kanban Guide for Scrum Teams: a Scrum Team may limit WIP inside a Sprint, watch cycle time and promise dates by an SLE. The interview answer: Scrum is a framework of events and accountabilities, Kanban is a strategy for managing flow; one does not exclude the other.',
       ),
     },
