@@ -453,7 +453,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     if (brokeAt) {
       brokeLine.hidden = false;
       clear(brokeLine);
-      brokeLine.append(h('span.st-icon.err', { 'aria-hidden': 'true' }, '⨯'), h('div', {}, h('strong', {}, t(model.stopLabel ?? L.stoppedAt)), ' — ', t(brokeAt.caption), h('pre.tool-msg', {}, brokeAt.message)));
+      brokeLine.append(h('span.st-icon.err', { 'aria-hidden': 'true' }, '⨯'), h('div', {}, ...(/^[A-ZА-ЯЁ]/.test(t(brokeAt.caption)) ? [h('strong', {}, t(brokeAt.caption))] : [h('strong', {}, t(model.stopLabel ?? L.stoppedAt)), ' — ', t(brokeAt.caption)]), h('pre.tool-msg', {}, brokeAt.message)));
     } else brokeLine.hidden = true;
     clear(metricsBox);
     const m = st?.metrics ?? {};
