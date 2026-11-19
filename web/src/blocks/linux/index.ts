@@ -1,5 +1,7 @@
 // The Linux block (route id `linux`, design 02): nineteen lessons from the
-// terminal to how the kernel isolates and limits processes, six process
+// terminal to how the kernel isolates and limits processes, four more on real
+// Alpine machines in the tab (design 00 §6.13: SSH between machines, nginx
+// and OpenRC, installing onto a blank disk, a full partition), eight process
 // explainers, the quiz bank, the placement check, the block exam and the lab
 // programs of the simulated machine.
 
@@ -21,10 +23,27 @@ import { restartModel } from './explainers/restart';
 import { LESSONS_1 } from './lessons-1';
 import { LESSONS_2 } from './lessons-2';
 import { LESSONS_3 } from './lessons-3';
+import { LESSONS_4 } from './lessons-4';
 import { QUIZ } from './quiz';
+import { QUIZ_REAL } from './quiz-real';
+import { installModel } from './explainers/install';
+import { sshModel } from './explainers/ssh';
+import { LAB_PAGES } from './reallab/labs';
+import { lazyWidget } from '../../engine/v86/lazy';
 import { BASH_MANUAL, DEBIAN_HANDBOOK, DEBIAN_HANDBOOK_RU, TLCL, man7, sources, wiki } from './shared';
 
-const LESSONS = [...LESSONS_1, ...LESSONS_2, ...LESSONS_3];
+const LESSONS = [...LESSONS_1, ...LESSONS_2, ...LESSONS_3, ...LESSONS_4];
+
+/** The emulator, xterm and the lab UI load only when a real-machine lab mounts. */
+const loadLab = async () => (await import('./reallab/widget')).mountRealLab;
+const labWidgets = [
+  lazyWidget('linux.lab', loadLab),
+  // #/lab/<id>: the in-browser variants of the learning exams (the props come from LAB_PAGES).
+  ...Object.entries(LAB_PAGES).map(([id, props]) => lazyWidget(`lab:${id}`, async () => {
+    const mount = await loadLab();
+    return (el, _p, ctx) => mount(el, props, ctx);
+  })),
+];
 
 /** `hello` — the program of the PATH lesson; it exists only in ~/bin of that lab. */
 const hello: ShellCommand = {
@@ -295,9 +314,10 @@ export default defineModule({
   blocks: [block],
   lessons: LESSONS,
   concepts,
-  quiz: QUIZ,
+  quiz: [...QUIZ, ...QUIZ_REAL],
   exams: [exam, DISK_EXAM, ISOLATION_EXAM, ACCESS_EXAM],
   docs: LINUX_DOCS,
   commands: [hello, batchExport],
-  explainers: [fromModel(execModel), fromModel(pipeModel), fromModel(permModel), fromModel(restartModel), fromModel(bootModel), fromModel(isolationModel)],
+  explainers: [fromModel(execModel), fromModel(pipeModel), fromModel(permModel), fromModel(restartModel), fromModel(bootModel), fromModel(isolationModel), fromModel(sshModel), fromModel(installModel)],
+  widgets: labWidgets,
 });
