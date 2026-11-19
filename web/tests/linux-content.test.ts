@@ -41,9 +41,9 @@ async function solve(lesson: string, section: string, i: number, lines: string[]
 }
 
 describe('linux block structure', () => {
-  it('has the block, 19 lessons, six explainers and a quiz bank of at least 12', () => {
+  it('has the block, 23 lessons, eight explainers and a quiz bank of at least 12', () => {
     const b = registry.blocks.get('linux')!;
-    expect(b.lessons.length).toBe(19);
+    expect(b.lessons.length).toBe(23);
     for (const id of ['linux.exec', 'linux.pipe', 'linux.perm', 'linux.restart', 'linux.boot', 'linux.isolation']) expect(registry.explainers.has(id)).toBe(true);
     expect([...registry.quiz.keys()].filter((k) => k.startsWith('linux.')).length).toBeGreaterThanOrEqual(12);
     expect(b.placement.some((p) => p.level === 'intermediate')).toBe(true);
