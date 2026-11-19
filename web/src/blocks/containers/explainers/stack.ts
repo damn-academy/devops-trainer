@@ -51,7 +51,7 @@ export const stackModel = defineModel<P>({
   block: 'containers',
   title: bi('Железо, виртуальные машины, контейнеры', 'Bare metal, virtual machines, containers'),
   summary: bi(
-    'Три сервера одинакового размера. Двигай число приложений — счётчики пересчитаются; включай поломки и смотри, где проходит граница изоляции.',
+    'Три сервера одинакового размера. Двигайте число приложений — счётчики пересчитаются; включайте поломки и смотрите, где проходит граница изоляции.',
     'Three servers of the same size. Move the number of applications and the counters recompute; switch on the failures and see where the isolation boundary runs.',
   ),
   concepts: ['docker.env-problem', 'docker.vm', 'docker.container', 'docker.vm-vs-container'],
@@ -190,7 +190,7 @@ export const stackModel = defineModel<P>({
         id: 'bare',
         label: bi('один сервер', 'one server'),
         caption: p.conflict
-          ? bi('Два приложения на одной системе делят библиотеки. A нужен libssl 1.1, B — 3.0: обновишь для B — сломается A. Это и есть проблема окружений: «у меня работает».', 'Two applications on one system share libraries. A needs libssl 1.1, B needs 3.0: upgrade for B and A breaks. That is the environment problem: “it works on my machine”.')
+          ? bi('Два приложения на одной системе делят библиотеки. A нужен libssl 1.1, B — 3.0: обновите для B — сломается A. Это и есть проблема окружений: «у меня работает».', 'Two applications on one system share libraries. A needs libssl 1.1, B needs 3.0: upgrade for B and A breaks. That is the environment problem: “it works on my machine”.')
           : bi('Два приложения на одной системе. Пока им подходят одни и те же версии библиотек, всё работает, и сервер загружен процентов на десять.', 'Two applications on one system. As long as the same library versions suit both, everything works, and the server is about ten per cent busy.'),
         focus: ['bm-apps', 'bm-os', 'e-bm-sys'],
         states: { 'bm-apps': p.conflict ? 'err' : 'ok', 'bm-os': 'on', 'vm-apps': 'off', 'vm-os': 'off', 'vm-kernel': 'off', 'vm-hyp': 'off', 'ct-apps': 'off', 'ct-rt': 'off', 'ct-kernel': 'off' },

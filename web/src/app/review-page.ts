@@ -39,7 +39,7 @@ function blockOfConcept(c: ConceptId): string | undefined {
 
 const R = {
   lede: bi(
-    'Каждое понятие возвращается тогда, когда ты вот-вот его забудешь: планировщик FSRS держит вероятность вспомнить около 90%. Сегодня — смесь блоков и каждый раз другой формат вопроса.',
+    'Каждое понятие возвращается тогда, когда вы вот-вот его забудете: планировщик FSRS держит вероятность вспомнить около 90%. Сегодня — смесь блоков и каждый раз другой формат вопроса.',
     'Each concept comes back just before you would forget it: the FSRS scheduler keeps the chance of recall near 90%. Today is a mix of blocks, and each time the question takes another form.',
   ),
   why: bi('Почему этот вопрос вернулся сегодня?', 'Why did this question come back today?'),
@@ -52,7 +52,7 @@ const R = {
   nextIn: bi('Вернётся через', 'Comes back in'),
   days: bi('дн.', 'd'),
   minutes: bi('мин', 'min'),
-  confident: bi('Ты ответил «знаю» и ошибся. Такие ошибки исправляются лучше всего, поэтому вопрос вернётся в конце этой сессии в другом виде и завтра.', 'You said “I know” and got it wrong. Such mistakes are the easiest to fix, so the question returns at the end of this session in another form, and tomorrow.'),
+  confident: bi('Вы ответили «знаю» и ошиблись. Такие ошибки исправляются лучше всего, поэтому вопрос вернётся в конце этой сессии в другом виде и завтра.', 'You said “I know” and got it wrong. Such mistakes are the easiest to fix, so the question returns at the end of this session in another form, and tomorrow.'),
   reasonDue: bi('Пора: вероятность вспомнить упала до {p}%.', 'It is time: the chance of recall has dropped to {p}%.'),
   reasonNew: bi('Первое повторение после урока.', 'The first review after the lesson.'),
   reasonMiss: bi('Вчера здесь была уверенная ошибка.', 'Last time this was a confident mistake.'),
@@ -113,7 +113,7 @@ export function reviewPage(): Page {
     const sure = store.state.calibration[3];
     if (sure.n < 5) return null;
     const p = Math.round((sure.right / sure.n) * 100);
-    return h('p.calibration', {}, t(bi(`Когда ты отвечал «знаю», ты был прав в ${p}% случаев.`, `When you said “I know”, you were right ${p}% of the time.`)));
+    return h('p.calibration', {}, t(bi(`Когда вы отвечали «знаю», вы были правы в ${p}% случаев.`, `When you said “I know”, you were right ${p}% of the time.`)));
   };
 
   const intro = () => {

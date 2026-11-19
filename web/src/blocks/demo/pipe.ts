@@ -52,7 +52,7 @@ export const pipeModel = defineModel<P>({
   block: 'demo',
   title: bi('Конвейер: ls /etc | grep conf', 'A pipeline: ls /etc | grep conf'),
   summary: bi(
-    'Оболочка соединяет вывод одной программы со входом другой через буфер в ядре. Двигай ручки и ломай — процесс пересчитается.',
+    'Оболочка соединяет вывод одной программы со входом другой через буфер в ядре. Двигайте ручки и ломайте — процесс пересчитается.',
     'The shell connects the output of one program to the input of another through a buffer in the kernel. Move the knobs and break things — the process is recomputed.',
   ),
   concepts: ['demo.pipe', 'demo.exit-code'],

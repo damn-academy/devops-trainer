@@ -91,7 +91,7 @@ export function shouldRecord(next: DocStep, stored?: { step: DocStep; block: Blo
 export const STEP_NAMES: Record<DocStep, { ru: string; en: string }> = {
   1: { ru: 'мелькает', en: 'flicker' },
   2: { ru: 'анатомия', en: 'anatomy' },
-  3: { ru: 'найди флаг', en: 'find the flag' },
+  3: { ru: 'найдите флаг', en: 'find the flag' },
   4: { ru: 'принуждение', en: 'forcing' },
   5: { ru: 'экзамен', en: 'exam' },
 };

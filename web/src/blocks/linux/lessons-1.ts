@@ -24,7 +24,7 @@ const terminal: Lesson = {
       kind: 'text',
       step: 'hook',
       body: bi(
-        'Тимлид пишет в чат: «Зайди на сервер и глянь, сколько там времени и под каким пользователем мы работаем». Вы открываете подключение — и видите не рабочий стол, а одну строку с мигающим курсором. Кнопок нет. Это не урезанная версия привычного компьютера, а главный способ работать с машиной, которая стоит в чужом здании за тысячу километров: ей не нужны монитор и мышь, ей нужен текст.',
+        'Тимлид пишет в чат: «Зайдите на сервер и гляньте, сколько там времени и под каким пользователем мы работаем». Вы открываете подключение — и видите не рабочий стол, а одну строку с мигающим курсором. Кнопок нет. Это не урезанная версия привычного компьютера, а главный способ работать с машиной, которая стоит в чужом здании за тысячу километров: ей не нужны монитор и мышь, ей нужен текст.',
         'Your team lead writes in the chat: “Log in to the server and check what time it is there and which user we run as.” You connect — and see not a desktop but a single line with a blinking cursor. There are no buttons. This is not a cut-down version of the computer you know; it is the main way to work with a machine that stands in someone else’s building a thousand kilometres away: it needs no monitor or mouse, it needs text.',
       ),
     },
@@ -134,7 +134,7 @@ const paths: Lesson = {
       id: 'hook',
       kind: 'text',
       step: 'hook',
-      body: bi('«Журналы лежат в /var/log — сходи посмотри, что там с приложением». Где это «в /var/log» и как туда «сходить», если нет ни проводника, ни папок на экране?', '“The logs are in /var/log — go and see what is up with the app.” Where is “in /var/log”, and how do you “go” there with no file manager and no folders on the screen?'),
+      body: bi('«Журналы лежат в /var/log — сходите посмотрите, что там с приложением». Где это «в /var/log» и как туда «сходить», если нет ни проводника, ни папок на экране?', '“The logs are in /var/log — go and see what is up with the app.” Where is “in /var/log”, and how do you “go” there with no file manager and no folders on the screen?'),
     },
     {
       id: 'tree',
@@ -220,7 +220,7 @@ const files: Lesson = {
       id: 'hook',
       kind: 'text',
       step: 'hook',
-      body: bi('«Перед тем как править конфиг, сделай копию» — первое правило любого администратора. Второе: «удалённое не вернуть». В Linux нет корзины, и `rm` удаляет сразу.', '“Before you edit a config, make a copy” — the first rule of any administrator. The second: “what is deleted is gone”. Linux has no trash can, and `rm` deletes at once.'),
+      body: bi('«Перед тем как править конфиг, сделайте копию» — первое правило любого администратора. Второе: «удалённое не вернуть». В Linux нет корзины, и `rm` удаляет сразу.', '“Before you edit a config, make a copy” — the first rule of any administrator. The second: “what is deleted is gone”. Linux has no trash can, and `rm` deletes at once.'),
     },
     {
       id: 'ops',

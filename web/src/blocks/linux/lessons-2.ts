@@ -72,7 +72,7 @@ const streams: Lesson = {
       id: 'hook',
       kind: 'text',
       step: 'hook',
-      body: bi('«Посмотри по журналу, с каких адресов чаще всего прилетают ошибки 500». В журнале сорок тысяч строк. Программы «посчитай ошибки по адресам» не существует — но её можно собрать из пяти маленьких за одну строку.', '“Check the log: which addresses get the most 500 errors?” The log has forty thousand lines. There is no program called “count errors by address” — but you can build one out of five small ones in a single line.'),
+      body: bi('«Посмотрите по журналу, с каких адресов чаще всего прилетают ошибки 500». В журнале сорок тысяч строк. Программы «посчитай ошибки по адресам» не существует — но её можно собрать из пяти маленьких за одну строку.', '“Check the log: which addresses get the most 500 errors?” The log has forty thousand lines. There is no program called “count errors by address” — but you can build one out of five small ones in a single line.'),
     },
     {
       id: 'streams',
@@ -283,7 +283,7 @@ const processes: Lesson = {
       id: 'hook',
       kind: 'text',
       step: 'hook',
-      body: bi('«Сервер тормозит, глянь, что там жрёт процессор». Где это «что»? Не файл и не каталог — что-то, что работает прямо сейчас.', '“The server is slow, see what is eating the CPU.” Where is that “what”? Not a file, not a directory — something that is running right now.'),
+      body: bi('«Сервер тормозит, гляньте, что там жрёт процессор». Где это «что»? Не файл и не каталог — что-то, что работает прямо сейчас.', '“The server is slow, see what is eating the CPU.” Where is that “what”? Not a file, not a directory — something that is running right now.'),
     },
     {
       id: 'process',
@@ -493,7 +493,7 @@ const packages: Lesson = {
       id: 'hook',
       kind: 'text',
       step: 'hook',
-      body: bi('«Поставь на сервер jq». Скачивать файл с сайта и класть его в `/usr/bin` не нужно — и даже опасно: кто потом вспомнит, откуда он, какой версии и что ему нужно для работы?', '“Install jq on the server.” Downloading a file from a website and putting it into `/usr/bin` is not needed — and even dangerous: who will later remember where it came from, which version it is and what it needs to work?'),
+      body: bi('«Поставьте на сервер jq». Скачивать файл с сайта и класть его в `/usr/bin` не нужно — и даже опасно: кто потом вспомнит, откуда он, какой версии и что ему нужно для работы?', '“Install jq on the server.” Downloading a file from a website and putting it into `/usr/bin` is not needed — and even dangerous: who will later remember where it came from, which version it is and what it needs to work?'),
     },
     {
       id: 'explain',

@@ -148,3 +148,4 @@
 .exam-timer { font: 500 0.95rem/1 var(--font-mono); color: var(--ink-2); }
 .exam-timer.over { color: var(--c-err); }
 .calibration { font-family: var(--font-text); }
+.boot-loading { max-width: 1180px; margin: 0 auto; padding: 48px var(--gutter); color: var(--muted); font-family: var(--font-ui); }

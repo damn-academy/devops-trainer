@@ -39,7 +39,7 @@ export function askBox(o: AskOptions): HTMLElement {
         h(
           'p.muted',
           {},
-          t(bi('Наставник работает на твоей нейросети. Подключи её в ', 'The mentor runs on your own AI. Connect it in ')),
+          t(bi('Наставник работает на вашей нейросети. Подключите её в ', 'The mentor runs on your own AI. Connect it in ')),
           h('a', { href: href({ name: 'settings' }) }, t(UI.settings)),
           '.',
         ),

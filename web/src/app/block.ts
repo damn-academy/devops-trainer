@@ -135,7 +135,7 @@ export function placementPage(id: string): Page {
     root.append(
       h('nav.crumbs', {}, h('a', { href: href({ name: 'block', id: b.id }) }, t(b.title))),
       h('h1', {}, t(UI.checkLevel)),
-      h('p.lede', {}, t(bi('Выбери уровень, который хочешь подтвердить. Подсказок и наставника на проверке нет; ответ с пометкой «угадываю» не засчитывается, даже если верный.', 'Choose the level you want to confirm. There are no hints and no mentor during the check; an answer marked “guessing” does not count even when it is right.'))),
+      h('p.lede', {}, t(bi('Выберите уровень, который хотите подтвердить. Подсказок и наставника на проверке нет; ответ с пометкой «угадываю» не засчитывается, даже если верный.', 'Choose the level you want to confirm. There are no hints and no mentor during the check; an answer marked “guessing” does not count even when it is right.'))),
       h('div.level-chooser', {}, ...claimable.map((l) => h('button.level-card', { type: 'button', onclick: () => run(l) }, h('span.level-name', {}, t(UI.levels[l])), h('span.level-desc', {}, t(b.levels[l]))))),
     );
   };
@@ -206,7 +206,7 @@ export function placementPage(id: string): Page {
         : h(
             'div.placement-choice',
             {},
-            h('p', {}, t(bi('Выбери сам, как идти дальше:', 'Choose how to go on:'))),
+            h('p', {}, t(bi('Выберите сами, как идти дальше:', 'Choose how to go on:'))),
             lower !== claimed
               ? h(
                   'button.btn',

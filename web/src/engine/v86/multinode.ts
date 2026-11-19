@@ -27,7 +27,7 @@ interface Card {
 const T = {
   title: bi('Несколько машин и коммутатор', 'Several machines and a switch'),
   lede: bi(
-    'В этой вкладке работают настоящие машины Linux, каждая в своём потоке браузера. Их сетевые карты подключены к коммутатору тренажёра: он, как настоящий, запоминает, за каким портом какой MAC-адрес, и пересылает кадр только туда, где сидит получатель. Отправь `ping` с одной машины на другую и смотри, как идут кадры.',
+    'В этой вкладке работают настоящие машины Linux, каждая в своём потоке браузера. Их сетевые карты подключены к коммутатору тренажёра: он, как настоящий, запоминает, за каким портом какой MAC-адрес, и пересылает кадр только туда, где сидит получатель. Отправьте `ping` с одной машины на другую и смотрите, как идут кадры.',
     'Real Linux machines run in this tab, each in its own browser thread. Their network cards are plugged into the trainer’s switch: like a real one, it remembers which MAC address sits behind which port and forwards a frame only where the receiver is. Send a `ping` from one machine to another and watch the frames go.',
   ),
   machines: bi('Машин', 'Machines'),
@@ -40,14 +40,14 @@ const T = {
   aging: bi('Время жизни записи MAC', 'MAC entry lifetime'),
   clear: bi('Очистить таблицу MAC', 'Clear the MAC table'),
   table: bi('Таблица MAC коммутатора', 'The switch’s MAC table'),
-  tableEmpty: bi('Пусто: коммутатор ещё не видел ни одного кадра. Отправь ping.', 'Empty: the switch has not seen a frame yet. Send a ping.'),
+  tableEmpty: bi('Пусто: коммутатор ещё не видел ни одного кадра. Отправьте ping.', 'Empty: the switch has not seen a frame yet. Send a ping.'),
   frames: bi('Последние кадры', 'Last frames'),
   framesEmpty: bi('Кадров пока не было.', 'No frames yet.'),
   unplug: bi('Выдернуть кабель {n}', 'Unplug the cable of {n}'),
   unplugged: bi('кабель отключён', 'cable unplugged'),
   predict: bi('Что будет?', 'What will happen?'),
-  try: bi('Попробуй', 'Try'),
-  card: bi('Нажми на любой элемент схемы — здесь появится, что это и как на него посмотреть.', 'Click any element of the diagram: what it is and how to look at it will appear here.'),
+  try: bi('Попробуйте', 'Try'),
+  card: bi('Нажмите на любой элемент схемы — здесь появится, что это и как на него посмотреть.', 'Click any element of the diagram: what it is and how to look at it will appear here.'),
   cardWhat: bi('Что это', 'What it is'),
   cardWho: bi('Кто создаёт и меняет', 'Who creates and changes it'),
   cardSee: bi('Как посмотреть', 'How to look'),
@@ -162,7 +162,7 @@ export function mountMultiNode(root: HTMLElement, _props: unknown = {}, ctx?: Wi
     const swG = s('g.mn-el.fam-l2', { tabindex: 0, role: 'button' });
     swG.append(s('rect.mn-switch', { x: swBox.x, y: swBox.y, width: swBox.w, height: swBox.h, rx: 8 }), s('text.mn-label', { x: W / 2, y: swBox.y + 24, 'text-anchor': 'middle' }, sw.hub ? 'hub' : 'dt-switch'), s('text.mn-sub', { x: W / 2, y: swBox.y + 42, 'text-anchor': 'middle' }, sw.hub ? t(bi('без таблицы MAC', 'no MAC table')) : `${sw.table().length} MAC · ${Math.round(sw.agingMs / 1000)} s`));
     const swCard: Card = sw.hub
-      ? { title: 'hub', what: bi('Концентратор повторяет каждый кадр во все порты, не глядя на адреса. Так работали сети на общей шине.', 'A hub repeats every frame to every port without looking at addresses. That is how shared-bus networks worked.'), who: bi('Ты включил режим концентратора тумблером ниже.', 'You switched the hub mode on with the toggle below.') }
+      ? { title: 'hub', what: bi('Концентратор повторяет каждый кадр во все порты, не глядя на адреса. Так работали сети на общей шине.', 'A hub repeats every frame to every port without looking at addresses. That is how shared-bus networks worked.'), who: bi('Вы включили режим концентратора тумблером ниже.', 'You switched the hub mode on with the toggle below.') }
       : { title: 'dt-switch', what: bi('Коммутатор второго уровня: учит, какой MAC за каким портом, и пересылает кадр только получателю; широковещательные и незнакомые кадры рассылает всем.', 'A layer-2 switch: it learns which MAC is behind which port and forwards a frame only to the receiver; broadcast and unknown frames go to everyone.'), who: bi('Тренажёр: программа на странице, через которую идут кадры настоящих сетевых карт.', 'The trainer: a program in the page that every frame of the real network cards passes through.'), see: 'bridge fdb show   # the same table on a Linux bridge' };
     swG.addEventListener('click', () => showCard(swCard));
     swG.addEventListener('keydown', (e) => (e as KeyboardEvent).key === 'Enter' && showCard(swCard));
@@ -298,7 +298,7 @@ export function mountMultiNode(root: HTMLElement, _props: unknown = {}, ctx?: Wi
       b.addEventListener('click', () => {
         predicted.add(id);
         ctx?.record({ kind: 'x.v86.predict', about: id, choice: o.id, correct: o.id === right });
-        box.replaceWith(h('p.mn-verdict.small', { class: o.id === right ? 'ok' : 'warn' }, h('span.st-icon', { 'aria-hidden': 'true' }, o.id === right ? '✓' : '!'), t(o.id === right ? bi('Верно — смотри на схему.', 'Right — watch the diagram.') : bi('Посмотри, что произошло на самом деле.', 'See what actually happened.'))));
+        box.replaceWith(h('p.mn-verdict.small', { class: o.id === right ? 'ok' : 'warn' }, h('span.st-icon', { 'aria-hidden': 'true' }, o.id === right ? '✓' : '!'), t(o.id === right ? bi('Верно — смотрите на схему.', 'Right — watch the diagram.') : bi('Посмотрите, что произошло на самом деле.', 'See what actually happened.'))));
         then();
       });
       box.append(b);

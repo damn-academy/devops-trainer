@@ -121,17 +121,17 @@ export function ai(): AiService {
 
 /** Human sentences for error codes (09 §4.1). */
 export const ERRORS: Record<AiErrorCode, Bi> = {
-  auth: bi('Провайдер не принял ключ: проверь, что он скопирован целиком и не отозван.', 'The provider rejected the key: check that it was copied whole and has not been revoked.'),
+  auth: bi('Провайдер не принял ключ: проверьте, что он скопирован целиком и не отозван.', 'The provider rejected the key: check that it was copied whole and has not been revoked.'),
   quota: bi('На балансе провайдера закончились деньги или исчерпан лимит ключа.', 'The provider balance is empty or the key’s limit is used up.'),
-  rate: bi('Слишком много запросов подряд — провайдер просит подождать. Повтори через минуту.', 'Too many requests in a row — the provider asks to wait. Try again in a minute.'),
-  model: bi('У провайдера нет такой модели. Нажми «Загрузить список» и выбери из него.', 'The provider has no such model. Press “Load the list” and pick one from it.'),
+  rate: bi('Слишком много запросов подряд — провайдер просит подождать. Повторите через минуту.', 'Too many requests in a row — the provider asks to wait. Try again in a minute.'),
+  model: bi('У провайдера нет такой модели. Нажмите «Загрузить список» и выберите из него.', 'The provider has no such model. Press “Load the list” and pick one from it.'),
   'bad-url': bi('По этому адресу нет API в формате OpenAI. Адрес должен заканчиваться перед `/chat/completions`, например `…/v1`; разрешены https:// и http://localhost.', 'There is no OpenAI-style API at this address. It should stop before `/chat/completions`, e.g. `…/v1`; https:// and http://localhost are allowed.'),
   cors: bi('Браузер не получил ответа: провайдер не разрешает запросы со страниц (CORS), адрес неверен или нет сети.', 'The browser got no answer: the provider does not allow requests from web pages (CORS), the address is wrong, or there is no network.'),
   'local-down': bi('Локальный сервер не ответил: Ollama не запущена, не разрешён адрес курса в `OLLAMA_ORIGINS`, или браузер запретил доступ к локальной сети (Chrome спрашивает об этом отдельно — разрешение включается в настройках сайта).', 'The local server did not answer: Ollama is not running, the course address is not in `OLLAMA_ORIGINS`, or the browser blocked local network access (Chrome asks about it separately — the permission is in the site settings).'),
-  server: bi('У провайдера ошибка на сервере. Обычно это проходит само; попробуй позже.', 'The provider has a server error. It usually passes by itself; try later.'),
-  empty: bi('Провайдер ответил пустым текстом. Попробуй другую модель.', 'The provider answered with empty text. Try another model.'),
+  server: bi('У провайдера ошибка на сервере. Обычно это проходит само; попробуйте позже.', 'The provider has a server error. It usually passes by itself; try later.'),
+  empty: bi('Провайдер ответил пустым текстом. Попробуйте другую модель.', 'The provider answered with empty text. Try another model.'),
   aborted: bi('Ответ остановлен.', 'The answer was stopped.'),
   locked: bi('Идёт экзамен: наставник выключен до конца попытки.', 'An exam is on: the tutor is off until the attempt ends.'),
-  'no-provider': bi('Нейросеть не подключена. Подключи её в настройках.', 'No AI is connected. Connect one in the settings.'),
+  'no-provider': bi('Нейросеть не подключена. Подключите её в настройках.', 'No AI is connected. Connect one in the settings.'),
   other: bi('Что-то пошло не так.', 'Something went wrong.'),
 };

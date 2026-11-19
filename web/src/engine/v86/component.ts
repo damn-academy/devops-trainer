@@ -57,14 +57,14 @@ export const T = {
   } as Record<BootPhase, Bi>,
   cold: bi('ядро загрузилось за {s} с', 'the kernel booted in {s} s'),
   restored: bi('восстановлена из сохранённого состояния за {s} с', 'restored from a saved state in {s} s'),
-  resumed: bi('продолжаем с того места, где ты остановился ({s} с)', 'continuing where you left off ({s} s)'),
-  readyLine: bi('выше — сообщения загрузки ядра; дальше терминал твой', 'above are the kernel boot messages; from here on the terminal is yours'),
+  resumed: bi('продолжаем с того места, где вы остановились ({s} с)', 'continuing where you left off ({s} s)'),
+  readyLine: bi('выше — сообщения загрузки ядра; дальше терминал ваш', 'above are the kernel boot messages; from here on the terminal is yours'),
   reset: bi('Сбросить машину', 'Reset the machine'),
   resetDone: bi('Машина возвращена к началу упражнения', 'The machine is back at the start of the exercise'),
   goals: bi('Цели', 'Goals'),
   allDone: bi('Все цели выполнены — на настоящем ядре.', 'All goals are done — on a real kernel.'),
   hint: bi('Подсказка', 'Hint'),
-  noHints: bi('Здесь подсказок нет: ищи в документации — `man`, `--help`.', 'No hints here: look it up in the documentation — `man`, `--help`.'),
+  noHints: bi('Здесь подсказок нет: ищите в документации — `man`, `--help`.', 'No hints here: look it up in the documentation — `man`, `--help`.'),
   checking: bi('Проверяю состояние машины…', 'Checking the state of the machine…'),
 };
 

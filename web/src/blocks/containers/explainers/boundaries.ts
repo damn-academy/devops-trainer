@@ -71,7 +71,7 @@ export const boundariesModel = defineModel<P>({
   id: 'containers.boundaries',
   block: 'containers',
   title: bi('Шесть границ контейнера', 'The six boundaries of a container'),
-  summary: bi('Контейнер — процесс, у которого с окружением шесть границ. Открой любую сторону, покрути её ручку; включи поломку — и сначала назови сторону, где она сидит.', 'A container is a process with six boundaries to its surroundings. Open any side and turn its knob; switch on a failure — and first name the side it sits on.'),
+  summary: bi('Контейнер — процесс, у которого с окружением шесть границ. Откройте любую сторону, покрутите её ручку; включите поломку — и сначала назовите сторону, где она сидит.', 'A container is a process with six boundaries to its surroundings. Open any side and turn its knob; switch on a failure — and first name the side it sits on.'),
   concepts: ['docker.boundary', 'docker.volume', 'docker.network', 'docker.logs'],
   diagram: {
     width: 960,

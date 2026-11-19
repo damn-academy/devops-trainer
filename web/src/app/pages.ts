@@ -54,7 +54,7 @@ export function reviewPage(): Page {
     {},
     h('h1', {}, t(UI.review)),
     h('p.lede', {}, t(bi('Понятия возвращаются через растущие промежутки. Ошибка с пометкой «знаю» вернётся сегодня же и завтра.', 'Concepts come back at growing intervals. A mistake marked “I know” returns today and tomorrow.'))),
-    sure.n >= 5 ? h('p.calibration', {}, t(bi(`Когда ты отвечал «знаю», ты был прав в ${Math.round((sure.right / sure.n) * 100)}% случаев.`, `When you said “I know”, you were right ${Math.round((sure.right / sure.n) * 100)}% of the time.`))) : null,
+    sure.n >= 5 ? h('p.calibration', {}, t(bi(`Когда вы отвечали «знаю», вы были правы в ${Math.round((sure.right / sure.n) * 100)}% случаев.`, `When you said “I know”, you were right ${Math.round((sure.right / sure.n) * 100)}% of the time.`))) : null,
     due.length ? h('p.small', {}, h('span.k', {}, t(bi('К повторению', 'Due'))), ' ', ...due.slice(0, 20).flatMap((c, i) => [i ? ', ' : '', conceptLink(c)])) : null,
     items.length ? list : emptyState(bi('Сегодня повторять нечего', 'Nothing to review today'), bi('Пройденные уроки добавят сюда свои понятия.', 'Finished lessons add their concepts here.'), { label: UI.backHome, href: href({ name: 'home' }) }),
   );

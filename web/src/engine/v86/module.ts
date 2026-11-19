@@ -59,7 +59,7 @@ export default defineModule({
             {},
             t(
               bi(
-                'Уроки с настоящим Linux запускают ядро прямо во вкладке (эмулятор v86). Состояние каждой машины сохраняется в этом браузере: вернувшись, ты продолжишь с того же места. Прогресс уроков хранится отдельно и от удаления машин не пострадает.',
+                'Уроки с настоящим Linux запускают ядро прямо во вкладке (эмулятор v86). Состояние каждой машины сохраняется в этом браузере: вернувшись, вы продолжите с того же места. Прогресс уроков хранится отдельно и от удаления машин не пострадает.',
                 'Lessons with real Linux run a kernel right in the tab (the v86 emulator). Each machine’s state is saved in this browser, so you continue where you left off. Lesson progress is stored separately and is not affected when machines are deleted.',
               ),
             ),

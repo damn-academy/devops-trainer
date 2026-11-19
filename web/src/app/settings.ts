@@ -75,13 +75,13 @@ export function settingsPage(): Page {
     : h(
         'section.settings-sec',
         { 'data-id': 'ai' },
-        h('h2', {}, t(bi('Твоя нейросеть', 'Your AI'))),
+        h('h2', {}, t(bi('Ваша нейросеть', 'Your AI'))),
         h(
           'p',
           {},
           t(
             bi(
-              'Наставник работает на нейросети ученика: запросы идут прямо из браузера к твоему провайдеру, наш сервер ключа не видит. Подключение появится здесь.',
+              'Наставник работает на нейросети ученика: запросы идут прямо из браузера к вашему провайдеру, наш сервер ключа не видит. Подключение появится здесь.',
               'The mentor runs on the learner’s own AI: requests go straight from the browser to your provider; our server never sees the key. Connecting will appear here.',
             ),
           ),
