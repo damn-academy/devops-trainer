@@ -791,6 +791,8 @@ export interface Exam {
   retakeHours?: number;
   /** "Explain" questions at the end: weight 0, they give the interview-readiness mark (10 §6.1). */
   explain?: ExamExplain[];
+  /** Extension: the exam runs on the learner's own VMs (tasks of kind 'real'). */
+  real?: RealLab;
 }
 
 /** An interview-style question at the end of an exam, self-checked against its key points. */
@@ -807,7 +809,76 @@ export interface ExamExplain {
 export type ExamTask = { id: string; weight: number; critical?: boolean; beyond?: boolean; pool?: string } & (
   | { kind: 'task'; setup: TerminalSetup; task: Task }
   | { kind: 'quiz'; item: QuizItem }
+  | { kind: 'real'; real: RealTask }
 );
+
+/**
+ * Extension (real-machine exams, 00 §6.6, tier C): the learner's own VMs.
+ * The trainer runs nothing there. The learner runs the read-only collector
+ * `trainer-check-host.sh` on each machine with the arguments the exam page
+ * builds from `RealMachine`, pastes the printed block, and the page judges
+ * `RealTask.goals` on the facts with the same predicates as the simulator.
+ */
+export interface RealLab {
+  /** The `dt-track` label of the VMs and the track name in the protocol. */
+  track: string;
+  /** What to order and how (sizes, OS, the labels `trainer=devops`, `dt-track=<track>`), in prose. */
+  order: Bi;
+  machines: RealMachine[];
+  /** Scripts the learner reads and runs before the tasks: they install stubs and plant the faults. */
+  prepare?: RealScript[];
+  /**
+   * Another read-only collector instead of trainer-check-host.sh, printing the
+   * same dt.host-check/v1 block (Kubernetes: public/check/trainer-check.sh
+   * with --machine, which adds the cluster's objects and the node's probes).
+   */
+  collector?: { name: string; text: string };
+}
+
+export interface RealMachine {
+  /** Machine id used in goals (`on`) and in `{id}` placeholders: 'vm1', 'server'. */
+  id: string;
+  role: Bi;
+  /**
+   * Collector arguments, one per element, `{otherId}` replaced by the address
+   * the learner typed for that machine: '--scope net', '--file /etc/fstab',
+   * '--tcp ssh,{vm1},22', '--http portal,https://www.corp.lab/,resolve=www.corp.lab:443:{vm1}'.
+   */
+  collect: string[];
+}
+
+export interface RealScript {
+  /** File name on the machine: 'net-b-app.sh'. */
+  name: string;
+  /** Machine id it runs on. */
+  on: string;
+  /** What it does, in one or two sentences. */
+  note: Bi;
+  /** The whole script (bash). */
+  text: string;
+}
+
+export interface RealTask {
+  prompt: Bi;
+  concepts?: ConceptId[];
+  /**
+   * Goals judged on the pasted facts. With `on`, `check` sees that machine's
+   * facts; without, it sees `{ machines: { <id>: Facts } }` for checks that
+   * compare machines. The task's result is the share of goals that hold.
+   */
+  goals?: RealGoal[];
+  /** Instead of facts: the learner pastes the output of a command (the cleanup), matched by any of `accept`. */
+  paste?: { label: Bi; accept: RegExp[] };
+  /** The task needs something the course never showed (DL5): tokens the mentor must never say. */
+  solutionTokens?: string[];
+}
+
+export interface RealGoal {
+  id: string;
+  label: Bi;
+  on?: string;
+  check: Check;
+}
 
 // ── Process explainers (08 §3.1–3.7, §6) ───────────────────────────────────
 
