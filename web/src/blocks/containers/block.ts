@@ -39,7 +39,7 @@ const placement: PlacementTask[] = [
     setup: dockerHost({ files: [{ path: '~/app/Dockerfile', content: 'FROM python:3.13-slim\nCOPY . /app\nRUN pip install -r /app/requirements.txt\nCMD python /app/main.py\n' }, { path: '~/app/requirements.txt', content: 'flask==3.1.2\n' }, { path: '~/app/main.py', content: 'print("hi")\n' }] }, { pull: ['python:3.13-slim'] }),
     task: {
       id: 'p-cache',
-      prompt: bi('Измените `~/app/Dockerfile` так, чтобы правка `main.py` не вызывала переустановку зависимостей. Проверкой служат две сборки: во второй шаг `pip install` должен быть взят из кэша.', 'Change `~/app/Dockerfile` so that editing `main.py` does not reinstall dependencies: two builds, the second with `pip install` from the cache.'),
+      prompt: bi('Измените `~/app/Dockerfile` так, чтобы правка `main.py` не вызывала переустановку зависимостей. Проверкой служат две сборки, и во второй шаг `pip install` должен быть взят из кэша.', 'Change `~/app/Dockerfile` so that editing `main.py` does not reinstall dependencies: two builds, the second with `pip install` from the cache.'),
       check: {
         when: (f: Facts) => {
           const bs = ((f.builds as B[] | undefined) ?? []).filter((b) => b.ok);
@@ -84,8 +84,8 @@ const exam: Exam = {
       setup: dockerHost({}, { pull: ['trainer/worker:1.0'], run: ['docker run -d --name worker --memory 64m --restart on-failure trainer/worker:1.0'] }),
       task: {
         id: 'e-worker',
-        prompt: bi('«Контейнер worker постоянно перезапускается». Почините его, не снимая лимит памяти совсем: в README образа написано, сколько памяти ему нужно.', '“The worker container keeps restarting”. Fix it without removing the memory limit altogether: the image README says how much it needs.'),
-        check: { when: 'containers[name=worker].state=running && containers[name=worker].hostConfig.memory>=128Mi', fail: [{ if: 'containers[name=worker].hostConfig.memory=0', say: bi('Лимит не убирают, а подбирают: без лимита один контейнер может занять всю память машины.', 'A limit is not removed — it is tuned: without it one container can eat the whole machine’s memory.') }] },
+        prompt: bi('«Контейнер worker постоянно перезапускается». Почините его, не снимая лимит памяти совсем. Сколько памяти ему нужно, написано в README образа.', '“The worker container keeps restarting”. Fix it without removing the memory limit altogether: the image README says how much it needs.'),
+        check: { when: 'containers[name=worker].state=running && containers[name=worker].hostConfig.memory>=128Mi', fail: [{ if: 'containers[name=worker].hostConfig.memory=0', say: bi('Лимит не убирают, а подбирают, потому что без лимита один контейнер может занять всю память машины.', 'A limit is not removed — it is tuned: without it one container can eat the whole machine’s memory.') }] },
       },
     },
     {
@@ -123,9 +123,9 @@ export const block: Block = {
   summary: route.summary,
   checklistStep: route.checklistStep,
   levels: {
-    beginner: bi('Ещё не запускали ни одного контейнера. К концу блока вы запускаете и чините контейнеры, пишете Dockerfile и compose.yaml, объясняете отличие контейнера от виртуальной машины через пространства имён и cgroup и начинаете поиск неисправности с вопроса «на какой границе?».', 'Has never run a container. Outcome: runs and fixes containers, writes a Dockerfile and compose.yaml, explains container vs VM through namespaces and cgroups and starts diagnosis with “on which boundary?”.'),
-    intermediate: bi('Уже запускали docker run по инструкции из README. К концу блока вы понимаете кэш сборки, тома и сети, PID 1 и сигналы, собираете контейнер своими руками и решаете задания, где нужный флаг приходится искать в документации.', 'Has run docker run from a README. Outcome: understands the build cache, volumes and networks, PID 1 and signals, builds a container by hand and solves “find the flag” tasks.'),
-    experienced: bi('Пишете Dockerfile, но не знаете, что такое бандл, цепочка рантайма и PID 1. К концу блока вы читаете спецификации OCI, видите всю цепочку запуска до runc, понимаете digest, пространства имён пользователей и профиль безопасности контейнера.', 'Writes Dockerfiles; does not know the bundle, the runtime chain, PID 1. Outcome: reads the OCI specifications, sees the chain down to runc, understands digests, user namespaces and the security profile.'),
+    beginner: bi('Вы ещё не запускали ни одного контейнера. К концу блока вы запускаете и чините контейнеры, пишете Dockerfile и compose.yaml, объясняете отличие контейнера от виртуальной машины через пространства имён и cgroup и начинаете поиск неисправности с вопроса «на какой границе?».', 'Has never run a container. Outcome: runs and fixes containers, writes a Dockerfile and compose.yaml, explains container vs VM through namespaces and cgroups and starts diagnosis with “on which boundary?”.'),
+    intermediate: bi('Вы уже запускали docker run по инструкции из README. К концу блока вы понимаете кэш сборки, тома и сети, PID 1 и сигналы, собираете контейнер своими руками и решаете задания, где нужный флаг приходится искать в документации.', 'Has run docker run from a README. Outcome: understands the build cache, volumes and networks, PID 1 and signals, builds a container by hand and solves “find the flag” tasks.'),
+    experienced: bi('Вы пишете Dockerfile, но не знаете, что такое бандл, цепочка рантайма и PID 1. К концу блока вы читаете спецификации OCI, видите всю цепочку запуска до runc, понимаете digest, пространства имён пользователей и профиль безопасности контейнера.', 'Writes Dockerfiles; does not know the bundle, the runtime chain, PID 1. Outcome: reads the OCI specifications, sees the chain down to runc, understands digests, user namespaces and the security profile.'),
   },
   hours: route.hours,
   placement,

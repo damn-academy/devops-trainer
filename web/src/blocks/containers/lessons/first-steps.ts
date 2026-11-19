@@ -28,11 +28,11 @@ export const firstQuiz: QuizItem[] = [
     concepts: ['docker.lifecycle'],
     prompt: bi('Команда `docker stop app` ждала 10 секунд, и контейнер завершился с кодом 137. Что произошло?', '`docker stop app` waited 10 seconds and the container exited with code 137. What happened?'),
     options: [
-      { id: 'kill', text: bi('Программа не завершилась по сигналу SIGTERM, и через 10 секунд Docker послал SIGKILL: 137 = 128 + 9', 'The program did not exit on SIGTERM, so after 10 seconds Docker sent SIGKILL: 137 = 128 + 9'), correct: true },
-      { id: 'error', text: bi('Программа сама завершилась с ошибкой 137', 'The program exited with error 137'), why: bi('Код больше 128 обычно означает, что процесс завершён сигналом, номер которого равен коду минус 128. Здесь это 9, то есть SIGKILL.', 'Codes above 128 usually mean “killed by signal number code − 128”; 9 is SIGKILL.') },
-      { id: 'ok', text: bi('Это нормальное завершение', 'That is a normal exit'), why: bi('Если программа обработала SIGTERM и завершилась сама, код обычно равен 0, а если обработчика не было и её завершил сам сигнал SIGTERM, код равен 143. Код 137 значит, что программу пришлось завершить принудительно.', 'A normal exit after SIGTERM is 0 (or 143 if the program died from SIGTERM). 137 means it had to be killed.') },
+      { id: 'kill', text: bi('Программа не завершилась по сигналу SIGTERM, и через 10 секунд Docker послал SIGKILL с номером 9, отсюда и код 137, то есть 128 + 9', 'The program did not exit on SIGTERM, so after 10 seconds Docker sent SIGKILL, number 9, hence the code 137, that is 128 + 9'), correct: true },
+      { id: 'error', text: bi('Программа сама завершилась с ошибкой 137', 'The program exited with error 137'), why: bi('Код больше 128 обычно означает, что процесс завершён сигналом, номер которого равен коду минус 128. Здесь номер сигнала равен 9, а это SIGKILL.', 'Codes above 128 usually mean “killed by signal number code − 128”; 9 is SIGKILL.') },
+      { id: 'ok', text: bi('Контейнер завершился нормально', 'The container exited normally'), why: bi('Если программа обработала SIGTERM и завершилась сама, код обычно равен 0, а если обработчика не было и её завершил сам сигнал SIGTERM, код равен 143. Код 137 значит, что программу пришлось завершить принудительно.', 'A normal exit after SIGTERM is 0 (or 143 if the program died from SIGTERM). 137 means it had to be killed.') },
     ],
-    explain: bi('Почему программа не отреагировала на SIGTERM, мы разберём в главе о Dockerfile: всё дело в PID 1.', 'Why the program did not hear SIGTERM we take apart in the Dockerfile chapter: it is about PID 1.'),
+    explain: bi('Почему программа не отреагировала на SIGTERM, мы разберём в главе о Dockerfile. Причина связана с тем, какая программа работает в контейнере первым процессом, PID 1.', 'Why the program did not hear SIGTERM we take apart in the Dockerfile chapter: it is about PID 1.'),
   },
   {
     id: 'containers.q.publish-which',
@@ -41,7 +41,7 @@ export const firstQuiz: QuizItem[] = [
     prompt: bi('Какое число в `-p 8080:80` означает порт хоста?', 'In `-p 8080:80`, which number is the host port?'),
     options: [
       { id: '8080', text: '8080', correct: true },
-      { id: '80', text: '80', why: bi('80 — это порт внутри контейнера, на котором слушает nginx. Порядок всегда такой: сначала порт хоста, потом порт контейнера.', '80 is the port inside the container that nginx listens on. The format is HOST:CONTAINER.') },
+      { id: '80', text: '80', why: bi('Число 80 обозначает порт внутри контейнера, на котором слушает nginx. Во флаге `-p` всегда сначала пишут порт хоста, а потом порт контейнера.', 'The number 80 is the port inside the container that nginx listens on. In the `-p` flag the host port always comes first and the container port second.') },
     ],
     explain: bi('Пакеты, пришедшие на порт 8080 хоста, ядро перенаправляет правилом DNAT на адрес контейнера и порт 80.', 'The kernel rewrites (DNAT) a request to host port 8080 to the container’s address and port 80.'),
   },
@@ -73,7 +73,7 @@ export const firstStepsLesson: Lesson = {
   id: 'containers.first-steps',
   block: 'containers',
   title: bi('Первые шаги с Docker', 'First steps with Docker'),
-  summary: bi('Что происходит, когда вы набираете `docker run`: запуск, просмотр, журналы, вход внутрь, остановка и удаление контейнера, а также переменные окружения и порты.', 'What happens when you type `docker run`; running, listing, logs, getting inside, stopping and removing; variables and ports.'),
+  summary: bi('В этом уроке вы узнаете, что происходит, когда вы набираете `docker run`, и научитесь запускать, просматривать, останавливать и удалять контейнеры, читать их журналы, заходить внутрь, передавать переменные окружения и публиковать порты.', 'In this lesson you will learn what happens when you type `docker run`, and you will learn to run, list, stop and remove containers, read their logs, get inside, pass environment variables and publish ports.'),
   introduces: ['docker.lifecycle', 'docker.env', 'docker.publish'],
   uses: ['docker.container', 'docker.runtime', 'docker.states'],
   tier: 'core',
@@ -87,7 +87,7 @@ export const firstStepsLesson: Lesson = {
       id: 'hook',
       kind: 'text',
       step: 'hook',
-      body: bi('Вы уже знаете, из чего сделан контейнер и какие программы его запускают. Пора освоить самую частую команду DevOps-инженера. Глава отвечает на вопрос: **что именно произошло, когда я набрал `docker run`?**', 'Now you know what a container is made of and who starts it. Time for the most frequent command of a DevOps engineer. The leading question of the chapter: **what exactly happened when I typed `docker run`?**'),
+      body: bi('Вы уже знаете, из чего сделан контейнер и какие программы его запускают. Пора освоить самую частую команду DevOps-инженера. Глава отвечает на вопрос: **что происходит, когда я набираю `docker run`?**', 'Now you know what a container is made of and who starts it. Time for the most frequent command of a DevOps engineer. The leading question of the chapter: **what exactly happened when I typed `docker run`?**'),
     },
     {
       id: 'hello',
@@ -103,9 +103,9 @@ export const firstStepsLesson: Lesson = {
       id: 'lifecycle',
       kind: 'text',
       step: 'explain',
-      title: bi('Жизненный цикл контейнера: шесть команд', 'The lifecycle: six commands'),
+      title: bi('Шесть команд, которые ведут контейнер от запуска до удаления', 'Six commands that take a container from start to removal'),
       body: bi(
-        '[[docker.lifecycle|Жизненный цикл контейнера]] в Docker держится на шести командах.\n\n- `docker run` создаёт и запускает контейнер. Флаг `-d` запускает его в фоне и печатает ID, `--name web` даёт контейнеру имя, `--rm` удаляет контейнер, когда тот завершится, а `-it` подключает ваш терминал к процессу внутри.\n- `docker ps` показывает работающие контейнеры, а `docker ps -a` — все, включая завершившиеся. Состояние `Exited (0)` означает, что процесс завершился сам с кодом 0.\n- `docker logs web` показывает, что главный процесс выводил в stdout и stderr; эти потоки держит shim.\n- `docker exec web ls /` запускает ещё один процесс в уже работающем контейнере, а `docker exec -it web sh` открывает в нём оболочку.\n- `docker stop web` посылает сигнал SIGTERM и ждёт 10 секунд, а если это не помогло, посылает SIGKILL. Код выхода 0 значит, что процесс завершился сам, 143 = 128 + 15 — что он завершился от SIGTERM, а 137 = 128 + 9 — что его завершил SIGKILL.\n- `docker rm web` удаляет остановленный контейнер, а вместе с ним и всё, что контейнер записал в свой записываемый слой.',
+        '[[docker.lifecycle|Жизненный цикл контейнера]] в Docker держится на шести командах.\n\n- `docker run` создаёт и запускает контейнер. Флаг `-d` запускает его в фоне и печатает ID, `--name web` даёт контейнеру имя, `--rm` удаляет контейнер, когда тот завершится, а `-it` подключает ваш терминал к процессу внутри.\n- `docker ps` показывает работающие контейнеры, а `docker ps -a` — все, включая завершившиеся. Состояние `Exited (0)` означает, что процесс завершился сам с кодом 0.\n- `docker logs web` показывает, что главный процесс выводил в stdout и stderr; эти потоки держит shim.\n- `docker exec web ls /` запускает ещё один процесс в уже работающем контейнере, а `docker exec -it web sh` открывает в нём оболочку.\n- `docker stop web` посылает сигнал SIGTERM и ждёт 10 секунд, а если это не помогло, посылает SIGKILL. Код выхода 0 означает, что процесс завершился сам, код 143, то есть 128 + 15, означает, что его завершил сигнал SIGTERM, а код 137, то есть 128 + 9, означает, что его завершил SIGKILL.\n- `docker rm web` удаляет остановленный контейнер, а вместе с ним и всё, что контейнер записал в свой записываемый слой.',
         'The [[docker.lifecycle|container lifecycle]] in Docker rests on six commands.\n\n- `docker run` creates and starts. The `-d` flag sends the container to the background and prints its ID; `--name web` gives it a name; `--rm` removes the container when it exits; `-it` attaches your terminal to the process inside.\n- `docker ps` shows running containers, `docker ps -a` all of them, including exited ones: `Exited (0)` means it exited by itself with code 0.\n- `docker logs web` shows what the main process wrote to stdout and stderr — the shim holds them.\n- `docker exec web ls /` starts one more process in an already running container; `docker exec -it web sh` a shell inside.\n- `docker stop web` sends the SIGTERM signal and waits 10 seconds; if that does not help — SIGKILL. Exit codes: 0 — exited by itself; 143 = 128 + 15 — died from SIGTERM; 137 = 128 + 9 — killed by SIGKILL.\n- `docker rm web` removes a stopped container, and with it everything it wrote into its writable layer.',
       ),
     },
@@ -115,7 +115,7 @@ export const firstStepsLesson: Lesson = {
       step: 'explain',
       title: bi('Переменные окружения и порты', 'Variables and ports'),
       body: bi(
-        'Один и тот же образ работает и на ноутбуке разработчика, и на рабочем сервере; различаются только настройки. Их передают [[docker.env|переменными окружения]]: флагом `-e POSTGRES_PASSWORD=secret` или файлом `--env-file app.env`. Если программе нужна переменная, а её не передали, программа обычно сразу завершается, и причину можно прочитать в `docker logs`.\n\nКонтейнер работает в своём сетевом пространстве имён и получает свой адрес вида 172.17.0.2. Снаружи к нему не попасть, пока вы не опубликуете порт. [[docker.publish|Публикация порта]] `-p 8080:80` означает: «пакеты на порт 8080 хоста направлять на порт 80 контейнера». Первое число относится к хосту, второе к контейнеру. Внутри ядра публикация устроена как правило DNAT в netfilter, такое же, какое вы писали руками в блоке сетей.',
+        'Один и тот же образ работает и на ноутбуке разработчика, и на рабочем сервере; различаются только настройки. Их передают [[docker.env|переменными окружения]]: флагом `-e POSTGRES_PASSWORD=secret` или файлом `--env-file app.env`. Если программе нужна переменная, а её не передали, программа обычно сразу завершается, и причину можно прочитать в `docker logs`.\n\nКонтейнер работает в своём сетевом пространстве имён и получает свой адрес вида 172.17.0.2. Снаружи к нему не попасть, пока вы не опубликуете порт. [[docker.publish|Публикация порта]] `-p 8080:80` означает, что пакеты, пришедшие на порт 8080 хоста, ядро направляет на порт 80 контейнера. Первое число относится к хосту, второе к контейнеру. Внутри ядра публикация устроена как правило DNAT в netfilter, такое же, какое вы писали руками в блоке сетей.',
         'The same image runs on the developer’s laptop and in production; what differs is the settings. They are passed as [[docker.env|environment variables]]: `-e POSTGRES_PASSWORD=secret` or a file `--env-file app.env`. If a program needs a variable and it was not passed, it usually exits at once — and the reason is in `docker logs`.\n\nA container lives in its own network namespace with its own address like 172.17.0.2. It cannot be reached from outside until a port is published. [[docker.publish|Publishing a port]] `-p 8080:80` means: “lead port 8080 of the host to port 80 of the container”. The first number is the host, the second the container. Underneath it is a DNAT rule in netfilter, which you wrote by hand in the networks block.',
       ),
     },
@@ -143,13 +143,13 @@ export const firstStepsLesson: Lesson = {
             when: "containers[name=web].state=running && containers[name=web].ports[hostPort=8080].containerPort=80 && http['localhost:8080'].status=200",
             fail: [
               { if: 'containers[name=web].state=running && containers[name=web].ports#=0', say: bi('Контейнер работает, но порт не опубликован, поэтому снаружи до него не добраться. Нужен флаг `-p` с портом хоста и портом контейнера.', 'The container runs, but no port is published: it cannot be reached from outside. You need `-p HOST:CONTAINER`.'), concept: 'docker.publish' },
-              { if: 'containers[name=web].ports[hostPort=80]', say: bi('Порты перепутаны местами: первым идёт порт хоста (8080), вторым порт nginx в контейнере (80).', 'The ports are swapped: the host port (8080) comes first, the nginx port in the container (80) second.'), concept: 'docker.publish' },
+              { if: 'containers[name=web].ports[hostPort=80]', say: bi('Порты перепутаны местами, а первым должен идти порт хоста (8080) и только вторым порт nginx в контейнере (80).', 'The ports are swapped: the host port (8080) comes first, the nginx port in the container (80) second.'), concept: 'docker.publish' },
             ],
           },
           chips: 'docker run -d --name web -p 8080:80 nginx:1.30-alpine',
           concepts: ['docker.lifecycle', 'docker.publish'],
           docRef: web('reference/cli/docker/container/run', 'publish', 'The first number is the port on the host'),
-          hints: { H1: bi('Понадобятся три флага: для запуска в фоне, для имени и для публикации порта.', 'Three flags: background, name, publishing a port.'), H2: bi('`-d`, `--name web`, `-p 8080:80`.', '`-d`, `--name web`, `-p 8080:80`.') },
+          hints: { H1: bi('Понадобятся три флага: для запуска в фоне, для имени и для публикации порта.', 'Three flags: background, name, publishing a port.'), H2: bi('Нужны флаги `-d`, `--name web` и `-p 8080:80`.', 'You need the flags `-d`, `--name web` and `-p 8080:80`.') },
         },
         {
           id: 'page',
@@ -161,7 +161,7 @@ export const firstStepsLesson: Lesson = {
         },
         {
           id: 'env',
-          prompt: bi('Запустите базу данных `postgres:17-alpine` в фоне с именем `db`. Она сразу завершится: узнайте из журнала почему, удалите контейнер и запустите базу правильно.', 'Run the `postgres:17-alpine` database in the background named `db`. It exits at once — find out why from the log, remove it and run it properly.'),
+          prompt: bi('Запустите базу данных `postgres:17-alpine` в фоне с именем `db`. База сразу завершится. Узнайте из журнала почему, удалите контейнер и запустите базу правильно.', 'Run the `postgres:17-alpine` database in the background named `db`. It exits at once — find out why from the log, remove it and run it properly.'),
           check: {
             when: (f) => containers(f).some((c) => c.name === 'db' && c.state === 'running' && c.config.Env.some((e) => /^POSTGRES_PASSWORD=.+/.test(e))),
             fail: [{ if: 'containers[name=db].state=exited', say: bi('Контейнер `db` завершился. Что написано в выводе `docker logs db`?', 'The `db` container exited. What does `docker logs db` say?'), concept: 'docker.env' }],
@@ -169,7 +169,7 @@ export const firstStepsLesson: Lesson = {
           chips: 'docker logs db; docker rm db; docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:17-alpine',
           concepts: ['docker.env'],
           docRef: web('reference/cli/docker/container/run', 'env'),
-          hints: { H1: bi('Журнал называет переменную, которой не хватает.', 'The log names the variable it needs.'), H2: bi('Переменную передают флагом `-e ИМЯ=значение`.', 'A variable is passed with `-e NAME=value`.') },
+          hints: { H1: bi('В журнале названа переменная, которой базе не хватает.', 'The log names the variable it needs.'), H2: bi('Переменную передают флагом `-e ИМЯ=значение`.', 'A variable is passed with `-e NAME=value`.') },
         },
         {
           id: 'interactive',
@@ -242,7 +242,7 @@ export const firstStepsLesson: Lesson = {
       tone: 'why',
       step: 'review',
       title: bi('Итог главы', 'Summary'),
-      body: bi('Команда `docker run` скачивает образ, если его нет на машине, создаёт контейнер и запускает в нём процесс. Контейнер работает, пока работает этот процесс. Главные инструменты — `ps -a`, `logs`, `exec`, `stop` и `rm`; настройки передают через `-e`, а доступ снаружи открывают флагом `-p` с портом хоста и портом контейнера.', '`docker run` = pull the image if missing, create a container and start the process. A container lives as long as its process. `ps -a`, `logs`, `exec`, `stop`, `rm` are the main tools; settings go through `-e`, outside access through `-p HOST:CONTAINER`.'),
+      body: bi('Команда `docker run` скачивает образ, если его нет на машине, создаёт контейнер и запускает в нём процесс. Контейнер работает, пока работает этот процесс. Главными инструментами служат команды `ps -a`, `logs`, `exec`, `stop` и `rm`. Настройки передают через `-e`, а доступ снаружи открывают флагом `-p` с портом хоста и портом контейнера.', '`docker run` = pull the image if missing, create a container and start the process. A container lives as long as its process. `ps -a`, `logs`, `exec`, `stop`, `rm` are the main tools; settings go through `-e`, outside access through `-p HOST:CONTAINER`.'),
     },
   ],
 };
