@@ -47,6 +47,7 @@ const GROUP_ALERT = bi('Когда алерт срабатывает и уход
 
 export const monModel = defineModel<P>({
   id: 'obs.scrape-to-notify',
+  frame: 'visible',
   block: 'monitoring',
   title: bi('Как ошибка в сервисе становится сообщением дежурному', 'How an error in a service becomes a message to the on-call engineer'),
   summary: bi(
@@ -302,7 +303,7 @@ export const monModel = defineModel<P>({
   ],
   metrics: [
     { id: 'samples', label: bi('значений счётчика в окне', 'counter values in the window') },
-    { id: 'detect', label: bi('от первой ошибки до сообщения, в худшем случае', 'from the first error to the message, worst case'), unit: 's' },
+    { id: 'detect', label: bi('от первой ошибки до сообщения, в худшем случае', 'from the first error to the message, worst case'), unit: { ru: 'с', en: 's' } },
   ],
   run(p, broken) {
     const n = monNumbers(p);

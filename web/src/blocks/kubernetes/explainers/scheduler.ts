@@ -101,6 +101,7 @@ const W = ['w1', 'w2', 'w3'];
 
 export const schedulerModel = defineModel<P>({
   id: 'k8s.scheduler',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Как планировщик выбирает узел для пода', 'How the scheduler picks a node'),
   summary: bi(

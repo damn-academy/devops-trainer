@@ -19,6 +19,7 @@ const cacheLeft = (s: number) => bi(`кэш: ещё ${s} с`, `cache: ${s} s lef
 
 export const dnsModel = defineModel<P>({
   id: 'net.dns',
+  frame: 'visible',
   block: 'networks',
   title: b('Как имя сайта превращается в адрес', 'How a name becomes an address'),
   summary: b(
@@ -71,7 +72,7 @@ export const dnsModel = defineModel<P>({
       min: 0,
       max: 600,
       step: 10,
-      unit: 's',
+      unit: { ru: 'с', en: 's' },
       default: 120,
       near: 'res',
       predict: {
@@ -83,7 +84,7 @@ export const dnsModel = defineModel<P>({
         resolve: (_p, next) => ((lastMetric(next, 'upstream') ?? 0) > 3 ? 'full' : 'zero'),
       },
     },
-    { id: 'ttl', group: b('Что записал владелец домена', 'What the domain owner set'), label: b('Сколько секунд можно хранить запись A (TTL)', 'TTL of the A record'), kind: 'range', min: 30, max: 86400, step: 30, unit: 's', default: 300, near: 'auth' },
+    { id: 'ttl', group: b('Что записал владелец домена', 'What the domain owner set'), label: b('Сколько секунд можно хранить запись A (TTL)', 'TTL of the A record'), kind: 'range', min: 30, max: 86400, step: 30, unit: { ru: 'с', en: 's' }, default: 300, near: 'auth' },
     {
       id: 'hosts',
       group: b('Что записано на вашей машине', 'What is on your machine'),
@@ -134,7 +135,7 @@ export const dnsModel = defineModel<P>({
   ],
   metrics: [
     { id: 'upstream', label: b('вопросов резолвера другим серверам', 'resolver questions') },
-    { id: 'ms', label: b('время ответа', 'answer time'), unit: 'ms' },
+    { id: 'ms', label: b('время ответа', 'answer time'), unit: { ru: 'мс', en: 'ms' } },
   ],
   run(p, broken): Step[] {
     const steps: Step[] = [];

@@ -50,6 +50,7 @@ const objectsRu = (n: number) => (n === 1 ? 'объект' : n < 5 ? 'объек
 
 export const gitModel = defineModel<GitP>({
   id: 'git.commit-push',
+  frame: 'visible',
   block: 'git-yaml',
   title: bi('Что делают git add, git commit и git push', 'What git add, git commit and git push do'),
   summary: bi(
@@ -78,7 +79,7 @@ export const gitModel = defineModel<GitP>({
     width: 960,
     height: 480,
     nodes: [
-      { id: 'file', label: 'index.html', icon: 'file', work: 'dots', sub: 'working tree', family: 'ci-source', shape: 'doc', x: 24, y: 40, w: 184, h: 64, card: card(bi('Обычный файл в рабочем каталоге. Его меняет редактор, а Git узнаёт о правке только тогда, когда сравнивает файл с версией в индексе.', 'An ordinary file in the working directory. An editor changes it; Git learns about the change only by comparing the file with the index.'), bi('Файл правите вы в редакторе.', 'You, with an editor.'), 'git status', { page: 'man/git-status.1', anchor: 'DESCRIPTION' }) },
+      { id: 'file', label: 'index.html', icon: 'file', work: 'dots', sub: { ru: 'рабочая копия', en: 'working tree' }, family: 'ci-source', shape: 'doc', x: 24, y: 40, w: 184, h: 64, card: card(bi('Обычный файл в рабочем каталоге. Его меняет редактор, а Git узнаёт о правке только тогда, когда сравнивает файл с версией в индексе.', 'An ordinary file in the working directory. An editor changes it; Git learns about the change only by comparing the file with the index.'), bi('Файл правите вы в редакторе.', 'You, with an editor.'), 'git status', { page: 'man/git-status.1', anchor: 'DESCRIPTION' }) },
       { id: 'index', label: bi('индекс', 'index'), icon: 'database', sub: `index.html → ${short(blobOld)}`, family: 'ci-build', shape: 'buffer', x: 272, y: 40, w: 208, h: 64, card: card(bi('Список пар «путь файла и хэш его содержимого», из которого будет собран следующий коммит. Команда `git add` записывает сюда текущее содержимое файла.', 'A list of "path → blob" for the next commit. `git add` puts the current content of a file here.'), bi('Индекс меняют команды `git add`, `git restore --staged` и `git commit -a`.', 'git add, git restore --staged, git commit -a.'), 'git ls-files -s', { page: 'man/git-add.1', anchor: 'DESCRIPTION', line: 'snapshot' }) },
       { id: 'blob', label: 'blob', icon: 'file', sub: short(blobNew), family: 'store', shape: 'box', x: 272, y: 176, w: 208, h: 56, card: card(bi('Содержимое файла, сохранённое как объект. Имя объекта вычисляется из содержимого (это хэш SHA-1), поэтому одинаковые файлы хранятся одним объектом, а новая правка даёт новый объект, и старый при этом остаётся на месте.', 'The file content as an object. Its name is the SHA-1 of the content: equal files share one blob, a new edit makes a new blob and the old one stays.'), bi('Объект создаёт команда `git add`.', 'git add (git hash-object -w).'), `git cat-file -p ${short(blobNew)}`, { page: 'man/git-cat-file.1', anchor: 'OPTIONS' }) },
       { id: 'tree', label: 'tree', icon: 'folder', sub: '', family: 'store', shape: 'box', x: 544, y: 176, w: 184, h: 56, card: card(bi('Снимок каталога, то есть список имён файлов вместе с хэшами их содержимого. Файлы, которые вы не меняли, ссылаются на те же объекты, что и в прошлом коммите, и заново не копируются.', 'A snapshot of a directory: file names and the hashes of their blobs (and nested trees). Unchanged files point to the same blobs as before.'), bi('Снимок собирает команда `git commit` из индекса.', 'git commit, from the index.'), 'git cat-file -p HEAD^{tree}') },
@@ -182,7 +183,7 @@ export const gitModel = defineModel<GitP>({
         focus: ['file'],
         say: { file: bi('Вы поменяли заголовок, и теперь файл отличается от версии, записанной в индексе.', 'You changed the heading, and the file now differs from the version in the index.') },
         states: { ...hiddenExcept(GIT_ALL, 'file', 'index'), file: 'warn' },
-        values: { file: 'modified' },
+        values: { file: t(bi('изменён', 'modified')) },
         metrics: m0,
       },
       {
@@ -207,7 +208,7 @@ export const gitModel = defineModel<GitP>({
         focus: ['file', 'index'],
         say: { file: bi('Вы снова изменили файл, но эта правка в индекс не попала, потому что git add вы больше не запускали.', 'You edited the file again, but this edit is not in the index because you did not run git add again.') },
         states: { file: 'warn', index: 'warn' },
-        values: { file: 'modified again' },
+        values: { file: t(bi('снова изменён', 'modified again')) },
         metrics: { ...m0, objects: 1 },
       });
     if (broken.has('empty-message')) {
@@ -339,6 +340,7 @@ const CI_ALL = ['dev', 'forge', 'cfg', 'queue', 'runner', 'art', 'reg', 'staging
 
 export const ciModel = defineModel<CiP>({
   id: 'cicd.push-to-deploy',
+  frame: 'visible',
   block: 'cicd',
   title: bi('Путь от git push до работающей версии', 'From git push to a running version'),
   summary: bi(

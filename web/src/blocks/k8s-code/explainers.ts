@@ -82,6 +82,7 @@ const minReplicas = (s: Step[]) => Math.min(...s.map((x) => x.metrics?.replicas 
 
 export const codeModel = defineModel<CodeP>({
   id: 'k8s-3.from-code',
+  frame: 'visible',
   block: 'k8s-3',
   title: bi('Как кластер собирается из кода', 'How a cluster is built from code'),
   summary: bi(
@@ -658,6 +659,7 @@ const G_POLICY = bi('Политика синхронизации в Application 
 
 export const gitopsModel = defineModel<GitP>({
   id: 'k8s-3.gitops-loop',
+  frame: 'visible',
   block: 'k8s-3',
   title: bi('Как Argo CD приводит кластер к Git', 'How Argo CD brings the cluster to Git'),
   summary: bi(

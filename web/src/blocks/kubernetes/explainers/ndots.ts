@@ -57,6 +57,7 @@ const short = (t: string) => (t.length > 22 ? t.slice(0, 20) + '…' : t);
 
 export const ndotsModel = defineModel<P>({
   id: 'k8s.ndots',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Как под ищет адрес по короткому имени', 'How a pod looks up a short name'),
   summary: bi(

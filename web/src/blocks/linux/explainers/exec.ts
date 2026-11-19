@@ -45,6 +45,7 @@ const startWith = (...shown: string[]): Record<string, ElementState> => Object.f
 
 export const execModel = defineModel<P>({
   id: 'linux.exec',
+  frame: 'visible',
   block: 'linux',
   title: bi('Что происходит, когда вы нажимаете Enter', 'What happens when you press Enter'),
   summary: bi(
@@ -146,7 +147,7 @@ export const execModel = defineModel<P>({
         id: 'file',
         label: 'list.txt',
         icon: 'file',
-        sub: '0 B',
+        sub: { ru: '0 Б', en: '0 B' },
         family: 'store',
         x: 740,
         y: 200,

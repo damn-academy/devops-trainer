@@ -53,6 +53,7 @@ const CAUSE: Record<string, Bi> = {
 
 export const symptomModel = defineModel<P>({
   id: 'career.symptom',
+  frame: 'visible',
   block: 'career',
   title: bi('Как найти причину ошибки 504', 'From symptom to cause: where a 504 comes from'),
   summary: bi(

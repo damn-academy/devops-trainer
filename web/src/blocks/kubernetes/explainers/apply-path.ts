@@ -55,6 +55,7 @@ const ALL = idsOf(diagram);
 
 export const applyPathModel = defineModel<P>({
   id: 'k8s.apply-path',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Что происходит после kubectl apply', 'What happens after kubectl apply'),
   summary: bi(

@@ -51,6 +51,7 @@ const ALL = idsOf(diagram);
 
 export const etcdRestoreModel = defineModel<P>({
   id: 'k8s.etcd-restore',
+  frame: 'visible',
   block: 'k8s-2',
   title: bi('Как снять снимок etcd и восстановиться из него', 'How to snapshot etcd and restore'),
   summary: bi(

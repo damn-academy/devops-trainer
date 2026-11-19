@@ -42,6 +42,7 @@ const ALL = idsOf(diagram);
 
 export const dispatchModel = defineModel<P>({
   id: 'k8s.dispatch',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Как раскладывают контейнеры по серверам', 'How containers are placed on servers'),
   summary: bi(

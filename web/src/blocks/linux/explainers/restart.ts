@@ -83,6 +83,7 @@ const startWith = (...shown: string[]): Record<string, ElementState> => Object.f
 
 export const restartModel = defineModel<P>({
   id: 'linux.restart',
+  frame: 'visible',
   block: 'linux',
   title: bi('Как systemd перезапускает службу после сбоя', 'How systemd restarts a service after a failure'),
   summary: bi(
@@ -190,7 +191,7 @@ export const restartModel = defineModel<P>({
       max: 30,
       step: 1,
       default: 0,
-      unit: 's',
+      unit: { ru: 'с', en: 's' },
       near: 'main',
       group: bi('Как ведёт себя программа', 'How the program behaves'),
       predict: {
@@ -224,7 +225,7 @@ export const restartModel = defineModel<P>({
         resolve: (_p, next) => (next.some((s) => s.id.startsWith('wait')) ? 'yes' : 'no'),
       },
     },
-    { id: 'restartSec', label: bi('Пауза перед новой попыткой (RestartSec=)', 'Pause before a new attempt (RestartSec=)'), kind: 'range', min: 0.1, max: 30, step: 0.1, default: 0.1, unit: 's', near: 'e-retry', group: bi('Настройки unit-файла', 'Unit file settings') },
+    { id: 'restartSec', label: bi('Пауза перед новой попыткой (RestartSec=)', 'Pause before a new attempt (RestartSec=)'), kind: 'range', min: 0.1, max: 30, step: 0.1, default: 0.1, unit: { ru: 'с', en: 's' }, near: 'e-retry', group: bi('Настройки unit-файла', 'Unit file settings') },
     { id: 'burst', label: bi('Сколько запусков разрешено за 10 секунд (StartLimitBurst=)', 'How many starts are allowed in 10 seconds (StartLimitBurst=)'), kind: 'range', min: 1, max: 10, step: 1, default: 5, near: 'limit', group: bi('Настройки unit-файла', 'Unit file settings'), levels: ['intermediate', 'experienced'] },
   ],
   breaks: [
@@ -260,7 +261,7 @@ export const restartModel = defineModel<P>({
   metrics: [
     { id: 'restarts', label: bi('перезапусков', 'restarts') },
     { id: 'window', label: bi('запусков за последние 10 секунд', 'starts in the last 10 seconds') },
-    { id: 't', label: bi('прошло времени', 'time passed'), unit: 's' },
+    { id: 't', label: bi('прошло времени', 'time passed'), unit: { ru: 'с', en: 's' } },
   ],
   run(p, broken): Step[] {
     const sim = simulate(p, broken);

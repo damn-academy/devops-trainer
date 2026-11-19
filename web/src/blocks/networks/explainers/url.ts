@@ -36,6 +36,7 @@ const ADVANCED = ['intermediate', 'experienced'] as const;
 
 export const urlModel = defineModel<P>({
   id: 'net.url',
+  frame: 'visible',
   block: 'networks',
   title: b('Что происходит, когда вы вводите адрес сайта', 'What happens when you type a URL'),
   summary: b(
@@ -162,7 +163,7 @@ export const urlModel = defineModel<P>({
       },
     },
     { id: 'keepalive', group: b('Соединение с узлом CDN', 'The connection to the CDN edge'), label: b('Соединение с узлом CDN уже открыто прошлым запросом', 'The connection is already open'), kind: 'toggle', default: false, near: 'e-edge', levels: [...ADVANCED] },
-    { id: 'rtt', group: b('Соединение с узлом CDN', 'The connection to the CDN edge'), label: b('Время пути до узла CDN и обратно (RTT)', 'RTT to the CDN edge'), kind: 'range', min: 4, max: 200, step: 2, unit: 'ms', default: 20, near: 'cdn', levels: [...ADVANCED] },
+    { id: 'rtt', group: b('Соединение с узлом CDN', 'The connection to the CDN edge'), label: b('Время пути до узла CDN и обратно (RTT)', 'RTT to the CDN edge'), kind: 'range', min: 4, max: 200, step: 2, unit: { ru: 'мс', en: 'ms' }, default: 20, near: 'cdn', levels: [...ADVANCED] },
   ],
   breaks: [
     {
@@ -226,11 +227,11 @@ export const urlModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'dns', label: b('DNS', 'DNS'), unit: 'ms' },
-    { id: 'connect', label: b('TCP', 'TCP'), unit: 'ms' },
-    { id: 'tls', label: b('TLS', 'TLS'), unit: 'ms' },
-    { id: 'ttfb', label: b('до первого байта', 'first byte'), unit: 'ms' },
-    { id: 'total', label: b('всего', 'total'), unit: 'ms' },
+    { id: 'dns', label: b('DNS', 'DNS'), unit: { ru: 'мс', en: 'ms' } },
+    { id: 'connect', label: b('TCP', 'TCP'), unit: { ru: 'мс', en: 'ms' } },
+    { id: 'tls', label: b('TLS', 'TLS'), unit: { ru: 'мс', en: 'ms' } },
+    { id: 'ttfb', label: b('до первого байта', 'first byte'), unit: { ru: 'мс', en: 'ms' } },
+    { id: 'total', label: b('всего', 'total'), unit: { ru: 'мс', en: 'ms' } },
     { id: 'code', label: b('код ответа', 'status') },
   ],
   waterfall: 'total',

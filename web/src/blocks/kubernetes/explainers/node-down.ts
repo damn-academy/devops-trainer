@@ -59,6 +59,7 @@ const ALL = idsOf(diagram);
 
 export const nodeDownModel = defineModel<P>({
   id: 'k8s.node-down',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Как кластер замечает, что узел выключился', 'How the cluster notices that a node went down'),
   summary: bi(

@@ -18,6 +18,7 @@ const ALL = ['shared', 'anna', 'boris', 'merge', 'history', 'e-takeA', 'e-takeB'
 
 export const togetherModel = defineModel<P>({
   id: 'orient.together',
+  frame: 'visible',
   block: 'orient',
   title: bi('Анна и Борис правят один файл', 'Two people edit one text'),
   summary: bi(

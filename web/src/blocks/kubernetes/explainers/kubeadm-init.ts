@@ -59,6 +59,7 @@ const ALL = idsOf(diagram);
 
 export const kubeadmInitModel = defineModel<P>({
   id: 'k8s.kubeadm-init',
+  frame: 'visible',
   block: 'k8s-2',
   title: bi('Что делает kubeadm init', 'What kubeadm init does'),
   summary: bi(

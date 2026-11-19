@@ -70,6 +70,7 @@ const ALL = ['slo', 'budget', 'outage', 'burn', 'alert', 'policy', 'e-size', 'e-
 
 export const budgetModel = defineModel<P>({
   id: 'method.x.budget',
+  frame: 'visible',
   block: 'methodology',
   title: b('Девятки и бюджет ошибок', 'Nines and the error budget'),
   summary: b(

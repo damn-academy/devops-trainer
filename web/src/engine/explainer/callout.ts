@@ -77,11 +77,11 @@ const GAP = 14;
  * and lines and stays inside `bounds`: above, below, to the right, to the left,
  * shifted along the side if that helps.
  */
-export function placeCallout(anchor: Box, w: number, h: number, obstacles: Box[], bounds: Box, lines: [Pt, Pt][] = []): Placed {
+export function placeCallout(anchor: Box, w: number, h: number, obstacles: Box[], bounds: Box, lines: [Pt, Pt][] = [], allowOutside = false): Placed {
   const cx = anchor.x + anchor.w / 2;
   const cy = anchor.y + anchor.h / 2;
   const cands: { box: Box; side: Side; pref: number }[] = [];
-  const shifts = [0, -0.35, 0.35, -0.7, 0.7];
+  const shifts = [0, -0.35, 0.35, -0.7, 0.7, -1, 1];
   for (const k of shifts) {
     cands.push({ side: 'top', box: { x: cx - w / 2 + k * w, y: anchor.y - GAP - h, w, h }, pref: 0 + Math.abs(k) });
     cands.push({ side: 'bottom', box: { x: cx - w / 2 + k * w, y: anchor.y + anchor.h + GAP, w, h }, pref: 0.3 + Math.abs(k) });
@@ -90,13 +90,23 @@ export function placeCallout(anchor: Box, w: number, h: number, obstacles: Box[]
     cands.push({ side: 'right', box: { x: anchor.x + anchor.w + GAP, y: cy - h / 2 + k * h, w, h }, pref: 0.6 + Math.abs(k) });
     cands.push({ side: 'left', box: { x: anchor.x - GAP - w, y: cy - h / 2 + k * h, w, h }, pref: 0.8 + Math.abs(k) });
   }
+  if (allowOutside) {
+    // Dense diagrams may have no free slot directly beside the actor.
+    for (const c of [...cands]) {
+      for (const distance of [40, 80, 120, 180, 260]) {
+        const dx = c.side === 'left' ? -distance : c.side === 'right' ? distance : 0;
+        const dy = c.side === 'top' ? -distance : c.side === 'bottom' ? distance : 0;
+        cands.push({ ...c, box: { ...c.box, x: c.box.x + dx, y: c.box.y + dy }, pref: c.pref + distance / 100 });
+      }
+    }
+  }
   let best: { c: (typeof cands)[number]; score: number } | null = null;
   for (const c of cands) {
     const b = c.box;
     const out = Math.max(0, bounds.x - b.x) + Math.max(0, b.x + b.w - (bounds.x + bounds.w)) + Math.max(0, bounds.y - b.y) + Math.max(0, b.y + b.h - (bounds.y + bounds.h));
-    let score = out * 400 + c.pref * 300;
+    let score = out * (allowOutside ? 0.2 : 400) + c.pref * 300;
     score += overlap(b, { x: anchor.x - 4, y: anchor.y - 4, w: anchor.w + 8, h: anchor.h + 8 }) * 20;
-    for (const o of obstacles) score += overlap(b, o) * 3;
+    for (const o of obstacles) score += overlap(b, o) * 100;
     for (const [a, z] of lines) score += clipLength(a, z, b) * 6;
     if (!best || score < best.score) best = { c, score };
   }

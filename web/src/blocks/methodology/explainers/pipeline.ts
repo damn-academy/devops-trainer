@@ -52,6 +52,7 @@ const PIPE: [string, string] = ['Этот шаг выполняет конвей
 
 export const pipelineModel = defineModel<P>({
   id: 'method.x.pipeline',
+  frame: 'visible',
   block: 'methodology',
   title: b('Как изменение проходит путь от слияния до рабочего сайта', 'How a change travels from the merge to the working site'),
   summary: b(

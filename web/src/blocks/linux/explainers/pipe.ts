@@ -75,7 +75,7 @@ const proc = (id: string, label: string, x: number, what: Bi, see: string, page:
 const buf = (id: string, x: number, between: Bi): DiagramNode => ({
   id,
   label: bi('Труба', 'Pipe'),
-  sub: '0 / 64 KiB',
+  sub: { ru: '0 / 64 КиБ', en: '0 / 64 KiB' },
   family: 'kernel',
   shape: 'buffer',
   x,
@@ -121,6 +121,7 @@ const startWith = (...shown: string[]): Record<string, ElementState> => Object.f
 
 export const pipeModel = defineModel<P>({
   id: 'linux.pipe',
+  frame: 'visible',
   block: 'linux',
   title: bi('Как конвейер передаёт вывод одной команды на вход следующей', 'How a pipeline hands the output of one command to the next'),
   summary: bi(

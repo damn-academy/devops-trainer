@@ -54,6 +54,7 @@ const ALL = idsOf(diagram);
 
 export const podNetworkModel = defineModel<P>({
   id: 'k8s.pod-network',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Как пакет идёт из пода в под', 'How a packet goes from pod to pod'),
   summary: bi(

@@ -9,7 +9,7 @@ import { bi, lang, t, type Bi } from '../../core/i18n';
 import type { DiagramGroup, DiagramNode, ElementCard, ExplainerCtx, ExplainerReg, LegendMark, ModelChange, Mounted, ParamSpec, Prediction, ProcessModel, QText, Step } from '../../core/types';
 import { renderInline, renderMd } from '../../core/markdown';
 import { docChip } from '../docs/viewer';
-import { fitSub, tidyDiagram, type Box } from './tidy';
+import { fitSub, tidyDiagram, overlap, placeLabel, type Box } from './tidy';
 import { changedElements, edgePoints, fold, iconInside, iconPad, keepIndex, metricDelta, pathD, pointAt, polyLength, type Pt } from './geometry';
 import { bubblePath, estimate, placeCallout, wrapWords, type Run } from './callout';
 import { defaultWork, NODE_ICONS } from './icons';
@@ -93,7 +93,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   const knobBox = h('div.ex-knobs');
   const breakBox = h('div.ex-breaks');
   const scrub = h('input.ex-scrub', { type: 'range', min: 0, max: Math.max(0, steps.length - 1), step: 1, value: 0, 'aria-label': t(L.steps) }) as HTMLInputElement;
-  const ticks = h('div.ex-ticks', { 'aria-hidden': 'true' });
+  const ticks = h('div.ex-ticks');
   const counter = h('span.ex-counter');
   const playBtn = h('button.icon-btn.ex-play', { type: 'button', 'aria-label': t(L.play) }, icon('play'));
   const backBtn = h('button.icon-btn', { type: 'button', 'aria-label': t(L.back) }, icon('prev'));
@@ -111,7 +111,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   const legendBox = model.legend?.length ? drawLegend(model.legend) : null;
   const el = h(
     'div.explainer',
-    { tabindex: 0, 'data-model': model.id },
+    { tabindex: 0, 'data-model': model.id, 'data-frame': model.frame ?? 'fixed' },
     h('header.ex-head', {}, h('h3', {}, t(model.title)), model.summary ? h('p.ex-summary', {}, ...renderInline(t(model.summary))) : null),
     h('div.ex-controls', {}, knobBox, breakBox),
     predictBox,
@@ -187,6 +187,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       tidyObs = null;
       const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
       void (fonts ? fonts.ready : Promise.resolve()).then(() => {
+        if (disposed) return;
         tidyDiagram(svg, d);
         paint();
       });
@@ -245,7 +246,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     const anchor = isBar ? 'start' : 'middle';
     const ly = n.sub !== undefined || shape === 'buffer' ? y + hh / 2 - (shape === 'buffer' ? 8 : 4) : y + hh / 2 + 5;
     parts.push(s('text.node-label', { x: lx, y: ly, 'text-anchor': anchor }, label));
-    const sub = s('text.node-sub', { x: lx, y: ly + 17, 'text-anchor': anchor }, n.sub ?? '');
+    const sub = s('text.node-sub', { x: lx, y: ly + 17, 'text-anchor': anchor }, txt(n.sub ?? ''));
     parts.push(sub);
     subEls.set(n.id, sub);
     parts.push(s('text.node-x', { x: x + w - 10, y: y + 16, 'text-anchor': 'middle', 'aria-hidden': 'true' }, '⨯'));
@@ -311,7 +312,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
             { class: i > idx ? 'future' : i === idx ? 'now' : undefined },
             h('span.wf-name', {}, txt(st.label)),
             h('span.wf-track', {}, h('span.wf-bar', { style: `left:${(prev / scale) * 100}%;width:${Math.max(0.8, (dur / scale) * 100)}%` })),
-            h('span.wf-val', {}, `${formatNum(dur)}${spec?.unit ? ' ' + spec.unit : ''}`),
+            h('span.wf-val', {}, `${formatNum(dur)}${spec?.unit ? ' ' + txt(spec.unit) : ''}`),
           ),
         );
       }
@@ -354,6 +355,8 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
 
   // ── painting ──
   let tokenAnim = 0;
+  let cameraAnim = 0;
+  let disposed = false;
   function paint(animateFrom?: number) {
     const st = steps[idx];
     const frame = fold(steps, idx);
@@ -384,7 +387,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const sub = subEls.get(id);
       if (sub) {
         const n = d.nodes.find((x) => x.id === id);
-        const text = frame.values[id] ?? n?.sub ?? '';
+        const text = frame.values[id] ?? txt(n?.sub ?? '');
         if (sub.dataset.full !== text) {
           sub.dataset.full = text;
           sub.textContent = text;
@@ -404,7 +407,11 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const carrying = (st?.tokens ?? []).some((tk) => tk.edge === id && tk.label);
       const moving = (st?.tokens ?? []).some((tk) => tk.edge === id);
       e.g.setAttribute('class', ['edge', carrying ? 'carrying' : '', moving ? 'moving' : '', isFocus ? 'focus' : '', state ? `st-${state}` : '', removedIds.has(id) ? 'removed' : '', isErr ? 'broken' : '', selected === id ? 'selected' : '', highlight.includes(id) ? 'changed' : ''].filter(Boolean).join(' '));
-      e.path.setAttribute('marker-end', `url(#arr-${model.id}-${isErr ? 'e' : isFocus ? 'f' : 'n'})`);
+      const tokens = (st?.tokens ?? []).filter((tk) => tk.edge === id);
+      const undirected = d.edges.find((edge) => edge.id === id)?.undirected;
+      const marker = `url(#arr-${model.id}-${isErr ? 'e' : isFocus ? 'f' : 'n'})`;
+      e.path.setAttribute('marker-start', !undirected && tokens.some((tk) => tk.reverse) ? marker : 'none');
+      e.path.setAttribute('marker-end', !undirected && (!tokens.length || tokens.some((tk) => !tk.reverse)) ? marker : 'none');
       setHidden(e.g, state === 'hidden');
     }
     // tokens: a labelled token is a small card with what is handed over, an unlabelled one a dot
@@ -419,15 +426,43 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const lab = e.g.querySelector('text.edge-label');
       const at: Pt | null = lab ? [Number(lab.getAttribute('x')), Number(lab.getAttribute('y')) - 4] : null;
       const half = tk.label ? Number(g.getAttribute('data-w')) / 2 : 6;
-      // on an edge too short for the card, the card itself names what goes there: its label steps aside
-      if (tk.label && polyLength(pts) < 2 * half + 60) e.g.classList.add('covered');
-      return { g, pts, rest: restAt(pts, at, half) };
+      const preferred = restAt(pts, at, half);
+      const nodeBoxes = d.nodes.filter((n) => frame.states[n.id] !== 'hidden').map((n) => ({ x: n.x - 8, y: n.y - 8, w: n.w + 16, h: n.h + 16 }));
+      for (const caption of svg.querySelectorAll<SVGGraphicsElement>('.node-label, .node-sub, .group-label')) {
+        if (caption.closest('.st-hidden, .removed') || typeof caption.getBBox !== 'function') continue;
+        const b = caption.getBBox();
+        nodeBoxes.push({ x: b.x - 4, y: b.y - 4, w: b.width + 8, h: b.height + 8 });
+      }
+      const fits = (f: number, shift: Pt) => {
+        const { p } = pointAt(pts, f);
+        const box = { x: p[0] + shift[0] - half, y: p[1] + shift[1] - 11, w: half * 2, h: 22 };
+        return nodeBoxes.every((n) => overlap(box, n) === 0);
+      };
+      // Try positions on the line first; a short line may need a small perpendicular offset.
+      let best: { rest: number; shift: Pt; score: number } | undefined;
+      const fractions = [preferred, ...Array.from({ length: 19 }, (_, i) => (i + 1) / 20)];
+      for (let distance = 0; distance <= Math.max(d.width, d.height); distance += 8) {
+        if (best && distance * 2 > best.score) break;
+        for (const f of fractions) {
+          const { angle } = pointAt(pts, f);
+          for (const side of distance ? [-1, 1] : [1]) {
+            const shift: Pt = [-Math.sin(angle) * distance * side, Math.cos(angle) * distance * side];
+            const score = distance * 2 + Math.abs(f - preferred) * polyLength(pts) * 0.3;
+            if ((!best || score < best.score) && fits(f, shift)) best = { rest: f, shift, score };
+          }
+        }
+      }
+      const { rest, shift } = best ?? { rest: preferred, shift: [0, 0] as Pt };
+      let start = rest;
+      // Animate only the contiguous part of the route that stays clear of nodes.
+      while (start > 0.03 && fits(start - 0.02, shift)) start -= 0.02;
+      return { g, pts, rest, half, shift, start };
     });
     const place = (f: number | null) => {
       for (const tk of toks) {
         if (!tk) continue;
         const { p } = pointAt(tk.pts, f ?? tk.rest);
-        tk.g.setAttribute('transform', `translate(${p[0].toFixed(1)} ${p[1].toFixed(1)})`);
+        tk.g.setAttribute('transform', `translate(${(p[0] + tk.shift[0]).toFixed(1)} ${(p[1] + tk.shift[1]).toFixed(1)})`);
       }
     };
     const animate = animateFrom !== undefined && animateFrom < idx && !calm();
@@ -435,16 +470,40 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const start = performance.now();
       const dur = 520 / speed;
       const tick = (now: number) => {
-        const k = Math.min(1, (now - start) / dur);
+        const k = Math.max(0, Math.min(1, (now - start) / dur));
         const eased = 1 - Math.pow(1 - k, 3);
-        for (const tk of toks) if (tk) tk.g.setAttribute('transform', translateAt(tk.pts, 0.06 + (tk.rest - 0.06) * eased));
+        for (const tk of toks) if (tk) tk.g.setAttribute('transform', translateAt(tk.pts, tk.start + (tk.rest - tk.start) * eased, tk.shift));
         if (k < 1) tokenAnim = requestAnimationFrame(tick);
       };
-      place(0.06);
+      for (const tk of toks) if (tk) tk.g.setAttribute('transform', translateAt(tk.pts, tk.start, tk.shift));
       tokenAnim = requestAnimationFrame(tick);
     } else place(null);
 
-    drawSays(st, frame.states);
+    const tokenBoxes = toks.flatMap((tk) => {
+      if (!tk) return [];
+      const points = Array.from({ length: 25 }, (_, i) => pointAt(tk.pts, tk.start + (tk.rest - tk.start) * i / 24).p);
+      const xs = points.map((p) => p[0] + tk.shift[0]);
+      const ys = points.map((p) => p[1] + tk.shift[1]);
+      return [{ x: Math.min(...xs) - tk.half - 3, y: Math.min(...ys) - 14,
+        w: Math.max(...xs) - Math.min(...xs) + tk.half * 2 + 6, h: Math.max(...ys) - Math.min(...ys) + 28 }];
+    });
+    tidyDiagram(svg, d);
+    const labelObstacles = [...d.nodes.filter((n) => frame.states[n.id] !== 'hidden'), ...tokenBoxes];
+    for (const [id, edge] of edgeEls) {
+      if (frame.states[id] === 'hidden') continue;
+      const label = edge.g.querySelector<SVGTextElement>('text.edge-label');
+      if (!label || typeof label.getBBox !== 'function') continue;
+      const b = label.getBBox();
+      if (tokenBoxes.some((box) => overlap(box, { x: b.x, y: b.y, w: b.width, h: b.height }))) {
+        const box = placeLabel(edge.pts, d.edges.find((e) => e.id === id)?.labelAt ?? 0.5, b.width + 6, b.height + 6, labelObstacles);
+        label.setAttribute('x', String(Number(label.getAttribute('x')) + box.x + 3 - b.x));
+        label.setAttribute('y', String(Number(label.getAttribute('y')) + box.y + 3 - b.y));
+      }
+      const placed = label.getBBox();
+      labelObstacles.push({ x: placed.x, y: placed.y, w: placed.width, h: placed.height });
+    }
+    drawSays(st, frame.states, tokenBoxes);
+    fitCamera(tokenBoxes);
     keepInView(animateFrom !== undefined);
 
     // caption, broken line, metrics, stepper
@@ -459,7 +518,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     const m = st?.metrics ?? {};
     for (const spec of model.metrics ?? []) {
       if (!(spec.id in m)) continue;
-      metricsBox.append(h('div', {}, h('dt', {}, t(spec.label)), h('dd', {}, `${formatNum(m[spec.id])}${spec.unit ? ' ' + spec.unit : ''}`)));
+      metricsBox.append(h('div', {}, h('dt', {}, t(spec.label)), h('dd', {}, `${formatNum(m[spec.id])}${spec.unit ? ' ' + txt(spec.unit) : ''}`)));
     }
     if (model.waterfall) drawWaterfall();
     scrub.max = String(Math.max(0, steps.length - 1));
@@ -470,6 +529,35 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     fwdBtn.toggleAttribute('disabled', idx >= steps.length - 1);
     lastBtn.toggleAttribute('disabled', idx >= steps.length - 1);
     for (const [i, tick] of [...ticks.children].entries()) tick.classList.toggle('on', i <= idx);
+  }
+
+  /** Animate only the camera; the drawing retains its authored coordinates. */
+  function fitCamera(tokenBoxes: Box[]) {
+    const parts = [...svg.querySelectorAll<SVGGraphicsElement>('.node, .edge, .group, .say, .token')];
+    const boxes = parts.flatMap((el) => {
+      if (typeof el.getBBox !== 'function' || el.classList.contains('removed') || (model.frame === 'visible' && el.classList.contains('st-hidden'))) return [];
+      const b = el.getBBox();
+      const transform = el.transform?.baseVal.consolidate()?.matrix;
+      return [{ x: b.x + (transform?.e ?? 0), y: b.y + (transform?.f ?? 0), w: b.width, h: b.height }];
+    });
+    boxes.push(...tokenBoxes);
+    if (!boxes.length) return;
+    const x = Math.min(...boxes.map((b) => b.x)) - 20;
+    const y = Math.min(...boxes.map((b) => b.y)) - 20 - (d.topPadding ?? 0);
+    const target = [x, y, Math.max(...boxes.map((b) => b.x + b.w)) + 20 - x, Math.max(...boxes.map((b) => b.y + b.h)) + 20 - y];
+    cancelAnimationFrame(cameraAnim);
+    const from = (svg.dataset.camera ?? target.join(' ')).split(' ').map(Number);
+    const start = performance.now();
+    const update = (now: number) => {
+      const k = calm() ? 1 : Math.max(0, Math.min(1, (now - start) / 320));
+      const eased = 1 - (1 - k) ** 3;
+      const value = target.map((v, i) => from[i] + (v - from[i]) * eased).join(' ');
+      svg.setAttribute('viewBox', value);
+      svg.dataset.camera = value;
+      if (k < 1) cameraAnim = requestAnimationFrame(update);
+    };
+    svg.style.setProperty('--ex-minw', `${Math.round(target[2] * 0.7)}px`);
+    update(start);
   }
 
   function setHidden(g: SVGElement, hidden: boolean) {
@@ -499,7 +587,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     const hh = 22;
     return s(
       'g.token.card',
-      { 'data-w': w.toFixed(0) },
+      { 'data-w': Math.ceil(w) },
       s('rect.token-bg', { x: -w / 2, y: -hh / 2, width: w, height: hh, rx: 5 }),
       s('path.token-env', { d: `M${-w / 2 + 7} -4 h12 v8 h-12 Z M${-w / 2 + 7} -4 l6 4.5 l6 -4.5`, transform: '' }),
       s('text.token-text', { x: -w / 2 + 24, y: 4 }, label),
@@ -507,7 +595,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   }
 
   /** The speech callouts of the acting nodes, placed where they cover the least. */
-  function drawSays(st: Step | undefined, states: Record<string, string>) {
+  function drawSays(st: Step | undefined, states: Record<string, string>, tokenBoxes: Box[]) {
     clear(layerSay);
     const says = Object.entries(st?.say ?? {}).filter(([id]) => states[id] !== 'hidden');
     if (!says.length) return;
@@ -515,6 +603,12 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     const bounds: Box = vb && vb.width ? { x: vb.x, y: vb.y, w: vb.width, h: vb.height } : { x: 0, y: 0, w: d.width, h: d.height };
     const visible = d.nodes.filter((n) => states[n.id] !== 'hidden' && n.shape !== 'bar');
     const obstacles: Box[] = visible.map((n) => ({ x: n.x - 4, y: n.y - 4, w: n.w + 8, h: n.h + 8 }));
+    obstacles.push(...tokenBoxes);
+    for (const el of svg.querySelectorAll<SVGGraphicsElement>('.edge-label, .group-label, .node-label, .node-sub')) {
+      if (el.closest('.st-hidden, .removed') || typeof el.getBBox !== 'function') continue;
+      const b = el.getBBox();
+      obstacles.push({ x: b.x - 4, y: b.y - 4, w: b.width + 8, h: b.height + 8 });
+    }
     const lines: [Pt, Pt][] = [];
     for (const [id, e] of edgeEls) if (states[id] !== 'hidden') for (let i = 1; i < e.pts.length; i++) lines.push([e.pts[i - 1], e.pts[i]]);
     // on a phone the picture is scaled down: the callout text grows so it stays readable
@@ -530,7 +624,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const w = Math.max(...linesOf.map((l) => l.width), 60) + 24;
       const hh = linesOf.length * lh + 16;
       const anchor = { x: n.x, y: n.y, w: n.w, h: n.h };
-      const pl = placeCallout(anchor, w, hh, obstacles, bounds, lines);
+      const pl = placeCallout(anchor, w, hh, obstacles, bounds, lines, true);
       obstacles.push(pl.box);
       const textEl = s('text.say-text', { x: pl.box.x + 12, y: pl.box.y + 8 + lh * 0.72 });
       linesOf.forEach((ln, i) => {
@@ -573,7 +667,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       ticks.append(
         h(
           'button.ex-tick',
-          { type: 'button', style: `left:${steps.length > 1 ? (i / (steps.length - 1)) * 100 : 0}%`, tabindex: -1, title: txt(st.label), onclick: () => go(i), class: st.broken ? 'broken' : undefined },
+          { type: 'button', style: `left:${steps.length > 1 ? (i / (steps.length - 1)) * 100 : 0}%;max-width:calc(${100 / Math.max(1, steps.length)}% - 4px)`, tabindex: 0, 'aria-label': txt(st.label), 'data-label': txt(st.label), title: txt(st.label), onclick: () => go(i), class: st.broken ? 'broken' : undefined },
           h('span', {}, txt(st.label)),
         ),
       );
@@ -659,7 +753,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     deltaBox.hidden = false;
     const chips = Object.entries(md).map(([k, v]) => {
       const spec = model.metrics?.find((x) => x.id === k);
-      return h('span.ex-mdelta', { class: v > 0 ? 'up' : 'down' }, `${v > 0 ? '+' : ''}${formatNum(v)}${spec?.unit ? ' ' + spec.unit : ''} ${spec ? t(spec.label) : k}`);
+      return h('span.ex-mdelta', { class: v > 0 ? 'up' : 'down' }, `${v > 0 ? '+' : ''}${formatNum(v)}${spec?.unit ? ' ' + txt(spec.unit) : ''} ${spec ? t(spec.label) : k}`);
     });
     put(deltaBox, h('h4', {}, t(L.changed)), h('p', {}, t(delta)), chips.length ? h('div.ex-mdeltas', {}, ...chips) : null);
     // the one-line delta also sits next to the knob that changed
@@ -920,7 +1014,9 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
 
   return {
     dispose() {
+      disposed = true;
       stop();
+      cancelAnimationFrame(cameraAnim);
       cancelAnimationFrame(tokenAnim);
       tidyObs?.disconnect();
       clear(root);
@@ -967,9 +1063,9 @@ export function restAt(pts: Pt[], label: Pt | null, half = 40): number {
   return best;
 }
 
-function translateAt(pts: Pt[], f: number): string {
+function translateAt(pts: Pt[], f: number, shift: Pt = [0, 0]): string {
   const { p } = pointAt(pts, f);
-  return `translate(${p[0].toFixed(1)} ${p[1].toFixed(1)})`;
+  return `translate(${(p[0] + shift[0]).toFixed(1)} ${(p[1] + shift[1]).toFixed(1)})`;
 }
 
 function formatNum(n: number): string {
@@ -983,7 +1079,7 @@ function formatParam(spec: ParamSpec, v: unknown): string {
     const o = spec.options?.find((x) => x.id === v);
     return o ? t(o.label) : String(v);
   }
-  return `${formatNum(Number(v))}${spec.unit ? ' ' + spec.unit : ''}`;
+  return `${formatNum(Number(v))}${spec.unit ? ' ' + txt(spec.unit) : ''}`;
 }
 
 /** A small drawing of what a legend line explains, in the diagram's own style. */

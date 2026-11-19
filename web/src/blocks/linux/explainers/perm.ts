@@ -80,6 +80,7 @@ const sys = (what: [string, string], see?: string) => ({ what: bi(what[0], what[
 
 export const permModel = defineModel<P>({
   id: 'linux.perm',
+  frame: 'visible',
   block: 'linux',
   title: bi('Как система проверяет права доступа', 'How the system decides whether you may'),
   summary: bi(

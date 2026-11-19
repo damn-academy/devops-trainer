@@ -39,6 +39,7 @@ const TEXT_LINE = 'ERROR checkout … (500)';
 
 export const logModel = defineModel<LogP>({
   id: 'obs.log-path',
+  frame: 'visible',
   block: 'monitoring',
   title: bi('Как строка журнала попадает из программы на экран Grafana', 'How a log line gets from a program to the Grafana screen'),
   summary: bi(
@@ -73,7 +74,7 @@ export const logModel = defineModel<LogP>({
       { id: 'app', label: bi('Процесс api', 'The api process'), icon: 'process', sub: 'stdout', family: 'user', x: 24, y: 40, w: 220, h: 64, card: card(bi('Сервис пишет журнал в стандартный вывод, по строке на событие. Куда эти строки попадут дальше, он не знает и знать не должен, потому что доставкой занимается инфраструктура.', 'The service writes its log to standard output, one line per event. Where the lines go next it does not know and should not know, because delivery is the infrastructure’s job.'), bi('Строки пишет код сервиса через свою библиотеку журналирования.', 'The service code writes the lines through its logging library.'), 'kubectl logs deploy/api') },
       { id: 'file', label: bi('Файл журнала пода', 'The pod’s log file'), icon: 'file', sub: '/var/log/pods/…/0.log', family: 'kernel', x: 370, y: 40, w: 220, h: 64, card: card(bi('Среда контейнеров перехватывает стандартный вывод и дописывает каждую строку в файл на узле, добавив к ней время и имя потока. Когда файл вырастает до предела, его заменяют новым, а старый со временем удаляют; это называется ротацией.', 'The container runtime catches standard output and appends every line to a file on the node, adding the time and the stream name. When the file reaches its size limit it is replaced with a new one and the old one is later deleted; this is called rotation.'), bi('Файл ведёт среда контейнеров на узле: containerd или CRI-O.', 'The container runtime on the node keeps the file: containerd or CRI-O.'), 'ls /var/log/pods/') },
       { id: 'agent', label: bi('Агент', 'Agent'), icon: 'container', sub: 'Grafana Alloy', family: 'process', x: 716, y: 40, w: 220, h: 64, card: card(bi('Агент работает на каждом узле, дочитывает новые строки из файлов журналов, добавляет к ним метки из Kubernetes (namespace, app, instance) и пачками отправляет их в Loki. Агент помнит, до какого места дочитал каждый файл, и после перезапуска продолжает с этого места.', 'The agent runs on every node, reads the new lines of the log files, adds labels from Kubernetes (namespace, app, instance) and sends them to Loki in batches. The agent remembers how far it has read each file and continues from there after a restart.'), bi('Агент запускают на каждом узле кластера как DaemonSet, и обычно это Grafana Alloy (раньше Promtail), Fluent Bit или Vector.', 'The agent runs on every node of the cluster as a DaemonSet, and it is usually Grafana Alloy (formerly Promtail), Fluent Bit or Vector.'), undefined, { url: 'https://grafana.com/docs/loki/latest/send-data/', label: 'grafana.com › Send log data to Loki' }) },
-      { id: 'index', label: bi('Индекс меток', 'Label index'), icon: 'database', sub: '6 streams', family: 'store', shape: 'buffer', x: 716, y: 200, w: 220, h: 64, card: card(bi('Loki индексирует только наборы меток. Все строки с одинаковым набором меток составляют один поток, и индекс знает, в каких кусках хранилища лежат строки каждого потока. Шкала внутри блока показывает, насколько индекс заполнен.', 'Loki indexes only label sets. All lines with the same label set make up one stream, and the index knows in which storage chunks the lines of each stream lie. The gauge inside the block shows how full the index is.'), bi('Индекс ведёт Loki.', 'Loki keeps the index.')) },
+      { id: 'index', label: bi('Индекс меток', 'Label index'), icon: 'database', sub: { ru: '6 потоков', en: '6 streams' }, family: 'store', shape: 'buffer', x: 716, y: 200, w: 220, h: 64, card: card(bi('Loki индексирует только наборы меток. Все строки с одинаковым набором меток составляют один поток, и индекс знает, в каких кусках хранилища лежат строки каждого потока. Шкала внутри блока показывает, насколько индекс заполнен.', 'Loki indexes only label sets. All lines with the same label set make up one stream, and the index knows in which storage chunks the lines of each stream lie. The gauge inside the block shows how full the index is.'), bi('Индекс ведёт Loki.', 'Loki keeps the index.')) },
       { id: 'chunks', label: bi('Куски строк', 'Chunks of lines'), icon: 'disk', sub: 'gzip', family: 'store', shape: 'buffer', x: 370, y: 200, w: 220, h: 64, card: card(bi('Сами строки Loki сжимает и хранит кусками в объектном хранилище, без всякого индекса по содержимому. Поэтому хранить журналы дёшево, а искать слово в тексте приходится перебором строк.', 'Loki compresses the lines themselves and keeps them in chunks in object storage, with no index on their content at all. So storing logs is cheap, and finding a word in the text means scanning the lines.'), bi('Куски хранит Loki в объектном хранилище, например в S3, GCS или MinIO.', 'Loki keeps the chunks in object storage, such as S3, GCS or MinIO.')) },
       { id: 'query', label: bi('Запрос LogQL', 'LogQL query'), icon: 'terminal', work: 'spin', sub: '{app="api"} | json', family: 'flow', x: 370, y: 360, w: 220, h: 64, card: card(bi('Запрос на языке LogQL. Сначала он выбирает потоки по меткам, и это быстро, потому что метки проиндексированы. Потом он прогоняет строки выбранных потоков через фильтры и разбор полей, и эта часть работы идёт перебором.', 'A query in LogQL. First it selects streams by labels, which is fast because the labels are indexed. Then it runs the lines of the selected streams through filters and field parsing, and that part of the work is a scan.'), bi('Запрос пишете вы в Grafana Explore или в терминале командой logcli.', 'You write the query in Grafana Explore or in the terminal with logcli.'), 'logcli query \'{app="api"} |= "error"\'') },
       { id: 'grafana', label: 'Grafana', icon: 'browser', sub: 'Explore', family: 'neutral', x: 24, y: 360, w: 220, h: 64, card: card(bi('На экране Grafana видны найденные строки и график их числа во времени.', 'The Grafana screen shows the lines found and a graph of their count over time.'), bi('Grafana настраивает команда эксплуатации.', 'The operations team sets up Grafana.')) },
@@ -133,7 +134,7 @@ export const logModel = defineModel<LogP>({
   ],
   metrics: [
     { id: 'streams', label: bi('потоков в индексе', 'streams in the index') },
-    { id: 'mbDay', label: bi('объём строк за сутки', 'volume of lines per day'), unit: 'MB' },
+    { id: 'mbDay', label: bi('объём строк за сутки', 'volume of lines per day'), unit: { ru: 'МБ', en: 'MB' } },
   ],
   run(p, broken) {
     const n = logNumbers(p);
@@ -296,6 +297,7 @@ const TRACE_ALL = ['front', 'api', 'db', 'logs', 'coll', 'tempo', 'e-call', 'e-s
 
 export const traceModel = defineModel<TraceP>({
   id: 'obs.trace-path',
+  frame: 'visible',
   block: 'monitoring',
   title: bi('Как из операций трёх сервисов складывается один трейс', 'How the operations of three services add up to one trace'),
   summary: bi(
@@ -409,7 +411,7 @@ export const traceModel = defineModel<TraceP>({
     },
   ],
   metrics: [
-    { id: 'ms', label: bi('сколько длился заказ', 'how long the order took'), unit: 'ms' },
+    { id: 'ms', label: bi('сколько длился заказ', 'how long the order took'), unit: { ru: 'мс', en: 'ms' } },
     { id: 'kept', label: bi('трейсов из 1000 сохранено', 'traces kept out of 1000') },
     { id: 'traces', label: bi('трейсов на один заказ', 'traces per order') },
   ],
@@ -595,6 +597,7 @@ const CG_ALL = ['proc', 'cg', 'cad', 'spec', 'ksm', 'prom', 'answer', 'e-acct', 
 
 export const cgModel = defineModel<CgP>({
   id: 'obs.container-metrics',
+  frame: 'visible',
   block: 'monitoring',
   title: bi('Откуда Prometheus знает о памяти и процессоре контейнера', 'How Prometheus knows about a container’s memory and CPU'),
   summary: bi(
@@ -644,7 +647,7 @@ export const cgModel = defineModel<CgP>({
     groups: [{ id: 'pod', label: bi('под api-6f9c7d-q7rvn', 'pod api-6f9c7d-q7rvn'), around: ['proc'], family: 'ns', dash: 'dash', card: card(bi('Пунктирная рамка обозначает под. У контейнеров пода общие пространства имён и одна cgroup, внутри которой у каждого контейнера своя вложенная группа.', 'The dashed frame stands for the pod. The pod’s containers share namespaces and one cgroup, inside which each container has a nested group of its own.'), bi('Под создают kubelet и среда контейнеров.', 'The kubelet and the container runtime create the pod.')) }],
   },
   params: [
-    { id: 'memLimit', group: bi('Память контейнера', 'Container memory'), label: bi('Лимит памяти контейнера (limits.memory)', 'Container memory limit (limits.memory)'), kind: 'range', min: 128, max: 1024, step: 64, unit: 'Mi', default: 512, near: 'spec' },
+    { id: 'memLimit', group: bi('Память контейнера', 'Container memory'), label: bi('Лимит памяти контейнера (limits.memory)', 'Container memory limit (limits.memory)'), kind: 'range', min: 128, max: 1024, step: 64, unit: { ru: 'МиБ', en: 'Mi' }, default: 512, near: 'spec' },
     {
       id: 'memUse',
       group: bi('Память контейнера', 'Container memory'),
@@ -653,7 +656,7 @@ export const cgModel = defineModel<CgP>({
       min: 64,
       max: 1200,
       step: 16,
-      unit: 'Mi',
+      unit: { ru: 'МиБ', en: 'Mi' },
       default: 300,
       near: 'proc',
       predict: {

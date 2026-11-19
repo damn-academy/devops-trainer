@@ -48,6 +48,7 @@ const TF_SYS = bi('Эту работу выполняет программа ter
 
 export const tfModel = defineModel<TfP>({
   id: 'iac.tf-plan-apply',
+  frame: 'visible',
   block: 'iac',
   title: bi('Что делают terraform plan и terraform apply', 'What terraform plan and terraform apply do'),
   summary: bi(
@@ -496,6 +497,7 @@ const ANS_SYS = bi('Эту работу выполняет ansible-playbook на
 
 export const ansModel = defineModel<AnsP>({
   id: 'iac.ansible-run',
+  frame: 'visible',
   block: 'iac',
   title: bi('Как Ansible выполняет плейбук на нескольких хостах', 'How Ansible walks a playbook across hosts'),
   summary: bi(

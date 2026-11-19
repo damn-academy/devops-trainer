@@ -19,6 +19,7 @@ const rows = (n: number) => t(bi(`записей: ${n}`, `${n} ${n === 1 ? 'entr
 
 export const natModel = defineModel<P>({
   id: 'net.nat',
+  frame: 'visible',
   block: 'networks',
   title: b('Как NAT даёт всей квартире выйти в интернет через один адрес', 'NAT: one public address for the whole flat'),
   summary: b(

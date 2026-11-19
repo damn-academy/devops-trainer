@@ -30,6 +30,7 @@ const MERGE_ALL = ['a', 'b', 'c', 'd', 'm', 'main', 'feature', 'head', 'file', '
 
 export const mergeModel = defineModel<MergeP>({
   id: 'git.merge-kinds',
+  frame: 'visible',
   block: 'git-yaml',
   title: bi('Как git merge соединяет две ветки', 'How git merge joins two branches'),
   summary: bi(
@@ -60,7 +61,7 @@ export const mergeModel = defineModel<MergeP>({
       { id: 'b', label: 'B', icon: 'disk', sub: 'main', family: 'ci-source', shape: 'doc', x: 260, y: 190, w: 128, h: 56, card: card(bi('Коммит коллеги в main, сделанный после того, как вы создали ветку feature. Из-за него истории двух веток разошлись.', 'A colleague’s commit on main made after you branched off. Because of it the histories diverged.'), bi('Коммит сделал коллега в ветке main.', 'A colleague: git commit on main.'), 'git log --oneline main') },
       { id: 'c', label: 'C', icon: 'disk', sub: 'feature', family: 'ci-build', shape: 'doc', x: 260, y: 50, w: 128, h: 56, card: card(bi('Ваш первый коммит в ветке feature. Его родителем служит коммит A.', 'Your first commit on the feature branch. Its parent is A.'), bi('Коммит сделали вы в ветке feature.', 'You: git commit on feature.'), 'git log --oneline feature') },
       { id: 'd', label: 'D', icon: 'disk', sub: 'feature', family: 'ci-build', shape: 'doc', x: 470, y: 50, w: 128, h: 56, card: card(bi('Последний коммит ветки feature, на который указывает её имя.', 'The last commit of the feature branch: its name points here.'), bi('Коммит сделали вы в ветке feature.', 'You: git commit on feature.'), 'git rev-parse feature') },
-      { id: 'm', label: 'M', icon: 'disk', sub: '2 parents', family: 'ci-test', shape: 'doc', x: 600, y: 190, w: 144, h: 56, card: card(bi('Коммит слияния с двумя родителями. Его снимок объединяет изменения обеих веток относительно коммита A. Такой коммит появляется, только если передвинуть ветку нельзя или если вы запретили это ключом `--no-ff`.', 'A commit with two parents, B and D. Its snapshot joins the changes of both branches relative to A. It appears only when a fast-forward is impossible or forbidden with --no-ff.'), bi('Коммит записывает команда `git merge`.', 'git merge.'), 'git log --graph --oneline', { page: 'man/git-merge.1', anchor: 'OPTIONS', line: '--no-ff' }) },
+      { id: 'm', label: 'M', icon: 'disk', sub: { ru: '2 родителя', en: '2 parents' }, family: 'ci-test', shape: 'doc', x: 600, y: 190, w: 144, h: 56, card: card(bi('Коммит слияния с двумя родителями. Его снимок объединяет изменения обеих веток относительно коммита A. Такой коммит появляется, только если передвинуть ветку нельзя или если вы запретили это ключом `--no-ff`.', 'A commit with two parents, B and D. Its snapshot joins the changes of both branches relative to A. It appears only when a fast-forward is impossible or forbidden with --no-ff.'), bi('Коммит записывает команда `git merge`.', 'git merge.'), 'git log --graph --oneline', { page: 'man/git-merge.1', anchor: 'OPTIONS', line: '--no-ff' }) },
       { id: 'main', label: 'main', icon: 'file', sub: '→ A', family: 'neutral', shape: 'pill', x: 800, y: 196, w: 144, h: 44, card: card(bi('Ветка main, то есть файл с хэшем одного коммита. Слияние в main меняет этот хэш и, если нужно, добавляет коммит слияния.', 'The main branch: a file with the hash of one commit. A merge into main changes only that hash (and maybe adds the commit M).'), bi('Ветку передвигает команда `git merge`.', 'git merge moves it.'), 'cat .git/refs/heads/main') },
       { id: 'feature', label: 'feature', icon: 'file', sub: '→ D', family: 'neutral', shape: 'pill', x: 800, y: 56, w: 144, h: 44, card: card(bi('Ветка feature. Слияние в main её не трогает, и после слияния её можно удалить, а коммиты останутся в истории main.', 'The feature branch. Merging into main does not touch it: after the merge it can be deleted and its commits stay in main’s history.'), bi('Ветку создаёт команда `git switch -c feature`.', 'git switch -c feature.'), 'git branch -v') },
       { id: 'head', label: 'HEAD', icon: 'file', sub: '→ main', family: 'neutral', shape: 'pill', x: 800, y: 320, w: 144, h: 44, card: card(bi('Слияние всегда вливает названную ветку в ту, на которой вы стоите. Поэтому перед слиянием нужно перейти на main командой `git switch main`.', 'A merge always brings the named branch into the one you are on. That is why you run git switch main first.'), bi('HEAD переписывает команда `git switch`.', 'git switch.'), 'cat .git/HEAD') },
@@ -304,6 +305,7 @@ const ART_ALL = ['b1', 't1', 'deploy', 'art', 'cache', 'lock', 'b2', 'e-up', 'e-
 
 export const artifactsModel = defineModel<ArtP>({
   id: 'cicd.artifacts-cache',
+  frame: 'visible',
   block: 'cicd',
   title: bi('Артефакт внутри пайплайна и кэш между пайплайнами', 'Artifacts within a pipeline, the cache between pipelines'),
   summary: bi(
@@ -590,6 +592,7 @@ const DAG_ALL = ['build', 'lint', 'test', 'deploy', 'clock', 'e-bt', 'e-lt', 'e-
 
 export const dagModel = defineModel<DagP>({
   id: 'cicd.stages-needs',
+  frame: 'visible',
   block: 'cicd',
   title: bi('Как стадии и needs решают, когда стартует джоба', 'The staircase of stages and the needs graph'),
   summary: bi(
@@ -616,10 +619,10 @@ export const dagModel = defineModel<DagP>({
     width: 960,
     height: 400,
     nodes: [
-      { id: 'build', label: 'build', icon: 'container', work: 'dots', sub: '20 s', family: 'ci-build', shape: 'box', x: 40, y: 60, w: 168, h: 60, card: card(bi('Сборка, которая в модели длится 20 секунд. Её результат, каталог dist/, сохраняется как артефакт.', 'The build: 20 model seconds. Its result is the dist/ artifact.'), bi('Джобу выполняет раннер.', 'A runner.'), 'glab ci view') },
-      { id: 'lint', label: 'lint', icon: 'container', work: 'dots', sub: '90 s', family: 'ci-build', shape: 'box', x: 40, y: 250, w: 168, h: 60, card: card(bi('Медленный линтер в той же стадии build. Тестам он не нужен, потому что им нужен только каталог dist/ из сборки.', 'A slow linter in the same build stage. The tests do not need it: they need only dist/ from build.'), bi('Джобу выполняет раннер.', 'A runner.')) },
-      { id: 'test', label: 'test', icon: 'container', work: 'dots', sub: '30 s', family: 'ci-test', shape: 'box', x: 400, y: 60, w: 168, h: 60, card: card(bi('Тесты стадии test. Без needs они ждут всю стадию build вместе с линтером, а с `needs: [build]` ждут только сборку.', 'The tests of the test stage. Without needs they wait for the whole build stage, lint included; with needs: [build], only for build.'), bi('Джобу выполняет раннер.', 'A runner.'), 'glab ci view', { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'needs' }) },
-      { id: 'deploy', label: 'deploy_staging', icon: 'container', work: 'dots', sub: '15 s', family: 'ci-deploy', shape: 'box', x: 740, y: 60, w: 192, h: 60, card: card(bi('Выкладка на тестовый стенд. С `needs: [test]` она стартует сразу после тестов.', 'The deploy. With needs: [test] it starts right after the tests.'), bi('Джобу выполняет раннер.', 'A runner.')) },
+      { id: 'build', label: 'build', icon: 'container', work: 'dots', sub: { ru: '20 с', en: '20 s' }, family: 'ci-build', shape: 'box', x: 40, y: 60, w: 168, h: 60, card: card(bi('Сборка, которая в модели длится 20 секунд. Её результат, каталог dist/, сохраняется как артефакт.', 'The build: 20 model seconds. Its result is the dist/ artifact.'), bi('Джобу выполняет раннер.', 'A runner.'), 'glab ci view') },
+      { id: 'lint', label: 'lint', icon: 'container', work: 'dots', sub: { ru: '90 с', en: '90 s' }, family: 'ci-build', shape: 'box', x: 40, y: 250, w: 168, h: 60, card: card(bi('Медленный линтер в той же стадии build. Тестам он не нужен, потому что им нужен только каталог dist/ из сборки.', 'A slow linter in the same build stage. The tests do not need it: they need only dist/ from build.'), bi('Джобу выполняет раннер.', 'A runner.')) },
+      { id: 'test', label: 'test', icon: 'container', work: 'dots', sub: { ru: '30 с', en: '30 s' }, family: 'ci-test', shape: 'box', x: 400, y: 60, w: 168, h: 60, card: card(bi('Тесты стадии test. Без needs они ждут всю стадию build вместе с линтером, а с `needs: [build]` ждут только сборку.', 'The tests of the test stage. Without needs they wait for the whole build stage, lint included; with needs: [build], only for build.'), bi('Джобу выполняет раннер.', 'A runner.'), 'glab ci view', { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'needs' }) },
+      { id: 'deploy', label: 'deploy_staging', icon: 'container', work: 'dots', sub: { ru: '15 с', en: '15 s' }, family: 'ci-deploy', shape: 'box', x: 740, y: 60, w: 192, h: 60, card: card(bi('Выкладка на тестовый стенд. С `needs: [test]` она стартует сразу после тестов.', 'The deploy. With needs: [test] it starts right after the tests.'), bi('Джобу выполняет раннер.', 'A runner.')) },
       { id: 'clock', label: bi('весь пайплайн', 'whole pipeline'), icon: 'server', sub: '—', family: 'gauge', shape: 'buffer', x: 400, y: 250, w: 192, h: 60, card: card(bi('Время от создания пайплайна до конца последней джобы. Столько времени коллега, который проверяет merge request, ждёт, прежде чем увидит результат проверок.', 'The time from the pipeline’s creation to the end of its last job. In a merge request it is how long the reviewer waits.'), bi('Время считает сервер.', 'The forge counts it.'), 'glab ci status') },
     ],
     edges: [
@@ -789,6 +792,7 @@ const KD_ALL = ['job', 'reg', 'kcfg', 'api', 'dep', 'rsOld', 'rsNew', 'cfg', 'ag
 
 export const kubeDeployModel = defineModel<KdP>({
   id: 'cicd.k8s-deploy',
+  frame: 'visible',
   block: 'cicd-k8s',
   title: bi('Как пайплайн выкладывает версию в Kubernetes', 'How a pipeline rolls a version out to Kubernetes'),
   summary: bi(

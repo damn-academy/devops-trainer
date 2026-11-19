@@ -34,6 +34,7 @@
 @media (max-width: 900px) { .ex-stage { grid-template-columns: 1fr; } }
 .ex-canvas { min-width: 0; }
 .ex-svg { width: 100%; height: auto; display: block; font-family: var(--font-ui); overflow: visible; }
+.explainer[data-frame='visible'] .ex-svg { max-height: 640px; }
 .ex-hint { font-size: 0.8rem; color: var(--muted); margin: 4px 0 0; }
 .ex-side { display: grid; gap: 12px; }
 .ex-card, .ex-delta { border: 1px solid var(--line-2); border-radius: var(--r-lg); padding: 12px 14px; background: var(--bg); font-size: 0.92rem; }

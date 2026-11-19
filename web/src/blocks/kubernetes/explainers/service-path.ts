@@ -63,6 +63,7 @@ const ALL = idsOf(diagram);
 
 export const servicePathModel = defineModel<P>({
   id: 'k8s.service-path',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Как запрос проходит через Service', 'How a request passes through a Service'),
   summary: bi(

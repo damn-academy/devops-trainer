@@ -41,6 +41,7 @@ const DISK_NAME: Record<string, Bi> = { ssd: bi('быстрый диск SSD', '
 
 export const runModel = defineModel<P>({
   id: 'orient.run',
+  frame: 'visible',
   block: 'orient',
   title: bi('Что происходит, когда вы запускаете программу', 'What happens when you start a program'),
   summary: bi(
@@ -88,7 +89,7 @@ export const runModel = defineModel<P>({
         id: 'cpu',
         label: bi('Процессор', 'Processor'),
         icon: 'process',
-        sub: '3 GHz',
+        sub: { ru: '3 ГГц', en: '3 GHz' },
         family: 'process',
         x: 408,
         y: 56,
@@ -118,7 +119,7 @@ export const runModel = defineModel<P>({
         id: 'disk',
         label: bi('Диск', 'Disk'),
         icon: 'disk',
-        sub: 'notes · 300 MB',
+        sub: { ru: 'notes · 300 МБ', en: 'notes · 300 MB' },
         family: 'store',
         x: 24,
         y: 224,

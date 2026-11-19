@@ -105,7 +105,7 @@ test('explainer: step forward, change a parameter, break a component', async ({ 
   await expect(page.locator('.ex-broken:not([hidden])')).toBeVisible();
 
   // Every node is clickable and explains itself.
-  await page.locator('svg [data-id]').first().click();
+  await page.locator('svg.ex-svg .node:not(.st-hidden) .node-shape').first().click();
   await expect(page.locator('.ex-card:not([hidden])')).toBeVisible();
   expect(errors).toEqual([]);
 });

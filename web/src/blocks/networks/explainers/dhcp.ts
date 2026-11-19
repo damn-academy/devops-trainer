@@ -69,7 +69,7 @@ export const dhcpModel = defineModel<P>({
       min: 60,
       max: 86400,
       step: 60,
-      unit: 's',
+      unit: { ru: 'с', en: 's' },
       default: 86400,
       near: 'router',
       predict: {
@@ -115,8 +115,8 @@ export const dhcpModel = defineModel<P>({
   ],
   metrics: [
     { id: 'msgs', label: b('сообщений DHCP', 'DHCP messages') },
-    { id: 't1', label: b('продление у своего сервера (T1)', 'renewal with its server (T1)'), unit: 's' },
-    { id: 't2', label: b('продление у любого сервера (T2)', 'renewal with any server (T2)'), unit: 's' },
+    { id: 't1', label: b('продление у своего сервера (T1)', 'renewal with its server (T1)'), unit: { ru: 'с', en: 's' } },
+    { id: 't2', label: b('продление у любого сервера (T2)', 'renewal with any server (T2)'), unit: { ru: 'с', en: 's' } },
   ],
   run(p, broken): Step[] {
     const steps: Step[] = [];

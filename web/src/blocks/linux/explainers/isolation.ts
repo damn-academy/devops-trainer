@@ -39,6 +39,7 @@ const startWith = (...shown: string[]): Record<string, ElementState> => Object.f
 
 export const isolationModel = defineModel<P>({
   id: 'linux.isolation',
+  frame: 'visible',
   block: 'linux',
   title: bi('Что процесс видит и сколько ресурсов он может взять', 'What a process sees and how many resources it may take'),
   summary: bi(
@@ -80,7 +81,7 @@ export const isolationModel = defineModel<P>({
         id: 'neigh',
         label: 'postgres',
         icon: 'database',
-        sub: 'PID 811 · 300 MiB',
+        sub: { ru: 'PID 811 · 300 МиБ', en: 'PID 811 · 300 MiB' },
         family: 'process',
         x: 600,
         y: 88,
@@ -103,7 +104,7 @@ export const isolationModel = defineModel<P>({
       {
         id: 'mem',
         label: bi('Память группы (memory.current)', 'Group memory (memory.current)'),
-        sub: '24 MiB / max',
+        sub: { ru: '24 МиБ / max', en: '24 MiB / max' },
         family: 'gauge',
         shape: 'buffer',
         x: 40,
@@ -180,7 +181,7 @@ export const isolationModel = defineModel<P>({
       },
     },
     { id: 'net', label: bi('У процесса своя сеть (--net)', 'The process has its own network (--net)'), kind: 'toggle', default: false, near: 'proc', group: bi('Какие стены стоят вокруг процесса', 'Which walls surround the process'), levels: ['intermediate', 'experienced'] },
-    { id: 'grow', label: bi('На сколько мебибайт в секунду растёт память report-gen', 'How many MiB per second report-gen’s memory grows'), kind: 'range', min: 0, max: 40, step: 2, default: 8, unit: 'MiB/s', near: 'proc', group: bi('Сколько ресурсов разрешено группе', 'How many resources the group may take') },
+    { id: 'grow', label: bi('На сколько мебибайт в секунду растёт память report-gen', 'How many MiB per second report-gen’s memory grows'), kind: 'range', min: 0, max: 40, step: 2, default: 8, unit: { ru: 'МиБ/с', en: 'MiB/s' }, near: 'proc', group: bi('Сколько ресурсов разрешено группе', 'How many resources the group may take') },
     {
       id: 'memMax',
       label: bi('Лимит памяти группы (memory.max, 0 означает «без лимита»)', 'The group’s memory limit (memory.max, 0 means “no limit”)'),
@@ -189,7 +190,7 @@ export const isolationModel = defineModel<P>({
       max: 512,
       step: 16,
       default: 64,
-      unit: 'MiB',
+      unit: { ru: 'МиБ', en: 'MiB' },
       near: 'mem',
       group: bi('Сколько ресурсов разрешено группе', 'How many resources the group may take'),
       predict: {
@@ -234,7 +235,7 @@ export const isolationModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'mem', label: bi('память группы', 'group memory'), unit: 'MiB' },
+    { id: 'mem', label: bi('память группы', 'group memory'), unit: { ru: 'МиБ', en: 'MiB' } },
     { id: 'oom', label: bi('процессов завершено из-за памяти (oom_kill)', 'processes ended for memory (oom_kill)') },
     { id: 'walls', label: bi('стен вокруг процесса', 'walls around the process') },
   ],

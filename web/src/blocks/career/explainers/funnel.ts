@@ -66,6 +66,7 @@ const ALL = ['apply', 'reply', 'screen', 'tech', 'final', 'offer', 'no', 'e1', '
 
 export const funnelModel = defineModel<P>({
   id: 'career.funnel',
+  frame: 'visible',
   block: 'career',
   title: bi('Как воронка поиска работы работает в виде потока', 'How the job search funnel works as a flow'),
   summary: bi(

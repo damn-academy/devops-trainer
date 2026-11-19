@@ -39,6 +39,7 @@ const startWith = (...shown: string[]): Record<string, ElementState> => Object.f
 
 export const installModel = defineModel<P>({
   id: 'linux.install',
+  frame: 'visible',
   block: 'linux',
   title: bi('Как машина загружается с только что установленного диска', 'How a machine boots from a freshly installed disk'),
   summary: bi(

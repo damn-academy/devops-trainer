@@ -24,7 +24,7 @@ export function overlap(a: Box, b: Box): number {
 }
 
 const FRACTIONS = [0, 0.15, -0.15, 0.3, -0.3, 0.42, -0.42];
-const EXTRA = [0, 10, 22, 36, 52];
+const EXTRA = [0, 10, 22, 36, 52, 80, 120, 180, 260];
 
 /**
  * The best box for a label of size w×h on a polyline: no overlap with
@@ -99,7 +99,8 @@ export function fitSub(sub: SVGTextElement, nodeWidth: number): void {
   if (typeof sub.getComputedTextLength !== 'function' || !sub.isConnected) return;
   sub.style.fontSize = '';
   sub.querySelector('title')?.remove();
-  const full = sub.textContent ?? '';
+  const full = sub.dataset.full ?? sub.textContent ?? '';
+  sub.textContent = full;
   const avail = nodeWidth - 12;
   const width = sub.getComputedTextLength();
   if (!full || width === 0 || width <= avail) return;
@@ -208,7 +209,7 @@ export function tidyDiagram(svg: SVGSVGElement, d: Diagram): void {
   }
   if (Number.isFinite(x0)) {
     const pad = 10;
-    svg.setAttribute('viewBox', `${(x0 - pad).toFixed(0)} ${(y0 - pad).toFixed(0)} ${(x1 - x0 + 2 * pad).toFixed(0)} ${(y1 - y0 + 2 * pad).toFixed(0)}`);
+    svg.setAttribute('viewBox', `${(x0 - pad).toFixed(0)} ${(y0 - pad - (d.topPadding ?? 0)).toFixed(0)} ${(x1 - x0 + 2 * pad).toFixed(0)} ${(y1 - y0 + 2 * pad + (d.topPadding ?? 0)).toFixed(0)}`);
     // On a phone the diagram keeps a readable scale (labels ≥ ~9 px) and scrolls sideways inside its frame.
     svg.style.setProperty('--ex-minw', `${Math.round((x1 - x0 + 2 * pad) * 0.7)}px`);
   }
