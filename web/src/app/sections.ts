@@ -34,11 +34,22 @@ const CALLOUT: Record<string, Bi> = {
 
 const md = (b: Bi) => renderMd(t(b), { concept: conceptLink });
 
+const HOWTO: Bi = { ru: 'Как пользоваться схемой', en: 'How to use the diagram' };
+
+function howtoPanel(body: Bi, title?: Bi): HTMLElement {
+  return h('div.howto', {}, h('p.howto-tag', {}, icon('play'), t(title ?? HOWTO)), prose(body));
+}
+
 export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mounted?: Mounted } {
   const el = h('section.lsec', { 'data-kind': s.kind, id: `s-${s.id}`, 'data-step': s.step });
   const done = () => c.done(s.id);
   switch (s.kind) {
     case 'text': {
+      if (s.role === 'howto') {
+        el.append(howtoPanel(s.body, s.title));
+        onVisible(el, done, 0.25);
+        return { el };
+      }
       if (s.title) el.append(h('h2', {}, t(s.title)));
       el.append(prose(s.body));
       onVisible(el, done, 0.25);
@@ -56,6 +67,7 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
         el.append(h('p.err', {}, `Unknown explainer: ${s.explainer}`));
         return { el };
       }
+      if (s.howto) el.append(howtoPanel(s.howto));
       const host = h('div.ex-host');
       el.append(host);
       if (s.caption) el.append(h('p.figcaption', {}, t(s.caption)));

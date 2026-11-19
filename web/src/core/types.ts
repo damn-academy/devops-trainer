@@ -156,12 +156,16 @@ export interface TextSection extends SectionBase {
   kind: 'text';
   title?: Bi;
   body: Bi;
+  /** 'howto' renders the text as an instruction panel (how to use a widget or run a test), not as theory prose. */
+  role?: 'theory' | 'howto';
 }
 
 /** A process explainer registered by id (see ExplainerReg). */
 export interface ExplainerSection extends SectionBase {
   kind: 'explainer';
   explainer: string;
+  /** How to use the diagram: rendered as an instruction panel attached above it, in UI type, distinct from theory prose. */
+  howto?: Bi;
   /** Initial parameter values for this placement of the explainer. */
   params?: Record<string, number | boolean | string>;
   caption?: Bi;
