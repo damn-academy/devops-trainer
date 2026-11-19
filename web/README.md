@@ -1,5 +1,7 @@
 # DevOps Trainer — web
 
+English · [Русский](README.ru.md)
+
 An interactive in-browser textbook and hands-on trainer for people entering DevOps, in Russian and English. It is a static site: no accounts, no server, progress lives in the browser.
 
 The course rests on three pillars, with practice on top:
