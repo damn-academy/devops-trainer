@@ -29,11 +29,11 @@ export function placementFor(quiz: QuizItem[]) {
         kind: 'mcq',
         prompt: bi('Чем образ отличается от контейнера?', 'How is an image different from a container?'),
         options: [
-          { id: 'right', text: bi('Образ — неизменяемый набор слоёв и настроек; контейнер — процесс, запущенный из него', 'An image is an immutable set of layers and settings; a container is a process started from it'), correct: true },
-          { id: 'proc', text: bi('Образ — запущенный процесс, контейнер — файл на диске', 'An image is a running process, a container is a file on disk'), why: bi('Наоборот: образ лежит в хранилище и ничего не делает, пока из него не запустили контейнер.', 'The other way round: an image sits in storage and does nothing until a container is started from it.') },
-          { id: 'same', text: bi('Это одно и то же', 'They are the same thing'), why: bi('Из одного образа можно запустить сколько угодно контейнеров — значит, это разные вещи.', 'You can start any number of containers from one image — so they are different things.') },
+          { id: 'right', text: bi('Образ — неизменяемый набор слоёв и настроек, а контейнер — процесс, запущенный из образа', 'An image is an immutable set of layers and settings; a container is a process started from it'), correct: true },
+          { id: 'proc', text: bi('Образ — запущенный процесс, а контейнер — файл на диске', 'An image is a running process, a container is a file on disk'), why: bi('Наоборот: образ лежит в хранилище и ничего не делает, пока из него не запустили контейнер.', 'The other way round: an image sits in storage and does nothing until a container is started from it.') },
+          { id: 'same', text: bi('Это одно и то же', 'They are the same thing'), why: bi('Из одного образа можно запустить сколько угодно контейнеров, значит, это разные вещи.', 'You can start any number of containers from one image — so they are different things.') },
         ],
-        explain: bi('Без этого различия Kubernetes не объяснить: под ссылается на образ, а kubelet запускает из него контейнеры.', 'Kubernetes cannot be explained without this distinction: a pod refers to an image, and the kubelet starts containers from it.'),
+        explain: bi('Без этого различия Kubernetes не объяснить: под ссылается на образ, а kubelet запускает из этого образа контейнеры.', 'Kubernetes cannot be explained without this distinction: a pod refers to an image, and the kubelet starts containers from it.'),
       },
     },
     {
@@ -47,9 +47,9 @@ export function placementFor(quiz: QuizItem[]) {
         kind: 'mcq',
         prompt: bi('На сервере `ss -ltn` показывает `0.0.0.0:80` и `0.0.0.0:8080`. Что это значит?', 'On a server `ss -ltn` shows `0.0.0.0:80` and `0.0.0.0:8080`. What does it mean?'),
         options: [
-          { id: 'right', text: bi('Два слушающих сокета на всех адресах машины, к ним обращаются по разным портам', 'Two listening sockets on every address of the machine, reached by different ports'), correct: true },
-          { id: 'ips', text: bi('У машины два IP-адреса', 'The machine has two IP addresses'), why: bi('0.0.0.0 значит «все адреса машины»; различаются здесь порты, а не адреса.', '0.0.0.0 means "every address of the machine"; what differs here is the ports, not the addresses.') },
-          { id: 'one', text: bi('Один и тот же сокет', 'The same socket'), why: bi('Сокет определяется адресом и портом; порты разные — сокеты разные.', 'A socket is defined by an address and a port; different ports — different sockets.') },
+          { id: 'right', text: bi('Это два слушающих сокета на всех адресах машины, и к ним обращаются по разным портам', 'Two listening sockets on every address of the machine, reached by different ports'), correct: true },
+          { id: 'ips', text: bi('У машины два IP-адреса', 'The machine has two IP addresses'), why: bi('0.0.0.0 означает «все адреса машины», а различаются здесь порты, а не адреса.', '0.0.0.0 means "every address of the machine"; what differs here is the ports, not the addresses.') },
+          { id: 'one', text: bi('Это один и тот же сокет', 'The same socket'), why: bi('Сокет определяется адресом и портом, и раз порты разные, разные и сокеты.', 'A socket is defined by an address and a port; different ports — different sockets.') },
         ],
       },
     },
@@ -64,7 +64,7 @@ export function placementFor(quiz: QuizItem[]) {
       setup: { hostname: 'laptop', ext: { k8s: { manifests: [ns('shop'), 'apiVersion: v1\nkind: Pod\nmetadata:\n  name: client\n  namespace: shop\nspec:\n  containers:\n  - name: client\n    image: trainer/client:1.0\n'] } } },
       task: {
         id: 'shop',
-        prompt: bi('В namespace `shop`: Deployment `web` из `trainer/web:1.0` на 3 реплики и Service `web` на порту 80. Под `client` должен получать ответ по `http://web.shop`.', 'In namespace `shop`: Deployment `web` from `trainer/web:1.0` with 3 replicas and Service `web` on port 80. Pod `client` must get an answer from `http://web.shop`.'),
+        prompt: bi('Создайте в namespace `shop` Deployment `web` из образа `trainer/web:1.0` на три реплики и Service `web` на порту 80. Под `client` должен получать ответ по адресу `http://web.shop`.', 'In namespace `shop`: Deployment `web` from `trainer/web:1.0` with 3 replicas and Service `web` on port 80. Pod `client` must get an answer from `http://web.shop`.'),
         check: { when: "k8s.deployments[ns=shop][name=web].ready=3 && k8s.reach[from='shop/client'][to='web.shop'].status=200" },
       },
     },
@@ -78,7 +78,7 @@ export function placementFor(quiz: QuizItem[]) {
       setup: DEPLOY_LAB,
       task: {
         id: 'rollout',
-        prompt: bi('Примените `~/web.yaml` и переведите Deployment `web` на `trainer/web:1.1`: все 4 пода должны работать на новой версии.', 'Apply `~/web.yaml` and move Deployment `web` to `trainer/web:1.1`: all 4 pods must run the new version.'),
+        prompt: bi('Примените файл `~/web.yaml` и переведите Deployment `web` на образ `trainer/web:1.1`: все четыре пода должны работать на новой версии.', 'Apply `~/web.yaml` and move Deployment `web` to `trainer/web:1.1`: all 4 pods must run the new version.'),
         check: { when: "k8s.deployments[ns=default][name=web].image='trainer/web:1.1' && k8s.deployments[ns=default][name=web].updated=4 && k8s.deployments[ns=default][name=web].ready=4" },
       },
     },
@@ -92,7 +92,7 @@ export function placementFor(quiz: QuizItem[]) {
       setup: EXAM_SETUPS.rollback,
       task: {
         id: 'undo',
-        prompt: bi('Deployment `web` выкатили на версию, которая падает. Верните последнюю работающую версию: 4 готовых пода.', 'Deployment `web` was rolled out to a version that crashes. Bring back the last working version: 4 ready pods.'),
+        prompt: bi('Deployment `web` выкатили на версию, которая падает. Верните последнюю работавшую версию так, чтобы были готовы четыре пода.', 'Deployment `web` was rolled out to a version that crashes. Bring back the last working version: 4 ready pods.'),
         check: { when: "k8s.deployments[ns=default][name=web].image='trainer/web:1.1' && k8s.deployments[ns=default][name=web].ready>=4" },
       },
     },
@@ -129,7 +129,7 @@ export function placementFor(quiz: QuizItem[]) {
       setup: TROUBLE_LAB,
       task: {
         id: 'ladder',
-        prompt: bi('Под `client` в namespace `shop` не достаёт ни до `web` (shop), ни до `pay` (namespace pay). Почините оба пути, не пересоздавая поды и не удаляя политику в pay.', 'Pod `client` in namespace `shop` reaches neither `web` (shop) nor `pay` (namespace pay). Fix both paths without recreating pods and without deleting the policy in pay.'),
+        prompt: bi('Под `client` в namespace `shop` не может обратиться ни к `web` в namespace shop, ни к `pay` в namespace pay. Почините оба пути, не пересоздавая поды и не удаляя политику в namespace pay.', 'Pod `client` in namespace `shop` reaches neither `web` (shop) nor `pay` (namespace pay). Fix both paths without recreating pods and without deleting the policy in pay.'),
         check: { when: "k8s.reach[from='shop/client'][to='web.shop'].status=200 && k8s.reach[from='shop/client'][to='pay.pay'].status=200 && k8s.objects[kind=NetworkPolicy][metadata.name=only-shop-frontend]#=1" },
       },
     },
@@ -143,7 +143,7 @@ export function placementFor(quiz: QuizItem[]) {
       setup: EXAM_SETUPS.drain,
       task: {
         id: 'maint',
-        prompt: bi('Выведите `worker-2` на обслуживание: новых подов на нём быть не должно, рабочих подов из `default` тоже, а `web` всё это время держит три готовых пода.', 'Take `worker-2` out for maintenance: no new pods may land on it, no workload pods of `default` may stay, and `web` keeps three ready pods all along.'),
+        prompt: bi('Выведите `worker-2` на обслуживание: новых подов на нём быть не должно, рабочих подов из namespace `default` тоже, а у `web` всё это время должно быть три готовых пода.', 'Take `worker-2` out for maintenance: no new pods may land on it, no workload pods of `default` may stay, and `web` keeps three ready pods all along.'),
         check: {
           when: (f) => {
             const k = k8s(f);
@@ -161,7 +161,7 @@ export function placementFor(quiz: QuizItem[]) {
       setup: NETPOL_LAB,
       task: {
         id: 'np',
-        prompt: bi('Закройте `pay` для всех, кроме подов role=frontend из namespace `shop`. Клиент из `dev` с той же меткой должен остаться снаружи.', 'Close `pay` to everyone except role=frontend pods of namespace `shop`. The client from `dev` with the same label must stay outside.'),
+        prompt: bi('Закройте namespace `pay` для всех, кроме подов с меткой role=frontend из namespace `shop`. Клиент из namespace `dev` с той же меткой должен остаться снаружи.', 'Close `pay` to everyone except role=frontend pods of namespace `shop`. The client from `dev` with the same label must stay outside.'),
         check: {
           when: (f) =>
             reach(f, 'shop/client', 'pay.pay') === 200 &&

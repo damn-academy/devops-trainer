@@ -3,11 +3,15 @@
 // node kernel rewrites it to one pod IP by the rules kube-proxy wrote from the
 // EndpointSlice. The replicas knob rewrites the probabilities of the rules
 // (1/N, 1/(N−1), …, the rest); keep-alive shows why the balance looks unequal.
+//
+// Reading order: at first only the client, the Service and its pods are on
+// screen; CoreDNS, the EndpointSlice, kube-proxy and the kernel rules appear
+// when the request needs them.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, t, type Bi } from '../../../core/i18n';
+import { bi, fmt, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { D, edge, metric, node } from './kit';
+import { box, D, edge, fmtb, idsOf, LEGEND_BASE, mark, metric, only } from './kit';
 
 type P = { replicas: number; mode: string; keepalive: boolean; unready: boolean };
 
@@ -26,96 +30,124 @@ export function distribution(n: number, keepalive: boolean): number[] {
 
 const POD_IPS = ['10.42.1.15', '10.42.2.9', '10.42.0.22', '10.42.1.31', '10.42.2.17'];
 
+const KERNEL = bi('Правила пишет kube-proxy, а исполняет их ядро узла.', 'kube-proxy writes the rules; the kernel runs them.');
+const POD = (i: number) => box(`p${i + 1}`, `web-${i + 1}`, 'process', 'box', [300 + i * 220, 410, 170, 52], 'container', bi('Один из подов сервиса web. Процесс в нём слушает порт 80.', 'A pod of Service web, listening on 80.'), bi('Под создал ReplicaSet.', 'Created by the ReplicaSet.'), { doc: D.service, sub: POD_IPS[i] });
+
+const diagram = {
+  width: 960,
+  height: 490,
+  nodes: [
+    box('client', bi('Под client', 'Pod client'), 'process', 'box', [24, 40, 190, 56], 'container', bi('Под, из которого вы выполняете `curl http://web`: сначала он узнаёт адрес по имени через DNS, потом открывает соединение с этим адресом.', 'Runs curl http://web: DNS first, then connects.'), bi('Под запустили вы.', 'You started it.'), { see: 'kubectl exec client -- curl -v http://web', doc: D.service, sub: '10.42.0.40' }),
+    box('dns', 'CoreDNS', 'l7', 'box', [24, 200, 190, 52], 'dns', bi('Сервер имён кластера. На имя web.default.svc.cluster.local он отвечает адресом Service, 10.43.12.7.', 'Answers web.default.svc.cluster.local with 10.43.12.7.'), bi('Работает подами в namespace kube-system.', 'Pods in kube-system.'), { see: 'kubectl exec client -- nslookup web', doc: D.dns }),
+    box('nf', bi('Правила ядра узла (netfilter)', 'Node kernel rules (netfilter)'), 'kernel', 'bar', [24, 296, 912, 60], 'router', bi('Цепочки правил KUBE-SERVICES, KUBE-SVC и KUBE-SEP в ядре узла. Пакет, адресованный ClusterIP, получает здесь новый адрес назначения — IP одного из подов, а ответ ядро переводит обратно.', 'KUBE-SERVICES → KUBE-SVC → KUBE-SEP: a packet to the ClusterIP gets a pod IP; the reply is translated back.'), KERNEL, { see: 'cluster iptables worker-1', doc: D.vip, sub: 'KUBE-SVC-LOLE4ISW44XBNF3G' }),
+    box('svc', bi('Service web', 'Service web'), 'l4', 'pill', [300, 40, 230, 56], 'file', bi('Объект Service с селектором app=web и портом 80, который ведёт на порт 80 подов (targetPort). Адрес 10.43.12.7, ClusterIP, — это поле объекта, а не сетевой интерфейс.', 'Selector app=web, port 80 → targetPort 80; the ClusterIP 10.43.12.7 is a field, not an interface.'), bi('Service создаёте вы командой `kubectl expose` или `kubectl apply`.', 'You create it.'), { see: 'kubectl get svc web -o wide', doc: D.service, sub: '10.43.12.7:80' }),
+    box('slice', bi('EndpointSlice сервиса web', 'EndpointSlice of web'), 'obj', 'doc', [300, 150, 230, 80], 'file', bi('Список адресов подов, которые выбрал селектор Service. Неготовый под тоже попадает в список, но с пометкой ready: false.', 'The addresses of the pods the selector picked; a not-ready pod is listed with ready: false.'), bi('Список ведёт контроллер EndpointSlice.', 'Kept by the EndpointSlice controller.'), { see: 'kubectl get endpointslices -l kubernetes.io/service-name=web', doc: D.slices, sub: '3 ready' }),
+    box('kp', 'kube-proxy', 'l4', 'box', [610, 160, 190, 52], 'process', bi('Следит за Service и EndpointSlice и переписывает правила ядра на своём узле. Сами пакеты kube-proxy не пересылает: их по этим правилам пересылает ядро.', 'Watches Services and EndpointSlices and rewrites the kernel rules; it forwards nothing.'), bi('Работает на каждом узле.', 'Runs on every node.'), { see: 'cluster iptables worker-1', doc: D.vip }),
+    POD(0),
+    POD(1),
+    POD(2),
+  ],
+  edges: [
+    edge('e-dns', 'client', 'dns', bi('адрес имени web', 'address of web'), bi('Запрос DNS, в котором под спрашивает адрес имени web.', 'A DNS query for the Service name.'), bi('Спрашивает резолвер пода.', 'The pod’s resolver.')),
+    edge('e-conn', 'client', 'nf', bi('соединение на ClusterIP', 'connect to ClusterIP'), bi('Пакет на ClusterIP попадает в цепочки правил ядра узла.', 'The packet to the ClusterIP enters the kernel chains.'), bi('Пакет отправляет ядро.', 'The kernel.'), { via: [[248, 68], [248, 296]], labelAt: 0.55 }),
+    edge('e-sel', 'svc', 'slice', bi('поды с app=web', 'pods with app=web'), bi('Контроллер EndpointSlice ищет поды по селектору и записывает их адреса.', 'Finds pods by selector and writes their addresses.'), bi('kube-controller-manager', 'kube-controller-manager')),
+    edge('e-watch', 'slice', 'kp', bi('адреса подов', 'pod addresses'), bi('kube-proxy получает адреса и пересчитывает правила.', 'kube-proxy gets the addresses and recomputes rules.'), bi('kube-proxy', 'kube-proxy')),
+    edge('e-rules', 'kp', 'nf', bi('новые правила', 'new rules'), bi('Новые правила загружаются в ядро одной операцией.', 'Loaded into the kernel in one transaction.'), bi('kube-proxy', 'kube-proxy')),
+    edge('e-p1', 'nf', 'p1', bi('новый адрес :80', 'rewritten :80'), bi('Правило KUBE-SEP заменило адрес назначения на IP этого пода.', 'A KUBE-SEP rule replaced the destination with this pod’s IP.'), KERNEL),
+    edge('e-p2', 'nf', 'p2', bi('новый адрес :80', 'rewritten :80'), bi('Правило KUBE-SEP заменило адрес назначения на IP этого пода.', 'A KUBE-SEP rule replaced the destination with this pod’s IP.'), KERNEL),
+    edge('e-p3', 'nf', 'p3', bi('новый адрес :80', 'rewritten :80'), bi('Правило KUBE-SEP заменило адрес назначения на IP этого пода.', 'A KUBE-SEP rule replaced the destination with this pod’s IP.'), KERNEL),
+  ],
+};
+
+const ALL = idsOf(diagram);
+
 export const servicePathModel = defineModel<P>({
   id: 'k8s.service-path',
   block: 'k8s-1',
-  title: bi('Запрос через Service и kube-proxy', 'A request through a Service and kube-proxy'),
-  summary: bi('ClusterIP не висит ни на одном интерфейсе. Это адрес, который ядро узла подменяет на IP одного из подов по правилам, которые kube-proxy написал из EndpointSlice.', 'A ClusterIP is not on any interface. It is an address the node kernel replaces with the IP of one of the pods, by rules kube-proxy wrote from the EndpointSlice.'),
+  title: bi('Как запрос проходит через Service', 'How a request passes through a Service'),
+  summary: bi(
+    'Адрес Service, ClusterIP, не принадлежит ни одному сетевому интерфейсу. Когда под отправляет на него пакет, ядро узла заменяет адрес назначения на IP одного из подов по правилам, которые kube-proxy составил из списка готовых подов (EndpointSlice). Схема показывает этот путь и считает, как сто запросов распределяются по подам.',
+    'A ClusterIP is on no interface: the node kernel replaces it with a pod IP by rules kube-proxy built from the EndpointSlice. The diagram counts how 100 requests spread over the pods.',
+  ),
+  intro: bi(
+    'Сейчас на схеме под client и три пода сервиса web. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд»: client выполнит `curl http://web`, и схема покажет, кто превращает имя web в адрес конкретного пода. Карточка на линии показывает адрес назначения пакета, и следите, как он меняется. Потом меняйте в «Параметрах» число подов и включите keep-alive, а напоследок сломайте селектор или порт в блоке «Сломать».',
+    'For now: pod client and the three pods of Service web. Press “Start: step forward” and go on with “Step forward”: client runs `curl http://web`, and the diagram shows who turns the name into a pod address. Watch the destination on the card change. Then change the pod count and keep-alive, and break the selector or the port.',
+  ),
+  legend: [
+    ...LEGEND_BASE,
+    mark('icon:container', 'под', 'a pod'),
+    mark('icon:file', 'объект API: Service или EndpointSlice', 'an API object'),
+    mark('icon:router', 'правила ядра узла', 'the node kernel rules'),
+    mark('icon:dns', 'сервер имён CoreDNS', 'CoreDNS'),
+    mark('ok', 'под получил запрос', 'the pod got the request'),
+    mark('warn', 'под не готов и запросов не получает', 'the pod is not ready'),
+    mark('pale', 'такого пода сейчас нет', 'no such pod now'),
+  ],
+  stopLabel: bi('Запрос остановился', 'The request stopped'),
   concepts: ['k8s.service', 'k8s.kube-proxy', 'k8s.endpointslice'],
-  diagram: {
-    width: 960,
-    height: 500,
-    nodes: [
-      node('client', bi('под client', 'pod client'), 'process', 'box', 24, 40, 180, 56, bi('Делает curl http://web: сначала DNS, потом connect() к полученному адресу.', 'Runs curl http://web: DNS first, then connect() to the address it got.'), bi('вы', 'you'), 'kubectl exec client -- curl -v http://web', D.service, '10.42.0.40'),
-      node('dns', 'CoreDNS', 'l7', 'box', 24, 170, 180, 52, bi('Отвечает на web.default.svc.cluster.local адресом ClusterIP 10.43.12.7.', 'Answers web.default.svc.cluster.local with the ClusterIP 10.43.12.7.'), bi('kube-system', 'kube-system'), 'kubectl exec client -- nslookup web', D.dns),
-      node('nf', bi('ядро узла: netfilter (nat)', 'node kernel: netfilter (nat)'), 'kernel', 'bar', 24, 290, 912, 64, bi('Цепочки KUBE-SERVICES → KUBE-SVC-… → KUBE-SEP-…: пакет на ClusterIP получает DNAT на IP пода. Ответ conntrack переводит обратно.', 'Chains KUBE-SERVICES → KUBE-SVC-… → KUBE-SEP-…: a packet to the ClusterIP gets DNAT to a pod IP. conntrack translates the reply back.'), bi('kube-proxy пишет правила; ядро их исполняет', 'kube-proxy writes the rules; the kernel executes them'), 'cluster iptables worker-1', D.vip, 'KUBE-SVC-LOLE4ISW44XBNF3G'),
-      node('svc', bi('Service web', 'Service web'), 'l4', 'pill', 300, 40, 220, 56, bi('Объект: селектор app=web, port 80 → targetPort 80. ClusterIP 10.43.12.7 — запись в объекте, а не интерфейс.', 'An object: selector app=web, port 80 → targetPort 80. ClusterIP 10.43.12.7 is a field of the object, not an interface.'), bi('вы (kubectl expose / apply)', 'you (kubectl expose / apply)'), 'kubectl get svc web -o wide', D.service, '10.43.12.7:80'),
-      node('slice', bi('EndpointSlice web-…', 'EndpointSlice web-…'), 'obj', 'doc', 300, 150, 220, 80, bi('Список готовых адресов подов, которые выбрал селектор. Неготовый под здесь есть, но с ready: false.', 'The list of ready addresses of the pods the selector picked. A not-ready pod is listed too, with ready: false.'), bi('контроллер EndpointSlice', 'the EndpointSlice controller'), 'kubectl get endpointslices -l kubernetes.io/service-name=web', D.slices, t(bi('готовых: 3', '3 ready'))),
-      node('kp', 'kube-proxy', 'l4', 'box', 600, 160, 180, 52, bi('Смотрит Service и EndpointSlice и переписывает правила ядра своего узла. Сам пакеты не пересылает.', 'Watches Services and EndpointSlices and rewrites its node’s kernel rules. It does not forward packets itself.'), bi('DaemonSet / k3s', 'a DaemonSet / k3s'), 'cluster iptables worker-1', D.vip),
-      node('p1', 'web-1', 'process', 'box', 300, 410, 170, 52, bi('Под Service: слушает 80.', 'A Service pod: listens on 80.'), bi('ReplicaSet', 'the ReplicaSet'), undefined, D.service, POD_IPS[0]),
-      node('p2', 'web-2', 'process', 'box', 520, 410, 170, 52, bi('Под Service: слушает 80.', 'A Service pod: listens on 80.'), bi('ReplicaSet', 'the ReplicaSet'), undefined, D.service, POD_IPS[1]),
-      node('p3', 'web-3', 'process', 'box', 740, 410, 170, 52, bi('Под Service: слушает 80.', 'A Service pod: listens on 80.'), bi('ReplicaSet', 'the ReplicaSet'), undefined, D.service, POD_IPS[2]),
-    ],
-    edges: [
-      edge('e-dns', 'client', 'dns', 'A web? → 10.43.12.7', bi('DNS-запрос имени Service.', 'A DNS query for the Service name.'), bi('резолвер пода', 'the pod resolver')),
-      edge('e-conn', 'client', 'nf', 'connect 10.43.12.7:80', bi('Пакет уходит на ClusterIP — и попадает в цепочки netfilter узла.', 'The packet goes to the ClusterIP — and enters the node’s netfilter chains.'), bi('ядро', 'the kernel'), { via: [[230, 68], [230, 290]], labelAt: 0.55 }),
-      edge('e-sel', 'svc', 'slice', 'selector app=web', bi('Контроллер EndpointSlice ищет поды по селектору и пишет их адреса.', 'The EndpointSlice controller finds pods by the selector and writes their addresses.'), bi('kube-controller-manager', 'kube-controller-manager')),
-      edge('e-watch', 'slice', 'kp', 'watch', bi('kube-proxy получает адреса и пересчитывает правила.', 'kube-proxy gets the addresses and recomputes the rules.'), bi('kube-proxy', 'kube-proxy')),
-      edge('e-rules', 'kp', 'nf', 'iptables-restore', bi('Новые правила загружаются в ядро одной транзакцией.', 'The new rules are loaded into the kernel in one transaction.'), bi('kube-proxy', 'kube-proxy')),
-      edge('e-p1', 'nf', 'p1', 'DNAT → :80', bi('Правило KUBE-SEP подменило адрес назначения на IP этого пода.', 'A KUBE-SEP rule replaced the destination with this pod’s IP.'), bi('ядро', 'the kernel')),
-      edge('e-p2', 'nf', 'p2', 'DNAT → :80', bi('Правило KUBE-SEP подменило адрес назначения на IP этого пода.', 'A KUBE-SEP rule replaced the destination with this pod’s IP.'), bi('ядро', 'the kernel')),
-      edge('e-p3', 'nf', 'p3', 'DNAT → :80', bi('Правило KUBE-SEP подменило адрес назначения на IP этого пода.', 'A KUBE-SEP rule replaced the destination with this pod’s IP.'), bi('ядро', 'the kernel')),
-    ],
-  },
+  diagram,
   params: [
     {
       id: 'replicas',
-      label: bi('replicas', 'replicas'),
+      label: bi('Сколько подов за Service', 'Pods behind the Service'),
       kind: 'range',
       min: 1,
       max: 5,
       step: 1,
       default: 3,
       near: 'slice',
+      group: bi('Service и его поды', 'The Service and its pods'),
       predict: {
-        prompt: bi('Подов стало больше. Какая вероятность у первого правила KUBE-SEP?', 'There are more pods now. What is the probability of the first KUBE-SEP rule?'),
+        prompt: bi('Вы меняете число подов за Service. С какой вероятностью первое правило KUBE-SEP отправит соединение на первый под?', 'You change the pod count. With what probability does the first KUBE-SEP rule pick the first pod?'),
         options: [
-          { id: 'inv', text: bi('1/N — по числу подов', '1/N — by the number of pods') },
-          { id: 'half', text: bi('Всегда 0.5', 'Always 0.5') },
+          { id: 'inv', text: bi('Один к числу готовых подов (1/N)', '1/N of the ready pods') },
+          { id: 'half', text: bi('Всегда одна вторая, при любом числе подов', 'Always 0.5') },
         ],
         resolve: () => 'inv',
       },
     },
-    { id: 'mode', label: bi('Режим kube-proxy', 'kube-proxy mode'), kind: 'choice', default: 'iptables', options: [{ id: 'iptables', label: bi('iptables', 'iptables') }, { id: 'nftables', label: bi('nftables', 'nftables') }, { id: 'ipvs', label: bi('IPVS (устаревший)', 'IPVS (deprecated)') }], near: 'kp', levels: ['intermediate', 'experienced'] },
-    {
-      id: 'keepalive',
-      label: bi('Клиент держит соединение (keep-alive)', 'The client keeps the connection (keep-alive)'),
-      kind: 'toggle',
-      default: false,
-      near: 'client',
-      predict: {
-        prompt: bi('Клиент шлёт 100 запросов по одному соединению. Как они разойдутся по подам?', 'The client sends 100 requests over one connection. How do they spread over the pods?'),
-        options: [
-          { id: 'one', text: bi('Все на один под', 'All to one pod') },
-          { id: 'equal', text: bi('Поровну', 'Equally') },
-        ],
-        resolve: (_p, n) => (metric(n, 'pod1') === 100 ? 'one' : 'equal'),
-      },
-    },
     {
       id: 'unready',
-      label: bi('Проба готовности web-2 не проходит', 'The web-2 readiness probe fails'),
+      label: bi('web-2 не проходит проверку готовности', 'web-2 fails its readiness check'),
       kind: 'toggle',
       default: false,
       near: 'p2',
       levels: ['intermediate', 'experienced'],
+      group: bi('Service и его поды', 'The Service and its pods'),
       predict: {
-        prompt: bi('web-2 не готов. Его перезапустят?', 'web-2 is not ready. Will it be restarted?'),
+        prompt: bi('Под web-2 перестал проходить проверку готовности, но процесс в нём работает. Что с ним сделает кластер?', 'web-2 fails its readiness check, the process runs. What does the cluster do?'),
         options: [
-          { id: 'out', text: bi('Нет: его просто уберут из правил, процесс живёт', 'No: it is just removed from the rules, the process lives on') },
-          { id: 'restart', text: bi('Да, kubelet перезапустит контейнер', 'Yes, the kubelet restarts the container') },
+          { id: 'out', text: bi('Уберёт его из правил, а процесс оставит работать', 'Remove it from the rules, leave the process running') },
+          { id: 'restart', text: bi('kubelet перезапустит контейнер', 'The kubelet restarts the container') },
         ],
         resolve: () => 'out',
       },
     },
+    {
+      id: 'keepalive',
+      label: bi('Клиент отправляет все запросы по одному соединению (keep-alive)', 'The client sends everything over one connection (keep-alive)'),
+      kind: 'toggle',
+      default: false,
+      near: 'client',
+      group: bi('Клиент', 'The client'),
+      predict: {
+        prompt: bi('Клиент отправляет сто запросов по одному соединению. Как они распределятся по подам?', 'The client sends 100 requests over one connection. How do they spread?'),
+        options: [
+          { id: 'one', text: bi('Все сто уйдут на один под', 'All to one pod') },
+          { id: 'equal', text: bi('Поровну между подами', 'Equally') },
+        ],
+        resolve: (_p, n) => (metric(n, 'pod1') === 100 ? 'one' : 'equal'),
+      },
+    },
+    { id: 'mode', label: bi('Как kube-proxy записывает правила', 'How kube-proxy writes the rules'), kind: 'choice', default: 'iptables', options: [{ id: 'iptables', label: bi('iptables', 'iptables') }, { id: 'nftables', label: bi('nftables', 'nftables') }, { id: 'ipvs', label: bi('IPVS (устаревший режим)', 'IPVS (deprecated)') }], near: 'kp', levels: ['intermediate', 'experienced'], group: bi('kube-proxy', 'kube-proxy') },
   ],
   breaks: [
-    { id: 'selector', label: bi('Селектор не совпадает с метками (app: wbe)', 'The selector does not match the labels (app: wbe)'), remove: ['e-sel'], layer: 'L4', boundary: 'network', predict: { prompt: bi('Селектор с опечаткой. Что скажет curl?', 'The selector has a typo. What does curl say?'), options: [{ id: 'refused', text: bi('Connection refused — сразу', 'Connection refused — at once') }, { id: 'timeout', text: bi('Тайм-аут', 'A timeout') }, { id: 'dns', text: bi('Could not resolve host', 'Could not resolve host') }], resolve: () => 'refused' } },
-    { id: 'targetport', label: bi('targetPort 8080, а под слушает 80', 'targetPort 8080, but the pod listens on 80'), remove: ['e-p1', 'e-p2', 'e-p3'], layer: 'L4', boundary: 'network', predict: { prompt: bi('Service шлёт на 8080, процесс слушает 80. Что будет?', 'The Service sends to 8080, the process listens on 80. What happens?'), options: [{ id: 'rst', text: bi('Под ответит RST — Connection refused', 'The pod answers RST — Connection refused') }, { id: 'ok', text: bi('Kubernetes возьмёт containerPort', 'Kubernetes takes containerPort instead') }], resolve: () => 'rst' } },
-    { id: 'no-kp', label: bi('kube-proxy остановлен (Service создан после остановки)', 'kube-proxy stopped (the Service was created after that)'), remove: ['kp', 'e-watch', 'e-rules'], layer: 'L4', boundary: 'network', predict: { prompt: bi('kube-proxy не работает, Service новый. Что скажет curl?', 'kube-proxy is down, the Service is new. What does curl say?'), options: [{ id: 'timeout', text: bi('Тайм-аут: правила для этого ClusterIP нет', 'A timeout: there is no rule for this ClusterIP') }, { id: 'refused', text: bi('Connection refused', 'Connection refused') }], resolve: () => 'timeout' } },
+    { id: 'selector', label: bi('В селекторе Service опечатка: app: wbe вместо app: web', 'A typo in the selector: app: wbe'), remove: ['e-sel'], layer: 'L4', boundary: 'network', predict: { prompt: bi('В селекторе Service опечатка, и он не находит ни одного пода. Что напечатает `curl http://web`?', 'The selector finds no pods. What does `curl http://web` print?'), options: [{ id: 'refused', text: bi('Сразу же откажет в соединении (Couldn’t connect)', 'An immediate refusal') }, { id: 'timeout', text: bi('Будет долго ждать и закончится тайм-аутом', 'A long wait, then a timeout') }, { id: 'dns', text: bi('Could not resolve host: имя не найдено', 'Could not resolve host') }], resolve: () => 'refused' } },
+    { id: 'targetport', label: bi('В Service указан targetPort 8080, а процесс в поде слушает 80', 'targetPort is 8080, the process listens on 80'), remove: ['e-p1', 'e-p2', 'e-p3'], layer: 'L4', boundary: 'network', predict: { prompt: bi('Service отправляет пакеты на порт 8080, а процесс в поде слушает порт 80. Что будет?', 'The Service sends to 8080, the process listens on 80. What happens?'), options: [{ id: 'rst', text: bi('Под откажет в соединении: на 8080 никто не слушает', 'The pod refuses: nobody listens on 8080') }, { id: 'ok', text: bi('Kubernetes сам возьмёт порт из containerPort', 'Kubernetes uses containerPort instead') }], resolve: () => 'rst' } },
+    { id: 'no-kp', label: bi('kube-proxy остановлен, а Service создан уже после этого', 'kube-proxy stopped before the Service was created'), remove: ['kp', 'e-watch', 'e-rules'], layer: 'L4', boundary: 'network', predict: { prompt: bi('kube-proxy не работает, а Service создан уже после его остановки. Что напечатает `curl http://web`?', 'kube-proxy is down and the Service is new. What does curl print?'), options: [{ id: 'timeout', text: bi('Тайм-аут: правила для этого ClusterIP в ядре нет', 'A timeout: no rule for this ClusterIP') }, { id: 'refused', text: bi('Сразу же откажет в соединении', 'An immediate refusal') }], resolve: () => 'timeout' } },
   ],
   metrics: [
-    { id: 'pod1', label: bi('запросов на web-1 из 100', 'requests to web-1 of 100') },
+    { id: 'pod1', label: bi('запросов из ста на web-1', 'of 100 to web-1') },
     { id: 'pod2', label: bi('на web-2', 'to web-2') },
     { id: 'pod3', label: bi('на web-3', 'to web-3') },
   ],
@@ -130,49 +162,154 @@ export const servicePathModel = defineModel<P>({
       if (idx < 3) per[idx] = dist[k];
     });
     const metrics = { pod1: per[0], pod2: per[1], pod3: per[2] };
+    const zero = { pod1: 0, pod2: 0, pod3: 0 };
     const offPods: Record<string, 'off'> = {};
     for (let i = total; i < 3; i++) offPods[`p${i + 1}`] = 'off';
-    s.push({ id: 'dns', label: 'DNS', caption: bi('Клиент спрашивает CoreDNS: web.default.svc.cluster.local → 10.43.12.7 (ClusterIP Service).', 'The client asks CoreDNS: web.default.svc.cluster.local → 10.43.12.7 (the Service ClusterIP).'), focus: ['client', 'e-dns', 'dns'], tokens: [{ edge: 'e-dns', label: 'web?' }], states: { ...offPods }, metrics: { pod1: 0, pod2: 0, pod3: 0 } });
+    s.push({
+      id: 'dns',
+      label: 'DNS',
+      caption: bi('Под client выполняет `curl http://web` и сначала спрашивает у CoreDNS, какой адрес у имени web. CoreDNS отвечает адресом Service, 10.43.12.7. Это ClusterIP, а не адрес какого-нибудь пода.', 'client asks CoreDNS for web and gets 10.43.12.7, the ClusterIP, not a pod address.'),
+      focus: ['dns', 'e-dns'],
+      reveal: ['dns', 'e-dns'],
+      tokens: [{ edge: 'e-dns', label: 'web → 10.43.12.7' }],
+      say: { dns: bi('CoreDNS отвечает: у имени web адрес 10.43.12.7.', 'CoreDNS answers: web is 10.43.12.7.') },
+      states: { ...only(ALL, 'client', 'p1', 'p2', 'p3'), ...offPods },
+      metrics: zero,
+    });
     if (broken.has('selector')) {
-      s.push({ id: 'empty', label: bi('пусто', 'empty'), caption: bi('Селектор app: wbe не находит ни одного пода: EndpointSlice пуст, и kube-proxy пишет для этого ClusterIP правило REJECT.', 'The selector app: wbe finds no pods: the EndpointSlice is empty, and kube-proxy writes a REJECT rule for this ClusterIP.'), focus: ['svc', 'slice', 'nf'], states: { slice: 'err' }, values: { slice: '0 endpoints', nf: '-j REJECT' }, metrics: { pod1: 0, pod2: 0, pod3: 0 }, broken: { at: 'slice', message: '-A KUBE-SERVICES -d 10.43.12.7/32 -p tcp -m comment --comment "default/web has no endpoints" -m tcp --dport 80 -j REJECT --reject-with icmp-port-unreachable\n$ kubectl exec client -- curl -sS http://web\ncurl: (7) Failed to connect to web port 80 after 2 ms: Couldn\'t connect to server', caption: bi('Service находит поды только по меткам: проверьте `kubectl get endpointslices` и `kubectl get pods --show-labels`.', 'A Service finds pods only by labels: check `kubectl get endpointslices` and `kubectl get pods --show-labels`.') } });
+      s.push({
+        id: 'empty',
+        label: bi('пусто', 'empty'),
+        caption: bi('Селектор app: wbe не находит ни одного пода, поэтому EndpointSlice пуст, и kube-proxy записывает для этого ClusterIP правило, которое сразу отвергает соединения.', 'app: wbe finds no pods: the EndpointSlice is empty and kube-proxy writes a REJECT rule.'),
+        focus: ['slice'],
+        reveal: ['svc', 'e-sel', 'slice', 'nf'],
+        say: { slice: bi('В EndpointSlice нет ни одного адреса: селектор не нашёл подов.', 'The EndpointSlice is empty.') },
+        states: { slice: 'err' },
+        values: { slice: '0 endpoints', nf: '-j REJECT' },
+        metrics: zero,
+        broken: { at: 'slice', message: '-A KUBE-SERVICES -d 10.43.12.7/32 -p tcp -m comment --comment "default/web has no endpoints" -m tcp --dport 80 -j REJECT --reject-with icmp-port-unreachable\n$ kubectl exec client -- curl -sS http://web\ncurl: (7) Failed to connect to web port 80 after 2 ms: Couldn\'t connect to server', caption: bi('на списке подов. Service находит поды только по меткам, поэтому сравните вывод `kubectl get endpointslices` и `kubectl get pods --show-labels`: пустой список подов выдаёт такую поломку сразу.', 'at the pod list: compare `kubectl get endpointslices` with `kubectl get pods --show-labels`.') },
+      });
       return s;
     }
-    s.push({ id: 'slice', label: 'EndpointSlice', caption: fmt(bi('EndpointSlice знает {n} адрес(а) подов с app=web; готовых — {r}.', 'The EndpointSlice knows {n} pod address(es) with app=web; {r} ready.'), { n: total, r: readyIdx.length }), focus: ['svc', 'e-sel', 'slice'], values: { slice: `${readyIdx.length} ready${p.unready ? ', web-2 ready: false' : ''}` }, states: p.unready ? { p2: 'warn' } : {} });
+    s.push({
+      id: 'slice',
+      label: 'EndpointSlice',
+      caption: fmt(bi('Контроллер EndpointSlice нашёл по селектору app=web поды и записал их адреса: всего {n}, из них готовых {r}. Только готовые поды будут получать запросы.', 'The EndpointSlice lists {n} pods, {r} ready; only ready ones get requests.'), { n: total, r: readyIdx.length }),
+      focus: ['slice', 'e-sel'],
+      reveal: ['svc', 'slice', 'e-sel'],
+      tokens: [{ edge: 'e-sel', label: 'app=web' }],
+      say: { slice: fmt(bi('В EndpointSlice адреса подов с app=web, готовых {r}.', 'The EndpointSlice holds the app=web pods, {r} ready.'), { r: readyIdx.length }) },
+      values: { slice: `${readyIdx.length} ready${p.unready ? ', web-2 ready: false' : ''}` },
+      states: p.unready ? { p2: 'warn' } : {},
+      metrics: zero,
+    });
     if (broken.has('no-kp')) {
-      s.push({ id: 'norule', label: bi('нет правила', 'no rule'), caption: bi('Адреса подов в EndpointSlice есть, но kube-proxy не работает — правила для нового ClusterIP нет. Пакет на 10.43.12.7 уходит по маршруту по умолчанию в никуда.', 'The pod addresses are in the EndpointSlice, but kube-proxy is not running — there is no rule for the new ClusterIP. The packet to 10.43.12.7 leaves through the default route into nowhere.'), focus: ['kp', 'nf'], states: { kp: 'off' }, metrics: { pod1: 0, pod2: 0, pod3: 0 }, broken: { at: 'nf', message: '$ kubectl exec client -- curl -sS http://web\ncurl: (28) Failed to connect to web port 80 after 130412 ms: Couldn\'t connect to server', caption: bi('старые Service продолжают работать (их правила остались в ядре), новые — нет: kube-proxy только пишет правила, пакеты пересылает ядро.', 'old Services keep working (their rules stay in the kernel), new ones do not: kube-proxy only writes rules, the kernel forwards packets.') } });
+      s.push({
+        id: 'norule',
+        label: bi('нет правила', 'no rule'),
+        caption: bi('Адреса подов в EndpointSlice есть, но kube-proxy не работает, и правила для нового ClusterIP в ядре нет. Пакет на 10.43.12.7 уходит по маршруту по умолчанию в никуда.', 'The addresses exist, but kube-proxy is down: no rule for the new ClusterIP, the packet goes nowhere.'),
+        focus: ['nf'],
+        reveal: ['nf', 'kp'],
+        say: { nf: bi('В ядре узла нет правила для адреса 10.43.12.7.', 'No kernel rule for 10.43.12.7.') },
+        states: { kp: 'err' },
+        metrics: zero,
+        broken: { at: 'nf', message: "$ kubectl exec client -- curl -sS http://web\ncurl: (28) Failed to connect to web port 80 after 130412 ms: Couldn't connect to server", caption: bi('в ядре узла. Старые Service продолжают работать, потому что их правила остались в ядре, а новые нет: kube-proxy только пишет правила, а пакеты пересылает ядро.', 'in the kernel: old Services still work, new ones do not; kube-proxy only writes rules.') },
+      });
       return s;
     }
-    const probs = ruleProbabilities(readyIdx.length).map((x) => x.toFixed(5));
+    const probs = ruleProbabilities(readyIdx.length).map((x) => x.toFixed(2));
     const modeText: Record<string, Bi> = {
-      iptables: fmt(bi('kube-proxy (iptables) записал цепочку KUBE-SVC с правилами KUBE-SEP: вероятности {p} — каждое следующее правило делит остаток, поэтому доли равные.', 'kube-proxy (iptables) wrote a KUBE-SVC chain with KUBE-SEP rules: probabilities {p} — each next rule splits what is left, so the shares are equal.'), { p: probs.join(', ') }),
-      nftables: bi('kube-proxy (nftables) записал в таблицу ip kube-proxy карту: numgen random mod N vmap { 0 : endpoint-…, 1 : … } — та же логика одной операцией.', 'kube-proxy (nftables) wrote a map into the table ip kube-proxy: numgen random mod N vmap { 0 : endpoint-…, 1 : … } — the same logic in one operation.'),
-      ipvs: bi('Режим IPVS: ClusterIP висит на фиктивном интерфейсе kube-ipvs0, балансирует модуль ядра IPVS. Режим объявлен устаревшим — в новых кластерах iptables или nftables.', 'IPVS mode: the ClusterIP sits on the dummy interface kube-ipvs0, the IPVS kernel module balances. The mode is deprecated — new clusters use iptables or nftables.'),
+      iptables: fmt(bi('kube-proxy получает адреса и записывает в ядро цепочку правил: первое правило выбирает свой под с вероятностью {p0}, следующее делит остаток, и так до последнего. Вероятности {p} выглядят неравными, но каждому поду в итоге достаётся одинаковая доля соединений.', 'kube-proxy writes the chain; probabilities {p}: each rule splits what is left, so the shares are equal.'), { p0: probs[0] ?? '1', p: probs.join(', ') }),
+      nftables: bi('kube-proxy в режиме nftables записывает в ядро таблицу, в которой случайное число выбирает один из готовых подов одной операцией. Логика та же, что у iptables, только короче.', 'nftables: a random number picks a ready pod in one operation.'),
+      ipvs: bi('В режиме IPVS адрес Service назначен служебному интерфейсу kube-ipvs0, а соединения распределяет модуль ядра IPVS. Этот режим объявлен устаревшим, и в новых кластерах используют iptables или nftables.', 'IPVS: the ClusterIP sits on kube-ipvs0 and the IPVS module balances; the mode is deprecated.'),
     };
-    s.push({ id: 'rules', label: bi('правила', 'rules'), caption: modeText[p.mode] ?? modeText.iptables, focus: ['e-watch', 'kp', 'e-rules', 'nf'], tokens: [{ edge: 'e-watch' }, { edge: 'e-rules', label: 'iptables-restore' }], values: { nf: p.mode === 'nftables' ? 'numgen random mod ' + readyIdx.length : `KUBE-SVC → ${readyIdx.length} × KUBE-SEP` } });
-    s.push({ id: 'connect', label: 'connect', caption: bi('Клиент открывает соединение на 10.43.12.7:80. Ни у одного интерфейса нет этого адреса — пакет перехватывает цепочка KUBE-SERVICES ещё до маршрутизации.', 'The client connects to 10.43.12.7:80. No interface has this address — the KUBE-SERVICES chain catches the packet before routing.'), focus: ['e-conn', 'nf'], tokens: [{ edge: 'e-conn', label: 'dst 10.43.12.7:80' }] });
+    s.push({
+      id: 'rules',
+      label: bi('правила', 'rules'),
+      caption: modeText[p.mode] ?? modeText.iptables,
+      focus: ['kp', 'e-watch', 'e-rules'],
+      reveal: ['kp', 'e-watch', 'e-rules', 'nf'],
+      tokens: [{ edge: 'e-rules', label: p.mode === 'nftables' ? `numgen mod ${readyIdx.length}` : `${readyIdx.length} × KUBE-SEP` }],
+      say: { kp: bi('kube-proxy переписывает правила ядра по списку готовых подов.', 'kube-proxy rewrites the kernel rules from the ready pods.') },
+      values: { nf: p.mode === 'nftables' ? `numgen random mod ${readyIdx.length}` : `KUBE-SVC → ${readyIdx.length} × KUBE-SEP` },
+      metrics: zero,
+    });
+    s.push({
+      id: 'connect',
+      label: bi('соединение', 'connect'),
+      caption: bi('Под client открывает соединение на 10.43.12.7, порт 80. Ни у одного интерфейса в кластере нет такого адреса, поэтому пакет перехватывает цепочка KUBE-SERVICES в ядре узла ещё до того, как ядро станет искать маршрут.', 'client connects to 10.43.12.7:80; no interface has it, so KUBE-SERVICES catches the packet before routing.'),
+      focus: ['client', 'e-conn'],
+      reveal: ['e-conn'],
+      tokens: [{ edge: 'e-conn', label: 'dst 10.43.12.7:80' }],
+      say: { client: bi('Под client отправляет пакет на адрес Service 10.43.12.7, порт 80.', 'client sends to 10.43.12.7:80.') },
+      metrics: zero,
+    });
     if (broken.has('targetport')) {
-      s.push({ id: 'rst', label: 'RST', caption: bi('DNAT отправил пакет на 10.42.1.15:8080, но процесс в поде слушает 80: ядро пода отвечает RST.', 'DNAT sent the packet to 10.42.1.15:8080, but the process in the pod listens on 80: the pod kernel answers RST.'), focus: ['nf', 'p1'], states: { p1: 'err' }, metrics: { pod1: 0, pod2: 0, pod3: 0 }, broken: { at: 'p1', message: '$ kubectl exec client -- curl -sS http://web\ncurl: (7) Failed to connect to web port 80 after 1 ms: Couldn\'t connect to server', caption: bi('Service шлёт на targetPort; containerPort — только описание. Какой порт слушает процесс, покажет `kubectl exec <pod> -- ss -ltn`.', 'A Service sends to targetPort; containerPort is only a description. Which port the process listens on: `kubectl exec <pod> -- ss -ltn`.') } });
+      s.push({
+        id: 'rst',
+        label: 'RST',
+        caption: bi('Ядро заменило адрес назначения на 10.42.1.15, порт 8080, но процесс в поде слушает порт 80. На 8080 никто не слушает, и ядро пода отвечает отказом в соединении.', 'DNAT sent it to 10.42.1.15:8080, but the process listens on 80: the pod answers RST.'),
+        focus: ['p1', 'e-p1'],
+        reveal: ['e-p1'],
+        tokens: [{ edge: 'e-p1', label: `dst ${POD_IPS[0]}:8080` }],
+        say: { p1: bi('На порт 8080 в поде web-1 никто не слушает, и под отказывает в соединении.', 'Nobody listens on 8080 in web-1: refused.') },
+        states: { p1: 'err' },
+        metrics: zero,
+        broken: { at: 'p1', message: "$ kubectl exec client -- curl -sS http://web\ncurl: (7) Failed to connect to web port 80 after 1 ms: Couldn't connect to server", caption: bi('на поде. Service отправляет пакеты на targetPort, а containerPort в описании пода — только справка для людей. Какой порт на самом деле слушает процесс, покажет `kubectl exec <под> -- ss -ltn`.', 'at the pod: a Service sends to targetPort; containerPort is only a description. Check with `kubectl exec <pod> -- ss -ltn`.') },
+      });
       return s;
     }
     const first = readyIdx[0] ?? 0;
-    s.push({ id: 'dnat', label: 'DNAT', caption: fmt(bi('Правило KUBE-SEP выбрано случайно: адрес назначения 10.43.12.7:80 заменён на {ip}:80. Дальше пакет идёт как обычный пакет из пода в под.', 'A KUBE-SEP rule was chosen at random: the destination 10.43.12.7:80 is replaced with {ip}:80. From here the packet goes like any pod-to-pod packet.'), { ip: POD_IPS[first] }), focus: [`e-p${first + 1}`, `p${first + 1}`], tokens: [{ edge: `e-p${first + 1}`, label: `dst ${POD_IPS[first]}:80` }], states: { [`p${first + 1}`]: 'ok' } });
-    s.push({ id: 'reply', label: bi('ответ', 'reply'), caption: bi('Ответ пода идёт с его IP; conntrack помнит трансляцию и возвращает источник 10.43.12.7 — клиент так и не узнал адрес пода.', 'The pod replies from its IP; conntrack remembers the translation and restores the source 10.43.12.7 — the client never learns the pod address.'), focus: ['nf', 'e-conn'], tokens: [{ edge: 'e-conn', reverse: true, label: 'src 10.43.12.7' }] });
-    s.push({ id: 'hundred', label: '×100', caption: p.keepalive ? bi('100 запросов по одному соединению: правило выбирается при установке соединения, дальше conntrack ведёт его на тот же под. Отсюда «неравная» балансировка.', '100 requests over one connection: the rule is chosen when the connection is set up, then conntrack keeps it on the same pod. Hence the "unequal" balancing.') : fmt(bi('100 новых соединений разошлись почти поровну: {d}.', '100 new connections spread almost equally: {d}.'), { d: readyIdx.map((i, k) => `web-${i + 1} ${dist[k]}`).join(', ') }), focus: ['p1', 'p2', 'p3'].slice(0, total), metrics });
+    s.push({
+      id: 'dnat',
+      label: bi('новый адрес', 'rewrite'),
+      caption: fmt(bi('Правило выбрало под случайным образом, и ядро заменило адрес назначения 10.43.12.7:80 на {ip}:80. Дальше пакет идёт как обычный пакет из пода в под.', 'A rule picked a pod: 10.43.12.7:80 becomes {ip}:80; from here it is an ordinary pod-to-pod packet.'), { ip: POD_IPS[first] }),
+      focus: ['nf', `e-p${first + 1}`],
+      reveal: [`e-p${first + 1}`],
+      tokens: [{ edge: `e-p${first + 1}`, label: `dst ${POD_IPS[first]}:80` }],
+      say: { nf: fmt(bi('Ядро меняет адрес назначения на {ip}, адрес пода web-{n}.', 'The kernel rewrites 10.43.12.7 to {ip}, web-{n}.'), { ip: POD_IPS[first], n: first + 1 }) },
+      states: { [`p${first + 1}`]: 'ok' },
+      metrics: zero,
+    });
+    s.push({
+      id: 'reply',
+      label: bi('ответ', 'reply'),
+      caption: bi('Под отвечает со своего адреса, но ядро помнит сделанную замену (это работа модуля conntrack) и возвращает в ответе адрес отправителя 10.43.12.7. Поэтому под client так и не узнаёт, какой под ему ответил.', 'conntrack restores the source 10.43.12.7, so client never learns the pod address.'),
+      focus: ['nf', 'e-conn'],
+      tokens: [{ edge: 'e-conn', reverse: true, label: 'src 10.43.12.7' }],
+      say: { nf: bi('Ядро возвращает в ответе адрес Service вместо адреса пода.', 'The kernel puts the Service address back in the reply.') },
+      metrics: zero,
+    });
+    s.push({
+      id: 'hundred',
+      label: bi('сто запросов', '100 requests'),
+      caption: p.keepalive
+        ? bi('Сто запросов идут по одному соединению. Правило выбирает под только при открытии соединения, а потом ядро ведёт всё соединение на тот же под. Поэтому все сто запросов попадают на один под, и балансировка выглядит неравной.', '100 requests on one connection: the rule picks a pod only at connect time, so all go to one pod.')
+        : fmtb(bi('Сто новых соединений распределились почти поровну: {d}.', '100 new connections spread almost equally: {d}.'), { d: readyIdx.map((i, k) => `web-${i + 1} ${dist[k]}`).join(', ') }),
+      focus: ['client'],
+      say: { client: p.keepalive ? bi('Под client отправляет сто запросов по одному и тому же соединению.', 'client sends 100 requests over one connection.') : bi('Под client открывает сто новых соединений, по одному на запрос.', 'client opens 100 new connections.') },
+      metrics,
+    });
     return s;
   },
   explainDelta(_prev, next, change, _a, b): Bi {
-    if (change.kind === 'break') return change.on ? bi('Поломка: путь остановился там, где это видно и в настоящем кластере.', 'A break: the path stops where you would see it in a real cluster too.') : bi('Поломка убрана: запрос снова доходит до пода.', 'The break is removed: the request reaches a pod again.');
+    if (change.kind === 'break')
+      return change.on
+        ? bi('Путь остановился там же, где остановился бы в настоящем кластере.', 'The path stops where it would in a real cluster.')
+        : bi('Поломка убрана, и запрос снова доходит до пода.', 'Fixed: the request reaches a pod again.');
     switch (change.id) {
       case 'replicas': {
         const n = b.replicas as number;
-        return fmt(bi('{n} подов: вероятности правил {p} — так каждый под получает 1/{n} соединений.', '{n} pods: rule probabilities {p} — so every pod gets 1/{n} of the connections.'), { n, p: ruleProbabilities(n).map((x) => x.toFixed(2)).join(', ') });
+        return fmt(bi('Подов теперь {n}, и вероятности правил стали такими: {p}. Так каждый под получает 1/{n} всех соединений.', '{n} pods: probabilities {p}, each pod gets 1/{n}.'), { n, p: ruleProbabilities(n).map((x) => x.toFixed(2)).join(', ') });
       }
       case 'keepalive':
-        return b.keepalive ? bi('Keep-alive: одно соединение — один выбор правила — все запросы на один под.', 'Keep-alive: one connection — one choice of rule — all requests to one pod.') : bi('Каждый запрос — новое соединение и новый выбор правила.', 'Every request is a new connection and a new choice of rule.');
+        return b.keepalive ? bi('С keep-alive соединение одно, правило выбирается один раз, и все запросы уходят на один под.', 'Keep-alive: one connection, one pick, one pod.') : bi('Без keep-alive каждый запрос открывает новое соединение, и правило выбирает под заново.', 'Each request is a new connection and a new pick.');
       case 'unready':
-        return b.unready ? fmt(bi('web-2 неготов: в EndpointSlice ready: false, правила KUBE-SEP для него нет — процесс жив, но трафика не получает. Теперь {d}.', 'web-2 is not ready: ready: false in the EndpointSlice, no KUBE-SEP rule for it — the process lives but gets no traffic. Now {d}.'), { d: `web-1 ${metric(next, 'pod1')}, web-3 ${metric(next, 'pod3')}` }) : bi('web-2 снова готов и вернулся в правила.', 'web-2 is ready again and back in the rules.');
+        return b.unready
+          ? fmt(bi('web-2 не готов: в EndpointSlice у него ready: false, и правила для него нет. Процесс работает, но запросов не получает. Теперь распределение такое: {d}.', 'web-2 is not ready: no rule for it; now {d}.'), { d: `web-1 ${metric(next, 'pod1')}, web-3 ${metric(next, 'pod3')}` })
+          : bi('web-2 снова готов и вернулся в правила.', 'web-2 is ready and back in the rules.');
       case 'mode':
-        return b.mode === 'ipvs' ? bi('IPVS: та же идея, другой механизм ядра; режим устаревший.', 'IPVS: the same idea, another kernel mechanism; the mode is deprecated.') : fmt(bi('Режим {m}: правила другие по форме, решение то же — DNAT на один из готовых подов.', 'Mode {m}: the rules look different, the decision is the same — DNAT to one of the ready pods.'), { m: b.mode as string });
+        return b.mode === 'ipvs' ? bi('Режим IPVS устроен иначе, но решает ту же задачу, и этот режим объявлен устаревшим.', 'IPVS: the same idea, another mechanism; deprecated.') : fmt(bi('В режиме {m} правила выглядят иначе, но решение то же: заменить адрес на один из готовых подов.', 'Mode {m}: different rules, the same decision.'), { m: b.mode as string });
     }
     return bi('Путь пересчитан.', 'The path is recomputed.');
   },

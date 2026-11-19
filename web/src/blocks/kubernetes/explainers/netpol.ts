@@ -4,11 +4,15 @@
 // or dropped it. Knobs: the policy itself (none, default-deny, AND, OR),
 // a default-deny egress in shop with or without the DNS rule, and the CNI
 // that is supposed to enforce all of it (plain flannel enforces nothing).
+//
+// Reading order: at first only the policy, its enforcer and the payment pod
+// are on screen (inside the empty namespace frames); then each client pod
+// appears and tries to connect, one connection per step.
 
 import { defineModel } from '../../../core/define';
 import { bi, fmt, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { D, edge, metric, node } from './kit';
+import { box, D, edge, idsOf, LEGEND_BASE, mark, metric, only } from './kit';
 
 type P = { policy: string; egress: boolean; dns: boolean; cni: string };
 
@@ -39,25 +43,25 @@ export function netpolFlows(p: P, broken: ReadonlySet<string> = new Set()): Flow
     dbg: { ns: 'dev', role: 'frontend' },
   } as const;
   const ingress = (k: keyof typeof src): { ok: boolean; why: Bi } => {
-    if (!enforced) return { ok: true, why: bi('Политика есть в API, но flannel её не исполняет: пакет проходит.', 'The policy is in the API, but flannel does not enforce it: the packet passes.') };
+    if (!enforced) return { ok: true, why: bi('Политика лежит в API, но flannel её не исполняет, поэтому пакет проходит.', 'The policy is in the API, but flannel does not enforce it: the packet passes.') };
     const s = src[k];
-    if (p.policy === 'none') return { ok: true, why: bi('Ни одна политика не выбирает под pay — он открыт для всех.', 'No policy selects the pay pod — it is open to everyone.') };
-    if (p.policy === 'deny') return { ok: false, why: bi('default-deny выбрал все поды pay и не разрешил ничего.', 'default-deny selected every pod of pay and allowed nothing.') };
-    if (badPort) return { ok: false, why: bi('Правило разрешает порт 8080, а под слушает 80: под это правило не подходит ни один пакет.', 'The rule allows port 8080, but the pod listens on 80: no packet matches the rule.') };
+    if (p.policy === 'none') return { ok: true, why: bi('Ни одна политика не выбирает под pay, и он открыт для всех.', 'No policy selects the pay pod — it is open to everyone.') };
+    if (p.policy === 'deny') return { ok: false, why: bi('Политика default-deny выбрала все поды namespace pay и не разрешила ничего, поэтому пакет отброшен.', 'default-deny selected every pod of pay and allowed nothing.') };
+    if (badPort) return { ok: false, why: bi('Правило разрешает порт 8080, а pay слушает порт 80, поэтому ни один пакет под это правило не подходит и пакет отброшен.', 'The rule allows port 8080, but the pod listens on 80: no packet matches the rule.') };
     const nsOk = !typo && s.ns === 'shop';
     const roleOk = s.role === 'frontend';
     if (p.policy === 'and') {
-      if (nsOk && roleOk) return { ok: true, why: bi('Один элемент from: namespace shop **и** role=frontend — оба условия выполнены.', 'One from item: namespace shop **and** role=frontend — both conditions hold.') };
-      if (typo && s.ns === 'shop') return { ok: false, why: bi('В namespaceSelector опечатка (shopp): такого namespace нет, условие не выполняется ни для кого.', 'The namespaceSelector has a typo (shopp): there is no such namespace, the condition holds for nobody.') };
-      return { ok: false, why: s.ns !== 'shop' ? bi('role=frontend есть, но namespace не shop: в одном элементе нужны оба условия.', 'role=frontend is there, but the namespace is not shop: one item needs both conditions.') : bi('Namespace shop, но метки role=frontend нет.', 'Namespace shop, but no role=frontend label.') };
+      if (nsOk && roleOk) return { ok: true, why: bi('В правиле один элемент from, и в нём два условия: namespace shop **и** метка role=frontend. Оба условия выполнены, поэтому соединение проходит.', 'One from item: namespace shop **and** role=frontend — both conditions hold.') };
+      if (typo && s.ns === 'shop') return { ok: false, why: bi('В namespaceSelector опечатка (shopp): такого namespace нет, поэтому условие не выполняется ни для кого, и пакет отброшен.', 'The namespaceSelector has a typo (shopp): there is no such namespace, the condition holds for nobody.') };
+      return { ok: false, why: s.ns !== 'shop' ? bi('Метка role=frontend у пода есть, но namespace у него не shop, а в одном элементе from должны выполняться оба условия. Пакет отброшен.', 'role=frontend is there, but the namespace is not shop: one item needs both conditions.') : bi('Namespace у пода shop, но метки role=frontend у него нет. Пакет отброшен.', 'Namespace shop, but no role=frontend label.') };
     }
     // or: two items; a podSelector without namespaceSelector means "pods of the policy's own namespace" (pay)
-    if (nsOk) return { ok: true, why: bi('Первый элемент from: любой под из namespace shop.', 'The first from item: any pod of namespace shop.') };
+    if (nsOk) return { ok: true, why: bi('Первый элемент from пускает любой под из namespace shop, поэтому соединение проходит.', 'The first from item: any pod of namespace shop.') };
     return {
       ok: false,
       why: typo
-        ? bi('Опечатка в namespaceSelector отрезала shop, а второй элемент — podSelector без namespaceSelector — выбирает поды только в самом pay.', 'The typo in namespaceSelector cut shop off, and the second item — a podSelector without a namespaceSelector — selects pods of pay itself only.')
-        : bi('Второй элемент — podSelector без namespaceSelector — выбирает поды с role=frontend только в namespace самой политики, pay. debug живёт в dev.', 'The second item — a podSelector without a namespaceSelector — selects role=frontend pods only in the policy’s own namespace, pay. debug lives in dev.'),
+        ? bi('Опечатка в namespaceSelector отрезала namespace shop, а второй элемент from, podSelector без namespaceSelector, выбирает поды только в самом namespace pay. Пакет отброшен.', 'The typo in namespaceSelector cut shop off, and the second item — a podSelector without a namespaceSelector — selects pods of pay itself only.')
+        : bi('Второй элемент from, podSelector без namespaceSelector, выбирает поды с role=frontend только в namespace самой политики, то есть в pay, а debug работает в namespace dev. Пакет отброшен.', 'The second item — a podSelector without a namespaceSelector — selects role=frontend pods only in the policy’s own namespace, pay. debug lives in dev.'),
     };
   };
   const egressBlocked = (k: 'fe' | 'cl' | 'dbg') => enforced && p.egress && src[k].ns === 'shop';
@@ -65,70 +69,93 @@ export function netpolFlows(p: P, broken: ReadonlySet<string> = new Set()): Flow
   for (const k of ['fe', 'cl', 'dbg'] as const) {
     const e = `e-${k}`;
     if (egressBlocked(k) && !p.dns) {
-      flows.push({ id: k, edge: e, allowed: false, at: 'dns', why: bi('Egress-политика shop не разрешает UDP 53 к CoreDNS: имя pay.pay не резолвится, до TCP дело не доходит.', 'The egress policy of shop does not allow UDP 53 to CoreDNS: the name pay.pay does not resolve, TCP never starts.') });
+      flows.push({ id: k, edge: e, allowed: false, at: 'dns', why: bi('Политика исходящего трафика в shop не разрешает обращаться к CoreDNS по UDP 53, поэтому имя pay.pay не превращается в адрес, и до соединения TCP дело не доходит.', 'The egress policy of shop does not allow UDP 53 to CoreDNS: the name pay.pay does not resolve, TCP never starts.') });
       continue;
     }
     const ing = ingress(k);
-    flows.push({ id: k, edge: e, allowed: ing.ok, at: p.policy === 'none' || !enforced ? 'open' : 'ingress', why: egressBlocked(k) ? { ru: `Egress пропустил (DNS и TCP 80 в pay разрешены). ${ing.why.ru}`, en: `Egress let it out (DNS and TCP 80 to pay are allowed). ${ing.why.en}` } : ing.why });
+    flows.push({ id: k, edge: e, allowed: ing.ok, at: p.policy === 'none' || !enforced ? 'open' : 'ingress', why: egressBlocked(k) ? { ru: `Политика исходящего трафика выпустила пакет, потому что запросы DNS и TCP 80 к pay разрешены. ${ing.why.ru}`, en: `Egress let it out (DNS and TCP 80 to pay are allowed). ${ing.why.en}` } : ing.why });
   }
-  if (egressBlocked('fe')) flows.push({ id: 'net', edge: 'e-net', allowed: false, at: 'egress', why: bi('Egress-политика shop разрешает только pay и DNS; интернета в списке нет.', 'The egress policy of shop allows only pay and DNS; the internet is not on the list.') });
-  else flows.push({ id: 'net', edge: 'e-net', allowed: true, at: 'open', why: bi('Исходящий трафик не ограничен: узел делает MASQUERADE и выпускает пакет.', 'Outgoing traffic is not restricted: the node MASQUERADEs and lets the packet out.') });
+  if (egressBlocked('fe')) flows.push({ id: 'net', edge: 'e-net', allowed: false, at: 'egress', why: bi('Политика исходящего трафика в shop разрешает обращаться только к pay и к DNS, а интернета в этом списке нет. Пакет отброшен.', 'The egress policy of shop allows only pay and DNS; the internet is not on the list.') });
+  else flows.push({ id: 'net', edge: 'e-net', allowed: true, at: 'open', why: bi('Исходящий трафик ничем не ограничен: узел подменяет адрес отправителя своим (MASQUERADE) и выпускает пакет.', 'Outgoing traffic is not restricted: the node MASQUERADEs and lets the packet out.') });
   return flows;
 }
 
 const label = (f: Flow): Bi => ({ fe: bi('frontend → pay', 'frontend → pay'), cl: bi('client → pay', 'client → pay'), dbg: bi('debug → pay', 'debug → pay'), net: bi('frontend → интернет', 'frontend → internet') })[f.id];
+const NAME: Record<Flow['id'], string> = { fe: 'frontend', cl: 'client', dbg: 'debug', net: 'frontend' };
+const ADMIN = bi('Namespace создаёт администратор кластера.', 'The cluster admin.');
+
+const diagram = {
+  width: 960,
+  height: 480,
+  nodes: [
+    box('fe', 'frontend', 'process', 'box', [40, 56, 190, 56], 'container', bi('Под фронтенда магазина в namespace shop с меткой role=frontend. Только ему платёжный сервис должен доверять.', 'The frontend pod in shop, role=frontend: the one pay should trust.'), bi('Под создал Deployment frontend команды магазина.', 'The shop team’s Deployment.'), { see: 'kubectl -n shop get pods --show-labels', sub: 'role=frontend' }),
+    box('cl', 'client', 'process', 'box', [40, 168, 190, 56], 'container', bi('Другой под в том же namespace shop, но без метки role.', 'Another pod in shop, with no role label.'), bi('Под запустил кто-то из команды для отладки.', 'Someone from the team, for debugging.'), { see: 'kubectl -n shop get pod client --show-labels', sub: 'shop · no role' }),
+    box('dbg', 'debug', 'process', 'box', [40, 318, 190, 56], 'container', bi('Под в namespace dev с той же меткой role=frontend. Метка у него та же, а namespace другой.', 'A pod in dev with the same role=frontend label: same label, other namespace.'), bi('Под запустил разработчик в своём namespace.', 'A developer.'), { see: 'kubectl -n dev get pods --show-labels', sub: 'dev · role=frontend' }),
+    box('pay', 'pay', 'process', 'box', [720, 56, 200, 60], 'container', bi('Платёжный сервис работает в поде с меткой app=pay и слушает TCP-порт 80. Этот под и защищает политика.', 'The payment pod, app=pay, TCP 80: what the policy protects.'), bi('Под создал Deployment pay.', 'The pay Deployment.'), { see: 'kubectl -n pay get pods -o wide', sub: 'app=pay :80' }),
+    box('pol', 'NetworkPolicy', 'obj', 'doc', [720, 176, 200, 76], 'file', bi('Объект API, который выбирает поды (podSelector) и перечисляет, откуда к ним можно обращаться. Сам он ничего не блокирует: это только запись.', 'Selects pods and lists allowed sources; it blocks nothing by itself.'), bi('Политику пишет команда платёжного сервиса.', 'The payment team.'), { see: 'kubectl -n pay describe netpol', doc: D.netpol }),
+    box('cni', bi('Исполнитель политик', 'Policy enforcer'), 'node', 'hex', [380, 256, 210, 60], 'process', bi('Агент сетевого плагина на каждом узле. Он читает объекты NetworkPolicy и записывает по ним правила фильтрации в ядро узла. В k3s это встроенный kube-router, у Calico и Cilium свои агенты, а у чистого flannel такого агента нет.', 'The plugin’s agent on every node: turns NetworkPolicies into kernel filter rules. kube-router in k3s; plain flannel has none.'), bi('Агента ставит плагин сети кластера.', 'The cluster’s CNI.'), { see: 'kubectl -n kube-system get pods -o wide' }),
+    box('dns', 'CoreDNS', 'cp', 'box', [720, 400, 200, 56], 'dns', bi('Сервер имён кластера в namespace kube-system. Под обращается к нему по UDP-порту 53, и политика исходящего трафика может это запретить.', 'Cluster DNS; reached over UDP 53, which an egress policy can forbid.'), bi('k3s ставит его сам.', 'k3s installs it.'), { see: 'kubectl -n kube-system get pods -l k8s-app=kube-dns', doc: D.dns, sub: 'kube-system :53/UDP' }),
+    box('net', bi('Интернет', 'The internet'), 'neutral', 'pill', [400, 116, 200, 48], 'cloud', bi('Внешний адрес 93.184.215.14. Выход туда тоже можно ограничить политикой исходящего трафика.', 'An outside address; egress can be restricted too.'), bi('Интернет к кластеру не относится, и его адресами никто в кластере не управляет.', 'The internet is not part of the cluster, and nobody in the cluster manages its addresses.'), { sub: '93.184.215.14:443' }),
+  ],
+  edges: [
+    edge('e-fe', 'fe', 'pay', 'TCP 80', bi('Соединение frontend с pay по имени pay.pay: сначала запрос DNS, потом TCP на порт 80.', 'frontend → pay by name: DNS, then TCP 80.'), bi('Соединяется приложение frontend.', 'The frontend app.'), { see: 'kubectl -n shop exec frontend -- curl -s http://pay.pay' }),
+    edge('e-cl', 'cl', 'pay', 'TCP 80', bi('client обращается к тому же сервису.', 'client knocks on the same door.'), bi('Соединяется человек через kubectl exec.', 'A person via kubectl exec.'), { via: [[660, 196], [660, 100]], labelAt: 0.25, see: 'kubectl -n shop exec client -- curl -s http://pay.pay' }),
+    edge('e-dbg', 'dbg', 'pay', 'TCP 80', bi('debug из namespace dev обращается к тому же сервису.', 'debug from dev knocks on the same door.'), bi('Соединяется разработчик.', 'A developer.'), { via: [[690, 346], [690, 108]], labelAt: 0.25 }),
+    edge('e-dns', 'fe', 'dns', 'UDP 53', bi('Вопрос к CoreDNS об адресе имени. Без ответа под не узнает адрес Service.', 'A DNS query; without it no Service address.'), bi('Спрашивает резолвер пода.', 'The pod’s resolver.'), { via: [[250, 112], [250, 428]], labelAt: 0.7 }),
+    edge('e-net', 'fe', 'net', 'TCP 443', bi('Выход в интернет: узел подменяет адрес отправителя своим.', 'Out to the internet: the node replaces the source.'), bi('Соединяется приложение frontend.', 'The frontend app.'), { via: [[320, 104], [320, 140]], labelAt: 0.8 }),
+    edge('e-watch', 'cni', 'pol', bi('читает политики', 'reads policies'), bi('Исполнитель читает политики и превращает их в правила ядра.', 'The enforcer reads the policies and turns them into kernel rules.'), bi('Читает агент плагина сети.', 'The CNI agent.'), { dashed: true, via: [[620, 286], [620, 214]] }),
+  ],
+  groups: [
+    { id: 'g-shop', label: 'namespace shop', around: ['fe', 'cl'], family: 'ns' as const, dash: 'dash' as const, pad: 14, card: { what: bi('Namespace магазина. У каждого namespace есть метка kubernetes.io/metadata.name с его именем, и по этой метке его выбирает namespaceSelector.', 'Every namespace has kubernetes.io/metadata.name; namespaceSelector uses it.'), who: ADMIN, see: 'kubectl get ns shop --show-labels' } },
+    { id: 'g-dev', label: 'namespace dev', around: ['dbg'], family: 'ns' as const, dash: 'dash' as const, pad: 14, card: { what: bi('Namespace разработчиков.', 'The developers’ namespace.'), who: ADMIN } },
+    { id: 'g-pay', label: 'namespace pay', around: ['pay', 'pol'], family: 'ns' as const, dash: 'dash' as const, pad: 14, card: { what: bi('Namespace платёжного сервиса. Политика лежит здесь и действует только на поды этого namespace.', 'The policy lives here and applies only to pods of this namespace.'), who: ADMIN } },
+  ],
+};
+
+const ALL = idsOf(diagram);
 
 export const netpolModel = defineModel<P>({
   id: 'k8s.netpol',
   block: 'k8s-1',
-  title: bi('NetworkPolicy: кто до кого достаёт', 'NetworkPolicy: who reaches whom'),
-  summary: bi('Три пода стучатся в платёжный сервис, один ещё и в интернет. Меняйте политику и смотрите, кого она пускает, а кого отбрасывает — и почему.', 'Three pods knock on the payment service, one also goes to the internet. Change the policy and see whom it lets in and whom it drops — and why.'),
+  title: bi('Кого пропускает NetworkPolicy', 'Whom a NetworkPolicy lets through'),
+  summary: bi(
+    'Три пода пытаются обратиться к платёжному сервису pay, а frontend ещё и выходит в интернет. Политика в namespace pay решает, кого пропустить, а исполнитель политик на узлах претворяет её решение в правила ядра. Схема проводит каждое соединение по очереди и объясняет, почему оно прошло или было отброшено.',
+    'Three pods try to reach pay, frontend also the internet. The policy decides, the enforcer turns it into kernel rules. The diagram walks each connection and says why it passed or was dropped.',
+  ),
+  intro: bi(
+    'Сейчас на схеме платёжный сервис pay, политика рядом с ним и исполнитель политик в центре, а пунктирные рамки показывают три namespace. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд»: каждый шаг — одно соединение, и подпись объясняет, какое правило его пропустило или отбросило. Зелёная линия означает, что соединение прошло, красная — что пакет отброшен. Потом переключайте в «Параметрах» политику между вариантами «И» и «ИЛИ».',
+    'For now: the pay service, its policy and the enforcer, inside three namespace frames. Press “Start: step forward” and go on with “Step forward”: each step is one connection, and the caption says which rule let it through or dropped it. Green means passed, red dropped. Then switch the policy between AND and OR in “Parameters”.',
+  ),
+  legend: [
+    ...LEGEND_BASE,
+    mark('icon:container', 'под', 'a pod'),
+    mark('icon:file', 'объект NetworkPolicy', 'the NetworkPolicy object'),
+    mark('icon:process', 'исполнитель политик на узлах', 'the policy enforcer'),
+    mark('ok', 'соединение прошло', 'the connection passed'),
+    mark('err', 'пакет отброшен, клиент ждёт до тайм-аута', 'dropped: the client waits for a timeout'),
+  ],
+  stopLabel: bi('Соединение не прошло', 'The connection failed'),
   concepts: ['k8s.networkpolicy', 'k8s.default-deny'],
-  diagram: {
-    width: 960,
-    height: 480,
-    nodes: [
-      node('fe', 'frontend', 'process', 'box', 40, 56, 190, 56, bi('Под фронтенда в namespace shop с меткой role=frontend — тот, кому платёжный сервис доверяет.', 'The frontend pod in namespace shop labelled role=frontend — the one the payment service trusts.'), bi('Deployment frontend команды магазина', 'the shop team’s frontend Deployment'), 'kubectl -n shop get pods --show-labels', undefined, 'role=frontend'),
-      node('cl', 'client', 'process', 'box', 40, 168, 190, 56, bi('Другой под того же namespace shop, без метки role.', 'Another pod of the same namespace shop, with no role label.'), bi('кто-то из команды для отладки', 'someone from the team, for debugging'), 'kubectl -n shop get pod client --show-labels', undefined, 'shop · no role'),
-      node('dbg', 'debug', 'process', 'box', 40, 318, 190, 56, bi('Под в namespace dev, но с той же меткой role=frontend. Метка одна, namespace другой.', 'A pod in namespace dev, but with the same role=frontend label. Same label, different namespace.'), bi('разработчик в своём namespace', 'a developer in their own namespace'), 'kubectl -n dev get pods --show-labels', undefined, 'dev · role=frontend'),
-      node('pay', 'pay', 'process', 'box', 720, 56, 200, 60, bi('Платёжный сервис: под с app=pay, слушает TCP 80. Его и защищает политика.', 'The payment service: a pod with app=pay, listening on TCP 80. This is what the policy protects.'), bi('Deployment pay', 'the pay Deployment'), 'kubectl -n pay get pods -o wide', undefined, 'app=pay :80'),
-      node('pol', 'NetworkPolicy', 'obj', 'doc', 720, 176, 200, 76, bi('Объект API: выбирает поды (podSelector) и перечисляет, откуда к ним можно. Сам ничего не блокирует — это только запись.', 'An API object: it selects pods (podSelector) and lists where they may be reached from. It blocks nothing by itself — it is only a record.'), bi('команда платёжного сервиса (kubectl apply)', 'the payment team (kubectl apply)'), 'kubectl -n pay describe netpol', D.netpol),
-      node('cni', bi('исполнитель политик', 'policy enforcer'), 'node', 'hex', 380, 256, 200, 60, bi('Агент сетевого плагина на каждом узле: смотрит NetworkPolicy через watch и пишет правила фильтрации в ядро узла. В k3s это встроенный kube-router; у Calico и Cilium — свои агенты; у чистого flannel его нет.', 'The network plugin’s agent on every node: it watches NetworkPolicies and writes filter rules into the node kernel. In k3s it is the built-in kube-router; Calico and Cilium have their own agents; plain flannel has none.'), bi('CNI, установленный в кластере', 'the CNI installed in the cluster'), 'kubectl -n kube-system get pods -o wide'),
-      node('dns', 'CoreDNS', 'cp', 'box', 720, 400, 200, 56, bi('DNS кластера в kube-system. До него под идёт по UDP 53 — и egress-политика может это запретить.', 'The cluster DNS in kube-system. A pod reaches it over UDP 53 — and an egress policy can forbid that.'), bi('k3s ставит его сам', 'k3s installs it itself'), 'kubectl -n kube-system get pods -l k8s-app=kube-dns', D.dns, 'kube-system :53/UDP'),
-      node('net', bi('интернет', 'the internet'), 'neutral', 'pill', 400, 116, 200, 48, bi('Внешний адрес 93.184.215.14. Выход туда тоже можно ограничить egress-политикой.', 'An outside address 93.184.215.14. Going there can be restricted by an egress policy too.'), bi('не кластер', 'not the cluster'), undefined, undefined, '93.184.215.14:443'),
-    ],
-    edges: [
-      edge('e-fe', 'fe', 'pay', 'TCP 80', bi('Соединение frontend → pay по имени pay.pay: сначала DNS, затем TCP на порт 80.', 'The connection frontend → pay by the name pay.pay: DNS first, then TCP to port 80.'), bi('приложение frontend', 'the frontend application'), { see: 'kubectl -n shop exec frontend -- curl -s http://pay.pay' }),
-      edge('e-cl', 'cl', 'pay', 'TCP 80', bi('client стучится туда же.', 'client knocks on the same door.'), bi('человек с kubectl exec', 'a person with kubectl exec'), { via: [[660, 196], [660, 100]], labelAt: 0.25, see: 'kubectl -n shop exec client -- curl -s http://pay.pay' }),
-      edge('e-dbg', 'dbg', 'pay', 'TCP 80', bi('debug из namespace dev стучится туда же.', 'debug from namespace dev knocks on the same door.'), bi('разработчик', 'a developer'), { via: [[690, 346], [690, 108]], labelAt: 0.25 }),
-      edge('e-dns', 'fe', 'dns', 'UDP 53', bi('Запрос имени к CoreDNS. Без него под не узнает адрес Service.', 'A name query to CoreDNS. Without it the pod does not learn the Service address.'), bi('резолвер пода', 'the pod resolver'), { via: [[250, 112], [250, 428]], labelAt: 0.7 }),
-      edge('e-net', 'fe', 'net', 'TCP 443', bi('Выход в интернет: узел подменяет источник на свой адрес.', 'Going out to the internet: the node replaces the source with its own address.'), bi('приложение frontend', 'the frontend application'), { via: [[320, 104], [320, 140]], labelAt: 0.8 }),
-      edge('e-watch', 'cni', 'pol', 'watch', bi('Исполнитель читает политики через watch и превращает их в правила ядра.', 'The enforcer reads the policies through watch and turns them into kernel rules.'), bi('агент CNI', 'the CNI agent'), { dashed: true, via: [[620, 286], [620, 214]] }),
-    ],
-    groups: [
-      { id: 'g-shop', label: 'namespace shop', around: ['fe', 'cl'], family: 'ns', dash: 'dash', pad: 14, card: { what: bi('Namespace магазина. У каждого namespace есть метка kubernetes.io/metadata.name с его именем — по ней его выбирает namespaceSelector.', 'The shop namespace. Every namespace has the label kubernetes.io/metadata.name with its name — namespaceSelector picks it by that label.'), who: bi('администратор кластера', 'the cluster admin'), see: 'kubectl get ns shop --show-labels' } },
-      { id: 'g-dev', label: 'namespace dev', around: ['dbg'], family: 'ns', dash: 'dash', pad: 14, card: { what: bi('Namespace разработчиков.', 'The developers’ namespace.'), who: bi('администратор кластера', 'the cluster admin') } },
-      { id: 'g-pay', label: 'namespace pay', around: ['pay', 'pol'], family: 'ns', dash: 'dash', pad: 14, card: { what: bi('Namespace платёжного сервиса. Политика живёт здесь и действует только на поды этого namespace.', 'The payment service namespace. The policy lives here and applies only to the pods of this namespace.'), who: bi('администратор кластера', 'the cluster admin') } },
-    ],
-  },
+  diagram,
   params: [
     {
       id: 'policy',
-      label: bi('Политика в pay', 'The policy in pay'),
+      label: bi('Какая политика стоит в namespace pay', 'The policy in pay'),
       kind: 'choice',
       default: 'and',
       near: 'pol',
+      group: bi('Политика в namespace pay', 'The policy in pay'),
       options: [
-        { id: 'none', label: bi('нет политики', 'no policy') },
-        { id: 'deny', label: bi('default-deny', 'default-deny') },
-        { id: 'and', label: bi('один элемент: shop И role=frontend', 'one item: shop AND role=frontend') },
-        { id: 'or', label: bi('два элемента: shop ИЛИ role=frontend', 'two items: shop OR role=frontend') },
+        { id: 'none', label: bi('никакой', 'none') },
+        { id: 'deny', label: bi('запретить всё (default-deny)', 'deny all (default-deny)') },
+        { id: 'and', label: bi('одно правило: из shop И с role=frontend', 'one item: shop AND role=frontend') },
+        { id: 'or', label: bi('два правила: из shop ИЛИ с role=frontend', 'two items: shop OR role=frontend') },
       ],
       predict: {
-        prompt: bi('Кто теперь достучится до pay?', 'Who reaches pay now?'),
+        prompt: bi('Вы выбрали другую политику. Кто из трёх подов, frontend, client и debug, теперь дойдёт до pay?', 'Another policy. Which of frontend, client and debug now reach pay?'),
         options: [
           { id: 'all', text: bi('Все трое', 'All three') },
-          { id: 'shop', text: bi('Оба пода из shop', 'Both pods of shop') },
+          { id: 'shop', text: bi('Оба пода из shop, а debug нет', 'Both shop pods, not debug') },
           { id: 'fe', text: bi('Только frontend', 'Only frontend') },
           { id: 'none', text: bi('Никто', 'Nobody') },
         ],
@@ -141,36 +168,38 @@ export const netpolModel = defineModel<P>({
     },
     {
       id: 'egress',
-      label: bi('В shop: egress только в pay', 'In shop: egress to pay only'),
+      label: bi('Поды shop могут обращаться только к pay (политика исходящего трафика)', 'shop pods may go only to pay (egress policy)'),
       kind: 'toggle',
       default: false,
       near: 'fe',
+      group: bi('Исходящий трафик из shop', 'Egress from shop'),
       predict: {
-        prompt: bi('Поды shop теперь могут ходить только в pay на TCP 80. Дойдёт ли frontend до pay по имени?', 'The pods of shop may now go only to pay on TCP 80. Will frontend reach pay by name?'),
+        prompt: bi('Подам shop теперь разрешено обращаться только к pay на TCP-порт 80, и больше никуда. Дойдёт ли frontend до pay по имени pay.pay?', 'shop pods may go only to pay on TCP 80. Will frontend reach pay.pay by name?'),
         options: [
           { id: 'yes', text: bi('Да: pay разрешён', 'Yes: pay is allowed') },
-          { id: 'no', text: bi('Нет: не пройдёт DNS', 'No: DNS will not pass') },
+          { id: 'no', text: bi('Нет: не пройдёт запрос DNS', 'No: DNS will not pass') },
         ],
         resolve: (_p, n) => (n.find((s) => s.id === 'flow-fe')?.states?.['e-fe'] === 'ok' ? 'yes' : 'no'),
       },
     },
-    { id: 'dns', label: bi('…и разрешить DNS (UDP 53 к CoreDNS)', '…and allow DNS (UDP 53 to CoreDNS)'), kind: 'toggle', default: false, near: 'dns', levels: ['intermediate', 'experienced'] },
+    { id: 'dns', label: bi('…и ещё разрешено обращаться к CoreDNS по UDP 53', '…and DNS (UDP 53) is allowed'), kind: 'toggle', default: false, near: 'dns', levels: ['intermediate', 'experienced'], group: bi('Исходящий трафик из shop', 'Egress from shop') },
     {
       id: 'cni',
-      label: bi('Сетевой плагин', 'Network plugin'),
+      label: bi('Какой плагин сети стоит в кластере', 'The cluster’s network plugin'),
       kind: 'choice',
       default: 'kube-router',
       near: 'cni',
+      group: bi('Кластер', 'The cluster'),
       options: [
-        { id: 'kube-router', label: bi('k3s (kube-router)', 'k3s (kube-router)') },
+        { id: 'kube-router', label: bi('встроенный в k3s (kube-router)', 'k3s built-in (kube-router)') },
         { id: 'cilium', label: bi('Cilium', 'Cilium') },
         { id: 'flannel', label: bi('чистый flannel', 'plain flannel') },
       ],
       predict: {
-        prompt: bi('Политика та же, плагин другой. Что изменится?', 'The same policy, a different plugin. What changes?'),
+        prompt: bi('Политика остаётся той же, а плагин сети вы меняете. Что изменится для соединений?', 'Same policy, another plugin. What changes?'),
         options: [
-          { id: 'same', text: bi('Ничего', 'Nothing') },
-          { id: 'open', text: bi('Всё станет открыто', 'Everything becomes open') },
+          { id: 'same', text: bi('Ничего: политика работает так же', 'Nothing') },
+          { id: 'open', text: bi('Все соединения станут открытыми', 'Everything becomes open') },
         ],
         resolve: (_p, n) => (metric(n, 'dropped') === 0 ? 'open' : 'same'),
       },
@@ -179,38 +208,47 @@ export const netpolModel = defineModel<P>({
   breaks: [
     {
       id: 'typo',
-      label: bi('Опечатка в метке namespace (shopp)', 'A typo in the namespace label (shopp)'),
+      label: bi('В namespaceSelector политики опечатка: shopp вместо shop', 'A typo in namespaceSelector: shopp'),
       remove: ['g-shop'],
       layer: 'L3',
-      predict: { prompt: bi('В namespaceSelector написали shopp. Пройдёт ли frontend?', 'The namespaceSelector says shopp. Will frontend get through?'), options: [{ id: 'no', text: bi('Нет: условие не выполнено', 'No: the condition does not hold') }, { id: 'err', text: bi('API-сервер не примет политику', 'The API server rejects the policy') }], resolve: () => 'no' },
+      predict: { prompt: bi('В namespaceSelector политики написали shopp вместо shop. Пройдёт ли frontend?', 'The namespaceSelector says shopp. Will frontend get through?'), options: [{ id: 'no', text: bi('Нет: такого namespace нет, и условие не выполняется', 'No: no such namespace') }, { id: 'err', text: bi('API-сервер не примет такую политику', 'The API server rejects the policy') }], resolve: () => 'no' },
     },
     {
       id: 'port',
-      label: bi('В правиле порт 8080 вместо 80', 'The rule says port 8080 instead of 80'),
+      label: bi('В правиле политики порт 8080 вместо 80', 'The rule says port 8080 instead of 80'),
       remove: ['e-fe'],
       layer: 'L4',
-      predict: { prompt: bi('Правило разрешает только порт 8080. Что будет с frontend?', 'The rule allows only port 8080. What happens to frontend?'), options: [{ id: 'drop', text: bi('Тайм-аут: пакет на 80 под правило не подходит', 'A timeout: a packet to 80 matches no rule') }, { id: 'ok', text: bi('Пройдёт: порт в политике — подсказка', 'It passes: the port in a policy is a hint') }], resolve: () => 'drop' },
+      predict: { prompt: bi('Правило политики разрешает только порт 8080, а pay слушает 80. Что будет с frontend?', 'The rule allows only 8080; pay listens on 80. What happens to frontend?'), options: [{ id: 'drop', text: bi('Тайм-аут: пакет на порт 80 не подходит ни под одно правило', 'A timeout: no rule matches port 80') }, { id: 'ok', text: bi('Пройдёт: порт в политике — только подсказка', 'It passes: the port is a hint') }], resolve: () => 'drop' },
     },
   ],
   metrics: [
-    { id: 'allowed', label: bi('пропущено', 'allowed') },
-    { id: 'dropped', label: bi('отброшено', 'dropped') },
+    { id: 'allowed', label: bi('соединений прошло', 'allowed') },
+    { id: 'dropped', label: bi('соединений отброшено', 'dropped') },
   ],
   run(p, broken): Step[] {
     const flows = netpolFlows(p, broken);
     const enforced = p.cni !== 'flannel';
     const s: Step[] = [];
+    const actor = enforced && p.policy !== 'none' ? 'cni' : p.policy === 'none' ? 'pay' : 'pol';
     s.push({
       id: 'policy',
       label: bi('политика', 'policy'),
       caption: enforced
         ? p.policy === 'none'
-          ? bi('Политик нет: сетевая модель обещает, что любой под достаёт до любого.', 'No policies: the network model promises any pod reaches any other.')
-          : bi('Политика лежит в API. Исполнитель на узлах прочитал её через watch и записал правила в ядро.', 'The policy is in the API. The enforcer on the nodes read it through watch and wrote rules into the kernel.')
-        : bi('API-сервер принял политику, но исполнять её некому: чистый flannel NetworkPolicy не поддерживает.', 'The API server accepted the policy, but nobody enforces it: plain flannel does not support NetworkPolicy.'),
-      focus: ['pol', 'cni', 'e-watch'],
+          ? bi('Политик нет, и сетевая модель обещает, что любой под может обратиться к любому другому.', 'No policies: any pod reaches any other.')
+          : bi('Политика лежит в API. Исполнитель политик на узлах прочитал её и записал по ней правила фильтрации в ядро каждого узла.', 'The enforcer read the policy and wrote filter rules into every node.')
+        : bi('API-сервер принял политику, но исполнять её некому: чистый flannel объекты NetworkPolicy не поддерживает.', 'The API accepted it, but plain flannel enforces nothing.'),
+      focus: [actor, ...(actor === 'cni' ? ['e-watch'] : [])],
       tokens: enforced && p.policy !== 'none' ? [{ edge: 'e-watch', label: 'NetworkPolicy' }] : [],
-      states: { cni: enforced ? 'on' : 'off', 'e-watch': enforced ? 'on' : 'off', 'e-dns': p.egress && !p.dns && enforced ? 'err' : 'ok' },
+      say: {
+        [actor]:
+          actor === 'cni'
+            ? bi('Исполнитель политик превращает политику в правила ядра на каждом узле.', 'The enforcer turns the policy into kernel rules.')
+            : actor === 'pay'
+              ? bi('Ни одна политика не выбирает под pay, и он открыт для всех.', 'No policy selects pay: it is open.')
+              : bi('Политика записана, но никто её не исполняет.', 'The policy is stored, but nobody enforces it.'),
+      },
+      states: { ...only(ALL, 'pay', 'pol', 'cni', 'e-watch'), cni: enforced ? 'on' : 'off', 'e-watch': enforced ? 'on' : 'off' },
       values: { pol: POLICY_TEXT[p.policy], cni: p.cni },
       metrics: { allowed: 0, dropped: 0 },
     });
@@ -219,13 +257,23 @@ export const netpolModel = defineModel<P>({
     for (const f of flows) {
       if (f.allowed) allowed++;
       else dropped++;
+      const src = f.id === 'net' ? 'fe' : f.id;
+      const dnsStage = f.at === 'dns';
       const st: Step = {
         id: `flow-${f.id}`,
         label: label(f),
         caption: f.why,
-        focus: [f.edge, f.id === 'net' ? 'net' : 'pay', f.id === 'net' ? 'fe' : f.id],
-        tokens: [{ edge: f.at === 'dns' ? 'e-dns' : f.edge, label: f.at === 'dns' ? 'DNS pay.pay' : f.id === 'net' ? 'SYN :443' : 'SYN :80' }],
-        states: { [f.edge]: f.allowed ? 'ok' : 'err', ...(f.at === 'dns' ? { 'e-dns': 'err' as const } : {}) },
+        focus: [src, dnsStage ? 'e-dns' : f.edge],
+        reveal: [src, f.edge, ...(f.id === 'net' ? ['net'] : []), ...(dnsStage || (p.egress && enforced) ? ['dns', 'e-dns'] : [])],
+        tokens: [{ edge: dnsStage ? 'e-dns' : f.edge, label: dnsStage ? 'pay.pay?' : f.id === 'net' ? 'SYN :443' : 'SYN :80' }],
+        say: {
+          [src]: dnsStage
+            ? fmt(bi('{n} спрашивает адрес pay.pay, но запрос к CoreDNS не выпускают.', '{n} asks for pay.pay, but DNS is blocked.'), { n: NAME[f.id] })
+            : f.allowed
+              ? fmt(bi('{n} открывает соединение и получает ответ.', '{n} connects and gets an answer.'), { n: NAME[f.id] })
+              : fmt(bi('{n} отправляет пакет и ждёт ответа до тайм-аута: пакет отброшен.', '{n} sends a packet and waits in vain: dropped.'), { n: NAME[f.id] }),
+        },
+        states: { [f.edge]: f.allowed ? 'ok' : 'err', ...(dnsStage ? { 'e-dns': 'err' as const } : {}) },
         metrics: { allowed, dropped },
       };
       const intended = f.id === 'fe';
@@ -233,22 +281,36 @@ export const netpolModel = defineModel<P>({
         st.broken = { at: 'pay', message: '$ kubectl -n shop exec frontend -- curl -s -m 5 http://pay.pay\ncurl: (28) Connection timed out after 5001 milliseconds', caption: f.why };
       s.push(st);
     }
-    s.push({ id: 'sum', label: bi('итог', 'result'), caption: fmt(bi('Пропущено {a}, отброшено {d}. Политики складываются: разрешено то, что разрешает хотя бы одна; отброшенный пакет не получает ответа — клиент видит тайм-аут, а не отказ.', 'Allowed {a}, dropped {d}. Policies add up: allowed is whatever at least one allows; a dropped packet gets no answer — the client sees a timeout, not a refusal.'), { a: allowed, d: dropped }), focus: ['pay', 'pol'], metrics: { allowed, dropped } });
+    s.push({
+      id: 'sum',
+      label: bi('итог', 'result'),
+      caption: fmt(bi('Прошло соединений: {a}, отброшено: {d}. Если политик несколько, их разрешения складываются: соединение проходит, если его разрешает хотя бы одна. На отброшенный пакет никто не отвечает, поэтому клиент видит тайм-аут, а не отказ в соединении.', 'Allowed {a}, dropped {d}. Policies add up; a dropped packet gets no answer, so the client sees a timeout, not a refusal.'), { a: allowed, d: dropped }),
+      focus: ['pay'],
+      say: { pay: fmt(bi('До pay дошло соединений: {a}.', 'Connections that reached pay: {a}.'), { a: flows.filter((f) => f.id !== 'net' && f.allowed).length }) },
+      metrics: { allowed, dropped },
+    });
     return s;
   },
   explainDelta(_prev, next, change, a, b): Bi {
-    if (change.kind === 'break') return change.on ? bi('Одна буква или одна цифра в политике — и разрешённый клиент получает тайм-аут.', 'One letter or one digit in the policy — and an allowed client gets a timeout.') : bi('Политика снова верная.', 'The policy is right again.');
+    if (change.kind === 'break')
+      return change.on
+        ? bi('Одна лишняя буква или цифра в политике, и разрешённый клиент получает тайм-аут.', 'One letter or digit, and an allowed client times out.')
+        : bi('Политика снова написана верно.', 'The policy is right again.');
     const d = metric(next, 'dropped');
     switch (change.id) {
       case 'policy':
-        return fmt(bi('Политика {x} → {y}: отброшено соединений — {d}.', 'Policy {x} → {y}: connections dropped — {d}.'), { x: String(a.policy), y: String(b.policy), d });
+        return fmt(bi('Политика сменилась, и теперь отброшено соединений: {d}.', 'Policy {x} → {y}: {d} dropped.'), { x: String(a.policy), y: String(b.policy), d });
       case 'egress':
-        return b.egress ? (b.dns ? bi('Egress закрыт, но DNS разрешён: в pay можно, в интернет нельзя.', 'Egress is closed but DNS is allowed: pay is reachable, the internet is not.') : bi('Egress закрыт вместе с DNS: под не может даже узнать адрес pay. Самая частая ошибка с egress.', 'Egress is closed together with DNS: the pod cannot even learn the address of pay. The most common egress mistake.')) : bi('Исходящий трафик shop снова не ограничен.', 'The outgoing traffic of shop is unrestricted again.');
+        return b.egress
+          ? b.dns
+            ? bi('Исходящий трафик закрыт, но DNS разрешён: к pay обратиться можно, а в интернет нельзя.', 'Egress closed, DNS allowed: pay yes, internet no.')
+            : bi('Исходящий трафик закрыт вместе с DNS, и под не может даже узнать адрес pay. Это самая частая ошибка с такими политиками.', 'Egress closed with DNS: the pod cannot even resolve pay. The most common egress mistake.')
+          : bi('Исходящий трафик из shop снова не ограничен.', 'Egress from shop is unrestricted again.');
       case 'dns':
-        return b.dns ? bi('Правило «UDP 53 к kube-dns» вернуло поду имена.', 'The rule "UDP 53 to kube-dns" gave the pod its names back.') : bi('Без правила DNS egress-политика ломает все обращения по имени.', 'Without the DNS rule the egress policy breaks every call by name.');
+        return b.dns ? bi('Правило «UDP 53 к kube-dns» вернуло поду возможность искать имена.', 'The DNS rule gives the pod its names back.') : bi('Без правила для DNS политика исходящего трафика ломает все обращения по имени.', 'Without the DNS rule every call by name breaks.');
       case 'cni':
-        return b.cni === 'flannel' ? bi('Флаг в YAML ничего не значит без исполнителя: всё открыто.', 'A flag in YAML means nothing without an enforcer: everything is open.') : bi('Исполнитель есть: политика снова работает.', 'There is an enforcer: the policy works again.');
+        return b.cni === 'flannel' ? bi('Политика в YAML ничего не значит, если её некому исполнять, и все соединения открыты.', 'Without an enforcer everything is open.') : bi('Исполнитель есть, и политика снова работает.', 'There is an enforcer; the policy works again.');
     }
-    return bi('Матрица пересчитана.', 'The matrix is recomputed.');
+    return bi('Соединения пересчитаны.', 'The connections are recomputed.');
   },
 });
