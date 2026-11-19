@@ -7,3 +7,6 @@ SESSION_LOG.md
 # v86 BIOS and kernel images: fetched by web/scripts/fetch-v86.mjs, not committed
 web/public/v86/
 web/screenshots/
+
+# checklist used for structure only; not redistributed
+source/
