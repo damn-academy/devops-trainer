@@ -275,6 +275,100 @@ function docCmd(ctx: CmdContext): number {
 
 const SUMMARY = bi('Ansible: настройка серверов по описанию из инвентаря и плейбуков.', 'Ansible: configuring servers from an inventory and playbooks.');
 
+const GALAXY_HELP = `usage: ansible-galaxy [-h] [--version] [-v] TYPE ...
+
+Perform various Role and Collection related operations.
+
+positional arguments:
+  TYPE
+    collection   Manage an Ansible Galaxy collection.
+    role         Manage an Ansible Galaxy role.
+
+options:
+  --version      show program's version number, config file location,
+                 configured module search path, module location, executable
+                 location and exit
+  -h, --help     show this help message and exit
+  -v, --verbose  Causes Ansible to print more debug messages.
+
+usage: ansible-galaxy role init [-h] [-f] [--init-path INIT_PATH] role_name
+
+Initialize new role with the base structure of a role.
+
+positional arguments:
+  role_name             Role name
+
+options:
+  -f, --force           Force overwriting an existing role or collection
+  --init-path INIT_PATH
+                        The path in which the skeleton role will be created.
+                        The default is the current working directory.
+
+usage: ansible-galaxy role list [-h] [-p ROLES_PATH] [role_name]
+
+Show the name and version of each role installed in the roles_path.
+`;
+
+const skeleton = (name: string): Record<string, string> => ({
+  'README.md': `Role Name\n=========\n\nA brief description of the role goes here.\n\nRequirements\n------------\n\nRole Variables\n--------------\n\nA description of the settable variables for this role should go here, including any variables\nthat are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via\nparameters to the role.\n\nDependencies\n------------\n\nExample Playbook\n----------------\n\n    - hosts: servers\n      roles:\n         - { role: ${name}, x: 42 }\n\nLicense\n-------\n\nBSD\n`,
+  'defaults/main.yml': `---\n# defaults file for ${name}\n`,
+  'handlers/main.yml': `---\n# handlers file for ${name}\n`,
+  'meta/main.yml': `galaxy_info:\n  author: your name\n  description: your role description\n  company: your company (optional)\n  license: license (GPL-2.0-or-later, MIT, etc)\n  min_ansible_version: 2.1\n  galaxy_tags: []\n\ndependencies: []\n  # List your role dependencies here, one per line. Be sure to remove the '[]' above,\n  # if you add dependencies to this list.\n`,
+  'tasks/main.yml': `---\n# tasks file for ${name}\n`,
+  'tests/inventory': 'localhost\n\n',
+  'tests/test.yml': `---\n- hosts: localhost\n  remote_user: root\n  roles:\n    - ${name}\n`,
+  'vars/main.yml': `---\n# vars file for ${name}\n`,
+});
+
+function galaxy(ctx: CmdContext): number {
+  let args = ctx.argv.slice(1);
+  if (args.includes('--version')) {
+    ctx.out(`ansible-galaxy [core ${ANSIBLE_VERSION}]\n`);
+    return 0;
+  }
+  if (!args.length || args[0] === '-h' || args[0] === '--help' || args.includes('--help') || args.includes('-h')) {
+    ctx.out(GALAXY_HELP);
+    return args.length ? 0 : 2;
+  }
+  if (args[0] === 'role') args = args.slice(1);
+  else if (args[0] === 'collection') {
+    ctx.err('ERROR! Collections are not part of this training environment: use roles.\n');
+    return 1;
+  }
+  const [action, ...rest] = args;
+  if (action === 'init') {
+    const pi = rest.findIndex((a) => a === '--init-path' || a.startsWith('--init-path='));
+    const path = pi < 0 ? '.' : rest[pi].includes('=') ? rest[pi].split('=')[1] : rest[pi + 1];
+    const name = rest.find((a, i) => !a.startsWith('-') && (pi < 0 || (i !== pi && i !== pi + 1)));
+    if (!name) {
+      ctx.err('usage: ansible-galaxy role init [-h] [-f] [--init-path INIT_PATH] role_name\nansible-galaxy role init: error: the following arguments are required: role_name\n');
+      return 2;
+    }
+    const dir = `${path.replace(/\/$/, '')}/${name}`;
+    if (ctx.fs.exists(dir) && !rest.includes('-f') && !rest.includes('--force')) {
+      ctx.err(`ERROR! - the directory ${ctx.fs.resolve(dir)} already exists. You can use --force to re-initialize this directory,\nhowever it will reset any main.yml files that may have\nbeen modified there already.\n`);
+      return 1;
+    }
+    for (const sub of ['files', 'templates']) ctx.fs.mkdir(`${dir}/${sub}`, { parents: true });
+    for (const [p, text] of Object.entries(skeleton(name))) {
+      const d = `${dir}/${p.slice(0, p.lastIndexOf('/'))}`;
+      if (p.includes('/') && !ctx.fs.exists(d)) ctx.fs.mkdir(d, { parents: true });
+      ctx.fs.writeFile(`${dir}/${p}`, text);
+    }
+    ctx.out(`- Role ${name} was created successfully\n`);
+    return 0;
+  }
+  if (action === 'list') {
+    const pi = rest.findIndex((a) => a === '-p' || a === '--roles-path');
+    const path = pi >= 0 ? rest[pi + 1] : 'roles';
+    ctx.out(`# ${ctx.fs.resolve(path)}\n`);
+    if (ctx.fs.exists(path)) for (const r of ctx.fs.readdir(path).sort()) if (ctx.fs.stat(`${path}/${r}`)?.type === 'd') ctx.out(`- ${r}, (unknown version)\n`);
+    return 0;
+  }
+  ctx.err(`usage: ansible-galaxy role [-h] ROLE_ACTION ...\nansible-galaxy role: error: argument ROLE_ACTION: invalid choice: '${action}' (choose from 'init', 'list')\n`);
+  return 2;
+}
+
 export const ansibleCommands: ShellCommand[] = [
   {
     name: 'ansible',
@@ -293,6 +387,14 @@ export const ansibleCommands: ShellCommand[] = [
     summary: SUMMARY,
     help: 'usage: ansible-inventory [-h] [-i INVENTORY] [--list | --host HOST | --graph] [group]\n\nShow Ansible inventory information, by default it uses the inventory script JSON format\n\noptions:\n  --graph               create inventory graph, if supplying pattern it must be a valid group name.\n  --host HOST           Output specific host info, works as inventory script\n  --list                Output all hosts info, works as inventory script\n',
     run: inventoryCmd,
+  },
+  {
+    name: 'ansible-galaxy',
+    summary: bi('Роли Ansible: создать каркас роли, показать установленные.', 'Ansible roles: create a role skeleton, list installed roles.'),
+    help: GALAXY_HELP,
+    handlesHelp: true,
+    run: galaxy,
+    complete: (args) => (args.length <= 1 ? ['role', 'init', 'list'] : args[0] === 'role' ? ['init', 'list'] : []),
   },
   {
     name: 'ansible-doc',

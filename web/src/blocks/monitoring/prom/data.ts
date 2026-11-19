@@ -3,6 +3,8 @@
 // in-memory TSDB. Incidents change rates and latency distributions on an
 // interval, so the same queries find the same evidence every time.
 
+import { K8S_META, kubeSeries } from './k8s';
+
 export type Labels = Record<string, string>;
 
 export interface Series {
@@ -23,7 +25,8 @@ export const NOW = Date.UTC(2026, 10, 18, 12, 0, 0);
 export const SCRAPE = 15_000;
 export const BUCKETS = ['0.005', '0.01', '0.025', '0.05', '0.1', '0.25', '0.5', '1.0', '2.5', '5.0', '10.0', '+Inf'];
 
-export type Incident = 'none' | 'checkout' | 'api-down' | 'restart';
+/** 'k8s' adds the series of kube-state-metrics and cAdvisor of the Shop running in Kubernetes. */
+export type Incident = 'none' | 'checkout' | 'api-down' | 'restart' | 'k8s';
 
 export function seriesKey(l: Labels): string {
   return Object.keys(l)
@@ -198,6 +201,10 @@ export function generate(o: GenOptions = {}): Tsdb {
       }
     }
     out.push(up, mt, ma, ...cpu.values());
+  }
+  if (incident === 'k8s') {
+    out.push(...kubeSeries(ts, steps, NOW, rand));
+    Object.assign(meta, K8S_META);
   }
   return { series: out, start, end: NOW, step: SCRAPE, meta };
 }

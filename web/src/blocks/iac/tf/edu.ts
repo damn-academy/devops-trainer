@@ -8,6 +8,8 @@ import { Cloud, CloudError, emptyCloud, type CloudResource } from './cloud';
 import { stateInstances, type StateFile } from './engine';
 
 const KIND: Record<string, string> = { vm: 'edu_vm', network: 'edu_network', dns: 'edu_dns_record' };
+/** What the console fills in when a resource is created by hand (the provider schema defaults). */
+const DEFAULTS: Record<string, Record<string, unknown>> = { edu_vm: { cores: 2, memory_gb: 2, zone: 'edu-central-1a', labels: {} }, edu_dns_record: { type: 'A', ttl: 300 }, edu_network: {} };
 
 function table(ctx: CmdContext, rows: CloudResource[]): void {
   if (!rows.length) {
@@ -23,7 +25,7 @@ function table(ctx: CmdContext, rows: CloudResource[]): void {
 export const eduCommand: ShellCommand = {
   name: 'edu',
   summary: bi('Консоль учебного облака Edu Cloud: смотреть и менять ресурсы руками.', 'The Edu Cloud console: look at and change resources by hand.'),
-  help: 'Usage: edu <resource> <command> [ID] [--key value]...\n\nResources:\n  vm        virtual machines\n  network   networks\n  dns       DNS records\n\nCommands:\n  list                    list resources\n  get ID                  show one resource\n  update ID --key value   change attributes (as if clicked in the web console)\n  delete ID               delete a resource\n\n  edu log                 the audit log of the cloud\n',
+  help: 'Usage: edu <resource> <command> [ID] [--key value]...\n\nResources:\n  vm        virtual machines\n  network   networks\n  dns       DNS records\n\nCommands:\n  list                    list resources\n  get ID                  show one resource\n  create --key value...   create a resource by hand (as if clicked in the web console)\n  update ID --key value   change attributes (as if clicked in the web console)\n  delete ID               delete a resource\n\n  edu log                 the audit log of the cloud\n',
   run(ctx) {
     const [res, cmd, id, ...rest] = ctx.argv.slice(1);
     const user = ctx.user.name === 'learner' ? 'ops-2' : ctx.user.name;
@@ -40,6 +42,22 @@ export const eduCommand: ShellCommand = {
       }
       if (cmd === 'list' || !cmd) {
         table(ctx, cloud.list(type));
+        return 0;
+      }
+      if (cmd === 'create') {
+        const attrs: Record<string, unknown> = { ...(DEFAULTS[type] ?? {}) };
+        const opts = [id, ...rest].filter((x) => x !== undefined);
+        for (let i = 0; i < opts.length; i++) {
+          const k = opts[i].replace(/^--/, '').replace(/-/g, '_');
+          const v = opts[++i];
+          if (v === undefined) {
+            ctx.err(`edu: --${k} needs a value\n`);
+            return 2;
+          }
+          attrs[k] = /^-?\d+$/.test(v) ? Number(v) : v;
+        }
+        const r = cloud.create(type, attrs, 'console', user);
+        ctx.out(`created ${r.id}\n`);
         return 0;
       }
       if (!id) {

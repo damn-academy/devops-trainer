@@ -9,7 +9,7 @@ import { hostFact, lastRun, runs } from './ans/command';
 import { tfDir, type TfFacts } from './tf/edu';
 import type { HostSpec } from './ans/hosts';
 
-const S = {
+export const S = {
   ansIntro: { title: 'Ansible Community Documentation — Getting started with Ansible', url: 'https://docs.ansible.com/ansible/latest/getting_started/index.html' },
   ansInv: { title: 'Ansible — How to build your inventory', url: 'https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html' },
   ansPlay: { title: 'Ansible — Ansible playbooks', url: 'https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html' },
@@ -26,7 +26,7 @@ const S = {
   ruIdem: { title: 'Идемпотентность — Википедия', url: 'https://ru.wikipedia.org/wiki/%D0%98%D0%B4%D0%B5%D0%BC%D0%BF%D0%BE%D1%82%D0%B5%D0%BD%D1%82%D0%BD%D0%BE%D1%81%D1%82%D1%8C' },
   ruHabrAnsible: { title: 'Хабр — Ansible: введение для начинающих', url: 'https://habr.com/ru/articles/508762/' },
 };
-const src = (en: { title: string; url: string }[], ru: { title: string; url: string }[]): Sources => ({ en, ru });
+export const src = (en: { title: string; url: string }[], ru: { title: string; url: string }[]): Sources => ({ en, ru });
 
 export const concepts: Concept[] = [
   { id: 'iac.iac', term: bi('инфраструктура как код', 'infrastructure as code'), forms: { ru: ['инфраструктуры как кода', 'инфраструктуру как код'] }, short: bi('Подход, при котором серверы, сети и облачные ресурсы описываются файлами в репозитории и создаются программой по этому описанию.', 'An approach where servers, networks and cloud resources are described by files in a repository and created by a program from that description.'), introducedIn: 'iac.ansible-intro' },
@@ -45,26 +45,26 @@ export const concepts: Concept[] = [
 
 // ── setups and fact helpers ──
 
-const OPS = '/home/learner/ops';
-const INFRA = '/home/learner/infra';
-const INV = '[web]\nweb1\nweb2\n\n[db]\ndb1\n';
+export const OPS = '/home/learner/ops';
+export const INFRA = '/home/learner/infra';
+export const INV = '[web]\nweb1\nweb2\n\n[db]\ndb1\n';
 
-const ansSetup = (files: Record<string, string> = {}, hosts: HostSpec[] = [{ name: 'web1' }, { name: 'web2' }, { name: 'db1' }]): TerminalSetup => ({
+export const ansSetup = (files: Record<string, string> = {}, hosts: HostSpec[] = [{ name: 'web1' }, { name: 'web2' }, { name: 'db1' }]): TerminalSetup => ({
   cwd: '~/ops',
   files: [{ path: `${OPS}/ansible.cfg`, content: '[defaults]\ninventory = ./inventory.ini\n' }, ...Object.entries(files).map(([p, content]) => ({ path: `${OPS}/${p}`, content }))],
   ext: { ans: { hosts } },
 });
 
-const TF_HEAD = 'terraform {\n  required_providers {\n    edu = {\n      source  = "edu/edu"\n      version = "~> 1.4"\n    }\n  }\n}\n\nprovider "edu" {}\n';
-const TF_NET = '\nresource "edu_network" "main" {\n  name = "cafe"\n  cidr = "10.0.0.0/16"\n}\n';
-const TF_VM = '\nresource "edu_vm" "web" {\n  name       = "web"\n  image      = "ubuntu-24.04"\n  cores      = 2\n  network_id = edu_network.main.id\n}\n';
-const tfSetup = (main: string, extra: TerminalSetup['script'] = []): TerminalSetup => ({ cwd: '~/infra', files: [{ path: `${INFRA}/main.tf`, content: main }], ext: { tf: {} }, script: extra });
+export const TF_HEAD = 'terraform {\n  required_providers {\n    edu = {\n      source  = "edu/edu"\n      version = "~> 1.4"\n    }\n  }\n}\n\nprovider "edu" {}\n';
+export const TF_NET = '\nresource "edu_network" "main" {\n  name = "cafe"\n  cidr = "10.0.0.0/16"\n}\n';
+export const TF_VM = '\nresource "edu_vm" "web" {\n  name       = "web"\n  image      = "ubuntu-24.04"\n  cores      = 2\n  network_id = edu_network.main.id\n}\n';
+export const tfSetup = (main: string, extra: TerminalSetup['script'] = []): TerminalSetup => ({ cwd: '~/infra', files: [{ path: `${INFRA}/main.tf`, content: main }], ext: { tf: {} }, script: extra });
 
-const host = hostFact;
-const tf = (f: Facts) => tfDir(f, INFRA);
-const cloud = (f: Facts) => (f.tf as TfFacts | undefined)?.cloud ?? [];
+export const host = hostFact;
+export const tf = (f: Facts) => tfDir(f, INFRA);
+export const cloud = (f: Facts) => (f.tf as TfFacts | undefined)?.cloud ?? [];
 
-const SITE_PLAY = `- name: Web servers serve the cafe site
+export const SITE_PLAY = `- name: Web servers serve the cafe site
   hosts: web
   become: true
   tasks:
@@ -93,7 +93,7 @@ const SITE_PLAY = `- name: Web servers serve the cafe site
         name: nginx
         state: reloaded
 `;
-const TEMPLATE = 'server {\n    listen {{ http_port | default(80) }};\n    server_name {{ inventory_hostname }}.site.edu;\n    root /var/www/cafe;\n}\n';
+export const TEMPLATE = 'server {\n    listen {{ http_port | default(80) }};\n    server_name {{ inventory_hostname }}.site.edu;\n    root /var/www/cafe;\n}\n';
 
 // ── quiz ──
 
@@ -477,7 +477,7 @@ const tfLesson: Lesson = {
   ],
 };
 
-const APPLIED = [`cd ${INFRA} && terraform init && terraform apply -auto-approve && chown -R learner:learner ${INFRA}`];
+export const APPLIED = [`cd ${INFRA} && terraform init && terraform apply -auto-approve && chown -R learner:learner ${INFRA}`];
 const stateLesson: Lesson = {
   id: 'iac.state',
   block: 'iac',
@@ -589,7 +589,7 @@ export const block: Block = {
   id: 'iac',
   order: 80,
   title: bi('IaC: Ansible и Terraform', 'IaC: Ansible and Terraform'),
-  summary: bi('Ansible: инвентарь, модули, плейбуки, идемпотентность, handlers, check mode. Terraform: провайдер, ресурсы, plan и apply, state, дрейф и пересоздание.', 'Ansible: inventory, modules, playbooks, idempotence, handlers, check mode. Terraform: providers, resources, plan and apply, state, drift and replacement.'),
+  summary: bi('Ansible: инвентарь, модули, плейбуки, идемпотентность, handlers, check mode, роли и приоритет переменных. Terraform: провайдер, ресурсы, plan и apply, state, дрейф и пересоздание, переменные и модули, moved, import и refresh-only.', 'Ansible: inventory, modules, playbooks, idempotence, handlers, check mode, roles and variable precedence. Terraform: providers, resources, plan and apply, state, drift and replacement, variables and modules, moved, import and refresh-only.'),
   checklistStep: '06',
   levels: {
     beginner: bi('Слышал название', 'Has heard the name'),
