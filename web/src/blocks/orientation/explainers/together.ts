@@ -25,8 +25,8 @@ export const togetherModel = defineModel<P>({
     'Anna and Boris change prices in the tea shop’s menu. Each edits a copy; a collaboration program compares both with the shared one, joins the edits and records who changed what. If two people changed the same line differently, it asks a person.',
   ),
   intro: bi(
-    'Сейчас на схеме только общая копия меню. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Подсвечен тот, кто работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся: копия меню, правка или новая версия.\n\nКогда дойдёте до истории, выберите в «Параметрах», что Анна и Борис правят одну и ту же строчку, и пройдите слияние ещё раз. Потом включите в блоке «Сломать» пересылку файла почтой и посмотрите, что станет с правкой Анны.',
-    'Now the diagram shows only the shared menu. Press “Start: step forward”, then “Step forward”. The one working is highlighted, the callout says what it does, the card on the line shows the copy, the edit or the new version.\n\nAt the history, make Anna and Boris edit the same line in “Parameters” and merge again. Then switch on sending the file by email in “Break it”.',
+    'Сейчас на схеме только общая копия меню. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Подсвечен тот, кто работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся: копия меню, правка или новая версия.\n\nКогда дойдёте до истории, выберите в «Параметрах», что Анна и Борис правят одну и ту же строчку, и пройдите слияние ещё раз. Потом включите в блоке «Сломать» пересылку файла почтой и посмотрите, что станет с правкой Анны.',
+    'Now the diagram shows only the shared menu. Press “Start from the first step”, then go on with “Step forward” above the diagram. The one working is highlighted, the callout says what it does, the card on the line shows the copy, the edit or the new version.\n\nAt the history, make Anna and Boris edit the same line in “Parameters” and merge again. Then switch on sending the file by email in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },
@@ -49,7 +49,7 @@ export const togetherModel = defineModel<P>({
       { id: 'anna', label: bi('Копия Анны', 'Anna’s copy'), icon: 'user', work: 'dots', sub: 'Oolong — 450', family: 'user', x: 24, y: 160, w: 208, h: 64, card: card(bi('Анна взяла копию меню и правит её у себя, никому не мешая.', 'Anna edits her copy without getting in anyone’s way.'), bi('Копию ведёт Анна.', 'Anna.')) },
       { id: 'boris', label: bi('Копия Бориса', 'Boris’s copy'), icon: 'user', work: 'dots', sub: 'Black tea — 250', family: 'user', x: 728, y: 160, w: 208, h: 64, card: card(bi('Борис в то же время взял такую же копию и правит в ней своё.', 'Boris took the same copy at the same time.'), bi('Копию ведёт Борис.', 'Boris.')) },
       { id: 'merge', label: bi('Слияние', 'Merge'), icon: 'process', sub: '', family: 'flow', x: 376, y: 160, w: 208, h: 64, card: card(bi('Программа сравнивает обе копии с общей строчку за строчкой. Правки в разных строчках она соединяет сама, а строчку, которую оба изменили по-разному, оставляет решать человеку.', 'Compares both copies with the shared one line by line; joins edits on different lines, leaves a contested line to a person.'), bi('Слияние выполняет программа совместной работы, чаще всего Git.', 'A collaboration program, most often Git.'), { doc: PROGIT }) },
-      { id: 'history', label: bi('История', 'History'), icon: 'database', sub: 'v1', family: 'store', x: 376, y: 296, w: 208, h: 64, card: card(bi('Список всех правок: кто, что и когда изменил. По нему находят, какая правка принесла ошибку, и возвращают любую прошлую версию.', 'Who changed what and when; any past version can be brought back.'), bi('Историю записывает программа совместной работы.', 'The collaboration program.')) },
+      { id: 'history', label: bi('История', 'History'), icon: 'database', sub: 'v1', family: 'store', x: 376, y: 296, w: 208, h: 64, card: card(bi('В истории хранится список всех правок, и по нему видно, кто, что и когда изменил. По этому списку находят, какая правка принесла ошибку, и возвращают любую прошлую версию.', 'Who changed what and when; any past version can be brought back.'), bi('Историю записывает программа совместной работы.', 'The collaboration program.')) },
     ],
     edges: [
       { id: 'e-takeA', from: 'shared', to: 'anna', via: [[128, 56]], label: bi('копия', 'copy'), card: card(bi('Анна берёт себе копию общей версии.', 'Anna takes a copy of the shared version.'), bi('Копию берёт Анна.', 'Anna.')) },
@@ -71,8 +71,8 @@ export const togetherModel = defineModel<P>({
       default: 'different',
       near: 'merge',
       options: [
-        { id: 'different', label: bi('разные строчки: Анна правит цену улуна, а Борис — чёрного чая', 'different: Anna the oolong, Boris the black tea') },
-        { id: 'same', label: bi('одну и ту же строчку: оба меняют цену чёрного чая', 'the same: both change the black tea price') },
+        { id: 'different', label: bi('Анна меняет цену улуна, а Борис — цену чёрного чая, то есть они правят разные строчки', 'Anna changes the oolong price and Boris the black tea price, so they edit different lines') },
+        { id: 'same', label: bi('Оба меняют цену чёрного чая, то есть правят одну и ту же строчку', 'Both change the black tea price, so they edit the same line') },
       ],
       predict: {
         prompt: bi('Вы изменили, какие строчки правят Анна и Борис. Что сделает программа при слиянии?', 'You changed which lines they edit. What will the program do at the merge?'),
@@ -92,29 +92,29 @@ export const togetherModel = defineModel<P>({
       default: 'small',
       near: 'history',
       options: [
-        { id: 'small', label: bi('по 3 строчки, правки за полдня', '3 lines each, half a day’s work') },
-        { id: 'big', label: bi('по 300 строчек, правки за неделю', '300 lines each, a week’s work') },
+        { id: 'small', label: bi('Каждый меняет по 3 строчки, и на работу уходит полдня', 'Each changes 3 lines, and the work takes half a day') },
+        { id: 'big', label: bi('Каждый меняет по 300 строчек, и на работу уходит неделя', 'Each changes 300 lines, and the work takes a week') },
       ],
     },
   ],
   breaks: [
     {
       id: 'email',
-      label: bi('Обходиться без программы слияния и пересылать файл почтой', 'No merge program: send the file by email'),
+      label: bi('Анна и Борис обходятся без программы слияния и пересылают файл почтой', 'Anna and Boris do without a merge program and send the file by email'),
       remove: ['merge', 'e-giveA', 'e-giveB', 'e-log', 'history'],
       predict: {
         prompt: bi('Анна и Борис правят каждый свою копию и рассылают файл целиком по почте. Борис отправил свой файл последним. Что станет с правкой Анны?', 'Each edits a copy and emails the whole file. Boris sent his last. What becomes of Anna’s edit?'),
         options: [
-          { id: 'lost', text: bi('Пропадёт: файл Бориса целиком заменит её файл', 'It is lost: his file replaces hers whole') },
-          { id: 'kept', text: bi('Сохранится: правки соединятся сами', 'It survives: the edits join by themselves') },
+          { id: 'lost', text: bi('Правка пропадёт, потому что файл Бориса целиком заменит файл Анны', 'The edit is lost, because Boris’s file replaces Anna’s whole') },
+          { id: 'kept', text: bi('Правка сохранится, потому что правки соединятся сами', 'The edit survives, because the edits join by themselves') },
         ],
         resolve: (_p, next) => (next.some((s) => s.broken) ? 'lost' : 'kept'),
       },
     },
   ],
   metrics: [
-    { id: 'review', label: bi('строчек проверить глазами', 'lines to check by eye') },
-    { id: 'lost', label: bi('пропало правок', 'edits lost') },
+    { id: 'review', label: bi('сколько строчек проверить глазами', 'lines to check by eye') },
+    { id: 'lost', label: bi('сколько правок пропало', 'edits lost') },
   ],
   run(p, broken): Step[] {
     const lines = p.size === 'big' ? 300 : 3;
@@ -124,9 +124,9 @@ export const togetherModel = defineModel<P>({
       {
         id: 'shared',
         label: bi('общая копия', 'shared copy'),
-        caption: bi('В общей копии меню улун стоит 450, а чёрный чай 250. Это главная версия, с которой все начинают работу, и напрямую её никто не правит.', 'In the shared menu oolong costs 450 and black tea 250. Nobody edits it directly.'),
+        caption: bi('В общей копии меню улун стоит 450, а чёрный чай 250. Эта копия служит главной версией, с которой все начинают работу, и напрямую её никто не правит.', 'In the shared menu oolong costs 450 and black tea 250. Nobody edits it directly.'),
         focus: ['shared'],
-        say: { shared: bi('Общая копия меню: улун за 450, чёрный чай за 250.', 'The shared menu: oolong 450, black tea 250.') },
+        say: { shared: bi('В общей копии меню улун стоит 450, а чёрный чай 250.', 'In the shared menu oolong costs 450 and black tea 250.') },
         states: { ...startWith(ALL, 'shared'), shared: 'on' },
         values: { shared: 'menu.txt · v1', history: 'v1', anna: 'Oolong — 450', boris: 'Black tea — 250', merge: '' },
         metrics: { review: 0, lost: 0 },
@@ -156,16 +156,16 @@ export const togetherModel = defineModel<P>({
       {
         id: 'editA',
         label: bi('правка Анны', 'Anna edits'),
-        caption: same ? bi('Анна решает, что чёрный чай должен стоить 260, и меняет эту строчку в своей копии.', 'Anna sets black tea to 260 in her copy.') : bi('Анна поднимает цену улуна с 450 до 480 в своей копии.', 'Anna raises oolong from 450 to 480 in her copy.'),
+        caption: same ? bi('Анна решает, что чёрный чай должен стоить 260, и меняет эту строчку в своей копии.', 'Anna sets black tea to 260 in her copy.') : bi('Анна повышает цену улуна с 450 до 480 в своей копии.', 'Anna raises oolong from 450 to 480 in her copy.'),
         focus: ['anna'],
-        say: { anna: same ? bi('Анна ставит чёрному чаю цену 260.', 'Anna sets black tea to 260.') : bi('Анна поднимает цену улуна до 480.', 'Anna raises oolong to 480.') },
+        say: { anna: same ? bi('Анна ставит чёрному чаю цену 260.', 'Anna sets black tea to 260.') : bi('Анна повышает цену улуна до 480.', 'Anna raises oolong to 480.') },
         values: { anna: annaLine },
         metrics: { review: 0, lost: 0 },
       },
       {
         id: 'editB',
         label: bi('правка Бориса', 'Boris edits'),
-        caption: same ? bi('Борис тем временем решает, что чёрный чай должен стоить 280, и меняет ту же самую строчку в своей копии.', 'Boris meanwhile sets the same line to 280.') : bi('Борис тем временем поднимает цену чёрного чая с 250 до 280. Анна и Борис правили разные строчки.', 'Boris raises black tea to 280: a different line.'),
+        caption: same ? bi('Борис тем временем решает, что чёрный чай должен стоить 280, и меняет ту же самую строчку в своей копии.', 'Boris meanwhile sets the same line to 280.') : bi('Борис тем временем повышает цену чёрного чая с 250 до 280. Анна и Борис правили разные строчки.', 'Boris raises black tea to 280: a different line.'),
         focus: ['boris'],
         say: { boris: bi('Борис ставит чёрному чаю цену 280.', 'Boris sets black tea to 280.') },
         values: { boris: 'Black tea — 280' },
@@ -188,7 +188,7 @@ export const togetherModel = defineModel<P>({
         {
           id: 'sendB',
           label: bi('письмо Бориса', 'Boris’s email'),
-          caption: bi('Через час Борис отправляет свой файл, тоже целиком. Его файл ложится поверх файла Анны, и в общем меню улун снова стоит 450. Правка Анны пропала молча: никто об этом не узнал.', 'An hour later Boris sends his whole file; it replaces Anna’s, and her edit is silently gone.'),
+          caption: bi('Через час Борис отправляет свой файл, тоже целиком. Его файл ложится поверх файла Анны, и в общем меню улун снова стоит 450. Правка Анны пропала молча, и никто об этом не узнал.', 'An hour later Boris sends his whole file; it replaces Anna’s, and her edit is silently gone, with nobody finding out.'),
           focus: ['e-mailB', 'shared'],
           reveal: ['e-mailB'],
           tokens: [{ edge: 'e-mailB', label: bi('файл Бориса', 'Boris’s file') }],
@@ -204,14 +204,14 @@ export const togetherModel = defineModel<P>({
     steps.push({
       id: 'merge',
       label: bi('слияние', 'merge'),
-      caption: fmtb(bi('Анна и Борис отдают свои правки на слияние. Программа сравнивает обе копии с общей строчку за строчкой: изменено {n} строчек.', 'Both edits go to the merge. The program compares both copies with the shared one: {n} changed lines.'), { n: lines * 2 }),
+      caption: fmtb(bi('Анна и Борис отдают свои правки на слияние. Программа сравнивает обе копии с общей строчку за строчкой и находит {n} изменённых строчек.', 'Both edits go to the merge. The program compares both copies with the shared one line by line and finds {n} changed lines.'), { n: lines * 2 }),
       focus: ['e-giveA', 'e-giveB', 'merge'],
       reveal: ['merge', 'e-giveA', 'e-giveB'],
       tokens: [
         { edge: 'e-giveA', label: `+${lines}` },
         { edge: 'e-giveB', label: `+${lines}` },
       ],
-      say: { merge: fmtb(bi('Слияние сравнивает обе копии с общей: изменено {n} строчек.', 'The merge compares both copies: {n} lines changed.'), { n: lines * 2 }) },
+      say: { merge: fmtb(bi('Программа слияния сравнила обе копии с общей и нашла {n} изменённых строчек.', 'The merge program compared both copies with the shared one and found {n} changed lines.'), { n: lines * 2 }) },
       states: { merge: 'on' },
       metrics: { review: 0, lost: 0 },
     });
@@ -219,9 +219,9 @@ export const togetherModel = defineModel<P>({
       steps.push({
         id: 'ask',
         label: bi('решает человек', 'a person decides'),
-        caption: bi('Строчку с чёрным чаем изменили оба, и каждый по-своему. Программа не знает, какая цена правильная, поэтому не угадывает: она показывает Анне и Борису обе версии и ждёт, что решат люди.', 'One line was changed differently by two people. The program does not guess: it shows both versions and waits for people.'),
+        caption: bi('Строчку с чёрным чаем изменили оба, и каждый по-своему. Программа не знает, какая цена правильная, поэтому не пытается угадать, а показывает Анне и Борису обе версии и ждёт, что решат люди.', 'One line was changed differently by two people. The program does not guess: it shows both versions and waits for people.'),
         focus: ['merge'],
-        say: { merge: bi('Одну строчку изменили по-разному: 260 или 280? Выбрать должен человек.', 'One line, two values: 260 or 280? A person decides.') },
+        say: { merge: bi('Одну и ту же строчку изменили по-разному, и выбрать между 260 и 280 должен человек.', 'The same line was changed differently, and a person must choose between 260 and 280.') },
         states: { merge: 'warn' },
         values: { merge: '260 or 280?' },
         metrics: { review: lines * 2, lost: 0 },
@@ -232,11 +232,11 @@ export const togetherModel = defineModel<P>({
         label: 'v2',
         caption: same
           ? bi('Анна и Борис договорились о цене 280, и общая версия меню обновилась. Ни одна правка не пропала молча.', 'They agreed on 280, and the shared menu was updated. No edit vanished silently.')
-          : bi('Правки в разных строчках программа соединила сама: в новой общей версии и улун за 480, и чёрный чай за 280.', 'Edits on different lines were joined: oolong 480 and black tea 280.'),
+          : bi('Правки в разных строчках программа соединила сама, и в новой общей версии улун стоит 480, а чёрный чай 280.', 'Edits on different lines were joined: oolong 480 and black tea 280.'),
         focus: ['e-result', 'shared'],
         reveal: ['e-result'],
         tokens: [{ edge: 'e-result', label: 'v2' }],
-        say: { shared: same ? bi('В общей копии теперь чёрный чай за 280.', 'The shared copy: black tea at 280.') : bi('В общей копии теперь обе новые цены.', 'The shared copy has both new prices.') },
+        say: { shared: same ? bi('В общей копии чёрный чай теперь стоит 280.', 'The shared copy: black tea at 280.') : bi('В общей копии теперь обе новые цены.', 'The shared copy has both new prices.') },
         states: { shared: 'ok', merge: 'ok' },
         values: { shared: 'menu.txt · v2', merge: same ? 'decided: 280' : 'joined' },
         metrics: { review: same || p.size === 'big' ? lines * 2 : 0, lost: 0 },
@@ -249,7 +249,7 @@ export const togetherModel = defineModel<P>({
             ? bi('В истории две записи, но в каждой по 300 строчек. Проверить такую правку глазами трудно, и ошибка в ней легко проскочит. Маленькие правки проще и прочитать, и соединить.', 'Two entries of 300 lines each: hard to check by eye. Small edits are easier to read and join.')
             : same
               ? bi('В истории записано, что строчку с чёрным чаем меняли и Анна, и Борис и что в итоге они договорились о цене 280. Любую из этих правок можно найти и отменить.', 'The history records that both changed the black tea line and agreed on 280. Either edit can be undone.')
-              : bi('В истории две записи: «Анна, цена улуна» и «Борис, цена чёрного чая». Любую из них можно найти и отменить.', 'Two entries: “Anna, oolong price” and “Boris, black tea price”. Either can be undone.'),
+              : bi('В истории появились две записи, «Анна, цена улуна» и «Борис, цена чёрного чая». Любую из них можно найти и отменить.', 'Two entries: “Anna, oolong price” and “Boris, black tea price”. Either can be undone.'),
         focus: ['e-log', 'history'],
         reveal: ['history', 'e-log'],
         tokens: [{ edge: 'e-log', label: bi('Анна · Борис', 'Anna · Boris') }],
@@ -264,8 +264,8 @@ export const togetherModel = defineModel<P>({
   explainDelta(_prev, _next, change, _a, b): Bi {
     if (change.kind === 'break') {
       return change.on
-        ? bi('Без программы слияния файлы целиком заменяют друг друга: правка Анны пропала, и никто об этом не узнал.', 'Without the merge files replace each other: Anna’s edit is gone unnoticed.')
-        : bi('Программа слияния вернулась: правки снова соединяются, а не затирают друг друга.', 'The merge is back: edits are joined again.');
+        ? bi('Без программы слияния файлы целиком заменяют друг друга, поэтому правка Анны пропала, и никто об этом не узнал.', 'Without the merge files replace each other: Anna’s edit is gone unnoticed.')
+        : bi('Программа слияния снова работает, поэтому правки соединяются, а не затирают друг друга.', 'The merge program works again, so edits are joined instead of overwriting each other.');
     }
     if (change.id === 'where')
       return b.where === 'same'
@@ -273,6 +273,6 @@ export const togetherModel = defineModel<P>({
         : bi('Теперь Анна и Борис правят разные строчки, и программа соединяет их правки без участия людей.', 'Different lines are joined without people.');
     return b.size === 'big'
       ? bi('Каждый теперь правит по 300 строчек. Столько строчек придётся прочитать, чтобы понять, что изменилось, и в стольких же местах правки могут столкнуться.', 'Edits of 300 lines each: that much to read.')
-      : bi('Правки снова маленькие, по 3 строчки: их быстро прочитать и легко соединить.', 'Small edits again: quick to read, easy to join.');
+      : bi('Правки снова маленькие, по 3 строчки, поэтому их быстро прочитать и легко соединить.', 'The edits are small again, 3 lines each, so they are quick to read and easy to join.');
   },
 });

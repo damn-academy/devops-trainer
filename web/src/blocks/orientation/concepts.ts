@@ -16,7 +16,7 @@ const c = (id: string, ru: string, en: string, shortRu: string, shortEn: string,
 });
 
 export const concepts: Concept[] = [
-  c('computer', 'компьютер', 'computer', 'Машина, в которой работают процессор, память и диск. Процессор выполняет инструкции, память хранит то, что нужно прямо сейчас, а диск хранит всё остальное.', 'A machine of a processor, memory and a disk: the processor carries out instructions, memory holds what is needed now, the disk keeps everything else.', 'inside', { scan: false }),
+  c('computer', 'компьютер', 'computer', 'Машина, в которой работают процессор, память и диск. Процессор выполняет инструкции, память хранит то, что нужно сейчас, а диск хранит всё остальное.', 'A machine of a processor, memory and a disk: the processor carries out instructions, memory holds what is needed now, the disk keeps everything else.', 'inside', { scan: false }),
   c('program', 'программа', 'program', 'Последовательность инструкций, записанная на диск. Запустить программу значит скопировать её в память и отдать процессору на выполнение.', 'A sequence of instructions stored on the disk. Running it means copying it into memory and letting the processor carry it out.', 'inside', { scan: false }),
   c('os', 'операционная система', 'operating system', 'Главная программа компьютера. Она запускает остальные программы, делит между ними процессор и память, хранит файлы и управляет устройствами.', 'The main program of a computer: it starts the others, shares the processor and memory between them, keeps files and talks to the devices.', 'system', {
     forms: { ru: ['операционной системы', 'операционную систему', 'операционной системой', 'операционной системе', 'операционные системы', 'операционных систем', 'ОС'], en: ['operating systems', 'OS'] },

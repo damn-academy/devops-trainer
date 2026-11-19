@@ -27,8 +27,8 @@ export const placesModel = defineModel<P>({
     'The same build of the shop, version 1.5.0, goes to the developer’s laptop, the test stand and production. Next to it in each place lies its own settings file, and only that file tells the program where to send payments.',
   ),
   intro: bi(
-    'Сейчас на схеме только сборка 1.5.0. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Подсвечено то, что работает сейчас, облачко говорит, что оно делает, а карточка на линии показывает, что передаётся: сама сборка или строка из файла настроек.\n\nКогда дойдёте до покупателей, включите в «Параметрах» настройки, записанные в сам код, и посмотрите на число сборок под схемой. Потом поставьте на стенд предыдущую версию системы, а в блоке «Сломать» положите в рабочее окружение не тот файл.',
-    'Now the diagram shows only build 1.5.0. Press “Start: step forward”, then “Step forward”. What works is highlighted, the callout says what it does, the card on the line shows the build or a line of the settings file.\n\nAt the customers, switch on settings baked into the code in “Parameters” and watch the number of builds. Then make the stand’s system older, and in “Break it” put the wrong file into production.',
+    'Сейчас на схеме только сборка 1.5.0. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Подсвечено то, что работает сейчас, облачко говорит, что оно делает, а карточка на линии показывает, что передаётся: сама сборка или строка из файла настроек.\n\nКогда дойдёте до покупателей, включите в «Параметрах» настройки, записанные в сам код, и посмотрите на число сборок под схемой. Потом поставьте на стенд предыдущую версию системы, а в блоке «Сломать» положите в рабочее окружение не тот файл.',
+    'Now the diagram shows only build 1.5.0. Press “Start from the first step”, then go on with “Step forward” above the diagram. What works is highlighted, the callout says what it does, the card on the line shows the build or a line of the settings file.\n\nAt the customers, switch on settings baked into the code in “Parameters” and watch the number of builds. Then make the stand’s system older, and in “Break it” put the wrong file into production.',
   ),
   legend: [
     { mark: 'active', text: bi('то, что работает сейчас', 'what works now') },
@@ -41,7 +41,7 @@ export const placesModel = defineModel<P>({
     { mark: 'icon:user', text: bi('покупатели', 'the customers') },
     { mark: 'ok', text: bi('проверка пройдена', 'check passed') },
     { mark: 'warn', text: bi('здесь кроется риск', 'a risk here') },
-    { mark: 'err', text: bi('здесь сломалось', 'it broke here') },
+    { mark: 'err', text: bi('здесь всё сломалось', 'everything broke here') },
   ],
   stopLabel: bi('Выкладка остановилась', 'The deploy stopped'),
   concepts: ['orient.environments', 'orient.config'],
@@ -49,13 +49,13 @@ export const placesModel = defineModel<P>({
     width: 960,
     height: 400,
     nodes: [
-      { id: 'devConf', label: 'dev.conf', icon: 'file', sub: 'pay=sandbox', family: 'obj', shape: 'doc', x: 24, y: 24, w: 192, h: 64, card: card(bi('Настройки для ноутбука разработчика: учебная база, учебная платёжная система и подробный журнал работы.', 'Settings for the developer’s laptop: a test database, test payments, a detailed log.'), bi('Файл ведёт сам разработчик.', 'The developer.'), { see: 'cat config/dev.conf', doc: CONFIG }) },
+      { id: 'devConf', label: 'dev.conf', icon: 'file', sub: 'pay=sandbox', family: 'obj', shape: 'doc', x: 24, y: 24, w: 192, h: 64, card: card(bi('В этом файле лежат настройки для ноутбука разработчика: учебная база, учебная платёжная система и подробный журнал работы.', 'Settings for the developer’s laptop: a test database, test payments, a detailed log.'), bi('Файл ведёт сам разработчик.', 'The developer.'), { see: 'cat config/dev.conf', doc: CONFIG }) },
       { id: 'testConf', label: 'test.conf', icon: 'file', sub: 'pay=sandbox', family: 'obj', shape: 'doc', x: 264, y: 24, w: 192, h: 64, card: card(bi('В этом файле лежат настройки тестового стенда. Всё устроено как в рабочем окружении, только платёжная система учебная, а в базе ненастоящие покупатели.', 'Test stand settings: as in production, but pretend payments and fake customers.'), bi('Файл ведут тестировщики вместе с инженерами эксплуатации.', 'Testers and operations.'), { see: 'cat config/test.conf', doc: CONFIG }) },
-      { id: 'prodConf', label: 'prod.conf', icon: 'file', sub: 'pay=real', family: 'obj', shape: 'doc', x: 504, y: 24, w: 192, h: 64, card: card(bi('Настройки рабочего окружения: настоящая платёжная система и настоящая база. Пароли от них хранятся здесь, а не в коде, и видят их только те, кому положено.', 'Production settings: real payments, the real database; their passwords live here, not in the code.'), bi('Файл ведут инженеры эксплуатации.', 'Operations.'), { see: 'cat config/prod.conf', doc: CONFIG }) },
-      { id: 'dev', label: bi('Ноутбук разработчика', 'Developer’s laptop'), icon: 'terminal', sub: 'dev', family: 'node', shape: 'rack', x: 24, y: 160, w: 192, h: 72, card: card(bi('Ноутбук разработчика — это окружение разработки. Здесь программу пишут и запускают десятки раз в день, и сломать её тут не страшно.', 'The development environment: run dozens of times a day; breaking it is harmless.'), bi('Ноутбуком пользуется разработчик.', 'The developer.')) },
-      { id: 'test', label: bi('Тестовый стенд', 'Test stand'), icon: 'server', sub: 'test · Debian 13', family: 'node', shape: 'rack', x: 264, y: 160, w: 192, h: 72, card: card(bi('Отдельные серверы, устроенные как можно ближе к рабочим: та же операционная система, те же версии программ, но без настоящих покупателей. Здесь новую версию проверяют.', 'Servers built like production, without real customers; new versions are checked here.'), bi('Стенд готовят инженеры эксплуатации, а проверяют на нём тестировщики.', 'Operations prepare it, testers check on it.'), { doc: PARITY }) },
+      { id: 'prodConf', label: 'prod.conf', icon: 'file', sub: 'pay=real', family: 'obj', shape: 'doc', x: 504, y: 24, w: 192, h: 64, card: card(bi('В этом файле лежат настройки рабочего окружения, то есть адреса настоящей платёжной системы и настоящей базы. Пароли от них хранятся здесь, а не в коде, и видят их только те, кому положено.', 'Production settings: real payments, the real database; their passwords live here, not in the code.'), bi('Файл ведут инженеры эксплуатации.', 'Operations.'), { see: 'cat config/prod.conf', doc: CONFIG }) },
+      { id: 'dev', label: bi('Ноутбук разработчика', 'Developer’s laptop'), icon: 'terminal', sub: 'dev', family: 'node', shape: 'rack', x: 24, y: 160, w: 192, h: 72, card: card(bi('Ноутбук разработчика служит окружением разработки. Здесь программу пишут и запускают десятки раз в день, и сломать её тут не страшно.', 'The development environment: run dozens of times a day; breaking it is harmless.'), bi('Ноутбуком пользуется разработчик.', 'The developer.')) },
+      { id: 'test', label: bi('Тестовый стенд', 'Test stand'), icon: 'server', sub: 'test · Debian 13', family: 'node', shape: 'rack', x: 264, y: 160, w: 192, h: 72, card: card(bi('Тестовый стенд состоит из отдельных серверов, устроенных как можно ближе к рабочим: та же операционная система, те же версии программ, но без настоящих покупателей. Здесь новую версию проверяют.', 'Servers built like production, without real customers; new versions are checked here.'), bi('Стенд готовят инженеры эксплуатации, а проверяют на нём тестировщики.', 'Operations prepare it, testers check on it.'), { doc: PARITY }) },
       { id: 'prod', label: bi('Рабочее окружение', 'Production'), icon: 'server', sub: 'prod · Debian 13', family: 'node', shape: 'rack', x: 504, y: 160, w: 192, h: 72, card: card(bi('На этих серверах работает магазин для настоящих покупателей. В командах это окружение называют продом. Ошибка здесь стоит денег и доверия.', 'The servers real customers use (“prod”). A mistake here costs money.'), bi('Рабочим окружением занимаются инженеры эксплуатации.', 'Operations.')) },
-      { id: 'users', label: bi('Покупатели', 'Customers'), icon: 'user', sub: 'real money', family: 'user', x: 800, y: 160, w: 144, h: 72, card: card(bi('Покупатели — настоящие люди с настоящими банковскими картами. Они видят только рабочее окружение.', 'Real people with real cards; they see only production.'), bi('Покупатели сами пришли в магазин.', 'They came by themselves.')) },
+      { id: 'users', label: bi('Покупатели', 'Customers'), icon: 'user', sub: 'real money', family: 'user', x: 800, y: 160, w: 144, h: 72, card: card(bi('Магазином пользуются настоящие люди с настоящими банковскими картами. Они видят только рабочее окружение.', 'Real people with real cards; they see only production.'), bi('Покупатели сами пришли в магазин.', 'They came by themselves.')) },
       { id: 'artifact', label: bi('Сборка 1.5.0', 'Build 1.5.0'), icon: 'container', sub: 'shop-1.5.0', family: 'store', x: 264, y: 312, w: 192, h: 64, card: card(bi('Сборка у всех окружений одна. В каждое из них попадает один и тот же файл, поэтому до покупателей доходит та самая сборка, которую проверили на стенде.', 'One build: the same file goes everywhere, so what was checked reaches the customers.'), bi('Сборку сделала команда разработки.', 'The build.')) },
     ],
     edges: [
@@ -80,8 +80,8 @@ export const placesModel = defineModel<P>({
       predict: {
         prompt: bi('Адрес платёжной системы и пароль к ней теперь записаны в самом исходном коде, а в каждом окружении они свои. Сколько разных сборок понадобится на три окружения?', 'The payment address and password are now in the source code, and each environment has its own. How many builds do three environments need?'),
         options: [
-          { id: 'one', text: bi('Одна, как и раньше', 'One, as before') },
-          { id: 'three', text: bi('Три, на каждое окружение своя', 'Three, one per environment') },
+          { id: 'one', text: bi('Понадобится одна сборка, как и раньше', 'One build, as before') },
+          { id: 'three', text: bi('Понадобятся три сборки, на каждое окружение своя', 'Three builds, one per environment') },
         ],
         resolve: (_prev, next) => ((next[next.length - 1]?.metrics?.builds ?? 1) > 1 ? 'three' : 'one'),
       },
@@ -94,14 +94,14 @@ export const placesModel = defineModel<P>({
       default: 'close',
       near: 'test',
       options: [
-        { id: 'close', label: bi('та же, что в рабочем окружении, Debian 13', 'the same as production, Debian 13') },
-        { id: 'far', label: bi('на версию отстаёт, Debian 12', 'a version behind, Debian 12') },
+        { id: 'close', label: bi('Debian 13, та же система, что в рабочем окружении', 'Debian 13, the same system as in production') },
+        { id: 'far', label: bi('Debian 12, которая отстаёт от рабочего окружения на версию', 'Debian 12, a version behind production') },
       ],
       predict: {
         prompt: bi('Вы изменили систему на тестовом стенде, а в рабочем окружении по-прежнему Debian 13. Сборка прошла все проверки на стенде. Как она поведёт себя у покупателей?', 'You changed the stand’s system; production still runs Debian 13. The build passed every check on the stand. How will it behave for the customers?'),
         options: [
-          { id: 'works', text: bi('Будет работать так же, как на стенде', 'It works as on the stand') },
-          { id: 'surprise', text: bi('Может сломаться на том, чего на стенде не было', 'It may break on what the stand did not have') },
+          { id: 'works', text: bi('Сборка будет работать так же, как на стенде', 'The build works as it did on the stand') },
+          { id: 'surprise', text: bi('Сборка может сломаться на том, чего на стенде не было', 'The build may break on what the stand did not have') },
         ],
         resolve: (_prev, next) => (next.some((s) => s.id === 'serve' && s.states?.users === 'warn') ? 'surprise' : 'works'),
       },
@@ -110,7 +110,7 @@ export const placesModel = defineModel<P>({
   breaks: [
     {
       id: 'wrong-config',
-      label: bi('Положить в рабочее окружение test.conf вместо prod.conf', 'Put test.conf into production'),
+      label: bi('В рабочее окружение положили test.conf вместо prod.conf', 'test.conf was put into production instead of prod.conf'),
       remove: ['e-pc'],
       predict: {
         prompt: bi('В рабочее окружение по ошибке положили файл настроек тестового стенда, а сборка та же, что прошла проверки. Что заметят первым?', 'Production got the test stand’s settings by mistake; the build is the checked one. What will be noticed first?'),
@@ -123,21 +123,21 @@ export const placesModel = defineModel<P>({
     },
     {
       id: 'no-config',
-      label: bi('Забыть положить prod.conf в рабочее окружение', 'Forget to put prod.conf into production'),
+      label: bi('Файл prod.conf забыли положить в рабочее окружение', 'prod.conf was not put into production'),
       remove: ['prodConf', 'e-pc'],
       predict: {
         prompt: bi('Файл prod.conf забыли положить в рабочее окружение. Что сделает программа при запуске?', 'Nobody put prod.conf into production. What does the program do at start?'),
         options: [
-          { id: 'stop', text: bi('Не запустится и напишет, какого файла ей не хватает', 'It will not start and names the missing file') },
-          { id: 'guess', text: bi('Запустится с настройками разработчика', 'It starts with the developer’s settings') },
+          { id: 'stop', text: bi('Программа не запустится и напишет, какого файла ей не хватает', 'The program will not start and names the missing file') },
+          { id: 'guess', text: bi('Программа запустится с настройками разработчика', 'The program starts with the developer’s settings') },
         ],
         resolve: (_p, next) => (next.some((s) => s.id === 'no-config') ? 'stop' : 'guess'),
       },
     },
   ],
   metrics: [
-    { id: 'builds', label: bi('сборок на один выпуск', 'builds per release') },
-    { id: 'checked', label: bi('у покупателей проверенная сборка', 'customers run the checked build'), unit: '%' },
+    { id: 'builds', label: bi('сколько сборок нужно на один выпуск', 'builds per release') },
+    { id: 'checked', label: bi('покупатели получили проверенную сборку', 'customers run the checked build'), unit: '%' },
   ],
   run(p, broken): Step[] {
     const inside = p.inside;
@@ -149,7 +149,7 @@ export const placesModel = defineModel<P>({
         label: bi('сборка', 'build'),
         caption: inside
           ? bi('Адрес оплаты и пароль записаны в самом коде, а в каждом окружении они свои. Поэтому собирать приходится три разные программы: для ноутбука, для стенда и для рабочего окружения.', 'The settings are in the code, so three different programs are built.')
-          : bi('Команда собрала одну программу, версию 1.5.0. Настроек внутри неё нет: программа ожидает, что в каждом окружении рядом с ней положат файл настроек.', 'One program is built, 1.5.0. It carries no settings: it expects a settings file next to it.'),
+          : bi('Команда собрала одну программу, версию 1.5.0. Настроек внутри неё нет, потому что программа ожидает, что в каждом окружении рядом с ней положат файл настроек.', 'One program is built, 1.5.0. It carries no settings: it expects a settings file next to it.'),
         focus: ['artifact'],
         say: { artifact: inside ? bi('Собраны три программы, и в каждой зашиты свои настройки.', 'Three programs, each with its settings inside.') : bi('Собрана одна программа 1.5.0, настроек в ней нет.', 'One program, 1.5.0, with no settings inside.') },
         states: { ...startWith(ALL, 'artifact'), artifact: inside ? 'warn' : 'on' },
@@ -228,7 +228,7 @@ export const placesModel = defineModel<P>({
       steps.push({
         id: 'no-config',
         label: bi('нет настроек', 'no settings'),
-        caption: bi('При запуске программа ищет рядом с собой prod.conf и не находит его. Угадывать, куда отправлять платежи, она не станет: программа останавливается и пишет, какого файла ей не хватает.', 'At start the program looks for prod.conf and does not find it. It does not guess: it stops and names the missing file.'),
+        caption: bi('При запуске программа ищет рядом с собой prod.conf и не находит его. Угадывать, куда отправлять платежи, она не станет, поэтому останавливается и пишет, какого файла ей не хватает.', 'At start the program looks for prod.conf and does not find it. It does not guess: it stops and names the missing file.'),
         focus: ['prod'],
         reveal: ['prodConf'],
         say: { prod: bi('Программа не нашла prod.conf и не запустилась.', 'No prod.conf: the program does not start.') },
@@ -271,7 +271,7 @@ export const placesModel = defineModel<P>({
         : inside
           ? bi('Покупатели пользуются сборкой, которую до них не видел никто, даже тестировщики. Если в ней ошибка, первыми её найдут покупатели.', 'The customers use a build nobody checked; they will find its errors first.')
           : far
-            ? bi('В рабочем окружении система новее, чем на стенде, и программа спотыкается на том, чего на стенде не было: часть заказов не проходит. Чем сильнее стенд отличается от рабочего окружения, тем больше таких сюрпризов.', 'Production’s system is newer than the stand’s, and the program trips on what the stand lacked.')
+            ? bi('В рабочем окружении система новее, чем на стенде, и программа спотыкается на том, чего на стенде не было, поэтому часть заказов не проходит. Чем сильнее стенд отличается от рабочего окружения, тем больше таких сюрпризов.', 'Production’s system is newer than the stand’s, and the program trips on what the stand lacked.')
             : bi('Покупатели пользуются той самой сборкой, которую проверили на стенде, и платят настоящими деньгами. Различаются окружения только файлом настроек.', 'The customers use the checked build and pay real money. The environments differ only in the settings file.'),
       focus: ['e-serve', 'users'],
       reveal: ['users', 'e-serve'],
@@ -286,17 +286,17 @@ export const placesModel = defineModel<P>({
       states: { users: wrong || far || inside ? 'warn' : 'ok', prod: wrong ? 'err' : far || inside ? 'warn' : 'ok' },
       metrics,
       ...(wrong
-        ? { broken: { at: 'prod', message: 'payment gateway: sandbox mode — card not charged, order #10482 marked paid', caption: bi('в рабочем окружении. Программа та же, что на стенде, а окружение ей задаёт файл настроек: перепутанный файл перепутал окружения.', 'in production: the program is the same; the settings file makes the environment, and a mixed-up file mixed them up.') } }
+        ? { broken: { at: 'prod', message: 'payment gateway: sandbox mode — card not charged, order #10482 marked paid', caption: bi('в рабочем окружении. Программа та же, что на стенде, а окружение ей задаёт файл настроек, поэтому перепутанный файл перепутал и окружения.', 'in production: the program is the same; the settings file makes the environment, and a mixed-up file mixed them up.') } }
         : {}),
     });
     return steps;
   },
   explainDelta(_prev, _next, change, _a, b): Bi {
     if (change.kind === 'break') {
-      if (!change.on) return bi('Поломку убрали: в рабочем окружении снова лежит свой файл настроек.', 'The break is removed: production has its own settings file again.');
+      if (!change.on) return bi('Поломку выключили, и в рабочем окружении снова лежит свой файл настроек.', 'The break is removed: production has its own settings file again.');
       return change.id === 'wrong-config'
-        ? bi('Программа сама не знает, где она работает: об этом ей говорит файл настроек. Чужой файл превратил рабочее окружение в учебный стенд с настоящими покупателями.', 'The settings file tells the program where it runs; the wrong file turned production into a practice stand.')
-        : bi('Без файла настроек программа в рабочем окружении не запускается и называет недостающий файл. Это лучше, чем если бы она пыталась угадать.', 'Without its settings file the program does not start and names the file.');
+        ? bi('Программа сама не знает, где она работает, и узнаёт это только из файла настроек. Чужой файл превратил рабочее окружение в учебный стенд с настоящими покупателями.', 'The settings file tells the program where it runs; the wrong file turned production into a practice stand.')
+        : bi('Без файла настроек программа в рабочем окружении не запускается и называет недостающий файл. Такое поведение лучше, чем попытка угадать.', 'Without its settings file the program does not start and names the file.');
     }
     if (change.id === 'inside')
       return b.inside
