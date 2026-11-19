@@ -24,7 +24,7 @@ export const ROUTE: RouteEntry[] = [
   {
     id: 'orient',
     order: 5,
-    folder: 'methodology',
+    folder: 'orientation',
     segment: 'F',
     title: bi('Ориентир', 'Orientation'),
     summary: bi(
@@ -34,7 +34,7 @@ export const ROUTE: RouteEntry[] = [
     checklistStep: null,
     beginnerOnly: true,
     levels: {
-      beginner: bi('Знаешь компьютер как пользователь', 'You know computers as a user'),
+      beginner: bi('Знаете компьютер как пользователь', 'You know computers as a user'),
       intermediate: bi('Закрывается тремя вопросами', 'Closed with three questions'),
       experienced: bi('Закрывается тремя вопросами', 'Closed with three questions'),
     },
@@ -168,6 +168,25 @@ export const ROUTE: RouteEntry[] = [
     hours: { beginner: 85, intermediate: 54, experienced: 31 },
   },
   {
+    id: 'cicd-k8s',
+    order: 65,
+    folder: 'git-cicd',
+    segment: '6a',
+    title: bi('Выкладка в Kubernetes из CI', 'Deploying to Kubernetes from CI'),
+    summary: bi(
+      'Пайплайн сам выкатывает версию в кластер: ключ узкого аккаунта, неизменяемый тег, ожидание и откат; push- и pull-модели.',
+      'The pipeline rolls a version out to the cluster by itself: a narrow account’s key, an immutable tag, waiting and rolling back; the push and the pull model.',
+    ),
+    checklistStep: '05',
+    levels: {
+      beginner: bi('Прошёл блоки CI/CD и Kubernetes', 'Has done the CI/CD and Kubernetes blocks'),
+      intermediate: bi('Выкатывал в кластер руками', 'Has rolled out to a cluster by hand'),
+      experienced: bi('Писал джобы с kubectl или helm', 'Has written jobs with kubectl or helm'),
+    },
+    hours: { beginner: 4, intermediate: 3, experienced: 2 },
+    requires: ['cicd', 'k8s-1'],
+  },
+  {
     id: 'k8s-2',
     order: 70,
     folder: 'kubernetes',
@@ -207,7 +226,7 @@ export const ROUTE: RouteEntry[] = [
   {
     id: 'k8s-3',
     order: 90,
-    folder: 'iac',
+    folder: 'k8s-code',
     segment: '9',
     title: bi('Кластер из кода', 'A cluster from code'),
     summary: bi(
