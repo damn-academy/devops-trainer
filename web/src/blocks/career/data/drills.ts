@@ -7,7 +7,7 @@ import type { Drill, DrillOption } from '../drill-engine';
 
 const restartAll = (why = bi('Если перезапустить службы до того, как собраны улики, улики пропадут, а причина останется, и с первой же волной запросов симптом вернётся.', 'Restarting before collecting evidence destroys it and does not remove the cause: the symptom returns with the next wave of requests.')): DrillOption => ({
   id: 'restart',
-  text: bi('Перезапустить всё: nginx, приложение и базу', 'Restart everything: nginx, the app, the database'),
+  text: bi('Перезапустить сразу nginx, приложение и базу', 'Restart nginx, the application and the database all at once'),
   tags: ['destructive'],
   why,
   cmd: ['restart', 'reboot'],
@@ -41,14 +41,14 @@ export const DRILL_504: Drill = {
             pool: bi('«У всех, на оформлении заказа, с 14:10. В 14:05 вышел релиз приложения, а в 14:08 сетевые инженеры ввели новые правила межсетевого экрана».', '“Everyone, on checkout, since 14:10. A release of the application went out at 14:05; at 14:08 the network team rolled out new firewall rules.”'),
             'drop-rule': bi('«У всех, на оформлении заказа, с 14:10. В 14:05 вышел релиз приложения, а в 14:08 сетевые инженеры ввели новые правила межсетевого экрана».', '“Everyone, on checkout, since 14:10. A release of the application went out at 14:05; at 14:08 the network team rolled out new firewall rules.”'),
           },
-          why: bi('Два вопроса экономят полчаса: масштаб сбоя говорит о влиянии на пользователей, а ответ на вопрос «что менялось» называет первых подозреваемых. Изменений было два, и пока неясно, какое из них виновато.', 'Two questions save half an hour: the scope tells the impact, and “what changed” gives the first suspects. There are two changes, and it is not yet clear which one is to blame.'),
+          why: bi('Два вопроса экономят полчаса, потому что масштаб сбоя говорит о влиянии на пользователей, а ответ на вопрос «что менялось» называет первых подозреваемых. Изменений было два, и пока неясно, какое из них виновато.', 'Two questions save half an hour: the scope tells the impact, and “what changed” gives the first suspects. There are two changes, and it is not yet clear which one is to blame.'),
         },
         restartAll(),
         {
           id: 'timeout',
           text: bi('Увеличить proxy_read_timeout в nginx до 300 секунд', 'Raise proxy_read_timeout in nginx to 300 seconds'),
           tags: ['hide'],
-          why: bi('Это прячет симптом: вместо ошибки через 60 секунд пользователи будут ждать пять минут, а причина останется.', 'This hides the symptom: instead of an error after 60 seconds users wait five minutes, and the cause stays.'),
+          why: bi('Так симптом только прячется, потому что вместо ошибки через 60 секунд пользователи будут ждать пять минут, а причина останется.', 'This only hides the symptom, because instead of an error after 60 seconds users will wait five minutes, and the cause stays.'),
         },
         {
           id: 'dns',
@@ -65,7 +65,7 @@ export const DRILL_504: Drill = {
       options: [
         {
           id: 'curl',
-          text: bi('Отправить запрос с подробным выводом: `curl -sv https://shop.example/checkout`', 'A verbose request: `curl -sv https://shop.example/checkout`'),
+          text: bi('Отправить запрос с подробным выводом командой `curl -sv https://shop.example/checkout`', 'Send a request with verbose output using `curl -sv https://shop.example/checkout`'),
           tags: ['evidence', 'level'],
           good: true,
           cmd: ['^curl\\b.*shop'],
@@ -86,7 +86,7 @@ export const DRILL_504: Drill = {
           tags: ['contradicts'],
           cmd: ['^dig\\b', '^nslookup\\b'],
           out: 'shop.example.\t\t300\tIN\tA\t203.0.113.10',
-          why: bi('Имя превращается в адрес, как и ожидалось: если бы клиент не нашёл сервер, ответ 504 не мог бы прийти.', 'The name resolves, as expected: a 504 could not have arrived at all if the client had not found the server.'),
+          why: bi('Имя превращается в адрес, как и ожидалось, ведь если бы клиент не нашёл сервер, ответ 504 не мог бы прийти.', 'The name resolves, as expected, because a 504 could not have arrived at all if the client had not found the server.'),
         },
       ],
     },
@@ -96,7 +96,7 @@ export const DRILL_504: Drill = {
       options: [
         {
           id: 'errlog',
-          text: bi('Журнал ошибок: `tail /var/log/nginx/error.log`', 'The error log: `tail /var/log/nginx/error.log`'),
+          text: bi('Прочитать журнал ошибок командой `tail /var/log/nginx/error.log`', 'Read the error log with `tail /var/log/nginx/error.log`'),
           tags: ['evidence'],
           good: true,
           cmd: ['error\\.log', 'journalctl.*nginx'],
@@ -109,11 +109,11 @@ export const DRILL_504: Drill = {
         },
         {
           id: 'access',
-          text: bi('Журнал доступа: `tail /var/log/nginx/access.log`', 'The access log: `tail /var/log/nginx/access.log`'),
+          text: bi('Прочитать журнал доступа командой `tail /var/log/nginx/access.log`', 'Read the access log with `tail /var/log/nginx/access.log`'),
           tags: ['detour'],
           cmd: ['access\\.log'],
           out: '198.51.100.7 - - [18/Nov/2026:14:12:03 +0300] "POST /checkout HTTP/2.0" 504 160 "-" "Mozilla/5.0"',
-          why: bi('Журнал доступа ещё раз подтверждает ошибку 504, но причины в нём нет: она записана в журнале ошибок.', 'The access log confirms the 504 once more, but the reason is not there: it is in the error log.'),
+          why: bi('Журнал доступа ещё раз подтверждает ошибку 504, но причины в нём нет, потому что причина записана в журнале ошибок.', 'The access log confirms the 504 once more, but the reason is not there, because the reason is written in the error log.'),
         },
         restartAll(),
       ],
@@ -128,9 +128,9 @@ export const DRILL_504: Drill = {
           tags: ['level'],
           rightFor: ['slow-sql', 'pool'],
           why: {
-            'slow-sql': bi('Слова «while reading response header» означают, что соединение установлено и запрос отправлен, но ответа нет. Значит, проблема на уровне приложений: в самом приложении или в том, чего оно ждёт.', '“while reading response header”: the connection is up and the request sent, no answer: this is L7, the application itself or what it waits for.'),
-            pool: bi('Слова «while reading response header» означают, что соединение установлено и запрос отправлен, но ответа нет. Значит, проблема на уровне приложений: в самом приложении или в том, чего оно ждёт.', '“while reading response header”: the connection is up and the request sent, no answer: this is L7, the application itself or what it waits for.'),
-            'drop-rule': bi('В строке написано «while connecting»: до чтения ответа дело не дошло, потому что соединение даже не установилось.', 'The line says “while connecting”: it never got to reading a response — the connection was not even established.'),
+            'slow-sql': bi('Слова «while reading response header» означают, что соединение установлено и запрос отправлен, но ответа нет. Значит, проблема лежит на уровне приложений, то есть в самом приложении или в том, чего оно ждёт.', 'The words “while reading response header” mean that the connection is up and the request sent, but no answer has come. So the problem is at L7, that is, in the application itself or in what it waits for.'),
+            pool: bi('Слова «while reading response header» означают, что соединение установлено и запрос отправлен, но ответа нет. Значит, проблема лежит на уровне приложений, то есть в самом приложении или в том, чего оно ждёт.', 'The words “while reading response header” mean that the connection is up and the request sent, but no answer has come. So the problem is at L7, that is, in the application itself or in what it waits for.'),
+            'drop-rule': bi('В строке написано «while connecting», а значит, до чтения ответа дело не дошло, потому что соединение даже не установилось.', 'The line says “while connecting”, which means it never got to reading a response, because the connection was not even established.'),
           },
         },
         {
@@ -139,8 +139,8 @@ export const DRILL_504: Drill = {
           tags: ['level'],
           rightFor: ['drop-rule'],
           why: {
-            'drop-rule': bi('Слова «while connecting to upstream» означают, что TCP-соединение не установилось за отведённое время. Значит, проблема на сетевом или транспортном уровне: в сети или в межсетевом экране между nginx и приложением.', '“while connecting to upstream”: the TCP connection was not established in time: this is L4/L3, the network or a firewall between nginx and the application.'),
-            default: bi('В строке написано «while reading response header»: соединение было, и nginx ждал ответа.', 'The line says “while reading response header”: there was a connection, and nginx waited for an answer.'),
+            'drop-rule': bi('Слова «while connecting to upstream» означают, что TCP-соединение не установилось за отведённое время. Значит, проблема лежит на сетевом или транспортном уровне, то есть в сети или в межсетевом экране между nginx и приложением.', '“while connecting to upstream”: the TCP connection was not established in time: this is L4/L3, the network or a firewall between nginx and the application.'),
+            default: bi('В строке написано «while reading response header», а это значит, что соединение было и nginx ждал ответа.', 'The line says “while reading response header”, which means there was a connection and nginx waited for an answer.'),
           },
         },
         {
@@ -153,7 +153,7 @@ export const DRILL_504: Drill = {
     },
     {
       id: 'narrow',
-      prompt: bi('Сузьте круг гипотез: проверьте приложение напрямую, мимо nginx.', 'Narrow it down: check the upstream bypassing nginx.'),
+      prompt: bi('Сузьте круг гипотез и проверьте приложение напрямую, мимо nginx.', 'Narrow down the hypotheses and check the application directly, bypassing nginx.'),
       options: [
         {
           id: 'direct',
@@ -167,14 +167,14 @@ export const DRILL_504: Drill = {
             'drop-rule': "$ curl -s -o /dev/null -w '%{http_code} %{time_total}\\n' http://10.0.0.12:8000/health\ncurl: (28) Failed to connect to 10.0.0.12 port 8000 after 30001 ms: Timeout was reached",
           },
           why: {
-            'slow-sql': bi('Страница /health отвечает мгновенно, а оформление заказа — за 35 секунд. Медленно работает один обработчик, а не всё приложение.', 'Health answers instantly, checkout takes 35 seconds: one handler is slow, not the whole application.'),
-            pool: bi('Страница /health отвечает мгновенно, а оформление заказа через 30 секунд заканчивается ошибкой 500: обработчик чего-то ждёт и прекращает ждать по таймауту.', 'Health answers instantly, checkout fails with 500 after 30 seconds: the handler waits for something and gives up on a timeout.'),
-            'drop-rule': bi('Даже к /health не удаётся подключиться: само приложение может работать, но пакеты до него не доходят.', 'Even /health does not connect: the application may be alive, but packets do not reach it.'),
+            'slow-sql': bi('Страница /health отвечает мгновенно, а оформление заказа отвечает только через 35 секунд. Медленно работает один обработчик, а не всё приложение.', 'Health answers instantly, checkout takes 35 seconds: one handler is slow, not the whole application.'),
+            pool: bi('Страница /health отвечает мгновенно, а оформление заказа через 30 секунд заканчивается ошибкой 500, потому что обработчик чего-то ждёт и прекращает ждать по таймауту.', 'Health answers instantly, checkout fails with 500 after 30 seconds: the handler waits for something and gives up on a timeout.'),
+            'drop-rule': bi('Даже к /health не удаётся подключиться. Само приложение при этом может работать, но пакеты до него не доходят.', 'Even /health does not connect. The application itself may be running, but packets do not reach it.'),
           },
         },
         {
           id: 'ss',
-          text: bi('Посмотреть состояние соединений с приложением: `ss -tn dst 10.0.0.12`', 'Connection states to the application: `ss -tn dst 10.0.0.12`'),
+          text: bi('Посмотреть состояние соединений с приложением командой `ss -tn dst 10.0.0.12`', 'Look at the state of the connections to the application with `ss -tn dst 10.0.0.12`'),
           tags: ['evidence'],
           rightFor: ['drop-rule'],
           cmd: ['^ss\\b'],
@@ -212,13 +212,13 @@ export const DRILL_504: Drill = {
           },
           why: {
             'slow-sql': bi('Новый запрос из релиза читает таблицу целиком, все четыре миллиона строк (Seq Scan), потому что индекса по полю customer_email нет.', 'The new query from the release reads the whole table (a Seq Scan over four million rows): there is no index on customer_email.'),
-            pool: bi('Все пять соединений пула заняты: новый код держит соединение с базой, пока ждёт ответа внешнего платёжного сервиса.', 'The pool of five connections is exhausted: the new code holds a database session while it waits for the external payments service.'),
+            pool: bi('Все пять соединений пула заняты, потому что новый код держит соединение с базой, пока ждёт ответа внешнего платёжного сервиса.', 'The pool of five connections is exhausted: the new code holds a database session while it waits for the external payments service.'),
             'drop-rule': bi('С 14:08 до приложения не дошёл ни один запрос, так что дело не в нём.', 'Since 14:08 not a single request has reached the application: it is not the culprit.'),
           },
         },
         {
           id: 'nft',
-          text: bi('Посмотреть правила межсетевого экрана: `nft list ruleset`', 'Firewall rules: `nft list ruleset`'),
+          text: bi('Посмотреть правила межсетевого экрана командой `nft list ruleset`', 'Look at the firewall rules with `nft list ruleset`'),
           tags: ['evidence'],
           rightFor: ['drop-rule'],
           cmd: ['^nft\\b', 'iptables'],
@@ -227,7 +227,7 @@ export const DRILL_504: Drill = {
             default: 'table inet filter {\n  chain output {\n    type filter hook output priority filter; policy accept;\n  }\n}',
           },
           why: {
-            'drop-rule': bi('Вот и причина: правило, которое сетевые инженеры ввели утром, отбрасывает все пакеты, идущие на порт 8000 в подсети приложения.', 'Here is the cause: a rule from the network team’s rollout drops everything going to port 8000 in the application subnet.'),
+            'drop-rule': bi('Причина нашлась. Правило, которое сетевые инженеры ввели утром, отбрасывает все пакеты, идущие на порт 8000 в подсети приложения.', 'Here is the cause: a rule from the network team’s rollout drops everything going to port 8000 in the application subnet.'),
             default: bi('Правил о порте 8000 нет, и сеть пакеты не трогает. Изменения сетевых инженеров ни при чём.', 'There are no rules about port 8000: the network leaves the packets alone. The network team’s change is not to blame.'),
           },
         },
@@ -244,7 +244,7 @@ export const DRILL_504: Drill = {
           rightFor: ['slow-sql', 'pool'],
           out: { 'drop-rule': 'release 2026.11.18-2 → 2026.11.18-1\n5xx share: 31% → 31%', default: 'release 2026.11.18-2 → 2026.11.18-1\n5xx share: 31% → 0.4% in 3 min' },
           why: {
-            'drop-rule': bi('Откатили не то изменение: релиз ни при чём, и пакеты к приложению по-прежнему отбрасывает правило межсетевого экрана.', 'You rolled back the wrong change: the release is innocent, the rule still drops packets to the application.'),
+            'drop-rule': bi('Вы откатили не то изменение, потому что релиз ни при чём, а пакеты к приложению по-прежнему отбрасывает правило межсетевого экрана.', 'You rolled back the wrong change, because the release is not to blame, and the firewall rule still drops packets to the application.'),
             default: bi('Откатывают то изменение, которое вызвало поломку. После отката доля ошибок вернулась к норме, и теперь причину можно чинить без спешки.', 'You roll back the change that caused the failure: after the rollback the error share is back to normal, and the fix can be done calmly.'),
           },
         },
@@ -255,13 +255,13 @@ export const DRILL_504: Drill = {
           rightFor: ['drop-rule'],
           out: { 'drop-rule': 'rule "netops 14:08" removed\n5xx share: 31% → 0.3% in 1 min', default: 'rule "netops 14:08" removed\n5xx share: 31% → 31%' },
           why: {
-            'drop-rule': bi('Откатили то изменение, которое вызвало поломку, и сразу проверили долю ошибок.', 'You rolled back exactly the change that caused the failure and checked the error share right away.'),
+            'drop-rule': bi('Вы откатили то изменение, которое вызвало поломку, и сразу проверили долю ошибок.', 'You rolled back exactly the change that caused the failure and checked the error share right away.'),
             default: bi('Правило не касалось порта приложения, поэтому ошибки остались. Улики указывали на релиз.', 'The rule never touched the application port: the errors stay. The evidence pointed at the release.'),
           },
         },
         {
           id: 'hotfix',
-          text: bi('Сразу чинить всё руками на рабочем сервере: создать индекс, увеличить пул, править код', 'Fix it in production by hand right away: create the index, raise the pool, edit code on the server'),
+          text: bi('Сразу чинить всё руками на рабочем сервере, то есть создать индекс, увеличить пул и править код', 'Fix everything by hand on the production server right away, that is, create the index, enlarge the pool and edit the code'),
           tags: ['fix-first'],
           why: bi('Это починка, а не возвращение сервиса. Пока вы чините руками, пользователи ждут, а ручная правка на рабочем сервере добавляет ещё один риск. Сначала нужно вернуть сервис, а потом исправлять причину через конвейер.', 'This is a fix, not a mitigation. While you fix by hand users wait, and a manual change in production is one more risk. First restore the service, then fix through the pipeline.'),
         },
@@ -277,27 +277,27 @@ export const DRILL_504: Drill = {
           text: bi('Добавить индекс по customer_email миграцией через конвейер, снова выложить релиз и проверить время ответа и долю ошибок 5xx', 'An index on customer_email as a migration through the pipeline; release again and check the response time and the 5xx share'),
           tags: ['fix', 'verify'],
           rightFor: ['slow-sql'],
-          why: { 'slow-sql': bi('Причина была в запросе без индекса. Индекс, добавленный миграцией, проверен на тестовом стенде и попадёт в историю изменений.', 'The cause is a query without an index; an index as a migration is tested on staging and stays in the change history.'), default: bi('Индекс не поможет: улики говорят о другой причине.', 'An index will not help: the evidence points to another cause.') },
+          why: { 'slow-sql': bi('Причина была в запросе без индекса. Индекс, добавленный миграцией, проверен на тестовом стенде и попадёт в историю изменений.', 'The cause is a query without an index; an index as a migration is tested on staging and stays in the change history.'), default: bi('Индекс не поможет, потому что улики говорят о другой причине.', 'An index will not help, because the evidence points to another cause.') },
         },
         {
           id: 'fix-pool',
           text: bi('Исправить код, чтобы он не держал соединение с базой во время внешнего запроса, добавить тест и выложить новую версию, а размер пула менять только по данным о нагрузке', 'Do not hold the database session during the external call: fix the code, add a test and release; change the pool size from load data'),
           tags: ['fix', 'verify'],
           rightFor: ['pool'],
-          why: { pool: bi('Соединения в пуле кончались не потому, что пул мал, а потому, что соединения не возвращались. Если только увеличить пул, та же поломка случится позже.', 'The pool ran out not because it was small but because connections were not returned. A “bigger pool” would only postpone the same failure.'), default: bi('Пул тут ни при чём: улики говорят о другой причине.', 'The pool is not involved: the evidence points to another cause.') },
+          why: { pool: bi('Соединения в пуле кончались не потому, что пул мал, а потому, что соединения не возвращались. Если только увеличить пул, та же поломка случится позже.', 'The pool ran out not because it was small but because connections were not returned. A “bigger pool” would only postpone the same failure.'), default: bi('Пул тут ни при чём, потому что улики говорят о другой причине.', 'The pool is not involved, because the evidence points to another cause.') },
         },
         {
           id: 'fix-rule',
           text: bi('Вместе с сетевыми инженерами исправить правило, разрешив соединения от web-1 к 10.0.0.12:8000, добавить проверку правил перед их вводом и убедиться, что ошибок 5xx меньше 1 %', 'Fix the rule with the network team: allow web-1 → 10.0.0.12:8000, add a rule check before rollouts; make sure 5xx < 1%'),
           tags: ['fix', 'verify'],
           rightFor: ['drop-rule'],
-          why: { 'drop-rule': bi('Правило исправлено точечно, а проверка перед вводом правил поймает следующую такую ошибку раньше, чем она дойдёт до рабочих серверов.', 'The rule is fixed precisely, and a check before rollouts catches the next such mistake before production.'), default: bi('Сеть тут ни при чём: улики говорят о другой причине.', 'The network is not involved: the evidence points to another cause.') },
+          why: { 'drop-rule': bi('Правило исправлено точечно, а проверка перед вводом правил поймает следующую такую ошибку раньше, чем она дойдёт до рабочих серверов.', 'The rule is fixed precisely, and a check before rollouts catches the next such mistake before production.'), default: bi('Сеть тут ни при чём, потому что улики говорят о другой причине.', 'The network is not involved, because the evidence points to another cause.') },
         },
         {
           id: 'timeout2',
           text: bi('Оставить всё как есть, но увеличить таймауты в nginx и в приложении', 'Leave it as it is but raise the timeouts in nginx and the app'),
           tags: ['hide'],
-          why: bi('Большие таймауты прячут проблему: пользователи будут ждать дольше, а следующая волна нагрузки снова выведет сервис из строя.', 'Timeouts hide the problem: users wait longer, and the next load wave brings the service down again.'),
+          why: bi('Большие таймауты прячут проблему, потому что пользователи будут ждать дольше, а следующая волна нагрузки снова выведет сервис из строя.', 'Timeouts hide the problem: users wait longer, and the next load wave brings the service down again.'),
         },
       ],
     },
@@ -307,7 +307,7 @@ export const DRILL_504: Drill = {
 export const DRILL_DISK: Drill = {
   id: 'drill.disk',
   title: bi('«Диск скоро заполнится»', '“The disk will fill up soon”'),
-  symptom: bi('На сервере `shop` сработал алерт `DiskWillFillIn4Hours`: диск заполнится примерно через четыре часа.', 'An alert came in: `DiskWillFillIn4Hours` on the `shop` server.'),
+  symptom: bi('На сервере `shop` сработал алерт `DiskWillFillIn4Hours`, который предупреждает, что диск заполнится примерно через четыре часа.', 'On the `shop` server the alert `DiskWillFillIn4Hours` has fired, warning that the disk will fill up in about four hours.'),
   concepts: ['career.situational', 'career.mitigate-first'],
   variants: [
     { id: 'deleted-open', cause: bi('служба держит открытым удалённый журнал', 'a service holds a deleted log open') },
@@ -329,7 +329,7 @@ export const DRILL_DISK: Drill = {
         },
         {
           id: 'rmlogs',
-          text: bi('Сразу освободить место: `rm -rf /var/log/*`', 'Free space right away: `rm -rf /var/log/*`'),
+          text: bi('Сразу освободить место командой `rm -rf /var/log/*`', 'Free space right away with `rm -rf /var/log/*`'),
           tags: ['destructive'],
           cmd: ['rm\\s+-rf'],
           why: bi('Вы удалили улики и журналы всех служб. А если место занимает открытый файл, оно даже не освободится.', 'You deleted the evidence and the logs of every service. And if an open file holds the space, it will not even be freed.'),
@@ -345,7 +345,7 @@ export const DRILL_DISK: Drill = {
     },
     {
       id: 'df',
-      prompt: bi('Подтвердите симптом: сколько места занято и на каком разделе.', 'Confirm the symptom: how much space, and where.'),
+      prompt: bi('Подтвердите симптом и выясните, сколько места занято и на каком разделе.', 'Confirm the symptom and find out how much space is used and on which partition.'),
       options: [
         {
           id: 'df',
@@ -354,7 +354,7 @@ export const DRILL_DISK: Drill = {
           good: true,
           cmd: ['^df\\b'],
           out: 'Filesystem      Size  Used Avail Use% Mounted on\n/dev/vda1        20G   19G  1.0G  95% /\ntmpfs           2.0G     0  2.0G   0% /dev/shm',
-          why: bi('Корневой раздел заполнен: занято 19 ГБ из 20. Теперь нужно выяснить, что его занимает.', 'The root partition is full: 19 GB of 20. Now: what exactly fills it.'),
+          why: bi('Корневой раздел заполнен почти целиком, занято 19 ГБ из 20. Теперь нужно выяснить, что его занимает.', 'The root partition is full: 19 GB of 20. Now: what exactly fills it.'),
         },
         {
           id: 'free',
@@ -385,7 +385,7 @@ export const DRILL_DISK: Drill = {
         },
         {
           id: 'find-all',
-          text: bi('Удалить все файлы старше недели: `find / -mtime +7 -delete`', 'Delete everything older than a week: `find / -mtime +7 -delete`'),
+          text: bi('Удалить все файлы старше недели командой `find / -mtime +7 -delete`', 'Delete every file older than a week with `find / -mtime +7 -delete`'),
           tags: ['destructive'],
           cmd: ['find.*-delete'],
           why: bi('Эта команда удалит системные файлы и данные приложения. Сначала соберите улики, а потом действуйте точечно.', 'This deletes system files and application data. Evidence first, then a precise action.'),
@@ -408,7 +408,7 @@ export const DRILL_DISK: Drill = {
           text: bi('Растёт журнал приложения в /var/log/app', 'The application log in /var/log/app is growing'),
           tags: ['level'],
           rightFor: ['no-rotate'],
-          why: { 'no-rotate': bi('В /var/log/app лежит 11 ГБ, то есть почти всё занятое место.', '11 GB in /var/log/app is nearly all the used space.'), default: bi('В выводе команды /var/log/app — не самый большой каталог.', 'In the output /var/log/app is not the biggest directory.') },
+          why: { 'no-rotate': bi('В /var/log/app лежит 11 ГБ, то есть почти всё занятое место.', '11 GB in /var/log/app is nearly all the used space.'), default: bi('В выводе команды каталог /var/log/app не самый большой.', 'In the output the /var/log/app directory is not the biggest.') },
         },
         {
           id: 'tmpdir',
@@ -431,7 +431,7 @@ export const DRILL_DISK: Drill = {
       options: [
         {
           id: 'lsof',
-          text: bi('Найти удалённые, но открытые файлы: `lsof +L1`', 'Deleted files still open: `lsof +L1`'),
+          text: bi('Найти удалённые, но открытые файлы командой `lsof +L1`', 'Find deleted but still open files with `lsof +L1`'),
           tags: ['evidence'],
           rightFor: ['deleted-open'],
           cmd: ['lsof', '/proc/.*/fd'],
@@ -454,7 +454,7 @@ export const DRILL_DISK: Drill = {
           rightFor: ['tmp'],
           cmd: ['report/tmp'],
           out: { tmp: '48211\n$ ls -ltr /var/lib/report/tmp | head -2\n-rw-r--r-- 1 app app 210K Sep  2 03:00 render-0001.tmp', default: '12' },
-          why: { tmp: bi('С сентября накопилось почти 50 тысяч временных файлов: служба не убирает за собой.', 'Almost 50 thousand temporary files since September: the service does not clean up after itself.'), default: bi('Временных файлов немного, и дело не в них.', 'There are few temporary files: they are not the culprit.') },
+          why: { tmp: bi('С сентября накопилось почти 50 тысяч временных файлов, потому что служба не убирает за собой.', 'Almost 50 thousand temporary files have piled up since September, because the service does not clean up after itself.'), default: bi('Временных файлов немного, и дело не в них.', 'There are few temporary files: they are not the culprit.') },
         },
       ],
     },
@@ -464,14 +464,14 @@ export const DRILL_DISK: Drill = {
       options: [
         {
           id: 'reopen',
-          text: bi('Заставить службу report заново открыть журнал: перезапустить её в спокойный момент или послать ей сигнал, по которому она переоткрывает журналы', 'Make report reopen its log: restart the service at a quiet moment or send it its log-reopen signal'),
+          text: bi('Заставить службу report заново открыть журнал, то есть перезапустить её в спокойный момент или послать ей сигнал, по которому она переоткрывает журналы', 'Make the report service reopen its log, that is, restart it at a quiet moment or send it the signal on which it reopens its logs'),
           tags: ['mitigate'],
           rightFor: ['deleted-open'],
-          why: { 'deleted-open': bi('Место освободится, только когда процесс закроет файл. Теперь перезапуск — осознанное действие, основанное на улике, а не гадание.', 'The space comes back only when the process closes the file. Now a restart is a deliberate action based on evidence, not a guess.'), default: bi('Перезапуск ничего не освободит, потому что место занимают обычные файлы.', 'A restart frees nothing: ordinary files take the space.') },
+          why: { 'deleted-open': bi('Место освободится, только когда процесс закроет файл. Теперь перезапуск становится осознанным действием, основанным на улике, а не гаданием.', 'The space comes back only when the process closes the file. Now a restart is a deliberate action based on evidence, not a guess.'), default: bi('Перезапуск ничего не освободит, потому что место занимают обычные файлы.', 'A restart frees nothing: ordinary files take the space.') },
         },
         {
           id: 'truncate',
-          text: bi('Сохранить конец журнала как улику и опустошить файл: `truncate -s 0 /var/log/app/app.log`', 'Keep the tail of the log as evidence and truncate the file: `truncate -s 0 /var/log/app/app.log`'),
+          text: bi('Сохранить конец журнала как улику и опустошить файл командой `truncate -s 0 /var/log/app/app.log`', 'Keep the tail of the log as evidence and empty the file with `truncate -s 0 /var/log/app/app.log`'),
           tags: ['mitigate'],
           rightFor: ['no-rotate'],
           cmd: ['truncate'],
@@ -479,7 +479,7 @@ export const DRILL_DISK: Drill = {
         },
         {
           id: 'cleantmp',
-          text: bi('Удалить временные файлы службы старше суток: `find /var/lib/report/tmp -mtime +1 -delete`', 'Delete the service’s temporary files older than a day: `find /var/lib/report/tmp -mtime +1 -delete`'),
+          text: bi('Удалить временные файлы службы старше суток командой `find /var/lib/report/tmp -mtime +1 -delete`', 'Delete the service’s temporary files older than a day with `find /var/lib/report/tmp -mtime +1 -delete`'),
           tags: ['mitigate'],
           rightFor: ['tmp'],
           why: { tmp: bi('Удаляются только старые временные файлы одной службы, а данные остаются нетронутыми.', 'Only one service’s temporary files, and only old ones, are removed — the data is untouched.'), default: bi('Временные файлы не виноваты, и это действие место не вернёт.', 'The temporary files are not the culprit: this does not bring the space back.') },
@@ -488,7 +488,7 @@ export const DRILL_DISK: Drill = {
           id: 'rmdata',
           text: bi('Удалить /var/lib/report/data, потому что там много места', 'Delete /var/lib/report/data — there is a lot of space there'),
           tags: ['destructive'],
-          why: bi('Это данные приложения. Освободить место ценой потери данных — авария похуже исходной.', 'This is the application’s data. Free space at the price of data is a worse incident than the original one.'),
+          why: bi('Это данные приложения. Если освободить место ценой потери данных, авария получится хуже исходной.', 'This is the application’s data. Free space at the price of data is a worse incident than the original one.'),
         },
       ],
     },
@@ -501,7 +501,7 @@ export const DRILL_DISK: Drill = {
           text: bi('Добавить для журнала правило logrotate (с переоткрытием журнала в postrotate или с copytruncate) и проверить, что алерт по-прежнему настроен', 'A logrotate rule for the log (with a reopen in postrotate or copytruncate), and keep the alert'),
           tags: ['fix', 'verify'],
           rightFor: ['deleted-open', 'no-rotate'],
-          why: { default: bi('Ротация с переоткрытием не даёт журналу ни расти без конца, ни занимать место после удаления.', 'Rotation with a reopen keeps the log from growing forever or getting stuck as a deleted file.'), tmp: bi('Журналы тут ни при чём: копятся временные файлы.', 'Logs are not the problem here: temporary files pile up.') },
+          why: { default: bi('Ротация с переоткрытием не даёт журналу ни расти без конца, ни занимать место после удаления.', 'Rotation with a reopen keeps the log from growing forever or getting stuck as a deleted file.'), tmp: bi('Журналы тут ни при чём, потому что копятся временные файлы.', 'Logs are not the problem here, because temporary files pile up.') },
         },
         {
           id: 'tmpfiles',
@@ -588,7 +588,7 @@ export const DRILL_CRASHLOOP: Drill = {
             env: '    Last State:     Terminated\n      Reason:       Error\n      Exit Code:    1\n    Restart Count:  6\nEvents:\n  Warning  BackOff  kubelet  Back-off restarting failed container api in pod api-7c9d8f6b5-2xkqp',
             oom: '    Last State:     Terminated\n      Reason:       OOMKilled\n      Exit Code:    137\n    Limits:\n      memory:  64Mi\nEvents:\n  Warning  BackOff  kubelet  Back-off restarting failed container api in pod api-7c9d8f6b5-2xkqp',
           },
-          why: bi('Поле Last State говорит, почему контейнер завершился в прошлый раз: сам ли он вышел или его завершили внешним сигналом.', 'The Last State field tells why the container ended last time: on its own, or killed.'),
+          why: bi('Поле Last State говорит, почему контейнер завершился в прошлый раз, то есть вышел ли он сам или его завершили внешним сигналом.', 'The Last State field tells why the container ended last time: on its own, or killed.'),
         },
       ],
     },
@@ -624,12 +624,12 @@ export const DRILL_CRASHLOOP: Drill = {
       options: [
         {
           id: 'previous',
-          text: bi('Журнал прошлого запуска: `kubectl logs api-7c9d8f6b5-2xkqp -n shop --previous`', 'The log of the previous run: `kubectl logs api-7c9d8f6b5-2xkqp -n shop --previous`'),
+          text: bi('Прочитать журнал прошлого запуска командой `kubectl logs api-7c9d8f6b5-2xkqp -n shop --previous`', 'Read the log of the previous run with `kubectl logs api-7c9d8f6b5-2xkqp -n shop --previous`'),
           tags: ['evidence'],
           rightFor: ['env'],
           cmd: ['logs.*(-p\\b|--previous)'],
           out: { env: 'Traceback (most recent call last):\n  File "/app/main.py", line 12, in <module>\n    DB = os.environ["DATABASE_URL"]\nKeyError: \'DATABASE_URL\'', oom: 'starting api 2.4.0\nloading catalog cache (90 MiB)…' },
-          why: { env: bi('Новой версии нужна переменная DATABASE_URL, а в манифесте её нет.', 'The new version needs a DATABASE_URL variable that the manifest does not have.'), oom: bi('Журнал обрывается на загрузке кэша размером 90 МиБ при лимите 64Mi: ядро завершило процесс посреди загрузки.', 'The log stops while loading a 90 MiB cache under a 64Mi limit: the kernel killed the process mid-load.') },
+          why: { env: bi('Новой версии нужна переменная DATABASE_URL, а в манифесте её нет.', 'The new version needs a DATABASE_URL variable that the manifest does not have.'), oom: bi('Журнал обрывается на загрузке кэша размером 90 МиБ при лимите 64Mi, и это значит, что ядро завершило процесс посреди загрузки.', 'The log stops while loading a 90 MiB cache under a 64Mi limit: the kernel killed the process mid-load.') },
         },
         {
           id: 'limits',
@@ -638,7 +638,7 @@ export const DRILL_CRASHLOOP: Drill = {
           rightFor: ['oom'],
           cmd: ['kubectl top'],
           out: { oom: 'NAME                  CPU(cores)   MEMORY(bytes)\napi-7c9d8f6b5-2xkqp   120m         63Mi', default: 'NAME                  CPU(cores)   MEMORY(bytes)\napi-7c9d8f6b5-2xkqp   2m           18Mi' },
-          why: { oom: bi('Под упирается в лимит 64Mi, и ядро его завершает: лимит меньше, чем приложению нужно при запуске.', 'The pod hits the 64Mi limit and the kernel ends it: the limit is lower than the application needs to start.'), env: bi('Памяти хватает с запасом, и дело не в лимите.', 'There is plenty of memory: the limit is not the cause.') },
+          why: { oom: bi('Под упирается в лимит 64Mi, и ядро его завершает, потому что лимит меньше, чем приложению нужно при запуске.', 'The pod hits the 64Mi limit and the kernel ends it: the limit is lower than the application needs to start.'), env: bi('Памяти хватает с запасом, и дело не в лимите.', 'There is plenty of memory: the limit is not the cause.') },
         },
         {
           id: 'logsnow',
@@ -656,7 +656,7 @@ export const DRILL_CRASHLOOP: Drill = {
       options: [
         {
           id: 'undo',
-          text: bi('Откатить выкладку: вернуть прошлую ревизию в Git (или `kubectl rollout undo`, если GitOps нет)', 'Roll back the release: revert to the previous revision in Git (or `kubectl rollout undo` without GitOps)'),
+          text: bi('Откатить выкладку, то есть вернуть прошлую ревизию в Git (или выполнить `kubectl rollout undo`, если GitOps нет)', 'Roll back the release: revert to the previous revision in Git (or `kubectl rollout undo` without GitOps)'),
           tags: ['mitigate'],
           good: true,
           cmd: ['rollout undo', 'git revert'],
@@ -671,7 +671,7 @@ export const DRILL_CRASHLOOP: Drill = {
         },
         {
           id: 'edit',
-          text: bi('Поправить Deployment руками: `kubectl edit`', 'Edit the Deployment by hand: `kubectl edit`'),
+          text: bi('Поправить Deployment руками командой `kubectl edit`', 'Edit the Deployment by hand with `kubectl edit`'),
           tags: ['fix-first'],
           cmd: ['kubectl edit'],
           why: bi('Выкладка идёт через Argo CD из Git, поэтому ручная правка откатится при следующей синхронизации или разойдётся с Git. Сначала нужен откат, а потом исправление в Git.', 'Releases go through Argo CD from Git: a manual edit is reverted on the next sync or drifts from Git. Roll back first, then fix it in Git.'),
@@ -694,7 +694,7 @@ export const DRILL_CRASHLOOP: Drill = {
           text: bi('Увеличить лимит по измерениям: на старте нужно до 90Mi, поэтому с запасом поставить, например, 128Mi в манифесте в Git, выложить и проверить', 'Raise the limit from data: the 90Mi start peak plus headroom, say 128Mi, in the manifest in Git; release and verify'),
           tags: ['fix', 'verify'],
           rightFor: ['oom'],
-          why: { oom: bi('Лимит выбран по измерению, а не наугад, и изменение прошло через Git.', 'The limit comes from a measurement, not “more”, and the change went through Git.'), env: bi('Память ни при чём, не хватает переменной окружения.', 'Memory is not the issue: a variable is missing.') },
+          why: { oom: bi('Лимит выбран по измерению, а не наугад, и изменение прошло через Git.', 'The limit comes from a measurement, not “more”, and the change went through Git.'), env: bi('Память ни при чём, а не хватает переменной окружения.', 'Memory is not the issue, and what is missing is an environment variable.') },
         },
       ],
     },

@@ -80,7 +80,7 @@ export const ONCALL_EXAM: Exam = {
   id: 'final.exam.oncall',
   block: 'final',
   kind: 'oncall',
-  title: bi('Смена дежурного: экзамен', 'The on-call shift: the exam'),
+  title: bi('Экзамен по смене дежурного', 'The on-call shift exam'),
   intro: bi(
     'У вас шестьдесят минут по жёсткому таймеру, два настоящих инцидента на стендах и три вопроса о том, как ведёт себя дежурный. Проверяется не только починка: сначала выбор приоритета, потом возвращение сервиса, а в конце статус и разбор. Встроенная документация открыта.',
     'Sixty minutes, a hard timer, two real incidents on the stands and three questions about the on-call behaviour. Not only the fix is checked: first the priority, then the service, at the end the status and the review. The built-in documentation is open.',
@@ -103,10 +103,10 @@ export const ONCALL_EXAM: Exam = {
       setup: brokenRelease(),
       task: {
         id: 'o-checkout',
-        prompt: bi('Алерт: «Оплата отвечает ошибкой 503». Верните сервис. Выкладка идёт через Git, поэтому и откат должен пройти через Git: ручную правку в кластере система отменит через несколько секунд.', '“Checkout answers 503”. Restore the service. Releases go through Git, and the rollback must go through Git too: a manual edit in the cluster is undone within seconds.'),
+        prompt: bi('Пришёл алерт «Оплата отвечает ошибкой 503», и вам нужно вернуть сервис. Выкладка идёт через Git, поэтому и откат должен пройти через Git, ведь ручную правку в кластере система отменит через несколько секунд.', 'An alert has fired, “Checkout answers 503”, and you need to restore the service. Releases go through Git, so the rollback must go through Git too, because the system undoes a manual edit in the cluster within seconds.'),
         check: {
           when: (f: Facts) => healthy(f) && synced(f) && appRevision(f) === forgeHead(f) && ['trainer/web:1.0', 'trainer/web:1.1'].includes(image(f) ?? ''),
-          fail: [{ if: (f: Facts) => image(f) === 'trainer/web:1.2', say: bi('В кластере всё ещё работает образ 1.2, а такого образа нет в реестре. Отмените коммит командой git revert и отправьте изменения командой git push.', 'The cluster still runs image 1.2: it does not exist in the registry. Revert the commit (git revert) and push.') }],
+          fail: [{ if: (f: Facts) => image(f) === 'trainer/web:1.2', say: bi('В кластере всё ещё работает образ 1.2, а такого образа нет в реестре. Отмените коммит командой git revert и отправьте изменения командой git push.', 'The cluster still runs image 1.2, and that image does not exist in the registry. Revert the commit with git revert and send the change with git push.') }],
         },
         concepts: ['cicd.gitops-pull', 'career.oncall'],
       },
@@ -118,7 +118,7 @@ export const ONCALL_EXAM: Exam = {
       setup: clusterStand({ faults: [{ host: 'worker-2', kind: 'kubelet-stopped' }] }),
       task: {
         id: 'o-node',
-        prompt: bi('Алерт: «worker-2 NotReady». Найдите по уликам, что случилось с узлом, и верните его в строй, не пересоздавая его и не присоединяя к кластеру заново.', '“worker-2 is NotReady”. Find from evidence what is wrong with the node and bring it back without recreating or re-joining it.'),
+        prompt: bi('Пришёл алерт «worker-2 NotReady». Найдите по уликам, что случилось с узлом, и верните его в строй, не пересоздавая его и не присоединяя к кластеру заново.', 'An alert has fired, “worker-2 is NotReady”. Find from evidence what is wrong with the node and bring it back without recreating or re-joining it.'),
         check: { when: (f: Facts) => readyNodes(f) === 3 },
         concepts: ['k8s.kubelet', 'career.oncall'],
       },
@@ -135,9 +135,9 @@ export const CAPSTONE_EXAM: Exam = {
   id: 'final.exam.capstone',
   block: 'final',
   kind: 'capstone',
-  title: bi('Итоговый экзамен на стендах: построить, починить, защитить', 'The final exam on the stands: build, fix, defend'),
+  title: bi('Итоговый экзамен на стендах, где вы строите, чините и защищаете систему', 'The final exam on the stands, where you build, fix and defend a system'),
   intro: bi(
-    'Один сценарий в четыре этапа на стендах курса. На этапе **А, «Построить»**, вы создаёте кластер из кода, выкладываете магазин через Git, наводите порядок с безопасностью узлов, чините алерт и решаете по документации задачу, которой не было в курсе. На этапе **Б, «Починить»**, вам достаётся одна поломка из набора, и какую из них вы получите, решает номер варианта. На этапе **В, «Защитить»**, вы своими словами отвечаете на вопросы и сверяете ответы с ключевыми пунктами. Последний этап — **уборка**, и без неё экзамен не сдан. Проверяется состояние стендов, а не набранные команды. Подсказок и наставника нет, открыта только встроенная документация. Тот же экзамен на трёх настоящих виртуальных машинах описан в чек-листе урока «Итоговый экзамен».',
+    'Один сценарий в четыре этапа на стендах курса. На этапе **А, «Построить»**, вы создаёте кластер из кода, выкладываете магазин через Git, наводите порядок с безопасностью узлов, чините алерт и решаете по документации задачу, которой не было в курсе. На этапе **Б, «Починить»**, вам достаётся одна поломка из набора, и какую из них вы получите, решает номер варианта. На этапе **В, «Защитить»**, вы своими словами отвечаете на вопросы и сверяете ответы с ключевыми пунктами. На последнем этапе вы делаете **уборку**, и без неё экзамен не сдан. Проверяется состояние стендов, а не набранные команды. Подсказок и наставника нет, открыта только встроенная документация. Тот же экзамен на трёх настоящих виртуальных машинах описан в чек-листе урока «Итоговый экзамен».',
     'One scenario in four stages on the course stands. **A. Build** — a cluster from code, a release through Git, node security, an alert and a task beyond the course from the documentation. **B. Fix** — one failure from a pool, chosen by the variant seed. **C. Defend** — questions you answer in your own words and check against the key points. **Cleanup** — without it the exam is not passed. The state is checked, not the commands typed; there are no hints and no mentor, only the built-in documentation is open. The same exam on three real VMs is the checklist of the “Final exam” lesson.',
   ),
   story: bi(
@@ -156,7 +156,7 @@ export const CAPSTONE_EXAM: Exam = {
       setup: stand({ ops: opsFiles() }),
       task: {
         id: 'f-cluster',
-        prompt: bi('**А1. Кластер из кода.** Облако пустое. Создайте три узла и кластер кодом из каталогов `~/infra` и `~/ops` и докажите, что код описывает состояние, а не последовательность действий: повторный запуск `site.yml` должен показать `changed=0`.', '**A1. A cluster from code.** The cloud is empty. Bring up three nodes and the cluster with the code in `~/infra` and `~/ops`, and prove the code describes a state: a repeated run of `site.yml` gives `changed=0`.'),
+        prompt: bi('**А1. Кластер из кода.** Облако пустое. Создайте три узла и кластер кодом из каталогов `~/infra` и `~/ops` и докажите, что код описывает состояние, а не последовательность действий. Для этого повторный запуск `site.yml` должен показать `changed=0`, то есть код больше ничего не меняет.', '**A1. A cluster from code.** The cloud is empty. Create three nodes and the cluster with the code in `~/infra` and `~/ops`, and prove that the code describes a state rather than a sequence of actions. To do so, a repeated run of `site.yml` must show `changed=0`, meaning the code changes nothing more.'),
         check: { when: (f: Facts) => readyNodes(f) === 3 && idempotentRun(f) },
         concepts: ['k8s.rebuildable', 'iac.creates'],
       },
@@ -239,7 +239,7 @@ export const CAPSTONE_EXAM: Exam = {
       setup: clusterStand(),
       task: {
         id: 'f-cleanup',
-        prompt: bi('**Уборка.** Экзамен закончен. Удалите всё, что создал код из каталога `~/infra`: в облаке не должно остаться ни одной машины курса.', '**Cleanup.** The exam is over. Delete everything the code in `~/infra` created; not a single course machine may be left in the cloud.'),
+        prompt: bi('**Уборка.** Экзамен закончен. Удалите всё, что создал код из каталога `~/infra`, так, чтобы в облаке не осталось ни одной машины курса.', '**Cleanup.** The exam is over. Delete everything the code in `~/infra` created so that not a single course machine is left in the cloud.'),
         check: { when: (f: Facts) => vms(f).length === 0 && (tf(f)?.state.length ?? 1) === 0 && (tf(f)?.serial ?? 0) > 1 },
         concepts: ['career.cleanup'],
       },
@@ -249,17 +249,17 @@ export const CAPSTONE_EXAM: Exam = {
     {
       id: 'c1',
       prompt: bi('**В. Защита.** Техлид спрашивает: «Где в этом кластере единая точка отказа и что будет, если она выйдет из строя?»', '**C. Defence.** The tech lead asks: “Where is the single point of failure in this cluster and what happens if it fails?”'),
-      keyPoints: [bi('Управляющий узел (control plane) один: если он выйдет из строя, запущенные поды продолжат работать, но изменения, планирование и автоматическое восстановление остановятся', 'One control plane: if it fails, running pods live on, but changes, scheduling and self-healing stop'), bi('etcd тоже один и без снимков, и его потеря означает потерю всего состояния кластера', 'One etcd without snapshots means losing the whole cluster state'), bi('Чтобы избавиться от единой точки отказа, ставят три управляющих узла за балансировщиком и делают снимки etcd, восстановление из которых проверено', 'How to remove it: three control planes behind a load balancer, etcd snapshots with a tested restore')],
+      keyPoints: [bi('Управляющий узел (control plane) в кластере один, и если он выйдет из строя, запущенные поды продолжат работать, но изменения, планирование и автоматическое восстановление остановятся', 'The cluster has one control plane, and if it fails, running pods keep working, but changes, scheduling and self-healing stop'), bi('etcd тоже один и без снимков, и его потеря означает потерю всего состояния кластера', 'One etcd without snapshots means losing the whole cluster state'), bi('Чтобы избавиться от единой точки отказа, ставят три управляющих узла за балансировщиком и делают снимки etcd, восстановление из которых проверено', 'How to remove it: three control planes behind a load balancer, etcd snapshots with a tested restore')],
     },
     {
       id: 'c2',
       prompt: bi('**В. Защита.** «Как вы откатите неудачную выкладку и сколько это займёт?»', '**C. Defence.** “How do you roll back a failed release, and how long does it take?”'),
-      keyPoints: [bi('Отменить коммит выкладки командой git revert и отправить изменение командой push, а Argo CD сам вернёт прошлую ревизию', 'git revert of the release commit and a push — Argo CD brings back the previous revision itself'), bi('Ручная правка через kubectl не поможет: selfHeal её отменит', 'A manual kubectl does not help: selfHeal undoes it'), bi('Откат занимает один цикл синхронизации и время на постепенную замену подов (rolling update)', 'The time is one sync loop plus a rolling update')],
+      keyPoints: [bi('Отменить коммит выкладки командой git revert и отправить изменение командой push, а Argo CD сам вернёт прошлую ревизию', 'git revert of the release commit and a push — Argo CD brings back the previous revision itself'), bi('Ручная правка через kubectl не поможет, потому что selfHeal её отменит', 'A manual edit with kubectl does not help, because selfHeal undoes it'), bi('Откат занимает один цикл синхронизации и время на постепенную замену подов (rolling update)', 'The time is one sync loop plus a rolling update')],
     },
     {
       id: 'c3',
       prompt: bi('**В. Защита.** «Что kubeadm сделал за вас, а что осталось на вас? Что спрятал бы k3s?»', '**C. Defence.** “What did kubeadm do for you, and what was left to you? What would k3s hide?”'),
-      keyPoints: [bi('kubeadm создал сертификаты, файлы kubeconfig, статические поды управляющего узла и токены для присоединения узлов', 'kubeadm: certificates, kubeconfigs, the static pods of the control plane, bootstrap tokens'), bi('На вас остались подготовка узлов, среда запуска контейнеров, сеть подов, хранилище, обновления и снимки etcd', 'Left to you: node preparation, the runtime, the pod network, storage, upgrades, etcd snapshots'), bi('k3s ставит всё одной программой со встроенными сетью, хранилищем и SQLite или etcd: так проще, но устройство кластера видно хуже', 'k3s installs everything as one binary with a built-in network, storage and SQLite or etcd — simpler, but less is visible'), bi('Честно сказать, что вы не делали своими руками', 'Honestly name what you did not do by hand')],
+      keyPoints: [bi('kubeadm создал сертификаты, файлы kubeconfig, статические поды управляющего узла и токены для присоединения узлов', 'kubeadm: certificates, kubeconfigs, the static pods of the control plane, bootstrap tokens'), bi('На вас остались подготовка узлов, среда запуска контейнеров, сеть подов, хранилище, обновления и снимки etcd', 'Left to you: node preparation, the runtime, the pod network, storage, upgrades, etcd snapshots'), bi('k3s ставит всё одной программой со встроенными сетью, хранилищем и SQLite или etcd, и это проще, но устройство кластера при этом видно хуже', 'k3s installs everything as one program with a built-in network, storage and SQLite or etcd, which is simpler, but the structure of the cluster is less visible'), bi('Открыто признать, какие шаги вы не делали своими руками', 'Openly admit which steps you did not do by hand')],
     },
   ],
 };

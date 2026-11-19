@@ -84,13 +84,13 @@ export const fsrsModel = defineModel<P>({
     'The course brings each concept back not on a fixed schedule but when the chance that you recall it falls to the target, usually 90%. The FSRS scheduler computes that day from your answer history. The diagram follows one question after today’s answer, with the same scheduler as the review screen.',
   ),
   intro: bi(
-    'Схема соберётся по шагам: сейчас на ней только ваш ответ и срок следующего повторения. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Облачко у подсвеченного блока говорит, что этот блок делает, а карточка на линии показывает, что он передаёт дальше. Под схемой видны три числа: через сколько дней вопрос вернётся, насколько устойчива память и сколько раз за месяц вопрос появится снова.\n\nПосле первого прохода выберите в «Параметрах», как вы ответили сегодня, или поднимите цель вспоминания и посмотрите, как изменятся эти числа.',
-    'The diagram builds itself step by step: now it shows only your answer and the date of the next review. Press “Start: step forward”, then go on with “Step forward”. The callout says what the highlighted block does; the card on the line shows what it hands on. Under the diagram: days to the next review, how stable the memory is, and how many times a month the question returns.\n\nAfter the first pass choose in “Parameters” how you answered today, or raise the target, and watch the numbers.',
+    'Схема собирается по шагам, и сейчас на ней только ваш ответ и срок следующего повторения. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что этот блок делает, а карточка на линии показывает, что он передаёт дальше. Под схемой видны три числа: через сколько дней вопрос вернётся, насколько устойчива память и сколько раз за месяц вопрос появится снова.\n\nПосле первого прохода выберите в «Параметрах», как вы ответили сегодня, или повысьте цель вспоминания и посмотрите, как изменятся эти числа.',
+    'The diagram builds itself step by step, and now it shows only your answer and the date of the next review. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted block says what that block does, and the card on the line shows what it hands on. Under the diagram you see three numbers: in how many days the question returns, how stable the memory is and how many times a month the question appears again.\n\nAfter the first pass choose in “Parameters” how you answered today, or raise the target, and watch the numbers.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
     { mark: 'say', text: bi('что этот блок делает', 'what that block does') },
-    { mark: 'token', text: bi('что передаётся дальше: оценка, число дней', 'what is handed on: the rating, the number of days') },
+    { mark: 'token', text: bi('то, что передаётся дальше, то есть оценка или число дней', 'what is handed on, that is, the rating or the number of days') },
     { mark: 'icon:user', text: bi('ваш ответ', 'your answer') },
     { mark: 'icon:process', text: bi('расчёт, который делает курс', 'the course’s computation') },
     { mark: 'icon:folder', text: bi('очередь вопросов', 'a queue of questions') },
@@ -108,9 +108,9 @@ export const fsrsModel = defineModel<P>({
       { id: 'rating', label: bi('Оценка ответа', 'Rating'), icon: 'process', work: 'spin', sub: 'good', family: 'gauge', x: 312, y: 40, w: 192, h: 64, card: card('Курс переводит ответ в одну из четырёх оценок. Ошибка получает оценку «снова». Верный ответ наугад, с подсказкой или вдвое медленнее обычного получает оценку «с трудом», верный ответ в обычное время — «вспомнил», а быстрый верный ответ с отметкой «знаю» — «легко».', 'A mistake is “again”; right but guessed, hinted or twice as slow is “hard”; right within the norm is “good”; fast with “I know” is “easy”.', 'Оценку выставляет курс по этому правилу.', 'The course, by the rule of the review chapter.') },
       { id: 'fsrs', label: bi('Планировщик FSRS', 'FSRS scheduler'), icon: 'process', work: 'spin', sub: 'retention 0.90', family: 'process', shape: 'hex', x: 608, y: 40, w: 208, h: 64, card: card('Планировщик повторений. По истории ваших ответов он оценивает, как быстро вы забываете это понятие, и выбирает день, когда вероятность вспомнить его упадёт до цели.', 'From your answer history it estimates how fast you forget this concept and picks the day the chance of recall falls to the target.', 'Это библиотека ts-fsrs, которая работает у вас в браузере.', 'The ts-fsrs library in your browser.') },
       { id: 'stab', label: bi('Устойчивость памяти', 'Stability'), icon: 'process', sub: '—', family: 'gauge', x: 608, y: 200, w: 208, h: 64, card: card('Число дней, в течение которых вероятность вспомнить понятие остаётся не ниже цели. С каждым верным ответом, данным вовремя, это число растёт, а после ошибки сильно падает.', 'How many days the memory stays at the target. It grows with every right answer on time and drops after a mistake.', 'Число вычисляет FSRS.', 'FSRS.') },
-      { id: 'due', label: bi('Следующее повторение', 'Next review'), icon: 'file', sub: '—', family: 'flow', x: 608, y: 352, w: 208, h: 64, card: card('Срок, через который вопрос по этому понятию вернётся: несколько минут после ошибки или несколько дней после верного ответа.', 'When the concept comes back.', 'Срок назначает FSRS.', 'FSRS.') },
+      { id: 'due', label: bi('Следующее повторение', 'Next review'), icon: 'file', sub: '—', family: 'flow', x: 608, y: 352, w: 208, h: 64, card: card('Срок, через который вопрос по этому понятию вернётся. После ошибки это несколько минут, а после верного ответа несколько дней.', 'When the question on this concept comes back. After a mistake it is a few minutes, and after a right answer a few days.', 'Срок назначает FSRS.', 'FSRS.') },
       { id: 'queue', label: bi('Очередь на день', 'The day’s queue'), icon: 'folder', sub: '≤ 15 min', family: 'neutral', shape: 'buffer', x: 312, y: 352, w: 192, h: 64, card: card('Здесь собираются вопросы, срок которых наступил, вперемешку из разных блоков курса. В одной сессии повторения не больше 15 минут или 30 вопросов.', 'Questions whose day has come, mixed across blocks, up to 15 minutes or 30 cards.', 'Очередь собирает экран повторения.', 'The review screen.') },
-      { id: 'miss', label: bi('Уверенные ошибки', 'Confident mistakes'), icon: 'folder', sub: '0', family: 'neutral', shape: 'buffer', x: 312, y: 200, w: 192, h: 64, card: card('В эту отдельную очередь попадают ошибки, сделанные с отметкой «знаю». Такой вопрос возвращается в другом виде в конце той же сессии и ещё раз на следующий день: уверенную ошибку исправить легче всего, пока она свежа.', 'A mistake marked “I know” comes back in another form at the end of the same session and the next day.', 'Очередь ведёт экран повторения.', 'The review screen.') },
+      { id: 'miss', label: bi('Уверенные ошибки', 'Confident mistakes'), icon: 'folder', sub: '0', family: 'neutral', shape: 'buffer', x: 312, y: 200, w: 192, h: 64, card: card('В эту отдельную очередь попадают ошибки, сделанные с отметкой «знаю». Такой вопрос возвращается в другом виде в конце той же сессии и ещё раз на следующий день, потому что уверенную ошибку легче всего исправить, пока она свежа.', 'A mistake marked “I know” comes back in another form at the end of the same session and the next day.', 'Очередь ведёт экран повторения.', 'The review screen.') },
       { id: 'format', label: bi('Вид следующего вопроса', 'Next question’s kind'), icon: 'file', sub: 'mcq → order', family: 'obj', x: 16, y: 200, w: 192, h: 64, card: card('Каждый раз курс задаёт вопрос по понятию в другом виде: выбор ответа, порядок шагов, команда, задание в песочнице. Если вопрос всегда один и тот же, запоминается ответ, а не понятие.', 'Each time another kind of question: a choice, an order, a command, a sandbox task. Otherwise you remember the answer, not the concept.', 'Вид выбирает курс.', 'The course.') },
     ],
     edges: [
@@ -188,10 +188,10 @@ export const fsrsModel = defineModel<P>({
       label: bi('Задавать вопрос по понятию всегда в одном и том же виде', 'Always ask in the same kind'),
       remove: ['format', 'e-fmt', 'e-ans'],
       predict: {
-        prompt: bi('Каждое повторение — один и тот же вопрос с выбором ответа, и вы каждый раз отвечаете верно. Будет ли понятие считаться освоенным?', 'Every review is the same multiple-choice question, and you answer it right every time. Is the concept mastered?'),
+        prompt: bi('На каждом повторении вам задают один и тот же вопрос с выбором ответа, и вы каждый раз отвечаете верно. Будет ли понятие считаться освоенным?', 'Every review is the same multiple-choice question, and you answer it right every time. Is the concept mastered?'),
         options: [
-          { id: 'stuck', text: bi('Нет: вы запомнили ответ на этот вопрос, а понятие курс не проверил', 'No: you remember the answer, the concept is unchecked') },
-          { id: 'faster', text: bi('Да, и даже быстрее: одинаковый вопрос легче вспомнить', 'Yes, and faster: the same question is easier') },
+          { id: 'stuck', text: bi('Нет, потому что вы запомнили ответ на этот вопрос, а понятие курс не проверил', 'No, because you remember the answer to this question, while the course has not checked the concept') },
+          { id: 'faster', text: bi('Да, и даже быстрее, ведь одинаковый вопрос легче вспомнить', 'Yes, and even faster, because the same question is easier to recall') },
         ],
         resolve: () => 'stuck',
       },
@@ -221,7 +221,7 @@ export const fsrsModel = defineModel<P>({
       {
         id: 'rating',
         label: bi('оценка', 'rating'),
-        caption: fmtb(bi('Курс переводит ваш ответ в оценку {r}. Оценка учитывает не только верность, но и уверенность и время: угаданный ответ не считается знанием.', 'The course turns your answer into the rating {r}: correctness, confidence and time count, and a lucky guess is not knowledge.'), { r: ratingName(outcome) }),
+        caption: fmtb(bi('Курс переводит ваш ответ в оценку {r}. Оценка учитывает не только верность, но и уверенность и время, потому что угаданный ответ не считается знанием.', 'The course turns your answer into the rating {r}: correctness, confidence and time count, and a lucky guess is not knowledge.'), { r: ratingName(outcome) }),
         focus: ['rating', 'e-r'],
         reveal: ['rating', 'e-r'],
         tokens: [{ edge: 'e-r', label: wrong ? bi('неверно', 'wrong') : bi('верно', 'right') }],
@@ -272,8 +272,8 @@ export const fsrsModel = defineModel<P>({
         id: 'due',
         label: bi('срок', 'due'),
         caption: r.perMonth > 0
-          ? fmtb(bi('Из устойчивости памяти и цели получается срок: вопрос вернётся через {d}. Если и дальше отвечать верно, за ближайший месяц он появится {n}.', 'The next review is in {d}. Answering right from now on, it returns {n} in the next month.'), { d: span(r.interval), n: nouned(r.perMonth, ['раз', 'раза', 'раз'], ['time', 'times']) })
-          : fmtb(bi('Из устойчивости памяти и цели получается срок: вопрос вернётся через {d}, так что в ближайший месяц вы его не увидите.', 'The next review is in {d}, so you will not see it in the next month.'), { d: span(r.interval) }),
+          ? fmtb(bi('Из устойчивости памяти и цели получается срок, и вопрос вернётся через {d}. Если и дальше отвечать верно, за ближайший месяц он появится {n}.', 'The next review is in {d}. Answering right from now on, it returns {n} in the next month.'), { d: span(r.interval), n: nouned(r.perMonth, ['раз', 'раза', 'раз'], ['time', 'times']) })
+          : fmtb(bi('Из устойчивости памяти и цели получается срок, и вопрос вернётся через {d}, так что в ближайший месяц вы его не увидите.', 'The next review is in {d}, so you will not see it in the next month.'), { d: span(r.interval) }),
         focus: ['due', 'e-d'],
         reveal: ['e-d'],
         tokens: [{ edge: 'e-d', label: days(r.interval) }],
@@ -308,7 +308,7 @@ export const fsrsModel = defineModel<P>({
       steps.push({
         id: 'format',
         label: bi('другой вид', 'another kind'),
-        caption: bi('Из очереди вопрос выходит уже в другом виде: если сегодня был выбор ответа, в следующий раз будет порядок шагов или команда. Так курс проверяет понятие, а не память на один ответ.', 'The question leaves the queue in another kind: a choice today, an order or a command next time.'),
+        caption: bi('Из очереди вопрос выходит уже в другом виде, и если сегодня был выбор ответа, в следующий раз будет порядок шагов или команда. Так курс проверяет понятие, а не память на один ответ.', 'The question leaves the queue in another kind: a choice today, an order or a command next time.'),
         focus: ['format', 'e-fmt'],
         reveal: ['format', 'e-fmt', 'e-ans'],
         tokens: [{ edge: 'e-fmt', label: bi('выбор → порядок шагов', 'choice → order') }],
@@ -324,7 +324,7 @@ export const fsrsModel = defineModel<P>({
         ? bi('Вопрос всегда задаётся в одном и том же виде. Ответы верные, но понятие застревает и не считается освоенным.', 'Always the same kind: right answers, but the concept is stuck.')
         : bi('Вид вопроса снова меняется от раза к разу.', 'The kind of question changes again.');
     if (change.id === 'retention')
-      return fmtb(bi('Цель была {a} %, стала {b} %. Интервал до следующего повторения был {i0}, а стал {i1}, и повторений за месяц теперь {n1} вместо {n0}. Чем выше цель, тем чаще приходится повторять.', 'Target {a}% → {b}%: interval {i0} → {i1}, reviews a month {n0} → {n1}. A higher target means more frequent reviews.'), { a: Math.round(Number(a.retention) * 100), b: Math.round(Number(b.retention) * 100), i0: span(m(prev).next ?? 0), i1: span(m(next).next ?? 0), n0: m(prev).month ?? 0, n1: m(next).month ?? 0 });
+      return fmtb(bi('Цель изменилась с {a} до {b} %, интервал до следующего повторения изменился с {i0} на {i1}, и повторений за месяц теперь {n1} вместо {n0}. Чем выше цель, тем чаще приходится повторять.', 'Target {a}% → {b}%: interval {i0} → {i1}, reviews a month {n0} → {n1}. A higher target means more frequent reviews.'), { a: Math.round(Number(a.retention) * 100), b: Math.round(Number(b.retention) * 100), i0: span(m(prev).next ?? 0), i1: span(m(next).next ?? 0), n0: m(prev).month ?? 0, n1: m(next).month ?? 0 });
     if (change.id === 'confident')
       return b.confident
         ? bi('Ошибка с отметкой «знаю» сжимает интервал до минут, и вопрос попадает в отдельную очередь уверенных ошибок.', 'A confident mistake shrinks the interval to minutes and adds a separate queue.')

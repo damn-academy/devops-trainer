@@ -37,7 +37,7 @@ export const CAPSTONE: CapstonePart[] = [
   },
   {
     id: 'b',
-    title: bi('Б. Починить — 60 минут', 'B. Fix — 60 minutes'),
+    title: bi('Б. Починить за 60 минут', 'B. Fix in 60 minutes'),
     items: [
       i('B1', 'Поломка найдена по уликам, сервис возвращён, причина устранена', 'The failure is found from evidence, the service restored, the cause removed', 'Все проверки части А снова зелёные, данные целы', 'Every check of part A is green again, the data is intact'),
       i('B2', 'Статус для команды и разбор из четырёх частей', 'A status to the team and a four-line review', 'Рубрика инцидента', 'The incident rubric'),
@@ -45,9 +45,9 @@ export const CAPSTONE: CapstonePart[] = [
   },
   {
     id: 'c',
-    title: bi('В. Защитить — 40 минут', 'C. Defend — 40 minutes'),
+    title: bi('В. Защитить за 40 минут', 'C. Defend in 40 minutes'),
     items: [
-      i('C1', 'Защита проекта перед учебным интервьюером: средний балл не ниже 2 и ни одного нуля по честности', 'The project defence with the mock interviewer: a mean score ≥ 2, no zero for honesty', 'Рубрика интервью с цитатами', 'The interview rubric with quotes'),
+      i('C1', 'Проект защищён перед учебным интервьюером со средним баллом не ниже 2 и без единого нуля по честности', 'The project is defended before the mock interviewer with a mean score of at least 2 and not a single zero for honesty', 'Рубрика интервью с цитатами', 'The interview rubric with quotes'),
       i('C2', 'Та же защита с живым человеком', 'The same defence with a live person', 'Бланк рубрики, заполненный интервьюером', 'The rubric sheet filled in by the interviewer'),
     ],
   },
@@ -55,7 +55,7 @@ export const CAPSTONE: CapstonePart[] = [
     id: 'cleanup',
     title: bi('Уборка', 'Cleanup'),
     items: [
-      i('D1', '`terraform destroy` — `Destroy complete! Resources: N destroyed.`, N = числу ресурсов в state', '`terraform destroy` — `Destroy complete! Resources: N destroyed.`, N = the number of resources in state', 'Вывод команды', 'The command output'),
+      i('D1', 'Команда `terraform destroy` выводит `Destroy complete! Resources: N destroyed.`, где N равно числу ресурсов в состоянии Terraform', '`terraform destroy` prints `Destroy complete! Resources: N destroyed.`, where N equals the number of resources in the Terraform state', 'Вывод команды', 'The command output'),
       i('D2', 'Пустой `terraform state list` и пустой список машин провайдера по метке экзамена', 'An empty `terraform state list` and an empty provider machine list with the exam label', 'Вывод в JSON', 'The JSON output'),
     ],
   },

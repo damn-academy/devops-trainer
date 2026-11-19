@@ -21,11 +21,11 @@ import { eventsOf, scoreDots } from './ui';
 
 const M = {
   intro: bi(
-    'Учебное интервью на позицию junior DevOps, около 30 минут текстом: самопрезентация, пять технических вопросов с уточнениями, ситуационный вопрос, поведенческий вопрос и ваши вопросы компании. Отвечайте так, как ответили бы вслух.',
+    'Учебное интервью на позицию junior DevOps идёт около 30 минут в текстовом виде. В нём есть самопрезентация, пять технических вопросов с уточнениями, ситуационный вопрос, поведенческий вопрос и ваши вопросы компании. Отвечайте так, как ответили бы вслух.',
     'A practice interview for a junior DevOps role, about 30 minutes in text: a self-presentation, five technical questions with follow-ups, a situational question, a behavioural question and your questions to the company. Answer as you would aloud.',
   ),
-  aiOn: bi('Интервьюер работает на вашей нейросети: он задаёт уточнения, а после интервью разбирает ответы по рубрике.', 'The interviewer runs on your own AI: it asks follow-ups and reviews the answers on the rubric afterwards.'),
-  aiOff: bi('Нейросеть не подключена: интервью пройдёт с уточнениями курса, а разбор вы сделаете сами по той же рубрике. Подключить свою нейросеть можно в ', 'No AI connected: the interview runs with the course’s follow-ups, and you review it yourself on the same rubric. You can connect your own AI in '),
+  aiOn: bi('Интервьюер работает на вашей нейросети. Он задаёт уточняющие вопросы, а после интервью разбирает ответы по рубрике.', 'The interviewer runs on your own AI. It asks follow-up questions and reviews the answers on the rubric afterwards.'),
+  aiOff: bi('Нейросеть не подключена, поэтому интервью пройдёт с уточнениями курса, а разбор вы сделаете сами по той же рубрике. Подключить свою нейросеть можно в ', 'No AI is connected, so the interview runs with the course’s follow-ups, and you review it yourself on the same rubric. You can connect your own AI in '),
   settings: bi('настройках', 'the settings'),
   start: bi('Начать интервью', 'Start the interview'),
   send: bi('Ответить', 'Answer'),
@@ -35,12 +35,12 @@ const M = {
   grade: bi('Завершить и разобрать', 'Finish and review'),
   grading: bi('Нейросеть разбирает ответы…', 'The AI is reviewing the answers…'),
   self: bi('Разбор по рубрике', 'Review on the rubric'),
-  selfLede: bi('Честно поставьте баллы каждому ответу, сверяясь с эталоном и ключевыми пунктами. Что означает каждый балл, написано под критерием.', 'For each answer score yourself honestly against the model answer and key points. The anchors are under each criterion.'),
+  selfLede: bi('Поставьте баллы каждому ответу без снисхождения к себе, сверяясь с эталоном и ключевыми пунктами. Что означает каждый балл, написано под критерием.', 'Score each answer without leniency towards yourself, checking it against the model answer and the key points. What each score means is written under the criterion.'),
   save: bi('Посчитать итог', 'Compute the result'),
   mean: bi('Средний балл: {m} из 3', 'Mean score: {m} of 3'),
   passed: bi('По этому интервью вы на уровне «готов к живому собеседованию».', 'This run is at the “ready for a live interview” level.'),
-  notPassed: bi('Пока результат ниже порога: нужен средний балл не ниже 2 и ни одного нуля по честности.', 'Below the bar for now: a mean of 2 and no zero for honesty.'),
-  ready: bi('Если три учебных интервью подряд оказались выше порога, пора разговаривать с людьми: найдите того, кто проведёт с вами учебное интервью вживую.', 'Three mock interviews in a row above the bar — time for people: find someone to run a live mock interview.'),
+  notPassed: bi('Пока результат ниже порога. Чтобы пройти порог, нужен средний балл не ниже 2 и ни одного нуля по честности.', 'The result is below the bar for now. To pass it you need a mean score of at least 2 and no zero for honesty.'),
+  ready: bi('Если три учебных интервью подряд оказались выше порога, пора разговаривать с людьми. Найдите того, кто проведёт с вами учебное интервью вживую.', 'If three mock interviews in a row are above the bar, it is time to talk to people. Find someone who will run a mock interview with you in person.'),
   unconfirmed: bi('не подтверждено цитатой', 'not confirmed by a quote'),
   model: bi('Эталон и ключевые пункты', 'Model answer and key points'),
   again: bi('Новое интервью', 'A new interview'),
@@ -50,8 +50,8 @@ const M = {
 };
 
 const Q = {
-  hello: bi('Здравствуйте! Я руковожу платформенной командой. Начнём с простого: расскажите о себе.', 'Hello! I lead the platform team. Let us start simple: tell me about yourself.'),
-  situational: bi('Представьте: пользователи пишут, что магазин отвечает ошибкой 504, а дежурите вы. Что вы будете делать?', 'A situation: users say the shop returns 504. You are on call. What will you do?'),
+  hello: bi('Здравствуйте! Я руковожу платформенной командой. Начнём с простого вопроса. Расскажите, пожалуйста, о себе.', 'Hello! I lead the platform team. Let us start with a simple question. Please tell me about yourself.'),
+  situational: bi('Представьте, что пользователи жалуются на ошибку 504 в магазине, а дежурите в это время вы. Что вы будете делать?', 'Imagine that users complain about a 504 in the shop, and you are the one on call. What will you do?'),
   situationalFollow: bi('В журнале ошибок nginx записано: «upstream timed out … while connecting to upstream». Что вы сделаете дальше?', 'The nginx error log says “upstream timed out … while connecting to upstream”. What next?'),
   behavioural: bi('Расскажите о случае, когда вы ошиблись. Что произошло и что вы сделали потом?', 'Tell me about a time you made a mistake. What happened and what did you do afterwards?'),
   yours: bi('Какие у вас есть вопросы к нам?', 'What questions do you have for us?'),

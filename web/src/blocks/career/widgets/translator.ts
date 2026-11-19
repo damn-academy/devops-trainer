@@ -19,8 +19,8 @@ const T = {
   rewrite: bi('Перепишите его как механизм', 'Rewrite it as a mechanism'),
   check: bi('Сверить с эталоном', 'Compare with the model'),
   share: bi('Команды занимают {p}% ответа', 'Commands take {p}% of the answer'),
-  shareOk: bi('меньше трети — хорошо', 'under a third — good'),
-  shareBad: bi('больше трети: объясните механизм словами', 'over a third: explain the mechanism in words'),
+  shareOk: bi('и это меньше трети, как и должно быть', 'which is under a third, as it should be'),
+  shareBad: bi('и это больше трети, поэтому объясните механизм словами', 'which is over a third, so explain the mechanism in words'),
   parts: bi('Частей заполнено: {n} из 4', 'Parts written: {n} of 4'),
   points: bi('Ключевые пункты', 'Key points'),
   found: bi('нашлось в вашем ответе', 'found in your answer'),
@@ -31,7 +31,7 @@ const T = {
   done: bi('Засчитать карточку', 'Count this card'),
   doneMark: bi('засчитано', 'counted'),
   ai: bi('Разбор моей нейросетью по рубрике', 'Review by my AI on the rubric'),
-  aiNo: bi('Подключите свою нейросеть в настройках — и получите разбор по рубрике с цитатами из ответа.', 'Connect your own AI in the settings to get a rubric review quoting your answer.'),
+  aiNo: bi('Подключите свою нейросеть в настройках, и вы получите разбор по рубрике с цитатами из ответа.', 'Connect your own AI in the settings, and you will get a rubric review quoting your answer.'),
   aiFail: bi('Нейросеть ответила не по схеме. Попробуйте ещё раз.', 'The AI did not answer in the expected format. Try again.'),
   unconfirmed: bi('не подтверждено цитатой', 'not confirmed by a quote'),
   progress: bi('Засчитано карточек: {n}', 'Cards counted: {n}'),
@@ -81,7 +81,7 @@ export const translatorWidget: WidgetReg = {
       const update = () => {
         const n = ANSWER_PARTS.filter((x) => fields[x].value.trim().length > 8).length;
         const share = Math.round(commandShare(text()) * 100);
-        meter.textContent = `${t(fmt(T.parts, { n }))} · ${t(fmt(T.share, { p: share }))} — ${share <= 33 ? t(T.shareOk) : t(T.shareBad)}`;
+        meter.textContent = `${t(fmt(T.parts, { n }))} · ${t(fmt(T.share, { p: share }))}, ${share <= 33 ? t(T.shareOk) : t(T.shareBad)}`;
         meter.classList.toggle('warn', share > 33);
         checkBtn.disabled = n < 4;
       };
