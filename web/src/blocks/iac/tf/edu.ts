@@ -24,7 +24,7 @@ function table(ctx: CmdContext, rows: CloudResource[]): void {
 
 export const eduCommand: ShellCommand = {
   name: 'edu',
-  summary: bi('Консоль учебного облака Edu Cloud: смотреть и менять ресурсы руками.', 'The Edu Cloud console: look at and change resources by hand.'),
+  summary: bi('Консоль учебного облака Edu Cloud, в которой ресурсы можно смотреть и менять вручную.', 'The Edu Cloud console: look at and change resources by hand.'),
   help: 'Usage: edu <resource> <command> [ID] [--key value]...\n\nResources:\n  vm        virtual machines\n  network   networks\n  dns       DNS records\n\nCommands:\n  list                    list resources\n  get ID                  show one resource\n  create --key value...   create a resource by hand (as if clicked in the web console)\n  update ID --key value   change attributes (as if clicked in the web console)\n  delete ID               delete a resource\n\n  edu log                 the audit log of the cloud\n',
   run(ctx) {
     const [res, cmd, id, ...rest] = ctx.argv.slice(1);

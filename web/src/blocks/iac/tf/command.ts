@@ -614,7 +614,7 @@ function fmt(ctx: CmdContext, o: Opts): number {
 export const terraformCommand: ShellCommand = {
   name: 'terraform',
   aliases: ['tofu'],
-  summary: bi('Terraform / OpenTofu: инфраструктура из кода против учебного облака Edu Cloud.', 'Terraform / OpenTofu: infrastructure from code against the Edu Cloud training cloud.'),
+  summary: bi('Terraform и OpenTofu создают инфраструктуру по коду в учебном облаке Edu Cloud.', 'Terraform / OpenTofu: infrastructure from code against the Edu Cloud training cloud.'),
   help: HELP.main,
   handlesHelp: true,
   run,
