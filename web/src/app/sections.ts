@@ -70,7 +70,7 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
       if (s.howto) el.append(howtoPanel(s.howto));
       const host = h('div.ex-host');
       el.append(host);
-      if (s.caption) el.append(h('p.figcaption', {}, t(s.caption)));
+      if (s.caption) el.append(h('div.figcaption', {}, md(s.caption)));
       const mounted = reg.mount(host, { level: c.level, params: s.params, onComplete: done, record: (e) => store.record(e), openDoc: (r) => openDoc(r) });
       return { el, mounted };
     }

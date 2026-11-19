@@ -75,7 +75,6 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   let maxSeen = -1;
   let completed = false;
   let playing = 0;
-  let playStarted = 0;
   let speed = 1;
   let pending: Pending | null = null;
   const asked = new Set<string>();
@@ -104,7 +103,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   const speedSel = h(
     'select.ex-speed',
     { 'aria-label': t(L.speed) },
-    ...[0.25, 1, 4].map((v) => h('option', { value: v, selected: v === 1 }, `${v}×`)),
+    ...[0.5, 1, 2].map((v) => h('option', { value: v, selected: v === 1 }, `${v}×`)),
   ) as HTMLSelectElement;
 
   const canvasEl = h('div.ex-canvas', {}, svg, h('p.ex-hint', {}, t(L.hintClick)));
@@ -117,11 +116,11 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     h('div.ex-controls', {}, knobBox, breakBox),
     predictBox,
     introBox,
+    // the step controls sit right above the picture, under the settings that shape it
+    h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks)),
     h('div.ex-stage', {}, canvasEl, h('div.ex-side', {}, deltaBox, card)),
     brokeLine,
     caption,
-    // the controls of the steps sit right under what they move
-    h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks)),
     metricsBox,
     waterfallBox,
     legendBox,
@@ -615,24 +614,31 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   }
 
   function stop() {
-    if (playing) clearInterval(playing);
+    if (playing) clearTimeout(playing);
     playing = 0;
     playBtn.replaceChildren(icon('play'));
     playBtn.setAttribute('aria-label', t(L.play));
   }
+  /** How long a step stays on screen while playing: enough to read its caption and callouts at 1×. */
+  function readingTime(i: number): number {
+    const st = steps[i];
+    if (!st) return 3000;
+    let chars = t(st.caption).length;
+    for (const v of Object.values(st.say ?? {})) chars += t(v).length;
+    const ms = 2200 + chars * 45; // ~45 ms per character is a calm reading pace
+    return Math.min(14000, Math.max(3000, ms)) / speed;
+  }
   function play() {
     if (playing) return stop();
     if (idx >= steps.length - 1) go(0, false);
-    playStarted = performance.now();
     playBtn.replaceChildren(icon('pause'));
     playBtn.setAttribute('aria-label', t(L.pause));
-    playing = window.setInterval(
-      () => {
-        if (idx >= steps.length - 1 || performance.now() - playStarted > 5000) return stop();
-        go(idx + 1);
-      },
-      Math.max(250, 1100 / speed),
-    );
+    const tick = () => {
+      if (idx >= steps.length - 1) return stop();
+      go(idx + 1);
+      playing = window.setTimeout(tick, readingTime(idx));
+    };
+    playing = window.setTimeout(tick, readingTime(idx));
   }
 
   // ── knobs, breaks, predictions ──
