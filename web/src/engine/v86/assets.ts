@@ -50,3 +50,47 @@ export function downloadBytes(m: AssetManifest): number {
 export function formatMB(bytes: number): string {
   return (bytes / 1024 / 1024).toFixed(bytes > 10 * 1024 * 1024 ? 0 : 1);
 }
+
+// ── the lab image (scripts/build-lab-image.mjs → public/v86/lab/) ─────────
+
+export interface LabManifest {
+  schema: 'dt.v86-lab-image/v1';
+  distro: { name: string; release: string; arch: string; mirror: string };
+  kernel: { file: string; version: string; package: string };
+  initrd: { file: string };
+  filesBase: string;
+  cmdline: string;
+  store: { files: number; bytes: number };
+  profiles: Record<string, { fsJson: string; packages: string[]; world: string[]; rootBytes: number; entries: number }>;
+  outputs: Record<string, { size: number; sha256: string }>;
+  downloads: { file: string; url: string; sha256: string; size: number; license?: string }[];
+}
+
+export function labAssetUrl(file: string): string {
+  return assetUrl(`lab/${file}`);
+}
+
+let labManifest: Promise<LabManifest | null> | null = null;
+
+/** The lab image manifest, or null when this build has no lab image (`npm run build:lab-image`). */
+export function loadLabManifest(): Promise<LabManifest | null> {
+  labManifest ??= fetch(labAssetUrl('manifest.json'))
+    .then((r) => (r.ok ? (r.json() as Promise<LabManifest>) : null))
+    .then((m) => (m && m.schema === 'dt.v86-lab-image/v1' ? m : null))
+    .catch(() => null);
+  return labManifest;
+}
+
+/**
+ * Files read from the 9p root while a lab machine boots for the first time
+ * (measured: busybox, musl, bash, OpenRC, sshd, the first-boot scripts).
+ * Later starts restore the boot snapshot and fetch only what the learner opens.
+ */
+export const LAB_BOOT_READ_BYTES = 9 * 1024 * 1024;
+
+/** Bytes downloaded on the first start of a lab machine. */
+export function labDownloadBytes(m: LabManifest, profileId: string): number {
+  const fs = m.profiles[profileId]?.fsJson;
+  const out = (f?: string) => (f ? (m.outputs[f]?.size ?? 0) : 0);
+  return WASM_BYTES + WORKER_BYTES + out(m.kernel.file) + out(m.initrd.file) + out(fs) + LAB_BOOT_READ_BYTES;
+}

@@ -5,6 +5,7 @@
 
 import { V86, type V86Options } from 'v86';
 import type { WorkerIn, WorkerOut } from './messages';
+import { SparseDisk } from './sparse-disk';
 
 export type Post = (m: WorkerOut, transfer?: Transferable[]) => void;
 
@@ -12,6 +13,7 @@ type Bus = { register(name: string, fn: (data: unknown) => void, ctx?: unknown):
 
 export function createHost(post: Post, close: () => void = () => {}): (m: WorkerIn) => Promise<void> {
   let emu: V86 | null = null;
+  let disks: Partial<Record<'hda' | 'hdb', SparseDisk>> = {};
   const pending: Record<number, number[]> = {};
   let flushQueued = false;
 
@@ -38,11 +40,18 @@ export function createHost(post: Post, close: () => void = () => {}): (m: Worker
       switch (m.op) {
         case 'boot': {
           const c = m.config;
+          disks = {};
+          for (const d of c.disks ?? []) disks[d.slot] = new SparseDisk(d.data.byteLength, d.data);
           const opts: V86Options = {
             wasm_path: c.wasm,
             bios: { url: c.bios },
             vga_bios: { url: c.vgaBios },
-            bzimage: { url: c.bzimage },
+            bzimage: c.bzimage ? { url: c.bzimage } : undefined,
+            initrd: c.initrd ? { url: c.initrd } : undefined,
+            filesystem: c.filesystem,
+            // v86 takes any object with get/set/load as a disk image as is.
+            hda: disks.hda as never,
+            hdb: disks.hdb as never,
             cmdline: c.cmdline,
             memory_size: c.memoryMB * 1024 * 1024,
             vga_memory_size: 2 * 1024 * 1024,
@@ -100,6 +109,20 @@ export function createHost(post: Post, close: () => void = () => {}): (m: Worker
         case 'stats':
           post({ op: 'stats', id: m.id, instructions: emu?.get_instruction_counter() ?? 0, running: emu?.is_running() ?? false });
           break;
+        case 'disk': {
+          const d = disks[m.slot];
+          const data = d ? d.export() : null;
+          post({ op: 'disk', id: m.id, slot: m.slot, data }, data ? [data.index.buffer, data.data.buffer] : []);
+          break;
+        }
+        case 'fsstats': {
+          // Bytes of 9p content fetched so far (v86 keeps them in a MemoryFileStorage).
+          const store = (emu as unknown as { fs9p?: { storage?: { storage?: { filedata?: Map<string, Uint8Array> } } } } | null)?.fs9p?.storage?.storage?.filedata;
+          let bytes = 0;
+          for (const v of store?.values() ?? []) bytes += v.byteLength;
+          post({ op: 'fsstats', id: m.id, files: store?.size ?? 0, bytes });
+          break;
+        }
         case 'destroy':
           await emu?.destroy();
           emu = null;

@@ -1,7 +1,9 @@
 // Saved machine states (09 §3.1): v86 snapshots are tens of megabytes, so they
 // go to the Origin Private File System, gzip-compressed with the browser's
 // CompressionStream, not to IndexedDB. Without OPFS (old Safari, private
-// windows) the cache is simply empty and the machine boots from scratch.
+// windows, Node tests) boot snapshots (keys starting with `boot-`) are kept
+// compressed in memory for this tab, so the second machine of a lab still
+// starts from the first one's snapshot; the learner's own states are not.
 
 const DIR = 'vm';
 
@@ -17,6 +19,10 @@ async function dir(): Promise<FileSystemDirectoryHandle | null> {
 
 const fileName = (key: string) => key.replace(/[^a-zA-Z0-9._-]+/g, '_') + '.gz';
 
+/** Boot snapshots of this tab when OPFS is not available. */
+const memory = new Map<string, ArrayBuffer>();
+const memoryKey = (key: string) => key.startsWith('boot-');
+
 async function pipe(data: ArrayBuffer | Blob, stream: CompressionStream | DecompressionStream): Promise<ArrayBuffer> {
   const blob = data instanceof Blob ? data : new Blob([data]);
   return new Response(blob.stream().pipeThrough(stream)).arrayBuffer();
@@ -24,7 +30,13 @@ async function pipe(data: ArrayBuffer | Blob, stream: CompressionStream | Decomp
 
 export async function saveState(key: string, state: ArrayBuffer): Promise<number | null> {
   const d = await dir();
-  if (!d || typeof CompressionStream === 'undefined') return null;
+  if (typeof CompressionStream === 'undefined') return null;
+  if (!d) {
+    if (!memoryKey(key)) return null;
+    const gz = await pipe(state.slice(0), new CompressionStream('gzip'));
+    memory.set(key, gz);
+    return gz.byteLength;
+  }
   try {
     const gz = await pipe(state, new CompressionStream('gzip'));
     const fh = await d.getFileHandle(fileName(key), { create: true });
@@ -40,7 +52,11 @@ export async function saveState(key: string, state: ArrayBuffer): Promise<number
 
 export async function loadState(key: string): Promise<ArrayBuffer | null> {
   const d = await dir();
-  if (!d || typeof DecompressionStream === 'undefined') return null;
+  if (typeof DecompressionStream === 'undefined') return null;
+  if (!d) {
+    const gz = memory.get(key);
+    return gz ? pipe(gz, new DecompressionStream('gzip')) : null;
+  }
   try {
     const fh = await d.getFileHandle(fileName(key));
     return await pipe(await fh.getFile(), new DecompressionStream('gzip'));
@@ -50,6 +66,7 @@ export async function loadState(key: string): Promise<ArrayBuffer | null> {
 }
 
 export async function deleteState(key: string): Promise<void> {
+  memory.delete(key);
   const d = await dir();
   try {
     await d?.removeEntry(fileName(key));
