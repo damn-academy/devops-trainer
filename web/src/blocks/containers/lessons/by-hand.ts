@@ -1,0 +1,229 @@
+// m04. A container by hand in bash (04 §9): chroot → UTS → PID+mount →
+// cgroup → overlay → capabilities → crun. It runs on the simulated machine's
+// kernel model (namespaces, cgroup v2, OverlayFS, capabilities) that the Linux
+// block's commands drive; checks read that model's facts (shell.ns, cgroups,
+// mounts), not the typed text.
+
+import { bi } from '../../../core/i18n';
+import type { Lesson, QuizItem, TerminalSetup } from '../../../core/types';
+import { SRC } from '../shared';
+
+const stub = '#!/usr/bin/sim\n# busybox: BusyBox v1.37.0 multi-call binary\n';
+const APPLETS = ['sh', 'ls', 'cat', 'echo', 'hostname', 'ps', 'mount', 'umount', 'id', 'pwd', 'mkdir', 'sleep'];
+
+const rootfs = (dir: string) => [
+  { path: `${dir}/bin/busybox`, content: stub, mode: '0755', owner: 'root' },
+  ...APPLETS.map((n) => ({ path: `${dir}/bin/${n}`, type: 'l' as const, target: '/bin/busybox' })),
+  { path: `${dir}/etc/os-release`, content: 'NAME="Alpine Linux"\nID=alpine\nVERSION_ID=3.22.2\n', owner: 'root' },
+  { path: `${dir}/etc/hostname`, content: 'box\n', owner: 'root' },
+  { path: `${dir}/proc`, type: 'd' as const, owner: 'root' },
+  { path: `${dir}/www/index.html`, content: '<h1>hello from mybox</h1>\n', owner: 'root' },
+];
+
+export const byHandSetup: TerminalSetup = {
+  hostname: 'trainer',
+  user: 'root',
+  cwd: '/c',
+  files: [
+    ...rootfs('/c/rootfs'),
+    // two prepared lower directories for overlay (the image chapter will call them layers)
+    { path: '/c/l1/www/index.html', content: '<h1>from the first directory</h1>\n', owner: 'root' },
+    { path: '/c/l1/www/old.txt', content: 'this file is removed in l2\n', owner: 'root' },
+    { path: '/c/l2/www/index.html', content: '<h1>from the second directory</h1>\n', owner: 'root' },
+    { path: '/c/upper', type: 'd', owner: 'root' },
+    { path: '/c/work', type: 'd', owner: 'root' },
+    { path: '/c/merged', type: 'd', owner: 'root' },
+    { path: '/c/bundle', type: 'd', owner: 'root' },
+  ],
+};
+
+export const byHandQuiz: QuizItem[] = [
+  {
+    id: 'containers.q.chroot-ps',
+    kind: 'mcq',
+    concepts: ['docker.container'],
+    prompt: bi('После `chroot /c/rootfs` и `mount -t proc proc /proc` команда `ps` показала все процессы хоста. Почему?', 'After `chroot /c/rootfs` and `mount -t proc proc /proc`, `ps` showed every process of the host. Why?'),
+    options: [
+      { id: 'root-only', text: bi('chroot меняет только корень файлов; процессы, сеть и имя машины остаются общими', 'chroot changes only the file root; processes, network and hostname stay shared'), correct: true },
+      { id: 'bug', text: bi('Это ошибка busybox ps', 'It is a busybox ps bug'), why: bi('ps честно читает /proc, а /proc показывает pid namespace, в котором процесс живёт, — хостовой.', 'ps honestly reads /proc, and /proc shows the pid namespace the process lives in — the host’s.') },
+      { id: 'proc', text: bi('Нужно было смонтировать /proc с другими опциями', 'You had to mount /proc with other options'), why: bi('Опции не помогут: нужен свой pid namespace (`unshare --pid --fork`).', 'Options will not help: you need a pid namespace of your own (`unshare --pid --fork`).') },
+    ],
+  },
+  {
+    id: 'containers.q.fork-why',
+    kind: 'mcq',
+    concepts: ['docker.container'],
+    prompt: bi('Зачем `unshare --pid` нужен флаг `--fork`?', 'Why does `unshare --pid` need the `--fork` flag?'),
+    options: [
+      { id: 'child', text: bi('Сам unshare в новый pid namespace не попадает — туда попадают его дети; с --fork первым ребёнком и PID 1 станет sh', 'unshare itself does not enter the new pid namespace — its children do; with --fork the first child, sh, becomes PID 1'), correct: true },
+      { id: 'speed', text: bi('Чтобы запуск был в фоне', 'To run in the background'), why: bi('`--fork` не про фон: он про то, кто станет первым процессом нового пространства.', '`--fork` is not about the background: it is about who becomes the first process of the new namespace.') },
+      { id: 'mount', text: bi('Чтобы смонтировать /proc', 'To mount /proc'), why: bi('Это делает `--mount-proc` (или ваша команда mount внутри).', 'That is what `--mount-proc` does (or your own mount command inside).') },
+    ],
+    explain: bi('Без --fork первым процессом нового пространства станет первый ребёнок sh, а sh получит ошибку при попытке породить второй процесс.', 'Without --fork the first process of the new namespace becomes sh’s first child, and sh gets an error when it tries to start a second one.'),
+  },
+  {
+    id: 'containers.q.cgroup-procs',
+    kind: 'mcq',
+    concepts: ['docker.container'],
+    prompt: bi('Вы создали группу `/sys/fs/cgroup/box` и записали `16M` в `memory.max`, но не записали PID в `cgroup.procs`. Что будет?', 'You created `/sys/fs/cgroup/box` and wrote `16M` into `memory.max`, but never wrote the PID into `cgroup.procs`. What happens?'),
+    options: [
+      { id: 'none', text: bi('Лимит ни на кого не действует: в группе нет процессов', 'The limit applies to nobody: the group has no processes'), correct: true },
+      { id: 'all', text: bi('Лимит ляжет на все процессы машины', 'The limit applies to every process of the machine'), why: bi('Лимит группы действует только на процессы в ней (и в её подгруппах).', 'A group limit applies only to the processes in it (and in its sub-groups).') },
+      { id: 'error', text: bi('Запись в memory.max вернёт ошибку', 'Writing memory.max returns an error'), why: bi('Записать лимит в пустую группу можно.', 'You can write a limit into an empty group.') },
+    ],
+  },
+  {
+    id: 'containers.q.pivot-order',
+    kind: 'order',
+    concepts: ['docker.container'],
+    prompt: bi('Расставьте шаги смены корня через pivot_root в новом mount namespace.', 'Order the steps of changing the root through pivot_root in a new mount namespace.'),
+    steps: [
+      { id: 'private', text: 'mount --make-rprivate /' },
+      { id: 'bind', text: 'mount --bind /c/merged /c/merged', why: bi('pivot_root требует, чтобы новый корень был точкой монтирования.', 'pivot_root requires the new root to be a mount point.') },
+      { id: 'mkdir', text: 'mkdir -p /c/merged/.oldroot' },
+      { id: 'pivot', text: 'pivot_root /c/merged /c/merged/.oldroot' },
+      { id: 'umount', text: 'umount -l /.oldroot', why: bi('Старый корень размонтируют, чтобы из контейнера до него было не добраться.', 'The old root is unmounted so that it cannot be reached from the container.') },
+    ],
+  },
+];
+
+export const byHandLesson: Lesson = {
+  id: 'containers.by-hand',
+  block: 'containers',
+  title: bi('Контейнер своими руками', 'A container by hand'),
+  summary: bi('Собираем контейнер без Docker: chroot, пространства имён, cgroup, overlay и pivot_root, capabilities — и тот же контейнер настоящим рантаймом crun.', 'We build a container without Docker: chroot, namespaces, a cgroup, overlay and pivot_root, capabilities — and the same container with the real crun runtime.'),
+  introduces: [],
+  uses: ['docker.container', 'docker.bundle', 'docker.runtime'],
+  tier: 'core',
+  minutes: 40,
+  sources: {
+    en: [SRC.lizrice, SRC.iximiuz, SRC.namespaces, SRC.cgroups, SRC.overlayfs, SRC.capabilities],
+    ru: [SRC.habrUnshare, SRC.habrPivot, SRC.habrCgroups, SRC.habrOverlay],
+  },
+  sections: [
+    {
+      id: 'hook',
+      kind: 'text',
+      step: 'hook',
+      body: bi('Можно ли собрать контейнер без Docker? Можно — и вы уже знаете все детали: каждую из них вы трогали в блоке Linux. Здесь мы соберём их в одно целое, по одной строке в растущий скрипт `mybox.sh`. В конце окажется, что `crun` с `config.json` делает ровно то же самое, только за вас.', 'Can you build a container without Docker? You can — and you already know every part: you touched each of them in the Linux block. Here we put them together, one line at a time into a growing `mybox.sh` script. At the end it turns out that `crun` with `config.json` does exactly the same, only for you.'),
+    },
+    {
+      id: 'plan',
+      kind: 'text',
+      step: 'explain',
+      title: bi('План сборки', 'The plan'),
+      body: bi(
+        '### Шаг за шагом\n\n1. **chroot** — другой корень файлов. Только корень: процессы, сеть и имя машины остаются общими, а root внутри выбирается наружу через `/proc/1/root` любого процесса хоста.\n2. **UTS** — своё имя машины: `unshare --uts sh`, затем `hostname box`. На хосте имя не меняется.\n3. **PID и mount** — свой PID 1: `unshare --pid --fork --mount sh` и `mount -t proc proc /proc`. Теперь `ps` видит только своих. Сам unshare в новое пространство не попадает, поэтому нужен `--fork`.\n4. **cgroup** — лимиты: `mkdir /sys/fs/cgroup/box`, `echo 16M > memory.max`, `echo 20 > pids.max` и PID процесса в `cgroup.procs`. Без последней записи лимит ни на кого не действует.\n5. **overlay и pivot_root** — корень из двух заготовленных нижних каталогов и пустого верхнего; затем `pivot_root`, и старый корень размонтирован: выйти некуда.\n6. **capabilities** — урезанный root: без `cap_sys_admin` нельзя монтировать.\n7. **crun** — тот же контейнер по `config.json`.\n\nСеть — veth-пара между хостом и новым net namespace — вы собирали в блоке сетей; здесь она та же, поэтому шаг с ней только для желающих.',
+        '### Step by step\n\n1. **chroot** — a different file root. Only the root: processes, network and hostname stay shared, and root inside can climb out through `/proc/1/root` of any host process.\n2. **UTS** — a hostname of its own: `unshare --uts sh`, then `hostname box`. The host’s name does not change.\n3. **PID and mount** — a PID 1 of its own: `unshare --pid --fork --mount sh` and `mount -t proc proc /proc`. Now `ps` sees only its own. unshare itself does not enter the new namespace, hence `--fork`.\n4. **cgroup** — limits: `mkdir /sys/fs/cgroup/box`, `echo 16M > memory.max`, `echo 20 > pids.max` and the process’s PID into `cgroup.procs`. Without that last write the limit applies to nobody.\n5. **overlay and pivot_root** — a root from two prepared lower directories and an empty upper one; then `pivot_root`, and the old root is unmounted: there is nowhere to climb out to.\n6. **capabilities** — a reduced root: without `cap_sys_admin` you cannot mount.\n7. **crun** — the same container from `config.json`.\n\nThe network — a veth pair between the host and a new net namespace — you built in the networks block; it is the same here, so that step is optional.',
+      ),
+    },
+    {
+      id: 'lab',
+      kind: 'terminal',
+      step: 'practice',
+      machine: 'sim',
+      setup: byHandSetup,
+      intro: bi('Вы — root на машине с ядром, которое умеет пространства имён, cgroup v2 и OverlayFS. В `/c/rootfs` лежит маленький корень на busybox, в `/c/l1` и `/c/l2` — два нижних каталога для overlay.', 'You are root on a machine whose kernel does namespaces, cgroup v2 and OverlayFS. `/c/rootfs` holds a small busybox root, `/c/l1` and `/c/l2` two lower directories for overlay.'),
+      tasks: [
+        {
+          id: 'chroot',
+          prompt: bi('Войдите в `/c/rootfs` через chroot и посмотрите `ls /`. Оставайтесь внутри.', 'Enter `/c/rootfs` with chroot and look at `ls /`. Stay inside.'),
+          check: { when: "shell.root='/c/rootfs'" },
+          chips: 'chroot /c/rootfs /bin/sh',
+          docRef: { page: 'man/chroot.8', anchor: 'SYNOPSIS' },
+          hints: { H1: bi('Команда меняет корень и запускает в нём оболочку.', 'The command changes the root and starts a shell in it.'), H2: bi('Первый аргумент — новый корень, второй — программа внутри него.', 'The first argument is the new root, the second the program inside it.') },
+        },
+        {
+          id: 'uts',
+          prompt: bi('Выйдите из chroot (`exit`). Запустите оболочку в новом пространстве имён UTS и задайте в нём имя `box`. Оставайтесь внутри.', 'Leave the chroot (`exit`). Start a shell in a new UTS namespace and set the name `box` in it. Stay inside.'),
+          check: { when: "shell.ns.uts!=4026531838 && shell.hostname=box" },
+          chips: 'unshare --uts sh',
+          docRef: { page: 'man/unshare.1', anchor: 'OPTIONS', line: '--uts' },
+          hints: { H1: bi('Сначала новое пространство имён, потом `hostname box` уже внутри него.', 'First the new namespace, then `hostname box` already inside it.'), H2: bi('`unshare --uts sh`, затем `hostname box`.', '`unshare --uts sh`, then `hostname box`.') },
+        },
+        {
+          id: 'pid',
+          prompt: bi('Выйдите и запустите `sh` в новых пространствах pid и mount так, чтобы внутри `echo $$` вывел 1, а `ps` показывал только ваши процессы. Оставайтесь внутри.', 'Leave and start `sh` in new pid and mount namespaces so that `echo $$` inside prints 1 and `ps` shows only your processes. Stay inside.'),
+          check: { when: "shell.ns.pid!=4026531836 && shell.ns.mnt!=4026531841" },
+          chips: 'unshare --pid --fork --mount sh',
+          docRef: { page: 'man/unshare.1', anchor: 'OPTIONS', line: '--fork' },
+          hints: { H1: bi('Нужны три флага: pid, mount и тот, без которого sh не станет PID 1.', 'You need three flags: pid, mount and the one without which sh will not become PID 1.'), H2: bi('`unshare --pid --fork --mount sh`, внутри `mount -t proc proc /proc`.', '`unshare --pid --fork --mount sh`, inside `mount -t proc proc /proc`.') },
+        },
+        {
+          id: 'cgroup',
+          prompt: bi('Выйдите на хост. Создайте группу `box` в `/sys/fs/cgroup`, ограничьте её 16 МиБ памяти и 20 процессами и переместите в неё текущую оболочку.', 'Go back to the host. Create a `box` group in `/sys/fs/cgroup`, limit it to 16 MiB of memory and 20 processes, and move the current shell into it.'),
+          check: {
+            when: (f) => {
+              const cgs = (f.cgroups as { path: string; procs: number[]; memory: { max: number | string }; pids: { max: number | string } }[] | undefined) ?? [];
+              const box = cgs.find((c) => c.path === '/box' || c.path === '/sys/fs/cgroup/box');
+              return !!box && Number(box.memory.max) <= 16 * 1024 * 1024 && Number(box.pids.max) <= 20 && box.procs.length > 0;
+            },
+            fail: [{ if: "files['/sys/fs/cgroup/box'].type=d && files['/sys/fs/cgroup/box/cgroup.procs'].text=''", say: bi('Лимиты записаны, а в группе нет ни одного процесса: запишите PID оболочки (`echo $$`) в `cgroup.procs`.', 'The limits are written but the group has no processes: write the shell’s PID (`echo $$`) into `cgroup.procs`.') }],
+          },
+          chips: 'mkdir /sys/fs/cgroup/box && echo 16M > /sys/fs/cgroup/box/memory.max && echo 20 > /sys/fs/cgroup/box/pids.max && echo $$ > /sys/fs/cgroup/box/cgroup.procs',
+          hints: { H1: bi('Группа — каталог, лимит — файл в нём, участник — PID в `cgroup.procs`.', 'A group is a directory, a limit is a file in it, a member is a PID in `cgroup.procs`.') },
+        },
+        {
+          id: 'overlay',
+          prompt: bi('Смонтируйте в `/c/merged` overlay: нижние каталоги `/c/l2` (верхний из нижних) и `/c/l1`, верхний `/c/upper`, рабочий `/c/work`. Посмотрите, чей `index.html` виден.', 'Mount an overlay at `/c/merged`: lower directories `/c/l2` (the upper of the lower) and `/c/l1`, upper `/c/upper`, work `/c/work`. See whose `index.html` shows.'),
+          check: { when: "mounts[target='/c/merged'].type=overlay" },
+          chips: 'mount -t overlay overlay -o lowerdir=/c/l2:/c/l1,upperdir=/c/upper,workdir=/c/work /c/merged',
+          docRef: { url: 'https://docs.kernel.org/filesystems/overlayfs.html', label: 'docs.kernel.org › overlayfs' },
+          hints: { H1: bi('В lowerdir каталоги перечисляют через двоеточие, верхний — первым.', 'In lowerdir the directories are listed with colons, the uppermost first.') },
+        },
+        {
+          id: 'caps',
+          prompt: bi('Убедитесь, что root без `cap_sys_admin` не может монтировать: запустите через capsh оболочку без этой capability и попробуйте `mount -t tmpfs t /mnt`.', 'Check that root without `cap_sys_admin` cannot mount: start a shell through capsh without that capability and try `mount -t tmpfs t /mnt`.'),
+          check: { stdout: /Operation not permitted|permission denied/i },
+          chips: "capsh --drop=cap_sys_admin -- -c 'mount -t tmpfs t /mnt'",
+          docRef: { page: 'man/capsh.1', anchor: 'OPTIONS', line: '--drop' },
+          hints: { H1: bi('capsh убирает capability из ограничивающего набора, и после exec её нет даже у root.', 'capsh removes a capability from the bounding set, and after exec even root lacks it.') },
+        },
+        {
+          id: 'crun',
+          prompt: bi('Тот же контейнер рантаймом: в `/c/bundle` скопируйте `/c/rootfs` как `rootfs`, создайте `config.json` (`crun spec`) и запустите `crun run mybox`. Внутри проверьте `hostname`, потом `exit`.', 'The same container with a runtime: in `/c/bundle` copy `/c/rootfs` as `rootfs`, create `config.json` (`crun spec`) and run `crun run mybox`. Inside check `hostname`, then `exit`.'),
+          check: { when: "files['/c/bundle/config.json'].type=f && files['/c/bundle/rootfs/bin/busybox'].type=f" },
+          chips: 'cd /c/bundle && cp -r /c/rootfs rootfs && crun spec && crun run mybox',
+          concepts: ['docker.bundle', 'docker.runtime'],
+          hints: { H1: bi('Bundle — это rootfs и config.json рядом.', 'A bundle is rootfs and config.json side by side.') },
+        },
+      ],
+    },
+    {
+      id: 'map',
+      kind: 'text',
+      step: 'explain',
+      title: bi('Что сделал crun', 'What crun did'),
+      body: bi('Сравните поля `config.json` с тем, что вы делали руками: `linux.namespaces` — шаги 2, 3 и сеть; `linux.resources` — шаг 4; `root.path` и `mounts` — шаг 5; `process.capabilities` и `process.user` — шаг 6. Список пространств имён: pid, network, ipc, uts, mount, cgroup — новые; user и time — общие с хостом. Ваш `mybox.sh` — это то, что рантайм делает по-взрослому, а рантайм — то, что для Docker делают containerd и runc.', 'Compare the `config.json` fields with what you did by hand: `linux.namespaces` — steps 2, 3 and the network; `linux.resources` — step 4; `root.path` and `mounts` — step 5; `process.capabilities` and `process.user` — step 6. The namespaces: pid, network, ipc, uts, mount, cgroup — new; user and time — shared with the host. Your `mybox.sh` is what a runtime does properly, and the runtime is what containerd and runc do for Docker.'),
+    },
+    {
+      id: 'seccomp',
+      kind: 'docs',
+      step: 'practice',
+      levels: ['experienced'],
+      mode: 'find',
+      prompt: bi('Запретите контейнеру системный вызов `mkdir` средствами runtime-spec — без подсказок. Где это описано, найдите сами в спецификации.', 'Forbid the `mkdir` system call to the container with runtime-spec means — no hints. Find where it is described in the specification yourself.'),
+      ref: { url: 'https://github.com/opencontainers/runtime-spec/blob/main/config-linux.md', label: 'runtime-spec › config-linux.md' },
+      terminal: {
+        setup: { ...byHandSetup, cwd: '/c/bundle' },
+        task: {
+          id: 'seccomp',
+          prompt: bi('В `/c/bundle/config.json` должно быть правило, которое отвечает ошибкой на `mkdir`.', '`/c/bundle/config.json` must hold a rule that answers `mkdir` with an error.'),
+          check: { when: (f) => /"seccomp"[\s\S]*"mkdir"[\s\S]*SCMP_ACT_ERRNO/.test(f.files['/c/bundle/config.json']?.text ?? '') },
+          docStep: 4,
+          beyond: true,
+          solutionTokens: ['seccomp', 'SCMP_ACT_ERRNO', 'syscalls', 'defaultAction'],
+        },
+      },
+    },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: byHandQuiz.map((q) => q.id) },
+    {
+      id: 'summary',
+      kind: 'callout',
+      tone: 'why',
+      step: 'review',
+      title: bi('Итог', 'Summary'),
+      body: bi('chroot меняет только корень; пространства имён дают своё имя, PID 1 и дерево монтирований; cgroup ограничивает; overlay и pivot_root дают корень, из которого не выйти; capabilities урезают root. Docker делает то же самое — только за вас.', 'chroot changes only the root; namespaces give a name, a PID 1 and a mount tree of their own; a cgroup limits; overlay and pivot_root give a root you cannot climb out of; capabilities cut down root. Docker does the same — only for you.'),
+    },
+  ],
+};

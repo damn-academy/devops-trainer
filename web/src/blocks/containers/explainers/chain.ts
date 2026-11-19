@@ -1,0 +1,99 @@
+// X1 (04 §6.2): `docker run -d -p 8080:80 --memory 64m nginx` from the
+// command to the process: docker CLI → dockerd → containerd → shim → runc →
+// the kernel → nginx. Who calls whom, and who stays alive.
+
+import { defineModel } from '../../../core/define';
+import { bi, fmt, type Bi } from '../../../core/i18n';
+import type { Step } from '../../../core/types';
+
+type P = { local: boolean; publish: boolean; network: string; memory: number };
+
+const dd = (path: string, label: string) => ({ url: `https://docs.docker.com/${path}`, label });
+
+export const chainModel = defineModel<P>({
+  id: 'containers.chain',
+  block: 'containers',
+  title: bi('docker run: от команды до процесса', 'docker run: from the command to the process'),
+  summary: bi('Кто кого вызывает, когда вы набираете `docker run -d -p 8080:80 --memory 64m nginx`, и кто остаётся жить, когда команда вернулась.', 'Who calls whom when you type `docker run -d -p 8080:80 --memory 64m nginx`, and who stays alive after the command returns.'),
+  concepts: ['docker.runtime', 'docker.bundle'],
+  diagram: {
+    width: 960,
+    height: 470,
+    nodes: [
+      { id: 'cli', label: 'docker', sub: 'CLI', family: 'user', x: 24, y: 40, w: 144, h: 64, card: { what: bi('Клиент. Сам ничего не запускает: превращает команду в HTTP-запрос к демону и печатает ответ.', 'The client. It starts nothing itself: it turns the command into an HTTP request to the daemon and prints the answer.'), who: bi('Вы, в терминале.', 'You, in the terminal.'), see: 'docker version', doc: { page: 'help/docker-run' } } },
+      { id: 'dockerd', label: 'dockerd', family: 'cp', x: 208, y: 40, w: 144, h: 64, card: { what: bi('Демон Docker: принимает API-запросы, знает образы, сети, тома, и раздаёт работу containerd.', 'The Docker daemon: takes API requests, knows images, networks and volumes, and hands work to containerd.'), who: bi('systemd запускает его при старте машины (docker.service).', 'systemd starts it at boot (docker.service).'), see: 'systemctl status docker' } },
+      { id: 'containerd', label: 'containerd', family: 'cp', x: 392, y: 40, w: 144, h: 64, card: { what: bi('Демон, который хранит снапшоты файловых систем и запускает задачи — процессы контейнеров — через shim.', 'The daemon that keeps file-system snapshots and runs tasks — container processes — through a shim.'), who: bi('systemd (containerd.service).', 'systemd (containerd.service).'), see: 'ctr -n moby tasks ls', doc: { url: 'https://containerd.io/docs/', label: 'containerd docs' } } },
+      { id: 'shim', label: 'containerd-shim-runc-v2', family: 'process', x: 576, y: 40, w: 192, h: 64, card: { what: bi('Маленький процесс-посредник на каждый контейнер: держит stdin/stdout, ждёт код выхода и остаётся родителем процесса контейнера. Благодаря ему можно перезапустить containerd, не убив контейнер.', 'A small go-between process for each container: holds stdin/stdout, waits for the exit code and stays the parent of the container process. Thanks to it containerd can restart without killing the container.'), who: bi('containerd запускает его на задачу.', 'containerd starts one per task.'), see: 'ps -ef --forest' } },
+      { id: 'runc', label: 'runc', sub: 'OCI runtime', family: 'process', x: 808, y: 40, w: 128, h: 64, card: { what: bi('OCI-рантайм: читает config.json бандла, просит ядро создать пространства имён и cgroup, делает pivot_root и execve — и выходит.', 'The OCI runtime: reads the bundle’s config.json, asks the kernel for namespaces and a cgroup, does pivot_root and execve — and exits.'), who: bi('shim вызывает его командами `runc create` и `runc start`.', 'The shim calls it with `runc create` and `runc start`.'), doc: { url: 'https://github.com/opencontainers/runtime-spec/blob/main/runtime.md', label: 'runtime-spec › runtime.md' } } },
+      { id: 'nginx', label: 'nginx', sub: 'PID 1 · 4123', family: 'process', x: 576, y: 200, w: 192, h: 64, card: { what: bi('Процесс контейнера. Внутри своего pid namespace он PID 1, на хосте — обычный процесс с другим номером, ребёнок shim.', 'The container process. Inside its pid namespace it is PID 1; on the host it is an ordinary process with another number, a child of the shim.'), who: bi('runc, через execve.', 'runc, through execve.'), see: 'docker top web' } },
+      { id: 'image', label: bi('образ на диске', 'image on disk'), sub: 'nginx:1.30-alpine', family: 'store', x: 208, y: 200, w: 144, h: 64, card: { what: bi('Слои образа в хранилище containerd. Если образа нет, демон сначала скачает его из реестра.', 'The image layers in containerd’s store. If the image is missing, the daemon downloads it from a registry first.'), who: bi('`docker pull` или сам `docker run`.', '`docker pull`, or `docker run` itself.'), see: 'docker images' } },
+      { id: 'kernel', label: bi('ядро Linux', 'Linux kernel'), sub: 'namespaces · cgroup · mount · netfilter', family: 'kernel', shape: 'bar', x: 24, y: 344, w: 912, h: 104, card: { what: bi('Всё, что делает контейнер контейнером, делает ядро: новые пространства имён (clone), лимиты cgroup, монтирование overlay, правила netfilter для `-p`.', 'Everything that makes a container a container is done by the kernel: new namespaces (clone), cgroup limits, the overlay mount, netfilter rules for `-p`.'), who: bi('Одно на машину.', 'One per machine.'), see: 'uname -r' } },
+    ],
+    edges: [
+      { id: 'e-api', from: 'cli', to: 'dockerd', label: 'POST /containers/create', card: { what: bi('HTTP-запрос через сокет /var/run/docker.sock. В теле: Image, HostConfig.PortBindings, HostConfig.Memory=67108864.', 'An HTTP request through the /var/run/docker.sock socket. In the body: Image, HostConfig.PortBindings, HostConfig.Memory=67108864.'), who: bi('docker CLI.', 'The docker CLI.'), doc: dd('reference/api/engine/', 'Docker Engine API') } },
+      { id: 'e-img', from: 'dockerd', to: 'image', label: bi('образ есть?', 'image here?'), card: { what: bi('Демон ищет образ локально; если нет — тянет из реестра (pull).', 'The daemon looks for the image locally; if absent, it pulls it from a registry.'), who: bi('dockerd.', 'dockerd.') } },
+      { id: 'e-snap', from: 'dockerd', to: 'containerd', label: 'Snapshots.Prepare', card: { what: bi('containerd готовит снапшот: слои образа снизу, пустой записываемый слой сверху — это будет корень контейнера.', 'containerd prepares a snapshot: image layers below, an empty writable layer on top — the future root of the container.'), who: bi('dockerd по gRPC.', 'dockerd over gRPC.') } },
+      { id: 'e-task', from: 'containerd', to: 'shim', label: 'Tasks.Create', card: { what: bi('Для задачи containerd запускает shim — он переживёт и runc, и перезапуск самого containerd.', 'For the task containerd starts a shim — it will outlive runc and even a restart of containerd itself.'), who: bi('containerd.', 'containerd.') } },
+      { id: 'e-runc', from: 'shim', to: 'runc', label: 'runc create / start', card: { what: bi('shim вызывает рантайм на бандле (rootfs + config.json).', 'The shim calls the runtime on the bundle (rootfs + config.json).'), who: bi('shim.', 'The shim.') } },
+      { id: 'e-clone', from: 'runc', to: 'kernel', via: [[872, 300]], label: 'clone(CLONE_NEW*) · cgroup · pivot_root', labelAt: 0.3, card: { what: bi('runc просит ядро: новые pid, mnt, net, uts, ipc, cgroup namespaces; лимит memory.max; смену корня.', 'runc asks the kernel for new pid, mnt, net, uts, ipc and cgroup namespaces, a memory.max limit and a change of root.'), who: bi('runc.', 'runc.'), doc: { url: 'https://man7.org/linux/man-pages/man2/clone.2.html', label: 'clone(2)' } } },
+      { id: 'e-exec', from: 'runc', to: 'nginx', via: [[872, 232]], label: 'execve', card: { what: bi('Последний шаг runc: подменить себя программой контейнера. После этого runc выходит, а процесс остаётся ребёнком shim.', 'runc’s last step: replace itself with the container program. Then runc exits and the process stays a child of the shim.'), who: bi('runc.', 'runc.') } },
+      { id: 'e-parent', from: 'shim', to: 'nginx', label: bi('родитель · stdio', 'parent · stdio'), card: { what: bi('shim — родитель процесса: держит его stdout/stderr (отсюда `docker logs`) и узнаёт код выхода.', 'The shim is the parent: it holds the process’s stdout/stderr (that is where `docker logs` comes from) and learns the exit code.'), who: bi('shim.', 'The shim.') } },
+    ],
+  },
+  params: [
+    { id: 'local', label: bi('Образ уже скачан', 'The image is already here'), kind: 'toggle', default: true, near: 'image', predict: { prompt: bi('Образа нет локально. Что изменится?', 'The image is not here. What changes?'), options: [{ id: 'pull', text: bi('Перед стартом демон скачает слои: запуск займёт заметно дольше', 'The daemon downloads layers first: the start takes much longer') }, { id: 'fail', text: bi('docker run завершится ошибкой', 'docker run fails') }], resolve: (_p, n) => ((n[n.length - 1]?.metrics?.total ?? 0) > 2000 ? 'pull' : 'fail') } },
+    { id: 'publish', label: bi('Опубликовать порт: -p 8080:80', 'Publish the port: -p 8080:80'), kind: 'toggle', default: true, near: 'kernel' },
+    { id: 'network', label: bi('Сеть контейнера', 'Container network'), kind: 'choice', default: 'bridge', options: [{ id: 'bridge', label: bi('bridge (по умолчанию)', 'bridge (default)') }, { id: 'host', label: bi('host — сеть хоста', 'host — the host’s network') }, { id: 'none', label: bi('none — только lo', 'none — lo only') }], near: 'kernel' },
+    { id: 'memory', label: bi('--memory, МиБ (0 — без лимита)', '--memory, MiB (0 — no limit)'), kind: 'range', min: 0, max: 512, step: 16, default: 64, near: 'kernel' },
+  ],
+  breaks: [
+    { id: 'no-containerd', label: bi('containerd не запущен', 'containerd is not running'), remove: ['containerd', 'e-snap', 'e-task'], boundary: 'process', predict: { prompt: bi('containerd остановлен. На каком шаге всё встанет?', 'containerd is stopped. At which step does it all stop?'), options: [{ id: 'snap', text: bi('На подготовке снапшота: dockerd не до кого достучаться', 'At preparing the snapshot: dockerd cannot reach anyone') }, { id: 'end', text: bi('Контейнер стартует, а сломается потом', 'The container starts and breaks later') }], resolve: () => 'snap' } },
+    { id: 'port-busy', label: bi('Порт 8080 уже занят', 'Port 8080 is already taken'), remove: ['e-clone'], boundary: 'network', predict: { prompt: bi('Порт 8080 хоста занят другим процессом. Что ответит docker run?', 'Port 8080 of the host is taken by another process. What does docker run answer?'), options: [{ id: 'err', text: bi('Ошибку, и контейнер останется в состоянии Created', 'An error, and the container stays Created') }, { id: 'other', text: bi('Выберет другой порт сам', 'It picks another port by itself') }], resolve: (_p, n) => (n.some((s) => s.broken) ? 'err' : 'other') } },
+  ],
+  metrics: [{ id: 'total', label: bi('время до старта', 'time to start'), unit: 'ms' }],
+  run(p, broken): Step[] {
+    const steps: Step[] = [];
+    let t = 30;
+    const mem = p.memory ? String(p.memory * 1024 * 1024) : 'max';
+    steps.push({ id: 'api', label: 'API', caption: bi('CLI ничего не запускает сам — он отправляет HTTP-запрос демону через сокет /var/run/docker.sock.', 'The CLI starts nothing itself — it sends an HTTP request to the daemon through the /var/run/docker.sock socket.'), focus: ['cli', 'e-api', 'dockerd'], tokens: [{ edge: 'e-api', label: 'JSON' }], states: { cli: 'on', dockerd: 'on', containerd: 'off', shim: 'off', runc: 'off', nginx: 'off' }, metrics: { total: t } });
+    if (!p.local) t += 4200;
+    steps.push({ id: 'image', label: bi('образ', 'image'), caption: p.local ? bi('Образ уже лежит локально — скачивать нечего.', 'The image is already here — nothing to download.') : bi('Образа нет: демон скачивает слои из реестра (подробно — в уроке про образы). Это самый долгий шаг.', 'No image: the daemon downloads the layers from a registry (in detail in the lesson about images). This is the longest step.'), focus: ['e-img', 'image'], tokens: [{ edge: 'e-img', reverse: !p.local, label: p.local ? '✓' : 'pull' }], states: { image: 'ok' }, metrics: { total: t } });
+    if (broken.has('no-containerd')) {
+      steps.push({ id: 'dial', label: 'Snapshots', caption: bi('dockerd пытается попросить containerd подготовить снапшот, но сокет containerd никто не слушает.', 'dockerd tries to ask containerd for a snapshot, but nobody listens on containerd’s socket.'), focus: ['dockerd', 'e-snap'], states: { dockerd: 'err' }, metrics: { total: t }, broken: { at: 'e-snap', message: 'failed to dial "/run/containerd/containerd.sock": connection error: desc = "transport: error while dialing: dial unix /run/containerd/containerd.sock: connect: connection refused"', caption: bi('без containerd у dockerd нет того, кто хранит снапшоты и запускает задачи.', 'without containerd, dockerd has nobody to keep snapshots and run tasks.') } });
+      return steps;
+    }
+    t += 40;
+    steps.push({ id: 'snap', label: 'snapshot', caption: bi('containerd готовит корень: слои образа снизу, пустой записываемый слой сверху. В ядре появится монтирование overlay.', 'containerd prepares the root: image layers below, an empty writable layer on top. An overlay mount will appear in the kernel.'), focus: ['e-snap', 'containerd', 'kernel'], tokens: [{ edge: 'e-snap' }], states: { containerd: 'on' }, values: { kernel: 'mount: overlay lowerdir=L3:L2:L1,upperdir=U' }, metrics: { total: t } });
+    t += 60;
+    const netLine = p.network === 'host' ? bi('Сеть host: своего net namespace нет, veth и правил DNAT не будет — процесс слушает прямо порты хоста.', 'Network host: no net namespace of its own, no veth and no DNAT rules — the process listens on the host’s ports directly.') : p.network === 'none' ? bi('Сеть none: в новом net namespace только интерфейс lo — снаружи контейнер недостижим.', 'Network none: the new net namespace has only the lo interface — the container cannot be reached.') : p.publish ? bi('Сеть bridge: veth-пара между docker0 и новым net namespace, адрес 172.17.0.2, и правило DNAT: порт 8080 хоста → 172.17.0.2:80.', 'Network bridge: a veth pair between docker0 and the new net namespace, address 172.17.0.2, and a DNAT rule: host port 8080 → 172.17.0.2:80.') : bi('Сеть bridge без -p: veth и адрес 172.17.0.2 есть, но правила DNAT нет — с хоста до 172.17.0.2:80 дойти можно, снаружи нельзя.', 'Network bridge without -p: there is a veth and the address 172.17.0.2, but no DNAT rule — the host can reach 172.17.0.2:80, the outside cannot.');
+    const netVal = p.network === 'host' ? 'netfilter: (no rules)' : p.network === 'none' ? 'net ns: lo' : p.publish ? 'DNAT tcp dpt:8080 → 172.17.0.2:80' : 'veth ↔ docker0, 172.17.0.2';
+    steps.push({ id: 'net', label: bi('сеть', 'network'), caption: netLine, focus: ['kernel'], values: { kernel: netVal }, metrics: { total: t } });
+    t += 30;
+    steps.push({ id: 'task', label: 'task', caption: bi('POST /containers/{id}/start → containerd создаёт задачу и запускает shim. Shim останется жить до конца контейнера.', 'POST /containers/{id}/start → containerd creates a task and starts a shim. The shim stays alive until the container ends.'), focus: ['e-task', 'shim'], tokens: [{ edge: 'e-task' }], states: { shim: 'on' }, metrics: { total: t } });
+    if (broken.has('port-busy') && p.publish && p.network === 'bridge') {
+      steps.push({ id: 'bind', label: 'bind', caption: bi('Демон пытается занять порт 8080 хоста под публикацию, а его уже держит другой процесс.', 'The daemon tries to take host port 8080 for publishing, but another process already holds it.'), focus: ['dockerd', 'kernel'], states: { kernel: 'err' }, metrics: { total: t }, broken: { at: 'kernel', message: 'docker: Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint web: Bind for 0.0.0.0:8080 failed: port is already allocated', caption: bi('контейнер создан, но не запущен: состояние Created.', 'the container is created but not started: state Created.') } });
+      return steps;
+    }
+    t += 80;
+    steps.push({ id: 'create', label: 'runc create', caption: fmt(bi('shim вызывает runc create: ядро создаёт процесс в новых пространствах имён, ставит его в cgroup с memory.max = {m} и меняет ему корень (pivot_root).', 'The shim calls runc create: the kernel creates a process in new namespaces, puts it into a cgroup with memory.max = {m} and changes its root (pivot_root).'), { m: mem }), focus: ['e-runc', 'runc', 'e-clone', 'kernel'], tokens: [{ edge: 'e-runc' }, { edge: 'e-clone', label: 'clone' }], states: { runc: 'on' }, values: { kernel: `clone(NEWPID|NEWNS|${p.network === 'host' ? '' : 'NEWNET|'}NEWUTS|NEWIPC|NEWCGROUP) · memory.max=${mem}` }, metrics: { total: t } });
+    t += 20;
+    steps.push({ id: 'start', label: 'runc start', caption: bi('runc start: execve("/docker-entrypoint.sh") — runc подменил себя программой и вышел. Процесс остался ребёнком shim.', 'runc start: execve("/docker-entrypoint.sh") — runc replaced itself with the program and exited. The process stays a child of the shim.'), focus: ['e-exec', 'nginx'], tokens: [{ edge: 'e-exec' }], states: { runc: 'off', nginx: 'on' }, metrics: { total: t } });
+    steps.push({ id: 'done', label: bi('итог', 'done'), caption: bi('CLI получил ID контейнера и вышел. Живут dockerd, containerd, shim и nginx; в `ps -ef --forest` хоста видна цепочка containerd-shim-runc-v2 → nginx: master → worker.', 'The CLI got the container ID and exited. dockerd, containerd, the shim and nginx live on; `ps -ef --forest` on the host shows containerd-shim-runc-v2 → nginx: master → worker.'), focus: ['shim', 'e-parent', 'nginx'], states: { cli: 'off', nginx: 'ok' }, metrics: { total: t } });
+    return steps;
+  },
+  explainDelta(_prev, next, change, a, b): Bi {
+    const total = next[next.length - 1]?.metrics?.total ?? 0;
+    if (change.kind === 'break') return change.on ? (change.id === 'no-containerd' ? bi('Без containerd цепочка рвётся на втором звене: dockerd не может подготовить снапшот.', 'Without containerd the chain breaks at the second link: dockerd cannot prepare a snapshot.') : bi('Занятый порт хоста — ошибка ещё до создания процесса: контейнер остаётся Created.', 'A taken host port is an error before any process exists: the container stays Created.')) : bi('Поломка убрана.', 'The failure is removed.');
+    switch (change.id) {
+      case 'local':
+        return fmt(b.local ? bi('Образ локально: время до старта {t} мс.', 'The image is local: {t} ms to start.') : bi('Образа нет: сначала скачивание слоёв, время до старта {t} мс.', 'No image: first the layers are downloaded; {t} ms to start.'), { t: total });
+      case 'publish':
+        return b.publish ? bi('С -p демон добавил правило DNAT: порт хоста ведёт в контейнер.', 'With -p the daemon added a DNAT rule: a host port leads into the container.') : bi('Без -p правила DNAT нет: снаружи контейнер недостижим, с самого хоста — по адресу 172.17.0.2.', 'Without -p there is no DNAT rule: unreachable from outside, reachable from the host itself at 172.17.0.2.');
+      case 'network':
+        return b.network === 'host' ? bi('host: нет своего net namespace — порты процесса и есть порты хоста.', 'host: no net namespace of its own — the process’s ports are the host’s ports.') : b.network === 'none' ? bi('none: в namespace только lo, сети нет.', 'none: only lo in the namespace, no network.') : bi('bridge: veth в docker0, адрес из 172.17.0.0/16.', 'bridge: a veth into docker0, an address from 172.17.0.0/16.');
+      case 'memory':
+        return fmt(bi('--memory {a} → {b} МиБ: меняется только одно число — memory.max в cgroup контейнера.', '--memory {a} → {b} MiB: only one number changes — memory.max in the container’s cgroup.'), { a: a.memory, b: b.memory });
+    }
+    return bi('Модель пересчитана.', 'The model is recomputed.');
+  },
+});
