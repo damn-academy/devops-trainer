@@ -61,8 +61,8 @@ export const examB: Exam = {
   real: {
     track: 'net-b',
     order: bi(
-      'Три самые маленькие машины (1 vCPU, 1 ГБ памяти) с Debian 12 или Ubuntu 24.04 в одной частной сети, у каждой — SSH. Поставьте на них метки `trainer=devops` и `dt-track=net-b`: по ним последнее задание проверит уборку. В тенанте курса набор бесплатен в пределах квоты и живёт 8 часов; в своём облаке экран провайдера покажет цену, обычно это стоимость трёх самых дешёвых машин за три часа. Введите адреса машин в частной сети ниже: они подставятся в команды.',
-      'Three of the smallest machines (1 vCPU, 1 GB of memory) with Debian 12 or Ubuntu 24.04 in one private network, each reachable over SSH. Give them the labels `trainer=devops` and `dt-track=net-b`: the last task checks the cleanup by them. In the course tenant the set is free within the quota and lives for 8 hours; in your own cloud the provider’s screen shows the price, usually that of the three cheapest machines for three hours. Type the machines’ private addresses below: they are filled into the commands.',
+      'Три самые маленькие машины (1 vCPU, 1 ГБ памяти) с Debian 12 или Ubuntu 24.04 в одной частной сети, у каждой — SSH. Поставьте на них метки `trainer=devops` и `dt-track=net-b`: по ним последнее задание проверит уборку. Машины вы заказываете в своём облаке или поднимаете на своём компьютере; экран провайдера покажет цену, обычно это стоимость трёх самых дешёвых машин за три часа. Введите адреса машин в частной сети ниже: они подставятся в команды.',
+      'Three of the smallest machines (1 vCPU, 1 GB of memory) with Debian 12 or Ubuntu 24.04 in one private network, each reachable over SSH. Give them the labels `trainer=devops` and `dt-track=net-b`: the last task checks the cleanup by them. You order the machines in your own cloud or run them on your own computer; the provider’s screen shows the price, usually that of the three cheapest machines for three hours. Type the machines’ private addresses below: they are filled into the commands.',
     ),
     machines: [
       {
@@ -256,8 +256,8 @@ export const examB: Exam = {
       kind: 'real',
       real: {
         prompt: bi(
-          'Уборка. Машины стоят денег, пока работают, поэтому без уборки экзамен не закрывается. Удалите все три машины и вставьте сюда подтверждение: вывод `terraform destroy`, если заказывали их Terraform; в тенанте курса — `kubectl get vm -l dt-track=net-b`; в своём облаке — список машин провайдера по метке `dt-track=net-b` в JSON, то есть пустой список `[]`.',
-          'Cleanup. The machines cost money while they run, so the exam does not close without cleanup. Delete all three machines and paste the confirmation here: the output of `terraform destroy` if you ordered them with Terraform; in the course tenant, `kubectl get vm -l dt-track=net-b`; in your own cloud, the provider’s list of machines with the label `dt-track=net-b` as JSON, that is, an empty list `[]`.',
+          'Уборка. Машины стоят денег, пока работают, поэтому без уборки экзамен не закрывается. Удалите все три машины и вставьте сюда подтверждение: вывод `terraform destroy`, если заказывали их Terraform; в своём облаке — список машин провайдера по метке `dt-track=net-b` в JSON, то есть пустой список `[]`.',
+          'Cleanup. The machines cost money while they run, so the exam does not close without cleanup. Delete all three machines and paste the confirmation here: the output of `terraform destroy` if you ordered them with Terraform; in your own cloud, the provider’s list of machines with the label `dt-track=net-b` as JSON, that is, an empty list `[]`.',
         ),
         paste: {
           label: bi('Подтверждение уборки', 'The cleanup confirmation'),
