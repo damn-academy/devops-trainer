@@ -25,7 +25,7 @@ const placement: PlacementTask[] = [
       kind: 'multi',
       prompt: bi('Что из этого верно?', 'Which of these are true?'),
       options: [
-        { id: 'ram', text: bi('Несохранённый текст живёт в памяти и пропадает при выключении', 'Unsaved text lives in memory and is lost at power-off'), correct: true },
+        { id: 'ram', text: bi('Несохранённый текст находится в памяти и пропадает при выключении', 'Unsaved text lives in memory and is lost at power-off'), correct: true },
         { id: 'os', text: bi('Программы обращаются к диску через операционную систему', 'Programs reach the disk through the operating system'), correct: true },
         { id: 'first', text: bi('В строке `ls -l notes` первое слово — что сделать, остальные — с чем и как', 'In the line `ls -l notes` the first word is what to do, the rest with what and how'), correct: true },
         { id: 'icon', text: bi('Значок на рабочем столе и есть сама программа', 'The icon on the desktop is the program itself'), why: bi('Значок — ярлык, программа — файл на диске.', 'The icon is a shortcut; the program is a file on the disk.') },
@@ -58,10 +58,10 @@ const placement: PlacementTask[] = [
     item: {
       id: 'orient.place.q.code',
       kind: 'mcq',
-      prompt: bi('Программа версии 1.4.2 прошла тестовый стенд. Что должно уехать на прод?', 'Version 1.4.2 of a program passed the test stand. What should go to production?'),
+      prompt: bi('Программа версии 1.4.2 прошла тестовый стенд. Что должно попасть на прод?', 'Version 1.4.2 of a program passed the test stand. What should go to production?'),
       options: [
         { id: 'same', text: bi('Та же сборка 1.4.2 и файл настроек прода рядом с ней', 'The same 1.4.2 build with the production settings file next to it'), correct: true },
-        { id: 'rebuild', text: bi('Новая сборка с настройками прода внутри', 'A new build with the production settings inside'), why: bi('Тогда на прод поедет программа, которую на стенде не проверяли.', 'Then production gets a program the stand never checked.') },
+        { id: 'rebuild', text: bi('Новая сборка с настройками прода внутри', 'A new build with the production settings inside'), why: bi('Тогда на прод попадёт программа, которую на стенде не проверяли.', 'Then production gets a program the stand never checked.') },
         { id: 'latest', text: bi('Самая свежая копия из общей ветки, какой бы она ни была', 'The freshest copy from the shared branch, whatever it is'), why: bi('Свежая копия могла получить новые правки, которых стенд не видел.', 'The freshest copy may have new edits the stand never saw.') },
       ],
     },

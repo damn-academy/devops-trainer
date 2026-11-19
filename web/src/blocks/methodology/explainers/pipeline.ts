@@ -133,7 +133,7 @@ export const pipelineModel = defineModel<P>({
         prompt: bi('Отката нет. Выкладка сломала оплату. Что будет?', 'There is no rollback. A deployment broke the checkout. What happens?'),
         options: [
           { id: 'hotfix', text: bi('Чинят на ходу хотфиксом: дольше, и это ещё одна, внеплановая выкладка', 'They fix it live with a hotfix: longer, and one more, unplanned deployment') },
-          { id: 'same', text: bi('Ничего: просто подождут', 'Nothing: they just wait') },
+          { id: 'same', text: bi('Ничего: подождут своей очереди', 'Nothing: they just wait') },
         ],
         resolve: () => 'hotfix',
       },

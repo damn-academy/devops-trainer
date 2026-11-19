@@ -23,7 +23,7 @@ const T = {
   shareBad: bi('больше трети: объясните механизм словами', 'over a third: explain the mechanism in words'),
   parts: bi('Частей заполнено: {n} из 4', 'Parts written: {n} of 4'),
   points: bi('Ключевые пункты', 'Key points'),
-  found: bi('нашлось в твоём ответе', 'found in your answer'),
+  found: bi('нашлось в вашем ответе', 'found in your answer'),
   confirm: bi('отметьте, если назвали другими словами', 'tick if you said it in other words'),
   model: bi('Эталон', 'The model answer'),
   from: bi('это отсюда', 'this is from'),

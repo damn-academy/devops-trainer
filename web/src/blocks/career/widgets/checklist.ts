@@ -18,7 +18,7 @@ import { load, save } from './ui';
 
 const C = {
   opens: bi('Открывается после', 'Opens after'),
-  required: bi('обязателен на твоём уровне', 'required at your level'),
+  required: bi('обязателен на вашем уровне', 'required at your level'),
   optional: bi('по выбору', 'optional'),
   defense: bi('Вопросы защиты', 'Defence questions'),
   readme: bi('Скопировать шаблон README', 'Copy the README template'),

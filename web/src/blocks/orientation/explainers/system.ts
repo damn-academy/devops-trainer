@@ -89,7 +89,7 @@ export const systemModel = defineModel<P>({
         prompt: bi('Редактор и браузер одновременно пишут на диск сами, не спросив систему. Что будет?', 'The editor and the browser both write to the disk themselves without asking the system. What happens?'),
         options: [
           { id: 'clash', text: bi('Они запишут в одни и те же блоки и испортят друг другу данные', 'They write into the same blocks and spoil each other’s data') },
-          { id: 'fine', text: bi('Ничего страшного, просто быстрее', 'Nothing bad, just faster') },
+          { id: 'fine', text: bi('Ничего страшного, зато быстрее', 'Nothing bad, just faster') },
         ],
         resolve: () => 'clash',
       },

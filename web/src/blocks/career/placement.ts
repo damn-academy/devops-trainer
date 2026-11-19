@@ -23,7 +23,7 @@ const structure2: QuizItem = {
   steps: [
     { id: 'what', text: bi('Ещё одно имя того же inode', 'Another name for the same inode') },
     { id: 'why', text: bi('Имя и данные файла в Linux разделены', 'In Linux a file’s name and data are separate') },
-    { id: 'how', text: bi('Данные живут, пока счётчик ссылок больше нуля или файл открыт', 'The data lives while the link count is above zero or the file is open') },
+    { id: 'how', text: bi('Данные сохраняются, пока счётчик ссылок больше нуля или файл открыт', 'The data lives while the link count is above zero or the file is open') },
     { id: 'when', text: bi('Пользуюсь редко: чаще символическими для версий', 'I rarely use them: more often symlinks for versions') },
   ],
 };

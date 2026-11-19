@@ -16,11 +16,11 @@ export const insideQuiz: QuizItem[] = [
     concepts: ['orient.computer'],
     prompt: bi('Вы три часа писали отчёт и не сохраняли его. Свет моргнул, ноутбук без батареи выключился. Что вы найдёте после включения?', 'You wrote a report for three hours without saving it. The power flickered and the laptop, which has no battery, switched off. What will you find after switching on?'),
     options: [
-      { id: 'prog', text: bi('Программа на месте, отчёта нет', 'The program is there, the report is not'), correct: true, why: bi('Программа лежит на диске, а несохранённый текст жил только в памяти — она забывает всё без питания.', 'The program lives on the disk, while the unsaved text lived only in memory, which forgets everything without power.') },
-      { id: 'all', text: bi('И программа, и отчёт: компьютер всё помнит', 'Both the program and the report: the computer remembers everything'), why: bi('Помнит диск, а текст до нажатия «Сохранить» лежал в памяти. Память при выключении обнуляется.', 'The disk remembers, but until you press “Save” the text lay in memory. Memory is wiped at power-off.') },
+      { id: 'prog', text: bi('Программа на месте, отчёта нет', 'The program is there, the report is not'), correct: true, why: bi('Программа хранится на диске, поэтому она уцелела. Несохранённый текст находился только в памяти, а память забывает всё, когда питание выключается.', 'The program lives on the disk, while the unsaved text lived only in memory, which forgets everything without power.') },
+      { id: 'all', text: bi('И программа, и отчёт: компьютер всё помнит', 'Both the program and the report: the computer remembers everything'), why: bi('Диск помнит всё, что на него записали, а текст до нажатия «Сохранить» находился в памяти. При выключении память обнуляется, и несохранённое пропадает.', 'The disk remembers, but until you press “Save” the text lay in memory. Memory is wiped at power-off.') },
       { id: 'none', text: bi('Ни программы, ни отчёта', 'Neither the program nor the report'), why: bi('Программа записана на диск, а диску выключение не страшно.', 'The program is written on the disk, and the disk does not mind a power-off.') },
     ],
-    explain: bi('Память быстрая, но держит данные только под током. Диск медленнее, зато хранит их годами. Кнопка «Сохранить» — это и есть копия из памяти на диск.', 'Memory is fast but holds data only while powered. The disk is slower but keeps data for years. The “Save” button is exactly a copy from memory to the disk.'),
+    explain: bi('Память работает быстро, но держит данные только под током. Диск работает медленнее, зато хранит данные годами. Кнопка «Сохранить» запускает копирование текста из памяти на диск.', 'Memory is fast but holds data only while powered. The disk is slower but keeps data for years. The “Save” button is exactly a copy from memory to the disk.'),
     refs: { lesson: 'orient.inside', explainer: 'orient.run' },
   },
   {
@@ -33,7 +33,7 @@ export const insideQuiz: QuizItem[] = [
       { id: 'ram', left: bi('Память', 'Memory'), right: bi('держит то, с чем работают прямо сейчас', 'holds what is being worked on right now') },
       { id: 'disk', left: bi('Диск', 'Disk'), right: bi('хранит программы и документы, пока их не удалят', 'keeps programs and documents until they are deleted') },
     ],
-    explain: bi('Три роли, которые повторяются в любой машине — от телефона до огромного компьютера в дата-центре.', 'Three roles that repeat in every machine, from a phone to a huge computer in a data centre.'),
+    explain: bi('Эти три роли выполняет любая машина — от телефона до огромного компьютера в дата-центре.', 'Three roles that repeat in every machine, from a phone to a huge computer in a data centre.'),
   },
   {
     id: 'orient.q.start-order',
@@ -60,7 +60,7 @@ export const insideQuiz: QuizItem[] = [
       { id: 'full', text: bi('память забита другими открытыми программами', 'memory is packed with other open programs'), correct: true },
       { id: 'screen', text: bi('экран слишком маленький', 'the screen is too small'), why: bi('Экран только показывает готовую картинку; на скорость запуска он не влияет.', 'The screen only shows the finished picture; it does not affect how fast a program starts.') },
     ],
-    explain: bi('Запуск — это копирование с диска в память. Его замедляют размер программы, скорость диска и нехватка свободной памяти, когда системе приходится выгружать куски других программ обратно на диск.', 'Starting is copying from the disk to memory. It is slowed by the size of the program, the speed of the disk and a lack of free memory, when pieces of other programs have to be pushed back out to the disk.'),
+    explain: bi('Запуск программы — это копирование её с диска в память. Этот процесс замедляют три вещи: большой размер программы, медленный диск и нехватка свободной памяти, при которой системе приходится выгружать части других программ обратно на диск.', 'Starting is copying from the disk to memory. It is slowed by the size of the program, the speed of the disk and a lack of free memory, when pieces of other programs have to be pushed back out to the disk.'),
     refs: { explainer: 'orient.run' },
   },
   {
@@ -70,10 +70,10 @@ export const insideQuiz: QuizItem[] = [
     prompt: bi('Коллега жалуется: «Открыто сорок вкладок, всё тормозит, а на диске ещё 300 ГБ свободно». Чего, скорее всего, не хватает?', 'A colleague complains: “Forty tabs open, everything is slow, and the disk still has 300 GB free.” What is most likely lacking?'),
     options: [
       { id: 'ram', text: bi('Памяти', 'Memory'), correct: true },
-      { id: 'disk', text: bi('Места на диске', 'Disk space'), why: bi('Место на диске есть; открытые вкладки живут не там, а в памяти.', 'There is disk space; open tabs do not live there but in memory.') },
+      { id: 'disk', text: bi('Места на диске', 'Disk space'), why: bi('Место на диске есть; открытые вкладки занимают память, а не диск.', 'There is disk space; open tabs do not live there but in memory.') },
       { id: 'screen', text: bi('Размера экрана', 'Screen size'), why: bi('Экран к скорости не относится.', 'The screen has nothing to do with speed.') },
     ],
-    explain: bi('Память и диск путают постоянно, даже в магазинах техники. Память — то, что занято сейчас; диск — то, что хранится. Память кончается, когда много открыто, диск — когда много сохранено.', 'Memory and disk are mixed up all the time, even in electronics shops. Memory is what is in use now; the disk is what is kept. Memory runs out when much is open, the disk when much is saved.'),
+    explain: bi('Память и диск путают постоянно, даже в магазинах техники. Память — это то, что занято прямо сейчас, а диск — то, что хранится долго. Память кончается, когда открыто много программ, а диск — когда сохранено много файлов.', 'Memory and disk are mixed up all the time, even in electronics shops. Memory is what is in use now; the disk is what is kept. Memory runs out when much is open, the disk when much is saved.'),
   },
 ];
 
@@ -127,7 +127,7 @@ export const insideLesson: Lesson = {
       step: 'explain',
       title: bi('Три части', 'Three parts'),
       body: bi(
-        'Внутри любого [[orient.computer|компьютера]] — от телефона до огромной машины в дата-центре — работают три главные части, и у каждой своя роль.\n\n**Процессор** выполняет инструкции. Инструкция — крошечное действие: сложить два числа, сравнить их, перейти к другой инструкции. Сам по себе процессор ничего не помнит, зато выполняет миллиарды таких действий в секунду. Когда говорят «процессор на 3 ГГц с четырьмя ядрами», имеют в виду, что внутри четыре независимых исполнителя и каждый делает около трёх миллиардов шагов в секунду.\n\n**Память** (её ещё называют оперативной) держит то, с чем компьютер работает прямо сейчас: открытые программы, страницу в браузере, ваш несохранённый текст. Она быстрая, но живёт только под током: выключили питание — и память пуста.\n\n**Диск** хранит всё остальное: программы, документы, фотографии. Он в сотни раз медленнее памяти, но помнит годами и без питания. Старые диски, HDD, устроены как пластинки с головкой; новые, SSD, собраны из микросхем и быстрее раз в десять.\n\nТеперь история с отчётом понятна. Программа лежала на диске и уцелела. Отчёт до нажатия «Сохранить» был только в памяти — и исчез вместе с током. А 16 ГБ памяти и 512 ГБ диска — действительно разные вещи: сколько можно держать открытым одновременно и сколько можно хранить.',
+        'Внутри любого [[orient.computer|компьютера]] — от телефона до огромной машины в дата-центре — работают три главные части, и у каждой своя роль.\n\n**Процессор** выполняет инструкции. Инструкция — крошечное действие: сложить два числа, сравнить их, перейти к другой инструкции. Сам по себе процессор ничего не помнит, зато выполняет миллиарды таких действий в секунду. Когда говорят «процессор на 3 ГГц с четырьмя ядрами», имеют в виду, что внутри четыре независимых исполнителя и каждый делает около трёх миллиардов шагов в секунду.\n\n**Память** (её ещё называют оперативной) держит то, с чем компьютер работает прямо сейчас: открытые программы, страницу в браузере, ваш несохранённый текст. Память работает быстро, но хранит данные только под током: как только питание выключается, её содержимое пропадает.\n\n**Диск** хранит всё остальное: программы, документы, фотографии. Он в сотни раз медленнее памяти, но помнит годами и без питания. Старые диски, HDD, устроены как пластинки с головкой; новые, SSD, собраны из микросхем и работают примерно в десять раз быстрее.\n\nТеперь история с отчётом понятна. Программа лежала на диске и уцелела. Отчёт до нажатия «Сохранить» находился только в памяти — и исчез вместе с током. А 16 ГБ памяти и 512 ГБ диска — это разные вещи: сколько можно держать открытым одновременно и сколько можно хранить.',
         'Inside every [[orient.computer|computer]], from a phone to a huge machine in a data centre, three main parts are at work, each with its own role.\n\nThe **processor** carries out instructions. An instruction is a tiny action: add two numbers, compare them, jump to another instruction. The processor itself remembers nothing, but it carries out billions of such actions a second. When someone says “a 3 GHz processor with four cores”, they mean there are four independent workers inside, each making about three billion steps a second.\n\n**Memory** (also called main memory or RAM) holds what the computer is working on right now: open programs, the page in the browser, your unsaved text. It is fast, but it lives only while powered: switch off the power and memory is empty.\n\nThe **disk** keeps everything else: programs, documents, photos. It is hundreds of times slower than memory, but it remembers for years and without power. Old disks, HDDs, work like record players with a moving arm; new ones, SSDs, are made of chips and are about ten times faster.\n\nNow the report story makes sense. The program lay on the disk and survived. Until “Save” was pressed, the report was only in memory, and it vanished with the power. And 16 GB of memory and 512 GB of disk really are different things: how much can be open at once and how much can be kept.',
       ),
     },
@@ -137,7 +137,7 @@ export const insideLesson: Lesson = {
       step: 'explain',
       title: bi('Что такое программа и что значит «запустить»', 'What a program is and what “start” means'),
       body: bi(
-        '[[orient.program|Программа]] — это длинная последовательность инструкций для процессора, записанная на диск. Пока её никто не запустил, это просто данные, такие же, как фотография. Запустить программу — значит скопировать её с диска в память и сказать процессору: «начинай отсюда». Дальше процессор берёт из памяти инструкцию за инструкцией и выполняет их, а программа рисует своё окно, ждёт ваших щелчков и отвечает на них.\n\nОдна программа на диске может быть запущена несколько раз: два окна одного редактора — это две копии в памяти, у каждой свои данные. А значок на рабочем столе — вовсе не программа, а только ярлык, который указывает, где она лежит. Удалите программу с диска, и значок будет указывать в пустоту.\n\nПройдите объяснение ниже. Пошевелите ползунки: сделайте программу больше, поменяйте диск на медленный, откройте лишние программы. А потом выключите питание до сохранения — и сравните со своим предсказанием.',
+        '[[orient.program|Программа]] — это длинная последовательность инструкций для процессора, записанная на диск. Пока её никто не запустил, это такие же данные, как фотография. Запустить программу — значит скопировать её с диска в память и сказать процессору: «начинай отсюда». Дальше процессор берёт из памяти инструкцию за инструкцией и выполняет их, а программа рисует своё окно, ждёт ваших щелчков и отвечает на них.\n\nОдна программа на диске может быть запущена несколько раз: два окна одного редактора — это две копии в памяти, у каждой свои данные. А значок на рабочем столе — не сама программа, а ярлык, который указывает, где она лежит. Удалите программу с диска, и значок будет указывать в пустоту.\n\nПройдите объяснение ниже. Пошевелите ползунки: сделайте программу больше, поменяйте диск на медленный, откройте лишние программы. А потом выключите питание до сохранения — и сравните результат со своим предсказанием.',
         'A [[orient.program|program]] is a long sequence of instructions for the processor, written to the disk. Until someone starts it, it is just data, like a photo. Starting a program means copying it from the disk into memory and telling the processor: “begin here”. From then on the processor takes instruction after instruction from memory and carries them out, while the program draws its window, waits for your clicks and responds to them.\n\nOne program on the disk can be started several times: two windows of the same editor are two copies in memory, each with its own data. And the icon on the desktop is not the program at all, only a shortcut pointing to where it lies. Delete the program from the disk, and the icon points at nothing.\n\nWalk through the explainer below. Move the sliders: make the program bigger, switch to a slow disk, open too many programs. Then cut the power before saving, and compare with your prediction.',
       ),
     },
@@ -149,7 +149,7 @@ export const insideLesson: Lesson = {
       machine: 'sim',
       setup: desk(),
       intro: bi(
-        'Это учебная машина прямо в браузере. У неё нет окон и значков: с ней разговаривают текстом. Как это устроено, разберём через урок, а сейчас достаточно напечатать то, что написано в задании, нажать Enter и прочитать ответ. Сломать здесь ничего нельзя: кнопка «Сбросить» вернёт машину в начало.',
+        'Перед вами учебная машина прямо в браузере. У неё нет окон и значков: с ней разговаривают текстом. Как это устроено, мы разберём через урок, а пока достаточно напечатать то, что написано в задании, нажать Enter и прочитать ответ. Сломать здесь ничего нельзя: кнопка «Сбросить» вернёт машину в начало.',
         'This is a training machine right in your browser. It has no windows or icons: you talk to it in text. How that works we take apart in two lessons; for now it is enough to type what the task says, press Enter and read the answer. Nothing can be broken here: the “Reset” button returns the machine to the start.',
       ),
       tasks: [
@@ -189,7 +189,7 @@ export const insideLesson: Lesson = {
       levels: ['experienced'],
       title: bi('Если вы программист', 'If you are a programmer'),
       body: bi(
-        'Это архитектура фон Неймана в один абзац: программа и данные лежат в одной памяти, процессор выбирает и исполняет инструкции. Кэши, виртуальная память и подкачка — уточнения этой картины, а не её замена: выгрузка страниц на диск при нехватке памяти и есть «всё тормозит» из объяснения.',
+        'Вся архитектура фон Неймана умещается в один абзац: программа и данные лежат в одной памяти, а процессор по очереди выбирает и выполняет инструкции. Кэши, виртуальная память и подкачка уточняют эту картину, а не заменяют её: выгрузка страниц на диск при нехватке памяти и есть то самое «всё тормозит» из объяснения ниже.',
         'This is the von Neumann architecture in one paragraph: the program and its data share one memory, the processor fetches and executes instructions. Caches, virtual memory and paging refine this picture rather than replace it: paging out to the disk when memory runs short is exactly the “everything slows down” of the explainer.',
       ),
     },
@@ -201,7 +201,7 @@ export const insideLesson: Lesson = {
       step: 'review',
       title: bi('Итог', 'Summary'),
       body: bi(
-        'Процессор выполняет, память держит то, что нужно сейчас, диск хранит. Программа — инструкции на диске; запустить её значит скопировать в память и отдать процессору. Всё, что не сохранено на диск, исчезает вместе с питанием.',
+        'Процессор выполняет инструкции, память держит то, что нужно сейчас, а диск хранит всё остальное. Программа — это инструкции на диске; запустить её значит скопировать их в память и отдать процессору. Всё, что не сохранено на диск, исчезает вместе с питанием.',
         'The processor carries out, memory holds what is needed now, the disk keeps. A program is instructions on the disk; starting it means copying it into memory and handing it to the processor. Anything not saved to the disk disappears with the power.',
       ),
     },
@@ -221,9 +221,9 @@ export const systemQuiz: QuizItem[] = [
       { id: 'turns', text: bi('по очереди даёт программам процессор', 'gives programs the processor in turns'), correct: true },
       { id: 'mem', text: bi('выдаёт каждой программе её участок памяти', 'gives each program its piece of memory'), correct: true },
       { id: 'files', text: bi('помнит, где на диске лежит каждый файл', 'remembers where each file lies on the disk'), correct: true },
-      { id: 'text', text: bi('пишет за вас текст письма', 'writes the text of your letter for you'), why: bi('Текст пишете вы в программе-редакторе. Система только сохраняет его, когда редактор попросит.', 'You write the text in an editor program. The system only saves it when the editor asks.') },
+      { id: 'text', text: bi('пишет за вас текст письма', 'writes the text of your letter for you'), why: bi('Текст пишете вы в программе-редакторе. Система сохраняет его, только когда редактор попросит.', 'You write the text in an editor program. The system only saves it when the editor asks.') },
     ],
-    explain: bi('Система — посредник между программами и железом. Программы просят её, а она решает, кому что дать, и следит, чтобы они не мешали друг другу.', 'The system is the go-between for programs and hardware. Programs ask it, and it decides who gets what and makes sure they do not get in each other’s way.'),
+    explain: bi('Система — посредник между программами и железом. Программы обращаются к ней с просьбами, а она решает, кому что выдать, и следит, чтобы программы не мешали друг другу.', 'The system is the go-between for programs and hardware. Programs ask it, and it decides who gets what and makes sure they do not get in each other’s way.'),
     refs: { explainer: 'orient.system' },
   },
   {
@@ -233,10 +233,10 @@ export const systemQuiz: QuizItem[] = [
     prompt: bi('У старого ноутбука одно ядро, а вы одновременно слушаете музыку, пишете письмо и качаете файл. Как это возможно?', 'An old laptop has one core, and you listen to music, write a letter and download a file at the same time. How is that possible?'),
     options: [
       { id: 'turns', text: bi('Система переключает процессор между программами сотни раз в секунду', 'The system switches the processor between programs hundreds of times a second'), correct: true },
-      { id: 'magic', text: bi('Одно ядро умеет выполнять три программы сразу', 'One core can run three programs at once'), why: bi('В каждый момент одно ядро выполняет одну программу. Одновременность — иллюзия от очень частых переключений.', 'At any moment one core runs one program. The simultaneity is an illusion from very frequent switching.') },
+      { id: 'magic', text: bi('Одно ядро умеет выполнять три программы сразу', 'One core can run three programs at once'), why: bi('В каждый момент одно ядро выполняет одну программу. Одновременность кажущаяся: она возникает из очень частых переключений.', 'At any moment one core runs one program. The simultaneity is an illusion from very frequent switching.') },
       { id: 'queue', text: bi('Программы ждут, пока предыдущая закончит работу', 'The programs wait until the previous one finishes'), why: bi('Тогда музыка играла бы только после того, как вы допишете письмо.', 'Then the music would play only after you finished the letter.') },
     ],
-    explain: bi('Каждой программе достаётся отрезок в несколько миллисекунд, потом система отдаёт процессор следующей. Глазу и уху этого не заметить.', 'Each program gets a slice of a few milliseconds, then the system gives the processor to the next one. Neither eye nor ear can notice it.'),
+    explain: bi('Каждой программе достаётся отрезок времени в несколько миллисекунд, потом система отдаёт процессор следующей. Ни глазу, ни уху такие перерывы не заметны.', 'Each program gets a slice of a few milliseconds, then the system gives the processor to the next one. Neither eye nor ear can notice it.'),
     refs: { explainer: 'orient.system' },
   },
   {
@@ -261,7 +261,7 @@ export const systemQuiz: QuizItem[] = [
       { id: 'win', text: 'Windows', why: bi('Windows встречается на рабочих местах и в части компаний, но машины, которые обслуживают сайты и приложения, — в подавляющем большинстве Linux.', 'Windows appears on desktops and in some companies, but the machines that serve sites and applications are overwhelmingly Linux.') },
       { id: 'mac', text: 'macOS', why: bi('macOS — система ноутбуков и компьютеров Apple; для таких машин её почти не используют.', 'macOS is the system of Apple laptops and computers; it is hardly used for such machines.') },
     ],
-    explain: bi('Поэтому второй блок курса целиком про Linux. Многое из этого урока вы увидите там снова, но уже изнутри.', 'That is why the course’s second block is entirely about Linux. Much of this lesson you will see there again, this time from the inside.'),
+    explain: bi('Поэтому второй блок курса целиком посвящён Linux. Многое из этого урока вы увидите там снова, но уже изнутри.', 'That is why the course’s second block is entirely about Linux. Much of this lesson you will see there again, this time from the inside.'),
   },
   {
     id: 'orient.q.folders-label',
@@ -292,7 +292,7 @@ export const systemQuiz: QuizItem[] = [
       { id: 'notes', text: 'notes' },
       { id: 'todo', text: 'todo.txt' },
     ],
-    explain: bi('Каждая «/» в пути — шаг на одну папку вниз. Самая верхняя папка называется просто «/».', 'Every “/” in a path is one step down into a folder. The topmost folder is called simply “/”.'),
+    explain: bi('Каждый знак «/» в пути — шаг на одну папку вниз, а самая верхняя папка обозначается одним этим знаком.', 'Every “/” in a path is one step down into a folder. The topmost folder is called simply “/”.'),
   },
 ];
 
@@ -322,7 +322,7 @@ export const systemLesson: Lesson = {
       step: 'explain',
       title: bi('Посредник между программами и железом', 'A go-between for programs and hardware'),
       body: bi(
-        '[[orient.os|Операционная система]] (ОС) — первая программа, которая загружается при включении компьютера, и последняя, которая завершается при выключении. Все остальные программы запускает она, и к железу они обращаются только через неё.\n\nУ системы четыре главные работы. Она **запускает программы** — та самая копия с диска в память делается её руками. Она **делит процессор**: программ запущено много, а ядер мало, поэтому система даёт каждой программе процессор на несколько миллисекунд и переключает дальше; переключения так часты, что вам кажется, будто всё работает одновременно. Она **раздаёт память**, каждой программе свой участок, и не пускает одну программу в чужой. И она **ведёт учёт диска**: какие ячейки свободны, какие заняты и каким файлам принадлежат.\n\nСистемы бывают разные. На ноутбуках чаще всего Windows и macOS, на телефонах — Android и iOS. А на машинах, которые круглые сутки обслуживают сайты и приложения, почти всегда работает Linux — поэтому ему посвящён целый следующий технический блок курса.',
+        '[[orient.os|Операционная система]] (ОС) — первая программа, которая загружается при включении компьютера, и последняя, которая завершается при выключении. Все остальные программы запускает она, и к железу они обращаются только через неё.\n\nУ системы четыре главные работы. Она **запускает программы** — ту самую копию с диска в память делает она сама. Она **делит процессор**: программ запущено много, а ядер мало, поэтому система даёт каждой программе процессор на несколько миллисекунд и переключает дальше; переключения так часты, что вам кажется, будто всё работает одновременно. Она **раздаёт память**, каждой программе свой участок, и не пускает одну программу в чужой. И она **ведёт учёт диска**: какие ячейки свободны, какие заняты и каким файлам принадлежат.\n\nСистемы бывают разные. На ноутбуках чаще всего работают Windows и macOS, на телефонах — Android и iOS. А на машинах, которые круглые сутки обслуживают сайты и приложения, почти всегда работает Linux — поэтому ему посвящён целый следующий технический блок курса.',
         'The [[orient.os|operating system]] (OS) is the first program to load when a computer is switched on and the last to finish when it is switched off. It starts all other programs, and they reach the hardware only through it.\n\nThe system has four main jobs. It **starts programs**: that copy from the disk into memory is made by its hands. It **shares the processor**: many programs are running and there are few cores, so the system gives each program the processor for a few milliseconds and moves on; the switches are so frequent that it seems to you everything runs at once. It **hands out memory**, a piece to each program, and keeps one program out of another’s. And it **keeps track of the disk**: which cells are free, which are taken and which files they belong to.\n\nSystems differ. Laptops most often run Windows and macOS, phones Android and iOS. But the machines that serve sites and applications around the clock almost always run Linux, which is why the course’s next technical block is devoted entirely to it.',
       ),
     },
@@ -333,7 +333,7 @@ export const systemLesson: Lesson = {
       step: 'explain',
       title: bi('Файлы и папки', 'Files and folders'),
       body: bi(
-        '[[orient.file|Файл]] — именованный кусок данных на диске: текст, фотография, программа. Имя придумали для людей; для системы файл — это список занятых ячеек и запись о том, как он называется и кому принадлежит.\n\nФайлы лежат в папках, папки — в других папках, и вместе они образуют дерево. На машинах с Linux у этого дерева одна вершина, она называется просто `/`. Внутри неё папка `home`, где у каждого человека своя папка: у вас на учебной машине это `learner`. Чтобы назвать файл точно, перечисляют все папки от вершины до него через косую черту: `/home/learner/notes/todo.txt`. Такая запись называется путём. Её читают как почтовый адрес — от страны к квартире.\n\nВ Windows дерево устроено похоже, только верхушек несколько (`C:`, `D:`), а черта обратная: `C:\\Users\\learner\\notes\\todo.txt`. На машинах, с которыми работает этот курс, всегда прямая — `/`.',
+        '[[orient.file|Файл]] — именованный кусок данных на диске: текст, фотография, программа. Имя придумали для людей; для системы файл — это список занятых ячеек и запись о том, как он называется и кому принадлежит.\n\nФайлы лежат в папках, папки лежат в других папках, и вместе они образуют дерево. На машинах с Linux у этого дерева одна вершина, и обозначается она знаком `/`. Внутри неё находится папка `home`, где у каждого человека своя папка: у вас на учебной машине это `learner`. Чтобы назвать файл точно, перечисляют все папки от вершины до него через косую черту: `/home/learner/notes/todo.txt`. Такая запись называется путём. Её читают как почтовый адрес — от страны к квартире.\n\nВ Windows дерево устроено похоже, только верхушек несколько (`C:`, `D:`), а черта обратная: `C:\\Users\\learner\\notes\\todo.txt`. На машинах, с которыми работает этот курс, всегда прямая — `/`.',
         'A [[orient.file|file]] is a named piece of data on the disk: a text, a photo, a program. The name was invented for people; to the system a file is a list of occupied cells plus a record of what it is called and whom it belongs to.\n\nFiles lie in folders, folders in other folders, and together they form a tree. On Linux machines the tree has a single top, called simply `/`. Inside it is the folder `home`, where every person has a folder of their own: on the training machine yours is `learner`. To name a file exactly, you list all folders from the top down to it, separated by slashes: `/home/learner/notes/todo.txt`. This is called a path. You read it like a postal address, from the country down to the flat.\n\nIn Windows the tree is arranged in a similar way, except there are several tops (`C:`, `D:`) and the slash leans the other way: `C:\\Users\\learner\\notes\\todo.txt`. On the machines this course works with it is always the forward one, `/`.',
       ),
     },
@@ -391,7 +391,7 @@ export const systemLesson: Lesson = {
       step: 'review',
       title: bi('Итог', 'Summary'),
       body: bi(
-        'Операционная система — главная программа: запускает остальные, по очереди даёт им процессор, раздаёт память и ведёт учёт диска. Файл — именованные данные на диске, папки складываются в дерево, путь `/home/learner/notes/todo.txt` называет файл точно.',
+        'Операционная система — главная программа компьютера: она запускает остальные программы, по очереди даёт им процессор, раздаёт память и ведёт учёт диска. Файл — это именованные данные на диске. Папки складываются в дерево, а путь `/home/learner/notes/todo.txt` называет файл точно.',
         'The operating system is the main program: it starts the others, gives them the processor in turns, hands out memory and keeps track of the disk. A file is named data on the disk, folders form a tree, and the path `/home/learner/notes/todo.txt` names a file exactly.',
       ),
     },
@@ -409,7 +409,7 @@ export const textQuiz: QuizItem[] = [
     prompt: bi('Почему с машинами, которые обслуживают сайты, обычно говорят командами, а не мышью?', 'Why do people usually talk to the machines that serve sites in commands rather than with a mouse?'),
     options: [
       { id: 'far', text: bi('Машина стоит далеко и без экрана, а текст легко передать по сети, записать и повторить', 'The machine is far away and has no screen, and text is easy to send over a network, to write down and to repeat'), correct: true },
-      { id: 'old', text: bi('Это пережиток: так работали до изобретения мыши', 'It is a leftover: that is how it worked before the mouse was invented'), why: bi('Команды живут не по привычке: строку можно сохранить, отправить коллеге и выполнить на сотне машин сразу. С щелчками мыши так не выйдет.', 'Commands survive not out of habit: a line can be saved, sent to a colleague and run on a hundred machines at once. Mouse clicks cannot do that.') },
+      { id: 'old', text: bi('Это пережиток: так работали до изобретения мыши', 'It is a leftover: that is how it worked before the mouse was invented'), why: bi('Причина не в привычке: строку можно сохранить, отправить коллеге и выполнить на сотне машин сразу. С щелчками мыши так не выйдет.', 'Commands survive not out of habit: a line can be saved, sent to a colleague and run on a hundred machines at once. Mouse clicks cannot do that.') },
       { id: 'secret', text: bi('Чтобы посторонние не поняли, что происходит', 'So that outsiders do not understand what is going on'), why: bi('Команды — не шифр: они записаны в открытой справке, и их учит любой желающий.', 'Commands are no cipher: they are written in open documentation, and anyone can learn them.') },
     ],
     explain: bi('Текстовую команду можно напечатать за тысячу километров, вставить в инструкцию и выполнить снова через год. В этом её сила.', 'A text command can be typed a thousand kilometres away, put into an instruction and run again a year later. That is its strength.'),
@@ -433,8 +433,8 @@ export const textQuiz: QuizItem[] = [
     prompt: bi('Запишите в файл `hello.txt` строку `hello`. Напечатайте строку команды целиком.', 'Write the line `hello` into the file `hello.txt`. Type the whole command line.'),
     setup: { hostname: 'trainer' },
     check: { when: "files['/home/learner/hello.txt'].text~'hello'" },
-    misconceptions: [{ match: '^echo hello$', why: bi('Так строка напечатается на экран. Чтобы она ушла в файл, после неё нужен знак `>` и имя файла.', 'This prints the line on the screen. To send it to a file, add the `>` sign and the file name.') }],
-    explain: bi('`echo` печатает то, что ему дали, а знак `>` отправляет напечатанное не на экран, а в файл. Если файла не было, он появится.', '`echo` prints what it is given, and the `>` sign sends the printout not to the screen but to a file. If the file did not exist, it appears.'),
+    misconceptions: [{ match: '^echo hello$', why: bi('Так строка напечатается на экране. Чтобы она ушла в файл, после неё нужен знак `>` и имя файла.', 'This prints the line on the screen. To send it to a file, add the `>` sign and the file name.') }],
+    explain: bi('Команда `echo` печатает то, что ей передали, а знак `>` отправляет напечатанное не на экран, а в файл. Если такого файла не было, он появится.', '`echo` prints what it is given, and the `>` sign sends the printout not to the screen but to a file. If the file did not exist, it appears.'),
   },
   {
     id: 'orient.q.help',
@@ -466,7 +466,7 @@ export const textLesson: Lesson = {
       kind: 'text',
       step: 'hook',
       body: bi(
-        'Окна, значки и мышь — удобный способ говорить с компьютером, который стоит перед вами. Но машина, на которой работает сайт магазина, стоит в чужом здании за сотни километров, у неё нет ни монитора, ни мыши, а иногда таких машин у компании тысяча. С ними говорят по-другому: печатают строку текста, а машина выполняет её и отвечает тоже текстом. На учебной машине вы уже так делали. Теперь разберёмся, что именно вы печатали.',
+        'Окна, значки и мышь — удобный способ говорить с компьютером, который стоит перед вами. Но машина, на которой работает сайт магазина, стоит в чужом здании за сотни километров, у неё нет ни монитора, ни мыши, а иногда таких машин у компании тысяча. С ними говорят по-другому: печатают строку текста, машина выполняет её и отвечает тоже текстом. На учебной машине вы уже так делали. Теперь разберёмся, что именно вы печатали.',
         'Windows, icons and a mouse are a handy way to talk to the computer in front of you. But the machine that runs a shop’s site stands in someone else’s building hundreds of kilometres away; it has no monitor and no mouse, and sometimes a company has a thousand such machines. People talk to them differently: they type a line of text, and the machine carries it out and answers in text too. You have already done this on the training machine. Now let us see what exactly you were typing.',
       ),
     },
@@ -476,7 +476,7 @@ export const textLesson: Lesson = {
       step: 'explain',
       title: bi('Строка — это слова', 'A line is words'),
       body: bi(
-        'Строка, которую вы печатаете машине и отправляете клавишей Enter, называется [[orient.command|командой]]. Машина делит её на слова по пробелам. Первое слово говорит, **что сделать**: `ls` — показать список, `cat` — вывести файл, `mkdir` — создать папку. Остальные слова уточняют, **с чем** и **как**:\n\n```\nls -l notes\n```\n\nЗдесь `ls` — что сделать, `notes` — с какой папкой, а `-l` — как: подробно, с размерами и датами. Слова с дефисом называют опциями. Учить их наизусть не нужно: у каждой команды есть справка, и через пару блоков вы будете находить в ней нужную опцию быстрее, чем вспоминать.\n\nКаждое слово команды — сокращение английского: `ls` — list, `pwd` — print working directory, `mkdir` — make directory, `cat` — concatenate, «склеить» (команда умеет выводить подряд несколько файлов). Знать это полезно: сокращение подсказывает, что делает команда, и её проще запомнить.\n\nЕщё одно правило пригодится сразу. Знак `>` после команды отправляет то, что она напечатала бы на экран, в файл:\n\n```\necho "buy milk" > notes/shopping.txt\n```\n\n`echo` просто печатает свои слова, а `>` кладёт их в файл `shopping.txt`. Если такого файла не было, он появится; если был — его прежнее содержимое заменится.',
+        'Строка, которую вы печатаете машине и отправляете клавишей Enter, называется [[orient.command|командой]]. Машина делит её на слова по пробелам. Первое слово говорит, **что сделать**: `ls` — показать список, `cat` — вывести файл, `mkdir` — создать папку. Остальные слова уточняют, **с чем** и **как**:\n\n```\nls -l notes\n```\n\nЗдесь слово `ls` говорит, что сделать: показать список. Слово `notes` уточняет, с какой папкой, а `-l` — как: подробно, с размерами и датами. Слова с дефисом называют опциями. Учить их наизусть не нужно: у каждой команды есть справка, и через пару блоков вы будете находить в ней нужную опцию быстрее, чем вспоминать.\n\nКаждое слово команды — это сокращение английского выражения: `ls` — list, `pwd` — print working directory, `mkdir` — make directory, `cat` — concatenate, «склеить» (команда умеет выводить подряд несколько файлов). Знать это полезно: сокращение подсказывает, что делает команда, и её проще запомнить.\n\nЕщё одно правило пригодится сразу. Знак `>` после команды отправляет то, что она напечатала бы на экран, в файл:\n\n```\necho "buy milk" > notes/shopping.txt\n```\n\nКоманда `echo` печатает свои слова без изменений, а знак `>` кладёт напечатанное в файл `shopping.txt`. Если такого файла не было, он появится; если был — его прежнее содержимое заменится.',
         'The line you type to a machine and send with the Enter key is called a [[orient.command|command]]. The machine splits it into words at the spaces. The first word says **what to do**: `ls` lists, `cat` prints a file, `mkdir` makes a folder. The other words refine **with what** and **how**:\n\n```\nls -l notes\n```\n\nHere `ls` is what to do, `notes` is which folder, and `-l` is how: in detail, with sizes and dates. Words with a hyphen are called options. There is no need to learn them by heart: every command has its help, and in a couple of blocks you will find the right option there faster than you could recall it.\n\nEvery command word is an English abbreviation: `ls` is list, `pwd` is print working directory, `mkdir` is make directory, `cat` is concatenate (the command can print several files one after another). Knowing this helps: the abbreviation hints at what the command does and makes it easier to remember.\n\nOne more rule will be useful right away. The `>` sign after a command sends what it would have printed on the screen into a file:\n\n```\necho "buy milk" > notes/shopping.txt\n```\n\n`echo` simply prints its words, and `>` puts them into the file `shopping.txt`. If there was no such file, it appears; if there was, its old contents are replaced.',
       ),
     },
@@ -497,7 +497,7 @@ export const textLesson: Lesson = {
       step: 'try',
       machine: 'sim',
       setup: desk(),
-      intro: bi('Пять минут на учебной машине. Если ошибётесь в букве, машина ответит, что не знает такой команды, — исправьте и попробуйте снова. Стрелка вверх возвращает прошлую строку.', 'Five minutes on the training machine. If you mistype a letter, the machine answers that it knows no such command: fix it and try again. The up arrow brings back the previous line.'),
+      intro: bi('Поработайте пять минут на учебной машине. Если вы ошибётесь в букве, машина ответит, что не знает такой команды, — исправьте строку и попробуйте снова. Стрелка вверх возвращает прошлую строку.', 'Five minutes on the training machine. If you mistype a letter, the machine answers that it knows no such command: fix it and try again. The up arrow brings back the previous line.'),
       tasks: [
         {
           id: 'who',
@@ -510,7 +510,7 @@ export const textLesson: Lesson = {
         },
         {
           id: 'detail',
-          prompt: bi('Посмотрите на папку `notes` подробно: `ls -l notes`. Чем ответ отличается от простого `ls notes`?', 'Look at the folder `notes` in detail: `ls -l notes`. How does the answer differ from plain `ls notes`?'),
+          prompt: bi('Посмотрите на папку `notes` подробно: `ls -l notes`. Чем ответ отличается от обычного `ls notes`?', 'Look at the folder `notes` in detail: `ls -l notes`. How does the answer differ from plain `ls notes`?'),
           check: { stdout: /todo\.txt/ },
           chips: 'ls -l notes',
           docRef: man('ls.1', 'OPTIONS', '-l'),
@@ -545,7 +545,7 @@ export const textLesson: Lesson = {
       step: 'review',
       title: bi('Итог', 'Summary'),
       body: bi(
-        'Команда — строка текста: первое слово говорит, что сделать, остальные — с чем и как. Слова с дефисом — опции, их смотрят в справке. Знак `>` отправляет вывод в файл. Текст можно переслать, записать и повторить, поэтому с удалёнными машинами работают именно так.',
+        'Команда — это строка текста: первое слово говорит, что сделать, а остальные уточняют, с чем и как. Слова с дефисом — опции, и нужную опцию ищут в справке. Знак `>` отправляет вывод команды в файл. Текст можно переслать, записать и повторить, поэтому с удалёнными машинами и работают строками.',
         'A command is a line of text: the first word says what to do, the rest with what and how. Words with a hyphen are options, looked up in the help. The `>` sign sends output to a file. Text can be forwarded, written down and repeated, which is why remote machines are worked with exactly this way.',
       ),
     },
@@ -566,7 +566,7 @@ export const netQuiz: QuizItem[] = [
       { id: 'one', text: bi('Одна большая сеть, которой владеет международная организация', 'One big network owned by an international organisation'), why: bi('Единого владельца у интернета нет. Есть домашние сети, сети провайдеров, компаний, университетов — и договорённости между ними.', 'The internet has no single owner. There are home networks, networks of providers, companies and universities, and agreements between them.') },
       { id: 'wifi', text: bi('Wi-Fi в квартире', 'The Wi-Fi in your flat'), why: bi('Wi-Fi — только последний кусок пути, от ноутбука до домашнего роутера.', 'Wi-Fi is only the last piece of the path, from the laptop to the home router.') },
     ],
-    explain: bi('Само слово так и переводится: «между сетями». Подробная карта интернета будет в блоке «Сети».', 'The word itself means “between networks”. A detailed map of the internet comes in the Networks block.'),
+    explain: bi('Само слово так и переводится: «между сетями». Подробную карту интернета вы получите в блоке «Сети».', 'The word itself means “between networks”. A detailed map of the internet comes in the Networks block.'),
   },
   {
     id: 'orient.q.address',
@@ -574,11 +574,11 @@ export const netQuiz: QuizItem[] = [
     concepts: ['orient.network'],
     prompt: bi('Зачем у каждого компьютера в сети есть адрес?', 'Why does every computer on a network have an address?'),
     options: [
-      { id: 'deliver', text: bi('Чтобы сообщение для него можно было доставить именно ему', 'So that a message for it can be delivered to it and nobody else'), correct: true },
+      { id: 'deliver', text: bi('Чтобы сеть могла доставить сообщение тому компьютеру, которому оно адресовано', 'So that a message for it can be delivered to it and nobody else'), correct: true },
       { id: 'name', text: bi('Чтобы владелец мог дать компьютеру красивое имя', 'So that the owner can give the computer a pretty name'), why: bi('Имена для людей тоже есть, но доставка идёт по числовому адресу.', 'There are names for people too, but delivery goes by the numeric address.') },
-      { id: 'speed', text: bi('Чтобы сеть работала быстрее', 'So that the network runs faster'), why: bi('Скорость от адреса не зависит. Адрес нужен, чтобы знать, куда везти.', 'Speed does not depend on the address. The address says where to carry the message.') },
+      { id: 'speed', text: bi('Чтобы сеть работала быстрее', 'So that the network runs faster'), why: bi('Скорость от адреса не зависит. Адрес нужен, чтобы знать, куда везти сообщение.', 'Speed does not depend on the address. The address says where to carry the message.') },
     ],
-    explain: bi('Как у дома на улице: без адреса письмо не найдёт получателя.', 'Like a house on a street: without an address a letter cannot find its recipient.'),
+    explain: bi('Это как с домом на улице: без адреса письмо не найдёт получателя.', 'Like a house on a street: without an address a letter cannot find its recipient.'),
   },
   {
     id: 'orient.q.far',
@@ -586,7 +586,7 @@ export const netQuiz: QuizItem[] = [
     concepts: ['orient.network', 'orient.internet'],
     prompt: bi('Почему страница из соседнего города открывается быстрее, чем такая же страница с другого континента?', 'Why does a page from the next city open faster than the same page from another continent?'),
     options: [
-      { id: 'dist', text: bi('Сообщению дольше ехать: даже свету через океан нужны десятки миллисекунд', 'The message has further to go: even light needs tens of milliseconds to cross an ocean'), correct: true },
+      { id: 'dist', text: bi('Сообщению предстоит более долгий путь: даже свету через океан нужны десятки миллисекунд', 'The message has further to go: even light needs tens of milliseconds to cross an ocean'), correct: true },
       { id: 'lang', text: bi('Её приходится переводить на другой язык', 'It has to be translated into another language'), why: bi('Сеть ничего не переводит, она только доставляет.', 'The network translates nothing; it only delivers.') },
       { id: 'cust', text: bi('На границе её проверяет таможня', 'Customs checks it at the border'), why: bi('Это шутка, но расстояние — настоящая причина: время в пути не уменьшить ничем, кроме приближения.', 'That is a joke, but distance is the real reason: the travel time cannot be cut by anything except getting closer.') },
     ],
@@ -598,7 +598,7 @@ export const netLesson: Lesson = {
   id: 'orient.net',
   block: 'orient',
   title: bi('Сеть и интернет', 'Networks and the internet'),
-  summary: bi('Как компьютеры посылают друг другу сообщения по адресам и почему интернет — сеть из сетей, у которой нет одного хозяина.', 'How computers send each other messages by address and why the internet is a network of networks with no single owner.'),
+  summary: bi('Как компьютеры посылают друг другу сообщения по адресам и почему интернет — это сеть из сетей, у которой нет одного хозяина.', 'How computers send each other messages by address and why the internet is a network of networks with no single owner.'),
   introduces: ['orient.network', 'orient.internet'],
   uses: ['orient.computer', 'orient.command'],
   tier: 'core',
@@ -620,7 +620,7 @@ export const netLesson: Lesson = {
       step: 'explain',
       title: bi('Сеть', 'A network'),
       body: bi(
-        '[[orient.network|Сеть]] — это компьютеры, соединённые проводами или радиоволнами так, что могут посылать друг другу сообщения. Ваш ноутбук, телефон и телевизор, подключённые к одному роутеру, — маленькая домашняя сеть. В офисе сеть побольше, у провайдера — огромная.\n\nЧтобы сообщение нашло получателя, у каждого компьютера в сети есть **адрес** — набор чисел, похожий на `198.51.100.20`. Отправитель пишет на сообщении адрес получателя, и сеть доставляет его так же, как почта доставляет письмо: не зная, что внутри. Большое сообщение — фотография, страница — режется на небольшие куски, каждый идёт со своим адресом, а у получателя куски собираются обратно.\n\nЛюдям числа запоминать неудобно, поэтому у компьютеров есть ещё и имена вроде `shop.example`. Когда вы пишете имя, ваш компьютер сначала спрашивает в сети, какой адрес ему соответствует, — примерно как вы смотрите номер телефона в записной книжке, прежде чем позвонить.',
+        '[[orient.network|Сеть]] — это компьютеры, соединённые проводами или радиоволнами так, что могут посылать друг другу сообщения. Ваш ноутбук, телефон и телевизор, подключённые к одному роутеру, — маленькая домашняя сеть. В офисе сеть побольше, у провайдера — огромная.\n\nЧтобы сообщение нашло получателя, у каждого компьютера в сети есть **адрес** — набор чисел, похожий на `198.51.100.20`. Отправитель пишет на сообщении адрес получателя, и сеть доставляет его так же, как почта доставляет письмо: не зная, что внутри. Большое сообщение — фотография, страница — режется на небольшие куски, каждый идёт со своим адресом, а у получателя куски собираются обратно.\n\nЛюдям числа запоминать неудобно, поэтому у компьютеров есть ещё и имена вроде `shop.example`. Когда вы пишете имя, ваш компьютер сначала спрашивает в сети, какой адрес ему соответствует, — примерно так, как вы смотрите номер телефона в записной книжке, прежде чем позвонить.',
         'A [[orient.network|network]] is computers connected by wires or radio waves so that they can send each other messages. Your laptop, phone and TV, connected to one router, are a small home network. An office has a bigger network, a provider a huge one.\n\nFor a message to find its recipient, every computer on a network has an **address**, a set of numbers like `198.51.100.20`. The sender writes the recipient’s address on the message, and the network delivers it the way the post delivers a letter: without knowing what is inside. A big message, a photo or a page, is cut into small pieces, each travels with its own address, and at the recipient the pieces are put back together.\n\nNumbers are hard for people to remember, so computers also have names such as `shop.example`. When you type a name, your computer first asks the network which address belongs to it, much as you look up a phone number in your address book before calling.',
       ),
     },
@@ -630,7 +630,7 @@ export const netLesson: Lesson = {
       step: 'explain',
       title: bi('Сеть из сетей', 'A network of networks'),
       body: bi(
-        'Ваш роутер соединяет домашнюю сеть с сетью провайдера. Провайдер соединён с другими провайдерами, те — с третьими, и где-то в этой цепочке есть сеть, к которой подключены компьютеры магазина. Это и есть [[orient.internet|интернет]]: десятки тысяч сетей разных владельцев, которые договорились передавать сообщения друг друга. Хозяина у интернета нет, есть общие правила и договоры между соседями.\n\nСообщение идёт по этой цепочке прыжками: от ноутбука к роутеру, от роутера к провайдеру, от провайдера к следующему — пока не дойдёт до сети получателя. Каждый узел на пути смотрит только на адрес и решает, кому передать дальше. На каждый прыжок уходит время, и чем дальше получатель, тем больше прыжков и тем длиннее провода. Сообщение через страну идёт десятки миллисекунд, через океан — около сотни: даже свет в стекле быстрее не умеет.\n\nКак именно устроены адреса, прыжки и поиск адреса по имени, подробно разберёт блок «Сети». Пока достаточно картины: сеть доставляет сообщения по адресам, интернет — множество сетей, связанных договорами, а расстояние стоит времени.',
+        'Ваш роутер соединяет домашнюю сеть с сетью провайдера. Провайдер соединён с другими провайдерами, те — с третьими, и где-то в этой цепочке есть сеть, к которой подключены компьютеры магазина. Это и есть [[orient.internet|интернет]]: десятки тысяч сетей разных владельцев, которые договорились передавать сообщения друг друга. Хозяина у интернета нет, есть общие правила и договоры между соседями.\n\nСообщение идёт по этой цепочке прыжками: от ноутбука к роутеру, от роутера к провайдеру, от провайдера к следующему — пока не дойдёт до сети получателя. Каждый узел на пути смотрит только на адрес и решает, кому передать сообщение дальше. На каждый прыжок уходит время, и чем дальше получатель, тем больше прыжков и тем длиннее провода. Сообщение через страну идёт десятки миллисекунд, через океан — около сотни: даже свет в стекле быстрее не умеет.\n\nКак именно устроены адреса, прыжки и поиск адреса по имени, подробно разберёт блок «Сети». Пока достаточно картины: сеть доставляет сообщения по адресам, интернет — это множество сетей, связанных договорами, а расстояние стоит времени.',
         'Your router connects the home network to the provider’s network. The provider is connected to other providers, those to others still, and somewhere along this chain is the network the shop’s computers are attached to. That is the [[orient.internet|internet]]: tens of thousands of networks with different owners that agreed to pass each other’s messages on. The internet has no owner; it has common rules and agreements between neighbours.\n\nA message travels along this chain in hops: from the laptop to the router, from the router to the provider, from the provider to the next one, until it reaches the recipient’s network. Each node on the way looks only at the address and decides whom to hand it to next. Each hop takes time, and the further away the recipient, the more hops and the longer the wires. A message crosses a country in tens of milliseconds and an ocean in about a hundred: even light in glass cannot go faster.\n\nHow exactly addresses, hops and finding an address by name work is taken apart in the Networks block. For now the picture is enough: a network delivers messages by address, the internet is many networks tied by agreements, and distance costs time.',
       ),
     },
@@ -668,7 +668,7 @@ export const netLesson: Lesson = {
       step: 'review',
       title: bi('Итог', 'Summary'),
       body: bi(
-        'Сеть доставляет сообщения между компьютерами по адресам, имена нужны людям и переводятся в адреса. Интернет — десятки тысяч сетей, связанных договорами; сообщение идёт по ним прыжками, и чем дальше получатель, тем дольше путь.',
+        'Сеть доставляет сообщения между компьютерами по адресам, а имена нужны людям и переводятся в адреса. Интернет — это десятки тысяч сетей, связанных договорами; сообщение идёт по ним прыжками, и чем дальше получатель, тем дольше путь.',
         'A network delivers messages between computers by address; names are for people and are turned into addresses. The internet is tens of thousands of networks tied by agreements; a message travels across them in hops, and the further the recipient, the longer the trip.',
       ),
     },
@@ -702,7 +702,7 @@ export const requestsQuiz: QuizItem[] = [
       { id: 'magic', text: bi('Это особый вид компьютера без процессора и памяти', 'It is a special kind of computer without a processor or memory'), why: bi('У сервера те же процессор, память, диск и операционная система, просто их больше и они надёжнее.', 'A server has the same processor, memory, disk and operating system, just more of them and more reliable.') },
       { id: 'site', text: bi('Сервер — это сам сайт, а не машина', 'A server is the site itself, not a machine'), why: bi('Сайт — программа, которая работает на сервере. Сервер — машина, на которой она работает.', 'A site is a program running on a server. The server is the machine it runs on.') },
     ],
-    explain: bi('Слово «сервер» говорят и про машину, и про программу, которая на ней отвечает на запросы. Различать их помогает вопрос: «машина включена, а программа запущена?»', 'The word “server” is used both for the machine and for the program on it that answers requests. Telling them apart is helped by the question: “is the machine on, and is the program running?”'),
+    explain: bi('Словом «сервер» называют и машину, и программу, которая на ней отвечает на запросы. Различить их помогает вопрос: «машина включена, а программа запущена?»', 'The word “server” is used both for the machine and for the program on it that answers requests. Telling them apart is helped by the question: “is the machine on, and is the program running?”'),
   },
   {
     id: 'orient.q.overload',
@@ -711,10 +711,10 @@ export const requestsQuiz: QuizItem[] = [
     prompt: bi('Сервер успевает ответить на 200 запросов в секунду. В распродажу приходит 400. Что увидят покупатели?', 'A server can answer 200 requests a second. During a sale 400 arrive. What will the shoppers see?'),
     options: [
       { id: 'err', text: bi('Очередь переполнится, часть получит ошибку «сервер перегружен»', 'The queue overflows, and some get a “server overloaded” error'), correct: true },
-      { id: 'half', text: bi('Все получат страницу, просто в два раза медленнее', 'Everyone gets the page, just twice as slowly'), why: bi('Если запросов приходит больше, чем сервер успевает обслужить, очередь растёт без конца; медленно становится задолго до 200, а после — ошибки.', 'If more requests arrive than the server can serve, the queue grows without end; it gets slow long before 200, and beyond it come errors.') },
+      { id: 'half', text: bi('Все получат страницу, но в два раза медленнее', 'Everyone gets the page, just twice as slowly'), why: bi('Если запросов приходит больше, чем сервер успевает обслужить, очередь растёт без конца: скорость падает задолго до двухсот запросов в секунду, а после начинаются ошибки.', 'If more requests arrive than the server can serve, the queue grows without end; it gets slow long before 200, and beyond it come errors.') },
       { id: 'none', text: bi('Ничего: сервер станет работать быстрее', 'Nothing: the server will work faster'), why: bi('Скорость одного сервера ограничена. Выручают второй сервер или лёгкие страницы.', 'One server’s speed is limited. A second server or lighter pages help.') },
     ],
-    explain: bi('В объяснении это видно: ожидание растёт тем круче, чем ближе загрузка к 100%. Поэтому к распродажам готовятся заранее и добавляют серверы.', 'The explainer shows it: the wait rises more steeply the closer the load is to 100%. That is why sales are prepared for in advance by adding servers.'),
+    explain: bi('В объяснении это видно: ожидание растёт тем круче, чем ближе загрузка к ста процентам. Поэтому к распродажам готовятся заранее и добавляют серверы.', 'The explainer shows it: the wait rises more steeply the closer the load is to 100%. That is why sales are prepared for in advance by adding servers.'),
     refs: { explainer: 'orient.request' },
   },
   {
@@ -727,7 +727,7 @@ export const requestsQuiz: QuizItem[] = [
       { id: 'net', left: bi('Кабель между городами перерублен', 'The cable between cities is cut'), right: bi('долгое ожидание, потом «время вышло»', 'a long wait, then “timed out”') },
       { id: 'load', left: bi('Покупателей больше, чем сервер успевает', 'More shoppers than the server can handle'), right: bi('ответ 503: «сервер перегружен»', 'answer 503: “server overloaded”') },
     ],
-    explain: bi('По виду ошибки уже можно сказать, где искать: отказ — машина отвечает, но программа не слушает; тишина — сообщение не дошло; 503 — дошло, но сервер не справляется.', 'The kind of error already tells you where to look: a refusal means the machine answers but the program is not listening; silence means the message did not arrive; 503 means it arrived but the server cannot cope.'),
+    explain: bi('По виду ошибки уже можно сказать, где искать: отказ означает, что машина отвечает, но программа не слушает; тишина означает, что сообщение не дошло; 503 означает, что сообщение дошло, но сервер не справляется.', 'The kind of error already tells you where to look: a refusal means the machine answers but the program is not listening; silence means the message did not arrive; 503 means it arrived but the server cannot cope.'),
     refs: { explainer: 'orient.request' },
   },
   {
@@ -750,7 +750,7 @@ export const requestsLesson: Lesson = {
   id: 'orient.requests',
   block: 'orient',
   title: bi('Сервер, клиент и запрос', 'Server, client and request'),
-  summary: bi('Машина, которая круглые сутки обслуживает других; программа, которая просит; что происходит, когда просящих становится слишком много.', 'A machine that serves others around the clock; a program that asks; what happens when there are too many asking.'),
+  summary: bi('Урок про машину, которая круглые сутки обслуживает других, и про программу, которая просит: вы увидите, что происходит, когда просящих становится слишком много.', 'A machine that serves others around the clock; a program that asks; what happens when there are too many asking.'),
   introduces: ['orient.server', 'orient.client-request'],
   uses: ['orient.os', 'orient.network', 'orient.internet', 'orient.command'],
   tier: 'core',
@@ -772,7 +772,7 @@ export const requestsLesson: Lesson = {
       step: 'explain',
       title: bi('Сервер', 'A server'),
       body: bi(
-        '[[orient.server|Сервер]] — компьютер, который работает без перерыва и обслуживает другие. Внутри у него всё то же: процессор, память, диск, операционная система (почти всегда Linux). Отличается работа. Сервер стоит в специальном здании с резервным питанием и охлаждением, обычно у него нет ни экрана, ни клавиатуры, а говорят с ним командами по сети. И на нём запущена программа, которая ждёт просьб и отвечает на них: отдаёт страницы, принимает заказы, хранит данные.\n\nСловом «сервер» называют и машину, и эту программу. Обычно из разговора понятно, о чём речь, а когда непонятно, помогает вопрос: «машина включена? а программа на ней запущена?» Это два разных ответа, и в объяснении ниже вы увидите, чем они отличаются.',
+        '[[orient.server|Сервер]] — компьютер, который работает без перерыва и обслуживает другие. Внутри у него всё то же самое: процессор, память, диск и операционная система (почти всегда Linux). Отличается не начинка, а работа. Сервер стоит в специальном здании с резервным питанием и охлаждением, обычно у него нет ни экрана, ни клавиатуры, а говорят с ним командами по сети. И на нём запущена программа, которая ждёт просьб и отвечает на них: отдаёт страницы, принимает заказы, хранит данные.\n\nСловом «сервер» называют и машину, и эту программу. Обычно из разговора понятно, о чём речь, а когда непонятно, помогает вопрос: «машина включена? а программа на ней запущена?» Это два разных ответа, и в объяснении ниже вы увидите, чем они отличаются.',
         'A [[orient.server|server]] is a computer that runs without a break and serves others. Inside it has all the same: a processor, memory, a disk, an operating system (almost always Linux). The job is what differs. A server stands in a special building with backup power and cooling, usually has no screen or keyboard, and is talked to with commands over the network. And a program runs on it that waits for requests and answers them: it hands out pages, takes orders, keeps data.\n\nThe word “server” names both the machine and that program. Usually the conversation makes clear which is meant, and when it does not, the question helps: “is the machine on? and is the program on it running?” These are two different answers, and in the explainer below you will see how they differ.',
       ),
     },
@@ -782,7 +782,7 @@ export const requestsLesson: Lesson = {
       step: 'explain',
       title: bi('Клиент просит, сервер отвечает', 'The client asks, the server answers'),
       body: bi(
-        'Программа, которая обращается к серверу, называется [[orient.client-request|клиентом]], а её просьба — запросом. Ваш браузер — клиент: когда вы открываете каталог, он отправляет на сервер магазина несколько строк текста, смысл которых — «дайте, пожалуйста, страницу /catalog». Сервер находит нужные данные, составляет из них страницу и присылает ответ. Ответ начинается с числа, по которому клиент понимает, как прошло дело: 200 — всё в порядке, 404 — такой страницы нет, 503 — сервер перегружен.\n\nВажное правило: разговор всегда начинает клиент. Сервер сам никому не пишет — он даже не знает, что вы существуете, пока не придёт ваш запрос.\n\nОдин сервер обслуживает многих клиентов, и тут начинается самое интересное для эксплуатации. Если программа тратит на запрос пять миллисекунд, она успевает ответить на двести запросов в секунду. Пока приходит пятьдесят, никто не ждёт. Когда приходит сто девяносто, запросы выстраиваются в очередь, и ожидание растёт куда быстрее, чем число покупателей. А если приходит больше двухсот, очередь переполняется, и часть людей получает 503. Ниже это можно увидеть своими глазами и посмотреть, что помогает: второй сервер или сервер поближе.',
+        'Программа, которая обращается к серверу, называется [[orient.client-request|клиентом]], а её просьба — запросом. Ваш браузер — клиент: когда вы открываете каталог, он отправляет на сервер магазина несколько строк текста, смысл которых — «дайте, пожалуйста, страницу /catalog». Сервер находит нужные данные, составляет из них страницу и присылает ответ. Ответ начинается с числа, по которому клиент понимает, как прошло дело: 200 — всё в порядке, 404 — такой страницы нет, 503 — сервер перегружен.\n\nВажное правило: разговор всегда начинает клиент. Сервер сам никому не пишет — он даже не знает, что вы существуете, пока не придёт ваш запрос.\n\nОдин сервер обслуживает многих клиентов, и тут начинается главная задача эксплуатации. Если программа тратит на запрос пять миллисекунд, она успевает ответить на двести запросов в секунду. Пока приходит пятьдесят, никто не ждёт. Когда приходит сто девяносто, запросы выстраиваются в очередь, и ожидание растёт заметно быстрее, чем растёт число покупателей. А если приходит больше двухсот, очередь переполняется, и часть людей получает 503. Ниже это можно увидеть своими глазами и посмотреть, что помогает: второй сервер или сервер поближе.',
         'The program that turns to a server is called the [[orient.client-request|client]], and what it asks for is a request. Your browser is a client: when you open the catalogue, it sends the shop’s server a few lines of text meaning “please give me the page /catalog”. The server finds the data, puts the page together and sends an answer. The answer begins with a number that tells the client how things went: 200 means all is well, 404 no such page, 503 the server is overloaded.\n\nAn important rule: the client always starts the conversation. A server never writes to anyone by itself; it does not even know you exist until your request arrives.\n\nOne server serves many clients, and this is where it gets interesting for operations. If the program spends five milliseconds per request, it can answer two hundred requests a second. While fifty arrive, nobody waits. When a hundred and ninety arrive, requests line up in a queue, and the wait grows much faster than the number of shoppers. And if more than two hundred arrive, the queue overflows and some people get 503. Below you can see it with your own eyes and find out what helps: a second server or a server closer by.',
       ),
     },
@@ -793,7 +793,7 @@ export const requestsLesson: Lesson = {
       step: 'try',
       machine: 'sim',
       setup: laptop(),
-      intro: bi('Учебный ноутбук. `curl` — клиент без окон: он отправляет запрос и печатает ответ сервера как есть, текстом.', 'The training laptop. `curl` is a client without windows: it sends a request and prints the server’s answer as it is, in text.'),
+      intro: bi('Учебный ноутбук. Команда `curl` — это клиент без окон: она отправляет запрос и печатает ответ сервера как есть, текстом.', 'The training laptop. `curl` is a client without windows: it sends a request and prints the server’s answer as it is, in text.'),
       tasks: [
         {
           id: 'page',
@@ -831,7 +831,7 @@ export const requestsLesson: Lesson = {
       step: 'review',
       title: bi('Итог', 'Summary'),
       body: bi(
-        'Сервер — машина, которая без перерыва обслуживает других, и программа на ней, которая отвечает. Клиент начинает разговор запросом, сервер отвечает числом и данными. Один сервер обслуживает многих; когда загрузка подходит к пределу, ожидание растёт резко, а за пределом приходят ошибки.',
+        'Сервер — это машина, которая без перерыва обслуживает других, и программа на ней, которая отвечает на запросы. Клиент начинает разговор запросом, сервер отвечает числом и данными. Один сервер обслуживает многих; когда загрузка подходит к пределу, ожидание растёт резко, а за пределом приходят ошибки.',
         'A server is a machine that serves others without a break, plus the program on it that answers. The client starts the conversation with a request, the server answers with a number and data. One server serves many; as the load nears its limit the wait rises sharply, and beyond the limit come errors.',
       ),
     },

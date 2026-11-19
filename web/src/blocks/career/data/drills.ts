@@ -169,7 +169,7 @@ export const DRILL_504: Drill = {
           why: {
             'slow-sql': bi('Здоровье отвечает мгновенно, оформление — 35 секунд: тормозит один обработчик, а не всё приложение.', 'Health answers instantly, checkout takes 35 seconds: one handler is slow, not the whole application.'),
             pool: bi('Здоровье отвечает мгновенно, оформление падает с 500 через 30 секунд: обработчик чего-то ждёт и сдаётся по таймауту.', 'Health answers instantly, checkout fails with 500 after 30 seconds: the handler waits for something and gives up on a timeout.'),
-            'drop-rule': bi('Даже /health не соединяется: само приложение может быть живо, но пакеты до него не доходят.', 'Even /health does not connect: the application may be alive, but packets do not reach it.'),
+            'drop-rule': bi('Даже /health не соединяется: само приложение может работать, но пакеты до него не доходят.', 'Even /health does not connect: the application may be alive, but packets do not reach it.'),
           },
         },
         {
@@ -270,7 +270,7 @@ export const DRILL_504: Drill = {
     },
     {
       id: 'fix',
-      prompt: bi('Устрани причину так, чтобы это не повторилось, и проверьте результат.', 'Remove the cause so it does not happen again, and verify the result.'),
+      prompt: bi('Устраните причину так, чтобы это не повторилось, и проверьте результат.', 'Remove the cause so it does not happen again, and verify the result.'),
       options: [
         {
           id: 'fix-index',
@@ -345,7 +345,7 @@ export const DRILL_DISK: Drill = {
     },
     {
       id: 'df',
-      prompt: bi('Подтверди симптом: сколько места и где.', 'Confirm the symptom: how much space, and where.'),
+      prompt: bi('Подтвердите симптом: сколько места и где.', 'Confirm the symptom: how much space, and where.'),
       options: [
         {
           id: 'df',
@@ -427,7 +427,7 @@ export const DRILL_DISK: Drill = {
     },
     {
       id: 'confirm',
-      prompt: bi('Подтверди причину одной командой.', 'Confirm the cause with one command.'),
+      prompt: bi('Подтвердите причину одной командой.', 'Confirm the cause with one command.'),
       options: [
         {
           id: 'lsof',
@@ -460,7 +460,7 @@ export const DRILL_DISK: Drill = {
     },
     {
       id: 'free',
-      prompt: bi('Освободи место безопасно.', 'Free the space safely.'),
+      prompt: bi('Освободите место безопасно.', 'Free the space safely.'),
       options: [
         {
           id: 'reopen',
@@ -588,7 +588,7 @@ export const DRILL_CRASHLOOP: Drill = {
             env: '    Last State:     Terminated\n      Reason:       Error\n      Exit Code:    1\n    Restart Count:  6\nEvents:\n  Warning  BackOff  kubelet  Back-off restarting failed container api in pod api-7c9d8f6b5-2xkqp',
             oom: '    Last State:     Terminated\n      Reason:       OOMKilled\n      Exit Code:    137\n    Limits:\n      memory:  64Mi\nEvents:\n  Warning  BackOff  kubelet  Back-off restarting failed container api in pod api-7c9d8f6b5-2xkqp',
           },
-          why: bi('Поле Last State говорит, почему контейнер завершился в прошлый раз: сам или его убили.', 'The Last State field tells why the container ended last time: on its own, or killed.'),
+          why: bi('Поле Last State говорит, почему контейнер завершился в прошлый раз: сам ли он вышел или его завершили по внешнему сигналу.', 'The Last State field tells why the container ended last time: on its own, or killed.'),
         },
       ],
     },
@@ -638,7 +638,7 @@ export const DRILL_CRASHLOOP: Drill = {
           rightFor: ['oom'],
           cmd: ['kubectl top'],
           out: { oom: 'NAME                  CPU(cores)   MEMORY(bytes)\napi-7c9d8f6b5-2xkqp   120m         63Mi', default: 'NAME                  CPU(cores)   MEMORY(bytes)\napi-7c9d8f6b5-2xkqp   2m           18Mi' },
-          why: { oom: bi('Под упирается в 64Mi и умирает: лимит меньше, чем приложению нужно на старте.', 'The pod hits 64Mi and dies: the limit is lower than the application needs to start.'), env: bi('Памяти хватает с запасом: дело не в лимите.', 'There is plenty of memory: the limit is not the cause.') },
+          why: { oom: bi('Под упирается в лимит 64Mi, и его завершает ядро: лимит меньше, чем приложению нужно на старте.', 'The pod hits the 64Mi limit and the kernel ends it: the limit is lower than the application needs to start.'), env: bi('Памяти хватает с запасом: дело не в лимите.', 'There is plenty of memory: the limit is not the cause.') },
         },
         {
           id: 'logsnow',
@@ -687,7 +687,7 @@ export const DRILL_CRASHLOOP: Drill = {
           text: bi('Добавить DATABASE_URL из Secret в манифест в Git и выкатить через конвейер; проверить, что поды Ready', 'Add DATABASE_URL from a Secret to the manifest in Git and release through the pipeline; check the pods are Ready'),
           tags: ['fix', 'verify'],
           rightFor: ['env'],
-          why: { env: bi('Причина устранена там, где живёт желаемое состояние, — в Git; секрет не попал в репозиторий открытым текстом.', 'The cause is fixed where the desired state lives — in Git; the secret did not land in the repository as plain text.'), oom: bi('Переменные на месте: убивает ядро за память.', 'The variables are there: the kernel kills it for memory.') },
+          why: { env: bi('Причина устранена там, где хранится желаемое состояние, — в Git; секрет не попал в репозиторий открытым текстом.', 'The cause is fixed where the desired state lives — in Git; the secret did not land in the repository as plain text.'), oom: bi('Переменные на месте: убивает ядро за память.', 'The variables are there: the kernel kills it for memory.') },
         },
         {
           id: 'mem-fix',

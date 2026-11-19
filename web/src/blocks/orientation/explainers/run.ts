@@ -97,7 +97,7 @@ export const runModel = defineModel<P>({
         y: 200,
         w: 208,
         h: 72,
-        card: card(bi('Оперативная память: быстрая, но забывает всё при выключении. Здесь лежат запущенные программы и то, с чем они работают прямо сейчас, — в том числе ваш несохранённый текст.', 'Main memory: fast, but it forgets everything at power-off. Running programs live here together with what they are working on right now, including your unsaved text.'), bi('Планки памяти на главной плате.', 'Memory modules on the main board.'), { see: 'free -h', doc: { page: 'man/free.1', anchor: 'DESCRIPTION' } }),
+        card: card(bi('Оперативная память работает быстро, но забывает всё при выключении. Здесь лежат запущенные программы и то, с чем они работают прямо сейчас, — в том числе ваш несохранённый текст.', 'Main memory: fast, but it forgets everything at power-off. Running programs live here together with what they are working on right now, including your unsaved text.'), bi('Планки памяти на главной плате.', 'Memory modules on the main board.'), { see: 'free -h', doc: { page: 'man/free.1', anchor: 'DESCRIPTION' } }),
       },
     ],
     edges: [
@@ -236,7 +236,7 @@ export const runModel = defineModel<P>({
         id: 'load',
         label: bi('копия в память', 'copy to memory'),
         caption: n.swap
-          ? fmt(bi('Программа копируется с диска в память, но память уже почти занята: системе приходится выгружать на диск куски других программ. Запуск — {ms} мс вместо обычных.', 'The program is copied from the disk into memory, but memory is almost full: the system has to push pieces of other programs out to the disk. The start takes {ms} ms instead of the usual.'), { ms: n.ms })
+          ? fmt(bi('Программа копируется с диска в память, но память уже почти занята: системе приходится выгружать на диск части других программ. Запуск — {ms} мс вместо обычных.', 'The program is copied from the disk into memory, but memory is almost full: the system has to push pieces of other programs out to the disk. The start takes {ms} ms instead of the usual.'), { ms: n.ms })
           : fmt(bi('Программа на {s} МБ копируется с диска в память. С {d} это занимает около {ms} мс.', 'The {s} MB program is copied from the disk into memory. From an {d} this takes about {ms} ms.'), { s: p.size, d: p.disk === 'hdd' ? 'HDD' : 'SSD', ms: n.ms }),
         focus: ['disk', 'e-load', 'memory'],
         tokens: [{ edge: 'e-load', label: `${p.size} MB` }],
@@ -283,7 +283,7 @@ export const runModel = defineModel<P>({
         values: { memory: gb(0) },
         fill: { memory: 0 },
         metrics: { ms: n.ms + 16, used: 0 },
-        broken: { at: 'memory', message: 'Notes quit unexpectedly. Unsaved changes are lost.', caption: bi('память живёт, пока есть питание; переживает выключение только то, что сохранено на диск.', 'memory lives only while there is power; only what was saved to the disk survives a power-off.') },
+        broken: { at: 'memory', message: 'Notes quit unexpectedly. Unsaved changes are lost.', caption: bi('память помнит данные, только пока есть питание; переживает выключение только то, что сохранено на диске.', 'memory lives only while there is power; only what was saved to the disk survives a power-off.') },
       });
       return steps;
     }
@@ -317,7 +317,7 @@ export const runModel = defineModel<P>({
       case 'open': {
         const swap = next.some((s) => s.states?.memory === 'warn');
         return swap
-          ? fmt(bi('{n} открытых программ не помещаются в {r} ГБ: система выгружает их куски на диск, и запуск растягивается до {t} мс.', '{n} open programs do not fit into {r} GB: the system pushes pieces of them out to the disk, and the start stretches to {t} ms.'), { n: b.open as number, r: RAM_GB, t: ms(next) })
+          ? fmt(bi('{n} открытых программ не помещаются в {r} ГБ: система выгружает их части на диск, и запуск растягивается до {t} мс.', '{n} open programs do not fit into {r} GB: the system pushes pieces of them out to the disk, and the start stretches to {t} ms.'), { n: b.open as number, r: RAM_GB, t: ms(next) })
           : fmt(bi('Открыто {n} программ: памяти ещё хватает, на скорость запуска это не влияет.', '{n} programs open: there is still enough memory, the start is not affected.'), { n: b.open as number });
       }
     }

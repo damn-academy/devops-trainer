@@ -17,7 +17,7 @@ export const placesModel = defineModel<P>({
   block: 'orient',
   title: bi('Одна сборка, три окружения', 'One build, three environments'),
   summary: bi(
-    'Одна и та же программа едет к разработчику, на тестовый стенд и на прод; рядом с ней в каждом месте свой файл настроек. Зашейте настройки в код, разведите стенд и прод, перепутайте файлы.',
+    'Одна и та же программа попадает к разработчику, на тестовый стенд и на прод; рядом с ней в каждом месте лежит свой файл настроек. Зашейте настройки в код, разведите стенд и прод, перепутайте файлы.',
     'The same program goes to the developer, to the test stand and to production; next to it in each place lies its own settings file. Bake the settings into the code, let the stand fall behind production, mix up the files.',
   ),
   concepts: ['orient.environments', 'orient.config'],
@@ -32,13 +32,13 @@ export const placesModel = defineModel<P>({
       { id: 'test', label: bi('Тестовый стенд', 'Test stand'), sub: 'test', family: 'node', shape: 'rack', x: 264, y: 144, w: 192, h: 64, card: card(bi('Копия прода для проверки: те же серверы и та же система, но без настоящих покупателей.', 'A copy of production for checking: the same servers and the same system, but no real customers.'), bi('Эксплуатация готовит, тестировщики проверяют.', 'Operations prepare it, testers check on it.'), { doc: PARITY }) },
       { id: 'prod', label: bi('Прод', 'Production'), sub: 'prod', family: 'node', shape: 'rack', x: 504, y: 144, w: 192, h: 64, card: card(bi('Рабочее окружение, которым пользуются покупатели. Ошибка здесь стоит денег.', 'The working environment the customers use. A mistake here costs money.'), bi('Эксплуатация.', 'Operations.')) },
       { id: 'users', label: bi('Покупатели', 'Customers'), sub: 'real money', family: 'user', x: 760, y: 144, w: 176, h: 64, card: card(bi('Настоящие люди с настоящими картами. Они видят только прод.', 'Real people with real cards. They see only production.'), bi('Сами пришли в магазин.', 'They came to the shop themselves.')) },
-      { id: 'artifact', label: bi('Программа 1.5.0', 'Program 1.5.0'), sub: 'shop-1.5.0', family: 'store', x: 264, y: 272, w: 192, h: 56, card: card(bi('Одна сборка. В каждое окружение едет один и тот же файл — тот, что проверили на стенде, и попадает на прод.', 'One build. The same file goes to every environment: the one checked on the stand is the one that reaches production.'), bi('Сборка.', 'The build.')) },
+      { id: 'artifact', label: bi('Программа 1.5.0', 'Program 1.5.0'), sub: 'shop-1.5.0', family: 'store', x: 264, y: 272, w: 192, h: 56, card: card(bi('Одна сборка. В каждое окружение попадает один и тот же файл: тот, что проверили на стенде, доходит и до прода.', 'One build. The same file goes to every environment: the one checked on the stand is the one that reaches production.'), bi('Сборка.', 'The build.')) },
     ],
     edges: [
       { id: 'e-dc', from: 'devConf', to: 'dev', label: bi('настройки', 'settings'), card: card(bi('Программа при запуске читает файл настроек своего окружения.', 'At start the program reads the settings file of its environment.'), bi('Программа.', 'The program.')) },
-      { id: 'e-tc', from: 'testConf', to: 'test', label: bi('настройки', 'settings'), card: card(bi('Тот же код, другие значения.', 'The same code, other values.'), bi('Программа.', 'The program.')) },
+      { id: 'e-tc', from: 'testConf', to: 'test', label: bi('настройки', 'settings'), card: card(bi('Код у программы тот же, меняются лишь значения из файла.', 'The code is the same; only the values in the file change.'), bi('Программа.', 'The program.')) },
       { id: 'e-pc', from: 'prodConf', to: 'prod', label: bi('настройки', 'settings'), card: card(bi('На проде программа читает prod.conf — и только его.', 'In production the program reads prod.conf, and only that.'), bi('Программа.', 'The program.')) },
-      { id: 'e-adev', from: 'artifact', to: 'dev', via: [[120, 300]], label: bi('та же сборка', 'same build'), card: card(bi('Разработчик запускает ту же сборку, что поедет дальше.', 'The developer runs the same build that will travel further.'), bi('Разработчик.', 'The developer.')) },
+      { id: 'e-adev', from: 'artifact', to: 'dev', via: [[120, 300]], label: bi('та же сборка', 'same build'), card: card(bi('Разработчик запускает ту же сборку, которая попадёт дальше, на стенд и прод.', 'The developer runs the same build that will travel further.'), bi('Разработчик.', 'The developer.')) },
       { id: 'e-atest', from: 'artifact', to: 'test', label: bi('проверка', 'check'), card: card(bi('Сборку ставят на стенд и проверяют.', 'The build is installed on the stand and checked.'), bi('Тестировщики.', 'Testers.')) },
       { id: 'e-aprod', from: 'artifact', to: 'prod', via: [[600, 300]], label: bi('выкладка', 'deploy'), card: card(bi('Проверенную сборку выкладывают на прод без пересборки.', 'The checked build is deployed to production without rebuilding.'), bi('Эксплуатация.', 'Operations.')) },
       { id: 'e-serve', from: 'prod', to: 'users', label: bi('страницы и оплата', 'pages and payments'), card: card(bi('Прод обслуживает покупателей и списывает деньги через настоящую платёжную систему.', 'Production serves the customers and charges them through the real payment system.'), bi('Программа на проде.', 'The program in production.')) },
@@ -146,7 +146,7 @@ export const placesModel = defineModel<P>({
       steps.push({
         id: 'no-config',
         label: bi('нет настроек', 'no settings'),
-        caption: bi('Программа приехала на прод, ищет prod.conf и не находит. Она не гадает, а останавливается и пишет, чего ей не хватает.', 'The program arrived in production, looks for prod.conf and does not find it. It does not guess; it stops and says what is missing.'),
+        caption: bi('Программу выложили на прод; при запуске она ищет prod.conf и не находит. Она не гадает, а останавливается и пишет, чего ей не хватает.', 'The program was deployed to production; at start it looks for prod.conf and does not find it. It does not guess; it stops and says what is missing.'),
         focus: ['e-aprod', 'prod'],
         tokens: [{ edge: 'e-aprod' }],
         states: { prod: 'err', users: 'off' },
@@ -173,7 +173,7 @@ export const placesModel = defineModel<P>({
       id: 'prod',
       label: 'prod',
       caption: p.inside
-        ? bi('На прод поехала отдельная сборка shop-prod — её на стенде никто не проверял. Работает ли она, станет ясно на покупателях.', 'A separate build, shop-prod, went to production, and nobody checked it on the stand. Whether it works will become clear on the customers.')
+        ? bi('На прод попала отдельная сборка shop-prod — её на стенде никто не проверял. Работает ли она, станет ясно на покупателях.', 'A separate build, shop-prod, went to production, and nobody checked it on the stand. Whether it works will become clear on the customers.')
         : p.parity === 'far'
           ? bi('На проде новая версия системы, и программа падает на том, чего на стенде не было. Чем дальше стенд от прода, тем больше таких сюрпризов.', 'Production has a newer system version, and the program fails on something the stand did not have. The further the stand is from production, the more such surprises.')
           : bi('На прод выложена та самая сборка, что прошла стенд, рядом с ней prod.conf. Покупатели платят настоящими деньгами.', 'The very build that passed the stand is deployed to production, with prod.conf beside it. The customers pay with real money.'),
@@ -193,8 +193,8 @@ export const placesModel = defineModel<P>({
     }
     if (change.id === 'inside')
       return b.inside
-        ? fmt(bi('Настройки в коде: сборок стало {n}, и на прод едет та, которую не проверяли.', 'Settings in the code: there are now {n} builds, and the one going to production was never checked.'), { n: 3 })
-        : bi('Настройки снова рядом с программой: одна сборка на все окружения, на прод едет проверенная.', 'The settings are next to the program again: one build for every environment, the checked one goes to production.');
+        ? fmt(bi('Настройки в коде: сборок стало {n}, и на прод попадает та, которую не проверяли.', 'Settings in the code: there are now {n} builds, and the one going to production was never checked.'), { n: 3 })
+        : bi('Настройки снова лежат рядом с программой, а не внутри неё. Поэтому сборка остаётся одна на все окружения, и на прод попадает та сборка, которую проверили на тестовом стенде.', 'The settings lie next to the program again rather than inside it. So one build stays for every environment, and the build that was checked on the test stand is the one that reaches production.');
     return b.parity === 'far'
       ? bi('Стенд отстал от прода: тесты на нём проходят, а на проде программа встречает то, чего не видела.', 'The stand has fallen behind production: tests pass on it, while in production the program meets what it has never seen.')
       : bi('Стенд снова как прод: что прошло там, сработает и здесь.', 'The stand is like production again: what passed there will work here.');
