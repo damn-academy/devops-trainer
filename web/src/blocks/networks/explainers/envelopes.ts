@@ -120,7 +120,7 @@ function ipLayer(s: PacketSpec, proto: 'tcp' | 'udp' | 'icmp', inner: number, c:
     family: 'l3',
     bytes: [...ipNoSum.slice(0, 10), ...u16(ipSum), ...ipNoSum.slice(12)],
     fields: [
-      { id: 'ip.vihl', name: 'Version · IHL', off: 0, len: 1, value: '4 · 5 (20 bytes)', what: bi('Версия протокола (4) и длина заголовка в 32-битных словах. Пять слов дают 20 байт, то есть заголовок без опций.', 'The protocol version (4) and the header length in 32-bit words: 5 words = 20 bytes, no options.'), from: bi('Значение ставит ядро.', 'The kernel.') },
+      { id: 'ip.vihl', name: 'Version · IHL', off: 0, len: 1, value: t(bi('4 · 5 (20 байт)', '4 · 5 (20 bytes)')), what: bi('Версия протокола (4) и длина заголовка в 32-битных словах. Пять слов дают 20 байт, то есть заголовок без опций.', 'The protocol version (4) and the header length in 32-bit words: 5 words = 20 bytes, no options.'), from: bi('Значение ставит ядро.', 'The kernel.') },
       { id: 'ip.len', name: 'Total Length', off: 2, len: 2, value: `${total}`, what: bi('Длина всего IP-пакета, то есть заголовка IP вместе со всем, что лежит внутри. Если она больше MTU канала (1500 байт), пакет придётся разрезать на части, а если резать его запрещено, пакет выбросят.', 'The length of the whole IP packet: the IP header plus everything inside. If it exceeds the link’s MTU (1500), the packet has to be fragmented or it is rejected.'), from: bi('Значение ставит ядро по размеру данных.', 'The kernel, from the data size.') },
       df
         ? { id: 'ip.flags', name: 'Flags · DF', off: 6, len: 2, value: 'DF (Don’t Fragment)', what: bi('Флаг DF означает «не дробить». Маршрутизатор, через который пакет не проходит по размеру, не режет его, а возвращает сообщение ICMP «Fragmentation Needed» с допустимым размером. На этом построен поиск MTU пути.', 'The DF flag: “do not fragment”. A router the packet does not fit through does not cut it but returns ICMP “Fragmentation Needed” with the allowed size. That is how path MTU discovery works.'), from: bi('Ядро Linux ставит этот флаг для TCP и ping по умолчанию.', 'The Linux kernel sets it for TCP and ping by default.') }
@@ -161,7 +161,7 @@ export function buildPacket(s: PacketSpec, changed: Set<string> = new Set()): La
         { id: 'tcp.seq', name: 'Sequence Number', off: 4, len: 4, value: String(seq), what: bi('Номер первого байта данных в этом сегменте. По номерам получатель собирает поток в правильном порядке и замечает пропуски.', 'The number of the first data byte in this segment. This is how the receiver reassembles the stream in order and notices holes.'), from: bi('Номер ведёт ядро: это случайный начальный номер из рукопожатия плюс число уже отправленных байтов.', 'The kernel: a random initial number at the handshake plus the bytes sent.') },
         { id: 'tcp.ack', name: 'Acknowledgment Number', off: 8, len: 4, value: String(ack), what: bi('Номер следующего байта, который мы ждём от собеседника. Он подтверждает всё, что было получено до этого байта.', 'The next byte we expect from the peer: an acknowledgement of everything received before it.'), from: bi('Значение ставит ядро.', 'The kernel.') },
         { id: 'tcp.flags', name: 'Flags', off: 13, len: 1, value: 'PSH, ACK', what: bi('Флаги сегмента: SYN просит начать соединение, ACK подтверждает полученное, PSH просит сразу отдать данные программе, FIN сообщает, что отправитель закончил, а RST сбрасывает соединение.', 'The segment’s flags: SYN — start, ACK — acknowledging, PSH — hand to the application now, FIN — done, RST — reset.'), from: bi('Флаги ставит ядро.', 'The kernel.') },
-        { id: 'tcp.win', name: 'Window', off: 14, len: 2, value: '502 (× 128 = 64256 bytes)', what: bi('Сколько байтов отправитель этого сегмента готов принять, не дожидаясь подтверждений. Число умножается на масштаб, о котором договорились при рукопожатии (wscale 7 означает умножение на 128).', 'How many bytes the sender of this segment is ready to receive without waiting for acknowledgements. The number is multiplied by the scale from the handshake (wscale 7 = ×128).'), from: bi('Значение ставит ядро по свободному месту в буфере сокета.', 'The kernel, from the free room in the socket buffer.') },
+        { id: 'tcp.win', name: 'Window', off: 14, len: 2, value: t(bi('502 (× 128 = 64 256 байт)', '502 (× 128 = 64256 bytes)')), what: bi('Сколько байтов отправитель этого сегмента готов принять, не дожидаясь подтверждений. Число умножается на масштаб, о котором договорились при рукопожатии (wscale 7 означает умножение на 128).', 'How many bytes the sender of this segment is ready to receive without waiting for acknowledgements. The number is multiplied by the scale from the handshake (wscale 7 = ×128).'), from: bi('Значение ставит ядро по свободному месту в буфере сокета.', 'The kernel, from the free room in the socket buffer.') },
         { id: 'tcp.sum', name: 'Checksum', off: 16, len: 2, value: hex4(tcpSum), changed: c('tcp.sum'), what: bi('Контрольная сумма TCP считается вместе с псевдозаголовком, в котором есть IP-адреса. Поэтому NAT, когда меняет адрес, пересчитывает и её.', 'The TCP checksum covers a pseudo-header that includes the IP addresses. That is why NAT, changing an address, recomputes it too.'), from: bi('Сумму считает ядро или сетевая карта.', 'The kernel (or the network card).') },
       ],
     },
@@ -256,7 +256,7 @@ function buildPing(s: PacketSpec, changed: Set<string>): Layer[] {
         { id: 'icmp.sum', name: 'Checksum', off: 2, len: 2, value: hex4(sum), changed: c('icmp.sum'), what: bi('Сумма считается только по сообщению ICMP, без IP-адресов. NAT пересчитывает её не из-за адреса, а потому, что подменяет идентификатор.', 'The sum over the ICMP message only, without the IP addresses. NAT recomputes it not because of the address but because it replaces the identifier.'), from: bi('Сумму считает ядро.', 'The kernel.') },
         { id: 'icmp.id', name: 'Identifier', off: 4, len: 2, value: String(ident), changed: c('icmp.id'), what: bi('По этому номеру ответ находит ту программу ping, которая отправила запрос. Портов у ICMP нет, поэтому NAT пользуется этим полем вместо порта.', 'The number by which answers find their ping. ICMP has no ports, so NAT uses this field in place of a port.'), from: bi('Номер выбирает ядро для сокета ping.', 'The kernel, for the ping socket.') },
         { id: 'icmp.seq', name: 'Sequence', off: 6, len: 2, value: '1', what: bi('Номер запроса, который ping печатает как icmp_seq=1, 2, 3. Пропуск в номерах означает потерянный пакет.', 'The request number: icmp_seq=1, 2, 3 in ping’s output. A gap in the numbers is a lost packet.'), from: bi('ping.', 'ping.') },
-        { id: 'icmp.data', name: 'Data', off: 8, len: 56, value: '56 bytes', what: bi('Данные занимают 56 байт и содержат время отправки и заполнитель. Получатель возвращает их без изменений, и ping вычисляет задержку по времени отправки.', '56 bytes of data: the send time and filler. The receiver returns them as they are, and ping computes the delay from the timestamp.'), from: bi('Данные кладёт ping, а их размер задаёт флаг -s.', 'ping; -s sets the size.') },
+        { id: 'icmp.data', name: 'Data', off: 8, len: 56, value: t(bi('56 байт', '56 bytes')), what: bi('Данные занимают 56 байт и содержат время отправки и заполнитель. Получатель возвращает их без изменений, и ping вычисляет задержку по времени отправки.', '56 bytes of data: the send time and filler. The receiver returns them as they are, and ping computes the delay from the timestamp.'), from: bi('Данные кладёт ping, а их размер задаёт флаг -s.', 'ping; -s sets the size.') },
       ],
     },
   ];
@@ -388,7 +388,7 @@ const L = {
   dictDevice: bi('Какое устройство тут работает', 'Which device works here'),
   osiNote: bi('В модели OSI есть ещё уровни L5 (сеанс) и L6 (представление). Отдельных конвертов для них в интернете нет, и эту работу выполняют само приложение и TLS. Модель служит словарём: «проблема на L3» означает проблему с адресами и маршрутами, а «балансировщик L7» означает, что балансировщик читает HTTP.', 'OSI also has L5 (session) and L6 (presentation). On the internet they have no envelopes of their own: the application and TLS do that work. The model is a vocabulary: “an L3 problem” means “addresses and routes”, “an L7 load balancer” means “it sees HTTP”.'),
   devNote: {
-    none: bi('Пакет в том виде, в каком его отправил ноутбук.', 'The packet as the laptop sent it.'),
+    none: bi('Сейчас показан пакет в том виде, в каком его отправил ноутбук.', 'The packet as the laptop sent it.'),
     switch: bi('Коммутатор открывает только кадр и смотрит на MAC-адрес получателя. В пакете ничего не меняется.', 'A switch opens only the frame and looks at the destination MAC. Nothing in the packet changes.'),
     router: bi('Маршрутизатор снимает кадр, уменьшает TTL с 64 до 63, пересчитывает контрольную сумму IP и надевает новый кадр с другими MAC-адресами. То, что лежит внутри IP, он не открывает.', 'A router removes the frame, decrements TTL 64 → 63, recomputes the IP checksum and puts on a new frame with different MACs. It does not open what lies inside IP.'),
   } as Record<Exclude<Device, 'nat'>, Bi>,
@@ -497,7 +497,7 @@ function mount(root: HTMLElement, ctx: ExplainerCtx): Mounted {
       const box = h(
         `div.env-layer.fam-${l.family}`,
         {},
-        h('div.env-bar', {}, h('span.env-layer-name', {}, t(l.name)), h('span.env-layer-tag', {}, layerName), h('span.env-layer-size', {}, `${l.bytes.length} B`)),
+        h('div.env-bar', {}, h('span.env-layer-name', {}, t(l.name)), h('span.env-layer-tag', {}, layerName), h('span.env-layer-size', {}, t(fmt(bi('{n} байт', '{n} B'), { n: l.bytes.length })))),
         h(
           'div.env-fields',
           {},
@@ -593,7 +593,7 @@ function mount(root: HTMLElement, ctx: ExplainerCtx): Mounted {
       mtuBox = h(
         'div.env-mtu',
         {},
-        h('label.env-ctl', {}, h('span.env-ctl-label', {}, `${t(L.size)}: ${size} B`), range),
+        h('label.env-ctl', {}, h('span.env-ctl-label', {}, `${t(L.size)}: ${t(fmt(bi('{n} байт', '{n} B'), { n: size }))}`), range),
         h('label.env-check', {}, h('input', { type: 'checkbox', checked: df, onchange: (e: Event) => { df = (e.target as HTMLInputElement).checked; render(); } }), ` ${t(L.df)}`),
         h('label.env-check.env-break', {}, breakBox, ` ${t(L.breakIcmp)}`),
         prediction,

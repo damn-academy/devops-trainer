@@ -95,7 +95,7 @@ export const transport: Lesson = {
       kind: 'docs',
       step: 'practice',
       mode: 'find',
-      prompt: bi('Система мониторинга обращается к http://10.0.0.2:9100/metrics, и каждый раз обращение висит по две минуты. Сделайте так, чтобы curl прекращал попытку подключиться через 3 секунды.', 'Monitoring polls http://10.0.0.2:9100/metrics and hangs for two minutes at a time. Make curl give up on connecting after 3 seconds.'),
+      prompt: bi('Система мониторинга обращается к http://10.0.0.2:9100/metrics, и каждое обращение зависает на две минуты. Сделайте так, чтобы curl прекращал попытку подключиться через 3 секунды.', 'Monitoring polls http://10.0.0.2:9100/metrics and hangs for two minutes at a time. Make curl give up on connecting after 3 seconds.'),
       ref: { page: 'man/curl.1' },
       terminal: {
         setup: lab('client', 'tcp'),

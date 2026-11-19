@@ -110,7 +110,7 @@ export const proxyModel = defineModel<P>({
       edge('e-2', 'nginx', 'app2', b('повтор', 'retry'), card(['По умолчанию действует настройка proxy_next_upstream error timeout: после ошибки соединения или истёкшего срока ожидания nginx повторяет запрос на следующем сервере, если повтор безопасен для этого метода.', 'proxy_next_upstream error timeout (the default): after a connection error or a timeout nginx retries on the next server — if the method is idempotent.'], ['Запрос повторяет nginx.', 'nginx.'], undefined, DOC.nginxNext), { via: [[500, 232]], labelAt: 0.4 }),
       edge('e-1d', 'app1', 'db', 'SQL', card(['Запрос приложения к базе данных.', 'The application’s query to the database.'], ['Запрос отправляет приложение.', 'The application.']), { via: [[760, 72], [760, 136]] }),
       edge('e-2d', 'app2', 'db', 'SQL', card(['Запрос второго сервера приложения к той же базе.', 'The second backend’s query to the same database.'], ['Запрос отправляет приложение.', 'The application.']), { via: [[760, 232], [760, 168]] }),
-      edge('e-log', 'nginx', 'log', b('строка', 'line'), card(['nginx записывает по одной строке на каждую неудачную попытку, вместе с адресом сервера приложения.', 'One line per failed attempt, with the upstream address.'], ['Строку пишет nginx.', 'nginx.'])),
+      edge('e-log', 'nginx', 'log', b('строка', 'line'), card(['nginx записывает по одной строке на каждую неудачную попытку, вместе с адресом сервера приложения.', 'One line per failed attempt, with the upstream address.'], ['Строку пишет nginx.', 'nginx.']), { labelAt: 0.75 }),
     ],
   },
   params: [
@@ -320,6 +320,7 @@ export const proxyModel = defineModel<P>({
           label: b('повтор', 'retry'),
           caption: b('Настройка proxy_next_upstream error timeout велит nginx повторить тот же запрос на следующем сервере группы. Неудачный сервер nginx на 10 секунд помечает недоступным (max_fails=1, fail_timeout=10s).', 'proxy_next_upstream error timeout: nginx retries the same request on the next server of the group and marks the failed one unavailable for 10 seconds (max_fails=1, fail_timeout=10s).'),
           focus: ['nginx', 'e-2'],
+          tokens: [{ edge: 'e-2', label: `${p.method} /report` }],
           say: { nginx: b('nginx повторяет запрос на следующем сервере приложения.', 'nginx retries on the next backend.') },
           states: two ? { app2: 'on', 'e-2': 'on' } : {},
           metrics: { lines: n, waited: t },
@@ -340,7 +341,7 @@ export const proxyModel = defineModel<P>({
       caption: fmt(b(`${tx[0]} Клиент ждал ответа {w} с.`, `${tx[1]} The client waited {w} s.`), { w: o.waited }),
       focus: ['e-c', writer],
       tokens: [{ edge: 'e-c', reverse: true, label: String(o.status) }],
-      say: { [writer]: fault ? fmt(b('Этот блок пишет клиенту ответ с кодом {c}.', 'This block writes the {c} to the client.'), { c: o.status }) : b('nginx передаёт клиенту готовую страницу.', 'nginx passes the page to the client.') },
+      say: { [writer]: fault ? fmt(writer === 'nginx' ? b('nginx сам пишет клиенту ответ с кодом {c}, потому что сервер приложения не дал ответа.', 'nginx itself writes the {c} to the client: the backend gave no answer.') : b('Сервер приложения {w} сам ответил кодом {c}, а nginx передаёт этот ответ клиенту без изменений.', 'Backend {w} itself answered {c}; nginx passes it on unchanged.'), { c: o.status, w: writer }) : b('nginx передаёт клиенту готовую страницу.', 'nginx passes the page to the client.') },
       states: { client: fault ? 'err' : 'ok', [writer]: fault ? 'warn' : 'ok' },
       metrics: { code: o.status, waited: o.waited, lines: o.lines.length },
       ...(fault
