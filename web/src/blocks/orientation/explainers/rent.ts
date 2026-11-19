@@ -112,7 +112,7 @@ export const rentModel = defineModel<P>({
       predict: {
         prompt: bi('Ночью в дата-центре сгорел сервер с вашей машиной. Кто это чинит?', 'At night the server holding your machine burnt out. Who fixes it?'),
         options: [
-          { id: 'provider', text: bi('Провайдер: поднимет машину на другой стойке, а данные, что были только в ней, могут пропасть', 'The provider: it restarts the machine on another rack, and data that lived only in it may be lost') },
+          { id: 'provider', text: bi('Провайдер: запустит машину на другой стойке, а данные, которые хранились только на ней, могут пропасть', 'The provider: it restarts the machine on another rack, and data that lived only in it may be lost') },
           { id: 'you', text: bi('Вы: едете в дата-центр менять железо', 'You: you drive to the data centre to replace the hardware') },
         ],
         resolve: () => 'provider',
@@ -130,7 +130,7 @@ export const rentModel = defineModel<P>({
       {
         id: 'order',
         label: bi('заказ', 'order'),
-        caption: fmt(bi('Вы заказываете в панели {n} × {cpu} CPU и {ram} ГБ памяти по {h} $ в час за каждую. Ни покупки, ни договора на год.', 'You order {n} × {cpu} CPU and {ram} GB of memory in the panel at ${h} an hour each. No purchase and no yearly contract.'), { n: p.count, cpu: s.cpu, ram: s.ram, h: s.perHour }),
+        caption: fmt(bi('Вы заказываете в панели {n} × {cpu} CPU и {ram} ГБ памяти по {h} $ в час за каждую. Покупать железо и подписывать договор на год не нужно.', 'You order {n} × {cpu} CPU and {ram} GB of memory in the panel at ${h} an hour each. No purchase and no yearly contract.'), { n: p.count, cpu: s.cpu, ram: s.ram, h: s.perHour }),
         focus: ['you', 'e-order', 'panel'],
         tokens: [{ edge: 'e-order', label: `${s.cpu} CPU` }],
         states: { you: 'on', panel: 'on' },
@@ -152,7 +152,7 @@ export const rentModel = defineModel<P>({
       steps.push({
         id: 'fire',
         label: bi('пожар', 'fire'),
-        caption: bi('Сервер на стойке A сгорел. Провайдер сам поднимает вашу машину на стойке B, но то, что лежало только на ней, пропало.', 'The server on rack A burnt out. The provider itself brings your machine up on rack B, but whatever lay only on it is gone.'),
+        caption: bi('Сервер на стойке A сгорел. Провайдер сам запускает вашу машину на стойке B, но то, что лежало только на ней, пропало.', 'The server on rack A burnt out. The provider itself brings your machine up on rack B, but whatever lay only on it is gone.'),
         focus: ['rackA', 'rackB', 'vm'],
         states: { rackA: 'err', rackB: 'on', vm: 'warn' },
         metrics: { cost: 0, hours: 0 },
@@ -213,7 +213,7 @@ export const rentModel = defineModel<P>({
       if (!change.on) return bi('Поломка убрана.', 'The break is removed.');
       return change.id === 'forget'
         ? fmt(bi('Машина простояла месяц без дела: счёт {a} → {b}. Это самая частая лишняя трата в облаке.', 'The machine sat idle for a month: the bill goes {a} → {b}. This is the most common wasted spend in the cloud.'), { a: money(cost(prev)), b: money(cost(next)) })
-        : bi('Сгоревшее железо меняет провайдер, а машина переезжает на другую стойку. Пропадает только то, у чего не было копии.', 'The provider replaces burnt hardware, and the machine moves to another rack. Only what had no copy is lost.');
+        : bi('Сгоревшее железо заменяет провайдер, а вашу машину запускают на другой стойке. Пропадает только то, у чего не было копии.', 'The provider replaces burnt hardware, and the machine moves to another rack. Only what had no copy is lost.');
     }
     switch (change.id) {
       case 'size':
@@ -221,7 +221,7 @@ export const rentModel = defineModel<P>({
       case 'count':
         return fmt(bi('Машин {n}: счёт растёт в столько же раз, {c}.', '{n} machines: the bill grows by as many times, {c}.'), { n: b.count as number, c: money(cost(next)) });
       case 'hours':
-        return fmt(bi('{a} → {b} ч: счёт {c}. Платите ровно за то время, что машина существует.', '{a} → {b} h: the bill is {c}. You pay exactly for the time the machine exists.'), { a: a.hours as number, b: b.hours as number, c: money(cost(next)) });
+        return fmt(bi('{a} → {b} ч: счёт {c}. Платите за то время, что машина существует.', '{a} → {b} h: the bill is {c}. You pay exactly for the time the machine exists.'), { a: a.hours as number, b: b.hours as number, c: money(cost(next)) });
     }
     return bi('Процесс пересчитан.', 'The process is recomputed.');
   },

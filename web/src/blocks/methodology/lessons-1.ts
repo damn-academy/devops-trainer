@@ -25,7 +25,7 @@ export const business: Lesson = {
       levels: ['beginner'],
       title: bi('Как устроен этот курс', 'How this course works'),
       body: bi(
-        'Здесь мы часто будем просить вспомнить и предсказать, а не перечитать. Это кажется медленнее, но через неделю помнится заметно больше. Ошибки в предсказаниях — часть работы: они никуда не идут в оценку, очков и рейтингов здесь нет.',
+        'Здесь мы часто будем просить вспомнить и предсказать, а не перечитать. Это кажется медленнее, но через неделю вы запомните заметно больше. Ошибки в предсказаниях — часть работы: они не влияют на оценку, потому что очков и рейтингов здесь нет.',
         'We will often ask you to recall and to predict rather than to reread. It feels slower, but a week later you remember noticeably more. Wrong predictions are part of the work: they do not count against you, and there are no points or rankings here.',
       ),
     },
@@ -99,7 +99,7 @@ export const valueStream: Lesson = {
       kind: 'text',
       step: 'hook',
       body: bi(
-        'Покупатели попросили оплату картой в понедельник. Работает она у них через две с половиной недели. Как вы думаете, сколько из этих дней кто-то действительно работал над оплатой картой — десять, пять, два? Запомните свой ответ и пройдите путь этой задачи шаг за шагом.',
+        'Покупатели попросили оплату картой в понедельник. Работает она у них через две с половиной недели. Как вы думаете, сколько из этих дней кто-то работал над самой оплатой картой — десять, пять, два? Запомните свой ответ и пройдите путь этой задачи шаг за шагом.',
         'Customers asked for card payments on a Monday. It works for them two and a half weeks later. How many of those days do you think someone actually worked on card payments: ten, five, two? Remember your answer and walk the path of this task step by step.',
       ),
     },
@@ -154,7 +154,7 @@ export const board: Lesson = {
       kind: 'text',
       step: 'hook',
       body: bi(
-        'Задачи команды магазина живут в общем чате: «сделай скидку», «а что с оплатой?», «напомни, мы начали фильтр?». Чтобы узнать, что начато, что ждёт и что уже готово, нужно перечитать сотню сообщений. Знакомо? Первый шаг любой методологии потока — сделать работу видимой.',
+        'Задачи команды магазина лежат в общем чате: «сделай скидку», «а что с оплатой?», «напомни, мы начали фильтр?». Чтобы узнать, что начато, что ждёт и что уже готово, нужно перечитать сотню сообщений. Знакомо? Первый шаг любой методологии потока — сделать работу видимой.',
         'The shop team’s tasks live in a group chat: “do the discount”, “what about payments?”, “remind me, did we start the filter?”. To find out what is started, what waits and what is done, you have to reread a hundred messages. Sounds familiar? The first step of any flow method is to make the work visible.',
       ),
     },

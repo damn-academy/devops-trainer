@@ -126,7 +126,7 @@ export const budgetModel = defineModel<P>({
       remove: ['e-burn'],
       boundary: 'process',
       predict: {
-        prompt: bi('Оповещение смотрит на загрузку процессора. Сервер жив, но оплата не проходит. Что будет?', 'The alert watches CPU load. The server is alive, but payments fail. What happens?'),
+        prompt: bi('Оповещение смотрит на загрузку процессора. Сервер работает, но оплата не проходит. Что будет?', 'The alert watches CPU load. The server is alive, but payments fail. What happens?'),
         options: [
           { id: 'silent', text: bi('Оповещение промолчит', 'The alert stays silent') },
           { id: 'fires', text: bi('Сработает как обычно', 'It fires as usual') },
@@ -216,7 +216,7 @@ export const budgetModel = defineModel<P>({
   explainDelta(prev, next, change, a, b): Bi {
     const m0 = prev[prev.length - 1].metrics ?? {};
     const m1 = next[next.length - 1].metrics ?? {};
-    if (change.kind === 'break') return change.on ? bi('Оповещение по процессору молчит: сервер жив, а 10% заказов не проходят. Индикатор должен описывать опыт покупателя — долю успешных оформлений.', 'The CPU alert stays silent: the server is alive while 10% of orders fail. The indicator must describe the customer’s experience: the share of successful checkouts.') : bi('Оповещение снова смотрит на долю ошибок.', 'The alert watches the error share again.');
+    if (change.kind === 'break') return change.on ? bi('Оповещение по процессору молчит: сервер работает, а 10% заказов не проходят. Индикатор должен описывать опыт покупателя — долю успешных оформлений.', 'The CPU alert stays silent: the server is alive while 10% of orders fail. The indicator must describe the customer’s experience: the share of successful checkouts.') : bi('Оповещение снова смотрит на долю ошибок.', 'The alert watches the error share again.');
     switch (change.id) {
       case 'slo':
         return fmt(bi('SLO {x}% → {y}%: бюджет {b0} → {b1} мин за 30 дней. Каждая девятка — вдесятеро меньше права на ошибку.', 'SLO {x}% → {y}%: budget {b0} → {b1} min over 30 days. Each nine is ten times less room for error.'), { x: a.slo as string, y: b.slo as string, b0: m0.budget ?? 0, b1: m1.budget ?? 0 });

@@ -73,7 +73,7 @@ export const quiz: QuizItem[] = [
     concepts: ['method.value-stream'],
     prompt: bi('Расставьте этапы пути изменения в магазине по порядку.', 'Put the stages of a change’s path in the shop in order.'),
     steps: [
-      { id: 'select', text: bi('Отбор: решили браться и что значит «готово»', 'Selection: decided to take it and what “done” means') },
+      { id: 'select', text: bi('Отбор: решили браться за задачу и что значит «готово»', 'Selection: decided to take it and what “done” means') },
       { id: 'dev', text: bi('Разработка', 'Development') },
       { id: 'review', text: bi('Ревью — проверка кода коллегой', 'Review: a colleague checks the code'), why: bi('Ревью идёт сразу после разработки: проверяют код, а не работающий сайт.', 'Review comes right after development: it checks the code, not the working site.') },
       { id: 'test', text: bi('Проверка — тестирование', 'Testing') },
@@ -209,7 +209,7 @@ export const quiz: QuizItem[] = [
       { id: 'exploit', text: bi('Использовать его полностью', 'Exploit it') },
       { id: 'sub', text: bi('Подчинить ему всё остальное', 'Subordinate everything else to it'), why: bi('Подчинение идёт до расширения: оно почти бесплатно и часто снимает проблему.', 'Subordination comes before elevation: it is almost free and often removes the problem.') },
       { id: 'elevate', text: bi('Расширить', 'Elevate it'), why: bi('Расширение — нанять людей, купить оборудование, построить автопроверки — дорого, поэтому оно четвёртое.', 'Elevation — hiring people, buying equipment, building automatic checks — is expensive, which is why it is fourth.') },
-      { id: 'repeat', text: bi('Повторить: узкое место переехало', 'Repeat: the constraint has moved') },
+      { id: 'repeat', text: bi('Повторить: узкое место сместилось', 'Repeat: the constraint has moved') },
     ],
   },
   {

@@ -96,7 +96,7 @@ export const incidentModel = defineModel<P>({
       default: 'slo-alerts',
       near: 'monitor',
       predict: {
-        prompt: bi('Мониторинг проверяет только, жив ли сервер. Сервер жив, а 20% заказов не проходят. Когда заметят сбой?', 'Monitoring only checks whether the server is alive. The server is alive and 20% of orders fail. When will the outage be noticed?'),
+        prompt: bi('Мониторинг проверяет только, отвечает ли сервер. Сервер отвечает, а 20% заказов не проходят. Когда заметят сбой?', 'Monitoring only checks whether the server is alive. The server is alive and 20% of orders fail. When will the outage be noticed?'),
         options: [
           { id: 'late', text: bi('Через несколько часов, по жалобам покупателей', 'In a few hours, from customer complaints') },
           { id: 'fast', text: bi('Через несколько минут', 'In a few minutes') },
@@ -166,7 +166,7 @@ export const incidentModel = defineModel<P>({
     steps.push({
       id: 's1',
       label: bi('выкладка', 'deploy'),
-      caption: fmt(bi('02:00. Выкладка #41 из {b} изм. Сразу после неё перестают проходить {f}% заказов: сервер жив, оплата нет.', '02:00. Deployment #41 with {b} changes. Right after it {f}% of orders start to fail: the server is alive, the checkout is not.'), { b: p.batch, f: p.failing }),
+      caption: fmt(bi('02:00. Выкладка #41 из {b} изм. Сразу после неё перестают проходить {f}% заказов: сервер работает, а оплата — нет.', '02:00. Deployment #41 with {b} changes. Right after it {f}% of orders start to fail: the server is alive, the checkout is not.'), { b: p.batch, f: p.failing }),
       focus: ['deploy', 'e-deploy', 'service'],
       tokens: [{ edge: 'e-deploy', label: `×${p.batch}` }],
       values: { deploy: `${p.batch} changes`, service: `errors ${p.failing}%`, monitor: '', oncall: '', status: '', log: '', postmortem: '', board: '' },
@@ -180,7 +180,7 @@ export const incidentModel = defineModel<P>({
         ? {
             id: 's2',
             label: bi('тишина', 'silence'),
-            caption: cpu ? bi('Оповещение смотрит на процессор: он в норме. Сигнала нет — через 4 часа поддержка приносит жалобы покупателей.', 'The alert watches the CPU: it is fine. No signal: after 4 hours support brings in customer complaints.') : bi('Проверка видит только падение сервера, а сервер жив. Через 4 часа поддержка приносит жалобы покупателей.', 'The check only sees the server going down, and the server is alive. After 4 hours support brings in customer complaints.'),
+            caption: cpu ? bi('Оповещение смотрит на процессор: он в норме. Сигнала нет — через 4 часа поддержка приносит жалобы покупателей.', 'The alert watches the CPU: it is fine. No signal: after 4 hours support brings in customer complaints.') : bi('Проверка замечает только полное падение сервера, а сервер работает. Через 4 часа поддержка приносит жалобы покупателей.', 'The check only sees the server going down, and the server is alive. After 4 hours support brings in customer complaints.'),
             focus: ['monitor'],
             states: { monitor: 'off' },
             values: { monitor: cpu ? 'CPU OK' : 'host UP' },

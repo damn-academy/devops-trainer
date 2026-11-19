@@ -181,7 +181,7 @@ export const togetherModel = defineModel<P>({
   explainDelta(_prev, next, change, _a, b): Bi {
     if (change.kind === 'break') {
       return change.on
-        ? bi('Без общей истории файлы просто заменяют друг друга: правка Анны пропала, и никто об этом не узнал.', 'Without a shared history files simply replace each other: Anna’s edit is gone, and nobody found out.')
+        ? bi('Без общей истории файлы затирают друг друга: правка Анны пропала, и никто об этом не узнал.', 'Without a shared history files simply replace each other: Anna’s edit is gone, and nobody found out.')
         : bi('Общая история вернулась: правки снова соединяются, а не затирают друг друга.', 'The shared history is back: edits are joined again instead of overwriting each other.');
     }
     if (change.id === 'where')

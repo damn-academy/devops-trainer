@@ -106,7 +106,7 @@ export const L_INTERVIEWS: Lesson = {
       tone: 'note',
       levels: ['intermediate'],
       title: bi('Если вы из поддержки, тестирования или аналитики', 'If you come from support, QA or analytics'),
-      body: bi('Вы часто описываете опыт словами процесса («закрывал тикеты»), а не системы («находил по журналам, на каком сервисе обрывается запрос»), и недооцениваете свой опыт инцидентов. Переводите его на язык системы: это сильная сторона.', 'You tend to describe experience in process words (“closed tickets”) rather than system words (“found in the logs which service the request died at”) and undervalue your incident experience. Translate it: it is a strength.'),
+      body: bi('Вы часто описываете опыт словами процесса («закрывал тикеты»), а не системы («находил по журналам, на каком сервисе запрос прерывается»), и недооцениваете свой опыт инцидентов. Переводите его на язык системы: это сильная сторона.', 'You tend to describe experience in process words (“closed tickets”) rather than system words (“found in the logs which service the request died at”) and undervalue your incident experience. Translate it: it is a strength.'),
     },
     {
       id: 'lvl-e',

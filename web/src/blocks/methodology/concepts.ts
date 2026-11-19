@@ -50,7 +50,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.flow-efficiency',
     term: bi('эффективность потока', 'flow efficiency'),
-    short: bi('Доля времени, когда над задачей действительно работали, от всего её пути: работа / (работа + ожидание).', 'The share of time a task was actually worked on, out of its whole journey: work / (work + waiting).'),
+    short: bi('Доля времени, когда над задачей работали, от всего её пути: работа / (работа + ожидание).', 'The share of time a task was actually worked on, out of its whole journey: work / (work + waiting).'),
     introducedIn: 'methodology.value-stream',
     forms: { ru: ['эффективности потока', 'эффективностью потока'] },
   },
@@ -214,7 +214,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.runbook',
     term: bi('инструкция для дежурного', 'runbook'),
-    short: bi('Записанный порядок действий при типовом сбое: что проверить, как откатить, кого звать. Знание перестаёт жить в одной голове.', 'A written procedure for a typical outage: what to check, how to restore, whom to call. Knowledge stops living in one head.'),
+    short: bi('Записанный порядок действий при типовом сбое: что проверить, как откатить, кого звать. Знание больше не хранится в одной голове.', 'A written procedure for a typical outage: what to check, how to restore, whom to call. Knowledge stops living in one head.'),
     introducedIn: 'methodology.work-types',
     forms: { ru: ['инструкции для дежурного', 'инструкцию для дежурного'], en: ['runbooks'] },
   },
