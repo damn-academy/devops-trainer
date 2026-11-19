@@ -10,7 +10,7 @@
 // is rebuilt. The finished image appears last.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, t, type Bi } from '../../../core/i18n';
+import { bi, fmt, pluralRu, t, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { fmtb, startWith } from './util';
 
@@ -248,7 +248,7 @@ export const buildModel = defineModel<P>({
         say: { 'n-ctx': bi('В контексте лежат .git и тестовые данные, и каждый коммит меняет ключ COPY . .', 'The context holds .git and test data, and every commit changes the key of COPY . .') },
         states: { 'n-ctx': 'warn', 'n-code': 'warn' },
         metrics: m(),
-        broken: { at: 'e-ctx', message: ' => [internal] load build context                      2.4s\n => => transferring context: 200.47MB                   2.4s', caption: bi('Изъян сидит в контексте сборки. Лишние файлы замедляют сборку, сбивают кэш и могут унести в образ секреты вроде .env и ключей.', 'The flaw sits in the build context. Extra files slow the build down, break the cache and can carry secrets such as .env and keys into the image.') },
+        broken: { at: 'e-ctx', message: ' => [internal] load build context                      2.4s\n => => transferring context: 200.47MB                   2.4s', caption: bi('Изъян находится в контексте сборки. Лишние файлы замедляют сборку, сбивают кэш и могут унести в образ секреты вроде .env и ключей.', 'The flaw sits in the build context. Extra files slow the build down, break the cache and can carry secrets such as .env and keys into the image.') },
       });
     }
     if (broken.has('rm-later')) {
@@ -262,17 +262,17 @@ export const buildModel = defineModel<P>({
         say: { 'n-image': bi('В образе остался слой с кэшем pip, а сверху лежит слой с пометками об удалении.', 'The image keeps the layer with the pip cache plus a layer of deletion marks.') },
         states: { 'n-image': 'warn' },
         metrics: m(),
-        broken: { at: 'e-out', message: 'IMAGE          CREATED BY                                SIZE\n<missing>      RUN /bin/sh -c rm -rf /root/.cache        0B\n<missing>      RUN /bin/sh -c pip install -r require…   48MB', caption: bi('Изъян сидит в сборке слоёв. Удалять файлы нужно в той же инструкции RUN, где они появились, или пользоваться многоэтапной сборкой.', 'The flaw sits in how the layers are built. Delete files in the same RUN that created them, or use a multi-stage build.') },
+        broken: { at: 'e-out', message: 'IMAGE          CREATED BY                                SIZE\n<missing>      RUN /bin/sh -c rm -rf /root/.cache        0B\n<missing>      RUN /bin/sh -c pip install -r require…   48MB', caption: bi('Изъян находится в сборке слоёв. Удалять файлы нужно в той же инструкции RUN, где они появились, или пользоваться многоэтапной сборкой.', 'The flaw sits in how the layers are built. Delete files in the same RUN that created them, or use a multi-stage build.') },
       });
     } else {
       steps.push({
         id: 'image',
         label: bi('образ', 'image'),
-        caption: fmt(bi('Образ собран за {s} с, и {c} шагов из шести взяты из кэша. Образ занимает {mb} МБ.', 'The image is built in {s} s: {c} steps from the cache. Size {mb} MB.'), { s: Math.round(seconds * 10) / 10, c: cached, mb: Math.round(size) }),
+        caption: fmtb(bi('Образ собран за {s} с, и {c} из кэша. Образ занимает {mb} МБ.', 'The image is built in {s} s: {c} steps from the cache. Size {mb} MB.'), { s: bi(String(Math.round(seconds * 10) / 10).replace('.', ','), String(Math.round(seconds * 10) / 10)), c: bi(`${cached} ${pluralRu(cached, ['шаг', 'шага', 'шагов'])} из шести ${pluralRu(cached, ['взят', 'взяты', 'взяты'])}`, String(cached)), mb: Math.round(size) }),
         focus: ['n-image', 'e-out'],
         reveal: ['n-image', 'e-out'],
-        tokens: [{ edge: 'e-out', label: bi('6 слоёв и настройки', '6 layers and config') }],
-        say: { 'n-image': fmt(bi('Образ app:1.0 собран за {s} с.', 'The app:1.0 image is built in {s} s.'), { s: Math.round(seconds * 10) / 10 }) },
+        tokens: [{ edge: 'e-out', label: bi('слои и настройки', 'layers and config') }],
+        say: { 'n-image': fmtb(bi('Образ app:1.0 собран за {s} с.', 'The app:1.0 image is built in {s} s.'), { s: bi(String(Math.round(seconds * 10) / 10).replace('.', ','), String(Math.round(seconds * 10) / 10)) }) },
         states: { 'n-image': 'ok' },
         metrics: m(),
       });

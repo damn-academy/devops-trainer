@@ -63,7 +63,7 @@ const exam: Exam = {
   id: 'exam-docker-duty',
   block: 'containers',
   title: bi('Дежурство', 'On duty'),
-  intro: bi('Вам приходят четыре сообщения из чата команды, и все они про одну машину. Для каждого сначала найдите границу контейнера, на которой сидит поломка, а потом почините её. Открыты только справка `--help` и документация docs.docker.com, а ИИ-наставник выключен.', 'Four messages “from the team chat”, one machine. For each, find the boundary first, then fix it. Only `--help` and docs.docker.com are open; the AI is off.'),
+  intro: bi('Вам приходят четыре сообщения из чата команды, и все они про одну машину. Для каждого сначала найдите границу контейнера, на которой находится поломка, а потом почините её. Открыты только справка `--help` и документация docs.docker.com, а ИИ-наставник выключен.', 'Four messages “from the team chat”, one machine. For each, find the boundary first, then fix it. Only `--help` and docs.docker.com are open; the AI is off.'),
   minutes: 40,
   pass: 0.75,
   allowedDocs: ['help', 'docs.docker.com', 'man'],
