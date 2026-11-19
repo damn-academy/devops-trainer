@@ -36,7 +36,7 @@ const P5: TerminalSetup = { ext: { flow: { scenario: 'p5' } } };
 const P10: TerminalSetup = { ext: { flow: { scenario: 'p10' } } };
 const S2: TerminalSetup = { ext: { flow: { scenario: 's2' } } };
 
-const flowIntro = bi('Доска запущена в терминале командой `flow`: `flow help` перечислит команды, `man flow` объяснит их подробно.', 'The board runs in the terminal as the `flow` command: `flow help` lists the commands, `man flow` explains them in detail.');
+const flowIntro = bi('Доска работает в терминале, и управляют ею командой `flow`. Команда `flow help` перечислит все команды доски, а страница `man flow` подробно их объяснит.', 'The board runs in the terminal as the `flow` command: `flow help` lists the commands, `man flow` explains them in detail.');
 
 const placement: PlacementTask[] = [
   // Intermediate (07 §2.3): count, read, decide, sort, order, and two runs on the board.
@@ -56,7 +56,7 @@ const placement: PlacementTask[] = [
     task: {
       id: 'wip5',
       prompt: bi(
-        'Пять дней доски с постоянной мощностью: четыре человека, четырнадцать одинаковых задач, автопилот тянет карточки сам. Поставьте лимиты WIP так, чтобы к концу 5-го дня готовыми были не меньше 6 карточек, и прогоните пять дней. ' + flowIntro.ru,
+        'Перед вами пять дней работы доски, на которой мощность не меняется: четыре человека, четырнадцать одинаковых задач, а карточки вытягивает автопилот. Поставьте лимиты WIP так, чтобы к концу пятого дня готовыми были не меньше 6 карточек, и прогоните все пять дней. ' + flowIntro.ru,
         'Five days of a board with fixed capacity: four people, fourteen equal tasks, the autopilot pulls the cards. Set the WIP limits so that at least 6 cards are done by the end of day 5, and run the five days. ' + flowIntro.en,
       ),
       check: { when: 'flow.daysDone>=5 && flow.done.count>=6' },
@@ -73,7 +73,7 @@ const placement: PlacementTask[] = [
     task: {
       id: 'bottleneck10',
       prompt: bi(
-        'Доска на 10 дней, один этап медленнее остальных. Найдите его и распределите людей и лимиты так, чтобы за 10 дней закончить не меньше задач, чем проходная линия на этом зерне (`flow goal`). ' + flowIntro.ru,
+        'Перед вами доска на 10 дней, и один этап на ней медленнее остальных. Найдите этот этап и распределите людей и лимиты так, чтобы за 10 дней закончить не меньше задач, чем требует проходная линия для этого прогона (её показывает команда `flow goal`). ' + flowIntro.ru,
         'A 10-day board with one stage slower than the others. Find it and arrange people and limits so that in 10 days you finish at least as many tasks as the pass line on this seed (`flow goal`). ' + flowIntro.en,
       ),
       check: { when: 'flow.daysDone>=10 && flow.pass.done=1' },
@@ -97,7 +97,7 @@ const placement: PlacementTask[] = [
     task: {
       id: 'exp10',
       prompt: bi(
-        'Доска на 10 дней, один этап медленнее остальных. Добейтесь, чтобы за 10 дней было закончено не меньше задач, чем проходная линия (`flow goal`). ' + flowIntro.ru,
+        'Перед вами доска на 10 дней, и один этап на ней медленнее остальных. Добейтесь, чтобы за 10 дней было закончено не меньше задач, чем требует проходная линия (её показывает команда `flow goal`). ' + flowIntro.ru,
         'A 10-day board with one stage slower than the others. Make sure that in 10 days at least as many tasks are finished as the pass line (`flow goal`). ' + flowIntro.en,
       ),
       check: { when: 'flow.daysDone>=10 && flow.pass.done=1' },
@@ -111,7 +111,7 @@ const exam: Exam = {
   block: 'methodology',
   title: bi('Экзамен блока «Методология»', 'Methodology block exam'),
   intro: bi(
-    'Двадцать дней «Чёрной пятницы» в терминале, одна настройка доски, которой нет в курсе, и восемь вопросов. Открыта только документация: страница `man flow`, Scrum Guide, Kanban Guide и заметки к политике бюджета ошибок. Сдача — 70% и обязательная часть с доской.',
+    'Экзамен состоит из двадцати дней «Чёрной пятницы» в терминале, одной настройки доски, которой в курсе нет, и восьми вопросов. Пользоваться можно только документацией: страницей `man flow`, Scrum Guide, Kanban Guide и заметками к политике бюджета ошибок. Чтобы сдать экзамен, нужно набрать 70 % и обязательно выполнить часть с доской.',
     'Twenty days of “Black Friday” in the terminal, one board setting the course does not show, and eight questions. Only the documentation is open: `man flow`, the Scrum Guide, the Kanban Guide and the notes on the error budget policy. Pass: 70% and the mandatory board part.',
   ),
   minutes: 60,
@@ -127,10 +127,10 @@ const exam: Exam = {
       task: {
         id: 'bf-run',
         prompt: bi(
-          'Проведите все 20 дней. Итог по деньгам должен быть не хуже проходной линии на этом зерне (`flow goal`, `flow metrics`). ' + flowIntro.ru,
+          'Проведите магазин через все 20 дней. Итог по деньгам должен быть не хуже проходной линии для этого прогона: её показывает команда `flow goal`, а ваш итог показывает `flow metrics`. ' + flowIntro.ru,
           'Run all 20 days. The money result must be no worse than the pass line on this seed (`flow goal`, `flow metrics`). ' + flowIntro.en,
         ),
-        check: { when: 'flow.finished=1 && flow.pass.money=1', fail: [{ if: 'flow.finished=1', say: bi('Двадцать дней прошли, но итог по деньгам ниже проходной линии.', 'The twenty days are over, but the money result is below the pass line.') }] },
+        check: { when: 'flow.finished=1 && flow.pass.money=1', fail: [{ if: 'flow.finished=1', say: bi('Двадцать дней прошли, но итог по деньгам оказался ниже проходной линии.', 'The twenty days are over, but the money result is below the pass line.') }] },
         docStep: 5,
         solutionTokens: ['flow wip', 'flow station', 'flow policy deploy'],
       },
@@ -144,7 +144,7 @@ const exam: Exam = {
       task: {
         id: 'cd3-order',
         prompt: bi(
-          'Сделайте так, чтобы доска первыми вытягивала карточки с наибольшей стоимостью задержки на единицу оставшейся работы. Как это настроить, в курсе не показано — найдите в документации команды.',
+          'Сделайте так, чтобы доска первыми вытягивала карточки с наибольшей стоимостью задержки на единицу оставшейся работы. Как это настроить, в курсе не показано, поэтому найдите нужную настройку в документации команды.',
           'Make the board pull first the cards with the highest cost of delay per unit of remaining work. How to set this up is not shown in the course; find it in the command’s documentation.',
         ),
         check: { when: 'flow.policies.pullOrder=cd3' },

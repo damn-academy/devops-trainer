@@ -2,14 +2,20 @@
 // ten days. The output of the system is the capacity of its slowest stage; a
 // limit on work in progress keeps the queue in front of it short; swarming
 // and focus raise the bottleneck itself.
+//
+// Reading order: the picture is built from zero. First the morning queue of
+// new tasks, then development, review and testing appear one by one, each
+// saying in a callout how many tasks a day it can finish. Then the ten days
+// run: on each day the stage with the longest queue in front of it is
+// highlighted and says what it did, and the finished tasks travel to the
+// customers as a card with their number.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
-import type { ElementCard, Step } from '../../../core/types';
+import type { Step } from '../../../core/types';
+import { b, card, edge, fmtn, hiddenExcept, lastMetrics, node, nWord, ruNum, type Bi } from './kit';
 
 type P = { arrivals: number; dev: number; test: number; limit: boolean; focus: boolean; swarm: boolean };
 
-const card = (what: Bi, who: Bi, extra: Partial<ElementCard> = {}): ElementCard => ({ what, who, ...extra });
 const GOAL = { url: 'https://en.wikipedia.org/wiki/Theory_of_constraints', label: 'Wikipedia › Theory of constraints' };
 
 export const DAYS = 10;
@@ -17,7 +23,7 @@ export const REVIEW_CAP = 4;
 export const LIMIT = 6;
 
 export interface FlowRun {
-  days: { ready: number; dev: number; qReview: number; qTest: number; done: number; wip: number; out: number; testCap: number }[];
+  days: { ready: number; dev: number; qReview: number; qTest: number; done: number; wip: number; out: number; outDev: number; outReview: number; testCap: number }[];
   done: number;
   wipAvg: number;
   throughput: number;
@@ -53,7 +59,7 @@ export function simulate(p: P, testRemoved = false): FlowRun {
     ready -= pulled;
     dev += pulled;
     const wip = dev + qReview + qTest;
-    days.push({ ready, dev, qReview, qTest, done, wip, out: outT, testCap });
+    days.push({ ready, dev, qReview, qTest, done, wip, out: outT, outDev: outD, outReview: outR, testCap });
   }
   const r = (x: number) => Math.round(x * 10) / 10;
   const wipAvg = days.reduce((a, x) => a + x.wip, 0) / DAYS;
@@ -61,41 +67,69 @@ export function simulate(p: P, testRemoved = false): FlowRun {
   return { days, done: r(done), wipAvg: r(wipAvg), throughput: r(throughput), cycle: throughput ? r(wipAvg / throughput) : 99 };
 }
 
+const ALL = ['ready', 'dev', 'q-review', 'review', 'q-test', 'test', 'done', 'e-pull', 'e-code', 'e-rev', 'e-revd', 'e-test', 'e-done'];
+const r1 = (x: number) => Math.round(x * 10) / 10;
+/** "3 задачи" / "3 tasks". */
+const T = (n: number) => nWord(r1(n), ['задача', 'задачи', 'задач'], ['task', 'tasks']);
+/** The same in the genitive, after "до": "до 3 задач". */
+const TG = (n: number) => nWord(r1(n), ['задачи', 'задач', 'задач'], ['task', 'tasks'], 'задачи');
+/** The same in the accusative, after a verb: "заканчивает 1 задачу". */
+const TA = (n: number) => nWord(r1(n), ['задачу', 'задачи', 'задач'], ['task', 'tasks']);
+const Td = (n: number) => nWord(r1(n), ['день', 'дня', 'дней'], ['day', 'days']);
+const QUEUE: [string, string] = ['Очередь никто не ведёт нарочно: задачи лежат в ней, пока следующий этап занят.', 'Nobody runs a queue on purpose: the tasks lie in it while the next stage is busy.'];
+const SUBORDINATE = b('Шаги Голдратта для узкого места', 'Goldratt’s steps for the bottleneck');
+
 export const bottleneckModel = defineModel<P>({
   id: 'method.x.bottleneck',
   block: 'methodology',
-  title: bi('Где застревает поток', 'Where the flow gets stuck'),
-  summary: bi(
-    'Десять дней работы команды. Каждый этап делает столько, сколько позволяет его мощность, но не больше, чем лежит перед ним. Найдите узкое место по очередям и попробуйте его расширить.',
-    'Ten days of a team’s work. Each stage does as much as its capacity allows, but no more than lies in front of it. Find the bottleneck by the queues and try to elevate it.',
+  title: b('Где застревает поток', 'Where the flow gets stuck'),
+  summary: b(
+    'Десять рабочих дней команды из двух разработчиков, ревьюера и тестировщика. Каждое утро приходят новые задачи, и каждый этап за день заканчивает столько задач, сколько позволяет его мощность, но не больше, чем лежит перед ним. Под схемой копятся число готовых задач, незавершённая работа и время цикла.',
+    'Ten working days of a team of two developers, a reviewer and a tester. New tasks arrive every morning, and each stage finishes as many tasks a day as its capacity allows, but no more than lies in front of it. Under the diagram the number of finished tasks, the work in progress and the cycle time add up.',
   ),
+  intro: b(
+    'Схема соберётся по шагам: сейчас на ней только утренняя очередь новых задач и покупатели. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Сначала по одному появятся этапы, и каждый скажет, сколько задач в день он успевает, а потом пойдут десять рабочих дней. В каждый день подсвечен этап, перед которым скопилась самая длинная очередь, а полоска в очереди показывает, сколько задач в ней ждёт.\n\nПосле первого прохода ускорьте в «Параметрах» разработку и проверьте, изменится ли число готовых задач. Затем верните её и по очереди включите шаги Голдратта.',
+    'The diagram builds itself step by step: now it shows only the morning queue of new tasks and the customers. Press “Start: step forward”, then go on with “Step forward” under the diagram. First the stages appear one by one, each saying how many tasks a day it can finish, and then ten working days run. On each day the stage with the longest queue in front of it is highlighted, and the bar in the queue shows how many tasks wait there.\n\nAfter the first pass, speed up development in “Parameters” and check whether the number of finished tasks changes. Then set it back and switch on Goldratt’s steps one at a time.',
+  ),
+  legend: [
+    { mark: 'active', text: b('этап, на который стоит смотреть сейчас', 'the stage to look at now') },
+    { mark: 'say', text: b('что этот этап сделал', 'what that stage did') },
+    { mark: 'token', text: b('сколько задач прошло по линии за день', 'how many tasks went along the line in a day') },
+    { mark: 'warn', text: b('очередь длиннее шести задач', 'a queue longer than six tasks') },
+    { mark: 'icon:file', text: b('очередь задач', 'a queue of tasks') },
+    { mark: 'icon:user', text: b('люди на этапе', 'the people at a stage') },
+    { mark: 'icon:browser', text: b('задачи у покупателей', 'tasks with the customers') },
+    { mark: 'pale', text: b('этап, на котором сейчас ничего не меняется', 'a stage where nothing changes now') },
+  ],
+  stopLabel: b('Поток остановился', 'The flow stopped'),
   concepts: ['method.bottleneck', 'method.five-steps', 'method.swarming'],
   diagram: {
     width: 960,
-    height: 300,
+    height: 440,
     nodes: [
-      { id: 'ready', label: bi('Готово к работе', 'Ready'), sub: '0', family: 'neutral', shape: 'buffer', x: 16, y: 40, w: 128, h: 64, card: card(bi('Очередь выбранных задач. Сюда каждое утро приходят новые.', 'The queue of selected tasks. New ones arrive every morning.'), bi('Владелец продукта.', 'The product owner.')) },
-      { id: 'dev', label: bi('Разработка', 'Development'), sub: '3/day', family: 'ci-build', x: 224, y: 40, w: 128, h: 64, card: card(bi('Два разработчика: мощность — сколько задач в день они могут закончить.', 'Two developers: the capacity is how many tasks a day they can finish.'), bi('Разработчики.', 'Developers.')) },
-      { id: 'q-review', label: bi('ждут ревью', 'wait for review'), sub: '0', family: 'gauge', shape: 'buffer', x: 348, y: 196, w: 120, h: 48, card: card(bi('Очередь перед ревью: «готово» колонки разработки.', 'The queue before review: the “done” part of the development column.'), bi('Никто: это очередь.', 'Nobody: it is a queue.')) },
-      { id: 'review', label: bi('Ревью', 'Review'), sub: `${REVIEW_CAP}/day`, family: 'ci-build', x: 464, y: 40, w: 120, h: 64, card: card(bi('Проверка кода коллегой. Мощность — четыре задачи в день.', 'Code review by a colleague. Capacity: four tasks a day.'), bi('Разработчики по очереди.', 'Developers in turn.')) },
-      { id: 'q-test', label: bi('ждут проверки', 'wait for testing'), sub: '0', family: 'gauge', shape: 'buffer', x: 580, y: 196, w: 120, h: 48, card: card(bi('Очередь перед проверкой. Если она растёт, проверка не успевает.', 'The queue before testing. When it grows, testing cannot keep up.'), bi('Никто: это очередь.', 'Nobody: it is a queue.')) },
-      { id: 'test', label: bi('Проверка', 'Testing'), sub: '2/day', family: 'ci-test', x: 696, y: 40, w: 120, h: 64, card: card(bi('Один тестировщик. Его мощность ниже, чем у остальных этапов.', 'One tester. Their capacity is lower than that of the other stages.'), bi('Тестировщик.', 'The tester.'), { doc: GOAL }) },
-      { id: 'done', label: bi('Готово', 'Done'), sub: '0', family: 'user', x: 872, y: 40, w: 80, h: 64, card: card(bi('Задачи у покупателей. Их число за день — пропускная способность системы.', 'Tasks with the customers. Their number per day is the throughput of the system.'), bi('Покупатели.', 'Customers.')) },
+      node('ready', b('Новые задачи', 'New tasks'), 'neutral', [16, 48, 150, 64], card(['Очередь отобранных задач, которые ещё никто не начал. Каждое утро сюда приходят новые.', 'The queue of selected tasks nobody has started yet. New ones arrive every morning.'], ['Задачи отбирает владелец продукта.', 'The product owner selects them.']), { icon: 'file', shape: 'buffer', sub: '0' }),
+      node('dev', b('Разработка', 'Development'), 'ci-build', [232, 48, 160, 64], card(['На этапе разработки работают два разработчика. Мощность этапа показывает, сколько задач в день они вместе могут закончить.', 'Two developers work at the development stage. The stage’s capacity is how many tasks a day they can finish together.'], ['Здесь работают разработчики.', 'The developers work here.']), { icon: 'terminal' }),
+      node('q-review', b('Ждут ревью', 'Waiting for review'), 'gauge', [312, 232, 160, 56], card(['Задачи, код которых готов, но ревьюер их ещё не взял. На доске это часть «готово» в колонке разработки.', 'Tasks whose code is ready but not yet taken by the reviewer. On a board it is the “done” part of the development column.'], QUEUE), { icon: 'file', shape: 'buffer', sub: '0' }),
+      node('review', b('Ревью', 'Review'), 'ci-build', [472, 48, 160, 64], card(['Коллега читает код и ищет ошибки. Этот этап успевает четыре задачи в день.', 'A colleague reads the code and looks for mistakes. This stage manages four tasks a day.'], ['Ревью делает ревьюер, опытный разработчик команды.', 'The reviewer, an experienced developer of the team, does it.']), { icon: 'user' }),
+      node('q-test', b('Ждут проверки', 'Waiting for testing'), 'gauge', [552, 232, 160, 56], card(['Задачи, которые прошли ревью и ждут тестировщика. Если эта очередь растёт день за днём, проверка не успевает за остальными.', 'Tasks that passed review and wait for the tester. When this queue grows day after day, testing cannot keep up with the rest.'], QUEUE), { icon: 'file', shape: 'buffer', sub: '0' }),
+      node('test', b('Проверка', 'Testing'), 'ci-test', [744, 48, 160, 64], card(['На этапе проверки работает один тестировщик. Мощность этого этапа ниже, чем у остальных, поэтому именно проверка задаёт скорость всей команды.', 'One tester works at the test stage. Its capacity is lower than that of the other stages, which is why testing sets the speed of the whole team.'], ['Проверяет тестировщик.', 'The tester does it.'], GOAL), { icon: 'process' }),
+      node('done', b('У покупателей', 'With the customers'), 'user', [744, 344, 160, 64], card(['Здесь собираются задачи, которые дошли до покупателей. Число задач, которое прибавляется здесь за день, и есть пропускная способность всей команды.', 'Here the tasks that reached the customers gather. The number added here per day is the throughput of the whole team.'], ['Покупатели приходят на сайт магазина сами и пользуются только тем, что уже выложено.', 'The customers come to the shop’s site themselves and use only what is already deployed.']), { icon: 'browser', sub: '0' }),
     ],
     edges: [
-      { id: 'e-pull', from: 'ready', to: 'dev', label: bi('в работу', 'start'), card: card(bi('Сколько задач разработка берёт каждое утро. С лимитом — только если в системе есть место.', 'How many tasks development starts each morning. With a limit, only if there is room in the system.'), bi('Разработчики.', 'Developers.')) },
-      { id: 'e-code', from: 'dev', to: 'q-review', label: bi('код готов', 'code done'), card: card(bi('Закончили писать — задача ждёт ревьюера.', 'Coding finished: the task waits for a reviewer.'), bi('Разработчики.', 'Developers.')) },
-      { id: 'e-rev', from: 'q-review', to: 'review', label: bi('на ревью', 'to review'), card: card(bi('Ревьюер берёт задачу из очереди.', 'A reviewer takes a task from the queue.'), bi('Ревьюер.', 'The reviewer.')) },
-      { id: 'e-revd', from: 'review', to: 'q-test', label: bi('ревью пройдено', 'reviewed'), card: card(bi('Задача прошла ревью и ждёт тестировщика.', 'The task passed review and waits for the tester.'), bi('Ревьюер.', 'The reviewer.')) },
-      { id: 'e-test', from: 'q-test', to: 'test', label: bi('на проверку', 'to testing'), card: card(bi('Тестировщик берёт задачу из очереди.', 'The tester takes a task from the queue.'), bi('Тестировщик.', 'The tester.')) },
-      { id: 'e-done', from: 'test', to: 'done', label: bi('выход', 'out'), card: card(bi('Задача проверена и уходит покупателям.', 'The task is tested and goes to the customers.'), bi('Тестировщик.', 'The tester.')) },
+      edge('e-pull', 'ready', 'dev', b('берут в работу', 'started'), card(['По этой линии задачи переходят из очереди в разработку: каждое утро разработчики берут столько новых задач, сколько успевают сделать за день. С лимитом незавершённой работы новую задачу берут, только если в работе меньше шести задач.', 'Along this line tasks go from the queue into development: every morning the developers take as many new tasks as they can finish in a day. With a WIP limit a new task is taken only while fewer than six are in progress.'], ['Задачи берут разработчики.', 'The developers take them.'])),
+      edge('e-code', 'dev', 'q-review', b('код готов', 'code done'), card(['Разработчик закончил код, и задача встаёт в очередь к ревьюеру.', 'A developer finished the code, and the task joins the queue to the reviewer.'], ['Задачу передают разработчики.', 'The developers hand it on.'])),
+      edge('e-rev', 'q-review', 'review', b('на ревью', 'to review'), card(['Ревьюер берёт следующую задачу из очереди.', 'The reviewer takes the next task from the queue.'], ['Задачу берёт ревьюер.', 'The reviewer takes it.'])),
+      edge('e-revd', 'review', 'q-test', b('ревью пройдено', 'reviewed'), card(['Задача прошла ревью и встаёт в очередь к тестировщику.', 'The task passed review and joins the queue to the tester.'], ['Задачу передаёт ревьюер.', 'The reviewer hands it on.'])),
+      edge('e-test', 'q-test', 'test', b('на проверку', 'to testing'), card(['Тестировщик берёт следующую задачу из очереди.', 'The tester takes the next task from the queue.'], ['Задачу берёт тестировщик.', 'The tester takes it.'])),
+      edge('e-done', 'test', 'done', b('проверено', 'tested'), card(['Проверенная задача уходит к покупателям.', 'A tested task goes to the customers.'], ['Задачу передаёт тестировщик.', 'The tester hands it on.'])),
     ],
   },
   params: [
-    { id: 'arrivals', label: bi('Входящих задач в день', 'Incoming tasks per day'), kind: 'range', min: 1, max: 5, step: 1, default: 3, near: 'ready' },
+    { id: 'arrivals', group: b('Сколько работы приходит', 'How much work arrives'), label: b('Сколько новых задач приходит каждое утро', 'New tasks arriving every morning'), kind: 'range', min: 1, max: 5, step: 1, default: 3, near: 'ready', levels: ['intermediate', 'experienced'] },
     {
       id: 'dev',
-      label: bi('Мощность разработки, задач в день', 'Development capacity, tasks per day'),
+      group: b('Мощность этапов', 'The capacity of the stages'),
+      label: b('Сколько задач в день заканчивает разработка', 'Tasks development finishes a day'),
       kind: 'range',
       min: 1,
       max: 6,
@@ -103,135 +137,221 @@ export const bottleneckModel = defineModel<P>({
       default: 3,
       near: 'dev',
       predict: {
-        prompt: bi('Разработку ускоряют вдвое: 3 → 6 задач в день. Что станет с выходом системы?', 'Development gets twice as fast: 3 → 6 tasks a day. What happens to the output of the system?'),
+        prompt: b('Вы меняете мощность разработки, а тестировщик по-прежнему проверяет две задачи в день. Как изменится число задач, которые дойдут до покупателей за 10 дней?', 'You change the capacity of development, while the tester still tests two tasks a day. How does the number of tasks that reach the customers in 10 days change?'),
         options: [
-          { id: 'same', text: bi('Почти не изменится', 'Almost nothing changes') },
-          { id: 'double', text: bi('Вырастет вдвое', 'It doubles') },
-          { id: 'down', text: bi('Упадёт', 'It falls') },
+          { id: 'same', text: b('Почти не изменится, пока разработка быстрее проверки', 'It barely changes as long as development is faster than testing') },
+          { id: 'scale', text: b('Изменится примерно во столько же раз, во сколько изменилась мощность разработки', 'It changes about as many times as the capacity of development did') },
         ],
         resolve: (prev, next) => {
-          const a = prev[prev.length - 1].metrics?.done ?? 0;
-          const b = next[next.length - 1].metrics?.done ?? 0;
-          return b > a * 1.5 ? 'double' : b < a * 0.9 ? 'down' : 'same';
+          const x = lastMetrics(prev).done ?? 0;
+          const y = lastMetrics(next).done ?? 0;
+          return Math.abs(y - x) <= Math.max(1, x * 0.15) ? 'same' : 'scale';
         },
       },
     },
-    { id: 'test', label: bi('Мощность проверки, задач в день', 'Testing capacity, tasks per day'), kind: 'range', min: 1, max: 6, step: 1, default: 2, near: 'test' },
+    { id: 'test', group: b('Мощность этапов', 'The capacity of the stages'), label: b('Сколько задач в день проверяет тестировщик', 'Tasks the tester tests a day'), kind: 'range', min: 1, max: 6, step: 1, default: 2, near: 'test' },
+    { id: 'focus', group: SUBORDINATE, label: b('Тестировщика не отвлекают на совещания и чужие задачи (шаг «использовать»)', 'The tester is not pulled into meetings and other tasks (the “exploit” step)'), kind: 'toggle', default: false, near: 'test' },
     {
       id: 'limit',
-      label: bi(`Лимит: в работе не больше ${LIMIT} задач`, `Limit: at most ${LIMIT} tasks in progress`),
+      group: SUBORDINATE,
+      label: b(`Не брать новую задачу, пока в работе ${LIMIT} задач (шаг «подчинить»)`, `Start no new task while ${LIMIT} are in progress (the “subordinate” step)`),
       kind: 'toggle',
       default: false,
       near: 'q-test',
       predict: {
-        prompt: bi('В системе не больше шести задач одновременно. Что станет со временем цикла?', 'At most six tasks in the system at once. What happens to cycle time?'),
+        prompt: b('Вы включаете или выключаете лимит: новую задачу не берут, пока в работе шесть задач. Как изменится время цикла, то есть сколько дней одна задача проводит в работе?', 'You switch the limit on or off: no new task is started while six are in progress. How does the cycle time change, that is, how many days one task spends in progress?'),
         options: [
-          { id: 'shorter', text: bi('Станет короче', 'It gets shorter') },
-          { id: 'same', text: bi('Не изменится', 'It stays the same') },
-          { id: 'longer', text: bi('Станет длиннее: работа простаивает', 'It gets longer: work stands still') },
+          { id: 'shorter', text: b('С лимитом время цикла короче: задачи меньше ждут в очередях', 'With the limit the cycle time is shorter: tasks wait less in queues') },
+          { id: 'same', text: b('Время цикла не зависит от лимита', 'The cycle time does not depend on the limit') },
+          { id: 'longer', text: b('С лимитом время цикла длиннее: разработчики простаивают', 'With the limit the cycle time is longer: the developers stand idle') },
         ],
-        resolve: (prev, next) => ((next[next.length - 1].metrics?.cycle ?? 0) < (prev[prev.length - 1].metrics?.cycle ?? 0) ? 'shorter' : 'same'),
+        resolve: (prev, next) => {
+          const a = lastMetrics(prev).cycle ?? 0;
+          const c = lastMetrics(next).cycle ?? 0;
+          const limited = next.some((s) => s.id === 'limit-on');
+          if (a === c) return 'same';
+          return (limited ? c < a : c > a) ? 'shorter' : 'longer';
+        },
       },
     },
-    { id: 'focus', label: bi('Использовать: проверка не отвлекается на другое (+20%)', 'Exploit: testing is not distracted (+20%)'), kind: 'toggle', default: false, near: 'test' },
-    { id: 'swarm', label: bi('Подчинить: свободные разработчики помогают проверке', 'Subordinate: free developers help testing'), kind: 'toggle', default: false, near: 'test' },
+    { id: 'swarm', group: SUBORDINATE, label: b('Свободные разработчики помогают проверять (тоже шаг «подчинить»)', 'Free developers help with testing (also the “subordinate” step)'), kind: 'toggle', default: false, near: 'test' },
   ],
   breaks: [
     {
       id: 'no-test',
-      label: bi('Тестировщик ушёл на две недели', 'The tester is away for two weeks'),
+      label: b('Тестировщик ушёл в отпуск на две недели, и проверять задачи некому', 'The tester is on leave for two weeks, and nobody can test'),
       remove: ['test', 'e-test', 'e-done'],
       boundary: 'process',
       predict: {
-        prompt: bi('Проверять некому. Что будет с работой остальных?', 'Nobody can test. What happens to everyone else’s work?'),
+        prompt: b('Тестировщика нет, а разработчики и ревьюер работают как обычно. Что произойдёт за десять дней?', 'The tester is away, while the developers and the reviewer work as usual. What happens in ten days?'),
         options: [
-          { id: 'pile', text: bi('Она будет копиться перед проверкой, до покупателей не дойдёт ничего', 'It piles up before testing; nothing reaches the customers') },
-          { id: 'faster', text: bi('Остальные успеют больше', 'The others get more done') },
+          { id: 'pile', text: b('Задачи будут копиться в очереди к проверке, и до покупателей не дойдёт ни одна', 'Tasks pile up in the queue to testing, and none reaches the customers') },
+          { id: 'faster', text: b('Остальные успеют больше, потому что их никто не задерживает', 'The others get more done, because nobody holds them up') },
         ],
-        resolve: () => 'pile',
+        resolve: (_p, next) => ((lastMetrics(next).done ?? 0) === 0 ? 'pile' : 'faster'),
       },
     },
   ],
   metrics: [
-    { id: 'done', label: bi('готово', 'done') },
-    { id: 'wip', label: bi('в работе', 'in progress') },
-    { id: 'th', label: bi('пропускная способность', 'throughput'), unit: '/d' },
-    { id: 'cycle', label: bi('время цикла ≈ WIP / выход', 'cycle time ≈ WIP / output'), unit: 'd' },
+    { id: 'done', label: b('готово задач', 'tasks done') },
+    { id: 'wip', label: b('задач в работе', 'tasks in progress') },
+    { id: 'th', label: b('готово в день', 'done a day') },
+    { id: 'cycle', label: b('время цикла, дней', 'cycle time, days') },
   ],
   run(p, broken): Step[] {
     const removed = broken.has('no-test');
     const r = simulate(p, removed);
     const steps: Step[] = [];
-    const cap = (x: number) => (Number.isInteger(x) ? String(x) : x.toFixed(1));
-    const testCap0 = removed ? 0 : p.test * (p.focus ? 1.2 : 1);
-    const slowest = Math.min(p.dev, REVIEW_CAP, testCap0 || 0);
+    const testCap0 = removed ? 0 : r1(p.test * (p.focus ? 1.2 : 1));
+    const slowest = Math.min(p.dev, REVIEW_CAP, testCap0);
+    const zero = { done: 0, wip: 0, th: 0, cycle: 0 };
     steps.push({
-      id: 'start',
-      label: bi('мощности', 'capacities'),
-      caption: fmt(bi('Входит {a} задачи в день. Мощность: разработка {d}, ревью {r}, проверка {t} задачи в день. Самый медленный этап — {s}.', '{a} tasks arrive a day. Capacity: development {d}, review {r}, testing {t} tasks a day. The slowest stage does {s}.'), { a: p.arrivals, d: p.dev, r: REVIEW_CAP, t: cap(testCap0), s: cap(slowest) }),
-      focus: ['dev', 'review', 'test'],
-      values: { dev: `${p.dev}/day`, test: `${cap(testCap0)}/day`, ready: '0', 'q-review': '0', 'q-test': '0', done: '0' },
+      id: 'arrive',
+      label: b('утро', 'morning'),
+      caption: fmtn(b('Каждое утро в очередь новых задач приходит {a}. Справа внизу стоят покупатели, и сделанной считается только та задача, которая дошла до них.', 'Every morning {a} arrive in the queue of new tasks. Bottom right are the customers: as many tasks as reach them in ten days, that is how much the team has done.'), { a: T(p.arrivals) }),
+      focus: ['ready'],
+      say: { ready: fmtn(b('Каждое утро сюда приходит {a}.', 'Every morning {a} arrive here.'), { a: T(p.arrivals) }) },
+      states: hiddenExcept(ALL, 'ready', 'done'),
+      values: { ready: '0', 'q-review': '0', 'q-test': '0', done: '0' },
       fill: { ready: 0, 'q-review': 0, 'q-test': 0 },
-      states: removed ? { test: 'off', 'e-test': 'off', 'e-done': 'off' } : {},
-      metrics: { done: 0, wip: 0, th: 0, cycle: 0 },
+      metrics: zero,
+    });
+    steps.push({
+      id: 'cap-dev',
+      label: b('разработка', 'dev'),
+      caption: fmtn(b('Первым идёт этап разработки. Два разработчика вместе заканчивают до {d} в день, и столько же новых задач они могут взять утром.', 'The first stage is development. Together the two developers finish up to {d} a day, and they can take as many new tasks in the morning.'), { d: TG(p.dev) }),
+      focus: ['dev', 'e-pull'],
+      say: { dev: fmtn(b('Разработчики успевают {d} в день.', 'The developers manage {d} a day.'), { d: TA(p.dev) }) },
+      reveal: ['dev', 'e-pull'],
+      metrics: zero,
+    });
+    steps.push({
+      id: 'cap-review',
+      label: b('ревью', 'review'),
+      caption: b('Готовый код встаёт в очередь к ревьюеру. Ревью успевает четыре задачи в день, то есть больше, чем разработка.', 'Finished code joins the queue to the reviewer. Review manages four tasks a day, more than development does.'),
+      focus: ['review', 'q-review'],
+      say: { review: b('Ревью успевает 4 задачи в день.', 'Review manages 4 tasks a day.') },
+      reveal: ['q-review', 'review', 'e-code', 'e-rev'],
+      metrics: zero,
+    });
+    steps.push(
+      removed
+        ? {
+            id: 'cap-test',
+            label: b('проверка', 'test'),
+            caption: b('После ревью задачи встают в очередь к тестировщику, но тестировщик в отпуске, и проверять их некому.', 'After review the tasks join the queue to the tester, but the tester is on leave, and nobody can test them.'),
+            focus: ['q-test'],
+            say: { 'q-test': b('Тестировщика нет, поэтому задачи сюда приходят, а дальше им идти некуда.', 'There is no tester: tasks come here and have nowhere to go.') },
+            reveal: ['q-test', 'e-revd'],
+            states: { test: 'off', 'e-test': 'off', 'e-done': 'off' },
+            metrics: zero,
+          }
+        : {
+            id: 'cap-test',
+            label: b('проверка', 'test'),
+            caption: fmtn(b('После ревью задачи встают в очередь к тестировщику. Он проверяет {t} в день, меньше, чем любой другой этап.', 'After review the tasks join the queue to the tester. The tester tests {t} a day, fewer than any other stage.'), { t: TA(testCap0) }),
+            focus: ['test', 'q-test'],
+            say: { test: fmtn(b('Тестировщик успевает только {t} в день.', 'The tester manages only {t} a day.'), { t: TA(testCap0) }) },
+            reveal: ['q-test', 'test', 'e-revd', 'e-test'],
+            metrics: zero,
+          },
+    );
+    steps.push({
+      id: p.limit ? 'limit-on' : 'slowest',
+      label: b('предел', 'limit'),
+      caption: removed
+        ? b('Самый медленный этап сейчас — проверка, и её мощность равна нулю. Посмотрим, что это значит для десяти дней работы.', 'The slowest stage now is testing, and its capacity is zero. Let us see what that means for ten days of work.')
+        : fmtn(b('Самый медленный этап успевает {s} в день. Как бы быстро ни работали остальные, до покупателей каждый день будет доходить не больше задач, чем успевает он. {l}', 'The slowest stage manages {s} a day. However fast the others work, no more than that will reach the customers per day. {l}'), {
+            s: TA(slowest),
+            l: p.limit ? b('Включён лимит, поэтому новую задачу не берут, пока в работе шесть задач.', 'The limit is on: no new task is started while six are in progress.') : b('Лимита нет, поэтому разработчики берут новые задачи каждое утро.', 'There is no limit: the developers take new tasks every morning.'),
+          }),
+      focus: ['done', 'e-done'],
+      say: { done: removed ? b('Сюда не дойдёт ничего, пока проверять некому.', 'Nothing will get here while nobody can test.') : b('Сюда каждый день будет приходить не больше задач, чем успевает самый медленный этап.', 'No more tasks a day will come here than the slowest stage manages.') },
+      reveal: ['done', 'e-done'],
+      states: removed ? { 'e-done': 'off' } : {},
+      metrics: zero,
     });
     const full = (n: number) => Math.min(1, n / 12);
     r.days.forEach((d, i) => {
       const day = i + 1;
-      const doneSoFar = Math.round(d.done * 10) / 10;
-      const th = Math.round((d.done / day) * 10) / 10;
-      const cyc = th ? Math.round((r.days.slice(0, day).reduce((a, x) => a + x.wip, 0) / day / th) * 10) / 10 : 0;
-      const worst = d.qTest >= d.qReview ? 'q-test' : 'q-review';
-      const caption =
-        day === 1
-          ? bi('День 1: разработка берёт задачи, очередей ещё нет.', 'Day 1: development starts tasks, there are no queues yet.')
-          : fmt(bi('День {n}: готово {x}; в очереди к ревью {qr}, к проверке {qt}.', 'Day {n}: {x} done; {qr} waiting for review, {qt} waiting for testing.'), { n: day, x: cap(doneSoFar), qr: cap(d.qReview), qt: cap(d.qTest) });
+      const doneSoFar = r1(d.done);
+      const th = r1(d.done / day);
+      const cyc = th ? r1(r.days.slice(0, day).reduce((a, x) => a + x.wip, 0) / day / th) : 0;
+      const worst = removed || d.qTest >= d.qReview ? 'q-test' : 'q-review';
+      const actor = worst === 'q-test' ? (removed ? 'q-test' : 'test') : 'review';
+      const say =
+        actor === 'test'
+          ? fmtn(b('Тестировщик проверил {o}, а в очереди к нему остаётся {q}.', 'The tester tested {o}, and {q} remain in the queue.'), { o: TA(d.out), q: T(d.qTest) })
+          : actor === 'review'
+            ? fmtn(b('Ревью пропустило {o}, а в очереди к нему остаётся {q}.', 'Review passed {o}, and {q} remain in the queue.'), { o: TA(d.outReview), q: T(d.qReview) })
+            : fmtn(b('В очереди к проверке уже {q}, и ни одна задача не ушла дальше.', 'There are already {q} in the queue to testing, and none moved on.'), { q: T(d.qTest) });
       const st: Step = {
         id: `d${day}`,
         label: `${day}`,
-        caption,
-        focus: day === 1 ? ['e-pull', 'dev'] : [worst, worst === 'q-test' ? 'test' : 'review'],
-        tokens: day === 1 ? [{ edge: 'e-pull' }] : removed ? [{ edge: 'e-revd' }] : [{ edge: 'e-done' }],
-        values: { ready: cap(d.ready), 'q-review': cap(d.qReview), 'q-test': cap(d.qTest), done: cap(doneSoFar), dev: `${cap(d.dev)} / ${p.dev}` },
+        caption: day === 1
+          ? fmtn(b('В первый день разработчики берут в работу первые {p}, а ревью и проверке пока нечего делать: до них ещё ничего не дошло.', 'Day 1. The developers start their first {p}, while review and testing have nothing to do yet: nothing has reached them.'), { p: TA(Math.min(p.arrivals, p.dev)) })
+          : fmtn(b('На {n}-й день разработка закончила {dv}, ревью пропустило {rv}, проверка выпустила к покупателям {ov}. Всего готово {x}, в очереди к ревью остаётся {qr}, в очереди к проверке остаётся {qt}.', 'Day {n}. Development finished {dv}, review passed {rv}, testing released {ov} to the customers. {x} done in all; {qr} wait for review, {qt} wait for testing.'), {
+          n: day,
+          dv: TA(d.outDev),
+          rv: TA(d.outReview),
+          ov: TA(d.out),
+          x: T(doneSoFar),
+          qr: T(d.qReview),
+          qt: T(d.qTest),
+        }),
+        focus: [worst, actor],
+        say: { [actor]: say },
+        tokens: removed ? [{ edge: 'e-revd', label: `+${ruNum(r1(d.outReview))}` }] : [{ edge: 'e-done', label: `+${ruNum(r1(d.out))}` }],
+        values: { ready: ruNum(r1(d.ready)), 'q-review': ruNum(r1(d.qReview)), 'q-test': ruNum(r1(d.qTest)), done: ruNum(doneSoFar) },
         fill: { ready: full(d.ready), 'q-review': full(d.qReview), 'q-test': full(d.qTest) },
-        states: { 'q-test': d.qTest > 6 ? 'warn' : 'on', 'q-review': d.qReview > 6 ? 'warn' : 'on' },
-        metrics: { done: doneSoFar, wip: Math.round(d.wip * 10) / 10, th, cycle: cyc },
+        states: { 'q-test': d.qTest > 6 ? 'warn' : 'on', 'q-review': d.qReview > 6 ? 'warn' : 'on', done: doneSoFar > 0 ? 'ok' : 'on' },
+        metrics: { done: doneSoFar, wip: r1(d.wip), th, cycle: cyc },
       };
-      if (removed && day === DAYS) st.broken = { at: 'q-test', message: `queue before testing: ${cap(d.qTest)} tasks, done: 0`, caption: bi('без проверки поток стоит: всё сделанное разработкой копится в очереди и не приносит ценности.', 'without testing the flow stops: everything development made piles up in the queue and brings no value.') };
+      if (removed && day === DAYS) st.broken = { at: 'q-test', message: `queue before testing: ${r1(d.qTest)} tasks\ndone: 0`, caption: b('без проверки поток стоит: всё, что сделала разработка, копится в очереди и не приносит покупателям никакой пользы.', 'without testing the flow stands still: everything development made piles up in the queue and gives the customers nothing.') };
       steps.push(st);
     });
     steps.push({
       id: 'sum',
-      label: bi('итог', 'total'),
+      label: b('итог', 'total'),
       caption: removed
-        ? bi('Итог: ноль у покупателей — поток идёт со скоростью самого медленного этапа, а здесь она ноль.', 'Total: zero with the customers. The flow moves at the speed of its slowest stage, and here it is zero.')
-        : fmt(bi('Итог за {n} дней: готово {x}, пропускная способность {t} в день — почти ровно мощность самого медленного этапа ({s}). Время цикла по закону Литтла ≈ {c} дн.', 'Total for {n} days: {x} done, a throughput of {t} a day — almost exactly the capacity of the slowest stage ({s}). Cycle time by Little’s law ≈ {c} d.'), { n: DAYS, x: cap(r.done), t: cap(r.throughput), s: cap(slowest), c: r.cycle }),
+        ? b('За десять дней до покупателей не дошло ни одной задачи. Поток идёт со скоростью самого медленного этапа, а скорость проверки здесь равна нулю.', 'In ten days not a single task reached the customers. The flow moves at the speed of its slowest stage, and the speed of testing here is zero.')
+        : p.arrivals < slowest
+          ? fmtn(b('За {n} дней готово {x}. Новых задач приходит меньше, чем успевает даже самый медленный этап, поэтому команду сейчас ограничивают не этапы, а поток новых задач. По закону Литтла время цикла получается около {c}.', 'In {n} days {x} are done. Fewer new tasks arrive than even the slowest stage manages, so the team is now limited not by its stages but by the flow of new tasks. Cycle time by Little’s law is about {c}.'), { n: DAYS, x: T(r.done), c: Td(r.cycle) })
+          : fmtn(b('За {n} дней готово {x}. В последние дни до покупателей доходило по {o} в день, то есть столько, сколько успевает самый медленный этап, а первые дни ушли на то, чтобы задачи до него добрались. По закону Литтла время цикла получается около {c}.', 'In {n} days {x} are done. In the last days {o} a day reached the customers, as many as the slowest stage manages, and the first days went on the tasks getting that far. Cycle time by Little’s law is about {c}.'), { n: DAYS, x: T(r.done), o: T(r.days[DAYS - 1].out), c: Td(r.cycle) }),
       focus: removed ? ['q-test'] : ['done'],
+      say: removed ? { 'q-test': fmtn(b('Здесь скопилось {q}, а до покупателей не дошло ни одной задачи.', '{q} piled up here, and the customers have zero.'), { q: T(r.days[DAYS - 1].qTest) }) } : { done: fmtn(b('За десять дней сюда дошло {x}.', 'In ten days {x} got here.'), { x: T(r.done) }) },
       states: removed ? { done: 'off' } : { done: 'ok' },
       metrics: { done: r.done, wip: r.wipAvg, th: r.throughput, cycle: r.cycle },
     });
     return steps;
   },
-  explainDelta(prev, next, change, a, b): Bi {
-    const m0 = prev[prev.length - 1].metrics ?? {};
-    const m1 = next[next.length - 1].metrics ?? {};
-    const v = { d0: m0.done ?? 0, d1: m1.done ?? 0, c0: m0.cycle ?? 0, c1: m1.cycle ?? 0, w0: m0.wip ?? 0, w1: m1.wip ?? 0 };
-    if (change.kind === 'break') return change.on ? bi('Проверки нет — выход системы ноль, хотя разработка работает в полную силу. Её работа без проверки не дошла до покупателей.', 'No testing: the system delivers zero although development works at full speed. Its work never reached the customers.') : bi('Тестировщик вернулся — поток снова идёт.', 'The tester is back: the flow moves again.');
+  explainDelta(prev, next, change, a, c): Bi {
+    const m0 = lastMetrics(prev);
+    const m1 = lastMetrics(next);
+    const v = { d0: T(m0.done ?? 0), d1: T(m1.done ?? 0), c0: m0.cycle ?? 0, c1: Td(m1.cycle ?? 0), w0: m0.wip ?? 0, w1: T(m1.wip ?? 0) };
+    if (change.kind === 'break')
+      return change.on
+        ? b('Тестировщика нет, и до покупателей не дошло ничего, хотя разработка работает в полную силу. Всё, что она сделала, лежит в очереди к проверке.', 'The tester is away, and nothing reached the customers although development works at full speed. Everything it made lies in the queue to testing.')
+        : b('Тестировщик вернулся, и задачи снова доходят до покупателей.', 'The tester is back, and tasks reach the customers again.');
     switch (change.id) {
       case 'dev':
-        return fmt(bi('Разработка {x} → {y} в день: готово {d0} → {d1}. Выход задаёт самый медленный этап; лишняя мощность до него только быстрее наполняет очередь (в работе {w0} → {w1}).', 'Development {x} → {y} a day: done {d0} → {d1}. The slowest stage sets the output; extra capacity before it only fills the queue faster (in progress {w0} → {w1}).'), { x: a.dev as number, y: b.dev as number, ...v });
+        return fmtn(b('Разработка теперь заканчивает {y} в день вместо {x}. За десять дней готово {d1} вместо {d0}, потому что число задач, которые доходят до покупателей, задаёт самый медленный этап. Лишняя мощность перед ним только быстрее наполняет очередь: в работе теперь в среднем {w1} вместо {w0}.', 'Development now finishes {y} a day instead of {x}. In ten days {d1} are done instead of {d0}: the slowest stage sets the output, and extra capacity before it only fills the queue faster (on average {w1} in progress instead of {w0}).'), { x: a.dev as number, y: TA(c.dev as number), ...v });
       case 'test':
-        return fmt(bi('Проверка {x} → {y} в день: готово {d0} → {d1}, время цикла {c0} → {c1} дн. Ускорение узкого места ускоряет всю систему.', 'Testing {x} → {y} a day: done {d0} → {d1}, cycle time {c0} → {c1} d. Speeding up the bottleneck speeds up the whole system.'), { x: a.test as number, y: b.test as number, ...v });
+        return fmtn(b('Тестировщик теперь проверяет {y} в день вместо {x}. Готово {d1} вместо {d0}, а время цикла {c1} вместо {c0}: если ускорить узкое место, ускоряется вся система.', 'The tester now tests {y} a day instead of {x}. {d1} are done instead of {d0}, and the cycle time is {c1} instead of {c0}: speed up the bottleneck and the whole system speeds up.'), { x: a.test as number, y: TA(c.test as number), ...v });
       case 'limit':
-        return b.limit
-          ? fmt(bi('С лимитом очередь перед проверкой не растёт без конца: в работе {w0} → {w1}, время цикла {c0} → {c1} дн., а готово столько же ({d1}).', 'With the limit the queue before testing stops growing: in progress {w0} → {w1}, cycle time {c0} → {c1} d, and just as much is done ({d1}).'), v)
-          : fmt(bi('Без лимита разработка берёт всё подряд: в работе {w0} → {w1}, время цикла {c0} → {c1} дн., выход тот же.', 'Without the limit development starts everything: in progress {w0} → {w1}, cycle time {c0} → {c1} d, the same output.'), v);
+        return c.limit
+          ? fmtn(b('С лимитом очередь перед проверкой перестала расти: в работе в среднем {w1} вместо {w0}, время цикла {c1} вместо {c0}, а готово столько же, {d1}.', 'With the limit the queue before testing stopped growing: on average {w1} in progress instead of {w0}, a cycle time of {c1} instead of {c0}, and just as many done, {d1}.'), v)
+          : fmtn(b('Без лимита разработчики берут всё подряд: в работе в среднем {w1} вместо {w0}, время цикла {c1} вместо {c0}, а готово столько же.', 'Without the limit the developers start everything: on average {w1} in progress instead of {w0}, a cycle time of {c1} instead of {c0}, and the same number done.'), v);
       case 'focus':
-        return fmt(bi('Проверка без переключений делает на 20% больше: готово {d0} → {d1}. Это шаг «использовать» — выжать из узкого места всё, что есть.', 'Testing without switching does 20% more: done {d0} → {d1}. That is the “exploit” step: get everything out of the bottleneck.'), v);
+        return c.focus
+          ? fmtn(b('Тестировщик больше не переключается на другие дела и проверяет на 20 % больше: готово {d1} вместо {d0}. Это шаг «использовать»: взять от узкого места всё, на что оно способно.', 'The tester no longer switches to other things and tests 20% more: {d1} done instead of {d0}. That is the “exploit” step: get everything the bottleneck can give.'), v)
+          : fmtn(b('Тестировщика снова отвлекают: готово {d1} вместо {d0}.', 'The tester is distracted again: {d1} done instead of {d0}.'), v);
       case 'swarm':
-        return fmt(bi('Свободные разработчики помогают проверке вполсилы: готово {d0} → {d1}. Это шаг «подчинить»: остальные работают на узкое место, а не начинают новое.', 'Free developers help testing at half speed: done {d0} → {d1}. That is the “subordinate” step: the others work for the bottleneck instead of starting new work.'), v);
+        return c.swarm
+          ? fmtn(b('Свободные разработчики помогают проверять, хоть и вдвое медленнее тестировщика: готово {d1} вместо {d0}. Это шаг «подчинить»: остальные работают на узкое место, а не начинают новое.', 'Free developers help with testing, if half as fast as the tester: {d1} done instead of {d0}. That is the “subordinate” step: the others work for the bottleneck instead of starting something new.'), v)
+          : fmtn(b('Разработчики больше не помогают проверке: готово {d1} вместо {d0}.', 'The developers no longer help with testing: {d1} done instead of {d0}.'), v);
       default:
-        return fmt(bi('Вход {x} → {y} в день: готово {d0} → {d1}, в работе {w0} → {w1}. Если входит больше, чем выходит, очередь растёт без предела.', 'Arrivals {x} → {y} a day: done {d0} → {d1}, in progress {w0} → {w1}. When more comes in than goes out, the queue grows without bound.'), { x: a.arrivals as number, y: b.arrivals as number, ...v });
+        return fmtn(b('Новых задач каждое утро теперь {y} вместо {x}. Готово {d1} вместо {d0}, в работе в среднем {w1} вместо {w0}. Если задач приходит больше, чем уходит, очередь растёт без предела.', 'There are now {y} new tasks every morning instead of {x}. {d1} done instead of {d0}, on average {w1} in progress instead of {w0}. When more comes in than goes out, the queue grows without bound.'), { x: a.arrivals as number, y: c.arrivals as number, ...v });
     }
   },
 });
