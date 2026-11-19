@@ -2,10 +2,17 @@
 // instructions of a Python service; "what changed" recomputes which steps
 // come from the cache, the order switch moves `COPY . .` above `pip install`,
 // and breaks remove .dockerignore or delete files in a separate RUN.
+//
+// Reading order: at the start only the build context and the empty cache are
+// on the diagram. Each instruction appears when the builder reaches it, so the
+// image grows from FROM at the bottom up to CMD; the instruction says in a
+// callout whether its key matched and the layer came from the cache or why it
+// is rebuilt. The finished image appears last.
 
 import { defineModel } from '../../../core/define';
 import { bi, fmt, t, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
+import { fmtb, startWith } from './util';
 
 type P = { changed: string; order: string; noCache: boolean };
 
@@ -39,47 +46,134 @@ export function firstMiss(ins: Ins[], changed: string, noCache: boolean): number
 }
 
 const NODE: Record<string, string> = { from: 'n-from', workdir: 'n-workdir', copyreq: 'n-req', pip: 'n-pip', copycode: 'n-code', cmd: 'n-cmd' };
+const ALL = ['n-from', 'n-workdir', 'n-req', 'n-pip', 'n-code', 'n-cmd', 'n-ctx', 'n-cache', 'n-image', 'e-ctx', 'e-req', 'e-key', 'e-out'];
+const DF = bi('Ваш Dockerfile.', 'Your Dockerfile.');
 
 export const buildModel = defineModel<P>({
   id: 'containers.build-cache',
   block: 'containers',
-  title: bi('docker build: слой за слоем, с кэшем', 'docker build: layer by layer, with the cache'),
-  summary: bi('Что пересоберётся после правки и почему вторая сборка быстрее первой. Ключ шага — родитель, текст инструкции и содержимое копируемых файлов.', 'What rebuilds after an edit and why the second build is faster than the first. A step’s key is its parent, the instruction text and the content of the copied files.'),
+  title: bi('Как docker build собирает образ и пользуется кэшем', 'docker build: layer by layer, with the cache'),
+  summary: bi(
+    'Сборка небольшого сервиса на Python по Dockerfile из шести инструкций. Схема показывает, какие шаги после вашей правки сборщик возьмёт из кэша, а какие выполнит заново, и почему вторая сборка обычно быстрее первой. Ключ каждого шага складывается из ключа предыдущего шага, текста инструкции и содержимого копируемых файлов.',
+    'A build of a small Python service from a six-instruction Dockerfile. The diagram shows which steps the builder takes from the cache after your edit and which it reruns, and why the second build is usually faster than the first. A step’s key is made of the previous step’s key, the instruction text and the content of the copied files.',
+  ),
+  intro: bi(
+    'Сейчас на схеме только каталог с файлами проекта и пустой пока кэш сборщика. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд»: инструкции Dockerfile появятся снизу вверх в том порядке, в каком их выполняет сборщик. Облачко у инструкции говорит, совпал ли её ключ с прошлой сборкой. Зелёная рамка означает, что слой взят из кэша, жёлтая — что с этого шага начинается пересборка.\n\nПосле первого прохода выберите в «Параметрах», какой файл вы поменяли, и переставьте инструкции, а потом следите за временем сборки под схемой.',
+    'Now the diagram shows only the project directory and the builder’s cache, still empty. Press “Start: step forward”, then go on with “Step forward”: the Dockerfile instructions appear from the bottom up in the order the builder runs them. The callout at an instruction says whether its key matched the last build. A green outline means the layer came from the cache, a yellow one that the rebuild starts at this step.\n\nAfter the first pass choose in “Parameters” which file you changed and reorder the instructions, and watch the build time under the diagram.',
+  ),
+  legend: [
+    { mark: 'active', text: bi('инструкция, которую сборщик выполняет сейчас', 'the instruction the builder runs now') },
+    { mark: 'say', text: bi('что сборщик решил: взять из кэша или выполнить', 'what the builder decided: cache or run') },
+    { mark: 'token', text: bi('что передаётся: файлы, ключ шага, слои', 'what is passed: files, the step key, layers') },
+    { mark: 'icon:folder', text: bi('контекст сборки, каталог проекта', 'the build context, the project directory') },
+    { mark: 'icon:disk', text: bi('инструкция, которая создаёт слой', 'an instruction that makes a layer') },
+    { mark: 'icon:file', text: bi('инструкция, которая меняет только настройки образа', 'an instruction that changes only the config') },
+    { mark: 'icon:database', text: bi('кэш сборки', 'the build cache') },
+    { mark: 'ok', text: bi('слой взят из кэша', 'the layer came from the cache') },
+    { mark: 'warn', text: bi('первый шаг с новым ключом: отсюда пересборка', 'the first step with a new key: the rebuild starts here') },
+  ],
+  stopLabel: bi('Сборка с изъяном', 'A flawed build'),
   concepts: ['docker.dockerfile', 'docker.build-cache', 'docker.layer'],
   diagram: {
     width: 960,
-    height: 500,
+    height: 520,
     nodes: [
-      { id: 'n-from', label: 'FROM python:3.13-slim', sub: '120 MB', family: 'store', x: 24, y: 424, w: 400, h: 52, card: { what: bi('Базовые слои целиком: их кэш-ключ — ID базового образа.', 'The base layers as a whole: their cache key is the base image ID.'), who: bi('Чужой Dockerfile (Python).', 'Someone else’s Dockerfile (Python).'), doc: { page: 'web/docs.docker.com/reference/dockerfile', anchor: 'from' } } },
-      { id: 'n-workdir', label: 'WORKDIR /app', sub: 'config', family: 'obj', shape: 'doc', x: 24, y: 352, w: 400, h: 52, card: { what: bi('Слоя нет: меняется строка WorkingDir в config образа.', 'No layer: the WorkingDir line in the image config changes.'), who: bi('Ваш Dockerfile.', 'Your Dockerfile.') } },
-      { id: 'n-req', label: 'COPY requirements.txt .', sub: '0.1 kB', family: 'store', x: 24, y: 280, w: 400, h: 52, card: { what: bi('Слой с одним файлом. В ключ входит sha256 его содержимого: файл не изменился — шаг из кэша.', 'A layer with one file. The key includes the sha256 of its content: if the file did not change, the step comes from the cache.'), who: bi('Ваш Dockerfile.', 'Your Dockerfile.') } },
-      { id: 'n-pip', label: 'RUN pip install -r requirements.txt', sub: '48 MB · 21 s', family: 'ci-build', x: 24, y: 208, w: 400, h: 52, card: { what: bi('Самый долгий шаг. Его ключ — родитель и текст команды: пока выше ничего не поменялось, он берётся из кэша, даже если код приложения другой.', 'The longest step. Its key is the parent and the command text: as long as nothing above changed, it comes from the cache, even if the application code is different.'), who: bi('Ваш Dockerfile.', 'Your Dockerfile.') } },
-      { id: 'n-code', label: 'COPY . .', sub: '0.1 MB', family: 'store', x: 24, y: 136, w: 400, h: 52, card: { what: bi('Весь контекст сборки, кроме того, что перечислено в .dockerignore. Любая правка любого файла меняет ключ этого шага.', 'The whole build context except what .dockerignore lists. Any edit of any file changes this step’s key.'), who: bi('Ваш Dockerfile.', 'Your Dockerfile.'), see: 'cat .dockerignore' } },
-      { id: 'n-cmd', label: 'CMD ["python", "main.py"]', sub: 'config', family: 'obj', shape: 'doc', x: 24, y: 64, w: 400, h: 52, card: { what: bi('Слоя нет: это строка Cmd в config.', 'No layer: it is the Cmd line in the config.'), who: bi('Ваш Dockerfile.', 'Your Dockerfile.') } },
-      { id: 'n-ctx', label: bi('контекст сборки', 'build context'), sub: 'main.py · requirements.txt · README.md', family: 'user', x: 560, y: 136, w: 376, h: 64, card: { what: bi('Каталог, который клиент отправляет сборщику. `.dockerignore` вычёркивает из него лишнее: .git, тестовые данные, секреты.', 'The directory the client sends to the builder. `.dockerignore` strikes out what is not needed: .git, test data, secrets.'), who: bi('Последний аргумент `docker build` (обычно точка).', 'The last argument of `docker build` (usually a dot).') } },
-      { id: 'n-cache', label: bi('кэш сборки', 'build cache'), sub: t(bi('ключ → слой', 'key → layer')), family: 'kernel', shape: 'buffer', x: 560, y: 280, w: 376, h: 72, card: { what: bi('Таблица «ключ шага → готовый слой». Ключ = sha256(ключ родителя + текст инструкции + хеш копируемых файлов). С первой изменившейся инструкции и ниже ключи новые.', 'A table “step key → finished layer”. Key = sha256(parent key + instruction text + hash of copied files). From the first changed instruction down, the keys are new.'), who: bi('BuildKit, сборщик Docker.', 'BuildKit, Docker’s builder.'), see: 'docker builder du', doc: { page: 'web/docs.docker.com/build/cache', anchor: 'how-the-cache-works' } } },
-      { id: 'n-image', label: bi('образ', 'image'), sub: 'app:1.0', family: 'obj', x: 560, y: 424, w: 376, h: 52, card: { what: bi('Итог: стопка слоёв и config.', 'The result: a stack of layers and a config.'), who: bi('`docker build -t app:1.0 .`', '`docker build -t app:1.0 .`') } },
+      { id: 'n-from', label: 'FROM python:3.13-slim', icon: 'disk', sub: '120 MB', family: 'store', x: 24, y: 440, w: 400, h: 52, card: { what: bi('Базовые слои образа Python целиком. Их ключ в кэше — ID базового образа.', 'The base layers as a whole: their cache key is the base image ID.'), who: bi('Слои собраны чужим Dockerfile, который написали авторы образа python.', 'Someone else’s Dockerfile (Python).'), doc: { page: 'web/docs.docker.com/reference/dockerfile', anchor: 'from' } } },
+      { id: 'n-workdir', label: 'WORKDIR /app', icon: 'file', sub: 'config', family: 'obj', shape: 'doc', x: 24, y: 368, w: 400, h: 52, card: { what: bi('Эта инструкция не создаёт слоя: она меняет строку WorkingDir в настройках образа.', 'No layer: the WorkingDir line in the image config changes.'), who: DF } },
+      { id: 'n-req', label: 'COPY requirements.txt .', icon: 'disk', sub: '0.1 kB', family: 'store', x: 24, y: 296, w: 400, h: 52, card: { what: bi('Слой с одним файлом. В ключ шага входит отпечаток sha256 содержимого этого файла, поэтому, если файл не менялся, шаг берётся из кэша.', 'A layer with one file. The key includes the sha256 of its content: if the file did not change, the step comes from the cache.'), who: DF } },
+      { id: 'n-pip', label: 'RUN pip install -r requirements.txt', icon: 'disk', sub: '48 MB · 21 s', family: 'ci-build', x: 24, y: 224, w: 400, h: 52, card: { what: bi('Самый долгий шаг сборки. Его ключ складывается из ключа предыдущего шага и текста команды, поэтому, пока выше ничего не поменялось, шаг берётся из кэша, даже если код приложения другой.', 'The longest step. Its key is the parent and the command text: as long as nothing above changed, it comes from the cache, even if the application code is different.'), who: DF } },
+      { id: 'n-code', label: 'COPY . .', icon: 'disk', sub: '0.1 MB', family: 'store', x: 24, y: 152, w: 400, h: 52, card: { what: bi('Инструкция копирует весь контекст сборки, кроме того, что перечислено в .dockerignore. Любая правка любого скопированного файла меняет ключ этого шага.', 'The whole build context except what .dockerignore lists. Any edit of any file changes this step’s key.'), who: DF, see: 'cat .dockerignore' } },
+      { id: 'n-cmd', label: 'CMD ["python", "main.py"]', icon: 'file', sub: 'config', family: 'obj', shape: 'doc', x: 24, y: 80, w: 400, h: 52, card: { what: bi('Эта инструкция тоже не создаёт слоя: она записывает строку Cmd в настройки образа.', 'No layer: it is the Cmd line in the config.'), who: DF } },
+      { id: 'n-ctx', label: bi('Контекст сборки', 'Build context'), icon: 'folder', sub: 'main.py · requirements.txt · README.md', family: 'user', x: 560, y: 152, w: 376, h: 64, card: { what: bi('Каталог, который клиент отправляет сборщику. Файл `.dockerignore` вычёркивает из него лишнее: каталог .git, тестовые данные, секреты.', 'The directory the client sends to the builder. `.dockerignore` strikes out what is not needed: .git, test data, secrets.'), who: bi('Это последний аргумент `docker build`, обычно точка.', 'The last argument of `docker build` (usually a dot).') } },
+      { id: 'n-cache', label: bi('Кэш сборки', 'Build cache'), icon: 'database', sub: t(bi('ключ → слой', 'key → layer')), family: 'kernel', shape: 'buffer', x: 560, y: 296, w: 376, h: 72, card: { what: bi('Таблица, где каждому ключу шага соответствует готовый слой. Ключ — это sha256 от ключа родителя, текста инструкции и отпечатка копируемых файлов, поэтому начиная с первой изменившейся инструкции все ключи ниже по Dockerfile получаются новыми.', 'A table “step key → finished layer”. Key = sha256(parent key + instruction text + hash of copied files). From the first changed instruction down, the keys are new.'), who: bi('Таблицу ведёт BuildKit, сборщик Docker.', 'BuildKit, Docker’s builder.'), see: 'docker builder du', doc: { page: 'web/docs.docker.com/build/cache', anchor: 'how-the-cache-works' } } },
+      { id: 'n-image', label: bi('Образ', 'Image'), icon: 'container', sub: 'app:1.0', family: 'obj', x: 560, y: 440, w: 376, h: 52, card: { what: bi('Результат сборки: стопка слоёв и документ настроек.', 'The result: a stack of layers and a config.'), who: bi('Его создаёт команда `docker build -t app:1.0 .`.', '`docker build -t app:1.0 .`') } },
     ],
     edges: [
-      { id: 'e-ctx', from: 'n-ctx', to: 'n-code', label: bi('файлы контекста', 'context files'), card: { what: bi('COPY берёт файлы из контекста; их хеш входит в ключ шага.', 'COPY takes files from the context; their hash goes into the step key.'), who: bi('Сборщик.', 'The builder.') } },
-      { id: 'e-req', from: 'n-ctx', to: 'n-req', via: [[520, 168], [520, 306]], label: 'requirements.txt', labelAt: 0.6, card: { what: bi('Отдельный COPY одного файла: зависимости меняются редко, код — часто.', 'A separate COPY of one file: dependencies change rarely, code often.'), who: bi('Сборщик.', 'The builder.') } },
-      { id: 'e-key', from: 'n-pip', to: 'n-cache', via: [[480, 234], [480, 316]], label: bi('ключ шага', 'step key'), labelAt: 0.5, card: { what: bi('Сборщик ищет слой по ключу. Нашёл — `CACHED`, не нашёл — выполняет шаг.', 'The builder looks up a layer by key. Found — `CACHED`; not found — it runs the step.'), who: bi('BuildKit.', 'BuildKit.') } },
-      { id: 'e-out', from: 'n-cache', to: 'n-image', label: bi('слои', 'layers'), card: { what: bi('Слои из кэша и новые складываются в образ.', 'Cached and new layers are assembled into the image.'), who: bi('BuildKit.', 'BuildKit.') } },
+      { id: 'e-ctx', from: 'n-ctx', to: 'n-code', label: bi('файлы проекта', 'context files'), card: { what: bi('COPY берёт файлы из контекста, и их отпечаток входит в ключ шага.', 'COPY takes files from the context; their hash goes into the step key.'), who: bi('Файлы проекта копирует в образ сборщик BuildKit.', 'The builder.') } },
+      { id: 'e-req', from: 'n-ctx', to: 'n-req', via: [[520, 184], [520, 322]], label: 'requirements.txt', labelAt: 0.6, card: { what: bi('Файл requirements.txt копируется отдельной инструкцией COPY, потому что список зависимостей меняется редко, а код часто.', 'A separate COPY of one file: dependencies change rarely, code often.'), who: bi('Файл requirements.txt копирует в образ сборщик BuildKit.', 'The builder.') } },
+      { id: 'e-key', from: 'n-pip', to: 'n-cache', via: [[480, 250], [480, 332]], label: bi('ключ шага', 'step key'), labelAt: 0.5, card: { what: bi('Сборщик ищет слой по ключу. Если находит, пишет `CACHED`, а если нет, выполняет шаг.', 'The builder looks up a layer by key. Found — `CACHED`; not found — it runs the step.'), who: bi('Слой по ключу ищет в своём кэше сборщик BuildKit.', 'BuildKit.') } },
+      { id: 'e-out', from: 'n-cache', to: 'n-image', label: bi('слои', 'layers'), card: { what: bi('Слои из кэша и новые слои складываются в образ.', 'Cached and new layers are assembled into the image.'), who: bi('Слои в готовый образ складывает сборщик BuildKit.', 'BuildKit.') } },
     ],
   },
   params: [
-    { id: 'changed', label: bi('Что изменилось с прошлой сборки', 'What changed since the last build'), kind: 'choice', default: 'code', options: [{ id: 'none', label: bi('ничего', 'nothing') }, { id: 'code', label: bi('main.py', 'main.py') }, { id: 'requirements', label: bi('requirements.txt', 'requirements.txt') }, { id: 'readme', label: bi('README.md (в .dockerignore)', 'README.md (in .dockerignore)') }], near: 'n-ctx', predict: { prompt: bi('Поменяли только main.py. Будет ли заново выполняться pip install?', 'Only main.py changed. Will pip install run again?'), options: [{ id: 'cached', text: bi('Нет: он выше COPY . . и его ключ не изменился', 'No: it is above COPY . . and its key did not change') }, { id: 'rerun', text: bi('Да: изменился контекст сборки', 'Yes: the build context changed') }], resolve: (_p, n) => (n.some((s) => s.id === 'pip' && s.states?.['n-pip'] === 'ok') ? 'cached' : 'rerun') } },
-    { id: 'order', label: bi('Порядок инструкций', 'Order of instructions'), kind: 'choice', default: 'good', options: [{ id: 'good', label: bi('сначала зависимости, потом код', 'dependencies first, then code') }, { id: 'bad', label: bi('COPY . . перед pip install', 'COPY . . before pip install') }], near: 'n-pip', predict: { prompt: bi('COPY . . поставили выше pip install. Что будет после правки main.py?', 'COPY . . moved above pip install. What happens after editing main.py?'), options: [{ id: 'rerun', text: bi('pip install будет выполняться при каждой правке кода', 'pip install runs again on every code edit') }, { id: 'same', text: bi('Ничего не изменится', 'Nothing changes') }], resolve: (_p, n) => ((n[n.length - 1]?.metrics?.seconds ?? 0) > 10 ? 'rerun' : 'same') } },
-    { id: 'noCache', label: bi('--no-cache', '--no-cache'), kind: 'toggle', default: false, near: 'n-cache' },
+    {
+      id: 'changed',
+      label: bi('Какой файл вы поменяли после прошлой сборки', 'What changed since the last build'),
+      kind: 'choice',
+      default: 'code',
+      options: [
+        { id: 'none', label: bi('ничего не меняли', 'nothing') },
+        { id: 'code', label: bi('код main.py', 'main.py') },
+        { id: 'requirements', label: bi('список зависимостей requirements.txt', 'requirements.txt') },
+        { id: 'readme', label: bi('README.md, который вычеркнут в .dockerignore', 'README.md (in .dockerignore)') },
+      ],
+      near: 'n-ctx',
+      group: bi('Что изменилось в проекте', 'What changed in the project'),
+      predict: {
+        prompt: bi('Инструкции стоят в порядке «сначала зависимости, потом код», и вы поменяли только main.py. Выполнится ли pip install заново?', 'Dependencies come first, then the code, and only main.py changed. Will pip install run again?'),
+        options: [
+          { id: 'cached', text: bi('Нет: pip install стоит выше COPY . ., и его ключ не изменился', 'No: it is above COPY . . and its key did not change') },
+          { id: 'rerun', text: bi('Да: контекст сборки изменился, и всё пересобирается', 'Yes: the build context changed') },
+        ],
+        resolve: (_p, n) => (n.some((s) => s.id === 'pip' && s.states?.['n-pip'] === 'ok') ? 'cached' : 'rerun'),
+      },
+    },
+    {
+      id: 'order',
+      label: bi('Порядок инструкций в Dockerfile', 'Order of instructions'),
+      kind: 'choice',
+      default: 'good',
+      options: [
+        { id: 'good', label: bi('сначала зависимости, потом код', 'dependencies first, then code') },
+        { id: 'bad', label: bi('COPY . . перед pip install', 'COPY . . before pip install') },
+      ],
+      near: 'n-pip',
+      group: bi('Как написан Dockerfile', 'How the Dockerfile is written'),
+      predict: {
+        prompt: bi('Вы поставили COPY . . выше pip install и поменяли main.py. Что будет со следующей сборкой?', 'COPY . . moved above pip install. What happens after editing main.py?'),
+        options: [
+          { id: 'rerun', text: bi('pip install будет выполняться заново после каждой правки кода', 'pip install runs again on every code edit') },
+          { id: 'same', text: bi('Ничего не изменится, pip install возьмётся из кэша', 'Nothing changes') },
+        ],
+        resolve: (_p, n) => ((n[n.length - 1]?.metrics?.seconds ?? 0) > 10 ? 'rerun' : 'same'),
+      },
+    },
+    { id: 'noCache', label: bi('Собрать с флагом --no-cache', '--no-cache'), kind: 'toggle', default: false, near: 'n-cache', group: bi('Как запускают сборку', 'How the build is run') },
   ],
   breaks: [
-    { id: 'no-ignore', label: bi('Удалить .dockerignore', 'Delete .dockerignore'), remove: ['e-ctx'], boundary: 'storage', predict: { prompt: bi('Удалили .dockerignore (в каталоге .git и 200 МБ testdata/). Что изменится?', 'Deleted .dockerignore (the directory has .git and 200 MB of testdata/). What changes?'), options: [{ id: 'big', text: bi('Контекст вырастет на 200 МБ, а COPY . . будет пересобираться почти всегда', 'The context grows by 200 MB and COPY . . rebuilds almost every time') }, { id: 'none', text: bi('Ничего: Docker сам пропустит лишнее', 'Nothing: Docker skips the extra files itself') }], resolve: () => 'big' } },
-    { id: 'rm-later', label: bi('RUN rm -rf /root/.cache отдельной строкой', 'RUN rm -rf /root/.cache on a separate line'), remove: ['e-out'], boundary: 'storage', predict: { prompt: bi('Кэш pip удалили следующей инструкцией RUN rm. Станет ли образ меньше?', 'The pip cache is deleted by the next RUN rm instruction. Will the image get smaller?'), options: [{ id: 'no', text: bi('Нет: файлы остались в предыдущем слое, сверху только пометка об удалении', 'No: the files stay in the previous layer; on top there is only a deletion mark') }, { id: 'yes', text: bi('Да, на размер кэша', 'Yes, by the size of the cache') }], resolve: () => 'no' } },
+    {
+      id: 'no-ignore',
+      label: bi('Файл .dockerignore удалили', 'Delete .dockerignore'),
+      remove: ['e-ctx'],
+      boundary: 'storage',
+      predict: {
+        prompt: bi('Файл .dockerignore удалили, а в каталоге проекта лежат .git и 200 МБ тестовых данных в testdata/. Что изменится?', 'Deleted .dockerignore (the directory has .git and 200 MB of testdata/). What changes?'),
+        options: [
+          { id: 'big', text: bi('Контекст вырастет на 200 МБ, а COPY . . будет пересобираться почти при каждой сборке', 'The context grows by 200 MB and COPY . . rebuilds almost every time') },
+          { id: 'none', text: bi('Ничего: Docker сам пропустит ненужные файлы', 'Nothing: Docker skips the extra files itself') },
+        ],
+        resolve: () => 'big',
+      },
+    },
+    {
+      id: 'rm-later',
+      label: bi('Кэш pip удаляют отдельной инструкцией RUN rm -rf /root/.cache', 'RUN rm -rf /root/.cache on a separate line'),
+      remove: ['e-out'],
+      boundary: 'storage',
+      predict: {
+        prompt: bi('Кэш pip удаляют следующей инструкцией, `RUN rm -rf /root/.cache`. Станет ли образ меньше?', 'The pip cache is deleted by the next RUN rm instruction. Will the image get smaller?'),
+        options: [
+          { id: 'no', text: bi('Нет: файлы остались в предыдущем слое, а сверху легли только пометки об удалении', 'No: the files stay in the previous layer; on top there is only a deletion mark') },
+          { id: 'yes', text: bi('Да, на размер кэша pip', 'Yes, by the size of the cache') },
+        ],
+        resolve: () => 'no',
+      },
+    },
   ],
   metrics: [
     { id: 'seconds', label: bi('время сборки', 'build time'), unit: 's' },
-    { id: 'cached', label: bi('шагов из кэша', 'steps from cache') },
-    { id: 'context', label: bi('контекст', 'context'), unit: 'MB' },
+    { id: 'cached', label: bi('шагов взято из кэша', 'steps from cache') },
+    { id: 'context', label: bi('размер контекста', 'context'), unit: 'MB' },
     { id: 'size', label: bi('размер образа', 'image size'), unit: 'MB' },
   ],
   run(p, broken): Step[] {
@@ -93,49 +187,113 @@ export const buildModel = defineModel<P>({
     let cached = 0;
     let size = 0;
     const context = ignore ? 0.1 : 200;
+    const m = () => ({ seconds: Math.round(seconds * 10) / 10, cached, context, size: Math.round(size) });
+    steps.push({
+      id: 'context',
+      label: bi('контекст', 'context'),
+      caption: ignore
+        ? bi('Вы запускаете `docker build -t app:1.0 .`. Клиент отправляет сборщику каталог проекта, так называемый контекст сборки, и вычёркивает из него всё, что перечислено в `.dockerignore`. В итоге сборщику уходит 0,1 МБ.', 'You run `docker build -t app:1.0 .`. The client sends the project directory, the build context, to the builder, striking out what `.dockerignore` lists: 0.1 MB.')
+        : bi('Вы запускаете `docker build -t app:1.0 .`, но файла `.dockerignore` нет, поэтому сборщику уходит весь каталог: и .git, и 200 МБ тестовых данных.', 'You run `docker build -t app:1.0 .`, but there is no `.dockerignore`, so the whole directory travels to the builder: .git and 200 MB of test data.'),
+      focus: ['n-ctx'],
+      say: { 'n-ctx': fmtb(bi('Клиент отправляет сборщику контекст сборки, {c} МБ.', 'The client sends the build context to the builder, {c} MB.'), { c: context }) },
+      states: { ...startWith(ALL, 'n-ctx', 'n-cache'), ...(ignore ? {} : { 'n-ctx': 'warn' }) },
+      values: { 'n-ctx': ignore ? 'main.py · requirements.txt · README.md' : '.git · testdata/ · main.py · …' },
+      fill: { 'n-cache': 0 },
+      metrics: m(),
+    });
     ins.forEach((x, i) => {
       const hit = miss < 0 || i < miss;
       if (hit) cached++;
       else seconds += x.ms / 1000;
       size += x.mb;
       const node = NODE[x.id];
+      const edge = x.id === 'pip' ? 'e-key' : x.id === 'copycode' ? 'e-ctx' : x.id === 'copyreq' ? 'e-req' : undefined;
+      const say = hit
+        ? x.layer
+          ? bi('Ключ шага совпал с прошлой сборкой, и слой берётся из кэша.', 'The step key matches the last build: the layer comes from the cache.')
+          : bi('Слоя нет: меняется только строка в настройках образа.', 'No layer: only a line of the image config changes.')
+        : i === miss
+          ? p.noCache
+            ? bi('Сборка запущена с --no-cache, поэтому кэш не используется и шаг выполняется.', 'The build runs with --no-cache, so the cache is not used and the step runs.')
+            : fmtb(bi('Изменился {w}, ключ шага новый, и шаг выполняется заново.', '{w} changed, the key is new, and the step runs again.'), { w: changedName(changed, p.noCache) })
+          : bi('Ключ предыдущего шага изменился, поэтому и этот шаг выполняется заново.', 'The previous step’s key changed, so this step runs again too.');
       steps.push({
         id: x.id,
         label: x.text.split(' ')[0],
         caption: hit
           ? x.layer
-            ? fmt(bi('`{t}` — CACHED: ключ этого шага совпал с прошлой сборкой, слой взят из кэша.', '`{t}` — CACHED: this step’s key matches the last build; the layer comes from the cache.'), { t: x.text })
-            : fmt(bi('`{t}` — меняет только config, слоя нет.', '`{t}` — changes only the config, no layer.'), { t: x.text })
+            ? fmt(bi('Инструкция `{t}` помечена CACHED: её ключ совпал с ключом прошлой сборки, и сборщик взял готовый слой из кэша.', '`{t}` — CACHED: this step’s key matches the last build; the layer comes from the cache.'), { t: x.text })
+            : fmt(bi('Инструкция `{t}` меняет только настройки образа, и слоя у неё нет.', '`{t}` — changes only the config, no layer.'), { t: x.text })
+          : i === miss && p.noCache
+            ? fmt(bi('Сборка запущена с флагом --no-cache, поэтому сборщик не заглядывает в кэш и выполняет инструкцию `{t}` и все следующие заново.', '`{t}` — --no-cache: the cache is not consulted, everything from here down runs again.'), { t: x.text })
           : i === miss
-            ? fmt(bi('`{t}` — первый шаг с новым ключом: изменилось {what}. Отсюда и ниже всё пересобирается.', '`{t}` — the first step with a new key: {what} changed. From here down everything rebuilds.'), { t: x.text, what: changedName(changed, p.noCache) })
-            : fmt(bi('`{t}` — пересобирается, потому что изменился родитель: ключ включает ключ шага выше.', '`{t}` — rebuilds because its parent changed: the key includes the key of the step above.'), { t: x.text }),
-        focus: [node, ...(x.id === 'pip' ? ['e-key', 'n-cache'] : []), ...(x.id === 'copycode' ? ['e-ctx'] : []), ...(x.id === 'copyreq' ? ['e-req'] : [])],
+            ? fmtb(bi('Инструкция `{t}` — первый шаг с новым ключом, потому что изменился {what}. С этого шага и до конца Dockerfile всё пересобирается.', '`{t}` — the first step with a new key: {what} changed. From here down everything rebuilds.'), { t: x.text, what: changedName(changed, p.noCache) })
+            : fmt(bi('Инструкция `{t}` пересобирается, хотя сама не менялась: в её ключ входит ключ шага выше, а он стал новым.', '`{t}` — rebuilds because its parent changed: the key includes the key of the step above.'), { t: x.text }),
+        focus: [node, ...(edge ? [edge] : [])],
+        reveal: [node, ...(edge ? [edge] : [])],
+        say: { [node]: say },
         states: { [node]: hit ? 'ok' : i === miss ? 'warn' : 'on' },
         values: { [node]: hit ? (x.layer ? 'CACHED' : 'config') : `${(x.ms / 1000).toFixed(1)} s` },
-        tokens: x.id === 'pip' ? [{ edge: 'e-key' }] : x.id === 'copycode' ? [{ edge: 'e-ctx' }] : [],
+        tokens: x.id === 'pip' ? [{ edge: 'e-key', label: hit ? 'CACHED' : 'MISS' }] : x.id === 'copycode' ? [{ edge: 'e-ctx', label: ignore ? 'main.py …' : '.git testdata/ …' }] : x.id === 'copyreq' ? [{ edge: 'e-req', label: 'requirements.txt' }] : [],
         fill: { 'n-cache': cached / ins.length },
-        metrics: { seconds: Math.round(seconds * 10) / 10, cached, context, size: Math.round(size) },
+        metrics: m(),
       });
     });
     if (broken.has('no-ignore')) {
-      steps.push({ id: 'context', label: bi('контекст', 'context'), caption: bi('Без .dockerignore сборщику уезжает весь каталог: .git и 200 МБ testdata/. Каталог .git меняется с каждым коммитом — ключ `COPY . .` почти всегда новый.', 'Without .dockerignore the whole directory travels to the builder: .git and 200 MB of testdata/. .git changes with every commit — the key of `COPY . .` is almost always new.'), focus: ['n-ctx', 'e-ctx', 'n-code'], states: { 'n-ctx': 'warn', 'n-code': 'warn' }, metrics: { seconds: Math.round(seconds * 10) / 10, cached, context, size: Math.round(size) }, broken: { at: 'e-ctx', message: ' => [internal] load build context                      2.4s\n => => transferring context: 200.47MB                   2.4s', caption: bi('лишнее в контексте — это и медленная сборка, и промах кэша, и риск утечки (.env, ключи).', 'extra files in the context mean a slow build, cache misses and a leak risk (.env, keys).') } });
+      steps.push({
+        id: 'ctx-broken',
+        label: bi('лишнее', 'extra'),
+        caption: bi('Без `.dockerignore` сборщику уходит весь каталог, включая .git и 200 МБ testdata/. Каталог .git меняется с каждым коммитом, поэтому ключ `COPY . .` почти всегда получается новым, и вместе с ним пересобирается всё, что ниже.', 'Without .dockerignore the whole directory travels to the builder: .git and 200 MB of testdata/. .git changes with every commit — the key of `COPY . .` is almost always new.'),
+        focus: ['n-ctx', 'e-ctx'],
+        say: { 'n-ctx': bi('В контексте лежат .git и тестовые данные, и каждый коммит меняет ключ COPY . .', 'The context holds .git and test data, and every commit changes the key of COPY . .') },
+        states: { 'n-ctx': 'warn', 'n-code': 'warn' },
+        metrics: m(),
+        broken: { at: 'e-ctx', message: ' => [internal] load build context                      2.4s\n => => transferring context: 200.47MB                   2.4s', caption: bi('в контексте сборки. Лишние файлы замедляют сборку, сбивают кэш и рискуют унести в образ секреты вроде .env и ключей.', 'extra files in the context mean a slow build, cache misses and a leak risk (.env, keys).') },
+      });
     }
     if (broken.has('rm-later')) {
-      steps.push({ id: 'rm', label: 'RUN rm', caption: bi('`RUN rm -rf /root/.cache` создаёт новый слой с пометками об удалении. Предыдущий слой с кэшем никуда не делся — образ не уменьшился.', '`RUN rm -rf /root/.cache` makes a new layer of deletion marks. The previous layer with the cache is still there — the image did not shrink.'), focus: ['n-pip', 'n-image'], states: { 'n-image': 'warn' }, metrics: { seconds: Math.round((seconds + 0.3) * 10) / 10, cached, context, size: Math.round(size) }, broken: { at: 'e-out', message: 'IMAGE          CREATED BY                                SIZE\n<missing>      RUN /bin/sh -c rm -rf /root/.cache        0B\n<missing>      RUN /bin/sh -c pip install -r require…   48MB', caption: bi('удалять нужно в той же инструкции RUN, где файлы появились, или брать multi-stage.', 'delete in the same RUN that created the files, or use a multi-stage build.') } });
+      seconds += 0.3;
+      steps.push({
+        id: 'rm',
+        label: 'RUN rm',
+        caption: bi('Инструкция `RUN rm -rf /root/.cache` создаёт новый слой, в котором лежат только пометки об удалении. Предыдущий слой с кэшем pip остался в образе целиком, поэтому образ не уменьшился.', '`RUN rm -rf /root/.cache` makes a new layer of deletion marks. The previous layer with the cache is still there — the image did not shrink.'),
+        focus: ['n-image', 'e-out'],
+        reveal: ['n-image', 'e-out'],
+        say: { 'n-image': bi('В образе остался слой с кэшем pip, а сверху лежит слой с пометками об удалении.', 'The image keeps the layer with the pip cache plus a layer of deletion marks.') },
+        states: { 'n-image': 'warn' },
+        metrics: m(),
+        broken: { at: 'e-out', message: 'IMAGE          CREATED BY                                SIZE\n<missing>      RUN /bin/sh -c rm -rf /root/.cache        0B\n<missing>      RUN /bin/sh -c pip install -r require…   48MB', caption: bi('на сборке слоёв. Удалять файлы нужно в той же инструкции RUN, где они появились, или пользоваться многоэтапной сборкой.', 'delete in the same RUN that created the files, or use a multi-stage build.') },
+      });
     } else {
-      steps.push({ id: 'image', label: bi('образ', 'image'), caption: fmt(bi('Образ собран за {s} с: {c} шагов из кэша. Размер {mb} МБ.', 'The image is built in {s} s: {c} steps from the cache. Size {mb} MB.'), { s: Math.round(seconds * 10) / 10, c: cached, mb: Math.round(size) }), focus: ['e-out', 'n-image'], tokens: [{ edge: 'e-out' }], states: { 'n-image': 'ok' }, metrics: { seconds: Math.round(seconds * 10) / 10, cached, context, size: Math.round(size) } });
+      steps.push({
+        id: 'image',
+        label: bi('образ', 'image'),
+        caption: fmt(bi('Образ собран за {s} с, и {c} шагов из шести взяты из кэша. Размер образа {mb} МБ.', 'The image is built in {s} s: {c} steps from the cache. Size {mb} MB.'), { s: Math.round(seconds * 10) / 10, c: cached, mb: Math.round(size) }),
+        focus: ['n-image', 'e-out'],
+        reveal: ['n-image', 'e-out'],
+        tokens: [{ edge: 'e-out', label: bi('6 слоёв и настройки', '6 layers and config') }],
+        say: { 'n-image': fmt(bi('Образ app:1.0 собран за {s} с.', 'The app:1.0 image is built in {s} s.'), { s: Math.round(seconds * 10) / 10 }) },
+        states: { 'n-image': 'ok' },
+        metrics: m(),
+      });
     }
     return steps;
   },
   explainDelta(_prev, next, change, _a, b): Bi {
     const m = next[next.length - 1]?.metrics ?? {};
     if (change.kind === 'break') {
-      if (!change.on) return bi('Поломка убрана.', 'The failure is removed.');
-      return change.id === 'no-ignore' ? fmt(bi('Без .dockerignore контекст — {c} МБ, и .git меняется с каждым коммитом: COPY . . почти всегда мимо кэша.', 'Without .dockerignore the context is {c} MB and .git changes with every commit: COPY . . almost always misses the cache.'), { c: m.context ?? 0 }) : bi('Отдельный RUN rm добавляет слой пометок, а не уменьшает предыдущий.', 'A separate RUN rm adds a layer of marks; it does not shrink the previous one.');
+      if (!change.on) return bi('Поломку убрали, и сборка снова идёт как обычно.', 'The failure is removed.');
+      return change.id === 'no-ignore'
+        ? fmt(bi('Без .dockerignore контекст весит {c} МБ, а .git меняется с каждым коммитом, поэтому COPY . . почти всегда проходит мимо кэша.', 'Without .dockerignore the context is {c} MB and .git changes with every commit: COPY . . almost always misses the cache.'), { c: m.context ?? 0 })
+        : bi('Отдельная инструкция RUN rm добавляет слой с пометками об удалении, а предыдущий слой не уменьшает.', 'A separate RUN rm adds a layer of marks; it does not shrink the previous one.');
     }
-    if (change.id === 'noCache') return b.noCache ? fmt(bi('--no-cache: кэш не используется, сборка {s} с.', '--no-cache: the cache is not used; the build takes {s} s.'), { s: m.seconds ?? 0 }) : bi('Кэш снова используется.', 'The cache is used again.');
-    if (change.id === 'order') return b.order === 'bad' ? fmt(bi('COPY . . выше pip install: любая правка кода сбивает ключ — сборка {s} с.', 'COPY . . above pip install: any code edit changes the key — the build takes {s} s.'), { s: m.seconds ?? 0 }) : fmt(bi('Сначала зависимости: правка кода пересобирает только последний COPY — {s} с.', 'Dependencies first: a code edit rebuilds only the last COPY — {s} s.'), { s: m.seconds ?? 0 });
-    return fmt(bi('Изменилось: {w}. Из кэша {c} шагов, сборка {s} с.', 'Changed: {w}. {c} steps from the cache, the build takes {s} s.'), { w: changedName(b.changed, false), c: m.cached ?? 0, s: m.seconds ?? 0 });
+    if (change.id === 'noCache') return b.noCache ? fmt(bi('С флагом --no-cache кэш не используется вовсе, и сборка идёт {s} с.', '--no-cache: the cache is not used; the build takes {s} s.'), { s: m.seconds ?? 0 }) : bi('Кэш снова используется.', 'The cache is used again.');
+    if (change.id === 'order')
+      return b.order === 'bad'
+        ? fmt(bi('COPY . . стоит выше pip install, поэтому любая правка кода меняет ключ, и сборка идёт {s} с.', 'COPY . . above pip install: any code edit changes the key — the build takes {s} s.'), { s: m.seconds ?? 0 })
+        : fmt(bi('Зависимости ставятся раньше кода, поэтому правка кода пересобирает только последний COPY, и сборка идёт {s} с.', 'Dependencies first: a code edit rebuilds only the last COPY — {s} s.'), { s: m.seconds ?? 0 });
+    if (b.changed === 'none') return fmt(bi('Ничего не менялось, поэтому из кэша взяты все шаги ({c}), и сборка идёт {s} с.', 'Nothing changed: {c} steps from the cache, the build takes {s} s.'), { c: m.cached ?? 0, s: m.seconds ?? 0 });
+    return fmt(bi('Изменился файл {w}. Из кэша взято шагов: {c}, сборка идёт {s} с.', 'Changed: {w}. {c} steps from the cache, the build takes {s} s.'), { w: changedName(b.changed, false), c: m.cached ?? 0, s: m.seconds ?? 0 });
   },
 });
 
