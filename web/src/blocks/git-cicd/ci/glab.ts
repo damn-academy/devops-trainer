@@ -112,7 +112,8 @@ MR SUBCOMMANDS
   glab mr list | view <id> | merge <id>
 
 VARIABLE SUBCOMMANDS
-  glab variable set <key> <value> [--masked] [--protected]
+  glab variable set <key> <value> [--masked] [--protected] [--type env_var|file]
+  glab variable set <key> --type file < <file>
   glab variable list | delete <key>
 `;
 
@@ -321,12 +322,25 @@ function variable(ctx: CmdContext, args: string[]): number {
   const sub = args[0];
   const { forge } = project(ctx);
   if (sub === 'set') {
-    const rest = args.slice(1).filter((a) => !a.startsWith('-'));
-    const [key, value] = rest;
+    const rest: string[] = [];
+    let type = 'env_var';
+    for (let i = 1; i < args.length; i++) {
+      const x = args[i];
+      if (x === '--type' || x === '-t') type = args[++i] ?? '';
+      else if (x.startsWith('--type=')) type = x.slice(7);
+      else if (!x.startsWith('-')) rest.push(x);
+    }
+    const [key] = rest;
+    // Like glab: without a value argument the value is read from standard input.
+    const value = rest[1] ?? (ctx.stdin ? ctx.stdin : undefined);
     const masked = args.includes('--masked') || args.includes('-m');
     const prot = args.includes('--protected') || args.includes('-p');
     if (!key || value === undefined) {
-      ctx.err('ERROR: usage: glab variable set <key> <value> [--masked] [--protected]\n');
+      ctx.err('ERROR: usage: glab variable set <key> <value> [--masked] [--protected] [--type env_var|file]\n');
+      return 1;
+    }
+    if (type !== 'env_var' && type !== 'file') {
+      ctx.err(`ERROR: invalid type "${type}": must be env_var or file\n`);
       return 1;
     }
     if (!/^[A-Za-z0-9_]+$/.test(key)) {
@@ -337,16 +351,17 @@ function variable(ctx: CmdContext, args: string[]): number {
       ctx.err('ERROR: 400 Bad Request: {value: [is invalid]}\n(a masked value must be at least 8 characters long and must not contain spaces)\n');
       return 1;
     }
+    const file = type === 'file';
     forge.update((s) => {
       s.variables = s.variables.filter((v) => v.key !== key);
-      s.variables.push({ key, value, masked, protected: prot });
+      s.variables.push({ key, value, masked, protected: prot, ...(file ? { file: true } : {}) });
     });
-    ctx.out(`✓ Created variable ${key} for ${forge.project}${prot ? ' (protected)' : ''}${masked ? ' (masked)' : ''}\n`);
+    ctx.out(`✓ Created variable ${key} for ${forge.project}${prot ? ' (protected)' : ''}${masked ? ' (masked)' : ''}${file ? ' (file)' : ''}\n`);
     return 0;
   }
   if (sub === 'list') {
     const vs = forge.state().variables;
-    ctx.out(`KEY\tPROTECTED\tMASKED\tVALUE\n${vs.map((v) => `${v.key}\t${v.protected}\t${v.masked}\t${v.masked ? '********' : v.value}`).join('\n')}\n`);
+    ctx.out(`KEY\tTYPE\tPROTECTED\tMASKED\tVALUE\n${vs.map((v) => `${v.key}\t${v.file ? 'file' : 'env_var'}\t${v.protected}\t${v.masked}\t${v.masked ? '********' : v.file ? '(file contents)' : v.value}`).join('\n')}\n`);
     return 0;
   }
   if (sub === 'delete') {
