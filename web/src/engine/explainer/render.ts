@@ -36,7 +36,7 @@ const L = {
   cardDoc: bi('Где написано', 'Where it is written'),
   stoppedAt: bi('Остановилось', 'Stopped'),
   howTo: bi('Как пользоваться схемой', 'How to use the diagram'),
-  start: bi('Начать: шаг вперёд', 'Start: step forward'),
+  start: bi('Начать с первого шага', 'Start from the first step'),
   legend: bi('Как читать схему', 'How to read the diagram'),
   speed: bi('Скорость', 'Speed'),
   hintClick: bi('Нажмите на любой элемент схемы — он объяснит себя.', 'Click any element of the diagram — it explains itself.'),

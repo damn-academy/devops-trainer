@@ -93,7 +93,7 @@ describe('linux labs on real machines: checks on recorded facts', () => {
     expect(pass(SSH_LAB, 'mux', facts(reach({ cfg: { exit: 0, out: 'controlmaster auto\ncontrolpath ~/.ssh/x\ncontrolpersist no\n' } })))).toBe(false);
     const listening = { listen: [{ proto: 'tcp', addr: '127.0.0.1', port: 8080, proc: 'ssh' }] };
     expect(pass(SSH_LAB, 'tunnel', facts({ ...listening, ...reach({ tunnel: { exit: 0, out: '<h1>orders admin</h1>' } }) }))).toBe(true);
-    expect(say(SSH_LAB, 'tunnel', facts({ ...listening, ...reach({ tunnel: { exit: 7, out: '' } }) }))).toContain('right side of `-L`');
+    expect(say(SSH_LAB, 'tunnel', facts({ ...listening, ...reach({ tunnel: { exit: 7, out: '' } }) }))).toContain('To the right of `-L`');
     expect(say(SSH_LAB, 'bastion', facts(reach({ bastion: { exit: 255, out: 'Host key verification failed.' } })))).toContain('host key');
   });
 
@@ -139,7 +139,7 @@ describe('linux labs on real machines: checks on recorded facts', () => {
   it('disk: free space only with the agent alive and the orders intact', () => {
     const r = (free: number, agent = true, orders = 40) => facts(reach({ free: { exit: 0, out: String(free) }, agent: { exit: agent ? 0 : 1, out: agent ? '812\n' : '' }, app: { exit: 0, out: '900\n' }, orders: { exit: 0, out: `${orders}\n` } }));
     expect(pass(DISK_LAB, 'free', r(80_000))).toBe(true);
-    expect(say(DISK_LAB, 'free', r(80_000, false))).toContain('agent is stopped');
+    expect(say(DISK_LAB, 'free', r(80_000, false))).toContain('agent was stopped');
     expect(say(DISK_LAB, 'free', r(40_000))).toContain('deleted log');
     expect(pass(DISK_LAB, 'free', r(80_000, true, 39))).toBe(false);
     const culprit = facts({ files: { '/root/culprit.txt': { exists: true, text: '812\n' } }, ...reach({ holders: { exit: 0, out: '812\n815\n' } }) });

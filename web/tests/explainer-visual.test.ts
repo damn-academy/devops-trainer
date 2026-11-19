@@ -28,7 +28,7 @@ const tiny: ProcessModel = {
   id: 't.tiny',
   title: bi('Т', 'T'),
   block: 'linux',
-  intro: bi('Нажмите «Начать: шаг вперёд».', 'Press “Start: step forward”.'),
+  intro: bi('Нажмите «Начать с первого шага».', 'Press “Start from the first step”.'),
   legend: [
     { mark: 'active', text: bi('работает', 'working') },
     { mark: 'icon:dns', text: bi('сервер DNS', 'DNS server') },
