@@ -24,7 +24,7 @@ export const switchModel = defineModel<P>({
   id: 'net.switch',
   block: 'networks',
   title: b('Коммутатор учит MAC-адреса', 'A switch learns MAC addresses'),
-  summary: b('Компьютер A отправляет кадр компьютеру B. Смотри, как заполняется таблица коммутатора и когда кадр уходит во все порты.', 'Computer A sends a frame to computer B. Watch the switch table fill up and see when a frame goes out of every port.'),
+  summary: b('Компьютер A отправляет кадр компьютеру B. Смотрите, как заполняется таблица коммутатора и когда кадр уходит во все порты.', 'Computer A sends a frame to computer B. Watch the switch table fill up and see when a frame goes out of every port.'),
   diagram: {
     width: 960,
     height: 400,

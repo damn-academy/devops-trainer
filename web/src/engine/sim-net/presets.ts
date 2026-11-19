@@ -414,6 +414,99 @@ export function proxy(o: ProxyOpts = {}): Built {
   };
 }
 
+// ── a small company: office, server room, internet (the block exam, 03 §17) ─
+
+export interface OfficeOpts {
+  /** gw forwards packets between its interfaces. */
+  forward?: boolean;
+  /** gw masquerades both subnets out of eth2. */
+  masq?: boolean;
+  /** gw forwards 203.0.113.10:443 to app; a number sets the (wrong) target port. */
+  dnat?: boolean | number;
+  /** gw runs the reference firewall: DROP policies, only the needed traffic allowed. */
+  firewall?: boolean;
+  /** Every part of the above at once. */
+  configured?: boolean;
+  /** One planted fault on a configured network. */
+  fault?: 'no-est' | 'dnat-port' | 'no-route' | 'resolv';
+}
+
+export const OFFICE_FIREWALL = {
+  INPUT: [
+    rule('ACCEPT', { inIf: 'lo' }),
+    rule('ACCEPT', { state: ['ESTABLISHED', 'RELATED'] }),
+    rule('ACCEPT', { proto: 'tcp', src: '10.20.0.0/24', dport: 22 }),
+  ],
+  FORWARD: [
+    rule('ACCEPT', { state: ['ESTABLISHED', 'RELATED'] }),
+    rule('ACCEPT', { inIf: 'eth0', outIf: 'eth2' }),
+    rule('ACCEPT', { inIf: 'eth1', outIf: 'eth2' }),
+    rule('ACCEPT', { proto: 'tcp', inIf: 'eth0', outIf: 'eth1', dport: 443 }),
+    rule('ACCEPT', { proto: 'udp', inIf: 'eth0', outIf: 'eth1', dst: '10.20.1.2', dport: 53 }),
+    rule('ACCEPT', { proto: 'tcp', inIf: 'eth2', outIf: 'eth1', dst: '10.20.1.10', dport: 443 }),
+  ],
+};
+
+export function office(o: OfficeOpts = {}): Built {
+  const all = o.configured || !!o.fault;
+  const forward = all || !!o.forward;
+  const masq = all || !!o.masq;
+  const dnat = all || o.dnat !== undefined ? (o.fault === 'dnat-port' ? 8443 : typeof o.dnat === 'number' ? o.dnat : 443) : undefined;
+  const firewall = all || !!o.firewall;
+  const b = new Builder('gw');
+  b.seg('office', 0.2).seg('srv', 0.2).seg('wan', 3, 'wan').seg('net', 12, 'core');
+
+  const gw = b.host('gw', { name: 'gw', role: 'router', forward });
+  b.nic(gw, 'eth0', 'office', ['10.20.0.1/24'], '02:00:0a:14:00:01').nic(gw, 'eth1', 'srv', ['10.20.1.1/27'], '02:00:0a:14:01:01').nic(gw, 'eth2', 'wan', ['203.0.113.10/24'], '02:00:cb:00:71:0a');
+  if (o.fault !== 'no-route') b.route(gw, 'default', '203.0.113.1', 'eth2');
+  b.svc(gw, { proto: 'tcp', port: 22, bind: '0.0.0.0', proc: 'sshd', kind: 'ssh', banner: 'SSH-2.0-OpenSSH_10.0p2 Debian-7' });
+  if (masq) gw.nf.nat.POSTROUTING.rules.push(rule('MASQUERADE', { src: '10.20.0.0/23', outIf: 'eth2' }));
+  if (dnat !== undefined) gw.nf.nat.PREROUTING.rules.push(rule('DNAT', { proto: 'tcp', inIf: 'eth2', dport: 443, toDest: `10.20.1.10:${dnat}` }));
+  if (firewall) {
+    gw.nf.filter.INPUT.policy = 'DROP';
+    gw.nf.filter.FORWARD.policy = 'DROP';
+    gw.nf.filter.INPUT.rules.push(...OFFICE_FIREWALL.INPUT.map((r) => ({ ...r })));
+    gw.nf.filter.FORWARD.rules.push(...OFFICE_FIREWALL.FORWARD.filter((r) => !(o.fault === 'no-est' && r.state)).map((r) => ({ ...r })));
+  }
+
+  const laptop = b.host('laptop', { name: 'laptop-07', role: 'client' });
+  b.nic(laptop, 'eth0', 'office', ['10.20.0.50/24'], '3c:22:fb:20:00:50');
+  b.route(laptop, 'default', '10.20.0.1', 'eth0', 'dhcp');
+  laptop.files['/etc/resolv.conf'] = 'nameserver 10.20.1.2\nsearch corp.lab\n';
+  laptop.files['/etc/hosts'] = '127.0.0.1\tlocalhost\n';
+
+  const ns = b.host('ns', { name: 'ns', role: 'dns-auth' });
+  b.nic(ns, 'eth0', 'srv', ['10.20.1.2/27']);
+  b.route(ns, 'default', '10.20.1.1', 'eth0');
+  const zone: DnsZone = {
+    origin: 'corp.lab.',
+    negTtl: 300,
+    records: [soa('corp.lab.', 'ns.corp.lab.'), rr('corp.lab.', 'NS', 'ns.corp.lab.', 86400), rr('ns.corp.lab.', 'A', '10.20.1.2'), rr('gw.corp.lab.', 'A', '10.20.1.1'), rr('app.corp.lab.', 'A', '10.20.1.10'), rr('www.corp.lab.', 'CNAME', 'app.corp.lab.')],
+  };
+  b.svc(ns, { proto: 'udp', port: 53, bind: '0.0.0.0', proc: 'nsd', kind: 'dns', dns: { mode: 'auth', zones: [zone] } });
+
+  const app = b.host('app', { name: 'app', role: 'web' });
+  b.nic(app, 'eth0', 'srv', ['10.20.1.10/27']);
+  b.route(app, 'default', '10.20.1.1', 'eth0');
+  b.svc(app, { proto: 'tcp', port: 443, bind: '0.0.0.0', proc: 'nginx', kind: 'http', tls: cert('www.corp.lab', ['www.corp.lab', 'app.corp.lab']), http: { server: 'nginx/1.26.3', routes: { '/': { status: 200, body: '<!doctype html><title>Corp portal</title>\n' } } } });
+  b.svc(app, { proto: 'tcp', port: 8080, bind: '0.0.0.0', proc: 'gunicorn', kind: 'http', http: { server: 'gunicorn', routes: { '/': { status: 200, body: 'portal backend\n' }, '/health': { status: 200, body: 'ok\n' } } } });
+  app.files['/etc/resolv.conf'] = 'nameserver 10.20.1.2\nsearch corp.lab\n';
+
+  const isp = b.host('isp', { name: 'bras2.isp.example', role: 'isp', forward: true });
+  b.nic(isp, 'eth0', 'wan', ['203.0.113.1/24']).nic(isp, 'eth1', 'net', ['198.51.100.1/24']);
+  const ext = b.host('ext', { name: 'outside', role: 'internet' });
+  b.nic(ext, 'eth0', 'net', ['198.51.100.80/24']);
+  b.route(ext, 'default', '198.51.100.1', 'eth0');
+  b.svc(ext, { proto: 'tcp', port: 80, bind: '0.0.0.0', proc: 'nginx', kind: 'http', http: { server: 'nginx/1.26.3', routes: { '/': { status: 200, body: 'hello from the internet\n' } } } });
+  ext.files['/etc/hosts'] = '127.0.0.1\tlocalhost\n203.0.113.10\twww.corp.lab\n';
+
+  const resolv = o.fault === 'resolv' ? 'nameserver 10.20.1.2\n' : 'nameserver 10.20.1.2\nsearch corp.lab\n';
+  return {
+    world: b.w,
+    files: { '/etc/hosts': '127.0.0.1\tlocalhost\n127.0.1.1\tgw\n', '/etc/resolv.conf': resolv },
+  };
+}
+
 export const PRESETS: Record<string, (o: never) => Built> = {
   home: home as (o: never) => Built,
   'two-subnets': twoSubnets as (o: never) => Built,
@@ -422,6 +515,7 @@ export const PRESETS: Record<string, (o: never) => Built> = {
   tcp: tcpLab as (o: never) => Built,
   nat: natLab as (o: never) => Built,
   proxy: proxy as (o: never) => Built,
+  office: office as (o: never) => Built,
 };
 
 export function buildPreset(name: string, opts: Record<string, unknown> = {}): Built {

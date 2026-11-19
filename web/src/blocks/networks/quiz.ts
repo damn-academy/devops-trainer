@@ -575,7 +575,7 @@ export const quiz: QuizItem[] = [
       { id: 'sni', text: bi('имя сайта в SNI', 'the site name in SNI'), correct: true },
       { id: 'port', text: bi('порт 443', 'port 443'), correct: true },
       { id: 'path', text: bi('путь /catalog', 'the path /catalog'), why: bi('Путь — часть HTTP-запроса, а он целиком внутри шифрования.', 'The path is part of the HTTP request, which is entirely inside the encryption.') },
-      { id: 'cookie', text: bi('cookies', 'cookies'), why: bi('Заголовки HTTP зашифрованы вместе с запросом.', 'HTTP headers are encrypted along with the request.') },
+      { id: 'cookie', text: bi('cookie', 'cookies'), why: bi('Заголовки HTTP зашифрованы вместе с запросом.', 'HTTP headers are encrypted along with the request.') },
     ],
     refs: { explainer: 'net.tls' },
   },

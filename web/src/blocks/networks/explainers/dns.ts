@@ -13,7 +13,7 @@ export const dnsModel = defineModel<P>({
   id: 'net.dns',
   block: 'networks',
   title: b('Как имя превращается в адрес', 'How a name becomes an address'),
-  summary: b('curl https://shop.example/ — первый запрос с пустыми кэшами и второй, через заданное время. Двигай TTL и время второго запроса.', 'curl https://shop.example/ — the first request with empty caches and a second one after a while. Move the TTL and the time of the second request.'),
+  summary: b('curl https://shop.example/ — первый запрос с пустыми кэшами и второй, через заданное время. Двигайте TTL и время второго запроса.', 'curl https://shop.example/ — the first request with empty caches and a second one after a while. Move the TTL and the time of the second request.'),
   diagram: {
     width: 960,
     height: 440,

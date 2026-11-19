@@ -30,7 +30,7 @@ export const nat: Lesson = {
         'At home your laptop is 192.168.1.23. Your neighbour’s is 192.168.1.23 too. And a million other flats’. Private addresses are not routed on the internet, so a site cannot possibly answer “192.168.1.23” — and yet the page opens. Someone on the way replaced the address.',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.nat', caption: bi('Добавь устройств, попробуй подключиться снаружи, убери правило NAT.', 'Add devices, try to connect from outside, remove the NAT rule.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.nat', caption: bi('Добавьте устройств, попробуйте подключиться снаружи, уберите правило NAT.', 'Add devices, try to connect from outside, remove the NAT rule.') },
     {
       id: 'explain1',
       kind: 'text',
@@ -122,7 +122,29 @@ export const nat: Lesson = {
       ref: { page: 'man/iptables.8' },
       answer: 'TABLES',
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.nat.inbound', 'net.q.nat.hooks', 'net.q.nat.reject', 'net.q.nat.est'] },
+    {
+      id: 'findflag',
+      kind: 'docs',
+      step: 'practice',
+      mode: 'find',
+      prompt: bi(
+        'Правила цепочки проверяются по порядку, сверху вниз, и чтобы вставить правило перед другим или удалить одно, не трогая соседей, нужно знать его номер. Найдите в iptables(8), как напечатать номера строк, и выведите так таблицу nat.',
+        'The rules of a chain are checked in order, top to bottom, and to insert a rule before another or delete one without touching its neighbours you need its number. Find in iptables(8) how to print the line numbers, and list the nat table that way.',
+      ),
+      ref: { page: 'man/iptables.8', anchor: 'OPTIONS', line: '--line-numbers' },
+      terminal: {
+        setup: lab('gw', 'nat', { configured: true }),
+        task: {
+          id: 'lines',
+          prompt: bi('Таблица nat с номерами правил.', 'The nat table with rule numbers.'),
+          check: { stdout: /^num\s+target[\s\S]*MASQUERADE/m },
+          docStep: 3,
+          chips: 'iptables -t nat -L -n --line-numbers',
+          hints: { H1: bi('Номера появляются только при выводе списка, то есть вместе с -L.', 'The numbers appear only when listing, that is, together with -L.') },
+        },
+      },
+    },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.nat.inbound', 'net.q.nat.hooks', 'net.q.nat.reject', 'net.q.nat.est'] },
   ],
 };
 
@@ -233,7 +255,7 @@ export const http: Lesson = {
         },
       },
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.http.codes', 'net.q.http.host', 'net.q.http.redirect', 'net.q.http.bug'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.http.codes', 'net.q.http.host', 'net.q.http.redirect', 'net.q.http.bug'] },
   ],
 };
 
@@ -269,7 +291,7 @@ export const tls: Lesson = {
         '[[net.tls|TLS]] solves both. HTTPS is the same HTTP, only inside TLS, on port 443. Encryption is built on a key pair: what is encrypted with the public key only the private key can decrypt, and a signature made with the private key is checked with the public one. Client and server exchange public parts and arrive at a shared secret nobody on the path has seen.\n\nBut how do you know the public key came from shop.example and not from your Wi-Fi neighbour? That is what a [[net.cert|certificate]] is for: the server’s public key together with its name (the subjectAltName field) and validity dates, signed by someone your system trusts. It is signed by a [[net.ca|certificate authority]] — usually not directly but through an intermediate certificate. The client checks the chain: the site’s certificate is signed by the intermediate, the intermediate by a root, and the root is already on the system, in `/etc/ssl/certs`.\n\nThere are three checks, each with its own `curl` error, code 60: the dates (`certificate has expired`; a wrong clock on the client looks the same), the name (`no alternative certificate subject name matches target host name` — the certificate is for www and people come without www) and the chain (`unable to get local issuer certificate` — the server forgot to send the intermediate certificate). All three are the TLS layer: the network and the server are fine, the authenticity check failed.',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.tls', caption: bi('Растяни RTT, переключи TLS 1.2 и HTTP/3, открой соединение заранее, сломай сертификат.', 'Stretch the RTT, switch to TLS 1.2 and HTTP/3, open the connection in advance, break the certificate.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.tls', caption: bi('Растяните RTT, переключите TLS 1.2 и HTTP/3, откройте соединение заранее, сломайте сертификат.', 'Stretch the RTT, switch to TLS 1.2 and HTTP/3, open the connection in advance, break the certificate.') },
     {
       id: 'explain2',
       kind: 'text',
@@ -330,7 +352,32 @@ export const tls: Lesson = {
         },
       },
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.tls.sees', 'net.q.tls.rtt', 'net.q.tls.errors', 'net.q.tls.ssh'] },
+    {
+      id: 'forcing',
+      kind: 'docs',
+      step: 'practice',
+      mode: 'find',
+      prompt: bi(
+        'Сайт shop.example собираются перевести на новый сервер с адресом `198.51.100.30`. Прежде чем менять DNS, нужно проверить с ноутбука, отдаст ли этот сервер годный сертификат, когда браузер придёт к нему с именем shop.example. Ни DNS, ни `/etc/hosts` трогать нельзя: пусть curl сам подключится к этому адресу под этим именем.',
+        'shop.example is about to move to a new server at `198.51.100.30`. Before DNS is changed, check from the laptop whether that server presents a valid certificate when a browser comes to it with the name shop.example. Neither DNS nor `/etc/hosts` may be touched: make curl itself connect to that address under that name.',
+      ),
+      ref: { page: 'man/curl.1' },
+      terminal: {
+        setup: lab('laptop', 'home'),
+        task: {
+          id: 'resolve',
+          prompt: bi('Запрос к https://shop.example/, который уходит на 198.51.100.30, — и вывод, по которому видно, готов ли сервер.', 'A request to https://shop.example/ that goes to 198.51.100.30 — and output that shows whether the server is ready.'),
+          check: {
+            stdout: /no alternative certificate subject name matches target host name 'shop\.example'/,
+            when: (f, start) => !start || (f.files as Record<string, { text?: string }>)['/etc/hosts']?.text === (start.files as Record<string, { text?: string }>)['/etc/hosts']?.text,
+          },
+          docStep: 4,
+          beyond: true,
+          solutionTokens: ['--resolve', '--connect-to'],
+        },
+      },
+    },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.tls.sees', 'net.q.tls.rtt', 'net.q.tls.errors', 'net.q.tls.ssh'] },
   ],
 };
 
@@ -373,7 +420,7 @@ export const proxy: Lesson = {
         'In front of applications there is almost always a [[net.reverse-proxy|reverse proxy]] — most often nginx. The client connects to it, and it passes the request on to the application and returns the answer. (A forward proxy is the opposite: it sits by the client and goes to the internet on its behalf.) Whatever the proxy passes the request to is called the [[net.upstream|upstream]], and in nginx a group of such servers is described by an `upstream` block:\n\n```\nupstream backend {\n    server 10.0.2.21:8080;\n    server 10.0.2.22:8080;\n}\nserver {\n    listen 80;\n    location / {\n        proxy_pass http://backend;\n    }\n}\n```\n\nA proxy that spreads requests over several servers is a [[net.lb|load balancer]]. There are L4 load balancers: they see only addresses and ports (HAProxy in `mode tcp`, a cloud’s TCP load balancer). And L7 ones: they see all of HTTP and can send /api to one place and /static to another. By default nginx hands out requests in turn (round robin). It adds an `X-Forwarded-For` header for the backend — otherwise the application would see the proxy’s address instead of the client’s.\n\nA [[net.cdn|CDN]] is the copies of the site nearby from the first lesson. It is a network of proxies placed in cities: the site’s DNS name points to the nearest node, which serves the page from its cache (HIT), and if it is missing or stale by `Cache-Control`, goes to the main server, the origin (MISS).\n\nProxies have timers. nginx has `proxy_connect_timeout` — how long to wait for a connection to the upstream — and `proxy_read_timeout` — how long to wait for the answer. Both default to 60 seconds.',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.proxy504', caption: bi('Двигай время ответа приложения и таймаут, оставь один бэкенд, отключи повторы, смени метод на POST; ломай бэкенды по-разному.', 'Move the application time and the timeout, keep one backend, turn retries off, switch the method to POST; break the backends in different ways.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.proxy504', caption: bi('Двигайте время ответа приложения и таймаут, оставьте один бэкенд, отключите повторы, смените метод на POST; ломайте бэкенды по-разному.', 'Move the application time and the timeout, keep one backend, turn retries off, switch the method to POST; break the backends in different ways.') },
     {
       id: 'explain2',
       kind: 'text',
@@ -441,7 +488,39 @@ export const proxy: Lesson = {
       ref: { page: 'web/nginx.org/proxy_read_timeout' },
       answer: 'DEFAULT',
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.proxy.who', 'net.q.proxy.lines', 'net.q.proxy.connecting', 'net.q.proxy.500'] },
+    {
+      id: 'forcing',
+      kind: 'docs',
+      step: 'practice',
+      mode: 'find',
+      prompt: bi(
+        'Отчёт `/report` строится 75 секунд и тяжело нагружает базу. Пока разработчики его ускоряют, выяснилось неприятное: когда первый бэкенд не укладывается в таймаут, nginx повторяет запрос на втором, и база строит один и тот же отчёт дважды. Запретите nginx передавать неудавшийся запрос следующему серверу группы. Таймауты не меняйте.',
+        'The `/report` takes 75 seconds to build and loads the database heavily. While the developers speed it up, an unpleasant detail came out: when the first backend does not fit into the timeout, nginx retries the request on the second, and the database builds the same report twice. Forbid nginx to pass a failed request to the next server of the group. Do not change the timeouts.',
+      ),
+      ref: { page: 'web/nginx.org/proxy_next_upstream' },
+      terminal: {
+        setup: lab('lb', 'proxy', {}, [{ id: 'r', kind: 'http', from: 'client', to: 'http://10.0.0.1/report' }]),
+        task: {
+          id: 'next',
+          prompt: bi('Одна попытка на запрос: `/report` отвечает 504 через одну минуту, а не через две.', 'One attempt per request: `/report` answers 504 after one minute, not two.'),
+          check: {
+            when: (f) => {
+              const conf = (f.files as Record<string, { text?: string }>)['/etc/nginx/conf.d/shop.conf']?.text ?? '';
+              const r = (f.reach as Record<string, { status?: number; ms?: number }> | undefined)?.r;
+              return /proxy_next_upstream\s+off\s*;/.test(conf) && !/proxy_(read|connect)_timeout/.test(conf) && r?.status === 504 && (r.ms ?? 0) < 90000;
+            },
+            fail: [
+              { if: (f) => /proxy_(read|connect)_timeout/.test((f.files as Record<string, { text?: string }>)['/etc/nginx/conf.d/shop.conf']?.text ?? ''), say: bi('Таймаут просили не трогать: повтор останется, просто случится позже или раньше.', 'The timeouts were not to be touched: the retry stays, it just happens later or sooner.') },
+              { if: (f) => /proxy_next_upstream\s+off/.test((f.files as Record<string, { text?: string }>)['/etc/nginx/conf.d/shop.conf']?.text ?? ''), say: bi('В файле правка есть, а nginx работает со старой конфигурацией: проверьте и перечитайте её.', 'The file has the change, but nginx runs the old configuration: test it and reload.') },
+            ],
+          },
+          docStep: 4,
+          beyond: true,
+          solutionTokens: ['proxy_next_upstream', 'off'],
+        },
+      },
+    },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.proxy.who', 'net.q.proxy.lines', 'net.q.proxy.connecting', 'net.q.proxy.500'] },
   ],
 };
 
@@ -453,7 +532,7 @@ export const troubleshooting: Lesson = {
   id: 'networks.troubleshooting',
   block: 'networks',
   title: bi('Траблшутинг по уровням и весь путь URL', 'Troubleshooting by layer, and the whole URL'),
-  summary: bi('Методика «сначала слой», таблица симптомов, сквозное объяснение «что происходит, когда вводишь URL» и два инцидента.', 'The “layer first” method, the table of symptoms, the end-to-end “what happens when you type a URL” explainer and two incidents.'),
+  summary: bi('Методика «сначала слой», таблица симптомов, сквозное объяснение «что происходит, когда вы вводите URL» и два инцидента.', 'The “layer first” method, the table of symptoms, the end-to-end “what happens when you type a URL” explainer and two incidents.'),
   introduces: ['net.layers-method'],
   uses: ['net.osi', 'net.dns', 'net.tcp', 'net.tls', 'net.http', 'net.status', 'net.reverse-proxy', 'net.upstream', 'net.nat', 'net.arp', 'net.cdn', 'net.keepalive', 'net.handshake'],
   tier: 'core',
@@ -479,12 +558,12 @@ export const troubleshooting: Lesson = {
         '[[net.layers-method|Layer-by-layer troubleshooting]] is an order of thinking. First reproduce the symptom with your own hands and read the whole message. Then name the layer from the message. Then confirm the hypothesis with a command that checks exactly that layer. And change one thing at a time: two edits at once, and you will not know which one helped.\n\nYou can go bottom up — link, address, route, port, DNS, TLS, HTTP — or top down, from the symptom. Tool messages almost always name the layer themselves:\n\n- `ping: connect: Network is unreachable` — the kernel has no route, the packet was never born: L3, look at `ip route`;\n- `From <your own address> … Destination Host Unreachable` — a neighbour or the gateway does not answer ARP: L2, `ip neigh`;\n- `curl: (6) Could not resolve host` — DNS: `cat /etc/resolv.conf`, `dig`;\n- `curl: (7) … Couldn\'t connect to server`, with `Connection refused` in `-v` — the host is alive, the port is closed: L4, `ss -ltnp` on the server;\n- `curl: (28) … Timeout was reached` — no answer at all: a filter, no route, the host is off: L3/L4, `traceroute`, `tcpdump`;\n- `curl: (60) SSL certificate problem` — TLS: dates, name, chain;\n- `502` — the proxy got no answer from the upstream; `504` — it did not wait long enough: L7, `error.log`.\n\nAnd a safety rule. Dangerous actions — restarting a production service without a hypothesis, `iptables -F` on a router, editing two parameters at once — are done only when the hypothesis is proven and you understand what you will break if you are wrong.',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.url', caption: bi('Весь путь — от разбора адреса до отрисовки. Включай кэши, меняй схему, ломай DNS, порт 443 и origin.', 'The whole path — from parsing the address to rendering. Turn caches on, change the scheme, break DNS, port 443 and the origin.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.url', caption: bi('Весь путь — от разбора адреса до отрисовки. Включайте кэши, меняйте схему и версию HTTP, ломайте DNS, порт 443, сертификат и origin.', 'The whole path — from parsing the address to rendering. Turn caches on, change the scheme and the HTTP version, break DNS, port 443, the certificate and the origin.') },
     {
       id: 'url',
       kind: 'text',
       step: 'explain',
-      title: bi('Что происходит, когда вводишь URL', 'What happens when you type a URL'),
+      title: bi('Что происходит, когда вы вводите URL', 'What happens when you type a URL'),
       body: bi(
         'Это самый частый вопрос собеседования, и теперь у вас есть все слова для ответа. Браузер разбирает адрес на схему, имя, порт и путь и проверяет свой кэш: свежая копия — и в сеть ничего не уходит. Если ARP-кэш пуст, ноутбук узнаёт MAC шлюза. Имя превращается в адрес: кэш ОС, `/etc/hosts`, рекурсивный резолвер, а у того при пустом кэше — корень, TLD и авторитативный сервер. Пакет уходит через домашний роутер, и NAT подменяет адрес источника. TCP-рукопожатие с ближайшим узлом CDN — один круг; TLS 1.3 с SNI и проверкой сертификата — ещё один. Зашифрованный `GET /catalog`. Узел CDN отдаёт страницу из кэша или идёт к origin: балансировщик, nginx с `X-Forwarded-For`, приложение, база. Ответ возвращается тем же путём, через обратный NAT. Браузер разбирает HTML и по тому же соединению просит стили и картинки.\n\nНа каждом шаге есть своя поломка и своё сообщение — их вы видели в объяснении выше. Хороший ответ на собеседовании идёт по этому пути и на каждом шаге называет, что может сломаться и как это проверить.',
         'This is the most common interview question, and now you have every word for the answer. The browser splits the address into scheme, name, port and path and checks its cache: a fresh copy, and nothing goes to the network. If the ARP cache is empty, the laptop learns the gateway’s MAC. The name becomes an address: the OS cache, `/etc/hosts`, the recursive resolver, and, with an empty cache, its walk through the root, the TLD and the authoritative server. The packet leaves through the home router, and NAT rewrites the source address. The TCP handshake with the nearest CDN node is one round trip; TLS 1.3 with SNI and the certificate check is another. An encrypted `GET /catalog`. The CDN node serves the page from cache or goes to the origin: the load balancer, nginx with `X-Forwarded-For`, the application, the database. The answer comes back the same way, through the reverse NAT. The browser parses the HTML and asks for styles and images over the same connection.\n\nEvery step has its own failure and its own message — you saw them in the explainer above. A good interview answer walks this path and at every step names what can break and how to check it.',
@@ -554,7 +633,7 @@ export const troubleshooting: Lesson = {
         },
       ],
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.ts.layer', 'net.q.ts.first', 'net.q.ts.revisit'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.ts.layer', 'net.q.ts.first', 'net.q.ts.revisit'] },
   ],
 };
 
@@ -581,6 +660,6 @@ export const protocols: Lesson = {
       ),
     },
     { id: 'catalogue', kind: 'widget', step: 'explain', widget: 'net.protocols' },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.proto.transport', 'net.q.proto.ntp'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.proto.transport', 'net.q.proto.ntp'] },
   ],
 };

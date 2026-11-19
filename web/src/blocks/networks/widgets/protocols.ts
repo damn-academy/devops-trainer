@@ -25,6 +25,42 @@ const c = (x: ProtoCard) => x;
 
 export const PROTOCOLS: ProtoCard[] = [
   c({
+    id: 'ethernet', name: 'Ethernet', level: 'beginner', layer: 'L2', transport: 'frame, EtherType, MTU 1500',
+    why: bi('Доставить кадр от одной сетевой карты к другой внутри одного сегмента. Дальше своего коммутатора кадр не уходит: на каждом маршрутизаторе пакет перекладывают в новый кадр.', 'Deliver a frame from one network card to another within one segment. A frame never travels beyond its own switch: at every router the packet is moved into a new frame.'),
+    actors: ['host', 'switch', 'neighbour'],
+    steps: [{ from: 0, to: 1, label: 'dst 02:42:ac:11:00:14, src …:0a, type 0x0800' }, { from: 1, to: 2, label: 'MAC table: port 2' }, { from: 2, to: 1, label: 'reply frame' }, { from: 1, to: 0, label: 'MAC table: port 1' }],
+    observe: ['ip link show eth0', 'tcpdump -n -e', 'bridge fdb show'],
+    breaks: [
+      { symptom: 'state DOWN / NO-CARRIER', layer: 'L2', cause: bi('Интерфейс выключен или кабель не воткнут: кадры не уходят вовсе.', 'The interface is down or the cable is unplugged: no frames leave at all.'), prove: 'ip link show eth0' },
+      { symptom: 'RX errors and CRC grow', layer: 'L2', cause: bi('Повреждённый кабель или порт: контрольная сумма кадра (FCS) не сходится, кадр выброшен.', 'A damaged cable or port: the frame checksum (FCS) does not match and the frame is dropped.'), prove: 'ip -s link show eth0' },
+    ],
+    doc: { label: 'Ethernet frame (IEEE 802.3)', url: 'https://en.wikipedia.org/wiki/Ethernet_frame' },
+  }),
+  c({
+    id: 'ipv4', name: 'IPv4', level: 'beginner', layer: 'L3', transport: 'EtherType 0x0800',
+    why: bi('Доставить пакет между сетями по адресу назначения: каждый маршрутизатор выбирает самый длинный подходящий префикс своей таблицы и уменьшает TTL.', 'Deliver a packet between networks by its destination address: every router picks the longest matching prefix in its table and decrements the TTL.'),
+    actors: ['host', 'router', 'router', 'server'],
+    steps: [{ from: 0, to: 1, label: '10.0.1.10 → 10.20.0.5, TTL 64' }, { from: 1, to: 2, label: 'TTL 63, new frame' }, { from: 2, to: 3, label: 'TTL 62' }, { from: 3, to: 0, label: 'reply, by its own routes' }],
+    observe: ['ip addr', 'ip route', 'ip route get 10.20.0.5', 'traceroute -n 10.20.0.5'],
+    breaks: [
+      { symptom: 'ping: connect: Network is unreachable', layer: 'L3', cause: bi('У отправителя нет маршрута к этой сети: пакет даже не создан.', 'The sender has no route to that network: the packet is not even created.'), prove: 'ip route' },
+      { symptom: 'requests arrive, replies do not', layer: 'L3', cause: bi('У получателя нет маршрута обратно: маршрутизация в каждую сторону своя.', 'The receiver has no route back: routing is separate in each direction.'), prove: 'tcpdump on the receiver: requests in, nothing out' },
+    ],
+    doc: { label: 'RFC 791', url: 'https://www.rfc-editor.org/rfc/rfc791' },
+  }),
+  c({
+    id: 'ipv6', name: 'IPv6', level: 'intermediate', layer: 'L3', transport: 'EtherType 0x86DD',
+    why: bi('Тот же межсетевой уровень с адресами в 128 бит: адресов хватает всем без NAT, соседей ищут не ARP, а сообщениями ICMPv6 (Neighbor Discovery), а у каждого интерфейса всегда есть адрес fe80::.', 'The same internetwork layer with 128-bit addresses: there are enough for everyone without NAT, neighbours are found not by ARP but by ICMPv6 messages (Neighbor Discovery), and every interface always has an fe80:: address.'),
+    actors: ['host', 'router', 'server'],
+    steps: [{ from: 0, to: 1, label: 'Router Solicitation (ICMPv6)' }, { from: 1, to: 0, label: 'Router Advertisement: prefix 2001:db8:1::/64' }, { from: 0, to: 2, label: '2001:db8:1::23 → 2001:db8:5::20' }],
+    observe: ['ip -6 addr', 'ip -6 route', 'ip -6 neigh', 'ping -6 2001:db8:5::20'],
+    breaks: [
+      { symptom: 'site slow, then works (long connect)', layer: 'L3', cause: bi('У машины есть IPv6-адрес, а пути наружу по IPv6 нет: клиент сначала пробует AAAA и ждёт, потом откатывается на IPv4.', 'The machine has an IPv6 address but no IPv6 path out: the client tries the AAAA first and waits, then falls back to IPv4.'), prove: 'curl -6 -v vs curl -4 -v' },
+      { symptom: 'only fe80:: on the interface', layer: 'L3', cause: bi('Маршрутизатор не присылает Router Advertisement: глобального адреса и шлюза нет.', 'The router sends no Router Advertisement: no global address and no gateway.'), prove: 'tcpdump -n icmp6' },
+    ],
+    doc: { label: 'RFC 8200', url: 'https://www.rfc-editor.org/rfc/rfc8200' },
+  }),
+  c({
     id: 'arp', name: 'ARP', level: 'beginner', layer: 'L2', transport: 'EtherType 0x0806',
     why: bi('По IP-адресу соседа в своей подсети узнать его MAC — без него кадр не собрать.', 'Learn the MAC of a neighbour in your subnet from its IP address — a frame cannot be built without it.'),
     actors: ['host', 'all (ff:ff…)', 'neighbour'],
@@ -171,14 +207,26 @@ export const PROTOCOLS: ProtoCard[] = [
     doc: { label: 'RFC 9113', url: 'https://www.rfc-editor.org/rfc/rfc9113' },
   }),
   c({
-    id: 'h3', name: 'HTTP/3 · QUIC', level: 'intermediate', layer: 'L7', transport: 'QUIC over UDP 443',
-    why: bi('Транспорт и TLS 1.3 в одном рукопожатии поверх UDP: один круг до запроса, потери не тормозят соседние потоки.', 'Transport and TLS 1.3 in one handshake over UDP: one round trip to the request, losses do not stall neighbouring streams.'),
+    id: 'h3', name: 'HTTP/3', level: 'intermediate', layer: 'L7', transport: 'QUIC over UDP 443',
+    why: bi('Те же методы, заголовки и коды HTTP, но поверх QUIC: транспорт и TLS 1.3 договариваются за один круг, а потеря пакета тормозит только свой поток. О поддержке браузер узнаёт из заголовка Alt-Svc или DNS-записи HTTPS и в следующий раз идёт по UDP.', 'The same HTTP methods, headers and codes, but over QUIC: the transport and TLS 1.3 agree in one round trip, and a lost packet stalls only its own stream. The browser learns of support from the Alt-Svc header or the HTTPS DNS record and goes over UDP next time.'),
     actors: ['client', 'server'],
     steps: [{ from: 0, to: 1, label: 'Initial (ClientHello)' }, { from: 1, to: 0, label: 'Initial + Handshake' }, { from: 0, to: 1, label: '1-RTT: request' }, { from: 1, to: 0, label: 'response' }],
     observe: ['curl --http3 -v https://…  (if built with HTTP/3)', 'curl -sI … | grep -i alt-svc'],
     breaks: [
       { symptom: 'falls back to h2', layer: 'L4', cause: bi('UDP/443 закрыт по пути: браузер тихо откатывается на TCP.', 'UDP/443 is blocked on the path: the browser quietly falls back to TCP.'), prove: 'tcpdump -n udp port 443' },
       { symptom: 'connection breaks behind NAT after idle', layer: 'L3', cause: bi('Запись UDP в conntrack устарела быстрее, чем живёт сеанс QUIC.', 'The UDP conntrack entry expired sooner than the QUIC session.'), prove: 'conntrack -L -p udp' },
+    ],
+    doc: { label: 'RFC 9000', url: 'https://www.rfc-editor.org/rfc/rfc9000' },
+  }),
+  c({
+    id: 'quic', name: 'QUIC', level: 'intermediate', layer: 'L4', transport: 'UDP 443',
+    why: bi('Транспорт, который делает работу TCP — номера, подтверждения, повторы, управление скоростью — поверх UDP и сразу шифрует всё, кроме пары полей заголовка. Потоки независимы: потеря в одном не останавливает другие. Соединение опознаётся по Connection ID, а не по адресу и порту, поэтому переживает смену сети.', 'A transport that does TCP’s work — numbering, acknowledgements, retransmission, congestion control — over UDP and encrypts everything except a few header fields from the start. Streams are independent: a loss in one does not stop the others. A connection is identified by its Connection ID, not by address and port, so it survives a change of network.'),
+    actors: ['client', 'NAT', 'server'],
+    steps: [{ from: 0, to: 2, label: 'Initial: CRYPTO(ClientHello), DCID' }, { from: 2, to: 0, label: 'Initial + Handshake: ServerHello, cert' }, { from: 0, to: 2, label: 'Handshake done, 1-RTT data' }, { from: 1, to: 2, label: 'new source port, same Connection ID' }],
+    observe: ['tcpdump -n udp port 443', 'ss -uanp', 'conntrack -L -p udp --dport 443'],
+    breaks: [
+      { symptom: 'QUIC never used, always TCP', layer: 'L4', cause: bi('Сеть по пути пропускает только TCP 443, а UDP 443 режет: клиент тихо остаётся на TCP.', 'The network on the way passes only TCP 443 and drops UDP 443: the client quietly stays on TCP.'), prove: 'tcpdump -n udp port 443: Initial without an answer' },
+      { symptom: 'packets lost above ~1200 bytes', layer: 'L3', cause: bi('QUIC требует, чтобы путь пропускал датаграммы не меньше 1200 байт; туннель с маленьким MTU их режет.', 'QUIC requires the path to carry datagrams of at least 1200 bytes; a tunnel with a small MTU cuts them.'), prove: 'ping -M do -s 1172 host' },
     ],
     doc: { label: 'RFC 9000', url: 'https://www.rfc-editor.org/rfc/rfc9000' },
   }),

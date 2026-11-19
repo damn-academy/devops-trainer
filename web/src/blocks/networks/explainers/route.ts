@@ -200,7 +200,7 @@ export const routeModel = defineModel<P>({
         states: { t3: 'err', h2: 'err' },
         values: { t3: '10.0.2.0/24 dev eth0 only' },
         metrics: { ttl: p.ttl - 1, routers: 1 },
-        broken: { at: 't3', message: '$ ping -c 2 10.0.2.10\n\n--- 10.0.2.10 ping statistics ---\n2 packets transmitted, 0 received, 100% packet loss, time 1001ms\n\n# on h2: tcpdump -n icmp\nIP 10.0.1.10 > 10.0.2.10: ICMP echo request, id 7, seq 1, length 64', caption: b('запрос пришёл — его видно в захвате на h2, — а ответа нет. Смотри маршрут обратно: ip route get 10.0.1.10 на h2.', 'the request arrived — it is visible in a capture on h2 — but there is no reply. Check the way back: ip route get 10.0.1.10 on h2.') },
+        broken: { at: 't3', message: '$ ping -c 2 10.0.2.10\n\n--- 10.0.2.10 ping statistics ---\n2 packets transmitted, 0 received, 100% packet loss, time 1001ms\n\n# on h2: tcpdump -n icmp\nIP 10.0.1.10 > 10.0.2.10: ICMP echo request, id 7, seq 1, length 64', caption: b('запрос пришёл — его видно в захвате на h2, — а ответа нет. Смотрите маршрут обратно: ip route get 10.0.1.10 на h2.', 'the request arrived — it is visible in a capture on h2 — but there is no reply. Check the way back: ip route get 10.0.1.10 on h2.') },
       });
       return steps;
     }

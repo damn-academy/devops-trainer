@@ -9,7 +9,7 @@ import { fmt } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { b, brokenAt, card, DOC, edge, lastMetric, node } from './kit';
 
-type P = { cache: boolean; dns: string; scheme: string; cdnHit: boolean; keepalive: boolean; rtt: number };
+type P = { cache: boolean; dns: string; scheme: string; version: string; cdnHit: boolean; keepalive: boolean; rtt: number };
 
 export interface Waterfall {
   dns: number;
@@ -24,8 +24,8 @@ const r1 = (x: number) => Math.round(x * 10) / 10;
 export const urlModel = defineModel<P>({
   id: 'net.url',
   block: 'networks',
-  title: b('Что происходит, когда вводишь URL', 'What happens when you type a URL'),
-  summary: b('https://shop.example/catalog — от нажатия Enter до готовой страницы. Под схемой растёт водопад, как в DevTools. Меняй кэши, схему, CDN; ломай DNS, порт 443 и origin.', 'https://shop.example/catalog — from pressing Enter to a rendered page. The waterfall under the diagram grows as in DevTools. Change the caches, the scheme, the CDN; break DNS, port 443 and the origin.'),
+  title: b('Что происходит, когда вы вводите URL', 'What happens when you type a URL'),
+  summary: b('https://shop.example/catalog — от нажатия Enter до готовой страницы. Под схемой растёт водопад, как в DevTools. Меняйте кэши, схему, версию HTTP и CDN; ломайте DNS, порт 443, сертификат и origin.', 'https://shop.example/catalog — from pressing Enter to a rendered page. The waterfall under the diagram grows as in DevTools. Change the caches, the scheme, the HTTP version and the CDN; break DNS, port 443, the certificate and the origin.'),
   diagram: {
     width: 960,
     height: 480,
@@ -100,6 +100,27 @@ export const urlModel = defineModel<P>({
         resolve: (_p, next) => (next.some((s) => s.id === 'redirect') ? 'redirect' : 'plain'),
       },
     },
+    {
+      id: 'version',
+      label: b('Версия HTTP', 'HTTP version'),
+      kind: 'choice',
+      default: '1.1',
+      near: 'e-edge',
+      options: [
+        { id: '1.1', label: b('HTTP/1.1', 'HTTP/1.1') },
+        { id: 'h2', label: b('HTTP/2', 'HTTP/2') },
+        { id: 'h3', label: b('HTTP/3 (QUIC)', 'HTTP/3 (QUIC)') },
+      ],
+      predict: {
+        prompt: b('Браузер уже знает, что узел говорит HTTP/3. Сколько кругов до узла пройдёт, прежде чем уйдёт сам запрос?', 'The browser already knows the edge speaks HTTP/3. How many round trips to the edge pass before the request itself leaves?'),
+        options: [
+          { id: 'one', text: b('Один: QUIC договаривается о транспорте и TLS сразу', 'One: QUIC agrees on the transport and TLS at once') },
+          { id: 'two', text: b('Два, как с TCP и TLS', 'Two, as with TCP and TLS') },
+          { id: 'zero', text: b('Ни одного: UDP не нужно рукопожатие', 'None: UDP needs no handshake') },
+        ],
+        resolve: (_p, next) => (next.some((s) => s.id === 'quic') ? 'one' : 'two'),
+      },
+    },
     { id: 'cdnHit', label: b('Страница в кэше CDN', 'The page is in the CDN cache'), kind: 'toggle', default: false, near: 'cdn' },
     { id: 'keepalive', label: b('Соединение уже открыто', 'The connection is already open'), kind: 'toggle', default: false, near: 'e-edge', levels: ['intermediate', 'experienced'] },
     { id: 'rtt', label: b('RTT до узла CDN', 'RTT to the CDN edge'), kind: 'range', min: 4, max: 200, step: 2, unit: 'ms', default: 20, near: 'cdn' },
@@ -122,7 +143,7 @@ export const urlModel = defineModel<P>({
     },
     {
       id: 'fw443',
-      label: b('Межсетевой экран выбрасывает TCP 443', 'A firewall drops TCP 443'),
+      label: b('Межсетевой экран выбрасывает порт 443', 'A firewall drops port 443'),
       remove: ['e-edge'],
       layer: 'L4',
       predict: {
@@ -147,6 +168,21 @@ export const urlModel = defineModel<P>({
           { id: 'none', text: b('Никакого: браузер не подключится', 'None: the browser cannot connect') },
         ],
         resolve: (_p, next) => (lastMetric(next, 'code') === 504 ? '504' : lastMetric(next, 'code') === 200 ? 'none' : 'none'),
+      },
+    },
+    {
+      id: 'cert-expired',
+      label: b('Сертификат узла истёк', 'The edge’s certificate has expired'),
+      remove: [],
+      layer: 'TLS',
+      predict: {
+        prompt: b('Срок сертификата на узле CDN кончился вчера. Где остановится загрузка?', 'The certificate on the CDN edge expired yesterday. Where does the load stop?'),
+        options: [
+          { id: 'tls', text: b('На TLS: соединение есть, но браузер не поверит серверу', 'At TLS: there is a connection, but the browser will not trust the server') },
+          { id: 'tcp', text: b('На TCP: узел не примет соединение', 'At TCP: the edge will not accept the connection') },
+          { id: 'none', text: b('Нигде: срок проверяют только банки', 'Nowhere: only banks check the dates') },
+        ],
+        resolve: (_p, next) => (brokenAt(next) === 'e-edge' ? 'tls' : brokenAt(next) === 'cdn' ? 'tcp' : 'none'),
       },
     },
   ],
@@ -194,10 +230,21 @@ export const urlModel = defineModel<P>({
     const connect = (scheme: string) => {
       steps.push({ id: `nat-${scheme}`, label: 'NAT', caption: b('Пакет уходит через роутер: источник 192.168.1.23:51234 превращается в 203.0.113.7:40001, соответствие записано в conntrack.', 'The packet leaves through the router: source 192.168.1.23:51234 becomes 203.0.113.7:40001, the mapping is written to conntrack.'), focus: ['router', 'e-wifi'], tokens: [{ edge: 'e-wifi', label: 'SYN' }], states: { router: 'on' }, metrics: snap() });
       if (broken.has('fw443') && scheme === 'https') {
+        if (p.version === 'h3') {
+          m.connect += 3000;
+          m.total += 3000;
+          steps.push({ id: 'quic-drop', label: 'QUIC…', caption: b('Пакет Initial по UDP 443 уходит без ответа. Браузер выжидает и откатывается на TCP — но тот же экран режет и TCP 443.', 'The Initial packet on UDP 443 leaves and gets no answer. The browser waits and falls back to TCP — but the same firewall drops TCP 443 too.'), focus: ['e-edge'], tokens: [{ edge: 'e-edge', label: 'Initial' }], metrics: snap() });
+        }
         m.connect += 127000;
         m.total += 127000;
         steps.push({ id: 'syn-drop', label: 'SYN…', caption: b('SYN на порт 443 уходит — и пропадает: межсетевой экран выбрасывает его молча. Ядро повторяет SYN через 1, 2, 4, 8… секунд. Браузер долго крутит индикатор.', 'The SYN to port 443 leaves — and vanishes: the firewall drops it silently. The kernel resends the SYN after 1, 2, 4, 8… seconds. The browser spins for a long time.'), focus: ['e-edge'], tokens: [{ edge: 'e-edge', label: 'SYN' }], states: { 'e-edge': 'err', browser: 'err' }, metrics: snap(), broken: { at: 'cdn', message: "$ curl --connect-timeout 10 https://shop.example/catalog\ncurl: (28) Failed to connect to shop.example port 443 after 10002 ms: Timeout was reached", caption: b('слой L4: имя есть, адрес есть, соединения нет. Тишина вместо отказа — признак фильтра. Chrome напишет ERR_CONNECTION_TIMED_OUT.', 'layer L4: the name resolves, the address exists, there is no connection. Silence instead of a refusal is the mark of a filter. Chrome shows ERR_CONNECTION_TIMED_OUT.') } });
         return false;
+      }
+      if (scheme === 'https' && p.version === 'h3') {
+        m.connect += rtt;
+        m.total += rtt;
+        steps.push({ id: 'quic', label: 'QUIC', caption: fmt(b('QUIC по UDP 443: в первом же пакете Initial лежит ClientHello с SNI shop.example, в ответе — сертификат. Транспорт и TLS 1.3 договорились за один круг, {r} мс, — отдельного рукопожатия TCP нет.', 'QUIC over UDP 443: the very first Initial packet carries the ClientHello with SNI shop.example, the answer carries the certificate. The transport and TLS 1.3 agree in one round trip, {r} ms — there is no separate TCP handshake.'), { r: rtt }), focus: ['e-edge', 'cdn'], tokens: [{ edge: 'e-edge', label: 'Initial' }, { edge: 'e-edge', reverse: true, label: 'Initial+Handshake' }], states: { cdn: 'on' }, metrics: snap() });
+        return certOk();
       }
       m.connect += rtt;
       m.total += rtt;
@@ -206,8 +253,15 @@ export const urlModel = defineModel<P>({
         m.tls += rtt;
         m.total += rtt;
         steps.push({ id: 'tls', label: 'TLS 1.3', caption: fmt(b('TLS 1.3: ClientHello с SNI shop.example, ответ сервера с сертификатом. Браузер проверяет имя, срок и цепочку. Ещё один круг — {r} мс. Провайдер видит только адрес, порт и SNI.', 'TLS 1.3: ClientHello with SNI shop.example, the server’s answer with the certificate. The browser checks the name, the dates and the chain. One more round trip — {r} ms. The provider sees only the address, the port and the SNI.'), { r: rtt }), focus: ['e-edge'], tokens: [{ edge: 'e-edge', label: 'ClientHello' }, { edge: 'e-edge', reverse: true, label: '{Certificate}' }], metrics: snap() });
+        if (p.version === 'h2') steps.push({ id: 'alpn', label: 'ALPN h2', caption: b('В том же обмене стороны выбрали протокол: браузер предложил «h2, http/1.1» в расширении ALPN, узел ответил «h2». Дальше запросы пойдут бинарными кадрами, много потоков в одном соединении.', 'In the same exchange the sides chose the protocol: the browser offered “h2, http/1.1” in the ALPN extension, the edge answered “h2”. From now on requests go as binary frames, many streams over one connection.'), focus: ['e-edge'], metrics: snap() });
+        return certOk();
       }
       return true;
+    };
+    const certOk = () => {
+      if (!broken.has('cert-expired')) return true;
+      steps.push({ id: 'cert-bad', label: b('сертификат', 'certificate'), caption: b('В сертификате notAfter — вчерашняя дата. Браузер шлёт TLS alert и закрывает соединение: TCP работает, сервер отвечает, но доказать, что это shop.example, он больше не может.', 'The certificate’s notAfter is yesterday. The browser sends a TLS alert and closes the connection: TCP works and the server answers, but it can no longer prove it is shop.example.'), focus: ['e-edge', 'browser'], states: { 'e-edge': 'err', browser: 'err' }, metrics: snap(), broken: { at: 'e-edge', message: '$ curl https://shop.example/catalog\ncurl: (60) SSL certificate problem: certificate has expired', caption: b('слой TLS: имя, адрес и соединение в порядке, не прошла проверка сертификата. Chrome напишет NET::ERR_CERT_DATE_INVALID.', 'layer TLS: the name, the address and the connection are fine; the certificate check failed. Chrome shows NET::ERR_CERT_DATE_INVALID.') } });
+      return false;
     };
     if (p.scheme === 'http') {
       if (!p.keepalive && !connect('http')) return steps;
@@ -218,7 +272,13 @@ export const urlModel = defineModel<P>({
       if (!connect('https')) return steps;
     } else steps.push({ id: 'reuse', label: b('открыто', 'open'), caption: b('С этим узлом уже есть соединение с готовым TLS-сеансом: ни ARP, ни TCP, ни TLS не нужны.', 'There is already a connection to this edge with a ready TLS session: no ARP, no TCP, no TLS needed.'), focus: ['e-edge'], metrics: snap() });
     m.total += rtt / 2;
-    steps.push({ id: 'request', label: 'GET', caption: b('Зашифрованный запрос: GET /catalog HTTP/1.1, Host: shop.example. Для провайдера это просто TLS Application Data.', 'The encrypted request: GET /catalog HTTP/1.1, Host: shop.example. To the provider it is just TLS Application Data.'), focus: ['e-edge', 'cdn'], tokens: [{ edge: 'e-edge', label: '{GET /catalog}' }], metrics: snap() });
+    const reqCaption =
+      p.version === 'h2'
+        ? b('Зашифрованный кадр HEADERS в потоке 1: :method GET, :path /catalog, :authority shop.example. Стили и картинки потом пойдут потоками 3, 5, 7 по тому же соединению, не дожидаясь друг друга.', 'An encrypted HEADERS frame on stream 1: :method GET, :path /catalog, :authority shop.example. Styles and images will later go as streams 3, 5, 7 over the same connection without waiting for each other.')
+        : p.version === 'h3'
+          ? b('Запрос — кадр HEADERS в потоке QUIC, внутри зашифрованных UDP-датаграмм. Если датаграмма потеряется, ждать будет только её поток, а не всё соединение.', 'The request is a HEADERS frame on a QUIC stream inside encrypted UDP datagrams. If a datagram is lost, only its stream waits, not the whole connection.')
+          : b('Зашифрованный запрос: GET /catalog HTTP/1.1, Host: shop.example. Для провайдера это просто TLS Application Data.', 'The encrypted request: GET /catalog HTTP/1.1, Host: shop.example. To the provider it is just TLS Application Data.');
+    steps.push({ id: 'request', label: p.version === '1.1' ? 'GET' : 'HEADERS', caption: reqCaption, focus: ['e-edge', 'cdn'], tokens: [{ edge: 'e-edge', label: p.version === '1.1' ? '{GET /catalog}' : '{HEADERS :path /catalog}' }], metrics: snap() });
     let code = 200;
     if (p.cdnHit) {
       m.total += 1;
@@ -237,7 +297,7 @@ export const urlModel = defineModel<P>({
     }
     m.total += rtt / 2;
     m.ttfb = m.total;
-    steps.push({ id: 'response', label: '200', caption: b('Ответ HTTP/1.1 200 OK едет обратно: CDN → роутер (обратный NAT: 203.0.113.7:40001 → 192.168.1.23:51234 по conntrack) → браузер.', 'The answer HTTP/1.1 200 OK travels back: CDN → router (reverse NAT: 203.0.113.7:40001 → 192.168.1.23:51234 through conntrack) → browser.'), focus: ['e-edge', 'e-wifi', 'browser'], tokens: [{ edge: 'e-edge', reverse: true, label: '{200 OK}' }, { edge: 'e-wifi', reverse: true }], states: { browser: 'on' }, metrics: snap({ code }) });
+    steps.push({ id: 'response', label: '200', caption: p.version === '1.1' ? b('Ответ HTTP/1.1 200 OK едет обратно: CDN → роутер (обратный NAT: 203.0.113.7:40001 → 192.168.1.23:51234 по conntrack) → браузер.', 'The answer HTTP/1.1 200 OK travels back: CDN → router (reverse NAT: 203.0.113.7:40001 → 192.168.1.23:51234 through conntrack) → browser.') : b('Ответ — кадр HEADERS с :status 200 и кадры DATA с телом — едет обратно: CDN → роутер (обратный NAT по conntrack) → браузер.', 'The answer — a HEADERS frame with :status 200 and DATA frames with the body — travels back: CDN → router (reverse NAT through conntrack) → browser.'), focus: ['e-edge', 'e-wifi', 'browser'], tokens: [{ edge: 'e-edge', reverse: true, label: '{200 OK}' }, { edge: 'e-wifi', reverse: true }], states: { browser: 'on' }, metrics: snap({ code }) });
     m.total += rtt;
     steps.push({ id: 'render', label: b('отрисовка', 'render'), caption: b('Браузер разбирает HTML, находит CSS, скрипты и картинки и запрашивает их по тому же соединению — без DNS, TCP и TLS. Страница готова.', 'The browser parses the HTML, finds the CSS, scripts and images and requests them over the same connection — no DNS, TCP or TLS. The page is ready.'), focus: ['browser', 'e-edge'], tokens: [{ edge: 'e-edge', label: 'app.css' }], states: { browser: 'ok' }, metrics: snap({ code }) });
     return steps;
@@ -248,7 +308,13 @@ export const urlModel = defineModel<P>({
     if (change.kind === 'break') {
       if (!change.on) return fmt(b('Поломка убрана: страница снова загружается, всего {t} мс.', 'The break is removed: the page loads again, {t} ms in total.'), { t: t1 });
       const at = brokenAt(next);
+      if (at === 'e-edge') return b('Загрузка остановилась на TLS: соединение есть, но сертификат просрочен, и браузер прервал рукопожатие.', 'The load stopped at TLS: the connection is up, but the certificate has expired and the browser aborted the handshake.');
       return at === 'auth' ? b('Загрузка остановилась на DNS: имя не превратилось в адрес — до TCP не дошло.', 'The load stopped at DNS: the name did not become an address — it never got to TCP.') : at === 'cdn' ? b('Загрузка остановилась на TCP: SYN без ответа, ожидание до таймаута.', 'The load stopped at TCP: a SYN with no answer, a wait until the timeout.') : at === 'lb' ? b('CDN не дождался origin и ответил 504 — сеть пользователя тут ни при чём.', 'The CDN did not get an answer from the origin and replied 504 — the user’s network has nothing to do with it.') : b('Страница пришла из кэша CDN: выключенный origin пользователь даже не заметил.', 'The page came from the CDN cache: the user did not even notice the origin was off.');
+    }
+    if (change.kind === 'param' && change.id === 'version') {
+      if (change.to === 'h3') return fmt(b('HTTP/3: QUIC объединил рукопожатия транспорта и TLS в один круг — полное время {a} → {b} мс.', 'HTTP/3: QUIC merged the transport and TLS handshakes into one round trip — total time {a} → {b} ms.'), { a: t0, b: t1 });
+      if (change.to === 'h2') return fmt(b('HTTP/2: рукопожатия те же, что у HTTP/1.1, но запросы идут кадрами в потоках одного соединения — {a} → {b} мс.', 'HTTP/2: the same handshakes as HTTP/1.1, but requests go as frames on the streams of one connection — {a} → {b} ms.'), { a: t0, b: t1 });
+      return fmt(b('HTTP/1.1: отдельные рукопожатия TCP и TLS, один запрос за раз в соединении — {a} → {b} мс.', 'HTTP/1.1: separate TCP and TLS handshakes, one request at a time per connection — {a} → {b} ms.'), { a: t0, b: t1 });
     }
     return fmt(b('Полное время {a} → {b} мс. DNS {d} мс, TCP {c} мс, TLS {s} мс.', 'Total time {a} → {b} ms. DNS {d} ms, TCP {c} ms, TLS {s} ms.'), { a: t0, b: t1, d: lastMetric(next, 'dns') ?? 0, c: lastMetric(next, 'connect') ?? 0, s: lastMetric(next, 'tls') ?? 0 });
   },
