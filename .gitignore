@@ -10,3 +10,6 @@ web/screenshots/
 
 # checklist used for structure only; not redistributed
 source/
+
+# lab image build cache (Alpine packages), see web/scripts/build-lab-image.mjs
+web/.cache/
