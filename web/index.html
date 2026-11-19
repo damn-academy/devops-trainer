@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="DevOps Trainer — интерактивный учебник и тренажёр для входа в DevOps." />
+    <title>DevOps Trainer</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2' y='3' width='20' height='18' rx='4' fill='%23353a6e'/%3E%3Cpath d='m7 9 3 3-3 3m5 0h5' stroke='%23f4efe4' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <script>
+      // Apply the stored theme before first paint, so a dark-theme reader never sees a white flash.
+      try {
+        var t = localStorage.getItem('dt.theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        if (localStorage.getItem('dt.calm') === '1') document.documentElement.setAttribute('data-calm', '');
+        var l = localStorage.getItem('dt.lang');
+        if (l === 'en' || l === 'ru') document.documentElement.lang = l;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <noscript>DevOps Trainer needs JavaScript: the textbook, terminal and diagrams all run in the browser.</noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
