@@ -1,14 +1,20 @@
 // The operating system as the go-between: programs never touch the hardware
-// themselves; the system shares the processor in turns, hands out memory and
-// keeps the files (F04, F03).
+// themselves; the system keeps the files, hands out memory and shares the
+// processor in turns (F04, F03).
+//
+// Reading order: at the start there are only the editor and the disk it wants
+// to save to. The system appears when the editor turns to it, then the disk
+// takes the blocks, the browser asks for memory and the processor appears
+// last, with the queue of programs. The break removes the go-between and shows
+// two programs writing into the same block of the disk.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
-import type { ElementCard, Step } from '../../../core/types';
+import { bi, pluralRu, type Bi } from '../../../core/i18n';
+import type { Step } from '../../../core/types';
+import { card, fmtb, startWith } from './kit';
 
 type P = { programs: number; cores: string };
 
-const card = (what: Bi, who: Bi, extra: Partial<ElementCard> = {}): ElementCard => ({ what, who, ...extra });
 const SLICE_MS = 10;
 
 export function share(p: P): { share: number; switches: number } {
@@ -18,40 +24,156 @@ export function share(p: P): { share: number; switches: number } {
   return { share: sharePct, switches };
 }
 
+const ALL = ['editor', 'browser', 'os', 'disk', 'memory', 'cpu', 'e-save', 'e-write', 'e-mem', 'e-alloc', 'e-turns', 'e-rawA', 'e-rawB'];
+/** Dative: «нужен 3 программам». */
+const progsDat = (n: number) => `${n} ${pluralRu(n, ['программе', 'программам', 'программам'])}`;
+const cores = (n: number) => `${n} ${pluralRu(n, ['ядро', 'ядра', 'ядер'])}`;
+
 export const systemModel = defineModel<P>({
   id: 'orient.system',
   block: 'orient',
   title: bi('Операционная система между программами и железом', 'The operating system between programs and hardware'),
   summary: bi(
-    'Программы не трогают диск и процессор сами: они просят систему. Добавьте программ, поменяйте число ядер, уберите посредника.',
-    'Programs do not touch the disk and the processor themselves: they ask the system. Add programs, change the number of cores, remove the go-between.',
+    'Программы не пишут на диск сами и не берут себе память и процессор: они просят об этом операционную систему. Схема показывает три такие просьбы подряд: редактор сохраняет файл, браузер просит память для новой вкладки, а несколько программ делят одно ядро процессора.',
+    'Programs neither write to the disk themselves nor take memory and the processor: they ask the operating system. The diagram shows three such requests: the editor saves a file, the browser asks for memory for a new tab, and several programs share one processor core.',
   ),
+  intro: bi(
+    'Сейчас на схеме только редактор, в котором вы нажали «Сохранить», и диск. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Подсвечен тот, кто работает сейчас, облачко говорит, что он делает, а карточка на линии показывает, с какой просьбой или с каким результатом одна часть обращается к другой.\n\nКогда дойдёте до процессора, поменяйте в «Параметрах» число программ и ядер. Напоследок включите в блоке «Сломать» поломку, при которой программы пишут на диск сами, без системы.',
+    'Now the diagram shows only the editor where you pressed “Save” and the disk. Press “Start: step forward”, then go on with “Step forward” under the diagram. The one working now is highlighted, the callout says what it does, and the card on the line shows the request or result passed on.\n\nOnce you reach the processor, change the number of programs and cores in “Parameters”. Finally switch on the break in “Break it” where programs write to the disk themselves.',
+  ),
+  legend: [
+    { mark: 'active', text: bi('часть, которая работает сейчас', 'the part working now') },
+    { mark: 'say', text: bi('что она делает', 'what it does') },
+    { mark: 'token', text: bi('просьба программы или ответ системы', 'a program’s request or the system’s answer') },
+    { mark: 'icon:lock', text: bi('операционная система распоряжается железом', 'the operating system: in charge of the hardware') },
+    { mark: 'icon:file', text: bi('редактор текста', 'the text editor') },
+    { mark: 'icon:browser', text: bi('браузер', 'the browser') },
+    { mark: 'icon:disk', text: bi('диск', 'the disk') },
+    { mark: 'icon:switch', text: bi('память', 'memory') },
+    { mark: 'icon:process', text: bi('процессор', 'the processor') },
+    { mark: 'warn', text: bi('процессора на всех не хватает', 'not enough processor for everyone') },
+    { mark: 'err', text: bi('данные испорчены', 'the data is spoilt') },
+  ],
+  stopLabel: bi('Запись испорчена', 'The write is spoilt'),
   concepts: ['orient.os', 'orient.file'],
   diagram: {
     width: 960,
-    height: 392,
+    height: 400,
     nodes: [
-      { id: 'editor', label: bi('Редактор', 'Editor'), sub: 'notes.txt', family: 'process', x: 40, y: 32, w: 200, h: 56, card: card(bi('Программа, в которой вы пишете текст. Хочет сохранить файл, но не знает, где на диске свободное место, — это знает только система.', 'The program you write text in. It wants to save a file but does not know where the disk has free room; only the system knows that.'), bi('Вы запустили её щелчком.', 'You started it with a click.')) },
-      { id: 'browser', label: bi('Браузер', 'Browser'), sub: '12 tabs', family: 'process', x: 380, y: 32, w: 200, h: 56, card: card(bi('Ещё одна программа. Ей нужны память под вкладки и процессор, чтобы рисовать страницы.', 'Another program. It needs memory for its tabs and the processor to draw pages.'), bi('Вы запустили её щелчком.', 'You started it with a click.')) },
-      { id: 'player', label: bi('Плеер', 'Player'), sub: 'music', family: 'process', x: 720, y: 32, w: 200, h: 56, card: card(bi('Третья программа: играет музыку и не должна прерываться, пока вы пишете.', 'A third program: it plays music and must not stop while you write.'), bi('Вы запустили её щелчком.', 'You started it with a click.')) },
-      { id: 'os', label: bi('Операционная система', 'Operating system'), sub: 'Linux · Windows · macOS', family: 'kernel', shape: 'bar', x: 16, y: 160, w: 928, h: 72, card: card(bi('Главная программа компьютера. Запускает остальные, по очереди даёт им процессор, раздаёт память, ведёт учёт файлов и папок и говорит с устройствами. Программы обращаются к железу только через неё.', 'The main program of the computer. It starts the others, gives them the processor in turns, hands out memory, keeps track of files and folders and talks to the devices. Programs reach the hardware only through it.'), bi('Загружается первой при включении компьютера и работает до выключения.', 'Loads first when the computer is switched on and runs until it is switched off.'), { see: 'uname -a', doc: { page: 'man/uname.1', anchor: 'DESCRIPTION' } }) },
-      { id: 'cpu', label: bi('Процессор', 'Processor'), sub: '1 core', family: 'neutral', x: 40, y: 304, w: 200, h: 56, card: card(bi('Одно ядро процессора в каждый момент выполняет одну программу. Несколько ядер — несколько программ сразу.', 'One processor core runs one program at any moment. Several cores run several programs at once.'), bi('Железо.', 'Hardware.'), { see: 'nproc' }) },
-      { id: 'memory', label: bi('Память', 'Memory'), sub: '8 GB', family: 'neutral', x: 380, y: 304, w: 200, h: 56, card: card(bi('Система выдаёт каждой программе свой участок памяти и не пускает её в чужой.', 'The system gives each program its own piece of memory and keeps it out of the others’.'), bi('Железо.', 'Hardware.'), { see: 'free -h' }) },
-      { id: 'disk', label: bi('Диск', 'Disk'), sub: '/home/learner', family: 'store', x: 720, y: 304, w: 200, h: 56, card: card(bi('На диске нет «файлов» — только пронумерованные блоки. Имена, папки и то, какие блоки чьи, помнит система.', 'A disk has no “files”, only numbered blocks. Names, folders and which blocks belong to what are remembered by the system.'), bi('Железо.', 'Hardware.'), { see: 'df -h' }) },
+      {
+        id: 'editor',
+        label: bi('Редактор', 'Editor'),
+        icon: 'file',
+        work: 'dots',
+        sub: 'notes.txt',
+        family: 'process',
+        x: 40,
+        y: 32,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('Редактор — программа, в которой вы пишете текст. Он хочет сохранить файл, но не знает, где на диске свободное место: это знает только операционная система.', 'The program you write text in. It wants to save a file but does not know where the disk has free room; only the system knows.'),
+          bi('Редактор запустили вы, щёлкнув по его значку.', 'You started it with a click.'),
+        ),
+      },
+      {
+        id: 'browser',
+        label: bi('Браузер', 'Browser'),
+        icon: 'browser',
+        work: 'dots',
+        sub: '12 tabs',
+        family: 'process',
+        x: 370,
+        y: 32,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('Браузер — ещё одна программа. Под каждую вкладку браузеру нужна память, а чтобы рисовать страницы, ему нужен процессор.', 'Another program. It needs memory for its tabs and the processor to draw pages.'),
+          bi('Браузер тоже запустили вы.', 'You started it too.'),
+        ),
+      },
+      {
+        id: 'os',
+        label: bi('Операционная система', 'Operating system'),
+        icon: 'lock',
+        work: 'spin',
+        sub: 'Linux · Windows · macOS',
+        family: 'kernel',
+        shape: 'bar',
+        x: 16,
+        y: 168,
+        w: 928,
+        h: 64,
+        card: card(
+          bi('Операционная система — главная программа компьютера. Она запускает остальные программы, по очереди даёт им процессор, раздаёт память, ведёт учёт файлов и папок на диске и управляет устройствами. Программы обращаются к железу только через неё.', 'The main program of the computer. It starts the others, gives them the processor in turns, hands out memory, keeps track of files and talks to the devices.'),
+          bi('Система загружается первой при включении компьютера и работает до самого выключения.', 'Loads first at power-on and runs until power-off.'),
+          { see: 'uname -a', doc: { page: 'man/uname.1', anchor: 'DESCRIPTION' } },
+        ),
+      },
+      {
+        id: 'disk',
+        label: bi('Диск', 'Disk'),
+        icon: 'disk',
+        sub: '/home/learner',
+        family: 'store',
+        x: 40,
+        y: 304,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('На самом диске нет ни файлов, ни папок, только миллиарды пронумерованных блоков. Какие блоки свободны и какие из них принадлежат файлу notes.txt, помнит операционная система.', 'A disk has no files, only numbered blocks. Which are free and which belong to notes.txt the system remembers.'),
+          bi('Диск — это железо внутри компьютера.', 'Hardware.'),
+          { see: 'df -h' },
+        ),
+      },
+      {
+        id: 'memory',
+        label: bi('Память', 'Memory'),
+        icon: 'switch',
+        sub: '8 GB',
+        family: 'neutral',
+        x: 370,
+        y: 304,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('Система выдаёт каждой программе отдельный участок памяти и следит, чтобы программа не залезла в чужой участок.', 'The system gives each program its own piece of memory and keeps it out of the others’.'),
+          bi('Память — это железо внутри компьютера.', 'Hardware.'),
+          { see: 'free -h' },
+        ),
+      },
+      {
+        id: 'cpu',
+        label: bi('Процессор', 'Processor'),
+        icon: 'process',
+        sub: '1 core',
+        family: 'neutral',
+        x: 700,
+        y: 304,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('В каждый момент одно ядро процессора выполняет одну программу. Если ядер несколько, столько же программ работают одновременно, а остальные ждут своей очереди.', 'One core runs one program at any moment; several cores run several at once.'),
+          bi('Процессор — это железо внутри компьютера.', 'Hardware.'),
+          { see: 'nproc' },
+        ),
+      },
     ],
     edges: [
-      { id: 'e-save', from: 'editor', to: 'os', label: bi('сохрани файл', 'save the file'), card: card(bi('Просьба программы к системе: «запиши вот эти байты в файл notes.txt в папке notes».', 'The program’s request to the system: “write these bytes into the file notes.txt in the folder notes”.'), bi('Редактор, когда вы нажали «Сохранить».', 'The editor, when you pressed “Save”.')) },
-      { id: 'e-mem', from: 'browser', to: 'os', label: bi('дай память', 'give me memory'), card: card(bi('Новая вкладка — новая просьба выделить память.', 'A new tab is a new request for memory.'), bi('Браузер.', 'The browser.')) },
-      { id: 'e-play', from: 'player', to: 'os', label: bi('мне процессор', 'processor, please'), card: card(bi('Каждой программе нужен процессор; система решает, кому и на сколько.', 'Every program needs the processor; the system decides who gets it and for how long.'), bi('Плеер.', 'The player.')) },
-      { id: 'e-turns', from: 'os', to: 'cpu', label: bi('по очереди', 'in turns'), card: card(bi('Система даёт процессор каждой программе на несколько миллисекунд и переключает дальше. Переключения так часты, что программы кажутся работающими одновременно.', 'The system gives the processor to each program for a few milliseconds and moves on. The switches are so frequent that the programs seem to run at the same time.'), bi('Операционная система.', 'The operating system.')) },
-      { id: 'e-alloc', from: 'os', to: 'memory', label: bi('участки', 'pieces'), card: card(bi('Каждая программа получает свой участок памяти. Залезть в чужой система не позволит.', 'Every program gets its own piece of memory. The system will not let it into another’s.'), bi('Операционная система.', 'The operating system.')) },
-      { id: 'e-write', from: 'os', to: 'disk', label: bi('блоки файла', 'file blocks'), card: card(bi('Система находит свободные блоки, записывает туда данные и запоминает, что это файл notes.txt.', 'The system finds free blocks, writes the data there and remembers that this is the file notes.txt.'), bi('Операционная система.', 'The operating system.'), { see: 'ls -l notes' }) },
+      { id: 'e-save', from: 'editor', to: 'os', via: [[150, 168]], label: bi('сохрани notes.txt', 'save notes.txt'), card: card(bi('Просьба редактора к системе: «запиши вот этот текст в файл notes.txt в папке notes».', 'The editor’s request: “write this text into notes.txt”.'), bi('Просьбу отправляет редактор, когда вы нажимаете «Сохранить».', 'The editor, when you press “Save”.')) },
+      { id: 'e-write', from: 'os', to: 'disk', via: [[150, 232]], label: bi('блоки файла', 'file blocks'), card: card(bi('Система находит на диске свободные блоки, записывает туда текст и запоминает, что эти блоки теперь принадлежат файлу notes.txt.', 'The system finds free blocks, writes the text and remembers they are notes.txt.'), bi('Блоки записывает операционная система.', 'The operating system.'), { see: 'ls -l notes' }) },
+      { id: 'e-mem', from: 'browser', to: 'os', via: [[480, 168]], label: bi('дай памяти', 'give me memory'), card: card(bi('Новая вкладка браузера означает новую просьбу к системе: выделить ещё немного памяти.', 'A new tab is a new request for memory.'), bi('Память просит браузер.', 'The browser.')) },
+      { id: 'e-alloc', from: 'os', to: 'memory', via: [[480, 232]], label: bi('свой участок', 'its own piece'), card: card(bi('Система выделяет программе отдельный участок памяти. Залезть в чужой участок программа не сможет: система не позволит.', 'The system gives the program its own piece of memory and keeps it out of others’.'), bi('Участок выделяет операционная система.', 'The operating system.')) },
+      { id: 'e-turns', from: 'os', to: 'cpu', via: [[810, 232]], label: bi('программы по очереди', 'programs in turns'), card: card(bi('Система даёт процессор каждой программе на несколько миллисекунд и переключает его на следующую. Переключения так часты, что программы кажутся работающими одновременно.', 'The system gives the processor to each program for a few milliseconds and moves on.'), bi('Очередь ведёт операционная система.', 'The operating system.')) },
+      { id: 'e-rawA', from: 'editor', to: 'disk', dashed: true, labelAt: 0.25, label: bi('редактор пишет сам', 'writes itself'), card: card(bi('Так было бы без операционной системы: редактор сам выбирает блоки диска и пишет в них, не спросив никого.', 'Without the system: the editor picks disk blocks itself.'), bi('Так пишет редактор, когда посредника нет.', 'The editor, with no go-between.')) },
+      { id: 'e-rawB', from: 'browser', to: 'disk', dashed: true, via: [[480, 280]], labelAt: 0.3, label: bi('браузер тоже пишет сам', 'writes itself too'), card: card(bi('Браузер без посредника тоже сам выбирает блоки диска и не знает, что редактор уже занял некоторые из них.', 'Without the system the browser picks blocks too, unaware of the editor.'), bi('Так пишет браузер, когда посредника нет.', 'The browser, with no go-between.')) },
     ],
   },
   params: [
     {
       id: 'programs',
-      label: bi('Сколько программ хотят процессор', 'Programs that want the processor'),
+      label: bi('Сколько программ одновременно хотят процессор', 'Programs that want the processor'),
+      group: bi('Программы', 'Programs'),
       kind: 'range',
       min: 1,
       max: 8,
@@ -59,114 +181,176 @@ export const systemModel = defineModel<P>({
       default: 3,
       near: 'cpu',
       predict: {
-        prompt: bi('Восемь программ и одно ядро. Как они будут работать?', 'Eight programs and one core. How will they run?'),
+        prompt: bi('Вы изменили число программ, которым нужен процессор, а число ядер осталось прежним. Как эти программы будут работать?', 'You changed the number of programs that need the processor; the cores stay the same. How will the programs run?'),
         options: [
-          { id: 'turns', text: bi('По очереди, так быстро, что кажется — одновременно', 'In turns, so fast that it seems simultaneous') },
-          { id: 'wait', text: bi('Одна работает, остальные ждут, пока она закончит', 'One runs, the others wait until it finishes') },
+          { id: 'turns', text: bi('По очереди, но так быстро, что это похоже на одновременную работу', 'In turns, so fast it seems simultaneous') },
+          { id: 'wait', text: bi('Одна будет работать, а остальные ждать, пока она закончит', 'One runs, the others wait until it finishes') },
+          { id: 'own', text: bi('Каждой программе достанется своё ядро, и очереди не будет', 'Each gets a core of its own, no queue') },
         ],
-        resolve: (_prev, next) => ((next[next.length - 1]?.metrics?.switches ?? 0) > 0 ? 'turns' : 'wait'),
+        resolve: (_prev, next) => ((next[next.length - 1]?.metrics?.switches ?? 0) > 0 ? 'turns' : 'own'),
       },
     },
     {
       id: 'cores',
-      label: bi('Ядер в процессоре', 'Processor cores'),
+      label: bi('Сколько ядер у процессора', 'Processor cores'),
+      group: bi('Процессор', 'The processor'),
       kind: 'choice',
       default: '1',
       near: 'cpu',
       options: [
-        { id: '1', label: bi('1', '1') },
-        { id: '4', label: bi('4', '4') },
+        { id: '1', label: bi('одно ядро, как у старого ноутбука', 'one core, like an old laptop') },
+        { id: '4', label: bi('четыре ядра', 'four cores') },
       ],
     },
   ],
   breaks: [
     {
       id: 'no-os',
-      label: bi('Программы пишут на диск сами, без системы', 'Programs write to the disk themselves, without the system'),
+      label: bi('Программы пишут на диск сами, не спрашивая систему', 'Programs write to the disk themselves'),
       remove: ['os', 'e-write'],
       boundary: 'storage',
       predict: {
-        prompt: bi('Редактор и браузер одновременно пишут на диск сами, не спросив систему. Что будет?', 'The editor and the browser both write to the disk themselves without asking the system. What happens?'),
+        prompt: bi('Редактор и браузер пишут на диск сами, не спрашивая систему, и каждый из них ищет свободное место самостоятельно. Что станет с файлом notes.txt?', 'The editor and the browser write to the disk themselves, each looking for free room on its own. What becomes of notes.txt?'),
         options: [
-          { id: 'clash', text: bi('Они запишут в одни и те же блоки и испортят друг другу данные', 'They write into the same blocks and spoil each other’s data') },
-          { id: 'fine', text: bi('Ничего страшного, зато быстрее', 'Nothing bad, just faster') },
+          { id: 'clash', text: bi('Браузер запишет свои данные поверх текста, и файл испортится', 'The browser writes over the text and the file is spoilt') },
+          { id: 'fine', text: bi('Файл сохранится, только запись пойдёт быстрее', 'The file is saved, only faster') },
         ],
-        resolve: () => 'clash',
+        resolve: (_prev, next) => (next.some((s) => s.broken) ? 'clash' : 'fine'),
       },
     },
   ],
   metrics: [
-    { id: 'share', label: bi('доля процессора у каждой', 'processor share each'), unit: '%' },
-    { id: 'switches', label: bi('переключений в секунду', 'switches per second') },
+    { id: 'share', label: bi('доля процессора у каждой программы', 'processor share each'), unit: '%' },
+    { id: 'switches', label: bi('переключений процессора в секунду', 'switches per second') },
   ],
   run(p, broken): Step[] {
     const n = share(p);
     const metrics = { share: n.share, switches: n.switches };
-    const cores = p.cores === '4' ? 4 : 1;
+    const c = p.cores === '4' ? 4 : 1;
     const steps: Step[] = [
       {
-        id: 'ask',
-        label: bi('просьба', 'request'),
-        caption: bi('Вы нажали «Сохранить». Редактор не пишет на диск сам — он просит систему: «сохрани notes.txt».', 'You pressed “Save”. The editor does not write to the disk itself; it asks the system: “save notes.txt”.'),
-        focus: ['editor', 'e-save', 'os'],
-        tokens: [{ edge: 'e-save', label: 'notes.txt' }],
-        states: { editor: 'on', os: 'on' },
-        values: { cpu: `${cores} core${cores > 1 ? 's' : ''}` },
+        id: 'press',
+        label: bi('«Сохранить»', '“Save”'),
+        caption: bi(
+          'Вы нажали «Сохранить» в редакторе. Чтобы текст пережил выключение, его нужно записать на диск, но редактор не знает, какие места на диске свободны, а какие заняты другими файлами. Этот учёт ведёт операционная система, поэтому редактор не пишет на диск сам, а обращается к ней.',
+          'You pressed “Save”. The text must go to the disk, but the editor does not know which places there are free; the operating system keeps that account, so the editor asks it.',
+        ),
+        focus: ['editor'],
+        say: { editor: bi('Редактору нужно записать файл notes.txt на диск.', 'The editor needs to write notes.txt to the disk.') },
+        states: { ...startWith(ALL, 'editor', 'disk'), editor: 'on' },
+        values: { cpu: c === 4 ? '4 cores' : '1 core' },
         metrics,
       },
     ];
     if (broken.has('no-os')) {
       steps.push(
         {
-          id: 'both',
-          label: bi('без посредника', 'no go-between'),
-          caption: bi('Посредника нет. Редактор и браузер сами ищут на диске свободное место — и каждый решает, что блок 4711 свободен.', 'There is no go-between. The editor and the browser look for free room on the disk themselves, and each decides that block 4711 is free.'),
-          focus: ['editor', 'browser', 'disk'],
-          states: { os: 'off', editor: 'warn', browser: 'warn' },
+          id: 'rawA',
+          label: bi('редактор пишет', 'editor writes'),
+          caption: bi('Посредника нет, и редактор сам ищет на диске свободное место. Он решает, что блок 4711 никем не занят, и записывает туда ваш текст.', 'There is no go-between: the editor itself decides block 4711 is free and writes your text there.'),
+          focus: ['e-rawA', 'disk'],
+          reveal: ['e-rawA', 'os'],
+          tokens: [{ edge: 'e-rawA', label: 'notes.txt → 4711' }],
+          say: { disk: bi('Редактор сам записал текст в блок 4711, решив, что этот блок свободен.', 'The editor wrote the text into block 4711.') },
+          states: { os: 'off' },
+          values: { disk: 'notes.txt · 4711' },
           metrics,
         },
         {
-          id: 'clash',
-          label: bi('порча', 'corruption'),
-          caption: bi('Браузер записал свой кэш поверх половины вашего текста. Файл notes.txt испорчен.', 'The browser wrote its cache over half of your text. The file notes.txt is spoilt.'),
-          focus: ['disk'],
-          states: { disk: 'err' },
+          id: 'rawB',
+          label: bi('браузер пишет', 'browser writes'),
+          caption: bi('Браузер тоже ищет место сам. Он не знает, что редактор только что занял блок 4711, считает этот блок свободным и записывает туда свои временные файлы. Половина вашего текста стёрта.', 'The browser also decides block 4711 is free and writes its cache there. Half of your text is gone.'),
+          focus: ['e-rawB', 'disk'],
+          reveal: ['browser', 'e-rawB'],
+          tokens: [{ edge: 'e-rawB', label: 'cache → 4711' }],
+          say: { disk: bi('Браузер записал свои данные в тот же блок 4711, поверх текста.', 'The browser wrote into the same block 4711.') },
+          states: { disk: 'err', browser: 'on' },
+          values: { disk: 'notes.txt · 4711 (!)' },
           metrics,
-          broken: { at: 'disk', message: "cat: notes.txt: Input/output error", caption: bi('кто-то должен один вести учёт места на диске; это и есть работа системы.', 'someone has to be the only one who keeps track of disk space; that is the system’s job.') },
+          broken: { at: 'disk', message: 'cat: notes.txt: Input/output error', caption: bi('на диске. Учёт места на диске должен вести кто-то один, иначе программы пишут друг поверх друга. Эту работу и выполняет операционная система.', 'on the disk: one party must keep track of disk space; that is the system’s job.') },
         },
       );
       return steps;
     }
+    const turns = n.switches > 0;
     steps.push(
       {
-        id: 'write',
-        label: bi('запись', 'write'),
-        caption: bi('Система находит свободные блоки, пишет туда текст и отмечает: это файл notes.txt в папке notes. Редактор получает ответ «готово».', 'The system finds free blocks, writes the text there and notes: this is the file notes.txt in the folder notes. The editor gets the answer “done”.'),
-        focus: ['os', 'e-write', 'disk'],
-        tokens: [{ edge: 'e-write', label: 'blocks 4711–4713' }],
-        states: { disk: 'ok' },
+        id: 'ask',
+        label: bi('просьба', 'request'),
+        caption: bi('Редактор передаёт системе просьбу: записать текст в файл notes.txt в папке notes. Сам редактор при этом ждёт ответа.', 'The editor hands the system a request: write the text into notes.txt. It waits for the answer.'),
+        focus: ['e-save', 'os'],
+        reveal: ['os', 'e-save'],
+        tokens: [{ edge: 'e-save', label: bi('сохрани notes.txt', 'save notes.txt') }],
+        say: { os: bi('Система принимает просьбу редактора сохранить файл notes.txt.', 'The system takes the editor’s request to save notes.txt.') },
+        states: { os: 'on' },
         metrics,
       },
       {
-        id: 'memory',
+        id: 'write',
+        label: bi('запись', 'write'),
+        caption: bi('Система находит на диске свободные блоки 4711–4713, записывает в них текст и отмечает у себя, что эти блоки принадлежат файлу notes.txt. Никакая другая программа их теперь не получит.', 'The system finds free blocks 4711–4713, writes the text and notes they belong to notes.txt.'),
+        focus: ['e-write', 'disk'],
+        reveal: ['e-write'],
+        tokens: [{ edge: 'e-write', label: bi('блоки 4711–4713', 'blocks 4711–4713') }],
+        say: { disk: bi('Диск записывает текст в блоки 4711–4713, которые система нашла свободными.', 'The disk writes the text into the free blocks 4711–4713.') },
+        states: { disk: 'ok' },
+        values: { disk: 'notes.txt · 4711–4713' },
+        metrics,
+      },
+      {
+        id: 'done',
+        label: bi('готово', 'done'),
+        caption: bi('Система сообщает редактору, что файл записан. Редактор показывает вам, что всё сохранено, и вы продолжаете печатать.', 'The system tells the editor the file is written.'),
+        focus: ['e-save', 'editor'],
+        tokens: [{ edge: 'e-save', label: bi('готово', 'done'), reverse: true }],
+        say: { editor: bi('Редактор получил от системы ответ: файл сохранён.', 'The editor hears back: the file is saved.') },
+        states: { editor: 'ok' },
+        metrics,
+      },
+      {
+        id: 'tab',
+        label: bi('вкладка', 'tab'),
+        caption: bi('Тем временем вы открыли в браузере новую вкладку. Странице нужна память, и браузер тоже не берёт её сам, а просит у системы.', 'Meanwhile you opened a new tab. The page needs memory, and the browser asks the system for it.'),
+        focus: ['browser', 'e-mem'],
+        reveal: ['browser', 'e-mem'],
+        tokens: [{ edge: 'e-mem', label: bi('нужно 300 МБ', 'need 300 MB') }],
+        say: { browser: bi('Браузер открывает вкладку и просит у системы 300 МБ памяти.', 'The browser asks for 300 MB for a new tab.') },
+        states: { browser: 'on' },
+        metrics,
+      },
+      {
+        id: 'alloc',
         label: bi('память', 'memory'),
-        caption: bi('Тем временем браузер открыл вкладку и попросил памяти. Система выделила ему отдельный участок, в чужой он не залезет.', 'Meanwhile the browser opened a tab and asked for memory. The system gave it a separate piece; it cannot reach into anyone else’s.'),
-        focus: ['browser', 'e-mem', 'os', 'e-alloc', 'memory'],
-        tokens: [{ edge: 'e-mem' }, { edge: 'e-alloc', label: '+300 MB' }],
-        states: { browser: 'on', memory: 'on' },
+        caption: bi('Система выделяет браузеру отдельный участок памяти. Участок редактора остаётся нетронутым: если браузер попытается залезть в чужую память, система его остановит.', 'The system gives the browser a separate piece of memory; the editor’s piece stays untouched.'),
+        focus: ['e-alloc', 'memory'],
+        reveal: ['memory', 'e-alloc'],
+        tokens: [{ edge: 'e-alloc', label: bi('+300 МБ браузеру', '+300 MB for the browser') }],
+        say: { memory: bi('У браузера появился свой участок памяти, отдельный от участка редактора.', 'The browser has its own piece, apart from the editor’s.') },
+        states: { memory: 'on' },
         metrics,
       },
       {
         id: 'turns',
         label: bi('по очереди', 'in turns'),
-        caption:
-          n.switches > 0
-            ? fmt(bi('Процессор хотят {n} программ, а ядер {c}. Система даёт каждой по {s} мс и переключает дальше — {w} раз в секунду. Музыка не прерывается.', '{n} programs want the processor and there are {c} cores. The system gives each {s} ms and moves on, {w} times a second. The music does not stop.'), { n: p.programs, c: cores, s: SLICE_MS, w: n.switches })
-            : fmt(bi('Программ {n}, ядер {c}: каждой досталось своё ядро, очереди нет.', '{n} programs, {c} cores: each has a core of its own, there is no queue.'), { n: p.programs, c: cores }),
-        focus: ['player', 'e-play', 'os', 'e-turns', 'cpu'],
-        tokens: [{ edge: 'e-play' }, { edge: 'e-turns', label: `${SLICE_MS} ms` }],
-        states: { player: 'on', cpu: n.share < 30 ? 'warn' : 'on' },
-        values: { cpu: `${cores} core${cores > 1 ? 's' : ''} · ${n.share}% each` },
+        caption: turns
+          ? fmtb(
+              bi(
+                'Процессор сейчас нужен {n}, а у него {c}. Поэтому система даёт каждой программе по {s} мс и переключает процессор на следующую, {w} раз в секунду. Каждой достаётся {sh}% времени процессора, но перерывы так коротки, что музыка не прерывается, а буквы появляются сразу.',
+                '{n} want the processor and it has {c}. The system gives each {s} ms and moves on, {w} times a second; each gets {sh}%.',
+              ),
+              { n: bi(progsDat(p.programs), `${p.programs} programs`), c: bi(cores(c), `${c} core(s)`), s: SLICE_MS, w: n.switches, sh: n.share },
+            )
+          : fmtb(bi('Процессор нужен {n}, а у него {c}. Каждой программе досталось своё ядро, поэтому очереди нет, и никому не приходится ждать.', '{n} programs, {c} cores: each has a core of its own, there is no queue.'), { n: bi(progsDat(p.programs), `${p.programs}`), c: bi(cores(c), `${c}`) }),
+        focus: ['e-turns', 'cpu'],
+        reveal: ['cpu', 'e-turns'],
+        tokens: [{ edge: 'e-turns', label: turns ? bi(`по ${SLICE_MS} мс каждой`, `${SLICE_MS} ms each`) : bi('по ядру каждой', 'a core each') }],
+        say: {
+          cpu: turns
+            ? fmtb(bi('Ядро выполняет программы по очереди: {w} переключений в секунду.', 'The core runs programs in turns: {w} switches a second.'), { w: n.switches })
+            : bi('У каждой программы своё ядро, и ждать очереди не нужно.', 'Each program has its own core.'),
+        },
+        states: { cpu: n.share < 30 ? 'warn' : 'on' },
+        values: { cpu: `${c === 4 ? '4 cores' : '1 core'} · ${n.share}% each` },
         metrics,
       },
     );
@@ -176,10 +360,11 @@ export const systemModel = defineModel<P>({
     const m = next[next.length - 1]?.metrics ?? {};
     if (change.kind === 'break') {
       return change.on
-        ? bi('Без системы никто не ведёт учёт диска: две программы записали данные в одно место, и файл испорчен.', 'Without the system nobody keeps track of the disk: two programs wrote into the same place, and the file is spoilt.')
-        : bi('Посредник вернулся: программы снова просят систему, и та раздаёт место без столкновений.', 'The go-between is back: programs ask the system again, and it hands out room without collisions.');
+        ? bi('Без системы учёт диска никто не ведёт: две программы записали данные в один и тот же блок, и файл испорчен.', 'Without the system nobody keeps track of the disk: two programs wrote into the same block.')
+        : bi('Посредник вернулся: программы снова просят систему, и она раздаёт место на диске так, что записи не сталкиваются.', 'The go-between is back: no more collisions.');
     }
-    if (change.id === 'programs') return fmt(bi('{a} → {b} программ: каждой достаётся {s}% процессора. Медленнее, но работают все.', '{a} → {b} programs: each gets {s}% of the processor. Slower, but they all run.'), { a: a.programs as number, b: b.programs as number, s: m.share ?? 0 });
-    return fmt(bi('Ядер стало {c}: одновременно работают до {c} программ, у каждой {s}% процессора.', 'There are now {c} cores: up to {c} programs run at the same moment, each with {s}% of the processor.'), { c: b.cores as string, s: m.share ?? 0 });
+    if (change.id === 'programs')
+      return fmtb(bi('Процессор теперь нужен не {a}, а {b}. Каждой достаётся {s}% его времени: работают все, но каждая медленнее.', '{a} → {b} programs: each gets {s}% of the processor.'), { a: bi(progsDat(a.programs as number), String(a.programs)), b: bi(progsDat(b.programs as number), String(b.programs)), s: m.share ?? 0 });
+    return fmtb(bi('Теперь у процессора {c}. Одновременно работают до {n} программ, и каждой достаётся {s}% времени процессора.', 'Now {c}: up to {n} programs at once, {s}% each.'), { c: bi(cores(Number(b.cores)), `${b.cores} cores`), n: Number(b.cores), s: m.share ?? 0 });
   },
 });
