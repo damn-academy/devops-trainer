@@ -91,7 +91,7 @@ export const CONCEPTS: Concept[] = [
     id: 'iac.serial',
     term: bi('serial', 'serial'),
     scan: false,
-    short: bi('Ключ плея Ansible, который задаёт, сколько хостов проходят весь плей за один раз. При serial: 1 узлы обрабатываются по одному, и если на одном узле плей завершился ошибкой, он останавливается и не трогает остальные.', 'A key of an Ansible play: how many hosts go through the whole play at a time. With serial: 1 the nodes go one by one, and if one fails, the play stops and leaves the rest alone.'),
+    short: bi('Ключ сценария Ansible, который задаёт, сколько хостов проходят весь сценарий за один раз. При serial: 1 узлы обрабатываются по одному, и если на одном узле сценарий завершился ошибкой, он останавливается и не трогает остальные.', 'A key of an Ansible play: how many hosts go through the whole play at a time. With serial: 1 the nodes go one by one, and if one fails, the play stops and leaves the rest alone.'),
     introducedIn: 'k8s-3.operate',
   },
 ];

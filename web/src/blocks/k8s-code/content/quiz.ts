@@ -251,7 +251,7 @@ export const QUIZ: QuizItem[] = [
     id: 'k8s-3.q.serial',
     kind: 'bugfind',
     concepts: ['iac.serial'],
-    prompt: bi('Перед вами плей обновления рабочих узлов. Пока он работал, сайт несколько минут был недоступен. Найдите строку, которая в этом виновата.', 'The play that upgrades the workers. During the run the site was down for several minutes. Find the line responsible.'),
+    prompt: bi('Перед вами сценарий обновления рабочих узлов. Пока он работал, сайт несколько минут был недоступен. Найдите строку, которая в этом виновата.', 'The play that upgrades the workers. During the run the site was down for several minutes. Find the line responsible.'),
     code: '- name: Upgrade the workers\n  hosts: workers\n  become: true\n  serial: "100%"\n  tasks:\n    - name: Drain the node\n      ansible.builtin.command: kubectl drain {{ inventory_hostname }} --ignore-daemonsets\n      delegate_to: cp-1\n    - name: kubeadm upgrade node\n      ansible.builtin.command: kubeadm upgrade node',
     lang: 'yaml',
     bug: [4],
