@@ -77,7 +77,7 @@ function checkRules(ctx: CmdContext, file: string): boolean {
 
 export const promtoolCommand: ShellCommand = {
   name: 'promtool',
-  summary: bi('Инструменты Prometheus: проверка конфигурации и правил, запросы PromQL.', 'Prometheus tools: checking config and rules, PromQL queries.'),
+  summary: bi('Инструменты Prometheus, которые проверяют конфигурацию и правила и выполняют запросы PromQL.', 'Prometheus tools that check the configuration and rules and run PromQL queries.'),
   help: `usage: promtool [<flags>] <command> [<args> ...]
 
 Tooling for the Prometheus monitoring system.
@@ -163,7 +163,7 @@ function tree(r: Route, ind: string, last: boolean, out: string[], root = false)
 
 export const amtoolCommand: ShellCommand = {
   name: 'amtool',
-  summary: bi('Инструмент Alertmanager: проверка конфигурации и маршрутов.', 'The Alertmanager tool: checking config and routes.'),
+  summary: bi('Инструмент Alertmanager, который проверяет конфигурацию и маршруты.', 'The Alertmanager tool, which checks the configuration and routes.'),
   help: `usage: amtool [<flags>] <command> [<args> ...]
 
 View and modify the current Alertmanager state.

@@ -54,13 +54,13 @@ export const monModel = defineModel<P>({
     'The api service has started answering with error 500. The diagram shows how the error counter in the process memory reaches Prometheus, how an alerting rule notices that there are too many errors, and how Alertmanager sends a message to the on-call engineer. Under the diagram you see how many seconds pass from the first error to the message in the worst case.',
   ),
   intro: bi(
-    'Схема соберётся у вас на глазах: сейчас на ней только процесс api. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Новый участник появляется, когда до него доходит ошибка. Облачко у подсвеченного участника говорит, что он делает, а карточка на линии показывает, что он передаёт следующему.\n\nКогда дойдёте до сообщения дежурному, поменяйте в «Параметрах» интервал опроса, окно, for или group_wait и посмотрите, как меняется время до сообщения. Потом включите по одной поломке в блоке «Сломать».',
-    'The diagram builds itself as you go: now it shows only the api process. Press “Start: step forward”, then go on with “Step forward” under the diagram. A participant appears when the error reaches it. The callout at the highlighted participant says what it does, and the card on the line shows what it hands on.\n\nOnce you reach the message to the on-call engineer, change the scrape interval, the window, for or group_wait in “Parameters” and watch the time to the message change. Then switch on the breaks in “Break it” one at a time.',
+    'Схема соберётся у вас на глазах, и сейчас на ней есть только процесс api. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Новый участник появляется, когда до него доходит ошибка. Облачко у подсвеченного участника говорит, что он делает, а карточка на линии показывает, что он передаёт следующему.\n\nКогда дойдёте до сообщения дежурному, поменяйте в «Параметрах» интервал опроса, окно, for или group_wait и посмотрите, как меняется время до сообщения. Потом включите по одной поломке в блоке «Сломать».',
+    'The diagram builds itself as you go, and now it shows only the api process. Press “Start from the first step”, then go on with “Step forward” above the diagram. A participant appears when the error reaches it. The callout at the highlighted participant says what it does, and the card on the line shows what it hands on.\n\nOnce you reach the message to the on-call engineer, change the scrape interval, the window, for or group_wait in “Parameters” and watch the time to the message change. Then switch on the breaks in “Break it” one at a time.',
   ),
   legend: [
     { mark: 'active', text: bi('участник, который работает сейчас', 'the participant working now') },
     { mark: 'say', text: bi('что он делает', 'what it does') },
-    { mark: 'token', text: bi('что он передаёт следующему: значение счётчика, алерт, сообщение', 'what it hands on: a counter value, an alert, a message') },
+    { mark: 'token', text: bi('то, что участник передаёт следующему, например значение счётчика, алерт или сообщение', 'what the participant hands on, such as a counter value, an alert or a message') },
     { mark: 'icon:process', text: bi('процесс сервиса api', 'the api service process') },
     { mark: 'icon:file', text: bi('страница /metrics', 'the /metrics page') },
     { mark: 'icon:server', text: bi('сервер Prometheus', 'the Prometheus server') },
@@ -89,7 +89,7 @@ export const monModel = defineModel<P>({
         w: 220,
         h: 64,
         card: card(
-          bi('Процесс сервиса api. Каждый раз, когда он отвечает на запрос, клиентская библиотека Prometheus внутри процесса увеличивает на единицу счётчик http_requests_total с метками маршрута и кода ответа. Счётчик хранится в памяти процесса и после перезапуска начинается с нуля.', 'The api service process. Every time it answers a request, the Prometheus client library inside the process adds one to the http_requests_total counter with the route and status code labels. The counter lives in the process memory and starts from zero after a restart.'),
+          bi('Этот блок изображает процесс сервиса api. Каждый раз, когда он отвечает на запрос, клиентская библиотека Prometheus внутри процесса увеличивает на единицу счётчик http_requests_total с метками маршрута и кода ответа. Счётчик хранится в памяти процесса и после перезапуска начинается с нуля.', 'This block stands for the api service process. Every time it answers a request, the Prometheus client library inside the process adds one to the http_requests_total counter with the route and status code labels. The counter lives in the process memory and starts from zero after a restart.'),
           bi('Счётчики описывают разработчики сервиса в его коде.', 'The service developers declare the counters in its code.'),
         ),
       },
@@ -104,7 +104,7 @@ export const monModel = defineModel<P>({
         w: 220,
         h: 64,
         card: card(
-          bi('Страница, которую процесс отдаёт по HTTP. На ней записаны текущие значения всех метрик процесса, по строке на ряд: `http_requests_total{route="/checkout",code="500"} 37`. Истории на странице нет: каждый, кто её открывает, видит только числа на эту секунду.', 'A page the process serves over HTTP. It holds the current values of all its metrics, one line per series: `http_requests_total{route="/checkout",code="500"} 37`. There is no history on the page: whoever opens it sees only the numbers of this second.'),
+          bi('Страницу /metrics процесс отдаёт по HTTP. На ней записаны текущие значения всех метрик процесса, по строке на ряд: `http_requests_total{route="/checkout",code="500"} 37`. Истории на странице нет, и каждый, кто её открывает, видит только числа на текущую секунду.', 'The process serves the /metrics page over HTTP. It holds the current values of all its metrics, one line per series: `http_requests_total{route="/checkout",code="500"} 37`. There is no history on the page, and whoever opens it sees only the numbers of this second.'),
           bi('Страницу отдаёт клиентская библиотека Prometheus внутри процесса.', 'The Prometheus client library inside the process serves the page.'),
           'curl http://api-1:8080/metrics',
         ),
@@ -120,7 +120,7 @@ export const monModel = defineModel<P>({
         w: 220,
         h: 64,
         card: card(
-          bi('Сервер мониторинга. Он сам по расписанию приходит к каждой цели за страницей /metrics, записывает значения в своё хранилище и раз в минуту вычисляет правила алертов. Если цель не ответила, Prometheus записывает для неё ряд up со значением 0.', 'The monitoring server. It visits every target on a schedule to fetch its /metrics page, writes the values into its store and evaluates the alerting rules once a minute. If a target does not answer, Prometheus writes the up series with the value 0 for it.'),
+          bi('Prometheus служит сервером мониторинга. Он сам по расписанию приходит к каждой цели за страницей /metrics, записывает значения в своё хранилище и раз в минуту вычисляет правила алертов. Если цель не ответила, Prometheus записывает для неё ряд up со значением 0.', 'Prometheus is the monitoring server. It visits every target on a schedule to fetch its /metrics page, writes the values into its store and evaluates the alerting rules once a minute. If a target does not answer, Prometheus writes the up series with the value 0 for it.'),
           bi('Prometheus настраивает команда эксплуатации в файле prometheus.yml: там перечислены цели и интервал опроса.', 'The operations team configures Prometheus in prometheus.yml, which lists the targets and the scrape interval.'),
           'promtool check config prometheus.yml',
           { url: 'https://prometheus.io/docs/prometheus/latest/configuration/configuration/', label: 'prometheus.io › Configuration' },
@@ -138,7 +138,7 @@ export const monModel = defineModel<P>({
         w: 220,
         h: 64,
         card: card(
-          bi('База временных рядов внутри Prometheus (TSDB). Для каждого набора меток она хранит ленту пар «время, значение» и дописывает в её конец каждое новое значение. Шкала внутри блока показывает, сколько значений помещается в окно, за которое правило считает скорость.', 'The time-series database inside Prometheus (TSDB). For every label set it keeps a strip of “time, value” pairs and appends every new value to its end. The gauge inside the block shows how many values fit into the window over which the rule computes the rate.'),
+          bi('Внутри Prometheus работает база временных рядов (TSDB). Для каждого набора меток она хранит ленту пар «время, значение» и дописывает в её конец каждое новое значение. Шкала внутри блока показывает, сколько значений помещается в окно, за которое правило считает скорость.', 'Inside Prometheus runs a time-series database (TSDB). For every label set it keeps a strip of “time, value” pairs and appends every new value to its end. The gauge inside the block shows how many values fit into the window over which the rule computes the rate.'),
           bi('Хранилище ведёт сам Prometheus.', 'Prometheus keeps the store itself.'),
         ),
       },
@@ -154,7 +154,7 @@ export const monModel = defineModel<P>({
         w: 220,
         h: 64,
         card: card(
-          bi('Запрос PromQL с условием, что доля ответов 5xx за окно выше 2 %. Prometheus вычисляет его раз в минуту. Пока условие выполняется меньше, чем указано в поле for, алерт находится в состоянии pending и никуда не уходит. Когда условие продержалось дольше, алерт переходит в состояние firing.', 'A PromQL query with a condition: the share of 5xx answers over the window is above 2 %. Prometheus evaluates it once a minute. While the condition has held for less than the `for` field says, the alert is pending and goes nowhere. Once the condition has held longer, the alert is firing.'),
+          bi('Правило состоит из запроса PromQL с условием, что доля ответов 5xx за окно выше 2 %. Prometheus вычисляет его раз в минуту. Пока условие выполняется меньше, чем указано в поле for, алерт находится в состоянии pending и никуда не уходит. Когда условие продержалось дольше, алерт переходит в состояние firing.', 'The rule consists of a PromQL query with the condition that the share of 5xx answers over the window is above 2 %. Prometheus evaluates it once a minute. While the condition has held for less than the `for` field says, the alert is pending and goes nowhere. Once the condition has held longer, the alert is firing.'),
           bi('Правило пишете вы, в файле правил rules.yml.', 'You write the rule, in the rule file rules.yml.'),
           'promtool check rules rules.yml',
           { url: 'https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/', label: 'prometheus.io › Alerting rules' },
@@ -171,7 +171,7 @@ export const monModel = defineModel<P>({
         w: 220,
         h: 64,
         card: card(
-          bi('Отдельный сервис, который получает сработавшие алерты от Prometheus. По меткам алерта он выбирает получателя, ждёт group_wait, чтобы собрать похожие алерты в одно сообщение, и отправляет это сообщение. Он же гасит алерты-следствия, когда уже сработал алерт о причине.', 'A separate service that receives firing alerts from Prometheus. By the alert labels it picks the receiver, waits group_wait to gather similar alerts into one message and sends that message. It also mutes the consequence alerts once the alert about the cause has fired.'),
+          bi('Alertmanager работает отдельным сервисом и получает сработавшие алерты от Prometheus. По меткам алерта он выбирает получателя, ждёт group_wait, чтобы собрать похожие алерты в одно сообщение, и отправляет это сообщение. Он же гасит алерты-следствия, когда уже сработал алерт о причине.', 'Alertmanager runs as a separate service and receives firing alerts from Prometheus. By the alert labels it picks the receiver, waits group_wait to gather similar alerts into one message and sends that message. It also mutes the consequence alerts once the alert about the cause has fired.'),
           bi('Alertmanager настраивает команда эксплуатации в файле alertmanager.yml.', 'The operations team configures Alertmanager in alertmanager.yml.'),
           'amtool config routes show',
         ),
@@ -187,7 +187,7 @@ export const monModel = defineModel<P>({
         w: 220,
         h: 64,
         card: card(
-          bi('Человек, которому приходит сообщение: на телефон, в чат или на почту. Будить его стоит только из-за того, что чувствуют пользователи, поэтому правило стоит на доле ошибок, а не на загрузке процессора.', 'The person who gets the message: on a phone, in a chat or by email. They should be woken only by what users feel, which is why the rule watches the error share rather than CPU load.'),
+          bi('Дежурный получает сообщение на телефон, в чат или на почту. Будить его стоит только из-за того, что чувствуют пользователи, поэтому правило стоит на доле ошибок, а не на загрузке процессора.', 'The on-call engineer gets the message on a phone, in a chat or by email. They should be woken only by what users feel, which is why the rule watches the error share rather than CPU load.'),
           bi('Кто дежурит сегодня, решает расписание дежурств команды.', 'The team’s on-call schedule decides who is on duty today.'),
         ),
       },
@@ -197,8 +197,8 @@ export const monModel = defineModel<P>({
       { id: 'e-scrape', from: 'prom', to: 'metrics', label: 'GET /metrics', card: card(bi('Prometheus сам приходит за страницей каждые scrape_interval секунд, и такой опрос цели называют scrape. Если цель не ответила, ряд up для неё становится равным 0.', 'Polling a target, called a scrape: Prometheus comes for the page itself every scrape_interval seconds. If the target does not answer, its up series becomes 0.'), bi('Опрос выполняет Prometheus.', 'Prometheus performs the scrape.'), 'up{job="api"}') },
       { id: 'e-store', from: 'prom', to: 'tsdb', label: bi('время и значение', 'time and value'), card: card(bi('Каждое полученное значение дописывается в конец своего ряда вместе со временем опроса.', 'Every value received is appended to the end of its series together with the scrape time.'), bi('Значения записывает Prometheus.', 'Prometheus writes it.')) },
       { id: 'e-eval', from: 'tsdb', to: 'rule', label: bi('раз в минуту', 'once a minute'), card: card(bi('Раз в минуту Prometheus вычисляет правило. Функция rate берёт из хранилища значения счётчика за окно и считает по ним, сколько ошибок в секунду было в среднем.', 'Once a minute Prometheus evaluates the rule. The rate function takes the counter values for the window from the store and computes the average errors per second from them.'), bi('Правило вычисляет Prometheus.', 'Prometheus evaluates it.')) },
-      { id: 'e-alert', from: 'rule', to: 'am', label: bi('алерт firing', 'firing alert'), card: card(bi('Сам Prometheus людям не пишет: сработавший алерт он отправляет в Alertmanager запросом POST /api/v2/alerts.', 'Prometheus does not message people itself: it sends the firing alert to Alertmanager with POST /api/v2/alerts.'), bi('Алерт отправляет Prometheus.', 'Prometheus sends it.')) },
-      { id: 'e-notify', from: 'am', to: 'pager', label: bi('сообщение', 'message'), card: card(bi('Одно сообщение на группу похожих алертов. Повторит его Alertmanager не раньше, чем через repeat_interval.', 'One message per group of similar alerts. Alertmanager repeats it no sooner than repeat_interval.'), bi('Сообщение отправляет Alertmanager.', 'Alertmanager sends it.')) },
+      { id: 'e-alert', from: 'rule', to: 'am', label: bi('алерт firing', 'firing alert'), card: card(bi('Сам Prometheus людям не пишет, а сработавший алерт отправляет в Alertmanager запросом POST /api/v2/alerts.', 'Prometheus does not message people itself, and it sends the firing alert to Alertmanager with POST /api/v2/alerts.'), bi('Алерт отправляет Prometheus.', 'Prometheus sends it.')) },
+      { id: 'e-notify', from: 'am', to: 'pager', label: bi('сообщение', 'message'), card: card(bi('Alertmanager отправляет одно сообщение на группу похожих алертов и повторяет его не раньше, чем через repeat_interval.', 'Alertmanager sends one message per group of similar alerts and repeats it no sooner than repeat_interval.'), bi('Сообщение отправляет Alertmanager.', 'Alertmanager sends it.')) },
     ],
   },
   params: [
@@ -312,7 +312,7 @@ export const monModel = defineModel<P>({
       {
         id: 'count',
         label: bi('ошибка', 'error'),
-        caption: bi('Пользователь оформляет заказ, и процесс api отвечает ему ошибкой 500. Клиентская библиотека Prometheus внутри процесса тут же увеличивает на единицу счётчик http_requests_total с метками route="/checkout" и code="500". Больше процесс ничего не делает: он не знает, кто и когда посмотрит на этот счётчик.', 'A user places an order and the api process answers with error 500. The Prometheus client library inside the process at once adds one to the http_requests_total counter with the labels route="/checkout" and code="500". The process does nothing else: it does not know who will look at the counter or when.'),
+        caption: bi('Пользователь оформляет заказ, и процесс api отвечает ему ошибкой 500. Клиентская библиотека Prometheus внутри процесса тут же увеличивает на единицу счётчик http_requests_total с метками route="/checkout" и code="500". Больше процесс ничего не делает, потому что он не знает, кто и когда посмотрит на этот счётчик.', 'A user places an order and the api process answers with error 500. The Prometheus client library inside the process at once adds one to the http_requests_total counter with the labels route="/checkout" and code="500". The process does nothing else, because it does not know who will look at the counter or when.'),
         focus: ['app'],
         say: { app: bi('Процесс api отвечает ошибкой 500 и прибавляет единицу к счётчику ошибок.', 'The api process answers with error 500 and adds one to the error counter.') },
         states: startWith('app'),
@@ -355,7 +355,7 @@ export const monModel = defineModel<P>({
       {
         id: 'scrape',
         label: 'scrape',
-        caption: fb(bi('Каждые {s} секунд Prometheus сам приходит к процессу за страницей /metrics. Такой опрос называют scrape: не сервис отправляет данные в мониторинг, а мониторинг забирает их у сервиса. Поэтому Prometheus сразу замечает, если сервис перестал отвечать.', 'Every {s} seconds Prometheus comes to the process for the /metrics page itself. Such polling is called a scrape: the service does not send data to monitoring, monitoring fetches it from the service. That is why Prometheus notices at once when a service stops answering.'), { s }),
+        caption: fb(bi('Каждые {s} секунд Prometheus сам приходит к процессу за страницей /metrics. Такой опрос называют scrape, и при нём не сервис отправляет данные в мониторинг, а мониторинг забирает их у сервиса. Поэтому Prometheus сразу замечает, если сервис перестал отвечать.', 'Every {s} seconds Prometheus comes to the process for the /metrics page itself. Such polling is called a scrape, and in it the service does not send data to monitoring, monitoring fetches it from the service. That is why Prometheus notices at once when a service stops answering.'), { s }),
         focus: ['e-scrape', 'prom'],
         reveal: ['prom', 'e-scrape'],
         tokens: [{ edge: 'e-scrape', reverse: true, label: 'code="500" 37' }],
@@ -371,7 +371,7 @@ export const monModel = defineModel<P>({
         focus: ['e-store', 'tsdb'],
         reveal: ['tsdb', 'e-store'],
         tokens: [{ edge: 'e-store', label: bi('(время, 37)', '(time, 37)') }],
-        say: { tsdb: fb(bi('Хранилище дописывает значение в ряд; в окне {w} мин их уже {n}.', 'The store appends the value to the series; the {w} min window now holds {n}.'), { w: p.window, n: n.samples }) },
+        say: { tsdb: fb(bi('Хранилище дописывает значение в ряд, и в окне {w} мин таких значений уже {n}.', 'The store appends the value to the series, and the {w} min window now holds {n} such values.'), { w: p.window, n: n.samples }) },
         fill: { tsdb: Math.min(1, n.samples / 40) },
         values: { tsdb: `[${p.window}m] → ${n.samples}` },
         metrics: m,
@@ -396,11 +396,11 @@ export const monModel = defineModel<P>({
         {
           id: 'eval',
           label: 'pending',
-          caption: fb(bi('Раз в минуту Prometheus вычисляет правило: какая доля ответов за последние {w} мин закончилась ошибкой 5xx? Доля выше 2 %, условие выполнено. Но в правиле указано for: {f}m, поэтому алерт пока переходит только в состояние pending и никуда не уходит. Если ошибки прекратятся раньше, никто ничего не получит.', 'Once a minute Prometheus evaluates the rule: what share of answers over the last {w} min ended in a 5xx error? The share is above 2 %, the condition holds. But the rule says for: {f}m, so for now the alert only becomes pending and goes nowhere. If the errors stop earlier, nobody gets anything.'), { w: p.window, f: p.forMin }),
+          caption: fb(bi('Раз в минуту Prometheus вычисляет правило и считает, какая доля ответов за последние {w} мин закончилась ошибкой 5xx. Доля оказывается выше 2 %, и условие выполнено. Но в правиле указано for: {f}m, поэтому алерт пока переходит только в состояние pending и никуда не уходит. Если ошибки прекратятся раньше, никто ничего не получит.', 'Once a minute Prometheus evaluates the rule and computes what share of answers over the last {w} min ended in a 5xx error. The share turns out above 2 %, and the condition holds. But the rule says for: {f}m, so for now the alert only becomes pending and goes nowhere. If the errors stop earlier, nobody gets anything.'), { w: p.window, f: p.forMin }),
           focus: ['e-eval', 'rule'],
           reveal: ['rule', 'e-eval'],
           tokens: [{ edge: 'e-eval', label: bi('5xx: 25 %', '5xx: 25 %') }],
-          say: { rule: bi('Правило насчитало 25 % ошибок, это выше порога в 2 %, и алерт ждёт в состоянии pending.', 'The rule computes the error share: 25 %, above the 2 % threshold. The alert waits (pending).') },
+          say: { rule: bi('Правило насчитало 25 % ошибок, это выше порога в 2 %, и алерт ждёт в состоянии pending.', 'The rule computed 25 % errors, which is above the 2 % threshold, and the alert waits in the pending state.') },
           states: { rule: 'warn', tsdb: 'ok' },
           values: { rule: `pending · for ${p.forMin}m` },
           metrics: m,
@@ -408,7 +408,7 @@ export const monModel = defineModel<P>({
         {
           id: 'firing',
           label: 'firing',
-          caption: fb(bi('Условие продержалось {f} мин подряд, и алерт переходит из состояния pending в firing. Короткий всплеск ошибок до этого шага не дошёл бы: for отсеивает его и бережёт сон дежурного.', 'The condition has held for {f} min in a row, and the alert goes from pending to firing. A short burst of errors would not get this far: for filters it out and spares the on-call engineer’s sleep.'), { f: p.forMin }),
+          caption: fb(bi('Условие продержалось {f} мин подряд, и алерт переходит из состояния pending в firing. Короткий всплеск ошибок до этого шага не дошёл бы, потому что for отсеивает его и бережёт сон дежурного.', 'The condition has held for {f} min in a row, and the alert goes from pending to firing. A short burst of errors would not get this far, because for filters it out and spares the on-call engineer’s sleep.'), { f: p.forMin }),
           focus: ['rule'],
           say: { rule: fb(bi('Условие держится уже {f} мин подряд, и алерт срабатывает (firing).', 'The condition has held for {f} min in a row: the alert fires.'), { f: p.forMin }) },
           states: { rule: 'err' },
@@ -420,11 +420,11 @@ export const monModel = defineModel<P>({
       steps.push({
         id: 'eval',
         label: 'firing',
-        caption: fb(bi('Раз в минуту Prometheus вычисляет правило: какая доля ответов за последние {w} мин закончилась ошибкой 5xx? Доля выше 2 %. Поле for равно нулю, поэтому алерт срабатывает сразу, при первом же вычислении. Так он сработал бы и на всплеске ошибок длиной в одну минуту.', 'Once a minute Prometheus evaluates the rule: what share of answers over the last {w} min ended in a 5xx error? The share is above 2 %. The for field is zero, so the alert fires at once, on the first evaluation. It would fire the same way on a burst of errors lasting one minute.'), { w: p.window }),
+        caption: fb(bi('Раз в минуту Prometheus вычисляет правило и считает, какая доля ответов за последние {w} мин закончилась ошибкой 5xx. Доля оказывается выше 2 %. Поле for равно нулю, поэтому алерт срабатывает сразу, при первом же вычислении. Так он сработал бы и на всплеске ошибок длиной в одну минуту.', 'Once a minute Prometheus evaluates the rule and computes what share of answers over the last {w} min ended in a 5xx error. The share turns out above 2 %. The for field is zero, so the alert fires at once, on the first evaluation. It would fire the same way on a burst of errors lasting one minute.'), { w: p.window }),
         focus: ['e-eval', 'rule'],
         reveal: ['rule', 'e-eval'],
         tokens: [{ edge: 'e-eval', label: bi('5xx: 25 %', '5xx: 25 %') }],
-        say: { rule: bi('Доля ошибок 25 %, выше порога в 2 %, и for не задан: алерт срабатывает сразу.', 'The error share is 25 %, above the 2 % threshold, and there is no for: the alert fires at once.') },
+        say: { rule: bi('Доля ошибок составляет 25 %, это выше порога в 2 %, а поле for не задано, поэтому алерт срабатывает сразу.', 'The error share is 25 %, which is above the 2 % threshold, and the for field is not set, so the alert fires at once.') },
         states: { rule: 'err', tsdb: 'ok' },
         values: { rule: 'firing' },
         metrics: m,
@@ -476,11 +476,11 @@ export const monModel = defineModel<P>({
       {
         id: 'notify',
         label: bi('сообщение', 'message'),
-        caption: fb(bi('Дежурный получает сообщение. От первой ошибки до него в худшем случае проходит {d} секунд: до {s} секунд до следующего опроса, до минуты до следующего вычисления правила, {f} мин на for и {g} секунд на group_wait. Меняйте эти параметры и следите за счётчиком под схемой.', 'The on-call engineer gets the message. In the worst case {d} seconds pass from the first error: up to {s} seconds to the next scrape, up to a minute to the next rule evaluation, {f} min for `for` and {g} seconds of group_wait. Change these parameters and watch the counter under the diagram.'), { d: n.detect, s, f: p.forMin, g: p.groupWait }),
+        caption: fb(bi('Дежурный получает сообщение. В худшем случае от первой ошибки до сообщения проходит {d} секунд. Из них до {s} секунд уходит на ожидание следующего опроса, до минуты на ожидание следующего вычисления правила, {f} мин на for и {g} секунд на group_wait. Меняйте эти параметры и следите за счётчиком под схемой.', 'The on-call engineer gets the message. In the worst case {d} seconds pass from the first error to the message. Of them, up to {s} seconds go to waiting for the next scrape, up to a minute to waiting for the next rule evaluation, {f} min to `for` and {g} seconds to group_wait. Change these parameters and watch the counter under the diagram.'), { d: n.detect, s, f: p.forMin, g: p.groupWait }),
         focus: ['e-notify', 'pager'],
         reveal: ['pager', 'e-notify'],
         tokens: [{ edge: 'e-notify', label: bi('сообщение', 'message') }],
-        say: { pager: bi('Дежурный получает сообщение о том, что доля ошибок api выше 2 %.', 'The on-call engineer gets the message: the api error share is above 2 %.') },
+        say: { pager: bi('Дежурный получает сообщение о том, что доля ошибок api выше 2 %.', 'The on-call engineer gets the message that the api error share is above 2 %.') },
         states: { pager: 'ok' },
         metrics: m,
       },
@@ -491,10 +491,10 @@ export const monModel = defineModel<P>({
     if (change.kind === 'break') {
       if (change.id === 'target-down')
         return change.on
-          ? bi('Процесс api перестал отвечать, и Prometheus сам замечает это при опросе: он записывает up = 0. Правило о доле ошибок при этом молчит, потому что новых значений нет.', 'The api process stopped answering, and Prometheus notices it itself at the scrape: it writes up = 0. The error-share rule stays silent, because there are no new values.')
+          ? bi('Процесс api перестал отвечать, и Prometheus сам замечает это при опросе и записывает up = 0. Правило о доле ошибок при этом молчит, потому что новых значений нет.', 'The api process stopped answering, and Prometheus notices it itself at the scrape and writes up = 0. The error-share rule stays silent, because there are no new values.')
           : bi('Процесс api снова отвечает на /metrics, и значения счётчиков опять попадают в хранилище.', 'The api process answers /metrics again, and the counter values reach the store again.');
       return change.on
-        ? bi('Alertmanager остановлен, поэтому алерт срабатывает, но сообщение до дежурного не доходит.', 'Alertmanager is stopped: the alert fires, but the message does not reach the on-call engineer.')
+        ? bi('Alertmanager остановлен, поэтому алерт срабатывает, но сообщение до дежурного не доходит.', 'Alertmanager is stopped, so the alert fires, but the message does not reach the on-call engineer.')
         : bi('Alertmanager снова работает, и сообщение доходит до дежурного.', 'Alertmanager works again, and the message reaches the on-call engineer.');
     }
     const d0 = last(prev).detect ?? 0;

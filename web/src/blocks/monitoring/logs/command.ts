@@ -139,7 +139,7 @@ function run(ctx: CmdContext): number {
 
 export const logcliCommand: ShellCommand = {
   name: 'logcli',
-  summary: bi('Клиент Loki: запросы LogQL к журналам магазина.', 'The Loki client: LogQL queries over the Shop logs.'),
+  summary: bi('Клиент Loki, который выполняет запросы LogQL к журналам магазина.', 'The Loki client, which runs LogQL queries over the Shop logs.'),
   help: LOGCLI_HELP,
   handlesHelp: true,
   run,
