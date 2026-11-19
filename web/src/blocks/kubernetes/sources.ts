@@ -1,0 +1,79 @@
+// Sources of the Kubernetes block, in English and Russian. The Russian
+// localisation of kubernetes.io covers the core concept pages; where it has
+// none, the Russian list points to the closest Russian page or to Wikipedia.
+
+import type { SourceLink, Sources } from '../../core/types';
+
+const k = (path: string, title: string): SourceLink => ({ title, url: `https://kubernetes.io/docs/${path}/` });
+const kru = (path: string, title: string): SourceLink => ({ title, url: `https://kubernetes.io/ru/docs/${path}/` });
+
+export const S = {
+  overview: k('concepts/overview', 'Overview'),
+  components: k('concepts/overview/components', 'Kubernetes Components'),
+  objects: k('concepts/overview/working-with-objects', 'Objects In Kubernetes'),
+  labels: k('concepts/overview/working-with-objects/labels', 'Labels and Selectors'),
+  namespaces: k('concepts/overview/working-with-objects/namespaces', 'Namespaces'),
+  owners: k('concepts/overview/working-with-objects/owners-dependents', 'Owners and Dependents'),
+  pods: k('concepts/workloads/pods', 'Pods'),
+  lifecycle: k('concepts/workloads/pods/pod-lifecycle', 'Pod Lifecycle'),
+  controller: k('concepts/architecture/controller', 'Controllers'),
+  replicaset: k('concepts/workloads/controllers/replicaset', 'ReplicaSet'),
+  deployment: k('concepts/workloads/controllers/deployment', 'Deployments'),
+  scheduler: k('concepts/scheduling-eviction/kube-scheduler', 'Kubernetes Scheduler'),
+  nodes: k('concepts/architecture/nodes', 'Nodes'),
+  cri: k('concepts/architecture/cri', 'Container Runtime Interface (CRI)'),
+  operator: k('concepts/extend-kubernetes/operator', 'Operator pattern'),
+  crd: k('concepts/extend-kubernetes/api-extension/custom-resources', 'Custom Resources'),
+  networking: k('concepts/cluster-administration/networking', 'Cluster Networking'),
+  service: k('concepts/services-networking/service', 'Service'),
+  slices: k('concepts/services-networking/endpoint-slices', 'EndpointSlices'),
+  vip: k('reference/networking/virtual-ips', 'Virtual IPs and Service Proxies'),
+  dns: k('concepts/services-networking/dns-pod-service', 'DNS for Services and Pods'),
+  ingress: k('concepts/services-networking/ingress', 'Ingress'),
+  gateway: k('concepts/services-networking/gateway', 'Gateway API'),
+  netpol: k('concepts/services-networking/network-policies', 'Network Policies'),
+  debugService: k('tasks/debug/debug-application/debug-service', 'Debug Services'),
+  configmap: k('concepts/configuration/configmap', 'ConfigMaps'),
+  secret: k('concepts/configuration/secret', 'Secrets'),
+  probes: k('tasks/configure-pod-container/configure-liveness-readiness-startup-probes', 'Configure Liveness, Readiness and Startup Probes'),
+  resources: k('concepts/configuration/manage-resources-containers', 'Resource Management for Pods and Containers'),
+  kubectl: k('reference/kubectl', 'Command line tool (kubectl)'),
+  kubeadm: k('setup/production-environment/tools/kubeadm/create-cluster-kubeadm', 'Creating a cluster with kubeadm'),
+  installKubeadm: k('setup/production-environment/tools/kubeadm/install-kubeadm', 'Installing kubeadm'),
+  upgrade: k('tasks/administer-cluster/kubeadm/kubeadm-upgrade', 'Upgrading kubeadm clusters'),
+  helm: { title: 'Helm — Using Helm', url: 'https://helm.sh/docs/intro/using_helm/' },
+  helmCharts: { title: 'Helm — Charts', url: 'https://helm.sh/docs/topics/charts/' },
+  k3s: { title: 'K3s — Quick-Start Guide', url: 'https://docs.k3s.io/quick-start' },
+  k3sNetworking: { title: 'K3s — Networking Services', url: 'https://docs.k3s.io/networking/networking-services' },
+  etcdRecovery: { title: 'etcd v3.6 — Disaster recovery', url: 'https://etcd.io/docs/v3.6/op-guide/recovery/' },
+  cilium: { title: 'Cilium — Installation using kubeadm', url: 'https://docs.cilium.io/en/stable/installation/k8s-install-kubeadm/' },
+  flannel: { title: 'flannel — Backends', url: 'https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md' },
+  gatewayApi: { title: 'Gateway API', url: 'https://gateway-api.sigs.k8s.io/' },
+  ingressNginx: { title: 'Ingress NGINX Retirement: What You Need to Know', url: 'https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/' },
+};
+
+export const R = {
+  what: kru('concepts/overview/what-is-kubernetes', 'Что такое Kubernetes'),
+  components: kru('concepts/overview/components', 'Компоненты Kubernetes'),
+  objects: kru('concepts/overview/working-with-objects/kubernetes-objects', 'Изучение объектов Kubernetes'),
+  labels: kru('concepts/overview/working-with-objects/labels', 'Метки и селекторы'),
+  namespaces: kru('concepts/overview/working-with-objects/namespaces', 'Пространства имён'),
+  controller: kru('concepts/architecture/controller', 'Контроллеры'),
+  nodes: kru('concepts/architecture/nodes', 'Узлы'),
+  deployment: kru('concepts/workloads/controllers/deployment', 'Deployments'),
+  service: kru('concepts/services-networking/service', 'Сервисы'),
+  dns: kru('concepts/services-networking/dns-pod-service', 'DNS для сервисов и подов'),
+  configmap: kru('concepts/configuration/configmap', 'ConfigMaps'),
+  secret: kru('concepts/configuration/secret', 'Секреты'),
+  probes: kru('tasks/configure-pod-container/configure-liveness-readiness-startup-probes', 'Настройка Liveness, Readiness и Startup проб'),
+  installKubeadm: kru('setup/production-environment/tools/kubeadm/install-kubeadm', 'Установка kubeadm'),
+  cheatsheet: kru('reference/kubectl/cheatsheet', 'Шпаргалка по kubectl'),
+  wiki: { title: 'Kubernetes — Википедия', url: 'https://ru.wikipedia.org/wiki/Kubernetes' },
+  wikiIptables: { title: 'iptables — Википедия', url: 'https://ru.wikipedia.org/wiki/Iptables' },
+  wikiDns: { title: 'DNS — Википедия', url: 'https://ru.wikipedia.org/wiki/DNS' },
+  wikiVxlan: { title: 'VXLAN — Википедия', url: 'https://ru.wikipedia.org/wiki/VXLAN' },
+  wikiProxy: { title: 'Обратный прокси — Википедия', url: 'https://ru.wikipedia.org/wiki/%D0%9E%D0%B1%D1%80%D0%B0%D1%82%D0%BD%D1%8B%D0%B9_%D0%BF%D1%80%D0%BE%D0%BA%D1%81%D0%B8' },
+  helm: { title: 'Helm — Использование Helm', url: 'https://helm.sh/ru/docs/intro/using_helm/' },
+};
+
+export const src = (en: SourceLink[], ru: SourceLink[]): Sources => ({ en, ru });
