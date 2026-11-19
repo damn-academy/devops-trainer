@@ -1,7 +1,7 @@
 // The Networks block (route id `networks`, design 03-networks.md): fifteen
-// lessons from the map of the internet to layer-by-layer troubleshooting, ten
-// process explainers, the subnet calculator and drill, the protocol catalogue,
-// the quiz bank and the placement check. The simulator and its commands live in
+// lessons from the map of the internet to layer-by-layer troubleshooting,
+// twelve process explainers, the subnet calculator and drill, the protocol
+// catalogue, the quiz bank, the placement check and the block exam. The simulator and its commands live in
 // src/engine/sim-net.
 
 import { defineModule } from '../../core/define';
@@ -11,6 +11,7 @@ import type { Block } from '../../core/types';
 import { fromModel } from '../../engine/explainer/render';
 import { concepts } from './concepts';
 import { docs } from './docs';
+import { exam } from './exam';
 import { arpModel } from './explainers/arp';
 import { dhcpModel } from './explainers/dhcp';
 import { dnsModel } from './explainers/dns';
@@ -51,6 +52,7 @@ const block: Block = {
   lessons: lessons.map((l) => l.id),
   sources: src([EN.howInternet, EN.rfc791, EN.rfc9293, EN.rfc1034, EN.mdnHttp, EN.rfc8446, EN.nginxProxy, EN.whatHappens], [RU.internet, RU.osi, RU.tcp, RU.dns, RU.http, RU.tls, RU.nat]),
   docSources: ['man', 'help', 'rfc', 'nginx.org', 'mdn'],
+  exam: exam.id,
 };
 
 export default defineModule({
@@ -59,6 +61,7 @@ export default defineModule({
   concepts,
   quiz,
   docs,
+  exams: [exam],
   explainers: [fromModel(mapModel), fromModel(switchModel), fromModel(arpModel), fromModel(routeModel), fromModel(tcpModel), envelopesExplainer, fromModel(dnsModel), fromModel(dhcpModel), fromModel(natModel), fromModel(tlsModel), fromModel(proxyModel), fromModel(urlModel)],
   widgets: [subnetWidget, drillWidget, catalogueWidget],
 });

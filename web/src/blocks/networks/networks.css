@@ -55,6 +55,18 @@
 .env-mtu-line { flex-basis: 100%; margin: 0; font-family: var(--font-text); }
 .env-mtu-line.warn { color: var(--ink); background: var(--c-warn-bg); padding: 6px 8px; border-radius: 4px; }
 .env-mtu-line.err { color: var(--ink); background: var(--c-err-bg); padding: 6px 8px; border-radius: 4px; }
+.env-ladder { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; }
+.env-rung { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; border: 1px solid var(--line-2); border-left: 4px solid var(--line-2); background: var(--surface); color: var(--ink-2); border-radius: 4px; padding: 4px 8px; min-height: 36px; cursor: pointer; font: 500 0.8rem/1.2 var(--font-ui); transition: border-color var(--t-step) var(--ease), background var(--t-step) var(--ease); }
+.env-rung.has { border-left-color: var(--fam); color: var(--ink); background: color-mix(in oklch, var(--fam) 8%, var(--surface)); }
+.env-rung.ghost { border-style: dashed; }
+.env-rung[aria-pressed='true'] { box-shadow: 0 0 0 2px color-mix(in oklch, var(--fam) 45%, transparent); }
+.env-rung:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.env-rung-note { font-size: 0.7rem; color: var(--muted); }
+.env-break { color: var(--ink); }
+.env-predict { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 10px; border: 1px dashed var(--line-2); border-radius: var(--r); }
+.env-predict p { flex-basis: 100%; margin: 0 0 4px; }
+.env-predict-res { flex-basis: 100%; margin: 0; font-weight: 600; }
+.env-predict-res.ok { color: var(--c-ok, var(--ink)); }
 .env-nav { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; margin-top: 12px; }
 
 /* ── subnet calculator and drill ── */
@@ -121,5 +133,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .env-layer, .sn-bit { transition: none; }
+  .env-layer, .sn-bit, .env-rung { transition: none; }
 }

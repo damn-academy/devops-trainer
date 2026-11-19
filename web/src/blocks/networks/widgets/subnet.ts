@@ -26,7 +26,7 @@ const L = {
   prefix: bi('Префикс', 'Prefix'),
   mask: bi('Маска', 'Mask'),
   network: bi('Адрес сети', 'Network address'),
-  broadcast: bi('Broadcast', 'Broadcast'),
+  broadcast: bi('Широковещательный адрес', 'Broadcast'),
   range: bi('Адреса хостов', 'Host addresses'),
   hosts: bi('Хостов', 'Hosts'),
   kind: bi('Что за адрес', 'What kind of address'),

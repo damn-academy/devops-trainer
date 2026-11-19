@@ -27,7 +27,7 @@ export const mapModel = defineModel<P>({
   block: 'networks',
   title: b('Как устроен интернет: от ноутбука до ЦОДа', 'How the internet is built: from a laptop to a data centre'),
   summary: b(
-    'Карта в уровнях приближения. Каждый шаг — один уровень и одна идея. Переключай IXP, CDN и CGNAT, двигай расстояние, режь кабель.',
+    'Карта в уровнях приближения. Каждый шаг — один уровень и одна идея. Переключайте IXP, CDN и CGNAT, двигайте расстояние, режьте кабель.',
     'A map in levels of zoom. Each step is one level and one idea. Toggle the IXP, the CDN and CGNAT, move the distance, cut the cable.',
   ),
   diagram: {
@@ -233,7 +233,7 @@ export const mapModel = defineModel<P>({
       label: 'CDN',
       caption: p.cdn
         ? fmt(b('Картинки и стили сайта лежат копией на узле CDN в вашем городе: {c} мс туда и обратно вместо {o} мс до ЦОДа. Физику не обманешь — но можно не ездить далеко.', 'The site’s images and styles have a copy on a CDN node in your city: {c} ms round trip instead of {o} ms to the data centre. Physics cannot be cheated — but you can avoid travelling far.'), { c: L.cdnRtt, o: L.rtt })
-        : b('Копий поблизости нет: каждая картинка едет из ЦОДа через кабель. Включи CDN и посмотри на счётчики.', 'There are no copies nearby: every image travels from the data centre through the cable. Turn the CDN on and watch the counters.'),
+        : b('Копий поблизости нет: каждая картинка едет из ЦОДа через кабель. Включите CDN и посмотрите на счётчики.', 'There are no copies nearby: every image travels from the data centre through the cable. Turn the CDN on and watch the counters.'),
       focus: p.cdn ? ['cdn', 'e-cdn'] : ['dc', 'e-cable'],
       tokens: p.cdn ? [{ edge: 'e-cdn', label: 'app.css' }] : [{ edge: 'e-cable', label: 'app.css', reverse: true }],
       states: { cdn: p.cdn ? 'on' : 'off' },

@@ -52,7 +52,7 @@ export const proxyModel = defineModel<P>({
   id: 'net.proxy504',
   block: 'networks',
   title: b('Откуда берутся 504 и 502', 'Where 504 and 502 come from'),
-  summary: b('Код ответа говорит, кто его написал. Клиент → nginx → два бэкенда → база. Двигай время ответа базы и таймаут прокси, ломай бэкенды.', 'The status code tells who wrote it. Client → nginx → two backends → database. Move the database time and the proxy timeout, break the backends.'),
+  summary: b('Код ответа говорит, кто его написал. Клиент → nginx → два бэкенда → база. Двигайте время ответа базы и таймаут прокси, ломайте бэкенды.', 'The status code tells who wrote it. Client → nginx → two backends → database. Move the database time and the proxy timeout, break the backends.'),
   diagram: {
     width: 960,
     height: 420,

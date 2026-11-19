@@ -33,7 +33,7 @@ export const internet: Lesson = {
         'You type a shop’s address and press Enter. Forty milliseconds later the page appears. In that time the request visited your flat, your provider, a couple of other companies, travelled along a cable on the sea floor and came back. None of these companies answers to any other — and yet they have agreed well enough that it works the first time. Let us start with a map: who owns what and how they agree.',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.map', caption: bi('Иди по уровням приближения стрелками; нажимай на блоки и линии — каждый объяснит себя.', 'Step through the levels of zoom with the arrow keys; click blocks and lines — each explains itself.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.map', caption: bi('Идите по уровням приближения стрелками; нажимайте на блоки и линии — каждый объяснит себя.', 'Step through the levels of zoom with the arrow keys; click blocks and lines — each explains itself.') },
     {
       id: 'explain',
       kind: 'text',
@@ -105,7 +105,7 @@ export const internet: Lesson = {
         'Run traceroute to three sites in different countries and find each hop’s autonomous system: `whois -h whois.radb.net <address>`. Look up your provider on bgp.tools — you will see whom it peers with and at which exchange points.',
       ),
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.internet.order', 'net.q.internet.latency', 'net.q.internet.match', 'net.q.internet.ixp'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.internet.order', 'net.q.internet.latency', 'net.q.internet.match', 'net.q.internet.ixp'] },
   ],
 };
 
@@ -141,7 +141,7 @@ export const frames: Lesson = {
         'A machine talks to the network through a [[net.nic|network card]], physical or virtual. In Linux it shows up as an interface: `eth0`, `wlan0`, `enp3s0`. Every card has a [[net.mac|MAC address]] — 48 bits written as six pairs of hexadecimal digits: `02:42:ac:11:00:0a`. The card’s manufacturer sets it (for a virtual machine, the hypervisor), and `ip link` shows it: the `link/ether` line.\n\nData goes along the cable in pieces — [[net.frame|frames]]. An Ethernet frame is simple: the receiver’s MAC first, then the sender’s MAC, then a two-byte EtherType field — “what is inside” — then the data itself, and at the end a checksum by which the receiver sees whether the frame was damaged on the way. The receiver’s address comes first for a reason: a device decides where to send the frame before it has finished reading it.\n\nA MAC address says *which card* it is, but not *where* it is. That is why it works only inside one local network — among machines joined by cables and boxes with no middlemen. How a packet leaves that network is three lessons from now.',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.switch', caption: bi('Сначала с пустой таблицей, потом с заполненной. Попробуй кадр «всем» и выдерни кабель.', 'First with an empty table, then with a full one. Try a frame “to everyone” and pull a cable.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.switch', caption: bi('Сначала с пустой таблицей, потом с заполненной. Попробуйте кадр «всем» и выдерните кабель.', 'First with an empty table, then with a full one. Try a frame “to everyone” and pull a cable.') },
     {
       id: 'explain2',
       kind: 'text',
@@ -203,7 +203,7 @@ export const frames: Lesson = {
         },
       },
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.frames.flood', 'net.q.frames.scope', 'net.q.frames.label'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.frames.flood', 'net.q.frames.scope', 'net.q.frames.label'] },
   ],
 };
 
@@ -291,7 +291,29 @@ export const subnets: Lesson = {
         },
       ],
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.sub.hosts', 'net.q.sub.private', 'net.q.sub.same', 'net.q.sub.mask'] },
+    {
+      id: 'findflag',
+      kind: 'docs',
+      step: 'practice',
+      mode: 'find',
+      prompt: bi(
+        'Вывод `ip addr` подробный: на каждый интерфейс приходится по пять-шесть строк, и на машине с десятком интерфейсов адреса теряются среди служебных подробностей. Найдите в ip(8) параметр, который печатает по одной строке на интерфейс — имя, состояние и адреса, — и покажите так адреса машины.',
+        'The output of `ip addr` is detailed: five or six lines per interface, and on a machine with a dozen interfaces the addresses get lost among the details. Find the ip(8) option that prints one line per interface — the name, the state and the addresses — and show the machine’s addresses that way.',
+      ),
+      ref: { page: 'man/ip.8', anchor: 'OPTIONS', line: '-br, -brief' },
+      terminal: {
+        setup: lab('h1', 'two-subnets'),
+        task: {
+          id: 'brief',
+          prompt: bi('Адреса машины — по одной строке на интерфейс.', 'The machine’s addresses — one line per interface.'),
+          check: { stdout: /^eth0\s+UP\s+10\.0\.1\.10\/24/m },
+          docStep: 3,
+          chips: 'ip -br a',
+          hints: { H1: bi('Параметры ip пишут до объекта: `ip ПАРАМЕТР addr`. Ищите в OPTIONS слово «tabular».', 'ip options go before the object: `ip OPTION addr`. Look for the word “tabular” in OPTIONS.') },
+        },
+      },
+    },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.sub.hosts', 'net.q.sub.private', 'net.q.sub.same', 'net.q.sub.mask'] },
   ],
 };
 
@@ -370,7 +392,7 @@ export const arp: Lesson = {
       ref: { page: 'man/ip.8' },
       answer: 'OBJECTS',
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.arp.who', 'net.q.arp.unreach', 'net.q.arp.order'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.arp.who', 'net.q.arp.unreach', 'net.q.arp.order'] },
   ],
 };
 
@@ -406,7 +428,7 @@ export const routing: Lesson = {
         'A [[net.router|router]] is a machine connected to several subnets at once and willing to forward other machines’ packets. In DevOps it is almost always ordinary Linux with two network cards and the `net.ipv4.ip_forward=1` setting turned on. Without it, a machine with two cards is just a machine with two cards: packets not addressed to it are silently dropped.\n\nThe kernel decides where to send a packet by the [[net.route-table|routing table]] — `ip route` shows it. Each line says “where to — via whom — through which interface”. Lines like `10.0.1.0/24 dev eth0 proto kernel scope link` were added by the kernel itself when the interface got an address: its own subnet is reachable directly. The line `default via 10.0.1.1 dev eth0` was added by the administrator or given by an address server: everything else goes through the [[net.gateway|default gateway]] 10.0.1.1.\n\nIf several lines match, the [[net.lpm|longest prefix match]] wins: `/24` is more specific than `/16`, and `default` is `0.0.0.0/0`, a prefix of length zero that matches everything and loses to everything. The order of lines does not matter. To see which line the kernel picks for an address, use `ip route get 10.0.2.10`.\n\nNow the answer to the riddle of the ARP lesson. If the destination is in another subnet, the packet goes to the gateway — so the frame needs the *gateway’s* MAC. The host asks over ARP “who has 10.0.1.1?”, and in the frame carrying the packet for 10.0.2.10 the receiver is the router’s MAC.',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.route', caption: bi('Подвигай TTL до единицы, убери маршрут обратно, выключи маршрутизатор.', 'Move TTL down to one, remove the route back, switch the router off.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.route', caption: bi('Подвигайте TTL до единицы, уберите маршрут обратно, выключите маршрутизатор.', 'Move TTL down to one, remove the route back, switch the router off.') },
     {
       id: 'explain2',
       kind: 'text',
@@ -493,6 +515,6 @@ export const routing: Lesson = {
         },
       },
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.route.lpm', 'net.q.route.changes', 'net.q.route.trace', 'net.q.route.oneway'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.route.lpm', 'net.q.route.changes', 'net.q.route.trace', 'net.q.route.oneway'] },
   ],
 };

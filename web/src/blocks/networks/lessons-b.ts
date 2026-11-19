@@ -38,7 +38,7 @@ export const transport: Lesson = {
         'Inside the IP packet lies one more envelope — the transport one. Its header carries two numbers: the sender’s [[net.port|port]] and the receiver’s port, from 0 to 65535. A program that wants to accept connections asks the kernel to “listen” on a port: nginx on 80 and 443, sshd on 22. The kernel looks at the destination port and hands the data to whichever program listens on it. Well-known ports are fixed by convention: 22 is SSH, 53 is DNS, 80 is HTTP, 443 is HTTPS.\n\nThe client’s source port is chosen by the kernel itself when connecting — a free one from the range 32768–60999. This is an [[net.ephemeral|ephemeral port]]: it lives as long as the connection, and the answer finds exactly this program by it, even with a hundred browser tabs open on the machine.\n\nThere are two transports. [[net.udp|UDP]] is “send and forget”: a datagram leaves, nobody confirms receipt, nothing lost is resent. But it is fast and simple — DNS questions, address hand-outs and video go this way. [[net.tcp|TCP]] is a connection: every byte is numbered, the receiver confirms what it got, the sender resends whatever was not confirmed and delivers the stream to the application strictly in order. HTTP, SSH and databases run on TCP.',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.tcp', caption: bi('Время идёт вниз. Закрой порт, включи фильтр, растяни RTT.', 'Time runs downwards. Close the port, turn on the filter, stretch the RTT.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.tcp', caption: bi('Время идёт вниз. Закройте порт, включите фильтр, растяните RTT.', 'Time runs downwards. Close the port, turn on the filter, stretch the RTT.') },
     {
       id: 'explain2',
       kind: 'text',
@@ -99,7 +99,7 @@ export const transport: Lesson = {
         },
       },
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.tcp.order', 'net.q.tcp.refused', 'net.q.tcp.ports', 'net.q.tcp.ephemeral'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.tcp.order', 'net.q.tcp.refused', 'net.q.tcp.ports', 'net.q.tcp.ephemeral'] },
   ],
 };
 
@@ -125,7 +125,7 @@ export const envelopes: Lesson = {
         'Frames, addresses, routes, ports — you touched them one at a time. But what goes onto the wire is not four different things but one sequence of bytes. How do the MAC, the IP address, the port and the request text live in it together — and which device on the way reads what?',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.envelopes', caption: bi('Иди по шагам, нажимай на поля, на последнем шаге выбери устройство и увеличь пакет.', 'Go step by step, click the fields, on the last step choose a device and grow the packet.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.envelopes', caption: bi('Идите по шагам и нажимайте на поля и ступени слоёв; сравните HTTP, DNS и ping; на последнем шаге выберите устройство, увеличьте пакет и сломайте ICMP.', 'Go step by step and click the fields and the rungs of layers; compare HTTP, DNS and ping; on the last step choose a device, grow the packet and break ICMP.') },
     {
       id: 'explain',
       kind: 'text',
@@ -180,7 +180,7 @@ export const envelopes: Lesson = {
       ref: { page: 'man/tcpdump.8' },
       answer: 'EXPRESSION',
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.env.order', 'net.q.env.layer', 'net.q.env.mss', 'net.q.env.dstmac'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.env.order', 'net.q.env.layer', 'net.q.env.mss', 'net.q.env.dstmac'] },
   ],
 };
 
@@ -216,7 +216,7 @@ export const dns: Lesson = {
         'People like names, machines like addresses. [[net.dns|DNS]] turns one into the other. A name is read right to left: in `shop.example.` the final dot is the root, `example.` is a top-level zone (TLD), `shop.example.` is the shop’s zone. Every zone answers for itself and knows whom the zones below it are delegated to.\n\nThere are two kinds of DNS servers. An [[net.authoritative|authoritative server]] holds the zone itself: ns1.hosting.example has the record “shop.example — 198.51.100.20”. Its answer is trusted — the answer carries the `aa` flag. A [[net.resolver|recursive resolver]] holds nothing of its own but finds the answer for the client: the provider’s resolver, the home router, the public 1.1.1.1 and 8.8.8.8. Its address is what `/etc/resolv.conf` holds.\n\nA resolver with an empty cache starts at the root. The root servers have thirteen names — from a.root-servers.net to m.root-servers.net — and behind them more than fifteen hundred machines worldwide. They share the same addresses: this is [[net.anycast|anycast]], one address announced over BGP from many places, and routes bring you to the nearest instance. The root does not know the shop’s address. It answers with a referral: “a.nic.example answers for the example. zone; here is its address.” The example. zone server refers further in the same way: “ns1.hosting.example answers for shop.example.” These referrals are NS records, and the server addresses that come with them are called glue. Only the shop’s authoritative server answers with the address itself. A modern resolver also gives away no more than needed: it tells the root only “example.”, not the full name (QNAME minimisation, RFC 9156).\n\nAn answer is stored in the zone as a [[net.rr|resource record]]: name, TTL, type, value. The types you meet every day: A (an IPv4 address), AAAA (IPv6), CNAME (an alias: “www.shop.example is shop.example”), MX (the mail server), NS (who answers for the zone), TXT (arbitrary text — domain checks, SPF).',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.dns', caption: bi('Двигай время второго запроса и TTL; положи имя в /etc/hosts; сломай авторитативный сервер и сделай опечатку.', 'Move the time of the second request and the TTL; put the name in /etc/hosts; break the authoritative server and make a typo.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.dns', caption: bi('Двигайте время второго запроса и TTL; положите имя в /etc/hosts; сломайте авторитативный сервер и сделайте опечатку.', 'Move the time of the second request and the TTL; put the name in /etc/hosts; break the authoritative server and make a typo.') },
     {
       id: 'explain2',
       kind: 'text',
@@ -310,7 +310,7 @@ export const dns: Lesson = {
         },
       },
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.dns.order', 'net.q.dns.nx', 'net.q.dns.servfail', 'net.q.dns.hosts', 'net.q.dns.ttl'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.dns.order', 'net.q.dns.nx', 'net.q.dns.servfail', 'net.q.dns.hosts', 'net.q.dns.ttl'] },
   ],
 };
 
@@ -336,7 +336,7 @@ export const dhcp: Lesson = {
         'You bring a laptop to a café, join the Wi-Fi — and a second later it has an address, a gateway and a DNS server. You typed nothing. Yet the laptop knew neither its own address nor the address of whom to ask. How do you ask a question without knowing whom?',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.dhcp', caption: bi('Двигай срок аренды; выключи сервер; добавь в сеть второй.', 'Move the lease time; switch the server off; add a second one to the network.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.dhcp', caption: bi('Двигайте срок аренды; выключите сервер; добавьте в сеть второй.', 'Move the lease time; switch the server off; add a second one to the network.') },
     {
       id: 'explain',
       kind: 'text',
@@ -411,6 +411,6 @@ export const dhcp: Lesson = {
         },
       },
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверь себя', 'Check yourself'), items: ['net.q.dhcp.order', 'net.q.dhcp.ll', 'net.q.dhcp.opts'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.dhcp.order', 'net.q.dhcp.ll', 'net.q.dhcp.opts'] },
   ],
 };

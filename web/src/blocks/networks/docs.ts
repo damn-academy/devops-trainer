@@ -50,3 +50,46 @@ export const docs: DocPage[] = [
     'ngx_http_upstream_module',
   ),
 ];
+
+// Pages of iproute2 that ip(8) points to in SEE ALSO. The course itself never
+// teaches `nud permanent` or `mtu`: these pages are what the exam's fifth
+// ladder step sends the learner to. Text condensed from the Linux man-pages
+// project (iproute2, GPL-2.0).
+
+const iproute2 = (name: string, sections: DocPage['sections']): DocPage => ({
+  id: `man/${name}.8`,
+  source: 'man',
+  title: `${name}(8)`,
+  url: `https://man7.org/linux/man-pages/man8/${name}.8.html`,
+  license: 'condensed from the Linux man-pages project (iproute2, GPL-2.0)',
+  version: 'iproute2 6.15',
+  sections,
+});
+
+docs.push(
+  iproute2('ip-link', [
+    { id: 'NAME', body: 'ip-link - network device configuration' },
+    { id: 'SYNOPSIS', body: 'ip link show [ DEVICE ]\n\nip link set { DEVICE | group GROUP }\n        [ { up | down } ]\n        [ arp { on | off } ]\n        [ mtu MTU ]\n        [ address LLADDR ]\n        [ name NEWNAME ]\n        [ txqueuelen PACKETS ]\n\nip link add [ link DEVICE ] name NAME type TYPE [ ARGS ]\n\nip link delete { DEVICE | group GROUP } type TYPE [ ARGS ]' },
+    { id: 'DESCRIPTION', body: 'A link is a network device: a physical card, a loopback, a bridge, a VLAN or a tunnel interface. ip link shows devices and changes their attributes. Changes take effect at once and are lost at reboot unless the system’s network configuration applies them again.' },
+    {
+      id: 'ip link set',
+      title: 'ip link set - change device attributes',
+      body: 'dev DEVICE\n       DEVICE specifies network device to operate on.\n\nup and down\n       change the state of the device to UP or DOWN.\n\narp on or arp off\n       change the NOARP flag on the device.\n\nmtu NUMBER\n       change the MTU of the device. The MTU is the largest packet, counted from the start of the IP header, that the device sends without fragmentation.\n\naddress LLADDRESS\n       change the station address of the interface.\n\nname NAME\n       change the name of the device. This operation is not recommended if the device is running or has some addresses already configured.\n\nWarning: If multiple parameter changes are requested, ip aborts immediately after any of the changes have failed.',
+    },
+    { id: 'EXAMPLES', body: 'ip link show\n    Shows the state of all network interfaces on the system.\nip link set dev ppp0 mtu 1400\n    Change the MTU the ppp0 device.\nip link add link eth0 name eth0.10 type vlan id 10\n    Creates a new vlan device eth0.10 on device eth0.' },
+    { id: 'SEE ALSO', body: 'ip(8), ip-address(8), ip-neighbour(8)' },
+  ]),
+  iproute2('ip-neighbour', [
+    { id: 'NAME', body: 'ip-neighbour - neighbour/arp tables management' },
+    { id: 'SYNOPSIS', body: 'ip neigh { add | del | change | replace } { ADDR [ lladdr LLADDR ] [ nud STATE ] | proxy ADDR } [ dev DEV ]\n\nip neigh { show | flush } [ to PREFIX ] [ dev DEV ] [ nud STATE ]\n\nSTATE := { delay | failed | incomplete | noarp | none | permanent | probe | reachable | stale }' },
+    { id: 'DESCRIPTION', body: 'The ip neigh command manipulates neighbour objects that establish bindings between protocol addresses and link layer addresses for hosts sharing the same link. Neighbour entries are organized into tables. The IPv4 neighbour table is also known by another name - the ARP table.\n\nThe corresponding commands display neighbour bindings and their properties, add new neighbour entries and delete old ones.' },
+    {
+      id: 'ip neighbour add',
+      title: 'ip neighbour add, change, replace',
+      body: 'ip neighbour add - add a new neighbour entry\nip neighbour change - change an existing entry\nip neighbour replace - add a new entry or change an existing one\n\nto ADDRESS (default)\n       the protocol address of the neighbour. It is either an IPv4 or IPv6 address.\n\ndev NAME\n       the interface to which this neighbour is attached.\n\nlladdr LLADDRESS\n       the link layer address of the neighbour. LLADDRESS can also be null.\n\nnud STATE\n       the state of the neighbour entry. nud is an abbreviation for ’Neighbour Unreachability Detection’. The state can take one of the following values:\n\n       permanent  the neighbour entry is valid forever and can be only be removed administratively.\n       noarp      the neighbour entry is valid. No attempts to validate this entry will be made but it can be removed when its lifetime expires.\n       reachable  the neighbour entry is valid until the reachability timeout expires.\n       stale      the neighbour entry is valid but suspicious.',
+    },
+    { id: 'ip neighbour show', title: 'ip neighbour show - list neighbour entries', body: 'to ADDRESS (default)\n       the prefix selecting the neighbours to list.\n\ndev NAME\n       only list the neighbours attached to this device.\n\nnud STATE\n       only list neighbour entries in this state.' },
+    { id: 'EXAMPLES', body: 'ip neighbour\n    Shows the current neighbour table in kernel.\nip neigh flush dev eth0\n    Removes entries in the neighbour table on device eth0.' },
+    { id: 'SEE ALSO', body: 'ip(8), arp(8)' },
+  ]),
+);
