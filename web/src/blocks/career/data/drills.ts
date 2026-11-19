@@ -22,7 +22,7 @@ export const DRILL_504: Drill = {
   ),
   concepts: ['career.situational', 'career.mitigate-first'],
   variants: [
-    { id: 'slow-sql', cause: bi('после релиза новый запрос к базе идёт без индекса', 'after the release a new database query runs without an index') },
+    { id: 'slow-sql', cause: bi('в новой версии приложения появился запрос к базе, для которого нет индекса', 'after the release a new database query runs without an index') },
     { id: 'pool', cause: bi('новый код не возвращает соединения в пул базы', 'the new code does not return connections to the database pool') },
     { id: 'drop-rule', cause: bi('новое правило межсетевого экрана отбрасывает пакеты к приложению', 'a new firewall rule drops packets to the application') },
   ],
@@ -37,9 +37,9 @@ export const DRILL_504: Drill = {
           tags: ['clarify'],
           good: true,
           out: {
-            'slow-sql': bi('«У всех, на оформлении заказа, с 14:10. В 14:05 вышел релиз приложения, а в 14:08 сетевые инженеры ввели новые правила межсетевого экрана».', '“Everyone, on checkout, since 14:10. A release of the application went out at 14:05; at 14:08 the network team rolled out new firewall rules.”'),
-            pool: bi('«У всех, на оформлении заказа, с 14:10. В 14:05 вышел релиз приложения, а в 14:08 сетевые инженеры ввели новые правила межсетевого экрана».', '“Everyone, on checkout, since 14:10. A release of the application went out at 14:05; at 14:08 the network team rolled out new firewall rules.”'),
-            'drop-rule': bi('«У всех, на оформлении заказа, с 14:10. В 14:05 вышел релиз приложения, а в 14:08 сетевые инженеры ввели новые правила межсетевого экрана».', '“Everyone, on checkout, since 14:10. A release of the application went out at 14:05; at 14:08 the network team rolled out new firewall rules.”'),
+            'slow-sql': bi('«У всех, на оформлении заказа, с 14:10. В 14:05 выложили новую версию приложения, а в 14:08 сетевые инженеры ввели новые правила межсетевого экрана».', '“Everyone, on checkout, since 14:10. A release of the application went out at 14:05; at 14:08 the network team rolled out new firewall rules.”'),
+            pool: bi('«У всех, на оформлении заказа, с 14:10. В 14:05 выложили новую версию приложения, а в 14:08 сетевые инженеры ввели новые правила межсетевого экрана».', '“Everyone, on checkout, since 14:10. A release of the application went out at 14:05; at 14:08 the network team rolled out new firewall rules.”'),
+            'drop-rule': bi('«У всех, на оформлении заказа, с 14:10. В 14:05 выложили новую версию приложения, а в 14:08 сетевые инженеры ввели новые правила межсетевого экрана».', '“Everyone, on checkout, since 14:10. A release of the application went out at 14:05; at 14:08 the network team rolled out new firewall rules.”'),
           },
           why: bi('Два вопроса экономят полчаса, потому что масштаб сбоя говорит о влиянии на пользователей, а ответ на вопрос «что менялось» называет первых подозреваемых. Изменений было два, и пока неясно, какое из них виновато.', 'Two questions save half an hour: the scope tells the impact, and “what changed” gives the first suspects. There are two changes, and it is not yet clear which one is to blame.'),
         },
@@ -168,7 +168,7 @@ export const DRILL_504: Drill = {
           },
           why: {
             'slow-sql': bi('Страница /health отвечает мгновенно, а оформление заказа отвечает только через 35 секунд. Медленно работает один обработчик, а не всё приложение.', 'Health answers instantly, checkout takes 35 seconds: one handler is slow, not the whole application.'),
-            pool: bi('Страница /health отвечает мгновенно, а оформление заказа через 30 секунд заканчивается ошибкой 500, потому что обработчик чего-то ждёт и прекращает ждать по таймауту.', 'Health answers instantly, checkout fails with 500 after 30 seconds: the handler waits for something and gives up on a timeout.'),
+            pool: bi('Страница /health отвечает мгновенно, а оформление заказа через 30 секунд заканчивается ошибкой 500, потому что обработчик чего-то ждёт и прекращает ждать по тайм-ауту.', 'Health answers instantly, checkout fails with 500 after 30 seconds: the handler waits for something and gives up on a timeout.'),
             'drop-rule': bi('Даже к /health не удаётся подключиться. Само приложение при этом может работать, но пакеты до него не доходят.', 'Even /health does not connect. The application itself may be running, but packets do not reach it.'),
           },
         },
@@ -211,7 +211,7 @@ export const DRILL_504: Drill = {
             'drop-rule': '-- No entries since 14:08 --',
           },
           why: {
-            'slow-sql': bi('Новый запрос из релиза читает таблицу целиком, все четыре миллиона строк (Seq Scan), потому что индекса по полю customer_email нет.', 'The new query from the release reads the whole table (a Seq Scan over four million rows): there is no index on customer_email.'),
+            'slow-sql': bi('Новый запрос из свежей версии приложения читает таблицу целиком, все четыре миллиона строк (Seq Scan), потому что индекса по полю customer_email нет.', 'The new query from the release reads the whole table (a Seq Scan over four million rows): there is no index on customer_email.'),
             pool: bi('Все пять соединений пула заняты, потому что новый код держит соединение с базой, пока ждёт ответа внешнего платёжного сервиса.', 'The pool of five connections is exhausted: the new code holds a database session while it waits for the external payments service.'),
             'drop-rule': bi('С 14:08 до приложения не дошёл ни один запрос, так что дело не в нём.', 'Since 14:08 not a single request has reached the application: it is not the culprit.'),
           },
@@ -239,12 +239,12 @@ export const DRILL_504: Drill = {
       options: [
         {
           id: 'rollback-release',
-          text: bi('Откатить релиз 14:05', 'Roll back the 14:05 release'),
+          text: bi('Откатить версию, выложенную в 14:05', 'Roll back the 14:05 release'),
           tags: ['mitigate'],
           rightFor: ['slow-sql', 'pool'],
           out: { 'drop-rule': 'release 2026.11.18-2 → 2026.11.18-1\n5xx share: 31% → 31%', default: 'release 2026.11.18-2 → 2026.11.18-1\n5xx share: 31% → 0.4% in 3 min' },
           why: {
-            'drop-rule': bi('Вы откатили не то изменение, потому что релиз ни при чём, а пакеты к приложению по-прежнему отбрасывает правило межсетевого экрана.', 'You rolled back the wrong change, because the release is not to blame, and the firewall rule still drops packets to the application.'),
+            'drop-rule': bi('Вы откатили не то изменение, потому что новая версия приложения ни при чём, а пакеты к приложению по-прежнему отбрасывает правило межсетевого экрана.', 'You rolled back the wrong change, because the release is not to blame, and the firewall rule still drops packets to the application.'),
             default: bi('Откатывают то изменение, которое вызвало поломку. После отката доля ошибок вернулась к норме, и теперь причину можно чинить без спешки.', 'You roll back the change that caused the failure: after the rollback the error share is back to normal, and the fix can be done calmly.'),
           },
         },
@@ -256,7 +256,7 @@ export const DRILL_504: Drill = {
           out: { 'drop-rule': 'rule "netops 14:08" removed\n5xx share: 31% → 0.3% in 1 min', default: 'rule "netops 14:08" removed\n5xx share: 31% → 31%' },
           why: {
             'drop-rule': bi('Вы откатили то изменение, которое вызвало поломку, и сразу проверили долю ошибок.', 'You rolled back exactly the change that caused the failure and checked the error share right away.'),
-            default: bi('Правило не касалось порта приложения, поэтому ошибки остались. Улики указывали на релиз.', 'The rule never touched the application port: the errors stay. The evidence pointed at the release.'),
+            default: bi('Правило не касалось порта приложения, поэтому ошибки остались. Улики указывали на новую версию приложения.', 'The rule never touched the application port: the errors stay. The evidence pointed at the release.'),
           },
         },
         {
@@ -274,7 +274,7 @@ export const DRILL_504: Drill = {
       options: [
         {
           id: 'fix-index',
-          text: bi('Добавить индекс по customer_email миграцией через конвейер, снова выложить релиз и проверить время ответа и долю ошибок 5xx', 'An index on customer_email as a migration through the pipeline; release again and check the response time and the 5xx share'),
+          text: bi('Добавить индекс по customer_email миграцией через конвейер, снова выложить версию и проверить время ответа и долю ошибок 5xx', 'An index on customer_email as a migration through the pipeline; release again and check the response time and the 5xx share'),
           tags: ['fix', 'verify'],
           rightFor: ['slow-sql'],
           why: { 'slow-sql': bi('Причина была в запросе без индекса. Индекс, добавленный миграцией, проверен на тестовом стенде и попадёт в историю изменений.', 'The cause is a query without an index; an index as a migration is tested on staging and stays in the change history.'), default: bi('Индекс не поможет, потому что улики говорят о другой причине.', 'An index will not help, because the evidence points to another cause.') },
@@ -295,9 +295,9 @@ export const DRILL_504: Drill = {
         },
         {
           id: 'timeout2',
-          text: bi('Оставить всё как есть, но увеличить таймауты в nginx и в приложении', 'Leave it as it is but raise the timeouts in nginx and the app'),
+          text: bi('Оставить всё как есть, но увеличить тайм-ауты в nginx и в приложении', 'Leave it as it is but raise the timeouts in nginx and the app'),
           tags: ['hide'],
-          why: bi('Большие таймауты прячут проблему, потому что пользователи будут ждать дольше, а следующая волна нагрузки снова выведет сервис из строя.', 'Timeouts hide the problem: users wait longer, and the next load wave brings the service down again.'),
+          why: bi('Большие тайм-ауты прячут проблему, потому что пользователи будут ждать дольше, а следующая волна нагрузки снова выведет сервис из строя.', 'Timeouts hide the problem: users wait longer, and the next load wave brings the service down again.'),
         },
       ],
     },

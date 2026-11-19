@@ -40,7 +40,7 @@ const D = {
   hide: bi('прячет симптом', 'hides the symptom'),
   wrong: bi('не то', 'not this'),
   step: bi('Шаг', 'Step'),
-  placeholder: bi('Например: «С 14:10 оплата не проходит у всех, около 30 % запросов заканчиваются ошибкой 504. Откатили релиз 14:05, доля ошибок упала до 0,4 %. Индекс добавим миграцией, следующий статус в 15:00».', 'For example: “Checkout for everyone, 504 ~30% since 14:10. Rolled back the 14:05 release, errors 0.4%. The index goes out as a migration, next update at 15:00.”'),
+  placeholder: bi('Например: «С 14:10 оплата не проходит у всех, около 30 % запросов заканчиваются ошибкой 504. Откатили версию от 14:05, доля ошибок упала до 0,4 %. Индекс добавим миграцией, следующий статус в 15:00».', 'For example: “Checkout for everyone, 504 ~30% since 14:10. Rolled back the 14:05 release, errors 0.4%. The index goes out as a migration, next update at 15:00.”'),
 };
 
 const MARK: Record<string, { icon: string; cls: string; label: typeof D.evidence }> = {

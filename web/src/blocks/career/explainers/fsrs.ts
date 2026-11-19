@@ -11,11 +11,11 @@
 // says in a callout what it does, and its result travels along the line.
 
 import { defineModel } from '../../../core/define';
-import { bi, type Bi } from '../../../core/i18n';
+import { bi, t, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { createEmptyCard } from 'ts-fsrs';
 import { Rating, RATING_NAMES, scheduler, type Grade } from '../../../engine/quiz/fsrs';
-import { fmtb, nouned, startWith } from './util';
+import { fmtb, nouned, startWith, tr } from './util';
 
 type P = { retention: number; outcome: string; before: number; confident: boolean };
 
@@ -57,7 +57,10 @@ export function fsrsRun(p: P): FsrsRun {
 }
 
 /** "12 d" / "10 min" for node values. */
-const days = (x: number) => (x < 1 ? `${Math.max(1, Math.round(x * 24 * 60))} min` : `${Math.round(x)} d`);
+const days = (x: number) => {
+  const min = Math.max(1, Math.round(x * 24 * 60));
+  return x < 1 ? tr(`${min} мин`, `${min} min`) : tr(`${Math.round(x)} дн.`, `${Math.round(x)} d`);
+};
 /** «через 12 дней», «через 10 минут» as words. */
 const span = (x: number): Bi => (x < 1 ? nouned(Math.max(1, Math.round(x * 24 * 60)), ['минуту', 'минуты', 'минут'], ['minute', 'minutes']) : nouned(Math.round(x), ['день', 'дня', 'дней'], ['day', 'days']));
 const card = (whatRu: string, whatEn: string, whoRu: string, whoEn: string) => ({ what: bi(whatRu, whatEn), who: bi(whoRu, whoEn) });
@@ -198,8 +201,8 @@ export const fsrsModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'next', label: bi('дней до следующего повторения', 'days to the next review'), unit: 'd' },
-    { id: 'stab', label: bi('устойчивость памяти, дней', 'stability, days'), unit: 'd' },
+    { id: 'next', label: bi('дней до следующего повторения', 'days to the next review') },
+    { id: 'stab', label: bi('устойчивость памяти, дней', 'stability, days') },
     { id: 'month', label: bi('повторений за месяц', 'reviews in a month') },
   ],
   run(p, broken): Step[] {
@@ -215,7 +218,7 @@ export const fsrsModel = defineModel<P>({
         focus: ['answer'],
         say: { answer: p.confident ? bi('Вы отметили «знаю» и ошиблись.', 'You marked “I know” and were wrong.') : OUTCOME[outcome] ?? OUTCOME.good },
         states: { ...startWith(ALL, 'answer', 'due'), answer: wrong ? 'err' : 'ok' },
-        values: { answer: p.confident ? 'wrong · I know' : outcome },
+        values: { answer: p.confident ? tr('ошибка · «знаю»', 'wrong · I know') : t(ratingName(outcome)), queue: tr('до 15 минут', '≤ 15 min'), format: tr('выбор → порядок', 'mcq → order'), rating: t(ratingName('good')), fsrs: tr('цель 90 %', 'retention 0.90') },
         metrics: { next: 0, stab: 0, month: 0 },
       },
       {
@@ -226,7 +229,7 @@ export const fsrsModel = defineModel<P>({
         reveal: ['rating', 'e-r'],
         tokens: [{ edge: 'e-r', label: wrong ? bi('неверно', 'wrong') : bi('верно', 'right') }],
         say: { rating: fmtb(bi('Курс ставит ответу оценку {r}.', 'The course rates the answer {r}.'), { r: ratingName(outcome) }) },
-        values: { rating: outcome },
+        values: { rating: t(ratingName(outcome)) },
         metrics: { next: 0, stab: 0, month: 0 },
       },
     ];
@@ -252,7 +255,7 @@ export const fsrsModel = defineModel<P>({
         reveal: ['fsrs', 'e-f'],
         tokens: [{ edge: 'e-f', label: ratingName(outcome) }],
         say: { fsrs: fmtb(bi('FSRS пересчитывает память о понятии при цели {t} %.', 'FSRS recomputes the memory at a {t}% target.'), { t: Math.round(p.retention * 100) }) },
-        values: { fsrs: `retention ${p.retention.toFixed(2)}` },
+        values: { fsrs: tr(`цель ${Math.round(p.retention * 100)} %`, `retention ${p.retention.toFixed(2)}`) },
         metrics: { next: 0, stab: 0, month: 0 },
       },
       {

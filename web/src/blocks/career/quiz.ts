@@ -37,13 +37,13 @@ export const QUIZ: QuizItem[] = [
     id: 'career.q.five',
     kind: 'multi',
     concepts: ['career.interview'],
-    prompt: bi('Что нанимающий инженер ищет в джуне? Отметьте всё верное.', 'What does a hiring engineer look for in a junior? Mark everything that is true.'),
+    prompt: bi('Что нанимающий инженер ищет в начинающем кандидате? Отметьте всё верное.', 'What does a hiring engineer look for in a junior? Mark everything that is true.'),
     options: [
       { id: 'mech', text: bi('Понимание механизма, а не память на команды', 'Understanding of the mechanism, not a memory for commands'), correct: true },
       { id: 'docs', text: bi('Умение найти ответ в документации самому', 'Finding the answer in the documentation on your own'), correct: true },
       { id: 'honest', text: bi('Готовность признать, где кончаются ваши знания', 'Willingness to admit where your knowledge ends'), correct: true },
-      { id: 'certs', text: bi('Как можно больше сертификатов', 'As many certificates as possible'), why: bi('При найме джуна сертификаты почти не влияют на решение, потому что репозиторий и умение его объяснить весят больше.', 'When a junior is hired, certificates barely affect the decision, because a repository and the ability to explain it weigh more.') },
-      { id: 'all', text: bi('Опыт со всеми инструментами из вакансии', 'Experience with every tool in the vacancy'), why: bi('Требования в вакансиях завышают намеренно, а от джуна ждут знания основ и умения учиться.', 'Requirements are inflated on purpose; a junior is expected to have the basics and the ability to learn.') },
+      { id: 'certs', text: bi('Как можно больше сертификатов', 'As many certificates as possible'), why: bi('При найме начинающего инженера сертификаты почти не влияют на решение, потому что репозиторий и умение его объяснить весят больше.', 'When a junior is hired, certificates barely affect the decision, because a repository and the ability to explain it weigh more.') },
+      { id: 'all', text: bi('Опыт со всеми инструментами из вакансии', 'Experience with every tool in the vacancy'), why: bi('Требования в вакансиях завышают намеренно, а от начинающего инженера ждут знания основ и умения учиться.', 'Requirements are inflated on purpose; a junior is expected to have the basics and the ability to learn.') },
     ],
   },
   // ── career.answer ──
@@ -188,9 +188,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.status-update'],
     prompt: bi('Какой статус для чата команды написан лучше?', 'Which status message to the team is best?'),
     options: [
-      { id: 'good', text: bi('«С 14:10 оплата не проходит у всех пользователей: около 30 % запросов заканчиваются ошибкой 504. Откатываем релиз 14:05. Следующий статус в 14:40 или раньше, если ошибок не станет меньше».', '“Checkout for everyone: about 30% of requests return 504 since 14:10. Rolling back the 14:05 release. Next update at 14:40, or earlier if errors do not drop.”'), correct: true },
+      { id: 'good', text: bi('«С 14:10 оплата не проходит у всех пользователей: около 30 % запросов заканчиваются ошибкой 504. Откатываем версию, выложенную в 14:05. Следующий статус в 14:40 или раньше, если ошибок не станет меньше».', '“Checkout for everyone: about 30% of requests return 504 since 14:10. Rolling back the 14:05 release. Next update at 14:40, or earlier if errors do not drop.”'), correct: true },
       { id: 'vague', text: bi('«Сайт что-то тормозит, смотрю».', '“The site is slow-ish, looking.”'), why: bi('В статусе не сказано, насколько велико влияние, нет конкретного действия и времени следующего сообщения.', 'No scale of impact, no concrete action, no time for the next message.') },
-      { id: 'blame', text: bi('«Кто-то выкатил кривой релиз, разбираюсь».', '“Someone shipped a broken release, dealing with it.”'), why: bi('Вместо влияния и плана статус ищет виноватого, а во время инцидента это только мешает.', 'Blame instead of impact and a plan; during an incident it only gets in the way.') },
+      { id: 'blame', text: bi('«Кто-то выложил кривую версию, разбираюсь».', '“Someone shipped a broken release, dealing with it.”'), why: bi('Вместо влияния и плана статус ищет виноватого, а во время инцидента это только мешает.', 'Blame instead of impact and a plan; during an incident it only gets in the way.') },
     ],
   },
   // ── career.mock ──
@@ -297,7 +297,7 @@ export const QUIZ: QuizItem[] = [
     id: 'career.q.evidence',
     kind: 'mcq',
     concepts: ['career.evidence'],
-    prompt: bi('Что лучше всего подтверждает навык «Docker» в резюме джуна?', 'What best backs the skill “Docker” on a junior CV?'),
+    prompt: bi('Что лучше всего подтверждает навык «Docker» в резюме начинающего инженера?', 'What best backs the skill “Docker” on a junior CV?'),
     options: [
       { id: 'repo', text: bi('Ссылка на репозиторий проекта с Dockerfile, compose и README', 'A link to a project repository with a Dockerfile, compose and a README'), correct: true },
       { id: 'course', text: bi('«Прошёл онлайн-курс по Docker»', '“Took an online Docker course”'), why: bi('Пройденный курс не показывает, что вы умеете, а репозиторий или сданный практический экзамен показывают.', 'A course taken does not show what you can do; a repository or a practical exam does.') },
