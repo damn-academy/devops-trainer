@@ -28,7 +28,7 @@ const placement: PlacementTask[] = [
     concepts: ['docker.lifecycle', 'docker.publish'],
     kind: 'task',
     setup: dockerHost(),
-    task: { id: 'p-web', prompt: bi('Запустите nginx в фоне с именем `web`, чтобы `http://localhost:8080` открывал его стартовую страницу.', 'Run nginx in the background named `web` so that `http://localhost:8080` opens its start page.'), check: { when: "containers[name=web].state=running && http['localhost:8080'].status=200" } },
+    task: { id: 'p-web', prompt: bi('Запустите nginx в фоне с именем `web` так, чтобы адрес `http://localhost:8080` открывал его стартовую страницу.', 'Run nginx in the background named `web` so that `http://localhost:8080` opens its start page.'), check: { when: "containers[name=web].state=running && http['localhost:8080'].status=200" } },
   },
   {
     id: 'containers.place.cache',
@@ -39,7 +39,7 @@ const placement: PlacementTask[] = [
     setup: dockerHost({ files: [{ path: '~/app/Dockerfile', content: 'FROM python:3.13-slim\nCOPY . /app\nRUN pip install -r /app/requirements.txt\nCMD python /app/main.py\n' }, { path: '~/app/requirements.txt', content: 'flask==3.1.2\n' }, { path: '~/app/main.py', content: 'print("hi")\n' }] }, { pull: ['python:3.13-slim'] }),
     task: {
       id: 'p-cache',
-      prompt: bi('Измените `~/app/Dockerfile` так, чтобы правка `main.py` не вызывала переустановку зависимостей: две сборки, во второй `pip install` из кэша.', 'Change `~/app/Dockerfile` so that editing `main.py` does not reinstall dependencies: two builds, the second with `pip install` from the cache.'),
+      prompt: bi('Измените `~/app/Dockerfile` так, чтобы правка `main.py` не вызывала переустановку зависимостей. Проверкой служат две сборки: во второй шаг `pip install` должен быть взят из кэша.', 'Change `~/app/Dockerfile` so that editing `main.py` does not reinstall dependencies: two builds, the second with `pip install` from the cache.'),
       check: {
         when: (f: Facts) => {
           const bs = ((f.builds as B[] | undefined) ?? []).filter((b) => b.ok);
@@ -63,7 +63,7 @@ const exam: Exam = {
   id: 'exam-docker-duty',
   block: 'containers',
   title: bi('Дежурство', 'On duty'),
-  intro: bi('Четыре сообщения «из чата команды», одна машина. Для каждого сначала найдите границу, потом почините. Открыта только справка `--help` и документация docs.docker.com; ИИ выключен.', 'Four messages “from the team chat”, one machine. For each, find the boundary first, then fix it. Only `--help` and docs.docker.com are open; the AI is off.'),
+  intro: bi('Вам приходят четыре сообщения из чата команды, и все они про одну машину. Для каждого сначала найдите границу контейнера, на которой сидит поломка, а потом почините её. Открыты только справка `--help` и документация docs.docker.com, а ИИ-наставник выключен.', 'Four messages “from the team chat”, one machine. For each, find the boundary first, then fix it. Only `--help` and docs.docker.com are open; the AI is off.'),
   minutes: 40,
   pass: 0.75,
   allowedDocs: ['help', 'docs.docker.com', 'man'],
@@ -74,7 +74,7 @@ const exam: Exam = {
       critical: true,
       kind: 'task',
       setup: dockerHost({}, { pull: ['trainer/web:1.0'], run: ['docker run -d --name site -p 8080:8000 trainer/web:1.0'] }),
-      task: { id: 'e-site', prompt: bi('«Сайт не открывается»: `curl localhost:8080` должен отвечать 200.', '“The site does not open”: `curl localhost:8080` must answer 200.'), check: { when: "http['localhost:8080'].status=200" } },
+      task: { id: 'e-site', prompt: bi('«Сайт не открывается». Команда `curl localhost:8080` должна получать ответ с кодом 200.', '“The site does not open”: `curl localhost:8080` must answer 200.'), check: { when: "http['localhost:8080'].status=200" } },
     },
     {
       id: 'worker',
@@ -84,8 +84,8 @@ const exam: Exam = {
       setup: dockerHost({}, { pull: ['trainer/worker:1.0'], run: ['docker run -d --name worker --memory 64m --restart on-failure trainer/worker:1.0'] }),
       task: {
         id: 'e-worker',
-        prompt: bi('«Контейнер worker постоянно перезапускается». Почините, не снимая лимит памяти совсем: в README образа написано, сколько ему нужно.', '“The worker container keeps restarting”. Fix it without removing the memory limit altogether: the image README says how much it needs.'),
-        check: { when: 'containers[name=worker].state=running && containers[name=worker].hostConfig.memory>=128Mi', fail: [{ if: 'containers[name=worker].hostConfig.memory=0', say: bi('Лимит не убирают — его подбирают: без него один контейнер может съесть всю память машины.', 'A limit is not removed — it is tuned: without it one container can eat the whole machine’s memory.') }] },
+        prompt: bi('«Контейнер worker постоянно перезапускается». Почините его, не снимая лимит памяти совсем: в README образа написано, сколько памяти ему нужно.', '“The worker container keeps restarting”. Fix it without removing the memory limit altogether: the image README says how much it needs.'),
+        check: { when: 'containers[name=worker].state=running && containers[name=worker].hostConfig.memory>=128Mi', fail: [{ if: 'containers[name=worker].hostConfig.memory=0', say: bi('Лимит не убирают, а подбирают: без лимита один контейнер может занять всю память машины.', 'A limit is not removed — it is tuned: without it one container can eat the whole machine’s memory.') }] },
       },
     },
     {
@@ -95,7 +95,7 @@ const exam: Exam = {
       setup: dockerHost({}, { pull: ['alpine:3.22', 'nginx:1.30-alpine', 'postgres:17-alpine'], run: ['docker run -d --name db -e POSTGRES_PASSWORD=pw -v pgdata:/var/lib/postgresql/data postgres:17-alpine', 'docker run --name old1 alpine:3.22 true', 'docker run --name old2 nginx:1.30-alpine true'] }),
       task: {
         id: 'e-disk',
-        prompt: bi('«Кончился диск»: удалите остановленные контейнеры и неиспользуемые образы, не тронув базу и её том `pgdata`.', '“The disk is full”: remove the stopped containers and unused images without touching the database and its `pgdata` volume.'),
+        prompt: bi('«Кончилось место на диске». Удалите остановленные контейнеры и неиспользуемые образы, не тронув базу данных и её том `pgdata`.', '“The disk is full”: remove the stopped containers and unused images without touching the database and its `pgdata` volume.'),
         check: { when: "containers[state=exited]#=0 && containers[name=db].state=running && volumes[name=pgdata] && !images[ref='nginx:1.30-alpine']" },
       },
     },
@@ -107,7 +107,7 @@ const exam: Exam = {
       setup: dockerHost({}, { pull: ['nginx:1.30-alpine'] }),
       task: {
         id: 'e-logs',
-        prompt: bi('«Журнал контейнера съел диск»: запустите nginx `front` так, чтобы его журнал занимал не больше 3 файлов по 10 МБ.', '“A container log ate the disk”: run an nginx `front` whose log takes at most 3 files of 10 MB.'),
+        prompt: bi('«Журнал контейнера занял весь диск». Запустите nginx с именем `front` так, чтобы его журнал занимал не больше трёх файлов по 10 МБ.', '“A container log ate the disk”: run an nginx `front` whose log takes at most 3 files of 10 MB.'),
         check: { when: "containers[name=front].hostConfig.logConfig.config['max-size']=10m && containers[name=front].hostConfig.logConfig.config['max-file']=3" },
         docStep: 5,
         solutionTokens: ['--log-opt', 'max-size', 'max-file'],
@@ -123,9 +123,9 @@ export const block: Block = {
   summary: route.summary,
   checklistStep: route.checklistStep,
   levels: {
-    beginner: bi('Не запускал контейнеров. Итог: запускает и чинит контейнеры, пишет Dockerfile и compose.yaml, объясняет контейнер против ВМ через namespaces и cgroups и начинает диагностику с вопроса «на какой границе?».', 'Has never run a container. Outcome: runs and fixes containers, writes a Dockerfile and compose.yaml, explains container vs VM through namespaces and cgroups and starts diagnosis with “on which boundary?”.'),
-    intermediate: bi('Запускал docker run по README. Итог: понимает кэш сборки, тома и сети, PID 1 и сигналы, собирает контейнер руками и проходит задания «найди флаг».', 'Has run docker run from a README. Outcome: understands the build cache, volumes and networks, PID 1 and signals, builds a container by hand and solves “find the flag” tasks.'),
-    experienced: bi('Пишет Dockerfile, не знает bundle, цепочку рантайма, PID 1. Итог: читает OCI-спецификации, видит цепочку до runc, понимает digest, user namespaces и профиль безопасности.', 'Writes Dockerfiles; does not know the bundle, the runtime chain, PID 1. Outcome: reads the OCI specifications, sees the chain down to runc, understands digests, user namespaces and the security profile.'),
+    beginner: bi('Ещё не запускали ни одного контейнера. К концу блока вы запускаете и чините контейнеры, пишете Dockerfile и compose.yaml, объясняете отличие контейнера от виртуальной машины через пространства имён и cgroup и начинаете поиск неисправности с вопроса «на какой границе?».', 'Has never run a container. Outcome: runs and fixes containers, writes a Dockerfile and compose.yaml, explains container vs VM through namespaces and cgroups and starts diagnosis with “on which boundary?”.'),
+    intermediate: bi('Уже запускали docker run по инструкции из README. К концу блока вы понимаете кэш сборки, тома и сети, PID 1 и сигналы, собираете контейнер своими руками и решаете задания, где нужный флаг приходится искать в документации.', 'Has run docker run from a README. Outcome: understands the build cache, volumes and networks, PID 1 and signals, builds a container by hand and solves “find the flag” tasks.'),
+    experienced: bi('Пишете Dockerfile, но не знаете, что такое бандл, цепочка рантайма и PID 1. К концу блока вы читаете спецификации OCI, видите всю цепочку запуска до runc, понимаете digest, пространства имён пользователей и профиль безопасности контейнера.', 'Writes Dockerfiles; does not know the bundle, the runtime chain, PID 1. Outcome: reads the OCI specifications, sees the chain down to runc, understands digests, user namespaces and the security profile.'),
   },
   hours: route.hours,
   placement,
