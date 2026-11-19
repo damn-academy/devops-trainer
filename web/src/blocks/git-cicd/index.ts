@@ -14,6 +14,7 @@ import './ci/run';
 import * as cicd from './content/cicd';
 import * as cicdK8s from './content/cicd-k8s';
 import { CICD_EXAM, GIT_YAML_EXAM } from './content/exams';
+import { CICD_TAB_EXAM } from './content/exam-tab';
 import * as gy from './content/git-yaml';
 import { ciModel, gitModel } from './explainers';
 import { artifactsModel, dagModel, kubeDeployModel, mergeModel } from './explainers-flow';
@@ -29,7 +30,7 @@ export default defineModule({
   concepts: [...gy.concepts, ...cicd.concepts, ...cicdK8s.concepts],
   quiz: [...gy.quiz, ...cicd.quiz, ...cicdK8s.quiz],
   explainers: [fromModel(gitModel), fromModel(mergeModel), fromModel(ciModel), fromModel(artifactsModel), fromModel(dagModel), fromModel(kubeDeployModel)],
-  exams: [GIT_YAML_EXAM, CICD_EXAM],
+  exams: [GIT_YAML_EXAM, CICD_EXAM, CICD_TAB_EXAM],
   commands: [gitCommand, glabCommand, yamllintCommand, editCommand],
   docs: [...GIT_MAN, ...GITLAB_DOCS],
   widgets: [yamlWidget, boardWidget],

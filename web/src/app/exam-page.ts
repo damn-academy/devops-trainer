@@ -12,7 +12,7 @@ import { bi, fmt, lang, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
 import { href } from '../core/router';
 import { store } from '../core/store';
-import type { Exam, ExamTask, Mounted } from '../core/types';
+import type { Exam, ExamTask, Facts, Mounted } from '../core/types';
 import { openDoc } from '../engine/docs/viewer';
 import { examGate, newSeed, pickTasks, protocol, scoreExam, type ExamProtocol } from '../engine/quiz/exam';
 import { mountQuiz } from '../engine/quiz/render';
@@ -83,6 +83,16 @@ function taskTitle(x: ExamTask): string {
 
 function taskConcepts(x: ExamTask): string[] {
   return (x.kind === 'quiz' ? x.item.concepts : x.kind === 'task' ? x.task.concepts : x.real.concepts) ?? [];
+}
+
+/** The in-tab lab of an exam (Exam.inTab): the widget reports facts of its machines, the real cards judge them. */
+function mountTabLab(exam: Exam, onFacts: (m: Record<string, Facts>) => void): { el: HTMLElement; mounted: Mounted } | null {
+  const inTab = exam.inTab;
+  const w = inTab ? registry.widgets.get(inTab.widget) : undefined;
+  if (!inTab || !w) return null;
+  const el = h('div.widget-host.ex2-tablab');
+  const mounted = w.mount(el, inTab.props ?? {}, { level: 'experienced', complete() {}, record: (e) => store.record(e), openDoc: (r) => openDoc(r, { mode: 'exam', allowed: exam.allowedDocs, via: 'exam' }), reportFacts: onFacts });
+  return { el, mounted };
 }
 
 export function examPage(id: string): Page {
@@ -157,8 +167,11 @@ export function examPage(id: string): Page {
     const docsBtn = h('button.btn.ghost.small', { type: 'button', onclick: () => openDoc({}, { mode: 'exam', allowed: exam.allowedDocs, via: 'exam' }) }, icon('doc'), t(E.docs));
     const list = h('ol.exam-tasks.ex2-tasks');
     const realCards: RealCardView[] = [];
-    const lab = exam.real ? mountRealLab({ ...exam, real: exam.real }, seed, (m) => realCards.forEach((c) => c.update(m))) : null;
+    // With an in-tab lab the machines report their facts themselves: no paste panel.
+    const lab = exam.real && !exam.inTab ? mountRealLab({ ...exam, real: exam.real }, seed, (m) => realCards.forEach((c) => c.update(m))) : null;
     if (lab) mounts.push(lab);
+    const tabLab = mountTabLab(exam, (m) => realCards.forEach((c) => c.update(m)));
+    if (tabLab) mounts.push(tabLab.mounted);
     tasks.forEach((task, i) => {
       const host = h('div');
       const tags = [`${task.weight} ${t(E.pts)}`, task.critical ? t(E.critical) : '', task.beyond ? t(E.beyond) : ''].filter(Boolean).join(' · ');
@@ -190,7 +203,7 @@ export function examPage(id: string): Page {
       disposeAll();
       explainStep(mode, seed, tasks, results, started);
     };
-    put(root, h('header.exam-head', {}, h('h1', {}, t(exam.title)), h('span.badge', {}, t(mode === 'exam' ? E.exam : E.training)), timer, docsBtn), exam.story ? h('details.ex2-story-mini', {}, h('summary', {}, t(E.story)), prose(exam.story)) : null, lab?.el ?? null, list, submitBtn);
+    put(root, h('header.exam-head', {}, h('h1', {}, t(exam.title)), h('span.badge', {}, t(mode === 'exam' ? E.exam : E.training)), timer, docsBtn), exam.story ? h('details.ex2-story-mini', {}, h('summary', {}, t(E.story)), prose(exam.story)) : null, lab?.el ?? null, tabLab?.el ?? null, list, submitBtn);
   };
 
   const explainStep = (mode: 'exam' | 'training', seed: string, tasks: ExamTask[], results: Map<string, number>, started: Date) => {
@@ -243,7 +256,7 @@ export function examPage(id: string): Page {
       checks: tasks.map((x) => ({ id: x.id, title: taskTitle(x), weight: x.weight, critical: !!x.critical, beyond: !!x.beyond, result: results.get(x.id) ?? 0 })),
       docOpens,
       explain,
-      env: exam.real ? 'vm' : 'sim',
+      env: exam.inTab ? 'tab' : exam.real ? 'vm' : 'sim',
     });
     const gaps = [...new Set(tasks.filter((x) => (results.get(x.id) ?? 0) < 1).flatMap(taskConcepts))];
     clear(root);
