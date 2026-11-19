@@ -62,15 +62,15 @@ const TLS = ['--resolve', 'www.corp.lab:443:10.0.0.11', '--cacert', '/root/ca/ca
 
 export const examLab: NetLabSpec = {
   id: 'exam-net-b',
-  title: bi('Сети на настоящих машинах: в браузере', 'Networks on real machines: in the browser'),
+  title: bi('Сети на настоящих машинах в браузере', 'Networks on real machines: in the browser'),
   intro: bi(
-    'Три настоящие машины Linux в этой вкладке. `vm1` и `vm2` подключены к коммутатору транком: VLAN 1 без метки (там их адреса 10.0.0.11 и 10.0.0.12) и VLAN 99 с меткой — пока пустой. `probe` (10.0.0.13) — только в VLAN 1. На `probe` уже работают API партнёра на порту 8081 и учебный центр сертификации в `/root/ca` с командой `dt-ca-sign`; на `vm2` установлено приложение заказов, которое ждёт адреса 10.99.0.2, и метрики на порту 9100. После каждого шага нажимайте «Проверить состояние машин».',
+    'В этой вкладке работают три настоящие машины с Linux. Машины `vm1` и `vm2` подключены к коммутатору транком: VLAN 1 идёт по нему без метки, и в нём у машин адреса 10.0.0.11 и 10.0.0.12, а VLAN 99 идёт с меткой и пока пуст. Машина `probe` с адресом 10.0.0.13 подключена только к VLAN 1. На `probe` уже работают API партнёра на порту 8081 и учебный удостоверяющий центр в `/root/ca` с командой `dt-ca-sign`, а на `vm2` установлено приложение заказов, которое ждёт появления адреса 10.99.0.2, и метрики на порту 9100. После каждого шага нажимайте «Проверить состояние машин».',
     'Three real Linux machines in this tab. `vm1` and `vm2` are on trunk ports of the switch: VLAN 1 untagged (their addresses 10.0.0.11 and 10.0.0.12 are there) and VLAN 99 tagged — empty so far. `probe` (10.0.0.13) is in VLAN 1 only. On `probe` the partner’s API already runs on port 8081, with the training certificate authority in `/root/ca` and the command `dt-ca-sign`; on `vm2` the orders application is installed and waits for the address 10.99.0.2, and the metrics run on port 9100. After each step press “Check the machines”.',
   ),
   machines: [
-    { name: 'vm1', ip: '10.0.0.11/24', port: { mode: 'trunk', vlan: 1, vlans: [99] }, role: bi('краевая машина: nginx, выход к партнёру', 'the edge: nginx, the way out to the partner') },
+    { name: 'vm1', ip: '10.0.0.11/24', port: { mode: 'trunk', vlan: 1, vlans: [99] }, role: bi('краевая машина с nginx и выходом к партнёру', 'the edge: nginx, the way out to the partner') },
     { name: 'vm2', ip: '10.0.0.12/24', port: { mode: 'trunk', vlan: 1, vlans: [99] }, role: bi('машина приложения', 'the application machine'), setup: VM2_SETUP },
-    { name: 'probe', ip: '10.0.0.13/24', role: bi('внешний мир, партнёр и учебный CA', 'the outside world, the partner and the training CA'), setup: PROBE_SETUP },
+    { name: 'probe', ip: '10.0.0.13/24', role: bi('внешний мир, партнёр и учебный удостоверяющий центр', 'the outside world, the partner and the training CA'), setup: PROBE_SETUP },
   ],
   nginx: ['vm1'],
   files: { vm1: ['/root/504.txt'], vm2: ['/etc/dt-stub/delay'] },
@@ -132,9 +132,9 @@ export function reportTimeout(conf: string): boolean {
 export const examBrowser: Exam = {
   id: 'networks.exam.browser',
   block: 'networks',
-  title: bi('Сети на настоящих машинах — в браузере', 'Networks on real machines — in the browser'),
+  title: bi('Сети на настоящих машинах в браузере', 'Networks on real machines — in the browser'),
   intro: bi(
-    'Та же вторая часть экзамена, что и на ваших облачных машинах, но три машины Linux работают прямо в этой вкладке: ничего не нужно заказывать, платить и убирать. Засчитывается состояние машин и ответы проб с других машин, путь к нему может быть любым. Одно отличие: частная связь между `vm1` и `vm2` — не туннель WireGuard, а VLAN 99 на коммутаторе лаборатории, и проложить её — первый тикет. Открыта только документация: `man`, `--help`, nginx.org и RFC; на самих машинах есть `man`. Наставник выключен. Машинам нужно около 600 МБ памяти вкладки.',
+    'Это та же вторая часть экзамена, что и на ваших облачных машинах, но три машины с Linux работают прямо в этой вкладке, и ничего не нужно заказывать, оплачивать и удалять. Засчитывается состояние машин и ответы на проверочные запросы с других машин, а путь к этому состоянию может быть любым. Отличие одно: частная связь между `vm1` и `vm2` построена не туннелем WireGuard, а через VLAN 99 на коммутаторе лаборатории, и проложить её нужно в первой заявке. Открыта только документация, то есть `man`, `--help`, nginx.org и RFC, а на самих машинах есть `man`. Наставник выключен. Машинам нужно около 600 МБ памяти вкладки.',
     'The same second part of the exam as on your cloud machines, but the three Linux machines run right in this tab: nothing to order, pay for or clean up. What counts is the state of the machines and the answers of probes from the other machines; any path to it is fine. One difference: the private link between `vm1` and `vm2` is not a WireGuard tunnel but VLAN 99 on the lab switch, and laying it is the first ticket. Only documentation is open: `man`, `--help`, nginx.org and the RFCs; the machines have `man` themselves. The mentor is off. The machines need about 600 MB of tab memory.',
   ),
   story: examB.story,
@@ -155,16 +155,16 @@ export const examBrowser: Exam = {
       kind: 'real',
       real: {
         prompt: bi(
-          'Тикет 1. Проложите частную связь: на `vm1` и `vm2` поднимите интерфейсы VLAN 99 с адресами 10.99.0.1/24 и 10.99.0.2/24. Как только адрес появится, приложение на `vm2` начнёт отвечать на `http://10.99.0.2:8080/` — только на этом адресе.',
+          'Заявка 1. Проложите частную связь: создайте на `vm1` и `vm2` интерфейсы VLAN 99 с адресами 10.99.0.1/24 и 10.99.0.2/24 и включите их. Как только адрес появится, приложение на `vm2` начнёт отвечать на `http://10.99.0.2:8080/`, причём только на этом адресе.',
           'Ticket 1. Lay the private link: on `vm1` and `vm2` bring up VLAN 99 interfaces with 10.99.0.1/24 and 10.99.0.2/24. As soon as the address appears, the application on `vm2` starts answering on `http://10.99.0.2:8080/` — on that address only.',
         ),
         concepts: ['net.vlan', 'net.route-table', 'net.port'],
         goals: [
-          G('v1', ['на `vm1` интерфейс VLAN 99 с адресом 10.99.0.1/24', '`vm1` has a VLAN 99 interface with 10.99.0.1/24'], 'vm1', (f) => vlan99(f, '10.99.0.1/24')),
-          G('v2', ['на `vm2` интерфейс VLAN 99 с адресом 10.99.0.2/24', '`vm2` has a VLAN 99 interface with 10.99.0.2/24'], 'vm2', (f) => vlan99(f, '10.99.0.2/24')),
-          G('ping', ['`vm1` пингует 10.99.0.2 по VLAN 99', '`vm1` pings 10.99.0.2 over VLAN 99'], 'vm1', (f) => !!reach(f, 'tun')?.ok),
-          G('app', ['приложение отвечает `vm1` по VLAN 99', 'the application answers `vm1` over VLAN 99'], 'vm1', (f) => ok200(f, 'app')),
-          G('bind', ['на `vm2` порт 8080 слушается только на 10.99.0.2', 'on `vm2` port 8080 listens on 10.99.0.2 only'], 'vm2', (f) => {
+          G('v1', ['На `vm1` есть интерфейс VLAN 99 с адресом 10.99.0.1/24', '`vm1` has a VLAN 99 interface with 10.99.0.1/24'], 'vm1', (f) => vlan99(f, '10.99.0.1/24')),
+          G('v2', ['На `vm2` есть интерфейс VLAN 99 с адресом 10.99.0.2/24', '`vm2` has a VLAN 99 interface with 10.99.0.2/24'], 'vm2', (f) => vlan99(f, '10.99.0.2/24')),
+          G('ping', ['`vm1` получает ответ на ping до 10.99.0.2 по VLAN 99', '`vm1` pings 10.99.0.2 over VLAN 99'], 'vm1', (f) => !!reach(f, 'tun')?.ok),
+          G('app', ['Приложение отвечает машине `vm1` по VLAN 99', 'the application answers `vm1` over VLAN 99'], 'vm1', (f) => ok200(f, 'app')),
+          G('bind', ['На `vm2` порт 8080 слушается только на адресе 10.99.0.2', 'on `vm2` port 8080 listens on 10.99.0.2 only'], 'vm2', (f) => {
             const l = listen(f).filter((x) => x.port === 8080);
             return l.length > 0 && l.every((x) => x.addr === '10.99.0.2');
           }),
@@ -178,17 +178,17 @@ export const examBrowser: Exam = {
       kind: 'real',
       real: {
         prompt: bi(
-          'Тикет 2. Клиенты открывают `https://www.corp.lab/` (имя указывает на `vm1`). Поставьте на `vm1` nginx обратным прокси на `http://10.99.0.2:8080` с сертификатом на `www.corp.lab`, подписанным учебным центром на `probe`; ключ сертификата не должен покидать `vm1`. Запрос на подпись передайте на `probe` по SSH: ключ SSH с `vm1` положите в `authorized_keys` на `probe` через его терминал. Обычный HTTP пусть перенаправляет на HTTPS.',
+          'Заявка 2. Клиенты открывают `https://www.corp.lab/`, и это имя указывает на `vm1`. Настройте на `vm1` nginx как обратный прокси к `http://10.99.0.2:8080` с сертификатом на имя `www.corp.lab`, подписанным учебным удостоверяющим центром на `probe`; ключ сертификата не должен покидать `vm1`. Запрос на подпись передайте на `probe` по SSH, а для этого положите ключ SSH с `vm1` в `authorized_keys` на `probe` через терминал `probe`. Запросы по обычному HTTP пусть перенаправляются на HTTPS.',
           'Ticket 2. Customers open `https://www.corp.lab/` (the name points to `vm1`). Put nginx on `vm1` as a reverse proxy to `http://10.99.0.2:8080` with a certificate for `www.corp.lab` signed by the training authority on `probe`; the certificate’s key must not leave `vm1`. Send the signing request to `probe` over SSH: put `vm1`’s SSH key into `authorized_keys` on `probe` through its terminal. Plain HTTP should redirect to HTTPS.',
         ),
         concepts: ['net.reverse-proxy', 'net.cert', 'net.ca', 'net.tls'],
         goals: [
-          G('conf', ['nginx на `vm1` проксирует на 10.99.0.2:8080, конфигурация проходит `nginx -t`', 'nginx on `vm1` proxies to 10.99.0.2:8080 and its configuration passes `nginx -t`'], 'vm1', (f) => nginxOk(f) && /proxy_pass\s+http:\/\/10\.99\.0\.2:8080/.test(nginxConf(f))),
-          G('portal', ['`probe` открывает `https://www.corp.lab/`, доверяя только учебному CA', '`probe` opens `https://www.corp.lab/` trusting only the training CA'], 'probe', (f) => ok200(f, 'portal'), [
-            { if: (f) => reach(f, 'portal')?.error === 'tls', say: bi('TLS не сошёлся: сертификат не на `www.corp.lab` или подписан не учебным CA. Посмотрите `openssl x509 -noout -subject -ext subjectAltName -issuer -in` на ваш сертификат.', 'TLS failed: the certificate is not for `www.corp.lab` or is not signed by the training CA. Look at `openssl x509 -noout -subject -ext subjectAltName -issuer -in` on your certificate.') },
-            { if: (f) => reach(f, 'portal')?.status === 502, say: bi('502: nginx не достучался до бэкенда. Отвечает ли `curl http://10.99.0.2:8080/` на самой `vm1`?', '502: nginx could not reach the backend. Does `curl http://10.99.0.2:8080/` answer on `vm1` itself?') },
+          G('conf', ['nginx на `vm1` передаёт запросы на 10.99.0.2:8080, и конфигурация проходит проверку `nginx -t`', 'nginx on `vm1` proxies to 10.99.0.2:8080 and its configuration passes `nginx -t`'], 'vm1', (f) => nginxOk(f) && /proxy_pass\s+http:\/\/10\.99\.0\.2:8080/.test(nginxConf(f))),
+          G('portal', ['`probe` открывает `https://www.corp.lab/`, доверяя только учебному удостоверяющему центру', '`probe` opens `https://www.corp.lab/` trusting only the training CA'], 'probe', (f) => ok200(f, 'portal'), [
+            { if: (f) => reach(f, 'portal')?.error === 'tls', say: bi('Соединение TLS не установилось, потому что сертификат выписан не на `www.corp.lab` или подписан не учебным центром. Посмотрите на свой сертификат командой `openssl x509 -noout -subject -ext subjectAltName -issuer -in`.', 'TLS failed: the certificate is not for `www.corp.lab` or is not signed by the training CA. Look at `openssl x509 -noout -subject -ext subjectAltName -issuer -in` on your certificate.') },
+            { if: (f) => reach(f, 'portal')?.status === 502, say: bi('nginx ответил кодом 502, потому что не подключился к серверу приложения. Проверьте, отвечает ли `curl http://10.99.0.2:8080/` на самой `vm1`.', '502: nginx could not reach the backend. Does `curl http://10.99.0.2:8080/` answer on `vm1` itself?') },
           ]),
-          G('redirect', ['`http://` на `vm1` перенаправляет на HTTPS', '`http://` on `vm1` redirects to HTTPS'], 'probe', (f) => [301, 302, 307, 308].includes(reach(f, 'plain')?.status ?? 0)),
+          G('redirect', ['Запрос `http://` на `vm1` перенаправляется на HTTPS', '`http://` on `vm1` redirects to HTTPS'], 'probe', (f) => [301, 302, 307, 308].includes(reach(f, 'plain')?.status ?? 0)),
         ],
       },
     },
@@ -199,19 +199,19 @@ export const examBrowser: Exam = {
       kind: 'real',
       real: {
         prompt: bi(
-          'Тикет 3. Закройте обе машины: политика DROP на входе. Снаружи, из VLAN 1, на `vm1` открыты только SSH, HTTP и HTTPS, на `vm2` — только SSH. Метрики `vm2` на порту 9100 снаружи закрыты, а с `vm1` по VLAN 99 доступны. Сначала разрешите SSH, потом меняйте политику.',
+          'Заявка 3. Закройте обе машины, поставив на входе политику DROP. Снаружи, то есть из VLAN 1, на `vm1` должны быть открыты только SSH, HTTP и HTTPS, а на `vm2` только SSH. Метрики `vm2` на порту 9100 снаружи должны быть закрыты, но доступны с `vm1` по VLAN 99. Сначала разрешите SSH, а потом меняйте политику.',
           'Ticket 3. Lock both machines down: a DROP policy on input. From outside, from VLAN 1, `vm1` has only SSH, HTTP and HTTPS open, `vm2` only SSH. `vm2`’s metrics on port 9100 are closed from outside and reachable from `vm1` over VLAN 99. Allow SSH first, then change the policy.',
         ),
         concepts: ['net.netfilter', 'net.conntrack', 'net.port'],
         goals: [
-          G('drop1', ['на `vm1` политика входа DROP', '`vm1` has an input DROP policy'], 'vm1', (f) => inputDrop(f)),
-          G('drop2', ['на `vm2` политика входа DROP', '`vm2` has an input DROP policy'], 'vm2', (f) => inputDrop(f)),
-          G('closed1', ['закрытый порт `vm1` молчит, а не отвечает отказом', 'a closed port of `vm1` stays silent instead of refusing'], 'probe', (f) => reach(f, 'closed1')?.error === 'timeout'),
+          G('drop1', ['На `vm1` политика входящего трафика равна DROP', '`vm1` has an input DROP policy'], 'vm1', (f) => inputDrop(f)),
+          G('drop2', ['На `vm2` политика входящего трафика равна DROP', '`vm2` has an input DROP policy'], 'vm2', (f) => inputDrop(f)),
+          G('closed1', ['Закрытый порт `vm1` молчит, а не отвечает отказом', 'a closed port of `vm1` stays silent instead of refusing'], 'probe', (f) => reach(f, 'closed1')?.error === 'timeout'),
           G('open1', ['SSH и HTTPS на `vm1` открыты снаружи', 'SSH and HTTPS on `vm1` are open from outside'], 'probe', (f) => !!reach(f, 'ssh1')?.connected && ok200(f, 'portal')),
           G('ssh2', ['SSH на `vm2` открыт снаружи', 'SSH on `vm2` is open from outside'], 'probe', (f) => !!reach(f, 'ssh2')?.connected),
-          G('exp-out', ['метрики `vm2` снаружи закрыты', '`vm2`’s metrics are closed from outside'], 'probe', (f) => reach(f, 'exporter2')?.connected === false, [{ if: (f) => !!reach(f, 'exporter2')?.connected, say: bi('Порт 9100 на `vm2` отвечает `probe`: правило для метрик должно смотреть на входной интерфейс.', 'Port 9100 on `vm2` answers `probe`: the rule for the metrics must look at the input interface.') }]),
-          G('exp-in', ['метрики `vm2` доступны с `vm1` по VLAN 99', '`vm2`’s metrics are reachable from `vm1` over VLAN 99'], 'vm1', (f) => !!reach(f, 'exporter')?.connected),
-          G('link', ['связь по VLAN 99 пережила межсетевой экран', 'the VLAN 99 link survived the firewall'], 'vm1', (f) => !!reach(f, 'tun')?.ok && ok200(f, 'app')),
+          G('exp-out', ['Метрики `vm2` снаружи закрыты', '`vm2`’s metrics are closed from outside'], 'probe', (f) => reach(f, 'exporter2')?.connected === false, [{ if: (f) => !!reach(f, 'exporter2')?.connected, say: bi('Порт 9100 на `vm2` отвечает машине `probe`, а правило для метрик должно проверять входной интерфейс.', 'Port 9100 on `vm2` answers `probe`: the rule for the metrics must look at the input interface.') }]),
+          G('exp-in', ['Метрики `vm2` доступны с `vm1` по VLAN 99', '`vm2`’s metrics are reachable from `vm1` over VLAN 99'], 'vm1', (f) => !!reach(f, 'exporter')?.connected),
+          G('link', ['Связь по VLAN 99 продолжает работать после включения межсетевого экрана', 'the VLAN 99 link survived the firewall'], 'vm1', (f) => !!reach(f, 'tun')?.ok && ok200(f, 'app')),
         ],
       },
     },
@@ -221,19 +221,19 @@ export const examBrowser: Exam = {
       kind: 'real',
       real: {
         prompt: bi(
-          'Тикет 4. Приложению на `vm2` нужен API партнёра `http://10.0.0.13:8081/`, а партнёр пускает только адрес `vm1`. Отправьте трафик `vm2` к партнёру через VLAN 99 и `vm1` так, чтобы партнёр видел адрес `vm1`. API отвечает адресом, с которого пришёл запрос.',
+          'Заявка 4. Приложению на `vm2` нужен API партнёра `http://10.0.0.13:8081/`, а партнёр пускает только адрес `vm1`. Отправьте трафик `vm2` к партнёру через VLAN 99 и `vm1` так, чтобы партнёр видел адрес `vm1`. API отвечает тем адресом, с которого пришёл запрос.',
           'Ticket 4. The application on `vm2` needs the partner’s API `http://10.0.0.13:8081/`, and the partner lets in only `vm1`’s address. Send `vm2`’s traffic to the partner over VLAN 99 and `vm1` so that the partner sees `vm1`’s address. The API answers with the address the request came from.',
         ),
         concepts: ['net.nat', 'net.route-table', 'net.gateway'],
         goals: [
           G('forward', ['`vm1` пересылает пакеты', '`vm1` forwards packets'], 'vm1', (f) => net(f).forward === 1),
-          G('masq', ['на `vm1` есть подмена адреса источника', '`vm1` has a source address rewrite'], 'vm1', (f) => hasMasquerade(f)),
-          G('seen', ['партнёр видит запрос `vm2` с адреса `vm1`', 'the partner sees `vm2`’s request from `vm1`’s address'], undefined, (f) => {
+          G('masq', ['На `vm1` есть правило подмены адреса отправителя', '`vm1` has a source address rewrite'], 'vm1', (f) => hasMasquerade(f)),
+          G('seen', ['Партнёр видит запрос от `vm2` с адресом `vm1`', 'the partner sees `vm2`’s request from `vm1`’s address'], undefined, (f) => {
             const p = reach(on(f, 'vm2'), 'partner');
             return !!p && p.status === 200 && (p.body ?? '').trim() === '10.0.0.11';
           }, [
-            { if: (f) => !net(on(f, 'vm2')).routes.some((r) => /^10\.0\.0\.13(\/32)?$/.test(r.dst) && r.via === '10.99.0.1'), say: bi('Запрос уходит с `vm2` напрямую, мимо `vm1`: партнёр видит адрес самой `vm2` и отказывает. Куда ведёт маршрут к 10.0.0.13 на `vm2`?', 'The request leaves `vm2` directly, around `vm1`: the partner sees `vm2`’s own address and refuses. Where does `vm2`’s route to 10.0.0.13 lead?') },
-            { if: (f) => reach(on(f, 'vm2'), 'partner')?.status === 403, say: bi('Партнёр ответил 403: пакет дошёл через `vm1`, но адрес источника не подменён на выходе.', 'The partner answered 403: the packet came through `vm1`, but its source was not rewritten on the way out.') },
+            { if: (f) => !net(on(f, 'vm2')).routes.some((r) => /^10\.0\.0\.13(\/32)?$/.test(r.dst) && r.via === '10.99.0.1'), say: bi('Запрос уходит с `vm2` напрямую, мимо `vm1`, поэтому партнёр видит адрес самой `vm2` и отказывает. Проверьте, куда ведёт маршрут к 10.0.0.13 на `vm2`.', 'The request leaves `vm2` directly, around `vm1`: the partner sees `vm2`’s own address and refuses. Where does `vm2`’s route to 10.0.0.13 lead?') },
+            { if: (f) => reach(on(f, 'vm2'), 'partner')?.status === 403, say: bi('Партнёр ответил кодом 403. Значит, пакет дошёл через `vm1`, но адрес отправителя не подменён на выходе.', 'The partner answered 403: the packet came through `vm1`, but its source was not rewritten on the way out.') },
           ]),
         ],
       },
@@ -244,15 +244,15 @@ export const examBrowser: Exam = {
       kind: 'real',
       real: {
         prompt: bi(
-          'Тикет 5. Включите поломку: на `vm2` выполните `dt-stub-delay 70` — месячный отчёт теперь считается 70 секунд. Откройте с `probe` `https://www.corp.lab/report` и дождитесь ошибки. Найдите в журнале nginx строку о ней и положите её в `/root/504.txt` на `vm1`. Почините так, чтобы отчёт открывался, а остальные пути сайта не ждали дольше прежнего. Проверка ждёт отчёт до 100 секунд.',
+          'Заявка 5. Включите поломку: выполните на `vm2` команду `dt-stub-delay 70`, и месячный отчёт будет считаться 70 секунд. Откройте с `probe` страницу `https://www.corp.lab/report` и дождитесь ошибки. Найдите в журнале nginx строку об этой ошибке и запишите её в `/root/504.txt` на `vm1`. Затем исправьте настройку так, чтобы отчёт открывался, а остальные пути сайта не ждали дольше прежнего. Проверка ждёт отчёт до 100 секунд.',
           'Ticket 5. Switch the fault on: run `dt-stub-delay 70` on `vm2` — the monthly report now takes 70 seconds. Open `https://www.corp.lab/report` from `probe` and wait for the error. Find nginx’s log line about it and put it into `/root/504.txt` on `vm1`. Fix it so that the report opens and the other paths of the site wait no longer than before. The check waits for the report for up to 100 seconds.',
         ),
         concepts: ['net.reverse-proxy', 'net.upstream', 'net.status'],
         goals: [
-          G('fault', ['поломка включена: задержка отчёта 70 секунд', 'the fault is on: the report takes 70 seconds'], 'vm2', (f) => /70/.test(fileText(f, '/etc/dt-stub/delay'))),
-          G('evidence', ['в `/root/504.txt` — строка журнала о таймауте бэкенда', '`/root/504.txt` holds the log line about the backend timeout'], 'vm1', (f) => /upstream timed out/.test(fileText(f, '/root/504.txt'))),
-          G('local', ['таймаут поднят только для отчёта', 'the timeout is raised for the report only'], 'vm1', (f) => reportTimeout(nginxConf(f)) && siteReadTimeout(nginxConf(f)) <= 60, [{ if: (f) => siteReadTimeout(nginxConf(f)) > 60, say: bi('Таймаут поднят для всего сайта: теперь любой зависший путь держит клиента дольше минуты.', 'The timeout is raised for the whole site: now any hanging path holds the customer for longer than a minute.') }]),
-          G('report', ['отчёт открывается с `probe` при задержке 70 секунд', 'the report opens from `probe` with the 70-second delay'], undefined, (f) => /70/.test(fileText(on(f, 'vm2'), '/etc/dt-stub/delay')) && ok200(on(f, 'probe'), 'report')),
+          G('fault', ['Поломка включена, и отчёт задерживается на 70 секунд', 'the fault is on: the report takes 70 seconds'], 'vm2', (f) => /70/.test(fileText(f, '/etc/dt-stub/delay'))),
+          G('evidence', ['В `/root/504.txt` записана строка журнала о том, что сервер приложения не ответил вовремя', '`/root/504.txt` holds the log line about the backend timeout'], 'vm1', (f) => /upstream timed out/.test(fileText(f, '/root/504.txt'))),
+          G('local', ['Срок ожидания увеличен только для отчёта', 'the timeout is raised for the report only'], 'vm1', (f) => reportTimeout(nginxConf(f)) && siteReadTimeout(nginxConf(f)) <= 60, [{ if: (f) => siteReadTimeout(nginxConf(f)) > 60, say: bi('Срок ожидания увеличен для всего сайта, и теперь любой зависший путь держит клиента дольше минуты.', 'The timeout is raised for the whole site: now any hanging path holds the customer for longer than a minute.') }]),
+          G('report', ['Отчёт открывается с `probe` при задержке в 70 секунд', 'the report opens from `probe` with the 70-second delay'], undefined, (f) => /70/.test(fileText(on(f, 'vm2'), '/etc/dt-stub/delay')) && ok200(on(f, 'probe'), 'report')),
         ],
       },
     },
@@ -263,11 +263,11 @@ export const examBrowser: Exam = {
       kind: 'real',
       real: {
         prompt: bi(
-          'Тикет 6. В журнале `vm1` тысячи попыток подобрать пароль SSH. Ограничьте средствами межсетевого экрана число новых подключений к SSH с одного адреса — скажем, не больше пяти в минуту. Как это записать, в курсе не показано: ищите в `man nft` или `man iptables-extensions` на самой машине.',
+          'Заявка 6. В журнале `vm1` тысячи попыток подобрать пароль SSH. Ограничьте средствами межсетевого экрана число новых подключений к SSH с одного адреса, например не больше пяти в минуту. Как записать такое правило, в курсе не показано, поэтому ищите ответ в `man nft` или `man iptables-extensions` на самой машине.',
           'Ticket 6. `vm1`’s log has thousands of SSH password-guessing attempts. Limit the number of new SSH connections from one address with the firewall — say, no more than five a minute. How to write it was not shown in the course: look in `man nft` or `man iptables-extensions` on the machine itself.',
         ),
         concepts: ['net.netfilter'],
-        goals: [G('limit', ['на `vm1` новые подключения к порту 22 ограничены по частоте', 'on `vm1` new connections to port 22 are rate-limited'], 'vm1', (f) => /dport 22\b[^\n]*\b(limit|meter|ct count|update @|add @)|--dport 22\b[^\n]*-m (hashlimit|limit|recent|connlimit)|-m (hashlimit|limit|recent|connlimit)[^\n]*--dport 22\b/.test(rules(f)))],
+        goals: [G('limit', ['На `vm1` частота новых подключений к порту 22 ограничена', 'on `vm1` new connections to port 22 are rate-limited'], 'vm1', (f) => /dport 22\b[^\n]*\b(limit|meter|ct count|update @|add @)|--dport 22\b[^\n]*-m (hashlimit|limit|recent|connlimit)|-m (hashlimit|limit|recent|connlimit)[^\n]*--dport 22\b/.test(rules(f)))],
         solutionTokens: ['limit rate', 'meter', 'hashlimit', 'ct count', '--hitcount'],
       },
     },

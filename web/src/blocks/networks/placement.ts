@@ -25,7 +25,7 @@ export const placement: PlacementTask[] = [
     setup: lab('h1', 'two-subnets', {}, [{ id: 'p', kind: 'icmp', to: '10.0.2.10', count: 3 }]),
     task: {
       id: 'gw',
-      prompt: bi('У хоста h1 адрес 10.0.1.10/24, шлюза нет. Маршрутизатор подсети — 10.0.1.1. Сделайте так, чтобы ping 10.0.2.10 проходил.', 'Host h1 has 10.0.1.10/24 and no gateway. The subnet’s router is 10.0.1.1. Make ping 10.0.2.10 work.'),
+      prompt: bi('У машины h1 адрес 10.0.1.10/24, а шлюза нет. Маршрутизатор подсети имеет адрес 10.0.1.1. Сделайте так, чтобы ping 10.0.2.10 проходил.', 'Host h1 has 10.0.1.10/24 and no gateway. The subnet’s router is 10.0.1.1. Make ping 10.0.2.10 work.'),
       check: { when: "(net.routes[dst=default].gateway='10.0.1.1' || net.routes[dst='10.0.2.0/24'].gateway='10.0.1.1') && reach.p.received>=2" },
     },
   },
@@ -38,7 +38,7 @@ export const placement: PlacementTask[] = [
     setup: lab('laptop', 'home', { resolv: 'nameserver 192.168.1.54\n' }, [{ id: 'd', kind: 'dns', to: 'shop.example' }]),
     task: {
       id: 'resolv',
-      prompt: bi('curl https://shop.example/ пишет «Could not resolve host». DNS-сервер сети — 192.168.1.1. Найдите причину и исправьте.', 'curl https://shop.example/ says “Could not resolve host”. The network’s DNS server is 192.168.1.1. Find the cause and fix it.'),
+      prompt: bi('Команда curl https://shop.example/ пишет «Could not resolve host». Сервер DNS этой сети имеет адрес 192.168.1.1. Найдите причину и исправьте её.', 'curl https://shop.example/ says “Could not resolve host”. The network’s DNS server is 192.168.1.1. Find the cause and fix it.'),
       check: { when: "reach.d.answer has '198.51.100.20'" },
     },
   },
@@ -63,7 +63,7 @@ export const placement: PlacementTask[] = [
     ]),
     task: {
       id: 'dnat',
-      prompt: bi('На шлюзе gw: выпустите сеть 10.0.2.0/24 в интернет через eth1 и пробросьте 203.0.113.10:80 на 10.0.2.20:8080.', 'On gateway gw: let network 10.0.2.0/24 out to the internet through eth1 and forward 203.0.113.10:80 to 10.0.2.20:8080.'),
+      prompt: bi('Вы работаете на шлюзе gw. Выпустите сеть 10.0.2.0/24 в интернет через eth1 и пробросьте порт 203.0.113.10:80 на 10.0.2.20:8080.', 'On gateway gw: let network 10.0.2.0/24 out to the internet through eth1 and forward 203.0.113.10:80 to 10.0.2.20:8080.'),
       check: { when: "reach.out.status=200 && reach.in.status=200 && net.sysctl['net.ipv4.ip_forward']=1" },
     },
   },
@@ -77,7 +77,7 @@ export const placement: PlacementTask[] = [
     setup: lab('laptop', 'home'),
     task: {
       id: 'dig',
-      prompt: bi('Покажите только секцию ANSWER ответа на запрос shop.example вместе с TTL — без строк, начинающихся с «;;». Документация: dig(1).', 'Show only the ANSWER section of the reply for shop.example, with the TTL — no lines starting with “;;”. Documentation: dig(1).'),
+      prompt: bi('Покажите только секцию ANSWER ответа на запрос shop.example вместе с TTL, без строк, которые начинаются с «;;». Пригодится страница документации dig(1).', 'Show only the ANSWER section of the reply for shop.example, with the TTL — no lines starting with “;;”. Documentation: dig(1).'),
       check: { stdout: /^shop\.example\.\s+\d+\s+IN\s+A\s+198\.51\.100\.20\n?$/ },
       docRef: { page: 'man/dig.1', anchor: 'QUERY OPTIONS' },
     },

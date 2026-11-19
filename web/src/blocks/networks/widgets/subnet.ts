@@ -9,15 +9,15 @@ import type { Mounted, WidgetCtx, WidgetReg } from '../../../core/types';
 import { bits, fmtIp, inSubnet, maskOf, parseCidr, parseIp, prefixOfMask, rng, subnetInfo, type AddressKind } from '../../../engine/sim-net/ip';
 
 const KIND: Record<AddressKind, Bi> = {
-  private: bi('частный (RFC 1918): в интернете не маршрутизируется', 'private (RFC 1918): not routed on the internet'),
-  loopback: bi('петля (loopback): сама машина', 'loopback: the machine itself'),
-  'link-local': bi('link-local 169.254/16: DHCP не ответил', 'link-local 169.254/16: DHCP did not answer'),
-  cgnat: bi('CGNAT 100.64/10 (RFC 6598): общий адрес провайдера', 'CGNAT 100.64/10 (RFC 6598): the provider’s shared range'),
-  documentation: bi('для документации (RFC 5737)', 'for documentation (RFC 5737)'),
-  multicast: bi('групповой (multicast)', 'multicast'),
-  public: bi('публичный', 'public'),
-  unspecified: bi('«не задан» (0.0.0.0)', '“unspecified” (0.0.0.0)'),
-  broadcast: bi('широковещательный для всех', 'limited broadcast'),
+  private: bi('частный адрес из RFC 1918, в интернете не маршрутизируется', 'private (RFC 1918): not routed on the internet'),
+  loopback: bi('адрес самой машины (loopback)', 'loopback: the machine itself'),
+  'link-local': bi('адрес link-local из 169.254/16, который машина назначает себе, если DHCP не ответил', 'link-local 169.254/16: DHCP did not answer'),
+  cgnat: bi('общий адрес провайдера из 100.64/10 (CGNAT, RFC 6598)', 'CGNAT 100.64/10 (RFC 6598): the provider’s shared range'),
+  documentation: bi('адрес для документации и примеров (RFC 5737)', 'for documentation (RFC 5737)'),
+  multicast: bi('групповой адрес (multicast)', 'multicast'),
+  public: bi('публичный адрес', 'public'),
+  unspecified: bi('адрес «не задан» (0.0.0.0)', '“unspecified” (0.0.0.0)'),
+  broadcast: bi('широковещательный адрес, то есть адрес «всем в сети»', 'limited broadcast'),
 };
 
 const L = {
@@ -32,10 +32,10 @@ const L = {
   kind: bi('Что за адрес', 'What kind of address'),
   netBits: bi('сеть', 'network'),
   hostBits: bi('хост', 'host'),
-  bad: bi('Введите адрес вида 192.168.10.37 и префикс 0–32.', 'Enter an address like 192.168.10.37 and a prefix 0–32.'),
-  delta: bi('/{a} → /{b}: под сеть {more} {n} бит, хостов {h0} → {h1}.', '/{a} → /{b}: the network part {more} by {n} bit(s), hosts {h0} → {h1}.'),
-  grew: bi('забрала ещё', 'grew'),
-  shrank: bi('отдала', 'shrank'),
+  bad: bi('Введите адрес вида 192.168.10.37 и префикс от 0 до 32.', 'Enter an address like 192.168.10.37 and a prefix 0–32.'),
+  delta: bi('Префикс изменился с /{a} на /{b}, и адресов для машин стало {h1} вместо {h0}, потому что сетевая часть {more}.', '/{a} → /{b}: the network part {more} by {n} bit(s), hosts {h0} → {h1}.'),
+  grew: bi('стала длиннее', 'grew'),
+  shrank: bi('стала короче', 'shrank'),
 };
 
 function bitRow(addr: number, prefix: number): HTMLElement {
@@ -126,17 +126,17 @@ export function drillQuestion(seed: number): DrillQ {
   const info = subnetInfo(`${ip}/${prefix}`);
   switch (kind) {
     case 'hosts':
-      return { kind, prompt: fmt(bi('Сколько адресов для хостов в подсети /{p}?', 'How many host addresses does a /{p} subnet have?'), { p: prefix }), answer: String(info.hosts), explain: fmt(bi('32 − {p} = {h} бит на хост: 2^{h} = {t} адресов, минус адрес сети и broadcast = {n}.', '32 − {p} = {h} host bits: 2^{h} = {t} addresses, minus the network and broadcast addresses = {n}.'), { p: prefix, h: 32 - prefix, t: info.total, n: info.hosts }) };
+      return { kind, prompt: fmt(bi('Сколько адресов можно выдать машинам в подсети /{p}?', 'How many host addresses does a /{p} subnet have?'), { p: prefix }), answer: String(info.hosts), explain: fmt(bi('На номер машины остаётся 32 − {p} = {h} бит, это 2^{h} = {t} адресов. Если вычесть адрес сети и широковещательный адрес, остаётся {n}.', '32 − {p} = {h} host bits: 2^{h} = {t} addresses, minus the network and broadcast addresses = {n}.'), { p: prefix, h: 32 - prefix, t: info.total, n: info.hosts }) };
     case 'network':
-      return { kind, prompt: fmt(bi('Адрес сети для {ip}/{p}?', 'The network address of {ip}/{p}?'), { ip, p: prefix }), answer: info.network, explain: fmt(bi('Обнулите {h} младших бит адреса (биты хоста): {n}.', 'Zero the {h} lowest bits of the address (the host bits): {n}.'), { h: 32 - prefix, n: info.network }) };
+      return { kind, prompt: fmt(bi('Какой адрес сети у {ip}/{p}?', 'The network address of {ip}/{p}?'), { ip, p: prefix }), answer: info.network, explain: fmt(bi('Обнулите {h} младших бит адреса, то есть биты номера машины, и получится {n}.', 'Zero the {h} lowest bits of the address (the host bits): {n}.'), { h: 32 - prefix, n: info.network }) };
     case 'broadcast':
-      return { kind, prompt: fmt(bi('Broadcast-адрес подсети {ip}/{p}?', 'The broadcast address of {ip}/{p}?'), { ip, p: prefix }), answer: info.broadcast, explain: fmt(bi('Поставьте в единицы все {h} бит хоста: {b}.', 'Set all {h} host bits to ones: {b}.'), { h: 32 - prefix, b: info.broadcast }) };
+      return { kind, prompt: fmt(bi('Какой широковещательный адрес у подсети {ip}/{p}?', 'The broadcast address of {ip}/{p}?'), { ip, p: prefix }), answer: info.broadcast, explain: fmt(bi('Поставьте в единицу все {h} бит номера машины, и получится {b}.', 'Set all {h} host bits to ones: {b}.'), { h: 32 - prefix, b: info.broadcast }) };
     case 'mask':
-      return { kind, prompt: fmt(bi('Какая маска у префикса /{p}? Запишите четырьмя числами.', 'What mask does prefix /{p} have? Write it as four numbers.'), { p: prefix }), answer: info.mask, explain: fmt(bi('{p} единиц подряд слева, остальные нули: {m}.', '{p} ones in a row from the left, zeros after: {m}.'), { p: prefix, m: info.mask }) };
+      return { kind, prompt: fmt(bi('Какая маска соответствует префиксу /{p}? Запишите её четырьмя числами.', 'What mask does prefix /{p} have? Write it as four numbers.'), { p: prefix }), answer: info.mask, explain: fmt(bi('Слева идут {p} единиц подряд, а остальные биты равны нулю, и получается {m}.', '{p} ones in a row from the left, zeros after: {m}.'), { p: prefix, m: info.mask }) };
     default: {
       const other = fmtIp((parseIp(info.network) + Math.floor(r() * info.total * 2)) >>> 0);
       const same = inSubnet(other, `${info.network}/${prefix}`);
-      return { kind: 'same', prompt: fmt(bi('{a}/{p} и {b} — в одной подсети? Ответьте «да» или «нет».', 'Are {a}/{p} and {b} in the same subnet? Answer “yes” or “no”.'), { a: ip, p: prefix, b: other }), answer: same ? 'yes' : 'no', explain: fmt(same ? bi('Подсеть {a}/{p} — это {n} … {bc}. {b} внутри.', 'Subnet {a}/{p} is {n} … {bc}. {b} is inside.') : bi('Подсеть {a}/{p} — это {n} … {bc}. {b} снаружи.', 'Subnet {a}/{p} is {n} … {bc}. {b} is outside.'), { a: ip, p: prefix, n: info.network, bc: info.broadcast, b: other }) };
+      return { kind: 'same', prompt: fmt(bi('Находятся ли {a}/{p} и {b} в одной подсети? Ответьте «да» или «нет».', 'Are {a}/{p} and {b} in the same subnet? Answer “yes” or “no”.'), { a: ip, p: prefix, b: other }), answer: same ? 'yes' : 'no', explain: fmt(same ? bi('Подсеть {a}/{p} включает адреса от {n} до {bc}, и адрес {b} лежит внутри неё.', 'Subnet {a}/{p} is {n} … {bc}. {b} is inside.') : bi('Подсеть {a}/{p} включает адреса от {n} до {bc}, и адрес {b} лежит за её пределами.', 'Subnet {a}/{p} is {n} … {bc}. {b} is outside.'), { a: ip, p: prefix, n: info.network, bc: info.broadcast, b: other }) };
     }
   }
 }
@@ -168,7 +168,7 @@ function mountDrill(el: HTMLElement, props: { need?: number }, ctx: WidgetCtx): 
     const input = h('input.sn-input', { type: 'text', 'aria-label': t(bi('Ответ', 'Answer')), spellcheck: 'false', autocomplete: 'off' });
     const submit = () => {
       const ok = checkDrill(q, (input as HTMLInputElement).value);
-      feedback = h(`p.sn-feedback${ok ? '.ok' : '.err'}`, { 'aria-live': 'polite' }, ok ? t(bi('Верно. ', 'Right. ')) : t(fmt(bi('Ответ: {a}. ', 'The answer: {a}. '), { a: q.answer === 'yes' ? t(bi('да', 'yes')) : q.answer === 'no' ? t(bi('нет', 'no')) : q.answer })), t(q.explain));
+      feedback = h(`p.sn-feedback${ok ? '.ok' : '.err'}`, { 'aria-live': 'polite' }, ok ? t(bi('Вы ответили верно. ', 'Right. ')) : t(fmt(bi('Правильный ответ: {a}. ', 'The answer: {a}. '), { a: q.answer === 'yes' ? t(bi('да', 'yes')) : q.answer === 'no' ? t(bi('нет', 'no')) : q.answer })), t(q.explain));
       if (ok) {
         solved++;
         if (solved >= need) ctx.complete();
@@ -178,11 +178,11 @@ function mountDrill(el: HTMLElement, props: { need?: number }, ctx: WidgetCtx): 
       (root.querySelector('button.next') as HTMLButtonElement | null)?.focus();
     };
     const form = h('form.sn-form', { onsubmit: (e: Event) => { e.preventDefault(); submit(); } }, h('p.sn-q', {}, t(q.prompt)), h('div.sn-row', {}, input, h('button.btn', { type: 'submit' }, t(bi('Проверить', 'Check')))));
-    root.append(h('h4.sn-title', {}, t(bi('Дрилл: подсети', 'Drill: subnets'))), form);
+    root.append(h('h4.sn-title', {}, t(bi('Тренажёр по подсетям', 'Drill: subnets'))), form);
     if (feedback) {
       root.append(feedback, h('button.btn.small.next', { type: 'button', onclick: () => { seed++; q = drillQuestion(seed); feedback = null; render(); (root.querySelector('input') as HTMLInputElement | null)?.focus(); } }, t(bi('Следующий вопрос', 'Next question'))));
     }
-    root.append(h('p.sn-progress', {}, t(fmt(bi('Решено: {n} из {k}', 'Solved: {n} of {k}'), { n: Math.min(solved, need), k: need }))));
+    root.append(h('p.sn-progress', {}, t(fmt(bi('Решено {n} из {k}', 'Solved: {n} of {k}'), { n: Math.min(solved, need), k: need }))));
   };
   const off = onLangChange(render);
   render();
