@@ -144,13 +144,13 @@ export const CKA_SETUPS = {
 export const ckaExam: Exam = {
   id: 'k8s-1.exam.cka',
   block: 'k8s-1',
-  title: bi('Практика в духе CKA', 'A CKA-style practical'),
+  title: bi('Практика в духе экзамена CKA', 'A CKA-style practical'),
   intro: bi(
-    'Шестнадцать задач на 120 минут, как на экзамене Certified Kubernetes Administrator: у каждой свой кластер, каждая проверяется по состоянию кластера, а не по набранным командам. Порог — 66%, критических задач нет, но веса разные. Три задачи требуют полей, которых не было в уроках: их ищут в `kubectl explain` и на страницах kubernetes.io, как на настоящем экзамене. Это необязательная часть блока: зачётным остаётся экзамен «Смена в кластере».',
+    'Шестнадцать задач на 120 минут, как на экзамене Certified Kubernetes Administrator. У каждой задачи свой кластер, и каждая проверяется по состоянию кластера, а не по набранным командам. Порог прохождения — 66 %, критических задач нет, но веса у задач разные. Три задачи требуют полей, которых не было в уроках: их ищут в `kubectl explain` и на страницах kubernetes.io, как на настоящем экзамене. Эта практика необязательна, а зачётным для блока остаётся экзамен «Смена в кластере».',
     'Sixteen tasks in 120 minutes, as at the Certified Kubernetes Administrator exam: each has its own cluster, each is checked by the state of the cluster, not by the commands typed. The pass mark is 66%, there are no critical tasks, but the weights differ. Three tasks need fields the lessons never showed: you look them up in `kubectl explain` and on the kubernetes.io pages, as at the real exam. This is an optional part of the block: the block exam is still “A shift on the cluster”.',
   ),
   story: bi(
-    'Вас взяли администратором кластера в компанию, где до этого кластером занимались все понемногу. Первая неделя — шестнадцать заявок от команд, по одной на кластер. Задачи независимы: начинайте с тех, что знаете, и не застревайте на одной дольше десяти минут.',
+    'Вас взяли администратором кластера в компанию, где до этого кластером занимались все понемногу. За первую неделю пришло шестнадцать заявок от команд, по одной на кластер. Задачи не зависят друг от друга, поэтому начинайте с тех, которые знаете, и не тратьте на одну больше десяти минут.',
     'You have been hired as the cluster administrator at a company where everybody looked after the cluster a little until now. The first week brings sixteen requests from the teams, one per cluster. The tasks are independent: start with the ones you know and do not get stuck on one for longer than ten minutes.',
   ),
   minutes: 120,
@@ -166,7 +166,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-deploy',
         prompt: bi(
-          'Команда биллинга просит своё пространство: создайте namespace `billing` и в нём Deployment `invoice` из образа `trainer/web:1.1` на три реплики. У подов должны быть метки `app=invoice` и `tier=backend`, контейнер слушает порт 80.',
+          'Команда биллинга просит своё пространство: создайте namespace `billing` и в нём Deployment `invoice` из образа `trainer/web:1.1` на три реплики. У подов должны быть метки `app=invoice` и `tier=backend`, а контейнер слушает порт 80.',
           'The billing team asks for its own space: create namespace `billing` and in it a Deployment `invoice` from the image `trainer/web:1.1` with three replicas. The pods must carry the labels `app=invoice` and `tier=backend`; the container listens on port 80.',
         ),
         check: {
@@ -175,7 +175,7 @@ export const ckaExam: Exam = {
             const labels = obj(f, 'Deployment', 'billing', 'invoice')?.spec?.template?.metadata?.labels ?? {};
             return !!d && d.ready >= 3 && d.image === 'trainer/web:1.1' && labels.app === 'invoice' && labels.tier === 'backend';
           },
-          fail: [{ if: (f) => !!dep(f, 'billing', 'invoice') && !obj(f, 'Deployment', 'billing', 'invoice')?.spec?.template?.metadata?.labels?.tier, say: bi('Deployment есть, но в шаблоне пода нет метки tier=backend. Метки подов задаются в spec.template.metadata.labels.', 'The Deployment exists, but the pod template has no tier=backend label. Pod labels live in spec.template.metadata.labels.') }],
+          fail: [{ if: (f) => !!dep(f, 'billing', 'invoice') && !obj(f, 'Deployment', 'billing', 'invoice')?.spec?.template?.metadata?.labels?.tier, say: bi('Deployment есть, но в шаблоне пода нет метки tier=backend. Метки подов задаются в поле spec.template.metadata.labels.', 'The Deployment exists, but the pod template has no tier=backend label. Pod labels live in spec.template.metadata.labels.') }],
         },
         concepts: ['k8s.deployment', 'k8s.namespace', 'k8s.label'],
       },
@@ -188,7 +188,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-nodeport',
         prompt: bi(
-          'Внешний балансировщик ходит на узлы по порту 30080. Опубликуйте Deployment `web` сервисом `web-public` типа NodePort: порт сервиса 80, порт на узлах — ровно 30080. За сервисом должны стоять все три пода.',
+          'Внешний балансировщик обращается к узлам на порт 30080. Опубликуйте Deployment `web` сервисом `web-public` типа NodePort: порт сервиса 80, а порт на узлах ровно 30080. За сервисом должны стоять все три пода.',
           'The external load balancer comes to the nodes on port 30080. Publish Deployment `web` as a Service `web-public` of type NodePort: service port 80, node port exactly 30080. All three pods must stand behind the Service.',
         ),
         check: {
@@ -198,8 +198,8 @@ export const ckaExam: Exam = {
             return s?.spec?.type === 'NodePort' && (s.spec.ports ?? []).some((p: Obj) => p.port === 80 && p.nodePort === 30080) && (sf?.endpoints ?? 0) >= 3;
           },
           fail: [
-            { if: (f) => !!obj(f, 'Service', 'default', 'web-public') && obj(f, 'Service', 'default', 'web-public')?.spec?.type !== 'NodePort', say: bi('Сервис есть, но не NodePort: снаружи на узлы до него не достучаться.', 'The Service exists but is not a NodePort: nobody outside can reach it on the nodes.') },
-            { if: (f) => (k8s(f).services.find((x) => x.name === 'web-public')?.endpoints ?? 1) === 0, say: bi('У сервиса нет конечных точек: селектор не совпадает с метками подов web.', 'The Service has no endpoints: its selector does not match the labels of the web pods.') },
+            { if: (f) => !!obj(f, 'Service', 'default', 'web-public') && obj(f, 'Service', 'default', 'web-public')?.spec?.type !== 'NodePort', say: bi('Сервис есть, но он не типа NodePort, и снаружи к нему через узлы не обратиться.', 'The Service exists but is not a NodePort: nobody outside can reach it on the nodes.') },
+            { if: (f) => (k8s(f).services.find((x) => x.name === 'web-public')?.endpoints ?? 1) === 0, say: bi('У сервиса нет адресов подов: селектор не совпадает с метками подов web.', 'The Service has no endpoints: its selector does not match the labels of the web pods.') },
           ],
         },
         concepts: ['k8s.service', 'k8s.nodeport'],
@@ -213,7 +213,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-rolling',
         prompt: bi(
-          'Выкатите Deployment `web` на `trainer/web:1.1` так, чтобы во время выкатки ни на секунду не становилось меньше четырёх готовых подов, а лишним мог быть только один. Deployment не пересоздавать.',
+          'Выкатите Deployment `web` на образ `trainer/web:1.1` так, чтобы во время выкатки готовых подов ни на секунду не становилось меньше четырёх, а лишним мог быть только один под. Deployment не пересоздавайте.',
           'Roll Deployment `web` out to `trainer/web:1.1` so that during the rollout there are never fewer than four ready pods, with at most one extra. Do not recreate the Deployment.',
         ),
         check: {
@@ -222,7 +222,7 @@ export const ckaExam: Exam = {
             const ru = obj(f, 'Deployment', 'default', 'web')?.spec?.strategy?.rollingUpdate ?? {};
             return !!d && d.image === 'trainer/web:1.1' && d.ready >= 4 && d.updated >= 4 && String(ru.maxUnavailable) === '0' && String(ru.maxSurge) === '1' && sameObject(f, start, 'Deployment', 'default', 'web');
           },
-          fail: [{ if: (f) => dep(f, 'default', 'web')?.image === 'trainer/web:1.1' && String(obj(f, 'Deployment', 'default', 'web')?.spec?.strategy?.rollingUpdate?.maxUnavailable) !== '0', say: bi('Версия новая, но стратегия прежняя: maxUnavailable: 1 разрешает терять один готовый под. Нужно 0.', 'The version is new but the strategy is the old one: maxUnavailable: 1 allows losing one ready pod. It must be 0.') }],
+          fail: [{ if: (f) => dep(f, 'default', 'web')?.image === 'trainer/web:1.1' && String(obj(f, 'Deployment', 'default', 'web')?.spec?.strategy?.rollingUpdate?.maxUnavailable) !== '0', say: bi('Версия новая, но стратегия прежняя: maxUnavailable: 1 разрешает на время выкатки остаться без одного готового пода, а нужно, чтобы готовых подов не становилось меньше.', 'The version is new but the strategy is the old one: maxUnavailable: 1 lets the rollout go one ready pod short, and the ready count must never drop.') }],
         },
         concepts: ['k8s.rolling-update'],
       },
@@ -235,7 +235,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-undo',
         prompt: bi(
-          'Аудиторы требуют, чтобы Deployment `web` работал ровно на той версии, с которой он начинался, — на первой ревизии из истории выкаток. Верните её, не удаляя Deployment; все четыре пода должны быть готовы.',
+          'Аудиторы требуют, чтобы Deployment `web` работал на той версии, с которой он начинался, то есть на первой ревизии из истории выкаток. Верните её, не удаляя Deployment, и все четыре пода должны быть готовы.',
           'The auditors require Deployment `web` to run exactly the version it started with — the first revision in the rollout history. Bring it back without deleting the Deployment; all four pods must be ready.',
         ),
         check: {
@@ -256,7 +256,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-nodeselector',
         prompt: bi(
-          'На worker-1 поставили быстрый диск. Отметьте узел меткой `disk=ssd` и запустите под `fast` из `trainer/web:1.0`, который может работать только на узлах с этой меткой.',
+          'На worker-1 поставили быстрый диск. Пометьте узел меткой `disk=ssd` и запустите из образа `trainer/web:1.0` под `fast`, который может работать только на узлах с этой меткой.',
           'worker-1 got a fast disk. Mark the node with the label `disk=ssd` and start a pod `fast` from `trainer/web:1.0` that may run only on nodes with this label.',
         ),
         check: {
@@ -267,7 +267,7 @@ export const ckaExam: Exam = {
             const pinned = pod?.spec?.nodeSelector?.disk === 'ssd' || JSON.stringify(pod?.spec?.affinity ?? {}).includes('"disk"');
             return node?.metadata?.labels?.disk === 'ssd' && pinned && p?.node === 'worker-1' && p.ready;
           },
-          fail: [{ if: (f) => !!obj(f, 'Pod', 'default', 'fast') && !obj(f, 'Pod', 'default', 'fast')?.spec?.nodeSelector && !obj(f, 'Pod', 'default', 'fast')?.spec?.affinity, say: bi('Под мог попасть на worker-1 случайно: в его spec ничего не привязывает его к метке disk=ssd.', 'The pod may have landed on worker-1 by chance: nothing in its spec ties it to the disk=ssd label.') }],
+          fail: [{ if: (f) => !!obj(f, 'Pod', 'default', 'fast') && !obj(f, 'Pod', 'default', 'fast')?.spec?.nodeSelector && !obj(f, 'Pod', 'default', 'fast')?.spec?.affinity, say: bi('Под мог попасть на worker-1 случайно: в его spec ничто не привязывает его к метке disk=ssd.', 'The pod may have landed on worker-1 by chance: nothing in its spec ties it to the disk=ssd label.') }],
         },
         concepts: ['k8s.scheduler', 'k8s.label'],
       },
@@ -280,7 +280,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-daemonset',
         prompt: bi(
-          'Команде наблюдения нужен агент на каждом узле, включая control plane: DaemonSet `node-agent` в namespace `kube-system` из образа `trainer/client:1.0` с командой `sleep infinity`. Под агента должен работать на всех трёх узлах.',
+          'Команде наблюдения нужен агент на каждом узле, включая управляющий: DaemonSet `node-agent` в namespace `kube-system` из образа `trainer/client:1.0` с командой `sleep infinity`. Под агента должен работать на всех трёх узлах.',
           'The observability team needs an agent on every node, the control plane included: a DaemonSet `node-agent` in namespace `kube-system` from the image `trainer/client:1.0` with the command `sleep infinity`. An agent pod must run on all three nodes.',
         ),
         check: {
@@ -288,7 +288,7 @@ export const ckaExam: Exam = {
             const pods = ownedPods(f, 'kube-system', 'DaemonSet/node-agent').filter((p) => p.ready);
             return new Set(pods.map((p) => p.node)).size >= 3 && pods.some((p) => p.node === 'cp-1');
           },
-          fail: [{ if: (f) => ownedPods(f, 'kube-system', 'DaemonSet/node-agent').length > 0 && !ownedPods(f, 'kube-system', 'DaemonSet/node-agent').some((p) => p.node === 'cp-1'), say: bi('Агенты стоят только на рабочих узлах: у cp-1 taint control-plane, и поды без допуска к нему туда не идут.', 'The agents run on the workers only: cp-1 has the control-plane taint, and pods without a toleration for it do not go there.') }],
+          fail: [{ if: (f) => ownedPods(f, 'kube-system', 'DaemonSet/node-agent').length > 0 && !ownedPods(f, 'kube-system', 'DaemonSet/node-agent').some((p) => p.node === 'cp-1'), say: bi('Агенты работают только на рабочих узлах: на cp-1 стоит запрет (taint) control-plane, и поды без разрешения на него туда не попадают.', 'The agents run on the workers only: cp-1 has the control-plane taint, and pods without a toleration for it do not go there.') }],
         },
         concepts: ['k8s.scheduler', 'k8s.node'],
       },
@@ -301,7 +301,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-secret',
         prompt: bi(
-          'Приложению `api` нужен пароль базы. Создайте Secret `db-cred` с ключом `password` и значением `s3cr3t` и передайте его в Deployment `api` переменной окружения `DB_PASSWORD` — ссылкой на Secret, а не текстом в манифесте. Оба пода должны работать с новой переменной.',
+          'Приложению `api` нужен пароль от базы. Создайте Secret `db-cred` с ключом `password` и значением `s3cr3t` и передайте его в Deployment `api` переменной окружения `DB_PASSWORD` ссылкой на Secret, а не текстом в манифесте. Оба пода должны работать с новой переменной.',
           'The `api` application needs the database password. Create a Secret `db-cred` with the key `password` and the value `s3cr3t` and pass it to Deployment `api` as the environment variable `DB_PASSWORD` — by a reference to the Secret, not as text in the manifest. Both pods must run with the new variable.',
         ),
         check: {
@@ -313,7 +313,7 @@ export const ckaExam: Exam = {
             const d = dep(f, 'default', 'api');
             return value === 's3cr3t' && ref?.name === 'db-cred' && ref?.key === 'password' && !!d && d.updated >= 2 && d.ready >= 2;
           },
-          fail: [{ if: (f) => containers(obj(f, 'Deployment', 'default', 'api')).some((c) => (c.env ?? []).some((e: Obj) => e.name === 'DB_PASSWORD' && e.value)), say: bi('Пароль записан в манифест открытым текстом: его видит каждый, кто может прочитать Deployment. Нужна ссылка valueFrom.secretKeyRef.', 'The password is written into the manifest as plain text: everyone who can read the Deployment sees it. You need a valueFrom.secretKeyRef reference.') }],
+          fail: [{ if: (f) => containers(obj(f, 'Deployment', 'default', 'api')).some((c) => (c.env ?? []).some((e: Obj) => e.name === 'DB_PASSWORD' && e.value)), say: bi('Пароль записан в манифест открытым текстом, и его видит каждый, кто может прочитать Deployment. Храните пароль в Secret и подставляйте его в переменную ссылкой valueFrom.secretKeyRef.', 'The password is written into the manifest as plain text: everyone who can read the Deployment sees it. Keep the password in a Secret and put it into the variable with a valueFrom.secretKeyRef reference.') }],
         },
         concepts: ['k8s.secret'],
       },
@@ -326,7 +326,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-limits',
         prompt: bi(
-          'Deployment `cache` всё время перезапускается. Выясните причину и почините так, чтобы кеш работал и дальше получал свои 300 МиБ (переменная `MEM_MB` остаётся прежней).',
+          'Deployment `cache` всё время перезапускается. Выясните причину и почините так, чтобы кэш работал и по-прежнему получал свои 300 МиБ (переменная `MEM_MB` остаётся прежней).',
           'Deployment `cache` keeps restarting. Find the cause and fix it so that the cache keeps running and still gets its 300 MiB (the `MEM_MB` variable stays as it is).',
         ),
         check: {
@@ -337,7 +337,7 @@ export const ckaExam: Exam = {
             const pods = k8s(f).pods.filter((p) => p.ns === 'default' && p.labels.app === 'cache' && p.ready);
             return mem === '300' && mebibytes(c?.resources?.limits?.memory) >= 300 && !!d && d.ready >= 1 && pods.some((p) => p.restarts === 0);
           },
-          fail: [{ if: (f) => (containers(obj(f, 'Deployment', 'default', 'cache'))[0]?.env ?? []).find((e: Obj) => e.name === 'MEM_MB')?.value !== '300', say: bi('Кеш перестал падать, потому что ему урезали память, — но так он перестанет быть кешем. Поднимите лимит, а не потребность.', 'The cache stopped crashing because its memory was cut, but then it is no longer a cache. Raise the limit, not the need.') }],
+          fail: [{ if: (f) => (containers(obj(f, 'Deployment', 'default', 'cache'))[0]?.env ?? []).find((e: Obj) => e.name === 'MEM_MB')?.value !== '300', say: bi('Кэш перестал падать, потому что ему урезали память, но так он перестанет быть кэшем. Поднимите лимит, а не потребность.', 'The cache stopped crashing because its memory was cut, but then it is no longer a cache. Raise the limit, not the need.') }],
         },
         concepts: ['k8s.resources', 'k8s.crashloop'],
       },
@@ -371,7 +371,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-probe-path',
         prompt: bi(
-          'Магазин не открывается: под `client` в `shop` не получает ответа от `http://shop`, хотя оба пода `shop` в статусе Running. Почините, не удаляя Deployment.',
+          'Магазин не открывается: под `client` в namespace `shop` не получает ответа от `http://shop`, хотя оба пода `shop` в состоянии Running. Почините, не удаляя Deployment.',
           'The shop does not open: pod `client` in `shop` gets no answer from `http://shop`, although both `shop` pods are Running. Fix it without deleting the Deployment.',
         ),
         check: { when: (f, start) => reach(f, 'shop/client', 'shop.shop') === 200 && (dep(f, 'shop', 'shop')?.ready ?? 0) >= 2 && sameObject(f, start, 'Deployment', 'shop', 'shop') && containers(obj(f, 'Deployment', 'shop', 'shop')).some((c) => !!c.readinessProbe) },
@@ -387,7 +387,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-probe-port',
         prompt: bi(
-          'Магазин не открывается: под `client` в `shop` не получает ответа от `http://shop`, хотя оба пода `shop` в статусе Running. Почините, не удаляя Deployment.',
+          'Магазин не открывается: под `client` в namespace `shop` не получает ответа от `http://shop`, хотя оба пода `shop` в состоянии Running. Почините, не удаляя Deployment.',
           'The shop does not open: pod `client` in `shop` gets no answer from `http://shop`, although both `shop` pods are Running. Fix it without deleting the Deployment.',
         ),
         check: { when: (f, start) => reach(f, 'shop/client', 'shop.shop') === 200 && (dep(f, 'shop', 'shop')?.ready ?? 0) >= 2 && sameObject(f, start, 'Deployment', 'shop', 'shop') && containers(obj(f, 'Deployment', 'shop', 'shop')).some((c) => !!c.readinessProbe) },
@@ -422,7 +422,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-ingress',
         prompt: bi(
-          'Сайт переезжает на адрес `shop.example.com`. Создайте Ingress `shop`, который отправляет все пути этого хоста (тип пути Prefix, путь `/`) на Service `web`, порт 80.',
+          'Сайт переезжает на адрес `shop.example.com`. Создайте Ingress `shop`, который отправляет все пути этого сайта (тип пути Prefix, путь `/`) на Service `web`, порт 80.',
           'The site moves to `shop.example.com`. Create an Ingress `shop` that sends every path of this host (path type Prefix, path `/`) to Service `web`, port 80.',
         ),
         check: {
@@ -442,7 +442,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-startup',
         prompt: bi(
-          'Новая версия каталога прогревает кеш 40 секунд, и проба живости убивает её раньше, чем она успевает ответить. Добейтесь, чтобы оба пода `catalog` стали готовы и больше не перезапускались. Пробу живости не убирайте: после старта она нужна.',
+          'Новая версия каталога прогревает кэш 40 секунд, и проверка жизнеспособности перезапускает контейнер раньше, чем тот успевает ответить. Добейтесь, чтобы оба пода `catalog` стали готовы и больше не перезапускались. Проверку жизнеспособности не убирайте: после запуска она нужна.',
           'The new version of the catalogue warms its cache for 40 seconds, and the liveness probe kills it before it can answer. Get both `catalog` pods ready and no longer restarting. Do not remove the liveness probe: it is needed after the start.',
         ),
         check: {
@@ -452,7 +452,7 @@ export const ckaExam: Exam = {
             const pods = k8s(f).pods.filter((p) => p.ns === 'default' && p.labels.app === 'catalog' && p.ready && p.restarts === 0);
             return cts.some((c) => !!c.livenessProbe) && !!d && d.ready >= 2 && d.updated >= 2 && pods.length >= 2;
           },
-          fail: [{ if: (f) => !containers(obj(f, 'Deployment', 'default', 'catalog')).some((c) => !!c.livenessProbe), say: bi('Проба живости пропала: зависший после старта каталог теперь никто не перезапустит.', 'The liveness probe is gone: nobody will restart the catalogue now if it hangs after the start.') }],
+          fail: [{ if: (f) => !containers(obj(f, 'Deployment', 'default', 'catalog')).some((c) => !!c.livenessProbe), say: bi('Проверка жизнеспособности пропала, и каталог, который зависнет после запуска, теперь никто не перезапустит.', 'The liveness probe is gone: nobody will restart the catalogue now if it hangs after the start.') }],
         },
         concepts: ['k8s.probe'],
       },
@@ -466,7 +466,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-affinity',
         prompt: bi(
-          'Узел worker-2 скоро сдают в ремонт. Запустите Deployment `batch` из `trainer/web:1.0` на три реплики так, чтобы его поды никогда не попадали на worker-2. Метки узлов не трогайте, `nodeName` и taint не используйте: правило должно быть записано в самом Deployment.',
+          'Узел worker-2 скоро отдают в ремонт. Запустите Deployment `batch` из образа `trainer/web:1.0` на три реплики так, чтобы его поды никогда не попадали на worker-2. Метки узлов не трогайте, `nodeName` и taint не используйте: правило должно быть записано в самом Deployment.',
           'Node worker-2 is going in for repair soon. Start a Deployment `batch` from `trainer/web:1.0` with three replicas so that its pods never land on worker-2. Do not touch the node labels, do not use `nodeName` or taints: the rule must be written in the Deployment itself.',
         ),
         check: {
@@ -493,7 +493,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-deadline',
         prompt: bi(
-          'Ночной импорт иногда зависает и висит сутками. Манифест Job лежит в `~/import.yaml`. Сделайте так, чтобы Kubernetes сам останавливал Job `import`, если тот работает дольше 60 секунд, и запустите его.',
+          'Ночной импорт иногда зависает и висит сутками. Манифест Job лежит в файле `~/import.yaml`. Сделайте так, чтобы Kubernetes сам останавливал Job `import`, если тот работает дольше 60 секунд, и запустите его.',
           'The nightly import sometimes hangs and stays stuck for days. The Job manifest is in `~/import.yaml`. Make Kubernetes itself stop Job `import` if it runs longer than 60 seconds, and start it.',
         ),
         check: {
@@ -518,7 +518,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-history',
         prompt: bi(
-          'В namespace копятся старые ReplicaSet: у Deployment `web` их уже четыре. Пусть Kubernetes хранит для отката только две прежние версии и сам удаляет остальные. Deployment не пересоздавать.',
+          'В namespace копятся старые ReplicaSet: у Deployment `web` их уже четыре. Пусть Kubernetes хранит для отката только две прежние версии и сам удаляет остальные. Deployment не пересоздавайте.',
           'Old ReplicaSets pile up in the namespace: Deployment `web` already has four. Let Kubernetes keep only two previous versions for a rollback and delete the rest by itself. Do not recreate the Deployment.',
         ),
         check: {
@@ -538,20 +538,20 @@ export const ckaExam: Exam = {
   explain: [
     {
       id: 'requests',
-      prompt: bi('Чем requests отличаются от limits и кто из компонентов кластера смотрит на каждое из них?', 'How do requests differ from limits, and which components of the cluster look at each of them?'),
+      prompt: bi('Чем requests отличаются от limits и какой компонент кластера смотрит на каждое из этих чисел?', 'How do requests differ from limits, and which components of the cluster look at each of them?'),
       keyPoints: [
-        bi('requests читает планировщик: под встаёт только на узел, где сумма requests помещается в свободную ёмкость', 'requests are read by the scheduler: a pod lands only on a node where the sum of requests fits the free capacity'),
-        bi('limits исполняет ядро через cgroup на узле: выход за лимит памяти — OOMKilled, за лимит CPU — притормаживание', 'limits are enforced by the kernel through the cgroup on the node: going over the memory limit means OOMKilled, over the CPU limit means throttling'),
-        bi('без limits под может съесть узел, без requests планировщик не знает, сколько под займёт', 'without limits a pod can eat the node; without requests the scheduler does not know how much the pod will take'),
+        bi('requests читает планировщик: под попадает только на узел, где сумма requests помещается в свободную ёмкость', 'requests are read by the scheduler: a pod lands only on a node where the sum of requests fits the free capacity'),
+        bi('limits соблюдает ядро на узле через cgroup: за превышение лимита памяти процесс завершается (OOMKilled), а за превышение лимита процессора притормаживается', 'limits are enforced by the kernel through the cgroup on the node: going over the memory limit means OOMKilled, over the CPU limit means throttling'),
+        bi('без limits под может занять весь узел, а без requests планировщик не знает, сколько под займёт', 'without limits a pod can eat the node; without requests the scheduler does not know how much the pod will take'),
       ],
     },
     {
       id: 'probes',
-      prompt: bi('Под Running, но в сервис трафик не идёт. Какие пробы бывают и как каждая из них влияет на этот симптом?', 'A pod is Running but no traffic reaches it through the Service. What probes are there, and how does each of them bear on this symptom?'),
+      prompt: bi('Под в состоянии Running, но запросы к сервису до него не доходят. Какие бывают проверки контейнера и как каждая из них связана с этим симптомом?', 'A pod is Running but no traffic reaches it through the Service. What probes are there, and how does each of them bear on this symptom?'),
       keyPoints: [
-        bi('readiness решает, стоит ли под в EndpointSlice сервиса: не готов — трафика нет, но под не перезапускают', 'readiness decides whether the pod is in the Service’s EndpointSlice: not ready means no traffic, but the pod is not restarted'),
-        bi('liveness перезапускает контейнер, когда проба проваливается подряд failureThreshold раз', 'liveness restarts the container when the probe fails failureThreshold times in a row'),
-        bi('startup держит остальные пробы, пока медленное приложение стартует', 'startup holds the other probes back while a slow application starts'),
+        bi('проверка готовности решает, есть ли под в EndpointSlice сервиса: неготовый под не получает запросов, но его не перезапускают', 'readiness decides whether the pod is in the Service’s EndpointSlice: not ready means no traffic, but the pod is not restarted'),
+        bi('проверка жизнеспособности перезапускает контейнер, когда не проходит failureThreshold раз подряд', 'liveness restarts the container when the probe fails failureThreshold times in a row'),
+        bi('проверка запуска откладывает остальные проверки, пока медленное приложение запускается', 'startup holds the other probes back while a slow application starts'),
       ],
     },
   ],

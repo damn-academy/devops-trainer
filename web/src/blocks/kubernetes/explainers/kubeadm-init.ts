@@ -4,11 +4,15 @@
 // starts etcd and the control plane. Breaks are the classic forgotten
 // prerequisites; the "months later" knob shows what a year-long certificate
 // means for a cluster nobody upgrades.
+//
+// Reading order: at first only kubeadm is on screen; the files appear as its
+// phases write them, then the kubelet and the static pods it starts, then the
+// addons. Every step is one phase.
 
 import { defineModel } from '../../../core/define';
 import { bi, fmt, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { D, edge, metric, node } from './kit';
+import { box, D, edge, idsOf, LEGEND_BASE, mark, metric, only } from './kit';
 
 type P = { cni: boolean; months: number; renewed: boolean };
 
@@ -19,52 +23,77 @@ export function certState(months: number, renewed: boolean): { leafLeftDays: num
   return { leafLeftDays, expired: leafLeftDays <= 0 };
 }
 
+const BY_KUBELET = (f: string) => fmt(bi('Под запускает kubelet по файлу {f}.', 'The kubelet starts it from {f}.'), { f });
+const START = bi('Запускает kubelet через containerd.', 'The kubelet, through containerd.');
+
+const diagram = {
+  width: 960,
+  height: 480,
+  nodes: [
+    box('kadm', 'kubeadm init', 'user', 'pill', [24, 24, 200, 48], 'terminal', bi('Установщик кластера. Он проходит свои фазы по порядку: preflight, certs, kubeconfig, etcd, control-plane, kubelet-start, ожидание и addons. Любую фазу можно запустить отдельно командой `kubeadm init phase <имя>`.', 'The installer, phase by phase; any phase alone with `kubeadm init phase <name>`.'), bi('Команду запускаете вы на cp-1.', 'You, on cp-1.'), { see: 'kubeadm init --help', doc: D.kubeadmInit }),
+    box('pki', '/etc/kubernetes/pki', 'store', 'doc', [24, 116, 200, 76], 'lock', bi('Центр сертификации кластера (ca.crt и ca.key) и сертификаты, которые он подписал: для API-сервера, для обращений API-сервера к kubelet, для front-proxy, отдельный центр для etcd и ключ для учётных записей ServiceAccount (sa.key).', 'The cluster CA and the certificates it signed, a separate etcd CA and sa.key.'), bi('Файлы пишет фаза certs.', 'The certs phase.'), { see: 'sudo kubeadm certs check-expiration', doc: D.pki, sub: 'ca: 10y · leaf: 1y' }),
+    box('confs', '/etc/kubernetes/*.conf', 'store', 'doc', [24, 234, 200, 76], 'file', bi('Файлы kubeconfig для администратора (admin.conf и super-admin.conf), controller-manager, scheduler и kubelet. В каждом адрес API-сервера, сертификат центра и клиентский сертификат.', 'kubeconfigs for admin, super-admin, controller-manager, scheduler and kubelet.'), bi('Файлы пишет фаза kubeconfig.', 'The kubeconfig phase.'), { see: 'sudo ls /etc/kubernetes/*.conf' }),
+    box('mf', '/etc/kubernetes/manifests', 'store', 'doc', [24, 352, 200, 76], 'folder', bi('Четыре файла: etcd.yaml, kube-apiserver.yaml, kube-controller-manager.yaml и kube-scheduler.yaml. Это и есть статические поды управляющего слоя.', 'Four files: the static pods.'), bi('Файлы пишут фазы etcd и control-plane.', 'The etcd and control-plane phases.'), { see: 'ls /etc/kubernetes/manifests', doc: D.staticPods }),
+    box('klet', 'kubelet', 'node', 'rack', [320, 360, 210, 70], 'process', bi('Единственная служба systemd на узле. Она читает каталог manifests и запускает поды прямо из файлов, даже когда API-сервера ещё нет.', 'The only systemd service: starts pods from the manifests, even without an API server.'), bi('Ставится пакетом kubelet и запускается systemd.', 'The kubelet package, systemd.'), { see: 'systemctl status kubelet; journalctl -u kubelet -n 50' }),
+    box('etcd', 'etcd', 'store', 'box', [640, 380, 150, 50], 'database', bi('Хранилище кластера в статическом поде. Оно принимает соединения на порту 2379 только по TLS и проверяет их своим центром сертификации.', 'The store, a static pod; TLS-only on 2379 with its own CA.'), BY_KUBELET('etcd.yaml'), { see: 'sudo crictl ps --name etcd' }),
+    box('api', 'kube-apiserver', 'cp', 'hex', [640, 252, 210, 56], 'server', bi('API-сервер в статическом поде. В etcd он обращается с клиентским сертификатом, а API отдаёт на порту 6443 с сертификатом apiserver.crt.', 'A static pod: client cert to etcd, serves on 6443 with apiserver.crt.'), BY_KUBELET('kube-apiserver.yaml'), { see: 'kubectl -n kube-system get pod -l component=kube-apiserver' }),
+    box('cms', bi('controller-manager и scheduler', 'controller-manager, scheduler'), 'cp', 'hex', [640, 132, 296, 56], 'process', bi('Ещё два статических пода. Каждый обращается к API-серверу со своим файлом kubeconfig из /etc/kubernetes.', 'Two more static pods, each with its own kubeconfig.'), bi('Поды запускает kubelet по файлам kube-controller-manager.yaml и kube-scheduler.yaml.', 'The kubelet starts them from their manifests.')),
+    box('dns', 'CoreDNS', 'cp', 'box', [640, 24, 150, 52], 'dns', bi('Дополнение, которое kubeadm ставит последним вместе с kube-proxy. Это обычный Deployment, и без сети подов он остаётся в состоянии Pending.', 'An addon; an ordinary Deployment, Pending without a pod network.'), bi('Ставит фаза addons.', 'The addons phase.'), { see: 'kubectl -n kube-system get pods -l k8s-app=kube-dns' }),
+    box('cni', bi('Сеть подов', 'Pod network'), 'node', 'box', [816, 24, 130, 52], 'router', bi('Сетевой плагин подов: Cilium, Calico или flannel. kubeadm его не ставит, и этому посвящён следующий урок.', 'The CNI; kubeadm does not install one.'), bi('Ставите вы после init.', 'You, after init.'), { see: 'cilium status' }),
+  ],
+  edges: [
+    edge('e-certs', 'kadm', 'pki', bi('сертификаты', 'certificates'), bi('Фаза certs создаёт центр сертификации и подписывает им сертификаты компонентов.', 'The certs phase creates the CA and signs the certificates.'), bi('Пишет kubeadm.', 'kubeadm.')),
+    edge('e-confs', 'pki', 'confs', bi('клиентские сертификаты', 'client certificates'), bi('В каждый kubeconfig попадают сертификат центра и клиентский сертификат, подписанный тем же центром.', 'Each kubeconfig carries the CA and a client certificate.'), bi('Пишет kubeadm, фаза kubeconfig.', 'kubeadm, the kubeconfig phase.')),
+    edge('e-mf', 'confs', 'mf', bi('пути к файлам', 'file paths'), bi('Манифесты ссылаются на файлы из pki и на *.conf через hostPath.', 'The manifests mount pki and *.conf through hostPath.'), bi('Пишет kubeadm, фазы etcd и control-plane.', 'kubeadm, the etcd and control-plane phases.')),
+    edge('e-read', 'mf', 'klet', bi('читает каталог', 'reads the directory'), bi('kubelet каждые 20 секунд перечитывает каталог статических подов и запускает, перезапускает или останавливает поды по файлам.', 'Every 20 s the kubelet rereads the directory.'), bi('Читает kubelet.', 'The kubelet.')),
+    edge('e-etcd', 'klet', 'etcd', bi('запускает', 'starts'), bi('Первым kubelet запускает etcd.', 'etcd first.'), START),
+    edge('e-api', 'klet', 'api', bi('запускает', 'starts'), bi('Затем kubelet запускает API-сервер.', 'Then the API server.'), START, { via: [[575, 395], [575, 280]], labelAt: 0.6 }),
+    edge('e-cms', 'klet', 'cms', bi('запускает', 'starts'), bi('И наконец два управляющих процесса.', 'And the two controllers.'), START, { via: [[460, 160]], labelAt: 0.4 }),
+    edge('e-store', 'api', 'etcd', 'TLS :2379', bi('API-сервер — единственный клиент etcd. Его сертификат apiserver-etcd-client подписан центром etcd.', 'The API server is etcd’s only client.'), bi('Соединяется kube-apiserver.', 'kube-apiserver.')),
+    edge('e-watch', 'cms', 'api', 'TLS :6443', bi('controller-manager и scheduler обращаются к API со своими kubeconfig.', 'They talk to the API with their kubeconfigs.'), bi('Соединяются kube-controller-manager и kube-scheduler.', 'The controller-manager and scheduler.')),
+    edge('e-net', 'cni', 'dns', bi('сеть подов', 'pod network'), bi('Без сетевого плагина у подов нет адресов, и CoreDNS не может запуститься.', 'Without a CNI CoreDNS cannot start.'), bi('Сеть даёт плагин.', 'The plugin.')),
+  ],
+};
+
+const ALL = idsOf(diagram);
+
 export const kubeadmInitModel = defineModel<P>({
   id: 'k8s.kubeadm-init',
   block: 'k8s-2',
-  title: bi('kubeadm init: сертификаты, kubeconfig, статические поды', 'kubeadm init: certificates, kubeconfigs, static pods'),
-  summary: bi('kubeadm ничего не запускает сам. Он пишет файлы — сертификаты, kubeconfig и манифесты, — а control plane из этих манифестов поднимает kubelet.', 'kubeadm starts nothing itself. It writes files — certificates, kubeconfigs and manifests — and the kubelet brings the control plane up from those manifests.'),
+  title: bi('Что делает kubeadm init', 'What kubeadm init does'),
+  summary: bi(
+    'kubeadm сам ничего не запускает. Он только записывает файлы: сертификаты, файлы kubeconfig и манифесты статических подов. Управляющий слой кластера из этих манифестов запускает kubelet. Схема проходит фазы init по порядку и показывает, на какой из них всплывает каждая забытая подготовка узла.',
+    'kubeadm writes files; the kubelet starts the control plane from them. The diagram walks the phases and shows where each forgotten preparation surfaces.',
+  ),
+  intro: bi(
+    'Сейчас на схеме только команда kubeadm init. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд»: каждый шаг — одна фаза init. Слева появятся файлы, которые kubeadm записывает, внизу kubelet, а справа поды, которые kubelet запускает из этих файлов. Счётчик под схемой показывает, сколько файлов уже записано. Потом включайте по одной поломки в блоке «Сломать» и смотрите, на какой фазе остановится init.',
+    'For now only kubeadm init. Press “Start: step forward” and go on with “Step forward”: each step is a phase. The files appear on the left, the kubelet at the bottom, the pods it starts on the right. Then switch on the breaks one at a time and see where init stops.',
+  ),
+  legend: [
+    ...LEGEND_BASE,
+    mark('icon:lock', 'сертификаты кластера', 'the cluster certificates'),
+    mark('icon:folder', 'каталог манифестов статических подов', 'the static pod manifests'),
+    mark('icon:process', 'kubelet и управляющие процессы', 'the kubelet and controllers'),
+    mark('ok', 'фаза выполнена', 'the phase is done'),
+    mark('wait', 'ждёт сети подов', 'waits for a pod network'),
+    mark('err', 'здесь init остановился', 'init stopped here'),
+  ],
+  stopLabel: bi('kubeadm init остановился', 'kubeadm init stopped'),
   concepts: ['k8s.kubeadm', 'k8s.static-pod', 'k8s.pki'],
-  diagram: {
-    width: 960,
-    height: 480,
-    nodes: [
-      node('kadm', 'kubeadm init', 'user', 'pill', 24, 24, 180, 44, bi('Установщик. Проходит фазы по порядку: preflight, certs, kubeconfig, etcd, control-plane, kubelet-start, wait, addons. Любую фазу можно запустить отдельно: kubeadm init phase <имя>.', 'The installer. It walks the phases in order: preflight, certs, kubeconfig, etcd, control-plane, kubelet-start, wait, addons. Any phase can be run alone: kubeadm init phase <name>.'), bi('вы, на cp-1', 'you, on cp-1'), 'kubeadm init --help', D.kubeadmInit),
-      node('pki', '/etc/kubernetes/pki', 'store', 'doc', 24, 120, 200, 76, bi('Центр сертификации кластера (ca.crt, ca.key) и сертификаты, которые он подписал: apiserver, apiserver-kubelet-client, front-proxy, отдельный CA для etcd, ключ ServiceAccount (sa.key).', 'The cluster certificate authority (ca.crt, ca.key) and the certificates it signed: apiserver, apiserver-kubelet-client, front-proxy, a separate CA for etcd, the ServiceAccount key (sa.key).'), bi('фаза certs', 'the certs phase'), 'sudo kubeadm certs check-expiration', D.pki, 'ca: 10y · leaf: 1y'),
-      node('confs', '/etc/kubernetes/*.conf', 'store', 'doc', 24, 236, 200, 76, bi('kubeconfig для admin, super-admin, controller-manager, scheduler и kubelet: адрес API-сервера, CA и клиентский сертификат каждого.', 'kubeconfigs for admin, super-admin, controller-manager, scheduler and the kubelet: the API server address, the CA and each one’s client certificate.'), bi('фаза kubeconfig', 'the kubeconfig phase'), 'sudo ls /etc/kubernetes/*.conf'),
-      node('mf', '/etc/kubernetes/manifests', 'store', 'doc', 24, 352, 200, 76, bi('Четыре файла: etcd.yaml, kube-apiserver.yaml, kube-controller-manager.yaml, kube-scheduler.yaml. Это и есть статические поды.', 'Four files: etcd.yaml, kube-apiserver.yaml, kube-controller-manager.yaml, kube-scheduler.yaml. These are the static pods.'), bi('фазы etcd и control-plane', 'the etcd and control-plane phases'), 'ls /etc/kubernetes/manifests', D.staticPods),
-      node('klet', 'kubelet', 'node', 'rack', 330, 360, 200, 70, bi('Единственная служба systemd на узле. Читает каталог manifests и запускает поды из файлов, даже когда API-сервера нет.', 'The only systemd service on the node. It reads the manifests directory and starts pods from the files, even when there is no API server.'), bi('пакет kubelet, systemd', 'the kubelet package, systemd'), 'systemctl status kubelet; journalctl -u kubelet -n 50'),
-      node('etcd', 'etcd', 'store', 'box', 640, 380, 140, 50, bi('Хранилище кластера, статический под. Слушает 2379 только по TLS со своим CA.', 'The cluster store, a static pod. Listens on 2379 over TLS only, with its own CA.'), bi('kubelet из etcd.yaml', 'the kubelet from etcd.yaml'), 'sudo crictl ps --name etcd'),
-      node('api', 'kube-apiserver', 'cp', 'hex', 640, 250, 200, 56, bi('Статический под. Ходит в etcd с клиентским сертификатом, отдаёт API на 6443 с сертификатом apiserver.crt.', 'A static pod. It talks to etcd with a client certificate and serves the API on 6443 with apiserver.crt.'), bi('kubelet из kube-apiserver.yaml', 'the kubelet from kube-apiserver.yaml'), 'kubectl -n kube-system get pod -l component=kube-apiserver'),
-      node('cms', bi('controller-manager, scheduler', 'controller-manager, scheduler'), 'cp', 'hex', 640, 130, 290, 56, bi('Ещё два статических пода. Каждый ходит в API со своим kubeconfig из /etc/kubernetes.', 'Two more static pods. Each talks to the API with its own kubeconfig from /etc/kubernetes.'), bi('kubelet из манифестов', 'the kubelet from the manifests')),
-      node('dns', 'CoreDNS', 'cp', 'box', 640, 24, 140, 50, bi('Дополнение, которое kubeadm ставит последним, вместе с kube-proxy. Обычный Deployment: без сети подов он в Pending.', 'An addon kubeadm installs last, together with kube-proxy. An ordinary Deployment: without a pod network it is Pending.'), bi('фаза addon', 'the addon phase'), 'kubectl -n kube-system get pods -l k8s-app=kube-dns'),
-      node('cni', 'CNI', 'node', 'box', 820, 24, 120, 50, bi('Сетевой плагин (Cilium, Calico, flannel). kubeadm его не ставит: это следующий урок.', 'The network plugin (Cilium, Calico, flannel). kubeadm does not install one: that is the next lesson.'), bi('вы, после init', 'you, after init'), 'cilium status'),
-    ],
-    edges: [
-      edge('e-certs', 'kadm', 'pki', 'certs', bi('Фаза certs создаёт CA и подписывает им сертификаты компонентов.', 'The certs phase creates the CA and signs the component certificates with it.'), bi('kubeadm', 'kubeadm')),
-      edge('e-confs', 'pki', 'confs', bi('клиентские серты', 'client certs'), bi('Каждый kubeconfig несёт CA и клиентский сертификат, подписанный тем же CA.', 'Each kubeconfig carries the CA and a client certificate signed by the same CA.'), bi('kubeadm, фаза kubeconfig', 'kubeadm, the kubeconfig phase')),
-      edge('e-mf', 'confs', 'mf', bi('манифесты', 'manifests'), bi('Манифесты ссылаются на файлы pki и *.conf через hostPath.', 'The manifests refer to the pki and *.conf files through hostPath.'), bi('kubeadm, фазы etcd и control-plane', 'kubeadm, the etcd and control-plane phases')),
-      edge('e-read', 'mf', 'klet', bi('читает каталог', 'reads the directory'), bi('kubelet раз в 20 секунд перечитывает staticPodPath и запускает, перезапускает или останавливает поды по файлам.', 'Every 20 seconds the kubelet rereads staticPodPath and starts, restarts or stops pods by the files.'), bi('kubelet', 'kubelet')),
-      edge('e-etcd', 'klet', 'etcd', bi('запускает', 'starts'), bi('Сначала etcd.', 'etcd first.'), bi('kubelet через containerd', 'the kubelet through containerd')),
-      edge('e-api', 'klet', 'api', bi('запускает', 'starts'), bi('Затем API-сервер…', 'Then the API server…'), bi('kubelet через containerd', 'the kubelet through containerd'), { via: [[560, 395], [560, 278]], labelAt: 0.6 }),
-      edge('e-cms', 'klet', 'cms', bi('запускает', 'starts'), bi('…и два контроллера.', '…and the two controllers.'), bi('kubelet через containerd', 'the kubelet through containerd'), { via: [[460, 158]], labelAt: 0.4 }),
-      edge('e-store', 'api', 'etcd', 'TLS :2379', bi('API-сервер — единственный клиент etcd. Сертификат apiserver-etcd-client подписан CA etcd.', 'The API server is etcd’s only client. The apiserver-etcd-client certificate is signed by the etcd CA.'), bi('kube-apiserver', 'kube-apiserver')),
-      edge('e-watch', 'cms', 'api', 'TLS :6443', bi('Контроллеры и планировщик говорят с API по своим kubeconfig.', 'The controllers and the scheduler talk to the API with their kubeconfigs.'), bi('kube-controller-manager, kube-scheduler', 'kube-controller-manager, kube-scheduler')),
-      edge('e-net', 'cni', 'dns', bi('сеть подов', 'pod network'), bi('Без CNI у подов нет адресов, и CoreDNS не может стартовать.', 'Without a CNI pods have no addresses, and CoreDNS cannot start.'), bi('сетевой плагин', 'the network plugin')),
-    ],
-  },
+  diagram,
   params: [
     {
       id: 'cni',
-      label: bi('Сетевой плагин установлен', 'A network plugin is installed'),
+      label: bi('Сетевой плагин подов уже установлен', 'A pod network plugin is installed'),
       kind: 'toggle',
       default: false,
       near: 'cni',
-      predict: { prompt: bi('init закончился, CNI нет. В каком состоянии CoreDNS?', 'init has finished, there is no CNI. What state is CoreDNS in?'), options: [{ id: 'pending', text: bi('Pending', 'Pending') }, { id: 'running', text: bi('Running', 'Running') }], resolve: (_p, n) => (n.some((s) => s.values?.dns === 'Running') ? 'running' : 'pending') },
+      group: bi('После init', 'After init'),
+      predict: { prompt: bi('Вы меняете, установлен ли сетевой плагин подов. В каком состоянии будет CoreDNS после init?', 'You change whether a CNI is installed. What state is CoreDNS in after init?'), options: [{ id: 'pending', text: bi('Pending: ждёт сети подов', 'Pending') }, { id: 'running', text: bi('Running', 'Running') }], resolve: (_p, n) => (n.some((s) => s.values?.dns === 'Running') ? 'running' : 'pending') },
     },
     {
       id: 'months',
-      label: bi('Прошло месяцев после init', 'Months since init'),
+      label: bi('Сколько месяцев прошло после init', 'Months since init'),
       kind: 'range',
       min: 0,
       max: 24,
@@ -72,68 +101,183 @@ export const kubeadmInitModel = defineModel<P>({
       default: 0,
       near: 'pki',
       levels: ['intermediate', 'experienced'],
-      predict: { prompt: bi('Кластер не обновляли 13 месяцев. Что ответит kubectl?', 'The cluster has not been upgraded for 13 months. What does kubectl answer?'), options: [{ id: 'x509', text: bi('Ошибку x509: срок сертификата истёк', 'An x509 error: the certificate has expired') }, { id: 'ok', text: bi('Как обычно', 'As usual') }], resolve: (_p, n) => (n.some((s) => s.id === 'expired') ? 'x509' : 'ok') },
+      group: bi('Время', 'Time'),
+      predict: { prompt: bi('Кластер не обновляли столько месяцев, сколько вы выбрали. Что ответит kubectl?', 'Not upgraded for the chosen months. What does kubectl answer?'), options: [{ id: 'x509', text: bi('Ошибку x509: срок сертификата истёк', 'An x509 error: expired') }, { id: 'ok', text: bi('Как обычно', 'As usual') }], resolve: (_p, n) => (n.some((s) => s.id === 'expired') ? 'x509' : 'ok') },
     },
-    { id: 'renewed', label: bi('Сертификаты продлевали (kubeadm certs renew или upgrade)', 'Certificates were renewed (kubeadm certs renew or an upgrade)'), kind: 'toggle', default: false, near: 'pki', levels: ['intermediate', 'experienced'] },
+    { id: 'renewed', label: bi('Сертификаты продлевали (kubeadm certs renew или обновление кластера)', 'Certificates were renewed'), kind: 'toggle', default: false, near: 'pki', levels: ['intermediate', 'experienced'], group: bi('Время', 'Time') },
   ],
   breaks: [
     {
       id: 'ipfwd',
-      label: bi('Забыть net.ipv4.ip_forward=1', 'Forget net.ipv4.ip_forward=1'),
+      label: bi('На узле не включена пересылка пакетов (net.ipv4.ip_forward=1)', 'Packet forwarding is off on the node'),
       remove: ['e-certs'],
       boundary: 'kernel',
-      predict: { prompt: bi('Пересылка пакетов в ядре выключена. Где остановится init?', 'Packet forwarding is off in the kernel. Where does init stop?'), options: [{ id: 'pre', text: bi('Сразу, на проверках preflight', 'At once, in the preflight checks') }, { id: 'late', text: bi('Поды запустятся, сеть не будет работать', 'The pods start, the network will not work') }], resolve: () => 'pre' },
+      predict: { prompt: bi('Пересылка пакетов в ядре узла выключена. На какой фазе остановится init?', 'Packet forwarding is off. Where does init stop?'), options: [{ id: 'pre', text: bi('Сразу, на проверках preflight', 'At once, in preflight') }, { id: 'late', text: bi('Поды запустятся, но сеть работать не будет', 'The pods start, the network fails') }], resolve: () => 'pre' },
     },
     {
       id: 'swap',
-      label: bi('Не выключить swap', 'Leave swap on'),
+      label: bi('На узле не выключен swap', 'Swap is left on'),
       remove: ['klet'],
       boundary: 'process',
-      predict: { prompt: bi('swap включён. Что случится?', 'Swap is on. What happens?'), options: [{ id: 'kubelet', text: bi('kubelet не стартует, init ждёт его 4 минуты и сдаётся', 'The kubelet does not start, init waits 4 minutes and gives up') }, { id: 'slow', text: bi('Всё заработает, только медленнее', 'Everything works, only slower') }], resolve: () => 'kubelet' },
+      predict: { prompt: bi('На узле включён swap. Что случится при init?', 'Swap is on. What happens?'), options: [{ id: 'kubelet', text: bi('kubelet не запустится, init прождёт его четыре минуты и сдастся', 'The kubelet will not start; init waits 4 minutes and gives up') }, { id: 'slow', text: bi('Всё заработает, только медленнее', 'Everything works, slower') }], resolve: () => 'kubelet' },
     },
     {
       id: 'cgroup',
-      label: bi('containerd с SystemdCgroup = false', 'containerd with SystemdCgroup = false'),
+      label: bi('containerd работает с cgroupfs, а kubelet ждёт systemd (SystemdCgroup = false)', 'containerd uses cgroupfs, the kubelet expects systemd'),
       remove: ['e-api'],
       boundary: 'process',
-      predict: { prompt: bi('kubelet ждёт драйвер systemd, containerd работает с cgroupfs. Что вы увидите?', 'The kubelet expects the systemd driver, containerd runs with cgroupfs. What will you see?'), options: [{ id: 'flap', text: bi('Control plane то поднимается, то падает', 'The control plane keeps coming up and falling down') }, { id: 'error', text: bi('Понятную ошибку в preflight', 'A clear error in preflight') }], resolve: () => 'flap' },
+      predict: { prompt: bi('kubelet ждёт драйвер cgroup systemd, а containerd работает с cgroupfs. Что вы увидите?', 'The kubelet expects systemd, containerd uses cgroupfs. What will you see?'), options: [{ id: 'flap', text: bi('Управляющий слой то запускается, то падает', 'The control plane keeps coming up and falling') }, { id: 'error', text: bi('Понятную ошибку на проверках preflight', 'A clear preflight error') }], resolve: () => 'flap' },
     },
   ],
   metrics: [
-    { id: 'files', label: bi('файлов записал kubeadm', 'files written by kubeadm') },
-    { id: 'days', label: bi('дней до конца сертификатов', 'days until the certificates expire') },
+    { id: 'files', label: bi('файлов записал kubeadm', 'files written') },
+    { id: 'days', label: bi('дней до конца срока сертификатов', 'days until the certificates expire') },
   ],
   run(p, broken): Step[] {
     const s: Step[] = [];
     const cert = certState(p.months, p.renewed);
-    s.push({ id: 'preflight', label: 'preflight', caption: bi('Проверки: модули br_netfilter и overlay, ip_forward=1, свободные порты 6443, 2379–2380, 10250, рантайм отвечает по CRI, swap.', 'Checks: the br_netfilter and overlay modules, ip_forward=1, free ports 6443, 2379–2380, 10250, the runtime answers over CRI, swap.'), focus: ['kadm'], metrics: { files: 0, days: 365 } });
+    s.push({
+      id: 'preflight',
+      label: 'preflight',
+      caption: bi('Первая фаза — проверки узла: загружены ли модули ядра br_netfilter и overlay, включена ли пересылка пакетов, свободны ли порты 6443, 2379–2380 и 10250, отвечает ли среда запуска контейнеров и выключен ли swap.', 'Preflight checks: kernel modules, ip_forward, free ports, the runtime, swap.'),
+      focus: ['kadm'],
+      say: { kadm: bi('kubeadm проверяет, готов ли узел стать управляющим.', 'kubeadm checks the node is ready.') },
+      states: only(ALL, 'kadm'),
+      metrics: { files: 0, days: 365 },
+    });
     if (broken.has('ipfwd')) {
-      s.push({ id: 'fail', label: bi('стоп', 'stop'), caption: bi('init останавливается до того, как записал хоть один файл. Это лучший вид ошибки: понятный и дешёвый.', 'init stops before writing a single file. This is the best kind of error: clear and cheap.'), focus: ['kadm'], states: { kadm: 'err' }, metrics: { files: 0, days: 365 }, broken: { at: 'kadm', message: '[preflight] Running pre-flight checks\nerror execution phase preflight: [preflight] Some fatal errors occurred:\n\t[ERROR FileContent--proc-sys-net-ipv4-ip_forward]: /proc/sys/net/ipv4/ip_forward contents are not set to 1', caption: bi('без пересылки пакетов узел не сможет быть маршрутизатором для подов — kubeadm проверяет это первым.', 'without packet forwarding the node cannot route for its pods — kubeadm checks it first.') } });
+      s.push({
+        id: 'fail',
+        label: bi('стоп', 'stop'),
+        caption: bi('init останавливается раньше, чем записал хоть один файл. Это лучший вид ошибки: её причина понятна, а исправить её дёшево.', 'init stops before writing a file: the best kind of error, clear and cheap.'),
+        focus: ['kadm'],
+        say: { kadm: bi('kubeadm видит, что пересылка пакетов выключена, и прекращает работу.', 'kubeadm sees forwarding off and stops.') },
+        states: { kadm: 'err' },
+        metrics: { files: 0, days: 365 },
+        broken: { at: 'kadm', message: '[preflight] Running pre-flight checks\nerror execution phase preflight: [preflight] Some fatal errors occurred:\n\t[ERROR FileContent--proc-sys-net-ipv4-ip_forward]: /proc/sys/net/ipv4/ip_forward contents are not set to 1', caption: bi('на проверках preflight. Без пересылки пакетов узел не сможет служить маршрутизатором для своих подов, поэтому kubeadm проверяет это первым делом.', 'in preflight: without forwarding the node cannot route for its pods.') },
+      });
       return s;
     }
-    s.push({ id: 'certs', label: 'certs', caption: bi('Фаза certs: CA кластера на 10 лет и сертификаты компонентов на год. В apiserver.crt вписаны все имена и адреса, по которым к API будут обращаться (SAN).', 'The certs phase: the cluster CA for 10 years and the component certificates for one year. apiserver.crt lists every name and address the API will be reached by (SANs).'), focus: ['e-certs', 'pki'], tokens: [{ edge: 'e-certs', label: 'ca.crt + 21 files' }], states: { pki: 'ok' }, metrics: { files: 22, days: 365 } });
-    s.push({ id: 'kubeconfig', label: 'kubeconfig', caption: bi('Фаза kubeconfig: admin.conf для вас, свои файлы для controller-manager, scheduler и kubelet. Каждый — это адрес API, CA и клиентский сертификат.', 'The kubeconfig phase: admin.conf for you, separate files for the controller-manager, the scheduler and the kubelet. Each is the API address, the CA and a client certificate.'), focus: ['e-confs', 'confs'], tokens: [{ edge: 'e-confs', label: '5 × .conf' }], states: { confs: 'ok' }, metrics: { files: 27, days: 365 } });
-    s.push({ id: 'manifests', label: 'manifests', caption: bi('Фазы etcd и control-plane не запускают ничего: они только кладут четыре YAML-файла в /etc/kubernetes/manifests.', 'The etcd and control-plane phases start nothing: they only put four YAML files into /etc/kubernetes/manifests.'), focus: ['e-mf', 'mf'], tokens: [{ edge: 'e-mf', label: '4 × .yaml' }], states: { mf: 'ok' }, metrics: { files: 31, days: 365 } });
+    s.push({
+      id: 'certs',
+      label: 'certs',
+      caption: bi('Фаза certs создаёт центр сертификации кластера сроком на 10 лет и сертификаты компонентов сроком на год. В сертификат API-сервера вписаны все имена и адреса, по которым к нему будут обращаться.', 'certs: the CA for 10 years, components for one; apiserver.crt lists every name and address (SANs).'),
+      focus: ['kadm', 'e-certs'],
+      reveal: ['pki', 'e-certs'],
+      tokens: [{ edge: 'e-certs', label: 'ca.crt + 21 files' }],
+      say: { kadm: bi('kubeadm создаёт центр сертификации и подписывает им сертификаты компонентов.', 'kubeadm creates the CA and signs the certificates.') },
+      states: { pki: 'ok' },
+      metrics: { files: 22, days: 365 },
+    });
+    s.push({
+      id: 'kubeconfig',
+      label: 'kubeconfig',
+      caption: bi('Фаза kubeconfig записывает admin.conf для администратора и отдельные файлы для controller-manager, scheduler и kubelet. В каждом файле адрес API-сервера, сертификат центра и клиентский сертификат.', 'kubeconfig: admin.conf and files for the controller-manager, scheduler and kubelet.'),
+      focus: ['kadm', 'e-confs'],
+      reveal: ['confs', 'e-confs'],
+      tokens: [{ edge: 'e-confs', label: '5 × .conf' }],
+      say: { kadm: bi('kubeadm записывает файлы kubeconfig для администратора и компонентов.', 'kubeadm writes the kubeconfigs.') },
+      states: { confs: 'ok' },
+      metrics: { files: 27, days: 365 },
+    });
+    s.push({
+      id: 'manifests',
+      label: 'manifests',
+      caption: bi('Фазы etcd и control-plane ничего не запускают: они только кладут четыре YAML-файла в каталог /etc/kubernetes/manifests.', 'etcd and control-plane start nothing: four YAML files in /etc/kubernetes/manifests.'),
+      focus: ['kadm', 'e-mf'],
+      reveal: ['mf', 'e-mf'],
+      tokens: [{ edge: 'e-mf', label: '4 × .yaml' }],
+      say: { kadm: bi('kubeadm кладёт в каталог manifests четыре файла статических подов.', 'kubeadm writes four static pod files.') },
+      states: { mf: 'ok' },
+      metrics: { files: 31, days: 365 },
+    });
     if (broken.has('swap')) {
-      s.push({ id: 'nokubelet', label: 'kubelet', caption: bi('kubelet падает при старте, файлы в manifests никто не читает, и init ждёт здоровый kubelet четыре минуты.', 'The kubelet dies at start, nobody reads the manifests, and init waits four minutes for a healthy kubelet.'), focus: ['klet', 'e-read'], states: { klet: 'err' }, metrics: { files: 31, days: 365 }, broken: { at: 'klet', message: '$ journalctl -u kubelet -n 1\nkubelet[2211]: E1118 "command failed" err="failed to run Kubelet: running with swap on is not supported, please disable swap or set --fail-swap-on flag to false"\n\n[kubelet-check] The kubelet is not healthy after 4m0s', caption: bi('сообщение kubeadm говорит только «kubelet нездоров»; причину называет журнал kubelet.', 'the kubeadm message only says "the kubelet is unhealthy"; the kubelet journal names the reason.') } });
+      s.push({
+        id: 'nokubelet',
+        label: 'kubelet',
+        caption: bi('kubelet завершается при запуске, и файлы в manifests никто не читает. kubeadm четыре минуты ждёт, что kubelet станет здоровым, и сдаётся.', 'The kubelet exits at start; nobody reads the manifests; init waits four minutes.'),
+        focus: ['kadm'],
+        reveal: ['klet', 'e-read'],
+        say: { kadm: bi('kubeadm ждёт здоровый kubelet и не дожидается.', 'kubeadm waits for a healthy kubelet in vain.') },
+        states: { klet: 'err' },
+        metrics: { files: 31, days: 365 },
+        broken: { at: 'klet', message: '$ journalctl -u kubelet -n 1\nkubelet[2211]: E1118 "command failed" err="failed to run Kubelet: running with swap on is not supported, please disable swap or set --fail-swap-on flag to false"\n\n[kubelet-check] The kubelet is not healthy after 4m0s', caption: bi('на запуске kubelet. Сообщение kubeadm говорит только, что kubelet нездоров, а причину называет журнал самого kubelet.', 'at the kubelet: kubeadm only says “unhealthy”; the kubelet journal names the cause.') },
+      });
       return s;
     }
-    s.push({ id: 'kubelet', label: 'kubelet-start', caption: bi('kubelet перечитал каталог и запустил статические поды: etcd, API-сервер, контроллеры. В API они появятся «зеркальными» подами с именем узла в конце: kube-apiserver-cp-1.', 'The kubelet reread the directory and started the static pods: etcd, the API server, the controllers. In the API they show up as "mirror" pods with the node name at the end: kube-apiserver-cp-1.'), focus: ['e-read', 'klet', 'e-etcd', 'e-api', 'e-cms'], tokens: [{ edge: 'e-read' }, { edge: 'e-etcd' }, { edge: 'e-api' }, { edge: 'e-cms' }], states: { klet: 'ok', etcd: 'ok', api: 'ok', cms: 'ok' }, metrics: { files: 31, days: 365 } });
+    s.push({
+      id: 'kubelet',
+      label: 'kubelet-start',
+      caption: bi('kubelet перечитывает каталог и запускает статические поды: etcd, API-сервер, controller-manager и scheduler. В API эти поды появятся «зеркальными» копиями с именем узла в конце, например kube-apiserver-cp-1.', 'The kubelet starts the static pods; in the API they appear as mirror pods like kube-apiserver-cp-1.'),
+      focus: ['klet', 'e-read'],
+      reveal: ['klet', 'e-read', 'etcd', 'api', 'cms', 'e-etcd', 'e-api', 'e-cms'],
+      tokens: [{ edge: 'e-read', label: '4 × .yaml' }],
+      say: { klet: bi('kubelet читает манифесты и запускает etcd, API-сервер и два управляющих процесса.', 'The kubelet starts etcd, the API server and the controllers.') },
+      states: { klet: 'ok', etcd: 'ok', api: 'ok', cms: 'ok' },
+      metrics: { files: 31, days: 365 },
+    });
     if (broken.has('cgroup')) {
-      s.push({ id: 'flap', label: bi('мигает', 'flapping'), caption: bi('kubelet и containerd по-разному понимают, где лежат cgroup контейнеров. Поды control plane то и дело убиваются и перезапускаются, API-сервер отвечает через раз.', 'The kubelet and containerd disagree on where the container cgroups live. The control-plane pods keep getting killed and restarted, the API server answers every other time.'), focus: ['api', 'etcd'], states: { api: 'warn', etcd: 'warn' }, metrics: { files: 31, days: 365 }, broken: { at: 'api', message: '$ kubectl get nodes\nThe connection to the server 10.10.1.11:6443 was refused - did you specify the right host or port?\n$ sudo crictl ps -a | grep kube-apiserver\n3f2a1c   Exited   kube-apiserver   7', caption: bi('preflight этого не ловит: драйвер cgroup надо выставить в containerd одинаково с kubelet (systemd) до init.', 'preflight does not catch it: the cgroup driver in containerd must match the kubelet’s (systemd) before init.') } });
+      s.push({
+        id: 'flap',
+        label: bi('перезапуски', 'flapping'),
+        caption: bi('kubelet и containerd по-разному понимают, где лежат контрольные группы (cgroup) контейнеров. Поды управляющего слоя раз за разом завершаются и запускаются снова, и API-сервер отвечает через раз.', 'The kubelet and containerd disagree on cgroups: the control plane keeps restarting.'),
+        focus: ['klet'],
+        say: { klet: bi('kubelet снова и снова перезапускает API-сервер и etcd.', 'The kubelet restarts the API server and etcd again and again.') },
+        states: { api: 'warn', etcd: 'warn' },
+        metrics: { files: 31, days: 365 },
+        broken: { at: 'api', message: '$ kubectl get nodes\nThe connection to the server 10.10.1.11:6443 was refused - did you specify the right host or port?\n$ sudo crictl ps -a | grep kube-apiserver\n3f2a1c   Exited   kube-apiserver   7', caption: bi('на подах управляющего слоя. Проверки preflight такую ошибку не ловят, поэтому драйвер cgroup в containerd нужно выставить так же, как у kubelet (systemd), ещё до init.', 'at the control plane: preflight does not catch it; set the same cgroup driver before init.') },
+      });
       return s;
     }
-    s.push({ id: 'wait', label: 'wait', caption: bi('API-сервер ответил на /readyz. kubeadm загружает свою конфигурацию в ConfigMap kubeadm-config, помечает узел control-plane и создаёт bootstrap-токен для будущих узлов.', 'The API server answered /readyz. kubeadm uploads its configuration to the kubeadm-config ConfigMap, marks the node control-plane and creates a bootstrap token for future nodes.'), focus: ['api', 'e-store', 'e-watch'], tokens: [{ edge: 'e-store' }, { edge: 'e-watch' }], metrics: { files: 31, days: cert.leafLeftDays } });
-    s.push({ id: 'addons', label: 'addons', caption: p.cni ? bi('Дополнения: kube-proxy и CoreDNS. Сеть подов есть — CoreDNS получает адреса и становится Ready, узел Ready.', 'Addons: kube-proxy and CoreDNS. There is a pod network — CoreDNS gets addresses and becomes Ready, the node is Ready.') : bi('Дополнения: kube-proxy и CoreDNS. Сети подов нет: CoreDNS в Pending, узел NotReady. init напомнит: «You should now deploy a pod network to the cluster».', 'Addons: kube-proxy and CoreDNS. No pod network: CoreDNS is Pending, the node is NotReady. init reminds you: "You should now deploy a pod network to the cluster".'), focus: ['dns', 'e-net', 'cni'], tokens: p.cni ? [{ edge: 'e-net' }] : [], states: { dns: p.cni ? 'ok' : 'wait', cni: p.cni ? 'ok' : 'off' }, values: { dns: p.cni ? 'Running' : 'Pending' }, metrics: { files: 31, days: cert.leafLeftDays } });
+    s.push({
+      id: 'wait',
+      label: bi('ожидание', 'wait'),
+      caption: bi('API-сервер ответил на /readyz. kubeadm сохраняет свою конфигурацию в ConfigMap kubeadm-config, помечает узел как управляющий и создаёт токен для узлов, которые будут присоединяться потом.', 'The API server answers; kubeadm uploads its config, marks the node and creates a bootstrap token.'),
+      focus: ['kadm'],
+      say: { kadm: bi('kubeadm дожидается ответа API-сервера и создаёт токен для новых узлов.', 'kubeadm waits for the API and creates a join token.') },
+      metrics: { files: 31, days: cert.leafLeftDays },
+    });
+    s.push({
+      id: 'addons',
+      label: 'addons',
+      caption: p.cni
+        ? bi('kubeadm ставит дополнения kube-proxy и CoreDNS. Сеть подов уже есть, поэтому CoreDNS получает адреса и становится готовым, а узел переходит в состояние Ready.', 'Addons: with a pod network CoreDNS becomes ready and the node Ready.')
+        : bi('kubeadm ставит дополнения kube-proxy и CoreDNS. Сети подов нет, поэтому CoreDNS остаётся в Pending, а узел в NotReady. init напомнит об этом в конце: «You should now deploy a pod network to the cluster».', 'Addons: no pod network, CoreDNS Pending, the node NotReady; init reminds you to deploy one.'),
+      focus: ['dns'],
+      reveal: ['dns', 'cni', 'e-net'],
+      tokens: p.cni ? [{ edge: 'e-net', label: '10.0.1.0/24' }] : [],
+      say: { dns: p.cni ? bi('CoreDNS получает адреса и начинает отвечать.', 'CoreDNS gets addresses and answers.') : bi('CoreDNS ждёт сети подов и остаётся в Pending.', 'CoreDNS waits for a pod network.') },
+      states: { dns: p.cni ? 'ok' : 'wait', cni: p.cni ? 'ok' : 'off' },
+      values: { dns: p.cni ? 'Running' : 'Pending' },
+      metrics: { files: 31, days: cert.leafLeftDays },
+    });
     if (cert.expired)
-      s.push({ id: 'expired', label: 'x509', caption: bi('Прошёл год: сертификаты компонентов и admin.conf истекли. kubectl больше не может представиться API-серверу; kubelet тоже теряет связь.', 'A year has passed: the component certificates and admin.conf have expired. kubectl can no longer introduce itself to the API server; the kubelet loses its connection too.'), focus: ['pki', 'confs'], states: { pki: 'err', confs: 'err' }, values: { pki: 'leaf: expired' }, metrics: { files: 31, days: cert.leafLeftDays } });
-    else if (p.months > 0) s.push({ id: 'aging', label: bi('время', 'time'), caption: fmt(bi('До конца сертификатов {d} дней. Каждое обновление кластера через kubeadm upgrade продлевает их — регулярные обновления и есть лучшая защита.', '{d} days until the certificates expire. Every cluster upgrade with kubeadm upgrade renews them — regular upgrades are the best protection.'), { d: cert.leafLeftDays }), focus: ['pki'], states: { pki: cert.leafLeftDays < 60 ? 'warn' : 'ok' }, metrics: { files: 31, days: cert.leafLeftDays } });
+      s.push({
+        id: 'expired',
+        label: 'x509',
+        caption: bi('Прошёл год, и сертификаты компонентов вместе с admin.conf истекли. kubectl больше не может представиться API-серверу, и связь kubelet с ним тоже обрывается.', 'A year later the certificates and admin.conf have expired: kubectl and the kubelet lose the API.'),
+        focus: ['pki'],
+        say: { pki: bi('Срок сертификатов компонентов истёк.', 'The component certificates have expired.') },
+        states: { pki: 'err', confs: 'err' },
+        values: { pki: 'leaf: expired' },
+        metrics: { files: 31, days: cert.leafLeftDays },
+      });
+    else if (p.months > 0)
+      s.push({
+        id: 'aging',
+        label: bi('время', 'time'),
+        caption: fmt(bi('До конца срока сертификатов осталось {d} дней. Каждое обновление кластера командой kubeadm upgrade продлевает их, поэтому регулярные обновления и есть лучшая защита.', '{d} days left; every kubeadm upgrade renews them.'), { d: cert.leafLeftDays }),
+        focus: ['pki'],
+        say: { pki: fmt(bi('Сертификатам осталось {d} дней.', '{d} days left.'), { d: cert.leafLeftDays }) },
+        states: { pki: cert.leafLeftDays < 60 ? 'warn' : 'ok' },
+        metrics: { files: 31, days: cert.leafLeftDays },
+      });
     return s;
   },
   explainDelta(_prev, next, change, _a, b): Bi {
-    if (change.kind === 'break') return change.on ? bi('Пропущенная подготовка узла: смотрите, на какой фазе это всплывает и какое сообщение вы увидите.', 'A skipped node preparation step: see at which phase it surfaces and which message you get.') : bi('Узел подготовлен правильно.', 'The node is prepared correctly.');
-    if (change.id === 'cni') return b.cni ? bi('С сетью подов CoreDNS стартует, и узел становится Ready.', 'With a pod network CoreDNS starts and the node becomes Ready.') : bi('Без CNI init завершается успешно, но кластер ещё не работает.', 'Without a CNI init finishes successfully, but the cluster does not work yet.');
+    if (change.kind === 'break') return change.on ? bi('Подготовка узла пропущена: посмотрите, на какой фазе это всплывает и какое сообщение вы увидите.', 'A preparation step was skipped: see where it surfaces.') : bi('Узел снова подготовлен правильно.', 'The node is prepared correctly.');
+    if (change.id === 'cni') return b.cni ? bi('С сетью подов CoreDNS запускается, и узел становится Ready.', 'With a pod network the node becomes Ready.') : bi('Без сети подов init завершается успешно, но кластер ещё не работает.', 'Without one init succeeds, but the cluster does not work yet.');
     const d = metric(next, 'days');
-    return d <= 0 ? bi('Сертификаты истекли: нужен kubeadm certs renew all и перезапуск статических подов.', 'The certificates have expired: you need kubeadm certs renew all and a restart of the static pods.') : fmt(bi('Сертификатам осталось {d} дней.', 'The certificates have {d} days left.'), { d });
+    return d <= 0 ? bi('Сертификаты истекли: нужно выполнить kubeadm certs renew all и перезапустить статические поды.', 'Expired: kubeadm certs renew all and restart the static pods.') : fmt(bi('Сертификатам осталось {d} дней.', '{d} days left.'), { d });
   },
 });

@@ -1,8 +1,9 @@
 // Small builders for the Kubernetes process explainers: nodes and edges with
-// their cards, and the doc links the cards point to.
+// their cards, the doc links the cards point to, the picture that starts with
+// a few elements and grows, and the legend marks every explainer shares.
 
-import type { Bi } from '../../../core/i18n';
-import type { ColorFamily, DiagramEdge, DiagramNode, DocRef, ElementCard, QText, Step } from '../../../core/types';
+import { bi, pluralRu, type Bi } from '../../../core/i18n';
+import type { ColorFamily, DiagramEdge, DiagramNode, DocRef, ElementCard, ElementState, LegendMark, NodeIcon, NodeWork, QText, Step } from '../../../core/types';
 
 export const D = {
   components: { url: 'https://kubernetes.io/docs/concepts/overview/components/', label: 'kubernetes.io › Components' },
@@ -36,10 +37,29 @@ export const D = {
   skew: { page: 'web/kubernetes.io/docs/setup/release/version-skew-policy', anchor: 'kubelet', line: 'must not be newer' },
 } satisfies Record<string, DocRef>;
 
-export function node(id: string, label: QText, family: ColorFamily, shape: DiagramNode['shape'], x: number, y: number, w: number, h: number, what: Bi, who: Bi, see?: string, doc?: DocRef, sub?: string): DiagramNode {
-  const card: ElementCard = { what, who, ...(see ? { see } : {}), ...(doc ? { doc } : {}) };
-  return { id, label, family, shape, x, y, w, h, card, ...(sub ? { sub } : {}) };
+/** A node with a pictogram: `box(id, label, family, shape, [x, y, w, h], icon, what, who, { see, doc, sub })`. */
+export function box(id: string, label: QText, family: ColorFamily, shape: DiagramNode['shape'], at: [number, number, number, number], icon: NodeIcon, what: Bi, who: Bi, o: { see?: string; doc?: DocRef; sub?: string; work?: NodeWork } = {}): DiagramNode {
+  const [x, y, w, h] = at;
+  const card: ElementCard = { what, who, ...(o.see ? { see: o.see } : {}), ...(o.doc ? { doc: o.doc } : {}) };
+  return { id, label, family, shape, x, y, w, h, icon, card, ...(o.sub ? { sub: o.sub } : {}), ...(o.work ? { work: o.work } : {}) };
 }
+
+/** States of the first step: every element of `all` is hidden except `shown`. */
+export function only(all: string[], ...shown: string[]): Record<string, ElementState> {
+  return Object.fromEntries(all.filter((id) => !shown.includes(id)).map((id) => [id, 'hidden' as ElementState]));
+}
+
+/** Ids of every node and edge of a diagram, for `only`. */
+export const idsOf = (d: { nodes: { id: string }[]; edges: { id: string }[] }) => [...d.nodes.map((n) => n.id), ...d.edges.map((e) => e.id)];
+
+/** The legend marks every Kubernetes explainer starts with; each adds its pictograms and states. */
+export const LEGEND_BASE: { mark: LegendMark; text: Bi }[] = [
+  { mark: 'active', text: bi('блок, который работает на этом шаге', 'the block working at this step') },
+  { mark: 'say', text: bi('что этот блок делает прямо сейчас', 'what that block is doing now') },
+  { mark: 'token', text: bi('что передаётся по линии дальше', 'what is handed on along the line') },
+];
+
+export const mark = (m: LegendMark, ru: string, en: string) => ({ mark: m, text: bi(ru, en) });
 
 export function edge(id: string, from: string, to: string, label: QText, what: Bi, who: Bi, o: { via?: [number, number][]; dashed?: boolean; labelAt?: number; see?: string; doc?: DocRef } = {}): DiagramEdge {
   return { id, from, to, label, card: { what, who, ...(o.see ? { see: o.see } : {}), ...(o.doc ? { doc: o.doc } : {}) }, ...(o.via ? { via: o.via } : {}), ...(o.dashed ? { dashed: true } : {}), ...(o.labelAt !== undefined ? { labelAt: o.labelAt } : {}) };
@@ -48,3 +68,20 @@ export function edge(id: string, from: string, to: string, label: QText, what: B
 export const last = (s: Step[]) => s[s.length - 1];
 export const metric = (s: Step[], k: string) => last(s)?.metrics?.[k] ?? 0;
 export const anyBroken = (s: Step[]) => s.some((x) => x.broken);
+
+/** fmt with values that may themselves be bilingual: {v} takes v.ru in Russian and v.en in English. */
+export function fmtb(b: Bi, vars: Record<string, string | number | Bi>): Bi {
+  const fill = (s: string, lang: 'ru' | 'en') =>
+    s.replace(/\{(\w+)\}/g, (m, k) => {
+      const v = vars[k];
+      if (v === undefined) return m;
+      return typeof v === 'object' ? v[lang] : String(v);
+    });
+  return { ru: fill(b.ru, 'ru'), en: fill(b.en, 'en') };
+}
+
+/** A number with its noun in both languages: num(3, ['под', 'пода', 'подов'], ['pod', 'pods']) → «3 пода» / “3 pods”. */
+export function num(n: number, ru: [string, string, string], en: [string, string]): Bi {
+  return { ru: `${n} ${pluralRu(n, ru)}`, en: `${n} ${n === 1 ? en[0] : en[1]}` };
+}
+export const PODS: [[string, string, string], [string, string]] = [['под', 'пода', 'подов'], ['pod', 'pods']];
