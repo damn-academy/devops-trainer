@@ -30,6 +30,7 @@ const L = {
   tls: 'networks.tls',
   proxy: 'networks.proxy',
   trouble: 'networks.troubleshooting',
+  linuxLab: 'networks.linux-lab',
 };
 
 export const concepts: Concept[] = [
@@ -132,6 +133,17 @@ export const concepts: Concept[] = [
   C('net.netfilter', L.nat, ['netfilter', 'netfilter'], ['Подсистема ядра Linux, через которую проходит каждый пакет: таблицы filter и nat, цепочки INPUT, FORWARD, OUTPUT, PREROUTING, POSTROUTING. Команда iptables (или nft).', 'The Linux kernel subsystem every packet passes through: the filter and nat tables, the INPUT, FORWARD, OUTPUT, PREROUTING and POSTROUTING chains. The iptables (or nft) command.'], { docRef: { page: 'man/iptables.8', anchor: 'TABLES' } }),
   C('net.dnat', L.nat, ['проброс порта', 'port forwarding'], ['DNAT: роутер переписывает адрес назначения входящих соединений на внутренний сервер (203.0.113.10:80 → 10.0.2.20:8080).', 'DNAT: the router rewrites the destination of incoming connections to an inside server (203.0.113.10:80 → 10.0.2.20:8080).'], {
     forms: { ru: ['проброса порта', 'пробросом порта', 'проброс портов', 'DNAT'], en: ['DNAT'] },
+  }),
+
+  // ── the network by hand on real Linux ──
+  C('net.vlan', L.linuxLab, ['VLAN', 'VLAN'], ['Виртуальная локальная сеть: коммутатор делит порты на группы, и кадры из одной группы в другую не попадают. На транке кадры несут метку 802.1Q с номером VLAN.', 'A virtual local network: the switch divides its ports into groups, and frames from one group never reach another. On a trunk, frames carry an 802.1Q tag with the VLAN number.'], {
+    forms: { ru: ['VLAN-интерфейс', 'VLAN-интерфейсы', 'VLAN-интерфейса'], en: ['VLANs'] },
+    docRef: { page: 'man/ip-link.8', anchor: 'VLAN' },
+  }),
+  C('net.bridge', L.linuxLab, ['мост', 'bridge'], ['Программный коммутатор внутри ядра Linux: его порты (интерфейсы) образуют одну сеть второго уровня, и он учит MAC-адреса, как железный коммутатор.', 'A software switch inside the Linux kernel: its ports (interfaces) form one layer-2 network, and it learns MAC addresses like a hardware switch.'], { scan: false, docRef: { page: 'man/bridge.8', anchor: 'FDB' } }),
+  C('net.veth', L.linuxLab, ['пара veth', 'veth pair'], ['Виртуальный кабель из двух интерфейсов: что вошло в один конец, выходит из другого. Так пространство имён подключают к сети машины.', 'A virtual cable of two interfaces: what goes into one end comes out of the other. This is how a namespace is connected to the machine’s network.'], {
+    forms: { ru: ['пары veth', 'парой veth', 'пару veth'], en: ['veth pairs'] },
+    docRef: { page: 'man/ip-link.8', anchor: 'VETH' },
   }),
 
   // ── HTTP ──

@@ -1,0 +1,13 @@
+/* The Linux block's multi-machine labs: tabs over the terminals, the machine
+   tag of each goal. Colours come from styles/tokens.css only. */
+.rl-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+.rl-tab { display: inline-flex; align-items: baseline; gap: 2px; max-width: 100%; padding: 5px 10px; font: inherit; font-size: 0.9rem; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); cursor: pointer; overflow-wrap: anywhere; }
+.rl-tab[aria-selected='true'] { color: var(--ink); border-color: var(--c-kernel); box-shadow: inset 0 -2px 0 var(--c-kernel); }
+.rl-tab:focus-visible { outline: 2px solid var(--c-kernel); outline-offset: 2px; }
+.rl-terms { min-width: 0; }
+.rl-term[hidden] { display: none; }
+.rl-on { display: block; margin-bottom: 2px; color: var(--ink-2); font-family: var(--font-mono, ui-monospace, monospace); }
+.rl-crit { color: var(--c-warn, var(--ink-2)); }
+.rl-actions { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.rl-exam { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.chip.doc { display: inline-flex; gap: 4px; align-items: center; margin-top: 6px; }

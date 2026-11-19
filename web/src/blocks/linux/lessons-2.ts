@@ -592,6 +592,16 @@ const services: Lesson = {
     },
     { id: 'boot', kind: 'explainer', step: 'look', explainer: 'linux.boot', caption: bi('От включения до приглашения. Попробуйте rescue.target и сломанный fstab.', 'From power-on to the prompt. Try rescue.target and a broken fstab.') },
     {
+      id: 'not-everywhere',
+      kind: 'callout',
+      tone: 'note',
+      title: bi('systemd есть не везде', 'systemd is not everywhere'),
+      body: bi(
+        'systemd стоит на Debian, Ubuntu, RHEL и большинстве серверов, поэтому этот урок о нём. Но это не единственная система запуска служб. В конце блока вы будете работать на настоящих машинах с Alpine Linux, и там службы запускает другая система, попроще; задачи у неё те же — запустить, включить при загрузке, перезапустить после падения, — меняются только команды и файлы.',
+        'systemd runs on Debian, Ubuntu, RHEL and most servers, which is why this lesson is about it. But it is not the only service manager. At the end of the block you will work on real machines with Alpine Linux, where a different, simpler system starts the services; its jobs are the same — start, enable at boot, restart after a crash — only the commands and the files change.',
+      ),
+    },
+    {
       id: 'systemctl',
       kind: 'text',
       step: 'explain',

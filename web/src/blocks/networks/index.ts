@@ -1,7 +1,8 @@
-// The Networks block (route id `networks`, design 03-networks.md): fifteen
+// The Networks block (route id `networks`, design 03-networks.md): sixteen
 // lessons from the map of the internet to layer-by-layer troubleshooting,
 // twelve process explainers, the subnet calculator and drill, the protocol
-// catalogue, the quiz bank, the placement check and the block exam. The simulator and its commands live in
+// catalogue, the quiz bank, the placement check and the block exam; the lesson on real Linux and the
+// in-browser part B of the exam run on v86 machines (reallab/). The simulator and its commands live in
 // src/engine/sim-net.
 
 import { defineModule } from '../../core/define';
@@ -27,6 +28,9 @@ import { urlModel } from './explainers/url';
 import { arp, frames, internet, routing, subnets } from './lessons-a';
 import { dhcp, dns, envelopes, transport } from './lessons-b';
 import { http, nat, protocols, proxy, tls, troubleshooting } from './lessons-c';
+import { linuxLab } from './lessons-d';
+import { examBrowser } from './reallab/exam-lab';
+import { realLabWidget } from './reallab/register';
 import { placement } from './placement';
 import { quiz } from './quiz';
 import { EN, RU, src } from './sources';
@@ -34,7 +38,7 @@ import { catalogueWidget } from './widgets/catalogue';
 import { drillWidget, subnetWidget } from './widgets/subnet';
 import './networks.css';
 
-const lessons = [internet, frames, subnets, arp, routing, transport, envelopes, dns, dhcp, nat, http, tls, proxy, troubleshooting, protocols];
+const lessons = [internet, frames, subnets, arp, routing, transport, envelopes, dns, dhcp, nat, linuxLab, http, tls, proxy, troubleshooting, protocols];
 
 const entry = ROUTE.find((r) => r.id === 'networks')!;
 
@@ -62,7 +66,7 @@ export default defineModule({
   concepts,
   quiz,
   docs,
-  exams: [exam, examB],
+  exams: [exam, examB, examBrowser],
   explainers: [fromModel(mapModel), fromModel(switchModel), fromModel(arpModel), fromModel(routeModel), fromModel(tcpModel), envelopesExplainer, fromModel(dnsModel), fromModel(dhcpModel), fromModel(natModel), fromModel(tlsModel), fromModel(proxyModel), fromModel(urlModel)],
-  widgets: [subnetWidget, drillWidget, catalogueWidget],
+  widgets: [subnetWidget, drillWidget, catalogueWidget, realLabWidget],
 });

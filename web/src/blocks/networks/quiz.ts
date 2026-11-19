@@ -514,6 +514,80 @@ export const quiz: QuizItem[] = [
     ],
   },
 
+  // ── the network by hand on real Linux ──
+  {
+    id: 'net.q.lab.vlan-trunk',
+    kind: 'mcq',
+    concepts: ['net.vlan'],
+    prompt: bi('Машина в порту доступа VLAN 10 отправляет широковещательный ARP-запрос. Кто его получит?', 'A machine on a VLAN 10 access port sends a broadcast ARP request. Who receives it?'),
+    options: [
+      { id: 'vlan', text: bi('Все порты VLAN 10 и транки, по которым идёт VLAN 10 (там — с меткой 10)', 'Every VLAN 10 port and the trunks that carry VLAN 10 (tagged 10 there)'), correct: true },
+      { id: 'all', text: bi('Все порты коммутатора: широковещательный кадр получают все', 'Every port of the switch: everyone receives a broadcast frame'), why: bi('«Все» — это все в своей сети второго уровня. VLAN и есть отдельная сеть: в чужие VLAN кадр не попадает.', '“Everyone” means everyone in its own layer-2 network. A VLAN is exactly a separate network: the frame never reaches other VLANs.') },
+      { id: 'trunk', text: bi('Только транковые порты', 'Only the trunk ports'), why: bi('Порты доступа того же VLAN тоже получают его, только без метки.', 'Access ports of the same VLAN receive it too, just without a tag.') },
+    ],
+    explain: bi('Коммутатор рассылает кадр во все порты того же VLAN. На порт доступа он уходит без метки, на транк — с меткой 802.1Q, чтобы на другом конце было ясно, из какой он сети.', 'The switch floods the frame to every port of the same VLAN. It leaves an access port untagged and a trunk with an 802.1Q tag, so that the other end knows which network it came from.'),
+  },
+  {
+    id: 'net.q.lab.bridge',
+    kind: 'mcq',
+    concepts: ['net.bridge', 'net.vlan'],
+    prompt: bi('На Linux-машине с транком интерфейсы `eth0.10` и `eth0.20` стали портами одного моста `br0`. Что теперь с VLAN 10 и VLAN 20?', 'On a Linux machine with a trunk, the interfaces `eth0.10` and `eth0.20` became ports of one bridge `br0`. What about VLANs 10 and 20 now?'),
+    options: [
+      { id: 'one', text: bi('Они стали одной сетью второго уровня: кадры и ARP ходят между ними через мост', 'They became one layer-2 network: frames and ARP pass between them through the bridge'), correct: true },
+      { id: 'routed', text: bi('Между ними работает маршрутизация, но ARP по-прежнему не проходит', 'Routing works between them, but ARP still does not pass'), why: bi('Мост работает на втором уровне и пересылает кадры, включая ARP. Маршрутизация — это третий уровень и разные подсети.', 'A bridge works at layer 2 and forwards frames, ARP included. Routing is layer 3 and different subnets.') },
+      { id: 'nothing', text: bi('Ничего: VLAN разделяет коммутатор, а не Linux', 'Nothing: the switch separates VLANs, not Linux'), why: bi('Коммутатор разделяет их, но кадры обоих VLAN приходят к мосту по транку, и мост пересылает их из одного в другой.', 'The switch separates them, but frames of both VLANs reach the bridge over the trunk, and the bridge forwards them from one to the other.') },
+    ],
+  },
+  {
+    id: 'net.q.lab.veth',
+    kind: 'mcq',
+    concepts: ['net.veth', 'linux.namespaces'],
+    prompt: bi('Вы создали пространство имён `blue` и больше ничего не делали. Что в нём есть из сети?', 'You created the namespace `blue` and did nothing else. What network does it have?'),
+    options: [
+      { id: 'lo', text: bi('Только выключенный `lo`: ни интерфейсов, ни адресов, ни маршрутов', 'Only `lo`, and it is down: no interfaces, no addresses, no routes'), correct: true },
+      { id: 'copy', text: bi('Копия интерфейсов машины с теми же адресами', 'A copy of the machine’s interfaces with the same addresses'), why: bi('Пространство имён не копирует сеть, а начинает с пустой. Поэтому ему нужна пара veth.', 'A namespace does not copy the network, it starts empty. That is why it needs a veth pair.') },
+      { id: 'eth0', text: bi('Общий с машиной `eth0`', 'The machine’s `eth0`, shared'), why: bi('Интерфейс принадлежит ровно одному пространству имён; его можно перенести, но не разделить.', 'An interface belongs to exactly one namespace; it can be moved, not shared.') },
+    ],
+  },
+  {
+    id: 'net.q.lab.netns-order',
+    kind: 'order',
+    concepts: ['net.veth', 'net.nat', 'linux.namespaces'],
+    prompt: bi('Расставьте шаги, которые выпускают пространство имён `blue` в сеть так, как это делает Docker.', 'Put in order the steps that let the namespace `blue` out to the network the way Docker does it.'),
+    steps: [
+      { id: 'ns', text: bi('`ip netns add blue`', '`ip netns add blue`') },
+      { id: 'veth', text: bi('пара veth, один конец — в `blue`', 'a veth pair, one end into `blue`') },
+      { id: 'addr', text: bi('адреса на обоих концах и `up`', 'addresses on both ends and `up`') },
+      { id: 'route', text: bi('маршрут по умолчанию внутри `blue`', 'a default route inside `blue`') },
+      { id: 'nat', text: bi('пересылка и MASQUERADE на машине', 'forwarding and MASQUERADE on the machine') },
+    ],
+    explain: bi('Сначала то, что нужно создать (пространство имён, кабель), потом то, что настраивают на созданном (адреса, маршрут), и последним — выход наружу. Последний шаг можно сделать и раньше: без маршрута внутри он всё равно ничего не даст.', 'First what must be created (the namespace, the cable), then what is set on it (addresses, the route), and last the way out. The last step could come earlier: without the route inside it gives nothing anyway.'),
+  },
+  {
+    id: 'net.q.lab.nft-order',
+    kind: 'mcq',
+    concepts: ['net.netfilter'],
+    prompt: bi('Вы работаете на сервере по SSH и закрываете его nftables. Что сделать первым?', 'You work on a server over SSH and lock it down with nftables. What do you do first?'),
+    options: [
+      { id: 'allow', text: bi('Разрешить `ct state established,related` и SSH, и только потом поставить политике `drop`', 'Allow `ct state established,related` and SSH, and only then set the policy to `drop`'), correct: true },
+      { id: 'policy', text: bi('Поставить политику `drop`, потом добавить разрешения', 'Set the `drop` policy, then add the allow rules'), why: bi('С политикой `drop` и без разрешений первым пакетом отрежется ваша же SSH-сессия, и добавлять правила станет некуда.', 'With a `drop` policy and no allow rules, your own SSH session is cut with the next packet, and there is nowhere left to add rules from.') },
+      { id: 'flush', text: bi('`nft flush ruleset`, чтобы начать с чистого листа', '`nft flush ruleset` to start from a clean slate'), why: bi('Сброс удаляет и то, что уже защищает сервер. Начинать с чистого листа удобно на машине, к которой есть консоль, а не только SSH.', 'Flushing also removes what already protects the server. A clean slate is fine on a machine with a console, not only SSH.') },
+    ],
+  },
+  {
+    id: 'net.q.lab.dnsmasq',
+    kind: 'multi',
+    concepts: ['net.dhcp', 'net.dns', 'net.lease'],
+    prompt: bi('В `/etc/dnsmasq.conf` одна строка: `dhcp-range=10.0.0.100,10.0.0.199,1h`. Что получит клиент, попросивший адрес?', '`/etc/dnsmasq.conf` has one line: `dhcp-range=10.0.0.100,10.0.0.199,1h`. What does a client asking for an address get?'),
+    options: [
+      { id: 'addr', text: bi('Адрес из 10.0.0.100–10.0.0.199 на час', 'An address from 10.0.0.100–10.0.0.199 for an hour'), correct: true },
+      { id: 'gw', text: bi('Адрес самого dnsmasq как шлюз', 'dnsmasq’s own address as the gateway'), correct: true },
+      { id: 'dns', text: bi('Адрес самого dnsmasq как DNS-сервер', 'dnsmasq’s own address as the DNS server'), correct: true },
+      { id: 'forever', text: bi('Адрес навсегда, пока клиент включён', 'An address forever, while the client is on'), why: bi('Третье поле — срок аренды. Клиент продлевает её заранее, но если он пропадёт, адрес вернётся в пул.', 'The third field is the lease time. The client renews it in advance, but if it disappears, the address returns to the pool.') },
+    ],
+    explain: bi('Шлюз и DNS-сервер dnsmasq по умолчанию сообщает свои, поэтому маленькой сети хватает одной строки.', 'By default dnsmasq offers itself as the gateway and the DNS server, so one line is enough for a small network.'),
+  },
+
   // ── HTTP ──
   {
     id: 'net.q.http.codes',
