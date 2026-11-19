@@ -1,0 +1,145 @@
+// Markdown-lite for textbook prose: paragraphs, ### headings, lists, quotes,
+// ``` fences, `code`, **bold**, *em*, [text](url) and glossary links
+// [[concept.id]] / [[concept.id|shown words]]. No raw HTML: content is turned
+// into DOM nodes, never into innerHTML.
+
+import { h } from './dom';
+import { lang as currentLang, type Lang } from './i18n';
+
+const LINK = /\[\[([a-z0-9][\w.-]*)(?:\|([^\]]+))?\]\]/g;
+
+/** Concept ids linked in a text: [[linux.process]] or [[linux.process|процессы]]. */
+export function conceptLinks(md: string): { id: string; words?: string }[] {
+  return [...md.matchAll(LINK)].map((m) => ({ id: m[1], words: m[2] }));
+}
+
+/** Plain prose of a text for the glossary scan: no code, no URLs, no glossary links. */
+export function plainText(md: string): string {
+  return md
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`[^`]*`/g, ' ')
+    .replace(LINK, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[*_#>]/g, ' ');
+}
+
+const NBSP = ' ';
+const RU_SHORT = /(^|[\s(«„"—–-])(а|в|во|и|к|ко|о|об|с|со|у|я|не|ни|но|на|за|из|от|до|по|при|без|для|как|что|это)[ \t\n]+(?=\S)/giu;
+const EN_SHORT = /(^|[\s(“"—–])(a|an|the|of|to|in|on|at|by|for|and|or|as|is|I)[ \t\n]+(?=\S)/gu;
+
+/** Journal typography: «ёлочки» in Russian, “quotes” in English, no hanging short words, the dash stays with the word before. */
+export function typeset(text: string, l: Lang = currentLang()): string {
+  let s = text
+    .replace(/(^|[\s(\[—–-])"/gu, `$1${l === 'ru' ? '«' : '“'}`)
+    .replace(/"/g, l === 'ru' ? '»' : '”')
+    .replace(/(\p{L})'(?=\p{L})/gu, '$1’')
+    .replace(/ (—)/g, `${NBSP}$1`)
+    .replace(/(\d) (?=[^\d\s])/g, `$1${NBSP}`);
+  const re = l === 'ru' ? RU_SHORT : EN_SHORT;
+  for (let i = 0; i < 3; i++) {
+    const next = s.replace(re, (_m, pre, w) => `${pre}${w}${NBSP}`);
+    if (next === s) break;
+    s = next;
+  }
+  return s;
+}
+
+export interface MdOptions {
+  lang?: Lang;
+  /** Render a glossary link; default is a plain <span class="term">. */
+  concept?: (id: string, words: string | undefined) => Node;
+  /** Language label for fenced code (copy button etc. is up to the caller). */
+  code?: (code: string, lang: string) => Node;
+}
+
+function inline(src: string, o: MdOptions): Node[] {
+  const out: Node[] = [];
+  const l = o.lang ?? currentLang();
+  // tokens: `code`, [[concept]], [text](url), **bold**, *em*
+  const re = /(`[^`]+`)|(\[\[[a-z0-9][\w.-]*(?:\|[^\]]+)?\]\])|(\[[^\]]+\]\((?:https?:\/\/|#)[^)\s]+\))|(\*\*[^*]+\*\*)|(\*[^*\s][^*]*\*)/g;
+  let last = 0;
+  for (const m of src.matchAll(re)) {
+    if (m.index! > last) out.push(document.createTextNode(typeset(src.slice(last, m.index), l)));
+    const tok = m[0];
+    if (m[1]) out.push(h('code', {}, tok.slice(1, -1)));
+    else if (m[2]) {
+      const mm = /^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/.exec(tok)!;
+      out.push(o.concept ? o.concept(mm[1], mm[2]) : h('span.term', { 'data-concept': mm[1] }, mm[2] ?? mm[1]));
+    } else if (m[3]) {
+      const mm = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(tok)!;
+      const external = /^https?:/.test(mm[2]);
+      out.push(h('a', { href: mm[2], ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) }, ...inline(mm[1], o)));
+    } else if (m[4]) out.push(h('strong', {}, ...inline(tok.slice(2, -2), o)));
+    else if (m[5]) out.push(h('em', {}, ...inline(tok.slice(1, -1), o)));
+    last = m.index! + tok.length;
+  }
+  if (last < src.length) out.push(document.createTextNode(typeset(src.slice(last), l)));
+  return out;
+}
+
+/** Inline markdown-lite (code, bold, em, links) for one-line texts such as summaries. */
+export function renderInline(md: string, o: MdOptions = {}): Node[] {
+  return inline(md, o);
+}
+
+/** Render markdown-lite to a fragment. */
+export function renderMd(md: string, o: MdOptions = {}): DocumentFragment {
+  const frag = document.createDocumentFragment();
+  const lines = md.replace(/\r\n/g, '\n').split('\n');
+  let i = 0;
+  let para: string[] = [];
+  const flush = () => {
+    if (para.length) frag.append(h('p', {}, ...inline(para.join(' '), o)));
+    para = [];
+  };
+  while (i < lines.length) {
+    const line = lines[i];
+    const fence = /^```(\S*)\s*$/.exec(line);
+    if (fence) {
+      flush();
+      const body: string[] = [];
+      i++;
+      while (i < lines.length && !/^```\s*$/.test(lines[i])) body.push(lines[i++]);
+      i++;
+      const code = body.join('\n');
+      frag.append(o.code ? o.code(code, fence[1]) : h('pre', { class: `code lang-${fence[1] || 'text'}` }, h('code', {}, code)));
+      continue;
+    }
+    const head = /^(#{2,4})\s+(.*)$/.exec(line);
+    if (head) {
+      flush();
+      frag.append(h(`h${Math.min(4, head[1].length + 1)}`, {}, ...inline(head[2], o)));
+      i++;
+      continue;
+    }
+    if (/^\s*([-*]|\d+\.)\s+/.test(line)) {
+      flush();
+      const ordered = /^\s*\d+\./.test(line);
+      const list = h(ordered ? 'ol' : 'ul');
+      while (i < lines.length && /^\s*([-*]|\d+\.)\s+/.test(lines[i])) {
+        let item = lines[i].replace(/^\s*([-*]|\d+\.)\s+/, '');
+        i++;
+        while (i < lines.length && /^\s{2,}\S/.test(lines[i]) && !/^\s*([-*]|\d+\.)\s+/.test(lines[i])) item += ' ' + lines[i++].trim();
+        list.append(h('li', {}, ...inline(item, o)));
+      }
+      frag.append(list);
+      continue;
+    }
+    if (/^>\s?/.test(line)) {
+      flush();
+      const body: string[] = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) body.push(lines[i++].replace(/^>\s?/, ''));
+      frag.append(h('blockquote', {}, ...inline(body.join(' '), o)));
+      continue;
+    }
+    if (!line.trim()) {
+      flush();
+      i++;
+      continue;
+    }
+    para.push(line.trim());
+    i++;
+  }
+  flush();
+  return frag;
+}
