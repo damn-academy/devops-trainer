@@ -133,7 +133,7 @@ export function podExec(c: Cluster, pod: Obj, ct: Obj, argv: string[]): ExecOut 
     case 'nslookup': {
       const host = args.find((a) => !a.startsWith('-'));
       if (!host) return { out: '', err: 'BusyBox v1.37.0 multi-call binary.\n\nUsage: nslookup [-type=QUERY_TYPE] [-debug] HOST [DNS_SERVER]\n', code: 1 };
-      const r = resolve(c, pod.metadata.namespace, host);
+      const r = resolve(c, pod.metadata.namespace, host, 5, pod);
       if (r.error === 'TIMEOUT') return { out: ';; connection timed out; no servers could be reached\n\n', err: '', code: 1 };
       if (!r.ok) return { out: `Server:\t\t${DNS_IP}\nAddress:\t${DNS_IP}:53\n\n** server can't find ${host}.${pod.metadata.namespace}.svc.cluster.local: NXDOMAIN\n\n`, err: '', code: 1 };
       return { out: `Server:\t\t${DNS_IP}\nAddress:\t${DNS_IP}:53\n\n${r.ips.map((ip) => `Name:\t${r.fqdn}\nAddress: ${ip}\n`).join('')}\n`, err: '', code: 0 };
@@ -142,7 +142,7 @@ export function podExec(c: Cluster, pod: Obj, ct: Obj, argv: string[]): ExecOut 
       const host = args.find((a) => !a.startsWith('+') && !a.startsWith('-') && !a.startsWith('@'));
       if (!host) return { out: '', err: '', code: 1 };
       const short = args.includes('+short');
-      const r = resolve(c, pod.metadata.namespace, host, args.includes('+search') ? 5 : 1);
+      const r = resolve(c, pod.metadata.namespace, host, args.includes('+search') ? 5 : 1, pod);
       if (r.error === 'TIMEOUT') return { out: ';; communications error to 10.43.0.10#53: timed out\n;; no servers could be reached\n', err: '', code: 9 };
       if (short) return { out: r.ips.map((x) => x + '\n').join(''), err: '', code: 0 };
       const status = r.ok ? 'NOERROR' : 'NXDOMAIN';

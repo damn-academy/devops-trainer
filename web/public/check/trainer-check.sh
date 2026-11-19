@@ -12,7 +12,10 @@
 #     storageclasses, persistentvolumeclaims (all namespaces)
 #   - gatewayclasses, gateways, httproutes and Argo CD applications,
 #     if those resource types exist in your cluster
-#   - the ConfigMap default/trainer-proof only (your one-time code);
+#   - the ConfigMap default/trainer-proof (your one-time code) and, on a
+#     kubeadm cluster, kube-system/kubeadm-config and kube-system/kubelet-config
+#     (the ClusterConfiguration and the KubeletConfiguration kubeadm uploads:
+#     versions, the pod subnet, the cgroup driver — no keys in them);
 #     no other ConfigMap and no Secret is read
 #   - kubectl client and server versions, the current context name
 #
@@ -34,7 +37,7 @@ while [ $# -gt 0 ]; do
     --nonce) nonce="${2:-}"; shift 2 ;;
     --context) context_flag=(--context "${2:-}"); shift 2 ;;
     -h|--help)
-      sed -n '2,24p' "$0"
+      sed -n '2,27p' "$0"
       exit 0 ;;
     *) echo "trainer-check: unknown argument: $1" >&2; exit 2 ;;
   esac
@@ -84,6 +87,8 @@ client_version="$(k version --client -o json 2>/dev/null | tr -d '\n' || echo '{
 server_version="$(k version -o json 2>/dev/null | tr -d '\n' || echo '{}')"
 current_context="$(k config current-context 2>/dev/null || echo '')"
 proof="$(k get configmap trainer-proof -n default -o json 2>/dev/null || echo 'null')"
+kubeadm_config="$(k get configmap kubeadm-config -n kube-system -o json 2>/dev/null || echo 'null')"
+kubelet_config="$(k get configmap kubelet-config -n kube-system -o json 2>/dev/null || echo 'null')"
 collected_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 [ -n "$client_version" ] || client_version='{}'
 [ -n "$server_version" ] || server_version='{}'
@@ -111,7 +116,10 @@ payload() {
   section httproutes httproutes.gateway.networking.k8s.io; printf ','
   section applications applications.argoproj.io; printf ','
   printf '"configmaps":{"items":['
-  if [ "$proof" != "null" ]; then printf '%s' "$proof"; fi
+  local sep=''
+  for cm in "$proof" "$kubeadm_config" "$kubelet_config"; do
+    if [ "$cm" != "null" ]; then printf '%s%s' "$sep" "$cm"; sep=','; fi
+  done
   printf ']}'
   printf '},"absent":['
   local first=1

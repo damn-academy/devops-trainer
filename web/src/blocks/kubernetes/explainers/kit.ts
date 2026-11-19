@@ -24,6 +24,16 @@ export const D = {
   flannel: { url: 'https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md', label: 'flannel › Backends' },
   cri: { url: 'https://kubernetes.io/docs/concepts/architecture/cri/', label: 'kubernetes.io › Container Runtime Interface' },
   cni: { url: 'https://www.cni.dev/docs/spec/', label: 'cni.dev › Specification' },
+  netpol: { page: 'web/kubernetes.io/docs/concepts/services-networking/network-policies', anchor: 'behavior-of-to-and-from-selectors' },
+  kubeadmInit: { page: 'help/kubeadm-init', anchor: 'DESCRIPTION', line: 'control-plane' },
+  kubeadmJoin: { page: 'help/kubeadm-join', anchor: 'DESCRIPTION', line: 'discovery-token-ca-cert-hash' },
+  pki: { page: 'web/kubernetes.io/docs/setup/best-practices/certificates', anchor: 'how-certificates-are-used-by-your-cluster' },
+  staticPods: { page: 'web/kubernetes.io/docs/tasks/configure-pod-container/static-pod', anchor: 'DESCRIPTION', line: 'mirror Pod' },
+  tlsBootstrap: { page: 'web/kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping', anchor: 'approval' },
+  etcdRecovery: { url: 'https://etcd.io/docs/v3.6/op-guide/recovery/', label: 'etcd.io › Disaster recovery' },
+  upgrade: { url: 'https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/', label: 'kubernetes.io › Upgrading kubeadm clusters' },
+  drain: { page: 'web/kubernetes.io/docs/tasks/administer-cluster/safely-drain-node', anchor: 'use-kubectl-drain-to-remove-a-node-from-service' },
+  skew: { page: 'web/kubernetes.io/docs/setup/release/version-skew-policy', anchor: 'kubelet', line: 'must not be newer' },
 } satisfies Record<string, DocRef>;
 
 export function node(id: string, label: QText, family: ColorFamily, shape: DiagramNode['shape'], x: number, y: number, w: number, h: number, what: Bi, who: Bi, see?: string, doc?: DocRef, sub?: string): DiagramNode {

@@ -299,6 +299,7 @@ export const architectureLesson: Lesson = {
     },
     { id: 'constructor', kind: 'widget', step: 'try', widget: 'k8s.constructor' },
     { id: 'look-apply', kind: 'explainer', step: 'look', explainer: 'k8s.apply-path', caption: bi('Весь путь целиком: 14 шагов. Сломайте любой компонент — путь оборвётся на его шаге.', 'The whole path: 14 steps. Break any component — the path stops at its step.') },
+    { id: 'look-chain', kind: 'explainer', step: 'look', explainer: 'k8s.loop-chain', caption: bi('Одна команда — четыре петли. Остановите любую из них и посмотрите, где оборвётся волна и что покажет kubectl.', 'One command — four loops. Stop any of them and see where the wave stops and what kubectl shows.') },
     { id: 'look-node', kind: 'explainer', step: 'look', explainer: 'k8s.node-down', caption: bi('Выключите узел и пройдите по виртуальному времени: когда его заметят и когда поды переедут.', 'Turn a node off and walk through virtual time: when it is noticed and when the pods move.') },
     {
       id: 'lab',

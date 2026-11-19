@@ -487,14 +487,16 @@ function cmdApply(x: Ctx, mode: 'apply' | 'create'): void {
           else x.out(`${kindRef(x, info)}/${obj.metadata?.name} ${mode === 'apply' ? (exists ? 'configured' : 'created') : 'created'} (dry run)\n`);
           continue;
         }
+        // Like kubectl: the object's own namespace wins unless --namespace was given explicitly.
+        const ns = str(x.p, 'namespace') !== undefined ? x.ns : (obj.metadata?.namespace ?? x.ns);
         if (mode === 'apply') {
-          const r = x.c.apply(obj, { namespace: x.ns, dryRun: dr === 'server' });
+          const r = x.c.apply(obj, { namespace: ns, dryRun: dr === 'server' });
           const info = x.c.kinds.byKind(r.obj.kind)!;
           verboseReq(x, r.result === 'created' ? 'POST' : 'PATCH', apiPath(info, r.obj.metadata.namespace, r.result === 'created' ? undefined : r.obj.metadata.name), r.result === 'created' ? '201 Created' : '200 OK');
           if (outputFormat(x)) printObjects(x, [r.obj], true);
           else x.out(`${kindRef(x, info)}/${r.obj.metadata.name} ${r.result}${suffix(x)}\n`);
         } else {
-          const o = x.c.create(obj, { namespace: x.ns, dryRun: dr === 'server' });
+          const o = x.c.create(obj, { namespace: ns, dryRun: dr === 'server' });
           verboseReq(x, 'POST', apiPath(x.c.kinds.byKind(o.kind)!, o.metadata.namespace), '201 Created');
           created(x, o, 'created');
         }
