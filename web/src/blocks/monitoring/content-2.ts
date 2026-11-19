@@ -175,7 +175,7 @@ export const quiz2: QuizItem[] = [
     concepts: ['obs.trace', 'obs.structured-log'],
     prompt: bi('Какой источник сведений отвечает на каждый из этих вопросов?', 'Which source of information answers each of these questions?'),
     pairs: [
-      { id: 'm', left: bi('Сколько заказов в секунду падает и с каких пор?', 'How many orders per second fail, and since when?'), right: bi('метрики', 'metrics') },
+      { id: 'm', left: bi('Сколько заказов в секунду заканчиваются ошибкой и с каких пор?', 'How many orders per second fail, and since when?'), right: bi('метрики', 'metrics') },
       { id: 'l', left: bi('Что написал сервис об этом отказе?', 'What did the service write about this failure?'), right: bi('журналы', 'logs') },
       { id: 't', left: bi('На каком шаге внутри запроса ушли две секунды?', 'At which step inside the request did the two seconds go?'), right: bi('трейсы', 'traces') },
     ],
@@ -520,7 +520,7 @@ export const monitoringExam: Exam = {
   id: 'monitoring.exam',
   block: 'monitoring',
   title: bi('Ночное дежурство по магазину', 'Night duty for the shop'),
-  story: bi('Идёт ночь вашего первого дежурства. В рабочем канале команды вас ждут три сообщения: «корзина иногда пустеет», «оформление заказа падает» и «к утреннему разбору нужен список того, что падает». Кроме того, у руководителя команды есть к вам вопросы.', 'It is the night of your first on-call shift. The work channel has three messages: “the cart sometimes empties”, “checkout fails” and “we need a list of what fails for the morning review”. Besides, the team lead has questions for you.'),
+  story: bi('Идёт ночь вашего первого дежурства. В рабочем канале команды вас ждут три сообщения: «корзина иногда пустеет», «заказ не оформляется, сайт показывает ошибку» и «к утреннему разбору нужен список того, что ломается». Кроме того, у руководителя команды есть к вам вопросы.', 'It is the night of your first on-call shift. The work channel has three messages: “the cart sometimes empties”, “checkout fails” and “we need a list of what fails for the morning review”. Besides, the team lead has questions for you.'),
   intro: bi('Вас ждут четыре задачи на машинах с Prometheus и Loki магазина и два вопроса. Пользоваться можно выводом `--help` и справочниками prometheus.io, grafana.com и opentelemetry.io, а подсказок и наставника на экзамене нет.', 'Four tasks on machines with the shop’s Prometheus and Loki and two questions await you. You may use `--help` and the prometheus.io, grafana.com and opentelemetry.io references; there are no hints and no mentor in the exam.'),
   minutes: 60,
   pass: 0.7,
@@ -546,7 +546,7 @@ export const monitoringExam: Exam = {
       setup: monSetup('checkout'),
       task: {
         id: 'x-routes',
-        prompt: bi('«Оформление заказа падает». Выведите через logcli, сколько ответов 5xx отдал api за последние 15 минут на каждом маршруте. Нужен один запрос, который возвращает по ряду на маршрут.', '“Checkout fails.” Print with logcli how many 5xx answers api gave over the last 15 minutes on each route. You need one query that returns one series per route.'),
+        prompt: bi('«Заказ не оформляется, сайт показывает ошибку». Выведите через logcli, сколько ответов 5xx отдал api за последние 15 минут на каждом маршруте. Нужен один запрос, который возвращает по ряду на маршрут.', '“Checkout fails.” Print with logcli how many 5xx answers api gave over the last 15 minutes on each route. You need one query that returns one series per route.'),
         check: {
           when: (f) => {
             const v = jsonVector(outOf(f));
