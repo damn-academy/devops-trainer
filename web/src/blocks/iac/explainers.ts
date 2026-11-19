@@ -11,7 +11,7 @@
 // the line as a card.
 
 import { defineModel } from '../../core/define';
-import { bi, type Bi } from '../../core/i18n';
+import { bi, t, type Bi } from '../../core/i18n';
 import type { ElementState, Step } from '../../core/types';
 import { card } from '../git-cicd/explainers';
 
@@ -181,7 +181,7 @@ export const tfModel = defineModel<TfP>({
     ],
     edges: [
       { id: 'e-read', from: 'code', to: 'core', label: bi('чтение кода', 'reading the code'), card: card(bi('Terraform читает все файлы .tf в каталоге. Порядок работы задают ссылки между ресурсами, а не порядок строк в файле.', 'Terraform reads every .tf file in the directory. The order of work comes from the references between resources, not from the order of lines in the file.'), TF_SYS) },
-      { id: 'e-state', from: 'state', to: 'core', label: bi('чтение и запись state', 'reading and writing the state'), card: card(bi('Из файла state Terraform узнаёт ID своих ресурсов, а после изменений записывает туда новые сведения.', 'From the state file Terraform learns the IDs of its resources, and after changes it writes the new facts there.'), TF_SYS, 'terraform show') },
+      { id: 'e-state', from: 'state', to: 'core', labelAt: 0.22, label: bi('чтение и запись state', 'reading and writing the state'), card: card(bi('Из файла state Terraform узнаёт ID своих ресурсов, а после изменений записывает туда новые сведения.', 'From the state file Terraform learns the IDs of its resources, and after changes it writes the new facts there.'), TF_SYS, 'terraform show') },
       { id: 'e-refresh', from: 'core', to: 'api', label: bi('запрос текущего состояния', 'asking for the current state'), card: card(bi('Перед планом Terraform перечитывает из облака каждый ресурс, записанный в state. Этот шаг называется refresh, и на нём Terraform замечает дрейф.', 'Before the plan Terraform rereads from the cloud every resource recorded in the state. This step is called refresh, and that is where Terraform notices drift.'), bi('Refresh выполняет terraform plan, если его не запустили с ключом -refresh=false.', 'terraform plan does the refresh unless it runs with -refresh=false.')) },
       { id: 'e-apply', from: 'api', to: 'vm', label: bi('чтение и изменение машины', 'reading and changing the machine'), card: card(bi('Облако читает машину по запросу GET и меняет её по запросам POST, PATCH и DELETE, которые отправляет провайдер.', 'The cloud reads the machine on a GET request and changes it on the POST, PATCH and DELETE requests the provider sends.'), bi('Запросы отправляет провайдер edu по команде terraform apply.', 'The edu provider sends the requests when terraform apply tells it to.')) },
       { id: 'e-drift', from: 'console', to: 'vm', dashed: true, label: bi('правка вручную', 'a manual edit'), card: card(bi('Человек меняет машину в обход кода, и следующий plan с refresh увидит эту правку и предложит вернуть машину к тому, что записано в коде.', 'A change that bypasses the code. The next plan with refresh sees it and proposes to bring the machine back to what the code says.'), bi('Правку делает человек в консоли облака.', 'A person in the cloud console makes the edit.'), 'edu vm update vm-4f66 --cores 4') },
@@ -278,7 +278,7 @@ export const tfModel = defineModel<TfP>({
     { id: 'add', label: bi('будет создано ресурсов', 'resources to add') },
     { id: 'change', label: bi('будет изменено ресурсов', 'resources to change') },
     { id: 'destroy', label: bi('будет удалено ресурсов', 'resources to destroy') },
-    { id: 'down', label: bi('сайт простоит без сервера', 'the site stays without a server'), unit: 's' },
+    { id: 'down', label: bi('сайт простоит без сервера, с', 'the site stays without a server, s') },
   ],
   run(p, broken) {
     const lost = broken.has('state-lost');
@@ -497,9 +497,9 @@ const ANS_SYS = bi('Эту работу выполняет ansible-playbook на
 export const ansModel = defineModel<AnsP>({
   id: 'iac.ansible-run',
   block: 'iac',
-  title: bi('Как Ansible проходит плейбук по хостам', 'How Ansible walks a playbook across hosts'),
+  title: bi('Как Ansible выполняет плейбук на нескольких хостах', 'How Ansible walks a playbook across hosts'),
   summary: bi(
-    'Вы запускаете `ansible-playbook site.yml` для группы web из трёх хостов. Плейбук ставит nginx, раскладывает его конфигурацию, пишет строку в `/etc/motd` и проверяет, что nginx запущен. Каждая задача сначала смотрит, как устроен хост сейчас, и меняет только разницу, поэтому правильный плейбук на втором прогоне ничего не меняет. Под схемой считается, сколько задач ответили changed, сколько хостов выбыло и сколько раз перезагрузился nginx.',
+    'Вы запускаете `ansible-playbook site.yml` для группы web из трёх хостов. Плейбук ставит nginx, раскладывает его конфигурацию, пишет строку в `/etc/motd` и проверяет, что nginx запущен. Каждая задача сначала смотрит, как устроен хост сейчас, и меняет только разницу, поэтому правильный плейбук на втором прогоне ничего не меняет. Под схемой считается, сколько задач ответили changed, сколько хостов Ansible исключил из дальнейшего выполнения и сколько раз перезагрузился nginx.',
     'You run `ansible-playbook site.yml` for the web group of three hosts. The playbook installs nginx, lays out its config, writes a line into `/etc/motd` and checks that nginx is running. Every task first looks at how the host is now and changes only the difference, so a correct playbook changes nothing on the second run. Under the diagram you see how many tasks answered changed, how many hosts dropped out and how many times nginx was reloaded.',
   ),
   intro: bi(
@@ -513,12 +513,12 @@ export const ansModel = defineModel<AnsP>({
     { mark: 'icon:file', text: bi('инвентарь со списком хостов', 'the inventory with the list of hosts') },
     { mark: 'icon:terminal', text: bi('ansible-playbook на управляющей машине', 'ansible-playbook on the control machine') },
     { mark: 'icon:server', text: bi('управляемый хост', 'a managed host') },
-    { mark: 'icon:process', text: bi('очередь handlers', 'the handler queue') },
+    { mark: 'icon:process', text: bi('очередь обработчиков (handlers)', 'the handler queue') },
     { mark: 'warn', text: bi('задача на этом хосте что-то изменила (changed)', 'the task changed something on this host (changed)') },
     { mark: 'ok', text: bi('хост уже был в нужном состоянии (ok)', 'the host was already in the desired state (ok)') },
-    { mark: 'err', text: bi('на этом хосте задача не выполнилась, и он выбыл из плея', 'the task failed on this host, and it left the play') },
+    { mark: 'err', text: bi('на этом хосте задача завершилась с ошибкой, и Ansible исключил хост из дальнейшего выполнения плейбука', 'the task failed on this host, and it left the play') },
   ],
-  stopLabel: bi('Хост выбыл из плея', 'A host left the play'),
+  stopLabel: bi('Ansible исключил хост из выполнения', 'A host left the play'),
   concepts: ['iac.idempotence', 'iac.module', 'iac.handler'],
   diagram: {
     width: 960,
@@ -553,16 +553,16 @@ export const ansModel = defineModel<AnsP>({
       { id: 'h3', label: 'web3', icon: 'server', sub: '', family: 'node', x: 716, y: 312, w: 220, h: 64, card: card(bi('Хост web3 тоже входит в группу web. Если на нём нет python3, модули Ansible запуститься на нём не могут.', 'The third host of the web group. If it has no python3, Ansible modules cannot run on it.'), bi('Хост создало облако или администратор.', 'The cloud or an administrator created the host.'), 'ansible web3 -m ansible.builtin.ping') },
       {
         id: 'hq',
-        label: bi('Очередь handlers', 'Handler queue'),
+        label: bi('Очередь обработчиков', 'Handler queue'),
         icon: 'process',
         sub: 'Reload nginx',
         family: 'flow',
         shape: 'buffer',
-        x: 300,
+        x: 24,
         y: 330,
         w: 220,
         h: 64,
-        card: card(bi('Сюда попадает handler, когда его уведомляет задача, которая что-то изменила. Ansible выполняет handler один раз в конце плея на каждом хосте, где пришло уведомление, сколько бы задач его ни уведомили.', 'A handler lands here when a task that changed something notifies it. Ansible runs the handler once at the end of the play on every host that got a notification, however many tasks notified it.'), bi('Уведомление отправляет задача со строкой `notify:`.', 'A task with a `notify:` line sends the notification.'), 'grep -n notify site.yml', { page: 'ansible-doc/ansible.builtin.service', anchor: 'OPTIONS' }),
+        card: card(bi('Обработчиком (по-английски handler) называют задачу, которая выполняется не сразу, а только по уведомлению другой задачи. Сюда обработчик попадает, когда его уведомляет задача, которая что-то изменила. Ansible выполняет обработчик один раз в конце сценария на каждом хосте, куда пришло уведомление, сколько бы задач его ни уведомили.', 'A handler lands here when a task that changed something notifies it. Ansible runs the handler once at the end of the play on every host that got a notification, however many tasks notified it.'), bi('Уведомление отправляет задача со строкой `notify:`.', 'A task with a `notify:` line sends the notification.'), 'grep -n notify site.yml', { page: 'ansible-doc/ansible.builtin.service', anchor: 'OPTIONS' }),
       },
     ],
     edges: [
@@ -570,7 +570,7 @@ export const ansModel = defineModel<AnsP>({
       { id: 'e1', from: 'ctl', to: 'h1', label: bi('SSH и модуль', 'SSH and a module'), labelAt: 0.45, card: card(bi('По SSH на хост уходит модуль с параметрами задачи. Модуль выполняется на хосте и отвечает в формате JSON, например `{"changed": true}`.', 'A module with the task arguments goes to the host over SSH. It runs on the host and answers in JSON, for example `{"changed": true}`.'), ANS_SYS) },
       { id: 'e2', from: 'ctl', to: 'h2', label: bi('SSH и модуль', 'SSH and a module'), card: card(bi('Та же задача уходит на второй хост. Каждая задача проходит все хосты, прежде чем Ansible начнёт следующую.', 'The same task goes to the second host. Every task goes through all hosts before Ansible starts the next one.'), ANS_SYS) },
       { id: 'e3', from: 'ctl', to: 'h3', label: bi('SSH и модуль', 'SSH and a module'), labelAt: 0.45, card: card(bi('Та же задача уходит на третий хост.', 'The same task goes to the third host.'), ANS_SYS) },
-      { id: 'e-notify', from: 'ctl', to: 'hq', labelAt: 0.8, label: bi('уведомление handler', 'notifying the handler'), card: card(bi('Задача со строкой notify ставит handler в очередь, только если она ответила changed. Если задача ответила ok, уведомления нет.', 'A task with a notify line queues the handler only if it answered changed. If the task answered ok, there is no notification.'), ANS_SYS) },
+      { id: 'e-notify', from: 'ctl', to: 'hq', label: bi('уведомление обработчику', 'notifying the handler'), card: card(bi('Задача со строкой notify ставит обработчик в очередь, только если она ответила changed. Если задача ответила ok, уведомления нет.', 'A task with a notify line queues the handler only if it answered changed. If the task answered ok, there is no notification.'), ANS_SYS) },
     ],
   },
   params: [
@@ -627,7 +627,7 @@ export const ansModel = defineModel<AnsP>({
       predict: {
         prompt: bi('На хосте web3 нет python3, без которого модули Ansible не запускаются. Что будет с прогоном?', 'Host web3 has no python3, without which Ansible modules do not run. What happens to the run?'),
         options: [
-          { id: 'one', text: bi('Хост web3 выбудет из плея, а web1 и web2 Ansible настроит до конца', 'Host web3 leaves the play, and Ansible configures web1 and web2 to the end') },
+          { id: 'one', text: bi('Ansible исключит web3 из дальнейшего выполнения плейбука, а web1 и web2 настроит до конца', 'Host web3 leaves the play, and Ansible configures web1 and web2 to the end') },
           { id: 'all', text: bi('Ansible остановит весь прогон на всех хостах', 'Ansible stops the whole run on every host') },
         ],
         resolve: () => 'one',
@@ -639,10 +639,10 @@ export const ansModel = defineModel<AnsP>({
       remove: ['e2'],
       boundary: 'process',
       predict: {
-        prompt: bi('Задача «nginx is running» на хосте web2 падает, потому что порт 80 там занят другой программой. Перезагрузит ли Ansible nginx на web2 в конце плея?', 'The task “nginx is running” fails on web2, because another program holds port 80 there. Will Ansible reload nginx on web2 at the end of the play?'),
+        prompt: bi('Задача «nginx is running» на хосте web2 завершается с ошибкой, потому что порт 80 там занят другой программой. Перезагрузит ли Ansible nginx на web2 в конце сценария?', 'The task “nginx is running” fails on web2, because another program holds port 80 there. Will Ansible reload nginx on web2 at the end of the play?'),
         options: [
-          { id: 'no', text: bi('Нет, хост с упавшей задачей выбывает из плея и до handlers не доходит', 'No, a host with a failed task leaves the play and does not reach the handlers') },
-          { id: 'yes', text: bi('Да, handler уже стоит в очереди и выполнится на всех хостах', 'Yes, the handler is already queued and runs on every host') },
+          { id: 'no', text: bi('Нет, хост, на котором задача завершилась с ошибкой, Ansible исключает из дальнейшего выполнения, и до обработчиков дело не доходит', 'No, a host with a failed task leaves the play and does not reach the handlers') },
+          { id: 'yes', text: bi('Да, обработчик уже стоит в очереди и выполнится на всех хостах', 'Yes, the handler is already queued and runs on every host') },
         ],
         resolve: () => 'no',
       },
@@ -650,7 +650,7 @@ export const ansModel = defineModel<AnsP>({
   ],
   metrics: [
     { id: 'changed', label: bi('задач ответили changed', 'tasks answered changed') },
-    { id: 'failed', label: bi('хостов выбыло', 'hosts dropped out') },
+    { id: 'failed', label: bi('хостов исключено из выполнения', 'hosts dropped out') },
     { id: 'handlers', label: bi('перезагрузок nginx', 'nginx reloads') },
   ],
   run(p, broken) {
@@ -667,7 +667,7 @@ export const ansModel = defineModel<AnsP>({
       {
         id: 'inv',
         label: bi('инвентарь', 'inventory'),
-        caption: bi('ansible-playbook читает инвентарь. Плей начинается строкой `hosts: web`, поэтому настраивать предстоит три хоста группы web: web1, web2 и web3.', 'ansible-playbook reads the inventory. The play starts with `hosts: web`, so three hosts of the web group are to be configured: web1, web2 and web3.'),
+        caption: bi('ansible-playbook читает инвентарь. Сценарий плейбука начинается строкой `hosts: web`, поэтому настраивать предстоит три хоста группы web: web1, web2 и web3.', 'ansible-playbook reads the inventory. The play starts with `hosts: web`, so three hosts of the web group are to be configured: web1, web2 and web3.'),
         focus: ['e-inv', 'ctl'],
         tokens: [{ edge: 'e-inv', label: 'web1, web2, web3' }],
         say: { ctl: bi('ansible-playbook находит в инвентаре группу web и в ней три хоста.', 'ansible-playbook finds the web group in the inventory, with three hosts in it.') },
@@ -688,7 +688,7 @@ export const ansModel = defineModel<AnsP>({
       steps.push({
         id: 'nopy',
         label: 'web3',
-        caption: bi('На хосте web3 модуль setup не запускается, потому что там нет python3. Ansible отмечает хост как сбойный и исключает его из плея, а на web1 и web2 продолжает работу.', 'On web3 the setup module does not start, because there is no python3. Ansible marks the host as failed and drops it from the play, while it goes on with web1 and web2.'),
+        caption: bi('На хосте web3 модуль setup не запускается, потому что там нет python3. Ansible отмечает хост как сбойный и исключает его из дальнейшего выполнения плейбука, а на web1 и web2 продолжает работу.', 'On web3 the setup module does not start, because there is no python3. Ansible marks the host as failed and drops it from the play, while it goes on with web1 and web2.'),
         focus: ['e3', 'h3'],
         tokens: [{ edge: 'e3', reverse: true, label: 'FAILED' }],
         say: { h3: bi('На web3 нет программы python3, поэтому модуль, который прислал Ansible, здесь запустить нечем.', 'web3 has no python3 program, so there is nothing to run the module Ansible sent.') },
@@ -723,11 +723,11 @@ export const ansModel = defineModel<AnsP>({
       steps.push({
         id: 'notify',
         label: 'notify',
-        caption: bi('Задача с шаблоном ответила changed и в строке notify называет handler «Reload nginx». Ansible ставит его в очередь, но пока не выполняет, потому что handler срабатывает один раз в конце плея.', 'The template task answered changed, and its notify line names the handler “Reload nginx”. Ansible queues it but does not run it yet, because the handler fires once at the end of the play.'),
+        caption: bi('Задача с шаблоном ответила changed и в строке notify называет обработчик «Reload nginx». Ansible ставит обработчик в очередь, но пока не выполняет, потому что обработчики срабатывают один раз в конце сценария.', 'The template task answered changed, and its notify line names the handler “Reload nginx”. Ansible queues it but does not run it yet, because the handler fires once at the end of the play.'),
         focus: ['e-notify', 'hq'],
         reveal: ['hq', 'e-notify'],
         tokens: [{ edge: 'e-notify', label: 'Reload nginx' }],
-        say: { hq: fb(bi('В очередь встаёт handler «Reload nginx» для хостов {h}, где конфигурация изменилась.', 'The handler “Reload nginx” is queued for {h}, where the config changed.'), { h: live.map((h) => HOST_NAME[h]).join(', ') }) },
+        say: { hq: fb(bi('В очередь встаёт обработчик «Reload nginx» для хостов {h}, где конфигурация изменилась.', 'The handler “Reload nginx” is queued for {h}, where the config changed.'), { h: live.map((h) => HOST_NAME[h]).join(', ') }) },
         fill: { hq: live.length / 3 },
         values: { hq: `Reload nginx × ${live.length}` },
       });
@@ -745,20 +745,20 @@ export const ansModel = defineModel<AnsP>({
       tokens: each(live, motdChanged ? 'changed' : 'ok'),
       say: { ctl: p.task === 'shell' ? bi('Модуль shell выполняет команду echo и дописывает в /etc/motd ещё одну строку, не проверяя, есть ли она уже.', 'The shell module runs echo and appends one more line to /etc/motd without checking whether it is already there.') : motdChanged ? bi('Модуль lineinfile не находит нужной строки в /etc/motd и добавляет её.', 'The lineinfile module does not find the line in /etc/motd and adds it.') : bi('Модуль lineinfile находит нужную строку в /etc/motd и оставляет файл как есть.', 'The lineinfile module finds the line in /etc/motd and leaves the file as it is.') },
       states: st(live, motdChanged ? 'warn' : 'ok'),
-      values: Object.fromEntries(live.map((h) => [h, `/etc/motd: ${motdLines} line(s)`])),
+      values: Object.fromEntries(live.map((h) => [h, t(fb(bi('строк в /etc/motd: {n}', 'lines in /etc/motd: {n}'), { n: motdLines }))])),
     });
     steps.push({
       id: 'service',
       label: 'service',
       caption: fail2
-        ? bi('Задача «nginx is running» проверяет, что служба nginx запущена. На web1 и web3 она работает, а на web2 не запускается, потому что порт 80 там занят другой программой. Ansible исключает web2 из плея.', 'The task “nginx is running” checks that the nginx service is running. On web1 and web3 it runs, but on web2 it does not start, because another program holds port 80 there. Ansible drops web2 from the play.')
+        ? bi('Задача «nginx is running» проверяет, что служба nginx запущена. На web1 и web3 она работает, а на web2 не запускается, потому что порт 80 там занят другой программой. Ansible исключает web2 из дальнейшего выполнения плейбука.', 'The task “nginx is running” checks that the nginx service is running. On web1 and web3 it runs, but on web2 it does not start, because another program holds port 80 there. Ansible drops web2 from the play.')
         : bi('Задача «nginx is running» проверяет, что служба nginx запущена. Она уже работает, поэтому модуль service ничего не делает и отвечает ok.', 'The task “nginx is running” checks that the nginx service is running. It already is, so the service module does nothing and answers ok.'),
       focus: fail2 ? ['e2', 'h2'] : ['ctl', ...live.map(edgeOf)],
       tokens: live.map((h) => ({ edge: edgeOf(h), label: fail2 && h === 'h2' ? 'FAILED' : 'ok' })),
-      say: fail2 ? { h2: bi('На web2 служба nginx не запускается, потому что порт 80 уже занят, и задача падает.', 'On web2 the nginx service does not start, because port 80 is taken, and the task fails.') } : { ctl: bi('Модуль service на каждом хосте видит, что nginx работает, и ничего не трогает.', 'On every host the service module sees that nginx is running and touches nothing.') },
+      say: fail2 ? { h2: bi('На web2 служба nginx не запускается, потому что порт 80 уже занят, и задача завершается с ошибкой.', 'On web2 the nginx service does not start, because port 80 is taken, and the task fails.') } : { ctl: bi('Модуль service на каждом хосте видит, что nginx работает, и ничего не трогает.', 'On every host the service module sees that nginx is running and touches nothing.') },
       states: { ...st(alive, 'ok'), ...(fail2 ? { h2: 'err' as ElementState, e2: 'err' as ElementState } : {}) },
       ...(fail2
-        ? { broken: { at: 'h2', message: 'fatal: [web2]: FAILED! => {"changed": false, "msg": "Unable to start service nginx: Job for nginx.service failed because the control process exited with error code."}', caption: bi('Хост, на котором упала задача, выбывает из плея, и handlers на нём не выполняются, хотя конфигурация уже изменилась. Ключ --force-handlers заставляет Ansible выполнить уведомлённые handlers и на таком хосте.', 'A host where a task failed leaves the play, and handlers do not run on it, although its config already changed. The --force-handlers key makes Ansible run notified handlers on such a host too.') } }
+        ? { broken: { at: 'h2', message: 'fatal: [web2]: FAILED! => {"changed": false, "msg": "Unable to start service nginx: Job for nginx.service failed because the control process exited with error code."}', caption: bi('Хост, на котором задача завершилась с ошибкой, Ansible исключает из дальнейшего выполнения плейбука, и обработчики на нём не выполняются, хотя конфигурация уже изменилась. Ключ --force-handlers заставляет Ansible выполнить уведомлённые обработчики и на таком хосте.', 'A host where a task failed leaves the play, and handlers do not run on it, although its config already changed. The --force-handlers key makes Ansible run notified handlers on such a host too.') } }
         : {}),
     });
     steps.push(
@@ -766,21 +766,21 @@ export const ansModel = defineModel<AnsP>({
         ? {
             id: 'handler',
             label: 'handler',
-            caption: fb(bi('В конце плея Ansible выполняет handler «Reload nginx» по одному разу на каждом хосте, где конфигурация изменилась и задачи прошли: на {h}. nginx перечитывает новую конфигурацию.{x}', 'At the end of the play Ansible runs the handler “Reload nginx” once on every host whose config changed and whose tasks passed: on {h}. nginx rereads the new config.{x}'), { h: alive.map((h) => HOST_NAME[h]).join(', '), x: fail2 ? bi(' На web2 nginx новую конфигурацию не получит, потому что хост выбыл из плея раньше.', ' On web2 nginx does not get the new config, because the host left the play earlier.') : '' }),
+            caption: fb(bi('В конце сценария Ansible выполняет обработчик «Reload nginx» по одному разу на каждом хосте, где конфигурация изменилась и задачи прошли: на {h}. nginx перечитывает новую конфигурацию.{x}', 'At the end of the play Ansible runs the handler “Reload nginx” once on every host whose config changed and whose tasks passed: on {h}. nginx rereads the new config.{x}'), { h: alive.map((h) => HOST_NAME[h]).join(', '), x: fail2 ? bi(' На web2 nginx новую конфигурацию не получит, потому что Ansible исключил этот хост из выполнения раньше.', ' On web2 nginx does not get the new config, because the host left the play earlier.') : '' }),
             focus: ['hq', ...alive.map(edgeOf)],
             reveal: ['hq', 'e-notify'],
             tokens: each(alive, 'reload'),
-            say: { hq: fb(bi('Ansible выполняет handler «Reload nginx» {n}, по одному разу на каждом хосте, и очередь пустеет.', 'Ansible runs the handler “Reload nginx” {e}, once on every host, and the queue empties.'), { n: TIMES_RU[n.handlers] ?? String(n.handlers), e: TIMES_EN[n.handlers] ?? String(n.handlers) }) },
+            say: { hq: fb(bi('Ansible выполняет обработчик «Reload nginx» {n}, по одному разу на каждом хосте, и очередь пустеет.', 'Ansible runs the handler “Reload nginx” {e}, once on every host, and the queue empties.'), { n: TIMES_RU[n.handlers] ?? String(n.handlers), e: TIMES_EN[n.handlers] ?? String(n.handlers) }) },
             fill: { hq: 0 },
             values: { hq: `${n.handlers} × Reload nginx` },
           }
         : {
             id: 'handler',
-            label: bi('без handler', 'no handler'),
-            caption: bi('Ни одна задача не уведомила handler, потому что конфигурация nginx не менялась. Поэтому nginx не перезагружается без нужды.', 'No task notified the handler, because the nginx config did not change. So nginx is not reloaded for nothing.'),
+            label: bi('без обработчика', 'no handler'),
+            caption: bi('Ни одна задача не уведомила обработчик, потому что конфигурация nginx не менялась. Поэтому nginx не перезагружается без нужды.', 'No task notified the handler, because the nginx config did not change. So nginx is not reloaded for nothing.'),
             focus: ['hq'],
             reveal: ['hq', 'e-notify'],
-            say: { hq: bi('Очередь handlers пуста, потому что уведомлений не было, и перезагружать nginx не нужно.', 'The handler queue is empty: there were no notifications, and nginx need not be reloaded.') },
+            say: { hq: bi('Очередь обработчиков пуста, потому что уведомлений не было, и перезагружать nginx не нужно.', 'The handler queue is empty: there were no notifications, and nginx need not be reloaded.') },
             fill: { hq: 0 },
             values: { hq: '0 × Reload nginx' },
           },
@@ -803,8 +803,8 @@ export const ansModel = defineModel<AnsP>({
   },
   explainDelta(prev, next, change, _a, b): Bi {
     if (change.kind === 'break') {
-      if (change.id === 'no-python') return change.on ? bi('Без python3 модули на web3 не запускаются, поэтому этот хост выбывает из плея, а остальные Ansible настраивает до конца.', 'Without python3 the modules cannot run on web3, so this host leaves the play, and Ansible configures the others to the end.') : bi('На web3 снова есть python3, и он проходит плей вместе с остальными хостами.', 'web3 has python3 again and goes through the play with the other hosts.');
-      return change.on ? bi('Хост web2 выбывает из плея на упавшей задаче и не доходит до handlers, поэтому nginx на нём не перезагружается.', 'web2 leaves the play at the failed task and does not reach the handlers, so nginx is not reloaded there.') : bi('На web2 порт 80 освободился, и хост снова проходит плей до конца.', 'Port 80 on web2 is free again, and the host goes through the play to the end.');
+      if (change.id === 'no-python') return change.on ? bi('Без python3 модули на web3 не запускаются, поэтому Ansible исключает этот хост из дальнейшего выполнения плейбука, а остальные хосты настраивает до конца.', 'Without python3 the modules cannot run on web3, so this host leaves the play, and Ansible configures the others to the end.') : bi('На web3 снова есть python3, и этот хост проходит весь плейбук вместе с остальными.', 'web3 has python3 again and goes through the play with the other hosts.');
+      return change.on ? bi('Задача на web2 завершилась с ошибкой, и Ansible исключил хост из дальнейшего выполнения, поэтому до обработчиков дело не дошло и nginx на нём не перезагружается.', 'web2 leaves the play at the failed task and does not reach the handlers, so nginx is not reloaded there.') : bi('На web2 порт 80 освободился, и хост снова проходит весь плейбук до конца.', 'Port 80 on web2 is free again, and the host goes through the play to the end.');
     }
     const c0 = last(prev).changed ?? 0;
     const c1 = last(next).changed ?? 0;

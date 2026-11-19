@@ -691,7 +691,7 @@ const ciTasks: Task[] = [
       when: (f) => (lf(f).git?.repos ?? []).some((r) => r.name === 'infra' && r.branches.includes('main') && r.files.includes('.terraform.lock.hcl')) && pipes(f).some((p) => job(p, 'plan')?.status === 'success'),
       fail: [
         { if: (f) => (lf(f).git?.repos ?? []).some((r) => r.name === 'infra' && !r.files.includes('.terraform.lock.hcl')), say: bi('В репозитории нет `.terraform.lock.hcl`. Он появляется после `tofu init` и коммитится вместе с кодом.', 'The repository has no `.terraform.lock.hcl`. It appears after `tofu init` and is committed together with the code.') },
-        { if: (f) => pipes(f).some((p) => job(p, 'plan')?.status === 'failed'), say: bi('Джоба plan упала. Откройте её журнал в панели или командой `curl http://ci.lab/pipelines/<номер>`.', 'The plan job failed: open its log in the panel or with `curl http://ci.lab/pipelines/<number>`.') },
+        { if: (f) => pipes(f).some((p) => job(p, 'plan')?.status === 'failed'), say: bi('Джоба plan завершилась с ошибкой. Откройте её журнал в панели или командой `curl http://ci.lab/pipelines/<номер>`.', 'The plan job failed: open its log in the panel or with `curl http://ci.lab/pipelines/<number>`.') },
       ],
     },
     concepts: ['cicd.pipeline-file', 'cicd.runner'],
@@ -707,7 +707,7 @@ const ciTasks: Task[] = [
     ),
     check: {
       when: (f) => pipes(f).some((p) => p.ref === 'main' && job(p, 'apply')?.status === 'success') && vm(f, 'ci-app')?.status === 'RUNNING' && addrs(stateAt(f, ciState)).includes('lab_vm.app'),
-      fail: [{ if: (f) => pipes(f).some((p) => job(p, 'apply')?.status === 'failed'), say: bi('Джоба apply упала. Чаще всего причина в том, что в этой джобе не выполнили `tofu init`, а каталог .terraform у каждой джобы свой.', 'apply failed. A common cause: no `tofu init` in this job; each job has its own .terraform directory.') }],
+      fail: [{ if: (f) => pipes(f).some((p) => job(p, 'apply')?.status === 'failed'), say: bi('Джоба apply завершилась с ошибкой. Чаще всего причина в том, что в этой джобе не выполнили `tofu init`, а каталог .terraform у каждой джобы свой.', 'apply failed. A common cause: no `tofu init` in this job; each job has its own .terraform directory.') }],
     },
     concepts: ['iac.saved-plan', 'cicd.rules', 'cicd.artifact'],
     hints: {
@@ -848,7 +848,7 @@ export const quiz3: QuizItem[] = [
       { id: 'force', text: bi('Сразу выполнить `tofu force-unlock`', 'Run `tofu force-unlock` right away'), why: bi('Команда force-unlock снимает чужую блокировку. Если чужой apply ещё идёт, два процесса запишут state поверх друг друга, а блокировка и нужна, чтобы этого не случилось.', 'force-unlock removes someone else’s lock. If their apply is still running, two processes write the state over each other, which is exactly what the lock protects against.') },
       { id: 'local', text: bi('Переключиться на локальный state и применить', 'Switch to a local state and apply'), why: bi('Тогда в облаке появятся изменения, о которых общий state не знает, то есть вы сами создадите дрейф.', 'Then the cloud gets changes the shared state does not know about: that is drift by design.') },
     ],
-    explain: bi('Блокировку снимают вручную, только когда уверены, что запуск, который её поставил, уже не работает, например джоба CI упала или ноутбук закрыли, и обычно после того, как спросили коллегу.', 'A lock is removed by hand only when you are sure the run that took it is no longer working, for example a CI job crashed or a laptop was closed, and usually after asking the colleague.'),
+    explain: bi('Блокировку снимают вручную, только когда уверены, что запуск, который её поставил, уже не работает, например джоба CI завершилась с ошибкой или ноутбук закрыли, и обычно после того, как спросили коллегу.', 'A lock is removed by hand only when you are sure the run that took it is no longer working, for example a CI job crashed or a laptop was closed, and usually after asking the colleague.'),
   },
   {
     id: 'iac.q.foreach-count',
