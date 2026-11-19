@@ -9,6 +9,9 @@ import type { Block, Exam, Facts, PlacementTask, ShellCommand } from '../../core
 import { fromModel } from '../../engine/explainer/render';
 import { PACKAGED } from '../../engine/terminal/shell';
 import { concepts } from './concepts';
+import { LINUX_DOCS } from './docs';
+import { batchExport, ISOLATION_EXAM } from './exam-isolation';
+import { ACCESS_EXAM, DISK_EXAM } from './exam-real';
 import { bootModel } from './explainers/boot';
 import { execModel } from './explainers/exec';
 import { isolationModel } from './explainers/isolation';
@@ -293,7 +296,8 @@ export default defineModule({
   lessons: LESSONS,
   concepts,
   quiz: QUIZ,
-  exams: [exam],
-  commands: [hello],
+  exams: [exam, DISK_EXAM, ISOLATION_EXAM, ACCESS_EXAM],
+  docs: LINUX_DOCS,
+  commands: [hello, batchExport],
   explainers: [fromModel(execModel), fromModel(pipeModel), fromModel(permModel), fromModel(restartModel), fromModel(bootModel), fromModel(isolationModel)],
 });

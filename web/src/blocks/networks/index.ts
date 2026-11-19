@@ -12,6 +12,7 @@ import { fromModel } from '../../engine/explainer/render';
 import { concepts } from './concepts';
 import { docs } from './docs';
 import { exam } from './exam';
+import { examB } from './exam-b';
 import { arpModel } from './explainers/arp';
 import { dhcpModel } from './explainers/dhcp';
 import { dnsModel } from './explainers/dns';
@@ -61,7 +62,7 @@ export default defineModule({
   concepts,
   quiz,
   docs,
-  exams: [exam],
+  exams: [exam, examB],
   explainers: [fromModel(mapModel), fromModel(switchModel), fromModel(arpModel), fromModel(routeModel), fromModel(tcpModel), envelopesExplainer, fromModel(dnsModel), fromModel(dhcpModel), fromModel(natModel), fromModel(tlsModel), fromModel(proxyModel), fromModel(urlModel)],
   widgets: [subnetWidget, drillWidget, catalogueWidget],
 });
