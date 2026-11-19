@@ -26,8 +26,8 @@ export interface DrillResult {
 const D = {
   start: bi('Начать', 'Start'),
   orType: bi('или введите команду и нажмите Enter', 'or type a command and press Enter'),
-  noMatch: bi('На этом шаге такая команда ничего полезного не покажет. Выберите шаг или попробуйте другую команду.', 'At this step that command shows nothing useful. Pick a step or try another command.'),
-  status: bi('Последний шаг — статус в чат команды: влияние, что сделано, когда следующее сообщение или что инцидент закрыт.', 'The last step is a status to the team chat: the impact, what was done, when the next message comes or that the incident is closed.'),
+  noMatch: bi('На этом шаге такая команда ничего полезного не покажет. Выберите один из вариантов или попробуйте другую команду.', 'At this step that command shows nothing useful. Pick a step or try another command.'),
+  status: bi('Последний шаг — написать статус в чат команды: кого задел сбой и насколько, что сделано и когда будет следующее сообщение или что инцидент закрыт.', 'The last step is a status to the team chat: the impact, what was done, when the next message comes or that the incident is closed.'),
   send: bi('Отправить статус и завершить', 'Send the status and finish'),
   cause: bi('Скрытая причина была', 'The hidden cause was'),
   again: bi('Ещё раз, с другой причиной', 'Again, with another cause'),
@@ -40,7 +40,7 @@ const D = {
   hide: bi('прячет симптом', 'hides the symptom'),
   wrong: bi('не то', 'not this'),
   step: bi('Шаг', 'Step'),
-  placeholder: bi('Например: «Оплата у всех, 504 ~30% с 14:10. Откатили релиз 14:05, ошибки 0,4%. Индекс выкатим миграцией, следующий статус в 15:00».', 'For example: “Checkout for everyone, 504 ~30% since 14:10. Rolled back the 14:05 release, errors 0.4%. The index goes out as a migration, next update at 15:00.”'),
+  placeholder: bi('Например: «С 14:10 оплата не проходит у всех, около 30 % запросов заканчиваются ошибкой 504. Откатили релиз 14:05, доля ошибок упала до 0,4 %. Индекс добавим миграцией, следующий статус в 15:00».', 'For example: “Checkout for everyone, 504 ~30% since 14:10. Rolled back the 14:05 release, errors 0.4%. The index goes out as a migration, next update at 15:00.”'),
 };
 
 const MARK: Record<string, { icon: string; cls: string; label: typeof D.evidence }> = {

@@ -33,10 +33,10 @@ const P = {
 };
 
 const PARTS = [
-  bi('Кто я и откуда — одна фраза, без извинений', 'Who I am and where from — one sentence, no apologies'),
-  bi('Что умею — с доказательствами (экзамены, проекты со ссылкой)', 'What I can do — with proof (exams, projects with links)'),
-  bi('Одна история: проблема → что сделал → что изменилось', 'One story: problem → what I did → what changed'),
-  bi('Почему DevOps — мост от прежнего опыта', 'Why DevOps — the bridge from earlier experience'),
+  bi('Кто я и откуда: одна фраза, без извинений', 'Who I am and where from — one sentence, no apologies'),
+  bi('Что я умею и чем это подтверждается (экзамены, проекты со ссылками)', 'What I can do — with proof (exams, projects with links)'),
+  bi('Одна история: какая была проблема, что я сделал и что изменилось', 'One story: problem → what I did → what changed'),
+  bi('Почему DevOps: мост от прежнего опыта', 'Why DevOps — the bridge from earlier experience'),
   bi('Что ищу: роль и формат', 'What I am looking for: role and format'),
 ];
 
