@@ -93,8 +93,11 @@ async function register() {
   setInterval(() => void reg.update().catch(() => undefined), 60 * 60 * 1000);
 }
 
+// This module loads with the full content, often after the page's load event.
 if (supported && prod && typeof window !== 'undefined') {
-  window.addEventListener('load', () => void register().catch(() => undefined), { once: true });
+  const start = () => void register().catch(() => undefined);
+  if (document.readyState === 'complete') start();
+  else window.addEventListener('load', start, { once: true });
 }
 
 export default defineModule({

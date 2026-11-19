@@ -3,44 +3,21 @@
 
 import { clear, h, icon, downloadFile } from '../core/dom';
 import { bi, lang, onLangChange, setLang, t, UI } from '../core/i18n';
+import { loadRegistry, registry } from '../core/registry';
 import { href, onRoute, type Route } from '../core/router';
 import { store } from '../core/store';
-import { blockPage } from './block';
-import { examPage } from './exam-page';
-import { placementPage } from './exam-placement';
-import { emptyState, type Page } from './common';
+import type { Page } from './common';
 import { homePage } from './home';
-import { lessonPage } from './lesson';
-import { explainerPage } from './pages';
-import { labPage } from './lab-page';
-import { reviewPage } from './review-page';
-import { settingsPage } from './settings';
 import { getTheme, setTheme, shownTheme } from './theme';
-import { closeDoc } from '../engine/docs/viewer';
 
-function render(r: Route): Page {
-  switch (r.name) {
-    case 'home':
-      return homePage();
-    case 'block':
-      return blockPage(r.id);
-    case 'placement':
-      return placementPage(r.id);
-    case 'lesson':
-      return lessonPage(r.id, r.section);
-    case 'explainer':
-      return explainerPage(r.id);
-    case 'exam':
-      return examPage(r.id);
-    case 'settings':
-      return settingsPage();
-    case 'review':
-      return reviewPage();
-    case 'lab':
-      return labPage(r.id);
-    case 'notfound':
-      return { el: emptyState(UI.notFound, undefined, { label: UI.backHome, href: href({ name: 'home' }) }) };
-  }
+type ContentPages = typeof import('./content-pages');
+let contentPages: ContentPages | null = null;
+
+/** The full content and the code of every page but the route map, loaded on the first visit to such a page. */
+async function loadContent(): Promise<ContentPages> {
+  const [pages] = await Promise.all([import('./content-pages'), loadRegistry()]);
+  contentPages = pages;
+  return pages;
 }
 
 function topBar(current: Route): HTMLElement {
@@ -94,17 +71,45 @@ export function startApp(root: HTMLElement): void {
     {},
     h('p', {}, t(bi('Прогресс сохраняется в этом браузере после каждого действия.', 'Progress is saved in this browser after every action.'))),
   );
-  root.append(h('a.skip', { href: '#main', onclick: (e: Event) => (e.preventDefault(), main.focus()) }, t(bi('К содержанию', 'Skip to content'))), header, main, footer);
+  // Shown while the full content loads; outside <main>, which stays empty until the page is ready.
+  const loadingLine = h('p.boot-loading', { role: 'status', hidden: true }, t(bi('Загружаем учебник…', 'Loading the textbook…')));
+  root.append(h('a.skip', { href: '#main', onclick: (e: Event) => (e.preventDefault(), main.focus()) }, t(bi('К содержанию', 'Skip to content'))), header, loadingLine, main, footer);
 
-  const show = (r: Route, keepScroll = false) => {
+  let shown = 0;
+  const waitForContent = (r: Route, seq: number, keepScroll: boolean) => {
+    clear(main);
+    loadingLine.textContent = t(bi('Загружаем учебник…', 'Loading the textbook…'));
+    loadingLine.hidden = false;
+    loadContent().then(
+      () => {
+        if (seq === shown) show(r, keepScroll);
+      },
+      () => {
+        if (seq !== shown) return;
+        loadingLine.hidden = true;
+        const retry = h('button.btn', { type: 'button', onclick: () => show(r, keepScroll) }, t(bi('Попробовать ещё раз', 'Try again')));
+        main.replaceChildren(h('div.empty', {}, h('p', {}, t(bi('Не удалось загрузить учебник. Проверьте соединение с сетью.', 'The textbook could not be loaded. Check the network connection.'))), retry));
+      },
+    );
+  };
+  const show = (r: Route, keepScroll = false): void => {
     route = r;
-    closeDoc();
+    const seq = ++shown;
+    contentPages?.closeDoc();
     page?.dispose?.();
+    page = null;
     clear(header);
     header.append(topBar(r));
+    // The route map needs only the manifest; every other page needs the full content.
+    const pages = registry.complete ? contentPages : null;
+    if (r.name !== 'home' && !pages) {
+      waitForContent(r, seq, keepScroll);
+      return;
+    }
+    loadingLine.hidden = true;
     const rem = reminder();
     if (rem) header.append(rem);
-    page = render(r);
+    page = r.name === 'home' || !pages ? homePage() : pages.renderPage(r);
     clear(main);
     main.append(page.el);
     footer.replaceChildren(h('p', {}, t(bi('Прогресс сохраняется в этом браузере после каждого действия. Курс не игра: без очков, значков и серий.', 'Progress is saved in this browser after every action. The course is not a game: no points, badges or streaks.'))));

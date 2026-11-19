@@ -6,6 +6,7 @@
 import { evaluateCheck } from '../core/check';
 import { clear, h, icon, toast } from '../core/dom';
 import { bi, t, UI, type Bi } from '../core/i18n';
+import { renderInline } from '../core/markdown';
 import { store } from '../core/store';
 import type { BlockId, DocStep, Facts, HintLevel, Level, Mounted, Task, TerminalSetup } from '../core/types';
 import { refLabel, sourceOf } from '../engine/docs/corpus';
@@ -175,7 +176,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       } else if (!failSay && r.say && task === o.tasks.find((x) => !passed.has(x.id))) failSay = t(r.say);
     }
     clear(status);
-    if (failSay && !o.exam) status.append(h('p.lab-fail', {}, h('span.st-icon.warn', { 'aria-hidden': 'true' }, '!'), failSay));
+    if (failSay && !o.exam) status.append(h('p.lab-fail', {}, h('span.st-icon.warn', { 'aria-hidden': 'true' }, '!'), h('span', {}, ...renderInline(failSay))));
     if (changed) {
       renderGoals();
       if (passed.size === o.tasks.length) {

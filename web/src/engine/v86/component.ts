@@ -9,6 +9,7 @@
 import { evaluateCheck } from '../../core/check';
 import { clear, h, icon, toast } from '../../core/dom';
 import { bi, fmt, t, type Bi } from '../../core/i18n';
+import { renderInline } from '../../core/markdown';
 import { prose } from '../../app/common';
 import { store } from '../../core/store';
 import type { Facts, Mounted, Task, WidgetCtx } from '../../core/types';
@@ -172,7 +173,7 @@ export function mountRealLinux(root: HTMLElement, props: RealLinuxProps = {}, ct
       } else if (!say && r.say && task === tasks.find((x) => !passed.has(x.id))) say = t(r.say);
     }
     clear(checkLine);
-    if (say) checkLine.append(h('p.lab-fail', {}, h('span.st-icon.warn', { 'aria-hidden': 'true' }, '!'), say));
+    if (say) checkLine.append(h('p.lab-fail', {}, h('span.st-icon.warn', { 'aria-hidden': 'true' }, '!'), h('span', {}, ...renderInline(say))));
     if (changed) {
       renderGoals();
       void machine.persist();

@@ -27,6 +27,16 @@ It is discovered by `import.meta.glob` in `src/core/registry.ts`; there is no
 shared list to edit. Engines do the same with `src/engine/<name>/module.ts`
 (engine modules load before block modules).
 
+The route map does not wait for these modules. At build time (and in dev after
+a change) `src/core/manifest-plugin.ts` imports every module in Node and keeps
+only what the map shows — blocks without placement tasks and sources, lesson
+ids, titles, tiers and minutes — as `virtual:dt-manifest`. The home page paints
+from it; the first visit to any other page loads every module and the page
+code. Nothing to do for builders, except: a module must import cleanly in Node
+(no `document`/`window` at the top level, guard with `typeof`), or the build
+fails. Code that runs only on the home page sees lesson stubs with empty
+`sections`; use `registry.placementCount(id)`, not `block.placement.length`.
+
 - **Block ids and order** come from `src/core/route.ts` (`ROUTE`). Use the id
   and `order` given there; until your block exists the route map shows the
   placeholder. One folder may export several blocks (`git-cicd` → `git-yaml`,
