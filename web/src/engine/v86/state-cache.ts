@@ -29,16 +29,23 @@ async function pipe(data: ArrayBuffer | Blob, stream: CompressionStream | Decomp
 }
 
 export async function saveState(key: string, state: ArrayBuffer): Promise<number | null> {
-  const d = await dir();
   if (typeof CompressionStream === 'undefined') return null;
+  try {
+    return await saveCompressedState(key, await pipe(state, new CompressionStream('gzip')));
+  } catch {
+    return null;
+  }
+}
+
+/** Keep a verified prebuilt snapshot without compressing the same RAM twice. */
+export async function saveCompressedState(key: string, gz: ArrayBuffer): Promise<number | null> {
+  const d = await dir();
   if (!d) {
     if (!memoryKey(key)) return null;
-    const gz = await pipe(state.slice(0), new CompressionStream('gzip'));
     memory.set(key, gz);
     return gz.byteLength;
   }
   try {
-    const gz = await pipe(state, new CompressionStream('gzip'));
     const fh = await d.getFileHandle(fileName(key), { create: true });
     const w = await fh.createWritable();
     await w.write(gz);
