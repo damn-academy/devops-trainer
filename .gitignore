@@ -4,3 +4,6 @@ web/test-results/
 web/playwright-report/
 .DS_Store
 SESSION_LOG.md
+# v86 BIOS and kernel images: fetched by web/scripts/fetch-v86.mjs, not committed
+web/public/v86/
+web/screenshots/
