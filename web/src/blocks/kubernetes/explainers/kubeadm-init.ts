@@ -10,7 +10,7 @@
 // addons. Every step is one phase.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
+import { bi, fmt, t, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { box, D, edge, idsOf, LEGEND_BASE, mark, metric, only } from './kit';
 
@@ -47,7 +47,7 @@ const diagram = {
     edge('e-mf', 'confs', 'mf', bi('пути к файлам', 'file paths'), bi('Манифесты ссылаются на файлы из pki и на *.conf через hostPath.', 'The manifests mount pki and *.conf through hostPath.'), bi('Пишет kubeadm, фазы etcd и control-plane.', 'kubeadm, the etcd and control-plane phases.')),
     edge('e-read', 'mf', 'klet', bi('читает каталог', 'reads the directory'), bi('kubelet каждые 20 секунд перечитывает каталог статических подов и запускает, перезапускает или останавливает поды по файлам.', 'Every 20 s the kubelet rereads the directory.'), bi('Читает kubelet.', 'The kubelet.')),
     edge('e-etcd', 'klet', 'etcd', bi('запускает', 'starts'), bi('Первым kubelet запускает etcd.', 'etcd first.'), START),
-    edge('e-api', 'klet', 'api', bi('запускает', 'starts'), bi('Затем kubelet запускает API-сервер.', 'Then the API server.'), START, { via: [[575, 395], [575, 280]], labelAt: 0.6 }),
+    edge('e-api', 'klet', 'api', bi('запускает', 'starts'), bi('Затем kubelet запускает API-сервер.', 'Then the API server.'), START, { via: [[575, 395], [575, 280]], labelAt: 0.85 }),
     edge('e-cms', 'klet', 'cms', bi('запускает', 'starts'), bi('И наконец два управляющих процесса.', 'And the two controllers.'), START, { via: [[460, 160]], labelAt: 0.4 }),
     edge('e-store', 'api', 'etcd', 'TLS :2379', bi('Кроме API-сервера, к etcd никто не обращается. Его сертификат apiserver-etcd-client подписан центром etcd.', 'The API server is etcd’s only client.'), bi('Соединяется kube-apiserver.', 'kube-apiserver.')),
     edge('e-watch', 'cms', 'api', 'TLS :6443', bi('controller-manager и scheduler обращаются к API со своими kubeconfig.', 'They talk to the API with their kubeconfigs.'), bi('Соединяются kube-controller-manager и kube-scheduler.', 'The controller-manager and scheduler.')),
@@ -126,7 +126,7 @@ export const kubeadmInitModel = defineModel<P>({
       label: bi('containerd работает с cgroupfs, а kubelet ждёт systemd (SystemdCgroup = false)', 'containerd uses cgroupfs, the kubelet expects systemd'),
       remove: ['e-api'],
       boundary: 'process',
-      predict: { prompt: bi('kubelet ждёт драйвер cgroup systemd, а containerd работает с cgroupfs. Что вы увидите?', 'The kubelet expects systemd, containerd uses cgroupfs. What will you see?'), options: [{ id: 'flap', text: bi('Управляющий слой то запускается, то падает', 'The control plane keeps coming up and falling') }, { id: 'error', text: bi('Понятную ошибку на проверках preflight', 'A clear preflight error') }], resolve: () => 'flap' },
+      predict: { prompt: bi('kubelet ждёт драйвер cgroup systemd, а containerd работает с cgroupfs. Что вы увидите?', 'The kubelet expects systemd, containerd uses cgroupfs. What will you see?'), options: [{ id: 'flap', text: bi('Управляющий слой то запускается, то снова аварийно завершается', 'The control plane keeps coming up and falling') }, { id: 'error', text: bi('Понятную ошибку на проверках preflight', 'A clear preflight error') }], resolve: () => 'flap' },
     },
   ],
   metrics: [
@@ -164,9 +164,10 @@ export const kubeadmInitModel = defineModel<P>({
       caption: bi('Фаза certs создаёт центр сертификации кластера сроком на 10 лет и сертификаты компонентов сроком на год. В сертификат API-сервера вписаны все имена и адреса, по которым к нему будут обращаться.', 'certs: the CA for 10 years, components for one; apiserver.crt lists every name and address (SANs).'),
       focus: ['kadm', 'e-certs'],
       reveal: ['pki', 'e-certs'],
-      tokens: [{ edge: 'e-certs', label: 'ca.crt + 21 files' }],
+      tokens: [{ edge: 'e-certs', label: bi('ca.crt и ещё 21 файл', 'ca.crt + 21 files') }],
       say: { kadm: bi('kubeadm создаёт центр сертификации и подписывает им сертификаты компонентов.', 'kubeadm creates the CA and signs the certificates.') },
       states: { pki: 'ok' },
+      values: { pki: t(bi('центр на 10 лет · прочие на 1 год', 'ca: 10y · leaf: 1y')) },
       metrics: { files: 22, days: 365 },
     });
     s.push({
@@ -175,7 +176,7 @@ export const kubeadmInitModel = defineModel<P>({
       caption: bi('Фаза kubeconfig записывает admin.conf для администратора и отдельные файлы для controller-manager, scheduler и kubelet. В каждом файле адрес API-сервера, сертификат центра и клиентский сертификат.', 'kubeconfig: admin.conf and files for the controller-manager, scheduler and kubelet.'),
       focus: ['kadm', 'e-confs'],
       reveal: ['confs', 'e-confs'],
-      tokens: [{ edge: 'e-confs', label: '5 × .conf' }],
+      tokens: [{ edge: 'e-confs', label: bi('5 файлов .conf', '5 × .conf') }],
       say: { kadm: bi('kubeadm записывает файлы kubeconfig для администратора и компонентов.', 'kubeadm writes the kubeconfigs.') },
       states: { confs: 'ok' },
       metrics: { files: 27, days: 365 },
@@ -186,7 +187,7 @@ export const kubeadmInitModel = defineModel<P>({
       caption: bi('Фазы etcd и control-plane ничего не запускают, а только кладут четыре YAML-файла в каталог /etc/kubernetes/manifests.', 'etcd and control-plane start nothing: four YAML files in /etc/kubernetes/manifests.'),
       focus: ['kadm', 'e-mf'],
       reveal: ['mf', 'e-mf'],
-      tokens: [{ edge: 'e-mf', label: '4 × .yaml' }],
+      tokens: [{ edge: 'e-mf', label: bi('4 файла .yaml', '4 × .yaml') }],
       say: { kadm: bi('kubeadm кладёт в каталог manifests четыре файла статических подов.', 'kubeadm writes four static pod files.') },
       states: { mf: 'ok' },
       metrics: { files: 31, days: 365 },
@@ -211,7 +212,7 @@ export const kubeadmInitModel = defineModel<P>({
       caption: bi('kubelet перечитывает каталог и запускает статические поды: etcd, API-сервер, controller-manager и scheduler. В API эти поды появятся «зеркальными» копиями с именем узла в конце, например kube-apiserver-cp-1.', 'The kubelet starts the static pods; in the API they appear as mirror pods like kube-apiserver-cp-1.'),
       focus: ['klet', 'e-read'],
       reveal: ['klet', 'e-read', 'etcd', 'api', 'cms', 'e-etcd', 'e-api', 'e-cms'],
-      tokens: [{ edge: 'e-read', label: '4 × .yaml' }],
+      tokens: [{ edge: 'e-read', label: bi('4 файла .yaml', '4 × .yaml') }],
       say: { klet: bi('kubelet читает манифесты и запускает etcd, API-сервер и два управляющих процесса.', 'The kubelet starts etcd, the API server and the controllers.') },
       states: { klet: 'ok', etcd: 'ok', api: 'ok', cms: 'ok' },
       metrics: { files: 31, days: 365 },
@@ -259,7 +260,7 @@ export const kubeadmInitModel = defineModel<P>({
         focus: ['pki'],
         say: { pki: bi('Срок сертификатов компонентов истёк.', 'The component certificates have expired.') },
         states: { pki: 'err', confs: 'err' },
-        values: { pki: 'leaf: expired' },
+        values: { pki: t(bi('сертификаты истекли', 'leaf: expired')) },
         metrics: { files: 31, days: cert.leafLeftDays },
       });
     else if (p.months > 0)

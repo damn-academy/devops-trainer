@@ -23,7 +23,7 @@ const diagram = {
   width: 960,
   height: 560,
   nodes: [
-    box('kubectl', bi('Вы, kubectl', 'You, kubectl'), 'user', 'box', [24, 52, 170, 56], 'terminal', bi('Клиент кластера. Он читает файл web.yaml, по полям apiVersion и kind понимает, какой это объект, и отправляет его API-серверу.', 'Reads web.yaml, finds the resource by apiVersion and kind and sends it to the API server.'), bi('Команду набираете вы; адрес сервера и ключ kubectl берёт из kubeconfig.', 'You type it; address and keys come from kubeconfig.'), { see: 'kubectl apply -f web.yaml -v=6', doc: D.components }),
+    box('kubectl', bi('Вы, kubectl', 'You, kubectl'), 'user', 'box', [24, 52, 150, 56], 'terminal', bi('Клиент кластера. Он читает файл web.yaml, по полям apiVersion и kind понимает, какой это объект, и отправляет его API-серверу.', 'Reads web.yaml, finds the resource by apiVersion and kind and sends it to the API server.'), bi('Команду набираете вы; адрес сервера и ключ kubectl берёт из kubeconfig.', 'You type it; address and keys come from kubeconfig.'), { see: 'kubectl apply -f web.yaml -v=6', doc: D.components }),
     box('api', 'kube-apiserver', 'cp', 'hex', [360, 52, 220, 56], 'server', bi('Единственный вход в кластер. API-сервер узнаёт, кто вы, проверяет, разрешено ли вам действие, дописывает значения по умолчанию, проверяет объект, записывает его в etcd и рассылает события всем подписчикам.', 'The only door: authentication, authorization, defaults, validation, the etcd write and watch events.'), STATIC, { see: 'kubectl get --raw /readyz?verbose', doc: D.apiserver }),
     box('etcd', 'etcd', 'store', 'box', [770, 52, 166, 56], 'database', bi('Хранилище «ключ — значение», в котором кластер держит все объекты. Ваш Deployment будет лежать там по ключу /registry/deployments/default/web.', 'The key store; your Deployment lives at /registry/deployments/default/web.'), STATIC, { see: 'cluster etcd /registry/deployments', doc: D.components }),
     box('cm', 'controller-manager', 'cp', 'hex', [250, 178, 210, 56], 'process', bi('В процессе kube-controller-manager работают контроллеры, в том числе Deployment и ReplicaSet. Они видят новый объект и создают следующий, то есть сначала ReplicaSet, а потом поды.', 'Runs the controllers, including Deployment and ReplicaSet: they see a new object and create the next one.'), STATIC, { see: 'kubectl get rs', doc: D.controller }),
@@ -35,7 +35,7 @@ const diagram = {
     box('dns', 'CoreDNS', 'l7', 'box', [290, 448, 180, 56], 'dns', bi('Сервер имён кластера. Он отвечает на имя web.default.svc.cluster.local адресом Service.', 'The cluster DNS: answers web.default.svc.cluster.local with the Service address.'), bi('Работает подами в namespace kube-system.', 'Pods in kube-system.'), { see: 'kubectl -n kube-system get pods -l k8s-app=kube-dns', doc: D.dns }),
   ],
   edges: [
-    edge('e-kubectl', 'kubectl', 'api', bi('запрос и ответ', 'request and reply'), bi('HTTPS-запрос к API-серверу, в теле которого ваш YAML, переведённый в JSON. Обратно приходит ответ.', 'An HTTPS request with your YAML as JSON; the reply comes back.'), bi('Запрос отправляет kubectl.', 'kubectl.'), { see: 'kubectl apply -f web.yaml -v=6' }),
+    edge('e-kubectl', 'kubectl', 'api', bi('запрос', 'request'), bi('HTTPS-запрос к API-серверу, в теле которого ваш YAML, переведённый в JSON. Обратно приходит ответ.', 'An HTTPS request with your YAML as JSON; the reply comes back.'), bi('Запрос отправляет kubectl.', 'kubectl.'), { see: 'kubectl apply -f web.yaml -v=6', labelAt: 0.2 }),
     edge('e-etcd', 'api', 'etcd', bi('запись объекта', 'object write'), bi('API-сервер записывает объект, а etcd отвечает номером новой ревизии, который становится resourceVersion объекта.', 'The write; etcd replies with a revision that becomes resourceVersion.'), bi('Пишет kube-apiserver.', 'kube-apiserver.'), { see: 'cluster etcd' }),
     edge('e-cm', 'cm', 'api', bi('создать ReplicaSet и поды', 'create rs and pods'), bi('Контроллеры узнают о новых объектах из событий и создают следующие объекты через тот же API.', 'Controllers learn of objects from events and create the next ones through the same API.'), bi('kube-controller-manager', 'kube-controller-manager')),
     edge('e-sched', 'sched', 'api', bi('узел для пода', 'node for a pod'), bi('Планировщик видит поды без узла и записывает выбранный узел.', 'Sees pods without a node and writes the chosen one.'), bi('kube-scheduler', 'kube-scheduler')),
@@ -43,7 +43,7 @@ const diagram = {
     edge('e-cri', 'kubelet', 'crt', bi('создать под', 'create pod'), bi('kubelet по интерфейсу CRI просит containerd создать песочницу пода, а потом контейнер.', 'Over CRI: create the sandbox, then the container.'), bi('kubelet', 'kubelet'), { doc: D.cri }),
     edge('e-cni', 'crt', 'cni', bi('дать сеть', 'network'), bi('containerd вызывает плагин сети с командой ADD и параметрами песочницы.', 'containerd runs the plugin with ADD.'), bi('containerd', 'containerd'), { doc: D.cni }),
     edge('e-proxy', 'proxy', 'api', bi('адреса готовых подов', 'ready pod addresses'), bi('kube-proxy получает адреса готовых подов из EndpointSlice и переписывает правила.', 'Gets ready pod addresses from EndpointSlices and rewrites rules.'), bi('kube-proxy', 'kube-proxy'), { via: [[150, 530], [940, 530], [940, 80]], labelAt: 0.38 }),
-    edge('e-dns', 'dns', 'api', bi('имена Service', 'Service names'), bi('CoreDNS знает имена и адреса всех Service.', 'CoreDNS knows every Service name.'), bi('CoreDNS', 'CoreDNS'), { via: [[380, 518], [730, 518], [730, 108]], labelAt: 0.45 }),
+    edge('e-dns', 'dns', 'api', bi('имена Service', 'Service names'), bi('CoreDNS знает имена и адреса всех Service.', 'CoreDNS knows every Service name.'), bi('CoreDNS', 'CoreDNS'), { via: [[380, 518], [730, 518], [730, 108]], labelAt: 0.65 }),
   ],
   groups: [
     { id: 'g-cp', label: bi('управляющий слой (control plane)', 'control plane'), around: ['api', 'etcd', 'cm', 'sched'], family: 'cp' as const, dash: 'dash' as const, pad: 14, card: { what: bi('Компоненты, которые управляют кластером. Ни один из них не запускает ваши контейнеры.', 'The components that manage the cluster; none runs your containers.'), who: bi('Их ставит установщик кластера: k3s или kubeadm.', 'Installed by k3s or kubeadm.') } },
@@ -62,7 +62,7 @@ export const applyPathModel = defineModel<P>({
     'You send a Deployment from web.yaml, and the diagram walks it through every component, from the API request to a ready pod behind a Service. Each component does one job and writes its result through the API server.',
   ),
   intro: bi(
-    'Сейчас на схеме только kubectl и API-сервер, а пунктирные рамки показывают, где появятся остальные: вверху управляющий слой кластера, внизу узел worker-1. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» или нажмите «Проиграть». Компоненты будут появляться по одному, когда до них дойдёт путь. Потом выключайте по одному компоненту в блоке «Сломать» и смотрите, на каком шаге путь оборвётся и какое сообщение вы увидите.',
+    'Сейчас на схеме только kubectl и API-сервер, а рамки показывают, где появятся остальные компоненты: вверху пунктирная рамка управляющего слоя кластера, внизу сплошная рамка узла worker-1. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» или нажмите «Проиграть». Компоненты будут появляться по одному, когда до них дойдёт путь. Потом выключайте по одному компоненту в блоке «Сломать» и смотрите, на каком шаге путь оборвётся и какое сообщение вы увидите.',
     'For now the diagram shows only kubectl and the API server; the frames show where the rest will appear: the control plane at the top, the node worker-1 at the bottom. Press “Start from the first step”, then “Step forward” or “Play”. Then turn off one component at a time in “Break it” and see where the path stops and what message you get.',
   ),
   legend: [
@@ -187,10 +187,10 @@ export const applyPathModel = defineModel<P>({
     s.push({
       id: 'defaults',
       label: bi('умолчания', 'defaults'),
-      caption: bi('API-сервер дописывает в объект всё, чего вы не указали: способ выкатки RollingUpdate с границами по 25 %, хранить 10 старых ревизий, считать выкатку зависшей через 600 секунд.', 'Defaults are filled in: RollingUpdate 25 %/25 %, 10 old revisions, a 600-second progress deadline.'),
+      caption: bi('API-сервер дописывает в объект всё, чего вы не указали: способ выкладки RollingUpdate с границами по 25 %, хранить 10 старых ревизий, считать выкладку зависшей через 600 секунд.', 'Defaults are filled in: RollingUpdate 25 %/25 %, 10 old revisions, a 600-second progress deadline.'),
       focus: ['api'],
       say: { api: bi('API-сервер дописывает в Deployment значения по умолчанию.', 'The API server fills in defaults.') },
-      values: { api: '+ defaults' },
+      values: { api: t(bi('+ умолчания', '+ defaults')) },
       metrics: m(),
     });
     if (p.quota) {
@@ -235,15 +235,15 @@ export const applyPathModel = defineModel<P>({
       caption: bi('API-сервер записывает Deployment в etcd. Объект получает уникальный uid и номер ревизии resourceVersion, и с этого момента он существует в кластере.', 'The Deployment is written to etcd and gets a uid and a resourceVersion: now it exists.'),
       focus: ['etcd', 'e-etcd'],
       reveal: ['etcd', 'e-etcd'],
-      tokens: [{ edge: 'e-etcd', label: '/registry/deployments/default/web' }],
+      tokens: [{ edge: 'e-etcd', label: 'Deployment web' }],
       say: { etcd: bi('etcd сохраняет Deployment web и отвечает номером новой ревизии.', 'etcd stores the Deployment and replies with a revision.') },
-      values: { etcd: 'rv 1042' },
+      values: { etcd: t(bi('ревизия 1042', 'rv 1042')) },
       states: { etcd: 'ok' },
       metrics: m(),
     });
     s.push({
       id: 'created',
-      label: 'created',
+      label: bi('ответ', 'created'),
       caption: bi('API-сервер отвечает kubectl, и тот печатает «deployment.apps/web created». На этом работа API-сервера закончена. Он сохранил объект, но ни одного процесса не запустил.', 'kubectl prints “deployment.apps/web created”. The API server’s work is over: it stored the object and started nothing.'),
       focus: ['kubectl', 'e-kubectl'],
       tokens: [{ edge: 'e-kubectl', label: 'deployment.apps/web created', reverse: true }],
@@ -285,7 +285,7 @@ export const applyPathModel = defineModel<P>({
       caption: bi('Контроллер Deployment получает событие о новом объекте и создаёт ReplicaSet web-5d78b9c7f4. Хвост имени содержит хеш шаблона пода, и по нему контроллер отличает ReplicaSet разных версий.', 'The Deployment controller creates ReplicaSet web-5d78b9c7f4; the suffix is the pod template hash.'),
       focus: ['cm', 'e-cm'],
       reveal: ['cm', 'e-cm'],
-      tokens: [{ edge: 'e-cm', label: 'create ReplicaSet' }],
+      tokens: [{ edge: 'e-cm', label: bi('создать ReplicaSet', 'create ReplicaSet') }],
       say: { cm: bi('Контроллер Deployment создаёт ReplicaSet для нового шаблона пода.', 'The Deployment controller creates a ReplicaSet.') },
       values: { cm: 'rs web-5d78b9c7f4' },
       metrics: m(),
@@ -298,9 +298,9 @@ export const applyPathModel = defineModel<P>({
       label: bi('поды', 'pods'),
       caption: fmtb(bi('Контроллер ReplicaSet видит новый ReplicaSet и создаёт {n}. Пока это только записи в etcd без узла, и ни одного процесса ещё не запущено.', 'The ReplicaSet controller creates {n}: records without a node, no process yet.'), { n: pods }),
       focus: ['cm', 'e-cm'],
-      tokens: [{ edge: 'e-cm', label: `${n} × create pod` }],
+      tokens: [{ edge: 'e-cm', label: fmtb(bi('создать {n}', 'create {n}'), { n: num(n, ...PODS) }) }],
       say: { cm: fmtb(bi('Контроллер ReplicaSet создаёт {n} по шаблону.', 'The ReplicaSet controller creates {n}.'), { n: pods }) },
-      values: { etcd: `rv ${1043 + n}` },
+      values: { etcd: t(fmt(bi('ревизия {r}', 'rv {r}'), { r: 1043 + n })) },
       states: { cm: 'ok' },
       metrics: m(),
     });
@@ -330,7 +330,7 @@ export const applyPathModel = defineModel<P>({
       reveal: ['sched', 'e-sched'],
       tokens: [{ edge: 'e-sched', label: 'nodeName: worker-1' }],
       say: { sched: fmtb(bi('Планировщик выбирает узел для каждого из подов: {n}.', 'The scheduler picks a node for {n}.'), { n: pods }) },
-      values: { sched: `${n} × bind` },
+      values: { sched: t(fmt(bi('подов привязано: {n}', 'bound: {n}'), { n })) },
       states: { sched: 'ok' },
       metrics: m(),
     });

@@ -115,7 +115,7 @@ const keyCheck = {
 export const cicdExam: Exam = {
   id: 'cicd-k8s.exam',
   block: 'cicd-k8s',
-  title: bi('День релиза', 'Release day'),
+  title: bi('День выпуска новой версии', 'Release day'),
   intro: bi(
     'Перед вами пять карточек из трекера по одному проекту `~/site`: его конвейер собирает образ и выкладывает его в кластер. Каждая карточка начинается со своего состояния проекта и кластера. Проверяется результат: какой образ работает в каком namespace, какие джобы прошли и чем закончились, где лежит ключ. Открыты справка `--help`, справочник GitLab и страницы kubernetes.io, а наставник выключен.',
     'Five cards from the tracker on one project, `~/site`: the pipeline builds an image and deploys it to the cluster. Each card starts from its own state of the project and the cluster. What is checked is the outcome: which image runs in which namespace, which jobs ran and how they ended, where the key lives. The `--help` output, the GitLab reference and the kubernetes.io pages are open; the mentor is off.',
@@ -155,7 +155,7 @@ export const cicdExam: Exam = {
       task: {
         id: 'x-key-plain',
         prompt: bi(
-          'Пришла заявка «Выкладка на staging красная с первого дня». Ключ сервисного аккаунта уже лежит в настройках проекта, а `deploy_staging` всё равно падает. Отправьте пустой коммит в main, прочитайте лог джобы и почините настройку так, чтобы выкладка стала зелёной. Исходный ключ лежит в файле `~/deployer.kubeconfig`.',
+          'Пришла заявка «Выкладка на staging красная с первого дня». Ключ сервисного аккаунта уже лежит в настройках проекта, а джоба `deploy_staging` всё равно завершается с ошибкой. Отправьте пустой коммит в main, прочитайте лог джобы и почините настройку так, чтобы выкладка стала зелёной. Исходный ключ лежит в файле `~/deployer.kubeconfig`.',
           'The ticket says: “The staging deployment has been red since day one”. The service account’s key is already in the project settings, and `deploy_staging` still fails. Push an empty commit to main, read the job’s log and fix the setting so the deployment turns green. The original key is in `~/deployer.kubeconfig`.',
         ),
         check: keyCheck,
@@ -190,7 +190,7 @@ export const cicdExam: Exam = {
       task: {
         id: 'x-gate',
         prompt: bi(
-          'Пришла заявка «Зелёный конвейер выложил сломанную версию». Разработчики переводят сайт на базовый образ `FROM trainer/web:2.0`, а он падает при запуске. Сначала сделайте конвейер честным: выкладка ждёт результата не дольше двух минут, при неудаче конвейер становится красным и сам возвращает staging к прежней версии. Потом отправьте смену базового образа в `Dockerfile`.',
+          'Пришла заявка «Зелёный конвейер выложил сломанную версию». Разработчики переводят сайт на базовый образ `FROM trainer/web:2.0`, а контейнер из этого образа аварийно завершается сразу после запуска. Сначала сделайте конвейер честным: выкладка ждёт результата не дольше двух минут, при неудаче конвейер становится красным и сам возвращает staging к прежней версии. Потом отправьте смену базового образа в `Dockerfile`.',
           'The ticket says: “A green pipeline deployed a broken version”. The developers move the site to the base `FROM trainer/web:2.0`, and it crashes on start. First make the pipeline honest: the deployment waits for the result for no more than two minutes, on failure the pipeline is red and returns staging to the previous version by itself. Then push the base change in the `Dockerfile`.',
         ),
         check: {
@@ -200,7 +200,7 @@ export const cicdExam: Exam = {
             return broken && jobOf(f, 'deploy_staging', { ref: 'main' })?.status === 'failed' && /:[0-9a-f]{8}$/.test(img) && img !== tipImage(f);
           },
           fail: [
-            { if: (f) => (mainTip(f)?.files.Dockerfile ?? '').includes('trainer/web:2.0') && deployOk(f), say: bi('Джоба зелёная, а поды падают, потому что джоба закончилась сразу после set image и ничего не дождалась.', 'The job is green and the pods crash: it ended right after set image and waited for nothing.') },
+            { if: (f) => (mainTip(f)?.files.Dockerfile ?? '').includes('trainer/web:2.0') && deployOk(f), say: bi('Джоба зелёная, а контейнеры новых подов аварийно завершаются, потому что джоба закончилась сразу после set image и ничего не дождалась.', 'The job is green and the pods crash: it ended right after set image and waited for nothing.') },
             { if: (f) => jobOf(f, 'deploy_staging', { ref: 'main' })?.status === 'failed' && webIn(f, 'staging')?.image === tipImage(f), say: bi('Конвейер красный, и это правильно, но на staging осталась сломанная версия. Откат должен запускаться сам и только при неудаче.', 'The pipeline is red, which is right, but the broken version stayed on staging. The rollback must start by itself, only on failure.') },
           ],
         },
@@ -276,7 +276,7 @@ export const cicdExam: Exam = {
       prompt: bi('Почему зелёная джоба с одной командой `kubectl set image` ничего не говорит о версии в кластере и что нужно, чтобы цвет конвейера стал правдой?', 'Why does a green job with a single `kubectl set image` say nothing about the version in the cluster, and what is needed for the pipeline’s colour to tell the truth?'),
       keyPoints: [
         bi('set image только меняет объект в API и сразу возвращает 0, а выкладку контроллеры ведут уже потом', 'set image only changes the object in the API and returns 0 at once; the controllers carry out the rollout later'),
-        bi('нужно дождаться результата: kubectl rollout status с таймаутом (или helm upgrade --wait) делает джобу красной, если поды не стали готовыми', 'you have to wait: kubectl rollout status with a timeout (or helm upgrade --wait) turns the job red if the pods never become ready'),
+        bi('нужно дождаться результата: kubectl rollout status с тайм-аутом (или helm upgrade --wait) делает джобу красной, если поды не стали готовыми', 'you have to wait: kubectl rollout status with a timeout (or helm upgrade --wait) turns the job red if the pods never become ready'),
         bi('после провала нужен откат отдельной джобой при неудаче или командой rollout undo, иначе сломанная версия останется', 'after a failure, a rollback in a separate on-failure job or rollout undo, or the broken version stays'),
       ],
     },

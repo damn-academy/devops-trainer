@@ -213,7 +213,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-rolling',
         prompt: bi(
-          'Выкатите Deployment `web` на образ `trainer/web:1.1` так, чтобы во время выкатки готовых подов ни на секунду не становилось меньше четырёх, а лишним мог быть только один под. Deployment не пересоздавайте.',
+          'Обновите Deployment `web` до образа `trainer/web:1.1` так, чтобы во время выкладки готовых подов ни на секунду не становилось меньше четырёх, а лишним мог быть только один под. Deployment не пересоздавайте.',
           'Roll Deployment `web` out to `trainer/web:1.1` so that during the rollout there are never fewer than four ready pods, with at most one extra. Do not recreate the Deployment.',
         ),
         check: {
@@ -222,7 +222,7 @@ export const ckaExam: Exam = {
             const ru = obj(f, 'Deployment', 'default', 'web')?.spec?.strategy?.rollingUpdate ?? {};
             return !!d && d.image === 'trainer/web:1.1' && d.ready >= 4 && d.updated >= 4 && String(ru.maxUnavailable) === '0' && String(ru.maxSurge) === '1' && sameObject(f, start, 'Deployment', 'default', 'web');
           },
-          fail: [{ if: (f) => dep(f, 'default', 'web')?.image === 'trainer/web:1.1' && String(obj(f, 'Deployment', 'default', 'web')?.spec?.strategy?.rollingUpdate?.maxUnavailable) !== '0', say: bi('Версия новая, но стратегия прежняя, и maxUnavailable: 1 разрешает на время выкатки остаться без одного готового пода, а нужно, чтобы готовых подов не становилось меньше.', 'The version is new but the strategy is the old one: maxUnavailable: 1 lets the rollout go one ready pod short, and the ready count must never drop.') }],
+          fail: [{ if: (f) => dep(f, 'default', 'web')?.image === 'trainer/web:1.1' && String(obj(f, 'Deployment', 'default', 'web')?.spec?.strategy?.rollingUpdate?.maxUnavailable) !== '0', say: bi('Версия новая, но стратегия прежняя, и maxUnavailable: 1 разрешает на время выкладки остаться без одного готового пода, а нужно, чтобы готовых подов не становилось меньше.', 'The version is new but the strategy is the old one: maxUnavailable: 1 lets the rollout go one ready pod short, and the ready count must never drop.') }],
         },
         concepts: ['k8s.rolling-update'],
       },
@@ -235,7 +235,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-undo',
         prompt: bi(
-          'Аудиторы требуют, чтобы Deployment `web` работал на той версии, с которой он начинался, то есть на первой ревизии из истории выкаток. Верните её, не удаляя Deployment, и все четыре пода должны быть готовы.',
+          'Аудиторы требуют, чтобы Deployment `web` работал на той версии, с которой он начинался, то есть на первой ревизии из истории выкладок. Верните её, не удаляя Deployment, и все четыре пода должны быть готовы.',
           'The auditors require Deployment `web` to run exactly the version it started with — the first revision in the rollout history. Bring it back without deleting the Deployment; all four pods must be ready.',
         ),
         check: {
@@ -243,7 +243,7 @@ export const ckaExam: Exam = {
             const d = dep(f, 'default', 'web');
             return !!d && d.image === 'trainer/web:1.0' && d.ready >= 4 && sameObject(f, start, 'Deployment', 'default', 'web');
           },
-          fail: [{ if: (f) => dep(f, 'default', 'web')?.image === 'trainer/web:1.1', say: bi('Это предыдущая ревизия, а не первая. Посмотрите историю выкаток и учтите, что у команды отката есть флаг, который выбирает номер ревизии.', 'That is the previous revision, not the first. Look at the rollout history: the undo has a flag that picks the revision number.') }],
+          fail: [{ if: (f) => dep(f, 'default', 'web')?.image === 'trainer/web:1.1', say: bi('Это предыдущая ревизия, а не первая. Посмотрите историю выкладок и учтите, что у команды отката есть флаг, который выбирает номер ревизии.', 'That is the previous revision, not the first. Look at the rollout history: the undo has a flag that picks the revision number.') }],
         },
         concepts: ['k8s.revision'],
       },
@@ -337,7 +337,7 @@ export const ckaExam: Exam = {
             const pods = k8s(f).pods.filter((p) => p.ns === 'default' && p.labels.app === 'cache' && p.ready);
             return mem === '300' && mebibytes(c?.resources?.limits?.memory) >= 300 && !!d && d.ready >= 1 && pods.some((p) => p.restarts === 0);
           },
-          fail: [{ if: (f) => (containers(obj(f, 'Deployment', 'default', 'cache'))[0]?.env ?? []).find((e: Obj) => e.name === 'MEM_MB')?.value !== '300', say: bi('Кэш перестал падать, потому что ему урезали память, но так он перестанет быть кэшем. Увеличьте лимит, а не потребность.', 'The cache stopped crashing because its memory was cut, but then it is no longer a cache. Raise the limit, not the need.') }],
+          fail: [{ if: (f) => (containers(obj(f, 'Deployment', 'default', 'cache'))[0]?.env ?? []).find((e: Obj) => e.name === 'MEM_MB')?.value !== '300', say: bi('Кэш перестал аварийно завершаться, потому что ему урезали память, но так он перестанет быть кэшем. Увеличьте лимит, а не потребность.', 'The cache stopped crashing because its memory was cut, but then it is no longer a cache. Raise the limit, not the need.') }],
         },
         concepts: ['k8s.resources', 'k8s.crashloop'],
       },
@@ -402,7 +402,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-image',
         prompt: bi(
-          'Deployment `orders-api` в namespace `orders` выкатили вчера вечером, и с тех пор ни один его под не запустился. Разработчики говорят, что хотели версию 1.1. Почините Deployment, не удаляя его.',
+          'Deployment `orders-api` в namespace `orders` выложили вчера вечером, и с тех пор ни один его под не запустился. Разработчики говорят, что хотели версию 1.1. Почините Deployment, не удаляя его.',
           'Deployment `orders-api` in namespace `orders` was rolled out last night, and since then not one of its pods has started. The developers say they meant version 1.1. Fix the Deployment without deleting it.',
         ),
         check: {
@@ -493,7 +493,7 @@ export const ckaExam: Exam = {
       task: {
         id: 'cka-deadline',
         prompt: bi(
-          'Ночной импорт иногда зависает и висит сутками. Манифест Job лежит в файле `~/import.yaml`. Сделайте так, чтобы Kubernetes сам останавливал Job `import`, если тот работает дольше 60 секунд, и запустите его.',
+          'Ночной импорт иногда зависает и не завершается сутками. Манифест Job лежит в файле `~/import.yaml`. Сделайте так, чтобы Kubernetes сам останавливал Job `import`, если тот работает дольше 60 секунд, и запустите его.',
           'The nightly import sometimes hangs and stays stuck for days. The Job manifest is in `~/import.yaml`. Make Kubernetes itself stop Job `import` if it runs longer than 60 seconds, and start it.',
         ),
         check: {

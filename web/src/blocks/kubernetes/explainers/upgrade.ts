@@ -30,11 +30,11 @@ const diagram = {
   height: 440,
   nodes: [
     box('you', 'kubeadm upgrade', 'user', 'pill', [24, 24, 210, 48], 'terminal', bi('Команда kubeadm upgrade plan показывает доступные версии, apply обновляет управляющий слой, а node обновляет настройки kubelet на рабочем узле.', 'plan shows versions, apply upgrades the control plane, node upgrades a worker’s kubelet config.'), bi('Команды запускаете вы.', 'You run them.'), { see: 'kubeadm upgrade plan', doc: D.upgrade }),
-    box('cp', 'cp-1', 'cp', 'rack', [24, 120, 260, 90], 'server', bi('Управляющий узел. API-сервер, controller-manager, scheduler и etcd работают на нём статическими подами, и kubeadm upgrade apply меняет образы в их манифестах и продлевает сертификаты.', 'The control-plane node; apply changes the static pod images and renews certificates.'), bi('Управляющий слой поставил kubeadm.', 'Set up by kubeadm.'), { see: 'kubectl -n kube-system get pods -l tier=control-plane -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image' }),
-    box('w1', 'worker-1', 'node', 'rack', [380, 120, 230, 90], 'server', bi('Рабочий узел с kubelet и kube-proxy. kubelet обновляют пакетом после того, как узел выведен из работы командой drain.', 'A worker; the kubelet is upgraded as a package after a drain.'), PKG, { see: 'kubectl get node worker-1 -o wide' }),
-    box('w2', 'worker-2', 'node', 'rack', [700, 120, 230, 90], 'server', bi('Второй рабочий узел. Его очередь наступает только после того, как первый вернулся в работу.', 'The second worker, only after the first is back.'), PKG, { see: 'kubectl get node worker-2 -o wide' }),
-    box('web', bi('Deployment web, 3 пода', 'Deployment web, 3 pods'), 'process', 'buffer', [380, 300, 260, 64], 'container', bi('Приложение, которое должно пережить обновление. drain выселяет его поды с узла через Eviction API и при этом соблюдает PodDisruptionBudget.', 'The application; drain evicts it via the Eviction API, honouring the PodDisruptionBudget.'), bi('Deployment создала команда приложения.', 'The application team.'), { see: 'kubectl get pods -o wide -l app=web', doc: D.drain, sub: 'ready 3/3' }),
-    box('skew', bi('Правило версий', 'Version skew policy'), 'obj', 'doc', [24, 300, 260, 76], 'file', bi('Самым новым должен быть API-сервер. controller-manager и scheduler не новее его, kubelet тоже не новее и отстаёт не больше чем на три минорные версии, а kubeadm обновляет кластер на одну минорную версию за раз.', 'The API server is the newest; the kubelet not newer and at most three behind; kubeadm moves one minor at a time.'), bi('Правило задаёт проект Kubernetes.', 'The Kubernetes project.'), { doc: D.skew }),
+    box('cp', 'cp-1', 'cp', 'rack', [24, 160, 260, 90], 'server', bi('Управляющий узел. API-сервер, controller-manager, scheduler и etcd работают на нём статическими подами, и kubeadm upgrade apply меняет образы в их манифестах и продлевает сертификаты.', 'The control-plane node; apply changes the static pod images and renews certificates.'), bi('Управляющий слой поставил kubeadm.', 'Set up by kubeadm.'), { see: 'kubectl -n kube-system get pods -l tier=control-plane -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image' }),
+    box('w1', 'worker-1', 'node', 'rack', [380, 160, 230, 90], 'server', bi('Рабочий узел с kubelet и kube-proxy. kubelet обновляют пакетом после того, как узел выведен из работы командой drain.', 'A worker; the kubelet is upgraded as a package after a drain.'), PKG, { see: 'kubectl get node worker-1 -o wide' }),
+    box('w2', 'worker-2', 'node', 'rack', [700, 160, 230, 90], 'server', bi('Второй рабочий узел. Его очередь наступает только после того, как первый вернулся в работу.', 'The second worker, only after the first is back.'), PKG, { see: 'kubectl get node worker-2 -o wide' }),
+    box('web', bi('Deployment web, 3 пода', 'Deployment web, 3 pods'), 'process', 'buffer', [380, 330, 260, 64], 'container', bi('Приложение, которое должно пережить обновление. drain выселяет его поды с узла через Eviction API и при этом соблюдает PodDisruptionBudget.', 'The application; drain evicts it via the Eviction API, honouring the PodDisruptionBudget.'), bi('Deployment создала команда приложения.', 'The application team.'), { see: 'kubectl get pods -o wide -l app=web', doc: D.drain, sub: 'READY 3/3' }),
+    box('skew', bi('Правило версий', 'Version skew policy'), 'obj', 'doc', [24, 330, 260, 76], 'file', bi('Самым новым должен быть API-сервер. controller-manager и scheduler не новее его, kubelet тоже не новее и отстаёт не больше чем на три минорные версии, а kubeadm обновляет кластер на одну минорную версию за раз.', 'The API server is the newest; the kubelet not newer and at most three behind; kubeadm moves one minor at a time.'), bi('Правило задаёт проект Kubernetes.', 'The Kubernetes project.'), { doc: D.skew }),
   ],
   edges: [
     edge('e-apply', 'you', 'cp', bi('обновить управляющий слой', 'upgrade the control plane'), bi('Новые образы статических подов, новые сертификаты и новые дополнения.', 'New images, certificates and addons.'), bi('Обновляет kubeadm.', 'kubeadm.')),
@@ -228,7 +228,7 @@ export const upgradeModel = defineModel<P>({
       tokens: p.drain ? [{ edge: 'e-evict', label: bi('выселение', 'evict') }] : [],
       say: { w1: p.drain ? bi('worker-1 выведен из работы, обновлён и возвращён.', 'worker-1 is drained, upgraded and back.') : bi('worker-1 перезагружается, и его поды пропадают разом.', 'worker-1 reboots; its pods vanish at once.') },
       states: { w1: 'ok', web: p.drain ? 'ok' : 'warn' },
-      values: { w1: `kubelet ${v(target)}`, web: `ready ${minReady}/3 → 3/3` },
+      values: { w1: `kubelet ${v(target)}`, web: `READY ${minReady}/3 → 3/3` },
       fill: { web: minReady / 3 },
       metrics: { minReady, apiMinor: target },
     });
@@ -240,7 +240,7 @@ export const upgradeModel = defineModel<P>({
       tokens: [{ edge: 'e-w2', label: v(target) }],
       say: { w2: bi('worker-2 выводят из работы, обновляют и возвращают так же, как worker-1.', 'worker-2 goes through the same.') },
       states: { w2: 'ok' },
-      values: { w2: `kubelet ${v(target)}`, web: 'ready 3/3' },
+      values: { w2: `kubelet ${v(target)}`, web: 'READY 3/3' },
       fill: { web: 1 },
       metrics: { minReady, apiMinor: target },
     });

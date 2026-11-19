@@ -9,7 +9,7 @@
 // screen; each loop appears with the object it writes when the wave reaches it.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
+import { bi, fmt, t, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { box, D, edge, fmtb, idsOf, LEGEND_BASE, mark, metric, num, only, PODS } from './kit';
 
@@ -292,11 +292,11 @@ export const loopChainModel = defineModel<P>({
       id: 'status',
       label: bi('итог', 'result'),
       caption: image
-        ? bi('Новый под готов, и волна идёт обратно вверх, так что петля Deployment уменьшит старый ReplicaSet на один под и увеличит новый. Выкатка новой версии и есть много таких маленьких волн.', 'The new pod is ready and the wave goes back up: the old ReplicaSet shrinks by one, the new one grows. A rollout is many small waves.')
+        ? bi('Новый под готов, и волна идёт обратно вверх, так что петля Deployment уменьшит старый ReplicaSet на один под и увеличит новый. Выкладка новой версии и есть много таких маленьких волн.', 'The new pod is ready and the wave goes back up: the old ReplicaSet shrinks by one, the new one grows. A rollout is many small waves.')
         : bi('Петли выше читают состояние подов и обновляют число готовых. Сообщения «готово» никто не отправлял, потому что каждая петля сама снова посмотрела на состояние объектов.', 'The loops above read pod status and update readyReplicas. Nobody sent “done”: each loop looked at the state again.'),
       focus: ['cdep'],
-      say: { cdep: image ? bi('Петля Deployment видит готовый новый под и продолжает выкатку.', 'The Deployment loop sees the new pod ready and goes on.') : bi('Петля Deployment видит, что все поды готовы.', 'The Deployment loop sees all pods ready.') },
-      values: { dep: image ? 'image: 1.1 · 1 / 3 updated' : `replicas: ${target} · ready ${target}` },
+      say: { cdep: image ? bi('Петля Deployment видит готовый новый под и продолжает выкладку.', 'The Deployment loop sees the new pod ready and goes on.') : bi('Петля Deployment видит, что все поды готовы.', 'The Deployment loop sees all pods ready.') },
+      values: { dep: image ? t(bi('image: 1.1 · обновлено 1 из 3', 'image: 1.1 · 1 / 3 updated')) : t(fmt(bi('replicas: {n} · готово {n}', 'replicas: {n} · ready {n}'), { n: target })) },
       metrics: { writes: w.writes, ready: w.ready },
     });
     return s;

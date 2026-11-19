@@ -10,7 +10,7 @@
 // as the packet reaches them, and every step is one hop of the packet.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
+import { bi, fmt, t, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { box, D, edge, idsOf, LEGEND_BASE, mark, only } from './kit';
 
@@ -170,9 +170,9 @@ export const podNetworkModel = defineModel<P>({
       s.push({
         id: 'bridge',
         label: bi('мост', 'bridge'),
-        caption: bi('Мост cni0 по адресу получателя пересылает кадр в интерфейс пода B, так же как это делает обычный коммутатор. Ни маршрутизации, ни трансляции адресов здесь нет, и под B видит, что пакет пришёл с 10.42.0.15.', 'The bridge forwards the frame to B like a switch; no routing, no NAT: B sees 10.42.0.15.'),
+        caption: bi('Мост cni0 по адресу получателя пересылает кадр в интерфейс пода B, так же как это делает обычный коммутатор. Ни маршрутизации, ни трансляции адресов здесь нет, и под B видит, что пакет пришёл с 10.42.0.15. Маршруты ядра, сетевые карты узлов и сеть между ними в этом случае не понадобились, поэтому на схеме они остаются бледными.', 'The bridge forwards the frame to B like a switch; no routing, no NAT: B sees 10.42.0.15. Routes, node interfaces and the node network stay pale: they were not needed.'),
         focus: ['br1', 'e-b'],
-        reveal: ['e-b'],
+        reveal: ['e-b', 'rt1', 'eth1', 'net', 'eth2', 'rt2', 'br2', 'c', 'e-up1', 'e-out1', 'e-wire', 'e-in2', 'e-down2', 'e-c'],
         tokens: [{ edge: 'e-b', label: '10.42.0.15 → 10.42.0.16', reverse: true }],
         say: { br1: bi('Мост пересылает кадр в интерфейс пода B, как коммутатор.', 'The bridge forwards the frame to pod B.') },
         states: { b: 'ok' },
@@ -229,7 +229,7 @@ export const podNetworkModel = defineModel<P>({
         reveal: ['e-out1', 'eth1'],
         tokens: [{ edge: 'e-out1', label: '.11 → .12 UDP 8472' }],
         say: { rt1: bi('flannel.1 кладёт пакет пода в UDP-пакет, адресованный второму узлу.', 'flannel.1 wraps the pod packet into UDP for the second node.') },
-        values: { eth1: '192.168.56.11 · outer .11 → .12' },
+        values: { eth1: t(bi('192.168.56.11 · конверт .11 → .12', '192.168.56.11 · outer .11 → .12')) },
         metrics: { hops: 3, overhead: 50 },
       });
       if (Number(p.mtu) === 1500) {

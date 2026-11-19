@@ -10,7 +10,7 @@
 // appears and tries to connect, one connection per step.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
+import { bi, fmt, t, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { box, D, edge, idsOf, LEGEND_BASE, mark, metric, only } from './kit';
 
@@ -25,11 +25,11 @@ export interface Flow {
   why: Bi;
 }
 
-const POLICY_TEXT: Record<string, string> = {
+const POLICY_TEXT: Record<string, Bi | string> = {
   none: '—',
   deny: 'podSelector: {}',
-  and: 'ns AND pod',
-  or: 'ns OR pod',
+  and: bi('shop и role=frontend', 'ns AND pod'),
+  or: bi('shop или role=frontend', 'ns OR pod'),
 };
 
 /** Who reaches what under the given knobs and breaks. Shared by the steps and the tests. */
@@ -80,7 +80,7 @@ export function netpolFlows(p: P, broken: ReadonlySet<string> = new Set()): Flow
   return flows;
 }
 
-const label = (f: Flow): Bi => ({ fe: bi('frontend → pay', 'frontend → pay'), cl: bi('client → pay', 'client → pay'), dbg: bi('debug → pay', 'debug → pay'), net: bi('frontend → интернет', 'frontend → internet') })[f.id];
+const label = (f: Flow): Bi => ({ fe: bi('frontend', 'frontend → pay'), cl: bi('client', 'client → pay'), dbg: bi('debug', 'debug → pay'), net: bi('в интернет', 'frontend → internet') })[f.id];
 const NAME: Record<Flow['id'], string> = { fe: 'frontend', cl: 'client', dbg: 'debug', net: 'frontend' };
 const ADMIN = bi('Namespace создаёт администратор кластера.', 'The cluster admin.');
 
@@ -89,7 +89,7 @@ const diagram = {
   height: 480,
   nodes: [
     box('fe', 'frontend', 'process', 'box', [40, 56, 190, 56], 'container', bi('Под фронтенда магазина в namespace shop с меткой role=frontend. Только ему платёжный сервис должен доверять.', 'The frontend pod in shop, role=frontend: the one pay should trust.'), bi('Под создал Deployment frontend команды магазина.', 'The shop team’s Deployment.'), { see: 'kubectl -n shop get pods --show-labels', sub: 'role=frontend' }),
-    box('cl', 'client', 'process', 'box', [40, 168, 190, 56], 'container', bi('Другой под в том же namespace shop, но без метки role.', 'Another pod in shop, with no role label.'), bi('Под запустил кто-то из команды для отладки.', 'Someone from the team, for debugging.'), { see: 'kubectl -n shop get pod client --show-labels', sub: 'shop · no role' }),
+    box('cl', 'client', 'process', 'box', [40, 168, 190, 56], 'container', bi('Другой под в том же namespace shop, но без метки role.', 'Another pod in shop, with no role label.'), bi('Под запустил кто-то из команды для отладки.', 'Someone from the team, for debugging.'), { see: 'kubectl -n shop get pod client --show-labels', sub: 'shop · role=—' }),
     box('dbg', 'debug', 'process', 'box', [40, 318, 190, 56], 'container', bi('Под в namespace dev с той же меткой role=frontend. Метка у него та же, а namespace другой.', 'A pod in dev with the same role=frontend label: same label, other namespace.'), bi('Под запустил разработчик в своём namespace.', 'A developer.'), { see: 'kubectl -n dev get pods --show-labels', sub: 'dev · role=frontend' }),
     box('pay', 'pay', 'process', 'box', [720, 56, 200, 60], 'container', bi('Платёжный сервис работает в поде с меткой app=pay и слушает TCP-порт 80. Этот под и защищает политика.', 'The payment pod, app=pay, TCP 80: what the policy protects.'), bi('Под создал Deployment pay.', 'The pay Deployment.'), { see: 'kubectl -n pay get pods -o wide', sub: 'app=pay :80' }),
     box('pol', 'NetworkPolicy', 'obj', 'doc', [720, 176, 200, 76], 'file', bi('Объект API, который выбирает поды (podSelector) и перечисляет, откуда к ним можно обращаться. Сам объект ничего не блокирует, потому что остаётся только записью.', 'Selects pods and lists allowed sources; it blocks nothing by itself.'), bi('Политику пишет команда платёжного сервиса.', 'The payment team.'), { see: 'kubectl -n pay describe netpol', doc: D.netpol }),
@@ -249,7 +249,7 @@ export const netpolModel = defineModel<P>({
               : bi('Политика записана, но никто её не исполняет.', 'The policy is stored, but nobody enforces it.'),
       },
       states: { ...only(ALL, 'pay', 'pol', 'cni', 'e-watch'), cni: enforced ? 'on' : 'off', 'e-watch': enforced ? 'on' : 'off' },
-      values: { pol: POLICY_TEXT[p.policy], cni: p.cni },
+      values: { pol: t(POLICY_TEXT[p.policy]), cni: p.cni },
       metrics: { allowed: 0, dropped: 0 },
     });
     let allowed = 0;

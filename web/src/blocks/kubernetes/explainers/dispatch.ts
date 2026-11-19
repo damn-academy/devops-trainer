@@ -10,7 +10,7 @@
 // the program are two nodes in the same place, and the run shows one of them.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
+import { bi, fmt, t as tr, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { box, edge, fmtb, idsOf, LEGEND_BASE, mark, metric, only } from './kit';
 
@@ -23,8 +23,8 @@ const diagram = {
   height: 440,
   nodes: [
     box('list', bi('Список того, что должно работать', 'The list of what must run'), 'obj', 'doc', [24, 40, 270, 96], 'file', bi('Список пяти контейнеров, которые должны работать, и памяти, которая нужна каждому из них: два контейнера магазина shop по 512 МБ, два контейнера api по 1 ГБ и один контейнер cache на 2 ГБ. Всё остальное диспетчер выводит из этого списка.', 'Five containers that must run and the memory each needs: shop ×2 (512 MB), api ×2 (1 GB), cache (2 GB). Everything else the dispatcher derives from this list.'), bi('Список составляете вы, когда решаете, из чего состоит сервис.', 'You write the list when you decide what the service consists of.'), { sub: 'shop ×2 · api ×2 · cache' }),
-    box('hand', bi('Диспетчер, то есть вы сами', 'The dispatcher, that is you'), 'user', 'box', [370, 52, 240, 72], 'user', bi('Человек с терминалом, который сам выбирает сервер для каждого контейнера, запускает его командой `docker run` и потом время от времени проверяет, что всё работает.', 'A person at a terminal who picks a server for each container, starts it with `docker run` and checks now and then that it works.'), bi('Эту работу делает дежурный инженер.', 'The on-call engineer does it.')),
-    box('bot', bi('Диспетчер-программа', 'The dispatcher program'), 'process', 'box', [370, 52, 240, 72], 'process', bi('Программа, которая делает те же три работы, что и человек: выбирает сервер по свободной памяти, каждые несколько секунд проверяет серверы и сверяет то, что работает, со списком.', 'A program doing the same three jobs: picks a server by free memory, checks the servers every few seconds and compares what runs with the list.'), bi('В следующих уроках такой программой будет Kubernetes.', 'In the next lessons this program is Kubernetes.')),
+    box('hand', bi('Диспетчер, то есть вы сами', 'The dispatcher, that is you'), 'user', 'box', [430, 52, 240, 72], 'user', bi('Человек с терминалом, который сам выбирает сервер для каждого контейнера, запускает его командой `docker run` и потом время от времени проверяет, что всё работает.', 'A person at a terminal who picks a server for each container, starts it with `docker run` and checks now and then that it works.'), bi('Эту работу делает дежурный инженер.', 'The on-call engineer does it.')),
+    box('bot', bi('Диспетчер-программа', 'The dispatcher program'), 'process', 'box', [430, 52, 240, 72], 'process', bi('Программа, которая делает те же три работы, что и человек: выбирает сервер по свободной памяти, каждые несколько секунд проверяет серверы и сверяет то, что работает, со списком.', 'A program doing the same three jobs: picks a server by free memory, checks the servers every few seconds and compares what runs with the list.'), bi('В следующих уроках такой программой будет Kubernetes.', 'In the next lessons this program is Kubernetes.')),
     box('s1', bi('Сервер 1, 4 ГБ', 'Server 1 · 4 GB'), 'node', 'rack', [24, 270, 280, 110], 'server', bi('Машина, на которой для контейнеров есть 4 ГБ памяти.', 'A machine with 4 GB of memory for containers.'), store, { sub: 'shop, api' }),
     box('s2', bi('Сервер 2, 4 ГБ', 'Server 2 · 4 GB'), 'node', 'rack', [340, 270, 280, 110], 'server', bi('Вторая машина с 4 ГБ памяти для контейнеров. Её можно выключить ручкой «Ночью выключается сервер 2».', 'The second machine with 4 GB; the knob “Server 2 goes down at night” turns it off.'), store, { sub: 'shop, api' }),
     box('s3', bi('Сервер 3, 4 ГБ', 'Server 3 · 4 GB'), 'node', 'rack', [656, 270, 280, 110], 'server', bi('Третья машина с 4 ГБ памяти для контейнеров.', 'The third machine with 4 GB of memory.'), store, { sub: 'cache' }),
@@ -33,7 +33,7 @@ const diagram = {
     edge('e-read', 'list', 'hand', bi('что запустить', 'what to start'), bi('Диспетчер читает список, потому что без него неизвестно, какие контейнеры и сколько их нужно запустить.', 'The dispatcher reads the list: without it nobody knows what to start and how many.'), bi('Список читает диспетчер.', 'The dispatcher reads it.')),
     edge('e-read2', 'list', 'bot', bi('что запустить', 'what to start'), bi('Программа читает тот же список, что и человек.', 'The program reads the same list.'), bi('Список читает программа.', 'The program reads it.')),
     edge('e-1', 'hand', 's1', bi('запуск и проверка', 'start and check'), bi('По этой линии диспетчер запускает контейнеры на сервере 1 и потом проверяет, что они работают.', 'Along this line the dispatcher starts containers on server 1 and checks them.'), bi('Команды отдаёт диспетчер.', 'The dispatcher.'), { via: [[164, 200]] }),
-    edge('e-2', 'hand', 's2', bi('запуск и проверка', 'start and check'), bi('По этой линии диспетчер запускает контейнеры на сервере 2 и проверяет их.', 'Starts and checks containers on server 2.'), bi('Команды отдаёт диспетчер.', 'The dispatcher.')),
+    edge('e-2', 'hand', 's2', bi('запуск и проверка', 'start and check'), bi('По этой линии диспетчер запускает контейнеры на сервере 2 и проверяет их.', 'Starts and checks containers on server 2.'), bi('Команды отдаёт диспетчер.', 'The dispatcher.'), { labelAt: 0.8 }),
     edge('e-3', 'hand', 's3', bi('запуск и проверка', 'start and check'), bi('По этой линии диспетчер запускает контейнеры на сервере 3 и проверяет их.', 'Starts and checks containers on server 3.'), bi('Команды отдаёт диспетчер.', 'The dispatcher.'), { via: [[796, 200]] }),
   ],
 };
@@ -45,11 +45,11 @@ export const dispatchModel = defineModel<P>({
   block: 'k8s-1',
   title: bi('Как раскладывают контейнеры по серверам', 'How containers are placed on servers'),
   summary: bi(
-    'Пять контейнеров нужно разложить по трём серверам так, чтобы всем хватило памяти, потом пережить ночной сбой одного сервера и утром выкатить новую версию магазина. Схема показывает, как эту работу делает человек и как её делает программа, и считает, сколько минут на неё уходит.',
+    'Пять контейнеров нужно разложить по трём серверам так, чтобы всем хватило памяти, потом пережить ночной сбой одного сервера и утром выложить новую версию магазина. Схема показывает, как эту работу делает человек и как её делает программа, и считает, сколько минут на неё уходит.',
     'Five containers must be placed on three servers so that each has enough memory, then a night failure of one server survived and a new shop version rolled out in the morning. The diagram shows a person and a program doing it and counts the minutes.',
   ),
   intro: bi(
-    'Сейчас на схеме только список того, что должно работать, и диспетчер, то есть вы сами. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Серверы появятся, когда диспетчер начнёт раскладывать контейнеры. Потом включите в «Параметрах» ночной сбой и выкатку новой версии, а напоследок поручите работу программе и сравните минуты под схемой.',
+    'Сейчас на схеме только список того, что должно работать, и диспетчер, то есть вы сами. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Серверы появятся, когда диспетчер начнёт раскладывать контейнеры. Потом включите в «Параметрах» ночной сбой и выкладку новой версии, а напоследок поручите работу программе и сравните минуты под схемой.',
     'For now the diagram shows only the list of what must run and the dispatcher, that is you. Press “Start from the first step”, then go on with “Step forward”. The servers appear when the dispatcher starts placing containers. Then turn on the night failure and the rollout in “Parameters”, and finally hand the job to a program and compare the minutes under the diagram.',
   ),
   legend: [...LEGEND_BASE, mark('icon:file', 'список того, что должно работать', 'the list of what must run'), mark('icon:user', 'диспетчер-человек', 'the human dispatcher'), mark('icon:process', 'диспетчер-программа', 'the program'), mark('icon:server', 'сервер с памятью для контейнеров', 'a server with memory for containers'), mark('err', 'сервер выключен', 'the server is down')],
@@ -92,7 +92,7 @@ export const dispatchModel = defineModel<P>({
         resolve: () => 'two',
       },
     },
-    { id: 'update', label: bi('Утром выходит версия 2 магазина, и её нужно выкатить, не останавливая сайт', 'In the morning shop v2 comes out and must be rolled out without stopping the site'), kind: 'toggle', default: false, group: bi('Что случается с сервисом', 'What happens to the service'), near: 'list' },
+    { id: 'update', label: bi('Утром выходит версия 2 магазина, и её нужно выложить, не останавливая сайт', 'In the morning shop v2 comes out and must be rolled out without stopping the site'), kind: 'toggle', default: false, group: bi('Что случается с сервисом', 'What happens to the service'), near: 'list' },
   ],
   breaks: [
     {
@@ -149,8 +149,8 @@ export const dispatchModel = defineModel<P>({
       caption: hand ? bi('Вы читаете список и прикидываете, какой контейнер на какой сервер поставить, чтобы ни на одном сервере не кончилась память.', 'You read the list and work out where each container goes so no server runs out of memory.') : bi('Программа читает тот же список и сама считает, сколько памяти свободно на каждом сервере.', 'The program reads the same list and counts the free memory on each server itself.'),
       focus: [read, me],
       reveal: [read],
-      tokens: [{ edge: read, label: '5 × container' }],
-      say: { [me]: hand ? bi('Вы складываете память: shop и api вместе занимают 1,5 ГБ, а cache один занимает 2 ГБ.', 'You add up: shop and api take 1.5 GB together, cache alone 2 GB.') : bi('Программа сравнивает нужную память со свободной на каждом сервере.', 'The program compares the memory needed with the free memory on each server.') },
+      tokens: [{ edge: read, label: bi('5 контейнеров', '5 containers') }],
+      say: { [me]: hand ? bi('Вы складываете память: один контейнер shop и один контейнер api вместе занимают 1,5 ГБ, а один контейнер cache занимает 2 ГБ.', 'You add up: shop and api take 1.5 GB together, cache alone 2 GB.') : bi('Программа сравнивает нужную память со свободной на каждом сервере.', 'The program compares the memory needed with the free memory on each server.') },
       metrics: minutes(),
     });
     total += t(15);
@@ -168,7 +168,7 @@ export const dispatchModel = defineModel<P>({
         { edge: 'e-3', label: 'cache' },
       ],
       say: { [me]: bi('Диспетчер запускает shop и api на первых двух серверах, а cache на третьем.', 'The dispatcher starts shop and api on the first two servers and cache on the third.') },
-      values: { s1: 'shop, api · 1,5 / 4 GB', s2: 'shop, api · 1,5 / 4 GB', s3: 'cache · 2 / 4 GB' },
+      values: { s1: tr(bi('shop, api · 1,5 из 4 ГБ', 'shop, api · 1.5 / 4 GB')), s2: tr(bi('shop, api · 1,5 из 4 ГБ', 'shop, api · 1.5 / 4 GB')), s3: tr(bi('cache · 2 из 4 ГБ', 'cache · 2 / 4 GB')) },
       metrics: minutes(),
     });
     if (p.failure) {
@@ -179,7 +179,7 @@ export const dispatchModel = defineModel<P>({
         focus: ['s2'],
         say: { s2: bi('Сервер 2 не отвечает, и контейнеры shop и api на нём остановились.', 'Server 2 does not answer; its shop and api have stopped.') },
         states: { s2: 'err', 'e-2': 'err' },
-        values: { s2: 'down' },
+        values: { s2: tr(bi('выключен', 'down')) },
         metrics: minutes(),
       });
       s.push({
@@ -205,7 +205,7 @@ export const dispatchModel = defineModel<P>({
           { edge: 'e-3', label: 'shop' },
         ],
         say: { [me]: bi('Диспетчер запускает недостающие api и shop на серверах, где ещё есть память.', 'The dispatcher starts the missing api and shop where there is memory.') },
-        values: { s1: 'shop, api, api · 2,5 / 4 GB', s3: 'cache, shop · 2,5 / 4 GB' },
+        values: { s1: tr(bi('shop, api, api · 2,5 из 4 ГБ', 'shop, api, api · 2.5 / 4 GB')), s3: tr(bi('cache, shop · 2,5 из 4 ГБ', 'cache, shop · 2.5 / 4 GB')) },
         states: { s1: 'ok', s3: 'ok' },
         metrics: minutes(),
       });

@@ -9,7 +9,7 @@
 // appear as you use them.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
+import { bi, fmt, t, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { box, D, edge, idsOf, LEGEND_BASE, mark, metric, only } from './kit';
 
@@ -33,15 +33,15 @@ const diagram = {
     box('ctl', 'etcdctl', 'user', 'pill', [380, 170, 210, 48], 'terminal', bi('Клиент работающего etcd. Команда snapshot save снимает снимок по сети, предъявляя сертификаты центра etcd.', 'The client of a running etcd: snapshot save over TLS.'), YOU, { see: 'etcdctl snapshot save --help' }),
     box('snap', 'etcd-2026-11-18.db', 'store', 'doc', [716, 150, 220, 76], 'disk', bi('В файле снимка хранятся все ключи /registry/… на момент снимка, номер ревизии и хеш. Храните копию вне узла.', 'Every /registry/… key at that moment, the revision and a hash; keep a copy off the node.'), bi('Файл пишет etcdctl snapshot save.', 'etcdctl snapshot save.'), { see: 'etcdutl snapshot status etcd-2026-11-18.db -w table' }),
     box('utl', 'etcdutl', 'user', 'pill', [716, 290, 220, 48], 'terminal', bi('Утилита для файлов etcd. Команды status и restore работают без сервера, напрямую с файлом.', 'Works on etcd files: status and restore need no server.'), YOU, { see: 'etcdutl snapshot restore --help' }),
-    box('newdir', '/var/lib/etcd-restore', 'store', 'doc', [380, 290, 210, 70], 'folder', bi('Новый каталог данных, который создаёт restore. В уже существующий каталог restore писать отказывается.', 'A new data directory; restore refuses an existing one.'), bi('Создаёт etcdutl snapshot restore.', 'etcdutl snapshot restore.')),
+    box('newdir', '/var/lib/etcd-restore', 'store', 'doc', [380, 290, 210, 70], 'folder', bi('Новый каталог данных, который создаёт команда etcdutl snapshot restore. В уже существующий каталог эта команда писать отказывается.', 'A new data directory; restore refuses an existing one.'), bi('Создаёт etcdutl snapshot restore.', 'etcdutl snapshot restore.')),
     box('mf', 'etcd.yaml', 'obj', 'doc', [24, 290, 210, 70], 'file', bi('Манифест статического пода etcd. Его том etcd-data указывает через hostPath на каталог данных, поэтому стоит поменять путь, и kubelet перезапустит etcd на других данных.', 'The etcd manifest: change the hostPath and the kubelet restarts etcd on other data.'), bi('Файл записал kubeadm init, а правите его вы.', 'Written by kubeadm init, edited by you.'), { see: 'sudo grep -A2 etcd-data /etc/kubernetes/manifests/etcd.yaml', doc: D.staticPods, sub: 'hostPath: /var/lib/etcd' }),
   ],
   edges: [
     edge('e-write', 'api', 'etcd', 'TLS :2379', bi('API-сервер записывает в etcd каждое изменение объекта.', 'Every object change.'), bi('Пишет kube-apiserver.', 'kube-apiserver.')),
     edge('e-save', 'ctl', 'etcd', bi('снять снимок', 'take a snapshot'), bi('Снимок снимают по сети, и для этого нужны флаги --cacert, --cert и --key с файлами из /etc/kubernetes/pki/etcd.', 'Needs --cacert, --cert, --key from pki/etcd.'), bi('etcdctl', 'etcdctl')),
-    edge('e-file', 'ctl', 'snap', bi('файл .db', '.db file'), bi('Снимок ложится в файл, а копию файла увозят с узла.', 'The snapshot goes into a file; a copy leaves the node.'), bi('etcdctl', 'etcdctl')),
-    edge('e-read', 'snap', 'utl', bi('читает файл', 'reads the file'), bi('restore читает файл, а не сервер.', 'restore reads the file, not the server.'), bi('etcdutl', 'etcdutl')),
-    edge('e-restore', 'utl', 'newdir', bi('новый каталог', 'new directory'), bi('restore создаёт новый каталог с новым идентификатором кластера etcd.', 'A new directory with a new cluster ID.'), bi('etcdutl', 'etcdutl')),
+    edge('e-file', 'ctl', 'snap', bi('файл .db', '.db file'), bi('Снимок записывается в файл, а копию этого файла переносят с узла на другую машину.', 'The snapshot goes into a file; a copy leaves the node.'), bi('etcdctl', 'etcdctl')),
+    edge('e-read', 'snap', 'utl', bi('читает файл', 'reads the file'), bi('Команда restore берёт данные из файла снимка, а к работающему серверу etcd не обращается.', 'restore reads the file, not the server.'), bi('etcdutl', 'etcdutl')),
+    edge('e-restore', 'utl', 'newdir', bi('новый каталог', 'new directory'), bi('Команда restore создаёт новый каталог данных с новым идентификатором кластера etcd.', 'A new directory with a new cluster ID.'), bi('etcdutl', 'etcdutl')),
     edge('e-point', 'mf', 'newdir', bi('новый путь', 'new path'), bi('В манифесте меняется один путь.', 'One path changes in the manifest.'), bi('Правите вы.', 'You.')),
     edge('e-kubelet', 'mf', 'etcd', bi('перезапуск etcd', 'etcd restart'), bi('kubelet видит изменённый файл и пересоздаёт под etcd.', 'The kubelet recreates the etcd pod.'), bi('Перезапускает kubelet.', 'The kubelet.'), { via: [[129, 200], [300, 200], [300, 80]], labelAt: 0.3 }),
   ],
@@ -106,7 +106,7 @@ export const etcdRestoreModel = defineModel<P>({
       label: bi('Восстановить в существующий каталог /var/lib/etcd', 'Restore into the existing /var/lib/etcd'),
       remove: ['newdir'],
       boundary: 'storage',
-      predict: { prompt: bi('Вы восстанавливаете снимок в каталог данных, который уже существует. Что ответит restore?', 'You restore into an existing directory. What does restore answer?'), options: [{ id: 'refuse', text: bi('Откажется писать в этот каталог', 'It refuses') }, { id: 'overwrite', text: bi('Перезапишет каталог', 'It overwrites') }], resolve: () => 'refuse' },
+      predict: { prompt: bi('Вы восстанавливаете снимок в каталог данных, который уже существует. Что ответит команда restore?', 'You restore into an existing directory. What does restore answer?'), options: [{ id: 'refuse', text: bi('Откажется писать в этот каталог', 'It refuses') }, { id: 'overwrite', text: bi('Перезапишет каталог', 'It overwrites') }], resolve: () => 'refuse' },
     },
     {
       id: 'nopoint',
@@ -143,7 +143,7 @@ export const etcdRestoreModel = defineModel<P>({
       reveal: ['utl', 'e-read'],
       tokens: [{ edge: 'e-read', label: 'status' }],
       say: { utl: bi('etcdutl читает файл снимка и проверяет, что он цел.', 'etcdutl checks the file.') },
-      values: { snap: 'rev 18342 · 412 keys' },
+      values: { snap: t(bi('ревизия 18342 · 412 ключей', 'rev 18342 · 412 keys')) },
       metrics: zero,
     });
     s.push({
@@ -183,7 +183,7 @@ export const etcdRestoreModel = defineModel<P>({
       s.push({
         id: 'exists',
         label: 'restore',
-        caption: bi('restore не пишет поверх существующего каталога и так защищает живые данные от случайной перезаписи.', 'restore does not overwrite an existing directory.'),
+        caption: bi('Команда restore не пишет поверх существующего каталога и так защищает живые данные от случайной перезаписи.', 'restore does not overwrite an existing directory.'),
         focus: ['utl'],
         say: { utl: bi('etcdutl отказывается писать в существующий каталог /var/lib/etcd.', 'etcdutl refuses the existing directory.') },
         states: { utl: 'err' },
@@ -198,7 +198,7 @@ export const etcdRestoreModel = defineModel<P>({
       caption: bi('etcdutl читает файл и создаёт новый каталог данных с новым идентификатором кластера etcd, чтобы прежние участники кластера не спутали его со старым.', 'etcdutl writes a new directory with a new cluster ID.'),
       focus: ['utl', 'e-restore'],
       reveal: ['newdir', 'e-restore'],
-      tokens: [{ edge: 'e-restore', label: '412 keys' }],
+      tokens: [{ edge: 'e-restore', label: bi('412 ключей', '412 keys') }],
       say: { utl: bi('etcdutl восстанавливает снимок в новый каталог /var/lib/etcd-restore.', 'etcdutl restores into /var/lib/etcd-restore.') },
       states: { newdir: 'ok' },
       metrics: zero,

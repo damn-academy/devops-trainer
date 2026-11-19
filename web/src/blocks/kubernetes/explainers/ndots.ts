@@ -40,13 +40,13 @@ const diagram = {
   nodes: [
     box('app', bi('Под в namespace shop', 'A pod in namespace shop'), 'process', 'box', [24, 40, 230, 56], 'container', bi('Приложение в поде просит адрес имени у резолвера своей системной библиотеки (вызов getaddrinfo). Дальше всё делает резолвер.', 'The application calls getaddrinfo; the resolver does the rest.'), bi('Под запустили вы.', 'You started it.'), { see: 'kubectl exec client -n shop -- nslookup web', doc: D.dns }),
     box('conf', '/etc/resolv.conf', 'obj', 'doc', [24, 160, 230, 110], 'file', bi('Настройки резолвера пода: список доменов search (shop.svc.cluster.local, svc.cluster.local, cluster.local), адрес сервера имён 10.43.0.10 и правило ndots:5. Если в имени меньше точек, чем ndots, резолвер сначала пробует дописать к нему домены из search.', 'search domains, nameserver 10.43.0.10 and ndots:5: names with fewer dots get the search domains first.'), bi('Файл пишет kubelet при создании пода (dnsPolicy: ClusterFirst).', 'The kubelet writes it (dnsPolicy: ClusterFirst).'), { see: 'kubectl exec client -- cat /etc/resolv.conf', doc: D.dns, sub: 'ndots:5' }),
-    box('dns', 'CoreDNS 10.43.0.10', 'l7', 'box', [380, 110, 230, 60], 'dns', bi('Сервер имён кластера. На имена в зоне cluster.local он отвечает сам, а остальные вопросы пересылает внешнему серверу.', 'Answers cluster.local itself, forwards everything else.'), bi('Работает подами в namespace kube-system.', 'Pods in kube-system.'), { see: 'kubectl -n kube-system get cm coredns -o yaml', doc: D.dns }),
+    box('dns', 'CoreDNS 10.43.0.10', 'l7', 'box', [380, 190, 230, 60], 'dns', bi('Сервер имён кластера. На имена в зоне cluster.local он отвечает сам, а остальные вопросы пересылает внешнему серверу.', 'Answers cluster.local itself, forwards everything else.'), bi('Работает подами в namespace kube-system.', 'Pods in kube-system.'), { see: 'kubectl -n kube-system get cm coredns -o yaml', doc: D.dns }),
     box('zone', bi('Зона cluster.local', 'Zone cluster.local'), 'obj', 'doc', [700, 30, 236, 90], 'database', bi('Имена всех Service кластера вида <имя>.<namespace>.svc.cluster.local и их адреса ClusterIP.', 'Every Service name <svc>.<ns>.svc.cluster.local and its ClusterIP.'), bi('Зону CoreDNS строит из объектов API.', 'CoreDNS builds it from the API.'), { doc: D.dns }),
-    box('up', bi('Внешний сервер DNS', 'Upstream DNS'), 'l7', 'box', [700, 220, 236, 60], 'cloud', bi('Сервер имён, который указан у самого узла. Он отвечает на внешние имена вроде api.github.com.', 'The node’s DNS; answers external names like api.github.com.'), bi('Сервер даёт провайдер или облако.', 'The provider or cloud.'), { doc: D.dns }),
+    box('up', bi('Внешний сервер DNS', 'Upstream DNS'), 'l7', 'box', [700, 280, 236, 60], 'cloud', bi('Сервер имён, который указан у самого узла. Он отвечает на внешние имена вроде api.github.com.', 'The node’s DNS; answers external names like api.github.com.'), bi('Сервер даёт провайдер или облако.', 'The provider or cloud.'), { doc: D.dns }),
   ],
   edges: [
     edge('e-read', 'app', 'conf', bi('правила поиска', 'search rules'), bi('Резолвер читает список search и правило ndots.', 'The resolver reads search and ndots.'), bi('Читает резолвер библиотеки libc.', 'The libc resolver.')),
-    edge('e-q', 'app', 'dns', bi('вопрос A и AAAA', 'A and AAAA query'), bi('Для каждого варианта имени уходит два вопроса: адрес IPv4 (A) и адрес IPv6 (AAAA).', 'Two queries per candidate: A and AAAA.'), bi('Спрашивает резолвер пода.', 'The pod’s resolver.'), { via: [[317, 68], [317, 140]] }),
+    edge('e-q', 'app', 'dns', bi('вопрос A и AAAA', 'A and AAAA query'), bi('Для каждого варианта имени уходит два вопроса: адрес IPv4 (A) и адрес IPv6 (AAAA).', 'Two queries per candidate: A and AAAA.'), bi('Спрашивает резолвер пода.', 'The pod’s resolver.'), { via: [[317, 68], [317, 220]] }),
     edge('e-zone', 'dns', 'zone', bi('имя кластера', 'cluster name'), bi('Для имени в зоне кластера CoreDNS отвечает адресом из API или ответом NXDOMAIN, то есть «такого имени нет».', 'A cluster name: an answer or NXDOMAIN.'), bi('Отвечает плагин kubernetes в CoreDNS.', 'The kubernetes plugin.')),
     edge('e-fwd', 'dns', 'up', bi('внешнее имя', 'external name'), bi('Остальные имена CoreDNS пересылает внешнему серверу.', 'Everything else goes upstream.'), bi('Пересылает плагин forward в CoreDNS.', 'The forward plugin.')),
   ],
@@ -115,6 +115,8 @@ export const ndotsModel = defineModel<P>({
   run(p, broken): Step[] {
     const s: Step[] = [];
     const r = lookupOrder(p.name, p.ndots);
+    // scrub tick: the search domain the resolver appended (without the shared .cluster.local), or the name as is
+    const tick = (t: string) => (t.startsWith(`${p.name}.`) ? t.slice(p.name.length + 1).replace(/\.cluster\.local$/, '') : bi('как есть', 'as is'));
     const dots = (p.name.replace(/\.$/, '').match(/\./g) ?? []).length;
     const dotsBi = num(dots, ['точка', 'точки', 'точек'], ['dot', 'dots']);
     s.push({
@@ -137,7 +139,7 @@ export const ndotsModel = defineModel<P>({
       focus: ['conf', 'e-read'],
       reveal: ['e-read'],
       tokens: [{ edge: 'e-read', label: `ndots:${p.ndots}` }],
-      say: { conf: fmt(bi('resolv.conf: три домена в search и ndots:{n}.', 'resolv.conf: three search domains, ndots:{n}.'), { n: p.ndots }) },
+      say: { conf: fmt(bi('В файле resolv.conf записаны три домена поиска (search) и правило ndots:{n}.', 'resolv.conf: three search domains, ndots:{n}.'), { n: p.ndots }) },
       values: { conf: `ndots:${p.ndots}` },
       metrics: { queries: 0, nx: 0 },
     });
@@ -179,7 +181,7 @@ export const ndotsModel = defineModel<P>({
       if (!inZone && broken.has('no-forward')) {
         s.push({
           id: `q-${q}`,
-          label: short(t),
+          label: tick(t),
           caption: fmt(bi('Имя {t} лежит вне зоны кластера, а пересылать внешние имена CoreDNS больше не умеет, поэтому отвечает SERVFAIL: «не могу получить ответ».', '{t} is outside the cluster zone and forward is gone: SERVFAIL.'), { t }),
           focus: ['dns', 'e-q'],
           reveal: ['dns', 'e-q', 'up', 'e-fwd'],
@@ -193,7 +195,7 @@ export const ndotsModel = defineModel<P>({
       }
       s.push({
         id: `q-${q}`,
-        label: short(t),
+        label: tick(t),
         caption: ok
           ? fmt(bi('Вариант {t} нашёлся, и CoreDNS отвечает адресом {ip}. Всего на поиск ушло {q} запросов.', '{t} → {ip}. {q} queries in all.'), { t, ip: KNOWN[t], q })
           : fmt(bi('Резолвер спрашивает {t}, и CoreDNS отвечает NXDOMAIN, то есть «такого имени нет», и на вопрос A, и на вопрос AAAA. Резолвер переходит к следующему варианту.', '{t}: NXDOMAIN for A and AAAA; the next candidate.'), { t }),
