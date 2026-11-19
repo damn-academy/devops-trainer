@@ -10,7 +10,7 @@
 import { defineModel } from '../../../core/define';
 import { bi, pluralRu, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { card, compare, fmtb, lastMetric, ruNum, startWith } from './kit';
+import { card, compare, fmtb, lastMetric, ruNum, startWith, tr } from './kit';
 
 type P = { clients: number; distance: string; servers: number };
 
@@ -191,7 +191,7 @@ export const requestModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'ms', label: bi('сколько прошло от запроса до страницы', 'from request to page'), unit: 'ms' },
+    { id: 'ms', label: bi('сколько миллисекунд прошло от запроса до страницы', 'milliseconds from request to page') },
     { id: 'load', label: bi('загрузка серверов', 'server load'), unit: '%' },
   ],
   run(p, broken): Step[] {
@@ -206,7 +206,7 @@ export const requestModel = defineModel<P>({
         focus: ['browser'],
         say: { browser: bi('Браузер просит у сервера страницу /catalog.', 'The browser asks the server for the page /catalog.') },
         states: { ...startWith(ALL, 'browser'), browser: 'on' },
-        values: { others: `${p.clients} / s`, net: `${n.net} ms`, app: p.servers > 1 ? `×${p.servers} · 5 ms / request` : '5 ms / request', queue: '0' },
+        values: { browser: tr('клиент', 'client'), others: tr(`${p.clients} в секунду`, `${p.clients} / s`), net: tr(`${n.net} мс`, `${n.net} ms`), app: tr(`${p.servers > 1 ? `×${p.servers} · ` : ''}5 мс на запрос`, `${p.servers > 1 ? `×${p.servers} · ` : ''}5 ms / request`), queue: '0' },
         metrics: m(0),
       },
       {
@@ -273,7 +273,7 @@ export const requestModel = defineModel<P>({
           tokens: [{ edge: 'e-net', label: 'GET /catalog' }],
           say: { queue: bi('Очередь переполнена, и новые запросы ставить некуда.', 'The queue is full.') },
           states: { queue: 'err' },
-          values: { queue: 'full' },
+          values: { queue: tr('переполнена', 'full') },
           fill: { queue: 1 },
           metrics: m(n.net),
         },

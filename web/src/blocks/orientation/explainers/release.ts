@@ -9,7 +9,7 @@
 import { defineModel } from '../../../core/define';
 import { bi, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { card, fmtb, startWith } from './kit';
+import { card, fmtb, startWith, tr } from './kit';
 
 type P = { change: string; lang: string };
 
@@ -149,7 +149,7 @@ export const releaseModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'buildSec', label: bi('время сборки', 'build time'), unit: 's' },
+    { id: 'buildSec', label: bi('время сборки, секунд', 'build time, seconds') },
     { id: 'released', label: bi('сколько выпусков на полке', 'releases on the shelf') },
   ],
   run(p, broken): Step[] {
@@ -171,7 +171,7 @@ export const releaseModel = defineModel<P>({
         tokens: [{ edge: 'e-edit', label: typo ? 'pirnt(…)' : '+12 −3' }],
         say: { dev: fmtb(bi('Программист {w}.', 'The programmer {w}.'), { w: WHAT[p.change] ?? WHAT.fix }) },
         states: { ...startWith(ALL, 'dev', 'src', 'e-edit'), dev: 'on', src: 'on' },
-        values: { src: compiled ? 'shop/*.go · 12 000 lines' : 'shop/*.py · 12 000 lines', shelf: '1.4.1 · 1.4.2', users: 'on 1.4.2', artifact: 'shop', build: compiled ? 'go build' : 'pack' },
+        values: { src: tr(`shop/*.${compiled ? 'go' : 'py'} · 12 000 строк`, `shop/*.${compiled ? 'go' : 'py'} · 12 000 lines`), shelf: '1.4.1 · 1.4.2', users: tr('у всех 1.4.2', 'on 1.4.2'), artifact: 'shop', build: compiled ? 'go build' : 'pack' },
         metrics: { buildSec: 0, released: 2 },
       },
       {
@@ -227,7 +227,7 @@ export const releaseModel = defineModel<P>({
         tokens: [{ edge: 'e-tag', label: 'latest' }],
         say: { shelf: bi('На полке лежит один файл «последняя», а прежние выпуски затёрты.', 'One “latest” file; the old releases are overwritten.') },
         states: { shelf: 'err', users: 'warn' },
-        values: { shelf: 'latest', users: 'on latest (?)' },
+        values: { shelf: 'latest', users: tr('у всех latest (?)', 'on latest (?)') },
         metrics: { buildSec, released: 1 },
         broken: { at: 'shelf', message: 'Which build is “latest”? 3 different files were called that this month.', caption: bi('на полке выпусков. Без номера нельзя ни понять, что изменилось, ни вернуть прежнюю сборку.', 'on the shelf: without a number you can neither tell what changed nor bring back the previous one.') },
       });
@@ -255,7 +255,7 @@ export const releaseModel = defineModel<P>({
         tokens: [{ edge: 'e-upgrade', label: v }],
         say: { users: bi('У пользователей программа завершается с ошибкой на строке с pirnt.', 'The program fails at the pirnt line.') },
         states: { users: 'err' },
-        values: { users: `on ${v}` },
+        values: { users: tr(`у всех ${v}`, `on ${v}`) },
         metrics: { buildSec, released: 3 },
         broken: { at: 'users', message: "NameError: name 'pirnt' is not defined", caption: bi('у пользователей. То, чего не проверила сборка, должны проверить тесты, иначе это сделают пользователи.', 'at the users’: what the build did not check, tests must check; otherwise the users will.') },
       });
@@ -278,7 +278,7 @@ export const releaseModel = defineModel<P>({
             : fmtb(bi('Пользователи ставят {v} без опаски.', 'The users install {v} without fear.'), { v }),
       },
       states: { users: p.change === 'breaking' ? 'warn' : 'ok' },
-      values: { users: p.change === 'breaking' ? 'on 1.4.2 → 2.0.0?' : `on ${v}` },
+      values: { users: p.change === 'breaking' ? tr('у всех 1.4.2 → 2.0.0?', 'on 1.4.2 → 2.0.0?') : tr(`у всех ${v}`, `on ${v}`) },
       metrics: { buildSec, released: 3 },
     });
     return steps;

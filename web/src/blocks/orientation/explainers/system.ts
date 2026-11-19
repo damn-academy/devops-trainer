@@ -11,7 +11,7 @@
 import { defineModel } from '../../../core/define';
 import { bi, pluralRu, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { card, fmtb, startWith } from './kit';
+import { card, fmtb, startWith, tr } from './kit';
 
 type P = { programs: number; cores: string };
 
@@ -238,7 +238,7 @@ export const systemModel = defineModel<P>({
         focus: ['editor'],
         say: { editor: bi('Редактору нужно записать файл notes.txt на диск.', 'The editor needs to write notes.txt to the disk.') },
         states: { ...startWith(ALL, 'editor', 'disk'), editor: 'on' },
-        values: { cpu: c === 4 ? '4 cores' : '1 core' },
+        values: { cpu: tr(cores(c), c === 4 ? '4 cores' : '1 core'), browser: tr('12 вкладок', '12 tabs'), memory: tr('8 ГБ', '8 GB'), os: tr('Linux, Windows или macOS', 'Linux · Windows · macOS') },
         metrics,
       },
     ];
@@ -350,7 +350,7 @@ export const systemModel = defineModel<P>({
             : bi('У каждой программы своё ядро, и ждать очереди не нужно.', 'Each program has its own core.'),
         },
         states: { cpu: n.share < 30 ? 'warn' : 'on' },
-        values: { cpu: `${c === 4 ? '4 cores' : '1 core'} · ${n.share}% each` },
+        values: { cpu: tr(`${cores(c)} · по ${n.share} % каждой`, `${c === 4 ? '4 cores' : '1 core'} · ${n.share}% each`) },
         metrics,
       },
     );

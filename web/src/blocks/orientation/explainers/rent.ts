@@ -11,7 +11,7 @@
 import { defineModel } from '../../../core/define';
 import { bi, pluralRu, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { card, compare, fmtb, lastMetric, startWith } from './kit';
+import { card, compare, fmtb, lastMetric, startWith, tr } from './kit';
 
 type P = { size: string; count: number; hours: number };
 
@@ -29,7 +29,7 @@ export function bill(size: string, count: number, hours: number): number {
   return Math.round((SIZES[size] ?? SIZES.small).perHour * count * hours * 100) / 100;
 }
 
-const money = (x: number) => `$${x.toFixed(2)}`;
+const money = (x: number) => tr(`$${x.toFixed(2).replace('.', ',')}`, `$${x.toFixed(2)}`);
 const ALL = ['you', 'panel', 'rackA', 'rackB', 'vm', 'bill', 'dc', 'e-order', 'e-place', 'e-boot', 'e-connect', 'e-meter', 'e-move'];
 const machines = (n: number) => `${n} ${pluralRu(n, ['машина', 'машины', 'машин'])}`;
 /** Accusative: «взять одну машину», «взять 3 машины». */
@@ -92,9 +92,9 @@ export const rentModel = defineModel<P>({
       default: 'small',
       near: 'vm',
       options: [
-        { id: 'small', label: bi('2 процессора и 2 ГБ памяти, $0.02 в час', '2 CPU · 2 GB, $0.02 an hour') },
-        { id: 'medium', label: bi('4 процессора и 8 ГБ памяти, $0.08 в час', '4 CPU · 8 GB, $0.08 an hour') },
-        { id: 'large', label: bi('16 процессоров и 64 ГБ памяти, $0.60 в час', '16 CPU · 64 GB, $0.60 an hour') },
+        { id: 'small', label: bi('2 процессора и 2 ГБ памяти, $0,02 в час', '2 CPU · 2 GB, $0.02 an hour') },
+        { id: 'medium', label: bi('4 процессора и 8 ГБ памяти, $0,08 в час', '4 CPU · 8 GB, $0.08 an hour') },
+        { id: 'large', label: bi('16 процессоров и 64 ГБ памяти, $0,60 в час', '16 CPU · 64 GB, $0.60 an hour') },
       ],
       predict: {
         prompt: bi('Вы выбрали другой размер машины, а число машин и часы работы остались прежними. Что станет со счётом?', 'You chose another size; the count and hours stay the same. What happens to the bill?'),
@@ -107,7 +107,7 @@ export const rentModel = defineModel<P>({
       },
     },
     { id: 'count', label: bi('Сколько машин', 'How many machines'), group: bi('Какие машины вы заказали', 'What you ordered'), kind: 'range', min: 1, max: 5, step: 1, default: 1, near: 'rackA' },
-    { id: 'hours', label: bi('Сколько часов машины нужны проекту', 'Hours the project needs'), group: bi('Как долго нужны машины', 'How long they are needed'), kind: 'range', min: 1, max: 720, step: 1, unit: 'h', default: 60, near: 'bill' },
+    { id: 'hours', label: bi('Сколько часов машины нужны проекту', 'Hours the project needs'), group: bi('Как долго нужны машины', 'How long they are needed'), kind: 'range', min: 1, max: 720, step: 1, default: 60, near: 'bill' },
   ],
   breaks: [
     {
@@ -140,11 +140,11 @@ export const rentModel = defineModel<P>({
   ],
   metrics: [
     { id: 'cost', label: bi('сумма счёта', 'bill'), unit: '$' },
-    { id: 'hours', label: bi('сколько машино-часов оплачено', 'machine-hours billed'), unit: 'h' },
+    { id: 'hours', label: bi('сколько машино-часов оплачено', 'machine-hours billed') },
   ],
   run(p, broken): Step[] {
     const s = SIZES[p.size] ?? SIZES.small;
-    const sub = `${s.cpu} CPU · ${s.ram} GB${p.count > 1 ? ` · ×${p.count}` : ''}`;
+    const sub = tr(`${s.cpu} CPU · ${s.ram} ГБ${p.count > 1 ? ` · ×${p.count}` : ''}`, `${s.cpu} CPU · ${s.ram} GB${p.count > 1 ? ` · ×${p.count}` : ''}`);
     const work = bill(p.size, p.count, p.hours);
     const steps: Step[] = [
       {
@@ -154,14 +154,14 @@ export const rentModel = defineModel<P>({
         focus: ['you'],
         say: { you: fmtb(bi('Вы решаете взять напрокат {n} на {h} и открываете панель облака.', 'You need {n} for {h} h.'), { n: bi(machinesAcc(p.count), String(p.count)), h: bi(hoursRu(p.hours), String(p.hours)) }) },
         states: { ...startWith(ALL, 'you', 'panel'), you: 'on' },
-        values: { vm: sub, bill: money(0) },
+        values: { vm: sub, bill: money(0), you: tr('ноутбук', 'laptop'), panel: tr('сайт провайдера', 'web page'), rackA: tr('40 серверов', '40 servers'), rackB: tr('40 серверов', '40 servers') },
         fill: { bill: 0 },
         metrics: { cost: 0, hours: 0 },
       },
       {
         id: 'order',
         label: bi('заказ', 'order'),
-        caption: fmtb(bi('Вы заказываете в панели {n}, {each} {cpu} и {ram} ГБ памяти, а час работы {cost} ${h}. Потом вы нажимаете «Создать». Ни договора на год, ни оплаты вперёд не нужно.', 'You order {n} × {cpu} CPU and {ram} GB at ${h} an hour each. No contract, no payment up front.'), { n: bi(machinesAcc(p.count), String(p.count)), each: p.count > 1 ? bi('и у каждой из них будет', '') : bi('и у неё будет', ''), cost: p.count > 1 ? bi('каждой стоит', '') : bi('стоит', ''), cpu: bi(cpus(s.cpu), String(s.cpu)), ram: s.ram, h: s.perHour.toFixed(2) }),
+        caption: fmtb(bi('Вы заказываете в панели {n}, {each} {cpu} и {ram} ГБ памяти, а час работы {cost} ${h}. Потом вы нажимаете «Создать». Ни договора на год, ни оплаты вперёд не нужно.', 'You order {n} × {cpu} CPU and {ram} GB at ${h} an hour each. No contract, no payment up front.'), { n: bi(machinesAcc(p.count), String(p.count)), each: p.count > 1 ? bi('и у каждой из них будет', '') : bi('и у неё будет', ''), cost: p.count > 1 ? bi('каждой стоит', '') : bi('стоит', ''), cpu: bi(cpus(s.cpu), String(s.cpu)), ram: s.ram, h: bi(s.perHour.toFixed(2).replace('.', ','), s.perHour.toFixed(2)) }),
         focus: ['e-order', 'panel'],
         reveal: ['e-order'],
         tokens: [{ edge: 'e-order', label: bi(`${p.count} × ${s.cpu} CPU · ${s.ram} ГБ`, `${p.count} × ${s.cpu} CPU · ${s.ram} GB`) }],
@@ -281,7 +281,7 @@ export const rentModel = defineModel<P>({
     switch (change.id) {
       case 'size': {
         const sz = SIZES[b.size as string] ?? SIZES.small;
-        return fmtb(bi('Теперь у каждой машины {cpu} и {ram} ГБ памяти, и час её работы стоит ${h}. Счёт изменился с {c0} до {c1}.', 'Now {cpu} CPU and {ram} GB at ${h} an hour: {c0} → {c1}.'), { cpu: bi(cpus(sz.cpu), String(sz.cpu)), ram: sz.ram, h: sz.perHour.toFixed(2), c0: money(cost(prev)), c1: money(cost(next)) });
+        return fmtb(bi('Теперь у каждой машины {cpu} и {ram} ГБ памяти, и час её работы стоит ${h}. Счёт изменился с {c0} до {c1}.', 'Now {cpu} CPU and {ram} GB at ${h} an hour: {c0} → {c1}.'), { cpu: bi(cpus(sz.cpu), String(sz.cpu)), ram: sz.ram, h: bi(sz.perHour.toFixed(2).replace('.', ','), sz.perHour.toFixed(2)), c0: money(cost(prev)), c1: money(cost(next)) });
       }
       case 'count':
         return fmtb(bi('Теперь вы арендуете {n}, и счёт меняется во столько же раз и составляет {c}.', '{n} machines: the bill changes as many times, {c}.'), { n: bi(machines(b.count as number), String(b.count)), c: money(cost(next)) });

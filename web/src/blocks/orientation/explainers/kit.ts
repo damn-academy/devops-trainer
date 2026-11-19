@@ -1,7 +1,7 @@
 // Helpers shared by the Orientation explainers: element cards, bilingual
 // placeholders and the "picture built from zero" start state.
 
-import type { Bi } from '../../../core/i18n';
+import { bi, t, type Bi } from '../../../core/i18n';
 import type { ElementCard, ElementState } from '../../../core/types';
 
 export const card = (what: Bi, who: Bi, extra: Partial<ElementCard> = {}): ElementCard => ({ what, who, ...extra });
@@ -39,3 +39,6 @@ export const compare = (before: number, after: number, tolerance = 0): 'up' | 'd
 
 /** A number with a decimal comma for Russian text: 2.1 → «2,1». */
 export const ruNum = (x: number) => String(x).replace('.', ',');
+
+/** A node value in the reader's language: values are plain strings, so the pair is resolved when the steps are built. */
+export const tr = (ru: string, en: string): string => t(bi(ru, en));
