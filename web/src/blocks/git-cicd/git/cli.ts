@@ -1730,7 +1730,7 @@ See 'git help git' for an overview of the system.
 
 export const gitCommand: ShellCommand = {
   name: 'git',
-  summary: bi('Система контроля версий: история проекта, ветки, обмен с удалённым репозиторием.', 'Version control: the project history, branches, exchange with a remote repository.'),
+  summary: bi('Система контроля версий, которая хранит историю проекта, ведёт ветки и обменивается коммитами с удалённым репозиторием.', 'Version control: the project history, branches, exchange with a remote repository.'),
   help: GIT_USAGE,
   handlesHelp: true,
   async run(ctx) {

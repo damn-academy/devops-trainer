@@ -375,7 +375,7 @@ function variable(ctx: CmdContext, args: string[]): number {
 
 export const glabCommand: ShellCommand = {
   name: 'glab',
-  summary: bi('GitLab CLI: пайплайны, merge request и переменные учебного forge.', 'GitLab CLI: pipelines, merge requests and variables on the training forge.'),
+  summary: bi('Консольный клиент GitLab, который работает с пайплайнами, merge request и переменными учебного forge.', 'GitLab CLI: pipelines, merge requests and variables on the training forge.'),
   help: HELP,
   async run(ctx) {
     const [group, ...rest] = ctx.argv.slice(1);

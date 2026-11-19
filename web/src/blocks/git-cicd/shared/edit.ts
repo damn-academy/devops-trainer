@@ -11,7 +11,7 @@ import './edit.css';
 const L = {
   save: bi('Сохранить', 'Save'),
   close: bi('Закрыть', 'Close'),
-  hint: bi('Ctrl+S — сохранить, Esc — закрыть без сохранения. Tab вставляет два пробела.', 'Ctrl+S saves, Esc closes without saving. Tab inserts two spaces.'),
+  hint: bi('Сочетание Ctrl+S сохраняет файл, клавиша Esc закрывает редактор без сохранения, а клавиша Tab вставляет два пробела.', 'Ctrl+S saves, Esc closes without saving. Tab inserts two spaces.'),
   newFile: bi('новый файл', 'new file'),
 };
 
@@ -105,7 +105,7 @@ function openEditor(path: string, text: string, isNew: boolean): Promise<string 
 
 export const editCommand: ShellCommand = {
   name: 'edit',
-  summary: bi('Открыть файл в редакторе (Ctrl+S — сохранить).', 'Open a file in the editor (Ctrl+S saves).'),
+  summary: bi('Открывает файл в редакторе, а сочетание Ctrl+S сохраняет его.', 'Open a file in the editor (Ctrl+S saves).'),
   help: 'Usage: edit FILE\nOpen FILE in a text editor panel. Ctrl+S saves and closes, Esc closes without saving.\nA missing FILE is created on save.\n',
   async run(ctx) {
     const file = ctx.argv[1];
