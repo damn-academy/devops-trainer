@@ -81,7 +81,7 @@ describe('linux.exam.isolation on the simulator', () => {
   it('a limit written into /sys by hand does not count: systemd owns the service cgroup', async () => {
     const r = await runTask('mem', ['echo 64M | sudo tee /sys/fs/cgroup/system.slice/batch.service/memory.max', 'sudo systemctl restart batch']);
     expect(r.after.pass).toBe(false);
-    expect(r.after.say?.en).toMatch(/lives in its unit file/);
+    expect(r.after.say?.en).toMatch(/kept in its unit file/);
   });
 
   it('a limit without a restart is explained', async () => {
@@ -93,7 +93,7 @@ describe('linux.exam.isolation on the simulator', () => {
   it('a user that does not exist leaves the service down, and the reason is named', async () => {
     const r = await runTask('user', ['sudo sed -i s/User=root/User=batch/ /etc/systemd/system/batch.service', 'sudo systemctl daemon-reload', 'sudo systemctl restart batch']);
     expect(r.after.pass).toBe(false);
-    expect(r.after.say?.en).toMatch(/does not seem to exist/);
+    expect(r.after.say?.en).toMatch(/no such user/);
   });
 
   it('an ordinary login account does not count as a service user', async () => {

@@ -12,6 +12,9 @@ import { ciModel, gitModel } from '../src/blocks/git-cicd/explainers';
 import { ansModel, tfModel } from '../src/blocks/iac/explainers';
 import { monModel } from '../src/blocks/monitoring/explainer';
 import { bi } from '../src/core/i18n';
+import { fold } from '../src/engine/explainer/geometry';
+import type { ProcessModel } from '../src/core/types';
+import { artifactsModel, dagModel, kubeDeployModel, mergeModel } from '../src/blocks/git-cicd/explainers-flow';
 
 
 const ctx = () => {
@@ -67,6 +70,36 @@ describe('explainers', () => {
       const mounted = reg.mount(el, { level: 'experienced', onComplete: () => {}, record: () => {}, openDoc: () => {} });
       expect(el.querySelectorAll('[data-id]').length).toBeGreaterThan(5);
       mounted.dispose();
+    });
+  }
+});
+
+describe('git and CI/CD explainers follow the gold reading order', () => {
+  const defaults = (m: ProcessModel<any>) => Object.fromEntries(m.params.map((p) => [p.id, p.default]));
+  const models = [gitModel, ciModel, mergeModel, artifactsModel, dagModel, kubeDeployModel] as ProcessModel<any>[];
+  for (const model of models) {
+    it(`${model.id}: starts small, every step has a visible actor with an icon, every break stops`, () => {
+      expect(model.intro && model.legend?.length && model.stopLabel).toBeTruthy();
+      const ids = new Set(model.diagram.nodes.map((n) => n.id));
+      const runs = [new Set<string>(), ...model.breaks.map((b) => new Set([b.id]))];
+      for (const broken of runs) {
+        const steps = model.run(defaults(model), broken);
+        if (broken.size) expect(steps.some((s) => s.broken), [...broken][0]).toBe(true);
+        const visible0 = model.diagram.nodes.filter((n) => fold(steps, 0).states[n.id] !== 'hidden');
+        expect(visible0.length).toBeLessThanOrEqual(5);
+        steps.forEach((st, i) => {
+          const frame = fold(steps, i);
+          const actors = Object.keys(st.say ?? {});
+          expect(actors.length, st.id).toBeGreaterThan(0);
+          for (const a of actors) {
+            expect(ids.has(a), `${st.id}: ${a}`).toBe(true);
+            expect(frame.states[a], `${st.id}: ${a} is hidden`).not.toBe('hidden');
+            expect(model.diagram.nodes.find((n) => n.id === a)!.icon, a).toBeTruthy();
+          }
+          for (const f of st.focus) expect(frame.states[f], `${st.id}: focus on hidden ${f}`).not.toBe('hidden');
+          for (const tk of st.tokens ?? []) expect(frame.states[tk.edge], `${st.id}: token on hidden ${tk.edge}`).not.toBe('hidden');
+        });
+      }
     });
   }
 });
