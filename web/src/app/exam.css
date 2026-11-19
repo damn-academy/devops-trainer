@@ -1,0 +1,38 @@
+/* Exam runner and placement check: no animation except the step change;
+   colour only where it means something (green passed, red critical). */
+.pl-bar { display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0 1rem; font-family: var(--font-ui); font-size: 0.875rem; }
+.pl-count { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 4.5rem; }
+.pl-bar .rv-progress { flex: 1; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.pl-bar .rv-progress span { display: block; height: 100%; background: var(--ink-2); }
+.pl-tags { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; min-height: 1.5rem; }
+.badge.key { border-color: var(--ink-2); }
+.pl-host { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 1rem 1.25rem; background: var(--surface); }
+.pl-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
+.pl-details { margin: 1.25rem 0; font-family: var(--font-ui); }
+.pl-details summary { cursor: pointer; color: var(--muted); }
+.level-card[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+.ex2-story { border-left: 3px solid var(--line-2); padding: 0.25rem 0 0.25rem 1rem; margin: 1.25rem 0; }
+.ex2-story h2 { font-size: 1rem; margin: 0 0 0.25rem; font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.ex2-story-mini { margin: 0.5rem 0 1rem; font-family: var(--font-ui); }
+.ex2-facts { list-style: none; padding: 0; margin: 1rem 0; font-family: var(--font-ui); font-size: 0.9375rem; }
+.ex2-facts li { margin: 0.35rem 0; display: flex; gap: 0.4rem; align-items: baseline; }
+.ex2-honesty { margin: 1.5rem 0; padding: 1rem 1.25rem; border-left: 3px solid var(--ink-2); background: var(--bg-2); font-family: var(--font-text); line-height: var(--text-lh); }
+.ex2-tasks { padding-left: 0; list-style: none; }
+.ex2-card { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 1rem 1.25rem; margin: 1rem 0; background: var(--surface); }
+.ex2-card[data-critical] { border-color: var(--c-err); }
+.ex2-card-head { display: flex; justify-content: space-between; gap: 1rem; margin: 0 0 0.5rem; font-family: var(--font-ui); font-size: 0.875rem; font-weight: 600; }
+.ex2-explain { margin: 1.5rem 0; }
+.ex2-answer { width: 100%; font: inherit; padding: 0.75rem; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink); }
+.ex2-points { border: 0; padding: 0; margin: 0.75rem 0 0; }
+.ex2-points legend { font-family: var(--font-ui); font-size: 0.875rem; color: var(--muted); margin-bottom: 0.25rem; }
+.ex2-point { display: flex; gap: 0.5rem; align-items: baseline; margin: 0.25rem 0; }
+.ex2-score { font-variant-numeric: tabular-nums; }
+.ex2-results li.skip { color: var(--muted); }
+.ex2-trail, .ex2-gaps { margin: 1.5rem 0; }
+.ex2-trail h2, .ex2-gaps h2 { font-size: 1.125rem; }
+.ex2-proto { margin-top: 1.5rem; }
+@media print {
+  .topbar, .foot, .ex2-proto, .reminder { display: none !important; }
+  .ex2-card, .pl-host { break-inside: avoid; }
+}

@@ -1,0 +1,204 @@
+/* Design tokens (08 §6). Colour encodes the family of a thing, never its
+   importance; green, amber and red are reserved for state and always come
+   with an icon. Values are OKLCH; the dark theme has its own lightness
+   values rather than "lighter by 25%". Terminal colours are hex because
+   xterm.js parses only hex and rgb(). */
+
+:root {
+  color-scheme: light;
+
+  /* paper and ink */
+  --bg: oklch(0.975 0.008 85);
+  --bg-2: oklch(0.955 0.011 85);
+  --surface: oklch(0.99 0.005 85);
+  --ink: oklch(0.24 0.015 260);
+  --ink-2: oklch(0.4 0.015 260);
+  --muted: oklch(0.52 0.012 260);
+  --line: oklch(0.88 0.01 85);
+  --line-2: oklch(0.79 0.012 85);
+  --focus: oklch(0.55 0.11 255);
+  --highlight: oklch(0.93 0.06 95);
+  --link: oklch(0.36 0.06 255);
+
+  /* families: Linux and containers */
+  --c-kernel: oklch(0.4 0.09 275);
+  --c-user: oklch(0.965 0.012 85);
+  --c-user-line: oklch(0.45 0.02 85);
+  --c-process: oklch(0.36 0.02 260);
+  --c-ns: oklch(0.5 0.1 340);
+  --c-gauge: oklch(0.55 0.01 260);
+
+  /* network layers: one blue scale of lightness, L1 darkest, L7 lightest */
+  --c-l1: oklch(0.28 0.07 230);
+  --c-l2: oklch(0.33 0.08 230);
+  --c-l3: oklch(0.4 0.08 230);
+  --c-l4: oklch(0.47 0.08 230);
+  --c-tls: oklch(0.53 0.08 230);
+  --c-l7: oklch(0.59 0.08 230);
+
+  /* Kubernetes, IaC */
+  --c-cp: oklch(0.45 0.08 200);
+  --c-node: oklch(0.45 0.03 60);
+  --c-obj: oklch(0.52 0.06 55);
+  --c-store: oklch(0.42 0.04 290);
+
+  /* CI stages: one family (sage), stages by lightness and by shape/label */
+  --c-ci-source: oklch(0.38 0.05 130);
+  --c-ci-build: oklch(0.44 0.05 130);
+  --c-ci-test: oklch(0.5 0.05 130);
+  --c-ci-deploy: oklch(0.56 0.05 130);
+
+  /* request flow and neutral */
+  --c-flow: oklch(0.25 0.01 260);
+  --c-neutral: oklch(0.5 0.01 260);
+
+  /* state — only for status, always with ✓ ! ⨯ */
+  --c-ok: oklch(0.55 0.13 150);
+  --c-warn: oklch(0.72 0.14 85);
+  --c-err: oklch(0.55 0.17 25);
+  --c-ok-bg: oklch(0.95 0.04 150);
+  --c-warn-bg: oklch(0.96 0.05 85);
+  --c-err-bg: oklch(0.95 0.04 25);
+
+  /* terminal (same in both themes: deep graphite, muted ANSI) */
+  --term-bg: #1f2228;
+  --term-fg: #e8e3d8;
+  --term-cursor: #e8e3d8;
+  --term-sel: #3f4552;
+  --term-black: #2b2f37;
+  --term-red: #e08a7a;
+  --term-green: #9fc29a;
+  --term-yellow: #e3cf9f;
+  --term-blue: #93acdc;
+  --term-magenta: #b4aee8;
+  --term-cyan: #8fc7c4;
+  --term-white: #d9d4ca;
+  --term-bright-black: #6e7482;
+
+  /* type */
+  --font-text: 'Literata Variable', 'Literata', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-size: 18.5px;
+  --text-lh: 1.55;
+  --measure: 66ch;
+
+  /* geometry and motion */
+  --r: 6px;
+  --r-lg: 10px;
+  --stroke: 1.5px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-step: 240ms;
+  --gutter: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: oklch(0.2 0.01 260);
+    --bg-2: oklch(0.235 0.011 260);
+    --surface: oklch(0.25 0.012 260);
+    --ink: oklch(0.92 0.012 85);
+    --ink-2: oklch(0.8 0.012 85);
+    --muted: oklch(0.68 0.012 260);
+    --line: oklch(0.33 0.012 260);
+    --line-2: oklch(0.42 0.012 260);
+    --focus: oklch(0.74 0.1 255);
+    --highlight: oklch(0.38 0.06 95);
+    --link: oklch(0.8 0.07 255);
+    --c-kernel: oklch(0.72 0.09 275);
+    --c-user: oklch(0.27 0.012 85);
+    --c-user-line: oklch(0.74 0.03 85);
+    --c-process: oklch(0.86 0.02 260);
+    --c-ns: oklch(0.74 0.1 340);
+    --c-gauge: oklch(0.7 0.01 260);
+    --c-l1: oklch(0.86 0.06 230);
+    --c-l2: oklch(0.81 0.07 230);
+    --c-l3: oklch(0.76 0.08 230);
+    --c-l4: oklch(0.71 0.08 230);
+    --c-tls: oklch(0.66 0.08 230);
+    --c-l7: oklch(0.61 0.08 230);
+    --c-cp: oklch(0.75 0.08 200);
+    --c-node: oklch(0.75 0.03 60);
+    --c-obj: oklch(0.77 0.07 65);
+    --c-store: oklch(0.74 0.05 290);
+    --c-ci-source: oklch(0.82 0.05 130);
+    --c-ci-build: oklch(0.76 0.05 130);
+    --c-ci-test: oklch(0.7 0.05 130);
+    --c-ci-deploy: oklch(0.64 0.05 130);
+    --c-flow: oklch(0.9 0.01 260);
+    --c-neutral: oklch(0.72 0.01 260);
+    --c-ok: oklch(0.74 0.13 150);
+    --c-warn: oklch(0.8 0.13 85);
+    --c-err: oklch(0.7 0.16 25);
+    --c-ok-bg: oklch(0.3 0.05 150);
+    --c-warn-bg: oklch(0.32 0.05 85);
+    --c-err-bg: oklch(0.3 0.05 25);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: oklch(0.2 0.01 260);
+  --bg-2: oklch(0.235 0.011 260);
+  --surface: oklch(0.25 0.012 260);
+  --ink: oklch(0.92 0.012 85);
+  --ink-2: oklch(0.8 0.012 85);
+  --muted: oklch(0.68 0.012 260);
+  --line: oklch(0.33 0.012 260);
+  --line-2: oklch(0.42 0.012 260);
+  --focus: oklch(0.74 0.1 255);
+  --highlight: oklch(0.38 0.06 95);
+  --link: oklch(0.8 0.07 255);
+  --c-kernel: oklch(0.72 0.09 275);
+  --c-user: oklch(0.27 0.012 85);
+  --c-user-line: oklch(0.74 0.03 85);
+  --c-process: oklch(0.86 0.02 260);
+  --c-ns: oklch(0.74 0.1 340);
+  --c-gauge: oklch(0.7 0.01 260);
+  --c-l1: oklch(0.86 0.06 230);
+  --c-l2: oklch(0.81 0.07 230);
+  --c-l3: oklch(0.76 0.08 230);
+  --c-l4: oklch(0.71 0.08 230);
+  --c-tls: oklch(0.66 0.08 230);
+  --c-l7: oklch(0.61 0.08 230);
+  --c-cp: oklch(0.75 0.08 200);
+  --c-node: oklch(0.75 0.03 60);
+  --c-obj: oklch(0.77 0.07 65);
+  --c-store: oklch(0.74 0.05 290);
+  --c-ci-source: oklch(0.82 0.05 130);
+  --c-ci-build: oklch(0.76 0.05 130);
+  --c-ci-test: oklch(0.7 0.05 130);
+  --c-ci-deploy: oklch(0.64 0.05 130);
+  --c-flow: oklch(0.9 0.01 260);
+  --c-neutral: oklch(0.72 0.01 260);
+  --c-ok: oklch(0.74 0.13 150);
+  --c-warn: oklch(0.8 0.13 85);
+  --c-err: oklch(0.7 0.16 25);
+  --c-ok-bg: oklch(0.3 0.05 150);
+  --c-warn-bg: oklch(0.32 0.05 85);
+  --c-err-bg: oklch(0.3 0.05 25);
+}
+
+/* Family helpers: any element with .fam-<family> gets --fam for strokes and tints. */
+.fam-kernel { --fam: var(--c-kernel); }
+.fam-user { --fam: var(--c-user-line); }
+.fam-process { --fam: var(--c-process); }
+.fam-ns { --fam: var(--c-ns); }
+.fam-gauge { --fam: var(--c-gauge); }
+.fam-l1 { --fam: var(--c-l1); }
+.fam-l2 { --fam: var(--c-l2); }
+.fam-l3 { --fam: var(--c-l3); }
+.fam-l4 { --fam: var(--c-l4); }
+.fam-tls { --fam: var(--c-tls); }
+.fam-l7 { --fam: var(--c-l7); }
+.fam-cp { --fam: var(--c-cp); }
+.fam-node { --fam: var(--c-node); }
+.fam-obj { --fam: var(--c-obj); }
+.fam-store { --fam: var(--c-store); }
+.fam-flow { --fam: var(--c-flow); }
+.fam-ci-source { --fam: var(--c-ci-source); }
+.fam-ci-build { --fam: var(--c-ci-build); }
+.fam-ci-test { --fam: var(--c-ci-test); }
+.fam-ci-deploy { --fam: var(--c-ci-deploy); }
+.fam-neutral { --fam: var(--c-neutral); }
