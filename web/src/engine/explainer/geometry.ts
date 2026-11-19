@@ -70,6 +70,7 @@ export function fold(steps: Step[], n: number): Frame {
   const f: Frame = { states: {}, values: {}, fill: {} };
   for (let i = 0; i <= n && i < steps.length; i++) {
     Object.assign(f.states, steps[i].states ?? {});
+    for (const id of steps[i].reveal ?? []) if (f.states[id] === 'hidden' || f.states[id] === undefined) f.states[id] = 'on';
     Object.assign(f.values, steps[i].values ?? {});
     Object.assign(f.fill, steps[i].fill ?? {});
   }
@@ -107,4 +108,18 @@ export function metricDelta(prev: Step[], next: Step[]): Record<string, number> 
     if (d) out[k] = d;
   }
   return out;
+}
+
+/** Room an icon takes at the left of a node; 0 when there is no icon or the node is too small (the icon then sits on its corner). */
+export function iconPad(n: DiagramNode): number {
+  return n.icon && iconInside(n) ? 34 : 0;
+}
+
+export function iconInside(n: DiagramNode): boolean {
+  return n.w >= 104 && n.h >= 40;
+}
+
+/** Ids drawn at this frame: everything not in the 'hidden' state. */
+export function isHidden(frame: Frame, id: string): boolean {
+  return frame.states[id] === 'hidden';
 }

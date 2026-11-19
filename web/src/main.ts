@@ -11,6 +11,7 @@ import './styles/tokens.css';
 import './styles/base.css';
 import './styles/app.css';
 import './styles/widgets.css';
+import './styles/explainer.css';
 
 import manifest from 'virtual:dt-manifest';
 import { startApp } from './app/shell';
