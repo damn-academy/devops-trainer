@@ -46,11 +46,11 @@ export const ingressPathModel = defineModel<P>({
   block: 'k8s-1',
   title: bi('Как запрос из интернета доходит до пода', 'How a request from the internet reaches a pod'),
   summary: bi(
-    'Запрос из интернета сначала попадает на порт узла, напрямую или через внешний балансировщик, потом в обратный прокси контроллера входа, который по имени сайта и пути выбирает Service, и только затем через обычный Service доходит до пода. На этом пути у прокси свой таймаут, и ошибки 502, 503 и 504 часто пишет он, а не приложение.',
+    'Запрос из интернета сначала попадает на порт узла, напрямую или через внешний балансировщик, потом в обратный прокси контроллера входа, который по имени сайта и пути выбирает Service, и только затем через обычный Service доходит до пода. На этом пути у прокси свой тайм-аут, и ошибки 502, 503 и 504 часто пишет он, а не приложение.',
     'A request reaches a node port (directly or via a load balancer), then the ingress proxy that picks a Service by host and path, then the pod. The proxy has its own timeout, and 502, 503 and 504 often come from it.',
   ),
   intro: bi(
-    'Сейчас на схеме браузер пользователя и под приложения. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Участники между браузером и подом будут появляться, когда до них дойдёт запрос. Под схемой показан код ответа, который получит браузер. Потом увеличьте в «Параметрах» время ответа пода так, чтобы оно превысило таймаут прокси, и посмотрите, кто вернёт ошибку.',
+    'Сейчас на схеме браузер пользователя и под приложения. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Участники между браузером и подом будут появляться, когда до них дойдёт запрос. Под схемой показан код ответа, который получит браузер. Потом увеличьте в «Параметрах» время ответа пода так, чтобы оно превысило тайм-аут прокси, и посмотрите, кто вернёт ошибку.',
     'For now: the browser and the pod. Press “Start from the first step” and go on with “Step forward”: the hops appear as the request reaches them. The status code is shown under the diagram. Then raise the pod’s response time above the proxy timeout and see who returns the error.',
   ),
   legend: [
@@ -100,7 +100,7 @@ export const ingressPathModel = defineModel<P>({
       near: 'pod',
       group: bi('Время ответа', 'Timing'),
       predict: {
-        prompt: bi('Вы меняете время, за которое под готовит ответ, а таймаут прокси остаётся прежним. Какой ответ получит браузер?', 'You change the pod’s response time; the proxy timeout stays. What does the browser get?'),
+        prompt: bi('Вы меняете время, за которое под готовит ответ, а тайм-аут прокси остаётся прежним. Какой ответ получит браузер?', 'You change the pod’s response time; the proxy timeout stays. What does the browser get?'),
         options: [
           { id: 'ok', text: bi('Код 200 и страницу от приложения', '200 from the application') },
           { id: 'proxy', text: bi('504 Gateway Timeout от прокси', '504 from the proxy') },
@@ -140,7 +140,7 @@ export const ingressPathModel = defineModel<P>({
         caption: bi('Балансировщик выбирает один из узлов и отправляет запрос на его порт NodePort 30443.', 'The load balancer picks a node and sends to its NodePort 30443.'),
         focus: ['lb', 'e-np'],
         reveal: ['node', 'e-np'],
-        tokens: [{ edge: 'e-np', label: 'worker-1:30443' }],
+        tokens: [{ edge: 'e-np', label: ':30443' }],
         say: { lb: bi('Балансировщик отправляет запрос на порт 30443 узла worker-1.', 'The load balancer sends to worker-1:30443.') },
         metrics: { status: 0, seconds: 0 },
       });
@@ -208,7 +208,7 @@ export const ingressPathModel = defineModel<P>({
     }
     s.push({
       id: 'new-conn',
-      label: bi('новое соединение', 'new connection'),
+      label: bi('соединение', 'new connection'),
       caption: bi('Прокси открывает новое TCP-соединение к Service web на порт 80. Соединение браузера закончилось на прокси, а адрес пользователя теперь передаётся в заголовке X-Forwarded-For.', 'The proxy opens a new TCP connection to web:80; the client IP travels in X-Forwarded-For.'),
       focus: ['proxy', 'e-svc'],
       reveal: ['svc', 'e-svc'],
@@ -254,7 +254,7 @@ export const ingressPathModel = defineModel<P>({
     s.push({
       id: '200',
       label: '200',
-      caption: p.response ? fmt(bi('Под ответил за {r} с, быстрее, чем истёк таймаут прокси. Ответ возвращается по тем же соединениям, и браузер получает страницу с кодом 200.', 'The pod answered in {r} s, under the timeout: the browser gets 200.'), { r: p.response }) : bi('Под ответил сразу. Ответ возвращается по тем же соединениям, и браузер получает страницу с кодом 200.', 'The pod answered at once: the browser gets 200.'),
+      caption: p.response ? fmt(bi('Под ответил за {r} с, быстрее, чем истёк тайм-аут прокси. Ответ возвращается по тем же соединениям, и браузер получает страницу с кодом 200.', 'The pod answered in {r} s, under the timeout: the browser gets 200.'), { r: p.response }) : bi('Под ответил сразу. Ответ возвращается по тем же соединениям, и браузер получает страницу с кодом 200.', 'The pod answered at once: the browser gets 200.'),
       focus: ['pod'],
       say: { pod: p.response ? fmt(bi('Под отдаёт страницу за {r} с, и она возвращается браузеру с кодом 200.', 'The pod answers in {r} s; the browser gets 200.'), { r: p.response }) : bi('Под сразу отдаёт страницу, и она возвращается браузеру с кодом 200.', 'The pod answers at once; the browser gets 200.') },
       states: { pod: 'ok', client: 'ok' },
@@ -268,8 +268,8 @@ export const ingressPathModel = defineModel<P>({
       case 'response':
       case 'timeout':
         return metric(next, 'status') === 504
-          ? fmt(bi('Под готовит ответ {r} с, это дольше таймаута прокси в {t} с, поэтому браузер получает 504 от прокси.', '{r} s > {t} s: 504 from the proxy.'), { r: b.response as number, t: b.timeout as number })
-          : fmt(bi('Под готовит ответ {r} с и укладывается в таймаут прокси в {t} с, поэтому браузер получает 200.', '{r} s ≤ {t} s: 200.'), { r: b.response as number, t: b.timeout as number });
+          ? fmt(bi('Под готовит ответ {r} с, это дольше тайм-аута прокси в {t} с, поэтому браузер получает 504 от прокси.', '{r} s > {t} s: 504 from the proxy.'), { r: b.response as number, t: b.timeout as number })
+          : fmt(bi('Под готовит ответ {r} с и укладывается в тайм-аут прокси в {t} с, поэтому браузер получает 200.', '{r} s ≤ {t} s: 200.'), { r: b.response as number, t: b.timeout as number });
       case 'etp':
         return b.etp === 'Local' ? bi('При Local адрес пользователя сохраняется, но узлы без пода прокси выпадают из балансировщика.', 'Local: the client IP is kept; nodes without a proxy pod drop out.') : bi('При Cluster прокси видит адрес узла, зато запрос может принять любой узел.', 'Cluster: SNAT to the node IP, but any node takes the request.');
       case 'api':

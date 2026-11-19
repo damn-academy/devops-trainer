@@ -9,13 +9,15 @@
 // the controllers appear when they act, one per step, by virtual time.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
+import { bi, fmt, t as tr, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { box, D, edge, idsOf, LEGEND_BASE, mark, metric, only } from './kit';
 
 type P = { grace: number; toleration: number; back: string };
 
 const RPS = 10;
+/** How long ago the kubelet last renewed the Lease, as shown under the Lease node. */
+const renewed = (ru: string, en: string) => tr(bi(ru === '0 с' ? 'продлён только что' : `продлён ${ru} назад`, `renewed ${en} ago`));
 /** Share of requests that go to the dead node's pods (1 of 3 replicas). */
 const SHARE = 1 / 3;
 
@@ -48,7 +50,7 @@ const diagram = {
     edge('e-renew', 'w2', 'lease', bi('продление каждые 10 с', 'renewal every 10 s'), bi('Пока kubelet продлевает Lease, кластер считает узел живым.', 'While the kubelet renews the Lease, the node is alive.'), bi('Продлевает kubelet.', 'The kubelet.')),
     edge('e-check', 'nlc', 'lease', bi('давно не продлевали?', 'renewed long ago?'), bi('Контроллер сравнивает время последнего продления со сроком node-monitor-grace-period.', 'The controller compares renewTime with node-monitor-grace-period.'), CM, { via: [[155, 177]] }),
     edge('e-taint', 'nlc', 'api', bi('узел недоступен', 'node unreachable'), bi('Контроллер ставит узлу Ready=Unknown и запрет node.kubernetes.io/unreachable:NoExecute.', 'Ready=Unknown and the taint unreachable:NoExecute.'), CM),
-    edge('e-evict', 'api', 'w2', bi('выселить поды', 'evict pods'), bi('Когда истекает tolerationSeconds пода (по умолчанию 300 секунд), под на недоступном узле помечается к удалению.', 'After tolerationSeconds (300 s by default) the pods are marked for deletion.'), bi('Выселяет контроллер taint-eviction.', 'The taint-eviction controller.'), { via: [[630, 250], [630, 345]], labelAt: 0.3 }),
+    edge('e-evict', 'api', 'w2', bi('выселить поды', 'evict pods'), bi('Когда истекает tolerationSeconds пода (по умолчанию 300 секунд), под на недоступном узле помечается к удалению.', 'After tolerationSeconds (300 s by default) the pods are marked for deletion.'), bi('Выселяет контроллер taint-eviction.', 'The taint-eviction controller.'), { via: [[620, 100], [620, 345]], labelAt: 0.55 }),
     edge('e-create', 'rs', 'w3', bi('замена', 'replacement'), bi('Контроллер ReplicaSet создаёт новый под, а планировщик ставит его на исправный узел.', 'The replacement is created and scheduled on a live node.'), bi('Контроллер ReplicaSet и kube-scheduler.', 'The ReplicaSet controller and kube-scheduler.')),
   ],
 };
@@ -151,7 +153,7 @@ export const nodeDownModel = defineModel<P>({
       focus: ['w2'],
       say: { w2: bi('Питание worker-2 выключено, и под web-b остановился вместе с узлом.', 'worker-2 is off; web-b stopped with it.') },
       states: { ...only(ALL, 'w1', 'w2', 'w3', 'lease', 'e-renew'), w2: 'err' },
-      values: { w2: 'web-b Running (stale)', lease: 'renewed 0s ago' },
+      values: { w2: tr(bi('web-b Running (сведения устарели)', 'web-b Running (stale)')), lease: renewed('0 с', '0s') },
       metrics: { t: 0, lost: 0, ready: 3 },
     });
     s.push({
@@ -161,7 +163,7 @@ export const nodeDownModel = defineModel<P>({
       focus: ['lease', 'e-renew'],
       say: { lease: bi('Lease узла worker-2 не продлевали уже 10 секунд.', 'The Lease has not been renewed for 10 s.') },
       states: { 'e-renew': 'off' },
-      values: { lease: 'renewed 10s ago' },
+      values: { lease: renewed('10 с', '10s') },
       metrics: { t: 10, lost: lostAt(10), ready: 3 },
     });
     if (backAt <= p.grace && !noCm) {
@@ -172,7 +174,7 @@ export const nodeDownModel = defineModel<P>({
         focus: ['w2'],
         say: { w2: bi('worker-2 снова работает, и kubelet заново запустил под web-b.', 'worker-2 runs again; the kubelet restarted web-b.') },
         states: { w2: 'ok', 'e-renew': 'on' },
-        values: { lease: 'renewed 0s ago', w2: 'web-b Running (restarted)' },
+        values: { lease: renewed('0 с', '0s'), w2: tr(bi('web-b Running (перезапущен)', 'web-b Running (restarted)')) },
         metrics: { t: backAt, lost: n.lost, ready: 3 },
       });
       return s;
@@ -185,7 +187,7 @@ export const nodeDownModel = defineModel<P>({
         focus: ['lease'],
         reveal: ['nlc'],
         say: { lease: bi('Lease не продлевали уже 15 минут, и никто этого не проверяет.', 'Not renewed for 15 minutes; nobody checks.') },
-        values: { lease: 'renewed 15m ago' },
+        values: { lease: renewed('15 мин', '15m') },
         metrics: { t: 900, lost: n.lost, ready: 2 },
         broken: { at: 'nlc', message: '$ kubectl get nodes\nNAME       STATUS   ROLES    AGE   VERSION\nworker-2   Ready    <none>   4d    v1.37.1+k3s1', caption: bi('на контроллере узлов. Без него молчание узла никто не превращает в состояние Unknown, и `kubectl get nodes` продолжает показывать Ready у машины, которая давно выключена.', 'at the node controller: nobody turns the silence into Unknown, and `kubectl get nodes` keeps showing Ready.') },
       });
@@ -200,7 +202,7 @@ export const nodeDownModel = defineModel<P>({
       tokens: [{ edge: 'e-taint', label: 'Ready=Unknown' }],
       say: { nlc: fmt(bi('Контроллер видит, что Lease не продлевали {g} с, и помечает worker-2 недоступным.', 'The controller sees {g} s of silence and marks worker-2 unreachable.'), { g: p.grace }) },
       states: { w2: 'warn' },
-      values: { w2: 'NotReady · web-b NotReady', lease: `renewed ${p.grace}s ago` },
+      values: { w2: 'NotReady · web-b NotReady', lease: renewed(`${p.grace} с`, `${p.grace}s`) },
       metrics: { t: p.grace, lost: n.lost, ready: 2 },
     });
     const evictAt = p.grace + p.toleration;
@@ -212,7 +214,7 @@ export const nodeDownModel = defineModel<P>({
         focus: ['w2'],
         say: { w2: bi('worker-2 снова работает, и под web-b готов на прежнем месте.', 'worker-2 is back; web-b is ready in place.') },
         states: { w2: 'ok' },
-        values: { w2: 'Ready · web-b Running', lease: 'renewed 0s ago' },
+        values: { w2: 'Ready · web-b Running', lease: renewed('0 с', '0s') },
         metrics: { t: backAt, lost: n.lost, ready: 3 },
       });
       return s;
@@ -248,7 +250,7 @@ export const nodeDownModel = defineModel<P>({
         focus: ['w2'],
         say: { w2: bi('kubelet на worker-2 останавливает под web-b, помеченный к удалению.', 'The kubelet stops web-b, marked for deletion.') },
         states: { w2: 'ok' },
-        values: { w2: 'Ready · no pods', lease: 'renewed 0s ago' },
+        values: { w2: tr(bi('Ready · подов нет', 'Ready · no pods')), lease: renewed('0 с', '0s') },
         metrics: { t: 600, lost: n.lost, ready: 3 },
       });
     return s;

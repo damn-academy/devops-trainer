@@ -182,13 +182,13 @@ export const healthQuiz: QuizItem[] = [
     id: 'k8s.q.h.crash',
     kind: 'predict-output',
     concepts: ['k8s.crashloop'],
-    prompt: bi('Контейнер падает через три секунды после запуска. Что покажет столбец STATUS через полминуты?', 'A container crashes 3 seconds after it starts. What does STATUS show half a minute later?'),
+    prompt: bi('Контейнер аварийно завершается через три секунды после запуска. Что покажет столбец STATUS через полминуты?', 'A container crashes 3 seconds after it starts. What does STATUS show half a minute later?'),
     command: 'kubectl run crash --image=trainer/web:2.0 >/dev/null; cluster ff 30s >/dev/null; kubectl get pod crash --no-headers',
     setup: { hostname: 'laptop', ext: { k8s: {} } },
     options: [
       { id: 'crash', text: 'CrashLoopBackOff', correct: true },
       { id: 'error', text: 'Error', why: bi('Error виден только в момент падения, а большую часть времени kubelet ждёт перед следующим перезапуском, и это и есть CrashLoopBackOff.', 'Error flashes at the moment of the crash; most of the time the kubelet waits before the restart — that is CrashLoopBackOff.') },
-      { id: 'running', text: 'Running', why: bi('Running под показывает три секунды после каждого перезапуска, а потом контейнер снова падает.', 'Running lasts three seconds after each restart, then the container crashes again.') },
+      { id: 'running', text: 'Running', why: bi('Running под показывает три секунды после каждого перезапуска, а потом контейнер снова аварийно завершается.', 'Running lasts three seconds after each restart, then the container crashes again.') },
     ],
   },
 ];
@@ -210,7 +210,7 @@ export const healthLesson: Lesson = {
       step: 'explain',
       title: bi('Жив ли контейнер, готов ли он и запустился ли', 'Alive, ready, started'),
       body: bi(
-        'Запущенный процесс ещё не означает, что приложение работает. kubelet умеет сам спрашивать его об этом, и такие вопросы называются [[k8s.probe|проверками контейнера (probes)]]: это HTTP-запрос, TCP-подключение или команда внутри контейнера.\n\n- **Проверка готовности (readinessProbe)** отвечает на вопрос, можно ли отправлять поду запросы. Если она не проходит, процесс никто не трогает: под получает `ready: false` и выпадает из EndpointSlice, и Service перестаёт отправлять ему запросы. Без этой проверки под получает запросы, как только запущен процесс, даже если приложение ещё прогревается.\n- **Проверка жизнеспособности (livenessProbe)** отвечает на вопрос, жив ли контейнер. Если она не проходит `failureThreshold` раз подряд, kubelet перезапускает контейнер. Привязывать её к внешней зависимости, например к базе данных, опасно: база перестанет отвечать, и перезапустятся все поды.\n- **Проверка запуска (startupProbe)** нужна приложениям, которые долго запускаются: пока она не прошла, остальные проверки не выполняются.\n\nКогда контейнер падает, kubelet перезапускает его, и паузы между перезапусками растут: 10 секунд, 20, 40 и так далее, до пяти минут. Пока kubelet ждёт, под показывает статус [[k8s.crashloop|CrashLoopBackOff]], а счётчик RESTARTS растёт. Причину ищут в логах **предыдущего** запуска, потому что текущий только что начался.',
+        'Запущенный процесс ещё не означает, что приложение работает. kubelet умеет сам спрашивать его об этом, и такие вопросы называются [[k8s.probe|проверками контейнера (probes)]]: это HTTP-запрос, TCP-подключение или команда внутри контейнера.\n\n- **Проверка готовности (readinessProbe)** отвечает на вопрос, можно ли отправлять поду запросы. Если она не проходит, процесс никто не трогает: под получает `ready: false` и выпадает из EndpointSlice, и Service перестаёт отправлять ему запросы. Без этой проверки под получает запросы, как только запущен процесс, даже если приложение ещё прогревается.\n- **Проверка жизнеспособности (livenessProbe)** отвечает на вопрос, жив ли контейнер. Если она не проходит `failureThreshold` раз подряд, kubelet перезапускает контейнер. Привязывать её к внешней зависимости, например к базе данных, опасно: база перестанет отвечать, и перезапустятся все поды.\n- **Проверка запуска (startupProbe)** нужна приложениям, которые долго запускаются: пока она не прошла, остальные проверки не выполняются.\n\nКогда контейнер аварийно завершается, kubelet перезапускает его, и паузы между перезапусками растут: 10 секунд, 20, 40 и так далее, до пяти минут. Пока kubelet ждёт, под показывает статус [[k8s.crashloop|CrashLoopBackOff]], а счётчик RESTARTS растёт. Причину ищут в логах **предыдущего** запуска, потому что текущий только что начался.',
         'A process that runs does not yet mean the application works. The kubelet can ask it itself: these are [[k8s.probe|probes]], an HTTP request, a TCP connection or a command inside the container.\n\n- **readinessProbe** answers "may traffic be sent". A failure does not touch the process: the pod gets `ready: false` and leaves the EndpointSlice — the Service stops sending to it. Without readiness a pod gets traffic as soon as its process starts, even if the application is still warming up.\n- **livenessProbe** asks "is it alive". `failureThreshold` failures in a row — the kubelet restarts the container. Pointing it at a dependency (a database) is dangerous: the database goes down — every pod restarts.\n- **startupProbe** is for applications that start slowly: until it passes, the other probes do not run.\n\nWhen a container crashes, the kubelet restarts it — with a growing pause of 10 s, 20 s, 40 s… up to 5 minutes. While it waits, the status is [[k8s.crashloop|CrashLoopBackOff]] and the RESTARTS counter grows. The cause is in the logs of the **previous** run: the current one has only just begun.',
       ),
     },
@@ -230,7 +230,7 @@ export const healthLesson: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: HEALTH_LAB,
-      intro: bi('В кластере работают под `crash`, который падает, и Deployment `shop` с Service `shop`, на который не идут запросы. Ещё есть файл `hog.yaml` с подом, который занимает 300 МБ памяти.', 'The cluster has: pod `crash`, which crashes; Deployment `shop` with Service `shop` that gets no traffic; the file `hog.yaml` — a pod that eats 300 MB.'),
+      intro: bi('В кластере работают под `crash`, контейнер которого раз за разом аварийно завершается, и Deployment `shop` с Service `shop`, на который не идут запросы. Ещё есть файл `hog.yaml` с подом, который занимает 300 МБ памяти.', 'The cluster has: pod `crash`, which crashes; Deployment `shop` with Service `shop` that gets no traffic; the file `hog.yaml` — a pod that eats 300 MB.'),
       tasks: [
         {
           id: 'previous',

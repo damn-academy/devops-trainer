@@ -120,18 +120,18 @@ const diagram = {
   width: 960,
   height: 470,
   nodes: [
-    box('you', bi('Вы, kubectl', 'You, kubectl'), 'user', 'box', [24, 24, 230, 64], 'terminal', bi('Вы меняете образ в шаблоне пода, и с этого начинается выкатка новой версии.', 'You change the image in the pod template; this starts the rollout.'), bi('Команду набираете вы.', 'You type it.'), { see: 'kubectl rollout history deploy/web' }),
-    box('deploy', bi('Deployment web', 'Deployment web'), 'obj', 'doc', [360, 24, 240, 80], 'file', bi('Объект Deployment хранит желаемое: сколько подов должно работать (replicas), шаблон пода и правила выкатки. Каждая смена шаблона, например нового образа, создаёт новую ревизию и новый ReplicaSet.', 'Holds replicas, the pod template and the rollout rules; a template change makes a new revision and a new ReplicaSet.'), bi('Объект создаёте вы командой `kubectl apply`.', 'You create it with `kubectl apply`.'), { see: 'kubectl get deploy web -o yaml', doc: D.deployment, sub: 'image 1.0' }),
+    box('you', bi('Вы, kubectl', 'You, kubectl'), 'user', 'box', [24, 24, 230, 64], 'terminal', bi('Вы меняете образ в шаблоне пода, и с этого начинается выкладка новой версии.', 'You change the image in the pod template; this starts the rollout.'), bi('Команду набираете вы.', 'You type it.'), { see: 'kubectl rollout history deploy/web' }),
+    box('deploy', bi('Deployment web', 'Deployment web'), 'obj', 'doc', [360, 24, 240, 80], 'file', bi('Объект Deployment хранит желаемое: сколько подов должно работать (replicas), шаблон пода и правила выкладки. Каждая смена шаблона, например нового образа, создаёт новую ревизию и новый ReplicaSet.', 'Holds replicas, the pod template and the rollout rules; a template change makes a new revision and a new ReplicaSet.'), bi('Объект создаёте вы командой `kubectl apply`.', 'You create it with `kubectl apply`.'), { see: 'kubectl get deploy web -o yaml', doc: D.deployment, sub: 'image: 1.0' }),
     box('ctrl', bi('Контроллер Deployment', 'Deployment controller'), 'cp', 'hex', [380, 150, 200, 60], 'process', bi('На каждом шаге контроллер решает одно: добавить подов новому ReplicaSet, убрать подов у старого или подождать, пока новые поды станут готовы. Границы ему задают maxSurge и maxUnavailable.', 'At each step it decides: scale up the new ReplicaSet, scale down the old one, or wait for readiness, within maxSurge and maxUnavailable.'), CM, { see: 'kubectl rollout status deploy/web', doc: D.deployment }),
-    box('old', bi('Старый ReplicaSet, версия 1.0', 'Old ReplicaSet, 1.0'), 'obj', 'buffer', [40, 262, 320, 78], 'container', bi('ReplicaSet со старым шаблоном. Во время выкатки контроллер уменьшает число его подов до нуля, но сам объект оставляет, потому что по нему работает откат командой `kubectl rollout undo`.', 'The ReplicaSet with the old template; scaled to zero but kept for `kubectl rollout undo`.'), bi('ReplicaSet создал контроллер Deployment при прошлой выкатке.', 'Created by the Deployment controller at the last rollout.'), { see: 'kubectl get rs', doc: D.rs, sub: '' }),
-    box('new', bi('Новый ReplicaSet, версия 1.1', 'New ReplicaSet, 1.1'), 'obj', 'buffer', [600, 262, 320, 78], 'container', bi('ReplicaSet с новым шаблоном. Число его подов растёт, но в расчёт границ под входит только тогда, когда стал готов (Ready).', 'The ReplicaSet with the new template; a pod counts only once it is Ready.'), bi('ReplicaSet создаёт контроллер Deployment в начале выкатки.', 'Created by the Deployment controller when the rollout starts.'), { see: 'kubectl get rs -w', doc: D.rs, sub: '' }),
-    box('svc', bi('Service web', 'Service web'), 'l4', 'pill', [360, 396, 240, 56], 'switch', bi('Service отправляет запросы только на готовые поды, причём обоих ReplicaSet сразу. Поэтому во время выкатки пользователям отвечают и версия 1.0, и версия 1.1.', 'Sends requests only to Ready pods of both ReplicaSets, so during the rollout both versions answer.'), bi('Service создаёте вы.', 'You create it.'), { see: 'kubectl get endpointslices -l kubernetes.io/service-name=web', doc: D.service }),
+    box('old', bi('Старый ReplicaSet, версия 1.0', 'Old ReplicaSet, 1.0'), 'obj', 'buffer', [40, 262, 320, 78], 'container', bi('ReplicaSet со старым шаблоном. Во время выкладки контроллер уменьшает число его подов до нуля, но сам объект оставляет, потому что по нему работает откат командой `kubectl rollout undo`.', 'The ReplicaSet with the old template; scaled to zero but kept for `kubectl rollout undo`.'), bi('ReplicaSet создал контроллер Deployment при прошлой выкладке.', 'Created by the Deployment controller at the last rollout.'), { see: 'kubectl get rs', doc: D.rs, sub: '' }),
+    box('new', bi('Новый ReplicaSet, версия 1.1', 'New ReplicaSet, 1.1'), 'obj', 'buffer', [600, 262, 320, 78], 'container', bi('ReplicaSet с новым шаблоном. Число его подов растёт, но в расчёт границ под входит только тогда, когда стал готов (Ready).', 'The ReplicaSet with the new template; a pod counts only once it is Ready.'), bi('ReplicaSet создаёт контроллер Deployment в начале выкладки.', 'Created by the Deployment controller when the rollout starts.'), { see: 'kubectl get rs -w', doc: D.rs, sub: '' }),
+    box('svc', bi('Service web', 'Service web'), 'l4', 'pill', [360, 396, 240, 56], 'switch', bi('Service отправляет запросы только на готовые поды, причём обоих ReplicaSet сразу. Поэтому во время выкладки пользователям отвечают и версия 1.0, и версия 1.1.', 'Sends requests only to Ready pods of both ReplicaSets, so during the rollout both versions answer.'), bi('Service создаёте вы.', 'You create it.'), { see: 'kubectl get endpointslices -l kubernetes.io/service-name=web', doc: D.service }),
   ],
   edges: [
     edge('e-you', 'you', 'deploy', bi('новый образ', 'new image'), bi('Команда меняет образ в шаблоне Deployment.', 'The command changes the image in the template.'), bi('Запрос отправляет kubectl.', 'kubectl.')),
     edge('e-watch', 'deploy', 'ctrl', bi('новая ревизия', 'new revision'), bi('Контроллер узнаёт о новой ревизии шаблона из события watch.', 'The controller learns of the new revision from a watch event.'), CM),
-    edge('e-old', 'ctrl', 'old', bi('убрать поды', 'scale down'), bi('Контроллер уменьшает replicas старого ReplicaSet. В событиях это видно как «Scaled down replica set».', 'The controller lowers the old ReplicaSet’s replicas: “Scaled down replica set”.'), CM, { via: [[200, 180]] }),
-    edge('e-new', 'ctrl', 'new', bi('добавить поды', 'scale up'), bi('Контроллер увеличивает replicas нового ReplicaSet. В событиях это видно как «Scaled up replica set».', 'The controller raises the new ReplicaSet’s replicas: “Scaled up replica set”.'), CM, { via: [[760, 180]] }),
+    edge('e-old', 'ctrl', 'old', bi('убрать поды', 'scale down'), bi('Контроллер уменьшает replicas старого ReplicaSet. В событиях это видно как «Scaled down replica set».', 'The controller lowers the old ReplicaSet’s replicas: “Scaled down replica set”.'), CM, { via: [[200, 180]], labelAt: 0.15 }),
+    edge('e-new', 'ctrl', 'new', bi('добавить поды', 'scale up'), bi('Контроллер увеличивает replicas нового ReplicaSet. В событиях это видно как «Scaled up replica set».', 'The controller raises the new ReplicaSet’s replicas: “Scaled up replica set”.'), CM, { via: [[760, 180]], labelAt: 0.85 }),
     edge('e-svc-old', 'svc', 'old', bi('запросы к 1.0', 'requests to 1.0'), bi('Запросы пользователей к готовым подам старой версии.', 'User requests to Ready old pods.'), bi('Список готовых подов ведёт контроллер EndpointSlice.', 'The EndpointSlice controller keeps the list.'), { via: [[200, 424]] }),
     edge('e-svc-new', 'svc', 'new', bi('запросы к 1.1', 'requests to 1.1'), bi('Запросы пользователей к готовым подам новой версии.', 'User requests to Ready new pods.'), bi('Список готовых подов ведёт контроллер EndpointSlice.', 'The EndpointSlice controller keeps the list.'), { via: [[760, 424]] }),
   ],
@@ -145,11 +145,11 @@ export const rollingModel = defineModel<P>({
   block: 'k8s-1',
   title: bi('Как Deployment заменяет поды на новую версию', 'How a Deployment replaces pods with a new version'),
   summary: bi(
-    'Вы меняете образ в Deployment, и контроллер заменяет поды старой версии подами новой. Он делает это по шагам: добавляет подов новому ReplicaSet, ждёт, пока они станут готовы, и убирает поды у старого. Выкатку ограничивают две границы: maxSurge говорит, сколько подов можно добавить сверх replicas, а maxUnavailable — сколько подов может временно не отвечать.',
+    'Вы меняете образ в Deployment, и контроллер заменяет поды старой версии подами новой. Он делает это по шагам: добавляет подов новому ReplicaSet, ждёт, пока они станут готовы, и убирает поды у старого. Выкладку ограничивают две границы: maxSurge говорит, сколько подов можно добавить сверх replicas, а maxUnavailable — сколько подов может временно не отвечать.',
     'You change the image and the controller replaces old pods with new ones step by step, within two bounds: maxSurge (extra pods above replicas) and maxUnavailable (pods that may be unavailable).',
   ),
   intro: bi(
-    'Сейчас на схеме Deployment, старый ReplicaSet с четырьмя готовыми подами версии 1.0 и Service, который отправляет на них запросы. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Следите за счётчиком «готово в худший момент» под схемой, потому что он показывает, сколько подов отвечало пользователям в самый неудачный момент выкатки. Потом меняйте в «Параметрах» границы выкатки и способ замены.',
+    'Сейчас на схеме Deployment, старый ReplicaSet с четырьмя готовыми подами версии 1.0 и Service, который отправляет на них запросы. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Следите за счётчиком «готово в худший момент» под схемой, потому что он показывает, сколько подов отвечало пользователям в самый неудачный момент выкладки. Потом меняйте в «Параметрах» границы выкладки и способ замены.',
     'For now the diagram shows the Deployment, the old ReplicaSet with four Ready 1.0 pods and the Service sending them requests. Press “Start from the first step”, then go on with “Step forward”. Watch the counter “ready at the worst moment” under the diagram. Then change the rollout bounds and the strategy in “Parameters”.',
   ),
   legend: [
@@ -162,7 +162,7 @@ export const rollingModel = defineModel<P>({
     mark('ok', 'поды готовы и получают запросы', 'pods ready and serving'),
     mark('err', 'поды не становятся готовыми', 'pods never become ready'),
   ],
-  stopLabel: bi('Выкатка остановилась', 'The rollout stopped'),
+  stopLabel: bi('Выкладка остановилась', 'The rollout stopped'),
   concepts: ['k8s.deployment', 'k8s.rolling-update'],
   diagram,
   params: [
@@ -179,7 +179,7 @@ export const rollingModel = defineModel<P>({
       ],
       near: 'ctrl',
       predict: {
-        prompt: bi('Вы переключаете способ замены подов. Сколько подов будет отвечать пользователям в самый неудачный момент выкатки?', 'You switch the strategy. How many pods answer users at the worst moment?'),
+        prompt: bi('Вы переключаете способ замены подов. Сколько подов будет отвечать пользователям в самый неудачный момент выкладки?', 'You switch the strategy. How many pods answer users at the worst moment?'),
         options: [
           { id: 'zero', text: bi('Ни одного, и какое-то время сайт не будет отвечать', 'None: for a while the site does not answer') },
           { id: 'some', text: bi('Хотя бы один под будет отвечать всё время', 'At least one pod answers all the time') },
@@ -196,9 +196,9 @@ export const rollingModel = defineModel<P>({
       step: 1,
       default: 1,
       near: 'new',
-      group: bi('Границы выкатки', 'Rollout bounds'),
+      group: bi('Границы выкладки', 'Rollout bounds'),
       predict: {
-        prompt: bi('Вы меняете maxSurge, то есть сколько подов можно запустить сверх replicas. С чего контроллер начнёт выкатку при новом значении?', 'You change maxSurge. How will the controller start the rollout now?'),
+        prompt: bi('Вы меняете maxSurge, то есть сколько подов можно запустить сверх replicas. С чего контроллер начнёт выкладку при новом значении?', 'You change maxSurge. How will the controller start the rollout now?'),
         options: [
           { id: 'up', text: bi('Сначала создаст поды новой версии', 'First it creates new pods') },
           { id: 'down', text: bi('Сначала уберёт старый под, потому что добавлять сверх replicas нельзя', 'First it removes an old pod, since nothing may be added on top') },
@@ -216,9 +216,9 @@ export const rollingModel = defineModel<P>({
       step: 1,
       default: 1,
       near: 'old',
-      group: bi('Границы выкатки', 'Rollout bounds'),
+      group: bi('Границы выкладки', 'Rollout bounds'),
       predict: {
-        prompt: bi('Вы меняете maxUnavailable. Сколько подов будет отвечать пользователям в самый неудачный момент выкатки?', 'You change maxUnavailable. How many pods answer at the worst moment?'),
+        prompt: bi('Вы меняете maxUnavailable. Сколько подов будет отвечать пользователям в самый неудачный момент выкладки?', 'You change maxUnavailable. How many pods answer at the worst moment?'),
         options: [
           { id: 'all', text: bi('Столько же, сколько записано в replicas', 'As many as replicas') },
           { id: 'less', text: bi('Меньше, чем записано в replicas', 'Fewer than replicas') },
@@ -232,11 +232,11 @@ export const rollingModel = defineModel<P>({
   breaks: [
     {
       id: 'bad-image',
-      label: bi('Новый образ trainer/web:2.0 падает сразу при запуске', 'The new image trainer/web:2.0 crashes on start'),
+      label: bi('Контейнер из нового образа trainer/web:2.0 аварийно завершается сразу после запуска', 'The new image trainer/web:2.0 crashes on start'),
       remove: ['e-svc-new'],
       boundary: 'process',
       predict: {
-        prompt: bi('Новый образ падает сразу при запуске, и новые поды никогда не становятся готовыми. Что будет со старыми подами версии 1.0?', 'The new image crashes on start; new pods never become ready. What happens to the old 1.0 pods?'),
+        prompt: bi('Контейнер из нового образа аварийно завершается сразу после запуска, и новые поды никогда не становятся готовыми. Что будет со старыми подами версии 1.0?', 'The new image crashes on start; new pods never become ready. What happens to the old 1.0 pods?'),
         options: [
           { id: 'keep', text: bi('Часть старых подов продолжит работать, сколько позволяет maxUnavailable', 'Some keep running, as maxUnavailable allows') },
           { id: 'gone', text: bi('Старые поды удалят, и сайт перестанет отвечать', 'They are deleted and the site stops answering') },
@@ -251,7 +251,7 @@ export const rollingModel = defineModel<P>({
     { id: 'minAvailable', label: bi('готово в худший момент', 'ready at the worst moment') },
     { id: 'total', label: bi('подов всего', 'pods in total') },
     { id: 'replicas', label: bi('должно быть (replicas)', 'replicas') },
-    { id: 'seconds', label: bi('секунд с начала выкатки', 'seconds since the start') },
+    { id: 'seconds', label: bi('секунд с начала выкладки', 'seconds since the start') },
   ],
   run(p, broken): Step[] {
     const bad = broken.has('bad-image');
@@ -263,8 +263,8 @@ export const rollingModel = defineModel<P>({
     const m0 = { available: R, minAvailable: R, total: R, replicas: R, seconds: 0 };
     s.push({
       id: 'before',
-      label: bi('до выкатки', 'before'),
-      caption: fmtb(bi('До выкатки всё спокойно, и старый ReplicaSet держит {r} версии 1.0, все они готовы, и Service отправляет запросы пользователей на них.', 'Before the rollout the old ReplicaSet holds {r} of 1.0, all ready, and the Service sends requests to them.'), { r: num(R, ...PODS) }),
+      label: bi('исходно', 'before'),
+      caption: fmtb(bi('До выкладки всё спокойно, и старый ReplicaSet держит {r} версии 1.0, все они готовы, и Service отправляет запросы пользователей на них.', 'Before the rollout the old ReplicaSet holds {r} of 1.0, all ready, and the Service sends requests to them.'), { r: num(R, ...PODS) }),
       focus: ['old', 'e-svc-old'],
       say: { old: fmtb(bi('Старый ReplicaSet держит {r} версии 1.0, и все они отвечают.', 'The old ReplicaSet holds {r} of 1.0, all answering.'), { r: num(R, ...PODS) }) },
       states: only(ALL, 'deploy', 'old', 'svc', 'e-svc-old'),
@@ -274,11 +274,11 @@ export const rollingModel = defineModel<P>({
     });
     s.push({
       id: 'change',
-      label: bi('новый образ', 'new image'),
+      label: fmt(bi('образ {v}', 'image {v}'), { v: img }),
       caption: fmt(bi('Вы меняете образ в шаблоне Deployment на `trainer/web:{i}`. Deployment получает новую ревизию шаблона, но поды от этого пока не меняются.', 'You change the template image to `trainer/web:{i}`: a new revision, but no pod changes yet.'), { i: img }),
       focus: ['you', 'e-you'],
       reveal: ['you', 'e-you'],
-      tokens: [{ edge: 'e-you', label: `kubectl set image deploy/web web=trainer/web:${img}` }],
+      tokens: [{ edge: 'e-you', label: fmt(bi('образ {v}', 'image {v}'), { v: img }) }],
       say: { you: fmt(bi('Вы меняете образ в шаблоне на trainer/web:{i}.', 'You change the template image to trainer/web:{i}.'), { i: img }) },
       values: { deploy: `image 1.0 → ${img}` },
       metrics: m0,
@@ -287,12 +287,12 @@ export const rollingModel = defineModel<P>({
       s.push({
         id: 'a0-invalid',
         label: bi('отказ', 'rejected'),
-        caption: bi('Оба параметра, maxSurge и maxUnavailable, равны нулю, поэтому контроллеру нельзя ни добавить под сверх replicas, ни убрать хотя бы один старый, и выкатка не смогла бы сделать ни шага. Поэтому API-сервер такой Deployment не принимает.', 'Both maxSurge and maxUnavailable are zero: no step is possible, so the API server rejects the Deployment.'),
+        caption: bi('Оба параметра, maxSurge и maxUnavailable, равны нулю, поэтому контроллеру нельзя ни добавить под сверх replicas, ни убрать хотя бы один старый, и выкладка не смогла бы сделать ни шага. Поэтому API-сервер такой Deployment не принимает.', 'Both maxSurge and maxUnavailable are zero: no step is possible, so the API server rejects the Deployment.'),
         focus: ['deploy'],
-        say: { deploy: bi('API-сервер отклоняет Deployment, в котором обе границы выкатки равны нулю.', 'The API server rejects a Deployment with both bounds at zero.') },
+        say: { deploy: bi('API-сервер отклоняет Deployment, в котором обе границы выкладки равны нулю.', 'The API server rejects a Deployment with both bounds at zero.') },
         states: { deploy: 'err' },
         metrics: m0,
-        broken: { at: 'deploy', message: 'The Deployment "web" is invalid: spec.strategy.rollingUpdate.maxUnavailable: Invalid value: intstr.IntOrString{Type:0, IntVal:0, StrVal:""}: may not be 0 when `maxSurge` is 0', caption: bi('ещё до начала выкатки, на проверке объекта. Хотя бы одна из двух границ должна оставлять место для шага.', 'before the rollout, at validation: at least one bound must leave room for a step.') },
+        broken: { at: 'deploy', message: 'The Deployment "web" is invalid: spec.strategy.rollingUpdate.maxUnavailable: Invalid value: intstr.IntOrString{Type:0, IntVal:0, StrVal:""}: may not be 0 when `maxSurge` is 0', caption: bi('ещё до начала выкладки, на проверке объекта. Хотя бы одна из двух границ должна оставлять место для шага.', 'before the rollout, at validation: at least one bound must leave room for a step.') },
       });
       return s;
     }
@@ -351,7 +351,7 @@ export const rollingModel = defineModel<P>({
           id: `a${i}-ready`,
           label: fmt(bi('готово {n}', '{n} ready'), { n: a.to ?? 0 }),
           caption: p.probe
-            ? fmt(bi('Прошло {t} с с начала выкатки. Новые поды прошли проверку готовности, и готово уже {r} из {n}. Service начинает отправлять на них запросы, и только теперь контроллер может убрать следующие старые поды.', '{t} s in: new pods passed the readiness check, {r} of {n} ready. The Service sends them requests, and only now may the controller remove more old pods.'), { t: a.t, r: a.newReady, n: a.newR })
+            ? fmt(bi('Прошло {t} с с начала выкладки. Новые поды прошли проверку готовности, и готово уже {r} из {n}. Service начинает отправлять на них запросы, и только теперь контроллер может убрать следующие старые поды.', '{t} s in: new pods passed the readiness check, {r} of {n} ready. The Service sends them requests, and only now may the controller remove more old pods.'), { t: a.t, r: a.newReady, n: a.newR })
             : bi('Проверки готовности у пода нет, поэтому под считается готовым, как только запущен процесс, даже если приложение ещё прогревается и отвечает ошибками. Service сразу отправляет на него запросы.', 'Without a readiness check a pod counts as ready once its process starts, even while the application still warms up and answers with errors.'),
           focus: ['new', 'e-svc-new'],
           reveal: ['e-svc-new'],
@@ -366,9 +366,9 @@ export const rollingModel = defineModel<P>({
         s.push({
           id: `a${i}-stuck`,
           label: bi('застряла', 'stuck'),
-          caption: bi('Новые поды падают при запуске, переходят в состояние CrashLoopBackOff и не становятся готовыми. Контроллер ждёт, потому что убирать старые поды дальше ему нельзя, потому что тогда готовых подов стало бы меньше, чем разрешает maxUnavailable.', 'New pods crash, go into CrashLoopBackOff and never become ready. The controller waits: removing more old pods would break maxUnavailable.'),
+          caption: bi('Контейнеры новых подов аварийно завершаются сразу после запуска, поды переходят в состояние CrashLoopBackOff и не становятся готовыми. Контроллер ждёт, потому что убирать старые поды дальше ему нельзя, потому что тогда готовых подов стало бы меньше, чем разрешает maxUnavailable.', 'New pods crash, go into CrashLoopBackOff and never become ready. The controller waits: removing more old pods would break maxUnavailable.'),
           focus: ['new'],
-          say: { new: bi('Новые поды падают при запуске и не становятся готовыми.', 'New pods crash on start and never become ready.') },
+          say: { new: bi('Контейнеры новых подов аварийно завершаются сразу после запуска, поэтому поды не становятся готовыми.', 'New pods crash on start and never become ready.') },
           values: vals(a),
           fill,
           states: { new: 'err' },
@@ -383,9 +383,9 @@ export const rollingModel = defineModel<P>({
         s.push({
           id: `a${i}-done`,
           label: bi('готово', 'done'),
-          caption: fmtb(bi('Выкатка закончена. Подов новой версии работает столько, сколько нужно ({r}), а у старого ReplicaSet не осталось ни одного пода. Сам старый ReplicaSet контроллер не удаляет, потому что по нему работает откат. Команда `kubectl rollout status` печатает: deployment "web" successfully rolled out.', 'Done: {r} of the new version run, the old ReplicaSet is at zero and kept for a rollback.'), { r: num(R, ...PODS) }),
+          caption: fmtb(bi('Выкладка закончена. Подов новой версии работает столько, сколько нужно ({r}), а у старого ReplicaSet не осталось ни одного пода. Сам старый ReplicaSet контроллер не удаляет, потому что по нему работает откат. Команда `kubectl rollout status` печатает: deployment "web" successfully rolled out.', 'Done: {r} of the new version run, the old ReplicaSet is at zero and kept for a rollback.'), { r: num(R, ...PODS) }),
           focus: ['ctrl'],
-          say: { ctrl: bi('Контроллер видит, что все поды новой версии готовы, и заканчивает выкатку.', 'The controller sees all new pods ready and finishes.') },
+          say: { ctrl: bi('Контроллер видит, что все поды новой версии готовы, и заканчивает выкладку.', 'The controller sees all new pods ready and finishes.') },
           values: vals(a),
           fill,
           states: { new: 'ok', old: 'off' },
@@ -397,27 +397,27 @@ export const rollingModel = defineModel<P>({
   explainDelta(_prev, next, change, a, b): Bi {
     if (change.kind === 'break')
       return change.on
-        ? fmt(bi('Новый образ падает, и выкатка застряла. Старые поды продолжают отвечать, и в худший момент готово {m}.', 'The new image crashes and the rollout is stuck; at the worst moment {m} are ready.'), { m: metric(next, 'minAvailable') })
-        : bi('Образ исправлен, и выкатка доходит до конца.', 'The image is fixed; the rollout finishes.');
+        ? fmt(bi('Контейнер из нового образа аварийно завершается, и выкладка застряла. Старые поды продолжают отвечать, и в худший момент готово {m}.', 'The new image crashes and the rollout is stuck; at the worst moment {m} are ready.'), { m: metric(next, 'minAvailable') })
+        : bi('Образ исправлен, и выкладка доходит до конца.', 'The image is fixed; the rollout finishes.');
     const m = metric(next, 'minAvailable');
     const sec = metric(next, 'seconds');
     switch (change.id) {
       case 'surge':
       case 'unavailable':
-        return fmt(bi('Теперь maxSurge равен {s}, а maxUnavailable равен {u}. В худший момент готово {m}, а вся выкатка займёт около {t} с.', 'maxSurge {s}, maxUnavailable {u}: {m} ready at worst, about {t} s in all.'), { s: b.surge as number, u: b.unavailable as number, m, t: sec });
+        return fmt(bi('Теперь maxSurge равен {s}, а maxUnavailable равен {u}. В худший момент готово {m}, а вся выкладка займёт около {t} с.', 'maxSurge {s}, maxUnavailable {u}: {m} ready at worst, about {t} s in all.'), { s: b.surge as number, u: b.unavailable as number, m, t: sec });
       case 'strategy':
         return b.strategy === 'Recreate'
           ? bi('При способе Recreate сначала уходят все старые поды и только потом приходят новые, поэтому в худший момент не готово ни одного пода.', 'Recreate: all old pods go first, so at worst none is ready.')
           : bi('При способе RollingUpdate старые и новые поды сменяют друг друга по шагам, и сайт всё время отвечает.', 'RollingUpdate: old and new pods replace each other step by step.');
       case 'ready':
-        return fmt(bi('Новый под теперь готов не через {a}, а через {b} с. Шагов столько же, но каждый ждёт дольше, и вся выкатка занимает {t} с.', 'Ready after {b} s instead of {a}: as many steps, each longer, {t} s in all.'), { a: a.ready as number, b: b.ready as number, t: sec });
+        return fmt(bi('Новый под теперь готов не через {a}, а через {b} с. Шагов столько же, но каждый ждёт дольше, и вся выкладка занимает {t} с.', 'Ready after {b} s instead of {a}: as many steps, each longer, {t} s in all.'), { a: a.ready as number, b: b.ready as number, t: sec });
       case 'probe':
         return b.probe
           ? bi('С проверкой готовности под получает запросы только тогда, когда приложение уже отвечает.', 'With a readiness check a pod gets requests only when the application answers.')
-          : bi('Без проверки готовности выкатка заканчивается быстрее, но запросы попадают на поды, которые ещё прогреваются, и получают ошибки.', 'Without it the rollout is faster, but requests reach warming pods and get errors.');
+          : bi('Без проверки готовности выкладка заканчивается быстрее, но запросы попадают на поды, которые ещё прогреваются, и получают ошибки.', 'Without it the rollout is faster, but requests reach warming pods and get errors.');
       case 'replicas':
-        return fmt(bi('Подов теперь должно быть {b} вместо {a}. Границы выкатки считаются от нового числа, и в худший момент готово {m}.', 'replicas {a} → {b}: the bounds apply to the new number; {m} ready at worst.'), { a: a.replicas as number, b: b.replicas as number, m });
+        return fmt(bi('Подов теперь должно быть {b} вместо {a}. Границы выкладки считаются от нового числа, и в худший момент готово {m}.', 'replicas {a} → {b}: the bounds apply to the new number; {m} ready at worst.'), { a: a.replicas as number, b: b.replicas as number, m });
     }
-    return bi('Выкатка пересчитана.', 'The rollout is recomputed.');
+    return bi('Выкладка пересчитана.', 'The rollout is recomputed.');
   },
 });

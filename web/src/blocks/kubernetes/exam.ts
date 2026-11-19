@@ -87,14 +87,14 @@ export const k8sExam: Exam = {
       setup: EXAM_SETUPS.rollback,
       task: {
         id: 'x-rollback',
-        prompt: bi('Пришла заявка «После выкатки сайт наполовину не работает». Deployment `web` выкатили на новую версию, и она падает. Верните последнюю работавшую версию, не удаляя Deployment: все четыре пода должны быть готовы.', 'The ticket says: “Half the site is down after the rollout”. Deployment `web` was rolled out to a new version, and it crashes. Bring back the last working version without deleting the Deployment: all 4 pods must be ready.'),
+        prompt: bi('Пришла заявка «После выкладки сайт наполовину не работает». Deployment `web` обновили до новой версии, и её контейнеры аварийно завершаются сразу после запуска. Верните последнюю работавшую версию, не удаляя Deployment: все четыре пода должны быть готовы.', 'The ticket says: “Half the site is down after the rollout”. Deployment `web` was rolled out to a new version, and it crashes. Bring back the last working version without deleting the Deployment: all 4 pods must be ready.'),
         check: {
           when: (f, start) => {
             const d = k8s(f).deployments.find((x) => x.ns === 'default' && x.name === 'web');
             const uid = (x?: Facts) => (x ? obj(x, 'Deployment', 'default', 'web')?.metadata?.uid : undefined);
             return !!d && d.ready >= 4 && d.image === 'trainer/web:1.1' && (!start || uid(f) === uid(start));
           },
-          fail: [{ if: (f) => k8s(f).deployments.find((x) => x.name === 'web')?.image === 'trainer/web:1.0', say: bi('Версия 1.0 работает, но последней работавшей версией была 1.1. Посмотрите историю выкаток.', '1.0 works, but the last working version is 1.1. Look at the rollout history.') }],
+          fail: [{ if: (f) => k8s(f).deployments.find((x) => x.name === 'web')?.image === 'trainer/web:1.0', say: bi('Версия 1.0 работает, но последней работавшей версией была 1.1. Посмотрите историю выкладок.', '1.0 works, but the last working version is 1.1. Look at the rollout history.') }],
         },
         concepts: ['k8s.revision', 'k8s.rolling-update'],
       },
@@ -186,7 +186,7 @@ export const k8sExam: Exam = {
       setup: EXAM_SETUPS.config,
       task: {
         id: 'x-grace',
-        prompt: bi('Пришла заявка «Выкатка ждёт полминуты на каждом поде». Приложение `web` завершается за секунду, а Kubernetes ждёт его 30 секунд. Найдите в документации поле пода, которое задаёт это время, и поставьте 5 секунд в шаблоне Deployment `web`.', 'The ticket says: “A rollout waits half a minute on every pod”. The `web` application exits in a second, but Kubernetes waits 30 seconds for it. Find in the documentation the pod field that sets this time and set 5 seconds in the template of Deployment `web`.'),
+        prompt: bi('Пришла заявка «Выкладка ждёт полминуты на каждом поде». Приложение `web` завершается за секунду, а Kubernetes ждёт его 30 секунд. Найдите в документации поле пода, которое задаёт это время, и поставьте 5 секунд в шаблоне Deployment `web`.', 'The ticket says: “A rollout waits half a minute on every pod”. The `web` application exits in a second, but Kubernetes waits 30 seconds for it. Find in the documentation the pod field that sets this time and set 5 seconds in the template of Deployment `web`.'),
         check: { when: 'k8s.objects[kind=Deployment][metadata.name=web].spec.template.spec.terminationGracePeriodSeconds=5' },
         docStep: 5,
         beyond: true,

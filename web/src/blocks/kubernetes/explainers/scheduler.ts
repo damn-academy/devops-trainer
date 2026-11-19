@@ -79,7 +79,7 @@ const diagram = {
   height: 470,
   nodes: [
     box('pod', bi('Под web', 'Pod web'), 'obj', 'doc', [24, 30, 230, 84], 'file', bi('Новый под, у которого ещё нет узла, поэтому поле `spec.nodeName` у него пустое. Планировщику важно, сколько ресурсов под просит (requests), какие узлы он требует (nodeSelector) и какие запреты узлов готов терпеть (tolerations).', 'A new pod with empty `spec.nodeName`. The scheduler cares about its requests, nodeSelector and tolerations.'), bi('Под создал контроллер ReplicaSet.', 'The ReplicaSet controller created it.'), { see: 'kubectl get pod web -o yaml', doc: D.scheduler, sub: 'requests 250m / 512Mi' }),
-    box('queue', bi('Очередь планировщика', 'Scheduling queue'), 'cp', 'buffer', [24, 190, 230, 64], 'folder', bi('Поды, которые ждут узла. Под, для которого узла не нашлось, возвращается сюда, и планировщик пробует снова, когда в кластере что-то меняется.', 'Pods waiting for a node; an unschedulable pod comes back and is retried when the cluster changes.'), bi('Очередь ведёт kube-scheduler.', 'Kept by kube-scheduler.'), { see: 'kubectl get pods --field-selector status.phase=Pending', doc: D.scheduler, sub: '1 pod' }),
+    box('queue', bi('Очередь планировщика', 'Scheduling queue'), 'cp', 'buffer', [24, 190, 230, 64], 'folder', bi('Поды, которые ждут узла. Под, для которого узла не нашлось, возвращается сюда, и планировщик пробует снова, когда в кластере что-то меняется.', 'Pods waiting for a node; an unschedulable pod comes back and is retried when the cluster changes.'), bi('Очередь ведёт kube-scheduler.', 'Kept by kube-scheduler.'), { see: 'kubectl get pods --field-selector status.phase=Pending', doc: D.scheduler, sub: '1' }),
     box('sched', 'kube-scheduler', 'cp', 'hex', [320, 190, 230, 64], 'process', bi('Планировщик выбирает узел для пода в три приёма: фильтры отбрасывают узлы, куда под не поместится или куда его нельзя ставить, оценка выбирает лучший из оставшихся, а привязка (Binding) записывает выбор. Сам планировщик ничего не запускает.', 'Filter, score, bind: it only picks a node and records the choice, it starts nothing.'), bi('Работает статическим подом на управляющем узле.', 'Runs as a static pod on the control-plane node.'), { see: 'kubectl get events --field-selector reason=FailedScheduling', doc: D.scheduler }),
     box('api', 'kube-apiserver', 'cp', 'hex', [320, 30, 230, 60], 'server', bi('API-сервер принимает от планировщика привязку пода к узлу и записывает в под поле `nodeName`. После этого под забирает kubelet выбранного узла.', 'Accepts the Binding and writes `nodeName`; then the chosen node’s kubelet takes the pod.'), bi('Работает на управляющем узле.', 'Runs on the control-plane node.'), { doc: D.apiserver }),
     box('w1', 'worker-1', 'node', 'rack', [620, 24, 316, 110], 'server', nodeCard(NODES[0], bi('Ручка «worker-1 закрыт на обслуживание» вешает на него запрет (taint) maintenance=true:NoSchedule.', 'A knob puts the taint maintenance=true:NoSchedule on it.')), NODE_WHO, { see: 'kubectl describe node worker-1', doc: D.scheduler, sub: gauge(NODES[0], 500, 1536) }),
@@ -89,9 +89,9 @@ const diagram = {
   edges: [
     edge('e-pod', 'pod', 'queue', bi('ждёт узла', 'waits for a node'), bi('Под без узла попадает в очередь планировщика.', 'A pod without a node enters the queue.'), bi('Под в очередь ставит kube-scheduler.', 'kube-scheduler.')),
     edge('e-queue', 'queue', 'sched', bi('следующий под', 'next pod'), bi('Планировщик берёт из очереди следующий под, выбирая сначала по приоритету, а потом по времени.', 'The next pod, by priority, then by time.'), bi('kube-scheduler', 'kube-scheduler')),
-    edge('e-w1', 'sched', 'w1', bi('проверка узла', 'check the node'), bi('Фильтры проверяют, подходит ли узел, а оценка — насколько он хорош.', 'Filters check whether the node fits; scoring, how good it is.'), bi('Проверяют плагины планировщика.', 'Scheduler plugins.'), { via: [[585, 222], [585, 79]] }),
-    edge('e-w2', 'sched', 'w2', bi('проверка узла', 'check the node'), bi('Фильтры проверяют, подходит ли узел, а оценка — насколько он хорош.', 'Filters check whether the node fits; scoring, how good it is.'), bi('Проверяют плагины планировщика.', 'Scheduler plugins.')),
-    edge('e-w3', 'sched', 'w3', bi('проверка узла', 'check the node'), bi('Фильтры проверяют, подходит ли узел, а оценка — насколько он хорош.', 'Filters check whether the node fits; scoring, how good it is.'), bi('Проверяют плагины планировщика.', 'Scheduler plugins.'), { via: [[585, 222], [585, 387]] }),
+    edge('e-w1', 'sched', 'w1', bi('проверка узла', 'check the node'), bi('Фильтры проверяют, подходит ли узел, а оценка — насколько он хорош.', 'Filters check whether the node fits; scoring, how good it is.'), bi('Проверяют плагины планировщика.', 'Scheduler plugins.'), { via: [[585, 222], [585, 79]], labelAt: 0.85 }),
+    edge('e-w2', 'sched', 'w2', bi('проверка узла', 'check the node'), bi('Фильтры проверяют, подходит ли узел, а оценка — насколько он хорош.', 'Filters check whether the node fits; scoring, how good it is.'), bi('Проверяют плагины планировщика.', 'Scheduler plugins.'), { labelAt: 0.85 }),
+    edge('e-w3', 'sched', 'w3', bi('проверка узла', 'check the node'), bi('Фильтры проверяют, подходит ли узел, а оценка — насколько он хорош.', 'Filters check whether the node fits; scoring, how good it is.'), bi('Проверяют плагины планировщика.', 'Scheduler plugins.'), { via: [[585, 222], [585, 387]], labelAt: 0.85 }),
     edge('e-bind', 'sched', 'api', bi('привязка к узлу', 'binding'), bi('Планировщик записывает выбор запросом Binding, и у пода появляется `spec.nodeName`.', 'The scheduler writes a Binding; the pod gets `spec.nodeName`.'), bi('kube-scheduler', 'kube-scheduler')),
   ],
 };
@@ -235,8 +235,8 @@ export const schedulerModel = defineModel<P>({
         tokens: [{ edge: 'e-w1', label: name }, { edge: 'e-w2', label: name }, { edge: 'e-w3', label: name }],
         say: { sched: fmt(bi('Планировщик проверяет, на каком узле хватит ресурсов для {p} и где ему не запрещено работать.', 'The scheduler checks where {p} fits and is allowed.'), { p: name }) },
         states: { sched: 'on', ...states },
-        values: { ...values, queue: String(p.replicas - i) },
-        fill: { queue: Math.min(1, (p.replicas - i) / 6) },
+        values: { ...values, queue: String(p.replicas - i - 1) },
+        fill: { queue: Math.min(1, (p.replicas - i - 1) / 6) },
         metrics: m(scheduled),
       });
       const best = r.placements[i];
@@ -249,8 +249,10 @@ export const schedulerModel = defineModel<P>({
           focus: ['sched'],
           say: { sched: bi('Подходящего узла не нашлось, поэтому планировщик возвращает под в очередь и записывает событие FailedScheduling.', 'No node: the pod goes back to the queue with FailedScheduling.') },
           states: { sched: 'warn' },
+          values: { queue: String(p.replicas - i) },
+          fill: { queue: Math.min(1, (p.replicas - i) / 6) },
           metrics: m(scheduled),
-          broken: { at: 'sched', message: `Warning  FailedScheduling  default-scheduler  ${msg}`, caption: bi('на фильтрах. Сообщение собирается из причин, по которым отброшен каждый узел, а последняя фраза про preemption говорит, помогло бы ли вытеснить с узлов менее важные поды.', 'at the filters: the message lists every node’s reason, and the preemption part says whether evicting less important pods would help.') },
+          broken: { at: 'sched', message: `Warning  FailedScheduling  default-scheduler  ${msg}`, caption: bi('на фильтрах. Сообщение собирается из причин, по которым отброшен каждый узел, а последняя фраза, про вытеснение (preemption), говорит, помогло бы ли вытеснить с узлов менее важные поды.', 'at the filters: the message lists every node’s reason, and the preemption part says whether evicting less important pods would help.') },
         });
         return s;
       }

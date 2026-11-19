@@ -92,7 +92,7 @@ export function placementFor(quiz: QuizItem[]) {
       setup: EXAM_SETUPS.rollback,
       task: {
         id: 'undo',
-        prompt: bi('Deployment `web` выкатили на версию, которая падает. Верните последнюю работавшую версию так, чтобы были готовы четыре пода.', 'Deployment `web` was rolled out to a version that crashes. Bring back the last working version: 4 ready pods.'),
+        prompt: bi('Deployment `web` обновили до версии, контейнеры которой аварийно завершаются сразу после запуска. Верните последнюю работавшую версию так, чтобы были готовы четыре пода.', 'Deployment `web` was rolled out to a version that crashes. Bring back the last working version: 4 ready pods.'),
         check: { when: "k8s.deployments[ns=default][name=web].image='trainer/web:1.1' && k8s.deployments[ns=default][name=web].ready>=4" },
       },
     },
