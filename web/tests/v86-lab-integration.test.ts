@@ -11,7 +11,7 @@
 
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { evaluateCheck } from '../src/core/check';
 import { createHost } from '../src/engine/v86/host';
 import { V86Lab } from '../src/engine/v86/lab';
@@ -40,7 +40,7 @@ const inProcess: TransportFactory = (onMessage) => {
 };
 
 const cleanup: (() => void)[] = [];
-afterAll(() => cleanup.forEach((f) => f()));
+afterEach(() => cleanup.splice(0).forEach((f) => f()));
 const rss = () => Math.round(process.memoryUsage().rss / 1048576);
 
 async function timed<T>(fn: () => Promise<T>): Promise<[T, number]> {
@@ -76,6 +76,8 @@ describe.skipIf(!enabled)('v86 lab image: Alpine on a 9p root', () => {
     expect((await n2.exec('hostname')).out.trim()).toBe('node2');
     expect((await n2.exec('cat /etc/machine-id')).out).not.toBe((await n1.exec('cat /etc/machine-id')).out);
     expect((await n1.exec('ping -c 2 -W 3 node2')).exit).toBe(0);
+    const fingerprint = "ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub | awk '{print $2}'";
+    expect((await n1.exec(fingerprint)).out).not.toBe((await n2.exec(fingerprint)).out);
 
     // The facts a lesson checks, by state.
     n2.watchPredicates(['listen[port=22].proc=sshd', "net.addrs[dev=eth0].cidr='10.0.0.12/24'"]);
@@ -90,9 +92,11 @@ describe.skipIf(!enabled)('v86 lab image: Alpine on a 9p root', () => {
     const [ssh, sshMs] = await timed(() => n1.exec('ssh -o StrictHostKeyChecking=accept-new -o BatchMode=yes root@node2 hostname'));
     console.log(`ssh node1 → node2: ${sshMs} ms, exit ${ssh.exit}: ${ssh.out.trim()}`);
     expect(ssh.out).toContain('node2');
+    const servedKey = await n1.exec("ssh-keygen -F node2 -f /root/.ssh/known_hosts | tail -1 | awk '{print $3}'");
+    expect(servedKey.out.trim()).toBe((await n2.exec("awk '{print $2}' /etc/ssh/ssh_host_ed25519_key.pub")).out.trim());
 
     // A web server on one machine, a client on the other.
-    expect((await n2.exec('echo hello-from-node2 > /var/lib/nginx/html/index.html; rc-service nginx start')).exit).toBe(0);
+    expect((await n2.exec(`mkdir -p /var/www/localhost/htdocs && echo hello-from-node2 > /var/www/localhost/htdocs/index.html && printf '%s\\n' 'server { listen 80 default_server; root /var/www/localhost/htdocs; index index.html; }' > /etc/nginx/http.d/default.conf && rc-service nginx start`)).exit).toBe(0);
     const [curl, curlMs] = await timed(() => n1.exec('curl -s http://node2/'));
     console.log(`curl node1 → nginx on node2: ${curlMs} ms`);
     expect(curl.out).toContain('hello-from-node2');
@@ -137,21 +141,24 @@ describe.skipIf(!enabled)('v86 lab image: Alpine on a 9p root', () => {
     const steps = [
       "printf 'label: dos\\n,128M,L,*\\n,,L\\n' | sfdisk -q /dev/sda",
       'mkfs.ext4 -q /dev/sda1 && mkfs.ext4 -q /dev/sda2',
-      'mount /dev/sda2 /mnt && mkdir -p /mnt/boot && mount /dev/sda1 /mnt/boot',
-      'setup-disk -m sys -k virt -s 0 /mnt',
+      'mkdir -p /mnt && mount -t ext4 /dev/sda2 /mnt && mkdir -p /mnt/boot && mount -t ext4 /dev/sda1 /mnt/boot',
+      "KERNELOPTS='console=ttyS0,115200 tsc=reliable mitigations=off' setup-disk -m sys -k virt -s 0 /mnt",
+      "sed -i 's@getty -n -l /usr/libexec/dt/autologin@getty@' /mnt/etc/inittab",
       'dd if=/usr/share/syslinux/mbr.bin of=/dev/sda bs=440 count=1 conv=notrunc',
       'sync',
     ];
     for (const s of steps) {
-      const [r, ms] = await timed(() => m.exec(`BOOTLOADER=syslinux ${s} 2>&1 | tail -5`));
+      const [r, ms] = await timed(() => m.exec(`set -o pipefail; export BOOTLOADER=syslinux; ${s} 2>&1 | tail -5`));
       console.log(`${s.slice(0, 50)}…: ${ms} ms exit ${r.exit} ${r.out.trim().split('\n').slice(-2).join(' | ')}`);
+      if (r.exit) console.log((await m.exec('ls -ld /mnt /dev/sda*; cat /proc/filesystems; dmesg | tail -20')).out);
+      expect(r.exit, r.out).toBe(0);
     }
     const f = await m.facts(['blk']);
     console.log(JSON.stringify(f.blk));
     screen = '';
     m.write('reboot\r');
     await new Promise<void>((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error('no login prompt from the disk')), 600_000);
+      const t = setTimeout(() => reject(new Error('no login prompt from the disk: ' + screen.slice(-4000))), 600_000);
       const off = m.onOutput(() => {
         if (/login:\s*$/.test(screen)) {
           clearTimeout(t);

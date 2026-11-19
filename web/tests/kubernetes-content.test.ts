@@ -10,6 +10,7 @@ import { rollout } from '../src/blocks/kubernetes/explainers/rolling';
 import { schedule } from '../src/blocks/kubernetes/explainers/scheduler';
 import { distribution, ruleProbabilities } from '../src/blocks/kubernetes/explainers/service-path';
 import { nodeDownNumbers } from '../src/blocks/kubernetes/explainers/node-down';
+import { fold } from '../src/engine/explainer/geometry';
 
 const mine = (where: string) => /k8s|kubernetes/.test(where);
 
@@ -48,6 +49,50 @@ describe('the Kubernetes block content', () => {
       }
     }
   });
+});
+
+describe('the Kubernetes explainers are built like the gold ones', () => {
+  const models = [...registry.explainers.values()].filter((e) => e.block === 'k8s-1' || e.block === 'k8s-2').map((e) => e.model as ProcessModel<Record<string, unknown>>);
+  const variantsOf = (m: ProcessModel<Record<string, unknown>>) => {
+    const base = Object.fromEntries(m.params.map((p) => [p.id, p.default]));
+    const out: Record<string, unknown>[] = [base];
+    for (const p of m.params) {
+      const values = p.kind === 'toggle' ? [true, false] : p.kind === 'choice' ? (p.options ?? []).map((o) => o.id) : [p.min, p.max];
+      for (const v of values) out.push({ ...base, [p.id]: p.kind === 'choice' && typeof p.default === 'number' ? Number(v) : v });
+    }
+    return out;
+  };
+  for (const m of models) {
+    it(`${m.id}: intro, legend, stop label, a small first picture and an actor with an icon at every step`, () => {
+      expect(m.intro && m.legend?.length && m.stopLabel, m.id).toBeTruthy();
+      const nodes = new Map(m.diagram.nodes.map((n) => [n.id, n]));
+      const defaults = variantsOf(m)[0];
+      const first = fold(m.run(defaults, new Set()), 0);
+      expect(m.diagram.nodes.filter((n) => first.states[n.id] !== 'hidden').length, m.id).toBeLessThanOrEqual(5);
+      let labelled = false;
+      for (const [vi, v] of variantsOf(m).entries())
+        for (const br of [null, ...m.breaks.map((b) => b.id)]) {
+          const steps = m.run(v, new Set(br ? [br] : []));
+          steps.forEach((st, i) => {
+            const frame = fold(steps, i);
+            const actors = Object.keys(st.say ?? {});
+            const where = `${m.id} ${JSON.stringify(v)} ${br}/${st.id}`;
+            expect(actors.length, where).toBeGreaterThan(0);
+            for (const a of actors) {
+              expect(nodes.get(a)?.icon, `${where}: ${a}`).toBeTruthy();
+              expect(frame.states[a], `${where}: ${a} is hidden`).not.toBe('hidden');
+            }
+            for (const f of st.focus) expect(frame.states[f], `${where}: focus on hidden ${f}`).not.toBe('hidden');
+            for (const tk of st.tokens ?? []) {
+              expect(frame.states[tk.edge], `${where}: token on hidden ${tk.edge}`).not.toBe('hidden');
+              if (tk.label) labelled = true;
+            }
+          });
+          if (br && vi === 0) expect(steps.some((s) => s.broken), `${m.id} ${br}`).toBe(true);
+        }
+      expect(labelled, m.id).toBe(true);
+    });
+  }
 });
 
 describe('explainer arithmetic', () => {
