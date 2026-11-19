@@ -39,7 +39,7 @@ const L = {
   start: bi('Начать с первого шага', 'Start from the first step'),
   legend: bi('Как читать схему', 'How to read the diagram'),
   speed: bi('Скорость', 'Speed'),
-  hintClick: bi('Нажмите на любой элемент схемы — он объяснит себя.', 'Click any element of the diagram — it explains itself.'),
+  hintClick: bi('Нажмите на любой элемент схемы, и появится карточка с его объяснением.', 'Click any element of the diagram to open a card that explains it.'),
   cancel: bi('Отмена', 'Cancel'),
   waterfall: bi('Водопад запроса', 'Request waterfall'),
 };
