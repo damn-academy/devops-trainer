@@ -24,6 +24,23 @@ test.describe('shell', () => {
     expect(errors).toEqual([]);
   });
 
+  test('home paints from the manifest; block modules load on entering a lesson', async ({ page }) => {
+    const errors = watchErrors(page);
+    const blockFiles: string[] = [];
+    page.on('request', (r) => {
+      if (r.url().includes('/src/blocks/')) blockFiles.push(r.url());
+    });
+    await open(page, '#/');
+    await expect(page.locator('ol.route > li')).toHaveCount(BLOCKS.length);
+    await page.waitForLoadState('networkidle');
+    expect(blockFiles).toEqual([]);
+
+    await page.locator('ol.route > li[data-block="linux"] .route-actions a.btn.primary').click();
+    await expect(page.locator('main#main .lesson-body')).toBeVisible();
+    expect(blockFiles.length).toBeGreaterThan(0);
+    expect(errors).toEqual([]);
+  });
+
   test('theme toggle switches light and dark', async ({ page }) => {
     await open(page, '#/');
     const before = await page.locator('html').getAttribute('data-theme');
