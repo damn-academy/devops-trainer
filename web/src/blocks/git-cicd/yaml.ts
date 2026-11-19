@@ -63,7 +63,7 @@ export function lintYaml(text: string): YamlProblem[] {
 
 export const yamllintCommand: ShellCommand = {
   name: 'yamllint',
-  summary: bi('Проверка YAML-файлов: синтаксис, дубли ключей, «правдивые» значения.', 'A linter for YAML files: syntax, duplicate keys, truthy values.'),
+  summary: bi('Проверяет YAML-файлы и сообщает о синтаксических ошибках, повторённых ключах и подозрительных логических значениях.', 'A linter for YAML files: syntax, duplicate keys, truthy values.'),
   help: 'usage: yamllint [-h] [-f {parsable,standard}] [-s] FILE_OR_DIR ...\n\nA linter for YAML files.\n\npositional arguments:\n  FILE_OR_DIR           files to check\n\noptions:\n  -h, --help            show this help message and exit\n  -f, --format          format for parsing output\n  -s, --strict          return non-zero exit code on warnings as well as errors\n\nExit status:\n  0  no problems, or only warnings\n  1  at least one error\n  2  warnings with --strict\n',
   run(ctx) {
     const args = ctx.argv.slice(1);
@@ -105,15 +105,15 @@ export const yamllintCommand: ShellCommand = {
 // ── the widget ──
 
 const W = {
-  title: bi('YAML глазами парсера', 'YAML through the parser’s eyes'),
+  title: bi('Как парсер читает YAML', 'YAML through the parser’s eyes'),
   source: bi('Текст', 'Text'),
   tree: bi('Что получил парсер', 'What the parser got'),
   json: bi('То же в JSON', 'The same in JSON'),
   v12: bi('YAML 1.2 (большинство современных парсеров)', 'YAML 1.2 (most current parsers)'),
   v11: bi('YAML 1.1 (PyYAML, старые инструменты)', 'YAML 1.1 (PyYAML, older tools)'),
   ok: bi('Документ разобран без ошибок.', 'The document parses without errors.'),
-  diff: bi('В YAML 1.1 и 1.2 это значение понимается по-разному', 'YAML 1.1 and 1.2 read this value differently'),
-  goal: bi('Цель экрана', 'Goal of this screen'),
+  diff: bi('YAML 1.1 и YAML 1.2 читают это значение по-разному.', 'YAML 1.1 and 1.2 read this value differently'),
+  goal: bi('Что нужно сделать', 'What to do'),
 };
 
 type Kind = 'map' | 'seq' | 'str' | 'int' | 'float' | 'bool' | 'null';
