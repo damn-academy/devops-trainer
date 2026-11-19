@@ -17,12 +17,14 @@
 
 import type { ExecResult, Facts, Machine, SimEvent } from '../../core/types';
 import { assetUrl, IMAGE, labAssetUrl, loadLabManifest, loadManifest, wasmAssetUrl } from './assets';
+import { fetchBootSnapshot, imageHash, V86_VERSION, type BootSnapshot } from './boot-snapshot';
+import { cloneIdentity, type CloneIdentity } from './clone-identity';
 import { labFactsScript, parseLabFacts, scopesOf, LAB_SCOPES } from './lab-facts';
 import type { BootConfig, DiskConfig, WorkerIn, WorkerOut } from './messages';
 import { profile as profileOf, type DiskSpec, type MachineProfile, type ProfileId } from './profiles';
 import { factsScript, frameCommand, hideService, parseFacts, PromptTracker, ServiceParser, shq, watchedPaths, type PromptMark } from './protocol';
 import type { SparseDiskData } from './sparse-disk';
-import { loadState, saveState } from './state-cache';
+import { loadState, saveCompressedState, saveState } from './state-cache';
 
 /** Bump when the bootstrap below changes: old saved states no longer match it. */
 export const BOOTSTRAP_VERSION = 3;
@@ -72,6 +74,7 @@ export interface MachineAssets {
   filesBase?: string;
   /** Kernel command line of the image (the console and debug flags are added here). */
   cmdline?: string;
+  bootSnapshots?: Record<string, BootSnapshot>;
 }
 
 const BUILDROOT_CMDLINE = 'tsc=reliable mitigations=off random.trust_cpu=on console=ttyS0';
@@ -92,7 +95,8 @@ export async function defaultAssets(profileId: ProfileId = 'buildroot'): Promise
     fsJson: labAssetUrl(fs.fsJson),
     filesBase: labAssetUrl(lab.filesBase),
     cmdline: lab.cmdline,
-    kernelSha: (lab.outputs[fs.fsJson]?.sha256 ?? 'x').slice(0, 12),
+    kernelSha: await imageHash(lab, fs.fsJson),
+    bootSnapshots: lab.bootSnapshots,
   };
 }
 
@@ -192,7 +196,11 @@ export class V86Machine implements Machine {
   constructor(o: V86MachineOptions = {}) {
     this.id = o.id ?? `v86-${++seq}`;
     this.profile = profileOf(o.profile);
-    this.identity = { ...o.identity, hostname: o.identity?.hostname ?? this.profile.hostname };
+    this.identity = {
+      mac: '02:' + Array.from(crypto.getRandomValues(new Uint8Array(5)), (b) => b.toString(16).padStart(2, '0')).join(':'),
+      ...o.identity,
+      hostname: o.identity?.hostname ?? this.profile.hostname,
+    };
     this.memoryMB = o.memoryMB ?? this.profile.memoryMB;
     this.disks = o.disks ?? this.profile.disks;
     this.bootCache = o.bootCache ?? true;
@@ -243,10 +251,10 @@ export class V86Machine implements Machine {
 
   // ── start ───────────────────────────────────────────────────────────────
 
-  private cacheKey(): string {
+  cacheKey(): string {
     if (!this.lab) return `boot-${IMAGE.kernel}-${this.memoryMB}m-b${BOOTSTRAP_VERSION}`;
     const disks = this.disks.map((d, i) => `${d.slot ?? (i ? 'hdb' : 'hda')}${d.sizeMB}`).join('');
-    return `boot-${this.profile.id}-v${this.profile.version}-${this.memoryMB}m${disks ? '-' + disks : ''}-b${BOOTSTRAP_VERSION}`;
+    return `boot-v86-${V86_VERSION}-${this.profile.id}-v${this.profile.version}-${this.memoryMB}m${disks ? '-' + disks : ''}-b${BOOTSTRAP_VERSION}`;
   }
 
   private diskKey(): string | undefined {
@@ -283,7 +291,12 @@ export class V86Machine implements Machine {
       if (diskState) this.bootFrom = 'disk';
       const resumed = diskState ?? (this.stateKey ? await loadState(this.stateKey) : null);
       this.resumed = !!resumed;
-      const saved = resumed ?? (this.bootCache ? await loadState(key) : null);
+      let saved = resumed ?? (this.bootCache ? await loadState(key) : null);
+      if (!saved && this.bootCache && a.bootSnapshots) {
+        const entry = a.bootSnapshots[this.cacheKey()];
+        saved = await fetchBootSnapshot(entry, this.cacheKey(), a.kernelSha, labAssetUrl, (gz) => saveCompressedState(key, gz));
+        if (saved) this.downloaded += entry.size;
+      }
       const ready = this.spawn(this.config(a, saved ?? undefined), saved);
       const r = await ready;
       if (this.bootFrom === 'disk') {
@@ -464,7 +477,9 @@ export class V86Machine implements Machine {
       return;
     }
     // A cold-booted machine generated its own host key on boot; a clone of a snapshot needs a new one.
-    await this.svcRun(identityScript(id, { sshd: this.profile.sshd, newKeys: !fresh }));
+    const random = await cloneIdentity(this.profile.sshd && !fresh);
+    const result = await this.svcRun(identityScript(id, { sshd: this.profile.sshd, newKeys: !fresh, random }));
+    if (result.exit) throw new Error(`identity setup failed: ${result.out}`);
   }
 
   private async afterRestore(): Promise<void> {
@@ -715,7 +730,7 @@ export function isBootable(d: SparseDiskData): boolean {
  * /etc/network/interfaces and live, machine-id and, for machines that run
  * sshd, a new Ed25519 host key so clones of one snapshot differ.
  */
-export function identityScript(id: Identity, o: { sshd: boolean; newKeys: boolean }): string {
+export function identityScript(id: Identity, o: { sshd: boolean; newKeys: boolean; random?: CloneIdentity }): string {
   const hosts = [`127.0.0.1\t${id.hostname} localhost localhost.localdomain`, '::1\t\tlocalhost localhost.localdomain'];
   for (const [name, addr] of Object.entries(id.hosts ?? {})) if (name !== id.hostname) hosts.push(`${addr.replace(/\/\d+$/, '')}\t${name}`);
   const iface = ['auto lo', 'iface lo inet loopback', ''];
@@ -726,7 +741,7 @@ export function identityScript(id: Identity, o: { sshd: boolean; newKeys: boolea
     `echo ${shq(id.hostname)} > /etc/hostname`,
     `printf '%s\\n' ${hosts.map(shq).join(' ')} > /etc/hosts`,
     `printf '%s\\n' ${iface.map(shq).join(' ')} > /etc/network/interfaces`,
-    'cat /proc/sys/kernel/random/uuid | tr -d - > /etc/machine-id',
+    o.random ? `printf '%s\\n' ${shq(o.random.machineId)} > /etc/machine-id` : 'cat /proc/sys/kernel/random/uuid | tr -d - > /etc/machine-id',
   ];
   if (id.dns) lines.push(`echo ${shq(`nameserver ${id.dns}`)} > /etc/resolv.conf`);
   if (id.mac || id.ip || id.dhcp) {
@@ -740,9 +755,13 @@ export function identityScript(id: Identity, o: { sshd: boolean; newKeys: boolea
   if (o.sshd && o.newKeys) {
     lines.push(
       'rm -f /etc/ssh/ssh_host_*',
-      "ssh-keygen -q -t ed25519 -N '' -f /etc/ssh/ssh_host_ed25519_key",
-      'rc-service -q sshd status >/dev/null 2>&1 && rc-service -q sshd restart >/dev/null 2>&1',
+      ...(o.random?.privateKey ? [
+        `umask 077; printf '%s' ${shq(o.random.privateKey)} > /etc/ssh/ssh_host_ed25519_key`,
+        `printf '%s\\n' ${shq(o.random.publicKey!)} > /etc/ssh/ssh_host_ed25519_key.pub`,
+      ] : ["ssh-keygen -q -t ed25519 -N '' -f /etc/ssh/ssh_host_ed25519_key"]),
+      // OpenRC reload validates and rereads the new keys without its stop/start delay.
+      'rc-service -q sshd reload >/dev/null 2>&1',
     );
   }
-  return lines.join('\n');
+  return ['set -e', ...lines].join('\n');
 }

@@ -2,6 +2,8 @@
 // is bundled from the `v86` npm package; BIOS and kernel are fetched into
 // public/v86/ by scripts/fetch-v86.mjs and described in manifest.json.
 
+import type { BootSnapshot } from './boot-snapshot';
+
 import wasmUrl from 'v86/build/v86.wasm?url';
 
 export interface AssetManifest {
@@ -55,6 +57,7 @@ export function formatMB(bytes: number): string {
 
 export interface LabManifest {
   schema: 'dt.v86-lab-image/v1';
+  bootSnapshots?: Record<string, BootSnapshot>;
   distro: { name: string; release: string; arch: string; mirror: string };
   kernel: { file: string; version: string; package: string };
   initrd: { file: string };
