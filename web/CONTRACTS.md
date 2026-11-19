@@ -1,5 +1,7 @@
 # DevOps Trainer web — contracts for builders
 
+English · [Русский](CONTRACTS.ru.md)
+
 All shapes live in `src/core/types.ts` (read its comments — they are the spec).
 This page says how to plug in without touching anyone else's files.
 
