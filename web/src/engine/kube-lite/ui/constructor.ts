@@ -288,7 +288,7 @@ const L = {
   running: bi('Кластер запускается…', 'Starting the cluster…'),
   verdictOk: bi('Все компоненты на месте и соединены: кластер ведёт себя как настоящий k3s.', 'Every component is in place and wired: the cluster behaves like a real k3s.'),
   verdictMissing: bi('Выключено, потому что нет на холсте или нет провода: ', 'Switched off because it is not on the canvas or not wired: '),
-  pick: bi('Нажмите на любой блок или провод — он объяснит себя.', 'Press any block or wire — it explains itself.'),
+  pick: bi('Нажмите на любой блок или провод, и появится карточка с его объяснением.', 'Press any block or wire — it explains itself.'),
 };
 
 function blockShape(c: Comp): SVGElement {
