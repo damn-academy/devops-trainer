@@ -57,6 +57,7 @@ const waitLabel = (h: number) => b(`ждёт ${h} ч`, `waits ${h} h`);
 
 export const valueStreamModel = defineModel<P>({
   id: 'method.x.value-stream',
+  frame: 'visible',
   block: 'methodology',
   title: b('Путь задачи от идеи до покупателя', 'A task from an idea to the customer'),
   summary: b(

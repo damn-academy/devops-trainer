@@ -31,6 +31,7 @@ const cores = (n: number) => `${n} ${pluralRu(n, ['ядро', 'ядра', 'яд�
 
 export const systemModel = defineModel<P>({
   id: 'orient.system',
+  frame: 'visible',
   block: 'orient',
   title: bi('Операционная система между программами и железом', 'The operating system between programs and hardware'),
   summary: bi(
@@ -81,7 +82,7 @@ export const systemModel = defineModel<P>({
         label: bi('Браузер', 'Browser'),
         icon: 'browser',
         work: 'dots',
-        sub: '12 tabs',
+        sub: { ru: '12 вкладок', en: '12 tabs' },
         family: 'process',
         x: 370,
         y: 32,
@@ -130,7 +131,7 @@ export const systemModel = defineModel<P>({
         id: 'memory',
         label: bi('Память', 'Memory'),
         icon: 'switch',
-        sub: '8 GB',
+        sub: { ru: '8 ГБ', en: '8 GB' },
         family: 'neutral',
         x: 370,
         y: 304,
@@ -146,7 +147,7 @@ export const systemModel = defineModel<P>({
         id: 'cpu',
         label: bi('Процессор', 'Processor'),
         icon: 'process',
-        sub: '1 core',
+        sub: { ru: '1 ядро', en: '1 core' },
         family: 'neutral',
         x: 700,
         y: 304,

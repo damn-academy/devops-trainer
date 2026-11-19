@@ -41,6 +41,7 @@ let lastVersion = nextVersion('fix');
 
 export const releaseModel = defineModel<P>({
   id: 'orient.release',
+  frame: 'visible',
   block: 'orient',
   title: bi('От исходного кода до выпуска с номером', 'From source code to a numbered release'),
   summary: bi(

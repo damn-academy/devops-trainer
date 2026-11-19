@@ -21,6 +21,7 @@ const HIDDEN: Record<string, ElementState> = Object.fromEntries(['r1', 'h2', 't2
 
 export const routeModel = defineModel<P>({
   id: 'net.route',
+  frame: 'visible',
   block: 'networks',
   title: b('Как пакет проходит через маршрутизатор в соседнюю подсеть', 'How a packet crosses a router into the next subnet'),
   summary: b(

@@ -81,6 +81,7 @@ const SUBORDINATE = b('Шаги Голдратта для узкого мест�
 
 export const bottleneckModel = defineModel<P>({
   id: 'method.x.bottleneck',
+  frame: 'visible',
   block: 'methodology',
   title: b('Где застревает поток', 'Where the flow gets stuck'),
   summary: b(

@@ -87,6 +87,7 @@ const ALL = idsOf(diagram);
 
 export const loopChainModel = defineModel<P>({
   id: 'k8s.loop-chain',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Как одна команда проходит по цепочке петель', 'How one command passes through a chain of loops'),
   summary: bi(

@@ -20,6 +20,7 @@ const ALL = ['devConf', 'testConf', 'prodConf', 'dev', 'test', 'prod', 'users', 
 
 export const placesModel = defineModel<P>({
   id: 'orient.places',
+  frame: 'visible',
   block: 'orient',
   title: bi('Одна сборка, три окружения', 'One build, three environments'),
   summary: bi(
@@ -55,7 +56,7 @@ export const placesModel = defineModel<P>({
       { id: 'dev', label: bi('Ноутбук разработчика', 'Developer’s laptop'), icon: 'terminal', sub: 'dev', family: 'node', shape: 'rack', x: 24, y: 160, w: 192, h: 72, card: card(bi('Ноутбук разработчика служит окружением разработки. Здесь программу пишут и запускают десятки раз в день, и сломать её тут не страшно.', 'The development environment: run dozens of times a day; breaking it is harmless.'), bi('Ноутбуком пользуется разработчик.', 'The developer.')) },
       { id: 'test', label: bi('Тестовый стенд', 'Test stand'), icon: 'server', sub: 'test · Debian 13', family: 'node', shape: 'rack', x: 264, y: 160, w: 192, h: 72, card: card(bi('Тестовый стенд состоит из отдельных серверов, устроенных как можно ближе к рабочим: та же операционная система, те же версии программ, но без настоящих покупателей. Здесь новую версию проверяют.', 'Servers built like production, without real customers; new versions are checked here.'), bi('Стенд готовят инженеры эксплуатации, а проверяют на нём тестировщики.', 'Operations prepare it, testers check on it.'), { doc: PARITY }) },
       { id: 'prod', label: bi('Рабочее окружение', 'Production'), icon: 'server', sub: 'prod · Debian 13', family: 'node', shape: 'rack', x: 496, y: 160, w: 212, h: 72, card: card(bi('На этих серверах работает магазин для настоящих покупателей. В командах это окружение называют продом. Ошибка здесь стоит денег и доверия.', 'The servers real customers use (“prod”). A mistake here costs money.'), bi('Рабочим окружением занимаются инженеры эксплуатации.', 'Operations.')) },
-      { id: 'users', label: bi('Покупатели', 'Customers'), icon: 'user', sub: 'real money', family: 'user', x: 800, y: 160, w: 144, h: 72, card: card(bi('Магазином пользуются настоящие люди с настоящими банковскими картами. Они видят только рабочее окружение.', 'Real people with real cards; they see only production.'), bi('Покупатели сами пришли в магазин.', 'They came by themselves.')) },
+      { id: 'users', label: bi('Покупатели', 'Customers'), icon: 'user', sub: { ru: 'настоящие деньги', en: 'real money' }, family: 'user', x: 800, y: 160, w: 144, h: 72, card: card(bi('Магазином пользуются настоящие люди с настоящими банковскими картами. Они видят только рабочее окружение.', 'Real people with real cards; they see only production.'), bi('Покупатели сами пришли в магазин.', 'They came by themselves.')) },
       { id: 'artifact', label: bi('Сборка 1.5.0', 'Build 1.5.0'), icon: 'container', sub: 'shop-1.5.0', family: 'store', x: 264, y: 312, w: 192, h: 64, card: card(bi('Сборка у всех окружений одна. В каждое из них попадает один и тот же файл, поэтому до покупателей доходит та самая сборка, которую проверили на стенде.', 'One build: the same file goes everywhere, so what was checked reaches the customers.'), bi('Сборку сделала команда разработки.', 'The build.')) },
     ],
     edges: [

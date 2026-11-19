@@ -116,6 +116,7 @@ const ALL = idsOf(diagram);
 
 export const netpolModel = defineModel<P>({
   id: 'k8s.netpol',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Кого пропускает NetworkPolicy', 'Whom a NetworkPolicy lets through'),
   summary: bi(

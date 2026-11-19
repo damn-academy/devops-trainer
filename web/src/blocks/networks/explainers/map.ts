@@ -33,6 +33,7 @@ const HIDDEN: Record<string, ElementState> = Object.fromEntries(
 
 export const mapModel = defineModel<P>({
   id: 'net.map',
+  frame: 'visible',
   block: 'networks',
   title: b('Как устроен интернет и какой путь проходит запрос от ноутбука до дата-центра', 'How the internet is built: from a laptop to a data centre'),
   summary: b(
@@ -105,7 +106,7 @@ export const mapModel = defineModel<P>({
         },
       },
     },
-    { id: 'distance', group: b('Как сети связаны между собой', 'How the networks are connected'), label: b('Расстояние от провайдера до дата-центра', 'Distance to the data centre'), kind: 'range', min: 200, max: 15000, step: 100, unit: 'km', default: 2000, near: 'cable' },
+    { id: 'distance', group: b('Как сети связаны между собой', 'How the networks are connected'), label: b('Расстояние от провайдера до дата-центра', 'Distance to the data centre'), kind: 'range', min: 200, max: 15000, step: 100, unit: { ru: 'км', en: 'km' }, default: 2000, near: 'cable' },
     {
       id: 'cdn',
       group: b('Что сделал владелец сайта', 'What the site owner did'),
@@ -156,8 +157,8 @@ export const mapModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'rtt', label: b('время до сайта и обратно', 'round trip to the site'), unit: 'ms' },
-    { id: 'cdn', label: b('время до копии в CDN и обратно', 'round trip to the CDN copy'), unit: 'ms' },
+    { id: 'rtt', label: b('время до сайта и обратно', 'round trip to the site'), unit: { ru: 'мс', en: 'ms' } },
+    { id: 'cdn', label: b('время до копии в CDN и обратно', 'round trip to the CDN copy'), unit: { ru: 'мс', en: 'ms' } },
     { id: 'ases', label: b('автономных систем на пути', 'autonomous systems on the way') },
   ],
   run(p, broken): Step[] {

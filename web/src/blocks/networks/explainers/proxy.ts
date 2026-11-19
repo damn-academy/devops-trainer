@@ -69,6 +69,7 @@ const HIDDEN: Record<string, ElementState> = Object.fromEntries(['app1', 'app2',
 
 export const proxyModel = defineModel<P>({
   id: 'net.proxy504',
+  frame: 'visible',
   block: 'networks',
   title: b('Откуда берутся ошибки 504 и 502', 'Where 504 and 502 come from'),
   summary: b(
@@ -122,7 +123,7 @@ export const proxyModel = defineModel<P>({
       min: 1,
       max: 120,
       step: 1,
-      unit: 's',
+      unit: { ru: 'с', en: 's' },
       default: 75,
       near: 'db',
       predict: {
@@ -150,7 +151,7 @@ export const proxyModel = defineModel<P>({
       ],
       near: 'app2',
     },
-    { id: 'read', group: b('Настройки nginx', 'nginx settings'), label: b('Сколько секунд nginx ждёт ответа приложения (proxy_read_timeout)', 'proxy_read_timeout'), kind: 'range', min: 5, max: 300, step: 5, unit: 's', default: 60, near: 'nginx' },
+    { id: 'read', group: b('Настройки nginx', 'nginx settings'), label: b('Сколько секунд nginx ждёт ответа приложения (proxy_read_timeout)', 'proxy_read_timeout'), kind: 'range', min: 5, max: 300, step: 5, unit: { ru: 'с', en: 's' }, default: 60, near: 'nginx' },
     { id: 'next', group: b('Настройки nginx', 'nginx settings'), label: b('nginx повторяет запрос на другом сервере (proxy_next_upstream)', 'proxy_next_upstream'), kind: 'toggle', default: true, near: 'e-2', levels: ['intermediate', 'experienced'] },
     {
       id: 'method',
@@ -221,7 +222,7 @@ export const proxyModel = defineModel<P>({
   ],
   metrics: [
     { id: 'code', label: b('код ответа клиенту', 'code to the client') },
-    { id: 'waited', label: b('клиент ждал', 'client waited'), unit: 's' },
+    { id: 'waited', label: b('клиент ждал', 'client waited'), unit: { ru: 'с', en: 's' } },
     { id: 'lines', label: b('строк в error.log', 'lines in error.log') },
   ],
   run(p, broken): Step[] {

@@ -43,6 +43,7 @@ const ALL = idsOf(diagram);
 
 export const ingressPathModel = defineModel<P>({
   id: 'k8s.ingress-path',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Как запрос из интернета доходит до пода', 'How a request from the internet reaches a pod'),
   summary: bi(

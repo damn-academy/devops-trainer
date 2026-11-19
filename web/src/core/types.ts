@@ -962,7 +962,7 @@ export interface DiagramNode {
   /** The "busy" animation while the node acts (it has a `say` at the step); by default it follows the icon. */
   work?: NodeWork;
   /** A mono value under the label, may change per step (Step.values). */
-  sub?: string;
+  sub?: QText;
   family: ColorFamily;
   /** bar = the kernel strip; hex = control plane; doc = API object; rack = node; buffer = queue with a fill gauge. */
   shape?: 'box' | 'bar' | 'hex' | 'doc' | 'rack' | 'pill' | 'buffer';
@@ -974,6 +974,7 @@ export interface DiagramNode {
 }
 
 export interface DiagramEdge {
+  undirected?: boolean;
   id: string;
   from: string;
   to: string;
@@ -999,6 +1000,8 @@ export interface DiagramGroup {
 
 /** Hand-laid diagram on an 8 px grid; positions are stable across steps. At most 12 nodes per screen. */
 export interface Diagram {
+  /** Extra space above the drawing, in diagram units. */
+  topPadding?: number;
   width: number;
   height: number;
   nodes: DiagramNode[];
@@ -1014,7 +1017,7 @@ export interface ParamSpec {
   min?: number;
   max?: number;
   step?: number;
-  unit?: string;
+  unit?: QText;
   options?: { id: string; label: Bi }[];
   default: number | boolean | string;
   /** Levels this knob is open for (beginners get them one at a time). */
@@ -1122,8 +1125,10 @@ export interface ProcessModel<P extends Record<string, unknown> = Record<string,
   diagram: Diagram;
   params: ParamSpec[];
   breaks: BreakSpec[];
+  /** Fit the camera to visible elements without moving their coordinates. */
+  frame?: 'fixed' | 'visible';
   /** Labels of the metrics steps report. */
-  metrics?: { id: string; label: Bi; unit?: string }[];
+  metrics?: { id: string; label: Bi; unit?: QText }[];
   /**
    * Id of a metric that holds the elapsed time. The explainer then draws a
    * DevTools-style waterfall next to the diagram: one bar per step that took time.

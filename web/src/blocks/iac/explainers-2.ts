@@ -55,6 +55,7 @@ const G_CLI = bi('Командная строка', 'The command line');
 
 export const varModel = defineModel<VarP>({
   id: 'iac.var-precedence',
+  frame: 'visible',
   block: 'iac',
   title: bi('Откуда хост берёт значение переменной', 'Where a host gets the value of a variable'),
   summary: bi(
@@ -276,7 +277,7 @@ export function addrNumbers(scenario: 'refactor' | 'adopt', block: boolean, brok
 
 const TF = bi('Эту работу выполняет terraform plan.', 'terraform plan does this work.');
 const M_ADD = { id: 'add', label: bi('будет создано машин', 'machines to add') };
-const MOVED_METRICS = [M_ADD, { id: 'destroy', label: bi('будет удалено машин', 'machines to destroy') }, { id: 'downtime', label: bi('сайт простоит без сервера', 'the site stays without a server'), unit: 's' }];
+const MOVED_METRICS = [M_ADD, { id: 'destroy', label: bi('будет удалено машин', 'machines to destroy') }, { id: 'downtime', label: bi('сайт простоит без сервера', 'the site stays without a server'), unit: { ru: 'с', en: 's' } }];
 const IMPORT_METRICS = [M_ADD, { id: 'imported', label: bi('машин перейдёт под управление кода', 'machines to import') }];
 const ADDR_LEGEND = (machine: Bi) => [
   { mark: 'active' as const, text: bi('участник, который работает сейчас', 'the participant working now') },
@@ -363,6 +364,7 @@ const lostBreak = (adopt: boolean) => ({
 
 export const addrModel = defineModel<AddrP>({
   id: 'iac.address',
+  frame: 'visible',
   block: 'iac',
   title: bi('Как блок moved переносит машину в модуль без пересоздания', 'How a moved block carries a machine into a module without recreating it'),
   summary: bi(
@@ -520,6 +522,7 @@ export const addrModel = defineModel<AddrP>({
 
 export const importModel = defineModel<AddrP>({
   id: 'iac.import-plan',
+  frame: 'visible',
   block: 'iac',
   title: bi('Как блок import берёт под управление машину, созданную вручную', 'How an import block takes over a machine made by hand'),
   summary: bi(

@@ -44,6 +44,7 @@ const H = 56;
 
 export const nestingModel = defineModel<P>({
   id: 'containers.nesting',
+  frame: 'visible',
   block: 'containers',
   title: bi('Как сегодня вкладывают ВМ и контейнеры друг в друга', 'Today: VMs and containers are nested in each other'),
   summary: bi(

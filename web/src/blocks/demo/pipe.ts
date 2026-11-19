@@ -142,7 +142,7 @@ export const pipeModel = defineModel<P>({
       {
         id: 'pipe',
         label: bi('труба', 'pipe'),
-        sub: '0 B / 64 KiB',
+        sub: { ru: '0 Б / 64 КиБ', en: '0 B / 64 KiB' },
         family: 'kernel',
         shape: 'buffer',
         x: 360,
@@ -301,9 +301,9 @@ export const pipeModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'bytes', label: bi('прошло через трубу', 'through the pipe'), unit: 'B' },
+    { id: 'bytes', label: bi('прошло через трубу', 'through the pipe'), unit: { ru: 'Б', en: 'B' } },
     { id: 'waits', label: bi('раз ls ждал', 'times ls waited') },
-    { id: 'ms', label: bi('время модели', 'model time'), unit: 'ms' },
+    { id: 'ms', label: bi('время модели', 'model time'), unit: { ru: 'мс', en: 'ms' } },
     { id: 'status', label: bi('$?', '$?') },
   ],
   run(p, broken): Step[] {

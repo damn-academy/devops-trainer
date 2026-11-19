@@ -36,6 +36,7 @@ const IMG = bi('Что записано в образе', 'What the image says')
 
 export const stopModel = defineModel<P>({
   id: 'containers.stop',
+  frame: 'visible',
   block: 'containers',
   title: bi('Как docker stop останавливает контейнер', 'docker stop: signals and PID 1'),
   summary: bi(
@@ -66,7 +67,7 @@ export const stopModel = defineModel<P>({
       { id: 'cli', label: 'docker stop app', icon: 'terminal', family: 'user', x: 24, y: 72, w: 160, h: 56, card: { what: bi('Команда остановки просит Docker послать контейнеру сигнал остановки, подождать и, если контейнер не завершился, завершить его принудительно.', 'The stop command: “send the stop signal, wait, then kill”.'), who: bi('Её запускаете вы или система оркестрации.', 'You or an orchestrator.'), doc: { page: 'help/docker-stop' } } },
       { id: 'dockerd', label: 'dockerd', icon: 'process', family: 'cp', x: 416, y: 72, w: 168, h: 56, card: { what: bi('Демон выбирает сигнал (STOPSIGNAL из образа или флаг --stop-signal, по умолчанию SIGTERM) и время ожидания (10 секунд, если не задано --stop-timeout или `docker stop -t`).', 'The daemon picks the signal (the image StopSignal or --stop-signal, SIGTERM by default) and the wait (10 s or --stop-timeout / -t).'), who: bi('Его запускает systemd.', 'systemd.') } },
       { id: 'shim', label: 'shim', icon: 'process', family: 'process', x: 416, y: 192, w: 168, h: 56, card: { what: bi('Shim остаётся родителем процесса контейнера. Он посылает процессу сигнал и ждёт его кода выхода.', 'Sends the signal to the container process and waits for its exit code.'), who: bi('Его запустил containerd, когда создавал контейнер.', 'containerd.') } },
-      { id: 'timer', label: bi('Ожидание', 'Grace period'), sub: '0 / 10 s', family: 'gauge', shape: 'buffer', x: 688, y: 64, w: 248, h: 64, card: { what: bi('Таймер показывает, сколько Docker ждёт после сигнала остановки. Если процесс за это время не завершился, Docker посылает SIGKILL, и код выхода будет 137, то есть 128 + 9, номер сигнала KILL.', 'How long the daemon waits after the stop signal. If the process has not exited — SIGKILL, code 137 = 128 + 9.'), who: bi('Время задают флаг --stop-timeout при запуске или `docker stop -t`.', 'dockerd; changed by --stop-timeout or `docker stop -t`.'), doc: { page: 'web/docs.docker.com/reference/cli/docker/container/run', anchor: 'stop-timeout' } } },
+      { id: 'timer', label: bi('Ожидание', 'Grace period'), sub: { ru: '0 / 10 с', en: '0 / 10 s' }, family: 'gauge', shape: 'buffer', x: 688, y: 64, w: 248, h: 64, card: { what: bi('Таймер показывает, сколько Docker ждёт после сигнала остановки. Если процесс за это время не завершился, Docker посылает SIGKILL, и код выхода будет 137, то есть 128 + 9, номер сигнала KILL.', 'How long the daemon waits after the stop signal. If the process has not exited — SIGKILL, code 137 = 128 + 9.'), who: bi('Время задают флаг --stop-timeout при запуске или `docker stop -t`.', 'dockerd; changed by --stop-timeout or `docker stop -t`.'), doc: { page: 'web/docs.docker.com/reference/cli/docker/container/run', anchor: 'stop-timeout' } } },
       { id: 'pid1', label: 'PID 1', icon: 'process', sub: 'python app.py', family: 'process', x: 360, y: 312, w: 280, h: 64, card: { what: bi('Под номером 1 в пространстве имён PID контейнера работает его первый процесс, и ядро этот процесс бережёт. Сигнал, для которого у процесса нет обработчика, ему не доставляется, и действие по умолчанию «завершиться» для PID 1 не срабатывает.', 'The first process of the container’s pid namespace. The kernel protects it: a signal without a handler is not delivered (the default “die” action does not apply to PID 1).'), who: bi('Это та программа, что записана в ENTRYPOINT и CMD образа.', 'Whatever the image’s ENTRYPOINT/CMD says.'), see: 'grep SigCgt /proc/1/status', doc: man('pid_namespaces', 7) } },
       { id: 'child', label: bi('Дочерний процесс', 'Child'), icon: 'process', sub: 'python app.py', family: 'process', x: 736, y: 312, w: 200, h: 64, card: { what: bi('Этот процесс запустил PID 1. Он уже не первый, поэтому сигнал без обработчика сразу его завершает.', 'A child of PID 1. It is not PID 1: a signal without a handler simply ends it.'), who: bi('Его запустил PID 1.', 'PID 1 started it.') } },
       { id: 'kernel', label: bi('Ядро доставляет сигнал', 'The kernel delivers the signal'), sub: 'SigCgt · pid_namespaces(7)', family: 'kernel', shape: 'bar', x: 24, y: 448, w: 912, h: 72, card: { what: bi('Ядро проверяет, есть ли у процесса обработчик сигнала (маска SigCgt в `/proc/<pid>/status`). Первому процессу пространства имён сигнал без обработчика не доставляется, а SIGKILL доставляется всегда.', 'The kernel checks whether the process has a handler for the signal (the SigCgt mask in /proc/<pid>/status). For the init of a namespace without a handler the signal is dropped; SIGKILL always goes through.'), who: bi('Это правило ядра Linux.', 'The Linux kernel.'), doc: man('signal', 7) } },
@@ -104,7 +105,7 @@ export const stopModel = defineModel<P>({
       },
     },
     { id: 'signal', label: bi('Сигнал остановки (STOPSIGNAL)', 'STOPSIGNAL'), kind: 'choice', default: 'SIGTERM', options: [{ id: 'SIGTERM', label: bi('SIGTERM, по умолчанию', 'SIGTERM (default)') }, { id: 'SIGINT', label: bi('SIGINT', 'SIGINT') }], near: 'dockerd', group: IMG },
-    { id: 'timeout', label: bi('Сколько ждать перед SIGKILL (--stop-timeout)', '--stop-timeout'), kind: 'range', min: 1, max: 60, step: 1, unit: 's', default: 10, near: 'timer', group: bi('Как останавливают', 'How it is stopped') },
+    { id: 'timeout', label: bi('Сколько ждать перед SIGKILL (--stop-timeout)', '--stop-timeout'), kind: 'range', min: 1, max: 60, step: 1, unit: { ru: 'с', en: 's' }, default: 10, near: 'timer', group: bi('Как останавливают', 'How it is stopped') },
   ],
   breaks: [
     {
@@ -123,7 +124,7 @@ export const stopModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'ms', label: bi('остановка заняла', 'the stop took'), unit: 'ms' },
+    { id: 'ms', label: bi('остановка заняла', 'the stop took'), unit: { ru: 'мс', en: 'ms' } },
     { id: 'code', label: bi('код выхода', 'exit code') },
     { id: 'zombies', label: bi('сколько процессов-зомби накопилось', 'how many zombie processes piled up') },
   ],

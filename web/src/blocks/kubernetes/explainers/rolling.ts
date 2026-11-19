@@ -142,6 +142,7 @@ const firstMove = (steps: Step[]) => steps.find((x) => /^a\d+-(up|down)$/.test(x
 
 export const rollingModel = defineModel<P>({
   id: 'k8s.rolling',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Как Deployment заменяет поды на новую версию', 'How a Deployment replaces pods with a new version'),
   summary: bi(

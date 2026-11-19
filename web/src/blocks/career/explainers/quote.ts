@@ -53,6 +53,7 @@ const ALL = ['tr', 'rubric', 'llm', 'quote', 'norm', 'match', 'score', 'e-tr', '
 
 export const quoteModel = defineModel<P>({
   id: 'career.quote',
+  frame: 'visible',
   block: 'career',
   title: bi('Как нейросеть ставит балл за ответ', 'How the AI puts a score on an answer'),
   summary: bi(
@@ -80,7 +81,7 @@ export const quoteModel = defineModel<P>({
     width: 960,
     height: 400,
     nodes: [
-      { id: 'tr', label: bi('Ваш ответ', 'Your answer'), icon: 'user', sub: '23 words', family: 'obj', x: 24, y: 40, w: 200, h: 64, card: card('Расшифровка того, что вы сказали или написали на учебном интервью. Расшифровка служит главным документом проверки, и всё, что говорит нейросеть, сверяется с ней.', 'The transcript of what you said or wrote. It is the main document of the check, and everything the AI says is checked against it.', 'Ответ даёте вы, а голос в текст превращает программа распознавания речи.', 'You; speech recognition turns voice into text.') },
+      { id: 'tr', label: bi('Ваш ответ', 'Your answer'), icon: 'user', sub: { ru: '23 слова', en: '23 words' }, family: 'obj', x: 24, y: 40, w: 200, h: 64, card: card('Расшифровка того, что вы сказали или написали на учебном интервью. Расшифровка служит главным документом проверки, и всё, что говорит нейросеть, сверяется с ней.', 'The transcript of what you said or wrote. It is the main document of the check, and everything the AI says is checked against it.', 'Ответ даёте вы, а голос в текст превращает программа распознавания речи.', 'You; speech recognition turns voice into text.') },
       { id: 'rubric', label: bi('Рубрика', 'Rubric'), icon: 'file', sub: '6 × 0–3', family: 'obj', x: 312, y: 184, w: 208, h: 64, card: card('Шесть критериев оценки, и у каждого балла от 0 до 3 есть описание. Одна и та же рубрика служит для учебных интервью, вопросов «объясните» и разбора дежурства.', 'Six criteria, each score from 0 to 3 described. The same rubric serves interviews, “explain” questions and on-call reviews.', 'Рубрику составили авторы курса.', 'The course.') },
       { id: 'llm', label: bi('Нейросеть-оценщик', 'AI grader'), icon: 'cloud', work: 'dots', sub: 'temperature 0', family: 'process', x: 312, y: 40, w: 208, h: 64, card: card('Ваша нейросеть. Она читает ответ и рубрику и возвращает строгий JSON, в котором по каждому критерию стоят балл и цитата.', 'Your own AI. It reads the answer and the rubric and returns strict JSON with a score and a quote for each criterion.', 'Нейросеть вы подключаете сами в настройках курса.', 'You connect it in the settings.') },
       { id: 'quote', label: bi('Цитата-доказательство', 'Evidence quote'), icon: 'file', sub: '—', family: 'neutral', shape: 'pill', x: 640, y: 40, w: 296, h: 64, card: card('Фраза из ответа, которой нейросеть обосновывает балл. Нейросеть может ошибиться или польстить, поэтому курс ищет эту фразу в расшифровке.', 'The phrase the AI bases the score on. The AI can err or flatter, so the course looks for it in the transcript.', 'Цитату возвращает нейросеть.', 'The AI returns it.') },

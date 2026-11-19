@@ -66,6 +66,7 @@ const ONCALL: [string, string] = ['Этот шаг выполняет дежур
 
 export const incidentModel = defineModel<P>({
   id: 'method.x.incident',
+  frame: 'visible',
   block: 'methodology',
   title: b('От оповещения до разбора', 'From the alert to the postmortem'),
   summary: b(

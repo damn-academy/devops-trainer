@@ -95,7 +95,7 @@ export const tcpModel = defineModel<TP>({
         resolve: (_p, next) => ((lastMetric(next, 'ms') ?? 0) < 10000 ? 'rtt' : 'long'),
       },
     },
-    { id: 'rtt', group: b('Что происходит в сети', 'What happens on the network'), label: b('Время пути от клиента до сервера и обратно (RTT)', 'RTT between the machines'), kind: 'range', min: 1, max: 300, step: 1, unit: 'ms', default: 40, near: 'synack' },
+    { id: 'rtt', group: b('Что происходит в сети', 'What happens on the network'), label: b('Время пути от клиента до сервера и обратно (RTT)', 'RTT between the machines'), kind: 'range', min: 1, max: 300, step: 1, unit: { ru: 'мс', en: 'ms' }, default: 40, near: 'synack' },
   ],
   breaks: [
     {
@@ -114,7 +114,7 @@ export const tcpModel = defineModel<TP>({
     },
   ],
   metrics: [
-    { id: 'ms', label: b('прошло времени', 'elapsed'), unit: 'ms' },
+    { id: 'ms', label: b('прошло времени', 'elapsed'), unit: { ru: 'мс', en: 'ms' } },
     { id: 'rtts', label: b('путей туда и обратно', 'round trips') },
   ],
   run(p, broken): Step[] {
@@ -273,7 +273,7 @@ export const tlsModel = defineModel<LP>({
     ],
   },
   params: [
-    { id: 'rtt', group: b('Соединение', 'The connection'), label: b('Время пути до сервера и обратно (RTT)', 'RTT to the server'), kind: 'range', min: 1, max: 300, step: 1, unit: 'ms', default: 40, near: 'hello' },
+    { id: 'rtt', group: b('Соединение', 'The connection'), label: b('Время пути до сервера и обратно (RTT)', 'RTT to the server'), kind: 'range', min: 1, max: 300, step: 1, unit: { ru: 'мс', en: 'ms' }, default: 40, near: 'hello' },
     {
       id: 'reuse',
       group: b('Соединение', 'The connection'),
@@ -347,7 +347,7 @@ export const tlsModel = defineModel<LP>({
   ],
   metrics: [
     { id: 'rtts', label: b('путей туда и обратно до первого байта', 'round trips to the first byte') },
-    { id: 'ttfb', label: b('время до первого байта', 'first byte'), unit: 'ms' },
+    { id: 'ttfb', label: b('время до первого байта', 'first byte'), unit: { ru: 'мс', en: 'ms' } },
   ],
   run(p, broken): Step[] {
     const r = p.rtt;

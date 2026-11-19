@@ -112,6 +112,7 @@ const EVENT: Record<string, { cmd: string; api: string; say: Bi; caption: Bi }> 
 
 export const reconcileModel = defineModel<P>({
   id: 'k8s.reconcile',
+  frame: 'visible',
   block: 'k8s-1',
   title: bi('Как контроллер ReplicaSet держит число подов', 'How the ReplicaSet controller keeps the number of pods'),
   summary: bi(

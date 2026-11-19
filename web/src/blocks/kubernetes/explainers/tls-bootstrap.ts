@@ -50,6 +50,7 @@ const ALL = idsOf(diagram);
 
 export const tlsBootstrapModel = defineModel<P>({
   id: 'k8s.tls-bootstrap',
+  frame: 'visible',
   block: 'k8s-2',
   title: bi('Как новый узел получает свой сертификат', 'How a new node gets its certificate'),
   summary: bi(

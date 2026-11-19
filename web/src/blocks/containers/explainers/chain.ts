@@ -21,6 +21,7 @@ const RUN = bi('Что указано в команде docker run', 'What the d
 
 export const chainModel = defineModel<P>({
   id: 'containers.chain',
+  frame: 'visible',
   block: 'containers',
   title: bi('Что происходит после docker run', 'docker run: from the command to the process'),
   summary: bi(
@@ -120,7 +121,7 @@ export const chainModel = defineModel<P>({
       },
     },
   ],
-  metrics: [{ id: 'total', label: bi('сколько времени прошло с начала запуска', 'time since the start began'), unit: 'ms' }],
+  metrics: [{ id: 'total', label: bi('сколько времени прошло с начала запуска', 'time since the start began'), unit: { ru: 'мс', en: 'ms' } }],
   run(p, broken): Step[] {
     const steps: Step[] = [];
     let t = 0;

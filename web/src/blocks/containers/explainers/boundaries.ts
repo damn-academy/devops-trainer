@@ -87,6 +87,7 @@ const BREAK_MSG: Record<string, { side: Exclude<Side, 'all'>; msg: string; capti
 
 export const boundariesModel = defineModel<P>({
   id: 'containers.boundaries',
+  frame: 'visible',
   block: 'containers',
   title: bi('Шесть границ контейнера', 'The six boundaries of a container'),
   summary: bi(

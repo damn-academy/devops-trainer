@@ -110,7 +110,11 @@
 .ex-svg .edge.carrying .edge-label { opacity: 1; }
 .explainer > .ex-legend { border-top: 1px solid var(--line); padding-top: 10px; }
 .explainer > .ex-metrics { margin-top: 8px; }
-.ex-svg .edge.covered .edge-label { opacity: 0; }
+.ex-svg .group.st-off { opacity: 0.3; }
+.ex-tick:hover, .ex-tick:focus-visible { overflow: visible; z-index: 2; }
+.ex-tick:hover::after, .ex-tick:focus-visible::after { content: attr(data-label); position: absolute; top: 100%; left: 50%; transform: translateX(-50%); white-space: normal; width: max-content; max-width: 220px; padding: 8px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; line-height: 1.4; }
+.ex-tick:first-child::after { left: 0; transform: none; }
+.ex-tick:last-child::after { left: auto; right: 0; transform: none; }
 
 /* The step controls stay on screen while the learner scrolls through the picture. */
 .explainer > .ex-stepper { position: sticky; top: 54px; z-index: 20; background: color-mix(in oklch, var(--bg) 94%, transparent); backdrop-filter: blur(6px); border-top: 0; border-bottom: 1px solid var(--line); padding: 8px 0; margin-bottom: 8px; }
