@@ -8,7 +8,7 @@
 // card with its receiver, and the switch table grows under the switch.
 
 import { defineModel } from '../../../core/define';
-import { fmt } from '../../../core/i18n';
+import { fmt, t } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { b, brokenAt, card, edge, lastMetric, node } from './kit';
 
@@ -37,11 +37,12 @@ const host = (id: 'a' | 'b' | 'c' | 'd', x: number, y: number) =>
     ),
     { sub: MAC[id], icon: 'terminal' },
   );
-const port = (id: string, from: string, n: number, via?: [number, number][]) =>
+// The cable is two-way, but its arrow shows the main direction of the story: A sends to the switch, the switch sends on to the others.
+const port = (id: string, host: string, n: number, via?: [number, number][]) =>
   edge(
     id,
-    'switch',
-    from,
+    host === 'a' ? 'a' : 'switch',
+    host === 'a' ? 'switch' : host,
     b(`порт ${n}`, `port ${n}`),
     card([`Кабель, который соединяет компьютер с портом ${n} коммутатора. По этому кабелю кадры идут в обе стороны.`, `The cable from the computer to port ${n} of the switch. Frames travel both ways along it.`], ['Кабель подключает тот, кто собирает сеть.', 'Whoever builds the network plugs in the cable.']),
     { via, labelAt: 0.6 },
@@ -79,7 +80,7 @@ export const switchModel = defineModel<P>({
       host('b', 760, 40),
       host('c', 24, 304),
       host('d', 760, 304),
-      node('switch', b('Коммутатор', 'Switch'), 'l2', [376, 160, 208, 80], swCard, { sub: '[ ]', icon: 'switch', work: 'spin' }),
+      node('switch', b('Коммутатор', 'Switch'), 'l2', [376, 160, 208, 80], swCard, { sub: ' ', icon: 'switch', work: 'spin' }),
     ],
     edges: [port('p1', 'a', 1), port('p2', 'b', 2), port('p3', 'c', 3), port('p4', 'd', 4)],
   },
@@ -143,7 +144,7 @@ export const switchModel = defineModel<P>({
   ],
   run(p, broken): Step[] {
     const warm = p.table === 'warm';
-    const table = (rows: string[]) => (rows.length ? rows.join(' · ') : '[ ]');
+    const table = (rows: string[]) => (rows.length ? rows.join(' · ') : t(b('таблица пуста', 'table empty')));
     const known = warm ? ['A → 1', 'B → 2'] : [];
     const steps: Step[] = [];
     const dst = p.broadcast ? 'ff:ff:ff:ff:ff:ff' : MAC.b;
@@ -158,7 +159,7 @@ export const switchModel = defineModel<P>({
         { d: dst, s: MAC.a },
       ),
       focus: ['a', 'p1'],
-      tokens: [{ edge: 'p1', label: p.broadcast ? b('кадр для всех', 'frame for everyone') : b('кадр → B', 'frame → B'), reverse: true }],
+      tokens: [{ edge: 'p1', label: p.broadcast ? b('кадр для всех', 'frame for everyone') : b('кадр → B', 'frame → B') }],
       say: { a: p.broadcast ? b('Компьютер A отправляет кадр на адрес ff:ff:ff:ff:ff:ff, то есть всем компьютерам сети.', 'Computer A sends a frame to ff:ff:ff:ff:ff:ff, to every computer on the network.') : b('Компьютер A отправляет кадр на MAC-адрес компьютера B.', 'Computer A sends a frame to B’s MAC address.') },
       states: { a: 'on', b: 'off', c: 'off', d: 'off', p2: 'off', p3: 'off', p4: 'off' },
       values: { switch: table(known) },
@@ -226,7 +227,7 @@ export const switchModel = defineModel<P>({
       label: b('ответ', 'reply'),
       caption: b('Компьютер B отвечает кадром на MAC-адрес компьютера A. Коммутатор записывает в таблицу, что B подключён к порту 2, а так как A в таблице уже есть, отдаёт ответ только в порт 1.', 'B answers with a frame to A’s MAC. The switch writes that B is on port 2 and, since A is already in the table, delivers the answer to port 1 only.'),
       focus: ['switch', 'p2', 'p1'],
-      tokens: [{ edge: 'p2', reverse: true, label: b('ответ → A', 'answer → A') }, { edge: 'p1', label: b('ответ → A', 'answer → A') }],
+      tokens: [{ edge: 'p2', reverse: true, label: b('ответ → A', 'answer → A') }, { edge: 'p1', reverse: true, label: b('ответ → A', 'answer → A') }],
       say: { switch: b('Коммутатор записывает, что компьютер B подключён к порту 2, и отдаёт ответ только в порт 1.', 'The switch writes that B is on port 2 and delivers the answer to port 1 only.') },
       states: { b: 'ok', c: 'off', d: 'off', p3: 'off', p4: 'off' },
       values: { switch: table(after) },
@@ -235,9 +236,9 @@ export const switchModel = defineModel<P>({
     steps.push({
       id: 'again',
       label: b('дальше', 'from now'),
-      caption: b('Теперь коммутатор знает обоих, и все следующие кадры между A и B идут только по нужным портам. Каждая запись хранится 300 секунд, то есть пять минут, после последнего кадра с этим MAC-адресом.', 'Now the switch knows both, and every further frame between A and B goes only to the right ports. Each entry is kept 300 seconds, five minutes, after the last frame from that MAC.'),
+      caption: b('Теперь коммутатор знает порты обоих компьютеров, и все следующие кадры между A и B идут только по нужным портам. Каждая запись хранится 300 секунд, то есть пять минут, после последнего кадра с этим MAC-адресом.', 'Now the switch knows both, and every further frame between A and B goes only to the right ports. Each entry is kept 300 seconds, five minutes, after the last frame from that MAC.'),
       focus: ['p1', 'p2'],
-      tokens: [{ edge: 'p1', reverse: true, label: b('кадр → B', 'frame → B') }, { edge: 'p2', label: b('кадр → B', 'frame → B') }],
+      tokens: [{ edge: 'p1', label: b('кадр → B', 'frame → B') }, { edge: 'p2', label: b('кадр → B', 'frame → B') }],
       say: { switch: b('Коммутатор знает порты обоих компьютеров и больше не рассылает их кадры во все порты.', 'The switch knows both ports and no longer floods their frames.') },
       states: { a: 'ok', b: 'ok', switch: 'ok' },
       metrics: { flooded: flood ? 3 : 0, entries: after.length },

@@ -10,7 +10,7 @@
 // travels along the line as a card.
 
 import { defineModel } from '../../../core/define';
-import { fmt } from '../../../core/i18n';
+import { fmt, t } from '../../../core/i18n';
 import type { ElementState, Step } from '../../../core/types';
 import { b, brokenAt, card, DOC, edge, lastMetric, node } from './kit';
 
@@ -58,7 +58,7 @@ export const mapModel = defineModel<P>({
   ],
   stopLabel: b('Пакеты не дошли до сайта', 'The packets did not reach the site'),
   diagram: {
-    width: 960,
+    width: 1000,
     height: 456,
     nodes: [
       node('laptop', b('Ноутбук', 'Laptop'), 'user', [24, 196, 128, 56], card(['Ваш компьютер. Адрес 192.168.1.23 в домашней сети ему выдал роутер.', 'Your computer. The router gave it the address 192.168.1.23 in the home network.'], ['Ноутбуком пользуетесь вы сами.', 'You.'], 'ip a'), { sub: '192.168.1.23', icon: 'terminal' }),
@@ -66,10 +66,10 @@ export const mapModel = defineModel<P>({
       node('isp', b('Провайдер', 'Provider (ISP)'), 'l3', [360, 196, 144, 56], card(['Сеть провайдера называется автономной системой. Ею управляет одна компания, у неё свой номер (ASN, здесь 64500) и свои блоки адресов.', 'The provider’s network is an autonomous system: a network under one administration with its own number (ASN) and its own address blocks.'], ['Сетью управляет компания-провайдер, а номер автономной системы выдаёт региональный регистратор, в Европе это RIPE NCC.', 'The provider company; the AS number comes from a regional registry (RIPE NCC in Europe).'], 'traceroute -n shop.example', DOC.cfBgp), { sub: 'AS 64500', icon: 'router' }),
       node('ixp', b('Точка обмена трафиком', 'Exchange point (IXP)'), 'l2', [536, 88, 152, 56], card(['Точка обмена трафиком (IXP) устроена как большой коммутатор, к которому подключены десятки сетей. Подключённые сети передают друг другу трафик напрямую и не платят посреднику; такой обмен называют пирингом. Примеры точек обмена: MSK-IX в Москве, DE-CIX во Франкфурте.', 'A large switch that dozens of networks connect to. Neighbours exchange traffic directly (peering) without paying a middleman. Examples: MSK-IX, DE-CIX.'], ['Точку обмена держит независимая организация, а участники платят ей за подключение.', 'An independent organisation; members pay for a port.'], undefined, DOC.cfIxp), { icon: 'switch' }),
       node('transit', b('Транзитный оператор', 'Transit carrier'), 'l3', [536, 308, 152, 56], card(['Крупная сеть, которая за деньги передаёт трафик туда, куда у вашего провайдера нет собственного пути.', 'A large network that carries traffic for money to places your provider has no direct path to.'], ['Сетью управляет магистральный оператор связи.', 'A backbone carrier.']), { sub: 'AS 64502', icon: 'router' }),
-      node('cable', b('Подводный кабель', 'Submarine cable'), 'l1', [720, 196, 112, 56], card(['Оптоволоконный кабель, проложенный по дну моря. Свет в стекле проходит около 200 000 километров в секунду, то есть тратит примерно 5 микросекунд на каждый километр, и быстрее сигнал передать нельзя.', 'Optical fibre on the sea floor. Light in glass travels about 200,000 km/s — roughly 5 µs per kilometre. Nothing is faster.'], ['Кабели прокладывают консорциумы операторов связи и облачных компаний.', 'A consortium of carriers and cloud companies.'], undefined, DOC.cableMap), { sub: '2 000 km' }),
-      node('dc', b('Дата-центр', 'Data centre'), 'node', [856, 188, 96, 72], card(['Здание со стойками серверов, в котором работает сайт магазина. Внутри стоят свой роутер на границе сети, коммутаторы и серверы. Эту часть пути вы разберёте подробно в следующих уроках.', 'A building with racks of servers. The site lives here: an edge router, switches, servers. We build this part later in the course.'], ['Дата-центр принадлежит хостинг-провайдеру или облаку.', 'A hosting provider or a cloud.']), { shape: 'rack', sub: 'AS 64501', icon: 'server' }),
+      node('cable', b('Подводный кабель', 'Submarine cable'), 'l1', [720, 188, 112, 72], card(['Оптоволоконный кабель, проложенный по дну моря. Свет в стекле проходит около 200 000 километров в секунду, то есть тратит примерно 5 микросекунд на каждый километр, и быстрее сигнал передать нельзя.', 'Optical fibre on the sea floor. Light in glass travels about 200,000 km/s — roughly 5 µs per kilometre. Nothing is faster.'], ['Кабели прокладывают консорциумы операторов связи и облачных компаний.', 'A consortium of carriers and cloud companies.'], undefined, DOC.cableMap)),
+      node('dc', b('Дата-центр', 'Data centre'), 'node', [864, 188, 128, 72], card(['Здание со стойками серверов, в котором работает сайт магазина. Внутри стоят свой роутер на границе сети, коммутаторы и серверы. Эту часть пути вы разберёте подробно в следующих уроках.', 'A building with racks of servers. The site lives here: an edge router, switches, servers. We build this part later in the course.'], ['Дата-центр принадлежит хостинг-провайдеру или облаку.', 'A hosting provider or a cloud.']), { shape: 'rack', sub: 'AS 64501', icon: 'server' }),
       node('cdn', b('Копия сайта (CDN)', 'Site copy (CDN)'), 'l7', [184, 40, 144, 48], card(['Сервер сети доставки контента (CDN) в вашем городе. Он хранит копии картинок и страниц сайта, чтобы их не приходилось каждый раз передавать через океан.', 'A content delivery network server in your city. It keeps copies of images and pages so they do not cross the ocean.'], ['Сервер держит компания CDN по договору с владельцем сайта.', 'A CDN company under contract with the site owner.'], undefined, DOC.cfCdn), { icon: 'cloud' }),
-      node('root', b('Корневой сервер DNS', 'Root DNS'), 'l7', [184, 380, 160, 48], card(['Вершина системы имён интернета. У корневых серверов 13 имён, от a.root-servers.net до m.root-servers.net, но за ними стоят более полутора тысяч серверов по всему миру. Серверы одного имени объявляют один и тот же адрес (это называется anycast), и BGP приводит вас к ближайшему из них.', 'The top of the naming system. 13 names a…m.root-servers.net and behind them more than fifteen hundred servers worldwide sharing the same addresses (anycast): BGP brings you to the nearest one.'], ['Корневые серверы держат 12 организаций-операторов, а работу координирует IANA.', '12 operator organisations, coordinated by IANA.'], 'dig . NS', DOC.rootServers), { sub: 'a.root-servers.net', icon: 'dns' }),
+      node('root', b('Корневой сервер DNS', 'Root DNS'), 'l7', [168, 376, 192, 56], card(['Вершина системы имён интернета. У корневых серверов 13 имён, от a.root-servers.net до m.root-servers.net, но за ними стоят более полутора тысяч серверов по всему миру. Серверы одного имени объявляют один и тот же адрес (это называется anycast), и BGP приводит вас к ближайшему из них.', 'The top of the naming system. 13 names a…m.root-servers.net and behind them more than fifteen hundred servers worldwide sharing the same addresses (anycast): BGP brings you to the nearest one.'], ['Корневые серверы держат 12 организаций-операторов, а работу координирует IANA.', '12 operator organisations, coordinated by IANA.'], 'dig . NS', DOC.rootServers), { sub: 'a.root-servers.net', icon: 'dns' }),
     ],
     edges: [
       edge('e-wifi', 'laptop', 'router', 'Wi-Fi', card(['Радиоканал между ноутбуком и точкой доступа в роутере. Вся квартира образует одну локальную сеть 192.168.1.0/24.', 'A radio link between the laptop and the access point in the router. The whole flat is one local network, 192.168.1.0/24.'], ['Радиоканал создаёт точка доступа в роутере.', 'The access point in the router.'])),
@@ -80,7 +80,7 @@ export const mapModel = defineModel<P>({
       edge('e-tr-cable', 'transit', 'cable', b('через AS 64502', 'via AS 64502'), card(['Путь через транзитного оператора. На нём на одну автономную систему больше, а сам путь длиннее на несколько тысяч километров.', 'The path through the transit carrier: one more autonomous system and a few thousand kilometres longer.'], ['Этот путь выбирает BGP, когда короткого пути нет.', 'BGP chooses this path when there is no shorter one.']), { via: [[776, 336]], labelAt: 0.4 }),
       edge('e-cable', 'cable', 'dc', b('5 мкс на км', '5 µs per km'), card(['Задержка в кабеле равна его длине в километрах, умноженной на 5 микросекунд. От Москвы до Франкфурта около 2 000 километров, это 10 миллисекунд в одну сторону, а от Москвы до Нью-Йорка около 7 500 километров, это 37 миллисекунд.', 'Propagation delay: distance × 5 µs. Moscow to Frankfurt is about 2,000 km, 10 ms one way; Moscow to New York about 7,500 km, 37 ms.'], ['Эту задержку задаёт физика, и никто не может её уменьшить.', 'Physics.'])),
       edge('e-cdn', 'isp', 'cdn', b('копия рядом', 'copy nearby'), card(['Узел CDN стоит в сети провайдера или на ближайшей точке обмена, поэтому путь до него занимает пару миллисекунд.', 'The CDN node sits in the provider’s network or at the nearest exchange point: a couple of milliseconds away.'], ['Узел ставит компания CDN.', 'The CDN.']), { via: [[384, 64]], labelAt: 0.35 }),
-      edge('e-root', 'isp', 'root', 'anycast', card(['Один и тот же адрес объявлен из многих мест сразу, и BGP ведёт пакеты к ближайшему экземпляру сервера. Поэтому корень DNS быстро отвечает в любой стране.', 'One address is announced from many places at once; BGP leads to the nearest instance. That is how the DNS root answers fast in any country.'], ['Адреса объявляют операторы корневых серверов.', 'The root server operators.'], 'dig @198.41.0.4 . NS', DOC.rootServers), { via: [[384, 404]], labelAt: 0.35 }),
+      edge('e-root', 'isp', 'root', 'anycast', card(['Один и тот же адрес объявлен из многих мест сразу, и BGP ведёт пакеты к ближайшему экземпляру сервера. Поэтому корень DNS быстро отвечает в любой стране.', 'One address is announced from many places at once; BGP leads to the nearest instance. That is how the DNS root answers fast in any country.'], ['Адреса объявляют операторы корневых серверов.', 'The root server operators.'], 'dig @198.41.0.4 . NS', DOC.rootServers), { via: [[384, 404]], labelAt: 0.15 }),
     ],
   },
   params: [
@@ -175,7 +175,7 @@ export const mapModel = defineModel<P>({
       tokens: [{ edge: 'e-wifi', label: b('запрос', 'request') }],
       say: { laptop: b('Ноутбук отправляет роутеру запрос к сайту магазина.', 'The laptop sends the router a request for the shop’s site.') },
       states: { ...HIDDEN, laptop: 'on', router: 'on' },
-      values: { router: routerAddr },
+      values: { router: routerAddr, cable: t(fmt(b('{d} км', '{e} km'), { d: p.distance.toLocaleString('ru-RU'), e: p.distance.toLocaleString('en-US') })) },
     });
     steps.push({
       id: 'city',
@@ -195,7 +195,7 @@ export const mapModel = defineModel<P>({
         label: b('страна', 'country'),
         caption: b('Сайт находится в другой сети, AS 64501. Обе сети подключены к точке обмена трафиком и передают пакеты друг другу напрямую. Какие адреса находятся в какой сети, они заранее сообщили друг другу по протоколу BGP.', 'The site is in another network, AS 64501. Both networks are connected to an exchange point and swap packets directly. They agreed over BGP which addresses belong to whom.'),
         focus: ['isp', 'e-peer', 'ixp'],
-        tokens: [{ edge: 'e-peer', label: b('запрос', 'request') }, { edge: 'e-ixp-cable', label: '198.51.100.0/24' }],
+        tokens: [{ edge: 'e-peer', label: b('запрос', 'request') }, { edge: 'e-ixp-cable', reverse: true, label: '198.51.100.0/24' }],
         say: { isp: b('Провайдер знает из анонса BGP, что адреса сайта доступны через точку обмена, и отправляет пакет туда.', 'The provider knows from a BGP announcement that the site is reachable via the exchange point and sends the packet there.') },
         states: { ixp: 'on', 'e-peer': 'on', 'e-ixp-cable': 'on' },
         metrics: { rtt: Math.round((L.wifi + L.access + L.middle) * 20) / 10, ases },
@@ -251,10 +251,9 @@ export const mapModel = defineModel<P>({
         ms: Math.round(L.cable * 10) / 10,
       }),
       focus: ['e-cable', 'cable'],
-      tokens: [{ edge: 'e-cable', label: b('запрос', 'request') }],
+      tokens: [{ edge: p.ixp ? 'e-ixp-cable' : 'e-tr-cable', label: b('запрос', 'request') }],
       say: { cable: fmt(b('Свет проходит по кабелю {d} км, и на это уходит {ms} мс.', 'Light crosses {d} km of cable in {ms} ms.'), { d: p.distance.toLocaleString('ru-RU'), ms: Math.round(L.cable * 10) / 10 }) },
       states: { cable: 'on', 'e-cable': 'on' },
-      values: { cable: `${p.distance.toLocaleString('en-US')} km` },
       metrics: { rtt: L.rtt - L.dc * 2, ases },
     });
     steps.push({
