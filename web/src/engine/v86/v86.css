@@ -1,0 +1,63 @@
+/* Tier B: real Linux labs (v86) and the multi-machine lab. Uses the tokens of
+   styles/tokens.css only; the terminal box is the shared .lab-term-box. */
+
+.v86-env { color: var(--c-kernel); }
+.v86-boot { font-variant-numeric: tabular-nums; }
+.v86-term { min-height: 300px; }
+.v86-honest { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; }
+.v86-honest .ic { flex: none; margin-top: 2px; }
+.v86-offer { display: grid; gap: 12px; padding: 18px; color: var(--ink); background: var(--surface); border: 1px dashed var(--line-2); border-radius: var(--r-lg); }
+.v86-offer .prose { font-size: 1rem; }
+.v86-offer-row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.v86-status { min-height: 1.5em; }
+.v86-phase { display: flex; gap: 8px; align-items: center; margin: 8px 0 4px; font-size: 0.92rem; color: var(--ink-2); }
+.v86-progress { width: 100%; height: 6px; accent-color: var(--c-kernel); }
+.v86-spinner { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line-2); border-top-color: var(--c-kernel); animation: v86-spin 0.9s linear infinite; flex: none; }
+@keyframes v86-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .v86-spinner { animation: none; border-top-color: var(--line-2); } }
+:root[data-calm] .v86-spinner { animation: none; }
+
+/* multi-machine lab */
+.mn h1 { margin-bottom: 0.3em; }
+.mn-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; margin: 18px 0; align-items: start; }
+@media (max-width: 900px) { .mn-grid { grid-template-columns: minmax(0, 1fr); } }
+.mn-grid > * { min-width: 0; }
+.mn-diagram { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 8px; }
+.mn-svg { width: 100%; height: auto; display: block; font-family: var(--font-ui); }
+.mn-el { cursor: pointer; outline: none; }
+.mn-el:focus-visible rect, .mn-el:focus-visible .mn-edge { stroke: var(--focus); stroke-width: 2.5; }
+.mn-switch { fill: color-mix(in oklch, var(--c-l2) 10%, var(--surface)); stroke: var(--c-l2); stroke-width: var(--stroke); }
+.mn-node { fill: color-mix(in oklch, var(--c-node) 8%, var(--surface)); stroke: var(--c-node); stroke-width: var(--stroke); }
+.mn-label { font-size: 14px; font-weight: 600; fill: var(--ink); }
+.mn-sub { font-family: var(--font-mono); font-size: 11.5px; fill: var(--muted); }
+.mn-edge { fill: none; stroke: var(--c-l1); stroke-width: 2; transition: stroke var(--t-step) var(--ease); }
+.mn-edge.down { stroke: var(--c-err); stroke-dasharray: 6 5; }
+.mn-edge.lit { stroke: var(--focus); stroke-width: 3; }
+.mn-hit { fill: none; stroke: transparent; stroke-width: 16; }
+.mn-edge-label { font-family: var(--font-mono); font-size: 11.5px; fill: var(--ink-2); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.mn-token { fill: var(--c-l3); }
+.mn-token.arp { fill: var(--c-l2); }
+.mn-token.icmp { fill: var(--c-l4); }
+.mn-delta { min-height: 1.5em; margin: 10px 0; font-size: 0.98rem; color: var(--ink); }
+.mn-controls { display: grid; gap: 10px; }
+.mn-knob { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.mn-predict { padding: 10px 12px; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--bg-2); display: grid; gap: 6px; }
+.mn-predict p { margin: 0; }
+.mn-verdict { display: flex; gap: 8px; align-items: center; margin: 0; }
+.mn-card { margin-top: 14px; padding: 12px 14px; border-left: 2px solid var(--line-2); background: var(--bg); }
+.mn-card h4 { margin: 0 0 6px; font-family: var(--font-ui); }
+.mn-card dl { margin: 0; display: grid; gap: 2px 0; }
+.mn-card dt { font: 600 0.72rem/1.4 var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+.mn-card dd { margin: 0; }
+.mn-mac { width: 100%; border-collapse: collapse; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+.mn-mac th { text-align: left; font: 600 0.72rem/1.4 var(--font-ui); color: var(--muted); border-bottom: 1px solid var(--line); padding: 4px 6px; }
+.mn-mac td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.mn-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 320px; overflow: auto; }
+.mn-log li { display: grid; gap: 1px; font-size: 0.88rem; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.mn-log-how { font-family: var(--font-mono); font-size: 0.78rem; }
+.mn-consoles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.mn-con { display: grid; gap: 6px; min-width: 0; }
+.mn-con-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.mn-con .lab-term-box { min-height: 240px; }
+.mn-status { margin: 10px 0; }
+.mn-mono { font-family: var(--font-mono); }
