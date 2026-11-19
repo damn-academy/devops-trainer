@@ -76,7 +76,7 @@ const TG = (n: number) => nWord(r1(n), ['задачи', 'задач', 'зада�
 /** The same in the accusative, after a verb: "заканчивает 1 задачу". */
 const TA = (n: number) => nWord(r1(n), ['задачу', 'задачи', 'задач'], ['task', 'tasks']);
 const Td = (n: number) => nWord(r1(n), ['день', 'дня', 'дней'], ['day', 'days']);
-const QUEUE: [string, string] = ['Очередь никто не ведёт нарочно: задачи лежат в ней, пока следующий этап занят.', 'Nobody runs a queue on purpose: the tasks lie in it while the next stage is busy.'];
+const QUEUE: [string, string] = ['Очередь никто не заводит нарочно. Задачи лежат в ней, пока следующий этап занят другой работой.', 'Nobody sets up a queue on purpose. The tasks lie in it while the next stage is busy with other work.'];
 const SUBORDINATE = b('Шаги Голдратта для узкого места', 'Goldratt’s steps for the bottleneck');
 
 export const bottleneckModel = defineModel<P>({
@@ -88,8 +88,8 @@ export const bottleneckModel = defineModel<P>({
     'Ten working days of a team of two developers, a reviewer and a tester. New tasks arrive every morning, and each stage finishes as many tasks a day as its capacity allows, but no more than lies in front of it. Under the diagram the number of finished tasks, the work in progress and the cycle time add up.',
   ),
   intro: b(
-    'Схема соберётся по шагам: сейчас на ней только утренняя очередь новых задач и покупатели. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Сначала по одному появятся этапы, и каждый скажет, сколько задач в день он успевает, а потом пойдут десять рабочих дней. В каждый день подсвечен этап, перед которым скопилась самая длинная очередь, а полоска в очереди показывает, сколько задач в ней ждёт.\n\nПосле первого прохода ускорьте в «Параметрах» разработку и проверьте, изменится ли число готовых задач. Затем верните её и по очереди включите шаги Голдратта.',
-    'The diagram builds itself step by step: now it shows only the morning queue of new tasks and the customers. Press “Start: step forward”, then go on with “Step forward” under the diagram. First the stages appear one by one, each saying how many tasks a day it can finish, and then ten working days run. On each day the stage with the longest queue in front of it is highlighted, and the bar in the queue shows how many tasks wait there.\n\nAfter the first pass, speed up development in “Parameters” and check whether the number of finished tasks changes. Then set it back and switch on Goldratt’s steps one at a time.',
+    'Схема собирается по шагам, и сейчас на ней видны только утренняя очередь новых задач и покупатели. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Сначала по одному появятся этапы, и каждый скажет, сколько задач в день он успевает, а потом пойдут десять рабочих дней. В каждый день подсвечен этап, перед которым скопилась самая длинная очередь, а полоска в очереди показывает, сколько задач в ней ждёт.\n\nПосле первого прохода ускорьте в «Параметрах» разработку и проверьте, изменится ли число готовых задач. Затем верните её и по очереди включите шаги Голдратта.',
+    'The diagram builds up step by step, and for now it shows only the morning queue of new tasks and the customers. Press “Start from the first step”, then go on with “Step forward” above the diagram. First the stages appear one by one, each saying how many tasks a day it can finish, and then ten working days run. On each day the stage with the longest queue in front of it is highlighted, and the bar in the queue shows how many tasks wait there.\n\nAfter the first pass, speed up development in “Parameters” and check whether the number of finished tasks changes. Then set it back and switch on Goldratt’s steps one at a time.',
   ),
   legend: [
     { mark: 'active', text: b('этап, на который стоит смотреть сейчас', 'the stage to look at now') },
@@ -112,11 +112,11 @@ export const bottleneckModel = defineModel<P>({
       node('q-review', b('Ждут ревью', 'Waiting for review'), 'gauge', [312, 232, 160, 56], card(['Задачи, код которых готов, но ревьюер их ещё не взял. На доске это часть «готово» в колонке разработки.', 'Tasks whose code is ready but not yet taken by the reviewer. On a board it is the “done” part of the development column.'], QUEUE), { icon: 'file', shape: 'buffer', sub: '0' }),
       node('review', b('Ревью', 'Review'), 'ci-build', [472, 48, 160, 64], card(['Коллега читает код и ищет ошибки. Этот этап успевает четыре задачи в день.', 'A colleague reads the code and looks for mistakes. This stage manages four tasks a day.'], ['Ревью делает ревьюер, опытный разработчик команды.', 'The reviewer, an experienced developer of the team, does it.']), { icon: 'user' }),
       node('q-test', b('Ждут проверки', 'Waiting for testing'), 'gauge', [552, 232, 160, 56], card(['Задачи, которые прошли ревью и ждут тестировщика. Если эта очередь растёт день за днём, проверка не успевает за остальными.', 'Tasks that passed review and wait for the tester. When this queue grows day after day, testing cannot keep up with the rest.'], QUEUE), { icon: 'file', shape: 'buffer', sub: '0' }),
-      node('test', b('Проверка', 'Testing'), 'ci-test', [744, 48, 160, 64], card(['На этапе проверки работает один тестировщик. Мощность этого этапа ниже, чем у остальных, поэтому именно проверка задаёт скорость всей команды.', 'One tester works at the test stage. Its capacity is lower than that of the other stages, which is why testing sets the speed of the whole team.'], ['Проверяет тестировщик.', 'The tester does it.'], GOAL), { icon: 'process' }),
+      node('test', b('Проверка', 'Testing'), 'ci-test', [744, 48, 160, 64], card(['На этапе проверки работает один тестировщик. Мощность этого этапа ниже, чем у остальных, поэтому скорость всей команды задаёт проверка.', 'One tester works at the test stage. Its capacity is lower than that of the other stages, which is why testing sets the speed of the whole team.'], ['Проверяет тестировщик.', 'The tester does it.'], GOAL), { icon: 'process' }),
       node('done', b('У покупателей', 'With the customers'), 'user', [744, 344, 160, 64], card(['Здесь собираются задачи, которые дошли до покупателей. Число задач, которое прибавляется здесь за день, и есть пропускная способность всей команды.', 'Here the tasks that reached the customers gather. The number added here per day is the throughput of the whole team.'], ['Покупатели приходят на сайт магазина сами и пользуются только тем, что уже выложено.', 'The customers come to the shop’s site themselves and use only what is already deployed.']), { icon: 'browser', sub: '0' }),
     ],
     edges: [
-      edge('e-pull', 'ready', 'dev', b('берут в работу', 'started'), card(['По этой линии задачи переходят из очереди в разработку: каждое утро разработчики берут столько новых задач, сколько успевают сделать за день. С лимитом незавершённой работы новую задачу берут, только если в работе меньше шести задач.', 'Along this line tasks go from the queue into development: every morning the developers take as many new tasks as they can finish in a day. With a WIP limit a new task is taken only while fewer than six are in progress.'], ['Задачи берут разработчики.', 'The developers take them.'])),
+      edge('e-pull', 'ready', 'dev', b('берут в работу', 'started'), card(['По этой линии задачи переходят из очереди в разработку. Каждое утро разработчики берут столько новых задач, сколько успевают сделать за день. С лимитом незавершённой работы новую задачу берут, только если в работе меньше шести задач.', 'Along this line tasks go from the queue into development. Every morning the developers take as many new tasks as they can finish in a day. With a WIP limit a new task is taken only while fewer than six are in progress.'], ['Задачи берут разработчики.', 'The developers take them.'])),
       edge('e-code', 'dev', 'q-review', b('код готов', 'code done'), card(['Разработчик закончил код, и задача встаёт в очередь к ревьюеру.', 'A developer finished the code, and the task joins the queue to the reviewer.'], ['Задачу передают разработчики.', 'The developers hand it on.'])),
       edge('e-rev', 'q-review', 'review', b('на ревью', 'to review'), card(['Ревьюер берёт следующую задачу из очереди.', 'The reviewer takes the next task from the queue.'], ['Задачу берёт ревьюер.', 'The reviewer takes it.'])),
       edge('e-revd', 'review', 'q-test', b('ревью пройдено', 'reviewed'), card(['Задача прошла ревью и встаёт в очередь к тестировщику.', 'The task passed review and joins the queue to the tester.'], ['Задачу передаёт ревьюер.', 'The reviewer hands it on.'])),
@@ -161,9 +161,9 @@ export const bottleneckModel = defineModel<P>({
       predict: {
         prompt: b('Вы включаете или выключаете лимит: новую задачу не берут, пока в работе шесть задач. Как изменится время цикла, то есть сколько дней одна задача проводит в работе?', 'You switch the limit on or off: no new task is started while six are in progress. How does the cycle time change, that is, how many days one task spends in progress?'),
         options: [
-          { id: 'shorter', text: b('С лимитом время цикла короче: задачи меньше ждут в очередях', 'With the limit the cycle time is shorter: tasks wait less in queues') },
+          { id: 'shorter', text: b('С лимитом время цикла короче, потому что задачи меньше ждут в очередях', 'With the limit the cycle time is shorter, because tasks wait less in queues') },
           { id: 'same', text: b('Время цикла не зависит от лимита', 'The cycle time does not depend on the limit') },
-          { id: 'longer', text: b('С лимитом время цикла длиннее: разработчики простаивают', 'With the limit the cycle time is longer: the developers stand idle') },
+          { id: 'longer', text: b('С лимитом время цикла длиннее, потому что разработчики простаивают', 'With the limit the cycle time is longer, because the developers stand idle') },
         ],
         resolve: (prev, next) => {
           const a = lastMetrics(prev).cycle ?? 0;
@@ -241,7 +241,7 @@ export const bottleneckModel = defineModel<P>({
             label: b('проверка', 'test'),
             caption: b('После ревью задачи встают в очередь к тестировщику, но тестировщик в отпуске, и проверять их некому.', 'After review the tasks join the queue to the tester, but the tester is on leave, and nobody can test them.'),
             focus: ['q-test'],
-            say: { 'q-test': b('Тестировщика нет, поэтому задачи сюда приходят, а дальше им идти некуда.', 'There is no tester: tasks come here and have nowhere to go.') },
+            say: { 'q-test': b('Тестировщика нет, поэтому задачи сюда приходят, а дальше им идти некуда.', 'There is no tester, so tasks come here and have nowhere to go on.') },
             reveal: ['q-test', 'e-revd'],
             states: { test: 'off', 'e-test': 'off', 'e-done': 'off' },
             metrics: zero,
@@ -260,7 +260,7 @@ export const bottleneckModel = defineModel<P>({
       id: p.limit ? 'limit-on' : 'slowest',
       label: b('предел', 'limit'),
       caption: removed
-        ? b('Самый медленный этап сейчас — проверка, и её мощность равна нулю. Посмотрим, что это значит для десяти дней работы.', 'The slowest stage now is testing, and its capacity is zero. Let us see what that means for ten days of work.')
+        ? b('Самым медленным этапом сейчас стала проверка, и её мощность равна нулю. Посмотрим, что это значит для десяти дней работы.', 'The slowest stage now is testing, and its capacity is zero. Let us see what that means for ten days of work.')
         : fmtn(b('Самый медленный этап успевает {s} в день. Как бы быстро ни работали остальные, до покупателей каждый день будет доходить не больше задач, чем успевает он. {l}', 'The slowest stage manages {s} a day. However fast the others work, no more than that will reach the customers per day. {l}'), {
             s: TA(slowest),
             l: p.limit ? b('Включён лимит, поэтому новую задачу не берут, пока в работе шесть задач.', 'The limit is on: no new task is started while six are in progress.') : b('Лимита нет, поэтому разработчики берут новые задачи каждое утро.', 'There is no limit: the developers take new tasks every morning.'),
@@ -289,7 +289,7 @@ export const bottleneckModel = defineModel<P>({
         id: `d${day}`,
         label: `${day}`,
         caption: day === 1
-          ? fmtn(b('В первый день разработчики берут в работу первые {p}, а ревью и проверке пока нечего делать: до них ещё ничего не дошло.', 'Day 1. The developers start their first {p}, while review and testing have nothing to do yet: nothing has reached them.'), { p: TA(Math.min(p.arrivals, p.dev)) })
+          ? fmtn(b('В первый день разработчики берут в работу первые {p}, а ревью и проверке пока нечего делать, потому что до них ещё ничего не дошло.', 'Day 1. The developers start their first {p}, while review and testing have nothing to do yet, because nothing has reached them.'), { p: TA(Math.min(p.arrivals, p.dev)) })
           : fmtn(b('На {n}-й день разработка закончила {dv}, ревью пропустило {rv}, проверка выпустила к покупателям {ov}. Всего готово {x}, в очереди к ревью остаётся {qr}, в очереди к проверке остаётся {qt}.', 'Day {n}. Development finished {dv}, review passed {rv}, testing released {ov} to the customers. {x} done in all; {qr} wait for review, {qt} wait for testing.'), {
           n: day,
           dv: TA(d.outDev),
@@ -307,7 +307,7 @@ export const bottleneckModel = defineModel<P>({
         states: { 'q-test': d.qTest > 6 ? 'warn' : 'on', 'q-review': d.qReview > 6 ? 'warn' : 'on', done: doneSoFar > 0 ? 'ok' : 'on' },
         metrics: { done: doneSoFar, wip: r1(d.wip), th, cycle: cyc },
       };
-      if (removed && day === DAYS) st.broken = { at: 'q-test', message: `queue before testing: ${r1(d.qTest)} tasks\ndone: 0`, caption: b('без проверки поток стоит: всё, что сделала разработка, копится в очереди и не приносит покупателям никакой пользы.', 'without testing the flow stands still: everything development made piles up in the queue and gives the customers nothing.') };
+      if (removed && day === DAYS) st.broken = { at: 'q-test', message: `queue before testing: ${r1(d.qTest)} tasks\ndone: 0`, caption: b('без проверки поток стоит, и всё, что сделала разработка, копится в очереди и не приносит покупателям никакой пользы.', 'without testing the flow stands still, and everything development made piles up in the queue and gives the customers nothing.') };
       steps.push(st);
     });
     steps.push({
@@ -335,21 +335,21 @@ export const bottleneckModel = defineModel<P>({
         : b('Тестировщик вернулся, и задачи снова доходят до покупателей.', 'The tester is back, and tasks reach the customers again.');
     switch (change.id) {
       case 'dev':
-        return fmtn(b('Разработка теперь заканчивает {y} в день вместо {x}. За десять дней готово {d1} вместо {d0}, потому что число задач, которые доходят до покупателей, задаёт самый медленный этап. Лишняя мощность перед ним только быстрее наполняет очередь: в работе теперь в среднем {w1} вместо {w0}.', 'Development now finishes {y} a day instead of {x}. In ten days {d1} are done instead of {d0}: the slowest stage sets the output, and extra capacity before it only fills the queue faster (on average {w1} in progress instead of {w0}).'), { x: a.dev as number, y: TA(c.dev as number), ...v });
+        return fmtn(b('Разработка теперь заканчивает {y} в день вместо {x}. За десять дней готово {d1} вместо {d0}, потому что число задач, которые доходят до покупателей, задаёт самый медленный этап. Лишняя мощность перед ним только быстрее наполняет очередь, и в работе теперь в среднем {w1} вместо {w0}.', 'Development now finishes {y} a day instead of {x}. In ten days {d1} are done instead of {d0}, because the slowest stage sets how many tasks reach the customers. Extra capacity before it only fills the queue faster, and on average {w1} are now in progress instead of {w0}.'), { x: a.dev as number, y: TA(c.dev as number), ...v });
       case 'test':
-        return fmtn(b('Тестировщик теперь проверяет {y} в день вместо {x}. Готово {d1} вместо {d0}, а время цикла {c1} вместо {c0}: если ускорить узкое место, ускоряется вся система.', 'The tester now tests {y} a day instead of {x}. {d1} are done instead of {d0}, and the cycle time is {c1} instead of {c0}: speed up the bottleneck and the whole system speeds up.'), { x: a.test as number, y: TA(c.test as number), ...v });
+        return fmtn(b('Тестировщик теперь проверяет {y} в день вместо {x}. Готово {d1} вместо {d0}, а время цикла равно {c1} вместо {c0}. Если ускорить узкое место, ускоряется вся система.', 'The tester now tests {y} a day instead of {x}. {d1} are done instead of {d0}, and the cycle time is {c1} instead of {c0}. When the bottleneck speeds up, the whole system speeds up.'), { x: a.test as number, y: TA(c.test as number), ...v });
       case 'limit':
         return c.limit
-          ? fmtn(b('С лимитом очередь перед проверкой перестала расти: в работе в среднем {w1} вместо {w0}, время цикла {c1} вместо {c0}, а готово столько же, {d1}.', 'With the limit the queue before testing stopped growing: on average {w1} in progress instead of {w0}, a cycle time of {c1} instead of {c0}, and just as many done, {d1}.'), v)
-          : fmtn(b('Без лимита разработчики берут всё подряд: в работе в среднем {w1} вместо {w0}, время цикла {c1} вместо {c0}, а готово столько же.', 'Without the limit the developers start everything: on average {w1} in progress instead of {w0}, a cycle time of {c1} instead of {c0}, and the same number done.'), v);
+          ? fmtn(b('С лимитом очередь перед проверкой перестала расти. В работе теперь в среднем {w1} вместо {w0}, время цикла равно {c1} вместо {c0}, а готово столько же задач, {d1}.', 'With the limit the queue before testing stopped growing. On average {w1} are now in progress instead of {w0}, the cycle time is {c1} instead of {c0}, and just as many tasks are done, {d1}.'), v)
+          : fmtn(b('Без лимита разработчики берут в работу всё подряд, поэтому в работе теперь в среднем {w1} вместо {w0}, время цикла равно {c1} вместо {c0}, а готово столько же задач.', 'Without the limit the developers start everything, so on average {w1} are now in progress instead of {w0}, the cycle time is {c1} instead of {c0}, and the same number of tasks is done.'), v);
       case 'focus':
         return c.focus
-          ? fmtn(b('Тестировщик больше не переключается на другие дела и проверяет на 20 % больше: готово {d1} вместо {d0}. Это шаг «использовать»: взять от узкого места всё, на что оно способно.', 'The tester no longer switches to other things and tests 20% more: {d1} done instead of {d0}. That is the “exploit” step: get everything the bottleneck can give.'), v)
-          : fmtn(b('Тестировщика снова отвлекают: готово {d1} вместо {d0}.', 'The tester is distracted again: {d1} done instead of {d0}.'), v);
+          ? fmtn(b('Тестировщик больше не переключается на другие дела и проверяет на 20 % больше, поэтому готово {d1} вместо {d0}. Так выглядит шаг «использовать», на котором команда берёт от узкого места всё, на что оно способно.', 'The tester no longer switches to other things and tests 20% more, so {d1} are done instead of {d0}. This is the “exploit” step, at which the team gets everything the bottleneck can give.'), v)
+          : fmtn(b('Тестировщика снова отвлекают на совещания и чужие задачи, и готово теперь {d1} вместо {d0}.', 'The tester is pulled into meetings and other tasks again, and {d1} are now done instead of {d0}.'), v);
       case 'swarm':
         return c.swarm
-          ? fmtn(b('Свободные разработчики помогают проверять, хоть и вдвое медленнее тестировщика: готово {d1} вместо {d0}. Это шаг «подчинить»: остальные работают на узкое место, а не начинают новое.', 'Free developers help with testing, if half as fast as the tester: {d1} done instead of {d0}. That is the “subordinate” step: the others work for the bottleneck instead of starting something new.'), v)
-          : fmtn(b('Разработчики больше не помогают проверке: готово {d1} вместо {d0}.', 'The developers no longer help with testing: {d1} done instead of {d0}.'), v);
+          ? fmtn(b('Свободные разработчики помогают проверять, хоть и вдвое медленнее тестировщика, и готово теперь {d1} вместо {d0}. Так выглядит шаг «подчинить», на котором остальные работают на узкое место, а не начинают новые задачи.', 'Free developers help with testing, if half as fast as the tester, and {d1} are now done instead of {d0}. This is the “subordinate” step, at which the others work for the bottleneck instead of starting new tasks.'), v)
+          : fmtn(b('Разработчики больше не помогают проверке, и готово теперь {d1} вместо {d0}.', 'The developers no longer help with testing, and {d1} are now done instead of {d0}.'), v);
       default:
         return fmtn(b('Новых задач каждое утро теперь {y} вместо {x}. Готово {d1} вместо {d0}, в работе в среднем {w1} вместо {w0}. Если задач приходит больше, чем уходит, очередь растёт без предела.', 'There are now {y} new tasks every morning instead of {x}. {d1} done instead of {d0}, on average {w1} in progress instead of {w0}. When more comes in than goes out, the queue grows without bound.'), { x: a.arrivals as number, y: c.arrivals as number, ...v });
     }

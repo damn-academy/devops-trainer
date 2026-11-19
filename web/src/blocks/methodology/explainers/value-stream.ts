@@ -50,7 +50,7 @@ export function pathNumbers(p: P, noTest: boolean): PathNumbers {
 }
 
 const ALL = ['idea', 'select', 'dev', 'review', 'test', 'deploy', 'customers', 'w-idea', 'w-dev', 'w-review', 'w-test', 'w-skip', 'w-deploy', 'w-live', 'defect'];
-const QUEUE = ['Очередь никто не ведёт нарочно: карточка лежит в ней, пока следующий этап занят другой работой.', 'Nobody runs a queue on purpose: the card lies in it while the next stage is busy with other work.'] as [string, string];
+const QUEUE = ['Очередь никто не заводит нарочно. Карточка лежит в ней, пока следующий этап занят другой работой.', 'Nobody sets up a queue on purpose. The card lies in it while the next stage is busy with other work.'] as [string, string];
 
 /** "ждёт 24 ч" — the label of the card while it waits on an arrow. */
 const waitLabel = (h: number) => b(`ждёт ${h} ч`, `waits ${h} h`);
@@ -64,14 +64,14 @@ export const valueStreamModel = defineModel<P>({
     'How the card “Card payments” walks the path from the customers’ request to a working feature on the site. At each stage the card is worked on for a few hours, and between the stages it waits; the diagram counts the hours of work and the hours of waiting separately. Under the diagram these hours add up, together with the length of the whole path in working days and the flow efficiency.',
   ),
   intro: b(
-    'Схема соберётся по шагам: сейчас на ней только идея и покупатели, к которым эта идея должна прийти. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Каждый этап появляется, когда до него доходит карточка. Облачко у подсвеченного блока говорит, что этот блок делает или почему карточка у него ждёт, а карточка на линии показывает, сколько часов она ждёт.\n\nКогда карточка дойдёт до покупателей, сократите в «Параметрах» ожидание дня выкладки и посмотрите, как изменится длина пути, а потом включите поломку в блоке «Сломать».',
-    'The diagram builds itself step by step: now it shows only the idea and the customers it should reach. Press “Start: step forward”, then go on with “Step forward” under the diagram. Each stage appears when the card reaches it. The callout at the highlighted block says what the block does or why the card waits there, and the card on the line shows how many hours it waits.\n\nOnce the card reaches the customers, shorten the wait for the deployment day in “Parameters” and see how the length of the path changes, then switch on the break in “Break it”.',
+    'Схема собирается по шагам, и сейчас на ней видны только идея и покупатели, к которым эта идея должна прийти. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый этап появляется, когда до него доходит карточка. Облачко у подсвеченного блока говорит, что этот блок делает или почему карточка у него ждёт, а карточка на линии показывает, сколько часов она ждёт.\n\nКогда карточка дойдёт до покупателей, сократите в «Параметрах» ожидание дня выкладки и посмотрите, как изменится длина пути, а потом включите поломку в блоке «Сломать».',
+    'The diagram builds up step by step, and for now it shows only the idea and the customers it should reach. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each stage appears when the card reaches it. The callout at the highlighted block says what the block does or why the card waits there, and the card on the line shows how many hours it waits.\n\nOnce the card reaches the customers, shorten the wait for the deployment day in “Parameters” and see how the length of the path changes, then switch on the break in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('этап, на котором карточка сейчас', 'the stage where the card is now') },
     { mark: 'say', text: b('что делает этап или почему карточка ждёт', 'what the stage does or why the card waits') },
     { mark: 'token', text: b('карточка и сколько часов она ждёт', 'the card and how many hours it waits') },
-    { mark: 'wait', text: b('очередь: карточка лежит и ждёт', 'a queue: the card lies and waits') },
+    { mark: 'wait', text: b('очередь, в которой карточка лежит и ждёт', 'a queue where the card lies and waits') },
     { mark: 'warn', text: b('карточка ждёт сутки и дольше', 'the card waits a day or longer') },
     { mark: 'ok', text: b('этап закончил свою работу', 'the stage has done its work') },
     { mark: 'err', text: b('дефект нашёл покупатель', 'a customer found the defect') },
@@ -86,7 +86,7 @@ export const valueStreamModel = defineModel<P>({
     height: 440,
     nodes: [
       node('idea', b('Идея', 'Idea'), 'neutral', [24, 40, 176, 60], card(['Просьба покупателей или мысль владельца бизнеса, записанная на карточку: «хотим оплату картой». Пока карточка лежит в списке идей, над ней никто не работает.', 'A customer request or the owner’s idea written on a card: “we want card payments”. While the card lies in the idea list, nobody works on it.'], ['Идеи приносят покупатели, служба поддержки и владелец бизнеса.', 'Ideas come from the customers, support and the business owner.']), { icon: 'file' }),
-      node('select', b('Отбор', 'Selection'), 'ci-source', [392, 40, 176, 60], card(['На этом этапе решают, браться ли за идею, и записывают, что значит «готово»: проверяемое условие, по которому все поймут, что задача закончена. Работы здесь на пару часов.', 'Here the team decides whether to take the idea and writes down what “done” means: a checkable condition by which everyone will know the task is finished. A couple of hours of work.'], ['Отбирает идеи владелец продукта.', 'The product owner selects the ideas.']), { icon: 'user' }),
+      node('select', b('Отбор', 'Selection'), 'ci-source', [392, 40, 176, 60], card(['На этом этапе решают, браться ли за идею, и записывают, что значит «готово», то есть проверяемое условие, по которому все поймут, что задача закончена. Работа на этом этапе занимает пару часов.', 'Here the team decides whether to take the idea and writes down what “done” means, that is, a checkable condition by which everyone will know the task is finished. The work at this stage takes a couple of hours.'], ['Отбирает идеи владелец продукта.', 'The product owner selects the ideas.']), { icon: 'user' }),
       node('dev', b('Разработка', 'Development'), 'ci-build', [760, 40, 176, 60], card(['Разработчик пишет код изменения. Это самый заметный этап, но по календарю он далеко не самый долгий.', 'A developer writes the code of the change. It is the most visible stage, but far from the longest on the calendar.'], ['Код пишут разработчики.', 'Developers write the code.']), { icon: 'terminal' }),
       node('review', b('Ревью', 'Review'), 'ci-build', [760, 200, 176, 60], card(['Коллега читает код изменения и ищет ошибки до того, как их найдут покупатели.', 'A colleague reads the code of the change and looks for mistakes before the customers find them.'], ['Ревью делает другой разработчик.', 'Another developer does the review.']), { icon: 'user' }),
       node('test', b('Проверка', 'Testing'), 'ci-test', [760, 360, 176, 60], card(['Тестировщик проверяет, что изменение работает так, как задумано, и не сломало ничего рядом.', 'The tester checks that the change works as intended and broke nothing next to it.'], ['Проверяет тестировщик, один на двух разработчиков.', 'The tester does it, one for two developers.']), { icon: 'process' }),
@@ -120,7 +120,7 @@ export const valueStreamModel = defineModel<P>({
         options: [
           { id: 'path', text: b('Путь изменится на столько же часов, а часов работы останется столько же', 'The path changes by the same number of hours, and the hours of work stay the same') },
           { id: 'work', text: b('Вместе с путём изменится и число часов работы над карточкой', 'The hours of work on the card change along with the path') },
-          { id: 'none', text: b('Путь не изменится: ожидание не входит в путь, считается только работа', 'The path does not change: waiting is not part of the path, only work counts') },
+          { id: 'none', text: b('Путь не изменится, потому что ожидание в путь не входит и считаются только часы работы', 'The path does not change, because waiting is not part of the path and only the hours of work count') },
         ],
         resolve: (prev, next) => (lastMetrics(next).work !== lastMetrics(prev).work ? 'work' : lastMetrics(next).days !== lastMetrics(prev).days ? 'path' : 'none'),
       },
@@ -139,9 +139,9 @@ export const valueStreamModel = defineModel<P>({
       predict: {
         prompt: b('Вы меняете, сколько карточек команда ведёт одновременно. Люди и часы работы на каждой карточке остаются прежними. Что произойдёт с путём одной карточки?', 'You change how many cards the team runs at once. The people and the hours of work on each card stay the same. What happens to the path of one card?'),
         options: [
-          { id: 'longer', text: b('Чем больше карточек начато, тем длиннее путь: очереди к ревьюеру и тестировщику растут', 'The more cards are started, the longer the path: the queues to the reviewer and the tester grow') },
-          { id: 'same', text: b('Путь не изменится: работы на карточке столько же', 'The path does not change: the work on the card is the same') },
-          { id: 'shorter', text: b('Чем больше карточек начато, тем короче путь: все заняты делом', 'The more cards are started, the shorter the path: everyone is busy') },
+          { id: 'longer', text: b('Чем больше карточек начато, тем длиннее путь, потому что очереди к ревьюеру и тестировщику растут', 'The more cards are started, the longer the path, because the queues to the reviewer and the tester grow') },
+          { id: 'same', text: b('Путь не изменится, потому что работы на карточке остаётся столько же', 'The path does not change, because the card needs as much work as before') },
+          { id: 'shorter', text: b('Чем больше карточек начато, тем короче путь, потому что все люди заняты делом', 'The more cards are started, the shorter the path, because everyone is busy') },
         ],
         resolve: (prev, next) => {
           const a = lastMetrics(prev).days ?? 0;
@@ -156,7 +156,7 @@ export const valueStreamModel = defineModel<P>({
   breaks: [
     {
       id: 'no-test',
-      label: b('Убрать этап проверки: изменения уходят к покупателям непроверенными', 'Remove the test stage: changes reach the customers untested'),
+      label: b('Этап проверки убран, и изменения уходят к покупателям непроверенными', 'The test stage is removed, and changes reach the customers untested'),
       remove: ['test', 'w-test'],
       predict: {
         prompt: b('Этап проверки убрали, чтобы изменения доходили до покупателей быстрее. Остальные этапы и очереди прежние. Что произойдёт?', 'The test stage is removed so that changes reach the customers sooner. The other stages and queues are the same. What happens?'),
@@ -205,16 +205,16 @@ export const valueStreamModel = defineModel<P>({
       states: hiddenExcept(ALL, 'idea', 'customers'),
       metrics: m(),
     });
-    queue('w-idea', 'select', n.waits.idea, fmtn(b('Карточка {hh} лежит в списке идей: владелец продукта разбирает другие идеи и до этой ещё не дошёл. Над карточкой никто не работает, но часы пути уже идут.', 'For {hh} the card lies in the idea list: the product owner is sorting other ideas and has not got to this one. Nobody works on the card, but the hours of the path are already running.'), { h: n.waits.idea, hh: H(n.waits.idea) }), fmtn(b('Владелец продукта занят другими идеями и возьмёт эту карточку через {hh}.', 'The product owner is busy with other ideas and will take this card in {hh}.'), { h: n.waits.idea, hh: H(n.waits.idea) }));
-    stage('select', WORK.select, b('отбор', 'select'), b('Владелец продукта берёт карточку в работу и записывает, что значит «готово»: покупатель может оплатить заказ картой. На это уходит два часа.', 'The product owner takes the card and writes down what “done” means: a customer can pay for an order by card. This takes two hours.'), b('Владелец продукта записывает, по какому признаку задачу сочтут готовой: покупатель может заплатить картой.', 'The product owner writes down how everyone will know the task is done: a customer can pay by card.'));
-    queue('w-dev', 'dev', n.waits.dev, fmtn(b('Отобранная карточка ждёт {hh}: оба разработчика заканчивают задачи, которые начали раньше.', 'The selected card waits {hh}: both developers are finishing tasks they started earlier.'), { h: n.waits.dev, hh: H(n.waits.dev) }), fmtn(b('Разработчики заканчивают начатые задачи, и карточка ждёт свободного человека {hh}.', 'The developers finish what they started; the card waits {hh} for a free person.'), { h: n.waits.dev, hh: H(n.waits.dev) }));
-    stage('dev', WORK.dev, b('код', 'code'), b('Разработчик пишет код оплаты картой. Работы шесть часов, то есть меньше одного рабочего дня.', 'A developer writes the card payment code. Six hours of work, less than one working day.'), b('Разработчик пишет код оплаты картой, и на это уходит шесть часов.', 'A developer writes the card payment code, and it takes six hours.'));
+    queue('w-idea', 'select', n.waits.idea, fmtn(b('Карточка {hh} лежит в списке идей, потому что владелец продукта разбирает другие идеи и до этой ещё не дошёл. Над карточкой никто не работает, но часы пути уже идут.', 'For {hh} the card lies in the idea list, because the product owner is sorting other ideas and has not got to this one. Nobody works on the card, but the hours of the path are already running.'), { h: n.waits.idea, hh: H(n.waits.idea) }), fmtn(b('Владелец продукта занят другими идеями и возьмёт эту карточку через {hh}.', 'The product owner is busy with other ideas and will take this card in {hh}.'), { h: n.waits.idea, hh: H(n.waits.idea) }));
+    stage('select', WORK.select, b('отбор', 'select'), b('Владелец продукта берёт карточку в работу и записывает, что задача будет считаться готовой, когда покупатель сможет оплатить заказ картой. На это уходит два часа.', 'The product owner takes the card and writes down that the task will count as done when a customer can pay for an order by card. This takes two hours.'), b('Владелец продукта записывает, что задачу сочтут готовой, когда покупатель сможет заплатить картой.', 'The product owner writes down that the task will count as done when a customer can pay by card.'));
+    queue('w-dev', 'dev', n.waits.dev, fmtn(b('Отобранная карточка ждёт {hh}, потому что оба разработчика заканчивают задачи, которые начали раньше.', 'The selected card waits {hh}, because both developers are finishing tasks they started earlier.'), { h: n.waits.dev, hh: H(n.waits.dev) }), fmtn(b('Разработчики заканчивают начатые задачи, и карточка ждёт свободного человека {hh}.', 'The developers finish what they started; the card waits {hh} for a free person.'), { h: n.waits.dev, hh: H(n.waits.dev) }));
+    stage('dev', WORK.dev, b('код', 'code'), b('Разработчик пишет код оплаты картой. На это уходит шесть часов работы, то есть меньше одного рабочего дня.', 'A developer writes the card payment code. This takes six hours of work, less than one working day.'), b('Разработчик пишет код оплаты картой, и на это уходит шесть часов.', 'A developer writes the card payment code, and it takes six hours.'));
     queue(
       'w-review',
       'review',
       n.waits.review,
       p.inProgress > 1
-        ? fmtn(b('Код готов, но ревьюер получит его только через {hh}: кроме этой карточки, у него в очереди ещё {kk}, потому что команда ведёт несколько карточек сразу.', 'The code is ready, but the reviewer will get it only after {hh}: besides this card there are {kk} more in their queue, because the team runs several cards at once.'), { h: n.waits.review, hh: H(n.waits.review), kk: nWord(p.inProgress - 1, ['карточка', 'карточки', 'карточек'], ['card', 'cards']) })
+        ? fmtn(b('Код готов, но ревьюер получит его только через {hh}. Кроме этой карточки, у него в очереди ещё {kk}, потому что команда ведёт несколько карточек сразу.', 'The code is ready, but the reviewer will get it only after {hh}. Besides this card there are {kk} more in their queue, because the team runs several cards at once.'), { h: n.waits.review, hh: H(n.waits.review), kk: nWord(p.inProgress - 1, ['карточка', 'карточки', 'карточек'], ['card', 'cards']) })
         : fmtn(b('Код готов, но ревьюер занят своей задачей, и карточка ждёт его {hh}.', 'The code is ready, but the reviewer is busy with their own task, and the card waits {hh} for them.'), { h: n.waits.review, hh: H(n.waits.review) }),
       p.inProgress > 1
         ? fmtn(b('У ревьюера в очереди ещё {kk} от коллег, поэтому эта карточка подождёт {hh}.', 'The reviewer has {kk} more from colleagues in the queue; this one waits {hh}.'), { h: n.waits.review, hh: H(n.waits.review), kk: nWord(p.inProgress - 1, ['карточка', 'карточки', 'карточек'], ['card', 'cards']) })
@@ -222,7 +222,7 @@ export const valueStreamModel = defineModel<P>({
     );
     stage('review', WORK.review, b('ревью', 'review'), b('Коллега читает код и ищет в нём ошибки. Ревью занимает час.', 'A colleague reads the code and looks for mistakes. Review takes an hour.'), b('Коллега читает код и ищет в нём ошибки, и на это уходит час.', 'A colleague reads the code and looks for mistakes, and it takes an hour.'));
     if (!noTest) {
-      queue('w-test', 'test', n.waits.test, fmtn(b('Карточка {hh} стоит в очереди к тестировщику: он один, а изменения приходят к нему от двух разработчиков.', 'For {hh} the card stands in the queue to the tester: there is one tester, and changes come from two developers.'), { h: n.waits.test, hh: H(n.waits.test) }), fmtn(b('Тестировщик проверяет изменения другого разработчика, а эта карточка ждёт своей очереди {hh}.', 'The tester is checking the other developer’s changes; this card waits {hh}.'), { h: n.waits.test, hh: H(n.waits.test) }));
+      queue('w-test', 'test', n.waits.test, fmtn(b('Карточка {hh} стоит в очереди к тестировщику, потому что тестировщик один, а изменения приходят к нему от двух разработчиков.', 'For {hh} the card stands in the queue to the tester, because there is one tester, and changes come from two developers.'), { h: n.waits.test, hh: H(n.waits.test) }), fmtn(b('Тестировщик проверяет изменения другого разработчика, а эта карточка ждёт своей очереди {hh}.', 'The tester is checking the other developer’s changes; this card waits {hh}.'), { h: n.waits.test, hh: H(n.waits.test) }));
       stage('test', WORK.test, b('проверка', 'test'), b('Тестировщик проверяет, что покупатель может оплатить заказ картой и что корзина и скидки работают как раньше. Проверка занимает два часа.', 'The tester checks that a customer can pay by card and that the cart and the discounts work as before. Two hours of work.'), b('Тестировщик проверяет оплату картой и всё, что с ней связано, и на это уходит два часа.', 'The tester checks card payments and everything connected to them, and it takes two hours.'));
     }
     queue(
@@ -236,7 +236,7 @@ export const valueStreamModel = defineModel<P>({
     steps.push({
       id: 'done',
       label: b('итог', 'total'),
-      caption: fmtn(b('Покупатели могут платить картой. Весь путь занял {dd}, из них над карточкой работали {ww}. Эффективность потока равна {e} %: всё остальное время карточка ждала в очередях.', 'The customers can pay by card. The whole path took {dd}, and the card was worked on for {ww} of them. Flow efficiency is {e}%: the rest of the time the card waited in queues.'), { dd: D(n.days), ww: H(n.work), e: n.efficiency }),
+      caption: fmtn(b('Покупатели могут платить картой. Весь путь занял {dd}, из них над карточкой работали {ww}. Эффективность потока равна {e} %, а всё остальное время карточка ждала в очередях.', 'The customers can pay by card. The whole path took {dd}, and the card was worked on for {ww} of them. Flow efficiency is {e}%, and the rest of the time the card waited in queues.'), { dd: D(n.days), ww: H(n.work), e: n.efficiency }),
       focus: ['customers', 'w-live'],
       tokens: [{ edge: 'w-live', label: b('оплата картой', 'card payments') }],
       say: { customers: b('Покупатели платят картой, и только теперь изменение приносит деньги.', 'The customers pay by card, and only now does the change earn money.') },
@@ -247,7 +247,7 @@ export const valueStreamModel = defineModel<P>({
       steps.push({
         id: 'defect',
         label: b('дефект', 'defect'),
-        caption: fmtn(b('Без проверки путь короче, но ошибки теперь находят покупатели. В модели так возвращается каждая пятая карточка ({p} %): исправление становится новой карточкой и проходит весь путь ещё раз.', 'Without testing the path is shorter, but now the customers find the mistakes. In the model one card in five ({p}%) comes back this way: the fix becomes a new card and walks the whole path again.'), { p: DEFECT_SHARE * 100 }),
+        caption: fmtn(b('Без проверки путь короче, но ошибки теперь находят покупатели. В модели так возвращается каждая пятая карточка ({p} %), и исправление каждой из них становится новой карточкой, которая проходит весь путь ещё раз.', 'Without testing the path is shorter, but now the customers find the mistakes. In the model one card in five ({p}%) comes back this way, and the fix of each becomes a new card that walks the whole path again.'), { p: DEFECT_SHARE * 100 }),
         focus: ['defect', 'customers'],
         tokens: [{ edge: 'defect', label: b('дефект', 'defect') }],
         say: { customers: b('Покупатель оплатил заказ картой, а заказ не подтвердился, и покупатель пишет в поддержку.', 'A customer paid by card, but the order was not confirmed; they write to support.') },

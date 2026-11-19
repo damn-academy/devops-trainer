@@ -73,15 +73,15 @@ export const incidentModel = defineModel<P>({
     'One incident in the shop step by step, from a faulty night deployment to the action items. Monitoring notices the outage, the on-call engineer acknowledges the alert and posts a status, looks for the cause in the deployment log and rolls the site back to the previous version, and the next day the team reviews what happened without looking for someone to blame. Under the diagram the time to detection and to recovery, the bad minutes and the share of the monthly error budget this outage ate add up.',
   ),
   intro: b(
-    'Схема соберётся по шагам: сейчас на ней только выкладка и сайт магазина. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Каждый участник появляется, когда до него доходит инцидент, и говорит в облачке, что он делает в эту минуту, а карточка на линии показывает, что он передаёт дальше. Подпись каждого шага начинается с времени ночи.\n\nПосле первого прохода выберите в «Параметрах» другой способ замечать сбой, например проверку, что сервер отвечает, и посмотрите, когда о сбое узнают теперь. Потом уберите откат и инструкцию для дежурного, а в блоке «Сломать» отключите график дежурств.',
-    'The diagram builds itself step by step: now it shows only the deployment and the shop’s site. Press “Start: step forward”, then go on with “Step forward” under the diagram. Each participant appears when the incident reaches it and says in a callout what it does at that minute, and the card on the line shows what it hands on. The time of night is given at the start of the step caption.\n\nAfter the first pass choose another way of noticing the outage in “Parameters”, such as a check that the server answers, and see when the outage is noticed now. Then remove the rollback and the runbook, and switch off the on-call rota in “Break it”.',
+    'Схема собирается по шагам, и сейчас на ней видны только выкладка и сайт магазина. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый участник появляется, когда до него доходит инцидент, и говорит в облачке, что он делает в эту минуту, а карточка на линии показывает, что он передаёт дальше. Подпись каждого шага начинается с времени ночи.\n\nПосле первого прохода выберите в «Параметрах» другой способ замечать сбой, например проверку, что сервер отвечает, и посмотрите, когда о сбое узнают теперь. Потом уберите откат и инструкцию для дежурного, а в блоке «Сломать» отключите график дежурств.',
+    'The diagram builds up step by step, and for now it shows only the deployment and the shop’s site. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each participant appears when the incident reaches it and says in a callout what it does at that minute, and the card on the line shows what it hands on. The time of night is given at the start of the step caption.\n\nAfter the first pass choose another way of noticing the outage in “Parameters”, such as a check that the server answers, and see when the outage is noticed now. Then remove the rollback and the runbook, and switch off the on-call rota in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('участник, который действует сейчас', 'the participant acting now') },
     { mark: 'say', text: b('что он делает в эту минуту', 'what it does at that minute') },
     { mark: 'token', text: b('что он передаёт дальше', 'what it hands on') },
-    { mark: 'err', text: b('здесь сломано или здесь задержка', 'broken here, or a delay here') },
-    { mark: 'ok', text: b('сделано: сайт восстановлен, задачи заведены', 'done: the site restored, the tasks filed') },
+    { mark: 'err', text: b('на этом участке поломка или задержка', 'a break or a delay at this point') },
+    { mark: 'ok', text: b('сайт восстановлен, и задачи заведены', 'the site is restored, and the tasks are filed') },
     { mark: 'dashed', text: b('эскалация к запасному дежурному', 'escalation to the secondary') },
     { mark: 'icon:server', text: b('сайт магазина', 'the shop’s site') },
     { mark: 'icon:user', text: b('дежурные', 'the on-call engineers') },
@@ -96,22 +96,22 @@ export const incidentModel = defineModel<P>({
       node('deploy', b('Выкладка #41', 'Deploy #41'), 'ci-deploy', [24, 40, 168, 60], card(['Выкладка, после которой начался сбой. В журнале о ней записаны время, номер и список изменений, которые в неё вошли.', 'The deployment after which the outage began. The log records its time, its number and the list of changes in it.'], ['Выкладывает конвейер или эксплуатация.', 'The pipeline or operations deploys.']), { icon: 'container' }),
       node('service', b('Сайт магазина', 'Shop site'), 'node', [264, 40, 184, 64], card(['Рабочий сайт магазина. После выкладки часть оформлений заказа перестала проходить, хотя сам сервер продолжает отвечать.', 'The shop’s working site. After the deployment part of the checkouts started to fail, although the server itself keeps answering.'], ['Сайт обслуживает эксплуатация.', 'Operations looks after it.']), { icon: 'server' }),
       node('monitor', b('Мониторинг', 'Monitoring'), 'gauge', [520, 40, 176, 60], card(['Система, которая следит за долей успешных оформлений заказа и скоростью сжигания бюджета ошибок. Если она смотрит только на то, отвечает ли сервер, сбой оплаты ей не виден.', 'The system that watches the share of successful checkouts and the burn rate of the error budget. If it only watches whether the server answers, a checkout failure is invisible to it.'], ['Мониторинг настраивает команда.', 'The team sets it up.'], { url: 'https://sre.google/workbook/alerting-on-slos/', label: 'SRE Workbook › Alerting on SLOs' }), { icon: 'process' }),
-      node('oncall', b('Дежурный', 'On-call'), 'user', [776, 40, 160, 60], card(['Человек, который по графику дежурств отвечает за срочные оповещения: подтверждает оповещение, оценивает сбой и восстанавливает сервис.', 'The person who, by the on-call rota, answers pages: acknowledges the alert, assesses the outage and restores the service.'], ['Дежурного назначает команда по графику.', 'The team assigns them by the rota.'], IM), { icon: 'user' }),
+      node('oncall', b('Дежурный', 'On-call'), 'user', [776, 40, 160, 60], card(['Человек, который по графику дежурств отвечает за срочные оповещения. Он подтверждает оповещение, оценивает сбой и восстанавливает сервис.', 'The person who, by the on-call rota, answers pages. They acknowledge the alert, assess the outage and restore the service.'], ['Дежурного назначает команда по графику.', 'The team assigns them by the rota.'], IM), { icon: 'user' }),
       node('backup', b('Запасной дежурный', 'Secondary'), 'user', [776, 240, 160, 60], card(['Запасным называют второго дежурного. Оповещение уходит ему, если первый дежурный не подтвердил его за 15 минут, и такую передачу называют эскалацией.', 'The second on-call engineer. The page goes to them if the first did not acknowledge it within 15 minutes; this is called escalation.'], ['Его тоже назначает команда по графику.', 'The team assigns them by the rota too.']), { icon: 'user' }),
-      node('status', b('Канал статуса', 'Status channel'), 'neutral', [520, 240, 176, 60], card(['Канал статуса — это чат, куда дежурный пишет, что команда видит, что делает и когда будет следующее сообщение. Владелец бизнеса и поддержка читают этот канал и не отвлекают дежурного вопросами.', 'A chat where the on-call engineer writes what the team sees, what it does and when the next update is. The business owner and support read this channel instead of distracting the on-call engineer.'], ['Пишет дежурный или координатор инцидента.', 'The on-call engineer or the incident commander writes.']), { icon: 'browser' }),
+      node('status', b('Канал статуса', 'Status channel'), 'neutral', [520, 240, 176, 60], card(['Канал статуса — это чат, куда дежурный пишет, что команда видит, что делает и когда будет следующее сообщение. Владелец бизнеса и поддержка читают этот канал и не отвлекают дежурного вопросами.', 'A chat where the on-call engineer writes what the team sees, what it does and when the next update is. The business owner and support read this channel instead of distracting the on-call engineer.'], ['Сообщения в канал пишет дежурный или координатор инцидента.', 'The on-call engineer or the incident commander writes the updates.']), { icon: 'browser' }),
       node('log', b('Журнал выкладок', 'Deploy log'), 'obj', [24, 240, 168, 60], card(['В журнал выкладок записано, когда была каждая выкладка и какие изменения в неё вошли. Диагностика начинается с вопроса, что менялось последним, и журнал отвечает на него.', 'A list of deployments with times and changes. Diagnosis starts with the question of what changed last, and the log answers it.'], ['Журнал пишет конвейер сам.', 'The pipeline writes it automatically.']), { icon: 'file' }),
-      node('postmortem', b('Разбор', 'Postmortem'), 'obj', [264, 400, 184, 64], card(['Разбор — это письменный отчёт о сбое: хронология из всех источников, влияние на покупателей, способствующие факторы и задачи на улучшение. Виноватого в нём не ищут.', 'A written review of the outage: a timeline from every source, the impact on the customers, the contributing factors and the action items. Nobody looks for someone to blame.'], ['Разбор пишут участники инцидента в течение нескольких дней.', 'The people involved write it within a few days.'], PM), { icon: 'file' }),
+      node('postmortem', b('Разбор', 'Postmortem'), 'obj', [264, 400, 184, 64], card(['Разбором называют письменный отчёт о сбое, в котором собраны хронология из всех источников, влияние на покупателей, способствующие факторы и задачи на улучшение. Виноватого в разборе не ищут.', 'A postmortem is a written report on the outage that holds a timeline from every source, the impact on the customers, the contributing factors and the action items. Nobody looks for someone to blame in it.'], ['Разбор пишут участники инцидента в течение нескольких дней.', 'The people involved write it within a few days.'], PM), { icon: 'file' }),
       node('board', b('Доска', 'Board'), 'neutral', [520, 400, 176, 64], card(['На доске команды задачи на улучшение становятся обычными карточками с владельцем и сроком.', 'The team’s board. The action items become ordinary cards on it, with an owner and a due date.'], ['Карточки заводит команда.', 'The team files the cards.']), { icon: 'folder' }),
     ],
     edges: [
       edge('e-deploy', 'deploy', 'service', b('изменения', 'changes'), card(['Выкладка поставила изменения на рабочий сайт.', 'The deployment brought the changes to the working site.'], ['Выкладывает конвейер.', 'The pipeline deploys.'])),
-      edge('e-signal', 'service', 'monitor', b('доля ошибок', 'error share'), card(['Сайт сообщает мониторингу, сколько оформлений заказа прошло и сколько нет.', 'The site tells monitoring how many checkouts passed and how many failed.'], ['Метрики отдаёт сайт, собирает мониторинг.', 'The site exports the metrics, monitoring collects them.'])),
+      edge('e-signal', 'service', 'monitor', b('доля ошибок', 'error share'), card(['Сайт сообщает мониторингу, сколько оформлений заказа прошло и сколько нет.', 'The site tells monitoring how many checkouts passed and how many failed.'], ['Метрики отдаёт сайт, а собирает их мониторинг.', 'The site exports the metrics, and monitoring collects them.'])),
       edge('e-page', 'monitor', 'oncall', b('срочное оповещение', 'page'), card(['Срочное оповещение будит человека звонком, а тикет ждёт рабочего дня.', 'A page wakes a person with a call; a ticket waits for the working day.'], ['Оповещение отправляет система оповещений.', 'The alerting system sends it.'])),
-      edge('e-escalate', 'oncall', 'backup', b('эскалация', 'escalation'), card(['Если оповещение не подтвердили за 15 минут, оно уходит запасному дежурному.', 'If the page is not acknowledged within 15 minutes, it goes to the secondary.'], ['Передаёт система оповещений.', 'The alerting system passes it on.']), { dashed: true }),
+      edge('e-escalate', 'oncall', 'backup', b('эскалация', 'escalation'), card(['Если оповещение не подтвердили за 15 минут, оно уходит запасному дежурному.', 'If the page is not acknowledged within 15 minutes, it goes to the secondary.'], ['Оповещение передаёт дальше система оповещений.', 'The alerting system passes the page on.']), { dashed: true }),
       edge('e-status', 'oncall', 'status', b('статус', 'status'), card(['Первое сообщение о статусе уходит в первые минуты, даже если причина ещё неизвестна.', 'The first status update goes out in the first minutes, even when the cause is still unknown.'], ONCALL)),
-      edge('e-diag', 'oncall', 'log', b('что менялось?', 'what changed?'), card(['Диагностика начинается с журнала выкладок: последнее изменение подозревают первым.', 'Diagnosis starts with the deployment log: the last change is the first suspect.'], ['Журнал проверяет дежурный, как велит инструкция.', 'The on-call engineer checks the log, as the runbook says.']), { via: [[856, 196], [108, 196]], labelAt: 0.3 }),
-      edge('e-rollback', 'log', 'service', b('откат', 'rollback'), card(['Откат смягчает сбой: на сайт возвращают прошлую версию, а причину ищут потом.', 'A rollback mitigates the outage: the previous version is put back on the site, and the cause is looked for later.'], ONCALL)),
-      edge('e-timeline', 'status', 'postmortem', b('факты по времени', 'facts by time'), card(['Хронологию разбора собирают из всех источников: журнала выкладок, графиков мониторинга, канала статуса и тикетов поддержки.', 'The review’s timeline is assembled from every source: the deployment log, the monitoring graphs, the status channel and support tickets.'], ['Собирает автор разбора.', 'The author of the review assembles it.'])),
+      edge('e-diag', 'oncall', 'log', b('что менялось?', 'what changed?'), card(['Диагностика начинается с журнала выкладок, потому что первым подозревают последнее изменение.', 'Diagnosis starts with the deployment log, because the last change is suspected first.'], ['Журнал проверяет дежурный, как велит инструкция.', 'The on-call engineer checks the log, as the runbook says.']), { via: [[856, 196], [108, 196]], labelAt: 0.3 }),
+      edge('e-rollback', 'log', 'service', b('откат', 'rollback'), card(['Откат смягчает сбой, потому что на сайт возвращают прошлую версию, а причину ищут потом.', 'A rollback mitigates the outage, because the previous version is put back on the site, and the cause is looked for later.'], ONCALL)),
+      edge('e-timeline', 'status', 'postmortem', b('факты по времени', 'facts by time'), card(['Хронологию разбора собирают из всех источников: журнала выкладок, графиков мониторинга, канала статуса и тикетов поддержки.', 'The review’s timeline is assembled from every source: the deployment log, the monitoring graphs, the status channel and support tickets.'], ['Хронологию собирает автор разбора.', 'The author of the review assembles the timeline.'])),
       edge('e-actions', 'postmortem', 'board', b('фактор → задача', 'factor → task'), card(['Каждый способствующий фактор становится задачей, например «оповещение по доле ошибок» или «откат одной кнопкой».', 'Each contributing factor becomes a task, such as “an alert on the error share” or “one-click rollback”.'], ['Задачи заводит команда.', 'The team files them.'])),
     ],
   },
@@ -122,7 +122,7 @@ export const incidentModel = defineModel<P>({
       label: b('Кто или что первым сообщит о поломке оплаты', 'Who or what first reports that the checkout broke'),
       kind: 'choice',
       options: [
-        { id: 'none', label: b('никто: о поломке узнают из жалоб покупателей', 'nobody: the team learns from customer complaints') },
+        { id: 'none', label: b('никто, и о поломке узнают из жалоб покупателей', 'nobody, and the team learns from customer complaints') },
         { id: 'host-check', label: b('проверка, что сервер отвечает', 'a check that the server answers') },
         { id: 'slo-alerts', label: b('оповещение по доле неуспешных заказов', 'an alert on the share of failing orders') },
       ],
@@ -158,7 +158,7 @@ export const incidentModel = defineModel<P>({
   breaks: [
     {
       id: 'no-rota',
-      label: b('Графика дежурств нет: срочное оповещение приходит всем сразу', 'No on-call rota: the page goes to everyone at once'),
+      label: b('Графика дежурств нет, поэтому срочное оповещение приходит всем сразу', 'There is no on-call rota, so the page goes to everyone at once'),
       remove: ['oncall'],
       boundary: 'identity',
       predict: {
@@ -176,7 +176,7 @@ export const incidentModel = defineModel<P>({
       remove: ['e-signal'],
       boundary: 'process',
       predict: {
-        prompt: b('Оповещение срабатывает, только когда процессор загружен больше чем на 90 %. Процессор загружен на 35 %, а оплата сломана. Что будет?', 'The alert fires only when the CPU is loaded over 90%. The CPU is at 35%, and the checkout is broken. What happens?'),
+        prompt: b('Оповещение срабатывает, только когда процессор загружен больше чем на 90 %. Процессор загружен на 35 %, а оплата сломана. Что сделает оповещение?', 'The alert fires only when the CPU is loaded over 90%. The CPU is at 35%, and the checkout is broken. What does the alert do?'),
         options: [
           { id: 'silent', text: b('Оповещение промолчит, и о сбое первыми узнают покупатели', 'The alert stays silent, and the customers learn about the outage first') },
           { id: 'fires', text: b('Оповещение сработает как обычно', 'The alert fires as usual') },
@@ -203,7 +203,7 @@ export const incidentModel = defineModel<P>({
     steps.push({
       id: 's1',
       label: b('выкладка', 'deploy'),
-      caption: at(fmtn(b('Ночная выкладка #41 из {b} уходит на сайт. Сразу после неё перестают проходить {f} заказов: сервер работает, а оплата нет.', 'The night deployment #41 with {b} goes to the site. Right after it {f} of orders start to fail: the server works, the checkout does not.'), { b: CH(batch), f: pct(p.failing) })),
+      caption: at(fmtn(b('Ночная выкладка #41 из {b} уходит на сайт. Сразу после неё перестают проходить {f} заказов. Сервер при этом работает, и сломалась только оплата.', 'The night deployment #41 with {b} goes to the site. Right after it {f} of orders start to fail. The server keeps working, and only the checkout is broken.'), { b: CH(batch), f: pct(p.failing) })),
       focus: ['e-deploy', 'service'],
       say: { service: fmtn(b('После выкладки не проходит {f} заказов, хотя сервер отвечает.', 'After the deployment {f} of orders fail, although the server answers.'), { f: pct(p.failing) }) },
       tokens: [{ edge: 'e-deploy', label: fmtn(b('#41, {b}', '#41, {b}'), { b: nWord(batch, ['изменение', 'изменения', 'изменений'], ['change', 'changes']) }) }],
@@ -224,12 +224,12 @@ export const incidentModel = defineModel<P>({
               : b('Прошло четыре часа. Мониторинга нет, и о сбое команда узнаёт из жалоб покупателей, которые приносит поддержка.', 'Four hours have passed. There is no monitoring, and the team learns about the outage from customer complaints brought by support.'),
         ),
         focus: ['monitor'],
-        say: { monitor: cpu ? b('Процессор загружен на 35 %, поэтому тревоги нет.', 'The CPU is at 35%, so there is no alarm.') : p.detection === 'host-check' ? b('Сервер отвечает, и проверка считает, что всё в порядке.', 'The server answers, and the check considers all is well.') : b('Никто не следит за сайтом.', 'Nobody watches the site.') },
+        say: { monitor: cpu ? b('Процессор загружен на 35 %, поэтому тревоги нет.', 'The CPU is at 35%, so there is no alarm.') : p.detection === 'host-check' ? b('Сервер отвечает, и проверка считает, что всё в порядке.', 'The server answers, and the check considers all is well.') : b('За сайтом никто не следит, поэтому сигнала нет.', 'Nobody watches the site, so there is no signal.') },
         reveal: ['monitor'],
         states: { monitor: 'off' },
         values: { monitor: cpu ? 'CPU 35%' : p.detection === 'host-check' ? '200 OK' : '—' },
         metrics: m(),
-        ...(cpu ? { broken: { at: 'monitor', message: 'ALERT HighCPU: inactive (cpu=35%)\ncheckout success: 80%', caption: b('показатель для оповещения не описывает то, что видит покупатель: процессор в норме, а заказы не проходят.', 'the indicator for the alert does not describe what the customer sees: the CPU is fine while orders fail.') } } : {}),
+        ...(cpu ? { broken: { at: 'monitor', message: 'ALERT HighCPU: inactive (cpu=35%)\ncheckout success: 80%', caption: b('показатель для оповещения не описывает то, что видит покупатель, потому что процессор в норме, а заказы при этом не проходят.', 'the indicator for the alert does not describe what the customer sees, because the CPU is fine while orders fail.') } } : {}),
       });
       t += n.ack;
       steps.push(
@@ -289,7 +289,7 @@ export const incidentModel = defineModel<P>({
               label: b('подтверждение', 'ack'),
               caption: at(b('Дежурный подтверждает оповещение за пару минут. Теперь сбой за ним, и остальные знают, что им занимаются.', 'The on-call engineer acknowledges the page within a couple of minutes. The outage is now theirs, and everyone knows it is being handled.')),
               focus: ['e-page', 'oncall'],
-              say: { oncall: b('Дежурный подтверждает оповещение: «беру».', 'The on-call engineer acknowledges the page: “mine”.') },
+              say: { oncall: b('Дежурный подтверждает оповещение и тем самым говорит остальным: «беру».', 'The on-call engineer acknowledges the page and so tells the others: “mine”.') },
               tokens: [{ edge: 'e-page', label: b('оплата сломана', 'checkout broken') }],
               reveal: ['e-page', 'oncall'],
               metrics: m(),
@@ -300,9 +300,9 @@ export const incidentModel = defineModel<P>({
     steps.push({
       id: 's4',
       label: b('статус', 'status'),
-      caption: at(b('Первое сообщение о статусе уходит в канал сразу, хотя причина ещё неизвестна: что видим, что делаем и когда напишем снова. Владелец бизнеса читает канал и не отвлекает дежурного вопросами.', 'The first status update goes to the channel at once, although the cause is still unknown: what we see, what we do and when we write again. The business owner reads the channel instead of distracting the on-call engineer.')),
+      caption: at(b('Первое сообщение о статусе уходит в канал сразу, хотя причина ещё неизвестна. В сообщении сказано, что команда видит, что она делает и когда напишет снова. Владелец бизнеса читает канал и не отвлекает дежурного вопросами.', 'The first status update goes to the channel at once, although the cause is still unknown. The update says what the team sees, what it does and when it will write again. The business owner reads the channel instead of distracting the on-call engineer.')),
       focus: ['e-status', 'status'],
-      say: { status: b('«Видим: не проходят оплаты. Ищем причину. Следующее сообщение через 30 минут».', '“We see: payments fail. Looking for the cause. Next update in 30 minutes.”') },
+      say: { status: b('«Мы видим, что не проходят оплаты, и ищем причину. Следующее сообщение напишем через 30 минут».', '“We see that payments fail and are looking for the cause. We will post the next update in 30 minutes.”') },
       tokens: [{ edge: 'e-status', label: b('статус 1', 'status 1') }],
       reveal: ['e-status', 'status'],
       states: responder === 'backup' ? { 'e-status': 'on' } : {},
@@ -312,9 +312,9 @@ export const incidentModel = defineModel<P>({
     steps.push({
       id: 's5',
       label: b('диагностика', 'diagnose'),
-      caption: at(fmtn(b('Первый вопрос диагностики: что менялось последним? Журнал выкладок отвечает, что последней была выкладка #41 из {b}. На поиск виноватого изменения среди них ушло {d}{r}.', 'The first question of diagnosis: what changed last? The deployment log answers that the last one was deployment #41 with {b}. Finding the faulty change among them took {d}{r}.'), { b: CH(batch), d: MIN(n.diagnose), r: p.runbook ? b('', '') : b(', вдвое дольше обычного, потому что инструкции для дежурного нет', ', twice as long as usual, because there is no runbook') })),
+      caption: at(fmtn(b('Диагностика начинается с вопроса, что менялось последним. Журнал выкладок отвечает, что последней была выкладка #41 из {b}. На поиск виноватого изменения среди них ушло {d}{r}.', 'Diagnosis starts with the question of what changed last. The deployment log answers that the last one was deployment #41 with {b}. Finding the faulty change among them took {d}{r}.'), { b: CH(batch), d: MIN(n.diagnose), r: p.runbook ? b('', '') : b(', вдвое дольше обычного, потому что инструкции для дежурного нет', ', twice as long as usual, because there is no runbook') })),
       focus: ['e-diag', 'log'],
-      say: { log: fmtn(b('Последней была выкладка #41 из {b}, и её подозревают первой.', 'The last one was deployment #41 with {b}: it is the first suspect.'), { b: CH(batch) }) },
+      say: { log: fmtn(b('Последней была выкладка #41 из {b}, и её подозревают первой.', 'The last one was deployment #41 with {b}, and it is suspected first.'), { b: CH(batch) }) },
       tokens: [{ edge: 'e-diag', label: b('что менялось?', 'what changed?') }],
       reveal: ['e-diag', 'log'],
       states: { log: p.runbook ? 'on' : 'warn' },
@@ -327,7 +327,7 @@ export const incidentModel = defineModel<P>({
         ? {
             id: 's6',
             label: b('откат', 'rollback'),
-            caption: at(fmtn(b('Дежурный смягчает сбой: одной командой он возвращает на сайт прошлую версию #40, и за {r} доля ошибок падает до нуля. Почему сломалась #41, будут спокойно выяснять днём.', 'Mitigation: with one command the on-call engineer puts the previous version #40 back on the site, and within {r} the error share falls to zero. Why #41 broke will be worked out calmly in the daytime.'), { r: MIN(n.restore) })),
+            caption: at(fmtn(b('Дежурный смягчает сбой. Одной командой он возвращает на сайт прошлую версию #40, и за {r} доля ошибок падает до нуля. Почему сломалась #41, будут спокойно выяснять днём.', 'The on-call engineer mitigates the outage. With one command they put the previous version #40 back on the site, and within {r} the error share falls to zero. Why #41 broke will be worked out calmly in the daytime.'), { r: MIN(n.restore) })),
             focus: ['e-rollback', 'service'],
             say: { service: b('На сайте снова версия #40, и заказы проходят.', 'The site runs version #40 again, and orders go through.') },
             tokens: [{ edge: 'e-rollback', label: b('вернуть #40', 'restore #40') }],
@@ -354,16 +354,16 @@ export const incidentModel = defineModel<P>({
       label: b('восстановлено', 'restored'),
       caption: at(fmtn(b('Дежурный проверяет по тем же графикам, по которым заметили сбой, что заказы проходят, и пишет итоговый статус. Сбой длился {m}, что составляет {bm} плохой работы, то есть {pc} месячного бюджета ошибок, а магазин недополучил {x} выручки.', 'The on-call engineer checks on the same graphs that showed the outage that orders go through, and posts the final status. The outage lasted {m}, which is {bm} of bad service, or {pc} of the monthly error budget, and the shop lost {x} of revenue.'), { m: MIN(n.downtime), bm: nWord(n.bad, ['минута', 'минуты', 'минут'], ['minute', 'minutes']), pc: pct(n.budgetPct), x: money(n.lost) })),
       focus: ['status'],
-      say: { status: fmtn(b('«Восстановлено. Сбой длился {m}. Разбор завтра».', '“Restored. The outage lasted {m}. Review tomorrow.”'), { m: MIN(n.downtime) }) },
+      say: { status: fmtn(b('«Сервис восстановлен. Сбой длился {m}, разбор проведём завтра».', '“The service is restored. The outage lasted {m}; we will hold the review tomorrow.”'), { m: MIN(n.downtime) }) },
       states: { status: 'ok' },
       metrics: m(true),
     });
     steps.push({
       id: 's8',
       label: b('хронология', 'timeline'),
-      caption: b('На следующий день команда пишет разбор. Хронологию собирают из журнала выкладок, графиков, канала статуса и тикетов поддержки. Главный вопрос разбора звучит так: что было видно в каждый момент? А вопрос «кто ошибся» на разборе не задают.', 'The next day the team writes the review. The timeline is assembled from the deployment log, the graphs, the status channel and the support tickets. The central question of the review is what could be seen at each moment; the question “who made the mistake” is not asked.'),
+      caption: b('На следующий день команда пишет разбор. Хронологию собирают из журнала выкладок, графиков, канала статуса и тикетов поддержки. Главный вопрос разбора состоит в том, что было видно в каждый момент, а вопрос «кто ошибся» на разборе не задают.', 'The next day the team writes the review. The timeline is assembled from the deployment log, the graphs, the status channel and the support tickets. The central question of the review is what could be seen at each moment; the question “who made the mistake” is not asked.'),
       focus: ['e-timeline', 'postmortem'],
-      say: { postmortem: b('Команда собирает факты по времени: что было видно в каждый момент.', 'The team collects facts by time: what could be seen at each moment.') },
+      say: { postmortem: b('Команда собирает факты по времени и выясняет, что было видно в каждый момент.', 'The team collects facts by time and finds out what could be seen at each moment.') },
       tokens: [{ edge: 'e-timeline', label: b('факты по времени', 'facts by time') }],
       reveal: ['e-timeline', 'postmortem'],
       metrics: m(true),
@@ -402,11 +402,11 @@ export const incidentModel = defineModel<P>({
     }
     switch (change.id) {
       case 'detection':
-        return fmtn(b('О сбое узнали через {d1} вместо {d0}, весь сбой длился {r1} вместо {r0} и потратил {b1} месячного бюджета ошибок. Проверка, что сервер отвечает, не видит сбоя оплаты: сервер отвечает, а заказы не проходят.', 'The outage was noticed after {d1} instead of {d0}, it lasted {r1} instead of {r0} and ate {b1} of the monthly error budget. A check that the server answers cannot see a checkout failure: the server answers while orders fail.'), v);
+        return fmtn(b('О сбое узнали через {d1} вместо {d0}, весь сбой длился {r1} вместо {r0} и потратил {b1} месячного бюджета ошибок. Проверка, что сервер отвечает, не видит сбоя оплаты, потому что сервер отвечает, а заказы при этом не проходят.', 'The outage was noticed after {d1} instead of {d0}, it lasted {r1} instead of {r0} and ate {b1} of the monthly error budget. A check that the server answers cannot see a checkout failure, because the server answers while orders fail.'), v);
       case 'rollback':
         return c.rollback
           ? fmtn(b('С откатом сайт восстанавливают за 10 минут вместо 120, и сбой длится {r1} вместо {r0}.', 'With rollback the site is restored in 10 minutes instead of 120, and the outage lasts {r1} instead of {r0}.'), v)
-          : fmtn(b('Без отката сайт чинят срочным исправлением: сбой длится {r1} вместо {r0}, и появляется вторая, внеплановая выкладка.', 'Without rollback the site is fixed with an urgent fix: the outage lasts {r1} instead of {r0}, and a second, unplanned deployment appears.'), v);
+          : fmtn(b('Без отката сайт чинят срочным исправлением, поэтому сбой длится {r1} вместо {r0}, и появляется вторая, внеплановая выкладка.', 'Without rollback the site is mended with an urgent fix, so the outage lasts {r1} instead of {r0}, and a second, unplanned deployment appears.'), v);
       case 'runbook':
         return c.runbook
           ? fmtn(b('С инструкцией дежурный находит причину вдвое быстрее, и сбой длится {r1} вместо {r0}.', 'With a runbook the on-call engineer finds the cause twice as fast, and the outage lasts {r1} instead of {r0}.'), v)
