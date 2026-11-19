@@ -77,6 +77,8 @@ const SOLUTIONS: Record<string, string[]> = {
   'networks.troubleshooting/incident2/port': ['nc -zv 10.0.2.21 8080', 'nc -zv 10.0.2.21 8081', 'echo 8081 > ~/port.txt'],
   'networks.troubleshooting/incident2/fix': ['__REWRITE_CONF__', 'nginx -t', 'nginx -s reload'],
   'networks.proxy/lab/layer': ['echo L7 > ~/layer.txt'],
+  'networks.tls/forcing/resolve': ['curl --resolve shop.example:443:198.51.100.30 https://shop.example/'],
+  'networks.proxy/forcing/next': ["echo 'proxy_next_upstream off;' >> /etc/nginx/conf.d/shop.conf", 'nginx -t', 'nginx -s reload'],
 };
 
 const FIXED = 'upstream backend {\\n    server 10.0.2.21:8081;\\n}\\nserver {\\n    listen 80;\\n    server_name shop.lab;\\n    location / {\\n        proxy_pass http://backend;\\n    }\\n}';

@@ -439,3 +439,59 @@ describe('protocol catalogue', () => {
 });
 
 export { sequenceSvg };
+
+describe('E-ENV: three messages, three stacks', () => {
+  it('DNS over UDP: 8-byte header, 30-byte question, a valid checksum over the pseudo-header', async () => {
+    const { buildMessage } = await import('../src/blocks/networks/explainers/envelopes');
+    const s = specFor('none', 'dns').spec;
+    const layers = buildMessage('dns', s);
+    const udp = layers.find((l) => l.id === 'udp')!;
+    const dns = layers.find((l) => l.id === 'dns')!;
+    expect(udp.bytes).toHaveLength(8);
+    expect(dns.bytes).toHaveLength(30);
+    const ip = layers.find((l) => l.id === 'ip')!;
+    expect(inetChecksum(ip.bytes)).toBe(0);
+    expect((ip.bytes[2] << 8) + ip.bytes[3]).toBe(58);
+    const pseudo = [...s.src.split('.').map(Number), ...s.dst.split('.').map(Number), 0, 17, 0, 38];
+    expect(inetChecksum([...pseudo, ...udp.bytes, ...dns.bytes])).toBe(0);
+  });
+  it('ping: no transport layer, a 64-byte ICMP message, a 98-byte frame', async () => {
+    const { buildMessage } = await import('../src/blocks/networks/explainers/envelopes');
+    const layers = buildMessage('ping', specFor('none', 'ping').spec);
+    expect(layers.map((l) => l.id)).toEqual(['eth', 'ip', 'icmp']);
+    const icmp = layers.find((l) => l.id === 'icmp')!;
+    expect(icmp.bytes).toHaveLength(64);
+    expect(inetChecksum(icmp.bytes)).toBe(0);
+    expect(layers.reduce((n, l) => n + l.bytes.length, 0)).toBe(98);
+    expect([...specFor('nat', 'ping').changed]).toContain('icmp.id');
+    expect([...specFor('nat', 'dns').changed]).toContain('udp.sum');
+  });
+  it('filtered ICMP turns "Fragmentation Needed" into a black hole', () => {
+    expect(mtuOutcome(1600, true, 1500, true)).toMatchObject({ fits: false, icmp: false, blackhole: true });
+    expect(mtuOutcome(1600, false, 1500, true)).toMatchObject({ blackhole: false, fragments: 2 });
+  });
+});
+
+describe('E-URL: HTTP versions and the certificate', () => {
+  it('HTTP/3 merges the transport and TLS handshakes; an expired certificate stops at TLS', async () => {
+    const { urlModel } = await import('../src/blocks/networks/explainers/url');
+    const d = Object.fromEntries(urlModel.params.map((p) => [p.id, p.default])) as Record<string, unknown>;
+    const total = (steps: { metrics?: Record<string, number> }[]) => steps.reduce((n, s) => s.metrics?.total ?? n, 0);
+    const h1 = urlModel.run(d as never, new Set());
+    const h3 = urlModel.run({ ...d, version: 'h3' } as never, new Set());
+    expect(h3.some((s) => s.id === 'quic')).toBe(true);
+    expect(h3.some((s) => s.id.startsWith('tcp-'))).toBe(false);
+    expect(total(h3)).toBeLessThan(total(h1));
+    const h2 = urlModel.run({ ...d, version: 'h2' } as never, new Set());
+    expect(h2.some((s) => s.id === 'alpn')).toBe(true);
+    const bad = urlModel.run(d as never, new Set(['cert-expired']));
+    expect(bad.find((s) => s.broken)?.broken?.message).toMatch(/certificate has expired/);
+  });
+});
+
+describe('the protocol catalogue covers the core set', () => {
+  it('has every protocol the block promises', () => {
+    const ids = new Set(PROTOCOLS.map((p) => p.id));
+    for (const id of ['ethernet', 'arp', 'ipv4', 'ipv6', 'icmp', 'tcp', 'udp', 'dns', 'dhcp', 'http', 'h2', 'h3', 'quic', 'tls', 'ssh', 'ntp', 'smtp']) expect(ids.has(id), id).toBe(true);
+  });
+});
