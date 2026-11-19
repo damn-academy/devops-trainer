@@ -31,7 +31,7 @@ const placement: PlacementTask[] = [
     setup: stand({ main: TF_HEAD + TF_CP }),
     task: {
       id: 'p-count',
-      prompt: bi('В `~/infra/main.tf` описан только control plane. Добавьте два рабочих узла `worker-1` и `worker-2` одним ресурсом и создайте все три ВМ, каждую с меткой `trainer = "devops"`.', '`~/infra/main.tf` describes only the control plane. Add two workers `worker-1` and `worker-2` as one resource and create all three VMs, each with the label `trainer = "devops"`.'),
+      prompt: bi('В файле `~/infra/main.tf` описан только control plane. Добавьте два рабочих узла, `worker-1` и `worker-2`, одним ресурсом и создайте все три ВМ так, чтобы на каждой стояла метка `trainer = "devops"`.', '`~/infra/main.tf` describes only the control plane. Add two workers `worker-1` and `worker-2` as one resource and create all three VMs, each with the label `trainer = "devops"`.'),
       check: { when: (f: Facts) => threeNodesLabelled(f) && (tf(f)?.state.some((s) => s.address === 'edu_vm.worker[1]') ?? false) },
     },
   },
@@ -44,7 +44,7 @@ const placement: PlacementTask[] = [
     setup: preparedStand({ faults: [{ host: 'cp-1', kind: 'swap' }, { host: 'cp-1', kind: 'ipforward' }] }, opsCfg),
     task: {
       id: 'p-preflight',
-      prompt: bi('`ansible cp-1 -b -a "kubeadm init"` падает на проверках. Приведите узел в порядок средствами Ansible, не отключая проверки, и поднимите control plane.', '`ansible cp-1 -b -a "kubeadm init"` fails its checks. Put the node in order with Ansible, without switching the checks off, and bring up the control plane.'),
+      prompt: bi('Команда `ansible cp-1 -b -a "kubeadm init"` останавливается на проверках с ошибкой. Приведите узел в порядок средствами Ansible, не отключая проверки, и запустите control plane.', '`ansible cp-1 -b -a "kubeadm init"` fails its checks. Put the node in order with Ansible, without switching the checks off, and start the control plane.'),
       check: { when: (f: Facts) => !!cluster(f)?.initialized && !!vms(f).length && (cluster(f)?.nodes.length ?? 0) >= 1 && !!(f.kcode as { hosts: { name: string; swapOff: boolean; ipForward: boolean }[] }).hosts.find((h) => h.name === 'cp-1' && h.swapOff && h.ipForward) },
     },
   },
@@ -58,7 +58,7 @@ const placement: PlacementTask[] = [
     setup: preparedStand({ cluster: { cp: 'cp-1', workers: [], cni: true, expiredToken: true } }, opsCfg),
     task: {
       id: 'p-token',
-      prompt: bi('Кластер подняли вчера, токен из вывода init истёк, рабочие узлы не присоединены. Присоедините оба.', 'The cluster was brought up yesterday, the token from the init output has expired, the workers are not joined. Join both.'),
+      prompt: bi('Кластер запустили вчера, срок действия токена из вывода init истёк, а рабочие узлы так и не присоединили. Присоедините оба рабочих узла.', 'The cluster was started yesterday, the token from the init output has expired, and the workers were never joined. Join both workers.'),
       check: { when: (f: Facts) => readyNodes(f) === 3 },
       docRef: { page: 'help/kubeadm-token', anchor: 'OPTIONS' },
       docStep: 3,
@@ -73,7 +73,7 @@ const placement: PlacementTask[] = [
     setup: { ...gitopsStand({ apps: [APP({ selfHeal: false })] }), script: ['kubectl scale deployment shop -n shop --replicas=6'] },
     task: {
       id: 'p-drift',
-      prompt: bi('Application `shop` в namespace `argocd` показывает OutOfSync: кто-то поменял число реплик руками. Верните кластер к Git и сделайте так, чтобы следующая ручная правка не пережила и минуты.', 'The Application `shop` in the `argocd` namespace shows OutOfSync: someone changed the replica count by hand. Bring the cluster back to Git and make sure the next manual edit does not survive a minute.'),
+      prompt: bi('Application `shop` в namespace `argocd` находится в состоянии OutOfSync, потому что кто-то поменял число реплик руками. Верните кластер к Git и сделайте так, чтобы следующая ручная правка не продержалась и минуты.', 'The Application `shop` in the `argocd` namespace shows OutOfSync: someone changed the replica count by hand. Bring the cluster back to Git and make sure the next manual edit does not survive a minute.'),
       check: { when: (f: Facts) => synced(f) && deployment(f)?.spec?.replicas === 2 && (app(f)?.spec as { syncPolicy?: { automated?: { selfHeal?: boolean } } } | undefined)?.syncPolicy?.automated?.selfHeal === true },
     },
   },
@@ -88,14 +88,14 @@ export const EXAM: Exam = {
   id: 'k8s-3.exam.rebuild',
   block: 'k8s-3',
   kind: 'block',
-  title: bi('Экзамен блока: стенд пропал, код остался', 'Block exam: the lab is gone, the code is left'),
+  title: bi('Экзамен блока о том, как пересоздать пропавший стенд из кода', 'Block exam on rebuilding a lost lab from code'),
   intro: bi(
-    'Шесть карточек из трекера, каждая на своём стенде. Проверяется состояние — машины, узлы, файлы ролей, объекты кластера, — а не набранные команды. Подсказок нет; открыта встроенная документация: `--help`, `ansible-doc`, Terraform, kubernetes.io и Argo CD.',
-    'Six cards from the tracker, each on its own stand. The state is checked — the machines, the nodes, the role files, the cluster objects — not the commands typed. There are no hints; the built-in documentation is open: `--help`, `ansible-doc`, Terraform, kubernetes.io and Argo CD.',
+    'Экзамен состоит из шести карточек из трекера задач, и у каждой карточки свой стенд. Проверяется не то, какие команды вы набрали, а то, в каком состоянии оказались машины, узлы, файлы ролей и объекты кластера. Подсказок нет, но открыта встроенная документация: справка `--help`, `ansible-doc`, документация Terraform, kubernetes.io и Argo CD.',
+    'The exam is six cards from the task tracker, each on its own stand. What is checked is not the commands you typed but the state of the machines, the nodes, the role files and the cluster objects. There are no hints, but the built-in documentation is open: `--help`, `ansible-doc`, the Terraform docs, kubernetes.io and Argo CD.',
   ),
   story: bi(
-    'Ночью у провайдера «Ларька» случилась авария: все три машины кластера удалены, в репозитории остался код. Тимлид утром в отпуске и оставил карточки: поднять кластер, найти, почему код не поднимает его с первого раза, вернуть магазин и выдать подрядчику доступ на присоединение узла. А вечером всё убрать.',
-    'Overnight the provider of the shop had an outage: all three cluster machines are deleted, the code is left in the repository. The team lead is on holiday from this morning and left cards: bring the cluster up, find why the code does not bring it up on the first try, bring the shop back and give a contractor access to join a node. And clean everything up in the evening.',
+    'Ночью у провайдера, на котором работает магазин «Ларёк», случилась авария, и все три машины кластера удалены. В репозитории остался код. Тимлид с утра ушёл в отпуск и оставил карточки с задачами: собрать кластер заново, найти, почему код не собирает его с первого раза, вернуть магазин и выдать подрядчику доступ, чтобы он присоединил свой узел. А вечером всё это нужно убрать.',
+    'Overnight the provider that runs the shop had an outage, and all three cluster machines are deleted. The code is left in the repository. The team lead went on holiday this morning and left task cards: build the cluster again, find why the code does not build it on the first try, bring the shop back and give a contractor access to join their node. And clean everything up in the evening.',
   ),
   minutes: 120,
   pass: 0.7,
@@ -109,7 +109,7 @@ export const EXAM: Exam = {
       setup: stand({ ops: opsCfg }),
       task: {
         id: 'e-machines',
-        prompt: bi('«Машин нет». Закажите три узла кодом из `~/infra` и отдайте Ansible инвентарь в `~/ops/inventory.ini`.', '“There are no machines”. Order the three nodes with the code in `~/infra` and hand Ansible the inventory in `~/ops/inventory.ini`.'),
+        prompt: bi('Карточка «Машин нет». Закажите три узла кодом из каталога `~/infra` и передайте Ansible инвентарь в файле `~/ops/inventory.ini`.', 'The card “There are no machines”. Order the three nodes with the code in `~/infra` and hand Ansible the inventory in `~/ops/inventory.ini`.'),
         check: { when: (f: Facts) => threeNodesLabelled(f) && inventoryOk(f, inv) },
         concepts: ['iac.output', 'iac.count'],
       },
@@ -122,7 +122,7 @@ export const EXAM: Exam = {
       setup: stand({ applied: true, ops: opsWith('k8s_prereq', prereqNoFwd) }),
       task: {
         id: 'e-cluster',
-        prompt: bi('«Кластера нет». Поднимите его `ansible-playbook site.yml`. Если код не доводит дело до конца, почините код, а не узел: завтра его прогонят снова.', '“There is no cluster”. Bring it up with `ansible-playbook site.yml`. If the code does not get there, fix the code, not the node: it will be run again tomorrow.'),
+        prompt: bi('Карточка «Кластера нет». Соберите кластер командой `ansible-playbook site.yml`. Если код не доводит дело до конца, чините код, а не узел, потому что завтра этот код прогонят снова.', 'The card “There is no cluster”. Build it with `ansible-playbook site.yml`. If the code does not get there, fix the code, not the node, because the code will be run again tomorrow.'),
         check: { when: (f: Facts) => readyNodes(f) === 3 && /ip_forward\s*=\s*1/.test(f.files[`${OPS}/roles/k8s_prereq/tasks/main.yml`]?.text ?? '') },
         concepts: ['k8s.kubeadm', 'iac.role'],
       },
@@ -135,7 +135,7 @@ export const EXAM: Exam = {
       setup: clusterStand({}, opsWith('kubeadm_join', noCreates(ROLE_JOIN))),
       task: {
         id: 'e-idem',
-        prompt: bi('«Ночной прогон site.yml красный». Кластер работает, но повторный прогон кода на нём падает. Добейтесь `changed=0` на всех узлах.', '“The nightly site.yml run is red”. The cluster works, but a repeated run of the code on it fails. Get `changed=0` on every node.'),
+        prompt: bi('Карточка «Ночной прогон site.yml красный». Кластер работает, но повторный прогон кода на нём завершается ошибкой. Добейтесь, чтобы на всех узлах в итоговой сводке стояло `changed=0`.', 'The card “The nightly site.yml run is red”. The cluster works, but a repeated run of the code on it fails. Get `changed=0` in the recap of every node.'),
         check: { when: (f: Facts) => idempotentRun(f) && readyNodes(f) === 3 },
         concepts: ['iac.creates'],
       },
@@ -148,7 +148,7 @@ export const EXAM: Exam = {
       setup: clusterStand({}, opsWith('cilium', noCreates(ROLE_CILIUM))),
       task: {
         id: 'e-idem',
-        prompt: bi('«Ночной прогон site.yml красный». Кластер работает, но повторный прогон кода на нём падает. Добейтесь `changed=0` на всех узлах.', '“The nightly site.yml run is red”. The cluster works, but a repeated run of the code on it fails. Get `changed=0` on every node.'),
+        prompt: bi('Карточка «Ночной прогон site.yml красный». Кластер работает, но повторный прогон кода на нём завершается ошибкой. Добейтесь, чтобы на всех узлах в итоговой сводке стояло `changed=0`.', 'The card “The nightly site.yml run is red”. The cluster works, but a repeated run of the code on it fails. Get `changed=0` in the recap of every node.'),
         check: { when: (f: Facts) => idempotentRun(f) && readyNodes(f) === 3 },
         concepts: ['iac.creates'],
       },
@@ -160,7 +160,7 @@ export const EXAM: Exam = {
       setup: gitopsStand({ files: DEPLOY_FILES('trainer/web:1.1', 2) }),
       task: {
         id: 'e-shop',
-        prompt: bi('«Магазина нет». Он должен приехать в namespace `shop` из каталога `k8s` репозитория `team/shop-deploy` и дальше обновляться сам с каждым коммитом.', '“There is no shop”. It must arrive in the `shop` namespace from the `k8s` directory of the `team/shop-deploy` repository and keep updating itself with every commit.'),
+        prompt: bi('Карточка «Магазина нет». Магазин должен появиться в namespace `shop` из каталога `k8s` репозитория `team/shop-deploy` и дальше обновляться сам после каждого коммита.', 'The card “There is no shop”. The shop must appear in the `shop` namespace from the `k8s` directory of the `team/shop-deploy` repository and keep updating itself after every commit.'),
         check: { when: (f: Facts) => synced(f) && healthy(f) && image(f) === 'trainer/web:1.1' && !!(app(f)?.spec as { syncPolicy?: { automated?: unknown } } | undefined)?.syncPolicy?.automated },
         concepts: ['k8s.argocd-app', 'k8s.sync-policy'],
       },
@@ -173,7 +173,7 @@ export const EXAM: Exam = {
       setup: clusterStand(),
       task: {
         id: 'e-contractor',
-        prompt: bi('«Подрядчик сегодня подключит свой узел». Выдайте токен присоединения, который проживёт не больше двух часов и в описании которого сказано, для кого он.', '“A contractor connects their node today”. Issue a bootstrap token that lives no longer than two hours and whose description says who it is for.'),
+        prompt: bi('Карточка «Подрядчик сегодня подключит свой узел». Выдайте токен присоединения, который действует не больше двух часов и в описании которого сказано, для кого он выдан.', 'The card “A contractor connects their node today”. Issue a bootstrap token that is valid for no longer than two hours and whose description says who it is for.'),
         check: { when: (f: Facts) => (cluster(f)?.tokens ?? []).some((t) => t.valid && t.hoursLeft <= 2 && !!t.description && !/default bootstrap token/.test(t.description)) },
         docStep: 5,
         solutionTokens: ['--ttl', '--description'],
@@ -188,15 +188,15 @@ export const EXAM: Exam = {
       setup: clusterStand(),
       task: {
         id: 'e-cleanup',
-        prompt: bi('«Вечером стенд не нужен». Удалите всё, что создал код в `~/infra`, и убедитесь, что в облаке не осталось машин курса.', '“The lab is not needed in the evening”. Delete everything the code in `~/infra` created and make sure no course machines are left in the cloud.'),
+        prompt: bi('Карточка «Вечером стенд не нужен». Удалите всё, что создал код из каталога `~/infra`, и убедитесь, что в облаке не осталось машин курса.', 'The card “The lab is not needed in the evening”. Delete everything the code in `~/infra` created and make sure no course machines are left in the cloud.'),
         check: { when: (f: Facts) => vms(f).length === 0 && (tf(f)?.state.length ?? 1) === 0 && (tf(f)?.serial ?? 0) > 1 },
         concepts: ['iac.resource-label'],
       },
     },
   ],
   explain: [
-    { id: 'x1', prompt: bi('Тимлид вернулся и спрашивает: «Что изменится в нашей жизни теперь, когда кластер поднимается кодом?» Ответьте ему.', 'The team lead is back and asks: “What changes in our life now that the cluster comes up from code?” Answer them.'), keyPoints: [bi('Потеря машины или всего стенда чинится прогоном кода, а не днём ручной работы', 'Losing a machine or the whole lab is fixed by a run of the code, not by a day of manual work'), bi('Второе окружение — тот же код с другими переменными', 'A second environment is the same code with other variables'), bi('Узлы одинаковы по построению, а изменения проходят ревью', 'The nodes are identical by construction, and changes go through review'), bi('Стенд можно не держать между занятиями — это деньги', 'The lab need not be kept between sessions — that is money')] },
-    { id: 'x2', prompt: bi('Почему в ролях kubeadm стоит creates и чем опасен признак, выбранный неудачно?', 'Why do the kubeadm roles have creates, and what is the danger of a badly chosen sign?'), keyPoints: [bi('Модуль command запускает команду всегда; kubeadm init на готовом узле падает на preflight', 'The command module always runs the command; kubeadm init on a ready node fails at preflight'), bi('creates пропускает задачу, если файл-признак есть', 'creates skips the task if the sign file exists'), bi('Признак должен появляться только при успехе: иначе после неудачи роль сочтёт работу сделанной', 'The sign must appear only on success: otherwise after a failure the role considers the job done')] },
+    { id: 'x1', prompt: bi('Тимлид вернулся из отпуска и спрашивает: «Что изменится в нашей работе теперь, когда кластер собирается кодом?» Ответьте ему.', 'The team lead is back from holiday and asks: “What changes in our work now that the cluster is built from code?” Answer them.'), keyPoints: [bi('Потерю машины или всего стенда исправляет новый прогон кода, а не день ручной работы', 'Losing a machine or the whole lab is fixed by a new run of the code, not by a day of manual work'), bi('Второе окружение собирается тем же кодом с другими переменными', 'A second environment is built by the same code with other variables'), bi('Узлы одинаковы по построению, а каждое изменение проходит ревью', 'The nodes are identical by construction, and every change goes through review'), bi('Стенд не нужно держать между занятиями, и это экономит деньги', 'The lab need not be kept between sessions, and that saves money')] },
+    { id: 'x2', prompt: bi('Зачем в ролях kubeadm стоит параметр creates и чем опасен неудачно выбранный файл-признак?', 'Why do the kubeadm roles have creates, and what is the danger of a badly chosen sign file?'), keyPoints: [bi('Модуль command запускает команду при каждом прогоне, а kubeadm init на готовом узле останавливается на проверках preflight', 'The command module runs the command on every run, and kubeadm init on a ready node fails at preflight'), bi('Параметр creates пропускает задачу, если файл-признак уже есть', 'creates skips the task if the sign file already exists'), bi('Файл-признак должен появляться только при успехе, иначе после неудачного прогона роль сочтёт работу сделанной', 'The sign file must appear only on success, otherwise after a failed run the role considers the job done')] },
   ],
 };
 
@@ -205,14 +205,14 @@ export const block: Block = {
   order: route.order,
   title: route.title,
   summary: bi(
-    'Terraform заказывает три ВМ с метками, Ansible готовит узлы ролями, kubeadm проходится один раз руками и превращается в роли с creates, кластер пересоздаётся с нуля одной последовательностью команд, приложение приходит из Git через Argo CD; сертификаты, расхождение версий, обновление по узлу; настоящий трек и обязательная уборка.',
-    'Terraform orders three labelled VMs, Ansible prepares the nodes with roles, kubeadm is walked through once by hand and turned into roles with creates, the cluster is rebuilt from scratch by one sequence of commands, the application comes from Git through Argo CD; certificates, version skew, upgrading node by node; the real track and a mandatory cleanup.',
+    'В этом блоке Terraform заказывает три ВМ с метками, а Ansible готовит узлы ролями. Вы один раз выполняете kubeadm вручную и превращаете его в роли с параметром creates, пересоздаёте кластер с нуля одной последовательностью команд и выкладываете приложение из Git через Argo CD. Затем вы разбираете сроки сертификатов, расхождение версий и обновление по одному узлу, а в конце проходите настоящий трек и обязательно убираете за собой машины.',
+    'In this block Terraform orders three labelled VMs and Ansible prepares the nodes with roles. You walk through kubeadm once by hand and turn it into roles with creates, rebuild the cluster from scratch with one sequence of commands and release the application from Git through Argo CD. Then you go through certificate lifetimes, version skew and upgrading node by node, and at the end you do the real track and clean up the machines.',
   ),
   checklistStep: route.checklistStep,
   levels: {
-    beginner: bi('Прошёл IaC и второй этап Kubernetes. Работает по полному чеклисту: читает готовые роли, запускает их и дописывает отмеченные места. Итог — кластер из кода и понимание каждого звена.', 'Has finished IaC and Kubernetes stage 2. Works by the full checklist: reads the ready roles, runs them and fills in the marked places. The outcome is a cluster from code and an understanding of every link.'),
-    intermediate: bi('Дан каркас: структура каталогов, имена ролей и переменных, пустые файлы задач. Итог — роли kubeadm с creates и пересоздание с нуля без ручных шагов.', 'Given a skeleton: the directory layout, role and variable names, empty task files. The outcome is kubeadm roles with creates and a rebuild from scratch with no manual steps.'),
-    experienced: bi('С нуля по описанию; на настоящем треке — join с проверкой CA через delegate_to и run_once, обновление с serial: 1, снимок etcd по расписанию.', 'From scratch by the description; on the real track — join with the CA check through delegate_to and run_once, an upgrade with serial: 1, a scheduled etcd snapshot.'),
+    beginner: bi('Вы прошли блок «Инфраструктура как код» и второй этап Kubernetes. Вы работаете по полному чеклисту: читаете готовые роли, запускаете их и дописываете отмеченные места. В итоге у вас будет кластер из кода и понимание каждого звена цепочки.', 'You have finished the infrastructure-as-code block and Kubernetes stage 2. You work by the full checklist: you read the ready roles, run them and fill in the marked places. In the end you have a cluster from code and an understanding of every link of the chain.'),
+    intermediate: bi('Вам дают каркас проекта: структуру каталогов, имена ролей и переменных и пустые файлы задач. В итоге вы напишете роли kubeadm с параметром creates и пересоздадите кластер с нуля без единого ручного шага.', 'You get a project skeleton: the directory layout, role and variable names and empty task files. In the end you write kubeadm roles with creates and rebuild the cluster from scratch without a single manual step.'),
+    experienced: bi('Вы пишете всё с нуля по описанию. На настоящем треке вы присоединяете узлы с проверкой CA через delegate_to и run_once, обновляете кластер с serial: 1 и снимаете снимок etcd по расписанию.', 'You write everything from scratch by the description. On the real track you join the nodes with the CA check through delegate_to and run_once, upgrade the cluster with serial: 1 and take a scheduled etcd snapshot.'),
   },
   hours: route.hours,
   placement,

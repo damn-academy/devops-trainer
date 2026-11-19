@@ -822,7 +822,7 @@ export function kubeadmHelpPages(): DocPage[] {
 
 export const kubeadmCommand: ShellCommand = {
   name: 'kubeadm',
-  summary: bi('kubeadm: поднять control plane, присоединить узел, токены, сертификаты, обновление', 'kubeadm: bring up a control plane, join a node, tokens, certificates, upgrades'),
+  summary: bi('Программа kubeadm запускает control plane, присоединяет узлы, выдаёт токены, продлевает сертификаты и обновляет кластер', 'kubeadm starts a control plane, joins nodes, issues tokens, renews certificates and upgrades the cluster'),
   help: HELP[''],
   handlesHelp: true,
   complete: (args) => (args.length <= 1 ? ['init', 'join', 'token', 'certs', 'upgrade', 'config', 'reset', 'version'] : args[0] === 'token' ? ['create', 'list', 'delete', 'generate'] : args[0] === 'certs' ? ['check-expiration'] : args[0] === 'upgrade' ? ['plan'] : args[0] === 'config' ? ['print'] : []),
@@ -908,7 +908,7 @@ Options:
 
 export const ciliumCommand: ShellCommand = {
   name: 'cilium',
-  summary: bi('cilium CLI: поставить сетевой плагин Cilium и посмотреть его состояние', 'the cilium CLI: install the Cilium network plugin and look at its status'),
+  summary: bi('Программа cilium ставит сетевой плагин Cilium и показывает его состояние', 'The cilium CLI installs the Cilium network plugin and shows its status'),
   help: CILIUM_HELP,
   handlesHelp: true,
   complete: (args) => (args.length <= 1 ? ['install', 'status', 'uninstall', 'version'] : []),
