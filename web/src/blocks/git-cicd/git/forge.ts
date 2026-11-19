@@ -28,6 +28,8 @@ export interface CiVariable {
   value: string;
   protected: boolean;
   masked: boolean;
+  /** A File-type variable: the runner writes the value to a temporary file and the variable holds its path. */
+  file?: boolean;
 }
 
 export interface Runner {

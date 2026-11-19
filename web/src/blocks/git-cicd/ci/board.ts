@@ -12,12 +12,12 @@ import './board.css';
 
 const L = {
   title: bi('Страница пайплайна', 'Pipeline page'),
-  empty: bi('Пайплайнов пока нет. Сделай git push — здесь появятся джобы.', 'No pipelines yet. Do a git push and the jobs appear here.'),
+  empty: bi('Пайплайнов пока нет. Сделайте git push — здесь появятся джобы.', 'No pipelines yet. Do a git push and the jobs appear here.'),
   noPipeline: bi('Push прошёл, но пайплайн не создан: правила не добавили ни одной джобы.', 'The push went through but no pipeline was created: the rules added no jobs.'),
   yaml: bi('Файл пайплайна с ошибкой — пайплайн не создан', 'The pipeline file has an error, so no pipeline was created'),
   timeline: bi('Время модели', 'Model time'),
   log: bi('Лог джобы', 'Job log'),
-  pick: bi('Нажми на джобу, чтобы открыть её лог.', 'Click a job to open its log.'),
+  pick: bi('Нажмите на джобу, чтобы открыть её лог.', 'Click a job to open its log.'),
   excluded: bi('Не попали в пайплайн', 'Not in this pipeline'),
 };
 

@@ -12,7 +12,7 @@ export interface CiFacts {
   pipelines: (Omit<PipelineRec, 'jobs'> & { jobs: { name: string; stage: string; status: string; start?: number; end?: number; log: string; cacheHit?: boolean; env?: string; allowFailure: boolean; when: string; artifacts: string[] }[] })[];
   deployments: { project: string; env: string; sha: string; ref: string; job: string; pipeline: number }[];
   registry: { project: string; image: string; tag: string; sha: string }[];
-  variables: { project: string; key: string; protected: boolean; masked: boolean }[];
+  variables: { project: string; key: string; protected: boolean; masked: boolean; file: boolean }[];
 }
 
 export function ciFacts(m: SimMachineApi): CiFacts {
@@ -27,7 +27,7 @@ export function ciFacts(m: SimMachineApi): CiFacts {
       });
     for (const d of s.deployments) out.deployments.push({ project, env: d.env, sha: d.sha, ref: d.ref, job: d.job, pipeline: d.pipeline });
     for (const r of s.registry) out.registry.push({ project, ...r });
-    for (const v of s.variables) out.variables.push({ project, key: v.key, protected: v.protected, masked: v.masked });
+    for (const v of s.variables) out.variables.push({ project, key: v.key, protected: v.protected, masked: v.masked, file: !!v.file });
   }
   out.pipelines.sort((a, b) => a.id - b.id);
   return out;

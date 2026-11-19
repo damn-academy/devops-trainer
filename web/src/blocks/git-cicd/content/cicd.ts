@@ -227,7 +227,7 @@ const remoteLesson: Lesson = {
       step: 'explain',
       title: bi('Одна история — много копий', 'One history, many copies'),
       body: bi(
-        'Пока репозиторий живёт на одном ноутбуке, он умирает вместе с ноутбуком, и коллеги его не видят. Поэтому у команды есть сервер репозиториев — forge (GitLab, GitHub, Gitea). На нём лежит [[git.remote|удалённый репозиторий]]: такая же история из тех же коммитов. У каждого разработчика своя полная копия, а forge — копия, о которой договорились, что она общая.\n\nСвязь с ним задаётся один раз: `git remote add origin https://forge.edu/team/site.git` — `origin` здесь просто короткое имя для адреса. `git push origin main` отправляет недостающие коммиты и просит сервер передвинуть его ветку `main`. `git fetch` забирает чужие коммиты и обновляет ветку-копию `origin/main`, не трогая ваших веток, а `git pull` — это fetch плюс слияние. `git clone` делает всё сразу: создаёт репозиторий, прописывает `origin` и забирает историю.\n\nСервер принимает push, только если ваш коммит **продолжает** его историю. Если коллега успел отправить свой коммит, ваш push получит отказ `! [rejected] … (fetch first)`: сначала `git pull`, слияние, и снова push. Это не ошибка, а защита: иначе чужая работа просто исчезла бы.\n\n### Merge request\n\nВ команде в основную ветку напрямую не пушат. Работу делают в своей ветке, отправляют её на forge и открывают [[git.mr|merge request]] (в GitHub это называется pull request): «влейте, пожалуйста, ветку contacts в main». В нём видны изменения, коллеги оставляют замечания, пайплайн проверяет код — и только потом ветку вливают. Ветка `main` на forge обычно **защищена**: в неё нельзя ни пушать напрямую, ни переписывать её историю.',
+        'Пока репозиторий лежит на одном ноутбуке, коллеги его не видят, а сломается ноутбук — пропадёт и репозиторий. Поэтому у команды есть сервер репозиториев — forge (GitLab, GitHub, Gitea). На нём лежит [[git.remote|удалённый репозиторий]]: такая же история из тех же коммитов. У каждого разработчика своя полная копия, а forge — копия, о которой договорились, что она общая.\n\nСвязь с ним задаётся один раз: `git remote add origin https://forge.edu/team/site.git` — `origin` здесь просто короткое имя для адреса. `git push origin main` отправляет недостающие коммиты и просит сервер передвинуть его ветку `main`. `git fetch` забирает чужие коммиты и обновляет ветку-копию `origin/main`, не трогая ваших веток, а `git pull` — это fetch плюс слияние. `git clone` делает всё сразу: создаёт репозиторий, прописывает `origin` и забирает историю.\n\nСервер принимает push, только если ваш коммит **продолжает** его историю. Если коллега успел отправить свой коммит, ваш push получит отказ `! [rejected] … (fetch first)`: сначала `git pull`, слияние, и снова push. Это не ошибка, а защита: иначе чужая работа просто исчезла бы.\n\n### Merge request\n\nВ команде в основную ветку напрямую не пушат. Работу делают в своей ветке, отправляют её на forge и открывают [[git.mr|merge request]] (в GitHub это называется pull request): «влейте, пожалуйста, ветку contacts в main». В нём видны изменения, коллеги оставляют замечания, пайплайн проверяет код — и только потом ветку вливают. Ветка `main` на forge обычно **защищена**: в неё нельзя ни пушать напрямую, ни переписывать её историю.',
         'While a repository lives on one laptop, it dies with the laptop and colleagues cannot see it. So the team has a repository server, a forge (GitLab, GitHub, Gitea). It holds a [[git.remote|remote repository]]: the same history of the same commits. Every developer has their own full copy, and the forge is the copy everyone agreed to share.\n\nThe link to it is set once: `git remote add origin https://forge.edu/team/site.git` (here `origin` is just a short name for the address). `git push origin main` sends the missing commits and asks the server to move its `main` branch. `git fetch` gets other people’s commits and updates the copy branch `origin/main` without touching your branches, and `git pull` is fetch plus a merge. `git clone` does it all at once: it creates the repository, sets `origin` and gets the history.\n\nThe server accepts a push only if your commit **continues** its history. If a colleague pushed first, your push gets `! [rejected] … (fetch first)`: run `git pull`, merge, and push again. This is not an error but a guard: otherwise someone else’s work would simply disappear.\n\n### The merge request\n\nIn a team nobody pushes straight to the main branch. Work is done on its own branch, pushed to the forge, and a [[git.mr|merge request]] is opened (GitHub calls it a pull request): "please merge the contacts branch into main". It shows the changes, colleagues leave comments, the pipeline checks the code, and only then is the branch merged. The `main` branch on the forge is usually **protected**: you can neither push to it directly nor rewrite its history.',
       ),
     },
@@ -391,6 +391,15 @@ const firstLesson: Lesson = {
         },
       ],
     },
+    {
+      id: 'anatomy',
+      kind: 'docs',
+      step: 'explain',
+      mode: 'anatomy',
+      prompt: bi('Справочник ключевых слов GitLab устроен по разделам: один раздел — одно ключевое слово. В каком из них сказано, что джобы одной стадии идут параллельно? Нажмите на него.', 'The GitLab keyword reference is organised in sections, one keyword per section. Which of them says that jobs of one stage run in parallel? Click it.'),
+      ref: { page: 'web/docs.gitlab.com/ci/yaml' },
+      answer: 'stages',
+    },
     { id: 'board', kind: 'widget', step: 'practice', widget: 'cicd.board' },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['cicd.q.who-runs', 'cicd.q.stages-order', 'cicd.q.exit'] },
   ],
@@ -410,6 +419,31 @@ test:
   image: node:24-alpine
   script:
     - test -f dist/index.html
+    - npm test
+`;
+
+const CACHE_BOTH_CI = `stages: [build, test]
+
+build:
+  stage: build
+  image: node:24-alpine
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths: [.npm/]
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run build
+  artifacts:
+    paths: [dist/]
+
+test:
+  stage: test
+  image: node:24-alpine
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths: [.npm/]
+  script:
+    - npm ci --cache .npm --prefer-offline
     - npm test
 `;
 
@@ -433,6 +467,7 @@ const artifactsLesson: Lesson = {
         'A runner executes every job in a container started from the [[cicd.image|job image]]: `image: node:24-alpine` gives Node.js, `image: alpine:3.22` a bare Alpine. A typo in the image name kills the job before the script: `failed to pull image`. After the job the container is deleted, so everything the job created is gone. `build` built `dist/`, and `test` starts from a clean copy of the repository, without `dist/`.\n\nTo get a result through, you declare it an [[cicd.artifact|artifact]]: `artifacts: paths: [dist/]`. After a successful job the runner uploads these files to the forge, and the jobs of later stages download them before their script, even when they run on another runner. Artifacts can be downloaded by hand from the job page; how long they are kept is set separately.\n\nA [[cicd.cache|CI cache]] looks like an artifact but serves another purpose. It is files a runner keeps after a job and lays out before the next run, usually downloaded dependencies. The `key` decides who sees the cache: `npm-$CI_COMMIT_REF_SLUG` is a shelf per branch, `key: files: [package-lock.json]` a new shelf every time the lock file changes. The main property of a cache: it is **not guaranteed**. Another runner, a wiped cache, a changed key, and the job must pass without it, only slower. Hence the test: if the job fails without the files, they are an artifact; if it is only slower, a cache.',
       ),
     },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'cicd.artifacts-cache', caption: bi('Сравните, что доходит до следующей джобы, а что — до следующего пайплайна. Смените ключ кэша, измените lock-файл, отправьте сборку на другой раннер; затем сломайте передачу dist/.', 'Compare what reaches the next job with what reaches the next pipeline. Change the cache key, change the lock file, send the build to another runner; then break the handover of dist/.') },
     {
       id: 'lab',
       kind: 'terminal',
@@ -479,6 +514,31 @@ const artifactsLesson: Lesson = {
           hints: { H1: bi('Это подключ artifacts; значение пишется словами.', 'It is a sub-key of artifacts; the value is written in words.') },
         },
       ],
+    },
+    {
+      id: 'forcing',
+      kind: 'docs',
+      step: 'practice',
+      mode: 'find',
+      prompt: bi('Кэш зависимостей теперь объявлен и у build, и у test. Обе джобы после успеха перезаливают его на полку, хотя test ничего в нём не меняет, и каждый пайплайн тратит на это время. Пусть test только берёт кэш, а обновляет его одна build. В уроке этого не было — найдите в справочнике GitLab.', 'The dependency cache is now declared on both build and test. After success both jobs upload it to the shelf again, although test changes nothing in it, and every pipeline spends time on that. Let test only take the cache, and let build alone update it. The lesson did not cover it: look it up in the GitLab reference.'),
+      ref: { page: 'web/docs.gitlab.com/ci/yaml' },
+      terminal: {
+        setup: projectSetup({ '.gitlab-ci.yml': CACHE_BOTH_CI }),
+        task: {
+          id: 'pull',
+          prompt: bi('test скачивает кэш, но не сохраняет его; build по-прежнему сохраняет; пайплайн main зелёный.', 'test downloads the cache but does not save it; build still saves it; the main pipeline is green.'),
+          check: {
+            when: (f) => {
+              const t = jobOf(f, 'test', { ref: 'main' });
+              const b = jobOf(f, 'build', { ref: 'main' });
+              return mainOk(f) && pushedCi(f)?.config?.jobs.find((j) => j.name === 'test')?.cache?.policy === 'pull' && !!t && !t.log.includes('Saving cache') && t.log.includes('Checking cache') && !!b && b.log.includes('Saving cache');
+            },
+          },
+          docStep: 4,
+          beyond: true,
+          solutionTokens: ['policy: pull', 'cache:policy', 'pull'],
+        },
+      },
     },
     { id: 'board', kind: 'widget', step: 'practice', widget: 'cicd.board' },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['cicd.q.cache-art', 'cicd.q.no-artifact'] },
@@ -639,6 +699,7 @@ const rulesLesson: Lesson = {
         'A pipeline starts on different events: a push to a branch, a merge request, a version tag. Which jobs get into the pipeline is decided by [[cicd.rules|rules]], a list of conditions on a job. Rules are checked in order when the pipeline is created; the first match decides how the job enters (`when: on_success`, `manual`, `never`), and if none matches, the job is not in the pipeline. An `if` condition is an expression over variables: `$CI_PIPELINE_SOURCE == "merge_request_event"` (a merge request pipeline), `$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH` (a push to main), `$CI_COMMIT_TAG =~ /^v\\d+\\.\\d+\\.\\d+$/` (a version tag). `changes` adds a job only if the push changed the given files. Note: a job with no `rules` at all does not get into merge request pipelines.\n\nStages set the order coarsely: a job waits for the **whole** previous stage even if it needs one job of it. [[cicd.needs|needs]] sets the dependencies exactly: `needs: [build]` means start as soon as `build` is done and download artifacts only from it; `needs: []` means start at once. The pipeline turns from a "staircase of stages" into a graph and is often noticeably shorter. The price is watching the graph: `needs` on a job that `rules` removed from the pipeline makes the pipeline invalid.',
       ),
     },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'cicd.stages-needs', caption: bi('Включите needs и подвигайте длительность линтера; оставьте один раннер. Затем исключите build правилом и посмотрите, что станет с пайплайном.', 'Switch needs on and move the linter duration; leave one runner. Then exclude build with a rule and see what becomes of the pipeline.') },
     {
       id: 'lab',
       kind: 'terminal',
@@ -773,5 +834,6 @@ export const block: Block = {
   sources: src([S.yaml, S.runner, S.envs], [S.ruCi, S.ruCd, S.ruCacheArt]),
   docSources: ['git-help', 'docs.gitlab.com'],
   placement,
+  exam: 'cicd.exam.release',
 };
 

@@ -426,6 +426,7 @@ const branchesLesson: Lesson = {
         'Every commit knows its parent, so the history is a chain. A [[git.branch|branch]] is just a movable name stuck on one commit of that chain: the file `.git/refs/heads/main` with one hash in it. When you commit, Git writes the hash of the new commit into that file, and the name moves forward. Creating a branch means writing one more such file; nothing is copied, so you make a branch for every task.\n\nHow does Git know which branch to move? That is what [[git.head|HEAD]] is for: the "you are here" pointer. Usually it points not to a commit but to a branch: the file `.git/HEAD` says `ref: refs/heads/main`. `git switch contacts` moves HEAD to another branch and brings the working directory to its commit. `git switch -c contacts` creates a branch and switches to it at once.\n\n### Merging\n\nWhen the work on a branch is ready, you join it with the main line: a [[git.merge|merge]], the command `git merge`. There are two cases. If nothing new appeared on `main` since the branch was made, the branch directly continues `main`, and Git simply moves the name `main` forward (*fast-forward*). If both branches moved on, Git creates a merge commit with two parents that joins the changes of both sides.\n\nUsually Git joins the changes by itself: one side edited the heading, the other the footer, and both edits end up in the result. But if both branches changed the same lines, Git cannot know which version is right. That is a [[git.conflict|merge conflict]]: the merge stops, markers appear in the file\n\n```\n<<<<<<< HEAD\nour version\n=======\ntheir version\n>>>>>>> team-text\n```\n\nand Git waits for a human decision. You edit the file to what it should be, delete the markers, run `git add` (the sign "conflict resolved") and finish the merge with `git commit`. Changed your mind? `git merge --abort` brings everything back to how it was before the merge.',
       ),
     },
+    { id: 'merge-kinds', kind: 'explainer', step: 'look', explainer: 'git.merge-kinds', caption: bi('Пройдите слияние, затем включите «в main появился коммит B» и ключ --no-ff. Сломайте его: одна строка с двух сторон, незакоммиченная правка.', 'Step through the merge, then switch on "commit B appeared on main" and the --no-ff key. Break it: one line from both sides, an uncommitted edit.') },
     {
       id: 'lab',
       kind: 'terminal',
@@ -506,6 +507,41 @@ const branchesLesson: Lesson = {
           hints: { H1: bi('После git merge откройте about.html: между маркерами две версии одной строки.', 'After git merge open about.html: between the markers there are two versions of one line.'), H2: bi('`edit about.html`: оставьте обе строки, удалите маркеры, затем `git add about.html` и `git commit`.', '`edit about.html`: keep both lines, delete the markers, then `git add about.html` and `git commit`.') },
         },
       ],
+    },
+    {
+      id: 'merge-anatomy',
+      kind: 'docs',
+      step: 'explain',
+      mode: 'anatomy',
+      prompt: bi('Откройте `git help merge`. В каком разделе описано, что делает ключ `--no-ff`? Нажмите на него.', 'Open `git help merge`. Which section describes what the `--no-ff` key does? Click it.'),
+      ref: { page: 'man/git-merge.1' },
+      answer: 'OPTIONS',
+    },
+    {
+      id: 'abort',
+      kind: 'docs',
+      step: 'practice',
+      mode: 'find',
+      prompt: bi('Вы начали слияние, получили конфликт и поняли, что решать его сейчас некогда: коллега, который знает правильный текст, вернётся завтра. Верните репозиторий в состояние до слияния, ничего не потеряв. В уроке этого не было — найдите в `git help merge`.', 'You started a merge, got a conflict and realised there is no time to resolve it now: the colleague who knows the right text is back tomorrow. Return the repository to the state before the merge without losing anything. The lesson did not cover it: look it up in `git help merge`.'),
+      ref: { page: 'man/git-merge.1' },
+      terminal: {
+        setup: { ...conflictSetup, script: ['cd /home/learner/site && git merge team-text'] },
+        task: {
+          id: 'abort',
+          prompt: bi('Слияние начато и остановлено конфликтом; верните всё как было до него.', 'A merge was started and stopped by a conflict; put everything back as it was before it.'),
+          check: {
+            when: (f, start) => {
+              const r = repo(f);
+              const before = start ? repo(start) : undefined;
+              return !!r && !!before?.merging && r.branch === 'main' && !r.merging && r.head === before.head && r.status.conflicted.length === 0 && (f.files[`${SITE}/about.html`]?.text ?? '') === head(f)?.files['about.html'];
+            },
+            fail: [{ if: (f) => !!repo(f)?.merging, say: bi('Слияние всё ещё идёт: Git помнит его в MERGE_HEAD. Для отмены у git merge есть отдельный ключ.', 'The merge is still in progress: Git remembers it in MERGE_HEAD. git merge has a separate key to cancel it.') }],
+          },
+          docStep: 4,
+          beyond: true,
+          solutionTokens: ['--abort', 'git merge --abort'],
+        },
+      },
     },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['git.q.branch-cost', 'git.q.ff', 'git.q.markers', 'git.q.merge-order'] },
   ],
@@ -666,6 +702,26 @@ const yamlLesson: Lesson = {
       ],
     },
     {
+      id: 'strict',
+      kind: 'docs',
+      step: 'practice',
+      mode: 'find',
+      prompt: bi('Пайплайн будет останавливаться, только если команда вернула ненулевой код. А `yamllint` на одни предупреждения отвечает кодом 0 — и `delivery: yes` пройдёт незамеченным. Найдите в `yamllint --help`, как сделать так, чтобы предупреждения тоже давали ненулевой код, и проверьте `~/cfg/flags.yaml`.', 'A pipeline stops only when a command returns a non-zero code. But `yamllint` answers mere warnings with code 0, and `delivery: yes` slips through. Find in `yamllint --help` how to make warnings give a non-zero code too, and check `~/cfg/flags.yaml`.'),
+      ref: { page: 'help/yamllint' },
+      terminal: {
+        setup: { cwd: '~/cfg', files: [{ path: `${HOME}/cfg/flags.yaml`, content: '---\nflags:\n  delivery: yes\n  takeaway: true\n' }] },
+        task: {
+          id: 'strict',
+          prompt: bi('yamllint завершился ненулевым кодом из-за предупреждения в flags.yaml.', 'yamllint ended with a non-zero code because of a warning in flags.yaml.'),
+          check: { when: "term['main'][last].exit=2", stdout: /truthy/ },
+          docStep: 3,
+          chips: 'yamllint -s flags.yaml',
+          docRef: { page: 'help/yamllint', anchor: 'USAGE', line: '--strict' },
+          hints: { H1: bi('Ищите в списке ключей слово «warnings».', 'Look for the word "warnings" in the list of keys.') },
+        },
+      },
+    },
+    {
       id: 'note',
       kind: 'callout',
       tone: 'why',
@@ -745,7 +801,8 @@ export const block: Block = {
   hours: { beginner: 15, intermediate: 10, experienced: 5 },
   lessons: lessons.map((l) => l.id),
   sources: src([S.progit, S.ref, S.yaml], [S.ruBook, S.ruLgb, S.ruYaml]),
-  docSources: ['git-help'],
+  docSources: ['git-help', 'help'],
   placement,
+  exam: 'git-yaml.exam.config',
 };
 

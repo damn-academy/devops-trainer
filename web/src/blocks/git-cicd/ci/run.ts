@@ -11,6 +11,7 @@ import { createTerminalRegistry, terminalRegistry, type TerminalRegistry } from 
 import { ForgeProject, onForgePush, type ForgeState, type PushEvent } from '../git/forge';
 import { publish } from '../shared/hub';
 import { decide, globMatch, parseCi, type CiConfig, type CiJob, type When } from './config';
+import { registerBuiltImage, shareCluster } from './kube';
 import { dockerModel, jobFallbacks, npmModel, type JobContext } from './models';
 
 export const RUNNER_VERSION = '18.5.0';
@@ -161,10 +162,13 @@ export function pipelineEnv(s: ForgeState, p: PipelineRec, mrInfo?: { source: st
   return env;
 }
 
+/** Where the runner writes File-type variables (GitLab: <builds dir>.tmp/<KEY>). */
+const fileVarPath = (project: string, key: string) => `/builds/${project}.tmp/${key}`;
+
 function projectVars(s: ForgeState, p: PipelineRec): Record<string, string> {
   const prot = isProtected(s, p.ref, !!p.tag);
   const out: Record<string, string> = {};
-  for (const v of s.variables) if (!v.protected || prot) out[v.key] = v.value;
+  for (const v of s.variables) if (!v.protected || prot) out[v.key] = v.file ? fileVarPath(p.project, v.key) : v.value;
   return out;
 }
 
@@ -446,7 +450,8 @@ async function runJob(machine: SimMachineApi, forge: ForgeProject, p: PipelineRe
   const m = await createSimMachine({ user: 'root', hostname: `runner-${rec.id}`, cwd: dir, env }, { registry: jobRegistry(), id: `job-${rec.id}` });
   const jobState: JobContext = {
     addTime: (sec) => (seconds += sec),
-    pushImage: (image, tag) => {
+    pushImage: (image, tag, from) => {
+      registerBuiltImage(image, tag, from);
       forge.update((st) => {
         st.registry = st.registry.filter((r) => !(r.image === image && r.tag === tag));
         st.registry.push({ image, tag, sha: p.sha, pipeline: p.id });
@@ -455,8 +460,11 @@ async function runJob(machine: SimMachineApi, forge: ForgeProject, p: PipelineRe
     registryLoggedIn: false,
   };
   m.ext('ci.job', () => jobState);
+  shareCluster(m, machine);
   const fs = m.rootFs;
   fs.mkdir(dir, { parents: true });
+  const prot = isProtected(s, p.ref, !!p.tag);
+  for (const v of s.variables) if (v.file && (!v.protected || prot)) writeTo(fs, fileVarPath(p.project, v.key), v.value.endsWith('\n') ? v.value : `${v.value}\n`);
   for (const [path, e] of forge.repo.commitFiles(p.sha)) {
     const abs = `${dir}/${path}`;
     const d = abs.slice(0, abs.lastIndexOf('/'));

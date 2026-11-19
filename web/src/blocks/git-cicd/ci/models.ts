@@ -10,7 +10,8 @@ import { bi } from '../../../core/i18n';
 /** What a job machine knows about the job it runs (set by the runner). */
 export interface JobContext {
   addTime(sec: number): void;
-  pushImage(image: string, tag: string): void;
+  /** `from` is the base image of the Dockerfile the image was built from (what it does when it runs). */
+  pushImage(image: string, tag: string, from?: string): void;
   registryLoggedIn: boolean;
 }
 
@@ -145,7 +146,12 @@ export const dockerModel: ShellCommand = {
       ctx.out(`#0 building with "default" instance using docker driver\n\n`);
       steps.forEach((s, i) => ctx.out(`#${i + 1} [${i + 1}/${steps.length}] ${s.trim()}\n#${i + 1} DONE 0.${(i * 3 + 2) % 10}s\n`));
       ctx.out(`#${steps.length + 1} exporting to image\n#${steps.length + 1} naming to ${tag ?? 'sha256:…'} done\n`);
-      if (tag) built.add(tag.includes(':') ? tag : `${tag}:latest`);
+      const ref = tag ? (tag.includes(':') ? tag : `${tag}:latest`) : null;
+      if (ref) {
+        built.add(ref);
+        const from = /^\s*FROM\s+(\S+)/im.exec(ctx.fs.readFile(file))?.[1];
+        if (from) ctx.machine.ext<Map<string, string>>('ci.image-from', () => new Map()).set(ref, from);
+      }
       job?.addTime(14);
       return 0;
     }
@@ -166,7 +172,7 @@ export const dockerModel: ShellCommand = {
       }
       const [image, tag] = [full.slice(0, full.lastIndexOf(':')), full.slice(full.lastIndexOf(':') + 1)];
       ctx.out(`The push refers to repository [${image}]\n${tag}: digest: sha256:${(image + tag).split('').reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7).toString(16).padStart(8, '0')}… size: 1570\n`);
-      job?.pushImage(image, tag);
+      job?.pushImage(image, tag, ctx.machine.ext<Map<string, string>>('ci.image-from', () => new Map()).get(full));
       job?.addTime(6);
       return 0;
     }
