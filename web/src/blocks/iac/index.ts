@@ -17,7 +17,7 @@ import { IAC_LAB_DOCS } from './docs-3';
 import { lazyWidget } from '../../engine/v86/lazy';
 import { bi } from '../../core/i18n';
 import { ansModel, tfModel } from './explainers';
-import { addrModel, varModel } from './explainers-2';
+import { addrModel, importModel, varModel } from './explainers-2';
 import { terraformCommand } from './tf/command';
 import { eduCommand, tfFactsProvider, tfSetupHook } from './tf/edu';
 
@@ -47,7 +47,7 @@ const cloudSandbox = lazyWidget('lab:cloud', async () => {
       el,
       {
         intro: bi(
-          '### Облако во вкладке\n\nПесочница без заданий: рабочая станция с curl, git и OpenTofu, облако `api.cloud.lab`, хранилище `s3.cloud.lab`, Git-сервер `git.lab` и CI `ci.lab`. Каждая ВМ, созданная через API, — настоящая машина в этой вкладке.',
+          '### Облако во вкладке\n\nЭто песочница без заданий. В ней работают рабочая станция с curl, git и OpenTofu, облако `api.cloud.lab`, хранилище `s3.cloud.lab`, Git-сервер `git.lab` и CI `ci.lab`. Каждая ВМ, которую вы создаёте через API, запускается как настоящая машина в этой вкладке.',
           '### The cloud in the tab\n\nA sandbox without tasks: a workstation with curl, git and OpenTofu, the cloud `api.cloud.lab`, storage `s3.cloud.lab`, the Git server `git.lab` and CI `ci.lab`. Every VM created through the API is a real machine in this tab.',
         ),
         ci: true,
@@ -62,7 +62,7 @@ export default defineModule({
   lessons: ordered,
   concepts: [...concepts, ...concepts2, ...concepts3],
   quiz: [...quiz, ...quiz2, ...quiz3],
-  explainers: [fromModel(tfModel), fromModel(ansModel), fromModel(varModel), fromModel(addrModel)],
+  explainers: [fromModel(tfModel), fromModel(ansModel), fromModel(varModel), fromModel(addrModel), fromModel(importModel)],
   commands: [terraformCommand, eduCommand, ...ansibleCommands],
   docs: [...ANSIBLE_DOCS, ...IAC_WEB_DOCS, ...IAC_LAB_DOCS],
   exams: [iacExam, cloudExam],

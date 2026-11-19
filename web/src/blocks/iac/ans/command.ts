@@ -273,7 +273,7 @@ function docCmd(ctx: CmdContext): number {
   return 0;
 }
 
-const SUMMARY = bi('Ansible: настройка серверов по описанию из инвентаря и плейбуков.', 'Ansible: configuring servers from an inventory and playbooks.');
+const SUMMARY = bi('Ansible настраивает серверы по описанию из инвентаря и плейбуков.', 'Ansible: configuring servers from an inventory and playbooks.');
 
 const GALAXY_HELP = `usage: ansible-galaxy [-h] [--version] [-v] TYPE ...
 
@@ -390,7 +390,7 @@ export const ansibleCommands: ShellCommand[] = [
   },
   {
     name: 'ansible-galaxy',
-    summary: bi('Роли Ansible: создать каркас роли, показать установленные.', 'Ansible roles: create a role skeleton, list installed roles.'),
+    summary: bi('Команда работает с ролями Ansible: создаёт каркас роли и показывает установленные роли.', 'Ansible roles: create a role skeleton, list installed roles.'),
     help: GALAXY_HELP,
     handlesHelp: true,
     run: galaxy,
@@ -398,7 +398,7 @@ export const ansibleCommands: ShellCommand[] = [
   },
   {
     name: 'ansible-doc',
-    summary: bi('Документация модулей Ansible в терминале.', 'Ansible module documentation in the terminal.'),
+    summary: bi('Команда показывает в терминале документацию модулей Ansible.', 'Ansible module documentation in the terminal.'),
     help: 'usage: ansible-doc [-h] [--version] [-l] [-s] [plugin ...]\n\nplugin documentation tool\n\npositional arguments:\n  plugin                Plugin\n\noptions:\n  -l, --list            List available plugins.\n  -s, --snippet         Show playbook snippet for these plugin types: inventory, lookup, module\n',
     run: docCmd,
   },

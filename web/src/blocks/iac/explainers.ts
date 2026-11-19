@@ -1,253 +1,814 @@
-// Process explainers of the IaC block: E-TF (plan and apply: code, state,
-// cloud) and E-ANS (an idempotent Ansible run), 06 §4.4 and §5.4.
+// Process explainers of the IaC block: E-TF (what terraform plan and apply do
+// with the code, the state and the cloud) and E-ANS (an idempotent Ansible
+// run), 06 §4.4 and §5.4.
+//
+// Reading order: each picture is built from zero. E-TF starts with the code and
+// the terraform program only; the state, the cloud API, the machine and the
+// person in the console appear when the run reaches them. E-ANS starts with the
+// inventory and ansible-playbook; the hosts appear when Ansible first logs in
+// to them, the handler queue when the first task notifies it. The participant
+// at work says in a callout what it does, and what it hands on travels along
+// the line as a card.
 
 import { defineModel } from '../../core/define';
-import { bi, fmt, type Bi } from '../../core/i18n';
-import type { Step } from '../../core/types';
+import { bi, type Bi } from '../../core/i18n';
+import type { ElementState, Step } from '../../core/types';
 import { card } from '../git-cicd/explainers';
 
 const last = (s: Step[]) => s[s.length - 1]?.metrics ?? {};
 
+/** Fills {k} with a string, a number or a bilingual value. */
+export function fb(b: Bi, vars: Record<string, string | number | Bi>): Bi {
+  const fill = (s: string, lang: 'ru' | 'en') =>
+    s.replace(/\{(\w+)\}/g, (m, k) => {
+      const v = vars[k];
+      if (v === undefined) return m;
+      return typeof v === 'object' ? v[lang] : String(v);
+    });
+  return { ru: fill(b.ru, 'ru'), en: fill(b.en, 'en') };
+}
+
+/** The picture starts empty except for the given elements. */
+export const hiddenExcept = (all: string[], ...shown: string[]): Record<string, ElementState> => Object.fromEntries(all.filter((id) => !shown.includes(id)).map((id) => [id, 'hidden' as ElementState]));
+
 // ── E-TF ──
 
-type TfP = { change: string; drift: boolean; refresh: boolean; cbd: boolean };
+type TfP = { change: string; refresh: boolean; cbd: boolean };
 
+/** What the plan proposes and how long the site stays without a server. */
 export function tfNumbers(p: TfP, stateLost: boolean): { add: number; change: number; destroy: number; downtime: number } {
   if (stateLost) return { add: 3, change: 0, destroy: 0, downtime: 0 };
-  const replace = p.change === 'image';
-  const update = p.change === 'cores' || (p.drift && p.refresh && p.change !== 'image');
-  return { add: replace ? 1 : 0, change: update && !replace ? 1 : 0, destroy: replace ? 1 : 0, downtime: replace ? (p.cbd ? 0 : 40) : update && (p.change === 'cores' || p.drift) ? 15 : 0 };
+  if (p.change === 'image') return { add: 1, change: 0, destroy: 1, downtime: p.cbd ? 0 : 40 };
+  if (p.change === 'cores' || (p.change === 'drift' && p.refresh)) return { add: 0, change: 1, destroy: 0, downtime: 15 };
+  return { add: 0, change: 0, destroy: 0, downtime: 0 };
 }
+
+const TF_ALL = ['code', 'core', 'state', 'api', 'vm', 'console', 'e-read', 'e-state', 'e-refresh', 'e-apply', 'e-drift'];
+const TF_SYS = bi('Эту работу выполняет программа terraform.', 'The terraform program does this work.');
 
 export const tfModel = defineModel<TfP>({
   id: 'iac.tf-plan-apply',
   block: 'iac',
-  title: bi('terraform plan и apply: код, state, облако', 'terraform plan and apply: code, state, the cloud'),
-  summary: bi('Terraform сравнивает три версии мира: код, свою память (state) и облако. План — разница; apply выполняет её вызовами API и записывает новый state.', 'Terraform compares three versions of the world: the code, its own memory (state) and the cloud. The plan is the difference; apply carries it out with API calls and writes the new state.'),
+  title: bi('Что делают terraform plan и terraform apply', 'What terraform plan and terraform apply do'),
+  summary: bi(
+    'Вы запускаете `terraform apply` в каталоге с кодом. Terraform читает код, достаёт из файла state сведения о том, что он создал раньше, спрашивает облако, какими ресурсы стали сейчас, и только потом решает, что изменить. Под схемой считается, сколько ресурсов план создаст, изменит и удалит и сколько секунд сайт останется без сервера.',
+    'You run `terraform apply` in a directory with code. Terraform reads the code, takes from the state file what it created before, asks the cloud what the resources are like now, and only then decides what to change. Under the diagram you see how many resources the plan creates, changes and destroys, and how many seconds the site spends without a server.',
+  ),
+  intro: bi(
+    'Схема соберётся у вас на глазах: сейчас на ней только код и программа terraform. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. На каждом шаге подсвечен тот участник, который работает, облачко рядом с ним говорит, что он делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда дойдёте до конца, выберите в «Параметрах» другое событие, например правку в консоли облака, и пройдите запуск ещё раз.',
+    'The diagram builds itself as you go: now it shows only the code and the terraform program. Press “Start from the first step”, then go on with “Step forward” above the diagram. At every step the participant at work is highlighted, the callout next to it says what it does, and the card on the line shows what is handed on.\n\nOnce you reach the end, choose another event in “Parameters”, such as an edit in the cloud console, and walk the run again.',
+  ),
+  legend: [
+    { mark: 'active', text: bi('участник, который работает сейчас', 'the participant working now') },
+    { mark: 'say', text: bi('что этот участник делает', 'what that participant does') },
+    { mark: 'token', text: bi('что передаётся дальше: адрес и ID, ответ облака, запрос на изменение', 'what is handed on: an address and an ID, the cloud’s answer, a change request') },
+    { mark: 'icon:file', text: bi('код в файле main.tf', 'the code in main.tf') },
+    { mark: 'icon:process', text: bi('программа terraform', 'the terraform program') },
+    { mark: 'icon:database', text: bi('файл state, в котором Terraform хранит сведения о созданных ресурсах', 'the state file, where Terraform keeps what it knows about the resources it created') },
+    { mark: 'icon:cloud', text: bi('API облака', 'the cloud API') },
+    { mark: 'icon:server', text: bi('виртуальная машина в облаке', 'the virtual machine in the cloud') },
+    { mark: 'icon:user', text: bi('человек, который работает в консоли облака', 'a person working in the cloud console') },
+    { mark: 'dashed', text: bi('изменение в обход кода', 'a change that bypasses the code') },
+    { mark: 'warn', text: bi('здесь есть разница, которую план предложит исправить', 'there is a difference the plan will propose to fix') },
+    { mark: 'ok', text: bi('этап пройден', 'stage passed') },
+    { mark: 'err', text: bi('здесь запуск остановился', 'the run stopped here') },
+  ],
+  stopLabel: bi('Запуск Terraform остановился', 'The Terraform run stopped'),
   concepts: ['iac.plan', 'iac.state', 'iac.drift'],
   diagram: {
     width: 960,
-    height: 440,
+    height: 470,
     nodes: [
-      { id: 'code', label: 'main.tf', sub: 'edu_vm.web: 2 cores', family: 'ci-source', shape: 'doc', x: 24, y: 40, w: 176, h: 72, card: card(bi('Код: какими ресурсы должны быть. Он не знает, какие они есть.', 'The code: what resources should be like. It does not know what they are.'), bi('Вы пишете, коммитите в Git.', 'You write it and commit it to Git.'), 'cat main.tf') },
-      { id: 'core', label: 'terraform', sub: 'plan', family: 'process', shape: 'box', x: 312, y: 40, w: 176, h: 72, card: card(bi('Ядро: разбирает код, строит граф ресурсов по ссылкам, обновляет state из облака, считает разницу и выполняет её.', 'The core: parses the code, builds the resource graph from references, refreshes state from the cloud, computes the difference and carries it out.'), bi('Вы или CI запускаете terraform plan / apply.', 'You or CI run terraform plan / apply.'), 'terraform plan', { page: 'help/terraform', anchor: 'USAGE' }) },
-      { id: 'state', label: 'terraform.tfstate', sub: 'serial 4', family: 'obj', shape: 'buffer', x: 312, y: 300, w: 176, h: 72, card: card(bi('Память Terraform: связь «адрес в коде ↔ ID в облаке» и последние известные атрибуты. Без неё Terraform не знает, что ресурсы его.', 'Terraform’s memory: the link "address in code ↔ ID in the cloud" and the last known attributes. Without it Terraform does not know the resources are its own.'), bi('Пишет terraform apply после каждого ресурса.', 'terraform apply writes it after every resource.'), 'terraform state list') },
-      { id: 'api', label: 'Edu Cloud API', sub: 'api.edu.cloud', family: 'cp', shape: 'hex', x: 600, y: 40, w: 176, h: 72, card: card(bi('API облака: GET читает ресурс, POST создаёт, PATCH меняет, DELETE удаляет. Провайдер edu переводит план в эти вызовы.', 'The cloud API: GET reads a resource, POST creates, PATCH changes, DELETE removes. The edu provider turns the plan into these calls.'), bi('Облачный провайдер.', 'The cloud provider.'), 'edu vm list') },
-      { id: 'vm', label: 'vm-4f66', sub: 'cores 2 · ubuntu-24.04', family: 'node', shape: 'rack', x: 600, y: 200, w: 176, h: 80, card: card(bi('Настоящая виртуальная машина в облаке. Её можно изменить и мимо Terraform — через консоль.', 'The real virtual machine in the cloud. It can be changed behind Terraform’s back, through the console.'), bi('Создана terraform apply.', 'Created by terraform apply.'), 'edu vm get vm-4f66') },
-      { id: 'console', label: bi('консоль облака', 'cloud console'), sub: 'ops-2', family: 'user', shape: 'box', x: 784, y: 330, w: 160, h: 64, card: card(bi('Веб-консоль или CLI облака. Правка здесь — дрейф: облако уже не такое, как в коде и state.', 'The cloud’s web console or CLI. A change here is drift: the cloud no longer matches the code and the state.'), bi('Любой человек с доступом к облаку.', 'Anyone with access to the cloud.'), 'edu log') },
+      {
+        id: 'code',
+        label: 'main.tf',
+        icon: 'file',
+        sub: 'edu_vm.web · 4 cores',
+        family: 'ci-source',
+        x: 24,
+        y: 40,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('Код, который описывает, какими ресурсы должны быть: сеть, машину edu_vm.web и DNS-запись. О том, какие ресурсы существуют на самом деле, код ничего не знает.', 'The code that describes what the resources should be like: a network, the machine edu_vm.web and a DNS record. The code knows nothing about which resources really exist.'),
+          bi('Код пишете вы и храните его в Git вместе с остальным кодом команды.', 'You write the code and keep it in Git with the rest of the team’s code.'),
+          'cat main.tf',
+        ),
+      },
+      {
+        id: 'core',
+        label: 'terraform',
+        icon: 'process',
+        work: 'spin',
+        sub: 'apply',
+        family: 'process',
+        x: 370,
+        y: 40,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('Программа, которая разбирает код, строит по ссылкам между ресурсами порядок их создания, сверяет код с файлом state и с облаком, считает разницу и выполняет её. Команда `terraform plan` только показывает разницу, а `terraform apply` показывает её и после подтверждения применяет.', 'The program that parses the code, builds the creation order from the references between resources, compares the code with the state file and the cloud, computes the difference and carries it out. `terraform plan` only shows the difference; `terraform apply` shows it and applies it after confirmation.'),
+          bi('Terraform запускаете вы в терминале или пайплайн CI.', 'You run Terraform in a terminal, or a CI pipeline runs it.'),
+          'terraform plan',
+          { page: 'help/terraform', anchor: 'USAGE' },
+        ),
+      },
+      {
+        id: 'api',
+        label: bi('API облака', 'Cloud API'),
+        icon: 'cloud',
+        sub: 'api.edu.cloud',
+        family: 'cp',
+        x: 716,
+        y: 40,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('Облако Edu Cloud принимает запросы через свой HTTP-интерфейс, то есть API. Запрос GET читает ресурс, POST создаёт его, PATCH меняет, DELETE удаляет. Провайдер edu, которого Terraform скачал командой `terraform init`, переводит план в такие запросы.', 'The HTTP interface of Edu Cloud. GET reads a resource, POST creates it, PATCH changes it, DELETE removes it. The edu provider, which Terraform downloaded with `terraform init`, turns the plan into such requests.'),
+          bi('API обслуживает компания, которой принадлежит облако.', 'The company that owns the cloud runs the API.'),
+          'edu vm list',
+        ),
+      },
+      {
+        id: 'state',
+        label: 'terraform.tfstate',
+        icon: 'database',
+        sub: 'serial 4',
+        family: 'obj',
+        x: 370,
+        y: 250,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('Файл state служит памятью Terraform. Для каждого адреса из кода, например edu_vm.web, в файле записаны ID объекта в облаке и последние известные атрибуты. Без этого файла Terraform не знает, какие объекты в облаке созданы им.', 'Terraform’s memory. For every address from the code, such as edu_vm.web, the file holds the object’s ID in the cloud and its last known attributes. Without this file Terraform does not know which cloud objects it created.'),
+          bi('Файл пишет `terraform apply` после каждого ресурса, который он создал или изменил. Поле serial, то есть номер версии файла, при каждой записи увеличивается на единицу.', '`terraform apply` writes the file after every resource it creates or changes. The serial field, the version number of the file, grows by one with every write.'),
+          'terraform state list',
+        ),
+      },
+      {
+        id: 'vm',
+        label: 'vm-4f66',
+        icon: 'server',
+        sub: 'cores 2 · ubuntu-24.04',
+        family: 'node',
+        x: 716,
+        y: 250,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('Настоящая виртуальная машина в облаке, которую код называет edu_vm.web. Изменить её можно не только через Terraform, но и вручную в консоли облака.', 'The real virtual machine in the cloud that the code calls edu_vm.web. It can be changed not only through Terraform but also by hand in the cloud console.'),
+          bi('Машину создал `terraform apply` при первом запуске.', '`terraform apply` created the machine on its first run.'),
+          'edu vm get vm-4f66',
+        ),
+      },
+      {
+        id: 'console',
+        label: bi('Дежурный в консоли', 'On-call in the console'),
+        icon: 'user',
+        work: 'dots',
+        sub: 'ops-2',
+        family: 'user',
+        x: 716,
+        y: 392,
+        w: 220,
+        h: 64,
+        card: card(
+          bi('Человек, который меняет ресурсы в веб-консоли или в утилите облака, а не в коде. После его правки облако перестаёт совпадать и с кодом, и с файлом state, и такое расхождение называется дрейфом.', 'A person who changes resources in the cloud’s web console or command-line tool rather than in the code. After such an edit the cloud stops matching both the code and the state file, and this mismatch is called drift.'),
+          bi('Так может поступить любой, у кого есть доступ к облаку, например дежурный инженер ночью.', 'Anyone with access to the cloud can do this, for example an on-call engineer at night.'),
+          'edu log',
+        ),
+      },
     ],
     edges: [
-      { id: 'e-read', from: 'code', to: 'core', label: bi('разбор и граф', 'parse and graph'), card: card(bi('Terraform читает все .tf каталога и строит граф: порядок задают ссылки между ресурсами, а не строки файла.', 'Terraform reads every .tf in the directory and builds a graph: the order comes from references between resources, not from lines in the file.'), bi('terraform.', 'terraform.')) },
-      { id: 'e-state', from: 'state', to: 'core', label: bi('что я создал', 'what I created'), card: card(bi('State даёт ID ресурсов, чтобы спросить облако именно про них.', 'The state gives resource IDs so Terraform can ask the cloud about exactly them.'), bi('terraform.', 'terraform.'), 'terraform show') },
-      { id: 'e-refresh', from: 'core', to: 'api', label: 'GET /v1/vms/vm-4f66', card: card(bi('Refresh: перед планом Terraform перечитывает каждый ресурс из облака и замечает дрейф.', 'Refresh: before the plan Terraform rereads every resource from the cloud and notices drift.'), bi('terraform plan (без -refresh=false).', 'terraform plan (without -refresh=false).')) },
-      { id: 'e-apply', from: 'api', to: 'vm', label: 'POST / PATCH / DELETE', card: card(bi('Apply выполняет план вызовами API в порядке графа.', 'Apply carries out the plan with API calls in graph order.'), bi('terraform apply после подтверждения.', 'terraform apply after approval.')) },
-      { id: 'e-write', from: 'core', to: 'state', via: [[440, 220]], label: bi('serial +1', 'serial +1'), labelAt: 0.4, card: card(bi('После каждого ресурса новый state записывается на диск, serial растёт.', 'After every resource the new state is written to disk and serial grows.'), bi('terraform apply.', 'terraform apply.'), 'cat terraform.tfstate') },
-      { id: 'e-drift', from: 'console', to: 'vm', label: bi('правка руками', 'a manual edit'), dashed: true, card: card(bi('Изменение мимо кода: следующий plan увидит его и предложит вернуть как в коде.', 'A change behind the code: the next plan sees it and proposes to bring it back to the code.'), bi('Человек в консоли.', 'A person in the console.'), 'edu vm update vm-4f66 --cores 4') },
+      { id: 'e-read', from: 'code', to: 'core', label: bi('чтение кода', 'reading the code'), card: card(bi('Terraform читает все файлы .tf в каталоге. Порядок работы задают ссылки между ресурсами, а не порядок строк в файле.', 'Terraform reads every .tf file in the directory. The order of work comes from the references between resources, not from the order of lines in the file.'), TF_SYS) },
+      { id: 'e-state', from: 'state', to: 'core', label: bi('чтение и запись state', 'reading and writing the state'), card: card(bi('Из файла state Terraform узнаёт ID своих ресурсов, а после изменений записывает туда новые сведения.', 'From the state file Terraform learns the IDs of its resources, and after changes it writes the new facts there.'), TF_SYS, 'terraform show') },
+      { id: 'e-refresh', from: 'core', to: 'api', label: bi('запрос текущего состояния', 'asking for the current state'), card: card(bi('Перед планом Terraform перечитывает из облака каждый ресурс, записанный в state. Этот шаг называется refresh, и на нём Terraform замечает дрейф.', 'Before the plan Terraform rereads from the cloud every resource recorded in the state. This step is called refresh, and that is where Terraform notices drift.'), bi('Refresh выполняет terraform plan, если его не запустили с ключом -refresh=false.', 'terraform plan does the refresh unless it runs with -refresh=false.')) },
+      { id: 'e-apply', from: 'api', to: 'vm', label: bi('чтение и изменение машины', 'reading and changing the machine'), card: card(bi('Облако читает машину по запросу GET и меняет её по запросам POST, PATCH и DELETE, которые отправляет провайдер.', 'The cloud reads the machine on a GET request and changes it on the POST, PATCH and DELETE requests the provider sends.'), bi('Запросы отправляет провайдер edu по команде terraform apply.', 'The edu provider sends the requests when terraform apply tells it to.')) },
+      { id: 'e-drift', from: 'console', to: 'vm', dashed: true, label: bi('правка вручную', 'a manual edit'), card: card(bi('Человек меняет машину в обход кода, и следующий plan с refresh увидит эту правку и предложит вернуть машину к тому, что записано в коде.', 'A change that bypasses the code. The next plan with refresh sees it and proposes to bring the machine back to what the code says.'), bi('Правку делает человек в консоли облака.', 'A person in the cloud console makes the edit.'), 'edu vm update vm-4f66 --cores 4') },
     ],
   },
   params: [
     {
       id: 'change',
-      label: bi('Что меняем в коде', 'What we change in the code'),
+      label: bi('Что произошло с тех пор, как машину создали', 'What happened since the machine was created'),
       kind: 'choice',
       default: 'cores',
       options: [
-        { id: 'none', label: bi('ничего', 'nothing') },
-        { id: 'cores', label: bi('cores 2 → 4', 'cores 2 → 4') },
-        { id: 'image', label: bi('image → debian-13', 'image → debian-13') },
+        { id: 'cores', label: bi('вы поменяли в коде число ядер с 2 на 4', 'you changed the cores in the code from 2 to 4') },
+        { id: 'image', label: bi('вы поменяли в коде образ на debian-13', 'you changed the image in the code to debian-13') },
+        { id: 'drift', label: bi('дежурный поставил машине 4 ядра в консоли, а код остался прежним', 'the on-call engineer gave the machine 4 cores in the console, and the code stayed the same') },
+        { id: 'none', label: bi('ничего не менялось', 'nothing changed') },
       ],
       near: 'code',
+      group: bi('Что изменилось', 'What changed'),
       predict: {
-        prompt: bi('Меняем образ ВМ. Что сделает Terraform?', 'We change the VM image. What will Terraform do?'),
+        prompt: bi('Вы выбрали, что изменилось. Что Terraform предложит сделать с машиной?', 'You chose what changed. What will Terraform propose to do with the machine?'),
         options: [
-          { id: 'replace', text: bi('Удалит ВМ и создаст новую', 'Delete the VM and create a new one') },
-          { id: 'update', text: bi('Поменяет образ на месте', 'Change the image in place') },
+          { id: 'update', text: bi('Изменить машину на месте, не пересоздавая её', 'Change the machine in place without recreating it') },
+          { id: 'replace', text: bi('Удалить машину и создать вместо неё новую', 'Destroy the machine and create a new one instead') },
+          { id: 'nothing', text: bi('Ничего не делать, потому что облако и код совпадают', 'Do nothing, because the cloud and the code match') },
         ],
-        resolve: (_p, n) => ((last(n).destroy ?? 0) > 0 ? 'replace' : 'update'),
+        resolve: (_p, n) => ((last(n).destroy ?? 0) > 0 ? 'replace' : (last(n).change ?? 0) > 0 ? 'update' : 'nothing'),
       },
     },
-    { id: 'drift', label: bi('Кто-то поменял cores в консоли', 'Someone changed cores in the console'), kind: 'toggle', default: false, near: 'console', predict: { prompt: bi('В консоли cores сменили на 4, код не трогали. Что покажет plan?', 'In the console cores was set to 4, the code is untouched. What does plan show?'), options: [{ id: 'revert', text: bi('Вернуть cores 4 → 2', 'Bring cores back 4 → 2') }, { id: 'nothing', text: bi('Ничего: код не менялся', 'Nothing: the code did not change') }], resolve: (_p, n) => ((last(n).change ?? 0) > 0 ? 'revert' : 'nothing') } },
-    { id: 'refresh', label: bi('Обновлять state из облака (refresh)', 'Refresh state from the cloud'), kind: 'toggle', default: true, near: 'api' },
-    { id: 'cbd', label: bi('create_before_destroy', 'create_before_destroy'), kind: 'toggle', default: false, near: 'vm' },
+    {
+      id: 'refresh',
+      label: bi('Перед планом спросить облако о текущем состоянии (refresh)', 'Ask the cloud about the current state before the plan (refresh)'),
+      kind: 'toggle',
+      default: true,
+      near: 'api',
+      group: bi('Как Terraform строит план', 'How Terraform builds the plan'),
+      predict: {
+        prompt: bi('Terraform запускают с ключом -refresh=false, то есть он не спрашивает облако, какой стала машина. Если дежурный поменял машину в консоли, заметит ли это такой plan?', 'Terraform runs with -refresh=false, so it does not ask the cloud what the machine is like now. If the on-call engineer changed the machine in the console, will such a plan notice?'),
+        options: [
+          { id: 'no', text: bi('Нет, Terraform поверит файлу state и правки не увидит', 'No, Terraform trusts the state file and does not see the edit') },
+          { id: 'yes', text: bi('Да, Terraform всё равно сверит машину с облаком', 'Yes, Terraform compares the machine with the cloud anyway') },
+        ],
+        resolve: () => 'no',
+      },
+    },
+    {
+      id: 'cbd',
+      label: bi('Создавать новую машину до удаления старой (create_before_destroy)', 'Create the new machine before destroying the old one (create_before_destroy)'),
+      kind: 'toggle',
+      default: false,
+      near: 'vm',
+      group: bi('Как Terraform строит план', 'How Terraform builds the plan'),
+      predict: {
+        prompt: bi('Чтобы сменить образ, Terraform пересоздаёт машину. Что изменит в этом пересоздании настройка create_before_destroy = true?', 'To change the image Terraform recreates the machine. What does create_before_destroy = true change in that replacement?'),
+        options: [
+          { id: 'order', text: bi('Terraform сначала создаст новую машину, а старую удалит потом, и сайт не останется без сервера', 'Terraform creates the new machine first and destroys the old one afterwards, so the site is never left without a server') },
+          { id: 'inplace', text: bi('Terraform поменяет образ на работающей машине без пересоздания', 'Terraform changes the image on the running machine without recreating it') },
+        ],
+        resolve: () => 'order',
+      },
+    },
   ],
   breaks: [
-    { id: 'state-lost', label: bi('terraform.tfstate удалён', 'terraform.tfstate deleted'), remove: ['state', 'e-state'], predict: { prompt: bi('State пропал, а ВМ в облаке работает. Что предложит plan?', 'The state is gone while the VM runs in the cloud. What does plan propose?'), options: [{ id: 'create', text: bi('Создать всё заново, как будто ничего нет', 'Create everything again, as if nothing existed') }, { id: 'none', text: bi('Ничего: облако-то на месте', 'Nothing: the cloud is still there') }], resolve: () => 'create' } },
-    { id: 'rate-limit', label: bi('API отвечает 429 на втором ресурсе', 'The API answers 429 on the second resource'), remove: ['e-apply'], predict: { prompt: bi('apply создаёт три ресурса, на втором API вернул 429. Что будет в state?', 'apply creates three resources and the API returns 429 on the second. What will the state hold?'), options: [{ id: 'one', text: bi('Только первый ресурс', 'Only the first resource') }, { id: 'none', text: bi('Ничего: apply откатится целиком', 'Nothing: apply rolls back as a whole') }], resolve: () => 'one' } },
+    {
+      id: 'state-lost',
+      label: bi('Файл terraform.tfstate удалили', 'The terraform.tfstate file was deleted'),
+      remove: ['state', 'e-state'],
+      boundary: 'storage',
+      predict: {
+        prompt: bi('Файл terraform.tfstate удалили, а сеть, машина и DNS-запись в облаке продолжают работать. Что предложит plan?', 'The terraform.tfstate file was deleted, while the network, the machine and the DNS record keep running in the cloud. What will plan propose?'),
+        options: [
+          { id: 'create', text: bi('Создать все три ресурса заново, как будто в облаке ничего нет', 'Create all three resources again, as if the cloud were empty') },
+          { id: 'none', text: bi('Ничего не делать, потому что ресурсы в облаке на месте', 'Do nothing, because the resources are still in the cloud') },
+        ],
+        resolve: () => 'create',
+      },
+    },
+    {
+      id: 'rate-limit',
+      label: bi('Облако отвечает на запросы ошибкой 429 Too Many Requests', 'The cloud answers requests with 429 Too Many Requests'),
+      remove: ['e-refresh', 'e-apply'],
+      boundary: 'network',
+      predict: {
+        prompt: bi('Облако отвечает на каждый запрос Terraform ошибкой 429 Too Many Requests, то есть «слишком много запросов». Что станет после этого запуска с машиной и с файлом state?', 'The cloud answers every Terraform request with 429 Too Many Requests. What becomes of the machine and the state file after this run?'),
+        options: [
+          { id: 'stop', text: bi('Ничего не изменится, потому что Terraform прекратит работу, как только облако откажет', 'Nothing changes, because Terraform stops as soon as the cloud refuses') },
+          { id: 'half', text: bi('Машина изменится, а файл state останется прежним', 'The machine changes, while the state file stays as it was') },
+        ],
+        resolve: () => 'stop',
+      },
+    },
   ],
   metrics: [
-    { id: 'add', label: bi('создать', 'to add') },
-    { id: 'change', label: bi('изменить', 'to change') },
-    { id: 'destroy', label: bi('удалить', 'to destroy') },
-    { id: 'down', label: bi('простой ВМ', 'VM downtime'), unit: 's' },
+    { id: 'add', label: bi('будет создано ресурсов', 'resources to add') },
+    { id: 'change', label: bi('будет изменено ресурсов', 'resources to change') },
+    { id: 'destroy', label: bi('будет удалено ресурсов', 'resources to destroy') },
+    { id: 'down', label: bi('сайт простоит без сервера', 'the site stays without a server'), unit: 's' },
   ],
   run(p, broken) {
     const lost = broken.has('state-lost');
+    const limited = broken.has('rate-limit');
     const n = tfNumbers(p, lost);
     const m = { add: n.add, change: n.change, destroy: n.destroy, down: n.downtime };
+    const codeCores = p.change === 'cores' ? 4 : 2;
+    const cloudCores = p.change === 'drift' ? 4 : 2;
+    const codeSub = p.change === 'image' ? 'edu_vm.web · debian-13' : `edu_vm.web · ${codeCores} cores`;
+    const total = n.add + n.change + n.destroy;
     const steps: Step[] = [
-      { id: 'parse', label: 'parse', caption: bi('Terraform читает main.tf и строит граф: ВМ ссылается на сеть, DNS-запись — на ВМ. Создавать придётся в этом порядке.', 'Terraform reads main.tf and builds the graph: the VM references the network, the DNS record references the VM. That is the creation order.'), focus: ['code', 'e-read', 'core'], tokens: [{ edge: 'e-read' }], states: { core: 'on' }, values: { code: p.change === 'cores' ? 'edu_vm.web: 4 cores' : p.change === 'image' ? 'image = debian-13' : 'edu_vm.web: 2 cores' } },
+      {
+        id: 'parse',
+        label: bi('код', 'code'),
+        caption: bi(
+          'Terraform читает файлы .tf в каталоге и находит три ресурса: сеть, машину edu_vm.web и DNS-запись. Машина ссылается на сеть, а запись на машину, поэтому создавать их можно только в таком порядке. По этим ссылкам Terraform строит граф зависимостей, то есть схему того, какой ресурс от какого зависит.',
+          'Terraform reads the .tf files in the directory and finds three resources: a network, the machine edu_vm.web and a DNS record. The machine refers to the network and the record to the machine, so they can be created only in that order, and Terraform builds a graph from these references.',
+        ),
+        focus: ['e-read', 'core'],
+        tokens: [{ edge: 'e-read', label: 'main.tf' }],
+        say: { core: fb(bi('Terraform читает код и видит, что машина edu_vm.web должна работать на образе {i} с {c} ядрами.', 'Terraform reads the code and sees that the machine edu_vm.web must run the {i} image with {c} cores.'), { i: p.change === 'image' ? 'debian-13' : 'ubuntu-24.04', c: codeCores }) },
+        values: { code: codeSub, vm: `cores ${cloudCores} · ubuntu-24.04` },
+        states: hiddenExcept(TF_ALL, 'code', 'core', 'e-read'),
+      },
     ];
     if (lost) {
-      steps.push({ id: 'nostate', label: 'state?', caption: bi('State нет: Terraform не знает ни одного ID и считает, что в облаке пусто.', 'There is no state: Terraform knows no IDs and assumes the cloud is empty.'), focus: ['core'], states: { state: 'off' } });
-      steps.push({ id: 'plan', label: 'plan', caption: bi('План: создать все три ресурса. Облако не тронуто, но связь с ним потеряна: apply создаст дубли или упрётся в занятые имена.', 'The plan: create all three resources. The cloud is untouched, but the link to it is lost: apply would create duplicates or hit names already taken.'), focus: ['core', 'vm'], states: { core: 'err' }, metrics: m, broken: { at: 'state', message: 'Plan: 3 to add, 0 to change, 0 to destroy.', caption: bi('state хранят удалённо, с блокировкой и резервной копией: его потеря отнимает у Terraform память.', 'state is kept remotely, locked and backed up: losing it takes Terraform’s memory away.') } });
+      steps.push({
+        id: 'nostate',
+        label: 'state?',
+        caption: bi('Terraform ищет файл terraform.tfstate и не находит его. Ни одного ID у Terraform теперь нет, поэтому он считает, что в облаке нет ни одного его ресурса.', 'Terraform looks for terraform.tfstate and does not find it. It now has no IDs at all, so it assumes the cloud holds none of its resources.'),
+        focus: ['state'],
+        reveal: ['state'],
+        say: { state: bi('Файла state нет, и некому сообщить Terraform, что сеть, машина и запись уже созданы.', 'There is no state file, and nothing can tell Terraform that the network, the machine and the record already exist.') },
+        states: { state: 'err' },
+        values: { state: '—' },
+      });
+      steps.push({
+        id: 'plan',
+        label: 'plan',
+        caption: bi('План предлагает создать все три ресурса. Облако при этом никто не трогал, но связь Terraform с ним потеряна: apply попытается создать вторую сеть и вторую машину рядом с работающими, а если имена в облаке должны быть уникальными, остановится с ошибкой о занятом имени.', 'The plan proposes to create all three resources. Nobody touched the cloud, but Terraform’s link to it is lost: apply would try to create a second network and a second machine next to the running ones, and if names in the cloud must be unique, it stops with an error about a taken name.'),
+        focus: ['core'],
+        say: { core: bi('Terraform сравнивает код с пустым state и решает, что все три ресурса нужно создать.', 'Terraform compares the code with an empty memory and decides that all three resources must be created.') },
+        states: { core: 'err' },
+        values: { core: 'Plan: 3 to add' },
+        metrics: m,
+        broken: { at: 'state', message: 'Plan: 3 to add, 0 to change, 0 to destroy.', caption: bi('План, в котором Terraform хочет создать заново всё, что давно работает, почти всегда означает, что он не нашёл файл state. Поэтому state хранят в общем хранилище с резервными копиями, а не на одном ноутбуке.', 'A plan in which Terraform wants to create again everything that has long been running almost always means it did not find the state file. That is why the state is kept in shared storage with backups, not on one laptop.') },
+      });
       return steps;
     }
-    steps.push({ id: 'state', label: 'state', caption: bi('Из state Terraform берёт адреса и ID: edu_vm.web — это vm-4f66.', 'From the state Terraform takes the addresses and IDs: edu_vm.web is vm-4f66.'), focus: ['state', 'e-state'], tokens: [{ edge: 'e-state', label: 'vm-4f66' }] });
-    if (p.drift) steps.push({ id: 'drift', label: bi('дрейф', 'drift'), caption: bi('Тем временем в консоли кто-то поменял cores на 4. Ни код, ни state об этом не знают.', 'Meanwhile someone changed cores to 4 in the console. Neither the code nor the state knows.'), focus: ['console', 'e-drift', 'vm'], tokens: [{ edge: 'e-drift', label: 'cores=4' }], states: { vm: 'warn' }, values: { vm: 'cores 4 · ubuntu-24.04' } });
-    steps.push(
-      p.refresh
-        ? { id: 'refresh', label: 'refresh', caption: p.drift ? bi('Refresh: GET в облако показывает cores = 4. Terraform пишет «Objects have changed outside of Terraform».', 'Refresh: a GET to the cloud shows cores = 4. Terraform reports "Objects have changed outside of Terraform".') : bi('Refresh: GET в облако — всё как в state.', 'Refresh: a GET to the cloud — everything matches the state.'), focus: ['e-refresh', 'api'], tokens: [{ edge: 'e-refresh' }, { edge: 'e-refresh', reverse: true, label: p.drift ? 'cores=4' : '200 OK' }], states: { api: 'on' } }
-        : { id: 'norefresh', label: '-refresh=false', caption: p.drift ? bi('Refresh выключен: Terraform верит state и дрейфа не видит. План врёт.', 'Refresh is off: Terraform trusts the state and does not see the drift. The plan lies.') : bi('Refresh выключен: Terraform верит state, в облако не ходит.', 'Refresh is off: Terraform trusts the state and does not ask the cloud.'), focus: ['core'], states: { api: 'off' } },
-    );
-    const what =
+    steps.push({
+      id: 'state',
+      label: 'state',
+      caption: bi('Из файла state Terraform узнаёт, что адресу edu_vm.web в облаке соответствует машина vm-4f66 и что в прошлый раз у неё было 2 ядра и образ ubuntu-24.04.', 'From the state file Terraform learns that the address edu_vm.web corresponds to the machine vm-4f66 in the cloud, and that last time it had 2 cores and the ubuntu-24.04 image.'),
+      focus: ['e-state', 'state'],
+      reveal: ['state', 'e-state'],
+      tokens: [{ edge: 'e-state', label: 'edu_vm.web = vm-4f66' }],
+      say: { state: bi('Файл state хранит запись о том, что edu_vm.web создана как машина vm-4f66 с 2 ядрами.', 'The state file holds the record that edu_vm.web was created as the machine vm-4f66 with 2 cores.') },
+      states: { state: 'ok' },
+    });
+    if (p.change === 'drift')
+      steps.push({
+        id: 'drift',
+        label: bi('дрейф', 'drift'),
+        caption: bi('Тем временем дежурный ставит машине vm-4f66 в консоли облака 4 ядра. Ни код, ни файл state об этой правке не знают, и теперь все три версии мира расходятся.', 'Meanwhile the on-call engineer gives vm-4f66 4 cores in the cloud console. Neither the code nor the state file knows about this edit, and the three versions of the world now differ.'),
+        focus: ['e-drift', 'console'],
+        reveal: ['console', 'e-drift', 'vm'],
+        tokens: [{ edge: 'e-drift', label: 'cores = 4' }],
+        say: { console: bi('Дежурный меняет в консоли число ядер машины vm-4f66 с 2 на 4, потому что ночью сайту не хватало мощности.', 'The on-call engineer changes the cores of vm-4f66 from 2 to 4 in the console, because the site lacked capacity at night.') },
+        states: { vm: 'warn' },
+      });
+    const callCloud = (id: string, what: Bi): Step => ({
+      id,
+      label: '429',
+      caption: bi('Облако отвечает на запрос ошибкой 429 Too Many Requests, и Terraform прекращает работу. Машина и файл state остались такими, какими были до запуска, поэтому следующий запуск начнётся с того же места.', 'The cloud answers the request with 429 Too Many Requests, and Terraform stops. The machine and the state file are as they were before the run, so the next run starts from the same place.'),
+      focus: ['e-refresh', 'api'],
+      reveal: ['api', 'e-refresh'],
+      tokens: [{ edge: 'e-refresh', label: what }],
+      say: { api: bi('API облака отклоняет запрос, потому что от этого ключа доступа пришло слишком много запросов за короткое время.', 'The cloud API rejects the request, because too many requests came from this access key in a short time.') },
+      states: { api: 'err', 'e-refresh': 'err' },
+      metrics: { add: 0, change: 0, destroy: 0, down: 0 },
+      broken: { at: 'api', message: '│ Error: reading VM vm-4f66: 429 Too Many Requests: rate limit of the training API exceeded, retry later', caption: bi('Ошибка 429 означает, что облако ограничивает число запросов. Ничего не сломалось, поэтому подождите и запустите Terraform снова, а в CI не запускайте одновременно много пайплайнов, которые обращаются к одному облаку.', 'Error 429 means the cloud limits the number of requests. Nothing is broken: wait and run Terraform again, and in CI do not run many pipelines against one cloud at once.') },
+    });
+    if (p.refresh) {
+      if (limited) {
+        steps.push(callCloud('refresh', bi('GET vm-4f66', 'GET vm-4f66')));
+        return steps;
+      }
+      steps.push({
+        id: 'refresh',
+        label: 'refresh',
+        caption:
+          p.change === 'drift'
+            ? bi('Terraform спрашивает облако о машине vm-4f66 и узнаёт, что у неё 4 ядра, хотя в state записано 2. Он сообщает об этом строкой «Objects have changed outside of Terraform» и обновляет свои сведения перед сравнением.', 'Terraform asks the cloud about vm-4f66 and learns it has 4 cores, although the state says 2. It reports this with the line “Objects have changed outside of Terraform” and updates its facts before the comparison.')
+            : bi('Terraform спрашивает облако о машине vm-4f66 и получает те же сведения, что записаны в state: 2 ядра и образ ubuntu-24.04. С тех пор как машину создали, в облаке её никто не менял.', 'Terraform asks the cloud about vm-4f66 and gets the same facts as in the state: 2 cores and the ubuntu-24.04 image. Nobody changed the machine in the cloud since it was created.'),
+        focus: ['e-refresh', 'api'],
+        reveal: ['api', 'e-refresh', 'vm', 'e-apply'],
+        tokens: [{ edge: 'e-refresh', label: 'GET vm-4f66' }, { edge: 'e-refresh', reverse: true, label: `cores = ${cloudCores}` }],
+        say: { api: fb(bi('API облака читает машину vm-4f66 и отвечает, что сейчас у неё {c} ядра и образ ubuntu-24.04.', 'The cloud API reads vm-4f66 and answers that it now has {c} cores and the ubuntu-24.04 image.'), { c: cloudCores }) },
+        states: { api: 'ok' },
+      });
+    } else {
+      steps.push({
+        id: 'norefresh',
+        label: '-refresh=false',
+        caption:
+          p.change === 'drift'
+            ? bi('Terraform запущен с ключом -refresh=false и в облако не обращается. Он верит файлу state, где записано 2 ядра, и правки дежурного не видит, поэтому план расходится с действительностью.', 'Terraform runs with -refresh=false and does not ask the cloud. It trusts the state file, which says 2 cores, and does not see the on-call engineer’s edit, so the plan disagrees with reality.')
+            : bi('Terraform запущен с ключом -refresh=false и в облако не обращается. Он верит файлу state и считает, что машина осталась такой, какой её записали при создании.', 'Terraform runs with -refresh=false and does not ask the cloud. It trusts the state file and assumes the machine is as it was recorded at creation.'),
+        focus: ['core'],
+        say: { core: bi('Terraform пропускает вопрос к облаку и берёт сведения о машине только из файла state.', 'Terraform skips asking the cloud and takes the machine’s facts from the state file only.') },
+      });
+    }
+    const diff =
       p.change === 'image'
-        ? bi('image нельзя поменять на месте: «-/+ must be replaced, # forces replacement».', 'image cannot change in place: "-/+ must be replaced, # forces replacement".')
-        : n.change
-          ? bi('cores меняется на месте: «~ update in-place».', 'cores changes in place: "~ update in-place".')
-          : bi('Разницы нет: «No changes. Your infrastructure matches the configuration».', 'No difference: "No changes. Your infrastructure matches the configuration".');
-    steps.push({ id: 'diff', label: 'plan', caption: bi(`Сравнение кода с обновлённым state. ${what.ru}`, `The code is compared with the refreshed state. ${what.en}`), focus: ['core', 'code', 'state'], states: { core: n.add + n.change + n.destroy ? 'warn' : 'ok' }, metrics: m });
-    if (!(n.add + n.change + n.destroy)) return steps;
-    if (broken.has('rate-limit')) {
-      steps.push({ id: 'apply', label: 'apply', caption: bi('apply начинает вызовы API, но облако отвечает 429 — слишком много запросов. Apply останавливается.', 'apply starts the API calls, but the cloud answers 429, too many requests. Apply stops.'), focus: ['api', 'e-apply'], states: { api: 'err' }, metrics: m, broken: { at: 'e-apply', message: '│ Error: creating VM: 429 Too Many Requests: rate limit of the training API exceeded, retry later', caption: bi('state уже записан для готовых ресурсов: следующий plan продолжит с места остановки.', 'the state is already written for the finished resources: the next plan continues from where it stopped.') } });
+        ? bi('Образ работающей машины облако поменять не может, поэтому план помечает строку с образом «# forces replacement» и предлагает пересоздать машину (знак -/+).', 'The cloud cannot change the image of a running machine, so the plan marks the image line “# forces replacement” and proposes to recreate the machine (the sign -/+).')
+        : p.change === 'cores'
+          ? bi('Число ядер облако умеет менять на месте, поэтому план предлагает изменить машину, не пересоздавая её (знак ~, «update in-place»), и вместо 2 ядер у машины станет 4.', 'The cloud can change the number of cores in place, so the plan proposes to change the machine without recreating it (the sign ~, “update in-place”), and the machine gets 4 cores instead of 2.')
+          : p.change === 'drift' && p.refresh
+            ? bi('В коде записано 2 ядра, а у машины теперь 4. Код описывает желаемое состояние, поэтому план предлагает вернуть машине 2 ядра и тем самым отменить правку дежурного.', 'The code says 2 cores, while the machine now has 4. The code describes the desired state, so the plan proposes to give the machine 2 cores back and thereby undo the on-call engineer’s edit.')
+            : bi('Код совпадает с тем, что Terraform знает о машине, и план сообщает «No changes. Your infrastructure matches the configuration».', 'The code matches what Terraform knows about the machine, and the plan reports “No changes. Your infrastructure matches the configuration”.');
+    steps.push({
+      id: 'diff',
+      label: 'plan',
+      caption: diff,
+      focus: ['core'],
+      say: { core: fb(bi('Terraform сравнивает код с тем, что знает о машине, и считает, сколько ресурсов нужно создать ({a}), сколько изменить ({c}) и сколько удалить ({d}).', 'Terraform compares the code with what it knows about the machine and counts how many resources to add ({a}), to change ({c}) and to destroy ({d}).'), { a: n.add, c: n.change, d: n.destroy }) },
+      states: { core: total ? 'warn' : 'ok', ...(total ? { code: 'warn' } : {}) },
+      values: { core: `+${n.add} ~${n.change} -${n.destroy}` },
+      metrics: m,
+    });
+    if (!total) return steps;
+    if (limited) {
+      steps.push(callCloud('apply', bi('PATCH vm-4f66', 'PATCH vm-4f66')));
       return steps;
     }
-    if (p.change === 'image')
-      steps.push({ id: 'apply', label: 'apply', caption: p.cbd ? bi('create_before_destroy: сначала новая ВМ, потом удаление старой (+/-). Простоя нет, но на время две ВМ.', 'create_before_destroy: the new VM first, then the old one is deleted (+/-). No downtime, but two VMs for a while.') : bi('Сначала DELETE старой ВМ, потом POST новой (-/+). Около 40 секунд сайт без сервера.', 'First a DELETE of the old VM, then a POST of the new one (-/+). About 40 seconds the site has no server.'), focus: ['e-apply', 'vm'], tokens: [{ edge: 'e-apply', label: p.cbd ? 'POST, DELETE' : 'DELETE, POST' }], states: { vm: 'ok' }, values: { vm: 'vm-4f9a · debian-13' }, metrics: m });
-    else steps.push({ id: 'apply', label: 'apply', caption: p.drift && p.change !== 'cores' ? bi('PATCH cores = 2: Terraform возвращает облако к коду и затирает ручную правку.', 'PATCH cores = 2: Terraform brings the cloud back to the code and overwrites the manual edit.') : bi('PATCH cores = 4: ВМ останавливается на время изменения и запускается снова.', 'PATCH cores = 4: the VM stops while it is changed and starts again.'), focus: ['e-apply', 'vm'], tokens: [{ edge: 'e-apply', label: 'PATCH' }], states: { vm: 'ok' }, values: { vm: p.change === 'cores' ? 'cores 4 · ubuntu-24.04' : 'cores 2 · ubuntu-24.04' }, metrics: m });
-    steps.push({ id: 'write', label: 'state', caption: bi('Новый state записан: serial 4 → 5. Следующий plan начнётся с этой памяти.', 'The new state is written: serial 4 → 5. The next plan starts from this memory.'), focus: ['e-write', 'state'], tokens: [{ edge: 'e-write', label: 'serial 5' }], values: { state: 'serial 5' }, states: { state: 'ok' }, metrics: m });
+    const applyStep: Step =
+      p.change === 'image'
+        ? {
+            id: 'apply',
+            label: 'apply',
+            caption: p.cbd
+              ? bi('Настройка create_before_destroy меняет порядок: облако сначала создаёт новую машину vm-4f9a с образом debian-13 и только потом удаляет старую. Сайт не остаётся без сервера, но какое-то время в облаке работают две машины и за обе приходится платить.', 'create_before_destroy changes the order: the cloud first creates the new machine vm-4f9a with debian-13 and only then destroys the old one. The site is never without a server, but for a while two machines run in the cloud and you pay for both.')
+              : bi('Облако сначала удаляет старую машину vm-4f66 и только потом создаёт новую vm-4f9a с образом debian-13. Новая машина загружается около 40 секунд, и всё это время сайту отвечать некому.', 'The cloud first destroys the old machine vm-4f66 and only then creates the new vm-4f9a with debian-13. While the new machine boots, about 40 seconds, nobody answers for the site.'),
+            focus: ['e-apply', 'vm'],
+            reveal: ['api', 'e-apply', 'vm'],
+            tokens: [{ edge: 'e-apply', label: p.cbd ? 'POST, DELETE' : 'DELETE, POST' }],
+            say: { vm: p.cbd ? bi('Новая машина vm-4f9a уже работает, и только после этого облако удаляет старую vm-4f66.', 'The new machine vm-4f9a is already running, and only then the cloud destroys the old vm-4f66.') : bi('Старой машины vm-4f66 больше нет, а новая vm-4f9a ещё загружается, поэтому сайт около 40 секунд не отвечает.', 'The old machine vm-4f66 is gone, and the new vm-4f9a is still booting, so the site does not answer for about 40 seconds.') },
+            states: { vm: 'ok', api: 'ok' },
+            values: { vm: 'vm-4f9a · debian-13' },
+            metrics: m,
+          }
+        : {
+            id: 'apply',
+            label: 'apply',
+            caption:
+              p.change === 'drift'
+                ? bi('Провайдер отправляет запрос PATCH, и облако возвращает машине 2 ядра, как записано в коде. Правка дежурного отменена; если 4 ядра были нужны, их следовало записать в код.', 'The provider sends a PATCH request, and the cloud gives the machine 2 cores again, as the code says. The on-call engineer’s edit is undone; if 4 cores were needed, they should have been written into the code.')
+                : bi('Провайдер отправляет запрос PATCH, и облако меняет машине число ядер с 2 на 4. Машина та же, с тем же ID и тем же диском, но на время изменения она останавливается примерно на 15 секунд.', 'The provider sends a PATCH request, and the cloud changes the machine’s cores from 2 to 4. It is the same machine with the same ID and disk, but it stops for about 15 seconds while it is changed.'),
+            focus: ['e-apply', 'vm'],
+            reveal: ['api', 'e-apply', 'vm'],
+            tokens: [{ edge: 'e-apply', label: `PATCH cores = ${codeCores}` }],
+            say: { vm: fb(bi('Облако останавливает машину vm-4f66, ставит ей {c} ядра и запускает её снова.', 'The cloud stops vm-4f66, gives it {c} cores and starts it again.'), { c: codeCores }) },
+            states: { vm: 'ok', api: 'ok' },
+            values: { vm: `cores ${codeCores} · ubuntu-24.04` },
+            metrics: m,
+          };
+    steps.push(applyStep);
+    steps.push({
+      id: 'write',
+      label: 'state',
+      caption: bi('Terraform записывает в файл state новые сведения о машине, и номер версии serial растёт с 4 до 5. Следующий plan начнётся с этих сведений и, если ничего не изменится, покажет «No changes».', 'Terraform writes the new facts about the machine into the state file, and the version number serial grows from 4 to 5. The next plan starts from these facts and, if nothing changes, shows “No changes”.'),
+      focus: ['e-state', 'state'],
+      tokens: [{ edge: 'e-state', reverse: true, label: 'serial 5' }],
+      say: { state: bi('В файл state записано, какой стала машина после изменения, и его версия теперь 5.', 'The state file records what the machine is like after the change, and its version is now 5.') },
+      values: { state: 'serial 5' },
+      states: { state: 'ok', core: 'ok' },
+      metrics: m,
+    });
     return steps;
   },
-  explainDelta(prev, next, change, _a, b): Bi {
-    if (change.kind === 'break') return change.on ? (change.id === 'state-lost' ? bi('Без state Terraform не знает, что ресурсы его: план — создать всё заново.', 'Without state Terraform does not know the resources are its own: the plan is to create everything again.') : bi('Apply не атомарен: state пишется после каждого ресурса, сбой оставляет часть работы сделанной.', 'Apply is not atomic: state is written after every resource, and a failure leaves part of the work done.')) : bi('Поломка убрана.', 'The break is removed.');
-    const a0 = last(prev);
+  explainDelta(_prev, next, change, _a, b): Bi {
+    if (change.kind === 'break') {
+      if (change.id === 'state-lost') return change.on ? bi('Без файла state Terraform не знает, какие ресурсы в облаке созданы им, и план предлагает создать всё заново.', 'Without the state file Terraform does not know which cloud resources it created, and the plan proposes to create everything again.') : bi('Файл state вернули, и Terraform снова узнаёт свои ресурсы по их ID.', 'The state file is back, and Terraform recognises its resources by their IDs again.');
+      return change.on ? bi('Облако отклоняет запросы, и Terraform останавливается на первом же обращении к нему, ничего не изменив.', 'The cloud rejects requests, and Terraform stops at its first call without changing anything.') : bi('Облако снова принимает запросы, и запуск проходит до конца.', 'The cloud accepts requests again, and the run goes to the end.');
+    }
     const a1 = last(next);
-    const line = fmt(bi('План: {a} создать, {c} изменить, {d} удалить; простой {t} с.', 'Plan: {a} to add, {c} to change, {d} to destroy; downtime {t} s.'), { a: a1.add ?? 0, c: a1.change ?? 0, d: a1.destroy ?? 0, t: a1.down ?? 0 });
-    void a0;
-    if (change.id === 'cbd') return b.cbd ? bi('create_before_destroy: новая ВМ раньше удаления старой — простой исчезает, если меняется образ.', 'create_before_destroy: the new VM before deleting the old one, so downtime disappears when the image changes.') : line;
-    if (change.id === 'refresh' && !b.refresh) return bi('Без refresh Terraform не спрашивает облако: дрейф не виден, и план может не совпасть с реальностью.', 'Without refresh Terraform does not ask the cloud: drift is invisible, and the plan may not match reality.');
+    const line = fb(bi('Теперь план создаёт {a}, изменяет {c} и удаляет {d} из описанных ресурсов, а сайт остаётся без сервера {t} с.', 'The plan now adds {a}, changes {c} and destroys {d} of the described resources, and the site is without a server for {t} s.'), { a: a1.add ?? 0, c: a1.change ?? 0, d: a1.destroy ?? 0, t: a1.down ?? 0 });
+    if (change.id === 'cbd') return b.cbd ? fb(bi('Новая машина создаётся раньше, чем удаляется старая, поэтому при смене образа простоя нет. {l}', 'The new machine is created before the old one is destroyed, so an image change causes no downtime. {l}'), { l: line }) : line;
+    if (change.id === 'refresh' && !b.refresh) return fb(bi('Без refresh Terraform не спрашивает облако, поэтому правку в консоли он не увидит, и план может разойтись с действительностью. {l}', 'Without refresh Terraform does not ask the cloud, so it will not see an edit in the console, and the plan may disagree with reality. {l}'), { l: line });
     return line;
   },
 });
 
 // ── E-ANS ──
 
-type AnsP = { hosts: number; task: string; run: number; check: boolean };
+type AnsP = { task: string; run: number };
 
-export function ansNumbers(p: AnsP, broken: ReadonlySet<string>): { changed: number; ok: number; failed: number; handlers: number } {
-  const live = p.hosts - (broken.has('no-python') && p.hosts >= 3 ? 1 : 0);
-  const failedTask = broken.has('task-fails') ? 1 : 0;
-  // Task 1 installs the package (changed on run 1), task 2 is the file task under study.
-  const pkgChanged = p.run === 1 ? live : 0;
-  const fileChanged = p.task === 'lineinfile' ? (p.run === 1 ? live : 0) : live;
-  const changed = pkgChanged + fileChanged - (failedTask ? 1 : 0);
-  const notified = p.check ? 0 : fileChanged - failedTask;
-  return { changed: p.check ? 0 : changed, ok: live * 3 - changed + Math.max(0, notified), failed: failedTask + (live < p.hosts ? 1 : 0), handlers: Math.max(0, notified) };
+const HOSTS = ['h1', 'h2', 'h3'] as const;
+const HOST_NAME: Record<string, string> = { h1: 'web1', h2: 'web2', h3: 'web3' };
+const edgeOf = (h: string) => `e${h.slice(1)}`;
+
+/** Totals of one run: changed tasks (handlers included), failed hosts, handler runs. */
+export function ansNumbers(p: AnsP, broken: ReadonlySet<string>): { changed: number; failed: number; handlers: number } {
+  const live = 3 - (broken.has('no-python') ? 1 : 0);
+  const fail2 = broken.has('task-fails') ? 1 : 0;
+  const perHost = p.run === 1 ? 3 : p.task === 'shell' ? 1 : 0;
+  const handlers = p.run === 1 ? live - fail2 : 0;
+  return { changed: live * perHost + handlers, failed: (live < 3 ? 1 : 0) + fail2, handlers };
 }
 
-const hostIds = ['h1', 'h2', 'h3'] as const;
+const TIMES_RU = ['ни разу', 'один раз', 'два раза', 'три раза'];
+const TIMES_EN = ['never', 'once', 'twice', 'three times'];
+const ANS_ALL = ['inv', 'ctl', 'h1', 'h2', 'h3', 'hq', 'e-inv', 'e1', 'e2', 'e3', 'e-notify'];
+const ANS_SYS = bi('Эту работу выполняет ansible-playbook на управляющей машине.', 'ansible-playbook on the control machine does this work.');
 
 export const ansModel = defineModel<AnsP>({
   id: 'iac.ansible-run',
   block: 'iac',
-  title: bi('Идемпотентный прогон Ansible', 'An idempotent Ansible run'),
-  summary: bi('Модуль сравнивает «как надо» с «как есть» и меняет только разницу. Правильный плейбук на втором прогоне ничего не меняет.', 'A module compares "how it should be" with "how it is" and changes only the difference. A correct playbook changes nothing on the second run.'),
+  title: bi('Как Ansible проходит плейбук по хостам', 'How Ansible walks a playbook across hosts'),
+  summary: bi(
+    'Вы запускаете `ansible-playbook site.yml` для группы web из трёх хостов. Плейбук ставит nginx, раскладывает его конфигурацию, пишет строку в `/etc/motd` и проверяет, что nginx запущен. Каждая задача сначала смотрит, как устроен хост сейчас, и меняет только разницу, поэтому правильный плейбук на втором прогоне ничего не меняет. Под схемой считается, сколько задач ответили changed, сколько хостов выбыло и сколько раз перезагрузился nginx.',
+    'You run `ansible-playbook site.yml` for the web group of three hosts. The playbook installs nginx, lays out its config, writes a line into `/etc/motd` and checks that nginx is running. Every task first looks at how the host is now and changes only the difference, so a correct playbook changes nothing on the second run. Under the diagram you see how many tasks answered changed, how many hosts dropped out and how many times nginx was reloaded.',
+  ),
+  intro: bi(
+    'Схема соберётся у вас на глазах: сейчас на ней только инвентарь и программа ansible-playbook. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый шаг соответствует одной задаче плейбука, а карточки на линиях показывают, что ответил модуль на каждом хосте.\n\nКогда пройдёте первый прогон, увеличьте в «Параметрах» номер прогона и посмотрите, что изменится.',
+    'The diagram builds itself as you go: now it shows only the inventory and the ansible-playbook program. Press “Start from the first step”, then go on with “Step forward” above the diagram. Every step is one task of the playbook, and the cards on the lines show what the module answered on each host.\n\nOnce you finish the first run, increase the run number in “Parameters” and see what changes.',
+  ),
+  legend: [
+    { mark: 'active', text: bi('участник, который работает сейчас', 'the participant working now') },
+    { mark: 'say', text: bi('что этот участник делает', 'what that participant does') },
+    { mark: 'token', text: bi('что ответил модуль: ok, changed или ошибку', 'what the module answered: ok, changed or an error') },
+    { mark: 'icon:file', text: bi('инвентарь со списком хостов', 'the inventory with the list of hosts') },
+    { mark: 'icon:terminal', text: bi('ansible-playbook на управляющей машине', 'ansible-playbook on the control machine') },
+    { mark: 'icon:server', text: bi('управляемый хост', 'a managed host') },
+    { mark: 'icon:process', text: bi('очередь handlers', 'the handler queue') },
+    { mark: 'warn', text: bi('задача на этом хосте что-то изменила (changed)', 'the task changed something on this host (changed)') },
+    { mark: 'ok', text: bi('хост уже был в нужном состоянии (ok)', 'the host was already in the desired state (ok)') },
+    { mark: 'err', text: bi('на этом хосте задача не выполнилась, и он выбыл из плея', 'the task failed on this host, and it left the play') },
+  ],
+  stopLabel: bi('Хост выбыл из плея', 'A host left the play'),
   concepts: ['iac.idempotence', 'iac.module', 'iac.handler'],
   diagram: {
     width: 960,
-    height: 440,
+    height: 420,
     nodes: [
-      { id: 'ctl', label: 'ansible-playbook', sub: 'site.yml', family: 'process', shape: 'box', x: 24, y: 168, w: 192, h: 72, card: card(bi('Управляющая машина: читает инвентарь и плейбук, по SSH отправляет на хосты модули и собирает ответы.', 'The control machine: reads the inventory and the playbook, sends modules to the hosts over SSH and collects the answers.'), bi('Вы или CI.', 'You or CI.'), 'ansible-playbook site.yml') },
-      { id: 'inv', label: 'inventory.ini', sub: '[web] web1 web2 web3', family: 'obj', shape: 'doc', x: 24, y: 40, w: 192, h: 64, card: card(bi('Инвентарь: какие хосты есть и в каких они группах.', 'The inventory: which hosts exist and which groups they are in.'), bi('Вы.', 'You.'), 'ansible-inventory --graph') },
-      { id: 'h1', label: 'web1', sub: '', family: 'node', shape: 'rack', x: 640, y: 24, w: 176, h: 80, card: card(bi('Управляемый хост. Агента нет: нужен только SSH и python3.', 'A managed host. No agent: only SSH and python3 are needed.'), bi('Облако или администратор.', 'The cloud or an administrator.'), 'ansible web1 -m ansible.builtin.setup') },
-      { id: 'h2', label: 'web2', sub: '', family: 'node', shape: 'rack', x: 640, y: 168, w: 176, h: 80, card: card(bi('Второй хост группы web: те же задачи, своё состояние.', 'The second host of the web group: the same tasks, its own state.'), bi('Облако или администратор.', 'The cloud or an administrator.'), 'ansible web2 -a "cat /etc/motd"') },
-      { id: 'h3', label: 'web3', sub: '', family: 'node', shape: 'rack', x: 640, y: 312, w: 176, h: 80, card: card(bi('Третий хост. Если на нём нет python3, модули не запустятся.', 'The third host. Without python3 modules cannot run on it.'), bi('Облако или администратор.', 'The cloud or an administrator.'), 'ansible web3 -m ansible.builtin.ping') },
-      { id: 'hq', label: bi('очередь handlers', 'handler queue'), sub: 'Restart nginx', family: 'flow', shape: 'buffer', x: 320, y: 320, w: 200, h: 64, card: card(bi('notify кладёт сюда handler, если задача что-то изменила. Handler выполняется один раз в конце плея.', 'notify puts a handler here if the task changed something. The handler runs once at the end of the play.'), bi('Задачи с notify.', 'Tasks with notify.'), 'grep -n notify site.yml', { page: 'ansible-doc/ansible.builtin.service', anchor: 'OPTIONS' }) },
+      {
+        id: 'inv',
+        label: 'inventory.ini',
+        icon: 'file',
+        sub: '[web] web1 web2 web3',
+        family: 'obj',
+        x: 24,
+        y: 40,
+        w: 220,
+        h: 64,
+        card: card(bi('Инвентарь, то есть файл со списком хостов и групп. Строка `hosts: web` в плейбуке выбирает из него хосты группы web.', 'The inventory, a file listing hosts and groups. The line `hosts: web` in the playbook picks the hosts of the web group from it.'), bi('Инвентарь пишете вы и храните его в репозитории рядом с плейбуком.', 'You write the inventory and keep it in the repository next to the playbook.'), 'ansible-inventory --graph'),
+      },
+      {
+        id: 'ctl',
+        label: 'ansible-playbook',
+        icon: 'terminal',
+        sub: 'site.yml',
+        family: 'process',
+        x: 24,
+        y: 190,
+        w: 220,
+        h: 64,
+        card: card(bi('Программа ansible-playbook работает на управляющей машине. Она читает инвентарь и плейбук, заходит на хосты по SSH, отправляет туда модули с параметрами задачи и собирает их ответы. На самих хостах никакой постоянной программы Ansible нет, нужны только SSH и python3.', 'The program on the control machine. It reads the inventory and the playbook, logs in to the hosts over SSH, sends them modules with the task arguments and collects their answers. No permanent Ansible program runs on the hosts; only SSH and python3 are needed.'), bi('Её запускаете вы в терминале или пайплайн CI.', 'You run it in a terminal, or a CI pipeline does.'), 'ansible-playbook site.yml'),
+      },
+      { id: 'h1', label: 'web1', icon: 'server', sub: '', family: 'node', x: 716, y: 24, w: 220, h: 64, card: card(bi('Хост web1 входит в группу web. Модуль, который сюда прислал Ansible, выполняется на этом хосте, сравнивает состояние хоста с описанием задачи и отвечает в формате JSON, изменил ли он что-нибудь.', 'The first host of the web group. The module Ansible sent here runs on this host, compares it with the task’s description and answers in JSON whether it changed anything.'), bi('Хост создало облако или администратор.', 'The cloud or an administrator created the host.'), 'ansible web1 -m ansible.builtin.setup') },
+      { id: 'h2', label: 'web2', icon: 'server', sub: '', family: 'node', x: 716, y: 168, w: 220, h: 64, card: card(bi('Хост web2 тоже входит в группу web. Задачи у него те же, что у web1, а состояние своё, поэтому и ответы модулей могут отличаться.', 'The second host of the web group. Its tasks are the same as web1’s, but its state is its own, so the modules’ answers may differ.'), bi('Хост создало облако или администратор.', 'The cloud or an administrator created the host.'), 'ansible web2 -a "cat /etc/motd"') },
+      { id: 'h3', label: 'web3', icon: 'server', sub: '', family: 'node', x: 716, y: 312, w: 220, h: 64, card: card(bi('Хост web3 тоже входит в группу web. Если на нём нет python3, модули Ansible запуститься на нём не могут.', 'The third host of the web group. If it has no python3, Ansible modules cannot run on it.'), bi('Хост создало облако или администратор.', 'The cloud or an administrator created the host.'), 'ansible web3 -m ansible.builtin.ping') },
+      {
+        id: 'hq',
+        label: bi('Очередь handlers', 'Handler queue'),
+        icon: 'process',
+        sub: 'Reload nginx',
+        family: 'flow',
+        shape: 'buffer',
+        x: 300,
+        y: 330,
+        w: 220,
+        h: 64,
+        card: card(bi('Сюда попадает handler, когда его уведомляет задача, которая что-то изменила. Ansible выполняет handler один раз в конце плея на каждом хосте, где пришло уведомление, сколько бы задач его ни уведомили.', 'A handler lands here when a task that changed something notifies it. Ansible runs the handler once at the end of the play on every host that got a notification, however many tasks notified it.'), bi('Уведомление отправляет задача со строкой `notify:`.', 'A task with a `notify:` line sends the notification.'), 'grep -n notify site.yml', { page: 'ansible-doc/ansible.builtin.service', anchor: 'OPTIONS' }),
+      },
     ],
     edges: [
-      { id: 'e-inv', from: 'inv', to: 'ctl', label: bi('кого настраивать', 'whom to configure'), card: card(bi('hosts: web в плее выбирает хосты группы.', 'hosts: web in the play selects the group’s hosts.'), bi('ansible-playbook.', 'ansible-playbook.')) },
-      { id: 'e1', from: 'ctl', to: 'h1', label: 'ssh · python3 AnsiballZ_lineinfile.py', labelAt: 0.55, card: card(bi('По SSH уходит модуль с параметрами задачи; он выполняется на хосте и отвечает JSON: {"changed": …}.', 'The module goes over SSH with the task arguments; it runs on the host and answers in JSON: {"changed": …}.'), bi('ansible-playbook.', 'ansible-playbook.')) },
-      { id: 'e2', from: 'ctl', to: 'h2', label: 'ssh', card: card(bi('Та же задача на втором хосте: задача проходит все хосты, прежде чем начнётся следующая.', 'The same task on the second host: a task goes through all hosts before the next one starts.'), bi('ansible-playbook.', 'ansible-playbook.')) },
-      { id: 'e3', from: 'ctl', to: 'h3', label: 'ssh', card: card(bi('И на третьем.', 'And on the third.'), bi('ansible-playbook.', 'ansible-playbook.')) },
-      { id: 'e-notify', from: 'ctl', to: 'hq', label: 'notify', card: card(bi('changed + notify → handler в очередь. ok → ничего.', 'changed + notify → the handler is queued. ok → nothing.'), bi('ansible-playbook.', 'ansible-playbook.')) },
+      { id: 'e-inv', from: 'inv', to: 'ctl', label: bi('список хостов', 'the host list'), card: card(bi('Строка `hosts: web` выбирает из инвентаря хосты группы web.', 'The line `hosts: web` picks the hosts of the web group from the inventory.'), ANS_SYS) },
+      { id: 'e1', from: 'ctl', to: 'h1', label: bi('SSH и модуль', 'SSH and a module'), labelAt: 0.45, card: card(bi('По SSH на хост уходит модуль с параметрами задачи. Модуль выполняется на хосте и отвечает в формате JSON, например `{"changed": true}`.', 'A module with the task arguments goes to the host over SSH. It runs on the host and answers in JSON, for example `{"changed": true}`.'), ANS_SYS) },
+      { id: 'e2', from: 'ctl', to: 'h2', label: bi('SSH и модуль', 'SSH and a module'), card: card(bi('Та же задача уходит на второй хост. Каждая задача проходит все хосты, прежде чем Ansible начнёт следующую.', 'The same task goes to the second host. Every task goes through all hosts before Ansible starts the next one.'), ANS_SYS) },
+      { id: 'e3', from: 'ctl', to: 'h3', label: bi('SSH и модуль', 'SSH and a module'), labelAt: 0.45, card: card(bi('Та же задача уходит на третий хост.', 'The same task goes to the third host.'), ANS_SYS) },
+      { id: 'e-notify', from: 'ctl', to: 'hq', labelAt: 0.8, label: bi('уведомление handler', 'notifying the handler'), card: card(bi('Задача со строкой notify ставит handler в очередь, только если она ответила changed. Если задача ответила ok, уведомления нет.', 'A task with a notify line queues the handler only if it answered changed. If the task answered ok, there is no notification.'), ANS_SYS) },
     ],
   },
   params: [
-    { id: 'hosts', label: bi('Хостов в группе', 'Hosts in the group'), kind: 'range', min: 1, max: 3, step: 1, default: 3, near: 'inv' },
     {
       id: 'task',
-      label: bi('Как добавить строку в /etc/motd', 'How to add a line to /etc/motd'),
+      label: bi('Как задача пишет строку «Managed by Ansible» в /etc/motd', 'How the task writes the line “Managed by Ansible” into /etc/motd'),
       kind: 'choice',
       default: 'lineinfile',
       options: [
-        { id: 'lineinfile', label: bi('ansible.builtin.lineinfile', 'ansible.builtin.lineinfile') },
-        { id: 'shell', label: bi('shell: echo … >> /etc/motd', 'shell: echo … >> /etc/motd') },
+        { id: 'lineinfile', label: bi('модуль lineinfile, который следит, чтобы строка была в файле', 'the lineinfile module, which makes sure the line is in the file') },
+        { id: 'shell', label: bi('модуль shell с командой echo … >> /etc/motd', 'the shell module with the command echo … >> /etc/motd') },
       ],
-      near: 'e1',
-      predict: { prompt: bi('Строку добавляет shell: echo >>. Что будет на втором прогоне?', 'The line is added with shell: echo >>. What happens on the second run?'), options: [{ id: 'changed', text: bi('Снова changed: строка добавится ещё раз', 'changed again: the line is added once more') }, { id: 'ok', text: bi('ok: строка уже есть', 'ok: the line is already there') }], resolve: (_p, n) => (n.some((s) => s.id === 'run' && JSON.stringify(s.states ?? {}).includes('warn')) ? 'changed' : 'ok') },
+      near: 'e2',
+      group: bi('Что написано в плейбуке', 'What the playbook says'),
+      predict: {
+        prompt: bi('Строку в /etc/motd теперь дописывает задача shell с командой echo >>. Что ответит эта задача на втором и третьем прогоне?', 'The line in /etc/motd is now appended by a shell task with echo >>. What will this task answer on the second and third run?'),
+        options: [
+          { id: 'changed', text: bi('changed на каждом прогоне, и строк в файле с каждым разом становится больше', 'changed on every run, and the file gets one more line each time') },
+          { id: 'ok', text: bi('ok, потому что строка уже есть в файле', 'ok, because the line is already in the file') },
+        ],
+        resolve: (_p, n) => (n.some((s) => s.id === 'motd' && JSON.stringify(s.tokens ?? []).includes('changed')) ? 'changed' : 'ok'),
+      },
     },
-    { id: 'run', label: bi('Номер прогона', 'Run number'), kind: 'range', min: 1, max: 3, step: 1, default: 1, near: 'ctl', predict: { prompt: bi('Запускаем тот же плейбук второй раз. Сколько задач будет changed?', 'We run the same playbook a second time. How many tasks are changed?'), options: [{ id: 'zero', text: bi('Ни одной', 'None') }, { id: 'same', text: bi('Столько же, сколько в первый раз', 'As many as the first time') }], resolve: (_p, n) => ((last(n).changed ?? 0) === 0 ? 'zero' : 'same') } },
-    { id: 'check', label: bi('--check', '--check'), kind: 'toggle', default: false, near: 'ctl' },
+    {
+      id: 'run',
+      label: bi('Который раз запускается плейбук', 'Which run of the playbook this is'),
+      kind: 'range',
+      min: 1,
+      max: 3,
+      step: 1,
+      default: 1,
+      near: 'ctl',
+      group: bi('Как запускают плейбук', 'How the playbook is run'),
+      predict: {
+        prompt: bi('Вы запускаете тот же плейбук ещё раз, ничего в нём и на хостах не меняя. Сколько задач ответят changed?', 'You run the same playbook again, changing nothing in it or on the hosts. How many tasks will answer changed?'),
+        options: [
+          { id: 'zero', text: bi('Ни одной, потому что хосты уже настроены и модулям нечего менять', 'None, because the hosts are already configured and the modules have nothing to change') },
+          { id: 'some', text: bi('Меньше, чем в первый раз, но не ноль, потому что одна задача снова что-то меняет', 'Fewer than the first time, but not zero, because one task changes something again') },
+          { id: 'same', text: bi('Столько же, сколько в первый раз', 'As many as the first time') },
+        ],
+        resolve: (_p, n) => {
+          const c = last(n).changed ?? 0;
+          return c === 0 ? 'zero' : n.some((s) => s.id === 'apt' && JSON.stringify(s.tokens ?? []).includes('changed')) ? 'same' : 'some';
+        },
+      },
+    },
   ],
   breaks: [
-    { id: 'no-python', label: bi('На web3 нет python3', 'web3 has no python3'), remove: ['e3'], predict: { prompt: bi('На web3 нет python3. Что будет с прогоном?', 'web3 has no python3. What happens to the run?'), options: [{ id: 'one', text: bi('web3 упадёт, web1 и web2 настроятся', 'web3 fails, web1 and web2 get configured') }, { id: 'all', text: bi('Упадёт весь прогон', 'The whole run fails') }], resolve: () => 'one' } },
-    { id: 'task-fails', label: bi('Задача на web2 упала после notify', 'A task failed on web2 after notify'), remove: ['e2'], predict: { prompt: bi('На web2 задача после notify упала. Выполнится ли handler на web2?', 'On web2 a task after notify failed. Will the handler run on web2?'), options: [{ id: 'no', text: bi('Нет: упавший хост выбывает до handlers', 'No: a failed host drops out before handlers') }, { id: 'yes', text: bi('Да, handler в очереди', 'Yes, the handler is queued') }], resolve: () => 'no' } },
+    {
+      id: 'no-python',
+      label: bi('На хосте web3 нет python3', 'Host web3 has no python3'),
+      remove: ['e3'],
+      boundary: 'process',
+      predict: {
+        prompt: bi('На хосте web3 нет python3, без которого модули Ansible не запускаются. Что будет с прогоном?', 'Host web3 has no python3, without which Ansible modules do not run. What happens to the run?'),
+        options: [
+          { id: 'one', text: bi('Хост web3 выбудет из плея, а web1 и web2 Ansible настроит до конца', 'Host web3 leaves the play, and Ansible configures web1 and web2 to the end') },
+          { id: 'all', text: bi('Ansible остановит весь прогон на всех хостах', 'Ansible stops the whole run on every host') },
+        ],
+        resolve: () => 'one',
+      },
+    },
+    {
+      id: 'task-fails',
+      label: bi('На хосте web2 nginx не запускается, потому что порт 80 занят', 'On web2 nginx does not start: port 80 is taken'),
+      remove: ['e2'],
+      boundary: 'process',
+      predict: {
+        prompt: bi('Задача «nginx is running» на хосте web2 падает, потому что порт 80 там занят другой программой. Перезагрузит ли Ansible nginx на web2 в конце плея?', 'The task “nginx is running” fails on web2, because another program holds port 80 there. Will Ansible reload nginx on web2 at the end of the play?'),
+        options: [
+          { id: 'no', text: bi('Нет, хост с упавшей задачей выбывает из плея и до handlers не доходит', 'No, a host with a failed task leaves the play and does not reach the handlers') },
+          { id: 'yes', text: bi('Да, handler уже стоит в очереди и выполнится на всех хостах', 'Yes, the handler is already queued and runs on every host') },
+        ],
+        resolve: () => 'no',
+      },
+    },
   ],
   metrics: [
-    { id: 'changed', label: bi('changed', 'changed') },
-    { id: 'ok', label: bi('ok', 'ok') },
-    { id: 'failed', label: bi('failed', 'failed') },
-    { id: 'handlers', label: bi('запусков handler', 'handler runs') },
+    { id: 'changed', label: bi('задач ответили changed', 'tasks answered changed') },
+    { id: 'failed', label: bi('хостов выбыло', 'hosts dropped out') },
+    { id: 'handlers', label: bi('перезагрузок nginx', 'nginx reloads') },
   ],
   run(p, broken) {
     const n = ansNumbers(p, broken);
-    const hosts = hostIds.slice(0, p.hosts);
-    const off = Object.fromEntries(hostIds.slice(p.hosts).map((h) => [h, 'off' as const]));
-    const noPy = broken.has('no-python') && p.hosts >= 3;
-    const live = hosts.filter((h) => !(noPy && h === 'h3'));
+    const noPy = broken.has('no-python');
+    const fail2 = broken.has('task-fails');
+    const first = p.run === 1;
+    const live = HOSTS.filter((h) => !(noPy && h === 'h3'));
+    const alive = live.filter((h) => !(fail2 && h === 'h2'));
+    const each = (hs: readonly string[], label: string) => hs.map((h) => ({ edge: edgeOf(h), label }));
+    const st = (hs: readonly string[], s: ElementState) => Object.fromEntries(hs.map((h) => [h, s]));
+    const motdLines = p.task === 'shell' ? p.run : 1;
     const steps: Step[] = [
-      { id: 'inv', label: 'inventory', caption: fmt(bi('Ansible читает инвентарь: в группе web {n} хост(а). Агентов нет — только SSH.', 'Ansible reads the inventory: the web group has {n} host(s). No agents, only SSH.'), { n: p.hosts }), focus: ['inv', 'e-inv', 'ctl'], tokens: [{ edge: 'e-inv' }], states: { ctl: 'on', ...off } },
-      { id: 'facts', label: bi('факты', 'facts'), caption: bi('Gathering Facts: на каждый хост уходит модуль setup и возвращает семейство ОС, адреса, память.', 'Gathering Facts: the setup module goes to every host and returns the OS family, addresses, memory.'), focus: [...hosts.map((h) => `e${h.slice(1)}`)], tokens: hosts.map((h) => ({ edge: `e${h.slice(1)}`, label: 'setup' })), states: Object.fromEntries(live.map((h) => [h, 'on' as const])) },
+      {
+        id: 'inv',
+        label: bi('инвентарь', 'inventory'),
+        caption: bi('ansible-playbook читает инвентарь. Плей начинается строкой `hosts: web`, поэтому настраивать предстоит три хоста группы web: web1, web2 и web3.', 'ansible-playbook reads the inventory. The play starts with `hosts: web`, so three hosts of the web group are to be configured: web1, web2 and web3.'),
+        focus: ['e-inv', 'ctl'],
+        tokens: [{ edge: 'e-inv', label: 'web1, web2, web3' }],
+        say: { ctl: bi('ansible-playbook находит в инвентаре группу web и в ней три хоста.', 'ansible-playbook finds the web group in the inventory, with three hosts in it.') },
+        states: hiddenExcept(ANS_ALL, 'inv', 'ctl', 'e-inv'),
+      },
+      {
+        id: 'facts',
+        label: bi('факты', 'facts'),
+        caption: bi('Перед первой задачей Ansible заходит на каждый хост по SSH и запускает там модуль setup. Модуль собирает факты о хосте: семейство системы, адреса, объём памяти, и эти факты потом можно использовать в условиях и шаблонах.', 'Before the first task Ansible logs in to every host over SSH and runs the setup module there. The module gathers facts about the host: the system family, the addresses, the amount of memory, and these facts can later be used in conditions and templates.'),
+        focus: ['ctl', 'e1', 'e2', 'e3'],
+        reveal: ['h1', 'h2', 'h3', 'e1', 'e2', 'e3'],
+        tokens: each(HOSTS, 'setup'),
+        say: { ctl: bi('Ansible отправляет на каждый хост модуль setup, чтобы узнать, что это за машина.', 'Ansible sends the setup module to every host to learn what kind of machine it is.') },
+        states: st(HOSTS, 'on'),
+      },
     ];
-    if (noPy) steps.push({ id: 'nopy', label: 'web3', caption: bi('На web3 модуль не запускается: python3 нет. Хост выбывает из плея, остальные продолжают.', 'On web3 the module does not start: there is no python3. The host drops out of the play; the others go on.'), focus: ['h3', 'e3'], states: { h3: 'err', e3: 'err' }, broken: { at: 'h3', message: 'fatal: [web3]: FAILED! => {"changed": false, "module_stderr": "/bin/sh: 1: /usr/bin/python3: not found\\n", "msg": "The module failed to execute correctly, you probably need to set the interpreter."}', caption: bi('Ansible без агента, но не без python — кроме модуля raw.', 'Ansible has no agent, but needs python, except for the raw module.') } });
+    if (noPy)
+      steps.push({
+        id: 'nopy',
+        label: 'web3',
+        caption: bi('На хосте web3 модуль setup не запускается, потому что там нет python3. Ansible отмечает хост как сбойный и исключает его из плея, а на web1 и web2 продолжает работу.', 'On web3 the setup module does not start, because there is no python3. Ansible marks the host as failed and drops it from the play, while it goes on with web1 and web2.'),
+        focus: ['e3', 'h3'],
+        tokens: [{ edge: 'e3', reverse: true, label: 'FAILED' }],
+        say: { h3: bi('На web3 нет программы python3, поэтому модуль, который прислал Ansible, здесь запустить нечем.', 'web3 has no python3 program, so there is nothing to run the module Ansible sent.') },
+        states: { h3: 'err', e3: 'err' },
+        broken: { at: 'h3', message: 'fatal: [web3]: FAILED! => {"changed": false, "module_stderr": "/bin/sh: 1: /usr/bin/python3: not found\\n", "msg": "The module failed to execute correctly, you probably need to set the interpreter."}', caption: bi('Ansible не ставит на хосты постоянную программу, но модули пишет на Python, поэтому без python3 на хосте работает только модуль raw. Такую ошибку узнают по строке «/usr/bin/python3: not found».', 'Ansible installs no permanent program on the hosts, but its modules are written in Python, so without python3 only the raw module works. You recognise this error by the line “/usr/bin/python3: not found”.') },
+      });
     steps.push({
-      id: 'pkg',
+      id: 'apt',
       label: 'apt',
-      caption: p.run === 1 ? bi('Задача «nginx установлен»: пакета нет — apt ставит, ответ changed.', 'The task "nginx is installed": the package is missing, apt installs it, the answer is changed.') : bi('Задача «nginx установлен»: пакет уже есть — ответ ok, ничего не делается.', 'The task "nginx is installed": the package is already there, the answer is ok, nothing is done.'),
-      focus: live.map((h) => `e${h.slice(1)}`),
-      tokens: live.map((h) => ({ edge: `e${h.slice(1)}`, label: p.check ? 'check' : p.run === 1 ? 'changed' : 'ok' })),
-      states: Object.fromEntries(live.map((h) => [h, p.run === 1 ? ('warn' as const) : ('ok' as const)])),
-      values: Object.fromEntries(live.map((h) => [h, p.check ? 'nginx: would install' : 'nginx 1.26'])),
+      caption: first
+        ? bi('Задача «nginx is installed» отправляет на хосты модуль apt. Модуль видит, что пакета nginx нет, ставит его и отвечает changed.', 'The task “nginx is installed” sends the apt module to the hosts. The module sees that the nginx package is missing, installs it and answers changed.')
+        : bi('Задача «nginx is installed» отправляет на хосты модуль apt. Модуль видит, что пакет nginx уже стоит, ничего не делает и отвечает ok.', 'The task “nginx is installed” sends the apt module to the hosts. The module sees that nginx is already installed, does nothing and answers ok.'),
+      focus: ['ctl', ...live.map(edgeOf)],
+      tokens: each(live, first ? 'changed' : 'ok'),
+      say: { ctl: first ? bi('Модуль apt на каждом хосте не находит пакета nginx и устанавливает его.', 'On every host the apt module finds no nginx package and installs it.') : bi('Модуль apt на каждом хосте находит пакет nginx и ничего не трогает.', 'On every host the apt module finds the nginx package and touches nothing.') },
+      states: st(live, first ? 'warn' : 'ok'),
+      values: Object.fromEntries(live.map((h) => [h, 'nginx 1.26'])),
     });
-    const fileChanges = p.task === 'shell' || p.run === 1;
     steps.push({
-      id: 'run',
+      id: 'template',
+      label: 'template',
+      caption: first
+        ? bi('Задача «The site config is in place» собирает файл конфигурации nginx из шаблона и сравнивает его с файлом на хосте. Файла ещё нет, поэтому модуль template записывает его и отвечает changed.', 'The task “The site config is in place” renders the nginx config from a template and compares it with the file on the host. There is no file yet, so the template module writes it and answers changed.')
+        : bi('Задача «The site config is in place» собирает файл конфигурации из шаблона и видит, что на хосте лежит точно такой же. Модуль template ничего не записывает и отвечает ok.', 'The task “The site config is in place” renders the config from the template and sees that the host already has the very same file. The template module writes nothing and answers ok.'),
+      focus: ['ctl', ...live.map(edgeOf)],
+      tokens: each(live, first ? 'changed' : 'ok'),
+      say: { ctl: first ? bi('Модуль template записывает на каждый хост файл cafe.conf, потому что его там ещё нет.', 'The template module writes cafe.conf to every host, because it is not there yet.') : bi('Модуль template сравнивает готовый файл с тем, что лежит на хосте, и не находит разницы.', 'The template module compares the rendered file with the one on the host and finds no difference.') },
+      states: st(live, first ? 'warn' : 'ok'),
+      values: Object.fromEntries(live.map((h) => [h, 'cafe.conf'])),
+    });
+    if (first)
+      steps.push({
+        id: 'notify',
+        label: 'notify',
+        caption: bi('Задача с шаблоном ответила changed и в строке notify называет handler «Reload nginx». Ansible ставит его в очередь, но пока не выполняет, потому что handler срабатывает один раз в конце плея.', 'The template task answered changed, and its notify line names the handler “Reload nginx”. Ansible queues it but does not run it yet, because the handler fires once at the end of the play.'),
+        focus: ['e-notify', 'hq'],
+        reveal: ['hq', 'e-notify'],
+        tokens: [{ edge: 'e-notify', label: 'Reload nginx' }],
+        say: { hq: fb(bi('В очередь встаёт handler «Reload nginx» для хостов {h}, где конфигурация изменилась.', 'The handler “Reload nginx” is queued for {h}, where the config changed.'), { h: live.map((h) => HOST_NAME[h]).join(', ') }) },
+        fill: { hq: live.length / 3 },
+        values: { hq: `Reload nginx × ${live.length}` },
+      });
+    const motdChanged = first || p.task === 'shell';
+    steps.push({
+      id: 'motd',
       label: p.task === 'shell' ? 'shell' : 'lineinfile',
       caption:
         p.task === 'shell'
-          ? fmt(bi('shell: echo >> не знает, каким должен быть файл: он просто дописывает строку. Прогон {r} — строк уже {r}, ответ снова changed.', 'shell: echo >> does not know what the file should be like: it just appends a line. Run {r}: there are {r} lines now, and the answer is changed again.'), { r: p.run })
-          : p.run === 1
-            ? bi('lineinfile сравнивает: строки нет — добавляет, changed.', 'lineinfile compares: the line is missing, so it adds it, changed.')
-            : bi('lineinfile сравнивает: строка уже есть — ok. Второй прогон ничего не меняет: это и есть идемпотентность.', 'lineinfile compares: the line is already there, ok. The second run changes nothing: that is idempotence.'),
-      focus: live.map((h) => `e${h.slice(1)}`),
-      tokens: live.map((h) => ({ edge: `e${h.slice(1)}`, label: fileChanges && !p.check ? 'changed' : 'ok' })),
-      states: Object.fromEntries(live.map((h) => [h, broken.has('task-fails') && h === 'h2' ? ('err' as const) : fileChanges ? ('warn' as const) : ('ok' as const)])),
-      values: Object.fromEntries(live.map((h) => [h, `/etc/motd: ${p.task === 'shell' ? p.run : 1} line(s)`])),
+          ? fb(bi('Задача shell выполняет команду `echo "Managed by Ansible" >> /etc/motd`. Команда не знает, каким должен быть файл, она лишь дописывает строку в конец, поэтому задача на каждом прогоне отвечает changed, и после прогона номер {r} в файле {r} одинаковых строк.', 'The shell task runs `echo "Managed by Ansible" >> /etc/motd`. The command does not know what the file should be like, it only appends a line, so the task answers changed on every run, and after run {r} the file holds {r} identical lines.'), { r: p.run })
+          : first
+            ? bi('Задача lineinfile проверяет, есть ли в /etc/motd строка «Managed by Ansible». Строки нет, поэтому модуль добавляет её и отвечает changed.', 'The lineinfile task checks whether /etc/motd has the line “Managed by Ansible”. It does not, so the module adds it and answers changed.')
+            : bi('Задача lineinfile находит строку «Managed by Ansible» в /etc/motd и ничего не меняет. Повторный прогон не изменил этот файл, и это свойство задачи называется идемпотентностью.', 'The lineinfile task finds the line “Managed by Ansible” in /etc/motd and changes nothing. The repeated run left the file alone, and this property of a task is called idempotence.'),
+      focus: ['ctl', ...live.map(edgeOf)],
+      tokens: each(live, motdChanged ? 'changed' : 'ok'),
+      say: { ctl: p.task === 'shell' ? bi('Модуль shell выполняет команду echo и дописывает в /etc/motd ещё одну строку, не проверяя, есть ли она уже.', 'The shell module runs echo and appends one more line to /etc/motd without checking whether it is already there.') : motdChanged ? bi('Модуль lineinfile не находит нужной строки в /etc/motd и добавляет её.', 'The lineinfile module does not find the line in /etc/motd and adds it.') : bi('Модуль lineinfile находит нужную строку в /etc/motd и оставляет файл как есть.', 'The lineinfile module finds the line in /etc/motd and leaves the file as it is.') },
+      states: st(live, motdChanged ? 'warn' : 'ok'),
+      values: Object.fromEntries(live.map((h) => [h, `/etc/motd: ${motdLines} line(s)`])),
     });
-    if (broken.has('task-fails') && hosts.includes('h2')) steps.push({ id: 'fail2', label: 'web2 ✗', caption: bi('На web2 следующая задача упала. Хост выбывает из плея — до своих handlers он не дойдёт.', 'On web2 the next task failed. The host drops out of the play and will not reach its handlers.'), focus: ['h2'], states: { h2: 'err', e2: 'err' }, broken: { at: 'h2', message: 'fatal: [web2]: FAILED! => {"changed": false, "msg": "Could not find the requested service nginxx: host"}', caption: bi('с --force-handlers handler выполнился бы и на упавшем хосте.', 'with --force-handlers the handler would run on the failed host too.') } });
+    steps.push({
+      id: 'service',
+      label: 'service',
+      caption: fail2
+        ? bi('Задача «nginx is running» проверяет, что служба nginx запущена. На web1 и web3 она работает, а на web2 не запускается, потому что порт 80 там занят другой программой. Ansible исключает web2 из плея.', 'The task “nginx is running” checks that the nginx service is running. On web1 and web3 it runs, but on web2 it does not start, because another program holds port 80 there. Ansible drops web2 from the play.')
+        : bi('Задача «nginx is running» проверяет, что служба nginx запущена. Она уже работает, поэтому модуль service ничего не делает и отвечает ok.', 'The task “nginx is running” checks that the nginx service is running. It already is, so the service module does nothing and answers ok.'),
+      focus: fail2 ? ['e2', 'h2'] : ['ctl', ...live.map(edgeOf)],
+      tokens: live.map((h) => ({ edge: edgeOf(h), label: fail2 && h === 'h2' ? 'FAILED' : 'ok' })),
+      say: fail2 ? { h2: bi('На web2 служба nginx не запускается, потому что порт 80 уже занят, и задача падает.', 'On web2 the nginx service does not start, because port 80 is taken, and the task fails.') } : { ctl: bi('Модуль service на каждом хосте видит, что nginx работает, и ничего не трогает.', 'On every host the service module sees that nginx is running and touches nothing.') },
+      states: { ...st(alive, 'ok'), ...(fail2 ? { h2: 'err' as ElementState, e2: 'err' as ElementState } : {}) },
+      ...(fail2
+        ? { broken: { at: 'h2', message: 'fatal: [web2]: FAILED! => {"changed": false, "msg": "Unable to start service nginx: Job for nginx.service failed because the control process exited with error code."}', caption: bi('Хост, на котором упала задача, выбывает из плея, и handlers на нём не выполняются, хотя конфигурация уже изменилась. Ключ --force-handlers заставляет Ansible выполнить уведомлённые handlers и на таком хосте.', 'A host where a task failed leaves the play, and handlers do not run on it, although its config already changed. The --force-handlers key makes Ansible run notified handlers on such a host too.') } }
+        : {}),
+    });
     steps.push(
       n.handlers > 0
-        ? { id: 'handler', label: 'handler', caption: fmt(bi('В конце плея handler «Restart nginx» выполняется один раз на каждом хосте, где задача была changed: {n} раз(а).', 'At the end of the play the "Restart nginx" handler runs once on every host where the task was changed: {n} time(s).'), { n: n.handlers }), focus: ['e-notify', 'hq'], tokens: [{ edge: 'e-notify', label: 'notify' }], fill: { hq: Math.min(1, n.handlers / 3) }, values: { hq: `${n.handlers} × Restart nginx` } }
-        : { id: 'handler', label: bi('нет handler', 'no handler'), caption: p.check ? bi('В --check модули только сообщают, что изменили бы. Хосты не тронуты, handler не запускается.', 'In --check modules only report what they would change. The hosts are untouched; no handler runs.') : bi('Ничего не изменилось — некому уведомлять handler: nginx не перезапускается зря.', 'Nothing changed, so nothing notifies the handler: nginx is not restarted for nothing.'), focus: ['hq'], fill: { hq: 0 } },
+        ? {
+            id: 'handler',
+            label: 'handler',
+            caption: fb(bi('В конце плея Ansible выполняет handler «Reload nginx» по одному разу на каждом хосте, где конфигурация изменилась и задачи прошли: на {h}. nginx перечитывает новую конфигурацию.{x}', 'At the end of the play Ansible runs the handler “Reload nginx” once on every host whose config changed and whose tasks passed: on {h}. nginx rereads the new config.{x}'), { h: alive.map((h) => HOST_NAME[h]).join(', '), x: fail2 ? bi(' На web2 nginx новую конфигурацию не получит, потому что хост выбыл из плея раньше.', ' On web2 nginx does not get the new config, because the host left the play earlier.') : '' }),
+            focus: ['hq', ...alive.map(edgeOf)],
+            reveal: ['hq', 'e-notify'],
+            tokens: each(alive, 'reload'),
+            say: { hq: fb(bi('Ansible выполняет handler «Reload nginx» {n}, по одному разу на каждом хосте, и очередь пустеет.', 'Ansible runs the handler “Reload nginx” {e}, once on every host, and the queue empties.'), { n: TIMES_RU[n.handlers] ?? String(n.handlers), e: TIMES_EN[n.handlers] ?? String(n.handlers) }) },
+            fill: { hq: 0 },
+            values: { hq: `${n.handlers} × Reload nginx` },
+          }
+        : {
+            id: 'handler',
+            label: bi('без handler', 'no handler'),
+            caption: bi('Ни одна задача не уведомила handler, потому что конфигурация nginx не менялась. Поэтому nginx не перезагружается без нужды.', 'No task notified the handler, because the nginx config did not change. So nginx is not reloaded for nothing.'),
+            focus: ['hq'],
+            reveal: ['hq', 'e-notify'],
+            say: { hq: bi('Очередь handlers пуста, потому что уведомлений не было, и перезагружать nginx не нужно.', 'The handler queue is empty: there were no notifications, and nginx need not be reloaded.') },
+            fill: { hq: 0 },
+            values: { hq: '0 × Reload nginx' },
+          },
     );
-    steps.push({ id: 'recap', label: 'RECAP', caption: fmt(bi('PLAY RECAP: changed={c}, failed={f}. Плейбук описывает состояние, а не действия, если на повторном прогоне changed=0.', 'PLAY RECAP: changed={c}, failed={f}. A playbook describes state, not actions, if a repeated run shows changed=0.'), { c: n.changed, f: n.failed }), focus: ['ctl'], states: { ctl: n.failed ? 'warn' : 'ok' }, metrics: { changed: n.changed, ok: n.ok, failed: n.failed, handlers: n.handlers } });
+    steps.push({
+      id: 'recap',
+      label: 'RECAP',
+      caption:
+        n.changed === 0
+          ? fb(bi('PLAY RECAP показывает changed={c} и failed={f}. Повторный прогон ничего не изменил, значит, плейбук описывает состояние хостов, а не действия, и его можно запускать сколько угодно раз.', 'PLAY RECAP shows changed={c} and failed={f}. The repeated run changed nothing, so the playbook describes the state of the hosts rather than actions, and it can be run any number of times.'), { c: n.changed, f: n.failed })
+          : first
+            ? fb(bi('PLAY RECAP показывает changed={c} и failed={f}. На первом прогоне так и должно быть, ведь хосты были пустыми. Настоящей проверкой плейбука служит второй прогон, на котором changed должно стать нулём.', 'PLAY RECAP shows changed={c} and failed={f}. On the first run that is as it should be: the hosts were empty. The real test of a playbook is the second run, where changed must drop to zero.'), { c: n.changed, f: n.failed })
+            : fb(bi('PLAY RECAP показывает changed={c} и failed={f}. Повторный прогон снова что-то изменил, значит, одна из задач описывает действие, а не состояние, и её нужно переписать.', 'PLAY RECAP shows changed={c} and failed={f}. The repeated run changed something again, so one of the tasks describes an action rather than a state and must be rewritten.'), { c: n.changed, f: n.failed }),
+      focus: ['ctl'],
+      say: { ctl: fb(bi('ansible-playbook подводит итог прогона и печатает для каждого хоста, сколько задач ответили ok, changed и failed.', 'ansible-playbook sums up the run and prints for every host how many tasks answered ok, changed and failed.'), { c: n.changed, f: n.failed }) },
+      states: { ctl: n.failed ? 'warn' : 'ok' },
+      metrics: { changed: n.changed, failed: n.failed, handlers: n.handlers },
+    });
     return steps;
   },
   explainDelta(prev, next, change, _a, b): Bi {
-    if (change.kind === 'break') return change.on ? (change.id === 'no-python' ? bi('Без python модули не запускаются: хост выбывает, остальные продолжают.', 'Without python modules cannot run: the host drops out, the others go on.') : bi('Упавший хост выбывает из плея до handlers.', 'A failed host leaves the play before the handlers.')) : bi('Поломка убрана.', 'The break is removed.');
+    if (change.kind === 'break') {
+      if (change.id === 'no-python') return change.on ? bi('Без python3 модули на web3 не запускаются, поэтому этот хост выбывает из плея, а остальные Ansible настраивает до конца.', 'Without python3 the modules cannot run on web3, so this host leaves the play, and Ansible configures the others to the end.') : bi('На web3 снова есть python3, и он проходит плей вместе с остальными хостами.', 'web3 has python3 again and goes through the play with the other hosts.');
+      return change.on ? bi('Хост web2 выбывает из плея на упавшей задаче и не доходит до handlers, поэтому nginx на нём не перезагружается.', 'web2 leaves the play at the failed task and does not reach the handlers, so nginx is not reloaded there.') : bi('На web2 порт 80 освободился, и хост снова проходит плей до конца.', 'Port 80 on web2 is free again, and the host goes through the play to the end.');
+    }
     const c0 = last(prev).changed ?? 0;
     const c1 = last(next).changed ?? 0;
-    if (change.id === 'check') return b.check ? bi('--check: модули предсказывают изменения, ничего не меняя; command и shell пропускаются.', '--check: modules predict changes without making them; command and shell are skipped.') : bi('Обычный прогон: изменения применяются.', 'A normal run: changes are applied.');
-    if (change.id === 'task') return b.task === 'shell' ? bi('shell всегда changed: он выполняет действие, а не описывает состояние.', 'shell is always changed: it performs an action instead of describing a state.') : bi('lineinfile сначала смотрит, есть ли строка: changed только когда её нет.', 'lineinfile first checks whether the line exists: changed only when it is missing.');
-    return fmt(bi('changed: {a} → {b}.', 'changed: {a} → {b}.'), { a: c0, b: c1 });
+    if (change.id === 'task') return b.task === 'shell' ? fb(bi('Задача shell выполняет действие, а не описывает состояние, поэтому она отвечает changed на каждом прогоне. Число изменённых задач изменилось с {a} на {b}.', 'The shell task performs an action instead of describing a state, so it answers changed on every run. The number of changed tasks went from {a} to {b}.'), { a: c0, b: c1 }) : fb(bi('Модуль lineinfile сначала проверяет, есть ли строка, и меняет файл, только если её нет. Число изменённых задач изменилось с {a} на {b}.', 'The lineinfile module first checks whether the line exists and changes the file only if it does not. The number of changed tasks went from {a} to {b}.'), { a: c0, b: c1 });
+    return fb(bi('Число задач, которые ответили changed, изменилось с {a} на {b}.', 'The number of tasks that answered changed went from {a} to {b}.'), { a: c0, b: c1 });
   },
 });
