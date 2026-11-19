@@ -69,7 +69,7 @@ export const execModel = defineModel<P>({
   concepts: ['linux.fork-exec', 'linux.path-var', 'linux.exit-code'],
   diagram: {
     width: 960,
-    height: 480,
+    height: 520,
     nodes: [
       {
         id: 'line',
@@ -79,7 +79,7 @@ export const execModel = defineModel<P>({
         family: 'user',
         x: 24,
         y: 24,
-        w: 300,
+        w: 280,
         h: 64,
         card: {
           what: bi('Строка, которую вы напечатали в терминале. Оболочка делит её на слова по пробелам: первое слово становится именем команды, остальные становятся аргументами, а перенаправление `> list.txt` оболочка забирает себе, и программа его даже не увидит.', 'The line you typed in the terminal. The shell splits it into words at the spaces: the first word becomes the command name, the others become arguments, and the redirection `> list.txt` the shell keeps for itself, so the program never sees it.'),
@@ -96,7 +96,7 @@ export const execModel = defineModel<P>({
         sub: 'PID 2210',
         family: 'process',
         x: 24,
-        y: 170,
+        y: 200,
         w: 220,
         h: 64,
         card: {
@@ -113,9 +113,9 @@ export const execModel = defineModel<P>({
         work: 'spin',
         sub: '/usr/local/bin:/usr/bin:/bin',
         family: 'neutral',
-        x: 380,
+        x: 420,
         y: 24,
-        w: 330,
+        w: 290,
         h: 64,
         card: {
           what: bi('Переменная окружения, в которой через двоеточие перечислены каталоги с программами. Оболочка проверяет их по очереди и запускает первую найденную программу с нужным именем. Текущего каталога в этом списке нет, поэтому программу из него запускают как `./prog`.', 'An environment variable that lists program directories separated by colons. The shell checks them in order and runs the first program with the right name it finds. The current directory is not on the list, which is why a program from it is started as `./prog`.'),
@@ -132,7 +132,7 @@ export const execModel = defineModel<P>({
         sub: 'PID 2231',
         family: 'process',
         x: 380,
-        y: 170,
+        y: 200,
         w: 240,
         h: 64,
         card: {
@@ -149,7 +149,7 @@ export const execModel = defineModel<P>({
         sub: '0 B',
         family: 'store',
         x: 740,
-        y: 170,
+        y: 200,
         w: 196,
         h: 64,
         card: {
@@ -180,7 +180,7 @@ export const execModel = defineModel<P>({
         family: 'kernel',
         shape: 'bar',
         x: 16,
-        y: 380,
+        y: 410,
         w: 928,
         h: 84,
         card: {
@@ -192,13 +192,13 @@ export const execModel = defineModel<P>({
       },
     ],
     edges: [
-      { id: 'e-words', from: 'line', to: 'bash', label: bi('разбор на слова', 'splitting into words'), card: { what: bi('Оболочка разбирает строку на слова, кавычки, переменные, шаблоны и перенаправления. Шаблоны вроде `*.log` раскрывает сама оболочка, а не команда.', 'The shell parses the line into words, quotes, variables, patterns and redirections. Patterns like `*.log` are expanded by the shell itself, not by the command.'), who: bi('Разбор выполняет оболочка bash.', 'The bash shell does the parsing.'), doc: { page: 'man/bash.1', anchor: 'DESCRIPTION' } } },
-      { id: 'e-lookup', from: 'bash', to: 'path', via: [[352, 202], [352, 56]], label: bi('поиск по PATH', 'PATH lookup'), labelAt: 0.5, card: { what: bi('Для имени без знака `/` оболочка перебирает каталоги PATH. Если программа нашлась, оболочка запоминает её полный путь, а если нет, печатает `command not found`, возвращает код 127 и даже не создаёт процесс.', 'For a name without `/` the shell goes through the PATH directories. If the program is found, the shell remembers its full path; if not, it prints `command not found`, returns code 127 and does not even create a process.'), who: bi('Поиск выполняет оболочка bash.', 'The bash shell does the lookup.'), see: 'type ls' } },
+      { id: 'e-words', from: 'line', to: 'bash', label: bi('разбор на слова', 'splitting into words'), labelAt: 0.15, card: { what: bi('Оболочка разбирает строку на слова, кавычки, переменные, шаблоны и перенаправления. Шаблоны вроде `*.log` раскрывает сама оболочка, а не команда.', 'The shell parses the line into words, quotes, variables, patterns and redirections. Patterns like `*.log` are expanded by the shell itself, not by the command.'), who: bi('Разбор выполняет оболочка bash.', 'The bash shell does the parsing.'), doc: { page: 'man/bash.1', anchor: 'DESCRIPTION' } } },
+      { id: 'e-lookup', from: 'bash', to: 'path', via: [[352, 232], [352, 56]], label: bi('поиск по PATH', 'PATH lookup'), labelAt: 0.8, card: { what: bi('Для имени без знака `/` оболочка перебирает каталоги PATH. Если программа нашлась, оболочка запоминает её полный путь, а если нет, печатает `command not found`, возвращает код 127 и даже не создаёт процесс.', 'For a name without `/` the shell goes through the PATH directories. If the program is found, the shell remembers its full path; if not, it prints `command not found`, returns code 127 and does not even create a process.'), who: bi('Поиск выполняет оболочка bash.', 'The bash shell does the lookup.'), see: 'type ls' } },
       { id: 'e-fork', from: 'bash', to: 'child', label: bi('создание копии (fork)', 'making a copy (fork)'), card: { what: bi('Ядро создаёт копию оболочки, новый процесс с новым номером, родителем которого становится сама оболочка с номером 2210.', 'The kernel creates a copy of the shell, a new process with a new number whose parent is the shell itself, number 2210.'), who: bi('Копию создаёт ядро по вызову clone.', 'The kernel creates it on the clone call.'), doc: man('fork', 2) } },
       { id: 'e-redirect', from: 'child', to: 'file', label: bi('вывод в файл', 'output to the file'), card: { what: bi('Копия закрывает свой поток 1, который был подключён к терминалу, и открывает на его месте файл. Это происходит до запуска программы, поэтому программа получает уже подключённый к файлу поток.', 'The copy closes its stream 1, which was connected to the terminal, and opens the file in its place. This happens before the program starts, so the program receives a stream already connected to the file.'), who: bi('Перенаправление выполняет копия оболочки вызовами open и dup2.', 'The copy of the shell does the redirection with the open and dup2 calls.'), doc: { page: 'man/bash.1', anchor: 'REDIRECTION' } } },
-      { id: 'e-exec', from: 'child', to: 'kernel', via: [[500, 330]], label: bi('загрузка программы (exec)', 'loading the program (exec)'), labelAt: 0.6, card: { what: bi('Копия просит ядро заменить её программу на `/usr/bin/ls`. Ядро стирает память копии и загружает новую программу, но номер процесса и открытые файлы остаются прежними.', 'The copy asks the kernel to replace its program with `/usr/bin/ls`. The kernel wipes the copy’s memory and loads the new program, but the process number and the open files stay the same.'), who: bi('Загрузку выполняет ядро по вызову execve.', 'The kernel does the loading on the execve call.'), doc: man('execve', 2) } },
-      { id: 'e-wait', from: 'child', to: 'bash', via: [[500, 290], [134, 290]], label: bi('код завершения в $?', 'exit code into $?'), labelAt: 0.5, dashed: true, card: { what: bi('Программа завершается и сообщает число, где ноль означает успех. Оболочка забирает это число вызовом wait4 и кладёт его в переменную `$?`. Пока родитель не забрал код, завершившийся процесс остаётся в таблице процессов как зомби с буквой Z.', 'The program ends and reports a number, where zero means success. The shell collects it with wait4 and puts it into `$?`. Until the parent collects the code, the finished process stays in the process table as a zombie marked Z.'), who: bi('Код хранит ядро, а забирает его оболочка.', 'The kernel keeps the code and the shell collects it.'), see: 'echo $?', doc: man('wait', 2) } },
-      { id: 'e-prompt', from: 'bash', to: 'tty', via: [[134, 134], [838, 134]], label: bi('новое приглашение', 'a new prompt'), labelAt: 0.62, card: { what: bi('Получив код завершения, оболочка снова печатает приглашение и ждёт следующую строку.', 'Having collected the exit code, the shell prints the prompt again and waits for the next line.'), who: bi('Приглашение печатает оболочка bash.', 'The bash shell prints the prompt.'), see: 'echo $PS1' } },
+      { id: 'e-exec', from: 'child', to: 'kernel', via: [[500, 360]], label: bi('загрузка программы (exec)', 'loading the program (exec)'), labelAt: 0.6, card: { what: bi('Копия просит ядро заменить её программу на `/usr/bin/ls`. Ядро стирает память копии и загружает новую программу, но номер процесса и открытые файлы остаются прежними.', 'The copy asks the kernel to replace its program with `/usr/bin/ls`. The kernel wipes the copy’s memory and loads the new program, but the process number and the open files stay the same.'), who: bi('Загрузку выполняет ядро по вызову execve.', 'The kernel does the loading on the execve call.'), doc: man('execve', 2) } },
+      { id: 'e-wait', from: 'child', to: 'bash', via: [[500, 320], [134, 320]], label: bi('код завершения в $?', 'exit code into $?'), labelAt: 0.5, dashed: true, card: { what: bi('Программа завершается и сообщает число, где ноль означает успех. Оболочка забирает это число вызовом wait4 и кладёт его в переменную `$?`. Пока родитель не забрал код, завершившийся процесс остаётся в таблице процессов как зомби с буквой Z.', 'The program ends and reports a number, where zero means success. The shell collects it with wait4 and puts it into `$?`. Until the parent collects the code, the finished process stays in the process table as a zombie marked Z.'), who: bi('Код хранит ядро, а забирает его оболочка.', 'The kernel keeps the code and the shell collects it.'), see: 'echo $?', doc: man('wait', 2) } },
+      { id: 'e-prompt', from: 'bash', to: 'tty', via: [[134, 134], [725, 134], [725, 56]], label: bi('новое приглашение', 'a new prompt'), labelAt: 0.79, card: { what: bi('Получив код завершения, оболочка снова печатает приглашение и ждёт следующую строку.', 'Having collected the exit code, the shell prints the prompt again and waits for the next line.'), who: bi('Приглашение печатает оболочка bash.', 'The bash shell prints the prompt.'), see: 'echo $PS1' } },
     ],
   },
   params: [
@@ -387,7 +387,7 @@ export const execModel = defineModel<P>({
         focus: ['e-fork', 'child'],
         reveal: ['child', 'e-fork', 'kernel'],
         tokens: [{ edge: 'e-fork', label: 'fork' }],
-        say: { child: bi('Ядро создало копию оболочки с номером 2231, и у копии те же переменные и открытые файлы.', 'The kernel made a copy of the shell, number 2231, with the same variables and open files.') },
+        say: { child: bi('Ядро создало процесс 2231, точную копию оболочки.', 'The kernel made process 2231, an exact copy of the shell.') },
         values: { child: 'PID 2231 · bash' },
         states: { child: 'on' },
         metrics: m({ checked: n.checked, forks: 1 }),
@@ -442,7 +442,7 @@ export const execModel = defineModel<P>({
       focus: ['e-exec', 'child'],
       reveal: ['e-exec', 'kernel'],
       tokens: [{ edge: 'e-exec', label: `execve ${path.found}` }],
-      say: { child: fmt(bi('В процессе {n} теперь работает программа ls, а его поток вывода всё так же подключён к файлу.', 'Process {n} now runs ls, and its output stream is still connected to the file.'), { n: pid }) },
+      say: { child: fmt(bi('Теперь в процессе {n} работает ls, а вывод всё так же идёт в файл.', 'Process {n} now runs ls, and its output stream is still connected to the file.'), { n: pid }) },
       values: { child: `PID ${pid} · ls` },
       metrics: m({ checked: n.checked, forks: n.forks, execs: 1 }),
     });
@@ -516,7 +516,7 @@ export const execModel = defineModel<P>({
       focus: ['e-prompt', 'tty'],
       reveal: ['e-prompt', 'tty'],
       tokens: [{ edge: 'e-prompt', label: '~$' }],
-      say: { tty: bi('Терминал показывает новое приглашение, и оболочка ждёт следующую строку.', 'The terminal shows a new prompt, and the shell waits for the next line.') },
+      say: { tty: bi('Терминал снова показывает приглашение оболочки.', 'The terminal shows the shell’s prompt again.') },
       metrics: m({ checked: n.checked, forks: 1, execs: 1 }),
     });
     return steps;

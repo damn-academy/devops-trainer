@@ -202,7 +202,7 @@ export const sshModel = defineModel<P>({
       focus: ['e-sign', 'sshd'],
       reveal: ['hostkey', 'e-sign'],
       tokens: [{ edge: 'e-sign', label: 'ssh-ed25519' }],
-      say: { sshd: bi('Служба sshd подписывает сеанс закрытым ключом хоста, чтобы клиент мог убедиться, что перед ним тот самый сервер.', 'sshd signs the session with the host’s private key so that the client can make sure it faces the same server.') },
+      say: { hostkey: bi('Закрытым ключом хоста служба sshd подписывает сеанс, чтобы клиент мог убедиться, что перед ним тот самый сервер.', 'sshd signs the session with the host’s private key so that the client can make sure it faces the same server.') },
       states: { hostkey: 'on' },
       metrics: m(),
     });

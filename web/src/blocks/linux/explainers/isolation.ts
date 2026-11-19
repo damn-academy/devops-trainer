@@ -6,7 +6,7 @@
 // and the OOM killer acts inside the group, not on the neighbour.
 
 import { defineModel } from '../../../core/define';
-import { bi, type Bi } from '../../../core/i18n';
+import { bi, t, type Bi } from '../../../core/i18n';
 import type { DiagramGroup, ElementState, Step } from '../../../core/types';
 import { fmtb } from './util';
 
@@ -55,7 +55,6 @@ export const isolationModel = defineModel<P>({
     { mark: 'dashed', text: bi('стена пространства имён вокруг процесса', 'a namespace wall around the process') },
     { mark: 'icon:process', text: bi('процесс', 'a process') },
     { mark: 'token', text: bi('что передаётся: номер процесса, рост памяти', 'what is handed on: a process number, memory growth') },
-    { mark: 'pale', text: bi('стена выключена', 'the wall is switched off') },
     { mark: 'err', text: bi('процесс завершён ядром из-за нехватки памяти', 'the process was ended by the kernel for lack of memory') },
   ],
   stopLabel: bi('Процесс остановлен', 'The process was stopped'),
@@ -84,7 +83,7 @@ export const isolationModel = defineModel<P>({
         sub: 'PID 811 · 300 MiB',
         family: 'process',
         x: 600,
-        y: 60,
+        y: 88,
         w: 200,
         h: 56,
         card: { what: bi('Процесс postgres обслуживает базу данных и работает на той же машине, что и report-gen. Если у report-gen нет лимита памяти, соседний процесс рискует: когда память кончается у всей машины, OOM killer выбирает самый большой процесс, и им может оказаться база.', 'The postgres process serves a database and runs on the same machine as report-gen. If report-gen has no memory limit, the neighbouring process is at risk: when the whole machine runs out of memory, the OOM killer picks the biggest process, and that may be the database.'), who: bi('Базу запускает systemd как службу postgresql.service.', 'systemd starts the database as postgresql.service.'), see: 'ps -o pid,rss,comm -p 811' },
@@ -96,7 +95,7 @@ export const isolationModel = defineModel<P>({
         sub: 'hostname: trainer',
         family: 'user',
         x: 600,
-        y: 150,
+        y: 160,
         w: 200,
         h: 56,
         card: { what: bi('Так машину видно снаружи стен: здесь видны все процессы машины с их настоящими номерами, настоящее имя машины и настоящая сеть.', 'This is how the machine looks from outside the walls: you see every process of the machine with its real number, the real host name and the real network.'), who: bi('Эту оболочку вы открыли в обычном терминале, вне всяких стен.', 'You opened this shell in an ordinary terminal, outside any walls.'), see: 'ps aux; hostname; ip a' },
@@ -154,7 +153,7 @@ export const isolationModel = defineModel<P>({
       { id: 'e-pids', from: 'proc', to: 'pids', label: bi('новые процессы', 'new processes'), card: { what: bi('Каждый новый процесс или поток засчитывается в pids.current.', 'Every new process or thread is counted in pids.current.'), who: bi('Учёт ведёт ядро.', 'The kernel keeps the account.') } },
       { id: 'e-cpu', from: 'proc', to: 'cpu', via: [[400, 260], [780, 260]], label: bi('время процессора', 'CPU time'), labelAt: 0.6, card: { what: bi('Время процессора, которое достаётся группе, делится на периоды по 100 мс.', 'The CPU time the group gets is cut into 100 ms periods.'), who: bi('Время делит планировщик ядра.', 'The kernel’s scheduler divides the time.') } },
       { id: 'e-view', from: 'host', to: 'proc', label: bi('взгляд снаружи', 'the view from outside'), card: { what: bi('Снаружи процесс виден всегда, причём с настоящим номером. Стены действуют в одну сторону, и изнутри не видно, что делается снаружи.', 'From outside the process is always visible, with its real number. The walls work one way: from inside you cannot see what happens outside.'), who: bi('Сведения о процессах выдаёт ядро.', 'The kernel provides the facts about processes.'), see: 'ps -o pid,pidns,utsns,comm -C report-gen' } },
-      { id: 'e-neigh', from: 'neigh', to: 'kernel', via: [[860, 88], [860, 380]], label: bi('общая память машины', 'the machine’s shared memory'), labelAt: 0.6, card: { what: bi('Сосед берёт память из общей памяти машины, из той же, которую берёт и report-gen, если у него нет лимита.', 'The neighbour takes memory from the machine’s shared memory, the same memory report-gen takes when it has no limit.'), who: bi('Память раздаёт ядро.', 'The kernel hands out the memory.'), see: 'free -h' } },
+      { id: 'e-neigh', from: 'neigh', to: 'kernel', via: [[860, 116], [860, 380]], label: bi('общая память машины', 'the machine’s shared memory'), labelAt: 0.6, card: { what: bi('Сосед берёт память из общей памяти машины, из той же, которую берёт и report-gen, если у него нет лимита.', 'The neighbour takes memory from the machine’s shared memory, the same memory report-gen takes when it has no limit.'), who: bi('Память раздаёт ядро.', 'The kernel hands out the memory.'), see: 'free -h' } },
     ],
     groups: [
       wall('w-pid', bi('своя нумерация процессов (pid)', 'its own process numbering (pid)'), 12, bi('У процесса своя нумерация процессов, поэтому внутри report-gen имеет номер 1, а снаружи номер 3120. Команда ps внутри видит только процессы своего пространства, если для него смонтирован свой /proc.', 'The process has its own numbering of processes, so inside, report-gen is number 1, and outside it is 3120. ps inside sees only the processes of its namespace, if its own /proc is mounted.'), 'readlink /proc/3120/ns/pid'),
@@ -245,7 +244,8 @@ export const isolationModel = defineModel<P>({
     const noLimit = broken.has('no-cgroup') || p.memMax <= 0;
     const mr = memoryRun({ ...p, memMax: noLimit ? 0 : p.memMax });
     const maxLabel = noLimit ? 'max' : `${p.memMax} MiB`;
-    const wallStates = { 'w-uts': p.uts ? 'on' : 'off', 'w-pid': p.pid ? 'on' : 'off', 'w-net': p.net ? 'on' : 'off' } as const;
+    // a wall that is switched off is not drawn at all: a pale frame would still read as a wall
+    const wallStates = { 'w-uts': p.uts ? 'on' : 'hidden', 'w-pid': p.pid ? 'on' : 'hidden', 'w-net': p.net ? 'on' : 'hidden' } as const;
     steps.push({
       id: 'start',
       label: 'unshare',
@@ -255,7 +255,7 @@ export const isolationModel = defineModel<P>({
       focus: ['proc'],
       say: { proc: walls ? fmtb(bi('Процесс report-gen запущен, и число стен вокруг него равно {n}.', 'report-gen is running, and the number of walls around it is {n}.'), { n: walls }) : bi('Процесс report-gen запущен без стен и видит всю машину.', 'report-gen runs without walls and sees the whole machine.') },
       states: { ...startWith('proc', 'host', 'kernel'), ...wallStates, proc: 'on' },
-      values: { proc: p.pid ? 'PID 1 · inside' : 'PID 3120', mem: `24 MiB / ${maxLabel}`, pids: '1 / 32', cpu: p.cpu >= 100 ? 'max 100000' : `${p.cpu * 1000} 100000`, host: 'hostname: trainer' },
+      values: { proc: p.pid ? t(bi('PID 1 внутри стен', 'PID 1 · inside')) : 'PID 3120', mem: `24 MiB / ${maxLabel}`, pids: '1 / 32', cpu: p.cpu >= 100 ? 'max 100000' : `${p.cpu * 1000} 100000`, host: 'hostname: trainer' },
       fill: { mem: noLimit ? 24 / 460 : 24 / p.memMax, pids: 1 / 32, cpu: 0 },
       metrics: { mem: 24, oom: 0, walls },
     });
@@ -315,7 +315,7 @@ export const isolationModel = defineModel<P>({
         tokens: [{ edge: 'e-cpu', label: fmtb(bi('{c}% процессора', '{c}% of a CPU'), { c: p.cpu }) }],
         say: { cpu: fmtb(bi('Ядро даёт группе {c} мс работы из каждых 100 мс.', 'The kernel gives the group {c} ms of work out of every 100 ms.'), { c: p.cpu }) },
         fill: { cpu: p.cpu / 100 },
-        values: { cpu: `${p.cpu * 1000} 100000 · throttled` },
+        values: { cpu: `${p.cpu * 1000} 100000 · ${t(bi('притормаживается', 'throttled'))}` },
         metrics: { mem: 24, oom: 0, walls },
       });
     }
@@ -339,11 +339,11 @@ export const isolationModel = defineModel<P>({
     if (mr.killedAt === null) {
       steps.push({
         id: 'fits',
-        label: bi('в пределах лимита', 'within the limit'),
+        label: p.grow > 0 ? bi('в пределах лимита', 'within the limit') : bi('работа за стенами', 'work behind the walls'),
         caption: p.grow > 0 ? bi('За минуту память так и не дошла до лимита. Процесс продолжает работать, и соседи ничего не замечают.', 'Within a minute the memory never reached the limit. The process keeps working, and the neighbours notice nothing.') : bi('Процесс работает внутри своих стен и новой памяти не берёт, поэтому соседи ничего не замечают.', 'The process works inside its walls and takes no new memory, so the neighbours notice nothing.'),
         focus: ['proc'],
         reveal: p.grow > 0 ? memReveal : [],
-        say: { proc: bi('Процессу хватает разрешённой памяти, и он спокойно работает дальше.', 'The allowed memory is enough for the process, and it keeps working.') },
+        say: { proc: p.grow > 0 ? bi('Процессу хватает разрешённой памяти, и он спокойно работает дальше.', 'The allowed memory is enough for the process, and it keeps working.') : bi('Процесс report-gen работает за своими стенами и не мешает соседям.', 'report-gen works behind its walls and does not disturb the neighbours.') },
         states: noLimit || p.grow <= 0 ? {} : { mem: 'ok' },
         metrics: { mem: Math.round(mr.peak), oom: 0, walls },
       });
@@ -359,7 +359,7 @@ export const isolationModel = defineModel<P>({
         tokens: [{ edge: 'e-neigh', label: 'KILL' }],
         say: { neigh: bi('Ядро завершило базу данных сигналом KILL, потому что она оказалась самым большим процессом машины.', 'The kernel ended the database with KILL, because it was the biggest process of the machine.') },
         states: { neigh: 'err', proc: 'warn' },
-        values: { neigh: 'killed', mem: `${Math.round(mr.peak)} MiB / max` },
+        values: { neigh: t(bi('завершён ядром', 'killed')), mem: `${Math.round(mr.peak)} MiB / max` },
         fill: { mem: 1 },
         metrics: { mem: Math.round(mr.peak), oom: 1, walls },
         broken: { at: 'neigh', message: 'Out of memory: Killed process 811 (postgres) total-vm:612000kB, anon-rss:307200kB, file-rss:0kB, shmem-rss:0kB, UID:999', caption: bi('Без лимита страдает не тот процесс, который занял память, а самый большой процесс машины, поэтому лимит памяти защищает соседей. Узнают такую поломку по строке «Out of memory: Killed process» в `dmesg`, где назван не тот процесс, который рос.', 'Without a limit it is not the process that took the memory that suffers but the biggest one on the machine, so a memory limit protects the neighbours. You recognise this break by the line “Out of memory: Killed process” in `dmesg` naming a process other than the one that grew.') },
@@ -373,7 +373,7 @@ export const isolationModel = defineModel<P>({
       focus: ['proc', 'mem'],
       say: { mem: bi('Ядро видит, что группа дошла до лимита, и завершает её самый большой процесс.', 'The kernel sees the group reached its limit and ends its biggest process.') },
       states: { proc: 'err', mem: 'err' },
-      values: { proc: 'killed (137)', mem: `${p.memMax} MiB / ${maxLabel}` },
+      values: { proc: t(bi('завершён, код 137', 'killed (137)')), mem: `${p.memMax} MiB / ${maxLabel}` },
       fill: { mem: 1 },
       metrics: { mem: p.memMax, oom: 1, walls },
     });

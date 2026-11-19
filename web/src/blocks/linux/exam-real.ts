@@ -83,7 +83,7 @@ export const DISK_EXAM: Exam = {
       id: 'e2',
       prompt: bi('«Что вы напишете в разборе инцидента, чтобы через неделю он не повторился?»', '“What do you write in the incident review so that it does not happen again in a week?”'),
       keyPoints: [
-        bi('кто писал на раздел и с какой скоростью, то есть дампы cron и журнал агента', 'who wrote to the partition and how fast, that is, the cron dumps and the agent’s log'),
+        bi('кто писал на раздел и с какой скоростью, то есть задание cron, которое раз в две минуты записывало в `/srv/shop/backups/legacy` новый файл с выгрузкой данных (такой файл называют дампом), и журнал агента', 'who wrote to the partition and how fast, that is, the cron dumps and the agent’s log'),
         bi('ротацию журналов с ограничением по числу и размеру файлов', 'log rotation limited by the number and size of files'),
         bi('предупреждение мониторинга задолго до заполнения на 100 %', 'a monitoring warning long before 100 %'),
         bi('открытые журналы не удаляют, а ротируют с `copytruncate` или с сигналом программе', 'open logs are not deleted but rotated with `copytruncate` or with a signal to the program'),
@@ -116,7 +116,7 @@ export const DISK_EXAM: Exam = {
       real: {
         prompt: bi('Карточка 2. Найдите, кто продолжает заполнять раздел, и остановите это так, чтобы после перезагрузки оно не возобновилось.', 'Card 2. Find who keeps filling the partition and stop it so that it does not resume after a reboot.'),
         concepts: ['linux.cron'],
-        goals: [G('cron', ['задание, которое пишет дампы, выключено', 'the job that writes the dumps is off'], 'app-01', cronOff)],
+        goals: [G('cron', ['задание cron, которое записывает файлы с выгрузкой данных, выключено', 'the job that writes the dumps is off'], 'app-01', cronOff)],
       },
     },
     {

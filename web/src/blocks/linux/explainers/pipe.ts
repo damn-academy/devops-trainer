@@ -10,7 +10,7 @@
 // a callout what it is doing with the lines.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
+import { bi, count, fmt as fill, pluralRu, type Bi } from '../../../core/i18n';
 import type { DiagramNode, ElementState, Step } from '../../../core/types';
 
 type P = { lines: number; errors: number; sorted: boolean; stderr: string };
@@ -66,7 +66,7 @@ const proc = (id: string, label: string, x: number, what: Bi, see: string, page:
   sub: '',
   family: 'process',
   x,
-  y: 56,
+  y: 126,
   w: 176,
   h: 64,
   card: { what, who: bi('Процесс запускает оболочка. Для каждой команды конвейера она создаёт копию себя и загружает в неё программу, и все четыре процесса запускаются одновременно.', 'The shell starts the process. For every command of the pipeline it makes a copy of itself and loads the program into it, and all four processes start at once.'), see, doc: { page, anchor: 'DESCRIPTION' } },
@@ -79,7 +79,7 @@ const buf = (id: string, x: number, between: Bi): DiagramNode => ({
   family: 'kernel',
   shape: 'buffer',
   x,
-  y: 300,
+  y: 370,
   w: 150,
   h: 60,
   card: {
@@ -89,6 +89,28 @@ const buf = (id: string, x: number, between: Bi): DiagramNode => ({
     doc: doc.pipe7,
   },
 });
+
+/** Russian numerals agree with their noun: «3 строки», «21 адрес», «1 ошибка», «из 1 строки». */
+const NOUNS: Record<string, [string, string, string, string]> = {
+  строк: ['строка', 'строку', 'строки', 'строк'],
+  адресов: ['адрес', 'адрес', 'адреса', 'адресов'],
+  ошибок: ['ошибка', 'ошибку', 'ошибки', 'ошибок'],
+};
+const ACCUSATIVE = /(пропускает|получает|печатает|держит|собирает|все)\s$/;
+export function agreeRu(text: string): string {
+  return text.replace(/(^|.)(\d+) (строк|адресов|ошибок)(?![а-яё])/g, (_m: string, pre: string, num: string, noun: string, at: number) => {
+    const before = text.slice(0, at + pre.length);
+    const forms = NOUNS[noun];
+    if (/из\s$/.test(before)) return `${pre}${num} ${pluralRu(Number(num), [forms[2], forms[3], forms[3]])}`;
+    const one = ACCUSATIVE.test(before) ? forms[1] : forms[0];
+    return `${pre}${num} ${pluralRu(Number(num), [one, forms[2], forms[3]])}`;
+  });
+}
+const fmt = (b: Bi, vars: Record<string, string | number>): Bi => {
+  const r = fill(b, vars);
+  return { ru: agreeRu(r.ru), en: r.en };
+};
+const lines = (n: number) => count(n, ['строка', 'строки', 'строк'], ['line', 'lines']);
 
 function fmtb2(b: Bi, between: Bi): Bi {
   return { ru: b.ru.replace('{b}', between.ru), en: b.en.replace('{b}', between.en) };
@@ -102,7 +124,7 @@ export const pipeModel = defineModel<P>({
   block: 'linux',
   title: bi('Как конвейер передаёт вывод одной команды на вход следующей', 'How a pipeline hands the output of one command to the next'),
   summary: bi(
-    'Конвейер `grep \' 500 \' access.log | cut -d\' \' -f1 | sort | uniq -c` считает, сколько ошибок 500 получил каждый адрес. Четыре программы работают одновременно, каждая в своём процессе, а между ними стоят трубы, то есть буферы в памяти ядра. Все числа на схеме вычисляются по журналу, который вы задаёте ручками.',
+    'Конвейер `grep \' 500 \' access.log | cut -d\' \' -f1 | sort | uniq -c` считает, сколько ошибок 500 получил каждый адрес. Четыре программы работают одновременно, каждая в своём процессе, а между ними стоят трубы, то есть буферы в памяти ядра. Все числа на схеме вычисляются по журналу, который вы описываете в «Параметрах» над схемой.',
     'The pipeline `grep \' 500 \' access.log | cut -d\' \' -f1 | sort | uniq -c` counts how many 500 errors each address got. Four programs run at once, each in its own process, with pipes, that is, kernel memory buffers, between them. Every number in the diagram is computed from the log you set with the knobs.',
   ),
   intro: bi(
@@ -122,7 +144,7 @@ export const pipeModel = defineModel<P>({
   concepts: ['linux.pipe', 'linux.stream'],
   diagram: {
     width: 960,
-    height: 470,
+    height: 540,
     nodes: [
       proc('grep', "grep ' 500 '", 16, bi('Программа grep оставляет только строки, в которых есть ` 500 `, то есть ответы с ошибкой сервера. Остальные строки дальше не идут.', 'grep keeps only the lines with ` 500 `, the answers with a server error. Other lines go no further.'), "grep -c ' 500 ' access.log", 'man/grep.1'),
       proc('cut', "cut -d' ' -f1", 260, bi('Программа cut берёт из каждой строки первое поле, если поля разделены пробелом. В журнале первым полем стоит адрес клиента.', 'cut takes the first field of every line when the fields are separated by a space. In the log the first field is the client address.'), "cut -d' ' -f1 access.log | head -3", 'man/cut.1'),
@@ -132,10 +154,10 @@ export const pipeModel = defineModel<P>({
         id: 'log',
         label: 'access.log',
         icon: 'file',
-        sub: '0 lines',
+        sub: 'wc -l: 0',
         family: 'store',
         x: 16,
-        y: 180,
+        y: 250,
         w: 176,
         h: 56,
         card: { what: bi('Журнал веб-сервера, в котором на каждый запрос приходится одна строка: адрес клиента, метод, путь и код ответа.', 'A web server log with one line per request: the client address, the method, the path and the response code.'), who: bi('Журнал пишет веб-сервер, а grep открывает этот файл сам, по имени, которое получил аргументом.', 'The web server writes the log, and grep opens the file itself, by the name it got as an argument.'), see: 'head -3 access.log' },
@@ -147,7 +169,7 @@ export const pipeModel = defineModel<P>({
         sub: '',
         family: 'user',
         x: 790,
-        y: 180,
+        y: 250,
         w: 154,
         h: 56,
         card: { what: bi('Сюда попадает вывод последней команды конвейера. Сюда же попадают ошибки всех команд, потому что поток 2 в трубы не подключён.', 'The output of the last command of the pipeline ends up here. So do the errors of all commands, because stream 2 is not connected to the pipes.'), who: bi('Подключение к терминалу все команды получают в наследство от оболочки.', 'All commands inherit their connection to the terminal from the shell.'), see: 'tty' },
@@ -161,7 +183,7 @@ export const pipeModel = defineModel<P>({
         family: 'kernel',
         shape: 'bar',
         x: 16,
-        y: 280,
+        y: 350,
         w: 928,
         h: 176,
         card: { what: bi('Трубы принадлежат ядру. Команды друг о друге не знают: каждая читает свой поток 0 и пишет в свой поток 1, а соединяет их ядро.', 'The pipes belong to the kernel. The commands know nothing of each other: each reads its stream 0 and writes to its stream 1, and the kernel connects them.'), who: bi('Ядро на машине одно, и все процессы работают с ним.', 'There is one kernel per machine, and all processes work with it.'), see: 'uname -r' },
@@ -169,14 +191,14 @@ export const pipeModel = defineModel<P>({
     ],
     edges: [
       { id: 'e-read', from: 'log', to: 'grep', label: bi('чтение журнала', 'reading the log'), card: { what: bi('Программа grep открывает журнал по имени, потому что получила его аргументом, а не через стандартный ввод.', 'grep opens the log by name, because it got it as an argument, not through standard input.'), who: bi('Файл открывает сама программа grep.', 'grep opens the file itself.') } },
-      { id: 'e-w1', from: 'grep', to: 'p1', via: [[104, 330]], label: bi('вывод grep', 'grep’s output'), labelAt: 0.35, card: { what: bi('Вывод grep идёт не на экран, а в первую трубу.', 'grep’s output goes not to the screen but into the first pipe.'), who: bi('Поток 1 программы grep подключила к трубе оболочка, ещё до запуска программы.', 'The shell connected grep’s stream 1 to the pipe before the program started.'), doc: doc.bash } },
-      { id: 'e-r1', from: 'p1', to: 'cut', via: [[348, 330]], label: bi('ввод cut', 'cut’s input'), labelAt: 0.65, card: { what: bi('Программа cut читает свой ввод из первой трубы.', 'cut reads its input from the first pipe.'), who: bi('Поток 0 программы cut подключила к трубе оболочка.', 'The shell connected cut’s stream 0 to the pipe.'), doc: doc.bash } },
-      { id: 'e-w2', from: 'cut', to: 'p2', via: [[348, 330]], label: bi('вывод cut', 'cut’s output'), labelAt: 0.35, card: { what: bi('Адреса клиентов cut пишет во вторую трубу.', 'cut writes the client addresses into the second pipe.'), who: bi('Поток 1 программы cut подключила к трубе оболочка.', 'The shell connected cut’s stream 1 to the pipe.') } },
-      { id: 'e-r2', from: 'p2', to: 'sort', via: [[592, 330]], label: bi('ввод sort', 'sort’s input'), labelAt: 0.65, card: { what: bi('Программа sort собирает у себя всё, что приходит из трубы, пока данные не кончатся.', 'sort collects everything that comes from the pipe until the data ends.'), who: bi('Поток 0 программы sort подключила к трубе оболочка.', 'The shell connected sort’s stream 0 to the pipe.') } },
-      { id: 'e-w3', from: 'sort', to: 'p3', via: [[592, 330]], label: bi('вывод sort', 'sort’s output'), labelAt: 0.35, card: { what: bi('Упорядоченные адреса программа sort пишет в третью трубу все сразу, одним куском.', 'sort writes the ordered addresses into the third pipe, all at once.'), who: bi('Поток 1 программы sort подключила к трубе оболочка.', 'The shell connected sort’s stream 1 to the pipe.') } },
-      { id: 'e-r3', from: 'p3', to: 'uniq', via: [[766, 330], [766, 140]], label: bi('ввод uniq', 'uniq’s input'), labelAt: 0.65, card: { what: bi('Программа uniq -c считает одинаковые строки, которые идут подряд.', 'uniq -c counts identical lines that come in a row.'), who: bi('Поток 0 программы uniq подключила к трубе оболочка.', 'The shell connected uniq’s stream 0 to the pipe.') } },
+      { id: 'e-w1', from: 'grep', to: 'p1', via: [[226, 158]], label: bi('вывод grep', 'grep’s output'), labelAt: 0.5, card: { what: bi('Вывод grep идёт не на экран, а в первую трубу.', 'grep’s output goes not to the screen but into the first pipe.'), who: bi('Поток 1 программы grep подключила к трубе оболочка, ещё до запуска программы.', 'The shell connected grep’s stream 1 to the pipe before the program started.'), doc: doc.bash } },
+      { id: 'e-r1', from: 'p1', to: 'cut', via: [[348, 400]], label: bi('ввод cut', 'cut’s input'), labelAt: 0.65, card: { what: bi('Программа cut читает свой ввод из первой трубы.', 'cut reads its input from the first pipe.'), who: bi('Поток 0 программы cut подключила к трубе оболочка.', 'The shell connected cut’s stream 0 to the pipe.'), doc: doc.bash } },
+      { id: 'e-w2', from: 'cut', to: 'p2', via: [[348, 400]], label: bi('вывод cut', 'cut’s output'), labelAt: 0.35, card: { what: bi('Адреса клиентов cut пишет во вторую трубу.', 'cut writes the client addresses into the second pipe.'), who: bi('Поток 1 программы cut подключила к трубе оболочка.', 'The shell connected cut’s stream 1 to the pipe.') } },
+      { id: 'e-r2', from: 'p2', to: 'sort', via: [[592, 400]], label: bi('ввод sort', 'sort’s input'), labelAt: 0.46, card: { what: bi('Программа sort собирает у себя всё, что приходит из трубы, пока данные не кончатся.', 'sort collects everything that comes from the pipe until the data ends.'), who: bi('Поток 0 программы sort подключила к трубе оболочка.', 'The shell connected sort’s stream 0 to the pipe.') } },
+      { id: 'e-w3', from: 'sort', to: 'p3', via: [[592, 400]], label: bi('вывод sort', 'sort’s output'), labelAt: 0.67, card: { what: bi('Упорядоченные адреса программа sort пишет в третью трубу все сразу, одним куском.', 'sort writes the ordered addresses into the third pipe, all at once.'), who: bi('Поток 1 программы sort подключила к трубе оболочка.', 'The shell connected sort’s stream 1 to the pipe.') } },
+      { id: 'e-r3', from: 'p3', to: 'uniq', via: [[766, 400], [766, 210]], label: bi('ввод uniq', 'uniq’s input'), labelAt: 0.36, card: { what: bi('Программа uniq -c считает одинаковые строки, которые идут подряд.', 'uniq -c counts identical lines that come in a row.'), who: bi('Поток 0 программы uniq подключила к трубе оболочка.', 'The shell connected uniq’s stream 0 to the pipe.') } },
       { id: 'e-out', from: 'uniq', to: 'tty', label: bi('вывод на экран', 'output to the screen'), card: { what: bi('Последняя команда пишет в терминал, потому что её поток 1 оболочка не трогала.', 'The last command writes to the terminal, because the shell left its stream 1 alone.'), who: bi('Поток 1 последняя команда получила по наследству от оболочки.', 'The last command inherited its stream 1 from the shell.') } },
-      { id: 'e-err', from: 'grep', to: 'tty', via: [[104, 22], [952, 22], [952, 208]], label: bi('ошибки grep на экран', 'grep’s errors to the screen'), labelAt: 0.5, dashed: true, card: { what: bi('Поток ошибок с номером 2 к трубе не подключён, поэтому сообщения об ошибках видны на экране, даже когда вывод идёт дальше по конвейеру. Запись `2>&1` перед `|` отправила бы их в трубу.', 'The error stream, number 2, is not connected to the pipe, so error messages show on the screen even while the output goes down the pipeline. `2>&1` before `|` would send them into the pipe.'), who: bi('Поток 2 программа grep получила по наследству от оболочки.', 'grep inherited its stream 2 from the shell.'), doc: { page: 'man/bash.1', anchor: 'REDIRECTION' } } },
+      { id: 'e-err', from: 'grep', to: 'tty', via: [[104, 22], [952, 22], [952, 278]], label: bi('ошибки grep на экран', 'grep’s errors to the screen'), labelAt: 0.5, dashed: true, card: { what: bi('Поток ошибок с номером 2 к трубе не подключён, поэтому сообщения об ошибках видны на экране, даже когда вывод идёт дальше по конвейеру. Запись `2>&1` перед `|` отправила бы их в трубу.', 'The error stream, number 2, is not connected to the pipe, so error messages show on the screen even while the output goes down the pipeline. `2>&1` before `|` would send them into the pipe.'), who: bi('Поток 2 программа grep получила по наследству от оболочки.', 'grep inherited its stream 2 from the shell.'), doc: { page: 'man/bash.1', anchor: 'REDIRECTION' } } },
     ],
   },
   params: [
@@ -279,7 +301,7 @@ export const pipeModel = defineModel<P>({
       focus: ['grep', 'cut', 'sort', 'uniq'],
       say: { grep: bi('Все четыре процесса уже запущены и ждут, когда к ним придут данные.', 'All four processes are already running and wait for data to arrive.') },
       states: startWith('log', 'grep', 'cut', 'sort', 'uniq'),
-      values: { log: `${n.lines} lines`, grep: 'PID 3101', cut: 'PID 3102', sort: 'PID 3103', uniq: p.sorted ? 'PID 3104' : 'PID 3104 (no sort)' },
+      values: { log: lines(n.lines), grep: 'PID 3101', cut: 'PID 3102', sort: 'PID 3103', uniq: 'PID 3104' },
       fill: { p1: 0, p2: 0, p3: 0 },
       metrics: { lines: n.lines, matched: 0, distinct: 0, printed: 0 },
     });
@@ -331,7 +353,7 @@ export const pipeModel = defineModel<P>({
         reveal: ['e-r2'],
         tokens: [{ edge: 'e-r2', label: fmt(bi('{m} адресов', '{m} addresses'), { m: n.matched }) }],
         say: { sort: fmt(bi('Программа sort держит у себя {m} адресов и ждёт конца данных.', 'sort holds {m} addresses and waits for the end of data.'), { m: n.matched }) },
-        values: { p2: '0 / 64 KiB', sort: `${n.matched} lines held` },
+        values: { p2: '0 / 64 KiB', sort: lines(n.matched) },
         fill: { p2: 0 },
         metrics: { lines: n.lines, matched: n.matched, distinct: n.distinct, printed: 0 },
       });
@@ -400,7 +422,7 @@ export const pipeModel = defineModel<P>({
       tokens: [{ edge: 'e-out', label: n.printed ? `${n.topCount} ${n.top}` : bi('пусто', 'empty') }],
       say: { tty: n.printed ? fmt(bi('На экране {p} строк, и в каждой стоит число ошибок и адрес.', 'The screen shows {p} lines, each with a count of errors and an address.'), { p: n.printed }) : bi('На экране ничего не появилось, потому что до uniq не дошло ни одной строки.', 'Nothing appeared on the screen, because not a single line reached uniq.') },
       states: { uniq: 'off', tty: 'on' },
-      values: { tty: n.printed ? `${n.printed} lines` : '(empty)' },
+      values: { tty: n.printed ? lines(n.printed) : '' },
       metrics: { lines: n.lines, matched: n.matched, distinct: n.distinct, printed: n.printed },
     });
     return steps;
