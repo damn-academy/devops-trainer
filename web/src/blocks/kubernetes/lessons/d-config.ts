@@ -18,8 +18,8 @@ export const configQuiz: QuizItem[] = [
       { id: 'plain', text: bi('По умолчанию значения хранятся в etcd незашифрованными', 'By default the values are stored unencrypted in etcd'), correct: true },
       { id: 'read', text: bi('Любой, кто может читать объекты Secret в namespace, видит их значения', 'Anyone who may read Secrets in a namespace sees the values'), correct: true },
       { id: 'rbac', text: bi('Доступ к Secret можно ограничить правами (RBAC)', 'Access to Secrets can be restricted with permissions (RBAC)'), correct: true },
-      { id: 'b64', text: bi('base64 шифрует значения', 'base64 encrypts the values'), why: bi('base64 — только способ записать байты текстом, и команда `base64 -d` вернёт исходное значение любому.', 'base64 is only a way to write bytes as text; `base64 -d` gives the original back to anyone.') },
-      { id: 'file', text: bi('Secret нельзя смонтировать как файл', 'A Secret cannot be mounted as a file'), why: bi('Можно: том типа secret показывает каждый ключ отдельным файлом.', 'It can: a secret volume shows every key as a separate file.') },
+      { id: 'b64', text: bi('base64 шифрует значения', 'base64 encrypts the values'), why: bi('base64 только записывает байты текстом, и команда `base64 -d` вернёт исходное значение любому.', 'base64 is only a way to write bytes as text; `base64 -d` gives the original back to anyone.') },
+      { id: 'file', text: bi('Secret нельзя смонтировать как файл', 'A Secret cannot be mounted as a file'), why: bi('Смонтировать можно, потому что том типа secret показывает каждый ключ отдельным файлом.', 'It can: a secret volume shows every key as a separate file.') },
     ],
     explain: bi('Шифрование данных в etcd включают отдельно (encryption at rest), а доступ к Secret ограничивают правами.', 'Encryption in etcd is enabled separately (encryption at rest), and access is restricted with permissions.'),
   },
@@ -41,7 +41,7 @@ export const configQuiz: QuizItem[] = [
     prompt: bi('Под ссылается на ConfigMap `web-config`, которого нет. Какой статус покажет под?', 'A pod refers to ConfigMap `web-config`, which does not exist. What will its status be?'),
     options: [
       { id: 'cfg', text: 'CreateContainerConfigError', correct: true },
-      { id: 'crash', text: 'CrashLoopBackOff', why: bi('Контейнер даже не создан: kubelet не может собрать для него окружение.', 'The container is not even created: the kubelet cannot build its environment.') },
+      { id: 'crash', text: 'CrashLoopBackOff', why: bi('Контейнер даже не создан, потому что kubelet не может собрать для него окружение.', 'The container is not even created: the kubelet cannot build its environment.') },
       { id: 'pending', text: 'Pending', why: bi('Под уже назначен на узел, и застрял он на kubelet, а не на планировщике.', 'The pod is already assigned to a node; it is stuck at the kubelet, not at the scheduler.') },
     ],
   },
@@ -50,7 +50,7 @@ export const configQuiz: QuizItem[] = [
 export const configLesson: Lesson = {
   id: 'k8s-1.config',
   block: 'k8s-1',
-  title: bi('Конфигурация: ConfigMap, Secret и тома', 'Configuration: ConfigMaps, Secrets and volumes'),
+  title: bi('Как передать приложению настройки через ConfigMap, Secret и тома', 'Configuration: ConfigMaps, Secrets and volumes'),
   summary: bi('Как передать поду настройки отдельно от образа: переменные окружения и файлы, том emptyDir и почему base64 ничего не шифрует.', 'Settings separate from the image: environment variables and files, emptyDir, what base64 does not encrypt.'),
   introduces: ['k8s.configmap', 'k8s.secret', 'k8s.volume'],
   uses: ['k8s.pod', 'k8s.deployment', 'k8s.kubelet', 'k8s.etcd'],
@@ -122,7 +122,7 @@ export const configLesson: Lesson = {
       kind: 'docs',
       step: 'practice',
       mode: 'find',
-      prompt: bi('Сделайте ConfigMap `web-config` неизменяемым: любая попытка поменять его данные должна отклоняться API-сервером. В уроке этого поля не было.', 'Make ConfigMap `web-config` immutable: any attempt to change its data must be rejected by the API server. The lesson did not cover it.'),
+      prompt: bi('Сделайте ConfigMap `web-config` неизменяемым, чтобы API-сервер отклонял любую попытку поменять его данные. В уроке об этом поле не рассказывали.', 'Make ConfigMap `web-config` immutable: any attempt to change its data must be rejected by the API server. The lesson did not cover it.'),
       ref: { page: 'explain/configmap' },
       terminal: {
         setup: { hostname: 'laptop', ext: { k8s: { manifests: ['apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: web-config\ndata:\n  GREETING: Привет\n'] } } },
@@ -175,7 +175,7 @@ export const healthQuiz: QuizItem[] = [
     options: [
       { id: 'req', text: bi('64Mi, то есть только requests', '64Mi — only the requests'), correct: true },
       { id: 'use', text: bi('700 МБ, то есть реальное потребление', '700 MB — the real usage'), why: bi('Планировщик не смотрит на потребление, и поэтому узлы переполняются, если requests занижены.', 'The scheduler does not look at usage; that is how nodes get overfull when requests are too low.') },
-      { id: 'lim', text: bi('1Gi — limits', '1Gi — the limits'), why: bi('limits соблюдает ядро на узле, а планировщику они не нужны.', 'The kernel on the node enforces limits; the scheduler does not need them.') },
+      { id: 'lim', text: bi('1Gi, то есть limits', '1Gi, that is, the limits'), why: bi('limits соблюдает ядро на узле, а планировщику они не нужны.', 'The kernel on the node enforces limits; the scheduler does not need them.') },
     ],
   },
   {
@@ -196,7 +196,7 @@ export const healthQuiz: QuizItem[] = [
 export const healthLesson: Lesson = {
   id: 'k8s-1.health',
   block: 'k8s-1',
-  title: bi('Здоровье и ресурсы: проверки контейнера, requests и limits', 'Health and resources: probes, requests and limits'),
+  title: bi('Как кластер проверяет здоровье контейнера и делит между контейнерами ресурсы', 'How the cluster checks a container’s health and shares resources between containers'),
   summary: bi('Проверки жизнеспособности, готовности и запуска; requests для планировщика и limits для ядра; что означают CrashLoopBackOff и OOMKilled.', 'liveness, readiness and startup; requests for the scheduler and limits for the kernel; CrashLoopBackOff and OOMKilled.'),
   introduces: ['k8s.probe', 'k8s.resources', 'k8s.crashloop'],
   uses: ['k8s.kubelet', 'k8s.scheduler', 'k8s.endpointslice', 'k8s.service'],
@@ -218,9 +218,9 @@ export const healthLesson: Lesson = {
       id: 'resources',
       kind: 'text',
       step: 'explain',
-      title: bi('requests — для планировщика, limits — для ядра', 'requests for the scheduler, limits for the kernel'),
+      title: bi('requests нужны планировщику, а limits нужны ядру', 'requests serve the scheduler, limits serve the kernel'),
       body: bi(
-        'Для каждого контейнера можно задать [[k8s.resources|requests и limits]] по процессору и памяти. Это два разных числа для двух разных потребителей.\n\n**requests** — это сколько контейнер просит. По ним работает планировщик: под попадёт на узел, только если запросы подов, которые там уже работают, вместе с запросом нового пода помещаются в память и процессор узла, отданные подам (allocatable). Ядро запрос памяти никак не ограничивает.\n\n**limits** — это потолок, и следит за ним ядро с помощью тех самых cgroup из блока Linux. `limits.memory: 256Mi` превращается в `memory.max = 268435456` в cgroup контейнера. Если контейнер превысит этот потолок, OOM killer ядра завершит процесс, и в `kubectl describe` появится `Reason: OOMKilled` и код 137. `limits.cpu: 500m` превращается в `cpu.max = 50000 100000`, то есть 50 мс процессорного времени из каждых 100 мс. Превышение по процессору процесс не завершает, а только притормаживает (throttling).\n\nИз сочетания requests и limits получается класс качества обслуживания (QoS): Guaranteed, когда requests равны limits у всех контейнеров, Burstable, когда задано хоть что-то, и BestEffort, когда не задано ничего. Когда на узле не хватает памяти, kubelet выселяет сначала поды BestEffort, а потом Burstable.',
+        'Для каждого контейнера можно задать [[k8s.resources|requests и limits]] по процессору и памяти. Это два разных числа для двух разных потребителей.\n\n**requests** говорят, сколько ресурсов контейнер просит. По ним работает планировщик: под попадёт на узел, только если запросы подов, которые там уже работают, вместе с запросом нового пода помещаются в память и процессор узла, отданные подам (allocatable). Ядро запрос памяти никак не ограничивает.\n\n**limits** задают потолок, и следит за ним ядро с помощью тех самых cgroup из блока Linux. `limits.memory: 256Mi` превращается в `memory.max = 268435456` в cgroup контейнера. Если контейнер превысит этот потолок, OOM killer ядра завершит процесс, и в `kubectl describe` появится `Reason: OOMKilled` и код 137. `limits.cpu: 500m` превращается в `cpu.max = 50000 100000`, то есть 50 мс процессорного времени из каждых 100 мс. Превышение по процессору процесс не завершает, а только притормаживает (throttling).\n\nИз сочетания requests и limits получается класс качества обслуживания (QoS): Guaranteed, когда requests равны limits у всех контейнеров, Burstable, когда задано хоть что-то, и BestEffort, когда не задано ничего. Когда на узле не хватает памяти, kubelet выселяет сначала поды BestEffort, а потом Burstable.',
         'Every container can have [[k8s.resources|requests and limits]] for CPU and memory. They are two different numbers for two different consumers.\n\n**requests** is how much the container asks for. The scheduler plans by them: a pod goes onto a node only if the sum of the requests of the pods already there plus its own fits into allocatable. The kernel does not limit memory by requests.\n\n**limits** is the ceiling, and the kernel enforces it — the very cgroups of the Linux block. `limits.memory: 256Mi` turns into `memory.max = 268435456` in the container cgroup. Exceed it and the OOM killer kills the process: `kubectl describe` shows `Reason: OOMKilled`, code 137. `limits.cpu: 500m` is `cpu.max = 50000 100000`: 50 ms out of every 100 ms. Exceeding CPU does not kill, it slows down (throttling).\n\nThe combination gives a QoS class: Guaranteed (requests = limits everywhere), Burstable (something is set), BestEffort (nothing). When a node runs short of memory, the kubelet evicts BestEffort first, then Burstable.',
       ),
     },
@@ -244,7 +244,7 @@ export const healthLesson: Lesson = {
         },
         {
           id: 'ready',
-          prompt: bi('Service `shop` не получает запросов: поды в состоянии Running, но не готовы. Найдите причину и почините Deployment так, чтобы оба пода стали готовыми.', 'Service `shop` gets no traffic: the pods are Running but not Ready. Find the cause and fix the Deployment so that both pods become ready.'),
+          prompt: bi('Service `shop` не получает запросов, потому что поды находятся в состоянии Running, но не готовы. Найдите причину и почините Deployment так, чтобы оба пода стали готовыми.', 'Service `shop` gets no traffic: the pods are Running but not Ready. Find the cause and fix the Deployment so that both pods become ready.'),
           check: { when: 'k8s.deployments[name=shop].ready=2 && k8s.services[name=shop].endpoints=2' },
           chips: 'kubectl describe pod -l app=shop | grep Readiness',
           concepts: ['k8s.probe'],
@@ -275,10 +275,10 @@ export const helmQuiz: QuizItem[] = [
     id: 'k8s.q.helm.rollback',
     kind: 'mcq',
     concepts: ['k8s.helm'],
-    prompt: bi('У релиза `blog` ревизия 1 — установка, а ревизия 2 — неудачное обновление. Что создаст команда `helm rollback blog 1`?', 'Release `blog`: revision 1 — install, revision 2 — a failed upgrade. What does `helm rollback blog 1` create?'),
+    prompt: bi('У релиза `blog` ревизия 1 соответствует установке, а ревизия 2 — неудачному обновлению. Что создаст команда `helm rollback blog 1`?', 'Release `blog`: revision 1 — install, revision 2 — a failed upgrade. What does `helm rollback blog 1` create?'),
     options: [
       { id: 'three', text: bi('Ревизию 3 с содержимым ревизии 1', 'Revision 3 with the contents of revision 1'), correct: true },
-      { id: 'delete', text: bi('Удалит ревизию 2 и вернёт номер 1', 'Delete revision 2 and go back to number 1'), why: bi('История в Helm только растёт: откат — это новая ревизия, так же как у Deployment.', 'History in Helm only grows: a rollback is a new revision, as with a Deployment.') },
+      { id: 'delete', text: bi('Удалит ревизию 2 и вернёт номер 1', 'Delete revision 2 and go back to number 1'), why: bi('История в Helm только растёт, потому что откат создаёт новую ревизию, так же как у Deployment.', 'History in Helm only grows: a rollback is a new revision, as with a Deployment.') },
     ],
   },
   {
@@ -288,7 +288,7 @@ export const helmQuiz: QuizItem[] = [
     prompt: bi('Где Helm 3 хранит историю релиза?', 'Where does Helm 3 keep the history of a release?'),
     options: [
       { id: 'secret', text: bi('В объектах Secret с именами sh.helm.release.v1.<релиз>.v<N> в namespace релиза', 'In Secrets sh.helm.release.v1.<release>.v<N> in the release namespace'), correct: true },
-      { id: 'tiller', text: bi('В сервере Tiller в namespace kube-system', 'In the Tiller server in kube-system'), why: bi('Tiller был в Helm 2 и удалён в Helm 3: теперь Helm — только клиент, а состояние хранится в кластере.', 'Tiller was in Helm 2 and removed in Helm 3: Helm is now only a client, and the state lives in the cluster.') },
+      { id: 'tiller', text: bi('В сервере Tiller в namespace kube-system', 'In the Tiller server in kube-system'), why: bi('Tiller был в Helm 2 и удалён в Helm 3. Теперь Helm работает только как клиент, а состояние хранится в кластере.', 'Tiller was in Helm 2 and removed in Helm 3: Helm is now only a client, and the state lives in the cluster.') },
       { id: 'local', text: bi('В каталоге ~/.helm на компьютере того, кто устанавливал релиз', 'In ~/.helm on the machine of whoever installed it'), why: bi('Тогда коллега не увидел бы вашего релиза, а история хранится в самом кластере.', 'Then a colleague would not see your release; the history is kept in the cluster itself.') },
     ],
   },
@@ -297,7 +297,7 @@ export const helmQuiz: QuizItem[] = [
 export const helmLesson: Lesson = {
   id: 'k8s-1.helm',
   block: 'k8s-1',
-  title: bi('Helm: манифесты как пакет', 'Helm: manifests as a package'),
+  title: bi('Как Helm собирает манифесты в пакет', 'Helm: manifests as a package'),
   summary: bi('Что такое чарт, values и релиз, как работают install, upgrade и rollback и где Helm хранит историю.', 'A chart, values and a release; install, upgrade and rollback; where Helm keeps the history.'),
   introduces: ['k8s.helm', 'k8s.chart'],
   uses: ['k8s.deployment', 'k8s.service', 'k8s.configmap', 'k8s.secret', 'k8s.revision'],

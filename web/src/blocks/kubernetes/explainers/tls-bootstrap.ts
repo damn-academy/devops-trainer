@@ -35,7 +35,7 @@ const diagram = {
     box('nodeobj', 'Node worker-1', 'obj', 'doc', [24, 400, 230, 56], 'file', bi('Объект Node, который kubelet регистрирует уже со своим собственным сертификатом.', 'The Node object, registered with the new certificate.'), bi('Регистрирует kubelet.', 'The kubelet.'), { see: 'kubectl get nodes -o wide' }),
   ],
   edges: [
-    edge('e-get', 'join', 'ci', bi('читает без входа', 'reads anonymously'), bi('Первый запрос узла: прочитать cluster-info без всякой проверки.', 'The first request: read cluster-info with no authentication.'), bi('Запрос отправляет kubeadm join.', 'kubeadm join.')),
+    edge('e-get', 'join', 'ci', bi('читает без входа', 'reads anonymously'), bi('Первым запросом узел без всякой проверки читает cluster-info.', 'The first request: read cluster-info with no authentication.'), bi('Запрос отправляет kubeadm join.', 'kubeadm join.')),
     edge('e-pin', 'ci', 'join', bi('центр и подпись', 'CA and signature'), bi('Узел сверяет хеш открытого ключа центра со значением --discovery-token-ca-cert-hash, а подпись JWS — с токеном.', 'The node checks the CA hash and the JWS signature.'), bi('Проверяет kubeadm join.', 'kubeadm join.'), { via: [[400, 84], [109, 84]], labelAt: 0.5 }),
     edge('e-tok', 'tok', 'ci', bi('подпись JWS', 'JWS signature'), bi('Токен подписывает cluster-info, и тот, кто знает токен, может убедиться, что ConfigMap не подменили.', 'The token signs cluster-info, proving it was not swapped.'), bi('Подписывает контроллер bootstrapsigner.', 'The bootstrapsigner controller.')),
     edge('e-auth', 'klet', 'api', bi('вход по токену', 'log in with the token'), bi('kubelet представляется пользователем system:bootstrap:<id> из группы system:bootstrappers.', 'The kubelet logs in as system:bootstrap:<id>.'), bi('Входит kubelet.', 'The kubelet.'), { via: [[310, 325], [310, 198]], labelAt: 0.5 }),
@@ -57,8 +57,8 @@ export const tlsBootstrapModel = defineModel<P>({
     'Trust is built in steps: the CA hash protects the node, the token protects the cluster, and a CSR gives the kubelet its own certificate.',
   ),
   intro: bi(
-    'Сейчас на схеме команда kubeadm join на новом узле и публичный ConfigMap cluster-info. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд»: каждый шаг добавляет одно звено цепочки доверия, а карточка на линии показывает, что передаётся: хеш, токен, заявка, сертификат. Потом сдвиньте в «Параметрах» время после init дальше срока токена, а в блоке «Сломать» ошибитесь в хеше или выключите автоматическое одобрение заявок.',
-    'For now: kubeadm join on the new node and the public cluster-info. Press “Start: step forward” and go on with “Step forward”: each step adds one link of trust, and the card shows what is handed on. Then move the time past the token’s lifetime, and break the hash or the auto-approval.',
+    'Сейчас на схеме команда kubeadm join на новом узле и публичный ConfigMap cluster-info. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Каждый шаг добавляет одно звено цепочки доверия, а карточка на линии показывает, что передаётся по линии: хеш, токен, заявка или сертификат. Потом сдвиньте в «Параметрах» время после init дальше срока токена, а в блоке «Сломать» ошибитесь в хеше или выключите автоматическое одобрение заявок.',
+    'For now: kubeadm join on the new node and the public cluster-info. Press “Start from the first step” and go on with “Step forward”: each step adds one link of trust, and the card shows what is handed on. Then move the time past the token’s lifetime, and break the hash or the auto-approval.',
   ),
   legend: [
     ...LEGEND_BASE,
@@ -85,7 +85,7 @@ export const tlsBootstrapModel = defineModel<P>({
       group: bi('Токен присоединения', 'The bootstrap token'),
       predict: { prompt: bi('Вы присоединяете узел той же командой join через выбранное число часов после init. Что будет?', 'You join with the same command after the chosen hours. What happens?'), options: [{ id: 'expired', text: bi('Токен истёк, и join откажет', 'The token has expired: join fails') }, { id: 'ok', text: bi('Узел присоединится', 'The node joins') }], resolve: (_p, n) => (n.some((s) => s.broken) ? 'expired' : 'ok') },
     },
-    { id: 'ttl', label: bi('Сколько часов действует токен (0 — без срока)', 'Token lifetime, hours (0: forever)'), kind: 'range', min: 0, max: 48, step: 12, default: 24, near: 'tok', levels: ['intermediate', 'experienced'], group: bi('Токен присоединения', 'The bootstrap token') },
+    { id: 'ttl', label: bi('Сколько часов действует токен (ноль означает, что срока нет)', 'Token lifetime, hours (0: forever)'), kind: 'range', min: 0, max: 48, step: 12, default: 24, near: 'tok', levels: ['intermediate', 'experienced'], group: bi('Токен присоединения', 'The bootstrap token') },
     {
       id: 'pin',
       label: bi('Как узел проверяет центр сертификации кластера', 'How the node checks the cluster CA'),
@@ -98,7 +98,7 @@ export const tlsBootstrapModel = defineModel<P>({
         { id: 'hash', label: bi('сверяет хеш (--discovery-token-ca-cert-hash)', 'checks the hash') },
         { id: 'skip', label: bi('не проверяет (--discovery-token-unsafe-skip-ca-verification)', 'skips the check') },
       ],
-      predict: { prompt: bi('Без проверки хеша join тоже проходит. Чем это опасно?', 'Without the hash join passes too. What is the danger?'), options: [{ id: 'mitm', text: bi('Узел поверит любому серверу, который подсунет свой центр сертификации', 'The node trusts any server with its own CA') }, { id: 'none', text: bi('Ничем: токен всё равно секретный', 'None: the token is secret') }], resolve: () => 'mitm' },
+      predict: { prompt: bi('Без проверки хеша join тоже проходит. Чем это опасно?', 'Without the hash join passes too. What is the danger?'), options: [{ id: 'mitm', text: bi('Узел поверит любому серверу, который подсунет свой центр сертификации', 'The node trusts any server with its own CA') }, { id: 'none', text: bi('Ничем, потому что токен всё равно секретный', 'None: the token is secret') }], resolve: () => 'mitm' },
     },
   ],
   breaks: [
@@ -132,12 +132,12 @@ export const tlsBootstrapModel = defineModel<P>({
       s.push({
         id: 'pinfail',
         label: bi('хеш', 'hash'),
-        caption: bi('Хеш ключа центра сертификации не совпал с тем, что вы передали, и узел отказывается верить этому серверу. Так и задумано: иначе узел можно было бы подключить к чужому кластеру.', 'The hash does not match: the node refuses to trust the server. That is the design.'),
+        caption: bi('Хеш ключа центра сертификации не совпал с тем, что вы передали, и узел отказывается верить этому серверу. Так и задумано, потому что иначе узел можно было бы подключить к чужому кластеру.', 'The hash does not match: the node refuses to trust the server. That is the design.'),
         focus: ['join', 'e-pin'],
         reveal: ['e-pin'],
         say: { join: bi('join сравнивает хеш ключа центра и видит, что он другой.', 'join compares the hash and sees a different one.') },
         states: { join: 'err' },
-        broken: { at: 'join', message: 'error execution phase preflight: couldn\'t validate the identity of the API Server: cluster CA found in cluster-info ConfigMap is invalid: none of the public keys "sha256:9f1c…" are pinned', caption: bi('на проверке кластера. Скопируйте хеш заново: на cp-1 его печатает команда `openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der | sha256sum`.', 'at the cluster check: copy the hash again with the openssl pipeline on cp-1.') },
+        broken: { at: 'join', message: 'error execution phase preflight: couldn\'t validate the identity of the API Server: cluster CA found in cluster-info ConfigMap is invalid: none of the public keys "sha256:9f1c…" are pinned', caption: bi('на проверке кластера. Скопируйте хеш заново. На cp-1 его печатает команда `openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der | sha256sum`.', 'at the cluster check: copy the hash again with the openssl pipeline on cp-1.') },
       });
       return s;
     }
@@ -234,7 +234,7 @@ export const tlsBootstrapModel = defineModel<P>({
     return s;
   },
   explainDelta(_prev, _next, change, _a, b): Bi {
-    if (change.kind === 'break') return change.on ? bi('Одно звено цепочки доверия выпало: посмотрите, кто это замечает и каким сообщением.', 'One link of trust is gone: see who notices and how.') : bi('Цепочка доверия снова цела.', 'The chain of trust is whole again.');
+    if (change.kind === 'break') return change.on ? bi('Из цепочки доверия выпало одно звено. Посмотрите, кто это замечает и каким сообщением.', 'One link of trust is gone: see who notices and how.') : bi('Цепочка доверия снова цела.', 'The chain of trust is whole again.');
     if (change.id === 'pin') return b.pin === 'skip' ? bi('Без хеша узел не может отличить свой кластер от подставного.', 'Without the hash the node cannot tell a fake cluster.') : bi('Хеш закрепляет центр сертификации, и незаметно подменить сервер нельзя.', 'The hash pins the CA.');
     return tokenValid(Number(b.hours), Number(b.ttl)) ? bi('Токен ещё действует, и join пройдёт.', 'The token is still valid.') : bi('Токен истёк, и нужен новый: kubeadm token create.', 'The token has expired: kubeadm token create.');
   },

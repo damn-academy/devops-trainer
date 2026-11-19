@@ -37,9 +37,9 @@ const diagram = {
   height: 470,
   nodes: [
     box('nlc', bi('Контроллер узлов', 'Node lifecycle controller'), 'cp', 'hex', [40, 30, 230, 56], 'process', bi('Контроллер, который каждые пять секунд проверяет отметку о жизни (Lease) каждого узла. Если отметку давно не продлевали, он помечает узел как недоступный.', 'Checks every node’s Lease every 5 s and marks silent nodes unreachable.'), CM, { see: 'kubectl get nodes -w', doc: D.nodes }),
-    box('api', 'kube-apiserver', 'cp', 'hex', [370, 30, 220, 56], 'server', bi('Хранит объекты Lease, Node и поды. Сам API-сервер ничего не решает: решения принимают контроллеры, а он их записывает.', 'Stores Leases, Nodes and pods; it decides nothing.'), bi('Работает на управляющем узле.', 'Runs on the control-plane node.'), { doc: D.apiserver }),
+    box('api', 'kube-apiserver', 'cp', 'hex', [370, 30, 220, 56], 'server', bi('API-сервер хранит объекты Lease, Node и поды, но сам ничего не решает. Решения принимают контроллеры, а API-сервер их только записывает.', 'Stores Leases, Nodes and pods; it decides nothing.'), bi('Работает на управляющем узле.', 'Runs on the control-plane node.'), { doc: D.apiserver }),
     box('rs', bi('Контроллер ReplicaSet', 'ReplicaSet controller'), 'cp', 'hex', [700, 30, 230, 56], 'process', bi('Видит, что готовых подов меньше, чем нужно (поды, помеченные к удалению, он не считает), и создаёт новые.', 'Sees fewer pods than desired (pods marked for deletion do not count) and creates new ones.'), CM, { see: 'kubectl get rs web', doc: D.rs }),
-    box('lease', bi('Lease узла worker-2', 'Lease of worker-2'), 'obj', 'doc', [370, 140, 220, 74], 'file', bi('Отметка о жизни узла: объект в namespace kube-node-lease, у которого kubelet каждые 10 секунд обновляет время renewTime. Это и есть сердцебиение узла.', 'An object in kube-node-lease whose renewTime the kubelet updates every 10 s: the node’s heartbeat.'), bi('Продлевает kubelet узла worker-2.', 'Renewed by the worker-2 kubelet.'), { see: 'kubectl get lease -n kube-node-lease', doc: D.nodes, sub: 'renewed 0s ago' }),
+    box('lease', bi('Lease узла worker-2', 'Lease of worker-2'), 'obj', 'doc', [370, 140, 220, 74], 'file', bi('Объект Lease служит отметкой о том, что узел жив. Он лежит в namespace kube-node-lease, и kubelet каждые 10 секунд обновляет в нём время renewTime. Это и есть сердцебиение узла.', 'An object in kube-node-lease whose renewTime the kubelet updates every 10 s: the node’s heartbeat.'), bi('Продлевает kubelet узла worker-2.', 'Renewed by the worker-2 kubelet.'), { see: 'kubectl get lease -n kube-node-lease', doc: D.nodes, sub: 'renewed 0s ago' }),
     box('w1', 'worker-1', 'node', 'rack', [40, 290, 260, 110], 'server', bi('Исправный узел, на котором работает под web-a.', 'A healthy node running web-a.'), NODE, { see: 'kubectl get pods -o wide', doc: D.nodes, sub: 'web-a Running' }),
     box('w2', 'worker-2', 'node', 'rack', [350, 290, 260, 110], 'server', bi('Узел, у которого выключилось питание. Его процессы остановились сразу, но кластер узнаёт об этом не сразу, а только по молчанию kubelet.', 'The node that lost power: its processes stopped at once, but the cluster learns of it only from the kubelet’s silence.'), NODE, { see: 'kubectl describe node worker-2', doc: D.nodes, sub: 'web-b Running' }),
     box('w3', 'worker-3', 'node', 'rack', [660, 290, 260, 110], 'server', bi('Исправный узел, на котором работает под web-c. На этот узел планировщик поставит замену.', 'A healthy node; the replacement lands here.'), NODE, { doc: D.nodes, sub: 'web-c Running' }),
@@ -64,8 +64,8 @@ export const nodeDownModel = defineModel<P>({
     'Nobody is told “the node is gone”. A controller notices the missing heartbeat, waits, marks the node, waits again, and only then the pods move. The counter shows the requests lost meanwhile.',
   ),
   intro: bi(
-    'Сейчас на схеме три узла и отметка о жизни узла worker-2. Нажмите «Начать: шаг вперёд»: у worker-2 выключится питание, и дальше каждый шаг — это момент времени, подписанный на шкале. Контроллеры появятся, когда начнут действовать. Потом меняйте в «Параметрах» таймеры кластера и момент, когда узел снова включают, и следите за счётчиком потерянных запросов.',
-    'For now: three nodes and worker-2’s Lease. Press “Start: step forward”: worker-2 loses power, and each step is a moment in time. Then change the timers and when the node comes back, and watch the lost-request counter.',
+    'Сейчас на схеме три узла и отметка о жизни узла worker-2. Нажмите «Начать с первого шага». У worker-2 выключится питание, и дальше каждый шаг будет моментом времени, подписанным на шкале. Контроллеры появятся, когда начнут действовать. Потом меняйте в «Параметрах» таймеры кластера и момент, когда узел снова включают, и следите за счётчиком потерянных запросов.',
+    'For now: three nodes and worker-2’s Lease. Press “Start from the first step”: worker-2 loses power, and each step is a moment in time. Then change the timers and when the node comes back, and watch the lost-request counter.',
   ),
   legend: [
     ...LEGEND_BASE,
@@ -117,7 +117,7 @@ export const nodeDownModel = defineModel<P>({
       predict: {
         prompt: bi('Узел worker-2 снова включили в выбранный момент. Где после этого будет работать замена пода web-b?', 'worker-2 comes back at the chosen moment. Where will web-b’s replacement run?'),
         options: [
-          { id: 'stay', text: bi('Переезда не было: web-b снова работает на worker-2', 'There was no move: web-b runs on worker-2 again') },
+          { id: 'stay', text: bi('Переезда не было, и web-b снова работает на worker-2', 'There was no move: web-b runs on worker-2 again') },
           { id: 'moved', text: bi('Под уже переехал на worker-3, а старый kubelet остановит сам', 'It has moved to worker-3; the kubelet stops the old one') },
         ],
         resolve: (_p, n) => (n.some((s) => s.id === 'evict') ? 'moved' : 'stay'),
@@ -127,7 +127,7 @@ export const nodeDownModel = defineModel<P>({
   breaks: [
     {
       id: 'no-cm',
-      label: bi('kube-controller-manager остановлен: контроллеры узлов и ReplicaSet не работают', 'kube-controller-manager is stopped'),
+      label: bi('kube-controller-manager остановлен, и контроллеры узлов и ReplicaSet не работают', 'kube-controller-manager is stopped'),
       remove: ['nlc', 'rs', 'e-check', 'e-taint', 'e-create'],
       boundary: 'process',
       predict: { prompt: bi('kube-controller-manager остановлен, а worker-2 выключился. Когда узел пометят недоступным?', 'controller-manager is stopped and worker-2 went down. When is the node marked unreachable?'), options: [{ id: 'never', text: bi('Никогда, и запросы на него так и будут пропадать', 'Never; requests keep being lost') }, { id: 'grace', text: bi('Через тот же срок, что и обычно', 'After the usual period') }], resolve: () => 'never' },
@@ -157,7 +157,7 @@ export const nodeDownModel = defineModel<P>({
     s.push({
       id: 'silence',
       label: 't = 10',
-      caption: bi('Прошло десять секунд, и очередное продление Lease не пришло. Никто пока ничего не делает: одно пропущенное сердцебиение ещё не повод считать узел потерянным, ведь это мог быть короткий сбой сети.', 'The next renewal did not come. Nobody acts yet: one missed heartbeat may be a network glitch.'),
+      caption: bi('Прошло десять секунд, и очередное продление Lease не пришло. Никто пока ничего не делает, потому что одно пропущенное сердцебиение ещё не повод считать узел потерянным, ведь это мог быть короткий сбой сети.', 'The next renewal did not come. Nobody acts yet: one missed heartbeat may be a network glitch.'),
       focus: ['lease', 'e-renew'],
       say: { lease: bi('Lease узла worker-2 не продлевали уже 10 секунд.', 'The Lease has not been renewed for 10 s.') },
       states: { 'e-renew': 'off' },
@@ -267,8 +267,8 @@ export const nodeDownModel = defineModel<P>({
         return b.back === 'never'
           ? bi('Узел не включают, и поды переезжают по таймерам.', 'The node never returns: the pods move on the timers.')
           : next.some((s) => s.id === 'evict')
-            ? bi('Узел включили поздно: поды уже переехали, и kubelet останавливает старые.', 'Too late: the pods have moved; the kubelet stops the old ones.')
-            : bi('Узел включили рано, и переезжать никому не пришлось.', 'Early enough: nothing moved.');
+            ? bi('Узел включили поздно, когда замена подов уже работала на других узлах, поэтому kubelet останавливает старые поды.', 'Too late: the pods have moved; the kubelet stops the old ones.')
+            : bi('Узел включили рано, и переносить поды на другие узлы не пришлось.', 'Early enough: nothing moved.');
     }
     return bi('Пересчитано.', 'Recomputed.');
   },

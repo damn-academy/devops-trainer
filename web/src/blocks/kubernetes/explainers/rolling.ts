@@ -123,7 +123,7 @@ const diagram = {
     box('you', bi('Вы, kubectl', 'You, kubectl'), 'user', 'box', [24, 24, 230, 64], 'terminal', bi('Вы меняете образ в шаблоне пода, и с этого начинается выкатка новой версии.', 'You change the image in the pod template; this starts the rollout.'), bi('Команду набираете вы.', 'You type it.'), { see: 'kubectl rollout history deploy/web' }),
     box('deploy', bi('Deployment web', 'Deployment web'), 'obj', 'doc', [360, 24, 240, 80], 'file', bi('Объект Deployment хранит желаемое: сколько подов должно работать (replicas), шаблон пода и правила выкатки. Каждая смена шаблона, например нового образа, создаёт новую ревизию и новый ReplicaSet.', 'Holds replicas, the pod template and the rollout rules; a template change makes a new revision and a new ReplicaSet.'), bi('Объект создаёте вы командой `kubectl apply`.', 'You create it with `kubectl apply`.'), { see: 'kubectl get deploy web -o yaml', doc: D.deployment, sub: 'image 1.0' }),
     box('ctrl', bi('Контроллер Deployment', 'Deployment controller'), 'cp', 'hex', [380, 150, 200, 60], 'process', bi('На каждом шаге контроллер решает одно: добавить подов новому ReplicaSet, убрать подов у старого или подождать, пока новые поды станут готовы. Границы ему задают maxSurge и maxUnavailable.', 'At each step it decides: scale up the new ReplicaSet, scale down the old one, or wait for readiness, within maxSurge and maxUnavailable.'), CM, { see: 'kubectl rollout status deploy/web', doc: D.deployment }),
-    box('old', bi('Старый ReplicaSet, версия 1.0', 'Old ReplicaSet, 1.0'), 'obj', 'buffer', [40, 262, 320, 78], 'container', bi('ReplicaSet со старым шаблоном. Во время выкатки контроллер уменьшает число его подов до нуля, но сам объект оставляет: по нему работает откат командой `kubectl rollout undo`.', 'The ReplicaSet with the old template; scaled to zero but kept for `kubectl rollout undo`.'), bi('ReplicaSet создал контроллер Deployment при прошлой выкатке.', 'Created by the Deployment controller at the last rollout.'), { see: 'kubectl get rs', doc: D.rs, sub: '' }),
+    box('old', bi('Старый ReplicaSet, версия 1.0', 'Old ReplicaSet, 1.0'), 'obj', 'buffer', [40, 262, 320, 78], 'container', bi('ReplicaSet со старым шаблоном. Во время выкатки контроллер уменьшает число его подов до нуля, но сам объект оставляет, потому что по нему работает откат командой `kubectl rollout undo`.', 'The ReplicaSet with the old template; scaled to zero but kept for `kubectl rollout undo`.'), bi('ReplicaSet создал контроллер Deployment при прошлой выкатке.', 'Created by the Deployment controller at the last rollout.'), { see: 'kubectl get rs', doc: D.rs, sub: '' }),
     box('new', bi('Новый ReplicaSet, версия 1.1', 'New ReplicaSet, 1.1'), 'obj', 'buffer', [600, 262, 320, 78], 'container', bi('ReplicaSet с новым шаблоном. Число его подов растёт, но в расчёт границ под входит только тогда, когда стал готов (Ready).', 'The ReplicaSet with the new template; a pod counts only once it is Ready.'), bi('ReplicaSet создаёт контроллер Deployment в начале выкатки.', 'Created by the Deployment controller when the rollout starts.'), { see: 'kubectl get rs -w', doc: D.rs, sub: '' }),
     box('svc', bi('Service web', 'Service web'), 'l4', 'pill', [360, 396, 240, 56], 'switch', bi('Service отправляет запросы только на готовые поды, причём обоих ReplicaSet сразу. Поэтому во время выкатки пользователям отвечают и версия 1.0, и версия 1.1.', 'Sends requests only to Ready pods of both ReplicaSets, so during the rollout both versions answer.'), bi('Service создаёте вы.', 'You create it.'), { see: 'kubectl get endpointslices -l kubernetes.io/service-name=web', doc: D.service }),
   ],
@@ -149,8 +149,8 @@ export const rollingModel = defineModel<P>({
     'You change the image and the controller replaces old pods with new ones step by step, within two bounds: maxSurge (extra pods above replicas) and maxUnavailable (pods that may be unavailable).',
   ),
   intro: bi(
-    'Сейчас на схеме Deployment, старый ReplicaSet с четырьмя готовыми подами версии 1.0 и Service, который отправляет на них запросы. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд». Следите за счётчиком «готово в худший момент» под схемой: он показывает, сколько подов отвечало пользователям в самый неудачный момент выкатки. Потом меняйте в «Параметрах» границы выкатки и способ замены.',
-    'For now the diagram shows the Deployment, the old ReplicaSet with four Ready 1.0 pods and the Service sending them requests. Press “Start: step forward”, then go on with “Step forward”. Watch the counter “ready at the worst moment” under the diagram. Then change the rollout bounds and the strategy in “Parameters”.',
+    'Сейчас на схеме Deployment, старый ReplicaSet с четырьмя готовыми подами версии 1.0 и Service, который отправляет на них запросы. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Следите за счётчиком «готово в худший момент» под схемой, потому что он показывает, сколько подов отвечало пользователям в самый неудачный момент выкатки. Потом меняйте в «Параметрах» границы выкатки и способ замены.',
+    'For now the diagram shows the Deployment, the old ReplicaSet with four Ready 1.0 pods and the Service sending them requests. Press “Start from the first step”, then go on with “Step forward”. Watch the counter “ready at the worst moment” under the diagram. Then change the rollout bounds and the strategy in “Parameters”.',
   ),
   legend: [
     ...LEGEND_BASE,
@@ -174,14 +174,14 @@ export const rollingModel = defineModel<P>({
       default: 'RollingUpdate',
       group: bi('Deployment', 'The Deployment'),
       options: [
-        { id: 'RollingUpdate', label: bi('RollingUpdate: по нескольку подов за шаг', 'RollingUpdate: a few pods per step') },
-        { id: 'Recreate', label: bi('Recreate: сначала удалить все старые', 'Recreate: delete all old pods first') },
+        { id: 'RollingUpdate', label: bi('RollingUpdate, то есть по нескольку подов за шаг', 'RollingUpdate: a few pods per step') },
+        { id: 'Recreate', label: bi('Recreate, то есть сначала удалить все старые поды', 'Recreate: delete all old pods first') },
       ],
       near: 'ctrl',
       predict: {
         prompt: bi('Вы переключаете способ замены подов. Сколько подов будет отвечать пользователям в самый неудачный момент выкатки?', 'You switch the strategy. How many pods answer users at the worst moment?'),
         options: [
-          { id: 'zero', text: bi('Ни одного: какое-то время сайт не будет отвечать', 'None: for a while the site does not answer') },
+          { id: 'zero', text: bi('Ни одного, и какое-то время сайт не будет отвечать', 'None: for a while the site does not answer') },
           { id: 'some', text: bi('Хотя бы один под будет отвечать всё время', 'At least one pod answers all the time') },
         ],
         resolve: (_p, n) => (metric(n, 'minAvailable') === 0 ? 'zero' : 'some'),
@@ -202,7 +202,7 @@ export const rollingModel = defineModel<P>({
         options: [
           { id: 'up', text: bi('Сначала создаст поды новой версии', 'First it creates new pods') },
           { id: 'down', text: bi('Сначала уберёт старый под, потому что добавлять сверх replicas нельзя', 'First it removes an old pod, since nothing may be added on top') },
-          { id: 'invalid', text: bi('Никак: API-сервер не примет такой Deployment', 'It will not: the API server rejects the Deployment') },
+          { id: 'invalid', text: bi('Никак, потому что API-сервер не примет такой Deployment', 'It will not: the API server rejects the Deployment') },
         ],
         resolve: (_p, n) => (n.some((s) => s.broken && s.id.endsWith('invalid')) ? 'invalid' : firstMove(n) ?? 'up'),
       },
@@ -264,7 +264,7 @@ export const rollingModel = defineModel<P>({
     s.push({
       id: 'before',
       label: bi('до выкатки', 'before'),
-      caption: fmtb(bi('До выкатки всё спокойно: старый ReplicaSet держит {r} версии 1.0, все они готовы, и Service отправляет запросы пользователей на них.', 'Before the rollout the old ReplicaSet holds {r} of 1.0, all ready, and the Service sends requests to them.'), { r: num(R, ...PODS) }),
+      caption: fmtb(bi('До выкатки всё спокойно, и старый ReplicaSet держит {r} версии 1.0, все они готовы, и Service отправляет запросы пользователей на них.', 'Before the rollout the old ReplicaSet holds {r} of 1.0, all ready, and the Service sends requests to them.'), { r: num(R, ...PODS) }),
       focus: ['old', 'e-svc-old'],
       say: { old: fmtb(bi('Старый ReplicaSet держит {r} версии 1.0, и все они отвечают.', 'The old ReplicaSet holds {r} of 1.0, all answering.'), { r: num(R, ...PODS) }) },
       states: only(ALL, 'deploy', 'old', 'svc', 'e-svc-old'),
@@ -287,7 +287,7 @@ export const rollingModel = defineModel<P>({
       s.push({
         id: 'a0-invalid',
         label: bi('отказ', 'rejected'),
-        caption: bi('Оба параметра, maxSurge и maxUnavailable, равны нулю: контроллеру нельзя ни добавить под сверх replicas, ни убрать хотя бы один старый, и выкатка не смогла бы сделать ни шага. Поэтому API-сервер такой Deployment не принимает.', 'Both maxSurge and maxUnavailable are zero: no step is possible, so the API server rejects the Deployment.'),
+        caption: bi('Оба параметра, maxSurge и maxUnavailable, равны нулю, поэтому контроллеру нельзя ни добавить под сверх replicas, ни убрать хотя бы один старый, и выкатка не смогла бы сделать ни шага. Поэтому API-сервер такой Deployment не принимает.', 'Both maxSurge and maxUnavailable are zero: no step is possible, so the API server rejects the Deployment.'),
         focus: ['deploy'],
         say: { deploy: bi('API-сервер отклоняет Deployment, в котором обе границы выкатки равны нулю.', 'The API server rejects a Deployment with both bounds at zero.') },
         states: { deploy: 'err' },
@@ -319,11 +319,11 @@ export const rollingModel = defineModel<P>({
           caption:
             p.strategy === 'Recreate'
               ? fmt(bi('Старых подов не осталось, и только теперь контроллер создаёт {t} новых. Пока они не готовы, сайт не отвечает.', 'No old pods are left; only now the controller creates {t} new ones. Until they are ready, the site does not answer.'), { t: a.to! })
-              : fmt(bi('Контроллер добавляет поды новому ReplicaSet: было {f}, стало {t}. Всего подов теперь {n}, и больше быть не может, потому что граница равна replicas плюс maxSurge.', 'The controller scales the new ReplicaSet {f} → {t}; {n} pods in all, the most replicas + maxSurge allows.'), { f: a.from!, t: a.to!, n: a.oldR + a.newR }),
+              : fmt(bi('Контроллер увеличивает число подов нового ReplicaSet с {f} до {t}. Всего подов теперь {n}, и больше быть не может, потому что граница равна replicas плюс maxSurge.', 'The controller scales the new ReplicaSet {f} → {t}; {n} pods in all, the most replicas + maxSurge allows.'), { f: a.from!, t: a.to!, n: a.oldR + a.newR }),
           focus: ['ctrl', 'e-new', 'new'],
           reveal: ['e-new'],
           tokens: [{ edge: 'e-new', label: `replicas ${a.from} → ${a.to}` }],
-          say: { ctrl: fmt(bi('Контроллер добавляет новому ReplicaSet подов: было {f}, стало {t}.', 'The controller scales the new ReplicaSet {f} → {t}.'), { f: a.from!, t: a.to! }) },
+          say: { ctrl: fmt(bi('Контроллер увеличивает число подов нового ReplicaSet с {f} до {t}.', 'The controller scales the new ReplicaSet {f} → {t}.'), { f: a.from!, t: a.to! }) },
           values: vals(a),
           fill,
           states: { new: 'wait' },
@@ -336,11 +336,11 @@ export const rollingModel = defineModel<P>({
           caption:
             p.strategy === 'Recreate'
               ? bi('При способе Recreate контроллер сначала убирает все старые поды разом. С этого момента ни один под не отвечает пользователям.', 'With Recreate all old pods go at once; from now on no pod answers.')
-              : fmt(bi('Контроллер убирает поды у старого ReplicaSet: было {f}, стало {t}. Готово отвечать {a}, и меньше быть не может, потому что граница равна replicas минус maxUnavailable.', 'The controller scales the old ReplicaSet {f} → {t}; {a} ready, the fewest replicas − maxUnavailable allows.'), { f: a.from!, t: a.to!, a: a.available }),
+              : fmt(bi('Контроллер уменьшает число подов старого ReplicaSet с {f} до {t}. Готовыми отвечать остаются {a}, и меньше быть не может, потому что граница равна replicas минус maxUnavailable.', 'The controller scales the old ReplicaSet {f} → {t}; {a} ready, the fewest replicas − maxUnavailable allows.'), { f: a.from!, t: a.to!, a: a.available }),
           focus: ['ctrl', 'e-old', 'old'],
           reveal: ['e-old'],
           tokens: [{ edge: 'e-old', label: `replicas ${a.from} → ${a.to}` }],
-          say: { ctrl: fmt(bi('Контроллер убирает поды у старого ReplicaSet: было {f}, стало {t}.', 'The controller scales the old ReplicaSet {f} → {t}.'), { f: a.from!, t: a.to! }) },
+          say: { ctrl: fmt(bi('Контроллер уменьшает число подов старого ReplicaSet с {f} до {t}.', 'The controller scales the old ReplicaSet {f} → {t}.'), { f: a.from!, t: a.to! }) },
           values: vals(a),
           fill,
           states: a.oldR === 0 ? { old: 'off', 'e-svc-old': 'off' } : {},
@@ -366,7 +366,7 @@ export const rollingModel = defineModel<P>({
         s.push({
           id: `a${i}-stuck`,
           label: bi('застряла', 'stuck'),
-          caption: bi('Новые поды падают при запуске, переходят в состояние CrashLoopBackOff и не становятся готовыми. Контроллер ждёт: убирать старые поды дальше ему нельзя, потому что тогда готовых подов стало бы меньше, чем разрешает maxUnavailable.', 'New pods crash, go into CrashLoopBackOff and never become ready. The controller waits: removing more old pods would break maxUnavailable.'),
+          caption: bi('Новые поды падают при запуске, переходят в состояние CrashLoopBackOff и не становятся готовыми. Контроллер ждёт, потому что убирать старые поды дальше ему нельзя, потому что тогда готовых подов стало бы меньше, чем разрешает maxUnavailable.', 'New pods crash, go into CrashLoopBackOff and never become ready. The controller waits: removing more old pods would break maxUnavailable.'),
           focus: ['new'],
           say: { new: bi('Новые поды падают при запуске и не становятся готовыми.', 'New pods crash on start and never become ready.') },
           values: vals(a),
@@ -376,14 +376,14 @@ export const rollingModel = defineModel<P>({
           broken: {
             at: 'new',
             message: '$ kubectl rollout status deploy/web\nWaiting for deployment "web" rollout to finish: 1 out of 4 new replicas have been updated...\nerror: deployment "web" exceeded its progress deadline',
-            caption: bi('на новых подах, которые не становятся готовыми. Через progressDeadlineSeconds у Deployment появится условие Progressing=False с причиной ProgressDeadlineExceeded. Это сигнал вам или системе сборки, а не откат: вернуть старую версию нужно самим командой `kubectl rollout undo`.', 'at the new pods. After progressDeadlineSeconds the Deployment gets Progressing=False, ProgressDeadlineExceeded: a signal, not a rollback; roll back with `kubectl rollout undo`.'),
+            caption: bi('на новых подах, которые не становятся готовыми. Через progressDeadlineSeconds у Deployment появится условие Progressing=False с причиной ProgressDeadlineExceeded. Это сигнал вам или системе сборки, а не откат, и вернуть старую версию нужно самим командой `kubectl rollout undo`.', 'at the new pods. After progressDeadlineSeconds the Deployment gets Progressing=False, ProgressDeadlineExceeded: a signal, not a rollback; roll back with `kubectl rollout undo`.'),
           },
         });
       else if (a.what === 'done')
         s.push({
           id: `a${i}-done`,
           label: bi('готово', 'done'),
-          caption: fmtb(bi('Выкатка закончена: работают {r} новой версии, а у старого ReplicaSet ноль подов. Сам старый ReplicaSet контроллер не удаляет, потому что по нему работает откат. Команда `kubectl rollout status` печатает: deployment "web" successfully rolled out.', 'Done: {r} of the new version run, the old ReplicaSet is at zero and kept for a rollback.'), { r: num(R, ...PODS) }),
+          caption: fmtb(bi('Выкатка закончена. Подов новой версии работает столько, сколько нужно ({r}), а у старого ReplicaSet не осталось ни одного пода. Сам старый ReplicaSet контроллер не удаляет, потому что по нему работает откат. Команда `kubectl rollout status` печатает: deployment "web" successfully rolled out.', 'Done: {r} of the new version run, the old ReplicaSet is at zero and kept for a rollback.'), { r: num(R, ...PODS) }),
           focus: ['ctrl'],
           say: { ctrl: bi('Контроллер видит, что все поды новой версии готовы, и заканчивает выкатку.', 'The controller sees all new pods ready and finishes.') },
           values: vals(a),

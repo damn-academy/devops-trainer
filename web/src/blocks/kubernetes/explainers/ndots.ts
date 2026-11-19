@@ -47,7 +47,7 @@ const diagram = {
   edges: [
     edge('e-read', 'app', 'conf', bi('правила поиска', 'search rules'), bi('Резолвер читает список search и правило ndots.', 'The resolver reads search and ndots.'), bi('Читает резолвер библиотеки libc.', 'The libc resolver.')),
     edge('e-q', 'app', 'dns', bi('вопрос A и AAAA', 'A and AAAA query'), bi('Для каждого варианта имени уходит два вопроса: адрес IPv4 (A) и адрес IPv6 (AAAA).', 'Two queries per candidate: A and AAAA.'), bi('Спрашивает резолвер пода.', 'The pod’s resolver.'), { via: [[317, 68], [317, 140]] }),
-    edge('e-zone', 'dns', 'zone', bi('имя кластера', 'cluster name'), bi('Имя в зоне кластера: ответ из API или NXDOMAIN, то есть «такого имени нет».', 'A cluster name: an answer or NXDOMAIN.'), bi('Отвечает плагин kubernetes в CoreDNS.', 'The kubernetes plugin.')),
+    edge('e-zone', 'dns', 'zone', bi('имя кластера', 'cluster name'), bi('Для имени в зоне кластера CoreDNS отвечает адресом из API или ответом NXDOMAIN, то есть «такого имени нет».', 'A cluster name: an answer or NXDOMAIN.'), bi('Отвечает плагин kubernetes в CoreDNS.', 'The kubernetes plugin.')),
     edge('e-fwd', 'dns', 'up', bi('внешнее имя', 'external name'), bi('Остальные имена CoreDNS пересылает внешнему серверу.', 'Everything else goes upstream.'), bi('Пересылает плагин forward в CoreDNS.', 'The forward plugin.')),
   ],
 };
@@ -60,12 +60,12 @@ export const ndotsModel = defineModel<P>({
   block: 'k8s-1',
   title: bi('Как под ищет адрес по короткому имени', 'How a pod looks up a short name'),
   summary: bi(
-    'Резолвер пода дописывает к имени домены из списка search, пока в имени меньше точек, чем задано в ndots. Для своих сервисов это удобно: достаточно написать web. Для внешних имён это оборачивается лишними запросами: прежде чем спросить api.github.com как есть, резолвер трижды получит ответ «такого имени нет».',
+    'Резолвер пода дописывает к имени домены из списка search, пока в имени меньше точек, чем задано в ndots. Для своих сервисов это удобно, потому что достаточно написать web. Для внешних имён это оборачивается лишними запросами, и прежде чем спросить api.github.com как есть, резолвер трижды получит ответ «такого имени нет».',
     'The pod resolver appends the search domains while the name has fewer dots than ndots: handy for your services, costly for external names.',
   ),
   intro: bi(
-    'Сейчас на схеме под и его файл /etc/resolv.conf. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд»: приложение попросит адрес api.github.com, и каждый шаг будет одним вариантом имени, который резолвер отправляет в CoreDNS. Имя написано на карточке, которая движется по линии. Следите за счётчиком запросов под схемой, а потом выбирайте в «Параметрах» другие имена.',
-    'For now: the pod and its /etc/resolv.conf. Press “Start: step forward” and go on with “Step forward”: the application asks for api.github.com, and each step is one candidate name sent to CoreDNS, written on the card. Watch the query counter, then pick other names in “Parameters”.',
+    'Сейчас на схеме под и его файл /etc/resolv.conf. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Приложение попросит адрес api.github.com, и каждый шаг будет одним вариантом имени, который резолвер отправляет в CoreDNS. Имя написано на карточке, которая движется по линии. Следите за счётчиком запросов под схемой, а потом выбирайте в «Параметрах» другие имена.',
+    'For now: the pod and its /etc/resolv.conf. Press “Start from the first step” and go on with “Step forward”: the application asks for api.github.com, and each step is one candidate name sent to CoreDNS, written on the card. Watch the query counter, then pick other names in “Parameters”.',
   ),
   legend: [
     ...LEGEND_BASE,
@@ -95,7 +95,7 @@ export const ndotsModel = defineModel<P>({
       predict: {
         prompt: bi('Вы выбрали другое имя, а ndots по-прежнему равен 5. Сколько запросов уйдёт в CoreDNS, пока резолвер найдёт ответ или сдастся?', 'Another name, ndots still 5. How many queries go to CoreDNS?'),
         options: [
-          { id: 'two', text: bi('Два: A и AAAA для самого имени', 'Two: A and AAAA for the name') },
+          { id: 'two', text: bi('Два, то есть A и AAAA для самого имени', 'Two: A and AAAA for the name') },
           { id: 'more', text: bi('Больше двух', 'More than two') },
         ],
         resolve: (_p, n) => (metric(n, 'queries') <= 2 ? 'two' : 'more'),
@@ -105,7 +105,7 @@ export const ndotsModel = defineModel<P>({
     { id: 'cache', label: bi('Такой же запрос недавно уже задавали, и ответ лежит в кэше CoreDNS', 'The same query was asked recently, and the answer is in the CoreDNS cache'), kind: 'toggle', default: false, near: 'dns', levels: ['intermediate', 'experienced'], group: bi('Настройки резолвера и CoreDNS', 'Resolver and CoreDNS settings') },
   ],
   breaks: [
-    { id: 'no-dns', label: bi('CoreDNS не работает', 'CoreDNS is down'), remove: ['dns', 'e-q', 'e-zone', 'e-fwd'], layer: 'L7', boundary: 'network', predict: { prompt: bi('CoreDNS не работает. Ответит ли сервис, если обратиться к нему по адресу, командой `curl http://10.43.12.7`?', 'CoreDNS is down. Does `curl http://10.43.12.7` work?'), options: [{ id: 'yes', text: bi('Да: для обращения по адресу DNS не нужен', 'Yes: an address needs no DNS') }, { id: 'no', text: bi('Нет: без DNS не работает ничего', 'No: nothing works without DNS') }], resolve: () => 'yes' } },
+    { id: 'no-dns', label: bi('CoreDNS не работает', 'CoreDNS is down'), remove: ['dns', 'e-q', 'e-zone', 'e-fwd'], layer: 'L7', boundary: 'network', predict: { prompt: bi('CoreDNS не работает. Ответит ли сервис, если обратиться к нему по адресу, командой `curl http://10.43.12.7`?', 'CoreDNS is down. Does `curl http://10.43.12.7` work?'), options: [{ id: 'yes', text: bi('Да, потому что для обращения по адресу DNS не нужен', 'Yes, because an address needs no DNS') }, { id: 'no', text: bi('Нет, потому что без DNS не работает ничего', 'No, because nothing works without DNS') }], resolve: () => 'yes' } },
     { id: 'no-forward', label: bi('Из настроек CoreDNS удалена пересылка внешних имён (forward)', 'forward removed from the Corefile'), remove: ['e-fwd'], layer: 'L7', boundary: 'network', predict: { prompt: bi('Из настроек CoreDNS удалили пересылку внешних имён. Какие имена перестанут находиться?', 'forward is gone. Which names stop resolving?'), options: [{ id: 'external', text: bi('Только внешние, вроде api.github.com', 'Only external ones') }, { id: 'all', text: bi('Все имена, включая сервисы кластера', 'All names') }], resolve: () => 'external' } },
   ],
   metrics: [
@@ -130,7 +130,7 @@ export const ndotsModel = defineModel<P>({
       id: 'read',
       label: 'resolv.conf',
       caption: p.name.endsWith('.')
-        ? bi('Имя заканчивается точкой, а значит, оно абсолютное: резолвер не дописывает к нему домены из search и сразу спрашивает его как есть.', 'A final dot makes the name absolute: no search domains.')
+        ? bi('Имя заканчивается точкой, а значит, оно абсолютное, и резолвер не дописывает к нему домены из search и сразу спрашивает его как есть.', 'A final dot makes the name absolute: no search domains.')
         : dots >= p.ndots
           ? fmtb(bi('В имени {d}, а ndots равен {n}. Точек достаточно, поэтому резолвер сначала спросит имя как есть и только потом с доменами из search.', '{d}, ndots {n}: the name as is first, then with search.'), { d: dotsBi, n: p.ndots })
           : fmtb(bi('В имени {d}, а ndots равен {n}. Точек меньше, поэтому резолвер сначала по очереди допишет к имени каждый домен из search и только в конце спросит имя как есть.', '{d}, fewer than ndots {n}: every search domain first, the name as is last.'), { d: dotsBi, n: p.ndots }),
@@ -151,7 +151,7 @@ export const ndotsModel = defineModel<P>({
         say: { app: bi('Резолвер ждёт ответа от 10.43.0.10 и не дожидается.', 'The resolver waits in vain.') },
         states: { dns: 'err' },
         metrics: { queries: 2, nx: 0 },
-        broken: { at: 'dns', message: ';; connection timed out; no servers could be reached\ncurl: (6) Could not resolve host: web', caption: bi('на сервере имён. Признак такой поломки: по именам ничего не работает, а по адресам работает. Если `curl http://10.43.12.7` отвечает, сломан DNS, а не Service.', 'at the name server: names fail, addresses work; if `curl http://10.43.12.7` answers, DNS is broken, not the Service.') },
+        broken: { at: 'dns', message: ';; connection timed out; no servers could be reached\ncurl: (6) Could not resolve host: web', caption: bi('на сервере имён. Такую поломку узнают по тому, что по именам ничего не работает, а по адресам всё работает. Если `curl http://10.43.12.7` отвечает, сломан DNS, а не Service.', 'at the name server: names fail, addresses work; if `curl http://10.43.12.7` answers, DNS is broken, not the Service.') },
       });
       return s;
     }
@@ -195,7 +195,7 @@ export const ndotsModel = defineModel<P>({
         id: `q-${q}`,
         label: short(t),
         caption: ok
-          ? fmt(bi('Вариант {t} нашёлся: адрес {ip}. Всего на поиск ушло {q} запросов.', '{t} → {ip}. {q} queries in all.'), { t, ip: KNOWN[t], q })
+          ? fmt(bi('Вариант {t} нашёлся, и CoreDNS отвечает адресом {ip}. Всего на поиск ушло {q} запросов.', '{t} → {ip}. {q} queries in all.'), { t, ip: KNOWN[t], q })
           : fmt(bi('Резолвер спрашивает {t}, и CoreDNS отвечает NXDOMAIN, то есть «такого имени нет», и на вопрос A, и на вопрос AAAA. Резолвер переходит к следующему варианту.', '{t}: NXDOMAIN for A and AAAA; the next candidate.'), { t }),
         focus: ['dns', 'e-q', where],
         reveal: ['dns', 'e-q', inZone ? 'zone' : 'up', where],
@@ -211,7 +211,7 @@ export const ndotsModel = defineModel<P>({
         label: 'NXDOMAIN',
         caption: bi('Ни один вариант имени не нашёлся, и вызов getaddrinfo возвращает приложению ошибку.', 'No candidate was found: getaddrinfo fails.'),
         focus: ['app'],
-        say: { app: bi('Приложение получает ошибку: имя не найдено.', 'The application gets “not found”.') },
+        say: { app: bi('Приложение получает ошибку о том, что имя не найдено.', 'The application gets “not found”.') },
         states: { app: 'err' },
         metrics: { queries: q, nx },
       });
@@ -224,7 +224,7 @@ export const ndotsModel = defineModel<P>({
       case 'ndots':
         return fmt(bi('Имя {n} при ndots:{d} стоит {q} запросов, и на {x} из них ответ «такого имени нет». Раньше было {q0}.', '{n} with ndots:{d}: {q} queries, {x} NXDOMAIN (was {q0}).'), { n: b.name as string, d: b.ndots as number, q: metric(next, 'queries'), x: metric(next, 'nx'), q0: metric(prev, 'queries') });
       case 'cache':
-        return b.cache ? bi('Кэш экономит работу CoreDNS, но не запросы пода: перебор доменов search всё равно идёт.', 'The cache saves CoreDNS work, not the pod’s queries.') : bi('Без кэша каждый вариант доходит до зоны кластера или до внешнего сервера.', 'Without the cache every candidate goes to the zone or upstream.');
+        return b.cache ? bi('Кэш экономит работу CoreDNS, но не запросы пода, потому что перебор доменов search всё равно идёт.', 'The cache saves CoreDNS work, not the pod’s queries.') : bi('Без кэша каждый вариант доходит до зоны кластера или до внешнего сервера.', 'Without the cache every candidate goes to the zone or upstream.');
     }
     return bi('Пересчитано.', 'Recomputed.');
   },

@@ -63,12 +63,12 @@ const diagram = {
   nodes: [
     box('want', bi('ReplicaSet web: желаемое', 'ReplicaSet web: desired'), 'obj', 'doc', [24, 40, 240, 88], 'file', bi('Объект ReplicaSet описывает желаемое: сколько подов должно работать (поле `spec.replicas`), какие поды считать своими (`selector`, здесь app=web) и из какого шаблона делать новые (`template`).', 'The ReplicaSet object describes the desired state: how many pods (`spec.replicas`), which pods are its own (`selector`, app=web) and the template for new ones.'), bi('Объект создаёте вы командой `kubectl apply` или контроллер Deployment.', 'You create it with `kubectl apply`, or the Deployment controller does.'), { see: 'kubectl get rs web -o yaml', doc: D.rs, sub: 'replicas: 3' }),
     box('etcd', 'etcd', 'store', 'box', [24, 190, 240, 60], 'database', bi('Хранилище «ключ — значение», в котором кластер хранит все объекты. ReplicaSet web лежит в нём по ключу `/registry/replicasets/default/web`, поэтому контроллер можно перезапустить, и он прочитает желаемое заново.', 'The key–value store holding every object; ReplicaSet web is at `/registry/replicasets/default/web`, so a restarted controller reads it again.'), CP, { see: 'cluster etcd /registry/replicasets', doc: D.components }),
-    box('you', bi('Вы, kubectl', 'You, kubectl'), 'user', 'box', [24, 400, 240, 64], 'terminal', bi('Вы меняете кластер командами kubectl: удаляете под, меняете метку или число реплик. Что именно вы делаете, выбирает ручка «Что вы делаете с подами».', 'You change the cluster with kubectl commands; the knob “What you do to the pods” picks which.'), bi('Команды набираете вы в терминале.', 'You type them.'), { see: 'kubectl get pods' }),
+    box('you', bi('Вы, kubectl', 'You, kubectl'), 'user', 'box', [24, 400, 240, 64], 'terminal', bi('Вы меняете кластер командами kubectl: удаляете под, меняете метку или число реплик. Какое из этих действий вы выполняете, выбирает ручка «Что вы делаете с подами».', 'You change the cluster with kubectl commands; the knob “What you do to the pods” picks which.'), bi('Команды набираете вы в терминале.', 'You type them.'), { see: 'kubectl get pods' }),
     box('api', 'kube-apiserver', 'cp', 'hex', [340, 40, 230, 64], 'server', bi('API-сервер принимает все изменения, записывает их в etcd и рассылает события всем, кто на них подписан. Контроллер видит кластер только через него.', 'Accepts every change, writes it to etcd and sends events to subscribers. The controller sees the cluster only through it.'), CP, { see: 'kubectl get --raw /readyz', doc: D.apiserver }),
     box('cache', bi('Кэш информера', 'Informer cache'), 'cp', 'box', [340, 166, 230, 56], 'disk', bi('Копия объектов в памяти контроллера. Её обновляют события watch, поэтому контроллер читает объекты отсюда и не спрашивает API-сервер на каждый вопрос.', 'An in-memory copy kept fresh by watch events; the controller reads from it instead of asking the API server.'), bi('Кэш ведёт библиотека client-go внутри контроллера.', 'Kept by the client-go library inside the controller.'), { doc: D.controller }),
     box('queue', bi('Очередь ключей', 'Work queue'), 'cp', 'buffer', [340, 278, 230, 64], 'folder', bi('Очередь имён объектов, которые нужно проверить. При любом изменении сюда попадает ключ default/web, и один и тот же ключ лежит в очереди только один раз, сколько бы событий ни пришло.', 'Names of objects to check. Any change puts the key default/web here, and the same key is queued only once.'), bi('Очередь ведёт сам контроллер.', 'Kept by the controller.'), { doc: D.controller, sub: 'keys: 0' }),
-    box('ctrl', bi('Контроллер ReplicaSet', 'ReplicaSet controller'), 'cp', 'hex', [340, 404, 230, 64], 'process', bi('Петля, которая берёт ключ из очереди, сравнивает желаемое число подов с фактическим и делает один шаг навстречу: создаёт или удаляет под. Между проходами контроллер ничего не помнит.', 'A loop: take a key, compare desired with actual, take one step. It remembers nothing between passes.'), bi('Контроллер работает внутри процесса kube-controller-manager.', 'Runs inside kube-controller-manager.'), { see: 'kubectl describe rs web', doc: D.controller }),
-    box('pods', bi('Поды app=web: фактическое', 'Pods app=web: actual'), 'process', 'buffer', [690, 210, 250, 90], 'container', bi('Фактическое состояние: поды с меткой app=web, у которых в `ownerReferences` записан ReplicaSet web.', 'The actual state: pods labelled app=web with ReplicaSet web in `ownerReferences`.'), bi('Поды создаёт контроллер ReplicaSet, а запускает их kubelet на узлах.', 'The controller creates them; the kubelet on a node runs them.'), { see: 'kubectl get pods -l app=web --show-labels', doc: D.rs, sub: '3 / 3' }),
+    box('ctrl', bi('Контроллер ReplicaSet', 'ReplicaSet controller'), 'cp', 'hex', [340, 404, 230, 64], 'process', bi('Петля, которая берёт ключ из очереди, сравнивает желаемое число подов с фактическим и делает один шаг навстречу желаемому, то есть создаёт или удаляет под. Между проходами контроллер ничего не помнит.', 'A loop: take a key, compare desired with actual, take one step. It remembers nothing between passes.'), bi('Контроллер работает внутри процесса kube-controller-manager.', 'Runs inside kube-controller-manager.'), { see: 'kubectl describe rs web', doc: D.controller }),
+    box('pods', bi('Поды app=web: фактическое', 'Pods app=web: actual'), 'process', 'buffer', [690, 210, 250, 90], 'container', bi('Фактическое состояние составляют поды с меткой app=web, у которых в `ownerReferences` записан ReplicaSet web.', 'The actual state: pods labelled app=web with ReplicaSet web in `ownerReferences`.'), bi('Поды создаёт контроллер ReplicaSet, а запускает их kubelet на узлах.', 'The controller creates them; the kubelet on a node runs them.'), { see: 'kubectl get pods -l app=web --show-labels', doc: D.rs, sub: '3 / 3' }),
   ],
   edges: [
     edge('e-store', 'want', 'etcd', bi('хранится в etcd', 'stored in etcd'), bi('Объект ReplicaSet хранится в etcd, а не в памяти контроллера.', 'The ReplicaSet is stored in etcd, not in the controller’s memory.'), bi('Записывает его kube-apiserver.', 'kube-apiserver writes it.')),
@@ -76,8 +76,8 @@ const diagram = {
     edge('e-watch', 'api', 'cache', bi('события watch', 'watch events'), bi('Поток событий ADDED, MODIFIED и DELETED, на который подписан контроллер.', 'The stream of ADDED/MODIFIED/DELETED events the controller subscribes to.'), bi('События рассылает kube-apiserver.', 'kube-apiserver sends them.')),
     edge('e-key', 'cache', 'queue', bi('ключ объекта', 'object key'), bi('Событие превращается в имя объекта, который нужно проверить, а не в описание того, что изменилось.', 'An event becomes the name of the object to check, not a description of the change.'), bi('Ключ кладёт обработчик информера.', 'The informer handler.')),
     edge('e-take', 'queue', 'ctrl', bi('взять ключ', 'take a key'), bi('Контроллер берёт ключ и начинает проход петли для этого объекта.', 'The controller takes a key and runs one pass for that object.'), bi('Ключ берёт контроллер.', 'The controller.')),
-    edge('e-act', 'ctrl', 'api', bi('создать или удалить под', 'create or delete a pod'), bi('Действие контроллера — обычный запрос к API-серверу, такой же, как ваш.', 'The controller’s action is an ordinary API request, just like yours.'), bi('Запрос отправляет контроллер.', 'The controller.'), { via: [[630, 436], [630, 90]], labelAt: 0.35 }),
-    edge('e-pods', 'api', 'pods', bi('новые и удалённые поды', 'pods added and removed'), bi('Поды — тоже объекты API: когда API-сервер принимает запрос на создание или удаление, фактическое состояние меняется.', 'Pods are API objects too; when the API server accepts a create or delete, the actual state changes.'), bi('Изменение принимает kube-apiserver.', 'kube-apiserver.'), { via: [[815, 60]], labelAt: 0.6 }),
+    edge('e-act', 'ctrl', 'api', bi('создать или удалить под', 'create or delete a pod'), bi('Действие контроллера оказывается обычным запросом к API-серверу, таким же, как ваш.', 'The controller’s action is an ordinary API request, just like yours.'), bi('Запрос отправляет контроллер.', 'The controller.'), { via: [[630, 436], [630, 90]], labelAt: 0.35 }),
+    edge('e-pods', 'api', 'pods', bi('новые и удалённые поды', 'pods added and removed'), bi('Поды тоже служат объектами API, поэтому, когда API-сервер принимает запрос на создание или удаление, фактическое состояние меняется.', 'Pods are API objects too; when the API server accepts a create or delete, the actual state changes.'), bi('Изменение принимает kube-apiserver.', 'kube-apiserver.'), { via: [[815, 60]], labelAt: 0.6 }),
   ],
 };
 
@@ -115,12 +115,12 @@ export const reconcileModel = defineModel<P>({
   block: 'k8s-1',
   title: bi('Как контроллер ReplicaSet держит число подов', 'How the ReplicaSet controller keeps the number of pods'),
   summary: bi(
-    'Слева записано желаемое: ReplicaSet web хочет три пода. Справа фактическое: поды, которые работают на самом деле. Посередине петля контроллера, которая узнаёт об изменениях, сравнивает одно с другим и делает шаг, чтобы разница исчезла. Контроллеру неважно, что именно произошло: он каждый раз смотрит на то, что есть сейчас.',
+    'Слева записано желаемое состояние, и ReplicaSet web в нём хочет три пода. Справа показано фактическое состояние, то есть поды, которые работают на самом деле. Посередине работает петля контроллера, которая узнаёт об изменениях, сравнивает одно с другим и делает шаг, чтобы разница исчезла. Контроллеру неважно, что произошло, потому что он каждый раз смотрит на то, что есть сейчас.',
     'On the left the desired state: ReplicaSet web wants three pods. On the right the actual state. In the middle the controller’s loop learns of changes, compares and takes a step to close the difference. It does not care what happened: it looks at what is there now.',
   ),
   intro: bi(
-    'Сейчас на схеме три блока: ReplicaSet с желаемым числом подов, контроллер и сами поды. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд». Вы удалите один под, и схема покажет, как это изменение доходит до контроллера и как он возвращает под. Потом выберите в «Параметрах» другое вмешательство или другое число реплик.',
-    'For now the diagram shows three blocks: the ReplicaSet, the controller and the pods. Press “Start: step forward”, then go on with “Step forward”. You will delete a pod and see how the change reaches the controller and how it brings the pod back. Then pick another intervention or another replica count in “Parameters”.',
+    'Сейчас на схеме три блока: ReplicaSet с желаемым числом подов, контроллер и сами поды. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Вы удалите один под, и схема покажет, как это изменение доходит до контроллера и как он возвращает под. Потом выберите в «Параметрах» другое вмешательство или другое число реплик.',
+    'For now the diagram shows three blocks: the ReplicaSet, the controller and the pods. Press “Start from the first step”, then go on with “Step forward”. You will delete a pod and see how the change reaches the controller and how it brings the pod back. Then pick another intervention or another replica count in “Parameters”.',
   ),
   legend: [
     ...LEGEND_BASE,
@@ -191,7 +191,7 @@ export const reconcileModel = defineModel<P>({
       predict: {
         prompt: bi('Контроллер стоял минуту, и за это время поды ReplicaSet web менялись трижды. Сколько раз контроллер выполнит проход петли для ReplicaSet web, когда снова заработает?', 'The controller was stopped while the pods changed three times. How many passes for ReplicaSet web will it run when it is back?'),
         options: [
-          { id: 'one', text: bi('Один раз: в очереди лежит один ключ default/web', 'Once: there is one key in the queue') },
+          { id: 'one', text: bi('Один раз, потому что в очереди лежит один ключ default/web', 'Once: there is one key in the queue') },
           { id: 'three', text: bi('Три раза, по разу на каждое изменение', 'Three times, once per change') },
         ],
         resolve: (_p, n) => (metric(n, 'reconciles') === 1 ? 'one' : 'three'),
@@ -207,8 +207,8 @@ export const reconcileModel = defineModel<P>({
       predict: {
         prompt: bi('Процесс kube-controller-manager остановлен, а API-сервер и etcd работают. Исправит ли кто-нибудь разницу между желаемым и фактическим числом подов?', 'kube-controller-manager is stopped; the API server and etcd run. Will anyone fix the difference between desired and actual?'),
         options: [
-          { id: 'no', text: bi('Нет: разница останется, пока контроллер не запустят снова', 'No: it stays until the controller runs again') },
-          { id: 'yes', text: bi('Да: API-сервер сам создаст недостающие поды', 'Yes: the API server creates the missing pods itself') },
+          { id: 'no', text: bi('Нет, разница останется, пока контроллер не запустят снова', 'No, it stays until the controller runs again') },
+          { id: 'yes', text: bi('Да, потому что API-сервер сам создаст недостающие поды', 'Yes, because the API server creates the missing pods itself') },
         ],
         resolve: (_p, n) => (n.some((s) => s.broken) ? 'no' : 'yes'),
       },
@@ -232,9 +232,9 @@ export const reconcileModel = defineModel<P>({
     s.push({
       id: 'want',
       label: bi('желаемое', 'desired'),
-      caption: bi('Слева записано желаемое состояние. ReplicaSet web хочет, чтобы работали три пода с меткой app=web, и знает шаблон, по которому их создавать. Сам объект ничего не делает: это только запись.', 'On the left the desired state: ReplicaSet web wants three pods with app=web and knows their template. The object itself does nothing: it is a record.'),
+      caption: bi('Слева записано желаемое состояние. ReplicaSet web хочет, чтобы работали три пода с меткой app=web, и знает шаблон, по которому их создавать. Сам объект ничего не делает, потому что остаётся только записью.', 'On the left the desired state: ReplicaSet web wants three pods with app=web and knows their template. The object itself does nothing: it is a record.'),
       focus: ['want'],
-      say: { want: bi('ReplicaSet web хранит желаемое: три пода по шаблону с меткой app=web.', 'ReplicaSet web holds the desired state: three pods with app=web.') },
+      say: { want: bi('ReplicaSet web хранит желаемое состояние, то есть три пода по шаблону с меткой app=web.', 'ReplicaSet web holds the desired state: three pods with app=web.') },
       states: only(ALL, 'want', 'ctrl', 'pods'),
       values: { want: 'replicas: 3', pods: '3 / 3', queue: keys(0) },
       fill: { pods: 1, queue: 0 },
@@ -243,7 +243,7 @@ export const reconcileModel = defineModel<P>({
     s.push({
       id: 'actual',
       label: bi('фактическое', 'actual'),
-      caption: bi('Справа фактическое состояние: три работающих пода. У каждого в поле `ownerReferences` записан хозяин, ReplicaSet web, поэтому контроллер считает эти поды своими. Пока желаемое и фактическое совпадают, контроллеру делать нечего.', 'On the right the actual state: three running pods, each with ReplicaSet web in `ownerReferences`. While desired and actual match, the controller has nothing to do.'),
+      caption: bi('Справа показано фактическое состояние, то есть три работающих пода. У каждого в поле `ownerReferences` записан хозяин, ReplicaSet web, поэтому контроллер считает эти поды своими. Пока желаемое и фактическое совпадают, контроллеру делать нечего.', 'On the right the actual state: three running pods, each with ReplicaSet web in `ownerReferences`. While desired and actual match, the controller has nothing to do.'),
       focus: ['pods'],
       say: { pods: bi('Работают три пода с меткой app=web, и хозяин у каждого ReplicaSet web.', 'Three pods with app=web run, each owned by ReplicaSet web.') },
       metrics: zero,
@@ -267,8 +267,8 @@ export const reconcileModel = defineModel<P>({
         'scale',
         bi('replicas', 'replicas'),
         `kubectl scale rs web --replicas=${want}`,
-        fmt(bi('Вы меняете желаемое: теперь подов должно быть {w}.', 'You change the desired count to {w}.'), { w: want }),
-        fmt(bi('Вы меняете желаемое командой `kubectl scale`: теперь ReplicaSet web хочет {w} подов. API-сервер записывает новое число в etcd, но поды от этого сами не появятся и не исчезнут.', 'You run `kubectl scale`: ReplicaSet web now wants {w}. The API server stores it in etcd, but no pod appears or disappears by itself.'), { w: want }),
+        fmt(bi('Вы меняете желаемое состояние, и теперь подов должно быть {w}.', 'You change the desired count to {w}.'), { w: want }),
+        fmt(bi('Вы меняете желаемое состояние командой `kubectl scale`, и теперь ReplicaSet web хочет {w} подов. API-сервер записывает новое число в etcd, но поды от этого сами не появятся и не исчезнут.', 'You run `kubectl scale`: ReplicaSet web now wants {w}. The API server stores it in etcd, but no pod appears or disappears by itself.'), { w: want }),
         { want: `replicas: ${want}`, pods: show(3) },
         { pods: fill(3) },
         true,
@@ -289,7 +289,7 @@ export const reconcileModel = defineModel<P>({
       s.push({
         id: 'enqueue',
         label: bi('в очередь', 'enqueue'),
-        caption: bi('Информер обновляет свою копию и кладёт в очередь не само событие, а только имя объекта, который нужно проверить: default/web. Что именно изменилось, контроллер узнает сам, когда посмотрит на объекты.', 'The informer updates its copy and queues only the name of the object to check, default/web, not the event.'),
+        caption: bi('Информер обновляет свою копию и кладёт в очередь не само событие, а только имя объекта default/web, который нужно проверить. Что изменилось, контроллер узнает сам, когда посмотрит на объекты.', 'The informer updates its copy and queues only the name of the object to check, default/web, not the event.'),
         focus: ['cache', 'e-key'],
         reveal: ['queue', 'e-key'],
         tokens: [{ edge: 'e-key', label: 'default/web' }],
@@ -317,7 +317,7 @@ export const reconcileModel = defineModel<P>({
         id: 'stuck',
         label: bi('стоит', 'stuck'),
         caption: changed
-          ? bi('Ключ default/web лежит в очереди, но взять его некому: процесс kube-controller-manager остановлен. Желаемое записано в etcd, а поды остаются такими, какими их оставило вмешательство.', 'The key waits in the queue, but nobody takes it: kube-controller-manager is stopped.')
+          ? bi('Ключ default/web лежит в очереди, но взять его некому, потому что процесс kube-controller-manager остановлен. Желаемое записано в etcd, а поды остаются такими, какими их оставило вмешательство.', 'The key waits in the queue, but nobody takes it: kube-controller-manager is stopped.')
           : bi('Процесс kube-controller-manager остановлен. Сейчас разницы нет, но если под удалят или узел выключится, исправлять это будет некому.', 'kube-controller-manager is stopped; there is no difference now, but nobody would fix one.'),
         focus: ['ctrl'],
         say: { ctrl: bi('Контроллер не работает и не берёт ключи из очереди.', 'The controller is not running and takes no keys.') },
@@ -349,18 +349,18 @@ export const reconcileModel = defineModel<P>({
     const diff = want - plan.actual;
     const cmp =
       p.event === 'image'
-        ? bi('Контроллер сравнивает числа: желаемых подов {w}, работает {a}. Образ он не сравнивает, потому что ReplicaSet следит только за количеством. Работающие поды останутся на старом образе, а новый образ получат только поды, созданные позже.', 'Desired {w}, actual {a}. The image is not compared: a ReplicaSet watches only the count. Running pods keep the old image.')
+        ? bi('Контроллер сравнивает числа и видит, что желаемых подов {w}, а работает {a}. Образ он не сравнивает, потому что ReplicaSet следит только за количеством. Работающие поды останутся на старом образе, а новый образ получат только поды, созданные позже.', 'Desired {w}, actual {a}. The image is not compared: a ReplicaSet watches only the count. Running pods keep the old image.')
         : diff > 0
-          ? bi('Контроллер сравнивает числа: желаемых подов {w}, работает {a}. Не хватает {d}, поэтому контроллер будет создавать поды.', 'Desired {w}, actual {a}: {d} missing, so the controller will create pods.')
+          ? bi('Контроллер сравнивает числа и видит, что желаемых подов {w}, а работает {a}. Не хватает {d}, поэтому контроллер будет создавать поды.', 'Desired {w}, actual {a}: {d} missing, so the controller will create pods.')
           : diff < 0
-            ? bi('Контроллер сравнивает числа: желаемых подов {w}, работает {a}. Лишних {n}, поэтому контроллер будет удалять поды.', 'Desired {w}, actual {a}: {n} extra, so the controller will delete pods.')
-            : bi('Контроллер сравнивает числа: желаемых подов {w}, работает {a}. Разницы нет, и контроллер ничего не делает, но продолжает ждать следующего изменения.', 'Desired {w}, actual {a}: no difference, so the controller does nothing and waits.');
+            ? bi('Контроллер сравнивает числа и видит, что желаемых подов {w}, а работает {a}. Лишних {n}, поэтому контроллер будет удалять поды.', 'Desired {w}, actual {a}: {n} extra, so the controller will delete pods.')
+            : bi('Контроллер сравнивает числа и видит, что желаемых подов {w}, а работает {a}. Разницы нет, и контроллер ничего не делает, но продолжает ждать следующего изменения.', 'Desired {w}, actual {a}: no difference, so the controller does nothing and waits.');
     s.push({
       id: 'compare',
       label: bi('сравнить', 'compare'),
       caption: fmt(cmp, { w: want, a: plan.actual, d: diff, n: -diff }),
       focus: ['ctrl'],
-      say: { ctrl: fmt(bi('Контроллер считает: желаемых {w}, работает {a}, разница {d}.', 'Desired {w}, actual {a}, difference {d}.'), { w: want, a: plan.actual, d: diff }) },
+      say: { ctrl: fmt(bi('Контроллер вычитает из {w} желаемых подов {a} работающих и получает разницу {d}.', 'Desired {w}, actual {a}, difference {d}.'), { w: want, a: plan.actual, d: diff }) },
       values: { ctrl: `${want} − ${plan.actual} = ${diff}` },
       metrics: zero,
     });
@@ -369,8 +369,8 @@ export const reconcileModel = defineModel<P>({
         id: 'owner',
         label: 'ownerReferences',
         caption: plan.adopted
-          ? bi('Сначала контроллер принимает новый под в свои: под подходит под селектор и хозяина не имеет, поэтому контроллер дописывает ему в `ownerReferences` ReplicaSet web. Теперь своих подов четыре.', 'First the controller adopts the new pod: it matches the selector and has no owner, so ReplicaSet web is written into its `ownerReferences`. Now there are four.')
-          : bi('Сначала контроллер отпускает под без метки: стирает себя из его `ownerReferences`. Под продолжает работать, но хозяина у него больше нет, и ReplicaSet за него не отвечает.', 'First the controller releases the unlabelled pod: it removes itself from `ownerReferences`. The pod keeps running without an owner.'),
+          ? bi('Сначала контроллер принимает новый под в свои. Под подходит под селектор и хозяина не имеет, поэтому контроллер дописывает ему в `ownerReferences` ReplicaSet web. Теперь своих подов четыре.', 'First the controller adopts the new pod: it matches the selector and has no owner, so ReplicaSet web is written into its `ownerReferences`. Now there are four.')
+          : bi('Сначала контроллер отказывается от пода без метки и стирает себя из его `ownerReferences`. Под продолжает работать, но хозяина у него больше нет, и ReplicaSet за него не отвечает.', 'First the controller releases the unlabelled pod: it removes itself from `ownerReferences`. The pod keeps running without an owner.'),
         focus: ['ctrl', 'e-act'],
         reveal: ['e-act'],
         tokens: [{ edge: 'e-act', label: 'PATCH ownerReferences' }],
@@ -396,7 +396,7 @@ export const reconcileModel = defineModel<P>({
         id: 'pods',
         label: bi('поды', 'pods'),
         caption: plan.created
-          ? bi('API-сервер принимает запрос, и появляются новые поды. Имена и IP-адреса у них новые: под нельзя «починить», его можно только заменить другим.', 'The API server accepts it and new pods appear with new names and IPs: a pod is not repaired, it is replaced.')
+          ? bi('API-сервер принимает запрос, и появляются новые поды. Имена и IP-адреса у них новые, потому что под нельзя «починить», его можно только заменить другим.', 'The API server accepts it and new pods appear with new names and IPs: a pod is not repaired, it is replaced.')
           : bi('API-сервер принимает запрос, и лишние поды удаляются. Подов снова столько, сколько записано в ReplicaSet.', 'The API server accepts it and the extra pods go away.'),
         focus: ['pods', 'e-pods'],
         tokens: [{ edge: 'e-pods', label: plan.created ? 'ADDED pod' : 'DELETED pod' }],
@@ -422,7 +422,7 @@ export const reconcileModel = defineModel<P>({
   explainDelta(_prev, next, change, a, b): Bi {
     if (change.kind === 'break')
       return change.on
-        ? bi('Контроллер остановлен: ключ лежит в очереди, и разницу между желаемым и фактическим никто не исправляет.', 'The controller is stopped: the key waits, nobody fixes the difference.')
+        ? bi('Контроллер остановлен, поэтому ключ лежит в очереди, и разницу между желаемым и фактическим никто не исправляет.', 'The controller is stopped: the key waits, nobody fixes the difference.')
         : bi('Контроллер снова работает и сразу смотрит на текущее состояние подов.', 'The controller runs again and looks at the current state at once.');
     const pl = reconcilePlan(b as P);
     const act = pl.created ? fmtb(bi('создаёт {n}', 'creates {n}'), { n: num(pl.created, ...PODS) }) : pl.deleted ? fmtb(bi('удаляет {n}', 'deletes {n}'), { n: num(pl.deleted, ...PODS) }) : bi('ничего не делает с подами', 'does nothing');

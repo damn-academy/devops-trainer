@@ -56,8 +56,8 @@ export const upgradeModel = defineModel<P>({
     'One minor version at a time, top down: the control plane, then the workers one by one, each drained, upgraded and returned.',
   ),
   intro: bi(
-    'Сейчас на схеме ваша команда kubeadm upgrade, управляющий узел cp-1 и два рабочих узла, и все они на версии v1.36. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд»: каждый шаг обновляет одну машину, а под узлами видна версия, которая на них работает. Счётчик под схемой показывает, сколько подов приложения оставалось готовыми в худший момент. Потом попробуйте в «Параметрах» сразу v1.38, обратный порядок и обновление без drain.',
-    'For now: your kubeadm upgrade, cp-1 and two workers, all on v1.36. Press “Start: step forward” and go on with “Step forward”: each step upgrades one machine. Then try v1.38 directly, the reverse order and no drain.',
+    'Сейчас на схеме ваша команда kubeadm upgrade, управляющий узел cp-1 и два рабочих узла, и все они на версии v1.36. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Каждый шаг обновляет одну машину, а под узлами видна версия, которая на них работает. Счётчик под схемой показывает, сколько подов приложения оставалось готовыми в худший момент. Потом попробуйте в «Параметрах» сразу v1.38, обратный порядок и обновление без drain.',
+    'For now: your kubeadm upgrade, cp-1 and two workers, all on v1.36. Press “Start from the first step” and go on with “Step forward”: each step upgrades one machine. Then try v1.38 directly, the reverse order and no drain.',
   ),
   legend: [
     ...LEGEND_BASE,
@@ -82,7 +82,7 @@ export const upgradeModel = defineModel<P>({
         { id: '37', label: bi('v1.37, следующая', 'v1.37, the next') },
         { id: '38', label: bi('v1.38, через одну', 'v1.38, skipping one') },
       ],
-      predict: { prompt: bi('Кластер на v1.36, и вы выбрали другую целевую версию. Пройдёт ли kubeadm upgrade apply до неё за один раз?', 'The cluster is on 1.36 and you pick another target. Will one apply get there?'), options: [{ id: 'yes', text: bi('Да, обновление пройдёт', 'Yes') }, { id: 'no', text: bi('Нет: kubeadm обновляет только на одну минорную версию', 'No: one minor version at a time') }], resolve: (_p, n) => (n.some((s) => s.broken) ? 'no' : 'yes') },
+      predict: { prompt: bi('Кластер на v1.36, и вы выбрали другую целевую версию. Пройдёт ли kubeadm upgrade apply до неё за один раз?', 'The cluster is on 1.36 and you pick another target. Will one apply get there?'), options: [{ id: 'yes', text: bi('Да, обновление пройдёт', 'Yes') }, { id: 'no', text: bi('Нет, потому что kubeadm обновляет кластер только на одну минорную версию за раз', 'No, because kubeadm upgrades by one minor version at a time') }], resolve: (_p, n) => (n.some((s) => s.broken) ? 'no' : 'yes') },
     },
     {
       id: 'order',
@@ -95,7 +95,7 @@ export const upgradeModel = defineModel<P>({
         { id: 'cp', label: bi('управляющий слой', 'the control plane') },
         { id: 'workers', label: bi('рабочие узлы', 'the workers') },
       ],
-      predict: { prompt: bi('Вы меняете порядок обновления. Нарушится ли при новом порядке правило версий?', 'You change the order. Will the skew policy be broken?'), options: [{ id: 'skew', text: bi('Да: kubelet окажется новее API-сервера', 'Yes: the kubelet becomes newer than the API server') }, { id: 'nothing', text: bi('Нет: правило соблюдено', 'No') }], resolve: (_p, n) => (n.some((s) => s.states?.w1 === 'err') ? 'skew' : 'nothing') },
+      predict: { prompt: bi('Вы меняете порядок обновления. Нарушится ли при новом порядке правило версий?', 'You change the order. Will the skew policy be broken?'), options: [{ id: 'skew', text: bi('Да, потому что kubelet окажется новее API-сервера', 'Yes, because the kubelet becomes newer than the API server') }, { id: 'nothing', text: bi('Нет, правило по-прежнему соблюдается', 'No, the rule still holds') }], resolve: (_p, n) => (n.some((s) => s.states?.w1 === 'err') ? 'skew' : 'nothing') },
     },
     {
       id: 'drain',
@@ -110,7 +110,7 @@ export const upgradeModel = defineModel<P>({
   breaks: [
     {
       id: 'held',
-      label: bi('Пакеты остались закреплены: забыли apt-mark unhold', 'Packages still held: no apt-mark unhold'),
+      label: bi('Пакеты остались закреплены, потому что команду apt-mark unhold забыли выполнить', 'The packages are still held because nobody ran apt-mark unhold'),
       remove: ['e-apply'],
       boundary: 'process',
       predict: { prompt: bi('Пакеты kubeadm и kubelet закреплены командой apt-mark hold. Что ответит apt-get install kubeadm=…?', 'The packages are held. What does apt-get install kubeadm=… answer?'), options: [{ id: 'held', text: bi('Откажется менять закреплённый пакет', 'It refuses to change a held package') }, { id: 'ok', text: bi('Обновит пакет', 'It upgrades') }], resolve: () => 'held' },
@@ -120,7 +120,7 @@ export const upgradeModel = defineModel<P>({
       label: bi('Бюджет доступности требует все 3 пода (PodDisruptionBudget minAvailable: 3)', 'A budget demands all 3 pods (minAvailable: 3)'),
       remove: ['e-evict'],
       boundary: 'process',
-      predict: { prompt: bi('Бюджет доступности требует, чтобы были готовы все три пода из трёх. Что сделает drain?', 'The budget demands 3 of 3 ready. What does drain do?'), options: [{ id: 'wait', text: bi('Будет ждать и повторять попытки: выселять нельзя', 'Wait and retry') }, { id: 'force', text: bi('Всё равно выселит поды', 'Evict anyway') }], resolve: () => 'wait' },
+      predict: { prompt: bi('Бюджет доступности требует, чтобы были готовы все три пода из трёх. Что сделает drain?', 'The budget demands 3 of 3 ready. What does drain do?'), options: [{ id: 'wait', text: bi('drain будет ждать и повторять попытки, потому что выселять поды нельзя', 'It waits and retries, because evicting is not allowed') }, { id: 'force', text: bi('Всё равно выселит поды', 'Evict anyway') }], resolve: () => 'wait' },
     },
   ],
   metrics: [
@@ -184,7 +184,7 @@ export const upgradeModel = defineModel<P>({
       s.push({
         id: 'fix',
         label: bi('правило', 'rule'),
-        caption: fmt(bi('Нарушено правило: {p}. Управляющий слой нужно обновлять первым: тогда на каждом шаге обновления kubelet не новее API-сервера.', 'Violated: {p}. The control plane goes first.'), { p: problems.join('; ') }),
+        caption: fmt(bi('Нарушено правило: {p}. Управляющий слой нужно обновлять первым, потому что тогда на каждом шаге обновления kubelet не новее API-сервера.', 'Violated: {p}. The control plane goes first.'), { p: problems.join('; ') }),
         focus: ['skew'],
         say: { skew: bi('Правило версий: kubelet не может быть новее API-сервера.', 'The kubelet may not be newer than the API server.') },
         metrics: { minReady: 3, apiMinor: 36 },
@@ -238,7 +238,7 @@ export const upgradeModel = defineModel<P>({
       caption: bi('Только когда worker-1 вернулся и поды снова готовы, наступает очередь worker-2, и его обновляют в том же порядке.', 'Only then worker-2, in the same order.'),
       focus: ['w2', 'e-w2'],
       tokens: [{ edge: 'e-w2', label: v(target) }],
-      say: { w2: bi('worker-2 проходит тот же путь: вывод, обновление, возврат.', 'worker-2 goes through the same.') },
+      say: { w2: bi('worker-2 выводят из работы, обновляют и возвращают так же, как worker-1.', 'worker-2 goes through the same.') },
       states: { w2: 'ok' },
       values: { w2: `kubelet ${v(target)}`, web: 'ready 3/3' },
       fill: { web: 1 },
@@ -258,6 +258,6 @@ export const upgradeModel = defineModel<P>({
     if (change.kind === 'break') return change.on ? bi('Посмотрите, где обновление останавливается и каким сообщением.', 'See where the upgrade stops and how.') : bi('Препятствие убрано.', 'The obstacle is gone.');
     if (change.id === 'drain') return fmt(bi('В худший момент обновления готово подов web: {n} из 3.', 'At worst {n} of 3 web pods are ready.'), { n: metric(next, 'minReady') });
     if (change.id === 'order') return b.order === 'workers' ? bi('kubelet новее API-сервера нарушает правило версий.', 'A newer kubelet breaks the policy.') : bi('Сверху вниз правило версий соблюдено на каждом шаге.', 'Top down, the policy holds.');
-    return Number(b.target) > 37 ? bi('Через минорную версию kubeadm не прыгает.', 'kubeadm does not skip a minor.') : bi('Одна минорная версия — обычный шаг обновления.', 'One minor is an ordinary step.');
+    return Number(b.target) > 37 ? bi('Через минорную версию kubeadm не прыгает.', 'kubeadm does not skip a minor.') : bi('Обновление на одну минорную версию считается обычным шагом.', 'One minor is an ordinary step.');
   },
 });

@@ -26,12 +26,12 @@ const diagram = {
     box('kubectl', bi('Вы, kubectl', 'You, kubectl'), 'user', 'box', [24, 52, 170, 56], 'terminal', bi('Клиент кластера. Он читает файл web.yaml, по полям apiVersion и kind понимает, какой это объект, и отправляет его API-серверу.', 'Reads web.yaml, finds the resource by apiVersion and kind and sends it to the API server.'), bi('Команду набираете вы; адрес сервера и ключ kubectl берёт из kubeconfig.', 'You type it; address and keys come from kubeconfig.'), { see: 'kubectl apply -f web.yaml -v=6', doc: D.components }),
     box('api', 'kube-apiserver', 'cp', 'hex', [360, 52, 220, 56], 'server', bi('Единственный вход в кластер. API-сервер узнаёт, кто вы, проверяет, разрешено ли вам действие, дописывает значения по умолчанию, проверяет объект, записывает его в etcd и рассылает события всем подписчикам.', 'The only door: authentication, authorization, defaults, validation, the etcd write and watch events.'), STATIC, { see: 'kubectl get --raw /readyz?verbose', doc: D.apiserver }),
     box('etcd', 'etcd', 'store', 'box', [770, 52, 166, 56], 'database', bi('Хранилище «ключ — значение», в котором кластер держит все объекты. Ваш Deployment будет лежать там по ключу /registry/deployments/default/web.', 'The key store; your Deployment lives at /registry/deployments/default/web.'), STATIC, { see: 'cluster etcd /registry/deployments', doc: D.components }),
-    box('cm', 'controller-manager', 'cp', 'hex', [250, 178, 210, 56], 'process', bi('Процесс, в котором работают контроллеры, в том числе Deployment и ReplicaSet. Они видят новый объект и создают следующий: сначала ReplicaSet, потом поды.', 'Runs the controllers, including Deployment and ReplicaSet: they see a new object and create the next one.'), STATIC, { see: 'kubectl get rs', doc: D.controller }),
+    box('cm', 'controller-manager', 'cp', 'hex', [250, 178, 210, 56], 'process', bi('В процессе kube-controller-manager работают контроллеры, в том числе Deployment и ReplicaSet. Они видят новый объект и создают следующий, то есть сначала ReplicaSet, а потом поды.', 'Runs the controllers, including Deployment and ReplicaSet: they see a new object and create the next one.'), STATIC, { see: 'kubectl get rs', doc: D.controller }),
     box('sched', 'kube-scheduler', 'cp', 'hex', [500, 178, 210, 56], 'process', bi('Планировщик выбирает узел для каждого пода, у которого ещё нет узла, и записывает выбор в поле nodeName.', 'Picks a node for every pod without one and writes nodeName.'), STATIC, { see: 'kubectl get pods -o wide', doc: D.scheduler }),
     box('kubelet', 'kubelet', 'node', 'box', [60, 336, 180, 56], 'process', bi('Агент узла worker-1. Он видит поды, назначенные своему узлу, запускает их через containerd и сообщает API-серверу, в каком они состоянии.', 'The worker-1 agent: sees pods assigned to its node, starts them via containerd and reports their status.'), ON_NODE, { see: 'kubectl describe pod <name>', doc: D.components }),
     box('crt', 'containerd', 'process', 'box', [290, 336, 180, 56], 'container', bi('Среда запуска контейнеров. Она создаёт песочницу пода, то есть процесс pause, который держит сетевое пространство имён, скачивает образ и запускает контейнер.', 'The runtime: the pod sandbox (pause), the image, the container.'), ON_NODE, { see: 'crictl pods   # on the node', doc: D.cri }),
     box('cni', bi('Сеть подов (CNI)', 'Pod network (CNI)'), 'l3', 'box', [520, 336, 180, 56], 'router', bi('Плагин сети, здесь flannel. Он даёт песочнице пода сетевой интерфейс и IP-адрес из диапазона адресов узла.', 'The network plugin (flannel): gives the sandbox an interface and an IP from the node’s range.'), bi('Плагин лежит в /opt/cni/bin, его вызывает containerd.', 'A binary in /opt/cni/bin, called by containerd.'), { see: 'cluster ip addr worker-1', doc: D.cni }),
-    box('proxy', 'kube-proxy', 'l4', 'box', [60, 448, 180, 56], 'switch', bi('На каждом узле пишет правила, по которым пакеты к адресу Service уходят на один из готовых подов.', 'On every node writes the rules that send Service traffic to a ready pod.'), bi('Работает на каждом узле (в k3s — внутри самого k3s).', 'Runs on every node (inside k3s).'), { see: 'cluster iptables worker-1', doc: D.vip }),
+    box('proxy', 'kube-proxy', 'l4', 'box', [60, 448, 180, 56], 'switch', bi('На каждом узле пишет правила, по которым пакеты к адресу Service уходят на один из готовых подов.', 'On every node writes the rules that send Service traffic to a ready pod.'), bi('Работает на каждом узле, а в k3s встроен в сам k3s.', 'Runs on every node (inside k3s).'), { see: 'cluster iptables worker-1', doc: D.vip }),
     box('dns', 'CoreDNS', 'l7', 'box', [290, 448, 180, 56], 'dns', bi('Сервер имён кластера. Он отвечает на имя web.default.svc.cluster.local адресом Service.', 'The cluster DNS: answers web.default.svc.cluster.local with the Service address.'), bi('Работает подами в namespace kube-system.', 'Pods in kube-system.'), { see: 'kubectl -n kube-system get pods -l k8s-app=kube-dns', doc: D.dns }),
   ],
   edges: [
@@ -47,7 +47,7 @@ const diagram = {
   ],
   groups: [
     { id: 'g-cp', label: bi('управляющий слой (control plane)', 'control plane'), around: ['api', 'etcd', 'cm', 'sched'], family: 'cp' as const, dash: 'dash' as const, pad: 14, card: { what: bi('Компоненты, которые управляют кластером. Ни один из них не запускает ваши контейнеры.', 'The components that manage the cluster; none runs your containers.'), who: bi('Их ставит установщик кластера: k3s или kubeadm.', 'Installed by k3s or kubeadm.') } },
-    { id: 'g-node', label: bi('узел worker-1', 'node worker-1'), around: ['kubelet', 'crt', 'cni', 'proxy', 'dns'], family: 'node' as const, dash: 'solid' as const, pad: 14, card: { what: bi('Узел — машина, на которой работают поды. Узлов в кластере обычно много, и на каждом работают kubelet, containerd и kube-proxy.', 'A machine where pods run; each has a kubelet, containerd and kube-proxy.'), who: bi('Машину даёте вы или облако, а в кластер её добавляет kubelet.', 'You or the cloud; the kubelet joins it.') } },
+    { id: 'g-node', label: bi('узел worker-1', 'node worker-1'), around: ['kubelet', 'crt', 'cni', 'proxy', 'dns'], family: 'node' as const, dash: 'solid' as const, pad: 14, card: { what: bi('Узлом называют машину, на которой работают поды. Узлов в кластере обычно много, и на каждом работают kubelet, containerd и kube-proxy.', 'A machine where pods run; each has a kubelet, containerd and kube-proxy.'), who: bi('Машину даёте вы или облако, а в кластер её добавляет kubelet.', 'You or the cloud; the kubelet joins it.') } },
   ],
 };
 
@@ -62,8 +62,8 @@ export const applyPathModel = defineModel<P>({
     'You send a Deployment from web.yaml, and the diagram walks it through every component, from the API request to a ready pod behind a Service. Each component does one job and writes its result through the API server.',
   ),
   intro: bi(
-    'Сейчас на схеме только kubectl и API-сервер, а пунктирные рамки показывают, где появятся остальные: вверху управляющий слой кластера, внизу узел worker-1. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» или нажмите «Проиграть». Компоненты будут появляться по одному, когда до них дойдёт путь. Потом выключайте по одному компоненту в блоке «Сломать» и смотрите, на каком шаге путь оборвётся и какое сообщение вы увидите.',
-    'For now the diagram shows only kubectl and the API server; the frames show where the rest will appear: the control plane at the top, the node worker-1 at the bottom. Press “Start: step forward”, then “Step forward” or “Play”. Then turn off one component at a time in “Break it” and see where the path stops and what message you get.',
+    'Сейчас на схеме только kubectl и API-сервер, а пунктирные рамки показывают, где появятся остальные: вверху управляющий слой кластера, внизу узел worker-1. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» или нажмите «Проиграть». Компоненты будут появляться по одному, когда до них дойдёт путь. Потом выключайте по одному компоненту в блоке «Сломать» и смотрите, на каком шаге путь оборвётся и какое сообщение вы увидите.',
+    'For now the diagram shows only kubectl and the API server; the frames show where the rest will appear: the control plane at the top, the node worker-1 at the bottom. Press “Start from the first step”, then “Step forward” or “Play”. Then turn off one component at a time in “Break it” and see where the path stops and what message you get.',
   ),
   legend: [
     ...LEGEND_BASE,
@@ -91,7 +91,7 @@ export const applyPathModel = defineModel<P>({
       predict: {
         prompt: bi('Вы меняете число подов в Deployment. Сколько записей о выборе узла сделает планировщик?', 'You change replicas. How many node choices will the scheduler write?'),
         options: [
-          { id: 'each', text: bi('Столько же, сколько подов: по одной на каждый под', 'One per pod') },
+          { id: 'each', text: bi('Столько же, сколько подов, то есть по одной на каждый под', 'One per pod') },
           { id: 'one', text: bi('Одну на весь Deployment', 'One for the whole Deployment') },
         ],
         resolve: () => 'each',
@@ -121,7 +121,7 @@ export const applyPathModel = defineModel<P>({
         prompt: bi('У вас нет права создавать Deployment. На каком компоненте остановится запрос?', 'You have no right to create Deployments. Where does the request stop?'),
         options: [
           { id: 'api', text: bi('На API-сервере, до записи в etcd', 'At the API server, before etcd') },
-          { id: 'kubelet', text: bi('На узле: kubelet откажется запускать под', 'On the node: the kubelet refuses') },
+          { id: 'kubelet', text: bi('На узле, где kubelet откажется запускать под', 'On the node, where the kubelet refuses') },
         ],
         resolve: (_p, n) => (n.find((s) => s.broken)?.broken?.at === 'api' ? 'api' : 'kubelet'),
       },
@@ -129,8 +129,8 @@ export const applyPathModel = defineModel<P>({
     { id: 'quota', label: bi('Квота namespace на число Deployment исчерпана', 'The namespace Deployment quota is used up'), kind: 'toggle', default: false, near: 'api', levels: ['intermediate', 'experienced'], group: bi('Условия в кластере', 'Cluster conditions') },
   ],
   breaks: [
-    { id: 'no-etcd', label: bi('etcd не отвечает', 'etcd does not answer'), remove: ['etcd', 'e-etcd'], boundary: 'storage', predict: { prompt: bi('etcd не отвечает, а остальные компоненты работают. Что вернёт kubectl после `kubectl apply -f web.yaml`?', 'etcd does not answer. What does kubectl get back?'), options: [{ id: 'err', text: bi('Ошибку: объект сохранить негде', 'An error: nowhere to store the object') }, { id: 'ok', text: bi('«created», а сохранится объект потом', '“created”, stored later') }], resolve: (_p, n) => (n.some((s) => s.broken?.at === 'e-etcd') ? 'err' : 'ok') } },
-    { id: 'no-cm', label: bi('kube-controller-manager остановлен', 'kube-controller-manager is stopped'), remove: ['cm', 'e-cm'], boundary: 'process', predict: { prompt: bi('kube-controller-manager остановлен, а API-сервер и etcd работают. Что будет после того, как kubectl напечатает «deployment.apps/web created»?', 'controller-manager is stopped. What happens after “deployment.apps/web created”?'), options: [{ id: 'nothing', text: bi('Ничего: не появится ни ReplicaSet, ни подов', 'Nothing: no ReplicaSet, no pods') }, { id: 'pods', text: bi('Поды создаст сам API-сервер', 'The API server creates the pods') }], resolve: (_p, n) => (n.some((s) => s.broken?.at === 'cm') ? 'nothing' : 'pods') } },
+    { id: 'no-etcd', label: bi('etcd не отвечает', 'etcd does not answer'), remove: ['etcd', 'e-etcd'], boundary: 'storage', predict: { prompt: bi('etcd не отвечает, а остальные компоненты работают. Что вернёт kubectl после `kubectl apply -f web.yaml`?', 'etcd does not answer. What does kubectl get back?'), options: [{ id: 'err', text: bi('Ошибку, потому что объект сохранить негде', 'An error: nowhere to store the object') }, { id: 'ok', text: bi('«created», а сохранится объект потом', '“created”, stored later') }], resolve: (_p, n) => (n.some((s) => s.broken?.at === 'e-etcd') ? 'err' : 'ok') } },
+    { id: 'no-cm', label: bi('kube-controller-manager остановлен', 'kube-controller-manager is stopped'), remove: ['cm', 'e-cm'], boundary: 'process', predict: { prompt: bi('kube-controller-manager остановлен, а API-сервер и etcd работают. Что будет после того, как kubectl напечатает «deployment.apps/web created»?', 'controller-manager is stopped. What happens after “deployment.apps/web created”?'), options: [{ id: 'nothing', text: bi('Ничего не произойдёт, и в кластере не появится ни ReplicaSet, ни подов', 'Nothing: no ReplicaSet, no pods') }, { id: 'pods', text: bi('Поды создаст сам API-сервер', 'The API server creates the pods') }], resolve: (_p, n) => (n.some((s) => s.broken?.at === 'cm') ? 'nothing' : 'pods') } },
     { id: 'no-sched', label: bi('kube-scheduler остановлен', 'kube-scheduler is stopped'), remove: ['sched', 'e-sched'], boundary: 'process', predict: { prompt: bi('kube-scheduler остановлен, а контроллеры работают. Что будет с подами, которые они создадут?', 'kube-scheduler is stopped. What happens to the pods?'), options: [{ id: 'pending', text: bi('Останутся в состоянии Pending, и событий о них не будет', 'They stay Pending with no events') }, { id: 'self', text: bi('kubelet сам заберёт под на свой узел', 'A kubelet takes them itself') }], resolve: (_p, n) => (n.some((s) => s.broken?.at === 'sched') ? 'pending' : 'self') } },
     { id: 'no-kubelet', label: bi('kubelet на worker-1 остановлен', 'The kubelet on worker-1 is stopped'), remove: ['kubelet', 'e-kubelet', 'e-cri'], boundary: 'process', predict: { prompt: bi('kubelet на worker-1 только что остановился, и узел ещё не помечен как недоступный. Может ли планировщик назначить под на worker-1?', 'The kubelet on worker-1 just stopped; the node is not yet marked unreachable. May the scheduler still assign a pod there?'), options: [{ id: 'yes', text: bi('Да, и под не запустится, пока узел не пометят недоступным', 'Yes, and the pod will not start') }, { id: 'no', text: bi('Нет, планировщик узнаёт об остановке сразу', 'No, the scheduler knows at once') }], resolve: () => 'yes' } },
     { id: 'no-cni', label: bi('Плагин сети подов (CNI) на worker-1 не установлен', 'No CNI plugin on worker-1'), remove: ['cni', 'e-cni'], boundary: 'network', layer: 'L3', predict: { prompt: bi('На worker-1 нет плагина сети подов. На каком шаге остановится запуск пода?', 'No CNI plugin on worker-1. At which step does the pod start fail?'), options: [{ id: 'sandbox', text: bi('Когда containerd создаёт песочницу пода', 'When the sandbox is created') }, { id: 'pull', text: bi('Когда containerd скачивает образ', 'When the image is pulled') }], resolve: (_p, n) => (n.some((s) => s.broken?.at === 'e-cni') ? 'sandbox' : 'pull') } },
@@ -224,7 +224,7 @@ export const applyPathModel = defineModel<P>({
         say: { api: bi('API-сервер ждёт ответа etcd и не дожидается.', 'The API server waits for etcd in vain.') },
         states: { api: 'err', 'e-etcd': 'err' },
         metrics: m(),
-        broken: { at: 'e-etcd', message: 'Error from server: etcdserver: request timed out', caption: bi('на записи в etcd. Без etcd у кластера нет состояния: ничего не сохраняется, и любая команда, которая что-то меняет, получает ошибку.', 'at the etcd write: without etcd there is no state, every change fails.') },
+        broken: { at: 'e-etcd', message: 'Error from server: etcdserver: request timed out', caption: bi('на записи в etcd. Без etcd у кластера нет состояния, поэтому ничего не сохраняется, и любая команда, которая что-то меняет, получает ошибку.', 'at the etcd write: without etcd there is no state, every change fails.') },
       });
       return s;
     }
@@ -244,7 +244,7 @@ export const applyPathModel = defineModel<P>({
     s.push({
       id: 'created',
       label: 'created',
-      caption: bi('API-сервер отвечает kubectl, и тот печатает «deployment.apps/web created». На этом работа API-сервера закончена: он сохранил объект, но ни одного процесса не запустил.', 'kubectl prints “deployment.apps/web created”. The API server’s work is over: it stored the object and started nothing.'),
+      caption: bi('API-сервер отвечает kubectl, и тот печатает «deployment.apps/web created». На этом работа API-сервера закончена. Он сохранил объект, но ни одного процесса не запустил.', 'kubectl prints “deployment.apps/web created”. The API server’s work is over: it stored the object and started nothing.'),
       focus: ['kubectl', 'e-kubectl'],
       tokens: [{ edge: 'e-kubectl', label: 'deployment.apps/web created', reverse: true }],
       say: { kubectl: bi('kubectl печатает: deployment.apps/web created.', 'kubectl prints: deployment.apps/web created.') },
@@ -282,7 +282,7 @@ export const applyPathModel = defineModel<P>({
     s.push({
       id: 'rs',
       label: 'ReplicaSet',
-      caption: bi('Контроллер Deployment получает событие о новом объекте и создаёт ReplicaSet web-5d78b9c7f4. Хвост имени — это хеш шаблона пода: по нему контроллер отличает ReplicaSet разных версий.', 'The Deployment controller creates ReplicaSet web-5d78b9c7f4; the suffix is the pod template hash.'),
+      caption: bi('Контроллер Deployment получает событие о новом объекте и создаёт ReplicaSet web-5d78b9c7f4. Хвост имени содержит хеш шаблона пода, и по нему контроллер отличает ReplicaSet разных версий.', 'The Deployment controller creates ReplicaSet web-5d78b9c7f4; the suffix is the pod template hash.'),
       focus: ['cm', 'e-cm'],
       reveal: ['cm', 'e-cm'],
       tokens: [{ edge: 'e-cm', label: 'create ReplicaSet' }],
@@ -296,7 +296,7 @@ export const applyPathModel = defineModel<P>({
     s.push({
       id: 'pods',
       label: bi('поды', 'pods'),
-      caption: fmtb(bi('Контроллер ReplicaSet видит новый ReplicaSet и создаёт {n}. Пока это только записи в etcd без узла: ни одного процесса ещё не запущено.', 'The ReplicaSet controller creates {n}: records without a node, no process yet.'), { n: pods }),
+      caption: fmtb(bi('Контроллер ReplicaSet видит новый ReplicaSet и создаёт {n}. Пока это только записи в etcd без узла, и ни одного процесса ещё не запущено.', 'The ReplicaSet controller creates {n}: records without a node, no process yet.'), { n: pods }),
       focus: ['cm', 'e-cm'],
       tokens: [{ edge: 'e-cm', label: `${n} × create pod` }],
       say: { cm: fmtb(bi('Контроллер ReplicaSet создаёт {n} по шаблону.', 'The ReplicaSet controller creates {n}.'), { n: pods }) },
@@ -308,13 +308,13 @@ export const applyPathModel = defineModel<P>({
       s.push({
         id: 'bind',
         label: bi('узел', 'node'),
-        caption: bi('Поды созданы, но узел им выбрать некому: kube-scheduler не работает. Поды остаются в состоянии Pending.', 'The pods exist, but nobody picks a node: they stay Pending.'),
+        caption: bi('Поды созданы, но узел им выбрать некому, потому что kube-scheduler не работает. Поды остаются в состоянии Pending.', 'The pods exist, but nobody picks a node: they stay Pending.'),
         focus: ['api'],
         reveal: ['sched'],
         say: { api: bi('API-сервер хранит поды без узла, и забрать их некому.', 'The API server holds pods without a node; nobody takes them.') },
         states: { sched: 'err' },
         metrics: m(),
-        broken: { at: 'sched', message: `$ kubectl get pods\nNAME                   READY   STATUS    RESTARTS   AGE\nweb-5d78b9c7f4-4mz8q   0/1     Pending   0          5m\n$ kubectl describe pod web-5d78b9c7f4-4mz8q | tail -2\nNode:             <none>\nEvents:           <none>`, caption: bi('на выборе узла. Под в состоянии Pending без единого события означает, что планировщика нет вовсе: событие FailedScheduling писать некому.', 'at scheduling: Pending with no events means there is no scheduler at all.') },
+        broken: { at: 'sched', message: `$ kubectl get pods\nNAME                   READY   STATUS    RESTARTS   AGE\nweb-5d78b9c7f4-4mz8q   0/1     Pending   0          5m\n$ kubectl describe pod web-5d78b9c7f4-4mz8q | tail -2\nNode:             <none>\nEvents:           <none>`, caption: bi('на выборе узла. Под в состоянии Pending без единого события означает, что планировщика нет вовсе, ведь событие FailedScheduling, кроме него, писать некому.', 'at scheduling: Pending with no events means there is no scheduler at all.') },
       });
       return s;
     }
@@ -431,7 +431,7 @@ export const applyPathModel = defineModel<P>({
         say: { kubectl: bi('Запрос curl к Service web не получает ответа.', 'A curl to Service web gets no answer.') },
         states: { proxy: 'err' },
         metrics: m(),
-        broken: { at: 'proxy', message: "$ kubectl exec client -- curl http://web\ncurl: (28) Failed to connect to web port 80 after 130412 ms: Couldn't connect to server", caption: bi('на правилах Service. По IP-адресу пода запрос проходит, а по адресу Service нет: этот адрес существует только в правилах, которые пишет kube-proxy.', 'at the Service rules: the pod IP works, the Service address does not, it exists only in kube-proxy’s rules.') },
+        broken: { at: 'proxy', message: "$ kubectl exec client -- curl http://web\ncurl: (28) Failed to connect to web port 80 after 130412 ms: Couldn't connect to server", caption: bi('на правилах Service. По IP-адресу пода запрос проходит, а по адресу Service нет, потому что этот адрес существует только в правилах, которые пишет kube-proxy.', 'at the Service rules: the pod IP works, the Service address does not, it exists only in kube-proxy’s rules.') },
       });
       return s;
     }
@@ -440,18 +440,18 @@ export const applyPathModel = defineModel<P>({
     s.push({
       id: 'svc',
       label: 'Service',
-      caption: bi('Адрес готового пода попадает в EndpointSlice сервиса web, kube-proxy получает его и дописывает на каждом узле правило: пакеты к адресу Service отправлять на этот под.', 'The pod’s address enters the EndpointSlice; kube-proxy adds a rule on every node.'),
+      caption: bi('Адрес готового пода попадает в EndpointSlice сервиса web, kube-proxy получает его и дописывает на каждом узле правило, по которому пакеты к адресу Service отправляются на этот под.', 'The pod’s address enters the EndpointSlice; kube-proxy adds a rule on every node.'),
       focus: ['proxy', 'e-proxy'],
       reveal: ['proxy', 'e-proxy'],
       tokens: [{ edge: 'e-proxy', label: 'EndpointSlice', reverse: true }],
-      say: { proxy: bi('kube-proxy дописывает правило: пакеты к Service web отправлять на новый под.', 'kube-proxy adds a rule for Service web.') },
+      say: { proxy: bi('kube-proxy дописывает правило, по которому пакеты к Service web отправляются на новый под.', 'kube-proxy adds a rule for Service web.') },
       states: { proxy: 'ok' },
       metrics: m(),
     });
     s.push({
       id: 'dns',
       label: 'DNS',
-      caption: bi('CoreDNS уже знает имя web и отвечает на него адресом Service. Путь пройден: другие поды могут обращаться к приложению по имени http://web.', 'CoreDNS answers the name web with the Service address: other pods can reach http://web.'),
+      caption: bi('CoreDNS уже знает имя web и отвечает на него адресом Service. Путь пройден, и теперь другие поды могут обращаться к приложению по имени http://web.', 'CoreDNS answers the name web with the Service address: other pods can reach http://web.'),
       focus: ['dns', 'e-dns'],
       reveal: ['dns', 'e-dns'],
       tokens: [{ edge: 'e-dns', label: 'web', reverse: true }],
@@ -465,7 +465,7 @@ export const applyPathModel = defineModel<P>({
     if (change.kind === 'break') {
       if (!change.on) return bi('Компонент снова работает, и путь опять доходит до готового пода.', 'The component is back; the path reaches a ready pod again.');
       const at = next.find((x) => x.broken)?.broken?.at ?? '';
-      return fmt(bi('Путь оборвался на элементе «{at}»: каждый следующий шаг ждёт результата предыдущего, и обходного пути нет.', 'The path stops at “{at}”: every step waits for the previous one.'), { at });
+      return fmt(bi('Путь оборвался на элементе «{at}», потому что каждый следующий шаг ждёт результата предыдущего, и обходного пути нет.', 'The path stops at “{at}”: every step waits for the previous one.'), { at });
     }
     switch (change.id) {
       case 'replicas':
@@ -477,7 +477,7 @@ export const applyPathModel = defineModel<P>({
       case 'quota':
         return b.quota ? bi('Квота исчерпана, и API-сервер отказывает на последней проверке перед записью.', 'The quota refuses at the last check.') : bi('Квота свободна, и запись проходит.', 'The quota has room.');
       case 'upto':
-        return b.upto === 'etcd' ? bi('Путь показан до записи в etcd: на этом работа API-сервера заканчивается.', 'Shown up to the etcd write.') : bi('Путь показан целиком: после etcd работают контроллеры, планировщик и kubelet.', 'The whole path is shown.');
+        return b.upto === 'etcd' ? bi('Путь показан до записи в etcd: на этом работа API-сервера заканчивается.', 'Shown up to the etcd write.') : bi('Путь показан целиком, и после etcd в нём работают контроллеры, планировщик и kubelet.', 'The whole path is shown.');
     }
     return anyBroken(next) ? bi('Путь пересчитан и обрывается на поломке.', 'The path stops at the break.') : bi('Путь пересчитан.', 'The path is recomputed.');
   },
