@@ -31,7 +31,7 @@ export const symptomModel = defineModel<P>({
   id: 'career.symptom',
   block: 'career',
   title: bi('От симптома к причине: откуда берётся 504', 'From symptom to cause: where a 504 comes from'),
-  summary: bi('Каждое наблюдение исключает часть гипотез. Меняй скрытую причину и время ответа — метод остаётся тем же.', 'Each observation rules out some hypotheses. Change the hidden cause and the response time: the method stays the same.'),
+  summary: bi('Каждое наблюдение исключает часть гипотез. Меняйте скрытую причину и время ответа — метод остаётся тем же.', 'Each observation rules out some hypotheses. Change the hidden cause and the response time: the method stays the same.'),
   concepts: ['career.situational', 'career.mitigate-first'],
   diagram: {
     width: 960,
@@ -105,7 +105,7 @@ export const symptomModel = defineModel<P>({
       remove: ['errlog', 'e-log', 'e-hyp'],
       boundary: 'process',
       predict: {
-        prompt: bi('Ты перезапустил nginx и приложение до чтения журналов. Сколько гипотез останется?', 'You restarted nginx and the application before reading the logs. How many hypotheses remain?'),
+        prompt: bi('Вы перезапустили nginx и приложение до чтения журналов. Сколько гипотез останется?', 'You restarted nginx and the application before reading the logs. How many hypotheses remain?'),
         options: [
           { id: '1', text: bi('Одна: перезапуск всё починил', 'One: the restart fixed it') },
           { id: '5', text: bi('Пять: улики стёрты, причина на месте', 'Five: the evidence is gone, the cause is still there') },

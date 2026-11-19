@@ -17,7 +17,7 @@ export const DRILL_504: Drill = {
   id: 'drill.504',
   title: bi('«Сайт отдаёт 504»', '“The site returns 504”'),
   symptom: bi(
-    'Тебе пишут в чат дежурных: «Магазин отдаёт 504, клиенты жалуются». Ты на сервере `web-1` (на нём nginx), приложение работает на `10.0.0.12:8000`.',
+    'Вам пишут в чат дежурных: «Магазин отдаёт 504, клиенты жалуются». Вы на сервере `web-1` (на нём nginx), приложение работает на `10.0.0.12:8000`.',
     'A message in the on-call chat: “The shop returns 504, customers complain.” You are on `web-1` (nginx runs there); the application runs on `10.0.0.12:8000`.',
   ),
   concepts: ['career.situational', 'career.mitigate-first'],
@@ -29,7 +29,7 @@ export const DRILL_504: Drill = {
   steps: [
     {
       id: 'clarify',
-      prompt: bi('С чего начнёшь?', 'Where do you start?'),
+      prompt: bi('С чего начнёте?', 'Where do you start?'),
       options: [
         {
           id: 'ask',
@@ -61,7 +61,7 @@ export const DRILL_504: Drill = {
     },
     {
       id: 'confirm',
-      prompt: bi('Подтверди симптом снаружи и пойми, кто именно отвечает 504.', 'Confirm the symptom from outside and find out who exactly answers 504.'),
+      prompt: bi('Подтвердите симптом снаружи и выясните, кто именно отвечает 504.', 'Confirm the symptom from outside and find out who exactly answers 504.'),
       options: [
         {
           id: 'curl',
@@ -153,7 +153,7 @@ export const DRILL_504: Drill = {
     },
     {
       id: 'narrow',
-      prompt: bi('Сузь гипотезу: проверь upstream мимо nginx.', 'Narrow it down: check the upstream bypassing nginx.'),
+      prompt: bi('Сузьте гипотезу: проверьте upstream мимо nginx.', 'Narrow it down: check the upstream bypassing nginx.'),
       options: [
         {
           id: 'direct',
@@ -197,7 +197,7 @@ export const DRILL_504: Drill = {
     },
     {
       id: 'cause',
-      prompt: bi('Найди причину по уликам.', 'Find the cause from the evidence.'),
+      prompt: bi('Найдите причину по уликам.', 'Find the cause from the evidence.'),
       options: [
         {
           id: 'applog',
@@ -235,7 +235,7 @@ export const DRILL_504: Drill = {
     },
     {
       id: 'mitigate',
-      prompt: bi('Верни сервис пользователям.', 'Give the service back to the users.'),
+      prompt: bi('Верните сервис пользователям.', 'Give the service back to the users.'),
       options: [
         {
           id: 'rollback-release',
@@ -263,14 +263,14 @@ export const DRILL_504: Drill = {
           id: 'hotfix',
           text: bi('Сразу чинить в проде руками: создать индекс, поднять пул, править код на сервере', 'Fix it in production by hand right away: create the index, raise the pool, edit code on the server'),
           tags: ['fix-first'],
-          why: bi('Это починка, а не смягчение. Пока ты чинишь руками, пользователи ждут, а ручная правка в проде — ещё один риск. Сначала вернуть сервис, потом исправлять через конвейер.', 'This is a fix, not a mitigation. While you fix by hand users wait, and a manual change in production is one more risk. First restore the service, then fix through the pipeline.'),
+          why: bi('Это починка, а не смягчение. Пока вы чините руками, пользователи ждут, а ручная правка в проде — ещё один риск. Сначала вернуть сервис, потом исправлять через конвейер.', 'This is a fix, not a mitigation. While you fix by hand users wait, and a manual change in production is one more risk. First restore the service, then fix through the pipeline.'),
         },
         restartAll(bi('Перезапуск не убирает ни медленный запрос, ни правило: через минуту всё повторится, а журналы прошлых запусков уже потеряны.', 'A restart removes neither the slow query nor the rule: in a minute it repeats, and the logs of the previous runs are gone.')),
       ],
     },
     {
       id: 'fix',
-      prompt: bi('Устрани причину так, чтобы это не повторилось, и проверь результат.', 'Remove the cause so it does not happen again, and verify the result.'),
+      prompt: bi('Устрани причину так, чтобы это не повторилось, и проверьте результат.', 'Remove the cause so it does not happen again, and verify the result.'),
       options: [
         {
           id: 'fix-index',
@@ -317,7 +317,7 @@ export const DRILL_DISK: Drill = {
   steps: [
     {
       id: 'clarify',
-      prompt: bi('С чего начнёшь?', 'Where do you start?'),
+      prompt: bi('С чего начнёте?', 'Where do you start?'),
       options: [
         {
           id: 'ask',
@@ -325,7 +325,7 @@ export const DRILL_DISK: Drill = {
           tags: ['clarify'],
           good: true,
           out: bi('«Раздел /, растёт примерно на гигабайт в час. На сервере nginx, приложение и служба отчётов report».', '“The / partition, growing about a gigabyte an hour. The server runs nginx, the application and the report service.”'),
-          why: bi('Скорость роста говорит, сколько у тебя времени, а список служб — где искать.', 'The growth rate tells you how much time you have, and the list of services where to look.'),
+          why: bi('Скорость роста говорит, сколько у вас времени, а список служб — где искать.', 'The growth rate tells you how much time you have, and the list of services where to look.'),
         },
         {
           id: 'rmlogs',
@@ -368,7 +368,7 @@ export const DRILL_DISK: Drill = {
     },
     {
       id: 'du',
-      prompt: bi('Найди, где место: от общего к частному.', 'Find where the space goes: from the general to the specific.'),
+      prompt: bi('Найдите, где место: от общего к частному.', 'Find where the space goes: from the general to the specific.'),
       options: [
         {
           id: 'du',
@@ -494,7 +494,7 @@ export const DRILL_DISK: Drill = {
     },
     {
       id: 'prevent',
-      prompt: bi('Сделай так, чтобы это не повторилось.', 'Make sure it does not happen again.'),
+      prompt: bi('Сделайте так, чтобы это не повторилось.', 'Make sure it does not happen again.'),
       options: [
         {
           id: 'logrotate',
@@ -524,7 +524,7 @@ export const DRILL_DISK: Drill = {
 export const DRILL_CRASHLOOP: Drill = {
   id: 'drill.crashloop',
   title: bi('«Под в CrashLoopBackOff»', '“A pod in CrashLoopBackOff”'),
-  symptom: bi('После выкладки новая версия сервиса `api` не принимает трафик. В кластере у тебя есть `kubectl` с правами на namespace `shop`.', 'After a release the new version of the `api` service does not take traffic. You have `kubectl` with rights to the `shop` namespace.'),
+  symptom: bi('После выкладки новая версия сервиса `api` не принимает трафик. В кластере у вас есть `kubectl` с правами на namespace `shop`.', 'After a release the new version of the `api` service does not take traffic. You have `kubectl` with rights to the `shop` namespace.'),
   concepts: ['career.situational', 'career.mitigate-first'],
   variants: [
     { id: 'env', cause: bi('в новой версии нужна переменная окружения, которой нет в манифесте', 'the new version needs an environment variable that is missing from the manifest') },
@@ -533,7 +533,7 @@ export const DRILL_CRASHLOOP: Drill = {
   steps: [
     {
       id: 'clarify',
-      prompt: bi('С чего начнёшь?', 'Where do you start?'),
+      prompt: bi('С чего начнёте?', 'Where do you start?'),
       options: [
         {
           id: 'ask',
@@ -561,7 +561,7 @@ export const DRILL_CRASHLOOP: Drill = {
     },
     {
       id: 'get',
-      prompt: bi('Посмотри состояние подов.', 'Look at the state of the pods.'),
+      prompt: bi('Посмотрите состояние подов.', 'Look at the state of the pods.'),
       options: [
         {
           id: 'get',
@@ -576,7 +576,7 @@ export const DRILL_CRASHLOOP: Drill = {
     },
     {
       id: 'describe',
-      prompt: bi('Узнай, как завершился прошлый запуск.', 'Find out how the last run ended.'),
+      prompt: bi('Узнайте, как завершился прошлый запуск.', 'Find out how the last run ended.'),
       options: [
         {
           id: 'describe',
@@ -620,7 +620,7 @@ export const DRILL_CRASHLOOP: Drill = {
     },
     {
       id: 'evidence',
-      prompt: bi('Собери улику, которая назовёт причину.', 'Collect the evidence that names the cause.'),
+      prompt: bi('Соберите улику, которая назовёт причину.', 'Collect the evidence that names the cause.'),
       options: [
         {
           id: 'previous',
@@ -652,7 +652,7 @@ export const DRILL_CRASHLOOP: Drill = {
     },
     {
       id: 'mitigate',
-      prompt: bi('Верни сервис.', 'Restore the service.'),
+      prompt: bi('Верните сервис.', 'Restore the service.'),
       options: [
         {
           id: 'undo',
@@ -680,7 +680,7 @@ export const DRILL_CRASHLOOP: Drill = {
     },
     {
       id: 'fix',
-      prompt: bi('Исправь причину и выкати заново.', 'Fix the cause and release again.'),
+      prompt: bi('Исправьте причину и выкатите заново.', 'Fix the cause and release again.'),
       options: [
         {
           id: 'env-fix',

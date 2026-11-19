@@ -13,21 +13,21 @@ import { analyze, extractRequirements, type Analysis } from '../vacancy';
 import { load, save } from './ui';
 
 const V = {
-  paste: bi('Вставь текст вакансии целиком, с заголовками разделов', 'Paste the whole vacancy text, with its section headings'),
+  paste: bi('Вставьте текст вакансии целиком, с заголовками разделов', 'Paste the whole vacancy text, with its section headings'),
   run: bi('Разобрать', 'Analyze'),
   req: bi('Требование', 'Requirement'),
   kind: bi('Вес', 'Weight'),
-  state: bi('Твоё состояние', 'Your state'),
+  state: bi('Ваше состояние', 'Your state'),
   credit: bi('Засчитано', 'Credited'),
   must: bi('обяз.', 'must'),
   nice: bi('жел.', 'nice'),
   total: bi('Итого {t}% (обязательные {r}%)', 'Total {t}% (required {r}%)'),
-  apply: bi('Откликайся: совпадение выше 60%, требования завышены намеренно.', 'Apply: the match is above 60%, and requirements are inflated on purpose.'),
+  apply: bi('Откликайтесь: совпадение выше 60%, требования завышены намеренно.', 'Apply: the match is above 60%, and requirements are inflated on purpose.'),
   almost: bi('Почти: два-три блока — и можно откликаться. Можно и сейчас: отказ тоже учит.', 'Almost: two or three blocks and you can apply. You may apply now too: a rejection also teaches.'),
   notYet: bi('Пока рано, но запрета нет. Вот что даст больше всего:', 'Early for now, but nothing forbids it. This gives the most:'),
-  empty: bi('В тексте не нашлось знакомых требований. Вставь вакансию целиком.', 'No familiar requirements found in the text. Paste the whole vacancy.'),
+  empty: bi('В тексте не нашлось знакомых требований. Вставьте вакансию целиком.', 'No familiar requirements found in the text. Paste the whole vacancy.'),
   toLearn: bi('Что подтянуть к собеседованию', 'What to catch up on before the interview'),
-  outside: bi('Вне курса — прочитай обзор по официальной документации', 'Outside the course — read an overview in the official docs'),
+  outside: bi('Вне курса — прочитайте обзор по официальной документации', 'Outside the course — read an overview in the official docs'),
   st: {
     exam: bi('экзамен сдан', 'exam passed'),
     lessons: bi('уроки пройдены', 'lessons done'),

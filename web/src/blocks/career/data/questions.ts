@@ -41,7 +41,7 @@ export const CARDS: InterviewCard[] = [
       kp('ttl', bi('кэш на время TTL', 'cache for the TTL'), ['ttl', 'кэш', 'cache']),
       kp('split', bi('резолвер против авторитативного: кэш или запись', 'resolver vs authoritative: cache or record'), ['@', 'напрямую', 'directly']),
     ],
-    followups: [bi('Что будет, если поменять запись, а TTL у неё сутки?', 'What happens if you change a record whose TTL is a day?'), bi('Откуда ты это знаешь?', 'How do you know that?')],
+    followups: [bi('Что будет, если поменять запись, а TTL у неё сутки?', 'What happens if you change a record whose TTL is a day?'), bi('Откуда вы это знаете?', 'How do you know that?')],
     source: { title: 'dig(1)', url: 'https://man7.org/linux/man-pages/man1/dig.1.html' },
   },
   {
@@ -82,13 +82,13 @@ export const CARDS: InterviewCard[] = [
       kp('deploy', bi('развёртывание: без ручного шага', 'deployment: no manual step'), ['автоматическ', 'automatic', 'без ручн', 'no manual']),
       kp('pre', bi('предпосылки: тесты, мониторинг, откат', 'prerequisites: tests, monitoring, rollback'), ['откат', 'rollback', 'мониторинг', 'monitoring']),
     ],
-    followups: [bi('Что ты сделаешь, если тесты в конвейере нестабильны?', 'What do you do when the pipeline tests are flaky?')],
+    followups: [bi('Что вы сделаете, если тесты в конвейере нестабильны?', 'What do you do when the pipeline tests are flaky?')],
     source: { title: 'Continuous Delivery — Martin Fowler', url: 'https://martinfowler.com/bliki/ContinuousDelivery.html' },
   },
   {
     id: 'q.url',
     block: 'networks',
-    question: bi('Что происходит, когда вводишь адрес в браузере?', 'What happens when you type an address into a browser?'),
+    question: bi('Что происходит, когда вы вводите адрес в браузере?', 'What happens when you type an address into a browser?'),
     bad: bi('Браузер делает GET и получает страницу.', 'The browser does a GET and gets the page.'),
     model: {
       what: bi('Цепочка шагов от имени до готовой страницы: имя → адрес → соединение → шифрование → запрос → ответ → отрисовка.', 'A chain of steps from a name to a rendered page: name → address → connection → encryption → request → response → rendering.'),
@@ -149,7 +149,7 @@ export const CARDS: InterviewCard[] = [
   {
     id: 'q.disk',
     block: 'linux',
-    question: bi('На сервере кончилось место. Что делаешь?', 'The server ran out of disk space. What do you do?'),
+    question: bi('На сервере кончилось место. Что будете делать?', 'The server ran out of disk space. What do you do?'),
     bad: bi('`rm -rf /var/log/*`', '`rm -rf /var/log/*`'),
     model: {
       what: bi('Сначала нахожу, какой раздел заполнен и чем, и только потом освобождаю место, не трогая данные приложения.', 'First I find which partition is full and with what, and only then free space without touching the application’s data.'),
@@ -170,7 +170,7 @@ export const CARDS: InterviewCard[] = [
   {
     id: 'q.apply',
     block: 'k8s-1',
-    question: bi('Что происходит, когда делаешь `kubectl apply -f deployment.yaml`?', 'What happens when you run `kubectl apply -f deployment.yaml`?'),
+    question: bi('Что происходит, когда вы выполняете `kubectl apply -f deployment.yaml`?', 'What happens when you run `kubectl apply -f deployment.yaml`?'),
     bad: bi('Kubernetes создаёт поды.', 'Kubernetes creates the pods.'),
     model: {
       what: bi('kubectl отправляет желаемое состояние в API-сервер, а дальше независимые контроллеры по цепочке доводят реальность до него.', 'kubectl sends the desired state to the API server, and independent controllers then bring reality to it, one after another.'),
@@ -245,7 +245,7 @@ export const CARDS: InterviewCard[] = [
       kp('samples', bi('нужно хотя бы две точки: окно в несколько интервалов', 'at least two samples: a window of several intervals'), ['интервал', 'interval', 'точ', 'sample', 'scrape']),
       kp('gauge', bi('не для датчиков', 'not for gauges'), ['gauge', 'датчик']),
     ],
-    followups: [bi('Почему график стал пустым, когда ты поставил окно [15s] при опросе раз в 15 секунд?', 'Why did the graph go empty with a [15s] window and a 15-second scrape interval?')],
+    followups: [bi('Почему график стал пустым, когда вы поставили окно [15s] при опросе раз в 15 секунд?', 'Why did the graph go empty with a [15s] window and a 15-second scrape interval?')],
     source: { title: 'Query functions — Prometheus', url: 'https://prometheus.io/docs/prometheus/latest/querying/functions/' },
   },
   {
@@ -265,7 +265,7 @@ export const CARDS: InterviewCard[] = [
       kp('dora', bi('метрики DORA', 'the DORA metrics'), ['dora', 'частот', 'frequency', 'восстановл', 'restore']),
       kp('auto', bi('автоматизация пути изменения', 'automating the path of a change'), ['автоматиз', 'automat', 'конвейер', 'pipeline']),
     ],
-    followups: [bi('Какая из метрик DORA, по-твоему, важнее всего для маленькой команды?', 'Which DORA metric matters most for a small team, in your view?')],
+    followups: [bi('Какая из метрик DORA, по-вашему, важнее всего для маленькой команды?', 'Which DORA metric matters most for a small team, in your view?')],
     source: { title: 'DORA — Get better at getting better', url: 'https://dora.dev/' },
   },
 ];

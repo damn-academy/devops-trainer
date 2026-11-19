@@ -25,13 +25,13 @@ export interface DrillResult {
 
 const D = {
   start: bi('Начать', 'Start'),
-  orType: bi('или введи команду и нажми Enter', 'or type a command and press Enter'),
-  noMatch: bi('На этом шаге такая команда ничего полезного не покажет. Выбери шаг или попробуй другую команду.', 'At this step that command shows nothing useful. Pick a step or try another command.'),
+  orType: bi('или введите команду и нажмите Enter', 'or type a command and press Enter'),
+  noMatch: bi('На этом шаге такая команда ничего полезного не покажет. Выберите шаг или попробуйте другую команду.', 'At this step that command shows nothing useful. Pick a step or try another command.'),
   status: bi('Последний шаг — статус в чат команды: влияние, что сделано, когда следующее сообщение или что инцидент закрыт.', 'The last step is a status to the team chat: the impact, what was done, when the next message comes or that the incident is closed.'),
   send: bi('Отправить статус и завершить', 'Send the status and finish'),
   cause: bi('Скрытая причина была', 'The hidden cause was'),
   again: bi('Ещё раз, с другой причиной', 'Again, with another cause'),
-  path: bi('Твой путь', 'Your path'),
+  path: bi('Ваш путь', 'Your path'),
   score: bi('Разбор по рубрике', 'Review on the rubric'),
   mean: bi('Средний балл', 'Mean score'),
   evidence: bi('улика', 'evidence'),
