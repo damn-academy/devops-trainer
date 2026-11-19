@@ -59,7 +59,7 @@ const STAGES: { id: string; ru: string; en: string; x: number; y: number; icon: 
   { id: 'screen', ru: 'Скрининг', en: 'Screening', x: 584, y: 56, icon: 'user', what: ['Разговор с рекрутером о мотивации, ожиданиях и формате работы. Скрининг проходит примерно половина кандидатов.', 'A talk with a recruiter: motivation, expectations, format. About half pass.'], who: ['Разговор ведёт рекрутер.', 'The recruiter.'] },
   { id: 'tech', ru: 'Техническое интервью', en: 'Technical', x: 584, y: 248, icon: 'terminal', what: ['Техническое интервью с инженером команды. Инженер спрашивает о механизмах, задаёт ситуационный вопрос и обсуждает ваши пет-проекты.', 'A technical interview with an engineer: mechanisms, a situational question, your pet projects.'], who: ['Интервью проводит инженер.', 'An engineer.'] },
   { id: 'final', ru: 'Финал', en: 'Final', x: 304, y: 248, icon: 'user', what: ['Разговор с руководителем о команде, процессах и ожиданиях с обеих сторон. В модели финал проходит половина дошедших до него.', 'A talk with the manager about the team and expectations. In the model half pass.'], who: ['Разговор ведёт руководитель.', 'The manager.'] },
-  { id: 'offer', ru: 'Предложение работы', en: 'Offer', x: 24, y: 248, icon: 'file', what: ['Компания предлагает вам работу. Это цель всей воронки.', 'A job offer: the goal of the whole funnel.'], who: ['Предложение делает компания.', 'The company.'] },
+  { id: 'offer', ru: 'Предложение работы', en: 'Offer', x: 24, y: 248, icon: 'file', what: ['Компания предлагает вам работу, и ради этого предложения работает вся воронка.', 'The company offers you a job, and the whole funnel works for the sake of this offer.'], who: ['Предложение делает компания.', 'The company.'] },
 ];
 
 const ALL = ['apply', 'reply', 'screen', 'tech', 'final', 'offer', 'no', 'e1', 'e2', 'e3', 'e4', 'e5', 'e-no'];
@@ -67,14 +67,14 @@ const ALL = ['apply', 'reply', 'screen', 'tech', 'final', 'offer', 'no', 'e1', '
 export const funnelModel = defineModel<P>({
   id: 'career.funnel',
   block: 'career',
-  title: bi('Воронка поиска работы как поток', 'The job search funnel as a flow'),
+  title: bi('Как воронка поиска работы работает в виде потока', 'How the job search funnel works as a flow'),
   summary: bi(
-    'Каждый отклик — карточка, которая неделями движется по колонкам: отклик, ответ компании, скрининг, техническое интервью, финал и предложение работы. На каждом этапе часть карточек отсеивается. Схема показывает, сколько карточек за неделю доходит до каждой колонки, сколько их у вас в работе одновременно и через сколько недель придёт первое предложение. Доли ответов здесь взяты для примера, а не из статистики рынка.',
+    'Каждый отклик изображён карточкой, которая неделями движется по колонкам: отклик, ответ компании, скрининг, техническое интервью, финал и предложение работы. На каждом этапе часть карточек отсеивается. Схема показывает, сколько карточек за неделю доходит до каждой колонки, сколько их у вас в работе одновременно и через сколько недель придёт первое предложение. Доли ответов здесь взяты для примера, а не из статистики рынка.',
     'Every application is a card moving through columns for weeks: applied, replied, screening, technical, final and offer. At each stage some cards drop out. The diagram shows how many cards reach each column a week, how many are in progress at once and how many weeks the first offer takes. The rates are an example, not market statistics.',
   ),
   intro: bi(
-    'Схема соберётся по шагам: сейчас на ней только колонка откликов и цель, предложение работы. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. На каждом шаге карточки переходят в следующую колонку: облачко у неё говорит, сколько карточек она получает за неделю, а по линии к ней передаётся это число. Заполненность колонки показывает, сколько карточек в ней сейчас.\n\nКогда дойдёте до итога, поменяйте в «Параметрах» число откликов в неделю или включите письмо под каждую вакансию и посмотрите, как изменится срок до первого предложения.',
-    'The diagram builds itself step by step: now it shows only the applications column and the goal, an offer. Press “Start: step forward”, then go on with “Step forward”. At each step the cards move to the next column: its callout says how many it gets a week, and the number travels along the line. How full a column is shows how many cards are in it.\n\nAt the end, change the number of applications a week or switch on a letter for each vacancy in “Parameters” and see how the time to the first offer changes.',
+    'Схема собирается по шагам, и сейчас на ней только колонка откликов и цель, то есть предложение работы. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. На каждом шаге карточки переходят в следующую колонку. Облачко у этой колонки говорит, сколько карточек она получает за неделю, а по линии к ней передаётся это число. Заполненность колонки показывает, сколько карточек в ней сейчас.\n\nКогда дойдёте до итога, поменяйте в «Параметрах» число откликов в неделю или включите письмо под каждую вакансию и посмотрите, как изменится срок до первого предложения.',
+    'The diagram builds itself step by step, and now it shows only the applications column and the goal, that is, an offer. Press “Start from the first step”, then go on with “Step forward” above the diagram. At each step the cards move to the next column. The callout at that column says how many cards it gets a week, and that number travels along the line to it. How full a column is shows how many cards are in it.\n\nAt the end, change the number of applications a week or switch on a letter for each vacancy in “Parameters” and see how the time to the first offer changes.',
   ),
   legend: [
     { mark: 'active', text: bi('колонка, в которую сейчас приходят карточки', 'the column receiving cards now') },
@@ -109,11 +109,11 @@ export const funnelModel = defineModel<P>({
     ],
     edges: [
       { id: 'e1', from: 'apply', to: 'reply', label: bi('компания ответила', 'replied'), card: card('Первый переход воронки. Его делают шире резюме с подтверждениями навыков и письмо, написанное под вакансию.', 'The first transition: a CV with evidence and a letter for the vacancy widen it.', 'Решает рекрутер.', 'The recruiter.') },
-      { id: 'e2', from: 'reply', to: 'screen', label: bi('созвонились', 'call'), card: card('Почти каждый ответ компании ведёт к разговору с рекрутером.', 'Nearly every reply leads to a screening call.', 'Звонок назначает рекрутер.', 'The recruiter.') },
+      { id: 'e2', from: 'reply', to: 'screen', label: bi('звонок рекрутера', 'recruiter call'), card: card('Почти каждый ответ компании ведёт к разговору с рекрутером.', 'Nearly every reply leads to a screening call.', 'Звонок назначает рекрутер.', 'The recruiter.') },
       { id: 'e3', from: 'screen', to: 'tech', label: bi('скрининг пройден', 'screening passed'), card: card('На этом переходе решают самопрезентация и мотивация.', 'Self-presentation and motivation decide here.', 'Решает рекрутер.', 'The recruiter.') },
       { id: 'e4', from: 'tech', to: 'final', label: bi('интервью пройдено', 'interview passed'), card: card('Здесь решают понимание механизмов, ответ на ситуационный вопрос и пет-проекты.', 'Mechanisms, the situational question and pet projects decide here.', 'Решает инженер.', 'The engineer.') },
       { id: 'e5', from: 'final', to: 'offer', label: bi('предложение', 'offer'), card: card('После финала компания делает предложение тем, с кем совпали ожидания.', 'After the final the company makes an offer.', 'Решает руководитель.', 'The manager.') },
-      { id: 'e-no', from: 'apply', to: 'no', label: bi('нет ответа', 'no reply'), via: [[112, 24], [872, 24]], card: card('Отклики, на которые не ответили. Таких большинство.', 'Applications without a reply: most of them.', 'Молчат компании, которые выбрали других кандидатов или не разобрали отклики.', 'Companies.') },
+      { id: 'e-no', from: 'apply', to: 'no', label: bi('нет ответа', 'no reply'), via: [[112, 24], [872, 24]], card: card('Сюда попадают отклики, на которые не ответили, и таких откликов большинство.', 'Applications without a reply end up here, and they are the majority.', 'Молчат компании, которые выбрали других кандидатов или не разобрали отклики.', 'Companies.') },
     ],
   },
   params: [
@@ -131,7 +131,7 @@ export const funnelModel = defineModel<P>({
         prompt: bi('Вы меняете число откликов в неделю, а доли ответов на всех этапах остаются прежними. Как время до первого предложения работы связано с числом откликов?', 'You change the number of applications a week; the rates at every stage stay. How does the time to the first offer follow the number of applications?'),
         options: [
           { id: 'inverse', text: bi('Чем больше откликов в неделю, тем раньше придёт первое предложение', 'The more applications a week, the sooner the first offer') },
-          { id: 'same', text: bi('Никак: путь карточки всё равно занимает три недели', 'Not at all: a card’s path still takes three weeks') },
+          { id: 'same', text: bi('Никак не связано, потому что путь карточки всё равно занимает три недели', 'It does not depend on it at all, because a card’s path still takes three weeks') },
           { id: 'direct', text: bi('Чем больше откликов в неделю, тем позже придёт первое предложение', 'The more applications a week, the later the first offer') },
         ],
         resolve: (prev, next) => {
@@ -153,8 +153,8 @@ export const funnelModel = defineModel<P>({
       predict: {
         prompt: bi('Вы начинаете писать письмо под каждую вакансию. Какой переход воронки от этого станет шире?', 'You start writing a letter for each vacancy. Which transition widens?'),
         options: [
-          { id: 'reply', text: bi('От отклика к ответу компании: на отклик с письмом чаще отвечают', 'Applied → replied: letters get more replies') },
-          { id: 'tech', text: bi('От технического интервью к финалу: письмо помогает на интервью', 'Technical → final: the letter helps at the interview') },
+          { id: 'reply', text: bi('Переход от отклика к ответу компании, потому что на отклик с письмом чаще отвечают', 'The transition from application to reply, because applications with a letter get more replies') },
+          { id: 'tech', text: bi('Переход от технического интервью к финалу, потому что письмо помогает на интервью', 'The transition from the technical interview to the final, because the letter helps at the interview') },
         ],
         resolve: () => 'reply',
       },
@@ -172,7 +172,7 @@ export const funnelModel = defineModel<P>({
         options: [
           { id: '1', text: bi('Через неделю', 'In a week') },
           { id: '3', text: bi('Примерно через три недели', 'In about three weeks') },
-          { id: 'never', text: bi('Никогда: старые отклики так и останутся на доске', 'Never: old applications stay') },
+          { id: 'never', text: bi('Никогда, потому что старые отклики так и останутся на доске', 'Never, because old applications will stay on the board') },
         ],
         resolve: () => '3',
       },
@@ -214,7 +214,7 @@ export const funnelModel = defineModel<P>({
           states: { reply: 'warn', screen: 'warn', tech: 'warn', final: 'warn' },
           fill: { reply: 0, screen: 0, tech: 0, final: 0 },
           metrics: { wip: 0, offers: 0, weeks: 999 },
-          broken: { at: 'apply', message: 'applications this week: 0\nin progress after 3 weeks: 0', caption: bi('на первой колонке. Поиск работы — это поток: стоит остановить отклики, и через три недели в воронке не останется ни одной карточки, а значит, и ни одного будущего предложения.', 'at the first column. The search is a flow: stop applying, and in three weeks nothing is left in the funnel.') },
+          broken: { at: 'apply', message: 'applications this week: 0\nin progress after 3 weeks: 0', caption: bi('на первой колонке. Поиск работы устроен как поток, и стоит остановить отклики, как через три недели в воронке не останется ни одной карточки, а значит, и ни одного будущего предложения.', 'at the first column. The search works as a flow, and once you stop applying, in three weeks not a single card is left in the funnel, and so not a single future offer.') },
         },
       ];
     }
@@ -305,7 +305,7 @@ export const funnelModel = defineModel<P>({
       {
         id: 'little',
         label: bi('итог', 'total'),
-        caption: fmtb(bi('Теперь можно сложить всё вместе. По закону Литтла число карточек в работе равно числу откликов в неделю, умноженному на число недель, которые карточка проводит в пути, и у вас в работе около {w}. Первое предложение придёт примерно через {k}: три недели занимает путь одной карточки, и ещё нужно дождаться, пока хотя бы одна пройдёт все этапы.', 'Now add it up. By Little’s law the cards in progress equal the weekly flow times the weeks on the way: about {w}. The first offer comes in about {k}: three weeks of path plus the wait for one card to get through.'), { w: nouned(m.wip, ['карточки', 'карточек', 'карточек'], ['card', 'cards']), k: weeks(m.weeks) }),
+        caption: fmtb(bi('Теперь можно сложить всё вместе. По закону Литтла число карточек в работе равно числу откликов в неделю, умноженному на число недель, которые карточка проводит в пути, и у вас в работе около {w}. Первое предложение придёт примерно через {k}, потому что три недели занимает путь одной карточки и ещё нужно дождаться, пока хотя бы одна карточка пройдёт все этапы.', 'Now add it up. By Little’s law the cards in progress equal the weekly flow times the weeks on the way: about {w}. The first offer comes in about {k}: three weeks of path plus the wait for one card to get through.'), { w: nouned(m.wip, ['карточки', 'карточек', 'карточек'], ['card', 'cards']), k: weeks(m.weeks) }),
         focus: ['offer'],
         say: { offer: fmtb(bi('Первое предложение придёт примерно через {k}.', 'The first offer: in about {k}.'), { k: weeks(m.weeks) }) },
         states: { offer: 'ok' },
@@ -325,7 +325,7 @@ export const funnelModel = defineModel<P>({
       return b.letter
         ? fmtb(bi('С письмом под вакансию компании отвечают чаще, поэтому первое предложение придёт примерно через {k}, а не через {k0}.', 'With a letter more companies reply: the first offer in {k} instead of {k0}.'), { k: weeks(k1 ?? 0), k0: weeks(k0 ?? 0) })
         : bi('Без письма под вакансию компании отвечают реже, и воронка сужается уже на первом переходе.', 'Without letters fewer reply: the funnel narrows from the first transition.');
-    if (change.id === 'rate') return fmtb(bi('Откликов в неделю было {a}, стало {b}. Теперь в работе около {w}, и первое предложение придёт примерно через {k}.', '{a} → {b} applications a week: {w} in progress, the first offer in {k}.'), { a: a.rate, b: b.rate, w: nouned(w(next).wip ?? 0, ['карточки', 'карточек', 'карточек'], ['card', 'cards']), k: weeks(k1 ?? 0) });
+    if (change.id === 'rate') return fmtb(bi('Число откликов в неделю изменилось с {a} на {b}. Теперь в работе около {w}, и первое предложение придёт примерно через {k}.', 'The number of applications a week changed from {a} to {b}. Now about {w} are in progress, and the first offer will come in about {k}.'), { a: a.rate, b: b.rate, w: nouned(w(next).wip ?? 0, ['карточки', 'карточек', 'карточек'], ['card', 'cards']), k: weeks(k1 ?? 0) });
     return fmtb(bi('Изменилась доля тех, кто проходит этап, и первое предложение теперь придёт примерно через {k}, а не через {k0}. Сильнее всего срок зависит от самого узкого перехода воронки.', 'A stage rate changed: the first offer in {k} instead of {k0}. The narrowest transition matters most.'), { k: weeks(k1 ?? 0), k0: weeks(k0 ?? 0) });
   },
 });

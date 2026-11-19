@@ -26,10 +26,10 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.logic'],
     prompt: bi('Вас спрашивают: «Как проверить, что служба слушает порт?» Какой ответ лучше всего показывает понимание?', 'To “How do you check that a service listens on a port?”, which answer best shows understanding?'),
     options: [
-      { id: 'cmd', text: '`ss -tlnp`', why: bi('Команда верная, но из ответа не видно, что вы понимаете: что такое сокет, который ждёт соединений, и что означают флаги.', 'The right command, but the answer says nothing about what you understand: what a listening socket is and what the flags mean.') },
-      { id: 'logic', text: bi('Служба открывает сокет и ждёт соединений на определённом адресе и порту, а ядро знает все такие сокеты. Командой `ss -tlnp` я прошу у ядра список TCP-сокетов, которые ждут соединений, вместе с процессами и смотрю, на каком адресе слушает служба: если это 127.0.0.1, снаружи к ней не подключиться.', 'The service opens a socket and waits for connections on an address and port; the kernel knows all such sockets. I ask the kernel for the listening TCP sockets with their processes — `ss -tlnp` — and look at the address: 127.0.0.1 is not reachable from outside.'), correct: true },
-      { id: 'curl', text: bi('Обращусь к порту командой `curl`: если ответ пришёл, значит, служба слушает.', 'I would `curl` the port: if it answers, it listens.'), why: bi('Команда `curl` заодно проверяет протокол и путь по сети, поэтому, если ответа нет, вы не узнаете, что не так.', '`curl` also tests the protocol and the network path; silence will not tell you what exactly is wrong.') },
-      { id: 'ps', text: bi('Посмотрю в выводе `ps aux`, запущена ли служба.', 'I would check `ps aux` to see whether the service is running.'), why: bi('Если процесс запущен, это ещё не значит, что он слушает порт: порт мог оказаться занят, или служба слушает не тот адрес.', 'A running process does not mean a listening port: it may have hit a busy port or listen on the wrong address.') },
+      { id: 'cmd', text: '`ss -tlnp`', why: bi('Команда верная, но из ответа не видно, понимаете ли вы, что такое сокет, который ждёт соединений, и что означают флаги.', 'The command is right, but the answer does not show whether you understand what a listening socket is and what the flags mean.') },
+      { id: 'logic', text: bi('Служба открывает сокет и ждёт соединений на определённом адресе и порту, а ядро знает все такие сокеты. Командой `ss -tlnp` я прошу у ядра список TCP-сокетов, которые ждут соединений, вместе с процессами и смотрю, на каком адресе слушает служба, потому что к службе на адресе 127.0.0.1 снаружи не подключиться.', 'The service opens a socket and waits for connections on an address and port; the kernel knows all such sockets. I ask the kernel for the listening TCP sockets with their processes — `ss -tlnp` — and look at the address: 127.0.0.1 is not reachable from outside.'), correct: true },
+      { id: 'curl', text: bi('Обращусь к порту командой `curl`, и если ответ пришёл, значит, служба слушает.', 'I would call the port with `curl`, and if an answer comes, the service listens.'), why: bi('Команда `curl` заодно проверяет протокол и путь по сети, поэтому, если ответа нет, вы не узнаете, что не так.', '`curl` also tests the protocol and the network path; silence will not tell you what exactly is wrong.') },
+      { id: 'ps', text: bi('Посмотрю в выводе `ps aux`, запущена ли служба.', 'I would check `ps aux` to see whether the service is running.'), why: bi('Если процесс запущен, это ещё не значит, что он слушает порт, ведь порт мог оказаться занят или служба могла начать слушать не тот адрес.', 'A running process does not yet mean a listening port, because the port may have been busy or the service may be listening on the wrong address.') },
     ],
     explain: bi('Сначала объясните механизм, затем назовите команду, которая позволяет его увидеть, и скажите, что из увиденного следует.', 'The mechanism, then the command as a way to see it, then what follows from it.'),
   },
@@ -41,8 +41,8 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'mech', text: bi('Понимание механизма, а не память на команды', 'Understanding of the mechanism, not a memory for commands'), correct: true },
       { id: 'docs', text: bi('Умение найти ответ в документации самому', 'Finding the answer in the documentation on your own'), correct: true },
-      { id: 'honest', text: bi('Честность о границах своих знаний', 'Honesty about the limits of your knowledge'), correct: true },
-      { id: 'certs', text: bi('Как можно больше сертификатов', 'As many certificates as possible'), why: bi('При найме джуна сертификаты почти не влияют на решение: репозиторий и умение его объяснить весят больше.', 'For a junior certificates barely affect the decision: a repository and an explanation weigh more.') },
+      { id: 'honest', text: bi('Готовность признать, где кончаются ваши знания', 'Willingness to admit where your knowledge ends'), correct: true },
+      { id: 'certs', text: bi('Как можно больше сертификатов', 'As many certificates as possible'), why: bi('При найме джуна сертификаты почти не влияют на решение, потому что репозиторий и умение его объяснить весят больше.', 'When a junior is hired, certificates barely affect the decision, because a repository and the ability to explain it weigh more.') },
       { id: 'all', text: bi('Опыт со всеми инструментами из вакансии', 'Experience with every tool in the vacancy'), why: bi('Требования в вакансиях завышают намеренно, а от джуна ждут знания основ и умения учиться.', 'Requirements are inflated on purpose; a junior is expected to have the basics and the ability to learn.') },
     ],
   },
@@ -56,7 +56,7 @@ export const QUIZ: QuizItem[] = [
       { id: 'what', text: bi('DNS превращает имя в адрес и другие записи', 'DNS turns a name into an address and other records') },
       { id: 'why', text: bi('Люди и конфигурации пользуются именами, а адреса меняются', 'People and configs use names while addresses change') },
       { id: 'how', text: bi('Резолвер идёт от корня к серверу зоны и кэширует ответ на время TTL', 'The resolver walks from the root to the zone server and caches the answer for the TTL') },
-      { id: 'when', text: bi('Проверяю `dig` через резолвер и напрямую у авторитативного сервера', 'I check with `dig` through the resolver and directly at the authoritative server') },
+      { id: 'when', text: bi('Проверяю это командой `dig` через резолвер и напрямую у сервера, который хранит записи зоны', 'I check it with `dig` through the resolver and directly at the server that holds the zone’s records') },
     ],
     explain: bi('Части идут в порядке «что, зачем, как, когда», и команда стоит последней, потому что служит способом увидеть механизм.', 'What → why → how → when: the command comes last, as a way to see the mechanism.'),
   },
@@ -103,11 +103,11 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.q-vm-container'],
     prompt: bi('Что верно о контейнере в сравнении с виртуальной машиной? Отметьте всё верное.', 'What is true of a container compared with a virtual machine? Mark everything that is true.'),
     options: [
-      { id: 'kernel', text: bi('Пользуется ядром хоста', 'Uses the host’s kernel'), correct: true },
-      { id: 'ns', text: bi('Собственный вид системы ему показывают пространства имён', 'Namespaces give it its own view of the system'), correct: true },
-      { id: 'cg', text: bi('Его ресурсы ограничивают cgroups', 'cgroups limit its resources'), correct: true },
-      { id: 'hyper', text: bi('Работает поверх гипервизора со своим ядром', 'Runs on a hypervisor with its own kernel'), why: bi('Так устроена виртуальная машина, а не контейнер.', 'That describes a virtual machine.') },
-      { id: 'stronger', text: bi('Изолирован сильнее, чем виртуальная машина', 'Is isolated more strongly than a VM'), why: bi('Всё наоборот: ядро у контейнеров общее, поэтому уязвимость в ядре затрагивает все контейнеры хоста.', 'The opposite: a shared kernel is a shared attack surface; a kernel vulnerability affects every container on the host.') },
+      { id: 'kernel', text: bi('Контейнер пользуется ядром хоста', 'A container uses the host’s kernel'), correct: true },
+      { id: 'ns', text: bi('Собственный вид системы контейнеру показывают пространства имён', 'Namespaces give a container its own view of the system'), correct: true },
+      { id: 'cg', text: bi('Ресурсы контейнера ограничивают cgroups', 'cgroups limit a container’s resources'), correct: true },
+      { id: 'hyper', text: bi('Контейнер работает поверх гипервизора со своим ядром', 'A container runs on a hypervisor with its own kernel'), why: bi('Так устроена виртуальная машина, а не контейнер.', 'That describes a virtual machine.') },
+      { id: 'stronger', text: bi('Контейнер изолирован сильнее, чем виртуальная машина', 'A container is isolated more strongly than a VM'), why: bi('Всё наоборот, потому что ядро у контейнеров общее, и уязвимость в ядре затрагивает все контейнеры хоста.', 'It is the other way round, because containers share the kernel, and a kernel vulnerability affects every container on the host.') },
     ],
   },
   {
@@ -116,7 +116,7 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.q-vm-container'],
     prompt: bi('Можно ли в контейнере на Linux-хосте запустить Windows-приложение, которому нужно ядро Windows?', 'Can a container on a Linux host run a Windows application that needs the Windows kernel?'),
     options: [
-      { id: 'no', text: bi('Нет: контейнер пользуется ядром хоста, а на этом хосте ядро Linux', 'No: a container uses the host’s kernel, and that is a Linux kernel'), correct: true },
+      { id: 'no', text: bi('Нет, потому что контейнер пользуется ядром хоста, а на этом хосте ядро Linux', 'No, because a container uses the host’s kernel, and on this host it is a Linux kernel'), correct: true },
       { id: 'yes', text: bi('Да, если взять образ Windows', 'Yes, with a Windows image'), why: bi('Образ содержит только файлы, а ядро контейнер всегда берёт у хоста.', 'An image is files, not a kernel. A container always gets the host’s kernel.') },
       { id: 'priv', text: bi('Да, в привилегированном режиме', 'Yes, in privileged mode'), why: bi('Привилегированный режим даёт контейнеру больше прав в том же ядре, но другого ядра не даёт.', 'Privileges give more rights within the same kernel, not another kernel.') },
     ],
@@ -128,8 +128,8 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.q-vm-container'],
     prompt: bi('Какая фраза лучше всего завершает ответ на вопрос «виртуальная машина или контейнер»?', 'Which sentence best ends an answer to “VM or container”?'),
     options: [
-      { id: 'nest', text: bi('Они вкладываются друг в друга: в облаке контейнеры работают внутри виртуальных машин, а виртуальные машины можно запускать в Kubernetes', 'They nest: in the cloud containers run inside VMs, and VMs can run inside Kubernetes'), correct: true },
-      { id: 'replace', text: bi('Контейнеры полностью заменили виртуальные машины', 'Containers have completely replaced virtual machines'), why: bi('Это не так: почти все контейнеры в облаке работают внутри виртуальных машин.', 'No: nearly every container in the cloud runs inside a VM.') },
+      { id: 'nest', text: bi('Контейнеры и виртуальные машины вкладываются друг в друга, ведь в облаке контейнеры работают внутри виртуальных машин, а виртуальные машины можно запускать в Kubernetes', 'Containers and virtual machines nest inside each other, because in the cloud containers run inside VMs, and VMs can run inside Kubernetes'), correct: true },
+      { id: 'replace', text: bi('Контейнеры полностью заменили виртуальные машины', 'Containers have completely replaced virtual machines'), why: bi('Это не так, ведь почти все контейнеры в облаке работают внутри виртуальных машин.', 'That is not so, because nearly every container in the cloud runs inside a VM.') },
       { id: 'old', text: bi('Виртуальные машины устарели', 'VMs are an outdated technology'), why: bi('Виртуальные машины нужны для сильной изоляции и для другой операционной системы, и их запускают даже современные платформы на Kubernetes.', 'VMs are needed for strong isolation and another OS; modern Kubernetes-based platforms run them too.') },
     ],
   },
@@ -140,7 +140,7 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.situational', 'career.mitigate-first'],
     prompt: bi('Расставьте по порядку шаги ответа на вопрос «сайт отвечает ошибкой 504, что вы будете делать?».', 'Put the steps of an answer to “504 — what do you do?” in order.'),
     steps: [
-      { id: 'ask', text: bi('Уточнить масштаб, время и что менялось', 'Ask about scope, time and what changed') },
+      { id: 'ask', text: bi('Уточнить, насколько широк сбой, когда он начался и что перед ним менялось', 'Ask how wide the failure is, when it started and what changed before it') },
       { id: 'confirm', text: bi('Подтвердить симптом снаружи и понять, кто отвечает ошибкой 504', 'Confirm the symptom from outside and find who answers 504') },
       { id: 'log', text: bi('Прочитать журнал ошибок прокси', 'Read the proxy’s error log') },
       { id: 'narrow', text: bi('Проверить приложение мимо прокси', 'Check the application bypassing the proxy') },
@@ -155,7 +155,7 @@ export const QUIZ: QuizItem[] = [
     prompt: bi('В журнале ошибок nginx записано: `upstream timed out (110: Connection timed out) while connecting to upstream`. Что это значит?', 'The nginx log says: `upstream timed out (110: Connection timed out) while connecting to upstream`. What does it mean?'),
     options: [
       { id: 'connect', text: bi('nginx не установил TCP-соединение с приложением, поэтому причину нужно искать на пути по сети', 'nginx could not establish a TCP connection to the application: look at the network path'), correct: true },
-      { id: 'slow', text: bi('Приложение медленно отвечает на запрос', 'The application is slow to answer the request'), why: bi('Тогда строка кончалась бы словами «while reading response header»: соединение установлено, а ответа нет.', 'That would be “while reading response header”: a connection exists, an answer does not.') },
+      { id: 'slow', text: bi('Приложение медленно отвечает на запрос', 'The application is slow to answer the request'), why: bi('Тогда строка кончалась бы словами «while reading response header», которые означают, что соединение установлено, а ответа нет.', 'Then the line would end with “while reading response header”, which means that a connection exists but no answer has come.') },
       { id: 'dns', text: bi('Имя сайта не превращается в адрес', 'The site’s name does not resolve'), why: bi('Клиент уже нашёл nginx по имени, а nginx пишет о соединении с приложением, которое стоит за ним (upstream).', 'The client already reached nginx by name, and nginx is talking about the upstream.') },
     ],
   },
@@ -165,10 +165,10 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.situational', 'career.mitigate-first'],
     prompt: bi('Какие действия при ошибке 504 ведут по плохому пути? Отметьте все.', 'Which actions are bad paths for a 504? Mark them all.'),
     options: [
-      { id: 'timeout', text: bi('Сразу увеличить proxy_read_timeout', 'Raise proxy_read_timeout right away'), correct: true, why: bi('Это прячет проблему: пользователи ждут дольше, а причина остаётся.', 'Hides the problem: users wait longer.') },
+      { id: 'timeout', text: bi('Сразу увеличить proxy_read_timeout', 'Raise proxy_read_timeout right away'), correct: true, why: bi('Так проблема только прячется, потому что пользователи ждут дольше, а причина остаётся на месте.', 'This only hides the problem, because users wait longer while the cause stays in place.') },
       { id: 'restart', text: bi('Перезапустить всё до чтения журналов', 'Restart everything before reading the logs'), correct: true, why: bi('Перезапуск стирает улики и не убирает причину.', 'Destroys the evidence and leaves the cause.') },
-      { id: 'dns', text: bi('Проверять DNS, когда в ответе стоит заголовок `server: nginx`', 'Check DNS when the answer is signed `server: nginx`'), correct: true, why: bi('Эта гипотеза противоречит наблюдению: до nginx запрос уже дошёл.', 'The hypothesis contradicts the observation.') },
-      { id: 'curl', text: bi('Сделать `curl -sv` к странице', 'Run `curl -sv` against the page'), why: bi('Это хороший первый шаг: он показывает, кто отвечает ошибкой 504.', 'This is a good first step: it shows who answers 504.') },
+      { id: 'dns', text: bi('Проверять DNS, когда в ответе стоит заголовок `server: nginx`', 'Check DNS when the answer is signed `server: nginx`'), correct: true, why: bi('Эта гипотеза противоречит наблюдению, ведь запрос уже дошёл до nginx, а значит, имя превратилось в адрес.', 'The hypothesis contradicts the observation, because the request has already reached nginx, which means the name has turned into an address.') },
+      { id: 'curl', text: bi('Сделать `curl -sv` к странице', 'Run `curl -sv` against the page'), why: bi('Это хороший первый шаг, потому что команда показывает, кто отвечает ошибкой 504.', 'This is a good first step, because the command shows who answers 504.') },
       { id: 'errlog', text: bi('Прочитать журнал ошибок nginx', 'Read the nginx error log'), why: bi('Чтение журнала и есть сбор улик.', 'That is collecting evidence.') },
     ],
   },
@@ -201,7 +201,7 @@ export const QUIZ: QuizItem[] = [
     prompt: bi('Нейросеть поставила 3 за глубину с цитатой «назвал компромисс между скоростью и изоляцией», но такой фразы в расшифровке нет. Что сделает курс?', 'The AI gave 3 for depth quoting “named the trade-off between speed and isolation”, but there is no such phrase in the transcript. What does the course do?'),
     options: [
       { id: 'lower', text: bi('Снизит балл до 1 и пометит «не подтверждено»', 'Lower the score to 1 and mark it “not confirmed”'), correct: true },
-      { id: 'keep', text: bi('Оставит 3: нейросети виднее', 'Keep the 3: the AI knows best'), why: bi('Балл без доказательства может оказаться лестью нейросети, поэтому каждую цитату сверяют с расшифровкой.', 'A score without proof is the model flattering you; that is why every quote is checked against the transcript.') },
+      { id: 'keep', text: bi('Оставит 3, потому что нейросети виднее', 'Keep the 3, because the AI knows best'), why: bi('Балл без доказательства может оказаться лестью нейросети, поэтому каждую цитату сверяют с расшифровкой.', 'A score without proof is the model flattering you; that is why every quote is checked against the transcript.') },
       { id: 'zero', text: bi('Поставит 0', 'Set it to 0'), why: bi('Ноль означает, что ответ не выдержал уточнения. Здесь неизвестно, заслуживал ли ответ меньше 1, поэтому балл опускают только до 1.', 'Zero means “did not survive the follow-up”; here it is unknown whether it was worse than 1, so the score drops only to 1.') },
     ],
   },
@@ -211,8 +211,8 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.rubric', 'career.mock-interview'],
     prompt: bi('Средний балл учебного интервью 2,5, но по честности стоит один ноль. Готов ли кандидат к живым собеседованиям?', 'A mock interview averages 2.5, but honesty has one 0. Is the candidate ready for live interviews?'),
     options: [
-      { id: 'no', text: bi('Нет: ноль по честности проваливает интервью целиком', 'No: a zero for honesty fails the whole interview'), correct: true },
-      { id: 'yes', text: bi('Да: средний балл выше 2', 'Yes: the mean is above 2'), why: bi('Выдуманный ответ на настоящем собеседовании обесценивает все остальные ответы, поэтому честность — единственный критерий, ноль по которому проваливает всё интервью.', 'An invented answer at a real interview devalues all the others; that is why honesty is the one criterion whose zero fails everything.') },
+      { id: 'no', text: bi('Нет, потому что ноль по честности проваливает интервью целиком', 'No, because a zero for honesty fails the whole interview'), correct: true },
+      { id: 'yes', text: bi('Да, ведь средний балл выше 2', 'Yes, because the mean is above 2'), why: bi('Выдуманный ответ на настоящем собеседовании обесценивает все остальные ответы, поэтому честность остаётся единственным критерием, ноль по которому проваливает всё интервью.', 'An invented answer at a real interview devalues all the others; that is why honesty is the one criterion whose zero fails everything.') },
     ],
   },
   {
@@ -221,10 +221,10 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.mock-interview'],
     prompt: bi('Расставьте части ответа на просьбу «Расскажите о своей ошибке» по схеме STAR.', 'Put the parts of an answer to “Tell us about a mistake” in STAR order.'),
     steps: [
-      { id: 's', text: bi('Ситуация: где и когда это было', 'Situation: where and when it was') },
-      { id: 't', text: bi('Задача: что нужно было сделать', 'Task: what had to be done') },
-      { id: 'a', text: bi('Действие: что сделали вы сами', 'Action: what you yourself did') },
-      { id: 'r', text: bi('Результат и что вы изменили после', 'Result, and what you changed afterwards') },
+      { id: 's', text: bi('Ситуация, то есть где и когда это было', 'The situation, that is, where and when it was') },
+      { id: 't', text: bi('Задача, то есть что нужно было сделать', 'The task, that is, what had to be done') },
+      { id: 'a', text: bi('Действие, то есть что сделали вы сами', 'The action, that is, what you yourself did') },
+      { id: 'r', text: bi('Результат и то, что вы изменили после', 'The result, and what you changed afterwards') },
     ],
   },
   // ── career.pitch ──
@@ -236,8 +236,8 @@ export const QUIZ: QuizItem[] = [
     steps: [
       { id: 'who', text: bi('Кто я и откуда, одной фразой', 'Who I am and where from — one sentence') },
       { id: 'can', text: bi('Что я умею, с подтверждениями', 'What I can do — with proof') },
-      { id: 'story', text: bi('Одна история: какая была проблема, что я сделал и что изменилось', 'One story: the problem, what I did, what changed') },
-      { id: 'why', text: bi('Почему DevOps: мост от прежнего опыта', 'Why DevOps — the bridge from earlier experience') },
+      { id: 'story', text: bi('Одна история о том, какая была проблема, что я сделал и что изменилось', 'One story about what the problem was, what I did and what changed') },
+      { id: 'why', text: bi('Почему DevOps, то есть мост от прежнего опыта к новой работе', 'Why DevOps, that is, the bridge from earlier experience to the new job') },
       { id: 'seek', text: bi('Что я ищу', 'What I am looking for') },
     ],
   },
@@ -250,7 +250,7 @@ export const QUIZ: QuizItem[] = [
       { id: 'sorry', text: bi('«К сожалению, у меня нет опыта работы в IT»', '“Unfortunately, I have no IT work experience”'), correct: true, why: bi('Извинение ещё до вопросов внушает слушателю, что вы не подходите.', 'An apology sets a “I don’t fit” tone before any questions.') },
       { id: 'only', text: bi('«Я пока только учусь»', '“I am only learning so far”'), correct: true, why: bi('Эта фраза обесценивает то, что вы уже сделали, а лучше назвать сделанное.', 'It devalues what you have already done; better to name it.') },
       { id: 'proof', text: bi('«Сдал практические экзамены по Linux и Docker; мой проект — github.com/…»', '“Passed the practical exams on Linux and Docker; my project is github.com/…”'), why: bi('Это подтверждение навыков, и его стоит оставить.', 'That is proof, exactly what to keep.') },
-      { id: 'bridge', text: bi('«Три года разбирал инциденты на первой линии — теперь хочу их предотвращать»', '“For three years I handled incidents on the first line; now I want to prevent them”'), why: bi('Это мост от прежнего опыта, сильная часть самопрезентации.', 'That is a bridge, a strong part.') },
+      { id: 'bridge', text: bi('«Три года разбирал инциденты на первой линии — теперь хочу их предотвращать»', '“For three years I handled incidents on the first line; now I want to prevent them”'), why: bi('Это мост от прежнего опыта, и он делает самопрезентацию сильнее.', 'That is a bridge from earlier experience, and it makes the self-presentation stronger.') },
     ],
   },
   {
@@ -261,7 +261,7 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'proof', text: bi('«Опыта работы DevOps-инженером у меня нет. Зато есть то, что можно открыть: три пет-проекта с конвейером и мониторингом и история о том, как в одном из них кончилось место на диске и как я нашёл причину».', '“I have no experience as a DevOps engineer. I have things you can open: three pet projects with pipelines and monitoring, and the story of how one of them ran out of disk and how I found it.”'), correct: true },
       { id: 'fake', text: bi('«Я работал DevOps-инженером на фрилансе».', '“I worked as a freelance DevOps engineer.”'), why: bi('Если такой работы не было, это выдумка, и она раскроется на первом же уточнении.', 'If it did not happen, it is an invention: it falls apart at the first follow-up.') },
-      { id: 'learn', text: bi('«Я быстро учусь и стрессоустойчив».', '“I learn fast and handle stress well.”'), why: bi('Это пустые слова: их говорит каждый, и проверить их нельзя.', 'Empty words: everyone says them, and they cannot be checked.') },
+      { id: 'learn', text: bi('«Я быстро учусь и стрессоустойчив».', '“I learn fast and handle stress well.”'), why: bi('Это пустые слова, потому что их говорит каждый, а проверить их нельзя.', 'These are empty words, because everyone says them and nobody can check them.') },
     ],
   },
   // ── career.resume ──
@@ -277,7 +277,7 @@ export const QUIZ: QuizItem[] = [
       1: bi('В заголовке стоит роль, на которую вы претендуете, и так и должно быть.', 'The headline is the target role: as it should be.'),
       2: bi('Проект со ссылкой на репозиторий подтверждает навык.', 'A project with a repository link is evidence.'),
       3: bi('Пункт называет действие и то, что сделано, и это хороший пункт.', 'An action and what exactly was done: a good bullet.'),
-      4: bi('Слова «отвечал за…» описывают обязанность, а не действие: непонятно, что вы сделали и что после этого изменилось.', '“Was responsible for…” is a duty, not an action: it does not say what you did or what changed.'),
+      4: bi('Слова «отвечал за…» описывают обязанность, а не действие, и из них непонятно, что вы сделали и что после этого изменилось.', 'The words “was responsible for…” describe a duty rather than an action, and they do not say what you did or what changed afterwards.'),
       5: bi('Пункт называет действие и измеримый результат, и написать его лучше трудно.', 'An action and a measurable result: the best kind of bullet.'),
     },
   },
@@ -287,10 +287,10 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.bridge'],
     prompt: bi('Какие строки резюме бывшего продавца стоит сжать или убрать в DevOps-версии? Отметьте все.', 'Which lines of a former salesperson’s CV should be shortened or removed in the DevOps version? Mark them all.'),
     options: [
-      { id: 'plan', text: bi('«Выполнил план продаж на 120% во втором квартале»', '“Hit 120% of the sales plan in Q2”'), correct: true, why: bi('Достижение хорошее, но к новой роли отношения не имеет: оставьте одну строку о должности, без подробностей.', 'A fine achievement, but not for this role: one line about the position, no details.') },
+      { id: 'plan', text: bi('«Выполнил план продаж на 120% во втором квартале»', '“Hit 120% of the sales plan in Q2”'), correct: true, why: bi('Достижение хорошее, но к новой роли отношения не имеет, поэтому оставьте одну строку о должности, без подробностей.', 'A fine achievement, but it has nothing to do with the new role, so leave one line about the position without details.') },
       { id: 'pc', text: bi('«Уверенный пользователь ПК»', '“Confident PC user”'), correct: true, why: bi('Это пустая формулировка, и в резюме DevOps-инженера она звучит странно.', 'An empty phrase: for DevOps it sounds odd.') },
       { id: 'req', text: bi('«Собирал требования клиентов и переводил их в задачи для технической команды»', '“Gathered customer requirements and turned them into tasks for the technical team”'), why: bi('Это мост к DevOps, и его стоит оставить.', 'This is a bridge to DevOps — keep it.') },
-      { id: 'auto', text: bi('«Автоматизировал отчёты: с 6 до 1 часа в неделю»', '“Automated reports: from 6 to 1 hour a week”'), why: bi('Пункт об автоматизации с измеримым результатом ценен для DevOps.', 'Automation with a result is a valuable bullet.') },
+      { id: 'auto', text: bi('«Автоматизировал отчёты и сократил работу над ними с 6 часов до 1 часа в неделю»', '“Automated reports and cut the work on them from 6 hours to 1 hour a week”'), why: bi('Пункт об автоматизации с измеримым результатом ценен для DevOps.', 'Automation with a result is a valuable bullet.') },
     ],
   },
   {
@@ -323,9 +323,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.pet-project'],
     prompt: bi('Какой критерий приёмки можно проверить?', 'Which acceptance criterion can be checked?'),
     options: [
-      { id: 'ok', text: bi('Пуш в main выкладывает новую версию меньше чем за 5 минут, и на странице виден SHA последнего коммита', 'A push to main releases the new version in under 5 minutes, and the page shows the last commit’s SHA'), correct: true },
+      { id: 'ok', text: bi('После `git push` в ветку main новая версия выкладывается меньше чем за 5 минут, и на странице виден SHA последнего коммита', 'After a `git push` to the main branch the new version is released in under 5 minutes, and the page shows the last commit’s SHA'), correct: true },
       { id: 'nice', text: bi('Сайт работает быстро и надёжно', 'The site works fast and reliably'), why: bi('«Быстро» и «надёжно» без чисел не проверить.', '“Fast” and “reliable” without numbers cannot be checked.') },
-      { id: 'modern', text: bi('Используются современные технологии', 'Modern technologies are used'), why: bi('Это не критерий: в нём нечего измерить.', 'This is not a criterion: there is nothing to measure.') },
+      { id: 'modern', text: bi('Используются современные технологии', 'Modern technologies are used'), why: bi('Это не критерий, потому что в нём нечего измерить.', 'This is not a criterion, because there is nothing in it to measure.') },
     ],
   },
   {
@@ -334,7 +334,7 @@ export const QUIZ: QuizItem[] = [
     concepts: ['career.readme'],
     prompt: bi('Какой раздел README пет-проекта важнее всего для собеседования?', 'Which README section of a pet project matters most for an interview?'),
     options: [
-      { id: 'broke', text: bi('Что сломалось по дороге и как чинил', 'What broke on the way and how you fixed it'), correct: true },
+      { id: 'broke', text: bi('Что сломалось по дороге и как вы это чинили', 'What broke on the way and how you fixed it'), correct: true },
       { id: 'run', text: bi('Как запустить', 'How to run it'), why: bi('Этот раздел нужен, но на собеседовании ценят вашу историю поломки и метод, а не инструкцию.', 'Necessary, but an interview values your failure story and method, not instructions.') },
       { id: 'badges', text: bi('Значки сборки и покрытия', 'Build and coverage badges'), why: bi('Значки украшают README, но ничего не говорят о том, как вы думаете.', 'Decoration; it says nothing about how you think.') },
     ],
@@ -358,8 +358,8 @@ export const QUIZ: QuizItem[] = [
     prompt: bi('Вы отправляете 12 откликов в неделю, а путь одного отклика в среднем занимает 3 недели. Сколько откликов у вас в работе одновременно?', 'You send 12 applications a week; the average path of an application is 3 weeks. How many are in progress at once?'),
     options: [
       { id: '36', text: '36', correct: true },
-      { id: '12', text: '12', why: bi('12 — это число откликов за одну неделю, а каждый отклик остаётся в работе три недели, поэтому одновременно их втрое больше.', 'That is one week’s flow; each application lives three weeks, so three times as many are in progress.') },
-      { id: '4', text: '4', why: bi('Здесь 12 разделили на 3, а нужно умножить: по закону Литтла число откликов в работе равно потоку, умноженному на время в пути.', '12 / 3 divides instead of multiplying: by Little’s law WIP = flow × time.') },
+      { id: '12', text: '12', why: bi('Число 12 показывает, сколько откликов уходит за одну неделю, а каждый отклик остаётся в работе три недели, поэтому одновременно их втрое больше.', 'The number 12 shows how many applications go out in one week, but each application stays in progress for three weeks, so three times as many are in progress at once.') },
+      { id: '4', text: '4', why: bi('Здесь 12 разделили на 3, а нужно умножить, потому что по закону Литтла число откликов в работе равно потоку, умноженному на время в пути.', 'Here 12 was divided by 3, but it must be multiplied, because by Little’s law the number of applications in progress equals the flow times the time in the system.') },
     ],
   },
   {
@@ -380,7 +380,7 @@ export const QUIZ: QuizItem[] = [
     prompt: bi('Отклик отправлен 16 дней назад, и ответа на него нет. Что с ним делать?', 'An application is 16 days old with no reply. What do you do with it?'),
     options: [
       { id: 'close', text: bi('Закрыть карточку, больше не ждать и держать поток откликов ровным', 'Close the card and stop waiting; keep the flow of applications steady'), correct: true },
-      { id: 'wait', text: bi('Ждать ответа, не отправляя новых', 'Wait for a reply without sending new ones'), why: bi('Поиск работы — это поток, и если перестать откликаться, весь путь до предложения растянется.', 'The search is a flow: stopping applications stretches the whole path to an offer.') },
+      { id: 'wait', text: bi('Ждать ответа, не отправляя новых', 'Wait for a reply without sending new ones'), why: bi('Поиск работы устроен как поток, и если перестать откликаться, весь путь до предложения растянется.', 'The job search works as a flow, and if you stop applying, the whole path to an offer stretches out.') },
       { id: 'spam', text: bi('Писать рекрутеру каждый день', 'Write to the recruiter every day'), why: bi('Одно напоминание уместно, а ежедневные письма раздражают.', 'One reminder is fine; daily ones are not.') },
     ],
   },
@@ -404,7 +404,7 @@ export const QUIZ: QuizItem[] = [
     prompt: bi('Какая строка раздела «способствующие факторы» в разборе инцидента написана лучше?', 'Which “contributing factors” line of an incident review is written best?'),
     options: [
       { id: 'system', text: bi('Миграция без индекса прошла ревью, потому что на стенде таблица маленькая; алерта на время ответа оформления не было', 'A migration without an index passed review because the staging table is small; there was no alert on checkout response time'), correct: true },
-      { id: 'person', text: bi('Разработчик Петров не проверил запрос', 'Developer Petrov did not check the query'), why: bi('Это поиск виноватого: в следующий раз ошибётся другой человек, если не изменить условия.', 'This is blame: next time someone else makes the mistake unless the conditions change.') },
+      { id: 'person', text: bi('Разработчик Петров не проверил запрос', 'Developer Petrov did not check the query'), why: bi('Это поиск виноватого, а если не изменить условия, в следующий раз ошибётся другой человек.', 'This is a search for someone to blame, and unless the conditions change, next time someone else makes the mistake.') },
       { id: 'root', text: bi('Корневая причина в человеческом факторе', 'Root cause: human error'), why: bi('Слова «человеческий фактор» не называют ни одного условия в системе, которое можно изменить.', '“Human error” names no condition of the system that can be changed.') },
     ],
   },

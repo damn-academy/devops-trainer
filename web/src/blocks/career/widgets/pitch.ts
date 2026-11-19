@@ -24,7 +24,7 @@ const P = {
   fillers: bi('Слова-паразиты', 'Filler words'),
   per15: bi('на 15 секунд', 'per 15 seconds'),
   apologies: bi('Извинения', 'Apologies'),
-  concrete: bi('Конкретика: число, проект или ссылка', 'Something concrete: a number, a project or a link'),
+  concrete: bi('Конкретные факты, то есть число, проект или ссылка', 'Concrete facts, that is, a number, a project or a link'),
   norm: bi('норма', 'target'),
   yes: bi('есть', 'yes'),
   no: bi('нет', 'no'),
@@ -33,11 +33,11 @@ const P = {
 };
 
 const PARTS = [
-  bi('Кто я и откуда: одна фраза, без извинений', 'Who I am and where from — one sentence, no apologies'),
+  bi('Кто я и откуда, одной фразой и без извинений', 'Who I am and where I come from, in one sentence and without apologies'),
   bi('Что я умею и чем это подтверждается (экзамены, проекты со ссылками)', 'What I can do — with proof (exams, projects with links)'),
-  bi('Одна история: какая была проблема, что я сделал и что изменилось', 'One story: problem → what I did → what changed'),
-  bi('Почему DevOps: мост от прежнего опыта', 'Why DevOps — the bridge from earlier experience'),
-  bi('Что ищу: роль и формат', 'What I am looking for: role and format'),
+  bi('Одна история о том, какая была проблема, что я сделал и что изменилось', 'One story about what the problem was, what I did and what changed'),
+  bi('Почему DevOps, то есть мост от прежнего опыта к новой работе', 'Why DevOps, that is, the bridge from earlier experience to the new job'),
+  bi('Что я ищу, то есть роль и формат работы', 'What I am looking for, that is, the role and the work format'),
 ];
 
 interface PitchMetrics {

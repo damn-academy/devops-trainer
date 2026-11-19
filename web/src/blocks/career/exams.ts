@@ -51,7 +51,7 @@ export const LINUX_EXAM: Exam = {
   kind: 'block',
   title: bi('Экзамен Linux: первый день на сервере', 'Linux exam: the first day on the server'),
   intro: bi(
-    'Пять карточек из трекера задач небольшого интернет-магазина. Каждую карточку проверяют по состоянию машины, а не по набранным командам, поэтому подходит любой путь к результату. Подсказок нет, а из документации открыта только встроенная: `man` и `--help`.',
+    'Пять карточек из трекера задач небольшого интернет-магазина. Каждую карточку проверяют по состоянию машины, а не по набранным командам, поэтому подходит любой путь к результату. Подсказок нет, а из документации открыта только встроенная справка, то есть страницы `man` и вывод `--help`.',
     'Five cards from a small shop’s tracker. Each is checked by the state of the machine, not by the commands you type: any way works. There are no hints; only the built-in documentation is open — `man` and `--help`.',
   ),
   story: bi(

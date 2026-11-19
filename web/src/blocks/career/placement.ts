@@ -21,7 +21,7 @@ const structure2: QuizItem = {
   kind: 'order',
   prompt: bi('Расставьте части ответа на вопрос «Что такое жёсткая ссылка?».', 'Order the parts of an answer to “What is a hard link?”.'),
   steps: [
-    { id: 'what', text: bi('Жёсткая ссылка — ещё одно имя того же inode', 'Another name for the same inode') },
+    { id: 'what', text: bi('Жёсткая ссылка даёт тому же inode ещё одно имя', 'A hard link gives the same inode one more name') },
     { id: 'why', text: bi('В Linux имя файла и его данные хранятся отдельно', 'In Linux a file’s name and data are separate') },
     { id: 'how', text: bi('Данные хранятся, пока счётчик ссылок больше нуля или файл кем-то открыт', 'The data lives while the link count is above zero or the file is open') },
     { id: 'when', text: bi('Пользуюсь ими редко, а для версий чаще беру символические ссылки', 'I rarely use them: more often symlinks for versions') },
@@ -36,7 +36,7 @@ const dontKnow1: QuizItem = {
     { id: 'a', text: bi('«Не работал. Судя по задаче, это планировщик, который распределяет нагрузку по машинам, как Kubernetes. Выяснял бы по официальной документации, по разделу об архитектуре, и попробовал бы запустить у себя».', '“I haven’t used it. From the task it sounds like a workload scheduler, like Kubernetes. I’d check the official docs, the architecture section, and try it locally.”'), correct: true },
     { id: 'b', text: bi('«Nomad — это система мониторинга».', '“Nomad is a monitoring system.”'), why: bi('Это выдумка, и за неё ставят ноль по честности.', 'An invention: zero for honesty.') },
     { id: 'c', text: bi('«Не знаю».', '“I don’t know.”'), why: bi('Ответ честный, но в нём нет ни рассуждения, ни плана, как выяснить ответ.', 'Honest, but no reasoning and no plan to find out.') },
-    { id: 'd', text: bi('«Это неважно, я быстро разберусь».', '“It doesn’t matter, I’ll figure it out fast.”'), why: bi('Это уход от ответа: интервьюер не узнал ни того, что вы знаете, ни того, как вы ищете.', 'A dodge: the interviewer learns neither what you know nor how you look.') },
+    { id: 'd', text: bi('«Это неважно, я быстро разберусь».', '“It doesn’t matter, I’ll figure it out fast.”'), why: bi('Это уход от ответа, после которого интервьюер не узнал ни того, что вы знаете, ни того, как вы ищете.', 'This is a dodge, after which the interviewer has learned neither what you know nor how you look things up.') },
   ],
 };
 
@@ -56,10 +56,10 @@ const cv1: QuizItem = {
   kind: 'multi',
   prompt: bi('Учебное резюме бывшего менеджера по продажам. Какие строки не нужны в DevOps-версии в таком виде? Отметьте все.', 'A training CV of a former sales manager. Which lines do not belong in the DevOps version as they are? Mark them all.'),
   options: [
-    { id: 'kpi', text: bi('«Выполнял план продаж на 115%»', '“Achieved 115% of the sales plan”'), correct: true, why: bi('Достижение не относится к новой роли: оставьте должность одной строкой, без подробностей.', 'Not about this role: the position in one line, no details.') },
+    { id: 'kpi', text: bi('«Выполнял план продаж на 115%»', '“Achieved 115% of the sales plan”'), correct: true, why: bi('Это достижение не относится к новой роли, поэтому оставьте должность одной строкой, без подробностей.', 'This achievement has nothing to do with the new role, so leave the position as one line without details.') },
     { id: 'pc', text: bi('«Уверенный пользователь ПК, стрессоустойчив»', '“Confident PC user, stress-resistant”'), correct: true, why: bi('Это пустые формулировки, и проверить их нельзя.', 'Empty phrases.') },
-    { id: 'bridge', text: bi('«Автоматизировал отчёты в Excel: с 5 часов до 40 минут в неделю»', '“Automated Excel reports: from 5 hours to 40 minutes a week”'), why: bi('Это мост к DevOps: автоматизация с измеримым результатом.', 'A bridge to DevOps: automation with a result.') },
-    { id: 'repo', text: bi('«Пет-проект: сайт в Docker с автодеплоем — github.com/…»', '“Pet project: a site in Docker with auto-deploy — github.com/…”'), why: bi('Подтверждение навыка важнее всего в резюме джуна.', 'Skill evidence is the core of a junior CV.') },
+    { id: 'bridge', text: bi('«Автоматизировал отчёты в Excel и сократил работу над ними с 5 часов до 40 минут в неделю»', '“Automated Excel reports and cut the work on them from 5 hours to 40 minutes a week”'), why: bi('Эта строка перекидывает мост к DevOps, потому что описывает автоматизацию с измеримым результатом.', 'This line builds a bridge to DevOps, because it describes automation with a measurable result.') },
+    { id: 'repo', text: bi('«Пет-проект: сайт в Docker с автоматической выкладкой, github.com/…»', '“Pet project: a site in Docker with automatic releases, github.com/…”'), why: bi('Подтверждение навыка важнее всего в резюме джуна.', 'Skill evidence is the core of a junior CV.') },
   ],
 };
 
@@ -80,10 +80,10 @@ const method1: QuizItem = {
   kind: 'order',
   prompt: bi('Сайт отвечает ошибкой 504. Расставьте шаги в том порядке, в каком действовал бы дежурный.', '“The site returns 504.” Order the steps as an on-call engineer would.'),
   steps: [
-    { id: 'ask', text: bi('Уточнить масштаб и что менялось', 'Ask about scope and what changed') },
-    { id: 'curl', text: bi('Выяснить командой `curl -sv`, кто отвечает ошибкой 504', '`curl -sv`: who answers 504') },
-    { id: 'log', text: bi('Прочитать журнал ошибок прокси', 'The proxy error log') },
-    { id: 'direct', text: bi('Проверить приложение напрямую, мимо прокси', 'The application directly, bypassing the proxy') },
+    { id: 'ask', text: bi('Уточнить, насколько широк сбой и что перед ним менялось', 'Ask how wide the failure is and what changed before it') },
+    { id: 'curl', text: bi('Выяснить командой `curl -sv`, кто отвечает ошибкой 504', 'Find out with `curl -sv` who answers 504') },
+    { id: 'log', text: bi('Прочитать журнал ошибок прокси', 'Read the proxy error log') },
+    { id: 'direct', text: bi('Проверить приложение напрямую, мимо прокси', 'Check the application directly, bypassing the proxy') },
     { id: 'rollback', text: bi('Откатить изменение, которое вызвало сбой', 'Roll back the change that caused the failure') },
   ],
 };
@@ -94,8 +94,8 @@ const method2: QuizItem = {
   prompt: bi('В 14:05 вышел релиз, в 14:08 ввели новые правила межсетевого экрана, а с 14:10 сайт отвечает ошибкой 504. В журнале ошибок nginx строка кончается словами «while connecting to upstream». Что вы откатите первым?', 'A release went out at 14:05, new firewall rules at 14:08; 504s since 14:10. The nginx log: “while connecting to upstream”. What do you roll back first?'),
   options: [
     { id: 'rule', text: bi('Правила межсетевого экрана, потому что nginx не может даже соединиться с приложением', 'The firewall rules: nginx cannot even connect'), correct: true },
-    { id: 'release', text: bi('Релиз, потому что он вышел раньше', 'The release: it came first'), why: bi('Важен не порядок изменений, а улика: слова «while connecting» указывают на сеть.', 'The order of changes does not matter — the evidence does: “while connecting” points at the network.') },
-    { id: 'both', text: bi('Всё сразу, а потом всё перезапустить', 'Everything at once, and restart'), why: bi('Так вы не узнаете причину, а улики пропадут.', 'That way you never learn the cause, and the evidence is lost.') },
+    { id: 'release', text: bi('Релиз, потому что он вышел раньше', 'The release: it came first'), why: bi('Решает не порядок изменений, а улика, и слова «while connecting» в журнале указывают на сеть.', 'What decides is not the order of the changes but the evidence, and the words “while connecting” in the log point at the network.') },
+    { id: 'both', text: bi('Откатить всё сразу, а потом всё перезапустить', 'Roll back everything at once and then restart everything'), why: bi('Так вы не узнаете причину, а улики пропадут.', 'That way you never learn the cause, and the evidence is lost.') },
   ],
 };
 
@@ -106,7 +106,7 @@ const vm: QuizItem = {
   options: [
     { id: 'proc', text: bi('Процесс хоста в собственных пространствах имён, ресурсы которого ограничены cgroups, а ядро общее с хостом', 'A host process in its own namespaces with cgroup limits; the kernel is shared'), correct: true },
     { id: 'lightvm', text: bi('Лёгкая виртуальная машина', 'A lightweight virtual machine'), why: bi('У контейнера нет ни своего ядра, ни гипервизора.', 'A container has no kernel or hypervisor of its own.') },
-    { id: 'image', text: bi('Образ Docker', 'A Docker image'), why: bi('Образ — это файлы, а контейнер — процесс, запущенный из этих файлов.', 'An image is files; a container is the process started from them.') },
+    { id: 'image', text: bi('Образ Docker', 'A Docker image'), why: bi('Образ состоит из файлов, а контейнер работает как процесс, запущенный из этих файлов.', 'An image consists of files, and a container runs as a process started from those files.') },
   ],
 };
 

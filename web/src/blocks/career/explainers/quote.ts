@@ -59,13 +59,13 @@ export const quoteModel = defineModel<P>({
     'After a practice interview the AI scores your answer by the rubric and backs every score above 1 with a quote from the answer. The course does not take the AI’s word for it: it looks for the quote in the transcript and counts the score only if it is found, with a small tolerance for recognition slips.',
   ),
   intro: bi(
-    'Схема соберётся по шагам: сейчас на ней ваш ответ, рубрика и нейросеть-оценщик. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Облачко у подсвеченного блока говорит, что этот блок делает, а карточка на линии показывает, что он передаёт дальше. Под схемой видны три числа: насколько цитата отличается от ответа, какой допуск разрешён и какой балл засчитан.\n\nПосле первого прохода выберите в «Параметрах» другую цитату, например пересказ или выдуманную похвалу, а потом подвигайте допуск.',
-    'The diagram builds itself step by step: now it shows your answer, the rubric and the AI grader. Press “Start: step forward”, then go on with “Step forward”. The callout says what the highlighted block does; the card on the line shows what it hands on. Under the diagram: how far the quote is from the answer, the tolerance, and the score counted.\n\nAfter the first pass choose another quote in “Parameters”, such as a paraphrase or invented praise, then move the tolerance.',
+    'Схема собирается по шагам, и сейчас на ней ваш ответ, рубрика и нейросеть-оценщик. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что этот блок делает, а карточка на линии показывает, что он передаёт дальше. Под схемой видны три числа: насколько цитата отличается от ответа, какой допуск разрешён и какой балл засчитан.\n\nПосле первого прохода выберите в «Параметрах» другую цитату, например пересказ или выдуманную похвалу, а потом подвигайте допуск.',
+    'The diagram builds itself step by step, and now it shows your answer, the rubric and the AI grader. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted block says what that block does, and the card on the line shows what it hands on. Under the diagram you see three numbers: how far the quote is from the answer, what tolerance is allowed and what score is counted.\n\nAfter the first pass choose another quote in “Parameters”, such as a paraphrase or invented praise, then move the tolerance.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
     { mark: 'say', text: bi('что этот блок делает', 'what that block does') },
-    { mark: 'token', text: bi('что передаётся дальше: ответ, цитата, балл', 'what is handed on: the answer, the quote, the score') },
+    { mark: 'token', text: bi('то, что передаётся дальше, то есть ответ, цитата или балл', 'what is handed on, that is, the answer, the quote or the score') },
     { mark: 'icon:user', text: bi('ваш ответ', 'your answer') },
     { mark: 'icon:cloud', text: bi('ваша нейросеть', 'your AI') },
     { mark: 'icon:file', text: bi('рубрика и цитата', 'the rubric and the quote') },
@@ -79,11 +79,11 @@ export const quoteModel = defineModel<P>({
     width: 960,
     height: 400,
     nodes: [
-      { id: 'tr', label: bi('Ваш ответ', 'Your answer'), icon: 'user', sub: '23 words', family: 'obj', x: 24, y: 40, w: 200, h: 64, card: card('Расшифровка того, что вы сказали или написали на учебном интервью. Это главный документ проверки: всё, что говорит нейросеть, сверяется с ним.', 'The transcript of what you said or wrote. It is the source of truth: everything the AI says is checked against it.', 'Ответ даёте вы, а голос в текст превращает программа распознавания речи.', 'You; speech recognition turns voice into text.') },
+      { id: 'tr', label: bi('Ваш ответ', 'Your answer'), icon: 'user', sub: '23 words', family: 'obj', x: 24, y: 40, w: 200, h: 64, card: card('Расшифровка того, что вы сказали или написали на учебном интервью. Расшифровка служит главным документом проверки, и всё, что говорит нейросеть, сверяется с ней.', 'The transcript of what you said or wrote. It is the main document of the check, and everything the AI says is checked against it.', 'Ответ даёте вы, а голос в текст превращает программа распознавания речи.', 'You; speech recognition turns voice into text.') },
       { id: 'rubric', label: bi('Рубрика', 'Rubric'), icon: 'file', sub: '6 × 0–3', family: 'obj', x: 312, y: 184, w: 208, h: 64, card: card('Шесть критериев оценки, и у каждого балла от 0 до 3 есть описание. Одна и та же рубрика служит для учебных интервью, вопросов «объясните» и разбора дежурства.', 'Six criteria, each score from 0 to 3 described. The same rubric serves interviews, “explain” questions and on-call reviews.', 'Рубрику составили авторы курса.', 'The course.') },
-      { id: 'llm', label: bi('Нейросеть-оценщик', 'AI grader'), icon: 'cloud', work: 'dots', sub: 'temperature 0', family: 'process', x: 312, y: 40, w: 208, h: 64, card: card('Ваша нейросеть. Она читает ответ и рубрику и возвращает строгий JSON: балл и цитату по каждому критерию.', 'Your own AI: reads the answer and the rubric and returns strict JSON, a score and a quote per criterion.', 'Нейросеть вы подключаете сами в настройках курса.', 'You connect it in the settings.') },
+      { id: 'llm', label: bi('Нейросеть-оценщик', 'AI grader'), icon: 'cloud', work: 'dots', sub: 'temperature 0', family: 'process', x: 312, y: 40, w: 208, h: 64, card: card('Ваша нейросеть. Она читает ответ и рубрику и возвращает строгий JSON, в котором по каждому критерию стоят балл и цитата.', 'Your own AI. It reads the answer and the rubric and returns strict JSON with a score and a quote for each criterion.', 'Нейросеть вы подключаете сами в настройках курса.', 'You connect it in the settings.') },
       { id: 'quote', label: bi('Цитата-доказательство', 'Evidence quote'), icon: 'file', sub: '—', family: 'neutral', shape: 'pill', x: 640, y: 40, w: 296, h: 64, card: card('Фраза из ответа, которой нейросеть обосновывает балл. Нейросеть может ошибиться или польстить, поэтому курс ищет эту фразу в расшифровке.', 'The phrase the AI bases the score on. The AI can err or flatter, so the course looks for it in the transcript.', 'Цитату возвращает нейросеть.', 'The AI returns it.') },
-      { id: 'norm', label: bi('Приведение к списку слов', 'Normalisation'), icon: 'process', work: 'spin', sub: 'lower, ё=е, no punctuation', family: 'process', x: 640, y: 184, w: 296, h: 64, card: card('Курс приводит оба текста к простому списку слов: делает все буквы строчными, убирает знаки препинания и считает «ё» и «е» одной буквой.', 'Both texts become plain word lists: lower case, no punctuation, “ё” = “е”.', 'Это делает курс у вас в браузере.', 'The course, in your browser.') },
+      { id: 'norm', label: bi('Приведение к списку слов', 'Normalisation'), icon: 'process', work: 'spin', sub: 'lower, ё=е, no punctuation', family: 'process', x: 640, y: 184, w: 296, h: 64, card: card('Курс приводит оба текста к простому списку слов. Для этого он делает все буквы строчными, убирает знаки препинания и считает «ё» и «е» одной буквой.', 'The course turns both texts into plain word lists. To do so it makes every letter lower case, removes punctuation and treats “ё” and “е” as one letter.', 'Это делает курс у вас в браузере.', 'The course, in your browser.') },
       { id: 'match', label: bi('Поиск цитаты в ответе', 'Finding the quote'), icon: 'process', work: 'spin', sub: 'Levenshtein by words', family: 'process', x: 640, y: 312, w: 296, h: 64, card: card('Курс сравнивает цитату с каждым куском расшифровки примерно той же длины, от двух слов короче до двух слов длиннее. Расстояние между ними равно числу слов, которые нужно заменить, вставить или удалить, чтобы кусок совпал с цитатой, делённому на число слов в цитате.', 'The quote is compared with every stretch of the transcript of the same length ± 2 words. The distance is how many words must be replaced, inserted or deleted, divided by the quote length.', 'Это делает курс.', 'The course.') },
       { id: 'score', label: bi('Засчитанный балл', 'Counted score'), icon: 'terminal', sub: '3', family: 'gauge', x: 312, y: 312, w: 208, h: 64, card: card('Если расстояние не больше допуска, балл засчитывается. Если больше, балл опускается до 1 и помечается «не подтверждено».', 'Within the tolerance the score counts; otherwise it drops to 1, marked “not confirmed”.', 'Решение принимает курс.', 'The course.') },
     ],
@@ -94,7 +94,7 @@ export const quoteModel = defineModel<P>({
       { id: 'e-n1', from: 'quote', to: 'norm', label: bi('слова цитаты', 'quote words'), card: card('Цитата превращается в список слов.', 'The quote is normalised.', 'Это делает курс.', 'The course.') },
       { id: 'e-n2', from: 'tr', to: 'norm', label: bi('слова ответа', 'answer words'), via: [[124, 288], [600, 288], [600, 216]], labelAt: 0.35, card: card('Расшифровка ответа тоже превращается в список слов, чтобы сравнивать одинаковое с одинаковым.', 'So is the transcript.', 'Это делает курс.', 'The course.') },
       { id: 'e-m', from: 'norm', to: 'match', label: bi('два списка слов', 'two word lists'), card: card('Оба списка слов передаются на сравнение.', 'Both lists go to the comparison.', 'Это делает курс.', 'The course.') },
-      { id: 'e-s', from: 'match', to: 'score', label: bi('не больше допуска?', 'within tolerance?'), card: card('Здесь курс решает, засчитать балл или опустить его до 1.', 'Count the score or drop it to 1.', 'Решение принимает курс.', 'The course.') },
+      { id: 'e-s', from: 'match', to: 'score', label: bi('сравнение с допуском', 'comparison with the tolerance'), card: card('Здесь курс решает, засчитать балл или опустить его до 1.', 'Count the score or drop it to 1.', 'Решение принимает курс.', 'The course.') },
     ],
   },
   params: [
@@ -150,7 +150,7 @@ export const quoteModel = defineModel<P>({
         prompt: bi('Ответ до нейросети не дошёл, и она поставила 3 с цитатой «контейнер изолирован сильнее виртуальной машины». Вы такого не говорили. Что сделает курс при допуске по умолчанию?', 'The answer never reached the AI, and it gave 3 quoting “a container is isolated more strongly than a virtual machine”, which you never said. What does the course do at the default tolerance?'),
         options: [
           { id: 'one', text: bi('Опустит балл до 1 и пометит «не подтверждено»', 'Drop the score to 1, “not confirmed”') },
-          { id: 'three', text: bi('Засчитает 3: нейросеть отвечает за свою оценку', 'Count the 3: the AI answers for its grade') },
+          { id: 'three', text: bi('Засчитает 3, потому что нейросеть отвечает за свою оценку', 'Count the 3, because the AI answers for its grade') },
         ],
         resolve: (_p, next) => ((next[next.length - 1]?.metrics?.score ?? 3) < 3 ? 'one' : 'three'),
       },
@@ -174,7 +174,7 @@ export const quoteModel = defineModel<P>({
         id: 'grade',
         label: bi('оценка', 'grade'),
         caption: blind
-          ? bi('Ваш ответ до нейросети не дошёл: она получила только рубрику. Но нейросеть всё равно должна вернуть баллы, и ей придётся их придумать.', 'Your answer never reached the AI: it got only the rubric. It still has to return scores, so it will make them up.')
+          ? bi('Ваш ответ до нейросети не дошёл, и она получила только рубрику. Но нейросеть всё равно должна вернуть баллы, и ей придётся их придумать.', 'Your answer never reached the AI, and it got only the rubric. But the AI still has to return scores, so it will have to make them up.')
           : bi('Курс отправляет вашей нейросети расшифровку ответа и рубрику. Нейросеть читает ответ и по каждому из шести критериев ставит балл от 0 до 3.', 'The course sends your AI the transcript and the rubric. The AI reads the answer and scores each of the six criteria from 0 to 3.'),
         focus: ['llm', blind ? 'e-rub' : 'e-tr'],
         reveal: ['e-tr', 'e-rub'],
@@ -226,7 +226,7 @@ export const quoteModel = defineModel<P>({
         label: '3 ✓',
         caption:
           kind === 'invented'
-            ? bi('Допуск так широк, что прошла даже фраза, которой в ответе не было. Проверка больше ничего не защищает: курс засчитал лесть нейросети.', 'The tolerance is so wide that even an invented phrase passed: the check no longer protects anything.')
+            ? bi('Допуск так широк, что прошла даже фраза, которой в ответе не было. Проверка больше ничего не защищает, потому что курс засчитал лесть нейросети.', 'The tolerance is so wide that even a phrase that was never in the answer passed. The check no longer protects anything, because the course has counted the AI’s flattery.')
             : bi('Цитата нашлась в ответе, и курс засчитывает балл 3.', 'The quote is in the answer, and the 3 counts.'),
         focus: ['score', 'e-s'],
         reveal: ['score', 'e-s'],
@@ -256,7 +256,7 @@ export const quoteModel = defineModel<P>({
         step.broken = {
           at: 'score',
           message: `evidence "${c.q.en}" not found in transcript\nscore: 3 → 1 (not confirmed)`,
-          caption: bi('на подтверждении балла. Нейросеть не видела ответа, и её цитата не нашлась в расшифровке. Так проверка и узнаёт выдуманную оценку: балл без доказательства не засчитывается.', 'at confirming the score: the AI never saw the answer and its quote was not in the transcript. A score without evidence does not count.'),
+          caption: bi('на подтверждении балла. Нейросеть не видела ответа, и её цитата не нашлась в расшифровке. Так проверка и узнаёт выдуманную оценку, ведь балл без доказательства не засчитывается.', 'at confirming the score. The AI never saw the answer, and its quote was not found in the transcript. This is how the check recognises an invented grade, because a score without evidence does not count.'),
         };
       steps.push(step);
     }
@@ -269,7 +269,7 @@ export const quoteModel = defineModel<P>({
       return change.on
         ? bi('Нейросеть не видела ответа, и её цитата не нашлась в расшифровке, поэтому балл опущен до 1.', 'The AI never saw the answer; its quote was not found, and the score dropped to 1.')
         : bi('Нейросеть снова получает ваш ответ и цитирует то, что вы сказали.', 'The AI gets your answer again.');
-    if (s(prev) === s(next)) return fmtb(bi('При допуске {t} исход для этой цитаты не изменился: засчитан балл {s}.', 'At a {t} tolerance the outcome is the same: score {s}.'), { t, s: s(next) ?? 0 });
+    if (s(prev) === s(next)) return fmtb(bi('При допуске {t} исход для этой цитаты не изменился, и засчитан по-прежнему балл {s}.', 'At a {t} tolerance the outcome for this quote has not changed, and the score counted is still {s}.'), { t, s: s(next) ?? 0 });
     return s(next) === 3
       ? fmtb(bi('При допуске {t} цитата находится в ответе, и балл 3 засчитан.', 'At a {t} tolerance the quote is found: the 3 counts.'), { t })
       : fmtb(bi('При допуске {t} цитата в ответе не находится, и балл опущен до 1.', 'At a {t} tolerance the quote is not found: the score drops to 1.'), { t });

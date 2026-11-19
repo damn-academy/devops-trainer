@@ -55,7 +55,7 @@ export const PETS: PetProject[] = [
   {
     id: 'pet3',
     n: '3',
-    title: bi('docker compose и конвейер: интерфейс, сервер приложения и база', 'docker compose and a pipeline: frontend, backend, database'),
+    title: bi('Интерфейс, сервер приложения и база в docker compose с конвейером', 'A frontend, a backend and a database in docker compose with a pipeline'),
     what: bi('Три сервиса, которые запускаются одной командой. На этом проекте построен итоговый экзамен.', 'Three services that start with one command; this is the base of the final exam.'),
     opensAfter: ['containers', 'cicd'],
     required: ['beginner', 'intermediate', 'experienced'],

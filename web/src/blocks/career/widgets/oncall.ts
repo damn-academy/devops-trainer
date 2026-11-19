@@ -44,20 +44,20 @@ const O = {
   announce: bi('Объявить в чате и продолжить текущий', 'Announce it in the chat and carry on with the current one'),
   switchNow: bi('Бросить текущий и переключиться', 'Drop the current one and switch'),
   ignore: bi('Не отвлекаться, ничего не писать', 'Stay focused, write nothing'),
-  note: bi('Сообщение в чат: что вы видите, когда возьмёте и почему не сейчас', 'A chat message: what you see, when you will take it and why not now'),
+  note: bi('Напишите в чат, что вы видите, когда возьмёте инцидент в работу и почему не сейчас', 'Write to the chat what you see, when you will take the incident and why not now'),
   noteSend: bi('Отправить', 'Send'),
   ciTitle: bi('Конвейер ветки main третий час красный', 'The main pipeline has been red for three hours'),
   ciPrompt: bi('Тест `test_checkout_timeout` не проходит через раз. Что вы будете делать?', 'A test fails every other run: `test_checkout_timeout`. What do you do?'),
   ciOptions: [
-    { id: 'retry', text: bi('Поставить `retry: 5` на задание с тестами', 'Put `retry: 5` on the test job'), ok: false, why: bi('Это прячет нестабильность: тест будет проходить случайно, а настоящая ошибка проскочит незамеченной.', 'Hides the flakiness: the test turns “green” by chance and a real regression slips through.') },
+    { id: 'retry', text: bi('Поставить `retry: 5` на задание с тестами', 'Put `retry: 5` on the test job'), ok: false, why: bi('Так нестабильность только прячется, потому что тест будет проходить случайно, а настоящая ошибка проскочит незамеченной.', 'This only hides the flakiness, because the test will pass by chance and a real regression will slip through unnoticed.') },
     { id: 'allow', text: bi('Поставить заданию с тестами `allow_failure: true`', 'Make the test job `allow_failure: true`'), ok: false, why: bi('Это выключает проверку целиком, а такой обходной путь на экзаменах не засчитывается.', 'Turns the check off entirely — a workaround that never counts on an exam.') },
-    { id: 'quarantine', text: bi('Найти нестабильный тест, отправить его в карантин, завести на него задачу с ответственным и перезапустить конвейер', 'Find the flaky test, quarantine it with a ticket and an owner, re-run the pipeline'), ok: true, why: bi('Выкладки снова идут, а тест не забыт: у него есть ответственный и срок.', 'Releases flow again and the test is not lost: it has an owner and a deadline.') },
+    { id: 'quarantine', text: bi('Найти нестабильный тест, отправить его в карантин, завести на него задачу с ответственным и перезапустить конвейер', 'Find the flaky test, quarantine it with a ticket and an owner, re-run the pipeline'), ok: true, why: bi('Выкладки снова идут, а тест не забыт, потому что у задачи о нём есть ответственный и срок.', 'Releases flow again and the test is not forgotten, because the ticket about it has an owner and a deadline.') },
   ],
   review: bi('Разбор главного инцидента из четырёх частей, без поиска виноватых', 'A four-line review of the main incident — without blame'),
-  rTimeline: bi('Хронология: ключевые моменты со временем', 'Timeline: the key moments with times'),
-  rImpact: bi('Влияние: кто пострадал и насколько', 'Impact: who was affected and how much'),
-  rFactors: bi('Способствующие факторы: условия в системе, по одному на строку', 'Contributing factors: conditions of the system, one per line'),
-  rActions: bi('Действия: изменения, которые можно проверить, и у каждого ответственный и срок', 'Actions: checkable changes, each with an owner and a date'),
+  rTimeline: bi('Хронология, то есть ключевые моменты и время каждого', 'The timeline, that is, the key moments and the time of each'),
+  rImpact: bi('Влияние, то есть кто пострадал и насколько', 'The impact, that is, who was affected and how much'),
+  rFactors: bi('Способствующие факторы, то есть условия в системе, по одному на строку', 'Contributing factors, that is, conditions of the system, one per line'),
+  rActions: bi('Действия, то есть изменения, которые можно проверить, и у каждого из них есть ответственный и срок', 'Actions, that is, changes that can be checked, each with an owner and a date'),
   finish: bi('Сдать смену', 'Hand over the shift'),
   timeUp: bi('Время смены вышло.', 'The shift time is up.'),
   passed: bi('Смена сдана', 'Shift passed'),
@@ -65,9 +65,9 @@ const O = {
   lines: {
     priority: bi('Первым взят инцидент с наибольшим влиянием', 'The highest-impact incident was taken first'),
     announce: bi('О новом алерте сообщили в чате, а не бросили его', 'The new alert was announced in the chat, not dropped'),
-    checkout: bi('504: сервис возвращён, причина устранена, и до сбора улик не было разрушительных действий', '504: service restored, cause removed, no destructive steps before evidence'),
-    disk: bi('Диск: место освобождено безопасно, и повторение предотвращено', 'Disk: space freed safely, recurrence prevented'),
-    ci: bi('Конвейер починен без обходных путей', 'Pipeline: fixed without workarounds'),
+    checkout: bi('После ошибки 504 сервис возвращён, причина устранена, и до сбора улик не было разрушительных действий', 'After the 504 the service is restored, the cause is removed, and there were no destructive steps before the evidence was gathered'),
+    disk: bi('Место на диске освобождено безопасно, и повторение предотвращено', 'Disk space is freed safely, and a recurrence is prevented'),
+    ci: bi('Конвейер починен без обходных путей', 'The pipeline is fixed without workarounds'),
     review: bi('В разборе есть хронология, влияние, два или больше условий в системе и действия с ответственными, а виноватых не ищут', 'Review: timeline, impact, two or more system conditions, actions with owners, no blame'),
     rubric: bi('Средний балл тренировок не ниже 2 и ни одного нуля по безопасности', 'Mean drill score ≥ 2 and no zero for safety'),
   },
@@ -183,7 +183,7 @@ export const oncallWidget: WidgetReg = {
       };
 
       const alertArrives = () => {
-        const disk: Card = { id: 'disk', title: bi('DiskWillFillIn4Hours на сервере shop', 'DiskWillFillIn4Hours on the shop server'), impact: bi('пользователей пока не задевает, запас около 4 часов', 'nobody yet: about 4 hours of headroom'), at: '14:19', col: 'new' };
+        const disk: Card = { id: 'disk', title: bi('DiskWillFillIn4Hours на сервере shop', 'DiskWillFillIn4Hours on the shop server'), impact: bi('пользователей это пока не задевает, а запас времени около 4 часов', 'users are not affected yet, and there are about 4 hours to spare'), at: '14:19', col: 'new' };
         cards.push(disk);
         drawBoard();
         const box = h('div.cw-alert', { role: 'alert' });
