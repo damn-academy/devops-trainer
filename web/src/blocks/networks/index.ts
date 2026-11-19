@@ -47,7 +47,7 @@ const block: Block = {
   order: entry.order,
   title: entry.title,
   summary: bi(
-    'От карты интернета к пакету и обратно: кадр и MAC, IP и подсети, ARP, маршрутизация, TCP и UDP, конверты OSI и TCP/IP, DNS, DHCP, NAT и netfilter, HTTP, TLS и SSH, прокси и 504 — и траблшутинг по уровням на сквозном пути URL.',
+    'Блок ведёт от карты интернета к отдельному пакету и обратно. В нём разобраны кадр и MAC-адрес, IP-адреса и подсети, ARP, маршрутизация, TCP и UDP, конверты моделей OSI и TCP/IP, DNS, DHCP, NAT и netfilter, HTTP, TLS и SSH, прокси и ошибка 504, а завершает блок поиск неисправности по уровням на всём пути запроса к сайту.',
     'From the map of the internet down to the packet and back: frames and MAC, IP and subnets, ARP, routing, TCP and UDP, OSI and TCP/IP envelopes, DNS, DHCP, NAT and netfilter, HTTP, TLS and SSH, proxies and the 504 — and layer-by-layer troubleshooting along the whole path of a URL.',
   ),
   checklistStep: entry.checklistStep,

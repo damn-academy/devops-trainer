@@ -73,13 +73,13 @@ function mount(el: HTMLElement, props: { level?: Level } | undefined, ctx: Widge
           sequenceSvg(p),
           h('h5', {}, t(bi('Как наблюдать', 'How to observe'))),
           h('ul.cat-observe', {}, ...p.observe.map((o) => h('li', {}, h('code', {}, o)))),
-          h('h5', {}, t(bi('Как ломается — какой уровень?', 'How it breaks — which layer?'))),
+          h('h5', {}, t(bi('Как протокол ломается и на каком это уровне', 'How it breaks — which layer?'))),
           h(
             'ul.cat-breaks',
             {},
-            ...p.breaks.map((b) => h('li', {}, h(`span.cat-layer.fam-${LAYER_FAM[b.layer]}`, {}, b.layer), h('code.cat-symptom', {}, b.symptom), h('span.cat-cause', {}, t(b.cause)), h('span.cat-prove', {}, t(bi('Чем доказать: ', 'Prove it: ')), h('code', {}, b.prove)))),
+            ...p.breaks.map((b) => h('li', {}, h(`span.cat-layer.fam-${LAYER_FAM[b.layer]}`, {}, b.layer), h('code.cat-symptom', {}, b.symptom), h('span.cat-cause', {}, t(b.cause)), h('span.cat-prove', {}, t(bi('Чем это доказать: ', 'Prove it: ')), h('code', {}, b.prove)))),
           ),
-          h('p.cat-doc', {}, t(bi('Где написано: ', 'Where it is written: ')), h('a', { href: p.doc.url, target: '_blank', rel: 'noopener' }, p.doc.label)),
+          h('p.cat-doc', {}, t(bi('Где это написано: ', 'Where it is written: ')), h('a', { href: p.doc.url, target: '_blank', rel: 'noopener' }, p.doc.label)),
         );
       }
       grid.append(card);

@@ -43,8 +43,8 @@ export const urlModel = defineModel<P>({
     'What happens after the user types https://shop.example/catalog and presses Enter: the browser learns the site’s address from DNS servers, opens a connection to the nearest CDN edge, gets the page and draws it. The waterfall under the diagram grows as in the Network tab of DevTools.',
   ),
   intro: b(
-    'Схема соберётся по шагам: сейчас на ней только браузер. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» или нажмите «Проиграть» над схемой. Новый участник появляется, когда до него доходит загрузка. Облачко у подсвеченного участника говорит, что он делает, а карточка на линии показывает, что он передаёт следующему.\n\nПосле первого прохода включайте по одной поломке в блоке «Сломать» и смотрите, на каком шаге загрузка остановится.',
-    'The diagram builds itself step by step: now it shows only the browser. Press “Start: step forward”, then go on with “Step forward” or press “Play” above the diagram. A participant appears when the load reaches it. The callout at the highlighted participant says what it does; the card on the line shows what it hands on.\n\nAfter the first pass switch on the breaks in “Break it” one at a time and see at which step the load stops.',
+    'Схема соберётся по шагам: сейчас на ней только браузер. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» или нажмите «Проиграть» над схемой. Новый участник появляется, когда до него доходит загрузка. Облачко у подсвеченного участника говорит, что он делает, а карточка на линии показывает, что он передаёт следующему.\n\nПосле первого прохода включайте по одной поломке в блоке «Сломать» и смотрите, на каком шаге загрузка остановится.',
+    'The diagram builds itself step by step: now it shows only the browser. Press “Start from the first step”, then go on with “Step forward” or press “Play” above the diagram. A participant appears when the load reaches it. The callout at the highlighted participant says what it does; the card on the line shows what it hands on.\n\nAfter the first pass switch on the breaks in “Break it” one at a time and see at which step the load stops.',
   ),
   legend: [
     { mark: 'active', text: b('участник, который работает сейчас', 'the participant working now') },
@@ -156,7 +156,7 @@ export const urlModel = defineModel<P>({
         options: [
           { id: 'one', text: b('Один раз: QUIC договаривается о транспорте и шифровании одновременно', 'One: QUIC agrees on the transport and TLS at once') },
           { id: 'two', text: b('Два раза, как TCP и TLS по отдельности', 'Two, as with TCP and TLS') },
-          { id: 'zero', text: b('Ни разу: протоколу UDP рукопожатие не нужно', 'None: UDP needs no handshake') },
+          { id: 'zero', text: b('Ни разу, потому что протоколу UDP рукопожатие не нужно', 'None: UDP needs no handshake') },
         ],
         resolve: (_p, next) => (next.some((s) => s.id === 'quic') ? 'one' : 'two'),
       },
@@ -204,7 +204,7 @@ export const urlModel = defineModel<P>({
         options: [
           { id: '504', text: b('Код 504, и напишет его узел CDN, который не дождался сервера сайта', '504 from the CDN: it did not wait long enough for the origin') },
           { id: '404', text: b('Код 404, и напишет его сам сайт', '404 from the site') },
-          { id: 'none', text: b('Никакого: браузер не сможет подключиться', 'None: the browser cannot connect') },
+          { id: 'none', text: b('Никакого, потому что браузер не сможет подключиться', 'None: the browser cannot connect') },
         ],
         resolve: (_p, next) => (lastMetric(next, 'code') === 504 ? '504' : lastMetric(next, 'code') === 200 ? 'none' : 'none'),
       },
@@ -219,7 +219,7 @@ export const urlModel = defineModel<P>({
         options: [
           { id: 'tls', text: b('На TLS: соединение установится, но браузер не поверит, что говорит с настоящим shop.example', 'At TLS: there is a connection, but the browser will not trust the server') },
           { id: 'tcp', text: b('На TCP: узел не примет соединение', 'At TCP: the edge will not accept the connection') },
-          { id: 'none', text: b('Нигде: срок сертификата проверяют только банки', 'Nowhere: only banks check the dates') },
+          { id: 'none', text: b('Нигде, потому что просроченный сертификат по-прежнему шифрует соединение', 'Nowhere: an expired certificate still encrypts the connection') },
         ],
         resolve: (_p, next) => (brokenAt(next) === 'e-edge' ? 'tls' : brokenAt(next) === 'cdn' ? 'tcp' : 'none'),
       },
