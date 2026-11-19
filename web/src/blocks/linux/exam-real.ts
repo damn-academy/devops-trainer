@@ -168,7 +168,7 @@ export const DISK_EXAM: Exam = {
       critical: true,
       kind: 'real',
       real: {
-        prompt: bi('Уборка. Удалите машину и вставьте подтверждение: вывод `terraform destroy`; в тенанте курса — `kubectl get vm -l dt-track=linux-disk`; в своём облаке — список машин по метке `dt-track=linux-disk` в JSON, то есть `[]`.', 'Cleanup. Delete the machine and paste the confirmation: the output of `terraform destroy`; in the course tenant, `kubectl get vm -l dt-track=linux-disk`; in your own cloud, the list of machines with the label `dt-track=linux-disk` as JSON, that is, `[]`.'),
+        prompt: bi('Уборка. Удалите машину и вставьте подтверждение: вывод `terraform destroy`; в своём облаке — список машин по метке `dt-track=linux-disk` в JSON, то есть `[]`.', 'Cleanup. Delete the machine and paste the confirmation: the output of `terraform destroy`; in your own cloud, the list of machines with the label `dt-track=linux-disk` as JSON, that is, `[]`.'),
         paste: { label: bi('Подтверждение уборки', 'The cleanup confirmation'), accept: CLEANUP_ACCEPT },
       },
     },
@@ -317,7 +317,7 @@ export const ACCESS_EXAM: Exam = {
       critical: true,
       kind: 'real',
       real: {
-        prompt: bi('Уборка. Удалите обе машины и вставьте подтверждение: вывод `terraform destroy`; в тенанте курса — `kubectl get vm -l dt-track=linux-access`; в своём облаке — список машин по метке `dt-track=linux-access` в JSON, то есть `[]`.', 'Cleanup. Delete both machines and paste the confirmation: the output of `terraform destroy`; in the course tenant, `kubectl get vm -l dt-track=linux-access`; in your own cloud, the list of machines with the label `dt-track=linux-access` as JSON, that is, `[]`.'),
+        prompt: bi('Уборка. Удалите обе машины и вставьте подтверждение: вывод `terraform destroy`; в своём облаке — список машин по метке `dt-track=linux-access` в JSON, то есть `[]`.', 'Cleanup. Delete both machines and paste the confirmation: the output of `terraform destroy`; in your own cloud, the list of machines with the label `dt-track=linux-access` as JSON, that is, `[]`.'),
         paste: { label: bi('Подтверждение уборки', 'The cleanup confirmation'), accept: CLEANUP_ACCEPT },
       },
     },
