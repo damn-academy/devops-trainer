@@ -1,0 +1,26 @@
+/* Daily review: one card at a time, a thin progress line, calm. */
+.rv { max-width: 760px; margin: 0 auto; }
+.rv-head h1 { margin-bottom: 0.25rem; }
+.rv-plan, .rv-done { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 1.25rem 1.5rem; background: var(--surface); margin-top: 1.5rem; }
+.rv-plan p { margin: 0 0 0.75rem; }
+.rv-bar { display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0 1rem; font-family: var(--font-ui); font-size: 0.875rem; }
+.rv-count { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 4.5rem; }
+.rv-progress { flex: 1; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.rv-progress span { display: block; height: 100%; background: var(--ink-2); transition: width var(--t-step) var(--ease); }
+.rv-card { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 1.25rem 1.5rem; background: var(--surface); }
+.rv-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.75rem; margin-bottom: 1rem; font-family: var(--font-ui); }
+.rv-after { margin-top: 0.75rem; }
+.rv-interval { font-family: var(--font-ui); font-size: 0.9375rem; }
+.rv-rating { font-weight: 600; }
+.rv-rating[data-rating='1'] { color: var(--c-err); }
+.rv-rating[data-rating='2'] { color: var(--c-warn); }
+.rv-rating[data-rating='3'], .rv-rating[data-rating='4'] { color: var(--c-ok); }
+.rv-note { border-left: 3px solid var(--c-warn); padding: 0.25rem 0 0.25rem 0.75rem; margin: 0.5rem 0; }
+.rv-actions { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.rv-upcoming ul { padding-left: 1.1rem; }
+@media (max-width: 600px) {
+  .rv-card, .rv-plan, .rv-done { padding: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rv-progress span { transition: none; }
+}
