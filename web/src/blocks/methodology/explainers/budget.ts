@@ -77,8 +77,8 @@ export const budgetModel = defineModel<P>({
     'What happens to the shop’s error budget over 30 days. The reliability target sets how many bad minutes are allowed; an outage spends them the faster, the more requests fail; by the speed of that spending an alert fires or stays silent, and the budget policy decides whether changes may still be deployed. Under the diagram the budget, the bad minutes spent, the burn rate and what is left add up.',
   ),
   intro: b(
-    'Схема соберётся по шагам: сейчас на ней только цель надёжности. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Каждый следующий блок появляется, когда до него доходит расчёт, и говорит в облачке, что он считает или решает. Полоска в бюджете показывает, сколько плохих минут ещё осталось, а карточка на линии несёт число, которое передаётся дальше.\n\nПосле первого прохода добавьте в «Параметрах» девятку к цели и посмотрите, как уменьшится бюджет. Потом сделайте сбой слабым, с одним процентом ошибок, и проверьте, разбудит ли оповещение дежурного. Напоследок включите поломку в блоке «Сломать».',
-    'The diagram builds itself step by step: now it shows only the reliability target. Press “Start: step forward”, then go on with “Step forward” under the diagram. Each next block appears when the calculation reaches it and says in a callout what it computes or decides. The bar in the budget shows how many bad minutes are still left, and the card on the line carries the number handed on.\n\nAfter the first pass add a nine to the target in “Parameters” and see how the budget shrinks. Then make the outage mild, with one percent of errors, and check whether the alert wakes the on-call engineer. Finally switch on the break in “Break it”.',
+    'Схема собирается по шагам, и сейчас на ней видна только цель надёжности. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый следующий блок появляется, когда до него доходит расчёт, и говорит в облачке, что он считает или решает. Полоска в бюджете показывает, сколько плохих минут ещё осталось, а карточка на линии несёт число, которое передаётся дальше.\n\nПосле первого прохода добавьте в «Параметрах» девятку к цели и посмотрите, как уменьшится бюджет. Потом сделайте сбой слабым, с одним процентом ошибок, и проверьте, разбудит ли оповещение дежурного. Напоследок включите поломку в блоке «Сломать».',
+    'The diagram builds up step by step, and for now it shows only the reliability target. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each next block appears when the calculation reaches it and says in a callout what it computes or decides. The bar in the budget shows how many bad minutes are still left, and the card on the line carries the number handed on.\n\nAfter the first pass add a nine to the target in “Parameters” and see how the budget shrinks. Then make the outage mild, with one percent of errors, and check whether the alert wakes the on-call engineer. Finally switch on the break in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('блок, который считает или решает сейчас', 'the block computing or deciding now') },
@@ -87,7 +87,7 @@ export const budgetModel = defineModel<P>({
     { mark: 'warn', text: b('бюджета осталось меньше четверти или скорость выше обычной', 'less than a quarter of the budget left, or a rate above normal') },
     { mark: 'err', text: b('бюджет превышен или дежурного будят', 'the budget is exceeded, or the on-call engineer is woken') },
     { mark: 'ok', text: b('выкладки разрешены', 'deployments are allowed') },
-    { mark: 'icon:file', text: b('договорённости: цель и политика', 'agreements: the target and the policy') },
+    { mark: 'icon:file', text: b('договорённости команды, то есть цель и политика', 'the team’s agreements, the target and the policy') },
     { mark: 'icon:server', text: b('сбой на рабочем сайте', 'the outage on the working site') },
     { mark: 'icon:user', text: b('оповещение дежурному', 'the alert to the on-call engineer') },
   ],
@@ -105,11 +105,11 @@ export const budgetModel = defineModel<P>({
       node('alert', b('Оповещение дежурному', 'Alert to on-call'), 'cp', [736, 320, 200, 64], card(['Правило оповещения решает, будить ли человека. По SRE Workbook срочное оповещение срабатывает при скорости 14,4 за последний час или 6 за последние 6 часов, а при скорости 1 за последние 3 дня заводится тикет на рабочее время.', 'The rule that decides whether to wake a person. By the SRE Workbook a page fires at a rate of 14.4 over the last hour or 6 over the last 6 hours, and a rate of 1 over the last 3 days opens a ticket for working hours.'], ['Правило настраивает команда в системе оповещений.', 'The team sets it up in the alerting system.'], ALERTING), { icon: 'user' }),
     ],
     edges: [
-      edge('e-size', 'slo', 'budget', b('(1 − SLO) × 30 дней', '(1 − SLO) × 30 days'), card(['Из цели получается бюджет: при цели 99,9 % это 43,2 минуты за 30 дней.', 'The target gives the budget: at 99.9% that is 43.2 minutes over 30 days.'], ['Бюджет получается из цели простой арифметикой, и вручную его никто не пересчитывает.', 'The budget follows from the target by plain arithmetic; nobody recomputes it by hand.'])),
-      edge('e-spend', 'outage', 'budget', b('минуты × доля ошибок', 'minutes × error share'), card(['По этой линии сбой забирает из бюджета плохие минуты: свою длительность, умноженную на долю неуспешных запросов.', 'How many bad minutes the outage takes from the budget: its duration multiplied by the share of failing requests.'], ['Минуты списывает мониторинг.', 'Monitoring deducts the minutes.'])),
+      edge('e-size', 'slo', 'budget', b('(1 − SLO) × 30 дней', '(1 − SLO) × 30 days'), card(['Из цели получается бюджет, и при цели 99,9 % он равен 43,2 минуты за 30 дней.', 'The target gives the budget, and at 99.9% it equals 43.2 minutes over 30 days.'], ['Бюджет получается из цели простой арифметикой, и вручную его никто не пересчитывает.', 'The budget follows from the target by plain arithmetic; nobody recomputes it by hand.'])),
+      edge('e-spend', 'outage', 'budget', b('минуты × доля ошибок', 'minutes × error share'), card(['По этой линии сбой забирает из бюджета плохие минуты, и их столько, сколько получится, если умножить длительность сбоя на долю неуспешных запросов.', 'Along this line the outage takes bad minutes from the budget, as many as its duration multiplied by the share of failing requests.'], ['Минуты списывает мониторинг.', 'Monitoring deducts the minutes.'])),
       edge('e-burn', 'outage', 'burn', b('доля ошибок', 'error share'), card(['Мониторинг смотрит, какая доля запросов не проходит прямо сейчас, и делит её на допустимую долю.', 'Monitoring looks at what share of requests fails right now and divides it by the allowed share.'], ['Долю считает мониторинг по окнам времени.', 'Monitoring computes it over time windows.'])),
-      edge('e-alert', 'burn', 'alert', b('выше порога?', 'above a threshold?'), card(['Скорость сравнивают с порогами из SRE Workbook: 14,4, 6 и 1.', 'The rate is compared with the SRE Workbook thresholds: 14.4, 6 and 1.'], ['Сравнивает правило оповещения.', 'The alerting rule compares.'], ALERTING)),
-      edge('e-policy', 'budget', 'policy', b('превышен за 4 недели?', 'exceeded over 4 weeks?'), card(['Решение о заморозке выпусков принимают по остатку бюджета за последние четыре недели, а не по ощущению.', 'The release freeze is decided on what is left of the budget over the last four weeks, not on a feeling.'], ['Решают команда и бизнес по политике.', 'The team and the business decide, by the policy.'], POLICY)),
+      edge('e-alert', 'burn', 'alert', b('выше порога?', 'above a threshold?'), card(['Скорость сравнивают с тремя порогами из SRE Workbook, которые равны 14,4, 6 и 1.', 'The rate is compared with three thresholds from the SRE Workbook, which are 14.4, 6 and 1.'], ['Скорость с порогами сравнивает правило оповещения.', 'The alerting rule compares the rate with the thresholds.'], ALERTING)),
+      edge('e-policy', 'budget', 'policy', b('превышен за 4 недели?', 'exceeded over 4 weeks?'), card(['Решение о заморозке выпусков принимают по остатку бюджета за последние четыре недели, а не по ощущению.', 'The release freeze is decided on what is left of the budget over the last four weeks, not on a feeling.'], ['Решение принимают команда и бизнес, следуя политике бюджета.', 'The team and the business decide, following the budget policy.'], POLICY)),
     ],
   },
   params: [
@@ -145,8 +145,8 @@ export const budgetModel = defineModel<P>({
       predict: {
         prompt: b('Цель равна 99,9 %, а сбой длится 20 минут. Вы меняете долю неуспешных запросов. Разбудит ли оповещение дежурного, если не проходит только 1 % запросов?', 'The target is 99.9%, the outage lasts 20 minutes. You change the share of failing requests. Will the alert wake the on-call engineer if only 1% of requests fail?'),
         options: [
-          { id: 'none', text: b('Нет: скорость сжигания равна 10, но за 20 минут сбой не успеет потратить ту долю бюджета, при которой срабатывает оповещение', 'No: the burn rate is 10, but in 20 minutes the outage does not spend the share of the budget at which an alert fires') },
-          { id: 'page', text: b('Да: любая ошибка будит дежурного', 'Yes: any error wakes the on-call engineer') },
+          { id: 'none', text: b('Нет, не разбудит. Скорость сжигания равна 10, но за 20 минут сбой не успеет потратить ту долю бюджета, при которой срабатывает оповещение', 'No, it will not. The burn rate is 10, but in 20 minutes the outage does not spend the share of the budget at which an alert fires') },
+          { id: 'page', text: b('Да, разбудит, потому что любая ошибка будит дежурного', 'Yes, it will, because any error wakes the on-call engineer') },
         ],
         resolve: () => 'none',
       },
@@ -162,8 +162,8 @@ export const budgetModel = defineModel<P>({
       predict: {
         prompt: b('Оповещение срабатывает, только когда процессор сервера загружен больше чем на 90 %. Сервер работает спокойно, а 10 % оплат не проходят. Что сделает оповещение?', 'The alert fires only when the server’s CPU is loaded over 90%. The server runs calmly while 10% of payments fail. What does the alert do?'),
         options: [
-          { id: 'silent', text: b('Промолчит, и о сбое первыми узнают покупатели', 'It stays silent, and the customers learn about the outage first') },
-          { id: 'fires', text: b('Сработает как обычно', 'It fires as usual') },
+          { id: 'silent', text: b('Оповещение промолчит, и о сбое первыми узнают покупатели', 'The alert stays silent, and the customers learn about the outage first') },
+          { id: 'fires', text: b('Оповещение сработает как обычно', 'The alert fires as usual') },
         ],
         resolve: (_p, next) => (next.some((s) => s.id === 'cpu') ? 'silent' : 'fires'),
       },
@@ -187,7 +187,7 @@ export const budgetModel = defineModel<P>({
         label: b('цель', 'target'),
         caption: fmtn(b('Команда магазина договорилась с бизнесом, что за 30 дней успешно должны пройти {s} оформлений заказа. Посмотрим, сколько плохой работы такая цель разрешает.', 'The shop’s team agreed with the business that {s} of checkouts must succeed over 30 days. Let us see how much bad service such a target allows.'), { s: pct(p.slo) }),
         focus: ['slo'],
-        say: { slo: fmtn(b('Цель требует, чтобы за 30 дней успешно проходили {s} оформлений заказа.', 'The target: {s} of checkouts succeed over 30 days.'), { s: pct(p.slo) }) },
+        say: { slo: fmtn(b('Цель требует, чтобы за 30 дней успешно проходили {s} оформлений заказа.', 'The target requires {s} of checkouts to succeed over 30 days.'), { s: pct(p.slo) }) },
         states: hiddenExcept(ALL, 'slo'),
         values: { slo: `${p.slo}%`, budget: sub(n.budget - p.earlier) },
         fill: { budget: 1 - p.earlier / Math.max(1e-9, n.budget) },
@@ -238,12 +238,12 @@ export const budgetModel = defineModel<P>({
         label: b('процессор', 'CPU'),
         caption: b('Оповещение смотрит на загрузку процессора, а не на долю ошибок. Процессор загружен на 35 %, сервер работает спокойно, а оплата при этом не проходит. Оповещение молчит, и о сбое первыми узнают покупатели.', 'The alert watches CPU load, not the error share. The CPU is at 35%, the server runs calmly, and yet payments fail. The alert stays silent, and the customers learn about the outage first.'),
         focus: ['alert'],
-        say: { alert: b('Процессор загружен на 35 %, правило считает, что всё спокойно, и дежурного никто не будит.', 'The CPU is at 35%, all calm: nobody wakes the on-call engineer.') },
+        say: { alert: b('Процессор загружен на 35 %, правило считает, что всё спокойно, и дежурного никто не будит.', 'The CPU is at 35%, the rule considers everything calm, and nobody wakes the on-call engineer.') },
         reveal: ['alert'],
         states: { burn: 'hidden', 'e-burn': 'hidden', 'e-alert': 'hidden', alert: 'off' },
         values: { alert: 'CPU 35%' },
         metrics: m,
-        broken: { at: 'alert', message: 'ALERT HighCPU: inactive (cpu=35%)\ncheckout success: 90%', caption: b('показатель не описывает то, что видит покупатель: процессор в норме, а заказы не проходят.', 'the indicator does not describe what the customer sees: the CPU is fine while orders fail.') },
+        broken: { at: 'alert', message: 'ALERT HighCPU: inactive (cpu=35%)\ncheckout success: 90%', caption: b('показатель не описывает то, что видит покупатель, потому что процессор в норме, а заказы при этом не проходят.', 'the indicator does not describe what the customer sees, because the CPU is fine while orders fail.') },
       });
     } else {
       steps.push({
@@ -265,7 +265,7 @@ export const budgetModel = defineModel<P>({
               label: b('будят', 'page'),
               caption: fmtn(b('Скорость выше порога срочного оповещения, поэтому через {a} после начала сбоя телефон дежурного звонит, и дежурный начинает разбираться.', 'The rate is above the paging threshold, so {a} after the outage began the on-call engineer’s phone rings, and they start to investigate.'), { a: durAcc(n.alertAfter ?? 5) }),
               focus: ['e-alert', 'alert'],
-              say: { alert: fmtn(b('Порог пройден, поэтому через {a} оповещение будит дежурного.', 'The threshold is crossed: wake the on-call engineer after {a}.'), { a: durAcc(n.alertAfter ?? 5) }) },
+              say: { alert: fmtn(b('Порог пройден, поэтому через {a} оповещение будит дежурного.', 'The threshold is crossed, so after {a} the alert wakes the on-call engineer.'), { a: durAcc(n.alertAfter ?? 5) }) },
               tokens: [{ edge: 'e-alert', label: `${n.burn}×` }],
               reveal: ['e-alert', 'alert'],
               states: { alert: 'err' },
@@ -277,7 +277,7 @@ export const budgetModel = defineModel<P>({
                 label: b('тикет', 'ticket'),
                 caption: b('Скорость выше единицы, но ниже порогов срочного оповещения. Человека ночью не будят, а утром в рабочей очереди появится тикет.', 'The rate is above one but below the paging thresholds. Nobody is woken at night; in the morning a ticket appears in the work queue.'),
                 focus: ['e-alert', 'alert'],
-                say: { alert: b('До порога срочного оповещения далеко, поэтому правило заводит тикет на утро.', 'Far from the paging threshold: open a ticket for the morning.') },
+                say: { alert: b('До порога срочного оповещения далеко, поэтому правило заводит тикет на утро.', 'The paging threshold is far away, so the rule opens a ticket for the morning.') },
                 tokens: [{ edge: 'e-alert', label: `${n.burn}×` }],
                 reveal: ['e-alert', 'alert'],
                 states: { alert: 'warn' },
@@ -286,9 +286,9 @@ export const budgetModel = defineModel<P>({
             : {
                 id: 'quiet',
                 label: b('тихо', 'quiet'),
-                caption: b('Ни один порог не пройден: сбой был слишком коротким или слишком слабым, чтобы будить человека. Его минуты всё равно списаны из бюджета.', 'No threshold is crossed: the outage was too short or too mild to wake anyone. Its minutes are still deducted from the budget.'),
+                caption: b('Ни один порог не пройден, потому что сбой был слишком коротким или слишком слабым, чтобы будить человека. Тем не менее его минуты списаны из бюджета.', 'No threshold is crossed, because the outage was too short or too mild to wake anyone. Its minutes are still deducted from the budget.'),
                 focus: ['e-alert', 'alert'],
-                say: { alert: b('Ни один порог не пройден, будить никого не нужно.', 'No threshold is crossed, nobody needs waking.') },
+                say: { alert: b('Ни один порог не пройден, поэтому будить никого не нужно.', 'No threshold is crossed, so nobody needs waking.') },
                 tokens: [{ edge: 'e-alert', label: `${n.burn}×` }],
                 reveal: ['e-alert', 'alert'],
                 states: { alert: 'on' },
@@ -303,7 +303,7 @@ export const budgetModel = defineModel<P>({
         ? fmtn(b('Бюджет за четыре недели превышен на {x}. По политике выпуски останавливают, пока сервис не вернётся к цели, и разрешают только исправления проблем P0 и исправления безопасности.', 'The four-week budget is exceeded by {x}. By the policy releases stop until the service is back within the target, and only P0 fixes and security fixes are allowed.'), { x: durAcc(-n.left) })
         : fmtn(b('В бюджете осталось {l} из {b}. Бюджет не превышен, поэтому политика выкладки не запрещает, даже если минут осталось мало.', '{l} of {b} are left in the budget. The budget is not exceeded, so the policy does not forbid deployments, even when very few minutes are left.'), { l: dur(n.left), b: dur(n.budget) }),
       focus: ['e-policy', 'policy'],
-      say: { policy: n.freeze ? b('Бюджет превышен, поэтому выпуски останавливают, кроме исправлений P0 и исправлений безопасности.', 'The budget is exceeded: releases stop, except P0 and security fixes.') : b('Бюджет не превышен, поэтому выкладывать изменения можно.', 'The budget is not exceeded: deployments may go ahead.') },
+      say: { policy: n.freeze ? b('Бюджет превышен, поэтому выпуски останавливают, кроме исправлений P0 и исправлений безопасности.', 'The budget is exceeded, so releases stop, except P0 fixes and security fixes.') : b('Бюджет не превышен, поэтому выкладывать изменения можно.', 'The budget is not exceeded, so changes may be deployed.') },
       tokens: [{ edge: 'e-policy', label: n.left < 0 ? fmtn(b('−{x} мин', '−{x} min'), { x: r1(-n.left) }) : fmtn(b('{x} мин', '{x} min'), { x: n.left }) }],
       reveal: ['e-policy', 'policy'],
       states: { policy: n.freeze ? 'err' : 'ok' },
@@ -316,7 +316,7 @@ export const budgetModel = defineModel<P>({
     const m1 = lastMetrics(next);
     if (change.kind === 'break')
       return change.on
-        ? b('Оповещение по процессору промолчало: сервер работает спокойно, а 10 % заказов не проходят. Показатель для оповещения должен описывать то, что видит покупатель, то есть долю успешных оформлений заказа.', 'The CPU alert stayed silent: the server runs calmly while 10% of orders fail. The indicator for an alert must describe what the customer sees, the share of successful checkouts.')
+        ? b('Оповещение по процессору промолчало, потому что сервер работает спокойно, хотя 10 % заказов не проходят. Показатель для оповещения должен описывать то, что видит покупатель, то есть долю успешных оформлений заказа.', 'The CPU alert stayed silent, because the server runs calmly although 10% of orders fail. The indicator for an alert must describe what the customer sees, that is, the share of successful checkouts.')
         : b('Оповещение снова смотрит на долю неуспешных запросов.', 'The alert watches the share of failing requests again.');
     switch (change.id) {
       case 'slo':

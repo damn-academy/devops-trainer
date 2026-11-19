@@ -13,7 +13,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.value',
     term: bi('ценность', 'value'),
-    short: bi('То, за что покупатель платит: работающий магазин и нужные ему возможности. Изменение приносит ценность только тогда, когда оно дошло до покупателя.', 'What the customer pays for: a working shop and the features they need. A change brings value only once it reaches the customer.'),
+    short: bi('Ценностью называют то, за что платит покупатель, то есть работающий магазин и нужные ему возможности. Изменение приносит ценность только тогда, когда оно дошло до покупателя.', 'Value is what the customer pays for, that is, a working shop and the features they need. A change brings value only once it reaches the customer.'),
     introducedIn: 'methodology.business',
     scan: false,
   },
@@ -73,7 +73,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.switching',
     term: bi('переключение между задачами', 'context switching'),
-    short: bi('Время, которое человек теряет, когда ведёт несколько задач сразу. По оценке Вайнберга, при двух задачах на полезную работу остаётся 80 % времени, а при пяти только 25 %.', 'Time lost when a person juggles several tasks: with two tasks 80% of the time is useful, with five 25% (Weinberg).'),
+    short: bi('Когда человек ведёт несколько задач сразу, часть его времени уходит впустую на переход от одной задачи к другой. По оценке Вайнберга, при двух задачах на полезную работу остаётся 80 % времени, а при пяти только 25 %.', 'When a person runs several tasks at once, part of their time is wasted on moving from one task to another. By Weinberg’s estimate, with two tasks 80% of the time is left for useful work, and with five only 25%.'),
     introducedIn: 'methodology.board',
     forms: { ru: ['переключения между задачами', 'переключений между задачами'] },
   },
@@ -89,7 +89,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.cycle-time',
     term: bi('время цикла', 'cycle time'),
-    short: bi('Время от начала работы над карточкой до её готовности. Время выполнения считают шире: от появления карточки в очереди до готовности.', 'Time from the start of work on a card to the moment it is done. Lead time runs from the moment it entered the queue.'),
+    short: bi('Время от начала работы над карточкой до её готовности. Время выполнения считают шире, начиная с того момента, когда карточка появилась в очереди, и до её готовности.', 'Time from the start of work on a card to the moment it is done. Lead time runs from the moment it entered the queue.'),
     introducedIn: 'methodology.flow',
     forms: { ru: ['времени цикла', 'временем цикла', 'время выполнения', 'времени выполнения'], en: ['lead time'] },
     docRef: { url: KANBAN_GUIDE, label: 'Kanban Guide › Cycle Time' },
@@ -158,7 +158,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.cod',
     term: bi('стоимость задержки', 'cost of delay'),
-    short: bi('Сколько денег магазин теряет за каждый день, пока изменение не дошло до покупателей. CD3 равен стоимости задержки, делённой на длительность работы.', 'How much money is lost each day the change is not with the customers. CD3 is the cost of delay divided by the duration of the work.'),
+    short: bi('Стоимостью задержки называют сумму, которую магазин недополучает за каждый день, пока изменение не дошло до покупателей. CD3 равен стоимости задержки, делённой на длительность работы.', 'The cost of delay is the money the shop does not earn for each day the change has not reached the customers. CD3 is the cost of delay divided by the duration of the work.'),
     introducedIn: 'methodology.batch',
     forms: { ru: ['стоимости задержки', 'стоимостью задержки', 'CD3'], en: ['CD3'] },
     docRef: { url: 'https://blackswanfarming.com/cost-of-delay/', label: 'Black Swan Farming › Cost of Delay' },
@@ -207,7 +207,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.automation',
     term: bi('автоматизация', 'automation'),
-    short: bi('Работа, которую раз и навсегда передают машине: скрипт, автоматическая проверка, выкладка одной кнопкой. Автоматизация служит главным средством против рутины.', 'Work handed to a machine once and for all: a script, an automated check, one-click deployment. The main tool against toil.'),
+    short: bi('Автоматизацией называют работу, которую раз и навсегда передают машине, например скрипт, автоматическую проверку или выкладку одной кнопкой. Автоматизация служит главным средством против рутины.', 'Automation is work handed to a machine once and for all, such as a script, an automated check or one-click deployment. Automation is the main tool against toil.'),
     introducedIn: 'methodology.work-types',
     forms: { ru: ['автоматизации', 'автоматизацию', 'автоматизацией', 'автоматизировать'] },
   },
@@ -315,7 +315,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.postmortem',
     term: bi('разбор без поиска виноватых', 'blameless postmortem'),
-    short: bi('Письменный разбор сбоя: хронология, влияние, способствующие факторы и задачи на улучшение. Человека, который виноват, в нём не ищут.', 'A written review of an outage: timeline, impact, contributing factors and action items — without looking for a person to blame.'),
+    short: bi('Разбором без поиска виноватых называют письменный отчёт о сбое, в котором собраны хронология, влияние на покупателей, способствующие факторы и задачи на улучшение. Человека, который виноват в сбое, в таком отчёте не ищут.', 'A blameless postmortem is a written report on an outage that holds the timeline, the impact on the customers, the contributing factors and the action items. Nobody looks in it for a person to blame.'),
     introducedIn: 'methodology.incident',
     forms: { ru: ['разбора без поиска виноватых', 'разбор сбоя', 'разбора сбоя', 'постмортем', 'способствующие факторы'], en: ['postmortem', 'postmortems', 'blameless'] },
     docRef: { url: 'https://sre.google/sre-book/postmortem-culture/', label: 'SRE book › Postmortem Culture' },
@@ -331,7 +331,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.calms',
     term: bi('CALMS', 'CALMS'),
-    short: bi('Культура, автоматизация, бережливость, измерение и обмен знаниями: пять опор DevOps.', 'Culture, Automation, Lean, Measurement, Sharing: five pillars of DevOps.'),
+    short: bi('Сокращение CALMS называет пять опор DevOps, то есть культуру (Culture), автоматизацию (Automation), бережливость (Lean), измерение (Measurement) и обмен знаниями (Sharing).', 'The acronym CALMS names the five pillars of DevOps, that is, Culture, Automation, Lean, Measurement and Sharing.'),
     introducedIn: 'methodology.culture',
   },
   {
@@ -345,7 +345,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.devops-engineer',
     term: bi('DevOps-инженер', 'DevOps engineer'),
-    short: bi('Человек, который внедряет методологию DevOps в команде. Его главный инструмент — автоматизация.', 'A person who puts this methodology into practice in a team; their main tool is automation.'),
+    short: bi('Человек, который внедряет методологию DevOps в команде. Главным его инструментом служит автоматизация.', 'A person who puts this methodology into practice in a team. Their main tool is automation.'),
     introducedIn: 'methodology.culture',
     forms: { ru: ['DevOps-инженера', 'DevOps-инженеры', 'DevOps-инженеров', 'DevOps-инженером'], en: ['DevOps engineers'] },
   },
