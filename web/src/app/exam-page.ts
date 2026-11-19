@@ -17,6 +17,7 @@ import { openDoc } from '../engine/docs/viewer';
 import { examGate, newSeed, pickTasks, protocol, scoreExam, type ExamProtocol } from '../engine/quiz/exam';
 import { mountQuiz } from '../engine/quiz/render';
 import { conceptLink, emptyState, levelFor, prose, setTitle, type Page } from './common';
+import { mountRealCard, mountRealLab, type RealCardView } from './real/panel';
 import { mountLab } from './terminal-section';
 import './exam.css';
 
@@ -77,11 +78,11 @@ function fmtDate(iso: string): string {
 }
 
 function taskTitle(x: ExamTask): string {
-  return x.kind === 'quiz' ? t(x.item.prompt) : t(x.task.prompt);
+  return t(x.kind === 'quiz' ? x.item.prompt : x.kind === 'task' ? x.task.prompt : x.real.prompt);
 }
 
 function taskConcepts(x: ExamTask): string[] {
-  return x.kind === 'quiz' ? (x.item.concepts ?? []) : (x.task.concepts ?? []);
+  return (x.kind === 'quiz' ? x.item.concepts : x.kind === 'task' ? x.task.concepts : x.real.concepts) ?? [];
 }
 
 export function examPage(id: string): Page {
@@ -155,12 +156,19 @@ export function examPage(id: string): Page {
     mounts.push({ dispose: () => clearInterval(iv) });
     const docsBtn = h('button.btn.ghost.small', { type: 'button', onclick: () => openDoc({}, { mode: 'exam', allowed: exam.allowedDocs, via: 'exam' }) }, icon('doc'), t(E.docs));
     const list = h('ol.exam-tasks.ex2-tasks');
+    const realCards: RealCardView[] = [];
+    const lab = exam.real ? mountRealLab({ ...exam, real: exam.real }, seed, (m) => realCards.forEach((c) => c.update(m))) : null;
+    if (lab) mounts.push(lab);
     tasks.forEach((task, i) => {
       const host = h('div');
       const tags = [`${task.weight} ${t(E.pts)}`, task.critical ? t(E.critical) : '', task.beyond ? t(E.beyond) : ''].filter(Boolean).join(' · ');
       list.append(h('li.ex2-card', { 'data-critical': task.critical ? 'true' : undefined }, h('p.ex2-card-head', {}, h('span', {}, `${t(E.task)} ${i + 1}`), h('span.muted', {}, tags)), host));
       if (task.kind === 'quiz') mounts.push(mountQuiz(host, task.item, { context: 'exam', feedback: mode === 'training', md: (b) => prose(b), onAnswered: (g) => results.set(task.id, g.correct ? 1 : g.score) }));
-      else
+      else if (task.kind === 'real') {
+        const card = mountRealCard(task.real, { feedback: mode === 'training', onScore: (sc) => results.set(task.id, sc) });
+        realCards.push(card);
+        put(host, prose(task.real.prompt), card.el);
+      } else
         mounts.push(
           mountLab(host, {
             key: `exam/${exam.id}/${seed}/${task.id}`,
@@ -182,7 +190,7 @@ export function examPage(id: string): Page {
       disposeAll();
       explainStep(mode, seed, tasks, results, started);
     };
-    put(root, h('header.exam-head', {}, h('h1', {}, t(exam.title)), h('span.badge', {}, t(mode === 'exam' ? E.exam : E.training)), timer, docsBtn), exam.story ? h('details.ex2-story-mini', {}, h('summary', {}, t(E.story)), prose(exam.story)) : null, list, submitBtn);
+    put(root, h('header.exam-head', {}, h('h1', {}, t(exam.title)), h('span.badge', {}, t(mode === 'exam' ? E.exam : E.training)), timer, docsBtn), exam.story ? h('details.ex2-story-mini', {}, h('summary', {}, t(E.story)), prose(exam.story)) : null, lab?.el ?? null, list, submitBtn);
   };
 
   const explainStep = (mode: 'exam' | 'training', seed: string, tasks: ExamTask[], results: Map<string, number>, started: Date) => {
@@ -235,6 +243,7 @@ export function examPage(id: string): Page {
       checks: tasks.map((x) => ({ id: x.id, title: taskTitle(x), weight: x.weight, critical: !!x.critical, beyond: !!x.beyond, result: results.get(x.id) ?? 0 })),
       docOpens,
       explain,
+      env: exam.real ? 'vm' : 'sim',
     });
     const gaps = [...new Set(tasks.filter((x) => (results.get(x.id) ?? 0) < 1).flatMap(taskConcepts))];
     clear(root);
