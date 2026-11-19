@@ -152,8 +152,8 @@ export interface ExamProtocol {
   seed: string;
   mode: 'exam' | 'training';
   authenticity: 'self';
-  /** 'vm': the tasks were judged on facts from the learner's own machines. */
-  env: 'sim' | 'vm';
+  /** 'vm': the tasks were judged on facts from the learner's own machines; 'tab': from real machines in the tab. */
+  env: 'sim' | 'vm' | 'tab';
   started: string;
   finished: string;
   minutes: number;

@@ -12,23 +12,61 @@ import { ANSIBLE_DOCS } from './ans/docs';
 import { block, concepts, lessons, quiz } from './content';
 import { concepts2, iacExam, lessons2, placement2, quiz2 } from './content-2';
 import { IAC_WEB_DOCS } from './docs-2';
+import { cloudExam, concepts3, lessons3, placement3, quiz3 } from './content-3';
+import { IAC_LAB_DOCS } from './docs-3';
+import { lazyWidget } from '../../engine/v86/lazy';
+import { bi } from '../../core/i18n';
 import { ansModel, tfModel } from './explainers';
 import { addrModel, varModel } from './explainers-2';
 import { terraformCommand } from './tf/command';
 import { eduCommand, tfFactsProvider, tfSetupHook } from './tf/edu';
 
 const [intro, playbook, terraform, state] = lessons;
-const ordered = [intro, playbook, lessons2.rolesLesson, terraform, state, lessons2.modulesLesson, lessons2.importLesson];
+const ordered = [
+  intro,
+  playbook,
+  lessons2.rolesLesson,
+  terraform,
+  state,
+  lessons2.modulesLesson,
+  lessons2.importLesson,
+  // On real machines in the tab (00 §6.13).
+  lessons3.apiLesson,
+  lessons3.tofuLesson,
+  lessons3.stateLesson,
+  lessons3.moduleLesson,
+  lessons3.ciLesson,
+];
+
+const cloudLabWidget = lazyWidget('iac.cloudlab', async () => (await import('./cloudlab/widget')).mountCloudLab as never);
+// #/lab/cloud: the in-tab cloud without tasks, with CI on git.lab.
+const cloudSandbox = lazyWidget('lab:cloud', async () => {
+  const { mountCloudLab } = await import('./cloudlab/widget');
+  return (el, _props, ctx) =>
+    mountCloudLab(
+      el,
+      {
+        intro: bi(
+          '### Облако во вкладке\n\nПесочница без заданий: рабочая станция с curl, git и OpenTofu, облако `api.cloud.lab`, хранилище `s3.cloud.lab`, Git-сервер `git.lab` и CI `ci.lab`. Каждая ВМ, созданная через API, — настоящая машина в этой вкладке.',
+          '### The cloud in the tab\n\nA sandbox without tasks: a workstation with curl, git and OpenTofu, the cloud `api.cloud.lab`, storage `s3.cloud.lab`, the Git server `git.lab` and CI `ci.lab`. Every VM created through the API is a real machine in this tab.',
+        ),
+        ci: true,
+        rows: 20,
+      },
+      ctx,
+    );
+});
 
 export default defineModule({
-  blocks: [{ ...block, lessons: ordered.map((l) => l.id), placement: [...block.placement, ...placement2], exam: iacExam.id }],
+  blocks: [{ ...block, lessons: ordered.map((l) => l.id), placement: [...block.placement, ...placement2, ...placement3], exam: iacExam.id }],
   lessons: ordered,
-  concepts: [...concepts, ...concepts2],
-  quiz: [...quiz, ...quiz2],
+  concepts: [...concepts, ...concepts2, ...concepts3],
+  quiz: [...quiz, ...quiz2, ...quiz3],
   explainers: [fromModel(tfModel), fromModel(ansModel), fromModel(varModel), fromModel(addrModel)],
   commands: [terraformCommand, eduCommand, ...ansibleCommands],
-  docs: [...ANSIBLE_DOCS, ...IAC_WEB_DOCS],
-  exams: [iacExam],
+  docs: [...ANSIBLE_DOCS, ...IAC_WEB_DOCS, ...IAC_LAB_DOCS],
+  exams: [iacExam, cloudExam],
+  widgets: [cloudLabWidget, cloudSandbox],
   facts: [tfFactsProvider, ansFactsProvider],
   setup: [tfSetupHook, ansSetupHook],
 });

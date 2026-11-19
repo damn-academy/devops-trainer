@@ -77,11 +77,12 @@ function lintTask(t: Task, where: string, issues: LintIssue[]): void {
 
 /** A real-machine task: goals compile, name known machines, and the exam describes its machines. */
 function lintRealTask(t: RealTask, ex: Exam, where: string, issues: LintIssue[]): void {
-  if (!ex.real) issues.push({ level: 'error', where, msg: 'a real-machine task needs Exam.real (the machines and the collector arguments)' });
+  if (!ex.real && !ex.inTab) issues.push({ level: 'error', where, msg: 'a real-machine task needs Exam.real (the machines and the collector arguments) or Exam.inTab' });
   if (!t.goals?.length && !t.paste) issues.push({ level: 'error', where, msg: 'a real-machine task needs goals or a paste check' });
   const ids = new Set(ex.real?.machines.map((m) => m.id) ?? []);
   for (const g of t.goals ?? []) {
-    if (g.on && !ids.has(g.on)) issues.push({ level: 'error', where: `${where}.${g.id}`, msg: `goal runs on unknown machine "${g.on}"` });
+    // In-tab labs name their machines at run time (the cloud creates them).
+    if (g.on && !ex.inTab && !ids.has(g.on)) issues.push({ level: 'error', where: `${where}.${g.id}`, msg: `goal runs on unknown machine "${g.on}"` });
     lintCheck(g.check, `${where}.${g.id}`, issues);
   }
 }
