@@ -793,6 +793,13 @@ export interface Exam {
   explain?: ExamExplain[];
   /** Extension: the exam runs on the learner's own VMs (tasks of kind 'real'). */
   real?: RealLab;
+  /**
+   * Extension (00 §6.13): the exam runs on real machines in this tab. The page
+   * mounts this widget once above the tasks; it reports the facts of its
+   * machines through `WidgetCtx.reportFacts`, and tasks of kind 'real' are
+   * judged on them as on pasted collector blocks.
+   */
+  inTab?: { widget: string; props?: unknown };
 }
 
 /** An interview-style question at the end of an exam, self-checked against its key points. */
@@ -919,9 +926,37 @@ export interface ElementCard {
   doc?: DocRef;
 }
 
+/**
+ * Built-in pictograms drawn inside a node (engine/explainer/icons.ts): what
+ * the block is at a glance — a browser, a server, a folder.
+ */
+export type NodeIcon =
+  | 'browser'
+  | 'server'
+  | 'dns'
+  | 'router'
+  | 'switch'
+  | 'disk'
+  | 'process'
+  | 'file'
+  | 'folder'
+  | 'user'
+  | 'lock'
+  | 'cloud'
+  | 'container'
+  | 'terminal'
+  | 'database';
+
+/** How a working node shows that it is busy: a breathing halo, a spinner (searching), typing dots (writing). */
+export type NodeWork = 'pulse' | 'spin' | 'dots';
+
 export interface DiagramNode {
   id: string;
   label: QText;
+  /** A pictogram drawn in the node (or on its corner when the node is small). */
+  icon?: NodeIcon;
+  /** The "busy" animation while the node acts (it has a `say` at the step); by default it follows the icon. */
+  work?: NodeWork;
   /** A mono value under the label, may change per step (Step.values). */
   sub?: string;
   family: ColorFamily;
@@ -980,6 +1015,12 @@ export interface ParamSpec {
   default: number | boolean | string;
   /** Levels this knob is open for (beginners get them one at a time). */
   levels?: Level[];
+  /**
+   * The part of the system this knob changes ("What is already cached",
+   * "The connection"). Knobs with the same group are shown together under it,
+   * groups in the order of their first knob.
+   */
+  group?: Bi;
   /** Node or edge id the delta line is placed next to. */
   near?: string;
   /** The "what will happen?" question asked before the first change of this knob. */
@@ -996,6 +1037,8 @@ export interface BreakSpec {
   predict: Prediction;
   layer?: 'L1' | 'L2' | 'L3' | 'L4' | 'TLS' | 'L7';
   boundary?: 'kernel' | 'network' | 'storage' | 'process' | 'io' | 'identity';
+  /** Levels this break is offered at (like ParamSpec.levels); all levels when absent. */
+  levels?: Level[];
 }
 
 /** A "what will happen?" question; `resolve` reads the recomputed run and returns the right option id. */
@@ -1005,14 +1048,25 @@ export interface Prediction {
   resolve(prev: Step[], next: Step[]): string;
 }
 
-export type ElementState = 'on' | 'off' | 'ok' | 'warn' | 'err' | 'wait';
+/**
+ * 'hidden' keeps an element out of the picture until a later step reveals it
+ * (state 'on' or Step.reveal), so a diagram is built from zero step by step.
+ */
+export type ElementState = 'on' | 'off' | 'ok' | 'warn' | 'err' | 'wait' | 'hidden';
 
-/** A token moving along an edge during the transition into this step. */
+/**
+ * A token moving along an edge during the transition into this step. With a
+ * label it is drawn as a small card (the thing handed over: `A? shop.example`,
+ * `r--`, `Permission denied`), without one as a dot.
+ */
 export interface Token {
   edge: string;
-  label?: string;
+  label?: QText;
   reverse?: boolean;
 }
+
+/** A mark in the legend next to the diagram; `icon:<name>` shows a node pictogram. */
+export type LegendMark = 'active' | 'ok' | 'err' | 'warn' | 'wait' | 'pale' | 'token' | 'say' | 'line' | 'dashed' | `icon:${NodeIcon}`;
 
 export interface Step {
   id: string;
@@ -1023,8 +1077,15 @@ export interface Step {
   /** Node/edge ids highlighted at this step. */
   focus: string[];
   tokens?: Token[];
+  /**
+   * What the acting node does right now, in one full sentence, drawn as a
+   * speech callout at that node: { resolver: 'The resolver looks for the address of shop.example' }.
+   */
+  say?: Record<string, Bi>;
   /** Element states, folded over steps 0..n (later steps override). */
   states?: Record<string, ElementState>;
+  /** Hidden elements that appear from this step on (sugar for states: { id: 'on' }). */
+  reveal?: string[];
   /** Node sub-values, folded over steps 0..n: { pipe: '12 KiB / 64 KiB' }. */
   values?: Record<string, string>;
   /** Fill level 0..1 of 'buffer' nodes, folded. */
@@ -1047,6 +1108,12 @@ export interface ProcessModel<P extends Record<string, unknown> = Record<string,
   title: Bi;
   block: BlockId;
   summary?: Bi;
+  /** "How to use": shown above the diagram before the first step, naming the first control to press. */
+  intro?: Bi;
+  /** What the colours, shapes, pictograms and moving cards mean; drawn next to the diagram. */
+  legend?: { mark: LegendMark; text: Bi }[];
+  /** Says where the process stopped after a break ("The check stopped"); neutral "Stopped" when absent. */
+  stopLabel?: Bi;
   concepts?: ConceptId[];
   diagram: Diagram;
   params: ParamSpec[];
@@ -1078,6 +1145,8 @@ export interface ExplainerCtx {
   onComplete(): void;
   record(ev: NewEvent): void;
   openDoc(ref: DocRef): void;
+  /** Set by exam pages with `Exam.inTab`: a lab widget reports the facts of its machines by id. */
+  reportFacts?(machines: Record<string, Facts>): void;
 }
 
 /**
@@ -1103,6 +1172,8 @@ export interface WidgetCtx {
   complete(): void;
   record(ev: NewEvent): void;
   openDoc(ref: DocRef): void;
+  /** Set by exam pages with `Exam.inTab`: a lab widget reports the facts of its machines by id. */
+  reportFacts?(machines: Record<string, Facts>): void;
 }
 
 /** An engine-specific section kind (`{ kind: 'widget', widget: id }`). */

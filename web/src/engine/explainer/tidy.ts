@@ -8,7 +8,7 @@
 // Pure placement maths is exported for tests; `tidyDiagram` does the DOM part.
 
 import type { Diagram } from '../../core/types';
-import { pointAt, type Pt } from './geometry';
+import { iconPad, pointAt, type Pt } from './geometry';
 
 export interface Box {
   x: number;
@@ -129,7 +129,7 @@ export function tidyDiagram(svg: SVGSVGElement, d: Diagram): void {
     const label = g.querySelector<SVGTextElement>('text.node-label');
     if (!label || label.dataset.fit) continue;
     label.dataset.fit = '1';
-    const avail = n.w - 14;
+    const avail = n.w - 14 - iconPad(n);
     const width = label.getComputedTextLength();
     if (width <= avail) continue;
     const base = parseFloat(getComputedStyle(label).fontSize) || 14;
@@ -164,7 +164,7 @@ export function tidyDiagram(svg: SVGSVGElement, d: Diagram): void {
   for (const n of d.nodes) {
     if (n.shape === 'bar') continue;
     const sub = svg.querySelector<SVGTextElement>(`g.node[data-id="${CSS.escape(n.id)}"] text.node-sub`);
-    if (sub) fitSub(sub, n.w);
+    if (sub) fitSub(sub, n.w - iconPad(n));
   }
 
   // 2. edge labels
@@ -193,6 +193,7 @@ export function tidyDiagram(svg: SVGSVGElement, d: Diagram): void {
 
   // 3. viewBox fits the drawing
   const parts = [...svg.querySelectorAll<SVGGraphicsElement>('g.l-groups, g.l-edges, g.l-nodes')];
+  // hidden elements still count: the frame stays the same while the picture is built step by step
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;

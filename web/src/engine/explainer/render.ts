@@ -6,11 +6,13 @@
 
 import { calm, clear, h, icon, put, s } from '../../core/dom';
 import { bi, lang, t, type Bi } from '../../core/i18n';
-import type { DiagramGroup, DiagramNode, ElementCard, ExplainerCtx, ExplainerReg, ModelChange, Mounted, ParamSpec, Prediction, ProcessModel, QText, Step } from '../../core/types';
+import type { DiagramGroup, DiagramNode, ElementCard, ExplainerCtx, ExplainerReg, LegendMark, ModelChange, Mounted, ParamSpec, Prediction, ProcessModel, QText, Step } from '../../core/types';
 import { renderInline, renderMd } from '../../core/markdown';
 import { docChip } from '../docs/viewer';
-import { fitSub, tidyDiagram } from './tidy';
-import { changedElements, edgePoints, fold, keepIndex, metricDelta, pathD, pointAt, type Pt } from './geometry';
+import { fitSub, tidyDiagram, type Box } from './tidy';
+import { changedElements, edgePoints, fold, iconInside, iconPad, keepIndex, metricDelta, pathD, pointAt, polyLength, type Pt } from './geometry';
+import { bubblePath, estimate, placeCallout, wrapWords, type Run } from './callout';
+import { defaultWork, NODE_ICONS } from './icons';
 
 const L = {
   steps: bi('Шаги', 'Steps'),
@@ -32,7 +34,10 @@ const L = {
   cardWho: bi('Кто создаёт', 'Who creates it'),
   cardSee: bi('Как посмотреть', 'How to look at it'),
   cardDoc: bi('Где написано', 'Where it is written'),
-  stoppedAt: bi('Процесс остановился', 'The process stopped'),
+  stoppedAt: bi('Остановилось', 'Stopped'),
+  howTo: bi('Как пользоваться схемой', 'How to use the diagram'),
+  start: bi('Начать: шаг вперёд', 'Start: step forward'),
+  legend: bi('Как читать схему', 'How to read the diagram'),
   speed: bi('Скорость', 'Speed'),
   hintClick: bi('Нажмите на любой элемент схемы — он объяснит себя.', 'Click any element of the diagram — it explains itself.'),
   cancel: bi('Отмена', 'Cancel'),
@@ -102,18 +107,24 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     ...[0.25, 1, 4].map((v) => h('option', { value: v, selected: v === 1 }, `${v}×`)),
   ) as HTMLSelectElement;
 
+  const canvasEl = h('div.ex-canvas', {}, svg, h('p.ex-hint', {}, t(L.hintClick)));
+  const introBox = model.intro ? h('div.ex-intro', { role: 'note' }) : null;
+  const legendBox = model.legend?.length ? drawLegend(model.legend) : null;
   const el = h(
     'div.explainer',
     { tabindex: 0, 'data-model': model.id },
     h('header.ex-head', {}, h('h3', {}, t(model.title)), model.summary ? h('p.ex-summary', {}, ...renderInline(t(model.summary))) : null),
     h('div.ex-controls', {}, knobBox, breakBox),
     predictBox,
-    h('div.ex-stage', {}, h('div.ex-canvas', {}, svg, h('p.ex-hint', {}, t(L.hintClick))), h('div.ex-side', {}, deltaBox, card)),
+    introBox,
+    h('div.ex-stage', {}, canvasEl, h('div.ex-side', {}, deltaBox, card)),
     brokeLine,
     caption,
+    // the controls of the steps sit right under what they move
+    h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks)),
     metricsBox,
     waterfallBox,
-    h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks)),
+    legendBox,
   );
   clear(root);
   root.append(el);
@@ -131,7 +142,9 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   const layerEdges = s('g.l-edges');
   const layerNodes = s('g.l-nodes');
   const layerTokens = s('g.l-tokens');
-  svg.append(layerGroups, layerEdges, layerNodes, layerTokens);
+  const layerSay = s('g.l-say', { 'aria-hidden': 'true' });
+  const measurer = s('text.say-measure', { x: -9999, y: -9999, 'aria-hidden': 'true' }) as SVGTextElement;
+  svg.append(layerGroups, layerEdges, layerNodes, layerTokens, layerSay, measurer);
 
   const nodeEls = new Map<string, SVGElement>();
   const edgeEls = new Map<string, { g: SVGElement; path: SVGPathElement; pts: Pt[] }>();
@@ -174,7 +187,10 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       tidyObs?.disconnect();
       tidyObs = null;
       const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
-      void (fonts ? fonts.ready : Promise.resolve()).then(() => tidyDiagram(svg, d));
+      void (fonts ? fonts.ready : Promise.resolve()).then(() => {
+        tidyDiagram(svg, d);
+        paint();
+      });
     });
     tidyObs.observe(svg);
   }
@@ -224,7 +240,9 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       }
     }
     const isBar = shape === 'bar';
-    const lx = isBar ? x + 16 : x + w / 2;
+    const pad = iconPad(n);
+    parts.unshift(s('rect.node-halo', { x: x - 5, y: y - 5, width: w + 10, height: hh + 10, rx: shape === 'pill' ? (hh + 10) / 2 : 10 }));
+    const lx = isBar ? x + 16 + pad : x + pad + (w - pad) / 2;
     const anchor = isBar ? 'start' : 'middle';
     const ly = n.sub !== undefined || shape === 'buffer' ? y + hh / 2 - (shape === 'buffer' ? 8 : 4) : y + hh / 2 + 5;
     parts.push(s('text.node-label', { x: lx, y: ly, 'text-anchor': anchor }, label));
@@ -232,14 +250,50 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     parts.push(sub);
     subEls.set(n.id, sub);
     parts.push(s('text.node-x', { x: x + w - 10, y: y + 16, 'text-anchor': 'middle', 'aria-hidden': 'true' }, '⨯'));
+    if (n.icon) parts.push(drawIcon(n));
+    // "typing" dots on the top-right corner while the node writes its answer
+    const dx = x + w - 20;
+    parts.push(
+      s(
+        'g.node-dots',
+        { 'aria-hidden': 'true' },
+        s('rect', { x: dx - 15, y: y - 8, width: 30, height: 16, rx: 8 }),
+        ...[0, 1, 2].map((i) => s('circle', { cx: dx - 7 + i * 7, cy: y, r: 2.2, style: `animation-delay:${(i * 0.18).toFixed(2)}s` })),
+      ),
+    );
     const fn = activate(n.id, n.card, label);
     const g = s(
       'g.node',
-      { 'data-id': n.id, class: `fam-${n.family} shape-${shape}`, tabindex: 0, role: 'button', 'aria-label': label, onclick: fn, onkeydown: keyActivate(fn) as never },
+      { 'data-id': n.id, class: `fam-${n.family} shape-${shape}${n.icon ? ' has-icon' : ''} work-${n.work ?? defaultWork(n.icon)}`, tabindex: 0, role: 'button', 'aria-label': label, onclick: fn, onkeydown: keyActivate(fn) as never },
       ...parts,
     );
     (shape === 'bar' ? layerGroups : layerNodes).append(g);
     nodeEls.set(n.id, g);
+  }
+
+  /** The pictogram in a soft disc: inside the node on the left, or on its top-left corner when the node is small. */
+  function drawIcon(n: DiagramNode): SVGElement {
+    const inside = iconInside(n);
+    const r = inside ? 15 : 12;
+    const cx = inside ? n.x + 6 + r : n.x + 2;
+    const cy = inside ? n.y + n.h / 2 : n.y + 2;
+    const k = inside ? 0.8 : 0.66;
+    return s(
+      'g.node-icon',
+      { 'aria-hidden': 'true' },
+      s('circle.icon-disc', { cx, cy, r }),
+      s('circle.icon-spin', { cx, cy, r: r + 3 }),
+      s('path.icon-glyph', { d: NODE_ICONS[n.icon!], transform: `translate(${(cx - 12 * k).toFixed(1)} ${(cy - 12 * k).toFixed(1)}) scale(${k})` }),
+    );
+  }
+
+  function drawLegend(items: NonNullable<ProcessModel['legend']>): HTMLElement {
+    return h(
+      'div.ex-legend',
+      { role: 'list', 'aria-label': t(L.legend) },
+      h('span.ex-legend-title', {}, t(L.legend)),
+      ...items.map((it) => h('span.ex-legend-item', { role: 'listitem' }, legendMark(it.mark), h('span', {}, ...renderInline(t(it.text))))),
+    );
   }
 
   function drawWaterfall() {
@@ -264,6 +318,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       }
       prev = end;
     });
+    clear(waterfallBox);
     put(waterfallBox, h('figcaption', {}, t(L.waterfall)), ...rows);
   }
 
@@ -305,22 +360,28 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     const frame = fold(steps, idx);
     const brokeAt = steps.find((x, i) => i <= idx && x.broken)?.broken;
     const focus = new Set(st?.focus ?? []);
+    const actors = new Set(Object.keys(st?.say ?? {}));
+    const removedIds = new Set([...broken].flatMap((b) => model.breaks.find((x) => x.id === b)?.remove ?? []));
+    // One focus per step: everything else steps back.
+    svg.classList.toggle('focusing', focus.size > 0);
     for (const [id, g] of nodeEls) {
       const state = frame.states[id];
       g.setAttribute(
         'class',
         [
-          g.getAttribute('class')!.split(' ').filter((c) => !/^(focus|st-|broken|changed|selected|removed)/.test(c)).join(' '),
+          g.getAttribute('class')!.split(' ').filter((c) => !/^(focus|st-|broken|changed|selected|removed|acting)/.test(c)).join(' '),
           focus.has(id) ? 'focus' : '',
+          actors.has(id) ? 'acting' : '',
           state ? `st-${state}` : '',
           brokeAt?.at === id ? 'broken' : '',
-          broken.size && [...broken].some((b) => model.breaks.find((x) => x.id === b)?.remove.includes(id)) ? 'removed' : '',
+          removedIds.has(id) ? 'removed' : '',
           highlight.includes(id) ? 'changed' : '',
           selected === id ? 'selected' : '',
         ]
           .filter(Boolean)
           .join(' '),
       );
+      setHidden(g, state === 'hidden');
       const sub = subEls.get(id);
       if (sub) {
         const n = d.nodes.find((x) => x.id === id);
@@ -328,7 +389,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
         if (sub.dataset.full !== text) {
           sub.dataset.full = text;
           sub.textContent = text;
-          if (n && n.shape !== 'bar') fitSub(sub as SVGTextElement, n.w);
+          if (n && n.shape !== 'bar') fitSub(sub as SVGTextElement, n.w - iconPad(n));
         }
       }
     }
@@ -340,43 +401,52 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     for (const [id, e] of edgeEls) {
       const state = frame.states[id];
       const isFocus = focus.has(id);
-      const removed = [...broken].some((b) => model.breaks.find((x) => x.id === b)?.remove.includes(id));
       const isErr = state === 'err' || brokeAt?.at === id;
       const carrying = (st?.tokens ?? []).some((tk) => tk.edge === id && tk.label);
-      e.g.setAttribute('class', ['edge', carrying ? 'carrying' : '', isFocus ? 'focus' : '', state ? `st-${state}` : '', removed ? 'removed' : '', isErr ? 'broken' : '', selected === id ? 'selected' : '', highlight.includes(id) ? 'changed' : ''].filter(Boolean).join(' '));
+      const moving = (st?.tokens ?? []).some((tk) => tk.edge === id);
+      e.g.setAttribute('class', ['edge', carrying ? 'carrying' : '', moving ? 'moving' : '', isFocus ? 'focus' : '', state ? `st-${state}` : '', removedIds.has(id) ? 'removed' : '', isErr ? 'broken' : '', selected === id ? 'selected' : '', highlight.includes(id) ? 'changed' : ''].filter(Boolean).join(' '));
       e.path.setAttribute('marker-end', `url(#arr-${model.id}-${isErr ? 'e' : isFocus ? 'f' : 'n'})`);
+      setHidden(e.g, state === 'hidden');
     }
-    // tokens
+    // tokens: a labelled token is a small card with what is handed over, an unlabelled one a dot
     cancelAnimationFrame(tokenAnim);
     clear(layerTokens);
     const toks = (st?.tokens ?? []).map((tk) => {
       const e = edgeEls.get(tk.edge);
-      if (!e) return null;
+      if (!e || frame.states[tk.edge] === 'hidden') return null;
       const pts = tk.reverse ? [...e.pts].reverse() : e.pts;
-      const g = s('g.token', {}, s('circle', { r: 5 }), tk.label ? s('text', { y: -9, 'text-anchor': 'middle' }, tk.label) : null);
+      const g = tk.label ? tokenCard(txt(tk.label)) : s('g.token.dot', {}, s('circle', { r: 5 }));
       layerTokens.append(g);
-      return { g, pts };
+      const lab = e.g.querySelector('text.edge-label');
+      const at: Pt | null = lab ? [Number(lab.getAttribute('x')), Number(lab.getAttribute('y')) - 4] : null;
+      const half = tk.label ? Number(g.getAttribute('data-w')) / 2 : 6;
+      // on an edge too short for the card, the card itself names what goes there: its label steps aside
+      if (tk.label && polyLength(pts) < 2 * half + 60) e.g.classList.add('covered');
+      return { g, pts, rest: restAt(pts, at, half) };
     });
-    const place = (f: number) => {
+    const place = (f: number | null) => {
       for (const tk of toks) {
         if (!tk) continue;
-        const { p } = pointAt(tk.pts, f);
+        const { p } = pointAt(tk.pts, f ?? tk.rest);
         tk.g.setAttribute('transform', `translate(${p[0].toFixed(1)} ${p[1].toFixed(1)})`);
       }
     };
     const animate = animateFrom !== undefined && animateFrom < idx && !calm();
     if (animate && toks.some(Boolean)) {
       const start = performance.now();
-      const dur = 300 / speed;
+      const dur = 520 / speed;
       const tick = (now: number) => {
         const k = Math.min(1, (now - start) / dur);
         const eased = 1 - Math.pow(1 - k, 3);
-        place(0.08 + 0.84 * eased);
+        for (const tk of toks) if (tk) tk.g.setAttribute('transform', translateAt(tk.pts, 0.06 + (tk.rest - 0.06) * eased));
         if (k < 1) tokenAnim = requestAnimationFrame(tick);
       };
-      place(0.08);
+      place(0.06);
       tokenAnim = requestAnimationFrame(tick);
-    } else place(0.92);
+    } else place(null);
+
+    drawSays(st, frame.states);
+    keepInView(animateFrom !== undefined);
 
     // caption, broken line, metrics, stepper
     clear(caption);
@@ -384,7 +454,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     if (brokeAt) {
       brokeLine.hidden = false;
       clear(brokeLine);
-      brokeLine.append(h('span.st-icon.err', { 'aria-hidden': 'true' }, '⨯'), h('div', {}, h('strong', {}, t(L.stoppedAt)), ' — ', t(brokeAt.caption), h('pre.tool-msg', {}, brokeAt.message)));
+      brokeLine.append(h('span.st-icon.err', { 'aria-hidden': 'true' }, '⨯'), h('div', {}, h('strong', {}, t(model.stopLabel ?? L.stoppedAt)), ' — ', t(brokeAt.caption), h('pre.tool-msg', {}, brokeAt.message)));
     } else brokeLine.hidden = true;
     clear(metricsBox);
     const m = st?.metrics ?? {};
@@ -401,6 +471,101 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     fwdBtn.toggleAttribute('disabled', idx >= steps.length - 1);
     lastBtn.toggleAttribute('disabled', idx >= steps.length - 1);
     for (const [i, tick] of [...ticks.children].entries()) tick.classList.toggle('on', i <= idx);
+  }
+
+  function setHidden(g: SVGElement, hidden: boolean) {
+    if (hidden) {
+      g.setAttribute('aria-hidden', 'true');
+      g.setAttribute('tabindex', '-1');
+    } else if (g.getAttribute('aria-hidden')) {
+      g.removeAttribute('aria-hidden');
+      g.setAttribute('tabindex', '0');
+    }
+  }
+
+  /** Width of a word in the callout or token font; an estimate until the diagram is laid out. */
+  function measure(r: Run, size: number, cls: string): number {
+    if (typeof measurer.getComputedTextLength === 'function' && measurer.isConnected) {
+      measurer.setAttribute('class', `say-measure ${cls}${r.code ? ' code' : ''}`);
+      measurer.textContent = r.text;
+      const w = measurer.getComputedTextLength();
+      if (w > 0) return w;
+    }
+    return estimate(r, size);
+  }
+
+  function tokenCard(label: string): SVGElement {
+    const run = { text: label, code: true };
+    const w = measure(run, 11.5, 'token-text') + 30;
+    const hh = 22;
+    return s(
+      'g.token.card',
+      { 'data-w': w.toFixed(0) },
+      s('rect.token-bg', { x: -w / 2, y: -hh / 2, width: w, height: hh, rx: 5 }),
+      s('path.token-env', { d: `M${-w / 2 + 7} -4 h12 v8 h-12 Z M${-w / 2 + 7} -4 l6 4.5 l6 -4.5`, transform: '' }),
+      s('text.token-text', { x: -w / 2 + 24, y: 4 }, label),
+    );
+  }
+
+  /** The speech callouts of the acting nodes, placed where they cover the least. */
+  function drawSays(st: Step | undefined, states: Record<string, string>) {
+    clear(layerSay);
+    const says = Object.entries(st?.say ?? {}).filter(([id]) => states[id] !== 'hidden');
+    if (!says.length) return;
+    const vb = svg.viewBox.baseVal;
+    const bounds: Box = vb && vb.width ? { x: vb.x, y: vb.y, w: vb.width, h: vb.height } : { x: 0, y: 0, w: d.width, h: d.height };
+    const visible = d.nodes.filter((n) => states[n.id] !== 'hidden' && n.shape !== 'bar');
+    const obstacles: Box[] = visible.map((n) => ({ x: n.x - 4, y: n.y - 4, w: n.w + 8, h: n.h + 8 }));
+    const lines: [Pt, Pt][] = [];
+    for (const [id, e] of edgeEls) if (states[id] !== 'hidden') for (let i = 1; i < e.pts.length; i++) lines.push([e.pts[i - 1], e.pts[i]]);
+    // on a phone the picture is scaled down: the callout text grows so it stays readable
+    const scale = svg.clientWidth && bounds.w ? svg.clientWidth / bounds.w : 1;
+    const size = Math.max(14, Math.min(19, 11.5 / (scale || 1)));
+    const lh = Math.round(size * 1.36);
+    layerSay.style.setProperty('--say-size', `${size.toFixed(1)}px`);
+    for (const [id, text] of says) {
+      const n = d.nodes.find((x) => x.id === id);
+      if (!n) continue;
+      const maxW = Math.min(300, Math.max(200, bounds.w * 0.3));
+      const linesOf = wrapWords(t(text), maxW - 24, (r) => measure(r, size, 'say-text') * (size / 14));
+      const w = Math.max(...linesOf.map((l) => l.width), 60) + 24;
+      const hh = linesOf.length * lh + 16;
+      const anchor = { x: n.x, y: n.y, w: n.w, h: n.h };
+      const pl = placeCallout(anchor, w, hh, obstacles, bounds, lines);
+      obstacles.push(pl.box);
+      const textEl = s('text.say-text', { x: pl.box.x + 12, y: pl.box.y + 8 + lh * 0.72 });
+      linesOf.forEach((ln, i) => {
+        ln.runs.forEach((r, j) => {
+          const ts = s('tspan', { class: r.code ? 'code' : undefined }, (j && !r.glue ? ' ' : '') + r.text);
+          if (j === 0) {
+            ts.setAttribute('x', String(pl.box.x + 12));
+            if (i) ts.setAttribute('dy', String(lh));
+          }
+          textEl.append(ts);
+        });
+      });
+      layerSay.append(s('g.say', { 'data-for': id, class: `side-${pl.side}` }, s('path.say-bubble', { d: bubblePath(pl.box, pl.side, pl.tip) }), textEl));
+    }
+  }
+
+  /** On a narrow screen the diagram scrolls sideways: bring the acting node and its callout into view. */
+  function keepInView(smooth: boolean) {
+    if (canvasEl.scrollWidth <= canvasEl.clientWidth + 4) return;
+    const targets = [...layerSay.querySelectorAll('g.say'), ...svg.querySelectorAll('g.node.acting, g.node.focus')] as SVGGraphicsElement[];
+    if (!targets.length) return;
+    const c = canvasEl.getBoundingClientRect();
+    let x0 = Infinity;
+    let x1 = -Infinity;
+    for (const el of targets) {
+      const r = el.getBoundingClientRect();
+      if (!r.width) continue;
+      x0 = Math.min(x0, r.left);
+      x1 = Math.max(x1, r.right);
+    }
+    if (!Number.isFinite(x0)) return;
+    const mid = (x0 + x1) / 2 - c.left + canvasEl.scrollLeft;
+    const left = x1 - x0 > c.width ? x0 - c.left + canvasEl.scrollLeft - 8 : mid - c.width / 2;
+    canvasEl.scrollTo({ left: Math.max(0, left), behavior: smooth && !calm() ? 'smooth' : 'auto' });
   }
 
   function drawTicks() {
@@ -429,6 +594,24 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       ctx.onComplete();
     }
     paint(animate ? prev : undefined);
+    drawIntro();
+  }
+
+  /** "How to use" before the first step; afterwards it folds into a details line. */
+  function drawIntro() {
+    if (!introBox || !model.intro) return;
+    const fresh = maxSeen <= 0;
+    fwdBtn.classList.toggle('ex-cue', fresh);
+    if (introBox.dataset.fresh === String(fresh)) return;
+    introBox.dataset.fresh = String(fresh);
+    clear(introBox);
+    if (fresh) {
+      put(
+        introBox,
+        h('div.ex-intro-text', {}, renderMd(t(model.intro))),
+        h('button.btn.primary.ex-intro-go', { type: 'button', onclick: () => go(idx + 1) }, t(L.start), ' ', icon('next')),
+      );
+    } else put(introBox, h('details.ex-intro-more', {}, h('summary', {}, t(L.howTo)), renderMd(t(model.intro))));
   }
 
   function stop() {
@@ -560,6 +743,21 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
 
   const visibleParams = model.params.filter((p) => !p.levels || p.levels.includes(ctx.level));
   if (visibleParams.length) knobBox.append(h('h4', {}, t(L.knobs)));
+  // Knobs of one part of the system sit together under its name, in the order of their first knob.
+  const knobGroups = new Map<string, { label?: Bi; box: HTMLElement }>();
+  const groupBox = (spec: ParamSpec): HTMLElement => {
+    if (!spec.group) return knobBox;
+    const key = spec.group.ru + '|' + spec.group.en;
+    let g = knobGroups.get(key);
+    if (!g) {
+      const box = h('fieldset.knob-group', {}, h('legend', {}, t(spec.group)));
+      g = { label: spec.group, box };
+      knobGroups.set(key, g);
+      knobBox.append(box);
+      knobBox.classList.add('grouped');
+    }
+    return g.box;
+  };
   for (const spec of visibleParams) {
     const value = h('output.knob-value', {}, formatParam(spec, params[spec.id]));
     knobValues.set(spec.id, value);
@@ -585,6 +783,19 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const input = h('input', { type: 'checkbox', role: 'switch', checked: !!params[spec.id], 'aria-label': t(spec.label) }) as HTMLInputElement;
       input.addEventListener('change', () => setParam(spec, input.checked, () => (input.checked = !input.checked)));
       control = h('label.switch', {}, input, h('span.switch-track', { 'aria-hidden': 'true' }));
+    } else if (longChoice(spec)) {
+      // many long options: a drop-down list instead of a wall of buttons
+      const sel = h('select.knob-select', { 'aria-label': t(spec.label) }, ...(spec.options ?? []).map((o) => h('option', { value: o.id, selected: params[spec.id] === o.id }, t(o.label)))) as HTMLSelectElement;
+      let committed = sel.value;
+      sel.addEventListener('change', () => {
+        const before = committed;
+        committed = sel.value;
+        setParam(spec, sel.value, () => {
+          sel.value = before;
+          committed = before;
+        });
+      });
+      control = sel;
     } else {
       const name = `${model.id}-${spec.id}-${Math.random().toString(36).slice(2, 6)}`;
       control = h(
@@ -603,12 +814,13 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
         }),
       );
     }
-    knobBox.append(h('div.knob', { 'data-knob': spec.id, 'data-kind': spec.kind }, h('div.knob-head', {}, h('span.knob-label', {}, t(spec.label)), value), control, h('p.knob-delta', { 'aria-live': 'polite' })));
+    groupBox(spec).append(h('div.knob', { 'data-knob': spec.id, 'data-kind': spec.kind }, h('div.knob-head', {}, h('span.knob-label', {}, t(spec.label)), value), control, h('p.knob-delta', { 'aria-live': 'polite' })));
   }
 
-  if (model.breaks.length) {
+  const visibleBreaks = model.breaks.filter((b) => !b.levels || b.levels.includes(ctx.level));
+  if (visibleBreaks.length) {
     breakBox.append(h('h4', {}, icon('bolt'), ' ', t(L.breakIt)));
-    for (const b of model.breaks) {
+    for (const b of visibleBreaks) {
       const input = h('input', { type: 'checkbox', role: 'switch', 'aria-label': t(b.label) }) as HTMLInputElement;
       input.addEventListener('change', () => {
         const on = input.checked;
@@ -713,9 +925,45 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const vals = Object.entries(frame.values)
         .map(([k, v]) => `${k}: ${v}`)
         .join('; ');
-      return `${t(model.title)} — ${t(L.step)} ${idx + 1}/${steps.length}: ${st ? t(st.caption) : ''}${vals ? ` (${vals})` : ''}${broken.size ? ` [broken: ${[...broken].join(', ')}]` : ''}`;
+      const says = Object.entries(st?.say ?? {})
+        .map(([k, v]) => `${k}: ${t(v)}`)
+        .join('; ');
+      return `${t(model.title)} — ${t(L.step)} ${idx + 1}/${steps.length}: ${st ? t(st.caption) : ''}${says ? ` [${says}]` : ''}${vals ? ` (${vals})` : ''}${broken.size ? ` [broken: ${[...broken].join(', ')}]` : ''}`;
     },
   };
+}
+
+/** A choice with more than three options and long labels reads better as a drop-down list. */
+export function longChoice(spec: ParamSpec): boolean {
+  const opts = spec.options ?? [];
+  return opts.length > 3 && opts.some((o) => o.label.ru.length > 24 || o.label.en.length > 24);
+}
+
+/** Where a token rests on its edge: late on the line (handed to the next node), but away from the edge's label. */
+export function restAt(pts: Pt[], label: Pt | null, half = 40): number {
+  const total = polyLength(pts);
+  // keep the card off both nodes: at least its half width plus a gap from each end
+  const lo = total ? Math.max(0.35, (half + 8) / total) : 0.5;
+  const hi = total ? Math.min(0.86, 1 - (half + 8) / total) : 0.5;
+  if (lo > hi) return 0.5;
+  if (!label || !Number.isFinite(label[0]) || !Number.isFinite(label[1])) return Math.min(hi, Math.max(lo, 0.72));
+  let best = hi;
+  let bestScore = -Infinity;
+  for (let f = lo; f <= hi + 1e-9; f += (hi - lo) / 20 || 1) {
+    const { p } = pointAt(pts, f);
+    const dist = Math.min(90, Math.hypot(p[0] - label[0], (p[1] - label[1]) * 2));
+    const score = dist + f * 20;
+    if (score > bestScore) {
+      bestScore = score;
+      best = f;
+    }
+  }
+  return best;
+}
+
+function translateAt(pts: Pt[], f: number): string {
+  const { p } = pointAt(pts, f);
+  return `translate(${p[0].toFixed(1)} ${p[1].toFixed(1)})`;
 }
 
 function formatNum(n: number): string {
@@ -730,4 +978,26 @@ function formatParam(spec: ParamSpec, v: unknown): string {
     return o ? t(o.label) : String(v);
   }
   return `${formatNum(Number(v))}${spec.unit ? ' ' + spec.unit : ''}`;
+}
+
+/** A small drawing of what a legend line explains, in the diagram's own style. */
+function legendMark(mark: LegendMark): SVGElement {
+  const box = (cls: string, extra: SVGElement[] = []) => s('svg.lg-mark', { viewBox: '0 0 34 20', width: 34, height: 20, class: cls }, s('rect.lg-box', { x: 3, y: 3, width: 28, height: 14, rx: 3 }), ...extra);
+  if (mark.startsWith('icon:')) {
+    const name = mark.slice(5) as keyof typeof NODE_ICONS;
+    return s('svg.lg-mark.lg-icon', { viewBox: '0 0 34 20', width: 34, height: 20 }, s('circle.icon-disc', { cx: 17, cy: 10, r: 9.5 }), s('path.icon-glyph', { d: NODE_ICONS[name] ?? '', transform: 'translate(9.8 2.8) scale(0.6)' }));
+  }
+  switch (mark) {
+    case 'active':
+      return box('lg-active', [s('rect.lg-halo', { x: 0.5, y: 0.5, width: 33, height: 19, rx: 5 })]);
+    case 'token':
+      return s('svg.lg-mark.lg-token', { viewBox: '0 0 34 20', width: 34, height: 20 }, s('line.lg-line', { x1: 0, y1: 10, x2: 34, y2: 10 }), s('rect.token-bg', { x: 5, y: 3.5, width: 24, height: 13, rx: 3 }), s('path.token-env', { d: 'M10 7 h10 v6.5 h-10 Z M10 7 l5 3.6 l5 -3.6' }));
+    case 'say':
+      return s('svg.lg-mark.lg-say', { viewBox: '0 0 34 20', width: 34, height: 20 }, s('path.say-bubble', { d: bubblePath({ x: 2, y: 1.5, w: 30, h: 12 }, 'top', [12, 19], 4, 3.5) }));
+    case 'line':
+    case 'dashed':
+      return s('svg.lg-mark', { viewBox: '0 0 34 20', width: 34, height: 20, class: `lg-${mark}` }, s('line.lg-line', { x1: 2, y1: 10, x2: 32, y2: 10 }));
+    default:
+      return box(`lg-${mark}`);
+  }
 }
