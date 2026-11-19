@@ -618,7 +618,7 @@ export const DISK_EXAM_LAB: RealLabProps = {
       id: 'cron',
       on: 'app',
       weight: 20,
-      prompt: bi('Карточка 2. Задание, которое пишет дампы в кэш, выключено и не вернётся после перезагрузки.', 'Card 2. The job that writes dumps into the cache is off and will not come back after a reboot.'),
+      prompt: bi('Карточка 2. Задание cron, которое раз за разом записывает в каталог кэша новые файлы с выгрузкой данных, выключено и не вернётся после перезагрузки.', 'Card 2. The job that writes dumps into the cache is off and will not come back after a reboot.'),
       check: { when: (f) => ok(f, 'app') && num(f, 'cron') === 0 && out(f, 'cron').trim() === '0' },
     },
     {
