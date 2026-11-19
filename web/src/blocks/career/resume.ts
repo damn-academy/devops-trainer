@@ -116,7 +116,7 @@ export function lintResume(r: Resume, vacancyKeywords: string[] = []): CvIssue[]
   push('CV6', 'warn', empty.length === 0, bi('В резюме нет пустых формулировок', 'The CV has no empty phrases'), bi(`Уберите или замените фактом: ${empty.join(', ')}.`, `Remove or replace with a fact: ${empty.join(', ')}.`));
 
   const words = wordCount(r);
-  push('CV7', 'warn', words <= 450, bi('Резюме джуна помещается на одну страницу A4', 'A junior’s CV fits on one A4 page'), bi(`Сейчас в резюме около ${words} слов, а на страницу помещается примерно 450.`, `The CV now has about ${words} words, and a page holds roughly 450.`));
+  push('CV7', 'warn', words <= 450, bi('Резюме начинающего инженера помещается на одну страницу A4', 'A junior’s CV fits on one A4 page'), bi(`Сейчас в резюме около ${words} слов, а на страницу помещается примерно 450.`, `The CV now has about ${words} words, and a page holds roughly 450.`));
 
   const personal = r.lang === 'en' && (r.photo || r.age || r.family);
   push('CV8', r.lang === 'en' ? 'error' : 'hint', !personal, bi('В английской версии нет фото, возраста и семейного положения', 'The English version has no photo, age or marital status'), bi('На международном рынке так принято, поэтому уберите фото, возраст и семейное положение.', 'This is the custom on the international market, so remove the photo, age and marital status.'));
@@ -175,7 +175,7 @@ export const BRIDGES: { from: Bi; to: Bi; why: Bi }[] = [
   },
   {
     from: bi('Первая линия поддержки', 'First-line support'),
-    to: bi('Разбирал до N обращений в день, локализовал проблемы по журналам и шагам воспроизведения, эскалировал с описанием', 'Handled up to N tickets a day, located problems from logs and reproduction steps, escalated with a write-up'),
+    to: bi('Разбирал до N обращений в день, находил причину проблем по журналам и шагам воспроизведения, передавал сложные случаи инженерам с описанием', 'Handled up to N tickets a day, located problems from logs and reproduction steps, escalated with a write-up'),
     why: bi('Это опыт разбора инцидентов и чтения журналов, и в DevOps он даёт преимущество.', 'This is experience of incident work and reading logs, and in DevOps it gives you an advantage.'),
   },
   {

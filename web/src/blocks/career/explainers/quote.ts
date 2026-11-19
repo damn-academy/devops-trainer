@@ -9,10 +9,10 @@
 // callout what it does; what it hands on travels along the line as a card.
 
 import { defineModel } from '../../../core/define';
-import { bi, type Bi } from '../../../core/i18n';
+import { bi, pluralRu, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { matchQuote } from '../../../engine/quiz/rubric';
-import { fmtb, startWith } from './util';
+import { fmtb, startWith, tr } from './util';
 
 type P = { tolerance: number; quote: string };
 
@@ -39,6 +39,7 @@ export function quoteCheck(kind: string, tolerance: number) {
 
 const card = (whatRu: string, whatEn: string, whoRu: string, whoEn: string) => ({ what: bi(whatRu, whatEn), who: bi(whoRu, whoEn) });
 const pct = (x: number) => `${Math.round(x * 100)} %`;
+const words = (s: string) => s.split(' ').length;
 const pctEn = (x: number) => `${Math.round(x * 100)}%`;
 
 const KIND: Record<string, Bi> = {
@@ -181,6 +182,7 @@ export const quoteModel = defineModel<P>({
         tokens: blind ? [{ edge: 'e-rub', label: bi('6 критериев', '6 criteria') }] : [{ edge: 'e-tr', label: bi('ответ, 23 слова', 'answer, 23 words') }, { edge: 'e-rub', label: bi('6 критериев', '6 criteria') }],
         say: { llm: blind ? bi('Нейросеть видит только рубрику, а ответа не видит.', 'The AI sees only the rubric, no answer.') : bi('Нейросеть читает ответ и ставит баллы по рубрике.', 'The AI reads the answer and scores it by the rubric.') },
         states: { ...startWith(ALL, 'tr', 'rubric', 'llm'), ...(blind ? { 'e-tr': 'off' as const } : {}) },
+        values: { tr: tr('23 слова', '23 words'), llm: tr('температура 0', 'temperature 0'), norm: tr('строчные буквы, ё=е, без знаков', 'lower, ё=е, no punctuation'), match: tr('расстояние Левенштейна по словам', 'Levenshtein by words') },
         metrics: { dist: 0, tol, score: 0 },
       },
       {
@@ -191,7 +193,7 @@ export const quoteModel = defineModel<P>({
         reveal: ['quote', 'e-q'],
         tokens: [{ edge: 'e-q', label: bi('3 и цитата', '3 and a quote') }],
         say: { quote: fmtb(bi('В доказательство балла нейросеть приводит фразу «{q}».', 'As proof the AI quotes “{q}”.'), { q: c.q }) },
-        values: { quote: `${c.q.ru.split(' ').length} words`, score: '3?' },
+        values: { quote: tr(`${words(c.q.ru)} ${pluralRu(words(c.q.ru), ['слово', 'слова', 'слов'])}`, `${words(c.q.ru)} words`), score: '3?' },
         metrics: { dist: 0, tol, score: 3 },
       },
       {
@@ -216,7 +218,7 @@ export const quoteModel = defineModel<P>({
         tokens: [{ edge: 'e-m', label: bi('два списка слов', 'two word lists') }],
         say: { match: { ru: `Ближайший кусок ответа отличается от цитаты на ${pct(d)} слов, а допуск разрешает ${pct(p.tolerance)}.`, en: `The closest stretch differs by ${pctEn(d)}; the tolerance is ${pctEn(p.tolerance)}.` } },
         states: { match: ok ? 'ok' : 'warn' },
-        values: { match: `d = ${pctEn(d)} · tol ${pctEn(p.tolerance)}` },
+        values: { match: tr(`отличие ${pct(d)} · допуск ${pct(p.tolerance)}`, `d = ${pctEn(d)} · tol ${pctEn(p.tolerance)}`) },
         metrics: { dist, tol, score: 3 },
       },
     ];
@@ -249,7 +251,7 @@ export const quoteModel = defineModel<P>({
         tokens: [{ edge: 'e-s', label: '3 → 1' }],
         say: { score: bi('Цитата не нашлась, поэтому балл опущен до 1 с пометкой «не подтверждено».', 'Not found: dropped to 1, “not confirmed”.') },
         states: { score: 'warn' },
-        values: { score: '1 · not confirmed' },
+        values: { score: tr('1 · не подтверждён', '1 · not confirmed') },
         metrics: { dist, tol, score: 1 },
       };
       if (blind)

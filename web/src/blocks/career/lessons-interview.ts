@@ -36,7 +36,7 @@ const SRC = {
 export const L_INTERVIEWS: Lesson = {
   id: 'career.interviews',
   block: 'career',
-  title: bi('Как устроено собеседование на должность джуна', 'How a junior interview works'),
+  title: bi('Как устроено собеседование на должность начинающего инженера', 'How a junior interview works'),
   summary: bi('Из каких этапов состоит собеседование, что проверяют на каждом из них и какое правило помогает отвечать на технические вопросы.', 'The stages, what each of them checks, and the main rule of an answer.'),
   introduces: ['career.interview', 'career.logic'],
   uses: [],
@@ -69,7 +69,7 @@ export const L_INTERVIEWS: Lesson = {
       step: 'explain',
       title: bi('Что проверяют на самом деле', 'What is really checked'),
       body: bi(
-        'Вопросы на собеседованиях бывают очень разными, но за ними инженер, который нанимает джуна, ищет пять вещей:\n\n1. **Понимаете ли вы, как устроен механизм**, или только помните команды. Вопрос «что происходит, когда вы вводите адрес в браузере» спрашивает о цепочке DNS, TCP, TLS и HTTP, а не о названии команды.\n2. **Умеете ли вы действовать, когда сломалось что-то незнакомое**, то есть идёте ли вы от симптома к причине и собираете ли улики прежде, чем что-то менять.\n3. **Можете ли вы объяснить, что сделали сами**: свой пет-проект, своё решение, свою ошибку.\n4. **Найдёте ли вы ответ сами**, если этому вас не учили: в man, в выводе `--help`, в `kubectl explain`, в официальной документации.\n5. **Признаёте ли вы вслух, где кончаются ваши знания.** Ответ «не знаю, но выяснял бы так» ценится выше уверенной выдумки.\n\nКурс тренирует каждое из пяти умений отдельно. Понимание механизмов закрепляют вопросы после уроков и повторение, работу с поломками — тренажёры и экзамены, умение объяснять — вопросы «объясните» и учебные интервью, поиск по документации — лестница документации, а честность — отметка уверенности, которую вы ставите перед каждым ответом.',
+        'Вопросы на собеседованиях бывают очень разными, но за ними инженер, который нанимает начинающего коллегу (в вакансиях такую должность называют junior, а в разговоре джуном), ищет пять вещей:\n\n1. **Понимаете ли вы, как устроен механизм**, или только помните команды. Вопрос «что происходит, когда вы вводите адрес в браузере» спрашивает о цепочке DNS, TCP, TLS и HTTP, а не о названии команды.\n2. **Умеете ли вы действовать, когда сломалось что-то незнакомое**, то есть идёте ли вы от симптома к причине и собираете ли улики прежде, чем что-то менять.\n3. **Можете ли вы объяснить, что сделали сами**: свой пет-проект, своё решение, свою ошибку.\n4. **Найдёте ли вы ответ сами**, если этому вас не учили: в man, в выводе `--help`, в `kubectl explain`, в официальной документации.\n5. **Признаёте ли вы вслух, где кончаются ваши знания.** Ответ «не знаю, но выяснял бы так» ценится выше уверенной выдумки.\n\nКурс тренирует каждое из пяти умений отдельно. Понимание механизмов закрепляют вопросы после уроков и повторение, работу с поломками — тренажёры и экзамены, умение объяснять — вопросы «объясните» и учебные интервью, поиск по документации — лестница документации, а честность — отметка уверенности, которую вы ставите перед каждым ответом.',
         'The questions differ, but a hiring engineer looks for five things:\n\n1. **Do you understand the mechanism**, rather than remember commands. “What happens when you type an address into a browser” is a question about the chain DNS → TCP → TLS → HTTP, not about the name of a command.\n2. **Can you act in an unfamiliar failure**: do you go from symptom to cause, do you collect evidence before changing things.\n3. **Can you explain what you did**: your pet project, your decision, your mistake.\n4. **Will you find the answer yourself** when nobody taught you — in man, `--help`, `kubectl explain`, the official documentation.\n5. **Are you honest about the limits of your knowledge**: “I don’t know, but I would find out like this” is worth more than a confident invention.\n\nThe course trains each of the five separately: concepts with quizzes and review, failures with trainers and exams, explaining with “explain” questions and mock interviews, documentation with the documentation ladder, honesty with the confidence mark before every answer.',
       ),
     },
@@ -209,7 +209,7 @@ export const L_CLASSICS: Lesson = {
       kind: 'text',
       step: 'hook',
       body: bi(
-        'Два вопроса задают почти на каждом собеседовании джуна, и почти все отвечают на них одинаково плохо: «чем контейнер отличается от виртуальной машины?» и «чем CI отличается от CD?». Плохо потому, что вместо механизма кандидаты дают сравнение вроде «контейнер легче». Разберём оба вопроса по четырём частям из прошлого урока.',
+        'Два вопроса задают почти на каждом собеседовании начинающего инженера, и почти все отвечают на них одинаково плохо: «чем контейнер отличается от виртуальной машины?» и «чем CI отличается от CD?». Плохо потому, что вместо механизма кандидаты дают сравнение вроде «контейнер легче». Разберём оба вопроса по четырём частям из прошлого урока.',
         'Two questions come up at nearly every junior interview, and nearly everyone answers them equally badly: “how is a container different from a virtual machine?” and “how is CI different from CD?”. Badly, because people answer with a comparison (“a container is lighter”) instead of a mechanism. Let us go through both with the four parts from the last lesson.',
       ),
     },
@@ -316,7 +316,7 @@ export const L_SITUATIONAL: Lesson = {
       tone: 'note',
       title: bi('Как написать статус для команды', 'How to write a status'),
       body: bi(
-        'Статус состоит из трёх частей, и каждую из них можно проверить. **Влияние**: «у всех пользователей не проходит оплата, около 30 % запросов заканчиваются ошибкой 504, началось в 14:10». **Что мы делаем**: «откатываем релиз 14:05 и ждём, когда доля ошибок упадёт». **Когда будет следующий статус**: «в 14:40 или раньше, если доля ошибок не упадёт». Если третьей части нет, команда начнёт засыпать вас вопросами в самый неудобный момент.',
+        'Статус состоит из трёх частей, и каждую из них можно проверить. **Влияние**: «у всех пользователей не проходит оплата, около 30 % запросов заканчиваются ошибкой 504, началось в 14:10». **Что мы делаем**: «откатываем версию, выложенную в 14:05, и ждём, когда доля ошибок упадёт». **Когда будет следующий статус**: «в 14:40 или раньше, если доля ошибок не упадёт». Если третьей части нет, команда начнёт засыпать вас вопросами в самый неудобный момент.',
         'Three parts, and each can be checked: **impact** (“checkout for everyone, about 30% of requests return 504, since 14:10”), **what we do** (“rolling back the 14:05 release, waiting for the error share to drop”), **when the next update is** (“at 14:40, or earlier if the error share does not drop”). Without the third part the team will interrupt you with questions at the worst moment.',
       ),
     },

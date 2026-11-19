@@ -15,7 +15,10 @@
 import { defineModel } from '../../../core/define';
 import { bi, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { fmtb, nouned, startWith } from './util';
+import { fmtb, nouned, startWith, tr } from './util';
+
+/** The size of the orders table under the database node. */
+const ORDERS = () => tr('orders: 4,1 млн строк', 'orders: 4.1M rows');
 
 const sec = (x: number) => nouned(x, ['секунду', 'секунды', 'секунд'], ['second', 'seconds']);
 const secGen = (x: number) => nouned(x, ['секунды', 'секунд', 'секунд'], ['second', 'seconds']);
@@ -79,10 +82,10 @@ export const symptomModel = defineModel<P>({
     height: 480,
     nodes: [
       { id: 'user', label: bi('Браузер', 'Browser'), icon: 'browser', work: 'dots', sub: 'POST /checkout', family: 'user', x: 16, y: 40, w: 160, h: 64, card: card('Браузер покупателя, который нажал кнопку «Оплатить». Пользователь видит только итог: код ответа и то, сколько секунд он ждал.', 'The browser of a customer who pressed “Pay”. The user only sees the outcome: the status code and how long they waited.', 'Браузер запускает сам покупатель. Дежурный повторяет его запрос командой `curl -sv`.', 'The customer runs the browser; the engineer repeats the request with `curl -sv`.', 'curl -sv https://shop.example/checkout') },
-      { id: 'dns', label: 'DNS', icon: 'dns', sub: 'shop.example → 203.0.113.10', family: 'l7', x: 16, y: 216, w: 160, h: 64, card: card('Система имён, которая превращает имя магазина в адрес сервера. Если бы она не работала, запрос не дошёл бы даже до nginx.', 'Turns the shop’s name into an address. If it were broken, the request would never reach nginx.', 'Отвечают резолвер провайдера и сервер, который хранит записи зоны магазина.', 'The provider’s resolver and the zone’s authoritative server.', 'dig shop.example') },
+      { id: 'dns', label: 'DNS', icon: 'dns', sub: '203.0.113.10', family: 'l7', x: 16, y: 216, w: 160, h: 64, card: card('Система имён, которая превращает имя магазина в адрес сервера. Если бы она не работала, запрос не дошёл бы даже до nginx.', 'Turns the shop’s name into an address. If it were broken, the request would never reach nginx.', 'Отвечают резолвер провайдера и сервер, который хранит записи зоны магазина.', 'The provider’s resolver and the zone’s authoritative server.', 'dig shop.example') },
       { id: 'nginx', label: 'nginx', icon: 'server', work: 'spin', sub: 'proxy_read_timeout 30s', family: 'l7', x: 264, y: 40, w: 176, h: 64, card: { ...card('nginx служит обратным прокси, то есть принимает соединение HTTPS от браузера и передаёт запрос приложению. Если приложение не ответило за время proxy_read_timeout, nginx сам отвечает браузеру кодом 504 Gateway Timeout.', 'The reverse proxy: accepts HTTPS from the browser and passes the request to the application. If the application does not answer within proxy_read_timeout, nginx itself answers 504 Gateway Timeout.', 'Служба nginx работает на сервере web-1 и настроена файлом конфигурации сайта.', 'The nginx service on web-1, configured by the site’s config file.', 'tail /var/log/nginx/error.log'), doc: NGINX_DOC } },
-      { id: 'errlog', label: bi('Журнал ошибок nginx', 'nginx error log'), icon: 'file', sub: 'error.log', family: 'obj', x: 256, y: 216, w: 192, h: 64, card: card('Файл /var/log/nginx/error.log, в который nginx записывает каждую неудачу при обращении к приложению. По последним словам строки видно, что случилось: «while connecting to upstream» означает, что nginx не установил соединение, а «while reading response header» означает, что соединение есть, но ответа не было.', 'The file /var/log/nginx/error.log where nginx records every failure to reach the application. The last words tell what happened: “while connecting” means no connection, “while reading response header” means connected but no answer.', 'Строки пишет сам nginx.', 'nginx writes it.', 'tail /var/log/nginx/error.log') },
-      { id: 'fw', label: bi('Межсетевой экран', 'Firewall'), icon: 'lock', sub: 'nftables', family: 'l3', x: 528, y: 40, w: 160, h: 64, card: card('Правила, по которым ядро сервера пропускает или отбрасывает пакеты. Когда пакет отброшен, об отказе никто не сообщает, и отправитель не получает никакого ответа и продолжает ждать.', 'Rules by which the kernel passes or drops packets. A dropped packet is not refused aloud: the sender just gets no answer and waits.', 'Правила вводят сетевые инженеры, и делают это отдельно от релизов приложения.', 'The network team rolls the rules out, separately from releases.', 'nft list ruleset') },
+      { id: 'errlog', label: bi('Журнал ошибок nginx', 'nginx error log'), icon: 'file', sub: 'error.log', family: 'obj', x: 228, y: 216, w: 248, h: 64, card: card('Файл /var/log/nginx/error.log, в который nginx записывает каждую неудачу при обращении к приложению. По последним словам строки видно, что случилось: «while connecting to upstream» означает, что nginx не установил соединение, а «while reading response header» означает, что соединение есть, но ответа не было.', 'The file /var/log/nginx/error.log where nginx records every failure to reach the application. The last words tell what happened: “while connecting” means no connection, “while reading response header” means connected but no answer.', 'Строки пишет сам nginx.', 'nginx writes it.', 'tail /var/log/nginx/error.log') },
+      { id: 'fw', label: bi('Межсетевой экран', 'Firewall'), icon: 'lock', sub: 'nftables', family: 'l3', x: 528, y: 40, w: 160, h: 64, card: card('Правила, по которым ядро сервера пропускает или отбрасывает пакеты. Когда пакет отброшен, об отказе никто не сообщает, и отправитель не получает никакого ответа и продолжает ждать.', 'Rules by which the kernel passes or drops packets. A dropped packet is not refused aloud: the sender just gets no answer and waits.', 'Правила вводят сетевые инженеры, и делают это отдельно от выпусков приложения.', 'The network team rolls the rules out, separately from releases.', 'nft list ruleset') },
       { id: 'app', label: bi('Приложение', 'Application'), icon: 'process', work: 'spin', sub: '10.0.0.12:8000', family: 'process', x: 784, y: 40, w: 160, h: 64, card: card('Сервис магазина. Страница проверки /health отвечает сразу, а ответ на /checkout зависит от базы данных.', 'The shop service. The /health page answers at once; the answer on /checkout depends on the database.', 'Новую версию выложили в 14:05 через конвейер.', 'The new version went out at 14:05 through the pipeline.', "curl -w '%{time_total}' http://10.0.0.12:8000/health") },
       { id: 'db', label: bi('База данных', 'Database'), icon: 'database', work: 'spin', sub: 'orders: 4.1M rows', family: 'store', x: 784, y: 216, w: 160, h: 64, card: card('PostgreSQL, в котором хранятся заказы. Запрос, для которого нет индекса, читает таблицу целиком, а в таблице orders 4,1 миллиона строк.', 'PostgreSQL storing the orders. A query without an index reads the whole table, and orders has 4.1 million rows.', 'База работает на отдельной машине, её обслуживает администратор баз данных.', 'A separate machine, looked after by the DBA.', 'tail /var/log/postgresql/postgresql.log') },
       { id: 'hyp', label: bi('Гипотезы дежурного', 'The engineer’s hypotheses'), sub: '8', family: 'neutral', shape: 'buffer', x: 16, y: 360, w: 448, h: 80, card: card('Список того, что могло сломаться: DNS, сертификат, сеть пользователя, сам nginx, межсетевой экран, приложение, пул соединений с базой и сама база. Каждое наблюдение вычёркивает гипотезы, которые ему противоречат, и список становится короче.', 'What could be broken: DNS, the certificate, the user’s network, nginx itself, the firewall, the application, the connection pool and the database. Every observation crosses out the hypotheses that contradict it.', 'Список ведёт дежурный инженер.', 'The on-call engineer keeps it.') },
@@ -125,7 +128,6 @@ export const symptomModel = defineModel<P>({
       min: 1,
       max: 90,
       step: 1,
-      unit: 's',
       default: 35,
       near: 'app',
       group: bi('Сколько длится ожидание', 'How long the waiting lasts'),
@@ -138,7 +140,7 @@ export const symptomModel = defineModel<P>({
         resolve: (_p, next) => (next.some((x) => x.id === 'slow') ? '200' : '504'),
       },
     },
-    { id: 'timeout', label: bi('Сколько секунд nginx ждёт ответа (proxy_read_timeout)', 'How many seconds nginx waits (proxy_read_timeout)'), kind: 'range', min: 10, max: 120, step: 5, unit: 's', default: 30, near: 'nginx', levels: ['intermediate', 'experienced'], group: bi('Сколько длится ожидание', 'How long the waiting lasts') },
+    { id: 'timeout', label: bi('Сколько секунд nginx ждёт ответа (proxy_read_timeout)', 'How many seconds nginx waits (proxy_read_timeout)'), kind: 'range', min: 10, max: 120, step: 5, default: 30, near: 'nginx', levels: ['intermediate', 'experienced'], group: bi('Сколько длится ожидание', 'How long the waiting lasts') },
   ],
   breaks: [
     {
@@ -159,7 +161,7 @@ export const symptomModel = defineModel<P>({
   ],
   metrics: [
     { id: 'hyp', label: bi('гипотез осталось', 'hypotheses left') },
-    { id: 'down', label: bi('с начала сбоя', 'since the failure began'), unit: 'min' },
+    { id: 'down', label: bi('минут с начала сбоя', 'minutes since the failure began') },
   ],
   run(p, broken): Step[] {
     const s = symptomOf(p);
@@ -192,11 +194,11 @@ export const symptomModel = defineModel<P>({
         {
           id: 'slow',
           label: bi('ответ', 'answer'),
-          caption: fmtb(bi('Приложение отвечает через {a}. Это дольше обычного, потому что запрос к базе выполняется медленно, но таймаут nginx к этому времени ещё не истёк, поэтому nginx дожидается ответа.', 'The application answers after {a}: slower than usual because of the database, but before the nginx timeout, so nginx waits it out.'), { a: sec(p.appSec) }),
+          caption: fmtb(bi('Приложение отвечает через {a}. Это дольше обычного, потому что запрос к базе выполняется медленно, но тайм-аут nginx, то есть предельное время ожидания ответа, к этому времени ещё не истёк, поэтому nginx дожидается ответа.', 'The application answers after {a}: slower than usual because of the database, but before the nginx timeout, so nginx waits it out.'), { a: sec(p.appSec) }),
           focus: ['app', 'e-fw'],
           reveal: ['e-sql', 'db'],
           tokens: [{ edge: 'e-fw', label: `200 · ${p.appSec} s`, reverse: true }],
-          say: { app: fmtb(bi('Приложение отвечает через {a}, медленно, но раньше, чем истекает таймаут nginx.', 'The application answers after {a}: slow, but within the timeout.'), { a: sec(p.appSec) }) },
+          say: { app: fmtb(bi('Приложение отвечает через {a}, медленно, но раньше, чем истекает тайм-аут nginx.', 'The application answers after {a}: slow, but within the timeout.'), { a: sec(p.appSec) }) },
           states: { app: 'warn', db: 'warn' },
           values: { app: `${p.appSec}s` },
           metrics: { hyp: 8, down: 0 },
@@ -234,7 +236,7 @@ export const symptomModel = defineModel<P>({
         focus: ['user'],
         say: { user: fmtb(bi('После нажатия «Оплатить» браузер показывает ошибку {c}.', 'After “Pay” the browser shows {c}.'), { c: s.status }) },
         states: { ...startWith(ALL, 'user', 'hyp'), user: 'err' },
-        values: { user: `HTTP/2 ${s.status}`, hyp: '8', nginx: `proxy_read_timeout ${p.timeout}s` },
+        values: { user: `HTTP/2 ${s.status}`, hyp: '8', nginx: `proxy_read_timeout ${p.timeout}s`, db: ORDERS() },
         fill: { hyp: 1 },
         metrics: { hyp: 8, down: 2 },
       },
@@ -276,7 +278,7 @@ export const symptomModel = defineModel<P>({
         s.log === 'connecting'
           ? bi('В журнале ошибок nginx строка кончается словами «while connecting to upstream». Это значит, что nginx даже не установил соединение с приложением. Остаются две гипотезы, и обе касаются пути по сети до приложения: межсетевой экран и само приложение, которое не принимает соединения.', 'The nginx error log line ends with “while connecting to upstream”: nginx did not even connect. Two hypotheses are left, both about the network path to the application: the firewall and the application not accepting connections.')
           : s.status === 500
-            ? bi('В журнале ошибок nginx нет записи о таймауте, потому что приложение само ответило кодом 500 через 30 секунд. Значит, соединение есть и приложение работает, но в обработчике оплаты что-то ждёт слишком долго. Остаются три гипотезы, и они касаются приложения, пула соединений и базы.', 'The nginx error log has no timeout record, because the application itself answered 500 after 30 s. So the connection works and the application runs, but something in the checkout handler waits too long. Three hypotheses are left, and they concern the application, the pool and the database.')
+            ? bi('В журнале ошибок nginx нет записи о тайм-ауте, потому что приложение само ответило кодом 500 через 30 секунд. Значит, соединение есть и приложение работает, но в обработчике оплаты что-то ждёт слишком долго. Остаются три гипотезы, и они касаются приложения, пула соединений и базы.', 'The nginx error log has no timeout record, because the application itself answered 500 after 30 s. So the connection works and the application runs, but something in the checkout handler waits too long. Three hypotheses are left, and they concern the application, the pool and the database.')
             : bi('В журнале ошибок nginx строка кончается словами «while reading response header». Это значит, что соединение с приложением установлено, но ответа nginx так и не дождался. Межсетевой экран и сам nginx вычеркнуты, и остаются три гипотезы, которые касаются приложения, пула соединений и базы.', 'The nginx error log line ends with “while reading response header”, which means a connection is set up but no answer came. The firewall and nginx are out, and three hypotheses are left, which concern the application, the pool and the database.'),
       focus: ['errlog', 'e-log'],
       reveal: ['errlog', 'e-log'],
@@ -304,7 +306,7 @@ export const symptomModel = defineModel<P>({
         {
           id: 'cause',
           label: 'nft',
-          caption: bi('Команда `nft list ruleset` находит правило, которое сетевые инженеры ввели в 14:08 и которое отбрасывает все пакеты на порт 8000. Причина подтверждена, и это не релиз приложения, а изменение в сети.', '`nft list ruleset` finds the rule the network team rolled out at 14:08, which drops everything to port 8000. The cause is confirmed, and it is not the release but a network change.'),
+          caption: bi('Команда `nft list ruleset` находит правило, которое сетевые инженеры ввели в 14:08 и которое отбрасывает все пакеты на порт 8000. Причина подтверждена, и это не новая версия приложения, а изменение в сети.', '`nft list ruleset` finds the rule the network team rolled out at 14:08, which drops everything to port 8000. The cause is confirmed, and it is not the release but a network change.'),
           focus: ['fw'],
           say: { fw: bi('Правило tcp dport 8000 drop отбрасывает запросы к приложению.', 'The rule tcp dport 8000 drop throws the requests away.') },
           states: { fw: 'err' },
@@ -314,7 +316,7 @@ export const symptomModel = defineModel<P>({
         {
           id: 'mitigate',
           label: bi('откат правила', 'roll back rule'),
-          caption: bi('Дежурный откатывает то, что изменилось, то есть правило межсетевого экрана, а не релиз приложения. Пакеты снова доходят до приложения, и за минуту доля ошибок падает с 31 % до 0,3 %.', 'The engineer rolls back what changed: the firewall rule, not the release. Packets reach the application again, and in a minute the error share falls from 31% to 0.3%.'),
+          caption: bi('Дежурный откатывает то, что изменилось, то есть правило межсетевого экрана, а не новую версию приложения. Пакеты снова доходят до приложения, и за минуту доля ошибок падает с 31 % до 0,3 %.', 'The engineer rolls back what changed: the firewall rule, not the release. Packets reach the application again, and in a minute the error share falls from 31% to 0.3%.'),
           focus: ['fw', 'e-fw'],
           tokens: [{ edge: 'e-fw', label: 'SYN → :8000' }],
           say: { fw: bi('Правило убрано, и пакеты снова проходят к приложению.', 'The rule is gone; packets pass again.') },
@@ -345,7 +347,7 @@ export const symptomModel = defineModel<P>({
           ? {
               id: 'cause',
               label: 'Seq Scan',
-              caption: bi('Журнал медленных запросов базы показывает новый запрос из релиза 14:05, который читает всю таблицу заказов, потому что для него нет индекса, и выполняется почти 35 секунд. Причина подтверждена.', 'The slow query log shows a new query from the 14:05 release: it reads the whole orders table because there is no index, and takes almost 35 s. The cause is confirmed.'),
+              caption: bi('Журнал медленных запросов базы показывает запрос, который появился в версии от 14:05. Этот запрос читает всю таблицу заказов, потому что для него нет индекса, и выполняется почти 35 секунд. Причина подтверждена.', 'The slow query log shows a new query from the 14:05 release: it reads the whole orders table because there is no index, and takes almost 35 s. The cause is confirmed.'),
               focus: ['db', 'e-sql'],
               reveal: ['e-sql', 'db'],
               tokens: [{ edge: 'e-sql', label: 'SELECT … orders' }],
@@ -358,24 +360,24 @@ export const symptomModel = defineModel<P>({
           : {
               id: 'cause',
               label: 'QueuePool',
-              caption: bi('В журнале приложения сказано, что все пять соединений пула заняты. Новый код из релиза 14:05 держит соединение с базой, пока ждёт ответа платёжного сервиса, и остальным запросам соединений не хватает. Причина подтверждена.', 'The application log says all five pool connections are busy: the new code from the 14:05 release holds a connection while it waits for the payments service. The cause is confirmed.'),
+              caption: bi('В журнале приложения сказано, что все пять соединений пула заняты. Новый код из версии, выложенной в 14:05, держит соединение с базой, пока ждёт ответа платёжного сервиса, и остальным запросам соединений не хватает. Причина подтверждена.', 'The application log says all five pool connections are busy: the new code from the 14:05 release holds a connection while it waits for the payments service. The cause is confirmed.'),
               focus: ['app', 'e-sql'],
               reveal: ['e-sql', 'db'],
               tokens: [{ edge: 'e-sql', label: bi('5 из 5 заняты', '5 of 5 busy') }],
               say: { app: bi('Все пять соединений с базой заняты, и новые запросы ждут в очереди.', 'All five connections to the database are busy, and new requests wait in the queue.') },
               states: { app: 'err', 'e-sql': 'err' },
-              values: { app: 'pool 5/5 busy', hyp: '1' },
+              values: { app: tr('пул: занято 5 из 5', 'pool 5/5 busy'), hyp: '1' },
               fill: { hyp: 1 / 8 },
               metrics: { hyp: 1, down: 11 },
             },
         {
           id: 'mitigate',
-          label: bi('откат релиза', 'roll back release'),
-          caption: bi('Дежурный откатывает то, что изменилось, то есть релиз 14:05. Доля ошибок падает до 0,4 %. Исправлять причину будут обычным путём, и индекс или новый код выйдут через конвейер с проверкой на тестовом стенде.', 'The engineer rolls back what changed, that is, the 14:05 release. The error share falls to 0.4%. The cause will be fixed the normal way, and the index or the new code will go out through the pipeline with a check on the staging stand.'),
+          label: bi('откат версии', 'roll back release'),
+          caption: bi('Дежурный откатывает то, что изменилось, то есть версию приложения, выложенную в 14:05. Доля ошибок падает до 0,4 %. Исправлять причину будут обычным путём, и индекс или новый код выйдут через конвейер с проверкой на тестовом стенде.', 'The engineer rolls back what changed, that is, the 14:05 release. The error share falls to 0.4%. The cause will be fixed the normal way, and the index or the new code will go out through the pipeline with a check on the staging stand.'),
           focus: ['app'],
           say: { app: bi('Работает прежняя версия приложения, и /checkout снова отвечает быстро.', 'The previous version runs, and /checkout is fast again.') },
           states: { app: 'ok', db: 'ok', 'e-sql': 'ok' },
-          values: { app: '10.0.0.12:8000', db: 'orders: 4.1M rows' },
+          values: { app: '10.0.0.12:8000', db: ORDERS() },
           metrics: { hyp: 1, down: 14 },
         },
       );

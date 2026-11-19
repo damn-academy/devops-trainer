@@ -39,7 +39,7 @@ export const CAPSTONE: CapstonePart[] = [
     id: 'b',
     title: bi('Б. Починить за 60 минут', 'B. Fix in 60 minutes'),
     items: [
-      i('B1', 'Поломка найдена по уликам, сервис возвращён, причина устранена', 'The failure is found from evidence, the service restored, the cause removed', 'Все проверки части А снова зелёные, данные целы', 'Every check of part A is green again, the data is intact'),
+      i('B1', 'Поломка найдена по уликам, сервис возвращён, причина устранена', 'The failure is found from evidence, the service restored, the cause removed', 'Все проверки части А снова пройдены, данные целы', 'Every check of part A is green again, the data is intact'),
       i('B2', 'Статус для команды и разбор из четырёх частей', 'A status to the team and a four-line review', 'Рубрика инцидента', 'The incident rubric'),
     ],
   },

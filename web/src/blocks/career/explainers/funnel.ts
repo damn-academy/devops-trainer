@@ -11,7 +11,7 @@
 // everything up with Little's law.
 
 import { defineModel } from '../../../core/define';
-import { bi, type Bi } from '../../../core/i18n';
+import { bi, t, type Bi } from '../../../core/i18n';
 import type { NodeIcon, Step } from '../../../core/types';
 import { fmtb, nouned, num1, startWith } from './util';
 
@@ -101,19 +101,19 @@ export const funnelModel = defineModel<P>({
         shape: 'buffer' as const,
         x: s.x,
         y: s.y,
-        w: 176,
+        w: 152,
         h: 88,
         card: card(s.what[0], s.what[1], s.who[0], s.who[1]),
       })),
       { id: 'no', label: bi('Отказ или тишина', 'Rejected or silent'), icon: 'folder', sub: '—', family: 'neutral', x: 800, y: 248, w: 144, h: 88, card: card('Сюда уходит большая часть откликов, и это обычная работа воронки, а не оценка вас. Карточку, на которую 14 дней нет ответа, закрывают и больше не ждут.', 'Most applications end here; that is how a funnel works, not a verdict on you. A card with no reply for 14 days is closed.', 'Ответа не дают компании, которые выбрали других кандидатов или не разобрали отклики.', 'Companies that chose others or never read the application.') },
     ],
     edges: [
-      { id: 'e1', from: 'apply', to: 'reply', label: bi('компания ответила', 'replied'), card: card('Первый переход воронки. Его делают шире резюме с подтверждениями навыков и письмо, написанное под вакансию.', 'The first transition: a CV with evidence and a letter for the vacancy widen it.', 'Решает рекрутер.', 'The recruiter.') },
+      { id: 'e1', from: 'apply', to: 'reply', label: bi('есть ответ', 'replied'), card: card('Первый переход воронки. Его делают шире резюме с подтверждениями навыков и письмо, написанное под вакансию.', 'The first transition: a CV with evidence and a letter for the vacancy widen it.', 'Решает рекрутер.', 'The recruiter.') },
       { id: 'e2', from: 'reply', to: 'screen', label: bi('звонок рекрутера', 'recruiter call'), card: card('Почти каждый ответ компании ведёт к разговору с рекрутером.', 'Nearly every reply leads to a screening call.', 'Звонок назначает рекрутер.', 'The recruiter.') },
       { id: 'e3', from: 'screen', to: 'tech', label: bi('скрининг пройден', 'screening passed'), card: card('На этом переходе решают самопрезентация и мотивация.', 'Self-presentation and motivation decide here.', 'Решает рекрутер.', 'The recruiter.') },
       { id: 'e4', from: 'tech', to: 'final', label: bi('интервью пройдено', 'interview passed'), card: card('Здесь решают понимание механизмов, ответ на ситуационный вопрос и пет-проекты.', 'Mechanisms, the situational question and pet projects decide here.', 'Решает инженер.', 'The engineer.') },
       { id: 'e5', from: 'final', to: 'offer', label: bi('предложение', 'offer'), card: card('После финала компания делает предложение тем, с кем совпали ожидания.', 'After the final the company makes an offer.', 'Решает руководитель.', 'The manager.') },
-      { id: 'e-no', from: 'apply', to: 'no', label: bi('нет ответа', 'no reply'), via: [[112, 24], [872, 24]], card: card('Сюда попадают отклики, на которые не ответили, и таких откликов большинство.', 'Applications without a reply end up here, and they are the majority.', 'Молчат компании, которые выбрали других кандидатов или не разобрали отклики.', 'Companies.') },
+      { id: 'e-no', from: 'apply', to: 'no', label: bi('нет ответа', 'no reply'), via: [[100, 24], [872, 24]], card: card('Сюда попадают отклики, на которые не ответили, и таких откликов большинство.', 'Applications without a reply end up here, and they are the majority.', 'Молчат компании, которые выбрали других кандидатов или не разобрали отклики.', 'Companies.') },
     ],
   },
   params: [
@@ -200,7 +200,7 @@ export const funnelModel = defineModel<P>({
           focus: ['apply'],
           say: { apply: bi('Новых откликов нет, поэтому в первую колонку ничего не приходит.', 'No new applications arrive.') },
           states: { ...start, e1: 'off' },
-          values: { apply: '0 / wk' },
+          values: { apply: t(perWeek(0)) },
           fill: { apply: 0 },
           metrics: { wip: Math.round(live.wip), offers: 0, weeks: 999 },
         },
@@ -227,7 +227,7 @@ export const funnelModel = defineModel<P>({
         focus: ['apply'],
         say: { apply: fmtb(bi('За неделю вы отправляете {r}.', 'You send {r} a week.'), { r: apps(p.rate) }) },
         states: start,
-        values: { apply: `${p.rate} / wk` },
+        values: { apply: t(perWeek(p.rate)) },
         fill: { apply: fill(p.rate) },
         metrics: { wip: 0, offers: 0, weeks: 0 },
       },
@@ -239,7 +239,7 @@ export const funnelModel = defineModel<P>({
         reveal: ['reply', 'e1'],
         tokens: [{ edge: 'e1', label: perWeek(pw.reply) }],
         say: { reply: fmtb(bi('Компании отвечают на {n} в неделю.', 'Companies reply to {n} a week.'), { n: apps(pw.reply) }) },
-        values: { reply: `${(Math.round(pw.reply * 10) / 10).toString()} / wk` },
+        values: { reply: t(perWeek(pw.reply)) },
         fill: { reply: fill(pw.reply) },
         metrics: { wip: 0, offers: 0, weeks: 0 },
       },
@@ -251,7 +251,7 @@ export const funnelModel = defineModel<P>({
         reveal: ['no', 'e-no'],
         tokens: [{ edge: 'e-no', label: perWeek(p.rate - pw.reply) }],
         say: { no: fmtb(bi('Сюда уходят {n} в неделю.', '{n} a week end up here.'), { n: apps(p.rate - pw.reply) }) },
-        values: { no: `${(Math.round((p.rate - pw.reply) * 10) / 10).toString()} / wk` },
+        values: { no: t(perWeek(p.rate - pw.reply)) },
         metrics: { wip: 0, offers: 0, weeks: 0 },
       },
       {
@@ -262,7 +262,7 @@ export const funnelModel = defineModel<P>({
         reveal: ['screen', 'e2'],
         tokens: [{ edge: 'e2', label: perWeek(pw.reply) }],
         say: { screen: fmtb(bi('За неделю скрининг проходит {n}.', '{n} a week pass screening.'), { n: nouned(pw.screen, KARD, ['card', 'cards']) }) },
-        values: { screen: `${(Math.round(pw.screen * 10) / 10).toString()} / wk` },
+        values: { screen: t(perWeek(pw.screen)) },
         fill: { screen: fill(pw.reply) },
         metrics: { wip: 0, offers: 0, weeks: 0 },
       },
@@ -274,7 +274,7 @@ export const funnelModel = defineModel<P>({
         reveal: ['tech', 'e3'],
         tokens: [{ edge: 'e3', label: perWeek(pw.screen) }],
         say: { tech: fmtb(bi('Из {s} интервью в неделю вы проходите {n}.', 'Of {s} interviews a week you pass {n}.'), { s: num1(pw.screen), n: num1(pw.tech) }) },
-        values: { tech: `${(Math.round(pw.tech * 10) / 10).toString()} / wk` },
+        values: { tech: t(perWeek(pw.tech)) },
         fill: { tech: fill(pw.screen) },
         metrics: { wip: 0, offers: 0, weeks: 0 },
       },
@@ -286,7 +286,7 @@ export const funnelModel = defineModel<P>({
         reveal: ['final', 'e4'],
         tokens: [{ edge: 'e4', label: perWeek(pw.tech) }],
         say: { final: fmtb(bi('За неделю финал проходит {n}.', '{n} a week pass the final.'), { n: nouned(pw.final, KARD, ['card', 'cards']) }) },
-        values: { final: `${(Math.round(pw.final * 10) / 10).toString()} / wk` },
+        values: { final: t(perWeek(pw.final)) },
         fill: { final: fill(pw.tech) },
         metrics: { wip: 0, offers: 0, weeks: 0 },
       },
@@ -298,7 +298,7 @@ export const funnelModel = defineModel<P>({
         reveal: ['e5'],
         tokens: [{ edge: 'e5', label: perWeek(pw.offer) }],
         say: { offer: fmtb(bi('Одно предложение приходит примерно раз в {w}.', 'About one offer every {w}.'), { w: pw.offer > 0 ? weeks(1 / pw.offer) : '∞' }) },
-        values: { offer: `${(Math.round(pw.offer * 10) / 10).toString()} / wk` },
+        values: { offer: t(perWeek(pw.offer)) },
         fill: { offer: fill(pw.offer * 4) },
         metrics: { wip: 0, offers: m.offers, weeks: 0 },
       },

@@ -59,7 +59,7 @@ const cv1: QuizItem = {
     { id: 'kpi', text: bi('«Выполнял план продаж на 115%»', '“Achieved 115% of the sales plan”'), correct: true, why: bi('Это достижение не относится к новой роли, поэтому оставьте должность одной строкой, без подробностей.', 'This achievement has nothing to do with the new role, so leave the position as one line without details.') },
     { id: 'pc', text: bi('«Уверенный пользователь ПК, стрессоустойчив»', '“Confident PC user, stress-resistant”'), correct: true, why: bi('Это пустые формулировки, и проверить их нельзя.', 'Empty phrases.') },
     { id: 'bridge', text: bi('«Автоматизировал отчёты в Excel и сократил работу над ними с 5 часов до 40 минут в неделю»', '“Automated Excel reports and cut the work on them from 5 hours to 40 minutes a week”'), why: bi('Эта строка перекидывает мост к DevOps, потому что описывает автоматизацию с измеримым результатом.', 'This line builds a bridge to DevOps, because it describes automation with a measurable result.') },
-    { id: 'repo', text: bi('«Пет-проект: сайт в Docker с автоматической выкладкой, github.com/…»', '“Pet project: a site in Docker with automatic releases, github.com/…”'), why: bi('Подтверждение навыка важнее всего в резюме джуна.', 'Skill evidence is the core of a junior CV.') },
+    { id: 'repo', text: bi('«Пет-проект: сайт в Docker с автоматической выкладкой, github.com/…»', '“Pet project: a site in Docker with automatic releases, github.com/…”'), why: bi('Подтверждение навыка важнее всего в резюме начинающего инженера.', 'Skill evidence is the core of a junior CV.') },
   ],
 };
 
@@ -70,7 +70,7 @@ const cv2: QuizItem = {
   options: [
     { id: 'duty', text: bi('«Отвечал за обработку обращений»', '“Was responsible for handling tickets”'), correct: true, why: bi('Здесь описана обязанность, а не действие и его результат.', 'A duty instead of an action and result.') },
     { id: 'fast', text: bi('«Быстро обучаюсь»', '“Fast learner”'), correct: true, why: bi('Это пустая формулировка, и проверить её нельзя.', 'An empty phrase.') },
-    { id: 'logs', text: bi('«Локализовал проблемы по журналам и эскалировал с описанием»', '“Located problems from logs and escalated with a write-up”'), why: bi('Опыт разбора инцидентов пригодится в DevOps.', 'Incident experience is a plus.') },
+    { id: 'logs', text: bi('«Находил причину проблем по журналам и передавал инженерам с описанием»', '“Located problems from logs and escalated with a write-up”'), why: bi('Опыт разбора инцидентов пригодится в DevOps.', 'Incident experience is a plus.') },
     { id: 'docs', text: bi('«Написал 12 инструкций для команды из 20 человек»', '“Wrote 12 how-tos for a team of 20”'), why: bi('Пункт о документации с числами хорошо показывает результат.', 'Documentation with numbers is a good bullet.') },
   ],
 };
@@ -91,10 +91,10 @@ const method1: QuizItem = {
 const method2: QuizItem = {
   id: 'career.p.504.2',
   kind: 'mcq',
-  prompt: bi('В 14:05 вышел релиз, в 14:08 ввели новые правила межсетевого экрана, а с 14:10 сайт отвечает ошибкой 504. В журнале ошибок nginx строка кончается словами «while connecting to upstream». Что вы откатите первым?', 'A release went out at 14:05, new firewall rules at 14:08; 504s since 14:10. The nginx log: “while connecting to upstream”. What do you roll back first?'),
+  prompt: bi('В 14:05 выложили новую версию приложения, в 14:08 ввели новые правила межсетевого экрана, а с 14:10 сайт отвечает ошибкой 504. В журнале ошибок nginx строка кончается словами «while connecting to upstream». Что вы откатите первым?', 'A release went out at 14:05, new firewall rules at 14:08; 504s since 14:10. The nginx log: “while connecting to upstream”. What do you roll back first?'),
   options: [
     { id: 'rule', text: bi('Правила межсетевого экрана, потому что nginx не может даже соединиться с приложением', 'The firewall rules: nginx cannot even connect'), correct: true },
-    { id: 'release', text: bi('Релиз, потому что он вышел раньше', 'The release: it came first'), why: bi('Решает не порядок изменений, а улика, и слова «while connecting» в журнале указывают на сеть.', 'What decides is not the order of the changes but the evidence, and the words “while connecting” in the log point at the network.') },
+    { id: 'release', text: bi('Новую версию приложения, потому что её выложили раньше', 'The release: it came first'), why: bi('Решает не порядок изменений, а улика, и слова «while connecting» в журнале указывают на сеть.', 'What decides is not the order of the changes but the evidence, and the words “while connecting” in the log point at the network.') },
     { id: 'both', text: bi('Откатить всё сразу, а потом всё перезапустить', 'Roll back everything at once and then restart everything'), why: bi('Так вы не узнаете причину, а улики пропадут.', 'That way you never learn the cause, and the evidence is lost.') },
   ],
 };

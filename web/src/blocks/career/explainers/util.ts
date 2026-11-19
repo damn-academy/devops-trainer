@@ -1,6 +1,6 @@
 // Helpers shared by the career explainers.
 
-import { pluralRu, type Bi } from '../../../core/i18n';
+import { bi, pluralRu, t, type Bi } from '../../../core/i18n';
 import type { ElementState } from '../../../core/types';
 
 /** fmt with values that may themselves be bilingual: {v} takes v.ru in Russian and v.en in English. */
@@ -36,3 +36,6 @@ export function nouned(x: number, ru: [string, string, string], en: [string, str
 /** Every listed element starts hidden except the given ones. */
 export const startWith = (all: string[], ...shown: string[]): Record<string, ElementState> =>
   Object.fromEntries(all.filter((id) => !shown.includes(id)).map((id) => [id, 'hidden' as ElementState]));
+
+/** A node value in the reader's language: values are plain strings, so the pair is resolved when the steps are built. */
+export const tr = (ru: string, en: string): string => t(bi(ru, en));
