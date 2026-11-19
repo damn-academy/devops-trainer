@@ -48,8 +48,8 @@ export const runModel = defineModel<P>({
     'You double-click the icon of the “Notes” program. The program lies on the disk, so it is first copied into memory, then the processor carries out its instructions and a window appears. The letter you type in that window lives only in memory until you press “Save”.',
   ),
   intro: bi(
-    'Схема соберётся у вас на глазах: сейчас на ней только вы и диск, на котором лежит программа. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. На каждом шаге подсвечена та часть компьютера, которая работает, облачко рядом с ней говорит, что она делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда дойдёте до сохранения письма, откройте «Параметры», сделайте программу больше или поставьте медленный диск и пройдите запуск ещё раз, следя за временем под схемой.',
-    'The diagram builds itself as you go: now it shows only you and the disk the program lies on. Press “Start: step forward”, then go on with “Step forward” under the diagram. At every step the part that works is highlighted, the callout next to it says what it does, and the card on the line shows what is handed on.\n\nOnce you reach the save, open “Parameters”, make the program bigger or choose a slow disk and walk through the start again, watching the time under the diagram.',
+    'Схема соберётся у вас на глазах, а сейчас на ней только вы и диск, на котором лежит программа. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. На каждом шаге подсвечена та часть компьютера, которая работает, облачко рядом с ней говорит, что она делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда дойдёте до сохранения письма, откройте «Параметры», сделайте программу больше или поставьте медленный диск и пройдите запуск ещё раз, следя за временем под схемой.',
+    'The diagram builds itself as you go: now it shows only you and the disk the program lies on. Press “Start from the first step”, then go on with “Step forward” above the diagram. At every step the part that works is highlighted, the callout next to it says what it does, and the card on the line shows what is handed on.\n\nOnce you reach the save, open “Parameters”, make the program bigger or choose a slow disk and walk through the start again, watching the time under the diagram.',
   ),
   legend: [
     { mark: 'active', text: bi('часть компьютера, которая работает сейчас', 'the part working now') },
@@ -60,7 +60,7 @@ export const runModel = defineModel<P>({
     { mark: 'icon:switch', text: bi('память работает быстро, но пустеет без питания', 'memory: fast, but empty without power') },
     { mark: 'icon:process', text: bi('процессор выполняет инструкции', 'the processor: carries out instructions') },
     { mark: 'icon:browser', text: bi('экран с окном программы', 'the screen with the program’s window') },
-    { mark: 'warn', text: bi('памяти не хватает, всё замедляется', 'memory runs short, everything slows down') },
+    { mark: 'warn', text: bi('памяти не хватает, и всё замедляется', 'memory runs short, and everything slows down') },
     { mark: 'err', text: bi('здесь запуск или письмо пропали', 'here the start or the letter was lost') },
   ],
   stopLabel: bi('Работа остановилась', 'The work stopped'),
@@ -96,7 +96,7 @@ export const runModel = defineModel<P>({
         h: 64,
         card: card(
           bi('Процессор выполняет инструкции: складывает два числа, сравнивает их, переходит к другой инструкции. Он делает это миллиарды раз в секунду, но берёт инструкции и данные только из памяти, а с диском напрямую не работает.', 'Carries out instructions: add two numbers, compare, jump to another instruction. It does so billions of times a second, but takes instructions and data only from memory.'),
-          bi('Процессор — это микросхема на главной плате компьютера. В ноутбуке её не видно под системой охлаждения.', 'A chip on the main board; in a laptop it hides under the cooling system.'),
+          bi('Процессор стоит на главной плате компьютера и выглядит как одна микросхема. В ноутбуке её не видно под системой охлаждения.', 'A chip on the main board; in a laptop it hides under the cooling system.'),
           { see: 'nproc', doc: { page: 'man/nproc.1', anchor: 'DESCRIPTION' } },
         ),
       },
@@ -110,7 +110,7 @@ export const runModel = defineModel<P>({
         w: 192,
         h: 64,
         card: card(
-          bi('Экран показывает картинку, которую программа нарисовала в памяти. Сам экран ничего не хранит: стоит выключить компьютер, и картинка исчезнет.', 'Shows the picture the program drew in memory. The screen itself keeps nothing.'),
+          bi('Экран показывает картинку, которую программа нарисовала в памяти. Сам экран ничего не хранит, и стоит выключить компьютер, как картинка исчезнет.', 'Shows the picture the program drew in memory. The screen itself keeps nothing.'),
           bi('Картинку на экран шестьдесят раз в секунду выводит видеокарта.', 'The graphics card puts it on the screen sixty times a second.'),
         ),
       },
@@ -142,15 +142,15 @@ export const runModel = defineModel<P>({
         w: 208,
         h: 72,
         card: card(
-          bi('Оперативная память работает быстро, но всё, что в ней хранится, пропадает, когда компьютер выключают. Здесь находятся запущенные программы и то, с чем они работают прямо сейчас, в том числе ваш несохранённый текст. Полоска внизу показывает, сколько памяти занято.', 'Main memory is fast, but everything in it is lost at power-off. Running programs live here with what they work on now, including your unsaved text. The bar shows how much is in use.'),
-          bi('Память — это планки с микросхемами на главной плате компьютера.', 'Memory modules on the main board.'),
+          bi('Оперативная память работает быстро, но всё, что в ней хранится, пропадает, когда компьютер выключают. Здесь находятся запущенные программы и то, с чем они работают сейчас, в том числе ваш несохранённый текст. Полоска внизу показывает, сколько памяти занято.', 'Main memory is fast, but everything in it is lost at power-off. Running programs live here with what they work on now, including your unsaved text. The bar shows how much is in use.'),
+          bi('Память собрана из планок с микросхемами, которые вставлены в главную плату компьютера.', 'Memory is made of modules with chips that are plugged into the main board.'),
           { see: 'free -h', doc: { page: 'man/free.1', anchor: 'DESCRIPTION' } },
         ),
       },
     ],
     edges: [
-      { id: 'e-input', from: 'you', to: 'cpu', label: bi('щелчки и буквы', 'clicks and letters'), card: card(bi('Каждое действие мышью и каждая нажатая клавиша приходят процессору сигналом: «нажата буква Д».', 'Every mouse action and key press reaches the processor as a signal.'), bi('Сигналы посылают мышь и клавиатура.', 'The mouse and keyboard.')) },
-      { id: 'e-load', from: 'disk', to: 'memory', label: bi('копия программы', 'copy of the program'), card: card(bi('Запуск начинается с копирования: файл программы читают с диска и кладут в память. Чем больше программа и чем медленнее диск, тем дольше вы ждёте окно.', 'Starting begins with copying: the program is read from the disk into memory. The bigger the program and the slower the disk, the longer you wait.'), bi('Копированием занимается главная программа компьютера, о которой рассказывает следующий урок.', 'The main program of the computer; the next lesson is about it.')) },
+      { id: 'e-input', from: 'you', to: 'cpu', label: bi('щелчки и буквы', 'clicks and letters'), card: card(bi('Каждое действие мышью и каждая нажатая клавиша приходят процессору сигналом вроде «нажата буква Д».', 'Every mouse action and key press reaches the processor as a signal.'), bi('Сигналы посылают мышь и клавиатура.', 'The mouse and keyboard.')) },
+      { id: 'e-load', from: 'disk', to: 'memory', label: bi('копия программы', 'copy of the program'), card: card(bi('Запуск начинается с копирования, то есть файл программы читают с диска и кладут в память. Чем больше программа и чем медленнее диск, тем дольше вы ждёте окно.', 'Starting begins with copying: the program is read from the disk into memory. The bigger the program and the slower the disk, the longer you wait.'), bi('Копированием занимается главная программа компьютера, о которой рассказывает следующий урок.', 'The main program of the computer; the next lesson is about it.')) },
       { id: 'e-fetch', from: 'memory', to: 'cpu', label: bi('инструкции и данные', 'instructions and data'), card: card(bi('Процессор берёт из памяти очередную инструкцию, выполняет её и берёт следующую. Данные, например буквы вашего письма, ходят между процессором и памятью тем же путём.', 'The processor takes the next instruction from memory, carries it out, takes the next one. Data travels the same way.'), bi('Инструкции забирает процессор.', 'The processor.')) },
       { id: 'e-draw', from: 'cpu', to: 'screen', label: bi('картинка окна', 'the window’s picture'), card: card(bi('Программа рисует своё окно, и видеокарта показывает его на экране.', 'The program draws its window, and the graphics card shows it on the screen.'), bi('Картинку выводит видеокарта.', 'The graphics card.')) },
       {
@@ -182,9 +182,9 @@ export const runModel = defineModel<P>({
       predict: {
         prompt: bi('Вы изменили размер программы, а диск и число открытых программ остались прежними. Как изменится время от щелчка до появления окна?', 'You changed the program’s size; the disk and the open programs stay the same. How does the time from click to window change?'),
         options: [
-          { id: 'up', text: bi('Вырастет', 'It grows') },
-          { id: 'down', text: bi('Сократится', 'It shrinks') },
-          { id: 'same', text: bi('Не изменится', 'It stays the same') },
+          { id: 'up', text: bi('Время вырастет', 'The time grows') },
+          { id: 'down', text: bi('Время сократится', 'The time shrinks') },
+          { id: 'same', text: bi('Время не изменится', 'The time stays the same') },
         ],
         resolve: (prev, next) => compare(lastMetric(prev, 'ms'), lastMetric(next, 'ms')),
       },
@@ -214,9 +214,9 @@ export const runModel = defineModel<P>({
       predict: {
         prompt: bi('Вы изменили число открытых программ, а сама программа «Заметки» и диск остались прежними. Как изменится время её запуска?', 'You changed the number of open programs; “Notes” and the disk stay the same. How does its start time change?'),
         options: [
-          { id: 'up', text: bi('Вырастет', 'It grows') },
-          { id: 'down', text: bi('Сократится', 'It shrinks') },
-          { id: 'same', text: bi('Не изменится', 'It stays the same') },
+          { id: 'up', text: bi('Время вырастет', 'The time grows') },
+          { id: 'down', text: bi('Время сократится', 'The time shrinks') },
+          { id: 'same', text: bi('Время не изменится', 'The time stays the same') },
         ],
         resolve: (prev, next) => compare(lastMetric(prev, 'ms'), lastMetric(next, 'ms')),
       },
@@ -225,37 +225,37 @@ export const runModel = defineModel<P>({
   breaks: [
     {
       id: 'power',
-      label: bi('Отключить питание, пока письмо не сохранено', 'Cut the power before “Save”'),
+      label: bi('Питание отключилось раньше, чем письмо сохранили', 'The power went before the letter was saved'),
       remove: ['memory', 'e-save'],
       boundary: 'storage',
       predict: {
         prompt: bi('Вы напечатали письмо, но не нажали «Сохранить», и в этот момент отключилось питание. Что вы найдёте, когда снова включите компьютер?', 'You typed a letter but did not press “Save”, and the power went. What will you find after switching on?'),
         options: [
-          { id: 'all', text: bi('И программу, и письмо', 'Both the program and the letter') },
-          { id: 'disk', text: bi('Программу, но не письмо', 'The program, but not the letter') },
-          { id: 'nothing', text: bi('Ни программы, ни письма', 'Neither the program nor the letter') },
+          { id: 'all', text: bi('Вы найдёте и программу, и письмо', 'You will find both the program and the letter') },
+          { id: 'disk', text: bi('Вы найдёте программу, но не письмо', 'You will find the program, but not the letter') },
+          { id: 'nothing', text: bi('Вы не найдёте ни программы, ни письма', 'You will find neither the program nor the letter') },
         ],
         resolve: () => 'disk',
       },
     },
     {
       id: 'no-disk',
-      label: bi('Удалить файл программы с диска, оставив значок', 'Delete the program file, keep the icon'),
+      label: bi('Файл программы удалили с диска, а значок оставили', 'The program file was deleted from the disk, and the icon was kept'),
       remove: ['disk', 'e-load'],
       boundary: 'storage',
       predict: {
         prompt: bi('Значок «Заметок» на рабочем столе остался, а файл программы с диска удалили. Что произойдёт, когда вы дважды щёлкнете по значку?', 'The icon is still there, but the program file was deleted. What happens on a double click?'),
         options: [
-          { id: 'error', text: bi('Появится ошибка: копировать в память нечего', 'An error: there is nothing to copy into memory') },
-          { id: 'runs', text: bi('Программа запустится: значок и есть программа', 'It starts: the icon is the program') },
+          { id: 'error', text: bi('Появится ошибка, потому что копировать в память нечего', 'An error appears, because there is nothing to copy into memory') },
+          { id: 'runs', text: bi('Программа запустится, потому что значок и есть программа', 'The program starts, because the icon is the program') },
         ],
         resolve: (_prev, next) => (next.some((s) => s.broken) ? 'error' : 'runs'),
       },
     },
   ],
   metrics: [
-    { id: 'ms', label: bi('от щелчка до окна', 'from click to window'), unit: 'ms' },
-    { id: 'used', label: bi('занято памяти', 'memory in use'), unit: 'GB' },
+    { id: 'ms', label: bi('сколько прошло от щелчка до окна', 'from click to window'), unit: 'ms' },
+    { id: 'used', label: bi('сколько памяти занято', 'memory in use'), unit: 'GB' },
   ],
   run(p, broken): Step[] {
     const n = runNumbers(p);
@@ -284,13 +284,13 @@ export const runModel = defineModel<P>({
       steps.push({
         id: 'missing',
         label: bi('файла нет', 'no file'),
-        caption: bi('Компьютер идёт на диск за файлом программы и не находит его: файл удалили, а значок остался. Копировать в память нечего, поэтому программа не запустится, сколько бы вы ни щёлкали.', 'The computer goes to the disk for the program file and does not find it. There is nothing to copy into memory, so the program will not start.'),
+        caption: bi('Компьютер идёт на диск за файлом программы и не находит его, потому что файл удалили, а значок остался. Копировать в память нечего, поэтому программа не запустится, сколько бы вы ни щёлкали.', 'The computer goes to the disk for the program file and does not find it. There is nothing to copy into memory, so the program will not start.'),
         focus: ['disk'],
         say: { disk: bi('Файла «Заметок» на диске больше нет, и копировать в память нечего.', 'The “Notes” file is gone; there is nothing to copy.') },
         states: { disk: 'err' },
         values: { disk: 'notes · ?' },
         metrics: { ms: 5, used: before },
-        broken: { at: 'disk', message: 'The item “Notes” can’t be found.', caption: bi('на диске. Значок — это ярлык, а не программа: без файла на диске запускать нечего.', 'on the disk: a shortcut is not the program; without the file there is nothing to start.') },
+        broken: { at: 'disk', message: 'The item “Notes” can’t be found.', caption: bi('на диске. Значок служит только ярлыком, а не программой, поэтому без файла на диске запускать нечего.', 'on the disk: a shortcut is not the program; without the file there is nothing to start.') },
       });
       return steps;
     }
@@ -318,7 +318,7 @@ export const runModel = defineModel<P>({
         tokens: [{ edge: 'e-load', label: bi(`Заметки · ${p.size} МБ`, `Notes · ${p.size} MB`) }],
         say: {
           memory: n.swap
-            ? bi('Память переполнена: части других программ уходят обратно на диск.', 'Memory is full: pieces of other programs go back to the disk.')
+            ? bi('Память переполнена, и части других программ уходят обратно на диск.', 'Memory is full, and pieces of other programs go back to the disk.')
             : fmtb(bi('В память легла копия «Заметок». Теперь занято {u} из {r} ГБ.', 'A copy of “Notes” is in memory: {u} of {r} GB used.'), { u: ruNum(n.used), r: RAM_GB }),
         },
         states: { memory: n.swap ? 'warn' : 'on', disk: 'on' },
@@ -340,7 +340,7 @@ export const runModel = defineModel<P>({
       {
         id: 'window',
         label: bi('окно', 'window'),
-        caption: fmtb(bi('Программа нарисовала своё окно, и оно появилось на экране. Для вас запуск закончился: от щелчка до окна прошло {t} мс.', 'The program has drawn its window, and it appears on the screen. For you the start is over: {t} ms from click to window.'), { t: n.ms + 16 }),
+        caption: fmtb(bi('Программа нарисовала своё окно, и оно появилось на экране. Для вас запуск на этом закончился, и от щелчка до окна прошло {t} мс.', 'The program has drawn its window, and it appears on the screen. For you the start is over: {t} ms from click to window.'), { t: n.ms + 16 }),
         focus: ['e-draw', 'screen'],
         reveal: ['screen', 'e-draw'],
         tokens: [{ edge: 'e-draw', label: bi('окно «Заметки»', 'the “Notes” window') }],
@@ -373,7 +373,7 @@ export const runModel = defineModel<P>({
       steps.push({
         id: 'blackout',
         label: bi('свет погас', 'power cut'),
-        caption: bi('Питание пропало, и память за доли секунды опустела вместе с письмом. Диск ничего не заметил: файл программы на нём цел, поэтому после включения «Заметки» запустятся, но письма в них не будет.', 'The power is gone and memory empties in a fraction of a second, letter and all. The disk noticed nothing: the program is intact, the letter is not.'),
+        caption: bi('Питание пропало, и память за доли секунды опустела вместе с письмом. Диск ничего не заметил, и файл программы на нём цел, поэтому после включения «Заметки» запустятся, но письма в них не будет.', 'The power is gone and memory empties in a fraction of a second, letter and all. The disk noticed nothing: the program is intact, the letter is not.'),
         focus: ['memory'],
         say: { memory: bi('Питание пропало, и память стёрла всё, что в ней было, вместе с письмом.', 'No power: memory loses everything, the letter included.') },
         states: { memory: 'err', cpu: 'off', screen: 'off', disk: 'ok' },
@@ -387,7 +387,7 @@ export const runModel = defineModel<P>({
     steps.push({
       id: 'save',
       label: bi('сохранить', 'save'),
-      caption: bi('Вы нажимаете «Сохранить», и программа копирует письмо из памяти в файл letter.txt на диске. Теперь компьютер можно выключить: письмо никуда не денется.', 'You press “Save”: the letter is copied from memory into letter.txt on the disk. Now switching off is safe.'),
+      caption: bi('Вы нажимаете «Сохранить», и программа копирует письмо из памяти в файл letter.txt на диске. Теперь компьютер можно выключить, и письмо никуда не денется.', 'You press “Save”: the letter is copied from memory into letter.txt on the disk. Now switching off is safe.'),
       focus: ['e-save', 'disk'],
       reveal: ['e-save'],
       tokens: [{ edge: 'e-save', label: 'letter.txt' }],
@@ -401,10 +401,10 @@ export const runModel = defineModel<P>({
   explainDelta(prev, next, change, a, b): Bi {
     const ms = (s: Step[]) => lastMetric(s, 'ms');
     if (change.kind === 'break') {
-      if (!change.on) return bi('Поломку убрали: программа снова запускается, и письмо сохраняется на диск.', 'The break is removed: the program starts again and the letter is saved.');
+      if (!change.on) return bi('Поломку выключили, поэтому программа снова запускается, а письмо сохраняется на диск.', 'The break is off, so the program starts again and the letter is saved to the disk.');
       return change.id === 'power'
         ? bi('Без питания память пустеет за доли секунды. Письмо хранилось только там и пропало, а программа лежала на диске и уцелела.', 'Without power memory empties: the letter was only there and is lost, while the program on the disk survives.')
-        : bi('Значок — это ярлык, а программа — это файл на диске. Файл удалили, и копировать в память стало нечего.', 'The icon is a shortcut and the program is a file. Delete the file and there is nothing to copy.');
+        : bi('Значок служит только ярлыком, а сама программа хранится файлом на диске. Файл удалили, и копировать в память стало нечего.', 'The icon is a shortcut and the program is a file. Delete the file and there is nothing to copy.');
     }
     switch (change.id) {
       case 'size':

@@ -34,12 +34,12 @@ export const systemModel = defineModel<P>({
   block: 'orient',
   title: bi('Операционная система между программами и железом', 'The operating system between programs and hardware'),
   summary: bi(
-    'Программы не пишут на диск сами и не берут себе память и процессор: они просят об этом операционную систему. Схема показывает три такие просьбы подряд: редактор сохраняет файл, браузер просит память для новой вкладки, а несколько программ делят одно ядро процессора.',
+    'Программы не пишут на диск сами и не берут себе память и процессор, а просят об этом операционную систему. Схема показывает три такие просьбы подряд: редактор сохраняет файл, браузер просит память для новой вкладки, а несколько программ делят одно ядро процессора.',
     'Programs neither write to the disk themselves nor take memory and the processor: they ask the operating system. The diagram shows three such requests: the editor saves a file, the browser asks for memory for a new tab, and several programs share one processor core.',
   ),
   intro: bi(
-    'Сейчас на схеме только редактор, в котором вы нажали «Сохранить», и диск. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Подсвечен тот, кто работает сейчас, облачко говорит, что он делает, а карточка на линии показывает, с какой просьбой или с каким результатом одна часть обращается к другой.\n\nКогда дойдёте до процессора, поменяйте в «Параметрах» число программ и ядер. Напоследок включите в блоке «Сломать» поломку, при которой программы пишут на диск сами, без системы.',
-    'Now the diagram shows only the editor where you pressed “Save” and the disk. Press “Start: step forward”, then go on with “Step forward” under the diagram. The one working now is highlighted, the callout says what it does, and the card on the line shows the request or result passed on.\n\nOnce you reach the processor, change the number of programs and cores in “Parameters”. Finally switch on the break in “Break it” where programs write to the disk themselves.',
+    'Сейчас на схеме только редактор, в котором вы нажали «Сохранить», и диск. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Подсвечен тот, кто работает сейчас, облачко говорит, что он делает, а карточка на линии показывает, с какой просьбой или с каким результатом одна часть обращается к другой.\n\nКогда дойдёте до процессора, поменяйте в «Параметрах» число программ и ядер. Напоследок включите в блоке «Сломать» поломку, при которой программы пишут на диск сами, без системы.',
+    'Now the diagram shows only the editor where you pressed “Save” and the disk. Press “Start from the first step”, then go on with “Step forward” above the diagram. The one working now is highlighted, the callout says what it does, and the card on the line shows the request or result passed on.\n\nOnce you reach the processor, change the number of programs and cores in “Parameters”. Finally switch on the break in “Break it” where programs write to the disk themselves.',
   ),
   legend: [
     { mark: 'active', text: bi('часть, которая работает сейчас', 'the part working now') },
@@ -72,7 +72,7 @@ export const systemModel = defineModel<P>({
         w: 220,
         h: 64,
         card: card(
-          bi('Редактор — программа, в которой вы пишете текст. Он хочет сохранить файл, но не знает, где на диске свободное место: это знает только операционная система.', 'The program you write text in. It wants to save a file but does not know where the disk has free room; only the system knows.'),
+          bi('Редактором называют программу, в которой вы пишете текст. Он хочет сохранить файл, но не знает, где на диске свободное место, потому что это знает только операционная система.', 'The program you write text in. It wants to save a file but does not know where the disk has free room; only the system knows.'),
           bi('Редактор запустили вы, щёлкнув по его значку.', 'You started it with a click.'),
         ),
       },
@@ -88,7 +88,7 @@ export const systemModel = defineModel<P>({
         w: 220,
         h: 64,
         card: card(
-          bi('Браузер — ещё одна программа. Под каждую вкладку браузеру нужна память, а чтобы рисовать страницы, ему нужен процессор.', 'Another program. It needs memory for its tabs and the processor to draw pages.'),
+          bi('Браузер тоже работает как обычная программа. Под каждую вкладку браузеру нужна память, а чтобы рисовать страницы, ему нужен процессор.', 'Another program. It needs memory for its tabs and the processor to draw pages.'),
           bi('Браузер тоже запустили вы.', 'You started it too.'),
         ),
       },
@@ -105,7 +105,7 @@ export const systemModel = defineModel<P>({
         w: 928,
         h: 64,
         card: card(
-          bi('Операционная система — главная программа компьютера. Она запускает остальные программы, по очереди даёт им процессор, раздаёт память, ведёт учёт файлов и папок на диске и управляет устройствами. Программы обращаются к железу только через неё.', 'The main program of the computer. It starts the others, gives them the processor in turns, hands out memory, keeps track of files and talks to the devices.'),
+          bi('Операционную систему называют главной программой компьютера. Она запускает остальные программы, по очереди даёт им процессор, раздаёт память, ведёт учёт файлов и папок на диске и управляет устройствами. Программы обращаются к железу только через неё.', 'The main program of the computer. It starts the others, gives them the processor in turns, hands out memory, keeps track of files and talks to the devices.'),
           bi('Система загружается первой при включении компьютера и работает до самого выключения.', 'Loads first at power-on and runs until power-off.'),
           { see: 'uname -a', doc: { page: 'man/uname.1', anchor: 'DESCRIPTION' } },
         ),
@@ -122,7 +122,7 @@ export const systemModel = defineModel<P>({
         h: 64,
         card: card(
           bi('На самом диске нет ни файлов, ни папок, только миллиарды пронумерованных блоков. Какие блоки свободны и какие из них принадлежат файлу notes.txt, помнит операционная система.', 'A disk has no files, only numbered blocks. Which are free and which belong to notes.txt the system remembers.'),
-          bi('Диск — это железо внутри компьютера.', 'Hardware.'),
+          bi('Диск стоит внутри компьютера и подключён к его главной плате.', 'The disk sits inside the computer and is connected to its main board.'),
           { see: 'df -h' },
         ),
       },
@@ -138,7 +138,7 @@ export const systemModel = defineModel<P>({
         h: 64,
         card: card(
           bi('Система выдаёт каждой программе отдельный участок памяти и следит, чтобы программа не залезла в чужой участок.', 'The system gives each program its own piece of memory and keeps it out of the others’.'),
-          bi('Память — это железо внутри компьютера.', 'Hardware.'),
+          bi('Память вставлена в главную плату компьютера.', 'Memory is plugged into the computer’s main board.'),
           { see: 'free -h' },
         ),
       },
@@ -154,18 +154,18 @@ export const systemModel = defineModel<P>({
         h: 64,
         card: card(
           bi('В каждый момент одно ядро процессора выполняет одну программу. Если ядер несколько, столько же программ работают одновременно, а остальные ждут своей очереди.', 'One core runs one program at any moment; several cores run several at once.'),
-          bi('Процессор — это железо внутри компьютера.', 'Hardware.'),
+          bi('Процессор стоит на главной плате компьютера.', 'The processor sits on the computer’s main board.'),
           { see: 'nproc' },
         ),
       },
     ],
     edges: [
-      { id: 'e-save', from: 'editor', to: 'os', via: [[150, 168]], label: bi('сохрани notes.txt', 'save notes.txt'), card: card(bi('Просьба редактора к системе: «запиши вот этот текст в файл notes.txt в папке notes».', 'The editor’s request: “write this text into notes.txt”.'), bi('Просьбу отправляет редактор, когда вы нажимаете «Сохранить».', 'The editor, when you press “Save”.')) },
+      { id: 'e-save', from: 'editor', to: 'os', via: [[150, 168]], label: bi('сохрани notes.txt', 'save notes.txt'), card: card(bi('Редактор просит систему: «запиши вот этот текст в файл notes.txt в папке notes».', 'The editor’s request: “write this text into notes.txt”.'), bi('Просьбу отправляет редактор, когда вы нажимаете «Сохранить».', 'The editor, when you press “Save”.')) },
       { id: 'e-write', from: 'os', to: 'disk', via: [[150, 232]], label: bi('блоки файла', 'file blocks'), card: card(bi('Система находит на диске свободные блоки, записывает туда текст и запоминает, что эти блоки теперь принадлежат файлу notes.txt.', 'The system finds free blocks, writes the text and remembers they are notes.txt.'), bi('Блоки записывает операционная система.', 'The operating system.'), { see: 'ls -l notes' }) },
-      { id: 'e-mem', from: 'browser', to: 'os', via: [[480, 168]], label: bi('дай памяти', 'give me memory'), card: card(bi('Новая вкладка браузера означает новую просьбу к системе: выделить ещё немного памяти.', 'A new tab is a new request for memory.'), bi('Память просит браузер.', 'The browser.')) },
-      { id: 'e-alloc', from: 'os', to: 'memory', via: [[480, 232]], label: bi('свой участок', 'its own piece'), card: card(bi('Система выделяет программе отдельный участок памяти. Залезть в чужой участок программа не сможет: система не позволит.', 'The system gives the program its own piece of memory and keeps it out of others’.'), bi('Участок выделяет операционная система.', 'The operating system.')) },
+      { id: 'e-mem', from: 'browser', to: 'os', via: [[480, 168]], label: bi('дай памяти', 'give me memory'), card: card(bi('Каждая новая вкладка означает, что браузер снова просит систему выделить ему ещё немного памяти.', 'Every new tab means the browser again asks the system for a little more memory.'), bi('Память просит браузер.', 'The browser.')) },
+      { id: 'e-alloc', from: 'os', to: 'memory', via: [[480, 232]], label: bi('свой участок', 'its own piece'), card: card(bi('Система выделяет программе отдельный участок памяти. Залезть в чужой участок программа не сможет, потому что система этого не позволит.', 'The system gives the program its own piece of memory and keeps it out of others’.'), bi('Участок выделяет операционная система.', 'The operating system.')) },
       { id: 'e-turns', from: 'os', to: 'cpu', via: [[810, 232]], label: bi('программы по очереди', 'programs in turns'), card: card(bi('Система даёт процессор каждой программе на несколько миллисекунд и переключает его на следующую. Переключения так часты, что программы кажутся работающими одновременно.', 'The system gives the processor to each program for a few milliseconds and moves on.'), bi('Очередь ведёт операционная система.', 'The operating system.')) },
-      { id: 'e-rawA', from: 'editor', to: 'disk', dashed: true, labelAt: 0.25, label: bi('редактор пишет сам', 'writes itself'), card: card(bi('Так было бы без операционной системы: редактор сам выбирает блоки диска и пишет в них, не спросив никого.', 'Without the system: the editor picks disk blocks itself.'), bi('Так пишет редактор, когда посредника нет.', 'The editor, with no go-between.')) },
+      { id: 'e-rawA', from: 'editor', to: 'disk', dashed: true, labelAt: 0.25, label: bi('редактор пишет сам', 'writes itself'), card: card(bi('Без операционной системы редактор сам выбирал бы блоки диска и писал бы в них, ни у кого не спросив.', 'Without the system: the editor picks disk blocks itself.'), bi('Так пишет редактор, когда посредника нет.', 'The editor, with no go-between.')) },
       { id: 'e-rawB', from: 'browser', to: 'disk', dashed: true, via: [[480, 280]], labelAt: 0.3, label: bi('браузер тоже пишет сам', 'writes itself too'), card: card(bi('Браузер без посредника тоже сам выбирает блоки диска и не знает, что редактор уже занял некоторые из них.', 'Without the system the browser picks blocks too, unaware of the editor.'), bi('Так пишет браузер, когда посредника нет.', 'The browser, with no go-between.')) },
     ],
   },
@@ -221,7 +221,7 @@ export const systemModel = defineModel<P>({
   ],
   metrics: [
     { id: 'share', label: bi('доля процессора у каждой программы', 'processor share each'), unit: '%' },
-    { id: 'switches', label: bi('переключений процессора в секунду', 'switches per second') },
+    { id: 'switches', label: bi('сколько раз в секунду переключается процессор', 'switches per second') },
   ],
   run(p, broken): Step[] {
     const n = share(p);
@@ -277,7 +277,7 @@ export const systemModel = defineModel<P>({
       {
         id: 'ask',
         label: bi('просьба', 'request'),
-        caption: bi('Редактор передаёт системе просьбу: записать текст в файл notes.txt в папке notes. Сам редактор при этом ждёт ответа.', 'The editor hands the system a request: write the text into notes.txt. It waits for the answer.'),
+        caption: bi('Редактор просит систему записать текст в файл notes.txt в папке notes. Сам редактор при этом ждёт ответа.', 'The editor hands the system a request: write the text into notes.txt. It waits for the answer.'),
         focus: ['e-save', 'os'],
         reveal: ['os', 'e-save'],
         tokens: [{ edge: 'e-save', label: bi('сохрани notes.txt', 'save notes.txt') }],
@@ -303,7 +303,7 @@ export const systemModel = defineModel<P>({
         caption: bi('Система сообщает редактору, что файл записан. Редактор показывает вам, что всё сохранено, и вы продолжаете печатать.', 'The system tells the editor the file is written.'),
         focus: ['e-save', 'editor'],
         tokens: [{ edge: 'e-save', label: bi('готово', 'done'), reverse: true }],
-        say: { editor: bi('Редактор получил от системы ответ: файл сохранён.', 'The editor hears back: the file is saved.') },
+        say: { editor: bi('Редактор получил от системы ответ, что файл сохранён.', 'The editor hears back from the system that the file is saved.') },
         states: { editor: 'ok' },
         metrics,
       },
@@ -321,7 +321,7 @@ export const systemModel = defineModel<P>({
       {
         id: 'alloc',
         label: bi('память', 'memory'),
-        caption: bi('Система выделяет браузеру отдельный участок памяти. Участок редактора остаётся нетронутым: если браузер попытается залезть в чужую память, система его остановит.', 'The system gives the browser a separate piece of memory; the editor’s piece stays untouched.'),
+        caption: bi('Система выделяет браузеру отдельный участок памяти. Участок редактора остаётся нетронутым, а если браузер попытается залезть в чужую память, система его остановит.', 'The system gives the browser a separate piece of memory; the editor’s piece stays untouched.'),
         focus: ['e-alloc', 'memory'],
         reveal: ['memory', 'e-alloc'],
         tokens: [{ edge: 'e-alloc', label: bi('+300 МБ браузеру', '+300 MB for the browser') }],
@@ -346,7 +346,7 @@ export const systemModel = defineModel<P>({
         tokens: [{ edge: 'e-turns', label: turns ? bi(`по ${SLICE_MS} мс каждой`, `${SLICE_MS} ms each`) : bi('по ядру каждой', 'a core each') }],
         say: {
           cpu: turns
-            ? fmtb(bi('Ядро выполняет программы по очереди: {w} переключений в секунду.', 'The core runs programs in turns: {w} switches a second.'), { w: n.switches })
+            ? fmtb(bi('Ядро выполняет программы по очереди и переключается между ними {w} раз в секунду.', 'The core runs the programs in turns and switches between them {w} times a second.'), { w: n.switches })
             : bi('У каждой программы своё ядро, и ждать очереди не нужно.', 'Each program has its own core.'),
         },
         states: { cpu: n.share < 30 ? 'warn' : 'on' },
@@ -360,11 +360,11 @@ export const systemModel = defineModel<P>({
     const m = next[next.length - 1]?.metrics ?? {};
     if (change.kind === 'break') {
       return change.on
-        ? bi('Без системы учёт диска никто не ведёт: две программы записали данные в один и тот же блок, и файл испорчен.', 'Without the system nobody keeps track of the disk: two programs wrote into the same block.')
-        : bi('Посредник вернулся: программы снова просят систему, и она раздаёт место на диске так, что записи не сталкиваются.', 'The go-between is back: no more collisions.');
+        ? bi('Без системы учёт диска никто не ведёт, поэтому две программы записали данные в один и тот же блок, и файл испорчен.', 'Without the system nobody keeps track of the disk: two programs wrote into the same block.')
+        : bi('Операционная система снова стоит посредником, поэтому программы просят её о месте на диске, и она раздаёт его так, что записи не сталкиваются.', 'The operating system is the go-between again, so programs ask it for disk space, and it hands the space out so that writes do not collide.');
     }
     if (change.id === 'programs')
-      return fmtb(bi('Процессор теперь нужен не {a}, а {b}. Каждой достаётся {s}% его времени: работают все, но каждая медленнее.', '{a} → {b} programs: each gets {s}% of the processor.'), { a: bi(progsDat(a.programs as number), String(a.programs)), b: bi(progsDat(b.programs as number), String(b.programs)), s: m.share ?? 0 });
+      return fmtb(bi('Процессор теперь нужен не {a}, а {b}. Каждой программе достаётся {s}% его времени, поэтому работают все, но каждая медленнее.', '{a} → {b} programs: each gets {s}% of the processor.'), { a: bi(progsDat(a.programs as number), String(a.programs)), b: bi(progsDat(b.programs as number), String(b.programs)), s: m.share ?? 0 });
     return fmtb(bi('Теперь у процессора {c}. Одновременно работают до {n} программ, и каждой достаётся {s}% времени процессора.', 'Now {c}: up to {n} programs at once, {s}% each.'), { c: bi(cores(Number(b.cores)), `${b.cores} cores`), n: Number(b.cores), s: m.share ?? 0 });
   },
 });

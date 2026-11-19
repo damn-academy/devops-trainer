@@ -28,7 +28,7 @@ const placement: PlacementTask[] = [
         { id: 'ram', text: bi('Несохранённый текст хранится в памяти и пропадает при выключении', 'Unsaved text lives in memory and is lost at power-off'), correct: true },
         { id: 'os', text: bi('Программы обращаются к диску через операционную систему', 'Programs reach the disk through the operating system'), correct: true },
         { id: 'first', text: bi('В строке `ls -l notes` первое слово говорит, что сделать, а остальные — с чем и как', 'In the line `ls -l notes` the first word is what to do, the rest with what and how'), correct: true },
-        { id: 'icon', text: bi('Значок на рабочем столе и есть сама программа', 'The icon on the desktop is the program itself'), why: bi('Значок на рабочем столе только указывает, где лежит программа, а сама программа хранится файлом на диске.', 'The icon is a shortcut; the program is a file on the disk.') },
+        { id: 'icon', text: bi('Значок на рабочем столе и есть сама программа', 'The icon on the desktop is the program itself'), why: bi('Значок на рабочем столе только указывает, где лежит программа, а сама программа хранится файлом на диске.', 'The icon on the desktop only points to where the program lies, and the program itself is stored as a file on the disk.') },
       ],
     },
   },
@@ -45,7 +45,7 @@ const placement: PlacementTask[] = [
       options: [
         { id: 'refused', text: bi('Сразу получит отказ в соединении', 'An immediate connection refusal'), correct: true },
         { id: 'timeout', text: bi('Будет долго ждать, а потом сообщит, что время вышло', 'A long wait and “timed out”'), why: bi('Так бывает, когда сообщение не доходит до машины. Здесь машина отвечает, но программу, которая слушала бы запросы, остановили.', 'That happens when the message does not arrive. Here the machine answers; nobody is listening.') },
-        { id: 'page', text: bi('Последнюю сохранённую страницу', 'The last saved page'), why: bi('Отвечать некому: без программы сервер страниц не отдаёт.', 'There is nobody to answer: without the program the server hands out no pages.') },
+        { id: 'page', text: bi('Последнюю сохранённую страницу', 'The last saved page'), why: bi('Страницы отдаёт программа магазина, а её остановили, поэтому отвечать на запрос некому и никакой страницы браузер не получит.', 'Pages are handed out by the shop’s program, and it has been stopped, so nobody answers the request and the browser gets no page at all.') },
       ],
     },
   },
@@ -91,8 +91,8 @@ const placement: PlacementTask[] = [
       kind: 'mcq',
       prompt: bi('Сервер успевает ответить на 200 запросов в секунду. Его загрузка выросла с 50 до 95%. Что стало с ожиданием в очереди?', 'A server answers 200 requests a second. The load rose from 50% to 95%. What about the queue wait?'),
       options: [
-        { id: 'many', text: bi('Выросло примерно в двадцать раз', 'It grew about twentyfold'), correct: true, why: bi('Ожидание растёт пропорционально ρ/(1−ρ), где ρ — загрузка: при 50% эта величина равна 1, а при 95% уже 19.', 'The wait grows as ρ/(1−ρ): 1 at 50% and 19 at 95%.') },
-        { id: 'twice', text: bi('Почти удвоилось, как и загрузка', 'Almost doubled, like the load'), why: bi('Очередь растёт нелинейно: чем ближе загрузка к ста процентам, тем быстрее растёт ожидание.', 'A queue grows non-linearly: the closer to 100%, the steeper.') },
+        { id: 'many', text: bi('Выросло примерно в двадцать раз', 'It grew about twentyfold'), correct: true, why: bi('Ожидание растёт пропорционально величине ρ/(1−ρ), где буквой ρ обозначена загрузка. При загрузке 50% эта величина равна 1, а при 95% она равна уже 19.', 'The wait grows in proportion to ρ/(1−ρ), where ρ stands for the load. At 50% load this value is 1, and at 95% it is already 19.') },
+        { id: 'twice', text: bi('Почти удвоилось, как и загрузка', 'Almost doubled, like the load'), why: bi('Ожидание в очереди растёт гораздо быстрее загрузки, и чем ближе загрузка к ста процентам, тем круче становится этот рост.', 'The queue wait grows much faster than the load, and the closer the load gets to one hundred per cent, the steeper that growth becomes.') },
         { id: 'same', text: bi('Не изменилось, пока загрузка ниже 100%', 'Unchanged while the load is under 100%'), why: bi('Запросы начинают ждать друг друга задолго до ста процентов.', 'Long before 100% requests start waiting for each other.') },
       ],
     },
@@ -110,7 +110,7 @@ const placement: PlacementTask[] = [
       options: [
         { id: 'major', text: '4.0.0', correct: true },
         { id: 'minor', text: '3.8.0', why: bi('Старые файлы настроек перестанут работать, а это несовместимое изменение.', 'Old settings files stop working: that is an incompatible change.') },
-        { id: 'patch', text: '3.7.5', why: bi('Это не исправление ошибки: у пользователей перестанут работать их настройки.', 'This is not a bug fix: behaviour breaks for users.') },
+        { id: 'patch', text: '3.7.5', why: bi('Последнее число увеличивают только тогда, когда исправляют ошибку. Здесь у пользователей перестанут работать их файлы настроек, поэтому изменение несовместимое и меняется первое число.', 'The last number goes up only when a bug is fixed. Here users’ settings files stop working, so the change is incompatible and the first number changes.') },
       ],
     },
   },

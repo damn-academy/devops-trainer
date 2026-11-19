@@ -40,25 +40,25 @@ const hoursRu = (n: number) => `${n} ${pluralRu(n, ['час', 'часа', 'ча
 export const rentModel = defineModel<P>({
   id: 'orient.rent',
   block: 'orient',
-  title: bi('Машина напрокат: как работает облако', 'A machine for hire: how the cloud works'),
+  title: bi('Как взять машину напрокат в облаке', 'How to hire a machine in the cloud'),
   summary: bi(
     'Вы заказываете сервер в панели облачного провайдера, провайдер выделяет его на своей стойке в дата-центре, вы работаете с машиной по сети, а счёт растёт с каждым часом, пока машина существует. Под схемой видно, сколько вы заплатите.',
     'You order a server in a cloud provider’s panel, the provider places it on a rack in its data centre, you work with it over the network, and the bill grows every hour the machine exists.',
   ),
   intro: bi(
-    'Сейчас на схеме только вы и панель облака, то есть сайт провайдера, на котором заказывают машины. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Подсвечен тот, кто работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся: заказ, команды или оплаченные часы.\n\nКогда дойдёте до счёта, поменяйте в «Параметрах» размер и число машин и посмотрите на сумму под схемой. Потом включите в блоке «Сломать» забытую машину и сгоревшую стойку.',
-    'Now the diagram shows only you and the cloud panel. Press “Start: step forward”, then go on with “Step forward”. The one working is highlighted, the callout says what it does, the card on the line shows the order, commands or billed hours.\n\nAt the bill, change the size and number of machines in “Parameters”. Then switch on the forgotten machine and the burnt rack in “Break it”.',
+    'Сейчас на схеме только вы и панель облака, то есть сайт провайдера, на котором заказывают машины. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Подсвечен тот, кто работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся: заказ, команды или оплаченные часы.\n\nКогда дойдёте до счёта, поменяйте в «Параметрах» размер и число машин и посмотрите на сумму под схемой. Потом включите в блоке «Сломать» забытую машину и сгоревшую стойку.',
+    'Now the diagram shows only you and the cloud panel. Press “Start from the first step”, then go on with “Step forward” above the diagram. The one working is highlighted, the callout says what it does, the card on the line shows the order, commands or billed hours.\n\nAt the bill, change the size and number of machines in “Parameters”. Then switch on the forgotten machine and the burnt rack in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },
     { mark: 'say', text: bi('что он делает', 'what it does') },
     { mark: 'token', text: bi('заказ, команды или оплаченные часы', 'the order, commands or billed hours') },
     { mark: 'icon:user', text: bi('вы', 'you') },
-    { mark: 'icon:browser', text: bi('панель облака, сайт провайдера', 'the cloud panel') },
+    { mark: 'icon:browser', text: bi('панель облака, то есть сайт провайдера', 'the cloud panel, that is, the provider’s site') },
     { mark: 'icon:server', text: bi('стойка с серверами провайдера', 'a rack of the provider’s servers') },
     { mark: 'icon:cloud', text: bi('ваша машина в облаке', 'your machine in the cloud') },
     { mark: 'icon:file', text: bi('счёт', 'the bill') },
-    { mark: 'err', text: bi('здесь случилась беда: пожар или лишние траты', 'trouble here: a fire or wasted money') },
+    { mark: 'err', text: bi('здесь случилась беда, например пожар или лишние траты', 'trouble happened here, such as a fire or wasted money') },
   ],
   stopLabel: bi('Беда случилась', 'Trouble'),
   concepts: ['orient.cloud'],
@@ -67,13 +67,13 @@ export const rentModel = defineModel<P>({
     height: 400,
     nodes: [
       { id: 'you', label: bi('Вы', 'You'), icon: 'user', work: 'dots', sub: 'laptop', family: 'user', x: 24, y: 72, w: 184, h: 64, card: card(bi('Вам нужен сервер на время проекта. Своего железа у вас нет, и покупать его ради нескольких недель работы незачем.', 'You need a server for a project; buying hardware for a few weeks makes no sense.'), bi('Заказываете машину вы сами.', 'You.')) },
-      { id: 'panel', label: bi('Панель облака', 'Cloud panel'), icon: 'browser', sub: 'web page', family: 'l7', x: 264, y: 72, w: 200, h: 64, card: card(bi('Сайт провайдера, на котором машину заказывают несколькими щелчками: выбирают размер, операционную систему и город. То же самое можно сделать командой или программой.', 'The provider’s site where a machine is ordered in a few clicks.'), bi('Панель держит облачный провайдер.', 'The cloud provider.'), { doc: NIST }) },
-      { id: 'rackA', label: bi('Стойка A', 'Rack A'), icon: 'server', sub: '40 servers', family: 'node', shape: 'rack', x: 560, y: 68, w: 168, h: 72, card: card(bi('Стойка — это шкаф с десятками серверов. Каждый сервер провайдер делит на несколько отдельных машин для разных клиентов, и соседей по серверу вы не видите.', 'A cabinet of servers; each is split into machines for different customers.'), bi('Стойку купил, поставил и обслуживает провайдер.', 'The provider bought and maintains it.')) },
+      { id: 'panel', label: bi('Панель облака', 'Cloud panel'), icon: 'browser', sub: 'web page', family: 'l7', x: 264, y: 72, w: 200, h: 64, card: card(bi('Панелью облака называют сайт провайдера, на котором машину заказывают несколькими щелчками: выбирают размер, операционную систему и город. То же самое можно сделать командой или программой.', 'The provider’s site where a machine is ordered in a few clicks.'), bi('Панель держит облачный провайдер.', 'The cloud provider.'), { doc: NIST }) },
+      { id: 'rackA', label: bi('Стойка A', 'Rack A'), icon: 'server', sub: '40 servers', family: 'node', shape: 'rack', x: 560, y: 68, w: 168, h: 72, card: card(bi('Стойкой называют шкаф, в котором стоят десятки серверов. Каждый сервер провайдер делит на несколько отдельных машин для разных клиентов, и соседей по серверу вы не видите.', 'A cabinet of servers; each is split into machines for different customers.'), bi('Стойку купил, поставил и обслуживает провайдер.', 'The provider bought and maintains it.')) },
       { id: 'rackB', label: bi('Стойка B', 'Rack B'), icon: 'server', sub: '40 servers', family: 'node', shape: 'rack', x: 768, y: 68, w: 168, h: 72, card: card(bi('Стойка B служит запасным местом. Если на стойке A сломается сервер, провайдер перезапустит машины клиентов здесь.', 'Spare room: if rack A breaks, the machines move here.'), bi('Стойку обслуживает провайдер.', 'The provider.')) },
-      { id: 'vm', label: bi('Ваша машина', 'Your machine'), icon: 'cloud', sub: '2 CPU · 2 GB', family: 'process', x: 560, y: 240, w: 168, h: 64, card: card(bi('Часть большого сервера, которая ведёт себя как отдельный компьютер: у неё своя операционная система, свой адрес в интернете и свой пароль.', 'A slice of a big server that behaves like a separate computer.'), bi('Машину создал провайдер по вашему заказу.', 'The provider created it on your order.')) },
-      { id: 'bill', label: bi('Счёт', 'Bill'), icon: 'file', sub: '$0.00', family: 'gauge', shape: 'buffer', x: 264, y: 240, w: 200, h: 64, card: card(bi('Облако берёт деньги за каждый час, пока машина существует, даже если она ничего не делает. Удалили машину, и счёт остановился. Полоска внизу показывает, какую часть месяца машина уже оплачена.', 'The cloud charges for every hour the machine exists, even if idle.'), bi('Счёт ведёт провайдер.', 'The provider.')) },
+      { id: 'vm', label: bi('Ваша машина', 'Your machine'), icon: 'cloud', sub: '2 CPU · 2 GB', family: 'process', x: 560, y: 240, w: 168, h: 64, card: card(bi('Ваша машина занимает часть большого сервера и ведёт себя как отдельный компьютер: у неё своя операционная система, свой адрес в интернете и свой пароль.', 'Your machine takes up a slice of a big server and behaves like a separate computer, with its own operating system, internet address and password.'), bi('Машину создал провайдер по вашему заказу.', 'The provider created it on your order.')) },
+      { id: 'bill', label: bi('Счёт', 'Bill'), icon: 'file', sub: '$0.00', family: 'gauge', shape: 'buffer', x: 264, y: 240, w: 200, h: 64, card: card(bi('Облако берёт деньги за каждый час, пока машина существует, даже если она ничего не делает. Как только машину удаляют, счёт останавливается. Полоска внизу показывает, какую часть месяца машина уже оплачена.', 'The cloud charges for every hour the machine exists, even if idle.'), bi('Счёт ведёт провайдер.', 'The provider.')) },
     ],
-    groups: [{ id: 'dc', label: bi('Дата-центр провайдера', 'The provider’s data centre'), around: ['rackA', 'rackB', 'vm'], family: 'node', dash: 'dash', pad: 16, card: card(bi('Здание с охраной, резервным питанием, охлаждением и мощным подключением к интернету. Его строит и содержит провайдер, а вы платите за маленькую часть этого хозяйства.', 'A building with guards, backup power and cooling; you pay for a slice.'), bi('Дата-центр принадлежит облачному провайдеру.', 'The cloud provider.')) }],
+    groups: [{ id: 'dc', label: bi('Дата-центр провайдера', 'The provider’s data centre'), around: ['rackA', 'rackB', 'vm'], family: 'node', dash: 'dash', pad: 16, card: card(bi('Дата-центр представляет собой здание с охраной, резервным питанием, охлаждением и мощным подключением к интернету. Его строит и содержит провайдер, а вы платите за маленькую часть этого хозяйства.', 'A building with guards, backup power and cooling; you pay for a slice.'), bi('Дата-центр принадлежит облачному провайдеру.', 'The cloud provider.')) }],
     edges: [
       { id: 'e-order', from: 'you', to: 'panel', label: bi('заказ', 'order'), card: card(bi('Вы выбираете размер машины и нажимаете «Создать». Через минуту машина готова.', 'You choose the size and press “Create”.'), bi('Заказ делаете вы.', 'You.')) },
       { id: 'e-place', from: 'panel', to: 'rackA', label: bi('выделить место', 'place it'), card: card(bi('Провайдер находит сервер со свободным местом и создаёт на нём вашу машину.', 'The provider finds a server with free room.'), bi('Место выбирают программы провайдера.', 'The provider’s programs.')) },
@@ -99,9 +99,9 @@ export const rentModel = defineModel<P>({
       predict: {
         prompt: bi('Вы выбрали другой размер машины, а число машин и часы работы остались прежними. Что станет со счётом?', 'You chose another size; the count and hours stay the same. What happens to the bill?'),
         options: [
-          { id: 'up', text: bi('Вырастет', 'It grows') },
-          { id: 'down', text: bi('Уменьшится', 'It shrinks') },
-          { id: 'same', text: bi('Не изменится: платят за время, а не за размер', 'Unchanged: you pay for time, not size') },
+          { id: 'up', text: bi('Счёт вырастет', 'The bill grows') },
+          { id: 'down', text: bi('Счёт уменьшится', 'The bill shrinks') },
+          { id: 'same', text: bi('Счёт не изменится, потому что платят за время, а не за размер', 'The bill stays the same, because you pay for time, not size') },
         ],
         resolve: (prev, next) => compare(lastMetric(prev, 'cost'), lastMetric(next, 'cost')),
       },
@@ -112,7 +112,7 @@ export const rentModel = defineModel<P>({
   breaks: [
     {
       id: 'forget',
-      label: bi('Забыть удалить машину после проекта', 'Forget to delete the machine after the project'),
+      label: bi('Машину забыли удалить, когда проект закончился', 'The machine was not deleted when the project ended'),
       remove: ['e-meter'],
       predict: {
         prompt: bi('Проект закончился, вы закрыли ноутбук, но машину в облаке не удалили, и ею никто не пользуется. Что будет со счётом к концу месяца?', 'The project is over, the machine was not deleted and nobody uses it. What happens to the bill by the end of the month?'),
@@ -139,8 +139,8 @@ export const rentModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'cost', label: bi('счёт', 'bill'), unit: '$' },
-    { id: 'hours', label: bi('оплачено машино-часов', 'machine-hours billed'), unit: 'h' },
+    { id: 'cost', label: bi('сумма счёта', 'bill'), unit: '$' },
+    { id: 'hours', label: bi('сколько машино-часов оплачено', 'machine-hours billed'), unit: 'h' },
   ],
   run(p, broken): Step[] {
     const s = SIZES[p.size] ?? SIZES.small;
@@ -161,7 +161,7 @@ export const rentModel = defineModel<P>({
       {
         id: 'order',
         label: bi('заказ', 'order'),
-        caption: fmtb(bi('Вы заказываете в панели {n}: {each} {cpu} и {ram} ГБ памяти, а час работы {cost} ${h}. Потом вы нажимаете «Создать». Ни договора на год, ни оплаты вперёд не нужно.', 'You order {n} × {cpu} CPU and {ram} GB at ${h} an hour each. No contract, no payment up front.'), { n: bi(machinesAcc(p.count), String(p.count)), each: p.count > 1 ? bi('в каждой', '') : bi('в ней', ''), cost: p.count > 1 ? bi('каждой стоит', '') : bi('стоит', ''), cpu: bi(cpus(s.cpu), String(s.cpu)), ram: s.ram, h: s.perHour.toFixed(2) }),
+        caption: fmtb(bi('Вы заказываете в панели {n}, {each} {cpu} и {ram} ГБ памяти, а час работы {cost} ${h}. Потом вы нажимаете «Создать». Ни договора на год, ни оплаты вперёд не нужно.', 'You order {n} × {cpu} CPU and {ram} GB at ${h} an hour each. No contract, no payment up front.'), { n: bi(machinesAcc(p.count), String(p.count)), each: p.count > 1 ? bi('и у каждой из них будет', '') : bi('и у неё будет', ''), cost: p.count > 1 ? bi('каждой стоит', '') : bi('стоит', ''), cpu: bi(cpus(s.cpu), String(s.cpu)), ram: s.ram, h: s.perHour.toFixed(2) }),
         focus: ['e-order', 'panel'],
         reveal: ['e-order'],
         tokens: [{ edge: 'e-order', label: bi(`${p.count} × ${s.cpu} CPU · ${s.ram} ГБ`, `${p.count} × ${s.cpu} CPU · ${s.ram} GB`) }],
@@ -172,7 +172,7 @@ export const rentModel = defineModel<P>({
       {
         id: 'place',
         label: bi('место', 'placement'),
-        caption: bi('Провайдер находит в стойке A сервер со свободным местом и выделяет на нём вашу машину. Какой это сервер, вы не знаете, и знать вам это не нужно: за железо отвечает провайдер.', 'The provider finds a server with room in rack A. Which one you need not know: hardware is the provider’s job.'),
+        caption: bi('Провайдер находит в стойке A сервер со свободным местом и выделяет на нём вашу машину. Какой это сервер, вы не знаете, и знать это вам не нужно, потому что за железо отвечает провайдер.', 'The provider finds a server with room in rack A. Which one you need not know: hardware is the provider’s job.'),
         focus: ['e-place', 'rackA'],
         reveal: ['dc', 'rackA', 'e-place'],
         tokens: [{ edge: 'e-place', label: sub }],
@@ -186,7 +186,7 @@ export const rentModel = defineModel<P>({
         {
           id: 'fire',
           label: bi('пожар', 'fire'),
-          caption: bi('Ночью сервер в стойке A сгорел, и ваша машина остановилась вместе с ним. Ехать в дата-центр вам не нужно, да вас туда и не пустят: это забота провайдера.', 'At night the server in rack A burnt out, and your machine stopped with it. This is the provider’s worry.'),
+          caption: bi('Ночью сервер в стойке A сгорел, и ваша машина остановилась вместе с ним. Ехать в дата-центр вам не нужно, да вас туда и не пустят, потому что сгоревшим сервером занимается провайдер.', 'At night the server in rack A burnt out, and your machine stopped with it. This is the provider’s worry.'),
           focus: ['rackA'],
           say: { rackA: bi('Сервер в стойке A сгорел вместе с вашей машиной.', 'The server in rack A burnt out with your machine.') },
           states: { rackA: 'err' },
@@ -195,14 +195,14 @@ export const rentModel = defineModel<P>({
         {
           id: 'move',
           label: bi('перезапуск', 'restart'),
-          caption: bi('Провайдер сам перезапускает вашу машину на стойке B, и через несколько минут она снова работает. Но всё, что хранилось только на её диске, пропало: копии своих данных делает их владелец, то есть вы.', 'The provider restarts your machine on rack B. But whatever lay only on its disk is gone: copies are the owner’s job.'),
+          caption: bi('Провайдер сам перезапускает вашу машину на стойке B, и через несколько минут она снова работает. Но всё, что хранилось только на её диске, пропало, потому что копии своих данных делает их владелец, то есть вы.', 'The provider restarts your machine on rack B. But whatever lay only on its disk is gone: copies are the owner’s job.'),
           focus: ['e-move', 'rackB'],
           reveal: ['rackB', 'e-move'],
           tokens: [{ edge: 'e-move', label: bi('ваша машина', 'your machine') }],
           say: { rackB: bi('Провайдер запустил вашу машину заново здесь, но её диск пуст.', 'The provider restarted it here, with an empty disk.') },
           states: { rackB: 'warn' },
           metrics: { cost: 0, hours: 0 },
-          broken: { at: 'rackA', message: 'Instance my-server was restarted on another host due to a hardware failure.', caption: bi('на стойке A. Железо — забота провайдера, а копии важных данных — ваша.', 'at rack A: the hardware is the provider’s worry; copies of important data are yours.') },
+          broken: { at: 'rackA', message: 'Instance my-server was restarted on another host due to a hardware failure.', caption: bi('на стойке A. За железо отвечает провайдер, а за копии важных данных отвечаете вы.', 'at rack A: the hardware is the provider’s worry; copies of important data are yours.') },
         },
       );
       return steps;
@@ -211,7 +211,7 @@ export const rentModel = defineModel<P>({
       {
         id: 'boot',
         label: bi('запуск', 'start'),
-        caption: bi('Через минуту машина включена: у неё своя операционная система и свой адрес в интернете. Для вас она выглядит как обычный сервер.', 'A minute later the machine is on, with its own system and address.'),
+        caption: bi('Через минуту машина включается, и у неё есть своя операционная система и свой адрес в интернете. Для вас она выглядит как обычный сервер.', 'A minute later the machine is on, with its own system and address.'),
         focus: ['e-boot', 'vm'],
         reveal: ['vm', 'e-boot'],
         tokens: [{ edge: 'e-boot', label: bi('включить', 'start') }],
@@ -222,7 +222,7 @@ export const rentModel = defineModel<P>({
       {
         id: 'work',
         label: bi('работа', 'work'),
-        caption: fmtb(bi('Вы подключаетесь к машине по сети и работаете с ней {h}: печатаете команды у себя, а выполняются они в дата-центре.', 'You connect over the network and work for {h} h.'), { h: bi(hoursRu(p.hours), String(p.hours)) }),
+        caption: fmtb(bi('Вы подключаетесь к машине по сети и работаете с ней {h}. Вы печатаете команды у себя, а выполняются они в дата-центре.', 'You connect over the network and work for {h} h.'), { h: bi(hoursRu(p.hours), String(p.hours)) }),
         focus: ['e-connect', 'vm'],
         reveal: ['e-connect'],
         tokens: [{ edge: 'e-connect', label: bi('команды', 'commands') }],
@@ -232,11 +232,11 @@ export const rentModel = defineModel<P>({
       {
         id: 'meter',
         label: bi('счёт', 'bill'),
-        caption: fmtb(bi('Пока машина существует, провайдер прибавляет к счёту каждый час. За {h} работы {n} набежало {c}.', 'Every hour the machine exists is billed: {c} for {h} h.'), { h: bi(hoursRu(p.hours), String(p.hours)), n: p.count > 1 ? bi(`${p.count} машин`, '') : bi('одной машины', ''), c: money(work) }),
+        caption: fmtb(bi('Пока машина существует, провайдер прибавляет к счёту каждый час. За {h} работы {n} в счёте набралось {c}.', 'Every hour the machine exists is billed: {c} for {h} h.'), { h: bi(hoursRu(p.hours), String(p.hours)), n: p.count > 1 ? bi(`${p.count} машин`, '') : bi('одной машины', ''), c: money(work) }),
         focus: ['e-meter', 'bill'],
         reveal: ['bill', 'e-meter'],
         tokens: [{ edge: 'e-meter', label: bi(`${p.hours} ч × ${p.count}`, `${p.hours} h × ${p.count}`) }],
-        say: { bill: fmtb(bi('Счёт растёт с каждым часом: сейчас в нём {c}.', 'The bill grows every hour: {c} now.'), { c: money(work) }) },
+        say: { bill: fmtb(bi('Счёт растёт с каждым часом, и сейчас в нём {c}.', 'The bill grows every hour, and it now holds {c}.'), { c: money(work) }) },
         states: { bill: 'on' },
         values: { bill: money(work) },
         fill: { bill: Math.min(1, p.hours / MONTH_H) },
@@ -273,9 +273,9 @@ export const rentModel = defineModel<P>({
   explainDelta(prev, next, change, a, b): Bi {
     const cost = (s: Step[]) => lastMetric(s, 'cost');
     if (change.kind === 'break') {
-      if (!change.on) return bi('Поломку убрали: машину снова удаляют вовремя, и стойка цела.', 'The break is removed.');
+      if (!change.on) return bi('Поломку выключили, поэтому машину снова удаляют вовремя, а стойка цела.', 'The break is off, so the machine is deleted on time again and the rack is intact.');
       return change.id === 'forget'
-        ? fmtb(bi('Машина простояла месяц без дела, и счёт вырос с {a} до {b}. Забытая машина — самая частая лишняя трата в облаке.', 'The machine sat idle for a month: {a} → {b}.'), { a: money(cost(prev)), b: money(cost(next)) })
+        ? fmtb(bi('Машина простояла месяц без дела, и счёт вырос с {a} до {b}. Чаще всего деньги в облаке уходят впустую на забытые машины.', 'The machine sat idle for a month, and the bill grew from {a} to {b}. Most money wasted in the cloud goes on forgotten machines.'), { a: money(cost(prev)), b: money(cost(next)) })
         : bi('Сгоревшее железо заменяет провайдер, а вашу машину перезапускают на другой стойке. Пропадает только то, у чего не было копии.', 'The provider replaces the hardware and restarts the machine; only what had no copy is lost.');
     }
     switch (change.id) {
@@ -284,9 +284,9 @@ export const rentModel = defineModel<P>({
         return fmtb(bi('Теперь у каждой машины {cpu} и {ram} ГБ памяти, и час её работы стоит ${h}. Счёт изменился с {c0} до {c1}.', 'Now {cpu} CPU and {ram} GB at ${h} an hour: {c0} → {c1}.'), { cpu: bi(cpus(sz.cpu), String(sz.cpu)), ram: sz.ram, h: sz.perHour.toFixed(2), c0: money(cost(prev)), c1: money(cost(next)) });
       }
       case 'count':
-        return fmtb(bi('Теперь вы арендуете {n}, и счёт меняется во столько же раз: {c}.', '{n} machines: the bill changes as many times, {c}.'), { n: bi(machines(b.count as number), String(b.count)), c: money(cost(next)) });
+        return fmtb(bi('Теперь вы арендуете {n}, и счёт меняется во столько же раз и составляет {c}.', '{n} machines: the bill changes as many times, {c}.'), { n: bi(machines(b.count as number), String(b.count)), c: money(cost(next)) });
       case 'hours':
-        return fmtb(bi('Машины нужны не {a}, а {b}, и счёт теперь {c}: вы платите за всё время, пока машины существуют.', '{a} → {b} h: the bill is {c}.'), { a: bi(hoursRu(a.hours as number), String(a.hours)), b: bi(hoursRu(b.hours as number), String(b.hours)), c: money(cost(next)) });
+        return fmtb(bi('Машины нужны не {a}, а {b}, и счёт теперь составляет {c}, потому что вы платите за всё время, пока машины существуют.', '{a} → {b} h: the bill is {c}.'), { a: bi(hoursRu(a.hours as number), String(a.hours)), b: bi(hoursRu(b.hours as number), String(b.hours)), c: money(cost(next)) });
     }
     return bi('Схема пересчитана для новых параметров.', 'The diagram is recomputed.');
   },

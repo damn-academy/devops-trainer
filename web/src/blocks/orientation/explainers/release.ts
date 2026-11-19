@@ -27,7 +27,7 @@ export function nextVersion(change: string): string {
 const KIND: Record<string, Bi> = {
   fix: bi('исправление ошибки', 'a bug fix'),
   feature: bi('новая возможность, при которой всё старое работает как прежде', 'a new feature, the old behaves as before'),
-  breaking: bi('несовместимое изменение: старые настройки больше не подходят', 'an incompatible change'),
+  breaking: bi('несовместимое изменение, после которого старые настройки больше не подходят', 'an incompatible change, after which old settings no longer fit'),
 };
 const WHAT: Record<string, Bi> = {
   fix: bi('исправляет ошибку в корзине', 'fixes a bug in the cart'),
@@ -48,14 +48,14 @@ export const releaseModel = defineModel<P>({
     'A programmer edits the program’s text, the build turns it into a runnable file, the file gets a version number and goes onto the shelf of releases, and the users decide by the number whether to upgrade. They now run 1.4.2.',
   ),
   intro: bi(
-    'Сейчас на схеме только программист и исходный код. Нажмите «Начать: шаг вперёд», а дальше листайте кнопкой «Шаг вперёд» под схемой. Подсвечен тот, кто работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся: правка, файл программы или номер выпуска.\n\nКогда пройдёте выпуск до конца, выберите в «Параметрах» другой вид изменения и попробуйте угадать новый номер. Потом включите в блоке «Сломать» опечатку и сравните, где её поймают для компилируемого и для скриптового языка.',
-    'Now the diagram shows only the programmer and the source code. Press “Start: step forward”, then “Step forward”. The one working is highlighted, the callout says what it does, the card on the line shows the edit, the program file or the release number.\n\nThen choose another kind of change in “Parameters” and guess the number. Switch on the typo in “Break it” and compare where it is caught for a compiled and a scripting language.',
+    'Сейчас на схеме только программист и исходный код. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Подсвечен тот, кто работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся: правка, файл программы или номер выпуска.\n\nКогда пройдёте выпуск до конца, выберите в «Параметрах» другой вид изменения и попробуйте угадать новый номер. Потом включите в блоке «Сломать» опечатку и сравните, где её поймают для компилируемого и для скриптового языка.',
+    'Now the diagram shows only the programmer and the source code. Press “Start from the first step”, then go on with “Step forward” above the diagram. The one working is highlighted, the callout says what it does, the card on the line shows the edit, the program file or the release number.\n\nThen choose another kind of change in “Parameters” and guess the number. Switch on the typo in “Break it” and compare where it is caught for a compiled and a scripting language.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },
     { mark: 'say', text: bi('что он делает', 'what it does') },
     { mark: 'token', text: bi('правка, файл программы или номер выпуска', 'the edit, the program file or the number') },
-    { mark: 'icon:user', text: bi('люди: программист и пользователи', 'people: the programmer and the users') },
+    { mark: 'icon:user', text: bi('люди, то есть программист и пользователи', 'people, that is, the programmer and the users') },
     { mark: 'icon:file', text: bi('исходный код', 'source code') },
     { mark: 'icon:process', text: bi('сборка', 'the build') },
     { mark: 'icon:container', text: bi('готовый файл программы', 'the program file') },
@@ -69,12 +69,12 @@ export const releaseModel = defineModel<P>({
     width: 960,
     height: 360,
     nodes: [
-      { id: 'dev', label: bi('Программист', 'Programmer'), icon: 'user', work: 'dots', family: 'user', x: 24, y: 56, w: 168, h: 64, card: card(bi('Программист пишет и правит исходный код, то есть текст программы, понятный людям.', 'Writes and edits the source code, a text people understand.'), bi('Это человек из команды разработки.', 'A person in the development team.')) },
-      { id: 'src', label: bi('Исходный код', 'Source code'), icon: 'file', sub: 'shop/ · 12 000 lines', family: 'obj', shape: 'doc', x: 232, y: 52, w: 208, h: 72, card: card(bi('Текст программы на языке программирования: Go, Python или Java. Его читают и правят люди, а процессор выполнить его напрямую не может.', 'The program’s text in a programming language; people read it, the processor cannot run it directly.'), bi('Исходный код пишут программисты, строчку за строчкой.', 'Programmers, line by line.'), { see: 'cat src/greet.sh' }) },
-      { id: 'build', label: bi('Сборка', 'Build'), icon: 'process', sub: 'go build', family: 'ci-build', x: 480, y: 56, w: 184, h: 64, card: card(bi('Сборка превращает исходный код в то, что запускает машина. Для языка Go это файл с инструкциями процессора, а для Python — архив с кодом и всем, что ему нужно для работы.', 'Turns source code into what the machine runs: for Go processor instructions, for Python an archive.'), bi('Сборку запускает программа-сборщик: по команде человека или сама, на отдельном сервере.', 'A build program, started by a person or a server.'), { see: 'bash build.sh' }) },
-      { id: 'artifact', label: bi('Файл программы', 'Program file'), icon: 'container', sub: 'shop', family: 'store', x: 712, y: 56, w: 224, h: 64, card: card(bi('Результат сборки: файл, который можно скопировать на другую машину и запустить там.', 'The build’s result: a file that can be copied elsewhere and run.'), bi('Файл создаёт сборка.', 'The build.')) },
-      { id: 'shelf', label: bi('Выпуски', 'Releases'), icon: 'folder', sub: '1.4.1 · 1.4.2', family: 'store', x: 712, y: 232, w: 224, h: 64, card: card(bi('Полка, на которой лежат все выпущенные версии со своими номерами. По номеру можно найти любую из них и вернуть, если новая подвела. Выпуск с номером после выхода никогда не меняют.', 'Every released version with its number; any can be brought back. A numbered release never changes.'), bi('Полку ведёт команда, которая выпускает программу.', 'The team that releases the program.'), { doc: SEMVER }) },
-      { id: 'users', label: bi('Пользователи', 'Users'), icon: 'user', sub: 'on 1.4.2', family: 'user', x: 432, y: 232, w: 208, h: 64, card: card(bi('Пользователями называют тех, у кого программа работает. Номер версии подсказывает им, можно ли обновиться без опаски.', 'Those who run the program; the number tells them whether upgrading is safe.'), bi('Это покупатели, коллеги или другие программы.', 'Customers, colleagues, other programs.')) },
+      { id: 'dev', label: bi('Программист', 'Programmer'), icon: 'user', work: 'dots', family: 'user', x: 24, y: 56, w: 168, h: 64, card: card(bi('Программист пишет и правит исходный код, то есть текст программы, понятный людям.', 'Writes and edits the source code, a text people understand.'), bi('Программист работает в команде разработки.', 'The programmer works in the development team.')) },
+      { id: 'src', label: bi('Исходный код', 'Source code'), icon: 'file', sub: 'shop/ · 12 000 lines', family: 'obj', shape: 'doc', x: 232, y: 52, w: 208, h: 72, card: card(bi('Исходный код представляет собой текст программы на языке программирования, например на Go, Python или Java. Его читают и правят люди, а процессор выполнить его напрямую не может.', 'The program’s text in a programming language; people read it, the processor cannot run it directly.'), bi('Исходный код пишут программисты, строчку за строчкой.', 'Programmers, line by line.'), { see: 'cat src/greet.sh' }) },
+      { id: 'build', label: bi('Сборка', 'Build'), icon: 'process', sub: 'go build', family: 'ci-build', x: 480, y: 56, w: 184, h: 64, card: card(bi('Сборка превращает исходный код в то, что запускает машина. Для языка Go это файл с инструкциями процессора, а для Python — архив с кодом и всем, что ему нужно для работы.', 'Turns source code into what the machine runs: for Go processor instructions, for Python an archive.'), bi('Сборку выполняет программа-сборщик, которую запускает человек или отдельный сервер.', 'A build program, started by a person or a server.'), { see: 'bash build.sh' }) },
+      { id: 'artifact', label: bi('Файл программы', 'Program file'), icon: 'container', sub: 'shop', family: 'store', x: 712, y: 56, w: 224, h: 64, card: card(bi('Сборка даёт файл, который можно скопировать на другую машину и запустить там.', 'The build’s result: a file that can be copied elsewhere and run.'), bi('Файл создаёт сборка.', 'The build.')) },
+      { id: 'shelf', label: bi('Выпуски', 'Releases'), icon: 'folder', sub: '1.4.1 · 1.4.2', family: 'store', x: 712, y: 232, w: 224, h: 64, card: card(bi('На полке выпусков лежат все выпущенные версии со своими номерами. По номеру можно найти любую из них и вернуть, если новая подвела. Выпуск с номером после выхода никогда не меняют.', 'Every released version with its number; any can be brought back. A numbered release never changes.'), bi('Полку ведёт команда, которая выпускает программу.', 'The team that releases the program.'), { doc: SEMVER }) },
+      { id: 'users', label: bi('Пользователи', 'Users'), icon: 'user', sub: 'on 1.4.2', family: 'user', x: 432, y: 232, w: 208, h: 64, card: card(bi('Пользователями называют тех, у кого программа работает. Номер версии подсказывает им, можно ли обновиться без опаски.', 'Those who run the program; the number tells them whether upgrading is safe.'), bi('Пользователями бывают покупатели, коллеги или другие программы.', 'Users can be customers, colleagues or other programs.')) },
     ],
     edges: [
       { id: 'e-edit', from: 'dev', to: 'src', label: bi('правка', 'edit'), card: card(bi('Программист меняет несколько строк исходного кода.', 'The programmer changes a few lines.'), bi('Правку вносит программист.', 'The programmer.')) },
@@ -115,20 +115,20 @@ export const releaseModel = defineModel<P>({
       default: 'compiled',
       near: 'build',
       options: [
-        { id: 'compiled', label: bi('Go: сборка переводит весь код в инструкции процессора', 'Go: compiled to processor instructions') },
-        { id: 'script', label: bi('Python: сборка только упаковывает код', 'Python: the build only packs the code') },
+        { id: 'compiled', label: bi('на Go, который сборка целиком переводит в инструкции процессора', 'in Go, which the build translates entirely into processor instructions') },
+        { id: 'script', label: bi('на Python, код которого сборка только упаковывает', 'in Python, whose code the build only packs') },
       ],
     },
   ],
   breaks: [
     {
       id: 'typo',
-      label: bi('Опечатка в коде: pirnt вместо print', 'A typo in the code: pirnt instead of print'),
+      label: bi('Программист написал в коде pirnt вместо print', 'The programmer wrote pirnt instead of print in the code'),
       remove: ['e-out'],
       predict: {
         prompt: bi('Программист написал pirnt вместо print в редко используемой части программы. Язык программы выбран в «Параметрах». Где обнаружится опечатка?', 'The programmer wrote pirnt instead of print in a rarely used part. The language is set in “Parameters”. Where will the typo show?'),
         options: [
-          { id: 'build', text: bi('На сборке: сборка остановится с ошибкой', 'At the build: it stops with an error') },
+          { id: 'build', text: bi('На сборке, которая остановится с ошибкой', 'At the build, which stops with an error') },
           { id: 'users', text: bi('У пользователей, когда программа дойдёт до этой строки', 'At the users’, when the program reaches that line') },
         ],
         resolve: (_prev, next) => (next.find((s) => s.broken)?.broken?.at === 'build' ? 'build' : 'users'),
@@ -136,13 +136,13 @@ export const releaseModel = defineModel<P>({
     },
     {
       id: 'no-number',
-      label: bi('Выпускать без номеров, под именем «последняя»', 'Release without numbers, as “latest”'),
+      label: bi('Выпуски кладут на полку без номеров, под именем «последняя»', 'Releases go onto the shelf without numbers, as “latest”'),
       remove: ['e-tag'],
       predict: {
-        prompt: bi('Выпуски кладут на полку без номеров, под именем «последняя». Пользователь пишет: «в последней версии ошибка». Что дальше?', 'Releases go onto the shelf as “latest”. A user writes: “the latest version has a bug”. What next?'),
+        prompt: bi('Выпуски кладут на полку без номеров, под именем «последняя». Пользователь пишет: «в последней версии ошибка». Что будет дальше?', 'Releases go onto the shelf as “latest”. A user writes: “the latest version has a bug”. What next?'),
         options: [
           { id: 'lost', text: bi('Непонятно, о какой сборке речь и к какой возвращаться', 'Nobody knows which build is meant or which to go back to') },
-          { id: 'fine', text: bi('Всё ясно: последняя версия всегда одна', 'All clear: there is always one latest') },
+          { id: 'fine', text: bi('Всё ясно, потому что последняя версия всегда одна', 'All is clear, because there is always one latest version') },
         ],
         resolve: (_p, next) => (next.some((s) => s.broken) ? 'lost' : 'fine'),
       },
@@ -150,7 +150,7 @@ export const releaseModel = defineModel<P>({
   ],
   metrics: [
     { id: 'buildSec', label: bi('время сборки', 'build time'), unit: 's' },
-    { id: 'released', label: bi('выпусков на полке', 'releases on the shelf') },
+    { id: 'released', label: bi('сколько выпусков на полке', 'releases on the shelf') },
   ],
   run(p, broken): Step[] {
     const v = nextVersion(p.change);
@@ -178,8 +178,8 @@ export const releaseModel = defineModel<P>({
         id: 'build',
         label: bi('сборка', 'build'),
         caption: compiled
-          ? bi('Сборка читает весь код и переводит его в инструкции процессора. По дороге она проверяет каждое имя в программе: если какого-то имени не существует, сборка дальше не пойдёт.', 'The build reads all the code and translates it into processor instructions, checking every name on the way.')
-          : bi('Программу на Python переводят для процессора уже во время работы, поэтому сборка здесь короче: она только укладывает код и всё, что ему нужно, в один архив. Каждое имя при этом не проверяется.', 'A Python program is translated while it runs, so the build only packs the code into an archive; names are not checked.'),
+          ? bi('Сборка читает весь код и переводит его в инструкции процессора. По дороге она проверяет каждое имя в программе, и если какого-то имени не существует, сборка дальше не пойдёт.', 'The build reads all the code and translates it into processor instructions, checking every name on the way.')
+          : bi('Программу на Python переводят для процессора уже во время работы, поэтому сборка здесь короче и только укладывает код и всё, что ему нужно, в один архив. Каждое имя при этом не проверяется.', 'A Python program is translated while it runs, so the build only packs the code into an archive; names are not checked.'),
         focus: ['e-build', 'build'],
         reveal: ['build', 'e-build'],
         tokens: [{ edge: 'e-build', label: compiled ? 'shop/*.go' : 'shop/*.py' }],
@@ -201,7 +201,7 @@ export const releaseModel = defineModel<P>({
         say: { build: bi('Сборщик не нашёл имени pirnt и остановил сборку.', 'The builder found no pirnt and stopped.') },
         states: { build: 'err' },
         metrics: { buildSec, released: 2 },
-        broken: { at: 'build', message: './greet.go:12:2: undefined: pirnt', caption: bi('на сборке. Ошибку поймали раньше, чем она дошла до пользователей: в этом и польза строгой сборки.', 'at the build: the error was caught before the users; this is what a strict build is good for.') },
+        broken: { at: 'build', message: './greet.go:12:2: undefined: pirnt', caption: bi('на сборке. Ошибку поймали раньше, чем она дошла до пользователей, и в этом польза строгой сборки.', 'at the build: the error was caught before the users; this is what a strict build is good for.') },
       });
       return steps;
     }
@@ -225,7 +225,7 @@ export const releaseModel = defineModel<P>({
         focus: ['e-tag', 'shelf'],
         reveal: ['shelf', 'e-tag', 'users'],
         tokens: [{ edge: 'e-tag', label: 'latest' }],
-        say: { shelf: bi('На полке один файл «последняя», прежние выпуски затёрты.', 'One “latest” file; the old releases are overwritten.') },
+        say: { shelf: bi('На полке лежит один файл «последняя», а прежние выпуски затёрты.', 'One “latest” file; the old releases are overwritten.') },
         states: { shelf: 'err', users: 'warn' },
         values: { shelf: 'latest', users: 'on latest (?)' },
         metrics: { buildSec, released: 1 },
@@ -266,8 +266,8 @@ export const releaseModel = defineModel<P>({
       label: bi('обновление', 'upgrade'),
       caption:
         p.change === 'breaking'
-          ? bi('Пользователи видят номер 2.0.0 и понимают: прежде чем обновляться, нужно прочитать, что изменилось несовместимо, и поправить свои настройки. Кто не готов, пока остаётся на 1.4.2.', 'The users see 2.0.0: read what broke before upgrading. Whoever is not ready stays on 1.4.2.')
-          : fmtb(bi('Пользователи видят номер {v} и обновляются без опаски: по номеру ясно, что всё старое работает как прежде.', 'The users see {v} and upgrade without fear.'), { v }),
+          ? bi('Пользователи видят номер 2.0.0 и понимают, что прежде чем обновляться, нужно прочитать, что изменилось несовместимо, и поправить свои настройки. Кто не готов, пока остаётся на 1.4.2.', 'The users see 2.0.0: read what broke before upgrading. Whoever is not ready stays on 1.4.2.')
+          : fmtb(bi('Пользователи видят номер {v} и обновляются без опаски, потому что по номеру ясно, что всё старое работает как прежде.', 'The users see {v} and upgrade without fear.'), { v }),
       focus: ['e-upgrade', 'users'],
       reveal: ['users', 'e-upgrade'],
       tokens: [{ edge: 'e-upgrade', label: v }],
@@ -285,7 +285,7 @@ export const releaseModel = defineModel<P>({
   },
   explainDelta(_prev, next, change, _a, b): Bi {
     if (change.kind === 'break') {
-      if (!change.on) return bi('Поломку убрали: сборка и выпуск снова проходят до конца.', 'The break is removed.');
+      if (!change.on) return bi('Поломку выключили, и сборка с выпуском снова проходят до конца.', 'The break is off, and the build and the release go through to the end again.');
       if (change.id === 'no-number') return bi('Без номеров выпуски сливаются в одну «последнюю», и уже не понять, что стоит у пользователей и куда возвращаться.', 'Without numbers releases merge into one “latest”.');
       return next.find((s) => s.broken)?.broken?.at === 'build'
         ? bi('Сборка программы на Go проверяет имена, поэтому опечатка остановила её, и до пользователей ничего не дошло.', 'A compiled build checks names: the typo stopped it.')
