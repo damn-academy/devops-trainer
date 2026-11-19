@@ -90,6 +90,30 @@ export function splitLabel(text: string): [string, string] | null {
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 /** Measure and tidy a mounted diagram. Safe to call more than once; does nothing without layout (jsdom). */
+/**
+ * Fits a node's mono value line (it changes per step) into the node width:
+ * shrinks the font down to 62 %, then shortens the text with an ellipsis and
+ * keeps the full value in a tooltip. Does nothing before layout.
+ */
+export function fitSub(sub: SVGTextElement, nodeWidth: number): void {
+  if (typeof sub.getComputedTextLength !== 'function' || !sub.isConnected) return;
+  sub.style.fontSize = '';
+  sub.querySelector('title')?.remove();
+  const full = sub.textContent ?? '';
+  const avail = nodeWidth - 12;
+  const width = sub.getComputedTextLength();
+  if (!full || width === 0 || width <= avail) return;
+  const base = parseFloat(getComputedStyle(sub).fontSize) || 12;
+  const k = avail / width;
+  sub.style.fontSize = `${(base * Math.max(0.62, k)).toFixed(2)}px`;
+  if (k >= 0.62) return;
+  let n = full.length;
+  while (n > 4 && sub.getComputedTextLength() > avail) sub.textContent = `${full.slice(0, --n).trimEnd()}…`;
+  const tip = document.createElementNS(SVGNS, 'title');
+  tip.textContent = full;
+  sub.append(tip);
+}
+
 export function tidyDiagram(svg: SVGSVGElement, d: Diagram): void {
   const probe = svg.querySelector<SVGTextElement>('text');
   if (!probe || typeof probe.getComputedTextLength !== 'function' || !svg.isConnected) return;
@@ -136,6 +160,11 @@ export function tidyDiagram(svg: SVGSVGElement, d: Diagram): void {
     if (hasSub) sub!.setAttribute('y', String(Number(sub!.getAttribute('y')) + 7));
     const widest = Math.max(...lines.map((l) => l.getComputedTextLength()));
     if (widest > avail) label.style.fontSize = `${(base * Math.max(0.68, avail / widest)).toFixed(2)}px`;
+  }
+  for (const n of d.nodes) {
+    if (n.shape === 'bar') continue;
+    const sub = svg.querySelector<SVGTextElement>(`g.node[data-id="${CSS.escape(n.id)}"] text.node-sub`);
+    if (sub) fitSub(sub, n.w);
   }
 
   // 2. edge labels

@@ -9,7 +9,7 @@ import { bi, lang, t, type Bi } from '../../core/i18n';
 import type { DiagramGroup, DiagramNode, ElementCard, ExplainerCtx, ExplainerReg, ModelChange, Mounted, ParamSpec, Prediction, ProcessModel, QText, Step } from '../../core/types';
 import { renderInline, renderMd } from '../../core/markdown';
 import { docChip } from '../docs/viewer';
-import { tidyDiagram } from './tidy';
+import { fitSub, tidyDiagram } from './tidy';
 import { changedElements, edgePoints, fold, keepIndex, metricDelta, pathD, pointAt, type Pt } from './geometry';
 
 const L = {
@@ -22,19 +22,19 @@ const L = {
   first: bi('В начало', 'To the start'),
   last: bi('В конец', 'To the end'),
   knobs: bi('Параметры', 'Parameters'),
-  breakIt: bi('Сломай', 'Break it'),
+  breakIt: bi('Сломать', 'Break it'),
   changed: bi('Что изменилось', 'What changed'),
   predict: bi('Что будет?', 'What will happen?'),
-  youSaid: bi('Ты предположил', 'You predicted'),
+  youSaid: bi('Вы предположили', 'You predicted'),
   happened: bi('Вышло', 'What happened'),
   right: bi('Совпало', 'Right'),
-  notRight: bi('Не совпало — посмотри, где расходится', 'Not quite — see where it differs'),
+  notRight: bi('Не совпало — посмотрите, где расходится', 'Not quite — see where it differs'),
   cardWho: bi('Кто создаёт', 'Who creates it'),
   cardSee: bi('Как посмотреть', 'How to look at it'),
   cardDoc: bi('Где написано', 'Where it is written'),
   stoppedAt: bi('Процесс остановился', 'The process stopped'),
   speed: bi('Скорость', 'Speed'),
-  hintClick: bi('Нажми на любой элемент схемы — он объяснит себя.', 'Click any element of the diagram — it explains itself.'),
+  hintClick: bi('Нажмите на любой элемент схемы — он объяснит себя.', 'Click any element of the diagram — it explains itself.'),
   cancel: bi('Отмена', 'Cancel'),
   waterfall: bi('Водопад запроса', 'Request waterfall'),
 };
@@ -322,7 +322,15 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
           .join(' '),
       );
       const sub = subEls.get(id);
-      if (sub) sub.textContent = frame.values[id] ?? d.nodes.find((n) => n.id === id)?.sub ?? '';
+      if (sub) {
+        const n = d.nodes.find((x) => x.id === id);
+        const text = frame.values[id] ?? n?.sub ?? '';
+        if (sub.dataset.full !== text) {
+          sub.dataset.full = text;
+          sub.textContent = text;
+          if (n && n.shape !== 'bar') fitSub(sub as SVGTextElement, n.w);
+        }
+      }
     }
     for (const [id, f] of fillEls) {
       const v = Math.max(0, Math.min(1, frame.fill[id] ?? 0));
@@ -334,7 +342,8 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const isFocus = focus.has(id);
       const removed = [...broken].some((b) => model.breaks.find((x) => x.id === b)?.remove.includes(id));
       const isErr = state === 'err' || brokeAt?.at === id;
-      e.g.setAttribute('class', ['edge', isFocus ? 'focus' : '', state ? `st-${state}` : '', removed ? 'removed' : '', isErr ? 'broken' : '', selected === id ? 'selected' : '', highlight.includes(id) ? 'changed' : ''].filter(Boolean).join(' '));
+      const carrying = (st?.tokens ?? []).some((tk) => tk.edge === id && tk.label);
+      e.g.setAttribute('class', ['edge', carrying ? 'carrying' : '', isFocus ? 'focus' : '', state ? `st-${state}` : '', removed ? 'removed' : '', isErr ? 'broken' : '', selected === id ? 'selected' : '', highlight.includes(id) ? 'changed' : ''].filter(Boolean).join(' '));
       e.path.setAttribute('marker-end', `url(#arr-${model.id}-${isErr ? 'e' : isFocus ? 'f' : 'n'})`);
     }
     // tokens
@@ -594,7 +603,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
         }),
       );
     }
-    knobBox.append(h('div.knob', { 'data-knob': spec.id }, h('div.knob-head', {}, h('span.knob-label', {}, t(spec.label)), value), control, h('p.knob-delta', { 'aria-live': 'polite' })));
+    knobBox.append(h('div.knob', { 'data-knob': spec.id, 'data-kind': spec.kind }, h('div.knob-head', {}, h('span.knob-label', {}, t(spec.label)), value), control, h('p.knob-delta', { 'aria-live': 'polite' })));
   }
 
   if (model.breaks.length) {
@@ -710,7 +719,8 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
 }
 
 function formatNum(n: number): string {
-  return Number.isInteger(n) ? n.toLocaleString(lang() === 'ru' ? 'ru-RU' : 'en-US') : n.toFixed(2);
+  // Two decimals at most, no float noise ("25.000000004" → "25"), locale decimal mark.
+  return n.toLocaleString(lang() === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits: 2 });
 }
 
 function formatParam(spec: ParamSpec, v: unknown): string {
