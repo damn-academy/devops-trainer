@@ -51,11 +51,11 @@ export const LINUX_EXAM: Exam = {
   kind: 'block',
   title: bi('Экзамен Linux: первый день на сервере', 'Linux exam: the first day on the server'),
   intro: bi(
-    'Пять карточек из трекера небольшого магазина. Каждая проверяется по состоянию машины, а не по набранным командам: подходит любой путь. Подсказок нет; открыта только встроенная документация — `man` и `--help`.',
+    'Пять карточек из трекера задач небольшого интернет-магазина. Каждую карточку проверяют по состоянию машины, а не по набранным командам, поэтому подходит любой путь к результату. Подсказок нет, а из документации открыта только встроенная: `man` и `--help`.',
     'Five cards from a small shop’s tracker. Each is checked by the state of the machine, not by the commands you type: any way works. There are no hints; only the built-in documentation is open — `man` and `--help`.',
   ),
   story: bi(
-    'Сегодня ваш первый день в магазине «Ларёк». Сайт и база работают на одном сервере «как-то так», а утром клиенты жаловались на оплату. Тимлид оставил в трекере пять карточек и ушёл на встречу.',
+    'Сегодня ваш первый день в интернет-магазине «Ларёк». Сайт и база данных кое-как работают на одном сервере, а утром покупатели жаловались, что не проходит оплата. Руководитель команды оставил в трекере пять карточек и ушёл на встречу.',
     'It is your first day at a small online shop. The site and the database run on one server “somehow”, and customers complained about checkout this morning. The team lead left five cards in the tracker and went to a meeting.',
   ),
   minutes: 45,
@@ -64,13 +64,13 @@ export const LINUX_EXAM: Exam = {
   explain: [
     {
       id: 'e1',
-      prompt: bi('Тимлид спрашивает: «Чем `>` отличается от `>>` и почему это важно, когда правите конфигурацию?» Ответьте ему.', 'The team lead asks: “How does `>` differ from `>>`, and why does it matter when you edit configuration?” Answer.'),
-      keyPoints: [bi('`>` открывает файл с обрезкой: старое содержимое пропадает', '`>` opens the file truncated: the old content is gone'), bi('`>>` дописывает в конец', '`>>` appends at the end'), bi('перенаправление делает оболочка до запуска команды', 'the shell does the redirection before the command starts'), bi('перед правкой конфигурации — копия или проверка', 'before editing configuration: a copy or a check')],
+      prompt: bi('Руководитель команды спрашивает: «Чем `>` отличается от `>>` и почему это важно, когда правите конфигурацию?» Ответьте ему.', 'The team lead asks: “How does `>` differ from `>>`, and why does it matter when you edit configuration?” Answer.'),
+      keyPoints: [bi('`>` открывает файл, предварительно опустошив его, и старое содержимое пропадает', '`>` opens the file truncated: the old content is gone'), bi('`>>` дописывает текст в конец файла', '`>>` appends at the end'), bi('перенаправление выполняет оболочка ещё до запуска команды', 'the shell does the redirection before the command starts'), bi('перед правкой конфигурации нужно сделать копию или проверить результат', 'before editing configuration: a copy or a check')],
     },
     {
       id: 'e2',
-      prompt: bi('«В журнале миллион строк, а `grep ERROR` выдаёт тысячи. Как будете искать причину?»', '“The log has a million lines and `grep ERROR` prints thousands. How will you look for the cause?”'),
-      keyPoints: [bi('сузить по времени начала симптома', 'narrow by the time the symptom started'), bi('посчитать и сгруппировать похожие ошибки', 'count and group similar errors'), bi('связать с запросами по идентификатору', 'link to the requests by an id'), bi('конвейер из простых команд, а не просмотр глазами', 'a pipeline of simple commands, not reading by eye')],
+      prompt: bi('«В журнале миллион строк, а `grep ERROR` выдаёт тысячи. Как вы будете искать причину?»', '“The log has a million lines and `grep ERROR` prints thousands. How will you look for the cause?”'),
+      keyPoints: [bi('сузить поиск до времени, когда начался симптом', 'narrow by the time the symptom started'), bi('сгруппировать похожие ошибки и посчитать их', 'count and group similar errors'), bi('связать ошибки с запросами по идентификатору', 'link to the requests by an id'), bi('собрать конвейер из простых команд, а не просматривать журнал глазами', 'a pipeline of simple commands, not reading by eye')],
     },
   ],
   tasks: [
@@ -82,7 +82,7 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'dirs',
-        prompt: bi('Карточка 1. «Приложению нужен каталог для журналов: `~/shop/logs`. И сразу заведите `~/shop/backup` — для копий конфигурации».', 'Card 1. “The application needs a log directory: `~/shop/logs`. And create `~/shop/backup` right away — for config copies.”'),
+        prompt: bi('Карточка 1. «Приложению нужен каталог для журналов `~/shop/logs`. И сразу заведите каталог `~/shop/backup`, в котором будут храниться копии конфигурации».', 'Card 1. “The application needs a log directory: `~/shop/logs`. And create `~/shop/backup` right away — for config copies.”'),
         concepts: [],
         check: { when: `files['${HOME}/shop/logs'].type=d && files['${HOME}/shop/backup'].type=d && files['${HOME}/shop/data/orders.db']` },
       },
@@ -94,10 +94,10 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'env',
-        prompt: bi('Карточка 2. «Приложение должно слушать порт 8080: допишите `PORT=8080` в `~/shop/config/app.env`, ничего не потеряв из того, что там уже есть».', 'Card 2. “The application must listen on port 8080: add `PORT=8080` to `~/shop/config/app.env` without losing anything already there.”'),
+        prompt: bi('Карточка 2. «Приложение должно слушать порт 8080. Допишите строку `PORT=8080` в файл `~/shop/config/app.env` так, чтобы не потерять ничего из того, что в нём уже есть».', 'Card 2. “The application must listen on port 8080: add `PORT=8080` to `~/shop/config/app.env` without losing anything already there.”'),
         check: {
           when: `files['${HOME}/shop/config/app.env'].text ~ 'PORT=8080' && files['${HOME}/shop/config/app.env'].text ~ 'DB_HOST=db' && files['${HOME}/shop/config/app.env'].text ~ 'DB_PORT=5432'`,
-          fail: [{ if: `files['${HOME}/shop/config/app.env'].text ~ 'PORT=8080' && !(files['${HOME}/shop/config/app.env'].text ~ 'DB_HOST=db')`, say: bi('Строка есть, но прежние настройки пропали: файл перезаписан.', 'The line is there, but the old settings are gone: the file was overwritten.') }],
+          fail: [{ if: `files['${HOME}/shop/config/app.env'].text ~ 'PORT=8080' && !(files['${HOME}/shop/config/app.env'].text ~ 'DB_HOST=db')`, say: bi('Строка появилась, но прежние настройки пропали, потому что файл был перезаписан.', 'The line is there, but the old settings are gone: the file was overwritten.') }],
         },
       },
     },
@@ -109,7 +109,7 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'errors-a',
-        prompt: bi('Карточка 3. «Соберите в `~/errors.txt` все строки с ERROR из `/var/log/shop/app.log` — и только их: хочу показать их разработчикам».', 'Card 3. “Put every ERROR line from `/var/log/shop/app.log` into `~/errors.txt` — and only those: I want to show them to the developers.”'),
+        prompt: bi('Карточка 3. «Соберите в файл `~/errors.txt` все строки со словом ERROR из журнала `/var/log/shop/app.log`, и только их: я хочу показать их разработчикам».', 'Card 3. “Put every ERROR line from `/var/log/shop/app.log` into `~/errors.txt` — and only those: I want to show them to the developers.”'),
         check: {
           when: (f) => {
             const lines = text(f, `${HOME}/errors.txt`).split('\n').filter(Boolean);
@@ -126,7 +126,7 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'errors-b',
-        prompt: bi('Карточка 3. «Соберите в `~/504.txt` все строки журнала доступа `/var/log/shop/access.log`, где сервер ответил 504, — и только их».', 'Card 3. “Put every line of the access log `/var/log/shop/access.log` where the server answered 504 into `~/504.txt` — and only those.”'),
+        prompt: bi('Карточка 3. «Соберите в файл `~/504.txt` все строки журнала доступа `/var/log/shop/access.log`, в которых сервер ответил кодом 504, и только их».', 'Card 3. “Put every line of the access log `/var/log/shop/access.log` where the server answered 504 into `~/504.txt` — and only those.”'),
         check: {
           when: (f) => {
             const lines = text(f, `${HOME}/504.txt`).split('\n').filter(Boolean);
@@ -142,10 +142,10 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'lock',
-        prompt: bi('Карточка 4. «После вчерашнего падения остался устаревший файл блокировки `~/shop/data/.lock` — удалите его, данные не трогайте».', 'Card 4. “A stale lock file `~/shop/data/.lock` is left after yesterday’s crash — remove it, leave the data alone.”'),
+        prompt: bi('Карточка 4. «После вчерашнего аварийного завершения приложения остался устаревший файл блокировки `~/shop/data/.lock`. Удалите его, а данные не трогайте».', 'Card 4. “A stale lock file `~/shop/data/.lock` is left after yesterday’s crash — remove it, leave the data alone.”'),
         check: {
           when: `!files['${HOME}/shop/data/.lock'] && files['${HOME}/shop/data/orders.db'].text ~ 'orders v3'`,
-          fail: [{ if: `!files['${HOME}/shop/data/orders.db']`, say: bi('Вместе с блокировкой пропали данные заказов.', 'The orders data is gone together with the lock.') }],
+          fail: [{ if: `!files['${HOME}/shop/data/orders.db']`, say: bi('Вместе с файлом блокировки пропали и данные заказов.', 'The orders data is gone together with the lock.') }],
         },
       },
     },
@@ -157,7 +157,7 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'count',
-        prompt: bi('Карточка 5. «Сколько раз за утро падал платёжный шлюз? Запишите одно число в `~/gateway.txt`». Это задача вне курса: ответ — в документации.', 'Card 5. “How many times did the payment gateway fail this morning? Write a single number into `~/gateway.txt`.” This task is beyond the course: the answer is in the documentation.'),
+        prompt: bi('Карточка 5. «Сколько раз за утро не ответил платёжный шлюз? Запишите одно число в файл `~/gateway.txt`». Этой задачи не было в курсе, и ответ нужно найти в документации.', 'Card 5. “How many times did the payment gateway fail this morning? Write a single number into `~/gateway.txt`.” This task is beyond the course: the answer is in the documentation.'),
         docStep: 5,
         beyond: true,
         docRef: { page: 'man/grep.1', anchor: 'OPTIONS' },
@@ -177,11 +177,11 @@ export const GIT_EXAM: Exam = {
   kind: 'block',
   title: bi('Экзамен Git: сайт кафе', 'Git exam: the café site'),
   intro: bi(
-    'Четыре карточки по репозиторию сайта кафе. Проверяется состояние репозитория — коммиты, ветки, файлы, — а не набранные команды. Открыта только встроенная справка Git.',
+    'Четыре карточки о репозитории сайта кафе. Проверяется состояние репозитория, то есть коммиты, ветки и файлы, а не набранные команды. Из документации открыта только встроенная справка Git.',
     'Four cards about the café site’s repository. The state of the repository is checked — commits, branches, files — not the commands you type. Only the built-in Git help is open.',
   ),
   story: bi(
-    'Небольшая кофейня держит сайт в Git. Прежний подрядчик ушёл, оставив репозиторий в беспорядке; владелица просит навести порядок до завтрашней выкладки.',
+    'Небольшая кофейня хранит свой сайт в Git. Прежний подрядчик ушёл и оставил репозиторий в беспорядке, и владелица просит навести порядок до завтрашней выкладки.',
     'A small coffee shop keeps its site in Git. The previous contractor left the repository in a mess; the owner asks you to tidy it up before tomorrow’s release.',
   ),
   minutes: 40,
@@ -190,13 +190,13 @@ export const GIT_EXAM: Exam = {
   explain: [
     {
       id: 'e1',
-      prompt: bi('Владелица спрашивает: «Файл с паролем мы же убрали из репозитория — значит, всё в порядке?» Ответьте ей.', 'The owner asks: “We removed the password file from the repository, so everything is fine?” Answer her.'),
-      keyPoints: [bi('старые коммиты по-прежнему содержат пароль', 'the old commits still contain the password'), bi('историю уже скопировали другие', 'others have already copied the history'), bi('пароль считается утёкшим и меняется', 'the password counts as leaked and is changed'), bi('в репозиторий кладут пример без значений', 'the repository gets an example without values')],
+      prompt: bi('Владелица спрашивает: «Мы же убрали файл с паролем из репозитория, значит, всё в порядке?» Ответьте ей.', 'The owner asks: “We removed the password file from the repository, so everything is fine?” Answer her.'),
+      keyPoints: [bi('в старых коммитах пароль по-прежнему есть', 'the old commits still contain the password'), bi('историю репозитория уже скопировали другие люди', 'others have already copied the history'), bi('пароль нужно считать утёкшим и сменить', 'the password counts as leaked and is changed'), bi('в репозиторий кладут пример файла без настоящих значений', 'the repository gets an example without values')],
     },
     {
       id: 'e2',
-      prompt: bi('«Почему вы отменили коммит новым коммитом, а не просто удалил его из истории?»', '“Why did you undo the commit with a new commit instead of just removing it from the history?”'),
-      keyPoints: [bi('история уже у коллег на сервере', 'the history is already with colleagues on the server'), bi('переписанная история расходится с их копиями', 'a rewritten history diverges from their copies'), bi('отменяющий коммит виден и сам отменяется', 'the undoing commit is visible and can itself be undone')],
+      prompt: bi('«Почему вы отменили коммит новым коммитом, а не удалили его из истории?»', '“Why did you undo the commit with a new commit instead of just removing it from the history?”'),
+      keyPoints: [bi('история уже лежит на сервере и у коллег', 'the history is already with colleagues on the server'), bi('переписанная история разойдётся с их копиями', 'a rewritten history diverges from their copies'), bi('отменяющий коммит виден в истории, и его самого тоже можно отменить', 'the undoing commit is visible and can itself be undone')],
     },
   ],
   tasks: [
@@ -208,7 +208,7 @@ export const GIT_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add pages', files: PAGES }], worktree: { 'menu.html': MENU, 'notes.txt': 'call the milk supplier\n' } }] }),
       task: {
         id: 'menu',
-        prompt: bi('Карточка 1. «Новая страница `menu.html` должна попасть в main отдельным коммитом. `notes.txt` — мои личные заметки, в репозиторий им нельзя, но и удалять их не надо».', 'Card 1. “The new `menu.html` page must land in main as a commit of its own. `notes.txt` is my personal notes: it must not go into the repository, but do not delete it either.”'),
+        prompt: bi('Карточка 1. «Новая страница `menu.html` должна попасть в ветку main отдельным коммитом. Файл `notes.txt` — мои личные заметки: в репозиторий их класть нельзя, но и удалять не надо».', 'Card 1. “The new `menu.html` page must land in main as a commit of its own. `notes.txt` is my personal notes: it must not go into the repository, but do not delete it either.”'),
         check: { when: (f) => repo(f)?.branch === 'main' && 'menu.html' in (head(f)?.files ?? {}) && !('notes.txt' in (head(f)?.files ?? {})) && !!f.files['/home/learner/site/notes.txt'] },
       },
     },
@@ -219,7 +219,7 @@ export const GIT_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add pages', files: { ...PAGES, 'index.html': TYPO } }] }] }),
       task: {
         id: 'branch',
-        prompt: bi('Карточка 2. «В заголовке главной лишний восклицательный знак: «Edu Cafe!». Исправьте в отдельной ветке `fix/title` и слейте её в main — так у нас принято».', 'Card 2. “The home page heading has a stray exclamation mark: “Edu Cafe!”. Fix it in a separate `fix/title` branch and merge it into main — that is how we work.”'),
+        prompt: bi('Карточка 2. «В заголовке главной страницы лишний восклицательный знак: „Edu Cafe!“. Исправьте его в отдельной ветке `fix/title` и слейте её в main, так у нас принято».', 'Card 2. “The home page heading has a stray exclamation mark: “Edu Cafe!”. Fix it in a separate `fix/title` branch and merge it into main — that is how we work.”'),
         check: { when: (f) => repo(f)?.branch === 'main' && !!repo(f)?.branches['fix/title'] && (head(f)?.files['index.html'] ?? '').includes('<h1>Edu Cafe</h1>') },
       },
     },
@@ -230,10 +230,10 @@ export const GIT_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add pages', files: PAGES }, { message: 'Add config', files: { '.env': 'DB_PASSWORD=hunter2\n' } }] }] }),
       task: {
         id: 'secret',
-        prompt: bi('Карточка 3. «Подрядчик закоммитил `.env` с паролем. Сделайте так, чтобы Git перестал следить за этим файлом и больше никогда не взял его в коммит, но сам файл у меня на диске остался».', 'Card 3. “The contractor committed `.env` with a password. Make Git stop tracking that file and never take it into a commit again, but keep the file on my disk.”'),
+        prompt: bi('Карточка 3. «Подрядчик закоммитил файл `.env` с паролем. Сделайте так, чтобы Git перестал следить за этим файлом и больше никогда не взял его в коммит, но сам файл у меня на диске остался».', 'Card 3. “The contractor committed `.env` with a password. Make Git stop tracking that file and never take it into a commit again, but keep the file on my disk.”'),
         check: {
           when: (f) => !('.env' in (head(f)?.files ?? {})) && /(^|\n)\/?\.env\s*(\n|$)/.test(head(f)?.files['.gitignore'] ?? '') && !!f.files['/home/learner/site/.env'],
-          fail: [{ if: (f) => !f.files['/home/learner/site/.env'], say: bi('Файл удалён и с диска: а он нужен приложению.', 'The file is gone from disk too, and the application needs it.') }],
+          fail: [{ if: (f) => !f.files['/home/learner/site/.env'], say: bi('Файл удалён и с диска, а он нужен приложению.', 'The file is gone from disk too, and the application needs it.') }],
         },
       },
     },
@@ -245,7 +245,7 @@ export const GIT_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add pages', files: PAGES }, { message: 'Rework the home page', files: { 'index.html': '<!doctype html>\n<title>TODO</title>\n' } }] }] }),
       task: {
         id: 'revert',
-        prompt: bi('Карточка 4. «Последний коммит сломал главную, а историю уже забрали коллеги. Отмените его — не переписывая историю». Это задача вне курса: ответ — в справке Git.', 'Card 4. “The last commit broke the home page, and colleagues have already pulled the history. Undo it — without rewriting the history.” This task is beyond the course: the answer is in the Git help.'),
+        prompt: bi('Карточка 4. «Последний коммит сломал главную страницу, а коллеги уже забрали себе историю. Отмените этот коммит, не переписывая историю». Этой задачи не было в курсе, и ответ нужно найти в справке Git.', 'Card 4. “The last commit broke the home page, and colleagues have already pulled the history. Undo it — without rewriting the history.” This task is beyond the course: the answer is in the Git help.'),
         docStep: 5,
         beyond: true,
         docRef: { page: 'man/git-revert.1' },

@@ -35,24 +35,24 @@ const M = {
   grade: bi('Завершить и разобрать', 'Finish and review'),
   grading: bi('Нейросеть разбирает ответы…', 'The AI is reviewing the answers…'),
   self: bi('Разбор по рубрике', 'Review on the rubric'),
-  selfLede: bi('Для каждого ответа честно поставьте баллы, сверяясь с эталоном и ключевыми пунктами. Якоря баллов — под каждым критерием.', 'For each answer score yourself honestly against the model answer and key points. The anchors are under each criterion.'),
+  selfLede: bi('Честно поставьте баллы каждому ответу, сверяясь с эталоном и ключевыми пунктами. Что означает каждый балл, написано под критерием.', 'For each answer score yourself honestly against the model answer and key points. The anchors are under each criterion.'),
   save: bi('Посчитать итог', 'Compute the result'),
   mean: bi('Средний балл: {m} из 3', 'Mean score: {m} of 3'),
-  passed: bi('Этот прогон — на уровне «готов к живому собеседованию».', 'This run is at the “ready for a live interview” level.'),
-  notPassed: bi('Пока ниже порога: средний 2 и ни одного нуля по честности.', 'Below the bar for now: a mean of 2 and no zero for honesty.'),
-  ready: bi('Три мок-интервью подряд выше порога — пора к людям: найдите того, кто проведёт живое мок-интервью.', 'Three mock interviews in a row above the bar — time for people: find someone to run a live mock interview.'),
+  passed: bi('По этому интервью вы на уровне «готов к живому собеседованию».', 'This run is at the “ready for a live interview” level.'),
+  notPassed: bi('Пока результат ниже порога: нужен средний балл не ниже 2 и ни одного нуля по честности.', 'Below the bar for now: a mean of 2 and no zero for honesty.'),
+  ready: bi('Если три учебных интервью подряд оказались выше порога, пора разговаривать с людьми: найдите того, кто проведёт с вами учебное интервью вживую.', 'Three mock interviews in a row above the bar — time for people: find someone to run a live mock interview.'),
   unconfirmed: bi('не подтверждено цитатой', 'not confirmed by a quote'),
   model: bi('Эталон и ключевые пункты', 'Model answer and key points'),
   again: bi('Новое интервью', 'A new interview'),
-  aiFail: bi('Нейросеть не вернула разбор по схеме — оцените ответы сами.', 'The AI did not return a review in the expected format — score the answers yourself.'),
+  aiFail: bi('Нейросеть вернула разбор не по схеме, поэтому оцените ответы сами.', 'The AI did not return a review in the expected format — score the answers yourself.'),
   workOn: bi('Над чем поработать', 'What to work on'),
   strong: bi('Сильные стороны', 'Strengths'),
 };
 
 const Q = {
-  hello: bi('Здравствуйте! Я тимлид команды платформы. Начнём с простого: расскажите о себе.', 'Hello! I lead the platform team. Let us start simple: tell me about yourself.'),
-  situational: bi('Ситуация: пользователи пишут, что магазин отдаёт 504. Вы дежурный. Что будете делать?', 'A situation: users say the shop returns 504. You are on call. What will you do?'),
-  situationalFollow: bi('Журнал ошибок nginx говорит «upstream timed out … while connecting to upstream». Что дальше?', 'The nginx error log says “upstream timed out … while connecting to upstream”. What next?'),
+  hello: bi('Здравствуйте! Я руковожу платформенной командой. Начнём с простого: расскажите о себе.', 'Hello! I lead the platform team. Let us start simple: tell me about yourself.'),
+  situational: bi('Представьте: пользователи пишут, что магазин отвечает ошибкой 504, а дежурите вы. Что вы будете делать?', 'A situation: users say the shop returns 504. You are on call. What will you do?'),
+  situationalFollow: bi('В журнале ошибок nginx записано: «upstream timed out … while connecting to upstream». Что вы сделаете дальше?', 'The nginx error log says “upstream timed out … while connecting to upstream”. What next?'),
   behavioural: bi('Расскажите о случае, когда вы ошиблись. Что произошло и что вы сделали потом?', 'Tell me about a time you made a mistake. What happened and what did you do afterwards?'),
   yours: bi('Какие у вас есть вопросы к нам?', 'What questions do you have for us?'),
   bye: bi('Спасибо, на этом всё. Сейчас посмотрим, как прошло.', 'Thank you, that is all. Let us see how it went.'),
@@ -317,7 +317,7 @@ export const mockWidget: WidgetReg = {
         disposed = true;
         clear(el);
       },
-      describe: () => t(bi('Мок-интервью', 'Mock interview')),
+      describe: () => t(bi('Учебное интервью', 'Mock interview')),
     };
   },
 };

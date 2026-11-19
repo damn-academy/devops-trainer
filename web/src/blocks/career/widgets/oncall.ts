@@ -32,13 +32,13 @@ interface Card {
 
 const O = {
   intro: bi(
-    'Смена длится 60 минут на жёстком таймере. Инциденты приходят по одному, но не ждут друг друга. Встроенный наставник выключен; команды и выбор шага показывают то, что показал бы настоящий сервер. В конце — разбор без виноватых по главному инциденту.',
+    'Смена длится 60 минут по жёсткому таймеру. Инциденты приходят по одному, но не ждут, пока вы закончите с предыдущим. Встроенный наставник выключен, а в ответ на ваши команды и выбор шага доска показывает то, что показал бы настоящий сервер. В конце вы пишете разбор главного инцидента без поиска виноватых.',
     'The shift lasts 60 minutes on a hard timer. Incidents arrive one by one but do not wait for each other. The built-in mentor is off; commands and step choices show what a real server would show. At the end, a blameless review of the main incident.',
   ),
   start: bi('Начать смену', 'Start the shift'),
   cols: { new: bi('Новое', 'New'), doing: bi('Разбираю', 'Investigating'), mitigated: bi('Смягчено', 'Mitigated'), closed: bi('Закрыто', 'Closed') } as Record<Col, Bi>,
   take: bi('Взять в работу', 'Take it'),
-  wip: bi('В «Разбираю» уже есть инцидент: лимит 1.', 'Investigating already holds an incident: the limit is 1.'),
+  wip: bi('В колонке «Разбираю» уже есть инцидент, а больше одного там держать нельзя.', 'Investigating already holds an incident: the limit is 1.'),
   pickFirst: bi('На доске два инцидента. Какой возьмёте первым?', 'Two incidents are on the board. Which do you take first?'),
   newAlert: bi('Пока вы работаете, пришёл новый алерт. Что будете делать?', 'While you work, a new alert arrives. What do you do?'),
   announce: bi('Объявить в чате и продолжить текущий', 'Announce it in the chat and carry on with the current one'),
@@ -46,30 +46,30 @@ const O = {
   ignore: bi('Не отвлекаться, ничего не писать', 'Stay focused, write nothing'),
   note: bi('Сообщение в чат: что вы видите, когда возьмёте и почему не сейчас', 'A chat message: what you see, when you will take it and why not now'),
   noteSend: bi('Отправить', 'Send'),
-  ciTitle: bi('Конвейер main красный третий час', 'The main pipeline has been red for three hours'),
-  ciPrompt: bi('Красный тест падает через раз: `test_checkout_timeout`. Что будете делать?', 'A test fails every other run: `test_checkout_timeout`. What do you do?'),
+  ciTitle: bi('Конвейер ветки main третий час красный', 'The main pipeline has been red for three hours'),
+  ciPrompt: bi('Тест `test_checkout_timeout` не проходит через раз. Что вы будете делать?', 'A test fails every other run: `test_checkout_timeout`. What do you do?'),
   ciOptions: [
-    { id: 'retry', text: bi('Поставить `retry: 5` на джобу тестов', 'Put `retry: 5` on the test job'), ok: false, why: bi('Прячет нестабильность: тест будет «зелёным» случайно, а настоящая регрессия проскочит.', 'Hides the flakiness: the test turns “green” by chance and a real regression slips through.') },
-    { id: 'allow', text: bi('Сделать джобу тестов `allow_failure: true`', 'Make the test job `allow_failure: true`'), ok: false, why: bi('Выключает проверку целиком — обходной путь, который на экзаменах не засчитывается.', 'Turns the check off entirely — a workaround that never counts on an exam.') },
-    { id: 'quarantine', text: bi('Найти нестабильный тест, вынести его в карантин с задачей и владельцем, перезапустить конвейер', 'Find the flaky test, quarantine it with a ticket and an owner, re-run the pipeline'), ok: true, why: bi('Выкладки снова идут, а тест не потерян: у него есть владелец и срок.', 'Releases flow again and the test is not lost: it has an owner and a deadline.') },
+    { id: 'retry', text: bi('Поставить `retry: 5` на задание с тестами', 'Put `retry: 5` on the test job'), ok: false, why: bi('Это прячет нестабильность: тест будет проходить случайно, а настоящая ошибка проскочит незамеченной.', 'Hides the flakiness: the test turns “green” by chance and a real regression slips through.') },
+    { id: 'allow', text: bi('Поставить заданию с тестами `allow_failure: true`', 'Make the test job `allow_failure: true`'), ok: false, why: bi('Это выключает проверку целиком, а такой обходной путь на экзаменах не засчитывается.', 'Turns the check off entirely — a workaround that never counts on an exam.') },
+    { id: 'quarantine', text: bi('Найти нестабильный тест, отправить его в карантин, завести на него задачу с ответственным и перезапустить конвейер', 'Find the flaky test, quarantine it with a ticket and an owner, re-run the pipeline'), ok: true, why: bi('Выкладки снова идут, а тест не забыт: у него есть ответственный и срок.', 'Releases flow again and the test is not lost: it has an owner and a deadline.') },
   ],
-  review: bi('Разбор главного инцидента в четыре строки — без поиска виноватых', 'A four-line review of the main incident — without blame'),
+  review: bi('Разбор главного инцидента из четырёх частей, без поиска виноватых', 'A four-line review of the main incident — without blame'),
   rTimeline: bi('Хронология: ключевые моменты со временем', 'Timeline: the key moments with times'),
   rImpact: bi('Влияние: кто пострадал и насколько', 'Impact: who was affected and how much'),
-  rFactors: bi('Способствующие факторы: условия системы, по одному на строку', 'Contributing factors: conditions of the system, one per line'),
-  rActions: bi('Действия: проверяемые изменения, у каждого владелец и срок', 'Actions: checkable changes, each with an owner and a date'),
+  rFactors: bi('Способствующие факторы: условия в системе, по одному на строку', 'Contributing factors: conditions of the system, one per line'),
+  rActions: bi('Действия: изменения, которые можно проверить, и у каждого ответственный и срок', 'Actions: checkable changes, each with an owner and a date'),
   finish: bi('Сдать смену', 'Hand over the shift'),
   timeUp: bi('Время смены вышло.', 'The shift time is up.'),
   passed: bi('Смена сдана', 'Shift passed'),
   failed: bi('Смена пока не сдана', 'Shift not passed yet'),
   lines: {
     priority: bi('Первым взят инцидент с наибольшим влиянием', 'The highest-impact incident was taken first'),
-    announce: bi('Новый алерт объявлен в чате, а не брошен', 'The new alert was announced in the chat, not dropped'),
-    checkout: bi('504: сервис возвращён, причина устранена, без разрушающих шагов до улик', '504: service restored, cause removed, no destructive steps before evidence'),
-    disk: bi('Диск: место освобождено безопасно, повтор предотвращён', 'Disk: space freed safely, recurrence prevented'),
-    ci: bi('Конвейер: починен без обходных путей', 'Pipeline: fixed without workarounds'),
-    review: bi('Разбор: хронология, влияние, два и больше условия системы, действия с владельцем, без виноватых', 'Review: timeline, impact, two or more system conditions, actions with owners, no blame'),
-    rubric: bi('Средний балл дриллов ≥ 2 и ни одного нуля по безопасности', 'Mean drill score ≥ 2 and no zero for safety'),
+    announce: bi('О новом алерте сообщили в чате, а не бросили его', 'The new alert was announced in the chat, not dropped'),
+    checkout: bi('504: сервис возвращён, причина устранена, и до сбора улик не было разрушительных действий', '504: service restored, cause removed, no destructive steps before evidence'),
+    disk: bi('Диск: место освобождено безопасно, и повторение предотвращено', 'Disk: space freed safely, recurrence prevented'),
+    ci: bi('Конвейер починен без обходных путей', 'Pipeline: fixed without workarounds'),
+    review: bi('В разборе есть хронология, влияние, два или больше условий в системе и действия с ответственными, а виноватых не ищут', 'Review: timeline, impact, two or more system conditions, actions with owners, no blame'),
+    rubric: bi('Средний балл тренировок не ниже 2 и ни одного нуля по безопасности', 'Mean drill score ≥ 2 and no zero for safety'),
   },
   again: bi('Новая смена', 'A new shift'),
 };
@@ -102,8 +102,8 @@ export const oncallWidget: WidgetReg = {
     const run = () => {
       const started = Date.now();
       const cards: Card[] = [
-        { id: 'ci', title: O.ciTitle, impact: bi('выкладки стоят, пользователи не затронуты', 'releases blocked, users unaffected'), at: '14:02', col: 'new' },
-        { id: 'checkout', title: bi('HighErrorRate: оформление заказа отдаёт 504', 'HighErrorRate: checkout returns 504'), impact: bi('около 30% запросов оплаты падают', 'about 30% of checkout requests fail'), at: '14:10', col: 'new' },
+        { id: 'ci', title: O.ciTitle, impact: bi('выкладки стоят, а пользователей это не задевает', 'releases blocked, users unaffected'), at: '14:02', col: 'new' },
+        { id: 'checkout', title: bi('HighErrorRate: оформление заказа отвечает ошибкой 504', 'HighErrorRate: checkout returns 504'), impact: bi('около 30 % запросов оплаты заканчиваются ошибкой', 'about 30% of checkout requests fail'), at: '14:10', col: 'new' },
       ];
       const res: { priority?: boolean; announce?: boolean; checkout?: DrillResult; disk?: DrillResult; ci?: boolean; review?: boolean } = {};
       let alerted = false;
@@ -183,7 +183,7 @@ export const oncallWidget: WidgetReg = {
       };
 
       const alertArrives = () => {
-        const disk: Card = { id: 'disk', title: bi('DiskWillFillIn4Hours на сервере shop', 'DiskWillFillIn4Hours on the shop server'), impact: bi('пока никого: запас около 4 часов', 'nobody yet: about 4 hours of headroom'), at: '14:19', col: 'new' };
+        const disk: Card = { id: 'disk', title: bi('DiskWillFillIn4Hours на сервере shop', 'DiskWillFillIn4Hours on the shop server'), impact: bi('пользователей пока не задевает, запас около 4 часов', 'nobody yet: about 4 hours of headroom'), at: '14:19', col: 'new' };
         cards.push(disk);
         drawBoard();
         const box = h('div.cw-alert', { role: 'alert' });
