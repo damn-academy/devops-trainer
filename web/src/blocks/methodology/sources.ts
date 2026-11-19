@@ -1,0 +1,55 @@
+// Source links of the methodology block (07 §16). Titles are in the language
+// of the source itself.
+
+import type { SourceLink } from '../../core/types';
+
+export const S = {
+  doraCapabilities: { title: 'DORA — Capabilities', url: 'https://dora.dev/capabilities/' },
+  doraMetrics: { title: 'DORA’s software delivery performance metrics', url: 'https://dora.dev/guides/dora-metrics/' },
+  doraCulture: { title: 'DORA — Generative organizational culture', url: 'https://dora.dev/capabilities/generative-organizational-culture/' },
+  devopsHandbook: { title: 'Kim, Humble, Debois, Willis — The DevOps Handbook, 2nd ed. (IT Revolution)', url: 'https://itrevolution.com/product/the-devops-handbook-second-edition/' },
+  kanbanGuide: { title: 'Vacanti, Coleman — The Kanban Guide', url: 'https://kanbanguides.org/english/' },
+  scrumGuide: { title: 'Schwaber, Sutherland — The Scrum Guide (2020)', url: 'https://scrumguides.org/scrum-guide.html' },
+  manifesto: { title: 'Manifesto for Agile Software Development', url: 'https://agilemanifesto.org/' },
+  principles: { title: 'Principles behind the Agile Manifesto', url: 'https://agilemanifesto.org/principles.html' },
+  little: { title: 'Little, J.D.C. (1961). A Proof for the Queuing Formula: L = λW. Operations Research 9(3)', url: 'https://doi.org/10.1287/opre.9.3.383' },
+  littleWiki: { title: 'Little’s law — Wikipedia', url: 'https://en.wikipedia.org/wiki/Little%27s_law' },
+  cfdWiki: { title: 'Cumulative flow diagram — Wikipedia', url: 'https://en.wikipedia.org/wiki/Cumulative_flow_diagram' },
+  tocWiki: { title: 'Theory of constraints — Wikipedia', url: 'https://en.wikipedia.org/wiki/Theory_of_constraints' },
+  multitasking: { title: 'Human multitasking — Wikipedia', url: 'https://en.wikipedia.org/wiki/Human_multitasking' },
+  cod: { title: 'Black Swan Farming — Cost of Delay', url: 'https://blackswanfarming.com/cost-of-delay/' },
+  fowlerCI: { title: 'Martin Fowler — Continuous Integration', url: 'https://martinfowler.com/articles/continuousIntegration.html' },
+  fowlerCD: { title: 'Martin Fowler — ContinuousDelivery (bliki)', url: 'https://martinfowler.com/bliki/ContinuousDelivery.html' },
+  cdCom: { title: 'Jez Humble — continuousdelivery.com', url: 'https://continuousdelivery.com/' },
+  sreBook: { title: 'Site Reliability Engineering (Google) — table of contents', url: 'https://sre.google/sre-book/table-of-contents/' },
+  sreToil: { title: 'Site Reliability Engineering, ch. 5 — Eliminating Toil', url: 'https://sre.google/sre-book/eliminating-toil/' },
+  sreSlo: { title: 'Site Reliability Engineering, ch. 4 — Service Level Objectives', url: 'https://sre.google/sre-book/service-level-objectives/' },
+  sreIncidents: { title: 'Site Reliability Engineering, ch. 14 — Managing Incidents', url: 'https://sre.google/sre-book/managing-incidents/' },
+  srePostmortem: { title: 'Site Reliability Engineering, ch. 15 — Postmortem Culture: Learning from Failure', url: 'https://sre.google/sre-book/postmortem-culture/' },
+  wbAlerting: { title: 'The Site Reliability Workbook — Alerting on SLOs', url: 'https://sre.google/workbook/alerting-on-slos/' },
+  wbPolicy: { title: 'The Site Reliability Workbook — Example Error Budget Policy', url: 'https://sre.google/workbook/error-budget-policy/' },
+  wbPostmortem: { title: 'The Site Reliability Workbook — Postmortem Culture', url: 'https://sre.google/workbook/postmortem-culture/' },
+  etsy: { title: 'Etsy — Debriefing Facilitation Guide', url: 'https://extfiles.etsy.com/DebriefingFacilitationGuide.pdf' },
+  goodhartWiki: { title: 'Goodhart’s law — Wikipedia', url: 'https://en.wikipedia.org/wiki/Goodhart%27s_law' },
+  westrum: { title: 'Westrum, R. (2004). A typology of organisational cultures. BMJ Quality & Safety', url: 'https://doi.org/10.1136/qshc.2003.009522' },
+} satisfies Record<string, SourceLink>;
+
+export const R = {
+  devops: { title: 'DevOps — Википедия', url: 'https://ru.wikipedia.org/wiki/DevOps' },
+  lean: { title: 'Бережливое производство — Википедия', url: 'https://ru.wikipedia.org/wiki/Бережливое_производство' },
+  kanban: { title: 'Канбан (разработка) — Википедия', url: 'https://ru.wikipedia.org/wiki/Канбан_(разработка)' },
+  kanbanToyota: { title: 'Канбан — Википедия', url: 'https://ru.wikipedia.org/wiki/Канбан' },
+  little: { title: 'Закон Литтла — Википедия', url: 'https://ru.wikipedia.org/wiki/Закон_Литтла' },
+  percentile: { title: 'Процентиль — Википедия', url: 'https://ru.wikipedia.org/wiki/Процентиль' },
+  toc: { title: 'Теория ограничений — Википедия', url: 'https://ru.wikipedia.org/wiki/Теория_ограничений' },
+  scrumGuide: { title: 'Руководство по Скраму (2020), русский перевод', url: 'https://scrumguides.org/docs/scrumguide/v2020/2020-Scrum-Guide-Russian.pdf' },
+  manifesto: { title: 'Манифест гибкой разработки программного обеспечения', url: 'https://agilemanifesto.org/iso/ru/manifesto.html' },
+  principles: { title: 'Принципы, лежащие в основе Agile-манифеста', url: 'https://agilemanifesto.org/iso/ru/principles.html' },
+  scrumWiki: { title: 'Scrum — Википедия', url: 'https://ru.wikipedia.org/wiki/Scrum' },
+  ci: { title: 'Непрерывная интеграция — Википедия', url: 'https://ru.wikipedia.org/wiki/Непрерывная_интеграция' },
+  cd: { title: 'Непрерывная поставка — Википедия', url: 'https://ru.wikipedia.org/wiki/Непрерывная_поставка' },
+  goodhart: { title: 'Закон Гудхарта — Википедия', url: 'https://ru.wikipedia.org/wiki/Закон_Гудхарта' },
+  sla: { title: 'Соглашение об уровне услуг — Википедия', url: 'https://ru.wikipedia.org/wiki/Соглашение_об_уровне_услуг' },
+  itil: { title: 'ITIL — Википедия', url: 'https://ru.wikipedia.org/wiki/ITIL' },
+  multitask: { title: 'Многозадачность — Википедия', url: 'https://ru.wikipedia.org/wiki/Многозадачность' },
+} satisfies Record<string, SourceLink>;
