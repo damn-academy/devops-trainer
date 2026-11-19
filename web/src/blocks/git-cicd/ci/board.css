@@ -1,0 +1,36 @@
+/* The pipeline page widget. Status colour is always doubled by an icon. */
+.pb { border: 1px solid var(--line-2); border-radius: var(--r-lg); padding: 14px 16px; background: var(--bg); font-family: var(--font-ui); }
+.pb-title { margin: 0 0 6px; }
+.pb h4 { font: 600 0.75rem/1.2 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 14px 0 6px; }
+.pb-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; font-size: 0.88rem; }
+.pb-badge { border-radius: 99px; padding: 2px 10px; font-weight: 600; border: 1.5px solid currentColor; }
+[data-st="success"] { --st: var(--c-ok); }
+[data-st="failed"] { --st: var(--c-err); }
+[data-st="running"] { --st: var(--c-flow); }
+[data-st="manual"], [data-st="blocked"], [data-st="pending"] { --st: var(--c-warn); }
+[data-st="skipped"], [data-st="created"], [data-st="canceled"] { --st: var(--muted); }
+.pb-badge { color: var(--st); }
+.pb-cols { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 4px; }
+.pb-col { display: grid; gap: 8px; align-content: start; min-width: 168px; }
+.pb-stage { font: 600 0.78rem/1 var(--font-ui); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 2px; border-bottom: 1px solid var(--line-2); }
+.pb-job { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; text-align: left; border: 1.5px solid var(--st); border-radius: var(--r); background: var(--bg); padding: 6px 10px; cursor: pointer; color: var(--ink); font: inherit; }
+.pb-job[data-st="skipped"], .pb-job[data-st="created"] { border-style: dashed; }
+.pb-job[aria-pressed="true"] { background: var(--bg-2); box-shadow: 0 0 0 2px var(--focus); }
+.pb-ic { grid-row: span 2; color: var(--st); font-weight: 700; align-self: center; }
+.pb-name { font-family: var(--font-mono); font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pb-st { font-size: 0.75rem; color: var(--muted); }
+.pb-time { display: grid; gap: 4px; }
+.pb-row { display: grid; grid-template-columns: minmax(80px, 160px) minmax(0, 1fr) 48px; gap: 8px; align-items: center; font-size: 0.8rem; }
+.pb-row-name { font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pb-track { position: relative; height: 10px; background: var(--bg-2); border-radius: 5px; }
+.pb-bar { position: absolute; top: 0; bottom: 0; border-radius: 5px; background: var(--st); transition: left var(--t-step) var(--ease), width var(--t-step) var(--ease); }
+.pb-row-t { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pb-log { background: var(--term-bg); color: var(--term-fg); font: 0.8rem/1.5 var(--font-mono); padding: 10px 12px; border-radius: var(--r); max-height: 360px; overflow: auto; white-space: pre-wrap; }
+.pb-log .lg-err { color: var(--term-red); font-weight: 600; }
+.pb-log .lg-ok { color: var(--term-green); }
+.pb-log .lg-warn { color: var(--term-yellow); }
+.pb-log .lg-sec { color: var(--term-cyan); font-weight: 600; }
+.pb-yaml { border-left: 3px solid var(--c-err); padding: 6px 12px; background: var(--c-err-bg); border-radius: 0 var(--r) var(--r) 0; }
+.pb-yaml p { margin: 4px 0 0; font-size: 0.88rem; }
+.pb-excl { font-size: 0.86rem; margin-top: 8px; }
+@media (prefers-reduced-motion: reduce) { .pb-bar { transition: none; } }
