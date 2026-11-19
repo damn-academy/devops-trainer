@@ -10,7 +10,7 @@
 import { defineModel } from '../../../core/define';
 import { bi, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { card, compare, fmtb, lastMetric, ruNum, startWith } from './kit';
+import { card, compare, fmtb, lastMetric, ruNum, startWith, tr } from './kit';
 
 type P = { size: number; disk: string; open: number };
 
@@ -35,7 +35,7 @@ export function runNumbers(p: P): RunNumbers {
   return { ms, used: Math.min(used, RAM_GB), swap };
 }
 
-const gb = (x: number) => `${x.toFixed(1)} / ${RAM_GB} GB`;
+const gb = (x: number) => tr(`${ruNum(Number(x.toFixed(1)))} / ${RAM_GB} ГБ`, `${x.toFixed(1)} / ${RAM_GB} GB`);
 const ALL = ['you', 'cpu', 'screen', 'disk', 'memory', 'e-input', 'e-load', 'e-fetch', 'e-draw', 'e-save'];
 const DISK_NAME: Record<string, Bi> = { ssd: bi('быстрый диск SSD', 'a fast SSD'), hdd: bi('старый вращающийся диск HDD', 'an old spinning HDD') };
 
@@ -90,7 +90,7 @@ export const runModel = defineModel<P>({
         icon: 'process',
         sub: '3 GHz',
         family: 'process',
-        x: 380,
+        x: 408,
         y: 56,
         w: 208,
         h: 64,
@@ -137,7 +137,7 @@ export const runModel = defineModel<P>({
         sub: gb(1.8),
         family: 'gauge',
         shape: 'buffer',
-        x: 380,
+        x: 408,
         y: 224,
         w: 208,
         h: 72,
@@ -158,7 +158,7 @@ export const runModel = defineModel<P>({
         from: 'memory',
         to: 'disk',
         via: [
-          [484, 360],
+          [512, 360],
           [124, 360],
         ],
         labelAt: 0.5,
@@ -170,13 +170,12 @@ export const runModel = defineModel<P>({
   params: [
     {
       id: 'size',
-      label: bi('Размер файла программы на диске', 'Size of the program file'),
+      label: bi('Размер файла программы на диске, МБ', 'Size of the program file, MB'),
       group: bi('Программа и диск', 'The program and the disk'),
       kind: 'range',
       min: 10,
       max: 4000,
       step: 10,
-      unit: 'MB',
       default: 300,
       near: 'disk',
       predict: {
@@ -254,8 +253,8 @@ export const runModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'ms', label: bi('сколько прошло от щелчка до окна', 'from click to window'), unit: 'ms' },
-    { id: 'used', label: bi('сколько памяти занято', 'memory in use'), unit: 'GB' },
+    { id: 'ms', label: bi('сколько миллисекунд прошло от щелчка до окна', 'milliseconds from click to window') },
+    { id: 'used', label: bi('сколько гигабайт памяти занято', 'gigabytes of memory in use') },
   ],
   run(p, broken): Step[] {
     const n = runNumbers(p);
@@ -275,7 +274,7 @@ export const runModel = defineModel<P>({
         focus: ['you'],
         say: { you: bi('Вы дважды щёлкаете по значку программы «Заметки».', 'You double-click the “Notes” icon.') },
         states: { ...startWith(ALL, 'you', 'disk'), you: 'on' },
-        values: { disk: `notes · ${p.size} MB`, memory: gb(before) },
+        values: { disk: tr(`notes · ${p.size} МБ`, `notes · ${p.size} MB`), memory: gb(before), cpu: tr('3 ГГц', '3 GHz') },
         fill: { memory: before / RAM_GB },
         metrics: { ms: 0, used: before },
       },
@@ -365,7 +364,7 @@ export const runModel = defineModel<P>({
         focus: ['e-fetch', 'memory'],
         tokens: [{ edge: 'e-fetch', label: bi('письмо', 'letter'), reverse: true }],
         say: { memory: bi('Текст письма хранится только в памяти, на диске его пока нет.', 'The letter lives only in memory for now.') },
-        values: { memory: `${gb(n.used)} · letter` },
+        values: { memory: tr(`${gb(n.used)} · письмо`, `${gb(n.used)} · letter`) },
         metrics: { ms: n.ms + 16, used: n.used },
       },
     );
@@ -391,9 +390,9 @@ export const runModel = defineModel<P>({
       focus: ['e-save', 'disk'],
       reveal: ['e-save'],
       tokens: [{ edge: 'e-save', label: 'letter.txt' }],
-      say: { disk: bi('Диск записывает письмо в файл letter.txt, и выключение ему больше не страшно.', 'The disk writes the letter into letter.txt.') },
+      say: { disk: bi('Диск сохраняет письмо в letter.txt.', 'The disk writes the letter into letter.txt.') },
       states: { disk: 'ok' },
-      values: { disk: `notes · ${p.size} MB · letter.txt` },
+      values: { disk: tr(`notes · ${p.size} МБ · letter.txt`, `notes · ${p.size} MB · letter.txt`) },
       metrics: { ms: n.ms + 16, used: n.used },
     });
     return steps;

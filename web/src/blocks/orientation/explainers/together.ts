@@ -9,7 +9,7 @@
 import { defineModel } from '../../../core/define';
 import { bi, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { card, fmtb, startWith } from './kit';
+import { card, fmtb, startWith, tr } from './kit';
 
 type P = { where: string; size: string };
 
@@ -182,7 +182,7 @@ export const togetherModel = defineModel<P>({
           reveal: ['e-mailA'],
           tokens: [{ edge: 'e-mailA', label: bi('файл Анны', 'Anna’s file') }],
           say: { shared: bi('Общей копией стал файл Анны с улуном за 480.', 'Anna’s file is now the shared copy.') },
-          values: { shared: 'menu.txt · Anna’s' },
+          values: { shared: tr('menu.txt · файл Анны', 'menu.txt · Anna’s') },
           metrics: { review: 0, lost: 0 },
         },
         {
@@ -194,7 +194,7 @@ export const togetherModel = defineModel<P>({
           tokens: [{ edge: 'e-mailB', label: bi('файл Бориса', 'Boris’s file') }],
           say: { shared: bi('Файл Бориса лёг поверх файла Анны, и её правка пропала.', 'Boris’s file replaced Anna’s; her edit is gone.') },
           states: { shared: 'err', anna: 'warn' },
-          values: { shared: 'menu.txt · Boris’s', anna: `${annaLine} (lost)` },
+          values: { shared: tr('menu.txt · файл Бориса', 'menu.txt · Boris’s'), anna: tr(`${annaLine} (пропала)`, `${annaLine} (lost)`) },
           metrics: { review: 0, lost: 1 },
           broken: { at: 'shared', message: 'menu.txt (final).txt, menu.txt (final 2).txt, menu-boris-FINAL.txt', caption: bi('в общей копии. Без программы, которая соединяет правки, побеждает тот, кто сохранил файл последним.', 'in the shared copy: without a program that joins edits, whoever saved last wins.') },
         },
@@ -223,7 +223,7 @@ export const togetherModel = defineModel<P>({
         focus: ['merge'],
         say: { merge: bi('Одну и ту же строчку изменили по-разному, и выбрать между 260 и 280 должен человек.', 'The same line was changed differently, and a person must choose between 260 and 280.') },
         states: { merge: 'warn' },
-        values: { merge: '260 or 280?' },
+        values: { merge: tr('260 или 280?', '260 or 280?') },
         metrics: { review: lines * 2, lost: 0 },
       });
     steps.push(
@@ -238,7 +238,7 @@ export const togetherModel = defineModel<P>({
         tokens: [{ edge: 'e-result', label: 'v2' }],
         say: { shared: same ? bi('В общей копии чёрный чай теперь стоит 280.', 'The shared copy: black tea at 280.') : bi('В общей копии теперь обе новые цены.', 'The shared copy has both new prices.') },
         states: { shared: 'ok', merge: 'ok' },
-        values: { shared: 'menu.txt · v2', merge: same ? 'decided: 280' : 'joined' },
+        values: { shared: 'menu.txt · v2', merge: same ? tr('решили: 280', 'decided: 280') : tr('соединено', 'joined') },
         metrics: { review: same || p.size === 'big' ? lines * 2 : 0, lost: 0 },
       },
       {
@@ -255,7 +255,7 @@ export const togetherModel = defineModel<P>({
         tokens: [{ edge: 'e-log', label: bi('Анна · Борис', 'Anna · Boris') }],
         say: { history: p.size === 'big' ? bi('В истории две правки по 300 строчек, и проверять их долго.', 'Two edits of 300 lines each.') : bi('История запомнила, кто, что и когда изменил.', 'The history records who changed what.') },
         states: { history: p.size === 'big' ? 'warn' : 'on' },
-        values: { history: 'v1 · Anna · Boris' },
+        values: { history: tr('v1 · Анна · Борис', 'v1 · Anna · Boris') },
         metrics: { review: same || p.size === 'big' ? lines * 2 : 0, lost: 0 },
       },
     );
