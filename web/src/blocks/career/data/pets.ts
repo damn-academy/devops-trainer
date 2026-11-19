@@ -35,13 +35,13 @@ export const PETS: PetProject[] = [
       a('keys', 'Вход на VPS только по ключу, пароль выключен', 'Login to the VPS by key only, password login off'),
       a('branches', 'С других веток выкладки нет', 'Other branches do not deploy'),
     ],
-    defense: [bi('Что будет, если выкладка упала на середине?', 'What happens if a release fails halfway?'), bi('Как ты получил сертификат и что будет через 90 дней?', 'How did you get the certificate and what happens in 90 days?'), bi('Почему nginx в контейнере, а не на хосте?', 'Why is nginx in a container rather than on the host?')],
+    defense: [bi('Что будет, если выкладка упала на середине?', 'What happens if a release fails halfway?'), bi('Как вы получили сертификат и что будет через 90 дней?', 'How did you get the certificate and what happens in 90 days?'), bi('Почему nginx в контейнере, а не на хосте?', 'Why is nginx in a container rather than on the host?')],
   },
   {
     id: 'pet2',
     n: '2',
     title: bi('Telegram-бот с выкладкой в публичное облако', 'A Telegram bot deployed to a public cloud'),
-    what: bi('Готовый код бота курса; твоя часть — Dockerfile, конвейер и выкладка. Программирование здесь не главное.', 'The course’s ready bot code; your part is the Dockerfile, the pipeline and the release. Programming is not the point here.'),
+    what: bi('Готовый код бота курса; ваша часть — Dockerfile, конвейер и выкладка. Программирование здесь не главное.', 'The course’s ready bot code; your part is the Dockerfile, the pipeline and the release. Programming is not the point here.'),
     opensAfter: ['containers', 'cicd'],
     required: [],
     acceptance: [
@@ -72,7 +72,7 @@ export const PETS: PetProject[] = [
     id: 'pet4',
     n: '4',
     title: bi('VPN-сервер на VPS: WireGuard и nftables', 'A VPN server on a VPS: WireGuard and nftables'),
-    what: bi('Свой VPN: клиент ходит в интернет через твою машину, а машина открыта только на нужные порты.', 'Your own VPN: the client reaches the internet through your machine, and the machine exposes only the ports it needs.'),
+    what: bi('Свой VPN: клиент ходит в интернет через вашу машину, а машина открыта только на нужные порты.', 'Your own VPN: the client reaches the internet through your machine, and the machine exposes only the ports it needs.'),
     opensAfter: ['linux', 'networks'],
     required: ['beginner', 'intermediate'],
     acceptance: [
@@ -96,7 +96,7 @@ export const PETS: PetProject[] = [
       a('idem', 'Второй прогон плейбука: changed=0', 'The second playbook run: changed=0'),
       a('vault', 'Секреты в ansible-vault, не открытым текстом', 'Secrets in ansible-vault, not in plain text'),
     ],
-    defense: [bi('Что значит идемпотентность и где она у тебя нарушалась?', 'What does idempotence mean, and where did your playbook break it?'), bi('Что ты сделаешь, если кто-то поменял машину руками?', 'What do you do if someone changed the machine by hand?')],
+    defense: [bi('Что значит идемпотентность и где она у вас нарушалась?', 'What does idempotence mean, and where did your playbook break it?'), bi('Что вы сделаете, если кто-то поменял машину руками?', 'What do you do if someone changed the machine by hand?')],
   },
   {
     id: 'pet6',
@@ -121,7 +121,7 @@ export const PETS: PetProject[] = [
     opensAfter: ['k8s-2'],
     required: ['beginner', 'intermediate', 'experienced'],
     acceptance: [
-      a('chart', 'Приложение упаковано в Helm-чарт; образ собран твоим CI и лежит в настоящем registry', 'The application is a Helm chart; the image is built by your CI and lives in a real registry'),
+      a('chart', 'Приложение упаковано в Helm-чарт; образ собран вашим CI и лежит в настоящем registry', 'The application is a Helm chart; the image is built by your CI and lives in a real registry'),
       a('ingress', 'Вход через Ingress или Gateway', 'Traffic comes in through an Ingress or a Gateway'),
       a('gitops', 'Argo CD синхронизирует из Git: изменение values.yaml выкладывается без kubectl', 'Argo CD syncs from Git: a change to values.yaml is released without kubectl'),
       a('probes', 'У всех контейнеров заданы пробы и ресурсы', 'Every container has probes and resources set'),
@@ -132,7 +132,7 @@ export const PETS: PetProject[] = [
     id: 'pet7b',
     n: '7b',
     title: bi('kubeadm-кластер своими руками', 'A kubeadm cluster by hand'),
-    what: bi('Три машины, кластер без готового дистрибутива: всё, что k3s делал за тебя, — руками.', 'Three machines, a cluster without a ready distribution: everything k3s did for you, by hand.'),
+    what: bi('Три машины, кластер без готового дистрибутива: всё, что k3s делал за вас, — руками.', 'Three machines, a cluster without a ready distribution: everything k3s did for you, by hand.'),
     opensAfter: ['k8s-3'],
     required: ['experienced'],
     acceptance: [
@@ -142,7 +142,7 @@ export const PETS: PetProject[] = [
       a('upgrade', 'Обновление на следующую минорную версию', 'An upgrade to the next minor version'),
       a('cleanup', 'Машины удалены после работы', 'The machines are deleted afterwards'),
     ],
-    defense: [bi('Что ты сделаешь, если истёк сертификат API-сервера?', 'What do you do if the API server certificate expired?'), bi('Как восстановить etcd из снимка?', 'How do you restore etcd from a snapshot?')],
+    defense: [bi('Что вы сделаете, если истёк сертификат API-сервера?', 'What do you do if the API server certificate expired?'), bi('Как восстановить etcd из снимка?', 'How do you restore etcd from a snapshot?')],
   },
   {
     id: 'pet8',

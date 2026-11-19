@@ -85,11 +85,11 @@ export const funnelModel = defineModel<P>({
             final: 'A talk with the manager.',
             offer: 'A job offer.',
           }[s.id]!,
-          'Ты и компания, по одной карточке на вакансию.',
+          'Вы и компания, по одной карточке на вакансию.',
           'You and the company, one card per vacancy.',
         ),
       })),
-      { id: 'no', label: bi('Отказ или тишина', 'Rejected or silent'), sub: '—', family: 'neutral', x: 784, y: 248, w: 160, h: 88, card: card('Большая часть откликов заканчивается здесь — это норма воронки, а не оценка тебя. Карточку без ответа старше 14 дней закрывают.', 'Most applications end here — that is how a funnel works, not a verdict on you. A card with no reply older than 14 days is closed.', 'Рынок.', 'The market.') },
+      { id: 'no', label: bi('Отказ или тишина', 'Rejected or silent'), sub: '—', family: 'neutral', x: 784, y: 248, w: 160, h: 88, card: card('Большая часть откликов заканчивается здесь — это норма воронки, а не оценка вас. Карточку без ответа старше 14 дней закрывают.', 'Most applications end here — that is how a funnel works, not a verdict on you. A card with no reply older than 14 days is closed.', 'Рынок.', 'The market.') },
     ],
     edges: [
       { id: 'e1', from: 'apply', to: 'reply', label: bi('ответили', 'replied'), card: card('Конверсия первого этапа: её поднимает резюме с подтверждениями и письмо под вакансию.', 'The first-stage conversion: a CV with evidence and a letter for the vacancy raise it.', 'Рекрутер.', 'The recruiter.') },
@@ -131,7 +131,7 @@ export const funnelModel = defineModel<P>({
       default: false,
       near: 'apply',
       predict: {
-        prompt: bi('Ты начал писать письмо под каждую вакансию. Какая конверсия вырастет?', 'You started writing a letter for each vacancy. Which conversion grows?'),
+        prompt: bi('Вы начали писать письмо под каждую вакансию. Какая конверсия вырастет?', 'You started writing a letter for each vacancy. Which conversion grows?'),
         options: [
           { id: 'reply', text: bi('Отклик → ответ', 'Applied → replied') },
           { id: 'tech', text: bi('Техническое → финал', 'Technical → final') },
@@ -139,7 +139,7 @@ export const funnelModel = defineModel<P>({
         resolve: () => 'reply',
       },
     },
-    { id: 'tech', label: bi('Проходишь техническое, из 100', 'Technical interviews passed, of 100'), kind: 'range', min: 10, max: 80, step: 5, unit: '%', default: 30, near: 'tech', levels: ['intermediate', 'experienced'] },
+    { id: 'tech', label: bi('Пройдено технических, из 100', 'Technical interviews passed, of 100'), kind: 'range', min: 10, max: 80, step: 5, unit: '%', default: 30, near: 'tech', levels: ['intermediate', 'experienced'] },
   ],
   breaks: [
     {
@@ -147,7 +147,7 @@ export const funnelModel = defineModel<P>({
       label: bi('Перестать откликаться на время учёбы', 'Stop applying while studying'),
       remove: ['e1'],
       predict: {
-        prompt: bi('Ты перестал откликаться. Через сколько недель доска опустеет при пути в три недели?', 'You stopped applying. With a three-week path, in how many weeks does the board empty?'),
+        prompt: bi('Вы перестали откликаться. Через сколько недель доска опустеет при пути в три недели?', 'You stopped applying. With a three-week path, in how many weeks does the board empty?'),
         options: [
           { id: '1', text: bi('Через неделю', 'In a week') },
           { id: '3', text: bi('Примерно через три недели', 'In about three weeks') },
@@ -184,7 +184,7 @@ export const funnelModel = defineModel<P>({
       ];
     }
     return [
-      { id: 'apply', label: bi('отклики', 'apply'), caption: fmt(bi('Ты отправляешь {r} откликов в неделю; каждый ждёт ответа около недели.', 'You send {r} applications a week; each waits for a reply about a week.'), { r: p.rate }), focus: ['apply'], values: { apply: `${p.rate} / wk` }, fill: { apply: fill(p.rate) } },
+      { id: 'apply', label: bi('отклики', 'apply'), caption: fmt(bi('Вы отправляете {r} откликов в неделю; каждый ждёт ответа около недели.', 'You send {r} applications a week; each waits for a reply about a week.'), { r: p.rate }), focus: ['apply'], values: { apply: `${p.rate} / wk` }, fill: { apply: fill(p.rate) } },
       { id: 'reply', label: bi('ответы', 'replies'), caption: fmt(p.letter ? bi('Отвечают на {c}% — это {n} в неделю благодаря письмам под вакансию.', '{c}% get a reply — {n} a week, thanks to letters for each vacancy.') : bi('Отвечают на {c}% — это {n} в неделю.', '{c}% get a reply — {n} a week.'), { c: Math.round(Math.min(90, p.reply * (p.letter ? 1.6 : 1))), n: r1(pw.reply) }), focus: ['e1', 'reply', 'e-no', 'no'], tokens: [{ edge: 'e1' }, { edge: 'e-no' }], values: { reply: `${r1(pw.reply)} / wk`, no: `${r1(p.rate - pw.reply)} / wk` }, fill: { reply: fill(pw.reply) } },
       { id: 'screen', label: bi('скрининг', 'screening'), caption: fmt(bi('Скрининг проходит половина: {n} в неделю идут на техническое.', 'Half pass the screening: {n} a week go to the technical round.'), { n: r1(pw.screen) }), focus: ['e2', 'screen', 'e3'], tokens: [{ edge: 'e2' }], values: { screen: `${r1(pw.screen)} / wk` }, fill: { screen: fill(pw.screen) } },
       { id: 'tech', label: bi('техническое', 'technical'), caption: fmt(bi('Техническое проходит {t}%: {n} в неделю.', '{t}% pass the technical round: {n} a week.'), { t: p.tech, n: r1(pw.tech) }), focus: ['e3', 'tech', 'e4'], tokens: [{ edge: 'e3' }], values: { tech: `${r1(pw.tech)} / wk` }, fill: { tech: fill(pw.tech) } },

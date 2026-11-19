@@ -97,38 +97,38 @@ export function lintResume(r: Resume, vacancyKeywords: string[] = []): CvIssue[]
   const out: CvIssue[] = [];
   const push = (id: string, level: CvIssue['level'], ok: boolean, rule: Bi, say?: Bi) => out.push({ id, level, ok, rule, say: ok ? undefined : say });
 
-  push('CV1', 'error', TARGET.test(r.label), bi('Заголовок — целевая роль, а не прежняя профессия', 'The headline is the target role, not the previous profession'), bi('Напиши, кем хочешь работать: «Junior DevOps Engineer», «DevOps-инженер (стажёр)».', 'Write the job you want: “Junior DevOps Engineer”, “DevOps intern”.'));
+  push('CV1', 'error', TARGET.test(r.label), bi('Заголовок — целевая роль, а не прежняя профессия', 'The headline is the target role, not the previous profession'), bi('Напишите, кем хотите работать: «Junior DevOps Engineer», «DevOps-инженер (стажёр)».', 'Write the job you want: “Junior DevOps Engineer”, “DevOps intern”.'));
 
   const bare = r.skills.filter((s) => !s.evidence.some((e) => e.trim()));
-  push('CV2', 'error', r.skills.length > 0 && bare.length === 0, bi('У каждого навыка есть подтверждение: экзамен, пет-проект или ссылка', 'Every skill has evidence: an exam, a pet project or a link'), r.skills.length ? bi(`Без подтверждения: ${bare.map((s) => s.name).join(', ')}. Перенеси в «Знаком» или удали.`, `No evidence: ${bare.map((s) => s.name).join(', ')}. Move to “Familiar with” or remove.`) : bi('Добавь навыки — каждый с тем, что можно открыть и проверить.', 'Add skills, each with something one can open and check.'));
+  push('CV2', 'error', r.skills.length > 0 && bare.length === 0, bi('У каждого навыка есть подтверждение: экзамен, пет-проект или ссылка', 'Every skill has evidence: an exam, a pet project or a link'), r.skills.length ? bi(`Без подтверждения: ${bare.map((s) => s.name).join(', ')}. Перенесите в «Знаком» или удалите.`, `No evidence: ${bare.map((s) => s.name).join(', ')}. Move to “Familiar with” or remove.`) : bi('Добавьте навыки — каждый с тем, что можно открыть и проверить.', 'Add skills, each with something one can open and check.'));
 
   const repoProjects = r.projects.filter((p) => REPO.test(p.url));
-  push('CV3', 'error', REPO.test(r.github) && repoProjects.length > 0, bi('Ссылка на GitHub или GitLab и хотя бы один проект с репозиторием', 'A GitHub or GitLab link and at least one project with a repository'), bi('Нанимающий менеджер первым делом откроет репозиторий. Дай ссылку на профиль и на проект.', 'A hiring manager opens the repository first. Link the profile and a project.'));
+  push('CV3', 'error', REPO.test(r.github) && repoProjects.length > 0, bi('Ссылка на GitHub или GitLab и хотя бы один проект с репозиторием', 'A GitHub or GitLab link and at least one project with a repository'), bi('Нанимающий менеджер первым делом откроет репозиторий. Дайте ссылку на профиль и на проект.', 'A hiring manager opens the repository first. Link the profile and a project.'));
 
   const long = r.work.filter((w) => !w.bridge && w.highlights.filter(Boolean).length > 1);
-  push('CV4', 'warn', long.length === 0, bi('Нерелевантный опыт — одной строкой или переведён в «мост» к DevOps', 'Unrelated experience takes one line or is rewritten as a bridge to DevOps'), bi(`Сожми или переведи: ${long.map((w) => w.position || w.company).join(', ')}.`, `Shorten or translate: ${long.map((w) => w.position || w.company).join(', ')}.`));
+  push('CV4', 'warn', long.length === 0, bi('Нерелевантный опыт — одной строкой или переведён в «мост» к DevOps', 'Unrelated experience takes one line or is rewritten as a bridge to DevOps'), bi(`Сожмите или переведите: ${long.map((w) => w.position || w.company).join(', ')}.`, `Shorten or translate: ${long.map((w) => w.position || w.company).join(', ')}.`));
 
   const duties = [...r.projects.flatMap((p) => p.highlights), ...r.work.flatMap((w) => w.highlights)].filter((x) => DUTIES.test(x.trim()));
-  push('CV5', 'warn', duties.length === 0, bi('Пункты — действие и результат, а не обязанности', 'Bullets are actions and results, not duties'), bi(`Перепиши как «сделал → что изменилось»: «${duties[0] ?? ''}».`, `Rewrite as “did → what changed”: “${duties[0] ?? ''}”.`));
+  push('CV5', 'warn', duties.length === 0, bi('Пункты — действие и результат, а не обязанности', 'Bullets are actions and results, not duties'), bi(`Перепишите как «сделал → что изменилось»: «${duties[0] ?? ''}».`, `Rewrite as “did → what changed”: “${duties[0] ?? ''}”.`));
 
   const low = allText(r).toLowerCase();
   const empty = EMPTY.filter((e) => low.includes(e));
-  push('CV6', 'warn', empty.length === 0, bi('Без пустых формулировок', 'No empty phrases'), bi(`Убери или замени фактом: ${empty.join(', ')}.`, `Remove or replace with a fact: ${empty.join(', ')}.`));
+  push('CV6', 'warn', empty.length === 0, bi('Без пустых формулировок', 'No empty phrases'), bi(`Уберите или замените фактом: ${empty.join(', ')}.`, `Remove or replace with a fact: ${empty.join(', ')}.`));
 
   const words = wordCount(r);
   push('CV7', 'warn', words <= 450, bi('Одна страница A4 для джуна', 'One A4 page for a junior'), bi(`Сейчас около ${words} слов; на страницу помещается примерно 450.`, `About ${words} words now; a page holds roughly 450.`));
 
   const personal = r.lang === 'en' && (r.photo || r.age || r.family);
-  push('CV8', r.lang === 'en' ? 'error' : 'hint', !personal, bi('В английской версии нет фото, возраста и семейного положения', 'The English version has no photo, age or marital status'), bi('Для международного рынка это норма: убери фото, возраст и семейное положение.', 'This is the norm on the international market: remove the photo, age and marital status.'));
+  push('CV8', r.lang === 'en' ? 'error' : 'hint', !personal, bi('В английской версии нет фото, возраста и семейного положения', 'The English version has no photo, age or marital status'), bi('Для международного рынка это норма: уберите фото, возраст и семейное положение.', 'This is the norm on the international market: remove the photo, age and marital status.'));
 
   if (vacancyKeywords.length) {
     const missing = vacancyKeywords.filter((k) => !low.includes(k.toLowerCase()));
-    push('CV9', 'hint', missing.length === 0, bi('Ключевые слова вакансии — там, где есть подтверждение, и только там', 'The vacancy’s keywords appear where you have evidence, and only there'), bi(`В вакансии есть, а в резюме нет: ${missing.join(', ')}. Добавь только то, что можешь подтвердить.`, `In the vacancy but not in the CV: ${missing.join(', ')}. Add only what you can back up.`));
+    push('CV9', 'hint', missing.length === 0, bi('Ключевые слова вакансии — там, где есть подтверждение, и только там', 'The vacancy’s keywords appear where you have evidence, and only there'), bi(`В вакансии есть, а в резюме нет: ${missing.join(', ')}. Добавьте только то, что можете подтвердить.`, `In the vacancy but not in the CV: ${missing.join(', ')}. Add only what you can back up.`));
   }
 
   const claimed = r.work.filter((w) => /devops|sre|site reliability/i.test(w.position));
   const petAsJob = r.work.filter((w) => /(пет|pet[- ]?project|личный проект|personal project|фриланс|freelance)/i.test(`${w.company} ${w.position}`));
-  push('CV10', 'error', (claimed.length === 0 || r.devopsJobConfirmed) && petAsJob.length === 0, bi('Ничего выдуманного: пет-проект — в проектах, а не в опыте работы', 'Nothing made up: a pet project goes under projects, not work experience'), petAsJob.length ? bi('Пет-проекты перенеси в раздел «Проекты»: работой они не были.', 'Move pet projects to “Projects”: they were not a job.') : bi('Должность DevOps в опыте работы — только если она была. Отметь, что это реальная должность, или убери.', 'A DevOps position under work only if you held it. Confirm it was a real job, or remove it.'));
+  push('CV10', 'error', (claimed.length === 0 || r.devopsJobConfirmed) && petAsJob.length === 0, bi('Ничего выдуманного: пет-проект — в проектах, а не в опыте работы', 'Nothing made up: a pet project goes under projects, not work experience'), petAsJob.length ? bi('Пет-проекты перенесите в раздел «Проекты»: работой они не были.', 'Move pet projects to “Projects”: they were not a job.') : bi('Должность DevOps в опыте работы — только если она была. Отметьте, что это реальная должность, или уберите.', 'A DevOps position under work only if you held it. Confirm it was a real job, or remove it.'));
   return out;
 }
 

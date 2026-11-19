@@ -31,7 +31,7 @@ const R = {
   position: bi('Должность', 'Position'),
   years: bi('Годы', 'Years'),
   bridge: bi('Перевести в мост к DevOps', 'Rewrite as a bridge to DevOps'),
-  bridgePick: bi('— подсказка: что ты действительно делал —', '— a prompt: what you really did —'),
+  bridgePick: bi('— подсказка: что вы действительно делали —', '— a prompt: what you really did —'),
   education: bi('Образование', 'Education'),
   personal: bi('В резюме есть', 'The CV includes'),
   photo: bi('фото', 'a photo'),
@@ -42,11 +42,11 @@ const R = {
   remove: bi('Убрать', 'Remove'),
   lint: bi('Проверка', 'Check'),
   ready: bi('Ошибок нет: резюме можно отправлять', 'No errors: the CV can be sent'),
-  notReady: bi('Есть ошибки: исправь их перед отправкой', 'There are errors: fix them before sending'),
+  notReady: bi('Есть ошибки: исправьте их перед отправкой', 'There are errors: fix them before sending'),
   json: bi('Скачать JSON Resume', 'Download JSON Resume'),
   copy: bi('Скопировать текстом', 'Copy as text'),
   copied: bi('Текст резюме скопирован', 'The CV text is copied'),
-  none: bi('— выбери —', '— choose —'),
+  none: bi('— выберите —', '— choose —'),
 };
 
 function evidenceOptions(): { id: string; label: string }[] {

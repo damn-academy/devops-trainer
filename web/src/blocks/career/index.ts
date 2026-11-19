@@ -9,6 +9,7 @@ import type { Block, Sources } from '../../core/types';
 import { fromModel } from '../../engine/explainer/render';
 import { CONCEPTS } from './concepts';
 import { BLOCK_EXAMS } from './exams';
+import { CAPSTONE_EXAM, FINAL_EXAMS } from './final-exam';
 import { fsrsModel } from './explainers/fsrs';
 import { funnelModel } from './explainers/funnel';
 import { quoteModel } from './explainers/quote';
@@ -67,6 +68,8 @@ const FINAL: Block = {
   placement: [],
   lessons: ['final.oncall', 'final.capstone'],
   sources: finalSources,
+  docSources: ['help', 'ansible-doc', 'terraform', 'kubernetes.io', 'argo-cd'],
+  exam: CAPSTONE_EXAM.id,
 };
 
 const CAREER: Block = {
@@ -96,5 +99,5 @@ export default defineModule({
   quiz: QUIZ,
   explainers: [fromModel(symptomModel), fromModel(quoteModel), fromModel(funnelModel), fromModel(fsrsModel)],
   widgets: [translatorWidget, drillWidget, mockWidget, pitchWidget, resumeWidget, vacancyWidget, checklistWidget, oncallWidget],
-  exams: BLOCK_EXAMS,
+  exams: [...BLOCK_EXAMS, ...FINAL_EXAMS],
 });

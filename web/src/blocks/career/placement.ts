@@ -7,7 +7,7 @@ import type { Level, PlacementTask, QuizItem } from '../../core/types';
 const structure1: QuizItem = {
   id: 'career.p.structure.1',
   kind: 'order',
-  prompt: bi('Расставь части ответа на «Что такое DNS?» так, как ответил бы на собеседовании.', 'Order the parts of an answer to “What is DNS?” as you would at an interview.'),
+  prompt: bi('Расставьте части ответа на «Что такое DNS?» так, как ответили бы на собеседовании.', 'Order the parts of an answer to “What is DNS?” as you would at an interview.'),
   steps: [
     { id: 'what', text: bi('Превращает имя в адрес и другие записи', 'Turns a name into an address and other records') },
     { id: 'why', text: bi('Имена стабильны, адреса меняются', 'Names are stable, addresses change') },
@@ -19,7 +19,7 @@ const structure1: QuizItem = {
 const structure2: QuizItem = {
   id: 'career.p.structure.2',
   kind: 'order',
-  prompt: bi('Расставь части ответа на «Что такое жёсткая ссылка?».', 'Order the parts of an answer to “What is a hard link?”.'),
+  prompt: bi('Расставьте части ответа на «Что такое жёсткая ссылка?».', 'Order the parts of an answer to “What is a hard link?”.'),
   steps: [
     { id: 'what', text: bi('Ещё одно имя того же inode', 'Another name for the same inode') },
     { id: 'why', text: bi('Имя и данные файла в Linux разделены', 'In Linux a file’s name and data are separate') },
@@ -31,19 +31,19 @@ const structure2: QuizItem = {
 const dontKnow1: QuizItem = {
   id: 'career.p.dontknow.1',
   kind: 'mcq',
-  prompt: bi('Вопрос про Nomad, с которым ты не работал. Какой ответ лучше?', 'A question about Nomad, which you have never used. Which answer is best?'),
+  prompt: bi('Вопрос про Nomad, с которым вы не работали. Какой ответ лучше?', 'A question about Nomad, which you have never used. Which answer is best?'),
   options: [
     { id: 'a', text: bi('«Не работал. Судя по названию задачи, это планировщик нагрузки, как Kubernetes. Выяснял бы по официальной документации, разделу архитектуры, и попробовал бы локально».', '“I haven’t used it. From the task it sounds like a workload scheduler, like Kubernetes. I’d check the official docs, the architecture section, and try it locally.”'), correct: true },
     { id: 'b', text: bi('«Nomad — это система мониторинга».', '“Nomad is a monitoring system.”'), why: bi('Выдумка: ноль по честности.', 'An invention: zero for honesty.') },
     { id: 'c', text: bi('«Не знаю».', '“I don’t know.”'), why: bi('Честно, но без рассуждения и плана, как выяснить.', 'Honest, but no reasoning and no plan to find out.') },
-    { id: 'd', text: bi('«Это неважно, я быстро разберусь».', '“It doesn’t matter, I’ll figure it out fast.”'), why: bi('Уход от ответа: интервьюер не узнал ни что ты знаешь, ни как ищешь.', 'A dodge: the interviewer learns neither what you know nor how you look.') },
+    { id: 'd', text: bi('«Это неважно, я быстро разберусь».', '“It doesn’t matter, I’ll figure it out fast.”'), why: bi('Уход от ответа: интервьюер не узнал ни что вы знаете, ни как ищете.', 'A dodge: the interviewer learns neither what you know nor how you look.') },
   ],
 };
 
 const dontKnow2: QuizItem = {
   id: 'career.p.dontknow.2',
   kind: 'mcq',
-  prompt: bi('Тебя спросили про eBPF, а ты о нём только слышал. Какой ответ лучше?', 'You are asked about eBPF, which you have only heard of. Which answer is best?'),
+  prompt: bi('Вас спросили про eBPF, а вы о нём только слышали. Какой ответ лучше?', 'You are asked about eBPF, which you have only heard of. Which answer is best?'),
   options: [
     { id: 'a', text: bi('«Глубоко не знаю. Знаю, что это программы, которые ядро выполняет по событиям, — на этом построены некоторые сетевые плагины Kubernetes. Начал бы с документации ядра и проекта ebpf.io».', '“Not in depth. I know these are programs the kernel runs on events — some Kubernetes network plugins are built on it. I’d start with the kernel docs and the ebpf.io project.”'), correct: true },
     { id: 'b', text: bi('«Это новая версия iptables».', '“It is a new version of iptables.”'), why: bi('Уверенная неточность: хуже честного «не знаю».', 'A confident inaccuracy: worse than an honest “I don’t know”.') },
@@ -54,7 +54,7 @@ const dontKnow2: QuizItem = {
 const cv1: QuizItem = {
   id: 'career.p.cv.1',
   kind: 'multi',
-  prompt: bi('Учебное резюме бывшего менеджера по продажам. Какие строки не нужны в DevOps-версии в таком виде? Отметь все.', 'A training CV of a former sales manager. Which lines do not belong in the DevOps version as they are? Mark them all.'),
+  prompt: bi('Учебное резюме бывшего менеджера по продажам. Какие строки не нужны в DevOps-версии в таком виде? Отметьте все.', 'A training CV of a former sales manager. Which lines do not belong in the DevOps version as they are? Mark them all.'),
   options: [
     { id: 'kpi', text: bi('«Выполнял план продаж на 115%»', '“Achieved 115% of the sales plan”'), correct: true, why: bi('Не про эту роль: должность одной строкой, без подробностей.', 'Not about this role: the position in one line, no details.') },
     { id: 'pc', text: bi('«Уверенный пользователь ПК, стрессоустойчив»', '“Confident PC user, stress-resistant”'), correct: true, why: bi('Пустые формулировки.', 'Empty phrases.') },
@@ -66,7 +66,7 @@ const cv1: QuizItem = {
 const cv2: QuizItem = {
   id: 'career.p.cv.2',
   kind: 'multi',
-  prompt: bi('Учебное резюме специалиста поддержки. Какие строки стоит переписать или убрать? Отметь все.', 'A training CV of a support specialist. Which lines should be rewritten or removed? Mark them all.'),
+  prompt: bi('Учебное резюме специалиста поддержки. Какие строки стоит переписать или убрать? Отметьте все.', 'A training CV of a support specialist. Which lines should be rewritten or removed? Mark them all.'),
   options: [
     { id: 'duty', text: bi('«Отвечал за обработку обращений»', '“Was responsible for handling tickets”'), correct: true, why: bi('Обязанность вместо действия и результата.', 'A duty instead of an action and result.') },
     { id: 'fast', text: bi('«Быстро обучаюсь»', '“Fast learner”'), correct: true, why: bi('Пустая формулировка.', 'An empty phrase.') },
@@ -78,7 +78,7 @@ const cv2: QuizItem = {
 const method1: QuizItem = {
   id: 'career.p.504.1',
   kind: 'order',
-  prompt: bi('«Сайт отдаёт 504». Расставь шаги так, как действовал бы дежурный.', '“The site returns 504.” Order the steps as an on-call engineer would.'),
+  prompt: bi('«Сайт отдаёт 504». Расставьте шаги так, как действовал бы дежурный.', '“The site returns 504.” Order the steps as an on-call engineer would.'),
   steps: [
     { id: 'ask', text: bi('Уточнить масштаб и что менялось', 'Ask about scope and what changed') },
     { id: 'curl', text: bi('`curl -sv`: кто отвечает 504', '`curl -sv`: who answers 504') },
@@ -91,7 +91,7 @@ const method1: QuizItem = {
 const method2: QuizItem = {
   id: 'career.p.504.2',
   kind: 'mcq',
-  prompt: bi('В 14:05 вышел релиз, в 14:08 — новые правила межсетевого экрана; с 14:10 504. Журнал nginx: «while connecting to upstream». Что откатываешь первым?', 'A release went out at 14:05, new firewall rules at 14:08; 504s since 14:10. The nginx log: “while connecting to upstream”. What do you roll back first?'),
+  prompt: bi('В 14:05 вышел релиз, в 14:08 — новые правила межсетевого экрана; с 14:10 504. Журнал nginx: «while connecting to upstream». Что откатите первым?', 'A release went out at 14:05, new firewall rules at 14:08; 504s since 14:10. The nginx log: “while connecting to upstream”. What do you roll back first?'),
   options: [
     { id: 'rule', text: bi('Правила межсетевого экрана: nginx не может даже соединиться', 'The firewall rules: nginx cannot even connect'), correct: true },
     { id: 'release', text: bi('Релиз: он вышел раньше', 'The release: it came first'), why: bi('Порядок изменений не важен — важна улика: «while connecting» указывает на сеть.', 'The order of changes does not matter — the evidence does: “while connecting” points at the network.') },

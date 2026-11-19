@@ -24,7 +24,7 @@ const C = {
   readme: bi('Скопировать шаблон README', 'Copy the README template'),
   copied: bi('Шаблон README скопирован', 'The README template is copied'),
   done: bi('принят', 'accepted'),
-  path: bi('Твой путь', 'Your path'),
+  path: bi('Ваш путь', 'Your path'),
   understood: bi('План понятен', 'The plan is clear'),
   check: bi('Как проверяется', 'How it is checked'),
   ready: bi('готов', 'ready'),

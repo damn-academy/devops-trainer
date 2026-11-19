@@ -12,8 +12,8 @@ import { apologyCount, fillerCount, hasConcrete, speakingSeconds } from '../../.
 import { debounce, eventsOf, load, save } from './ui';
 
 const P = {
-  write: bi('Напиши свою самопрезентацию — своими словами, как сказал бы вслух', 'Write your self-presentation in your own words, as you would say it aloud'),
-  timer: bi('Читай вслух с таймером', 'Read it aloud with the timer'),
+  write: bi('Напишите свою самопрезентацию своими словами, как сказали бы вслух', 'Write your self-presentation in your own words, as you would say it aloud'),
+  timer: bi('Читайте вслух с таймером', 'Read it aloud with the timer'),
   startT: bi('Старт', 'Start'),
   stopT: bi('Стоп', 'Stop'),
   parts: bi('Что есть в тексте', 'What the text has'),

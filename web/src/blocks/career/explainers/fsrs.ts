@@ -60,9 +60,9 @@ export const fsrsModel = defineModel<P>({
     width: 960,
     height: 440,
     nodes: [
-      { id: 'answer', label: bi('Твой ответ', 'Your answer'), sub: '—', family: 'user', x: 16, y: 40, w: 176, h: 64, card: card('Верно или нет, с какой уверенностью и за сколько секунд.', 'Right or not, how sure you were and how many seconds it took.', 'Ты, на экране повторения.', 'You, on the review screen.') },
+      { id: 'answer', label: bi('Ваш ответ', 'Your answer'), sub: '—', family: 'user', x: 16, y: 40, w: 176, h: 64, card: card('Верно или нет, с какой уверенностью и за сколько секунд.', 'Right or not, how sure you were and how many seconds it took.', 'Вы, на экране повторения.', 'You, on the review screen.') },
       { id: 'rating', label: bi('Рейтинг', 'Rating'), sub: 'good', family: 'gauge', x: 312, y: 40, w: 176, h: 64, card: card('Ошибка — «снова»; верно, но наугад или медленно — «с трудом»; верно в норму — «вспомнил»; быстро и с «знаю» — «легко».', 'A mistake is “again”; right but guessed or slow is “hard”; right within the norm is “good”; fast with “I know” is “easy”.', 'Курс по правилу из главы о повторении.', 'The course, by the rule of the review chapter.') },
-      { id: 'fsrs', label: 'FSRS', sub: 'retention 0.90', family: 'process', shape: 'hex', x: 608, y: 40, w: 176, h: 64, card: card('Планировщик: по истории ответов оценивает, как быстро ты забываешь это понятие, и выбирает день, когда вероятность вспомнить упадёт до цели.', 'The scheduler: from the answer history it estimates how fast you forget this concept and picks the day the chance of recall falls to the target.', 'Библиотека ts-fsrs у тебя в браузере.', 'The ts-fsrs library in your browser.') },
+      { id: 'fsrs', label: 'FSRS', sub: 'retention 0.90', family: 'process', shape: 'hex', x: 608, y: 40, w: 176, h: 64, card: card('Планировщик: по истории ответов оценивает, как быстро вы забываете это понятие, и выбирает день, когда вероятность вспомнить упадёт до цели.', 'The scheduler: from the answer history it estimates how fast you forget this concept and picks the day the chance of recall falls to the target.', 'Библиотека ts-fsrs у вас в браузере.', 'The ts-fsrs library in your browser.') },
       { id: 'stab', label: bi('Стабильность', 'Stability'), sub: '—', family: 'gauge', x: 608, y: 200, w: 176, h: 64, card: card('Сколько дней память держится на уровне цели. Растёт с каждым верным ответом в срок.', 'How many days the memory stays at the target level. It grows with every right answer on time.', 'FSRS.', 'FSRS.') },
       { id: 'due', label: bi('Следующее повторение', 'Next review'), sub: '—', family: 'flow', x: 608, y: 352, w: 176, h: 64, card: card('Через сколько вернётся понятие.', 'When the concept comes back.', 'FSRS.', 'FSRS.') },
       { id: 'queue', label: bi('Очередь на день', 'The day’s queue'), sub: '≤ 15 min', family: 'neutral', shape: 'buffer', x: 312, y: 352, w: 176, h: 64, card: card('Понятия, чей срок наступил, вперемешку из разных блоков, до 15 минут или 30 карточек.', 'Concepts whose time has come, mixed across blocks, up to 15 minutes or 30 cards.', 'Экран повторения.', 'The review screen.') },
@@ -119,7 +119,7 @@ export const fsrsModel = defineModel<P>({
       default: false,
       near: 'miss',
       predict: {
-        prompt: bi('Ты ответил «знаю» и ошибся. Когда вопрос вернётся?', 'You said “I know” and were wrong. When does the question come back?'),
+        prompt: bi('Вы ответили «знаю» и ошиблись. Когда вопрос вернётся?', 'You said “I know” and were wrong. When does the question come back?'),
         options: [
           { id: 'session', text: bi('В этой же сессии и завтра', 'In this same session, and tomorrow') },
           { id: 'week', text: bi('Через неделю, как обычно', 'In a week, as usual') },
@@ -153,7 +153,7 @@ export const fsrsModel = defineModel<P>({
     const outcome = p.confident ? 'again' : p.outcome;
     const m = { next: Math.round(r.interval * 10) / 10, stab: Math.round(r.stability * 10) / 10, month: r.perMonth };
     const steps: Step[] = [
-      { id: 'answer', label: bi('ответ', 'answer'), caption: p.confident ? bi('Ты ответил «знаю», но ошибся.', 'You said “I know” but were wrong.') : outcome === 'again' ? bi('Ты ошибся.', 'You were wrong.') : bi('Ты ответил верно.', 'You answered right.'), focus: ['answer'], values: { answer: p.confident ? 'wrong · I know' : outcome }, states: { answer: outcome === 'again' ? 'err' : 'ok' } },
+      { id: 'answer', label: bi('ответ', 'answer'), caption: p.confident ? bi('Вы ответили «знаю», но ошиблись.', 'You said “I know” but were wrong.') : outcome === 'again' ? bi('Вы ошиблись.', 'You were wrong.') : bi('Вы ответили верно.', 'You answered right.'), focus: ['answer'], values: { answer: p.confident ? 'wrong · I know' : outcome }, states: { answer: outcome === 'again' ? 'err' : 'ok' } },
       { id: 'rating', label: bi('рейтинг', 'rating'), caption: fmt(bi('Рейтинг: {r}.', 'Rating: {r}.'), { r: outcome }), focus: ['e-r', 'rating'], tokens: [{ edge: 'e-r' }], values: { rating: outcome } },
     ];
     if (p.confident) steps.push({ id: 'miss', label: bi('уверенная ошибка', 'confident miss'), caption: bi('Уверенная ошибка: вопрос другого вида вернётся в конце этой сессии и ещё раз завтра.', 'A confident mistake: a question of another kind comes back at the end of this session and again tomorrow.'), focus: ['e-m', 'miss'], tokens: [{ edge: 'e-m' }], values: { miss: '1' }, fill: { miss: 0.5 } });
