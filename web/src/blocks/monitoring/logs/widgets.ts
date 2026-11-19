@@ -32,7 +32,7 @@ const L = {
   placeholder: bi('Запрос LogQL, например {app="api"} |= "error"', 'A LogQL query, e.g. {app="api"} |= "error"'),
   goals: bi('Что найти', 'What to find'),
   hint: bi('Подсказка', 'Hint'),
-  empty: bi('Пусто: ни одна строка не подошла.', 'Empty: no line matched.'),
+  empty: bi('Ни одна строка журнала не подошла под запрос.', 'No log line matched the query.'),
   lines: bi('строк', 'lines'),
   series: bi('рядов', 'series'),
   range: bi('за последний час, сначала новые', 'over the last hour, newest first'),

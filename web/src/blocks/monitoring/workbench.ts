@@ -40,7 +40,7 @@ const L = {
   table: bi('Таблица', 'Table'),
   graph: bi('График', 'Graph'),
   targets: bi('Цели (/metrics)', 'Targets (/metrics)'),
-  empty: bi('Пустой результат: ни один ряд не подошёл.', 'Empty result: no series matched.'),
+  empty: bi('Запрос вернул пустой результат, потому что ни один ряд не подошёл под условия.', 'The query returned an empty result, because no series matched the conditions.'),
   series: bi('рядов', 'series'),
   goals: bi('Что найти', 'What to find'),
   done: bi('Найдено', 'Found'),
