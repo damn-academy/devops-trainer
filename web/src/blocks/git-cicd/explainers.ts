@@ -8,7 +8,7 @@
 // thing it hands on travels along a line as a labelled card.
 
 import { defineModel } from '../../core/define';
-import { bi, fmt, type Bi } from '../../core/i18n';
+import { bi, fmt, t, type Bi } from '../../core/i18n';
 import type { DocRef, ElementCard, ElementState, Step } from '../../core/types';
 import { objectId } from './git/sha1';
 
@@ -85,7 +85,7 @@ export const gitModel = defineModel<GitP>({
       { id: 'commit', label: 'commit', icon: 'disk', sub: '', family: 'ci-source', shape: 'doc', x: 544, y: 40, w: 184, h: 64, card: card(bi('Объект коммита хранит ссылку на снимок, ссылку на родителя, автора, время и сообщение. Хэш коммита вычисляется из всего этого, поэтому подменить историю незаметно нельзя.', 'An object: tree, parent, author, time, message. The commit hash depends on all of it, so history cannot be changed quietly.'), bi('Коммит записывает команда `git commit`.', 'git commit.'), 'git cat-file -p HEAD', { page: 'man/git-commit.1', anchor: 'DESCRIPTION' }) },
       { id: 'parent', label: bi('прошлый коммит', 'previous commit'), icon: 'disk', sub: '', family: 'neutral', shape: 'doc', x: 544, y: 300, w: 184, h: 56, card: card(bi('Коммит, на который указывала ветка до нового коммита. Цепочка таких ссылок от коммита к родителю и составляет историю проекта.', 'The commit the branch pointed to before. The chain of parents is the history.'), bi('Этот коммит записала предыдущая команда `git commit`.', 'The previous git commit.'), 'git log --oneline') },
       { id: 'main', label: 'main', icon: 'file', sub: 'refs/heads/main', family: 'ci-test', shape: 'pill', x: 792, y: 40, w: 152, h: 48, card: card(bi('Ветка main хранится как файл `.git/refs/heads/main`, в котором записан хэш одного коммита. Новый коммит переписывает этот файл, и ветка передвигается вперёд.', 'A branch is the file .git/refs/heads/main with one hash. A new commit rewrites that file.'), bi('Ветку передвигают команды `git commit`, `git merge` и `git reset`.', 'git commit, git merge, git reset move it.'), 'cat .git/refs/heads/main', { page: 'man/git-branch.1', anchor: 'DESCRIPTION' }) },
-      { id: 'head', label: 'HEAD', icon: 'file', sub: 'ref: refs/heads/main', family: 'ci-test', shape: 'pill', x: 792, y: 140, w: 152, h: 48, card: card(bi('Указатель HEAD показывает, на какой ветке вы сейчас стоите. Поэтому Git знает, какую ветку передвинуть после коммита.', '"You are here": a pointer to the current branch. git switch rewrites HEAD.'), bi('HEAD переписывают команды `git switch` и `git checkout`.', 'git switch, git checkout.'), 'cat .git/HEAD', { page: 'man/git-switch.1', anchor: 'DESCRIPTION' }) },
+      { id: 'head', label: 'HEAD', icon: 'file', sub: 'refs/heads/main', family: 'ci-test', shape: 'pill', x: 792, y: 236, w: 152, h: 48, card: card(bi('Указатель HEAD показывает, на какой ветке вы сейчас стоите. Поэтому Git знает, какую ветку передвинуть после коммита.', '"You are here": a pointer to the current branch. git switch rewrites HEAD.'), bi('HEAD переписывают команды `git switch` и `git checkout`.', 'git switch, git checkout.'), 'cat .git/HEAD', { page: 'man/git-switch.1', anchor: 'DESCRIPTION' }) },
       { id: 'forge', label: 'forge.edu', icon: 'server', work: 'spin', sub: 'team/site.git', family: 'cp', shape: 'rack', x: 792, y: 368, w: 152, h: 96, card: card(bi('Удалённый репозиторий на сервере команды. В нём такой же набор объектов и веток, как у вас, и туда отправляют работу все участники команды.', 'The remote repository: the same set of objects and branches, on the team server.'), bi('Репозиторий на сервере создаёт команда, а наполняет его команда `git push`.', 'The team creates it; git push fills it.'), 'git remote -v', { page: 'man/git-push.1', anchor: 'DESCRIPTION' }) },
     ],
     edges: [
@@ -95,7 +95,7 @@ export const gitModel = defineModel<GitP>({
       { id: 'e-snap', from: 'tree', to: 'commit', label: bi('ссылка на снимок', 'tree <oid>'), card: card(bi('Коммит указывает на один снимок корневого каталога, то есть на весь проект целиком.', 'A commit points to one root tree: the whole project snapshot.'), bi('Ссылку записывает команда `git commit`.', 'git commit.'), 'git cat-file -p HEAD') },
       { id: 'e-parent', from: 'commit', to: 'parent', via: [[636, 150], [636, 150]], label: bi('ссылка на родителя', 'parent <oid>'), labelAt: 0.75, dashed: true, card: card(bi('Каждый коммит ссылается на родителя, поэтому от последнего коммита можно пройти назад по всей истории.', 'A link to the parent: history is a chain of commits back in time.'), bi('Команда `git commit` берёт родителя из ветки, на которую указывает HEAD.', 'git commit takes it from HEAD.'), 'git log --oneline') },
       { id: 'e-ref', from: 'main', to: 'commit', label: bi('хэш последнего коммита', '41 bytes: a hash'), card: card(bi('Файл ветки хранит только хэш последнего коммита, всего 41 байт.', 'A branch just stores the hash of its last commit.'), bi('Файл ветки переписывает команда `git commit`.', 'git commit rewrites the branch file.'), 'cat .git/refs/heads/main') },
-      { id: 'e-head', from: 'head', to: 'main', label: bi('текущая ветка', 'ref: refs/heads/main'), card: card(bi('HEAD указывает на ветку, а не на коммит, и поэтому новый коммит передвигает эту ветку.', 'HEAD points to the branch, not to a commit: that is why a new commit moves the branch.'), bi('Ссылку переписывает команда `git switch`.', 'git switch.'), 'cat .git/HEAD') },
+      { id: 'e-head', from: 'head', to: 'main', labelAt: 0.25, label: bi('текущая ветка', 'ref: refs/heads/main'), card: card(bi('HEAD указывает на ветку, а не на коммит, и поэтому новый коммит передвигает эту ветку.', 'HEAD points to the branch, not to a commit: that is why a new commit moves the branch.'), bi('Ссылку переписывает команда `git switch`.', 'git switch.'), 'cat .git/HEAD') },
       { id: 'e-push', from: 'commit', to: 'forge', via: [[760, 72], [760, 416]], label: bi('отправка по HTTPS', 'git push (HTTPS)'), labelAt: 0.5, card: card(bi('Команда `git push` отправляет объекты, которых нет на сервере, и просит передвинуть там ветку. Сервер соглашается, только если новый коммит продолжает его историю.', 'Push sends the objects the server lacks and asks it to move its branch. The server agrees only if the new commit continues its history.'), bi('Команду запускаете вы.', 'You: git push.'), 'git push origin main', { page: 'man/git-push.1', anchor: 'DESCRIPTION', line: 'fast-forward' }) },
     ],
   },
@@ -231,10 +231,10 @@ export const gitModel = defineModel<GitP>({
         caption: fmt(bi('Команда `git commit` собирает из индекса снимок проекта. В нём {n} файлов, и {r} из них ссылаются на прежние объекты, поэтому их содержимое заново не копируется.', 'git commit builds a tree from the index: {n} files, {r} of them point to their old blobs; nothing is copied.'), { n: p.files, r: c.reused }),
         focus: ['e-tree', 'tree'],
         reveal: ['tree', 'e-tree'],
-        tokens: [{ edge: 'e-tree', label: `index.html → ${short(blobNew)}` }],
+        tokens: [{ edge: 'e-tree', label: short(blobNew) }],
         say: { tree: fmt(bi('Git записывает снимок каталога: {n} имён файлов и хэши их содержимого, из которых новый только у index.html.', 'Git writes the directory snapshot: {n} file names with their content hashes, and only index.html has a new one.'), { n: p.files }) },
         states: { tree: 'on' },
-        values: { tree: `${p.files} entries` },
+        values: { tree: t(bi(`файлов: ${p.files}`, `${p.files} entries`)) },
         metrics: { objects: 2, reused: c.reused, sent: 0 },
       },
       {
@@ -409,7 +409,7 @@ export const ciModel = defineModel<CiP>({
       },
     },
     { id: 'runners', label: bi('Сколько раннеров свободно', 'Free runners'), group: bi('Раннеры', 'The runners'), kind: 'range', min: 1, max: 4, step: 1, default: 2, near: 'runner', predict: { prompt: bi('Свободным остался один раннер, а джобы lint и test готовы стартовать одновременно. Что станет со временем всего пайплайна?', 'Only one runner is left. What happens to the pipeline time?'), options: [{ id: 'longer', text: bi('Время вырастет, потому что lint и test пойдут друг за другом', 'It grows: lint and test run one after another') }, { id: 'same', text: bi('Время не изменится, потому что джобы всё равно короткие', 'It stays the same') }], resolve: (prev, next) => ((last(next).total ?? 0) > (last(prev).total ?? 0) ? 'longer' : 'same') } },
-    { id: 'cache', label: bi('На раннере сохранились зависимости прошлой сборки (кэш)', 'Dependency cache'), group: bi('Раннеры', 'The runners'), kind: 'toggle', default: true, near: 'runner', predict: { prompt: bi('Кэш зависимостей на раннере пропал. Что будет со сборкой?', 'The cache is gone. What happens to the build?'), options: [{ id: 'slow', text: bi('Сборка пройдёт, но займёт больше времени', 'It passes, but slower') }, { id: 'fail', text: bi('Сборка упадёт, потому что зависимостей нет', 'It fails') }], resolve: () => 'slow' } },
+    { id: 'cache', label: bi('На раннере сохранились зависимости прошлой сборки (кэш)', 'Dependency cache'), group: bi('Раннеры', 'The runners'), kind: 'toggle', default: true, near: 'runner', predict: { prompt: bi('Кэш зависимостей на раннере пропал. Что будет со сборкой?', 'The cache is gone. What happens to the build?'), options: [{ id: 'slow', text: bi('Сборка пройдёт, но займёт больше времени', 'It passes, but slower') }, { id: 'fail', text: bi('Сборка завершится с ошибкой, потому что зависимостей нет', 'It fails') }], resolve: () => 'slow' } },
     { id: 'manual', label: bi('Выкладку на рабочий сервер запускает человек (when: manual)', 'when: manual on production'), group: bi('Выкладка', 'Deployment'), kind: 'toggle', default: true, near: 'prod' },
   ],
   breaks: [
@@ -419,9 +419,9 @@ export const ciModel = defineModel<CiP>({
     { id: 'no-secret', label: bi('В настройках проекта не задана переменная DEPLOY_TOKEN', 'DEPLOY_TOKEN is not set'), remove: ['e-stg'], predict: { prompt: bi('Ключа для выкладки нет в настройках проекта. На каком шаге остановится пайплайн?', 'The deploy secret is missing from the project settings. Where does the pipeline break?'), options: [{ id: 'deploy', text: bi('Пайплайн остановится на джобе выкладки', 'At the deploy job') }, { id: 'push', text: bi('Сервер не примет push', 'The push is refused') }], resolve: () => 'deploy' } },
   ],
   metrics: [
-    { id: 'build', label: bi('сборка', 'build'), unit: 's' },
-    { id: 'wait', label: bi('ожидание раннера', 'waiting for a runner'), unit: 's' },
-    { id: 'total', label: bi('весь пайплайн', 'whole pipeline'), unit: 's' },
+    { id: 'build', label: bi('сборка, с', 'build, s') },
+    { id: 'wait', label: bi('ожидание раннера, с', 'waiting for a runner, s') },
+    { id: 'total', label: bi('весь пайплайн, с', 'whole pipeline, s') },
   ],
   run(p, broken) {
     const n = ciNumbers(p);
@@ -449,7 +449,7 @@ export const ciModel = defineModel<CiP>({
         tokens: [{ edge: 'e-read', label: main ? bi('6 джоб', '6 jobs') : bi('3 джобы', '3 jobs') }],
         say: { forge: main ? bi('Сервер читает файл пайплайна и по его правилам создаёт для ветки main шесть джоб.', 'The server reads the pipeline file and creates six jobs for main by its rules.') : bi('Сервер читает файл пайплайна и по его правилам создаёт для ветки feature только три проверки.', 'The server reads the pipeline file and creates only three checks for feature by its rules.') },
         states: { cfg: 'ok' },
-        values: { cfg: main ? '6 jobs' : '3 jobs' },
+        values: { cfg: t(main ? bi('6 джоб', '6 jobs') : bi('3 джобы', '3 jobs')) },
         metrics: m0,
       },
       {
@@ -551,7 +551,7 @@ export const ciModel = defineModel<CiP>({
       steps.push({
         id: 'done',
         label: bi('готово', 'done'),
-        caption: bi('Для рабочей ветки пайплайн на этом заканчивается. Проверки прошли, и merge request можно отдавать на ревью, а выкладка случится после слияния в main.', 'For a branch the pipeline ends here: the checks are green and the merge request can be reviewed. Deployment happens after the merge into main.'),
+        caption: bi('Для рабочей ветки пайплайн на этом заканчивается. Проверки прошли, и merge request можно отдавать коллегам на проверку, а выкладка случится после слияния в main.', 'For a branch the pipeline ends here: the checks are green and the merge request can be reviewed. Deployment happens after the merge into main.'),
         focus: ['forge'],
         say: { forge: bi('Сервер отмечает, что все проверки ветки прошли, и показывает это в merge request.', 'The server marks that all the branch checks passed and shows it in the merge request.') },
         states: { forge: 'ok' },
@@ -601,7 +601,7 @@ export const ciModel = defineModel<CiP>({
       p.manual
         ? {
             id: 'gate',
-            label: '▶',
+            label: bi('ручной запуск', 'manual run'),
             caption: bi('Рабочий сервер ждёт нажатия кнопки. Версия готова к выпуску, но выпускать ли её, решает человек, и такая практика называется Continuous Delivery.', 'Production waits for the button: the version is ready to release, and releasing is a human decision. This is Continuous Delivery.'),
             focus: ['e-prod', 'prod'],
             reveal: ['prod', 'e-prod'],
@@ -632,7 +632,7 @@ export const ciModel = defineModel<CiP>({
         'test-fails': bi('Тест вернул код 1, джоба помечена как failed, и следующие стадии пропущены. Так пайплайн не пускает версию с ошибкой дальше.', 'Exit code 1 → the job failed → later stages skipped. The pipeline is the gate.'),
         'no-artifact': bi('Без артефактов результат сборки остаётся в её контейнере, а каждая следующая джоба начинает с чистой копии.', 'Without artifacts the build output stays on its machine: every job starts from a clean slate.'),
         'no-runner': bi('Сервер сам джобы не выполняет, поэтому без подходящего раннера джоба ждёт в очереди.', 'The forge never runs jobs itself; without a matching runner the job just waits.'),
-        'no-secret': bi('Секрет хранится в настройках проекта, а не в коде, и без него падает выкладка, хотя сборка и тесты прошли.', 'The secret is in the project settings, not in the code; without it the deploy is what fails.'),
+        'no-secret': bi('Секрет хранится в настройках проекта, а не в коде, и без него выкладка завершается с ошибкой, хотя сборка и тесты прошли.', 'The secret is in the project settings, not in the code; without it the deploy is what fails.'),
       };
       return m[change.id] ?? bi('Схема заново просчитала пайплайн с новыми условиями.', 'The diagram recomputed the pipeline with the new conditions.');
     }
