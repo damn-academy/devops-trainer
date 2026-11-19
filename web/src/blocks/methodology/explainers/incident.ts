@@ -13,7 +13,7 @@
 import { defineModel } from '../../../core/define';
 import type { Step } from '../../../core/types';
 import { detectMinutes, diagnoseMinutes, restoreMinutes } from '../../../engine/flowlab/sim';
-import { b, card, edge, fmtn, hiddenExcept, lastMetrics, node, nWord, type Bi } from './kit';
+import { b, card, edge, fmtn, hiddenExcept, lastMetrics, node, nWord, pctIn, type Bi } from './kit';
 
 type P = { detection: string; rollback: boolean; runbook: boolean; batch: string; failing: number };
 
@@ -106,12 +106,12 @@ export const incidentModel = defineModel<P>({
     edges: [
       edge('e-deploy', 'deploy', 'service', b('изменения', 'changes'), card(['Выкладка поставила изменения на рабочий сайт.', 'The deployment brought the changes to the working site.'], ['Выкладывает конвейер.', 'The pipeline deploys.'])),
       edge('e-signal', 'service', 'monitor', b('доля ошибок', 'error share'), card(['Сайт сообщает мониторингу, сколько оформлений заказа прошло и сколько нет.', 'The site tells monitoring how many checkouts passed and how many failed.'], ['Метрики отдаёт сайт, а собирает их мониторинг.', 'The site exports the metrics, and monitoring collects them.'])),
-      edge('e-page', 'monitor', 'oncall', b('срочное оповещение', 'page'), card(['Срочное оповещение будит человека звонком, а тикет ждёт рабочего дня.', 'A page wakes a person with a call; a ticket waits for the working day.'], ['Оповещение отправляет система оповещений.', 'The alerting system sends it.'])),
+      edge('e-page', 'monitor', 'oncall', b('срочное оповещение', 'page'), card(['Срочное оповещение будит человека звонком, а заявка в рабочей очереди ждёт рабочего дня.', 'A page wakes a person with a call; a ticket waits for the working day.'], ['Оповещение отправляет система оповещений.', 'The alerting system sends it.'])),
       edge('e-escalate', 'oncall', 'backup', b('эскалация', 'escalation'), card(['Если оповещение не подтвердили за 15 минут, оно уходит запасному дежурному.', 'If the page is not acknowledged within 15 minutes, it goes to the secondary.'], ['Оповещение передаёт дальше система оповещений.', 'The alerting system passes the page on.']), { dashed: true }),
       edge('e-status', 'oncall', 'status', b('статус', 'status'), card(['Первое сообщение о статусе уходит в первые минуты, даже если причина ещё неизвестна.', 'The first status update goes out in the first minutes, even when the cause is still unknown.'], ONCALL)),
       edge('e-diag', 'oncall', 'log', b('что менялось?', 'what changed?'), card(['Диагностика начинается с журнала выкладок, потому что первым подозревают последнее изменение.', 'Diagnosis starts with the deployment log, because the last change is suspected first.'], ['Журнал проверяет дежурный, как велит инструкция.', 'The on-call engineer checks the log, as the runbook says.']), { via: [[856, 196], [108, 196]], labelAt: 0.3 }),
       edge('e-rollback', 'log', 'service', b('откат', 'rollback'), card(['Откат смягчает сбой, потому что на сайт возвращают прошлую версию, а причину ищут потом.', 'A rollback mitigates the outage, because the previous version is put back on the site, and the cause is looked for later.'], ONCALL)),
-      edge('e-timeline', 'status', 'postmortem', b('факты по времени', 'facts by time'), card(['Хронологию разбора собирают из всех источников: журнала выкладок, графиков мониторинга, канала статуса и тикетов поддержки.', 'The review’s timeline is assembled from every source: the deployment log, the monitoring graphs, the status channel and support tickets.'], ['Хронологию собирает автор разбора.', 'The author of the review assembles the timeline.'])),
+      edge('e-timeline', 'status', 'postmortem', b('факты по времени', 'facts by time'), card(['Хронологию разбора собирают из всех источников: журнала выкладок, графиков мониторинга, канала статуса и обращений в поддержку.', 'The review’s timeline is assembled from every source: the deployment log, the monitoring graphs, the status channel and support tickets.'], ['Хронологию собирает автор разбора.', 'The author of the review assembles the timeline.'])),
       edge('e-actions', 'postmortem', 'board', b('фактор → задача', 'factor → task'), card(['Каждый способствующий фактор становится задачей, например «оповещение по доле ошибок» или «откат одной кнопкой».', 'Each contributing factor becomes a task, such as “an alert on the error share” or “one-click rollback”.'], ['Задачи заводит команда.', 'The team files them.'])),
     ],
   },
@@ -227,7 +227,7 @@ export const incidentModel = defineModel<P>({
         say: { monitor: cpu ? b('Процессор загружен на 35 %, поэтому тревоги нет.', 'The CPU is at 35%, so there is no alarm.') : p.detection === 'host-check' ? b('Сервер отвечает, и проверка считает, что всё в порядке.', 'The server answers, and the check considers all is well.') : b('За сайтом никто не следит, поэтому сигнала нет.', 'Nobody watches the site, so there is no signal.') },
         reveal: ['monitor'],
         states: { monitor: 'off' },
-        values: { monitor: cpu ? 'CPU 35%' : p.detection === 'host-check' ? '200 OK' : '—' },
+        values: { monitor: cpu ? `CPU ${pctIn(35)}` : p.detection === 'host-check' ? '200 OK' : '—' },
         metrics: m(),
         ...(cpu ? { broken: { at: 'monitor', message: 'ALERT HighCPU: inactive (cpu=35%)\ncheckout success: 80%', caption: b('показатель для оповещения не описывает то, что видит покупатель, потому что процессор в норме, а заказы при этом не проходят.', 'the indicator for the alert does not describe what the customer sees, because the CPU is fine while orders fail.') } } : {}),
       });
@@ -266,7 +266,7 @@ export const incidentModel = defineModel<P>({
         tokens: [{ edge: 'e-signal', label: fmtn(b('ошибок {f}', 'errors {f}'), { f: pct(p.failing) }) }],
         reveal: ['e-signal', 'monitor'],
         states: { monitor: 'warn' },
-        values: { monitor: `${Math.round(p.failing / 100 / (1 - SLO))}×`, service: `${p.failing}%` },
+        values: { monitor: `${Math.round(p.failing / 100 / (1 - SLO))}×`, service: pctIn(p.failing) },
         metrics: m(),
       });
       t += n.ack;
@@ -333,7 +333,7 @@ export const incidentModel = defineModel<P>({
             tokens: [{ edge: 'e-rollback', label: b('вернуть #40', 'restore #40') }],
             reveal: ['e-rollback'],
             states: { service: 'ok' },
-            values: { service: '0%' },
+            values: { service: pctIn(0) },
             metrics: m(true),
           }
         : {
@@ -345,7 +345,7 @@ export const incidentModel = defineModel<P>({
             tokens: [{ edge: 'e-rollback', label: b('исправление #42', 'fix #42') }],
             reveal: ['e-rollback'],
             states: { service: 'ok', 'e-rollback': 'warn' },
-            values: { service: '0%' },
+            values: { service: pctIn(0) },
             metrics: m(true),
           },
     );
@@ -361,7 +361,7 @@ export const incidentModel = defineModel<P>({
     steps.push({
       id: 's8',
       label: b('хронология', 'timeline'),
-      caption: b('На следующий день команда пишет разбор. Хронологию собирают из журнала выкладок, графиков, канала статуса и тикетов поддержки. Главный вопрос разбора состоит в том, что было видно в каждый момент, а вопрос «кто ошибся» на разборе не задают.', 'The next day the team writes the review. The timeline is assembled from the deployment log, the graphs, the status channel and the support tickets. The central question of the review is what could be seen at each moment; the question “who made the mistake” is not asked.'),
+      caption: b('На следующий день команда пишет разбор. Хронологию собирают из журнала выкладок, графиков, канала статуса и обращений в поддержку. Главный вопрос разбора состоит в том, что было видно в каждый момент, а вопрос «кто ошибся» на разборе не задают.', 'The next day the team writes the review. The timeline is assembled from the deployment log, the graphs, the status channel and the support tickets. The central question of the review is what could be seen at each moment; the question “who made the mistake” is not asked.'),
       focus: ['e-timeline', 'postmortem'],
       say: { postmortem: b('Команда собирает факты по времени и выясняет, что было видно в каждый момент.', 'The team collects facts by time and finds out what could be seen at each moment.') },
       tokens: [{ edge: 'e-timeline', label: b('факты по времени', 'facts by time') }],

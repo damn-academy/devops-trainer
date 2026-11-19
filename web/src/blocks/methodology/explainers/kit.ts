@@ -3,7 +3,7 @@
 // the pictures are built from zero step by step, so a helper hides everything
 // except the elements a run starts with.
 
-import { bi, type Bi } from '../../../core/i18n';
+import { bi, t, type Bi } from '../../../core/i18n';
 import type { ColorFamily, DiagramEdge, DiagramNode, DocRef, ElementCard, ElementState, QText, Step } from '../../../core/types';
 
 export const b = bi;
@@ -51,3 +51,9 @@ export function nWord(n: number, ru: [string, string, string], en: [string, stri
   const ruForm = !Number.isInteger(n) ? ruFraction : ((a) => (a % 100 > 10 && a % 100 < 20 ? ru[2] : a % 10 === 1 ? ru[0] : a % 10 >= 2 && a % 10 <= 4 ? ru[1] : ru[2]))(Math.abs(n));
   return { ru: `${ruNum(n)} ${ruForm}`, en: `${enNum(n)} ${n === 1 ? en[0] : en[1]}` };
 }
+
+/** A number in a node value, written the reader's way: «43,2» in Russian, “43.2” in English. */
+export const numIn = (n: number): string => t(bi(ruNum(n), enNum(n)));
+
+/** A percentage in a node value: «99,9 %» in Russian, “99.9%” in English. */
+export const pctIn = (n: number): string => t(bi(`${ruNum(n)} %`, `${enNum(n)}%`));

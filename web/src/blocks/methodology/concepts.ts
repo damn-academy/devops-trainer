@@ -175,7 +175,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.scrum',
     term: bi('Scrum', 'Scrum'),
-    short: bi('Фреймворк, в котором команда из владельца продукта, Scrum-мастера и разработчиков работает спринтами длиной до месяца. Его события — планирование спринта, ежедневный Scrum, обзор спринта и ретроспектива.', 'A framework: a team of a Product Owner, a Scrum Master and Developers works in Sprints of up to a month; the events are planning, the Daily Scrum, review and retrospective.'),
+    short: bi('Набор правил, по которому команда из владельца продукта, Scrum-мастера и разработчиков работает спринтами длиной до месяца. Его события — планирование спринта, ежедневный Scrum, обзор спринта и ретроспектива.', 'A framework: a team of a Product Owner, a Scrum Master and Developers works in Sprints of up to a month; the events are planning, the Daily Scrum, review and retrospective.'),
     introducedIn: 'methodology.agile',
     forms: { ru: ['спринт', 'спринта', 'спринты', 'спринтов', 'спринтом', 'бэклог', 'бэклога', 'бэклоге', 'ретроспектива', 'ретроспективы'], en: ['Sprint', 'sprint', 'sprints', 'backlog', 'retrospective'] },
     docRef: { page: 'web/scrumguides.org/scrum-guide', label: 'The Scrum Guide' },
@@ -252,7 +252,7 @@ export const concepts: Concept[] = [
   {
     id: 'method.rollback',
     term: bi('откат', 'rollback'),
-    short: bi('Возврат рабочего сайта к предыдущей работающей версии. Откат быстрее хотфикса, а причину сбоя можно спокойно исправить потом.', 'Returning production to the previous working version. Faster than a hotfix: the fix can come later, calmly.'),
+    short: bi('Возврат рабочего сайта к предыдущей работающей версии. Откат быстрее срочного исправления (хотфикса), а причину сбоя можно спокойно исправить потом.', 'Returning production to the previous working version. Faster than a hotfix: the fix can come later, calmly.'),
     introducedIn: 'methodology.pipeline',
     forms: { ru: ['отката', 'откатом', 'откатить', 'хотфикс', 'хотфикса'], en: ['roll back', 'hotfix'] },
   },

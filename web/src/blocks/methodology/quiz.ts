@@ -448,7 +448,7 @@ export const quiz: QuizItem[] = [
     concepts: ['method.goodhart'],
     prompt: bi('Команде пообещали премию за 50 развёртываний в неделю. Что, скорее всего, произойдёт?', 'A team was promised a bonus for 50 deployments a week. What is most likely to happen?'),
     options: [
-      { id: 'game', text: bi('Частоту накрутят пустыми или раздробленными выкладками, и показатель станет зелёным, хотя ценности не прибавится', 'The frequency gets inflated with empty or chopped-up deployments: the gauge is green, no value was added'), correct: true },
+      { id: 'game', text: bi('Частоту накрутят пустыми или раздробленными выкладками, и показатель будет выглядеть отличным, хотя ценности не прибавится', 'The frequency gets inflated with empty or chopped-up deployments: the gauge is green, no value was added'), correct: true },
       { id: 'better', text: bi('Команда начнёт доставлять ценность быстрее', 'The team will deliver value faster'), why: bi('Целью стало число выкладок, а не ценность, а самый дешёвый путь к такой цели состоит в том, чтобы выкладывать что угодно. Так и действует закон Гудхарта.', 'The target is the number of deployments, not value; the cheapest way to it is to deploy anything. That is Goodhart’s law.') },
     ],
   },
@@ -507,7 +507,7 @@ export const quiz: QuizItem[] = [
     prompt: bi('SLO требует, чтобы за 30 дней успешно прошли 99,9 % запросов. За последний час израсходовано 2 % месячного бюджета ошибок. Какова скорость сжигания и что делать?', 'The SLO is 99.9% successful requests over 30 days. In the last hour 2% of the monthly error budget was spent. What is the burn rate and what to do?'),
     options: [
       { id: 'page', text: bi('14,4, и нужно срочное оповещение, которое разбудит дежурного', '14.4: page, wake the on-call engineer'), correct: true },
-      { id: 'ticket', text: bi('2, и достаточно завести тикет', '2: open a ticket'), why: bi('Число 2 % показывает долю бюджета, а не скорость. Скорость равна доле бюджета, делённой на долю тридцатидневного окна, которая за это время прошла. Час составляет 1/720 от 30 дней, поэтому скорость равна 0,02 / (1/720) = 14,4.', '2% is a share of the budget, not the rate. The rate is the share of the budget divided by the share of the 30-day window that has passed. An hour is 1/720 of 30 days, so the rate is 0.02 / (1/720) = 14.4.') },
+      { id: 'ticket', text: bi('2, и достаточно завести заявку в рабочей очереди', '2: open a ticket'), why: bi('Число 2 % показывает долю бюджета, а не скорость. Скорость равна доле бюджета, делённой на долю тридцатидневного окна, которая за это время прошла. Час составляет 1/720 от 30 дней, поэтому скорость равна 0,02 / (1/720) = 14,4.', '2% is a share of the budget, not the rate. The rate is the share of the budget divided by the share of the 30-day window that has passed. An hour is 1/720 of 30 days, so the rate is 0.02 / (1/720) = 14.4.') },
       { id: 'none', text: bi('0,02, и делать ничего не нужно', '0.02: do nothing'), why: bi('В таком темпе весь бюджет закончится за 50 часов вместо 30 дней.', 'At this pace the whole budget is gone in 50 hours instead of 30 days.') },
     ],
   },
@@ -591,7 +591,7 @@ export const quiz: QuizItem[] = [
     id: 'method.q.westrum',
     kind: 'mcq',
     concepts: ['method.westrum'],
-    prompt: bi('Тестировщик сообщил, что тест оплаты падает. Руководитель ответил: «Оформи заявку по шаблону, рассмотрим на комитете в четверг». Какой это тип культуры по Веструму?', 'A tester reported that the checkout test fails. The manager replied: “File a request using the template; the committee will look at it on Thursday.” Which type of culture is this by Westrum?'),
+    prompt: bi('Тестировщик сообщил, что автотест оплаты завершается с ошибкой. Руководитель ответил: «Оформи заявку по шаблону, рассмотрим на комитете в четверг». Какой это тип культуры по Веструму?', 'A tester reported that the checkout test fails. The manager replied: “File a request using the template; the committee will look at it on Thursday.” Which type of culture is this by Westrum?'),
     options: [
       { id: 'bureau', text: bi('Бюрократическая', 'Bureaucratic'), correct: true },
       { id: 'patho', text: bi('Патологическая', 'Pathological'), why: bi('Новость не спрятали, и того, кто её принёс, не наказали, а пустили её по регламенту. Такой путь медленный, но не враждебный.', 'The news was not hidden and the messenger not punished; it was routed through procedure. Slow, but not hostile.') },
