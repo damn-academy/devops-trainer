@@ -11,15 +11,23 @@ import './styles/app.css';
 import './styles/widgets.css';
 
 import { startApp } from './app/shell';
-import { initLang } from './core/i18n';
+import { h } from './core/dom';
+import { bi, initLang, t } from './core/i18n';
+import { loadRegistry } from './core/registry';
 import { store } from './core/store';
 
 async function boot(): Promise<void> {
   initLang();
-  await store.init();
-  void store.requestPersist();
   const root = document.getElementById('app');
-  if (root) startApp(root);
+  root?.append(h('p.boot-loading', { role: 'status' }, t(bi('Загружаем учебник…', 'Loading the textbook…'))));
+  const content = loadRegistry();
+  await store.init();
+  await content;
+  void store.requestPersist();
+  if (root) {
+    root.replaceChildren();
+    startApp(root);
+  }
 }
 
 void boot();

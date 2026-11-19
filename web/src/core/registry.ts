@@ -146,8 +146,26 @@ export function buildRegistry(mods: ModuleMap, opts: { terminal?: TerminalRegist
   return { blocks, lessons, concepts, quiz, explainers, exams, widgets, settings, mentor, origin, errors, terminal, corpus, orderedBlocks, orderedLessons, position, blockOf, routeMap };
 }
 
-const engineModules = import.meta.glob<{ default: BlockModule }>('../engine/*/module.ts', { eager: true });
-const blockModules = import.meta.glob<{ default: BlockModule }>('../blocks/*/index.ts', { eager: true });
+// Every engine and block module is its own chunk (dynamic import), so the
+// entry chunk holds only the shell and the core; the chunks download in
+// parallel and are cached one by one, and a change to one block re-downloads
+// only that block. The registry object is created empty and filled in place
+// by loadRegistry(), so every import of `registry` sees the loaded content.
+const engineLoaders = import.meta.glob<{ default: BlockModule }>('../engine/*/module.ts');
+const blockLoaders = import.meta.glob<{ default: BlockModule }>('../blocks/*/index.ts');
 
-/** The registry of this build: every engine and block module. */
-export const registry: Registry = buildRegistry({ ...engineModules, ...blockModules });
+/** The registry of this build. Empty until loadRegistry() resolves. */
+export const registry: Registry = buildRegistry({});
+
+let loading: Promise<Registry> | null = null;
+
+/** Load every engine and block module (in parallel) and fill `registry`. Idempotent. */
+export function loadRegistry(): Promise<Registry> {
+  loading ??= (async () => {
+    const loaders = { ...engineLoaders, ...blockLoaders };
+    const entries = await Promise.all(Object.entries(loaders).map(async ([file, load]) => [file, await load()] as const));
+    Object.assign(registry, buildRegistry(Object.fromEntries(entries)));
+    return registry;
+  })();
+  return loading;
+}
