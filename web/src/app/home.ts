@@ -9,8 +9,8 @@ import type { RouteEntry } from '../core/route';
 import { href } from '../core/router';
 import { store } from '../core/store';
 import { LEVELS, type Block, type Level } from '../core/types';
-import { chosenLevel, setTitle, type Page } from './common';
-import { lessonStatus } from './lesson';
+import type { Page } from './common';
+import { chosenLevel, lessonStatus, setTitle } from './status';
 
 function levelsTable(levels: Record<Level, import('../core/i18n').Bi>, hours: Record<Level, number> | undefined, chosen: Level | undefined): HTMLElement {
   return h(
@@ -58,7 +58,7 @@ function blockItem(b: Block, entry: RouteEntry | undefined): HTMLElement {
           : lessons.length
             ? h('span.badge.ok', {}, '✓ ', t(UI.done))
             : null,
-        b.placement.length ? h('a.btn.ghost', { href: href({ name: 'placement', id: b.id }) }, icon('check'), t(UI.checkLevel)) : null,
+        registry.placementCount(b.id) ? h('a.btn.ghost', { href: href({ name: 'placement', id: b.id }) }, icon('check'), t(UI.checkLevel)) : null,
       ),
     ),
   );

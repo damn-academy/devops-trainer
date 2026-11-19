@@ -1,4 +1,6 @@
 // Entry point: fonts and styles, language, the progress store, the app shell.
+// The route map paints from the light manifest; the full content (every block
+// and engine module) is loaded when the learner opens any other page.
 
 import '@fontsource-variable/literata/opsz.css';
 import '@fontsource-variable/literata/opsz-italic.css';
@@ -10,24 +12,19 @@ import './styles/base.css';
 import './styles/app.css';
 import './styles/widgets.css';
 
+import manifest from 'virtual:dt-manifest';
 import { startApp } from './app/shell';
-import { h } from './core/dom';
-import { bi, initLang, t } from './core/i18n';
-import { loadRegistry } from './core/registry';
+import { initLang } from './core/i18n';
+import { useManifest } from './core/registry';
 import { store } from './core/store';
 
 async function boot(): Promise<void> {
   initLang();
-  const root = document.getElementById('app');
-  root?.append(h('p.boot-loading', { role: 'status' }, t(bi('Загружаем учебник…', 'Loading the textbook…'))));
-  const content = loadRegistry();
+  useManifest(manifest);
   await store.init();
-  await content;
   void store.requestPersist();
-  if (root) {
-    root.replaceChildren();
-    startApp(root);
-  }
+  const root = document.getElementById('app');
+  if (root) startApp(root);
 }
 
 void boot();

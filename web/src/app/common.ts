@@ -9,6 +9,8 @@ import { store } from '../core/store';
 import type { BlockId, DocRef, Level, Sources } from '../core/types';
 import { docChip, openDoc } from '../engine/docs/viewer';
 
+export { chosenLevel, setTitle } from './status';
+
 export interface Page {
   el: HTMLElement;
   title?: string;
@@ -18,10 +20,6 @@ export interface Page {
 /** The learner's level in a block: chosen, else Beginner. */
 export function levelFor(block: BlockId | undefined): Level {
   return (block && store.state.levels[block]) || 'beginner';
-}
-
-export function chosenLevel(block: BlockId): Level | undefined {
-  return store.state.levels[block];
 }
 
 /** Has the concept been introduced (or placed) for this learner? */
@@ -111,10 +109,6 @@ export function emptyState(title: Bi, body?: Bi, action?: { label: Bi; href: str
     body ? h('p', {}, t(body)) : null,
     action ? h('a.btn.primary', { href: action.href }, t(action.label), icon('next')) : null,
   );
-}
-
-export function setTitle(...parts: string[]): void {
-  document.title = [...parts.filter(Boolean), t(UI.course)].join(' · ');
 }
 
 export function replace(el: HTMLElement, ...children: Node[]): void {

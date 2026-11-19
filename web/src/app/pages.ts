@@ -97,7 +97,7 @@ export function examPage(id: string): Page {
       const host = h('div');
       list.append(h('li', {}, h('p.small.muted', {}, `${task.weight} ${t(bi('балл.', 'pts'))}${task.critical ? ' · ' + t(bi('критическое', 'critical')) : ''}${task.beyond ? ' · ' + t(bi('вне курса', 'beyond the course')) : ''}`), host));
       if (task.kind === 'quiz') mounts.push(mountQuiz(host, task.item, { context: 'exam', feedback: mode === 'training', onAnswered: (g) => results.set(task.id, g.correct) }));
-      else
+      else if (task.kind === 'task')
         mounts.push(
           mountLab(host, { key: `exam/${exam.id}/${task.id}`, setup: task.setup, tasks: [task.task], level: levelFor(exam.block), block: exam.block, index: 0, count: 1, exam: mode === 'exam', onTaskPass: () => results.set(task.id, true) }),
         );
@@ -115,7 +115,7 @@ export function examPage(id: string): Page {
       root.append(
         h('h1', {}, passed ? t(bi('Экзамен сдан', 'Exam passed')) : t(bi('Экзамен не сдан', 'Exam not passed'))),
         h('p.lede', {}, `${Math.round(score * 100)}% · ${t(bi('порог', 'threshold'))} ${Math.round(exam.pass * 100)}%${critical ? '' : ' · ' + t(bi('не все критические задания', 'not every critical task'))}`),
-        h('ul.placement-results', {}, ...exam.tasks.map((x) => h('li', { class: results.get(x.id) ? 'ok' : 'err' }, h('span.st-icon', { 'aria-hidden': 'true' }, results.get(x.id) ? '✓' : '⨯'), x.kind === 'quiz' ? t(x.item.prompt) : t(x.task.prompt)))),
+        h('ul.placement-results', {}, ...exam.tasks.map((x) => h('li', { class: results.get(x.id) ? 'ok' : 'err' }, h('span.st-icon', { 'aria-hidden': 'true' }, results.get(x.id) ? '✓' : '⨯'), t(x.kind === 'quiz' ? x.item.prompt : x.kind === 'task' ? x.task.prompt : x.real.prompt)))),
         h('a.btn', { href: href({ name: 'block', id: exam.block }) }, t(UI.continue)),
       );
     });

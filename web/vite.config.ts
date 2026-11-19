@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitest/config';
+import { manifestPlugin } from './src/core/manifest-plugin.ts';
 import { pwaPlugin } from './src/engine/pwa/vite-plugin.ts';
+import { publicRawPlugin } from './src/core/public-raw-plugin.ts';
 
 // Cross-origin isolation lets later engines (v86, the RV64 track) share memory
 // between workers through SharedArrayBuffer. The production server must send
@@ -11,8 +13,9 @@ const isolation = {
 
 export default defineConfig({
   base: './',
+  // virtual:dt-manifest: the light course manifest the home page paints from;
   // sw.js + manifest.webmanifest for offline use (design 09 §3.2).
-  plugins: [pwaPlugin()],
+  plugins: [publicRawPlugin(), manifestPlugin(), pwaPlugin()],
   server: { headers: isolation },
   preview: { headers: isolation },
   build: {

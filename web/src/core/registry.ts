@@ -3,8 +3,9 @@
 // defineModule); the registry merges them, so builders never edit a shared
 // list. Duplicate ids are collected in `errors` (the lint test fails on them).
 
-import { corpus as globalCorpus, type Corpus } from '../engine/docs/corpus';
-import { terminalRegistry, type TerminalRegistry } from '../engine/terminal/registry';
+import { corpus as globalCorpus, Corpus } from '../engine/docs/corpus';
+import { createTerminalRegistry, terminalRegistry, type TerminalRegistry } from '../engine/terminal/registry';
+import { fromManifest, type Manifest } from './manifest';
 import { ROUTE, type RouteEntry } from './route';
 import type { Block, BlockModule, Concept, Exam, ExplainerReg, Lesson, Mentor, QuizItem, SettingsSectionReg, WidgetReg } from './types';
 
@@ -18,6 +19,13 @@ export interface Registry {
   widgets: Map<string, WidgetReg>;
   settings: SettingsSectionReg[];
   mentor?: Mentor;
+  /**
+   * True once every engine and block module is loaded. While false the
+   * registry holds only the manifest: blocks and lesson stubs without bodies.
+   */
+  complete: boolean;
+  /** Number of placement tasks of a block (known from the manifest too). */
+  placementCount(blockId: string): number;
   /** Which module file delivered each id, for error messages. */
   origin: Map<string, string>;
   errors: string[];
@@ -143,14 +151,26 @@ export function buildRegistry(mods: ModuleMap, opts: { terminal?: TerminalRegist
     return items.sort((a, b) => order(a) - order(b));
   };
 
-  return { blocks, lessons, concepts, quiz, explainers, exams, widgets, settings, mentor, origin, errors, terminal, corpus, orderedBlocks, orderedLessons, position, blockOf, routeMap };
+  const placementCount = (id: string) => blocks.get(id)?.placement.length ?? 0;
+
+  return { blocks, lessons, concepts, quiz, explainers, exams, widgets, settings, mentor, complete: false, placementCount, origin, errors, terminal, corpus, orderedBlocks, orderedLessons, position, blockOf, routeMap };
+}
+
+/** A registry with only the manifest's blocks and lesson stubs. Touches no shared terminal or corpus. */
+export function registryFromManifest(m: Manifest): Registry {
+  const { blocks, lessons, placements } = fromManifest(m);
+  const r = buildRegistry({ manifest: { blocks, lessons } }, { terminal: createTerminalRegistry(), corpus: new Corpus() });
+  r.placementCount = (id) => placements.get(id) ?? 0;
+  return r;
 }
 
 // Every engine and block module is its own chunk (dynamic import), so the
 // entry chunk holds only the shell and the core; the chunks download in
 // parallel and are cached one by one, and a change to one block re-downloads
-// only that block. The registry object is created empty and filled in place
-// by loadRegistry(), so every import of `registry` sees the loaded content.
+// only that block. The registry object is created empty and filled in place,
+// first from the manifest (useManifest, enough for the route map) and then by
+// loadRegistry() with every module, so every import of `registry` sees the
+// loaded content.
 const engineLoaders = import.meta.glob<{ default: BlockModule }>('../engine/*/module.ts');
 const blockLoaders = import.meta.glob<{ default: BlockModule }>('../blocks/*/index.ts');
 
@@ -159,13 +179,22 @@ export const registry: Registry = buildRegistry({});
 
 let loading: Promise<Registry> | null = null;
 
+/** Fill `registry` from the manifest until the full content is loaded. No-op once it is. */
+export function useManifest(m: Manifest): Registry {
+  if (!registry.complete && !loading) Object.assign(registry, registryFromManifest(m));
+  return registry;
+}
+
 /** Load every engine and block module (in parallel) and fill `registry`. Idempotent. */
 export function loadRegistry(): Promise<Registry> {
   loading ??= (async () => {
     const loaders = { ...engineLoaders, ...blockLoaders };
     const entries = await Promise.all(Object.entries(loaders).map(async ([file, load]) => [file, await load()] as const));
-    Object.assign(registry, buildRegistry(Object.fromEntries(entries)));
+    Object.assign(registry, buildRegistry(Object.fromEntries(entries)), { complete: true });
     return registry;
-  })();
+  })().catch((e: unknown) => {
+    loading = null; // a failed chunk download can be retried by the next call
+    throw e;
+  });
   return loading;
 }

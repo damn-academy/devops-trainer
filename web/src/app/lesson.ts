@@ -6,7 +6,7 @@ import { bi, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
 import { href } from '../core/router';
 import { store } from '../core/store';
-import type { Level, Lesson, Mounted, Section } from '../core/types';
+import type { Level, Mounted, Section } from '../core/types';
 import { conceptLink, emptyState, levelBadge, levelFor, setTitle, sourcesBlock, type Page } from './common';
 import { renderSection } from './sections';
 
@@ -102,7 +102,4 @@ export function lessonPage(id: string, focusSection?: string): Page {
   return { el, dispose: () => mounts.forEach((m) => m.dispose()) };
 }
 
-export function lessonStatus(l: Lesson): 'done' | 'open' | 'new' {
-  const p = store.state.lessons[l.id];
-  return p?.status === 'done' ? 'done' : p ? 'open' : 'new';
-}
+export { lessonStatus } from './status';

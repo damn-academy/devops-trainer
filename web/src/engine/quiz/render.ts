@@ -5,7 +5,7 @@
 
 import { clear, h, icon } from '../../core/dom';
 import { bi, t, UI, type Bi } from '../../core/i18n';
-import { renderMd } from '../../core/markdown';
+import { renderInline, renderMd } from '../../core/markdown';
 import { store } from '../../core/store';
 import type { Confidence, Mounted, QText, QuizGrade, QuizItem } from '../../core/types';
 import { fullLine, gradeBugfind, gradeFill, gradeLabel, gradeMatch, gradeMcq, gradeMulti, gradeOrder, gradePredict } from './grade';
@@ -33,7 +33,7 @@ const Q = {
   slot: bi('Место', 'Slot'),
 };
 
-const qtext = (q: QText, cls = ''): HTMLElement => (typeof q === 'string' ? h(`code.qcode${cls}`, {}, q) : h(`span${cls}`, {}, t(q)));
+const qtext = (q: QText, cls = ''): HTMLElement => (typeof q === 'string' ? h(`code.qcode${cls}`, {}, q) : h(`span${cls}`, {}, ...renderInline(t(q))));
 
 /** Deterministic shuffle by a string seed, never returning the original order for n ≥ 2. */
 export function shuffle<T>(arr: T[], seed: string): T[] {

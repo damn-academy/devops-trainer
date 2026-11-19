@@ -8,7 +8,7 @@
 import { plainText, conceptLinks } from './markdown';
 import { compile, readsTypedText } from './predicate';
 import type { Registry } from './registry';
-import type { Bi, Check, Lesson, ProcessModel, QuizItem, Task } from './types';
+import type { Bi, Check, Exam, Lesson, ProcessModel, QuizItem, RealTask, Task } from './types';
 
 export interface LintIssue {
   level: 'error' | 'warn';
@@ -72,6 +72,17 @@ function lintTask(t: Task, where: string, issues: LintIssue[]): void {
     const hints = Object.keys(t.hints ?? {}).filter((k) => k !== 'H1');
     if (hints.length) issues.push({ level: 'error', where, msg: `DL${t.docStep} task must not carry content hints (found ${hints.join(', ')})` });
     if (!t.solutionTokens?.length) issues.push({ level: 'error', where, msg: 'DL4/DL5 task needs solutionTokens the mentor must not say' });
+  }
+}
+
+/** A real-machine task: goals compile, name known machines, and the exam describes its machines. */
+function lintRealTask(t: RealTask, ex: Exam, where: string, issues: LintIssue[]): void {
+  if (!ex.real) issues.push({ level: 'error', where, msg: 'a real-machine task needs Exam.real (the machines and the collector arguments)' });
+  if (!t.goals?.length && !t.paste) issues.push({ level: 'error', where, msg: 'a real-machine task needs goals or a paste check' });
+  const ids = new Set(ex.real?.machines.map((m) => m.id) ?? []);
+  for (const g of t.goals ?? []) {
+    if (g.on && !ids.has(g.on)) issues.push({ level: 'error', where: `${where}.${g.id}`, msg: `goal runs on unknown machine "${g.on}"` });
+    lintCheck(g.check, `${where}.${g.id}`, issues);
   }
 }
 
@@ -306,7 +317,8 @@ export function lintRegistry(reg: Registry): LintIssue[] {
   for (const ex of reg.exams.values()) {
     for (const t of ex.tasks) {
       if (t.kind === 'quiz') lintQuizItem(t.item, `exam ${ex.id}.${t.id}`, issues);
-      else lintTask(t.task, `exam ${ex.id}.${t.id}`, issues);
+      else if (t.kind === 'task') lintTask(t.task, `exam ${ex.id}.${t.id}`, issues);
+      else lintRealTask(t.real, ex, `exam ${ex.id}.${t.id}`, issues);
     }
   }
   return issues;

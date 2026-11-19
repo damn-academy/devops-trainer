@@ -152,7 +152,8 @@ export interface ExamProtocol {
   seed: string;
   mode: 'exam' | 'training';
   authenticity: 'self';
-  env: 'sim';
+  /** 'vm': the tasks were judged on facts from the learner's own machines. */
+  env: 'sim' | 'vm';
   started: string;
   finished: string;
   minutes: number;
@@ -165,7 +166,7 @@ export interface ExamProtocol {
   readinessMark: boolean;
 }
 
-export function protocol(p: Omit<ExamProtocol, 'format' | 'authenticity' | 'env' | 'readinessMark'>): ExamProtocol {
+export function protocol(p: Omit<ExamProtocol, 'format' | 'authenticity' | 'env' | 'readinessMark'> & { env?: ExamProtocol['env'] }): ExamProtocol {
   const readinessMark = p.explain.length > 0 && p.explain.every((e) => e.of > 0 && e.covered / e.of >= 0.75);
-  return { format: 'devops-trainer/exam-protocol@1', authenticity: 'self', env: 'sim', readinessMark, ...p };
+  return { format: 'devops-trainer/exam-protocol@1', authenticity: 'self', readinessMark, ...p, env: p.env ?? 'sim' };
 }
