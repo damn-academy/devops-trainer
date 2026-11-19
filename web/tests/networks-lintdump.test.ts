@@ -13,8 +13,8 @@ import { createSimMachine, stripAnsi } from '../src/engine/terminal/shell';
 const lessons = [...registry.lessons.values()].filter((l) => l.block === 'networks');
 
 describe('networks content', () => {
-  it('is delivered: 15 lessons, ≥ 12 explainers and widgets, ≥ 12 quiz items', () => {
-    expect(lessons.length).toBe(15);
+  it('is delivered: 16 lessons (one on real Linux), ≥ 12 explainers and widgets, ≥ 12 quiz items', () => {
+    expect(lessons.length).toBe(16);
     expect([...registry.explainers.values()].filter((e) => e.block === 'networks').length).toBeGreaterThanOrEqual(12);
     expect([...registry.quiz.keys()].filter((k) => k.startsWith('net.q.')).length).toBeGreaterThanOrEqual(12);
   });

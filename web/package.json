@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite",
     "fetch:v86": "node scripts/fetch-v86.mjs",
+    "build:lab-image": "node scripts/build-lab-image.mjs",
     "prebuild": "node scripts/fetch-v86.mjs --optional",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173 --strictPort",
@@ -15,7 +16,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:v86": "V86_INTEGRATION=1 vitest run tests/v86-integration.test.ts",
+    "test:v86-lab": "V86_LAB=1 vitest run tests/v86-lab-integration.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:v86": "E2E_V86=1 playwright test e2e/real-lab.spec.ts",
     "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
