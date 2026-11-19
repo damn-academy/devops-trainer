@@ -61,10 +61,10 @@ function lookupName(c: Cluster, fqdn: string): string[] | null {
 }
 
 /** The pod's resolver: search list and ndots, as glibc/musl do. */
-export function resolve(c: Cluster, ns: string, name: string, ndots = 5): DnsAnswer {
+export function resolve(c: Cluster, ns: string, name: string, ndots = 5, src: Obj | null = null): DnsAnswer {
   const queries: DnsAnswer['queries'] = [];
   if (/^\d+\.\d+\.\d+\.\d+$/.test(name)) return { ok: true, fqdn: name, ips: [name], queries };
-  if (!dnsUp(c)) return { ok: false, ips: [], queries: [{ name, rcode: 'TIMEOUT' }], error: 'TIMEOUT' };
+  if (!dnsUp(c) || !dnsEgressAllowed(c, src)) return { ok: false, ips: [], queries: [{ name, rcode: 'TIMEOUT' }], error: 'TIMEOUT' };
   const search = [`${ns}.svc.${CLUSTER_DOMAIN}`, `svc.${CLUSTER_DOMAIN}`, CLUSTER_DOMAIN];
   const absolute = name.endsWith('.');
   const dots = (name.match(/\./g) ?? []).length;
@@ -97,8 +97,7 @@ export function policyAllows(c: Cluster, src: Obj | null, dst: Obj, port: number
   const pols = c.list('NetworkPolicy', ns).filter((p) => {
     const sel = p.spec?.podSelector ?? {};
     const selectsAll = !Object.keys(sel.matchLabels ?? {}).length && !(sel.matchExpressions ?? []).length;
-    const types: string[] = p.spec?.policyTypes ?? ['Ingress'];
-    return types.includes('Ingress') && (selectsAll || selects(sel, dst.metadata.labels));
+    return policyTypes(p).includes('Ingress') && (selectsAll || selects(sel, dst.metadata.labels));
   });
   if (!pols.length) return { allowed: true };
   for (const p of pols) {
@@ -120,6 +119,61 @@ export function policyAllows(c: Cluster, src: Obj | null, dst: Obj, port: number
 
 const isEmptySel = (s: Obj) => !Object.keys(s.matchLabels ?? {}).length && !(s.matchExpressions ?? []).length;
 
+/** policyTypes with the API default: Ingress always, Egress when the policy has egress rules. */
+export function policyTypes(p: Obj): string[] {
+  return p.spec?.policyTypes ?? ['Ingress', ...(p.spec?.egress ? ['Egress'] : [])];
+}
+
+function ipInCidr(ip: string, cidr: string): boolean {
+  const [base, bitsS] = cidr.split('/');
+  const bits = Number(bitsS ?? 32);
+  const n = (x: string) => x.split('.').reduce((a, b) => (a << 8) + Number(b), 0) >>> 0;
+  const mask = bits === 0 ? 0 : (~0 << (32 - bits)) >>> 0;
+  return (n(ip) & mask) === (n(base) & mask);
+}
+
+/**
+ * NetworkPolicy egress (05 §6.12): may `src` open a connection to `dst` (a pod, or
+ * an outside address when dst is null) on `port`/`protocol`? Pods selected by no
+ * Egress policy of their namespace may go anywhere; otherwise the union of the
+ * rules decides. `to` peers: podSelector, namespaceSelector, ipBlock.
+ */
+export function egressAllows(c: Cluster, src: Obj | null, dst: Obj | null, ip: string, port: number, protocol: 'TCP' | 'UDP' = 'TCP'): { allowed: boolean; by?: string } {
+  if (!src || !c.components.netpol || !c.components.cni) return { allowed: true };
+  const ns = src.metadata.namespace;
+  const pols = c.list('NetworkPolicy', ns).filter((p) => {
+    const sel = p.spec?.podSelector ?? {};
+    return policyTypes(p).includes('Egress') && (isEmptySel(sel) || selects(sel, src.metadata.labels));
+  });
+  if (!pols.length) return { allowed: true };
+  for (const p of pols) {
+    for (const rule of p.spec.egress ?? []) {
+      const portsOk = !(rule.ports ?? []).length || (rule.ports ?? []).some((rp: Obj) => (rp.protocol ?? 'TCP') === protocol && (rp.port === undefined || Number(rp.port) === port || (dst ? resolveTargetPort(dst, rp.port) === port : false)));
+      if (!portsOk) continue;
+      if (!(rule.to ?? []).length) return { allowed: true, by: p.metadata.name };
+      for (const peer of rule.to) {
+        if (peer.ipBlock) {
+          if (ipInCidr(ip, peer.ipBlock.cidr) && !(peer.ipBlock.except ?? []).some((x: string) => ipInCidr(ip, x))) return { allowed: true, by: p.metadata.name };
+          continue;
+        }
+        if (!dst) continue;
+        const dstNs = c.get('Namespace', undefined, dst.metadata.namespace);
+        const nsOk = peer.namespaceSelector ? isEmptySel(peer.namespaceSelector) || selects(peer.namespaceSelector, dstNs?.metadata.labels) : dst.metadata.namespace === ns;
+        const podOk = peer.podSelector ? isEmptySel(peer.podSelector) || selects(peer.podSelector, dst.metadata.labels) : true;
+        if (nsOk && podOk) return { allowed: true, by: p.metadata.name };
+      }
+    }
+  }
+  return { allowed: false, by: pols.map((p) => p.metadata.name).join(', ') };
+}
+
+/** May the pod send DNS queries to CoreDNS (egress UDP 53 to a kube-dns pod)? */
+export function dnsEgressAllowed(c: Cluster, src: Obj | null): boolean {
+  if (!src) return true;
+  const dns = c.list('Pod', 'kube-system').find((p) => p.metadata.labels?.['k8s-app'] === 'kube-dns' && !p.metadata.deletionTimestamp);
+  return egressAllows(c, src, dns ?? null, dns?.status?.podIP ?? DNS_IP, 53, 'UDP').allowed;
+}
+
 export function podByIp(c: Cluster, ip: string): Obj | undefined {
   return c.list('Pod').find((p) => p.status?.podIP === ip && !p.metadata.deletionTimestamp) ?? c.list('Pod').find((p) => p.status?.podIP === ip);
 }
@@ -130,6 +184,11 @@ function askPod(c: Cluster, src: Obj | null, pod: Obj, port: number, path: strin
   if (!podProcessUp(c, pod)) {
     trace.push(`${ip}:${port} — no process answers (the pod's node is down or the container is not running)`);
     return { ok: false, exit: 28, error: `curl: (28) Failed to connect to ${host} port ${port} after 130421 ms: Couldn't connect to server`, trace };
+  }
+  const out = egressAllows(c, src, pod, ip, port);
+  if (!out.allowed) {
+    trace.push(`egress NetworkPolicy ${out.by} of ${src?.metadata.namespace} drops the packet as it leaves ${src?.metadata.name}`);
+    return { ok: false, exit: 28, error: `curl: (28) Failed to connect to ${host} port ${port} after 130415 ms: Couldn't connect to server`, trace };
   }
   const pol = policyAllows(c, src, pod, port);
   if (!pol.allowed) {
@@ -174,9 +233,9 @@ export function httpFrom(c: Cluster, src: Obj | null, url: string): HttpResult {
   const ns = src?.metadata.namespace ?? 'default';
   let ip = host;
   if (!/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
-    const r = resolve(c, ns, host);
+    const r = resolve(c, ns, host, 5, src);
     if (!r.ok) {
-      trace.push(r.error === 'TIMEOUT' ? `DNS: no answer from ${DNS_IP} (CoreDNS is not serving)` : `DNS: every name in the search list is NXDOMAIN (${r.queries.map((q) => q.name).join(', ')})`);
+      trace.push(r.error === 'TIMEOUT' ? (dnsUp(c) ? `DNS: the query to ${DNS_IP}:53/UDP is dropped by an egress NetworkPolicy of ${ns}` : `DNS: no answer from ${DNS_IP} (CoreDNS is not serving)`) : `DNS: every name in the search list is NXDOMAIN (${r.queries.map((q) => q.name).join(', ')})`);
       return { ok: false, exit: 6, error: `curl: (6) Could not resolve host: ${host}`, trace };
     }
     trace.push(`DNS: ${host} → ${r.fqdn} → ${r.ips[0]}`);
@@ -210,6 +269,10 @@ export function httpFrom(c: Cluster, src: Obj | null, url: string): HttpResult {
   const pod = podByIp(c, ip);
   if (pod) return askPod(c, src, pod, port, path, host, trace);
   if (Object.values(EXTERNAL).includes(ip)) {
+    if (!egressAllows(c, src, null, ip, port).allowed) {
+      trace.push(`egress NetworkPolicy of ${src?.metadata.namespace} drops the packet to ${ip}`);
+      return { ok: false, exit: 28, error: `curl: (28) Failed to connect to ${host} port ${port} after 130419 ms: Couldn't connect to server`, trace };
+    }
     trace.push(`${ip} is outside the cluster: the node MASQUERADEs the source to its own IP`);
     return { ok: true, status: 200, body: '<!doctype html><title>Example Domain</title>', exit: 0, trace };
   }

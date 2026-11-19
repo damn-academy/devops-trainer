@@ -6,7 +6,7 @@
 import { bi } from '../../../core/i18n';
 import type { Facts, Lesson, QuizItem } from '../../../core/types';
 import type { K8sFacts } from '../../../engine/kube-lite/facts';
-import { DNS_LAB, INGRESS_LAB, SERVICE_BROKEN, SERVICE_LAB, TROUBLE_LAB } from '../setups';
+import { DNS_BROKEN, DNS_LAB, INGRESS_LAB, SERVICE_BROKEN, SERVICE_LAB, TROUBLE_LAB } from '../setups';
 import { R, S, src } from '../sources';
 
 const k8s = (f: Facts) => f.k8s as K8sFacts;
@@ -389,6 +389,37 @@ export const dnsLesson: Lesson = {
         },
       ],
     },
+    {
+      id: 'coredns',
+      kind: 'text',
+      step: 'explain',
+      title: bi('Когда молчит сам CoreDNS', 'When CoreDNS itself is silent'),
+      body: bi(
+        'CoreDNS — обычный Deployment в kube-system, и ломается он как обычный Deployment: его масштабировали в ноль, его поды не помещаются на узлы, его ConfigMap с Corefile испорчен. Признак узнаётся сразу: по IP всё отвечает, а любое имя — и внутреннее, и внешнее — даёт тайм-аут, потому что на `10.43.0.10:53` никто не отвечает. Если же внутренние имена работают, а внешние отвечают SERVFAIL, смотрите строку `forward` в Corefile: она отправляет чужие имена дальше, к DNS узла.',
+        'CoreDNS is an ordinary Deployment in kube-system, and it breaks like an ordinary Deployment: it was scaled to zero, its pods do not fit on the nodes, its ConfigMap with the Corefile is spoilt. The sign is easy to recognise: everything answers by IP, while any name — internal or external — times out, because nobody answers on `10.43.0.10:53`. If internal names work while external ones answer SERVFAIL, look at the `forward` line in the Corefile: it sends foreign names on, to the node DNS.',
+      ),
+    },
+    {
+      id: 'broken',
+      kind: 'terminal',
+      step: 'practice',
+      machine: 'sim',
+      setup: DNS_BROKEN,
+      intro: bi('Namespace `shop`: Deployment и Service `web`, под `client`. Жалоба: «в кластере ничего не открывается по имени».', 'Namespace `shop`: a Deployment and a Service `web`, a pod `client`. The complaint: "nothing in the cluster opens by name".'),
+      tasks: [
+        {
+          id: 'fix',
+          prompt: bi('Найдите, почему имена не резолвятся, и почините: `client` должен снова получать ответ от `web` по имени.', 'Find out why names do not resolve and fix it: `client` must get an answer from `web` by name again.'),
+          check: { when: "k8s.reach[from='shop/client'][to='web.shop'].status=200 && k8s.pods[ns=kube-system][name~'coredns'][ready=true]#>=1" },
+          chips: 'kubectl -n kube-system get deploy,pods -l k8s-app=kube-dns',
+          concepts: ['k8s.cluster-dns'],
+          hints: {
+            H1: bi('Сравните: отвечает ли web по IP Service и по имени? Если по IP да, а по имени тайм-аут — спросите, кто отвечает на 10.43.0.10.', 'Compare: does web answer by the Service IP and by name? If by IP yes and by name a timeout — ask who answers on 10.43.0.10.'),
+            H2: bi('Посмотрите Deployment coredns в kube-system: сколько у него реплик?', 'Look at the coredns Deployment in kube-system: how many replicas does it have?'),
+          },
+        },
+      ],
+    },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: dnsQuiz.map((q) => q.id) },
   ],
 };
@@ -516,24 +547,14 @@ export const troubleQuiz: QuizItem[] = [
 export const troubleshootLesson: Lesson = {
   id: 'k8s-1.troubleshoot',
   block: 'k8s-1',
-  title: bi('NetworkPolicy и методика «под не достучался»', 'NetworkPolicy and the "pod cannot reach it" method'),
-  summary: bi('По умолчанию всё открыто; политика выбирает поды и только разрешает. Лестница слоёв: DNS → Service → EndpointSlice → под → NetworkPolicy.', 'By default everything is open; a policy selects pods and only allows. The ladder of layers: DNS → Service → EndpointSlice → pod → NetworkPolicy.'),
-  introduces: ['k8s.networkpolicy'],
-  uses: ['k8s.service', 'k8s.endpointslice', 'k8s.cluster-dns', 'k8s.cni', 'k8s.label', 'k8s.namespace'],
+  title: bi('Методика «под не достучался до сервиса»', 'The "a pod cannot reach the service" method'),
+  summary: bi('Лестница слоёв: DNS → Service → EndpointSlice → под → NetworkPolicy. У каждой ступени своя поломка и свой признак.', 'The ladder of layers: DNS → Service → EndpointSlice → pod → NetworkPolicy. Each step has its own break and its own sign.'),
+  introduces: [],
+  uses: ['k8s.service', 'k8s.endpointslice', 'k8s.cluster-dns', 'k8s.cni', 'k8s.label', 'k8s.namespace', 'k8s.networkpolicy'],
   tier: 'core',
   minutes: 40,
   sources: src([S.netpol, S.debugService], [R.service, R.dns]),
   sections: [
-    {
-      id: 'policy',
-      kind: 'text',
-      step: 'explain',
-      title: bi('По умолчанию всё открыто', 'By default everything is open'),
-      body: bi(
-        'Сетевая модель обещает, что любой под достаёт до любого. Для учебного кластера это удобно, для рабочего — опасно: взломанный фронтенд сразу видит базу данных. Ограничивают это объектом [[k8s.networkpolicy|NetworkPolicy]].\n\nПолитика выбирает поды (`podSelector`) и для них **только разрешает**: «в поды app=pay можно приходить из namespace shop от подов role=frontend». Как только под выбран хотя бы одной политикой с типом Ingress, к нему пускают только то, что разрешено; всё прочее отбрасывается. Политики складываются: разрешено то, что разрешает хотя бы одна.\n\nВ правиле `from` есть ловушка. `namespaceSelector` и `podSelector` в **одном** элементе списка означают «И» (под с такой меткой в таком namespace). В **двух** элементах — «ИЛИ» (любой под из этого namespace или под с этой меткой откуда угодно). Одна чёрточка в YAML меняет смысл.\n\nИ главное: политику исполняет сетевой плагин. API-сервер примет NetworkPolicy в любом кластере, но если CNI её не поддерживает — чистый flannel, например, — трафик пойдёт как прежде. В k3s политики применяет встроенный kube-router.',
-        'The network model promises that any pod reaches any other. For a training cluster that is handy, for production it is dangerous: a compromised frontend sees the database at once. A [[k8s.networkpolicy|NetworkPolicy]] object restricts it.\n\nA policy selects pods (`podSelector`) and for them **only allows**: "into app=pay pods you may come from namespace shop, from pods role=frontend". As soon as a pod is selected by at least one policy of type Ingress, only what is allowed gets in; everything else is dropped. Policies add up: allowed is whatever at least one allows.\n\nThere is a trap in the `from` rule. `namespaceSelector` and `podSelector` in **one** list item mean "AND" (a pod with this label in this namespace). In **two** items they mean "OR" (any pod from this namespace, or a pod with this label from anywhere). One dash in the YAML changes the meaning.\n\nAnd the main thing: the network plugin enforces the policy. The API server accepts a NetworkPolicy in any cluster, but if the CNI does not support it — plain flannel, for example — traffic flows as before. In k3s the built-in kube-router enforces policies.',
-      ),
-    },
     {
       id: 'ladder',
       kind: 'text',

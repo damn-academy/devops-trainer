@@ -1,7 +1,7 @@
-// The real stage (05 §11, R12): stage 2 — one real node (k3s on a VM or on
-// your own machine); stage 3 — a kubeadm cluster on three VMs. The trainer
-// guides and checks (trainer-check.sh), but does not execute: the commands
-// run on your machines. Both stages end with a mandatory cleanup.
+// The real stage (05 §11, R12), part one: one real node (k3s on a VM or on
+// your own machine). The kubeadm cluster on three VMs is in f-kubeadm.ts.
+// The trainer guides and checks (trainer-check.sh), but does not execute:
+// the commands run on your machines. Every part ends with a cleanup.
 
 import { bi } from '../../../core/i18n';
 import type { Lesson, QuizItem } from '../../../core/types';
@@ -50,17 +50,6 @@ const r1Checks = [
   { id: 'app', label: bi('В namespace shop есть Deployment с двумя готовыми подами', 'Namespace shop has a Deployment with two ready pods'), when: 'k8s.deployments[ns=shop][ready>=2]#>=1' },
   { id: 'svc', label: bi('У Service в shop есть готовые адреса', 'A Service in shop has ready endpoints'), when: 'k8s.services[ns=shop][endpoints>=1]#>=1' },
   { id: 'route', label: bi('HTTPRoute принят Gateway', 'An HTTPRoute is accepted by a Gateway'), when: "k8s.objects[kind=HTTPRoute].status.parents.conditions[type=Accepted].status=True", hint: bi('Проверьте parentRefs HTTPRoute и `kubectl describe httproute`.', 'Check the HTTPRoute parentRefs and `kubectl describe httproute`.') },
-];
-
-const r3Checks = [
-  { id: 'nodes', label: bi('Три узла Ready', 'Three nodes are Ready'), when: 'k8s.nodes[ready=true]#>=3' },
-  { id: 'real', label: bi('Настоящие ядра, не симулятор', 'Real kernels, not the simulator'), when: "k8s.nodes#>=3 && k8s.nodes[kernel~'dt-sim']#=0" },
-  { id: 'cp', label: bi('Есть узел control plane', 'There is a control-plane node'), when: "k8s.nodes[roles has 'control-plane']#>=1" },
-  { id: 'static', label: bi('kube-apiserver и etcd работают статическими подами', 'kube-apiserver and etcd run as static pods'), when: "k8s.pods[ns=kube-system][name~'kube-apiserver-'][ready=true]#>=1 && k8s.pods[ns=kube-system][name~'etcd-'][ready=true]#>=1" },
-  { id: 'cilium', label: bi('Cilium работает на каждом узле', 'Cilium runs on every node'), when: "k8s.pods[ns=kube-system][name~'cilium-'][ready=true]#>=3", hint: bi('`cilium status --wait` на cp-1 покажет, что не так.', '`cilium status --wait` on cp-1 shows what is wrong.') },
-  { id: 'dns', label: bi('CoreDNS работает', 'CoreDNS is running'), when: "k8s.pods[ns=kube-system][name~'coredns'][ready=true]#>=1" },
-  { id: 'sc', label: bi('Есть StorageClass', 'There is a StorageClass'), when: 'k8s.objects[kind=StorageClass]#>=1' },
-  { id: 'spread', label: bi('Deployment web: три готовых пода', 'Deployment web: three ready pods'), when: 'k8s.deployments[ns=default][name=web].ready>=3' },
 ];
 
 export const singleNodeLesson: Lesson = {
@@ -116,74 +105,5 @@ export const singleNodeLesson: Lesson = {
       ),
     },
     { id: 'quiz', kind: 'quiz', step: 'review', title: bi('Проверьте себя', 'Check yourself'), items: ['k8s.q.real.cleanup'] },
-  ],
-};
-
-export const kubeadmLesson: Lesson = {
-  id: 'k8s-2.kubeadm',
-  block: 'k8s-2',
-  title: bi('Полный кластер: kubeadm на трёх ВМ', 'A full cluster: kubeadm on three VMs'),
-  summary: bi('Этап 3: подготовка узлов, kubeadm init и join, Cilium, хранилище, сертификаты, снимок и восстановление etcd, обновление, поломка и починка, уборка.', 'Stage 3: preparing the nodes, kubeadm init and join, Cilium, storage, certificates, an etcd snapshot and restore, an upgrade, a break and a fix, the cleanup.'),
-  introduces: ['k8s.kubeadm', 'k8s.static-pod'],
-  uses: ['k8s.control-plane', 'k8s.etcd', 'k8s.kubelet', 'k8s.cni', 'k8s.k3s', 'k8s.kubeconfig'],
-  tier: 'core',
-  minutes: 240,
-  sources: src([S.kubeadm, S.installKubeadm, S.upgrade, S.etcdRecovery, S.cilium], [R.installKubeadm, R.components]),
-  sections: [
-    {
-      id: 'why',
-      kind: 'text',
-      step: 'hook',
-      body: bi(
-        'k3s собрал кластер за вас. Теперь вы соберёте его сами из тех же блоков, что в конструкторе, — на трёх ВМ: `cp-1` (control plane), `worker-1`, `worker-2`. Установщик — [[k8s.kubeadm|kubeadm]]: он поднимает control plane, но всё вокруг — сеть, хранилище, обновления — остаётся на вас. Тот же кластер вы позже закажете Terraform и подготовите Ansible в блоке IaC — когда боль ручного заказа трёх ВМ станет знакомой.',
-        'k3s assembled the cluster for you. Now you assemble one yourself from the same blocks as in the constructor — on three VMs: `cp-1` (control plane), `worker-1`, `worker-2`. The installer is [[k8s.kubeadm|kubeadm]]: it brings up the control plane, but everything around it — the network, storage, upgrades — stays with you. You will order the same cluster with Terraform and prepare it with Ansible later, in the IaC block — once the pain of ordering three VMs by hand is familiar.',
-      ),
-    },
-    { id: 'cost', kind: 'callout', tone: 'cost', step: 'hook', title: bi('Сколько это стоит', 'What it costs'), body: bi('Три ВМ по 2 vCPU / 4 ГБ на рабочий день. Впишите сегодняшнюю цену ВМ-часа своего провайдера: таблица посчитает этап и — крупно — месяц забытого стенда.', 'Three VMs with 2 vCPU / 4 GB for a working day. Type today’s price of a VM-hour of your provider: the table counts the stage and — in large type — a month of a forgotten lab.') },
-    { id: 'cost-table', kind: 'widget', step: 'hook', widget: 'k8s.cost', props: { vms: 3, hours: 8 } },
-    {
-      id: 'prepare',
-      kind: 'text',
-      step: 'practice',
-      title: bi('1–3. ВМ, сеть и подготовка узлов', '1–3. VMs, the network and node preparation'),
-      body: bi(
-        'Три ВМ Ubuntu 24.04 в одной частной сети (например, `10.10.1.0/24`), все с меткой `trainer=devops`. Снаружи открыты только 22 и 6443 (с вашего IP); 10250, 2379–2380 и порты Cilium (8472/udp, 4240/tcp) — только внутри частной сети.\n\nНа каждом узле — подготовка по странице *Installing kubeadm*. Прочитайте каждую строку, прежде чем запускать:\n\n```bash\nsudo swapoff -a                                    # kubelet не работает со swap по умолчанию\nsudo modprobe overlay && sudo modprobe br_netfilter\nsudo sysctl -w net.ipv4.ip_forward=1\nsudo apt-get update && sudo apt-get install -y containerd apt-transport-https ca-certificates curl gpg\ncontainerd config default | sudo tee /etc/containerd/config.toml\nsudo sed -i \'s/SystemdCgroup = false/SystemdCgroup = true/\' /etc/containerd/config.toml\nsudo systemctl restart containerd\ncurl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg\necho \'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /\' | sudo tee /etc/apt/sources.list.d/kubernetes.list\nsudo apt-get update && sudo apt-get install -y kubelet kubeadm kubectl\nsudo apt-mark hold kubelet kubeadm kubectl\n```\n\nВерсия 1.36 выбрана нарочно: в шаге 9 вы обновите кластер до 1.37.',
-        'Three Ubuntu 24.04 VMs on one private network (for example `10.10.1.0/24`), all labelled `trainer=devops`. From outside only 22 and 6443 (from your IP) are open; 10250, 2379–2380 and the Cilium ports (8472/udp, 4240/tcp) only inside the private network.\n\nOn every node, prepare it following the *Installing kubeadm* page. Read every line before running it:\n\n```bash\nsudo swapoff -a                                    # the kubelet does not work with swap by default\nsudo modprobe overlay && sudo modprobe br_netfilter\nsudo sysctl -w net.ipv4.ip_forward=1\nsudo apt-get update && sudo apt-get install -y containerd apt-transport-https ca-certificates curl gpg\ncontainerd config default | sudo tee /etc/containerd/config.toml\nsudo sed -i \'s/SystemdCgroup = false/SystemdCgroup = true/\' /etc/containerd/config.toml\nsudo systemctl restart containerd\ncurl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg\necho \'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /\' | sudo tee /etc/apt/sources.list.d/kubernetes.list\nsudo apt-get update && sudo apt-get install -y kubelet kubeadm kubectl\nsudo apt-mark hold kubelet kubeadm kubectl\n```\n\nVersion 1.36 is chosen on purpose: in step 9 you upgrade the cluster to 1.37.',
-      ),
-    },
-    {
-      id: 'init',
-      kind: 'text',
-      step: 'practice',
-      title: bi('4–6. Control plane, сеть, узлы', '4–6. The control plane, the network, the nodes'),
-      body: bi(
-        'На `cp-1`:\n\n```bash\nsudo kubeadm init --apiserver-advertise-address=10.10.1.11 --pod-network-cidr=10.244.0.0/16\nmkdir -p $HOME/.kube && sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config && sudo chown $(id -u):$(id -g) $HOME/.kube/config\nkubectl get pods -n kube-system -o wide\nls /etc/kubernetes/manifests\n```\n\nВ `/etc/kubernetes/manifests` лежат etcd, kube-apiserver, kube-controller-manager и kube-scheduler. Это [[k8s.static-pod|статические поды]]: kubelet запускает их сам, прямо из файлов, без API-сервера — так kubeadm поднимает API-сервер, которого ещё нет. Поправьте файл — kubelet перезапустит под; уберите файл из каталога — под остановится.\n\nCoreDNS пока в Pending: сети подов нет. Поставьте Cilium (CLI `cilium` — со страницы установки Cilium, версию закрепите):\n\n```bash\ncilium install --version <закреплённая> --set ipam.mode=kubernetes\ncilium status --wait\n```\n\nУзлы присоединяются командой, которую напечатал `kubeadm init`:\n\n```bash\nsudo kubeadm join 10.10.1.11:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>   # на worker-1 и worker-2\nkubectl get nodes -o wide                                                                         # на cp-1\n```\n\nТокен живёт 24 часа. Если он истёк, новый `join` найдётся в справке `kubeadm token`. Для хранилища поставьте local-path-provisioner и сделайте его StorageClass классом по умолчанию.',
-        'On `cp-1`:\n\n```bash\nsudo kubeadm init --apiserver-advertise-address=10.10.1.11 --pod-network-cidr=10.244.0.0/16\nmkdir -p $HOME/.kube && sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config && sudo chown $(id -u):$(id -g) $HOME/.kube/config\nkubectl get pods -n kube-system -o wide\nls /etc/kubernetes/manifests\n```\n\n`/etc/kubernetes/manifests` holds etcd, kube-apiserver, kube-controller-manager and kube-scheduler. These are [[k8s.static-pod|static pods]]: the kubelet runs them by itself, straight from the files, without the API server — that is how kubeadm brings up an API server that does not exist yet. Edit a file and the kubelet restarts the pod; move the file out of the directory and the pod stops.\n\nCoreDNS is Pending for now: there is no pod network. Install Cilium (the `cilium` CLI comes from the Cilium install page; pin the version):\n\n```bash\ncilium install --version <pinned> --set ipam.mode=kubernetes\ncilium status --wait\n```\n\nNodes join with the command `kubeadm init` printed:\n\n```bash\nsudo kubeadm join 10.10.1.11:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>   # on worker-1 and worker-2\nkubectl get nodes -o wide                                                                         # on cp-1\n```\n\nA token lives 24 hours. If it has expired, a new `join` is in the `kubeadm token` help. For storage install local-path-provisioner and make its StorageClass the default one.',
-      ),
-    },
-    {
-      id: 'ops',
-      kind: 'text',
-      step: 'practice',
-      title: bi('7–10. Сертификаты, etcd, обновление, поломка', '7–10. Certificates, etcd, the upgrade, a break'),
-      body: bi(
-        '**Сертификаты.** `sudo kubeadm certs check-expiration` покажет сроки всех сертификатов control plane (обычно год). `sudo kubeadm certs renew apiserver` продлит один; статический под подхватит его после перезапуска (уберите манифест из каталога и верните через полминуты).\n\n**Снимок etcd.** etcd хранит весь кластер; его копия — главная страховка.\n\n```bash\nsudo mkdir -p /opt/backup\nsudo etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/backup/etcd-$(date +%F).db\nsudo etcdutl snapshot status /opt/backup/etcd-$(date +%F).db -w table\n```\n\nВосстановление в etcd 3.6 делает `etcdutl`, а не `etcdctl`: `sudo etcdutl snapshot restore <файл> --data-dir /var/lib/etcd-restore`, затем в `/etc/kubernetes/manifests/etcd.yaml` замените `hostPath` тома данных на `/var/lib/etcd-restore`. Многие инструкции в интернете написаны для старых версий — сверяйтесь с документацией своей.\n\n**Обновление 1.36 → 1.37.** Сначала control plane, потом узлы по одному: репозиторий `v1.37`, `kubeadm` новой версии, `sudo kubeadm upgrade plan`, `sudo kubeadm upgrade apply v1.37.<x>`; затем для каждого worker: `kubectl drain worker-1 --ignore-daemonsets`, на узле `sudo kubeadm upgrade node`, новые kubelet и kubectl, `sudo systemctl restart kubelet`, `kubectl uncordon worker-1`.\n\n**Поломка и починка.** На `worker-2` выполните `sudo systemctl stop kubelet` и пронаблюдайте то, что видели в объяснении «узел упал»: через 50 секунд NotReady, через 300 — выселение. Затем почините узел и убедитесь, что поды на месте.',
-        '**Certificates.** `sudo kubeadm certs check-expiration` shows the expiry of every control-plane certificate (usually a year). `sudo kubeadm certs renew apiserver` renews one; the static pod picks it up after a restart (move its manifest out of the directory and back half a minute later).\n\n**An etcd snapshot.** etcd holds the whole cluster; a copy of it is the main insurance.\n\n```bash\nsudo mkdir -p /opt/backup\nsudo etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save /opt/backup/etcd-$(date +%F).db\nsudo etcdutl snapshot status /opt/backup/etcd-$(date +%F).db -w table\n```\n\nIn etcd 3.6 restoring is done by `etcdutl`, not `etcdctl`: `sudo etcdutl snapshot restore <file> --data-dir /var/lib/etcd-restore`, then in `/etc/kubernetes/manifests/etcd.yaml` change the `hostPath` of the data volume to `/var/lib/etcd-restore`. Many instructions on the internet are written for older versions — check against the documentation of yours.\n\n**The upgrade 1.36 → 1.37.** The control plane first, then the nodes one by one: the `v1.37` repository, `kubeadm` of the new version, `sudo kubeadm upgrade plan`, `sudo kubeadm upgrade apply v1.37.<x>`; then for every worker: `kubectl drain worker-1 --ignore-daemonsets`, on the node `sudo kubeadm upgrade node`, the new kubelet and kubectl, `sudo systemctl restart kubelet`, `kubectl uncordon worker-1`.\n\n**A break and a fix.** On `worker-2` run `sudo systemctl stop kubelet` and watch what you saw in the "a node went down" explainer: NotReady after 50 seconds, eviction after 300. Then fix the node and make sure the pods are in place.',
-      ),
-    },
-    { id: 'web', kind: 'callout', tone: 'note', step: 'practice', body: bi('Для проверки создайте Deployment на три пода: `kubectl create deployment web --image=nginx:1.29 --replicas=3` — и посмотрите `kubectl get pods -o wide`: поды должны разойтись по узлам.', 'For the check create a Deployment of three pods: `kubectl create deployment web --image=nginx:1.29 --replicas=3` — and look at `kubectl get pods -o wide`: the pods should spread over the nodes.') },
-    { id: 'check', kind: 'widget', step: 'exit', widget: 'k8s.real-check', props: { track: 'r3', checks: r3Checks } },
-    {
-      id: 'cleanup',
-      kind: 'callout',
-      tone: 'cleanup',
-      step: 'review',
-      title: bi('Уборка — обязательна', 'Cleanup — mandatory'),
-      body: bi(
-        'Три ВМ, диски и адреса тарифицируются каждый час. Удаляйте по метке и убедитесь, что список пуст:\n\n```bash\nhcloud server list -l trainer=devops -o json     # должно стать []\nhcloud server delete cp-1 worker-1 worker-2\nhcloud network delete trainer\n```\n\nВ другом облаке — то же: список по метке `trainer=devops`, удаление, повторный список.',
-        'Three VMs, their disks and addresses are billed every hour. Delete by the label and make sure the list is empty:\n\n```bash\nhcloud server list -l trainer=devops -o json     # must become []\nhcloud server delete cp-1 worker-1 worker-2\nhcloud network delete trainer\n```\n\nIn another cloud the same: a list by the `trainer=devops` label, the deletion, the list again.',
-      ),
-    },
-    { id: 'quiz', kind: 'quiz', step: 'review', title: bi('Проверьте себя', 'Check yourself'), items: ['k8s.q.real.etcdutl', 'k8s.q.real.static'] },
   ],
 };

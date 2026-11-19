@@ -4,6 +4,7 @@ import type { WidgetReg } from '../../../core/types';
 import { constructorWidget } from './constructor';
 import { controllerLabWidget } from './controller-lab';
 import { costWidget } from './cost';
+import { outputCheckWidget } from './output-check';
 import { realCheckWidget } from './real-check';
 
-export const KUBE_WIDGETS: WidgetReg[] = [constructorWidget, controllerLabWidget, realCheckWidget, costWidget];
+export const KUBE_WIDGETS: WidgetReg[] = [constructorWidget, controllerLabWidget, realCheckWidget, costWidget, outputCheckWidget];

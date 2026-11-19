@@ -1,13 +1,21 @@
 // The Kubernetes block (05): stage 1 in the browser (k8s-1) and stage 2–3 on
 // real machines (k8s-2). The engine — kube-lite, kubectl, the widgets — lives
 // in src/engine/kube-lite; this module is the textbook on top of it.
+// k8s-2 covers stage 2: one k3s node, then kubeadm on three real VMs.
 
 import { defineModule } from '../../core/define';
 import { bi } from '../../core/i18n';
-import type { Block, Facts } from '../../core/types';
+import type { Block } from '../../core/types';
 import { fromModel } from '../../engine/explainer/render';
-import type { K8sFacts } from '../../engine/kube-lite/facts';
 import { CONCEPTS } from './concepts';
+import { STAGE2_DOCS } from './docs';
+import { k8sExam } from './exam';
+import { etcdRestoreModel } from './explainers/etcd-restore';
+import { kubeadmInitModel } from './explainers/kubeadm-init';
+import { loopChainModel } from './explainers/loop-chain';
+import { netpolModel } from './explainers/netpol';
+import { tlsBootstrapModel } from './explainers/tls-bootstrap';
+import { upgradeModel } from './explainers/upgrade';
 import { applyPathModel } from './explainers/apply-path';
 import { dispatchModel } from './explainers/dispatch';
 import { ingressPathModel } from './explainers/ingress-path';
@@ -22,14 +30,14 @@ import { firstPodLesson, podQuiz, reconcileLesson, reconcileQuiz, whyLesson, why
 import { archQuiz, architectureLesson, deployQuiz, deploymentsLesson, operatorQuiz, operatorsLesson } from './lessons/b-workloads';
 import { dnsLesson, dnsQuiz, ingressLesson, ingressQuiz, networkLesson, networkQuiz, serviceQuiz, servicesLesson, troubleQuiz, troubleshootLesson } from './lessons/c-network';
 import { configLesson, configQuiz, healthLesson, healthQuiz, helmLesson, helmQuiz } from './lessons/d-config';
-import { kubeadmLesson, realQuiz, singleNodeLesson } from './lessons/e-real';
-import { SERVICE_BROKEN, ns } from './setups';
+import { netpolLesson, netpolQuiz } from './lessons/c2-netpol';
+import { realQuiz, singleNodeLesson } from './lessons/e-real';
+import { KUBEADM_LESSONS, stage2Quiz } from './lessons/f-kubeadm';
+import { placementFor } from './placement';
 import { R, S, src } from './sources';
 
-const k8s = (f: Facts) => f.k8s as K8sFacts;
-
-const quiz = [...whyQuiz, ...podQuiz, ...reconcileQuiz, ...deployQuiz, ...archQuiz, ...operatorQuiz, ...networkQuiz, ...serviceQuiz, ...dnsQuiz, ...ingressQuiz, ...troubleQuiz, ...configQuiz, ...healthQuiz, ...helmQuiz, ...realQuiz];
-const byId = (id: string) => quiz.find((q) => q.id === id)!;
+const quiz = [...whyQuiz, ...podQuiz, ...reconcileQuiz, ...deployQuiz, ...archQuiz, ...operatorQuiz, ...networkQuiz, ...serviceQuiz, ...dnsQuiz, ...ingressQuiz, ...netpolQuiz, ...troubleQuiz, ...configQuiz, ...healthQuiz, ...helmQuiz, ...realQuiz, ...stage2Quiz];
+const placement = placementFor(quiz);
 
 const stage1: Block = {
   id: 'k8s-1',
@@ -58,6 +66,7 @@ const stage1: Block = {
     'k8s-1.services',
     'k8s-1.dns',
     'k8s-1.ingress',
+    'k8s-1.netpol',
     'k8s-1.troubleshoot',
     'k8s-1.config',
     'k8s-1.health',
@@ -65,51 +74,15 @@ const stage1: Block = {
   ],
   sources: src([S.overview, S.components, S.networking, S.kubectl], [R.what, R.components, R.cheatsheet]),
   docSources: ['kubectl-explain', 'help', 'kubernetes.io'],
-  placement: [
-    { id: 'k8s.place.i1', level: 'intermediate', key: true, concepts: ['k8s.pod', 'k8s.replicaset'], kind: 'quiz', item: { ...byId('k8s.q.pod.delete'), id: 'k8s.place.q.delete' } },
-    { id: 'k8s.place.i2', level: 'intermediate', key: false, concepts: ['k8s.deployment'], kind: 'quiz', item: { ...byId('k8s.q.dep.order'), id: 'k8s.place.q.order' } },
-    {
-      id: 'k8s.place.i3',
-      level: 'intermediate',
-      key: true,
-      concepts: ['k8s.deployment', 'k8s.service', 'k8s.namespace'],
-      kind: 'task',
-      setup: { hostname: 'laptop', ext: { k8s: { manifests: [ns('shop'), 'apiVersion: v1\nkind: Pod\nmetadata:\n  name: client\n  namespace: shop\nspec:\n  containers:\n  - name: client\n    image: trainer/client:1.0\n'] } } },
-      task: {
-        id: 'shop',
-        prompt: bi('В namespace `shop`: Deployment `web` из `trainer/web:1.0` на 3 реплики и Service `web` на порту 80. Под `client` должен получать ответ по `http://web.shop`.', 'In namespace `shop`: Deployment `web` from `trainer/web:1.0` with 3 replicas and Service `web` on port 80. Pod `client` must get an answer from `http://web.shop`.'),
-        check: { when: "k8s.deployments[ns=shop][name=web].ready=3 && k8s.reach[from='shop/client'][to='web.shop'].status=200" },
-      },
-    },
-    { id: 'k8s.place.e1', level: 'experienced', key: true, concepts: ['k8s.clusterip', 'k8s.kube-proxy'], kind: 'quiz', item: { ...byId('k8s.q.svc.ip'), id: 'k8s.place.q.ip' } },
-    {
-      id: 'k8s.place.e2',
-      level: 'experienced',
-      key: true,
-      concepts: ['k8s.service', 'k8s.endpointslice', 'k8s.label'],
-      kind: 'task',
-      setup: SERVICE_BROKEN,
-      task: {
-        id: 'fix',
-        prompt: bi('Service `api` в namespace `prod` не отвечает. Почините его, не пересоздавая поды.', 'Service `api` in namespace `prod` does not answer. Fix it without recreating the pods.'),
-        check: {
-          when: (f, start) => {
-            const s = k8s(f).services.find((x) => x.ns === 'prod' && x.name === 'api');
-            const uids = (x?: Facts) => (x ? k8s(x).pods.filter((p) => p.ns === 'prod' && p.labels.app === 'api-v2').map((p) => p.uid).sort().join() : '');
-            return !!s && s.endpoints >= 2 && (!start || uids(f) === uids(start));
-          },
-        },
-      },
-    },
-    { id: 'k8s.place.e3', level: 'experienced', key: false, concepts: ['k8s.resources'], kind: 'quiz', item: { ...byId('k8s.q.h.reason'), id: 'k8s.place.q.oom' } },
-  ],
+  placement: placement.stage1,
+  exam: k8sExam.id,
 };
 
 const stage2: Block = {
   id: 'k8s-2',
   order: 70,
-  title: bi('Kubernetes, этап 2–3: настоящие машины', 'Kubernetes, stages 2–3: real machines'),
-  summary: bi('Один настоящий узел на k3s с Gateway и Helm, затем полный кластер kubeadm на трёх ВМ: Cilium, сертификаты, etcd, обновление, поломка и починка. Проверка — агентом, уборка — обязательна.', 'One real node on k3s with a Gateway and Helm, then a full kubeadm cluster on three VMs: Cilium, certificates, etcd, an upgrade, a break and a fix. The check is done by an agent, the cleanup is mandatory.'),
+  title: bi('Kubernetes, этап 2: настоящие машины', 'Kubernetes, stage 2: real machines'),
+  summary: bi('Один настоящий узел на k3s с Gateway и Helm, затем кластер kubeadm на трёх ВМ, которые вы заказываете сами: подготовка узлов, init и join, сертификаты и статические поды, Cilium, снимок и восстановление etcd, обновление, поломка и починка. Проверка — по фактам кластера и по выводу команд, уборка — обязательна.', 'One real node on k3s with a Gateway and Helm, then a kubeadm cluster on three VMs you order yourself: node preparation, init and join, certificates and static pods, Cilium, an etcd snapshot and restore, an upgrade, a break and a repair. The check is by the cluster’s facts and by command output, the cleanup is mandatory.'),
   checklistStep: '05',
   requires: ['k8s-1'],
   levels: {
@@ -118,16 +91,18 @@ const stage2: Block = {
     experienced: bi('Прошёл этап 1; собирает с нуля по документации', 'Finished stage 1; builds from scratch with the documentation'),
   },
   hours: { beginner: 14, intermediate: 12, experienced: 10 },
-  lessons: ['k8s-2.single-node', 'k8s-2.kubeadm'],
-  sources: src([S.k3s, S.kubeadm, S.etcdRecovery], [R.installKubeadm, R.what]),
+  lessons: ['k8s-2.single-node', ...KUBEADM_LESSONS.map((l) => l.id)],
+  sources: src([S.k3s, S.kubeadm, S.etcdRecovery, S.skew], [R.installKubeadm, R.what]),
   docSources: ['kubernetes.io', 'help'],
-  placement: [{ id: 'k8s2.place.1', level: 'experienced', key: true, concepts: ['k8s.kubeadm'], kind: 'quiz', item: { ...byId('k8s.q.real.etcdutl'), id: 'k8s2.place.q.etcdutl' } }],
+  placement: placement.stage2,
 };
 
 export default defineModule({
   blocks: [stage1, stage2],
-  lessons: [whyLesson, firstPodLesson, reconcileLesson, deploymentsLesson, architectureLesson, operatorsLesson, networkLesson, servicesLesson, dnsLesson, ingressLesson, troubleshootLesson, configLesson, healthLesson, helmLesson, singleNodeLesson, kubeadmLesson],
+  lessons: [whyLesson, firstPodLesson, reconcileLesson, deploymentsLesson, architectureLesson, operatorsLesson, networkLesson, servicesLesson, dnsLesson, ingressLesson, netpolLesson, troubleshootLesson, configLesson, healthLesson, helmLesson, singleNodeLesson, ...KUBEADM_LESSONS],
   concepts: CONCEPTS,
   quiz,
-  explainers: [dispatchModel, reconcileModel, rollingModel, schedulerModel, applyPathModel, nodeDownModel, podNetworkModel, servicePathModel, ndotsModel, ingressPathModel].map((m) => fromModel(m as never)),
+  explainers: [dispatchModel, reconcileModel, loopChainModel, rollingModel, schedulerModel, applyPathModel, nodeDownModel, podNetworkModel, servicePathModel, ndotsModel, ingressPathModel, netpolModel, kubeadmInitModel, tlsBootstrapModel, etcdRestoreModel, upgradeModel].map((m) => fromModel(m as never)),
+  docs: STAGE2_DOCS,
+  exams: [k8sExam],
 });
