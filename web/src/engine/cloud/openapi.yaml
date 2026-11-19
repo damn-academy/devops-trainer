@@ -1,0 +1,1200 @@
+openapi: 3.0.3
+info:
+  title: Lab Cloud API
+  version: 1.0.0
+  description: |
+    The in-tab cloud of DevOps Trainer. A JavaScript service attached to the
+    learning switch (dt-switch) answers at `api.cloud.lab` (10.0.0.1) for every
+    machine in the tab. Creating a VM boots a real v86 Linux machine and plugs
+    it into the switch; the limit is the memory of the browser tab.
+
+    Conventions (stable; the Terraform/OpenTofu provider `lab` relies on them):
+
+    - JSON in and out, `Content-Type: application/json`. Times are RFC 3339 UTC.
+    - Authentication: `Authorization: Bearer <access key secret>`. A key belongs
+      to one project and may act only inside it. The page panel "Cloud" shows the
+      first key of project `default`.
+    - Ids are prefixed: `prj-`, `key-`, `net-`, `subnet-`, `sg-`, `sshkey-`,
+      `vm-`, `disk-`, `lb-`, `zone-`, `rec-`, `op-`. Names are unique per project
+      and kind, `^[a-z][a-z0-9-]{0,62}$`.
+    - Every resource has `labels` (string → string). Lists filter with
+      `?label=key=value` (repeatable) and page with `?limit=` (default 50,
+      max 200) and `?page_token=`; the answer is `{ items, next_page_token }`.
+    - Slow changes (VMs, disks, load balancers, their deletion) return
+      `202 Accepted` with an `Operation` and header `Location: /v1/operations/<id>`.
+      The operation goes `PENDING → RUNNING → DONE` or `ERROR`. The resource
+      itself shows its own status. `GET /v1/operations/{id}?wait=30` blocks up
+      to 30 seconds until the operation is finished (long poll).
+    - Fast changes (networks, subnets, security groups, ssh keys, DNS, buckets)
+      return `201 Created` with the resource.
+    - Updates are `PATCH` with a partial body; fields marked readOnly or
+      "immutable" are rejected with `400 InvalidArgument`.
+    - Errors always have the body `Error` and header `X-Request-Id`.
+      Codes: 400 `InvalidArgument`, 401 `Unauthenticated`, 403 `PermissionDenied`,
+      403 `QuotaExceeded`, 404 `NotFound`, 405 `MethodNotAllowed`,
+      409 `AlreadyExists`, 409 `FailedPrecondition` (wrong state, resource in use),
+      409 `Conflict` (concurrent operation on the same resource), 413 `TooLarge`,
+      500 `Internal`, 503 `Unavailable` (the VM backend cannot boot machines here).
+    - Object storage is a separate S3-compatible endpoint, see tag `s3`.
+servers:
+  - url: http://api.cloud.lab/v1
+tags:
+  - name: core
+  - name: iam
+  - name: network
+  - name: compute
+  - name: storage
+  - name: lb
+  - name: dns
+  - name: s3
+    description: |
+      S3-compatible object storage at `http://s3.cloud.lab` (path style
+      `/<bucket>/<key>`, virtual-hosted `<bucket>.s3.cloud.lab` too). Enough for
+      the Terraform/OpenTofu `s3` backend including `use_lockfile`:
+      ListBuckets, HeadBucket, ListObjectsV2, GET/HEAD/PUT/DELETE object,
+      `If-None-Match: *` on PUT. Authentication: `Authorization: AWS4-HMAC-SHA256
+      Credential=<access key id>/…`; the key id selects the project, the
+      signature is not verified (this is a lab). Payloads with
+      `Content-Encoding: aws-chunked` are decoded. Errors are S3 XML
+      (`NoSuchBucket`, `NoSuchKey`, `PreconditionFailed`, `AccessDenied`).
+      Backend example:
+
+          terraform {
+            backend "s3" {
+              bucket = "tfstate"
+              key    = "lab/terraform.tfstate"
+              region = "lab-1"
+              endpoints = { s3 = "http://s3.cloud.lab" }
+              use_path_style = true
+              access_key = "AKLAB…"
+              secret_key = "…"
+              skip_credentials_validation = true
+              skip_region_validation      = true
+              skip_requesting_account_id  = true
+              skip_metadata_api_check     = true
+              skip_s3_checksum            = true
+              use_lockfile                = true
+            }
+          }
+
+security:
+  - bearer: []
+
+paths:
+  /:
+    get:
+      tags: [core]
+      summary: API information (no authentication)
+      security: []
+      operationId: getInfo
+      responses:
+        '200':
+          description: Version and endpoints
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Info' }
+
+  /whoami:
+    get:
+      tags: [iam]
+      summary: The project and key of the caller
+      operationId: whoami
+      responses:
+        '200':
+          description: Caller
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  project: { $ref: '#/components/schemas/Project' }
+                  access_key_id: { type: string }
+        '401': { $ref: '#/components/responses/Error' }
+
+  /regions:
+    get:
+      tags: [core]
+      summary: Regions and zones (one of each in the tab)
+      operationId: listRegions
+      responses:
+        '200':
+          description: Regions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name: { type: string, example: lab-1 }
+                        zones: { type: array, items: { type: string }, example: [lab-1a] }
+
+  /flavors:
+    get:
+      tags: [compute]
+      summary: VM sizes
+      operationId: listFlavors
+      responses:
+        '200':
+          description: Flavors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Flavor' } }
+
+  /images:
+    get:
+      tags: [compute]
+      summary: Bootable images the VM backend of this tab offers
+      operationId: listImages
+      responses:
+        '200':
+          description: Images
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Image' } }
+
+  /projects:
+    get:
+      tags: [iam]
+      summary: Projects visible to the caller (its own)
+      operationId: listProjects
+      responses:
+        '200':
+          description: Projects
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProjectList' }
+
+  /projects/{project}:
+    parameters: [{ $ref: '#/components/parameters/project' }]
+    get:
+      tags: [iam]
+      operationId: getProject
+      responses:
+        '200': { description: Project, content: { application/json: { schema: { $ref: '#/components/schemas/Project' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+
+  /projects/{project}/quotas:
+    parameters: [{ $ref: '#/components/parameters/project' }]
+    get:
+      tags: [iam]
+      summary: Limits and usage. memory_mb is bounded by the memory of the tab.
+      operationId: getQuotas
+      responses:
+        '200': { description: Quotas, content: { application/json: { schema: { $ref: '#/components/schemas/Quotas' } } } }
+
+  /projects/{project}/access-keys:
+    parameters: [{ $ref: '#/components/parameters/project' }]
+    get:
+      tags: [iam]
+      operationId: listAccessKeys
+      responses:
+        '200': { description: Keys without secrets, content: { application/json: { schema: { $ref: '#/components/schemas/AccessKeyList' } } } }
+    post:
+      tags: [iam]
+      summary: Create a key; the secret is returned only in this response
+      operationId: createAccessKey
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccessKeyCreate' }
+      responses:
+        '201': { description: Key with secret, content: { application/json: { schema: { $ref: '#/components/schemas/AccessKey' } } } }
+  /projects/{project}/access-keys/{id}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [iam]
+      operationId: getAccessKey
+      responses:
+        '200': { description: Key, content: { application/json: { schema: { $ref: '#/components/schemas/AccessKey' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [iam]
+      summary: Revoke; the last key of a project cannot be deleted (FailedPrecondition)
+      operationId: deleteAccessKey
+      responses:
+        '204': { description: Deleted }
+        '409': { $ref: '#/components/responses/Error' }
+
+  /projects/{project}/networks:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/label' }]
+    get:
+      tags: [network]
+      operationId: listNetworks
+      responses:
+        '200': { description: Networks, content: { application/json: { schema: { $ref: '#/components/schemas/NetworkList' } } } }
+    post:
+      tags: [network]
+      summary: A network is one VLAN on dt-switch; the lab host is its router
+      operationId: createNetwork
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/NetworkCreate' } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Network' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/networks/{id}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [network]
+      operationId: getNetwork
+      responses:
+        '200': { description: Network, content: { application/json: { schema: { $ref: '#/components/schemas/Network' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [network]
+      operationId: updateNetwork
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/LabelsPatch' } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Network' } } } }
+    delete:
+      tags: [network]
+      summary: Fails with FailedPrecondition while subnets exist; network `default` cannot be deleted
+      operationId: deleteNetwork
+      responses:
+        '204': { description: Deleted }
+        '409': { $ref: '#/components/responses/Error' }
+
+  /projects/{project}/subnets:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/label' }]
+    get:
+      tags: [network]
+      operationId: listSubnets
+      responses:
+        '200': { description: Subnets, content: { application/json: { schema: { $ref: '#/components/schemas/SubnetList' } } } }
+    post:
+      tags: [network]
+      operationId: createSubnet
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/SubnetCreate' } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Subnet' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/subnets/{id}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [network]
+      operationId: getSubnet
+      responses:
+        '200': { description: Subnet, content: { application/json: { schema: { $ref: '#/components/schemas/Subnet' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [network]
+      operationId: updateSubnet
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/LabelsPatch' } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Subnet' } } } }
+    delete:
+      tags: [network]
+      summary: Fails with FailedPrecondition while VMs or load balancers use it
+      operationId: deleteSubnet
+      responses:
+        '204': { description: Deleted }
+        '409': { $ref: '#/components/responses/Error' }
+
+  /projects/{project}/security-groups:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/label' }]
+    get:
+      tags: [network]
+      operationId: listSecurityGroups
+      responses:
+        '200': { description: Groups, content: { application/json: { schema: { $ref: '#/components/schemas/SecurityGroupList' } } } }
+    post:
+      tags: [network]
+      operationId: createSecurityGroup
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/SecurityGroupCreate' } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/SecurityGroup' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+  /projects/{project}/security-groups/{id}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [network]
+      operationId: getSecurityGroup
+      responses:
+        '200': { description: Group, content: { application/json: { schema: { $ref: '#/components/schemas/SecurityGroup' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [network]
+      summary: Replace rules (and/or labels, description); running VMs get the new rules
+      operationId: updateSecurityGroup
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/SecurityGroupPatch' } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/SecurityGroup' } } } }
+    delete:
+      tags: [network]
+      summary: Fails with FailedPrecondition while a VM uses it
+      operationId: deleteSecurityGroup
+      responses:
+        '204': { description: Deleted }
+        '409': { $ref: '#/components/responses/Error' }
+
+  /projects/{project}/ssh-keys:
+    parameters: [{ $ref: '#/components/parameters/project' }]
+    get:
+      tags: [compute]
+      operationId: listSshKeys
+      responses:
+        '200': { description: Keys, content: { application/json: { schema: { $ref: '#/components/schemas/SshKeyList' } } } }
+    post:
+      tags: [compute]
+      operationId: createSshKey
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/SshKeyCreate' } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/SshKey' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+  /projects/{project}/ssh-keys/{id}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [compute]
+      operationId: getSshKey
+      responses:
+        '200': { description: Key, content: { application/json: { schema: { $ref: '#/components/schemas/SshKey' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [compute]
+      operationId: deleteSshKey
+      responses:
+        '204': { description: Deleted }
+
+  /projects/{project}/vms:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/label' }]
+    get:
+      tags: [compute]
+      operationId: listVms
+      responses:
+        '200': { description: VMs, content: { application/json: { schema: { $ref: '#/components/schemas/VmList' } } } }
+    post:
+      tags: [compute]
+      summary: Boot a real v86 machine
+      description: |
+        Checks quotas (count and memory of the tab) synchronously and answers
+        403 QuotaExceeded before anything starts. The VM gets an address from
+        the subnet, a MAC, a DHCP lease and the metadata service at
+        169.254.169.254; ssh keys and user_data are applied on first boot.
+      operationId: createVm
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/VmCreate' } } }
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /projects/{project}/vms/{id}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [compute]
+      operationId: getVm
+      responses:
+        '200': { description: VM, content: { application/json: { schema: { $ref: '#/components/schemas/Vm' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [compute]
+      summary: Labels and security groups only; other fields are immutable
+      operationId: updateVm
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/VmPatch' } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Vm' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [compute]
+      summary: Power off and remove; attached disks are detached, not deleted
+      operationId: deleteVm
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/vms/{id}/start:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    post:
+      tags: [compute]
+      operationId: startVm
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/vms/{id}/stop:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    post:
+      tags: [compute]
+      summary: Stop and free tab memory; the disk state is kept
+      operationId: stopVm
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/vms/{id}/reboot:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    post:
+      tags: [compute]
+      operationId: rebootVm
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/vms/{id}/console:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [compute]
+      summary: The last 64 KiB of the serial console (text/plain)
+      operationId: getVmConsole
+      responses:
+        '200': { description: Console text, content: { text/plain: { schema: { type: string } } } }
+
+  /projects/{project}/disks:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/label' }]
+    get:
+      tags: [storage]
+      operationId: listDisks
+      responses:
+        '200': { description: Disks, content: { application/json: { schema: { $ref: '#/components/schemas/DiskList' } } } }
+    post:
+      tags: [storage]
+      summary: A blank disk (sizes are in MiB, the tab is small)
+      operationId: createDisk
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/DiskCreate' } } }
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /projects/{project}/disks/{id}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [storage]
+      operationId: getDisk
+      responses:
+        '200': { description: Disk, content: { application/json: { schema: { $ref: '#/components/schemas/Disk' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [storage]
+      operationId: updateDisk
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/LabelsPatch' } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Disk' } } } }
+    delete:
+      tags: [storage]
+      summary: FailedPrecondition while attached
+      operationId: deleteDisk
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/disks/{id}/attach:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    post:
+      tags: [storage]
+      summary: Attach to a STOPPED VM (v86 has no disk hot-plug)
+      operationId: attachDisk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vm_id]
+              properties:
+                vm_id: { type: string }
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/disks/{id}/detach:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    post:
+      tags: [storage]
+      summary: Detach from a STOPPED VM
+      operationId: detachDisk
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+        '409': { $ref: '#/components/responses/Error' }
+
+  /projects/{project}/load-balancers:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/label' }]
+    get:
+      tags: [lb]
+      operationId: listLoadBalancers
+      responses:
+        '200': { description: Load balancers, content: { application/json: { schema: { $ref: '#/components/schemas/LoadBalancerList' } } } }
+    post:
+      tags: [lb]
+      summary: An HTTP load balancer; the lab host owns its VIP and proxies to the targets
+      operationId: createLoadBalancer
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/LoadBalancerCreate' } } }
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+        '400': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /projects/{project}/load-balancers/{id}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [lb]
+      operationId: getLoadBalancer
+      responses:
+        '200': { description: Load balancer, content: { application/json: { schema: { $ref: '#/components/schemas/LoadBalancer' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [lb]
+      summary: Replace listeners, targets, health check or labels
+      operationId: updateLoadBalancer
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/LoadBalancerPatch' } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/LoadBalancer' } } } }
+    delete:
+      tags: [lb]
+      operationId: deleteLoadBalancer
+      responses:
+        '202': { $ref: '#/components/responses/Accepted' }
+
+  /projects/{project}/dns/zones:
+    parameters: [{ $ref: '#/components/parameters/project' }]
+    get:
+      tags: [dns]
+      operationId: listDnsZones
+      responses:
+        '200': { description: Zones, content: { application/json: { schema: { $ref: '#/components/schemas/DnsZoneList' } } } }
+    post:
+      tags: [dns]
+      summary: A zone under .lab (cloud.lab, git.lab and mirror.lab are reserved)
+      operationId: createDnsZone
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/DnsZoneCreate' } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/DnsZone' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/dns/zones/{id}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [dns]
+      operationId: getDnsZone
+      responses:
+        '200': { description: Zone, content: { application/json: { schema: { $ref: '#/components/schemas/DnsZone' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [dns]
+      summary: FailedPrecondition while records exist
+      operationId: deleteDnsZone
+      responses:
+        '204': { description: Deleted }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/dns/zones/{zone}/records:
+    parameters: [{ $ref: '#/components/parameters/project' }, { name: zone, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [dns]
+      operationId: listDnsRecords
+      responses:
+        '200': { description: Records, content: { application/json: { schema: { $ref: '#/components/schemas/DnsRecordList' } } } }
+    post:
+      tags: [dns]
+      operationId: createDnsRecord
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/DnsRecordCreate' } } }
+      responses:
+        '201': { description: Created; served by the lab DNS at once, content: { application/json: { schema: { $ref: '#/components/schemas/DnsRecord' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/dns/zones/{zone}/records/{id}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { name: zone, in: path, required: true, schema: { type: string } }, { $ref: '#/components/parameters/id' }]
+    get:
+      tags: [dns]
+      operationId: getDnsRecord
+      responses:
+        '200': { description: Record, content: { application/json: { schema: { $ref: '#/components/schemas/DnsRecord' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [dns]
+      operationId: updateDnsRecord
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/DnsRecordPatch' } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/DnsRecord' } } } }
+    delete:
+      tags: [dns]
+      operationId: deleteDnsRecord
+      responses:
+        '204': { description: Deleted }
+
+  /projects/{project}/buckets:
+    parameters: [{ $ref: '#/components/parameters/project' }]
+    get:
+      tags: [storage]
+      operationId: listBuckets
+      responses:
+        '200': { description: Buckets, content: { application/json: { schema: { $ref: '#/components/schemas/BucketList' } } } }
+    post:
+      tags: [storage]
+      summary: A bucket of the S3 endpoint; names are global in the tab
+      operationId: createBucket
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/BucketCreate' } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Bucket' } } } }
+        '409': { $ref: '#/components/responses/Error' }
+  /projects/{project}/buckets/{name}:
+    parameters: [{ $ref: '#/components/parameters/project' }, { name: name, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [storage]
+      operationId: getBucket
+      responses:
+        '200': { description: Bucket, content: { application/json: { schema: { $ref: '#/components/schemas/Bucket' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [storage]
+      summary: FailedPrecondition unless empty (or `?force=true`)
+      operationId: deleteBucket
+      parameters: [{ name: force, in: query, schema: { type: boolean } }]
+      responses:
+        '204': { description: Deleted }
+        '409': { $ref: '#/components/responses/Error' }
+
+  /projects/{project}/operations:
+    parameters: [{ $ref: '#/components/parameters/project' }]
+    get:
+      tags: [core]
+      operationId: listOperations
+      parameters: [{ name: status, in: query, schema: { $ref: '#/components/schemas/OperationStatus' } }]
+      responses:
+        '200': { description: Operations, newest first, content: { application/json: { schema: { $ref: '#/components/schemas/OperationList' } } } }
+  /operations/{id}:
+    parameters: [{ $ref: '#/components/parameters/id' }]
+    get:
+      tags: [core]
+      operationId: getOperation
+      parameters:
+        - name: wait
+          in: query
+          description: Seconds to block until the operation is DONE or ERROR (max 60)
+          schema: { type: integer, minimum: 0, maximum: 60 }
+      responses:
+        '200': { description: Operation, content: { application/json: { schema: { $ref: '#/components/schemas/Operation' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: The secret of an access key
+  parameters:
+    project:
+      name: project
+      in: path
+      required: true
+      description: Project name or id
+      schema: { type: string }
+    id:
+      name: id
+      in: path
+      required: true
+      description: Resource id or name
+      schema: { type: string }
+    label:
+      name: label
+      in: query
+      description: Filter `key=value`, repeatable (AND)
+      schema: { type: array, items: { type: string } }
+      style: form
+      explode: true
+  responses:
+    Error:
+      description: Error
+      headers:
+        X-Request-Id: { schema: { type: string } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Accepted:
+      description: The change is running; poll the operation
+      headers:
+        Location: { schema: { type: string }, description: /v1/operations/<id> }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Operation' }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, status, request_id]
+          properties:
+            code: { type: string, enum: [InvalidArgument, Unauthenticated, PermissionDenied, QuotaExceeded, NotFound, MethodNotAllowed, AlreadyExists, FailedPrecondition, Conflict, TooLarge, Internal, Unavailable] }
+            message: { type: string }
+            status: { type: integer }
+            request_id: { type: string }
+            details:
+              type: object
+              additionalProperties: true
+              description: 'Field errors: {"field": "cidr", "reason": "..."}; quotas: {"quota": "memory_mb", "limit": 512, "used": 448, "requested": 128}'
+      example:
+        error: { code: QuotaExceeded, message: 'quota memory_mb exceeded: limit 512, used 448, requested 128', status: 403, request_id: req-0000002a, details: { quota: memory_mb, limit: 512, used: 448, requested: 128 } }
+    Labels:
+      type: object
+      additionalProperties: { type: string }
+      example: { trainer: devops, dt-track: iac }
+    LabelsPatch:
+      type: object
+      properties:
+        labels: { $ref: '#/components/schemas/Labels' }
+        description: { type: string }
+    Meta:
+      type: object
+      required: [id, name, project, labels, created_at]
+      properties:
+        id: { type: string, readOnly: true }
+        name: { type: string }
+        project: { type: string, readOnly: true, description: Project id }
+        description: { type: string }
+        labels: { $ref: '#/components/schemas/Labels' }
+        created_at: { type: string, format: date-time, readOnly: true }
+        updated_at: { type: string, format: date-time, readOnly: true }
+    Info:
+      type: object
+      properties:
+        name: { type: string, example: lab-cloud }
+        version: { type: string, example: 1.0.0 }
+        region: { type: string, example: lab-1 }
+        endpoints:
+          type: object
+          properties:
+            api: { type: string, example: 'http://api.cloud.lab/v1' }
+            s3: { type: string, example: 'http://s3.cloud.lab' }
+            metadata: { type: string, example: 'http://169.254.169.254/latest/meta-data/' }
+            git: { type: string, example: 'http://git.lab/' }
+            mirror: { type: string, example: 'http://mirror.lab/' }
+    Project:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+    ProjectList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Project' } }
+        next_page_token: { type: string, nullable: true }
+    Quota:
+      type: object
+      properties:
+        limit: { type: integer }
+        used: { type: integer }
+    Quotas:
+      type: object
+      properties:
+        vms: { $ref: '#/components/schemas/Quota' }
+        memory_mb: { $ref: '#/components/schemas/Quota' }
+        disks: { $ref: '#/components/schemas/Quota' }
+        disk_mb: { $ref: '#/components/schemas/Quota' }
+        networks: { $ref: '#/components/schemas/Quota' }
+        load_balancers: { $ref: '#/components/schemas/Quota' }
+        buckets: { $ref: '#/components/schemas/Quota' }
+        storage_mb: { $ref: '#/components/schemas/Quota' }
+    AccessKeyCreate:
+      type: object
+      properties:
+        description: { type: string }
+    AccessKey:
+      type: object
+      properties:
+        id: { type: string, example: key-3f9a1c2b }
+        access_key_id: { type: string, example: AKLAB3F9A1C2B, description: For the S3 endpoint }
+        secret: { type: string, description: Only in the create response; the Bearer token }
+        description: { type: string }
+        project: { type: string }
+        created_at: { type: string, format: date-time }
+    AccessKeyList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AccessKey' } }
+        next_page_token: { type: string, nullable: true }
+    NetworkCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        cidr: { type: string, example: 10.10.0.0/16, description: 'Must be inside 10.0.0.0/8 and not overlap other networks; default: the next free 10.N.0.0/16' }
+        labels: { $ref: '#/components/schemas/Labels' }
+    Network:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            cidr: { type: string }
+            vlan: { type: integer, readOnly: true, description: 802.1Q VLAN of this network on dt-switch (default network is VLAN 1) }
+            default: { type: boolean, readOnly: true }
+            status: { type: string, enum: [ACTIVE], readOnly: true }
+    NetworkList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Network' } }
+        next_page_token: { type: string, nullable: true }
+    SubnetCreate:
+      type: object
+      required: [name, network_id, cidr]
+      properties:
+        name: { type: string }
+        network_id: { type: string, description: Id or name }
+        cidr: { type: string, example: 10.10.1.0/24, description: /16–/29 inside the network }
+        dhcp: { type: boolean, default: true }
+        dns_servers: { type: array, items: { type: string }, description: 'Default: the gateway (lab DNS)' }
+        labels: { $ref: '#/components/schemas/Labels' }
+    Subnet:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            network_id: { type: string }
+            cidr: { type: string }
+            gateway: { type: string, readOnly: true, description: First address; the lab host answers there }
+            dhcp: { type: boolean }
+            dns_servers: { type: array, items: { type: string } }
+            available_ips: { type: integer, readOnly: true }
+            status: { type: string, enum: [ACTIVE], readOnly: true }
+    SubnetList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Subnet' } }
+        next_page_token: { type: string, nullable: true }
+    SecurityRule:
+      type: object
+      required: [direction, protocol]
+      properties:
+        direction: { type: string, enum: [ingress, egress] }
+        protocol: { type: string, enum: [tcp, udp, icmp, all] }
+        port_min: { type: integer, minimum: 1, maximum: 65535 }
+        port_max: { type: integer, minimum: 1, maximum: 65535 }
+        cidr: { type: string, default: 0.0.0.0/0 }
+        description: { type: string }
+    SecurityGroupCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        rules: { type: array, items: { $ref: '#/components/schemas/SecurityRule' } }
+        labels: { $ref: '#/components/schemas/Labels' }
+    SecurityGroupPatch:
+      type: object
+      properties:
+        description: { type: string }
+        rules: { type: array, items: { $ref: '#/components/schemas/SecurityRule' } }
+        labels: { $ref: '#/components/schemas/Labels' }
+    SecurityGroup:
+      description: |
+        Rules are enforced by the lab host for traffic it carries (load
+        balancer to targets, routing between subnets) and are handed to the
+        guest in metadata (`/latest/meta-data/security-groups.json`) and as
+        iptables rules applied on boot by images that support it.
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            rules: { type: array, items: { $ref: '#/components/schemas/SecurityRule' } }
+    SecurityGroupList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/SecurityGroup' } }
+        next_page_token: { type: string, nullable: true }
+    SshKeyCreate:
+      type: object
+      required: [name, public_key]
+      properties:
+        name: { type: string }
+        public_key: { type: string, example: 'ssh-ed25519 AAAAC3Nza... learner@ws' }
+        labels: { $ref: '#/components/schemas/Labels' }
+    SshKey:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            public_key: { type: string }
+            fingerprint: { type: string, readOnly: true, example: 'SHA256:...' }
+    SshKeyList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/SshKey' } }
+        next_page_token: { type: string, nullable: true }
+    Flavor:
+      type: object
+      properties:
+        name: { type: string, example: lab.small }
+        memory_mb: { type: integer, example: 64 }
+        vcpus: { type: integer, example: 1 }
+    Image:
+      type: object
+      properties:
+        name: { type: string, example: alpine-3.20 }
+        description: { type: string }
+        os: { type: string, example: linux }
+        min_memory_mb: { type: integer }
+        ssh: { type: boolean, description: The image runs sshd }
+        cloud_init: { type: boolean, description: The image reads metadata itself on boot }
+    VmCreate:
+      type: object
+      required: [name, flavor, image]
+      properties:
+        name: { type: string }
+        hostname: { type: string, description: 'Default: name' }
+        flavor: { type: string }
+        image: { type: string }
+        subnet_id: { type: string, description: 'Id or name; default: the default subnet 10.0.0.0/24' }
+        ip: { type: string, description: 'Fixed address in the subnet; default: the next free one' }
+        security_group_ids: { type: array, items: { type: string } }
+        ssh_key_ids: { type: array, items: { type: string } }
+        ssh_authorized_keys: { type: array, items: { type: string }, description: Public keys given inline }
+        user_data: { type: string, description: 'Shell script (#!) or #cloud-config; at most 16 KiB' }
+        disk_ids: { type: array, items: { type: string }, description: Disks to attach before first boot }
+        labels: { $ref: '#/components/schemas/Labels' }
+    VmPatch:
+      type: object
+      properties:
+        labels: { $ref: '#/components/schemas/Labels' }
+        description: { type: string }
+        security_group_ids: { type: array, items: { type: string } }
+    VmStatus:
+      type: string
+      enum: [PENDING, PROVISIONING, RUNNING, STOPPING, STOPPED, STARTING, REBOOTING, DELETING, ERROR]
+    Vm:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            hostname: { type: string }
+            flavor: { type: string }
+            image: { type: string }
+            memory_mb: { type: integer, readOnly: true }
+            subnet_id: { type: string }
+            network_id: { type: string, readOnly: true }
+            ip: { type: string }
+            mac: { type: string, readOnly: true }
+            fqdn: { type: string, readOnly: true, example: web-1.vm.lab }
+            security_group_ids: { type: array, items: { type: string } }
+            ssh_key_ids: { type: array, items: { type: string } }
+            disk_ids: { type: array, items: { type: string } }
+            status: { $ref: '#/components/schemas/VmStatus' }
+            status_message: { type: string, readOnly: true }
+            boot:
+              type: object
+              nullable: true
+              readOnly: true
+              properties:
+                kind: { type: string, enum: [cold, restored] }
+                ms: { type: integer }
+            started_at: { type: string, format: date-time, nullable: true, readOnly: true }
+    VmList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Vm' } }
+        next_page_token: { type: string, nullable: true }
+    DiskCreate:
+      type: object
+      required: [name, size_mb]
+      properties:
+        name: { type: string }
+        size_mb: { type: integer, minimum: 8, maximum: 1024 }
+        labels: { $ref: '#/components/schemas/Labels' }
+    Disk:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            size_mb: { type: integer }
+            status: { type: string, enum: [CREATING, AVAILABLE, IN_USE, DELETING, ERROR] }
+            vm_id: { type: string, nullable: true }
+            device: { type: string, nullable: true, example: /dev/sdb, description: Name of the disk inside the attached VM }
+    DiskList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Disk' } }
+        next_page_token: { type: string, nullable: true }
+    Listener:
+      type: object
+      required: [port]
+      properties:
+        protocol: { type: string, enum: [http], default: http }
+        port: { type: integer, example: 80 }
+        target_port: { type: integer, example: 80, description: 'Default: port' }
+    HealthCheck:
+      type: object
+      properties:
+        path: { type: string, default: / }
+        port: { type: integer, description: 'Default: the target port of the first listener' }
+        interval_s: { type: integer, default: 5, minimum: 2 }
+        healthy_threshold: { type: integer, default: 2 }
+        unhealthy_threshold: { type: integer, default: 2 }
+    LoadBalancerCreate:
+      type: object
+      required: [name, listeners]
+      properties:
+        name: { type: string }
+        subnet_id: { type: string, description: 'Default: the default subnet' }
+        listeners: { type: array, minItems: 1, items: { $ref: '#/components/schemas/Listener' } }
+        target_vm_ids: { type: array, items: { type: string } }
+        algorithm: { type: string, enum: [round_robin, least_connections], default: round_robin }
+        health_check: { $ref: '#/components/schemas/HealthCheck' }
+        labels: { $ref: '#/components/schemas/Labels' }
+    LoadBalancerPatch:
+      type: object
+      properties:
+        listeners: { type: array, items: { $ref: '#/components/schemas/Listener' } }
+        target_vm_ids: { type: array, items: { type: string } }
+        algorithm: { type: string, enum: [round_robin, least_connections] }
+        health_check: { $ref: '#/components/schemas/HealthCheck' }
+        labels: { $ref: '#/components/schemas/Labels' }
+    LoadBalancer:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            subnet_id: { type: string }
+            vip: { type: string, readOnly: true, example: 10.0.0.200 }
+            fqdn: { type: string, readOnly: true, example: web.lb.lab }
+            listeners: { type: array, items: { $ref: '#/components/schemas/Listener' } }
+            target_vm_ids: { type: array, items: { type: string } }
+            algorithm: { type: string }
+            health_check: { $ref: '#/components/schemas/HealthCheck' }
+            targets:
+              type: array
+              readOnly: true
+              items:
+                type: object
+                properties:
+                  vm_id: { type: string }
+                  ip: { type: string }
+                  health: { type: string, enum: [unknown, healthy, unhealthy] }
+                  reason: { type: string }
+            status: { type: string, enum: [PENDING, ACTIVE, DELETING, ERROR] }
+    LoadBalancerList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/LoadBalancer' } }
+        next_page_token: { type: string, nullable: true }
+    DnsZoneCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, example: shop.lab, description: A domain ending in .lab }
+        labels: { $ref: '#/components/schemas/Labels' }
+    DnsZone:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            records: { type: integer, readOnly: true }
+    DnsZoneList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/DnsZone' } }
+        next_page_token: { type: string, nullable: true }
+    DnsRecordCreate:
+      type: object
+      required: [name, type, values]
+      properties:
+        name: { type: string, description: 'Relative to the zone; "@" for the apex', example: www }
+        type: { type: string, enum: [A, CNAME, TXT] }
+        values: { type: array, items: { type: string }, example: [10.0.0.200] }
+        ttl: { type: integer, default: 60 }
+        labels: { $ref: '#/components/schemas/Labels' }
+    DnsRecordPatch:
+      type: object
+      properties:
+        values: { type: array, items: { type: string } }
+        ttl: { type: integer }
+        labels: { $ref: '#/components/schemas/Labels' }
+    DnsRecord:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            zone_id: { type: string }
+            fqdn: { type: string, readOnly: true, example: www.shop.lab }
+            type: { type: string }
+            values: { type: array, items: { type: string } }
+            ttl: { type: integer }
+    DnsRecordList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/DnsRecord' } }
+        next_page_token: { type: string, nullable: true }
+    BucketCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, pattern: '^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$' }
+        versioning: { type: boolean, default: false }
+        labels: { $ref: '#/components/schemas/Labels' }
+    Bucket:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            endpoint: { type: string, readOnly: true, example: 'http://s3.cloud.lab/tfstate' }
+            objects: { type: integer, readOnly: true }
+            bytes: { type: integer, readOnly: true }
+            versioning: { type: boolean }
+    BucketList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Bucket' } }
+        next_page_token: { type: string, nullable: true }
+    OperationStatus:
+      type: string
+      enum: [PENDING, RUNNING, DONE, ERROR]
+    Operation:
+      type: object
+      properties:
+        id: { type: string, example: op-0000001c }
+        kind: { type: string, example: vm.create, description: '<resource>.<verb>' }
+        project: { type: string }
+        target:
+          type: object
+          properties:
+            type: { type: string, example: vm }
+            id: { type: string }
+            name: { type: string }
+        status: { $ref: '#/components/schemas/OperationStatus' }
+        progress: { type: integer, minimum: 0, maximum: 100 }
+        message: { type: string, description: What is happening now }
+        error:
+          type: object
+          nullable: true
+          properties:
+            code: { type: string }
+            message: { type: string }
+        created_at: { type: string, format: date-time }
+        started_at: { type: string, format: date-time, nullable: true }
+        done_at: { type: string, format: date-time, nullable: true }
+    OperationList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Operation' } }
+        next_page_token: { type: string, nullable: true }
