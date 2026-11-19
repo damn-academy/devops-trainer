@@ -23,6 +23,15 @@ const SHOTS = [
   ['reconcile-loop', '#/explainer/k8s.reconcile', 'full'],
   ['k8s-networking', '#/explainer/k8s.pod-network', 'full'],
   ['kanban-board', '#/lesson/methodology.board', '.flowlab'],
+  ['orient-request', '#/explainer/orient.request', 'full'],
+  ['orient-rent', '#/explainer/orient.rent', 'full'],
+  ['cicd-k8s-deploy', '#/explainer/cicd.k8s-deploy', 'full'],
+  ['k8s-netpol', '#/explainer/k8s.netpol', 'full'],
+  ['iac-var-precedence', '#/explainer/iac.var-precedence', 'full'],
+  ['cluster-from-code', '#/explainer/k8s-3.from-code', 'full'],
+  ['gitops-loop', '#/explainer/k8s-3.gitops-loop', 'full'],
+  ['log-path', '#/explainer/obs.log-path', 'full'],
+  ['network-exam', '#/exam/networks.exam.office', null],
 ];
 
 /** Actions before a shot, so the picture shows the thing working. */
@@ -57,7 +66,7 @@ for (const [view, viewport] of VIEWS) {
       page.on('pageerror', (e) => problems.push(`${view}/${theme}/${lang}: ${e.message}`));
       for (const [name, route, sel] of SHOTS) {
         if (filter && !name.includes(filter)) continue;
-        if (lang === 'en' && !['home', 'lesson', 'url-typing', 'kanban-board', 'k8s-from-blocks'].includes(name)) continue;
+        if (lang === 'en' && !['home', 'lesson', 'url-typing', 'kanban-board', 'k8s-from-blocks', 'orient-request', 'cluster-from-code'].includes(name)) continue;
         await page.goto(BASE + route);
         await page.waitForTimeout(700);
         await page.addStyleTag({ content: '.top { position: static !important; } .tutor-launch { display: none !important; }' });

@@ -4,15 +4,14 @@
 import { expect, test } from '@playwright/test';
 import { open, runInTerminal, terminalText, watchErrors } from './helpers';
 
-const BLOCKS = ['methodology', 'linux', 'git-yaml', 'networks', 'containers', 'cicd', 'k8s-1', 'k8s-2', 'iac', 'monitoring', 'final', 'career'];
+const BLOCKS = ['orient', 'methodology', 'linux', 'git-yaml', 'networks', 'containers', 'cicd', 'k8s-1', 'cicd-k8s', 'k8s-2', 'iac', 'k8s-3', 'monitoring', 'final', 'career'];
 
 test.describe('shell', () => {
   test('home shows the route in design order and switches RU/EN', async ({ page }) => {
     const errors = watchErrors(page);
     await open(page, '#/');
     const order = await page.locator('ol.route > li').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.block));
-    // Orientation and "A cluster from code" are on the route as placeholders until delivered.
-    expect(order.filter((id) => BLOCKS.includes(id!))).toEqual(BLOCKS);
+    expect(order).toEqual(BLOCKS);
     expect(order.indexOf('orient')).toBe(0);
 
     await page.locator('.lang-switch button', { hasText: 'RU' }).click();
@@ -157,7 +156,7 @@ test('progress persists after reload', async ({ page }) => {
 
 test.describe('phone width', () => {
   test.use({ viewport: { width: 390, height: 844 } });
-  for (const route of ['#/', '#/lesson/linux.terminal', '#/explainer/net.url', '#/explainer/containers.boundaries', '#/lesson/k8s-1.architecture', '#/lesson/methodology.board']) {
+  for (const route of ['#/', '#/lesson/linux.terminal', '#/explainer/net.url', '#/explainer/containers.boundaries', '#/lesson/k8s-1.architecture', '#/lesson/methodology.board', '#/lesson/orient.requests', '#/explainer/k8s.netpol', '#/lesson/k8s-3.as-code', '#/exam/networks.exam.office']) {
     test(`no sideways page scroll: ${route}`, async ({ page }) => {
       await open(page, route);
       await page.waitForTimeout(500);
