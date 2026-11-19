@@ -1,0 +1,36 @@
+/* The PromQL workbench and the incident drill. */
+.wb { border: 1px solid var(--line-2); border-radius: var(--r-lg); padding: 14px 16px; background: var(--bg); font-family: var(--font-ui); }
+.wb-title { margin: 0 0 8px; }
+.wb-q { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; }
+.wb-input { font: 0.9rem/1.5 var(--font-mono); padding: 8px 10px; border: 1.5px solid var(--line-2); border-radius: var(--r); background: var(--bg-2); color: var(--ink); resize: vertical; min-width: 0; }
+.wb-input:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+.wb-tabs { display: flex; gap: 4px; margin: 8px 0; border-bottom: 1px solid var(--line-2); }
+.wb-tab { border: 0; background: none; padding: 6px 10px; font: inherit; font-size: 0.86rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+.wb-tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+.wb-out { min-height: 60px; overflow-x: auto; }
+.wb-table { border-collapse: collapse; width: 100%; font: 0.82rem/1.45 var(--font-mono); }
+.wb-table td { padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; word-break: break-all; }
+.wb-table td.num { text-align: right; white-space: pre; font-variant-numeric: tabular-nums; word-break: normal; }
+.wb-err { color: var(--c-err); font: 0.86rem/1.4 var(--font-mono); display: flex; gap: 6px; align-items: flex-start; }
+.wb-scalar code { font-size: 1.1rem; }
+.wb-chart { width: 100%; height: auto; display: block; }
+.wb-grid { stroke: var(--line); stroke-width: 1; }
+.wb-tick { font: 10px var(--font-ui); fill: var(--muted); }
+.wb-line { fill: none; stroke-width: 1.8; stroke-linejoin: round; }
+.wb-legend { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 2px; font: 0.78rem/1.4 var(--font-mono); }
+.wb-swatch { display: inline-block; width: 12px; height: 3px; margin-right: 6px; vertical-align: middle; border-radius: 2px; }
+.wb-expo { background: var(--term-bg); color: var(--term-fg); font: 0.78rem/1.45 var(--font-mono); padding: 8px 10px; border-radius: var(--r); max-height: 280px; overflow: auto; }
+.wb-th { font: 600 0.78rem/1.2 var(--font-mono); margin: 10px 0 4px; }
+.wb-goals-box { margin-bottom: 10px; }
+.wb-goals { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.wb-goals .goal { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; }
+.wb-goals .goal-mark { width: 18px; height: 18px; border: 1.5px solid var(--line-2); border-radius: 50%; display: grid; place-items: center; font-size: 0.75rem; }
+.wb-goals .goal.done .goal-mark { background: var(--c-ok); border-color: var(--c-ok); color: var(--bg); }
+.wb-goals .goal-text { margin: 0; font-family: var(--font-text); }
+.wb-then { margin: 4px 0 0; color: var(--ink-2); font-family: var(--font-text); font-size: 0.92rem; border-left: 2px solid var(--c-ok); padding-left: 8px; }
+.wb-hint { font-size: 0.86rem; color: var(--muted); }
+.wb-alert { border-left: 4px solid var(--c-err); background: var(--c-err-bg); padding: 8px 12px; border-radius: 0 var(--r) var(--r) 0; margin-bottom: 12px; }
+.wb-alert p { margin: 2px 0; }
+.wb-alert-tag { display: flex; gap: 6px; align-items: center; }
+.wb-alert-labels { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.8rem; }
+@media (max-width: 600px) { .wb-q { grid-template-columns: minmax(0, 1fr); } }
