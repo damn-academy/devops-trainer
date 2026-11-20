@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { evaluateCheck } from '../src/core/check';
 import { replayLog } from '../src/engine/flowlab/board';
 import { bots, counterfactuals, passLine, policyTrace, replayPolicy, runBot } from '../src/engine/flowlab/bots';
-import { flowCommand, flowFacts, flowSetup } from '../src/engine/flowlab/cli';
+import { flowCommand, flowFacts, flowSetup, session } from '../src/engine/flowlab/cli';
 import { explainHits } from '../src/engine/flowlab/debrief';
 import { little, median, metrics, percentile } from '../src/engine/flowlab/metrics';
 import { hash32, mulberry32, rand } from '../src/engine/flowlab/rng';
@@ -270,6 +270,42 @@ describe('`flow` in the terminal and facts.flow', () => {
     expect(f.daysDone).toBe(0);
   });
 
+  it('exposes current stations, autopilot and deployment interval without reading output', async () => {
+    const m = await mk('s2');
+    await m.exec('flow station DEV-2 test');
+    await m.exec('flow auto on');
+    await m.exec('flow policy deploy train:2');
+    await m.exec('echo unrelated');
+    expect(evaluateCheck({ when: 'flow.people.DEV-2.station=test && flow.policies.auto=1 && flow.policies.deploy=train && flow.policies.deployEvery=2' }, await m.facts()).pass).toBe(true);
+    await m.exec('flow auto off');
+    await m.exec('flow policy deploy manual');
+    expect((await m.facts()).flow).toMatchObject({ policies: { auto: 0, deploy: 'manual', deployEvery: null } });
+    // Facts must not expose mutable simulator state.
+    const facts = (await m.facts()).flow as { people: Record<string, { station: string }> };
+    facts.people['DEV-2'].station = 'dev';
+    expect((await m.facts()).flow).toMatchObject({ people: { 'DEV-2': { station: 'test' } } });
+  });
+
+  it('reports routine ops share separately from incidents over the last ten days', async () => {
+    const m = await mk('s2');
+    expect((await m.facts()).flow).toMatchObject({ ops: { toilShare10: 0 } });
+    const f = session(m);
+    while (!f.s!.finished) f.next();
+    const days = f.s!.history.slice(-10);
+    const cap = days.reduce((n, h) => n + h.ops.capacity, 0);
+    const toil = days.reduce((n, h) => n + h.ops.toil, 0);
+    expect(cap).toBeGreaterThan(0);
+    expect(toil).toBeGreaterThan(0);
+    expect((await m.facts()).flow).toMatchObject({ ops: { toilShare10: toil / cap } });
+    // An older busy day is outside the window; incidents are not routine work.
+    f.s!.history = Array.from({ length: 11 }, (_, i) => ({ ...days[0], day: i + 1,
+      ops: { ...days[0].ops, capacity: 10, toil: i === 0 ? 10 : 2, unplanned: 3 } }));
+    expect((await m.facts()).flow).toMatchObject({ ops: { toilShare10: 0.2 }, metrics: { opsToilShare10: 0.5 } });
+    const noOps = await mk('p5');
+    await noOps.exec('flow next 5');
+    expect((await noOps.facts()).flow).toMatchObject({ ops: { toilShare10: 0 } });
+  });
+
   it('the intermediate placement goal: reference limits pass, no limits fail', async () => {
     const goal = { when: 'flow.daysDone>=5 && flow.pass.done=1' };
     const good = await mk('p5');
@@ -290,6 +326,34 @@ describe('`flow` in the terminal and facts.flow', () => {
     const f = (await m2.facts()).flow as { daysDone: number; policies: { wip: Record<string, number | null> } };
     expect(f.daysDone).toBe(2);
     expect(f.policies.wip.dev).toBe(2);
+  });
+
+  it('resets to captured setup, including after snapshots and a new seed', async () => {
+    const m = await createSimMachine({ ext: { flow: { scenario: 's2', seed: 42 } }, script: [
+      'flow auto on', 'flow wip analysis 2', 'flow wip dev 3', 'flow wip test 2',
+      'flow policy pull cd3', 'flow policy deploy train:2', 'flow station DEV-2 test',
+    ] }, { registry: reg });
+    session(m).captureSetup();
+    const initial = (await m.facts()).flow;
+    await m.exec('flow auto off');
+    await m.exec('flow policy deploy manual');
+    await m.exec('flow policy pull fifo');
+    await m.exec('flow wip dev none');
+    await m.exec('flow station DEV-2 dev');
+    await m.exec('flow next 5');
+    const snap = await m.snapshot();
+    const other = await mk('p5');
+    await other.restore(snap);
+    for (const machine of [m, other]) {
+      await machine.exec('flow reset');
+      expect((await machine.facts()).flow).toEqual(initial);
+      await machine.exec('flow next 2');
+      await machine.exec('flow reset');
+      expect((await machine.facts()).flow).toEqual(initial);
+      await machine.exec('flow reset 77');
+      expect((await machine.facts()).flow).toMatchObject({ seed: 77, daysDone: 0,
+        policies: { auto: 1, deploy: 'train', deployEvery: 2, pullOrder: 'cd3', wip: { dev: 3 } } });
+    }
   });
 
   it('P5 is deterministic: the numbers in the placement prompt hold', () => {

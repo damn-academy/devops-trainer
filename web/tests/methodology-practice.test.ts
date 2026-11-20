@@ -111,6 +111,19 @@ describe('lesson 6, the bottleneck: the beginner finds the slow stage and swarms
     expect((await play(l, ['flow reset', 'flow station DEV-2 test', 'flow next 10'])).say('swarm')).toContain('Сбросить машину');
   });
 
+  it('requires one developer at testing even when the delivery count is sufficient', async () => {
+    const m = await createSimMachine(l.setup, { registry: reg });
+    const facts = await m.facts();
+    const flow = facts.flow as Record<string, unknown>;
+    Object.assign(flow, { daysDone: 10, done: { count: 7 } });
+    const check = l.tasks.find(t => t.id === 'swarm')!.check;
+    expect(evaluateCheck(check, facts).pass).toBe(false);
+    flow.people = { 'DEV-1': { station: 'dev' }, 'DEV-2': { station: 'test' } };
+    expect(evaluateCheck(check, facts).pass).toBe(true);
+    flow.people = { 'DEV-1': { station: 'test' }, 'DEV-2': { station: 'test' } };
+    expect(evaluateCheck(check, facts).pass).toBe(false);
+  });
+
   it('the reset button keeps the limits of the setup', async () => {
     const r = await play(l, ['flow next 10', 'restart', 'flow next 4', 'flow status', 'flow station DEV-2 test', 'flow next 6']);
     expect(r.passed.has('swarm')).toBe(true);
@@ -181,6 +194,15 @@ describe('lesson 11, DORA: deployments every two days against every five', () =>
   it('the reference solution reaches every goal', async () => {
     const r = await play(l, [...RUN, 'flow metrics', 'restart', 'flow policy deploy train:2', ...RUN, 'flow metrics']);
     expect([...r.passed].sort()).toEqual(ids(l).sort());
+  });
+
+  it('checks the train interval even after unrelated output, and rejects the default', async () => {
+    expect((await play(l, ['flow policy deploy train:5'])).passed.has('often')).toBe(false);
+    expect((await play(l, ['flow policy deploy train:3'])).passed.has('often')).toBe(false);
+    const m = await createSimMachine(l.setup, { registry: reg });
+    await m.exec('flow policy deploy train:2');
+    await m.exec('echo unrelated');
+    expect(evaluateCheck(l.tasks.find(t => t.id === 'often')!.check, await m.facts()).pass).toBe(true);
   });
 
   it('whatever the learner answers to the notes, the goals hold and lead time gets shorter (the quiz)', async () => {

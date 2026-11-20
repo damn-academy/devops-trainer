@@ -96,8 +96,7 @@ export const dora: Lesson = {
           id: 'often',
           prompt: bi('Нажмите кнопку «Сбросить машину» над терминалом, чтобы вернуть доску к первому дню, и велите эксплуатации выкладывать изменения раз в два дня командой `flow policy deploy train:2`. Слово train означает «поезд»: выкладка уходит по расписанию, как поезд, и забирает всё, что успело её дождаться.', 'Press “Reset machine” above the terminal to take the board back to day 1, and tell operations to deploy every two days with `flow policy deploy train:2`. A train here is a deployment on a schedule: it leaves on time and takes everything that has made it to the platform.'),
           check: {
-            when: 'flow.policies.deploy=train',
-            stdout: /deployments: train:[12]\b/,
+            when: 'flow.policies.deploy=train && flow.policies.deployEvery>=1 && flow.policies.deployEvery<=2',
             fail: [{ if: 'flow.policies.deploy=manual', say: bi('При порядке `manual` выкладка случается, только когда вы наберёте `flow deploy`. Для сравнения нужна выкладка по расписанию: наберите `flow policy deploy train:2`.', 'With `manual` a deployment happens only when you type `flow deploy`. The comparison needs deployments on a schedule: type `flow policy deploy train:2`.') }],
           },
           chips: 'flow policy deploy train:2',
