@@ -1,3 +1,4 @@
+import { editCommand as lineEditor } from '../../../engine/terminal/commands/editor';
 // `edit <file>`: a plain text editor for the simulated machine. The terminal
 // has no full-screen editor, so the command opens an editor panel over the
 // page, waits until the learner saves or closes it and writes the file with
@@ -114,6 +115,7 @@ function openEditor(path: string, text: string, isNew: boolean): Promise<string 
 
 export const editCommand: ShellCommand = {
   name: 'edit',
+  override: true,
   summary: bi('Открывает файл в редакторе, а сочетание Ctrl+S сохраняет его.', 'Open a file in the editor (Ctrl+S saves).'),
   help: 'Usage: edit FILE\nOpen FILE in a text editor panel. Ctrl+S saves and closes, Esc closes without saving.\nA missing FILE is created on save.\n',
   async run(ctx) {
@@ -131,8 +133,7 @@ export const editCommand: ShellCommand = {
     const text = st ? ctx.fs.readFile(abs) : '';
     if (st && !ctx.fs.access(abs, 'w')) ctx.err(`edit: ${file}: read-only (you cannot save it)\n`);
     if (typeof document === 'undefined') {
-      ctx.err('edit: no display: the editor needs the browser page\n');
-      return 1;
+      return lineEditor.run(ctx);
     }
     const result = await openEditor(abs, text, !st);
     if (result === null) return 0;

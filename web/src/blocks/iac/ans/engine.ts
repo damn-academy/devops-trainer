@@ -185,6 +185,7 @@ export interface ModCtx {
   vars: Vars;
   /** Commands available on managed hosts (the control machine's registry). */
   registry?: TerminalRegistry;
+  environment?: Record<string, string>;
 }
 
 type Module = (c: ModCtx) => Promise<ModResult> | ModResult;
@@ -376,7 +377,7 @@ async function runOnHost(c: ModCtx, shell: boolean): Promise<ModResult> {
     // The command module does not use a shell: the operators become arguments.
   }
   const files = c.host.files();
-  const m = await createSimMachine({ user: 'root', hostname: c.host.name, cwd: String(c.args.chdir ?? '/root') }, { registry: c.registry, id: c.host.name });
+  const m = await createSimMachine({ user: 'root', hostname: c.host.name, cwd: String(c.args.chdir ?? '/root'), env: c.environment }, { registry: c.registry, id: c.host.name });
   for (const [p, t] of Object.entries(files)) {
     const dir = p.slice(0, p.lastIndexOf('/')) || '/';
     if (!m.rootFs.exists(dir)) m.rootFs.mkdir(dir, { parents: true });
@@ -642,15 +643,19 @@ export async function runPlaybook(
           }
           allSkipped = false;
           let args: Vars;
+          let environment: Record<string, string>;
           try {
             args = Object.fromEntries(Object.entries(t.args).map(([k, a]) => [k, typeof a === 'string' ? render(a, iv) : a]));
+            const env = typeof raw.environment === 'string' ? render(raw.environment, iv) : raw.environment ?? {};
+            if (!env || typeof env !== 'object' || Array.isArray(env)) throw new Error('environment must be a mapping');
+            environment = Object.fromEntries(Object.entries(env).map(([k, v]) => [k, String(typeof v === 'string' ? render(v, iv) : v)]));
           } catch (e) {
             const msg = e instanceof JinjaError ? `The task includes an option with an undefined variable. The error was: ${e.message}` : (e as Error).message;
             out(R(`fatal: [${h}]: FAILED! => {"msg": ${JSON.stringify(msg)}}`) + '\n');
             hostFailed = true;
             break;
           }
-          const res = await MODULES[t.module]({ host, args, check: o.check || raw.check_mode === true, base: taskBase, ctlFs: fs, vars: iv, registry });
+          const res = await MODULES[t.module]({ host, args, check: o.check || raw.check_mode === true, base: taskBase, ctlFs: fs, vars: iv, registry, environment });
           if (raw.changed_when !== undefined) res.changed = evalWhen(raw.changed_when, { ...iv, ...res, result: res });
           if (raw.failed_when !== undefined) res.failed = evalWhen(raw.failed_when, { ...iv, ...res, result: res });
           results.push(res);

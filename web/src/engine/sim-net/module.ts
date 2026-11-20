@@ -32,6 +32,8 @@ export const netSetup: SetupHook = {
     st.world = built.world;
     st.probes = v.probes ?? [];
     st.readPos = 0;
+    m.rootFs.mkdir('/proc/sys/net/ipv4', { parents: true });
+    m.rootFs.writeFile('/proc/sys/net/ipv4/ip_forward', st.local.ipForward ? '1\n' : '0\n');
     for (const [path, text] of Object.entries(built.files)) {
       const dir = path.slice(0, path.lastIndexOf('/')) || '/';
       if (!m.rootFs.exists(dir)) m.rootFs.mkdir(dir, { parents: true });

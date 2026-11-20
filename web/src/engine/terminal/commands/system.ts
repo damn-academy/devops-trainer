@@ -1,3 +1,4 @@
+import { remoteSsh } from '../../sim-net/ssh';
 // The machine as a whole: uname, hostname, uptime, free, nproc, lscpu, dmesg,
 // reboot; disks and mounts (lsblk, blkid, mkfs.ext4, mount, umount,
 // findmnt); what the machine sees of the network (ip, ss, curl, ping); SSH
@@ -153,6 +154,12 @@ const free: ShellCommand = {
     const freeK = Math.max(0, MEM_TOTAL - used - MEM_CACHE);
     const avail = freeK + Math.round(MEM_CACHE * 0.85);
     const fmt = (k: number) => (a.flags.has('h') ? humanSize(k * 1024).replace(/([KMGT])$/, '$1i') : a.flags.has('m') ? String(Math.round(k / 1024)) : a.flags.has('g') ? String(Math.round(k / 1048576)) : String(k));
+    if (ctx.isatty && ctx.cols < 73) {
+      ctx.out('Mem:\n');
+      for (const [name, value] of Object.entries({ total: MEM_TOTAL, used, free: freeK, shared: 12_400, 'buff/cache': MEM_CACHE, available: avail })) ctx.out(`  ${name.padEnd(10)} ${fmt(value)}\n`);
+      ctx.out(`Swap:\n  total      ${fmt(0)}\n  used       ${fmt(0)}\n  free       ${fmt(0)}\n`);
+      return 0;
+    }
     const row = (...c: string[]) => c.map((x, i) => (i === 0 ? x.padEnd(7) : x.padStart(11))).join('') + '\n';
     ctx.out(row('', 'total', 'used', 'free', 'shared', 'buff/cache', 'available').replace(/^ {7}/, '       '));
     ctx.out(row('Mem:', fmt(MEM_TOTAL), fmt(used), fmt(freeK), fmt(12_400), fmt(MEM_CACHE), fmt(avail)));
@@ -909,11 +916,12 @@ const ssh: ShellCommand = {
     const m = M(ctx);
     const args = ctx.argv.slice(1);
     let identity: string | undefined;
+    let port = 22;
     let verbose = false;
     const ops: string[] = [];
     for (let i = 0; i < args.length; i++) {
       if (args[i] === '-i') identity = args[++i];
-      else if (args[i] === '-p') i++;
+      else if (args[i] === '-p') port = Number(args[++i]);
       else if (args[i] === '-v') verbose = true;
       else if (args[i] === '-o') i++;
       else ops.push(args[i]);
@@ -927,6 +935,8 @@ const ssh: ShellCommand = {
     const user = at >= 0 ? dest.slice(0, at) : ctx.user.name;
     const host = at >= 0 ? dest.slice(at + 1) : dest;
     if (!['localhost', '127.0.0.1', m.hostname, '10.0.0.10'].includes(host)) {
+      const remote = await remoteSsh(ctx, host, user, port, ops.slice(1));
+      if (remote !== null) return remote;
       ctx.err(`ssh: Could not resolve hostname ${host}: Name or service not known\n`);
       return 255;
     }

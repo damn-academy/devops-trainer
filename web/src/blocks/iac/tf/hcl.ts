@@ -101,10 +101,15 @@ function lexTemplate(src: string, i: number, line: number, quoted: boolean): { e
       let depth = 1;
       let j = i + 2;
       while (j < src.length && depth) {
+        if (src[j] === '"') {
+          j = lexTemplate(src, j + 1, line, true).end;
+          continue;
+        }
         if (src[j] === '{') depth++;
         else if (src[j] === '}') depth--;
         if (depth) j++;
       }
+      if (depth) throw new HclError({ severity: 'error', summary: 'Unterminated interpolation', detail: 'Expected a closing brace.', line });
       let inner = src.slice(i + 2, j);
       const stripPrev = inner.startsWith('~');
       if (stripPrev) inner = inner.slice(1);

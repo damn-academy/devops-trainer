@@ -130,3 +130,19 @@ describe('ansible', () => {
     expect(text).toContain('- create');
   });
 });
+
+it('templates task environment and does not leak it to the next task', async () => {
+  const m = await mk([{ path: '/home/learner/ops/env.yml', content: `- hosts: web1
+  vars:
+    greeting: hello
+  tasks:
+    - shell: echo "$MESSAGE" > /tmp/greeting
+      environment:
+        MESSAGE: "{{ greeting }} world"
+    - shell: echo "\${MESSAGE:-absent}" > /tmp/after
+` }]);
+  const result = await run(m, 'ansible-playbook env.yml');
+  expect(result.exit, result.out).toBe(0);
+  expect((await run(m, 'ansible web1 -a "cat /tmp/greeting"')).out).toContain('hello world');
+  expect((await run(m, 'ansible web1 -a "cat /tmp/after"')).out).toContain('absent');
+});

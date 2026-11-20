@@ -182,3 +182,39 @@ describe('git porcelain', () => {
     expect((await run(m, 'cat f')).out).toBe('1\n');
   });
 });
+
+describe('paused rebase', () => {
+  const conflict = async () => {
+    const m = await mk();
+    for (const cmd of ['git init -b main', 'echo base > f', 'git add f', 'git commit -m base', 'git switch -c topic', 'echo topic > f', 'git commit -qam topic', 'git switch main', 'echo main > f', 'git commit -qam main', 'git switch topic']) expect((await run(m, cmd)).exit, cmd).toBe(0);
+    expect((await run(m, 'git rebase main')).exit).toBe(1);
+    expect(m.rootFs.exists('/home/learner/.git/rebase-merge/state')).toBe(true);
+    return m;
+  };
+  it('continues after staging and survives a snapshot', async () => {
+    const m = await conflict();
+    await m.restore(await m.snapshot());
+    expect((await run(m, 'git rebase --continue')).exit).not.toBe(0);
+    await run(m, 'echo resolved > f');
+    await run(m, 'git add f');
+    expect((await run(m, 'git rebase --continue')).exit).toBe(0);
+    expect((await run(m, 'cat f')).out).toBe('resolved\n');
+    expect((await run(m, 'git log --oneline')).out).toMatch(/topic[\s\S]*main[\s\S]*base/);
+  });
+  it('aborts to the original tree and skips onto upstream', async () => {
+    const m = await conflict();
+    expect((await run(m, 'git rebase --abort')).exit).toBe(0);
+    expect((await run(m, 'cat f')).out).toBe('topic\n');
+    await run(m, 'git rebase main');
+    expect((await run(m, 'git rebase --skip')).exit).toBe(0);
+    expect((await run(m, 'cat f')).out).toBe('main\n');
+    expect((await run(m, 'git rebase --continue')).exit).toBe(128);
+  });
+});
+
+it('does not parse a commit message as grouped flags', async () => {
+  const m = await mk();
+  await run(m, 'git init -b main');
+  expect((await run(m, 'git commit --allow-empty -qm "-qam"')).exit).toBe(0);
+  expect((await run(m, 'git log --oneline')).out).toContain('-qam');
+});

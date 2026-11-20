@@ -287,7 +287,7 @@ export class SimMachine implements SimMachineApi {
   jobs: Job[] = [];
   opts: ShellOpts = defaultOpts();
   aliases = new Map<string, string>();
-  private sessions: TerminalSession[] = [];
+  private sessions: (TerminalSession & { dispose?(): void })[] = [];
   private local = new Map<string, ShellCommand>();
   /** The pid of the command running right now (for /proc/self and ps). */
   current = 0;
@@ -676,7 +676,7 @@ export class SimMachine implements SimMachineApi {
     return this.local.get(name) ?? this.registry.commands.get(name);
   }
 
-  attach(session: TerminalSession): void {
+  attach(session: TerminalSession & { dispose?(): void }): void {
     this.sessions.push(session);
   }
 
@@ -749,7 +749,11 @@ export class SimMachine implements SimMachineApi {
     if (pidNs && pidNs.state === 'dead') throw new ForkError('fork: Cannot allocate memory');
     const pid = this.procs.next;
     const nspid = this.kernel.allocPid(pid, ns.pid);
-    return this.procs.spawn({ ...p, ns, nspid, pid, start: this.now() } as never);
+    const threads = Math.max(1, Math.min(1024, Math.floor(p.threads ?? 1)));
+    for (let t = 1; t < threads; t++) this.kernel.allocPid(pid + t, ns.pid);
+    const result = this.procs.spawn({ ...p, threads, ns, nspid, pid, start: this.now() } as never);
+    this.procs.next = Math.max(this.procs.next, pid + threads);
+    return result;
   }
 
   /** fork() as the shell does for a command: inherits the shell's namespaces, cgroup and root; checks pids.max. */
@@ -805,6 +809,7 @@ export class SimMachine implements SimMachineApi {
   /** What a reboot does to the machine (systemd.reboot calls it): processes, sessions, tmpfs, mounts. */
   rebootReset(): void {
     this.stack = [];
+    for (const session of this.sessions) session.dispose?.();
     this.sessions = [];
     for (const p of this.procs.list()) if (p.pid !== 1 && p.pid !== 2) this.procs.table.delete(p.pid);
     this.jobs = [];
@@ -1268,16 +1273,42 @@ export class SimMachine implements SimMachineApi {
   }
 
   private async runPipeline(pl: Pipeline, frame: Frame): Promise<number> {
+    const firstWord = pl.cmds[0]?.words[0];
+    if (firstWord?.length === 1 && firstWord[0].kind === 'lit' && !firstWord[0].quoted && firstWord[0].text === 'time') {
+      const first = { ...pl.cmds[0], words: pl.cmds[0].words.slice(1) };
+      const portable = first.words[0]?.[0];
+      if (portable?.kind === 'lit' && portable.text === '-p') first.words = first.words.slice(1);
+      const netClock = () => (this.extState.get('net') as { world?: { clock: number } } | undefined)?.world?.clock ?? 0;
+      const networkStarted = netClock();
+      const started = this.now();
+      const result = await this.runPipeline({ ...pl, cmds: [first, ...pl.cmds.slice(1)] }, frame);
+      const seconds = Math.max(0, this.now() - started, netClock() - networkStarted) / 1000;
+      frame.err(`real ${seconds.toFixed(3)}\nuser 0.000\nsys 0.000\n`);
+      return result;
+    }
     let input = '';
     let exit = 0;
     const statuses: number[] = [];
-    for (let i = 0; i < pl.cmds.length; i++) {
-      const last = i === pl.cmds.length - 1;
-      const r = await this.runSimple(pl.cmds[i], input, frame, last, i > 0, pl.cmds.length > 1);
-      input = r.stdout;
-      exit = r.exit;
-      statuses.push(exit);
-    }
+    // A pipeline's readers already exist while its writer runs. Keep literal
+    // downstream commands visible to ps without evaluating substitutions twice.
+    const readers = new Map<number, number>();
+    try {
+      for (let i = 1; i < pl.cmds.length; i++) {
+        const words = pl.cmds[i].words;
+        if (!words.length || words.some(w => w.some(p => p.kind !== 'lit'))) continue;
+        const argv = words.map(w => w.map(p => p.kind === 'lit' ? p.text : '').join(''));
+        readers.set(i, this.fork({ cmd: argv[0], argv, as: frame.as ?? { user: this.user(), capEff: this.shellProc().capEff }, ppid: frame.ppid }));
+      }
+      for (let i = 0; i < pl.cmds.length; i++) {
+        const reader = readers.get(i);
+        if (reader !== undefined) { this.procs.exit(reader, 0); readers.delete(i); }
+        const last = i === pl.cmds.length - 1;
+        const r = await this.runSimple(pl.cmds[i], input, frame, last, i > 0, pl.cmds.length > 1);
+        input = r.stdout;
+        exit = r.exit;
+        statuses.push(exit);
+      }
+    } finally { for (const pid of readers.values()) this.procs.exit(pid, 0); }
     if (input) frame.out(input);
     this.vars.PIPESTATUS = statuses.join(' ');
     if (frame.opts?.pipefail) exit = [...statuses].reverse().find((s) => s !== 0) ?? 0;
@@ -2004,6 +2035,8 @@ export class SimMachine implements SimMachineApi {
   async restore(snap: unknown): Promise<void> {
     const s = structuredCloneSafe(snap as SimSnapshot);
     if (!s || (s.v !== 2 && (s as { v: number }).v !== 1)) throw new Error('unknown snapshot format');
+    for (const session of this.sessions) session.dispose?.();
+    this.sessions = [];
     this.vfs.restore(s.fs);
     this.users = s.users;
     this.groups = s.groups;
@@ -2032,6 +2065,8 @@ export class SimMachine implements SimMachineApi {
   }
 
   dispose(): void {
+    for (const session of this.sessions) session.dispose?.();
+    this.sessions = [];
     this.listeners.clear();
   }
 

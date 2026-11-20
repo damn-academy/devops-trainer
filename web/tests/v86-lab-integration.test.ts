@@ -11,7 +11,7 @@
 
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { evaluateCheck } from '../src/core/check';
 import { createHost } from '../src/engine/v86/host';
 import { V86Lab } from '../src/engine/v86/lab';
@@ -69,6 +69,13 @@ describe.skipIf(!enabled)('v86 lab image: Alpine on a 9p root', () => {
 
     const n1 = l.machine('node1');
     const n2 = l.machine('node2');
+    for (const [machine, name] of [[n1, 'node1'], [n2, 'node2']] as const) {
+      let screen = '';
+      const off = machine.onOutput(text => { screen += text; });
+      machine.write('\r', false);
+      await vi.waitFor(() => expect(screen).toContain(`root@${name}:`), { timeout: 10000 });
+      off();
+    }
     for (const cmd of ['true', 'hostname', 'ip -br addr show eth0']) {
       const [r, ms] = await timed(() => n1.exec(cmd));
       console.log(`exec ${cmd}: ${ms} ms → ${r.out.trim()}`);

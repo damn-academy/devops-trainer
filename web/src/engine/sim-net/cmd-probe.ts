@@ -289,7 +289,7 @@ usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]
     { id: 'EXAMPLES', body: 'nc -zv 10.0.0.2 8080\n    Is anything listening on TCP 8080?\nnc -zv -w 3 10.0.0.2 9100\n    The same, but give up after three seconds.' },
     { id: 'SEE ALSO', body: 'socat(1)' },
   ], 'https://manpages.debian.org/trixie/netcat-openbsd/nc.1.en.html', 'condensed from netcat-openbsd nc(1)'),
-  run(ctx) {
+  async run(ctx) {
     const a = parseArgs(ctx.argv.slice(1), { short: 'vznu46CdklNSt', withValue: 'wpsiq' });
     if (a.error) {
       ctx.err(`nc: ${a.error}\n`);
@@ -301,6 +301,24 @@ usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]
     if (!host || !portS) {
       ctx.err('nc: missing port number\n');
       return 1;
+    }
+    const portSpecs = a.operands.slice(1).flatMap(p => p.split(','));
+    const ports: number[] = [];
+    for (const spec of portSpecs) {
+      const match = /^(\d+)(?:-(\d+))?$/.exec(spec);
+      const first = Number(match?.[1]), last = Number(match?.[2] ?? match?.[1]);
+      if (!match || first < 1 || last > 65535 || first > last) {
+        ctx.err(`nc: invalid port: ${spec}\n`);
+        return 1;
+      }
+      for (let p = first; p <= last; p++) ports.push(p);
+    }
+    if (ports.length > 1 || String(ports[0]) !== portS) {
+      let success = false;
+      // Reuse the single-port path so every probe follows routing and firewall rules.
+      const options = ctx.argv.slice(1, ctx.argv.indexOf(host));
+      for (const port of ports) if (await ncCommand.run({ ...ctx, argv: ['nc', ...options, host, String(port)] }) === 0) success = true;
+      return success ? 0 : 1;
     }
     const st = net(ctx);
     const w = st.world;

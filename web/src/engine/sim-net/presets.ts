@@ -154,7 +154,7 @@ export function home(o: HomeOpts = {}): Built {
   const tld = b.host('tld', { name: 'a.nic.example', role: 'dns-tld' });
   b.nic(tld, 'eth0', 'tldnet', ['192.0.2.53/24']);
   b.route(tld, 'default', '192.0.2.1', 'eth0');
-  const hosted = ['shop.example.', 'expired.example.', 'wrong.example.', 'chain.example.', 'hosting.example.', 'cdn.example.'];
+  const hosted = ['shop.example.', 'expired.example.', 'wrong.example.', 'chain.example.', 'selfsigned.example.', 'hosting.example.', 'cdn.example.'];
   const tldZone: DnsZone = {
     origin: 'example.',
     negTtl: 900,
@@ -176,6 +176,7 @@ export function home(o: HomeOpts = {}): Built {
     z('shop.example.', [rr('shop.example.', 'A', '198.51.100.20', ttl), rr('www.shop.example.', 'CNAME', 'shop.example.', ttl), rr('shop.example.', 'MX', '10 mail.shop.example.', 3600), rr('mail.shop.example.', 'A', '198.51.100.25', 3600), rr('shop.example.', 'TXT', '"v=spf1 mx -all"', 3600), rr('static.shop.example.', 'CNAME', 'edge.cdn.example.', 3600)]),
     z('expired.example.', [rr('expired.example.', 'A', '198.51.100.21')]),
     z('wrong.example.', [rr('wrong.example.', 'A', '198.51.100.22'), rr('www.wrong.example.', 'A', '198.51.100.22')]),
+    z('selfsigned.example.', [rr('selfsigned.example.', 'A', '198.51.100.24')]),
     z('chain.example.', [rr('chain.example.', 'A', '198.51.100.23')]),
     z('hosting.example.', [rr('ns1.hosting.example.', 'A', '198.51.100.53', 86400)]),
     z('cdn.example.', [rr('edge.cdn.example.', 'A', '198.51.100.30', 60)]),
@@ -184,7 +185,7 @@ export function home(o: HomeOpts = {}): Built {
   if (o.authDown) auth.down = true;
 
   const web = b.host('web', { name: 'web1.hosting.example', role: 'web' });
-  b.nic(web, 'eth0', 'dc', ['198.51.100.20/24', '198.51.100.21/24', '198.51.100.22/24', '198.51.100.23/24', '198.51.100.30/24']);
+  b.nic(web, 'eth0', 'dc', ['198.51.100.20/24', '198.51.100.21/24', '198.51.100.22/24', '198.51.100.23/24', '198.51.100.24/24', '198.51.100.30/24']);
   b.route(web, 'default', '198.51.100.1', 'eth0');
   const page = '<!doctype html>\n<html lang="en"><title>Shop</title><link rel="stylesheet" href="/static/app.css"><h1>Catalog</h1></html>\n';
   const shopRoutes = { '/': { status: 200, body: page }, '/catalog': { status: 200, body: page, headers: { 'Cache-Control': 'max-age=60' } }, '/static/app.css': { status: 200, body: 'body{font:16px/1.5 serif}\n', headers: { 'Cache-Control': 'max-age=86400' } } };
@@ -193,6 +194,7 @@ export function home(o: HomeOpts = {}): Built {
   b.svc(web, { proto: 'tcp', port: 443, bind: '198.51.100.21', proc: 'nginx', kind: 'http', tls: cert('expired.example', ['expired.example'], { notBefore: '2025-08-01T00:00:00Z', notAfter: '2025-10-30T23:59:59Z' }), http: { server: 'nginx/1.26.3', routes: { '/': { status: 200, body: 'old site\n' } } } });
   b.svc(web, { proto: 'tcp', port: 443, bind: '198.51.100.22', proc: 'nginx', kind: 'http', tls: cert('www.wrong.example', ['www.wrong.example']), http: { server: 'nginx/1.26.3', routes: { '/': { status: 200, body: 'www only\n' } } } });
   b.svc(web, { proto: 'tcp', port: 443, bind: '198.51.100.23', proc: 'nginx', kind: 'http', tls: cert('chain.example', ['chain.example'], { chain: 'incomplete' }), http: { server: 'nginx/1.26.3', routes: { '/': { status: 200, body: 'chain\n' } } } });
+  b.svc(web, { proto: 'tcp', port: 443, bind: '198.51.100.24', proc: 'nginx', kind: 'http', tls: cert('selfsigned.example', ['selfsigned.example'], { chain: 'self-signed' }), http: { routes: { '/': { status: 200, body: 'self-signed site\n' } } } });
   b.svc(web, { proto: 'tcp', port: 443, bind: '198.51.100.30', proc: 'nginx', kind: 'http', tls: cert('edge.cdn.example', ['*.cdn.example', 'static.shop.example']), http: { server: 'nginx/1.26.3', routes: shopRoutes } });
   b.svc(web, { proto: 'tcp', port: 22, bind: '0.0.0.0', proc: 'sshd', kind: 'ssh', banner: 'SSH-2.0-OpenSSH_10.0p2 Debian-7' });
 

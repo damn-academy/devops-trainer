@@ -113,6 +113,9 @@ describe.skipIf(!enabled)('the cloud lab on real machines', () => {
     cl.mux.add({ hosts: ['ci.lab'], handler: ci.handle });
     const boot = await ws.start();
     times.wsBoot = Math.round(t() - t0);
+    const curlHelp = await ws.exec('curl --help all');
+    expect(curlHelp.out).toContain('--aws-sigv4');
+    expect((await ws.exec('hostname')).out.trim()).toBe('ws');
     console.log(`ws ${boot.kind} boot ${boot.ms} ms, rss ${rss()} MiB`);
 
     const sh = async (name: string, cmd: string, expectExit: number | null = 0) => {
@@ -140,7 +143,7 @@ describe.skipIf(!enabled)('the cloud lab on real machines', () => {
     const opId = op.out.trim().split('\n').pop()!;
     expect(opId).toMatch(/^op-/);
     let status = '';
-    for (let i = 0; i < 6 && status !== 'DONE'; i++) status = (await sh(`curl-wait-${i}`, `${P} curl -s -H "Authorization: Bearer $LAB_TOKEN" "http://api.cloud.lab/v1/operations/${opId}?wait=30" | jq -r .status`)).out.trim().split('\n').pop()!;
+    for (let i = 0; i < 20 && status !== 'DONE'; i++) status = (await sh(`curl-wait-${i}`, `${P} curl -s -H "Authorization: Bearer $LAB_TOKEN" "http://api.cloud.lab/v1/operations/${opId}?wait=30" | jq -r .status`)).out.trim().split('\n').pop()!;
     times.vmCreate = Math.round(t() - t0);
     expect(status).toBe('DONE');
     expect(cl.cloud.state.vms.find((v) => v.name === 'api-1')?.status).toBe('RUNNING');

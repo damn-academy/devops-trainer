@@ -291,7 +291,11 @@ Concatenate FILE(s) to standard output.
 
 With no FILE, or when FILE is -, read standard input.
 
-  -n, --number             number all output lines`,
+  -n, --number             number all output lines
+  -A, --show-all           equivalent to -vET
+  -E, --show-ends          display $ at end of each line
+  -T, --show-tabs          display TAB characters as ^I
+  -v, --show-nonprinting   use ^ and M- notation, except for TAB and LF`,
   man: page('cat', 1, [
     { id: 'NAME', body: 'cat - concatenate files and print on the standard output' },
     { id: 'SYNOPSIS', body: 'cat [OPTION]... [FILE]...' },
@@ -301,7 +305,7 @@ With no FILE, or when FILE is -, read standard input.
     { id: 'SEE ALSO', body: 'tac(1)' },
   ]),
   run(ctx) {
-    const a = parseArgs(ctx.argv.slice(1), { short: 'n', long: { number: 'n' } });
+    const a = parseArgs(ctx.argv.slice(1), { short: 'nAETvet', long: { number: 'n', 'show-all': 'A', 'show-ends': 'E', 'show-tabs': 'T', 'show-nonprinting': 'v' } });
     if (a.error) return usageError(ctx, a.error);
     const files = a.operands.length ? a.operands : ['-'];
     let exit = 0;
@@ -317,6 +321,18 @@ With no FILE, or when FILE is -, read standard input.
         exit = fsErr(ctx, e, f);
       }
     }
+    const showTabs = ['A', 'T', 't'].some(f => a.flags.has(f));
+    const showEnds = ['A', 'E', 'e'].some(f => a.flags.has(f));
+    const showControls = ['A', 'v', 'e', 't'].some(f => a.flags.has(f));
+    if (showControls) {
+      const visible = (byte: number): string => byte < 32 ? '^' + String.fromCharCode(byte + 64) : byte === 127 ? '^?' : String.fromCharCode(byte);
+      text = Array.from(new TextEncoder().encode(text), byte => {
+        if (byte === 10 || byte === 9) return String.fromCharCode(byte);
+        return byte >= 128 ? 'M-' + visible(byte - 128) : visible(byte);
+      }).join('');
+    }
+    if (showTabs) text = text.replace(/\t/g, '^I');
+    if (showEnds) text = text.replace(/\n/g, '$\n');
     if (a.flags.has('n')) {
       const lines = text.split('\n');
       const trailing = text.endsWith('\n');
