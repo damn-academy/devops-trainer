@@ -201,6 +201,11 @@ function exprRefs(e: Expr, out: Set<string> = new Set()): Set<string> {
       exprRefs(e.a, out);
       exprRefs(e.b, out);
       break;
+    case 'for':
+      exprRefs(e.coll, out);
+      exprRefs(e.body, out);
+      if (e.cond) exprRefs(e.cond, out);
+      break;
   }
   return out;
 }
@@ -229,6 +234,8 @@ function mapRefs(e: Expr, ref: (x: Extract<Expr, { k: 'ref' }>) => Expr | null):
       return { ...e, a: m(e.a) };
     case 'cond':
       return { ...e, c: m(e.c), a: m(e.a), b: m(e.b) };
+    case 'for':
+      return { ...e, coll: m(e.coll), body: m(e.body), cond: e.cond && m(e.cond) };
     default:
       return e;
   }
@@ -519,10 +526,13 @@ export function loadConfig(fs: FsApi, dir: string): Config {
   // References to undeclared resources and variables.
   const declared = new Set(cfg.resources.map((r) => rAddr(r)));
   const walkRefs = (e: Expr, file: string, ctx: string) => {
+    const bound = new Set<string>();
     const visit = (x: Expr): void => {
       if (x.k === 'ref') {
         const [a, b, c, d] = x.path;
-        if (typeof a === 'string' && a in SCHEMA && typeof b === 'string' && !declared.has(`${a}.${b}`)) diags.push({ severity: 'error', summary: 'Reference to undeclared resource', detail: `A managed resource "${a}" "${b}" has not been declared in the root module.`, file, line: x.line, context: ctx });
+        if (typeof a === 'string' && bound.has(a)) {
+          for (const p of x.path) if (typeof p === 'object') visit(p);
+        } else if (typeof a === 'string' && a in SCHEMA && typeof b === 'string' && !declared.has(`${a}.${b}`)) diags.push({ severity: 'error', summary: 'Reference to undeclared resource', detail: `A managed resource "${a}" "${b}" has not been declared in the root module.`, file, line: x.line, context: ctx });
         else if (a === 'module' && typeof c === 'string' && c in SCHEMA && typeof d === 'string' && !declared.has(`module.${b}.${c}.${d}`)) diags.push({ severity: 'error', summary: 'Reference to undeclared resource', detail: `A managed resource "${c}" "${d}" has not been declared in module.${b}.`, file, line: x.line, context: ctx });
         else if (a === 'var' && typeof b === 'string' && !cfg.variables.has(b)) diags.push({ severity: 'error', summary: 'Reference to undeclared input variable', detail: `An input variable with the name "${b}" has not been declared. This variable can be declared with a variable "${b}" {} block.`, file, line: x.line, context: ctx });
         else if (a === 'local' && typeof b === 'string' && !cfg.locals.has(b)) diags.push({ severity: 'error', summary: 'Reference to undeclared local value', detail: `A local value with the name "${b}" has not been declared.`, file, line: x.line, context: ctx });
@@ -535,6 +545,14 @@ export function loadConfig(fs: FsApi, dir: string): Config {
       else if (x.k === 'bin') (visit(x.a), visit(x.b));
       else if (x.k === 'not' || x.k === 'neg') visit(x.a);
       else if (x.k === 'cond') (visit(x.c), visit(x.a), visit(x.b));
+      else if (x.k === 'for') {
+        visit(x.coll);
+        const names = [x.val, ...(x.key ? [x.key] : [])].filter((n) => !bound.has(n));
+        names.forEach((n) => bound.add(n));
+        visit(x.body);
+        if (x.cond) visit(x.cond);
+        names.forEach((n) => bound.delete(n));
+      }
     };
     visit(e);
   };
@@ -596,6 +614,8 @@ export interface EvalScope {
   resources: (type: string, name: string, module?: string) => Value | undefined;
   count?: number;
   file?: string;
+  /** Names bound by an enclosing for expression or %{ for } directive. */
+  iter?: Record<string, Value>;
 }
 
 const typeName = (v: Value) => (v === null ? 'null' : isUnknown(v) ? 'unknown' : Array.isArray(v) ? 'list' : typeof v === 'object' ? 'object' : typeof v);
@@ -657,6 +677,25 @@ export function evaluate(e: Expr, scope: EvalScope): Value {
       return e.items.map((x) => evaluate(x, scope));
     case 'obj':
       return Object.fromEntries(e.items.map(([k, x]) => [k, evaluate(x, scope)]));
+    case 'for': {
+      const coll = evaluate(e.coll, scope);
+      if (isUnknown(coll)) return UNKNOWN;
+      if (coll === null || typeof coll !== 'object') evalErr(e, 'Iteration over non-iterable value', `A value of type ${typeName(coll)} cannot be used as the collection in a 'for' expression.`, scope);
+      const entries: [Value, Value][] = Array.isArray(coll) ? coll.map((v, i) => [i, v]) : Object.entries(coll as Record<string, Value>);
+      const out: Value[] = [];
+      for (const [k, v] of entries) {
+        const inner: EvalScope = { ...scope, iter: { ...scope.iter, [e.val]: v, ...(e.key ? { [e.key]: k } : {}) } };
+        if (e.cond) {
+          const c = evaluate(e.cond, inner);
+          if (isUnknown(c)) return UNKNOWN;
+          if (!c) continue;
+        }
+        const v2 = evaluate(e.body, inner);
+        if (isUnknown(v2)) return UNKNOWN;
+        out.push(v2);
+      }
+      return e.str ? out.map(String).join('') : out;
+    }
     case 'cond': {
       const c = evaluate(e.c, scope);
       if (isUnknown(c)) return UNKNOWN;
@@ -720,7 +759,10 @@ export function evaluate(e: Expr, scope: EvalScope): Value {
       const path = e.path.map((p) => (typeof p === 'object' ? evaluate(p, scope) : p));
       const [a, b, ...rest] = path;
       let v: Value | undefined;
-      if (a === 'var') {
+      if (typeof a === 'string' && scope.iter && a in scope.iter) {
+        v = scope.iter[a];
+        rest.unshift(...(b === undefined ? [] : [b]));
+      } else if (a === 'var') {
         v = scope.vars[String(b)];
         if (v === undefined) evalErr(e, 'No value for required variable', `The root module input variable "${b}" is not set, and has no default value.`, scope);
       } else if (a === 'local') {

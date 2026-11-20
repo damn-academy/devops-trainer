@@ -17,6 +17,8 @@ import { card } from '../git-cicd/explainers';
 import { fb, hiddenExcept } from './explainers';
 
 const last = (s: Step[]) => s[s.length - 1]?.metrics ?? {};
+/** The port the last value on the ladder sets (read from the ansible-playbook node). */
+const portOf = (s: Step[]) => Number([...s].reverse().find((x) => x.values?.merge)?.values?.merge?.split('= ')[1] ?? 0);
 
 // ── Variable precedence ──
 
@@ -24,13 +26,13 @@ type VarP = { groupAll: boolean; groupWeb: boolean; hostVars: boolean; playVars:
 
 /** The sources from the lowest step to the highest, with the value each one sets in this explainer. */
 export const VAR_SOURCES = [
-  { id: 'defaults', param: null, value: 80, file: 'roles/webserver/defaults/main.yml', name: bi('умолчания роли', 'the role defaults'), why: bi('это самая нижняя ступень, и её перекрывает любое другое место', 'it is the lowest step, which any other place overrides') },
-  { id: 'gall', param: 'groupAll', value: 8000, file: 'group_vars/all.yml', name: bi('переменные всех хостов', 'the variables of all hosts'), why: bi('группа all стоит выше умолчаний роли', 'the all group stands above the role defaults') },
-  { id: 'gweb', param: 'groupWeb', value: 8080, file: 'group_vars/web.yml', name: bi('переменные группы web', 'the variables of the web group'), why: bi('отдельная группа точнее, чем группа всех хостов', 'a particular group is more specific than the group of all hosts') },
-  { id: 'hvars', param: 'hostVars', value: 8081, file: 'host_vars/web1.yml', name: bi('переменные хоста web1', 'the variables of host web1'), why: bi('один хост точнее любой группы', 'one host is more specific than any group') },
-  { id: 'play', param: 'playVars', value: 8888, file: 'site.yml · vars:', name: bi('секция vars: сценария', 'the play’s vars: section'), why: bi('плейбук стоит выше инвентаря', 'the playbook stands above the inventory') },
-  { id: 'rvars', param: 'roleVars', value: 9090, file: 'roles/webserver/vars/main.yml', name: bi('vars роли', 'the role vars'), why: bi('vars роли стоят выше инвентаря и сценария', 'role vars stand above the inventory and the play') },
-  { id: 'extra', param: 'extra', value: 9000, file: '-e http_port=9000', name: bi('ключ -e в командной строке', 'the -e key on the command line'), why: bi('командная строка стоит на самой верхней ступени', 'the command line is the highest step') },
+  { id: 'defaults', short: bi('умолчания роли', 'role defaults'), param: null, value: 80, file: 'roles/webserver/defaults/main.yml', name: bi('умолчания роли', 'the role defaults'), why: bi('это самая нижняя ступень, и её перекрывает любое другое место', 'it is the lowest step, which any other place overrides') },
+  { id: 'gall', short: bi('все хосты', 'all hosts'), param: 'groupAll', value: 8000, file: 'group_vars/all.yml', name: bi('переменные всех хостов', 'the variables of all hosts'), why: bi('группа all стоит выше умолчаний роли', 'the all group stands above the role defaults') },
+  { id: 'gweb', short: bi('группа web', 'group web'), param: 'groupWeb', value: 8080, file: 'group_vars/web.yml', name: bi('переменные группы web', 'the variables of the web group'), why: bi('отдельная группа точнее, чем группа всех хостов', 'a particular group is more specific than the group of all hosts') },
+  { id: 'hvars', short: bi('хост web1', 'host web1'), param: 'hostVars', value: 8081, file: 'host_vars/web1.yml', name: bi('переменные хоста web1', 'the variables of host web1'), why: bi('один хост точнее любой группы', 'one host is more specific than any group') },
+  { id: 'play', short: bi('vars сценария', 'play vars'), param: 'playVars', value: 8888, file: 'site.yml · vars:', name: bi('секция vars: сценария', 'the play’s vars: section'), why: bi('плейбук стоит выше инвентаря', 'the playbook stands above the inventory') },
+  { id: 'rvars', short: bi('vars роли', 'role vars'), param: 'roleVars', value: 9090, file: 'roles/webserver/vars/main.yml', name: bi('vars роли', 'the role vars'), why: bi('vars роли стоят выше инвентаря и сценария', 'role vars stand above the inventory and the play') },
+  { id: 'extra', short: bi('ключ -e', 'the -e key'), param: 'extra', value: 9000, file: '-e http_port=9000', name: bi('ключ -e в командной строке', 'the -e key on the command line'), why: bi('командная строка стоит на самой верхней ступени', 'the command line is the highest step') },
 ] as const;
 
 export function winningPort(p: VarP): { value: number; from: string; set: number } {
@@ -59,8 +61,8 @@ export const varModel = defineModel<VarP>({
   block: 'iac',
   title: bi('Откуда хост берёт значение переменной', 'Where a host gets the value of a variable'),
   summary: bi(
-    'Роль webserver пишет в конфигурацию nginx строку `listen {{ http_port }};`, а значение `http_port` может быть задано в семи местах. Ansible проходит эти места снизу вверх, как ступени лестницы, и значение с более высокой ступени перекрывает значение с более низкой. Порядок, в котором файлы прочитаны, при этом ничего не решает. Под схемой видно, какой порт в итоге получил хост web1 и в скольких местах значение было задано.',
-    'The webserver role writes the line `listen {{ http_port }};` into the nginx config, and `http_port` may be set in seven places. Ansible walks these places from the bottom up, like the steps of a ladder, and a value from a higher step overrides one from a lower step. The order in which files are read decides nothing. Under the diagram you see which port host web1 finally got and in how many places the value was set.',
+    'Роль webserver пишет в конфигурацию nginx строку `listen {{ http_port }};`, а значение `http_port` может быть задано в семи местах. Ansible проходит эти места снизу вверх, как ступени лестницы, и значение с более высокой ступени перекрывает значение с более низкой. Порядок, в котором файлы прочитаны, при этом ничего не решает. Под именем хоста web1 видно, какой порт он в итоге получил, а под схемой видно, в скольких местах значение было задано.',
+    'The webserver role writes the line `listen {{ http_port }};` into the nginx config, and `http_port` may be set in seven places. Ansible walks these places from the bottom up, like the steps of a ladder, and a value from a higher step overrides one from a lower step. The order in which files are read decides nothing. Under the name of host web1 you see which port it finally got, and under the diagram you see in how many places the value was set.',
   ),
   intro: bi(
     'Слева стоят семь мест, где можно задать переменную, от самого слабого внизу до самого сильного вверху. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. За каждый шаг Ansible поднимается по лестнице на одну ступень, и рядом с ним видно, какое значение у переменной сейчас.\n\nКогда дойдёте до хоста web1, включите в «Параметрах» другие места и пройдите лестницу ещё раз.',
@@ -102,11 +104,11 @@ export const varModel = defineModel<VarP>({
         h: 64,
         card: card(bi('Перед каждой задачей Ansible собирает переменные хоста со всех ступеней. Если одно имя задано в нескольких местах, остаётся значение с самой высокой ступени.', 'Before every task Ansible gathers the host’s variables from all steps. If one name is set in several places, the value from the highest step remains.'), ANSIBLE, 'ansible web1 -m ansible.builtin.debug -a "var=http_port"', { url: 'https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence', label: 'docs.ansible.com › variable precedence' }),
       },
-      { id: 'tpl', label: 'site.conf.j2', icon: 'file', sub: 'listen {{ http_port }};', family: 'ci-source', x: 490, y: 400, w: 210, h: 64, card: card(bi('Файл site.conf.j2 служит шаблоном роли. В момент прогона Jinja2 подставляет в него итоговое значение переменной, и получается готовый файл конфигурации nginx.', 'The role’s template. At run time Jinja2 inserts the final value of the variable, and the result is a ready nginx config file.'), bi('Шаблон пишет автор роли.', 'The role author writes the template.'), 'cat roles/webserver/templates/site.conf.j2') },
-      { id: 'web1', label: 'web1', icon: 'server', sub: 'listen ?;', family: 'node', x: 730, y: 224, w: 206, h: 64, card: card(bi('Ansible настраивает хост web1, и в его файл /etc/nginx/sites-enabled/site.conf попадает значение, которое победило на лестнице.', 'The managed host. Its file /etc/nginx/sites-enabled/site.conf gets the value that won on the ladder.'), bi('Файл на хост кладёт задача template роли webserver.', 'The template task of the webserver role puts the file on the host.'), 'ssh web1 cat /etc/nginx/sites-enabled/site.conf') },
+      { id: 'tpl', label: 'cafe.conf.j2', icon: 'file', sub: 'listen {{ http_port }};', family: 'ci-source', x: 490, y: 400, w: 210, h: 64, card: card(bi('Файл cafe.conf.j2 служит шаблоном роли. В момент прогона Jinja2 подставляет в него итоговое значение переменной, и получается готовый файл конфигурации nginx.', 'The role’s template. At run time Jinja2 inserts the final value of the variable, and the result is a ready nginx config file.'), bi('Шаблон пишет автор роли.', 'The role author writes the template.'), 'cat roles/webserver/templates/cafe.conf.j2') },
+      { id: 'web1', label: 'web1', icon: 'server', sub: 'listen ?;', family: 'node', x: 730, y: 224, w: 206, h: 64, card: card(bi('Ansible настраивает хост web1, и в его файл /etc/nginx/sites-enabled/cafe.conf попадает значение, которое победило на лестнице.', 'The managed host. Its file /etc/nginx/sites-enabled/cafe.conf gets the value that won on the ladder.'), bi('Файл на хост кладёт задача template роли webserver.', 'The template task of the webserver role puts the file on the host.'), 'ssh web1 cat /etc/nginx/sites-enabled/cafe.conf') },
     ],
     edges: [
-      ...VAR_SOURCES.map((s, i) => ({ id: `e-${s.id}`, from: s.id, to: 'merge', via: [[350, 484 - i * 72 - 16] as [number, number], [350, 256] as [number, number]], label: bi(`ступень ${i + 1} из 7`, `step ${i + 1} of 7`), labelAt: 0.06, card: card(fb(bi('По этой линии приходит значение со ступени {n} из семи, то есть {w}. Значение отсюда перекрывает все значения со ступеней ниже.', 'Step {n} of seven: {w}. A value from here overrides every value from the steps below.'), { n: i + 1, w: s.name }), ANSIBLE) })),
+      ...VAR_SOURCES.map((s, i) => ({ id: `e-${s.id}`, from: s.id, to: 'merge', via: [[350, 484 - i * 72 - 16] as [number, number], [350, 256] as [number, number]], label: bi(`ступень ${i + 1}`, `step ${i + 1}`), labelAt: 30 / (226 + Math.abs(468 - 72 * i - 256)), card: card(fb(bi('По этой линии приходит значение со ступени {n} из семи, то есть {w}. Значение отсюда перекрывает все значения со ступеней ниже.', 'Step {n} of seven: {w}. A value from here overrides every value from the steps below.'), { n: i + 1, w: s.name }), ANSIBLE) })),
       { id: 'e-render', from: 'merge', to: 'tpl', label: bi('подстановка в шаблон', 'rendering the template'), card: card(bi('Модуль template передаёт шаблону итоговые переменные хоста.', 'The template module hands the host’s final variables to the template.'), bi('Подстановку выполняет модуль ansible.builtin.template.', 'The ansible.builtin.template module does the rendering.')) },
       { id: 'e-copy', from: 'tpl', to: 'web1', label: bi('файл на хост', 'the file to the host'), card: card(bi('Готовый файл копируется на хост. Если он отличается от прежнего, задача отвечает changed и уведомляет обработчик, который перезагружает nginx.', 'The rendered file is copied to the host. If it differs from the previous one, the task answers changed and notifies the handler that reloads nginx.'), bi('Файл копирует модуль ansible.builtin.template.', 'The ansible.builtin.template module copies the file.')) },
     ],
@@ -129,7 +131,7 @@ export const varModel = defineModel<VarP>({
           { id: 'higher', text: bi('Другой порт, потому что выше на лестнице значение уже задано', 'Another port, because a higher step already sets a value') },
         ],
         resolve: (_p, n) => {
-          const port = String(last(n).port);
+          const port = String(portOf(n));
           return port === '8081' ? 'host' : port === '8080' ? 'group' : 'higher';
         },
       },
@@ -170,10 +172,8 @@ export const varModel = defineModel<VarP>({
       },
     },
   ],
-  metrics: [
-    { id: 'port', label: bi('порт nginx на web1', 'the nginx port on web1') },
-    { id: 'sources', label: bi('мест, где задано значение', 'places that set the value') },
-  ],
+  // The port is an identifier, not a quantity, so it is shown under web1 and not as a counter.
+  metrics: [{ id: 'sources', label: bi('мест, где задано значение', 'places that set the value') }],
   run(p, broken) {
     const steps: Step[] = [];
     let cur = 0;
@@ -185,7 +185,7 @@ export const varModel = defineModel<VarP>({
       if (!on) {
         steps.push({
           id: `s-${s.id}`,
-          label: s.id === 'extra' ? '-e' : s.id,
+          label: s.short,
           caption: fb(bi('Ansible поднимается на ступень {n}, {w}. Переменная http_port здесь не задана, поэтому значение остаётся прежним, то есть {v} из места «{c}».', 'Ansible climbs to step {n}, {w}. http_port is not set here, so the value stays as it was, that is {v} from “{c}”.'), { n: i + 1, w: s.name, v: cur, c: curName }),
           focus: [s.id, 'merge'],
           reveal: [s.id, edge],
@@ -201,7 +201,7 @@ export const varModel = defineModel<VarP>({
       curName = s.name;
       steps.push({
         id: `s-${s.id}`,
-        label: s.id === 'extra' ? '-e' : s.id,
+        label: s.short,
         caption: prev
           ? fb(bi('Ansible поднимается на ступень {n}, {w}. Здесь задано http_port: {v}, и это значение перекрывает прежнее {a}, потому что {y}.', 'Ansible climbs to step {n}, {w}. It sets http_port: {v}, and this value overrides the previous {a}, because {y}.'), { n: i + 1, w: s.name, v: s.value, a: prev, y: s.why })
           : fb(bi('Ansible начинает с нижней ступени, с умолчаний роли в файле {f}. Там задано http_port: {v}, и это значение действует, пока выше его никто не перекроет.', 'Ansible starts at the bottom step, the role defaults in {f}. They set http_port: {v}, and this value applies until a higher step overrides it.'), { f: s.file, v: s.value }),
@@ -223,7 +223,7 @@ export const varModel = defineModel<VarP>({
         tokens: [{ edge: 'e-render', label: 'http_prot?' }],
         say: { tpl: bi('Jinja2 ищет переменную http_prot, не находит её и останавливает подстановку.', 'Jinja2 looks for the variable http_prot, does not find it and stops rendering.') },
         states: { tpl: 'err', 'e-render': 'err' },
-        metrics: { port: 0, sources: set },
+        metrics: { sources: set },
         broken: { at: 'tpl', message: "fatal: [web1]: FAILED! => {\"changed\": false, \"msg\": \"AnsibleUndefinedVariable: 'http_prot' is undefined\"}", caption: bi('Неизвестное имя в шаблоне Ansible считает ошибкой, а не пустой строкой. Поэтому опечатка не попадает на рабочие серверы незаметно: её узнают по сообщению AnsibleUndefinedVariable с именем переменной.', 'Ansible treats an unknown name in a template as an error, not as an empty string. So a typo does not reach the production servers unnoticed: you recognise it by the AnsibleUndefinedVariable message with the variable’s name.') },
       });
       return steps;
@@ -246,19 +246,19 @@ export const varModel = defineModel<VarP>({
         caption: fb(bi('Готовый файл копируется на web1, и nginx на этом хосте будет слушать порт {v}. Победило значение со ступени «{w}», самой высокой из тех, где переменная задана.', 'The rendered file is copied to web1, and nginx on this host will listen on port {v}. The value from the step “{w}” won, the highest of the steps that set the variable.'), { v: cur, w: curName }),
         focus: ['e-copy', 'web1'],
         reveal: ['web1', 'e-copy'],
-        tokens: [{ edge: 'e-copy', label: 'site.conf' }],
-        say: { web1: fb(bi('На web1 записан файл site.conf со строкой «listen {v};».', 'web1 now has site.conf with the line “listen {v};”.'), { v: cur }) },
+        tokens: [{ edge: 'e-copy', label: 'cafe.conf' }],
+        say: { web1: fb(bi('На web1 записан файл cafe.conf со строкой «listen {v};».', 'web1 now has cafe.conf with the line “listen {v};”.'), { v: cur }) },
         states: { web1: 'ok' },
         values: { web1: `listen ${cur};` },
-        metrics: { port: cur, sources: set },
+        metrics: { sources: set },
       },
     );
     return steps;
   },
   explainDelta(prev, next, change): Bi {
     if (change.kind === 'break') return change.on ? bi('Неизвестная переменная в шаблоне останавливает задачу template на всех хостах.', 'An unknown variable in the template stops the template task on every host.') : bi('Опечатку в шаблоне исправили, и задача снова записывает файл.', 'The typo in the template is fixed, and the task writes the file again.');
-    const a = last(prev).port ?? 0;
-    const b = last(next).port ?? 0;
+    const a = portOf(prev);
+    const b = portOf(next);
     if (a === b) return fb(bi('Порт на web1 не изменился и остался {v}, потому что выше на лестнице уже есть место, где значение задано.', 'The port on web1 did not change and stays {v}, because a higher step already sets a value.'), { v: b });
     return fb(bi('Порт на web1 изменился с {a} на {b}, потому что теперь побеждает другая ступень, самая высокая из тех, где значение задано.', 'The port on web1 went from {a} to {b}, because another step now wins, the highest of the steps that set the value.'), { a, b });
   },

@@ -28,3 +28,5 @@
 .cl-log li { overflow-wrap: anywhere; }
 .cl-log li.err { color: var(--c-err); }
 .cl-kind { display: inline-block; min-width: 3.5em; color: var(--ink-2); }
+/* While the lab sets up the cloud the terminal takes no input (it is inert). */
+.cl .lab-term-box.cl-wait { opacity: 0.55; }

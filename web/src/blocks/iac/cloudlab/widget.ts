@@ -63,7 +63,7 @@ export const WS_IP = '10.0.0.10';
 export type { ApiCall };
 
 const T = {
-  env: bi('Облако во вкладке · v86', 'Cloud in the tab · v86'),
+  env: bi('Облако во вкладке', 'Cloud in the tab'),
   what: bi(
     'Здесь работают настоящие машины: рабочая станция с curl и OpenTofu и облако по адресу `api.cloud.lab`. Каждая ВМ, которую вы создадите через API облака, будет ещё одной настоящей машиной Linux, и загружается она в этой же вкладке.',
     'Real machines run here: a workstation with curl and OpenTofu, and a cloud at `api.cloud.lab`. Every VM you create through the cloud API is one more real Linux machine, booting in this same tab.',
@@ -72,7 +72,8 @@ const T = {
   start: bi('Запустить лабораторию', 'Start the lab'),
   missing: bi('В этой сборке нет образа лаборатории. Его собирает `npm run build:lab-image`.', 'This build has no lab image. `npm run build:lab-image` builds it.'),
   booting: bi('Рабочая станция загружается… ({s} с)', 'The workstation is booting… ({s} s)'),
-  setup: bi('Лаборатория готовит облако и рабочую станцию…', 'The lab is preparing the cloud and the workstation…'),
+  setup: bi('Лаборатория готовит облако и рабочую станцию. Терминал начнёт принимать команды, как только всё будет готово, обычно через полминуты или минуту.', 'The lab is preparing the cloud and the workstation. The terminal starts taking commands as soon as everything is ready, usually in half a minute to a minute.'),
+  small: bi('Эта лаборатория запускает настоящие машины и рассчитана на компьютер с браузером и хотя бы 4 ГБ памяти. На телефоне она, скорее всего, не запустится, поэтому прочитайте теорию и ответьте на вопросы ниже, а задания выполните за компьютером.', 'This lab runs real machines and is meant for a computer with a browser and at least 4 GB of memory. On a phone it will most likely not start, so read the theory and answer the questions below, and do the tasks at a computer.'),
   failed: bi('Лаборатория не запустилась', 'The lab did not start'),
   cold: bi('рабочая станция загрузилась за {s} с', 'the workstation booted in {s} s'),
   restored: bi('рабочая станция восстановлена из снимка за {s} с', 'the workstation was restored from a snapshot in {s} s'),
@@ -83,7 +84,7 @@ const T = {
   live: bi('Лаборатория работает, пока открыта страница. После перезагрузки страницы облако и машины запускаются заново в исходном состоянии, а выполненные цели остаются выполненными.', 'The lab runs while the page is open. After a page reload the cloud and the machines start over from their initial state, and the goals you passed stay passed.'),
   cloud: bi('Облако', 'Cloud'),
   key: bi('Ключ доступа проекта default', 'The access key of project default'),
-  keyNote: bi('Секрет уже записан в /etc/dt/cloud.env рабочей станции и попадает в окружение каждого нового shell.', 'The secret is already in /etc/dt/cloud.env on the workstation and gets into the environment of every new shell.'),
+  keyNote: bi('Секрет записан в файл /etc/dt/cloud.env рабочей станции, и лаборатория уже загрузила его в оболочку открытого терминала. Каждая новая оболочка загружает этот файл сама.', 'The secret is in /etc/dt/cloud.env on the workstation, and the lab has already loaded it into the shell of the open terminal. Every new shell loads this file by itself.'),
   keyNoteManual: bi('Секрет показан только здесь, поэтому передайте его программам сами.', 'The secret is shown only here: hand it to programs yourself.'),
   vms: bi('Виртуальные машины', 'Virtual machines'),
   noVms: bi('ВМ пока нет.', 'No VMs yet.'),
@@ -96,6 +97,9 @@ const T = {
   actionDone: bi('Изменение сделано через API в обход вашего кода.', 'The change was made through the API, bypassing your code.'),
   copied: bi('Скопировано', 'Copied'),
 };
+
+/** A VM that is busy booting may not answer the service channel; a check must not wait for it forever. */
+const within = <T,>(p: Promise<T>, ms: number): Promise<T | undefined> => Promise.race([p, new Promise<undefined>((r) => setTimeout(() => r(undefined), ms))]);
 
 const tabDeviceMemory = () => (typeof navigator !== 'undefined' ? (navigator as Navigator & { deviceMemory?: number }).deviceMemory : undefined);
 
@@ -120,6 +124,10 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
   let checking = false;
   let again = false;
   let ranCommand = false;
+  // The learner may type only after the lab has set up the cloud and loaded the key into the shell.
+  let ready = false;
+  // Commands the lab itself typed into the learner's shell, not to be counted as the learner's.
+  let primed = 0;
 
   const status = h('div.v86-status', { 'aria-live': 'polite' });
   const bootLine = h('span.v86-boot.muted.small');
@@ -149,7 +157,7 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
       const li = h('li.goal', { class: [done ? 'done' : '', task === current ? 'current' : ''].filter(Boolean).join(' '), 'data-task': task.id });
       const body = h('div.goal-body', {}, prose(task.prompt, 'goal-text'));
       li.append(h('span.goal-mark', { 'aria-hidden': 'true' }, done ? '✓' : ''), body);
-      if (!done && task.chips && !task.beyond) body.append(h('div.chips', {}, h('button.chip.cmd', { type: 'button', onclick: () => con?.type(task.chips!) }, task.chips)));
+      if (!done && task.chips && !task.beyond) body.append(h('div.chips', {}, h('button.chip.cmd', { type: 'button', onclick: () => ready && con?.type(task.chips!) }, task.chips)));
       if (!done && task === current) {
         const levels = (['H1', 'H2', 'H3', 'H4', 'H5'] as const).filter((hl) => task.hints?.[hl] && !(task.beyond && hl !== 'H1'));
         const shown = hintsShown.get(task.id) ?? 0;
@@ -186,7 +194,7 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
       [...lab.nodes].map(async ([name, n]) => {
         if (n.machine.phase !== 'ready') return;
         if (props.vmWatch?.length) n.machine.watchPaths(props.vmWatch);
-        out[name] = await n.machine.facts(props.vmScopes ?? []).catch(() => undefined as unknown as Facts);
+        out[name] = (await within(n.machine.facts(props.vmScopes ?? []).catch(() => undefined), 6000)) as Facts;
       }),
     );
     for (const k of Object.keys(out)) if (!out[k]) delete out[k];
@@ -195,7 +203,8 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
 
   const collect = async (): Promise<Facts | null> => {
     if (!ws || !cl || ws.phase !== 'ready') return null;
-    const [own, vms] = await Promise.all([ws.facts(), vmFacts()]);
+    const [own, vms] = await Promise.all([within(ws.facts(), 8000), vmFacts()]);
+    if (!own) return null;
     const c = cloudLabFacts(cl, requests, ci);
     const facts = { ...own, ...c, vms } as unknown as Facts;
     ctx?.reportFacts?.({ ws: own, cloud: { ...c } as unknown as Facts, ...vms });
@@ -427,9 +436,15 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
       m.onPhase((p: BootPhase, detail?: string) => {
         if (p === 'error') showError(new Error(detail ?? 'error'));
       });
+      termBox.inert = true;
+      termBox.classList.add('cl-wait');
       con = await mountConsole(termBox, m, { rows: props.rows ?? 16 });
       m.on((ev) => {
         if (ev.t !== 'cmd.done') return;
+        if (primed > 0) {
+          primed--;
+          return;
+        }
         ranCommand = true;
         scheduleCheck(150);
       });
@@ -447,8 +462,16 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
         const pub = JSON.stringify(props.seed).includes('{ws_pubkey}') ? (await m.exec('cat /root/.ssh/id_ed25519.pub 2>/dev/null')).out.trim() : '';
         for (const c of props.seed) await apiCall(cl, withPubKey(c, pub));
       }
+      if (props.token !== false) {
+        // The learner's shell logged in before the key file existed; load it there too.
+        primed++;
+        m.write('\x15. /etc/dt/cloud.env\r');
+      }
       startFacts = (await collect()) ?? undefined;
       clear(status);
+      ready = true;
+      termBox.inert = false;
+      termBox.classList.remove('cl-wait');
       const s = (boot.ms / 1000).toFixed(1).replace('.', t(bi(',', '.')));
       bootLine.textContent = ` · ${t(fmt(boot.kind === 'cold' ? T.cold : T.restored, { s }))}`;
       ctx?.record({ kind: 'x.v86.boot', boot: boot.kind, ms: boot.ms, resumed: false } as never);
@@ -479,6 +502,8 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
       btn.addEventListener('click', () => void start());
       card.append(h('div.v86-offer-row', {}, btn, h('span.small.muted', {}, t(fmt(T.cost, { mb: formatMB(labDownloadBytes(manifest, 'lab-node')) })))));
       if (props.autostart) return void start();
+      const mem = tabDeviceMemory();
+      if ((typeof window !== 'undefined' && window.matchMedia?.('(max-width: 600px)').matches) || (mem !== undefined && mem < 4)) card.append(prose(T.small, 'small'));
     }
     termBox.append(card);
   };
