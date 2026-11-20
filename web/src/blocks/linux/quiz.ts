@@ -14,7 +14,7 @@ export const QUIZ: QuizItem[] = [
     id: 'linux.q.words',
     kind: 'mcq',
     concepts: ['linux.argument'],
-    prompt: W('Сколько аргументов получит `echo` в строке `echo hello     world`?', 'How many arguments does `echo` get in the line `echo hello     world`?'),
+    prompt: W('В строке `echo hello world` между словами hello и world поставили не один, а пять пробелов подряд. Сколько аргументов получит команда `echo`?', 'In the line `echo hello world` five spaces in a row were put between hello and world instead of one. How many arguments does `echo` get?'),
     options: [
       { id: '2', text: '2', correct: true },
       { id: '6', text: '6', why: W('Пробелы оболочка аргументами не считает. Сколько бы их ни стояло подряд, они только отделяют одно слово от другого.', 'Spaces are not arguments: they only separate words, however many there are.') },
@@ -58,9 +58,9 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Сопоставьте каждый путь с тем местом, от которого он отсчитывается.', 'Match each path with the place it is counted from.'),
     pairs: [
       { id: 'abs', left: '/etc/hosts', right: W('путь отсчитывается от корня', 'the path is counted from the root') },
-      { id: 'rel', left: 'notes/todo.txt', right: W('путь отсчитывается от текущего каталога', 'the path is counted from the current directory') },
+      { id: 'rel', left: 'notes/todo.txt', right: W('путь ведёт вглубь от текущего каталога', 'the path goes down from the current directory') },
       { id: 'home', left: '~/notes', right: W('путь отсчитывается от домашнего каталога', 'the path is counted from the home directory') },
-      { id: 'up', left: '../app.log', right: W('путь отсчитывается от каталога над текущим', 'the path is counted from the directory above the current one') },
+      { id: 'up', left: '../app.log', right: W('путь начинается с подъёма на каталог выше текущего', 'the path starts by going up to the directory above the current one') },
     ],
   },
   // ── files ──
@@ -72,7 +72,7 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'b', text: W('Останется только b.txt, в котором будет содержимое бывшего a.txt', 'Only b.txt remains, holding the contents of the former a.txt'), correct: true },
       { id: 'both', text: W('Останутся оба файла, а b.txt никто не тронет', 'Both files remain, and nobody touches b.txt'), why: W('Нет, команда mv без флагов ничего не спрашивает и заменяет существующий файл.', 'No, mv without flags asks nothing and replaces the existing file.') },
-      { id: 'err', text: W('Команда сообщит об ошибке, потому что файл уже существует', 'The command reports an error, because the file already exists'), why: W('Так ведёт себя `ln` без флага `-f`, а `mv` молча перезаписывает файл. Перезапись не случилась бы только с флагом `mv -n`.', 'That is how `ln` behaves without `-f`, while `mv` silently overwrites the file. Only `mv -n` would not overwrite it.') },
+      { id: 'err', text: W('Команда сообщит об ошибке, потому что файл уже существует', 'The command reports an error, because the file already exists'), why: W('Нет, `mv` ничего не спрашивает и молча заменяет существующий файл. Чтобы этого не случилось, у команды есть флаг `-n`: с ним `mv -n a.txt b.txt` оставит b.txt нетронутым.', 'No, `mv` asks nothing and silently replaces the existing file. To prevent that, the command has the `-n` flag: with it `mv -n a.txt b.txt` leaves b.txt untouched.') },
       { id: 'trash', text: W('Старый b.txt попадёт в корзину', 'The old b.txt goes to the trash'), why: W('Нет, корзины в Linux нет, и прежнее содержимое b.txt потеряно безвозвратно.', 'No, Linux has no trash, and the old contents of b.txt are gone for good.') },
     ],
   },
@@ -143,7 +143,7 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.user'],
     prompt: W('В файле `/etc/passwd` есть строка `anna:x:1001:1001::/home/anna:/bin/bash`. Где хранится пароль anna?', '`/etc/passwd` has the line `anna:x:1001:1001::/home/anna:/bin/bash`. Where is anna’s password kept?'),
     options: [
-      { id: 'shadow', text: W('В зашифрованном виде в файле /etc/shadow, который может читать только root', 'Encrypted in /etc/shadow, which only root may read'), correct: true },
+      { id: 'shadow', text: W('Там хранится не пароль, а его хэш, в файле /etc/shadow, который обычный пользователь прочитать не может', 'Not the password but its hash is kept, in /etc/shadow, which an ordinary user cannot read'), correct: true },
       { id: 'x', text: W('Её пароль и есть буква x', 'Her password is the letter x'), why: W('Нет, буква `x` служит заглушкой и означает, что пароль хранится в другом месте.', 'No, the `x` is a placeholder meaning the password is kept elsewhere.') },
       { id: 'none', text: W('Пароля у anna нет', 'anna has no password'), why: W('Нет, без пароля поле было бы пустым, а здесь в нём стоит x.', 'No, without a password the field would be empty, and here it holds x.') },
     ],
@@ -189,7 +189,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Какой режим получит новый файл, если маска равна `umask 027`?', 'Which mode does a new file get with `umask 027`?'),
     options: [
       { id: '640', text: '640', correct: true },
-      { id: '750', text: '750', why: W('Нет, режим 750 получит новый каталог, потому что 777 минус 027 даёт 750. У нового файла бита x нет с самого начала, поэтому 666 минус 027 даёт 640.', 'No, 750 is what a new directory gets, because 777 minus 027 is 750. A new file has no x bit to begin with, so 666 minus 027 gives 640.') },
+      { id: '750', text: '750', why: W('Нет, режим 750 получит новый каталог: его создают с режимом 777, и маска 027 снимает в нём бит w у группы и все биты у остальных. Новый файл создают с режимом 666, бита x у него нет с самого начала, поэтому та же маска оставляет ему 640.', 'No, 750 is what a new directory gets: it is created with 777, and the mask 027 clears w for the group and every bit for others. A new file is created with 666 and has no x bit to begin with, so the same mask leaves it 640.') },
       { id: '027', text: '027', why: W('Нет, маска umask задаёт то, что убирается из прав, а не то, что в них остаётся.', 'No, umask sets what is removed from the rights, not what remains.') },
     ],
   },
@@ -197,7 +197,7 @@ export const QUIZ: QuizItem[] = [
     id: 'linux.q.sudo-redirect',
     kind: 'bugfind',
     concepts: ['linux.sudo', 'linux.root'],
-    prompt: W('Вторая строка скрипта завершается ошибкой `Permission denied`, хотя в ней есть sudo. Почему?', 'The second line of the script fails with `Permission denied` although it has sudo. Why?'),
+    prompt: W('Одна из строк скрипта завершается ошибкой `Permission denied`, хотя в ней есть sudo. Нажмите на эту строку.', 'One line of the script fails with `Permission denied` although it has sudo. Click that line.'),
     code: 'sudo mkdir -p /etc/app\nsudo echo "listen 8080" > /etc/app/app.conf\necho "workers 4" | sudo tee -a /etc/app/app.conf',
     bug: [2],
     why: {

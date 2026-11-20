@@ -217,10 +217,10 @@ export const execModel = defineModel<P>({
       near: 'line',
       group: bi('Что вы набираете', 'What you type'),
       predict: {
-        prompt: bi('Вы выбрали `cd /tmp`. Команда `cd` встроена в оболочку. Создаст ли оболочка для неё свою копию?', 'You chose `cd /tmp`. The `cd` command is built into the shell. Will the shell make a copy of itself for it?'),
+        prompt: bi('Вы выбрали другую строку. Создаст ли оболочка для выбранной строки свою копию вызовом fork, прежде чем выполнить её?', 'You chose another line. Will the shell make a copy of itself with fork before running the line you chose?'),
         options: [
-          { id: 'yes', text: bi('Да, оболочка создаёт копию для любой команды', 'Yes, the shell makes a copy for any command') },
-          { id: 'no', text: bi('Нет, встроенную команду оболочка выполнит сама', 'No, the shell runs a builtin itself') },
+          { id: 'yes', text: bi('Да, оболочка создаст копию, и в эту копию загрузится программа', 'Yes, the shell makes a copy, and the copy becomes the program') },
+          { id: 'no', text: bi('Нет, эту строку оболочка выполнит в собственном процессе, без копии', 'No, the shell runs this line in its own process, with no copy') },
         ],
         resolve: (_p, next) => ((next[next.length - 1]?.metrics?.forks ?? 0) > 0 ? 'yes' : 'no'),
       },
@@ -238,13 +238,13 @@ export const execModel = defineModel<P>({
       near: 'path',
       group: bi('Где оболочка ищет программы', 'Where the shell looks for programs'),
       predict: {
-        prompt: bi('Список PATH заменили одним каталогом `/opt/tools/bin`, в котором программы `ls` нет. Что произойдёт, когда вы наберёте `ls`?', 'PATH was replaced with the single directory `/opt/tools/bin`, which has no `ls`. What happens when you type `ls`?'),
+        prompt: bi('Вы выбрали другой список каталогов PATH. Что произойдёт, когда вы наберёте ls, если оболочка ищет программы только в каталогах выбранного вами списка?', 'You chose another PATH list. What happens when you type ls, if the shell looks for programs only in the directories of the list you chose?'),
         options: [
-          { id: 'works', text: bi('Программа `ls` запустится как обычно', 'The program `ls` runs as usual') },
+          { id: 'works', text: bi('Запустится обычная программа /usr/bin/ls', 'The usual program /usr/bin/ls runs') },
+          { id: 'mine', text: bi('Запустится ваша собственная программа ls из ~/bin', 'Your own ls from ~/bin runs') },
           { id: 'notfound', text: bi('Оболочка ответит `command not found` и не создаст процесс', 'The shell answers `command not found` and creates no process') },
-          { id: 'denied', text: bi('Оболочка ответит `Permission denied`', 'The shell answers `Permission denied`') },
         ],
-        resolve: (_p, next) => ((next[next.length - 1]?.metrics?.status ?? 0) === 127 ? 'notfound' : 'works'),
+        resolve: (_p, next) => ((next[next.length - 1]?.metrics?.status ?? 0) === 127 ? 'notfound' : JSON.stringify(next).includes(PATHS.mine.found!) ? 'mine' : 'works'),
       },
     },
   ],

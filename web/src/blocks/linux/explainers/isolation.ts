@@ -10,7 +10,7 @@ import { bi, t, type Bi } from '../../../core/i18n';
 import type { DiagramGroup, ElementState, Step } from '../../../core/types';
 import { fmtb } from './util';
 
-type P = { uts: boolean; pid: boolean; net: boolean; memMax: number; grow: number; cpu: number };
+type P = { uts: boolean; pid: boolean; net: boolean; limit?: boolean; memMax: number; grow: number; cpu: number };
 
 const man = (name: string, sec: number) => ({ url: `https://man7.org/linux/man-pages/man${sec}/${name}.${sec}.html`, label: `${name}(${sec})` });
 
@@ -47,8 +47,8 @@ export const isolationModel = defineModel<P>({
     'The report-gen process is started with `unshare` on a machine where the neighbouring process postgres also runs. Namespaces put walls around report-gen: it has its own host name, its own process numbering and its own network. A cgroup counts how much memory, how many processes and how much CPU time it takes, and keeps it within the limits.',
   ),
   intro: bi(
-    'Сейчас на схеме только процесс report-gen, оболочка на машине и ядро, а стены, счётчики и соседний процесс появятся по ходу шагов. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко рядом с подсвеченным блоком говорит, что он видит или делает, а пунктирные рамки вокруг report-gen обозначают стены пространств имён.\n\nКогда дойдёте до конца, выключите в «Параметрах» одну из стен или поставьте лимит памяти на ноль и пройдите шаги ещё раз.',
-    'Now the diagram shows only the report-gen process, the shell on the machine and the kernel; the walls, the meters and the neighbouring process appear as you step. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout next to the highlighted block says what it sees or does, and the dashed frames around report-gen are the namespace walls.\n\nOnce you reach the end, switch off one of the walls in “Parameters” or set the memory limit to zero and walk the steps again.',
+    'Сейчас на схеме только процесс report-gen, оболочка на машине и ядро, а стены, счётчики и соседний процесс появятся по ходу шагов. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко рядом с подсвеченным блоком говорит, что он видит или делает, а пунктирные рамки вокруг report-gen обозначают стены пространств имён.\n\nКогда дойдёте до конца, выключите в «Параметрах» одну из стен или снимите лимит памяти переключателем «У группы есть лимит памяти» и пройдите шаги ещё раз.',
+    'Now the diagram shows only the report-gen process, the shell on the machine and the kernel; the walls, the meters and the neighbouring process appear as you step. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout next to the highlighted block says what it sees or does, and the dashed frames around report-gen are the namespace walls.\n\nOnce you reach the end, switch off one of the walls in “Parameters” or remove the memory limit with “The group has a memory limit” and walk the steps again.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
@@ -81,13 +81,13 @@ export const isolationModel = defineModel<P>({
         id: 'neigh',
         label: 'postgres',
         icon: 'database',
-        sub: { ru: 'PID 811 · 300 МиБ', en: 'PID 811 · 300 MiB' },
+        sub: { ru: 'PID 811 · 600 МиБ', en: 'PID 811 · 600 MiB' },
         family: 'process',
         x: 600,
         y: 88,
         w: 200,
         h: 56,
-        card: { what: bi('Процесс postgres обслуживает базу данных и работает на той же машине, что и report-gen. Если у report-gen нет лимита памяти, соседний процесс рискует: когда память кончается у всей машины, OOM killer выбирает самый большой процесс, и им может оказаться база.', 'The postgres process serves a database and runs on the same machine as report-gen. If report-gen has no memory limit, the neighbouring process is at risk: when the whole machine runs out of memory, the OOM killer picks the biggest process, and that may be the database.'), who: bi('Базу запускает systemd как службу postgresql.service.', 'systemd starts the database as postgresql.service.'), see: 'ps -o pid,rss,comm -p 811' },
+        card: { what: bi('Процесс postgres обслуживает базу данных, работает на той же машине, что и report-gen, и держит в памяти 600 МиБ данных. Если у report-gen нет лимита памяти, соседний процесс рискует: когда память кончается у всей машины, OOM killer выбирает процесс с самой высокой оценкой oom_score, а она растёт вместе с занятой памятью. Пока report-gen занимает меньше 600 МиБ, самым большим процессом остаётся база.', 'The postgres process serves a database, runs on the same machine as report-gen and holds 600 MiB of data in memory. If report-gen has no memory limit, the neighbouring process is at risk: when the whole machine runs out of memory, the OOM killer picks the process with the highest oom_score, and the score grows with the memory taken. While report-gen takes less than 600 MiB, the database stays the biggest process.'), who: bi('Базу запускает systemd как службу postgresql.service.', 'systemd starts the database as postgresql.service.'), see: 'ps -o pid,rss,comm -p 811; cat /proc/811/oom_score' },
       },
       {
         id: 'host',
@@ -183,10 +183,26 @@ export const isolationModel = defineModel<P>({
     { id: 'net', label: bi('У процесса своя сеть (--net)', 'The process has its own network (--net)'), kind: 'toggle', default: false, near: 'proc', group: bi('Какие стены стоят вокруг процесса', 'Which walls surround the process'), levels: ['intermediate', 'experienced'] },
     { id: 'grow', label: bi('На сколько мебибайт в секунду растёт память report-gen', 'How many MiB per second report-gen’s memory grows'), kind: 'range', min: 0, max: 40, step: 2, default: 8, unit: { ru: 'МиБ/с', en: 'MiB/s' }, near: 'proc', group: bi('Сколько ресурсов разрешено группе', 'How many resources the group may take') },
     {
+      id: 'limit',
+      label: bi('У группы есть лимит памяти (если выключить, в memory.max будет записано слово max)', 'The group has a memory limit (switched off, memory.max holds the word max)'),
+      kind: 'toggle',
+      default: true,
+      near: 'mem',
+      group: bi('Сколько ресурсов разрешено группе', 'How many resources the group may take'),
+      predict: {
+        prompt: bi('Вы снимаете лимит памяти, а report-gen продолжает расти, пока память не кончится у всей машины. На машине работает и база postgres, которая держит в памяти 600 МиБ, а report-gen к этому моменту займёт 460 МиБ. Какой процесс завершит ядро?', 'You remove the memory limit, and report-gen keeps growing until the whole machine runs out of memory. The machine also runs postgres, which holds 600 MiB, while report-gen will have taken 460 MiB by then. Which process does the kernel end?'),
+        options: [
+          { id: 'biggest', text: bi('Базу postgres, потому что она занимает больше всех и её оценка oom_score выше', 'postgres, because it takes the most and its oom_score is higher') },
+          { id: 'report', text: bi('Обязательно report-gen, потому что память занял он', 'report-gen for sure, because it took the memory') },
+        ],
+        resolve: (_p, next) => (next.some((s) => s.broken?.at === 'neigh' || s.id === 'global') ? 'biggest' : 'report'),
+      },
+    },
+    {
       id: 'memMax',
-      label: bi('Лимит памяти группы (memory.max, 0 означает «без лимита»)', 'The group’s memory limit (memory.max, 0 means “no limit”)'),
+      label: bi('Лимит памяти группы (memory.max)', 'The group’s memory limit (memory.max)'),
       kind: 'range',
-      min: 0,
+      min: 16,
       max: 512,
       step: 16,
       default: 64,
@@ -194,12 +210,12 @@ export const isolationModel = defineModel<P>({
       near: 'mem',
       group: bi('Сколько ресурсов разрешено группе', 'How many resources the group may take'),
       predict: {
-        prompt: bi('Вы снимаете лимит памяти, а report-gen продолжает расти, пока память не кончится у всей машины. Какой процесс завершит ядро?', 'You remove the memory limit, and report-gen keeps growing until the whole machine runs out of memory. Which process does the kernel end?'),
+        prompt: bi('Вы меняете лимит memory.max, а скорость роста памяти report-gen остаётся прежней. Дойдёт ли группа до нового лимита за минуту?', 'You change the memory.max limit while report-gen’s memory keeps growing at the same speed. Will the group reach the new limit within a minute?'),
         options: [
-          { id: 'biggest', text: bi('Самый большой процесс машины, которым может оказаться соседняя база', 'The biggest process of the machine, which may be the neighbouring database') },
-          { id: 'report', text: bi('Обязательно report-gen, потому что память занял он', 'report-gen for sure, because it took the memory') },
+          { id: 'reach', text: bi('Дойдёт, и ядро завершит report-gen внутри группы', 'It will, and the kernel ends report-gen inside the group') },
+          { id: 'fits', text: bi('Не дойдёт, и report-gen продолжит работать', 'It will not, and report-gen keeps working') },
         ],
-        resolve: (_p, next) => (next.some((s) => s.broken?.at === 'neigh' || s.id === 'global') ? 'biggest' : 'report'),
+        resolve: (_p, next) => (next.some((s) => s.id === 'oom') ? 'reach' : 'fits'),
       },
     },
     { id: 'cpu', label: bi('Доля процессора, разрешённая группе (cpu.max)', 'The CPU share allowed to the group (cpu.max)'), kind: 'range', min: 10, max: 100, step: 10, default: 100, unit: '%', near: 'cpu', group: bi('Сколько ресурсов разрешено группе', 'How many resources the group may take'), levels: ['intermediate', 'experienced'] },
@@ -242,7 +258,7 @@ export const isolationModel = defineModel<P>({
   run(p, broken): Step[] {
     const steps: Step[] = [];
     const walls = Number(p.uts) + Number(p.pid) + Number(p.net);
-    const noLimit = broken.has('no-cgroup') || p.memMax <= 0;
+    const noLimit = broken.has('no-cgroup') || p.limit === false || p.memMax <= 0;
     const mr = memoryRun({ ...p, memMax: noLimit ? 0 : p.memMax });
     const maxLabel = noLimit ? 'max' : `${p.memMax} MiB`;
     // a wall that is switched off is not drawn at all: a pale frame would still read as a wall
@@ -354,16 +370,16 @@ export const isolationModel = defineModel<P>({
       steps.push({
         id: 'global',
         label: 'OOM',
-        caption: fmtb(bi('Лимита нет, и через {t} с память кончилась у всей машины. Общий OOM killer выбирает самый тяжёлый процесс машины, а сейчас это соседняя база данных postgres, которая ни в чём не виновата.', 'There is no limit, and after {t} s the whole machine runs out of memory. The machine-wide OOM killer picks the heaviest process of the machine, and right now that is the neighbouring database postgres, which is not to blame.'), { t: mr.killedAt }),
+        caption: fmtb(bi('Лимита нет, и через {t} с память кончилась у всей машины: report-gen занял {m} МиБ. Общий OOM killer выбирает процесс с самой высокой оценкой oom_score, а она растёт вместе с занятой памятью. База данных postgres держит 600 МиБ, больше, чем report-gen, поэтому ядро завершает её, хотя она ни в чём не виновата.', 'There is no limit, and after {t} s the whole machine runs out of memory: report-gen has taken {m} MiB. The machine-wide OOM killer picks the process with the highest oom_score, and the score grows with the memory taken. The postgres database holds 600 MiB, more than report-gen, so the kernel ends it, although it is not to blame.'), { t: mr.killedAt, m: Math.round(mr.peak) }),
         focus: ['neigh', 'e-neigh'],
         reveal: ['e-neigh'],
         tokens: [{ edge: 'e-neigh', label: 'KILL' }],
-        say: { neigh: bi('Ядро завершило базу данных сигналом KILL, потому что она оказалась самым большим процессом машины.', 'The kernel ended the database with KILL, because it was the biggest process of the machine.') },
+        say: { neigh: bi('Ядро завершило базу данных сигналом KILL, потому что с её 600 МиБ она оказалась самым большим процессом машины.', 'The kernel ended the database with KILL, because with its 600 MiB it was the biggest process of the machine.') },
         states: { neigh: 'err', proc: 'warn' },
         values: { neigh: t(bi('завершён ядром', 'killed')), mem: `${Math.round(mr.peak)} MiB / max` },
         fill: { mem: 1 },
         metrics: { mem: Math.round(mr.peak), oom: 1, walls },
-        broken: { at: 'neigh', message: 'Out of memory: Killed process 811 (postgres) total-vm:612000kB, anon-rss:307200kB, file-rss:0kB, shmem-rss:0kB, UID:999', caption: bi('Без лимита страдает не тот процесс, который занял память, а самый большой процесс машины, поэтому лимит памяти защищает соседей. Узнают такую поломку по строке «Out of memory: Killed process» в `dmesg`, где назван не тот процесс, который рос.', 'Without a limit it is not the process that took the memory that suffers but the biggest one on the machine, so a memory limit protects the neighbours. You recognise this break by the line “Out of memory: Killed process” in `dmesg` naming a process other than the one that grew.') },
+        broken: { at: 'neigh', message: 'Out of memory: Killed process 811 (postgres) total-vm:1228800kB, anon-rss:614400kB, file-rss:0kB, shmem-rss:0kB, UID:999', caption: bi('Без лимита страдает не тот процесс, который занял память, а самый большой процесс машины, поэтому лимит памяти защищает соседей. Узнают такую поломку по строке «Out of memory: Killed process» в `dmesg`, где назван не тот процесс, который рос.', 'Without a limit it is not the process that took the memory that suffers but the biggest one on the machine, so a memory limit protects the neighbours. You recognise this break by the line “Out of memory: Killed process” in `dmesg` naming a process other than the one that grew.') },
       });
       return steps;
     }
@@ -403,9 +419,13 @@ export const isolationModel = defineModel<P>({
         return b.pid ? bi('С флагами --pid --fork --mount-proc внутри report-gen получает номер 1, и ps видит только его, а снаружи он по-прежнему имеет номер 3120.', 'With --pid --fork --mount-proc report-gen gets number 1 inside and ps sees only it, while outside it is still 3120.') : bi('Без флага --pid внутри видны все процессы машины с их настоящими номерами.', 'Without --pid every process of the machine is visible inside, with its real number.');
       case 'net':
         return b.net ? bi('С флагом --net у процесса свой сетевой стек, в котором есть только выключенный интерфейс lo.', 'With --net the process has its own network stack with only the lo interface, down.') : bi('Без флага --net процесс пользуется сетью машины.', 'Without --net the process uses the machine’s network.');
+      case 'limit':
+        return b.limit === false
+          ? bi('Лимит памяти снят, и в memory.max теперь записано слово max. Когда память кончится, OOM killer будет выбирать среди всех процессов машины.', 'The memory limit is removed, and memory.max now holds the word max. When memory runs out, the OOM killer picks among all processes of the machine.')
+          : fmtb(bi('Лимит памяти снова действует, и в memory.max записано {x} МиБ.', 'The memory limit applies again, and memory.max holds {x} MiB.'), { x: Number(b.memMax) });
       case 'memMax':
-        return Number(b.memMax) <= 0
-          ? bi('Лимит памяти снят, и когда память кончится, OOM killer будет выбирать среди всех процессов машины.', 'The memory limit is removed, and when memory runs out, the OOM killer picks among all processes of the machine.')
+        return b.limit === false
+          ? fmtb(bi('На ручке теперь стоит {b} МиБ, но лимит выключен, и в memory.max по-прежнему записано слово max.', 'The number on the knob changed to {b} MiB, but the limit is switched off, and memory.max still holds the word max.'), { b: Number(b.memMax) })
           : fmtb(bi('Лимит памяти изменился с {a} на {b} МиБ, и теперь {r}.', 'The memory limit changed from {a} to {b} MiB, and now {r}.'), { a: Number(a.memMax), b: Number(b.memMax), r: last?.id === 'fits' ? bi('за минуту группа до лимита не доходит', 'the group does not reach the limit within a minute') : bi('группа рано или поздно дойдёт до лимита', 'the group will reach the limit sooner or later') });
       case 'grow':
         return fmtb(bi('Память теперь растёт на {g} МиБ в секунду, и {r}.', 'Memory now grows by {g} MiB per second, and {r}.'), { g: Number(b.grow), r: next.some((s) => s.id === 'oom' || s.id === 'global') ? bi('лимит будет достигнут', 'the limit will be reached') : bi('лимит не достигается', 'the limit is not reached') });

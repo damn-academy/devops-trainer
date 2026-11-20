@@ -7,7 +7,7 @@
 // Restart=no, RestartSec=100ms, StartLimitIntervalSec=10s, StartLimitBurst=5.
 
 import { defineModel } from '../../../core/define';
-import { bi, type Bi } from '../../../core/i18n';
+import { bi, pluralRu, type Bi } from '../../../core/i18n';
 import type { DiagramNode, ElementState, Step } from '../../../core/types';
 import { fmtb } from './util';
 
@@ -71,8 +71,17 @@ export function simulate(p: P, broken: ReadonlySet<string>): RestartSim {
     t += sec;
     restartsN++;
   }
+  // the restarts never hit the limit: the service keeps cycling, and the diagram ends on that steady state
+  events.push({ t, kind: 'stable', n: restartsN });
   return { events, restarts: restartsN, final: 'active' };
 }
+
+/** Russian number words: «2 запуска», «5 запусков»; decimal comma for fractions. */
+const ruNum = (n: number) => String(n).replace('.', ',');
+const startsRu = (n: number) => `${n} ${pluralRu(n, ['запуск', 'запуска', 'запусков'])}`;
+const startsGenRu = (n: number) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'запуска' : 'запусков'}`;
+const startsEn = (n: number) => `${n} ${n === 1 ? 'start' : 'starts'}`;
+const sb = (ru: string, en: string): Bi => bi(ru, en);
 
 
 const sd = (name: string, sec: number) => ({ url: `https://man7.org/linux/man-pages/man${sec}/${name}.${sec}.html`, label: `${name}(${sec})` });
@@ -80,6 +89,44 @@ const st = (id: string, label: string, x: number, y: number, what: Bi): DiagramN
 
 const ALL = ['inactive', 'activating', 'active', 'autorestart', 'failed', 'main', 'limit', 'journal', 'pid1', 'e-start', 'e-up', 'e-run', 'e-crash', 'e-retry', 'e-fail', 'e-count', 'e-log'];
 const startWith = (...shown: string[]): Record<string, ElementState> => Object.fromEntries(ALL.filter((id) => !shown.includes(id)).map((id) => [id, 'hidden' as ElementState]));
+
+/** Why the restarts never reach the limit, from the actual knobs. */
+function stableWhy(p: P): Bi {
+  if (p.after >= 10) return fmtb(bi('Программа работает {s} с, то есть дольше окна в 10 секунд, поэтому к каждому новому запуску прежние запуски уже выпали из счёта, и лимит так и не наступает. Служба продолжает перезапускаться после каждого сбоя.', 'The program runs {s} s, longer than the 10-second window, so by every new start the earlier starts have dropped out of the count, and the limit never comes. The service keeps restarting after every failure.'), { s: sb(ruNum(p.after), String(p.after)) });
+  const gap = Math.round((p.after + p.restartSec) * 10) / 10;
+  const fit = Math.ceil(10 / Math.max(0.1, gap));
+  return fmtb(bi('Между двумя запусками проходит {g} с, потому что к работе программы добавляется пауза RestartSec=. Поэтому в окно 10 секунд помещается не больше {f}, а systemd разрешает {b}, и лимит так и не наступает. Служба продолжает перезапускаться после каждого сбоя.', 'Between two starts {g} s pass, because the RestartSec= pause is added to the program’s run. So no more than {f} fit into the 10-second window, while systemd allows {b}, and the limit never comes. The service keeps restarting after every failure.'), { g: sb(ruNum(gap), String(gap)), f: sb(startsGenRu(fit), startsEn(fit)), b: sb(startsRu(p.burst), startsEn(p.burst)) });
+}
+
+/**
+ * A long run repeats the same three steps (start, failure, pause) many times.
+ * The first two cycles and the last one stay as they are; the cycles between
+ * them fold into one step, so the learner reaches the outcome without clicking
+ * through identical attempts. The folded step carries every state and reveal
+ * of the steps it replaces.
+ */
+function collapseRepeats(steps: Step[]): Step[] {
+  const head = 6;
+  const tail = 4;
+  if (steps.length <= head + tail + 3) return steps;
+  const middle = steps.slice(head, steps.length - tail);
+  const attempts = middle.filter((x) => x.id.startsWith('start')).length;
+  if (attempts < 2) return steps;
+  const last = middle[middle.length - 1];
+  const folded: Step = {
+    id: 'repeat',
+    label: bi('ещё попытки', 'more attempts'),
+    caption: fmtb(bi('Следующие {n} проходят так же: systemd запускает процесс, тот завершается, и после паузы RestartSec= следует новая попытка. Счётчик запусков за последние 10 секунд показывает, сколько попыток уже засчитано.', 'The next {n} go the same way: systemd starts the process, it ends, and after the RestartSec= pause a new attempt follows. The counter of starts in the last 10 seconds shows how many attempts are already counted.'), { n: bi(`${attempts} ${pluralRu(attempts, ['попытка', 'попытки', 'попыток'])}`, `${attempts} attempts`) }),
+    focus: ['autorestart', 'limit'],
+    reveal: [...new Set(middle.flatMap((x) => x.reveal ?? []))],
+    say: { limit: bi('Попытки повторяются одна за другой, и счётчик растёт.', 'The attempts repeat one after another, and the counter grows.') },
+    states: Object.assign({}, ...middle.map((x) => x.states ?? {})),
+    values: last.values,
+    fill: last.fill,
+    metrics: last.metrics,
+  };
+  return [...steps.slice(0, head), folded, ...steps.slice(steps.length - tail)];
+}
 
 export const restartModel = defineModel<P>({
   id: 'linux.restart',
@@ -195,7 +242,7 @@ export const restartModel = defineModel<P>({
       near: 'main',
       group: bi('Как ведёт себя программа', 'How the program behaves'),
       predict: {
-        prompt: bi('Теперь программа работает 5 секунд и только потом завершается с ошибкой, пауза RestartSec= равна 0,1 секунды, а лимит разрешает 5 запусков за 10 секунд. Упрётся ли служба в этот лимит?', 'Now the program runs 5 seconds before it fails, RestartSec= is 0.1 seconds, and the limit allows 5 starts in 10 seconds. Will the service hit the limit?'),
+        prompt: bi('Вы меняете время, которое программа работает до сбоя, а пауза RestartSec= и лимит запусков за 10 секунд остаются такими, как сейчас стоят на ручках. Упрётся ли служба в лимит при новом времени работы?', 'You change how long the program runs before it fails, while the RestartSec= pause and the limit of starts in 10 seconds stay as the knobs now show. Will the service hit the limit with the new running time?'),
         options: [
           { id: 'limit', text: bi('Да, рано или поздно попыток станет слишком много', 'Yes, sooner or later there will be too many attempts') },
           { id: 'forever', text: bi('Нет, служба будет перезапускаться бесконечно', 'No, the service will restart forever') },
@@ -217,10 +264,10 @@ export const restartModel = defineModel<P>({
       near: 'autorestart',
       group: bi('Настройки unit-файла', 'Unit file settings'),
       predict: {
-        prompt: bi('Программа завершается сама с кодом 1, а в unit-файле стоит Restart=on-abnormal. Перезапустит ли systemd службу?', 'The program exits by itself with code 1, and the unit file has Restart=on-abnormal. Will systemd restart the service?'),
+        prompt: bi('Вы выбираете новое значение Restart=, а программа завершается по той причине, которая выбрана в группе «Как ведёт себя программа». Перезапустит ли systemd службу после первого завершения при выбранном вами значении?', 'You choose a new Restart= value, while the program ends for the reason chosen in “How the program behaves”. Will systemd restart the service after the first end with the value you chose?'),
         options: [
-          { id: 'yes', text: bi('Да, потому что код 1 означает сбой', 'Yes, because code 1 means a failure') },
-          { id: 'no', text: bi('Нет, потому что on-abnormal реагирует только на сигналы и таймауты', 'No, because on-abnormal reacts only to signals and timeouts') },
+          { id: 'yes', text: bi('Да, это значение велит перезапустить службу после такого завершения', 'Yes, this value asks for a restart after such an end') },
+          { id: 'no', text: bi('Нет, при этом значении служба останется в состоянии failed', 'No, with this value the service stays failed') },
         ],
         resolve: (_p, next) => (next.some((s) => s.id.startsWith('wait')) ? 'yes' : 'no'),
       },
@@ -235,7 +282,7 @@ export const restartModel = defineModel<P>({
       remove: ['main', 'e-run'],
       boundary: 'process',
       predict: {
-        prompt: bi('Файла программы, указанного в ExecStart=, на диске нет, а в unit-файле стоит Restart=on-failure. Что станет со службой?', 'The program file named in ExecStart= is not on the disk, and the unit file has Restart=on-failure. What happens to the service?'),
+        prompt: bi('Файла программы, указанного в ExecStart=, на диске нет, а настройки unit-файла остаются такими, как сейчас стоят на ручках. Что станет со службой?', 'The program file named in ExecStart= is not on the disk, and the unit file settings stay as the knobs now show. What happens to the service?'),
         options: [
           { id: 'limit', text: bi('systemd быстро исчерпает лимит попыток и прекратит перезапуски', 'systemd quickly uses up the limit of attempts and stops restarting') },
           { id: 'once', text: bi('Служба завершится один раз и сразу останется failed', 'The service fails once and stays failed at once') },
@@ -249,7 +296,7 @@ export const restartModel = defineModel<P>({
       remove: ['e-crash'],
       boundary: 'process',
       predict: {
-        prompt: bi('В unit-файле стоит Restart=always, и вы останавливаете службу командой `systemctl stop`. Перезапустит ли её systemd?', 'The unit file has Restart=always, and you stop the service with `systemctl stop`. Will systemd restart it?'),
+        prompt: bi('Вы останавливаете службу командой systemctl stop. Перезапустит ли её systemd, если в unit-файле стоит даже Restart=always?', 'You stop the service with systemctl stop. Will systemd restart it, even if the unit file has Restart=always?'),
         options: [
           { id: 'no', text: bi('Нет, потому что остановка по команде не считается сбоем', 'No, because a stop on command does not count as a failure') },
           { id: 'yes', text: bi('Да, потому что always означает перезапуск в любом случае', 'Yes, because always means a restart in every case') },
@@ -268,7 +315,7 @@ export const restartModel = defineModel<P>({
     const c = CAUSE[p.crash] ?? CAUSE.exit1;
     const steps: Step[] = [];
     const winAt = (t: number) => sim.events.filter((e) => e.kind === 'start' && t - e.t < 10_000 && e.t <= t).length;
-    const shown = sim.events.slice(0, 22);
+    const shown = sim.events;
     let pid = 4100;
     for (const [i, e] of shown.entries()) {
       const metrics = { restarts: e.n, window: winAt(e.t), t: Math.round(e.t / 100) / 10 };
@@ -283,7 +330,7 @@ export const restartModel = defineModel<P>({
           caption: broken.has('no-binary')
             ? bi('systemd пытается запустить программу из ExecStart=, но такого файла нет, поэтому процесс не создаётся вовсе. В журнал попадает код status=203/EXEC.', 'systemd tries to run the program from ExecStart=, but there is no such file, so no process is created at all. The journal gets status=203/EXEC.')
             : e.n
-              ? fmtb(bi('systemd делает попытку номер {n}. Он создаёт новый процесс с новым номером {pid}, и за последние 10 секунд это уже {w} запусков из {b} разрешённых.', 'systemd makes attempt {n}. It creates a new process with a new number, {pid}, and within the last 10 seconds that makes {w} starts of the {b} allowed.'), { n: e.n, pid, w: winAt(e.t), b: p.burst })
+              ? fmtb(bi('systemd делает попытку номер {n}. Он создаёт новый процесс с новым номером {pid}. За последние 10 секунд это уже {w}, а лимит разрешает {b}.', 'systemd makes attempt {n}. It creates a new process with a new number, {pid}. Within the last 10 seconds that makes {w}, and the limit allows {b}.'), { n: e.n, pid, w: sb(startsRu(winAt(e.t)), startsEn(winAt(e.t))), b: sb(startsRu(p.burst), startsEn(p.burst)) })
               : fmtb(bi('Вы набрали `systemctl start app`. systemd создаёт процесс {pid}, и служба переходит в состояние active (running).', 'You typed `systemctl start app`. systemd creates process {pid}, and the service moves to active (running).'), { pid }),
           focus: e.n ? ['e-retry', 'active'] : ['e-start', 'active'],
           reveal: e.n ? ['e-retry'] : [],
@@ -300,7 +347,9 @@ export const restartModel = defineModel<P>({
           label: bi('сбой', 'failure'),
           caption: broken.has('no-binary')
             ? bi('В журнале появляется строка «Failed at step EXEC spawning /usr/local/bin/app: No such file or directory», то есть systemd не запустил файл, потому что его нет на диске. Для systemd это такой же сбой, как ненулевой код завершения.', 'The journal gets “Failed at step EXEC spawning /usr/local/bin/app: No such file or directory”, meaning systemd did not run the file, because it is not on the disk. For systemd this is a failure just like a non-zero exit code.')
-            : fmtb(bi('Прошло {s} с, и {c}. В журнале появляется строка «Main process exited, {l}».', '{s} s passed, and {c}. The journal gets “Main process exited, {l}”.'), { s: p.after, c: c.how, l: c.log }),
+            : p.after > 0
+              ? fmtb(bi('Через {s} с после запуска {c}. В журнале появляется строка «Main process exited, {l}».', '{s} s after the start {c}. The journal gets “Main process exited, {l}”.'), { s: sb(ruNum(p.after), String(p.after)), c: c.how, l: c.log })
+              : fmtb(bi('Сразу после запуска {c}. В журнале появляется строка «Main process exited, {l}».', 'Right after the start {c}. The journal gets “Main process exited, {l}”.'), { c: c.how, l: c.log }),
           focus: ['e-crash', 'main'],
           reveal: ['autorestart', 'e-crash'],
           tokens: [{ edge: 'e-crash', label: c.sig ? `SIG${c.sig}` : `exit ${c.code}` }],
@@ -314,11 +363,11 @@ export const restartModel = defineModel<P>({
         steps.push({
           id: `wait${i}`,
           label: 'RestartSec',
-          caption: fmtb(bi('Настройка Restart={r} велит перезапустить службу после такого завершения. Служба переходит в состояние auto-restart, systemd выжидает {s} с и пишет в журнал «Scheduled restart job, restart counter is at {n}».', 'Restart={r} asks for a restart after such an end. The service moves to auto-restart, systemd waits {s} s and writes “Scheduled restart job, restart counter is at {n}” to the journal.'), { r: p.restart, s: p.restartSec, n: e.n + 1 }),
+          caption: fmtb(bi('Настройка Restart={r} велит перезапустить службу после такого завершения. Служба переходит в состояние auto-restart, systemd выжидает {s} с и пишет в журнал «Scheduled restart job, restart counter is at {n}».', 'Restart={r} asks for a restart after such an end. The service moves to auto-restart, systemd waits {s} s and writes “Scheduled restart job, restart counter is at {n}” to the journal.'), { r: p.restart, s: sb(ruNum(p.restartSec), String(p.restartSec)), n: e.n + 1 }),
           focus: ['autorestart', 'e-count', 'limit'],
           reveal: ['limit', 'e-count'],
           tokens: [{ edge: 'e-count', label: '+1' }],
-          say: { autorestart: fmtb(bi('systemd ждёт {s} с перед новой попыткой и прибавляет её к счётчику.', 'systemd waits {s} s before a new attempt and adds it to the counter.'), { s: p.restartSec }) },
+          say: { autorestart: fmtb(bi('systemd ждёт {s} с перед новой попыткой и прибавляет её к счётчику.', 'systemd waits {s} s before a new attempt and adds it to the counter.'), { s: sb(ruNum(p.restartSec), String(p.restartSec)) }) },
           states: { autorestart: 'wait', main: 'off' },
           values,
           fill,
@@ -350,7 +399,7 @@ export const restartModel = defineModel<P>({
           focus: ['limit', 'e-fail', 'failed'],
           reveal: ['failed', 'e-fail', 'journal', 'e-log'],
           tokens: [{ edge: 'e-fail', label: 'start-limit-hit' }],
-          say: { limit: fmtb(bi('Счётчик дошёл до {b} запусков за 10 секунд, и systemd прекращает попытки.', 'The counter reached {b} starts in 10 seconds, and systemd stops trying.'), { b: p.burst }) },
+          say: { limit: fmtb(bi('Счётчик дошёл до {b} за 10 секунд, и systemd прекращает попытки.', 'The counter reached {b} in 10 seconds, and systemd stops trying.'), { b: sb(startsGenRu(p.burst), startsEn(p.burst)) }) },
           states: { failed: 'err', autorestart: 'off', main: 'off', limit: 'err' },
           values: { limit: `${p.burst} / ${p.burst}` },
           fill: { limit: 1 },
@@ -363,7 +412,7 @@ export const restartModel = defineModel<P>({
           label: broken.has('manual-stop') ? 'stop' : bi('работает', 'running'),
           caption: broken.has('manual-stop')
             ? bi('Вы набрали `systemctl stop app`. systemd сам посылает процессу сигнал TERM и переводит службу в состояние inactive. Это остановка по команде, а не сбой, поэтому настройка Restart= здесь не действует, какое бы значение у неё ни стояло.', 'You typed `systemctl stop app`. systemd itself sends the process TERM and moves the service to inactive. This is a stop on command, not a failure, so Restart= does not apply, whatever its value.')
-            : bi('Служба работает дольше 10 секунд, поэтому старые запуски выпадают из счёта, и лимит так и не наступает.', 'The service runs longer than 10 seconds, so old starts drop out of the count, and the limit never comes.'),
+            : stableWhy(p),
           focus: broken.has('manual-stop') ? ['inactive'] : ['active', 'limit'],
           say: broken.has('manual-stop') ? { inactive: bi('systemd остановил службу по вашей команде и не будет её перезапускать.', 'systemd stopped the service on your command and will not restart it.') } : { active: bi('Служба работает, и счётчик попыток не растёт.', 'The service runs, and the attempt counter does not grow.') },
           states: broken.has('manual-stop') ? { inactive: 'on', active: 'off', main: 'off' } : { active: 'ok' },
@@ -374,7 +423,7 @@ export const restartModel = defineModel<P>({
         });
       }
     }
-    return steps;
+    return collapseRepeats(steps);
   },
   explainDelta(prev, next, change, a, b): Bi {
     void prev;
@@ -385,7 +434,10 @@ export const restartModel = defineModel<P>({
       case 'restart':
         return fmtb(bi('Настройка Restart= изменилась с {a} на {b}, и теперь {v}.', 'Restart= changed from {a} to {b}, and now {v}.'), { a: String(a.restart), b: String(b.restart), v: verdict });
       case 'restartSec':
-        return fmtb(bi('Пауза RestartSec= теперь равна {s} с, и за 10 секунд помещается {n} запусков, поэтому {v}.', 'RestartSec= is now {s} s, and {n} starts fit into 10 seconds, so {v}.'), { s: Number(b.restartSec), n: Math.min(Number(b.burst) + 1, Math.floor(10 / Math.max(0.1, Number(b.restartSec) + Number(b.after))) + 1), v: verdict });
+      {
+        const fit = Math.min(Number(b.burst) + 1, Math.ceil(10 / Math.max(0.1, Number(b.restartSec) + Number(b.after))));
+        return fmtb(bi('Пауза RestartSec= теперь равна {s} с, и в окно 10 секунд помещается не больше {n}, поэтому {v}.', 'RestartSec= is now {s} s, and no more than {n} fit into the 10-second window, so {v}.'), { s: sb(ruNum(Number(b.restartSec)), String(b.restartSec)), n: sb(startsGenRu(fit), startsEn(fit)), v: verdict });
+      }
       case 'burst':
         return fmtb(bi('Лимит StartLimitBurst= теперь равен {n}, и {v}.', 'StartLimitBurst= is now {n}, and {v}.'), { n: Number(b.burst), v: verdict });
       case 'crash':
