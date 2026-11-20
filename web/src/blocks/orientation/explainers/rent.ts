@@ -18,10 +18,11 @@ type P = { size: string; count: number; hours: number };
 const NIST = { url: 'https://csrc.nist.gov/pubs/sp/800/145/final', label: 'NIST SP 800-145' };
 const MONTH_H = 720;
 
-export const SIZES: Record<string, { cpu: number; ram: number; perHour: number }> = {
-  small: { cpu: 2, ram: 2, perHour: 0.02 },
-  medium: { cpu: 4, ram: 8, perHour: 0.08 },
-  large: { cpu: 16, ram: 64, perHour: 0.6 },
+/** perHour: rent in dollars; buy: a rough price of a comparable server of one's own, in dollars. */
+export const SIZES: Record<string, { cpu: number; ram: number; perHour: number; buy: number }> = {
+  small: { cpu: 2, ram: 2, perHour: 0.02, buy: 400 },
+  medium: { cpu: 4, ram: 8, perHour: 0.08, buy: 1200 },
+  large: { cpu: 16, ram: 64, perHour: 0.6, buy: 6000 },
 };
 
 /** Dollars for `hours` of `count` machines of `size`, rounded to cents. */
@@ -31,9 +32,20 @@ export function bill(size: string, count: number, hours: number): number {
 
 const money = (x: number) => tr(`$${x.toFixed(2).replace('.', ',')}`, `$${x.toFixed(2)}`);
 const ALL = ['you', 'panel', 'rackA', 'rackB', 'vm', 'bill', 'dc', 'e-order', 'e-place', 'e-boot', 'e-connect', 'e-meter', 'e-move'];
-const machines = (n: number) => `${n} ${pluralRu(n, ['машина', 'машины', 'машин'])}`;
 /** Accusative: «взять одну машину», «взять 3 машины». */
 const machinesAcc = (n: number) => (n === 1 ? 'одну машину' : `${n} ${pluralRu(n, ['машину', 'машины', 'машин'])}`);
+/** Genitive: «вместо одной машины», «вместо 5 машин». */
+const machinesGen = (n: number) => (n === 1 ? 'одной машины' : `${n} ${pluralRu(n, ['машины', 'машин', 'машин'])}`);
+const timesRu = (n: number) => `${n} ${pluralRu(n, ['раз', 'раза', 'раз'])}`;
+
+/** How buying such servers compares with this bill: one sentence for the last step. */
+function buyVsRent(p: P, work: number): Bi {
+  const s = SIZES[p.size] ?? SIZES.small;
+  const buy = s.buy * p.count;
+  const r = Math.round(buy / Math.max(0.01, work));
+  if (r >= 2) return fmtb(bi('Купить {n} такой мощности стоило бы около {b}, примерно в {r} больше этого счёта.', 'Buying {nEn} of such power would cost about {b}, roughly {r} times this bill.'), { n: machinesAcc(p.count), nEn: p.count === 1 ? 'one machine' : `${p.count} machines`, b: money(buy), r: bi(timesRu(r), String(r)) });
+  return fmtb(bi('Купить {n} такой мощности стоило бы около {b}, то есть почти столько же, сколько этот счёт. Машину, которая нужна долго и на полную мощность, часто выгоднее купить, а облако выигрывает на коротких сроках.', 'Buying {nEn} of such power would cost about {b}, that is, almost as much as this bill. A machine needed for a long time at full power is often cheaper to buy, and the cloud wins on short terms.'), { n: machinesAcc(p.count), nEn: p.count === 1 ? 'one machine' : `${p.count} machines`, b: money(buy) });
+}
 const cpus = (n: number) => `${n} ${pluralRu(n, ['процессор', 'процессора', 'процессоров'])}`;
 const hoursRu = (n: number) => `${n} ${pluralRu(n, ['час', 'часа', 'часов'])}`;
 
@@ -47,8 +59,8 @@ export const rentModel = defineModel<P>({
     'You order a server in a cloud provider’s panel, the provider places it on a rack in its data centre, you work with it over the network, and the bill grows every hour the machine exists.',
   ),
   intro: bi(
-    'Сейчас на схеме только вы и панель облака, то есть сайт провайдера, на котором заказывают машины. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Подсвечен тот, кто работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся: заказ, команды или оплаченные часы.\n\nКогда дойдёте до счёта, поменяйте в «Параметрах» размер и число машин и посмотрите на сумму под схемой. Потом включите в блоке «Сломать» забытую машину и сгоревшую стойку.',
-    'Now the diagram shows only you and the cloud panel. Press “Start from the first step”, then go on with “Step forward” above the diagram. The one working is highlighted, the callout says what it does, the card on the line shows the order, commands or billed hours.\n\nAt the bill, change the size and number of machines in “Parameters”. Then switch on the forgotten machine and the burnt rack in “Break it”.',
+    'Сейчас на схеме только вы и панель облака, то есть сайт провайдера, на котором заказывают машины. Нажмите «Начать с первого шага», и вы закажете машину напрокат.',
+    'Now the diagram shows only you and the cloud panel, that is, the provider’s site where machines are ordered. Press “Start from the first step”, and you will order a machine for hire.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },
@@ -116,7 +128,7 @@ export const rentModel = defineModel<P>({
       label: bi('Машину забыли удалить, когда проект закончился', 'The machine was not deleted when the project ended'),
       remove: ['e-meter'],
       predict: {
-        prompt: bi('Проект закончился, вы закрыли ноутбук, но машину в облаке не удалили, и ею никто не пользуется. Что будет со счётом к концу месяца?', 'The project is over, the machine was not deleted and nobody uses it. What happens to the bill by the end of the month?'),
+        prompt: bi('Проект закончился, вы закрыли ноутбук, но машину в облаке не удалили, и ею никто не пользуется. Что будет со счётом за следующий месяц?', 'The project is over, you closed the laptop, but the machine in the cloud was not deleted, and nobody uses it. What happens to the bill over the next month?'),
         options: [
           { id: 'grows', text: bi('Будет расти весь месяц, пока машина существует', 'It grows all month while the machine exists') },
           { id: 'stops', text: bi('Остановится, потому что машиной не пользуются', 'It stops, since nobody uses the machine') },
@@ -203,7 +215,7 @@ export const rentModel = defineModel<P>({
           say: { rackB: bi('Провайдер запустил вашу машину заново здесь, но её диск пуст.', 'The provider restarted it here, with an empty disk.') },
           states: { rackB: 'warn' },
           metrics: { cost: 0, hours: 0 },
-          broken: { at: 'rackA', message: 'Instance my-server was restarted on another host due to a hardware failure.', caption: bi('на стойке A. За железо отвечает провайдер, а за копии важных данных отвечаете вы.', 'at rack A: the hardware is the provider’s worry; copies of important data are yours.') },
+          broken: { at: 'rackA', message: 'Instance my-server was restarted on another host due to a hardware failure.', caption: bi('Беда случилась на стойке A, где сгорел сервер. За железо отвечает провайдер, а за копии важных данных отвечаете вы. Сообщение ниже в жизни присылает провайдер: машину перезапустили на другом сервере из-за поломки железа.', 'The trouble happened at rack A, where a server burnt out. The hardware is the provider’s worry, and copies of important data are yours. The message below is what the provider sends in real life: the machine was restarted on another server because of a hardware failure.') },
         },
       );
       return steps;
@@ -245,25 +257,25 @@ export const rentModel = defineModel<P>({
       },
     );
     if (broken.has('forget')) {
-      const month = bill(p.size, p.count, MONTH_H);
+      const month = bill(p.size, p.count, p.hours + MONTH_H);
       steps.push({
         id: 'forgotten',
         label: bi('забыли', 'forgotten'),
-        caption: fmtb(bi('Проект закончился, а машину не удалили. Она никому не нужна, но существует, и провайдер продолжает считать часы. К концу месяца в счёте {c} вместо {w}.', 'The project ended but the machine stayed: by the end of the month the bill is {c} instead of {w}.'), { c: money(month), w: money(work) }),
+        caption: fmtb(bi('Проект закончился, а машину не удалили. Она никому не нужна, но существует, и провайдер продолжает считать часы. Через месяц после конца проекта в счёте {c} вместо {w}.', 'The project ended, but the machine was not deleted. Nobody needs it, but it exists, and the provider keeps counting the hours. A month after the end of the project the bill holds {c} instead of {w}.'), { c: money(month), w: money(work) }),
         focus: ['bill'],
-        say: { bill: fmtb(bi('Машиной не пользуются, а счёт за месяц дорос до {c}.', 'Nobody uses it, and the bill reached {c}.'), { c: money(month) }) },
+        say: { bill: fmtb(bi('Машиной не пользуются, а за месяц простоя счёт дорос до {c}.', 'Nobody uses the machine, and in a month of standing idle the bill has grown to {c}.'), { c: money(month) }) },
         states: { bill: 'err', vm: 'warn' },
         values: { bill: money(month) },
         fill: { bill: 1 },
-        metrics: { cost: month, hours: MONTH_H * p.count },
-        broken: { at: 'bill', message: `Invoice: ${p.count} × ${p.size}, ${MONTH_H} h — ${money(month)}`, caption: bi('в счёте. В облаке платят за то, что машина существует, а не за пользу от неё, поэтому ненужную машину удаляют сразу.', 'in the bill: the cloud is paid for a machine existing, not for being useful; delete what is not needed at once.') },
+        metrics: { cost: month, hours: (p.hours + MONTH_H) * p.count },
+        broken: { at: 'bill', message: `Invoice: ${p.count} × ${p.size}, ${p.hours + MONTH_H} h — ${money(month)}`, caption: bi('Деньги утекли через счёт, потому что машину забыли удалить. В облаке платят за то, что машина существует, а не за пользу от неё, поэтому ненужную машину удаляют сразу. Сообщение ниже в жизни приходит от провайдера: это счёт за все часы, пока машина существовала.', 'Money leaked through the bill, because the machine was not deleted. In the cloud you pay for a machine existing, not for the use you get from it, so an unneeded machine is deleted at once. The message below is what the provider sends in real life: a bill for all the hours the machine existed.') },
       });
       return steps;
     }
     steps.push({
       id: 'delete',
       label: bi('удаление', 'delete'),
-      caption: fmtb(bi('Проект закончен, вы удаляете {m}, и счёт останавливается на {c}. Покупка такого сервера обошлась бы в сотни раз дороже.', 'You delete the machine and the bill stops at {c}. Buying such a server would cost hundreds of times more.'), { c: money(work), m: p.count > 1 ? bi('машины', 'machines') : bi('машину', 'machine') }),
+      caption: fmtb(bi('Проект закончен, вы удаляете {m}, и счёт останавливается на {c}. {buy}', 'The project is over, you delete the {m}, and the bill stops at {c}. {buy}'), { c: money(work), m: p.count > 1 ? bi('машины', 'machines') : bi('машину', 'machine'), buy: buyVsRent(p, work) }),
       focus: ['bill'],
       say: { bill: fmtb(bi('{m}, и счёт остановился на {c}.', 'The machine is deleted; the bill stops at {c}.'), { c: money(work), m: p.count > 1 ? bi('Машины удалили', '') : bi('Машину удалили', '') }) },
       states: { vm: 'off', bill: 'ok', rackA: 'off' },
@@ -276,7 +288,7 @@ export const rentModel = defineModel<P>({
     if (change.kind === 'break') {
       if (!change.on) return bi('Поломку выключили, поэтому машину снова удаляют вовремя, а стойка цела.', 'The break is off, so the machine is deleted on time again and the rack is intact.');
       return change.id === 'forget'
-        ? fmtb(bi('Машина простояла месяц без дела, и счёт вырос с {a} до {b}. Чаще всего деньги в облаке уходят впустую на забытые машины.', 'The machine sat idle for a month, and the bill grew from {a} to {b}. Most money wasted in the cloud goes on forgotten machines.'), { a: money(cost(prev)), b: money(cost(next)) })
+        ? fmtb(bi('Машина простояла месяц без дела после конца проекта, и счёт вырос с {a} до {b}. Чаще всего деньги в облаке уходят впустую на забытые машины.', 'The machine sat idle for a month after the project ended, and the bill grew from {a} to {b}. Most money wasted in the cloud goes on forgotten machines.'), { a: money(cost(prev)), b: money(cost(next)) })
         : bi('Сгоревшее железо заменяет провайдер, а вашу машину перезапускают на другой стойке. Пропадает только то, у чего не было копии.', 'The provider replaces the hardware and restarts the machine; only what had no copy is lost.');
     }
     switch (change.id) {
@@ -285,7 +297,9 @@ export const rentModel = defineModel<P>({
         return fmtb(bi('Теперь у каждой машины {cpu} и {ram} ГБ памяти, и час её работы стоит ${h}. Счёт изменился с {c0} до {c1}.', 'Now {cpu} CPU and {ram} GB at ${h} an hour: {c0} → {c1}.'), { cpu: bi(cpus(sz.cpu), String(sz.cpu)), ram: sz.ram, h: bi(sz.perHour.toFixed(2).replace('.', ','), sz.perHour.toFixed(2)), c0: money(cost(prev)), c1: money(cost(next)) });
       }
       case 'count':
-        return fmtb(bi('Теперь вы арендуете {n}, и счёт меняется во столько же раз и составляет {c}.', '{n} machines: the bill changes as many times, {c}.'), { n: bi(machines(b.count as number), String(b.count)), c: money(cost(next)) });
+        return (b.count as number) === (a.count as number)
+          ? bi('Число машин не изменилось, поэтому и счёт остался прежним.', 'The number of machines has not changed, so the bill has stayed the same.')
+          : fmtb(bi('Теперь вы арендуете {n} вместо {was}, и счёт {dir} во столько же раз: был {c0}, а стал {c1}.', 'Now you hire {nEn} instead of {wasEn}, and the bill {dirEn} by the same factor: it was {c0}, and now it is {c1}.'), { n: machinesAcc(b.count as number), was: machinesGen(a.count as number), nEn: String(b.count), wasEn: String(a.count), dir: (b.count as number) > (a.count as number) ? 'вырос' : 'уменьшился', dirEn: (b.count as number) > (a.count as number) ? 'grew' : 'shrank', c0: money(cost(prev)), c1: money(cost(next)) });
       case 'hours':
         return fmtb(bi('Машины нужны не {a}, а {b}, и счёт теперь составляет {c}, потому что вы платите за всё время, пока машины существуют.', '{a} → {b} h: the bill is {c}.'), { a: bi(hoursRu(a.hours as number), String(a.hours)), b: bi(hoursRu(b.hours as number), String(b.hours)), c: money(cost(next)) });
     }

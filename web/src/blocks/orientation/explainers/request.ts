@@ -16,7 +16,7 @@ type P = { clients: number; distance: string; servers: number };
 
 const SERVICE_MS = 5;
 const PER_SERVER = 1000 / SERVICE_MS; // requests a second one server program can answer
-const ONE_WAY: Record<string, number> = { city: 5, country: 25, ocean: 80 };
+const ONE_WAY: Record<string, number> = { city: 5, country: 25, ocean: 40 };
 const MDN = { url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview', label: 'MDN › Overview of HTTP' };
 
 export interface ReqNumbers {
@@ -42,6 +42,14 @@ const ALL = ['browser', 'others', 'net', 'queue', 'app', 'data', 'server', 'e-re
 const WHERE: Record<string, Bi> = { city: bi('в вашем городе', 'in your city'), country: bi('в другом конце страны', 'across the country'), ocean: bi('за океаном', 'across the ocean') };
 const shoppers = (n: number) => `${n} ${pluralRu(n, ['покупатель', 'покупателя', 'покупателей'])}`;
 const r1 = (x: number) => Math.round(x * 10) / 10;
+/** The longest bar of the waterfall, for the last step's caption: the road there and back, the queue or the program's own work. */
+function biggest(n: ReqNumbers): Bi {
+  const road = n.net * 2;
+  if (n.wait >= road && n.wait >= SERVICE_MS) return bi('на ожидание в очереди', 'on waiting in the queue');
+  if (road >= SERVICE_MS) return bi('на дорогу туда и обратно', 'on the road there and back');
+  return bi('на работу самой программы магазина', 'on the work of the shop program itself');
+}
+const msb = (x: number) => bi(ruNum(r1(x)), String(r1(x)));
 
 export const requestModel = defineModel<P>({
   id: 'orient.request',
@@ -49,12 +57,12 @@ export const requestModel = defineModel<P>({
   block: 'orient',
   title: bi('Запрос к серверу и ответ', 'A request to a server and the answer'),
   summary: bi(
-    'Вы открываете каталог чайного магазина. Браузер отправляет запрос, сеть доставляет его на сервер магазина, запрос ждёт своей очереди, программа магазина составляет страницу из каталога и присылает ответ. Под схемой растёт водопад: каждому шагу, который занял время, в нём соответствует своя полоса.',
-    'You open the tea shop’s catalogue. The browser sends a request, the network delivers it to the shop’s server, the request waits its turn, the shop program builds the page from the catalogue and sends the answer. The waterfall under the diagram shows where the time went.',
+    'Вы открываете каталог чайного магазина. Браузер отправляет запрос, сеть доставляет его на сервер магазина, запрос ждёт своей очереди, программа магазина составляет страницу из каталога и присылает ответ. Под схемой растёт водопад, похожий на расписание дня: каждому шагу, который занял время, в нём соответствует своя полоска, и чем дольше шаг, тем она длиннее.',
+    'You open the tea shop’s catalogue. The browser sends a request, the network delivers it to the shop’s server, the request waits its turn, the shop program builds the page from the catalogue and sends the answer. Under the diagram a waterfall grows that looks like a day’s timetable: every step that took time has its own bar in it, and the longer the step, the longer the bar.',
   ),
   intro: bi(
-    'Сейчас на схеме только ваш браузер. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. На каждом шаге подсвечен тот, кто работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся: сам запрос, цены из каталога или ответ с числом 200.\n\nКогда пройдёте запрос до конца, откройте «Параметры» и приведите в магазин толпу покупателей, а потом перенесите сервер за океан. Сколько времени занял каждый шаг, видно в водопаде под схемой.',
-    'Now the diagram shows only your browser. Press “Start from the first step”, then go on with “Step forward” above the diagram. The one working is highlighted, the callout says what it does, and the card on the line shows what is passed: the request, the prices or the answer with 200.\n\nOnce through, open “Parameters”, bring a crowd of shoppers, then move the server across the ocean. The waterfall shows each step’s time.',
+    'Сейчас на схеме только ваш браузер. Нажмите «Начать с первого шага», и браузер отправит запрос серверу магазина.',
+    'Now the diagram shows only your browser. Press “Start from the first step”, and the browser sends a request to the shop’s server.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },
@@ -77,7 +85,7 @@ export const requestModel = defineModel<P>({
     height: 400,
     nodes: [
       { id: 'browser', label: bi('Ваш браузер', 'Your browser'), icon: 'browser', work: 'dots', sub: { ru: 'клиент', en: 'client' }, family: 'user', x: 24, y: 56, w: 184, h: 64, card: card(bi('Браузер служит клиентом, то есть программой, которая просит. Разговор всегда начинает браузер, а сервер сам никому не пишет.', 'The client: the program that asks. It always starts the conversation.'), bi('Браузер запустили вы и набрали в нём адрес магазина.', 'You started it and typed the shop’s address.'), { see: 'curl https://shop.example/', doc: MDN }) },
-      { id: 'net', label: bi('Сеть', 'Network'), icon: 'router', sub: { ru: '25 мс', en: '25 ms' }, family: 'l3', shape: 'pill', x: 272, y: 56, w: 192, h: 64, card: card(bi('Сообщение идёт от вас до сервера через сети нескольких провайдеров почти со скоростью света в стекле, и всё равно через страну оно идёт десятки миллисекунд, а через океан около сотни.', 'The path through providers: near the speed of light in glass, and still tens of milliseconds across a country.'), bi('Сеть держат провайдеры и их кабели.', 'Providers and their cables.'), { see: 'ping -c 3 shop.example' }) },
+      { id: 'net', label: bi('Сеть', 'Network'), icon: 'router', sub: { ru: '25 мс', en: '25 ms' }, family: 'l3', shape: 'pill', x: 272, y: 56, w: 192, h: 64, card: card(bi('Сообщение идёт от вас до сервера через сети нескольких провайдеров почти со скоростью света в стекле, то есть около двухсот километров за миллисекунду. И всё равно через страну оно идёт десятки миллисекунд, а через океан около сорока в одну сторону.', 'The message travels from you to the server through several providers’ networks at almost the speed of light in glass, that is, about two hundred kilometres a millisecond. Even so it takes tens of milliseconds to cross a country and about forty one way to cross an ocean.'), bi('Сеть держат провайдеры и их кабели.', 'Providers and their cables.'), { see: 'ping -c 3 shop.example' }) },
       { id: 'others', label: bi('Другие покупатели', 'Other shoppers'), icon: 'user', sub: '50 / s', family: 'user', x: 272, y: 224, w: 192, h: 64, card: card(bi('Браузеры других покупателей служат такими же клиентами, как ваш браузер. Сервер у магазина один на всех, и их запросы встают в ту же очередь, что и ваш.', 'Clients like you; their requests join the same queue.'), bi('Эти запросы отправляют люди со всей страны, которые зашли в магазин одновременно с вами.', 'People who visited the shop at the same time.')) },
       { id: 'queue', label: bi('Очередь', 'Queue'), icon: 'server', sub: '0', family: 'gauge', shape: 'buffer', x: 552, y: 56, w: 184, h: 64, card: card(bi('В очереди ждут запросы, которые пришли, пока программа магазина была занята предыдущими. Чем ближе загрузка сервера к ста процентам, тем длиннее очередь. Полоска внизу показывает, насколько она заполнена.', 'Requests that arrived while the program was busy; the closer the load to 100%, the longer the queue.'), bi('Очередь держит операционная система сервера, пока программа не возьмёт следующий запрос.', 'The server’s operating system holds it.')) },
       { id: 'app', label: bi('Программа магазина', 'Shop program'), icon: 'process', sub: { ru: '5 мс / request', en: '5 ms / request' }, family: 'process', x: 552, y: 224, w: 184, h: 64, card: card(bi('Программа магазина круглые сутки ждёт запросов и отвечает на них. На один запрос у неё уходит около 5 мс, так что за секунду она успевает ответить на 200 запросов.', 'Waits for requests and answers them: about 5 ms each, 200 a second.'), bi('Программу запустили на сервере и не выключают.', 'Started on the server and never switched off.')) },
@@ -99,7 +107,7 @@ export const requestModel = defineModel<P>({
           [116, 360],
         ],
         labelAt: 0.4,
-        label: bi('ответ с числом и страницей', 'answer with a number and the page'),
+        label: bi('ответ сервера', 'the server’s answer'),
         card: card(bi('Ответ начинается с числа: 200 означает «всё в порядке», 404 — «такой страницы нет», 503 — «сервер перегружен». За числом идёт сама страница.', '200 means all is well, 404 no such page, 503 overloaded. The page follows.'), bi('Ответ отправляет программа магазина.', 'The shop program.'), { see: 'curl -I https://shop.example/', doc: MDN }),
       },
     ],
@@ -136,7 +144,7 @@ export const requestModel = defineModel<P>({
       options: [
         { id: 'city', label: bi('в вашем городе, 5 мс в одну сторону', 'in your city, 5 ms one way') },
         { id: 'country', label: bi('в другом конце страны, 25 мс', 'across the country, 25 ms') },
-        { id: 'ocean', label: bi('за океаном, 80 мс', 'across the ocean, 80 ms') },
+        { id: 'ocean', label: bi('за океаном, 40 мс', 'across the ocean, 40 ms') },
       ],
       predict: {
         prompt: bi('Вы перенесли сервер в другое место, а покупателей столько же. Как изменится время от запроса до страницы?', 'You moved the server; the shoppers are the same. How does the time change?'),
@@ -192,7 +200,7 @@ export const requestModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'ms', label: bi('сколько миллисекунд прошло от запроса до страницы', 'milliseconds from request to page') },
+    { id: 'ms', label: bi('сколько миллисекунд прошло от запроса до ответа', 'milliseconds from request to answer') },
     { id: 'load', label: bi('загрузка серверов', 'server load'), unit: '%' },
   ],
   run(p, broken): Step[] {
@@ -231,7 +239,7 @@ export const requestModel = defineModel<P>({
         say: { net: bi('Кабель перерублен, и запрос пропал по дороге.', 'The cable is cut; the request is lost.') },
         states: { net: 'err', browser: 'wait' },
         metrics: m(30000),
-        broken: { at: 'net', message: 'curl: (28) Connection timed out after 30001 milliseconds', caption: bi('в сети. Ответ так и не пришёл, поэтому браузер ждал до конца отведённого времени. Долгое ожидание и сообщение «время вышло» в жизни означают, что сообщение не доходит.', 'in the network: no answer at all, so the browser waited to the end; a long wait and “timed out” mean the message does not arrive.') },
+        broken: { at: 'net', message: 'curl: (28) Connection timed out after 30001 milliseconds', caption: bi('Запрос пропал в сети. Ответ так и не пришёл, поэтому браузер ждал до конца отведённого времени. Долгое ожидание и сообщение «время вышло» в жизни означают, что запрос не доходит до сервера. Так об этой поломке сообщает программа curl, которая отправляет запросы из терминала: «соединение не установлено за 30001 миллисекунду, время вышло».', 'The request was lost in the network. No answer ever came, so the browser waited to the end of the allotted time. A long wait and a “timed out” message mean in real life that the message does not arrive. This is how curl prints this break: “the connection was not made within 30001 milliseconds, the time ran out”.') },
       });
       return steps;
     }
@@ -251,14 +259,14 @@ export const requestModel = defineModel<P>({
       steps.push({
         id: 'refused',
         label: bi('отказ', 'refused'),
-        caption: bi('Запрос дошёл до сервера, но программы, которая принимает запросы, на нём нет, потому что её остановили. Операционная система сервера сразу отвечает браузеру, что на этом порту никто не слушает, и браузер узнаёт об этом за время дороги туда и обратно.', 'The request reached the server, but the program is stopped. The server’s system at once answers that nobody listens on this port.'),
+        caption: bi('Запрос дошёл до сервера, но программы, которая принимает запросы, на нём нет, потому что её остановили. Операционная система сервера сразу отвечает браузеру отказом, потому что принять запрос некому. Браузер узнаёт об этом за время дороги туда и обратно.', 'The request reached the server, but the program that takes requests is not there, because it was stopped. The server’s operating system at once answers the browser with a refusal, because there is nobody to take the request. The browser learns of it in the time of the road there and back.'),
         focus: ['server', 'app'],
         reveal: ['server', 'app', 'queue', 'e-net'],
         tokens: [{ edge: 'e-net', label: 'GET /catalog' }],
         say: { app: bi('Программа магазина остановлена, и запрос принять некому.', 'The shop program is stopped; nobody takes the request.') },
         states: { app: 'err', queue: 'off' },
         metrics: m(n.net * 2),
-        broken: { at: 'app', message: 'curl: (7) Failed to connect to shop.example port 443: Connection refused', caption: bi('на сервере. Сервером называют машину вместе с работающей программой, а без программы машина может только отказать. Мгновенный отказ в жизни означает, что машина на связи, но нужная программа не запущена.', 'at the server: without the program the machine can only refuse. An instant refusal means the machine is up but the program is not running.') },
+        broken: { at: 'app', message: 'curl: (7) Failed to connect to shop.example port 443: Connection refused', caption: bi('Запрос остановился на сервере. Сервером называют машину вместе с работающей программой, а без программы машина может только отказать. Мгновенный отказ в жизни означает, что машина на связи, но нужная программа не запущена. Так об этой поломке сообщает программа curl, которая отправляет запросы из терминала: «не удалось подключиться к shop.example, в соединении отказано». Число 443 в сообщении служит номером, по которому браузер обращается к программе магазина.', 'The request stopped at the server. A server is the machine together with a running program, and without the program the machine can only refuse. An instant refusal means in real life that the machine is reachable but the needed program is not running. This is how curl prints this break: “failed to connect to shop.example, connection refused”. The number 443 in the message is the number by which the browser reaches the shop program.') },
       });
       return steps;
     }
@@ -340,8 +348,8 @@ export const requestModel = defineModel<P>({
         id: 'back',
         label: bi('ответ', 'answer'),
         caption: fmtb(
-          bi('Ответ «200 OK» со страницей возвращается к вам ещё {d} мс, и браузер рисует каталог. Весь путь занял {t} мс, и больше всего времени ушло на дорогу туда и обратно.', 'The answer “200 OK” with the page travels back for {d} ms and the browser draws it. {t} ms in all, most of it on the road.'),
-          { d: n.net, t: Math.round(n.net * 2 + n.wait + SERVICE_MS) },
+          bi('Ответ «200 OK» со страницей возвращается к вам ещё {d} мс, и браузер рисует каталог. Весь путь занял {t} мс, и больше всего времени ушло {most}.', 'The answer “200 OK” with the page comes back to you in another {d} ms, and the browser draws the catalogue. The whole path took {t} ms, and most of the time went {most}.'),
+          { d: n.net, t: bi(ruNum(r1(n.net * 2 + n.wait + SERVICE_MS)), String(r1(n.net * 2 + n.wait + SERVICE_MS))), most: biggest(n) },
         ),
         focus: ['e-resp', 'browser'],
         reveal: ['e-resp'],
@@ -364,14 +372,28 @@ export const requestModel = defineModel<P>({
     switch (change.id) {
       case 'clients': {
         const over = next.some((s) => s.id === 'overload');
-        return over
-          ? fmtb(bi('В секунду приходит {c} запросов, больше, чем успевают серверы. Очередь переполнилась, и покупатели получают ответ 503.', '{c} requests a second is more than the servers manage: 503.'), { c: b.clients as number })
-          : fmtb(bi('Покупателей в секунду стало не {a}, а {b}, и путь запроса занимает {t1} мс вместо {t0}. Чем ближе загрузка к ста процентам, тем быстрее растёт ожидание в очереди.', '{a} → {b} shoppers a second: {t0} → {t1} ms. The wait rises more steeply near 100%.'), { a: a.clients as number, b: b.clients as number, t0: ms(prev), t1: ms(next) });
+        const cap = PER_SERVER * (b.servers as number);
+        if (over)
+          return (b.clients as number) === cap
+            ? fmtb(bi('В секунду приходит {c} запросов, ровно столько, сколько успевают серверы. Запас кончился, очередь растёт без конца, и покупатели получают ответ 503 без страницы.', '{c} requests a second, exactly as many as the servers manage. There is no slack left, the queue grows without end, and the shoppers get the answer 503 without a page.'), { c: b.clients as number })
+            : fmtb(bi('В секунду приходит {c} запросов, больше, чем успевают серверы. Очередь переполнилась, и покупатели получают ответ 503 без страницы.', '{c} requests a second is more than the servers manage. The queue has overflowed, and the shoppers get the answer 503 without a page.'), { c: b.clients as number });
+        if (prev.some((s) => s.id === 'overload'))
+          return fmtb(bi('Покупателей в секунду стало {b}, и серверы снова успевают ответить всем. Очередь больше не переполняется, и страница приходит за {t1} мс.', 'There are now {b} shoppers a second, and the servers again manage to answer everyone. The queue no longer overflows, and the page arrives in {t1} ms.'), { b: b.clients as number, t1: msb(ms(next)) });
+        return fmtb(bi('Покупателей в секунду стало не {a}, а {b}, и путь запроса занимает {t1} мс вместо {t0}. Чем ближе загрузка к ста процентам, тем быстрее растёт ожидание в очереди.', 'There are now {b} shoppers a second instead of {a}, and the request’s path takes {t1} ms instead of {t0}. The closer the load is to one hundred per cent, the faster the wait in the queue grows.'), { a: a.clients as number, b: b.clients as number, t0: msb(ms(prev)), t1: msb(ms(next)) });
       }
       case 'distance':
-        return fmtb(bi('Сервер теперь стоит {w}. Дорога в одну сторону занимает {d} мс, а весь путь запроса — {t} мс. Расстояние нельзя сократить ничем, кроме переезда сервера ближе к покупателям.', 'The server is now {w}: {d} ms one way, {t} ms in all.'), { w: WHERE[b.distance as string] ?? WHERE.country, d: ONE_WAY[b.distance as string], t: ms(next) });
-      case 'servers':
-        return fmtb(bi('Запросы теперь делят между собой {n}. Загрузка каждого падает, и путь запроса занимает {t1} мс вместо {t0}.', '{n} servers share the requests: {t0} → {t1} ms.'), { n: bi(`${b.servers} ${pluralRu(b.servers as number, ['сервер', 'сервера', 'серверов'])}`, String(b.servers)), t0: ms(prev), t1: ms(next) });
+        return fmtb(bi('Сервер теперь стоит {w}. Дорога в одну сторону занимает {d} мс, а весь путь запроса — {t} мс. Расстояние нельзя сократить ничем, кроме переезда сервера ближе к покупателям.', 'The server now stands {w}. The road one way takes {d} ms, and the whole path of the request {t} ms. Distance can be shortened by nothing except moving the server closer to the shoppers.'), { w: WHERE[b.distance as string] ?? WHERE.country, d: ONE_WAY[b.distance as string], t: msb(ms(next)) });
+      case 'servers': {
+        const was = prev.some((s) => s.id === 'overload');
+        const now = next.some((s) => s.id === 'overload');
+        const more = (b.servers as number) > (a.servers as number);
+        const one = (b.servers as number) === 1;
+        const nS = one ? bi('обслуживает один сервер', 'one server serves') : bi(`обслуживают ${b.servers} ${pluralRu(b.servers as number, ['сервер', 'сервера', 'серверов'])}`, `${b.servers} servers serve`);
+        if ((b.servers as number) === (a.servers as number)) return bi('Число серверов не изменилось, поэтому и время ответа осталось прежним.', 'The number of servers has not changed, so the answer time has stayed the same.');
+        if (now) return fmtb(bi('Теперь запросы {n}, и {who} ответить всем покупателям. Очередь переполняется, и вместо страницы приходит ответ 503.', 'Now {n} the requests, and {whoEn} cannot answer all the shoppers. The queue overflows, and the answer 503 comes instead of the page.'), { n: nS, who: one ? 'он не успевает' : 'даже вместе они не успевают', whoEn: one ? 'it' : 'even together they' });
+        if (was) return fmtb(bi('Теперь запросы {n}, и сил хватает, чтобы ответить всем. Очередь больше не переполняется, и вместо ответа 503 приходит страница, за {t1} мс.', 'Now {n} the requests, and there is enough capacity to answer everyone. The queue no longer overflows, and instead of 503 the page arrives, in {t1} ms.'), { n: nS, t1: msb(ms(next)) });
+        return fmtb(bi('Теперь запросы {n}. Загрузка на каждый сервер {dir}, и путь запроса занимает {t1} мс вместо {t0}.', 'Now {n} the requests. The load on each server {dirEn}, and the request’s path takes {t1} ms instead of {t0}.'), { n: nS, dir: more ? 'падает' : 'растёт', dirEn: more ? 'falls' : 'rises', t0: msb(ms(prev)), t1: msb(ms(next)) });
+      }
     }
     return bi('Схема пересчитана для новых параметров.', 'The diagram is recomputed.');
   },
