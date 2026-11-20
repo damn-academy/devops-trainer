@@ -1,3 +1,4 @@
+import { exportWithFeedback } from '../engine/feedback/threads';
 import { mountFeedback } from '../engine/feedback/ui';
 // The app shell: top bar (course name, route, review, settings, language,
 // theme), the weekly "export or sign in" line, and the page outlet.
@@ -39,7 +40,7 @@ function topBar(current: Route): HTMLElement {
     'header.topbar',
     {},
     h('a.brand', { href: href({ name: 'home' }) }, h('span.brand-mark', { 'aria-hidden': 'true' }, icon('term')), h('span', {}, t(UI.course))),
-    h('nav.topnav', {}, nav({ name: 'home' }, t(UI.map), 'map'), nav({ name: 'review' }, t(UI.review), 'repeat'), nav({ name: 'settings' }, t(UI.settings), 'gear')),
+    h('nav.topnav', {}, nav({ name: 'home' }, t(UI.map), 'map'), nav({ name: 'review' }, t(UI.review), 'repeat'), nav({ name: 'settings' }, t(UI.settings), 'gear'), h('a.nav-link.feedback-menu', { href: '#/messages' }, icon('ask'), h('span', {}, t(bi('Мои сообщения', 'My messages'))))),
     h('div.top-tools', {}, langBtn, themeBtn),
   );
 }
@@ -49,8 +50,8 @@ function reminder(): HTMLElement | null {
   store.record({ kind: 'reminder.shown' });
   const bar = h('div.reminder', { role: 'status' });
   const exp = h('button.btn.small', { type: 'button' }, icon('download'), t(UI.export));
-  exp.addEventListener('click', () => {
-    downloadFile(`devops-trainer-progress-${new Date().toISOString().slice(0, 10)}.json`, store.exportJSON());
+  exp.addEventListener('click', async () => {
+    downloadFile(`devops-trainer-progress-${new Date().toISOString().slice(0, 10)}.json`, await exportWithFeedback(store.exportJSON()));
     bar.remove();
   });
   const dismiss = h('button.btn.ghost.small', { type: 'button' }, t(UI.dismiss));
@@ -114,6 +115,8 @@ export function startApp(root: HTMLElement): void {
     clear(main);
     main.append(page.el);
     footer.replaceChildren(h('p', {}, t(bi('Прогресс сохраняется в этом браузере после каждого действия. Курс не игра: без очков, значков и серий.', 'Progress is saved in this browser after every action. The course is not a game: no points, badges or streaks.'))));
+    footer.append(h('button.btn.ghost', { type: 'button', onclick: () => window.dispatchEvent(new Event('feedback-contact')) }, t(bi('Написать автору', 'Contact the author'))));
+    window.dispatchEvent(new Event('feedback-page'));
     if (!keepScroll) window.scrollTo({ top: 0 });
   };
   mountFeedback();

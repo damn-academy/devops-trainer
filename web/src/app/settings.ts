@@ -1,3 +1,4 @@
+import { exportWithFeedback, importFeedback } from '../engine/feedback/threads';
 // Settings: language, theme, calm mode, progress export/import, storage,
 // and sections registered by modules (the AI builder adds "Your AI" here).
 
@@ -42,9 +43,9 @@ export function settingsPage(): Page {
         : t(bi('Браузер не сообщает, сохранит ли он данные.', 'The browser does not say whether it will keep the data.'));
 
   const exportBtn = h('button.btn', { type: 'button' }, icon('download'), t(UI.export));
-  exportBtn.addEventListener('click', () => {
+  exportBtn.addEventListener('click', async () => {
     const date = new Date().toISOString().slice(0, 10);
-    downloadFile(`devops-trainer-progress-${date}.json`, store.exportJSON());
+    downloadFile(`devops-trainer-progress-${date}.json`, await exportWithFeedback(store.exportJSON()));
     toast(t(bi('Файл прогресса сохранён', 'Progress file saved')));
   });
   const importBtn = h('button.btn.ghost', { type: 'button' }, icon('upload'), t(UI.import));
@@ -53,6 +54,7 @@ export function settingsPage(): Page {
     if (!text) return;
     try {
       const r = await store.importJSON(text);
+      await importFeedback(text);
       toast(t(bi(`Добавлено событий: ${r.added}`, `Events added: ${r.added}`)));
     } catch (e) {
       toast((e as Error).message);
@@ -92,6 +94,7 @@ export function settingsPage(): Page {
     'div.settings',
     {},
     h('h1', {}, t(UI.settings)),
+    h('button.btn', { type: 'button', onclick: () => window.dispatchEvent(new Event('feedback-contact')) }, t(bi('Написать автору', 'Contact the author'))),
     h('section.settings-sec', {}, h('h2', {}, t(UI.language)), langSel),
     h('section.settings-sec', {}, h('h2', {}, t(UI.theme)), themeSel, h('label.switch-row', {}, h('label.switch', {}, calm, h('span.switch-track', { 'aria-hidden': 'true' })), h('span', {}, t(UI.calm), h('span.muted.small', {}, ` — ${t(UI.calmHint)}`)))),
     h(
