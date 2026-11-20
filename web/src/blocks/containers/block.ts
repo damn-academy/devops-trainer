@@ -3,10 +3,10 @@
 
 import { bi } from '../../core/i18n';
 import { ROUTE } from '../../core/route';
-import type { Block, Exam, Facts, PlacementTask } from '../../core/types';
+import type { Block, Exam, Facts, PlacementTask, Task } from '../../core/types';
 import { LESSONS } from './lessons';
 import { anatomyQuiz } from './lessons/anatomy';
-import { dockerfileQuiz } from './lessons/dockerfile';
+import { MAIN_GO, STOP_APP } from './lessons/dockerfile';
 import { imageQuiz } from './lessons/image';
 import { interviewQuiz } from './lessons/interview';
 import { securityQuiz } from './lessons/security';
@@ -17,7 +17,20 @@ import { dockerHost, RU, SRC } from './shared';
 const route = ROUTE.find((r) => r.id === 'containers')!;
 const pick = <T extends { id: string }>(list: T[], id: string, as: string): T => ({ ...list.find((x) => x.id === id)!, id: as });
 
-type B = { ok: boolean; steps: { text: string; cached: boolean }[] };
+type B = { ok: boolean; tags: string[]; steps: { text: string; cached: boolean; stage?: string }[] };
+type C = { name: string; state: string; networkNames: string[]; config: { Env: string[] } };
+const cs = (f: Facts) => (f.containers as C[] | undefined) ?? [];
+const userNet = (n: string) => !['bridge', 'host', 'none'].includes(n);
+
+/** api and db on the default network: the name `db` does not resolve until both share a user-defined network. */
+const twoOnDefault = dockerHost({}, { pull: ['alpine:3.22', 'postgres:17-alpine'], run: ['docker run -d --name api alpine:3.22 sleep 3600', 'docker run -d --name db -e POSTGRES_PASSWORD=pw postgres:17-alpine'] });
+const sameUserNet: Task['check'] = {
+  when: (f: Facts) => {
+    const a = cs(f).find((c) => c.name === 'api');
+    const d = cs(f).find((c) => c.name === 'db');
+    return !!a && !!d && a.networkNames.some((n) => userNet(n) && d.networkNames.includes(n));
+  },
+};
 
 const placement: PlacementTask[] = [
   { id: 'containers.place.vm', level: 'beginner', key: true, concepts: ['docker.container'], kind: 'quiz', item: pick(whyQuiz, 'containers.q.windows', 'containers.place.q.windows') },
@@ -49,14 +62,95 @@ const placement: PlacementTask[] = [
       },
     },
   },
-  { id: 'containers.place.dns', level: 'intermediate', key: false, concepts: ['docker.network'], kind: 'quiz', item: pick(storageQuiz, 'containers.q.dns-default', 'containers.place.q.dns') },
+  {
+    id: 'containers.place.env',
+    level: 'intermediate',
+    key: false,
+    concepts: ['docker.env', 'docker.lifecycle'],
+    kind: 'task',
+    setup: dockerHost({}, { pull: ['postgres:17-alpine'], run: ['docker run -d --name db postgres:17-alpine'] }),
+    task: {
+      id: 'p-env',
+      prompt: bi('Контейнер с базой данных `db` завершился сразу после запуска. Выясните причину и добейтесь, чтобы база с именем `db` работала.', 'The database container `db` exited right after it started. Find out why and get a database named `db` running.'),
+      check: { when: (f: Facts) => cs(f).some((c) => c.name === 'db' && c.state === 'running' && c.config.Env.some((e) => /^POSTGRES_PASSWORD=.+/.test(e))) },
+    },
+  },
+  {
+    id: 'containers.place.dns',
+    level: 'intermediate',
+    key: false,
+    concepts: ['docker.network'],
+    kind: 'task',
+    setup: twoOnDefault,
+    task: { id: 'p-dns', prompt: bi('Контейнеры `api` и `db` уже работают, но команда `docker exec api nslookup db` не находит базу по имени. Сделайте так, чтобы `api` находил `db` по имени, не удаляя контейнеры.', 'The `api` and `db` containers are already running, but `docker exec api nslookup db` does not find the database by name. Make `api` find `db` by name without removing the containers.'), check: sameUserNet },
+  },
   { id: 'containers.place.volume', level: 'intermediate', key: false, concepts: ['docker.volume'], kind: 'quiz', item: pick(storageQuiz, 'containers.q.volume-vs-bind', 'containers.place.q.volume') },
   { id: 'containers.place.137', level: 'intermediate', key: false, concepts: ['docker.pid1'], kind: 'quiz', item: pick(interviewQuiz, 'containers.q.code-137', 'containers.place.q.137') },
   { id: 'containers.place.rm', level: 'intermediate', key: false, concepts: ['docker.volume', 'docker.layer'], kind: 'quiz', item: pick(storageQuiz, 'containers.q.after-rm', 'containers.place.q.rm') },
-  { id: 'containers.place.chain', level: 'experienced', key: true, concepts: ['docker.runtime'], kind: 'quiz', item: pick(anatomyQuiz, 'containers.q.chain-order', 'containers.place.q.chain') },
-  { id: 'containers.place.hashes', level: 'experienced', key: true, concepts: ['docker.digest'], kind: 'quiz', item: pick(imageQuiz, 'containers.q.two-hashes', 'containers.place.q.hashes') },
+  // Experienced: what a developer who already writes Dockerfiles does at work, checked on the machine;
+  // the runtime and digest questions are not keys, a miss only opens their lessons.
+  {
+    id: 'containers.place.small',
+    level: 'experienced',
+    key: true,
+    concepts: ['docker.multistage', 'docker.dockerfile'],
+    kind: 'task',
+    setup: dockerHost({ files: [{ path: '~/go/main.go', content: MAIN_GO }, { path: '~/go/Dockerfile', content: 'FROM golang:1.25\nWORKDIR /src\nCOPY . .\nRUN go build -o /out/app .\nCMD ["/out/app"]\n' }] }, { pull: ['golang:1.25', 'alpine:3.22'] }),
+    task: {
+      id: 'p-small',
+      prompt: bi('Образ сервиса на Go из `~/go` весит сотни мегабайт. Перепишите `~/go/Dockerfile` и соберите образ `goapp:small` размером меньше 30 МБ, в котором нет компилятора.', 'The Go service image from `~/go` weighs hundreds of megabytes. Rewrite `~/go/Dockerfile` and build a `goapp:small` image under 30 MB with no compiler in it.'),
+      check: {
+        when: (f: Facts) => {
+          const img = ((f.images as { ref: string; size: number }[] | undefined) ?? []).find((i) => i.ref === 'goapp:small');
+          return !!img && img.size < 30_000_000 && ((f.builds as B[] | undefined) ?? []).some((b) => b.ok && b.tags.some((t) => t.endsWith('goapp:small')) && new Set(b.steps.map((x) => x.stage)).size >= 2);
+        },
+      },
+    },
+  },
+  {
+    id: 'containers.place.stop',
+    level: 'experienced',
+    key: true,
+    concepts: ['docker.pid1'],
+    kind: 'task',
+    setup: dockerHost({ files: [{ path: '~/stop/app.py', content: STOP_APP }, { path: '~/stop/Dockerfile', content: 'FROM python:3.13-slim\nCOPY app.py /app/\nCMD python /app/app.py; echo "app exited"\n' }] }, { pull: ['python:3.13-slim'] }),
+    task: {
+      id: 'p-stop',
+      prompt: bi('Сервис из `~/stop` при каждой выкладке останавливается ровно 10 секунд. Соберите из него образ, запустите контейнер `app` и добейтесь, чтобы `docker stop app` занимал меньше двух секунд.', 'The service from `~/stop` takes exactly 10 seconds to stop on every rollout. Build an image from it, run an `app` container and make `docker stop app` take under two seconds.'),
+      check: { when: 'containers[name=app].stopDurationMs<2000 && containers[name=app].exitCode in [0, 130, 143]' },
+    },
+  },
+  {
+    id: 'containers.place.cache-x',
+    level: 'experienced',
+    key: false,
+    concepts: ['docker.build-cache'],
+    kind: 'task',
+    setup: dockerHost({ files: [{ path: '~/app/Dockerfile', content: 'FROM python:3.13-slim\nCOPY . /app\nRUN pip install -r /app/requirements.txt\nCMD python /app/main.py\n' }, { path: '~/app/requirements.txt', content: 'flask==3.1.2\n' }, { path: '~/app/main.py', content: 'print("hi")\n' }] }, { pull: ['python:3.13-slim'] }),
+    task: {
+      id: 'p-cache-x',
+      prompt: bi('Сборка `~/app` после каждой правки `main.py` заново ставит зависимости. Исправьте `~/app/Dockerfile` и соберите образ дважды, поменяв между сборками `main.py`, так, чтобы во второй сборке шаг `pip install` был взят из кэша.', 'The `~/app` build reinstalls dependencies after every edit of `main.py`. Fix `~/app/Dockerfile` and build the image twice, changing `main.py` between the builds, so that the second build takes the `pip install` step from the cache.'),
+      check: {
+        when: (f: Facts) => {
+          const bs = ((f.builds as B[] | undefined) ?? []).filter((b) => b.ok);
+          const last = bs[bs.length - 1];
+          return bs.length >= 2 && !!last?.steps.find((x) => x.text.startsWith('RUN pip'))?.cached && last.steps.some((x) => x.text.startsWith('COPY') && !x.cached);
+        },
+      },
+    },
+  },
+  {
+    id: 'containers.place.dns-x',
+    level: 'experienced',
+    key: false,
+    concepts: ['docker.network'],
+    kind: 'task',
+    setup: twoOnDefault,
+    task: { id: 'p-dns-x', prompt: bi('Контейнеры `api` и `db` работают в сети по умолчанию, и `api` не находит базу по имени `db`. Почините это, не пересоздавая контейнеры.', 'The `api` and `db` containers run on the default network, and `api` does not find the database by the name `db`. Fix it without re-creating the containers.'), check: sameUserNet },
+  },
+  { id: 'containers.place.chain', level: 'experienced', key: false, concepts: ['docker.runtime'], kind: 'quiz', item: pick(anatomyQuiz, 'containers.q.chain-order', 'containers.place.q.chain') },
+  { id: 'containers.place.hashes', level: 'experienced', key: false, concepts: ['docker.digest'], kind: 'quiz', item: pick(imageQuiz, 'containers.q.two-hashes', 'containers.place.q.hashes') },
   { id: 'containers.place.privileged', level: 'experienced', key: false, concepts: ['docker.security-profile'], kind: 'quiz', item: pick(securityQuiz, 'containers.q.privileged', 'containers.place.q.privileged') },
-  { id: 'containers.place.exec', level: 'experienced', key: false, concepts: ['docker.pid1'], kind: 'quiz', item: pick(dockerfileQuiz, 'containers.q.exec-form', 'containers.place.q.exec') },
 ];
 
 const exam: Exam = {
@@ -124,8 +218,8 @@ export const block: Block = {
   checklistStep: route.checklistStep,
   levels: {
     beginner: bi('Вы ещё не запускали ни одного контейнера. К концу блока вы сами запускаете и чините контейнеры, пишете файлы, по которым собирают образ и запускают несколько контейнеров сразу, объясняете, чем контейнер отличается от виртуальной машины, и знаете, с какого вопроса начинать поиск, когда контейнер не работает.', 'You have never run a container. By the end of the block you run and fix containers yourself, write the files from which an image is built and several containers are started at once, explain how a container differs from a virtual machine, and know which question to start with when a container does not work.'),
-    intermediate: bi('Вы уже запускали docker run по инструкции из README. К концу блока вы понимаете кэш сборки, тома и сети, PID 1 и сигналы, собираете контейнер своими руками и решаете задания, где нужный флаг приходится искать в документации.', 'Has run docker run from a README. Outcome: understands the build cache, volumes and networks, PID 1 and signals, builds a container by hand and solves “find the flag” tasks.'),
-    experienced: bi('Вы пишете Dockerfile, но не знаете, что такое бандл, цепочка рантайма и PID 1. К концу блока вы читаете спецификации OCI, видите всю цепочку запуска до runc, понимаете digest, пространства имён пользователей и профиль безопасности контейнера.', 'Writes Dockerfiles; does not know the bundle, the runtime chain, PID 1. Outcome: reads the OCI specifications, sees the chain down to runc, understands digests, user namespaces and the security profile.'),
+    intermediate: bi('Вы уже запускали docker run по инструкции из README. К концу блока вы понимаете кэш сборки, тома и сети, PID 1 и сигналы, собираете контейнер своими руками и решаете задания, где нужный флаг приходится искать в документации.', 'You have run docker run from a README. By the end of the block you understand the build cache, volumes and networks, PID 1 and signals, build a container by hand and solve tasks where the right flag has to be found in the documentation.'),
+    experienced: bi('Вы пишете Dockerfile и запускаете контейнеры на работе, но не разбирали, что происходит после `docker run`. В проверке уровня вы соберёте маленький образ, почините медленную остановку и свяжете контейнеры сетью, а темы, в которых ошибётесь, курс предложит пройти по урокам. К концу блока вы видите всю цепочку запуска до runc, понимаете digest, пространства имён пользователей и профиль безопасности контейнера и разбираете поломки по границам контейнера.', 'You write Dockerfiles and run containers at work but have not taken apart what happens after `docker run`. In the placement check you build a small image, fix a slow stop and connect containers over a network, and the course suggests lessons for the topics where you slip. By the end of the block you see the whole launch chain down to runc, understand digests, user namespaces and the container security profile, and take failures apart by the container boundaries.'),
   },
   hours: route.hours,
   placement,

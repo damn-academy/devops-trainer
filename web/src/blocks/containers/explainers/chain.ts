@@ -11,7 +11,7 @@
 import { defineModel } from '../../../core/define';
 import { bi, fmt, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
-import { startWith } from './util';
+import { fmtb, startWith } from './util';
 
 type P = { local: boolean; publish: boolean; network: string; memory: number };
 
@@ -40,7 +40,7 @@ export const chainModel = defineModel<P>({
     { mark: 'icon:process', text: bi('программа Docker на хосте', 'a Docker program on the host') },
     { mark: 'icon:disk', text: bi('образ на диске', 'the image on disk') },
     { mark: 'icon:container', text: bi('процесс контейнера', 'the container process') },
-    { mark: 'ok', text: bi('шаг выполнен', 'step done') },
+    { mark: 'ok', text: bi('шаг выполнен; на последнем шаге так отмечены программы, которые продолжают работать', 'step done; at the last step this marks the programs that keep running') },
     { mark: 'err', text: bi('здесь запуск остановился', 'the start stopped here') },
     { mark: 'pale', text: bi('программа уже завершилась', 'the program has already exited') },
   ],
@@ -54,7 +54,7 @@ export const chainModel = defineModel<P>({
       { id: 'dockerd', label: 'dockerd', icon: 'process', family: 'cp', x: 400, y: 40, w: 150, h: 56, card: { what: bi('Демон Docker принимает запросы к API, знает об образах, сетях и томах и раздаёт работу службе containerd.', 'The Docker daemon: takes API requests, knows images, networks and volumes, and hands work to containerd.'), who: bi('Его запускает systemd при старте машины (служба docker.service).', 'systemd starts it at boot (docker.service).'), see: 'systemctl status docker' } },
       { id: 'containerd', label: 'containerd', icon: 'process', family: 'cp', x: 780, y: 40, w: 150, h: 56, card: { what: bi('Этот демон хранит снимки файловых систем (snapshots) и запускает задачи, то есть процессы контейнеров, через shim.', 'The daemon that keeps file-system snapshots and runs tasks — container processes — through a shim.'), who: bi('Его запускает systemd (служба containerd.service).', 'systemd (containerd.service).'), see: 'ctr -n moby tasks ls', doc: { url: 'https://containerd.io/docs/', label: 'containerd docs' } } },
       { id: 'shim', label: 'shim', icon: 'process', sub: 'containerd-shim-runc-v2', family: 'process', x: 767, y: 168, w: 176, h: 56, card: { what: bi('Этот маленький процесс-посредник запускается по одному на каждый контейнер. Он держит стандартные ввод и вывод контейнера, ждёт его кода выхода и остаётся родителем его процесса. Благодаря shim можно перезапустить containerd, не останавливая контейнер.', 'A small go-between process for each container: holds stdin/stdout, waits for the exit code and stays the parent of the container process. Thanks to it containerd can restart without killing the container.'), who: bi('containerd запускает по одному shim на каждую задачу.', 'containerd starts one per task.'), see: 'ps -ef --forest' } },
-      { id: 'runc', label: 'runc', icon: 'process', sub: 'OCI runtime', family: 'process', x: 780, y: 296, w: 150, h: 56, card: { what: bi('Рантайм по стандарту OCI читает файл `config.json` из бандла, просит ядро создать пространства имён и cgroup, меняет корень процесса, запускает в нём программу контейнера и завершается.', 'The OCI runtime: reads the bundle’s config.json, asks the kernel for namespaces and a cgroup, does pivot_root and execve — and exits.'), who: bi('shim вызывает его командами `runc create` и `runc start`.', 'The shim calls it with `runc create` and `runc start`.'), doc: { url: 'https://github.com/opencontainers/runtime-spec/blob/main/runtime.md', label: 'runtime-spec › runtime.md' } } },
+      { id: 'runc', label: 'runc', icon: 'process', sub: 'OCI runtime', family: 'process', x: 780, y: 296, w: 150, h: 56, card: { what: bi('Рантайм по стандарту OCI читает файл `config.json` из бандла и запускает дочерний процесс `runc init`. Этот процесс оказывается в новых пространствах имён и в cgroup, получает корень контейнера и ждёт команды start, а сам runc после этого завершается.', 'The OCI runtime reads the bundle’s `config.json` and starts a child process, `runc init`. That process ends up in the new namespaces and the cgroup, gets the container’s root and waits for the start command, while runc itself exits.'), who: bi('shim вызывает его командами `runc create` и `runc start`.', 'The shim calls it with `runc create` and `runc start`.'), doc: { url: 'https://github.com/opencontainers/runtime-spec/blob/main/runtime.md', label: 'runtime-spec › runtime.md' } } },
       { id: 'image', label: bi('Образ на диске', 'Image on disk'), icon: 'disk', sub: 'nginx:1.30-alpine', family: 'store', x: 395, y: 168, w: 160, h: 56, card: { what: bi('Слои образа лежат в хранилище containerd. Если образа на машине нет, демон сначала скачивает его из реестра.', 'The image layers in containerd’s store. If the image is missing, the daemon downloads it from a registry first.'), who: bi('Образ приносит команда `docker pull` или сам `docker run`.', '`docker pull`, or `docker run` itself.'), see: 'docker images' } },
       { id: 'nginx', label: 'nginx', icon: 'container', sub: 'PID 1 · 4123', family: 'process', x: 360, y: 296, w: 160, h: 56, card: { what: bi('Внутри своего пространства имён PID процесс контейнера работает первым, с номером 1, а на хосте он остаётся обычным процессом с другим номером и дочерним процессом shim.', 'The container process. Inside its pid namespace it is PID 1; on the host it is an ordinary process with another number, a child of the shim.'), who: bi('Его запускает runc системным вызовом execve.', 'runc, through execve.'), see: 'docker top web' } },
       { id: 'kernel', label: bi('Ядро Linux', 'Linux kernel'), sub: 'namespaces · cgroup · mount · netfilter', family: 'kernel', shape: 'bar', x: 24, y: 424, w: 919, h: 72, card: { what: bi('Всё, что делает контейнер контейнером, выполняет ядро: создаёт пространства имён, задаёт лимиты cgroup, монтирует overlay с файлами контейнера и добавляет правила netfilter для `-p`.', 'Everything that makes a container a container is done by the kernel: new namespaces (clone), cgroup limits, the overlay mount, netfilter rules for `-p`.'), who: bi('Ядро одно на всю машину.', 'One per machine.'), see: 'uname -r' } },
@@ -66,7 +66,7 @@ export const chainModel = defineModel<P>({
       { id: 'e-task', from: 'containerd', to: 'shim', label: 'task', card: { what: bi('Для новой задачи containerd запускает shim. Shim переживёт и runc, и даже перезапуск самого containerd.', 'For the task containerd starts a shim — it will outlive runc and even a restart of containerd itself.'), who: bi('Shim запускает containerd, по одному на каждый контейнер.', 'containerd.') } },
       { id: 'e-runc', from: 'shim', to: 'runc', label: 'runc create', card: { what: bi('shim вызывает рантайм и передаёт ему бандл, то есть каталог с файлами контейнера и `config.json`.', 'The shim calls the runtime on the bundle (rootfs + config.json).'), who: bi('Рантайм runc вызывает shim.', 'The shim.') } },
       { id: 'e-clone', from: 'runc', to: 'kernel', via: [[855, 422]], label: bi('системные вызовы', 'system calls'), labelAt: 0.3, card: { what: bi('runc просит ядро создать новые пространства имён pid, mnt, net, uts, ipc и cgroup, задать лимит memory.max и сменить корень процесса.', 'runc asks the kernel for new pid, mnt, net, uts, ipc and cgroup namespaces, a memory.max limit and a change of root.'), who: bi('Эти системные вызовы делает runc.', 'runc.'), doc: { url: 'https://man7.org/linux/man-pages/man2/clone.2.html', label: 'clone(2)' } } },
-      { id: 'e-exec', from: 'runc', to: 'nginx', label: 'execve', card: { what: bi('Последним действием runc заменяет себя программой контейнера. После этого runc больше нет, а процесс остаётся дочерним процессом shim.', 'runc’s last step: replace itself with the container program. Then runc exits and the process stays a child of the shim.'), who: bi('Вызов execve делает сам runc, и на этом его работа заканчивается.', 'runc.') } },
+      { id: 'e-exec', from: 'runc', to: 'nginx', label: 'execve', card: { what: bi('По команде `runc start` процесс `runc init`, подготовленный runc, заменяет себя программой контейнера. Номер процесса не меняется, поэтому программа остаётся дочерним процессом shim.', 'On the start command the `runc init` process prepared by runc replaces itself with the container program. The process number does not change, so the program stays a child of the shim.'), who: bi('Вызов execve делает процесс `runc init`, а оба запуска runc, `runc create` и `runc start`, к этому времени уже завершились.', 'The `runc init` process makes the execve call; both runc invocations, `runc create` and `runc start`, have already exited by then.') } },
       { id: 'e-parent', from: 'shim', to: 'nginx', via: [[640, 196], [640, 268], [440, 268]], label: bi('родитель', 'parent'), card: { what: bi('shim остаётся родителем процесса контейнера. Он держит его stdout и stderr, откуда берёт строки `docker logs`, и узнаёт код выхода.', 'The shim is the parent: it holds the process’s stdout/stderr (that is where `docker logs` comes from) and learns the exit code.'), who: bi('Процесс достаётся shim: когда runc завершается, ядро передаёт его дочерний процесс shim, потому что shim заранее попросил об этом ядро.', 'The shim.') } },
     ],
   },
@@ -235,7 +235,7 @@ export const chainModel = defineModel<P>({
     steps.push({
       id: 'clone',
       label: 'clone',
-      caption: fmt(bi('runc просит ядро создать процесс в новых пространствах имён, поставить его в cgroup с лимитом memory.max = {m} ({mb}) и сменить ему корень на подготовленный снимок.', 'The kernel creates a process in new namespaces, puts it into a cgroup with memory.max = {m} and changes its root (pivot_root).'), { m: mem, mb: p.memory ? `это ${p.memory} МиБ` : 'то есть без лимита' }),
+      caption: fmtb(bi('runc просит ядро создать дочерний процесс `runc init` в новых пространствах имён, поставить его в cgroup с лимитом memory.max = {m} ({mb}) и сменить ему корень на подготовленный снимок. Программы контейнера в этом процессе ещё нет, он ждёт команды start, а runc, выполнявший `runc create`, на этом завершается.', 'runc asks the kernel to create a child process, `runc init`, in new namespaces, put it into a cgroup with memory.max = {m} ({mb}) and change its root to the prepared snapshot. The container program is not in this process yet, it waits for the start command, and the runc that ran `runc create` exits here.'), { m: mem, mb: p.memory ? bi(`это ${p.memory} МиБ`, `that is ${p.memory} MiB`) : bi('то есть без лимита', 'that is, no limit') }),
       focus: ['kernel', 'e-clone'],
       reveal: ['e-clone'],
       tokens: [{ edge: 'e-clone', label: 'clone(CLONE_NEW*)' }],
@@ -247,7 +247,7 @@ export const chainModel = defineModel<P>({
     steps.push({
       id: 'start',
       label: 'execve',
-      caption: bi('Последним действием runc заменяет себя программой контейнера через execve и на этом заканчивает работу. Новый процесс остаётся дочерним процессом shim.', 'runc start: execve("/docker-entrypoint.sh") — runc replaced itself with the program and exited. The process stays a child of the shim.'),
+      caption: bi('Shim ещё раз ненадолго вызывает runc, теперь командой `runc start`. Эта команда только подаёт знак ожидающему процессу `runc init` и сразу завершается, а `runc init` системным вызовом execve заменяет себя программой контейнера. Номер процесса не меняется, поэтому nginx остаётся дочерним процессом shim, а ни одного процесса runc к этому времени уже нет.', 'The shim calls runc once more, briefly, now with `runc start`. This command only signals the waiting `runc init` process and exits at once, and `runc init` replaces itself with the container program through the execve system call. The process number does not change, so nginx stays a child of the shim, and no runc process is left by then.'),
       focus: ['nginx', 'e-exec'],
       reveal: ['nginx', 'e-exec'],
       tokens: [{ edge: 'e-exec', label: 'execve /docker-entrypoint.sh' }],
@@ -258,11 +258,11 @@ export const chainModel = defineModel<P>({
     steps.push({
       id: 'done',
       label: bi('итог', 'done'),
-      caption: bi('Клиент получил идентификатор контейнера и завершился, поэтому он бледный, как и runc. Работать остаются dockerd, containerd, shim и nginx. В выводе `ps -ef --forest` на хосте видна цепочка containerd-shim-runc-v2 → nginx: master → worker.', 'The CLI got the container ID and exited. dockerd, containerd, the shim and nginx live on; `ps -ef --forest` on the host shows containerd-shim-runc-v2 → nginx: master → worker.'),
-      focus: ['shim', 'e-parent'],
+      caption: bi('Клиент получил идентификатор контейнера и завершился, поэтому он бледный, как и runc. Работать остаются dockerd, containerd, shim и nginx, и их рамки зелёные. В выводе `ps -ef --forest` на хосте видна цепочка containerd-shim-runc-v2 → nginx: master → worker.', 'The CLI got the container ID and exited, so it is pale, like runc. dockerd, containerd, the shim and nginx keep running, and their outlines are green; `ps -ef --forest` on the host shows containerd-shim-runc-v2 → nginx: master → worker.'),
+      focus: ['shim', 'e-parent', 'dockerd', 'containerd', 'nginx'],
       reveal: ['e-parent'],
       say: { shim: bi('shim остаётся родителем nginx, держит его вывод и ждёт кода выхода.', 'The shim stays nginx’s parent, holds its output and waits for the exit code.') },
-      states: { cli: 'off', nginx: 'ok' },
+      states: { cli: 'off', runc: 'off', dockerd: 'ok', containerd: 'ok', shim: 'ok', nginx: 'ok' },
       metrics: { total: t },
     });
     return steps;

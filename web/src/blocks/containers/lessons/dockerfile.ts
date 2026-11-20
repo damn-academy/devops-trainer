@@ -1,5 +1,6 @@
 // m07. Dockerfile and the build: instructions, context, cache, PID 1 and signals, multi-stage (04 §4.3).
 
+import { lastOutput } from '../../../core/check';
 import { bi } from '../../../core/i18n';
 import type { Facts, Lesson, QuizItem } from '../../../core/types';
 import { dockerHost, RU, SRC, web } from '../shared';
@@ -8,7 +9,7 @@ type B = { ok: boolean; tags: string[]; steps: { text: string; cached: boolean; 
 const builds = (f: Facts) => ((f.builds as B[] | undefined) ?? []).filter((b) => b.ok);
 
 const APP_PY = `print("hello from the image")\n`;
-const STOP_APP = `import os
+export const STOP_APP = `import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT = 8000
@@ -24,7 +25,7 @@ class Handler(BaseHTTPRequestHandler):
 print("app: listening on 0.0.0.0:8000", flush=True)
 HTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
 `;
-const MAIN_GO = `package main
+export const MAIN_GO = `package main
 
 import (
 \t"fmt"
@@ -36,6 +37,34 @@ func main() {
 \thttp.ListenAndServe(":8080", nil)
 }
 `;
+
+/** Asked right after the instructions section: when RUN and CMD run, and which of two CMDs wins. */
+export const runCmdQuiz: QuizItem[] = [
+  {
+    id: 'containers.q.run-vs-cmd',
+    kind: 'mcq',
+    concepts: ['docker.dockerfile'],
+    prompt: bi('В Dockerfile две строки после `FROM alpine:3.22`: `RUN ls /etc` и `CMD ls /tmp`. Вы выполняете `docker build -t demo .`, а потом дважды `docker run demo`. Что и когда напечатается?', 'A Dockerfile has two lines after `FROM alpine:3.22`: `RUN ls /etc` and `CMD ls /tmp`. You run `docker build -t demo .` and then `docker run demo` twice. What is printed, and when?'),
+    options: [
+      { id: 'right', text: bi('Список /etc один раз в выводе сборки, а список /tmp при каждом из двух запусков', 'The /etc listing once in the build output, and the /tmp listing on each of the two runs'), correct: true },
+      { id: 'both-build', text: bi('Оба списка в выводе сборки, а запуски ничего не напечатают', 'Both listings in the build output, and the runs print nothing'), why: bi('Сборщик команду из `CMD` не выполняет, он только записывает её в настройки образа. Выполняет её Docker при запуске контейнера.', 'The builder does not run the `CMD` command; it only writes it into the image config. Docker runs it when a container starts.') },
+      { id: 'both-run', text: bi('Оба списка при каждом запуске, по одному после другого', 'Both listings on every run, one after the other'), why: bi('Команда из `RUN` выполнилась один раз во время сборки, и в образе остался только её результат, то есть файлы. При запуске контейнера её никто не повторяет.', 'The `RUN` command ran once during the build, and the image keeps only its result, the files. Nobody repeats it when a container starts.') },
+    ],
+    explain: bi('`RUN` работает во время сборки и меняет файлы образа, а `CMD` описывает, какую программу запустить в каждом новом контейнере.', '`RUN` works during the build and changes the image files, while `CMD` says which program to start in every new container.'),
+  },
+  {
+    id: 'containers.q.two-cmd',
+    kind: 'mcq',
+    concepts: ['docker.dockerfile'],
+    prompt: bi('Разработчик хочет, чтобы контейнер сначала применил миграции базы, а потом запустил сервер, и пишет в конце Dockerfile две строки: `CMD ["python", "migrate.py"]` и `CMD ["python", "server.py"]`. Что запустит `docker run`?', 'A developer wants the container to apply database migrations first and then start the server, and ends the Dockerfile with two lines: `CMD ["python", "migrate.py"]` and `CMD ["python", "server.py"]`. What does `docker run` start?'),
+    options: [
+      { id: 'last', text: bi('Только `server.py`, потому что вторая CMD заменила первую, и миграции не выполнятся', 'Only `server.py`, because the second CMD replaced the first, and the migrations do not run'), correct: true },
+      { id: 'both', text: bi('Сначала `migrate.py`, а когда он завершится, `server.py`', 'First `migrate.py`, and when it finishes, `server.py`'), why: bi('CMD задаёт одну программу контейнера, а не список шагов. Каждая следующая CMD заменяет предыдущую, поэтому от первой строки ничего не осталось.', 'CMD sets one program for the container, not a list of steps. Each next CMD replaces the previous one, so nothing is left of the first line.') },
+      { id: 'first', text: bi('Только `migrate.py`, потому что действует первая CMD', 'Only `migrate.py`, because the first CMD takes effect'), why: bi('Действует последняя CMD, а не первая: сборщик переписывает настройку образа каждый раз, когда встречает эту инструкцию.', 'The last CMD takes effect, not the first: the builder rewrites the image setting every time it meets this instruction.') },
+    ],
+    explain: bi('Чтобы выполнить две программы по очереди, их запускает одна: небольшой скрипт в ENTRYPOINT, который сначала применяет миграции, а потом командой `exec` заменяет себя сервером, чтобы сервер стал PID 1. Миграции часто выносят и в отдельный разовый запуск, `docker run --rm app python migrate.py`.', 'To run two programs in turn, one program starts them: a small ENTRYPOINT script that applies the migrations first and then replaces itself with the server via `exec`, so that the server becomes PID 1. Migrations are also often moved to a separate one-off run, `docker run --rm app python migrate.py`.'),
+  },
+];
 
 export const dockerfileQuiz: QuizItem[] = [
   {
@@ -86,8 +115,8 @@ export const dockerfileQuiz: QuizItem[] = [
     concepts: ['docker.dockerfile'],
     prompt: bi('В образе записаны `ENTRYPOINT ["curl"]` и `CMD ["--help"]`. Что выполнит команда `docker run IMAGE -s https://example.com`?', 'An image has `ENTRYPOINT ["curl"]` and `CMD ["--help"]`. What does `docker run IMAGE -s https://example.com` run?'),
     options: [
-      { id: 'right', text: '`curl -s https://example.com`', correct: true },
-      { id: 'both', text: '`curl --help -s https://example.com`', why: bi('Аргументы `docker run` заменяют CMD целиком, а не дописываются к нему.', 'The `docker run` arguments replace CMD entirely; they are not appended to it.') },
+      { id: 'right', text: 'curl -s https://example.com', correct: true },
+      { id: 'both', text: 'curl --help -s https://example.com', why: bi('Аргументы `docker run` заменяют CMD целиком, а не дописываются к нему.', 'The `docker run` arguments replace CMD entirely; they are not appended to it.') },
       { id: 'cmd', text: bi('`-s https://example.com` как отдельную программу', '`-s https://example.com` as a separate program'), why: bi('ENTRYPOINT остаётся на месте, а заменяется только CMD, который передаётся ENTRYPOINT как аргументы.', 'ENTRYPOINT stays; only CMD is replaced — it goes as arguments to ENTRYPOINT.') },
     ],
   },
@@ -129,10 +158,11 @@ export const dockerfileLesson: Lesson = {
       step: 'explain',
       title: bi('Как сборку записывают в файл', 'How a build is written into a file'),
       body: bi(
-        'Образ можно собрать и вручную: запустить контейнер, установить в нём пакеты и сохранить результат. Но такую сборку нельзя ни повторить, ни проверить на ревью, ни ускорить. Поэтому сборку записывают в [[docker.dockerfile|Dockerfile]], список инструкций, который читает сборщик BuildKit. Сборку запускают командой `docker build -t app:1.0 .`, где точка в конце обозначает текущий каталог.\n\nКаждая инструкция описывает шаг, у которого есть результат. Одни шаги создают слой: `RUN` выполняет команду в контейнере текущей стадии и сохраняет изменившиеся файлы, а `COPY` и `ADD` кладут в образ файлы из каталога проекта. Другие шаги меняют только настройки образа, и к ним относятся `ENV`, `WORKDIR`, `USER`, `EXPOSE`, `CMD` и `ENTRYPOINT`. Инструкция `EXPOSE` ничего не публикует, она служит пометкой для того, кто будет запускать контейнер, а публикует порт только флаг `-p`.\n\nПоследним аргументом `docker build` передают **контекст сборки**, то есть каталог, который клиент целиком отправляет сборщику. Всё, что образу не нужно (каталог `.git`, тестовые данные, файл `.env` с паролями), перечисляют в `.dockerignore`. От этого зависят и скорость, и безопасность, потому что то, что попало в контекст, может попасть и в слой.',
-        'You could build an image by hand: run a container, install packages, save it. But such a process cannot be repeated, reviewed or sped up. So the build is written into a [[docker.dockerfile|Dockerfile]] — a list of instructions the builder (BuildKit) reads. The build is started with `docker build -t app:1.0 .`, where the dot at the end means the current directory.\n\nEvery instruction is a step with a result. Some steps create a layer: `RUN` executes a command in a container of the current stage and saves the file changes; `COPY` and `ADD` put files from the context. Others change only the config: `ENV`, `WORKDIR`, `USER`, `EXPOSE`, `CMD`, `ENTRYPOINT`. `EXPOSE` publishes nothing — it is documentation; only `-p` publishes.\n\nThe last argument of `docker build` is the **build context**: the directory the client sends to the builder as a whole. Whatever the image does not need (`.git`, test data, an `.env` file with passwords) is listed in `.dockerignore`. It is a matter of speed and of safety: what got into the context can get into a layer.',
+        'Образ можно собрать и вручную: запустить контейнер, установить в нём пакеты и сохранить результат. Но такую сборку нельзя ни повторить, ни проверить на ревью, ни ускорить. Поэтому сборку записывают в [[docker.dockerfile|Dockerfile]], список инструкций, который читает сборщик BuildKit. Сборку запускают командой `docker build -t app:1.0 .`, где точка в конце обозначает текущий каталог.\n\nКаждая инструкция описывает шаг, у которого есть результат. Одни шаги создают слой: `RUN` выполняет команду в контейнере текущей стадии и сохраняет изменившиеся файлы, а `COPY` и `ADD` кладут в образ файлы из каталога проекта. Другие шаги меняют только настройки образа, и к ним относятся `ENV`, `WORKDIR`, `USER`, `EXPOSE`, `CMD` и `ENTRYPOINT`. Инструкция `EXPOSE` ничего не публикует, она служит пометкой для того, кто будет запускать контейнер, а публикует порт только флаг `-p`.\n\nНовички часто путают `RUN` и `CMD`, потому что обе инструкции содержат команду. Разница в том, когда команда выполняется. Команду из `RUN` сборщик выполняет один раз, во время `docker build`, и её вывод вы видите только в выводе сборки, а в образе остаются файлы, которые она создала. Команда из `CMD` во время сборки не выполняется вовсе: сборщик только записывает её в настройки образа, а запускает её Docker при каждом `docker run`. Поэтому `CMD` в Dockerfile бывает одна, а если их написать несколько, каждая следующая заменяет предыдущую, и действует только последняя.\n\nПоследним аргументом `docker build` передают **контекст сборки**, то есть каталог, который клиент целиком отправляет сборщику. Всё, что образу не нужно (каталог `.git`, тестовые данные, файл `.env` с паролями), перечисляют в `.dockerignore`. От этого зависят и скорость, и безопасность, потому что то, что попало в контекст, может попасть и в слой.',
+        'You could build an image by hand: run a container, install packages, save it. But such a process cannot be repeated, reviewed or sped up. So the build is written into a [[docker.dockerfile|Dockerfile]] — a list of instructions the builder (BuildKit) reads. The build is started with `docker build -t app:1.0 .`, where the dot at the end means the current directory.\n\nEvery instruction is a step with a result. Some steps create a layer: `RUN` executes a command in a container of the current stage and saves the file changes; `COPY` and `ADD` put files from the context. Others change only the config: `ENV`, `WORKDIR`, `USER`, `EXPOSE`, `CMD`, `ENTRYPOINT`. `EXPOSE` publishes nothing — it is documentation; only `-p` publishes.\n\nNewcomers often mix up `RUN` and `CMD`, because both contain a command. The difference is when the command runs. The builder runs a `RUN` command once, during `docker build`, and you see its output only in the build output, while the image keeps the files it created. A `CMD` command does not run during the build at all: the builder only writes it into the image config, and Docker starts it on every `docker run`. So a Dockerfile has one `CMD`, and if you write several, each replaces the previous one and only the last takes effect.\n\nThe last argument of `docker build` is the **build context**: the directory the client sends to the builder as a whole. Whatever the image does not need (`.git`, test data, an `.env` file with passwords) is listed in `.dockerignore`. It is a matter of speed and of safety: what got into the context can get into a layer.',
       ),
     },
+    { id: 'check-run-cmd', kind: 'quiz', step: 'try', title: bi('Когда выполняются RUN и CMD', 'When RUN and CMD run'), items: runCmdQuiz.map((q) => q.id) },
     {
       id: 'cache',
       kind: 'text',
@@ -161,7 +191,7 @@ export const dockerfileLesson: Lesson = {
       id: 'multistage',
       kind: 'text',
       step: 'explain',
-      title: bi('Как собрать программу в одной стадии, а в образ взять только результат', 'How to build a program in one stage and take only the result into the image'),
+      title: bi('Как собрать программу в отдельной стадии и взять в образ только результат', 'How to build a program in a separate stage and take only the result into the image'),
       body: bi(
         'Образ приложения на Go, собранный на основе `golang:1.25`, весит почти гигабайт, потому что в нём лежат компилятор, исходники и кэши. А приложению на сервере нужен только исполняемый файл. [[docker.multistage|Многоэтапная сборка]] решает эту задачу одним Dockerfile с несколькими инструкциями `FROM`. Первая стадия (`FROM golang:1.25 AS build`) собирает программу, а вторая (`FROM alpine:3.22`) получает готовый файл командой `COPY --from=build /out/app /usr/local/bin/app`. Всё, что осталось в первой стадии, в итоговый образ не попадает, и он весит около десяти мегабайт.\n\nКоманду сборки в первой стадии на практике пишут как `RUN CGO_ENABLED=0 go build -o /out/app .`. Переменная `CGO_ENABLED=0` велит собрать файл, который не зависит от системной библиотеки языка C. Образ golang построен на Debian с библиотекой glibc, а в Alpine стоит другая библиотека, musl, и файл, связанный с glibc, там не запустится: оболочка ответит загадочным «not found», хотя файл на месте.\n\nОтдельная осторожность нужна с паролями и ключами. Их не передают через `ARG` и не копируют в образ вместе с файлом `.env`, потому что всё это остаётся в истории образа и в его слоях. Для паролей, нужных при сборке, есть `RUN --mount=type=secret`, а при работе контейнера пароли передают переменными окружения при запуске.',
         'A Go application image built in `golang:1.25` weighs nearly a gigabyte: it holds the compiler, the sources and caches. The application on a server needs only the binary. A [[docker.multistage|multi-stage build]] solves this with one Dockerfile and several `FROM`s: the first stage (`FROM golang:1.25 AS build`) builds, the second (`FROM alpine:3.22`) takes the finished file with `COPY --from=build /out/app /usr/local/bin/app`. Nothing left in the first stage gets into the final image: it weighs a dozen megabytes.\n\nIn practice the build command of the first stage is written as `RUN CGO_ENABLED=0 go build -o /out/app .`. The variable `CGO_ENABLED=0` tells Go to build a file that does not depend on the system C library. The golang image is built on Debian with the glibc library, while Alpine has another library, musl, and a file linked against glibc will not start there: the shell answers with a puzzling “not found” although the file is in place.\n\nFor the same reason secrets are not passed through `ARG` and `.env` is not copied: all of that stays in the history and the layers. For passwords during the build there is `RUN --mount=type=secret`; at run time — variables passed when starting.',
@@ -192,7 +222,13 @@ export const dockerfileLesson: Lesson = {
         {
           id: 'site',
           prompt: bi('Напишите `~/site/Dockerfile` для статического сайта на основе `nginx:1.30-alpine` (страницы nginx лежат в `/usr/share/nginx/html`), соберите образ `site:1.0` и запустите его так, чтобы `curl localhost:8080` показал «My site».', 'Write `~/site/Dockerfile` for a static site on `nginx:1.30-alpine` (nginx pages live in `/usr/share/nginx/html`), build the `site:1.0` image and run it so that `curl localhost:8080` shows “My site”.'),
-          check: { when: "images[ref='site:1.0'] && http['localhost:8080'].body~'My site'" },
+          check: {
+            when: "images[ref='site:1.0'] && http['localhost:8080'].body~'My site'",
+            fail: [
+              { if: (f) => lastOutput(f).includes('open Dockerfile: no such file or directory') && !!(f.files as Record<string, { exists: boolean }> | undefined)?.['/home/learner/site/Dockerfile']?.exists, say: bi('Файл `~/site/Dockerfile` на месте, а сборщик его не нашёл. В этом тренажёре контекст сборки пока нужно указывать путём, а не точкой: `docker build -t site:1.0 ~/site`. В настоящем Docker точка означает текущий каталог, и команда `docker build -t site:1.0 .` из каталога `~/site` работает так же.', 'The file `~/site/Dockerfile` is in place, but the builder did not find it. In this trainer the build context must for now be given as a path rather than a dot: `docker build -t site:1.0 ~/site`. In real Docker the dot means the current directory, and `docker build -t site:1.0 .` from `~/site` works the same way.'), concept: 'docker.dockerfile' },
+              { if: (f) => lastOutput(f).includes('open Dockerfile: no such file or directory'), say: bi('Сборщик не нашёл Dockerfile в каталоге сборки. Сначала создайте файл `~/site/Dockerfile`, а потом соберите образ командой `docker build -t site:1.0 ~/site`.', 'The builder found no Dockerfile in the build directory. First create `~/site/Dockerfile`, then build the image with `docker build -t site:1.0 ~/site`.'), concept: 'docker.dockerfile' },
+            ],
+          },
           chips: "echo 'FROM nginx:1.30-alpine' > ~/site/Dockerfile && echo 'COPY index.html /usr/share/nginx/html/' >> ~/site/Dockerfile && docker build -t site:1.0 ~/site && docker run -d -p 8080:80 site:1.0",
           concepts: ['docker.dockerfile'],
           docRef: web('reference/dockerfile', 'copy'),
@@ -264,7 +300,7 @@ export const dockerfileLesson: Lesson = {
       step: 'practice',
       levels: ['intermediate', 'experienced'],
       mode: 'find',
-      prompt: bi('Приложение на Python из `~/stop` не обрабатывает SIGTERM. Сделайте так, чтобы оно останавливалось быстро, не меняя код и не пользуясь `--init`. Урок такого способа не показывал, поэтому найдите его в справочнике.', 'The Python application from `~/stop` does not handle SIGTERM. Make it stop fast without changing its code and without `--init`. The lesson did not show this way, so find it in the reference.'),
+      prompt: bi('Приложение на Python из `~/stop` не обрабатывает SIGTERM. Сделайте так, чтобы оно останавливалось быстро, не меняя код и не пользуясь `--init`. Урок такого способа не показывал, поэтому найдите его в справочнике. Терминал этого задания открывает отдельную чистую машину: образов из практики выше на ней нет, а в `~/stop/Dockerfile` CMD уже записан в exec-форме, так что образ нужно собрать заново.', 'The Python application from `~/stop` does not handle SIGTERM. Make it stop fast without changing its code and without `--init`. The lesson did not show this way, so find it in the reference. This task’s terminal opens a separate clean machine: the images from the lab above are not there, and CMD in `~/stop/Dockerfile` is already in exec form, so build the image again.'),
       ref: web('reference/dockerfile'),
       terminal: {
         setup: dockerHost({ files: [{ path: '~/stop/app.py', content: STOP_APP }, { path: '~/stop/Dockerfile', content: 'FROM python:3.13-slim\nCOPY app.py /app/\nCMD ["python", "/app/app.py"]\n' }] }, { pull: ['python:3.13-slim'] }),

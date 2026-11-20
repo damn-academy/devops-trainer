@@ -96,12 +96,16 @@ export const stopModel = defineModel<P>({
       near: 'pid1',
       group: IMG,
       predict: {
-        prompt: bi('Вы меняете PID 1. Допустим, теперь CMD записан в exec-форме, python сам стал PID 1, а обработчика SIGTERM в коде нет. Как остановится контейнер?', 'You change PID 1. Say CMD is now in exec form, python itself is PID 1, and the code has no SIGTERM handler. How does the container stop?'),
+        prompt: bi('Вы выбираете, какая программа будет работать в контейнере как PID 1. Сигнал остановки и время ожидания остаются прежними. Как остановится контейнер с выбранной программой?', 'You choose which program runs in the container as PID 1. The stop signal and the grace period stay as they are. How will the container with the chosen program stop?'),
         options: [
-          { id: 'kill', text: bi('Контейнер остановится через 10 секунд сигналом SIGKILL с кодом 137', 'The container stops after 10 seconds by SIGKILL with code 137') },
-          { id: 'fast', text: bi('Контейнер остановится сразу с кодом 143', 'The container stops at once with code 143') },
+          { id: 'kill', text: bi('Программа не завершится по сигналу остановки, и по истечении времени ожидания Docker завершит её сигналом SIGKILL с кодом 137', 'The program will not exit on the stop signal, and when the grace period runs out Docker ends it with SIGKILL and code 137') },
+          { id: 'signal', text: bi('Контейнер остановится сразу, но не с кодом 0, а с кодом 128 плюс номер сигнала: 143 для SIGTERM или 130 для SIGINT', 'The container stops at once, but not with code 0: with 128 plus the signal number, 143 for SIGTERM or 130 for SIGINT') },
+          { id: 'clean', text: bi('Контейнер остановится сразу, потому что программа обработает сигнал и завершится сама с кодом 0', 'The container stops at once because the program handles the signal and exits by itself with code 0') },
         ],
-        resolve: () => 'kill',
+        resolve: (_prev, next) => {
+          const code = next[next.length - 1]?.metrics?.code;
+          return code === 137 ? 'kill' : code === 0 ? 'clean' : 'signal';
+        },
       },
     },
     { id: 'signal', label: bi('Сигнал остановки (STOPSIGNAL)', 'STOPSIGNAL'), kind: 'choice', default: 'SIGTERM', options: [{ id: 'SIGTERM', label: bi('SIGTERM, по умолчанию', 'SIGTERM (default)') }, { id: 'SIGINT', label: bi('SIGINT', 'SIGINT') }], near: 'dockerd', group: IMG },
