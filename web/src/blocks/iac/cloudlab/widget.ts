@@ -98,6 +98,9 @@ const T = {
   copied: bi('Скопировано', 'Copied'),
 };
 
+/** A job log as plain text: tofu and git colour their output, and the panel shows no colours. */
+export const stripAnsi = (text: string) => text.replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, '');
+
 /** A VM that is busy booting may not answer the service channel; a check must not wait for it forever. */
 const within = <T,>(p: Promise<T>, ms: number): Promise<T | undefined> => Promise.race([p, new Promise<undefined>((r) => setTimeout(() => r(undefined), ms))]);
 
@@ -120,6 +123,7 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
   let startFacts: Facts | undefined;
   let disposed = false;
   let checkTimer = 0;
+  let pollTimer = 0;
   let drawTimer = 0;
   let checking = false;
   let again = false;
@@ -219,7 +223,11 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
     checking = true;
     try {
       const facts = await collect();
-      if (!facts) return;
+      if (!facts) {
+        // The workstation or a VM was too busy to answer in time (a VM booting in the same tab): look again soon.
+        if (ready && passed.size < tasks.length) scheduleCheck(4000);
+        return;
+      }
       if (!tasks.length) {
         if (ranCommand) ctx?.complete();
         return;
@@ -314,6 +322,8 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
     }
   };
 
+  // Job logs the learner opened stay open across redraws (the log is polled while the job runs).
+  const openJobs = new Set<string>();
   const drawCi = () => {
     if (!props.ci) return;
     clear(ciBox);
@@ -322,14 +332,26 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
       ciBox.append(prose(T.noPipelines, 'small muted'));
       return;
     }
+    const follow: HTMLElement[] = [];
     for (const p of [...(ci?.pipelines ?? [])].reverse().slice(0, 5)) {
       const jobs = h('ul.cl-jobs');
       for (const j of p.jobs) {
         const play = j.status === 'manual' ? h('button.btn.ghost.small', { type: 'button', onclick: () => ci?.play(p.id, j.name) }, icon('play'), t(T.play)) : null;
-        jobs.append(h('li', {}, h('details', {}, h('summary', {}, h(`span.cl-pill.${statusClass(j.status)}`, {}, j.status), ' ', h('code', {}, `${j.stage} / ${j.name}`), ' ', play), h('pre.cl-joblog', {}, j.log || '…'))));
+        const id = `${p.id}/${j.name}`;
+        const log = h('pre.cl-joblog', {}, stripAnsi(j.log) || '…');
+        const box = h('details', {}, h('summary', {}, h(`span.cl-pill.${statusClass(j.status)}`, {}, j.status), ' ', h('code', {}, `${j.stage} / ${j.name}`), ' ', play), log) as HTMLDetailsElement;
+        box.open = openJobs.has(id);
+        box.addEventListener('toggle', () => {
+          if (box.open) openJobs.add(id);
+          else openJobs.delete(id);
+        });
+        jobs.append(h('li', {}, box));
+        if (box.open) follow.push(log);
       }
       ciBox.append(h('div.cl-pipe', {}, h('p.small', {}, h(`span.cl-pill.${statusClass(p.status)}`, {}, p.status), ' ', h('code', {}, `#${p.id} ${p.repo} ${p.ref} ${p.sha.slice(0, 8)}`), p.error ? h('span.err', {}, ` ${p.error}`) : null), jobs));
     }
+    // An open log follows its tail, the way a CI page shows a running job.
+    if (follow.length) requestAnimationFrame(() => follow.forEach((l) => (l.scrollTop = l.scrollHeight)));
   };
 
   const drawLog = () => {
@@ -482,6 +504,11 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
       draw();
       con.focus();
       void check();
+      // Some goals become true without a new command in this terminal: an operation finishes, a file appears
+      // on a VM during an SSH session, a pipeline ends. Look at the state now and then as well.
+      pollTimer = window.setInterval(() => {
+        if (!checking && passed.size < tasks.length && document.visibilityState === 'visible') void check();
+      }, 10_000);
     } catch (e) {
       clearInterval(iv);
       showError(e);
@@ -515,6 +542,7 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
     dispose() {
       disposed = true;
       clearTimeout(checkTimer);
+      clearInterval(pollTimer);
       clearTimeout(drawTimer);
       con?.dispose();
       for (const c of vmConsoles.values()) c.dispose();

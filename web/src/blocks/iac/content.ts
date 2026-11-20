@@ -4,7 +4,7 @@
 // state → drift.
 
 import { bi } from '../../core/i18n';
-import type { Block, Concept, Facts, Lesson, PlacementTask, QuizItem, Sources, TerminalSetup } from '../../core/types';
+import type { Block, Concept, Facts, Lesson, QuizItem, Sources, TerminalSetup } from '../../core/types';
 import { hostFact, lastRun, runs } from './ans/command';
 import { tfDir, type TfFacts } from './tf/edu';
 import type { HostSpec } from './ans/hosts';
@@ -95,6 +95,25 @@ export const SITE_PLAY = `- name: Web servers serve the cafe site
 `;
 export const TEMPLATE = 'server {\n    listen {{ http_port | default(80) }};\n    server_name {{ inventory_hostname }}.site.edu;\n    root /var/www/cafe;\n}\n';
 
+// Russian explanations for the two YAML mistakes a hand-edited playbook makes most often.
+const lastOutOf = (f: Facts) => (f.term.main ?? []).at(-1)?.out ?? '';
+export const YAML_FAILS: { if: (f: Facts) => boolean; say: ReturnType<typeof bi> }[] = [
+  {
+    if: (f) => /Syntax Error while loading YAML/.test(lastOutOf(f)),
+    say: bi(
+      'Ansible не прочитал файл YAML, и чаще всего причина в отступах. В YAML вложенность задают пробелы в начале строки, поэтому все строки одной задачи начинаются с одинакового числа пробелов, а параметры модуля сдвинуты на два пробела дальше имени модуля. Номер строки в сообщении показывает, где Ansible запутался, а ошибка обычно стоит в этой строке или в строке перед ней.',
+      'Ansible could not read the YAML file, and most often the reason is the indentation. In YAML the spaces at the start of a line set the nesting, so all lines of one task start with the same number of spaces, and the module’s parameters sit two spaces further in than the module name. The line number in the message shows where Ansible got lost, and the mistake is usually on that line or the one before it.',
+    ),
+  },
+  {
+    if: (f) => /must be a list of plays/.test(lastOutOf(f)),
+    say: bi(
+      'Плейбук должен быть списком сценариев, поэтому его первая строка начинается с дефиса и пробела: `- name: …`. Ansible увидел в начале файла не список, а набор пар «ключ: значение», значит, первый дефис пропал или перед ним оказались лишние символы. Откройте файл командой `edit` и проверьте его начало.',
+      'A playbook must be a list of plays, so its first line starts with a dash and a space: `- name: …`. Ansible saw a dictionary instead of a list, so the first dash went missing or something stands in front of it. Open the file with `edit` and check its beginning.',
+    ),
+  },
+];
+
 // ── quiz ──
 
 export const quiz: QuizItem[] = [
@@ -161,10 +180,37 @@ export const quiz: QuizItem[] = [
     prompt: bi('Что делает `ansible-playbook --check site.yml`?', 'What does `ansible-playbook --check site.yml` do?'),
     options: [
       { id: 'predict', text: bi('Прогоняет задачи, но модули только сообщают, что изменили бы', 'Runs the tasks, but modules only report what they would change'), correct: true },
-      { id: 'syntax', text: bi('Только проверяет синтаксис YAML', 'Only checks the YAML syntax'), why: bi('Синтаксис проверяет ключ --syntax-check, а --check заходит на хосты и сравнивает их состояние с описанием.', 'There is --syntax-check for syntax. --check goes to the hosts and compares state.') },
-      { id: 'safe', text: bi('Применяет изменения, но с откатом при ошибке', 'Applies changes but rolls back on error'), why: bi('Отката изменений в Ansible нет, а --check ничего не применяет.', 'Ansible has no rollback; --check applies nothing at all.') },
+      { id: 'syntax', text: bi('Проверяет синтаксис YAML и имена модулей, не заходя на хосты', 'Checks the YAML syntax and the module names without going to the hosts'), why: bi('Синтаксис проверяет ключ --syntax-check, а --check заходит на хосты и сравнивает их состояние с описанием.', 'There is --syntax-check for syntax. --check goes to the hosts and compares state.') },
+      { id: 'safe', text: bi('Применяет изменения, а при первой ошибке откатывает их на всех хостах', 'Applies the changes and rolls them back on all hosts at the first error'), why: bi('Отката изменений в Ansible нет, а --check ничего не применяет.', 'Ansible has no rollback; --check applies nothing at all.') },
     ],
     explain: bi('Учтите, что в check mode пакет не устанавливается по-настоящему, поэтому следующая задача, которой этот пакет нужен, может завершиться с ошибкой.', 'Note: in check mode a package is not really installed, so a later task that needs it may fail.'),
+  },
+  {
+    id: 'iac.q.unreachable',
+    kind: 'mcq',
+    concepts: ['iac.module'],
+    prompt: bi('Команда `ansible web -m ansible.builtin.ping` печатает про web1 `UNREACHABLE!` и `Permission denied (publickey)`, а web2 отвечает `SUCCESS`. Что проверить первым делом?', 'The command `ansible web -m ansible.builtin.ping` prints `UNREACHABLE!` and `Permission denied (publickey)` for web1, and web2 answers `SUCCESS`. What do you check first?'),
+    options: [
+      { id: 'key', text: bi('Лежит ли открытая часть вашего ключа SSH в authorized_keys пользователя на web1', 'Whether the public part of your SSH key is in the user’s authorized_keys on web1'), correct: true },
+      { id: 'python', text: bi('Установлен ли на web1 Python, без которого Ansible не запустит модуль', 'Whether Python is installed on web1, without which Ansible cannot run the module'), why: bi('Без Python Ansible всё-таки входит на хост и только потом сообщает об ошибке модуля, то есть пишет FAILED. Сообщение Permission denied (publickey) присылает сервер SSH ещё до входа.', 'Without Python Ansible still logs in to the host and only then reports a module error, that is FAILED. The words Permission denied (publickey) come from the SSH server before any login.') },
+      { id: 'become', text: bi('Указан ли в задаче `become: true`, ведь без прав root на хост не пустят', 'Whether the task has `become: true`, since without root rights the host lets nobody in'), why: bi('Строка become включает sudo уже после того, как Ansible вошёл на хост. Если у пользователя нет прав sudo, задача завершится с ошибкой FAILED и сообщением о пароле sudo, а не с UNREACHABLE.', 'become switches on sudo only after Ansible has logged in. If the user has no sudo rights, the task ends with FAILED and a message about the sudo password, not with UNREACHABLE.') },
+      { id: 'module', text: bi('Поставлен ли на web1 модуль ping, ведь Ansible запускает модули с хоста', 'Whether the ping module is installed on web1, since Ansible runs modules from the host'), why: bi('Модули Ansible копирует на хост сам при каждом запуске, поэтому заранее ставить их на хост не нужно.', 'Ansible brings the modules along: on every run it copies the module to the host, and nothing has to be installed there in advance.') },
+    ],
+    explain: bi('UNREACHABLE означает, что Ansible не вошёл на хост и до модуля дело не дошло. Ту же ошибку покажет команда `ssh web1` из того же терминала, поэтому неисправность ищут так же, как в блоке Linux: проверяют ключ, пользователя и файл `~/.ssh/authorized_keys` на хосте.', 'UNREACHABLE means Ansible did not log in to the host and the module never ran. The command `ssh web1` from the same terminal shows the same error, so the fault is looked for as in the Linux block: check the key, the user and the file `~/.ssh/authorized_keys` on the host.'),
+  },
+  {
+    id: 'iac.q.self-ref',
+    kind: 'bugfind',
+    concepts: ['iac.resource'],
+    prompt: bi('Автор хотел, чтобы метка `role` у машины совпадала с её именем, но `terraform validate` сообщает об ошибке. Какая строка неверна?', 'The author wanted the machine’s `role` label to match its name, but `terraform validate` reports an error. Which line is wrong?'),
+    code: 'resource "edu_vm" "web" {\n  name       = "web"\n  image      = "ubuntu-24.04"\n  cores      = 2\n  network_id = edu_network.main.id\n  labels     = { role = edu_vm.web.name }\n}',
+    lang: 'hcl',
+    bug: [6],
+    why: {
+      6: bi('Блок resource не выполняется сверху вниз, как функция, поэтому сослаться на строку выше в том же блоке нельзя. Ссылка `edu_vm.web.name` делает ресурс зависимым от самого себя, и Terraform остановится с ошибкой `Self-referential block`. Общее значение выносят в блок `locals { name = "web" }` и в обоих аргументах пишут `local.name`.', 'A resource block is not executed top to bottom like a function, so it cannot refer to a line above in the same block. The reference `edu_vm.web.name` makes the resource depend on itself, and Terraform stops with `Self-referential block`. A shared value goes into a `locals { name = "web" }` block, and both arguments say `local.name`.'),
+      5: bi('Ссылка на другой ресурс допустима, даже если сеть описана ниже в файле. Порядок блоков в файле ничего не решает: Terraform выстраивает порядок работы по ссылкам.', 'A reference to another resource is fine even if the network is described further down the file. The order of blocks in a file decides nothing: Terraform orders the work by the references.'),
+      2: bi('Имя машины задано обычной строкой, и здесь всё верно.', 'The machine’s name is a plain string, and this is correct.'),
+    },
   },
   {
     id: 'iac.q.symbols',
@@ -200,6 +246,19 @@ export const quiz: QuizItem[] = [
       { id: 'delete', text: bi('Удалить ВМ из облака', 'Delete the VMs from the cloud'), why: bi('Terraform удаляет только то, что записано в state, а без state удалять ему нечего.', 'Only what is in the state can be destroyed. Without state there is nothing to destroy.') },
     ],
     explain: bi('Поэтому state хранят в общем хранилище с блокировкой и резервными копиями и ограничивают к нему доступ, ведь в нём лежат атрибуты ресурсов, включая секреты.', 'That is why state is kept remotely, with locking and backups, and access to it is limited: it holds attributes, secrets included.'),
+  },
+  {
+    id: 'iac.q.removed-block',
+    kind: 'mcq',
+    concepts: ['iac.state', 'iac.plan'],
+    prompt: bi('Коллега удалил из `main.tf` блок `resource "edu_dns_record" "www"`, решив, что так Terraform перестанет следить за записью. Команду destroy никто не запускал. Что сделает следующий `terraform apply`?', 'A colleague deleted the block `resource "edu_dns_record" "www"` from `main.tf`, thinking that Terraform would stop looking after the record. Nobody ran destroy. What will the next `terraform apply` do?'),
+    options: [
+      { id: 'destroy', text: bi('Удалит запись из облака, потому что она есть в state, но её нет в коде', 'Delete the record from the cloud, because it is in the state but not in the code'), correct: true },
+      { id: 'nothing', text: bi('Ничего не сделает, потому что команды удаления в коде никто не писал', 'Do nothing, because nobody wrote a delete command in the code'), why: bi('Код описывает желаемое состояние, а не список команд. Запись, которой нет в коде, но которая есть в state, для Terraform лишняя, и план ставит у неё знак `-`.', 'The code describes the desired state, not a list of commands. A record missing from the code but present in the state is extra for Terraform, and the plan marks it `-`.') },
+      { id: 'forget', text: bi('Уберёт запись из state, а саму запись оставит в облаке без присмотра', 'Remove the record from the state and leave the record itself in the cloud unattended'), why: bi('Так поступает команда `terraform state rm`: она разрывает связь адреса с объектом и не трогает облако. А удалённый из кода блок означает, что такой записи быть не должно.', 'That is what `terraform state rm` does: it breaks the link between the address and the object and leaves the cloud alone. A block removed from the code means that such a record must not exist.') },
+      { id: 'error', text: bi('Остановится с ошибкой, ведь в state есть ресурс, не описанный в коде', 'Stop with an error, since the state has a resource not described in the code'), why: bi('Это обычная ситуация, а не ошибка: так Terraform и удаляет ресурсы, которые убрали из кода.', 'This is a normal situation, not an error: this is exactly how Terraform deletes resources removed from the code.') },
+    ],
+    explain: bi('Перед apply план покажет `- destroy` у записи и итог `1 to destroy`, поэтому такую ошибку ловят, читая план. Если запись нужно оставить, но перестать управлять ею из кода, сначала выполняют `terraform state rm edu_dns_record.www`, а уже потом удаляют блок.', 'Before apply the plan shows `- destroy` for the record and the total `1 to destroy`, so such a mistake is caught by reading the plan. If the record must stay but no longer be managed by the code, first run `terraform state rm edu_dns_record.www` and only then delete the block.'),
   },
   {
     id: 'iac.q.drift',
@@ -239,6 +298,16 @@ const introLesson: Lesson = {
   minutes: 35,
   sources: src([S.fowlerIac, S.ansIntro, S.ansInv], [S.ruIac, S.ruAnsible, S.ruIdem]),
   sections: [
+    {
+      id: 'map',
+      kind: 'text',
+      levels: ['intermediate', 'experienced'],
+      title: bi('Как пройти этот блок, если вы уже пишете код', 'How to take this block if you already write code'),
+      body: bi(
+        'Блок построен вокруг одной модели: код описывает желаемое состояние, программа сравнивает его с действительностью и меняет только разницу. Ansible применяет эту модель к серверам, которые уже есть, а Terraform и его открытая версия OpenTofu применяют её к машинам, сетям и другим объектам в облаке и запоминают созданное в отдельном файле.\n\nПрограммисту здесь помогут два сравнения. План Terraform похож на миграции базы данных в Laravel или Django: изменения схемы можно посмотреть до того, как их применят, а таблица миграций помнит, что уже сделано. Отличаются они тем, что миграцию пишут как последовательность шагов, а план Terraform вычисляет сам, сравнивая код с тем, что есть в облаке. Тот, кто выкладывал сайты на Vercel или Heroku, уже пользовался такой системой, только она была спрятана: платформа сама заводила для сайта всё нужное в облаке и сама помнила, что завела. В этом блоке видно, что под ней лежит.\n\n- **Что можно пролистать.** Если вы знаете, что такое идемпотентность, пролистайте начало теории этого урока и задание с ad-hoc-командами. Прочтите только абзац об ответах модуля, потому что unreachable и failed означают разные неисправности.\n- **Где объяснена модель всей системы.** Урок [о state и пересоздании ресурсов](#/lesson/iac.state) объясняет, как Terraform сверяет код, свою память и облако, а урок [«Как устроен API облака»](#/lesson/iac.cloud-api) показывает, какие запросы стоят за каждой строкой плана. Вся цепочка от `git push` до настроенной машины собрана в последнем уроке, [«Как пайплайн применяет изменения инфраструктуры»](#/lesson/iac.ci-apply).\n- **Где искать рецепты для работы.** Роли и то, как Ansible выбирает значение переменной из нескольких мест, разобраны в уроке [о ролях](#/lesson/iac.roles), перенос ресурса без пересоздания в уроке [о модулях](#/lesson/iac.modules), ручные объекты и ночная проверка расхождений с кодом в уроке [об изменениях в обход кода](#/lesson/iac.import), а общее хранилище с блокировкой в уроке [о хранилище для state](#/lesson/iac.remote-state).\n\nШпаргалки команд и вопросы, которые задают на собеседовании, собраны в конце урока о ролях для Ansible и в конце последнего урока для Terraform.',
+        'The block is built around one model: code describes the desired state, a program compares it with reality and changes only the difference. Ansible applies this model to servers that already exist, while Terraform and its open version OpenTofu apply it to machines, networks and other objects in a cloud and remember what they created in a separate file.\n\nTwo comparisons help a programmer here. A Terraform plan is like database migrations in Laravel or Django: schema changes can be looked at before they are applied, and the migrations table remembers what has been done. They differ in that a migration is written as a sequence of steps, while Terraform works the plan out itself by comparing the code with what is in the cloud. Whoever deployed sites to Vercel or Heroku has already used such a system, only it was hidden: the platform set up everything the site needed in the cloud and remembered what it set up. This block shows what lies underneath.\n\n- **What you can skim.** If you know what idempotence is, skim the beginning of this lesson’s theory and the task with ad-hoc commands. Read only the paragraph about module answers, because unreachable and failed mean different faults.\n- **Where the model of the whole system is.** The lesson [on the state and resource replacement](#/lesson/iac.state) explains how Terraform checks the code, its memory and the cloud against each other, and the lesson [“How a cloud API works”](#/lesson/iac.cloud-api) shows which requests stand behind every line of a plan. The whole chain from `git push` to a configured machine is assembled in the last lesson, [“How a pipeline applies infrastructure changes”](#/lesson/iac.ci-apply).\n- **Where to find recipes for work.** Roles and how Ansible picks a variable’s value from several places are taken apart in the lesson [on roles](#/lesson/iac.roles), moving a resource without replacement in the lesson [on modules](#/lesson/iac.modules), hand-made objects and the nightly check for differences from the code in the lesson [on changes made bypassing the code](#/lesson/iac.import), and shared storage with locking in the lesson [on storage for the state](#/lesson/iac.remote-state).\n\nCheat sheets of commands and the questions asked in job interviews are collected at the end of the lesson on roles for Ansible and at the end of the last lesson for Terraform.',
+      ),
+    },
     {
       id: 'hook',
       kind: 'text',
@@ -328,8 +397,8 @@ const playbookLesson: Lesson = {
       kind: 'text',
       step: 'explain',
       body: bi(
-        'Ad-hoc-команда выполняет одну задачу, а настройка сервера состоит из десятков задач в определённом порядке. Их записывают в [[iac.playbook|плейбук]], то есть файл YAML со списком сценариев. Сценарий (в документации Ansible он называется play) говорит, на каких хостах (`hosts: web`) и какие задачи выполнить, а каждая задача состоит из имени и модуля с параметрами:\n\n```yaml\n- name: Web servers serve the cafe site\n  hosts: web\n  become: true\n  tasks:\n    - name: nginx is installed\n      ansible.builtin.apt:\n        name: nginx\n        state: present\n```\n\nПлейбук запускают командой `ansible-playbook site.yml`. Перед первой задачей Ansible собирает факты о каждом хосте, и в выводе это видно по строке Gathering Facts. Факты сообщают семейство системы, адреса и объём памяти. По ним можно, например, выполнить задачу только на хостах с Debian, если дописать к ней условие `when:`, но в этом уроке условия не понадобятся. Каждая задача проходит все хосты, прежде чем начнётся следующая. В конце Ansible печатает итог PLAY RECAP, где для каждого хоста указано, сколько задач ответили ok, сколько changed и сколько failed.\n\nМодуль `ansible.builtin.template` собирает файл из шаблона и кладёт его на хост. Шаблон похож на бланк письма, в который для каждого адресата подставляют его имя: это обычный файл конфигурации, в котором на месте меняющихся значений стоят выражения в двойных фигурных скобках. Язык этих выражений называется Jinja2. Выражение `{{ inventory_hostname }}` в шаблоне превращается в имя хоста, а выражение `{{ http_port | default(80) }}` превращается в значение переменной http_port или, если она не задана, в число 80.\n\n### Обработчики\n\nКогда конфигурация nginx меняется, nginx должен её перечитать, но только в том случае, если она изменилась. Для этого служит [[iac.handler|обработчик]] (в документации Ansible он называется handler), то есть задача, которую другие задачи уведомляют строкой `notify: Reload nginx`. Уведомление отправляется, только если задача ответила changed, а сам обработчик выполняется один раз, когда закончатся задачи сценария, сколько бы задач его ни уведомили. Если в сценарии есть секции `pre_tasks` и `post_tasks`, Ansible выполняет уведомлённые обработчики в конце каждой из них, а задача `meta: flush_handlers` выполняет их сразу. Если на хосте одна из задач завершилась с ошибкой, Ansible исключает этот хост из дальнейшего выполнения плейбука, и до обработчиков дело на нём не доходит.\n\n### Проверка без изменений\n\nГлавная проверка плейбука состоит из двух прогонов подряд: на втором все задачи должны ответить ok, то есть итог должен показать changed=0. Если какая-то задача отвечает changed на каждом прогоне, значит, она описывает действие, а не состояние. Чаще всего так ведут себя модули `ansible.builtin.shell` и `command`: они не знают, каким должен быть результат, и всегда отвечают changed. Замените их модулем, который описывает состояние (`lineinfile`, `copy`, `service`), или подскажите Ansible, когда задача действительно что-то меняет, параметрами `creates:` и `changed_when:`.\n\nПеред прогоном на рабочих серверах полезен [[iac.check-mode|check mode]]. Команда `ansible-playbook --check --diff site.yml` проходит все задачи, но модули только сообщают, что изменили бы, и показывают разницу в файлах, а сами хосты остаются нетронутыми.',
-        'An ad-hoc command is one task. Setting up a server means dozens of tasks in a certain order, and they are written into a [[iac.playbook|playbook]]: a YAML file with a list of plays. A play says on which hosts (`hosts: web`) and which tasks to run; a task is a name and a module with arguments:\n\n```yaml\n- name: Web servers serve the cafe site\n  hosts: web\n  become: true\n  tasks:\n    - name: nginx is installed\n      ansible.builtin.apt:\n        name: nginx\n        state: present\n```\n\nYou run it with `ansible-playbook site.yml`. Before the tasks Ansible gathers facts (Gathering Facts): the OS family, addresses, memory. With them you can, for example, run a task only on Debian hosts by adding a `when:` condition to it, but this lesson needs no conditions. Each task goes through all hosts before the next one starts. At the end comes the PLAY RECAP: for every host, how many tasks were ok, changed, failed.\n\nThe `ansible.builtin.template` module lays out a file from a template. A template is like a form letter into which each addressee’s name is inserted: an ordinary config file where the changing values are replaced with expressions in double curly braces. The language of these expressions is called Jinja2. `{{ inventory_hostname }}` in the template turns into the host name, and `{{ http_port | default(80) }}` turns into the value of the http_port variable or, if it is not set, into the number 80.\n\n### Handlers\n\nAfter changing the nginx config, nginx must reload it, but only if the config really changed. That is what a [[iac.handler|handler]] is for: a task that is notified with `notify: Reload nginx`. The notification fires only if the task was changed, and the handler itself runs once, when the play’s tasks are over, however many tasks notified it. If the play has `pre_tasks` and `post_tasks` sections, Ansible runs the notified handlers at the end of each of them, and a `meta: flush_handlers` task runs them at once. If a host failed on one of the tasks, it does not get to the handlers.\n\n### A run without changes\n\nTwo runs in a row are the main test of a playbook: on the second everything must be ok, changed=0. If some task is changed on every run, the playbook describes an action, not a state. The usual culprit is `ansible.builtin.shell` or `command`: they do not know what the result should be and always answer changed. Replace them with a state module (`lineinfile`, `copy`, `service`) or give Ansible a hint with `creates:` and `changed_when:`.\n\nBefore a run on live servers, [[iac.check-mode|check mode]] is useful: `ansible-playbook --check --diff site.yml` goes through all tasks, but modules only report what they would change and show the file differences.',
+        'Ad-hoc-команда выполняет одну задачу, а настройка сервера состоит из десятков задач в определённом порядке. Их записывают в [[iac.playbook|плейбук]], то есть файл YAML со списком сценариев. Сценарий (в документации Ansible он называется play) говорит, на каких хостах (`hosts: web`) и какие задачи выполнить, а каждая задача состоит из имени и модуля с параметрами:\n\n```yaml\n- name: Web servers serve the cafe site\n  hosts: web\n  become: true\n  tasks:\n    - name: nginx is installed\n      ansible.builtin.apt:\n        name: nginx\n        state: present\n```\n\nСтрока `become: true` велит Ansible выполнять задачи через sudo, то есть с правами root, потому что ставить пакеты и править файлы в `/etc` может только root. Входит на хост Ansible при этом под обычным пользователем, со своим ключом SSH, и права root получает уже на хосте.\n\nПлейбук запускают командой `ansible-playbook site.yml`. Перед первой задачей Ansible собирает факты о каждом хосте, и в выводе это видно по строке Gathering Facts. Факты сообщают семейство системы, адреса и объём памяти. По ним можно, например, выполнить задачу только на хостах с Debian, если дописать к ней условие `when:`, но в этом уроке условия не понадобятся. Каждая задача проходит все хосты, прежде чем начнётся следующая. В конце Ansible печатает итог PLAY RECAP, где для каждого хоста указано, сколько задач ответили ok, сколько changed и сколько failed.\n\nМодуль `ansible.builtin.template` собирает файл из шаблона и кладёт его на хост. Шаблон похож на бланк письма, в который для каждого адресата подставляют его имя: это обычный файл конфигурации, в котором на месте меняющихся значений стоят выражения в двойных фигурных скобках. Язык этих выражений называется Jinja2. Выражение `{{ inventory_hostname }}` в шаблоне превращается в имя хоста, а выражение `{{ http_port | default(80) }}` превращается в значение переменной http_port или, если она не задана, в число 80.\n\n### Обработчики\n\nКогда конфигурация nginx меняется, nginx должен её перечитать, но только в том случае, если она изменилась. Для этого служит [[iac.handler|обработчик]] (в документации Ansible он называется handler), то есть задача, которую другие задачи уведомляют строкой `notify: Reload nginx`. Уведомление отправляется, только если задача ответила changed, а сам обработчик выполняется один раз, когда закончатся задачи сценария, сколько бы задач его ни уведомили. Если в сценарии есть секции `pre_tasks` и `post_tasks`, Ansible выполняет уведомлённые обработчики в конце каждой из них, а задача `meta: flush_handlers` выполняет их сразу. Если на хосте одна из задач завершилась с ошибкой, Ansible исключает этот хост из дальнейшего выполнения плейбука, и до обработчиков дело на нём не доходит.\n\n### Проверка без изменений\n\nГлавная проверка плейбука состоит из двух прогонов подряд: на втором все задачи должны ответить ok, то есть итог должен показать changed=0. Если какая-то задача отвечает changed на каждом прогоне, значит, она описывает действие, а не состояние. Чаще всего так ведут себя модули `ansible.builtin.shell` и `command`: они не знают, каким должен быть результат, и всегда отвечают changed. Замените их модулем, который описывает состояние (`lineinfile`, `copy`, `service`), или подскажите Ansible, когда задача действительно что-то меняет, параметрами `creates:` и `changed_when:`. Сами эти два модуля тоже различаются. Модуль `command` запускает программу напрямую, без оболочки, поэтому конвейер `|` и перенаправление `>` в нём не работают. Модуль `shell` передаёт всю строку оболочке и нужен только тогда, когда без конвейера или перенаправления не обойтись. Третий модуль, `raw`, отправляет команду по SSH, не копируя на хост программу на Python, и им обычно ставят сам Python на новый хост.\n\nПеред прогоном на рабочих серверах полезен [[iac.check-mode|check mode]]. Команда `ansible-playbook --check --diff site.yml` проходит все задачи, но модули только сообщают, что изменили бы, и показывают разницу в файлах, а сами хосты остаются нетронутыми.',
+        'An ad-hoc command is one task. Setting up a server means dozens of tasks in a certain order, and they are written into a [[iac.playbook|playbook]]: a YAML file with a list of plays. A play says on which hosts (`hosts: web`) and which tasks to run; a task is a name and a module with arguments:\n\n```yaml\n- name: Web servers serve the cafe site\n  hosts: web\n  become: true\n  tasks:\n    - name: nginx is installed\n      ansible.builtin.apt:\n        name: nginx\n        state: present\n```\n\nThe line `become: true` tells Ansible to run the tasks through sudo, that is with root rights, because only root may install packages and edit files in `/etc`. Ansible still logs in to the host as an ordinary user, with its own SSH key, and gets root rights only on the host.\n\nYou run it with `ansible-playbook site.yml`. Before the tasks Ansible gathers facts (Gathering Facts): the OS family, addresses, memory. With them you can, for example, run a task only on Debian hosts by adding a `when:` condition to it, but this lesson needs no conditions. Each task goes through all hosts before the next one starts. At the end comes the PLAY RECAP: for every host, how many tasks were ok, changed, failed.\n\nThe `ansible.builtin.template` module lays out a file from a template. A template is like a form letter into which each addressee’s name is inserted: an ordinary config file where the changing values are replaced with expressions in double curly braces. The language of these expressions is called Jinja2. `{{ inventory_hostname }}` in the template turns into the host name, and `{{ http_port | default(80) }}` turns into the value of the http_port variable or, if it is not set, into the number 80.\n\n### Handlers\n\nAfter changing the nginx config, nginx must reload it, but only if the config really changed. That is what a [[iac.handler|handler]] is for: a task that is notified with `notify: Reload nginx`. The notification fires only if the task was changed, and the handler itself runs once, when the play’s tasks are over, however many tasks notified it. If the play has `pre_tasks` and `post_tasks` sections, Ansible runs the notified handlers at the end of each of them, and a `meta: flush_handlers` task runs them at once. If a host failed on one of the tasks, it does not get to the handlers.\n\n### A run without changes\n\nTwo runs in a row are the main test of a playbook: on the second everything must be ok, changed=0. If some task is changed on every run, the playbook describes an action, not a state. The usual culprit is `ansible.builtin.shell` or `command`: they do not know what the result should be and always answer changed. Replace them with a state module (`lineinfile`, `copy`, `service`) or give Ansible a hint with `creates:` and `changed_when:`. The two modules differ too. `command` runs a program directly, without a shell, so a pipe `|` or a redirect `>` does not work in it. `shell` hands the whole line to a shell and is needed only when a pipe or a redirect cannot be avoided. A third module, `raw`, sends a command over SSH without copying a Python program to the host, and it is usually how Python itself is installed on a new host.\n\nBefore a run on live servers, [[iac.check-mode|check mode]] is useful: `ansible-playbook --check --diff site.yml` goes through all tasks, but modules only report what they would change and show the file differences.',
       ),
     },
     {
@@ -371,6 +440,7 @@ const playbookLesson: Lesson = {
               return !!last && !last.check && Object.values(last.recap).every((r) => r.changed === 0 && r.failed === 0) && !!prev && once && !!motdTask && !/shell|command/.test(motdTask[1]);
             },
             fail: [
+              ...YAML_FAILS,
               { if: (f) => /The motd[\s\S]*?shell/.test(f.files[`${OPS}/site.yml`]?.text ?? ''), say: bi('Модуль shell не знает, каким должен быть файл, и поэтому всегда отвечает changed. Вам нужен модуль, который описывает строку в файле.', 'shell does not know what the file should be like and is always changed. You need a module that describes a line in a file.') },
             ],
           },
@@ -427,7 +497,7 @@ const playbookLesson: Lesson = {
         },
       },
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['iac.q.idem', 'iac.q.handler', 'iac.q.check'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['iac.q.idem', 'iac.q.handler', 'iac.q.check', 'iac.q.unreachable'] },
   ],
 };
 
@@ -501,7 +571,7 @@ const tfLesson: Lesson = {
         },
       ],
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['iac.q.symbols', 'iac.q.known-after'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['iac.q.symbols', 'iac.q.known-after', 'iac.q.self-ref'] },
   ],
 };
 
@@ -602,35 +672,11 @@ const stateLesson: Lesson = {
         },
       },
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['iac.q.state-lost', 'iac.q.drift', 'iac.q.ans-vs-tf'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['iac.q.state-lost', 'iac.q.removed-block', 'iac.q.drift', 'iac.q.ans-vs-tf'] },
   ],
 };
 
 export const lessons: Lesson[] = [introLesson, playbookLesson, tfLesson, stateLesson];
-
-const placement: PlacementTask[] = [
-  { id: 'iac.place.idem', level: 'intermediate', key: true, concepts: ['iac.idempotence'], kind: 'quiz', item: { ...(quiz.find((q) => q.id === 'iac.q.idem') as QuizItem), id: 'iac.place.q.idem' } },
-  {
-    id: 'iac.place.adhoc',
-    level: 'intermediate',
-    key: true,
-    concepts: ['iac.module', 'iac.inventory'],
-    kind: 'task',
-    setup: ansSetup({ 'inventory.ini': INV }),
-    task: { id: 'p1', prompt: bi('Поставьте пакет `chrony` на все хосты группы db и только на них.', 'Install the `chrony` package on all hosts of the db group and only on them.'), check: { when: (f) => !!host(f, 'db1')?.packages.includes('chrony') && !host(f, 'web1')?.packages.includes('chrony') } },
-  },
-  { id: 'iac.place.symbols', level: 'intermediate', key: false, concepts: ['iac.plan'], kind: 'quiz', item: { ...(quiz.find((q) => q.id === 'iac.q.symbols') as QuizItem), id: 'iac.place.q.symbols' } },
-  { id: 'iac.place.state', level: 'experienced', key: true, concepts: ['iac.state'], kind: 'quiz', item: { ...(quiz.find((q) => q.id === 'iac.q.state-lost') as QuizItem), id: 'iac.place.q.state' } },
-  {
-    id: 'iac.place.tf',
-    level: 'experienced',
-    key: true,
-    concepts: ['iac.plan', 'iac.resource'],
-    kind: 'task',
-    setup: tfSetup(TF_HEAD + TF_NET),
-    task: { id: 'p2', prompt: bi('Добавьте в код ВМ `api` с образом ubuntu-24.04 и двумя ядрами, подключите её к сети `edu_network.main` и создайте эту машину.', 'Add to the code a VM `api` with the ubuntu-24.04 image and two cores, connect it to the network `edu_network.main` and create the machine.'), check: { when: (f) => cloud(f).some((r) => r.type === 'edu_vm' && r.attrs.name === 'api') } },
-  },
-];
 
 export const block: Block = {
   id: 'iac',
@@ -647,5 +693,6 @@ export const block: Block = {
   lessons: lessons.map((l) => l.id),
   sources: src([S.fowlerIac, S.ansIntro, S.tofuState], [S.ruIac, S.ruAnsible, S.ruTerraform]),
   docSources: ['ansible-doc', 'help', 'terraform'],
-  placement,
+  // The placement check lives in placement.ts, its own bank of tasks.
+  placement: [],
 };
