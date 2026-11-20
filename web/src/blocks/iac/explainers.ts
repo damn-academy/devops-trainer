@@ -11,7 +11,7 @@
 // the line as a card.
 
 import { defineModel } from '../../core/define';
-import { bi, t, type Bi } from '../../core/i18n';
+import { bi, pluralRu, t, type Bi } from '../../core/i18n';
 import type { ElementState, Step } from '../../core/types';
 import { card } from '../git-cicd/explainers';
 
@@ -38,7 +38,8 @@ type TfP = { change: string; refresh: boolean; cbd: boolean };
 /** What the plan proposes and how long the site stays without a server. */
 export function tfNumbers(p: TfP, stateLost: boolean): { add: number; change: number; destroy: number; downtime: number } {
   if (stateLost) return { add: 3, change: 0, destroy: 0, downtime: 0 };
-  if (p.change === 'image') return { add: 1, change: 0, destroy: 1, downtime: p.cbd ? 0 : 40 };
+  // A new machine gets a new address, so the DNS record that points at it is updated in place too.
+  if (p.change === 'image') return { add: 1, change: 1, destroy: 1, downtime: p.cbd ? 0 : 40 };
   if (p.change === 'cores' || (p.change === 'drift' && p.refresh)) return { add: 0, change: 1, destroy: 0, downtime: 15 };
   return { add: 0, change: 0, destroy: 0, downtime: 0 };
 }
@@ -279,7 +280,7 @@ export const tfModel = defineModel<TfP>({
     { id: 'add', label: bi('будет создано ресурсов', 'resources to add') },
     { id: 'change', label: bi('будет изменено ресурсов', 'resources to change') },
     { id: 'destroy', label: bi('будет удалено ресурсов', 'resources to destroy') },
-    { id: 'down', label: bi('сайт простоит без сервера, с', 'the site stays without a server, s') },
+    { id: 'down', label: bi('сайт простоит без сервера', 'the site stays without a server'), unit: bi('с', 's') },
   ],
   run(p, broken) {
     const lost = broken.has('state-lost');
@@ -394,7 +395,7 @@ export const tfModel = defineModel<TfP>({
     }
     const diff =
       p.change === 'image'
-        ? bi('Образ работающей машины облако поменять не может, поэтому план помечает строку с образом «# forces replacement» и предлагает пересоздать машину (знак -/+).', 'The cloud cannot change the image of a running machine, so the plan marks the image line “# forces replacement” and proposes to recreate the machine (the sign -/+).')
+        ? bi('Образ работающей машины облако поменять не может, поэтому план помечает строку с образом «# forces replacement» и предлагает пересоздать машину (знак -/+). У новой машины будет новый адрес, поэтому DNS-запись www, которая ссылается на адрес машины, план тоже предлагает изменить на месте (знак ~).', 'The cloud cannot change the image of a running machine, so the plan marks the image line “# forces replacement” and proposes to recreate the machine (the sign -/+). The new machine gets a new address, so the plan also proposes to update in place the DNS record www, which refers to the machine’s address (the sign ~).')
         : p.change === 'cores'
           ? bi('Число ядер облако умеет менять на месте, поэтому план предлагает изменить машину, не пересоздавая её (знак ~, «update in-place»), и вместо 2 ядер у машины станет 4.', 'The cloud can change the number of cores in place, so the plan proposes to change the machine without recreating it (the sign ~, “update in-place”), and the machine gets 4 cores instead of 2.')
           : p.change === 'drift' && p.refresh
@@ -421,11 +422,11 @@ export const tfModel = defineModel<TfP>({
             id: 'apply',
             label: 'apply',
             caption: p.cbd
-              ? bi('Настройка create_before_destroy меняет порядок: облако сначала создаёт новую машину vm-4f9a с образом debian-13 и только потом удаляет старую. Сайт не остаётся без сервера, но какое-то время в облаке работают две машины и за обе приходится платить.', 'create_before_destroy changes the order: the cloud first creates the new machine vm-4f9a with debian-13 and only then destroys the old one. The site is never without a server, but for a while two machines run in the cloud and you pay for both.')
-              : bi('Облако сначала удаляет старую машину vm-4f66 и только потом создаёт новую vm-4f9a с образом debian-13. Новая машина загружается около 40 секунд, и всё это время сайту отвечать некому.', 'The cloud first destroys the old machine vm-4f66 and only then creates the new vm-4f9a with debian-13. While the new machine boots, about 40 seconds, nobody answers for the site.'),
+              ? bi('Настройка create_before_destroy меняет порядок: облако сначала создаёт новую машину vm-4f9a с образом debian-13, затем Terraform направляет DNS-запись на её адрес и только потом удаляет старую машину. Сервер у сайта есть всё время, но клиенты, которые запомнили старый адрес, увидят новый, только когда истечёт срок хранения DNS-записи, поэтому старую машину на практике удаляют не сразу. Какое-то время в облаке работают две машины, и за обе приходится платить.', 'create_before_destroy changes the order: the cloud first creates the new machine vm-4f9a with debian-13, then Terraform points the DNS record at its address and only then destroys the old machine. The site has a server all the time, but clients that remembered the old address see the new one only when the DNS record’s caching time runs out, so in practice the old machine is not removed at once. For a while two machines run in the cloud, and you pay for both.')
+              : bi('Облако сначала удаляет старую машину vm-4f66 и только потом создаёт новую vm-4f9a с образом debian-13, после чего Terraform направляет DNS-запись на новый адрес. Новая машина загружается около 40 секунд, и всё это время сайту отвечать некому.', 'The cloud first destroys the old machine vm-4f66 and only then creates the new vm-4f9a with debian-13, after which Terraform points the DNS record at the new address. While the new machine boots, about 40 seconds, nobody answers for the site.'),
             focus: ['e-apply', 'vm'],
             reveal: ['api', 'e-apply', 'vm'],
-            tokens: [{ edge: 'e-apply', label: p.cbd ? 'POST, DELETE' : 'DELETE, POST' }],
+            tokens: [{ edge: 'e-apply', label: p.cbd ? 'POST, PATCH dns, DELETE' : 'DELETE, POST, PATCH dns' }],
             say: { vm: p.cbd ? bi('Новая машина vm-4f9a уже работает, и только после этого облако удаляет старую vm-4f66.', 'The new machine vm-4f9a is already running, and only then the cloud destroys the old vm-4f66.') : bi('Старой машины vm-4f66 больше нет, а новая vm-4f9a ещё загружается, поэтому сайт около 40 секунд не отвечает.', 'The old machine vm-4f66 is gone, and the new vm-4f9a is still booting, so the site does not answer for about 40 seconds.') },
             states: { vm: 'ok', api: 'ok' },
             values: { vm: 'vm-4f9a · debian-13' },
@@ -450,7 +451,7 @@ export const tfModel = defineModel<TfP>({
     steps.push({
       id: 'write',
       label: 'state',
-      caption: bi('Terraform записывает в файл state новые сведения о машине, и номер версии serial растёт с 4 до 5. Следующий plan начнётся с этих сведений и, если ничего не изменится, покажет «No changes».', 'Terraform writes the new facts about the machine into the state file, and the version number serial grows from 4 to 5. The next plan starts from these facts and, if nothing changes, shows “No changes”.'),
+      caption: bi('Terraform записывает в файл state новые сведения о машине. При каждой записи он увеличивает номер версии state, который хранится в поле serial, поэтому serial растёт с 4 до 5. Следующий plan начнётся с этих сведений и, если ничего не изменится, покажет «No changes».', 'Terraform writes the new facts about the machine into the state file. On every write it raises the state’s version number, kept in the serial field, so serial grows from 4 to 5. The next plan starts from these facts and, if nothing changes, shows “No changes”.'),
       focus: ['e-state', 'state'],
       tokens: [{ edge: 'e-state', reverse: true, label: 'serial 5' }],
       say: { state: bi('В файл state записано, какой стала машина после изменения, и его версия теперь 5.', 'The state file records what the machine is like after the change, and its version is now 5.') },
@@ -466,8 +467,9 @@ export const tfModel = defineModel<TfP>({
       return change.on ? bi('Облако отклоняет запросы, и Terraform останавливается на первом же обращении к нему, ничего не изменив.', 'The cloud rejects requests, and Terraform stops at its first call without changing anything.') : bi('Облако снова принимает запросы, и запуск проходит до конца.', 'The cloud accepts requests again, and the run goes to the end.');
     }
     const a1 = last(next);
-    const line = fb(bi('Теперь план создаёт {a}, изменяет {c} и удаляет {d} из описанных ресурсов, а сайт остаётся без сервера {t} с.', 'The plan now adds {a}, changes {c} and destroys {d} of the described resources, and the site is without a server for {t} s.'), { a: a1.add ?? 0, c: a1.change ?? 0, d: a1.destroy ?? 0, t: a1.down ?? 0 });
-    if (change.id === 'cbd') return b.cbd ? fb(bi('Новая машина создаётся раньше, чем удаляется старая, поэтому при смене образа простоя нет. {l}', 'The new machine is created before the old one is destroyed, so an image change causes no downtime. {l}'), { l: line }) : line;
+    const secs = a1.down ?? 0;
+    const line = fb(bi('Теперь итог плана такой: создать {a}, изменить {c} и удалить {d}, а сайт {t}.', 'The plan now comes to {a} to add, {c} to change and {d} to destroy, and the site {t}.'), { a: a1.add ?? 0, c: a1.change ?? 0, d: a1.destroy ?? 0, t: secs ? bi(`остаётся без сервера ${secs} ${pluralRu(secs, ['секунду', 'секунды', 'секунд'])}`, `is without a server for ${secs} s`) : bi('ни секунды не остаётся без сервера', 'is never without a server') });
+    if (change.id === 'cbd') return b.cbd ? fb(bi('Новая машина создаётся раньше, чем удаляется старая, поэтому сервер у сайта есть всё время смены образа. DNS-запись при этом тоже меняется, потому что у новой машины другой адрес. {l}', 'The new machine is created before the old one is destroyed, so the site has a server throughout the image change. The DNS record changes too, because the new machine has another address. {l}'), { l: line }) : line;
     if (change.id === 'refresh' && !b.refresh) return fb(bi('Без refresh Terraform не спрашивает облако, поэтому правку в консоли он не увидит, и план может разойтись с действительностью. {l}', 'Without refresh Terraform does not ask the cloud, so it will not see an edit in the console, and the plan may disagree with reality. {l}'), { l: line });
     return line;
   },
@@ -739,7 +741,7 @@ export const ansModel = defineModel<AnsP>({
       label: p.task === 'shell' ? 'shell' : 'lineinfile',
       caption:
         p.task === 'shell'
-          ? fb(bi('Задача shell выполняет команду `echo "Managed by Ansible" >> /etc/motd`. Команда не знает, каким должен быть файл, она лишь дописывает строку в конец, поэтому задача на каждом прогоне отвечает changed, и после прогона номер {r} в файле {r} одинаковых строк.', 'The shell task runs `echo "Managed by Ansible" >> /etc/motd`. The command does not know what the file should be like, it only appends a line, so the task answers changed on every run, and after run {r} the file holds {r} identical lines.'), { r: p.run })
+          ? fb(bi('Задача shell выполняет команду `echo "Managed by Ansible" >> /etc/motd`. Команда не знает, каким должен быть файл, она лишь дописывает строку в конец, поэтому задача на каждом прогоне отвечает changed. После прогона номер {r} строка «Managed by Ansible» записана в файле {n}.', 'The shell task runs `echo "Managed by Ansible" >> /etc/motd`. The command does not know what the file should be like, it only appends a line, so the task answers changed on every run. After run {r} the line “Managed by Ansible” is in the file {e}.'), { r: p.run, n: p.run === 1 ? 'один раз' : `${p.run} ${pluralRu(p.run, ['раз', 'раза', 'раз'])}`, e: p.run === 1 ? 'once' : `${p.run} times` })
           : first
             ? bi('Задача lineinfile проверяет, есть ли в /etc/motd строка «Managed by Ansible». Строки нет, поэтому модуль добавляет её и отвечает changed.', 'The lineinfile task checks whether /etc/motd has the line “Managed by Ansible”. It does not, so the module adds it and answers changed.')
             : bi('Задача lineinfile находит строку «Managed by Ansible» в /etc/motd и ничего не меняет. Повторный прогон не изменил этот файл, и это свойство задачи называется идемпотентностью.', 'The lineinfile task finds the line “Managed by Ansible” in /etc/motd and changes nothing. The repeated run left the file alone, and this property of a task is called idempotence.'),
@@ -793,6 +795,8 @@ export const ansModel = defineModel<AnsP>({
       caption:
         n.changed === 0
           ? fb(bi('PLAY RECAP показывает changed={c} и failed={f}. Повторный прогон ничего не изменил, значит, плейбук описывает состояние хостов, а не действия, и его можно запускать сколько угодно раз.', 'PLAY RECAP shows changed={c} and failed={f}. The repeated run changed nothing, so the playbook describes the state of the hosts rather than actions, and it can be run any number of times.'), { c: n.changed, f: n.failed })
+          : first && n.failed
+            ? fb(bi('PLAY RECAP показывает changed={c} и failed={f}. Изменения на первом прогоне ожидаемы, ведь хосты были пустыми, а failed={f} означает, что Ansible исключил из прогона хост с поломкой. Без поломок первый прогон дал бы failed=0.', 'PLAY RECAP shows changed={c} and failed={f}. Changes on the first run are expected, since the hosts were empty, while failed={f} means Ansible dropped the broken host from the run. Without breaks the first run would give failed=0.'), { c: n.changed, f: n.failed })
           : first
             ? fb(bi('PLAY RECAP показывает changed={c} и failed={f}. На первом прогоне так и должно быть, ведь хосты были пустыми. Настоящей проверкой плейбука служит второй прогон, на котором changed должно стать нулём.', 'PLAY RECAP shows changed={c} and failed={f}. On the first run that is as it should be: the hosts were empty. The real test of a playbook is the second run, where changed must drop to zero.'), { c: n.changed, f: n.failed })
             : fb(bi('PLAY RECAP показывает changed={c} и failed={f}. Повторный прогон снова что-то изменил, значит, одна из задач описывает действие, а не состояние, и её нужно переписать.', 'PLAY RECAP shows changed={c} and failed={f}. The repeated run changed something again, so one of the tasks describes an action rather than a state and must be rewritten.'), { c: n.changed, f: n.failed }),
@@ -810,7 +814,12 @@ export const ansModel = defineModel<AnsP>({
     }
     const c0 = last(prev).changed ?? 0;
     const c1 = last(next).changed ?? 0;
-    if (change.id === 'task') return b.task === 'shell' ? fb(bi('Задача shell выполняет действие, а не описывает состояние, поэтому она отвечает changed на каждом прогоне. Число изменённых задач изменилось с {a} на {b}.', 'The shell task performs an action instead of describing a state, so it answers changed on every run. The number of changed tasks went from {a} to {b}.'), { a: c0, b: c1 }) : fb(bi('Модуль lineinfile сначала проверяет, есть ли строка, и меняет файл, только если её нет. Число изменённых задач изменилось с {a} на {b}.', 'The lineinfile module first checks whether the line exists and changes the file only if it does not. The number of changed tasks went from {a} to {b}.'), { a: c0, b: c1 });
-    return fb(bi('Число задач, которые ответили changed, изменилось с {a} на {b}.', 'The number of tasks that answered changed went from {a} to {b}.'), { a: c0, b: c1 });
+    const count =
+      c0 === c1
+        ? fb(bi('Число ответов changed осталось прежним и равно {a}.', 'The number of changed answers stayed the same: {a}.'), { a: c0 })
+        : fb(bi('Число ответов changed изменилось с {a} на {b}.', 'The number of changed answers went from {a} to {b}.'), { a: c0, b: c1 });
+    const say = (msg: Bi) => fb(msg, { n: count });
+    if (change.id === 'task') return b.task === 'shell' ? say(bi('Задача shell выполняет действие, а не описывает состояние, поэтому она отвечает changed на каждом прогоне. {n}', 'The shell task performs an action instead of describing a state, so it answers changed on every run. {n}')) : say(bi('Модуль lineinfile сначала проверяет, есть ли строка, и меняет файл, только если её нет. {n}', 'The lineinfile module first checks whether the line exists and changes the file only if it does not. {n}'));
+    return count;
   },
 });

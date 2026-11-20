@@ -1,7 +1,8 @@
 // A subset of HCL (the Terraform/OpenTofu configuration language) for the
 // course: blocks with labels, attributes, nested blocks, comments, strings
-// with ${…} interpolation, numbers, bools, null, lists, objects, references,
-// function calls, arithmetic, comparisons and the conditional operator.
+// with ${…} interpolation and %{ for } / %{ if } directives, heredocs,
+// numbers, bools, null, lists, objects, references, function calls,
+// arithmetic, comparisons, the conditional operator and [for …] expressions.
 // Diagnostics carry file and line, so errors print the way Terraform does.
 
 export type Expr =
@@ -14,7 +15,9 @@ export type Expr =
   | { k: 'bin'; op: string; a: Expr; b: Expr; line: number }
   | { k: 'not'; a: Expr; line: number }
   | { k: 'neg'; a: Expr; line: number }
-  | { k: 'cond'; c: Expr; a: Expr; b: Expr; line: number };
+  | { k: 'cond'; c: Expr; a: Expr; b: Expr; line: number }
+  /** `[for k, v in coll : body if cond]`; with `str` (a `%{ for }` directive) the results are joined into one string. */
+  | { k: 'for'; key?: string; val: string; coll: Expr; body: Expr; cond?: Expr; str?: boolean; line: number };
 
 export type Value = string | number | boolean | null | Value[] | { [k: string]: Value } | Unknown;
 export class Unknown {
@@ -53,25 +56,48 @@ export class HclError extends Error {
   }
 }
 
-type Tok = { t: 'id' | 'num' | 'str' | 'heredoc' | 'op' | 'nl' | 'eof'; v: string; line: number; parts?: (string | Tok[])[] };
+/** A raw template part: literal text, the tokens of a ${…} interpolation, or a %{…} directive. */
+type RawPart = string | Tok[] | { dir: Tok[]; line: number };
+type Tok = { t: 'id' | 'num' | 'str' | 'heredoc' | 'op' | 'nl' | 'eof'; v: string; line: number; parts?: RawPart[] };
 
-function lexString(src: string, i: number, line: number): { end: number; parts: (string | Tok[])[] } {
-  // i points after the opening quote. Returns raw parts: literal text and token lists of ${…}.
-  const parts: (string | Tok[])[] = [];
+/**
+ * Scans a template from `i`: a quoted string (stops after the closing quote,
+ * handles backslash escapes) or a heredoc body (runs to the end of `src`).
+ * `~` next to a brace strips the whitespace on that side, as in Terraform.
+ */
+function lexTemplate(src: string, i: number, line: number, quoted: boolean): { end: number; parts: RawPart[] } {
+  const parts: RawPart[] = [];
   let buf = '';
+  let stripNext = false;
+  const flush = (stripPrev: boolean) => {
+    parts.push(stripPrev ? buf.replace(/\s+$/, '') : buf);
+    buf = '';
+  };
   while (i < src.length) {
     const c = src[i];
-    if (c === '"') return { end: i + 1, parts: [...parts, buf] };
-    if (c === '\n') throw new HclError({ severity: 'error', summary: 'Unterminated template string', detail: 'No closing marker was found for the string.', line });
-    if (c === '\\') {
+    if (stripNext && /\s/.test(c)) {
+      if (c === '\n') line++;
+      i++;
+      continue;
+    }
+    stripNext = false;
+    if (quoted && c === '"') {
+      parts.push(buf);
+      return { end: i + 1, parts };
+    }
+    if (quoted && c === '\n') throw new HclError({ severity: 'error', summary: 'Unterminated template string', detail: 'No closing marker was found for the string.', line });
+    if (quoted && c === '\\') {
       const n = src[i + 1];
       buf += n === 'n' ? '\n' : n === 't' ? '\t' : n === '"' ? '"' : n === '\\' ? '\\' : '\\' + n;
       i += 2;
       continue;
     }
-    if (c === '$' && src[i + 1] === '{') {
-      parts.push(buf);
-      buf = '';
+    if ((c === '$' || c === '%') && src[i + 1] === c && src[i + 2] === '{') {
+      buf += c + '{';
+      i += 3;
+      continue;
+    }
+    if ((c === '$' || c === '%') && src[i + 1] === '{') {
       let depth = 1;
       let j = i + 2;
       while (j < src.length && depth) {
@@ -79,14 +105,27 @@ function lexString(src: string, i: number, line: number): { end: number; parts: 
         else if (src[j] === '}') depth--;
         if (depth) j++;
       }
-      parts.push(lex(src.slice(i + 2, j), line).filter((t) => t.t !== 'nl' && t.t !== 'eof'));
+      let inner = src.slice(i + 2, j);
+      const stripPrev = inner.startsWith('~');
+      if (stripPrev) inner = inner.slice(1);
+      if (inner.trimEnd().endsWith('~')) {
+        inner = inner.trimEnd().slice(0, -1);
+        stripNext = true;
+      }
+      flush(stripPrev);
+      const toks = lex(inner, line).filter((t) => t.t !== 'nl' && t.t !== 'eof');
+      parts.push(c === '$' ? toks : { dir: toks, line });
+      line += (src.slice(i, j).match(/\n/g) ?? []).length;
       i = j + 1;
       continue;
     }
+    if (c === '\n') line++;
     buf += c;
     i++;
   }
-  throw new HclError({ severity: 'error', summary: 'Unterminated template string', detail: 'No closing marker was found for the string.', line });
+  if (quoted) throw new HclError({ severity: 'error', summary: 'Unterminated template string', detail: 'No closing marker was found for the string.', line });
+  parts.push(buf);
+  return { end: i, parts };
 }
 
 export function lex(src: string, startLine = 1): Tok[] {
@@ -117,7 +156,7 @@ export function lex(src: string, startLine = 1): Tok[] {
       continue;
     }
     if (c === '"') {
-      const r = lexString(src, i + 1, line);
+      const r = lexTemplate(src, i + 1, line, true);
       toks.push({ t: 'str', v: '', line, parts: r.parts });
       i = r.end;
       continue;
@@ -130,7 +169,7 @@ export function lex(src: string, startLine = 1): Tok[] {
         const em = endRe.exec('\n' + rest);
         const body = em ? rest.slice(0, Math.max(0, em.index - 1) + 1) : rest;
         const text = body.endsWith('\n') ? body : body + '\n';
-        toks.push({ t: 'str', v: '', line, parts: [m[0].startsWith('<<-') ? text.replace(/^[ \t]+/gm, '') : text] });
+        toks.push({ t: 'str', v: '', line, parts: lexTemplate(m[0].startsWith('<<-') ? text.replace(/^[ \t]+/gm, '') : text, 0, line + 1, false).parts });
         const consumed = m[0].length + (em ? em.index - 1 + em[0].length : rest.length);
         line += (src.slice(i, i + consumed).match(/\n/g) ?? []).length;
         i += consumed;
@@ -307,18 +346,87 @@ class P {
       } else return e;
     }
   }
+  /** `for k, v in coll : body if cond ]`, after the opening bracket. */
+  forExpr(open: Tok): Expr {
+    this.next();
+    const names = [this.ident()];
+    if (this.is(',')) {
+      this.next();
+      names.push(this.ident());
+    }
+    this.keyword('in');
+    const coll = this.expr();
+    this.skipNl();
+    this.expect(':', 'colon');
+    this.skipNl();
+    const body = this.expr();
+    this.skipNl();
+    let cond: Expr | undefined;
+    if (this.peek().t === 'id' && this.peek().v === 'if') {
+      this.next();
+      cond = this.expr();
+      this.skipNl();
+    }
+    this.expect(']', 'close bracket');
+    const [key, val] = names.length === 2 ? names : [undefined, names[0]];
+    return { k: 'for', key, val, coll, body, cond, line: open.line };
+  }
+  ident(): string {
+    const t = this.next();
+    if (t.t !== 'id') this.fail(t, 'Invalid for expression', 'For expression requires a variable name after "for".');
+    return t.v;
+  }
+  keyword(v: string): void {
+    const t = this.next();
+    if (t.t !== 'id' || t.v !== v) this.fail(t, 'Invalid for expression', `For expression requires the "${v}" keyword after its names.`);
+  }
+  /** Builds a template from raw parts, nesting the parts between %{ for } / %{ endfor } and %{ if } / %{ else } / %{ endif }. */
+  template(raw: RawPart[], line: number): Expr {
+    let pos = 0;
+    const sub = (toks: Tok[], l: number) => new P([...toks, { t: 'eof', v: '', line: l }], this.file);
+    const seq = (stop: string[]): { parts: (string | Expr)[]; end?: string } => {
+      const parts: (string | Expr)[] = [];
+      while (pos < raw.length) {
+        const p = raw[pos++];
+        if (typeof p === 'string') parts.push(p);
+        else if (Array.isArray(p)) parts.push(sub(p, line).expr());
+        else {
+          const word = p.dir[0]?.t === 'id' ? p.dir[0].v : '';
+          if (stop.includes(word)) return { parts, end: word };
+          const d = sub(p.dir, p.line);
+          if (word === 'for') {
+            const names = [(d.next(), d.ident())];
+            if (d.is(',')) {
+              d.next();
+              names.push(d.ident());
+            }
+            d.keyword('in');
+            const coll = d.expr();
+            const inner = seq(['endfor']);
+            if (inner.end !== 'endfor') this.fail({ t: 'eof', v: '', line: p.line }, 'Unterminated template directive', 'The for directive has no matching endfor.');
+            const [key, val] = names.length === 2 ? names : [undefined, names[0]];
+            parts.push({ k: 'for', key, val, coll, body: { k: 'tpl', parts: inner.parts, line: p.line }, str: true, line: p.line });
+          } else if (word === 'if') {
+            d.next();
+            const c = d.expr();
+            const a = seq(['else', 'endif']);
+            const b = a.end === 'else' ? seq(['endif']) : { parts: [], end: a.end };
+            if (b.end !== 'endif') this.fail({ t: 'eof', v: '', line: p.line }, 'Unterminated template directive', 'The if directive has no matching endif.');
+            parts.push({ k: 'cond', c, a: { k: 'tpl', parts: a.parts, line: p.line }, b: { k: 'tpl', parts: b.parts, line: p.line }, line: p.line });
+          } else this.fail({ t: 'eof', v: '', line: p.line }, 'Invalid template directive', `A template directive keyword ("if", "for", etc) is expected at the beginning of a %{ sequence, not "${word}".`);
+        }
+      }
+      return { parts };
+    };
+    const { parts, end } = seq([]);
+    if (end) this.fail({ t: 'eof', v: '', line }, 'Unexpected template directive', `The "${end}" directive has no matching opening directive.`);
+    if (parts.every((p) => typeof p === 'string')) return { k: 'lit', v: parts.join(''), line };
+    return { k: 'tpl', parts, line };
+  }
   primary(): Expr {
     const t = this.next();
     if (t.t === 'num') return { k: 'lit', v: Number(t.v), line: t.line };
-    if (t.t === 'str') {
-      const parts: (string | Expr)[] = (t.parts ?? []).map((p) => {
-        if (typeof p === 'string') return p;
-        const sub = new P([...p, { t: 'eof', v: '', line: t.line }], this.file);
-        return sub.expr();
-      });
-      if (parts.every((p) => typeof p === 'string')) return { k: 'lit', v: parts.join(''), line: t.line };
-      return { k: 'tpl', parts, line: t.line };
-    }
+    if (t.t === 'str') return this.template(t.parts ?? [], t.line);
     if (t.t === 'id') {
       if (t.v === 'true' || t.v === 'false') return { k: 'lit', v: t.v === 'true', line: t.line };
       if (t.v === 'null') return { k: 'lit', v: null, line: t.line };
@@ -348,6 +456,7 @@ class P {
     if (t.t === 'op' && t.v === '[') {
       const items: Expr[] = [];
       this.skipNl();
+      if (this.peek().t === 'id' && this.peek().v === 'for') return this.forExpr(t);
       while (!this.is(']')) {
         items.push(this.expr());
         this.skipNl();

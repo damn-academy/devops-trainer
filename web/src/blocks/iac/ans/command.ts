@@ -223,15 +223,17 @@ function inventoryCmd(ctx: CmdContext): number {
   const { inv, dir, warn } = loadInventory(ctx, args);
   if (warn) ctx.err(warn);
   if (args.includes('--graph')) {
-    const draw = (g: string, ind: string, seen: Set<string>) => {
+    // ansible-core draws child groups sorted by name, then the hosts, each line
+    // prefixed with "  |" per level of depth; @ungrouped is always shown.
+    const line = (name: string, depth: number) => ctx.out(`${depth ? '  |'.repeat(depth) + '--' : ''}${name}\n`);
+    const draw = (g: string, depth: number, seen: Set<string>) => {
       const grp = inv.groups.get(g)!;
-      ctx.out(`${ind}@${g}:\n`);
-      for (const c of [...grp.children].sort()) if (!seen.has(c)) draw(c, ind + '  |--', new Set([...seen, c]));
-      for (const h of [...grp.hosts].sort()) ctx.out(`${ind}  |--${h}\n`);
+      line(`@${g}:`, depth);
+      const kids = g === 'all' ? [...inv.groups.keys()].filter((k) => k !== 'all' && ![...inv.groups.values()].some((x) => x.children.has(k))) : [...grp.children];
+      for (const c of kids.sort()) if (!seen.has(c)) draw(c, depth + 1, new Set([...seen, c]));
+      if (g !== 'all') for (const h of [...grp.hosts].sort()) line(h, depth + 1);
     };
-    const top = [...inv.groups.keys()].filter((g) => g !== 'all' && ![...inv.groups.values()].some((x) => x.children.has(g)) && (inv.groups.get(g)!.hosts.size || inv.groups.get(g)!.children.size));
-    ctx.out('@all:\n');
-    for (const g of top.sort((a, b) => (a === 'ungrouped' ? 1 : b === 'ungrouped' ? -1 : a.localeCompare(b)))) draw(g, '  |--', new Set([g]));
+    draw('all', 0, new Set(['all']));
     return 0;
   }
   const hi = args.indexOf('--host');

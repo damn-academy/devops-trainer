@@ -396,7 +396,7 @@ async function run(ctx: CmdContext): Promise<number> {
         return 0;
       }
       const yes = o.autoApprove || /^\s*yes\s*$/m.test(ctx.stdin);
-      ctx.out(`\n${col.b(destroy ? 'Do you really want to destroy all resources?' : 'Do you want to perform these actions?')}\n  Terraform will perform the actions described above.\n  Only 'yes' will be accepted to ${destroy ? 'confirm' : 'approve'}.\n\n  ${col.b('Enter a value:')} ${yes ? 'yes' : ''}\n\n`);
+      if (!o.autoApprove) ctx.out(`\n${col.b(destroy ? 'Do you really want to destroy all resources?' : 'Do you want to perform these actions?')}\n  Terraform will perform the actions described above.\n  Only 'yes' will be accepted to ${destroy ? 'confirm' : 'approve'}.\n\n  ${col.b('Enter a value:')} ${yes ? 'yes' : ''}\n\n`);
       if (!yes) {
         ctx.err(`\n${formatDiag({ severity: 'error', summary: `${destroy ? 'Destroy' : 'Apply'} cancelled`, detail: 'The simulated terminal cannot answer prompts: pipe the answer in (echo yes | terraform apply) or pass -auto-approve.' }, {}, col !== NO_COLOR)}`);
         return 1;
@@ -521,7 +521,7 @@ function refreshOnly(ctx: CmdContext, sub: string, p: Plan, prior: StateFile | n
     return o.detailedExit ? 2 : 0;
   }
   const yes = o.autoApprove || /^\s*yes\s*$/m.test(ctx.stdin);
-  ctx.out(`\n${col.b('Would you like to update the Terraform state to reflect these detected changes?')}\n  Terraform will write these changes to the state without modifying any real\n  infrastructure.\n  There is no undo. Only 'yes' will be accepted to confirm.\n\n  ${col.b('Enter a value:')} ${yes ? 'yes' : ''}\n\n`);
+  if (!o.autoApprove) ctx.out(`\n${col.b('Would you like to update the Terraform state to reflect these detected changes?')}\n  Terraform will write these changes to the state without modifying any real\n  infrastructure.\n  There is no undo. Only 'yes' will be accepted to confirm.\n\n  ${col.b('Enter a value:')} ${yes ? 'yes' : ''}\n\n`);
   if (!yes) {
     ctx.err(`\n${formatDiag({ severity: 'error', summary: 'Apply cancelled', detail: 'The simulated terminal cannot answer prompts: pipe the answer in (echo yes | terraform apply -refresh-only) or pass -auto-approve.' }, {}, col !== NO_COLOR)}`);
     return 1;
