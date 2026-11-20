@@ -338,6 +338,17 @@ export const blackFriday: Lesson = {
       ),
     },
     { id: 'practice', kind: 'widget', step: 'practice', widget: 'flowlab.board', props: { scenario: 's2' } },
+    {
+      id: 'goal-check',
+      kind: 'callout',
+      tone: 'note',
+      step: 'practice',
+      title: bi('Как по разбору понять, выполнена ли цель', 'How to tell from the debrief whether the goal is met'),
+      body: bi(
+        'Цель прогона состоит из трёх условий, и каждое из них проверяется по таблице во втором разделе разбора, в столбце «вы».\n\n1. Три промо-функции должны дойти до покупателей к 14-му дню. Это условие выполнено, если в строке «Промо-задач к сроку» стоит число 3.\n2. Сайт должен работать во время распродажи, с 15-го по 17-й день. Если в строке «Потери от сбоев» стоит ноль, сайт не падал ни в эти дни, ни в другие. Если там стоит больше нуля, передвиньте ползунок в первом разделе разбора на 15-й, 16-й и 17-й день и посмотрите, есть ли в журнале этих дней оповещения о сбое, отмеченные крестиком.\n3. Итог по деньгам должен быть лучше, чем у команды без методологии. Об этом говорит первая половина фразы под таблицей: «На столько-то рублей лучше команды без методологии». Итог по деньгам складывается из выручки за готовые задачи за вычетом потерь от задержки, потерь от сбоев и дополнительных расходов, поэтому он может разойтись со сравнением одной строки с потерями.\n\nСравнение с эталонной командой, вторая половина той же фразы, к цели не относится: эталон показывает, сколько ещё можно выиграть.',
+        'The goal of the run has three conditions, and each is checked against the table in the second section of the debrief, in the column “you”.\n\n1. Three promo features must reach the customers by day 14. This is met if the row “Promo tasks by the due day” shows 3.\n2. The site must work during the sale, days 15 to 17. If the row “Outage losses” shows zero, the site did not go down on those days or any others. If it shows more than zero, move the slider in the first section of the debrief to days 15, 16 and 17 and see whether the log of those days has outage alerts marked with a cross.\n3. The money result must beat the team without the method. The first half of the sentence under the table says so: “$… better than the team without the method”. The money result is the revenue from finished tasks minus the cost of delay, the outage losses and any extra spending, so it can differ from a comparison of a single loss row.\n\nThe comparison with the reference team, the second half of the same sentence, is not part of the goal: the reference shows how much more could be won.',
+      ),
+    },
     { id: 'review', kind: 'quiz', step: 'review', title: bi('Повторение блока', 'Block review'), items: ['method.q.little-calc', 'method.q.ci-cd-match', 'method.q.freeze', 'method.q.five-steps', 'method.q.dora-less-often', 'method.q.blameless-rewrite'] },
   ],
 };
