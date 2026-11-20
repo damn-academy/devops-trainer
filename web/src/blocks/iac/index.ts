@@ -10,9 +10,10 @@ import { fromModel } from '../../engine/explainer/render';
 import { ansibleCommands, ansFactsProvider, ansSetupHook } from './ans/command';
 import { ANSIBLE_DOCS } from './ans/docs';
 import { block, concepts, lessons, quiz } from './content';
-import { concepts2, iacExam, lessons2, placement2, quiz2 } from './content-2';
+import { concepts2, iacExam, lessons2, quiz2 } from './content-2';
 import { IAC_WEB_DOCS } from './docs-2';
-import { cloudExam, concepts3, lessons3, placement3, quiz3 } from './content-3';
+import { cloudExam, concepts3, lessons3, quiz3 } from './content-3';
+import { iacPlacement } from './placement';
 import { IAC_LAB_DOCS } from './docs-3';
 import { lazyWidget } from '../../engine/v86/lazy';
 import { bi } from '../../core/i18n';
@@ -58,7 +59,7 @@ const cloudSandbox = lazyWidget('lab:cloud', async () => {
 });
 
 export default defineModule({
-  blocks: [{ ...block, lessons: ordered.map((l) => l.id), placement: [...block.placement, ...placement2, ...placement3], exam: iacExam.id }],
+  blocks: [{ ...block, lessons: ordered.map((l) => l.id), placement: iacPlacement, exam: iacExam.id }],
   lessons: ordered,
   concepts: [...concepts, ...concepts2, ...concepts3],
   quiz: [...quiz, ...quiz2, ...quiz3],

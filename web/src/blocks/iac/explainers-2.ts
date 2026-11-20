@@ -16,6 +16,23 @@ import type { ElementState, ProcessModel, Step } from '../../core/types';
 import { card } from '../git-cicd/explainers';
 import { fb, hiddenExcept } from './explainers';
 
+/**
+ * "What changed" for a few counters under the diagram, as one sentence: the ones that moved say from what to
+ * what, the ones that stayed say so, so the learner never reads "went from 1 to 1".
+ */
+function deltaLine(items: [string, string, number, number, boolean?][]): Bi {
+  // A duration reads "grew from 0 to 40 seconds", not "changed from 0 s to 40 s".
+  const sec = (n: number) => (n % 10 === 1 && n % 100 !== 11 ? 'секунды' : 'секунд');
+  const ru = items.map(([r, , a, b, s]) =>
+    a === b ? `${r} осталось прежним и равно ${b}${s ? '\u00A0с' : ''}` : s ? `${r} ${b > a ? 'выросло' : 'сократилось'} с ${a} до ${b}\u00A0${sec(b)}` : `${r} изменилось с ${a} на ${b}`,
+  );
+  const en = items.map(([, e, a, b, s]) =>
+    a === b ? `${e} stayed the same at ${b}${s ? '\u00A0s' : ''}` : s ? `${e} ${b > a ? 'grew' : 'shrank'} from ${a} to ${b}\u00A0seconds` : `${e} went from ${a} to ${b}`,
+  );
+  const join = (xs: string[], and: string) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')}${and}${xs[xs.length - 1]}` : xs[0]);
+  return bi(`${join(ru, ', а ')}.`, `${join(en, ', and ')}.`);
+}
+
 const last = (s: Step[]) => s[s.length - 1]?.metrics ?? {};
 /** The port the last value on the ladder sets (read from the ansible-playbook node). */
 const portOf = (s: Step[]) => Number([...s].reverse().find((x) => x.values?.merge)?.values?.merge?.split('= ')[1] ?? 0);
@@ -516,7 +533,7 @@ export const addrModel = defineModel<AddrP>({
     const a = last(prev);
     const b = last(next);
     if (change.kind === 'break') return change.on ? (change.id === 'state-lost' ? bi('Без файла state Terraform не узнаёт работающую машину и предлагает создать её дубль.', 'Without the state file Terraform does not recognise the running machine and proposes to create a duplicate.') : bi('В коде описаны оба адреса, и план останавливается с ошибкой «Moved object still exists».', 'The code describes both addresses, and the plan stops with “Moved object still exists”.')) : bi('Поломку убрали, и план снова доходит до конца.', 'The break is removed, and the plan goes to the end again.');
-    return fb(bi('Число машин, которые план создаст, изменилось с {a1} на {b1}, а число машин, которые он удалит, изменилось с {a2} на {b2}. Сайт теперь остаётся без сервера {b3} с вместо {a3} с.', 'The number of machines the plan creates went from {a1} to {b1}, and the number it destroys went from {a2} to {b2}. The site is now without a server for {b3} s instead of {a3} s.'), { a1: a.add ?? 0, b1: b.add ?? 0, a2: a.destroy ?? 0, b2: b.destroy ?? 0, a3: a.downtime ?? 0, b3: b.downtime ?? 0 });
+    return deltaLine([['Число машин, которые план создаст,', 'The number of machines the plan creates', a.add ?? 0, b.add ?? 0], ['число машин, которые он удалит,', 'the number it destroys', a.destroy ?? 0, b.destroy ?? 0], ['время, которое сайт остаётся без сервера,', 'the time the site stays without a server', a.downtime ?? 0, b.downtime ?? 0, true]]);
   },
 });
 
@@ -675,6 +692,6 @@ export const importModel = defineModel<AddrP>({
     const a = last(prev);
     const b = last(next);
     if (change.kind === 'break') return change.on ? (change.id === 'state-lost' ? bi('Без файла state Terraform не узнаёт ни одной машины и предлагает создать дубли.', 'Without the state file Terraform recognises no machine and proposes to create duplicates.') : bi('Блок import ищет машину с неверным ID, и план останавливается с ошибкой.', 'The import block looks for a machine with a wrong ID, and the plan stops with an error.')) : bi('Поломку убрали, и план снова доходит до конца.', 'The break is removed, and the plan goes to the end again.');
-    return fb(bi('Число машин, которые план создаст, изменилось с {a1} на {b1}, а число машин, которые он возьмёт под управление, изменилось с {a2} на {b2}.', 'The number of machines the plan creates went from {a1} to {b1}, and the number it takes over went from {a2} to {b2}.'), { a1: a.add ?? 0, b1: b.add ?? 0, a2: a.imported ?? 0, b2: b.imported ?? 0 });
+    return deltaLine([['Число машин, которые план создаст,', 'The number of machines the plan creates', a.add ?? 0, b.add ?? 0], ['число машин, которые он возьмёт под управление,', 'the number it takes over', a.imported ?? 0, b.imported ?? 0]]);
   },
 });
