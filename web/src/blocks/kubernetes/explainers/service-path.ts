@@ -151,6 +151,7 @@ export const servicePathModel = defineModel<P>({
     { id: 'pod1', label: bi('запросов из ста на web-1', 'of 100 to web-1') },
     { id: 'pod2', label: bi('на web-2', 'to web-2') },
     { id: 'pod3', label: bi('на web-3', 'to web-3') },
+    { id: 'rest', label: bi('на web-4 и web-5 вместе', 'to web-4 and web-5 together') },
   ],
   run(p, broken): Step[] {
     const s: Step[] = [];
@@ -158,12 +159,12 @@ export const servicePathModel = defineModel<P>({
     const ready = Array.from({ length: total }, (_, i) => !(p.unready && i === 1));
     const readyIdx = ready.map((r, i) => (r ? i : -1)).filter((i) => i >= 0);
     const dist = distribution(readyIdx.length, p.keepalive);
-    const per = [0, 0, 0];
+    const per = [0, 0, 0, 0, 0];
     readyIdx.forEach((idx, k) => {
-      if (idx < 3) per[idx] = dist[k];
+      per[idx] = dist[k];
     });
-    const metrics = { pod1: per[0], pod2: per[1], pod3: per[2] };
-    const zero = { pod1: 0, pod2: 0, pod3: 0 };
+    const metrics = { pod1: per[0], pod2: per[1], pod3: per[2], rest: per[3] + per[4] };
+    const zero = { pod1: 0, pod2: 0, pod3: 0, rest: 0 };
     const offPods: Record<string, 'off'> = {};
     for (let i = total; i < 3; i++) offPods[`p${i + 1}`] = 'off';
     s.push({
@@ -219,8 +220,9 @@ export const servicePathModel = defineModel<P>({
       return s;
     }
     const probs = ruleProbabilities(readyIdx.length).map((x) => x.toFixed(2));
+    const probsRu = probs.map((x) => x.replace('.', ','));
     const modeText: Record<string, Bi> = {
-      iptables: fmt(bi('kube-proxy получает адреса и записывает в ядро цепочку правил. Первое правило выбирает свой под с вероятностью {p0}, следующее делит остаток, и так до последнего. Вероятности {p} выглядят неравными, но каждому поду в итоге достаётся одинаковая доля соединений.', 'kube-proxy writes the chain; probabilities {p}: each rule splits what is left, so the shares are equal.'), { p0: probs[0] ?? '1', p: probs.join(', ') }),
+      iptables: fmt(bi('kube-proxy получает адреса и записывает в ядро цепочку правил. Первое правило выбирает свой под с вероятностью {p0r}, следующее делит остаток, и так до последнего. Вероятности {pr} выглядят неравными, но каждому поду в итоге достаётся одинаковая доля соединений.', 'kube-proxy writes the chain; probabilities {p}: each rule splits what is left, so the shares are equal.'), { p0: probs[0] ?? '1', p: probs.join(', '), p0r: probsRu[0] ?? '1', pr: probsRu.join('; ') }),
       nftables: bi('kube-proxy в режиме nftables записывает в ядро таблицу, в которой случайное число выбирает один из готовых подов одной операцией. Логика та же, что у iptables, только короче.', 'nftables: a random number picks a ready pod in one operation.'),
       ipvs: bi('В режиме IPVS адрес Service назначен служебному интерфейсу kube-ipvs0, а соединения распределяет модуль ядра IPVS. Этот режим объявлен устаревшим, и в новых кластерах используют iptables или nftables.', 'IPVS: the ClusterIP sits on kube-ipvs0 and the IPVS module balances; the mode is deprecated.'),
     };
@@ -286,7 +288,9 @@ export const servicePathModel = defineModel<P>({
       label: bi('сто запросов', '100 requests'),
       caption: p.keepalive
         ? bi('Сто запросов идут по одному соединению. Правило выбирает под только при открытии соединения, а потом ядро ведёт всё соединение на тот же под. Поэтому все сто запросов попадают на один под, и балансировка выглядит неравной.', '100 requests on one connection: the rule picks a pod only at connect time, so all go to one pod.')
-        : fmtb(bi('Сто новых соединений распределились почти поровну: {d}.', '100 new connections spread almost equally: {d}.'), { d: readyIdx.map((i, k) => `web-${i + 1} ${dist[k]}`).join(', ') }),
+        : readyIdx.length === 1
+          ? bi('Все сто новых соединений ушли на web-1, потому что других готовых подов за Service нет.', 'All 100 new connections went to web-1, because there are no other ready pods behind the Service.')
+          : fmtb(bi('Правила выбирают под случайно, поэтому в среднем каждому из {n} подов достаётся одинаковая доля из ста новых соединений: {d}. В настоящем кластере числа от раза к разу немного отличаются от средних.', 'The rules pick a pod at random, so on average each of the {n} pods gets an equal share of the 100 new connections: {d}. In a real cluster the numbers differ a little from the average each time.'), { n: readyIdx.length, d: readyIdx.map((i, k) => `web-${i + 1} ${dist[k]}`).join(', ') }),
       focus: ['client'],
       say: { client: p.keepalive ? bi('Под client отправляет сто запросов по одному и тому же соединению.', 'client sends 100 requests over one connection.') : bi('Под client открывает сто новых соединений, по одному на запрос.', 'client opens 100 new connections.') },
       metrics,
@@ -301,7 +305,7 @@ export const servicePathModel = defineModel<P>({
     switch (change.id) {
       case 'replicas': {
         const n = b.replicas as number;
-        return fmt(bi('Подов теперь {n}, и вероятности правил стали такими: {p}. Так каждый под получает 1/{n} всех соединений.', '{n} pods: probabilities {p}, each pod gets 1/{n}.'), { n, p: ruleProbabilities(n).map((x) => x.toFixed(2)).join(', ') });
+        return fmt(bi('Подов теперь {n}, и вероятности правил стали такими: {pr}. Так каждый под получает 1/{n} всех соединений.', '{n} pods: probabilities {p}, each pod gets 1/{n}.'), { n, p: ruleProbabilities(n).map((x) => x.toFixed(2)).join(', '), pr: ruleProbabilities(n).map((x) => x.toFixed(2).replace('.', ',')).join('; ') });
       }
       case 'keepalive':
         return b.keepalive ? bi('С keep-alive соединение одно, правило выбирается один раз, и все запросы уходят на один под.', 'Keep-alive: one connection, one pick, one pod.') : bi('Без keep-alive каждый запрос открывает новое соединение, и правило выбирает под заново.', 'Each request is a new connection and a new pick.');

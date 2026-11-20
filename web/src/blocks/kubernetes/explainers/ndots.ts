@@ -102,7 +102,7 @@ export const ndotsModel = defineModel<P>({
         resolve: (_p, n) => (metric(n, 'queries') <= 2 ? 'two' : 'more'),
       },
     },
-    { id: 'ndots', label: bi('Сколько точек нужно в имени, чтобы сначала пробовать его как есть (ndots)', 'Dots needed to try the name as is first (ndots)'), kind: 'range', min: 1, max: 5, step: 1, default: 5, near: 'conf', levels: ['intermediate', 'experienced'], group: bi('Настройки резолвера и CoreDNS', 'Resolver and CoreDNS settings') },
+    { id: 'ndots', label: bi('Сколько точек нужно в имени, чтобы сначала пробовать его как есть (ndots)', 'Dots needed to try the name as is first (ndots)'), kind: 'range', min: 1, max: 5, step: 1, default: 5, near: 'conf', group: bi('Настройки резолвера и CoreDNS', 'Resolver and CoreDNS settings') },
     { id: 'cache', label: bi('Такой же запрос недавно уже задавали, и ответ лежит в кэше CoreDNS', 'The same query was asked recently, and the answer is in the CoreDNS cache'), kind: 'toggle', default: false, near: 'dns', levels: ['intermediate', 'experienced'], group: bi('Настройки резолвера и CoreDNS', 'Resolver and CoreDNS settings') },
   ],
   breaks: [

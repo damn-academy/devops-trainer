@@ -131,7 +131,7 @@ export const dispatchModel = defineModel<P>({
         say: { [me]: bi('Диспетчер ищет список того, что должно работать, и не находит его.', 'The dispatcher looks for the list and finds none.') },
         states: { ...first, list: 'err' },
         metrics: { minutes: 0 },
-        broken: { at: 'list', message: 'cat /srv/ops/services.txt: No such file or directory', caption: bi('ещё до первого запуска. Без описания того, что должно работать, диспетчеру не по чему ни раскладывать контейнеры, ни восстанавливать их после сбоя, поэтому сначала нужен список, а всё остальное потом.', 'before the first start: without a description of what must run there is nothing to place or restore from; the list comes first.') },
+        broken: { at: 'list', message: 'cat /srv/ops/services.txt: No such file or directory', caption: bi('ещё до первого запуска. Без описания того, что должно работать, диспетчеру не на что опереться: он не знает, какие контейнеры раскладывать и какие восстанавливать после сбоя. Поэтому сначала нужен список, а всё остальное потом.', 'before the first start: without a description of what must run there is nothing to place or restore from; the list comes first.') },
       });
       return s;
     }
@@ -244,7 +244,7 @@ export const dispatchModel = defineModel<P>({
         : bi('Список снова записан, и диспетчер может разложить контейнеры.', 'The list is back; the containers can be placed.');
     if (change.id === 'who')
       return fmt(
-        b.who === 'hand' ? bi('Работу снова делаете вы, и вместо {a} мин на те же действия уходит {b} мин.', 'You do it again: {a} → {b} min for the same work.') : bi('Работу делает программа, и вместо {a} мин на те же действия уходит {b} мин.', 'A program does it: {a} → {b} min for the same work.'),
+        b.who === 'hand' ? bi('Работу снова делаете вы, и вместо {a} мин на те же действия уходит {b} мин.', 'You do it again: {a} → {b} min for the same work.') : bi('Работу делает программа, и вместо {a} мин вашего времени на те же действия уходит {b} мин работы программы, причём без вашего участия и ночью так же, как днём. Ждать замену после сбоя всё равно приходится: настоящий кластер, как покажет урок об устройстве кластера, переносит контейнеры с выключенного сервера примерно через шесть минут, потому что сначала убеждается, что сервер не вернётся сам.', 'A program does it: instead of {a} min of your time the same actions take {b} min of the program’s work, without you and at night just as by day. You still wait for the replacement after a failure: a real cluster, as the lesson on the cluster’s parts shows, moves containers off a dead server after about six minutes, because it first makes sure the server will not come back by itself.'),
         { a: metric(prev, 'minutes'), b: metric(next, 'minutes') },
       );
     return fmtb(bi('Работы стало {d}, и теперь на неё уходит {m} мин.', 'The work changed: now {m} min.'), { d: metric(next, 'minutes') > metric(prev, 'minutes') ? bi('больше', 'more') : bi('меньше', 'less'), m: metric(next, 'minutes') });

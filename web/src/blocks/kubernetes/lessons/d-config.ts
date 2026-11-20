@@ -17,11 +17,11 @@ export const configQuiz: QuizItem[] = [
     options: [
       { id: 'plain', text: bi('По умолчанию значения хранятся в etcd незашифрованными', 'By default the values are stored unencrypted in etcd'), correct: true },
       { id: 'read', text: bi('Любой, кто может читать объекты Secret в namespace, видит их значения', 'Anyone who may read Secrets in a namespace sees the values'), correct: true },
-      { id: 'rbac', text: bi('Доступ к Secret можно ограничить правами (RBAC)', 'Access to Secrets can be restricted with permissions (RBAC)'), correct: true },
+      { id: 'rbac', text: bi('Доступ к Secret можно ограничить правами доступа (RBAC), то есть правилами, кто какие объекты может читать и менять', 'Access to Secrets can be restricted with access permissions (RBAC), that is, rules saying who may read and change which objects'), correct: true },
       { id: 'b64', text: bi('base64 шифрует значения', 'base64 encrypts the values'), why: bi('base64 только записывает байты текстом, и команда `base64 -d` вернёт исходное значение любому.', 'base64 is only a way to write bytes as text; `base64 -d` gives the original back to anyone.') },
       { id: 'file', text: bi('Secret нельзя смонтировать как файл', 'A Secret cannot be mounted as a file'), why: bi('Смонтировать можно, потому что том типа secret показывает каждый ключ отдельным файлом.', 'It can: a secret volume shows every key as a separate file.') },
     ],
-    explain: bi('Шифрование данных в etcd включают отдельно (encryption at rest), а доступ к Secret ограничивают правами.', 'Encryption in etcd is enabled separately (encryption at rest), and access is restricted with permissions.'),
+    explain: bi('Шифрование хранилища etcd (по-английски encryption at rest) включают отдельно, а доступ к Secret ограничивают правами доступа, которые выдают пользователям и программам.', 'Encryption of the etcd store (encryption at rest) is enabled separately, and access to Secrets is restricted with access permissions granted to users and programs.'),
   },
   {
     id: 'k8s.q.cfg.env',
@@ -90,7 +90,7 @@ export const configLesson: Lesson = {
           chips: 'kubectl create configmap web-config --from-env-file=app.env',
           concepts: ['k8s.configmap'],
           docRef: { page: 'help/kubectl-create-configmap', anchor: 'EXAMPLES', line: '--from-env-file' },
-          hints: { H1: bi('У команды create configmap три источника данных: значение в командной строке, файл и env-файл.', 'create configmap has three sources: a literal, a file and an env file.') },
+          hints: { H1: bi('У команды create configmap три источника данных: значение в командной строке, файл и env-файл.', 'create configmap has three sources: a literal, a file and an env file.'), H2: bi('В разделе Options справки ищите флаг, описание которого по-русски звучит так: «путь к файлу, из которого читаются строки вида ключ=значение». Флаг --from-file, наоборот, кладёт весь файл в один ключ.', 'In the Options section of the help look for the flag described as “the path to a file to read lines of key=val pairs from”. The --from-file flag, by contrast, puts the whole file into one key.') },
         },
         {
           id: 'env',
@@ -113,7 +113,7 @@ export const configLesson: Lesson = {
           check: { when: "k8s.objects[kind=Secret][metadata.name=db].data.password=czNjcjN0", stdout: /password: czNjcjN0/ },
           chips: 'kubectl create secret generic db --from-literal=password=s3cr3t && kubectl get secret db -o yaml',
           concepts: ['k8s.secret'],
-          hints: { H1: bi('Вид Secret для произвольных данных называется generic.', 'The Secret kind for arbitrary data is generic.') },
+          hints: { H1: bi('Вид Secret для произвольных данных называется generic.', 'The Secret kind for arbitrary data is generic.'), H2: bi('Команда записывается так: `kubectl create secret generic <имя> --from-literal=<ключ>=<значение>`, а YAML объекта напечатает команда `kubectl get secret <имя> -o yaml`.', 'The command looks like `kubectl create secret generic <name> --from-literal=<key>=<value>`, and `kubectl get secret <name> -o yaml` prints the object as YAML.') },
         },
       ],
     },
@@ -220,8 +220,8 @@ export const healthLesson: Lesson = {
       step: 'explain',
       title: bi('requests нужны планировщику, а limits нужны ядру', 'requests serve the scheduler, limits serve the kernel'),
       body: bi(
-        'Для каждого контейнера можно задать [[k8s.resources|requests и limits]] по процессору и памяти. Это два разных числа для двух разных потребителей.\n\n**requests** говорят, сколько ресурсов контейнер просит. По ним работает планировщик: под попадёт на узел, только если запросы подов, которые там уже работают, вместе с запросом нового пода помещаются в память и процессор узла, отданные подам (allocatable). Ядро запрос памяти никак не ограничивает.\n\n**limits** задают потолок, и следит за ним ядро с помощью тех самых cgroup из блока Linux. `limits.memory: 256Mi` превращается в `memory.max = 268435456` в cgroup контейнера. Если контейнер превысит этот потолок, OOM killer ядра завершит процесс, и в `kubectl describe` появится `Reason: OOMKilled` и код 137. `limits.cpu: 500m` превращается в `cpu.max = 50000 100000`, то есть 50 мс процессорного времени из каждых 100 мс. Превышение по процессору процесс не завершает, а только притормаживает (throttling).\n\nИз сочетания requests и limits получается класс качества обслуживания (QoS): Guaranteed, когда requests равны limits у всех контейнеров, Burstable, когда задано хоть что-то, и BestEffort, когда не задано ничего. Когда на узле не хватает памяти, kubelet выселяет сначала поды BestEffort, а потом Burstable.',
-        'Every container can have [[k8s.resources|requests and limits]] for CPU and memory. They are two different numbers for two different consumers.\n\n**requests** is how much the container asks for. The scheduler plans by them: a pod goes onto a node only if the sum of the requests of the pods already there plus its own fits into allocatable. The kernel does not limit memory by requests.\n\n**limits** is the ceiling, and the kernel enforces it — the very cgroups of the Linux block. `limits.memory: 256Mi` turns into `memory.max = 268435456` in the container cgroup. Exceed it and the OOM killer kills the process: `kubectl describe` shows `Reason: OOMKilled`, code 137. `limits.cpu: 500m` is `cpu.max = 50000 100000`: 50 ms out of every 100 ms. Exceeding CPU does not kill, it slows down (throttling).\n\nThe combination gives a QoS class: Guaranteed (requests = limits everywhere), Burstable (something is set), BestEffort (nothing). When a node runs short of memory, the kubelet evicts BestEffort first, then Burstable.',
+        'Для каждого контейнера можно задать [[k8s.resources|requests и limits]] по процессору и памяти. Это два разных числа для двух разных потребителей.\n\n**requests** говорят, сколько ресурсов контейнер просит. По ним работает планировщик: под попадёт на узел, только если запросы подов, которые там уже работают, вместе с запросом нового пода помещаются в память и процессор узла, отданные подам (allocatable). Ядро запрос памяти никак не ограничивает.\n\n**limits** задают потолок, и следит за ним ядро с помощью тех самых cgroup из блока Linux. `limits.memory: 256Mi` превращается в `memory.max = 268435456` в cgroup контейнера. Если контейнер превысит этот потолок, OOM killer ядра завершит процесс, и в `kubectl describe` появится `Reason: OOMKilled` и код 137. `limits.cpu: 500m` превращается в `cpu.max = 50000 100000`, то есть 50 мс процессорного времени из каждых 100 мс. Превышение по процессору процесс не завершает, а только притормаживает (throttling).\n\nИз сочетания requests и limits получается класс качества обслуживания (QoS): Guaranteed, когда requests равны limits у всех контейнеров, Burstable, когда задано хоть что-то, и BestEffort, когда не задано ничего. Когда на узле не хватает памяти, kubelet выселяет сначала те поды, которые потребляют больше, чем запросили в requests, и учитывает их приоритет. У подов BestEffort requests нет вовсе, поэтому они обычно оказываются первыми, а поды Guaranteed последними. Подробно порядок описан на странице документации [Node-pressure Eviction](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/).',
+        'Every container can have [[k8s.resources|requests and limits]] for CPU and memory. They are two different numbers for two different consumers.\n\n**requests** is how much the container asks for. The scheduler plans by them: a pod goes onto a node only if the sum of the requests of the pods already there plus its own fits into allocatable. The kernel does not limit memory by requests.\n\n**limits** is the ceiling, and the kernel enforces it — the very cgroups of the Linux block. `limits.memory: 256Mi` turns into `memory.max = 268435456` in the container cgroup. Exceed it and the OOM killer kills the process: `kubectl describe` shows `Reason: OOMKilled`, code 137. `limits.cpu: 500m` is `cpu.max = 50000 100000`: 50 ms out of every 100 ms. Exceeding CPU does not kill, it slows down (throttling).\n\nThe combination gives a QoS class: Guaranteed (requests = limits everywhere), Burstable (something is set), BestEffort (nothing). When a node runs short of memory, the kubelet first evicts the pods that use more than they asked for in requests, and takes their priority into account. BestEffort pods have no requests at all, so they usually come first, and Guaranteed pods last. The order is described in detail on the [Node-pressure Eviction](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/) page.',
       ),
     },
     {
@@ -240,7 +240,7 @@ export const healthLesson: Lesson = {
           concepts: ['k8s.crashloop'],
           docRef: { page: 'help/kubectl-logs', anchor: 'OPTIONS', line: '--previous' },
           docStep: 3,
-          hints: { H1: bi('Флаг для «предыдущего экземпляра контейнера» описан в разделе Options, а одну последнюю строку оставит флаг --tail.', 'The flag for "the previous instance of the container" is in Options; --tail gives a one-line tail.') },
+          hints: { H1: bi('Флаг для «предыдущего экземпляра контейнера» описан в разделе Options, а одну последнюю строку оставит флаг --tail.', 'The flag for "the previous instance of the container" is in Options; --tail gives a one-line tail.'), H2: bi('Нужная строка справки по-русски звучит так: «если флаг указан, напечатать журнал предыдущего экземпляра контейнера в поде». Вывод сохраните в файл перенаправлением `> ~/crash.txt`.', 'The help line you need reads: “If true, print the logs for the previous instance of the container in a pod if it exists.” Save the output to the file with the redirection `> ~/crash.txt`.') },
         },
         {
           id: 'ready',
@@ -250,7 +250,7 @@ export const healthLesson: Lesson = {
           concepts: ['k8s.probe'],
           hints: {
             H1: bi('Посмотрите события пода: kubelet пишет туда, почему проверка не прошла.', 'Look at the pod events: the kubelet writes why the probe failed.'),
-            H2: bi('Проверка обращается к порту, который приложение не слушает. Поменяйте порт проверки в шаблоне Deployment.', 'The probe knocks on a port the application does not listen on. Change the probe port in the Deployment template.'),
+            H2: bi('Проверка обращается к порту 8080, а приложение слушает порт 80. Поменяйте порт проверки в шаблоне Deployment командой `kubectl patch deploy shop -p \'{"spec":{"template":{"spec":{"containers":[{"name":"shop","readinessProbe":{"httpGet":{"port":80}}}]}}}}\'`.', 'The probe knocks on port 8080, while the application listens on port 80. Change the probe port in the Deployment template with `kubectl patch deploy shop -p \'{"spec":{"template":{"spec":{"containers":[{"name":"shop","readinessProbe":{"httpGet":{"port":80}}}]}}}}\'`.'),
             H3: bi('Выполните `kubectl patch deploy shop -p \'{"spec":{"template":{"spec":{"containers":[{"name":"shop","readinessProbe":{"httpGet":{"port":80}}}]}}}}\'`: контейнеры в шаблоне сопоставляются по имени.', '`kubectl patch deploy shop -p \'{"spec":{"template":{"spec":{"containers":[{"name":"shop","readinessProbe":{"httpGet":{"port":80}}}]}}}}\'` — containers merge by name.'),
           },
         },
@@ -260,7 +260,7 @@ export const healthLesson: Lesson = {
           check: { when: "files['/home/learner/exit.txt'].text~'137' && k8s.objects[kind=Pod][metadata.name=hog].status.containerStatuses.lastState.terminated.reason=OOMKilled" },
           chips: 'kubectl apply -f hog.yaml && kubectl describe pod hog',
           concepts: ['k8s.resources'],
-          hints: { H1: bi('В выводе describe найдите Last State, а в нём Reason и Exit Code.', 'In describe look for Last State: Reason and Exit Code.') },
+          hints: { H1: bi('В выводе describe найдите Last State, а в нём Reason и Exit Code.', 'In describe look for Last State: Reason and Exit Code.'), H2: bi('Найденное число запишите в файл командой `echo <код> > ~/exit.txt`.', 'Write the number you found into the file with `echo <code> > ~/exit.txt`.') },
         },
       ],
     },
@@ -271,6 +271,18 @@ export const healthLesson: Lesson = {
 // ── KM11 (the idea) ──────────────────────────────────────────────────────────
 
 export const helmQuiz: QuizItem[] = [
+  {
+    id: 'k8s.q.helm.values',
+    kind: 'mcq',
+    concepts: ['k8s.helm', 'k8s.chart'],
+    prompt: bi('В шаблоне чарта записано `replicas: {{ .Values.replicaCount }}`. В файле `values.yaml` стоит `replicaCount: 2`, а в файле `prod.yaml` стоит `replicaCount: 4`. Что напечатает команда `helm template blog ./chart -f prod.yaml` на месте этой строки?', 'The chart template says `replicas: {{ .Values.replicaCount }}`. `values.yaml` has `replicaCount: 2`, and `prod.yaml` has `replicaCount: 4`. What does `helm template blog ./chart -f prod.yaml` print in place of this line?'),
+    options: [
+      { id: 'four', text: 'replicas: 4', correct: true },
+      { id: 'two', text: 'replicas: 2', why: bi('Значения из `values.yaml` служат значениями по умолчанию, а файл, переданный флагом `-f`, их перекрывает.', 'The values in `values.yaml` are the defaults, and a file passed with `-f` overrides them.') },
+      { id: 'raw', text: 'replicas: {{ .Values.replicaCount }}', why: bi('Команда `helm template` для того и нужна, чтобы подставить значения и показать готовые манифесты, которые потом уйдут в API.', 'This is exactly what `helm template` is for: it fills in the values and shows the finished manifests that would go to the API.') },
+    ],
+    explain: bi('Helm берёт значения по умолчанию из `values.yaml`, накладывает поверх них файлы из флагов `-f` по порядку и только потом подставляет результат в шаблоны. Поэтому один чарт с разными файлами значений даёт тестовое и рабочее окружение.', 'Helm takes the defaults from `values.yaml`, lays the `-f` files over them in order, and only then fills the templates. That is why one chart with different values files gives the test and the production environment.'),
+  },
   {
     id: 'k8s.q.helm.rollback',
     kind: 'mcq',

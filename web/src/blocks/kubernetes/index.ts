@@ -54,7 +54,7 @@ const stage1: Block = {
   checklistStep: '05',
   requires: ['containers'],
   levels: {
-    beginner: bi('Уверенно работаю с Docker, но кластера не видел', 'Confident with Docker, never seen a cluster'),
+    beginner: bi('Прошёл блок «Контейнеры» нашего курса, но кластера не видел', 'Has done our Containers block, never seen a cluster'),
     intermediate: bi('Запускал kubectl apply по инструкции', 'kubectl apply by instructions'),
     experienced: bi('Сам пишу манифесты и готовлюсь к уровню CKA', 'Writes manifests, aims at CKA level'),
   },

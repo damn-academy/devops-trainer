@@ -115,6 +115,17 @@ export const netpolLesson: Lesson = {
       ),
     },
     {
+      id: 'sample',
+      kind: 'text',
+      step: 'explain',
+      levels: ['beginner'],
+      title: bi('Как читать политику построчно', 'How to read a policy line by line'),
+      body: bi(
+        'Ниже образец политики для другого случая, чем в лабораторной работе: к подам отчётов с меткой `app=report` в namespace `office` пускают только поды с меткой `role=accountant` из namespace `finance`. Комментарий после знака `#` объясняет каждую строку, и YAML его не читает.\n\n```yaml\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: only-accountants     # имя политики, любое\n  namespace: office          # политика действует в этом namespace\nspec:\n  podSelector:               # кого защищаем:\n    matchLabels:\n      app: report            # поды с меткой app=report\n  policyTypes:\n  - Ingress                  # ограничиваем только входящие соединения\n  ingress:\n  - from:\n    - namespaceSelector:     # один дефис, поэтому оба условия вместе:\n        matchLabels:\n          kubernetes.io/metadata.name: finance   # из namespace finance\n      podSelector:           # без дефиса: это тот же элемент списка\n        matchLabels:\n          role: accountant   # и только поды с role=accountant\n    ports:\n    - port: 80               # и только на порт 80\n```\n\nЕсли поставить дефис и перед `podSelector`, в списке `from` станет два элемента, и политика начнёт пускать всех из finance, а также всех бухгалтеров из самого office. Политику запрета по умолчанию пишут ещё короче: пустой `podSelector: {}`, тип Ingress и ни одного правила `ingress`.',
+        'Below is a sample policy for a different case than the lab: the report pods labelled `app=report` in namespace `office` admit only pods labelled `role=accountant` from namespace `finance`. The comment after `#` explains every line, and YAML ignores it.\n\n```yaml\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: only-accountants     # the policy name, any\n  namespace: office          # the policy works in this namespace\nspec:\n  podSelector:               # whom we protect:\n    matchLabels:\n      app: report            # pods labelled app=report\n  policyTypes:\n  - Ingress                  # restrict incoming connections only\n  ingress:\n  - from:\n    - namespaceSelector:     # one dash, so both conditions together:\n        matchLabels:\n          kubernetes.io/metadata.name: finance   # from namespace finance\n      podSelector:           # no dash: the same list item\n        matchLabels:\n          role: accountant   # and only pods with role=accountant\n    ports:\n    - port: 80               # and only on port 80\n```\n\nIf you also put a dash before `podSelector`, the `from` list gets two items, and the policy starts admitting everyone from finance and also every accountant from office itself. A default-deny policy is even shorter: an empty `podSelector: {}`, the Ingress type and no `ingress` rules at all.',
+      ),
+    },
+    {
       id: 'look-intro',
       kind: 'text',
       step: 'look',
@@ -150,7 +161,7 @@ export const netpolLesson: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: NETPOL_LAB,
-      intro: bi('В namespace `pay` работают Deployment и Service `pay`, в namespace `dev` — Service `web`. Есть два пода `client`, в `shop` и в `dev`, и у обоих метка role=frontend. Сейчас всё открыто. Политики удобно писать в файл командой `cat > np.yaml` и применять командой `kubectl apply -f`.', 'Namespace `pay` with a Deployment and Service `pay`, namespace `dev` with a Service `web`. Two pods named `client`: in `shop` and in `dev`, both labelled role=frontend. Everything is open now. Policies are easiest written into a file (`cat > np.yaml`) and applied with `kubectl apply -f`.'),
+      intro: bi('В namespace `pay` работают Deployment и Service `pay`, а в namespace `dev` работает Service `web`. Есть три пода `client`, в namespace `shop`, `dev` и `pay`, и у всех трёх метка role=frontend. Сейчас всё открыто. Политики удобно писать в файл командой `cat > np.yaml` и применять командой `kubectl apply -f`. Сломать здесь ничего нельзя: если политика получилась не такой, удалите её командой `kubectl delete -f np.yaml` и напишите заново.', 'Namespace `pay` runs a Deployment and Service `pay`, and namespace `dev` runs a Service `web`. There are three pods named `client`, in namespaces `shop`, `dev` and `pay`, and all three are labelled role=frontend. Everything is open now. Policies are easiest written into a file (`cat > np.yaml`) and applied with `kubectl apply -f`. You cannot break anything here: if a policy came out wrong, delete it with `kubectl delete -f np.yaml` and write it again.'),
       tasks: [
         {
           id: 'deny',
@@ -166,12 +177,13 @@ export const netpolLesson: Lesson = {
         },
         {
           id: 'frontend',
-          prompt: bi('Не удаляя default-deny, пропустите к `pay` на порт 80 только поды с role=frontend из namespace `shop`. Клиент из `dev` с той же меткой должен остаться снаружи.', 'Without deleting the default-deny, let into `pay` on port 80 only role=frontend pods from namespace `shop`. The client from `dev` with the same label must stay outside.'),
+          prompt: bi('Не удаляя default-deny, пропустите к `pay` на порт 80 только поды с role=frontend из namespace `shop`. Клиенты из `dev` и из самого `pay` с той же меткой должны остаться снаружи. Задача решена, когда `curl` из `shop` получает ответ, а из двух других клиентов ждёт до тайм-аута.', 'Without deleting the default-deny, let into `pay` on port 80 only role=frontend pods from namespace `shop`. The clients from `dev` and from `pay` itself with the same label must stay outside. The task is done when `curl` from `shop` gets an answer and from the other two clients waits until it times out.'),
           check: {
-            when: (f) => hasDenyIngress(f, 'pay') && hasAndPeer(f, 'pay') && reach(f, 'shop/client', 'pay.pay') === 200 && reach(f, 'dev/client', 'pay.pay') !== 200,
+            when: (f) => hasDenyIngress(f, 'pay') && hasAndPeer(f, 'pay') && reach(f, 'shop/client', 'pay.pay') === 200 && reach(f, 'dev/client', 'pay.pay') !== 200 && reach(f, 'pay/client', 'pay.pay') !== 200,
             fail: [
               { if: (f) => !hasDenyIngress(f, 'pay'), say: bi('Политика default-deny пропала. Разрешения добавляют отдельной политикой рядом с запретом, а не правкой самого запрета.', 'The default-deny is gone. Allows are added as a separate policy next to it, not by editing the deny.') },
               { if: (f) => reach(f, 'dev/client', 'pay.pay') === 200, say: bi('Клиент из dev прошёл, потому что политика выбирает по метке и не смотрит на namespace. Нужны оба условия в одном элементе from.', 'The client from dev got through: the policy selects by label without looking at the namespace. You need both conditions in one from item.') },
+              { if: (f) => reach(f, 'pay/client', 'pay.pay') === 200, say: bi('Клиент из самого namespace pay прошёл. Так бывает, когда в списке from два элемента: второй дефис превратил условия в «ИЛИ», и podSelector без namespaceSelector пускает поды с role=frontend из namespace политики. Сведите namespaceSelector и podSelector в один элемент.', 'The client from namespace pay itself got through. That happens when the from list has two items: the second dash turned the conditions into "OR", and a podSelector without a namespaceSelector lets in role=frontend pods from the policy’s own namespace. Put namespaceSelector and podSelector into one item.') },
               { if: (f) => reach(f, 'shop/client', 'pay.pay') === 200 && !hasAndPeer(f, 'pay'), say: bi('Клиент из shop проходит, но через «ИЛИ», и сейчас к pay пустят любой под из shop. Сведите namespaceSelector и podSelector в один элемент.', 'The shop client gets through, but by "OR": any pod of shop is let into pay now. Put namespaceSelector and podSelector into one item.') },
             ],
           },

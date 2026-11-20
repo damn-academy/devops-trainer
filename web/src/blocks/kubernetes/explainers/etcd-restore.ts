@@ -150,10 +150,10 @@ export const etcdRestoreModel = defineModel<P>({
     s.push({
       id: 'later',
       label: bi('позже', 'later'),
-      caption: fmt(bi('Кластер работает дальше, и после снимка в него записывают ещё {n} объектов. Потом случается беда, и кто-то удаляет namespace с приложением.', 'The cluster goes on: {n} more objects. Then someone deletes a namespace.'), { n: p.after }),
+      caption: p.after === 0 ? bi('Сразу после снимка случается беда, и кто-то удаляет namespace с приложением. Ничего другого после снимка в кластер записать не успели.', 'Right after the snapshot something goes wrong, and someone deletes a namespace with the application. Nothing else was written after the snapshot.') : fmt(bi('Кластер работает дальше, и после снимка в него записывают ещё {n} объектов. Потом случается беда, и кто-то удаляет namespace с приложением.', 'The cluster goes on: {n} more objects. Then someone deletes a namespace.'), { n: p.after }),
       focus: ['api', 'e-write'],
       tokens: [{ edge: 'e-write', label: `+${p.after}` }],
-      say: { api: fmt(bi('API-сервер записывает в etcd ещё {n} объектов, а потом записывает удаление namespace.', 'The API server writes {n} more objects, then a namespace deletion.'), { n: p.after }) },
+      say: { api: p.after === 0 ? bi('API-сервер записывает в etcd удаление namespace.', 'The API server writes a namespace deletion to etcd.') : fmt(bi('API-сервер записывает в etcd ещё {n} объектов, а потом записывает удаление namespace.', 'The API server writes {n} more objects, then a namespace deletion.'), { n: p.after }) },
       metrics: zero,
     });
     s.push({
@@ -233,7 +233,7 @@ export const etcdRestoreModel = defineModel<P>({
     s.push({
       id: 'back',
       label: bi('API снова', 'API back'),
-      caption: fmt(bi('Вы возвращаете манифест API-сервера, и кластер снова отвечает. Удалённый namespace вернулся, а {n} объектов, записанных после снимка, пропали. Контроллеры создадут заново то, что смогут, а остальное придётся применить ещё раз.', 'The API server is back; the namespace is back; {n} objects written after the snapshot are gone.'), { n: o.lost }),
+      caption: o.lost === 0 ? bi('Вы возвращаете манифест API-сервера, и кластер снова отвечает. Удалённый namespace вернулся, а после снимка ничего не записывали, поэтому ничего не потеряно.', 'The API server is back, and the cluster answers again. The deleted namespace is back, and nothing was written after the snapshot, so nothing is lost.') : fmt(bi('Вы возвращаете манифест API-сервера, и кластер снова отвечает. Удалённый namespace вернулся, а {n} объектов, записанных после снимка, пропали. Контроллеры создадут заново то, что смогут, а остальное придётся применить ещё раз.', 'The API server is back; the namespace is back; {n} objects written after the snapshot are gone.'), { n: o.lost }),
       focus: ['api'],
       say: { api: bi('API-сервер снова работает и видит данные из снимка.', 'The API server runs again on the snapshot’s data.') },
       states: { api: 'ok' },
@@ -243,7 +243,7 @@ export const etcdRestoreModel = defineModel<P>({
   },
   explainDelta(_prev, next, change, _a, b): Bi {
     if (change.kind === 'break') return change.on ? bi('Посмотрите, на каком шаге восстановление обрывается и что вам скажет инструмент.', 'See where the restore breaks and what the tool says.') : bi('Восстановление снова идёт по порядку.', 'The restore runs in order again.');
-    if (change.id === 'after') return fmt(bi('Потеряно объектов: {n}. Чем реже снимки, тем больше потеря.', '{n} objects lost: rarer snapshots, bigger losses.'), { n: metric(next, 'lost') });
+    if (change.id === 'after') return metric(next, 'lost') === 0 ? bi('После снимка ничего не записывали, поэтому при восстановлении ничего не пропадает. Чем реже делают снимки, тем больше пропадает при восстановлении.', 'Nothing was written after the snapshot, so the restore loses nothing. The rarer the snapshots, the more a restore loses.') : fmt(bi('После восстановления пропало {n} объектов, записанных после снимка. Чем реже делают снимки, тем больше пропадает при восстановлении.', '{n} objects lost: rarer snapshots, bigger losses.'), { n: metric(next, 'lost') });
     if (change.id === 'tool') return b.tool === 'etcdctl' ? bi('etcdctl работает с сервером, а с файлами работает etcdutl.', 'etcdctl talks to a server, etcdutl works with files.') : bi('С файлом снимка правильно работать программой etcdutl.', 'etcdutl is right for a snapshot file.');
     return b.stopApi ? bi('Пока подменяют базу, писать в неё некому.', 'Nobody writes while the database is swapped.') : bi('Работающий API-сервер во время подмены базы становится источником странных ошибок.', 'A running API server during the swap causes strange errors.');
   },

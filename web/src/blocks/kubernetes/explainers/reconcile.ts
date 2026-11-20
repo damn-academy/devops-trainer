@@ -79,6 +79,9 @@ const diagram = {
     edge('e-act', 'ctrl', 'api', bi('создать или удалить под', 'create or delete a pod'), bi('Действие контроллера оказывается обычным запросом к API-серверу, таким же, как ваш.', 'The controller’s action is an ordinary API request, just like yours.'), bi('Запрос отправляет контроллер.', 'The controller.'), { via: [[630, 436], [630, 90]], labelAt: 0.35 }),
     edge('e-pods', 'api', 'pods', bi('новые и удалённые поды', 'pods added and removed'), bi('Поды тоже служат объектами API, поэтому, когда API-сервер принимает запрос на создание или удаление, фактическое состояние меняется.', 'Pods are API objects too; when the API server accepts a create or delete, the actual state changes.'), bi('Изменение принимает kube-apiserver.', 'kube-apiserver.'), { via: [[815, 60]], labelAt: 0.6 }),
   ],
+  groups: [
+    { id: 'g-cm', label: bi('процесс kube-controller-manager', 'the kube-controller-manager process'), around: ['cache', 'queue', 'ctrl'], family: 'cp' as const, dash: 'dash' as const, pad: 10, card: { what: bi('Кэш информера, очередь ключей и сама петля контроллера ReplicaSet работают внутри одного процесса kube-controller-manager. Если процесс остановлен, нет ни кэша, ни очереди, ни петли.', 'The informer cache, the work queue and the ReplicaSet controller loop itself run inside one kube-controller-manager process. If the process is stopped, there is no cache, no queue and no loop.'), who: bi('Процесс запускают на управляющем узле кластера.', 'The process runs on a control-plane node of the cluster.') } },
+  ],
 };
 
 const ALL = idsOf(diagram);
@@ -216,7 +219,7 @@ export const reconcileModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'reconciles', label: bi('проходов петли для ReplicaSet web', 'loop passes for ReplicaSet web') },
+    { id: 'reconciles', label: bi('проходов петли с действием для ReplicaSet web', 'loop passes with an action for ReplicaSet web') },
     { id: 'created', label: bi('подов создано', 'pods created') },
     { id: 'deleted', label: bi('подов удалено', 'pods deleted') },
   ],
@@ -274,7 +277,7 @@ export const reconcileModel = defineModel<P>({
         { pods: fill(3) },
         true,
       );
-    if (ev) change('event', bi('вмешательство', 'intervention'), ev.cmd, ev.say, ev.caption, { pods: show(plan.actual) }, { pods: fill(plan.actual) }, !scaled);
+    if (ev) change('event', bi('вмешательство', 'intervention'), ev.cmd, ev.say, ev.caption, { pods: p.event === 'unlabel' ? `${show(plan.actual)} ${t(bi('и 1 без метки', 'and 1 unlabelled'))}` : show(plan.actual) }, { pods: fill(plan.actual) }, !scaled);
     const changed = scaled || !!ev;
     if (changed) {
       s.push({
@@ -318,10 +321,10 @@ export const reconcileModel = defineModel<P>({
         id: 'stuck',
         label: bi('стоит', 'stuck'),
         caption: changed
-          ? bi('Ключ default/web лежит в очереди, но взять его некому, потому что процесс kube-controller-manager остановлен. Желаемое записано в etcd, а поды остаются такими, какими их оставило вмешательство.', 'The key waits in the queue, but nobody takes it: kube-controller-manager is stopped.')
+          ? bi('Процесс kube-controller-manager остановлен, а вместе с ним не работают кэш информера, очередь ключей и сама петля, потому что все они работают внутри этого процесса. Событий о вмешательстве никто не получает. Желаемое записано в etcd, а поды остаются такими, какими их оставило вмешательство. Когда процесс запустят снова, он заново прочитает объекты из API-сервера, увидит разницу и исправит её.', 'kube-controller-manager is stopped, and with it the informer cache, the work queue and the loop itself, because they all run inside this process. Nobody receives the events about the intervention. The desired state is in etcd, and the pods stay as the intervention left them. When the process is started again, it reads the objects from the API server anew, sees the difference and fixes it.')
           : bi('Процесс kube-controller-manager остановлен. Сейчас разницы нет, но если под удалят или узел выключится, исправлять это будет некому.', 'kube-controller-manager is stopped; there is no difference now, but nobody would fix one.'),
         focus: ['ctrl'],
-        say: { ctrl: bi('Контроллер не работает и не берёт ключи из очереди.', 'The controller is not running and takes no keys.') },
+        say: { ctrl: bi('Процесс kube-controller-manager остановлен, и петля контроллера не работает.', 'The kube-controller-manager process is stopped, and the controller loop does not run.') },
         states: { ctrl: 'err' },
         metrics: zero,
         broken: {
@@ -397,7 +400,7 @@ export const reconcileModel = defineModel<P>({
         id: 'pods',
         label: bi('поды', 'pods'),
         caption: plan.created
-          ? bi('API-сервер принимает запрос, и появляются новые поды. Имена и IP-адреса у них новые, потому что под нельзя «починить», его можно только заменить другим.', 'The API server accepts it and new pods appear with new names and IPs: a pod is not repaired, it is replaced.')
+          ? (plan.created === 1 ? bi('API-сервер принимает запрос, и появляется новый под. Имя и IP-адрес у него новые, потому что под нельзя «починить», его можно только заменить другим.', 'The API server accepts it and a new pod appears with a new name and IP: a pod is not repaired, it is replaced.') : bi('API-сервер принимает запрос, и появляются новые поды. Имена и IP-адреса у них новые, потому что под нельзя «починить», его можно только заменить другим.', 'The API server accepts it and new pods appear with new names and IPs: a pod is not repaired, it is replaced.'))
           : bi('API-сервер принимает запрос, и лишние поды удаляются. Подов снова столько, сколько записано в ReplicaSet.', 'The API server accepts it and the extra pods go away.'),
         focus: ['pods', 'e-pods'],
         tokens: [{ edge: 'e-pods', label: plan.created ? 'ADDED pod' : 'DELETED pod' }],
@@ -411,7 +414,7 @@ export const reconcileModel = defineModel<P>({
       id: 'again',
       label: bi('снова', 'again'),
       caption: plan.created || plan.deleted
-        ? bi('Изменения, которые сделал сам контроллер, тоже приходят ему событиями и запускают ещё один проход. В этом проходе разницы уже нет, поэтому контроллер ничего не делает и ждёт следующего изменения.', 'The controller’s own changes come back as events and start one more pass; there is no difference now, so it waits.')
+        ? bi('Изменения, которые сделал сам контроллер, тоже приходят ему событиями и запускают ещё один, холостой проход. В этом проходе разницы уже нет, поэтому контроллер ничего не делает, и счётчик проходов с действием не растёт.', 'The controller’s own changes come back as events and start one more pass; there is no difference now, so it waits.')
         : bi('Контроллер закончил проход и ждёт следующего изменения. Петля работает всё время, пока работает кластер.', 'The pass is over; the controller waits for the next change. The loop runs as long as the cluster does.'),
       focus: ['ctrl'],
       say: { ctrl: bi('Разницы нет, и контроллер ждёт следующего события.', 'No difference; the controller waits for the next event.') },
@@ -424,7 +427,7 @@ export const reconcileModel = defineModel<P>({
   explainDelta(_prev, next, change, a, b): Bi {
     if (change.kind === 'break')
       return change.on
-        ? bi('Контроллер остановлен, поэтому ключ лежит в очереди, и разницу между желаемым и фактическим никто не исправляет.', 'The controller is stopped: the key waits, nobody fixes the difference.')
+        ? bi('Процесс kube-controller-manager остановлен вместе с кэшем, очередью и петлёй, поэтому разницу между желаемым и фактическим никто не исправляет.', 'The kube-controller-manager process is stopped together with the cache, the queue and the loop, so nobody fixes the difference.')
         : bi('Контроллер снова работает и сразу смотрит на текущее состояние подов.', 'The controller runs again and looks at the current state at once.');
     const pl = reconcilePlan(b as P);
     const act = pl.created ? fmtb(bi('создаёт {n}', 'creates {n}'), { n: num(pl.created, ...PODS) }) : pl.deleted ? fmtb(bi('удаляет {n}', 'deletes {n}'), { n: num(pl.deleted, ...PODS) }) : bi('ничего не делает с подами', 'does nothing');
@@ -434,7 +437,9 @@ export const reconcileModel = defineModel<P>({
       case 'event':
         return b.event === 'image'
           ? bi('Смена образа не меняет число подов, поэтому ReplicaSet её не замечает и работающие поды не трогает. Чтобы заменить поды на новый образ, нужен Deployment, о котором следующий урок.', 'An image change does not change the count, so the ReplicaSet ignores it; replacing pods needs a Deployment.')
-          : fmtb(bi('После вмешательства работает {c}, а желаемых подов {w}, поэтому контроллер {d}.', 'After the intervention {c} run, {w} wanted: the controller {d}.'), { c: num(pl.actual, ...PODS), w: b.replicas as number, d: act });
+          : b.event === 'unlabel'
+            ? fmtb(bi('Под без метки продолжает работать, но под селектор подходят только {c} из трёх работающих. Желаемых подов {w}, поэтому контроллер {d}.', 'The unlabelled pod keeps running, but only {c} of the three running pods match the selector. {w} are wanted, so the controller {d}.'), { c: num(pl.actual, ...PODS), w: b.replicas as number, d: act })
+            : fmtb(bi('После вмешательства работает {c}, а желаемых подов {w}, поэтому контроллер {d}.', 'After the intervention {c} run, {w} wanted: the controller {d}.'), { c: num(pl.actual, ...PODS), w: b.replicas as number, d: act });
       case 'paused':
         return b.paused
           ? fmt(bi('Три изменения пришли, пока контроллер стоял, а проходов петли для ReplicaSet web он выполнил столько: {n}. Важно то, что есть сейчас, а не история событий.', 'Three changes, {n} pass: the present matters, not the history.'), { n: metric(next, 'reconciles') })
