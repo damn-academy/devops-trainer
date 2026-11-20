@@ -251,10 +251,35 @@ export const http: Lesson = {
       answer: 'EXIT STATUS',
     },
     {
+      id: 'forcing-guided',
+      kind: 'docs',
+      step: 'practice',
+      mode: 'find',
+      levels: ['beginner'],
+      prompt: bi('Скрипту мониторинга нужен только код ответа: одна строка из трёх цифр без тела страницы. Получите так код для http://10.0.0.2:8080/nope. Нужная опция описана на странице справки curl(1), в разделе OPTIONS. Справка написана по-английски, поэтому ищите на ней слова write-out, то есть «вывести после запроса», и http_code, то есть «код ответа HTTP».', 'A monitoring script needs only the status code: one line of three digits without the page body. Get the code for http://10.0.0.2:8080/nope that way. The option is described on the curl(1) help page, in the OPTIONS section. The help is in English, so look on it for the words write-out and http_code.'),
+      ref: { page: 'man/curl.1', anchor: 'OPTIONS', line: '-w, --write-out' },
+      terminal: {
+        setup: lab('client', 'tcp'),
+        task: {
+          id: 'code',
+          prompt: bi('Выведите только код ответа, то есть 404. Задание выполнено, когда curl напечатает одну строку с числом 404 и больше ничего.', 'Print only the status code, 404. The task is done when curl prints one line with the number 404 and nothing else.'),
+          check: { stdout: /^404\n?$/ },
+          docStep: 3,
+          docRef: { page: 'man/curl.1', anchor: 'OPTIONS', line: '-w, --write-out' },
+          chips: "curl -s -o /dev/null -w '%{http_code}\\n' http://10.0.0.2:8080/nope",
+          hints: {
+            H1: bi('Здесь нужны три опции. Первая, `-s`, убирает строку о ходе загрузки, вторая, `-o /dev/null`, отправляет тело страницы в особый файл, который всё выбрасывает, а третья печатает после запроса то, что вы попросите. Третью и нужно найти в справке: в её описании есть слова «display information on stdout after a completed transfer», то есть «вывести сведения после завершённого запроса».', 'Three options are needed here. The first, `-s`, removes the progress line, the second, `-o /dev/null`, sends the page body to a special file that throws everything away, and the third prints after the request whatever you ask for. The third is the one to find in the help: its description says “display information on stdout after a completed transfer”.'),
+            H2: bi("После опции `-w` в кавычках пишут, что вывести, а код ответа обозначается словом `%{http_code}`. Команда целиком выглядит так: `curl -s -o /dev/null -w '%{http_code}\\n' http://10.0.0.2:8080/nope`. Знаки `\\n` в конце переводят строку, чтобы приглашение оболочки не прилипло к числу.", "After the `-w` option you write in quotes what to print, and the status code is written as `%{http_code}`. The whole command is `curl -s -o /dev/null -w '%{http_code}\\n' http://10.0.0.2:8080/nope`. The `\\n` at the end breaks the line so that the shell prompt does not stick to the number."),
+          },
+        },
+      },
+    },
+    {
       id: 'forcing',
       kind: 'docs',
       step: 'practice',
       mode: 'find',
+      levels: ['intermediate', 'experienced'],
       prompt: bi('Скрипту мониторинга нужен только код ответа: одна строка из трёх цифр без тела страницы. Получите так код для http://10.0.0.2:8080/nope.', 'A monitoring script needs only the status code: one line, three digits, no page body. Get the code for http://10.0.0.2:8080/nope that way.'),
       ref: { page: 'man/curl.1' },
       terminal: {
@@ -691,16 +716,16 @@ export const troubleshooting: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: lab('lb', 'proxy', { wrongPort: true }, [{ id: 'r', kind: 'http', from: 'client', to: 'http://10.0.0.1/' }]),
-      intro: bi('Второй инцидент. После выкладки новой версии все страницы сайта отвечают ошибкой 502. Вы работаете на балансировщике lb, а приложение запущено на единственном сервере app1 с адресом 10.0.2.21. Войти на app1 отсюда нельзя, поэтому порт приложения придётся искать снаружи: по журналу nginx и проверкой портов командой nc, по одному порту за раз.', 'Incident 2. “After the deploy — 502 on every page.” You are on the load balancer lb; there is one backend, app1 (10.0.2.21). You cannot log in to app1 from here, so the application’s port has to be found from outside: from the nginx log and by checking ports with nc, one port at a time.'),
+      intro: bi('Второй инцидент. После выкладки новой версии все страницы сайта отвечают ошибкой 502. Вы работаете на балансировщике lb, а приложение запущено на единственном сервере app1 с адресом 10.0.2.21. Войти на app1 отсюда нельзя, потому что сервер SSH на нём не запущен, поэтому порт приложения придётся искать снаружи: по журналу ошибок nginx и проверкой портов командой nc.', 'Incident 2. “After the deploy — 502 on every page.” You are on the load balancer lb; there is one backend, app1 (10.0.2.21). You cannot log in to app1 from here, because no SSH server runs on it, so the application’s port has to be found from outside: from the nginx error log and by checking ports with nc.'),
       tasks: [
         {
           id: 'port',
           prompt: bi('Выясните, на каком порту приложение на app1 принимает соединения на самом деле, и запишите номер этого порта в файл ~/port.txt.', 'Find out which port the application on app1 really listens on and write the number into ~/port.txt.'),
           check: { when: "files['/root/port.txt'].text~'8081'", fail: [{ if: "files['/root/port.txt'].text~'8080'", say: bi('На порту 8080 приложение отвечает отказом Connection refused, то есть приложения на этом порту нет.', 'On 8080 the application answers with a refusal — Connection refused. It is not there.') }] },
-          chips: 'tail /var/log/nginx/error.log; nc -zv 10.0.2.21 8081',
+          chips: 'curl -sI http://localhost/; tail /var/log/nginx/error.log; nc -zv 10.0.2.21 8079-8090',
           hints: {
-            H1: bi('В файл error.log nginx записывает, к какому адресу и порту он обращается и что получает в ответ.', 'The error.log line tells where nginx knocks and what it gets.'),
-            H2: bi('Проверяйте соседние порты командой nc -zv. Отказ приходит мгновенно, поэтому перебор займёт секунды.', 'Check neighbouring ports with nc -zv: a refusal is instant, so trying is quick.'),
+            H1: bi('В файл /var/log/nginx/error.log nginx записывает, к какому адресу и порту он обращается и что получает в ответ. Если журнал пока пуст, повторите запрос пользователя сами командой `curl -sI http://localhost/`: nginx ответит кодом 502 и запишет в журнал строку о неудачном подключении.', 'nginx writes into /var/log/nginx/error.log which address and port it connects to and what it gets back. If the log is still empty, repeat the user’s request yourself with `curl -sI http://localhost/`: nginx answers 502 and writes a line about the failed connection into the log.'),
+            H2: bi('Проверьте соседние порты командой nc -zv. Ей можно передать сразу диапазон портов через дефис, например `nc -zv 10.0.2.21 8079-8090`, и она проверит их по очереди. Отказ приходит мгновенно, поэтому перебор займёт секунды, а нужный порт отмечен в выводе словом succeeded.', 'Check the neighbouring ports with nc -zv. It accepts a whole range of ports with a hyphen, for example `nc -zv 10.0.2.21 8079-8090`, and checks them one by one. A refusal is instant, so the search takes seconds, and the right port is marked in the output with the word succeeded.'),
           },
         },
         {
