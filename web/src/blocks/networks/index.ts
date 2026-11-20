@@ -51,7 +51,20 @@ const block: Block = {
     'From the map of the internet down to the packet and back: frames and MAC, IP and subnets, ARP, routing, TCP and UDP, OSI and TCP/IP envelopes, DNS, DHCP, NAT and netfilter, HTTP, TLS and SSH, proxies and the 504 — and layer-by-layer troubleshooting along the whole path of a URL.',
   ),
   checklistStep: entry.checklistStep,
-  levels: entry.levels,
+  levels: {
+    beginner: bi(
+      'Вы знаете слова «Wi-Fi» и «IP-адрес» только по домашнему роутеру. К концу блока вы читаете вывод ping, traceroute, dig и curl, понимаете, на каком участке пути остановился запрос, и умеете проверить это командой.',
+      'You know the words “Wi-Fi” and “IP address” only from your home router. By the end of the block you read the output of ping, traceroute, dig and curl, see at which part of the path a request stopped and can check it with a command.',
+    ),
+    intermediate: bi(
+      'Вы настраивали роутер и пользовались ping, но подсети, NAT и путь запроса через прокси для вас пока туманны. К концу блока вы считаете подсети, разбираете DNS, NAT и ошибки 502 и 504 и ищете неисправность по уровням.',
+      'You have set up a router and used ping, but subnets, NAT and the path of a request through a proxy are still hazy. By the end of the block you calculate subnets, take apart DNS, NAT and the 502 and 504 errors and troubleshoot layer by layer.',
+    ),
+    experienced: bi(
+      'Вы свободно обращаетесь с HTTP и curl, но в маршрутизации, NAT и TLS у вас есть пробелы. К концу блока вы разбираете эти темы на уровне пакетов и правил и сдаёте экзамен на настоящем Linux.',
+      'You are fluent with HTTP and curl, but routing, NAT and TLS are gaps. By the end of the block you take these topics apart at the level of packets and rules and pass the exam on real Linux.',
+    ),
+  },
   hours: entry.hours,
   placement,
   lessons: lessons.map((l) => l.id),

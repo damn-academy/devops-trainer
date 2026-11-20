@@ -98,7 +98,7 @@ function ethLayer(s: PacketSpec, c: (id: string) => boolean): Layer {
     name: bi('Ethernet', 'Ethernet'),
     family: 'l2',
     bytes: [...macBytes(s.dstMac), ...macBytes(s.srcMac), 0x08, 0x00],
-    trailer: [0x5e, 0x2a, 0x91, 0x0c],
+    trailer: [0, 0, 0, 0], // filled by withFcs once the whole frame is known
     fields: [
       { id: 'eth.dst', name: 'Destination MAC', off: 0, len: 6, value: s.dstMac, changed: c('eth.dst'), what: bi('MAC-адрес получателя кадра, то есть следующего устройства на этом участке. Пакет направляется на другой край интернета, но кадр адресован шлюзу, и там пакет переложат в новый кадр.', 'The MAC address of the frame’s receiver — the next device on this segment. The packet travels to the other side of the internet, but the frame is addressed to the gateway: it will be repacked into a new frame there.'), from: bi('Значение взято из ARP-кэша, в котором ядро нашло MAC-адрес шлюза; этот кэш показывает ip neigh.', 'The ARP cache: the kernel found the gateway’s MAC (ip neigh).') },
       { id: 'eth.src', name: 'Source MAC', off: 6, len: 6, value: s.srcMac, changed: c('eth.src'), what: bi('MAC-адрес сетевой карты, которая отправила кадр.', 'The MAC address of the network card that sent the frame.'), from: bi('Адрес записан в самой сетевой карте, и его показывает ip link show eth0.', 'Stored in the card (ip link show eth0).') },
@@ -145,7 +145,7 @@ export function buildPacket(s: PacketSpec, changed: Set<string> = new Set()): La
   const pseudo = [...ipBytes(s.src), ...ipBytes(s.dst), 0, 6, ...u16(20 + data.length)];
   const tcpSum = inetChecksum([...pseudo, ...tcpNoSum, ...data]);
   const tcp = [...tcpNoSum.slice(0, 16), ...u16(tcpSum), 0, 0];
-  return [
+  return withFcs([
     ethLayer(s, c),
     ipLayer(s, 'tcp', tcp.length + data.length, c),
     {
@@ -179,7 +179,7 @@ export function buildPacket(s: PacketSpec, changed: Set<string> = new Set()): La
         { id: 'http.end', name: 'CRLF', off: 43, len: 2, value: '\\r\\n', what: bi('Пустая строка означает, что заголовки закончились. Тела у запроса GET нет.', 'An empty line: the headers are over. A GET has no body.'), from: bi('curl.', 'curl.') },
       ],
     },
-  ];
+  ]);
 }
 
 /** A DNS question "A? shop.example" over UDP: 12 bytes of header, the name as labels, type and class. */
@@ -263,9 +263,28 @@ function buildPing(s: PacketSpec, changed: Set<string>): Layer[] {
 }
 
 /** Build the layers of one of the three messages. */
+/** CRC-32 of IEEE 802.3 (the zlib one), as the Ethernet FCS is computed. */
+export function crc32(bytes: number[]): number {
+  let c = 0xffffffff;
+  for (const b of bytes) {
+    c ^= b;
+    for (let k = 0; k < 8; k++) c = c & 1 ? (c >>> 1) ^ 0xedb88320 : c >>> 1;
+  }
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+/** Puts the real frame checksum into the Ethernet trailer: CRC-32 over the frame, least significant byte first on the wire. */
+function withFcs(layers: Layer[]): Layer[] {
+  const eth = layers.find((l) => l.id === 'eth');
+  if (!eth) return layers;
+  const crc = crc32(layers.flatMap((l) => l.bytes));
+  eth.trailer = [crc & 255, (crc >>> 8) & 255, (crc >>> 16) & 255, crc >>> 24];
+  return layers;
+}
+
 export function buildMessage(msg: Message, s: PacketSpec, changed: Set<string> = new Set()): Layer[] {
-  if (msg === 'dns') return buildDns(s, changed);
-  if (msg === 'ping') return buildPing(s, changed);
+  if (msg === 'dns') return withFcs(buildDns(s, changed));
+  if (msg === 'ping') return withFcs(buildPing(s, changed));
   return buildPacket(s, changed);
 }
 
@@ -363,11 +382,12 @@ const L = {
   pick: bi('Нажмите на любое поле конверта, и появится его объяснение, а в дампе ниже подсветятся его байты. Ступени слоёв над конвертами открывают словарь, который объясняет, что значит «проблема на этом уровне».', 'Click any field of an envelope — it explains itself, and its bytes light up in the dump below. The rungs of layers above the envelopes open the vocabulary: what “a problem on this layer” means.'),
   counter: bi('данных {d} байт, заголовков {h} байт ({parts})', 'data {d} bytes · headers {h} bytes ({parts})'),
   counterData: bi('данных {d} байт, заголовков пока нет', 'data {d} bytes, no headers yet'),
+  mtuScene: bi('В этой модели ноутбук стоит в локальной сети, где разрешены большие кадры, а маршрутизатор на пути отправляет пакет дальше в канал с MTU 1500. Если бы узким был канал самого ноутбука, ядро отказалось бы отправлять пакет ещё до маршрутизатора, как в терминале этого урока.', 'In this model the laptop sits on a local network that allows large frames, and a router on the path sends the packet on into a link with an MTU of 1500. If the laptop’s own link were the narrow one, the kernel would refuse to send the packet before any router, as in this lesson’s terminal.'),
   fits: bi('Пакет в {t} байт не больше MTU 1500 и проходит целиком.', 'Packet {t} bytes ≤ MTU 1500: it passes whole.'),
   frag: bi('Пакет в {t} байт больше MTU 1500, а флаг DF снят, поэтому маршрутизатор режет его на {n} фрагмента, и получатель соберёт их обратно.', 'Packet {t} bytes > MTU 1500 with DF clear: the router cuts it into {n} fragments; the receiver reassembles them.'),
   icmp: bi('Пакет в {t} байт больше MTU 1500, а флаг DF стоит, поэтому маршрутизатор выбрасывает пакет и отвечает сообщением ICMP «Fragmentation Needed, mtu 1500». Отправитель уменьшит размер пакетов.', 'Packet {t} bytes > MTU 1500 with DF set: the router drops it and replies ICMP “Fragmentation Needed, mtu 1500”. The sender shrinks its packets.'),
   hole: bi('Получилась чёрная дыра MTU. Пакет в {t} байт выброшен, а сообщение ICMP «Fragmentation Needed», которое должно было предупредить отправителя, выброшено по дороге. Отправитель так и не узнаёт о меньшем MTU и повторяет тот же большой пакет. Маленькие пакеты вроде рукопожатия и коротких запросов проходят, поэтому страница зависает уже после того, как соединение установлено.', 'An MTU black hole. The {t}-byte packet is dropped, and the ICMP “Fragmentation Needed” that should have told the sender is dropped on the way. The sender never learns about the smaller MTU and keeps resending the same large packet. Small packets — the handshake, short requests — pass, which is why the page “hangs” after the connection is up.'),
-  predictQ: bi('Маршрутизатор на пути выбрасывает все сообщения ICMP. Что станет с пакетом в 1600 байт с флагом DF?', 'A router on the path drops all ICMP. What happens to a 1600-byte packet with DF set?'),
+  predictQ: bi('Маршрутизатор на пути выбрасывает все сообщения ICMP, а пакет больше 1500 байт, и флаг DF в нём стоит. Что станет с этим пакетом?', 'A router on the path drops all ICMP, and the packet is larger than 1500 bytes with DF set. What happens to it?'),
   predict: [
     ['frag', bi('Маршрутизатор разрежет его на фрагменты', 'It will be cut into fragments')],
     ['icmp', bi('Отправитель получит сообщение ICMP и уменьшит пакет', 'The sender gets ICMP and shrinks the packet')],
@@ -597,6 +617,7 @@ function mount(root: HTMLElement, ctx: ExplainerCtx): Mounted {
         h('label.env-check', {}, h('input', { type: 'checkbox', checked: df, onchange: (e: Event) => { df = (e.target as HTMLInputElement).checked; render(); } }), ` ${t(L.df)}`),
         h('label.env-check.env-break', {}, breakBox, ` ${t(L.breakIcmp)}`),
         prediction,
+        h('p.env-mtu-scene', {}, t(L.mtuScene)),
         h(`p.env-mtu-line${o.fits ? '' : o.fragments > 1 ? '.warn' : '.err'}`, {}, t(line)),
       );
     }

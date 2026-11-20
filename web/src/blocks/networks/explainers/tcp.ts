@@ -228,7 +228,12 @@ export const tcpModel = defineModel<TP>({
       return bb.port === 'closed'
         ? fmt(b('Порт закрыт, и пакет RST пришёл через {t} мс. Мгновенный отказ означает, что машина работает и путь до неё есть.', 'The port is closed: RST after {t} ms. An instant refusal means the host is alive and reachable.'), { t: m1 })
         : b('Порт снова слушает служба, и после трёх сообщений соединение готово.', 'The port is listened on again: three messages and the connection is ready.');
-    return fmt(b('Время пути туда и обратно изменилось с {a} до {b} мс, и весь обмен растянулся с {m0} до {m1} мс. Рукопожатие всегда стоит одного пути туда и обратно.', 'RTT {a} → {b} ms: the whole exchange stretches, {m0} → {m1} ms. The handshake costs exactly one round trip.'), { a: a.rtt as number, b: bb.rtt as number, m0, m1 });
+    return fmt(
+      m1 < m0
+        ? b('Время пути туда и обратно изменилось с {a} до {b} мс, и весь обмен сократился с {m0} до {m1} мс. Рукопожатие всегда стоит одного пути туда и обратно.', 'RTT {a} → {b} ms: the whole exchange shrinks, {m0} → {m1} ms. The handshake costs exactly one round trip.')
+        : b('Время пути туда и обратно изменилось с {a} до {b} мс, и весь обмен растянулся с {m0} до {m1} мс. Рукопожатие всегда стоит одного пути туда и обратно.', 'RTT {a} → {b} ms: the whole exchange stretches, {m0} → {m1} ms. The handshake costs exactly one round trip.'),
+      { a: a.rtt as number, b: bb.rtt as number, m0, m1 },
+    );
   },
 });
 

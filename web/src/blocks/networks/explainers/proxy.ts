@@ -329,7 +329,9 @@ export const proxyModel = defineModel<P>({
     });
     const writer = o.status === 504 || o.status === 502 ? 'nginx' : o.attempts[o.attempts.length - 1]?.addr.startsWith('10.0.2.22') ? 'app2' : 'app1';
     const text: Record<number, [string, string]> = {
-      200: ['Клиент получает код 200, и пользователь ничего не замечает. Но в error.log остались строки о неудачных попытках, и увидит их только дежурный инженер.', 'The client gets 200. The user noticed nothing, but error.log keeps lines about the failed attempts — only the on-call engineer sees them.'],
+      200: o.lines.length
+        ? ['Клиент получает код 200, и пользователь ничего не замечает. Но в error.log остались строки о неудачных попытках, и увидит их только дежурный инженер.', 'The client gets 200. The user noticed nothing, but error.log keeps lines about the failed attempts — only the on-call engineer sees them.']
+        : ['Клиент получает код 200, и пользователь ничего не замечает. Первая же попытка удалась, поэтому в error.log ничего не записано.', 'The client gets 200 and the user notices nothing. The first attempt succeeded, so nothing was written to error.log.'],
       500: ['Клиент получает код 500, и написало его приложение, а не nginx. Искать причину нужно в журналах приложения.', 'The client gets 500 — the application wrote it, not nginx. Look for the cause in the application’s logs.'],
       502: ['Клиент получает код 502 Bad Gateway, потому что соединение с сервером приложения было отвергнуто или оборвано и nginx не получил ответа. Этот код написал nginx.', 'The client gets 502 Bad Gateway: nginx could not get an answer — the connection was refused or broken. nginx wrote the code.'],
       504: ['Клиент получает код 504 Gateway Time-out, потому что nginx не дождался ответа сервера приложения. Код написал nginx, а причина лежит дальше, у сервера приложения.', 'The client gets 504 Gateway Time-out: nginx did not wait long enough for the upstream. nginx wrote the code; the cause is further on, at the backend.'],
@@ -368,6 +370,8 @@ export const proxyModel = defineModel<P>({
     const w1 = lastMetric(next, 'waited') ?? 0;
     const l1 = lastMetric(next, 'lines') ?? 0;
     if (change.kind === 'break' && !change.on) return fmt(b('Поломку убрали, и клиент получает код {c} через {w} с.', 'The break is removed: the client gets {c} after {w} s.'), { c: c1 ?? 0, w: w1 });
-    return fmt(b('Код ответа изменился с {a} на {c}, клиент ждал {w} с, а в error.log {l} строк. Первым срабатывает самый короткий таймер на пути запроса.', 'Code {a} → {c}, the client waited {w} s, error.log lines: {l}. The shortest timer on the path fires first.'), { a: c0 ?? 0, c: c1 ?? 0, w: w1, l: l1 });
+    return c0 === c1
+      ? fmt(b('Код ответа остался прежним, {c}, клиент ждал {w} с, а число строк в журнале error.log равно {l}. Первым срабатывает самый короткий таймер на пути запроса.', 'Code stays {c}, the client waited {w} s, error.log lines: {l}. The shortest timer on the path fires first.'), { c: c1 ?? 0, w: w1, l: l1 })
+      : fmt(b('Код ответа изменился с {a} на {c}, клиент ждал {w} с, а число строк в журнале error.log равно {l}. Первым срабатывает самый короткий таймер на пути запроса.', 'Code {a} → {c}, the client waited {w} s, error.log lines: {l}. The shortest timer on the path fires first.'), { a: c0 ?? 0, c: c1 ?? 0, w: w1, l: l1 });
   },
 });

@@ -129,7 +129,7 @@ export const switchModel = defineModel<P>({
       remove: ['p2', 'b'],
       layer: 'L1',
       predict: {
-        prompt: b('Кабель компьютера B выдернут из коммутатора, и A отправляет компьютеру B кадр. Что A получит в ответ?', 'B’s cable is pulled out of the switch, and A sends B a frame. What does A get back?'),
+        prompt: b('Кабель компьютера B выдернут из коммутатора, и A отправляет компьютеру B кадр. Что A получит от коммутатора или от компьютера B?', 'B’s cable is pulled out of the switch, and A sends B a frame. What does A get from the switch or from computer B?'),
         options: [
           { id: 'none', text: b('Ничего не получит, потому что кадр пропадёт, а коммутатор об этом не сообщит', 'Nothing: the frame vanishes and the switch says nothing') },
           { id: 'error', text: b('Получит от коммутатора сообщение о том, что B недоступен', 'A message from the switch that B is unreachable') },
@@ -216,7 +216,7 @@ export const switchModel = defineModel<P>({
         broken: {
           at: 'b',
           message: '$ ping -c 2 192.168.1.20\nFrom 192.168.1.10 icmp_seq=1 Destination Host Unreachable\nFrom 192.168.1.10 icmp_seq=2 Destination Host Unreachable',
-          caption: b('Кадр пропал на кабеле к компьютеру B. Коммутатор никого не предупредил, потому что на этом уровне сети отказов не бывает, бывает только отсутствие ответа. Поэтому ping узнаёт о беде только по тому, что ответы перестали приходить.', 'The frame vanished on the cable to B. The switch warned nobody: at this level of the network there is no refusal, only no answer. So ping reports the neighbour unreachable only after it stops waiting.'),
+          caption: b('Кадр пропал на кабеле к компьютеру B. Коммутатор никого не предупредил, потому что на уровне кадров сеть об отказах не сообщает, и кадр либо доходит, либо пропадает молча. Строки «Destination Host Unreachable» в выводе ping печатает не коммутатор, а ядро самого компьютера A: оно спросило сеть, у кого адрес 192.168.1.20, не дождалось ответа и поэтому сообщает, что сосед недоступен. Как устроен этот вопрос, подробно расскажет урок про ARP, а здесь важно, что адрес отправителя в этих строках, 192.168.1.10, принадлежит самому компьютеру A.', 'The frame vanished on the cable to B. The switch warned nobody: at this level of the network there is no refusal, only no answer. The “Destination Host Unreachable” lines in the ping output are printed not by the switch but by the kernel of computer A itself: it asked the network who has 192.168.1.20, got no answer and so reports the neighbour unreachable. The ARP lesson explains that question in detail; what matters here is that the sender address in these lines, 192.168.1.10, belongs to computer A itself.'),
         },
       });
       return steps;

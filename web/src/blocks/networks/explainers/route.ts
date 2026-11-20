@@ -67,7 +67,7 @@ export const routeModel = defineModel<P>({
       label: b('С каким TTL компьютер h1 отправляет пакет', 'The TTL h1 sends the packet with'),
       kind: 'range',
       min: 1,
-      max: 64,
+      max: 255,
       step: 1,
       default: 64,
       near: 'l1',
