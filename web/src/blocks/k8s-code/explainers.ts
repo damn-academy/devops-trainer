@@ -358,7 +358,11 @@ export const codeModel = defineModel<CodeP>({
               : fb(bi('Настройка serial: 1 означает, что сценарий проходит рабочие узлы по одному. Сейчас обновляется только worker-{k}: drain выселяет с него поды, и они переезжают на соседние узлы. Команда kubectl get nodes покажет у этого узла состояние Ready,SchedulingDisabled, то есть узел исправен, но новых подов не принимает.', 'serial: 1 means the play goes over the workers one by one. Only worker-{k} is upgraded now: drain evicts its pods, and they move to the neighbours. kubectl get nodes shows this node as Ready,SchedulingDisabled, that is, the node is healthy but takes no new pods.'), { k }),
           focus: [e, id],
           tokens: [{ edge: e, label: 'drain' }],
-          say: { [id]: fb(bi('Узел worker-{k} выведен из работы: новые поды на него не назначаются, а старые переезжают на другие узлы.', 'worker-{k} is out of service: no new pods are scheduled to it, and the old ones move to other nodes.'), { k: k === 2 && W > 2 ? `2…${W}` : k }) },
+          say: {
+            [id]: W === 1
+              ? bi('Узел worker-1 выведен из работы, и новые поды на него не назначаются. Другого рабочего узла нет, поэтому выселенным подам приложения переехать некуда.', 'worker-1 is out of service, and no new pods are scheduled to it. There is no other worker, so the evicted application pods have nowhere to go.')
+              : fb(bi('Узел worker-{k} выведен из работы: новые поды на него не назначаются, а старые переезжают на другие узлы.', 'worker-{k} is out of service: no new pods are scheduled to it, and the old ones move to other nodes.'), { k: k === 2 && W > 2 ? `2…${W}` : k }),
+          },
           states: { [id]: 'warn' },
           values: { [id]: 'Ready,SchedulingDisabled' },
           metrics: { ...base, replicas: W === 1 ? 0 : 2, ready: n.vms, changed: (k - 1) * 4, minutes: (k - 1) * 4 + 1 },
