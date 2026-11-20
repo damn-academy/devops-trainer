@@ -38,9 +38,17 @@ export function idempotentRun(f: Facts, min = 3): boolean {
 /** A file on a managed host, read from the control machine. */
 export const hostFile = (f: Facts, h: string, path: string) => f.files[`/srv/hosts/${h}${path}`]?.text ?? '';
 
+const NODES = ['cp-1', 'worker-1', 'worker-2'];
+
+/**
+ * The ping module answered SUCCESS for all three nodes. A count of the answers
+ * (`… | grep -c SUCCESS` printing 3) is accepted too, when the state agrees
+ * that Ansible can log in to each of the three hosts.
+ */
 export function pingedAll(f: Facts): boolean {
   const out = clean(lastOut(f));
-  return ['cp-1', 'worker-1', 'worker-2'].every((h) => new RegExp(`${h} \\| SUCCESS`).test(out));
+  if (NODES.every((h) => new RegExp(`${h} \\| SUCCESS`).test(out))) return true;
+  return out.trim() === '3' && NODES.every((n) => !!host(f, n)?.reachable);
 }
 
 export function inventoryOk(f: Facts, path: string): boolean {
