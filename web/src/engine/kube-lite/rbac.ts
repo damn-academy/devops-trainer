@@ -61,6 +61,11 @@ export function apiClient(c: Cluster, who: Identity): Cluster {
 }
 export function bootstrapRbac(c: Cluster): void {
   const apiVersion = 'rbac.authorization.k8s.io/v1';
+  c.put({ apiVersion, kind: 'ClusterRole', metadata: { name: 'system:basic-user' }, rules: [
+    { apiGroups: ['authorization.k8s.io'], resources: ['selfsubjectaccessreviews', 'selfsubjectrulesreviews'], verbs: ['create'] },
+    { apiGroups: ['authentication.k8s.io'], resources: ['selfsubjectreviews'], verbs: ['create'] },
+  ] });
+  c.put({ apiVersion, kind: 'ClusterRoleBinding', metadata: { name: 'system:basic-user' }, roleRef: { apiGroup: 'rbac.authorization.k8s.io', kind: 'ClusterRole', name: 'system:basic-user' }, subjects: [{ kind: 'Group', apiGroup: 'rbac.authorization.k8s.io', name: 'system:authenticated' }] });
   const read = ['get', 'list', 'watch'];
   const resources = ['pods', 'pods/log', 'services', 'endpoints', 'configmaps', 'persistentvolumeclaims', 'serviceaccounts'];
   for (const name of ['cluster-admin', 'admin', 'edit', 'view']) {

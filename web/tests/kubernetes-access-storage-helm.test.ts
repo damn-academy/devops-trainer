@@ -63,6 +63,7 @@ describe('k8s-1.access', () => {
     await l.run('kubectl auth can-i --list -n prod');
     await expectFail(l, 'dev-list', 0);
     await l.run('kubectl auth can-i --list --as=developer -n prod');
+    expect(l.log()).toContain('selfsubjectaccessreviews.authorization.k8s.io');
     await expectPass(l, 'dev-list');
     await l.run('kubectl -n prod get pods');
     await expectFail(l, 'forbidden', 0);
@@ -115,7 +116,7 @@ describe('k8s-1.access', () => {
   }, 60_000);
 
   const ciMistakes: [string, string[], number][] = [
-    ['deployments in the core group', ['kubectl create role deployer -n prod --verb=get,list,watch,patch --resource=deployments', 'kubectl create rolebinding ci-deployer -n prod --role=deployer --serviceaccount=prod:ci-deployer'], 1],
+    ['deployments in the core group', ['kubectl create role deployer -n prod --verb=get,list,watch,patch --resource=deployments', `kubectl patch role deployer -n prod --type=merge -p '{"rules":[{"apiGroups":[""],"resources":["deployments"],"verbs":["get","list","watch","patch"]}]}'`, 'kubectl create rolebinding ci-deployer -n prod --role=deployer --serviceaccount=prod:ci-deployer'], 1],
     ['a user instead of the service account', ['kubectl create role deployer -n prod --verb=get,list,watch,patch --resource=deployments.apps', 'kubectl create rolebinding ci-deployer -n prod --role=deployer --user=ci-deployer'], 2],
     ['the ready role edit', ['kubectl create rolebinding ci-deployer -n prod --clusterrole=edit --serviceaccount=prod:ci-deployer'], 3],
     ['a ClusterRoleBinding', ['kubectl create clusterrole deployer --verb=get,list,watch,patch --resource=deployments.apps', 'kubectl create clusterrolebinding ci-deployer --clusterrole=deployer --serviceaccount=prod:ci-deployer'], 4],
@@ -286,7 +287,7 @@ describe('the RBAC and StatefulSet exam tasks reject the typical mistakes', () =
   });
   it('CKA: workloads in the core group fail with the explanation', async () => {
     const t = examTask('k8s-1.exam.cka', 'rbac');
-    const r = await solve(t, ['kubectl create clusterrole deployment-clusterrole --verb=create --resource=deployments,statefulsets,daemonsets', 'kubectl -n app-team1 create serviceaccount cicd-token', 'kubectl -n app-team1 create rolebinding cicd-token --clusterrole=deployment-clusterrole --serviceaccount=app-team1:cicd-token']);
+    const r = await solve(t, ['kubectl create clusterrole deployment-clusterrole --verb=create --resource=deployments,statefulsets,daemonsets', `kubectl patch clusterrole deployment-clusterrole --type=merge -p '{"rules":[{"apiGroups":[""],"resources":["deployments","statefulsets","daemonsets"],"verbs":["create"]}]}'`, 'kubectl -n app-team1 create serviceaccount cicd-token', 'kubectl -n app-team1 create rolebinding cicd-token --clusterrole=deployment-clusterrole --serviceaccount=app-team1:cicd-token']);
     expect(r.pass).toBe(false);
     expect(r.say).toBe(t.task.check.fail![0].say);
   });

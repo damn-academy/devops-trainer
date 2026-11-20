@@ -31,7 +31,6 @@ export interface KubectlIO {
 }
 
 interface Ctx {
-  m: SimMachineApi;
   authorize: (verb: string, kind: string, ns?: string, name?: string, subresource?: string) => void;
   c: Cluster;
   ns: string;
@@ -46,6 +45,8 @@ interface Ctx {
   verbose: number;
   quiet?: boolean;
 }
+
+type MachineCtx = Ctx & { m: SimMachineApi };
 
 const TRAINER = '\x1b[2m(trainer)\x1b[0m';
 
@@ -77,7 +78,7 @@ const FLAGS: Record<string, FlagDef[]> = {
   describe: [SEL, ALLNS, FILE],
   apply: [FILE, OUT, DRY, REC],
   create: [...['verb', 'resource', 'resource-name', 'user', 'group', 'serviceaccount'].map(long => ({ long, value: true, multi: true })), { long: 'role', value: true }, { long: 'clusterrole', value: true }, FILE, OUT, DRY, { long: 'image', value: true, multi: true }, { long: 'replicas', short: 'r', value: true }, { long: 'port', value: true }, { long: 'tcp', value: true, multi: true }, { long: 'node-port', value: true }, { long: 'clusterip', value: true }, { long: 'from-literal', value: true, multi: true }, { long: 'from-file', value: true, multi: true }, { long: 'from-env-file', value: true, multi: true }, { long: 'type', value: true }, { long: 'restart', value: true }, REC],
-  run: [OUT, DRY, { long: 'image', value: true }, { long: 'env', value: true, multi: true }, { long: 'port', value: true }, { long: 'labels', short: 'l', value: true }, { long: 'restart', value: true }, { long: 'command' }, { long: 'stdin', short: 'i' }, { long: 'tty', short: 't' }, { long: 'rm' }],
+  run: [OUT, DRY, { long: 'overrides', value: true }, { long: 'image', value: true }, { long: 'env', value: true, multi: true }, { long: 'port', value: true }, { long: 'labels', short: 'l', value: true }, { long: 'restart', value: true }, { long: 'command' }, { long: 'stdin', short: 'i' }, { long: 'tty', short: 't' }, { long: 'rm' }],
   expose: [OUT, DRY, { long: 'port', value: true }, { long: 'target-port', value: true }, { long: 'name', value: true }, { long: 'type', value: true }, { long: 'protocol', value: true }, SEL],
   scale: [FILE, { long: 'replicas', value: true }, { long: 'current-replicas', value: true }, SEL],
   delete: [FILE, SEL, ALLNS, { long: 'all' }, { long: 'force' }, { long: 'now' }, { long: 'grace-period', value: true }, { long: 'cascade', value: 'optional' }, { long: 'wait', value: 'optional' }, DRY],
@@ -600,7 +601,7 @@ function cmdCreate(x: Ctx): void {
       obj.subjects = [...values('user').map(name => ({ kind: 'User', apiGroup: 'rbac.authorization.k8s.io', name })), ...values('group').map(name => ({ kind: 'Group', apiGroup: 'rbac.authorization.k8s.io', name })), ...values('serviceaccount').map(s => { const [namespace, name] = s.split(':'); return { kind: 'ServiceAccount', namespace, name }; })];
     } else if (info.kind.endsWith('Role')) {
       if (!values('verb').length || !values('resource').length) fail('error: --verb and --resource are required');
-      obj.rules = values('resource').map(r => { const [resource, ...group] = r.split('.'); return { apiGroups: [group.join('.')], resources: [resource], verbs: values('verb'), ...(values('resource-name').length ? { resourceNames: values('resource-name') } : {}) }; });
+      obj.rules = values('resource').map(r => { const [base, sub] = r.split('/'); const [resource, ...group] = base.split('.'); const resolved = x.c.kinds.resolve(base); return { apiGroups: [group.length ? group.join('.') : resolved?.group ?? ''], resources: [(resolved?.plural ?? resource) + (sub ? '/' + sub : '')], verbs: values('verb'), ...(values('resource-name').length ? { resourceNames: values('resource-name') } : {}) }; });
     }
     const result = x.c.create(obj, { dryRun: !!dryRun(x) });
     if (!printObjects(x, [result], true)) x.out(`${kindRef(x, info)}/${name} created${suffix(x)}\n`);
@@ -696,14 +697,21 @@ function cmdRun(x: Ctx): void {
   if (env.length) ct.env = env;
   if (port) ct.ports = [{ containerPort: Number(port) }];
   ct.resources = {};
-  const pod = { apiVersion: 'v1', kind: 'Pod', metadata: { creationTimestamp: null, labels, name }, spec: { containers: [ct], dnsPolicy: 'ClusterFirst', restartPolicy: restart }, status: {} };
+  let pod: Obj = { apiVersion: 'v1', kind: 'Pod', metadata: { creationTimestamp: null, labels, name }, spec: { containers: [ct], dnsPolicy: 'ClusterFirst', restartPolicy: restart }, status: {} };
+  const overrides = str(x.p, 'overrides');
+  if (overrides) {
+    let patch: unknown;
+    try { patch = JSON.parse(overrides); } catch { fail('error: Invalid JSON passed to --overrides'); }
+    if (!isObj(patch)) fail('error: --overrides must be a JSON object');
+    pod = mergePatch(pod, patch) as Obj;
+  }
   if (dryRun(x) === 'client') {
     if (outputFormat(x)) printObjects(x, [pod], true);
     else x.out(`pod/${name} created (dry run)\n`);
     return;
   }
   try {
-    const made = x.c.create(pod, { namespace: x.ns });
+    const made = x.c.create(pod, { namespace: x.ns, dryRun: !!dryRun(x) });
     if (outputFormat(x)) printObjects(x, [made], true);
     else x.out(`pod/${name} created\n`);
   } catch (e) {
@@ -897,7 +905,7 @@ function cmdLogs(x: Ctx): void {
   if (bool(x.p, 'follow')) x.out(`${TRAINER} -f keeps streaming new lines on a real cluster until Ctrl+C; here it prints what there is.\n`);
 }
 
-function cmdExec(x: Ctx): void {
+function cmdExec(x: MachineCtx): void {
   if (!x.p.args.length) fail(`error: expected 'exec (POD | TYPE/NAME) [-c CONTAINER] [flags] -- COMMAND [args...]'.\nPOD or TYPE/NAME is a required argument for the exec command\nSee 'kubectl exec -h' for help and examples`);
   if (!x.p.dash) {
     if (x.p.args.length > 1) fail(`error: exec [POD] [COMMAND] is not supported anymore. Use exec [POD] -- [COMMAND] instead\nSee 'kubectl exec -h' for help and examples`);
@@ -1277,7 +1285,7 @@ function cmdExplain(x: Ctx): void {
   x.out(explainText(t as Exclude<typeof t, { error: string }>, bool(x.p, 'recursive')));
 }
 
-function cmdConfig(x: Ctx): void {
+function cmdConfig(x: MachineCtx): void {
   const [verb, arg] = x.p.args;
   const kc = readKubeconfig(x.m, str(x.p, 'kubeconfig'));
   if (!verb) {
@@ -1572,7 +1580,7 @@ export async function runKubectl(m: SimMachineApi, cluster: Cluster | null, argv
   const c = cluster ?? clusterOf(m);
   c.syncReal(machineNow(m));
   const fs = o.fs ?? m.rootFs;
-  const x: Ctx = {
+  const x: MachineCtx = {
     m,
     authorize: (verb, kind, ns, name, subresource) => authorize(c, identity(str(p, 'as') ?? ctx?.user ?? 'default', list(p, 'as-group')), verb, kind, ns, name, subresource),
     c: apiClient(c, identity(str(p, 'as') ?? ctx?.user ?? 'default', list(p, 'as-group'))),
@@ -1603,7 +1611,12 @@ export async function runKubectl(m: SimMachineApi, cluster: Cluster | null, argv
       case 'auth': {
         if (p.args[0] !== 'can-i') fail('error: expected auth can-i');
         const who = identity(str(p, 'as') ?? ctx?.user ?? 'default', list(p, 'as-group'));
-        if (bool(p, 'list')) { x.out(pad([['Resources', 'Non-Resource URLs', 'Resource Names', 'Verbs'], ...rulesFor(c, who, x.ns).map(r => [(r.resources ?? []).join(','), '[]', '[' + (r.resourceNames ?? []).join(' ') + ']', '[' + r.verbs.join(' ') + ']'])])); break; }
+        if (bool(p, 'list')) {
+          const rows = rulesFor(c, who, x.ns).flatMap(r => (r.apiGroups ?? ['']).flatMap((group: string) =>
+            (r.resources ?? []).map((resource: string) => [resource + (group && group !== '*' ? '.' + group : ''), '[]', '[' + (r.resourceNames ?? []).join(' ') + ']', '[' + r.verbs.join(' ') + ']'])));
+          x.out(pad([['Resources', 'Non-Resource URLs', 'Resource Names', 'Verbs'], ...rows]));
+          break;
+        }
         const [resource, name] = (p.args[2] ?? '').split('/');
         const info = resource === '*' ? { ...resolveKind(x, 'pods'), plural: '*', group: '*' } : resolveKind(x, resource);
         const ok = canI(c, who, p.args[1], info.plural + (str(p, 'subresource') ? '/' + str(p, 'subresource') : ''), info.group, info.namespaced && !bool(p, 'all-namespaces') ? x.ns : undefined, name);
@@ -1738,3 +1751,21 @@ function k8sCluster(m: SimMachineApi): Cluster | null {
 }
 
 export { rfc1123, intOrPercent };
+
+/** Shared command handlers for the authenticated in-cluster CLI. */
+export function runPodWorkloadCommand(c: Cluster, ns: string, argv: string[]): KubectlIO {
+  let out = '', err = '';
+  const sub = argv[0];
+  const p = parseArgs(argv.slice(1), FLAGS[sub] ?? []);
+  try {
+    if (p.error || p.unsupported) fail(p.error ?? `error: unsupported flag ${p.unsupported}`);
+    const x: Ctx = { c, ns: str(p, 'namespace') ?? ns, p, sub, out: s => { out += s; }, err: s => { err += s; }, stdin: '', verbose: 0,
+      authorize: () => { throw new Error('unsupported authorization operation'); },
+      readFile: () => { throw new Error('a resource name is required'); }, isDir: () => false, listDir: () => [] };
+    if (sub === 'set') cmdSet(x);
+    else if (sub === 'rollout') cmdRollout(x);
+    else if (sub === 'run') cmdRun(x);
+    else fail('error: unsupported workload command');
+    return { out, err, code: 0 };
+  } catch (e) { return { out, err: err + (e instanceof Fail ? e.text : e instanceof ApiError ? e.print() + '\n' : String(e) + '\n'), code: 1 }; }
+}
