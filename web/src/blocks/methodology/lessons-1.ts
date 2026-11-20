@@ -7,6 +7,7 @@ import type { Lesson } from '../../core/types';
 import { R, S } from './sources';
 
 const CHECK = bi('Проверьте себя', 'Check yourself');
+const P5 = { ext: { flow: { scenario: 'p5' } } };
 
 export const business: Lesson = {
   id: 'methodology.business',
@@ -332,6 +333,77 @@ export const flow: Lesson = {
         },
       },
     },
+    {
+      id: 'practice-wip',
+      kind: 'terminal',
+      step: 'practice',
+      levels: ['beginner', 'intermediate'],
+      machine: 'sim',
+      setup: P5,
+      intro: bi(
+        'Ниже та же учебная доска на пять дней, что и в задании выше: четыре человека, четырнадцать одинаковых задач, и каждое утро автопилот сам вытягивает карточки в работу, пока в колонке есть место. Мощность у людей каждый день одна и та же, поэтому результат прогона зависит только от лимитов. За несколько минут вы прогоните доску дважды, без лимитов и с лимитами, и сравните итог.\n\nДоска отвечает по-английски. В выводе команды `flow metrics` строка `done (delivered)` показывает, сколько задач готово, строка `wip average` показывает, сколько карточек в среднем было в работе одновременно, а строка `cycle time p50 (d)` показывает время цикла: половина готовых карточек прошла путь от начала работы до готовности не дольше этого числа дней. Если команда ответит сообщением об ошибке, ничего не сломалось: доска не приняла решение и написала, почему.',
+        'Below is the same five-day training board as in the task above: four people, fourteen equal tasks, and every morning the autopilot pulls cards into work by itself while a column has room. People’s capacity is the same every day, so the result of the run depends only on the limits. In a few minutes you will run the board twice, without limits and with them, and compare the result.\n\nThe board answers in English. In the output of `flow metrics` the line `done (delivered)` shows how many tasks are done, `wip average` shows how many cards were in progress at once on average, and `cycle time p50 (d)` shows cycle time: half of the finished cards went from the start of work to done in no more than this number of days. If a command answers with an error message, nothing is broken: the board did not accept the decision and wrote why.',
+      ),
+      tasks: [
+        {
+          id: 'jam',
+          prompt: bi('Прогоните пять дней без лимитов командой `flow next 5`, а потом посмотрите на итог командой `flow metrics`. Запомните, сколько задач готово и сколько карточек в среднем было в работе.', 'Run five days without limits with `flow next 5`, then look at the result with `flow metrics`. Remember how many tasks are done and how many cards were in progress on average.'),
+          check: {
+            when: 'flow.daysDone>=5 && flow.done.count=0',
+            stdout: 'done (delivered)',
+            fail: [
+              { if: 'flow.daysDone>=5 && flow.done.count>0', say: bi('Вы прогнали дни уже с лимитами, поэтому пробки не увидели. Наберите `flow reset`: доска вернётся к первому дню без лимитов. Потом прогоните пять дней ещё раз.', 'You ran the days with limits already, so you did not see the jam. Type `flow reset`: the board goes back to day 1 without limits. Then run five days again.') },
+              { if: 'flow.daysDone>=5', say: bi('Пять дней прошли, и теперь осталось посмотреть на итог командой `flow metrics`.', 'Five days are over. Now look at the result with `flow metrics`.') },
+            ],
+          },
+          chips: 'flow next 5',
+          concepts: ['method.wip'],
+          hints: {
+            H1: bi('Команда `flow next` заканчивает рабочий день, а число после неё говорит, сколько дней закончить подряд.', '`flow next` ends the working day, and the number after it says how many days to end in a row.'),
+            H2: bi('Когда пять дней пройдут, найдите в выводе `flow metrics` строки `done (delivered)` и `wip average`.', 'When the five days are over, find the lines `done (delivered)` and `wip average` in the output of `flow metrics`.'),
+            H3: bi('Наберите `flow next 5`, а потом `flow metrics`.', 'Type `flow next 5`, then `flow metrics`.'),
+          },
+        },
+        {
+          id: 'limits',
+          prompt: bi('Верните доску к первому дню командой `flow reset` и поставьте всем трём колонкам лимиты по правилу из урока: число людей на этапе плюс один. В колонке `analysis` работает один человек, в колонке `dev` двое, в колонке `test` один. Лимит ставит команда вида `flow wip dev 3`.', 'Take the board back to day 1 with `flow reset` and give all three columns limits by the rule of the lesson: the number of people on the stage plus one. One person works in `analysis`, two in `dev`, one in `test`. A limit is set with a command like `flow wip dev 3`.'),
+          check: {
+            when: 'flow.policies.wip.analysis>=1 && flow.policies.wip.dev>=1 && flow.policies.wip.test>=1',
+            fail: [{ if: 'flow.policies.wip.analysis>=1 || flow.policies.wip.dev>=1 || flow.policies.wip.test>=1', say: bi('Лимит стоит не у всех колонок. Наберите `flow status`: у колонки с лимитом рядом с числом карточек написано, например, `0/2`, а у колонки без лимита дроби нет.', 'Not every column has a limit. Type `flow status`: a column with a limit shows, for example, `0/2` next to its card count, and a column without one has no fraction.') }],
+          },
+          chips: 'flow wip analysis 2',
+          concepts: ['method.wip'],
+          hints: {
+            H1: bi('Людей на этапе видно в квадратных скобках в выводе `flow status`: `[PO]` в analysis, `[DEV-1,DEV-2]` в dev, `[QA]` в test.', 'The people on a stage are shown in square brackets in `flow status`: `[PO]` in analysis, `[DEV-1,DEV-2]` in dev, `[QA]` in test.'),
+            H2: bi('По правилу «люди плюс один» получается 2 для analysis, 3 для dev и 2 для test.', 'By the rule “people plus one” that is 2 for analysis, 3 for dev and 2 for test.'),
+            H3: bi('Наберите по очереди `flow reset`, `flow wip analysis 2`, `flow wip dev 3` и `flow wip test 2`.', 'Type in turn `flow reset`, `flow wip analysis 2`, `flow wip dev 3` and `flow wip test 2`.'),
+          },
+        },
+        {
+          id: 'flow',
+          prompt: bi('Прогоните пять дней с лимитами и снова посмотрите `flow metrics`. Цель выполнена, если готово не меньше шести задач. Сравните три строки с первым прогоном.', 'Run five days with the limits and look at `flow metrics` again. The goal is met if at least six tasks are done. Compare the three lines with the first run.'),
+          check: {
+            when: 'flow.daysDone>=5 && flow.done.count>=6',
+            stdout: 'done (delivered)',
+            fail: [
+              { if: 'flow.daysDone>=5 && flow.done.count=0 && flow.policies.wip.analysis>=1', say: bi('Лимиты стоят, но ни одна задача не готова. Так бывает, если поставить лимиты, когда автопилот уже затянул в работу все карточки: лимит не возвращает начатые карточки назад, он только не даёт начинать новые. Начните заново командой `flow reset`, сначала поставьте лимиты, а потом прогоните дни.', 'The limits are set, but no task is done. This happens when the limits come after the autopilot has already pulled every card into work: a limit does not send started cards back, it only stops new ones from starting. Start again with `flow reset`, set the limits first, then run the days.') },
+              { if: 'flow.daysDone>=5 && flow.done.count<6 && (flow.policies.wip.analysis>2 || flow.policies.wip.dev>3 || flow.policies.wip.test>2)', say: bi('Готовых задач больше, чем без лимитов, но меньше шести. Лимиты великоваты: у одного человека оказалось несколько карточек сразу, и часть его времени ушла на переключение между ними. Начните заново командой `flow reset` и поставьте лимиты по правилу «люди плюс один».', 'More tasks are done than without limits, but fewer than six. The limits are too big: one person got several cards at once and lost part of the time switching between them. Start again with `flow reset` and set the limits by the rule “people plus one”.') },
+              { if: 'flow.daysDone>=5 && flow.done.count<6 && (flow.policies.wip.analysis<2 || flow.policies.wip.dev<2 || flow.policies.wip.test<2)', say: bi('Готовых задач меньше шести, потому что лимиты слишком малы. Законченная карточка занимает место в колонке, пока её не заберёт следующий этап, поэтому при лимите, равном числу людей, человеку некуда взять новую карточку. Для этого к числу людей и прибавляют единицу. Начните заново командой `flow reset` и поставьте лимиты по правилу «люди плюс один».', 'Fewer than six tasks are done because the limits are too small. A finished card takes up room in the column until the next stage takes it, so with a limit equal to the number of people a person has nowhere to take a new card. That is why one is added to the number of people. Start again with `flow reset` and set the limits by the rule “people plus one”.') },
+              { if: 'flow.daysDone>=5 && flow.done.count<6 && (flow.policies.wip.analysis>=1 || flow.policies.wip.dev>=1 || flow.policies.wip.test>=1)', say: bi('Готовых задач меньше шести. Проверьте командой `flow status`, какие лимиты стоят у колонок, потом начните заново командой `flow reset` и поставьте лимиты по правилу «люди плюс один» до того, как закончите первый день.', 'Fewer than six tasks are done. Check the column limits with `flow status`, then start again with `flow reset` and set the limits by the rule “people plus one” before you end the first day.') },
+              { if: 'flow.daysDone>=5 && flow.done.count>=6', say: bi('Шесть задач готовы, и осталось посмотреть на итог командой `flow metrics`, чтобы сравнить его с первым прогоном.', 'Six tasks are done. Look at the result with `flow metrics` and compare it with the first run.') },
+            ],
+          },
+          chips: 'flow next 5',
+          concepts: ['method.wip', 'method.cycle-time', 'method.throughput'],
+          hints: {
+            H1: bi('Лимиты уже стоят, и осталось закончить пять дней.', 'The limits are set; what is left is to end five days.'),
+            H2: bi('Если готово меньше шести задач, проверьте командой `flow status`, какие лимиты стоят у колонок.', 'If fewer than six tasks are done, check the column limits with `flow status`.'),
+            H3: bi('Наберите `flow next 5`, а потом `flow metrics`.', 'Type `flow next 5`, then `flow metrics`.'),
+          },
+        },
+      ],
+    },
+    { id: 'exit-practice', kind: 'quiz', step: 'exit', levels: ['beginner', 'intermediate'], title: bi('Что показала доска', 'What the board showed'), items: ['method.q.practice-wip'] },
     { id: 'exit', kind: 'quiz', step: 'exit', title: CHECK, items: ['method.q.cycle-vs-lead', 'method.q.wip-limit-count', 'method.q.age'] },
   ],
 };

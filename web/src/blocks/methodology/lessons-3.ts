@@ -7,6 +7,8 @@ import type { Lesson } from '../../core/types';
 import { R, S } from './sources';
 
 const CHECK = bi('Проверьте себя', 'Check yourself');
+/** The Black Friday board on another seed than the practicum's, with the autopilot and the limits "people plus one" switched on before the prompt. */
+const S2_AUTO = { ext: { flow: { scenario: 's2', seed: 21 } }, script: ['flow auto on', 'flow wip analysis 2', 'flow wip dev 3', 'flow wip test 2'] };
 
 export const dora: Lesson = {
   id: 'methodology.dora',
@@ -59,6 +61,77 @@ export const dora: Lesson = {
         '[[method.goodhart|Goodhart’s law]] in Marilyn Strathern’s wording: “when a measure becomes a target, it ceases to be a good measure.” Promise a team a bonus for 50 deployments a week and you get 50 empty deployments: the gauge is green, and the customers got nothing new. DORA warns explicitly: the metrics are there for a team to see where to improve, not for ranking teams or paying bonuses.',
       ),
     },
+    {
+      id: 'practice',
+      kind: 'terminal',
+      step: 'practice',
+      levels: ['beginner', 'intermediate'],
+      machine: 'sim',
+      setup: S2_AUTO,
+      intro: bi(
+        'Ниже доска магазина на 20 дней, на которой изменения выкладывают на рабочий сайт. После проверки готовые изменения ждут в колонке `deploy`, пока эксплуатация не выложит их, а пока что эксплуатация выкладывает их раз в пять дней. Автопилот уже включён, и лимиты по правилу «люди плюс один» тоже стоят. Вы прогоните доску дважды, сначала как есть, а потом с выкладкой раз в два дня, и сравните метрики DORA. Руководителю из начала урока как раз нужно такое сравнение.\n\nНа 3-й, 6-й и 12-й день доска остановится на записках. Ответьте на них так, как считаете правильным, или продолжайте командой `flow next 20`: тогда доска сама выберет первый вариант из списка. Команда `flow metrics` покажет метрики DORA по-английски: строка `deployments` показывает, сколько было выкладок, `change failure rate` показывает долю неудачных изменений (0,25 означает, что после каждой четвёртой выкладки понадобилось срочное вмешательство), а `lead time for changes (d)` показывает время внесения изменения в днях. Кнопка «Сбросить машину» над терминалом вернёт доску к первому дню вместе с автопилотом и лимитами, а команда `flow reset` выключит и то и другое.',
+        'Below is a 20-day board of the shop on which changes are deployed to production. After testing, finished changes wait in the `deploy` column until operations deploys them, and for now operations deploys once every five days. The autopilot is on, and the limits by the rule “people plus one” are set too. You will run the board twice, first as it is and then with a deployment every two days, and compare the DORA metrics. The manager from the start of the lesson needs exactly this comparison.\n\nOn days 3, 6 and 12 the board stops on notes. Answer them as you think right, or carry on with `flow next 20`: then the board picks the first answer in the list itself. `flow metrics` shows the DORA metrics in English: `deployments` is how many deployments there were, `change failure rate` is the share of failed changes (0.25 means that every fourth deployment needed urgent intervention), and `lead time for changes (d)` is change lead time in days. The “Reset machine” button above the terminal takes the board back to day 1 together with the autopilot and the limits, while `flow reset` switches both off.',
+      ),
+      tasks: [
+        {
+          id: 'as-is',
+          prompt: bi('Прогоните все 20 дней с выкладкой раз в пять дней: повторяйте `flow next 20`, пока доска не напишет, что прогон закончен. Потом посмотрите `flow metrics` и запомните три числа: `deployments`, `change failure rate` и `lead time for changes`.', 'Run all 20 days with a deployment every five days: repeat `flow next 20` until the board says the run is finished. Then look at `flow metrics` and remember three numbers: `deployments`, `change failure rate` and `lead time for changes`.'),
+          check: {
+            when: 'flow.finished=1 && flow.metrics.deploys<=5',
+            stdout: 'lead time for changes',
+            fail: [
+              { if: 'flow.finished=1 && flow.metrics.deploys>5', say: bi('Прогон закончен, но выкладок было больше пяти: похоже, вы уже поменяли порядок выкладки. Для сравнения нужен прогон «как есть». Нажмите «Сбросить машину» над терминалом и прогоните 20 дней, ничего не меняя в выкладке.', 'The run is over, but there were more than five deployments: it seems you changed the way of deploying already. The comparison needs a run “as it is”. Press “Reset machine” above the terminal and run the 20 days without changing the deployments.') },
+              { if: 'flow.finished=1', say: bi('Прогон закончен, и осталось посмотреть метрики командой `flow metrics`.', 'The run is over. Look at the metrics with `flow metrics`.') },
+            ],
+          },
+          chips: 'flow next 20',
+          concepts: ['method.dora'],
+          hints: {
+            H1: bi('Команда `flow next 20` останавливается на каждой записке. Наберите её ещё раз, и доска продолжит.', '`flow next 20` stops at every note. Type it again, and the board goes on.'),
+            H2: bi('Когда прогон закончится, доска напишет `the run is finished`. После этого наберите `flow metrics`.', 'When the run is over, the board writes `the run is finished`. Then type `flow metrics`.'),
+            H3: bi('Наберите `flow next 20` четыре раза подряд, а потом `flow metrics`.', 'Type `flow next 20` four times in a row, then `flow metrics`.'),
+          },
+        },
+        {
+          id: 'often',
+          prompt: bi('Нажмите кнопку «Сбросить машину» над терминалом, чтобы вернуть доску к первому дню, и велите эксплуатации выкладывать изменения раз в два дня командой `flow policy deploy train:2`. Слово train означает «поезд»: выкладка уходит по расписанию, как поезд, и забирает всё, что успело её дождаться.', 'Press “Reset machine” above the terminal to take the board back to day 1, and tell operations to deploy every two days with `flow policy deploy train:2`. A train here is a deployment on a schedule: it leaves on time and takes everything that has made it to the platform.'),
+          check: {
+            when: 'flow.policies.deploy=train',
+            stdout: /deployments: train:[12]\b/,
+            fail: [{ if: 'flow.policies.deploy=manual', say: bi('При порядке `manual` выкладка случается, только когда вы наберёте `flow deploy`. Для сравнения нужна выкладка по расписанию: наберите `flow policy deploy train:2`.', 'With `manual` a deployment happens only when you type `flow deploy`. The comparison needs deployments on a schedule: type `flow policy deploy train:2`.') }],
+          },
+          chips: 'flow policy deploy train:2',
+          concepts: ['method.dora', 'method.batch'],
+          hints: {
+            H1: bi('Как часто выкладывать, решает команда `flow policy deploy`.', 'How often to deploy is set with `flow policy deploy`.'),
+            H2: bi('Число после `train:` говорит, раз в сколько дней уходит выкладка. Сейчас стоит `train:5`.', 'The number after `train:` says how many days pass between deployments. Now it is `train:5`.'),
+            H3: bi('Нажмите «Сбросить машину», потом наберите `flow policy deploy train:2`.', 'Press “Reset machine”, then type `flow policy deploy train:2`.'),
+          },
+        },
+        {
+          id: 'compare',
+          prompt: bi('Снова прогоните 20 дней и посмотрите `flow metrics`. Цель выполнена, если выкладок не меньше восьми, а время внесения изменения не больше четырёх дней. Сравните все три числа с первым прогоном.', 'Run the 20 days again and look at `flow metrics`. The goal is met if there are at least eight deployments and change lead time is no more than four days. Compare all three numbers with the first run.'),
+          check: {
+            when: 'flow.finished=1 && flow.metrics.deploys>=8 && flow.metrics.changeLeadMedianDays<=4',
+            stdout: 'lead time for changes',
+            fail: [
+              { if: 'flow.finished=1 && !flow.policies.wip.dev', say: bi('Лимитов на доске нет: скорее всего, вы начинали заново командой `flow reset`, а она выключает автопилот и лимиты. Нажмите «Сбросить машину» над терминалом и снова наберите `flow policy deploy train:2`.', 'The board has no limits: most likely you started again with `flow reset`, which switches off the autopilot and the limits. Press “Reset machine” above the terminal and type `flow policy deploy train:2` again.') },
+              { if: 'flow.finished=1 && flow.decided.s2-release=freeze', say: bi('На записку 12-го дня вы ответили заморозкой выкладок, и шесть дней изменения никуда не уходили, поэтому выкладок мало, а изменения долго ждали. Выкладки замораживают, когда цель надёжности уже нарушена, и об этом пойдёт речь в следующем уроке. Нажмите «Сбросить машину» и пройдите прогон без заморозки.', 'You answered the day 12 note with a deployment freeze, and for six days no change went anywhere, so there are few deployments and changes waited long. Deployments are frozen when the reliability target is already broken, and the next lesson is about that. Press “Reset machine” and do the run without the freeze.') },
+              { if: 'flow.finished=1 && flow.metrics.deploys<=5', say: bi('Выкладок не больше пяти, как и бывает при выкладке раз в пять дней. Для сравнения нажмите «Сбросить машину» и до первого `flow next` наберите `flow policy deploy train:2`, иначе второй прогон повторит первый.', 'There are no more than five deployments, as there are with a deployment every five days. For the comparison press “Reset machine” and type `flow policy deploy train:2` before the first `flow next`, or the second run repeats the first.') },
+              { if: 'flow.finished=1 && flow.metrics.deploys>=8 && flow.metrics.changeLeadMedianDays<=4', say: bi('Прогон закончен, и осталось посмотреть метрики командой `flow metrics`.', 'The run is over. Look at the metrics with `flow metrics`.') },
+            ],
+          },
+          chips: 'flow next 20',
+          concepts: ['method.dora', 'method.batch'],
+          hints: {
+            H1: bi('Записки на 3-й, 6-й и 12-й день снова остановят доску. Ответьте на них или продолжайте командой `flow next 20`.', 'The notes on days 3, 6 and 12 stop the board again. Answer them or carry on with `flow next 20`.'),
+            H2: bi('Выкладок должно стать примерно вдвое больше. Если их столько же, порядок выкладки не поменялся.', 'There should be about twice as many deployments. If there are as many as before, the way of deploying did not change.'),
+            H3: bi('Наберите `flow next 20` четыре раза подряд, а потом `flow metrics`.', 'Type `flow next 20` four times in a row, then `flow metrics`.'),
+          },
+        },
+      ],
+    },
+    { id: 'exit-practice', kind: 'quiz', step: 'exit', levels: ['beginner', 'intermediate'], title: bi('Что показала доска', 'What the board showed'), items: ['method.q.practice-dora'] },
     { id: 'exit', kind: 'quiz', step: 'exit', title: CHECK, items: ['method.q.dora-groups', 'method.q.dora-less-often', 'method.q.cfr-calc', 'method.q.goodhart'] },
   ],
 };

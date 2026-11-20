@@ -7,6 +7,12 @@ import type { Lesson } from '../../core/types';
 import { R, S } from './sources';
 
 const P10 = { ext: { flow: { scenario: 'p10' } } };
+/** Limits by the rule "people plus one". P5 and P10 start with the autopilot on, S1 and S2 do not. */
+const LIMITS = ['flow wip analysis 2', 'flow wip dev 3', 'flow wip test 2'];
+const P10_LIMITED = { ...P10, script: LIMITS };
+const P5 = { ext: { flow: { scenario: 'p5' } } };
+/** The board of the lesson on Little's law in the terminal: the autopilot and the limits are switched on before the prompt. */
+const S1_AUTO = { ext: { flow: { scenario: 's1' } }, script: ['flow auto on', ...LIMITS] };
 const CHECK = bi('Проверьте себя', 'Check yourself');
 
 export const bottleneck: Lesson = {
@@ -81,10 +87,59 @@ export const bottleneck: Lesson = {
       ),
     },
     {
+      id: 'practice-beginner',
+      kind: 'terminal',
+      step: 'practice',
+      levels: ['beginner'],
+      machine: 'sim',
+      setup: P10_LIMITED,
+      intro: bi(
+        'Ниже доска на десять рабочих дней. Владелец продукта (PO) разбирает задачи в колонке `analysis`, двое разработчиков (DEV-1 и DEV-2) пишут код в колонке `dev`, тестировщик (QA) проверяет их работу в колонке `test`, и каждое утро приходят две новые задачи. Лимиты по правилу «люди плюс один» из урока о незавершённой работе уже стоят, а автопилот каждое утро сам вытягивает карточки, пока в колонке есть место. Одна из колонок здесь медленнее остальных, и за два шага вы её найдёте и поможете ей.\n\nВ выводе `flow status` галочкой ✓ помечены карточки, которые этап уже закончил и которые ждут, пока их заберёт следующий этап. Если в колонке все карточки стоят с галочкой, значит, следующий за ней этап не успевает их забирать.',
+        'Below is a board for ten working days. The product owner (PO) analyses tasks in the `analysis` column, two developers (DEV-1 and DEV-2) write code in `dev`, the tester (QA) checks their work in `test`, and two new tasks arrive every morning. The limits by the rule “people plus one” from the lesson on work in progress are already set, and every morning the autopilot pulls cards by itself while a column has room. One of the columns is slower than the others, and in two steps you will find it and help it.\n\nIn the output of `flow status` a tick ✓ marks cards that their stage has finished and that wait for the next stage to take them. If every card in a column has a tick, the stage after that column cannot take them fast enough.',
+      ),
+      tasks: [
+        {
+          id: 'look',
+          prompt: bi('Прогоните четыре дня командой `flow next 4` и посмотрите на доску командой `flow status`. Найдите самую правую колонку, в которой все карточки стоят с галочкой: этап сразу за ней и есть узкое место.', 'Run four days with `flow next 4` and look at the board with `flow status`. Find the rightmost column in which every card has a tick: the stage right after it is the bottleneck.'),
+          check: {
+            when: 'flow.daysDone>=4',
+            stdout: 'capacity today',
+            fail: [{ if: 'flow.daysDone>=4', say: bi('Четыре дня прошли, и теперь осталось посмотреть на доску командой `flow status`.', 'The days are over. Now look at the board with `flow status`.') }],
+          },
+          chips: 'flow next 4',
+          concepts: ['method.bottleneck'],
+          hints: {
+            H1: bi('Сначала закончите четыре дня, потом посмотрите на доску: в первый день очередей ещё нет.', 'First end four days, then look at the board: there are no queues on day 1 yet.'),
+            H2: bi('В колонке `dev` все три карточки стоят с галочкой: разработчики их закончили, а проверка не успевает их забрать. Под колонкой `test` написано, сколько очков работы тестировщик успеет сделать сегодня (`capacity today`).', 'In `dev` all three cards have a tick: the developers have finished them, and testing cannot take them fast enough. Under `test` you see how many points of work the tester can do today (`capacity today`).'),
+            H3: bi('Наберите `flow next 4`, а потом `flow status`. Узким местом здесь служит проверка, то есть колонка `test`.', 'Type `flow next 4`, then `flow status`. The bottleneck here is testing, the `test` column.'),
+          },
+        },
+        {
+          id: 'swarm',
+          prompt: bi('Переставьте одного разработчика помогать проверке командой `flow station DEV-2 test` и доведите прогон до десятого дня командой `flow next 6`. Цель выполнена, если за десять дней готово не меньше шести задач.', 'Move one developer to help testing with `flow station DEV-2 test` and take the run to day 10 with `flow next 6`. The goal is met if at least six tasks are done in ten days.'),
+          check: {
+            when: 'flow.daysDone>=10 && flow.done.count>=6',
+            fail: [
+              { if: 'flow.daysDone>=10 && !flow.policies.wip.test', say: bi('Лимитов на доске нет. Скорее всего, вы начинали заново командой `flow reset`, а она убирает и лимиты. Нажмите кнопку «Сбросить машину» над терминалом: она вернёт доску к первому дню вместе с лимитами.', 'The board has no limits. Most likely you started again with `flow reset`, which removes the limits too. Press “Reset machine” above the terminal: it takes the board back to day 1 together with the limits.') },
+              { if: 'flow.daysDone>=10 && flow.done.count=5', say: bi('Готово пять задач, столько же, сколько вышло бы без перестановки. Значит, тестировщик по-прежнему проверял один: разработчика нужно переставить в колонку `test`, а не в другую. Нажмите «Сбросить машину» над терминалом и пройдите оба шага ещё раз.', 'Five tasks are done, as many as without the move. So the tester was still checking alone: the developer has to go to the `test` column, not another one. Press “Reset machine” above the terminal and do both steps again.') },
+              { if: 'flow.daysDone>=10 && flow.done.count<5', say: bi('Готовых задач стало меньше, чем было бы без перестановки. Так бывает, когда к проверке уходят оба разработчика: проверять становится нечего, потому что новый код никто не пишет. Узкому месту помогает один свободный человек, а не вся команда. Нажмите «Сбросить машину» и переставьте только DEV-2.', 'Fewer tasks are done than there would be without the move. This happens when both developers go to testing: there is nothing to test, because nobody writes new code. One free person helps the bottleneck, not the whole team. Press “Reset machine” and move only DEV-2.') },
+            ],
+          },
+          chips: 'flow station DEV-2 test',
+          concepts: ['method.bottleneck', 'method.swarming'],
+          hints: {
+            H1: bi('Разработчики свободны, потому что их колонка заполнена готовыми карточками, а проверка не успевает. Свободный человек помогает узкому месту.', 'The developers are free because their column is full of finished cards and testing cannot keep up. A free person helps the bottleneck.'),
+            H2: bi('Команда `flow station` переставляет человека в другую колонку. Вне своего этапа человек работает вдвое медленнее, но каждая проверенная им карточка уходит к покупателям.', '`flow station` moves a person to another column. Outside their own stage a person works at half speed, but every card they check goes to the customers.'),
+            H3: bi('Наберите `flow station DEV-2 test`, потом `flow next 6`.', 'Type `flow station DEV-2 test`, then `flow next 6`.'),
+          },
+        },
+      ],
+    },
+    {
       id: 'find',
       kind: 'docs',
       step: 'practice',
-      levels: ['beginner', 'intermediate'],
+      levels: ['intermediate'],
       mode: 'find',
       prompt: bi(
         'Перед вами доска на 10 дней, и один этап на ней медленнее остальных. В первый день очередей на доске ещё нет, поэтому сначала прогоните три дня командой `flow next 3` и посмотрите на доску командой `flow status`: медленный этап тот, перед которым копятся карточки. Потом начните заново командой `flow reset`. Как переставить человека в другую колонку, найдите в странице `man flow`. Лимиты незавершённой работы из прошлых уроков тоже понадобятся, потому что без них автопилот затягивает в работу все карточки сразу. Задача выполнена, когда за 10 дней закончено не меньше задач, чем требует проходная линия, а её показывает команда `flow goal`. Доска учебная, и сломать её нельзя: команда `flow reset` в любой момент вернёт её к первому дню.',
@@ -132,6 +187,7 @@ export const bottleneck: Lesson = {
         },
       },
     },
+    { id: 'exit-practice', kind: 'quiz', step: 'exit', levels: ['beginner', 'intermediate'], title: bi('Что показала доска', 'What the board showed'), items: ['method.q.practice-swarm'] },
     { id: 'exit', kind: 'quiz', step: 'exit', title: CHECK, items: ['method.q.five-steps', 'method.q.faster-dev', 'method.q.tester-dilemma'] },
   ],
 };
@@ -176,6 +232,75 @@ export const batch: Lesson = {
         'When there is more work than capacity, the question “what first” is a question of money. [[method.cod|Cost of delay]] is how much the shop loses for each day a change is not with the customers: “card payments” might bring 4,000 ₽ a day, a “dark theme for the site” almost nothing.\n\nDon Reinertsen and Joshua Arnold suggest comparing tasks by CD3 (cost of delay divided by duration). Feature A is worth 10,000 ₽ a week and takes two weeks: CD3 = 5,000. Feature B is worth 6,000 ₽ a week and takes one week: CD3 = 6,000. B goes first: while B is being built, A loses 10,000; had A gone first, B would have lost 12,000 over the two weeks.\n\nSome cards need special rules: **classes of service**. A broken checkout does not wait in line: an **expedite lane** with a limit of one card is kept for it. A task with a fixed date (a report for the tax office by Friday) rises in the queue the closer the date gets.',
       ),
     },
+    {
+      id: 'practice',
+      kind: 'terminal',
+      step: 'practice',
+      levels: ['beginner', 'intermediate'],
+      machine: 'sim',
+      setup: S1_AUTO,
+      intro: bi(
+        'Ниже доска из тренажёра урока о законе Литтла: те же четыре человека, те же броски кубика и те же 15 дней, только в терминале. Автопилот уже включён, а лимиты стоят по правилу «люди плюс один». На третий день владелец бизнеса пришлёт записку о пяти промо-задачах к акции, и доска остановится, чтобы вы на неё ответили. В этой практике вы примените оба приёма урока: выберете порядок работы по стоимости задержки и не дадите большой партии задач войти в работу разом.\n\nКоманда `flow metrics` в конце покажет строку `cycle time p85 (d)`, то есть 85-й процентиль времени цикла, и строку `money net (RUB)`, то есть деньги, которые магазин заработал за прогон за вычетом того, что он недополучил, пока задачи ждали. Кнопка «Сбросить машину» над терминалом в любой момент вернёт доску к первому дню вместе с автопилотом и лимитами. Команда `flow reset` тоже вернёт её к первому дню, но выключит и автопилот, и лимиты.',
+        'Below is the board of the trainer from the lesson on Little’s law: the same four people, the same dice and the same 15 days, only in the terminal. The autopilot is already on, and the limits are set by the rule “people plus one”. On day 3 the business owner sends a note about five promo tasks for a sale, and the board stops for you to answer it. In this practice you use both techniques of the lesson: choose the order of work by cost of delay, and keep a big batch of tasks from entering work at once.\n\nAt the end `flow metrics` shows the line `cycle time p85 (d)`, the 85th percentile of cycle time, and `money net (RUB)`, the money the shop earned in the run minus what it missed while tasks waited. The “Reset machine” button above the terminal takes the board back to day 1 at any moment together with the autopilot and the limits. `flow reset` also takes it back to day 1, but switches off both the autopilot and the limits.',
+      ),
+      tasks: [
+        {
+          id: 'order',
+          prompt: bi('Велите автопилоту вытягивать первыми карточки по CD3, то есть по стоимости задержки, делённой на объём оставшейся работы.', 'Tell the autopilot to pull cards by CD3 first, that is, by cost of delay divided by the remaining work.'),
+          check: {
+            when: 'flow.policies.pullOrder=cd3',
+            fail: [{ if: 'flow.policies.pullOrder=cod', say: bi('Порядок `cod` берёт первой самую дорогую карточку и не смотрит, сколько в ней работы. CD3 делит стоимость задержки на длительность, поэтому короткая дорогая задача обгоняет длинную. Наберите `flow policy pull cd3`.', 'The `cod` order takes the most expensive card first and ignores how much work it holds. CD3 divides cost of delay by duration, so a short expensive task overtakes a long one. Type `flow policy pull cd3`.') }],
+          },
+          chips: 'flow policy pull cd3',
+          concepts: ['method.cod'],
+          hints: {
+            H1: bi('Порядок, в котором автопилот вытягивает карточки, меняет команда `flow policy pull`.', 'The order in which the autopilot pulls cards is changed with `flow policy pull`.'),
+            H2: bi('У команды три порядка: `fifo` берёт самую старую карточку, `cod` самую дорогую, а `cd3` самую дорогую в пересчёте на день работы.', 'The command has three orders: `fifo` takes the oldest card, `cod` the most expensive one, and `cd3` the most expensive one per day of work.'),
+            H3: bi('Наберите `flow policy pull cd3`.', 'Type `flow policy pull cd3`.'),
+          },
+        },
+        {
+          id: 'promo',
+          prompt: bi('Прогоните дни командой `flow next 15`. На третий день доска остановится и покажет записку с тремя вариантами ответа. Ответьте так, чтобы пять промо-задач не начинались одной партией.', 'Run the days with `flow next 15`. On day 3 the board stops and shows a note with three answers. Answer so that the five promo tasks do not start as one batch.'),
+          check: {
+            when: 'flow.decided.s1-promo=top',
+            fail: [
+              { if: 'flow.decided.s1-promo=all', say: bi('Все пять промо-задач начаты одной партией. Незавершённой работы сразу стало на пять карточек больше, каждая карточка идёт медленнее, и до акции успеют одна-две промо-задачи. Если вы закончили третий день, не ответив на записку, доска выбрала этот вариант сама, потому что так поступила бы команда без методологии. Решение не отменяется, поэтому нажмите «Сбросить машину» над терминалом и на третий день ответьте командой `flow decide s1-promo top`.', 'All five promo tasks started as one batch. Work in progress grew by five cards at once, every card goes slower, and only one or two promo tasks will be ready for the sale. If you ended day 3 without answering the note, the board chose this answer itself, because that is what a team without the method would do. A decision cannot be undone, so press “Reset machine” above the terminal and on day 3 answer with `flow decide s1-promo top`.') },
+              { if: 'flow.decided.s1-promo=refuse', say: bi('Отказ ничего не говорит владельцу бизнеса о деньгах, а промо-задачи нужны магазину к акции, поэтому тренажёр списывает 40 000 рублей недополученной выручки. Лучше поставить промо-задачи в очередь по стоимости задержки: тогда самая дорогая начнётся сразу, а остальные дождутся места. Нажмите «Сбросить машину» и ответьте на записку иначе.', 'A refusal tells the business owner nothing about money, and the shop needs the promo tasks for the sale, so the trainer charges 40,000 rubles of missed revenue. Better to queue the promo tasks by cost of delay: the most expensive one starts at once, and the others wait for room. Press “Reset machine” and answer the note differently.') },
+            ],
+          },
+          chips: 'flow decide s1-promo top',
+          concepts: ['method.batch', 'method.cod'],
+          hints: {
+            H1: bi('Записка спрашивает, начинать ли все пять задач сразу. Вспомните игру с монетами: чем меньше партия, тем раньше первая монета доходит до покупателя.', 'The note asks whether to start all five tasks at once. Remember the coin game: the smaller the batch, the sooner the first coin reaches the customer.'),
+            H2: bi('Под запиской доска печатает три готовые команды. Нужен вариант, в котором задачи встают в очередь по стоимости задержки.', 'Under the note the board prints three ready commands. You need the answer in which the tasks are queued by cost of delay.'),
+            H3: bi('Когда доска остановится на третьем дне, наберите `flow decide s1-promo top`.', 'When the board stops on day 3, type `flow decide s1-promo top`.'),
+          },
+        },
+        {
+          id: 'result',
+          prompt: bi('Доведите прогон до 15-го дня командой `flow next 15` и посмотрите итог командой `flow metrics`. Цель выполнена, если 85-й процентиль времени цикла не больше шести дней.', 'Take the run to day 15 with `flow next 15` and look at the result with `flow metrics`. The goal is met if the 85th percentile of cycle time is no more than six days.'),
+          check: {
+            when: 'flow.finished=1 && flow.metrics.cycleP85<=6',
+            stdout: 'cycle time p85',
+            fail: [
+              { if: 'flow.finished=1 && flow.done.count=0', say: bi('За 15 дней не готова ни одна задача. Скорее всего, вы начинали заново командой `flow reset`, и она выключила автопилот и лимиты. Нажмите «Сбросить машину» над терминалом: доска вернётся к первому дню с включённым автопилотом и лимитами.', 'Not one task is done in 15 days. Most likely you started again with `flow reset`, which switched off the autopilot and the limits. Press “Reset machine” above the terminal: the board goes back to day 1 with the autopilot and the limits on.') },
+              { if: 'flow.finished=1 && flow.decided.s1-promo=all', say: bi('Прогон закончен, но промо-задачи вошли в работу одной партией, и все карточки после третьего дня шли медленнее. Нажмите «Сбросить машину» и на третий день поставьте промо-задачи в очередь.', 'The run is over, but the promo tasks entered work as one batch, and every card after day 3 went slower. Press “Reset machine” and queue the promo tasks on day 3.') },
+              { if: 'flow.finished=1 && flow.policies.pullOrder=fifo', say: bi('Прогон закончен, но автопилот вытягивал карточки по старшинству, а не по стоимости задержки, и дорогие короткие задачи ждали своей очереди. Нажмите «Сбросить машину» и в первый день наберите `flow policy pull cd3`.', 'The run is over, but the autopilot pulled cards by age, not by cost of delay, and short expensive tasks waited their turn. Press “Reset machine” and type `flow policy pull cd3` on day 1.') },
+              { if: 'flow.finished=1 && flow.metrics.cycleP85<=6', say: bi('Прогон закончен, и осталось посмотреть итог командой `flow metrics`.', 'The run is over. Look at the result with `flow metrics`.') },
+            ],
+          },
+          chips: 'flow next 15',
+          concepts: ['method.batch', 'method.cod'],
+          hints: {
+            H1: bi('Команда `flow next 15` закончит все оставшиеся дни, потому что дальше записок нет.', '`flow next 15` ends all the remaining days, because there are no more notes.'),
+            H2: bi('Если процентиль получился больше шести дней, проверьте, выбран ли порядок `cd3` и как вы ответили на записку.', 'If the percentile is above six days, check whether the `cd3` order is set and how you answered the note.'),
+            H3: bi('Наберите `flow next 15`, а потом `flow metrics`.', 'Type `flow next 15`, then `flow metrics`.'),
+          },
+        },
+      ],
+    },
+    { id: 'exit-practice', kind: 'quiz', step: 'exit', levels: ['beginner', 'intermediate'], title: bi('Что показала доска', 'What the board showed'), items: ['method.q.practice-batch'] },
     { id: 'exit', kind: 'quiz', step: 'exit', title: CHECK, items: ['method.q.cd3', 'method.q.batch-why', 'method.q.batch-first'] },
   ],
 };
@@ -277,6 +402,72 @@ export const agile: Lesson = {
         'Scrum sets the rhythm, the accountabilities and the goals; Kanban sets how work flows inside that rhythm. The authors of the guides described their compatibility separately, in the Kanban Guide for Scrum Teams: a Scrum Team may limit WIP inside a Sprint, watch cycle time and promise dates by an SLE. The interview answer: Scrum is a framework of events and accountabilities, Kanban is a strategy for managing flow; one does not exclude the other.',
       ),
     },
+    {
+      id: 'practice-sprint',
+      kind: 'terminal',
+      step: 'practice',
+      levels: ['beginner', 'intermediate'],
+      machine: 'sim',
+      setup: P5,
+      intro: bi(
+        'Ниже доска на пять дней из урока о незавершённой работе, но теперь эти пять дней составляют один спринт. Четыре человека каждый день делают одинаковую работу, поэтому прогноз здесь точный: если не перегружать команду, за спринт она закончит шесть задач, и это число станет целью спринта. Каждое утро автопилот сам вытягивает карточки в работу, пока в колонке есть место, поэтому лимиты колонок решают, сколько работы команда берёт на себя одновременно. Вы проведёте спринт целиком: спланируете его лимитами, проживёте пять дней и покажете результат на обзоре.',
+        'Below is the five-day board from the lesson on work in progress, but now these five days are one Sprint. Four people do the same work every day, so the forecast here is exact: if the team is not overloaded, it finishes six tasks in the Sprint, and that number becomes the Sprint Goal. Every morning the autopilot pulls cards into work by itself while a column has room, so the column limits decide how much work the team takes on at once. You will run the whole Sprint: plan it with limits, live through the five days and show the result at the review.',
+      ),
+      tasks: [
+        {
+          id: 'plan',
+          prompt: bi('Планирование спринта. В первый день поставьте колонкам `analysis`, `dev` и `test` лимиты, при которых команда не возьмёт в работу больше, чем успеет закончить. Подойдёт правило «люди на этапе плюс один» из урока о незавершённой работе.', 'Sprint Planning. On day 1 give the `analysis`, `dev` and `test` columns limits at which the team does not take more into work than it can finish. The rule “people on the stage plus one” from the lesson on work in progress will do.'),
+          check: {
+            when: 'flow.daysDone=0 && flow.policies.wip.analysis=2 && flow.policies.wip.dev>=2 && flow.policies.wip.dev<=3 && flow.policies.wip.test=2',
+            fail: [
+              { if: 'flow.daysDone>0', say: bi('Спринт уже идёт, а планируют его до начала. Наберите `flow reset`, чтобы вернуться к первому дню, и поставьте лимиты, не заканчивая ни одного дня.', 'The Sprint has already started, and it is planned before the start. Type `flow reset` to go back to day 1 and set the limits without ending any day.') },
+              { if: 'flow.policies.wip.analysis>2 || flow.policies.wip.dev>3 || flow.policies.wip.test>2', say: bi('Один из лимитов больше, чем «люди плюс один». С таким лимитом у человека окажется несколько карточек сразу, и часть его времени уйдёт на переключение между ними. Поставьте 2 для `analysis`, 3 для `dev` и 2 для `test`.', 'One of the limits is above “people plus one”. With it a person gets several cards at once and loses part of the time switching between them. Set 2 for `analysis`, 3 for `dev` and 2 for `test`.') },
+              { if: 'flow.policies.wip.dev=1', say: bi('В колонке `dev` работают два разработчика, а при лимите 1 второму нечего делать. Поставьте `flow wip dev 3`.', 'Two developers work in `dev`, and with a limit of 1 the second one has nothing to do. Type `flow wip dev 3`.') },
+              { if: 'flow.policies.wip.analysis=1 || flow.policies.wip.test=1', say: bi('Лимит 1 в колонке, где работает один человек, остановит этот этап. Законченная карточка занимает место в колонке, пока её не заберёт следующий этап, и взять новую человеку некуда. Поэтому к числу людей и прибавляют единицу: поставьте 2 для `analysis` и 2 для `test`.', 'A limit of 1 in a column with one person stops that stage. A finished card takes up room in the column until the next stage takes it, and the person has nowhere to take a new one. That is why one is added to the number of people: set 2 for `analysis` and 2 for `test`.') },
+            ],
+          },
+          chips: 'flow wip dev 3',
+          concepts: ['method.scrum', 'method.wip'],
+          hints: {
+            H1: bi('В Scrum спринт ограничивает работу временем, а лимит ограничивает её числом карточек. Здесь вы планируете спринт лимитами.', 'In Scrum a Sprint limits work by time, and a limit limits it by the number of cards. Here you plan the Sprint with limits.'),
+            H2: bi('В `analysis` работает один человек, в `dev` двое, в `test` один, поэтому по правилу получается 2, 3 и 2.', 'One person works in `analysis`, two in `dev`, one in `test`, so the rule gives 2, 3 and 2.'),
+            H3: bi('Наберите по очереди `flow wip analysis 2`, `flow wip dev 3` и `flow wip test 2`.', 'Type in turn `flow wip analysis 2`, `flow wip dev 3` and `flow wip test 2`.'),
+          },
+        },
+        {
+          id: 'sprint',
+          prompt: bi('Проведите спринт: прогоните все пять дней командой `flow next 5`.', 'Run the Sprint: go through all five days with `flow next 5`.'),
+          check: { when: 'flow.finished=1' },
+          chips: 'flow next 5',
+          concepts: ['method.scrum'],
+          hints: {
+            H1: bi('Спринт длится пять дней доски, и каждый день заканчивает команда `flow next`.', 'The Sprint lasts five days of the board, and each day is ended with `flow next`.'),
+            H2: bi('Число после `flow next` говорит, сколько дней закончить подряд.', 'The number after `flow next` says how many days to end in a row.'),
+            H3: bi('Наберите `flow next 5`.', 'Type `flow next 5`.'),
+          },
+        },
+        {
+          id: 'review',
+          prompt: bi('Обзор спринта. Посмотрите на результат командой `flow metrics`. Цель спринта достигнута, если готово не меньше шести задач.', 'Sprint Review. Look at the result with `flow metrics`. The Sprint Goal is met if at least six tasks are done.'),
+          check: {
+            when: 'flow.finished=1 && flow.done.count>=6',
+            stdout: 'done (delivered)',
+            fail: [
+              { if: 'flow.finished=1 && flow.done.count<6', say: bi('Спринт закончился, а готово меньше шести задач, то есть меньше прогноза. Посмотрите командой `flow status`: в колонках остались начатые и не законченные карточки, значит, команда взяла больше, чем успевала, и время ушло на переключения. На ретроспективе такая команда решила бы брать меньше. Наберите `flow reset`, поставьте лимиты «люди плюс один» и проведите спринт заново.', 'The Sprint is over and fewer than six tasks are done, less than the forecast. Look with `flow status`: started, unfinished cards are left in the columns, so the team took more than it could manage, and the time went on switching. At the retrospective such a team would decide to take less. Type `flow reset`, set the limits “people plus one” and run the Sprint again.') },
+              { if: 'flow.finished=1 && flow.done.count>=6', say: bi('Спринт закончен, и осталось показать результат командой `flow metrics`.', 'The Sprint is over. Show the result with `flow metrics`.') },
+            ],
+          },
+          chips: 'flow metrics',
+          concepts: ['method.scrum'],
+          hints: {
+            H1: bi('На обзоре спринта показывают то, что готово, а не то, что начато.', 'At the Sprint Review the team shows what is done, not what is started.'),
+            H2: bi('Число готовых задач стоит в строке `done (delivered)` вывода `flow metrics`.', 'The number of finished tasks is in the line `done (delivered)` of `flow metrics`.'),
+            H3: bi('Наберите `flow metrics`.', 'Type `flow metrics`.'),
+          },
+        },
+      ],
+    },
+    { id: 'exit-practice', kind: 'quiz', step: 'exit', levels: ['beginner', 'intermediate'], title: bi('Что показала доска', 'What the board showed'), items: ['method.q.practice-sprint'] },
     { id: 'exit', kind: 'quiz', step: 'exit', title: CHECK, items: ['method.q.scrum-commitments', 'method.q.scrum-master', 'method.q.scrum-wip', 'method.q.sle'] },
   ],
 };
