@@ -67,7 +67,7 @@ export const ANSIBLE_CFG = '[defaults]\ninventory = ./inventory.ini\n';
 
 // ── the roles ──
 
-export const ROLE_PREREQ = `- name: Swap is off and stays off after a reboot
+export const ROLE_PREREQ = `- name: Swap stays off after a reboot
   ansible.builtin.lineinfile:
     path: /etc/fstab
     regexp: '\\sswap\\s'

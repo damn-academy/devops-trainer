@@ -84,7 +84,7 @@ export const codeModel = defineModel<CodeP>({
   id: 'k8s-3.from-code',
   frame: 'visible',
   block: 'k8s-3',
-  title: bi('Как кластер собирается из кода', 'How a cluster is built from code'),
+  title: bi('Как код собирает и обновляет кластер', 'How code builds and upgrades a cluster'),
   summary: bi(
     'Что происходит, когда вы прогоняете код кластера в пустом облаке: Terraform заказывает машины и записывает их адреса в инвентарь, Ansible одинаково готовит каждую машину, роль kubeadm запускает control plane на первом узле, роль cilium ставит сеть подов, а рабочие узлы присоединяются к кластеру. Под схемой считаются машины, минуты до готового кластера, задачи, которые что-то изменили, и ВМ-часы, которые наберёт забытый стенд.',
     'What happens when you run the cluster code in an empty cloud: Terraform orders the machines and writes their addresses into the inventory, Ansible prepares every machine the same way, the kubeadm role starts the control plane on the first node, the cilium role installs the pod network, and the workers join the cluster. Under the diagram you see the machines, the minutes to a ready cluster, the tasks that changed something and the VM-hours a forgotten lab runs up.',
@@ -98,7 +98,7 @@ export const codeModel = defineModel<CodeP>({
     { mark: 'say', text: bi('облачко с тем, что делает подсвеченный участник', 'the callout with what the highlighted participant does') },
     { mark: 'token', text: bi('карточка с тем, что участник передаёт следующему: код, машины, адреса, роли, токен', 'what it hands on: code, machines, addresses, roles, a token') },
     { mark: 'icon:file', text: bi('файл с кодом в репозитории или файл инвентаря', 'a code file in the repository or the inventory file') },
-    { mark: 'icon:terminal', text: bi('команда, которую запускаете вы или конвейер', 'a command you or the pipeline run') },
+    { mark: 'icon:terminal', text: bi('команда, которую запускаете вы или пайплайн', 'a command you or the pipeline run') },
     { mark: 'icon:cloud', text: bi('API облака, которое создаёт машины', 'the cloud API that creates the machines') },
     { mark: 'icon:server', text: bi('виртуальная машина, будущий узел кластера', 'a virtual machine, a future cluster node') },
     { mark: 'icon:container', text: bi('компоненты control plane в статических подах', 'the control-plane components in static pods') },
@@ -115,10 +115,10 @@ export const codeModel = defineModel<CodeP>({
     height: 640,
     nodes: [
       node('code', bi('Репозиторий с кодом', 'Code repository'), 'file', 'ci-source', 'doc', 24, 24, 184, 72, bi('Всё, из чего собирается кластер: файлы Terraform в каталоге infra, плейбук site.yml и роли Ansible в каталоге ops. Пересоздать кластер означает прогнать этот код ещё раз.', 'Everything the cluster is built from: the Terraform files in infra, the site.yml playbook and the Ansible roles in ops. Rebuilding the cluster means running this code once more.'), bi('Код пишете вы, а каждое изменение проверяют коллеги.', 'You write the code, and every change goes through review.'), 'git log --oneline', undefined, 'infra/ · ops/'),
-      node('tf', 'terraform apply', 'terminal', 'process', 'box', 272, 24, 192, 72, bi('Terraform сравнивает код с тем, что записано в state и что есть в облаке, и создаёт недостающее: сеть и машины. Аргумент count = 2 превращает один блок кода в две машины, worker[0] и worker[1].', 'Terraform compares the code with what the state records and what the cloud has, and creates what is missing: the network and the machines. count = 2 turns one block of code into two machines, worker[0] and worker[1].'), bi('Команду запускаете вы или конвейер.', 'You or the pipeline run the command.'), 'terraform plan', DOC.count),
+      node('tf', 'terraform apply', 'terminal', 'process', 'box', 272, 24, 192, 72, bi('Terraform сравнивает код с тем, что записано в state и что есть в облаке, и создаёт недостающее: сеть и машины. Аргумент count = 2 превращает один блок кода в две машины, worker[0] и worker[1].', 'Terraform compares the code with what the state records and what the cloud has, and creates what is missing: the network and the machines. count = 2 turns one block of code into two machines, worker[0] and worker[1].'), bi('Команду запускаете вы или пайплайн.', 'You or the pipeline run the command.'), 'terraform plan', DOC.count),
       node('cloud', bi('API облака', 'Cloud API'), 'cloud', 'neutral', 'box', 528, 24, 176, 72, bi('Облако создаёт машины, выдаёт им адреса и ставит на них метку trainer=devops. По этой метке машины потом находят, считают и удаляют.', 'The cloud creates the machines, gives them addresses and puts the trainer=devops label on them. By this label the machines are later found, counted and deleted.'), bi('Облако обслуживает провайдер.', 'The provider runs the cloud.'), 'edu vm list'),
       node('inv', 'inventory.ini', 'file', 'store', 'doc', 760, 24, 176, 72, bi('Инвентарь Ansible, который выдал Terraform: группы control_plane и workers, адреса машин и переменная cp_endpoint с адресом control plane. Вручную его не пишут, потому что после пересоздания у машин другие адреса.', 'The Ansible inventory Terraform produced: the control_plane and workers groups, the machine addresses and the cp_endpoint variable with the control-plane address. Nobody writes it by hand, because after a rebuild the machines have other addresses.'), bi('Файл записывает команда terraform output -raw inventory.', 'The terraform output -raw inventory command writes the file.'), 'terraform output -raw inventory', DOC.outputs),
-      node('ans', 'ansible-playbook site.yml', 'terminal', 'process', 'box', 332, 176, 296, 64, bi('Ansible приводит узлы к описанию в ролях. Роли k8s_prereq, containerd и kube_packages выполняются на всех узлах, роли kubeadm_init и cilium выполняются на control plane, а роль kubeadm_join выполняется на рабочих узлах.', 'Ansible brings the nodes to the description in the roles. k8s_prereq, containerd and kube_packages run on every node, kubeadm_init and cilium on the control plane, kubeadm_join on the workers.'), bi('Плейбук запускаете вы или конвейер.', 'You or the pipeline run the playbook.'), 'ansible-playbook --check site.yml'),
+      node('ans', 'ansible-playbook site.yml', 'terminal', 'process', 'box', 332, 176, 296, 64, bi('Ansible приводит узлы к описанию в ролях. Роли k8s_prereq, containerd и kube_packages выполняются на всех узлах, роли kubeadm_init и cilium выполняются на control plane, а роль kubeadm_join выполняется на рабочих узлах.', 'Ansible brings the nodes to the description in the roles. k8s_prereq, containerd and kube_packages run on every node, kubeadm_init and cilium on the control plane, kubeadm_join on the workers.'), bi('Плейбук запускаете вы или пайплайн.', 'You or the pipeline run the playbook.'), 'ansible-playbook --check site.yml'),
       node('cp', 'cp-1', 'server', 'node', 'rack', 40, 312, 240, 88, bi('Управляющий узел кластера. После kubeadm init на нём лежат сертификаты в /etc/kubernetes/pki, файл admin.conf и манифесты статических подов.', 'The control-plane node. After kubeadm init it holds the certificates in /etc/kubernetes/pki, the admin.conf file and the static pod manifests.'), bi('Машину создал Terraform, а подготовил Ansible.', 'Terraform created the machine, and Ansible prepared it.'), 'ls /etc/kubernetes', DOC.init, 'control plane'),
       node('w1', 'worker-1', 'server', 'node', 'rack', 360, 312, 240, 88, bi('Рабочий узел. Команда kubeadm join кладёт сюда файл kubelet.conf, и по этому файлу роль при следующем прогоне понимает, что узел уже в кластере.', 'A worker node. kubeadm join puts kubelet.conf here, and by this file the role sees on the next run that the node is already in the cluster.'), bi('Машину создал Terraform, а подготовил Ansible.', 'Terraform created the machine, and Ansible prepared it.'), 'ls /etc/kubernetes', DOC.join, 'worker'),
       node('w2', 'worker-2', 'server', 'node', 'rack', 680, 312, 240, 88, bi('Второй рабочий узел. Все рабочие узлы описаны одним ресурсом с count и готовятся одной ролью, поэтому они одинаковы по построению.', 'The second worker. All workers are described by one resource with count and prepared by one role, so they are identical by construction.'), bi('Машину создал Terraform, а подготовил Ansible.', 'Terraform created the machine, and Ansible prepared it.'), 'ls /etc/kubernetes', DOC.join, 'worker'),
@@ -207,6 +207,7 @@ export const codeModel = defineModel<CodeP>({
       kind: 'choice',
       default: '1',
       group: G_UPGRADE,
+      shownWhen: (p) => p.run === 'upgrade',
       options: [
         { id: '1', label: bi('по одному узлу (serial: 1)', 'one node at a time (serial: 1)') },
         { id: 'all', label: bi('все узлы сразу', 'all nodes at once') },
@@ -215,7 +216,7 @@ export const codeModel = defineModel<CodeP>({
       predict: {
         prompt: bi('Вы меняете, сколько рабочих узлов обновляются одновременно. Сколько реплик приложения останется готовыми в худший момент выбранного прогона?', 'You change how many workers are upgraded at once. How many application replicas stay ready at the worst moment of the chosen run?'),
         options: [
-          { id: 'zero', text: bi('Ни одной, потому что все рабочие узлы окажутся выведены из работы одновременно и подам некуда переехать', 'None, because all workers are out of service at once and the pods have nowhere to go') },
+          { id: 'zero', text: bi('Ни одной, потому что на время обновления у подов не останется рабочего узла, на который можно переехать', 'None, because during the upgrade the pods are left without a worker they could move to') },
           { id: 'some', text: bi('Хотя бы одна, потому что поды переедут на узлы, которые сейчас не обновляются', 'At least one, because the pods move to the nodes not being upgraded right now') },
         ],
         resolve: (_p, next) => (minReplicas(next) === 0 ? 'zero' : 'some'),
@@ -289,14 +290,15 @@ export const codeModel = defineModel<CodeP>({
     { id: 'changed', label: bi('задач, которые что-то изменили (changed)', 'tasks that changed something (changed)') },
     { id: 'ready', label: bi('узлов в состоянии Ready', 'nodes in the Ready state') },
     { id: 'month', label: bi('ВМ-часов, если забыть стенд на месяц', 'VM-hours if the lab is forgotten for a month') },
-    { id: 'replicas', label: bi('готовых реплик приложения', 'ready application replicas') },
+    { id: 'replicas', label: bi('готовых реплик приложения на рабочих узлах', 'ready application replicas on the workers') },
   ],
   run(p, broken): Step[] {
     const n = codeNumbers(p);
     const steps: Step[] = [];
     const W = p.workers;
     const two = W >= 2;
-    const base = { vms: n.vms, month: n.vmHoursMonth, replicas: 3 };
+    /** The application replicas exist only in the upgrade run: in the other runs no application has been released yet. */
+    const base = { vms: n.vms, month: n.vmHoursMonth };
     /** worker-2 and its lines stay off the picture when there is one worker. */
     const noW2: Record<string, ElementState> = two ? {} : hiddenAll(['w2', 'e-ssh-w2', 'e-join2']);
     const w2 = (s: ElementState): Record<string, ElementState> => (two ? { w2: s } : {});
@@ -313,26 +315,31 @@ export const codeModel = defineModel<CodeP>({
         say: { ans: bi('Ansible начинает сценарий обновления рабочих узлов. Control plane уже работает на версии v1.37, поэтому рабочие узлы можно обновлять.', 'Ansible starts the play that upgrades the workers. The control plane already runs v1.37, so the workers may be upgraded.') },
         states: { ...hiddenAll(['code', 'tf', 'cloud', 'inv', 'e-read', 'e-api', 'e-out', 'e-inv', 'e-join1', 'e-join2', 'e-init']), ...noW2, cp: 'ok', plane: 'ok' },
         values: { cp: 'v1.37.1', w1: 'v1.36.4', ...(two ? { w2: 'v1.36.4' } : {}), ...w2v },
-        metrics: { ...base, ready: n.vms, changed: 0, minutes: 0 },
+        metrics: { ...base, replicas: 3, ready: n.vms, changed: 0, minutes: 0 },
       });
       if (p.serial === 'all') {
         steps.push({
           id: 'drain-all',
           label: bi('drain всех', 'drain all'),
-          caption: fb(bi('Настройка serial разрешает обновлять все узлы сразу, поэтому Ansible выводит из работы все {w} одновременно. Команда drain выселяет поды приложения со всех рабочих узлов, и переехать им некуда, потому что на cp-1 поды приложения не запускаются.', 'serial lets all nodes be upgraded at once, so Ansible drains all {w} at the same time. drain evicts the application pods from every worker, and they have nowhere to go, because cp-1 runs no application pods.'), { w: fb(bi('{n} {r}', '{n} workers'), { n: W, r: workersRu(W) }) }),
+          caption:
+            W === 1
+              ? bi('Настройка serial разрешает обновлять все узлы сразу, но рабочий узел здесь один, так что результат будет тем же, что и при обновлении по одному. Команда drain выселяет поды приложения с worker-1, и переехать им некуда, потому что на cp-1 поды приложения не запускаются.', 'serial lets all nodes be upgraded at once, but there is only one worker here, so the result is the same as one at a time. drain evicts the application pods from worker-1, and they have nowhere to go, because cp-1 runs no application pods.')
+              : fb(bi('Настройка serial разрешает обновлять все узлы сразу, поэтому Ansible выводит из работы все {n} {r} одновременно. Команда drain выселяет поды приложения со всех рабочих узлов, и переехать им некуда, потому что на cp-1 поды приложения не запускаются.', 'serial lets all nodes be upgraded at once, so Ansible drains all {n} workers at the same time. drain evicts the application pods from every worker, and they have nowhere to go, because cp-1 runs no application pods.'), { n: W, r: workersRu(W) }),
           focus: ['ans', 'e-ssh-w1', 'e-ssh-w2'],
           tokens: sshTokens(bi('drain', 'drain')).slice(1),
-          say: { ans: bi('Ansible выполняет kubectl drain на всех рабочих узлах сразу, и приложение остаётся без единого готового пода.', 'Ansible runs kubectl drain on every worker at once, and the application is left without a single ready pod.') },
+          say: { ans: W === 1 ? bi('Ansible выполняет kubectl drain на единственном рабочем узле, и приложение остаётся без единого готового пода.', 'Ansible runs kubectl drain on the only worker, and the application is left without a single ready pod.') : bi('Ansible выполняет kubectl drain на всех рабочих узлах сразу, и приложение остаётся без единого готового пода.', 'Ansible runs kubectl drain on every worker at once, and the application is left without a single ready pod.') },
           states: { w1: 'warn', ...w2('warn') },
-          values: { w1: 'SchedulingDisabled', ...(two ? { w2: 'SchedulingDisabled' } : {}) },
-          metrics: { ...base, replicas: 0, ready: 1, changed: W, minutes: 4 },
+          values: { w1: 'Ready,SchedulingDisabled', ...(two ? { w2: 'Ready,SchedulingDisabled' } : {}) },
+          metrics: { ...base, replicas: 0, ready: n.vms, changed: W, minutes: 4 },
         });
         steps.push({
           id: 'up-all',
           label: 'uncordon',
-          caption: bi('Узлы обновились до v1.37 и вернулись в работу, поды приложения снова запущены. Но несколько минут приложение не отвечало ни одному пользователю.', 'The nodes are on v1.37 and back in service, and the application pods run again. But for a few minutes the application answered no user.'),
+          caption: W === 1
+            ? bi('Узел worker-1 обновился до v1.37 и вернулся в работу, поды приложения снова запущены. Но несколько минут приложение не отвечало ни одному пользователю: одного рабочего узла мало, чтобы обновлять кластер без простоя.', 'worker-1 is on v1.37 and back in service, and the application pods run again. But for a few minutes the application answered no user: one worker is not enough to upgrade a cluster without downtime.')
+            : bi('Рабочие узлы обновились до v1.37 и вернулись в работу, поды приложения снова запущены. Но несколько минут приложение не отвечало ни одному пользователю.', 'The workers are on v1.37 and back in service, and the application pods run again. But for a few minutes the application answered no user.'),
           focus: ['w1', 'w2'],
-          say: { w1: bi('Узел worker-1 работает на версии v1.37 и снова принимает поды, как и остальные рабочие узлы.', 'worker-1 runs v1.37 and takes pods again, like the other workers.') },
+          say: { w1: W === 1 ? bi('Узел worker-1 работает на версии v1.37 и снова принимает поды.', 'worker-1 runs v1.37 and takes pods again.') : bi('Узел worker-1 работает на версии v1.37 и снова принимает поды, как и остальные рабочие узлы.', 'worker-1 runs v1.37 and takes pods again, like the other workers.') },
           states: { w1: 'ok', ...w2('ok') },
           values: { w1: 'v1.37.1', ...(two ? { w2: 'v1.37.1' } : {}), ...(W > 2 ? { w2: `${W - 1} × v1.37.1` } : {}) },
           metrics: { ...base, replicas: 3, ready: n.vms, changed: W * 4, minutes: 8 },
@@ -348,18 +355,23 @@ export const codeModel = defineModel<CodeP>({
           caption:
             W === 1
               ? bi('Настройка serial: 1 означает, что сценарий проходит рабочие узлы по одному. Но рабочий узел здесь один, и когда drain выселяет с него поды, переехать им некуда, поэтому на время обновления у приложения не остаётся ни одного готового пода.', 'serial: 1 means the play goes over the workers one by one. But there is only one worker, and when drain evicts its pods they have nowhere to go, so for the upgrade the application is left without a single ready pod.')
-              : fb(bi('Настройка serial: 1 означает, что сценарий проходит рабочие узлы по одному. Сейчас обновляется только worker-{k}: drain выселяет с него поды, и они переезжают на соседние узлы.', 'serial: 1 means the play goes over the workers one by one. Only worker-{k} is upgraded now: drain evicts its pods, and they move to the neighbours.'), { k }),
+              : fb(bi('Настройка serial: 1 означает, что сценарий проходит рабочие узлы по одному. Сейчас обновляется только worker-{k}: drain выселяет с него поды, и они переезжают на соседние узлы. Команда kubectl get nodes покажет у этого узла состояние Ready,SchedulingDisabled, то есть узел исправен, но новых подов не принимает.', 'serial: 1 means the play goes over the workers one by one. Only worker-{k} is upgraded now: drain evicts its pods, and they move to the neighbours. kubectl get nodes shows this node as Ready,SchedulingDisabled, that is, the node is healthy but takes no new pods.'), { k }),
           focus: [e, id],
           tokens: [{ edge: e, label: 'drain' }],
           say: { [id]: fb(bi('Узел worker-{k} выведен из работы: новые поды на него не назначаются, а старые переезжают на другие узлы.', 'worker-{k} is out of service: no new pods are scheduled to it, and the old ones move to other nodes.'), { k: k === 2 && W > 2 ? `2…${W}` : k }) },
           states: { [id]: 'warn' },
-          values: { [id]: 'SchedulingDisabled' },
-          metrics: { ...base, replicas: W === 1 ? 0 : 2, ready: n.vms - 1, changed: (k - 1) * 4, minutes: (k - 1) * 4 + 1 },
+          values: { [id]: 'Ready,SchedulingDisabled' },
+          metrics: { ...base, replicas: W === 1 ? 0 : 2, ready: n.vms, changed: (k - 1) * 4, minutes: (k - 1) * 4 + 1 },
         });
         steps.push({
           id: `up-${k}`,
           label: `uncordon ${k}`,
-          caption: fb(bi('Узел worker-{k} обновился до v1.37 и снова принимает поды, поэтому сценарий переходит к следующему узлу. Приложение всё это время отвечало пользователям.', 'worker-{k} is on v1.37 and takes pods again, so the play moves to the next node. The application answered users all along.'), { k }),
+          caption:
+            W === 1
+              ? bi('Узел worker-1 обновился до v1.37, команда uncordon вернула его в работу, и поды приложения запустились снова. Но пока узел обновлялся, приложение не отвечало пользователям: одного рабочего узла мало, чтобы обновлять кластер без простоя.', 'worker-1 is on v1.37, uncordon put it back into service, and the application pods started again. But while the node was being upgraded the application answered no user: one worker is not enough to upgrade a cluster without downtime.')
+              : k === W
+                ? fb(bi('Узел worker-{k} обновился до v1.37 и снова принимает поды. Это был последний рабочий узел, поэтому сценарий на нём заканчивается: все узлы работают на новой версии, а приложение всё это время отвечало пользователям.', 'worker-{k} is on v1.37 and takes pods again. It was the last worker, so the play ends here: every node runs the new version, and the application answered users all along.'), { k })
+                : fb(bi('Узел worker-{k} обновился до v1.37 и снова принимает поды, поэтому сценарий переходит к следующему узлу. Приложение всё это время отвечало пользователям.', 'worker-{k} is on v1.37 and takes pods again, so the play moves to the next node. The application answered users all along.'), { k }),
           focus: [id],
           say: { [id]: fb(bi('Узел worker-{k} работает на версии v1.37, и команда uncordon вернула его в работу.', 'worker-{k} runs v1.37, and uncordon put it back into service.'), { k }) },
           states: { [id]: 'ok' },
@@ -637,10 +649,12 @@ export const codeModel = defineModel<CodeP>({
     if (change.id === 'workers') return fb(bi('Машин стало {v}. Если забыть стенд на месяц, он наберёт {h} ВМ-часов, потому что облако берёт плату за каждый час каждой машины.', 'There are now {v} machines. A lab forgotten for a month runs up {h} VM-hours, because the cloud bills every hour of every machine.'), { v: metric(next, 'vms'), h: metric(next, 'month') });
     if (change.id === 'forks') return fb(bi('Ansible готовит теперь по {f} узла за раз, и кластер готов через {m} мин вместо {p}.', 'Ansible now prepares {f} nodes at a time, and the cluster is ready in {m} min instead of {p}.'), { f: change.to as number, m: metric(next, 'minutes'), p: metric(prev, 'minutes') });
     if (change.id === 'serial')
-      return minReplicas(next) === 0
+      return minReplicas(next) === 0 && next.some((s) => s.id === 'drain-1')
+        ? bi('Рабочий узел здесь один, поэтому даже при обновлении по одному узлу подам некуда переехать, и в худший момент не остаётся ни одной готовой реплики. Чтобы обновлять кластер без простоя, нужно хотя бы два рабочих узла.', 'There is only one worker here, so even when nodes are upgraded one at a time the pods have nowhere to go, and at the worst moment not a single replica is ready. To upgrade a cluster without downtime you need at least two workers.')
+        : minReplicas(next) === 0
         ? bi('В худший момент обновления не осталось ни одной готовой реплики, потому что все рабочие узлы выведены из работы одновременно и подам некуда переехать.', 'At the worst moment of the upgrade not a single replica is ready, because all workers are out of service at once and the pods have nowhere to go.')
         : bi('Узлы обновляются по одному, поды переезжают на соседние узлы, и приложение отвечает пользователям всё время обновления.', 'The nodes are upgraded one by one, the pods move to the neighbours, and the application answers users throughout the upgrade.');
-    if (change.id === 'run' && change.to === 'upgrade') return bi('Теперь показано обновление рабочих узлов. Control plane уже работает на v1.37, и сценарий обновляет рабочие узлы так, как задано в поле serial.', 'Now the upgrade of the workers is shown. The control plane already runs v1.37, and the play upgrades the workers as the serial field says.');
+    if (change.id === 'run' && change.to === 'upgrade') return bi('Теперь показано обновление рабочих узлов. Control plane уже работает на v1.37, и сценарий обновляет рабочие узлы так, как задано в настройке «Сколько рабочих узлов обновлять одновременно». Настройка появилась в «Параметрах» только сейчас, потому что другие прогоны рабочие узлы не обновляют.', 'Now the upgrade of the workers is shown. The control plane already runs v1.37, and the play upgrades the workers as the “How many workers to upgrade at once” setting says. The setting appears in “Parameters” only now, because the other runs do not upgrade the workers.');
     if (change.id === 'run' && change.to === 'rebuild') return bi('Теперь показано пересоздание кластера. Terraform сначала удаляет все машины, а потом цепочка собирает кластер заново на новых машинах с новыми адресами.', 'Now the rebuild of the cluster is shown. Terraform first deletes every machine, and then the chain builds the cluster again on new machines with new addresses.');
     if (change.id === 'run' && change.to === 'first') return bi('Теперь показан первый прогон кода в пустом облаке, когда каждое звено цепочки создаёт что-то новое.', 'Now the first run of the code in an empty cloud is shown, when every link of the chain creates something new.');
     return metric(next, 'changed') === 0 && !brokenAt(next)
@@ -663,8 +677,8 @@ export const gitopsModel = defineModel<GitP>({
   block: 'k8s-3',
   title: bi('Как Argo CD приводит кластер к Git', 'How Argo CD brings the cluster to Git'),
   summary: bi(
-    'Что происходит после того, как кто-то изменил приложение shop: отправил коммит в репозиторий манифестов, удалил из него файл или поправил объект в кластере вручную. Контроллер Argo CD внутри кластера сравнивает манифесты из Git с живыми объектами и, если политика синхронизации разрешает, сам устраняет разницу. Под схемой считаются реплики в кластере, объекты, которые расходятся с Git, и минуты до совпадения.',
-    'What happens after someone changed the shop application: pushed a commit to the manifests repository, deleted a file from it or edited an object in the cluster by hand. The Argo CD controller inside the cluster compares the manifests from Git with the live objects and, if the sync policy allows, removes the difference itself. Under the diagram you see the replicas in the cluster, the objects that differ from Git and the minutes until they match.',
+    'Что происходит после того, как кто-то изменил приложение shop: отправил коммит в репозиторий манифестов, удалил из него файл или поправил объект в кластере вручную. Контроллер Argo CD внутри кластера сравнивает манифесты из Git с живыми объектами и, если политика синхронизации разрешает, сам устраняет разницу. Под схемой считаются реплики в кластере и объекты, которые расходятся с Git, а когда кластер придёт к состоянию из Git, там же появится, сколько минут на это ушло.',
+    'What happens after someone changed the shop application: pushed a commit to the manifests repository, deleted a file from it or edited an object in the cluster by hand. The Argo CD controller inside the cluster compares the manifests from Git with the live objects and, if the sync policy allows, removes the difference itself. Under the diagram you see the replicas in the cluster and the objects that differ from Git, and once the cluster reaches the state in Git, the minutes this took appear there too.',
   ),
   intro: bi(
     'Схема соберётся у вас на глазах: сейчас на ней только автор изменения и то место, которое он меняет. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Контроллер, объект Application и живые объекты кластера появятся, когда до них дойдёт цикл. Облачко у подсвеченного участника говорит, что он делает, а карточка на линии показывает, что он передаёт.\n\nКогда дойдёте до конца, выберите в «Параметрах» другое событие и переключите поля политики синхронизации.',
@@ -691,7 +705,7 @@ export const gitopsModel = defineModel<GitP>({
     width: 960,
     height: 520,
     nodes: [
-      node('dev', bi('Разработчик', 'Developer'), 'user', 'user', 'pill', 24, 60, 200, 56, bi('Человек, который выкладывает новую версию приложения. Выкладка в GitOps означает коммит в репозиторий манифестов, который проверили коллеги, поэтому доступ к кластеру разработчику для выкладки не нужен.', 'The person who releases a new version. In GitOps a release is a reviewed commit to the manifests repository, so the developer needs no cluster access to release.'), bi('Коммит делает разработчик или конвейер CI.', 'A developer or the CI pipeline makes the commit.'), 'git log --oneline -3'),
+      node('dev', bi('Разработчик', 'Developer'), 'user', 'user', 'pill', 24, 60, 200, 56, bi('Человек, который выкладывает новую версию приложения. Выкладка в GitOps означает коммит в репозиторий манифестов, который проверили коллеги, поэтому доступ к кластеру разработчику для выкладки не нужен.', 'The person who releases a new version. In GitOps a release is a reviewed commit to the manifests repository, so the developer needs no cluster access to release.'), bi('Коммит делает разработчик или пайплайн CI.', 'A developer or the CI pipeline makes the commit.'), 'git log --oneline -3'),
       node('repo', bi('Репозиторий манифестов', 'Manifests repository'), 'database', 'ci-source', 'doc', 312, 48, 208, 80, bi('Манифесты в каталоге k8s на ветке main служат единственным источником желаемого состояния приложения. Всё, что в кластере расходится с этими файлами, Argo CD считает расхождением.', 'The single source of the desired state: the manifests in the k8s directory on the main branch. Anything in the cluster that differs from these files Argo CD counts as a difference.'), bi('Репозиторий shop-deploy ведёт команда приложения.', 'The application team keeps the shop-deploy repository.'), 'git show --stat HEAD', DOC.argoApp, 'main @ a1b2c3d'),
       node('ctrl', bi('Контроллер Argo CD', 'Argo CD controller'), 'process', 'cp', 'hex', 680, 56, 256, 64, bi('Контроллер, который работает внутри кластера. Он сравнивает манифесты из Git с объектами в кластере и, если политика синхронизации разрешает, сам применяет разницу, а иначе только помечает Application как OutOfSync.', 'A controller running inside the cluster. It compares the manifests from Git with the objects in the cluster and, if the sync policy allows, applies the difference itself; otherwise it only marks the Application OutOfSync.'), bi('Контроллер запущен как Deployment argocd-application-controller в namespace argocd.', 'It runs as the argocd-application-controller Deployment in the argocd namespace.'), 'kubectl -n argocd get pods', DOC.argo),
       node('app', 'Application shop', 'file', 'obj', 'doc', 680, 184, 256, 72, bi('Объект, который говорит контроллеру, откуда брать манифесты (repoURL, path, targetRevision), куда их применять (destination) и по какой политике синхронизировать (syncPolicy). В его status контроллер пишет, совпадает ли кластер с Git (Synced или OutOfSync) и здоровы ли объекты (Healthy или Degraded).', 'The object that tells the controller where to take the manifests from (repoURL, path, targetRevision), where to apply them (destination) and by which policy to sync (syncPolicy). In its status the controller writes whether the cluster matches Git (Synced or OutOfSync) and whether the objects are healthy (Healthy or Degraded).'), bi('Объект создаёте вы командой kubectl apply в namespace argocd.', 'You create it with kubectl apply in the argocd namespace.'), 'kubectl -n argocd get application shop -o yaml', DOC.argoApp, 'Synced · Healthy'),
@@ -704,7 +718,7 @@ export const gitopsModel = defineModel<GitP>({
       edge('e-push', 'dev', 'repo', 'git push', bi('Коммит попадает в ветку main и становится новой ревизией.', 'The commit lands on main and becomes a new revision.'), bi('Коммит отправляет git.', 'git sends the commit.')),
       edge('e-poll', 'ctrl', 'repo', bi('опрос раз в 3 мин', 'poll every 3 min'), bi('Контроллер сам обращается к репозиторию раз в три минуты или сразу, когда репозиторий пришлёт уведомление (вебхук). Кластер забирает изменения сам, а не получает их снаружи.', 'The controller itself goes to the repository every three minutes, or at once when the repository sends a notification (a webhook). The cluster pulls the changes itself instead of receiving them from outside.'), bi('Репозиторий опрашивает компонент repo-server Argo CD.', 'The Argo CD repo-server polls the repository.'), { doc: DOC.argo, via: [[808, 20], [416, 20]], labelAt: 0.5 }),
       edge('e-app', 'app', 'ctrl', bi('источник и политика', 'source and policy'), bi('Контроллер читает из Application, откуда брать манифесты, куда их применять и что ему разрешено делать самому.', 'The controller reads from the Application where to take the manifests, where to apply them and what it may do by itself.'), bi('Объект читает Argo CD.', 'Argo CD reads the object.'), { doc: DOC.argoApp }),
-      edge('e-sync', 'ctrl', 'api', bi('сверка и применение', 'compare and apply'), bi('Контроллер читает живые объекты через API, а при синхронизации применяет манифесты из Git, помечая объекты аннотацией tracking-id.', 'The controller reads the live objects through the API and, during a sync, applies the manifests from Git, marking the objects with the tracking-id annotation.'), bi('Запросы делает Argo CD.', 'Argo CD makes the requests.'), { via: [[600, 88], [600, 236]], labelAt: 0.55 }),
+      edge('e-sync', 'ctrl', 'api', bi('сверка и применение', 'compare and apply'), bi('Контроллер читает живые объекты через API, а при синхронизации применяет манифесты из Git, помечая объекты аннотацией tracking-id.', 'The controller reads the live objects through the API and, during a sync, applies the manifests from Git, marking the objects with the tracking-id annotation.'), bi('Запросы делает Argo CD.', 'Argo CD makes the requests.'), { via: [[600, 88], [600, 236]], labelAt: 0.45 }),
       edge('e-live', 'api', 'deploy', bi('живой объект', 'live object'), bi('Объект, который на самом деле лежит в кластере сейчас.', 'The object that really is in the cluster now.'), bi('Объект хранит API-сервер.', 'The API server stores it.')),
       edge('e-rs', 'deploy', 'pods', bi('замена подов', 'replacing pods'), bi('Дальше работает обычный цикл согласования Deployment: ReplicaSet создаёт поды новой версии и останавливает старые.', 'From here the ordinary Deployment reconcile loop works: a ReplicaSet creates the new pods and stops the old ones.'), bi('Поды заменяет kube-controller-manager.', 'kube-controller-manager replaces the pods.')),
       edge('e-edit', 'human', 'deploy', 'kubectl scale', bi('Правка мимо Git меняет живой объект, а Git о ней ничего не знает.', 'An edit behind Git’s back changes the live object, and Git knows nothing about it.'), bi('Правку делает коллега.', 'The colleague makes it.'), { dashed: true }),
@@ -806,7 +820,7 @@ export const gitopsModel = defineModel<GitP>({
   metrics: [
     { id: 'replicas', label: bi('реплик в кластере', 'replicas in the cluster') },
     { id: 'drift', label: bi('объектов, которые расходятся с Git', 'objects that differ from Git') },
-    { id: 'minutes', label: bi('минут до совпадения с Git', 'minutes until it matches Git') },
+    { id: 'minutes', label: bi('минут ушло, чтобы кластер пришёл к состоянию из Git', 'minutes it took the cluster to reach the state in Git') },
   ],
   run(p, broken): Step[] {
     const steps: Step[] = [];
@@ -823,7 +837,7 @@ export const gitopsModel = defineModel<GitP>({
         say: { human: bi('Коллега меняет число реплик Deployment shop в самом кластере, мимо репозитория.', 'The colleague changes the replica count of the Deployment shop right in the cluster, bypassing the repository.') },
         values: { deploy: '5 × trainer/web:1.0' },
         states: { ...hiddenAll(GIT_ALL.filter((id) => id !== 'human' && id !== 'deploy')), deploy: 'warn' },
-        metrics: { replicas: 5, drift: 1, minutes: 0 },
+        metrics: { replicas: 5, drift: 1 },
       });
       steps.push({
         id: 'compare',
@@ -835,7 +849,7 @@ export const gitopsModel = defineModel<GitP>({
         say: { ctrl: bi('Контроллер сравнивает живой Deployment с файлом из Git и видит пять реплик вместо двух.', 'The controller compares the live Deployment with the file from Git and sees five replicas instead of two.') },
         values: { app: 'OutOfSync · Healthy' },
         states: { app: 'warn' },
-        metrics: { replicas: 5, drift: 1, minutes: 0 },
+        metrics: { replicas: 5, drift: 1 },
       });
       if (p.automated && p.selfHeal) {
         steps.push({
@@ -859,7 +873,7 @@ export const gitopsModel = defineModel<GitP>({
           focus: ['app'],
           say: { app: bi('Application shop остаётся в состоянии OutOfSync, и в кластере по-прежнему пять реплик.', 'The Application shop stays OutOfSync, and the cluster still has five replicas.') },
           states: { app: 'warn' },
-          metrics: { replicas: 5, drift: 1, minutes: 0 },
+          metrics: { replicas: 5, drift: 1 },
         });
       }
       return steps;
@@ -879,7 +893,7 @@ export const gitopsModel = defineModel<GitP>({
       say: { dev: del ? bi('Разработчик удаляет service.yaml и отправляет коммит командой git push.', 'The developer deletes service.yaml and pushes the commit.') : bi('Разработчик отправляет коммит с новым образом командой git push.', 'The developer pushes the commit with the new image.') },
       values: { repo: 'main @ d4e5f6a' },
       states: hiddenAll(GIT_ALL.filter((id) => id !== 'dev' && id !== 'repo')),
-      metrics: { replicas: 2, drift: 0, minutes: 0 },
+      metrics: { replicas: 2, drift: 0 },
     });
     if (broken.has('repo-down')) {
       steps.push({
@@ -891,7 +905,7 @@ export const gitopsModel = defineModel<GitP>({
         say: { ctrl: bi('Контроллер не может связаться с репозиторием и помечает состояние Application как неизвестное.', 'The controller cannot reach the repository and marks the Application state unknown.') },
         states: { 'e-poll': 'err', app: 'warn' },
         values: { app: 'Unknown · Healthy' },
-        metrics: { replicas: 2, drift: 0, minutes: 3 },
+        metrics: { replicas: 2, drift: 0 },
         broken: { at: 'e-poll', message: 'ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = failed to list refs: dial tcp: lookup forge.edu: no such host', caption: bi('Когда Git недоступен, приложение в кластере продолжает работать, а останавливаются только новые выкладки. В жизни эту поломку узнают по сообщению ComparisonError, в котором есть слова no such host.', 'When Git is unreachable, the application in the cluster keeps running and only new releases stop. In real life you recognise this break by ComparisonError with no such host.') },
       });
       return steps;
@@ -904,7 +918,7 @@ export const gitopsModel = defineModel<GitP>({
       reveal: ['ctrl', 'e-poll'],
       tokens: [{ edge: 'e-poll', reverse: true, label: 'd4e5f6a' }],
       say: { ctrl: bi('Контроллер спрашивает репозиторий, нет ли новой ревизии, и получает коммит d4e5f6a.', 'The controller asks the repository for a new revision and gets commit d4e5f6a.') },
-      metrics: { replicas: 2, drift: 1, minutes: 3 },
+      metrics: { replicas: 2, drift: 1 },
     });
     if (broken.has('bad-yaml')) {
       steps.push({
@@ -916,8 +930,8 @@ export const gitopsModel = defineModel<GitP>({
         say: { ctrl: bi('Контроллер пытается собрать манифесты новой ревизии и не может разобрать строку 7 в файле deployment.yaml.', 'The controller tries to build the manifests of the new revision and cannot parse line 7 of deployment.yaml.') },
         states: { app: 'err', ctrl: 'err' },
         values: { app: 'Unknown · Healthy' },
-        metrics: { replicas: 2, drift: 1, minutes: 3 },
-        broken: { at: 'ctrl', message: "ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = Manifest generation error (cached): error converting YAML to JSON: yaml: line 7: could not find expected ':'", caption: bi('Ревизия применяется целиком или не применяется вовсе. Поэтому манифесты проверяют в конвейере CI до слияния, а сообщение error converting YAML to JSON указывает на файл и строку, которые нужно исправить.', 'A revision is applied whole or not at all. That is why CI checks the manifests before the merge, and error converting YAML to JSON points at the file and line to fix.') },
+        metrics: { replicas: 2, drift: 1 },
+        broken: { at: 'ctrl', message: "ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = Unknown desc = Manifest generation error (cached): error converting YAML to JSON: yaml: line 7: could not find expected ':'", caption: bi('Ревизия применяется целиком или не применяется вовсе. Поэтому манифесты проверяют в пайплайне CI до слияния, а сообщение error converting YAML to JSON указывает на файл и строку, которые нужно исправить.', 'A revision is applied whole or not at all. That is why CI checks the manifests before the merge, and error converting YAML to JSON points at the file and line to fix.') },
       });
       return steps;
     }
@@ -933,7 +947,7 @@ export const gitopsModel = defineModel<GitP>({
       say: { ctrl: del ? bi('Контроллер находит в кластере Service shop, файла которого в Git больше нет.', 'The controller finds the Service shop in the cluster, whose file Git no longer has.') : bi('Контроллер видит, что в Git записан образ 1.1, а в кластере работает 1.0.', 'The controller sees Git says image 1.1 while the cluster runs 1.0.') },
       values: { app: 'OutOfSync · Healthy' },
       states: { app: 'warn' },
-      metrics: { replicas: 2, drift: 1, minutes: 3 },
+      metrics: { replicas: 2, drift: 1 },
     });
     if (!p.automated) {
       steps.push({
@@ -943,7 +957,7 @@ export const gitopsModel = defineModel<GitP>({
         focus: ['app'],
         say: { app: bi('Application shop остаётся в состоянии OutOfSync и ждёт, пока синхронизацию запустит человек.', 'The Application shop stays OutOfSync and waits for a person to start the sync.') },
         states: { app: 'warn' },
-        metrics: { replicas: 2, drift: 1, minutes: 3 },
+        metrics: { replicas: 2, drift: 1 },
       });
       return steps;
     }
@@ -956,7 +970,7 @@ export const gitopsModel = defineModel<GitP>({
         tokens: [{ edge: 'e-sync', label: 'apply' }],
         say: { ctrl: bi('Контроллер синхронизирует приложение, но лишний Service не удаляет, потому что prune выключен.', 'The controller syncs the application but does not delete the extra Service, because prune is off.') },
         states: { app: 'warn' },
-        metrics: { replicas: 2, drift: 1, minutes: 3 },
+        metrics: { replicas: 2, drift: 1 },
       });
       return steps;
     }
@@ -995,7 +1009,7 @@ export const gitopsModel = defineModel<GitP>({
       say: { pods: bi('Два пода с образом trainer/web:1.1 запущены и отвечают, а старые поды остановлены.', 'Two pods with trainer/web:1.1 run and answer, and the old pods are stopped.') },
       values: { app: 'Synced · Healthy' },
       states: { deploy: 'ok', pods: 'ok', app: 'ok' },
-      metrics: { replicas: 2, drift: 0, minutes: 4 },
+      metrics: { replicas: 2, drift: 0, minutes: 3.1 },
     });
     return steps;
   },
