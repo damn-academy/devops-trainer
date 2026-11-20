@@ -28,6 +28,9 @@ const ESCALATE_MIN = 15;
 export interface IncidentNumbers {
   detect: number;
   ack: number;
+  /** Minutes to find the last deployment in the log and decide to roll it back. */
+  locate: number;
+  /** Minutes to find the faulty change among those in the deployment. */
   diagnose: number;
   restore: number;
   downtime: number;
@@ -43,11 +46,14 @@ export function incidentNumbers(p: P, noRota: boolean, cpuAlert: boolean): Incid
   // The deployment broke the checkout: the server is alive, a share of orders fails.
   const detect = detectMinutes(monitoring, 'checkout-broken', share, SLO);
   const ack = noRota ? ESCALATE_MIN : detect < 240 ? 2 : 0;
+  const locate = p.runbook ? 5 : 10;
   const diagnose = diagnoseMinutes(Number(p.batch), false, true) * (p.runbook ? 1 : 2);
   const restore = restoreMinutes(p.rollback);
-  const downtime = detect + ack + diagnose + restore;
+  // Restore first, look for the cause later: with a rollback the whole deployment goes back as soon as the log names it,
+  // and the faulty change is looked for in the daytime. Without one the site can only be fixed by fixing that change.
+  const downtime = detect + ack + (p.rollback ? locate : diagnose) + restore;
   const bad = Math.round(downtime * share * 10) / 10;
-  return { detect, ack, diagnose, restore, downtime, bad, budgetPct: Math.round((bad / BUDGET_MIN) * 100), lost: Math.round(downtime * share * REVENUE_PER_MIN), hotfix: !p.rollback };
+  return { detect, ack, locate, diagnose, restore, downtime, bad, budgetPct: Math.round((bad / BUDGET_MIN) * 100), lost: Math.round(downtime * share * REVENUE_PER_MIN), hotfix: !p.rollback };
 }
 
 const money = (x: number): Bi => ({ ru: `${Math.round(x).toLocaleString('ru-RU')} ₽`, en: `$${Math.round(x / 80).toLocaleString('en-US')}` });
@@ -70,12 +76,12 @@ export const incidentModel = defineModel<P>({
   block: 'methodology',
   title: b('От оповещения до разбора', 'From the alert to the postmortem'),
   summary: b(
-    'Один инцидент в магазине по шагам, от ночной выкладки с ошибкой до задач на улучшение. Мониторинг замечает сбой, дежурный подтверждает оповещение и пишет статус, ищет причину в журнале выкладок, откатывает сайт к прошлой версии, а на следующий день команда разбирает случившееся без поиска виноватых. Под схемой копится время до обнаружения и до восстановления, плохие минуты и доля месячного бюджета ошибок, которую потратил этот сбой.',
-    'One incident in the shop step by step, from a faulty night deployment to the action items. Monitoring notices the outage, the on-call engineer acknowledges the alert and posts a status, looks for the cause in the deployment log and rolls the site back to the previous version, and the next day the team reviews what happened without looking for someone to blame. Under the diagram the time to detection and to recovery, the bad minutes and the share of the monthly error budget this outage ate add up.',
+    'Один инцидент в магазине по шагам, от ночной выкладки с ошибкой до задач на улучшение. Мониторинг замечает сбой, дежурный подтверждает оповещение и пишет статус, находит в журнале последнюю выкладку и откатывает её целиком, а на следующий день команда разбирает случившееся без поиска виноватых. Под схемой копится время до обнаружения и до восстановления, плохие минуты, доля месячного бюджета ошибок, которую потратил этот сбой, и время, которое уйдёт на поиск виноватого изменения.',
+    'One incident in the shop step by step, from a faulty night deployment to the action items. Monitoring notices the outage, the on-call engineer acknowledges the alert and posts a status, finds the last deployment in the log and rolls it back as a whole, and the next day the team reviews what happened without looking for someone to blame. Under the diagram the time to detection and to recovery, the bad minutes, the share of the monthly error budget this outage ate and the time it takes to find the faulty change add up.',
   ),
   intro: b(
-    'Схема собирается по шагам, и сейчас на ней видны только выкладка и сайт магазина. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый участник появляется, когда до него доходит инцидент, и говорит в облачке, что он делает в эту минуту, а карточка на линии показывает, что он передаёт дальше. Подпись каждого шага начинается с времени ночи.\n\nПосле первого прохода выберите в «Параметрах» другой способ замечать сбой, например проверку, что сервер отвечает, и посмотрите, когда о сбое узнают теперь. Потом уберите откат и инструкцию для дежурного, а в блоке «Сломать» отключите график дежурств.',
-    'The diagram builds up step by step, and for now it shows only the deployment and the shop’s site. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each participant appears when the incident reaches it and says in a callout what it does at that minute, and the card on the line shows what it hands on. The time of night is given at the start of the step caption.\n\nAfter the first pass choose another way of noticing the outage in “Parameters”, such as a check that the server answers, and see when the outage is noticed now. Then remove the rollback and the runbook, and switch off the on-call rota in “Break it”.',
+    'Схема собирается по шагам, и сейчас на ней видны только выкладка и сайт магазина. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый участник появляется, когда до него доходит инцидент, и говорит в облачке, что он делает в эту минуту, а карточка на линии показывает, что он передаёт дальше. Подпись каждого шага начинается с времени ночи.\n\nПосле первого прохода выберите в «Параметрах» другой способ замечать сбой, например проверку, что сервер отвечает, и посмотрите, когда о сбое узнают теперь. Потом уберите откат и инструкцию для дежурного, а в блоке «Сломать» включите поломку, при которой на эту ночь не назначили основного дежурного.',
+    'The diagram builds up step by step, and for now it shows only the deployment and the shop’s site. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each participant appears when the incident reaches it and says in a callout what it does at that minute, and the card on the line shows what it hands on. The time of night is given at the start of the step caption.\n\nAfter the first pass choose another way of noticing the outage in “Parameters”, such as a check that the server answers, and see when the outage is noticed now. Then remove the rollback and the runbook, and leave this night without a primary on-call engineer in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('участник, который действует сейчас', 'the participant acting now') },
@@ -159,11 +165,11 @@ export const incidentModel = defineModel<P>({
   breaks: [
     {
       id: 'no-rota',
-      label: b('Графика дежурств нет, поэтому срочное оповещение приходит всем сразу', 'There is no on-call rota, so the page goes to everyone at once'),
+      label: b('В графике дыра: основного дежурного на эту ночь не назначили, поэтому срочное оповещение приходит всей команде сразу', 'A gap in the rota: nobody was made primary on-call for this night, so the page goes to the whole team at once'),
       remove: ['oncall'],
       boundary: 'identity',
       predict: {
-        prompt: b('Графика дежурств нет, и срочное оповещение пришло всей команде сразу. Сколько пройдёт времени, прежде чем кто-нибудь его подтвердит?', 'There is no on-call rota, and the page went to the whole team at once. How long before somebody acknowledges it?'),
+        prompt: b('Основного дежурного на эту ночь не назначили, запасной дежурный в графике есть, и срочное оповещение пришло всей команде сразу. Сколько пройдёт времени, прежде чем кто-нибудь его подтвердит?', 'Nobody was made primary on-call for this night, a secondary is in the rota, and the page went to the whole team at once. How long before somebody acknowledges it?'),
         options: [
           { id: 'escalate', text: b('Никто не подтвердит, и через 15 минут оповещение уйдёт запасному дежурному', 'Nobody acknowledges, and after 15 minutes the page escalates to the secondary') },
           { id: 'faster', text: b('Пройдёт пара минут, ведь людей, которые видят оповещение, стало больше', 'A couple of minutes, since more people see the page') },
@@ -191,6 +197,7 @@ export const incidentModel = defineModel<P>({
     { id: 'restore', label: b('до восстановления, минут', 'to recovery, minutes') },
     { id: 'bad', label: b('плохих минут', 'bad minutes') },
     { id: 'budget', label: b('месячного бюджета ошибок', 'of the monthly error budget'), unit: '%' },
+    { id: 'cause', label: b('поиск виноватого изменения, минут', 'finding the faulty change, minutes') },
   ],
   run(p, broken): Step[] {
     const noRota = broken.has('no-rota');
@@ -198,7 +205,7 @@ export const incidentModel = defineModel<P>({
     const n = incidentNumbers(p, noRota, cpu);
     const batch = Number(p.batch);
     let t = 0;
-    const m = (restored = false) => ({ detect: n.detect, restore: restored ? n.downtime : t, bad: restored ? n.bad : Math.round(t * (p.failing / 100) * 10) / 10, budget: restored ? n.budgetPct : Math.round(((t * p.failing) / 100 / BUDGET_MIN) * 100) });
+    const m = (restored = false) => ({ detect: n.detect, restore: restored ? n.downtime : t, bad: restored ? n.bad : Math.round(t * (p.failing / 100) * 10) / 10, budget: restored ? n.budgetPct : Math.round(((t * p.failing) / 100 / BUDGET_MIN) * 100), cause: n.diagnose });
     const at = (text: Bi): Bi => fmtn(b('{c}. {t}', '{c}. {t}'), { c: clock(t), t: text });
     const steps: Step[] = [];
     steps.push({
@@ -245,7 +252,7 @@ export const incidentModel = defineModel<P>({
               reveal: ['oncall', 'e-escalate', 'backup'],
               states: { oncall: 'off', backup: 'on' },
               metrics: m(),
-              broken: { at: 'oncall', message: 'support: 14 complaints in #team, no owner for 15 min', caption: b('без графика дежурств никто не отвечает за сбой, и жалобы ждут, пока их кто-нибудь возьмёт.', 'without a rota nobody is responsible for the outage, and the complaints wait until someone takes them.') },
+              broken: { at: 'oncall', message: 'support: 14 complaints in #team, no owner for 15 min', caption: b('без назначенного дежурного никто не отвечает за сбой, и жалобы ждут, пока их кто-нибудь возьмёт.', 'without an assigned on-call engineer nobody is responsible for the outage, and the complaints wait until someone takes them.') },
             }
           : {
               id: 's3',
@@ -283,7 +290,7 @@ export const incidentModel = defineModel<P>({
               reveal: ['e-page', 'oncall', 'e-escalate', 'backup'],
               states: { oncall: 'off', backup: 'on' },
               metrics: m(),
-              broken: { at: 'oncall', message: 'PAGE #1932: not acknowledged in 15 min, escalating to secondary', caption: b('без графика дежурств никто не отвечает за оповещение, и оно ждёт, пока его кто-нибудь возьмёт.', 'without a rota nobody is responsible for the page, and it waits until someone takes it.') },
+              broken: { at: 'oncall', message: 'PAGE #1932: not acknowledged in 15 min, escalating to secondary', caption: b('без назначенного дежурного никто не отвечает за оповещение, и оно ждёт, пока его кто-нибудь возьмёт.', 'without an assigned on-call engineer nobody is responsible for the page, and it waits until someone takes it.') },
             }
           : {
               id: 's3',
@@ -309,11 +316,16 @@ export const incidentModel = defineModel<P>({
       states: responder === 'backup' ? { 'e-status': 'on' } : {},
       metrics: m(),
     });
-    t += n.diagnose;
+    t += p.rollback ? n.locate : n.diagnose;
+    const slow = p.runbook ? b('', '') : b(', вдвое дольше обычного, потому что инструкции для дежурного нет', ', twice as long as usual, because there is no runbook');
     steps.push({
       id: 's5',
       label: b('диагностика', 'diagnose'),
-      caption: at(fmtn(b('Диагностика начинается с вопроса, что менялось последним. Журнал выкладок отвечает, что последней была выкладка #41 из {b}. На поиск виноватого изменения среди них ушло {d}{r}.', 'Diagnosis starts with the question of what changed last. The deployment log answers that the last one was deployment #41 with {b}. Finding the faulty change among them took {d}{r}.'), { b: CH(batch), d: MIN(n.diagnose), r: p.runbook ? b('', '') : b(', вдвое дольше обычного, потому что инструкции для дежурного нет', ', twice as long as usual, because there is no runbook') })),
+      caption: at(
+        p.rollback
+          ? fmtn(b('Диагностика начинается с вопроса, что менялось последним. Дежурный открывает журнал выкладок и за {l} находит, что последней была выкладка #41 из {b}.{r} Искать среди них виноватое изменение ночью он не станет, потому что быстрее вернуть прошлую версию сайта целиком.', 'Diagnosis starts with the question of what changed last. The on-call engineer opens the deployment log and in {l} finds that the last one was deployment #41 with {b}.{r} They will not look for the faulty change among them at night, because putting the whole previous version back is faster.'), { b: CH(batch), l: MIN(n.locate), r: p.runbook ? b('', '') : b(' Без инструкции для дежурного на это ушло вдвое больше времени, чем обычно.', ' Without a runbook this took twice as long as usual.') })
+          : fmtn(b('Диагностика начинается с вопроса, что менялось последним. Журнал выкладок отвечает, что последней была выкладка #41 из {b}. Откатить её нельзя, поэтому дежурному приходится ночью искать виноватое изменение среди них, и на это уходит {d}{r}.', 'Diagnosis starts with the question of what changed last. The deployment log answers that the last one was deployment #41 with {b}. It cannot be rolled back, so the on-call engineer has to look for the faulty change among them at night, which takes {d}{r}.'), { b: CH(batch), d: MIN(n.diagnose), r: slow }),
+      ),
       focus: ['e-diag', 'log'],
       say: { log: fmtn(b('Последней была выкладка #41 из {b}, и её подозревают первой.', 'The last one was deployment #41 with {b}, and it is suspected first.'), { b: CH(batch) }) },
       tokens: [{ edge: 'e-diag', label: b('что менялось?', 'what changed?') }],
@@ -328,7 +340,7 @@ export const incidentModel = defineModel<P>({
         ? {
             id: 's6',
             label: b('откат', 'rollback'),
-            caption: at(fmtn(b('Дежурный смягчает сбой. Одной командой он возвращает на сайт прошлую версию #40, и за {r} доля ошибок падает до нуля. Почему сломалась #41, будут спокойно выяснять днём.', 'The on-call engineer mitigates the outage. With one command they put the previous version #40 back on the site, and within {r} the error share falls to zero. Why #41 broke will be worked out calmly in the daytime.'), { r: MIN(n.restore) })),
+            caption: at(fmtn(b('Дежурный смягчает сбой. Одной командой он возвращает на сайт прошлую версию #40, и за {r} доля ошибок падает до нуля. {w}', 'The on-call engineer mitigates the outage. With one command they put the previous version #40 back on the site, and within {r} the error share falls to zero. {w}'), { r: MIN(n.restore), w: batch === 1 ? fmtn(b('Ошибку в единственном изменении выкладки #41 будут спокойно искать днём, и на это уйдёт {d}.', 'The mistake in the only change of #41 will be looked for calmly in the daytime; that takes {d}.'), { d: MIN(n.diagnose) }) : fmtn(b('Какое из {b} сломало оплату, будут спокойно выяснять днём, и на это уйдёт {d}.', 'Which of the {b} broke the checkout will be worked out calmly in the daytime; that takes {d}.'), { b: CH(batch), d: MIN(n.diagnose) }) })),
             focus: ['e-rollback', 'service'],
             say: { service: b('На сайте снова версия #40, и заказы проходят.', 'The site runs version #40 again, and orders go through.') },
             tokens: [{ edge: 'e-rollback', label: b('вернуть #40', 'restore #40') }],
@@ -398,7 +410,7 @@ export const incidentModel = defineModel<P>({
     if (change.kind === 'break') {
       if (!change.on) return b('Поломка убрана, и реагирование снова идёт как обычно.', 'The break is removed, and the response runs as usual again.');
       return change.id === 'no-rota'
-        ? fmtn(b('Без графика дежурств оповещение 15 минут ждёт, пока его кто-нибудь возьмёт, и сбой длится {r1} вместо {r0}.', 'Without a rota the page waits 15 minutes for someone to take it, and the outage lasts {r1} instead of {r0}.'), v)
+        ? fmtn(b('Без назначенного дежурного оповещение 15 минут ждёт, пока его кто-нибудь возьмёт, и сбой длится {r1} вместо {r0}.', 'Without an assigned on-call engineer the page waits 15 minutes for someone to take it, and the outage lasts {r1} instead of {r0}.'), v)
         : fmtn(b('Оповещение по процессору не видит сбой оплаты. О сбое узнали через {d1} вместо {d0}, весь сбой длился {r1} вместо {r0} и потратил {b1} месячного бюджета ошибок.', 'A CPU alert cannot see a checkout failure. The outage was noticed after {d1} instead of {d0}, it lasted {r1} instead of {r0} and ate {b1} of the monthly error budget.'), v);
     }
     switch (change.id) {
@@ -406,14 +418,16 @@ export const incidentModel = defineModel<P>({
         return fmtn(b('О сбое узнали через {d1} вместо {d0}, весь сбой длился {r1} вместо {r0} и потратил {b1} месячного бюджета ошибок. Проверка, что сервер отвечает, не видит сбоя оплаты, потому что сервер отвечает, а заказы при этом не проходят.', 'The outage was noticed after {d1} instead of {d0}, it lasted {r1} instead of {r0} and ate {b1} of the monthly error budget. A check that the server answers cannot see a checkout failure, because the server answers while orders fail.'), v);
       case 'rollback':
         return c.rollback
-          ? fmtn(b('С откатом сайт восстанавливают за 10 минут вместо 120, и сбой длится {r1} вместо {r0}.', 'With rollback the site is restored in 10 minutes instead of 120, and the outage lasts {r1} instead of {r0}.'), v)
-          : fmtn(b('Без отката сайт чинят срочным исправлением, поэтому сбой длится {r1} вместо {r0}, и появляется вторая, внеплановая выкладка.', 'Without rollback the site is mended with an urgent fix, so the outage lasts {r1} instead of {r0}, and a second, unplanned deployment appears.'), v);
+          ? fmtn(b('С откатом дежурный не ищет виноватое изменение ночью, а возвращает прошлую версию за 10 минут, и сбой длится {r1} вместо {r0}.', 'With rollback the on-call engineer does not look for the faulty change at night but puts the previous version back in 10 minutes, and the outage lasts {r1} instead of {r0}.'), v)
+          : fmtn(b('Без отката дежурному приходится ночью искать виноватое изменение и чинить сайт срочным исправлением, поэтому сбой длится {r1} вместо {r0}, и появляется вторая, внеплановая выкладка.', 'Without rollback the on-call engineer has to look for the faulty change at night and mend the site with an urgent fix, so the outage lasts {r1} instead of {r0}, and a second, unplanned deployment appears.'), v);
       case 'runbook':
         return c.runbook
-          ? fmtn(b('С инструкцией дежурный находит причину вдвое быстрее, и сбой длится {r1} вместо {r0}.', 'With a runbook the on-call engineer finds the cause twice as fast, and the outage lasts {r1} instead of {r0}.'), v)
+          ? fmtn(b('С инструкцией дежурный проходит диагностику вдвое быстрее, и сбой длится {r1} вместо {r0}.', 'With a runbook the on-call engineer gets through diagnosis twice as fast, and the outage lasts {r1} instead of {r0}.'), v)
           : fmtn(b('Без инструкции диагностика идёт вдвое дольше, и сбой длится {r1} вместо {r0}.', 'Without a runbook diagnosis takes twice as long, and the outage lasts {r1} instead of {r0}.'), v);
       case 'batch':
-        return fmtn(b('Теперь в выкладку вошло {y} вместо {x}. Чем больше изменений, тем дольше искать виноватое, и сбой длится {r1} вместо {r0}.', 'The deployment now has {y} instead of {x}. The more changes, the longer it takes to find the faulty one, and the outage lasts {r1} instead of {r0}.'), { x: a.batch as string, y: nWord(Number(c.batch), ['изменение', 'изменения', 'изменений'], ['change', 'changes']), ...v });
+        return c.rollback
+          ? fmtn(b('Теперь в выкладку вошло {y} вместо {x}. Выкладку откатывают целиком, поэтому сбой длится {r1}, как и раньше, но днём искать виноватое изменение придётся {k1} вместо {k0}. Без отката размер выкладки удлинил бы и сам сбой.', 'The deployment now has {y} instead of {x}. The deployment is rolled back as a whole, so the outage lasts {r1} as before, but in the daytime finding the faulty change takes {k1} instead of {k0}. Without a rollback the size of the deployment would make the outage itself longer.'), { x: a.batch as string, y: nWord(Number(c.batch), ['изменение', 'изменения', 'изменений'], ['change', 'changes']), k0: m0.cause ?? 0, k1: MIN(m1.cause ?? 0), ...v })
+          : fmtn(b('Теперь в выкладку вошло {y} вместо {x}. Откатить её нельзя, а чем больше изменений, тем дольше искать виноватое, и сбой длится {r1} вместо {r0}.', 'The deployment now has {y} instead of {x}. It cannot be rolled back, and the more changes, the longer it takes to find the faulty one, so the outage lasts {r1} instead of {r0}.'), { x: a.batch as string, y: nWord(Number(c.batch), ['изменение', 'изменения', 'изменений'], ['change', 'changes']), ...v });
       default:
         return fmtn(b('Теперь не проходит {y} заказов вместо {x}, и сбой тратит {b1} месячного бюджета ошибок.', 'Now {y} of orders fail instead of {x}, and the outage eats {b1} of the monthly error budget.'), { x: pct(a.failing as number), y: pct(c.failing as number), ...v });
     }

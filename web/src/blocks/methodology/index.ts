@@ -22,7 +22,7 @@ import { valueStreamModel } from './explainers/value-stream';
 import { business, valueStream, board, flow, little } from './lessons-1';
 import { bottleneck, batch, agile, workTypes, pipeline } from './lessons-2';
 import { dora, sre, incident, culture, blackFriday } from './lessons-3';
-import { quiz } from './quiz';
+import { examItems, quiz } from './quiz';
 import { R, S } from './sources';
 
 const lessons = [business, valueStream, board, flow, little, bottleneck, batch, agile, workTypes, pipeline, dora, sre, incident, culture, blackFriday];
@@ -153,7 +153,8 @@ const exam: Exam = {
         solutionTokens: ['flow policy pull cd3', 'policy pull'],
       },
     },
-    ...['method.q.little-calc', 'method.q.ci-cd-match', 'method.q.freeze', 'method.q.burn', 'method.q.blameless-rewrite', 'method.q.five-steps', 'method.q.cd3', 'method.q.dora-less-often'].map((id) => ({ id: `exam.${id}`, weight: 6, kind: 'quiz' as const, item: copy(id, 'exam') })),
+    ...examItems.map((item) => ({ id: `exam.${item.id}`, weight: 6, kind: 'quiz' as const, item })),
+    ...['method.q.ci-cd-match', 'method.q.blameless-rewrite', 'method.q.five-steps', 'method.q.dora-less-often'].map((id) => ({ id: `exam.${id}`, weight: 6, kind: 'quiz' as const, item: copy(id, 'exam') })),
   ],
 };
 
@@ -161,7 +162,11 @@ const block: Block = {
   id: 'methodology',
   order: entry.order,
   title: entry.title,
-  summary: entry.summary,
+  // The route entry's summary speaks jargon (прод, CI, CD) to a beginner who has just left Orientation; the block says it in words.
+  summary: bi(
+    'Зачем бизнесу DevOps, как работа идёт от идеи до рабочего сайта, как доска задач помогает ей не застревать, зачем сборку, проверку и выкладку изменений поручают машине и как команда разбирает сбои, не ища виноватых.',
+    'Why a business needs DevOps, how work goes from an idea to the working site, how a task board keeps it from getting stuck, why the build, the checks and the deployment of changes are handed to a machine, and how a team reviews outages without looking for someone to blame.',
+  ),
   checklistStep: entry.checklistStep,
   levels: entry.levels,
   hours: entry.hours,

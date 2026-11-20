@@ -280,7 +280,7 @@ export const quiz: QuizItem[] = [
     pairs: [
       { id: 'pb', left: bi('Бэклог продукта', 'Product Backlog'), right: bi('Цель продукта', 'Product Goal') },
       { id: 'sb', left: bi('Бэклог спринта', 'Sprint Backlog'), right: bi('Цель спринта', 'Sprint Goal') },
-      { id: 'inc', left: bi('Инкремент', 'Increment'), right: bi('Критерии готовности', 'Definition of Done'), why: bi('Инкремент считается сделанным только тогда, когда он отвечает критериям готовности.', 'An Increment counts as done only when it meets the Definition of Done.') },
+      { id: 'inc', left: bi('Инкремент', 'Increment'), right: bi('Определение готовности', 'Definition of Done'), why: bi('Инкремент считается сделанным только тогда, когда он отвечает определению готовности.', 'An Increment counts as done only when it meets the Definition of Done.') },
     ],
   },
   {
@@ -379,7 +379,7 @@ export const quiz: QuizItem[] = [
     id: 'method.q.red-build',
     kind: 'bugfind',
     concepts: ['method.ci'],
-    prompt: bi('Перед вами договорённость команды о непрерывной интеграции. Какая строка лишает её смысла?', 'This is a team’s working agreement on continuous integration. Which line breaks its point?'),
+    prompt: bi('Перед вами договорённость команды о непрерывной интеграции. Она записана коротким списком правил на английском, по одному правилу в строке, как её могли бы записать в файле настроек. Какая строка лишает договорённость смысла?', 'This is a team’s working agreement on continuous integration. Which line breaks its point?'),
     lang: 'yaml',
     code: 'integration:\n  merge_to_main: at_least_daily\n  on_every_merge: [build, unit_tests]\n  when_build_is_red: keep_merging   # we fix it on Friday\n  when_build_is_green: deploy_to_staging',
     bug: [4],
@@ -596,6 +596,59 @@ export const quiz: QuizItem[] = [
       { id: 'bureau', text: bi('Бюрократическая', 'Bureaucratic'), correct: true },
       { id: 'patho', text: bi('Патологическая', 'Pathological'), why: bi('Новость не спрятали, и того, кто её принёс, не наказали, а пустили её по регламенту. Такой путь медленный, но не враждебный.', 'The news was not hidden and the messenger not punished; it was routed through procedure. Slow, but not hostile.') },
       { id: 'gen', text: bi('Генеративная', 'Generative'), why: bi('В генеративной культуре новость сразу ушла бы к тем, кто может её исправить.', 'In a generative culture the news would have gone at once to those who can fix it.') },
+    ],
+  },
+];
+
+/**
+ * Exam-only variants: the same mechanisms as the bank items, with other
+ * numbers and situations, so the exam checks the method rather than the
+ * memory of a question already answered in a lesson.
+ */
+export const examItems: QuizItem[] = [
+  {
+    id: 'method.q.exam.little',
+    kind: 'mcq',
+    concepts: ['method.little'],
+    prompt: bi('У команды в работе в среднем 18 карточек, а заканчивает она в среднем полторы карточки в день. Незавершённой работы при этом не становится больше. Сколько дней в среднем идёт одна карточка?', 'The team has 18 cards in progress on average and finishes one and a half cards a day on average. The work in progress is not growing. How many days does one card take on average?'),
+    options: [
+      { id: '12', text: bi('12 дней', '12 days'), correct: true },
+      { id: '27', text: bi('27 дней', '27 days'), why: bi('Здесь незавершённую работу умножили на пропускную способность. По закону Литтла время цикла равно незавершённой работе, делённой на пропускную способность, то есть 18 / 1,5.', 'Here the work in progress was multiplied by the throughput. By Little’s law cycle time is the work in progress divided by the throughput, that is, 18 / 1.5.') },
+      { id: '0.08', text: bi('Около 0,08 дня', 'About 0.08 days'), why: bi('Здесь разделили в обратную сторону, 1,5 / 18. Карточки, делённые на карточки в день, дают дни, поэтому делить нужно незавершённую работу на пропускную способность.', 'The division went the wrong way round, 1.5 / 18. Cards divided by cards a day give days, so the work in progress is divided by the throughput.') },
+    ],
+    explain: bi('18 / 1,5 = 12 дней. Условие закона выполнено, потому что незавершённой работы не становится больше.', '18 / 1.5 = 12 days. The law’s condition holds, because the work in progress is not growing.'),
+  },
+  {
+    id: 'method.q.exam.freeze',
+    kind: 'mcq',
+    concepts: ['method.error-budget'],
+    prompt: bi('Бюджет ошибок за последние четыре недели превышен на 10 минут. Команда хочет выложить исправление уязвимости, о которой сообщили вчера, и новую функцию поиска. Что разрешает пример политики из SRE Workbook?', 'The error budget for the last four weeks is exceeded by 10 minutes. The team wants to deploy a fix for a vulnerability reported yesterday and a new search feature. What does the example policy in the SRE Workbook allow?'),
+    options: [
+      { id: 'fix', text: bi('Исправление уязвимости выложить можно, а функция поиска ждёт, пока сервис не вернётся к своему SLO', 'The vulnerability fix may go out, and the search feature waits until the service is back within its SLO'), correct: true },
+      { id: 'both', text: bi('Можно выложить и то и другое, потому что превышение совсем небольшое', 'Both may go out, because the excess is very small'), why: bi('Политика смотрит на то, превышен ли бюджет, а не на то, насколько. Бюджет превышен, поэтому обычные выпуски останавливают.', 'The policy looks at whether the budget is exceeded, not by how much. It is exceeded, so ordinary releases stop.') },
+      { id: 'none', text: bi('Нельзя выкладывать ничего, пока бюджет снова не появится', 'Nothing may go out until there is budget again'), why: bi('Исправления безопасности и исправления проблем P0 политика оставляет исключениями из заморозки, иначе заморозка мешала бы самой надёжности.', 'The policy keeps security fixes and P0 fixes as exceptions to the freeze; otherwise the freeze would stand in the way of reliability itself.') },
+    ],
+  },
+  {
+    id: 'method.q.exam.burn',
+    kind: 'mcq',
+    concepts: ['method.burn-rate'],
+    prompt: bi('SLO требует, чтобы за 30 дней успешно прошли 99,9 % запросов. Последние шесть часов не проходит 0,6 % запросов. Какова скорость сжигания бюджета и что делать по порогам из SRE Workbook?', 'The SLO is 99.9% successful requests over 30 days. For the last six hours 0.6% of requests have been failing. What is the burn rate and what should happen by the thresholds of the SRE Workbook?'),
+    options: [
+      { id: 'page', text: bi('Скорость равна 6, и за шесть часов сгорело 5 % бюджета, поэтому нужно срочное оповещение', 'The rate is 6, and 5% of the budget burned in six hours, so a page is due'), correct: true },
+      { id: 'ticket', text: bi('Скорость равна 6, а это меньше 14,4, поэтому достаточно заявки в рабочей очереди', 'The rate is 6, which is below 14.4, so a ticket is enough'), why: bi('Порог 14,4 относится к окну в один час. Для окна в шесть часов порог срочного оповещения равен 6, и он достигнут.', 'The 14.4 threshold is for the one-hour window. For the six-hour window the paging threshold is 6, and it is reached.') },
+      { id: 'none', text: bi('Скорость равна 0,6, и делать ничего не нужно', 'The rate is 0.6, and nothing needs to be done'), why: bi('Скорость сжигания равна доле ошибок, делённой на допустимую долю: 0,6 % / 0,1 % = 6. Бюджет сгорает вшестеро быстрее нормы.', 'The burn rate is the error share divided by the allowed share: 0.6% / 0.1% = 6. The budget burns six times faster than normal.') },
+    ],
+  },
+  {
+    id: 'method.q.exam.cd3',
+    kind: 'mcq',
+    concepts: ['method.cod'],
+    prompt: bi('У функции A стоимость задержки 15 000 рублей в неделю и работы на 5 недель. У функции B стоимость задержки 4 000 рублей в неделю и работы на 1 неделю. У функции C стоимость задержки 10 000 рублей в неделю и работы на 2 недели. Что делать первым, если выбирать по CD3?', 'Feature A: cost of delay 15,000 ₽ a week, 5 weeks of work. Feature B: 4,000 ₽ a week, 1 week of work. Feature C: 10,000 ₽ a week, 2 weeks of work. What goes first by CD3?'),
+    options: [
+      { id: 'c', text: bi('Функцию C, потому что её CD3 равен 5 000, у B он равен 4 000, а у A 3 000', 'Feature C, because its CD3 is 5,000, B’s is 4,000 and A’s is 3,000'), correct: true },
+      { id: 'a', text: bi('Функцию A, потому что у неё самая высокая стоимость задержки', 'Feature A, because its cost of delay is the highest'), why: bi('Стоимость задержки нужно делить на длительность работы. Функция A дорогая, но занимает команду пять недель, и всё это время остальные функции тоже ждут.', 'The cost of delay must be divided by the duration. Feature A is expensive, but it keeps the team busy for five weeks, and all that time the other features wait too.') },
+      { id: 'b', text: bi('Функцию B, потому что её делать быстрее всех', 'Feature B, because it is the quickest to build'), why: bi('Короткая работа сама по себе ещё не повод начинать с неё. У B стоимость задержки на неделю работы меньше, чем у C.', 'Short work alone is no reason to start with it. B’s cost of delay per week of work is lower than C’s.') },
     ],
   },
 ];

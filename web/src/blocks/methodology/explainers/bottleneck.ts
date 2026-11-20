@@ -20,55 +20,108 @@ const GOAL = { url: 'https://en.wikipedia.org/wiki/Theory_of_constraints', label
 
 export const DAYS = 10;
 export const REVIEW_CAP = 4;
-export const LIMIT = 6;
+export const LIMIT = 8;
+/** Cycle time is measured on the tasks that reached the customers in this many last days. */
+export const RECENT = 3;
+
+export interface FlowDay {
+  ready: number;
+  dev: number;
+  qReview: number;
+  qTest: number;
+  done: number;
+  wip: number;
+  out: number;
+  outDev: number;
+  outReview: number;
+  /** Average cycle time of the tasks finished in the last RECENT days, or null when none finished. */
+  cycle: number | null;
+}
 
 export interface FlowRun {
-  days: { ready: number; dev: number; qReview: number; qTest: number; done: number; wip: number; out: number; outDev: number; outReview: number; testCap: number }[];
+  days: FlowDay[];
   done: number;
   wipAvg: number;
   throughput: number;
-  cycle: number;
+  cycle: number | null;
 }
 
-/** A deterministic ten-day flow: each stage does what its capacity allows, but no more than lies in front of it. */
+const r1 = (x: number) => Math.round(x * 10) / 10;
+
+/**
+ * A deterministic ten-day flow of whole tasks. Each stage does what its
+ * capacity allows, but no more than lies in front of it, and the tasks keep
+ * their order, so every finished task knows the day it was started: the cycle
+ * time is counted on real finished tasks, not derived by Little's law (which
+ * does not hold while the work in progress keeps growing).
+ */
 export function simulate(p: P, testRemoved = false): FlowRun {
   let ready = 0;
-  let dev = 0;
-  let qReview = 0;
-  let qTest = 0;
-  let done = 0;
-  const days: FlowRun['days'] = [];
+  // Each task is the day it was started.
+  const dev: number[] = [];
+  const qReview: number[] = [];
+  const qTest: number[] = [];
+  const finished: { day: number; cycle: number }[] = [];
+  // A fractional capacity (2.4 tasks a day) accumulates: 2, 2, 3, 2, 3…
+  let credit = 0;
+  const days: FlowDay[] = [];
   for (let d = 1; d <= DAYS; d++) {
     ready += p.arrivals;
     // Test: capacity of the tester, +20% without switching, + half of the free developer capacity when swarming.
     let testCap = testRemoved ? 0 : p.test * (p.focus ? 1.2 : 1);
-    const devFree = Math.max(0, p.dev - dev);
-    if (p.swarm && !testRemoved) testCap += 0.5 * Math.min(devFree, p.dev);
-    const outT = Math.min(testCap, qTest);
-    qTest -= outT;
-    done += outT;
-    const outR = Math.min(REVIEW_CAP, qReview);
-    qReview -= outR;
-    qTest += outR;
-    const outD = Math.min(p.dev, dev);
-    dev -= outD;
-    qReview += outD;
-    const inSystem = dev + qReview + qTest;
+    const devFree = Math.max(0, p.dev - dev.length);
+    if (p.swarm && !testRemoved) testCap += 0.5 * devFree;
+    credit += testCap;
+    const can = Math.floor(credit + 1e-9);
+    credit -= can;
+    const tested = qTest.splice(0, Math.min(can, qTest.length));
+    for (const start of tested) finished.push({ day: d, cycle: d - start + 1 });
+    const reviewed = qReview.splice(0, Math.min(REVIEW_CAP, qReview.length));
+    qTest.push(...reviewed);
+    const coded = dev.splice(0, Math.min(p.dev, dev.length));
+    qReview.push(...coded);
+    const inSystem = dev.length + qReview.length + qTest.length;
     const room = p.limit ? Math.max(0, LIMIT - inSystem) : Infinity;
-    const pulled = Math.min(ready, p.dev, room);
+    const pulled = Math.min(ready, p.dev - dev.length, room);
     ready -= pulled;
-    dev += pulled;
-    const wip = dev + qReview + qTest;
-    days.push({ ready, dev, qReview, qTest, done, wip, out: outT, outDev: outD, outReview: outR, testCap });
+    for (let i = 0; i < pulled; i++) dev.push(d);
+    const recent = finished.filter((f) => f.day > d - RECENT);
+    days.push({
+      ready,
+      dev: dev.length,
+      qReview: qReview.length,
+      qTest: qTest.length,
+      done: finished.length,
+      wip: dev.length + qReview.length + qTest.length,
+      out: tested.length,
+      outDev: coded.length,
+      outReview: reviewed.length,
+      cycle: recent.length ? r1(recent.reduce((a, f) => a + f.cycle, 0) / recent.length) : null,
+    });
   }
-  const r = (x: number) => Math.round(x * 10) / 10;
-  const wipAvg = days.reduce((a, x) => a + x.wip, 0) / DAYS;
-  const throughput = done / DAYS;
-  return { days, done: r(done), wipAvg: r(wipAvg), throughput: r(throughput), cycle: throughput ? r(wipAvg / throughput) : 99 };
+  const last = days[DAYS - 1];
+  return { days, done: last.done, wipAvg: r1(days.reduce((a, x) => a + x.wip, 0) / DAYS), throughput: r1(last.done / DAYS), cycle: last.cycle };
 }
 
+type Stage = 'arrivals' | 'dev' | 'review' | 'test';
+/** The stage that limits the flow: the smallest capacity, the flow of new tasks included. Ties go to the later stage. */
+export function bottleneckOf(p: P, testRemoved = false): Stage {
+  const caps: [Stage, number][] = [
+    ['arrivals', p.arrivals],
+    ['dev', p.dev],
+    ['review', REVIEW_CAP],
+    ['test', testRemoved ? 0 : p.test * (p.focus ? 1.2 : 1)],
+  ];
+  return caps.reduce((best, x) => (x[1] <= best[1] ? x : best))[0];
+}
+const STAGE_NAME: Record<Stage, Bi> = {
+  arrivals: b('поток новых задач', 'the flow of new tasks'),
+  dev: b('разработка', 'development'),
+  review: b('ревью', 'review'),
+  test: b('проверка', 'testing'),
+};
+
 const ALL = ['ready', 'dev', 'q-review', 'review', 'q-test', 'test', 'done', 'e-pull', 'e-code', 'e-rev', 'e-revd', 'e-test', 'e-done'];
-const r1 = (x: number) => Math.round(x * 10) / 10;
 /** "3 задачи" / "3 tasks". */
 const T = (n: number) => nWord(r1(n), ['задача', 'задачи', 'задач'], ['task', 'tasks']);
 /** The same in the genitive, after "до": "до 3 задач". */
@@ -85,8 +138,8 @@ export const bottleneckModel = defineModel<P>({
   block: 'methodology',
   title: b('Где застревает поток', 'Where the flow gets stuck'),
   summary: b(
-    'Десять рабочих дней команды из двух разработчиков, ревьюера и тестировщика. Каждое утро приходят новые задачи, и каждый этап за день заканчивает столько задач, сколько позволяет его мощность, но не больше, чем лежит перед ним. Под схемой копятся число готовых задач, незавершённая работа и время цикла.',
-    'Ten working days of a team of two developers, a reviewer and a tester. New tasks arrive every morning, and each stage finishes as many tasks a day as its capacity allows, but no more than lies in front of it. Under the diagram the number of finished tasks, the work in progress and the cycle time add up.',
+    'Десять рабочих дней команды из двух разработчиков, ревьюера и тестировщика. Каждое утро приходят новые задачи, и каждый этап за день заканчивает столько задач, сколько позволяет его мощность, но не больше, чем лежит перед ним. Под схемой видно, сколько задач уже дошло до покупателей, сколько задач сейчас в работе и сколько дней в среднем провели в работе задачи, которые дошли до покупателей за последние три дня.',
+    'Ten working days of a team of two developers, a reviewer and a tester. New tasks arrive every morning, and each stage finishes as many tasks a day as its capacity allows, but no more than lies in front of it. Under the diagram you see how many tasks have reached the customers, how many are in progress now, and how many days on average the tasks that reached the customers in the last three days spent in progress.',
   ),
   intro: b(
     'Схема собирается по шагам, и сейчас на ней видны только утренняя очередь новых задач и покупатели. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Сначала по одному появятся этапы, и каждый скажет, сколько задач в день он успевает, а потом пойдут десять рабочих дней. В каждый день подсвечен этап, перед которым скопилась самая длинная очередь, а полоска в очереди показывает, сколько задач в ней ждёт.\n\nПосле первого прохода ускорьте в «Параметрах» разработку и проверьте, изменится ли число готовых задач. Затем верните её и по очереди включите шаги Голдратта.',
@@ -117,7 +170,7 @@ export const bottleneckModel = defineModel<P>({
       node('done', b('У покупателей', 'With the customers'), 'user', [744, 344, 160, 64], card(['Здесь собираются задачи, которые дошли до покупателей. Число задач, которое прибавляется здесь за день, и есть пропускная способность всей команды.', 'Here the tasks that reached the customers gather. The number added here per day is the throughput of the whole team.'], ['Покупатели приходят на сайт магазина сами и пользуются только тем, что уже выложено.', 'The customers come to the shop’s site themselves and use only what is already deployed.']), { icon: 'browser', sub: '0' }),
     ],
     edges: [
-      edge('e-pull', 'ready', 'dev', b('берут в работу', 'started'), card(['По этой линии задачи переходят из очереди в разработку. Каждое утро разработчики берут столько новых задач, сколько успевают сделать за день. С лимитом незавершённой работы новую задачу берут, только если в работе меньше шести задач.', 'Along this line tasks go from the queue into development. Every morning the developers take as many new tasks as they can finish in a day. With a WIP limit a new task is taken only while fewer than six are in progress.'], ['Задачи берут разработчики.', 'The developers take them.'])),
+      edge('e-pull', 'ready', 'dev', b('берут в работу', 'started'), card(['По этой линии задачи переходят из очереди в разработку. Каждое утро разработчики берут столько новых задач, сколько успевают сделать за день. С лимитом незавершённой работы новую задачу берут, только если в работе меньше восьми задач.', 'Along this line tasks go from the queue into development. Every morning the developers take as many new tasks as they can finish in a day. With a WIP limit a new task is taken only while fewer than eight are in progress.'], ['Задачи берут разработчики.', 'The developers take them.'])),
       edge('e-code', 'dev', 'q-review', b('код готов', 'code done'), card(['Разработчик закончил код, и задача встаёт в очередь к ревьюеру.', 'A developer finished the code, and the task joins the queue to the reviewer.'], ['Задачу передают разработчики.', 'The developers hand it on.'])),
       edge('e-rev', 'q-review', 'review', b('на ревью', 'to review'), card(['Ревьюер берёт следующую задачу из очереди.', 'The reviewer takes the next task from the queue.'], ['Задачу берёт ревьюер.', 'The reviewer takes it.'])),
       edge('e-revd', 'review', 'q-test', b('ревью пройдено', 'reviewed'), card(['Задача прошла ревью и встаёт в очередь к тестировщику.', 'The task passed review and joins the queue to the tester.'], ['Задачу передаёт ревьюер.', 'The reviewer hands it on.'])),
@@ -126,7 +179,7 @@ export const bottleneckModel = defineModel<P>({
     ],
   },
   params: [
-    { id: 'arrivals', group: b('Сколько работы приходит', 'How much work arrives'), label: b('Сколько новых задач приходит каждое утро', 'New tasks arriving every morning'), kind: 'range', min: 1, max: 5, step: 1, default: 3, near: 'ready', levels: ['intermediate', 'experienced'] },
+    { id: 'arrivals', group: b('Сколько работы приходит', 'How much work arrives'), label: b('Сколько новых задач приходит каждое утро', 'New tasks arriving every morning'), kind: 'range', min: 1, max: 5, step: 1, default: 4, near: 'ready', levels: ['intermediate', 'experienced'] },
     {
       id: 'dev',
       group: b('Мощность этапов', 'The capacity of the stages'),
@@ -160,7 +213,7 @@ export const bottleneckModel = defineModel<P>({
       default: false,
       near: 'q-test',
       predict: {
-        prompt: b('Вы включаете или выключаете лимит: новую задачу не берут, пока в работе шесть задач. Как изменится время цикла, то есть сколько дней одна задача проводит в работе?', 'You switch the limit on or off: no new task is started while six are in progress. How does the cycle time change, that is, how many days one task spends in progress?'),
+        prompt: b('Вы включаете или выключаете лимит, при котором новую задачу не берут, пока в работе восемь задач. Как изменится время цикла, то есть сколько дней одна задача проводит в работе?', 'You switch the limit on or off: no new task is started while eight are in progress. How does the cycle time change, that is, how many days one task spends in progress?'),
         options: [
           { id: 'shorter', text: b('С лимитом время цикла короче, потому что задачи меньше ждут в очередях', 'With the limit the cycle time is shorter, because tasks wait less in queues') },
           { id: 'same', text: b('Время цикла не зависит от лимита', 'The cycle time does not depend on the limit') },
@@ -194,18 +247,19 @@ export const bottleneckModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'done', label: b('готово задач', 'tasks done') },
-    { id: 'wip', label: b('задач в работе', 'tasks in progress') },
-    { id: 'th', label: b('готово в день', 'done a day') },
-    { id: 'cycle', label: b('время цикла, дней', 'cycle time, days') },
+    { id: 'done', label: b('задач у покупателей', 'tasks with the customers') },
+    { id: 'wip', label: b('задач в работе сейчас', 'tasks in progress now') },
+    { id: 'th', label: b('готово в день, в среднем с первого дня', 'done a day, average since day 1') },
+    { id: 'cycle', label: b('время цикла задач, готовых за последние три дня, дней', 'cycle time of the tasks done in the last three days, days') },
   ],
   run(p, broken): Step[] {
     const removed = broken.has('no-test');
     const r = simulate(p, removed);
     const steps: Step[] = [];
     const testCap0 = removed ? 0 : r1(p.test * (p.focus ? 1.2 : 1));
-    const slowest = Math.min(p.dev, REVIEW_CAP, testCap0);
-    const zero = { done: 0, wip: 0, th: 0, cycle: 0 };
+    const bn = bottleneckOf(p, removed);
+    const slowest = Math.min(p.arrivals, p.dev, REVIEW_CAP, testCap0);
+    const zero = { done: 0, wip: 0, th: 0 };
     steps.push({
       id: 'arrive',
       label: b('утро', 'morning'),
@@ -250,22 +304,22 @@ export const bottleneckModel = defineModel<P>({
         : {
             id: 'cap-test',
             label: b('проверка', 'test'),
-            caption: fmtn(b('После ревью задачи встают в очередь к тестировщику. Он проверяет {t} в день, меньше, чем любой другой этап.', 'After review the tasks join the queue to the tester. The tester tests {t} a day, fewer than any other stage.'), { t: TA(testCap0) }),
+            caption: fmtn(b('После ревью задачи встают в очередь к тестировщику. Он проверяет {t} в день.', 'After review the tasks join the queue to the tester. The tester tests {t} a day.'), { t: TA(testCap0) }),
             focus: ['test', 'q-test'],
-            say: { test: fmtn(b('Тестировщик успевает только {t} в день.', 'The tester manages only {t} a day.'), { t: TA(testCap0) }) },
+            say: { test: fmtn(b('Тестировщик успевает {t} в день.', 'The tester manages {t} a day.'), { t: TA(testCap0) }) },
             reveal: ['q-test', 'test', 'e-revd', 'e-test'],
             metrics: zero,
           },
     );
+    const limitNote = p.limit ? b('Включён лимит, поэтому новую задачу не берут, пока в работе восемь задач.', 'The limit is on: no new task is started while eight are in progress.') : b('Лимита нет, поэтому разработчики берут новые задачи каждое утро.', 'There is no limit: the developers take new tasks every morning.');
     steps.push({
       id: p.limit ? 'limit-on' : 'slowest',
       label: b('предел', 'limit'),
       caption: removed
         ? b('Самым медленным этапом сейчас стала проверка, и её мощность равна нулю. Посмотрим, что это значит для десяти дней работы.', 'The slowest stage now is testing, and its capacity is zero. Let us see what that means for ten days of work.')
-        : fmtn(b('Самый медленный этап успевает {s} в день. Как бы быстро ни работали остальные, до покупателей каждый день будет доходить не больше задач, чем успевает он. {l}', 'The slowest stage manages {s} a day. However fast the others work, no more than that will reach the customers per day. {l}'), {
-            s: TA(slowest),
-            l: p.limit ? b('Включён лимит, поэтому новую задачу не берут, пока в работе шесть задач.', 'The limit is on: no new task is started while six are in progress.') : b('Лимита нет, поэтому разработчики берут новые задачи каждое утро.', 'There is no limit: the developers take new tasks every morning.'),
-          }),
+        : bn === 'arrivals'
+          ? fmtn(b('Новых задач приходит {s} в день, меньше, чем успевает любой этап. Поэтому команду сейчас сдерживают не её этапы, а поток новых задач. {l}', 'New tasks arrive at {s} a day, fewer than any stage manages. So the team is held back now not by its stages but by the flow of new tasks. {l}'), { s: T(slowest), l: limitNote })
+          : fmtn(b('Самый медленный этап здесь {n}, и он успевает {s} в день. Как бы быстро ни работали остальные, до покупателей каждый день будет доходить не больше задач, чем успевает этот этап. {l}', 'The slowest stage here is {n}, and it manages {s} a day. However fast the others work, no more tasks a day will reach the customers than this stage manages. {l}'), { n: STAGE_NAME[bn], s: TA(slowest), l: limitNote }),
       focus: ['done', 'e-done'],
       say: { done: removed ? b('Сюда не дойдёт ничего, пока проверять некому.', 'Nothing will get here while nobody can test.') : b('Сюда каждый день будет приходить не больше задач, чем успевает самый медленный этап.', 'No more tasks a day will come here than the slowest stage manages.') },
       reveal: ['done', 'e-done'],
@@ -273,86 +327,171 @@ export const bottleneckModel = defineModel<P>({
       metrics: zero,
     });
     const full = (n: number) => Math.min(1, n / 12);
+    let warned = false;
+    let blocked = false;
     r.days.forEach((d, i) => {
       const day = i + 1;
-      const doneSoFar = r1(d.done);
+      const y = r.days[i - 1];
       const th = r1(d.done / day);
-      const cyc = th ? r1(r.days.slice(0, day).reduce((a, x) => a + x.wip, 0) / day / th) : 0;
       const worst = removed || d.qTest >= d.qReview ? 'q-test' : 'q-review';
       const actor = worst === 'q-test' ? (removed ? 'q-test' : 'test') : 'review';
       const say =
         actor === 'test'
           ? fmtn(b('Тестировщик проверил {o}, а в очереди к нему остаётся {q}.', 'The tester tested {o}, and {q} remain in the queue.'), { o: TA(d.out), q: T(d.qTest) })
           : actor === 'review'
-            ? fmtn(b('Ревью пропустило {o}, а в очереди к нему остаётся {q}.', 'Review passed {o}, and {q} remain in the queue.'), { o: TA(d.outReview), q: T(d.qReview) })
+            ? fmtn(b('Ревью закончило {o} и передало их дальше, а в очереди к нему остаётся {q}.', 'Review finished {o} and passed them on, and {q} remain in the queue.'), { o: TA(d.outReview), q: T(d.qReview) })
             : fmtn(b('В очереди к проверке уже {q}, и ни одна задача не ушла дальше.', 'There are already {q} in the queue to testing, and none moved on.'), { q: T(d.qTest) });
+      // The caption tells only what is new on this day: the first output of a stage, the queue in front of testing, the limit at work.
+      const parts: Bi[] = [];
+      if (day === 1) parts.push(fmtn(b('В первый день разработчики берут в работу первые {p}, а ревью и проверке пока нечего делать, потому что до них ещё ничего не дошло.', 'On day 1 the developers start their first {p}, while review and testing have nothing to do yet, because nothing has reached them.'), { p: TA(Math.min(p.arrivals, p.dev)) }));
+      else {
+        if (d.outDev && !y.qReview && !r.days.slice(0, i).some((x) => x.outDev)) parts.push(fmtn(b('Разработка закончила первые {n}, и они встали в очередь к ревью.', 'Development finished its first {n}, and they joined the queue to review.'), { n: TA(d.outDev) }));
+        if (d.outReview && !r.days.slice(0, i).some((x) => x.outReview))
+          parts.push(removed ? fmtn(b('Ревью закончило первые {n} и передало их в очередь к проверке, но проверять их некому.', 'Review finished its first {n} and passed them to the queue to testing, but nobody can test them.'), { n: TA(d.outReview) }) : fmtn(b('Ревью закончило первые {n} и передало их в очередь к проверке.', 'Review finished its first {n} and passed them to the queue to testing.'), { n: TA(d.outReview) }));
+        else if (removed && d.qTest) parts.push(fmtn(b('В очереди к проверке уже {q}, и ни одна задача не ушла дальше.', 'There are already {q} in the queue to testing, and none has moved on.'), { q: T(d.qTest) }));
+        if (!removed && d.out) {
+          parts.push(y.done ? fmtn(b('Проверка передала покупателям {o}, и всего у них теперь {x}.', 'Testing passed {o} to the customers, and they now have {x} in all.'), { o: TA(d.out), x: T(d.done) }) : fmtn(b('Тестировщик проверил первые {o}, и они дошли до покупателей.', 'The tester tested the first {o}, and they reached the customers.'), { o: TA(d.out) }));
+          if (y.qTest && d.qTest !== y.qTest)
+            parts.push(d.qTest > y.qTest ? fmtn(b('Очередь к проверке выросла до {q}, потому что ревью отдаёт больше, чем успевает тестировщик.', 'The queue to testing grew to {q}, because review hands on more than the tester manages.'), { q: TG(d.qTest) }) : fmtn(b('Очередь к проверке сократилась до {q}.', 'The queue to testing shrank to {q}.'), { q: TG(d.qTest) }));
+          else if (y.qTest) parts.push(fmtn(b('В очереди к проверке по-прежнему {q}.', 'The queue to testing still holds {q}.'), { q: T(d.qTest) }));
+        }
+        if (d.qTest > 6 && !warned) {
+          warned = true;
+          parts.push(b('Очередь к проверке стала длиннее шести задач, поэтому её рамка пожелтела.', 'The queue to testing is now longer than six tasks, so its outline turned yellow.'));
+        }
+        if (p.limit && d.wip >= LIMIT && d.ready > 0 && !blocked) {
+          blocked = true;
+          parts.push(b('Утром разработчики не взяли новых задач, хотя они ждут в очереди, потому что в работе уже восемь задач и лимит исчерпан.', 'In the morning the developers took no new tasks, although some wait in the queue, because eight tasks are already in progress and the limit is used up.'));
+        }
+        if (!parts.length) parts.push(fmtn(b('До покупателей пока не дошло ни одной задачи, а в работе уже {w}.', 'No task has reached the customers yet, and {w} are already in progress.'), { w: T(d.wip) }));
+      }
+      const caption = day === 1 ? parts[0] : prefixDay(day, parts);
       const st: Step = {
         id: `d${day}`,
         label: `${day}`,
-        caption: day === 1
-          ? fmtn(b('В первый день разработчики берут в работу первые {p}, а ревью и проверке пока нечего делать, потому что до них ещё ничего не дошло.', 'Day 1. The developers start their first {p}, while review and testing have nothing to do yet, because nothing has reached them.'), { p: TA(Math.min(p.arrivals, p.dev)) })
-          : fmtn(b('На {n}-й день разработка закончила {dv}, ревью пропустило {rv}, проверка выпустила к покупателям {ov}. Всего готово {x}, в очереди к ревью остаётся {qr}, в очереди к проверке остаётся {qt}.', 'Day {n}. Development finished {dv}, review passed {rv}, testing released {ov} to the customers. {x} done in all; {qr} wait for review, {qt} wait for testing.'), {
-          n: day,
-          dv: TA(d.outDev),
-          rv: TA(d.outReview),
-          ov: TA(d.out),
-          x: T(doneSoFar),
-          qr: T(d.qReview),
-          qt: T(d.qTest),
-        }),
+        caption,
         focus: [worst, actor],
         say: { [actor]: say },
-        tokens: removed ? [{ edge: 'e-revd', label: `+${ruNum(r1(d.outReview))}` }] : [{ edge: 'e-done', label: `+${ruNum(r1(d.out))}` }],
-        values: { ready: ruNum(r1(d.ready)), 'q-review': ruNum(r1(d.qReview)), 'q-test': ruNum(r1(d.qTest)), done: ruNum(doneSoFar) },
+        tokens: removed ? [{ edge: 'e-revd', label: `+${ruNum(d.outReview)}` }] : [{ edge: 'e-done', label: `+${ruNum(d.out)}` }],
+        values: { ready: ruNum(d.ready), 'q-review': ruNum(d.qReview), 'q-test': ruNum(d.qTest), done: ruNum(d.done) },
         fill: { ready: full(d.ready), 'q-review': full(d.qReview), 'q-test': full(d.qTest) },
-        states: { 'q-test': d.qTest > 6 ? 'warn' : 'on', 'q-review': d.qReview > 6 ? 'warn' : 'on', done: doneSoFar > 0 ? 'ok' : 'on' },
-        metrics: { done: doneSoFar, wip: r1(d.wip), th, cycle: cyc },
+        states: { 'q-test': d.qTest > 6 ? 'warn' : 'on', 'q-review': d.qReview > 6 ? 'warn' : 'on', done: d.done > 0 ? 'ok' : 'on' },
+        metrics: metricsOf(d, th),
       };
-      if (removed && day === DAYS) st.broken = { at: 'q-test', message: `queue before testing: ${r1(d.qTest)} tasks\ndone: 0`, caption: b('без проверки поток стоит, и всё, что сделала разработка, копится в очереди и не приносит покупателям никакой пользы.', 'without testing the flow stands still, and everything development made piles up in the queue and gives the customers nothing.') };
+      if (removed && day === DAYS) st.broken = { at: 'q-test', message: `queue before testing: ${d.qTest} tasks\ndone: 0`, caption: b('без проверки поток стоит, и всё, что сделала разработка, копится в очереди и не приносит покупателям никакой пользы.', 'without testing the flow stands still, and everything development made piles up in the queue and gives the customers nothing.') };
       steps.push(st);
     });
+    const last = r.days[DAYS - 1];
+    const mid = r.days[4];
+    const recentOut = r1(r.days.slice(-4).reduce((a, x) => a + x.out, 0) / 4);
+    const stability =
+      last.wip > mid.wip
+        ? fmtn(b('Незавершённая работа всё это время росла, с {w5} на пятый день до {w10} к концу. Такая система нестабильна, закон Литтла к ней не применяют, и каждая следующая задача будет ждать дольше предыдущей.', 'The work in progress kept growing, from {w5} on day 5 to {w10} at the end. Such a system is unstable, Little’s law does not apply to it, and each next task will wait longer than the one before.'), { w5: TG(mid.wip), w10: TG(last.wip) })
+        : fmtn(b('Незавершённая работа перестала расти и держится на {w}, поэтому и время цикла дальше расти не будет.', 'The work in progress stopped growing and stays at {w}, so the cycle time will not grow further either.'), { w: TA(last.wip) });
+    const cycleNote = r.cycle !== null ? fmtn(b('Задачи, которые дошли до покупателей за последние три дня, провели в работе в среднем {c}.', 'The tasks that reached the customers in the last three days spent {c} in progress on average.'), { c: Td(r.cycle) }) : b('', '');
     steps.push({
       id: 'sum',
       label: b('итог', 'total'),
       caption: removed
         ? b('За десять дней до покупателей не дошло ни одной задачи. Поток идёт со скоростью самого медленного этапа, а скорость проверки здесь равна нулю.', 'In ten days not a single task reached the customers. The flow moves at the speed of its slowest stage, and the speed of testing here is zero.')
-        : p.arrivals < slowest
-          ? fmtn(b('За {n} дней готово {x}. Новых задач приходит меньше, чем успевает даже самый медленный этап, поэтому команду сейчас ограничивают не этапы, а поток новых задач. По закону Литтла время цикла получается около {c}.', 'In {n} days {x} are done. Fewer new tasks arrive than even the slowest stage manages, so the team is now limited not by its stages but by the flow of new tasks. Cycle time by Little’s law is about {c}.'), { n: DAYS, x: T(r.done), c: Td(r.cycle) })
-          : fmtn(b('За {n} дней готово {x}. В последние дни до покупателей доходило по {o} в день, то есть столько, сколько успевает самый медленный этап, а первые дни ушли на то, чтобы задачи до него добрались. По закону Литтла время цикла получается около {c}.', 'In {n} days {x} are done. In the last days {o} a day reached the customers, as many as the slowest stage manages, and the first days went on the tasks getting that far. Cycle time by Little’s law is about {c}.'), { n: DAYS, x: T(r.done), o: T(r.days[DAYS - 1].out), c: Td(r.cycle) }),
+        : join(
+            bn === 'arrivals'
+              ? fmtn(b('За {n} дней до покупателей дошло {x}. Новых задач приходит меньше, чем успевает даже самый медленный этап, поэтому команду сейчас ограничивают не этапы, а поток новых задач.', 'In {n} days {x} reached the customers. Fewer new tasks arrive than even the slowest stage manages, so the team is now limited not by its stages but by the flow of new tasks.'), { n: DAYS, x: T(r.done) })
+              : fmtn(b('За {n} дней до покупателей дошло {x}. В последние дни до них доходило в среднем по {o} в день, то есть примерно столько, сколько успевает самый медленный этап, {s}, а первые дни ушли на то, чтобы задачи до него добрались.', 'In {n} days {x} reached the customers. In the last days about {o} a day reached them, roughly what the slowest stage, {s}, manages, and the first days went on the tasks getting that far.'), { n: DAYS, x: T(r.done), o: TA(recentOut), s: STAGE_NAME[bn] }),
+            cycleNote,
+            stability,
+          ),
       focus: removed ? ['q-test'] : ['done'],
-      say: removed ? { 'q-test': fmtn(b('Здесь скопилось {q}, а до покупателей не дошло ни одной задачи.', '{q} piled up here, and the customers have zero.'), { q: T(r.days[DAYS - 1].qTest) }) } : { done: fmtn(b('За десять дней сюда дошло {x}.', 'In ten days {x} got here.'), { x: T(r.done) }) },
+      say: removed ? { 'q-test': fmtn(b('Здесь скопилось {q}, а до покупателей не дошло ни одной задачи.', '{q} piled up here, and the customers have zero.'), { q: T(last.qTest) }) } : { done: fmtn(b('За десять дней сюда дошло {x}.', 'In ten days {x} got here.'), { x: T(r.done) }) },
       states: removed ? { done: 'off' } : { done: 'ok' },
-      metrics: { done: r.done, wip: r.wipAvg, th: r.throughput, cycle: r.cycle },
+      metrics: metricsOf(last, r.throughput),
     });
     return steps;
   },
-  explainDelta(prev, next, change, a, c): Bi {
-    const m0 = lastMetrics(prev);
-    const m1 = lastMetrics(next);
-    const v = { d0: T(m0.done ?? 0), d1: T(m1.done ?? 0), c0: m0.cycle ?? 0, c1: Td(m1.cycle ?? 0), w0: m0.wip ?? 0, w1: T(m1.wip ?? 0) };
+  explainDelta(_prev, next, change, a, c): Bi {
     if (change.kind === 'break')
       return change.on
         ? b('Тестировщика нет, и до покупателей не дошло ничего, хотя разработка работает в полную силу. Всё, что она сделала, лежит в очереди к проверке.', 'The tester is away, and nothing reached the customers although development works at full speed. Everything it made lies in the queue to testing.')
         : b('Тестировщик вернулся, и задачи снова доходят до покупателей.', 'The tester is back, and tasks reach the customers again.');
+    const removed = next.some((s) => !!s.broken);
+    const r0 = simulate(a, removed);
+    const rr = simulate(c, removed);
+    const bn = bottleneckOf(c, removed);
+    const same = r0.done === rr.done;
+    const nothing = same && r0.days[DAYS - 1].wip === rr.days[DAYS - 1].wip && r0.cycle === rr.cycle;
+    const doneS = same
+      ? fmtn(b('Число задач, которые дошли до покупателей за десять дней, не изменилось и равно {d}.', 'The number of tasks that reached the customers in ten days did not change: {d}.'), { d: rr.done })
+      : fmtn(b('Число задач, которые дошли до покупателей за десять дней, теперь {d1} вместо {d0}.', 'The number of tasks that reached the customers in ten days is now {d1} instead of {d0}.'), { d1: rr.done, d0: r0.done });
+    const w0 = r0.days[DAYS - 1].wip;
+    const w1 = rr.days[DAYS - 1].wip;
+    const wipS = w0 === w1 ? fmtn(b('К концу десятого дня в работе по-прежнему {w}.', 'At the end of day 10 there are still {w} in progress.'), { w: T(w1) }) : fmtn(b('К концу десятого дня в работе {w1} вместо {w0}.', 'At the end of day 10 there are {w1} in progress instead of {w0}.'), { w1: T(w1), w0: w0 });
+    const cycS =
+      r0.cycle === null || rr.cycle === null
+        ? b('', '')
+        : r0.cycle === rr.cycle
+          ? fmtn(b('Время цикла последних готовых задач не изменилось и равно {c}.', 'The cycle time of the last finished tasks did not change: {c}.'), { c: Td(rr.cycle) })
+          : fmtn(b('Последние готовые задачи провели в работе в среднем {c1} вместо {c0}.', 'The last finished tasks spent {c1} in progress on average instead of {c0}.'), { c1: Td(rr.cycle), c0: r0.cycle });
+    const why = fmtn(b('Сейчас поток сдерживает {s}.', 'What holds the flow now is {s}.'), { s: STAGE_NAME[bn] });
     switch (change.id) {
-      case 'dev':
-        return fmtn(b('Разработка теперь заканчивает {y} в день вместо {x}. За десять дней готово {d1} вместо {d0}, потому что число задач, которые доходят до покупателей, задаёт самый медленный этап. Лишняя мощность перед ним только быстрее наполняет очередь, и в работе теперь в среднем {w1} вместо {w0}.', 'Development now finishes {y} a day instead of {x}. In ten days {d1} are done instead of {d0}, because the slowest stage sets how many tasks reach the customers. Extra capacity before it only fills the queue faster, and on average {w1} are now in progress instead of {w0}.'), { x: a.dev as number, y: TA(c.dev as number), ...v });
-      case 'test':
-        return fmtn(b('Тестировщик теперь проверяет {y} в день вместо {x}. Готово {d1} вместо {d0}, а время цикла равно {c1} вместо {c0}. Если ускорить узкое место, ускоряется вся система.', 'The tester now tests {y} a day instead of {x}. {d1} are done instead of {d0}, and the cycle time is {c1} instead of {c0}. When the bottleneck speeds up, the whole system speeds up.'), { x: a.test as number, y: TA(c.test as number), ...v });
+      case 'dev': {
+        const head = fmtn(b('Разработка теперь может заканчивать {y} в день вместо {x}.', 'Development can now finish {y} a day instead of {x}.'), { x: a.dev as number, y: TA(c.dev as number) });
+        if (nothing)
+          return (a.dev as number) >= c.arrivals && (c.dev as number) >= c.arrivals
+            ? join(head, fmtn(b('Но новых задач каждое утро приходит только {n}, поэтому брать в работу ей больше нечего, и ничего не изменилось.', 'But only {n} new tasks arrive every morning, so there is nothing more to start, and nothing changed.'), { n: T(c.arrivals as number) }))
+            : join(head, b('Но ничего не изменилось.', 'But nothing changed.'), why);
+        if (bn === 'dev') return join(head, b('Теперь разработка сама стала самым медленным этапом.', 'Development itself is now the slowest stage.'), doneS, wipS);
+        return join(head, doneS, fmtn(b('Число задач, которые доходят до покупателей, задаёт самый медленный этап, а здесь это {s}.', 'The number of tasks that reach the customers is set by the slowest stage, here {s}.'), { s: STAGE_NAME[bn] }), w1 > w0 ? b('Лишняя мощность перед ним только быстрее наполняет очередь.', 'Extra capacity in front of it only fills the queue faster.') : b('', ''), wipS, cycS);
+      }
+      case 'test': {
+        const head = fmtn(b('Тестировщик теперь проверяет {y} в день вместо {x}.', 'The tester now tests {y} a day instead of {x}.'), { x: a.test as number, y: TA(c.test as number) });
+        if (same) return join(head, fmtn(b('Но число задач, которые дошли до покупателей за десять дней, не изменилось и равно {d}, потому что проверка больше не самый медленный этап.', 'But the number of tasks that reached the customers in ten days did not change, {d}, because testing is no longer the slowest stage.'), { d: rr.done }), why, cycS);
+        if (rr.done < r0.done) return join(head, doneS, b('Проверка стала медленнее, а вся команда работает со скоростью самого медленного этапа.', 'Testing got slower, and the whole team works at the speed of its slowest stage.'), wipS);
+        return bn === 'test'
+          ? join(head, doneS, b('Проверка по-прежнему узкое место, и, когда его ускоряют, ускоряется вся команда.', 'Testing is still the bottleneck, and when it speeds up, the whole team speeds up.'), wipS, cycS)
+          : join(head, doneS, fmtn(b('Проверка перестала быть узким местом, и теперь поток сдерживает {s}, поэтому дальше ускорять проверку бесполезно.', 'Testing is no longer the bottleneck; now {s} holds the flow, so speeding up testing further is no use.'), { s: STAGE_NAME[bn] }), cycS);
+      }
       case 'limit':
         return c.limit
-          ? fmtn(b('С лимитом очередь перед проверкой перестала расти. В работе теперь в среднем {w1} вместо {w0}, время цикла равно {c1} вместо {c0}, а готово столько же задач, {d1}.', 'With the limit the queue before testing stopped growing. On average {w1} are now in progress instead of {w0}, the cycle time is {c1} instead of {c0}, and just as many tasks are done, {d1}.'), v)
-          : fmtn(b('Без лимита разработчики берут в работу всё подряд, поэтому в работе теперь в среднем {w1} вместо {w0}, время цикла равно {c1} вместо {c0}, а готово столько же задач.', 'Without the limit the developers start everything, so on average {w1} are now in progress instead of {w0}, the cycle time is {c1} instead of {c0}, and the same number of tasks is done.'), v);
+          ? join(b('С лимитом разработчики не берут новую задачу, пока в работе восемь задач, и очередь перед проверкой перестаёт расти.', 'With the limit the developers start no new task while eight are in progress, and the queue before testing stops growing.'), wipS, cycS, doneS)
+          : join(b('Без лимита разработчики каждое утро берут в работу всё, что успевают.', 'Without the limit the developers start everything they can every morning.'), wipS, cycS, doneS);
       case 'focus':
-        return c.focus
-          ? fmtn(b('Тестировщик больше не переключается на другие дела и проверяет на 20 % больше, поэтому готово {d1} вместо {d0}. Так выглядит шаг «использовать», на котором команда берёт от узкого места всё, на что оно способно.', 'The tester no longer switches to other things and tests 20% more, so {d1} are done instead of {d0}. This is the “exploit” step, at which the team gets everything the bottleneck can give.'), v)
-          : fmtn(b('Тестировщика снова отвлекают на совещания и чужие задачи, и готово теперь {d1} вместо {d0}.', 'The tester is pulled into meetings and other tasks again, and {d1} are now done instead of {d0}.'), v);
+        if (c.focus)
+          return same
+            ? join(b('Тестировщик больше не переключается на другие дела и может проверять на 20 % больше.', 'The tester no longer switches to other things and can test 20% more.'), doneS, why)
+            : join(b('Тестировщик больше не переключается на другие дела и проверяет на 20 % больше.', 'The tester no longer switches to other things and tests 20% more.'), doneS, b('Так выглядит шаг «использовать», на котором команда берёт от узкого места всё, на что оно способно.', 'This is the “exploit” step, at which the team gets everything the bottleneck can give.'));
+        return join(b('Тестировщика снова отвлекают на совещания и чужие задачи.', 'The tester is pulled into meetings and other tasks again.'), doneS);
       case 'swarm':
-        return c.swarm
-          ? fmtn(b('Свободные разработчики помогают проверять, хоть и вдвое медленнее тестировщика, и готово теперь {d1} вместо {d0}. Так выглядит шаг «подчинить», на котором остальные работают на узкое место, а не начинают новые задачи.', 'Free developers help with testing, if half as fast as the tester, and {d1} are now done instead of {d0}. This is the “subordinate” step, at which the others work for the bottleneck instead of starting new tasks.'), v)
-          : fmtn(b('Разработчики больше не помогают проверке, и готово теперь {d1} вместо {d0}.', 'The developers no longer help with testing, and {d1} are now done instead of {d0}.'), v);
+        if (c.swarm) {
+          if (same && !c.limit) return b('Помогать проверке некому: без лимита разработчики каждое утро берут новые задачи и заняты своими. Поэтому результат не изменился. Включите лимит, и у разработчиков появится свободное время.', 'Nobody is free to help with testing: without the limit the developers take new tasks every morning and are busy with their own. So the result did not change. Switch on the limit, and the developers get free time.');
+          if (same) return join(b('Свободные разработчики готовы помогать проверке, но результат не изменился.', 'Free developers are ready to help with testing, but the result did not change.'), why);
+          return join(b('Свободные разработчики помогают проверять, хоть и вдвое медленнее тестировщика.', 'Free developers help with testing, if half as fast as the tester.'), doneS, b('Так выглядит шаг «подчинить», на котором остальные работают на узкое место, а не начинают новые задачи.', 'This is the “subordinate” step, at which the others work for the bottleneck instead of starting new tasks.'));
+        }
+        return join(b('Разработчики больше не помогают проверке.', 'The developers no longer help with testing.'), doneS);
       default:
-        return fmtn(b('Новых задач каждое утро теперь {y} вместо {x}. Готово {d1} вместо {d0}, в работе в среднем {w1} вместо {w0}. Если задач приходит больше, чем уходит, очередь растёт без предела.', 'There are now {y} new tasks every morning instead of {x}. {d1} done instead of {d0}, on average {w1} in progress instead of {w0}. When more comes in than goes out, the queue grows without bound.'), { x: a.arrivals as number, y: c.arrivals as number, ...v });
+        return join(
+          fmtn(b('Каждое утро в очередь теперь приходит {y} вместо {x}.', 'There are now {y} new tasks every morning instead of {x}.'), { x: a.arrivals as number, y: T(c.arrivals as number) }),
+          doneS,
+          wipS,
+          (c.arrivals as number) > Math.min(c.dev as number, REVIEW_CAP, (c.test as number) * (c.focus ? 1.2 : 1)) && !c.limit ? b('Если задач приходит больше, чем уходит, и лимита нет, очередь растёт без предела.', 'When more comes in than goes out and there is no limit, the queue grows without bound.') : b('', ''),
+        );
     }
   },
 });
+
+/** The metrics of one day; the cycle time only once some tasks are finished. */
+function metricsOf(d: FlowDay, th: number): Record<string, number> {
+  return { done: d.done, wip: d.wip, th, ...(d.cycle !== null ? { cycle: d.cycle } : {}) };
+}
+
+/** Sentences joined with spaces, empty ones dropped. */
+function join(...parts: Bi[]): Bi {
+  const ok = parts.filter((x) => x.ru || x.en);
+  return { ru: ok.map((x) => x.ru).filter(Boolean).join(' '), en: ok.map((x) => x.en).filter(Boolean).join(' ') };
+}
+
+/** "На 5-й день разработка…" / "On day 5, development…": the day goes in front of the first sentence. */
+function prefixDay(day: number, parts: Bi[]): Bi {
+  const s = join(...parts);
+  const low = (x: string) => x.charAt(0).toLowerCase() + x.slice(1);
+  return { ru: `На ${day}-й день ${low(s.ru)}`, en: `On day ${day}, ${low(s.en)}` };
+}
