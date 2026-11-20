@@ -38,6 +38,7 @@ const usage = `dtlab — the DevOps Trainer's local lab
 
   dtlab check                     what this computer can run, and the profile to use
   dtlab up [--profile light|standard|full] [--with learner,kuberoot,kubeadm-nodes]
+           [--kuberoot-version 1.2.3|latest] [--kuberoot <url|dir>]
                                   create and start the lab's VMs (again: start them)
   dtlab status                    the VMs, their addresses and whether they run
   dtlab ssh <vm> [command]        a shell in a VM (learner, cp-1, worker-1, ...)
@@ -173,7 +174,8 @@ func up(ctx context.Context, l *lab.Lab, args []string) error {
 	prof := fs.String("profile", "", "light, standard or full (default: what `dtlab check` recommends)")
 	with := fs.String("with", "", "the parts: learner, kuberoot, kubeadm-nodes (comma list; default: the profile's)")
 	be := fs.String("backend", "auto", "qemu or hyperv")
-	kr := fs.String("kuberoot", "", "kuberoot artifacts: URL or directory")
+	kr := fs.String("kuberoot", "", "kuberoot artifacts: URL or directory, instead of the GitHub release")
+	krv := fs.String("kuberoot-version", "latest", "kuberoot release to install: a version (1.2.3) or latest")
 	course := fs.String("course", "", "the built course (web/dist) to serve")
 	timeout := fs.Duration("timeout", 25*time.Minute, "how long to wait for the VMs")
 	_ = fs.Parse(args)
@@ -194,7 +196,7 @@ func up(ctx context.Context, l *lab.Lab, args []string) error {
 		}
 		*course = l.L.Course()
 	}
-	return l.Up(ctx, lab.UpOptions{Profile: *prof, With: *with, Backend: *be, Kuberoot: *kr, Course: *course, Timeout: *timeout})
+	return l.Up(ctx, lab.UpOptions{Profile: *prof, With: *with, Backend: *be, Kuberoot: *kr, KuberootVersion: *krv, Course: *course, Timeout: *timeout})
 }
 
 // copyCourse keeps a copy of the built course in the lab root, so the lab
