@@ -187,15 +187,15 @@ export const L_NODES: Lesson = {
           check: {
             when: (f: Facts) => threeNodesLabelled(f) && (tf(f)?.state.some((s) => s.address === 'edu_vm.worker[1]') ?? false) && /cp_endpoint=\d/.test(inventoryOutput(f)),
             fail: [
-              { if: (f: Facts) => threeNodesLabelled(f) && !inventoryOutput(f), say: bi('Машины созданы, но в state нет output inventory. Добавьте блок output "inventory" в main.tf и снова выполните terraform apply.', 'The machines exist, but the state has no inventory output. Add an output "inventory" block to main.tf and run terraform apply again.') },
+              { if: (f: Facts) => threeNodesLabelled(f) && !inventoryOutput(f), say: bi('Машины созданы, но в state нет output inventory. Добавьте блок `output "inventory"` в `main.tf` и снова выполните `terraform apply`.', 'The machines exist, but the state has no inventory output. Add an `output "inventory"` block to `main.tf` and run `terraform apply` again.') },
               { if: (f: Facts) => (tf(f)?.state ?? []).some((s) => /^edu_vm\.worker_?\d|^edu_vm\.worker2/.test(s.address)), say: bi('Рабочие узлы описаны отдельными блоками. Нужен один блок с count, и тогда в state у машин будут адреса edu_vm.worker[0] и edu_vm.worker[1].', 'The workers are described by separate blocks. You need one block with count — then their addresses are edu_vm.worker[0] and [1].') },
-              { if: (f: Facts) => (kc(f)?.vms ?? []).some((v) => v.labels.trainer !== 'devops'), say: bi('Не у всех ВМ есть метка trainer = "devops", а уборка по метке такую машину не найдёт.', 'Not every VM has the trainer = "devops" label: a cleanup by label will not find such a machine.') },
+              { if: (f: Facts) => (kc(f)?.vms ?? []).some((v) => v.labels.trainer !== 'devops'), say: bi('Не у всех ВМ есть метка `trainer = "devops"`, а уборка по метке такую машину не найдёт.', 'Not every VM has the `trainer = "devops"` label: a cleanup by label will not find such a machine.') },
             ],
           },
           chips: 'terraform init && terraform apply',
           concepts: ['iac.count', 'iac.resource-label'],
           hints: {
-            H1: bi('Нужен один блок resource "edu_vm" "worker" с аргументом count = 2, а имя каждой машины строится из count.index.', 'One resource "edu_vm" "worker" block and the argument count = 2; the name is built from count.index.'),
+            H1: bi('Нужен один блок `resource "edu_vm" "worker"` с аргументом `count = 2`, а имя каждой машины строится из `count.index`.', 'One `resource "edu_vm" "worker"` block and the argument `count = 2`; the name is built from `count.index`.'),
             H2: bi('Имя задаётся так: `name = "worker-${count.index + 1}"`, потому что индекс начинается с нуля. Значение output записывается одной строкой, в которой строки инвентаря разделены символами \\n, а адреса подставлены ссылками ${edu_vm.cp.private_ip}, ${edu_vm.worker[0].name} и так далее.', '`name = "worker-${count.index + 1}"`: the index starts from zero. The output value is a string with \\n between the inventory lines and references ${edu_vm.cp.private_ip}, ${edu_vm.worker[0].name}…'),
           },
         },

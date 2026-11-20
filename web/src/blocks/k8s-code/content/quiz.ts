@@ -269,7 +269,7 @@ export const QUIZ: QuizItem[] = [
     lang: 'yaml',
     bug: [4],
     why: {
-      4: bi('Настройка serial: "100%" отправляет все рабочие узлы в одну партию. Команда drain выселяет поды со всех узлов сразу, и переехать им некуда, поэтому здесь нужно serial: 1.', 'serial: "100%" puts all workers in one batch. drain evicts the pods from all of them at once, and they have nowhere to go, so this must be serial: 1.'),
+      4: bi('Настройка `serial: "100%"` отправляет все рабочие узлы в одну партию. Команда drain выселяет поды со всех узлов сразу, и переехать им некуда, поэтому здесь нужно `serial: 1`.', '`serial: "100%"` puts all workers in one batch. drain evicts the pods from all of them at once, and they have nowhere to go, so this must be `serial: 1`.'),
       8: bi('Команду drain выполняют там, где лежит admin.conf, то есть на control plane, поэтому delegate_to здесь стоит верно.', 'drain runs where admin.conf is, that is on the control plane, so delegate_to is right here.'),
       7: bi('Флаг --ignore-daemonsets здесь нужен, потому что поды DaemonSet, например агенты Cilium, с узла не выселяются.', '--ignore-daemonsets is needed here, because DaemonSet pods such as the Cilium agents are not evicted from a node.'),
     },
