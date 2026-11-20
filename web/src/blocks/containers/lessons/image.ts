@@ -42,12 +42,12 @@ export const imageQuiz: QuizItem[] = [
     id: 'containers.q.deleted-file',
     kind: 'mcq',
     concepts: ['docker.layer'],
-    prompt: bi('В Dockerfile одна инструкция RUN скачала архив на 200 МБ, а следующая RUN его удалила. Насколько вырос образ?', 'In a Dockerfile one RUN downloaded a 200 MB archive and the next RUN deleted it. How much did the image grow?'),
+    prompt: bi('При сборке образа один шаг скачал архив на 200 МБ и сохранил его в своём слое, а следующий шаг удалил этот архив. Насколько вырос образ?', 'While an image was built, one step downloaded a 200 MB archive and saved it in its layer, and the next step deleted the archive. How much did the image grow?'),
     options: [
       { id: '200', text: bi('На 200 МБ, потому что архив остался в нижнем слое, а сверху легла только пометка об удалении', 'By 200 MB, because the archive stays in the lower layer; on top there is only a deletion mark'), correct: true },
       { id: '0', text: bi('Ни на сколько, ведь файл удалён', 'Not at all: the file was deleted'), why: bi('Слои можно только добавлять. Удаление записывается пометкой (whiteout) в новом слое, а байты нижнего слоя по-прежнему скачиваются.', 'Layers only add. A deletion is a whiteout in a new layer; the bytes of the lower layer are still downloaded.') },
     ],
-    explain: bi('Удалять файл нужно в той же инструкции, где он появился, или собирать его в отдельной стадии, как описано в главе о Dockerfile.', 'Delete in the same instruction that created the file — or build in a separate stage (the Dockerfile chapter).'),
+    explain: bi('Удалять файл нужно на том же шаге сборки, где он появился. Как это записать, рассказывает следующий урок, о Dockerfile.', 'A file has to be deleted in the same build step that created it. The next lesson, on the Dockerfile, shows how to write that down.'),
   },
   {
     id: 'containers.q.image-label',
@@ -83,7 +83,7 @@ export const imageLesson: Lesson = {
   id: 'containers.image',
   block: 'containers',
   title: bi('Как устроен образ', 'How an image is built'),
-  summary: bi('В этом уроке вы узнаете, что скачивает команда `docker pull`, то есть слои, настройки, манифест и индекс платформ, и почему все эти части ищут по адресу, вычисленному из содержимого.', 'In this lesson you will learn what `docker pull` downloads, that is the layers, the config, the manifest and the platform index, and why all these parts are found by an address computed from their content.'),
+  summary: bi('В этом уроке вы узнаете, что скачивает команда docker pull, то есть слои, настройки, манифест и индекс платформ, и почему все эти части ищут по адресу, вычисленному из содержимого.', 'In this lesson you will learn what `docker pull` downloads, that is the layers, the config, the manifest and the platform index, and why all these parts are found by an address computed from their content.'),
   introduces: ['docker.image', 'docker.layer', 'docker.digest', 'docker.registry'],
   uses: ['docker.container', 'docker.lifecycle'],
   tier: 'core',
@@ -97,7 +97,7 @@ export const imageLesson: Lesson = {
       id: 'hook',
       kind: 'text',
       step: 'hook',
-      body: bi('Команда `docker pull nginx:1.30-alpine` печатает несколько строк вида `f18232174bc9: Pull complete` и одну строку `Digest: sha256:…`. Что это за куски и что означает длинное число? Глава отвечает на вопрос: **что скачивает `docker pull`?**', '`docker pull nginx:1.30-alpine` prints a few lines like `f18232174bc9: Pull complete` and one line `Digest: sha256:…`. What are these pieces and what is the long number? The leading question: **what exactly does `docker pull` download?**'),
+      body: bi('Команда `docker pull nginx:1.30-alpine` печатает несколько строк вида `f18232174bc9: Pull complete` и одну строку `Digest: sha256:…`. Что это за куски и что означает длинное число? Этот урок отвечает на вопрос: **что скачивает `docker pull`?**', '`docker pull nginx:1.30-alpine` prints a few lines like `f18232174bc9: Pull complete` and one line `Digest: sha256:…`. What are these pieces and what is the long number? The leading question: **what exactly does `docker pull` download?**'),
     },
     {
       id: 'layers',
@@ -105,8 +105,8 @@ export const imageLesson: Lesson = {
       step: 'explain',
       title: bi('Из каких двух частей состоит образ', 'The two parts of an image: files and a description'),
       body: bi(
-        '[[docker.image|Образ]] служит шаблоном контейнера и состоит из двух частей. Первая часть содержит файлы будущего корня, разложенные стопкой [[docker.layer|слоёв]]. Каждый слой хранится как архив tar с изменениями файловой системы относительно слоя под ним: сначала базовая система Alpine, потом пакет nginx, потом скрипт запуска. Вторая часть содержит документ настроек (в спецификации он называется config), где записано, что запускать (Entrypoint и Cmd), с какими переменными, в каком рабочем каталоге, от имени какого пользователя, какие порты открыты и из каких инструкций образ собран.\n\nВ лаборатории «Как собрать контейнер своими руками» вы смонтировали overlay из двух заготовленных нижних каталогов. Образ устроен так же. Его слои служат нижними каталогами OverlayFS, доступными только для чтения, а запуск контейнера добавляет сверху пустой записываемый слой. Поэтому из одного образа можно запустить сколько угодно контейнеров, и ни один из них образ не меняет.',
-        'An [[docker.image|image]] is a container template in two parts. The first is the files of the future root, laid out as a stack of [[docker.layer|layers]]. Each layer is a tar archive of file-system changes relative to the layer below: the Alpine base system, then the nginx package, then the start script. The second part is the config: what to run (Entrypoint and Cmd), which variables, the working directory, the user, ports and the history of the instructions the image was built from.\n\nIn the “container by hand” lab you mounted an overlay from two prepared lower directories. Now we can name them properly: this is how an image is built. Layers are OverlayFS lower directories, read-only; running a container adds an empty writable layer on top. That is why any number of containers can run from one image, and none of them changes the image.',
+        '[[docker.image|Образ]] служит шаблоном контейнера и состоит из двух частей. Первая часть содержит файлы будущего корня, разложенные стопкой [[docker.layer|слоёв]]. Каждый слой хранится как архив tar с изменениями файловой системы относительно слоя под ним: сначала базовая система Alpine, потом пакет nginx, потом скрипты запуска. На схеме ниже для простоты нарисованы три слоя, а у настоящего образа `nginx:1.30-alpine` их четыре, и в практике вы посчитаете их сами. Вторая часть содержит документ настроек (в спецификации он называется config), где записано, что запускать (Entrypoint и Cmd), с какими переменными, в каком рабочем каталоге, от имени какого пользователя, какие порты открыты и из каких инструкций образ собран.\n\nВ уроке «Как собрать контейнер своими руками» вы смонтировали overlay из двух заготовленных нижних каталогов. Образ устроен так же. Его слои служат нижними каталогами OverlayFS, доступными только для чтения, а запуск контейнера добавляет сверху пустой записываемый слой. Поэтому из одного образа можно запустить сколько угодно контейнеров, и ни один из них образ не меняет.',
+        'An [[docker.image|image]] is a container template in two parts. The first is the files of the future root, laid out as a stack of [[docker.layer|layers]]. Each layer is a tar archive of file-system changes relative to the layer below: the Alpine base system, then the nginx package, then the start scripts. The diagram below draws three layers for simplicity, while the real `nginx:1.30-alpine` image has four, and in the practice you will count them yourself. The second part is the config: what to run (Entrypoint and Cmd), which variables, the working directory, the user, ports and the history of the instructions the image was built from.\n\nIn the “container by hand” lab you mounted an overlay from two prepared lower directories. Now we can name them properly: this is how an image is built. Layers are OverlayFS lower directories, read-only; running a container adds an empty writable layer on top. That is why any number of containers can run from one image, and none of them changes the image.',
       ),
     },
     {
@@ -127,7 +127,7 @@ export const imageLesson: Lesson = {
       step: 'explain',
       title: bi('Как образы хранятся в реестре и как их туда отправляют', 'How images are kept in a registry and how they are sent there'),
       body: bi(
-        '[[docker.registry|Реестром]] называют сервер, на котором образы лежат по репозиториям и тегам. По умолчанию Docker обращается к Docker Hub, поэтому имя `nginx` означает `docker.io/library/nginx`. У компаний бывают свои реестры, например GitLab Container Registry или Harbor, а в курсе есть реестр `registry.lab`. Протокол обмена простой и открытый, он называется OCI Distribution. По этому протоколу клиент получает токен, спрашивает манифест по тегу, а затем скачивает части образа по их digest. Отправка образа командой `docker push` идёт в обратную сторону: сначала загружаются слои, которых в реестре ещё нет, а потом манифест под нужным тегом. Слои, которые в реестре уже есть, повторно не загружаются, и Docker пишет `Layer already exists`.\n\nЧтобы отправить образ в свой реестр, его имя должно начинаться с адреса этого реестра. Поэтому сначала выполняют `docker tag nginx:1.30-alpine registry.lab/learner/web:1.0`, а затем `docker push registry.lab/learner/web:1.0`.',
+        '[[docker.registry|Реестром]] называют сервер, на котором образы лежат по репозиториям и тегам. По умолчанию Docker обращается к Docker Hub, поэтому имя `nginx` означает `docker.io/library/nginx`. У компаний бывают свои реестры, например GitLab Container Registry или Harbor, а в курсе есть реестр `registry.lab`. Протокол обмена простой и открытый, он называется OCI Distribution. По этому протоколу клиент получает токен, то есть временный пропуск к реестру, спрашивает манифест по тегу, а затем скачивает части образа по их digest. Отправка образа командой `docker push` идёт в обратную сторону: сначала загружаются слои, которых в реестре ещё нет, а потом манифест под нужным тегом. Слои, которые в реестре уже есть, повторно не загружаются, и Docker пишет `Layer already exists`.\n\nЧтобы отправить образ в свой реестр, его имя должно начинаться с адреса этого реестра. Поэтому сначала выполняют `docker tag nginx:1.30-alpine registry.lab/learner/web:1.0`, а затем `docker push registry.lab/learner/web:1.0`.',
         'A [[docker.registry|registry]] is a server that keeps images by repositories and tags. Docker Hub is the default: the name `nginx` means `docker.io/library/nginx`. Companies have their own registries: GitLab Container Registry, Harbor; the course has `registry.lab`. The protocol is simple and open (OCI Distribution): the client gets a token, asks for a manifest by tag, then downloads blobs by digest. Sending (`docker push`) goes the other way: first the layers the registry does not have, then the manifest under the tag. Layers that are already there are not uploaded — `Layer already exists`.\n\nTo send an image to your own registry, its name must start with the registry address: `docker tag nginx:1.30-alpine registry.lab/learner/web:1.0`, then `docker push registry.lab/learner/web:1.0`.',
       ),
     },
@@ -151,6 +151,7 @@ export const imageLesson: Lesson = {
           id: 'count',
           prompt: bi('Выведите одним числом, сколько слоёв в образе `nginx:1.30-alpine`.', 'Print as one number how many layers `nginx:1.30-alpine` has.'),
           check: { stdout: /^4\n?$/ },
+          docStep: 2,
           chips: "docker image inspect nginx:1.30-alpine --format '{{len .RootFS.Layers}}'",
           concepts: ['docker.layer'],
           docRef: help('inspect', 'OPTIONS', '--format'),
@@ -176,7 +177,7 @@ export const imageLesson: Lesson = {
         {
           id: 'digest',
           prompt: bi('Скачайте alpine не по тегу, а по digest. Так вы получите те же самые байты, даже если тег перевесят.', 'Pull alpine not by tag but by digest: that gets exactly the same bytes even if the tag is moved.'),
-          check: { when: "registry.log[path~'manifests/sha256:']" },
+          check: { when: (f) => (((f.registry as { log?: { method: string; path: string }[] } | undefined)?.log) ?? []).some((e) => e.method === 'HEAD' && /\/manifests\/sha256:/.test(e.path)) },
           chips: 'docker images --digests',
           concepts: ['docker.digest'],
           docRef: help('images', 'OPTIONS', '--digests'),
@@ -190,7 +191,7 @@ export const imageLesson: Lesson = {
       step: 'practice',
       levels: ['intermediate', 'experienced'],
       mode: 'find',
-      prompt: bi('Покажите, для каких платформ в реестре есть образ `nginx:1.30-alpine`, не скачивая сам образ. Глава такой команды не показывала, поэтому найдите её в справке.', 'Show which platforms the registry has for `nginx:1.30-alpine` — without pulling it. The chapter did not show this command, so find it in the help.'),
+      prompt: bi('Покажите, для каких платформ в реестре есть образ `nginx:1.30-alpine`, не скачивая сам образ. Урок такой команды не показывал, поэтому найдите её в справке.', 'Show which platforms the registry has for `nginx:1.30-alpine` — without pulling it. The lesson did not show this command, so find it in the help.'),
       ref: { page: 'help/docker-pull' },
       terminal: {
         setup: dockerHost({}, { pull: [] }),
@@ -210,7 +211,7 @@ export const imageLesson: Lesson = {
       kind: 'callout',
       tone: 'why',
       step: 'review',
-      title: bi('Итог главы', 'Summary'),
+      title: bi('Итог урока', 'Summary'),
       body: bi('Образ состоит из стопки слоёв и документа настроек. Каждая его часть адресуется по digest, и путь идёт от тега к индексу, от индекса к манифесту платформы, а от манифеста к настройкам и слоям. Тег можно перевесить, а digest нет. Реестр хранит части образов по их digest, поэтому одинаковые слои скачиваются один раз.', 'An image is a stack of layers and a config. Everything is addressed by digest: tag → index → platform manifest → config and layers. A tag can be moved, a digest cannot. A registry keeps blobs by digest; identical layers download once.'),
     },
   ],

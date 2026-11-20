@@ -231,7 +231,7 @@ export const imageModel = defineModel<P>({
         say: { l1: bi('Отпечаток полученных байтов не совпал с digest, и слой отвергнут.', 'The fingerprint of the bytes does not match the digest; the layer is refused.') },
         states: { l1: 'err' },
         metrics: base,
-        broken: { at: 'e-pull', message: `failed to register layer: unexpected EOF\nfailed commit on ref "layer-${d.l1}": "layer-${d.l1}" failed size validation: digest mismatch`, caption: bi('Скачивание остановилось на проверке слоя. Подменённый слой не примут, даже если подмена случилась в сети или в зеркале реестра.', 'The pull stopped at the layer check. A tampered layer is refused even if the tampering happened on the network or in a registry mirror.') },
+        broken: { at: 'e-pull', message: `failed commit on ref "layer-${d.l1}": unexpected commit digest sha256:d41f…9a07, expected ${d.l1}: failed precondition`, caption: bi('Скачивание остановилось на проверке слоя. Подменённый слой не примут, даже если подмена случилась в сети или в зеркале реестра.', 'The pull stopped at the layer check. A tampered layer is refused even if the tampering happened on the network or in a registry mirror.') },
       });
       return steps;
     }

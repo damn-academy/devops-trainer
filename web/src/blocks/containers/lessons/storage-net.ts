@@ -153,7 +153,7 @@ export const storageNetLesson: Lesson = {
       kind: 'callout',
       tone: 'why',
       step: 'review',
-      title: bi('Итог главы', 'Summary'),
+      title: bi('Итог урока', 'Summary'),
       body: bi('Записываемый слой удаляется вместе с контейнером, а данные переживают его, если лежат в томе или в bind mount, а в tmpfs не сохраняется ничего. Сеть по умолчанию даёт контейнерам адреса, но не имена, а пользовательская сеть добавляет DNS на адресе 127.0.0.11.', 'The writable layer dies with the container; a volume or a bind mount outlives it, tmpfs does not. The default network gives addresses without names; a user-defined network adds DNS at 127.0.0.11.'),
     },
   ],

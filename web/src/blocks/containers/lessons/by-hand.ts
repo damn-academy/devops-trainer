@@ -13,7 +13,7 @@ const APPLETS = ['sh', 'ls', 'cat', 'echo', 'hostname', 'ps', 'mount', 'umount',
 
 const rootfs = (dir: string) => [
   { path: `${dir}/bin/busybox`, content: stub, mode: '0755', owner: 'root' },
-  ...APPLETS.map((n) => ({ path: `${dir}/bin/${n}`, type: 'l' as const, target: '/bin/busybox' })),
+  ...APPLETS.map((n) => ({ path: `${dir}/bin/${n}`, type: 'l' as const, target: 'busybox' })),
   { path: `${dir}/etc/os-release`, content: 'NAME="Alpine Linux"\nID=alpine\nVERSION_ID=3.22.2\n', owner: 'root' },
   { path: `${dir}/etc/hostname`, content: 'box\n', owner: 'root' },
   { path: `${dir}/proc`, type: 'd' as const, owner: 'root' },
@@ -91,7 +91,7 @@ export const byHandLesson: Lesson = {
   id: 'containers.by-hand',
   block: 'containers',
   title: bi('Как собрать контейнер своими руками', 'A container by hand'),
-  summary: bi('В этом уроке мы соберём контейнер без Docker из chroot, пространств имён, cgroup, overlay с pivot_root и capabilities, а потом запустим тот же контейнер настоящим рантаймом crun.', 'We build a container without Docker: chroot, namespaces, a cgroup, overlay and pivot_root, capabilities — and the same container with the real crun runtime.'),
+  summary: bi('В этом уроке вы соберёте контейнер без Docker из механизмов ядра, знакомых по блоку Linux, по одному механизму за шаг, а потом запустите тот же контейнер настоящим рантаймом crun.', 'We build a container without Docker: chroot, namespaces, a cgroup, overlay and pivot_root, capabilities — and the same container with the real crun runtime.'),
   introduces: [],
   uses: ['docker.container', 'docker.bundle', 'docker.runtime'],
   tier: 'core',
@@ -105,7 +105,7 @@ export const byHandLesson: Lesson = {
       id: 'hook',
       kind: 'text',
       step: 'hook',
-      body: bi('Можно ли собрать контейнер без Docker? Можно, и все нужные детали вам уже знакомы: каждую из них вы трогали в блоке Linux. В этой главе мы соберём их вместе, по одной строке добавляя в растущий скрипт `mybox.sh`. В конце окажется, что `crun` с файлом `config.json` делает то же самое, только за вас.', 'Can you build a container without Docker? You can — and you already know every part: you touched each of them in the Linux block. Here we put them together, one line at a time into a growing `mybox.sh` script. At the end it turns out that `crun` with `config.json` does exactly the same, only for you.'),
+      body: bi('Можно ли собрать контейнер без Docker? Можно, и все нужные детали вам уже знакомы: каждую из них вы трогали в блоке Linux. В этом уроке мы соберём их вместе, по одной команде за шаг. В конце окажется, что `crun` с файлом `config.json` делает то же самое, только за вас.', 'Can you build a container without Docker? You can — and you already know every part: you touched each of them in the Linux block. In this lesson we put them together, one command per step. At the end it turns out that `crun` with `config.json` does exactly the same, only for you.'),
     },
     {
       id: 'plan',
@@ -113,8 +113,8 @@ export const byHandLesson: Lesson = {
       step: 'explain',
       title: bi('Из каких шагов складывается сборка контейнера', 'Which steps building a container takes'),
       body: bi(
-        '### Шаг за шагом\n\n1. **chroot** даёт процессу другой корень файловой системы, но только корень. Процессы, сеть и имя машины остаются общими, а root внутри может выбраться наружу через `/proc/1/root` любого процесса хоста.\n2. **UTS** даёт контейнеру своё имя машины. Для этого выполняют `unshare --uts sh`, а затем `hostname box`. Имя хоста при этом не меняется.\n3. **PID и mount** дают контейнеру свой PID 1. Для этого выполняют `unshare --pid --fork --mount sh`, а затем `mount -t proc proc /proc`. Теперь `ps` видит только процессы этого пространства. Сам unshare в новое пространство не попадает, поэтому нужен флаг `--fork`.\n4. **cgroup** задаёт лимиты. Для этого выполняют `mkdir /sys/fs/cgroup/box`, `echo 16M > memory.max`, `echo 20 > pids.max` и, наконец, записывают PID процесса в файл `cgroup.procs`. Без этой последней записи лимит ни на кого не действует.\n5. **overlay и pivot_root** собирают корень из двух заготовленных нижних каталогов и пустого верхнего. Затем `pivot_root` делает его корнем, старый корень размонтируется, и выйти наружу больше некуда.\n6. **capabilities** урезают права root, так что без привилегии `cap_sys_admin` монтировать уже нельзя.\n7. **crun** запускает тот же контейнер по файлу `config.json`.\n\nСеть, то есть пару veth между хостом и новым пространством имён net, вы уже собирали в блоке сетей. Здесь она устроена так же, поэтому этот шаг оставлен для желающих.',
-        '### Step by step\n\n1. **chroot** — a different file root. Only the root: processes, network and hostname stay shared, and root inside can climb out through `/proc/1/root` of any host process.\n2. **UTS** — a hostname of its own: `unshare --uts sh`, then `hostname box`. The host’s name does not change.\n3. **PID and mount** — a PID 1 of its own: `unshare --pid --fork --mount sh` and `mount -t proc proc /proc`. Now `ps` sees only its own. unshare itself does not enter the new namespace, hence `--fork`.\n4. **cgroup** — limits: `mkdir /sys/fs/cgroup/box`, `echo 16M > memory.max`, `echo 20 > pids.max` and the process’s PID into `cgroup.procs`. Without that last write the limit applies to nobody.\n5. **overlay and pivot_root** — a root from two prepared lower directories and an empty upper one; then `pivot_root`, and the old root is unmounted: there is nowhere to climb out to.\n6. **capabilities** — a reduced root: without `cap_sys_admin` you cannot mount.\n7. **crun** — the same container from `config.json`.\n\nThe network — a veth pair between the host and a new net namespace — you built in the networks block; it is the same here, so that step is optional.',
+        '### Шаг за шагом\n\n1. **chroot** даёт процессу другой корень файловой системы, но только корень. Процессы, сеть и имя машины остаются общими, а root внутри может выбраться наружу через каталог `/proc/<PID>/root` любого процесса хоста, например через `/proc/1/root`.\n2. **UTS** даёт контейнеру своё имя машины. Для этого выполняют `unshare --uts sh`, а затем `hostname box`. Имя хоста при этом не меняется.\n3. **PID и mount** дают контейнеру свой PID 1. Для этого выполняют `unshare --pid --fork --mount sh`, а затем `mount -t proc proc /proc`. Теперь `ps` видит только процессы этого пространства. Сам unshare в новое пространство не попадает, поэтому нужен флаг `--fork`.\n4. **cgroup** задаёт лимиты. Для этого выполняют `mkdir /sys/fs/cgroup/box`, `echo 16M > memory.max`, `echo 20 > pids.max` и, наконец, записывают PID процесса в файл `cgroup.procs`. Без этой последней записи лимит ни на кого не действует.\n5. **overlay и pivot_root** собирают корень из двух заготовленных нижних каталогов и пустого верхнего. Затем `pivot_root` делает его корнем, старый корень размонтируется, и выйти наружу больше некуда.\n6. **Привилегии ядра (capabilities)** урезают права root, так что без привилегии `cap_sys_admin` монтировать уже нельзя.\n7. **crun** запускает тот же контейнер по файлу `config.json`.\n\nСеть, то есть пару veth между хостом и новым пространством имён net, вы уже собирали в блоке сетей. Здесь она устроена так же, поэтому этот шаг оставлен для желающих.',
+        '### Step by step\n\n1. **chroot** — a different file root. Only the root: processes, network and hostname stay shared, and root inside can climb out through the `/proc/<PID>/root` directory of any host process, for example `/proc/1/root`.\n2. **UTS** — a hostname of its own: `unshare --uts sh`, then `hostname box`. The host’s name does not change.\n3. **PID and mount** — a PID 1 of its own: `unshare --pid --fork --mount sh` and `mount -t proc proc /proc`. Now `ps` sees only its own. unshare itself does not enter the new namespace, hence `--fork`.\n4. **cgroup** — limits: `mkdir /sys/fs/cgroup/box`, `echo 16M > memory.max`, `echo 20 > pids.max` and the process’s PID into `cgroup.procs`. Without that last write the limit applies to nobody.\n5. **overlay and pivot_root** — a root from two prepared lower directories and an empty upper one; then `pivot_root`, and the old root is unmounted: there is nowhere to climb out to.\n6. **capabilities** — a reduced root: without `cap_sys_admin` you cannot mount.\n7. **crun** — the same container from `config.json`.\n\nThe network — a veth pair between the host and a new net namespace — you built in the networks block; it is the same here, so that step is optional.',
       ),
     },
     {
@@ -123,7 +123,7 @@ export const byHandLesson: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: byHandSetup,
-      intro: bi('Вы работаете как root на машине, ядро которой умеет пространства имён, cgroup v2 и OverlayFS. В каталоге `/c/rootfs` лежит маленький корень на основе busybox, а в `/c/l1` и `/c/l2` — два нижних каталога для overlay.', 'You are root on a machine whose kernel does namespaces, cgroup v2 and OverlayFS. `/c/rootfs` holds a small busybox root, `/c/l1` and `/c/l2` two lower directories for overlay.'),
+      intro: bi('Вы работаете как root на машине, ядро которой умеет пространства имён, cgroup v2 и OverlayFS. В каталоге `/c/rootfs` лежит маленький корень на основе busybox, а в `/c/l1` и `/c/l2` — два нижних каталога для overlay. Машина учебная, поэтому сломать её нельзя. Если что-то пошло не так, кнопка «Сбросить экран» вернёт её в исходное состояние. Каждое задание, где сказано «оставайтесь внутри», вы заканчиваете внутри новой оболочки, а следующее начинаете с команды `exit`, которая возвращает вас на хост.', 'You are root on a machine whose kernel does namespaces, cgroup v2 and OverlayFS. `/c/rootfs` holds a small busybox root, `/c/l1` and `/c/l2` two lower directories for overlay. The machine is a training one, so it cannot be broken. If something goes wrong, the “Reset this screen” button brings it back to where it started. Every task that says “stay inside” ends inside a new shell, and the next one starts with `exit`, which takes you back to the host.'),
       tasks: [
         {
           id: 'chroot',
@@ -174,10 +174,10 @@ export const byHandLesson: Lesson = {
         {
           id: 'caps',
           prompt: bi('Убедитесь, что root без привилегии `cap_sys_admin` не может монтировать: запустите через capsh оболочку без этой привилегии и попробуйте выполнить `mount -t tmpfs t /mnt`.', 'Check that root without `cap_sys_admin` cannot mount: start a shell through capsh without that capability and try `mount -t tmpfs t /mnt`.'),
-          check: { stdout: /Operation not permitted|permission denied/i },
+          check: { stdout: /Operation not permitted|permission denied|only root can do that/i },
           chips: "capsh --drop=cap_sys_admin -- -c 'mount -t tmpfs t /mnt'",
           docRef: { page: 'man/capsh.1', anchor: 'OPTIONS', line: '--drop' },
-          hints: { H1: bi('capsh убирает привилегию из ограничивающего набора, и после exec её нет даже у root.', 'capsh removes a capability from the bounding set, and after exec even root lacks it.') },
+          hints: { H1: bi('Программа capsh отнимает привилегию у оболочки, которую запускает, и вернуть эту привилегию оболочка уже не сможет, даже если работает от root. Привилегию называет флаг `--drop`, а команду для оболочки пишут после `--`.', 'capsh removes a capability from the bounding set, and after exec even root lacks it.'), H2: bi("Выполните `capsh --drop=cap_sys_admin -- -c 'mount -t tmpfs t /mnt'`. Сообщение об ошибке в ответ и есть нужный результат.", "Run `capsh --drop=cap_sys_admin -- -c 'mount -t tmpfs t /mnt'`. The error message it prints is the result you need.") },
         },
         {
           id: 'crun',
@@ -185,7 +185,7 @@ export const byHandLesson: Lesson = {
           check: { when: "files['/c/bundle/config.json'].type=f && files['/c/bundle/rootfs/bin/busybox'].type=f" },
           chips: 'cd /c/bundle && cp -r /c/rootfs rootfs && crun spec && crun run mybox',
           concepts: ['docker.bundle', 'docker.runtime'],
-          hints: { H1: bi('Бандл состоит из каталога rootfs и файла config.json, которые лежат рядом.', 'A bundle is rootfs and config.json side by side.') },
+          hints: { H1: bi('Бандл состоит из каталога rootfs и файла config.json, которые лежат рядом.', 'A bundle is rootfs and config.json side by side.'), H2: bi('Перейдите в каталог командой `cd /c/bundle`, затем выполните `cp -r /c/rootfs rootfs`, `crun spec` и `crun run mybox`.', 'Go to the directory with `cd /c/bundle`, then run `cp -r /c/rootfs rootfs`, `crun spec` and `crun run mybox`.') },
         },
       ],
     },
@@ -194,7 +194,7 @@ export const byHandLesson: Lesson = {
       kind: 'text',
       step: 'explain',
       title: bi('Что сделал crun', 'What crun did'),
-      body: bi('Сравните поля `config.json` с тем, что вы делали руками. Поле `linux.namespaces` соответствует шагам 2 и 3 и сети, `linux.resources` — шагу 4, `root.path` и `mounts` — шагу 5, `process.capabilities` и `process.user` — шагу 6. Рантайм создаёт новые пространства имён pid, network, ipc, uts, mount и cgroup, а пространства user и time оставляет общими с хостом. Ваш `mybox.sh` делает в упрощённом виде то, что рантайм делает полностью, а рантайм — то, что для Docker делают containerd и runc.', 'Compare the `config.json` fields with what you did by hand: `linux.namespaces` — steps 2, 3 and the network; `linux.resources` — step 4; `root.path` and `mounts` — step 5; `process.capabilities` and `process.user` — step 6. The namespaces: pid, network, ipc, uts, mount, cgroup — new; user and time — shared with the host. Your `mybox.sh` is what a runtime does properly, and the runtime is what containerd and runc do for Docker.'),
+      body: bi('Сравните поля `config.json` с тем, что вы делали руками. Поле `linux.namespaces` соответствует шагам 2 и 3 и сети, `linux.resources` — шагу 4, `root.path` и `mounts` — шагу 5, `process.capabilities` и `process.user` — шагу 6. Рантайм создаёт новые пространства имён pid, network, ipc, uts, mount и cgroup, а пространства user и time оставляет общими с хостом. Ваши команды делали в упрощённом виде то, что рантайм делает полностью, а рантайм — то, что для Docker делают containerd и runc.', 'Compare the `config.json` fields with what you did by hand: `linux.namespaces` — steps 2, 3 and the network; `linux.resources` — step 4; `root.path` and `mounts` — step 5; `process.capabilities` and `process.user` — step 6. The namespaces: pid, network, ipc, uts, mount, cgroup — new; user and time — shared with the host. Your commands did in a simplified way what a runtime does properly, and the runtime is what containerd and runc do for Docker.'),
     },
     {
       id: 'seccomp',
@@ -222,8 +222,8 @@ export const byHandLesson: Lesson = {
       kind: 'callout',
       tone: 'why',
       step: 'review',
-      title: bi('Итог главы', 'Summary'),
-      body: bi('Команда chroot меняет только корень файловой системы. Пространства имён дают контейнеру своё имя машины, свой PID 1 и своё дерево монтирований, cgroup ограничивает ресурсы, overlay вместе с pivot_root дают корень, из которого не выбраться, а capabilities урезают права root. Docker делает всё то же самое, только за вас.', 'chroot changes only the root; namespaces give a name, a PID 1 and a mount tree of their own; a cgroup limits; overlay and pivot_root give a root you cannot climb out of; capabilities cut down root. Docker does the same — only for you.'),
+      title: bi('Итог урока', 'Summary'),
+      body: bi('Команда chroot меняет только корень файловой системы. Пространства имён дают контейнеру своё имя машины, свой PID 1 и своё дерево монтирований, cgroup ограничивает ресурсы, overlay вместе с pivot_root дают корень, из которого не выбраться, а привилегии ядра урезают права root. Docker делает всё то же самое, только за вас.', 'chroot changes only the root; namespaces give a name, a PID 1 and a mount tree of their own; a cgroup limits; overlay and pivot_root give a root you cannot climb out of; capabilities cut down root. Docker does the same — only for you.'),
     },
   ],
 };
