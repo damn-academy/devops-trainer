@@ -1,28 +1,33 @@
-// The on-call shift (10 §6.4), simulator version: 60 minutes on a hard
-// timer, three incidents that overlap, a board "New → Investigating →
-// Mitigated → Closed" with WIP 1 in Investigating. Graded: the incident with
-// the biggest user impact is taken first; a later alert is announced in the
-// chat, not silently dropped; each drill passes its rubric (fixed, no
-// destructive action before evidence); the low-impact incident is resolved
-// without hiding it; a blameless four-line review is written. The result is
-// logged as the `final.oncall` exam. The mentor is off throughout.
+// The on-call shift (10 §6.4), training version on a board: three incidents
+// that overlap, a board "New → Investigating → Mitigated → Closed" with at
+// most one card in Investigating. There is no countdown here: the timed
+// shift is the `final.exam.oncall` exam on the block page. The shift is
+// saved after every action, so a reload offers to continue it. Graded: the
+// incident with the biggest user impact is taken first; a later alert is
+// announced in the chat, not silently dropped; each drill passes its rubric
+// (fixed, no destructive action before evidence); the low-impact incident is
+// resolved without hiding it; a blameless four-line review is written. The
+// result is logged as a training run of `final.oncall`.
 
 import { clear, h, icon, put } from '../../../core/dom';
 import { bi, fmt, t, type Bi } from '../../../core/i18n';
 import { store } from '../../../core/store';
 import type { Mounted, WidgetReg } from '../../../core/types';
 import { meanScore, statusParts } from '../../../engine/quiz/rubric';
-import { prose } from './ui';
+import { load, prose, save } from './ui';
 import { DRILL_504, DRILL_DISK } from '../data/drills';
-import { mountDrill, type DrillResult } from './drill';
+import { mountDrill, type DrillAction, type DrillResult } from './drill';
 
 export const ONCALL_EXAM_ID = 'final.oncall';
+/** The length of the graded shift on the block page; the training board has no timer. */
 export const SHIFT_MINUTES = 60;
+const SAVE_KEY = 'oncall.shift';
 
 type Col = 'new' | 'doing' | 'mitigated' | 'closed';
+type CardId = 'checkout' | 'ci' | 'disk';
 
 interface Card {
-  id: 'checkout' | 'ci' | 'disk';
+  id: CardId;
   title: Bi;
   impact: Bi;
   at: string;
@@ -30,13 +35,37 @@ interface Card {
   deferNote?: string;
 }
 
+interface ShiftResult {
+  priority?: boolean;
+  announce?: boolean;
+  checkout?: DrillResult;
+  disk?: DrillResult;
+  ci?: boolean;
+  review?: boolean;
+}
+
+/** Everything needed to continue an interrupted shift. */
+interface SavedShift {
+  elapsed: number;
+  cards: { id: CardId; col: Col; deferNote?: string }[];
+  res: ShiftResult;
+  alerted: boolean;
+  alertOpen: boolean;
+  drills: Partial<Record<'checkout' | 'disk', { variant: string; actions: DrillAction[] }>>;
+}
+
 const O = {
   intro: bi(
-    'Смена длится 60 минут по жёсткому таймеру. Инциденты приходят по одному, но не ждут, пока вы закончите с предыдущим. Встроенный наставник выключен, а в ответ на ваши команды и выбор шага доска показывает то, что показал бы настоящий сервер. В конце вы пишете разбор главного инцидента без поиска виноватых.',
-    'The shift lasts 60 minutes on a hard timer. Incidents arrive one by one but do not wait for each other. The built-in mentor is off; commands and step choices show what a real server would show. At the end, a blameless review of the main incident.',
+    'У тренировочной смены нет таймера, и работать можно в своём темпе. Инциденты приходят по одному, но не ждут, пока вы закончите с предыдущим. В ответ на ваши команды и выбор шага доска показывает то, что показал бы настоящий сервер, а сломать здесь что-нибудь настоящее нельзя. Доска сохраняет смену после каждого шага, поэтому её можно прервать и продолжить позже. В конце вы пишете разбор главного инцидента без поиска виноватых.',
+    'The training shift has no time limit, so you can work at your own pace. Incidents arrive one by one but do not wait for each other. In answer to your commands and step choices the board shows what a real server would show, and nothing real can be broken here. The board saves the shift after every step, so you can stop and continue later. At the end you write a blameless review of the main incident.',
   ),
   start: bi('Начать смену', 'Start the shift'),
-  cols: { new: bi('Новое', 'New'), doing: bi('Разбираю', 'Investigating'), mitigated: bi('Смягчено', 'Mitigated'), closed: bi('Закрыто', 'Closed') } as Record<Col, Bi>,
+  resume: bi('Продолжить смену', 'Continue the shift'),
+  restart: bi('Начать заново', 'Start over'),
+  saved: bi('У вас есть незаконченная смена. Её можно продолжить с того места, где вы остановились.', 'You have an unfinished shift. You can continue it from where you stopped.'),
+  elapsed: bi('прошло {m} мин', '{m} min so far'),
+  wipNote: bi('не больше одной карточки', 'one card at most'),
+  cols: { new: bi('Новое', 'New'), doing: bi('Разбираю', 'Investigating'), mitigated: bi('Сервис возвращён', 'Mitigated'), closed: bi('Закрыто', 'Closed') } as Record<Col, Bi>,
   take: bi('Взять в работу', 'Take it'),
   wip: bi('В колонке «Разбираю» уже есть инцидент, а больше одного там держать нельзя.', 'Investigating already holds an incident: the limit is 1.'),
   pickFirst: bi('На доске два инцидента. Какой возьмёте первым?', 'Two incidents are on the board. Which do you take first?'),
@@ -59,7 +88,6 @@ const O = {
   rFactors: bi('Способствующие факторы, то есть условия в системе, по одному на строку', 'Contributing factors, that is, conditions of the system, one per line'),
   rActions: bi('Действия, то есть изменения, которые можно проверить, и у каждого из них есть ответственный и срок', 'Actions, that is, changes that can be checked, each with an owner and a date'),
   finish: bi('Сдать смену', 'Hand over the shift'),
-  timeUp: bi('Время смены вышло.', 'The shift time is up.'),
   passed: bi('Смена сдана', 'Shift passed'),
   failed: bi('Смена пока не сдана', 'Shift not passed yet'),
   lines: {
@@ -82,43 +110,65 @@ export function reviewOk(r: { timeline: string; impact: string; factors: string;
   return /\d{1,2}[:.]\d{2}/.test(r.timeline) && statusParts(r.impact).impact && factors.length >= 2 && !BLAME.test(`${r.factors} ${r.actions}`) && /\d|до |by |owner|владел|ответствен|@/i.test(r.actions);
 }
 
+const CARD_INFO: Record<CardId, { title: Bi; impact: Bi; at: string }> = {
+  ci: { title: O.ciTitle, impact: bi('выкладки стоят, а пользователей это не задевает', 'releases blocked, users unaffected'), at: '14:02' },
+  checkout: { title: bi('HighErrorRate: оформление заказа отвечает ошибкой 504', 'HighErrorRate: checkout returns 504'), impact: bi('около 30 % запросов оплаты заканчиваются ошибкой', 'about 30% of checkout requests fail'), at: '14:10' },
+  disk: { title: bi('DiskWillFillIn4Hours: диск сервера shop заполнится примерно через 4 часа', 'DiskWillFillIn4Hours: the shop server disk fills up in about 4 hours'), impact: bi('пользователей это пока не задевает', 'users are not affected yet'), at: '14:19' },
+};
+
+const makeCard = (id: CardId, col: Col = 'new', deferNote?: string): Card => ({ id, ...CARD_INFO[id], col, deferNote });
+
 export const oncallWidget: WidgetReg = {
   id: 'career.oncall',
   mount(el, _props, ctx): Mounted {
     const root = h('div.cw-oncall');
     const mounts: Mounted[] = [];
     let iv: number | undefined;
+    let onIntro = false;
     const stopAll = () => {
       mounts.splice(0).forEach((m) => m.dispose());
       clearInterval(iv);
     };
 
-    const intro = () => {
+    const intro = (saved?: SavedShift) => {
       stopAll();
+      onIntro = true;
       clear(root);
-      put(root, prose(O.intro), h('button.btn.primary', { type: 'button', onclick: () => run() }, icon('play'), t(O.start)));
+      if (saved)
+        put(
+          root,
+          prose(O.intro),
+          h('p.small', {}, t(O.saved)),
+          h('div.row', {}, h('button.btn.primary', { type: 'button', onclick: () => run(saved) }, icon('play'), t(O.resume)), h('button.btn.ghost', { type: 'button', onclick: () => run() }, icon('repeat'), t(O.restart))),
+        );
+      else put(root, prose(O.intro), h('button.btn.primary', { type: 'button', onclick: () => run() }, icon('play'), t(O.start)));
     };
 
-    const run = () => {
-      const started = Date.now();
-      const cards: Card[] = [
-        { id: 'ci', title: O.ciTitle, impact: bi('выкладки стоят, а пользователей это не задевает', 'releases blocked, users unaffected'), at: '14:02', col: 'new' },
-        { id: 'checkout', title: bi('HighErrorRate: оформление заказа отвечает ошибкой 504', 'HighErrorRate: checkout returns 504'), impact: bi('около 30 % запросов оплаты заканчиваются ошибкой', 'about 30% of checkout requests fail'), at: '14:10', col: 'new' },
-      ];
-      const res: { priority?: boolean; announce?: boolean; checkout?: DrillResult; disk?: DrillResult; ci?: boolean; review?: boolean } = {};
-      let alerted = false;
+    const run = (saved?: SavedShift) => {
+      onIntro = false;
+      stopAll();
+      const sessionStart = Date.now();
+      const elapsedBefore = saved?.elapsed ?? 0;
+      const elapsed = () => elapsedBefore + (Date.now() - sessionStart);
+      const cards: Card[] = saved ? saved.cards.map((c) => makeCard(c.id, c.col, c.deferNote)) : [makeCard('ci'), makeCard('checkout')];
+      const res: ShiftResult = saved ? { ...saved.res } : {};
+      const drills: SavedShift['drills'] = saved ? { ...saved.drills } : {};
+      let alerted = saved?.alerted ?? false;
+      let alertOpen = saved?.alertOpen ?? false;
       let ended = false;
-      const timer = h('span.exam-timer');
+      const persist = () => {
+        if (ended) return;
+        const snap: SavedShift = { elapsed: elapsed(), cards: cards.map((c) => ({ id: c.id, col: c.col, deferNote: c.deferNote })), res, alerted, alertOpen, drills };
+        save(SAVE_KEY, snap);
+      };
+      const clock = h('span.small.muted');
+      const tick = () => {
+        clock.textContent = t(fmt(O.elapsed, { m: Math.floor(elapsed() / 60000) }));
+      };
+      iv = window.setInterval(tick, 15000);
+      tick();
       const board = h('div.cw-board');
       const work = h('div.cw-work');
-      const tick = () => {
-        const left = Math.max(0, SHIFT_MINUTES * 60 - (Date.now() - started) / 1000);
-        timer.textContent = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`;
-        timer.classList.toggle('over', left <= 600);
-        if (left <= 0 && !ended) finish(true);
-      };
-      iv = window.setInterval(tick, 1000);
-      tick();
 
       const drawBoard = () => {
         clear(board);
@@ -128,7 +178,7 @@ export const oncallWidget: WidgetReg = {
             h(
               'section.cw-col',
               { 'data-col': col },
-              h('h4', {}, t(O.cols[col]), col === 'doing' ? h('span.muted.small', {}, ' · WIP 1') : null),
+              h('h4', {}, t(O.cols[col]), col === 'doing' ? h('span.muted.small', {}, ` · ${t(O.wipNote)}`) : null),
               ...cards.filter((c) => c.col === col).map((c) =>
                 h(
                   'article.cw-card',
@@ -136,7 +186,7 @@ export const oncallWidget: WidgetReg = {
                   h('p.small.muted', {}, c.at),
                   h('p', {}, t(c.title)),
                   h('p.small', {}, t(c.impact)),
-                  c.deferNote ? h('p.small.muted', {}, `${t(bi("Чат", "Chat"))}: ${c.deferNote}`) : null,
+                  c.deferNote ? h('p.small.muted', {}, `${t(bi('Чат', 'Chat'))}: ${c.deferNote}`) : null,
                   col === 'new' ? h('button.btn.small', { type: 'button', disabled: doing, title: doing ? t(O.wip) : undefined, onclick: () => take(c) }, t(O.take)) : null,
                 ),
               ),
@@ -145,15 +195,21 @@ export const oncallWidget: WidgetReg = {
         }
       };
 
+      const open = (c: Card) => {
+        clear(work);
+        if (alertOpen) alertArrives(false);
+        if (c.id === 'checkout') runDrill(c, DRILL_504, 'checkout');
+        else if (c.id === 'disk') runDrill(c, DRILL_DISK, 'disk');
+        else runCi(c);
+      };
+
       const take = (c: Card) => {
         if (cards.some((x) => x.col === 'doing')) return;
         if (res.priority === undefined) res.priority = c.id === 'checkout';
         c.col = 'doing';
         drawBoard();
-        clear(work);
-        if (c.id === 'checkout') runDrill(c, DRILL_504, 'checkout');
-        else if (c.id === 'disk') runDrill(c, DRILL_DISK, 'disk');
-        else runCi(c);
+        persist();
+        open(c);
       };
 
       const runDrill = (c: Card, drill: typeof DRILL_504, key: 'checkout' | 'disk') => {
@@ -161,31 +217,47 @@ export const oncallWidget: WidgetReg = {
         work.append(host);
         mounts.push(
           mountDrill(host, drill, {
+            resume: drills[key],
+            onProgress: (variant, actions) => {
+              drills[key] = { variant, actions: [...actions] };
+              persist();
+            },
             onMove: (s) => {
               if (key === 'checkout' && !alerted && s.path.length >= 3) {
                 alerted = true;
-                alertArrives();
+                alertArrives(true);
               }
               if (s.path.some((p) => p.right && p.tags.includes('mitigate')) && c.col === 'doing') {
                 c.col = 'mitigated';
                 drawBoard();
               }
+              persist();
             },
             onDone: (r) => {
               res[key] = r;
+              delete drills[key];
               c.col = 'closed';
               drawBoard();
+              mounts.splice(0).forEach((m) => m.dispose());
               clear(work);
+              if (alertOpen) alertArrives(false);
+              persist();
               if (allClosed()) reviewStep();
             },
           }),
         );
       };
 
-      const alertArrives = () => {
-        const disk: Card = { id: 'disk', title: bi('DiskWillFillIn4Hours на сервере shop', 'DiskWillFillIn4Hours on the shop server'), impact: bi('пользователей это пока не задевает, а запас времени около 4 часов', 'users are not affected yet, and there are about 4 hours to spare'), at: '14:19', col: 'new' };
-        cards.push(disk);
-        drawBoard();
+      const alertArrives = (fresh: boolean) => {
+        let disk = cards.find((x) => x.id === 'disk');
+        if (!disk) {
+          disk = makeCard('disk');
+          cards.push(disk);
+          drawBoard();
+        }
+        alertOpen = true;
+        if (fresh) persist();
+        const card = disk;
         const box = h('div.cw-alert', { role: 'alert' });
         const choose = (id: 'announce' | 'switch' | 'ignore') => {
           clear(box);
@@ -193,28 +265,32 @@ export const oncallWidget: WidgetReg = {
             const ta = h('textarea', { rows: 2, 'aria-label': t(O.note), placeholder: t(O.note) }) as HTMLTextAreaElement;
             const send = h('button.btn.small', { type: 'button' }, t(O.noteSend));
             send.addEventListener('click', () => {
-              disk.deferNote = ta.value.trim();
-              res.announce = disk.deferNote.length >= 10;
+              card.deferNote = ta.value.trim();
+              res.announce = card.deferNote.length >= 10;
+              alertOpen = false;
               box.remove();
               drawBoard();
+              persist();
             });
             put(box, h('p.small', {}, t(O.note)), ta, send);
           } else {
             res.announce = false;
+            alertOpen = false;
             box.remove();
             if (id === 'switch') {
               const cur = cards.find((x) => x.col === 'doing');
               if (cur) cur.col = 'new';
-              stopAll();
-              iv = window.setInterval(tick, 1000);
+              if (cur?.id === 'checkout' || cur?.id === 'disk') delete drills[cur.id];
+              mounts.splice(0).forEach((m) => m.dispose());
               clear(work);
               drawBoard();
             }
+            persist();
           }
         };
         put(
           box,
-          h('p', {}, h('strong', {}, t(O.newAlert)), ' ', t(disk.title)),
+          h('p', {}, h('strong', {}, t(O.newAlert)), ' ', t(card.title)),
           h('div.cw-options', {}, h('button.cw-option', { type: 'button', onclick: () => choose('announce') }, t(O.announce)), h('button.cw-option', { type: 'button', onclick: () => choose('switch') }, t(O.switchNow)), h('button.cw-option', { type: 'button', onclick: () => choose('ignore') }, t(O.ignore))),
         );
         work.prepend(box);
@@ -231,11 +307,13 @@ export const oncallWidget: WidgetReg = {
             if (o.ok) {
               c.col = 'closed';
               drawBoard();
+              persist();
               setTimeout(() => {
                 clear(work);
+                if (alertOpen) alertArrives(false);
                 if (allClosed()) reviewStep();
               }, 1200);
-            }
+            } else persist();
           },
         }, prose(o.text, 'prose cw-opt-text'))));
         put(work, h('h3', {}, t(O.ciTitle)), prose(O.ciPrompt), opts, out);
@@ -256,16 +334,18 @@ export const oncallWidget: WidgetReg = {
         const btn = h('button.btn.primary', { type: 'button' }, t(O.finish));
         btn.addEventListener('click', () => {
           res.review = reviewOk({ timeline: tl.ta.value, impact: im.ta.value, factors: fa.ta.value, actions: ac.ta.value });
-          finish(false);
+          finish();
         });
         put(work, h('h3', {}, t(O.review)), tl.row, im.row, fa.row, ac.row, h('div.row', {}, btn));
       };
 
-      const finish = (timeUp: boolean) => {
+      const finish = () => {
+        const minutes = Math.max(1, Math.round(elapsed() / 60000));
         ended = true;
         stopAll();
-        const drills = [res.checkout, res.disk].filter(Boolean) as DrillResult[];
-        const rubricOk = drills.length === 2 && meanScore(drills.flatMap((d) => d.scores)) >= 2 && drills.every((d) => !d.safetyZero);
+        save(SAVE_KEY, null);
+        const done = [res.checkout, res.disk].filter(Boolean) as DrillResult[];
+        const rubricOk = done.length === 2 && meanScore(done.flatMap((d) => d.scores)) >= 2 && done.every((d) => !d.safetyZero);
         const lines: [Bi, boolean][] = [
           [O.lines.priority, !!res.priority],
           [O.lines.announce, !!res.announce],
@@ -278,27 +358,34 @@ export const oncallWidget: WidgetReg = {
         const critical = !!res.checkout?.fixed && !!res.disk?.fixed && rubricOk;
         const score = lines.filter(([, ok]) => ok).length / lines.length;
         const passed = critical && score >= 0.7;
-        store.record({ kind: 'exam.result', exam: ONCALL_EXAM_ID, mode: 'exam', score, passed });
+        store.record({ kind: 'exam.result', exam: ONCALL_EXAM_ID, mode: 'training', score, passed });
         clear(root);
         put(
           root,
-          timeUp ? h('p.cw-mark.warn', {}, t(O.timeUp)) : null,
           h('h3', {}, t(passed ? O.passed : O.failed), ' · ', `${Math.round(score * 100)}%`),
           h('ul.placement-results', {}, ...lines.map(([b, ok]) => h('li', { class: ok ? 'ok' : 'err' }, h('span.st-icon', { 'aria-hidden': 'true' }, ok ? '✓' : '⨯'), t(b)))),
-          h('p.small.muted', {}, t(fmt(bi('Время смены: {m} мин из {n}.', 'Shift time: {m} of {n} min.'), { m: Math.max(1, Math.round((Date.now() - started) / 60000)), n: SHIFT_MINUTES }))),
-          h('button.btn.ghost', { type: 'button', onclick: intro }, icon('repeat'), t(O.again)),
+          h('p.small.muted', {}, t(fmt(bi('Смена заняла {m} мин. На зачётной смене в экзамене блока на всё даётся {n} мин.', 'The shift took {m} min. The graded shift in the block exam gives {n} min for everything.'), { m: minutes, n: SHIFT_MINUTES }))),
+          h('button.btn.ghost', { type: 'button', onclick: () => intro() }, icon('repeat'), t(O.again)),
         );
         ctx.complete();
       };
 
       clear(root);
-      put(root, h('header.exam-head', {}, h('h3', {}, t(bi('Смена дежурного', 'On-call shift'))), timer), board, h('p.small', {}, t(O.pickFirst)), work);
+      put(root, h('header.exam-head', {}, h('h3', {}, t(bi('Смена дежурного', 'On-call shift'))), clock), board, h('p.small', {}, t(O.pickFirst)), work);
       drawBoard();
+      const active = cards.find((c) => c.col === 'doing');
+      if (active) open(active);
+      else if (alertOpen) alertArrives(false);
+      else if (allClosed()) reviewStep();
+      persist();
     };
 
     clear(el);
     el.append(root);
     intro();
+    void load<SavedShift | null>(SAVE_KEY).then((saved) => {
+      if (saved && onIntro && Array.isArray(saved.cards)) intro(saved);
+    });
     return { dispose: () => (stopAll(), clear(el)), describe: () => t(bi('Смена дежурного', 'On-call shift')) };
   },
 };

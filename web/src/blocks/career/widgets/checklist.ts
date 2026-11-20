@@ -10,7 +10,8 @@ import { ROUTE } from '../../../core/route';
 import { href } from '../../../core/router';
 import { store } from '../../../core/store';
 import type { Level, Mounted, WidgetReg } from '../../../core/types';
-import { UI } from '../../../core/i18n';
+import { UI, lang } from '../../../core/i18n';
+import { renderInline } from '../../../core/markdown';
 import { CAPSTONE } from '../data/capstone';
 import { PET_PATHS, PETS, README_TEMPLATE } from '../data/pets';
 import { blockState } from './vacancy';
@@ -29,6 +30,12 @@ const C = {
   check: bi('Как проверяется', 'How it is checked'),
   ready: bi('готов', 'ready'),
 };
+
+/** The number shown for a capstone item inside its part: A4b → 4б, D1 → 1. Ids stay as they are, because the ticks are saved by id. */
+function itemNumber(id: string): string {
+  const n = id.replace(/^[A-Z]/, '');
+  return lang() === 'ru' ? n.replace('b', 'б') : n;
+}
 
 function careerLevel(): Level {
   return store.state.levels.career ?? store.state.levels.final ?? 'beginner';
@@ -112,7 +119,7 @@ export const checklistWidget: WidgetReg = {
             'section.cw-part',
             {},
             h('h4', {}, t(part.title), all ? h('span.cw-mark.ok', {}, ` ✓ ${t(C.ready)}`) : null),
-            h('ul.cw-acc', {}, ...items.map((x) => h('li', {}, h('label', {}, box(x.id), ' ', h('strong', {}, `${x.id}. `), t(x.text)), h('span.small.muted', {}, ` — ${t(C.check)}: ${t(x.check)}`)))),
+            h('ul.cw-acc', {}, ...items.map((x) => h('li', {}, h('label', {}, box(x.id), ' ', h('strong', {}, `${itemNumber(x.id)}. `), ...renderInline(t(x.text))), h('span.small.muted', {}, ` — ${t(C.check)}: `, ...renderInline(t(x.check)))))),
           ),
         );
       }

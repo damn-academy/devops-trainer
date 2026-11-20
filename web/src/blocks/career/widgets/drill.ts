@@ -11,7 +11,7 @@ import { meanScore, DRILL_RUBRIC, type CriterionScore } from '../../../engine/qu
 import { shuffle } from '../../../engine/quiz/render';
 import { prose } from './ui';
 import { drillById } from '../data/drills';
-import { finishStatus, matchCommand, move, pickVariant, scoreDrill, startDrill, type Drill, type DrillState } from '../drill-engine';
+import { finishStatus, matchAhead, matchCommand, move, pickVariant, scoreDrill, skipStep, startDrill, type Drill, type DrillState } from '../drill-engine';
 import { eventsOf, qtextBlock, scoreDots } from './ui';
 
 export interface DrillResult {
@@ -29,6 +29,10 @@ const D = {
   noMatch: bi('На этом шаге такая команда ничего полезного не покажет. Выберите один из вариантов или попробуйте другую команду.', 'At this step that command shows nothing useful. Pick a step or try another command.'),
   status: bi('Последний шаг — написать статус в чат команды: кого задел сбой и насколько, что сделано и когда будет следующее сообщение или что инцидент закрыт.', 'The last step is a status to the team chat: the impact, what was done, when the next message comes or that the incident is closed.'),
   send: bi('Отправить статус и завершить', 'Send the status and finish'),
+  statusEmpty: bi('Напишите статус хотя бы одной фразой: по нему ставится балл за общение с командой.', 'Write the status in at least one sentence: the score for communication with the team is based on it.'),
+  back: bi('Вернуться к доске', 'Back to the board'),
+  skipped: bi('Уточнять у коллег вы не стали и сразу проверили сами. Так тоже можно, но вопрос «что менялось» часто сразу называет подозреваемых, поэтому в разборе за метод будет на балл меньше.', 'You did not ask the team and went straight to checking yourself. That works too, but the question “what changed” often names the suspects at once, so the method score in the review is one point lower.'),
+  sameAs: bi('Доска выполнила для этого шага свои команды, которые проверяют то же, что ваша, и ниже показан их вывод.', 'For this step the board ran its own commands, which check the same as yours, and their output is below.'),
   cause: bi('Скрытая причина была', 'The hidden cause was'),
   again: bi('Ещё раз, с другой причиной', 'Again, with another cause'),
   path: bi('Ваш путь', 'Your path'),
@@ -51,11 +55,18 @@ const MARK: Record<string, { icon: string; cls: string; label: typeof D.evidence
   contradicts: { icon: '·', cls: 'muted', label: D.detour },
 };
 
+/** One learner action, enough to replay a drill after a page reload. */
+export type DrillAction = { kind: 'take'; id: string; via: 'choice' | 'command'; line?: string } | { kind: 'skip' };
+
 export interface DrillOptions {
   /** Hide the "again" button and report the result (the on-call shift). */
   onDone?(r: DrillResult): void;
   /** Called after every move (the shift uses it to bring the next incident). */
   onMove?(s: DrillState): void;
+  /** Called after every action with everything needed to replay the drill. */
+  onProgress?(variant: string, actions: DrillAction[]): void;
+  /** Continue a drill that was interrupted: the same variant and the same actions. */
+  resume?: { variant: string; actions: DrillAction[] };
   previousVariant?: string;
 }
 
@@ -64,11 +75,24 @@ export function mountDrill(root: HTMLElement, drill: Drill, o: DrillOptions = {}
   const log = h('ol.cw-log', { 'aria-live': 'polite' });
   const stage = h('div.cw-stage');
   let disposed = false;
+  let actions: DrillAction[] = [];
+  let replaying = false;
+  const progress = (a: DrillAction) => {
+    actions.push(a);
+    if (!replaying) o.onProgress?.(state.variant, actions);
+  };
 
   const begin = (prev?: string) => {
     state = startDrill(drill, pickVariant(drill, prev));
+    actions = [];
     clear(log);
     draw();
+  };
+
+  const skip = () => {
+    state = skipStep(state);
+    log.append(h('li.cw-entry.right', {}, prose(D.skipped, 'prose cw-why')));
+    progress({ kind: 'skip' });
   };
 
   const draw = () => {
@@ -83,11 +107,13 @@ export function mountDrill(root: HTMLElement, drill: Drill, o: DrillOptions = {}
       const line = input.value.trim();
       if (!line) return;
       const opt = matchCommand(step, line);
-      if (!opt) {
-        hint.textContent = t(D.noMatch);
-        return;
+      if (opt) return take(opt.id, 'command', line);
+      const ahead = matchAhead(drill, state, line);
+      if (ahead) {
+        skip();
+        return take(ahead.id, 'command', line);
       }
-      take(opt.id, 'command', line);
+      hint.textContent = t(D.noMatch);
     });
     put(
       stage,
@@ -109,10 +135,12 @@ export function mountDrill(root: HTMLElement, drill: Drill, o: DrillOptions = {}
         'li.cw-entry',
         { class: r.right ? 'right' : 'wrong' },
         h('p.cw-move', {}, via === 'command' ? h('code', {}, `$ ${line}`) : h('span', {}, t(r.option.text).replace(/`/g, '')), shown ? h('span.cw-mark', { class: shown.cls }, ` ${shown.icon} ${t(shown.label)}`) : !r.right ? h('span.cw-mark.warn', {}, ` · ${t(D.wrong)}`) : null),
+        via === 'command' && typeof r.output === 'string' && r.output.startsWith('$ ') ? h('p.small.muted', {}, t(D.sameAs)) : null,
         r.output ? qtextBlock(r.output) : null,
         prose(r.why, 'prose cw-why'),
       ),
     );
+    progress({ kind: 'take', id: optionId, via, line });
     o.onMove?.(state);
     draw();
     log.lastElementChild?.scrollIntoView?.({ block: 'nearest' });
@@ -120,9 +148,15 @@ export function mountDrill(root: HTMLElement, drill: Drill, o: DrillOptions = {}
 
   const statusStep = () => {
     const ta = h('textarea.cw-status', { rows: 3, placeholder: t(D.placeholder), 'aria-label': t(D.status) }) as HTMLTextAreaElement;
-    const btn = h('button.btn.primary', { type: 'button' }, t(D.send));
+    const btn = h('button.btn.primary', { type: 'button', disabled: true }, t(D.send)) as HTMLButtonElement;
+    const note = h('p.small.muted', {}, t(D.statusEmpty));
+    ta.addEventListener('input', () => {
+      const ok = ta.value.trim().length >= 10;
+      btn.disabled = !ok;
+      note.hidden = ok;
+    });
     btn.addEventListener('click', () => finish(ta.value));
-    put(stage, h('p.cw-step', {}, t(D.status)), ta, h('div.row', {}, btn));
+    put(stage, h('p.cw-step', {}, t(D.status)), ta, note, h('div.row', {}, btn));
     ta.focus({ preventScroll: true });
   };
 
@@ -151,14 +185,26 @@ export function mountDrill(root: HTMLElement, drill: Drill, o: DrillOptions = {}
         ),
       ),
       h('p', {}, `${t(D.mean)}: ${mean.toFixed(1)} / 3`),
-      o.onDone ? null : h('button.btn.ghost', { type: 'button', onclick: () => begin(state.variant) }, icon('repeat'), t(D.again)),
+      o.onDone ? h('button.btn.primary', { type: 'button', onclick: () => o.onDone!(result) }, t(D.back)) : h('button.btn.ghost', { type: 'button', onclick: () => begin(state.variant) }, icon('repeat'), t(D.again)),
     );
-    o.onDone?.(result);
   };
 
   clear(root);
   root.append(h('div.cw-drill', {}, h('header.cw-head', {}, h('h3', {}, t(drill.title)), prose(drill.symptom)), h('h4.cw-path-h', {}, t(D.path)), log, stage));
-  begin(o.previousVariant);
+  if (o.resume && drill.variants.some((v) => v.id === o.resume!.variant)) {
+    state = startDrill(drill, o.resume.variant);
+    replaying = true;
+    try {
+      for (const a of o.resume.actions) {
+        if (a.kind === 'skip') skip();
+        else take(a.id, a.via, a.line);
+      }
+    } catch {
+      begin(o.previousVariant);
+    }
+    replaying = false;
+    draw();
+  } else begin(o.previousVariant);
   return {
     dispose: () => {
       disposed = true;

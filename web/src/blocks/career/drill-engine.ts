@@ -24,6 +24,8 @@ export interface DrillOption {
   why: Bi | Record<string, Bi>;
   /** Regular expressions: a typed command that matches picks this move. */
   cmd?: string[];
+  /** Outputs that follow the learner's own flags: the first case-sensitive match on the typed line replaces `out`. */
+  outCmd?: { re: string; out: QText | Record<string, QText> }[];
 }
 
 export interface DrillStep {
@@ -73,9 +75,15 @@ function isBi(x: unknown): x is Bi {
   return typeof x === 'object' && x !== null && 'ru' in x && 'en' in x;
 }
 
-export function outputFor(o: DrillOption, variant: string): QText | undefined {
-  if (o.out === undefined || typeof o.out === 'string' || isBi(o.out)) return o.out as QText | undefined;
-  return (o.out as Record<string, QText>)[variant] ?? (o.out as Record<string, QText>).default;
+function pickOut(out: QText | Record<string, QText> | undefined, variant: string): QText | undefined {
+  if (out === undefined || typeof out === 'string' || isBi(out)) return out as QText | undefined;
+  return (out as Record<string, QText>)[variant] ?? (out as Record<string, QText>).default;
+}
+
+/** What the sandbox shows for a move; a typed line picks the output that matches its flags. */
+export function outputFor(o: DrillOption, variant: string, line?: string): QText | undefined {
+  const own = line ? o.outCmd?.find((c) => new RegExp(c.re).test(line)) : undefined;
+  return pickOut(own ? own.out : o.out, variant);
 }
 
 export function whyFor(o: DrillOption, variant: string): Bi {
@@ -84,11 +92,38 @@ export function whyFor(o: DrillOption, variant: string): Bi {
   return per[variant] ?? per.default ?? Object.values(per)[0];
 }
 
+/** A typed line without the `sudo` in front: the sandbox runs everything with enough rights anyway. */
+export function bareCommand(line: string): string {
+  return line.trim().replace(/^(?:sudo(?:\s+-\S+)*\s+)+/, '');
+}
+
 /** The move a typed command stands for at this step, if any. */
 export function matchCommand(step: DrillStep, line: string): DrillOption | undefined {
-  const l = line.trim();
+  const l = bareCommand(line);
   if (!l) return undefined;
   return step.options.find((o) => o.cmd?.some((re) => new RegExp(re, 'i').test(l)));
+}
+
+/**
+ * A command typed at a clarifying step that already belongs to the next
+ * step ("df -h" before asking which partition fills up): the learner chose
+ * to look for themselves instead of asking. The clarifying step is passed
+ * over and the command is taken at the next step; the method score then
+ * shows that nobody was asked.
+ */
+export function matchAhead(d: Drill, s: DrillState, line: string): DrillOption | undefined {
+  const step = d.steps[s.step];
+  const next = d.steps[s.step + 1];
+  if (!step || !next) return undefined;
+  const clarifying = step.options.some((o) => isRight(o, s.variant) && o.tags.includes('clarify'));
+  if (!clarifying) return undefined;
+  const o = matchCommand(next, line);
+  return o && isRight(o, s.variant) ? o : undefined;
+}
+
+/** Pass over the clarifying step (see matchAhead). */
+export function skipStep(s: DrillState): DrillState {
+  return { ...s, step: s.step + 1 };
 }
 
 export interface MoveResult {
@@ -108,7 +143,7 @@ export function move(d: Drill, s: DrillState, optionId: string, via: 'choice' | 
   const entry: PathEntry = { step: step.id, option: option.id, right, tags: option.tags, via, line };
   const next = right ? s.step + 1 : s.step;
   const state: DrillState = { ...s, step: next, path: [...s.path, entry], done: next >= d.steps.length };
-  return { state, option, right, output: outputFor(option, s.variant), why: whyFor(option, s.variant) };
+  return { state, option, right, output: outputFor(option, s.variant, line), why: whyFor(option, s.variant) };
 }
 
 export function finishStatus(s: DrillState, text: string): DrillState {

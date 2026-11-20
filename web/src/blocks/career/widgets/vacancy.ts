@@ -16,12 +16,15 @@ const V = {
   paste: bi('Вставьте текст вакансии целиком, с заголовками разделов', 'Paste the whole vacancy text, with its section headings'),
   run: bi('Разобрать', 'Analyze'),
   req: bi('Требование', 'Requirement'),
-  kind: bi('Вес', 'Weight'),
   state: bi('Ваше состояние', 'Your state'),
   credit: bi('Засчитано', 'Credited'),
-  must: bi('обяз.', 'must'),
-  nice: bi('жел.', 'nice'),
-  total: bi('Итого {t}% (обязательные {r}%)', 'Total {t}% (required {r}%)'),
+  groupMust: bi('Требования', 'Requirements'),
+  groupNice: bi('Будет плюсом', 'Nice to have'),
+  total: bi('Итого {t}\u00a0%, по обязательным требованиям {r}\u00a0%', 'Total {t}%, required items {r}%'),
+  totalOnly: bi('Итого {t}\u00a0%', 'Total {t}%'),
+  noSplit: bi('В тексте вакансии не нашлось заголовков «Требования» и «Будет плюсом», поэтому все требования считаются одинаково важными.', 'The vacancy text has no “Requirements” and “Nice to have” headings, so every requirement counts as equally important.'),
+  knowIt: bi('умею', 'I know it'),
+  knowHint: bi('Флажок «умею» стоит рядом с требованиями, которых нет в курсе. Ставьте его, только если вы делали это на прежней работе или в своих проектах и можете подтвердить на собеседовании.', 'The “I know it” box sits next to requirements the course does not cover. Tick it only if you did this at an earlier job or in your own projects and can back it up at an interview.'),
   apply: bi('Откликайтесь, потому что совпадение выше 60 %, а требования в вакансиях завышают намеренно.', 'Apply, because the match is above 60%, and vacancy requirements are inflated on purpose.'),
   almost: bi('Вы почти готовы. Пройдите ещё два-три блока, и можно откликаться, хотя откликнуться можно и сейчас, ведь отказ тоже учит.', 'You are almost ready. Do two or three more blocks and you can apply, although you may apply now too, because a rejection also teaches.'),
   notYet: bi('Откликаться пока рано, но никто не запрещает. Больше всего вам дадут вот эти блоки:', 'Early for now, but nothing forbids it. This gives the most:'),
@@ -34,6 +37,7 @@ const V = {
     started: bi('начато', 'started'),
     none: bi('не начато', 'not started'),
     outside: bi('вне курса', 'outside the course'),
+    known: bi('вне курса, отмечено вами', 'outside the course, marked by you'),
   },
   yes: bi('да', 'yes'),
   half: bi('половина', 'half'),
@@ -60,6 +64,11 @@ export const vacancyWidget: WidgetReg = {
       if (v && !ta.value) ta.value = v;
     });
     const out = h('div.cw-vresult', { 'aria-live': 'polite' });
+    let known = new Set<string>();
+    void load<string[]>('vacancy.known').then((v) => {
+      if (v?.length) known = new Set(v);
+    });
+    let lastReqs: ReturnType<typeof extractRequirements> = [];
     const runBtn = h('button.btn.primary', { type: 'button' }, t(V.run));
     const pct = (x: number) => Math.round(x * 100);
     const render = (a: Analysis) => {
@@ -78,18 +87,51 @@ export const vacancyWidget: WidgetReg = {
         h(
           'table.cw-table',
           {},
-          h('thead', {}, h('tr', {}, h('th', {}, t(V.req)), h('th', {}, t(V.kind)), h('th', {}, t(V.state)), h('th', {}, t(V.credit)))),
-          h('tbody', {}, ...a.rows.map((r) => h('tr', { class: r.credit === 1 ? 'ok' : r.credit === 0.5 ? '' : 'warn' }, h('td', {}, r.req.term.label), h('td.small', {}, t(r.req.required ? V.must : V.nice)), h('td.small', {}, t(V.st[r.status])), h('td', {}, t(r.credit === 1 ? V.yes : r.credit === 0.5 ? V.half : V.no))))),
+          h('thead', {}, h('tr', {}, h('th', {}, t(V.req)), h('th', {}, t(V.state)), h('th', {}, t(V.credit)))),
+          ...groups(a).map(([title, rows]) =>
+            h(
+              'tbody',
+              {},
+              a.hasRequired ? h('tr', {}, h('th', { colspan: 3, scope: 'rowgroup' }, t(title))) : null,
+              ...rows.map((r) =>
+                h(
+                  'tr',
+                  { class: r.credit === 1 ? 'ok' : r.credit === 0.5 ? '' : 'warn' },
+                  h('td', {}, r.req.term.label),
+                  h('td.small', {}, t(V.st[r.status]), r.status === 'outside' || r.status === 'known' ? h('label.small', {}, ' · ', knowBox(r.req.term.id), ' ', t(V.knowIt)) : null),
+                  h('td', {}, t(r.credit === 1 ? V.yes : r.credit === 0.5 ? V.half : V.no)),
+                ),
+              ),
+            ),
+          ),
         ),
-        h('p.cw-total', {}, h('strong', {}, t(fmt(V.total, { t: pct(a.total), r: pct(a.required) })))),
+        h('p.cw-total', {}, h('strong', {}, t(a.hasRequired ? fmt(V.total, { t: pct(a.total), r: pct(a.required) }) : fmt(V.totalOnly, { t: pct(a.total) })))),
+        a.hasRequired ? null : h('p.small.muted', {}, t(V.noSplit)),
+        a.rows.some((r) => r.status === 'outside' || r.status === 'known') ? h('p.small.muted', {}, t(V.knowHint)) : null,
         h('p', { class: a.verdict === 'apply' ? 'cw-mark ok' : '' }, t(a.verdict === 'apply' ? V.apply : a.verdict === 'almost' ? V.almost : V.notYet)),
         a.toLearn.length ? h('div', {}, h('h4', {}, t(V.toLearn)), h('ul', {}, ...a.toLearn.slice(0, 4).map((b) => h('li', {}, blockName(b))))) : null,
         a.outside.length ? h('p.small.muted', {}, `${t(V.outside)}: ${a.outside.join(', ')}`) : null,
       );
     };
+    const groups = (a: Analysis): [typeof V.groupMust, Analysis['rows']][] => {
+      const must = a.rows.filter((r) => r.req.required);
+      const nice = a.rows.filter((r) => !r.req.required);
+      return a.hasRequired ? [[V.groupMust, must], [V.groupNice, nice]] : [[V.groupMust, a.rows]];
+    };
+    const knowBox = (id: string) => {
+      const b = h('input', { type: 'checkbox', checked: known.has(id) }) as HTMLInputElement;
+      b.addEventListener('change', () => {
+        if (b.checked) known.add(id);
+        else known.delete(id);
+        save('vacancy.known', [...known]);
+        render(analyze(lastReqs, blockState, known));
+      });
+      return b;
+    };
     runBtn.addEventListener('click', () => {
       const reqs = extractRequirements(ta.value);
-      const a = analyze(reqs, blockState);
+      lastReqs = reqs;
+      const a = analyze(reqs, blockState, known);
       save('vacancy.text', ta.value);
       save('vacancy.keywords', reqs.map((r) => r.term.label));
       store.record({ kind: 'x.career.vacancy', total: a.total, required: a.required, verdict: a.verdict, n: a.rows.length });

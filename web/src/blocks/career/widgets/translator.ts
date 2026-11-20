@@ -27,7 +27,7 @@ const T = {
   confirm: bi('отметьте, если назвали другими словами', 'tick if you said it in other words'),
   model: bi('Эталон', 'The model answer'),
   from: bi('это отсюда', 'this is from'),
-  followups: bi('Чем продолжит интервьюер', 'How the interviewer will follow up'),
+  followups: bi('О чём интервьюер спросит дальше', 'What the interviewer will ask next'),
   done: bi('Засчитать карточку', 'Count this card'),
   doneMark: bi('засчитано', 'counted'),
   ai: bi('Разбор моей нейросетью по рубрике', 'Review by my AI on the rubric'),

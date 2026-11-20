@@ -60,8 +60,8 @@ const FINAL: Block = {
   summary: bi('Сначала смена дежурного с тремя инцидентами, которые наслаиваются друг на друга, а затем итоговый экзамен на трёх настоящих машинах, где нужно построить систему, починить её и защитить.', 'Three overlapping incidents, then the final exam on three real machines: build, fix, defend.'),
   checklistStep: '08',
   levels: {
-    beginner: bi('Экзамен одинаков для всех уровней, а кластер собирается на k3s', 'One exam for every level; the cluster is k3s'),
-    intermediate: bi('Экзамен одинаков для всех уровней, а кластер можно собрать на k3s или, по желанию, через kubeadm', 'One exam for every level; k3s, or kubeadm if you like'),
+    beginner: bi('Экзамен на стендах одинаков для всех уровней, и кластер в нём собирается через kubeadm. На настоящих машинах кластер можно собрать на k3s', 'One stand exam for every level, with a kubeadm cluster; on real machines the cluster may be k3s'),
+    intermediate: bi('Экзамен на стендах одинаков для всех уровней, и кластер в нём собирается через kubeadm. На настоящих машинах кластер можно собрать на k3s или через kubeadm', 'One stand exam for every level, with a kubeadm cluster; on real machines k3s or kubeadm'),
     experienced: bi('Вдобавок к общему экзамену вы обслуживаете кластер kubeadm: снимки etcd, обновление и сертификаты', 'Plus kubeadm operations: etcd, upgrades, certificates'),
   },
   hours: { beginner: 40, intermediate: 35, experienced: 30 },
@@ -77,8 +77,8 @@ const CAREER: Block = {
   order: 120,
   title: bi('Карьера', 'Career'),
   summary: bi(
-    'Этот блок идёт параллельно с остальными с первого месяца курса. В нём вы узнаете, как устроено собеседование и как построить ответ, потренируетесь отвечать на ситуационные вопросы в песочнице, пройдёте учебные интервью, подготовите самопрезентацию, резюме и пет-проекты и научитесь искать работу по правилу 60 %.',
-    'Runs alongside from the first month: how an interview works, a structured answer, situational questions in a sandbox, mock interviews, self-presentation, the CV, pet projects and searching by the 60% rule.',
+    'В маршруте блок стоит последним, но открыть его можно в любой момент, и начать полезно рано, примерно после блока о сетях: первые два урока опираются в основном на Linux и сети, а учебное интервью спрашивает только о блоках, которые вы уже прошли. В блоке вы узнаете, как устроено собеседование и как построить ответ, потренируетесь отвечать на ситуационные вопросы в песочнице, пройдёте учебные интервью, подготовите самопрезентацию, резюме и пет-проекты и научитесь искать работу по правилу 60 %.',
+    'Last on the route, but it can be opened at any time, and it pays to start early, roughly after the networks block: the first two lessons rely mostly on Linux and networks, and the mock interview asks only about blocks you have done. How an interview works, a structured answer, situational questions in a sandbox, mock interviews, self-presentation, the CV, pet projects and searching by the 60% rule.',
   ),
   checklistStep: '09–11',
   levels: {
