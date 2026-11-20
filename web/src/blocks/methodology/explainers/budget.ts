@@ -81,8 +81,8 @@ export const budgetModel = defineModel<P>({
     'What happens to the shop’s error budget over 30 days. The reliability target sets how many bad minutes are allowed; an outage spends them the faster, the more requests fail; by the speed of that spending an alert fires or stays silent, and the budget policy decides whether changes may still be deployed. Under the diagram the budget, the bad minutes spent, the burn rate and what is left add up.',
   ),
   intro: b(
-    'Схема собирается по шагам, и сейчас на ней видна только цель надёжности. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый следующий блок появляется, когда до него доходит расчёт, и говорит в облачке, что он считает или решает. Полоска в бюджете показывает, сколько плохих минут ещё осталось, а карточка на линии несёт число, которое передаётся дальше.\n\nПосле первого прохода добавьте в «Параметрах» девятку к цели и посмотрите, как уменьшится бюджет. Потом сделайте сбой слабым, с одним процентом ошибок, и проверьте, разбудит ли оповещение дежурного. Напоследок включите поломку в блоке «Сломать».',
-    'The diagram builds up step by step, and for now it shows only the reliability target. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each next block appears when the calculation reaches it and says in a callout what it computes or decides. The bar in the budget shows how many bad minutes are still left, and the card on the line carries the number handed on.\n\nAfter the first pass add a nine to the target in “Parameters” and see how the budget shrinks. Then make the outage mild, with one percent of errors, and check whether the alert wakes the on-call engineer. Finally switch on the break in “Break it”.',
+    'Схема собирается по шагам, и сейчас на ней видна только цель надёжности. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый следующий блок появляется, когда до него доходит расчёт, и говорит в облачке, что он считает или решает. Полоска в бюджете показывает, сколько плохих минут ещё осталось, а карточка на линии несёт число, которое передаётся дальше.\n\nПосле первого прохода меняйте «Параметры» и включайте поломки в блоке «Сломать», а схема объяснит, что изменилось и почему.',
+    'The diagram builds up step by step, and for now it shows only the reliability target. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each next block appears when the calculation reaches it and says in a callout what it computes or decides. The bar in the budget shows how many bad minutes are still left, and the card on the line carries the number handed on.\n\nAfter the first pass change the “Parameters” and switch on the breaks in “Break it”, and the diagram explains what changed and why.',
   ),
   legend: [
     { mark: 'active', text: b('блок, который считает или решает сейчас', 'the block computing or deciding now') },
@@ -149,10 +149,11 @@ export const budgetModel = defineModel<P>({
       predict: {
         prompt: b('Цель равна 99,9 %, а сбой длится 20 минут. Вы меняете долю неуспешных запросов. Разбудит ли оповещение дежурного, если не проходит только 1 % запросов?', 'The target is 99.9%, the outage lasts 20 minutes. You change the share of failing requests. Will the alert wake the on-call engineer if only 1% of requests fail?'),
         options: [
-          { id: 'none', text: b('Нет, не разбудит. Скорость сжигания равна 10, но за 20 минут сбой не успеет потратить ту долю бюджета, при которой срабатывает оповещение', 'No, it will not. The burn rate is 10, but in 20 minutes the outage does not spend the share of the budget at which an alert fires') },
-          { id: 'page', text: b('Да, разбудит, потому что любая ошибка будит дежурного', 'Yes, it will, because any error wakes the on-call engineer') },
+          { id: 'page', text: b('Разбудит срочным оповещением', 'It wakes them with a page') },
+          { id: 'ticket', text: b('Не разбудит, но заведёт заявку в рабочей очереди', 'It does not wake them, but opens a ticket') },
+          { id: 'none', text: b('Не разбудит и ничего не заведёт', 'It neither wakes them nor opens anything') },
         ],
-        resolve: () => 'none',
+        resolve: (_p, next) => (next.some((s) => s.id === 'page') ? 'page' : next.some((s) => s.id === 'ticket') ? 'ticket' : 'none'),
       },
     },
     { id: 'earlier', group: b('Что было раньше', 'What happened before'), label: b('Сколько плохих минут уже потрачено за последние 4 недели', 'Bad minutes already spent in the last 4 weeks'), kind: 'range', min: 0, max: 60, step: 2, default: 0, near: 'budget', levels: ['intermediate', 'experienced'] },
@@ -307,7 +308,9 @@ export const budgetModel = defineModel<P>({
       label: b('политика', 'policy'),
       caption: n.freeze
         ? fmtn(b('Бюджет за 30 дней превышен на {x}. По политике выпуски останавливают, пока сервис не вернётся к цели, и разрешают только исправления проблем P0 и исправления безопасности.', 'The 30-day budget is exceeded by {x}. By the policy releases stop until the service is back within the target, and only P0 fixes and security fixes are allowed.'), { x: durAcc(-n.left) })
-        : fmtn(b('В бюджете осталось {l} из {b}. Бюджет не превышен, поэтому политика бюджета не запрещает выкладывать изменения, даже если минут в нём осталось мало.', '{l} of {b} are left in the budget. The budget is not exceeded, so the policy does not forbid deployments, even when very few minutes are left.'), { l: dur(n.left), b: dur(n.budget) }),
+        : n.left < n.budget / 4
+          ? fmtn(b('В бюджете осталось {l} из {b}, то есть меньше четверти. Бюджет не превышен, поэтому политика бюджета не запрещает выкладывать изменения, даже когда минут в нём осталось мало, но следующий сбой такого размера уже может его исчерпать.', '{l} of {b} are left in the budget, less than a quarter. The budget is not exceeded, so the policy does not forbid deployments even when few minutes are left, but the next outage of this size may use it up.'), { l: dur(n.left), b: dur(n.budget) })
+          : fmtn(b('В бюджете осталось {l} из {b}. Бюджет не превышен, поэтому политика бюджета не запрещает выкладывать изменения.', '{l} of {b} are left in the budget. The budget is not exceeded, so the policy does not forbid deployments.'), { l: dur(n.left), b: dur(n.budget) }),
       focus: ['e-policy', 'policy'],
       say: { policy: n.freeze ? b('Бюджет превышен, поэтому выпуски останавливают, кроме исправлений P0 и исправлений безопасности.', 'The budget is exceeded, so releases stop, except P0 fixes and security fixes.') : b('Бюджет не превышен, поэтому выкладывать изменения можно.', 'The budget is not exceeded, so changes may be deployed.') },
       tokens: [{ edge: 'e-policy', label: n.left < 0 ? fmtn(b('−{x} мин', '−{x} min'), { x: r1(-n.left) }) : fmtn(b('{x} мин', '{x} min'), { x: n.left }) }],

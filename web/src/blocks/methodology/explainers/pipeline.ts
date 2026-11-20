@@ -63,8 +63,8 @@ export const pipelineModel = defineModel<P>({
     'The diagram shows the path of one change after a developer merged it into the shared branch. The change goes through the build, the automated checks, staging, the release and the batch, and then reaches the working site with a deployment. The dashed frame shows where continuous integration ends. Under the diagram you see how many hours the change takes to reach the working site, how risky one deployment is, how many deployments happen a week, how many minutes recovery takes if a deployment breaks the site, and how many minutes it then takes to find the faulty change.',
   ),
   intro: b(
-    'Схема собирается по шагам, и сейчас на ней видны только слитое изменение и рабочий сайт. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый шаг конвейера появляется, когда до него доходит изменение, и говорит в облачке, что он делает. Карточка на линии показывает, сколько времени изменение ждёт на этом переходе.\n\nПосле первого прохода переключите в «Параметрах» сборку на автоматическую, а выпуск на «конвейер сам», и посмотрите, как это меняет путь и название практики. Потом уменьшите число изменений в одной выкладке и следите за риском.',
-    'The diagram builds up step by step, and for now it shows only the merged change and the working site. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each step of the pipeline appears when the change reaches it and says in a callout what it does. The card on the line shows how long the change waits on that transition.\n\nAfter the first pass switch the build to automatic and the release to “the pipeline by itself” in “Parameters”, and see how this changes the path and the name of the practice. Then reduce the number of changes in one deployment and watch the risk.',
+    'Схема собирается по шагам, и сейчас на ней видны только слитое изменение и рабочий сайт. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый шаг конвейера появляется, когда до него доходит изменение, и говорит в облачке, что он делает. Карточка на линии показывает, сколько времени изменение ждёт на этом переходе.\n\nПосле первого прохода меняйте «Параметры» и включайте поломки в блоке «Сломать», а схема объяснит, что изменилось и почему.',
+    'The diagram builds up step by step, and for now it shows only the merged change and the working site. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each step of the pipeline appears when the change reaches it and says in a callout what it does. The card on the line shows how long the change waits on that transition.\n\nAfter the first pass change the “Parameters” and switch on the breaks in “Break it”, and the diagram explains what changed and why.',
   ),
   legend: [
     { mark: 'active', text: b('шаг, на котором изменение находится сейчас', 'the step the change is at now') },
@@ -156,7 +156,7 @@ export const pipelineModel = defineModel<P>({
         options: [
           { id: 'down', text: b('Чем меньше изменений в выкладке, тем ниже риск', 'The fewer changes in a deployment, the lower the risk') },
           { id: 'same', text: b('Риск не зависит от того, сколько изменений в выкладке', 'The risk does not depend on how many changes are in a deployment') },
-          { id: 'up', text: b('Чем меньше изменений в выкладке, тем выше риск, ведь выкладок становится больше', 'The fewer changes in a deployment, the higher the risk, since there are more deployments') },
+          { id: 'up', text: b('Чем меньше изменений в выкладке, тем выше риск', 'The fewer changes in a deployment, the higher the risk') },
         ],
         resolve: (prev, next) => {
           const r0 = lastMetrics(prev).risk ?? 0;
@@ -178,8 +178,9 @@ export const pipelineModel = defineModel<P>({
       predict: {
         prompt: b('Откатить выкладку нельзя, а очередная выкладка сломала оплату на рабочем сайте. Что будет дальше?', 'A deployment cannot be rolled back, and the latest one broke the checkout on the working site. What happens next?'),
         options: [
-          { id: 'hotfix', text: b('Команда напишет срочное исправление и выложит его ещё раз, а это займёт больше времени и станет второй, внеплановой выкладкой', 'The team writes an urgent fix and deploys it again: it takes longer, and it is a second, unplanned deployment') },
-          { id: 'same', text: b('Ничего особенного не произойдёт, и исправление дождётся следующей плановой выкладки', 'Nothing special: the fix waits for the next planned deployment') },
+          { id: 'hotfix', text: b('Команда выложит срочное исправление отдельной выкладкой', 'The team deploys an urgent fix in a separate deployment') },
+          { id: 'same', text: b('Исправление дождётся следующей плановой выкладки', 'The fix waits for the next planned deployment') },
+          { id: 'manual', text: b('Дежурный вручную вернёт прошлую версию за те же минуты', 'The on-call engineer puts the previous version back by hand in the same minutes') },
         ],
         resolve: (_p, next) => (next.some((s) => s.id === 'hotfix') ? 'hotfix' : 'same'),
       },
