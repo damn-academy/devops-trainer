@@ -104,7 +104,7 @@ const write = (m: SimMachine, path: string, text: string) => {
 const placement = (block: string, id: string) => registry.blocks.get(block)!.placement!.find((x) => x.id === id) as PlacementTask & { kind: 'task' };
 
 describe('CI checks added after the walk-through', () => {
-  it('a job-level when next to rules gets its own hint', async () => {
+  it('a job-level when next to rules makes the deploy manual, as in GitLab', async () => {
     const { setup, tasks } = lab('cicd.variables-envs', 'lab');
     const m = await createSimMachine(setup);
     await sh(m, 'glab variable set DEPLOY_TOKEN edu-deploy-7Kq2 --masked --protected');
@@ -113,7 +113,9 @@ describe('CI checks added after the walk-through', () => {
     await sh(m, 'git commit -am manual', 'git push');
     const r = await check(m, tasks[1]);
     expect(r.pass).toBe(false);
-    expect(r.say?.ru).toContain('на уровне джобы');
+    expect(r.say?.ru).toContain('glab ci trigger deploy_production');
+    await sh(m, 'glab ci trigger deploy_production');
+    expect((await check(m, tasks[1])).pass).toBe(true);
   });
 
   it('a cache key the shell emptied does not count as a key by branch', async () => {

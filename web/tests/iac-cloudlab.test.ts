@@ -249,6 +249,18 @@ describe('cloud lab lesson checks', () => {
     expect(evaluateCheck(ssh.check, { vms: { 'api-1': { files: { '/root/hello': { type: 'f' } } } } } as unknown as Facts).pass).toBe(true);
   });
 
+  it('lesson cloud-api: creation and the SSH visit still count after the VM is deleted', () => {
+    const tasks = tasksOf(lessons3.apiLesson as never);
+    const polled = [{ method: 'GET', path: '/v1/operations/op-1?wait=30', status: 200, from: '10.0.0.10' }];
+    const gone = { cloud: { vms: [], ops: [{ kind: 'vm.create', target: 'api-1', status: 'DONE' }], requests: polled } } as unknown as Facts;
+    expect(evaluateCheck(task(tasks, 'create').check, gone).pass).toBe(true);
+    const ssh = task(tasks, 'ssh');
+    const term = (line: string, exit = 0) => ({ term: { main: [{ line, exit, out: '' }] } }) as unknown as Facts;
+    expect(evaluateCheck(ssh.check, term('ssh root@api-1.vm.lab "touch /root/hello"')).pass).toBe(true);
+    expect(evaluateCheck(ssh.check, term('ssh root@api-1.vm.lab "touch /root/hello"', 255)).pass).toBe(false);
+    expect(evaluateCheck(ssh.check, term('ssh root@api-1.vm.lab')).pass).toBe(false);
+  });
+
   it('lesson remote-state: import must keep the hand-made record', () => {
     const tasks = tasksOf(lessons3.stateLesson as never);
     const imp = task(tasks, 'import');
