@@ -326,3 +326,143 @@ export const GATEWAY_LAB: TerminalSetup = {
   ],
   ext: { k8s: { addons: ['metallb', 'traefik'], manifests: [deploy('web', 'default', 2, 'trainer/web:1.0', { app: 'web' }), WEB_SVC] } },
 };
+
+// ── Access rights (k8s-1.access) ──
+
+const rbacApi = 'rbac.authorization.k8s.io/v1';
+
+/** The shop runs in prod, the developers try things in dev; nobody but the administrator has rights yet. */
+export const ACCESS_LAB: TerminalSetup = {
+  hostname: 'laptop',
+  ext: { k8s: { manifests: [ns('prod'), ns('dev'), deploy('web', 'prod', 2, 'trainer/web:1.0', { app: 'web' }), deploy('web', 'dev', 1, 'trainer/web:1.0', { app: 'web' })] } },
+};
+
+/** The status page the platform team wants to run in prod: it reads the list of pods through the API with its own service account. */
+export const STATUS_POD = `apiVersion: v1
+kind: Pod
+metadata:
+  name: status-page
+  namespace: prod
+spec:
+  serviceAccountName: status-reader
+  containers:
+  - name: status
+    image: trainer/client:1.0
+    command: ["sleep", "infinity"]
+`;
+
+export const CI_LAB: TerminalSetup = {
+  hostname: 'laptop',
+  files: [{ path: '~/status.yaml', content: STATUS_POD }],
+  ext: { k8s: { manifests: [ns('prod'), ns('dev'), deploy('web', 'prod', 2, 'trainer/web:1.0', { app: 'web' }), deploy('web', 'dev', 1, 'trainer/web:1.0', { app: 'web' })] } },
+};
+
+/**
+ * Two colleagues' attempts that do not work: a RoleBinding for the developer
+ * written into namespace default instead of prod, and a ClusterRole for the
+ * monitoring account granted through a RoleBinding, which limits it to one namespace.
+ */
+export const RBAC_BROKEN: TerminalSetup = {
+  hostname: 'laptop',
+  ext: {
+    k8s: {
+      manifests: [
+        ns('prod'),
+        ns('dev'),
+        ns('monitoring'),
+        deploy('web', 'prod', 2, 'trainer/web:1.0', { app: 'web' }),
+        deploy('web', 'dev', 1, 'trainer/web:1.0', { app: 'web' }),
+        `apiVersion: ${rbacApi}\nkind: Role\nmetadata:\n  name: log-reader\n  namespace: prod\nrules:\n- apiGroups: [""]\n  resources: [pods, pods/log]\n  verbs: [get, list, watch]\n`,
+        `apiVersion: ${rbacApi}\nkind: RoleBinding\nmetadata:\n  name: developer-logs\n  namespace: default\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: Role\n  name: log-reader\nsubjects:\n- kind: User\n  apiGroup: rbac.authorization.k8s.io\n  name: developer\n`,
+        `apiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: pod-watcher\n  namespace: monitoring\n`,
+        `apiVersion: ${rbacApi}\nkind: ClusterRole\nmetadata:\n  name: pod-lister\nrules:\n- apiGroups: [""]\n  resources: [pods]\n  verbs: [get, list, watch]\n`,
+        `apiVersion: ${rbacApi}\nkind: RoleBinding\nmetadata:\n  name: pod-watcher\n  namespace: monitoring\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: ClusterRole\n  name: pod-lister\nsubjects:\n- kind: ServiceAccount\n  name: pod-watcher\n  namespace: monitoring\n`,
+      ],
+    },
+  },
+};
+
+// ── StatefulSets (k8s-1.storage) ──
+
+const claimNoClass = (name: string) => `apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: ${name}\nspec:\n  accessModes:\n  - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gi\n`;
+
+/** The class the administrator had: the right provisioner, but without the default mark. */
+export const HOSTPATH_CLASS = `apiVersion: storage.k8s.io/v1\nkind: StorageClass\nmetadata:\n  name: hostpath\nprovisioner: hostpath.csi.k8s.io\nreclaimPolicy: Retain\nvolumeBindingMode: Immediate\n`;
+
+/** The CSI driver runs, but its StorageClass was deleted during a reinstall; a claim without a class waits. */
+export const NO_CLASS_LAB: TerminalSetup = {
+  hostname: 'laptop',
+  files: [
+    { path: '~/notes.yaml', content: claimNoClass('notes') },
+    { path: '~/class.yaml', content: HOSTPATH_CLASS },
+  ],
+  ext: { k8s: { addons: ['csi-hostpath'], kubectl: ['kubectl delete storageclass csi-hostpath-sc', 'kubectl apply -f /home/learner/notes.yaml'] } },
+};
+
+/** A headless Service and a StatefulSet of three web servers, each with a claim of its own. */
+export const statefulWeb = (name = 'web', replicas = 3, image = 'trainer/web:1.0') => `apiVersion: v1
+kind: Service
+metadata:
+  name: ${name}
+spec:
+  clusterIP: None
+  selector:
+    app: ${name}
+  ports:
+  - port: 80
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ${name}
+spec:
+  serviceName: ${name}
+  replicas: ${replicas}
+  selector:
+    matchLabels:
+      app: ${name}
+  template:
+    metadata:
+      labels:
+        app: ${name}
+    spec:
+      containers:
+      - name: ${name}
+        image: ${image}
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: data
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 1Gi
+`;
+
+export const STS_LAB: TerminalSetup = {
+  hostname: 'laptop',
+  files: [{ path: '~/web.yaml', content: statefulWeb() }],
+  ext: { k8s: { addons: ['csi-hostpath'], manifests: [CLIENT_POD] } },
+};
+
+/** The StatefulSet web already runs with its three claims. */
+export const STS_RUNNING: TerminalSetup = {
+  hostname: 'laptop',
+  files: [{ path: '~/web.yaml', content: statefulWeb() }],
+  ext: { k8s: { addons: ['csi-hostpath'], manifests: [CLIENT_POD, statefulWeb()], settle: 60_000 } },
+};
+
+// ── Helm (k8s-1.helm) ──
+
+export const HELM_PROD_VALUES = `replicaCount: 3\nimage:\n  tag: "1.1"\nenv:\n  GREETING: Hello from prod\n`;
+
+export const HELM_LAB: TerminalSetup = {
+  hostname: 'laptop',
+  files: [{ path: '~/prod.yaml', content: HELM_PROD_VALUES }],
+  ext: { k8s: { manifests: [CLIENT_POD] } },
+};

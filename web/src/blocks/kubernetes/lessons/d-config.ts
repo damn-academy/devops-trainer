@@ -1,9 +1,11 @@
-// KM05, KM06, KM11 (the idea): configuration and volumes, health and
-// resources, Helm.
+// KM05, KM06, KM11: configuration and volumes, health and resources, Helm
+// with a training chart (repo, template, install, --set and -f, history,
+// rollback; values precedence and release Secrets for the experienced).
 
 import { bi } from '../../../core/i18n';
-import type { Lesson, QuizItem } from '../../../core/types';
-import { CONFIG_LAB, HEALTH_LAB } from '../setups';
+import type { Facts, Lesson, QuizItem } from '../../../core/types';
+import { deploymentOf, releaseOf, revisionsOf } from '../rbac-facts';
+import { CONFIG_LAB, HEALTH_LAB, HELM_LAB } from '../setups';
 import { R, S, src } from '../sources';
 
 // ── KM05 ────────────────────────────────────────────────────────────────────
@@ -318,17 +320,34 @@ export const helmQuiz: QuizItem[] = [
       { id: 'local', text: bi('В каталоге ~/.helm на компьютере того, кто устанавливал релиз', 'In ~/.helm on the machine of whoever installed it'), why: bi('Тогда коллега не увидел бы вашего релиза, а история хранится в самом кластере.', 'Then a colleague would not see your release; the history is kept in the cluster itself.') },
     ],
   },
+  {
+    id: 'k8s.q.helm.undo',
+    kind: 'mcq',
+    concepts: ['k8s.helm-release'],
+    prompt: bi('Релиз `shop` поставлен Helm, и последнее обновление до образа 2.0 сломало сайт. Дежурный вернул старую версию командой `kubectl rollout undo deployment/shop`. Что покажет `helm history shop`?', 'Release `shop` was installed by Helm, and the last upgrade to image 2.0 broke the site. The on-call engineer brought the old version back with `kubectl rollout undo deployment/shop`. What does `helm history shop` show?'),
+    options: [
+      { id: 'stale', text: bi('Последней ревизией по-прежнему записано обновление до 2.0, потому что kubectl изменил Deployment мимо Helm', 'The upgrade to 2.0 is still recorded as the latest revision, because kubectl changed the Deployment behind Helm’s back'), correct: true },
+      { id: 'new', text: bi('Новую ревизию с описанием Rollback', 'A new revision described as Rollback'), why: bi('Ревизии записывает только сам Helm, а kubectl о релизах ничего не знает. Поэтому откатывают релиз командой `helm rollback`, иначе следующий `helm upgrade --reuse-values` снова выложит 2.0.', 'Only Helm itself writes revisions, and kubectl knows nothing of releases. That is why a release is rolled back with `helm rollback`; otherwise the next `helm upgrade --reuse-values` rolls 2.0 out again.') },
+      { id: 'gone', text: bi('Ничего, потому что релиз перестал существовать', 'Nothing, because the release ceased to exist'), why: bi('Релиз хранится в Secret и никуда не делся: kubectl поменял только шаблон Deployment.', 'The release is kept in Secrets and has not gone anywhere: kubectl changed only the Deployment template.') },
+    ],
+  },
 ];
+
+const shopRelease = (f: Facts | undefined) => releaseOf(f, 'default', 'shop');
+const lastOut = (f: Facts) => ((f.term as { main?: { line: string; out: string }[] } | undefined)?.main ?? []).at(-1);
 
 export const helmLesson: Lesson = {
   id: 'k8s-1.helm',
   block: 'k8s-1',
   title: bi('Как Helm собирает манифесты в пакет', 'Helm: manifests as a package'),
-  summary: bi('Что такое чарт, values и релиз, как работают install, upgrade и rollback и где Helm хранит историю.', 'A chart, values and a release; install, upgrade and rollback; where Helm keeps the history.'),
-  introduces: ['k8s.helm', 'k8s.chart'],
-  uses: ['k8s.deployment', 'k8s.service', 'k8s.configmap', 'k8s.secret', 'k8s.revision'],
+  summary: bi(
+    'Что такое чарт, values и релиз. На учебном кластере вы подключите репозиторий, прочитаете манифесты командой `helm template`, установите релиз, поменяете параметры флагом `--set` и файлом `-f`, посмотрите историю ревизий и откатите неудачное обновление.',
+    'What a chart, values and a release are. On the training cluster you add a repository, read the manifests with `helm template`, install a release, change parameters with `--set` and an `-f` file, look at the revision history and roll back a failed upgrade.',
+  ),
+  introduces: ['k8s.helm', 'k8s.chart', 'k8s.helm-values', 'k8s.helm-release'],
+  uses: ['k8s.deployment', 'k8s.service', 'k8s.configmap', 'k8s.secret', 'k8s.revision', 'k8s.namespace'],
   tier: 'core',
-  minutes: 20,
+  minutes: 40,
   sources: src([S.helm, S.helmCharts], [R.helm]),
   sections: [
     {
@@ -337,19 +356,173 @@ export const helmLesson: Lesson = {
       step: 'explain',
       title: bi('Зачем манифестам пакет', 'Why a package'),
       body: bi(
-        'Ваш сервис — это уже пять или шесть объектов: Deployment, Service, ConfigMap, Secret и правило входа. Для тестового и для рабочего окружения они почти одинаковые: отличаются число реплик, домен и образ. Если копировать YAML и править его руками, окружения рано или поздно разойдутся. [[k8s.helm|Helm]] решает эту задачу так же, как пакетный менеджер.\n\n[[k8s.chart|Чарт]] — это каталог, в котором лежат `Chart.yaml` с именем и версией, `values.yaml` с параметрами по умолчанию и `templates/` с манифестами, куда подставляются значения, например `{{ .Values.replicaCount }}`. Команда `helm install blog ./chart -f prod.yaml` подставляет значения, получает обычные манифесты и отправляет их в API, а дальше работают те же контроллеры. Установленный экземпляр чарта называется релизом. Каждая команда `install`, `upgrade` и `rollback` создаёт новую ревизию релиза, и история хранится в самом кластере, в объектах Secret `sh.helm.release.v1.blog.v1`, `…v2` и так далее. Команда `helm rollback blog 1` создаёт ревизию 3 с содержимым первой, так что история только растёт.\n\nКоманда `helm template` строит манифесты, ничего не устанавливая, и так удобно проверять, что получится. Готовые чарты публикуют в репозиториях и в OCI-реестрах, и на этапе 2 вы поставите чарт курса из ghcr.io в настоящий кластер.',
-        'Your service is already five or six objects: a Deployment, a Service, a ConfigMap, a Secret, an ingress rule. For test and for production they are almost the same: other replicas, another domain, another image. Copying YAML and editing it by hand leads to copies that quietly diverge. [[k8s.helm|Helm]] solves this as a package manager.\n\nA [[k8s.chart|chart]] is a directory: `Chart.yaml` (name and version), `values.yaml` (default parameters) and `templates/` (manifests with placeholders like `{{ .Values.replicaCount }}`). `helm install blog ./chart -f prod.yaml` fills in the values, gets ordinary manifests and sends them to the API — from there the same controllers work. An installed instance is called a release; every `install`, `upgrade` and `rollback` gets its own revision, and the history lives in the cluster, in the Secrets `sh.helm.release.v1.blog.v1`, `…v2`. `helm rollback blog 1` creates revision 3 with the contents of the first — the history only grows.\n\n`helm template` renders the manifests without installing anything — handy for checking what you will get. Ready charts are published in repositories and OCI registries; at stage 2 you will install the course chart from ghcr.io into a real cluster.',
+        'Ваш сервис — это уже пять или шесть объектов: Deployment, Service, ConfigMap, Secret и правило входа. Для тестового и для рабочего окружения они почти одинаковые: отличаются число реплик, домен и образ. Если копировать YAML и править его руками, окружения рано или поздно разойдутся. [[k8s.helm|Helm]] решает эту задачу так же, как пакетный менеджер.\n\n[[k8s.chart|Чарт]] — это каталог, в котором лежат `Chart.yaml` с именем и версией, `values.yaml` с параметрами по умолчанию и `templates/` с манифестами, куда подставляются значения, например `{{ .Values.replicaCount }}`. Параметры чарта называются [[k8s.helm-values|values]]. Свои значения передают файлом через флаг `-f` или по одному флагом `--set`, и Helm накладывает их поверх значений по умолчанию. Команда `helm install shop training/podinfo -f prod.yaml` подставляет значения, получает обычные манифесты и отправляет их в API, а дальше работают те же контроллеры, что и при `kubectl apply`.\n\nУстановленный экземпляр чарта называется [[k8s.helm-release|релизом]], и у релиза есть своё имя, например shop. Каждая команда `install`, `upgrade` и `rollback` создаёт новую ревизию релиза, и история хранится в самом кластере, в объектах Secret `sh.helm.release.v1.shop.v1`, `…v2` и так далее. Команда `helm rollback shop 1` создаёт новую ревизию с содержимым первой, так что история только растёт, как у Deployment. Команда `helm template` строит манифесты, ничего не устанавливая, и так удобно проверять, что получится.',
+        'Your service is already five or six objects: a Deployment, a Service, a ConfigMap, a Secret, an ingress rule. For test and for production they are almost the same: other replicas, another domain, another image. Copying YAML and editing it by hand leads to copies that quietly diverge. [[k8s.helm|Helm]] solves this as a package manager.\n\nA [[k8s.chart|chart]] is a directory: `Chart.yaml` (name and version), `values.yaml` (default parameters) and `templates/` (manifests with placeholders like `{{ .Values.replicaCount }}`). The chart’s parameters are called [[k8s.helm-values|values]]. Your own values come in a file with `-f` or one by one with `--set`, and Helm lays them over the defaults. `helm install shop training/podinfo -f prod.yaml` fills in the values, gets ordinary manifests and sends them to the API; from there the same controllers work as after `kubectl apply`.\n\nAn installed instance of a chart is a [[k8s.helm-release|release]], and a release has a name of its own, such as shop. Every `install`, `upgrade` and `rollback` creates a new revision of the release, and the history lives in the cluster itself, in the Secrets `sh.helm.release.v1.shop.v1`, `…v2` and so on. `helm rollback shop 1` creates a new revision with the contents of the first, so the history only grows, as with a Deployment. `helm template` renders the manifests without installing anything, which is handy for checking what you will get.',
       ),
+    },
+    {
+      id: 'lab',
+      kind: 'terminal',
+      step: 'practice',
+      machine: 'sim',
+      setup: HELM_LAB,
+      intro: bi(
+        'В учебном кластере работает команда `helm`, а учебные чарты лежат в репозитории по адресу https://charts.example.test. Чарт podinfo из этого репозитория запускает веб-сервер из образа `trainer/web` с Deployment и Service. В файле `prod.yaml` записаны настройки рабочего окружения магазина. Если запутаетесь, перезагрузите страницу, и кластер вернётся в исходное состояние.',
+        'The `helm` command works in the training cluster, and the training charts are in the repository at https://charts.example.test. Its podinfo chart runs a web server from the image `trainer/web` with a Deployment and a Service. `prod.yaml` holds the settings of the shop’s production environment. If you get lost, reload the page, and the cluster returns to where it started.',
+      ),
+      tasks: [
+        {
+          id: 'repo',
+          prompt: bi('Подключите репозиторий учебных чартов под именем `training` и найдите в нём чарт podinfo.', 'Add the training chart repository under the name `training` and find the podinfo chart in it.'),
+          check: { stdout: /training\/podinfo\s+1\.0\.0/, fail: [{ if: (f) => /repo training not found|no repositories/.test(lastOut(f)?.out ?? ''), say: bi('Репозиторий training ещё не подключён. Сначала выполните `helm repo add training https://charts.example.test`.', 'Repository training is not added yet. First run `helm repo add training https://charts.example.test`.') }] },
+          chips: 'helm repo add training https://charts.example.test && helm search repo training',
+          concepts: ['k8s.helm', 'k8s.chart'],
+          hints: {
+            H1: bi('Репозиторий подключают командой `helm repo add` с именем и адресом, а чарты в нём ищут командой `helm search repo`.', 'A repository is added with `helm repo add` with a name and an address, and its charts are found with `helm search repo`.'),
+            H2: bi('Выполните `helm repo add training https://charts.example.test`, а затем `helm search repo training`. В выводе будут имена чартов вида training/podinfo и их версии.', 'Run `helm repo add training https://charts.example.test`, then `helm search repo training`. The output lists charts named like training/podinfo with their versions.'),
+            H3: bi('Адрес репозитория написан над терминалом: https://charts.example.test. Имя `training` вы выбираете сами, и под этим именем Helm будет показывать чарты.', 'The repository address is written above the terminal: https://charts.example.test. You choose the name `training` yourself, and Helm shows the charts under it.'),
+          },
+        },
+        {
+          id: 'template',
+          prompt: bi('Ничего не устанавливая в кластер, посмотрите, какие манифесты получатся из чарта `training/podinfo` для релиза `shop` с двумя репликами.', 'Without installing anything into the cluster, look at the manifests the chart `training/podinfo` gives for release `shop` with two replicas.'),
+          check: {
+            stdout: /kind: Deployment[\s\S]*name: shop[\s\S]*replicas: 2/,
+            fail: [
+              { if: (f) => /^helm (install|upgrade)\b/.test(lastOut(f)?.line ?? ''), say: bi('Команды install и upgrade уже отправили манифесты в кластер. Посмотреть их, ничего не меняя, позволяет `helm template`.', 'install and upgrade have already sent the manifests to the cluster. `helm template` lets you look at them without changing anything.') },
+              { if: (f) => /replicas: 1\b/.test(lastOut(f)?.out ?? ''), say: bi('Манифесты получены, но с одной репликой, как в значениях по умолчанию. Передайте число реплик флагом `--set replicaCount=2`.', 'You got the manifests, but with one replica, as in the defaults. Pass the replica count with `--set replicaCount=2`.') },
+            ],
+          },
+          chips: 'helm template shop training/podinfo --set replicaCount=2',
+          concepts: ['k8s.helm-values'],
+          hints: {
+            H1: bi('Сначала посмотрите, какие параметры у чарта есть: `helm show values training/podinfo`. Число реплик называется replicaCount.', 'First see which parameters the chart has: `helm show values training/podinfo`. The replica count is called replicaCount.'),
+            H2: bi('Выполните `helm template shop training/podinfo --set replicaCount=2`. Helm напечатает Service и Deployment, а в Deployment будет строка `replicas: 2`.', 'Run `helm template shop training/podinfo --set replicaCount=2`. Helm prints a Service and a Deployment, and the Deployment has the line `replicas: 2`.'),
+            H3: bi('Если вы нечаянно выполнили `helm install`, удалите релиз командой `helm uninstall shop`, а потом повторите `helm template`.', 'If you ran `helm install` by mistake, remove the release with `helm uninstall shop`, then repeat `helm template`.'),
+          },
+        },
+        {
+          id: 'install',
+          prompt: bi('Установите релиз `shop` из того же чарта с двумя репликами и дождитесь, пока оба пода будут готовы.', 'Install release `shop` from the same chart with two replicas and wait until both pods are ready.'),
+          check: {
+            when: (f) => shopRelease(f)?.status === 'deployed' && shopRelease(f)?.values?.replicaCount === 2 && (deploymentOf(f, 'default', 'shop')?.ready ?? 0) >= 2,
+            fail: [
+              { if: (f) => !shopRelease(f) && !!deploymentOf(f, 'default', 'shop'), say: bi('Deployment `shop` создан, но не через Helm, поэтому релиза нет, и Helm о нём ничего не знает. Удалите его и установите чарт командой `helm install`.', 'Deployment `shop` exists, but not through Helm, so there is no release, and Helm knows nothing of it. Delete it and install the chart with `helm install`.') },
+              { if: (f) => !!shopRelease(f) && shopRelease(f)?.values?.replicaCount !== 2, say: bi('Релиз установлен, но без вашего значения replicaCount, и реплика в нём одна. Исправьте релиз командой `helm upgrade shop training/podinfo --set replicaCount=2`.', 'The release is installed, but without your replicaCount, so it has one replica. Fix it with `helm upgrade shop training/podinfo --set replicaCount=2`.') },
+            ],
+          },
+          chips: 'helm install shop training/podinfo --set replicaCount=2',
+          concepts: ['k8s.helm-release'],
+          hints: {
+            H1: bi('У `helm install` те же аргументы, что у `helm template`: имя релиза, чарт и значения.', '`helm install` takes the same arguments as `helm template`: the release name, the chart and the values.'),
+            H2: bi('Выполните `helm install shop training/podinfo --set replicaCount=2`, а затем `kubectl get pods` и `helm list`.', 'Run `helm install shop training/podinfo --set replicaCount=2`, then `kubectl get pods` and `helm list`.'),
+            H3: bi('Если Helm ответил `cannot re-use a name that is still in use`, релиз уже установлен. Тогда поправьте его командой `helm upgrade shop training/podinfo --set replicaCount=2`.', 'If Helm answered `cannot re-use a name that is still in use`, the release is installed already. Then fix it with `helm upgrade shop training/podinfo --set replicaCount=2`.'),
+          },
+        },
+        {
+          id: 'values-file',
+          prompt: bi('Обновите релиз `shop` с настройками из файла `prod.yaml` и посмотрите, с какими значениями он теперь работает.', 'Upgrade release `shop` with the settings from `prod.yaml` and look at which values it runs with now.'),
+          check: {
+            when: (f) => (shopRelease(f)?.revision ?? 0) >= 2 && shopRelease(f)?.status === 'deployed' && shopRelease(f)?.values?.replicaCount === 3 && String(shopRelease(f)?.values?.image?.tag) === '1.1' && deploymentOf(f, 'default', 'shop')?.image === 'trainer/web:1.1' && (deploymentOf(f, 'default', 'shop')?.ready ?? 0) >= 3,
+            fail: [
+              { if: (f) => (shopRelease(f)?.revision ?? 0) >= 2 && String(shopRelease(f)?.values?.image?.tag) !== '1.1', say: bi('Релиз обновлён без файла, поэтому в его значениях нет образа 1.1. Передайте файл флагом `-f prod.yaml`.', 'The release was upgraded, but without the file: its values lack image 1.1. Pass the file with `-f prod.yaml`.') },
+              { if: (f) => shopRelease(f)?.revision === 1, say: bi('У релиза пока одна ревизия. Новую создаёт команда `helm upgrade`.', 'The release still has one revision. `helm upgrade` creates a new one.') },
+            ],
+          },
+          chips: 'helm upgrade shop training/podinfo -f prod.yaml && helm get values shop',
+          concepts: ['k8s.helm-values', 'k8s.helm-release'],
+          hints: {
+            H1: bi('Файл значений передают командам `helm upgrade` и `helm install` флагом `-f`.', 'A values file is passed to `helm upgrade` and `helm install` with `-f`.'),
+            H2: bi('Выполните `helm upgrade shop training/podinfo -f prod.yaml`, а затем `helm get values shop`. Обратите внимание, что значения replicaCount=2 из прошлого задания в списке нет: каждый upgrade собирает значения заново из того, что передано в этот раз.', 'Run `helm upgrade shop training/podinfo -f prod.yaml`, then `helm get values shop`. Note that replicaCount=2 from the previous task is not in the list: every upgrade gathers the values anew from what is passed this time.'),
+            H3: bi('Чтобы увидеть все значения вместе со значениями чарта по умолчанию, добавьте флаг `--all`: `helm get values shop --all`.', 'To see all values together with the chart defaults, add `--all`: `helm get values shop --all`.'),
+          },
+        },
+        {
+          id: 'rollback',
+          prompt: bi(
+            'Коллега просит проверить версию образа 2.0. Обновите релиз с теми же настройками из `prod.yaml`, но с образом `2.0`, дождитесь, чем закончится выкладка, и средствами Helm верните последнюю работавшую ревизию.',
+            'A colleague asks to try image version 2.0. Upgrade the release with the same settings from `prod.yaml` but with image `2.0`, wait to see how the rollout ends, and with Helm bring back the last revision that worked.',
+          ),
+          check: {
+            when: (f) => revisionsOf(f, 'default', 'shop').some((r) => String(r.values?.image?.tag) === '2.0') && shopRelease(f)?.status === 'deployed' && /^Rollback to/.test(shopRelease(f)?.description ?? '') && String(shopRelease(f)?.values?.image?.tag) === '1.1' && deploymentOf(f, 'default', 'shop')?.image === 'trainer/web:1.1' && (deploymentOf(f, 'default', 'shop')?.ready ?? 0) >= 3,
+            fail: [
+              { if: (f) => deploymentOf(f, 'default', 'shop')?.image === 'trainer/web:1.1' && String(shopRelease(f)?.values?.image?.tag) === '2.0', say: bi('Deployment вернулся к образу 1.1, но через kubectl, и Helm об этом не знает: последней ревизией релиза по-прежнему записана версия 2.0. Следующий `helm upgrade --reuse-values` снова выложит 2.0. Откатите релиз командой `helm rollback`.', 'The Deployment is back on image 1.1, but through kubectl, and Helm does not know: the release’s latest revision still says 2.0. The next `helm upgrade --reuse-values` would roll 2.0 out again. Roll the release back with `helm rollback`.') },
+              { if: (f) => /^Rollback to/.test(shopRelease(f)?.description ?? '') && String(shopRelease(f)?.values?.image?.tag) !== '1.1', say: bi('Вы откатились не к той ревизии: в ней образ 1.0 и две реплики, то есть это установка из третьего задания. Последняя работавшая ревизия — та, что создал upgrade с файлом `prod.yaml`. Номер ревизии покажет `helm history shop`.', 'You rolled back to the wrong revision: it has image 1.0 and two replicas, so it is the install from the third task. The last revision that worked is the one the upgrade with `prod.yaml` created. `helm history shop` shows its number.') },
+              { if: (f) => String(shopRelease(f)?.values?.image?.tag) === '2.0', say: bi('Версия 2.0 выложена, и её поды аварийно завершаются. Посмотрите на ревизии командой `helm history shop` и верните последнюю работавшую командой `helm rollback shop <номер>`.', 'Version 2.0 is rolled out, and its pods crash. Look at the revisions with `helm history shop` and bring back the last one that worked with `helm rollback shop <number>`.') },
+            ],
+          },
+          chips: 'helm upgrade shop training/podinfo -f prod.yaml --set image.tag=2.0 --wait --timeout 60s',
+          concepts: ['k8s.helm-release', 'k8s.revision'],
+          hints: {
+            H1: bi('Флаг `--set` можно передать вместе с `-f`, и он перекроет значение из файла. Флаг `--wait` заставит Helm ждать, пока поды станут готовыми.', '`--set` can be passed together with `-f`, and it overrides the value from the file. `--wait` makes Helm wait until the pods are ready.'),
+            H2: bi('Выполните `helm upgrade shop training/podinfo -f prod.yaml --set image.tag=2.0 --wait --timeout 60s`. Через минуту Helm сообщит `UPGRADE FAILED`, а `helm history shop` покажет ревизию со статусом failed.', 'Run `helm upgrade shop training/podinfo -f prod.yaml --set image.tag=2.0 --wait --timeout 60s`. After a minute Helm reports `UPGRADE FAILED`, and `helm history shop` shows a revision with status failed.'),
+            H3: bi('Последняя работавшая ревизия — вторая, её создал upgrade с файлом. Верните её командой `helm rollback shop 2` и проверьте `helm history shop` и `kubectl get pods`.', 'The last revision that worked is the second, made by the upgrade with the file. Bring it back with `helm rollback shop 2` and check `helm history shop` and `kubectl get pods`.'),
+          },
+        },
+      ],
     },
     {
       id: 'recipes',
       kind: 'text',
-      step: 'practice',
-      title: bi('Команды Helm, которые нужны каждый день', 'The Helm commands needed every day'),
+      step: 'review',
+      title: bi('Что из этого понадобится в работе', 'What of this you will need at work'),
       body: bi(
-        'Эти команды вы выполните на настоящем узле на этапе 2, а в работе они встречаются почти в каждом конвейере выкладки. Чарт берут из репозитория, смотрят его настройки по умолчанию и сохраняют свои отличия в файл:\n\n```bash\nhelm repo add podinfo https://stefanprodan.github.io/podinfo\nhelm search repo podinfo --versions        # какие версии чарта есть\nhelm show values podinfo/podinfo > defaults.yaml\n```\n\nПрежде чем что-то менять в кластере, посмотрите, какие манифесты получатся. Команда `helm template` подставляет values в шаблоны и печатает готовый YAML, ничего не отправляя в кластер, а с флагом `--debug` показывает и ошибку шаблона:\n\n```bash\nhelm template web podinfo/podinfo -f prod.yaml --version <версия>\n```\n\nУстановка и обновление обычно делаются одной командой, которая ставит релиз, если его нет, и обновляет, если он есть. Флаг `--wait` ждёт, пока поды станут готовыми, `--atomic` откатывает неудачное обновление сам (в Helm 4 у этого флага новое имя, `--rollback-on-failure`, а старое оставлено для совместимости), а версию чарта, которую вы выбрали в выводе `helm search repo`, закрепляют флагом `--version`, как образ закрепляют тегом:\n\n```bash\nhelm upgrade --install web podinfo/podinfo -n shop --create-namespace -f prod.yaml --version <версия> --wait --atomic\nhelm list -n shop\nhelm history web -n shop                   # ревизии релиза\nhelm get values web -n shop                # с какими values стоит сейчас\nhelm rollback web 2 -n shop                # вернуться к ревизии 2\nhelm uninstall web -n shop\n```\n\nНа собеседовании часто спрашивают, где Helm хранит историю и чем `helm rollback` отличается от `kubectl rollout undo`. История лежит в кластере, в объектах Secret с именами вида `sh.helm.release.v1.web.v3` в namespace релиза. `helm rollback` возвращает весь набор объектов релиза, а `kubectl rollout undo` только шаблон одного Deployment.',
-        'You will run these commands on a real node in stage 2, and at work they appear in almost every deploy pipeline. A chart is taken from a repository, its defaults are looked at, and your differences go into a file:\n\n```bash\nhelm repo add podinfo https://stefanprodan.github.io/podinfo\nhelm search repo podinfo --versions        # which chart versions exist\nhelm show values podinfo/podinfo > defaults.yaml\n```\n\nBefore changing anything in the cluster, look at the manifests you will get. `helm template` puts the values into the templates and prints ready YAML without sending anything to the cluster, and with `--debug` it also shows a template error:\n\n```bash\nhelm template web podinfo/podinfo -f prod.yaml --version <version>\n```\n\nInstalling and upgrading are usually one command that installs the release if there is none and upgrades it if there is. `--wait` waits until the pods are ready, `--atomic` rolls a failed upgrade back by itself (Helm 4 renamed it to `--rollback-on-failure` and keeps the old name for compatibility), and the chart version you picked from `helm search repo` is pinned with `--version`, as an image is pinned with a tag:\n\n```bash\nhelm upgrade --install web podinfo/podinfo -n shop --create-namespace -f prod.yaml --version <version> --wait --atomic\nhelm list -n shop\nhelm history web -n shop                   # the release revisions\nhelm get values web -n shop                # which values it runs with now\nhelm rollback web 2 -n shop                # back to revision 2\nhelm uninstall web -n shop\n```\n\nInterviews often ask where Helm keeps its history and how `helm rollback` differs from `kubectl rollout undo`. The history is in the cluster, in Secret objects named like `sh.helm.release.v1.web.v3` in the release namespace. `helm rollback` brings back the whole set of the release’s objects, while `kubectl rollout undo` brings back only the template of one Deployment.',
+        'В учебном кластере репозиторий находился сразу, а в работе к командам из лабораторной работы добавляются ещё две привычки. Версию чарта, которую вы выбрали в выводе `helm search repo --versions`, закрепляют флагом `--version`, как образ закрепляют тегом. Установку и обновление делают одной командой, которая ставит релиз, если его нет, и обновляет, если он есть:\n\n```bash\nhelm upgrade --install shop podinfo/podinfo -n shop --create-namespace -f prod.yaml --version <версия> --wait --atomic\n```\n\nФлаг `--atomic` сам откатывает неудачное обновление, то есть делает то, что вы только что сделали руками командой `helm rollback`. В Helm 4 у этого флага новое имя, `--rollback-on-failure`, а старое оставлено для совместимости.\n\nНа собеседовании часто спрашивают, чем `helm rollback` отличается от `kubectl rollout undo`. `helm rollback` возвращает весь набор объектов релиза и записывает новую ревизию в историю релиза. `kubectl rollout undo` возвращает только шаблон одного Deployment и о релизе ничего не знает, поэтому после него история Helm расходится с тем, что работает в кластере, как в одной из ошибок последнего задания.',
+        'In the training cluster the repository was there at once; at work two more habits join the commands from the lab. The chart version you picked from `helm search repo --versions` is pinned with `--version`, as an image is pinned with a tag. Installing and upgrading are one command that installs the release if there is none and upgrades it if there is:\n\n```bash\nhelm upgrade --install shop podinfo/podinfo -n shop --create-namespace -f prod.yaml --version <version> --wait --atomic\n```\n\n`--atomic` rolls a failed upgrade back by itself, doing what you have just done by hand with `helm rollback`. Helm 4 renamed it to `--rollback-on-failure` and keeps the old name for compatibility.\n\nInterviews often ask how `helm rollback` differs from `kubectl rollout undo`. `helm rollback` brings back the whole set of the release’s objects and writes a new revision into the release history. `kubectl rollout undo` brings back only the template of one Deployment and knows nothing of the release, so afterwards Helm’s history disagrees with what runs in the cluster, as in one of the mistakes of the last task.',
       ),
+    },
+    {
+      id: 'deep',
+      kind: 'text',
+      step: 'explain',
+      levels: ['experienced'],
+      title: bi('Порядок values и почему состояние релиза лежит в Secret', 'The order of values, and why release state lives in Secrets'),
+      body: bi(
+        'Helm собирает values в строгом порядке, и каждый следующий слой перекрывает предыдущий: сначала `values.yaml` самого чарта, затем файлы из флагов `-f` слева направо, затем флаги `--set`, `--set-string` и `--set-file`, тоже слева направо. Словари сливаются по ключам, а списки заменяются целиком, поэтому файл, где перечислен один элемент `env`, стирает весь список из чарта. Флаг `--reuse-values` берёт за основу значения прошлой ревизии вместо значений чарта, а `--reset-then-reuse-values` начинает заново со значений чарта текущей версии и накладывает поверх них значения прошлой ревизии, что безопаснее при смене версии чарта.\n\nСостояние релиза Helm 3 хранит в кластере, а не на компьютере того, кто его ставил, и тому есть три причины. Во-первых, релиз видит любой, у кого есть доступ к namespace: коллега, другой конвейер и вы на другом ноутбуке. Во-вторых, в ревизии записаны все переданные values, а среди них бывают пароли, поэтому ревизии лежат в Secret и доступ к ним ограничивают те же роли RBAC, что и доступ к остальным Secret namespace. В-третьих, у Helm 2 для этого был отдельный сервер Tiller с правами на весь кластер, и Helm 3 избавился от него: теперь каждая команда Helm выполняется с правами того, кто её запустил. Тип таких Secret — `helm.sh/release.v1`, на них стоят метки `owner=helm`, `name`, `status` и `version`, а содержимое ревизии сжато и закодировано base64. Переменная окружения `HELM_DRIVER` позволяет хранить ревизии в ConfigMap, но так делают редко, потому что тогда values с паролями открыты всем, кто читает ConfigMap.',
+        'Helm gathers values in a strict order, and every layer overrides the one before: first the chart’s own `values.yaml`, then the `-f` files from left to right, then the `--set`, `--set-string` and `--set-file` flags, also left to right. Maps merge by key, and lists are replaced whole, so a file listing one `env` item wipes the chart’s whole list. `--reuse-values` starts from the previous revision’s values instead of the chart’s, and `--reset-then-reuse-values` starts again from the defaults of the current chart version and lays the previous revision’s values over them, which is safer when the chart version changes.\n\nHelm 3 keeps release state in the cluster rather than on the computer of whoever installed it, for three reasons. First, anyone with access to the namespace sees the release: a colleague, another pipeline and you on another laptop. Second, a revision records all the values passed, and some of them are passwords, so revisions live in Secrets, and the same RBAC roles that guard the namespace’s other Secrets guard them. Third, Helm 2 had a separate server, Tiller, with rights over the whole cluster for this, and Helm 3 got rid of it: every Helm command now runs with the rights of whoever started it. Such Secrets have the type `helm.sh/release.v1` and the labels `owner=helm`, `name`, `status` and `version`, and the revision content is compressed and base64-encoded. The environment variable `HELM_DRIVER` can keep revisions in ConfigMaps instead, but that is rare, because then values with passwords are open to everyone who reads ConfigMaps.',
+      ),
+    },
+    {
+      id: 'lab-deep',
+      kind: 'terminal',
+      step: 'practice',
+      machine: 'sim',
+      levels: ['experienced'],
+      setup: HELM_LAB,
+      intro: bi('Кластер чистый, а файл `prod.yaml` тот же, что в прошлой работе. Репозиторий `training` нужно подключить заново.', 'The cluster is clean, and `prod.yaml` is the same as in the previous lab. Repository `training` has to be added again.'),
+      tasks: [
+        {
+          id: 'precedence',
+          prompt: bi('Ничего не устанавливая, выясните, сколько реплик получится у релиза `shop`, если передать и файл `prod.yaml`, и флаг `--set replicaCount=5`.', 'Without installing anything, find out how many replicas release `shop` gets if both `prod.yaml` and `--set replicaCount=5` are passed.'),
+          check: {
+            stdout: /kind: Deployment[\s\S]*replicas: 5/,
+            fail: [{ if: (f) => /replicas: 3\b/.test(lastOut(f)?.out ?? ''), say: bi('Получилось три реплики из файла, значит, флаг `--set replicaCount=5` в команду не попал. Передайте оба источника значений сразу.', 'You got three replicas from the file, so `--set replicaCount=5` did not get into the command. Pass both sources of values at once.') }],
+          },
+          chips: 'helm template shop training/podinfo -f prod.yaml --set replicaCount=5',
+          concepts: ['k8s.helm-values'],
+          hints: {
+            H1: bi('Подойдёт `helm template` с обоими флагами. Порядок флагов в командной строке здесь не важен: `--set` всегда накладывается после всех файлов.', '`helm template` with both flags will do. The order of the flags on the command line does not matter here: `--set` is always laid over all the files.'),
+            H2: bi('Выполните `helm repo add training https://charts.example.test`, а затем `helm template shop training/podinfo -f prod.yaml --set replicaCount=5`.', 'Run `helm repo add training https://charts.example.test`, then `helm template shop training/podinfo -f prod.yaml --set replicaCount=5`.'),
+            H3: bi('В выводе ищите строку `replicas:` в манифесте Deployment. При правильной команде в ней будет 5, а не 3 из файла.', 'Look for the `replicas:` line in the Deployment manifest. With the right command it says 5, not the 3 from the file.'),
+          },
+        },
+        {
+          id: 'secrets',
+          prompt: bi('Установите релиз `shop`, обновите его один раз и найдите объекты кластера, в которых Helm хранит обе ревизии.', 'Install release `shop`, upgrade it once and find the cluster objects where Helm keeps both revisions.'),
+          check: {
+            when: (f) => revisionsOf(f, 'default', 'shop').length >= 2,
+            stdout: /sh\.helm\.release\.v1\.shop\.v1[\s\S]*sh\.helm\.release\.v1\.shop\.v2/,
+            fail: [{ if: (f) => revisionsOf(f, 'default', 'shop').length < 2, say: bi('У релиза пока меньше двух ревизий. Установите его командой `helm install`, а затем обновите командой `helm upgrade`.', 'The release has fewer than two revisions yet. Install it with `helm install`, then upgrade it with `helm upgrade`.') }],
+          },
+          chips: 'kubectl get secrets -l owner=helm',
+          concepts: ['k8s.helm-release', 'k8s.secret'],
+          hints: {
+            H1: bi('Ревизии лежат в Secret того же namespace, что и релиз, и на них стоит метка `owner=helm`.', 'The revisions are in Secrets of the release namespace, labelled `owner=helm`.'),
+            H2: bi('После `helm install shop training/podinfo` и `helm upgrade shop training/podinfo -f prod.yaml` выполните `kubectl get secrets -l owner=helm --show-labels`, а метки status покажут, какая ревизия сейчас развёрнута.', 'After `helm install shop training/podinfo` and `helm upgrade shop training/podinfo -f prod.yaml` run `kubectl get secrets -l owner=helm --show-labels`; the status labels show which revision is deployed now.'),
+            H3: bi('Имена этих Secret строятся так: `sh.helm.release.v1.<релиз>.v<номер ревизии>`. Для релиза shop после установки и обновления их будет два, v1 и v2.', 'These Secrets are named `sh.helm.release.v1.<release>.v<revision number>`. For release shop after an install and an upgrade there are two, v1 and v2.'),
+          },
+        },
+      ],
     },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: helmQuiz.map((q) => q.id) },
   ],

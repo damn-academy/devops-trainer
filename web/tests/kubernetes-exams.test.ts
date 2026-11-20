@@ -68,16 +68,26 @@ const CKA: Record<string, string[]> = {
   ],
   deadline: ["sed -i 's/^spec:$/spec:\\n  activeDeadlineSeconds: 60/' import.yaml", 'cat import.yaml', 'kubectl apply -f import.yaml', 'cluster ff 90s'],
   history: ["kubectl patch deployment web -p '{\"spec\":{\"revisionHistoryLimit\":2}}'", 'cluster ff 10s'],
+  rbac: [
+    'kubectl create clusterrole deployment-clusterrole --verb=create --resource=deployments.apps,statefulsets.apps,daemonsets.apps',
+    'kubectl -n app-team1 create serviceaccount cicd-token',
+    'kubectl -n app-team1 create rolebinding cicd-token --clusterrole=deployment-clusterrole --serviceaccount=app-team1:cicd-token',
+  ],
+  sts: [
+    `kubectl patch statefulset db -p '{"spec":{"updateStrategy":{"type":"RollingUpdate","rollingUpdate":{"partition":2}}}}'`,
+    'kubectl set image statefulset/db db=trainer/web:1.1',
+    'cluster ff 60s',
+  ],
 };
 
 describe('the CKA-style exam of stage 1', () => {
   const exam = registry.exams.get('k8s-1.exam.cka')!;
-  it('has the CKA shape: sixteen tasks per variant, 120 minutes, 66%, a quarter beyond the course', () => {
+  it('has the CKA shape: eighteen tasks per variant, 120 minutes, 66%, a quarter beyond the course', () => {
     expect(exam.block).toBe('k8s-1');
     expect(exam.minutes).toBe(120);
     expect(exam.pass).toBe(0.66);
     const variant = exam.tasks.filter((t) => t.pool !== 'probe' || t.id === 'probe-path');
-    expect(variant.length).toBe(16);
+    expect(variant.length).toBe(18);
     const total = variant.reduce((s, t) => s + t.weight, 0);
     const beyond = variant.filter((t) => t.beyond).reduce((s, t) => s + t.weight, 0);
     expect(beyond / total).toBeGreaterThanOrEqual(0.2);

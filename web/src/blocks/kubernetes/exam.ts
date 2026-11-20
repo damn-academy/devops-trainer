@@ -8,6 +8,7 @@ import { bi } from '../../core/i18n';
 import type { Exam, Facts, TerminalSetup } from '../../core/types';
 import type { K8sFacts } from '../../engine/kube-lite/facts';
 import type { Obj } from '../../engine/kube-lite/util';
+import { claimOf, may, objOf, podOf, stsOf } from './rbac-facts';
 import { CLIENT_POD, DNS_BROKEN, EXAM_LIKE, NETPOL_LAB, SERVICE_BROKEN, WEB_DEPLOY, client, deploy, ns, svc } from './setups';
 
 const k8s = (f: Facts) => f.k8s as K8sFacts;
@@ -21,15 +22,19 @@ export const EXAM_SETUPS = {
   rollback: { hostname: 'laptop', ext: { k8s: { manifests: [WEB_DEPLOY, WEB_DEPLOY.replace('trainer/web:1.0', 'trainer/web:1.1'), WEB_DEPLOY.replace('trainer/web:1.0', 'trainer/web:2.0')], settle: 120_000 } } } as TerminalSetup,
   drain: { hostname: 'laptop', ext: { k8s: { manifests: [deploy('web', 'default', 3, 'trainer/web:1.0', { app: 'web' }), CLIENT_POD] } } } as TerminalSetup,
   config: { hostname: 'laptop', ext: { k8s: { manifests: [deploy('web', 'default', 2, 'trainer/web:1.0', { app: 'web' })] } } } as TerminalSetup,
+  access: { hostname: 'laptop', ext: { k8s: { manifests: [ns('shop'), ns('dev'), deploy('web', 'shop', 2, 'trainer/web:1.0', { app: 'web' }), deploy('web', 'dev', 1, 'trainer/web:1.0', { app: 'web' })] } } } as TerminalSetup,
+  queue: { hostname: 'laptop', ext: { k8s: { addons: ['csi-hostpath'], manifests: [CLIENT_POD] } } } as TerminalSetup,
 };
+
+const QUEUE = ['queue-0', 'queue-1', 'queue-2'];
 
 export const k8sExam: Exam = {
   id: 'k8s-1.exam',
   block: 'k8s-1',
   title: bi('Смена в кластере', 'A shift on the cluster'),
   intro: bi(
-    'Перед вами девять карточек из трекера, и у каждой свой кластер. Сначала выясните, что сломано и на какой ступени, а потом чините так, как написано в карточке: если сказано «не пересоздавая», пересоздание не засчитывается. Открыты только `kubectl explain`, справка `--help` и страницы kubernetes.io, а наставник выключен. Задания проверяются по состоянию кластера, а не по набранным командам.',
-    'Nine cards from the tracker, each with its own cluster. First work out what is broken and on which step, then fix it — the way the card says: where it says "without recreating", recreating does not count. Only `kubectl explain`, the `--help` output and the kubernetes.io pages are open; the mentor is off. Tasks are checked by the state of the cluster, not by the commands typed.',
+    'Перед вами одиннадцать карточек из трекера, и у каждой свой кластер. Сначала выясните, что сломано и на какой ступени, а потом чините так, как написано в карточке: если сказано «не пересоздавая», пересоздание не засчитывается. Открыты только `kubectl explain`, справка `--help` и страницы kubernetes.io, а наставник выключен. Задания проверяются по состоянию кластера, а не по набранным командам.',
+    'Eleven cards from the tracker, each with its own cluster. First work out what is broken and on which step, then fix it — the way the card says: where it says "without recreating", recreating does not count. Only `kubectl explain`, the `--help` output and the kubernetes.io pages are open; the mentor is off. Tasks are checked by the state of the cluster, not by the commands typed.',
   ),
   story: bi(
     'Вы дежурный инженер платформенной команды интернет-магазина. За смену в трекер пришли карточки от команд каталога, платежей и аналитики. Кластер учебный, но все ошибки в нём взяты из настоящих разборов инцидентов.',
@@ -160,6 +165,46 @@ export const k8sExam: Exam = {
           },
         },
         concepts: ['k8s.configmap'],
+      },
+    },
+    {
+      id: 'rbac',
+      weight: 1,
+      kind: 'task',
+      setup: EXAM_SETUPS.access,
+      task: {
+        id: 'x-rbac',
+        prompt: bi(
+          'Пришла заявка «Разработчику нужны логи магазина». Пользователь `developer` должен читать поды и их логи в namespace `shop`. Выдайте ему это право так, чтобы ни в одном другом namespace и ни для каких других действий прав у него не появилось.',
+          'The ticket says: “The developer needs the shop’s logs”. User `developer` must read pods and their logs in namespace `shop`. Grant this so that no rights appear for them in any other namespace or for any other action.',
+        ),
+        check: {
+          when: (f) => may(f, 'developer', 'list', 'pods', 'shop') && may(f, 'developer', 'get', 'pods/log', 'shop') && !may(f, 'developer', 'list', 'pods', 'dev') && !may(f, 'developer', 'delete', 'pods', 'shop') && !may(f, 'developer', 'get', 'secrets', 'shop'),
+        },
+        concepts: ['k8s.rbac', 'k8s.least-privilege'],
+      },
+    },
+    {
+      id: 'sts',
+      weight: 1,
+      kind: 'task',
+      setup: EXAM_SETUPS.queue,
+      task: {
+        id: 'x-sts',
+        prompt: bi(
+          'Пришла заявка «После перезапуска очередь сообщений пустая». Запустите в namespace `default` StatefulSet `queue` на три реплики из образа `trainer/web:1.0` вместе с безголовым сервисом `queue`. У каждой реплики должна быть собственная заявка на 1 ГиБ, а реплика `queue-2` должна быть доступна по имени `queue-2.queue`.',
+          'The ticket says: “After a restart the message queue is empty”. In namespace `default` start a StatefulSet `queue` with three replicas from the image `trainer/web:1.0` together with a headless Service `queue`. Every replica must have a claim of its own of 1 GiB, and replica `queue-2` must be reachable by the name `queue-2.queue`.',
+        ),
+        check: {
+          when: (f) => {
+            const s = stsOf(f, 'default', 'queue');
+            const pod2 = objOf(f, 'Pod', 'default', 'queue-2');
+            return !!s && s.ready >= 3 && objOf(f, 'Service', 'default', 'queue')?.spec?.clusterIP === 'None' && objOf(f, 'StatefulSet', 'default', 'queue')?.spec?.serviceName === 'queue' && pod2?.spec?.subdomain === 'queue' && !!podOf(f, 'default', 'queue-2')?.ready &&
+              QUEUE.every((p) => { const claims = s.ordinals.find((o) => o.name === p)?.pvcs ?? []; return claims.length > 0 && claims.every((c) => claimOf(f, 'default', c)?.status?.phase === 'Bound' && claimOf(f, 'default', c)?.spec?.resources?.requests?.storage === '1Gi'); }) &&
+              new Set(QUEUE.flatMap((p) => s.ordinals.find((o) => o.name === p)?.pvcs ?? [])).size === 3;
+          },
+        },
+        concepts: ['k8s.statefulset', 'k8s.headless-service', 'k8s.pvc'],
       },
     },
     {
