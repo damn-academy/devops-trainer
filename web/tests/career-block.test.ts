@@ -5,10 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { registry } from '../src/core/registry';
 import { lintExam, pickTasks } from '../src/engine/quiz/exam';
 import { lintPlacement } from '../src/engine/quiz/placement';
-import { DRILLS, DRILL_504 } from '../src/blocks/career/data/drills';
+import { DRILLS, DRILL_504, DRILL_DISK } from '../src/blocks/career/data/drills';
 import { CARDS } from '../src/blocks/career/data/questions';
 import { PETS, PET_PATHS } from '../src/blocks/career/data/pets';
-import { finishStatus, isRight, matchCommand, move, pickVariant, scoreDrill, startDrill, type Drill, type DrillState } from '../src/blocks/career/drill-engine';
+import { finishStatus, isRight, matchAhead, matchCommand, move, pickVariant, scoreDrill, skipStep, startDrill, type Drill, type DrillState } from '../src/blocks/career/drill-engine';
 import { analyze, extractRequirements } from '../src/blocks/career/vacancy';
 import { emptyResume, lintResume, resumeReady, toJsonResume, toText, type Resume } from '../src/blocks/career/resume';
 import { symptomOf } from '../src/blocks/career/explainers/symptom';
@@ -71,6 +71,19 @@ describe('drills', () => {
     expect(matchCommand(DRILL_504.steps[1], 'ls')).toBeUndefined();
     for (let i = 0; i < 20; i++) expect(pickVariant(DRILL_504, 'pool')).not.toBe('pool');
   });
+
+  it('sudo is ignored, the output follows the typed flags, and a next-step command passes over the clarifying step', () => {
+    expect(matchCommand(DRILL_504.steps[5], 'sudo nft list ruleset')?.id).toBe('nft');
+    let s = move(DRILL_504, startDrill(DRILL_504, 'pool'), 'ask').state;
+    expect(String(move(DRILL_504, s, 'curl', 'command', 'curl -sv https://shop.example/checkout').output)).toContain('> GET /checkout');
+    expect(String(move(DRILL_504, s, 'curl', 'command', 'curl -sI https://shop.example/checkout').output)).toBe('HTTP/2 504\nserver: nginx\ncontent-type: text/html');
+    s = startDrill(DRILL_DISK, 'no-rotate');
+    const ahead = matchAhead(DRILL_DISK, s, 'df -h');
+    expect(ahead?.id).toBe('df');
+    s = move(DRILL_DISK, skipStep(s), ahead!.id, 'command', 'df -h').state;
+    expect(s.step).toBe(2);
+    expect(matchAhead(DRILL_DISK, s, 'df -h')).toBeUndefined();
+  });
 });
 
 describe('vacancy analyzer', () => {
@@ -106,6 +119,15 @@ Zabbix`;
     expect(a.outside).toContain('Zabbix');
     expect(analyze(reqs, () => 'none').verdict).toBe('not-yet');
     expect(analyze([], () => 'none').verdict).toBe('empty');
+  });
+
+  it('credits Argo CD from either block, counts skills marked as known and says when nothing is required', () => {
+    const reqs = extractRequirements('Требования:\nArgo CD\nMySQL');
+    const a = analyze(reqs, (b) => (b === 'k8s-3' ? 'lessons' : 'none'), new Set(['sql']));
+    expect(a.rows.map((r) => r.status)).toEqual(['lessons', 'known']);
+    expect(a.total).toBe(1);
+    expect(a.hasRequired).toBe(false);
+    expect(extractRequirements('Мы ждём от вас:\nLinux\nБудет плюсом:\nHelm').map((r) => r.required)).toEqual([true, false]);
   });
 });
 
@@ -157,6 +179,9 @@ describe('explainer models', () => {
     expect(b.weeksToOffer).toBeLessThan(a.weeksToOffer);
     expect(funnelNumbers({ rate: 12, reply: 15, letter: true, tech: 30 }).perWeek.reply).toBeGreaterThan(a.perWeek.reply);
     expect(funnelNumbers({ rate: 12, reply: 15, letter: false, tech: 30 }, true).wip).toBe(0);
+    expect(a.wip).toBeCloseTo(12 * a.avgWeeks);
+    expect(a.avgWeeks).toBeGreaterThan(1.5);
+    expect(a.avgWeeks).toBeLessThan(a.pathWeeks);
   });
 
   it('the quote tolerance separates a recognition slip from an invention', () => {

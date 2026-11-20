@@ -49,6 +49,9 @@ describe('widgets', () => {
     const { c, w } = ctx();
     workbenchWidget.mount(el, { query: 'up{job="api"}', goals: [{ id: 'g', prompt: bi('x', 'x'), reference: 'up{job="api"}' }] }, w);
     expect(el.querySelectorAll('.wb-table tr').length).toBe(3);
+    // The starting query is only shown: a goal counts after the learner runs a query.
+    expect(c.done).toBe(0);
+    (el.querySelector('.wb-q button') as HTMLButtonElement).click();
     expect(c.done).toBe(1);
     const input = el.querySelector('textarea')!;
     input.value = 'rate(up';

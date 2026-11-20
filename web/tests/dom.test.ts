@@ -36,6 +36,27 @@ describe('explainer renderer', () => {
   });
 });
 
+describe('knobs shown for one run only', () => {
+  it('hides the serial knob and its group outside the upgrade run', async () => {
+    const { codeModel } = await import('../src/blocks/k8s-code/explainers');
+    const mount = (params?: Record<string, string | number | boolean>) => {
+      const el = document.createElement('div');
+      document.body.append(el);
+      const m = mountModel(el, codeModel as unknown as ProcessModel, { level: 'beginner', params, onComplete: () => {}, record: () => {}, openDoc: () => {} });
+      const knob = el.querySelector<HTMLElement>('.knob[data-knob="serial"]')!;
+      return { m, knob, group: knob.closest('fieldset')! };
+    };
+    const first = mount();
+    expect(first.knob.hidden).toBe(true);
+    expect(first.group.hidden).toBe(true);
+    first.m.dispose();
+    const upgrade = mount({ run: 'upgrade' });
+    expect(upgrade.knob.hidden).toBe(false);
+    expect(upgrade.group.hidden).toBe(false);
+    upgrade.m.dispose();
+  });
+});
+
 describe('quiz renderer', () => {
   it('enables checking once an answer is picked and explains the distractor', () => {
     const el = document.createElement('div');

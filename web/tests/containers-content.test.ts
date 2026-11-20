@@ -11,7 +11,7 @@ import { terminalRegistry } from '../src/engine/terminal/registry';
 import { createSimMachine, type SimMachine } from '../src/engine/terminal/shell';
 import dsim from '../src/engine/dsim/module';
 import block from '../src/blocks/containers/index';
-import { stackNumbers } from '../src/blocks/containers/explainers/stack';
+import { stackModel, stackNumbers } from '../src/blocks/containers/explainers/stack';
 import { plan, firstMiss } from '../src/blocks/containers/explainers/build';
 import { stopResult } from '../src/blocks/containers/explainers/stop';
 
@@ -64,6 +64,16 @@ describe('containers explainers', () => {
     expect(n.ctMem).toBeLessThan(n.vmMem);
   });
 
+  it('agrees Russian numerals with the number of applications and machines', () => {
+    const caps = (apps: number) => stackModel.run({ apps, conflict: true, vuln: false, otherKernel: false }, new Set()).map((st) => st.caption.ru).join(' ');
+    expect(caps(1)).toContain('На 1 приложение сервер');
+    expect(caps(1)).toContain('работает 1 виртуальная машина');
+    expect(caps(4)).toContain('На 4 приложения сервер');
+    expect(caps(4)).toContain('работают 4 виртуальные машины');
+    expect(caps(30)).toContain('На 30 приложений сервер');
+    expect(caps(30)).toContain('работают 12 виртуальных машин');
+  });
+
   it('rebuilds from the first changed instruction', () => {
     expect(plan('good')[firstMiss(plan('good'), 'code', false)].text).toBe('COPY . .');
     expect(plan('bad')[firstMiss(plan('bad'), 'code', false)].text).toBe('COPY . .');
@@ -114,9 +124,9 @@ describe('containers labs can be solved', () => {
       count: ["docker image inspect nginx:1.30-alpine --format '{{len .RootFS.Layers}}'"],
       history: ['docker history nginx:1.30-alpine'],
       push: ['docker tag nginx:1.30-alpine registry.lab/learner/web:1.0', 'docker push registry.lab/learner/web:1.0'],
-      digest: [],
+      digest: ['docker pull alpine@sha256:2906d475629a72acbc446f89121308df237675baa3e6992575107246d55f9e62'],
     });
-    expect(r).toMatchObject({ pull: true, count: true, history: true, push: true });
+    expect(r).toEqual({ pull: true, count: true, history: true, push: true, digest: true });
   });
 
   it('storage and networks', async () => {
@@ -128,9 +138,50 @@ describe('containers labs can be solved', () => {
     expect(r).toEqual({ dns: true, volume: true, bind: true });
   });
 
+  it('does not count the digest goal before the learner pulls by digest', async () => {
+    const r = await solve('containers.image', 'lab', { pull: ['docker pull nginx:1.30-alpine'] });
+    expect(r.digest).toBe(false);
+  });
+
+  it('explains a name conflict in the first steps', async () => {
+    const lesson = block.lessons!.find((l) => l.id === 'containers.first-steps')!;
+    const sec = lesson.sections.find((s) => s.id === 'lab') as TerminalSection;
+    const m = await createSimMachine(fast(sec.setup));
+    await m.exec('docker run -d --name web nginx:1.30-alpine');
+    await m.exec('docker run -d --name web -p 8080:80 nginx:1.30-alpine');
+    const web = (sec.tasks as Task[]).find((t) => t.id === 'web')!;
+    const res = evaluateCheck(web.check, await m.facts());
+    expect(res.pass).toBe(false);
+    expect(res.say?.ru).toContain('docker rm -f web');
+  });
+
+  it('a container by hand', async () => {
+    const r = await solve('containers.by-hand', 'lab', {
+      chroot: ['chroot /c/rootfs /bin/sh', 'ls /'],
+      uts: ['exit', 'unshare --uts sh', 'hostname box'],
+      pid: ['exit', 'unshare --pid --fork --mount sh', 'mount -t proc proc /proc'],
+      cgroup: ['exit', 'mkdir /sys/fs/cgroup/box && echo 16M > /sys/fs/cgroup/box/memory.max && echo 20 > /sys/fs/cgroup/box/pids.max && echo $$ > /sys/fs/cgroup/box/cgroup.procs'],
+      overlay: ['mount -t overlay overlay -o lowerdir=/c/l2:/c/l1,upperdir=/c/upper,workdir=/c/work /c/merged'],
+      caps: ["capsh --drop=cap_sys_admin -- -c 'mount -t tmpfs t /mnt'"],
+      crun: ['cd /c/bundle && cp -r /c/rootfs rootfs && crun spec && crun run mybox', 'hostname', 'exit'],
+    });
+    expect(r).toEqual({ chroot: true, uts: true, pid: true, cgroup: true, overlay: true, caps: true, crun: true });
+  });
+
+  it('the anatomy lab, with crun list accepted for the created state', async () => {
+    const r = await solve('containers.anatomy', 'lab', {
+      spec: ['crun spec'],
+      namespaces: ['cat config.json'],
+      create: ['crun create box', 'crun list'],
+      start: ['crun start box', 'hostname', 'exit', 'crun state box'],
+      delete: ['crun delete box', 'crun list'],
+    });
+    expect(r).toEqual({ spec: true, namespaces: true, create: true, start: true, delete: true });
+  });
+
   it('the boundary drills', async () => {
     const r = await solve('containers.boundaries', 'drills', {
-      'b-kernel': ['docker logs tool', 'docker run trainer/tool:1.0-multiarch'],
+      'b-kernel': ['docker logs tool', 'docker run --rm trainer/tool:1.0-multiarch'],
       'b-network': ['docker rm -f web', 'docker run -d --name web -p 8080:8000 -e BIND=0.0.0.0 trainer/web:1.0'],
       'b-io': ['docker rm -f logger', 'docker run -d --name logger -e LOG_FILE=/dev/stdout trainer/logger:1.0'],
       'b-identity': ['docker exec -u 0 app chown 1001 /data', 'docker exec app touch /data/ok'],
@@ -166,6 +217,15 @@ describe('containers labs can be solved', () => {
     expect(r).toEqual({ site: true, cache: true, stop: true, small: true });
   });
 
+  it('accepts a two-stage Go build on scratch and refuses a single stage', async () => {
+    const twoStage = await solve('containers.dockerfile', 'lab', {
+      small: [`printf 'FROM golang:1.25 AS build\\nWORKDIR /src\\nCOPY . .\\nRUN CGO_ENABLED=0 go build -o /out/app .\\nFROM scratch\\nCOPY --from=build /out/app /app\\nCMD ["/app"]\\n' > ~/go/Dockerfile`, 'docker build -t goapp:small ~/go'],
+    });
+    expect(twoStage.small).toBe(true);
+    const oneStage = await solve('containers.dockerfile', 'lab', { small: ["echo 'FROM alpine:3.22' > ~/go/Dockerfile", 'docker build -t goapp:small ~/go'] });
+    expect(oneStage.small).toBe(false);
+  });
+
   it('compose', async () => {
     const healthy = `cat > compose.yaml <<'EOF'
 services:
@@ -195,5 +255,8 @@ EOF`;
       persist: ['docker compose down', 'docker compose up -d'],
     });
     expect(r).toEqual({ up: true, healthy: true, persist: true });
+    const early = await solve('containers.compose', 'lab', { up: ['docker compose up -d'], healthy: [healthy, 'docker compose up -d --force-recreate'] });
+    expect(early.persist).toBe(false);
   });
 });
+

@@ -63,9 +63,38 @@ describe('block 9 content', () => {
     expect(await passes(m, tasks[2])).toBe(true);
   });
 
+  it('nodes: an inventory written as a heredoc with %{ for } passes too', async () => {
+    const { setup, tasks } = lab('k8s-3.nodes', 'lab');
+    const m = await createSimMachine(setup);
+    const heredoc = [
+      'output "inventory" {',
+      '  value = <<-EOT',
+      '    [control_plane]',
+      '    cp-1 ansible_host=${edu_vm.cp.public_ip}',
+      '',
+      '    [workers]',
+      '    %{ for w in edu_vm.worker ~}',
+      '    ${w.name} ansible_host=${w.public_ip}',
+      '    %{ endfor ~}',
+      '',
+      '    [all:vars]',
+      '    cp_endpoint=${edu_vm.cp.private_ip}:6443',
+      '    EOT',
+      '}',
+      '',
+    ].join('\n');
+    write(m, `${INFRA}/main.tf`, TF_HEAD + TF_CP + TF_WORKERS + heredoc);
+    await sh(m, 'terraform init', 'terraform apply -auto-approve');
+    expect(await passes(m, tasks[0])).toBe(true);
+    const st = JSON.parse(m.rootFs.readFile(`${INFRA}/terraform.tfstate`)) as { outputs: Record<string, { value: string }> };
+    expect(st.outputs.inventory.value).toMatch(/\[workers\]\nworker-1 ansible_host=\S+\nworker-2 ansible_host=\S+\n\[all:vars\]/);
+  });
+
   it('prepare: two roles, then changed=0', async () => {
     const { setup, tasks } = lab('k8s-3.prepare', 'lab');
     const m = await createSimMachine(setup);
+    // A fresh lab shows no failing explanation before the first playbook run.
+    expect(evaluateCheck(tasks[0].check, await m.facts()).say).toBeUndefined();
     write(m, `${OPS}/roles/k8s_prereq/tasks/main.yml`, ROLE_PREREQ);
     await sh(m, 'ansible-playbook prepare.yml');
     expect(await passes(m, tasks[0])).toBe(true);
@@ -250,7 +279,16 @@ describe('block 9 content', () => {
     expect(codeModel.run({ ...d, run: 'rebuild' }, new Set(['stale-inventory'])).find((s) => s.broken)?.broken?.at).toBe('e-join1');
     expect(Math.min(...codeModel.run({ ...d, run: 'upgrade', serial: 'all' }, new Set()).map((s) => s.metrics?.replicas ?? 9))).toBe(0);
     expect(Math.min(...codeModel.run({ ...d, run: 'upgrade', serial: '1' }, new Set()).map((s) => s.metrics?.replicas ?? 9))).toBeGreaterThan(0);
+    // Before any application is released the counter of its replicas is not shown.
+    expect(codeModel.run(d, new Set()).every((s) => s.metrics?.replicas === undefined)).toBe(true);
+    // One worker: serial: 1 cannot keep the application up, and the last node does not hand over to a next one.
+    const one = codeModel.run({ ...d, workers: 1, run: 'upgrade', serial: '1' }, new Set());
+    expect(Math.min(...one.map((s) => s.metrics?.replicas ?? 9))).toBe(0);
+    expect(one.at(-1)?.caption.ru).not.toMatch(/следующему узлу/);
+    expect(codeModel.run({ ...d, run: 'upgrade', serial: '1' }, new Set()).at(-1)?.caption.ru).toMatch(/последний рабочий узел/);
     const g = { automated: true, selfHeal: true, prune: false, event: 'commit' };
+    // The minutes to a match appear only once the cluster matches Git.
+    expect(gitopsModel.run({ ...g, event: 'edit', selfHeal: false, automated: false }, new Set(['repo-down'])).every((s) => s.metrics?.minutes === undefined)).toBe(true);
     expect(gitopsModel.run(g, new Set()).at(-1)?.id).toBe('healthy');
     expect(gitopsModel.run({ ...g, event: 'edit', selfHeal: false }, new Set()).at(-1)?.metrics?.replicas).toBe(5);
     expect(gitopsModel.run({ ...g, event: 'delete', prune: true }, new Set()).some((s) => s.id === 'pruned')).toBe(true);

@@ -13,6 +13,7 @@ const section = (l: string, s: string) => (registry.lessons.get(l) as Lesson).se
 
 const SOLUTIONS: Record<string, string> = {
   up: 'up{job="api"}',
+  'two-routes': 'http_requests_total{job="api", route=~"/cart|/checkout"}',
   one: 'http_requests_total{instance="api-1:8080"}',
   gauge: 'db_connections_in_use{job="api"}',
   rate: 'rate(http_requests_total{job="api",instance="api-2:8080",route="/cart",code="200"}[5m])',
@@ -29,7 +30,7 @@ const SOLUTIONS: Record<string, string> = {
 };
 
 describe('workbench goals', () => {
-  for (const [lesson, sec] of [['monitoring.series', 'bench'], ['monitoring.promql', 'bench'], ['monitoring.histogram', 'bench'], ['monitoring.incident', 'drill']]) {
+  for (const [lesson, sec] of [['monitoring.series', 'bench'], ['monitoring.promql', 'bench-select'], ['monitoring.promql', 'bench-rate'], ['monitoring.promql', 'bench'], ['monitoring.histogram', 'bench'], ['monitoring.incident', 'drill']]) {
     it(`${lesson} goals pass with a reference solution`, () => {
       const p = (section(lesson, sec) as WidgetSection).props as WorkbenchProps;
       const db = dataset(p.incident ?? 'none');
@@ -42,6 +43,18 @@ describe('workbench goals', () => {
       if (p.query) expect(() => query(db, p.query!)).not.toThrow();
     });
   }
+  it('near misses explain an error share counted over every service', () => {
+    const p = (section('monitoring.promql', 'bench') as WidgetSection).props as WorkbenchProps;
+    const g = p.goals!.find((x) => x.id === 'errors')!;
+    const db = dataset(p.incident ?? 'none');
+    const q = 'sum(rate(http_requests_total{code=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))';
+    expect(equivalent(db, q, g.reference!).ok).toBe(false);
+    expect(g.miss!.find((m) => m.test(query(db, q), q))?.say.en).toMatch(/all the shop’s services/);
+  });
+  it('raw counters are whole numbers', () => {
+    const db = dataset('none');
+    for (const s of db.series.filter((x) => /^http_request(s_total|_duration_seconds_(bucket|count))$/.test(x.labels.__name__))) expect(s.samples.every(([, v]) => Number.isInteger(v)), s.labels.__name__).toBe(true);
+  });
   it('a wrong aggregation does not pass', () => {
     const db = dataset('none');
     expect(equivalent(db, 'sum(rate(http_requests_total{job="api"}[5m]))', 'sum by (route) (rate(http_requests_total{job="api"}[5m]))').ok).toBe(false);

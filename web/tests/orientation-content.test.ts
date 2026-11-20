@@ -72,9 +72,9 @@ describe('orientation block structure', () => {
 
 describe('orientation labs are solvable', () => {
   it('inside a computer', async () => {
-    const m = await solve('orient.inside', 'try', 0, ['nproc']);
-    await solve('orient.inside', 'try', 1, ['free -h'], m);
-    await solve('orient.inside', 'try', 2, ['df -h'], m);
+    await solve('orient.inside', 'try-cpu', 0, ['nproc']);
+    const m = await solve('orient.inside', 'try', 0, ['free -h']);
+    await solve('orient.inside', 'try', 1, ['df -h'], m);
   });
 
   it('the operating system and files', async () => {
@@ -93,6 +93,13 @@ describe('orientation labs are solvable', () => {
   it('networks', async () => {
     const m = await solve('orient.net', 'try', 0, ['ping -c 3 shop.example']);
     await solve('orient.net', 'try', 1, ['echo 198.51.100.20 > shop-address.txt'], m);
+    // the placeholder typed literally, with angle brackets, is explained in words
+    const { setup, tasks } = lab('orient.net');
+    const m2 = await createSimMachine(setup);
+    await sh(m2, 'echo <198.51.100.20> > shop-address.txt');
+    const r = evaluateCheck(tasks[1].check, await m2.facts());
+    expect(r.pass).toBe(false);
+    expect(r.say?.en).toMatch(/need not be typed/);
   });
 
   it('requests', async () => {
@@ -127,6 +134,9 @@ describe('orientation labs are solvable', () => {
     const m3 = await createSimMachine(setup);
     await sh(m3, 'echo echo hi > app.sh');
     expect(evaluateCheck(tasks[2].check, await m3.facts()).say?.en).toMatch(/touch the code/);
+    const m4 = await createSimMachine(setup);
+    await sh(m4, 'echo green >> config/prod.conf');
+    expect(evaluateCheck(tasks[2].check, await m4.facts()).say?.en).toMatch(/starts with `color=`/);
   });
 
   it('working together, including the doc-ladder find task', async () => {
@@ -201,5 +211,28 @@ describe('orientation explainer models', () => {
     expect(nextVersion('breaking')).toBe('2.0.0');
     expect(bill('small', 1, 720)).toBe(14.4);
     expect(bill('large', 2, 10)).toBe(12);
+  });
+
+  it('captions follow the numbers at the extremes', () => {
+    const get = (id: string) => registry.explainers.get(id)!.model as ProcessModel<Record<string, unknown>>;
+    const last = (s: Step[]) => s[s.length - 1];
+    // a machine forgotten after a month-long project still costs another month
+    const rent = get('orient.rent');
+    const month = { size: 'small', count: 1, hours: 720 };
+    const forgot = rent.run(month, new Set(['forget']));
+    expect(last(forgot).metrics?.cost).toBeGreaterThan(last(rent.run(month, new Set())).metrics!.cost);
+    // the last step of a request names the longest bar: the queue near full load, the road at low load
+    const req = get('orient.request');
+    expect(last(req.run({ clients: 199, distance: 'country', servers: 1 }, new Set())).caption.ru).toMatch(/ожидание в очереди/);
+    expect(last(req.run({ clients: 50, distance: 'country', servers: 1 }, new Set())).caption.ru).toMatch(/дорогу туда и обратно/);
+    // fewer servers never says the load falls
+    const a = { clients: 150, distance: 'country', servers: 2 };
+    const b = { ...a, servers: 1 };
+    expect(req.explainDelta(req.run(a, new Set()), req.run(b, new Set()), { kind: 'param', id: 'servers', from: 2, to: 1 }, a, b).ru).toMatch(/растёт/);
+    // one program on one core does not run slower
+    const sys = get('orient.system');
+    const s3 = { programs: 3, cores: '1' };
+    const s1 = { programs: 1, cores: '1' };
+    expect(sys.explainDelta(sys.run(s3, new Set()), sys.run(s1, new Set()), { kind: 'param', id: 'programs', from: 3, to: 1 }, s3, s1).ru).not.toMatch(/медленнее/);
   });
 });
