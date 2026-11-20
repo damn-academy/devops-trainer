@@ -5,7 +5,7 @@
 // mounts), not the typed text.
 
 import { bi } from '../../../core/i18n';
-import type { Lesson, QuizItem, TerminalSetup } from '../../../core/types';
+import type { Facts, Lesson, QuizItem, TerminalSetup } from '../../../core/types';
 import { SRC } from '../shared';
 
 const stub = '#!/usr/bin/sim\n# busybox: BusyBox v1.37.0 multi-call binary\n';
@@ -19,6 +19,21 @@ const rootfs = (dir: string) => [
   { path: `${dir}/proc`, type: 'd' as const, owner: 'root' },
   { path: `${dir}/www/index.html`, content: '<h1>hello from mybox</h1>\n', owner: 'root' },
 ];
+
+type FileFacts = Record<string, { type?: string } | undefined>;
+const bundleReady = (f: Facts) => {
+  const files = (f.files ?? {}) as FileFacts;
+  return files['/c/bundle/config.json']?.type === 'f' && files['/c/bundle/rootfs/bin/busybox']?.type === 'f';
+};
+/** `hostname` ran after the last `crun run` and printed a name other than the host's. */
+const hostnameInsideCrun = (f: Facts) => {
+  const term = f.term?.main ?? [];
+  let start = -1;
+  term.forEach((r, i) => {
+    if (/\bcrun\s+run\b/.test(r.line) && r.exit === 0) start = i;
+  });
+  return start >= 0 && term.slice(start + 1).some((r) => /^\s*hostname\s*$/.test(r.line) && r.exit === 0 && r.out.trim() !== '' && r.out.trim() !== 'trainer');
+};
 
 export const byHandSetup: TerminalSetup = {
   hostname: 'trainer',
@@ -123,7 +138,7 @@ export const byHandLesson: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: byHandSetup,
-      intro: bi('Вы работаете как root на машине, ядро которой умеет пространства имён, cgroup v2 и OverlayFS. В каталоге `/c/rootfs` лежит маленький корень на основе busybox, а в `/c/l1` и `/c/l2` — два нижних каталога для overlay. Машина учебная, поэтому сломать её нельзя. Если что-то пошло не так, кнопка «Сбросить машину» вернёт её в исходное состояние. Каждое задание, где сказано «оставайтесь внутри», вы заканчиваете внутри новой оболочки, а следующее начинаете с команды `exit`, которая возвращает вас на хост.', 'You are root on a machine whose kernel does namespaces, cgroup v2 and OverlayFS. `/c/rootfs` holds a small busybox root, `/c/l1` and `/c/l2` two lower directories for overlay. The machine is a training one, so it cannot be broken. If something goes wrong, the “Reset this screen” button brings it back to where it started. Every task that says “stay inside” ends inside a new shell, and the next one starts with `exit`, which takes you back to the host.'),
+      intro: bi('Вы работаете как root на машине, ядро которой умеет пространства имён, cgroup v2 и OverlayFS. В каталоге `/c/rootfs` лежит маленький корень на основе busybox, а в `/c/l1` и `/c/l2` — два нижних каталога для overlay. Машина учебная, поэтому сломать её нельзя. Если что-то пошло не так, кнопка «Сбросить машину» вернёт её в исходное состояние. Каждое задание, где сказано «оставайтесь внутри», вы заканчиваете внутри новой оболочки, а следующее начинаете с команды `exit`, которая возвращает вас на хост.', 'You are root on a machine whose kernel does namespaces, cgroup v2 and OverlayFS. `/c/rootfs` holds a small busybox root, `/c/l1` and `/c/l2` two lower directories for overlay. The machine is a training one, so it cannot be broken. If something goes wrong, the “Reset machine” button brings it back to where it started. Every task that says “stay inside” ends inside a new shell, and the next one starts with `exit`, which takes you back to the host.'),
       tasks: [
         {
           id: 'chroot',
@@ -182,7 +197,12 @@ export const byHandLesson: Lesson = {
         {
           id: 'crun',
           prompt: bi('Запустите тот же контейнер рантаймом. В каталог `/c/bundle` скопируйте `/c/rootfs` под именем `rootfs`, создайте `config.json` командой `crun spec` и выполните `crun run mybox`. Внутри проверьте `hostname`, потом выйдите командой `exit`.', 'The same container with a runtime: in `/c/bundle` copy `/c/rootfs` as `rootfs`, create `config.json` (`crun spec`) and run `crun run mybox`. Inside check `hostname`, then `exit`.'),
-          check: { when: "files['/c/bundle/config.json'].type=f && files['/c/bundle/rootfs/bin/busybox'].type=f" },
+          check: {
+            when: (f) => bundleReady(f) && hostnameInsideCrun(f),
+            fail: [
+              { if: (f) => bundleReady(f), say: bi('Бандл собран: рядом лежат каталог `rootfs` и файл `config.json`. Осталось запустить контейнер командой `crun run mybox` и уже внутри него выполнить `hostname`. Если crun ответит, что контейнер `mybox` уже существует, удалите старую запись командой `crun delete mybox` и запустите контейнер снова.', 'The bundle is ready: the `rootfs` directory and the `config.json` file lie side by side. What is left is to start the container with `crun run mybox` and run `hostname` inside it. If crun replies that the container `mybox` already exists, remove the old record with `crun delete mybox` and start the container again.'), concept: 'docker.runtime' },
+            ],
+          },
           chips: 'cd /c/bundle && cp -r /c/rootfs rootfs && crun spec && crun run mybox',
           concepts: ['docker.bundle', 'docker.runtime'],
           hints: { H1: bi('Бандл состоит из каталога rootfs и файла config.json, которые лежат рядом.', 'A bundle is rootfs and config.json side by side.'), H2: bi('Перейдите в каталог командой `cd /c/bundle`, затем выполните `cp -r /c/rootfs rootfs`, `crun spec` и `crun run mybox`.', 'Go to the directory with `cd /c/bundle`, then run `cp -r /c/rootfs rootfs`, `crun spec` and `crun run mybox`.') },
