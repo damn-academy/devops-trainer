@@ -54,6 +54,8 @@ const SSH_PROBES: LabProbe[] = [
   { id: 'jump', on: 'laptop', cmd: 'ssh -o BatchMode=yes -o ConnectTimeout=8 -J deploy@bastion deploy@app hostname 2>&1' },
   { id: 'app', on: 'laptop', cmd: 'ssh -o BatchMode=yes -o ConnectTimeout=8 app hostname 2>&1' },
   { id: 'tunnel', on: 'laptop', cmd: 'curl -s -m 5 http://127.0.0.1:8080/ 2>&1' },
+  // The copied file as `app` holds it, read from the laptop through the jump, so the goal stays on the machine where it is typed.
+  { id: 'notes', on: 'laptop', cmd: 'ssh -o BatchMode=yes -o ConnectTimeout=8 app cat release-notes.txt 2>&1' },
 ];
 
 export const SSH_TASKS: LabGoal[] = [
@@ -127,9 +129,12 @@ export const SSH_TASKS: LabGoal[] = [
   },
   {
     id: 'scp',
-    on: 'app',
-    prompt: bi('Скопируйте файл `~/release-notes.txt` с `laptop` в домашний каталог пользователя `deploy` на `app`.', 'Copy `~/release-notes.txt` from `laptop` into the home directory of `deploy` on `app`.'),
-    check: { when: "files['/home/deploy/release-notes.txt'].text~'Release 1.4.2'" },
+    on: 'laptop',
+    prompt: bi('Скопируйте файл `~/release-notes.txt` с `laptop` в домашний каталог пользователя `deploy` на `app`. Команду набирают на `laptop`, а проверка заглянет в домашний каталог `deploy` на `app`.', 'Copy `~/release-notes.txt` from `laptop` into the home directory of `deploy` on `app`. The command is typed on `laptop`, and the check looks into the home directory of `deploy` on `app`.'),
+    check: {
+      when: "reach['notes'].out~'Release 1.4.2'",
+      fail: [{ if: "reach['notes'].out~'No such file'", say: bi('На `app` в домашнем каталоге `deploy` файла `release-notes.txt` пока нет. Скопируйте его командой `scp` на `laptop`, а путь на `app` укажите после двоеточия.', 'There is no `release-notes.txt` in the home directory of `deploy` on `app` yet. Copy it with `scp` on `laptop`, and give the path on `app` after the colon.') }],
+    },
     chips: 'scp ~/release-notes.txt app:',
     docRef: obsd('scp', 1),
     hints: { H1: bi('Команда `scp` понимает имена из `~/.ssh/config`. Путь на удалённой машине пишется после двоеточия, а пустой путь означает домашний каталог.', '`scp` understands the names from `~/.ssh/config`. The path on the remote machine goes after a colon, and an empty path means the home directory.') },
@@ -142,13 +147,16 @@ export const SSH_TASKS: LabGoal[] = [
       '`app` runs an orders panel, but it listens only on `127.0.0.1:8080`, and it is not visible from outside. Start an SSH tunnel in the background so that the panel opens on `laptop` at `http://127.0.0.1:8080/`.',
     ),
     check: {
-      when: "listen[port=8080].proc=ssh && reach['tunnel'].out~'orders admin'",
-      fail: [{ if: "listen[port=8080].proc=ssh", say: bi('Туннель слушает, но панель не отвечает. Справа от `-L` стоит адрес с точки зрения `app`, а там панель работает на `localhost:8080`.', 'The tunnel listens, but the panel does not answer. To the right of `-L` stands an address as `app` sees it, and there the panel runs on `localhost:8080`.') }],
+      when: "reach['tunnel'].out~'orders admin'",
+      fail: [
+        { if: "reach['tunnel'].out~'refused' || reach['tunnel'].out~'onnect to'", say: bi('Проверка открыла на `laptop` адрес `http://127.0.0.1:8080/`, но порт 8080 никто не слушает. Туннель не запущен или уже завершился: запустите его снова и посмотрите командой `ss -ltn`, появился ли порт 8080.', 'The check opened `http://127.0.0.1:8080/` on `laptop`, but nobody listens on port 8080. The tunnel is not running or has ended: start it again and see with `ss -ltn` whether port 8080 appears.') },
+        { if: "!(reach['tunnel'].out~'orders admin')", say: bi('Проверка открыла на `laptop` адрес `http://127.0.0.1:8080/` и не получила страницу панели. Справа от `-L` стоит адрес с точки зрения `app`, а там панель работает на `localhost:8080`.', 'The check opened `http://127.0.0.1:8080/` on `laptop` and did not get the panel’s page. To the right of `-L` stands an address as `app` sees it, and there the panel runs on `localhost:8080`.') },
+      ],
     },
     chips: 'ssh -f -N -L 8080:localhost:8080 app',
     docRef: { ...obsd('ssh', 1), label: 'ssh(1) · -L' },
     hints: {
-      H1: bi('В записи `-L 8080:localhost:8080` первое число задаёт номер, который туннель слушает на вашей машине, а остальная часть говорит, куда сервер передаёт подключения от своего имени. Флаг `-N` велит не запускать оболочку, а `-f` велит уйти в фон.', 'In `-L 8080:localhost:8080` the first number is the one the tunnel listens on at your machine, and the rest says where the server passes the connections on its own behalf. `-N` says not to start a shell, and `-f` to go to the background.'),
+      H1: bi('В записи `-L 8080:localhost:8080` первое число задаёт порт, который туннель слушает на вашей машине, а остальная часть говорит, куда сервер передаёт подключения от своего имени. Флаг `-N` велит не запускать оболочку, а `-f` велит уйти в фон.', 'In `-L 8080:localhost:8080` the first number is the port the tunnel listens on at your machine, and the rest says where the server passes the connections on its own behalf. `-N` says not to start a shell, and `-f` to go to the background.'),
       H2: bi('Для проверки выполните `curl -s http://127.0.0.1:8080/` на `laptop`.', 'To check, run `curl -s http://127.0.0.1:8080/` on `laptop`.'),
     },
   },
@@ -158,8 +166,8 @@ export const SSH_TASKS: LabGoal[] = [
     beyond: true,
     docStep: 4,
     prompt: bi(
-      'Каждая команда `ssh app` заново проходит через бастион и тратит на это секунды. Сделайте так, чтобы все сеансы к `app` шли через одно открытое подключение и чтобы это подключение сохранялось ещё несколько минут после выхода. В уроке об этом не рассказывалось, поэтому поищите способ на странице `man ssh_config`.',
-      'Every `ssh app` goes through the bastion anew and spends seconds on it. Make all sessions to `app` go through one open connection and keep that connection for a few more minutes after you leave. The lesson did not cover this, so look for the way in `man ssh_config`.',
+      'Каждая команда `ssh app` заново проходит через бастион и тратит на это секунды. Сделайте так, чтобы все сеансы к `app` шли через одно открытое подключение и чтобы это подключение сохранялось ещё несколько минут после выхода. В уроке об этом не рассказывалось, поэтому поищите способ на странице `ssh_config(5)`. В Alpine этой страницы на машине нет, поэтому откройте её по ссылке под заданием.',
+      'Every `ssh app` goes through the bastion anew and spends seconds on it. Make all sessions to `app` go through one open connection and keep that connection for a few more minutes after you leave. The lesson did not cover this, so look for the way on the page `ssh_config(5)`. Alpine does not keep that page on the machine, so open it from the link under the task.',
     ),
     check: { when: (f) => /^controlmaster (auto|yes)/m.test(out(f, 'cfg')) && /^controlpath \S+/m.test(out(f, 'cfg')) && !/^controlpersist (no|0)$/m.test(out(f, 'cfg')) && /^controlpersist /m.test(out(f, 'cfg')) },
     docRef: obsd('ssh_config', 5),
@@ -174,8 +182,8 @@ export const SSH_LAB: RealLabProps = {
   tasks: SSH_TASKS,
   watch: { mux: ['probe:cfg'] },
   intro: bi(
-    '### Три машины лаборатории\n\nМашина `laptop` (10.0.0.11) служит вашим ноутбуком, и вы на ней работаете как root. Машина `bastion` (10.0.0.12) единственная видна снаружи. Машина `app` (10.0.0.13) служит сервером приложения, и к её sshd пускают только с бастиона. На всех трёх машинах работает настоящий Alpine Linux с OpenSSH. Вкладки над терминалом переключают машины, но работаете вы с `laptop`, как и в жизни.',
-    '### The three machines of the lab\n\n`laptop` (10.0.0.11) is your laptop, and you work on it as root. `bastion` (10.0.0.12) is the only machine visible from outside. `app` (10.0.0.13) is the application server, and its sshd lets in only connections from the bastion. All three run real Alpine Linux with OpenSSH. The tabs above the terminal switch machines, but you work on `laptop`, as in real life.',
+    '### Три машины лаборатории\n\nМашина `laptop` (10.0.0.11) служит вашим ноутбуком, и вы на ней работаете как root. Машина `bastion` (10.0.0.12) единственная видна снаружи. Машина `app` (10.0.0.13) служит сервером приложения, и к её sshd пускают только с бастиона. На всех трёх машинах работает настоящий Alpine Linux с OpenSSH. Вкладки над терминалом переключают машины, но работаете вы с `laptop`, как и в жизни.\n\nПри первом подключении клиент покажет отпечаток ключа сервера и спросит, доверять ли ему. В жизни отпечаток присылает администратор, а здесь вы можете узнать его сами: откройте вкладку нужной машины и выполните там `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`. Администратор получает отпечаток для коллег той же командой.',
+    '### The three machines of the lab\n\n`laptop` (10.0.0.11) is your laptop, and you work on it as root. `bastion` (10.0.0.12) is the only machine visible from outside. `app` (10.0.0.13) is the application server, and its sshd lets in only connections from the bastion. All three run real Alpine Linux with OpenSSH. The tabs above the terminal switch machines, but you work on `laptop`, as in real life.\n\nOn the first connection the client shows the fingerprint of the server’s key and asks whether to trust it. In real life the admin sends you the fingerprint, and here you can find it yourself: open the tab of the machine and run `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` there. The admin gets the fingerprint for colleagues with the same command.',
   ),
 };
 
@@ -204,8 +212,8 @@ export const WEB_TASKS: LabGoal[] = [
     id: 'server',
     on: 'web',
     prompt: bi(
-      'Опишите на машине `web` сайт магазина. Для этого создайте файл `/etc/nginx/http.d/shop.conf` с блоком `server`, который слушает номер 80 и отдаёт файлы из `/srv/shop`. Команда `nginx -t` должна сообщить, что настройки в порядке.',
-      'Describe the shop’s site on `web`. To do so, create `/etc/nginx/http.d/shop.conf` with a `server` block that listens on 80 and serves files from `/srv/shop`. `nginx -t` must report that the settings are fine.',
+      'Опишите на машине `web` сайт магазина. Для этого создайте файл `/etc/nginx/http.d/shop.conf` с блоком `server`, который слушает порт 80 и отдаёт файлы из `/srv/shop`. Команда `nginx -t` должна сообщить, что настройки в порядке. Пока nginx ни разу не запускался, она дописывает в конце жалобу на файл `/run/nginx/nginx.pid` и слова `test failed`, потому что каталог `/run/nginx` создаёт скрипт службы при первом запуске. Ваши настройки при этом в порядке, если выше стоит строка `syntax is ok`, и проверка задания смотрит на неё.',
+      'Describe the shop’s site on `web`. To do so, create `/etc/nginx/http.d/shop.conf` with a `server` block that listens on 80 and serves files from `/srv/shop`. `nginx -t` must report that the settings are fine. Until nginx has started once, it adds a complaint about `/run/nginx/nginx.pid` and the words `test failed` at the end, because the service script creates `/run/nginx` on the first start. Your settings are still fine if the line `syntax is ok` stands above, and the task’s check looks at exactly that.',
     ),
     check: {
       when: "files['/etc/nginx/http.d/shop.conf'].text~'/srv/shop' && reach['nginx-t'].exit=0",
@@ -243,7 +251,7 @@ export const WEB_TASKS: LabGoal[] = [
     chips: 'curl -s http://web/',
     hints: {
       H1: bi('Переключитесь на вкладку `client`, потому что проверять нужно с соседней машины, как это делает настоящий посетитель.', 'Switch to the `client` tab, because the check must come from the neighbouring machine, as a real visitor’s would.'),
-      H2: bi('Если пришёл ответ 404, посмотрите `ls /etc/nginx/http.d/`. Блоков `server` там два, и на номере 80 первым отвечает тот, что помечен `default_server`.', 'If the answer is 404, look at `ls /etc/nginx/http.d/`. There are two `server` blocks, and on 80 the one marked `default_server` answers first.'),
+      H2: bi('Если пришёл ответ 404, посмотрите `ls /etc/nginx/http.d/`. Блоков `server` там два, и на порту 80 первым отвечает тот, что помечен `default_server`.', 'If the answer is 404, look at `ls /etc/nginx/http.d/`. There are two `server` blocks, and on 80 the one marked `default_server` answers first.'),
     },
   },
   {

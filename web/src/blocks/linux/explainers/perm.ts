@@ -422,12 +422,12 @@ export const permModel = defineModel<P>({
       label: bi('проверка владельца', 'owner check'),
       caption:
         who.name === 'anna'
-          ? fmtb(bi('Первый вопрос: владелец ли вы? Да, владелец {f} anna, поэтому решает первая тройка, а на группу и остальных система уже не смотрит.', 'You are the owner. The first triad decides; the group and others are not looked at.'), { f: objName })
-          : fmtb(bi('Первый вопрос: владелец ли вы? Нет, владелец {f} anna, а не {w}, поэтому первая тройка к вам не относится, и система переходит ко второму вопросу.', 'You are not the owner: the first triad is not about you.'), { w: who.name, f: objName }),
+          ? fmtb(bi('Первый вопрос система задаёт о владельце {f}. Владелец здесь anna, и обращается тоже anna, поэтому решает первая тройка, а на группу и остальных система уже не смотрит.', 'The first question is about the owner of {f}. The owner is anna, and anna is the one asking, so the first triad decides, and the system does not look at the group and the others.'), { f: objName })
+          : fmtb(bi('Первый вопрос система задаёт о владельце {f}. Владелец здесь anna, а обращается {w}, поэтому первая тройка к {w} не относится, и система переходит ко второму вопросу.', 'The first question is about the owner of {f}. The owner is anna, but {w} is asking, so the first triad does not apply to {w}, and the system moves on to the second question.'), { w: who.name, f: objName }),
       focus: [firstEdge, 'tu'],
       reveal: [firstEdge, 'tu'],
       tokens: [{ edge: firstEdge, label: asker }],
-      say: { tu: who.name === 'anna' ? bi('Файл принадлежит anna, и обращается к нему тоже anna, поэтому решать будут права владельца.', 'The file belongs to anna, and anna is the one asking, so the owner’s triad decides.') : fmtb(bi('Файл принадлежит anna, а обращается к нему пользователь {w}, поэтому права владельца к нему не относятся.', 'The file belongs to anna, but {w} is asking, so the owner’s triad does not apply.'), { w: who.name }) },
+      say: { tu: who.name === 'anna' ? bi('Файл принадлежит anna, и обращается к нему тоже anna, поэтому решать будут права владельца.', 'The file belongs to anna, and anna is the one asking, so the owner’s triad decides.') : fmtb(bi('Файл принадлежит anna, а обращается к файлу {w}, поэтому права владельца для {w} не действуют.', 'The file belongs to anna, but {w} is asking, so the owner’s triad does not apply to {w}.'), { w: who.name }) },
       states: { tu: who.name === 'anna' ? 'ok' : 'off' },
     });
     if (d.triad !== 'u')
@@ -436,19 +436,19 @@ export const permModel = defineModel<P>({
         label: bi('проверка группы', 'group check'),
         caption:
           d.triad === 'g'
-            ? bi('Второй вопрос: входите ли вы в группу файла? Да, группа dev есть в списке ваших групп, поэтому решает вторая тройка.', 'The file’s group dev is one of yours. The second triad decides.')
-            : bi('Второй вопрос: входите ли вы в группу файла? Нет, группы dev в списке ваших групп нет, поэтому остаётся третья тройка.', 'The file’s group dev is not yours. The third triad remains.'),
+            ? fmtb(bi('Второй вопрос система задаёт о группе файла. Группа dev есть в списке групп пользователя {w}, поэтому решает вторая тройка.', 'The second question is about the file’s group. dev is on the list of {w}’s groups, so the second triad decides.'), { w: who.name })
+            : fmtb(bi('Второй вопрос система задаёт о группе файла. Группы dev в списке групп пользователя {w} нет, поэтому остаётся третья тройка.', 'The second question is about the file’s group. dev is not on the list of {w}’s groups, so the third triad remains.'), { w: who.name }),
         focus: ['e-g', 'tg'],
         reveal: ['e-g', 'tg'],
         tokens: [{ edge: 'e-g', label: asker }],
-        say: { tg: d.triad === 'g' ? fmtb(bi('Пользователь {w} входит в группу dev, которой принадлежит файл, поэтому решать будут права группы.', '{w} is in group dev, the file’s group, so the group triad decides.'), { w: who.name }) : fmtb(bi('Пользователь {w} не входит в группу dev, поэтому права группы к нему тоже не относятся.', '{w} is not in group dev, so the group triad does not apply either.'), { w: who.name }) },
+        say: { tg: d.triad === 'g' ? fmtb(bi('Пользователь {w} входит в группу dev, которой принадлежит файл, поэтому решать будут права группы.', '{w} is in group dev, the file’s group, so the group triad decides.'), { w: who.name }) : fmtb(bi('Пользователь {w} не входит в группу dev, поэтому права группы для {w} тоже не действуют.', '{w} is not in group dev, so the group triad does not apply to {w} either.'), { w: who.name }) },
         states: { tg: d.triad === 'g' ? 'ok' : 'off' },
       });
     if (d.triad === 'o')
       steps.push({
         id: 'q3',
         label: bi('права остальных', 'others’ rights'),
-        caption: fmtb(bi('Пользователь {w} не владелец и не участник группы dev, поэтому система применяет к нему третью тройку, права «остальных».', '{w} is neither the owner nor in dev: the “others” triad decides.'), { w: who.name }),
+        caption: fmtb(bi('Пользователь {w} не владелец файла и не участник группы dev, поэтому система применяет к {w} третью тройку, права «остальных».', '{w} is neither the owner nor in dev, so the system applies the third triad, the rights of “others”, to {w}.'), { w: who.name }),
         focus: ['e-o', 'to'],
         reveal: ['e-o', 'to'],
         tokens: [{ edge: 'e-o', label: asker }],

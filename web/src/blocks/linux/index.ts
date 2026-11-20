@@ -298,9 +298,9 @@ const block: Block = {
   ),
   checklistStep: '02',
   levels: {
-    beginner: bi('Работал только в графическом интерфейсе', 'Has worked only in a graphical interface'),
-    intermediate: bi('Открывал терминал и ставил пакеты по инструкции', 'Has opened a terminal and installed packages by instructions'),
-    experienced: bi('Пишет скрипты, но не знает systemd, журналов, /proc и ядра', 'Writes scripts but does not know systemd, logs, /proc or the kernel'),
+    beginner: bi('Вы работали с компьютером только через окна, значки и мышь', 'You have worked with a computer only through windows, icons and a mouse'),
+    intermediate: bi('Вы открывали терминал и ставили программы, вставляя команды из инструкции', 'You have opened a terminal and installed programs by pasting commands from instructions'),
+    experienced: bi('Вы пишете код и скрипты, а теперь хотите понять systemd, журналы, /proc и то, как ядро изолирует процессы', 'You write code and scripts and now want to understand systemd, logs, /proc and how the kernel isolates processes'),
   },
   hours: { beginner: 73, intermediate: 47, experienced: 27 },
   placement,

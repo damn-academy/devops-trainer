@@ -106,7 +106,7 @@ const NOUNS: Record<string, [string, string, string, string]> = {
   адресов: ['адрес', 'адрес', 'адреса', 'адресов'],
   ошибок: ['ошибка', 'ошибку', 'ошибки', 'ошибок'],
 };
-const ACCUSATIVE = /(пропускает|получает|печатает|держит|собирает|все)\s$/;
+const ACCUSATIVE = /(пропускает|оставляет|получает|печатает|держит|собирает|все)\s$/;
 export function agreeRu(text: string): string {
   return text.replace(/(^|.)(\d+) (строк|адресов|ошибок)(?![а-яё])/g, (_m: string, pre: string, num: string, noun: string, at: number) => {
     const before = text.slice(0, at + pre.length);
@@ -335,7 +335,7 @@ export const pipeModel = defineModel<P>({
     steps.push({
       id: 'grep',
       label: 'grep',
-      caption: fmt(bi('Программа grep читает журнал из {l} строк и пропускает {m} строк, в которых есть ` 500 `. Остальные строки дальше не идут, а пропущенные попадают в первую трубу, буфер в памяти ядра между grep и cut.', 'grep reads the log of {l} lines and lets {m} lines with ` 500 ` through. The other lines go no further, and the ones let through go into the first pipe, the kernel buffer between grep and cut.'), { l: n.lines, m: n.matched }),
+      caption: fmt(bi('Программа grep читает журнал из {l} строк и оставляет {m} строк, в которых есть код 500 между пробелами. Эти строки она отправляет в первую трубу, буфер в памяти ядра между grep и cut, а все остальные отбрасывает.', 'grep reads the log of {l} lines and lets {m} lines with ` 500 ` through. The other lines go no further, and the ones let through go into the first pipe, the kernel buffer between grep and cut.'), { l: n.lines, m: n.matched }),
       focus: ['grep', 'e-w1', 'p1'],
       reveal: ['e-read', 'e-w1', 'p1', 'kernel'],
       tokens: [{ edge: 'e-read', label: fmt(bi('{l} строк', '{l} lines'), { l: n.lines }) }, { edge: 'e-w1', label: fmt(bi('{m} строк', '{m} lines'), { m: n.matched }) }],

@@ -45,10 +45,10 @@ export const QUIZ_REAL: QuizItem[] = [
     id: 'linux.q.tunnel-sides',
     kind: 'mcq',
     concepts: ['linux.ssh-tunnel'],
-    prompt: W('Вы выполнили `ssh -L 8080:localhost:5432 app`. На какой машине окажется «localhost», к которому пойдёт подключение на номер 5432?', 'You ran `ssh -L 8080:localhost:5432 app`. On which machine is the “localhost” that the connection to 5432 goes to?'),
+    prompt: W('Вы выполнили `ssh -L 8080:localhost:5432 app`. На какой машине окажется «localhost», к которому пойдёт подключение на порт 5432?', 'You ran `ssh -L 8080:localhost:5432 app`. On which machine is the “localhost” that the connection to 5432 goes to?'),
     options: [
       { id: 'server', text: W('На `app`, потому что правая часть читается с точки зрения сервера', 'On `app`, because the right part is read from the server’s point of view'), correct: true },
-      { id: 'laptop', text: W('На вашем ноутбуке', 'On your laptop'), why: W('Нет, на ноутбуке открывается только левая часть, номер 8080, а куда передавать подключение дальше, решает `app`.', 'No, only the left part, 8080, opens on the laptop, and `app` decides where the connection goes next.') },
+      { id: 'laptop', text: W('На вашем ноутбуке', 'On your laptop'), why: W('Нет, на ноутбуке открывается только левая часть, порт 8080, а куда передавать подключение дальше, решает `app`.', 'No, only the left part, 8080, opens on the laptop, and `app` decides where the connection goes next.') },
       { id: 'bastion', text: W('На бастионе', 'On the bastion'), why: W('Нет, бастиона в этой команде нет вовсе, а с `ProxyJump` дальний конец туннеля всё равно оказался бы на `app`.', 'No, there is no bastion in this command at all, and with `ProxyJump` the far end of the tunnel would still be on `app`.') },
     ],
     explain: W('Так добираются до служб, которые слушают только адрес `127.0.0.1` сервера, например до баз данных и панелей. Наружу при этом ничего не открывается, и путь существует, пока работает сеанс SSH.', 'That is how you reach services that listen only on the server’s `127.0.0.1`, such as databases and panels. Nothing is opened to the outside, and the way exists while the SSH session runs.'),
