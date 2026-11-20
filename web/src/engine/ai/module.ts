@@ -59,6 +59,7 @@ if (browser) {
     void import('./context').then((c) => c.listenTerminals());
     void import('./service').then(({ ai }) => ai().ready.catch(() => undefined));
     installLauncher();
+    void import('./external-panel').then(m => m.installExternalCards());
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
   else setTimeout(start, 0);

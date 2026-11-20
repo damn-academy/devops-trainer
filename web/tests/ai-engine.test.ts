@@ -96,7 +96,7 @@ describe('streamChat', () => {
 
 describe('providers', () => {
   it('has the presets of the design and clean URLs', () => {
-    expect(PROVIDERS.map((p) => p.id)).toEqual(['deepseek', 'openrouter', 'openai', 'ollama', 'custom']);
+    expect(PROVIDERS.map((p) => p.id)).toEqual(['deepseek', 'openrouter', 'openai', 'gemini', 'anthropic', 'ollama', 'custom']);
     expect(normalizeBase('https://x.io/v1/chat/completions/')).toBe('https://x.io/v1');
     expect(isLocalUrl('http://127.0.0.1:11434/v1')).toBe(true);
     expect(isLocalUrl('https://api.deepseek.com')).toBe(false);

@@ -2,6 +2,7 @@
 // The engine folds any answer that leaks a solution token (09 §4.5) and never
 // offers the mentor in exam mode.
 
+import { externalButton } from '../engine/ai/external-panel';
 import { clear, h, icon } from '../core/dom';
 import { bi, lang, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
@@ -39,11 +40,12 @@ export function askBox(o: AskOptions): HTMLElement {
         h(
           'p.muted',
           {},
-          t(bi('Наставник работает на вашей нейросети. Подключите её в ', 'The mentor runs on your own AI. Connect it in ')),
+          t(bi('Можно скопировать запрос в любой чат с нейросетью или подключить наставника в ', 'You can copy a prompt into any AI chat or connect the tutor in ')),
           h('a', { href: href({ name: 'settings' }) }, t(UI.settings)),
           '.',
         ),
       );
+      panel.append(externalButton({ lessonId: o.lessonId, level: o.level, task: o.task?.prompt, screen: o.screen?.() }));
       if (docs) panel.append(h('p', {}, t(UI.whereDidYouLook)));
       return;
     }

@@ -5,6 +5,7 @@
 // checks. "Show every request" displays exactly what goes to the provider,
 // layer by layer (explainer П3 "What your AI sees", 09 §1.12).
 
+import { externalButton } from './external-panel';
 import { clear, copyText, h, icon, toast } from '../../core/dom';
 import { bi, t, type Bi } from '../../core/i18n';
 import { renderMd } from '../../core/markdown';
@@ -45,7 +46,7 @@ const T = {
     review: bi('Объясняет ответ на вопрос повторения.', 'Explains the answer to a review question.'),
     exam: bi('На экзамене и во входной проверке наставник выключен: здесь вы проверяете себя сами.', 'During exams and placement checks the tutor is off: here you check yourself.'),
   } as Record<TutorMode, Bi>,
-  notConnected: bi('Наставник работает на вашей нейросети: запросы идут прямо из браузера к вашему провайдеру. Подключите её в настройках.', 'The tutor runs on your own AI: requests go straight from the browser to your provider. Connect it in the settings.'),
+  notConnected: bi('Можно скопировать запрос в любой чат с нейросетью. Чтобы получать ответы здесь, подключите провайдера в настройках.', 'You can copy a prompt into any AI chat. To get answers here, connect a provider in Settings.'),
   connect: bi('Подключить', 'Connect'),
   placeholder: bi('Что непонятно? Ctrl+Enter — отправить', 'What is unclear? Ctrl+Enter to send'),
   placeholderDocs: bi('Где вы уже смотрели? Что нашли?', 'Where have you looked? What did you find?'),
@@ -168,6 +169,7 @@ function draw(o: TutorOptions) {
   panel.append(seg, h('p.small.tutor-help', {}, t(T.modeHelp[state.mode])), ctxLine);
 
   if (!ai().status.configured) {
+    panel.append(externalButton({ screen: o.screen?.() }));
     panel.append(h('div.tutor-connect', {}, h('p', {}, t(T.notConnected)), h('a.btn.primary.small', { href: href({ name: 'settings' }), onclick: closeTutor }, t(T.connect))));
     return;
   }
@@ -242,7 +244,7 @@ async function send(question: string, o: TutorOptions, hintStep?: HintLevel) {
   list.append(stopBtn);
   const tr = turn(ai(), ctx, question, {
     history: state.history.slice(-6),
-    solutionTokens: ct?.task.solutionTokens,
+    solutionTokens: mode === 'review' ? undefined : ct?.task.solutionTokens,
     onVisible: (text) => {
       clear(live);
       live.append(text ? answerNode(text) : h('p.muted', {}, '…'));

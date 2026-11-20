@@ -84,7 +84,7 @@ export class AiEngine {
     const key = (await this.keys.get()) ?? undefined;
     if (p.needsKey && !key) throw new AiError('no-provider', 'no key');
     if (!this.settings.model) throw new AiError('model', 'no model chosen');
-    return { baseUrl: this.settings.baseUrl || p.baseUrl, model: this.settings.model, key, headers: p.headers };
+    return { baseUrl: this.settings.baseUrl || p.baseUrl, model: this.settings.model, key, headers: p.headers, api: p.api };
   }
 
   async test(): Promise<TestResult> {
@@ -101,7 +101,7 @@ export class AiEngine {
     if (!this.settings) throw new AiError('no-provider');
     const p = preset(this.settings.provider);
     const key = (await this.keys.get()) ?? undefined;
-    return listModels({ baseUrl: this.settings.baseUrl || p.baseUrl, model: '', key, headers: p.headers }, this.f);
+    return listModels({ baseUrl: this.settings.baseUrl || p.baseUrl, model: '', key, headers: p.headers, api: p.api }, this.f);
   }
 
   /** Stream one answer; `onDelta` gets text pieces. Resolves with the full text. */

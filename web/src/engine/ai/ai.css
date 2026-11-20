@@ -63,3 +63,10 @@
 .ai-layers summary { cursor: pointer; font-family: var(--font-ui); }
 .ai-outside { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--line-2); border-radius: var(--r-lg); }
 .ai-outside p { margin: 0; }
+
+.external-dialog { width: min(740px, calc(100vw - 32px)); max-height: 90vh; overflow: auto; padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg, #171b22); color: var(--ink); }
+.external-dialog::backdrop { background: #0009; }
+.external-preview { display: block; width: 100%; box-sizing: border-box; resize: vertical; min-height: 220px; max-height: 48vh; padding: 12px; font: 13px/1.5 monospace; }
+.external-chats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.external-help { margin-top: 8px; }
+.external-dialog h2 { margin: 0 0 12px; font-size: 1.5rem; }
