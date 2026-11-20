@@ -24,8 +24,8 @@ beforeAll(() => {
 describe('containers explainers', () => {
   const models = (block.explainers ?? []).map((e) => e.model as ProcessModel<Record<string, unknown>>);
 
-  it('has seven models with at most 12 nodes', () => {
-    expect(models).toHaveLength(7);
+  it('has eight models with at most 12 nodes', () => {
+    expect(models).toHaveLength(8);
     for (const m of models) expect(m.diagram.nodes.length).toBeLessThanOrEqual(12);
   });
 

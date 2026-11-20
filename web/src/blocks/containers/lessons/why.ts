@@ -139,6 +139,30 @@ export const whyLesson: Lesson = {
       ),
     },
     {
+      id: 'scale',
+      kind: 'text',
+      step: 'explain',
+      title: bi('Что меняется, когда серверов становится много', 'What changes when there are many servers'),
+      body: bi(
+        'Пока у компании два-три сервера, администратор помнит каждый из них и чинит их руками, а поломка случается раз в несколько лет. Когда серверов десятки, что-нибудь ломается каждый месяц: по исследованию Microsoft примерно у каждого двенадцатого сервера за год случается аппаратная неисправность. Новую версию программы теперь нужно поставить не на один сервер, а на сорок, и каждая ручная операция повторяется сорок раз. Поэтому вопрос уже не в том, как запустить программу, а в том, кто заметит сбой в три часа ночи, кто перезапустит работу на другом сервере и сколько раз человеку придётся повторить одну и ту же команду.\n\nВиртуальные машины решили большую часть этих задач на своём уровне. Менеджер виртуализации, например VMware vCenter или OpenStack, сам перезапускает машины сгоревшего хоста на других хостах, делает новые машины из шаблона и возвращает машины к сохранённому снимку. У контейнеров такой программы нет, потому что Docker на каждом сервере управляет только своими контейнерами. Эту работу берёт на себя оркестратор, то есть программа, которая получает описание того, что должно работать, сама выбирает серверы для контейнеров и следит, чтобы копий службы было столько, сколько записано в описании.',
+        'While a company has two or three servers, the administrator remembers each of them and fixes them by hand, and a failure happens once in a few years. With dozens of servers something breaks every month: in a Microsoft study about one server in twelve had a hardware incident a year. A new version now has to go onto forty servers instead of one, and every manual operation is repeated forty times. So the question is no longer how to start a program, but who notices a failure at 3 a.m., who restarts the work on another server and how many times a person has to repeat the same command.\n\nVirtual machines solved most of these problems at their own level. A virtualisation manager such as VMware vCenter or OpenStack restarts a burnt host’s machines on other hosts, makes new machines from a template and reverts machines to a saved snapshot. Containers have no such program, because Docker on each server manages only its own containers. This work is taken on by an orchestrator: a program that receives a description of what must run, picks servers for the containers by itself and keeps as many copies of a service as the description says.',
+      ),
+    },
+    {
+      id: 'look-scale',
+      kind: 'explainer',
+      step: 'look',
+      explainer: 'containers.orchestration',
+      howto: bi(
+        'Сначала на схеме только первый мир, серверы без виртуализации. Выберите в «Параметрах» событие в поле «Что случилось или что нужно сделать», нажмите «Начать с первого шага» и переходите дальше кнопкой «Шаг вперёд». На каждом шаге подсвечен тот, кто действует: человек, менеджер виртуализации или оркестратор, а облачко рядом с ним говорит, что он делает. Карточка на линии показывает, что он передаёт дальше: тревогу, команду, описание службы или новые копии. Под схемой для каждого мира растут четыре счётчика: минуты простоя, минуты ручной работы, число разбуженных людей и риск ошибки по шкале от 1 до 3. Щелчок по любому блоку открывает карточку, в которой записано, из каких чисел складываются счётчики.\n\nПройдите все четыре события. Потом передвиньте число серверов от 3 до 40 и посмотрите, в каком мире растёт ручная работа, выключите оркестратор и включите старый шаблон ВМ. В блоке «Сломать» оставьте серверы с контейнерами без свободной памяти или положите диски ВМ на собственный диск хоста и посмотрите, где остановится работа.',
+        'At first only the first world, bare metal, is on the diagram. Pick an event in “Parameters” in the field “What happened or what has to be done”, press “Start from the first step” and go on with “Step forward”. At each step the one who acts is highlighted: a person, the virtualisation manager or the orchestrator, and the callout next to it says what it does. The card on the line shows what it hands on: an alert, a command, a service description or new copies. Under the diagram four counters grow for each world: minutes of downtime, minutes of manual work, people woken and the risk of a mistake on a scale of 1 to 3. Clicking any block opens a card that says which numbers the counters are made of.\n\nGo through all four events. Then move the number of servers between 3 and 40 and see in which world manual work grows, switch the orchestrator off and switch the old VM template on. In “Break it” leave the container servers without free memory or put the VM disks on the host’s own disk, and see where the work stops.',
+      ),
+      caption: bi(
+        'Оркестратор выигрывает не во всём. Сгоревший хост виртуальные машины возвращают быстрее, а ошибка в логике новой версии будит человека в любом мире. Выигрыш оркестратора в другом: его ручная работа не растёт вместе с числом серверов, потому что человек меняет описание службы, а не повторяет команды на каждом сервере. Самый распространённый оркестратор, Kubernetes, ждёт вас в отдельном блоке после CI/CD, и там планировщик, контроллеры, волновое обновление и автомасштабирование с этой схемы превратятся в описания и команды, которые вы будете писать сами.',
+        'The orchestrator does not win everywhere. Virtual machines bring a burnt host back faster, and a bug in the new version’s logic wakes a person in every world. The orchestrator wins elsewhere: its manual work does not grow with the number of servers, because a person changes the service description instead of repeating commands on every server. The most common orchestrator, Kubernetes, waits for you in its own block after CI/CD, and there the scheduler, controllers, rolling update and autoscaling from this diagram become descriptions and commands you will write yourself.',
+      ),
+    },
+    {
       id: 'nesting',
       kind: 'text',
       step: 'explain',
