@@ -261,9 +261,11 @@ export const rentModel = defineModel<P>({
       steps.push({
         id: 'forgotten',
         label: bi('забыли', 'forgotten'),
-        caption: fmtb(bi('Проект закончился, а машину не удалили. Она никому не нужна, но существует, и провайдер продолжает считать часы. Через месяц после конца проекта в счёте {c} вместо {w}.', 'The project ended, but the machine was not deleted. Nobody needs it, but it exists, and the provider keeps counting the hours. A month after the end of the project the bill holds {c} instead of {w}.'), { c: money(month), w: money(work) }),
+        caption: p.count > 1
+          ? fmtb(bi('Проект закончился, а машины не удалили. Они никому не нужны, но существуют, и провайдер продолжает считать часы каждой из них. Через месяц после конца проекта в счёте {c} вместо {w}.', 'The project ended, but the machines were not deleted. Nobody needs them, but they exist, and the provider keeps counting the hours of each. A month after the end of the project the bill holds {c} instead of {w}.'), { c: money(month), w: money(work) })
+          : fmtb(bi('Проект закончился, а машину не удалили. Она никому не нужна, но существует, и провайдер продолжает считать часы. Через месяц после конца проекта в счёте {c} вместо {w}.', 'The project ended, but the machine was not deleted. Nobody needs it, but it exists, and the provider keeps counting the hours. A month after the end of the project the bill holds {c} instead of {w}.'), { c: money(month), w: money(work) }),
         focus: ['bill'],
-        say: { bill: fmtb(bi('Машиной не пользуются, а за месяц простоя счёт дорос до {c}.', 'Nobody uses the machine, and in a month of standing idle the bill has grown to {c}.'), { c: money(month) }) },
+        say: { bill: p.count > 1 ? fmtb(bi('Машинами не пользуются, а за месяц простоя счёт дорос до {c}.', 'Nobody uses the machines, and in a month of standing idle the bill has grown to {c}.'), { c: money(month) }) : fmtb(bi('Машиной не пользуются, а за месяц простоя счёт дорос до {c}.', 'Nobody uses the machine, and in a month of standing idle the bill has grown to {c}.'), { c: money(month) }) },
         states: { bill: 'err', vm: 'warn' },
         values: { bill: money(month) },
         fill: { bill: 1 },
@@ -288,7 +290,7 @@ export const rentModel = defineModel<P>({
     if (change.kind === 'break') {
       if (!change.on) return bi('Поломку выключили, поэтому машину снова удаляют вовремя, а стойка цела.', 'The break is off, so the machine is deleted on time again and the rack is intact.');
       return change.id === 'forget'
-        ? fmtb(bi('Машина простояла месяц без дела после конца проекта, и счёт вырос с {a} до {b}. Чаще всего деньги в облаке уходят впустую на забытые машины.', 'The machine sat idle for a month after the project ended, and the bill grew from {a} to {b}. Most money wasted in the cloud goes on forgotten machines.'), { a: money(cost(prev)), b: money(cost(next)) })
+        ? fmtb(bi('{m} месяц без дела после конца проекта, и счёт вырос с {a} до {b}. Чаще всего деньги в облаке уходят впустую на забытые машины.', '{mEn} idle for a month after the project ended, and the bill grew from {a} to {b}. Most money wasted in the cloud goes on forgotten machines.'), { m: (b.count as number) > 1 ? 'Машины простояли' : 'Машина простояла', mEn: (b.count as number) > 1 ? 'The machines sat' : 'The machine sat', a: money(cost(prev)), b: money(cost(next)) })
         : bi('Сгоревшее железо заменяет провайдер, а вашу машину перезапускают на другой стойке. Пропадает только то, у чего не было копии.', 'The provider replaces the hardware and restarts the machine; only what had no copy is lost.');
     }
     switch (change.id) {
