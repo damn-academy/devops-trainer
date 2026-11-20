@@ -114,7 +114,6 @@ test('quiz: answer an item and get feedback', async ({ page }) => {
   await open(page, '#/lesson/linux.terminal');
   const item = page.locator('.quiz-item').first();
   await item.scrollIntoViewIfNeeded();
-  await item.locator('.q-confidence label').nth(2).click();
   const kind = await item.getAttribute('data-kind');
   if (kind === 'mcq' || kind === 'multi') await item.locator('.q-option').first().click();
   else if (kind === 'fill-command') await item.locator('input.q-fill').fill('ls');

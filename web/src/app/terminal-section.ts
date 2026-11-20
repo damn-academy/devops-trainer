@@ -10,11 +10,12 @@ import { renderInline } from '../core/markdown';
 import { store } from '../core/store';
 import type { BlockId, DocStep, Facts, HintLevel, Level, Mounted, Task, TerminalSetup } from '../core/types';
 import { refLabel, sourceOf } from '../engine/docs/corpus';
-import { effectiveStep, hintPolicy, shouldRecord, STEP_NAMES } from '../engine/docs/ladder';
+import { effectiveStep, hintPolicy, shouldRecord } from '../engine/docs/ladder';
 import { docChip, docFragment, openDoc } from '../engine/docs/viewer';
 import { createSimMachine, type SimMachine } from '../engine/terminal/shell';
 import { mountTerminal, type TerminalHandle } from '../engine/terminal/widget';
 import { prose } from './common';
+import { externalButton } from '../engine/ai/external-panel';
 import { askBox } from './mentor';
 
 export interface LabOptions {
@@ -86,12 +87,12 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   const renderGoals = () => {
     clear(goals);
     const current = o.tasks.find((x) => !passed.has(x.id));
-    for (const task of o.tasks) {
+    for (const [i, task] of o.tasks.entries()) {
       const done = passed.has(task.id);
       const step = stepFor(task);
       const pol = hintPolicy(step);
       const li = h('li.goal', { class: [done ? 'done' : '', task === current ? 'current' : ''].filter(Boolean).join(' '), 'data-task': task.id });
-      li.append(h('span.goal-mark', { 'aria-hidden': 'true' }, done ? '✓' : ''), h('div.goal-body', {}, prose(task.prompt, 'goal-text')));
+      li.append(h('span.goal-mark', { 'aria-hidden': 'true' }, done ? '✓' : String(i + 1)), h('div.goal-body', {}, prose(task.prompt, 'goal-text')));
       const body = li.querySelector('.goal-body')!;
       if (done) {
         body.append(h('span.sr-only', {}, t(TL.passed)));
@@ -99,7 +100,6 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
         continue;
       }
       const meta = h('div.goal-meta');
-      if (!o.exam) meta.append(h('span.dl-tag', { title: `DL${step}` }, `DL${step} · ${t(STEP_NAMES[step])}`));
       if (task.docRef && pol.docref) meta.append(docChip(task.docRef));
       if (task.docRef && step === 3) meta.append(h('button.docref', { type: 'button', onclick: () => openDoc({ page: task.docRef!.page, url: task.docRef!.url }, { mode: 'page', via: 'docref' }) }, icon('doc'), h('span', {}, `${t(TL.page)}: ${refLabel({ page: task.docRef.page, url: task.docRef.url })}`)));
       body.append(meta);
@@ -149,6 +149,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       );
     }
     if (!available.length && step >= 4) box.append(h('p.muted.small', {}, t(TL.noHints)));
+    if (shown >= available.length && available.length > 0) box.append(externalButton({ lessonId: o.lessonId, level: o.level, task: t(task.prompt) }));
     if (pol.mentor !== 'off') box.append(askBox({ mode: pol.mentor === 'docs' ? 'docs' : 'practice', level: o.level, lessonId: o.lessonId, task: { id: taskKey(task), prompt: t(task.prompt), solutionTokens: task.solutionTokens } }));
     return box;
   };
@@ -158,7 +159,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     return !!page && store.state.docTrail.some((d) => d.page === page && d.at >= mountedAt);
   };
 
-  const check = async () => {
+  const check = async (attempted = false) => {
     if (!machine) return;
     const facts = await machine.facts();
     let changed = false;
@@ -177,6 +178,8 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     }
     clear(status);
     if (failSay && !o.exam) status.append(h('p.lab-fail', {}, h('span.st-icon.warn', { 'aria-hidden': 'true' }, '!'), h('span', {}, ...renderInline(failSay))));
+    const pending = o.tasks.find(task => !passed.has(task.id));
+    if (pending && attempted && !o.exam) status.append(externalButton({ lessonId: o.lessonId, level: o.level, task: t(pending.prompt) }));
     if (changed) {
       renderGoals();
       if (passed.size === o.tasks.length) {
@@ -207,7 +210,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       rows: 14,
       onCommand: () => {
         void machine!.snapshot().then((sn) => !o.exam && store.saveSnapshot(o.key, sn));
-        void check();
+        void check(true);
       },
       onDoc: (ref) => openDoc(ref, { mode: 'page', via: 'terminal', keepFocus: true }),
     });
