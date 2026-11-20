@@ -18,6 +18,7 @@ export interface ExternalOptions {
   task?: string;
   screen?: string;
   quiz?: Pick<ExternalContext, 'task' | 'options' | 'response'>;
+  want?: string;
 }
 export function externalContext(o: ExternalOptions = {}): ExternalContext {
   const route = parseRoute(typeof location === 'undefined' ? '' : location.hash);
@@ -29,7 +30,7 @@ export function externalContext(o: ExternalOptions = {}): ExternalContext {
     block: block ? t(registry.blocks.get(block)?.title ?? bi(block, block)) : undefined,
     lesson: lesson ? t(lesson.title) : undefined, introduced: vocabulary(lesson),
     task: o.task ?? (task ? t(task.prompt) : undefined),
-    terminal: terminalTail(), screen: o.screen, ...o.quiz,
+    terminal: terminalTail(), screen: o.screen, ...o.quiz, want: o.want,
   };
 }
 export function externalButton(o: ExternalOptions | (() => ExternalOptions) = {}): HTMLButtonElement {
@@ -93,6 +94,7 @@ export function openExternalPanel(o: ExternalOptions = {}): void {
 
 /** Called only after grading; no quiz object is serialized into an external prompt. */
 export function answeredQuiz(item: QuizItem, answer: unknown, grade: QuizGrade, actual?: string): ExternalOptions {
+  const right = grade.correct;
   const text = (v: QText) => typeof v === 'string' ? v : t(v);
   let options: string[] = [];
   let correct = '';
@@ -109,7 +111,10 @@ export function answeredQuiz(item: QuizItem, answer: unknown, grade: QuizGrade, 
     case 'predict-output': correct = actual ?? correct; break;
   }
   const task = [t(item.prompt), item.kind === 'bugfind' ? item.code : item.kind === 'predict-output' ? item.command : item.kind === 'fill-command' ? item.template : ''].filter(Boolean).join('\n');
-  return { lessonId: item.refs?.lesson, quiz: { task, options, response: { answered: true, learner: typeof answer === 'string' ? (options.find(v => v.startsWith(answer + ': ')) ?? answer) : JSON.stringify(answer), correct, explanation: [...new Set([...(item.explain ? [t(item.explain)] : []), ...grade.feedback.map(b => t(b))])].join('\n') } } };
+  const want = right
+    ? t(bi('Мой ответ верный, но я хочу разобраться глубже: почему это так, где это встречается на практике и что спросят об этом на собеседовании.', 'I answered correctly but want to go deeper: why it is so, where it shows up in practice and what an interviewer might ask about it.'))
+    : undefined;
+  return { lessonId: item.refs?.lesson, want, quiz: { task, options, response: { answered: true, learner: typeof answer === 'string' ? (options.find(v => v.startsWith(answer + ': ')) ?? answer) : JSON.stringify(answer), correct, explanation: [...new Set([...(item.explain ? [t(item.explain)] : []), ...grade.feedback.map(b => t(b))])].join('\n') } } };
 }
 
 /** AI-owned integration keeps shared explainer rendering independent of AI. */
