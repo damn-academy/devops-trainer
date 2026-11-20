@@ -47,3 +47,61 @@ func TestUnknownAndWrongAddress(t *testing.T) {
 		t.Error("a request for another address must be refused")
 	}
 }
+
+func mtuOf(t *testing.T, r *dhcpv4.DHCPv4) (uint16, bool) {
+	t.Helper()
+	if r == nil {
+		t.Fatal("no reply")
+	}
+	if !r.Options.Has(dhcpv4.OptionInterfaceMTU) {
+		return 0, false
+	}
+	mtu, err := dhcpv4.GetUint16(dhcpv4.OptionInterfaceMTU, r.Options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return mtu, true
+}
+
+func TestOffersTheUplinkMTU(t *testing.T) {
+	mac, _ := net.ParseMAC("52:54:00:d7:01:1e")
+	c := cfg()
+	c.MTU = 1400
+	disc, _ := dhcpv4.NewDiscovery(mac)
+	offer, _ := c.Reply(disc)
+	if mtu, ok := mtuOf(t, offer); !ok || mtu != 1400 {
+		t.Errorf("offer: mtu %d, %v", mtu, ok)
+	}
+	req, _ := dhcpv4.NewRequestFromOffer(offer)
+	ack, _ := c.Reply(req)
+	// Through the wire, as the VM reads it.
+	ack, err := dhcpv4.FromBytes(ack.ToBytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mtu, ok := mtuOf(t, ack); !ok || mtu != 1400 {
+		t.Errorf("ack: mtu %d, %v", mtu, ok)
+	}
+}
+
+func TestOffersNoMTUItCannotVouchFor(t *testing.T) {
+	mac, _ := net.ParseMAC("52:54:00:d7:01:1e")
+	disc, _ := dhcpv4.NewDiscovery(mac)
+	for _, mtu := range []int{0, 575, 9001, 65536} {
+		c := cfg()
+		c.MTU = mtu
+		offer, _ := c.Reply(disc)
+		if got, ok := mtuOf(t, offer); ok {
+			t.Errorf("MTU %d: offered %d", mtu, got)
+		}
+	}
+	// A refusal carries no configuration at all.
+	c := cfg()
+	c.MTU = 1400
+	req, _ := dhcpv4.New(dhcpv4.WithHwAddr(mac), dhcpv4.WithMessageType(dhcpv4.MessageTypeRequest),
+		dhcpv4.WithOption(dhcpv4.OptRequestedIPAddress(net.ParseIP("10.10.1.99"))))
+	nak, _ := c.Reply(req)
+	if _, ok := mtuOf(t, nak); ok {
+		t.Error("a NAK offers an MTU")
+	}
+}

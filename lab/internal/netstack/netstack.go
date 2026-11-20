@@ -44,6 +44,9 @@ func Config(vms []profile.VM) *types.Configuration {
 		}
 	}
 	return &types.Configuration{
+		// Offered to the VMs by DHCP (option 26). 1500 whatever the host's
+		// uplink: the VMs' connections end in the agent, which opens its own
+		// sockets on the host, so the host's MTU applies there, not here.
 		MTU:               1500,
 		Subnet:            profile.Subnet,
 		GatewayIP:         profile.Gateway,

@@ -14,6 +14,7 @@ import (
 
 	"github.com/tym83/devops-trainer/lab/internal/agent"
 	"github.com/tym83/devops-trainer/lab/internal/backend"
+	"github.com/tym83/devops-trainer/lab/internal/hostinfo"
 	"github.com/tym83/devops-trainer/lab/internal/labdhcp"
 	"github.com/tym83/devops-trainer/lab/internal/netstack"
 	"github.com/tym83/devops-trainer/lab/internal/profile"
@@ -135,7 +136,8 @@ func (lab *Lab) serveDHCP(ctx context.Context, st *State) error {
 	}
 	c := labdhcp.Config{Leases: map[string]net.IP{}, Server: net.ParseIP(profile.Gateway).To4(),
 		Mask: net.CIDRMask(profile.Prefix, 32), Lease: 24 * 3600,
-		DNS: []net.IP{net.ParseIP("1.1.1.1").To4(), net.ParseIP("8.8.8.8").To4()}}
+		DNS: []net.IP{net.ParseIP("1.1.1.1").To4(), net.ParseIP("8.8.8.8").To4()},
+		MTU: hostinfo.UplinkMTU()}
 	for _, v := range st.VMs {
 		c.Leases[strings.ToLower(v.MAC)] = net.ParseIP(v.IP).To4()
 	}
@@ -144,7 +146,11 @@ func (lab *Lab) serveDHCP(ctx context.Context, st *State) error {
 			lab.Log("dhcp: %v", err)
 		}
 	}()
-	lab.Log("DHCP for the lab VMs on %s:67", profile.Gateway)
+	if c.MTU > 0 {
+		lab.Log("DHCP for the lab VMs on %s:67, MTU %d (the host's uplink)", profile.Gateway, c.MTU)
+	} else {
+		lab.Log("DHCP for the lab VMs on %s:67 (the host's uplink MTU is unknown: none offered)", profile.Gateway)
+	}
 	return nil
 }
 
