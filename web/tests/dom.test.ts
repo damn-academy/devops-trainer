@@ -37,18 +37,15 @@ describe('explainer renderer', () => {
 });
 
 describe('quiz renderer', () => {
-  it('requires confidence before checking and explains the distractor', () => {
+  it('enables checking once an answer is picked and explains the distractor', () => {
     const el = document.createElement('div');
     const item = registry.quiz.get('demo.q.where')!;
     mountQuiz(el, item, { context: 'lesson' });
     const check = el.querySelector<HTMLButtonElement>('.q-actions button')!;
+    expect(check.disabled).toBe(true);
     const wrong = el.querySelector<HTMLInputElement>('.q-option[data-id="disk"] input')!;
     wrong.checked = true;
     wrong.dispatchEvent(new Event('change'));
-    expect(check.disabled).toBe(true);
-    const conf = el.querySelector<HTMLInputElement>('.q-confidence input[value="3"]')!;
-    conf.checked = true;
-    conf.dispatchEvent(new Event('change'));
     expect(check.disabled).toBe(false);
     check.click();
     return new Promise<void>((r) =>

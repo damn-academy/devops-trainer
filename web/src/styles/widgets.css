@@ -137,7 +137,8 @@
 .goal { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
 .goal.current { border-color: var(--ink-2); }
 .goal.done { opacity: 0.75; }
-.goal-mark { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line-2); font: 700 0.75rem/1 var(--font-ui); }
+.goal-mark { display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 4px; border-radius: 5px; background: var(--bg-2); color: var(--muted); font: 700 0.78rem/1 var(--font-ui); }
+.goal.current .goal-mark { background: var(--ink); color: var(--bg); }
 .goal.done .goal-mark { background: var(--c-ok); border-color: var(--c-ok); color: var(--bg); }
 .goal-text { font-family: var(--font-text); font-size: 1.02rem; }
 .goal-text p { margin: 0; }
@@ -253,8 +254,6 @@
 .q-label-edge { stroke: var(--c-flow); stroke-width: 1.5px; opacity: 0.5; }
 .q-label-selects { display: grid; gap: 8px; }
 .q-label-row { display: flex; gap: 8px; align-items: center; }
-.q-confidence { border: 0; padding: 0; margin: 14px 0 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.q-confidence legend { font-size: 0.86rem; color: var(--muted); margin-bottom: 6px; padding: 0; }
 .q-actions { display: flex; gap: 8px; }
 .q-feedback:empty { display: none; }
 .q-feedback { margin-top: 12px; display: grid; gap: 8px; justify-items: start; }

@@ -20,8 +20,8 @@ import './exam.css';
 
 const P = {
   lede: bi(
-    'Выберите уровень, который хотите подтвердить. Задания идут по одному, первое — самое простое. Подсказок и наставника здесь нет. Перед каждым ответом отметьте уверенность: верный ответ с пометкой «угадываю» не засчитывается — правильная догадка ещё не знание.',
-    'Choose the level you want to confirm. Tasks come one at a time, the first is the easiest. There are no hints and no mentor here. Before each answer mark how sure you are: a right answer marked “guessing” does not count — a lucky guess is not knowledge yet.',
+    'Выберите уровень, который хотите подтвердить. Задания идут по одному, и первое из них самое простое. Подсказок и наставника на проверке нет.',
+    'Choose the level you want to confirm. Tasks come one at a time, and the first is the easiest. There are no hints and no mentor during the check.',
   ),
   rules: bi(
     'Зачёт — 80% заданий и все ключевые. Практика проверяется по состоянию машины, любой путь к нужному состоянию засчитывается. Время пишется, но не валит проверку.',

@@ -3,6 +3,7 @@
 // Quizzes teach rather than measure: retry is free, the first attempt is
 // what goes into progress.
 
+import { answeredQuiz, externalButton } from '../ai/external-panel';
 import { clear, h, icon } from '../../core/dom';
 import { bi, t, UI, type Bi } from '../../core/i18n';
 import { renderInline, renderMd } from '../../core/markdown';
@@ -57,7 +58,8 @@ export function shuffle<T>(arr: T[], seed: string): T[] {
 export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Mounted {
   const md = ctx.md ?? ((b: Bi) => renderMd(t(b)));
   const showFeedback = ctx.feedback ?? (ctx.context === 'lesson' || ctx.context === 'review');
-  let confidence: Confidence | null = null;
+  // Confidence marks were removed from the interface; answers are recorded as "I think so".
+  const confidence: Confidence = 2;
   let attempts = store.state.quiz[item.id]?.attempts ?? 0;
   const feedback = h('div.q-feedback', { 'aria-live': 'polite' });
   const checkBtn = h('button.btn.primary', { type: 'button', disabled: true }, t(UI.check)) as HTMLButtonElement;
@@ -65,24 +67,8 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
   let hasAnswer: () => boolean = () => false;
   const body = h('div.q-body');
   const update = () => {
-    checkBtn.disabled = !(confidence && hasAnswer());
+    checkBtn.disabled = !hasAnswer();
   };
-
-  // confidence first
-  const confName = `conf-${item.id}-${Math.random().toString(36).slice(2, 6)}`;
-  const conf = h(
-    'fieldset.q-confidence',
-    {},
-    h('legend', {}, t(UI.confidence)),
-    ...([1, 2, 3] as Confidence[]).map((c) => {
-      const r = h('input', { type: 'radio', name: confName, value: c }) as HTMLInputElement;
-      r.addEventListener('change', () => {
-        confidence = c;
-        update();
-      });
-      return h('label.chip', {}, r, h('span', {}, t(c === 1 ? UI.conf1 : c === 2 ? UI.conf2 : UI.conf3)));
-    }),
-  );
 
   switch (item.kind) {
     case 'mcq':
@@ -307,6 +293,7 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
     checkBtn.disabled = true;
     let g: QuizGrade;
     let extra: Node | undefined;
+    let actual: string | undefined;
     const a = answer();
     switch (item.kind) {
       case 'mcq':
@@ -328,6 +315,7 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
       case 'predict-output': {
         const r = await gradePredict(item, a as string);
         g = r;
+        actual = r.actual;
         if (showFeedback) extra = h('figure.q-actual', {}, h('figcaption', {}, t(Q.output)), h('pre.q-term', {}, h('span.prompt', {}, '$ '), item.command, '\n', r.actual));
         break;
       }
@@ -349,12 +337,13 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
       root.querySelectorAll<HTMLInputElement>('.q-body input, .q-body select, .q-body textarea, .q-body button').forEach((x) => (x.disabled = true));
     }
     show(g, extra);
+    if (!g.correct && showFeedback && ctx.context !== 'exam' && ctx.context !== 'placement') feedback.append(externalButton(answeredQuiz(item, a, g, actual)));
     ctx.onAnswered?.(g, first);
   });
 
   const prompt = h('div.q-prompt', {}, md(item.prompt));
   clear(root);
-  root.append(h('div.quiz-item', { 'data-kind': item.kind, 'data-id': item.id }, prompt, body, conf, h('div.q-actions', {}, checkBtn), feedback));
+  root.append(h('div.quiz-item', { 'data-kind': item.kind, 'data-id': item.id }, prompt, body, h('div.q-actions', {}, checkBtn), feedback));
   return {
     dispose: () => clear(root),
     describe: () => `${t(item.prompt)} (${item.kind})`,
