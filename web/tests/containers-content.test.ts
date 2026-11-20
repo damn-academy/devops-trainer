@@ -14,6 +14,8 @@ import block from '../src/blocks/containers/index';
 import { stackModel, stackNumbers } from '../src/blocks/containers/explainers/stack';
 import { plan, firstMiss } from '../src/blocks/containers/explainers/build';
 import { stopResult } from '../src/blocks/containers/explainers/stop';
+import { netPathModel } from '../src/blocks/containers/explainers/netpath';
+import { lintPlacement } from '../src/engine/quiz/placement';
 
 beforeAll(() => {
   for (const c of [...BUILTINS, ...BASIC_COMMANDS, ...(dsim.commands ?? [])]) if (!terminalRegistry.commands.get(c.name)) terminalRegistry.commands.add(c);
@@ -24,8 +26,8 @@ beforeAll(() => {
 describe('containers explainers', () => {
   const models = (block.explainers ?? []).map((e) => e.model as ProcessModel<Record<string, unknown>>);
 
-  it('has eight models with at most 12 nodes', () => {
-    expect(models).toHaveLength(8);
+  it('has nine models with at most 12 nodes', () => {
+    expect(models).toHaveLength(9);
     for (const m of models) expect(m.diagram.nodes.length).toBeLessThanOrEqual(12);
   });
 
@@ -260,3 +262,65 @@ EOF`;
   });
 });
 
+
+describe('containers: second persona round', () => {
+  it('the placement check has 5–10 tasks per level, at least half of them practical', () => {
+    expect(lintPlacement(block.blocks![0].placement)).toEqual([]);
+  });
+
+  async function place(id: string, lines: string[]) {
+    const t = block.blocks![0].placement.find((x) => x.id === id)!;
+    if (t.kind !== 'task') throw new Error(`${id} is not a task`);
+    const m = await createSimMachine(fast(t.setup));
+    const start = await m.facts();
+    for (const line of lines) await m.exec(line);
+    return evaluateCheck(t.task.check, await m.facts(), start).pass;
+  }
+
+  it('the practical placement tasks can be solved', async () => {
+    expect(await place('containers.place.env', ['docker logs db', 'docker rm db', 'docker run -d --name db -e POSTGRES_PASSWORD=pw postgres:17-alpine'])).toBe(true);
+    expect(await place('containers.place.dns', ['docker network create app', 'docker network connect app db', 'docker network connect app api'])).toBe(true);
+    expect(await place('containers.place.dns-x', [])).toBe(false);
+    expect(await place('containers.place.small', [`printf 'FROM golang:1.25 AS build\\nWORKDIR /src\\nCOPY . .\\nRUN CGO_ENABLED=0 go build -o /out/app .\\nFROM scratch\\nCOPY --from=build /out/app /app\\nCMD ["/app"]\\n' > ~/go/Dockerfile`, 'docker build -t goapp:small ~/go'])).toBe(true);
+    expect(await place('containers.place.stop', [`printf 'FROM python:3.13-slim\\nCOPY app.py /app/\\nCMD ["python", "/app/app.py"]\\n' > ~/stop/Dockerfile`, 'docker build -t stopper:1.0 ~/stop', 'docker run -d --init --name app stopper:1.0', 'docker stop app'])).toBe(true);
+    expect(await place('containers.place.cache-x', [`printf 'FROM python:3.13-slim\\nWORKDIR /app\\nCOPY requirements.txt .\\nRUN pip install -r requirements.txt\\nCOPY . .\\nCMD ["python", "main.py"]\\n' > ~/app/Dockerfile`, 'docker build -t app:1 ~/app', "echo 'print(2)' > ~/app/main.py", 'docker build -t app:2 ~/app'])).toBe(true);
+  });
+
+  it('the net-path model: localhost from a container stays in the container, names need a user network', () => {
+    const run = (p: Record<string, unknown>, b: string[] = []) => netPathModel.run({ request: 'published', userNet: true, netHost: false, addHost: true, hostLocalOnly: false, ...p } as never, new Set(b));
+    const fails = (p: Record<string, unknown>, b: string[] = []) => run(p, b).some((s) => s.broken);
+    expect(fails({})).toBe(false);
+    expect(fails({}, ['web-local'])).toBe(true);
+    expect(fails({ request: 'name' })).toBe(false);
+    expect(fails({ request: 'name', userNet: false })).toBe(true);
+    expect(fails({ request: 'localhost' })).toBe(true);
+    expect(fails({ request: 'localhost', netHost: true })).toBe(false);
+    expect(fails({ request: 'hostgw' })).toBe(false);
+    expect(fails({ request: 'hostgw', addHost: false })).toBe(true);
+    expect(fails({ request: 'hostgw', hostLocalOnly: true })).toBe(true);
+    expect(fails({ request: 'egress' })).toBe(false);
+  });
+
+  it('explains the build-context error in the Dockerfile lab and accepts grep for the namespaces goal', async () => {
+    const lesson = block.lessons!.find((l) => l.id === 'containers.dockerfile')!;
+    const sec = lesson.sections.find((s) => s.id === 'lab') as TerminalSection;
+    const m = await createSimMachine(fast(sec.setup));
+    await m.exec('cd ~/site');
+    await m.exec("echo 'FROM nginx:1.30-alpine' > Dockerfile");
+    await m.exec('docker build -t site:1.0 .');
+    const site = (sec.tasks as Task[]).find((t) => t.id === 'site')!;
+    const res = evaluateCheck(site.check, await m.facts());
+    expect(res.pass).toBe(false);
+    expect(res.say?.ru).toContain('В этом тренажёре контекст сборки');
+    const a = await solve('containers.anatomy', 'lab', { spec: ['crun spec'], namespaces: ['grep -n namespaces config.json'] });
+    expect(a.namespaces).toBe(true);
+  });
+
+  it('the interview asks situations the lessons did not', () => {
+    const interview = block.lessons!.find((l) => l.id === 'containers.interview')!;
+    const twelve = (interview.sections.find((s) => s.id === 'twelve') as { items: string[] }).items;
+    expect(twelve).toHaveLength(12);
+    const inLessons = new Set(block.lessons!.filter((l) => l.id !== 'containers.interview').flatMap((l) => l.sections.flatMap((s) => (s.kind === 'quiz' ? s.items.map((x) => (typeof x === 'string' ? x : x.id)) : []))));
+    expect(twelve.filter((id) => inLessons.has(id))).toEqual([]);
+  });
+});

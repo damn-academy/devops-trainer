@@ -236,3 +236,51 @@ describe('orientation explainer models', () => {
     expect(sys.explainDelta(sys.run(s3, new Set()), sys.run(s1, new Set()), { kind: 'param', id: 'programs', from: 3, to: 1 }, s3, s1).ru).not.toMatch(/медленнее/);
   });
 });
+
+describe('orientation for every level', () => {
+  it('asking a colleague after the help is a sensible step, and silence is the explained mistake', () => {
+    const q = registry.quiz.get('orient.q.help')!;
+    expect(q.kind).toBe('multi');
+    const opts = q.kind === 'multi' ? q.options : [];
+    expect(opts.find((o) => o.id === 'ask')?.correct).toBe(true);
+    const silent = opts.find((o) => o.id === 'silent')!;
+    expect(silent.correct).toBeFalsy();
+    expect(silent.why?.ru).toMatch(/первые недели/);
+    expect(silent.why?.ru).not.toMatch(/^Это /);
+  });
+
+  it('the block review asks new questions rather than repeating the lesson quizzes', () => {
+    const team = registry.lessons.get('orient.team')!;
+    const review = team.sections.find((s) => s.id === 'review')!;
+    const items = review.kind === 'quiz' ? review.items : [];
+    const inLessons = new Set(B.lessons.flatMap((id) => registry.lessons.get(id)!.sections.filter((s) => s.kind === 'quiz' && s.id === 'quiz').flatMap((s) => (s.kind === 'quiz' ? s.items : []))));
+    expect(items.length).toBeGreaterThanOrEqual(6);
+    for (const it of items) expect(inLessons.has(it), String(it)).toBe(false);
+  });
+
+  it('the last lesson gives the whole chain, interview questions and the pace of the route', () => {
+    const team = registry.lessons.get('orient.team')!;
+    for (const id of ['chain', 'interview', 'pace']) expect(team.sections.some((s) => s.id === id && !s.levels), id).toBe(true);
+    const pace = team.sections.find((s) => s.id === 'pace')!;
+    expect(pace.kind === 'callout' && pace.body.ru).toMatch(/60\u00a0%/);
+    expect(pace.kind === 'callout' && pace.body.ru).toMatch(/около \d+0 часов на уровне «Новичок»/);
+  });
+
+  it('the experienced see programmer notes in the lessons with practice, and beginners do not', () => {
+    for (const id of ['orient.inside', 'orient.requests', 'orient.rent', 'orient.release', 'orient.places', 'orient.together']) {
+      const s = registry.lessons.get(id)!.sections.find((x) => x.id === 'programmer');
+      expect(s?.levels, id).toEqual(['experienced']);
+    }
+  });
+
+  it('the programmer notes stay accurate about builds on the server and the Twelve-Factor points', () => {
+    const note = (id: string) => {
+      const s = registry.lessons.get(id)!.sections.find((x) => x.id === 'programmer')!;
+      return s.kind === 'callout' ? s.body.ru : '';
+    };
+    expect(note('orient.release')).not.toMatch(/разные версии зависимостей/);
+    expect(note('orient.release')).toMatch(/наполовину обновлённый код/);
+    expect(note('orient.places')).toMatch(/Build, release, run/);
+    expect(note('orient.requests')).toMatch(/--connect-timeout/);
+  });
+});

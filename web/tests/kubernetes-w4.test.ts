@@ -142,6 +142,8 @@ const PLACEMENT_SOLUTIONS: Record<string, string[]> = {
   'k8s.place.e2b': ['kubectl -n shop patch svc web -p \'{"spec":{"ports":[{"port":80,"targetPort":80}]}}\'', 'kubectl -n shop label pod client role=frontend', 'cluster ff 3s'],
   'k8s.place.e4': ['kubectl drain worker-2 --ignore-daemonsets --force', 'cluster ff 60s'],
   'k8s.place.e5': ['kubectl apply -f deny.yaml', 'kubectl apply -f and.yaml', 'cluster ff 2s'],
+  'k8s.place.e8': ['kubectl delete pvc reports', "sed -i 's/storageClassName: fast/storageClassName: csi-hostpath-sc/' reports.yaml", 'kubectl apply -f reports.yaml', 'cluster ff 30s'],
+  'k8s.place.e9': [`kubectl patch deployment web -p '{"spec":{"template":{"spec":{"containers":[{"name":"web","resources":{"requests":{"cpu":"100m"}}}]}}}}'`, 'cluster ff 1m'],
 };
 
 describe('placement', () => {

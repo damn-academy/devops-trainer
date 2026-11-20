@@ -166,7 +166,9 @@ describe('linux labs on real machines: which goals skip the general facts', () =
     expect(t(SSH_LAB, 'bastion')).toBe(true);
     expect(t(SSH_LAB, 'mux')).toBe(true);
     expect(t(SSH_LAB, 'keygen')).toBe(false);
-    expect(t(SSH_LAB, 'tunnel')).toBe(false);
+    // the tunnel and the copied file are judged by probes from the laptop, so they pass whenever they are done, not only when current
+    expect(t(SSH_LAB, 'tunnel')).toBe(true);
+    expect(t(SSH_LAB, 'scp')).toBe(true);
     expect(t(WEB_LAB, 'neighbour')).toBe(true);
     expect(t(WEB_LAB, 'server')).toBe(false);
     expect(t(DISK_LAB, 'free')).toBe(true);
