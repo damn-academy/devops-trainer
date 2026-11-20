@@ -123,6 +123,7 @@ func (lab *Lab) State() (*State, error) { return LoadState(lab.L.State()) }
 type UpOptions struct {
 	Profile, With, Backend string
 	Kuberoot               string // artifacts URL or directory
+	KuberootVersion        string // the release when Kuberoot is empty: a version or "latest"
 	Course                 string // web/dist to serve
 	Timeout                time.Duration
 }
@@ -144,6 +145,9 @@ func (lab *Lab) Up(ctx context.Context, o UpOptions) error {
 	}
 	if o.Kuberoot != "" {
 		lab.Src.Kuberoot = o.Kuberoot
+	}
+	if o.KuberootVersion != "" {
+		lab.Src.KuberootVersion = o.KuberootVersion
 	}
 	st, err := lab.State()
 	if err != nil {
@@ -357,21 +361,10 @@ func (lab *Lab) kuberootMedia(ctx context.Context, st *State, v *VMState) (strin
 	if _, err := os.Stat(media); err == nil {
 		return media, nil
 	}
-	art := filepath.Join(lab.L.Images(), "kuberoot", lab.Arch)
-	for _, f := range kuberoot.Artifacts {
-		if err := fetch(ctx, joinURL(lab.Src.Kuberoot, lab.Arch+"/"+f), filepath.Join(art, f), "", lab.Log); err != nil {
-			return "", fmt.Errorf("kuberoot artifacts: %w (pass --kuberoot <url or directory>)", err)
-		}
+	art, mkPath, err := lab.kuberootArtifacts(ctx)
+	if err != nil {
+		return "", err
 	}
-	mk := "mkimage-" + lab.GOOS + "-" + lab.Arch
-	if lab.GOOS == "windows" {
-		mk += ".exe"
-	}
-	mkPath := filepath.Join(lab.L.Files(), mk)
-	if err := fetch(ctx, joinURL(lab.Src.Kuberoot, "bin/"+mk), mkPath, "", lab.Log); err != nil {
-		return "", fmt.Errorf("kuberoot mkimage: %w", err)
-	}
-	_ = os.Chmod(mkPath, 0o755)
 	version, _ := os.ReadFile(filepath.Join(art, "VERSION"))
 	args := ""
 	if st.Backend.Name == "hyperv" {
@@ -478,7 +471,7 @@ func (lab *Lab) waitKuberoot(ctx context.Context, st *State, v *VMState) error {
 	}
 	if !kuberoot.Installed(entries) {
 		lab.Log("%s: installing kuberoot onto its system disk", v.Name)
-		if err := c.Install(ctx, "vda"); err != nil {
+		if err := c.Install(ctx, installDisk(st.Backend.Name)); err != nil {
 			return err
 		}
 		if err := poll(ctx, 5*time.Second, func() error {
