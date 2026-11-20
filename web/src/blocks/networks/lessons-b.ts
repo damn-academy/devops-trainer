@@ -175,7 +175,7 @@ export const envelopes: Lesson = {
         'The diagram below shows how a program and the kernel build a packet ready to send. In the middle is a stack of envelopes: at first only the program’s data, and at every step another header appears around it. Under the envelopes is the dump, the same bytes in hexadecimal, and above them the ladder of layers with the names of the OSI and TCP/IP layers. You can compare three messages, an unencrypted HTTP request, a DNS question and a ping, and each has its own set of envelopes.',
       ),
     },
-    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.envelopes', howto: bi('Листайте шаги кнопками «Назад» и «Дальше». Нажмите на любое поле конверта, и рядом появится объяснение, откуда взялось его значение, а в дампе подсветятся байты этого поля. Ступени лесенки над конвертами открывают словарь: что означает «проблема на этом уровне», каким инструментом её смотреть и какое устройство на этом уровне работает.\n\nПройдите шаги для запроса HTTP, а потом переключите сообщение на вопрос DNS и на ping и сравните, какие конверты появились, а какие нет. На последнем шаге выберите устройство на пути и посмотрите, какие поля оно меняет. Напоследок увеличьте размер данных сверх MTU, переключите флаг DF и включите поломку, при которой маршрутизатор на пути выбрасывает сообщения ICMP. Перед поломкой схема спросит, что, по-вашему, случится с большим пакетом.', 'Move through the steps with “Back” and “Next”. Click any field of an envelope to see where its value came from; its bytes light up in the dump. The rungs of the ladder above the envelopes open the vocabulary: what “a problem on this layer” means, which tool shows it and which device works there.\n\nGo through the steps for the HTTP request, then switch the message to the DNS question and to ping and compare which envelopes appeared and which did not. On the last step choose a device on the path and see which fields it changes. Finally grow the data past the MTU, toggle the DF flag and switch on the break where a router on the path drops ICMP. Before the break the diagram asks what you think will happen to the large packet.'), caption: bi('Конверты на схеме вкладывались один в другой, и устройства на пути открывали разное их число. В следующем разделе эти наблюдения собраны в правила, с размерами заголовков и ограничением на размер пакета.', 'The envelopes in the diagram nested inside each other, and the devices on the path opened different numbers of them. The next section turns these observations into rules, with the header sizes and the limit on packet size.') },
+    { id: 'look', kind: 'explainer', step: 'look', explainer: 'net.envelopes', howto: bi('Листайте шаги кнопками «Назад» и «Дальше». Нажмите на любое поле конверта, и рядом появится объяснение, откуда взялось его значение, а в дампе подсветятся байты этого поля. Ступени лесенки над конвертами открывают словарь: что означает «проблема на этом уровне», каким инструментом её смотреть и какое устройство на этом уровне работает.\n\nПройдите шаги для запроса HTTP, а потом переключите сообщение на вопрос DNS и на ping и сравните, какие конверты появились, а какие нет. На последнем шаге выберите устройство на пути и посмотрите, какие поля оно меняет. Напоследок увеличьте размер данных сверх MTU, переключите флаг DF, который запрещает маршрутизаторам резать пакет на части, и включите поломку, при которой маршрутизатор на пути выбрасывает сообщения ICMP. Перед поломкой схема спросит, что, по-вашему, случится с большим пакетом.', 'Move through the steps with “Back” and “Next”. Click any field of an envelope to see where its value came from; its bytes light up in the dump. The rungs of the ladder above the envelopes open the vocabulary: what “a problem on this layer” means, which tool shows it and which device works there.\n\nGo through the steps for the HTTP request, then switch the message to the DNS question and to ping and compare which envelopes appeared and which did not. On the last step choose a device on the path and see which fields it changes. Finally grow the data past the MTU, toggle the DF flag, which forbids routers to cut the packet into pieces, and switch on the break where a router on the path drops ICMP. Before the break the diagram asks what you think will happen to the large packet.'), caption: bi('Конверты на схеме вкладывались один в другой, и устройства на пути открывали разное их число. В следующем разделе эти наблюдения собраны в правила, с размерами заголовков и ограничением на размер пакета.', 'The envelopes in the diagram nested inside each other, and the devices on the path opened different numbers of them. The next section turns these observations into rules, with the header sizes and the limit on packet size.') },
     {
       id: 'explain',
       kind: 'text',
@@ -372,7 +372,34 @@ export const dns: Lesson = {
           check: { stdout: /^shop\.example\.\s+\d+\s+IN\s+A\s+198\.51\.100\.20\n?$/, fail: [{ if: "term['main'][last].line~'+short'", say: bi('Опция +short оставляет только само значение, адрес 198.51.100.20. А нужна вся строка секции ANSWER, в которой есть имя, TTL, тип и значение. Поищите на странице опцию, которая выключает весь вывод, и опцию, которая возвращает одну секцию ANSWER.', 'The +short option leaves only the value itself, the address 198.51.100.20. The task needs the whole line of the ANSWER section, with the name, TTL, type and value. Look on the page for the option that turns all output off and the option that brings back only the ANSWER section.') }] },
           docStep: 3,
           chips: 'dig +noall +answer shop.example',
-          hints: { H1: bi('Опции dig начинаются со знака +. Одна опция выключает весь вывод, а другая включает нужную секцию.', 'dig options start with +. One turns everything off, another turns the needed section back on.') },
+          hints: {
+            H1: bi('Опции dig начинаются со знака +. Одна опция выключает весь вывод, а другая включает нужную секцию.', 'dig options start with +. One turns everything off, another turns the needed section back on.'),
+            H2: bi('На странице справки обе опции описаны в разделе QUERY OPTIONS: `+noall` выключает весь вывод, а `+answer` возвращает одну секцию ANSWER. Команда целиком выглядит так: `dig +noall +answer shop.example`.', 'On the help page both options are described in the QUERY OPTIONS section: `+noall` turns all output off and `+answer` brings back the ANSWER section alone. The whole command is `dig +noall +answer shop.example`.'),
+          },
+        },
+      },
+    },
+    {
+      id: 'forcing-guided',
+      kind: 'docs',
+      step: 'practice',
+      mode: 'find',
+      levels: ['beginner'],
+      prompt: bi('Коллега спрашивает, на какой сервер уходит почта для домена shop.example. Узнайте это и запишите имя сервера в файл ~/mx.txt. Адрес почтового сервера хранится в DNS в записи особого типа, MX, а тип записи, о которой спрашивать, команде dig называют прямо в строке запроса. Как это сделать, описано на странице справки dig(1), в разделе SIMPLE USAGE: ищите на ней слово type, то есть «тип».', 'A colleague asks which server receives mail for the domain shop.example. Find out and write the server’s name into ~/mx.txt. The mail server is kept in DNS in a record of a special type, MX, and the record type to ask about is named to dig right in the query line. How to do that is described on the dig(1) help page, in the SIMPLE USAGE section: look on it for the word type.'),
+      ref: { page: 'man/dig.1', anchor: 'SIMPLE USAGE' },
+      terminal: {
+        setup: lab('laptop', 'home'),
+        task: {
+          id: 'mx',
+          prompt: bi('Запишите имя почтового сервера shop.example в файл ~/mx.txt.', 'Write the name of shop.example’s mail server into ~/mx.txt.'),
+          check: { when: "files['/root/mx.txt'].text~'mail.shop.example'" },
+          docStep: 3,
+          docRef: { page: 'man/dig.1', anchor: 'SIMPLE USAGE' },
+          chips: 'dig +short shop.example MX > ~/mx.txt',
+          hints: {
+            H1: bi('Сначала посмотрите ответ на экране командой `dig shop.example MX`: тип записи пишут после имени, как в строке `dig @server name type` из справки. В секции ANSWER будет строка с числом 10 и именем сервера, а число означает приоритет, то есть очерёдность, в которой пробуют почтовые серверы.', 'First look at the answer on screen with `dig shop.example MX`: the record type goes after the name, as in the line `dig @server name type` from the help. The ANSWER section will hold a line with the number 10 and the server’s name; the number is the priority, the order in which mail servers are tried.'),
+            H2: bi('Опция `+short` оставляет от ответа одно значение, а знак `>` записывает вывод команды в файл. Команда целиком выглядит так: `dig +short shop.example MX > ~/mx.txt`.', 'The `+short` option leaves only the value of the answer, and the `>` sign writes the command’s output into a file. The whole command is `dig +short shop.example MX > ~/mx.txt`.'),
+          },
         },
       },
     },
@@ -381,6 +408,7 @@ export const dns: Lesson = {
       kind: 'docs',
       step: 'practice',
       mode: 'find',
+      levels: ['intermediate', 'experienced'],
       prompt: bi('Коллега спрашивает, на какой сервер уходит почта для домена shop.example. Узнайте это и запишите имя сервера в файл ~/mx.txt.', 'A colleague asks which server receives mail for the domain shop.example. Find out and write the server’s name into ~/mx.txt.'),
       ref: { page: 'man/dig.1' },
       terminal: {
