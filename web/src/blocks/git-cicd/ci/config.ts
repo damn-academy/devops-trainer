@@ -473,7 +473,8 @@ export function decide(job: CiJob, env: Record<string, string>, changed: string[
       if (ok && r.changes !== undefined && env.CI_PIPELINE_SOURCE !== 'push' && env.CI_PIPELINE_SOURCE !== 'merge_request_event') ok = true;
       else if (ok && r.changes !== undefined) ok = r.changes.some((g) => changed.some((f) => globMatch(g, f)));
       if (ok) {
-        const when = r.when ?? 'on_success';
+        // A rule without its own when inherits the job-level when (GitLab: rules:when > job when > on_success).
+        const when = r.when ?? job.when ?? 'on_success';
         if (when === 'never') return { included: false, when, allowFailure: false, reason: `rules[${i}] matched with when: never` };
         return { included: true, when, allowFailure: r.allowFailure ?? (job.allowFailure && when !== 'manual' ? true : false), reason: `rules[${i}] matched${r.if ? `: ${r.if}` : ''}` };
       }
