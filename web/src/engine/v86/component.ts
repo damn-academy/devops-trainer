@@ -1,3 +1,4 @@
+import { registerFeedbackSnapshot } from '../feedback/data';
 // "Real Linux in the browser": a mountable lab with one v86 machine, goals
 // checked by state after every command (09 §2.5), and honest lines about what
 // this machine is and is not. Lessons use it as a widget section:
@@ -151,6 +152,11 @@ export function mountRealLinux(root: HTMLElement, props: RealLinuxProps = {}, ct
     }
   };
 
+  const unregisterFeedback = registerFeedbackSnapshot(root, async () => ({
+    key, environment: machine ? await machine.snapshotForFeedback() : { unavailable: 'Machine not started' },
+    goals: tasks.map(task => ({ id: task.id, prompt: t(task.prompt), passed: passed.has(task.id), check: task.check })),
+  }));
+
   const finish = () => ctx?.complete();
 
   const check = async () => {
@@ -258,6 +264,7 @@ export function mountRealLinux(root: HTMLElement, props: RealLinuxProps = {}, ct
 
   return {
     dispose() {
+      unregisterFeedback();
       disposed = true;
       clearTimeout(checkTimer);
       con?.dispose();

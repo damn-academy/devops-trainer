@@ -1,0 +1,68 @@
+# Create feedback-secrets separately; never commit real credentials.
+# kubectl create secret generic feedback-secrets --from-literal=ADMIN_TOKEN='...'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: feedback-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feedback
+spec:
+  replicas: 1 # SQLite: one writer. Use Postgres before scaling out.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: {app: feedback}
+  template:
+    metadata:
+      labels: {app: feedback}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+      containers:
+        - name: feedback
+          image: ghcr.io/YOUR_ORG/feedback:REPLACE_WITH_DIGEST
+          ports:
+            - containerPort: 6101
+          env:
+            - {name: ADDR, value: ':6101'}
+            - {name: DATABASE_URL, value: /data/feedback.sqlite}
+            - {name: ALLOWED_ORIGINS, value: 'https://course.example'}
+          envFrom:
+            - secretRef: {name: feedback-secrets}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+          readinessProbe:
+            httpGet: {path: /healthz, port: 6101}
+          livenessProbe:
+            httpGet: {path: /healthz, port: 6101}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: feedback-data}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feedback
+spec:
+  selector: {app: feedback}
+  ports:
+    - {port: 6101, targetPort: 6101}
+# Add your HTTPS ingress and restrict /admin to your administrative network.

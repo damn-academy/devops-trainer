@@ -1,13 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 5288;
+const PORT = Number(process.env.E2E_PORT ?? 6100);
 
 export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
-  workers: 2,
+  workers: 1,
   reporter: [['list']],
   use: {
     baseURL: `http://localhost:${PORT}/`,

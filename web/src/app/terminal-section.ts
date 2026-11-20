@@ -1,3 +1,5 @@
+import { registerFeedbackSnapshot } from '../engine/feedback/data';
+import { snapshotForFeedback } from '../engine/terminal/feedback';
 // A lab: terminal on a simulated machine with goals checked by state after
 // every command (09 §2.5). Hints follow the documentation ladder: DL1–2 full
 // command chips and a page fragment as H3, DL3 only the page link and the
@@ -73,6 +75,14 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   );
   clear(root);
   root.append(el);
+
+  el.dataset.feedbackLab = o.key;
+  const unregisterFeedback = registerFeedbackSnapshot(el, async () => ({
+    key: o.key, level: o.level,
+    ...(machine ? await snapshotForFeedback(machine, startSnap) : { unavailable: 'Machine is starting' }),
+    goals: o.tasks.map(task => ({ id: task.id, prompt: t(task.prompt), check: task.check,
+      result: machine ? evaluateCheck(task.check, machine.factsSync(), startFacts) : null })),
+  }));
 
   const stepFor = (task: Task): DocStep => {
     const source = task.docRef ? sourceOf(task.docRef) : 'man';
@@ -231,6 +241,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
 
   return {
     dispose() {
+      unregisterFeedback();
       disposed = true;
       term?.dispose();
       machine?.dispose();

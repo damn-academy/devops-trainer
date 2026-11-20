@@ -1,3 +1,4 @@
+import { registerFeedbackSnapshot } from '../engine/feedback/data';
 // The practical exam runner (10 §6, §7; 01 §13.3). A timed scenario in the
 // sandbox, auto-graded by state predicates; only the built-in documentation
 // of the allowed sources is open (DL5); the mentor is off. The variant comes
@@ -91,8 +92,10 @@ function mountTabLab(exam: Exam, onFacts: (m: Record<string, Facts>) => void): {
   const w = inTab ? registry.widgets.get(inTab.widget) : undefined;
   if (!inTab || !w) return null;
   const el = h('div.widget-host.ex2-tablab');
-  const mounted = w.mount(el, inTab.props ?? {}, { level: 'experienced', complete() {}, record: (e) => store.record(e), openDoc: (r) => openDoc(r, { mode: 'exam', allowed: exam.allowedDocs, via: 'exam' }), reportFacts: onFacts });
-  return { el, mounted };
+  let feedbackFacts: unknown = null;
+  const unregisterFeedback = registerFeedbackSnapshot(el, () => ({ facts: feedbackFacts }));
+  const mounted = w.mount(el, inTab.props ?? {}, { level: 'experienced', complete() {}, record: (e) => store.record(e), openDoc: (r) => openDoc(r, { mode: 'exam', allowed: exam.allowedDocs, via: 'exam' }), reportFacts: facts => { feedbackFacts = facts; onFacts(facts); } });
+  return { el, mounted: { ...mounted, dispose() { unregisterFeedback(); mounted.dispose(); } } };
 }
 
 export function examPage(id: string): Page {
@@ -175,7 +178,7 @@ export function examPage(id: string): Page {
     tasks.forEach((task, i) => {
       const host = h('div');
       const tags = [`${task.weight} ${t(E.pts)}`, task.critical ? t(E.critical) : '', task.beyond ? t(E.beyond) : ''].filter(Boolean).join(' · ');
-      list.append(h('li.ex2-card', { 'data-critical': task.critical ? 'true' : undefined }, h('p.ex2-card-head', {}, h('span', {}, `${t(E.task)} ${i + 1}`), h('span.muted', {}, tags)), host));
+      list.append(h('li.ex2-card', { 'data-feedback-id': task.id, 'data-critical': task.critical ? 'true' : undefined }, h('p.ex2-card-head', {}, h('span', {}, `${t(E.task)} ${i + 1}`), h('span.muted', {}, tags)), host));
       if (task.kind === 'quiz') mounts.push(mountQuiz(host, task.item, { context: 'exam', feedback: mode === 'training', md: (b) => prose(b), onAnswered: (g) => results.set(task.id, g.correct ? 1 : g.score) }));
       else if (task.kind === 'real') {
         const card = mountRealCard(task.real, { feedback: mode === 'training', onScore: (sc) => results.set(task.id, sc) });

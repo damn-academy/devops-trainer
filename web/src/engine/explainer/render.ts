@@ -677,6 +677,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   function go(i: number, animate = true) {
     const prev = idx;
     idx = Math.max(0, Math.min(steps.length - 1, i));
+    el.dataset.feedbackStep = steps[idx]?.id ?? String(idx);
     if (idx > maxSeen) {
       maxSeen = idx;
       ctx.record({ kind: 'explainer.step', explainer: model.id, step: idx, total: steps.length });

@@ -1,3 +1,4 @@
+import { registerFeedbackSnapshot } from '../engine/feedback/data';
 // Renderers of lesson sections. Each section reports "done" once: prose when
 // read (scrolled into view), an explainer when every step was seen, a lab
 // when every goal passed, a quiz when every item was answered.
@@ -123,8 +124,10 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
       }
       const host = h('div.widget-host');
       el.append(host);
-      const mounted = w.mount(host, s.props, { lessonId: c.lesson.id, sectionId: s.id, level: c.level, complete: done, record: (e) => store.record(e), openDoc: (r) => openDoc(r) });
-      return { el, mounted };
+      let feedbackFacts: unknown = { unavailable: 'No facts received from widget yet' };
+      const unregisterFeedback = registerFeedbackSnapshot(host, () => ({ widget: s.widget, facts: feedbackFacts }));
+      const mounted = w.mount(host, s.props, { reportFacts: facts => { feedbackFacts = facts; }, lessonId: c.lesson.id, sectionId: s.id, level: c.level, complete: done, record: (e) => store.record(e), openDoc: (r) => openDoc(r) });
+      return { el, mounted: { ...mounted, dispose() { unregisterFeedback(); mounted.dispose(); } } };
     }
   }
 }

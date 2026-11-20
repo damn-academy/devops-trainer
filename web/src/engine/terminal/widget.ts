@@ -1,10 +1,12 @@
+import { registerFeedbackSnapshot } from '../feedback/data';
+import { snapshotForFeedback } from './feedback';
 // The terminal widget: xterm.js bound to any Machine. xterm is loaded with the
 // first terminal on the page (08 §3.6). The widget owns line editing
 // (history, cursor keys, Ctrl+A/E/U/K/W/C/L, Tab completion, paste) and a
 // less-like pager for `man`, so the machine only sees complete lines.
 
 import type { DocRef, ExecResult, Machine } from '../../core/types';
-import { needsMore } from './shell';
+import { needsMore, SimMachine } from './shell';
 
 export interface TerminalOptions {
   machine: Machine;
@@ -66,6 +68,9 @@ export function readTheme(): Record<string, string> {
 const visibleLen = (s: string) => s.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').length;
 
 export async function mountTerminal(el: HTMLElement, o: TerminalOptions): Promise<TerminalHandle> {
+  const baseline = o.machine instanceof SimMachine && !el.closest('.lab') ? await o.machine.snapshot() : null;
+  const unregisterFeedback = baseline && o.machine instanceof SimMachine
+    ? registerFeedbackSnapshot(el, () => snapshotForFeedback(o.machine as SimMachine, baseline)) : () => {};
   const { Terminal, FitAddon } = await loadXterm();
   const term: XTerm = new Terminal({
     fontFamily: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
@@ -380,6 +385,7 @@ export async function mountTerminal(el: HTMLElement, o: TerminalOptions): Promis
       prompt();
     },
     dispose() {
+      unregisterFeedback();
       ro?.disconnect();
       themeObs.disconnect();
       mq.removeEventListener?.('change', onMq);
