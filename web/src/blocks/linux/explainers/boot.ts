@@ -10,6 +10,9 @@ import { bi, type Bi } from '../../../core/i18n';
 import type { ElementState, Step } from '../../../core/types';
 import { fmtb } from './util';
 
+/** A decimal number as a Russian (comma) and an English (dot) string. */
+const dec = (n: number, d: number) => ({ ru: n.toFixed(d).replace('.', ','), en: n.toFixed(d) });
+
 type P = { target: string; slow: number; after: boolean };
 
 const sd = (name: string, sec: number) => ({ url: `https://man7.org/linux/man-pages/man${sec}/${name}.${sec}.html`, label: `${name}(${sec})` });
@@ -60,7 +63,7 @@ export const bootModel = defineModel<P>({
       { id: 'pid1', label: 'systemd', icon: 'process', work: 'dots', sub: 'PID 1', family: 'process', x: 376, y: 32, w: 160, h: 56, card: { what: bi('Программа systemd работает первым процессом системы и служит родителем всех служб. Она читает unit-файлы и одновременно запускает всё, что нужно выбранной цели загрузки, соблюдая порядок, который задают строки After=.', 'systemd runs as the first process of the system and is the parent of all services. It reads unit files and starts, in parallel, everything the chosen boot target needs, keeping the order that the After= lines set.'), who: bi('Ядро запускает systemd сразу после того, как подключит корневую файловую систему.', 'The kernel starts systemd right after attaching the root file system.'), see: 'ps -p 1', doc: sd('systemd', 1) } },
       { id: 'fs', label: 'local-fs.target', icon: 'disk', sub: '/etc/fstab', family: 'obj', x: 576, y: 32, w: 180, h: 56, card: { what: bi('Цель local-fs.target считается достигнутой, когда подключены все локальные файловые системы. Список дисков для подключения хранится в файле /etc/fstab, и подробно он разобран в уроке о дисках. Пока эта цель не достигнута, загрузка дальше не идёт.', 'local-fs.target counts as reached once all local file systems are attached. The list of disks to attach is in /etc/fstab, covered in detail in the lesson on disks. Until this target is reached, the boot goes no further.'), who: bi('По строкам /etc/fstab systemd сам создаёт unit-файлы для подключения дисков.', 'systemd itself makes unit files for attaching disks from the lines of /etc/fstab.'), see: 'cat /etc/fstab; findmnt --verify', doc: sd('fstab', 5) } },
       { id: 'mu', label: 'multi-user.target', sub: 'Wants=…', family: 'obj', shape: 'doc', x: 796, y: 32, w: 148, h: 56, card: { what: bi('До цели multi-user.target загружается обычный сервер. Чтобы её достичь, должны запуститься все службы, которые включены командой `systemctl enable`, то есть все, для которых есть ссылки в каталоге multi-user.target.wants/.', 'An ordinary server boots to multi-user.target. To reach it, every service enabled with `systemctl enable`, that is, every one linked in multi-user.target.wants/, must start.'), who: bi('Эта цель стоит по умолчанию, и проверить это можно командой `systemctl get-default`.', 'This is the default target; check it with `systemctl get-default`.'), see: 'systemctl list-dependencies multi-user.target', doc: sd('systemd.special', 7) } },
-      { id: 'slow', label: 'slow.service', icon: 'process', work: 'spin', sub: { ru: '0.4 с', en: '0.4 s' }, family: 'process', x: 376, y: 170, w: 140, h: 56, card: { what: bi('Служба slow.service долго запускается, потому что ждёт сеть, диск или базу данных. Сколько времени ушло на её запуск, показывает команда `systemd-analyze blame`.', 'slow.service takes long to start because it waits for the network, a disk or a database. `systemd-analyze blame` shows how long its start took.'), who: bi('Службу запускает systemd, потому что её хочет цель multi-user.target.', 'systemd starts it because multi-user.target wants it.'), see: 'systemd-analyze blame' } },
+      { id: 'slow', label: 'slow.service', icon: 'process', work: 'spin', sub: { ru: '0,4 с', en: '0.4 s' }, family: 'process', x: 376, y: 170, w: 140, h: 56, card: { what: bi('Служба slow.service долго запускается, потому что ждёт сеть, диск или базу данных. Сколько времени ушло на её запуск, показывает команда `systemd-analyze blame`.', 'slow.service takes long to start because it waits for the network, a disk or a database. `systemd-analyze blame` shows how long its start took.'), who: bi('Службу запускает systemd, потому что её подтягивает цель multi-user.target.', 'systemd starts it because multi-user.target wants it.'), see: 'systemd-analyze blame' } },
       { id: 'web', label: 'web.service', icon: 'process', work: 'pulse', sub: { ru: '0.3 с', en: '0.3 s' }, family: 'process', x: 616, y: 170, w: 140, h: 56, card: { what: bi('Службу web.service написали вы сами. Если в её unit-файле стоит строка `After=slow.service`, служба web ждёт, пока запустится slow, а без этой строки запускается одновременно с ней.', 'You wrote web.service yourself. If its unit file has `After=slow.service`, it waits until slow has started; without that line it starts at the same time.'), who: bi('Службу запускает systemd, если она включена командой enable.', 'systemd starts it if it was enabled with enable.'), see: 'systemctl cat web', doc: sd('systemd.unit', 5) } },
       { id: 'cron', label: 'cron.service', icon: 'process', work: 'pulse', sub: { ru: '0.35 с', en: '0.35 s' }, family: 'process', x: 796, y: 240, w: 148, h: 56, card: { what: bi('Для службы cron порядок относительно slow не задан, поэтому она запускается сразу и никого не ждёт.', 'cron has no ordering relative to slow, so it starts at once and waits for nobody.'), who: bi('Службу запускает systemd.', 'systemd starts it.'), see: 'systemctl status cron' } },
       { id: 'getty', label: bi('Программа входа', 'The login program'), icon: 'lock', sub: 'getty → login', family: 'user', x: 526, y: 320, w: 160, h: 56, card: { what: bi('На консоли вход обслуживают программы getty и login, а по сети вход обслуживает sshd. Они проверяют, кто вы, и запускают вашу оболочку.', 'On the console getty and login handle the login, and over the network sshd does. They check who you are and start your shell.'), who: bi('Эти программы запускает systemd как службы getty@tty1.service и ssh.service.', 'systemd starts them as the services getty@tty1.service and ssh.service.'), see: 'who' } },
@@ -72,9 +75,9 @@ export const bootModel = defineModel<P>({
       { id: 'e-init', from: 'kernel', to: 'pid1', via: [[366, 360], [366, 60]], label: bi('запуск процесса PID 1', 'starting PID 1'), labelAt: 0.33, card: { what: bi('Последняя строка ядра в журнале загрузки перед запуском systemd выглядит так: «Run /sbin/init as init process», то есть «запускаю /sbin/init первым процессом».', 'The kernel’s last line in the boot log before systemd reads “Run /sbin/init as init process”.'), who: bi('Первый процесс запускает ядро.', 'The kernel starts the first process.'), doc: sd('bootup', 7) } },
       { id: 'e-fs', from: 'pid1', to: 'fs', label: bi('подключение дисков', 'attaching disks'), card: { what: bi('Сначала systemd подключает файловые системы из /etc/fstab.', 'First systemd attaches the file systems from /etc/fstab.'), who: sysd } },
       { id: 'e-mu', from: 'fs', to: 'mu', label: bi('после дисков', 'after the disks'), card: { what: bi('Цель multi-user.target наступает только после цели local-fs.target.', 'multi-user.target comes only after local-fs.target.'), who: sysd } },
-      { id: 'e-slow', from: 'mu', to: 'slow', via: [[870, 130], [456, 130]], label: bi('цель хочет службу', 'the target wants the service'), labelAt: 0.6, card: { what: bi('Цель хочет все включённые службы и запускает их одновременно. В unit-файлах это записано строкой Wants=.', 'The target wants all enabled services and starts them at the same time. Unit files write this as Wants=.'), who: sysd } },
+      { id: 'e-slow', from: 'mu', to: 'slow', via: [[870, 130], [456, 130]], label: bi('цель подтягивает службу (Wants=)', 'the target wants the service (Wants=)'), labelAt: 0.6, card: { what: bi('Цель подтягивает все включённые службы и запускает их одновременно. В unit-файлах это записано строкой Wants=.', 'The target wants all enabled services and starts them at the same time. Unit files write this as Wants=.'), who: sysd } },
       { id: 'e-web', from: 'slow', to: 'web', label: bi('web ждёт slow', 'web waits for slow'), card: { what: bi('Строка `After=slow` задаёт порядок, и служба web запускается только после slow. Без этой строки обе службы запускаются одновременно.', '`After=slow` sets the order: web starts only after slow. Without that line both start at the same time.'), who: bi('Порядок задаёт строка After= в unit-файле службы web.', 'The After= line in web’s unit file sets the order.'), doc: sd('systemd.unit', 5) } },
-      { id: 'e-cron', from: 'mu', to: 'cron', label: bi('цель хочет службу', 'the target wants the service'), card: { what: bi('Служба cron никого не ждёт и запускается сразу.', 'cron waits for nobody and starts at once.'), who: sysd } },
+      { id: 'e-cron', from: 'mu', to: 'cron', label: bi('цель подтягивает службу', 'the target wants the service'), card: { what: bi('Служба cron никого не ждёт и запускается сразу.', 'cron waits for nobody and starts at once.'), who: sysd } },
       { id: 'e-getty', from: 'web', to: 'getty', label: bi('цель достигнута', 'target reached'), card: { what: bi('Когда цель достигнута, на консоли появляется приглашение входа. Служба sshd принимает подключения ещё раньше, как только сама запустится.', 'Once the target is reached, the console shows the login prompt. sshd accepts connections even earlier, as soon as it has started.'), who: sysd } },
       { id: 'e-bash', from: 'getty', to: 'bash', label: bi('запуск оболочки', 'starting the shell'), card: { what: bi('Проверив пароль или ключ, программа входа запускает оболочку, которая записана для вас в /etc/passwd.', 'Having checked the password or key, the login program starts the shell listed for you in /etc/passwd.'), who: bi('Оболочку запускает программа login или sshd.', 'login or sshd starts the shell.') } },
     ],
@@ -103,7 +106,7 @@ export const bootModel = defineModel<P>({
     },
     {
       id: 'slow',
-      label: bi('Сколько секунд запускается служба slow.service', 'How many seconds slow.service takes to start'),
+      label: bi('На сколько секунд дольше обычных 0,4 с запускается служба slow.service', 'How many seconds longer than the usual 0.4 s slow.service takes to start'),
       kind: 'range',
       min: 0,
       max: 30,
@@ -161,7 +164,7 @@ export const bootModel = defineModel<P>({
       predict: {
         prompt: bi('Вчера службу web запустили вручную командой `systemctl start`, и она работала, но команду enable для неё никто не выполнял. Запустится ли web после перезагрузки?', 'Yesterday web was started by hand with `systemctl start` and worked, but nobody ran enable for it. Will web start after a reboot?'),
         options: [
-          { id: 'down', text: bi('Нет, потому что ни одна цель её не хочет', 'No, because no target wants it') },
+          { id: 'down', text: bi('Нет, потому что ни одна цель её не подтягивает', 'No, because no target wants it') },
           { id: 'up', text: bi('Да, потому что systemd помнит, что она работала', 'Yes, because systemd remembers it was running') },
         ],
         resolve: () => 'down',
@@ -287,20 +290,20 @@ export const bootModel = defineModel<P>({
     steps.push({
       id: 'parallel',
       label: bi('службы', 'services'),
-      caption: bi('Цель multi-user.target хочет все включённые службы, и systemd запускает их одновременно, поэтому slow и cron начинают запускаться вместе.', 'multi-user.target wants all enabled services, and systemd starts them at the same time, so slow and cron begin starting together.'),
+      caption: bi('Цель multi-user.target подтягивает все включённые службы, и systemd запускает их одновременно, поэтому slow и cron начинают запускаться вместе.', 'multi-user.target wants all enabled services, and systemd starts them at the same time, so slow and cron begin starting together.'),
       focus: ['mu', 'slow', 'cron'],
       reveal: ['e-mu', 'mu', 'e-slow', 'slow', 'e-cron', 'cron'],
       tokens: [{ edge: 'e-slow', label: 'start' }, { edge: 'e-cron', label: 'start' }],
       say: { mu: bi('Цель multi-user.target запускает включённые службы все разом.', 'multi-user.target starts the enabled services all at once.') },
       states: { mu: 'wait', slow: 'wait', cron: 'on' },
-      values: { slow: explainerText({ ru: `${t.slow.toFixed(1)} с`, en: `${t.slow.toFixed(1)} s` }), cron: explainerText({ ru: `${t.cron.toFixed(2)} с`, en: `${t.cron.toFixed(2)} s` }) },
+      values: { slow: explainerText({ ru: `${t.slow.toFixed(1).replace('.', ',')} с`, en: `${t.slow.toFixed(1)} s` }), cron: explainerText({ ru: `${t.cron.toFixed(2).replace('.', ',')} с`, en: `${t.cron.toFixed(2)} s` }) },
       metrics: { services: 1, t: t.cron },
     });
     if (broken.has('no-wantedby')) {
       steps.push({
         id: 'no-web',
         label: bi('нет web', 'no web'),
-        caption: bi('Службу web.service ни одна цель не хочет, потому что ссылки на неё в каталоге multi-user.target.wants/ нет. Вчерашняя команда `systemctl start` действовала только до перезагрузки.', 'No target wants web.service, because there is no link to it in multi-user.target.wants/. Yesterday’s `systemctl start` lasted only until the reboot.'),
+        caption: bi('Службу web.service ни одна цель не подтягивает, потому что ссылки на неё в каталоге multi-user.target.wants/ нет. Вчерашняя команда `systemctl start` действовала только до перезагрузки.', 'No target wants web.service, because there is no link to it in multi-user.target.wants/. Yesterday’s `systemctl start` lasted only until the reboot.'),
         focus: ['web'],
         reveal: ['web', 'getty', 'bash'],
         say: { web: bi('systemd не запускает службу web, потому что её не включили командой enable.', 'systemd does not start web, because it was not enabled.') },
@@ -314,20 +317,20 @@ export const bootModel = defineModel<P>({
       id: 'web',
       label: 'web',
       caption: p.after
-        ? fmtb(bi('Служба slow запускалась {s} с, и только после неё запустилась web, потому что в unit-файле web стоит строка `After=slow.service`. Служба web готова через {w} с, а cron ждать не стала.', 'slow took {s} s, and only then did web start, because web’s unit file has `After=slow.service`. web is ready after {w} s, and cron did not wait.'), { s: t.slow.toFixed(1), w: t.web.toFixed(1) })
-        : fmtb(bi('Без строки `After=` служба web запускается одновременно со slow и готова через {w} с, не дожидаясь её.', 'Without `After=` web starts at the same time as slow and is ready after {w} s without waiting for it.'), { w: t.web.toFixed(1) }),
+        ? fmtb(bi('Служба slow запускалась {s} с, и только после неё запустилась web, потому что в unit-файле web стоит строка `After=slow.service`. Служба web готова через {w} с, а cron ждать не стала.', 'slow took {s} s, and only then did web start, because web’s unit file has `After=slow.service`. web is ready after {w} s, and cron did not wait.'), { s: dec(t.slow, 1), w: dec(t.web, 1) })
+        : fmtb(bi('Без строки `After=` служба web запускается одновременно со slow и готова через {w} с, не дожидаясь её.', 'Without `After=` web starts at the same time as slow and is ready after {w} s without waiting for it.'), { w: dec(t.web, 1) }),
       focus: ['e-web', 'web'],
       reveal: ['e-web', 'web'],
       tokens: [{ edge: 'e-web', label: p.after ? 'After=slow' : 'start' }],
       say: { web: p.after ? bi('Служба web дождалась slow и теперь запускается сама.', 'web waited for slow and now starts itself.') : bi('Служба web запускается, не дожидаясь slow.', 'web starts without waiting for slow.') },
       states: { slow: 'ok', web: 'on', cron: 'ok' },
-      values: { web: explainerText({ ru: `${t.web.toFixed(1)} с`, en: `${t.web.toFixed(1)} s` }) },
+      values: { web: explainerText({ ru: `${t.web.toFixed(1).replace('.', ',')} с`, en: `${t.web.toFixed(1)} s` }) },
       metrics: { services: 3, t: t.web },
     });
     steps.push({
       id: 'login',
       label: bi('вход', 'login'),
-      caption: fmtb(bi('Цель multi-user.target достигнута через {r} с. На консоли появляется приглашение входа, а служба sshd принимает подключения по сети.', 'multi-user.target is reached after {r} s. The console shows the login prompt, and sshd accepts network connections.'), { r: t.ready.toFixed(1) }),
+      caption: fmtb(bi('Цель multi-user.target достигнута через {r} с. На консоли появляется приглашение входа, а служба sshd принимает подключения по сети.', 'multi-user.target is reached after {r} s. The console shows the login prompt, and sshd accepts network connections.'), { r: dec(t.ready, 1) }),
       focus: ['e-getty', 'getty'],
       reveal: ['e-getty', 'getty'],
       tokens: [{ edge: 'e-getty', label: 'login:' }],
@@ -354,14 +357,14 @@ export const bootModel = defineModel<P>({
       if (!change.on) return bi('Поломку убрали, и загрузка снова доходит до приглашения оболочки.', 'The break is removed, and the boot again reaches the shell prompt.');
       if (change.id === 'bad-uuid') return bi('Из-за неверного UUID в /etc/fstab цель local-fs.target не достигнута, и после 90 секунд ожидания машина перешла в аварийный режим.', 'Because of the wrong UUID in /etc/fstab, local-fs.target is not reached, and after a 90-second wait the machine went into emergency mode.');
       if (change.id === 'no-init') return bi('Без первой программы система не может работать, поэтому сразу после подключения корневой файловой системы ядро останавливается с сообщением Kernel panic.', 'Without a first program the system cannot run, so right after attaching the root file system the kernel stops with a kernel panic.');
-      return bi('Служба, которую не включили командой enable, при загрузке не запускается, потому что ни одна цель её не хочет.', 'A service that was not enabled does not start at boot, because no target wants it.');
+      return bi('Служба, которую не включили командой enable, при загрузке не запускается, потому что ни одна цель её не подтягивает.', 'A service that was not enabled does not start at boot, because no target wants it.');
     }
     const t0 = bootTimes(a as P);
     const t1 = bootTimes(b as P);
     if (change.id === 'slow')
       return (b as P).after
-        ? fmtb(bi('Служба slow теперь запускается не {a} с, а {b} с. Служба web ждёт её из-за строки After= и готова через {w} с, а cron не ждёт, потому что порядок между ними не задан.', 'slow now takes {b} s instead of {a} s. web waits for it because of After= and is ready after {w} s, while cron does not wait, because no order is set between them.'), { a: t0.slow.toFixed(1), b: t1.slow.toFixed(1), w: t1.web.toFixed(1) })
-        : fmtb(bi('Служба slow запускается {b} с, но web без строки After= её не ждёт и готова через {w} с.', 'slow takes {b} s, but web without After= does not wait and is ready after {w} s.'), { b: t1.slow.toFixed(1), w: t1.web.toFixed(1) });
+        ? fmtb(bi('Служба slow теперь запускается не {a} с, а {b} с. Служба web ждёт её из-за строки After= и готова через {w} с, а cron не ждёт, потому что порядок между ними не задан.', 'slow now takes {b} s instead of {a} s. web waits for it because of After= and is ready after {w} s, while cron does not wait, because no order is set between them.'), { a: dec(t0.slow, 1), b: dec(t1.slow, 1), w: dec(t1.web, 1) })
+        : fmtb(bi('Служба slow запускается {b} с, но web без строки After= её не ждёт и готова через {w} с.', 'slow takes {b} s, but web without After= does not wait and is ready after {w} s.'), { b: dec(t1.slow, 1), w: dec(t1.web, 1) });
     if (change.id === 'after') return (b as P).after ? bi('Строка After=slow.service заставляет web запускаться только после slow. Она задаёт порядок запуска, а потребность в службе задаёт другая строка, Wants=.', 'After=slow.service makes web start only after slow. It sets the order of starting, while the need for a service is set by another line, Wants=.') : bi('Без строки After= службы web и slow запускаются одновременно.', 'Without After= web and slow start at the same time.');
     if ((b as P).target === 'rescue') return bi('В режиме восстановления rescue.target не запускаются сеть, вход по сети и ваши службы, и вы получаете оболочку root на консоли.', 'In rescue.target the network, network logins and your services do not start, and you get a root shell on the console.');
     if ((b as P).target === 'emergency') return bi('В аварийном режиме emergency.target диски из /etc/fstab не подключаются, а корневая файловая система доступна только для чтения.', 'In emergency.target the disks from /etc/fstab are not attached, and the root file system is read-only.');

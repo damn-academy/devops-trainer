@@ -92,12 +92,24 @@ export const QUIZ: QuizItem[] = [
     id: 'linux.q.tar-c',
     kind: 'mcq',
     concepts: ['linux.archive'],
-    prompt: W('Чем команда `tar -xzf site.tgz -C /srv/site` отличается от `cd /srv/site && tar -xzf ~/site.tgz`?', 'How does `tar -xzf site.tgz -C /srv/site` differ from `cd /srv/site && tar -xzf ~/site.tgz`?'),
+    prompt: W('Чем команда `tar -xzf ~/site.tgz -C /srv/site` отличается от `cd /srv/site && tar -xzf ~/site.tgz`?', 'How does `tar -xzf ~/site.tgz -C /srv/site` differ from `cd /srv/site && tar -xzf ~/site.tgz`?'),
     options: [
       { id: 'same', text: W('Результат одинаковый, потому что -C переходит в каталог перед распаковкой', 'The result is the same, because -C changes to the directory before unpacking'), correct: true },
       { id: 'sub', text: W('Флаг -C создаёт подкаталог с именем архива', 'The -C flag creates a subdirectory named after the archive'), why: W('Нет, подкаталоги появятся, только если они записаны в самом архиве, а увидеть это можно командой `tar -t`.', 'No, subdirectories appear only if they are recorded in the archive itself, which `tar -t` shows.') },
       { id: 'over', text: W('Флаг -C перезаписывает каталог целиком', 'The -C flag overwrites the whole directory'), why: W('Нет, tar добавляет и заменяет только те файлы, которые есть в архиве, а остальные файлы каталога не трогает.', 'No, tar adds and replaces only the files in the archive and leaves the rest of the directory alone.') },
     ],
+  },
+  {
+    id: 'linux.q.vim-exit',
+    kind: 'mcq',
+    prompt: W('Вы открыли файл настроек в `vim`, что-то напечатали, и на экране творится непонятное. Как выйти из редактора, ничего не записав в файл?', 'You opened a settings file in `vim`, typed something, and the screen shows something strange. How do you leave the editor without writing anything to the file?'),
+    options: [
+      { id: 'q', text: W('Нажать Esc, набрать `:q!` и нажать Enter', 'Press Esc, type `:q!` and press Enter'), correct: true },
+      { id: 'ctrlc', text: W('Нажать Ctrl+C', 'Press Ctrl+C'), why: W('Нет, в `vim` сочетание Ctrl+C только прерывает текущую команду редактора и оставляет файл открытым. Выход без записи делает набор `:q!` в режиме команд, куда возвращает клавиша Esc.', 'No, in `vim` Ctrl+C only interrupts the current editor command and leaves the file open. Leaving without writing is `:q!` in command mode, to which Esc brings you back.') },
+      { id: 'ctrlx', text: W('Нажать Ctrl+X', 'Press Ctrl+X'), why: W('Так закрывается редактор `nano`. В `vim` сочетание Ctrl+X ничего не закрывает, а выход без записи делает набор `:q!` после клавиши Esc.', 'That is how `nano` closes. In `vim` Ctrl+X closes nothing, and leaving without writing is `:q!` after Esc.') },
+      { id: 'close', text: W('Закрыть окно терминала', 'Close the terminal window'), why: W('Файл останется прежним, но `vim` оставит рядом служебный файл с окончанием `.swp` и при следующем открытии начнёт спрашивать о нём, а на сервере вы ещё и потеряете сеанс. Чище выйти набором `:q!` после клавиши Esc.', 'The file stays as it was, but `vim` leaves a helper file ending in `.swp` next to it and asks about it the next time, and on a server you also lose the session. It is cleaner to leave with `:q!` after Esc.') },
+    ],
+    refs: { lesson: 'linux.files' },
   },
   // ── manual ──
   {
@@ -127,7 +139,7 @@ export const QUIZ: QuizItem[] = [
     id: 'linux.q.man-sections',
     kind: 'match',
     concepts: ['linux.man-page'],
-    prompt: W('Сопоставьте каждый раздел руководства с тем, что в нём описано.', 'Match each section of the manual with what it describes.'),
+    prompt: W('Сопоставьте каждый том руководства с тем, что в нём описано.', 'Match each section of the manual with what it describes.'),
     pairs: [
       { id: '1', left: 'man 1', right: W('в нём описаны команды пользователя', 'it describes user commands') },
       { id: '5', left: 'man 5', right: W('в нём описаны форматы файлов', 'it describes file formats') },
@@ -158,6 +170,19 @@ export const QUIZ: QuizItem[] = [
       { id: 'orphan', text: W('Файлы стали ничьими', 'The files belong to nobody now'), why: W('Нет, файл хранит номер владельца, а не имя, и имя команда ls подставляет по файлу /etc/passwd.', 'No, a file keeps its owner’s number, not the name, and ls fills in the name from /etc/passwd.') },
       { id: 'root', text: W('Файлы перешли к root', 'The files went to root'), why: W('Нет, владельца никто не менял, потому что номер UID остался тем же.', 'No, nobody changed the owner, because the UID stayed the same.') },
     ],
+  },
+  {
+    id: 'linux.q.uid-other-machine',
+    kind: 'mcq',
+    concepts: ['linux.user'],
+    prompt: W('Вы перенесли архив с файлами anna со старого сервера на новый и распаковали его от имени root. На новом сервере anna тоже есть, но `ls -l` показывает владельцем файлов не её имя, а число `1001`, и anna не может их изменить. Почему?', 'You moved an archive of anna’s files from the old server to a new one and unpacked it as root. anna exists on the new server too, but `ls -l` shows not her name but the number `1001` as the owner, and anna cannot change the files. Why?'),
+    options: [
+      { id: 'uid', text: W('На новом сервере у anna другой номер UID, а файлы хранят номер 1001, под которым она была на старом', 'On the new server anna has another UID, while the files keep the number 1001 she had on the old one'), correct: true },
+      { id: 'tar', text: W('Архив испортился при переносе', 'The archive got damaged on the way'), why: W('Нет, испорченный архив не распаковался бы, а здесь файлы на месте. Архив сохранил владельца как номер, и этот номер на новой машине никому не принадлежит или принадлежит другому человеку.', 'No, a damaged archive would not unpack, and here the files are in place. The archive kept the owner as a number, and on the new machine that number belongs to nobody or to someone else.') },
+      { id: 'root', text: W('Файлы принадлежат root, потому что их распаковал root', 'The files belong to root, because root unpacked them'), why: W('Нет, root при распаковке сохраняет владельцев, записанных в архиве, и поэтому файлы получили номер 1001. Будь владельцем root, `ls -l` показал бы имя root.', 'No, when root unpacks it keeps the owners recorded in the archive, which is why the files got the number 1001. If root were the owner, `ls -l` would show the name root.') },
+    ],
+    explain: W('Система хранит владельца файла номером, а имя подставляет по файлу `/etc/passwd` той машины, на которой вы смотрите. Команда `ls -n` показывает номера вместо имён, а `id anna` показывает, какой номер у anna здесь. Владельца файлов меняет команда `chown`, о которой рассказывает урок о правах. Та же история случается, когда каталог машины подключают к программе, которая работает под другим номером пользователя: имена совпадают, а номера нет.', 'The system keeps a file’s owner as a number and fills in the name from `/etc/passwd` of the machine you are looking from. `ls -n` shows numbers instead of names, and `id anna` shows which number anna has here. The owner of files is changed with `chown`, covered in the lesson on permissions. The same story happens when a directory of the machine is given to a program that runs under another user number: the names match, the numbers do not.'),
+    refs: { lesson: 'linux.users' },
   },
   // ── permissions ──
   {
@@ -205,6 +230,32 @@ export const QUIZ: QuizItem[] = [
       2: W('Запись `>` выполняет ваша оболочка от вашего имени ещё до запуска sudo, а от имени root работает только echo.', 'The `>` is done by your shell, as you, before sudo even starts, and only echo runs as root.'),
       3: W('Это правильный приём, потому что файл открывает команда tee, которая запущена от имени root.', 'This is the right trick, because the file is opened by tee, which runs as root.'),
     },
+  },
+  {
+    id: 'linux.q.sudo-cd',
+    kind: 'mcq',
+    concepts: ['linux.sudo', 'linux.builtin'],
+    prompt: W('Пользователь хочет зайти в домашний каталог администратора и набирает `sudo cd /root`, а получает ответ `sudo: cd: command not found`. Почему так вышло?', 'A user wants to enter the administrator’s home directory and types `sudo cd /root`, but gets `sudo: cd: command not found`. Why?'),
+    options: [
+      { id: 'builtin', text: W('Команда `cd` встроена в оболочку, а sudo умеет запускать только отдельные программы', '`cd` is built into the shell, and sudo can start only separate programs'), correct: true },
+      { id: 'nosudo', text: W('Пользователю не разрешено пользоваться sudo', 'The user is not allowed to use sudo'), why: W('Тогда sudo ответил бы, что пользователя нет в файле sudoers. Здесь sudo запустился и не нашёл программу с именем cd, потому что такой программы нет, а есть встроенная команда оболочки.', 'Then sudo would say that the user is not in the sudoers file. Here sudo started and found no program called cd, because there is none, only a shell builtin.') },
+      { id: 'dirx', text: W('У каталога `/root` нет бита x для остальных', '`/root` has no x bit for others'), why: W('Бит x у `/root` для остальных снят, но root эти биты не проверяет. Мешает другое: sudo запускает программу, а каталог оболочки может сменить только сама оболочка.', 'The x bit of `/root` is indeed cleared for others, but root does not check those bits. The obstacle is different: sudo starts a program, and only the shell itself can change the shell’s directory.') },
+    ],
+    explain: W('Даже если бы sudo нашёл программу `cd`, а в некоторых системах, например в RHEL, файл `/usr/bin/cd` есть, она сменила бы каталог только себе и сразу завершилась, а ваша оболочка осталась бы на месте. Посмотреть, что лежит в `/root`, можно командой `sudo ls /root`, а работать там удобнее в оболочке root, которую открывает `sudo -i`.', 'Even if sudo found a `cd` program, and some systems, such as RHEL, really have `/usr/bin/cd`, it would change only its own directory and exit at once, and your shell would stay where it was. To see what is in `/root`, use `sudo ls /root`, and to work there, open a root shell with `sudo -i`.'),
+    refs: { lesson: 'linux.permissions' },
+  },
+  {
+    id: 'linux.q.root-denied',
+    kind: 'mcq',
+    concepts: ['linux.root', 'linux.mode'],
+    prompt: W('Администратор работает под root и пытается удалить старый файл, а система ему отказывает:\n\n```\n# rm /etc/app/license.key\nrm: cannot remove \'/etc/app/license.key\': Operation not permitted\n# ls -l /etc/app/license.key\n-rw-r--r-- 1 root root 64 Nov 18 09:00 /etc/app/license.key\n```\n\nФайл принадлежит root, а каталог и биты прав в порядке. В чём, скорее всего, причина?', 'The administrator works as root and tries to delete an old file, but the system refuses:\n\n```\n# rm /etc/app/license.key\nrm: cannot remove \'/etc/app/license.key\': Operation not permitted\n# ls -l /etc/app/license.key\n-rw-r--r-- 1 root root 64 Nov 18 09:00 /etc/app/license.key\n```\n\nThe file belongs to root, and the directory and the mode bits are fine. What is the most likely cause?'),
+    options: [
+      { id: 'immutable', text: W('На файле стоит пометка «неизменяемый», которую показывает команда `lsattr`', 'The file carries the “immutable” mark that `lsattr` shows'), correct: true },
+      { id: 'sudo', text: W('Команду нужно было запустить через sudo', 'The command should have been run with sudo'), why: W('Знак `#` в приглашении показывает, что оболочка уже работает от имени root, и sudo ничего не добавит. Мешает не нехватка прав, а пометка, которую ставит `chattr +i` и снимает `chattr -i`.', 'The `#` in the prompt shows that the shell already runs as root, and sudo adds nothing. The obstacle is not a lack of rights but the mark that `chattr +i` sets and `chattr -i` removes.') },
+      { id: 'write', text: W('У файла нет бита w у группы и у остальных', 'The file has no w bit for the group and others'), why: W('Для удаления биты самого файла не важны, решает бит w у каталога, а root не проверяет и его. Отказ при удалении собственного файла у root чаще всего означает пометку «неизменяемый» от `chattr +i`.', 'The file’s own bits do not matter for deletion, the w bit of the directory decides, and root does not check even that. A refusal to delete root’s own file most often means the “immutable” mark set by `chattr +i`.') },
+    ],
+    explain: W('Биты rwx root обходит, но пометки файловой системы, диск, подключённый только для чтения, модули безопасности вроде SELinux и отнятые привилегии действуют и на него. Сначала посмотрите `lsattr /etc/app/license.key`: буква `i` в выводе означает, что файл неизменяемый, и снять пометку можно командой `chattr -i`.', 'root bypasses the rwx bits, but file system marks, a disk attached read-only, security modules such as SELinux and removed privileges apply to it too. Look at `lsattr /etc/app/license.key` first: the letter `i` in the output means the file is immutable, and `chattr -i` removes the mark.'),
+    refs: { lesson: 'linux.permissions' },
   },
   // ── streams ──
   {
@@ -292,6 +343,19 @@ export const QUIZ: QuizItem[] = [
       { id: 'none', text: '$CITY $CITY', why: W('Нет, в двойных кавычках оболочка подставляет значения переменных.', 'No, inside double quotes the shell substitutes variable values.') },
     ],
   },
+  {
+    id: 'linux.q.inline-var',
+    kind: 'mcq',
+    concepts: ['linux.env', 'linux.variable'],
+    prompt: W('Вы выполнили строку `LANG=C ls /nosuch`, а следующей командой `echo $LANG`. Что напечатает `echo`, если до этого переменная LANG в оболочке была равна `ru_RU.UTF-8`?', 'You ran the line `LANG=C ls /nosuch` and then `echo $LANG`. What does `echo` print if LANG in the shell was `ru_RU.UTF-8` before?'),
+    options: [
+      { id: 'old', text: W('`ru_RU.UTF-8`, потому что значение `C` получила только команда `ls`', '`ru_RU.UTF-8`, because only `ls` got the value `C`'), correct: true },
+      { id: 'c', text: W('`C`, потому что переменная задана в начале строки', '`C`, because the variable was set at the start of the line'), why: W('Нет, запись `ИМЯ=значение команда` кладёт переменную только в окружение этой одной команды, а в самой оболочке значение не меняется. Значение `C` осталось бы в оболочке, если бы между присваиванием и командой стояла точка с запятой.', 'No, `NAME=value command` puts the variable only into the environment of that one command, and the value in the shell itself does not change. `C` would have stayed in the shell if there had been a semicolon between the assignment and the command.') },
+      { id: 'empty', text: W('Пустую строку, потому что команда `ls` завершилась ошибкой', 'An empty line, because `ls` failed'), why: W('Нет, ошибка команды не трогает переменные оболочки. Оболочка не меняла LANG, она только передала `ls` окружение со значением `C`.', 'No, a command’s failure does not touch the shell’s variables. The shell did not change LANG at all; it only handed `ls` an environment with the value `C`.') },
+    ],
+    explain: W('Запись `ИМЯ=значение команда` удобна, когда настройка нужна одной программе: `TZ=UTC date` показывает время по UTC, а `LANG=C` заставляет программу писать сообщения по-английски, и оболочка после этого остаётся прежней.', '`NAME=value command` is handy when one program needs a setting: `TZ=UTC date` shows the time in UTC, and `LANG=C` makes a program write in English, while the shell stays as it was.'),
+    refs: { lesson: 'linux.env' },
+  },
   // ── processes ──
   {
     id: 'linux.q.signals',
@@ -365,6 +429,19 @@ export const QUIZ: QuizItem[] = [
       { id: 'reader', text: W('процесс grep, который читает поток 0', 'the grep process, which reads stream 0') },
       { id: 'file', text: W('временный файл на диске', 'a temporary file on disk'), why: W('Нет, между командами нет файла, а есть только буфер ядра, поэтому конвейер работает даже на заполненном диске.', 'No, there is no file between the commands, only a kernel buffer, which is why a pipeline works even on a full disk.') },
     ],
+  },
+  {
+    id: 'linux.q.loadavg',
+    kind: 'mcq',
+    concepts: ['linux.process'],
+    prompt: W('Команда `uptime` на сервере показывает `load average: 4.02, 3.95, 3.90`, а команда `nproc` печатает 4. Что это значит?', '`uptime` on a server shows `load average: 4.02, 3.95, 3.90`, and `nproc` prints 4. What does it mean?'),
+    options: [
+      { id: 'busy', text: W('Все четыре ядра заняты, но очереди к процессору почти нет, и нагрузка почти не меняется', 'All four cores are busy, but there is almost no queue for the CPU, and the load is steady'), correct: true },
+      { id: 'crash', text: W('Сервер перегружен в четыре раза, и нужно срочно останавливать программы', 'The server is four times overloaded, and programs must be stopped at once'), why: W('Нет, load average сравнивают с числом ядер. При четырёх ядрах нагрузка 4 означает, что каждое ядро работает, а ждать почти никому не приходится. Перегрузкой было бы число заметно больше четырёх, например 12.', 'No, the load average is compared with the number of cores. With four cores a load of 4 means every core works and almost nobody has to wait. An overload would be a number well above four, such as 12.') },
+      { id: 'percent', text: W('Процессор загружен на 4 %', 'The CPU is 4 % busy'), why: W('Нет, load average считает не проценты, а среднее число задач, которые работают на процессоре или ждут его и диска. Проценты показывает колонка `%CPU` в `top`.', 'No, the load average counts not percent but the average number of tasks running on the CPU or waiting for it and for the disk. Percent is shown by the `%CPU` column in `top`.') },
+    ],
+    explain: W('Три числа показывают среднюю нагрузку за одну, пять и пятнадцать минут. Если они близки друг к другу, нагрузка ровная, а если первое заметно больше третьего, она растёт. В Linux в это число входят и процессы в состоянии `D`, которые ждут диска, поэтому при большой нагрузке смотрят в `top`, кто стоит в очереди.', 'The three numbers are the average load over one, five and fifteen minutes. When they are close, the load is steady, and when the first is clearly bigger than the third, it is growing. In Linux the number also includes processes in state `D` waiting for the disk, so with a high load you look in `top` at who is in the queue.'),
+    refs: { lesson: 'linux.processes' },
   },
   // ── scripts ──
   {
@@ -600,7 +677,7 @@ export const QUIZ: QuizItem[] = [
       { id: 'root', text: W('У программы sleep права root', 'sleep has root rights'), why: W('Нет, права здесь ни при чём, и дело в особых правилах для первого процесса.', 'No, rights have nothing to do with it; the point is the special rules for the first process.') },
       { id: 'busy', text: W('Программа sleep занята и не слышит сигнала', 'sleep is busy and does not hear the signal'), why: W('Нет, занятость процесса на доставку сигнала не влияет.', 'No, being busy does not affect signal delivery.') },
     ],
-    explain: W('Поэтому первым процессом пространства запускают маленькие программы-посредники, которые умеют передавать сигнал TERM дальше настоящей программе.', 'That is why small go-between programs that can pass TERM on to the real program are run as the first process of a namespace.'),
+    explain: W('Поэтому первым процессом пространства запускают маленькие программы-посредники, которые передают сигнал TERM настоящей программе и забирают коды завершения её дочерних процессов. Самые известные из них называются `tini` и `dumb-init`. Другой путь состоит в том, чтобы сама программа обрабатывала TERM, например в Node.js строкой `process.on(\'SIGTERM\', …)`.', 'That is why small go-between programs are run as the first process of a namespace: they pass TERM on to the real program and collect the exit codes of its children. The best known are `tini` and `dumb-init`. The other way is to make the program handle TERM itself, for example in Node.js with `process.on(\'SIGTERM\', …)`.'),
   },
   // ── cgroups ──
   {

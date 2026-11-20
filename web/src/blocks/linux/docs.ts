@@ -1,14 +1,99 @@
-// Offline man pages the Linux learning exams read at the ladder's fifth step:
-// the resource directives of systemd and the execution environment of a
-// service. Text condensed from systemd.resource-control(5) and
-// systemd.exec(5) of systemd 257 (LGPL-2.1-or-later); `man systemd.exec` and
-// `man systemd.resource-control` open them on the simulated machine.
+// Offline man pages of systemd that the Linux lessons and learning exams read:
+// the unit file and its [Unit] section (start rate limiting), the [Service]
+// section (Restart=), the resource directives and the execution environment.
+// Text condensed from systemd.unit(5), systemd.service(5),
+// systemd.resource-control(5) and systemd.exec(5) of systemd 257
+// (LGPL-2.1-or-later); `man systemd.unit` and the others open them on the
+// simulated machine.
 
 import type { DocPage } from '../../core/types';
 
 const SYSTEMD = { license: 'condensed from the systemd manual pages (LGPL-2.1-or-later)', version: 'systemd 257' };
 
 export const LINUX_DOCS: DocPage[] = [
+  {
+    id: 'man/systemd.unit.5',
+    source: 'man',
+    title: 'systemd.unit(5)',
+    url: 'https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html',
+    ...SYSTEMD,
+    sections: [
+      { id: 'NAME', body: 'systemd.unit - Unit configuration' },
+      { id: 'SYNOPSIS', body: 'service.service, socket.socket, device.device, mount.mount, automount.automount, swap.swap, target.target, path.path, timer.timer, slice.slice, scope.scope\n\nSystem unit search path:\n/etc/systemd/system/*\n/run/systemd/system/*\n/usr/lib/systemd/system/*' },
+      {
+        id: 'DESCRIPTION',
+        body: 'A unit file is a plain text ini-style file that encodes information about a service, a socket, a device, a mount point, an automount point, a swap file or partition, a start-up target, a watched file system path, a timer, a resource management slice or a group of externally created processes.\n\nThis man page lists the common configuration options of all the unit types. These options need to be configured in the [Unit] or [Install] sections of the unit files. In addition to the generic [Unit] and [Install] sections, each unit may have a type-specific section, e.g. [Service] for a service unit. See systemd.service(5) for the options of that section.\n\nAfter changing a unit file, run "systemctl daemon-reload" so that the manager reads it again.',
+      },
+      {
+        id: '[UNIT] SECTION OPTIONS',
+        body: [
+          'Description=',
+          '       A short human readable title of the unit.',
+          '',
+          'Wants=',
+          '       Configures (weak) requirement dependencies on other units. Units listed in this option will be started if the configuring unit is. However, if the listed units fail to start or cannot be added to the transaction, this has no impact on the validity of the transaction as a whole.',
+          '',
+          'Requires=',
+          '       Similar to Wants=, but declares a stronger requirement dependency. If this unit gets activated, the units listed will be activated as well. If one of the other units fails to activate, this unit will not be started.',
+          '',
+          'After=, Before=',
+          '       These two settings configure ordering dependencies between units. If unit foo.service contains the setting Before=bar.service and both units are being started, bar.service\'s start-up is delayed until foo.service has finished starting up. Note that this setting is independent of and orthogonal to the requirement dependencies as configured by Requires= and Wants=.',
+          '',
+          'StartLimitIntervalSec=interval, StartLimitBurst=burst',
+          '       Configure unit start rate limiting. Units which are started more than burst times within an interval time span are not permitted to start any more. Use StartLimitIntervalSec= to configure the checking interval and StartLimitBurst= to configure how many starts per interval are allowed.',
+          '',
+          '       interval is a time span with the default unit of seconds, but other units may be specified, see systemd.time(7). The special value "infinity" can be used to limit the total number of start attempts, even if they happen at large time intervals. Defaults to DefaultStartLimitIntervalSec= in the manager configuration file (10s), and may be set to 0 to disable any kind of rate limiting. burst is a number and defaults to DefaultStartLimitBurst= (5).',
+          '',
+          '       These configuration options are particularly useful in conjunction with the service setting Restart= (see systemd.service(5)); however, they apply to all kinds of starts (including manual), not just those triggered by the Restart= logic.',
+          '',
+          '       A unit that hit the limit enters the failed state with the result "start-limit-hit". Use "systemctl reset-failed" to flush the counter and allow the unit to start again.',
+        ].join('\n'),
+      },
+      {
+        id: '[INSTALL] SECTION OPTIONS',
+        body: [
+          'WantedBy=, RequiredBy=',
+          '       This option may be used more than once, or a space-separated list of unit names may be given. A symbolic link is created in the .wants/ or .requires/ directory of each of the listed units when this unit is installed by systemctl enable. The primary result is that the current unit will be started when the listed unit is started.',
+        ].join('\n'),
+      },
+      { id: 'EXAMPLES', body: '# /etc/systemd/system/app.service\n[Unit]\nDescription=The app\nAfter=network-online.target\nStartLimitIntervalSec=60\nStartLimitBurst=3\n\n[Service]\nExecStart=/usr/local/bin/app\nRestart=on-failure\n\n[Install]\nWantedBy=multi-user.target' },
+      { id: 'SEE ALSO', body: 'systemd(1), systemctl(1), systemd.service(5), systemd.exec(5), systemd.resource-control(5), systemd.time(7)' },
+    ],
+  },
+  {
+    id: 'man/systemd.service.5',
+    source: 'man',
+    title: 'systemd.service(5)',
+    url: 'https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html',
+    ...SYSTEMD,
+    sections: [
+      { id: 'NAME', body: 'systemd.service - Service unit configuration' },
+      { id: 'SYNOPSIS', body: 'service.service' },
+      {
+        id: 'DESCRIPTION',
+        body: 'A unit configuration file whose name ends in ".service" encodes information about a process controlled and supervised by systemd.\n\nThis man page lists the configuration options specific to this unit type. See systemd.unit(5) for the common options of all unit configuration files, among them the start rate limiting StartLimitIntervalSec= and StartLimitBurst= of the [Unit] section. The service specific configuration options are configured in the [Service] section.',
+      },
+      {
+        id: 'OPTIONS',
+        body: [
+          'Type=',
+          '       Configures the mechanism via which the service notifies the manager that the service start-up has finished. One of simple, exec, forking, oneshot, dbus, notify, notify-reload or idle. If set to simple (the default if ExecStart= is specified), the service manager will consider the unit started immediately after the main service process has been forked off.',
+          '',
+          'ExecStart=',
+          '       Commands that are executed when this service is started. The first argument must be an absolute path to an executable or a simple file name without any slashes.',
+          '',
+          'Restart=',
+          '       Configures whether the service shall be restarted when the service process exits, is killed, or a timeout is reached. Takes one of no, on-success, on-failure, on-abnormal, on-watchdog, on-abort, or always. If set to no (the default), the service will not be restarted. If set to on-failure, the service will be restarted when the process exits with a non-zero exit code, is terminated by a signal (including on core dump, but excluding the four clean signals), when an operation times out, and when the configured watchdog timeout is triggered. If set to always, the service will be restarted regardless of whether it exited cleanly or not.',
+          '',
+          '       Note that service restart is subject to unit start rate limiting configured with StartLimitIntervalSec= and StartLimitBurst=, see systemd.unit(5) for details.',
+          '',
+          'RestartSec=',
+          '       Configures the time to sleep before restarting a service (as configured with Restart=). Takes a unit-less value in seconds, or a time span value such as "5min 20s". Defaults to 100ms.',
+        ].join('\n'),
+      },
+      { id: 'SEE ALSO', body: 'systemd(1), systemctl(1), systemd.unit(5), systemd.exec(5), systemd.resource-control(5)' },
+    ],
+  },
   {
     id: 'man/systemd.resource-control.5',
     source: 'man',
