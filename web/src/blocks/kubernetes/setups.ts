@@ -399,7 +399,7 @@ export const NO_CLASS_LAB: TerminalSetup = {
   ext: { k8s: { addons: ['csi-hostpath'], kubectl: ['kubectl delete storageclass csi-hostpath-sc', 'kubectl apply -f /home/learner/notes.yaml'] } },
 };
 
-/** A headless Service and a StatefulSet of three web servers, each with a claim of its own. */
+/** A headless Service and a StatefulSet of three web servers, each with a claim of its own (/data) and an emptyDir cache (/cache). */
 export const statefulWeb = (name = 'web', replicas = 3, image = 'trainer/web:1.0') => `apiVersion: v1
 kind: Service
 metadata:
@@ -434,6 +434,11 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
+        - name: cache
+          mountPath: /cache
+      volumes:
+      - name: cache
+        emptyDir: {}
   volumeClaimTemplates:
   - metadata:
       name: data

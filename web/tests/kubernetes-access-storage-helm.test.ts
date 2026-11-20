@@ -98,6 +98,12 @@ describe('k8s-1.access', () => {
       await expectFail(l, 'role', index);
     });
 
+  it('lab-ci: kubectl create role resolves deployments to the group apps, so the short form passes too', async () => {
+    const l = await lab('k8s-1.access', 'lab-ci');
+    await l.run('kubectl create serviceaccount ci-deployer -n prod', 'kubectl create role deployer -n prod --verb=get,list,watch,patch --resource=deployments', 'kubectl create rolebinding ci-deployer -n prod --role=deployer --serviceaccount=prod:ci-deployer');
+    await expectPass(l, 'sa');
+  });
+
   it('lab-ci: least privilege for the pipeline, the rollout as the account, a pod with its token', async () => {
     const l = await lab('k8s-1.access', 'lab-ci');
     await l.run('kubectl create serviceaccount ci-deployer -n prod');
@@ -116,7 +122,7 @@ describe('k8s-1.access', () => {
   }, 60_000);
 
   const ciMistakes: [string, string[], number][] = [
-    ['deployments in the core group', ['kubectl create role deployer -n prod --verb=get,list,watch,patch --resource=deployments', `kubectl patch role deployer -n prod --type=merge -p '{"rules":[{"apiGroups":[""],"resources":["deployments"],"verbs":["get","list","watch","patch"]}]}'`, 'kubectl create rolebinding ci-deployer -n prod --role=deployer --serviceaccount=prod:ci-deployer'], 1],
+    ['deployments in the core group', [`cat > core.yaml <<'EOF'\napiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  name: deployer\n  namespace: prod\nrules:\n- apiGroups: [\"\"]\n  resources: [deployments]\n  verbs: [get, list, watch, patch]\nEOF`, 'kubectl apply -f core.yaml', `kubectl patch role deployer -n prod --type=merge -p '{"rules":[{"apiGroups":[""],"resources":["deployments"],"verbs":["get","list","watch","patch"]}]}'`, 'kubectl create rolebinding ci-deployer -n prod --role=deployer --serviceaccount=prod:ci-deployer'], 1],
     ['a user instead of the service account', ['kubectl create role deployer -n prod --verb=get,list,watch,patch --resource=deployments.apps', 'kubectl create rolebinding ci-deployer -n prod --role=deployer --user=ci-deployer'], 2],
     ['the ready role edit', ['kubectl create rolebinding ci-deployer -n prod --clusterrole=edit --serviceaccount=prod:ci-deployer'], 3],
     ['a ClusterRoleBinding', ['kubectl create clusterrole deployer --verb=get,list,watch,patch --resource=deployments.apps', 'kubectl create clusterrolebinding ci-deployer --clusterrole=deployer --serviceaccount=prod:ci-deployer'], 4],
@@ -184,17 +190,27 @@ describe('k8s-1.storage', () => {
 
   it('lab-sts-life: the same name and disk, claims kept on scale-down, the old claim back on scale-up', async () => {
     const l = await lab('k8s-1.storage', 'lab-sts-life');
-    await l.run('kubectl delete pod web-1', 'cluster ff 30s');
+    await l.run(`kubectl exec web-1 -- sh -c 'echo order-42 > /data/orders.txt'`, `kubectl exec web-1 -- sh -c 'echo session-7 > /cache/session.txt'`, 'kubectl exec web-1 -- cat /data/orders.txt');
+    expect((await l.check('same-name')).pass, 'reading before the deletion does not count').toBe(false);
+    await l.run('kubectl delete pod web-1', 'cluster ff 30s', 'kubectl exec web-1 -- cat /data/orders.txt');
     await expectPass(l, 'same-name');
+    await l.run('kubectl exec web-1 -- cat /cache/session.txt');
+    await expectPass(l, 'emptydir');
     await l.run('kubectl scale statefulset web --replicas=1', 'cluster ff 60s');
     await expectPass(l, 'scale-down');
     await l.run('kubectl scale statefulset web --replicas=3', 'cluster ff 60s');
     await expectPass(l, 'scale-up');
   });
 
+  it('lab-sts-life: a file not written before the deletion is reported', async () => {
+    const l = await lab('k8s-1.storage', 'lab-sts-life');
+    await l.run('kubectl delete pod web-1', 'cluster ff 30s', 'kubectl exec web-1 -- cat /data/orders.txt');
+    await expectFail(l, 'same-name', 2);
+  });
+
   it('lab-sts-life: recreating the StatefulSet and deleting claims fail', async () => {
     const l = await lab('k8s-1.storage', 'lab-sts-life');
-    await l.run('kubectl delete statefulset web', 'cluster ff 30s', 'kubectl apply -f web.yaml', 'cluster ff 60s');
+    await l.run(`kubectl exec web-1 -- sh -c 'echo order-42 > /data/orders.txt'`, 'kubectl delete statefulset web', 'cluster ff 30s', 'kubectl apply -f web.yaml', 'cluster ff 60s', 'kubectl exec web-1 -- cat /data/orders.txt');
     await expectFail(l, 'same-name', 0);
     const k = await lab('k8s-1.storage', 'lab-sts-life');
     await k.run('kubectl scale statefulset web --replicas=1', 'cluster ff 60s', 'kubectl delete pvc data-web-1 data-web-2', 'cluster ff 10s');
@@ -287,7 +303,7 @@ describe('the RBAC and StatefulSet exam tasks reject the typical mistakes', () =
   });
   it('CKA: workloads in the core group fail with the explanation', async () => {
     const t = examTask('k8s-1.exam.cka', 'rbac');
-    const r = await solve(t, ['kubectl create clusterrole deployment-clusterrole --verb=create --resource=deployments,statefulsets,daemonsets', `kubectl patch clusterrole deployment-clusterrole --type=merge -p '{"rules":[{"apiGroups":[""],"resources":["deployments","statefulsets","daemonsets"],"verbs":["create"]}]}'`, 'kubectl -n app-team1 create serviceaccount cicd-token', 'kubectl -n app-team1 create rolebinding cicd-token --clusterrole=deployment-clusterrole --serviceaccount=app-team1:cicd-token']);
+    const r = await solve(t, [`cat > cr.yaml <<'EOF'\napiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRole\nmetadata:\n  name: deployment-clusterrole\nrules:\n- apiGroups: [\"\"]\n  resources: [deployments, statefulsets, daemonsets]\n  verbs: [create]\nEOF`, 'kubectl apply -f cr.yaml', `kubectl patch clusterrole deployment-clusterrole --type=merge -p '{"rules":[{"apiGroups":[""],"resources":["deployments","statefulsets","daemonsets"],"verbs":["create"]}]}'`, 'kubectl -n app-team1 create serviceaccount cicd-token', 'kubectl -n app-team1 create rolebinding cicd-token --clusterrole=deployment-clusterrole --serviceaccount=app-team1:cicd-token']);
     expect(r.pass).toBe(false);
     expect(r.say).toBe(t.task.check.fail![0].say);
   });
