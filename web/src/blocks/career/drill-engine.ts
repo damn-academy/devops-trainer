@@ -83,7 +83,27 @@ function pickOut(out: QText | Record<string, QText> | undefined, variant: string
 /** What the sandbox shows for a move; a typed line picks the output that matches its flags. */
 export function outputFor(o: DrillOption, variant: string, line?: string): QText | undefined {
   const own = line ? o.outCmd?.find((c) => new RegExp(c.re).test(line)) : undefined;
-  return pickOut(own ? own.out : o.out, variant);
+  const out = pickOut(own ? own.out : o.out, variant);
+  return typeof out === 'string' && line ? withCurlTimeout(out, line) : out;
+}
+
+/**
+ * A curl that cannot connect waits as long as its own time limit allows, so a
+ * typed `-m N` or `--connect-timeout N` changes the error line the way real
+ * curl prints it.
+ */
+export function withCurlTimeout(out: string, line: string): string {
+  if (!/^\s*(?:sudo\s+)?curl\b/.test(line)) return out;
+  const max = /(?:^|\s)(?:-m\s*|--max-time[\s=]+)(\d+(?:\.\d+)?)/.exec(line);
+  const conn = /--connect-timeout[\s=]+(\d+(?:\.\d+)?)/.exec(line);
+  return out.replace(/curl: \(28\) Failed to connect to (\S+) port (\d+) after (\d+) ms: Timeout was reached/g, (all, host: string, port: string, ms: string) => {
+    const limit = (x: RegExpExecArray | null) => (x ? Math.round(Number(x[1]) * 1000) : Infinity);
+    const m = limit(max);
+    const c = limit(conn);
+    if (Math.min(m, c) >= Number(ms)) return all;
+    if (c <= m) return `curl: (28) Failed to connect to ${host} port ${port} after ${c + 1} ms: Timeout was reached`;
+    return `curl: (28) Connection timed out after ${m + 1} milliseconds`;
+  });
 }
 
 export function whyFor(o: DrillOption, variant: string): Bi {

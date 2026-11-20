@@ -3,6 +3,7 @@
 
 import { bi } from '../../core/i18n';
 import type { Level, PlacementTask, QuizItem } from '../../core/types';
+import { orderAsMatch } from './order-fallback';
 
 const structure1: QuizItem = {
   id: 'career.p.structure.1',
@@ -123,7 +124,7 @@ const vm: QuizItem = {
   ],
 };
 
-const t = (id: string, level: Level, key: boolean, item: QuizItem, concepts: string[], variant?: number): PlacementTask => ({ id, level, key, concepts, variant, kind: 'quiz', item });
+const t = (id: string, level: Level, key: boolean, item: QuizItem, concepts: string[], variant?: number): PlacementTask => ({ id, level, key, concepts, variant, kind: 'quiz', item: orderAsMatch(item) });
 
 export const CAREER_PLACEMENT: PlacementTask[] = (['intermediate', 'experienced'] as Level[]).flatMap((l) => [
   t(`${l}.structure.1`, l, false, { ...structure1, id: `${structure1.id}.${l}` }, ['career.answer-structure'], 1),

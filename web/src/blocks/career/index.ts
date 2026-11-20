@@ -17,9 +17,13 @@ import { symptomModel } from './explainers/symptom';
 import { L_CAPSTONE, L_ONCALL } from './lessons-final';
 import { L_ANSWER, L_CLASSICS, L_INTERVIEWS, L_MOCK, L_SITUATIONAL } from './lessons-interview';
 import { L_PETS, L_PITCH, L_RESUME, L_SEARCH } from './lessons-job';
+import { L_CLUSTER_MAP, MAP_QUIZ } from './lessons-map';
+import { FIRST_JOB_QUIZ, L_FIRST_JOB, L_ONCALL_LIFE, ONCALL_LIFE_QUIZ } from './lessons-work';
 import { CAREER_PLACEMENT } from './placement';
+import { orderAsMatch } from './order-fallback';
 import { QUIZ } from './quiz';
 import { checklistWidget } from './widgets/checklist';
+import { clusterRepairWidget } from './widgets/cluster-repair';
 import { drillWidget } from './widgets/drill';
 import { mockWidget } from './widgets/mock';
 import { oncallWidget } from './widgets/oncall';
@@ -57,7 +61,7 @@ const FINAL: Block = {
   id: 'final',
   order: 110,
   title: bi('Смена дежурного и итоговый экзамен', 'On-call shift and final exam'),
-  summary: bi('Сначала смена дежурного с тремя инцидентами, которые наслаиваются друг на друга, а затем итоговый экзамен на трёх настоящих машинах, где нужно построить систему, починить её и защитить.', 'Three overlapping incidents, then the final exam on three real machines: build, fix, defend.'),
+  summary: bi('Сначала повторение всей карты кластера, в котором вы собираете Kubernetes из всех слоёв и чините его слой за слоем. Потом смена дежурного с тремя инцидентами, которые наслаиваются друг на друга, а в конце итоговый экзамен на стендах курса или на трёх настоящих машинах, где нужно построить систему, починить её и защитить.', 'A review of the whole cluster map, where you assemble Kubernetes from every layer and repair it layer by layer; then three overlapping incidents; then the final exam on the course stands or on three real machines: build, fix, defend.'),
   checklistStep: '08',
   levels: {
     beginner: bi('Экзамен на стендах одинаков для всех уровней, и кластер в нём собирается через kubeadm. На настоящих машинах кластер можно собрать на k3s', 'One stand exam for every level, with a kubeadm cluster; on real machines the cluster may be k3s'),
@@ -66,7 +70,7 @@ const FINAL: Block = {
   },
   hours: { beginner: 40, intermediate: 35, experienced: 30 },
   placement: [],
-  lessons: ['final.oncall', 'final.capstone'],
+  lessons: ['final.cluster-map', 'final.oncall', 'final.capstone'],
   sources: finalSources,
   docSources: ['help', 'ansible-doc', 'terraform', 'kubernetes.io', 'argo-cd'],
   exam: CAPSTONE_EXAM.id,
@@ -88,16 +92,16 @@ const CAREER: Block = {
   },
   hours: { beginner: 25, intermediate: 22, experienced: 18 },
   placement: CAREER_PLACEMENT,
-  lessons: ['career.interviews', 'career.answer', 'career.classics', 'career.situational', 'career.mock', 'career.pitch', 'career.resume', 'career.pets', 'career.search'],
+  lessons: ['career.interviews', 'career.answer', 'career.classics', 'career.situational', 'career.mock', 'career.pitch', 'career.resume', 'career.pets', 'career.search', 'career.first-job', 'career.oncall-life'],
   sources: careerSources,
 };
 
 export default defineModule({
   blocks: [FINAL, CAREER],
-  lessons: [L_ONCALL, L_CAPSTONE, L_INTERVIEWS, L_ANSWER, L_CLASSICS, L_SITUATIONAL, L_MOCK, L_PITCH, L_RESUME, L_PETS, L_SEARCH],
+  lessons: [L_CLUSTER_MAP, L_ONCALL, L_CAPSTONE, L_INTERVIEWS, L_ANSWER, L_CLASSICS, L_SITUATIONAL, L_MOCK, L_PITCH, L_RESUME, L_PETS, L_SEARCH, L_FIRST_JOB, L_ONCALL_LIFE],
   concepts: CONCEPTS,
-  quiz: QUIZ,
+  quiz: [...QUIZ, ...MAP_QUIZ, ...FIRST_JOB_QUIZ, ...ONCALL_LIFE_QUIZ].map(orderAsMatch),
   explainers: [fromModel(symptomModel), fromModel(quoteModel), fromModel(funnelModel), fromModel(fsrsModel)],
-  widgets: [translatorWidget, drillWidget, mockWidget, pitchWidget, resumeWidget, vacancyWidget, checklistWidget, oncallWidget],
+  widgets: [translatorWidget, drillWidget, mockWidget, pitchWidget, resumeWidget, vacancyWidget, checklistWidget, oncallWidget, clusterRepairWidget],
   exams: [...BLOCK_EXAMS, ...FINAL_EXAMS],
 });
