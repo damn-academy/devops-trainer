@@ -1028,6 +1028,11 @@ export interface ParamSpec {
    * groups in the order of their first knob.
    */
   group?: Bi;
+  /**
+   * Shown only while this holds for the current knob values, e.g. a knob that
+   * matters for one run of the model. A group whose knobs are all hidden is hidden too.
+   */
+  shownWhen?: (params: Record<string, unknown>) => boolean;
   /** Node or edge id the delta line is placed next to. */
   near?: string;
   /** The "what will happen?" question asked before the first change of this knob. */

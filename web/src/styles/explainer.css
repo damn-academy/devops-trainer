@@ -100,6 +100,7 @@
 /* ── grouped knobs ── */
 .ex-knobs.grouped { grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .knob-group { margin: 0; padding: 6px 12px 10px; border: 1px solid var(--line); border-radius: var(--r); display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 16px; min-width: 0; }
+.knob-group[hidden], .knob[hidden] { display: none; }
 .knob-group legend { padding: 0 6px; font: 600 0.8rem var(--font-ui); color: var(--ink-2); }
 
 /* a long choice is a drop-down list */

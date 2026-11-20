@@ -14,3 +14,4 @@ source/
 # lab image build cache (Alpine packages), see web/scripts/build-lab-image.mjs
 web/.cache/
 web/.feedback/
+web/shots/

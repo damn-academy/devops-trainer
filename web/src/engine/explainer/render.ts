@@ -835,10 +835,17 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   }
 
   const knobValues = new Map<string, HTMLElement>();
+  const knobEls = new Map<string, HTMLElement>();
   function updateKnobValues() {
     for (const spec of model.params) {
       const out = knobValues.get(spec.id);
       if (out) out.textContent = formatParam(spec, params[spec.id]);
+      const el = knobEls.get(spec.id);
+      if (el) el.hidden = !!spec.shownWhen && !spec.shownWhen(params);
+    }
+    for (const g of knobGroups.values()) {
+      const knobs = [...g.box.querySelectorAll<HTMLElement>(':scope > .knob')];
+      if (knobs.length) g.box.hidden = knobs.every((k) => k.hidden);
     }
   }
 
@@ -915,8 +922,11 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
         }),
       );
     }
-    groupBox(spec).append(h('div.knob', { 'data-knob': spec.id, 'data-kind': spec.kind }, h('div.knob-head', {}, h('span.knob-label', {}, t(spec.label)), value), control, h('p.knob-delta', { 'aria-live': 'polite' })));
+    const knobEl = h('div.knob', { 'data-knob': spec.id, 'data-kind': spec.kind }, h('div.knob-head', {}, h('span.knob-label', {}, t(spec.label)), value), control, h('p.knob-delta', { 'aria-live': 'polite' }));
+    knobEls.set(spec.id, knobEl);
+    groupBox(spec).append(knobEl);
   }
+  updateKnobValues();
 
   const visibleBreaks = model.breaks.filter((b) => !b.levels || b.levels.includes(ctx.level));
   if (visibleBreaks.length) {
