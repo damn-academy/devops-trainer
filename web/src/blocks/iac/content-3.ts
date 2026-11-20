@@ -100,7 +100,7 @@ export const concepts3: Concept[] = [
     id: 'iac.for-each',
     term: bi('for_each', 'for_each'),
     scan: false,
-    short: bi('Мета-аргумент, с которым один блок resource или module создаёт по экземпляру на каждый ключ множества или словаря. Экземпляры получают адреса вида module.web["a"].', 'A meta-argument: one resource or module block creates an instance per key of a set or map, with addresses like module.web["a"].'),
+    short: bi('Мета-аргумент, с которым один блок resource или module создаёт по экземпляру на каждый ключ множества или словаря. Экземпляры получают адреса вида `module.web["a"]`.', 'A meta-argument: one resource or module block creates an instance per key of a set or map, with addresses like `module.web["a"]`.'),
     introducedIn: 'iac.modules-lab',
   },
   {
@@ -210,7 +210,10 @@ const apiTasks: Task[] = [
       'Create a VM `api-1`: `POST /v1/projects/default/vms` with a JSON body of `name`, `flavor` `lab.small`, `image` `lab-node` and `ssh_authorized_keys` with a list of your public key. The cloud answers `202` and an operation object. Wait for it to finish with `GET /v1/operations/<id>?wait=30`: the VM is a real machine booting in this tab.',
     ),
     check: {
-      when: (f) => vm(f, 'api-1')?.status === 'RUNNING' && (vm(f, 'api-1')?.keys ?? 0) > 0 && wsReq(f, (r) => r.method === 'GET' && /^\/v1\/operations\/op-/.test(r.path) && r.status === 200),
+      // The operation log keeps the creation after the VM is gone, so a learner who already went on to delete it still gets the goal.
+      when: (f) =>
+        wsReq(f, (r) => r.method === 'GET' && /^\/v1\/operations\/op-/.test(r.path) && r.status === 200) &&
+        ((vm(f, 'api-1')?.status === 'RUNNING' && (vm(f, 'api-1')?.keys ?? 0) > 0) || (!vm(f, 'api-1') && (lf(f).cloud?.ops ?? []).some((o) => o.kind === 'vm.create' && o.target === 'api-1' && o.status === 'DONE'))),
       fail: [
         { if: (f) => wsReq(f, (r) => r.method === 'POST' && /\/vms/.test(r.path) && r.status === 400), say: bi('Облако ответило кодом 400. Поле `error.details.field` в теле ответа называет аргумент, который не подошёл.', 'The cloud answered 400: the field `error.details.field` in the response body names the argument that did not fit.') },
         { if: (f) => wsReq(f, (r) => r.method === 'POST' && /\/vms/.test(r.path) && r.status === 415), say: bi('В запросе не хватает заголовка `Content-Type: application/json`.', 'The `Content-Type: application/json` header is missing.') },
@@ -230,7 +233,12 @@ const apiTasks: Task[] = [
   {
     id: 'ssh',
     prompt: bi('Зайдите на `api-1` по SSH и создайте там файл `/root/hello`. В DNS лаборатории у этой машины имя `api-1.vm.lab`. Так вы убедитесь, что `api-1` настоящая отдельная машина.', 'Log in to `api-1` over SSH and create a file `/root/hello` there. In the lab DNS this machine is called `api-1.vm.lab`. This way you make sure that `api-1` is a real separate machine.'),
-    check: { when: "vms['api-1'].files['/root/hello'].type=f" },
+    check: {
+      // The file is seen on the VM itself, or, once the VM is deleted, in the workstation's own record of a successful `ssh … touch /root/hello`.
+      when: (f) =>
+        (lf(f).vms?.['api-1']?.files?.['/root/hello'] as { type?: string } | undefined)?.type === 'f' ||
+        (f.term?.main ?? []).some((r) => r.exit === 0 && /\bssh\b/.test(r.line) && /api-1/.test(r.line) && /\/root\/hello|\bhello\b/.test(r.line) && /touch|>/.test(r.line)),
+    },
     chips: 'ssh root@api-1.vm.lab',
     hints: { H1: bi('Команду можно выполнить на машине сразу при входе: `ssh root@api-1.vm.lab "touch /root/hello"`. При первом входе SSH спросит, доверять ли ключу хоста, и нужно ответить yes. Если вы вошли на машину, вернитесь на рабочую станцию командой `exit`.', 'You can run a command right away: `ssh root@api-1.vm.lab "touch /root/hello"`. On the first login SSH asks about the host key; answer yes. If you logged in to the machine, return to the workstation with `exit`.') },
   },
@@ -611,7 +619,7 @@ const moduleTasks: Task[] = [
     prompt: bi('Машина `web-b` больше не нужна. Уберите её из кода и примените изменения так, чтобы `web-a` осталась той же машиной и её не пересоздали.', 'The machine `web-b` is no longer needed. Remove it from the code and apply so that `web-a` stays the same machine: it must not be recreated.'),
     check: {
       when: (f) => !vm(f, 'web-b') && vm(f, 'web-a')?.status === 'RUNNING' && created(f, 'web-a') === 1 && webVms(f).length === 1,
-      fail: [{ if: (f) => created(f, 'web-a') > 1, say: bi('Машина web-a создана заново. Так бывает, когда for_each заменяют на count, потому что адреса экземпляров сдвигаются. Ключи множества сохраняют за машиной адрес module.web["a"].', 'web-a was created again. This happens when for_each is swapped for count: instance addresses shift. The keys of a set keep the address module.web["a"].') }],
+      fail: [{ if: (f) => created(f, 'web-a') > 1, say: bi('Машина web-a создана заново. Так бывает, когда for_each заменяют на count, потому что адреса экземпляров сдвигаются. Ключи множества сохраняют за машиной адрес `module.web["a"]`.', 'web-a was created again. This happens when for_each is swapped for count: instance addresses shift. The keys of a set keep the address `module.web["a"]`.') }],
     },
     concepts: ['iac.for-each'],
   },
