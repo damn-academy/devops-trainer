@@ -8,6 +8,7 @@
 
 import { bi } from '../../core/i18n';
 import type { Exam, Facts, QuizItem } from '../../core/types';
+import { orderAsMatch } from './order-fallback';
 import { app, deployment, forgeHead, healthy, hostFile, idempotentRun, image, readyNodes, synced, tf, vms } from '../k8s-code/content/checks';
 import { APP, clusterStand, DEPLOY_FILES, DEPLOYMENT, gitopsStand, opsFiles, stand } from '../k8s-code/content/setups';
 
@@ -94,7 +95,7 @@ export const ONCALL_EXAM: Exam = {
   pass: 0.75,
   allowedDocs: ['help', 'ansible-doc', 'kubernetes.io', 'argo-cd'],
   tasks: [
-    { id: 'priority', weight: 15, kind: 'quiz', item: PRIORITY },
+    { id: 'priority', weight: 15, kind: 'quiz', item: orderAsMatch(PRIORITY) },
     {
       id: 'checkout',
       weight: 30,
