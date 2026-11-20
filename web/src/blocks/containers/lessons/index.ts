@@ -13,6 +13,6 @@ import { securityLesson, securityQuiz } from './security';
 import { storageNetLesson, storageQuiz } from './storage-net';
 import { whyLesson, whyQuiz } from './why';
 
-export const LESSONS: Lesson[] = [whyLesson, anatomyLesson, byHandLesson, firstStepsLesson, imageLesson, dockerfileLesson, storageNetLesson, boundariesLesson, composeLesson, securityLesson, interviewLesson];
+export const LESSONS: Lesson[] = [whyLesson, firstStepsLesson, anatomyLesson, byHandLesson, imageLesson, dockerfileLesson, storageNetLesson, boundariesLesson, composeLesson, securityLesson, interviewLesson];
 
-export const QUIZ: QuizItem[] = [...whyQuiz, ...anatomyQuiz, ...byHandQuiz, ...firstQuiz, ...imageQuiz, ...dockerfileQuiz, ...storageQuiz, ...boundaryQuiz, ...composeQuiz, ...securityQuiz, ...interviewQuiz];
+export const QUIZ: QuizItem[] = [...whyQuiz, ...firstQuiz, ...anatomyQuiz, ...byHandQuiz, ...imageQuiz, ...dockerfileQuiz, ...storageQuiz, ...boundaryQuiz, ...composeQuiz, ...securityQuiz, ...interviewQuiz];

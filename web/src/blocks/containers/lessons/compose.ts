@@ -96,7 +96,7 @@ export const composeLesson: Lesson = {
       id: 'hook',
       kind: 'text',
       step: 'hook',
-      body: bi('Приложение из базы данных, API и веб-сервера требует сеть, том и три команды `docker run` с десятком флагов у каждой. Набирать их нужно в правильном порядке на каждой машине, и никто не помнит, с какими флагами запускали в прошлый раз. Глава отвечает на вопрос: **как описать три контейнера так, чтобы их можно было запустить одной командой?**', 'An application of a database, an API and a web server is a network, a volume and three `docker run` commands with a dozen flags each. They must be typed in the right order on every machine, and nobody remembers the flags from last time. The leading question: **how to describe three containers so they come up with one command?**'),
+      body: bi('Приложение из базы данных, API и веб-сервера требует сеть, том и три команды `docker run` с десятком флагов у каждой. Набирать их нужно в правильном порядке на каждой машине, и никто не помнит, с какими флагами запускали в прошлый раз. Этот урок отвечает на вопрос: **как описать три контейнера так, чтобы их можно было запустить одной командой?**', 'An application of a database, an API and a web server is a network, a volume and three `docker run` commands with a dozen flags each. They must be typed in the right order on every machine, and nobody remembers the flags from last time. The leading question: **how to describe three containers so they come up with one command?**'),
     },
     {
       id: 'file',
@@ -114,8 +114,20 @@ export const composeLesson: Lesson = {
       step: 'explain',
       title: bi('Почему запущенный сервис ещё не готов к работе', 'Why a started service is not yet ready'),
       body: bi(
-        'Строка `depends_on: [db]` говорит Compose: «запусти db раньше api». Но запущенный процесс postgres ещё пару секунд создаёт файлы базы и не принимает соединений. Если API пытается подключиться к базе сразу при старте, сервис api завершается с ошибкой `Connection refused`.\n\nЧтобы ждать готовности, нужна [[docker.healthcheck|проверка готовности]], то есть команда, которой Docker периодически опрашивает сервис, и условие в `depends_on`:\n\n```yaml\n  db:\n    healthcheck:\n      test: ["CMD-SHELL", "pg_isready -U postgres"]\n      interval: 2s\n      retries: 10\n  api:\n    depends_on:\n      db:\n        condition: service_healthy\n```\n\nРядом с этим работает политика перезапуска `restart: on-failure` или `unless-stopped`: если контейнер завершился с ошибкой, Docker запустит его снова. Так получается маленький местный цикл, в котором Docker раз за разом заново запускает завершившийся контейнер. Сама команда `compose up` приводит систему в соответствие с описанием один раз и завершается, а в Kubernetes на смену такому однократному запуску придёт цикл сверки, который непрерывно сравнивает описание с тем, что на самом деле работает.',
-        '`depends_on: [db]` tells Compose: “start db before api”. But a started postgres process spends another couple of seconds creating the database files and does not accept connections. An API that tries to connect right at start falls over with `Connection refused`.\n\nTo wait for readiness you need a [[docker.healthcheck|healthcheck]] — a command Docker periodically runs against the service — and a condition in `depends_on`:\n\n```yaml\n  db:\n    healthcheck:\n      test: ["CMD-SHELL", "pg_isready -U postgres"]\n      interval: 2s\n      retries: 10\n  api:\n    depends_on:\n      db:\n        condition: service_healthy\n```\n\nNext to it stands the restart policy `restart: on-failure` or `unless-stopped`: fell — bring it back. That is a small local loop “fell → start again”. `compose up` brings the system to the description once and returns; in Kubernetes this becomes a reconciliation loop that compares the desired and the actual state endlessly.',
+        'Строка `depends_on: [db]` говорит Compose: «запусти db раньше api». Но запущенный процесс postgres ещё пару секунд создаёт файлы базы и не принимает соединений. Если API пытается подключиться к базе сразу при старте, сервис api завершается с ошибкой `Connection refused`.\n\nЧтобы ждать готовности, нужна [[docker.healthcheck|проверка готовности]], то есть команда, которой Docker периодически опрашивает сервис, и условие в `depends_on`:\n\n```yaml\n  db:\n    healthcheck:\n      test: ["CMD-SHELL", "pg_isready -U postgres"]\n      interval: 2s\n      retries: 10\n  api:\n    depends_on:\n      db:\n        condition: service_healthy\n```\n\nРядом с этим работает политика перезапуска `restart: on-failure` или `unless-stopped`: если контейнер завершился с ошибкой, Docker запустит его снова. Так Docker сам перезапускает упавший контейнер, и это простейшая форма автоматического восстановления. Сама команда `compose up` приводит систему в соответствие с описанием один раз и завершается, а в Kubernetes на смену такому однократному запуску придёт цикл сверки, который непрерывно сравнивает описание с тем, что на самом деле работает.',
+        '`depends_on: [db]` tells Compose: “start db before api”. But a started postgres process spends another couple of seconds creating the database files and does not accept connections. An API that tries to connect right at start falls over with `Connection refused`.\n\nTo wait for readiness you need a [[docker.healthcheck|healthcheck]] — a command Docker periodically runs against the service — and a condition in `depends_on`:\n\n```yaml\n  db:\n    healthcheck:\n      test: ["CMD-SHELL", "pg_isready -U postgres"]\n      interval: 2s\n      retries: 10\n  api:\n    depends_on:\n      db:\n        condition: service_healthy\n```\n\nNext to it stands the restart policy `restart: on-failure` or `unless-stopped`: fell — bring it back. That way Docker restarts a fallen container by itself, the simplest form of automatic recovery. `compose up` brings the system to the description once and returns; in Kubernetes this becomes a reconciliation loop that compares the desired and the actual state endlessly.',
+      ),
+    },
+    {
+      id: 'heredoc',
+      kind: 'text',
+      role: 'howto',
+      step: 'practice',
+      levels: ['beginner'],
+      title: bi('Как записать compose.yaml без редактора', 'How to write compose.yaml without an editor'),
+      body: bi(
+        'Редактора в терминале тренажёра нет, поэтому файл записывают целиком одной командой. Команда `cat > compose.yaml <<\'EOF\'` велит оболочке записать в файл compose.yaml всё, что вы введёте дальше, вплоть до строки из одного слова `EOF`, а старое содержимое файла при этом пропадёт. В YAML важны отступы: вложенное поле сдвигают на два пробела вправо от родительского, а табуляцию вместо пробелов ставить нельзя.\n\nДля второго задания ниже приведён готовый файл целиком. От исходного он отличается в двух местах: у сервиса db появился блок `healthcheck`, а у сервиса api короткая запись `depends_on` заменена длинной, с условием `condition: service_healthy`. Скопируйте весь блок, вставьте его в терминал и нажмите Enter, а затем выполните `docker compose up -d --force-recreate`.\n\n```bash\ncat > compose.yaml <<\'EOF\'\nservices:\n  db:\n    image: postgres:17-alpine\n    environment:\n      POSTGRES_PASSWORD: secret\n    volumes:\n      - db-data:/var/lib/postgresql/data\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U postgres\"]\n      interval: 2s\n      retries: 10\n  api:\n    image: trainer/api:1.0\n    environment:\n      DB_HOST: db\n    ports:\n      - \"8000:8000\"\n    depends_on:\n      db:\n        condition: service_healthy\nvolumes:\n  db-data:\nEOF\n```',
+        'The trainer’s terminal has no editor, so a file is written whole with one command. The command `cat > compose.yaml <<\'EOF\'` means: everything you type next, up to a line holding the single word `EOF`, write into compose.yaml instead of its old contents. Indentation matters in YAML: a nested field is shifted two spaces to the right of its parent, and tabs cannot be used instead of spaces.\n\nFor the second task the finished file is shown below in full. It differs from the original in two places: the db service got a `healthcheck` block, and the short `depends_on` of the api service is replaced with the long form, with the condition `condition: service_healthy`. Copy the whole block, paste it into the terminal and press Enter, then run `docker compose up -d --force-recreate`.\n\n```bash\ncat > compose.yaml <<\'EOF\'\nservices:\n  db:\n    image: postgres:17-alpine\n    environment:\n      POSTGRES_PASSWORD: secret\n    volumes:\n      - db-data:/var/lib/postgresql/data\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U postgres\"]\n      interval: 2s\n      retries: 10\n  api:\n    image: trainer/api:1.0\n    environment:\n      DB_HOST: db\n    ports:\n      - \"8000:8000\"\n    depends_on:\n      db:\n        condition: service_healthy\nvolumes:\n  db-data:\nEOF\n```',
       ),
     },
     {
@@ -124,7 +136,7 @@ export const composeLesson: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: dockerHost({ cwd: '~/shop', files: [{ path: '~/shop/compose.yaml', content: COMPOSE_RACE }] }, { pull: ['postgres:17-alpine', 'trainer/api:1.0', 'nginx:1.30-alpine', 'alpine:3.22'] }),
-      intro: bi('В каталоге `~/shop` лежит compose.yaml с базой и API. Файлы удобно писать целиком командой `cat > compose.yaml <<\'EOF\'`: после неё вставьте текст файла и закончите его строкой `EOF`.', '`~/shop` holds a compose.yaml with a database and an API. Files are easiest to write whole with `cat > compose.yaml <<\'EOF\'`: after it paste the file text and end it with an `EOF` line.'),
+      intro: bi('В каталоге `~/shop` лежит compose.yaml с базой и API. Редактора на машине нет, поэтому файл удобно переписать целиком командой `cat > compose.yaml <<\'EOF\'`: после неё вставьте текст файла и закончите его строкой `EOF`. Машина учебная, и сломать её нельзя, а кнопка «Сбросить экран» вернёт исходный файл.', '`~/shop` holds a compose.yaml with a database and an API. There is no editor on the machine, so the file is easiest to rewrite whole with `cat > compose.yaml <<\'EOF\'`: after it paste the file text and end it with an `EOF` line. The machine is a training one and cannot be broken, and the “Reset this screen” button brings the original file back.'),
       tasks: [
         {
           id: 'up',
@@ -132,7 +144,7 @@ export const composeLesson: Lesson = {
           check: { when: "containers[name=shop-db-1].state=running && containers[name=shop-api-1]", stdout: /shop-api-1/ },
           chips: 'docker compose up -d; docker compose ps -a; docker compose logs api',
           concepts: ['docker.compose'],
-          hints: { H1: bi('api запустился раньше, чем база стала готова принимать соединения.', 'api started before the database was ready.') },
+          hints: { H1: bi('Сервис api запустился раньше, чем база стала готова принимать соединения.', 'api started before the database was ready.') },
         },
         {
           id: 'healthy',
@@ -149,7 +161,13 @@ export const composeLesson: Lesson = {
         {
           id: 'persist',
           prompt: bi('Убедитесь, что данные базы переживают пересоздание проекта. Для этого выполните `docker compose down`, а потом снова `up -d`. Том `shop_db-data` должен остаться и снова подключиться к db.', 'Make sure the database data survives a re-create: `docker compose down` and `up -d` again. The `shop_db-data` volume must stay and be attached to db again.'),
-          check: { when: (f) => !!svc(f, 'db') && svc(f, 'db')!.state === 'running' && svc(f, 'db')!.mounts.some((m) => m.source === 'shop_db-data') && ((f.docker as { events: { action: string; name: string }[] }).events.some((e) => e.action === 'destroy' && e.name === 'shop-db-1')) },
+          check: {
+            when: (f) => {
+              const events = (f.docker as { events: { type: string; action: string; name: string }[] }).events;
+              const networkCreated = events.filter((e) => e.type === 'network' && e.action === 'create' && e.name === 'shop_default').length;
+              return !!svc(f, 'db') && svc(f, 'db')!.state === 'running' && svc(f, 'db')!.mounts.some((m) => m.source === 'shop_db-data') && networkCreated >= 2;
+            },
+          },
           chips: 'docker compose down && docker compose up -d && docker volume ls',
           concepts: ['docker.compose', 'docker.volume'],
           hints: { H1: bi('Команда `down` без `-v` тома не трогает.', '`down` without `-v` does not touch volumes.') },
@@ -174,7 +192,7 @@ export const composeLesson: Lesson = {
       kind: 'callout',
       tone: 'why',
       step: 'review',
-      title: bi('Итог главы', 'Summary'),
+      title: bi('Итог урока', 'Summary'),
       body: bi('Файл compose.yaml хранит записанные команды `docker run` вместе с сетью и томами проекта, а `up` один раз приводит систему в соответствие с этим описанием. Запущенный сервис ещё не обязательно готов, поэтому нужны проверка готовности и условие `condition: service_healthy`. Команда `down -v` удаляет и данные.', 'compose.yaml is `docker run` written down plus the project’s network and volumes; `up` brings the system to it once. Started does not mean ready: a healthcheck and `condition: service_healthy`. `down -v` removes the data too.'),
     },
   ],

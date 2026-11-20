@@ -4,7 +4,7 @@ import { bi } from '../../../core/i18n';
 import type { Facts, Lesson, QuizItem } from '../../../core/types';
 import { dockerHost, RU, SRC, web } from '../shared';
 
-type B = { ok: boolean; tags: string[]; steps: { text: string; cached: boolean; layer: boolean }[]; size: number };
+type B = { ok: boolean; tags: string[]; steps: { text: string; cached: boolean; layer: boolean; stage?: string }[]; size: number };
 const builds = (f: Facts) => ((f.builds as B[] | undefined) ?? []).filter((b) => b.ok);
 
 const APP_PY = `print("hello from the image")\n`;
@@ -49,7 +49,7 @@ export const dockerfileQuiz: QuizItem[] = [
     why: {
       1: bi('Базовый образ указан с версией, и это правильно.', 'A versioned base image — correct.'),
       2: bi('WORKDIR меняет только настройки образа и лишней пересборки не вызывает.', 'WORKDIR only changes the config — it affects nothing in the cache.'),
-      3: bi('Инструкция `COPY . .` стоит до установки зависимостей. Любая правка любого файла меняет её ключ, а значит, и ключ `pip install` ниже. Правильно сначала выполнить `COPY requirements.txt .`, потом установить зависимости через pip и только после этого выполнить `COPY . .`.', '`COPY . .` comes before installing dependencies: any edit of any file changes its key and so the key of `pip install` below. First `COPY requirements.txt .`, then pip, then `COPY . .`.'),
+      3: bi('Инструкция `COPY . .` стоит до установки зависимостей. Любая правка любого файла меняет её ключ, а значит, и ключ `pip install` ниже. Правильно сначала выполнить `COPY requirements.txt .`, потом установить зависимости через pip, а инструкцию `COPY . .` поставить последней.', '`COPY . .` comes before installing dependencies: any edit of any file changes its key and so the key of `pip install` below. First `COPY requirements.txt .`, then pip, then `COPY . .`.'),
       4: bi('Сама эта строка верная, а лишнюю пересборку вызывает строка выше.', 'This line is fine — the line above ruins it.'),
       5: bi('CMD записан в exec-форме, и это правильно.', 'The exec form of CMD — correct.'),
     },
@@ -121,7 +121,7 @@ export const dockerfileLesson: Lesson = {
       id: 'hook',
       kind: 'text',
       step: 'hook',
-      body: bi('Первая сборка образа сервиса на Python заняла две минуты, вторая две секунды, а после правки одной строки кода снова две минуты. Глава отвечает на вопрос: **как из исходников получается образ и почему вторая сборка быстрее первой?**', 'The first build of a Python service image took two minutes, the second two seconds. And after editing one line of code — two minutes again. The leading question: **how is an image made from sources, and why is the second build faster than the first?**'),
+      body: bi('Первая сборка образа сервиса на Python заняла две минуты, вторая две секунды, а после правки одной строки кода снова две минуты. Этот урок отвечает на вопрос: **как из исходников получается образ и почему вторая сборка быстрее первой?**', 'The first build of a Python service image took two minutes, the second two seconds. And after editing one line of code — two minutes again. The leading question: **how is an image made from sources, and why is the second build faster than the first?**'),
     },
     {
       id: 'instructions',
@@ -129,8 +129,8 @@ export const dockerfileLesson: Lesson = {
       step: 'explain',
       title: bi('Как сборку записывают в файл', 'How a build is written into a file'),
       body: bi(
-        'Образ можно собрать и вручную: запустить контейнер, установить в нём пакеты и сохранить результат. Но такую сборку нельзя ни повторить, ни проверить на ревью, ни ускорить. Поэтому сборку записывают в [[docker.dockerfile|Dockerfile]], список инструкций, который читает сборщик BuildKit, когда вы запускаете `docker build -t app:1.0 .`.\n\nКаждая инструкция описывает шаг, у которого есть результат. Одни шаги создают слой: `RUN` выполняет команду в контейнере текущей стадии и сохраняет изменившиеся файлы, а `COPY` и `ADD` кладут в образ файлы из контекста. Другие шаги меняют только настройки образа, и к ним относятся `ENV`, `WORKDIR`, `USER`, `EXPOSE`, `CMD` и `ENTRYPOINT`. Инструкция `EXPOSE` ничего не публикует, она служит пометкой для того, кто будет запускать контейнер, а публикует порт только флаг `-p`.\n\nПоследним аргументом `docker build` передают **контекст сборки**, то есть каталог, который клиент целиком отправляет сборщику. Всё, что образу не нужно (каталог `.git`, тестовые данные, файл `.env` с паролями), перечисляют в `.dockerignore`. От этого зависят и скорость, и безопасность, потому что то, что попало в контекст, может попасть и в слой.',
-        'You could build an image by hand: run a container, install packages, save it. But such a process cannot be repeated, reviewed or sped up. So the build is written into a [[docker.dockerfile|Dockerfile]] — a list of instructions the builder (BuildKit) reads with `docker build -t app:1.0 .`.\n\nEvery instruction is a step with a result. Some steps create a layer: `RUN` executes a command in a container of the current stage and saves the file changes; `COPY` and `ADD` put files from the context. Others change only the config: `ENV`, `WORKDIR`, `USER`, `EXPOSE`, `CMD`, `ENTRYPOINT`. `EXPOSE` publishes nothing — it is documentation; only `-p` publishes.\n\nThe last argument of `docker build` is the **build context**: the directory the client sends to the builder as a whole. Whatever the image does not need (`.git`, test data, an `.env` file with passwords) is listed in `.dockerignore`. It is a matter of speed and of safety: what got into the context can get into a layer.',
+        'Образ можно собрать и вручную: запустить контейнер, установить в нём пакеты и сохранить результат. Но такую сборку нельзя ни повторить, ни проверить на ревью, ни ускорить. Поэтому сборку записывают в [[docker.dockerfile|Dockerfile]], список инструкций, который читает сборщик BuildKit. Сборку запускают командой `docker build -t app:1.0 .`, где точка в конце обозначает текущий каталог.\n\nКаждая инструкция описывает шаг, у которого есть результат. Одни шаги создают слой: `RUN` выполняет команду в контейнере текущей стадии и сохраняет изменившиеся файлы, а `COPY` и `ADD` кладут в образ файлы из каталога проекта. Другие шаги меняют только настройки образа, и к ним относятся `ENV`, `WORKDIR`, `USER`, `EXPOSE`, `CMD` и `ENTRYPOINT`. Инструкция `EXPOSE` ничего не публикует, она служит пометкой для того, кто будет запускать контейнер, а публикует порт только флаг `-p`.\n\nПоследним аргументом `docker build` передают **контекст сборки**, то есть каталог, который клиент целиком отправляет сборщику. Всё, что образу не нужно (каталог `.git`, тестовые данные, файл `.env` с паролями), перечисляют в `.dockerignore`. От этого зависят и скорость, и безопасность, потому что то, что попало в контекст, может попасть и в слой.',
+        'You could build an image by hand: run a container, install packages, save it. But such a process cannot be repeated, reviewed or sped up. So the build is written into a [[docker.dockerfile|Dockerfile]] — a list of instructions the builder (BuildKit) reads. The build is started with `docker build -t app:1.0 .`, where the dot at the end means the current directory.\n\nEvery instruction is a step with a result. Some steps create a layer: `RUN` executes a command in a container of the current stage and saves the file changes; `COPY` and `ADD` put files from the context. Others change only the config: `ENV`, `WORKDIR`, `USER`, `EXPOSE`, `CMD`, `ENTRYPOINT`. `EXPOSE` publishes nothing — it is documentation; only `-p` publishes.\n\nThe last argument of `docker build` is the **build context**: the directory the client sends to the builder as a whole. Whatever the image does not need (`.git`, test data, an `.env` file with passwords) is listed in `.dockerignore`. It is a matter of speed and of safety: what got into the context can get into a layer.',
       ),
     },
     {
@@ -161,10 +161,10 @@ export const dockerfileLesson: Lesson = {
       id: 'multistage',
       kind: 'text',
       step: 'explain',
-      title: bi('Как собрать программу в одной стадии и взять в образ только результат', 'How to build in one stage and ship only the result'),
+      title: bi('Как собрать программу в одной стадии, а в образ взять только результат', 'How to build a program in one stage and take only the result into the image'),
       body: bi(
-        'Образ приложения на Go, собранный на основе `golang:1.25`, весит почти гигабайт, потому что в нём лежат компилятор, исходники и кэши. А приложению на сервере нужен только исполняемый файл. [[docker.multistage|Многоэтапная сборка]] решает эту задачу одним Dockerfile с несколькими инструкциями `FROM`. Первая стадия (`FROM golang:1.25 AS build`) собирает программу, а вторая (`FROM alpine:3.22`) получает готовый файл командой `COPY --from=build /out/app /usr/local/bin/app`. Всё, что осталось в первой стадии, в итоговый образ не попадает, и он весит около десяти мегабайт.\n\nПо той же причине секреты не передают через `ARG` и не копируют файл `.env`, потому что всё это остаётся в истории образа и в его слоях. Для паролей, нужных при сборке, есть `RUN --mount=type=secret`, а при работе контейнера пароли передают переменными окружения при запуске.',
-        'A Go application image built in `golang:1.25` weighs nearly a gigabyte: it holds the compiler, the sources and caches. The application on a server needs only the binary. A [[docker.multistage|multi-stage build]] solves this with one Dockerfile and several `FROM`s: the first stage (`FROM golang:1.25 AS build`) builds, the second (`FROM alpine:3.22`) takes the finished file with `COPY --from=build /out/app /usr/local/bin/app`. Nothing left in the first stage gets into the final image: it weighs a dozen megabytes.\n\nFor the same reason secrets are not passed through `ARG` and `.env` is not copied: all of that stays in the history and the layers. For passwords during the build there is `RUN --mount=type=secret`; at run time — variables passed when starting.',
+        'Образ приложения на Go, собранный на основе `golang:1.25`, весит почти гигабайт, потому что в нём лежат компилятор, исходники и кэши. А приложению на сервере нужен только исполняемый файл. [[docker.multistage|Многоэтапная сборка]] решает эту задачу одним Dockerfile с несколькими инструкциями `FROM`. Первая стадия (`FROM golang:1.25 AS build`) собирает программу, а вторая (`FROM alpine:3.22`) получает готовый файл командой `COPY --from=build /out/app /usr/local/bin/app`. Всё, что осталось в первой стадии, в итоговый образ не попадает, и он весит около десяти мегабайт.\n\nКоманду сборки в первой стадии на практике пишут как `RUN CGO_ENABLED=0 go build -o /out/app .`. Переменная `CGO_ENABLED=0` велит собрать файл, который не зависит от системной библиотеки языка C. Образ golang построен на Debian с библиотекой glibc, а в Alpine стоит другая библиотека, musl, и файл, связанный с glibc, там не запустится: оболочка ответит загадочным «not found», хотя файл на месте.\n\nОтдельная осторожность нужна с паролями и ключами. Их не передают через `ARG` и не копируют в образ вместе с файлом `.env`, потому что всё это остаётся в истории образа и в его слоях. Для паролей, нужных при сборке, есть `RUN --mount=type=secret`, а при работе контейнера пароли передают переменными окружения при запуске.',
+        'A Go application image built in `golang:1.25` weighs nearly a gigabyte: it holds the compiler, the sources and caches. The application on a server needs only the binary. A [[docker.multistage|multi-stage build]] solves this with one Dockerfile and several `FROM`s: the first stage (`FROM golang:1.25 AS build`) builds, the second (`FROM alpine:3.22`) takes the finished file with `COPY --from=build /out/app /usr/local/bin/app`. Nothing left in the first stage gets into the final image: it weighs a dozen megabytes.\n\nIn practice the build command of the first stage is written as `RUN CGO_ENABLED=0 go build -o /out/app .`. The variable `CGO_ENABLED=0` tells Go to build a file that does not depend on the system C library. The golang image is built on Debian with the glibc library, while Alpine has another library, musl, and a file linked against glibc will not start there: the shell answers with a puzzling “not found” although the file is in place.\n\nFor the same reason secrets are not passed through `ARG` and `.env` is not copied: all of that stays in the history and the layers. For passwords during the build there is `RUN --mount=type=secret`; at run time — variables passed when starting.',
       ),
     },
     {
@@ -215,7 +215,7 @@ export const dockerfileLesson: Lesson = {
           chips: "echo 'FROM python:3.13-slim' > ~/app/Dockerfile; echo 'WORKDIR /app' >> ~/app/Dockerfile; echo 'COPY requirements.txt .' >> ~/app/Dockerfile; echo 'RUN pip install -r requirements.txt' >> ~/app/Dockerfile; echo 'COPY . .' >> ~/app/Dockerfile",
           concepts: ['docker.build-cache'],
           docRef: web('build/cache', 'order'),
-          hints: { H1: bi('То, что меняется редко, ставьте выше, а то, что часто, ниже.', 'What changes rarely goes higher, what changes often lower.'), H2: bi('Сначала `COPY requirements.txt .` и `RUN pip install …`, а потом `COPY . .`.', 'First `COPY requirements.txt .` and `RUN pip install …`, then `COPY . .`.') },
+          hints: { H1: bi('То, что меняется редко, ставьте выше, а то, что часто, ниже.', 'What changes rarely goes higher, what changes often lower.'), H2: bi('Сначала идут `COPY requirements.txt .` и `RUN pip install …`, а инструкция `COPY . .` стоит после них.', 'First `COPY requirements.txt .` and `RUN pip install …`, then `COPY . .`.') },
         },
         {
           id: 'stop',
@@ -235,7 +235,13 @@ export const dockerfileLesson: Lesson = {
         {
           id: 'small',
           prompt: bi('Образ из `~/go` весит сотни мегабайт. Перепишите Dockerfile в две стадии и соберите образ `goapp:small` размером меньше 30 МБ.', 'The image from `~/go` weighs hundreds of megabytes. Rewrite the Dockerfile in two stages and build `goapp:small` under 30 MB.'),
-          check: { when: "images[ref='goapp:small'].size<30000000 && images[ref='goapp:small'].layers>=2" },
+          check: {
+            when: (f) => {
+              const img = ((f.images as { ref: string; size: number }[] | undefined) ?? []).find((i) => i.ref === 'goapp:small');
+              return !!img && img.size < 30_000_000 && builds(f).some((b) => b.tags.some((t) => t.endsWith('goapp:small')) && new Set(b.steps.map((s) => s.stage)).size >= 2);
+            },
+            fail: [{ if: "images[ref='goapp:small'].size>=30000000", say: bi('Образ `goapp:small` собран, но весит больше 30 МБ. Проверьте, что вторая стадия начинается со своей инструкции `FROM` с маленьким базовым образом и забирает из первой стадии только готовый файл командой `COPY --from=build`.', 'The `goapp:small` image is built but weighs more than 30 MB. Check that the second stage starts with its own `FROM` with a small base image and takes only the finished file from the first stage with `COPY --from=build`.') }],
+          },
           chips: "echo 'FROM golang:1.25 AS build' > ~/go/Dockerfile; … echo 'FROM alpine:3.22' >> ~/go/Dockerfile; echo 'COPY --from=build /out/app /usr/local/bin/app' >> ~/go/Dockerfile",
           concepts: ['docker.multistage'],
           docRef: web('build/building/multi-stage', 'use-multi-stage-builds'),
@@ -258,7 +264,7 @@ export const dockerfileLesson: Lesson = {
       step: 'practice',
       levels: ['intermediate', 'experienced'],
       mode: 'find',
-      prompt: bi('Приложение на Python из `~/stop` не обрабатывает SIGTERM. Сделайте так, чтобы оно останавливалось быстро, не меняя код и не пользуясь `--init`. Глава такого способа не показывала, поэтому найдите его в справочнике.', 'The Python application from `~/stop` does not handle SIGTERM. Make it stop fast without changing its code and without `--init`. The chapter did not show this way, so find it in the reference.'),
+      prompt: bi('Приложение на Python из `~/stop` не обрабатывает SIGTERM. Сделайте так, чтобы оно останавливалось быстро, не меняя код и не пользуясь `--init`. Урок такого способа не показывал, поэтому найдите его в справочнике.', 'The Python application from `~/stop` does not handle SIGTERM. Make it stop fast without changing its code and without `--init`. The lesson did not show this way, so find it in the reference.'),
       ref: web('reference/dockerfile'),
       terminal: {
         setup: dockerHost({ files: [{ path: '~/stop/app.py', content: STOP_APP }, { path: '~/stop/Dockerfile', content: 'FROM python:3.13-slim\nCOPY app.py /app/\nCMD ["python", "/app/app.py"]\n' }] }, { pull: ['python:3.13-slim'] }),
@@ -278,7 +284,7 @@ export const dockerfileLesson: Lesson = {
       kind: 'callout',
       tone: 'why',
       step: 'review',
-      title: bi('Итог главы', 'Summary'),
+      title: bi('Итог урока', 'Summary'),
       body: bi('Dockerfile описывает сборку по шагам. Инструкции RUN и COPY создают слои, а остальные меняют настройки образа. Кэш действует до первой изменившейся инструкции, поэтому зависимости устанавливают до того, как копируют код. PID 1 без обработчика не получает SIGTERM, поэтому нужна exec-форма вместе с обработчиком, флагом `--init` или подходящим STOPSIGNAL. Многоэтапная сборка оставляет компилятор за пределами итогового образа.', 'A Dockerfile is a build written as steps: RUN/COPY make layers, the rest is config. The cache holds until the first changed instruction, so dependencies are installed before the code is copied. PID 1 without a handler does not get SIGTERM: the exec form plus a handler, `--init` or STOPSIGNAL. A multi-stage build leaves the compiler behind.'),
     },
   ],

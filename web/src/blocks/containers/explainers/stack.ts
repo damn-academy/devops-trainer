@@ -12,7 +12,7 @@
 // counters under the diagram appear together with the tower they count.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, type Bi } from '../../../core/i18n';
+import { bi, fmt, pluralRu, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { fmtb, man, startWith } from './util';
 
@@ -48,6 +48,7 @@ export function stackNumbers(apps: number) {
     vmStart: s.vmBootMs,
     ctStart: s.containerStartMs,
     vmOut: apps > vmFit ? vmFit + 1 : 0,
+    vmLost: Math.max(0, apps - vmFit),
     ctOut: apps > ctFit ? ctFit + 1 : 0,
   };
 }
@@ -66,8 +67,8 @@ export const stackModel = defineModel<P>({
   block: 'containers',
   title: bi('Один сервер, виртуальные машины и контейнеры', 'Bare metal, virtual machines, containers'),
   summary: bi(
-    'На схеме стоят три одинаковых сервера, по 16 ГиБ памяти у каждого. На первом два приложения работают в одной системе и мешают друг другу, на втором каждое приложение получает свою виртуальную машину, на третьем свой контейнер. Счётчики под схемой показывают, сколько памяти и времени стоит каждое решение.',
-    'Three servers of the same size, 16 GiB of memory each. On the first, two applications share one system and get in each other’s way; on the second, each application gets its own virtual machine; on the third, its own container. The counters under the diagram show what each solution costs in memory and time.',
+    'На схеме стоят три одинаковых сервера, по 16 ГиБ памяти у каждого. На первом два приложения работают в одной системе и мешают друг другу, на втором каждое приложение получает свою виртуальную машину, на третьем свой контейнер. Счётчики под схемой показывают, сколько памяти и времени стоит каждое решение. Память считается в мебибайтах и гибибайтах: МиБ почти равен мегабайту, а ГиБ равен 1024 МиБ, то есть примерно гигабайту.',
+    'Three servers of the same size, 16 GiB of memory each. On the first, two applications share one system and get in each other’s way; on the second, each application gets its own virtual machine; on the third, its own container. The counters under the diagram show what each solution costs in memory and time. Memory is counted in mebibytes and gibibytes: a MiB is almost a megabyte, and a GiB is 1024 MiB, roughly a gigabyte.',
   ),
   intro: bi(
     'Сейчас на схеме только первый сервер, на котором два приложения работают в одной системе. Нажмите «Начать с первого шага», а дальше переходите от шага к шагу кнопкой «Шаг вперёд». Рядом вырастут ещё две башни, снизу вверх, от железа к приложениям. Подсвечен тот блок, который работает на этом шаге, облачко рядом с ним говорит, что он делает, а карточка на линии показывает, что он передаёт дальше.\n\nКогда дойдёте до конца, доведите в «Параметрах» число приложений до 30 и посмотрите на счётчики памяти, а потом включите уязвимость в ядре.',
@@ -133,7 +134,7 @@ export const stackModel = defineModel<P>({
           { id: 'mem', text: bi('Нет, памяти сервера на все ВМ не хватит', 'No: the server runs out of memory') },
           { id: 'ok', text: bi('Да, поместятся все, как и контейнеры', 'Yes, all of them fit, like the containers') },
         ],
-        resolve: (_p, next) => ((next[next.length - 1]?.metrics?.vmOut ?? 0) > 0 ? 'mem' : 'ok'),
+        resolve: (_p, next) => ((next[next.length - 1]?.metrics?.vmLost ?? 0) > 0 ? 'mem' : 'ok'),
       },
     },
     { id: 'conflict', label: bi('Приложениям A и B нужны разные версии libssl', 'A and B need different versions of libssl'), kind: 'toggle', default: true, near: 'bm-apps', group: bi('Что нужно запустить', 'What has to run') },
@@ -203,7 +204,8 @@ export const stackModel = defineModel<P>({
   metrics: [
     { id: 'vmMem', label: bi('занято памяти на сервере с ВМ', 'VM memory'), unit: { ru: 'МиБ', en: 'MiB' } },
     { id: 'ctMem', label: bi('занято памяти на сервере с контейнерами', 'container memory'), unit: { ru: 'МиБ', en: 'MiB' } },
-    { id: 'vmStart', label: bi('время запуска ещё одной ВМ', 'time to start one more VM'), unit: { ru: 'мс', en: 'ms' } },
+    { id: 'vmLost', label: bi('виртуальных машин не поместилось на сервер', 'virtual machines that did not fit on the server') },
+    { id: 'vmStart', label: bi('время запуска ещё одной ВМ', 'time to start one more VM'), unit: { ru: 'с', en: 's' } },
     { id: 'ctStart', label: bi('время запуска ещё одного контейнера', 'time to start one more container'), unit: { ru: 'мс', en: 'ms' } },
     { id: 'vmOverhead', label: bi('доля процессора на служебную работу ВМ', 'CPU share spent on VM overhead'), unit: '%' },
     { id: 'ctOverhead', label: bi('доля процессора на служебную работу контейнеров', 'CPU share spent on container overhead'), unit: '%' },
@@ -212,7 +214,7 @@ export const stackModel = defineModel<P>({
     const n = stackNumbers(p.apps);
     const vmRun = Math.min(p.apps, n.vmFit);
     const ctRun = Math.min(p.apps, n.ctFit);
-    const vmM = { vmMem: n.vmMem, vmStart: n.vmStart, vmOverhead: n.vmOverhead, vmOut: n.vmOut };
+    const vmM = { vmMem: n.vmMem, vmStart: n.vmStart / 1000, vmOverhead: n.vmOverhead, vmLost: n.vmLost };
     const all = { ...vmM, ctMem: n.ctMem, ctStart: n.ctStart, ctOverhead: n.ctOverhead };
     const count = (x: number, fit: number) => (x > fit ? `× ${fit} / ${x}` : `× ${x}`);
     const steps: Step[] = [
@@ -260,15 +262,15 @@ export const stackModel = defineModel<P>({
         label: bi('гипервизор', 'hypervisor'),
         caption: fmt(
           bi(
-            'Первое решение состоит в том, чтобы дать каждому приложению отдельный компьютер. Покупать по серверу на приложение дорого, поэтому на второй сервер ставят гипервизор, то есть программу, которая делит одно железо на несколько виртуальных машин и каждой показывает её собственные процессоры, память и диск. Число виртуальных машин на этом сервере сейчас равно {n}.',
+            'Первое решение состоит в том, чтобы дать каждому приложению отдельный компьютер. Покупать по серверу на приложение дорого, поэтому на второй сервер ставят гипервизор, то есть программу, которая делит одно железо на несколько виртуальных машин и каждой показывает её собственные процессоры, память и диск. Сейчас на этом сервере {nRu}.',
             'The first solution is to give each application a separate computer. A server per application is expensive, so the second server gets a hypervisor: a program that divides one piece of hardware into several virtual machines and shows each its own CPUs, memory and disk. There are {n} machines now.',
           ),
-          { n: vmRun },
+          { n: vmRun, nRu: `${vmRun > 1 && !(vmRun % 10 === 1 && vmRun % 100 !== 11) ? 'работают' : 'работает'} ${vmRun} ${pluralRu(vmRun, ['виртуальная машина', 'виртуальные машины', 'виртуальных машин'])}` },
         ),
         focus: ['vm-hyp'],
         reveal: ['vm-hw', 'vm-hyp', 'e-vm-hw'],
-        say: { 'vm-hyp': fmt(bi('Гипервизор делит память и процессоры сервера между {n} виртуальными машинами.', 'The hypervisor divides the server’s memory and CPUs between {n} virtual machines.'), { n: vmRun }) },
-        metrics: { vmMem: n.vmMem, vmOut: n.vmOut },
+        say: { 'vm-hyp': vmRun === 1 ? bi('Гипервизор отдаёт часть памяти и процессоров сервера единственной виртуальной машине.', 'The hypervisor gives part of the server’s memory and CPUs to the only virtual machine.') : fmt(bi('Гипервизор делит память и процессоры сервера между {n} виртуальными машинами.', 'The hypervisor divides the server’s memory and CPUs between {n} virtual machines.'), { n: vmRun }) },
+        metrics: { vmMem: n.vmMem, vmLost: n.vmLost },
       },
       {
         id: 'guest',
@@ -285,7 +287,7 @@ export const stackModel = defineModel<P>({
         tokens: [{ edge: 'e-vm-virt', label: `${STACK.guestOsMiB} MiB × ${vmRun}` }],
         say: { 'vm-guest': bi('В каждой ВМ загружается своё ядро и своя система, и каждая занимает 1 ГиБ памяти ещё до приложения.', 'Each VM boots its own kernel and system, and each takes 1 GiB before the application.') },
         values: { 'vm-guest': `${STACK.guestOsMiB} MiB × ${vmRun}` },
-        metrics: { vmMem: n.vmMem, vmStart: n.vmStart, vmOut: n.vmOut },
+        metrics: { vmMem: n.vmMem, vmStart: n.vmStart / 1000, vmLost: n.vmLost },
       },
       {
         id: 'vm-apps',
@@ -360,10 +362,10 @@ export const stackModel = defineModel<P>({
         label: bi('+ контейнер', '+ container'),
         caption: fmt(
           bi(
-            'Новому контейнеру загружать нечего, потому что ядро уже работает. Запуск сводится к созданию процесса и занимает около {ct} мс, а памяти контейнер займёт {app} МиБ на приложение и примерно {ov} МиБ сверху. На {apps} приложений сервер с ВМ тратит {vmm} МиБ памяти, а сервер с контейнерами {ctm} МиБ.',
+            'Новому контейнеру загружать нечего, потому что ядро уже работает. Запуск сводится к созданию процесса и занимает около {ct} мс, а памяти контейнер займёт {app} МиБ на приложение и примерно {ov} МиБ сверху. На {appsRu} сервер с ВМ тратит {vmm} МиБ памяти, а сервер с контейнерами {ctm} МиБ.',
             'A new container has nothing to boot, because the kernel is already running. Starting it means creating a process, about {ct} ms, and it takes {app} MiB for the application plus about {ov} MiB. For {apps} applications the VM server spends {vmm} MiB and the container server {ctm} MiB.',
           ),
-          { ct: STACK.containerStartMs, app: STACK.appMiB, ov: STACK.containerOverheadMiB, apps: p.apps, vmm: n.vmMem, ctm: n.ctMem },
+          { ct: STACK.containerStartMs, app: STACK.appMiB, ov: STACK.containerOverheadMiB, apps: p.apps, appsRu: `${p.apps} ${pluralRu(p.apps, ['приложение', 'приложения', 'приложений'])}`, vmm: n.vmMem, ctm: n.ctMem },
         ),
         focus: ['ct-apps'],
         say: { 'ct-apps': fmt(bi('Для нового контейнера ядро создаёт новый процесс, и он готов примерно за {ms} мс.', 'A new container is a new process, ready in about {ms} ms.'), { ms: STACK.containerStartMs }) },
@@ -394,13 +396,13 @@ export const stackModel = defineModel<P>({
         label: bi('уязвимость', 'vulnerability'),
         caption: fmt(
           bi(
-            'В ядре нашли уязвимость, через которую процесс может выйти за границы своего контейнера. У контейнеров ядро общее, поэтому под угрозой оказываются все {n} контейнеров третьего сервера, потому что граница между ними проходит внутри того самого ядра, в котором нашли дыру.',
+            'В ядре нашли уязвимость, через которую процесс может выйти за границы своего контейнера. Граница между контейнерами проходит внутри того самого ядра, в котором нашли дыру, а ядро у них общее. Поэтому под угрозой {nRu}.',
             'A kernel vulnerability lets a process escape its container. Containers share the kernel, so all {n} containers of the third server are at risk: the boundary between them runs inside the very kernel that has the hole.',
           ),
-          { n: ctRun },
+          { n: ctRun, nRu: ctRun === 1 ? 'оказывается и единственный контейнер третьего сервера, и сам сервер' : `оказываются все ${ctRun} ${pluralRu(ctRun, ['контейнер', 'контейнера', 'контейнеров'])} третьего сервера` },
         ),
         focus: ['ct-kernel'],
-        say: { 'ct-kernel': bi('Через уязвимость в общем ядре процесс одного контейнера может добраться до всех остальных.', 'Through the hole in the shared kernel one container’s process can reach all the others.') },
+        say: { 'ct-kernel': ctRun === 1 ? bi('Через уязвимость в ядре процесс контейнера может добраться до самого сервера.', 'Through the hole in the kernel the container’s process can reach the server itself.') : bi('Через уязвимость в общем ядре процесс одного контейнера может добраться до всех остальных.', 'Through the hole in the shared kernel one container’s process can reach all the others.') },
         states: { 'ct-kernel': 'err', 'ct-apps': 'warn' },
         values: { 'ct-apps': `${ctRun} / ${ctRun} at risk` },
         metrics: all,
@@ -434,8 +436,8 @@ export const stackModel = defineModel<P>({
         id: 'boundary-ct',
         label: bi('в ядре', 'in the kernel'),
         caption: bi(
-          'У контейнеров граница проходит внутри одного ядра, и держат её пространства имён и cgroup, а ещё фильтры seccomp и урезанный набор capabilities. Поэтому контейнер изолирует слабее виртуальной машины, зато он легче и запускается быстрее.',
-          'For containers the boundary runs inside one kernel: namespaces and cgroups hold it, together with seccomp filters and a reduced set of capabilities. A container therefore isolates less strongly than a VM, but it is lighter and starts faster.',
+          'У контейнеров граница проходит внутри одного ядра. Держат её пространства имён и cgroup, а ещё несколько механизмов ядра, которые урезают права процесса; о них подробно рассказывает урок о безопасности. Поэтому контейнер изолирует слабее виртуальной машины, зато он легче и запускается быстрее.',
+          'For containers the boundary runs inside one kernel. Namespaces and cgroups hold it, together with a few more kernel mechanisms that cut down the rights of a process; the security lesson covers them in detail. A container therefore isolates less strongly than a VM, but it is lighter and starts faster.',
         ),
         focus: ['ct-kernel'],
         say: { 'ct-kernel': bi('Контейнеры отделяет друг от друга само ядро хоста, одно на всех.', 'The host kernel itself, one for all, separates the containers.') },
