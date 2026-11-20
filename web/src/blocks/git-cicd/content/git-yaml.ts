@@ -7,6 +7,7 @@ import { bi } from '../../../core/i18n';
 import type { Block, Concept, Facts, Lesson, PlacementTask, QuizItem, Sources } from '../../../core/types';
 import { lintYaml } from '../yaml';
 import { CONFIG, HOME, PAGES, SITE, gitSetup, head, repo, siteFiles } from './common';
+import { undoConcepts, undoLesson, undoPlacement, undoQuiz } from './undo';
 
 const S = {
   progit: { title: 'Pro Git, 2nd edition — Git Basics', url: 'https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository' },
@@ -42,6 +43,7 @@ export const concepts: Concept[] = [
   { id: 'git.conflict', term: bi('конфликт слияния', 'merge conflict'), forms: { ru: ['конфликта слияния', 'конфликты слияния', 'конфликтом слияния'], en: ['merge conflicts'] }, short: bi('Место, где обе ветки по-разному изменили одни и те же строки. Git ставит в файле маркеры и ждёт, пока решение примет человек.', 'A place where both branches changed the same lines: Git puts markers and waits for a human decision.'), introducedIn: 'git-yaml.branches', docRef: { page: 'man/git-merge.1', anchor: 'DESCRIPTION', line: 'conflict' } },
   { id: 'git.ignore', term: bi('.gitignore', '.gitignore'), short: bi('Файл со списком шаблонов для файлов, которые Git не должен отслеживать: зависимостей, результатов сборки и секретов.', 'A file listing patterns Git must not track: dependencies, build output, secrets.'), introducedIn: 'git-yaml.ignore', docRef: { page: 'man/gitignore.5', anchor: 'DESCRIPTION' } },
   { id: 'yaml.syntax', term: bi('YAML', 'YAML'), scan: false, short: bi('Текстовый формат данных, в котором словари записываются парами «ключ: значение», списки строками с «- », а вложенность задаётся отступом из пробелов.', 'A text data format: "key: value" mappings, "- " lists, nesting by spaces.'), introducedIn: 'git-yaml.yaml', docRef: { url: 'https://yaml.org/spec/1.2.2/', label: 'YAML 1.2.2 spec' } },
+  ...undoConcepts,
   { id: 'yaml.traps', term: bi('ловушки YAML', 'YAML traps'), forms: { ru: ['ловушка YAML', 'ловушек YAML'], en: ['YAML trap'] }, short: bi('Значения, которые парсер читает не как строку, например yes, no, on, 0755 и 1.10. Разные версии YAML читают их по-разному.', 'Values a parser does not read as strings: yes and no, on, 0755, 1.10 — and different YAML versions read them differently.'), introducedIn: 'git-yaml.yaml', docRef: { url: 'https://yaml.org/spec/1.2.2/', label: 'YAML 1.2.2 spec' } },
 ];
 
@@ -50,6 +52,7 @@ export const concepts: Concept[] = [
 const repoWithIndex = gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add pages', files: PAGES }], worktree: { 'index.html': PAGES['index.html'].replace('Edu Cafe</h1>', 'Edu Cafe!</h1>') }, staged: ['index.html'] }] });
 
 export const quiz: QuizItem[] = [
+  ...undoQuiz,
   {
     id: 'git.q.index-where',
     kind: 'mcq',
@@ -214,6 +217,18 @@ export const quiz: QuizItem[] = [
       { id: 'str', text: bi('Строку "- web - db"', 'The string "- web - db"'), why: bi('Строки под ключом, которые начинаются с «- », считаются элементами списка, а не текстом.', 'Lines starting with "- " under a key are list items, not text.') },
       { id: 'two', text: bi('Два словаря, web и db', 'Two mappings, web and db'), why: bi('Элемент был бы словарём, если бы после имени стояло двоеточие, например «- web: …».', 'An item would be a mapping with a colon: "- web: …".') },
     ],
+  },
+  {
+    id: 'yaml.q.block',
+    kind: 'mcq',
+    concepts: ['yaml.syntax'],
+    prompt: bi('Что получит парсер из ключа `run` в этом фрагменте?\n\n```yaml\nrun: >\n  npm ci\n  npm test\n```', 'What does a parser get from the `run` key in this snippet?\n\n```yaml\nrun: >\n  npm ci\n  npm test\n```'),
+    options: [
+      { id: 'folded', text: bi('Одну строку "npm ci npm test" с переводом строки в конце', 'One string "npm ci npm test" with a line break at the end'), correct: true },
+      { id: 'literal', text: bi('Две строки текста, "npm ci" и "npm test", разделённые переводом строки', 'Two lines of text, "npm ci" and "npm test", separated by a line break'), why: bi('Так прочитался бы блок со знаком |, который сохраняет переводы строк. Знак > склеивает строки блока в одну через пробел, и скрипт из двух команд превратился бы в одну команду npm ci с лишними словами.', 'That is how a block with | would read: it keeps the line breaks. > folds the lines of the block into one with spaces, and a two-command script would turn into one npm ci command with extra words.') },
+      { id: 'list', text: bi('Список из двух команд', 'A list of two commands'), why: bi('Списком строки стали бы, только если бы каждая начиналась с «- ». Блок после > или | всегда даёт одно текстовое значение, а не список.', 'The lines would be a list only if each started with "- ". A block after > or | always gives one string.') },
+    ],
+    explain: bi('Перевод строки внутри блока меняет значение: знак | сохраняет переводы строк, поэтому им записывают многострочные скрипты, а знак > склеивает строки и годится для длинного текста. В обоих случаях в конце значения остаётся один перевод строки.', 'A line break inside a block changes the value: | keeps the line breaks, which is why multi-line scripts are written with it, and > folds the lines and suits long text. In both cases one line break stays at the end of the value.'),
   },
   {
     id: 'yaml.q.indent',
@@ -796,7 +811,7 @@ const yamlLesson: Lesson = {
       tone: 'why',
       body: bi('Ошибка в YAML редко приводит к понятному сообщению об отказе. Чаще файл разбирается без ошибок, но получается другое дерево данных, и программа работает не так, как вы ожидали. Поэтому YAML проверяют линтером до коммита, а значения, похожие на числа и на «да» и «нет», по привычке пишут в кавычках.', 'A YAML mistake rarely crashes a system with a clear message: the file parses, but into a different tree. That is why YAML is linted before a commit, and values that look like numbers or yes/no are quoted out of habit.'),
     },
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['yaml.q.list', 'yaml.q.indent', 'yaml.q.norway', 'yaml.q.fill-lint'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['yaml.q.list', 'yaml.q.block', 'yaml.q.indent', 'yaml.q.norway', 'yaml.q.fill-lint'] },
   ],
 };
 
@@ -808,7 +823,7 @@ function yamlCheck(text: string, want: unknown): boolean {
   }
 }
 
-export const lessons: Lesson[] = [repoLesson, branchesLesson, ignoreLesson, yamlLesson];
+export const lessons: Lesson[] = [repoLesson, branchesLesson, undoLesson, ignoreLesson, yamlLesson];
 
 // ── placement ──
 
@@ -879,21 +894,42 @@ const placement: PlacementTask[] = [
       check: { when: (f) => yamlCheck(f.files[`${HOME}/cfg/site.yaml`]?.text ?? '', { site: { name: 'edu-cafe', port: 8080, country: 'NO' } }) && !lintYaml(f.files[`${HOME}/cfg/site.yaml`]?.text ?? '').length },
     },
   },
-  { id: 'git-yaml.place.norway', level: 'experienced', key: true, concepts: ['yaml.traps'], kind: 'quiz', item: { ...(quiz.find((q) => q.id === 'yaml.q.norway') as QuizItem), id: 'git-yaml.place.q.norway' } },
+  undoPlacement,
+  {
+    id: 'git-yaml.place.norway',
+    level: 'experienced',
+    key: true,
+    concepts: ['yaml.traps'],
+    kind: 'quiz',
+    item: {
+      id: 'git-yaml.place.q.norway',
+      kind: 'multi',
+      concepts: ['yaml.traps'],
+      prompt: bi('В каких строках парсер YAML 1.1 прочитает ключ или значение не как строку? Отметьте все такие строки.', 'In which lines does a YAML 1.1 parser read the key or the value NOT as a string? Mark them all.'),
+      options: [
+        { id: 'off', text: 'delivery: off', correct: true },
+        { id: 'zip', text: 'zip: 0123', correct: true },
+        { id: 'time', text: 'closes: 22:30', correct: true },
+        { id: 'yes', text: 'open: "yes"', why: bi('Кавычки делают значение строкой в любой версии YAML.', 'Quotes make a value a string in any YAML version.') },
+        { id: 'word', text: 'city: Oslo', why: bi('Обычное слово парсер читает как строку.', 'An ordinary word is a string.') },
+      ],
+      explain: bi('В YAML 1.1 значение off логическое, 0123 читается как восьмеричное число 83, а 22:30 как шестидесятеричное число 22 × 60 + 30 = 1350.', 'In YAML 1.1 off is a boolean, 0123 is the octal number 83, and 22:30 is the base-60 number 22 × 60 + 30 = 1350.'),
+    },
+  },
 ];
 
 export const block: Block = {
   id: 'git-yaml',
   order: 25,
   title: bi('Git и YAML', 'Git and YAML'),
-  summary: bi('В этом блоке вы научитесь сохранять версии проекта в репозитории Git, работать с ветками и слиянием, исключать лишние файлы через .gitignore и читать файлы настроек в формате YAML так, как их читает программа. Блок идёт до контейнеров, потому что описания сборки и выкладки, которые встретятся дальше, тоже хранятся в репозитории и написаны на YAML.', 'In this block you learn to save project versions in a Git repository, work with branches and merges, exclude files with .gitignore and read settings files in the YAML format the way a program reads them. It comes before containers because the build and deployment descriptions you meet later are kept in a repository and written in YAML.'),
+  summary: bi('В этом блоке вы научитесь сохранять версии проекта в репозитории Git, работать с ветками и слиянием, отменять сделанное, исключать лишние файлы через .gitignore и читать файлы настроек в формате YAML так, как их читает программа. Блок идёт до контейнеров, потому что описания сборки и выкладки, которые встретятся дальше, тоже хранятся в репозитории и написаны на YAML.', 'In this block you learn to save project versions in a Git repository, work with branches and merges, undo things, exclude files with .gitignore and read settings files in the YAML format the way a program reads them. It comes before containers because the build and deployment descriptions you meet later are kept in a repository and written in YAML.'),
   checklistStep: null,
   levels: {
     beginner: bi('Ещё не пользовался Git', 'Has not used Git'),
     intermediate: bi('Делал коммиты из среды разработки', 'Has committed from an IDE'),
     experienced: bi('Работал с ветками и merge request и правил файл пайплайна', 'Branches and merge requests, has edited a CI file'),
   },
-  hours: { beginner: 15, intermediate: 10, experienced: 5 },
+  hours: { beginner: 17, intermediate: 12, experienced: 6 },
   lessons: lessons.map((l) => l.id),
   sources: src([S.progit, S.ref, S.yaml], [S.ruBook, S.ruLgb, S.ruYaml]),
   docSources: ['git-help', 'help'],

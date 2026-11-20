@@ -15,7 +15,8 @@ const L = {
   empty: bi('Пайплайнов пока нет. Когда вы выполните git push, здесь появятся джобы.', 'No pipelines yet. Do a git push and the jobs appear here.'),
   noPipeline: bi('Сервер принял push, но пайплайн не создал, потому что правила не добавили в него ни одной джобы.', 'The push went through but no pipeline was created: the rules added no jobs.'),
   yaml: bi('В файле пайплайна есть ошибка, поэтому пайплайн не создан.', 'The pipeline file has an error, so no pipeline was created'),
-  timeline: bi('Время модели', 'Model time'),
+  timeline: bi('Длительность пайплайна', 'Pipeline duration'),
+  seconds: bi('с', 's'),
   log: bi('Журнал джобы', 'Job log'),
   pick: bi('Нажмите на джобу, чтобы открыть её журнал.', 'Click a job to open its log.'),
   excluded: bi('Не попали в пайплайн', 'Not in this pipeline'),
@@ -122,7 +123,7 @@ export const boardWidget: WidgetReg = {
           ),
         );
       }
-      if (bars.childElementCount) root.append(h('h4', {}, `${t(L.timeline)}: ${Math.round(total)} s`), bars);
+      if (bars.childElementCount) root.append(h('h4', {}, `${t(L.timeline)}: ${Math.round(total)} ${t(L.seconds)}`), bars);
       if (p.excluded.length) root.append(h('details.pb-excl', {}, h('summary', {}, `${t(L.excluded)}: ${p.excluded.length}`), h('ul', {}, ...p.excluded.map((e) => h('li', {}, h('code', {}, e.name), ` — ${e.reason}`)))));
       const job: JobRec | undefined = p.jobs.find((j) => j.name === picked);
       root.append(h('h4', {}, t(L.log) + (job ? `: ${job.name}` : '')), job ? h('pre.pb-log', {}, ...ansiToNodes(job.log || `${job.reason ?? ''}\n`)) : h('p.muted.small', {}, t(L.pick)));

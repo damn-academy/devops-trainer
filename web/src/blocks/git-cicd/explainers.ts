@@ -8,9 +8,17 @@
 // thing it hands on travels along a line as a labelled card.
 
 import { defineModel } from '../../core/define';
-import { bi, fmt, t, type Bi } from '../../core/i18n';
+import { bi, fmt, pluralRu, t, type Bi } from '../../core/i18n';
 import type { DocRef, ElementCard, ElementState, Step } from '../../core/types';
 import { objectId } from './git/sha1';
+
+/** A number of seconds in the accusative ("21 секунду", "52 секунды", "90 секунд") and in English. */
+export const sec = (n: number): Bi => ({ ru: `${n} ${pluralRu(n, ['секунду', 'секунды', 'секунд'])}`, en: `${n} ${n === 1 ? 'second' : 'seconds'}` });
+/** fmt whose values may differ by language. */
+export function fmtBi(b: Bi, vars: Record<string, string | number | Bi>): Bi {
+  const pick = (l: 'ru' | 'en') => Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, typeof v === 'object' ? v[l] : v]));
+  return { ru: fmt(b, pick('ru')).ru, en: fmt(b, pick('en')).en };
+}
 
 export const card = (what: Bi, who: Bi, see?: string, doc?: DocRef): ElementCard => ({ what, who, see, doc });
 const short = (oid: string) => oid.slice(0, 7);
@@ -471,13 +479,13 @@ export const ciModel = defineModel<CiP>({
       steps.push({
         id: 'stuck',
         label: 'stuck',
-        caption: bi('Раннеры спрашивают работу, но джоба требует тег docker, а такого тега нет ни у одного раннера. Поэтому джоба остаётся в очереди и будет ждать, пока не появится подходящий раннер.', 'Runners ask for work, but the job needs the docker tag and no runner has it. The job waits forever.'),
+        caption: bi('Раннеры спрашивают работу, но джоба требует тег docker, а такого тега нет ни у одного раннера. Поэтому джоба остаётся в очереди, GitLab помечает её как stuck, и она ждёт, пока не появится подходящий раннер или пока GitLab не снимет её по тайм-ауту. Схема показывает первые десять минут ожидания: время ожидания растёт, а время всего пайплайна остаётся нулевым, потому что пайплайн не закончился.', 'Runners ask for work, but the job needs the docker tag and no runner has it. The job stays in the queue, GitLab marks it stuck, and it waits until a matching runner appears or GitLab drops it on a timeout. The diagram shows the first ten minutes of waiting: the wait grows, and the whole pipeline time stays at zero because the pipeline has not finished.'),
         focus: ['queue', 'runner'],
         reveal: ['runner'],
         say: { queue: bi('Джоба требует раннер с тегом docker, такого раннера нет, и джоба продолжает ждать в очереди.', 'The job needs a runner with the docker tag; there is none, so the job keeps waiting in the queue.') },
         states: { runner: 'off', queue: 'warn' },
         fill: { queue: 0.8 },
-        metrics: m0,
+        metrics: { build: 0, wait: 600, total: 0 },
         broken: { at: 'queue', message: "This job is stuck because you don't have any active runners online or available with any of these tags assigned to them: docker", caption: bi('Теги джобы должны совпадать с тегами раннера. Исправьте тег в файле пайплайна или попросите администратора зарегистрировать раннер с нужным тегом.', 'the job tags must match the runner tags; fix the tag or register a runner.') },
       });
       return steps;
@@ -486,8 +494,8 @@ export const ciModel = defineModel<CiP>({
       id: 'build',
       label: 'build',
       caption: p.cache
-        ? fmt(bi('Раннер забирает джобу build: скачивает образ, копирует репозиторий, достаёт зависимости из кэша, поэтому `npm ci` занимает 9 секунд, и выполняет скрипт. Вся сборка длится {s} секунд.', 'A runner takes build: pulls the image, clones the repository, restores the cache (npm ci: 9 s), runs the script. {s} s in all.'), { s: n.build })
-        : fmt(bi('Раннер забирает джобу build и копирует репозиторий. Кэша нет, поэтому `npm ci` скачивает все зависимости заново за 52 секунды. Вся сборка длится {s} секунд, но заканчивается успешно.', 'A runner takes build: pulls the image, clones the repository; there is no cache, so npm ci downloads everything: 52 s. {s} s in all, and the build still passes.'), { s: n.build }),
+        ? fmtBi(bi('Раннер забирает джобу build, скачивает образ, копирует репозиторий, достаёт зависимости из кэша и выполняет скрипт. Благодаря кэшу `npm ci` занимает 9 секунд, а вся сборка длится {s}.', 'A runner takes build: pulls the image, clones the repository, restores the cache (npm ci: 9 s), runs the script. The whole build takes {s}.'), { s: sec(n.build) })
+        : fmtBi(bi('Раннер забирает джобу build и копирует репозиторий. Кэша нет, поэтому `npm ci` скачивает все зависимости заново за 52 секунды. Вся сборка длится {s}, но заканчивается успешно.', 'A runner takes build: pulls the image, clones the repository; there is no cache, so npm ci downloads everything: 52 s. The whole build takes {s}, and it still passes.'), { s: sec(n.build) }),
       focus: ['e-poll', 'runner'],
       reveal: ['runner', 'e-poll'],
       tokens: [{ edge: 'e-poll', label: 'build', reverse: true }],
@@ -527,10 +535,10 @@ export const ciModel = defineModel<CiP>({
         id: 'test',
         label: 'lint + test',
         caption: n.queueWait
-          ? fmt(bi('Джобы lint и test готовы стартовать одновременно, но раннер один, поэтому test ждёт своей очереди {w} секунд.', 'lint and test are ready at the same time, but there is one runner: test waits {w} s.'), { w: n.queueWait })
+          ? fmtBi(bi('Джобы lint и test готовы стартовать одновременно, но раннер один, поэтому test ждёт своей очереди {w}.', 'lint and test are ready at the same time, but there is one runner: test waits {w}.'), { w: sec(n.queueWait) })
           : bi('Джобы lint и test выполняются одновременно на двух раннерах.', 'lint and test run in parallel on two runners.'),
         focus: ['runner', 'queue'],
-        say: { runner: n.queueWait ? fmt(bi('Раннер один, поэтому он выполняет lint и test друг за другом, и test ждёт {w} секунд.', 'There is one runner, so it runs lint and test one after another, and test waits {w} seconds.'), { w: n.queueWait }) : bi('Два раннера выполняют lint и test одновременно, и ни одна джоба не ждёт.', 'Two runners run lint and test at the same time, and no job waits.') },
+        say: { runner: n.queueWait ? fmtBi(bi('Раннер один, поэтому он выполняет lint и test друг за другом, и test ждёт {w}.', 'There is one runner, so it runs lint and test one after another, and test waits {w}.'), { w: sec(n.queueWait) }) : bi('Два раннера выполняют lint и test одновременно, и ни одна джоба не ждёт.', 'Two runners run lint and test at the same time, and no job waits.') },
         states: { runner: broken.has('test-fails') ? 'err' : 'ok' },
         values: { runner: 'lint, test' },
         metrics: { build: n.build, wait: n.queueWait, total: n.total - (main ? 16 : 0) },
@@ -540,11 +548,11 @@ export const ciModel = defineModel<CiP>({
       steps.push({
         id: 'failed',
         label: 'failed',
-        caption: bi('Скрипт `./test.sh` вернул код 1, поэтому джоба test помечена как failed, а build-image и выкладки пропущены. Версия с ошибкой не попала ни на один сервер.', './test.sh returned 1: the job failed, and build-image and the deploys are skipped. The broken version went nowhere.'),
+        caption: bi('Скрипт `./test.sh` вернул код 1, поэтому джоба test помечена как failed, а build-image и выкладки пропущены. Версия с ошибкой не попала ни на один сервер, а пайплайн закончился на тесте, поэтому его время не включает выкладку.', './test.sh returned 1: the job failed, and build-image and the deploys are skipped. The broken version went nowhere.'),
         focus: ['runner'],
         say: { runner: bi('Тест нашёл ошибку и вернул код 1, поэтому раннер помечает джобу как failed.', 'The test found an error and returned code 1, so the runner marks the job as failed.') },
         states: { runner: 'err' },
-        metrics: { build: n.build, wait: n.queueWait, total: n.total },
+        metrics: { build: n.build, wait: n.queueWait, total: n.total - (main ? 16 : 0) },
         broken: { at: 'runner', message: '$ ./test.sh\nFAIL: index.html has no <h1>\nERROR: Job failed: exit code 1', caption: bi('Если команда в скрипте вернула ненулевой код, джоба считается упавшей, и следующие стадии пропускаются.', 'a non-zero exit code → the job failed → the later stages are skipped.') },
       });
       return steps;
@@ -564,7 +572,7 @@ export const ciModel = defineModel<CiP>({
     steps.push({
       id: 'image',
       label: 'image',
-      caption: bi('Джоба build-image собирает образ и отправляет его в реестр с тегом коммита 1a2b3c4d. Этот тег становится неизменным именем этой версии.', 'build-image builds the image and pushes it to the registry tagged with the commit, 1a2b3c4d: the unchanging name of this version.'),
+      caption: bi('Джоба build-image собирает образ и отправляет его в реестр с тегом 1a2b3c4d. Это короткий хэш коммита из переменной $CI_COMMIT_SHORT_SHA: GitLab берёт восемь первых знаков, а git log --oneline показывает семь, поэтому коммит 1a2b3c4 и тег 1a2b3c4d обозначают одно и то же. Этот тег становится неизменным именем этой версии.', 'build-image builds the image and pushes it to the registry tagged with the commit, 1a2b3c4d. It is the short commit hash from $CI_COMMIT_SHORT_SHA: GitLab takes the first eight characters, while git log --oneline shows seven, so commit 1a2b3c4 and tag 1a2b3c4d name the same thing. The tag becomes the unchanging name of this version.'),
       focus: ['e-img', 'reg'],
       reveal: ['reg', 'e-img'],
       tokens: [{ edge: 'e-img', label: ':1a2b3c4d' }],
@@ -640,7 +648,7 @@ export const ciModel = defineModel<CiP>({
     }
     const t0 = last(prev).total ?? 0;
     const t1 = last(next).total ?? 0;
-    if (change.id === 'runners') return fmt(bi('Раннеров стало {b} вместо {a}, и весь пайплайн теперь занимает {t1} секунд вместо {t0}, потому что от числа свободных раннеров зависит, сколько джоб одной стадии выполняются одновременно.', 'There are now {b} runners instead of {a}, and the whole pipeline takes {t1} s instead of {t0}, because the number of free runners decides how many jobs of one stage run at the same time.'), { a: a.runners, b: b.runners, t0, t1 });
+    if (change.id === 'runners') return fmtBi(bi('Раннеров стало {b} вместо {a}, и весь пайплайн теперь занимает {t1}, а раньше занимал {t0}, потому что от числа свободных раннеров зависит, сколько джоб одной стадии выполняются одновременно.', 'There are now {b} runners instead of {a}, and the whole pipeline takes {t1}, where it took {t0}, because the number of free runners decides how many jobs of one stage run at the same time.'), { a: a.runners, b: b.runners, t0: sec(t0), t1: sec(t1) });
     if (change.id === 'cache') return b.cache ? bi('Кэш вернулся, и установка зависимостей снова занимает 9 секунд вместо 52. Кэш только ускоряет сборку.', 'The cache is back: npm ci 52 → 9 s. A cache only speeds things up.') : bi('Без кэша зависимости скачиваются заново за 52 секунды вместо 9, но сборка проходит. Кэш может пропасть в любой момент, поэтому сборка не должна от него зависеть.', 'Without the cache npm ci downloads everything again: 9 → 52 s, but the build passes. A cache may vanish; the build must not depend on it.');
     if (change.id === 'manual') return b.manual ? bi('С when: manual последний шаг ждёт кнопки, и это Continuous Delivery.', 'With when: manual the last step is a button: Continuous Delivery.') : bi('Без when: manual рабочий сервер обновляется сам, и это Continuous Deployment. Две практики отличаются одной строкой YAML.', 'Without when: manual production updates by itself: Continuous Deployment. The difference is one line of YAML.');
     return b.branch === 'main' ? bi('Коммит пришёл в main, и правила добавили к проверкам сборку образа и обе выкладки.', 'A push to main: the rules add the image build and the deploys.') : bi('Коммит пришёл в рабочую ветку, и правила оставили только проверки без выкладок.', 'A push to a branch: the rules keep only the checks; no deploys.');
