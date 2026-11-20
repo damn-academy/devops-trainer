@@ -12,6 +12,7 @@ import { buildModel } from './explainers/build';
 import { chainModel } from './explainers/chain';
 import { imageModel } from './explainers/image';
 import { nestingModel } from './explainers/nesting';
+import { orchestrationModel } from './explainers/orchestration';
 import { stackModel } from './explainers/stack';
 import { stopModel } from './explainers/stop';
 import { LESSONS, QUIZ } from './lessons';
@@ -22,5 +23,5 @@ export default defineModule({
   concepts,
   quiz: QUIZ,
   exams,
-  explainers: [fromModel(stackModel), fromModel(nestingModel), fromModel(chainModel), fromModel(imageModel), fromModel(buildModel), fromModel(stopModel), fromModel(boundariesModel)],
+  explainers: [fromModel(stackModel), fromModel(nestingModel), fromModel(orchestrationModel), fromModel(chainModel), fromModel(imageModel), fromModel(buildModel), fromModel(stopModel), fromModel(boundariesModel)],
 });

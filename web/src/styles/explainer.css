@@ -118,3 +118,10 @@
 
 /* The step controls stay on screen while the learner scrolls through the picture. */
 .explainer > .ex-stepper { position: sticky; top: 54px; z-index: 20; background: color-mix(in oklch, var(--bg) 94%, transparent); backdrop-filter: blur(6px); border-top: 0; border-bottom: 1px solid var(--line); padding: 8px 0; margin-bottom: 8px; }
+
+/* containers.orchestration: four counters per world, one world per row. */
+.explainer[data-model="containers.orchestration"] > .ex-metrics { display: grid; grid-template-columns: repeat(4, max-content); }
+@media (max-width: 720px) {
+  .explainer[data-model="containers.orchestration"] > .ex-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .explainer[data-model="containers.orchestration"] > .ex-metrics dd { white-space: nowrap; }
+}
