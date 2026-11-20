@@ -2,8 +2,9 @@
 // environments and configuration, working on code together, and the roles
 // of an IT team (01 §6.2: F08–F12, plus the cloud and the roles).
 
-import { bi } from '../../core/i18n';
-import type { Facts, Lesson, QuizItem } from '../../core/types';
+import { bi, pluralRu } from '../../core/i18n';
+import { ROUTE } from '../../core/route';
+import type { Facts, Lesson, Level, QuizItem } from '../../core/types';
 import { APP_SH, EN, man, project, RU, settings, sources, twoCopies } from './shared';
 
 // ── 6. The cloud ───────────────────────────────────────────────────────────
@@ -112,6 +113,17 @@ export const rentLesson: Lesson = {
       body: bi(
         'Небольшая машина с двумя процессорами и 2 ГБ памяти стоит у недорогих провайдеров около двух центов в час, то есть примерно 15 долларов, если оставить её на целый месяц. Машина в восемь раз мощнее стоит примерно в восемь раз дороже. Дальше по курсу, когда вы будете заказывать настоящие машины, каждый такой урок будет начинаться с экрана, на котором посчитана стоимость, и заканчиваться уборкой.',
         'A small machine (2 processors, 2 GB of memory) costs about two cents an hour at inexpensive providers, roughly 15 dollars if left on for a month. A machine eight times more powerful costs about eight times more. Later in the course, when you order real machines, every such lesson starts with a cost screen and ends with a cleanup.',
+      ),
+    },
+    {
+      id: 'programmer',
+      kind: 'callout',
+      tone: 'note',
+      levels: ['experienced'],
+      title: bi('Если вы программист', 'If you are a programmer'),
+      body: bi(
+        'Если вы выкладывали проекты на Vercel или Heroku, вы уже пользовались облаком, только этажом выше. Такие платформы сами запускают ваше приложение на арендованных машинах, берут плату за запросы и минуты работы, а сами машины прячут. Этот курс спускается на этаж ниже, к машинам, потому что инженер, к которому ведёт курс, строит такие платформы для своей компании. Против забытых машин есть простой рецепт: при создании в описание машины записывают владельца и дату, после которой её можно удалять, а раз в неделю список машин в панели провайдера сверяют с этими записями. На собеседовании часто спрашивают, как снизить счёт за облако, и первым ответом ждут поиск забытых и слишком больших машин.',
+        'If you have deployed projects to Vercel or Heroku, you have already used the cloud, only one floor up. Such platforms start your app on hired machines themselves, charge for requests and minutes of work, and hide the machines. This course goes one floor down, to the machines, because the engineer it leads to creates such platforms for their company. There is a simple recipe against forgotten machines: when a machine is created, its owner and the date after which it may be deleted are written into its description, and once a week the list of machines in the provider’s panel is checked against these notes. An interview often asks how to cut a cloud bill, and the first answer expected is finding forgotten and oversized machines.',
       ),
     },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: rentQuiz.map((q) => q.id) },
@@ -284,6 +296,17 @@ export const releaseLesson: Lesson = {
         },
       ],
     },
+    {
+      id: 'programmer',
+      kind: 'callout',
+      tone: 'note',
+      levels: ['experienced'],
+      title: bi('Если вы программист', 'If you are a programmer'),
+      body: bi(
+        'Правило этого урока в индустрии формулируют так: собрать один раз и выкладывать много раз. Собранный файл получает номер и больше не меняется, а на каждую машину, от тестовой до той, с которой работают покупатели, попадает один и тот же файл. Для проекта на Laravel или Node сборка означает установку зависимостей строго по файлу с закреплёнными версиями (`composer.lock`, `package-lock.json`), сборку клиентской части и упаковку результата в один архив с номером версии. Если же на рабочем сервере выполняют `git pull` и `composer install`, каждый сервер собирает программу сам. Тогда на рабочей машине нужны инструменты сборки и доступ к репозиторию, сборка может прерваться посреди выкладки и оставить на диске наполовину обновлённый код, а покупатели получают не тот файл, который проверили на стенде, а новую сборку из другого места. Возврат к прошлой версии при этом тоже превращается в новую сборку, хотя мог бы быть возвратом прошлого архива. Вопрос «почему не стоит выкладывать обновление через `git pull` на сервере» на собеседовании задают часто, и ответ на него вытекает из этого урока.',
+        'In the industry the rule of this lesson is put this way: build once, deploy many times. The built file gets a number and never changes again, and every machine, from the test one to the one the customers use, gets one and the same file. For a Laravel or Node project the build means installing dependencies strictly from the file of locked versions (`composer.lock`, `package-lock.json`), building the front end and packing the result into one archive with the version number. If instead `git pull` and `composer install` are run on the live server, every server builds the program itself. Then the live machine needs build tools and access to the repository, a build can break off in the middle of a deployment and leave half-updated code on the disk, and the customers get not the file that was checked on the stand but a new build made somewhere else. Going back to the previous version, too, becomes a new build, though it could have been a return to the previous archive. The question “why not deploy an update with `git pull` on the server” is often asked at interviews, and its answer follows from this lesson.',
+      ),
+    },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: releaseQuiz.map((q) => q.id) },
     {
       id: 'summary',
@@ -454,6 +477,17 @@ export const placesLesson: Lesson = {
         },
       ],
     },
+    {
+      id: 'programmer',
+      kind: 'callout',
+      tone: 'note',
+      levels: ['experienced'],
+      title: bi('Если вы программист', 'If you are a programmer'),
+      body: bi(
+        'Этот урок вам знаком под другими именами. Файл `.env` в Laravel, `process.env` в Node и переменные проекта на Vercel служат тем же файлом настроек, а принцип «одна сборка, разные настройки» записан в методике Twelve-Factor App, на которую ссылаются источники урока: третий пункт (Config) требует держать настройки отдельно от кода, а пятый (Build, release, run) соединять одну сборку с настройками каждого окружения. Десятый пункт той же методики (Dev/prod parity) требует держать окружения похожими друг на друга.\n\nКогда на стенде всё работает, а в рабочем окружении нет, сначала сравните настройки двух окружений построчно, командой вроде `diff config/test.conf config/prod.conf`, потом сравните номера версий системы и программ, и только после этого читайте код. Пароли не кладут в репозиторий даже в отдельном файле. В рабочем окружении программа получает их при запуске из хранилища паролей или из параметров запуска, которые задаёт система выкладки, и доступ к ним есть только у тех, кому он нужен. Вопрос «где вы храните пароли и ключи от рабочего окружения» задают на собеседованиях часто.',
+        'You know this lesson under other names. The `.env` file in Laravel, `process.env` in Node and the project variables on Vercel serve as the same settings file, and the principle “one build, different settings” is written down in the Twelve-Factor App method that the lesson’s sources refer to: the third point (Config) requires keeping settings apart from the code, and the fifth (Build, release, run) joining one build with the settings of each environment. The tenth point of the same method (Dev/prod parity) requires keeping the environments alike.\n\nWhen everything works on the stand and not in production, first compare the settings of the two environments line by line, with a command like `diff config/test.conf config/prod.conf`, then compare the version numbers of the system and the programs, and only after that read the code. Passwords are not put into the repository, not even in a separate file. In production the program gets them at start from a secrets store or from start-up parameters set by the deployment system, and only those who need them can reach them. The question “where do you keep the passwords and keys of production” is asked at interviews often.',
+      ),
+    },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: placesQuiz.map((q) => q.id) },
     {
       id: 'summary',
@@ -600,6 +634,17 @@ export const togetherLesson: Lesson = {
         },
       },
     },
+    {
+      id: 'programmer',
+      kind: 'callout',
+      tone: 'note',
+      levels: ['experienced'],
+      title: bi('Если вы программист', 'If you are a programmer'),
+      body: bi(
+        'Слияние на схеме устроено так же, как трёхстороннее слияние в `git merge`. Программа сравнивает обе копии не друг с другом, а с их общей исходной версией, поэтому знает, кто из двоих менял строчку, и соединяет правки в разных строчках без вопросов. Строчку, которую оба изменили по-разному, Git оставляет в файле в двух вариантах между метками `<<<<<<<`, `=======` и `>>>>>>>` и ждёт решения человека. Совет из итога урока держать правки маленькими и соединять их часто в Git означает ветки, которые сливают в общую копию через день-два после того, как их создали.',
+        'The merge in the diagram works the same way as the three-way merge in `git merge`. The program compares both copies not with each other but with their common original version, so it knows which of the two changed a line and joins edits on different lines without questions. A line both changed differently Git leaves in the file in two variants between the markers `<<<<<<<`, `=======` and `>>>>>>>` and waits for a person to decide. The advice in the lesson’s summary to keep edits small and join them often means, in Git, branches merged into the shared copy a day or two after they were created.',
+      ),
+    },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: togetherQuiz.map((q) => q.id) },
     {
       id: 'summary',
@@ -614,6 +659,96 @@ export const togetherLesson: Lesson = {
     },
   ],
 };
+
+// The whole-block review asks the same ideas under new conditions, so a learner
+// who answered the lesson quizzes yesterday does not meet the same questions.
+export const reviewQuiz: QuizItem[] = [
+  {
+    id: 'orient.q.r.saved-then',
+    kind: 'mcq',
+    concepts: ['orient.computer'],
+    prompt: bi('Утром вы сохранили документ, а потом дописали к нему абзац и сохранить не успели. Батареи в ноутбуке нет, и он выключился, когда в доме пропал свет. Что вы найдёте, когда включите его снова?', 'In the morning you saved a document, then added a paragraph to it and did not save again. The laptop has no battery, and it switched off when the power went in the house. What will you find after switching it on?'),
+    options: [
+      { id: 'morning', text: bi('Документ в утреннем виде, без нового абзаца', 'The document as it was in the morning, without the new paragraph'), correct: true },
+      { id: 'all', text: bi('Документ вместе с новым абзацем', 'The document together with the new paragraph'), why: bi('Новый абзац был только в памяти, а память пустеет, как только пропадает питание. На диске осталось то, что вы сохранили утром.', 'The new paragraph was only in memory, and memory empties as soon as the power goes. The disk holds what you saved in the morning.') },
+      { id: 'none', text: bi('Ничего, потому что документ испортился целиком', 'Nothing, because the whole document is spoilt'), why: bi('Утренняя копия была записана на диск, а диску выключение не страшно.', 'The morning copy was written to the disk, and the disk does not mind a power-off.') },
+    ],
+    explain: bi('Кнопка «Сохранить» копирует текст из памяти на диск. Всё, что вы изменили после последнего сохранения, хранится только в памяти и пропадает вместе с питанием.', 'The “Save” button copies the text from memory to the disk. Everything changed after the last save is held only in memory and vanishes with the power.'),
+  },
+  {
+    id: 'orient.q.r.four-programs',
+    kind: 'mcq',
+    concepts: ['orient.os'],
+    prompt: bi('У процессора одно ядро, и четыре программы одновременно хотят считать без перерыва. Какую долю времени процессора получит каждая из них?', 'The processor has one core, and four programs all want to compute without a break. What share of the processor’s time will each of them get?'),
+    options: [
+      { id: 'quarter', text: bi('Около четверти, потому что система по очереди даёт процессор каждой программе', 'About a quarter, because the system gives the processor to each program in turn'), correct: true },
+      { id: 'full', text: bi('Каждая получит всё время процессора', 'Each will get all of the processor’s time'), why: bi('В каждый момент одно ядро выполняет одну программу, поэтому время ядра делится между четырьмя программами.', 'At any moment one core runs one program, so the core’s time is divided among the four programs.') },
+      { id: 'first', text: bi('Первая программа получит всё, а остальные будут ждать, пока она закончит', 'The first program will get everything, and the others will wait until it finishes'), why: bi('Тогда при одном ядре музыка не играла бы, пока вы пишете письмо. Система переключает процессор между программами каждые несколько миллисекунд.', 'Then, with one core, music would not play while you write a letter. The system switches the processor between programs every few milliseconds.') },
+    ],
+    explain: bi('Операционная система делит время ядра на короткие отрезки и раздаёт их по очереди. Четыре программы на одном ядре работают каждая примерно вчетверо медленнее, чем работала бы одна.', 'The operating system cuts the core’s time into short slices and hands them out in turn. Four programs on one core each run about four times slower than one alone would.'),
+    refs: { explainer: 'orient.system' },
+  },
+  {
+    id: 'orient.q.r.no-host',
+    kind: 'mcq',
+    concepts: ['orient.client-request', 'orient.network'],
+    prompt: bi('Команда `curl https://shop.example/` печатает `Could not resolve host: shop.example`. На каком звене искать неисправность?', 'The command `curl https://shop.example/` prints `Could not resolve host: shop.example`. At which link should the fault be looked for?'),
+    options: [
+      { id: 'name', text: bi('Имя не превратилось в адрес, поэтому запрос даже не ушёл к серверу', 'The name did not turn into an address, so the request did not even leave for the server'), correct: true },
+      { id: 'stopped', text: bi('Программа магазина на сервере остановлена', 'The shop program on the server is stopped'), why: bi('Тогда `curl` сразу получил бы отказ в соединении, Connection refused. Для отказа запрос должен дойти до машины, а здесь клиент даже не узнал её адреса.', 'Then `curl` would at once get a refusal, Connection refused. For a refusal the request has to reach the machine, and here the client did not even learn its address.') },
+      { id: 'busy', text: bi('Сервер перегружен покупателями', 'The server is overloaded with shoppers'), why: bi('Перегруженный сервер отвечает числом 503, но для этого запрос тоже должен до него дойти.', 'An overloaded server answers with 503, but for that, too, the request has to reach it.') },
+    ],
+    explain: bi('Каждое из трёх сообщений указывает на своё звено. Ненайденное имя означает, что запрос не ушёл, отказ означает, что машина на связи, а программа нет, а 503 означает, что запрос дошёл, но сервер не справляется.', 'Each of the three messages points to its own link. An unresolved name means the request never left, a refusal means the machine is reachable and the program is not, and 503 means the request arrived but the server cannot cope.'),
+  },
+  {
+    id: 'orient.q.r.sale-bill',
+    kind: 'mcq',
+    concepts: ['orient.cloud'],
+    prompt: bi('Машину за два цента в час арендовали на трёхдневную распродажу, а удалить забыли, и она простояла ещё месяц. Во сколько раз счёт оказался больше, чем был бы при удалении сразу после распродажи?', 'A machine at two cents an hour was taken for a three-day sale and then forgotten, so it stood for another month. How many times bigger is the bill than it would have been had the machine been deleted right after the sale?'),
+    options: [
+      { id: 'eleven', text: bi('Примерно в одиннадцать раз', 'About eleven times'), correct: true, why: bi('Три дня распродажи составляют 72 часа, то есть 1,44 доллара. С забытым месяцем набирается 72 + 720 = 792 часа, то есть 15,84 доллара, а это в одиннадцать раз больше.', 'The three days of the sale are 72 hours, or $1.44. With the forgotten month there are 72 + 720 = 792 hours, or $15.84, that is, eleven times more.') },
+      { id: 'same', text: bi('Счёт не изменился, потому что после распродажи машина простаивала', 'The bill did not change, because after the sale the machine stood idle'), why: bi('В облаке платят за то, что машина существует, а не за работу, которую она делает.', 'In the cloud you pay for the machine existing, not for the work it does.') },
+      { id: 'twice', text: bi('Примерно вдвое', 'About twice'), why: bi('Месяц длится 720 часов, а распродажа шла 72 часа, поэтому забытый месяц стоит вдесятеро больше самой распродажи.', 'A month lasts 720 hours and the sale ran for 72, so the forgotten month costs ten times as much as the sale itself.') },
+    ],
+    refs: { explainer: 'orient.rent' },
+  },
+  {
+    id: 'orient.q.r.semver-ten',
+    kind: 'mcq',
+    concepts: ['orient.version'],
+    prompt: bi('У программы версия 2.9.9. В неё добавили новую возможность, а всё старое работает как прежде. Какой номер получит выпуск?', 'A program is at version 2.9.9. A new feature was added, and everything old works as before. What number will the release get?'),
+    options: [
+      { id: 'ten', text: '2.10.0', correct: true },
+      { id: 'major', text: '3.0.0', why: bi('Числа в номере версии не переносятся, как разряды в обычной записи числа. Первое число растёт только при несовместимом изменении, а здесь всё старое работает.', 'The numbers in a version do not carry over like the digits of an ordinary number. The first one grows only with an incompatible change, and here everything old still works.') },
+      { id: 'patch', text: '2.9.10', why: bi('Последнее число растёт при исправлении ошибки, а новая возможность увеличивает среднее и обнуляет последнее.', 'The last number grows for a bug fix, while a new feature raises the middle one and resets the last.') },
+    ],
+    explain: bi('Каждое из трёх чисел считают отдельно, и после девяти идёт десять. Номер 2.10.0 больше, чем 2.9.9, хотя если сравнивать номера как слова, знак за знаком слева направо, он кажется меньшим.', 'Each of the three numbers is counted separately, and ten follows nine. The number 2.10.0 is greater than 2.9.9, although compared as strings of text it looks smaller.'),
+  },
+  {
+    id: 'orient.q.r.prod-only',
+    kind: 'mcq',
+    concepts: ['orient.config', 'orient.environments'],
+    prompt: bi('На тестовом стенде программа запускается, а в рабочем окружении сразу печатает ошибку и останавливается. Сборка в обоих окружениях одна и та же. С чего разумно начать?', 'On the test stand the program starts, but in production it prints an error at once and stops. The build is one and the same in both environments. Where is it sensible to start?'),
+    options: [
+      { id: 'diff', text: bi('Сравнить построчно файлы настроек двух окружений, а потом версии системы и программ на обеих машинах', 'Compare line by line the settings files of the two environments, then the versions of the system and programs on both machines'), correct: true },
+      { id: 'rebuild', text: bi('Собрать отдельную программу специально для рабочего окружения', 'Build a separate program specially for production'), why: bi('Тогда к покупателям попадёт сборка, которую на стенде никто не проверял. Сборка одна и та же, значит, причина в том, что лежит рядом с ней.', 'Then the customers would get a build nobody checked on the stand. The build is the same, so the cause lies in what is next to it.') },
+      { id: 'code', text: bi('Читать исходный код в поисках ошибки', 'Read the source code looking for the bug'), why: bi('Этот же код работает на стенде. Читать его стоит после того, как вы убедились, что настройки и окружения не различаются.', 'This same code works on the stand. It is worth reading after you have made sure that the settings and the environments do not differ.') },
+    ],
+    refs: { explainer: 'orient.places' },
+  },
+  {
+    id: 'orient.q.r.two-lines',
+    kind: 'mcq',
+    concepts: ['orient.collaboration'],
+    prompt: bi('Анна поменяла в меню цену улуна, а Борис в тот же день поменял цену чёрного чая, то есть другую строчку. Что сделает программа слияния?', 'Anna changed the oolong price in the menu, and Boris on the same day changed the black tea price, that is, another line. What will the merge program do?'),
+    options: [
+      { id: 'join', text: bi('Сама соединит обе правки, и в общей копии окажутся обе новые цены', 'Join both edits by itself, and the shared copy will have both new prices'), correct: true },
+      { id: 'ask', text: bi('Попросит человека выбрать одну из правок', 'Ask a person to choose one of the edits'), why: bi('Человека зовут, только когда одну и ту же строчку изменили по-разному. Правки в разных строчках друг другу не мешают.', 'A person is called only when one and the same line was changed in different ways. Edits on different lines do not get in each other’s way.') },
+      { id: 'last', text: bi('Оставит правку того, кто прислал её последним', 'Keep the edit of whoever sent it last'), why: bi('Так ведёт себя пересылка файла почтой, от которой программа слияния и защищает.', 'That is how sending the file by email behaves, which is exactly what the merge program protects against.') },
+    ],
+    refs: { explainer: 'orient.together' },
+  },
+];
 
 // ── 10. Who does what in an IT team ────────────────────────────────────────
 
@@ -662,6 +797,12 @@ export const teamQuiz: QuizItem[] = [
   },
 ];
 
+/** Hours of the whole route for a level, rounded to tens, and months at a weekly pace. */
+const routeHours = (lv: Level): number => Math.round(ROUTE.reduce((a, r) => a + r.hours[lv], 0) / 10) * 10;
+const monthsAt = (lv: Level, perWeek: number): number => Math.round(routeHours(lv) / ((perWeek * 52) / 12));
+const monthsRu = (n: number): string => `${n} ${pluralRu(n, ['месяц', 'месяца', 'месяцев'])}`;
+const ORIENT_HOURS = ROUTE.find((r) => r.id === 'orient')!.hours.beginner;
+
 export const teamLesson: Lesson = {
   id: 'orient.team',
   block: 'orient',
@@ -693,6 +834,16 @@ export const teamLesson: Lesson = {
       ),
     },
     {
+      id: 'chain',
+      kind: 'text',
+      step: 'explain',
+      title: bi('Весь путь изменения одним списком', 'The whole path of a change in one list'),
+      body: bi(
+        'Ниже весь путь собран в один список, от покупателя к программисту, то есть в том порядке, в каком его проходят, когда ночью что-то сломалось. Для каждого звена сказано, что оно делает, как оно ломается и чем это проверить, а последним пунктом названо облако, на котором стоят все звенья. Эти команды или похожие на них вы уже набирали в уроках этого блока.\n\n- **Имя и адрес.** Клиент сначала узнаёт адрес сервера по его имени. Если имя не нашлось, `curl` печатает `Could not resolve host`, и запрос даже не уходит в сеть. Адрес, который соответствует имени, показывает первая строка ответа команды `ping -c 3 shop.example`.\n- **Сеть.** Сеть доставляет запрос до машины через сети нескольких провайдеров, от одного узла к другому. Если путь оборван, браузер долго ждёт и сообщает, что время вышло, а `ping` не получает ни одного ответа.\n- **Машина и программа.** Программа магазина на сервере принимает запрос и составляет ответ. Если машина включена, а программа остановлена, отказ в соединении приходит сразу, а если покупателей больше, чем успевает сервер, приходит ответ 503. Число в первой строке ответа показывает команда `curl -I https://shop.example/`.\n- **Настройки.** Программа читает файл настроек своего окружения. Если положили не тот файл, программа работает, но делает не то, как в истории с платежами, которые уходили в учебную систему. Файлы двух окружений сравнивают построчно командой `diff`.\n- **Выпуск.** В рабочем окружении работает выпуск с конкретным номером. Если после обновления что-то сломалось, первым делом узнают этот номер и сравнивают его с прошлым выпуском, который остался на полке и к которому можно вернуться. В учебном проекте номер записан в файле `VERSION`, и его показывает команда `cat VERSION`.\n- **Сборка.** Сборка превращает исходный код в то, что выкладывают. Опечатку в программе на Go сборка остановит, а в программе на Python опечатка дойдёт до пользователей, если её не поймают тесты.\n- **Слияние.** Программа совместной работы соединяет правки разных людей и помнит историю. Если файл пересылали почтой, чья-то правка пропадает молча, и найти её помогает команда `diff`, которая сравнивает две копии.\n- **Облако.** Машина из третьего звена стоит в дата-центре провайдера. Сгоревший сервер провайдер заменит сам, но данные, которые хранились только на машине, могут пропасть, а забытая машина ничего не ломает и только увеличивает счёт.\n\nВопрос о ночной поломке в проверке ниже идёт по этому же списку сверху вниз.',
+        'Below, the whole path is gathered into one list, from the customer to the programmer, that is, in the order it is walked when something broke at night. For every link it says what the link does, how it breaks and how to check it, and the last item names the cloud all the links stand on. You have already typed these commands, or ones like them, in the lessons of this block.\n\n- **Name and address.** The client first learns the server’s address from its name. If the name is not found, `curl` prints `Could not resolve host`, and the request does not even leave for the network. The address that belongs to the name is shown by the first line of the answer of `ping -c 3 shop.example`.\n- **Network.** The network carries the request to the machine across the networks of several providers, from one node to the next. If the way is cut, the browser waits a long time and reports that the time ran out, and `ping` gets not a single answer.\n- **Machine and program.** The shop program on the server takes the request and puts the answer together. If the machine is on but the program is stopped, a refusal comes at once, and if there are more shoppers than the server manages, the answer is 503. The number in the first line of the answer is shown by `curl -I https://shop.example/`.\n- **Settings.** The program reads the settings file of its environment. If the wrong file was put there, the program works but does the wrong thing, as in the story of the payments that went to the pretend system. The files of two environments are compared line by line with `diff`.\n- **Release.** Production runs a release with a definite number. If something broke after an update, the first thing is to learn that number and compare it with the previous release, which is still on the shelf and can be brought back. In the training project the number is in the file `VERSION`, and `cat VERSION` shows it.\n- **Build.** The build turns source code into what is deployed. A typo in a Go program stops the build, while in a Python program a typo reaches the users unless tests catch it.\n- **Merge.** The collaboration program joins the edits of different people and remembers the history. If the file was sent around by email, someone’s edit vanishes silently, and `diff`, which compares two copies, helps to find it.\n- **Cloud.** The machine of the third link stands in the provider’s data centre. A burnt-out server the provider replaces itself, but data kept only on the machine may be lost, and a forgotten machine breaks nothing and only makes the bill grow.\n\nThe question about the night-time breakdown in the check below goes down this same list from top to bottom.',
+      ),
+    },
+    {
       id: 'map',
       kind: 'callout',
       tone: 'note',
@@ -703,13 +854,35 @@ export const teamLesson: Lesson = {
         'Every idea of this block becomes a whole chapter further on. The operating system and commands: the Linux block. Working on code together: the Git block. Networks, the internet, client and server: the Networks block. Builds, versions and environments: the blocks on running programs in isolation and on the path of a change to production. Cloud machines: Linux and the block on describing servers in code. And how to watch production: the monitoring block.',
       ),
     },
+    {
+      id: 'interview',
+      kind: 'callout',
+      tone: 'note',
+      step: 'explain',
+      title: bi('О чём спросят на первом собеседовании', 'What a first interview will ask'),
+      body: bi(
+        'Прямо о словах этого блока на собеседовании спрашивают редко, зато они спрятаны почти в каждом вопросе посложнее. Вот пять вопросов, которые задают чаще других, и уроки, в которых на них есть ответ.\n\n- «Что происходит, когда вы набираете адрес сайта в браузере и нажимаете Enter?» Ответ начинается в уроках «Сеть и интернет» и «Сервер, клиент и запрос», а целиком его разбирает блок «Сети».\n- «Чем память отличается от диска и почему компьютер работает медленно, когда памяти мало?» Ответ дан в уроке «Что внутри компьютера».\n- «Чем отказ в соединении отличается от истечения времени ожидания?» Ответ дан в уроке «Сервер, клиент и запрос».\n- «Почему настройки и пароли не хранят в коде?» Ответ дан в уроке «Где работает программа и откуда она берёт настройки».\n- «Что означают три числа в номере версии?» Ответ дан в уроке «Исходный код, сборка и версия».\n\nОтвечайте своими словами и с примером. Фраза «на стенде всё работало, а в рабочем окружении нет, потому что программа прочитала не тот файл настроек» убеждает собеседника лучше любого заученного определения.',
+        'An interview rarely asks about the words of this block directly, but they are hidden in almost every harder question. Here are the five questions asked most often, and the lessons that answer them.\n\n- “What happens when you type a site’s address in the browser and press Enter?” The answer starts in the lessons “Networks and the internet” and “Server, client and request”, and the Networks block takes it apart in full.\n- “How does memory differ from the disk, and why is a computer slow when memory is short?” The answer is in “What is inside a computer”.\n- “How does a refused connection differ from a timeout?” The answer is in “Server, client and request”.\n- “Why are settings and passwords not kept in the code?” The answer is in “Where a program runs: environments and settings”.\n- “What do the three numbers in a version mean?” The answer is in “Source code, build and version”.\n\nAnswer in your own words and with an example. The sentence “on the stand everything worked and in production it did not, because the program read the wrong settings file” convinces the interviewer better than any definition learnt by heart.',
+      ),
+    },
+    {
+      id: 'pace',
+      kind: 'callout',
+      tone: 'why',
+      step: 'explain',
+      title: bi('Сколько займёт путь и что из него не нужно сразу', 'How long the path takes and what of it is not needed at once'),
+      body: bi(
+        `Дорожные карты профессии, которые ходят по интернету, перечисляют сотню программ, и при взгляде на них легко решить, что всё это нужно выучить до первой работы. На первой работе от новичка ждут не знакомства с сотней программ, а уверенной базы. Он должен понимать устройство машины, сети и путь изменения настолько, чтобы самому найти, на каком звене цепочки случилась беда. Названия десятка похожих программ эту базу не заменяют, а на собеседовании быстро выясняется, где за названием нет понимания. Поэтому курс идёт вглубь, а не вширь, и из каждой группы похожих программ разбирает одну, самую распространённую.\n\nПо оценке курса весь маршрут занимает около ${routeHours('beginner')} часов на уровне «Новичок», около ${routeHours('intermediate')} часов на уровне «Средний» и около ${routeHours('experienced')} часов на уровне «Опытный». При пяти часах занятий в неделю новичок пройдёт его примерно за ${monthsRu(monthsAt('beginner', 5))}, а при десяти часах примерно за ${monthsRu(monthsAt('beginner', 10))}. Уровень выбирают для каждого блока отдельно, поэтому то, что вы уже знаете, займёт меньше времени. Сам этот блок занимает около ${ORIENT_HOURS} часов, то есть две-три недели вечерних занятий.\n\nЖдать конца маршрута, чтобы откликаться на вакансии, тоже не нужно. В блоке «Карьера» вы будете разбирать настоящие вакансии и познакомитесь с правилом, которым пользуются опытные соискатели: если вы подходите хотя бы на 60 % требований вакансии, откликайтесь, потому что списки требований нарочно составляют с запасом.`,
+        `The roadmaps of the profession that circulate on the internet list a hundred programs, and looking at them it is easy to decide that all of it must be learnt before the first job. A first job expects from a newcomer not an acquaintance with a hundred programs but a confident base. The newcomer has to understand the machine, networks and the path of a change well enough to find on your own at which link of the chain the trouble happened. The names of a dozen similar programs do not replace that base, and an interview quickly shows where there is no understanding behind a name. That is why the course goes deep rather than wide and, from every group of similar programs, takes apart one, the most widespread.\n\nBy the course’s estimate the whole route takes about ${routeHours('beginner')} hours at the Beginner level, about ${routeHours('intermediate')} hours at Intermediate and about ${routeHours('experienced')} hours at Experienced. At five hours of study a week a beginner covers it in about ${monthsAt('beginner', 5)} months, and at ten hours in about ${monthsAt('beginner', 10)} months. The level is chosen for every block separately, so what you already know takes less time. This block itself takes about ${ORIENT_HOURS} hours, that is, two or three weeks of evening study.\n\nThere is no need to wait for the end of the route to apply for jobs either. In the Career block you will take real job postings apart and meet the rule experienced applicants use: if you match at least 60% of a posting’s requirements, apply, because the lists of requirements are written with a margin on purpose.`,
+      ),
+    },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: teamQuiz.map((q) => q.id) },
     {
       id: 'review',
       kind: 'quiz',
       step: 'review',
       title: bi('Повторим весь блок', 'Review the whole block'),
-      items: ['orient.q.power-cut', 'orient.q.os-job', 'orient.q.who-starts', 'orient.q.cloud-is', 'orient.q.semver', 'orient.q.config-why', 'orient.q.same-line'],
+      items: reviewQuiz.map((q) => q.id),
     },
     {
       id: 'summary',
