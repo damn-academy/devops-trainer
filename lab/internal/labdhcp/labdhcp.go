@@ -20,7 +20,18 @@ type Config struct {
 	Mask   net.IPMask
 	DNS    []net.IP
 	Lease  uint32 // seconds
+	// MTU is offered as the interface MTU (option 26): the MTU of the
+	// host's uplink, since Hyper-V's NAT forwards the VMs' packets as they
+	// are and one larger than the uplink takes is dropped (TLS from the VM
+	// hangs). 0, or a value outside 576-9000, offers none.
+	MTU int
 }
+
+// The MTUs worth offering: RFC 2132's floor for option 26, and a jumbo frame.
+const (
+	minMTU = 576
+	maxMTU = 9000
+)
 
 // Reply answers a DISCOVER with an OFFER and a REQUEST with an ACK for the
 // VM's own address; anything else, or an unknown MAC, gets no answer.
@@ -57,6 +68,9 @@ func (c Config) Reply(req *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, error) {
 			dhcpv4.WithOption(dhcpv4.OptRouter(c.Server)),
 			dhcpv4.WithOption(dhcpv4.OptDNS(c.DNS...)),
 			dhcpv4.WithLeaseTime(c.Lease))
+		if c.MTU >= minMTU && c.MTU <= maxMTU {
+			mods = append(mods, dhcpv4.WithOption(dhcpv4.Option{Code: dhcpv4.OptionInterfaceMTU, Value: dhcpv4.Uint16(c.MTU)}))
+		}
 	}
 	return dhcpv4.NewReplyFromRequest(req, mods...)
 }
