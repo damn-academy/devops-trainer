@@ -88,7 +88,7 @@ export function defaultPodSpec(spec: Obj, forTemplate: boolean): Obj {
     }
     s.tolerations = tol;
     // The service account token volume (projected), as the ServiceAccount admission adds it.
-    if (!(spec.volumes ?? []).some((v: Obj) => String(v.name).startsWith('kube-api-access-'))) {
+    if (spec.automountServiceAccountToken !== false && !(spec.volumes ?? []).some((v: Obj) => String(v.name).startsWith('kube-api-access-'))) {
       const vol = `kube-api-access-${shortHash(JSON.stringify(spec.containers ?? []))}`;
       s.volumes = [
         ...(spec.volumes ?? []),
@@ -150,12 +150,16 @@ export function applyDefaults(c: Cluster, obj: Obj, info: KindInfo, prev: Obj | 
         const lim = ct.resources?.limits;
         if (lim) ct.resources.requests = { ...lim, ...(ct.resources.requests ?? {}) };
       }
-      o.spec = defaultPodSpec(o.spec ?? {}, false);
+      const serviceAccount = c.get('ServiceAccount', o.metadata.namespace, o.spec?.serviceAccountName ?? o.spec?.serviceAccount ?? 'default');
+      const podSpec = { ...(o.spec ?? {}) };
+      if (podSpec.automountServiceAccountToken === undefined && serviceAccount?.automountServiceAccountToken === false) podSpec.automountServiceAccountToken = false;
+      o.spec = defaultPodSpec(podSpec, false);
       o.status = prev?.status ?? o.status ?? { phase: 'Pending', qosClass: qosClass(o.spec) };
       o.status.qosClass ??= qosClass(o.spec);
       break;
     }
     case 'ReplicaSet':
+    case 'StatefulSet':
     case 'Deployment':
     case 'DaemonSet':
     case 'Job': {
@@ -179,6 +183,13 @@ export function applyDefaults(c: Cluster, obj: Obj, info: KindInfo, prev: Obj | 
         } else {
           spec.selector ??= prev.spec.selector;
         }
+      }
+      if (info.kind === 'StatefulSet') {
+        spec.podManagementPolicy ??= 'OrderedReady';
+        spec.updateStrategy ??= {};
+        spec.updateStrategy.type ??= 'RollingUpdate';
+        if (spec.updateStrategy.type === 'RollingUpdate') spec.updateStrategy.rollingUpdate ??= { partition: 0 };
+        spec.revisionHistoryLimit ??= 10;
       }
       if (info.kind === 'Deployment') {
         spec.revisionHistoryLimit ??= 10;
@@ -347,6 +358,7 @@ export function validate(c: Cluster, o: Obj, info: KindInfo, prev: Obj | undefin
       }
       break;
     }
+    case 'StatefulSet':
     case 'Deployment':
     case 'ReplicaSet':
     case 'DaemonSet': {
@@ -354,6 +366,19 @@ export function validate(c: Cluster, o: Obj, info: KindInfo, prev: Obj | undefin
       if (!spec.selector) errs.push('spec.selector: Required value');
       else if (!Object.keys(spec.selector.matchLabels ?? {}).length && !(spec.selector.matchExpressions ?? []).length)
         errs.push('spec.selector: Invalid value: v1.LabelSelector{MatchLabels:map[string]string(nil), MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: empty selector is invalid for deployment');
+      if (info.kind === 'StatefulSet') {
+        if (!spec.serviceName) errs.push('spec.serviceName: Required value');
+        for (const [i, claim] of (spec.volumeClaimTemplates ?? []).entries()) {
+          if (!claim.metadata?.name) errs.push(`spec.volumeClaimTemplates[${i}].metadata.name: Required value`);
+          if (!claim.spec?.accessModes?.length) errs.push(`spec.volumeClaimTemplates[${i}].spec.accessModes: Required value`);
+          if (!claim.spec?.resources?.requests?.storage) errs.push(`spec.volumeClaimTemplates[${i}].spec.resources.requests.storage: Required value`);
+        }
+        if (!['OrderedReady', 'Parallel'].includes(spec.podManagementPolicy)) errs.push('spec.podManagementPolicy: Unsupported value');
+        if (!['RollingUpdate', 'OnDelete'].includes(spec.updateStrategy?.type)) errs.push('spec.updateStrategy.type: Unsupported value');
+        if (!Number.isInteger(spec.replicas) || spec.replicas < 0) errs.push('spec.replicas: Invalid value: must be a non-negative integer');
+        if ((spec.updateStrategy?.rollingUpdate?.partition ?? 0) < 0) errs.push('spec.updateStrategy.rollingUpdate.partition: Invalid value');
+        if (prev && ['serviceName', 'podManagementPolicy', 'volumeClaimTemplates'].some(k => !deepEqual(prev.spec[k], spec[k]))) errs.push('spec: Forbidden: updates to immutable StatefulSet fields');
+      }
       const tl = spec.template?.metadata?.labels;
       if (spec.selector && !selects(spec.selector, tl)) errs.push(`spec.template.metadata.labels: Invalid value: ${goMap(tl)}: \`selector\` does not match template \`labels\``);
       validateContainers(info.kind, name, 'spec.template.spec', spec.template?.spec?.containers, errs);
@@ -405,6 +430,29 @@ export function validate(c: Cluster, o: Obj, info: KindInfo, prev: Obj | undefin
       if (prev?.immutable && (!deepEqual(prev.data, o.data) || !deepEqual(prev.binaryData, o.binaryData))) errs.push('data: Forbidden: field is immutable when `immutable` is set');
       for (const k of Object.keys(o.data ?? {})) if (!/^[-._a-zA-Z0-9]+$/.test(k)) errs.push(`data[${k}]: Invalid value: "${k}": a valid config key must consist of alphanumeric characters, '-', '_' or '.' (e.g. 'key.name',  or 'KEY_NAME',  or 'key-name', regex used for validation is '[-._a-zA-Z0-9]+')`);
       if (info.kind === 'Secret') for (const [k, v] of Object.entries(o.data ?? {})) if (typeof v !== 'string' || !/^[A-Za-z0-9+/]*={0,2}$/.test(v)) errs.push(`data[${k}]: Invalid value: "<secret contents redacted>": illegal base64 data at input byte 0`);
+      break;
+    }
+    case 'Role':
+    case 'ClusterRole': {
+      for (const [i, rule] of (o.rules ?? []).entries()) {
+        if (!rule.verbs?.length) errs.push(`rules[${i}].verbs: Required value`);
+        if (!rule.resources?.length && !rule.nonResourceURLs?.length) errs.push(`rules[${i}].resources: Required value`);
+        if (rule.resources?.length && !rule.apiGroups?.length) errs.push(`rules[${i}].apiGroups: Required value`);
+        if (info.kind === 'Role' && rule.nonResourceURLs?.length) errs.push(`rules[${i}].nonResourceURLs: Invalid value: namespaced rules cannot apply to non-resource URLs`);
+      }
+      break;
+    }
+    case 'RoleBinding':
+    case 'ClusterRoleBinding': {
+      if (o.roleRef?.apiGroup !== 'rbac.authorization.k8s.io') errs.push('roleRef.apiGroup: Unsupported value');
+      if (!o.roleRef?.name) errs.push('roleRef.name: Required value');
+      if (!(info.kind === 'ClusterRoleBinding' ? ['ClusterRole'] : ['Role', 'ClusterRole']).includes(o.roleRef?.kind)) errs.push('roleRef.kind: Unsupported value');
+      if (prev && !deepEqual(prev.roleRef, o.roleRef)) errs.push('roleRef: Invalid value: cannot change roleRef');
+      for (const [i, subject] of (o.subjects ?? []).entries()) {
+        if (!subject.name) errs.push(`subjects[${i}].name: Required value`);
+        if (!['User', 'Group', 'ServiceAccount'].includes(subject.kind)) errs.push(`subjects[${i}].kind: Unsupported value`);
+        if (subject.kind === 'ServiceAccount' && !subject.namespace && info.kind === 'ClusterRoleBinding') errs.push(`subjects[${i}].namespace: Required value`);
+      }
       break;
     }
     case 'Ingress': {

@@ -1,3 +1,5 @@
+import { trustedCluster } from '../rbac';
+import { podApi, serviceAccountToken } from '../pod-api';
 // What `kubectl exec <pod> -- <command>` runs inside a simulated container:
 // the tools of its image (05 §5.2: trainer/client has curl, nslookup, dig,
 // nc, ss) over the pod's view of the world — its env, /etc/resolv.conf with
@@ -43,7 +45,7 @@ export function podFiles(c: Cluster, pod: Obj, ct: Obj): Record<string, string> 
       for (const [k, val] of Object.entries(s?.data ?? {})) files[`${dir}/${k}`] = unb64(String(val));
     } else if (v.projected) {
       files[`${dir}/namespace`] = ns;
-      files[`${dir}/token`] = 'eyJhbGciOiJSUzI1NiIsImtpZCI6InRyYWluZXIifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50OmRlZmF1bHQ6ZGVmYXVsdCJ9.c2lnbmF0dXJl';
+      files[`${dir}/token`] = serviceAccountToken(pod);
       files[`${dir}/ca.crt`] = '-----BEGIN CERTIFICATE-----\nMIIBdzCCAR2gAwIBAgIBADAKBggqhkjOPQQDAjAjMSEwHwYDVQQDDBhrM3Mtc2Vy\n-----END CERTIFICATE-----\n';
     } else if (v.emptyDir) {
       files[`${dir}/`] = '';
@@ -62,6 +64,7 @@ function tokenize(line: string): string[] {
 
 /** Run one command line inside a container. */
 export function podExec(c: Cluster, pod: Obj, ct: Obj, argv: string[]): ExecOut {
+  c = trustedCluster(c);
   const img = lookupImage(ct.image);
   const tools = img?.tools ?? [];
   const has = (t: string) => tools.includes(t) || ['echo', 'exit', 'true', 'false'].includes(t);
@@ -74,13 +77,16 @@ export function podExec(c: Cluster, pod: Obj, ct: Obj, argv: string[]): ExecOut 
     let errs = '';
     for (const part of (args[1] ?? '').split(/\s*(?:;|&&)\s*/)) {
       if (!part.trim()) continue;
-      res = podExec(c, pod, ct, tokenize(part));
+      const expanded = part.replace(/\$\(cat\s+([^()]+)\)/g, (_m, path: string) => podFiles(c, pod, ct)[path.trim()] ?? '');
+      res = podExec(c, pod, ct, tokenize(expanded));
       all += res.out;
       errs += res.err;
       if (res.code !== 0) break;
     }
     return { out: all, err: errs, code: res.code };
   }
+  const api = podApi(c, pod, [name, ...args], podFiles(c, pod, ct));
+  if (api) return api;
   if (!has(name)) {
     return {
       out: '',

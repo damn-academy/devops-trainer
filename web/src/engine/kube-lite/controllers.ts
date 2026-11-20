@@ -1,3 +1,4 @@
+import { reconcileStatefulSet } from './statefulset';
 // kube-controller-manager-lite: each controller is a real reconcile loop
 // (05 §6.3): it reads the desired state from the store, compares it with what
 // exists and makes one step towards it. None of them remembers events; they
@@ -25,6 +26,7 @@ export function runControllers(c: Cluster): void {
   for (const d of c.list('Deployment')) deployment(c, d);
   for (const rs of c.list('ReplicaSet')) replicaSet(c, rs);
   for (const j of c.list('Job')) job(c, j);
+  for (const s of c.list('StatefulSet')) reconcileStatefulSet(c, s);
   for (const ds of c.list('DaemonSet')) daemonSet(c, ds);
   garbageCollector(c);
   for (const s of c.list('Service')) endpointSlices(c, s);

@@ -281,7 +281,7 @@ describe('kube-lite cluster', () => {
     const m = await mk();
     expect((await run(m, 'kubectl get pods --bogus')).out).toContain("error: unknown flag: --bogus\nSee 'kubectl get --help' for usage.");
     expect((await run(m, 'kubectl apply -f x.yaml --server-side')).out).toContain('the flag --server-side exists in kubectl');
-    expect((await run(m, 'kubectl get statefulsets')).out).toContain('error: the server doesn\'t have a resource type "statefulsets"');
+    expect((await run(m, 'kubectl get imaginaryresources')).out).toContain('error: the server doesn\'t have a resource type "imaginaryresources"');
     expect((await run(m, 'kubectl gte pods')).out).toContain('Did you mean this?\n\tget');
   });
 

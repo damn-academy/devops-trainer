@@ -1,3 +1,4 @@
+import { bootstrapRbac } from './rbac';
 // kube-lite: an in-browser model of a Kubernetes control plane (05 §5).
 //
 //  store      — objects with resourceVersion from one monotonic counter, a
@@ -84,6 +85,8 @@ export interface ClusterOptions {
 }
 
 export interface ClusterState {
+  helmRepos?: Record<string, string>;
+  authorizationDecisions?: Obj[];
   v: 1;
   now: number;
   rv: number;
@@ -144,6 +147,8 @@ const key = (kind: string, ns: string | undefined, name: string) => `${kind}/${n
 type Listener = (c: Change, obj: Obj | undefined) => void;
 
 export class Cluster {
+  authorizationDecisions: Obj[] = [];
+  helmRepos: Record<string, string> = {};
   now: number;
   rv: number;
   rand: Rand;
@@ -189,6 +194,7 @@ export class Cluster {
       labels: {},
     }));
     if (o.addons || o.proxyReplacement) this.addons = newAddonState(o.addons ?? [], !!o.proxyReplacement);
+    bootstrapRbac(this);
     this.boot(o);
   }
 
@@ -320,9 +326,9 @@ export class Cluster {
     return o;
   }
 
-  list(kind: string, ns?: string): Obj[] {
+  list(kind: string, ns?: string, name?: string): Obj[] {
     const out: Obj[] = [];
-    for (const o of this.objs.values()) if (o.kind === kind && (ns === undefined || o.metadata.namespace === ns)) out.push(o);
+    for (const o of this.objs.values()) if (o.kind === kind && (ns === undefined || o.metadata.namespace === ns) && (name === undefined || o.metadata.name === name)) out.push(o);
     return out.sort((a, b) => (a.metadata.namespace ?? '').localeCompare(b.metadata.namespace ?? '') || a.metadata.name.localeCompare(b.metadata.name));
   }
 
@@ -373,7 +379,7 @@ export class Cluster {
     } else {
       next.metadata.uid ??= this.rand.uid();
       next.metadata.creationTimestamp ??= iso(this.now);
-      if (['Deployment', 'ReplicaSet', 'DaemonSet', 'Job', 'Pod', 'Service', 'Namespace', 'CustomResourceDefinition'].includes(obj.kind) || this.kinds.byKind(obj.kind)?.custom) next.metadata.generation ??= 1;
+      if (['StatefulSet', 'Deployment', 'ReplicaSet', 'DaemonSet', 'Job', 'Pod', 'Service', 'Namespace', 'CustomResourceDefinition'].includes(obj.kind) || this.kinds.byKind(obj.kind)?.custom) next.metadata.generation ??= 1;
       if (obj.kind === 'Pod' || obj.kind === 'Service' || obj.kind === 'Namespace' || obj.kind === 'Node' || obj.kind === 'Event') delete next.metadata.generation;
     }
     this.rv++;
@@ -510,6 +516,7 @@ export class Cluster {
     delete obj.metadata.creationTimestamp;
     if (info.kind !== 'Node') delete obj.status;
     const defaulted = applyDefaults(this, obj, info, undefined);
+    if (info.kind === 'Pod' && !this.get('ServiceAccount', obj.metadata.namespace, defaulted.spec.serviceAccountName)) throw new ApiError(403, 'Forbidden', `pods "${obj.metadata.name}" is forbidden: error looking up service account ${obj.metadata.namespace}/${defaulted.spec.serviceAccountName}: serviceaccount "${defaulted.spec.serviceAccountName}" not found`);
     validate(this, defaulted, info, undefined);
     if (opts.dryRun) return { ...defaulted, metadata: { ...defaulted.metadata, uid: this.rand.uid(), creationTimestamp: iso(this.now) } };
     const stored = this.put(defaulted);
@@ -747,6 +754,8 @@ export class Cluster {
       nextClusterIP: this.nextClusterIP,
       nextNodePort: this.nextNodePort,
       addons: this.addons,
+      helmRepos: this.helmRepos,
+      authorizationDecisions: this.authorizationDecisions,
     } satisfies ClusterState);
   }
 
@@ -769,6 +778,8 @@ export class Cluster {
     this.nextClusterIP = s.nextClusterIP;
     this.nextNodePort = s.nextNodePort;
     this.addons = s.addons ?? null;
+    this.helmRepos = s.helmRepos ?? {};
+    this.authorizationDecisions = s.authorizationDecisions ?? [];
   }
 
   /** Image behaviour for a container, with the node cache. */

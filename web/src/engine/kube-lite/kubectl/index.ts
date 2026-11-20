@@ -1,3 +1,5 @@
+import { statefulRevisions } from '../statefulset';
+import { apiClient, identity, canI, rulesFor, authorize } from '../rbac';
 // kubectl for kube-lite (05 §5.5). Output follows kubectl v1.37; a flag
 // that exists in kubectl but is not modelled gets a trainer line rather
 // than "unknown flag"; a resource the training cluster lacks gets the real
@@ -30,6 +32,7 @@ export interface KubectlIO {
 
 interface Ctx {
   m: SimMachineApi;
+  authorize: (verb: string, kind: string, ns?: string, name?: string, subresource?: string) => void;
   c: Cluster;
   ns: string;
   out: (s: string) => void;
@@ -69,10 +72,11 @@ const DRY: FlagDef = { long: 'dry-run', value: 'optional' };
 const REC: FlagDef = { long: 'recursive', short: 'R' };
 
 const FLAGS: Record<string, FlagDef[]> = {
+  auth: [{ long: 'list' }, { long: 'subresource', value: true }, ALLNS],
   get: [OUT, SEL, ALLNS, FILE, { long: 'field-selector', value: true }, { long: 'show-labels' }, { long: 'watch', short: 'w' }, { long: 'no-headers' }, { long: 'sort-by', value: true }, { long: 'label-columns', short: 'L', value: true, multi: true }, REC],
   describe: [SEL, ALLNS, FILE],
   apply: [FILE, OUT, DRY, REC],
-  create: [FILE, OUT, DRY, { long: 'image', value: true, multi: true }, { long: 'replicas', short: 'r', value: true }, { long: 'port', value: true }, { long: 'tcp', value: true, multi: true }, { long: 'node-port', value: true }, { long: 'clusterip', value: true }, { long: 'from-literal', value: true, multi: true }, { long: 'from-file', value: true, multi: true }, { long: 'from-env-file', value: true, multi: true }, { long: 'type', value: true }, { long: 'restart', value: true }, REC],
+  create: [...['verb', 'resource', 'resource-name', 'user', 'group', 'serviceaccount'].map(long => ({ long, value: true, multi: true })), { long: 'role', value: true }, { long: 'clusterrole', value: true }, FILE, OUT, DRY, { long: 'image', value: true, multi: true }, { long: 'replicas', short: 'r', value: true }, { long: 'port', value: true }, { long: 'tcp', value: true, multi: true }, { long: 'node-port', value: true }, { long: 'clusterip', value: true }, { long: 'from-literal', value: true, multi: true }, { long: 'from-file', value: true, multi: true }, { long: 'from-env-file', value: true, multi: true }, { long: 'type', value: true }, { long: 'restart', value: true }, REC],
   run: [OUT, DRY, { long: 'image', value: true }, { long: 'env', value: true, multi: true }, { long: 'port', value: true }, { long: 'labels', short: 'l', value: true }, { long: 'restart', value: true }, { long: 'command' }, { long: 'stdin', short: 'i' }, { long: 'tty', short: 't' }, { long: 'rm' }],
   expose: [OUT, DRY, { long: 'port', value: true }, { long: 'target-port', value: true }, { long: 'name', value: true }, { long: 'type', value: true }, { long: 'protocol', value: true }, SEL],
   scale: [FILE, { long: 'replicas', value: true }, { long: 'current-replicas', value: true }, SEL],
@@ -242,7 +246,8 @@ function endpointsFor(c: Cluster, ns?: string): Obj[] {
 function objectsOf(x: Ctx, info: KindInfo, allNs: boolean): Obj[] {
   const ns = info.namespaced && !allNs ? x.ns : undefined;
   if (info.kind === 'Endpoints') return endpointsFor(x.c, ns);
-  let objs = x.c.list(info.kind, ns);
+  const fieldName = /^metadata\.name==?([^,]+)$/.exec(str(x.p, 'field-selector') ?? '')?.[1];
+  let objs = x.c.list(info.kind, ns, fieldName);
   if (info.kind === 'Event') objs = objs.sort((a, b) => Date.parse(a.lastTimestamp) - Date.parse(b.lastTimestamp) || Number(a.metadata.resourceVersion) - Number(b.metadata.resourceVersion));
   return objs;
 }
@@ -402,6 +407,7 @@ function cmdGet(x: Ctx): void {
 
 /** -w: let virtual time run and print every row that changes (a minute at most). */
 function watch(x: Ctx, info: KindInfo, allNs: boolean, sel?: string): void {
+  x.authorize('watch', info.kind, info.namespaced && !allNs ? x.ns : undefined, /^metadata\.name==?([^,]+)$/.exec(str(x.p, 'field-selector') ?? '')?.[1]);
   const t = tableFor(x.c, info.kind);
   const row = (o: Obj) => (allNs ? [o.metadata.namespace ?? ''] : []).concat(t.rows(o).map((cell, i) => (i === t.head.indexOf('AGE') ? '' : cell))).join('\u0000');
   const seen = new Map<string, string>();
@@ -582,6 +588,24 @@ function cmdCreate(x: Ctx): void {
   const need = (n: string | undefined, usage: string) => {
     if (!n) fail(`error: exactly one NAME is required, got 0\nSee '${usage}' for help and examples`);
   };
+  if (['role', 'clusterrole', 'rolebinding', 'clusterrolebinding', 'serviceaccount', 'sa'].includes(what)) {
+    need(name, `kubectl create ${what} -h`);
+    const info = resolveKind(x, what);
+    const obj: Obj = { apiVersion: apiVersionOf(info), kind: info.kind, metadata: { name, ...(info.namespaced ? { namespace: x.ns } : {}) } };
+    const values = (flag: string) => list(x.p, flag).flatMap(v => v.split(','));
+    if (info.kind.endsWith('Binding')) {
+      const role = str(x.p, 'role'), clusterrole = str(x.p, 'clusterrole');
+      if ((!role && !clusterrole) || (role && clusterrole) || (info.kind === 'ClusterRoleBinding' && role)) fail('error: exactly one valid role reference is required');
+      obj.roleRef = { apiGroup: 'rbac.authorization.k8s.io', kind: clusterrole ? 'ClusterRole' : 'Role', name: clusterrole ?? role };
+      obj.subjects = [...values('user').map(name => ({ kind: 'User', apiGroup: 'rbac.authorization.k8s.io', name })), ...values('group').map(name => ({ kind: 'Group', apiGroup: 'rbac.authorization.k8s.io', name })), ...values('serviceaccount').map(s => { const [namespace, name] = s.split(':'); return { kind: 'ServiceAccount', namespace, name }; })];
+    } else if (info.kind.endsWith('Role')) {
+      if (!values('verb').length || !values('resource').length) fail('error: --verb and --resource are required');
+      obj.rules = values('resource').map(r => { const [resource, ...group] = r.split('.'); return { apiGroups: [group.join('.')], resources: [resource], verbs: values('verb'), ...(values('resource-name').length ? { resourceNames: values('resource-name') } : {}) }; });
+    }
+    const result = x.c.create(obj, { dryRun: !!dryRun(x) });
+    if (!printObjects(x, [result], true)) x.out(`${kindRef(x, info)}/${name} created${suffix(x)}\n`);
+    return;
+  }
   switch (what) {
     case 'deployment':
     case 'deploy': {
@@ -740,7 +764,7 @@ function cmdScale(x: Ctx): void {
   const t = list(x.p, 'filename').length ? readSources(x).flatMap((s) => s.objs.map((o) => ({ info: x.c.resolveManifest(o), names: [o.metadata.name] }))) : targets(x, x.p.args);
   if (!t.length || !t[0].names.length) fail('error: resource(s) were provided, but no name was specified');
   for (const { info, names } of t) {
-    if (!['Deployment', 'ReplicaSet'].includes(info.kind) && !info.custom) fail(`error: no scaler has been implemented for {"${info.group}" "${info.kind}"}`);
+    if (!['Deployment', 'ReplicaSet', 'StatefulSet'].includes(info.kind) && !info.custom) fail(`error: no scaler has been implemented for {"${info.group}" "${info.kind}"}`);
     for (const name of names) {
       const o = getOne(x, info, name);
       const cur = str(x.p, 'current-replicas');
@@ -848,6 +872,7 @@ function cmdLogs(x: Ctx): void {
   const ts = bool(x.p, 'timestamps');
   const prefix = bool(x.p, 'prefix') || (sel !== undefined && pods.length > 1 && bool(x.p, 'prefix'));
   for (const pod of pods) {
+    x.authorize('get', 'Pod', pod.metadata.namespace, pod.metadata.name, 'log');
     const cts = bool(x.p, 'all-containers') ? pod.spec.containers : [pickContainer(x, pod, 'logs')];
     for (const ct of cts) {
       const rt = x.c.runtime[pod.metadata.uid];
@@ -879,6 +904,7 @@ function cmdExec(x: Ctx): void {
     fail(`error: you must specify at least one command for the container`);
   }
   const pod = podFor(x, x.p.args[0]);
+  x.authorize('create', 'Pod', pod.metadata.namespace, pod.metadata.name, 'exec');
   const ct = pickContainer(x, pod, 'exec');
   const status = pod.status?.containerStatuses?.find((s: Obj) => s.name === ct.name);
   if (pod.status?.phase === 'Succeeded' || pod.status?.phase === 'Failed') fail(`error: cannot exec into a container in a completed pod; current phase is ${pod.status.phase}`);
@@ -974,10 +1000,38 @@ function cmdRollout(x: Ctx): void {
   const t = targets(x, rest);
   if (!t.length || !t[0].names.length) fail(`error: required resource not specified`);
   const { info, names } = t[0];
-  if (!['Deployment', 'DaemonSet'].includes(info.kind)) fail(`error: no ${verb === 'status' ? 'status viewer' : 'history viewer'} has been implemented for "${info.kind}"`);
+  if (!['Deployment', 'DaemonSet', 'StatefulSet'].includes(info.kind)) fail(`error: no ${verb === 'status' ? 'status viewer' : 'history viewer'} has been implemented for "${info.kind}"`);
   const name = names[0];
   const d = getOne(x, info, name);
   const ref = `${kindRef(x, info)}/${name}`;
+  if (info.kind === 'StatefulSet') {
+    if (verb === 'history') {
+      const requested = Number(str(x.p, 'revision') ?? 0);
+      if (requested) { const revision = statefulRevisions(x.c, d).find(r => r.revision === requested); if (!revision) fail('error: unable to find specified revision'); x.out(`${ref} with revision #${requested}\n` + describeTemplate(revision!.data.spec.template)); return; }
+      x.out(`${ref}\n` + pad([['REVISION', 'CHANGE-CAUSE'], ...statefulRevisions(x.c, d).map(r => [String(r.revision), r.metadata.annotations?.['kubernetes.io/change-cause'] ?? '<none>'])])); return;
+    }
+    if (verb === 'undo') {
+      const revisions = statefulRevisions(x.c, d);
+      const revision = Number(str(x.p, 'to-revision') ?? 0);
+      const target = revision ? revisions.find(r => r.revision === revision) : revisions[revisions.length - 2];
+      if (!target) fail(`error: unable to find specified revision`);
+      x.c.patch(info.kind, x.ns, name, { spec: { template: target!.data.spec.template } }, { dryRun: !!dryRun(x) });
+      x.out(`${ref} rolled back${suffix(x)}\n`); return;
+    }
+    if (verb === 'status') {
+      if (d.spec.updateStrategy.type !== 'RollingUpdate') fail('error: rollout status is only available for RollingUpdate strategy type');
+      const deadline = x.c.now + (parseDuration(str(x.p, 'timeout') ?? '5m'));
+      for (;;) {
+        const cur = x.c.get(info.kind, x.ns, name)!;
+        const desired = cur.spec.replicas;
+        const partition = cur.spec.updateStrategy.rollingUpdate?.partition ?? 0;
+        if ((cur.status?.readyReplicas ?? 0) === desired && (cur.status?.updatedReplicas ?? 0) >= Math.max(0, desired - partition)) { x.out(`statefulset rolling update complete ${cur.status.updatedReplicas} pods at revision ${cur.status.updateRevision}...\n`); return; }
+        if (str(x.p, 'watch') === 'false') { x.out(`Waiting for ${desired - (cur.status?.readyReplicas ?? 0)} pods to be ready...\n`); return; }
+        if (x.c.now >= deadline) fail('error: timed out waiting for the condition');
+        x.c.advance(1000);
+      }
+    }
+  }
   switch (verb) {
     case 'status': {
       if (info.kind !== 'Deployment') {
@@ -1041,7 +1095,7 @@ function cmdRollout(x: Ctx): void {
       }
       const fresh = clone(d);
       fresh.spec.template = tpl;
-      x.c.replace(fresh);
+      x.c.patch(info.kind, x.ns, name, { spec: { template: fresh.spec.template } });
       x.out(`${ref} rolled back\n`);
       return;
     }
@@ -1102,7 +1156,7 @@ function cmdSet(x: Ctx): void {
           x.out(`${kindRef(x, info)}/${name} ${what === 'image' ? 'image' : 'env'} updated (dry run)\n`);
           continue;
         }
-        x.c.replace(o);
+        x.c.patch(info.kind, x.ns, name, { spec: o.spec });
       } catch (e) {
         if (e instanceof ApiError) fail(e.print());
         throw e;
@@ -1480,7 +1534,7 @@ function cmdEvents(x: Ctx): void {
 export async function runKubectl(m: SimMachineApi, cluster: Cluster | null, argv: string[], o: { stdin?: string; fs?: CmdContext['fs']; quiet?: boolean } = {}): Promise<KubectlIO> {
   let out = '';
   let err = '';
-  const sub0 = argv.find((a, i) => !a.startsWith('-') && !['-n', '--namespace', '--context', '--kubeconfig'].includes(argv[i - 1] ?? '')) ?? '';
+  const sub0 = argv.find((a, i) => !a.startsWith('-') && !['-n', '--namespace', '--context', '--kubeconfig', '--as', '--as-group'].includes(argv[i - 1] ?? '')) ?? '';
   const sub = COMMANDS.includes(sub0) ? sub0 : sub0;
   const subIdx = argv.indexOf(sub0);
   const rest = subIdx >= 0 ? [...argv.slice(0, subIdx), ...argv.slice(subIdx + 1)] : argv;
@@ -1520,7 +1574,8 @@ export async function runKubectl(m: SimMachineApi, cluster: Cluster | null, argv
   const fs = o.fs ?? m.rootFs;
   const x: Ctx = {
     m,
-    c,
+    authorize: (verb, kind, ns, name, subresource) => authorize(c, identity(str(p, 'as') ?? ctx?.user ?? 'default', list(p, 'as-group')), verb, kind, ns, name, subresource),
+    c: apiClient(c, identity(str(p, 'as') ?? ctx?.user ?? 'default', list(p, 'as-group'))),
     ns: str(p, 'namespace') ?? ctx?.namespace ?? 'default',
     out: (s) => (out += s),
     err: (s) => (err += s),
@@ -1537,7 +1592,24 @@ export async function runKubectl(m: SimMachineApi, cluster: Cluster | null, argv
     if (!['config', 'explain', 'version', 'api-resources', 'api-versions'].includes(sub) || (sub === 'version' && !bool(p, 'client'))) {
       if (sub !== 'config' && sub !== 'explain') c.reachable();
     }
+    const actor = identity(ctx?.user ?? 'default');
+    if (str(p, 'as') && !actor.groups.includes('system:masters')) {
+      const impersonated = str(p, 'as')!;
+      if (!canI(c, actor, 'impersonate', 'users', '', undefined, impersonated)) throw new ApiError(403, 'Forbidden', `users "${impersonated}" is forbidden: User "${actor.user}" cannot impersonate resource "users" in API group "" at the cluster scope`);
+      for (const group of list(p, 'as-group')) if (!canI(c, actor, 'impersonate', 'groups', '', undefined, group)) throw new ApiError(403, 'Forbidden', `groups "${group}" is forbidden: User "${actor.user}" cannot impersonate resource "groups" in API group "" at the cluster scope`);
+    }
+    if (list(p, 'as-group').length && !str(p, 'as')) fail('error: requesting groups without impersonating a user');
     switch (sub) {
+      case 'auth': {
+        if (p.args[0] !== 'can-i') fail('error: expected auth can-i');
+        const who = identity(str(p, 'as') ?? ctx?.user ?? 'default', list(p, 'as-group'));
+        if (bool(p, 'list')) { x.out(pad([['Resources', 'Non-Resource URLs', 'Resource Names', 'Verbs'], ...rulesFor(c, who, x.ns).map(r => [(r.resources ?? []).join(','), '[]', '[' + (r.resourceNames ?? []).join(' ') + ']', '[' + r.verbs.join(' ') + ']'])])); break; }
+        const [resource, name] = (p.args[2] ?? '').split('/');
+        const info = resource === '*' ? { ...resolveKind(x, 'pods'), plural: '*', group: '*' } : resolveKind(x, resource);
+        const ok = canI(c, who, p.args[1], info.plural + (str(p, 'subresource') ? '/' + str(p, 'subresource') : ''), info.group, info.namespaced && !bool(p, 'all-namespaces') ? x.ns : undefined, name);
+        c.authorizationDecisions.push({ user: who.user, groups: who.groups, verb: p.args[1], resource: info.plural, group: info.group, namespace: x.ns, name, allowed: ok });
+        x.out(ok ? 'yes\n' : 'no\n'); if (!ok) throw new Fail('', 1); break;
+      }
       case 'get':
         cmdGet(x);
         break;

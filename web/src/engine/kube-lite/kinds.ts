@@ -42,6 +42,12 @@ export const BUILTIN_KINDS: KindInfo[] = [
   k('ServiceAccount', '', 'v1', 'serviceaccounts', ['sa']),
   k('PersistentVolumeClaim', '', 'v1', 'persistentvolumeclaims', ['pvc']),
   k('PersistentVolume', '', 'v1', 'persistentvolumes', ['pv'], false),
+  k('StatefulSet', 'apps', 'v1', 'statefulsets', ['sts']),
+  k('ControllerRevision', 'apps', 'v1', 'controllerrevisions', []),
+  k('Role', 'rbac.authorization.k8s.io', 'v1', 'roles', [], true),
+  k('ClusterRole', 'rbac.authorization.k8s.io', 'v1', 'clusterroles', [], false),
+  k('RoleBinding', 'rbac.authorization.k8s.io', 'v1', 'rolebindings', [], true),
+  k('ClusterRoleBinding', 'rbac.authorization.k8s.io', 'v1', 'clusterrolebindings', [], false),
   k('Deployment', 'apps', 'v1', 'deployments', ['deploy']),
   k('ReplicaSet', 'apps', 'v1', 'replicasets', ['rs']),
   k('DaemonSet', 'apps', 'v1', 'daemonsets', ['ds']),
@@ -57,7 +63,7 @@ export const BUILTIN_KINDS: KindInfo[] = [
 ];
 
 /** The order `kubectl api-resources` prints and `get all` uses. */
-export const GET_ALL = ['Pod', 'Service', 'DaemonSet', 'Deployment', 'ReplicaSet', 'Job'];
+export const GET_ALL = ['Pod', 'Service', 'DaemonSet', 'Deployment', 'ReplicaSet', 'StatefulSet', 'Job'];
 
 export class KindTable {
   private list: KindInfo[];

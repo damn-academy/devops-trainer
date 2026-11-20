@@ -117,6 +117,14 @@ export function tableFor(c: Cluster, kind: string): Table {
         wideHead: ['IP', 'NODE', 'NOMINATED NODE', 'READINESS GATES'],
         wide: (p) => [p.status?.podIP ?? '<none>', p.spec.nodeName ?? '<none>', '<none>', '<none>'],
       };
+    case 'StatefulSet':
+      return { head: ['NAME', 'READY', 'AGE'], rows: s => [s.metadata.name, `${s.status?.readyReplicas ?? 0}/${s.spec.replicas}`, ago(c, s.metadata.creationTimestamp)], wideHead: ['CONTAINERS', 'IMAGES'], wide: s => images(s.spec.template.spec) };
+    case 'Role':
+    case 'ClusterRole':
+      return { head: ['NAME', 'CREATED AT'], rows: r => [r.metadata.name, r.metadata.creationTimestamp ?? ''] };
+    case 'RoleBinding':
+    case 'ClusterRoleBinding':
+      return { head: ['NAME', 'ROLE', 'AGE'], rows: b => [b.metadata.name, `${b.roleRef.kind}/${b.roleRef.name}`, ago(c, b.metadata.creationTimestamp)] };
     case 'Deployment':
       return {
         head: ['NAME', 'READY', 'UP-TO-DATE', 'AVAILABLE', 'AGE'],

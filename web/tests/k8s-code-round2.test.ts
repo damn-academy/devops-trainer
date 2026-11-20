@@ -35,9 +35,9 @@ describe('kubectl on the kubeadm stand', () => {
     expect(parseNodesQuery(['get', 'nodes', '-o', 'name'])?.names).toBe(true);
     expect(parseNodesQuery(['get', 'nodes', '--no-headers'])?.noHeaders).toBe(true);
     expect(parseNodesQuery(['get', 'node/worker-1'])?.name).toBe('worker-1');
-    expect(parseNodesQuery(['get', 'nodes', '-o', 'yaml'])).toBeNull();
+    expect(parseNodesQuery(['get', 'nodes', '-o', 'yaml'])?.format).toBe('yaml');
     expect(parseNodesQuery(['get', 'pods'])).toBeNull();
-    expect(parseNodesQuery(['describe', 'nodes'])).toBeNull();
+    expect(parseNodesQuery(['describe', 'nodes'])?.describe).toBe(true);
     expect([humanAge(5_000), humanAge(330_000), humanAge(3_600_000), humanAge(25 * 3_600_000), humanAge(3 * 86_400_000)]).toEqual(['5s', '5m30s', '60m', '25h', '3d']);
   });
 
@@ -61,6 +61,14 @@ describe('kubectl on the kubeadm stand', () => {
     expect(out).toMatch(/\b3\b/);
     out = await sh(m, 'ansible cp-1 -b -a "kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes -o name"');
     expect(out).toContain('node/worker-2');
+    const json = await sh(m, 'ansible cp-1 -b -a "kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes -o json"');
+    expect(json).toContain('"kind": "Node"');
+    expect(json).toContain('"name": "cp-1"');
+    const yaml = await sh(m, 'ansible cp-1 -b -a "kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes -o yaml"');
+    expect(yaml).toContain('kind: Node');
+    expect(yaml).not.toContain('k3s');
+    const description = await sh(m, 'ansible cp-1 -b -a "kubectl --kubeconfig /etc/kubernetes/admin.conf describe node cp-1"');
+    expect(description).toContain('Name:               cp-1');
   });
 
   it('marks nodes NotReady until the pod network is installed', async () => {
@@ -75,6 +83,8 @@ describe('kubectl on the kubeadm stand', () => {
   it('leaves kubectl of other clusters to kube-lite', async () => {
     const m = await createSimMachine({ ext: { k8s: {} } } as Parameters<typeof createSimMachine>[0]);
     expect(await sh(m, 'kubectl get nodes')).toMatch(/cp-1|NAME/);
+
+
   });
 });
 
@@ -96,7 +106,7 @@ describe('nodes lab: a counted ping', () => {
 });
 
 describe('as-code lab: environment on the cilium task', () => {
-  it('explains how to pass KUBECONFIG on the stand', async () => {
+  it('passes task environment to cilium on the stand', async () => {
     const l = lab('k8s-3.as-code');
     const m = await createSimMachine(l.setup);
     write(m, `${OPS}/roles/kubeadm_init/tasks/main.yml`, ROLE_INIT);
@@ -104,8 +114,7 @@ describe('as-code lab: environment on the cilium task', () => {
     write(m, `${OPS}/roles/cilium/tasks/main.yml`, '- name: Cilium is the pod network\n  ansible.builtin.command:\n    cmd: cilium install --version 1.18.4\n    creates: /etc/cni/net.d/05-cilium.conflist\n  environment:\n    KUBECONFIG: /etc/kubernetes/admin.conf\n');
     await sh(m, 'cd ~/ops', 'ansible-playbook site.yml');
     const r = await check(m, l.tasks[0]);
-    expect(r.pass).toBe(false);
-    expect(r.say?.ru).toContain('KUBECONFIG=/etc/kubernetes/admin.conf cilium install');
+    expect(r.pass).toBe(true);
   });
 });
 

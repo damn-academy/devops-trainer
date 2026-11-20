@@ -1,3 +1,4 @@
+import { helmCommand } from './helm';
 // kube-lite: the Kubernetes engine of the trainer (05 §5). It registers
 // kubectl and the trainer's `cluster` panel, the k8s facts scope, the
 // TerminalSetup.ext.k8s hook, the documentation pages (kubectl explain,
@@ -14,7 +15,7 @@ import { clusterCommand } from './trainer-cmd';
 import { KUBE_WIDGETS } from './ui/widgets';
 
 export default defineModule({
-  commands: [kubectlCommand(), clusterCommand()],
+  commands: [kubectlCommand(), helmCommand(), clusterCommand()],
   facts: [
     {
       scope: 'k8s',
