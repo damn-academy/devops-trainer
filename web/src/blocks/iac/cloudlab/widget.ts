@@ -205,13 +205,16 @@ export function mountCloudLab(root: HTMLElement, props: CloudLabProps = {}, ctx?
     return out;
   };
 
+  let lastOwn: Facts | undefined;
+  let ownPending: Promise<void> | undefined;
   const collect = async (): Promise<Facts | null> => {
     if (!ws || !cl || ws.phase !== 'ready') return null;
-    const [own, vms] = await Promise.all([within(ws.facts(), 8000), vmFacts()]);
-    if (!own) return null;
+    ownPending ??= within(ws.facts(), 8000).then(facts => { if (facts) { lastOwn = facts; } }).catch(() => {}).finally(() => { ownPending = undefined; });
+    const own = lastOwn;
+    const vms = await vmFacts();
     const c = cloudLabFacts(cl, requests, ci);
-    const facts = { ...own, ...c, vms } as unknown as Facts;
-    ctx?.reportFacts?.({ ws: own, cloud: { ...c } as unknown as Facts, ...vms });
+    const facts = { ...(own ?? {}), ...c, vms } as unknown as Facts;
+    ctx?.reportFacts?.({ ...(own ? { ws: own } : {}), cloud: { ...c } as unknown as Facts, ...vms });
     return facts;
   };
 

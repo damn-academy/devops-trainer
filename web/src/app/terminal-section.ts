@@ -169,7 +169,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       if (task.docRef) box.append(docChip({ ...task.docRef, gloss: task.docRef.gloss ?? task.hints?.H3 ?? task.hints?.H2 }));
     }
     if (shown >= available.length && available.length > 0) box.append(externalButton({ lessonId: o.lessonId, level: o.level, task: t(task.prompt) }));
-    if (pol.mentor !== 'off') box.append(askBox({ mode: pol.mentor === 'docs' ? 'docs' : 'practice', level: o.level, lessonId: o.lessonId, task: { id: taskKey(task), prompt: t(task.prompt), solutionTokens: task.solutionTokens } }));
+    if (pol.mentor !== 'off') box.append(askBox({ mode: pol.mentor === 'docs' ? 'docs' : 'practice', level: o.level, lessonId: o.lessonId, task: { id: taskKey(task), prompt: t(task.prompt), solutionTokens: task.solutionTokens, docRef: task.docRef } }));
     return box;
   };
 
@@ -186,7 +186,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     if (disposed) return;
     const initial = source?.initial ?? startFacts;
     let changed = false;
-    let failSay: string | null = null;
+    const failures: { task: Task; say: string }[] = [];
     for (const task of o.tasks) {
       if (passed.has(task.id)) continue;
       const r = evaluateCheck(task.check, facts, initial);
@@ -197,10 +197,10 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
         const hl = hintsOpened.get(task.id) ?? 0;
         store.record({ kind: 'task.pass', task: taskKey(task), lesson: o.lessonId, hintLevel: hl, docStep: step, docOpened: docOpenedFor(task), concepts: task.concepts ?? [], source: task.docRef ? sourceOf(task.docRef) : undefined });
         o.onTaskPass?.(task);
-      } else if (!failSay && r.say && task === o.tasks.find((x) => !passed.has(x.id))) failSay = t(r.say);
+      } else if (r.say) failures.push({ task, say: t(r.say) });
     }
     clear(status);
-    if (attempted && failSay && !o.exam) status.append(h('p.lab-fail', {}, h('span.st-icon.warn', { 'aria-hidden': 'true' }, '!'), h('span', {}, ...renderInline(failSay))));
+    if (attempted && !o.exam) for (const failure of failures) status.append(h('p.lab-fail', { 'data-task': failure.task.id }, h('strong', {}, t(failure.task.prompt)), ' ', h('span', {}, ...renderInline(failure.say))));
     const pending = o.tasks.find(task => !passed.has(task.id));
     if (attempted || !pending) el.dataset.feedbackFailed = String(!!pending);
     if (pending && attempted && !o.exam) status.append(externalButton({ lessonId: o.lessonId, level: o.level, task: t(pending.prompt) }));
@@ -222,6 +222,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     if (saved) {
       try {
         await fresh.restore(saved);
+        if (o.exam) termBox.before(h('p.exam-resumed', { role: 'status' }, t(bi('Состояние машины восстановлено из сохранённой попытки.', 'The machine state has been restored from a saved attempt.'))));
       } catch {
         await fresh.restore(startSnap);
       }

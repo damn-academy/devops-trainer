@@ -350,6 +350,10 @@ const capsh: ShellCommand = {
       return 1;
     }
     if (!rest) return 0;
+    if (!rest.length) {
+      m.pushShell({ user: ctx.user.name, capEff: capHex(mask), label: 'bash' });
+      return 0;
+    }
     const line = rest[0] === '-c' ? (rest[1] ?? '') : rest.join(' ');
     return m.runLineAs(line, { user: ctx.user, capEff: capHex(mask) }, { out: ctx.out, err: ctx.err, cwd: ctx.cwd, ppid: me(ctx).pid });
   },

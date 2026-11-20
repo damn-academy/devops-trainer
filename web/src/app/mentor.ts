@@ -2,6 +2,8 @@
 // The engine folds any answer that leaks a solution token (09 §4.5) and never
 // offers the mentor in exam mode.
 
+import { docChip } from '../engine/docs/viewer';
+import type { DocRef } from '../core/types';
 import { externalButton } from '../engine/ai/external-panel';
 import { clear, h, icon } from '../core/dom';
 import { bi, lang, t, UI } from '../core/i18n';
@@ -14,7 +16,7 @@ export interface AskOptions {
   mode: MentorMode;
   level: Level;
   lessonId?: string;
-  task?: { id: string; prompt: string; solutionTokens?: string[] };
+  task?: { id: string; prompt: string; solutionTokens?: string[]; docRef?: DocRef };
   screen?: () => string | undefined;
 }
 
@@ -36,6 +38,10 @@ export function askBox(o: AskOptions): HTMLElement {
     clear(panel);
     const mentor = registry.mentor;
     if (!mentor || !mentor.ready()) {
+      if (docs && o.task?.docRef) {
+        panel.append(h('p', {}, t(bi('Откройте указанную страницу: ссылка ведёт к нужному разделу и строке.', 'Open this page: the link points to the relevant section and line.')), ' ', docChip(o.task.docRef)));
+        return;
+      }
       panel.append(
         h(
           'p.muted',

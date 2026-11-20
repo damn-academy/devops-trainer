@@ -26,9 +26,9 @@ export function placementDisposition(l: Lesson): 'covered' | 'required' | 'optio
   const level = chosenLevel(l.block);
   const result = store.state.placement[l.block]?.filter(r => r.claimed === level).at(-1);
   if (!result) return undefined;
-  if ([...l.introduces, ...l.uses].some(c => result.gaps.includes(c))) return 'required';
+  if (l.introduces.some(c => result.gaps.includes(c))) return 'required';
   if (result.passed) return 'covered';
-  return l.tier === 'core' ? 'required' : 'optional';
+  return 'optional';
 }
 
 /** Estimated hours left, weighted by authored lesson durations. */

@@ -3,6 +3,8 @@
 // through Vite's module runner, so the manifest is always computed from the
 // current content; in dev it is recomputed after a source file changes.
 
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runnerImport, type Plugin, type ViteDevServer } from 'vite';
 import type { Manifest } from './manifest';
@@ -23,6 +25,10 @@ const noStyles: Plugin = {
 
 async function compute(root: string): Promise<string> {
   const { module } = await runnerImport<{ manifest: Manifest }>(BUILDER, { root, configFile: false, logLevel: 'error', plugins: [noStyles, publicRawPlugin()] });
+  const hours = Object.fromEntries(module.manifest.blocks.map(b => [b.id, b.hours]));
+  const hoursSource = "// Generated from lesson minutes by manifest-plugin.ts. Do not edit by hand.\nexport const ROUTE_HOURS: Record<string, Record<import('./types').Level, number>> = " + JSON.stringify(hours, null, 2) + ';\n';
+  const hoursPath = resolve(root, 'src/core/route-hours.ts');
+  if (await readFile(hoursPath, 'utf8').catch(() => '') !== hoursSource) await writeFile(hoursPath, hoursSource);
   const json = JSON.stringify(module.manifest);
   // JSON.parse of a string literal is faster to start than the same object literal.
   return `export default JSON.parse(${JSON.stringify(json)});\n`;

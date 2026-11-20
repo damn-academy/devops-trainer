@@ -23,7 +23,7 @@ export type Route =
   | { name: 'notfound'; path: string };
 
 export function parseRoute(hash: string): Route {
-  const path = hash.replace(/^#/, '').replace(/^\/+/, '').replace(/\/+$/, '');
+  const path = hash.split('?')[0].replace(/^#/, '').replace(/^\/+/, '').replace(/\/+$/, '');
   if (path === '') return { name: 'home' };
   const parts = path.split('/').map((p) => {
     try {

@@ -352,6 +352,7 @@ export interface FlowMetrics {
   budgetLeftMin: number;
   budgetLeftRatio: number;
   saleBadMinutes: number;
+  extraSpending: number;
   codLost: number;
   downtimeLost: number;
   moneyNet: number;

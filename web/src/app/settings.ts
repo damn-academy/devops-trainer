@@ -1,3 +1,4 @@
+import { encodeTransfer, decodeTransfer } from '../core/progress-transfer';
 import { exportWithFeedback, importFeedback } from '../engine/feedback/threads';
 // Settings: language, theme, calm mode, progress export/import, storage,
 // and sections registered by modules (the AI builder adds "Your AI" here).
@@ -48,6 +49,41 @@ export function settingsPage(): Page {
     downloadFile(`devops-trainer-progress-${date}.json`, await exportWithFeedback(store.exportJSON()));
     toast(t(bi('Файл прогресса сохранён', 'Progress file saved')));
   });
+  const transferBox = h('div.progress-transfer', { 'aria-live': 'polite' });
+  const transferBtn = h('button.btn', { type: 'button' }, t(bi('Перенести на другое устройство', 'Transfer to another device')));
+  transferBtn.addEventListener('click', async () => {
+    transferBtn.setAttribute('disabled', '');
+    try {
+      const json = await exportWithFeedback(store.exportJSON());
+      const payload = await encodeTransfer(json);
+      transferBox.replaceChildren();
+      if (payload.length > 12_000) {
+        downloadFile('devops-trainer-progress.json', json);
+        transferBox.append(h('p', {}, t(bi('Прогресс не помещается в короткую ссылку, поэтому сохранён файл для загрузки на другом устройстве.', 'Progress is too large for a short link, so a file has been saved for import on the other device.'))));
+      } else {
+        const url = location.href.split('#')[0] + '#/settings?transfer=' + payload;
+        const field = h('textarea', { rows: 3, readonly: true, 'aria-label': t(bi('Ссылка для переноса прогресса', 'Progress transfer link')) }) as HTMLTextAreaElement;
+        field.value = url;
+        transferBox.append(field, h('button.btn', { type: 'button', onclick: async () => { field.select(); try { await navigator.clipboard.writeText(url); } catch { field.focus(); } } }, t(bi('Скопировать ссылку', 'Copy link'))));
+      }
+    } catch { toast(t(bi('Не удалось создать ссылку; воспользуйтесь выгрузкой файла.', 'Could not create a link; use file export.'))); }
+    finally { transferBtn.removeAttribute('disabled'); }
+  });
+  const incoming = new URLSearchParams(location.hash.split('?')[1] ?? '').get('transfer');
+  if (incoming) {
+    const accept = h('button.btn', { type: 'button' }, t(bi('Загрузить прогресс по ссылке', 'Import progress from this link')));
+    transferBox.append(accept);
+    accept.addEventListener('click', async () => {
+      accept.setAttribute('disabled', '');
+      try {
+        const json = await decodeTransfer(incoming);
+        await store.importJSON(json);
+        await importFeedback(json);
+        history.replaceState(null, '', location.href.split('#')[0] + '#/settings');
+        transferBox.replaceChildren(h('p', {}, t(bi('Прогресс загружен на это устройство.', 'Progress has been imported on this device.'))));
+      } catch { transferBox.replaceChildren(h('p', {}, t(bi('Ссылка повреждена или срок её действия истёк; создайте новую на исходном устройстве.', 'The link is invalid or expired; create a new one on the source device.')))); }
+    });
+  }
   const importBtn = h('button.btn.ghost', { type: 'button' }, icon('upload'), t(UI.import));
   importBtn.addEventListener('click', async () => {
     const text = await pickFile();
@@ -104,11 +140,11 @@ export function settingsPage(): Page {
       h(
         'p',
         {},
-        t(bi('Прогресс сохраняется сам после каждого действия. Чтобы перенести его на другое устройство, нажмите «Выгрузить прогресс», передайте файл и откройте его кнопкой «Загрузить прогресс» в настройках на другом устройстве.', 'Progress saves itself after every action. It lives only in this browser; move it to another device with a file.')),
+        t(bi('Прогресс автоматически сохраняется в этом браузере после каждого действия.', 'Progress is saved automatically in this browser after every action.')),
       ),
       h('p.small.muted', {}, persistLine, store.volatile ? ' ' + t(bi('Хранилище недоступно: прогресс живёт до закрытия вкладки.', 'Storage is unavailable: progress lives until the tab is closed.')) : ''),
       h('p.small.muted', {}, `${t(bi('Событий в журнале', 'Events in the log'))}: ${p.meta.events}${p.meta.lastExportAt ? ` · ${t(bi('последняя выгрузка', 'last export'))}: ${p.meta.lastExportAt.slice(0, 10)}` : ''}`),
-      h('div.row', {}, exportBtn, importBtn),
+      h('div.row', {}, transferBtn, exportBtn, importBtn), h('p', {}, t(bi('Отправьте ссылку на другое устройство и откройте её в течение 15 минут, чтобы загрузить прогресс.', 'Send the link to the other device and open it within 15 minutes to import progress.'))), transferBox,
       h('p.small.muted', {}, t(bi('Вход по ссылке на почту, через GitHub или Google появится позже — тогда журнал будет синхронизироваться.', 'Sign-in by e-mail link, GitHub or Google comes later; then the log will sync.'))),
     ),
     ...extra,

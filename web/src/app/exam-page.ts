@@ -9,6 +9,7 @@ import { registerFeedbackSnapshot } from '../engine/feedback/data';
 // through the documentation, and a protocol to download.
 
 import { referenceAnswer } from '../engine/quiz/review';
+import { ActiveTimer } from '../core/active-timer';
 import { readDraft, writeDraft, clearDraft } from '../core/draft';
 import { renderInline } from '../core/markdown';
 import { clear, put, downloadFile, h, icon } from '../core/dom';
@@ -145,18 +146,21 @@ export function examPage(id: string): Page {
     disposeAll();
     clear(root);
     const key = `exam/${exam.id}/${mode}`;
-    const draft = readDraft<{ seed: string; started: string; results: [string, number][] }>(key);
+    const draft = readDraft<{ seed: string; started: string; results: [string, number][]; elapsedMs?: number }>(key);
     const seed = draft?.seed ?? newSeed();
     const tasks = pickTasks(exam, seed);
     const started = draft ? new Date(draft.started) : new Date();
     const results = new Map<string, number>(draft?.results ?? tasks.map((x) => [x.id, 0]));
-    const save = () => writeDraft(key, { seed, started: started.toISOString(), results: [...results] });
+    const canPause = exam.id === 'final.exam.oncall';
+    const activeTimer = new ActiveTimer(draft?.elapsedMs ?? (draft ? Date.now() - started.getTime() : 0));
+    const save = () => writeDraft(key, { seed, started: started.toISOString(), results: [...results], ...(canPause ? { elapsedMs: activeTimer.elapsed() } : {}) });
     const setResult = (id: string, score: number) => { results.set(id, score); save(); };
     save();
     let submitted = false;
     const timer = h('span.exam-timer', { 'aria-live': 'off' });
     const tick = () => {
-      const elapsed = (Date.now() - started.getTime()) / 60000;
+      const elapsed = (canPause ? activeTimer.elapsed() : Date.now() - started.getTime()) / 60000;
+      if (canPause) save();
       if (!exam.minutes) {
         timer.textContent = `${Math.floor(elapsed)} ${t(E.minutes)}`;
         return;
@@ -213,7 +217,13 @@ export function examPage(id: string): Page {
       disposeAll();
       explainStep(mode, seed, tasks, results, started);
     };
-    put(root, h('header.exam-head', {}, h('h1', {}, t(exam.title)), h('span.badge', {}, t(mode === 'exam' ? E.exam : E.training)), timer, docsBtn), exam.story ? h('details.ex2-story-mini', {}, h('summary', {}, t(E.story)), prose(exam.story)) : null, lab?.el ?? null, tabLab?.el ?? null, list, submitBtn);
+    const pauseBtn = canPause ? h('button.btn', { type: 'button', onclick: () => {
+      activeTimer.toggle();
+      save();
+      for (const child of [...root.children]) if (!child.classList.contains('exam-head') && !child.classList.contains('exam-pause-note')) (child as HTMLElement).inert = activeTimer.paused;
+      pauseBtn!.textContent = t(activeTimer.paused ? bi('Продолжить попытку', 'Resume attempt') : bi('Приостановить попытку', 'Pause attempt'));
+    } }, t(bi('Приостановить попытку', 'Pause attempt'))) : null;
+    put(root, h('header.exam-head', {}, h('h1', {}, t(exam.title)), h('span.badge', {}, t(mode === 'exam' ? E.exam : E.training)), timer, docsBtn, pauseBtn), canPause ? h('p.exam-pause-note', {}, t(bi('На выполнение отведено 60 минут активной работы: попытку можно приостановить и продолжить позже, а задания во время паузы недоступны.', 'You have 60 minutes of active work: pause and resume later; tasks are unavailable while paused.'))) : null, draft ? h('p.exam-resumed', { role: 'status' }, t(bi('Вы продолжаете сохранённую попытку: выполненные задания восстановлены.', 'You are continuing a saved attempt: completed tasks have been restored.'))) : null, exam.story ? h('details.ex2-story-mini', {}, h('summary', {}, t(E.story)), prose(exam.story)) : null, lab?.el ?? null, tabLab?.el ?? null, list, submitBtn);
   };
 
   const explainStep = (mode: 'exam' | 'training', seed: string, tasks: ExamTask[], results: Map<string, number>, started: Date) => {

@@ -411,7 +411,7 @@ const mount: ShellCommand = {
       else ops.push(a);
     }
     if (!hasCap(ctx, 'sys_admin')) {
-      ctx.err('mount: only root can do that\n');
+      ctx.err(`mount: ${ops.at(-1) ?? '/mnt'}: permission denied.\n`);
       return 1;
     }
     const d = disks(m);

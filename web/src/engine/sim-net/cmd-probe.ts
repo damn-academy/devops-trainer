@@ -86,6 +86,7 @@ For more details see ping(8).`,
       return 1;
     }
     const size = a.values.s ? Number(a.values.s) : 56;
+    if (size > 65507) { ctx.err(`ping: packet size ${size} is too large. Maximum is 65507\n`); return 2; }
     if (!Number.isInteger(size) || size < 0 || size > 65507) { ctx.err('ping: invalid packet size: must be between 0 and 65507\n'); return 2; }
     const ttl = a.values.t ? Number(a.values.t) : 64;
     const local = w.hosts[w.local];

@@ -20,7 +20,7 @@ function levelsTable(levels: Record<Level, import('../core/i18n').Bi>, hours: Re
       h(
         'div.level',
         { class: chosen === l ? 'chosen' : undefined },
-        h('dt', {}, t(UI.levels[l]), hours && hours[l] ? h('span.hours', {}, `≈ ${hours[l]} ${t(UI.hours)}`) : null),
+        h('dt', {}, t(UI.levels[l]), hours && hours[l] ? h('span.hours', {}, `≈ ${Number(hours[l].toFixed(2))} ${t(UI.hours)}`) : null),
         h('dd', {}, t(levels[l])),
       ),
     ),
@@ -119,7 +119,7 @@ function paceControl(): HTMLElement {
   const input = h('input', { type: 'number', min: 1, max: 168, value: weekly }) as HTMLInputElement;
   const output = h('p.time', { 'aria-live': 'polite' });
   const draw = () => {
-    const hours = ROUTE.reduce((sum, entry) => sum + Math.ceil(entry.hours[chosenLevel(entry.id) ?? 'beginner'] * remainingShare(entry.id)), 0);
+    const hours = ROUTE.reduce((sum, entry) => sum + Math.ceil((registry.blocks.get(entry.id)?.hours ?? entry.hours)[chosenLevel(entry.id) ?? 'beginner'] * remainingShare(entry.id)), 0);
     output.textContent = t(bi('При выбранных уровнях курс займёт примерно ', 'At your chosen levels the course takes about ')) + count(hours, ['час', 'часа', 'часов'], ['hour', 'hours']) + ', ' + count(durationWeeks(hours, weekly), ['неделю', 'недели', 'недель'], ['week', 'weeks']) + '.';
   };
   input.addEventListener('input', () => {
