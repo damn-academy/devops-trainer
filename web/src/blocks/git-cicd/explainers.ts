@@ -94,7 +94,7 @@ export const gitModel = defineModel<GitP>({
       { id: 'e-blob', from: 'index', to: 'blob', label: bi('хэш содержимого', 'content hash'), card: card(bi('Индекс хранит не сам текст файла, а ссылку на объект с этим текстом.', 'The index holds not the text but a reference to the blob.'), bi('Ссылку записывает команда `git add`.', 'git add.'), 'git ls-files -s') },
       { id: 'e-tree', from: 'blob', to: 'tree', label: bi('имя файла и хэш', 'name → blob'), card: card(bi('Снимок перечисляет все файлы проекта вместе с хэшами их содержимого.', 'The tree lists the files of the snapshot with their blob hashes.'), bi('Снимок собирает команда `git commit`.', 'git commit.')) },
       { id: 'e-snap', from: 'tree', to: 'commit', label: bi('ссылка на снимок', 'tree <oid>'), card: card(bi('Коммит указывает на один снимок корневого каталога, то есть на весь проект целиком.', 'A commit points to one root tree: the whole project snapshot.'), bi('Ссылку записывает команда `git commit`.', 'git commit.'), 'git cat-file -p HEAD') },
-      { id: 'e-parent', from: 'commit', to: 'parent', via: [[636, 150], [636, 150]], label: bi('ссылка на родителя', 'parent <oid>'), labelAt: 0.75, dashed: true, card: card(bi('Каждый коммит ссылается на родителя, поэтому от последнего коммита можно пройти назад по всей истории.', 'A link to the parent: history is a chain of commits back in time.'), bi('Команда `git commit` берёт родителя из ветки, на которую указывает HEAD.', 'git commit takes it from HEAD.'), 'git log --oneline') },
+      { id: 'e-parent', from: 'commit', to: 'parent', via: [[512, 72], [512, 328]], label: bi('ссылка на родителя', 'parent <oid>'), labelAt: 0.3, dashed: true, card: card(bi('Каждый коммит ссылается на родителя, поэтому от последнего коммита можно пройти назад по всей истории.', 'A link to the parent: history is a chain of commits back in time.'), bi('Команда `git commit` берёт родителя из ветки, на которую указывает HEAD.', 'git commit takes it from HEAD.'), 'git log --oneline') },
       { id: 'e-ref', from: 'main', to: 'commit', label: bi('хэш последнего коммита', '41 bytes: a hash'), card: card(bi('Файл ветки хранит только хэш последнего коммита, всего 41 байт.', 'A branch just stores the hash of its last commit.'), bi('Файл ветки переписывает команда `git commit`.', 'git commit rewrites the branch file.'), 'cat .git/refs/heads/main') },
       { id: 'e-head', from: 'head', to: 'main', labelAt: 0.25, label: bi('текущая ветка', 'ref: refs/heads/main'), card: card(bi('HEAD указывает на ветку, а не на коммит, и поэтому новый коммит передвигает эту ветку.', 'HEAD points to the branch, not to a commit: that is why a new commit moves the branch.'), bi('Ссылку переписывает команда `git switch`.', 'git switch.'), 'cat .git/HEAD') },
       { id: 'e-push', from: 'commit', to: 'forge', via: [[760, 72], [760, 416]], label: bi('отправка по HTTPS', 'git push (HTTPS)'), labelAt: 0.5, card: card(bi('Команда `git push` отправляет объекты, которых нет на сервере, и просит передвинуть там ветку. Сервер соглашается, только если новый коммит продолжает его историю.', 'Push sends the objects the server lacks and asks it to move its branch. The server agrees only if the new commit continues its history.'), bi('Команду запускаете вы.', 'You: git push.'), 'git push origin main', { page: 'man/git-push.1', anchor: 'DESCRIPTION', line: 'fast-forward' }) },
@@ -128,7 +128,7 @@ export const gitModel = defineModel<GitP>({
       default: false,
       near: 'index',
       predict: {
-        prompt: bi('Файл добавили в индекс командой `git add`, а потом изменили ещё раз и сразу выполнили `git commit`. Какая версия файла попадёт в коммит?', 'The file was added to the index and then edited again. Which version goes into the commit?'),
+        prompt: bi('Файл добавили в индекс командой git add, а потом изменили ещё раз и сразу выполнили git commit. Какая версия файла попадёт в коммит?', 'The file was added to the index and then edited again. Which version goes into the commit?'),
         options: [
           { id: 'old', text: bi('В коммит попадёт версия, которая была в файле в момент git add', 'The one at the moment of git add') },
           { id: 'new', text: bi('В коммит попадёт последняя версия из рабочего каталога', 'The latest one, from the working directory') },
@@ -143,7 +143,7 @@ export const gitModel = defineModel<GitP>({
       label: bi('Коммит запускают с пустым сообщением', 'A commit without a message'),
       remove: ['e-snap'],
       predict: {
-        prompt: bi('Вы запускаете `git commit`, но оставляете сообщение пустым. Что сделает Git?', 'The commit message is empty. What does Git do?'),
+        prompt: bi('Вы запускаете git commit, но оставляете сообщение пустым. Что сделает Git?', 'The commit message is empty. What does Git do?'),
         options: [
           { id: 'abort', text: bi('Git откажется создавать коммит', 'Refuses to create the commit') },
           { id: 'auto', text: bi('Git сам придумает сообщение и запишет коммит', 'Fills in a message itself') },
@@ -156,7 +156,7 @@ export const gitModel = defineModel<GitP>({
       label: bi('Коллега уже отправил на сервер свой коммит в main', 'The forge already has someone else’s commit'),
       remove: ['e-push'],
       predict: {
-        prompt: bi('Пока вы работали, коллега отправил свой коммит в ветку main на сервере, а вы его ещё не забрали. Что ответит сервер на ваш `git push`?', 'While you worked, a colleague pushed a commit to main. What does the forge answer to your git push?'),
+        prompt: bi('Пока вы работали, коллега отправил свой коммит в ветку main на сервере, а вы его ещё не забрали. Что ответит сервер на ваш git push?', 'While you worked, a colleague pushed a commit to main. What does the forge answer to your git push?'),
         options: [
           { id: 'reject', text: bi('Сервер откажет и попросит сначала забрать коммит коллеги', 'Rejects the push: fetch their commit first') },
           { id: 'overwrite', text: bi('Сервер примет ваш коммит, а коммит коллеги пропадёт', 'Accepts it and the colleague’s commit is lost') },
@@ -167,9 +167,9 @@ export const gitModel = defineModel<GitP>({
     },
   ],
   metrics: [
-    { id: 'objects', label: bi('новых объектов', 'new objects') },
-    { id: 'reused', label: bi('файлов взято из прошлого коммита', 'blobs reused as is') },
-    { id: 'sent', label: bi('объектов отправлено', 'objects sent') },
+    { id: 'objects', label: bi('число новых объектов', 'new objects') },
+    { id: 'reused', label: bi('число файлов, взятых из прошлого коммита', 'blobs reused as is') },
+    { id: 'sent', label: bi('число отправленных объектов', 'objects sent') },
   ],
   run(p, broken) {
     const c = gitCounts(p);
@@ -221,7 +221,7 @@ export const gitModel = defineModel<GitP>({
         say: { commit: bi('Git видит, что сообщение пустое, и прерывает коммит, потому что без объяснения изменение потом никто не поймёт.', 'Git sees the empty message and aborts the commit, because nobody would understand the change later without an explanation.') },
         states: { commit: 'err' },
         metrics: { objects: 1, reused: c.reused, sent: 0 },
-        broken: { at: 'commit', message: 'Aborting commit due to empty commit message.', caption: bi('Коммиту нужно сообщение, потому что оно объясняет изменение тем, кто будет читать историю. Повторите команду с ключом `-m "…"`.', 'a commit needs a message: it explains the change to whoever reads the history.') },
+        broken: { at: 'commit', message: 'Aborting commit due to empty commit message.', caption: bi('Коммиту нужно сообщение, потому что оно объясняет изменение тем, кто будет читать историю. Повторите команду с флагом -m "…".', 'a commit needs a message: it explains the change to whoever reads the history.') },
       });
       return steps;
     }
@@ -274,7 +274,7 @@ export const gitModel = defineModel<GitP>({
         say: { forge: bi('Сервер сравнивает истории и видит, что ваш коммит не продолжает его ветку main, поэтому отклоняет отправку.', 'The server compares the histories, sees that your commit does not continue its main, and rejects the push.') },
         states: { forge: 'err', 'e-push': 'err' },
         metrics: { objects: c.newObjects, reused: c.reused, sent: 0 },
-        broken: { at: 'e-push', message: ' ! [rejected]        main -> main (fetch first)\nerror: failed to push some refs to \'https://forge.edu/team/site.git\'', caption: bi('Сначала заберите коммит коллеги командой `git pull`, слейте его со своим и отправьте работу снова.', 'git pull first: fetch their commit, merge it with yours and push again.') },
+        broken: { at: 'e-push', message: ' ! [rejected]        main -> main (fetch first)\nerror: failed to push some refs to \'https://forge.edu/team/site.git\'', caption: bi('Сначала заберите коммит коллеги командой git pull, слейте его со своим и отправьте работу снова.', 'git pull first: fetch their commit, merge it with yours and push again.') },
       });
       return steps;
     }
@@ -416,7 +416,7 @@ export const ciModel = defineModel<CiP>({
   ],
   breaks: [
     { id: 'test-fails', label: bi('Тест находит ошибку и возвращает код 1', 'A test fails'), remove: ['e-img'], predict: { prompt: bi('Скрипт теста вернул код 1. Что будет с выкладкой?', 'A test returned exit code 1. What happens to the deployment?'), options: [{ id: 'stop', text: bi('Выкладки не будет, потому что следующие стадии пропускаются', 'It stops: the later stages are skipped') }, { id: 'go', text: bi('Версия всё равно выложится, а тест только предупредит', 'It deploys; the test is only a warning') }], resolve: () => 'stop' } },
-    { id: 'no-artifact', label: bi('У сборки не объявлены артефакты', 'The artifact is not declared'), remove: ['e-up', 'art'], predict: { prompt: bi('У джобы сборки нет ключа `artifacts:paths`. Что увидит следующая джоба в каталоге проекта?', 'The build has no artifacts:paths. What does the next job see?'), options: [{ id: 'missing', text: bi('Каталога dist/ там не будет', 'An empty directory: no dist/') }, { id: 'there', text: bi('Каталог dist/ будет на месте, потому что раннер тот же', 'dist/ is there: same runner') }], resolve: () => 'missing' } },
+    { id: 'no-artifact', label: bi('У сборки не объявлены артефакты', 'The artifact is not declared'), remove: ['e-up', 'art'], predict: { prompt: bi('У джобы сборки нет ключа artifacts:paths. Что увидит следующая джоба в каталоге проекта?', 'The build has no artifacts:paths. What does the next job see?'), options: [{ id: 'missing', text: bi('Каталога dist/ там не будет', 'An empty directory: no dist/') }, { id: 'there', text: bi('Каталог dist/ будет на месте, потому что раннер тот же', 'dist/ is there: same runner') }], resolve: () => 'missing' } },
     { id: 'no-runner', label: bi('Ни у одного раннера нет тега docker', 'No runner with the docker tag'), remove: ['e-poll'], predict: { prompt: bi('Джоба требует раннер с тегом docker, а ни у одного раннера такого тега нет. Что с ней будет?', 'No runner has the docker tag the job needs. What happens to the job?'), options: [{ id: 'stuck', text: bi('Джоба будет ждать в очереди в состоянии pending', 'It waits in pending') }, { id: 'any', text: bi('Джобу заберёт любой свободный раннер', 'Any runner takes it') }, { id: 'fail', text: bi('Джоба сразу завершится с ошибкой', 'It fails at once') }], resolve: () => 'stuck' } },
     { id: 'no-secret', label: bi('В настройках проекта не задана переменная DEPLOY_TOKEN', 'DEPLOY_TOKEN is not set'), remove: ['e-stg'], predict: { prompt: bi('Ключа для выкладки нет в настройках проекта. На каком шаге остановится пайплайн?', 'The deploy secret is missing from the project settings. Where does the pipeline break?'), options: [{ id: 'deploy', text: bi('Пайплайн остановится на джобе выкладки', 'At the deploy job') }, { id: 'push', text: bi('Сервер не примет push', 'The push is refused') }], resolve: () => 'deploy' } },
   ],
@@ -642,7 +642,7 @@ export const ciModel = defineModel<CiP>({
     const t1 = last(next).total ?? 0;
     if (change.id === 'runners') return fmt(bi('Раннеров стало {b} вместо {a}, и весь пайплайн теперь занимает {t1} секунд вместо {t0}, потому что от числа свободных раннеров зависит, сколько джоб одной стадии выполняются одновременно.', 'There are now {b} runners instead of {a}, and the whole pipeline takes {t1} s instead of {t0}, because the number of free runners decides how many jobs of one stage run at the same time.'), { a: a.runners, b: b.runners, t0, t1 });
     if (change.id === 'cache') return b.cache ? bi('Кэш вернулся, и установка зависимостей снова занимает 9 секунд вместо 52. Кэш только ускоряет сборку.', 'The cache is back: npm ci 52 → 9 s. A cache only speeds things up.') : bi('Без кэша зависимости скачиваются заново за 52 секунды вместо 9, но сборка проходит. Кэш может пропасть в любой момент, поэтому сборка не должна от него зависеть.', 'Without the cache npm ci downloads everything again: 9 → 52 s, but the build passes. A cache may vanish; the build must not depend on it.');
-    if (change.id === 'manual') return b.manual ? bi('С `when: manual` последний шаг ждёт кнопки, и это Continuous Delivery.', 'With when: manual the last step is a button: Continuous Delivery.') : bi('Без `when: manual` рабочий сервер обновляется сам, и это Continuous Deployment. Две практики отличаются одной строкой YAML.', 'Without when: manual production updates by itself: Continuous Deployment. The difference is one line of YAML.');
+    if (change.id === 'manual') return b.manual ? bi('С when: manual последний шаг ждёт кнопки, и это Continuous Delivery.', 'With when: manual the last step is a button: Continuous Delivery.') : bi('Без when: manual рабочий сервер обновляется сам, и это Continuous Deployment. Две практики отличаются одной строкой YAML.', 'Without when: manual production updates by itself: Continuous Deployment. The difference is one line of YAML.');
     return b.branch === 'main' ? bi('Коммит пришёл в main, и правила добавили к проверкам сборку образа и обе выкладки.', 'A push to main: the rules add the image build and the deploys.') : bi('Коммит пришёл в рабочую ветку, и правила оставили только проверки без выкладок.', 'A push to a branch: the rules keep only the checks; no deploys.');
   },
 });

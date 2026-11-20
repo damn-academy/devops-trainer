@@ -55,6 +55,15 @@ const pushedCi = (f: Facts) => {
   return text ? parseCi(text) : null;
 };
 const mainOk = (f: Facts) => lastPipeline(f, { ref: 'main' })?.status === 'success';
+/** The pipeline file in ~/site does not parse: shown first, because nothing else can work until it does. */
+const localCiBroken = (f: Facts) => {
+  const text = f.files[`${SITE}/.gitlab-ci.yml`]?.text;
+  return !!text && parseCi(text).errors.length > 0;
+};
+const lintFail = {
+  if: localCiBroken,
+  say: bi('Проверка нашла в файле .gitlab-ci.yml ошибку, и команда glab ci lint назовёт номер строки. Чаще всего дело в отступе: image, script и stage стоят на два пробела правее имени джобы, а строки команд с дефисом ещё на два пробела правее script. Сообщение вида «config should be a hash» значит, что под ключом, который назван в начале сообщения, ожидался вложенный блок со сдвигом вправо.', 'The check found a mistake in .gitlab-ci.yml, and glab ci lint names the line. Most often it is the indentation: image, script and stage stand two spaces right of the job name, and the command lines with a dash two more spaces right of script. A message like “config should be a hash” means a nested, indented block was expected under that word.'),
+};
 
 // ── quiz bank ──
 
@@ -67,7 +76,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'ahead', text: bi('На сервере есть коммиты, которых нет у вас, поэтому их нужно забрать командой git pull и отправить работу снова', 'The server has commits you do not have: get them (git pull) and push again'), correct: true },
       { id: 'perm', text: bi('У вас нет прав на запись в репозиторий', 'You have no write access'), why: bi('Отказ в правах выглядит иначе, например «You are not allowed to push code» или код 403. Здесь Git сравнил истории.', 'A permission error looks different: "You are not allowed to push code" or 403. Here Git compared histories.') },
-      { id: 'force', text: bi('Команду нужно повторить с ключом --force', 'Repeat it with --force'), why: bi('Ключ --force перезапишет ветку на сервере, и коммиты коллеги пропадут. А в защищённую ветку сервер не пустит и с этим ключом.', '--force would overwrite the server branch and the colleague’s commits would be lost. A protected branch would not allow it anyway.') },
+      { id: 'force', text: bi('Команду нужно повторить с флагом --force', 'Repeat it with --force'), why: bi('Флаг --force перезапишет ветку на сервере, и коммиты коллеги пропадут. А push в защищённую ветку сервер не примет и с этим флагом.', '--force would overwrite the server branch and the colleague’s commits would be lost. A protected branch would not allow it anyway.') },
     ],
   },
   {
@@ -125,7 +134,7 @@ export const quiz: QuizItem[] = [
     pairs: [
       { id: 'nm', left: bi('сохранять node_modules между пайплайнами, чтобы быстрее ставить зависимости', 'node_modules between pipelines, to install dependencies faster'), right: 'cache', why: bi('Если кэш пропадёт, npm ci скачает зависимости заново, и сборка пройдёт медленнее, но не сломается.', 'If it is gone, npm ci downloads again: slower, but nothing breaks.') },
       { id: 'dist', left: bi('передать dist/ из сборки в выкладку', 'dist/ from the build to the deploy'), right: 'artifacts', why: bi('Результат сборки обязан дойти до выкладки. Кэш может пропасть, а артефакт хранится на сервере и не пропадёт.', 'The result must arrive: a cache may vanish, an artifact must not.') },
-      { id: 'junit', left: bi('сохранить отчёт тестов, который покажет merge request', 'a test report the merge request will show'), right: 'artifacts:reports' },
+      { id: 'junit', left: bi('сохранить отчёт тестов, который покажет merge request', 'a test report the merge request will show'), right: 'artifacts:reports', why: bi('Отчёт тестов forge показывает на странице merge request, только если он сохранён под ключом artifacts:reports.', 'The forge shows a test report on the merge request page only when it is saved under artifacts:reports.') },
     ],
   },
   {
@@ -272,16 +281,19 @@ const remoteLesson: Lesson = {
         {
           id: 'origin',
           prompt: bi('Свяжите каталог `~/site` с адресом `https://forge.edu/team/site.git` под именем `origin` и отправьте туда ветку `main` так, чтобы Git запомнил связь этой ветки с сервером.', 'Link `~/site` to `https://forge.edu/team/site.git` as `origin` and push `main` there, remembering the link of the branch to the server.'),
-          check: { when: (f) => !!forge(f)?.branches.main && forge(f)!.branches.main === repo(f)?.branches.main && repo(f)?.upstream.main === 'origin/main', fail: [{ if: (f) => !!forge(f)?.branches.main && !repo(f)?.upstream.main, say: bi('Ветка main уже на сервере, но связь ветки с сервером Git не запомнил, и для этого нужен ключ -u (--set-upstream).', 'main is on the server, but the branch link was not remembered: you need -u (--set-upstream).') }] },
+          check: { when: (f) => !!forge(f)?.branches.main && forge(f)!.branches.main === repo(f)?.branches.main && repo(f)?.upstream.main === 'origin/main', fail: [{ if: (f) => !!forge(f)?.branches.main && !repo(f)?.upstream.main, say: bi('Ветка main уже на сервере, но Git не запомнил, что ваша main связана с main на сервере. Эту связь он записывает, когда push выполнен с флагом -u (--set-upstream).', 'main is on the server, but the branch link was not remembered: you need -u (--set-upstream).') }] },
           chips: 'git remote add origin https://forge.edu/team/site.git && git push -u origin main',
           concepts: ['git.remote'],
           docRef: { page: 'man/git-push.1', anchor: 'OPTIONS', line: '--set-upstream' },
-          hints: { H1: bi('Нужны два шага: сначала git remote add, а затем git push с ключом -u.', 'Two steps: git remote add, then git push with -u.') },
+          hints: { H1: bi('Нужны два шага: сначала git remote add, а затем git push с флагом -u.', 'Two steps: git remote add, then git push with -u.') },
         },
         {
           id: 'mr',
-          prompt: bi('В ветке `feature/hours` добавьте коммитом страницу `hours.html`, отправьте ветку на сервер и откройте merge request в ветку `main`.', 'On a branch `feature/hours`, add a page `hours.html` with a commit, push the branch and open a merge request into `main`.'),
-          check: { when: (f) => !!forge(f)?.branches['feature/hours'] && (forge(f)?.mrs ?? []).some((m) => m.source === 'feature/hours' && m.target === 'main') },
+          prompt: bi('Сделайте по порядку четыре шага. Создайте ветку `feature/hours` и перейдите на неё, добавьте в ней коммитом страницу `hours.html`, отправьте ветку на сервер командой `git push -u origin feature/hours` и в конце откройте merge request из этой ветки в `main`.', 'Do four steps in order. Create a branch `feature/hours` and switch to it, add a page `hours.html` on it with a commit, push the branch to the server with `git push -u origin feature/hours`, and finally open a merge request from this branch into `main`.'),
+          check: {
+            when: (f) => !!forge(f)?.branches['feature/hours'] && (forge(f)?.mrs ?? []).some((m) => m.source === 'feature/hours' && m.target === 'main'),
+            fail: [{ if: "term['main'][last].out~'is not on the forge'", say: bi('Сервер ответил, что ветки feature/hours на нём нет. Merge request открывают только из ветки, которая уже лежит на сервере, поэтому сначала создайте ветку, запишите в ней коммит и отправьте её командой git push -u origin feature/hours.', 'The server answered that it has no feature/hours branch. A merge request is opened only from a branch that is already on the server, so first create the branch, commit in it and push it with git push -u origin feature/hours.') }],
+          },
           chips: 'glab mr create --source-branch feature/hours --target-branch main --title "Add opening hours"',
           concepts: ['git.mr'],
           hints: { H1: bi('Порядок такой: git switch -c, новый файл, git add, git commit, git push -u и в конце glab mr create.', 'switch -c, a file, add, commit, push -u, then glab mr create.'), H2: bi('Откройте merge request командой `glab mr create -s feature/hours -b main -t "Add opening hours"`.', '`glab mr create -s feature/hours -b main -t "Add opening hours"`.') },
@@ -305,7 +317,7 @@ const remoteLesson: Lesson = {
       tasks: [
         {
           id: 'both',
-          prompt: bi('Закоммитьте любую правку `about.html` и доставьте её в ветку `main` на forge так, чтобы коммит Grace тоже остался.', 'Commit any edit of `about.html` and deliver it to `main` on the forge so that Grace’s commit stays too.'),
+          prompt: bi('Внесите любую правку в `about.html`, запишите её коммитом и отправьте в ветку `main` на сервере команды так, чтобы коммит Grace тоже остался.', 'Commit any edit of `about.html` and deliver it to `main` on the forge so that Grace’s commit stays too.'),
           check: {
             when: (f) => {
               const fg = forge(f);
@@ -352,8 +364,8 @@ const firstLesson: Lesson = {
       step: 'explain',
       title: bi('Файл пайплайна, джобы, стадии и раннер', 'File, job, stage, runner'),
       body: bi(
-        'Всё, что делает CI, записано в файле [[cicd.pipeline-file|.gitlab-ci.yml]] в корне репозитория. Это обычный YAML, его меняют коммитом, как код, и forge читает его заново при каждом push из того коммита, который пришёл.\n\nКаждый ключ верхнего уровня, кроме служебных (`stages`, `variables`, `default` и других), описывает [[cicd.job|джобу]]. У джобы есть имя и `script`, то есть список команд, которые вы набрали бы руками. Команды выполняются по очереди, и если какая-нибудь вернула ненулевой код, джоба останавливается со статусом **failed**. Все джобы одного коммита вместе составляют пайплайн.\n\nДжобы группируются в [[cicd.stage|стадии]], и порядок стадий задаёт строка `stages: [build, test, deploy]`. Джобы одной стадии выполняются одновременно, следующая стадия начинается, когда предыдущая прошла успешно, а после упавшей джобы следующие стадии пропускаются со статусом **skipped**. Если у джобы не указан `stage`, она попадает в стадию `test`.\n\nВажнее всего то, что forge сам джобы не выполняет, а только ставит их в очередь. Выполняет их [[cicd.runner|раннер]], программа gitlab-runner на отдельной машине. Раннер сам спрашивает forge, нет ли для него работы, получает джобу, разворачивает чистую копию репозитория, выполняет скрипт и отправляет журнал обратно. Раннер выбирают по тегам: джобу с `tags: [docker]` получит только раннер с таким тегом, а если такого раннера нет, джоба будет вечно ждать в состоянии **pending**.\n\nСостояние пайплайна видно в merge request и в выводе команды `glab ci status`. Красный пайплайн в main служит сигналом всей команде: основная ветка сломана, и чинить её нужно в первую очередь.',
-        'Everything CI does is written in the [[cicd.pipeline-file|.gitlab-ci.yml]] file in the repository root. It is ordinary YAML, it changes by a commit like code, and the forge reads it again on every push, from exactly the commit that arrived.\n\nEvery top-level key except the service ones (`stages`, `variables`, `default`…) is a [[cicd.job|job]]: a name and `script`, a list of commands, the same ones you would type by hand. The commands run in turn; if one returns a non-zero code, the job stops with the status **failed**. A pipeline is all the jobs of one commit.\n\nJobs are grouped into [[cicd.stage|stages]]: `stages: [build, test, deploy]` sets the order. Jobs of one stage run in parallel, the next stage begins when the previous one succeeded, and after a failed job the later stages are skipped (**skipped**). A job without `stage` is in the `test` stage.\n\nAnd the main thing: the forge does not run jobs. It queues them, and a [[cicd.runner|runner]] (the gitlab-runner program on a separate machine) asks the forge "any work?" by itself, takes a job, sets up a clean copy of the repository, runs the script and sends the log back. Runners are chosen by tags: a job with `tags: [docker]` goes only to a runner with that tag, and if there is none, it waits in **pending** forever.\n\nThe pipeline status shows in the merge request and in `glab ci status`. A red pipeline on main is a signal to the whole team: the main branch is broken and fixing it comes first.',
+        'Всё, что делает CI, записано в файле [[cicd.pipeline-file|.gitlab-ci.yml]] в корне репозитория. Это обычный YAML, его меняют коммитом, как код, и forge читает его заново при каждом push из того коммита, который пришёл.\n\nФайл состоит из джоб. Каждая [[cicd.job|джоба]] начинается со строки без отступа, в которой записаны её имя и двоеточие, а всё, что сдвинуто под этой строкой вправо, относится к джобе. Исключение составляют несколько служебных слов, например `stages`, `variables` и `default`: строка без отступа с таким словом задаёт не джобу, а настройки всего пайплайна. Вот целая джоба с именем `test`:\n\n```yaml\ntest:                  # имя джобы, строка без отступа\n  image: alpine:3.22   # образ, в котором раннер выполнит команды\n  script:              # дальше идёт список команд\n    - ./test.sh        # первая и единственная команда\n```\n\nЗдесь работают три правила YAML из блока о Git и YAML. Пара «ключ: значение» записывается через двоеточие с пробелом, отступ в два пробела означает «внутри», а дефис в начале строки отмечает пункт списка. Текст после знака `#` служит комментарием для людей, и программа его не читает. Если ошибиться в отступе, команда `glab ci lint` ответит красным текстом на английском, например `jobs:test config should implement the script:, run:, or trigger: keyword`. Ничего страшного в таком ответе нет: проверка называет номер строки, и чаще всего причина в том, что строка сдвинута не на столько пробелов, на сколько нужно.\n\nУ джобы есть `script`, то есть список команд, которые вы набрали бы руками. Команды выполняются по очереди, и если какая-нибудь вернула ненулевой код, джоба останавливается со статусом **failed**. Все джобы одного коммита вместе составляют пайплайн.\n\nДжобы группируются в [[cicd.stage|стадии]], и порядок стадий задаёт строка `stages: [build, test, deploy]`. Джобы одной стадии выполняются одновременно, следующая стадия начинается, когда предыдущая прошла успешно, а после упавшей джобы следующие стадии пропускаются со статусом **skipped**. Если у джобы не указан `stage`, она попадает в стадию `test`.\n\nВажнее всего то, что forge сам джобы не выполняет, а только ставит их в очередь. Выполняет их [[cicd.runner|раннер]], программа gitlab-runner на отдельной машине. Раннер сам спрашивает forge, нет ли для него работы, получает джобу, разворачивает чистую копию репозитория, выполняет скрипт и отправляет журнал обратно. Раннер выбирают по тегам: джобу с `tags: [docker]` получит только раннер с таким тегом, а если такого раннера нет, джоба будет вечно ждать в состоянии **pending**.\n\nСостояние пайплайна видно в merge request и в выводе команды `glab ci status`. Красный пайплайн в main служит сигналом всей команде: основная ветка сломана, и чинить её нужно в первую очередь.',
+        'Everything CI does is written in the [[cicd.pipeline-file|.gitlab-ci.yml]] file in the repository root. It is ordinary YAML, it changes by a commit like code, and the forge reads it again on every push, from exactly the commit that arrived.\n\nThe file is made of jobs. Every [[cicd.job|job]] starts with a line without indentation that holds its name and a colon, and everything shifted right under that line belongs to the job. A few service words are the exception, such as `stages`, `variables` and `default`: a line without indentation with such a word sets up the whole pipeline, not a job. Here is a whole job named `test`:\n\n```yaml\ntest:                  # the job name, a line without indentation\n  image: alpine:3.22   # the image the runner runs the commands in\n  script:              # a list of commands follows\n    - ./test.sh        # the first and only command\n```\n\nThree YAML rules from the Git and YAML block work here: a “name: value” pair is written with a colon and a space, an indentation of two spaces means “inside”, and a dash at the start of a line marks a list item. Text after `#` is a comment for people, and the program does not read it. If you get the indentation wrong, `glab ci lint` answers in red English, for example `jobs:test config should implement the script:, run:, or trigger: keyword`. There is nothing alarming in such an answer: the check names the line, and most often the line is shifted by the wrong number of spaces.\n\nA job has `script`, a list of commands, the same ones you would type by hand. The commands run in turn; if one returns a non-zero code, the job stops with the status **failed**. A pipeline is all the jobs of one commit.\n\nJobs are grouped into [[cicd.stage|stages]]: `stages: [build, test, deploy]` sets the order. Jobs of one stage run in parallel, the next stage begins when the previous one succeeded, and after a failed job the later stages are skipped (**skipped**). A job without `stage` is in the `test` stage.\n\nAnd the main thing: the forge does not run jobs. It queues them, and a [[cicd.runner|runner]] (the gitlab-runner program on a separate machine) asks the forge "any work?" by itself, takes a job, sets up a clean copy of the repository, runs the script and sends the log back. Runners are chosen by tags: a job with `tags: [docker]` goes only to a runner with that tag, and if there is none, it waits in **pending** forever.\n\nThe pipeline status shows in the merge request and in `glab ci status`. A red pipeline on main is a signal to the whole team: the main branch is broken and fixing it comes first.',
       ),
     },
     {
@@ -391,14 +403,15 @@ const firstLesson: Lesson = {
           check: {
             when: (f) => mainOk(f) && (jobOf(f, 'test', { ref: 'main' })?.log ?? '').includes('$ ./test.sh'),
             fail: [
-              { if: (f) => !!f.files[`${SITE}/.gitlab-ci.yml`] && !forge(f)?.commits.some((c) => '.gitlab-ci.yml' in c.files), say: bi('Файл есть у вас, но forge его ещё не видел, поэтому закоммитьте его и выполните git push.', 'The file exists locally, but the forge has not seen it: commit and git push.') },
+              lintFail,
+              { if: (f) => !!f.files[`${SITE}/.gitlab-ci.yml`] && !forge(f)?.commits.some((c) => '.gitlab-ci.yml' in c.files), say: bi('Файл есть у вас, но forge его ещё не видел, поэтому запишите его коммитом и выполните git push.', 'The file exists locally, but the forge has not seen it: commit and git push.') },
               { if: (f) => lastPipeline(f)?.status === 'failed' && !!lastPipeline(f)?.errors, say: bi('Forge не принял файл пайплайна из-за ошибки, и команда glab ci lint покажет, в какой строке она находится.', 'The forge could not read the pipeline file; glab ci lint shows the line.') },
             ],
           },
           chips: 'edit .gitlab-ci.yml',
           concepts: ['cicd.pipeline-file', 'cicd.job'],
           docRef: { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'script', line: 'job2:' },
-          hints: { H1: bi('Имя джобы записывается ключом верхнего уровня, а внутри него стоят ключи image и script.', 'The job name is a top-level key; inside it go image and script.'), H2: bi('```yaml\ntest:\n  image: alpine:3.22\n  script:\n    - ./test.sh\n```\nЗатем выполните `glab ci lint`, `git add .gitlab-ci.yml`, `git commit -m "Add CI"` и `git push`.', '```yaml\ntest:\n  image: alpine:3.22\n  script:\n    - ./test.sh\n```\nThen `glab ci lint`, `git add .gitlab-ci.yml`, `git commit -m "Add CI"`, `git push`.') },
+          hints: { H1: bi('Имя джобы стоит в строке без отступа, а под ним со сдвигом на два пробела стоят строки image и script, как в примере из текста урока.', 'The job name stands on a line without indentation, and under it, two spaces to the right, go image and script, as in the example in the lesson text.'), H2: bi('```yaml\ntest:\n  image: alpine:3.22\n  script:\n    - ./test.sh\n```\nЗатем выполните `glab ci lint`, `git add .gitlab-ci.yml`, `git commit -m "Add CI"` и `git push`.', '```yaml\ntest:\n  image: alpine:3.22\n  script:\n    - ./test.sh\n```\nThen `glab ci lint`, `git add .gitlab-ci.yml`, `git commit -m "Add CI"`, `git push`.') },
         },
         {
           id: 'stages',
@@ -411,7 +424,7 @@ const firstLesson: Lesson = {
               const l = p?.jobs.find((j) => j.name === 'lint');
               return p?.status === 'success' && !!b && !!t && !!l && b.stage === 'build' && t.stage === 'test' && l.stage === 'test' && (b.end ?? 0) <= (t.start ?? 0) && (b.end ?? 0) <= (l.start ?? 0);
             },
-            fail: [{ if: (f) => (lastPipeline(f)?.errors ?? []).some((e) => e.message.includes('chosen stage')), say: bi('Стадию, в которую входит джоба, нужно объявить в списке stages.', 'A job’s stage must be declared in the stages list.') }],
+            fail: [lintFail, { if: (f) => (lastPipeline(f)?.errors ?? []).some((e) => e.message.includes('chosen stage')), say: bi('Стадию, в которую входит джоба, нужно объявить в списке stages.', 'A job’s stage must be declared in the stages list.') }],
           },
           chips: 'glab ci view',
           concepts: ['cicd.stage'],
@@ -431,6 +444,7 @@ const firstLesson: Lesson = {
               return mainOk(f) && page.includes('Espresso 2.50') && !!t && t.script.includes('./test.sh') && !t.allowFailure && tip?.files['test.sh'] === PROJECT['test.sh'];
             },
             fail: [
+              lintFail,
               { if: (f) => pushedCi(f)?.config?.jobs.find((j) => j.name === 'test')?.allowFailure === true, say: bi('Ключ allow_failure прячет поломку, потому что пайплайн становится зелёным, а у страницы по-прежнему нет заголовка. Почините саму страницу.', 'allow_failure hides the breakage: the pipeline is green and the page still has no heading. Fix the page.') },
               { if: (f) => jobOf(f, 'test', { ref: 'main' })?.status === 'failed', say: bi('Тест завершился с ошибкой, поэтому откройте журнал командой glab ci trace test. В нём сказано, чего не хватает странице.', 'The test failed. Open the log with glab ci trace test: it says what the page is missing.') },
             ],
@@ -521,8 +535,8 @@ const artifactsLesson: Lesson = {
       kind: 'text',
       step: 'explain',
       body: bi(
-        'Раннер выполняет каждую джобу в контейнере, запущенном из [[cicd.image|образа джобы]]. Строка `image: node:24-alpine` даёт джобе Node.js, а строка `image: alpine:3.22` даёт чистый Alpine. Если ошибиться в имени образа, джоба завершится с ошибкой ещё до скрипта и напишет `failed to pull image`. После джобы контейнер удаляется, и вместе с ним исчезает всё, что джоба создала. Поэтому, когда `build` собрала каталог `dist/`, джоба `test` всё равно начинает с чистой копии репозитория, и каталога `dist/` в ней нет.\n\nЧтобы результат дошёл до следующих джоб, его объявляют [[cicd.artifact|артефактом]] строкой `artifacts: paths: [dist/]`. После успешной джобы раннер загружает эти файлы на forge, а джобы следующих стадий скачивают их перед своим скриптом, даже если они запустились на другом раннере. Артефакты можно скачать и вручную со страницы джобы, а срок их хранения задаётся отдельным ключом.\n\n[[cicd.cache|Кэш CI]] похож на артефакт, но служит другой цели. В кэше лежат файлы, которые раннер сохраняет у себя после джобы и раскладывает перед следующим запуском, обычно скачанные зависимости. Ключ `key` решает, под каким именем раннер сохранит кэш и какие джобы потом его найдут. Каждое такое имя работает как отдельная полка, поэтому с ключом `npm-$CI_COMMIT_REF_SLUG` у каждой ветки своя полка, а с ключом `key: files: [package-lock.json]` новая полка появляется при каждом изменении lock-файла. Главное свойство кэша в том, что его наличие **не гарантировано**: джоба может попасть на другой раннер, кэш могут стереть, ключ может смениться. Джоба должна пройти и без кэша, только медленнее. Отсюда простая проверка: если без файлов джоба завершается с ошибкой, эти файлы нужно передавать артефактом, а если она только работает медленнее, их можно держать в кэше.',
-        'A runner executes every job in a container started from the [[cicd.image|job image]]: `image: node:24-alpine` gives Node.js, `image: alpine:3.22` a bare Alpine. A typo in the image name kills the job before the script: `failed to pull image`. After the job the container is deleted, so everything the job created is gone. `build` built `dist/`, and `test` starts from a clean copy of the repository, without `dist/`.\n\nTo get a result through, you declare it an [[cicd.artifact|artifact]]: `artifacts: paths: [dist/]`. After a successful job the runner uploads these files to the forge, and the jobs of later stages download them before their script, even when they run on another runner. Artifacts can be downloaded by hand from the job page; how long they are kept is set separately.\n\nA [[cicd.cache|CI cache]] looks like an artifact but serves another purpose. It is files a runner keeps after a job and lays out before the next run, usually downloaded dependencies. The `key` decides who sees the cache: `npm-$CI_COMMIT_REF_SLUG` is a shelf per branch, `key: files: [package-lock.json]` a new shelf every time the lock file changes. The main property of a cache: it is **not guaranteed**. Another runner, a wiped cache, a changed key, and the job must pass without it, only slower. Hence the test: if the job fails without the files, they are an artifact; if it is only slower, a cache.',
+        'Раннер выполняет каждую джобу в контейнере, запущенном из [[cicd.image|образа джобы]]. Строка `image: node:24-alpine` даёт джобе Node.js, а строка `image: alpine:3.22` даёт чистый Alpine. Если ошибиться в имени образа, джоба завершится с ошибкой ещё до скрипта и напишет `failed to pull image`. После джобы контейнер удаляется, и вместе с ним исчезает всё, что джоба создала. Поэтому, когда `build` собрала каталог `dist/`, джоба `test` всё равно начинает с чистой копии репозитория, и каталога `dist/` в ней нет.\n\nЧтобы результат дошёл до следующих джоб, его объявляют [[cicd.artifact|артефактом]] строкой `artifacts: paths: [dist/]`. После успешной джобы раннер загружает эти файлы на forge, а джобы следующих стадий скачивают их перед своим скриптом, даже если они запустились на другом раннере. Артефакты можно скачать и вручную со страницы джобы, а срок их хранения задаётся отдельным ключом. Особый вид артефактов задаёт ключ `artifacts:reports`. Отчёт тестов, сохранённый под этим ключом, forge разбирает сам и показывает прямо на странице merge request.\n\n[[cicd.cache|Кэш CI]] похож на артефакт, но служит другой цели. В кэше лежат файлы, которые раннер сохраняет у себя после джобы и раскладывает перед следующим запуском, обычно скачанные зависимости. Ключ `key` решает, под каким именем раннер сохранит кэш и какие джобы потом его найдут. Каждое такое имя работает как отдельная полка, поэтому с ключом `npm-$CI_COMMIT_REF_SLUG`, где переменная `$CI_COMMIT_REF_SLUG` содержит имя ветки, у каждой ветки своя полка. С ключом `key: files: [package-lock.json]` новая полка появляется при каждом изменении lock-файла, то есть файла со списком точных версий всех библиотек проекта. Главное свойство кэша в том, что его наличие **не гарантировано**: джоба может попасть на другой раннер, кэш могут стереть, ключ может смениться. Джоба должна пройти и без кэша, только медленнее. Отсюда простая проверка: если без файлов джоба завершается с ошибкой, эти файлы нужно передавать артефактом, а если она только работает медленнее, их можно держать в кэше.',
+        'A runner executes every job in a container started from the [[cicd.image|job image]]: `image: node:24-alpine` gives Node.js, `image: alpine:3.22` a bare Alpine. A typo in the image name kills the job before the script: `failed to pull image`. After the job the container is deleted, so everything the job created is gone. `build` built `dist/`, and `test` starts from a clean copy of the repository, without `dist/`.\n\nTo get a result through, you declare it an [[cicd.artifact|artifact]]: `artifacts: paths: [dist/]`. After a successful job the runner uploads these files to the forge, and the jobs of later stages download them before their script, even when they run on another runner. Artifacts can be downloaded by hand from the job page; how long they are kept is set separately. A special kind of artifact is set by `artifacts:reports`: a test report saved under this key is parsed by the forge itself and shown right on the merge request page.\n\nA [[cicd.cache|CI cache]] looks like an artifact but serves another purpose. It is files a runner keeps after a job and lays out before the next run, usually downloaded dependencies. The `key` decides who sees the cache: `npm-$CI_COMMIT_REF_SLUG`, where `$CI_COMMIT_REF_SLUG` holds the branch name, is a shelf per branch, and `key: files: [package-lock.json]` is a new shelf every time the lock file, the list of exact versions of all the project’s libraries, changes. The main property of a cache: it is **not guaranteed**. Another runner, a wiped cache, a changed key, and the job must pass without it, only slower. Hence the test: if the job fails without the files, they are an artifact; if it is only slower, a cache.',
       ),
     },
     {
@@ -559,7 +573,7 @@ const artifactsLesson: Lesson = {
           prompt: bi('Отправьте пустой коммит командами `git commit --allow-empty -m "Run CI"` и `git push`, прочитайте, почему `test` завершается с ошибкой, и почините пайплайн, не меняя скриптов джоб.', 'Push an empty commit (`git commit --allow-empty -m "Run CI"`, `git push`), read why `test` fails, and fix the pipeline without changing the job scripts.'),
           check: {
             when: (f) => mainOk(f) && (jobOf(f, 'test', { ref: 'main' })?.log ?? '').includes('Downloading artifacts for build'),
-            fail: [{ if: (f) => (pushedCi(f)?.config?.jobs.find((j) => j.name === 'build')?.cache?.paths ?? []).some((p) => p.startsWith('dist')), say: bi('Кэш не гарантирует, что каталог dist/ дойдёт до теста, и если кэш не найдётся, тест снова завершится с ошибкой. Результат сборки передают через artifacts.', 'dist/ in a cache is not guaranteed: on a miss the test fails again. Results are passed with artifacts.') }],
+            fail: [lintFail, { if: (f) => (pushedCi(f)?.config?.jobs.find((j) => j.name === 'build')?.cache?.paths ?? []).some((p) => p.startsWith('dist')), say: bi('Кэш не гарантирует, что каталог dist/ дойдёт до теста, и если кэш не найдётся, тест снова завершится с ошибкой. Результат сборки передают через artifacts.', 'dist/ in a cache is not guaranteed: on a miss the test fails again. Results are passed with artifacts.') }],
           },
           chips: 'glab ci trace test',
           concepts: ['cicd.artifact'],
@@ -575,7 +589,7 @@ const artifactsLesson: Lesson = {
               const last2 = ps.slice(-2).map((p) => p.jobs.find((j) => j.name === 'build'));
               return last2.length === 2 && last2[0]?.cacheHit === false && last2[1]?.cacheHit === true && (last2[1]!.end! - last2[1]!.start!) < (last2[0]!.end! - last2[0]!.start!);
             },
-            fail: [{ if: (f) => (lastPipeline(f, { ref: 'main' })?.jobs.find((j) => j.name === 'build')?.cacheHit) === false, say: bi('Первый пайплайн сохранил кэш, поэтому отправьте ещё один коммит, и следующая сборка его найдёт.', 'This pipeline saved the cache. Push one more commit and the next build will find it.') }],
+            fail: [lintFail, { if: (f) => (lastPipeline(f, { ref: 'main' })?.jobs.find((j) => j.name === 'build')?.cacheHit) === false, say: bi('Первый пайплайн сохранил кэш, поэтому отправьте ещё один коммит, и следующая сборка его найдёт.', 'This pipeline saved the cache. Push one more commit and the next build will find it.') }],
           },
           chips: 'glab ci trace build',
           concepts: ['cicd.cache'],
@@ -702,6 +716,7 @@ const varsLesson: Lesson = {
           check: {
             when: (f) => (ci(f)?.deployments ?? []).some((d) => d.env === 'staging') && (ci(f)?.variables ?? []).some((v) => v.key === 'DEPLOY_TOKEN' && v.masked && v.protected) && !(ci(f)?.pipelines ?? []).some((p) => p.jobs.some((j) => j.log.includes('edu-deploy-7Kq2'))),
             fail: [
+              lintFail,
               { if: (f) => forge(f)?.commits.some((c) => Object.values(c.files).some((t) => t.includes('edu-deploy-7Kq2'))) ?? false, say: bi('Токен попал в коммит на forge и теперь хранится в истории. Уберите его из файлов, задайте как переменную в настройках проекта и считайте, что токен утёк.', 'The token got into a commit on the forge: it is in the history now. Remove it from the files, set it as a variable and treat the token as leaked.') },
               { if: (f) => (jobOf(f, 'deploy_staging')?.log ?? '').includes('DEPLOY_TOKEN is not set'), say: bi('Джоба выкладки не получила токен, поэтому задайте переменную командой glab variable set DEPLOY_TOKEN … --masked --protected.', 'The deploy job did not get the token. Set the variable: glab variable set DEPLOY_TOKEN … --masked --protected.') },
             ],
@@ -720,12 +735,15 @@ const varsLesson: Lesson = {
               const manualInFile = !!job && (job.when === 'manual' || (job.rules ?? []).some((r) => r.when === 'manual'));
               return manualInFile && p?.jobs.find((j) => j.name === 'deploy_production')?.status === 'success' && (p?.jobs.find((j) => j.name === 'deploy_production')?.when === 'manual');
             },
-            fail: [{ if: (f) => lastPipeline(f, { ref: 'main' })?.status === 'blocked', say: bi('Пайплайн ждёт нажатия кнопки, и запустить выкладку можно командой glab ci trigger deploy_production.', 'The pipeline waits for the button: glab ci trigger deploy_production.') }],
+            fail: [lintFail, { if: (f) => lastPipeline(f, { ref: 'main' })?.status === 'blocked', say: bi('Пайплайн ждёт нажатия кнопки, и запустить выкладку можно командой glab ci trigger deploy_production.', 'The pipeline waits for the button: glab ci trigger deploy_production.') }],
           },
           chips: 'glab ci trigger deploy_production',
           concepts: ['cicd.manual'],
           docRef: { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'when', line: 'manual' },
-          hints: { H1: bi('Добавьте when: manual в правило джобы deploy_production.', 'when: manual in the deploy_production rule.') },
+          hints: {
+            H1: bi('Допишите строку when: manual в правило джобы deploy_production. Правила rules подробно разберёт следующий урок, а пока достаточно добавить одну строку.', 'Add the line when: manual to the rule of the deploy_production job. The next lesson covers rules in detail; for now one added line is enough.'),
+            H2: bi('Конец джобы должен выглядеть так, причём строка `when: manual` стоит ровно под словом `if`:\n```yaml\n  rules:\n    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH\n      when: manual\n```', 'The end of the job must look like this, with `when: manual` exactly under the word `if`:\n```yaml\n  rules:\n    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH\n      when: manual\n```'),
+          },
         },
       ],
     },
@@ -835,6 +853,7 @@ const rulesLesson: Lesson = {
               const t = p?.jobs.find((j) => j.name === 'test');
               return p?.status === 'success' && !!b && !!l && !!t && (t.start ?? 0) >= (b.end ?? 0) && (t.start ?? 0) < (l.end ?? 0);
             },
+            fail: [lintFail],
           },
           chips: 'glab ci view',
           concepts: ['cicd.needs'],
@@ -843,7 +862,7 @@ const rulesLesson: Lesson = {
         },
         {
           id: 'rules',
-          prompt: bi('Выкладка на тестовый стенд должна запускаться только при отправке в main, а в ветках и merge request её быть не должно. Чтобы проверить это, отправьте ветку `feature/menu` и откройте из неё merge request. В пайплайне этого merge request должны быть `build`, `lint` и `test`, а выкладки быть не должно.', 'Staging deploys only on a push to main; never on branches and merge requests. Check it: push a branch `feature/menu` and open a merge request from it; its pipeline must have `build`, `lint` and `test`, without the deploy.'),
+          prompt: bi('Выкладка на тестовый стенд должна запускаться только при отправке в main, а в ветках и merge request её быть не должно. Чтобы проверить это, отправьте ветку `feature/menu` и откройте из неё merge request. В пайплайне этого merge request должны быть `build`, `lint` и `test`, а выкладки быть не должно. Нужные условия записаны в тексте урока выше.', 'Staging deploys only on a push to main; never on branches and merge requests. Check it: push a branch `feature/menu` and open a merge request from it; its pipeline must have `build`, `lint` and `test`, without the deploy. The conditions you need are written in the lesson text above.'),
           check: {
             when: (f) => {
               const mrp = lastPipeline(f, { source: 'merge_request_event' });
@@ -853,6 +872,7 @@ const rulesLesson: Lesson = {
               return names === 'build,lint,test' && !!dep?.rules?.length;
             },
             fail: [
+              lintFail,
               { if: (f) => !!lastPipeline(f, { source: 'merge_request_event' }) && !(lastPipeline(f, { source: 'merge_request_event' })?.jobs.some((j) => j.name === 'test')), say: bi('Джобы без rules в пайплайн merge request не попадают, поэтому дайте build, lint и test правило для merge_request_event и правило для main.', 'Jobs without rules do not get into merge request pipelines. Give build, lint and test a rule for merge_request_event and for main.') },
               { if: (f) => (lastPipeline(f, { source: 'merge_request_event' })?.jobs ?? []).some((j) => j.name === 'deploy_staging'), say: bi('Выкладка всё ещё попадает в пайплайн merge request, а её правило должно проверять, что коммит пришёл в ветку main.', 'The deploy is still in the merge request pipeline: its rule must check for the main branch.') },
             ],

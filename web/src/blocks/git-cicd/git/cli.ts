@@ -401,6 +401,8 @@ const subs: Record<string, Sub> = {
       } else if (a === '--allow-empty') allowEmpty = true;
       else if (a === '--amend') amend = true;
       else if (a === '-q' || a === '--quiet') continue;
+      // Without an editor every commit is --no-edit: the prepared message (MERGE_MSG, or the amended commit's) is used as is.
+      else if (a === '--no-edit') continue;
       else return usage(io, 'commit', `unknown option '${a.replace(/^-+/, '')}'`);
     }
     const idx = repo.readIndex();
