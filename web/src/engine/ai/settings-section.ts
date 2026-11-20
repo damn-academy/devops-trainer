@@ -66,6 +66,7 @@ export function mountAiSettings(el: HTMLElement): Mounted {
   const render = () => {
     if (disposed) return;
     clear(el);
+    el.append(h('p.small.muted', {}, t(bi('С GigaChat и Алисой можно работать через копирование запроса: их API не разрешают запросы из браузера.', 'Use copy and paste with GigaChat and Alice: their APIs do not allow browser requests.'))));
     const st = ai().status;
     const s = st.settings;
     let provider: ProviderId = s?.provider ?? 'deepseek';

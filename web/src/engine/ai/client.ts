@@ -17,6 +17,7 @@ export interface ChatRequest {
 }
 
 export interface Endpoint {
+  api?: 'anthropic';
   baseUrl: string;
   model: string;
   key?: string;
@@ -98,6 +99,12 @@ export function classifyHttp(status: number, body: string): AiErrorCode {
 
 function headers(ep: Endpoint): Record<string, string> {
   const h: Record<string, string> = { 'Content-Type': 'application/json', ...(ep.headers ?? {}) };
+  if (ep.api === 'anthropic') {
+    h['anthropic-version'] = '2023-06-01';
+    h['anthropic-dangerous-direct-browser-access'] = 'true';
+    if (ep.key) h['x-api-key'] = ep.key;
+    return h;
+  }
   if (ep.key) h.Authorization = `Bearer ${ep.key}`;
   return h;
 }
@@ -128,10 +135,10 @@ export async function* streamChat(ep: Endpoint, req: ChatRequest, signal?: Abort
   const base = checkUrl(ep.baseUrl);
   let res: Response;
   try {
-    res = await f(`${base}/chat/completions`, {
+    res = await f(`${base}/${ep.api === 'anthropic' ? 'messages' : 'chat/completions'}`, {
       method: 'POST',
       headers: headers(ep),
-      body: JSON.stringify({ model: ep.model, messages: req.messages, max_tokens: req.maxTokens, temperature: req.temperature, stream: true }),
+      body: JSON.stringify({ model: ep.model, ...(ep.api === 'anthropic' ? { system: req.messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n'), messages: req.messages.filter(m => m.role !== 'system') } : { messages: req.messages }), max_tokens: req.maxTokens, temperature: req.temperature, stream: true }),
       signal,
     });
   } catch (e) {
@@ -144,7 +151,7 @@ export async function* streamChat(ep: Endpoint, req: ChatRequest, signal?: Abort
   const type = res.headers.get('content-type') ?? '';
   if (!res.body || !type.includes('event-stream')) {
     // Some gateways ignore stream: true and answer with one JSON object.
-    const text = deltaOf(await res.text());
+    const text = ep.api === 'anthropic' ? anthropicDelta(await res.text()) : deltaOf(await res.text());
     if (text) yield text;
     return;
   }
@@ -156,7 +163,7 @@ export async function* streamChat(ep: Endpoint, req: ChatRequest, signal?: Abort
       const { done, value } = await reader.read();
       const payloads = done ? sse.flush() : sse.feed(dec.decode(value, { stream: true }));
       for (const p of payloads) {
-        const d = deltaOf(p);
+        const d = ep.api === 'anthropic' ? anthropicDelta(p) : deltaOf(p);
         if (d === null) return;
         if (d) yield d;
       }
@@ -221,4 +228,12 @@ export async function testEndpoint(ep: Endpoint, f: Fetch = fetch, now: () => nu
     const err = e instanceof AiError ? e : new AiError('other', (e as Error).message);
     return { ok: false, ms: Math.round(now() - t0), streamed: false, text, error: err.code, detail: err.detail };
   }
+}
+
+export function anthropicDelta(payload: string): string | null {
+  const j = JSON.parse(payload);
+  if (j.type === 'error') throw new AiError(classifyBody(j.error?.type ?? '', j.error?.message ?? ''), j.error?.message ?? '');
+  if (j.type === 'message_stop') return null;
+  if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') return j.delta.text;
+  return j.content?.filter((b: { type: string }) => b.type === 'text').map((b: { text: string }) => b.text).join('') ?? '';
 }

@@ -9,6 +9,7 @@ import { registry } from '../../core/registry';
 import { parseRoute } from '../../core/router';
 import { store } from '../../core/store';
 import type { Lesson, Task } from '../../core/types';
+import { maskSecrets } from './prompt';
 import type { TutorContext, TutorMode, VocabEntry } from './prompt';
 
 const MAX_LINES = 40;
@@ -27,8 +28,8 @@ export function listenTerminals(target: EventTarget = typeof document !== 'undef
 }
 
 export function pushTerminal(line: string, out: string, exit: number): void {
-  lines.push(`$ ${line}`);
-  for (const l of out.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').replace(/\r/g, '').split('\n')) if (l !== '') lines.push(l);
+  lines.push(`$ ${maskSecrets(line)}`);
+  for (const l of maskSecrets(out).replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').replace(/\r/g, '').split('\n')) if (l !== '') lines.push(l);
   if (exit !== 0) lines.push(`[exit ${exit}]`);
   if (lines.length > MAX_LINES) lines.splice(0, lines.length - MAX_LINES);
 }

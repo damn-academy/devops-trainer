@@ -124,6 +124,8 @@ const MODES: Record<Lang, Record<TutorMode, string>> = {
 };
 
 const SECRET_PATTERNS: [RegExp, string][] = [
+  [/\bAIza[A-Za-z0-9_-]{30,}\b/g, '«hidden»'],
+  [/\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi, 'Bearer «hidden»'],
   [/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----|$)/g, '«hidden»'],
   [/\b(sk|rk|pk)-[A-Za-z0-9_-]{16,}\b/g, '«hidden»'],
   [/\bsk-or-v1-[A-Za-z0-9]{20,}\b/g, '«hidden»'],

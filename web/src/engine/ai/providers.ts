@@ -1,13 +1,13 @@
-// Providers of "bring your own AI" (design 09 §4.1). Every one here speaks the
-// OpenAI-compatible Chat Completions API and allows requests straight from the
-// browser (CORS), so the learner's key never passes through our server.
+// Direct browser providers: OpenAI-compatible Chat Completions or Anthropic
+// Messages. The learner's key never passes through our server.
 
 import { bi, type Bi } from '../../core/i18n';
 
-export type ProviderId = 'deepseek' | 'openrouter' | 'openai' | 'custom' | 'ollama';
+export type ProviderId = 'deepseek' | 'openrouter' | 'openai' | 'custom' | 'ollama' | 'gemini' | 'anthropic';
 
 export interface ProviderPreset {
   id: ProviderId;
+  api?: 'anthropic';
   name: string;
   /** Base URL without the trailing /chat/completions. */
   baseUrl: string;
@@ -64,6 +64,18 @@ export const PROVIDERS: ProviderPreset[] = [
     keyUrl: 'https://platform.openai.com/api-keys',
     note: bi('Создайте для курса отдельный проектный ключ с лимитом расходов.', 'Create a separate project key with a spending limit for the course.'),
     cost: bi('≈ $0,5–2 за курс на малых моделях', '≈ $0.5–2 for the course on small models'),
+  },
+  {
+    id: 'gemini', name: 'Google Gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+    editableUrl: false, needsKey: true, defaultModel: 'gemini-2.5-flash', keyUrl: 'https://aistudio.google.com/apikey',
+    note: bi('Создайте ключ в Google AI Studio.', 'Create a key in Google AI Studio.'),
+    cost: bi('Стоимость зависит от модели.', 'Cost depends on the model.'),
+  },
+  {
+    id: 'anthropic', name: 'Anthropic', api: 'anthropic', baseUrl: 'https://api.anthropic.com/v1',
+    editableUrl: false, needsKey: true, defaultModel: 'claude-sonnet-4-5', keyUrl: 'https://platform.claude.com/settings/keys',
+    note: bi('Запросы идут из браузера с вашим ключом Anthropic.', 'Requests go from your browser with your Anthropic key.'),
+    cost: bi('Стоимость зависит от модели.', 'Cost depends on the model.'),
   },
   {
     id: 'ollama',
