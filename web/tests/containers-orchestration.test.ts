@@ -67,14 +67,25 @@ describe('orchestration: the numbers', () => {
     for (const event of ['fire', 'rollback']) expect(orchNumbers({ ...base, event, staleTemplate: true })).toEqual(orchNumbers({ ...base, event }));
   });
 
+  it('says sub-minute durations in seconds', () => {
+    const fire = m.run({ ...base }, new Set());
+    expect(fire[fire.length - 1].metrics?.vmDownS).toBe(65);
+    expect(fire.map((s) => s.caption.ru).join(' ')).toContain('Через 65 секунд работа хоста 1');
+    expect(fire.map((s) => s.caption.ru).join(' ')).not.toMatch(/\d,\d+ минут/);
+  });
+
   it('the counters under the last step are the totals', () => {
     for (const event of EVENTS)
       for (const orchestrator of [true, false]) {
         const t = orchNumbers({ ...base, event, orchestrator });
         const mx = last({ event, orchestrator });
         for (const w of ['bm', 'vm', 'ct'] as const) {
-          expect(mx[`${w}Down`]).toBe(t[w].down);
-          expect(mx[`${w}Manual`]).toBe(t[w].manual);
+          // Time under two minutes is counted in seconds, the rest in whole minutes.
+          for (const k of ['Down', 'Manual'] as const) {
+            const v = t[w][k === 'Down' ? 'down' : 'manual'];
+            if (v < 2 && !Number.isInteger(v)) expect(mx[`${w}${k}S`]).toBe(Math.round(v * 60));
+            else expect(mx[`${w}${k}`]).toBe(Math.round(v));
+          }
           expect(mx[`${w}Woken`]).toBe(t[w].woken);
           expect(mx[`${w}Risk`]).toBe(t[w].risk);
         }
