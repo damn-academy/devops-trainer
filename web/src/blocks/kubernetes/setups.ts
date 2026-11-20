@@ -262,13 +262,13 @@ export const EXAM_LIKE: TerminalSetup = {
   ext: { k8s: { manifests: [ns('exam'), `apiVersion: v1\nkind: Pod\nmetadata:\n  name: report\n  namespace: exam\nspec:\n  containers:\n  - name: report\n    image: trainer/web:1.O\n`] } },
 };
 
-/** NetworkPolicy lab: pay is open to everyone; two pods named client — shop/client (role=frontend) and dev/client (role=frontend, other namespace) — and a web Service in dev. */
+/** NetworkPolicy lab: pay is open to everyone; three pods named client, all role=frontend — shop/client, dev/client (other namespace) and pay/client (the policy's own namespace, where the OR form lets it in) — and a web Service in dev. */
 const labelled = (namespace: string, labels: Record<string, string>) => client(namespace).replace('    app: client\n', `    app: client\n${Object.entries(labels).map(([k, v]) => `    ${k}: ${v}\n`).join('')}`);
 export const NETPOL_LAB: TerminalSetup = {
   hostname: 'laptop',
   ext: {
     k8s: {
-      manifests: [ns('shop'), ns('pay'), ns('dev'), deploy('pay', 'pay', 2, 'trainer/web:1.0', { app: 'pay' }), svc('pay', 'pay', { app: 'pay' }), deploy('web', 'dev', 1, 'trainer/web:1.0', { app: 'web' }), svc('web', 'dev', { app: 'web' }), labelled('shop', { role: 'frontend' }), labelled('dev', { role: 'frontend' })],
+      manifests: [ns('shop'), ns('pay'), ns('dev'), deploy('pay', 'pay', 2, 'trainer/web:1.0', { app: 'pay' }), svc('pay', 'pay', { app: 'pay' }), deploy('web', 'dev', 1, 'trainer/web:1.0', { app: 'web' }), svc('web', 'dev', { app: 'web' }), labelled('shop', { role: 'frontend' }), labelled('dev', { role: 'frontend' }), labelled('pay', { role: 'frontend' })],
     },
   },
 };

@@ -42,9 +42,9 @@ const diagram = {
     box('api', 'kube-apiserver', 'cp', 'hex', [370, 30, 220, 56], 'server', bi('API-сервер хранит объекты Lease, Node и поды, но сам ничего не решает. Решения принимают контроллеры, а API-сервер их только записывает.', 'Stores Leases, Nodes and pods; it decides nothing.'), bi('Работает на управляющем узле.', 'Runs on the control-plane node.'), { doc: D.apiserver }),
     box('rs', bi('Контроллер ReplicaSet', 'ReplicaSet controller'), 'cp', 'hex', [700, 30, 230, 56], 'process', bi('Видит, что готовых подов меньше, чем нужно (поды, помеченные к удалению, он не считает), и создаёт новые.', 'Sees fewer pods than desired (pods marked for deletion do not count) and creates new ones.'), CM, { see: 'kubectl get rs web', doc: D.rs }),
     box('lease', bi('Lease узла worker-2', 'Lease of worker-2'), 'obj', 'doc', [370, 140, 220, 74], 'file', bi('Объект Lease служит отметкой о том, что узел жив. Он лежит в namespace kube-node-lease, и kubelet каждые 10 секунд обновляет в нём время renewTime. Это и есть сердцебиение узла.', 'An object in kube-node-lease whose renewTime the kubelet updates every 10 s: the node’s heartbeat.'), bi('Продлевает kubelet узла worker-2.', 'Renewed by the worker-2 kubelet.'), { see: 'kubectl get lease -n kube-node-lease', doc: D.nodes, sub: 'renewed 0s ago' }),
-    box('w1', 'worker-1', 'node', 'rack', [40, 290, 260, 110], 'server', bi('Исправный узел, на котором работает под web-a.', 'A healthy node running web-a.'), NODE, { see: 'kubectl get pods -o wide', doc: D.nodes, sub: 'web-a Running' }),
+    box('w1', 'cp-1', 'node', 'rack', [40, 290, 260, 110], 'server', bi('Исправный узел, на котором работает под web-a.', 'A healthy node running web-a.'), NODE, { see: 'kubectl get pods -o wide', doc: D.nodes, sub: 'web-a Running' }),
     box('w2', 'worker-2', 'node', 'rack', [350, 290, 260, 110], 'server', bi('Узел, у которого выключилось питание. Его процессы остановились сразу, но кластер узнаёт об этом не сразу, а только по молчанию kubelet.', 'The node that lost power: its processes stopped at once, but the cluster learns of it only from the kubelet’s silence.'), NODE, { see: 'kubectl describe node worker-2', doc: D.nodes, sub: 'web-b Running' }),
-    box('w3', 'worker-3', 'node', 'rack', [660, 290, 260, 110], 'server', bi('Исправный узел, на котором работает под web-c. На этот узел планировщик поставит замену.', 'A healthy node; the replacement lands here.'), NODE, { doc: D.nodes, sub: 'web-c Running' }),
+    box('w3', 'worker-1', 'node', 'rack', [660, 290, 260, 110], 'server', bi('Исправный узел, на котором работает под web-c. На этот узел планировщик поставит замену.', 'A healthy node; the replacement lands here.'), NODE, { doc: D.nodes, sub: 'web-c Running' }),
   ],
   edges: [
     edge('e-renew', 'w2', 'lease', bi('продление каждые 10 с', 'renewal every 10 s'), bi('Пока kubelet продлевает Lease, кластер считает узел живым.', 'While the kubelet renews the Lease, the node is alive.'), bi('Продлевает kubelet.', 'The kubelet.')),
@@ -92,7 +92,6 @@ export const nodeDownModel = defineModel<P>({
       step: 10,
       default: 50,
       near: 'lease',
-      levels: ['intermediate', 'experienced'],
       group: bi('Таймеры кластера', 'Cluster timers'),
       predict: {
         prompt: bi('Вы меняете срок, после которого молчащий узел помечают недоступным. Сколько запросов теперь уйдёт на выключенный узел по сравнению с прошлым разом?', 'You change the grace period. How many requests now go to the dead node compared with before?'),
@@ -121,7 +120,7 @@ export const nodeDownModel = defineModel<P>({
         prompt: bi('Узел worker-2 снова включили в выбранный момент. Где после этого будет работать замена пода web-b?', 'worker-2 comes back at the chosen moment. Where will web-b’s replacement run?'),
         options: [
           { id: 'stay', text: bi('Переезда не было, и web-b снова работает на worker-2', 'There was no move: web-b runs on worker-2 again') },
-          { id: 'moved', text: bi('Под уже переехал на worker-3, а старый kubelet остановит сам', 'It has moved to worker-3; the kubelet stops the old one') },
+          { id: 'moved', text: bi('Под уже переехал на worker-1, а старый kubelet остановит сам', 'It has moved to worker-1; the kubelet stops the old one') },
         ],
         resolve: (_p, n) => (n.some((s) => s.id === 'evict') ? 'moved' : 'stay'),
       },
@@ -234,11 +233,11 @@ export const nodeDownModel = defineModel<P>({
     s.push({
       id: 'replace',
       label: `t = ${evictAt + 5}`,
-      caption: bi('Контроллер ReplicaSet не считает поды, помеченные к удалению, видит, что готовых подов два вместо трёх, и создаёт замену web-d. Планировщик ставит её на worker-3, потому что на недоступный узел ставить нельзя, и через несколько секунд под готов.', 'The ReplicaSet controller creates web-d; the scheduler puts it on worker-3, and it is ready seconds later.'),
+      caption: bi('Контроллер ReplicaSet не считает поды, помеченные к удалению, видит, что готовых подов два вместо трёх, и создаёт замену web-d. Планировщик ставит её на worker-1, потому что на недоступный узел ставить нельзя, и через несколько секунд под готов.', 'The ReplicaSet controller creates web-d; the scheduler puts it on worker-1, and it is ready seconds later.'),
       focus: ['rs', 'e-create'],
       reveal: ['rs', 'e-create'],
       tokens: [{ edge: 'e-create', label: 'web-d' }],
-      say: { rs: bi('Контроллер ReplicaSet создаёт замену web-d взамен пода на выключенном узле.', 'The ReplicaSet controller creates web-d.') },
+      say: { rs: bi('Контроллер ReplicaSet создаёт под web-d вместо пода на выключенном узле.', 'The ReplicaSet controller creates web-d.') },
       values: { w3: 'web-c, web-d Running' },
       states: { w3: 'ok' },
       metrics: { t: evictAt + 5, lost: n.lost, ready: 3 },
@@ -265,7 +264,7 @@ export const nodeDownModel = defineModel<P>({
       case 'grace':
         return fmt(bi('Срок ожидания теперь {g} с, и на выключенный узел ушло {b} запросов вместо {a}: пока узел не помечен, на него идёт треть запросов.', 'Grace {g} s: lost {a} → {b}; until marked, a third of the requests goes to it.'), { g: b.grace as number, a: metric(prev, 'lost'), b: metric(next, 'lost') });
       case 'toleration':
-        return fmt(bi('Под теперь ждёт {t} с, и замена появляется на {r}-й секунде. Чем короче ожидание, тем быстрее переезд, но тем чаще поды переезжают зря после короткого сбоя сети.', 'tolerationSeconds {t}: the replacement appears at {r} s. Shorter means faster moves, and more needless ones.'), { t: b.toleration as number, r: metric(next, 't') });
+        return fmt(bi('Под теперь ждёт {t} с, и замена появляется на {r}-й секунде. Чем короче ожидание, тем быстрее переезд, но тем чаще поды переезжают зря после короткого сбоя сети. Число потерянных запросов при этом не меняется: через {g} с узел помечают недоступным, под выпадает из EndpointSlice, и запросы на него больше не идут.', 'tolerationSeconds {t}: the replacement appears at {r} s. Shorter means faster moves, and more needless ones. The lost requests do not change: after {g} s the node is marked unreachable, the pod drops out of the EndpointSlice, and no more requests go to it.'), { t: b.toleration as number, r: metric(next, 't'), g: b.grace as number });
       case 'back':
         return b.back === 'never'
           ? bi('Узел не включают, и поды переезжают по таймерам.', 'The node never returns: the pods move on the timers.')

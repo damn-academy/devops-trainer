@@ -337,7 +337,7 @@ export const rollingModel = defineModel<P>({
           caption:
             p.strategy === 'Recreate'
               ? bi('При способе Recreate контроллер сначала убирает все старые поды разом. С этого момента ни один под не отвечает пользователям.', 'With Recreate all old pods go at once; from now on no pod answers.')
-              : fmt(bi('Контроллер уменьшает число подов старого ReplicaSet с {f} до {t}. Готовыми отвечать остаются {a}, и меньше быть не может, потому что граница равна replicas минус maxUnavailable.', 'The controller scales the old ReplicaSet {f} → {t}; {a} ready, the fewest replicas − maxUnavailable allows.'), { f: a.from!, t: a.to!, a: a.available }),
+              : fmt(bi(a.available > R - p.unavailable ? 'Контроллер уменьшает число подов старого ReplicaSet с {f} до {t}. Готовыми отвечать остаются {a}, то есть больше, чем нижняя граница {lo}, равная replicas минус maxUnavailable.' : 'Контроллер уменьшает число подов старого ReplicaSet с {f} до {t}. Готовыми отвечать остаются {a}, и меньше быть не может, потому что нижняя граница {lo} равна replicas минус maxUnavailable.', a.available > R - p.unavailable ? 'The controller scales the old ReplicaSet {f} → {t}; {a} stay ready, more than the lower bound {lo}, that is, replicas − maxUnavailable.' : 'The controller scales the old ReplicaSet {f} → {t}; {a} ready, the fewest replicas − maxUnavailable allows.'), { f: a.from!, t: a.to!, a: a.available, lo: Math.max(0, R - p.unavailable) }),
           focus: ['ctrl', 'e-old', 'old'],
           reveal: ['e-old'],
           tokens: [{ edge: 'e-old', label: `replicas ${a.from} → ${a.to}` }],
@@ -367,7 +367,7 @@ export const rollingModel = defineModel<P>({
         s.push({
           id: `a${i}-stuck`,
           label: bi('застряла', 'stuck'),
-          caption: bi('Контейнеры новых подов аварийно завершаются сразу после запуска, поды переходят в состояние CrashLoopBackOff и не становятся готовыми. Контроллер ждёт, потому что убирать старые поды дальше ему нельзя, потому что тогда готовых подов стало бы меньше, чем разрешает maxUnavailable.', 'New pods crash, go into CrashLoopBackOff and never become ready. The controller waits: removing more old pods would break maxUnavailable.'),
+          caption: bi('Контейнеры новых подов аварийно завершаются сразу после запуска, поды переходят в состояние CrashLoopBackOff и не становятся готовыми. Контроллер ждёт: если убрать ещё один старый под, готовых станет меньше, чем разрешает maxUnavailable. Поэтому старые поды, которые ещё остались, продолжают отвечать пользователям.', 'New pods crash, go into CrashLoopBackOff and never become ready. The controller waits: removing more old pods would break maxUnavailable.'),
           focus: ['new'],
           say: { new: bi('Контейнеры новых подов аварийно завершаются сразу после запуска, поэтому поды не становятся готовыми.', 'New pods crash on start and never become ready.') },
           values: vals(a),
