@@ -116,7 +116,7 @@ export const nat: Lesson = {
         },
         {
           id: 'counters',
-          prompt: bi('Посмотрите таблицу nat со счётчиками пакетов. У правил, через которые прошли соединения, счётчики уже не нулевые.', 'Look at the nat table with packet counters: the rules the connections went through are no longer zero.'),
+          prompt: bi('Посмотрите таблицу nat вместе со счётчиками пакетов. В первых двух столбцах у каждого правила стоит, сколько пакетов и байтов через него прошло, и по ним видно, срабатывает ли правило вообще. Задание выполнено, когда в выводе появится цепочка POSTROUTING.', 'Look at the nat table together with the packet counters. The first two columns of each rule show how many packets and bytes went through it, which tells you whether the rule fires at all. The task is done when the POSTROUTING chain appears in the output.'),
           check: { stdout: /Chain POSTROUTING \(policy ACCEPT/ },
           chips: 'iptables -t nat -L -n -v',
           hints: { H1: bi('Флаг -L выводит список правил, -n отключает поиск имён, а -v добавляет счётчики.', '-L lists, -n skips names, -v adds counters.') },
@@ -216,7 +216,10 @@ export const http: Lesson = {
           check: { stdout: /< HTTP\/1\.1 200 OK/ },
           chips: 'curl -v http://10.0.0.2:8080/',
           docRef: { page: 'man/curl.1', anchor: 'OPTIONS', line: '-v, --verbose' },
-          hints: { H1: bi('Строки со знаком «>» показывают, что отправил curl, а строки со знаком «<» показывают, что ответил сервер.', '“>” lines are what curl sent, “<” what the server answered.') },
+          hints: {
+            H1: bi('Строки со знаком «>» показывают, что отправил curl, а строки со знаком «<» показывают, что ответил сервер.', '“>” lines are what curl sent, “<” what the server answered.'),
+            H2: bi('Нужный флаг описан в разделе OPTIONS страницы curl(1) первым, а его описание начинается словами «Makes curl verbose», то есть «делает вывод curl подробным». Если найти флаг не получается, наберите команду `curl -v http://10.0.0.2:8080/`.', 'The flag is the first one in the OPTIONS section of curl(1); its description starts with “Makes curl verbose”. If you cannot find the flag, type `curl -v http://10.0.0.2:8080/`.'),
+          },
         },
         {
           id: 'byhand',
@@ -225,7 +228,7 @@ export const http: Lesson = {
           chips: 'echo -e "GET / HTTP/1.1\\r\\nHost: srv\\r\\n\\r\\n" | nc 10.0.0.2 8080',
           hints: {
             H1: bi('Команда nc отправит на сервер всё, что получит на вход.', 'nc sends the server everything it gets on its input.'),
-            H2: bi('Строки HTTP разделяются символами \\r\\n, а заголовки заканчиваются пустой строкой. Команда echo -e понимает такие последовательности.', 'HTTP lines are separated by \\r\\n, and the headers end with an empty line. echo -e understands such sequences.'),
+            H2: bi('Строки HTTP разделяются символами \\r\\n, а заголовки заканчиваются пустой строкой. Команда printf понимает такие последовательности, и запрос целиком выглядит так: `printf \'GET / HTTP/1.1\\r\\nHost: 10.0.0.2\\r\\n\\r\\n\' | nc 10.0.0.2 8080`.', 'HTTP lines are separated by \\r\\n, and the headers end with an empty line. printf understands such sequences, and the whole request is `printf \'GET / HTTP/1.1\\r\\nHost: 10.0.0.2\\r\\n\\r\\n\' | nc 10.0.0.2 8080`.'),
           },
         },
         {
@@ -233,7 +236,7 @@ export const http: Lesson = {
           prompt: bi('Запросите несуществующий путь http://10.0.0.2:8080/nope вместе с заголовками ответа и посмотрите на код.', 'Request a path that does not exist, http://10.0.0.2:8080/nope, with the answer headers, and look at the code.'),
           check: { stdout: /HTTP\/1\.1 404 Not Found/ },
           chips: 'curl -i http://10.0.0.2:8080/nope',
-          hints: { H1: bi('Флаг -i добавляет к выводу заголовки ответа.', '-i adds the answer headers to the output.') },
+          hints: { H1: bi('Флаг -i добавляет к выводу заголовки ответа.', '-i adds the answer headers to the output.'), H2: bi('Если флаг не вспоминается, наберите команду `curl -i http://10.0.0.2:8080/nope`.', 'If the flag does not come to mind, type `curl -i http://10.0.0.2:8080/nope`.') },
         },
       ],
     },
@@ -436,8 +439,20 @@ export const proxy: Lesson = {
       step: 'explain',
       title: bi('Обратный прокси и балансировка', 'The reverse proxy and load balancing'),
       body: bi(
-        'Перед приложениями почти всегда стоит [[net.reverse-proxy|обратный прокси]], чаще всего nginx. Клиент подключается к прокси, а прокси передаёт запрос дальше, приложению, и возвращает клиенту ответ. Прямой прокси устроен наоборот: он стоит на стороне клиента и ходит в интернет от его имени. Сервер, которому прокси передаёт запрос, называется [[net.upstream|upstream]], а в nginx группа таких серверов описывается блоком `upstream`:\n\n```\nupstream backend {\n    server 10.0.2.21:8080;\n    server 10.0.2.22:8080;\n}\nserver {\n    listen 80;\n    location / {\n        proxy_pass http://backend;\n    }\n}\n```\n\nПрокси, который распределяет запросы по нескольким серверам, называют [[net.lb|балансировщиком нагрузки]]. Балансировщик уровня L4 видит только адреса и порты; так работает HAProxy в режиме `mode tcp` и TCP-балансировщик облака. Балансировщик уровня L7 видит HTTP целиком и может, например, отправлять запросы к /api в одно место, а к /static в другое. По умолчанию nginx раздаёт запросы серверам по очереди (round robin). Адрес клиента приложению передают в заголовке `X-Forwarded-For`, который nginx добавляет по строке `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for` в конфигурации, иначе приложение увидело бы адрес прокси вместо адреса клиента.\n\nСеть доставки контента, [[net.cdn|CDN]], хранит те самые копии сайта поблизости, о которых шла речь в первом уроке. Она состоит из прокси, расставленных по городам: имя сайта в DNS указывает на ближайший узел, и узел отдаёт страницу из своего кэша (HIT), а если страницы там нет или она устарела согласно заголовку `Cache-Control`, запрашивает её у основного сервера, который называют origin (MISS).\n\nУ прокси есть таймеры. У nginx параметр `proxy_connect_timeout` задаёт, сколько ждать подключения к серверу upstream, а `proxy_read_timeout` задаёт, сколько ждать его ответа. Оба по умолчанию равны 60 секундам.',
-        'In front of applications there is almost always a [[net.reverse-proxy|reverse proxy]] — most often nginx. The client connects to it, and it passes the request on to the application and returns the answer. (A forward proxy is the opposite: it sits by the client and goes to the internet on its behalf.) Whatever the proxy passes the request to is called the [[net.upstream|upstream]], and in nginx a group of such servers is described by an `upstream` block:\n\n```\nupstream backend {\n    server 10.0.2.21:8080;\n    server 10.0.2.22:8080;\n}\nserver {\n    listen 80;\n    location / {\n        proxy_pass http://backend;\n    }\n}\n```\n\nA proxy that spreads requests over several servers is a [[net.lb|load balancer]]. There are L4 load balancers: they see only addresses and ports (HAProxy in `mode tcp`, a cloud’s TCP load balancer). And L7 ones: they see all of HTTP and can send /api to one place and /static to another. By default nginx hands out requests in turn (round robin). The client’s address reaches the application in an `X-Forwarded-For` header, which nginx adds when the configuration has `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for` — otherwise the application would see the proxy’s address instead of the client’s.\n\nA [[net.cdn|CDN]] is the copies of the site nearby from the first lesson. It is a network of proxies placed in cities: the site’s DNS name points to the nearest node, which serves the page from its cache (HIT), and if it is missing or stale by `Cache-Control`, goes to the main server, the origin (MISS).\n\nProxies have timers. nginx has `proxy_connect_timeout` — how long to wait for a connection to the upstream — and `proxy_read_timeout` — how long to wait for the answer. Both default to 60 seconds.',
+        'Перед приложениями почти всегда стоит [[net.reverse-proxy|обратный прокси]], чаще всего nginx. Клиент подключается к прокси, а прокси передаёт запрос дальше, приложению, и возвращает клиенту ответ. Прямой прокси устроен наоборот: он стоит на стороне клиента и ходит в интернет от его имени. Сервер, которому прокси передаёт запрос, называется [[net.upstream|upstream]], а в nginx группа таких серверов описывается блоком `upstream`:\n\n```\nupstream backend {\n    server 10.0.2.21:8080;\n    server 10.0.2.22:8080;\n}\nserver {\n    listen 80;\n    location / {\n        proxy_pass http://backend;\n    }\n}\n```\n\nПрокси, который распределяет запросы по нескольким серверам, называют [[net.lb|балансировщиком нагрузки]]. Номера уровней здесь взяты из модели OSI, которую вы разбирали в уроке «Конверты». Балансировщик уровня L4, то есть транспортного, видит только адреса и порты, а балансировщик уровня L7, то есть уровня приложений, видит HTTP целиком и может, например, отправлять запросы к /api в одно место, а к /static в другое. По умолчанию nginx раздаёт запросы серверам по очереди. Поскольку к приложению подключается прокси, а не клиент, приложение видит адрес прокси. Поэтому прокси сообщает приложению адрес настоящего клиента в отдельном заголовке запроса, `X-Forwarded-For`.\n\nСеть доставки контента, [[net.cdn|CDN]], хранит те самые копии сайта поблизости, о которых шла речь в первом уроке. Она состоит из прокси, расставленных по городам: имя сайта в DNS указывает на ближайший узел, и узел отдаёт страницу из своего кэша (HIT), а если страницы там нет или она устарела согласно заголовку `Cache-Control`, запрашивает её у основного сервера, который называют origin (MISS).\n\nУ прокси есть таймеры. У nginx параметр `proxy_connect_timeout` задаёт, сколько ждать подключения к серверу upstream, а `proxy_read_timeout` задаёт, сколько ждать его ответа. Оба по умолчанию равны 60 секундам.',
+        'In front of applications there is almost always a [[net.reverse-proxy|reverse proxy]] — most often nginx. The client connects to it, and it passes the request on to the application and returns the answer. (A forward proxy is the opposite: it sits by the client and goes to the internet on its behalf.) Whatever the proxy passes the request to is called the [[net.upstream|upstream]], and in nginx a group of such servers is described by an `upstream` block:\n\n```\nupstream backend {\n    server 10.0.2.21:8080;\n    server 10.0.2.22:8080;\n}\nserver {\n    listen 80;\n    location / {\n        proxy_pass http://backend;\n    }\n}\n```\n\nA proxy that spreads requests over several servers is a [[net.lb|load balancer]]. An L4 load balancer sees only addresses and ports, while an L7 one sees all of HTTP and can, for example, send /api to one place and /static to another. By default nginx hands out requests in turn. Since it is the proxy, not the client, that connects to the application, the application sees the proxy’s address. So the proxy reports the real client’s address to the application in a separate request header, `X-Forwarded-For`.\n\nA [[net.cdn|CDN]] is the copies of the site nearby from the first lesson. It is a network of proxies placed in cities: the site’s DNS name points to the nearest node, which serves the page from its cache (HIT), and if it is missing or stale by `Cache-Control`, goes to the main server, the origin (MISS).\n\nProxies have timers. nginx has `proxy_connect_timeout` — how long to wait for a connection to the upstream — and `proxy_read_timeout` — how long to wait for the answer. Both default to 60 seconds.',
+      ),
+    },
+    {
+      id: 'lb-config',
+      kind: 'callout',
+      tone: 'note',
+      step: 'explain',
+      levels: ['intermediate', 'experienced'],
+      title: bi('Балансировщики L4 и L7 и заголовок X-Forwarded-For в конфигурации', 'L4 and L7 balancers and X-Forwarded-For in the configuration'),
+      body: bi(
+        'Балансировщиком уровня L4 работает, например, HAProxy в режиме `mode tcp` и TCP-балансировщик облака, а nginx с `proxy_pass` работает на уровне L7. Раздачу запросов по очереди называют round robin, и в блоке `upstream` её можно заменить директивами `least_conn` или `ip_hash`. Заголовок с адресом клиента nginx добавляет такой строкой в блоке `location`:\n\n```\nproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n```\n\nПеременная `$proxy_add_x_forwarded_for` дописывает адрес клиента к тому заголовку, который уже пришёл, поэтому за цепочкой из нескольких прокси приложение видит весь путь запроса.',
+        'An L4 balancer is, for example, HAProxy in `mode tcp` or a cloud’s TCP load balancer, while nginx with `proxy_pass` works at L7. Handing out requests in turn is called round robin; in the `upstream` block it can be replaced with `least_conn` or `ip_hash`. nginx adds the client address header with this line in the `location` block:\n\n```\nproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n```\n\nThe `$proxy_add_x_forwarded_for` variable appends the client address to the header that already came in, so behind a chain of several proxies the application sees the whole path of the request.',
       ),
     },
     {
@@ -504,7 +519,7 @@ export const proxy: Lesson = {
           docRef: { page: 'web/nginx.org/proxy_read_timeout', anchor: 'CONTEXT' },
           hints: {
             H1: bi('Директиву можно добавить в конец файла, потому что файл подключается внутри блока http, и настройка будет действовать для всех location.', 'The directive can be appended to the end of the file: it is included inside the http block, and every location inherits the setting.'),
-            H2: bi('После правки выполните nginx -t, чтобы проверить конфигурацию, а затем nginx -s reload.', 'After editing: nginx -t (the test), then nginx -s reload.'),
+            H2: bi('Строку проще всего дописать в конец файла командой echo с двумя знаками «>», а потом проверить конфигурацию и перечитать её: `echo \'proxy_read_timeout 90s;\' >> /etc/nginx/conf.d/shop.conf && nginx -t && nginx -s reload`.', 'The easiest way is to append the line with echo and two “>” signs, then test and reload the configuration: `echo \'proxy_read_timeout 90s;\' >> /etc/nginx/conf.d/shop.conf && nginx -t && nginx -s reload`.'),
           },
         },
       ],
@@ -648,7 +663,7 @@ export const troubleshooting: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: lab('lb', 'proxy', { wrongPort: true }, [{ id: 'r', kind: 'http', from: 'client', to: 'http://10.0.0.1/' }]),
-      intro: bi('Второй инцидент. После выкладки новой версии все страницы сайта отвечают ошибкой 502. Вы работаете на балансировщике lb, а приложение запущено на единственном сервере app1 с адресом 10.0.2.21.', 'Incident 2. “After the deploy — 502 on every page.” You are on the load balancer lb; there is one backend, app1 (10.0.2.21).'),
+      intro: bi('Второй инцидент. После выкладки новой версии все страницы сайта отвечают ошибкой 502. Вы работаете на балансировщике lb, а приложение запущено на единственном сервере app1 с адресом 10.0.2.21. Войти на app1 отсюда нельзя, поэтому порт приложения придётся искать снаружи: по журналу nginx и проверкой портов командой nc, по одному порту за раз.', 'Incident 2. “After the deploy — 502 on every page.” You are on the load balancer lb; there is one backend, app1 (10.0.2.21). You cannot log in to app1 from here, so the application’s port has to be found from outside: from the nginx log and by checking ports with nc, one port at a time.'),
       tasks: [
         {
           id: 'port',
@@ -662,7 +677,7 @@ export const troubleshooting: Lesson = {
         },
         {
           id: 'fix',
-          prompt: bi('Исправьте порт в блоке upstream файла /etc/nginx/conf.d/shop.conf, проверьте конфигурацию и заставьте nginx перечитать её.', 'Fix the upstream in /etc/nginx/conf.d/shop.conf to the right port, test and reload the configuration.'),
+          prompt: bi('Исправьте порт в блоке upstream файла /etc/nginx/conf.d/shop.conf, проверьте конфигурацию и заставьте nginx перечитать её. Текстового редактора на этой машине нет, но файл можно поправить командой `sed -i \'s/старое/новое/\' файл`: она находит в файле первое вхождение старого текста в каждой строке и заменяет его новым прямо на месте. Задание выполнено, когда сайт снова отвечает кодом 200.', 'Fix the upstream in /etc/nginx/conf.d/shop.conf to the right port, test and reload the configuration. There is no text editor on this machine, but the file can be fixed with `sed -i \'s/old/new/\' file`: it finds the old text in each line and replaces it with the new one in place. The task is done when the site answers 200 again.'),
           check: { when: 'reach.r.status=200' },
           chips: "sed -i 's/8080/8081/' /etc/nginx/conf.d/shop.conf && nginx -t && nginx -s reload",
           hints: {

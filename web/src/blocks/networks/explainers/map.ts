@@ -77,7 +77,7 @@ export const mapModel = defineModel<P>({
       edge('e-fiber', 'router', 'isp', b('оптика 1 Гбит/с', 'fibre 1 Gbit/s'), card(['Кабель от дома до узла провайдера. На этом кабеле кончается ваша сеть и начинается сеть провайдера.', 'The cable from the building to the provider’s node. Your network ends here and someone else’s begins.'], ['Кабель прокладывает провайдер.', 'The provider.'])),
       edge('e-peer', 'isp', 'ixp', b('пиринг', 'peering'), card(['Прямой обмен трафиком между соседними сетями через точку обмена. По протоколу BGP каждая сеть сообщает соседям, какие адреса находятся у неё.', 'Direct traffic exchange between neighbouring networks through an IXP. Over BGP each network tells its neighbours which addresses are in it.'], ['О пиринге договариваются инженеры двух сетей.', 'Engineers of two networks, by mutual agreement.'], undefined, DOC.rfc4271), { via: [[432, 116]], labelAt: 0.42 }),
       edge('e-transit', 'isp', 'transit', b('транзит за плату', 'paid transit'), card(['Если прямого соседства нет, провайдер платит транзитному оператору, и трафик идёт длинным путём.', 'Without a direct neighbour the provider pays a transit carrier, and traffic takes the long way.'], ['Транзит покупают по договору провайдера с оператором.', 'A contract between the provider and the carrier.']), { via: [[432, 336]], labelAt: 0.42 }),
-      edge('e-ixp-cable', 'ixp', 'cable', b('анонс BGP', 'BGP announcement'), card(['Объявление BGP от сети сайта: «адреса 198.51.100.0/24 доступны через меня». Соседние сети поверили этому объявлению и отправляют пакеты к сайту этой дорогой.', 'A BGP announcement: “network 198.51.100.0/24 is reachable through me”. Neighbours believed it and send packets this way.'], ['Объявления рассылают роутеры на границах сетей.', 'Routers at the edges of networks (BGP).'], undefined, DOC.rfc4271), { via: [[776, 116]], labelAt: 0.4 }),
+      edge('e-ixp-cable', 'ixp', 'cable', b('к сети сайта', 'to the site’s network'), card(['Объявление BGP от сети сайта: «адреса 198.51.100.0/24 доступны через меня». Соседние сети поверили этому объявлению и отправляют пакеты к сайту этой дорогой.', 'A BGP announcement: “network 198.51.100.0/24 is reachable through me”. Neighbours believed it and send packets this way.'], ['Объявления рассылают роутеры на границах сетей.', 'Routers at the edges of networks (BGP).'], undefined, DOC.rfc4271), { via: [[776, 116]], labelAt: 0.4 }),
       edge('e-tr-cable', 'transit', 'cable', b('через AS 64502', 'via AS 64502'), card(['Путь через транзитного оператора. На нём на одну автономную систему больше, а сам путь длиннее на несколько тысяч километров.', 'The path through the transit carrier: one more autonomous system and a few thousand kilometres longer.'], ['Этот путь выбирает BGP, когда короткого пути нет.', 'BGP chooses this path when there is no shorter one.']), { via: [[776, 336]], labelAt: 0.4 }),
       edge('e-cable', 'cable', 'dc', b('5 мкс на км', '5 µs per km'), card(['Задержка в кабеле равна его длине в километрах, умноженной на 5 микросекунд. От Москвы до Франкфурта около 2 000 километров, это 10 миллисекунд в одну сторону, а от Москвы до Нью-Йорка около 7 500 километров, это 37 миллисекунд.', 'Propagation delay: distance × 5 µs. Moscow to Frankfurt is about 2,000 km, 10 ms one way; Moscow to New York about 7,500 km, 37 ms.'], ['Эту задержку задаёт физика, и никто не может её уменьшить.', 'Physics.'])),
       edge('e-cdn', 'isp', 'cdn', b('копия рядом', 'copy nearby'), card(['Узел CDN стоит в сети провайдера или на ближайшей точке обмена, поэтому путь до него занимает пару миллисекунд.', 'The CDN node sits in the provider’s network or at the nearest exchange point: a couple of milliseconds away.'], ['Узел ставит компания CDN.', 'The CDN.']), { via: [[384, 64]], labelAt: 0.35 }),
@@ -196,7 +196,7 @@ export const mapModel = defineModel<P>({
         label: b('страна', 'country'),
         caption: b('Сайт находится в другой сети, AS 64501. Обе сети подключены к точке обмена трафиком и передают пакеты друг другу напрямую. Какие адреса находятся в какой сети, они заранее сообщили друг другу по протоколу BGP.', 'The site is in another network, AS 64501. Both networks are connected to an exchange point and swap packets directly. They agreed over BGP which addresses belong to whom.'),
         focus: ['isp', 'e-peer', 'ixp'],
-        tokens: [{ edge: 'e-peer', label: b('запрос', 'request') }, { edge: 'e-ixp-cable', reverse: true, label: '198.51.100.0/24' }],
+        tokens: [{ edge: 'e-peer', label: b('запрос', 'request') }, { edge: 'e-ixp-cable', reverse: true, label: b('анонс 198.51.100.0/24', 'announce 198.51.100.0/24') }],
         say: { isp: b('Провайдер знает из анонса BGP, что адреса сайта доступны через точку обмена, и отправляет пакет туда.', 'The provider knows from a BGP announcement that the site is reachable via the exchange point and sends the packet there.') },
         states: { ixp: 'on', 'e-peer': 'on', 'e-ixp-cable': 'on' },
         metrics: { rtt: Math.round((L.wifi + L.access + L.middle) * 20) / 10, ases },
@@ -214,7 +214,8 @@ export const mapModel = defineModel<P>({
           ? { transit: b('Транзитный оператор принимает пакеты к адресам сайта, но передать их ему некуда.', 'The transit carrier takes the packets for the site but has nowhere to send them.') }
           : { isp: b('Провайдер не видит прямого пути к сети сайта и отдаёт пакет транзитному оператору.', 'The provider sees no direct path to the site’s network and hands the packet to the transit carrier.') },
         states: { transit: leak ? 'err' : 'on', 'e-transit': 'on', 'e-tr-cable': leak ? 'hidden' : 'on' },
-        metrics: { rtt: Math.round((L.wifi + L.access + L.middle) * 20) / 10, ases },
+        // Lost packets have no round trip, so the counter is not shown at all.
+        metrics: leak ? { ases } : { rtt: Math.round((L.wifi + L.access + L.middle) * 20) / 10, ases },
         ...(leak
           ? {
               broken: {
@@ -235,7 +236,7 @@ export const mapModel = defineModel<P>({
         focus: ['cable', 'e-cable'],
         say: { cable: b('Кабель перебит, и пакеты, отправленные в него, никуда не доходят.', 'The cable is cut, and packets sent into it go nowhere.') },
         states: { cable: 'err' },
-        metrics: { rtt: 0, ases },
+        metrics: { ases },
         broken: {
           at: 'cable',
           message: '$ ping -c 3 shop.example\nPING shop.example (198.51.100.20) 56(84) bytes of data.\nFrom 198.18.0.2 icmp_seq=1 Destination Net Unreachable\n\n--- shop.example ping statistics ---\n3 packets transmitted, 0 received, +1 errors, 100% packet loss',
@@ -276,7 +277,7 @@ export const mapModel = defineModel<P>({
       tokens: p.cdn ? [{ edge: 'e-cdn', label: 'app.css' }] : [{ edge: 'e-cable', label: 'app.css', reverse: true }],
       say: p.cdn ? { cdn: b('Узел CDN в вашем городе отдаёт копию файла стилей app.css.', 'The CDN node in your city serves its copy of app.css.') } : { dc: b('Сервер в дата-центре отправляет файл стилей app.css через океан.', 'The server in the data centre sends app.css across the ocean.') },
       states: p.cdn ? { cdn: 'on', 'e-cdn': 'on' } : {},
-      metrics: { rtt: L.rtt, cdn: p.cdn ? L.cdnRtt : 0, ases },
+      metrics: { rtt: L.rtt, ...(p.cdn ? { cdn: L.cdnRtt } : {}), ases },
     });
     steps.push({
       id: 'root',
@@ -286,7 +287,7 @@ export const mapModel = defineModel<P>({
       tokens: [{ edge: 'e-root', label: '. NS?' }],
       say: { root: b('Ближайший экземпляр корневого сервера DNS отвечает на вопрос провайдера.', 'The nearest root DNS instance answers the provider’s question.') },
       states: { root: 'on', 'e-root': 'on' },
-      metrics: { rtt: L.rtt, cdn: p.cdn ? L.cdnRtt : 0, ases },
+      metrics: { rtt: L.rtt, ...(p.cdn ? { cdn: L.cdnRtt } : {}), ases },
     });
     steps.push({
       id: 'whole',
@@ -296,7 +297,7 @@ export const mapModel = defineModel<P>({
         : b('Весь путь пройден: ваша сеть, сеть провайдера, транзитный оператор, подводный кабель и дата-центр. У каждого участка свой хозяин. В следующих уроках вы разберёте, что передаётся по этим линиям.', 'The whole path: your network → the provider’s network → transit → the cable → the data centre. Each part has its own owner. Next we go inside: what exactly travels along this line.'),
       focus: ['e-wifi', 'e-fiber', p.ixp ? 'e-peer' : 'e-transit', p.ixp ? 'e-ixp-cable' : 'e-tr-cable', 'e-cable'],
       states: { laptop: 'ok', dc: 'ok' },
-      metrics: { rtt: L.rtt, cdn: p.cdn ? L.cdnRtt : 0, ases },
+      metrics: { rtt: L.rtt, ...(p.cdn ? { cdn: L.cdnRtt } : {}), ases },
     });
     return steps;
   },

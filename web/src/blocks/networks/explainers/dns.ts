@@ -57,7 +57,7 @@ export const dnsModel = defineModel<P>({
     edges: [
       edge('q-app', 'app', 'stub', 'getaddrinfo()', card(['По этой линии программа вызывает функцию библиотеки, и в сеть при этом ничего не уходит.', 'A function call inside the process, not a network request.'], ['Функцию вызывает curl.', 'curl.'])),
       edge('q-hosts', 'stub', 'hosts', b('сначала файл', 'file first'), card(['Если имя записано в /etc/hosts, поиск на этом заканчивается, и в сеть ничего не уходит.', 'If the name is in /etc/hosts, that is it: nothing goes to the network.'], ['Порядок задаёт строка hosts: files dns в /etc/nsswitch.conf.', 'glibc, by /etc/nsswitch.conf (hosts: files dns).'])),
-      edge('q-res', 'stub', 'res', 'A? shop.example RD', card(['Библиотека отправляет датаграмму UDP на порт 53 сервера, записанного в resolv.conf. Флаг RD (recursion desired) означает просьбу «найди ответ за меня».', 'A UDP datagram to port 53 of the server from resolv.conf. The RD flag (recursion desired): “find it for me”.'], ['Вопрос отправляет системная библиотека.', 'The stub resolver.'], 'tcpdump -n port 53')),
+      edge('q-res', 'stub', 'res', 'A? shop.example', card(['Библиотека отправляет датаграмму UDP на порт 53 сервера, записанного в resolv.conf. Флаг RD (recursion desired) означает просьбу «найди ответ за меня».', 'A UDP datagram to port 53 of the server from resolv.conf. The RD flag (recursion desired): “find it for me”.'], ['Вопрос отправляет системная библиотека.', 'The stub resolver.'], 'tcpdump -n port 53')),
       edge('q-root', 'res', 'root', 'NS? example.', card(['С минимизацией QNAME (RFC 9156) резолвер спрашивает корневой сервер только о зоне example. и не раскрывает полное имя. Корневой сервер отвечает делегированием.', 'With QNAME minimisation (RFC 9156) the resolver asks the root only about example., without revealing the full name. The root answers with a delegation.'], ['Вопрос задаёт рекурсивный резолвер.', 'The recursive resolver.'], 'dig +trace shop.example', DOC.rfc9156), { via: [[360, 52]], labelAt: 0.55 }),
       edge('q-tld', 'res', 'tld', 'NS? shop.example.', card(['Сервер зоны example. отвечает, что за shop.example отвечает ns1.hosting.example с адресом 198.51.100.53.', 'The TLD answers: “ns1.hosting.example answers for shop.example; its address is 198.51.100.53”.'], ['Вопрос задаёт рекурсивный резолвер.', 'The recursive resolver.']), { via: [[480, 168]], labelAt: 0.6 }),
       edge('q-auth', 'res', 'auth', 'A? shop.example.', card(['По этой линии резолвер спрашивает авторитативный сервер, и тот отвечает записью A 198.51.100.20 с TTL 300, то есть ответ можно хранить 300 секунд.', 'The question to the authoritative server. The answer: A 198.51.100.20, TTL 300 — the number of seconds the answer may be kept.'], ['Вопрос задаёт рекурсивный резолвер.', 'The recursive resolver.']), { via: [[480, 284]], labelAt: 0.9 }),
@@ -76,12 +76,13 @@ export const dnsModel = defineModel<P>({
       default: 120,
       near: 'res',
       predict: {
-        prompt: b('Запись хранится 300 секунд (TTL 300), а второй запрос приходит через 400 секунд после первого. Сколько вопросов другим серверам задаст резолвер?', 'The record’s TTL is 300 s. The second request comes after 400 s. How many questions will the resolver ask?'),
+        prompt: b('Сравните время второго запроса, которое вы только что выставили, со сроком хранения записи A (по умолчанию он равен 300 секундам). Записи о том, какие серверы отвечают за зоны, хранятся сутки и дольше. Сколько вопросов другим серверам задаст резолвер при втором запросе?', 'Compare the time of the second request you have just set with the lifetime of the A record (300 seconds by default). The records naming the servers for each zone are kept for a day and longer. How many questions to other servers will the resolver ask on the second request?'),
         options: [
-          { id: 'zero', text: b('Ни одного, потому что ответ лежит в кэше', 'None: the answer is cached') },
-          { id: 'full', text: b('Снова три, потому что запись в кэше устарела', 'Three again: the cached record has expired') },
+          { id: 'zero', text: b('Ни одного, потому что запись A ещё лежит в кэше', 'None: the A record is still cached') },
+          { id: 'one', text: b('Один вопрос серверу магазина, потому что устарела только запись A', 'One question to the shop’s server: only the A record has expired') },
+          { id: 'full', text: b('Снова три вопроса, потому что резолвер начинает поиск с корня', 'Three again: the resolver starts from the root') },
         ],
-        resolve: (_p, next) => ((lastMetric(next, 'upstream') ?? 0) > 3 ? 'full' : 'zero'),
+        resolve: (_p, next) => ((lastMetric(next, 'upstream') ?? 0) > 3 ? 'one' : 'zero'),
       },
     },
     { id: 'ttl', group: b('Что записал владелец домена', 'What the domain owner set'), label: b('Сколько секунд можно хранить запись A (TTL)', 'TTL of the A record'), kind: 'range', min: 30, max: 86400, step: 30, unit: { ru: 'с', en: 's' }, default: 300, near: 'auth' },
@@ -160,7 +161,7 @@ export const dnsModel = defineModel<P>({
     steps.push({
       id: 'to-res',
       label: 'A?',
-      caption: b('Библиотека отправляет резолверу вопрос в датаграмме UDP на порт 53 с флагом RD, который означает «найди ответ за меня». Кэш резолвера пока пуст.', 'The stub sends the resolver a UDP question to port 53 with the RD flag: “find it for me”. The resolver’s cache is empty.'),
+      caption: b('Библиотека отправляет резолверу вопрос в датаграмме UDP на порт 53 и просит найти ответ за неё. Кэш резолвера пока пуст, поэтому резолвер будет искать адрес сам.', 'The stub sends the resolver a UDP question to port 53 and asks it to find the answer. The resolver’s cache is empty, so it will search itself.'),
       focus: ['q-res', 'res'],
       tokens: [{ edge: 'q-res', label: `A? ${name}` }],
       say: { res: b('Резолвер не находит имя в своём кэше и начинает искать сам.', 'The resolver does not find the name in its cache and starts searching.') },
@@ -173,7 +174,7 @@ export const dnsModel = defineModel<P>({
       caption: typo
         ? b('Резолвер спрашивает корневой сервер о зоне exmaple., а такой зоны первого уровня не существует. Корневой сервер отвечает NXDOMAIN, и поиск заканчивается на первом же шаге.', 'The resolver asks the root about exmaple. — and there is no such top-level zone. The root answers NXDOMAIN, and the question ends at the very first step.')
         : p.qmin
-          ? b('Корневому серверу резолвер задаёт только вопрос «NS? example.», потому что полное имя корню знать незачем; это и есть минимизация QNAME. Корневой сервер отвечает подсказкой: «спросите a.nic.example, вот его адрес».', 'To the root the resolver says only “NS? example.” — the root has no need for the full name (QNAME minimisation). The answer is a referral: “ask a.nic.example, here is its address”.')
+          ? b('Резолвер спрашивает корневой сервер только о том, кто отвечает за зону example., потому что полное имя магазина корню знать незачем. Корневой сервер отвечает подсказкой: «спросите a.nic.example, вот его адрес».', 'The resolver asks the root only who answers for the example. zone, since the root has no need for the shop’s full name. The answer is a referral: “ask a.nic.example, here is its address”.')
           : b('Без минимизации резолвер сообщает корневому серверу полное имя shop.example. Ответ всё равно содержит только подсказку: «спросите a.nic.example».', 'Without minimisation the resolver sends the full name shop.example to the root. The answer is still only a referral: “ask a.nic.example”.'),
       focus: ['q-root', 'root'],
       tokens: [{ edge: 'q-root', label: typo ? 'NS? exmaple.' : p.qmin ? 'NS? example.' : 'A? shop.example.' }],
@@ -188,7 +189,7 @@ export const dnsModel = defineModel<P>({
     steps.push({
       id: 'tld',
       label: b('зона example.', 'TLD'),
-      caption: b('Сервер зоны example. знает делегирование и отвечает, что за shop.example отвечает сервер ns1.hosting.example с адресом 198.51.100.53. Такой ответ состоит из записи NS и записи glue.', 'The example. zone server knows the delegation: “ns1.hosting.example answers for shop.example — 198.51.100.53”. These are NS and glue records.'),
+      caption: b('Сервер зоны example. знает, кому передана зона магазина, и отвечает, что за shop.example отвечает сервер ns1.hosting.example с адресом 198.51.100.53.', 'The example. zone server knows whom the shop’s zone was handed to and answers that ns1.hosting.example, at 198.51.100.53, answers for shop.example.'),
       focus: ['q-tld', 'tld'],
       tokens: [{ edge: 'q-tld', label: p.qmin ? 'NS? shop.example.' : 'A? shop.example.' }],
       say: { tld: b('Сервер зоны example. отвечает, что записи shop.example хранит ns1.hosting.example.', 'The example. server answers that ns1.hosting.example keeps shop.example.') },
@@ -212,7 +213,7 @@ export const dnsModel = defineModel<P>({
     steps.push({
       id: 'auth',
       label: b('ответ', 'AA'),
-      caption: fmt(b('Авторитативный сервер отвечает с флагом aa: у shop.example адрес 198.51.100.20, а хранить ответ можно {t} с. Резолвер кладёт ответ в кэш на это время и передаёт адрес библиотеке.', 'The authoritative server answers with the aa flag: A 198.51.100.20, TTL {t}. The resolver caches it for {t} seconds and hands it to the stub resolver.'), { t: p.ttl }),
+      caption: fmt(b('Авторитативный сервер отвечает, что у shop.example адрес 198.51.100.20, а хранить ответ можно {t} с. Резолвер кладёт ответ в кэш на это время, запоминает заодно подсказки корня и зоны example. и передаёт адрес библиотеке.', 'The authoritative server answers that shop.example is at 198.51.100.20 and the answer may be kept for {t} s. The resolver caches it for that time, keeps the referrals from the root and the example. zone as well, and hands the address to the stub resolver.'), { t: p.ttl }),
       focus: ['q-auth', 'auth', 'q-res'],
       tokens: [{ edge: 'q-auth', label: 'A 198.51.100.20', reverse: true }, { edge: 'q-res', reverse: true, label: '198.51.100.20' }],
       say: { auth: b('Авторитативный сервер сообщает адрес shop.example и срок, на который его можно запомнить.', 'The authoritative server gives the address of shop.example and how long it may be kept.') },
@@ -226,14 +227,14 @@ export const dnsModel = defineModel<P>({
       label: fmt(b('через {s} с', 'after {s} s'), { s: p.second }),
       caption: hit
         ? fmt(b('Второй запрос приходит через {s} с, а запись в кэше ещё действует, и до её истечения осталось {l} с. Резолвер отвечает из кэша за миллисекунду, и авторитативный сервер об этом запросе не узнаёт.', 'The second request after {s} s: the record is still valid ({l} s left). The resolver answers from its cache in a millisecond; the authoritative server never learns about this request.'), { s: p.second, l: p.ttl - p.second })
-        : fmt(b('Второй запрос приходит через {s} с, а срок хранения записи, {t} с, уже истёк, и резолвер её выбросил. Поэтому он снова проходит весь путь: корневой сервер, сервер зоны example. и авторитативный сервер.', 'The second request after {s} s: the TTL of {t} s has expired and the record is gone. The resolver walks the whole path again — root, TLD, authoritative.'), { s: p.second, t: p.ttl }),
-      focus: hit ? ['q-res', 'res'] : ['res', 'q-root', 'q-tld', 'q-auth'],
+        : fmt(b('Второй запрос приходит через {s} с, а срок хранения записи A, {t} с, уже истёк, и резолвер её выбросил. Подсказки корня и зоны example. хранятся сутки и дольше и ещё лежат в кэше, поэтому резолвер сразу спрашивает авторитативный сервер магазина и задаёт всего один вопрос.', 'The second request after {s} s: the A record’s lifetime of {t} s has expired and the record is gone. The referrals from the root and the example. zone are kept for a day or longer and are still cached, so the resolver asks the shop’s authoritative server straight away, with a single question.'), { s: p.second, t: p.ttl }),
+      focus: hit ? ['q-res', 'res'] : ['res', 'q-auth', 'auth'],
       tokens: hit
         ? [{ edge: 'q-res', reverse: true, label: b('из кэша', 'from cache') }]
-        : [{ edge: 'q-root', label: 'NS?' }, { edge: 'q-tld', label: 'NS?' }, { edge: 'q-auth', label: 'A?' }],
-      say: { res: hit ? b('Резолвер отвечает из кэша, ни о чём не спрашивая другие серверы.', 'The resolver answers from its cache without asking anyone.') : b('Запись в кэше устарела, и резолвер снова обходит все три сервера.', 'The cached record has expired, and the resolver asks all three servers again.') },
+        : [{ edge: 'q-auth', label: 'A? shop.example.' }],
+      say: { res: hit ? b('Резолвер отвечает из кэша, ни о чём не спрашивая другие серверы.', 'The resolver answers from its cache without asking anyone.') : b('Запись A в кэше устарела, и резолвер снова спрашивает авторитативный сервер магазина.', 'The cached A record has expired, and the resolver asks the shop’s authoritative server again.') },
       values: { res: hit ? t(cacheLeft(p.ttl - p.second)) : t(cacheLeft(p.ttl)) },
-      metrics: { upstream: hit ? 3 : 6, ms: hit ? 1 : 62 },
+      metrics: { upstream: hit ? 3 : 4, ms: hit ? 1 : 22 },
     });
     return steps;
   },
@@ -251,7 +252,7 @@ export const dnsModel = defineModel<P>({
       return fmt(
         hit
           ? b('Второй запрос через {s} с при сроке хранения {t} с получает ответ из кэша. Число вопросов к серверам изменилось с {u0} до {u1}.', 'Second request after {s} s with a TTL of {t} s comes from the cache. Questions to servers: {u0} → {u1}.')
-          : b('Второй запрос через {s} с при сроке хранения {t} с снова проходит весь путь, и число вопросов изменилось с {u0} до {u1}. Длинный TTL экономит запросы, но после смены адреса старый адрес хранится в кэшах так же долго.', 'Second request after {s} s with a TTL of {t} s walks the whole path again. Questions: {u0} → {u1}. A long TTL saves queries, but after an address change the old one is kept just as long.'),
+          : b('Второй запрос через {s} с при сроке хранения {t} с не застаёт запись A в кэше, и резолверу приходится снова спросить сервер магазина, поэтому число вопросов изменилось с {u0} до {u1}. Чем дольше разрешено хранить запись, тем реже резолвер задаёт вопросы, но после смены адреса старый адрес так же долго остаётся в кэшах.', 'Second request after {s} s with a TTL of {t} s no longer finds the A record cached, so the resolver asks the shop’s server again. Questions: {u0} → {u1}. A long TTL saves queries, but after an address change the old one is kept just as long.'),
         { s: bb.second as number, t: bb.ttl as number, u0, u1 },
       );
     }

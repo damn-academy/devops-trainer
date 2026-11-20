@@ -233,13 +233,14 @@ export const quiz: QuizItem[] = [
       { id: 'dst', text: bi('IP-адрес получателя', 'the destination IP address'), why: bi('Адрес получателя остаётся одним и тем же от начала до конца пути, и по нему выбирают маршрут.', 'The destination address is the same along the whole path — routes are chosen by it.') },
       { id: 'port', text: bi('порт TCP', 'the TCP port'), why: bi('Маршрутизатор не открывает конверт TCP.', 'A router does not open the TCP envelope.') },
     ],
+    explain: bi('Маршрутизатор меняет три вещи. Пакет он перекладывает в новый кадр, где отправителем стоит его собственный MAC-адрес, а получателем MAC-адрес следующего устройства. В IP-заголовке он уменьшает TTL на единицу, а раз поле TTL изменилось, ему приходится заново посчитать и контрольную сумму заголовка, по которой следующий маршрутизатор проверяет, не испортился ли заголовок в пути.', 'A router changes three things. It puts the packet into a new frame with its own MAC as the sender and the next device’s MAC as the receiver. In the IP header it lowers the TTL by one, and since the TTL field changed, it must recompute the header checksum, by which the next router checks that the header was not damaged on the way.'),
     refs: { explainer: 'net.route' },
   },
   {
     id: 'net.q.route.trace',
     kind: 'mcq',
     concepts: ['net.icmp', 'net.ttl'],
-    prompt: bi('Команда traceroute -n 10.20.0.5 печатает четыре строки: 1 192.168.1.1, 2 10.0.0.1, 3 * * *, 4 * * *. Где сломался путь?', 'traceroute -n 10.20.0.5 prints: 1 192.168.1.1, 2 10.0.0.1, 3 * * *, 4 * * *. Where is it broken?'),
+    prompt: bi('Команда `traceroute -n 10.20.0.5` печатает четыре строки: `1 192.168.1.1`, `2 10.0.0.1`, `3 * * *` и `4 * * *`. Где сломался путь?', '`traceroute -n 10.20.0.5` prints four lines: `1 192.168.1.1`, `2 10.0.0.1`, `3 * * *` and `4 * * *`. Where is it broken?'),
     options: [
       { id: 'after', text: bi('За узлом 10.0.0.1: дальше пакеты не доходят или ответы от следующих узлов не возвращаются', 'Beyond 10.0.0.1: packets do not get further or answers do not come back'), correct: true },
       { id: 'at', text: bi('Сломан сам узел 10.0.0.1', '10.0.0.1 itself is broken'), why: bi('Узел 10.0.0.1 ответил, значит, он работает и принял пакет. Проверять нужно следующий узел и маршрут в обратную сторону.', '10.0.0.1 answered — so it is alive and took the packet. Look at the next node and the route back.') },
