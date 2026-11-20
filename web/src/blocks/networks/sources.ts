@@ -5,6 +5,9 @@ import type { SourceLink, Sources } from '../../core/types';
 const s = (title: string, url: string): SourceLink => ({ title, url });
 
 export const EN = {
+  wireguard: s('WireGuard — Conceptual overview', 'https://www.wireguard.com/#conceptual-overview'),
+  wgQuick: s('wg-quick(8) — Linux manual page', 'https://man7.org/linux/man-pages/man8/wg-quick.8.html'),
+  sshTunnel: s('ssh(1) — Linux manual page, option -L', 'https://man7.org/linux/man-pages/man1/ssh.1.html'),
   howInternet: s('Cloudflare Learning — How does the Internet work?', 'https://www.cloudflare.com/learning/network-layer/how-does-the-internet-work/'),
   as: s('Cloudflare Learning — What is an autonomous system?', 'https://www.cloudflare.com/learning/network-layer/what-is-an-autonomous-system/'),
   bgp: s('Cloudflare Learning — What is BGP?', 'https://www.cloudflare.com/learning/security/glossary/what-is-bgp/'),
@@ -108,6 +111,8 @@ export const RU = {
   cdn: s('Википедия — Content Delivery Network', 'https://ru.wikipedia.org/wiki/Content_Delivery_Network'),
   nginx: s('Википедия — Nginx', 'https://ru.wikipedia.org/wiki/Nginx'),
   lb: s('Википедия — Балансировка нагрузки', 'https://ru.wikipedia.org/wiki/Балансировка_нагрузки'),
+  vpn: s('Википедия — VPN', 'https://ru.wikipedia.org/wiki/VPN'),
+  wireguard: s('Википедия — WireGuard', 'https://ru.wikipedia.org/wiki/WireGuard'),
 };
 
 export const src = (en: SourceLink[], ru: SourceLink[]): Sources => ({ en, ru });

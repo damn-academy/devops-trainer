@@ -4,9 +4,12 @@
 // breaks with the layer named first.
 
 import { clear, h, s } from '../../../core/dom';
-import { bi, onLangChange, t } from '../../../core/i18n';
+import { bi, lang, onLangChange, t } from '../../../core/i18n';
 import type { Level, Mounted, WidgetCtx, WidgetReg } from '../../../core/types';
-import { PROTOCOLS, type LayerTag, type ProtoCard } from './protocols';
+import { PROTOCOLS, RU_TEXT, type LayerTag, type ProtoCard } from './protocols';
+
+/** A symptom, proof or actor name in the reader's language; commands and tool output stay as printed. */
+const tx = (text: string): string => (lang() === 'ru' ? RU_TEXT[text] ?? text : text);
 
 const LAYER_FAM: Record<LayerTag, string> = { L2: 'l2', L3: 'l3', L4: 'l4', TLS: 'tls', L7: 'l7' };
 const LEVEL_NAME: Record<Level, ReturnType<typeof bi>> = { beginner: bi('Новичок', 'Beginner'), intermediate: bi('Средний', 'Intermediate'), experienced: bi('Опытный', 'Experienced') };
@@ -22,7 +25,7 @@ export function sequenceSvg(p: ProtoCard): SVGElement {
   const H = top + p.steps.length * dy + 20;
   const svg = s('svg.cat-seq', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `${p.name}: ${p.steps.map((st) => st.label).join('; ')}` });
   p.actors.forEach((a, i) => {
-    svg.append(s('text.cat-actor', { x: x(i), y: 16, 'text-anchor': 'middle' }, a), s('line.cat-life', { x1: x(i), y1: 24, x2: x(i), y2: H - 6 }));
+    svg.append(s('text.cat-actor', { x: x(i), y: 16, 'text-anchor': 'middle' }, tx(a)), s('line.cat-life', { x1: x(i), y1: 24, x2: x(i), y2: H - 6 }));
   });
   p.steps.forEach((st, i) => {
     const y = top + i * dy + 16;
@@ -77,7 +80,7 @@ function mount(el: HTMLElement, props: { level?: Level } | undefined, ctx: Widge
           h(
             'ul.cat-breaks',
             {},
-            ...p.breaks.map((b) => h('li', {}, h(`span.cat-layer.fam-${LAYER_FAM[b.layer]}`, {}, b.layer), h('code.cat-symptom', {}, b.symptom), h('span.cat-cause', {}, t(b.cause)), h('span.cat-prove', {}, t(bi('Чем это доказать: ', 'Prove it: ')), h('code', {}, b.prove)))),
+            ...p.breaks.map((b) => h('li', {}, h(`span.cat-layer.fam-${LAYER_FAM[b.layer]}`, {}, b.layer), h('code.cat-symptom', {}, tx(b.symptom)), h('span.cat-cause', {}, t(b.cause)), h('span.cat-prove', {}, t(bi('Чем это доказать: ', 'Prove it: ')), h('code', {}, tx(b.prove))))),
           ),
           h('p.cat-doc', {}, t(bi('Где это написано: ', 'Where it is written: ')), h('a', { href: p.doc.url, target: '_blank', rel: 'noopener' }, p.doc.label)),
         );

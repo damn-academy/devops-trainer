@@ -76,7 +76,6 @@ export const arpModel = defineModel<P>({
       id: 'off',
       label: b('Компьютер B выключен', 'Computer B is off'),
       remove: ['h2'],
-      layer: 'L2',
       predict: {
         prompt: b('Компьютер B выключен, а в ARP-кэше компьютера A записи о нём нет. Что напечатает команда ping 192.168.1.20 на компьютере A?', 'B is off and A has no cache entry for it. What will ping 192.168.1.20 print on A?'),
         options: [

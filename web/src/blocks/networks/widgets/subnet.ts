@@ -43,6 +43,9 @@ const L = {
 const num = (n: number): string => n.toLocaleString(lang() === 'ru' ? 'ru-RU' : 'en-US');
 const bitWord = (n: number): string => pluralRu(n, ['бит', 'бита', 'бит']);
 const addrWord = (n: number): string => pluralRu(n, ['адрес', 'адреса', 'адресов']);
+const subnetWord = (n: number): string => pluralRu(n, ['подсеть', 'подсети', 'подсетей']);
+/** 2⁷ rather than 2^7, as in the lesson text. */
+const sup = (n: number): string => String(n).replace(/\d/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(d)]);
 
 function bitRow(addr: number, prefix: number): HTMLElement {
   const row = h('div.sn-bits', { role: 'img', 'aria-label': `${bits(addr)} /${prefix}` });
@@ -115,16 +118,17 @@ function mountCalc(el: HTMLElement, props: { cidr?: string }, ctx: WidgetCtx): M
 // ── drill ──────────────────────────────────────────────────────────────────
 
 export interface DrillQ {
-  kind: 'hosts' | 'network' | 'broadcast' | 'same' | 'mask';
+  kind: 'hosts' | 'network' | 'broadcast' | 'same' | 'mask' | 'split';
   prompt: Bi;
   answer: string;
   explain: Bi;
 }
 
+export const DRILL_KINDS: DrillQ['kind'][] = ['hosts', 'network', 'broadcast', 'same', 'mask', 'split'];
+
 /** Deterministic questions for the subnet drill (prefixes /16–/30 for beginners). */
-export function drillQuestion(seed: number): DrillQ {
+export function drillQuestion(seed: number, kinds: DrillQ['kind'][] = DRILL_KINDS): DrillQ {
   const r = rng(seed);
-  const kinds: DrillQ['kind'][] = ['hosts', 'network', 'broadcast', 'same', 'mask'];
   const kind = kinds[Math.floor(r() * kinds.length)];
   const prefix = 16 + Math.floor(r() * 15);
   const base = [[10, 0], [172, 16], [192, 168]][Math.floor(r() * 3)];
@@ -132,13 +136,25 @@ export function drillQuestion(seed: number): DrillQ {
   const info = subnetInfo(`${ip}/${prefix}`);
   switch (kind) {
     case 'hosts':
-      return { kind, prompt: fmt(bi('Сколько адресов можно выдать машинам в подсети /{p}?', 'How many host addresses does a /{p} subnet have?'), { p: prefix }), answer: String(info.hosts), explain: fmt(bi('На номер машины остаётся 32 − {p} = {h} {hb}, а это 2^{h} = {t} {ta}. Если вычесть адрес сети и широковещательный адрес, остаётся {n}.', '32 − {p} = {h} host bits: 2^{h} = {t} addresses, minus the network and broadcast addresses = {n}.'), { p: prefix, h: 32 - prefix, hb: bitWord(32 - prefix), t: num(info.total), ta: addrWord(info.total), n: num(info.hosts) }) };
+      return { kind, prompt: fmt(bi('Сколько адресов можно выдать машинам в подсети /{p}?', 'How many host addresses does a /{p} subnet have?'), { p: prefix }), answer: String(info.hosts), explain: fmt(bi('На номер машины остаётся 32 − {p} = {h} {hb}, а это 2{hs} = {t} {ta}. Если вычесть адрес сети и широковещательный адрес, остаётся {n}.', '32 − {p} = {h} host bits: 2{hs} = {t} addresses, minus the network and broadcast addresses = {n}.'), { p: prefix, h: 32 - prefix, hs: sup(32 - prefix), hb: bitWord(32 - prefix), t: num(info.total), ta: addrWord(info.total), n: num(info.hosts) }) };
     case 'network':
       return { kind, prompt: fmt(bi('Какой адрес сети у {ip}/{p}?', 'The network address of {ip}/{p}?'), { ip, p: prefix }), answer: info.network, explain: fmt(bi('Номеру машины в этой подсети отведено {h} {hb} справа. Запишите во все эти биты нули, и получится адрес сети {n}.', 'Zero the {h} lowest bits of the address (the host bits): {n}.'), { h: 32 - prefix, hb: bitWord(32 - prefix), n: info.network }) };
     case 'broadcast':
-      return { kind, prompt: fmt(bi('Какой широковещательный адрес в подсети, где находится машина {ip}/{p}?', 'What is the broadcast address of the subnet that holds {ip}/{p}?'), { ip, p: prefix }), answer: info.broadcast, explain: fmt(bi('Номеру машины в этой подсети отведено {h} {hb} справа. Запишите во все эти биты единицы, и получится {b}.', 'Set all {h} host bits to ones: {b}.'), { h: 32 - prefix, hb: bitWord(32 - prefix), b: info.broadcast }) };
+      return { kind, prompt: fmt(bi('Какой широковещательный адрес в подсети, где находится машина {ip}/{p}?', 'What is the broadcast address of the subnet that holds {ip}/{p}?'), { ip, p: prefix }), answer: info.broadcast, explain: fmt(bi('Подсеть начинается не с адреса машины, а с адреса сети {n}: границы подсетей идут с шагом в её размер, {t} {ta}, и адрес машины их не сдвигает. Номеру машины отведено {h} {hb} справа. Запишите во все эти биты единицы, и получится {b}.', 'The subnet starts not at the machine’s address but at the network address {n}: subnet borders go in steps of its size, {t} addresses, and a machine’s address does not move them. Set all {h} host bits to ones: {b}.'), { n: info.network, t: num(info.total), ta: addrWord(info.total), h: 32 - prefix, hb: bitWord(32 - prefix), b: info.broadcast }) };
     case 'mask':
       return { kind, prompt: fmt(bi('Какая маска соответствует префиксу /{p}? Запишите её четырьмя числами.', 'What mask does prefix /{p} have? Write it as four numbers.'), { p: prefix }), answer: info.mask, explain: fmt(bi('В маске /{p} первые {p} {pb} слева равны единице, а остальные нулю, и получается {m}.', '{p} ones in a row from the left, zeros after: {m}.'), { p: prefix, pb: bitWord(prefix), m: info.mask }) };
+    case 'split': {
+      const parent = 16 + Math.floor(r() * 9);
+      const k = 2 + Math.floor(r() * 11);
+      const add = Math.ceil(Math.log2(k));
+      const net = subnetInfo(`${ip}/${parent}`).network;
+      return {
+        kind,
+        prompt: fmt(bi('Из блока {net}/{p0} нужно нарезать {k} {kw} одинакового размера, как можно более крупных. Какой префикс будет у каждой подсети?', 'The block {net}/{p0} must be cut into {k} subnets of equal size, as large as possible. What prefix will each subnet have?'), { net, p0: parent, k, kw: subnetWord(k) }),
+        answer: String(parent + add),
+        explain: fmt(bi('Каждый бит, который вы забираете из номера машины, удваивает число подсетей. {k} {kw} нужно {s} {sb}, потому что 2{ss} = {c}, а это не меньше {k}. К родительскому префиксу /{p0} прибавляем {s} и получаем /{p}.', 'Each bit taken from the host number doubles the number of subnets. {k} subnets need {s} bit(s), because 2{ss} = {c}, which is at least {k}. Add {s} to the parent prefix /{p0} and you get /{p}.'), { k, kw: pluralRu(k, ['подсети', 'подсетям', 'подсетям']), s: add, sb: bitWord(add), ss: sup(add), c: 2 ** add, p0: parent, p: parent + add }),
+      };
+    }
     default: {
       const other = fmtIp((parseIp(info.network) + Math.floor(r() * info.total * 2)) >>> 0);
       const same = inSubnet(other, `${info.network}/${prefix}`);
@@ -161,11 +177,12 @@ export function checkDrill(q: DrillQ, raw: string): boolean {
   return a.replace(/\s|,/g, '') === q.answer;
 }
 
-function mountDrill(el: HTMLElement, props: { need?: number }, ctx: WidgetCtx): Mounted {
+function mountDrill(el: HTMLElement, props: { need?: number; kinds?: DrillQ['kind'][]; seed?: number }, ctx: WidgetCtx): Mounted {
   const need = props.need ?? 5;
-  let seed = 7;
+  const kinds = props.kinds ?? DRILL_KINDS;
+  let seed = props.seed ?? 7;
   const solved = new Set<number>();
-  let q = drillQuestion(seed);
+  let q = drillQuestion(seed, kinds);
   let feedback: HTMLElement | null = null;
   const root = h('section.sn-drill');
   el.append(root);
@@ -187,7 +204,7 @@ function mountDrill(el: HTMLElement, props: { need?: number }, ctx: WidgetCtx): 
     const form = h('form.sn-form', { onsubmit: (e: Event) => { e.preventDefault(); submit(); } }, h('p.sn-q', {}, t(q.prompt)), h('div.sn-row', {}, input, h('button.btn', { type: 'submit' }, t(bi('Проверить', 'Check')))));
     root.append(h('h4.sn-title', {}, t(bi('Тренажёр по подсетям', 'Drill: subnets'))), form);
     if (feedback) {
-      root.append(feedback, h('button.btn.small.next', { type: 'button', onclick: () => { seed++; q = drillQuestion(seed); feedback = null; render(); (root.querySelector('input') as HTMLInputElement | null)?.focus(); } }, t(bi('Следующий вопрос', 'Next question'))));
+      root.append(feedback, h('button.btn.small.next', { type: 'button', onclick: () => { seed++; q = drillQuestion(seed, kinds); feedback = null; render(); (root.querySelector('input') as HTMLInputElement | null)?.focus(); } }, t(bi('Следующий вопрос', 'Next question'))));
     }
     root.append(h('p.sn-progress', {}, t(fmt(bi('Решено {n} из {k}', 'Solved: {n} of {k}'), { n: Math.min(solved.size, need), k: need }))));
   };
@@ -197,6 +214,6 @@ function mountDrill(el: HTMLElement, props: { need?: number }, ctx: WidgetCtx): 
 }
 
 export const subnetWidget: WidgetReg = { id: 'net.subnet-calc', mount: (el, props, ctx) => mountCalc(el, (props ?? {}) as { cidr?: string }, ctx) };
-export const drillWidget: WidgetReg = { id: 'net.subnet-drill', mount: (el, props, ctx) => mountDrill(el, (props ?? {}) as { need?: number }, ctx) };
+export const drillWidget: WidgetReg = { id: 'net.subnet-drill', mount: (el, props, ctx) => mountDrill(el, (props ?? {}) as { need?: number; kinds?: DrillQ['kind'][]; seed?: number }, ctx) };
 
 export { parseCidr };

@@ -89,7 +89,7 @@ export const tcpModel = defineModel<TP>({
       predict: {
         prompt: b('Порт 8080 на сервере никто не слушает, а сеть между машинами в порядке. Как быстро клиент узнает об этом?', 'Nobody listens on the port. How fast does the client learn about it?'),
         options: [
-          { id: 'rtt', text: b('Через время одного пути туда и обратно, когда придёт ответ RST', 'After one RTT: an RST arrives') },
+          { id: 'rtt', text: b('Через время одного пути до сервера и обратно, когда придёт ответ RST', 'After one RTT: an RST arrives') },
           { id: 'long', text: b('Через пару минут ожидания', 'After a couple of minutes of waiting') },
         ],
         resolve: (_p, next) => ((lastMetric(next, 'ms') ?? 0) < 10000 ? 'rtt' : 'long'),
@@ -102,7 +102,6 @@ export const tcpModel = defineModel<TP>({
       id: 'filter',
       label: b('Фильтр на сервере молча отбрасывает пакеты на порт 8080', 'A filter on the server silently drops packets'),
       remove: ['synack', 'rst'],
-      layer: 'L4',
       predict: {
         prompt: b('На сервере включён фильтр, который молча отбрасывает все пакеты на порт 8080; как такие фильтры устроены, вы узнаете в уроке про NAT. Что увидит клиент?', 'A filter on the server silently drops packets to this port (how it works is the NAT lesson). What does the client see?'),
         options: [
@@ -115,7 +114,7 @@ export const tcpModel = defineModel<TP>({
   ],
   metrics: [
     { id: 'ms', label: b('прошло времени', 'elapsed'), unit: { ru: 'мс', en: 'ms' } },
-    { id: 'rtts', label: b('путей туда и обратно', 'round trips') },
+    { id: 'rtts', label: b('путей до сервера и обратно', 'round trips') },
   ],
   run(p, broken): Step[] {
     const r = p.rtt;
@@ -161,7 +160,7 @@ export const tcpModel = defineModel<TP>({
       steps.push({
         id: 'rst',
         label: 'RST',
-        caption: b('Порт 8080 никто не слушает, и ядро сервера отвечает пакетом RST, то есть «здесь никого нет». Ответ пришёл за время одного пути туда и обратно.', 'Nobody listens on port 8080. The server’s kernel answers RST: “nobody here”. The answer arrives after one RTT.'),
+        caption: b('Порт 8080 никто не слушает, и ядро сервера отвечает пакетом RST, то есть «здесь никого нет». Ответ пришёл за время одного пути до сервера и обратно.', 'Nobody listens on port 8080. The server’s kernel answers RST: “nobody here”. The answer arrives after one RTT.'),
         focus: ['server', 'rst'],
         tokens: [{ edge: 'rst', label: 'RST' }],
         say: { server: b('Ядро сервера видит, что порт 8080 никто не слушает, и отвечает RST.', 'The server kernel sees nobody on port 8080 and answers RST.') },
@@ -186,7 +185,7 @@ export const tcpModel = defineModel<TP>({
     steps.push({
       id: 'ack',
       label: 'ACK',
-      caption: fmt(b('Клиент подтверждает номер сервера, и соединение установлено. На рукопожатие ушёл один путь туда и обратно, {r} мс.', 'The client confirms the server’s number. The connection is established: it took one round trip — {r} ms.'), { r }),
+      caption: fmt(b('Клиент подтверждает номер сервера, и соединение установлено. На рукопожатие ушёл один путь до сервера и обратно, {r} мс.', 'The client confirms the server’s number. The connection is established: it took one round trip — {r} ms.'), { r }),
       focus: ['client', 'ack'],
       tokens: [{ edge: 'ack', label: 'ACK' }],
       say: { client: b('Клиент подтверждает номер сервера, и обе стороны считают соединение установленным.', 'The client confirms the server’s number; both sides consider the connection established.') },
@@ -230,8 +229,8 @@ export const tcpModel = defineModel<TP>({
         : b('Порт снова слушает служба, и после трёх сообщений соединение готово.', 'The port is listened on again: three messages and the connection is ready.');
     return fmt(
       m1 < m0
-        ? b('Время пути туда и обратно изменилось с {a} до {b} мс, и весь обмен сократился с {m0} до {m1} мс. Рукопожатие всегда стоит одного пути туда и обратно.', 'RTT {a} → {b} ms: the whole exchange shrinks, {m0} → {m1} ms. The handshake costs exactly one round trip.')
-        : b('Время пути туда и обратно изменилось с {a} до {b} мс, и весь обмен растянулся с {m0} до {m1} мс. Рукопожатие всегда стоит одного пути туда и обратно.', 'RTT {a} → {b} ms: the whole exchange stretches, {m0} → {m1} ms. The handshake costs exactly one round trip.'),
+        ? b('Время пути до сервера и обратно изменилось с {a} до {b} мс, и весь обмен сократился с {m0} до {m1} мс. Рукопожатие всегда стоит одного пути до сервера и обратно.', 'RTT {a} → {b} ms: the whole exchange shrinks, {m0} → {m1} ms. The handshake costs exactly one round trip.')
+        : b('Время пути до сервера и обратно изменилось с {a} до {b} мс, и весь обмен растянулся с {m0} до {m1} мс. Рукопожатие всегда стоит одного пути до сервера и обратно.', 'RTT {a} → {b} ms: the whole exchange stretches, {m0} → {m1} ms. The handshake costs exactly one round trip.'),
       { a: a.rtt as number, b: bb.rtt as number, m0, m1 },
     );
   },
@@ -247,7 +246,32 @@ export function ttfbRtts(p: LP): number {
   return p.version === '1.2' ? 4 : 3;
 }
 
-const TLS_ALL = ['tsyn', 'tsynack', 'hello', 'shello', 'cfin', 'resp', 'alert'];
+/** Round-trip counts in words for the Russian captions: «три пути», not «3 пути». */
+const RTT_WORDS: Record<number, string> = { 2: 'два', 3: 'три', 4: 'четыре' };
+const rttWord = (n: number): string => RTT_WORDS[n] ?? String(n);
+const TLS_ALL = ['tsyn', 'tsynack', 'hello', 'shello', 'cfin', 'resp', 'alert', 'hello12', 'shello12', 'ckx', 'sfin', 'get12', 'resp12', 'alert12'];
+
+/** The step at which the client rejects the certificate and sends an alert instead of the request. */
+function checkStep(bad: 'expired' | 'name', alert: 'alert' | 'alert12'): Step {
+  return {
+    id: 'check',
+    label: b('проверка', 'check'),
+    caption:
+      bad === 'expired'
+        ? b('Клиент проверяет сертификат и видит, что дата окончания (поле notAfter) уже прошла. Он отправляет предупреждение и закрывает соединение, а запрос HTTP так и не уходит.', 'The client checks the certificate: notAfter is in the past. It sends an alert and closes the connection. The HTTP request never left.')
+        : b('Клиент сверяет имя и видит, что в сертификате указано только www.shop.example, а сам он пришёл на shop.example. Соединение закрывается раньше, чем уходит запрос.', 'The client checks the name: the certificate lists only www.shop.example, and it came for shop.example. The connection closes before the request.'),
+    focus: ['client', alert],
+    tokens: [{ edge: alert, label: 'alert' }],
+    say: { client: bad === 'expired' ? b('Клиент видит, что срок сертификата истёк, и закрывает соединение.', 'The client sees the certificate has expired and closes.') : b('Клиент видит, что сертификат выписан на другое имя, и закрывает соединение.', 'The client sees the certificate is for another name and closes.') },
+    states: { [alert]: 'err', client: 'err' },
+    metrics: { rtts: 2, ttfb: 0 },
+    broken: {
+      at: 'client',
+      message: bad === 'expired' ? '$ curl https://shop.example/\ncurl: (60) SSL certificate problem: certificate has expired' : "$ curl https://shop.example/\ncurl: (60) SSL: no alternative certificate subject name matches target host name 'shop.example'",
+      caption: b('Поломка находится в TLS: сеть и сервер в порядке, но сервер не прошёл проверку подлинности. Код 60 у curl всегда означает проблему с сертификатом.', 'this is the TLS layer: the network and the server are fine, the authenticity check failed. curl code 60 is always about the certificate.'),
+    },
+  };
+}
 
 export const tlsModel = defineModel<LP>({
   id: 'net.tls',
@@ -275,6 +299,13 @@ export const tlsModel = defineModel<LP>({
       msg('cfin', 'cs', 4, '{Finished} + GET /', card(['Клиент проверил сертификат: имя, срок действия и цепочку подписей до корневого центра, которому он доверяет. Теперь он отправляет Finished и сразу за ним зашифрованный запрос HTTP.', 'The client checked the certificate: the name, the dates, the chain to a root it trusts. It sends Finished and straight away the encrypted HTTP request.'], ['Сообщения отправляет curl.', 'curl.'])),
       msg('resp', 'sc', 5, '{HTTP/1.1 200 OK}', card(['По этой стрелке идёт зашифрованный ответ, и постороннему на пути видны только адреса, порты, имя сайта из SNI и размеры сообщений.', 'The answer, encrypted. An outsider sees only addresses, ports, SNI and sizes.'], ['Ответ пишет приложение за nginx.', 'The application behind nginx.'])),
       msg('alert', 'cs', 6, 'alert: bad certificate', card(['Если проверка сертификата не прошла, клиент отправляет предупреждение и закрывает соединение, так и не отправив запрос.', 'If the check fails, the client closes the connection with an alert; the request is never sent.'], ['Предупреждение отправляет curl.', 'curl.'])),
+      msg('hello12', 'cs', 2, 'ClientHello: SNI, ALPN', card(['Приветствие клиента идёт открытым текстом. В нём перечислены версии TLS, наборы шифров, имя сайта (поле SNI, shop.example) и протоколы, на которых клиент готов говорить (поле ALPN). Половины ключа в нём нет: в TLS 1.2 клиент сначала ждёт, какие параметры выберет сервер.', 'The client hello goes in clear text: the TLS versions, the cipher suites, the site name (SNI, shop.example) and the protocols the client speaks (ALPN). There is no key share in it: in TLS 1.2 the client first waits for the parameters the server picks.'], ['Приветствие собирает библиотека TLS внутри curl, например OpenSSL.', 'The TLS library in curl (OpenSSL).'], 'curl -v --tls-max 1.2 https://shop.example/', DOC.rfc8446)),
+      msg('shello12', 'sc', 3, 'ServerHello, Certificate, ServerKeyExchange, ServerHelloDone', card(['Сервер выбирает версию и шифр и присылает четыре сообщения подряд, все открытым текстом: ServerHello, сертификат, свою половину обмена ключами с подписью (ServerKeyExchange) и ServerHelloDone, которое означает, что теперь очередь клиента.', 'The server picks the version and the cipher and sends four messages in a row, all in clear text: ServerHello, the certificate, its half of the key exchange with a signature (ServerKeyExchange) and ServerHelloDone, which means it is the client’s turn now.'], ['Ответ собирает nginx вместе со своей библиотекой TLS.', 'nginx and its TLS library.'], 'openssl s_client -tls1_2 -connect shop.example:443 -servername shop.example')),
+      msg('ckx', 'cs', 4, 'ClientKeyExchange, ChangeCipherSpec, {Finished}', card(['Клиент проверил сертификат и отправляет свою половину обмена ключами. Сообщение ChangeCipherSpec говорит, что дальше клиент шифрует, и первым зашифрованным сообщением идёт Finished.', 'The client has checked the certificate and sends its half of the key exchange. ChangeCipherSpec says that from now on the client encrypts, and the first encrypted message is Finished.'], ['Сообщения отправляет curl.', 'curl.'])),
+      msg('sfin', 'sc', 5, 'ChangeCipherSpec, {Finished}', card(['Сервер тоже переходит на шифрование и отвечает своим Finished. Только после этого клиент может отправить запрос: в TLS 1.2 он ждёт Finished сервера, и на это уходит второй путь до сервера и обратно.', 'The server switches to encryption too and answers with its own Finished. Only then may the client send the request: in TLS 1.2 it waits for the server’s Finished, and that costs the second round trip.'], ['Ответ собирает nginx.', 'nginx.'])),
+      msg('get12', 'cs', 6, '{GET /}', card(['Зашифрованный запрос HTTP. Постороннему на пути видны только адреса, порты, имя сайта из SNI и размеры сообщений.', 'The encrypted HTTP request. An outsider on the path sees only addresses, ports, the site name from SNI and the sizes.'], ['Запрос отправляет curl.', 'curl.'])),
+      msg('resp12', 'sc', 7, '{HTTP/1.1 200 OK}', card(['По этой стрелке идёт зашифрованный ответ.', 'The encrypted answer travels along this arrow.'], ['Ответ пишет приложение за nginx.', 'The application behind nginx.'])),
+      msg('alert12', 'cs', 4, 'alert: bad certificate', card(['Если проверка сертификата не прошла, клиент отправляет предупреждение и закрывает соединение, так и не отправив свою часть ключа и запрос.', 'If the check fails, the client sends an alert and closes the connection without sending its key part or the request.'], ['Предупреждение отправляет curl.', 'curl.'])),
     ],
   },
   params: [
@@ -351,7 +382,7 @@ export const tlsModel = defineModel<LP>({
     },
   ],
   metrics: [
-    { id: 'rtts', label: b('путей туда и обратно до первого байта', 'round trips to the first byte') },
+    { id: 'rtts', label: b('путей до сервера и обратно до первого байта', 'round trips to the first byte') },
     { id: 'ttfb', label: b('время до первого байта', 'first byte'), unit: { ru: 'мс', en: 'ms' } },
   ],
   run(p, broken): Step[] {
@@ -360,53 +391,41 @@ export const tlsModel = defineModel<LP>({
     const n = ttfbRtts(p);
     if (p.reuse) {
       steps.push({ id: 'req', label: 'GET', caption: b('Соединение уже открыто, и шифрование для него уже согласовано, поэтому зашифрованный запрос уходит сразу.', 'The connection and the TLS session already exist: the encrypted request goes straight away.'), focus: ['client', 'cfin'], tokens: [{ edge: 'cfin', label: '{GET /}' }], say: { client: b('Клиент отправляет зашифрованный запрос по уже открытому соединению.', 'The client sends the encrypted request over the open connection.') }, states: { ...hide(TLS_ALL), cfin: 'on', client: 'on', server: 'on' }, metrics: { rtts: 0, ttfb: 0 } });
-      steps.push({ id: 'resp', label: '200', caption: fmt(b('Ответ пришёл через один путь туда и обратно, за {t} мс. Повторно использовать соединение выгоднее всего, потому что никакие рукопожатия повторять не нужно.', 'The answer after one round trip: {t} ms. Reusing a connection is the cheapest optimisation there is.'), { t: r }), focus: ['server', 'resp'], tokens: [{ edge: 'resp', label: '{200 OK}' }], say: { server: b('Сервер отвечает по тому же соединению.', 'The server answers over the same connection.') }, states: { resp: 'on', client: 'ok' }, metrics: { rtts: 1, ttfb: r } });
+      steps.push({ id: 'resp', label: '200', caption: fmt(b('Ответ пришёл через один путь до сервера и обратно, за {t} мс. Повторно использовать соединение выгоднее всего, потому что никакие рукопожатия повторять не нужно.', 'The answer after one round trip: {t} ms. Reusing a connection is the cheapest optimisation there is.'), { t: r }), focus: ['server', 'resp'], tokens: [{ edge: 'resp', label: '{200 OK}' }], say: { server: b('Сервер отвечает по тому же соединению.', 'The server answers over the same connection.') }, states: { resp: 'on', client: 'ok' }, metrics: { rtts: 1, ttfb: r } });
       return steps;
     }
     if (p.version === 'h3') {
       steps.push({ id: 'quic', label: 'QUIC Initial', caption: b('HTTP/3 работает поверх протокола QUIC на UDP-порту 443, а транспорт и шифрование TLS 1.3 согласуются в одном обмене. Отдельного рукопожатия TCP здесь нет.', 'HTTP/3 runs over QUIC on UDP 443: transport and TLS 1.3 are negotiated in one exchange. There is no separate TCP handshake.'), focus: ['hello', 'shello', 'server'], tokens: [{ edge: 'hello', label: 'Initial' }, { edge: 'shello', label: 'Initial+Handshake' }], say: { server: b('Сервер отвечает на приветствие QUIC и сразу присылает сертификат.', 'The server answers the QUIC hello and sends its certificate.') }, states: { ...hide(TLS_ALL), hello: 'on', shello: 'on' }, metrics: { rtts: 1, ttfb: r } });
-      steps.push({ id: 'h3req', label: 'GET', caption: fmt(b('Запрос и ответ занимают второй путь туда и обратно. Всего до первого байта проходит {n} таких пути, то есть {t} мс.', 'The request and the answer are the second round trip. {n} RTT = {t} ms to the first byte.'), { n, t: n * r }), focus: ['cfin', 'resp', 'client'], tokens: [{ edge: 'cfin', label: '{GET}' }, { edge: 'resp', label: '{200}' }], say: { client: b('Клиент отправляет запрос и получает зашифрованный ответ.', 'The client sends the request and gets the encrypted answer.') }, states: { cfin: 'on', resp: 'on', client: 'ok' }, metrics: { rtts: n, ttfb: n * r } });
+      steps.push({ id: 'h3req', label: 'GET', caption: fmt(b('Запрос и ответ занимают второй путь до сервера и обратно. Всего до первого байта проходит {w} таких пути, то есть {t} мс.', 'The request and the answer are the second round trip. {n} RTT = {t} ms to the first byte.'), { n, w: rttWord(n), t: n * r }), focus: ['cfin', 'resp', 'client'], tokens: [{ edge: 'cfin', label: '{GET}' }, { edge: 'resp', label: '{200}' }], say: { client: b('Клиент отправляет запрос и получает зашифрованный ответ.', 'The client sends the request and gets the encrypted answer.') }, states: { cfin: 'on', resp: 'on', client: 'ok' }, metrics: { rtts: n, ttfb: n * r } });
       return steps;
     }
-    steps.push({ id: 'tcp', label: 'TCP', caption: b('Сначала устанавливается соединение TCP: пакеты SYN, SYN-ACK и ACK укладываются в один путь туда и обратно. Шифрования пока нет.', 'First TCP: SYN, SYN-ACK, ACK — one round trip. No encryption yet.'), focus: ['tsyn', 'tsynack', 'server'], tokens: [{ edge: 'tsyn', label: 'SYN' }, { edge: 'tsynack', label: 'SYN-ACK' }], say: { server: b('Сервер принимает соединение TCP.', 'The server accepts the TCP connection.') }, states: { ...hide(TLS_ALL), tsyn: 'on', tsynack: 'on' }, metrics: { rtts: 1, ttfb: r } });
+    steps.push({ id: 'tcp', label: 'TCP', caption: b('Сначала устанавливается соединение TCP: пакеты SYN, SYN-ACK и ACK укладываются в один путь до сервера и обратно. Шифрования пока нет.', 'First TCP: SYN, SYN-ACK, ACK — one round trip. No encryption yet.'), focus: ['tsyn', 'tsynack', 'server'], tokens: [{ edge: 'tsyn', label: 'SYN' }, { edge: 'tsynack', label: 'SYN-ACK' }], say: { server: b('Сервер принимает соединение TCP.', 'The server accepts the TCP connection.') }, states: { ...hide(TLS_ALL), tsyn: 'on', tsynack: 'on' }, metrics: { rtts: 1, ttfb: r } });
+    const v12 = p.version === '1.2';
+    const bad = broken.has('expired') ? 'expired' : broken.has('name') ? 'name' : null;
+    if (v12) {
+      steps.push({ id: 'hello', label: 'ClientHello', caption: b('Клиент отправляет приветствие ClientHello открытым текстом. В нём имя сайта (SNI), протоколы (ALPN) и список шифров, но половины ключа ещё нет: в TLS 1.2 клиент сначала ждёт, что выберет сервер.', 'ClientHello in clear text: the site name (SNI), the protocols (ALPN) and the cipher list, but no key share yet: in TLS 1.2 the client first waits for what the server picks.'), focus: ['client', 'hello12'], tokens: [{ edge: 'hello12', label: 'SNI shop.example' }], say: { client: b('Клиент называет имя сайта и перечисляет шифры, которые умеет.', 'The client names the site and lists the ciphers it knows.') }, states: { hello12: 'on' }, metrics: { rtts: 1, ttfb: r * 1.5 } });
+      steps.push({ id: 'shello', label: 'ServerHello', caption: b('Сервер выбирает шифр и присылает ServerHello, сертификат, свою половину обмена ключами и ServerHelloDone. Всё это идёт открытым текстом, и на этот обмен ушёл первый путь до сервера и обратно из двух, которые нужны TLS 1.2.', 'The server picks a cipher and sends ServerHello, the certificate, its half of the key exchange and ServerHelloDone. All of it goes in clear text, and this exchange took the first of the two round trips TLS 1.2 needs.'), focus: ['server', 'shello12'], tokens: [{ edge: 'shello12', label: 'Certificate' }], say: { server: b('Сервер присылает сертификат и свою половину ключа.', 'The server sends its certificate and its half of the key.') }, states: { shello12: 'on' }, metrics: { rtts: 2, ttfb: r * 2 } });
+      if (bad) return [...steps, checkStep(bad, 'alert12')];
+      steps.push({ id: 'ckx', label: 'ClientKeyExchange', caption: b('Сертификат прошёл проверку. Клиент отправляет свою половину ключа, сообщение ChangeCipherSpec и зашифрованный Finished, но запрос пока не отправляет: в TLS 1.2 нужно дождаться Finished от сервера.', 'The certificate passed the check. The client sends its half of the key, ChangeCipherSpec and an encrypted Finished, but not the request yet: in TLS 1.2 it has to wait for the server’s Finished.'), focus: ['client', 'ckx'], tokens: [{ edge: 'ckx', label: '{Finished}' }], say: { client: b('Клиент отправляет свою половину ключа и ждёт ответа сервера.', 'The client sends its half of the key and waits for the server.') }, states: { ckx: 'on' }, metrics: { rtts: 2, ttfb: r * 2.5 } });
+      steps.push({ id: 'sfin', label: 'Finished', caption: b('Сервер отвечает своими ChangeCipherSpec и Finished. Рукопожатие TLS 1.2 закончилось, и на него ушли два пути до сервера и обратно вместо одного в TLS 1.3.', 'The server answers with its ChangeCipherSpec and Finished. The TLS 1.2 handshake is over, and it took two round trips instead of the one of TLS 1.3.'), focus: ['server', 'sfin'], tokens: [{ edge: 'sfin', label: '{Finished}' }], say: { server: b('Сервер подтверждает, что тоже перешёл на шифрование.', 'The server confirms it has switched to encryption too.') }, states: { sfin: 'on' }, metrics: { rtts: 3, ttfb: r * 3 } });
+      steps.push({ id: 'fin', label: 'GET', caption: b('Только теперь клиент отправляет зашифрованный запрос HTTP.', 'Only now does the client send the encrypted HTTP request.'), focus: ['client', 'get12'], tokens: [{ edge: 'get12', label: '{GET /}' }], say: { client: b('Клиент отправляет зашифрованный запрос.', 'The client sends the encrypted request.') }, states: { get12: 'on' }, metrics: { rtts: 3, ttfb: r * 3.5 } });
+      steps.push({ id: 'resp', label: '200', caption: fmt(b('Первый байт ответа приходит через четыре пути до сервера и обратно, за {t} мс: один ушёл на TCP, два на TLS 1.2 и один на сам запрос.', 'The first byte of the answer arrives after four round trips, {t} ms: one for TCP, two for TLS 1.2 and one for the request itself.'), { t: n * r }), focus: ['server', 'resp12'], tokens: [{ edge: 'resp12', label: '{200 OK}' }], say: { server: b('Сервер отправляет зашифрованный ответ.', 'The server sends the encrypted answer.') }, states: { resp12: 'on', client: 'ok', server: 'ok' }, metrics: { rtts: n, ttfb: n * r } });
+      return steps;
+    }
     steps.push({ id: 'hello', label: 'ClientHello', caption: b('Клиент отправляет приветствие ClientHello открытым текстом. В нём имя сайта (SNI), протоколы (ALPN) и половина обмена ключами. С этого сообщения начинается TLS.', 'ClientHello in clear text: the site name (SNI), protocols (ALPN) and half of the key exchange. TLS starts here.'), focus: ['client', 'hello'], tokens: [{ edge: 'hello', label: 'SNI shop.example' }], say: { client: b('Клиент называет имя сайта и предлагает половину ключа.', 'The client names the site and offers half of the key.') }, states: { hello: 'on' }, metrics: { rtts: 1, ttfb: r * 1.5 } });
     steps.push({
       id: 'shello',
       label: 'ServerHello',
-      caption:
-        p.version === '1.2'
-          ? b('В TLS 1.2 обмен ключами занимает два пути туда и обратно: сначала сервер присылает сертификат и параметры, потом клиент отправляет свою часть ключа и Finished.', 'In TLS 1.2 the key exchange takes two round trips: first the server sends the certificate and parameters, then the client its key part and Finished.')
-          : b('Сервер отвечает своей половиной ключа, и всё, что идёт дальше, уже зашифровано: сертификат, подпись и Finished. В TLS 1.3 на это уходит один путь туда и обратно.', 'The server answers with its half of the key; everything after is encrypted: the certificate, the signature, Finished. TLS 1.3 needs one round trip for it.'),
+      caption: b('Сервер отвечает своей половиной ключа, и всё, что идёт дальше, уже зашифровано: сертификат, подпись и Finished. В TLS 1.3 на это уходит один путь до сервера и обратно.', 'The server answers with its half of the key; everything after is encrypted: the certificate, the signature, Finished. TLS 1.3 needs one round trip for it.'),
       focus: ['server', 'shello'],
       tokens: [{ edge: 'shello', label: '{Certificate}' }],
       say: { server: b('Сервер отвечает своей половиной ключа и присылает сертификат.', 'The server answers with its half of the key and its certificate.') },
       states: { shello: 'on' },
-      metrics: { rtts: p.version === '1.2' ? 3 : 2, ttfb: r * (p.version === '1.2' ? 3 : 2) },
+      metrics: { rtts: 2, ttfb: r * 2 },
     });
-    const bad = broken.has('expired') ? 'expired' : broken.has('name') ? 'name' : null;
-    if (bad) {
-      steps.push({
-        id: 'check',
-        label: b('проверка', 'check'),
-        caption:
-          bad === 'expired'
-            ? b('Клиент проверяет сертификат и видит, что дата окончания (поле notAfter) уже прошла. Он отправляет предупреждение и закрывает соединение, а запрос HTTP так и не уходит.', 'The client checks the certificate: notAfter is in the past. It sends an alert and closes the connection. The HTTP request never left.')
-            : b('Клиент сверяет имя и видит, что в сертификате указано только www.shop.example, а сам он пришёл на shop.example. Соединение закрывается раньше, чем уходит запрос.', 'The client checks the name: the certificate lists only www.shop.example, and it came for shop.example. The connection closes before the request.'),
-        focus: ['client', 'alert'],
-        tokens: [{ edge: 'alert', label: 'alert' }],
-        say: { client: bad === 'expired' ? b('Клиент видит, что срок сертификата истёк, и закрывает соединение.', 'The client sees the certificate has expired and closes.') : b('Клиент видит, что сертификат выписан на другое имя, и закрывает соединение.', 'The client sees the certificate is for another name and closes.') },
-        states: { alert: 'err', client: 'err' },
-        metrics: { rtts: 2, ttfb: 0 },
-        broken: {
-          at: 'client',
-          message: bad === 'expired' ? '$ curl https://shop.example/\ncurl: (60) SSL certificate problem: certificate has expired' : "$ curl https://shop.example/\ncurl: (60) SSL: no alternative certificate subject name matches target host name 'shop.example'",
-          caption: b('Поломка находится в TLS: сеть и сервер в порядке, но сервер не прошёл проверку подлинности. Код 60 у curl всегда означает проблему с сертификатом.', 'this is the TLS layer: the network and the server are fine, the authenticity check failed. curl code 60 is always about the certificate.'),
-        },
-      });
-      return steps;
-    }
-    steps.push({ id: 'fin', label: 'Finished + GET', caption: b('Сертификат прошёл проверку. Клиент отправляет Finished и сразу за ним зашифрованный запрос, не дожидаясь ещё одного ответа сервера.', 'The certificate is fine. The client sends Finished and the encrypted request at once, without waiting for another round trip.'), focus: ['client', 'cfin'], tokens: [{ edge: 'cfin', label: '{GET /}' }], say: { client: b('Клиент проверил сертификат и отправляет зашифрованный запрос.', 'The client has checked the certificate and sends the encrypted request.') }, states: { cfin: 'on' }, metrics: { rtts: n - 1, ttfb: r * (n - 0.5) } });
-    steps.push({ id: 'resp', label: '200', caption: fmt(b('Первый байт ответа приходит через {n} пути туда и обратно, за {t} мс: один путь ушёл на TCP, {k} на TLS и один на сам запрос.', 'The first byte of the answer after {n} RTT = {t} ms: one for TCP, {k} for TLS, one for the request.'), { n, t: n * r, k: n - 2 }), focus: ['server', 'resp'], tokens: [{ edge: 'resp', label: '{200 OK}' }], say: { server: b('Сервер отправляет зашифрованный ответ.', 'The server sends the encrypted answer.') }, states: { resp: 'on', client: 'ok', server: 'ok' }, metrics: { rtts: n, ttfb: n * r } });
+    if (bad) return [...steps, checkStep(bad, 'alert')];
+    steps.push({ id: 'fin', label: 'Finished + GET', caption: b('Сертификат прошёл проверку. Клиент отправляет Finished и сразу за ним зашифрованный запрос: в TLS 1.3 ждать ещё одного ответа сервера не нужно.', 'The certificate is fine. The client sends Finished and the encrypted request at once: in TLS 1.3 there is no need to wait for another answer from the server.'), focus: ['client', 'cfin'], tokens: [{ edge: 'cfin', label: '{GET /}' }], say: { client: b('Клиент проверил сертификат и отправляет зашифрованный запрос.', 'The client has checked the certificate and sends the encrypted request.') }, states: { cfin: 'on' }, metrics: { rtts: n - 1, ttfb: r * (n - 0.5) } });
+    steps.push({ id: 'resp', label: '200', caption: fmt(b('Первый байт ответа приходит через три пути до сервера и обратно, за {t} мс: один ушёл на TCP, один на TLS и один на сам запрос.', 'The first byte of the answer arrives after three round trips, {t} ms: one for TCP, one for TLS and one for the request itself.'), { t: n * r }), focus: ['server', 'resp'], tokens: [{ edge: 'resp', label: '{200 OK}' }], say: { server: b('Сервер отправляет зашифрованный ответ.', 'The server sends the encrypted answer.') }, states: { resp: 'on', client: 'ok', server: 'ok' }, metrics: { rtts: n, ttfb: n * r } });
     return steps;
   },
   explainDelta(prev, next, change, a, bb) {
@@ -421,6 +440,6 @@ export const tlsModel = defineModel<LP>({
       return bb.reuse
         ? fmt(b('Соединение уже открыто, рукопожатий нет, и время до первого байта изменилось с {t0} до {t1} мс.', 'The connection is open: no handshakes, first byte {t0} → {t1} ms.'), { t0, t1 })
         : b('Соединение новое, поэтому перед запросом снова нужны рукопожатия TCP и TLS.', 'A new connection: TCP and TLS again before the request.');
-    return fmt(b('С протоколом {v} до первого байта проходит {n} пути туда и обратно, то есть {t1} мс.', '{v}: {n} RTT to the first byte, {t1} ms.'), { v: bb.version === 'h3' ? 'HTTP/3' : `TLS ${bb.version}`, n: ttfbRtts(bb), t1 });
+    return fmt(b('С протоколом {v} до первого байта проходит {n} пути до сервера и обратно, то есть {t1} мс.', '{v}: {n} round trips to the first byte, {t1} ms.'), { v: bb.version === 'h3' ? 'HTTP/3' : `TLS ${bb.version}`, n: rttWord(ttfbRtts(bb)), t1 });
   },
 });

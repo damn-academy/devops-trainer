@@ -182,11 +182,11 @@ export const proxyModel = defineModel<P>({
       remove: ['app1'],
       layer: 'L4',
       predict: {
-        prompt: b('Процесс приложения на app1 аварийно завершился, а сама машина работает. Что получит клиент?', 'The process on app1 crashed; the machine is alive. What does the client get?'),
+        prompt: b('Процесс приложения на app1 аварийно завершился, а сама машина работает. Приложение на app2 строит отчёт столько секунд, сколько задано над схемой. Что получит клиент?', 'The application process on app1 has crashed, while the machine itself is up. The application on app2 builds the report in as many seconds as set above the diagram. What does the client get?'),
         options: [
-          { id: '200', text: b('Код 200, потому что nginx получит отказ RST и повторит запрос на app2', '200: nginx gets an RST and retries on app2') },
-          { id: '502', text: b('Код 502, потому что nginx получит отказ и сам напишет клиенту ошибку', '502, because nginx gets a refusal and writes the error itself') },
-          { id: '504', text: b('Код 504, потому что nginx так и не дождётся ответа ни от одного сервера', '504, because nginx never gets an answer from either server') },
+          { id: '502', text: b('Код 502: nginx получил отказ от app1 и сразу написал клиенту ошибку', '502: nginx got a refusal from app1 and wrote the error to the client at once') },
+          { id: '504', text: b('Код 504: nginx повторил запрос на app2, а app2 не успел ответить в срок', '504: nginx retried on app2, and app2 did not answer in time') },
+          { id: '200', text: b('Код 200: nginx повторил запрос на app2, и app2 успел ответить в срок', '200: nginx retried on app2, and app2 answered in time') },
         ],
         resolve: (_p, next) => String(lastMetric(next, 'code') ?? 0),
       },
