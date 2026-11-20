@@ -99,7 +99,7 @@ describe('clone identity', () => {
   it('writes persistent static networking and regenerates SSH keys for clones', () => {
     const s = identityScript({ hostname: "node'2", ip: '10.0.0.12/24', mac: '02:00:00:00:00:02', gateway: '10.0.0.1', dns: '10.0.0.1', hosts: { node1: '10.0.0.11/24' } }, { sshd: true, newKeys: true });
     expect(s).toContain("hostname 'node'\\''2'");
-    for (const value of ['/etc/machine-id', '/etc/network/interfaces', 'address 10.0.0.12/24', 'ip addr flush dev eth0', 'ip route replace default via 10.0.0.1', '10.0.0.11\tnode1', 'rm -f /etc/ssh/ssh_host_*', 'ssh-keygen', 'sshd reload']) expect(s).toContain(value);
+    for (const value of ['/etc/machine-id', '/etc/network/interfaces', 'address 10.0.0.12/24', 'ip addr flush dev eth0', 'ip route replace default via 10.0.0.1', '10.0.0.11\tnode1', 'rm -f /etc/ssh/ssh_host_*', 'ssh-keygen', 'sshd restart']) expect(s).toContain(value);
   });
   it('uses DHCP when requested and keeps fresh boot keys', () => {
     const s = identityScript({ hostname: 'node', dhcp: true }, { sshd: true, newKeys: false });

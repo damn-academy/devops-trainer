@@ -11,8 +11,20 @@ export type Post = (m: WorkerOut, transfer?: Transferable[]) => void;
 
 type Bus = { register(name: string, fn: (data: unknown) => void, ctx?: unknown): void; send(name: string, data: unknown): void };
 
+type VirtioNetwork = {
+  device_status: number;
+  queues: { enabled: boolean; is_configured(): boolean; has_request(): boolean }[];
+};
+type NetworkEmulator = {
+  bus: Bus;
+  v86?: { cpu: { devices: { virtio_net?: { virtio: VirtioNetwork } } } };
+};
+const VIRTIO_DRIVER_OK = 4;
+const VIRTIO_NEEDS_RESET_OR_FAILED = 64 | 128;
+
 export function createHost(post: Post, close: () => void = () => {}): (m: WorkerIn) => Promise<void> {
   let emu: V86 | null = null;
+  let nic: 'ne2k' | 'virtio' = 'ne2k';
   let disks: Partial<Record<'hda' | 'hdb', SparseDisk>> = {};
   const pending: Record<number, number[]> = {};
   let flushQueued = false;
@@ -40,6 +52,7 @@ export function createHost(post: Post, close: () => void = () => {}): (m: Worker
       switch (m.op) {
         case 'boot': {
           const c = m.config;
+          nic = c.nic;
           disks = {};
           for (const d of c.disks ?? []) disks[d.slot] = new SparseDisk(d.data.byteLength, d.data);
           const opts: V86Options = {
@@ -83,9 +96,21 @@ export function createHost(post: Post, close: () => void = () => {}): (m: Worker
         case 'serial':
           emu?.serial_send_bytes(m.port, m.bytes);
           break;
-        case 'net':
-          (emu as unknown as { bus: Bus } | null)?.bus.send('net0-receive', m.frame);
+        case 'net': {
+          const network = emu as unknown as NetworkEmulator | null;
+          if (nic === 'virtio') {
+            // v86's receive handler reads the RX ring even before the driver
+            // configures it. Broadcasts from already running peers can then
+            // write through address zero and corrupt the guest/ring state.
+            // A real NIC drops traffic until its driver and RX queue are ready.
+            const device = network?.v86?.cpu.devices.virtio_net?.virtio;
+            const rx = device?.queues[0];
+            if (!device || !(device.device_status & VIRTIO_DRIVER_OK) ||
+                (device.device_status & VIRTIO_NEEDS_RESET_OR_FAILED) || !rx?.enabled || !rx.is_configured() || !rx.has_request()) break;
+          }
+          network?.bus.send('net0-receive', m.frame);
           break;
+        }
         case 'save': {
           if (!emu) throw new Error('no machine');
           const state = await emu.save_state();
