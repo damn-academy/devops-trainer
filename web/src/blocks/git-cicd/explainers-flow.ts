@@ -38,7 +38,7 @@ export const mergeModel = defineModel<MergeP>({
     'A branch is a name on a commit. If main did not move on, a merge just moves it to the last commit of the other branch; if both branches moved on, Git compares them with their common ancestor and creates a commit with two parents; if both changed the same lines, it stops and asks you to decide.',
   ),
   intro: bi(
-    'Сейчас на схеме только коммит A и две ветки, которые на него указывают. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Новые коммиты появляются тогда, когда их делают, подсвечен тот блок, который работает, а облачко рядом с ним говорит, что он делает.\n\nКогда дойдёте до конца, включите в «Параметрах» коммит B в main или ключ `--no-ff` и посмотрите, появится ли коммит слияния.',
+    'Сейчас на схеме только коммит A и две ветки, которые на него указывают. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Новый коммит появляется на схеме в тот момент, когда Git его записывает. Подсвечен тот блок, который работает сейчас, а облачко рядом с ним говорит, что он делает.\n\nКогда дойдёте до конца, включите в «Параметрах» коммит B в main или флаг `--no-ff` и посмотрите, появится ли коммит слияния.',
     'For now the diagram shows only commit A and the two branches pointing to it. Press “Start from the first step”, then go on with “Step forward”. New commits appear when they are made; the working block is highlighted and the callout says what it does.\n\nAt the end, switch on commit B on main or the `--no-ff` key in “Parameters” and see whether a merge commit appears.',
   ),
   legend: [
@@ -61,7 +61,7 @@ export const mergeModel = defineModel<MergeP>({
       { id: 'b', label: 'B', icon: 'disk', sub: 'main', family: 'ci-source', shape: 'doc', x: 260, y: 190, w: 128, h: 56, card: card(bi('Коммит коллеги в main, сделанный после того, как вы создали ветку feature. Из-за него истории двух веток разошлись.', 'A colleague’s commit on main made after you branched off. Because of it the histories diverged.'), bi('Коммит сделал коллега в ветке main.', 'A colleague: git commit on main.'), 'git log --oneline main') },
       { id: 'c', label: 'C', icon: 'disk', sub: 'feature', family: 'ci-build', shape: 'doc', x: 260, y: 50, w: 128, h: 56, card: card(bi('Ваш первый коммит в ветке feature. Его родителем служит коммит A.', 'Your first commit on the feature branch. Its parent is A.'), bi('Коммит сделали вы в ветке feature.', 'You: git commit on feature.'), 'git log --oneline feature') },
       { id: 'd', label: 'D', icon: 'disk', sub: 'feature', family: 'ci-build', shape: 'doc', x: 470, y: 50, w: 128, h: 56, card: card(bi('Последний коммит ветки feature, на который указывает её имя.', 'The last commit of the feature branch: its name points here.'), bi('Коммит сделали вы в ветке feature.', 'You: git commit on feature.'), 'git rev-parse feature') },
-      { id: 'm', label: 'M', icon: 'disk', sub: { ru: '2 родителя', en: '2 parents' }, family: 'ci-test', shape: 'doc', x: 600, y: 190, w: 144, h: 56, card: card(bi('Коммит слияния с двумя родителями. Его снимок объединяет изменения обеих веток относительно коммита A. Такой коммит появляется, только если передвинуть ветку нельзя или если вы запретили это ключом `--no-ff`.', 'A commit with two parents, B and D. Its snapshot joins the changes of both branches relative to A. It appears only when a fast-forward is impossible or forbidden with --no-ff.'), bi('Коммит записывает команда `git merge`.', 'git merge.'), 'git log --graph --oneline', { page: 'man/git-merge.1', anchor: 'OPTIONS', line: '--no-ff' }) },
+      { id: 'm', label: 'M', icon: 'disk', sub: { ru: '2 родителя', en: '2 parents' }, family: 'ci-test', shape: 'doc', x: 600, y: 190, w: 144, h: 56, card: card(bi('Коммит слияния с двумя родителями. Его снимок объединяет изменения обеих веток относительно коммита A. Такой коммит появляется, только если передвинуть ветку нельзя или если вы запретили это флагом `--no-ff`.', 'A commit with two parents, B and D. Its snapshot joins the changes of both branches relative to A. It appears only when a fast-forward is impossible or forbidden with --no-ff.'), bi('Коммит записывает команда `git merge`.', 'git merge.'), 'git log --graph --oneline', { page: 'man/git-merge.1', anchor: 'OPTIONS', line: '--no-ff' }) },
       { id: 'main', label: 'main', icon: 'file', sub: '→ A', family: 'neutral', shape: 'pill', x: 800, y: 196, w: 144, h: 44, card: card(bi('Ветка main, то есть файл с хэшем одного коммита. Слияние в main меняет этот хэш и, если нужно, добавляет коммит слияния.', 'The main branch: a file with the hash of one commit. A merge into main changes only that hash (and maybe adds the commit M).'), bi('Ветку передвигает команда `git merge`.', 'git merge moves it.'), 'cat .git/refs/heads/main') },
       { id: 'feature', label: 'feature', icon: 'file', sub: '→ D', family: 'neutral', shape: 'pill', x: 800, y: 56, w: 144, h: 44, card: card(bi('Ветка feature. Слияние в main её не трогает, и после слияния её можно удалить, а коммиты останутся в истории main.', 'The feature branch. Merging into main does not touch it: after the merge it can be deleted and its commits stay in main’s history.'), bi('Ветку создаёт команда `git switch -c feature`.', 'git switch -c feature.'), 'git branch -v') },
       { id: 'head', label: 'HEAD', icon: 'file', sub: '→ main', family: 'neutral', shape: 'pill', x: 800, y: 320, w: 144, h: 44, card: card(bi('Слияние всегда вливает названную ветку в ту, на которой вы стоите. Поэтому перед слиянием нужно перейти на main командой `git switch main`.', 'A merge always brings the named branch into the one you are on. That is why you run git switch main first.'), bi('HEAD переписывает команда `git switch`.', 'git switch.'), 'cat .git/HEAD') },
@@ -87,7 +87,7 @@ export const mergeModel = defineModel<MergeP>({
       default: false,
       near: 'b',
       predict: {
-        prompt: bi('Пока вы работали в ветке feature, коллега сделал в main коммит B. Что сделает `git merge feature`?', 'While you worked on feature, a colleague made commit B on main. What does git merge feature do?'),
+        prompt: bi('Пока вы работали в ветке feature, коллега сделал в main коммит B. Что сделает git merge feature?', 'While you worked on feature, a colleague made commit B on main. What does git merge feature do?'),
         options: [
           { id: 'commit', text: bi('Git запишет коммит слияния с двумя родителями', 'Create a merge commit with two parents') },
           { id: 'ff', text: bi('Git передвинет main на коммит D без нового коммита', 'Just move main to D') },
@@ -97,15 +97,15 @@ export const mergeModel = defineModel<MergeP>({
     },
     {
       id: 'noFf',
-      label: bi('Слияние запускают с ключом --no-ff', 'The --no-ff key'),
+      label: bi('Слияние запускают с флагом --no-ff', 'The --no-ff key'),
       group: bi('Как вы сливаете', 'How you merge'),
       kind: 'toggle',
       default: false,
       near: 'm',
       predict: {
-        prompt: bi('В main новых коммитов не было, но вы запускаете `git merge --no-ff feature`. Появится ли коммит слияния?', 'main did not move on, but you run git merge --no-ff feature. Will a merge commit appear?'),
+        prompt: bi('В main новых коммитов не было, но вы запускаете git merge --no-ff feature. Появится ли коммит слияния?', 'main did not move on, but you run git merge --no-ff feature. Will a merge commit appear?'),
         options: [
-          { id: 'yes', text: bi('Да, потому что ключ --no-ff запрещает передвигать ветку без коммита слияния', 'Yes: --no-ff forbids the fast-forward') },
+          { id: 'yes', text: bi('Да, потому что флаг --no-ff запрещает передвигать ветку без коммита слияния', 'Yes: --no-ff forbids the fast-forward') },
           { id: 'no', text: bi('Нет, потому что соединять нечего и main передвинется вперёд', 'No: there is nothing to join, main just moves') },
         ],
         resolve: (_p, n) => (metric(n, 'created') > 0 ? 'yes' : 'no'),
@@ -118,7 +118,7 @@ export const mergeModel = defineModel<MergeP>({
       label: bi('Обе ветки по-разному изменили одну строку about.html', 'Both branches changed the same line'),
       remove: ['e-file'],
       predict: {
-        prompt: bi('В коммите B и в коммите D один и тот же абзац about.html переписан по-разному. Что сделает `git merge`?', 'B and D rewrote the same paragraph of about.html differently. What does git merge do?'),
+        prompt: bi('В коммите B и в коммите D один и тот же абзац about.html переписан по-разному. Что сделает git merge?', 'B and D rewrote the same paragraph of about.html differently. What does git merge do?'),
         options: [
           { id: 'stop', text: bi('Git остановится и попросит вас выбрать текст', 'Stop and ask you to choose') },
           { id: 'newer', text: bi('Git возьмёт ту правку, которую сделали позже', 'Take the later edit') },
@@ -132,7 +132,7 @@ export const mergeModel = defineModel<MergeP>({
       label: bi('В main осталась незакоммиченная правка about.html', 'An uncommitted edit of about.html on main'),
       remove: ['e-head'],
       predict: {
-        prompt: bi('В рабочем каталоге лежит незакоммиченная правка about.html, а ветка feature тоже меняла этот файл. Что ответит `git merge`?', 'The working directory has an uncommitted edit of about.html, and feature changed that file too. What does git merge answer?'),
+        prompt: bi('В рабочем каталоге лежит незакоммиченная правка about.html, а ветка feature тоже меняла этот файл. Что ответит git merge?', 'The working directory has an uncommitted edit of about.html, and feature changed that file too. What does git merge answer?'),
         options: [
           { id: 'refuse', text: bi('Git откажется сливать, потому что слияние затёрло бы вашу правку', 'Refuse: the edit would be overwritten') },
           { id: 'mix', text: bi('Git смешает вашу правку с результатом слияния', 'Mix the edit into the merge') },
@@ -142,9 +142,9 @@ export const mergeModel = defineModel<MergeP>({
     },
   ],
   metrics: [
-    { id: 'created', label: bi('новых коммитов при слиянии', 'commits created by the merge') },
-    { id: 'parents', label: bi('родителей у последнего коммита main', 'parents of main’s tip') },
-    { id: 'conflicts', label: bi('файлов в конфликте', 'files in conflict') },
+    { id: 'created', label: bi('число новых коммитов при слиянии', 'commits created by the merge') },
+    { id: 'parents', label: bi('число родителей у последнего коммита main', 'parents of main’s tip') },
+    { id: 'conflicts', label: bi('число файлов в конфликте', 'files in conflict') },
   ],
   run(p, broken) {
     const kind = mergeKind(p, broken);
@@ -208,7 +208,7 @@ export const mergeModel = defineModel<MergeP>({
         say: { file: bi('Git видит в about.html правку, которой нет ни в одном коммите, и отказывается её затирать.', 'Git sees an edit in about.html that is in no commit and refuses to overwrite it.') },
         states: { file: 'err', head: 'warn' },
         metrics: m0,
-        broken: { at: 'file', message: 'error: Your local changes to the following files would be overwritten by merge:\n\tabout.html\nPlease commit your changes or stash them before you merge.\nAborting', caption: bi('Сначала закоммитьте свою правку или отмените её, а затем запускайте слияние снова.', 'commit the edit first (or drop it), then merge.') },
+        broken: { at: 'file', message: 'error: Your local changes to the following files would be overwritten by merge:\n\tabout.html\nPlease commit your changes or stash them before you merge.\nAborting', caption: bi('Сначала запишите свою правку коммитом или отмените её, а затем запускайте слияние снова.', 'Commit the edit first (or drop it), then merge.') },
       });
       return steps;
     }
@@ -230,7 +230,7 @@ export const mergeModel = defineModel<MergeP>({
       label: bi('общий предок', 'common ancestor'),
       caption: diverged
         ? bi('Git находит общего предка двух веток, коммит A, и для каждого файла сравнивает три версии: из A, из B и из D.', 'Git finds the common ancestor A and for every file compares three versions: from A, from B and from D.')
-        : bi('Передвинуть ветку было бы можно, но ключ `--no-ff` это запретил. Поэтому Git всё равно сравнивает версии файлов с общим предком A.', '--no-ff: a fast-forward would be possible, but you forbade it. Git still compares the versions with the base A.'),
+        : bi('Передвинуть ветку было бы можно, но флаг `--no-ff` это запретил. Поэтому Git всё равно сравнивает версии файлов с общим предком A.', '--no-ff: a fast-forward would be possible, but you forbade it. Git still compares the versions with the base A.'),
       focus: ['file', 'a', 'e-file'],
       reveal: ['file', 'e-file', 'm'],
       tokens: [{ edge: 'e-file', label: 'base · ours · theirs' }],
@@ -248,7 +248,7 @@ export const mergeModel = defineModel<MergeP>({
         states: { file: 'err', m: 'wait' },
         values: { file: '<<<<<<< HEAD … >>>>>>> feature' },
         metrics: { created: 0, parents: 1, conflicts: 1 },
-        broken: { at: 'file', message: 'Auto-merging about.html\nCONFLICT (content): Merge conflict in about.html\nAutomatic merge failed; fix conflicts and then commit the result.', caption: bi('Отредактируйте файл, удалите маркеры, выполните `git add about.html` и `git commit`. Если решать сейчас некогда, команда `git merge --abort` вернёт всё как было до слияния.', 'edit the file, remove the markers, git add about.html and git commit, or git merge --abort to go back.') },
+        broken: { at: 'file', message: 'Auto-merging about.html\nCONFLICT (content): Merge conflict in about.html\nAutomatic merge failed; fix conflicts and then commit the result.', caption: bi('Отредактируйте файл, удалите маркеры, выполните git add about.html и git commit.', 'Edit the file, remove the markers, then git add about.html and git commit.') },
       });
       return steps;
     }
@@ -258,7 +258,7 @@ export const mergeModel = defineModel<MergeP>({
         label: 'M',
         caption: diverged
           ? bi('Изменения двух веток не пересекаются, поэтому Git соединяет их сам и записывает коммит слияния M с двумя родителями, B и D.', 'The changes do not overlap. Git records the commit M with two parents: B (or A) and D.')
-          : bi('Git записывает коммит слияния M с двумя родителями, A и D, хотя изменений в main не было: этого потребовал ключ `--no-ff`.', 'Git records the merge commit M with two parents, A and D, although main had no changes: --no-ff demanded it.'),
+          : bi('Git записывает коммит слияния M с двумя родителями, A и D, хотя изменений в main не было: этого потребовал флаг `--no-ff`.', 'Git records the merge commit M with two parents, A and D, although main had no changes: --no-ff demanded it.'),
         focus: ['m', 'e-mb', 'e-md'],
         reveal: ['e-mb', 'e-md'],
         tokens: [{ edge: 'e-md', label: bi('второй родитель D', 'parent 2: D') }],
@@ -282,11 +282,11 @@ export const mergeModel = defineModel<MergeP>({
   explainDelta(_prev, next, change, _a, b): Bi {
     if (change.kind === 'break') {
       if (!change.on) return bi('Поломку убрали, и слияние снова доходит до конца.', 'The break is removed: the merge completes again.');
-      return change.id === 'same-lines' ? bi('Обе стороны изменили одни и те же строки, поэтому Git останавливается и ждёт вашего решения.', 'Both sides changed the same lines: Git stops and waits for your decision.') : bi('Git защищает незакоммиченную правку и отказывается сливать ветки, пока вы её не закоммитите.', 'An uncommitted edit is protected: Git refuses to merge until you commit it.');
+      return change.id === 'same-lines' ? bi('Обе стороны изменили одни и те же строки, поэтому Git останавливается и ждёт вашего решения.', 'Both sides changed the same lines: Git stops and waits for your decision.') : bi('Git защищает незакоммиченную правку и отказывается сливать ветки, пока вы не запишете её коммитом.', 'An uncommitted edit is protected: Git refuses to merge until you commit it.');
     }
     const c = metric(next, 'created');
-    if (change.id === 'mainMoved') return b.mainMoved ? bi('Истории разошлись, передвинуть ветку уже нельзя, и появляется коммит M с двумя родителями.', 'The histories diverged: a fast-forward is impossible, and the commit M with two parents appears.') : c ? bi('В main новых коммитов нет, но ключ `--no-ff` всё равно требует коммит слияния.', 'main did not move on, but --no-ff still demands a merge commit.') : bi('В main новых коммитов нет, поэтому слияние сводится к тому, что Git передвигает ветку вперёд.', 'main did not move on: the merge is just a pointer moving forward.');
-    return b.noFf ? bi('С ключом `--no-ff` коммит слияния создаётся всегда, и по истории видно, что работа шла в отдельной ветке.', '--no-ff: a merge commit is always created, and the history shows that the work happened on a branch.') : c ? bi('Без ключа `--no-ff` коммит слияния всё равно нужен, потому что истории разошлись.', 'Without --no-ff a merge commit is still needed: the histories diverged.') : bi('Без ключа `--no-ff` Git передвигает main вперёд, и коммита слияния нет.', 'Without --no-ff Git fast-forwards main; there is no merge commit.');
+    if (change.id === 'mainMoved') return b.mainMoved ? bi('Истории разошлись, передвинуть ветку уже нельзя, и появляется коммит M с двумя родителями.', 'The histories diverged: a fast-forward is impossible, and the commit M with two parents appears.') : c ? bi('В main новых коммитов нет, но флаг --no-ff всё равно требует коммит слияния.', 'main did not move on, but --no-ff still demands a merge commit.') : bi('В main новых коммитов нет, поэтому слияние сводится к тому, что Git передвигает ветку вперёд.', 'main did not move on: the merge is just a pointer moving forward.');
+    return b.noFf ? bi('С флагом --no-ff коммит слияния создаётся всегда, и по истории видно, что работа шла в отдельной ветке.', '--no-ff: a merge commit is always created, and the history shows that the work happened on a branch.') : c ? bi('Без флага --no-ff коммит слияния всё равно нужен, потому что истории разошлись.', 'Without --no-ff a merge commit is still needed: the histories diverged.') : bi('Без флага --no-ff Git передвигает main вперёд, и коммита слияния нет.', 'Without --no-ff Git fast-forwards main; there is no merge commit.');
   },
 });
 
@@ -401,7 +401,7 @@ export const artifactsModel = defineModel<ArtP>({
       label: bi('У сборки не объявлены артефакты', 'No artifacts: declared'),
       remove: ['e-up', 'e-down', 'e-down2'],
       predict: {
-        prompt: bi('У джобы build нет ключа `artifacts:paths`, а обе джобы выполняются на одном раннере. Увидит ли test каталог dist/?', 'build has no artifacts:paths. Both jobs are on one runner. Will test see the dist/ directory?'),
+        prompt: bi('У джобы build нет ключа artifacts:paths, а обе джобы выполняются на одном раннере. Увидит ли test каталог dist/?', 'build has no artifacts:paths. Both jobs are on one runner. Will test see the dist/ directory?'),
         options: [
           { id: 'no', text: bi('Нет, потому что каждая джоба начинается с чистой копии репозитория', 'No: every job starts from a clean copy') },
           { id: 'yes', text: bi('Да, потому что раннер тот же', 'Yes: the runner is the same') },
@@ -414,7 +414,7 @@ export const artifactsModel = defineModel<ArtP>({
       label: bi('Каталог dist/ положили в кэш, а не в артефакт', 'dist/ put into the cache, not an artifact'),
       remove: ['e-up', 'e-down', 'e-down2'],
       predict: {
-        prompt: bi('Каталог dist/ объявлен в `cache`, а джобу deploy забрал runner-2. Дойдёт ли собранный сайт до выкладки?', 'dist/ is declared in cache, and deploy went to runner-2. Will the build reach the deploy?'),
+        prompt: bi('Каталог dist/ объявлен в cache, а джобу deploy забрал runner-2. Дойдёт ли собранный сайт до выкладки?', 'dist/ is declared in cache, and deploy went to runner-2. Will the build reach the deploy?'),
         options: [
           { id: 'no', text: bi('Нет, потому что у runner-2 своя полка и этого кэша на ней нет', 'No: runner-2 has a different shelf') },
           { id: 'yes', text: bi('Да, потому что кэш общий для всего пайплайна', 'Yes: the cache is shared by the pipeline') },
@@ -426,7 +426,7 @@ export const artifactsModel = defineModel<ArtP>({
   metrics: [
     { id: 'npm1', label: bi('npm ci в build #1, с', 'npm ci in build #1, s') },
     { id: 'npm2', label: bi('npm ci в build #2, с', 'npm ci in build #2, s') },
-    { id: 'delivered', label: bi('джоб получили dist/', 'jobs that got dist/') },
+    { id: 'delivered', label: bi('число джоб, получивших dist/', 'jobs that got dist/') },
   ],
   run(p, broken) {
     const n = artNumbers(p);
@@ -557,8 +557,8 @@ export const artifactsModel = defineModel<ArtP>({
     }
     const a1 = metric(prev, 'npm2');
     const b1 = metric(next, 'npm2');
-    if (change.id === 'key') return b.key === 'lock' ? fmt(bi('Теперь ключ вычисляется из lock-файла, и полка меняется вместе с зависимостями. `npm ci` во второй сборке занимает {b} секунд вместо {a}.', 'A key by the lock file: the shelf changes along with the dependencies. npm ci in the second build: {a} → {b} s.'), { a: a1, b: b1 }) : fmt(bi('Теперь ключ составлен из имени ветки, и у каждой ветки своя полка. `npm ci` во второй сборке занимает {b} секунд вместо {a}.', 'A key by branch: each branch has its own shelf. npm ci in the second build: {a} → {b} s.'), { a: a1, b: b1 });
-    return fmt(bi('`npm ci` во второй сборке занимает {b} секунд вместо {a}. Если кэш не нашёлся, сборка идёт дольше, но не ломается.', 'npm ci in the second build: {a} → {b} s. A cache miss slows down but breaks nothing.'), { a: a1, b: b1 });
+    if (change.id === 'key') return b.key === 'lock' ? fmt(bi('Теперь ключ вычисляется из lock-файла, и полка меняется вместе с зависимостями. npm ci во второй сборке занимает {b} секунд вместо {a}.', 'A key by the lock file: the shelf changes along with the dependencies. npm ci in the second build: {a} → {b} s.'), { a: a1, b: b1 }) : fmt(bi('Теперь ключ составлен из имени ветки, и у каждой ветки своя полка. npm ci во второй сборке занимает {b} секунд вместо {a}.', 'A key by branch: each branch has its own shelf. npm ci in the second build: {a} → {b} s.'), { a: a1, b: b1 });
+    return fmt(bi('npm ci во второй сборке занимает {b} секунд вместо {a}. Если кэш не нашёлся, сборка идёт дольше, но не ломается.', 'npm ci in the second build: {a} → {b} s. A cache miss slows down but breaks nothing.'), { a: a1, b: b1 });
   },
 });
 
@@ -641,7 +641,7 @@ export const dagModel = defineModel<DagP>({
       default: false,
       near: 'test',
       predict: {
-        prompt: bi('Джобе test добавили `needs: [build]`, а линтер по-прежнему идёт 90 секунд. Когда стартуют тесты?', 'Give test needs: [build]. When do the tests start?'),
+        prompt: bi('Джобе test добавили needs: [build], а линтер по-прежнему идёт 90 секунд. Когда стартуют тесты?', 'Give test needs: [build]. When do the tests start?'),
         options: [
           { id: 'early', text: bi('Тесты стартуют сразу после build и не ждут линтер', 'Right after build, without waiting for lint') },
           { id: 'same', text: bi('Тесты, как и раньше, стартуют после всей стадии build', 'As before, after the whole stage') },
@@ -676,7 +676,7 @@ export const dagModel = defineModel<DagP>({
       label: bi('Правило rules убрало build из пайплайна merge request', 'rules removed build from the pipeline'),
       remove: ['e-bt'],
       predict: {
-        prompt: bi('У джобы build правило «только для main», а пайплайн создаётся для merge request. У test по-прежнему записано `needs: [build]`. Что будет?', 'build has a "main only" rule, and the pipeline is a merge request one. test still has needs: [build]. What happens?'),
+        prompt: bi('У джобы build правило «только для main», а пайплайн создаётся для merge request. У test по-прежнему записано needs: [build]. Что будет?', 'build has a "main only" rule, and the pipeline is a merge request one. test still has needs: [build]. What happens?'),
         options: [
           { id: 'invalid', text: bi('Сервер не создаст пайплайн, потому что зависимость указывает на джобу, которой нет', 'The pipeline is not created: the dependency points to nothing') },
           { id: 'start', text: bi('Джоба test стартует сразу, не дожидаясь сборки', 'test just starts at once') },
@@ -710,7 +710,7 @@ export const dagModel = defineModel<DagP>({
           say: { test: bi('Джоба test ссылается на build, которой в пайплайне нет, и сервер не может построить граф зависимостей.', 'The test job refers to build, which is not in the pipeline, and the server cannot build the dependency graph.') },
           states: { test: 'err', lint: 'off' },
           metrics: { testStart: 0, total: 0 },
-          broken: { at: 'test', message: "'test' job needs 'build' job, but 'build' does not exist in the pipeline. This might be because of the only, except, or rules keywords. To need a job that sometimes does not exist in the pipeline, use needs:optional.", caption: bi('Держите rules и needs согласованными или пишите `needs: [{job: build, optional: true}]`, чтобы зависимость не мешала, когда джобы нет.', 'keep rules and needs consistent, or write needs: [{job: build, optional: true}].') },
+          broken: { at: 'test', message: "'test' job needs 'build' job, but 'build' does not exist in the pipeline. This might be because of the only, except, or rules keywords. To need a job that sometimes does not exist in the pipeline, use needs:optional.", caption: bi('Держите rules и needs согласованными или пишите needs: [{job: build, optional: true}], чтобы зависимость не мешала, когда джобы нет.', 'keep rules and needs consistent, or write needs: [{job: build, optional: true}].') },
         },
       ];
       return invalid;
@@ -877,7 +877,7 @@ export const kubeDeployModel = defineModel<KdP>({
       ],
       near: 'reg',
       predict: {
-        prompt: bi('Образ всегда собирается с тегом :latest, а джоба запускает `kubectl apply` того же манифеста. Появятся ли новые поды?', 'The image is always built as :latest, and the job runs kubectl apply of the same manifest. Will new pods appear?'),
+        prompt: bi('Образ всегда собирается с тегом :latest, а джоба запускает kubectl apply того же манифеста. Появятся ли новые поды?', 'The image is always built as :latest, and the job runs kubectl apply of the same manifest. Will new pods appear?'),
         options: [
           { id: 'no', text: bi('Нет, потому что текст Deployment не изменился и выкладки нет', 'No: the Deployment did not change, so there is no rollout') },
           { id: 'yes', text: bi('Да, потому что образ под этим тегом уже новый', 'Yes: the image is new, after all') },
@@ -914,7 +914,7 @@ export const kubeDeployModel = defineModel<KdP>({
       label: bi('У аккаунта deployer нет права patch', 'The deployer account has no patch right'),
       remove: ['e-store'],
       predict: {
-        prompt: bi('Роль deployer разрешает get и list, но не разрешает patch. Что ответит API-сервер на `kubectl set image`?', 'The deployer role allows get and list, but not patch. What does the API server answer to kubectl set image?'),
+        prompt: bi('Роль deployer разрешает get и list, но не разрешает patch. Что ответит API-сервер на kubectl set image?', 'The deployer role allows get and list, but not patch. What does the API server answer to kubectl set image?'),
         options: [
           { id: 'forbidden', text: bi('API-сервер ответит Forbidden, потому что пользователю это действие не разрешено', 'Forbidden: the user is not allowed to') },
           { id: 'ok', text: bi('API-сервер выполнит команду, потому что ключ от кластера у джобы есть', 'It does it: there is a kubeconfig after all') },
@@ -924,8 +924,8 @@ export const kubeDeployModel = defineModel<KdP>({
     },
   ],
   metrics: [
-    { id: 'newPods', label: bi('готовых подов новой версии', 'ready pods of the new version') },
-    { id: 'oldPods', label: bi('подов прежней версии', 'pods of the previous version') },
+    { id: 'newPods', label: bi('число готовых подов новой версии', 'ready pods of the new version') },
+    { id: 'oldPods', label: bi('число подов прежней версии', 'pods of the previous version') },
     { id: 'jobOk', label: bi('джоба выкладки зелёная (1 да, 0 нет)', 'deploy job green (1/0)') },
   ],
   run(p, broken) {
@@ -1101,7 +1101,7 @@ export const kubeDeployModel = defineModel<KdP>({
               say: { job: bi('Джоба не ждала окончания выкладки и завершилась успешно, хотя новые поды аварийно завершаются.', 'The job did not wait for the rollout and finished successfully, although the new pods are crashing.') },
               states: { job: 'ok', rsNew: 'err' },
               metrics: { newPods: 0, oldPods: 2, jobOk: 1 },
-              broken: { at: 'rsNew', message: 'pod/web-6mzdx-dr9ck   0/1   CrashLoopBackOff   3   2m', caption: bi('Без `kubectl rollout status` пайплайн не знает, чем закончилась выкладка.', 'without rollout status the pipeline does not know how the rollout ended.') },
+              broken: { at: 'rsNew', message: 'pod/web-6mzdx-dr9ck   0/1   CrashLoopBackOff   3   2m', caption: bi('Без kubectl rollout status пайплайн не знает, чем закончилась выкладка.', 'without rollout status the pipeline does not know how the rollout ended.') },
             }
           : {
               id: 'green',
@@ -1126,7 +1126,7 @@ export const kubeDeployModel = defineModel<KdP>({
         say: { job: bi('Джоба 120 секунд ждёт готовности новых подов, не дожидается её и завершается с кодом 1.', 'The job waits 120 seconds for the new pods to become ready, gives up and exits with code 1.') },
         states: { job: 'err' },
         metrics: { newPods: 0, oldPods: 2, jobOk: 0 },
-        broken: { at: 'job', message: 'Waiting for deployment "web" rollout to finish: 1 out of 3 new replicas have been updated...\nerror: timed out waiting for the condition\nERROR: Job failed: exit code 1', caption: bi('Джоба с `when: on_failure` выполняет `kubectl rollout undo`, и тестовый стенд возвращается к прежней ревизии.', 'a job with when: on_failure runs kubectl rollout undo, and staging returns to the previous revision.') },
+        broken: { at: 'job', message: 'Waiting for deployment "web" rollout to finish: 1 out of 3 new replicas have been updated...\nerror: timed out waiting for the condition\nERROR: Job failed: exit code 1', caption: bi('Джоба с when: on_failure выполняет kubectl rollout undo, и тестовый стенд возвращается к прежней ревизии.', 'a job with when: on_failure runs kubectl rollout undo, and staging returns to the previous revision.') },
       });
       return steps;
     }
@@ -1146,11 +1146,11 @@ export const kubeDeployModel = defineModel<KdP>({
   explainDelta(_prev, next, change, _a, b): Bi {
     if (change.kind === 'break') {
       if (!change.on) return bi('Поломку убрали, и выкладка снова доходит до конца.', 'The break is removed: the rollout completes again.');
-      if (change.id === 'forbidden') return b.mode === 'pull' ? bi('В pull-модели CI в кластер не обращается, поэтому права аккаунта deployer ему не нужны.', 'In the pull model CI does not go to the cluster: it does not need deployer’s rights.') : bi('API-сервер проверяет права аккаунта на каждое действие, и без права patch команда `kubectl set image` не выполняется.', 'The API server checks the account’s rights for every verb: no patch, no set image.');
-      return metric(next, 'jobOk') ? bi('Пайплайн зелёный, а новая версия аварийно завершается, потому что CI не дождался результата выкладки.', 'The pipeline is green while the version crashes: CI did not wait for the result.') : bi('Команда `kubectl rollout status` превратила неудачную выкладку в красный пайплайн.', 'rollout status turned a failed rollout into a red pipeline.');
+      if (change.id === 'forbidden') return b.mode === 'pull' ? bi('В pull-модели CI в кластер не обращается, поэтому права аккаунта deployer ему не нужны.', 'In the pull model CI does not go to the cluster: it does not need deployer’s rights.') : bi('API-сервер проверяет права аккаунта на каждое действие, и без права patch команда kubectl set image не выполняется.', 'The API server checks the account’s rights for every verb: no patch, no set image.');
+      return metric(next, 'jobOk') ? bi('Новая версия аварийно завершается, а пайплайн всё равно зелёный, потому что CI не дождался результата выкладки.', 'The pipeline is green while the version crashes: CI did not wait for the result.') : bi('Команда kubectl rollout status превратила неудачную выкладку в красный пайплайн.', 'rollout status turned a failed rollout into a red pipeline.');
     }
     if (change.id === 'mode') return b.mode === 'pull' ? bi('В pull-модели CI только записывает тег коммитом, а кластер изнутри меняет агент, и ключа от кластера у CI нет.', 'Pull: CI only commits the tag, and the agent changes the cluster from inside. CI holds no cluster key.') : bi('В push-модели джоба сама обращается к API-серверу со своим ключом.', 'Push: the job goes to the API server itself with its own key.');
     if (change.id === 'tag') return b.tag === 'latest' ? bi('С тегом :latest текст Deployment не меняется, поэтому Kubernetes не видит новой версии.', 'With :latest the Deployment text does not change, so Kubernetes sees no new version.') : bi('Тег коммита меняет шаблон пода, и поэтому начинается выкладка.', 'A commit tag changes the pod template and so starts a rollout.');
-    return b.wait ? bi('Джоба ждёт окончания выкладки, и её цвет снова говорит правду о тестовом стенде.', 'The job waits for the rollout: its colour tells the truth about staging again.') : bi('Без ожидания джоба становится зелёной сразу после `kubectl set image`, что бы ни случилось дальше.', 'Without waiting the job is green right after set image, whatever happens next.');
+    return b.wait ? bi('Джоба ждёт окончания выкладки, и её цвет снова говорит правду о тестовом стенде.', 'The job waits for the rollout: its colour tells the truth about staging again.') : bi('Без ожидания джоба становится зелёной сразу после kubectl set image, что бы ни случилось дальше.', 'Without waiting the job is green right after set image, whatever happens next.');
   },
 });

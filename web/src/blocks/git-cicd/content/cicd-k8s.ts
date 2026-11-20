@@ -312,7 +312,7 @@ const lesson: Lesson = {
         },
         {
           id: 'tag',
-          prompt: bi('Пайплайн зелёный, но посмотрите на вывод `kubectl get deploy,rs -o wide`: на тестовом стенде по-прежнему старая версия. Сделайте так, чтобы каждый пайплайн main выкладывал образ своего коммита, и отправьте изменение.', 'The pipeline is green, but look at `kubectl get deploy,rs -o wide`: staging still runs the old version. Make every main pipeline deploy the image of exactly its own commit, and push the change.'),
+          prompt: bi('Пайплайн зелёный, но посмотрите на вывод `kubectl get deploy,rs -o wide`: на тестовом стенде по-прежнему старая версия. Сделайте так, чтобы каждый пайплайн main выкладывал образ своего коммита. Тег коммита для этого нужен в двух местах: джоба build-image должна собирать и отправлять образ с этим тегом, а джоба deploy_staging должна выкладывать тот же образ. Отправьте изменение.', 'The pipeline is green, but look at `kubectl get deploy,rs -o wide`: staging still runs the old version. Make every main pipeline deploy the image of its own commit. The commit tag is needed in two places for that: the build-image job must build and push the image with this tag, and the deploy_staging job must deploy exactly that image. Push the change.'),
           check: {
             when: (f) => deployOk(f) && !!tipImage(f) && web(f)?.image === tipImage(f) && (ci(f)?.registry ?? []).some((r) => `${r.image}:${r.tag}` === tipImage(f)),
             fail: [
