@@ -16,6 +16,8 @@ type P = { size: number; disk: string; open: number };
 
 const RAM_GB = 8;
 const PER_PROGRAM_GB = 0.9;
+/** Memory the computer takes for itself from the moment it is switched on, with nothing opened yet. */
+const BASE_GB = 1;
 const SPEED = { hdd: 150, ssd: 2000 } as Record<string, number>; // MB per second, sequential read
 
 export interface RunNumbers {
@@ -28,7 +30,7 @@ export interface RunNumbers {
 }
 
 export function runNumbers(p: P): RunNumbers {
-  const used = Math.round((p.open * PER_PROGRAM_GB + p.size / 1024) * 10) / 10;
+  const used = Math.round((BASE_GB + p.open * PER_PROGRAM_GB + p.size / 1024) * 10) / 10;
   const swap = used > RAM_GB;
   const read = (p.size / (SPEED[p.disk] ?? SPEED.ssd)) * 1000;
   const ms = Math.round((read + 40) * (swap ? 4 : 1));
@@ -49,8 +51,8 @@ export const runModel = defineModel<P>({
     'You double-click the icon of the “Notes” program. The program lies on the disk, so it is first copied into memory, then the processor carries out its instructions and a window appears. The letter you type in that window lives only in memory until you press “Save”.',
   ),
   intro: bi(
-    'Схема соберётся у вас на глазах, а сейчас на ней только вы и диск, на котором лежит программа. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. На каждом шаге подсвечена та часть компьютера, которая работает, облачко рядом с ней говорит, что она делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда дойдёте до сохранения письма, откройте «Параметры», сделайте программу больше или поставьте медленный диск и пройдите запуск ещё раз, следя за временем под схемой.',
-    'The diagram builds itself as you go: now it shows only you and the disk the program lies on. Press “Start from the first step”, then go on with “Step forward” above the diagram. At every step the part that works is highlighted, the callout next to it says what it does, and the card on the line shows what is handed on.\n\nOnce you reach the save, open “Parameters”, make the program bigger or choose a slow disk and walk through the start again, watching the time under the diagram.',
+    'Схема соберётся у вас на глазах, а сейчас на ней только вы и диск, на котором лежит программа. Нажмите «Начать с первого шага», и вы увидите, что происходит после двойного щелчка по значку.',
+    'The diagram builds itself as you go, and now it shows only you and the disk the program lies on. Press “Start from the first step”, and you will see what happens after a double click on the icon.',
   ),
   legend: [
     { mark: 'active', text: bi('часть компьютера, которая работает сейчас', 'the part working now') },
@@ -135,7 +137,7 @@ export const runModel = defineModel<P>({
         id: 'memory',
         label: bi('Память', 'Memory'),
         icon: 'switch',
-        sub: gb(1.8),
+        sub: gb(2.8),
         family: 'gauge',
         shape: 'buffer',
         x: 408,
@@ -143,7 +145,7 @@ export const runModel = defineModel<P>({
         w: 208,
         h: 72,
         card: card(
-          bi('Оперативная память работает быстро, но всё, что в ней хранится, пропадает, когда компьютер выключают. Здесь находятся запущенные программы и то, с чем они работают сейчас, в том числе ваш несохранённый текст. Полоска внизу показывает, сколько памяти занято.', 'Main memory is fast, but everything in it is lost at power-off. Running programs live here with what they work on now, including your unsaved text. The bar shows how much is in use.'),
+          bi('Оперативная память работает быстро, но всё, что в ней хранится, пропадает, когда компьютер выключают. Здесь находятся запущенные программы и то, с чем они работают сейчас, в том числе ваш несохранённый текст. Около гигабайта компьютер занимает под свои нужды с момента включения, ещё до того, как вы что-нибудь открыли. Полоска внизу показывает, сколько памяти занято.', 'Main memory is fast, but everything in it is lost when the computer is switched off. Running programs are kept here with what they work on now, including your unsaved text. About a gigabyte is taken by the computer for its own needs from the moment it is switched on, before you open anything. The bar at the bottom shows how much memory is in use.'),
           bi('Память собрана из планок с микросхемами, которые вставлены в главную плату компьютера.', 'Memory is made of modules with chips that are plugged into the main board.'),
           { see: 'free -h', doc: { page: 'man/free.1', anchor: 'DESCRIPTION' } },
         ),
@@ -259,7 +261,7 @@ export const runModel = defineModel<P>({
   ],
   run(p, broken): Step[] {
     const n = runNumbers(p);
-    const before = Math.round(Math.min(p.open * PER_PROGRAM_GB, RAM_GB) * 10) / 10;
+    const before = Math.round(Math.min(BASE_GB + p.open * PER_PROGRAM_GB, RAM_GB) * 10) / 10;
     const disk = DISK_NAME[p.disk] ?? DISK_NAME.ssd;
     const steps: Step[] = [
       {
@@ -289,8 +291,8 @@ export const runModel = defineModel<P>({
         say: { disk: bi('Файла «Заметок» на диске больше нет, и копировать в память нечего.', 'The “Notes” file is gone; there is nothing to copy.') },
         states: { disk: 'err' },
         values: { disk: 'notes · ?' },
-        metrics: { ms: 5, used: before },
-        broken: { at: 'disk', message: 'The item “Notes” can’t be found.', caption: bi('на диске. Значок служит только ярлыком, а не программой, поэтому без файла на диске запускать нечего.', 'on the disk: a shortcut is not the program; without the file there is nothing to start.') },
+        metrics: { used: before },
+        broken: { at: 'disk', message: 'The item “Notes” can’t be found.', caption: bi('Программа не нашлась на диске. Значок на рабочем столе служит только ярлыком, а сама программа лежит на диске, поэтому без файла на диске запускать нечего, и окно так и не появится. Сообщение ниже, «Объект „Заметки“ не найден», в жизни печатает сам компьютер.', 'The program was not found on the disk. The icon is only a shortcut, not the program, so without the file on the disk there is nothing to start, and the window never appears. The message below, “The item Notes can’t be found”, is what the computer itself prints in real life.') },
       });
       return steps;
     }
@@ -380,7 +382,7 @@ export const runModel = defineModel<P>({
         values: { memory: gb(0) },
         fill: { memory: 0 },
         metrics: { ms: n.ms + 16, used: 0 },
-        broken: { at: 'memory', message: 'Notes quit unexpectedly. Unsaved changes are lost.', caption: bi('в памяти. Память хранит данные, только пока есть питание, а выключение переживает лишь то, что сохранено на диск.', 'in memory: it keeps data only while powered; only what was saved to the disk survives.') },
+        broken: { at: 'memory', message: 'Notes quit unexpectedly. Unsaved changes are lost.', caption: bi('Письмо пропало вместе с содержимым памяти. Память хранит данные, только пока есть питание, а выключение переживает лишь то, что сохранено на диск. Сообщение ниже в жизни показывают «Заметки» после включения: программа неожиданно завершилась, и несохранённые изменения потеряны.', 'The letter vanished together with what was in memory. Memory keeps data only while there is power, and only what was saved to the disk survives a power-off. The message below is what Notes shows in real life after switching on: the program quit unexpectedly, and unsaved changes are lost.') },
       });
       return steps;
     }
@@ -422,8 +424,8 @@ export const runModel = defineModel<P>({
       case 'open': {
         const swap = next.some((s) => s.states?.memory === 'warn');
         return swap
-          ? fmtb(bi('Открыто {n} других программ, и вместе с «Заметками» они не помещаются в {r} ГБ памяти. Компьютер выгружает их части на диск, поэтому запуск растягивается до {t} мс.', '{n} open programs do not fit into {r} GB with “Notes”: pieces go out to the disk and the start stretches to {t} ms.'), { n: b.open, r: RAM_GB, t: ms(next) })
-          : fmtb(bi('Открыто {n} других программ. Памяти пока хватает всем, поэтому запуск «Заметок» длится по-прежнему {t} мс.', '{n} programs open: there is still enough memory, the start takes {t} ms.'), { n: b.open, t: ms(next) });
+          ? fmtb(bi('Других открытых программ теперь {n}, и вместе с «Заметками» они не помещаются в {r} ГБ памяти. Компьютер выгружает их части на диск, поэтому запуск растягивается до {t} мс.', '{n} open programs do not fit into {r} GB with “Notes”: pieces go out to the disk and the start stretches to {t} ms.'), { n: b.open, r: RAM_GB, t: ms(next) })
+          : fmtb(bi('Других открытых программ теперь {n}. Памяти пока хватает всем, поэтому запуск «Заметок» длится по-прежнему {t} мс.', '{n} programs open: there is still enough memory, the start takes {t} ms.'), { n: b.open, t: ms(next) });
       }
     }
     return bi('Схема пересчитана для новых параметров.', 'The diagram is recomputed.');

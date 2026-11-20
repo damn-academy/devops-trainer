@@ -7,7 +7,7 @@
 // (the break) the two files simply travel back and the later one wins.
 
 import { defineModel } from '../../../core/define';
-import { bi, type Bi } from '../../../core/i18n';
+import { bi, pluralRu, type Bi } from '../../../core/i18n';
 import type { Step } from '../../../core/types';
 import { card, fmtb, startWith, tr } from './kit';
 
@@ -26,8 +26,8 @@ export const togetherModel = defineModel<P>({
     'Anna and Boris change prices in the tea shop’s menu. Each edits a copy; a collaboration program compares both with the shared one, joins the edits and records who changed what. If two people changed the same line differently, it asks a person.',
   ),
   intro: bi(
-    'Сейчас на схеме только общая копия меню. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Подсвечен тот, кто работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся: копия меню, правка или новая версия.\n\nКогда дойдёте до истории, выберите в «Параметрах», что Анна и Борис правят одну и ту же строчку, и пройдите слияние ещё раз. Потом включите в блоке «Сломать» пересылку файла почтой и посмотрите, что станет с правкой Анны.',
-    'Now the diagram shows only the shared menu. Press “Start from the first step”, then go on with “Step forward” above the diagram. The one working is highlighted, the callout says what it does, the card on the line shows the copy, the edit or the new version.\n\nAt the history, make Anna and Boris edit the same line in “Parameters” and merge again. Then switch on sending the file by email in “Break it”.',
+    'Сейчас на схеме только общая копия меню. Нажмите «Начать с первого шага», и Анна с Борисом возьмут себе по копии.',
+    'Now the diagram shows only the shared copy of the menu. Press “Start from the first step”, and Anna and Boris each take a copy.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },
@@ -93,7 +93,7 @@ export const togetherModel = defineModel<P>({
       default: 'small',
       near: 'history',
       options: [
-        { id: 'small', label: bi('Каждый меняет по 3 строчки, и на работу уходит полдня', 'Each changes 3 lines, and the work takes half a day') },
+        { id: 'small', label: bi('Каждый меняет одну строчку с ценой, и на работу уходит полчаса', 'Each changes one line with a price, and the work takes half an hour') },
         { id: 'big', label: bi('Каждый меняет по 300 строчек, и на работу уходит неделя', 'Each changes 300 lines, and the work takes a week') },
       ],
     },
@@ -118,7 +118,8 @@ export const togetherModel = defineModel<P>({
     { id: 'lost', label: bi('сколько правок пропало', 'edits lost') },
   ],
   run(p, broken): Step[] {
-    const lines = p.size === 'big' ? 300 : 3;
+    const lines = p.size === 'big' ? 300 : 1;
+    const changed = (n: number) => bi(`${n} ${pluralRu(n, ['изменённую строчку', 'изменённые строчки', 'изменённых строчек'])}`, `${n} changed ${n === 1 ? 'line' : 'lines'}`);
     const same = p.where === 'same';
     const annaLine = same ? 'Black tea — 260' : 'Oolong — 480';
     const steps: Step[] = [
@@ -197,7 +198,7 @@ export const togetherModel = defineModel<P>({
           states: { shared: 'err', anna: 'warn' },
           values: { shared: tr('menu.txt · файл Бориса', 'menu.txt · Boris’s'), anna: tr(`${annaLine} (пропала)`, `${annaLine} (lost)`) },
           metrics: { review: 0, lost: 1 },
-          broken: { at: 'shared', message: 'menu.txt (final).txt, menu.txt (final 2).txt, menu-boris-FINAL.txt', caption: bi('в общей копии. Без программы, которая соединяет правки, побеждает тот, кто сохранил файл последним.', 'in the shared copy: without a program that joins edits, whoever saved last wins.') },
+          broken: { at: 'shared', message: 'menu.txt (final).txt, menu.txt (final 2).txt, menu-boris-FINAL.txt', caption: bi('Правка Анны пропала из общей копии. Без программы, которая соединяет правки, побеждает тот, кто сохранил файл последним. Ниже перечислены файлы, которые в жизни скапливаются в такой папке: «окончательный», «окончательный 2», «Бориса, ОКОНЧАТЕЛЬНЫЙ».', 'Anna’s edit vanished from the shared copy. Without a program that joins edits, whoever saved the file last wins. Below are the files that pile up in such a folder in real life: “final”, “final 2”, “Boris’s, FINAL”.') },
         },
       );
       return steps;
@@ -205,14 +206,14 @@ export const togetherModel = defineModel<P>({
     steps.push({
       id: 'merge',
       label: bi('слияние', 'merge'),
-      caption: fmtb(bi('Анна и Борис отдают свои правки на слияние. Программа сравнивает обе копии с общей строчку за строчкой и находит {n} изменённых строчек.', 'Both edits go to the merge. The program compares both copies with the shared one line by line and finds {n} changed lines.'), { n: lines * 2 }),
+      caption: fmtb(bi('Анна и Борис отдают свои правки на слияние. Программа сравнивает обе копии с общей строчку за строчкой и находит {n}, по {k} в каждой копии.', 'Anna and Boris hand their edits over to the merge. The program compares both copies with the shared one line by line and finds {n}, {k} in each copy.'), { n: changed(lines * 2), k: lines }),
       focus: ['e-giveA', 'e-giveB', 'merge'],
       reveal: ['merge', 'e-giveA', 'e-giveB'],
       tokens: [
         { edge: 'e-giveA', label: `+${lines}` },
         { edge: 'e-giveB', label: `+${lines}` },
       ],
-      say: { merge: fmtb(bi('Программа слияния сравнила обе копии с общей и нашла {n} изменённых строчек.', 'The merge program compared both copies with the shared one and found {n} changed lines.'), { n: lines * 2 }) },
+      say: { merge: fmtb(bi('Программа слияния сравнила обе копии с общей и нашла {n}.', 'The merge program compared both copies with the shared one and found {n}.'), { n: changed(lines * 2) }) },
       states: { merge: 'on' },
       metrics: { review: 0, lost: 0 },
     });
@@ -274,6 +275,6 @@ export const togetherModel = defineModel<P>({
         : bi('Теперь Анна и Борис правят разные строчки, и программа соединяет их правки без участия людей.', 'Different lines are joined without people.');
     return b.size === 'big'
       ? bi('Каждый теперь правит по 300 строчек. Столько строчек придётся прочитать, чтобы понять, что изменилось, и в стольких же местах правки могут столкнуться.', 'Edits of 300 lines each: that much to read.')
-      : bi('Правки снова маленькие, по 3 строчки, поэтому их быстро прочитать и легко соединить.', 'The edits are small again, 3 lines each, so they are quick to read and easy to join.');
+      : bi('Правки снова маленькие, по одной строчке у каждого, поэтому их быстро прочитать и легко соединить.', 'The edits are small again, one line each, so they are quick to read and easy to join.');
   },
 });

@@ -39,8 +39,8 @@ export const systemModel = defineModel<P>({
     'Programs neither write to the disk themselves nor take memory and the processor: they ask the operating system. The diagram shows three such requests: the editor saves a file, the browser asks for memory for a new tab, and several programs share one processor core.',
   ),
   intro: bi(
-    'Сейчас на схеме только редактор, в котором вы нажали «Сохранить», и диск. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Подсвечен тот, кто работает сейчас, облачко говорит, что он делает, а карточка на линии показывает, с какой просьбой или с каким результатом одна часть обращается к другой.\n\nКогда дойдёте до процессора, поменяйте в «Параметрах» число программ и ядер. Напоследок включите в блоке «Сломать» поломку, при которой программы пишут на диск сами, без системы.',
-    'Now the diagram shows only the editor where you pressed “Save” and the disk. Press “Start from the first step”, then go on with “Step forward” above the diagram. The one working now is highlighted, the callout says what it does, and the card on the line shows the request or result passed on.\n\nOnce you reach the processor, change the number of programs and cores in “Parameters”. Finally switch on the break in “Break it” where programs write to the disk themselves.',
+    'Сейчас на схеме только редактор, в котором вы нажали «Сохранить», и диск. Нажмите «Начать с первого шага», и вы увидите, кто на самом деле записывает файл на диск.',
+    'Now the diagram shows only the editor where you pressed “Save” and the disk. Press “Start from the first step”, and you will see who really writes the file to the disk.',
   ),
   legend: [
     { mark: 'active', text: bi('часть, которая работает сейчас', 'the part working now') },
@@ -268,7 +268,7 @@ export const systemModel = defineModel<P>({
           states: { disk: 'err', browser: 'on' },
           values: { disk: 'notes.txt · 4711 (!)' },
           metrics,
-          broken: { at: 'disk', message: 'cat: notes.txt: Input/output error', caption: bi('на диске. Учёт места на диске должен вести кто-то один, иначе программы пишут друг поверх друга. Эту работу и выполняет операционная система.', 'on the disk: one party must keep track of disk space; that is the system’s job.') },
+          broken: { at: 'disk', message: 'cat: notes.txt: Input/output error', caption: bi('Файл на диске испорчен, потому что две программы записали свои данные в один и тот же блок. Учёт места на диске должен вести кто-то один, иначе программы пишут друг поверх друга, поэтому эту работу поручают операционной системе. Сообщение ниже, «ошибка ввода-вывода», в жизни печатает команда, которая пытается прочитать такой файл.', 'The file on the disk is spoilt, because two programs wrote their data into the same block. Keeping track of disk space must be the job of one party, otherwise programs write over each other, and that job is done by the operating system. The message below is what a command that tries to read such a file prints in real life: “input/output error”.') },
         },
       );
       return steps;
@@ -364,6 +364,8 @@ export const systemModel = defineModel<P>({
         ? bi('Без системы учёт диска никто не ведёт, поэтому две программы записали данные в один и тот же блок, и файл испорчен.', 'Without the system nobody keeps track of the disk: two programs wrote into the same block.')
         : bi('Операционная система снова стоит посредником, поэтому программы просят её о месте на диске, и она раздаёт его так, что записи не сталкиваются.', 'The operating system is the go-between again, so programs ask it for disk space, and it hands the space out so that writes do not collide.');
     }
+    if (change.id === 'programs' && (b.programs as number) <= (b.cores === '4' ? 4 : 1))
+      return fmtb(bi('Процессор теперь нужен не {a}, а {b}. Программ не больше, чем ядер, поэтому каждая работает на своём ядре без перерывов и ничего не ждёт.', '{a} → {b} programs. There are no more programs than cores, so each runs on its own core without breaks and waits for nothing.'), { a: bi(progsDat(a.programs as number), String(a.programs)), b: bi(progsDat(b.programs as number), String(b.programs)) });
     if (change.id === 'programs')
       return fmtb(bi('Процессор теперь нужен не {a}, а {b}. Каждой программе достаётся {s}% его времени, поэтому работают все, но каждая медленнее.', '{a} → {b} programs: each gets {s}% of the processor.'), { a: bi(progsDat(a.programs as number), String(a.programs)), b: bi(progsDat(b.programs as number), String(b.programs)), s: m.share ?? 0 });
     return fmtb(bi('Теперь у процессора {c}. Одновременно работают до {n} программ, и каждой достаётся {s}% времени процессора.', 'Now {c}: up to {n} programs at once, {s}% each.'), { c: bi(cores(Number(b.cores)), `${b.cores} cores`), n: Number(b.cores), s: m.share ?? 0 });

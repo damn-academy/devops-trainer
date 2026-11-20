@@ -49,8 +49,8 @@ export const releaseModel = defineModel<P>({
     'A programmer edits the program’s text, the build turns it into a runnable file, the file gets a version number and goes onto the shelf of releases, and the users decide by the number whether to upgrade. They now run 1.4.2.',
   ),
   intro: bi(
-    'Сейчас на схеме только программист и исходный код. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Подсвечен тот, кто работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся: правка, файл программы или номер выпуска.\n\nКогда пройдёте выпуск до конца, выберите в «Параметрах» другой вид изменения и попробуйте угадать новый номер. Потом включите в блоке «Сломать» опечатку и сравните, где её поймают для компилируемого и для скриптового языка.',
-    'Now the diagram shows only the programmer and the source code. Press “Start from the first step”, then go on with “Step forward” above the diagram. The one working is highlighted, the callout says what it does, the card on the line shows the edit, the program file or the release number.\n\nThen choose another kind of change in “Parameters” and guess the number. Switch on the typo in “Break it” and compare where it is caught for a compiled and a scripting language.',
+    'Сейчас на схеме только программист и исходный код. Нажмите «Начать с первого шага», и вы увидите, как правка программиста становится выпуском с номером.',
+    'Now the diagram shows only the programmer and the source code. Press “Start from the first step”, and you will see how the programmer’s edit becomes a numbered release.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },
@@ -82,7 +82,7 @@ export const releaseModel = defineModel<P>({
       { id: 'e-build', from: 'src', to: 'build', label: bi('весь текст', 'all the text'), card: card(bi('Сборка читает весь исходный код целиком, а не только изменённые строки.', 'The build reads all of the source code.'), bi('Текст читает сборщик.', 'The builder.')) },
       { id: 'e-out', from: 'build', to: 'artifact', label: bi('файл программы', 'program file'), card: card(bi('Если сборка не нашла ошибок, получается файл программы.', 'If there are no errors, a program file comes out.'), bi('Файл выдаёт сборщик.', 'The builder.')) },
       { id: 'e-tag', from: 'artifact', to: 'shelf', label: bi('номер версии', 'version number'), card: card(bi('Готовой программе дают номер вида 1.4.3 и кладут её на полку выпусков. Сам файл после этого не меняют никогда.', 'The program gets a number like 1.4.3 and goes onto the shelf; the file never changes after that.'), bi('Номер ставит команда.', 'The team.'), { doc: SEMVER }) },
-      { id: 'e-upgrade', from: 'shelf', to: 'users', label: bi('обновление', 'upgrade'), card: card(bi('Пользователи ставят новый выпуск. Если с ним что-то не так, можно вернуть выпуск с предыдущим номером.', 'The users install the release; the previous number can be brought back.'), bi('Обновляют сами пользователи или инженеры эксплуатации.', 'The users or operations.')) },
+      { id: 'e-upgrade', from: 'shelf', to: 'users', label: bi('обновление', 'upgrade'), card: card(bi('Пользователи ставят новый выпуск. Если с ним что-то не так, можно вернуть выпуск с предыдущим номером.', 'The users install the release; the previous number can be brought back.'), bi('Обновляют сами пользователи или инженеры, которые следят за серверами.', 'The users themselves upgrade, or the engineers who look after the servers.')) },
     ],
   },
   params: [
@@ -202,7 +202,7 @@ export const releaseModel = defineModel<P>({
         say: { build: bi('Сборщик не нашёл имени pirnt и остановил сборку.', 'The builder found no pirnt and stopped.') },
         states: { build: 'err' },
         metrics: { buildSec, released: 2 },
-        broken: { at: 'build', message: './greet.go:12:2: undefined: pirnt', caption: bi('на сборке. Ошибку поймали раньше, чем она дошла до пользователей, и в этом польза строгой сборки.', 'at the build: the error was caught before the users; this is what a strict build is good for.') },
+        broken: { at: 'build', message: './greet.go:12:2: undefined: pirnt', caption: bi('Выпуск остановился на сборке, и это хорошо: ошибку поймали раньше, чем она дошла до пользователей. В этом и состоит польза строгой сборки. Сообщение ниже в жизни печатает сборщик Go: в строке 12 файла greet.go встретилось неизвестное имя pirnt.', 'The release stopped at the build, and that is good: the error was caught before it reached the users. That is what a strict build is good for. The message below is what the Go builder prints in real life: line 12 of greet.go has an unknown name, pirnt.') },
       });
       return steps;
     }
@@ -230,7 +230,7 @@ export const releaseModel = defineModel<P>({
         states: { shelf: 'err', users: 'warn' },
         values: { shelf: 'latest', users: tr('у всех latest (?)', 'on latest (?)') },
         metrics: { buildSec, released: 1 },
-        broken: { at: 'shelf', message: 'Which build is “latest”? 3 different files were called that this month.', caption: bi('на полке выпусков. Без номера нельзя ни понять, что изменилось, ни вернуть прежнюю сборку.', 'on the shelf: without a number you can neither tell what changed nor bring back the previous one.') },
+        broken: { at: 'shelf', message: 'Which build is “latest”? 3 different files were called that this month.', caption: bi('Выпуск застрял на полке выпусков, где никто не может разобраться, какой файл какой. Без номера нельзя ни понять, что изменилось, ни вернуть прежнюю сборку. Сообщение ниже передаёт вопрос, который в жизни задаёт команда: какая сборка «последняя», если так за месяц называли три разных файла?', 'The release got stuck on the shelf, where nobody can tell which file is which. Without a number you can neither tell what changed nor bring back the previous build. The message below is the question a team asks in real life: which build is the “latest”, if three different files were called that this month?') },
       });
       return steps;
     }
@@ -258,7 +258,7 @@ export const releaseModel = defineModel<P>({
         states: { users: 'err' },
         values: { users: tr(`у всех ${v}`, `on ${v}`) },
         metrics: { buildSec, released: 3 },
-        broken: { at: 'users', message: "NameError: name 'pirnt' is not defined", caption: bi('у пользователей. То, чего не проверила сборка, должны проверить тесты, иначе это сделают пользователи.', 'at the users’: what the build did not check, tests must check; otherwise the users will.') },
+        broken: { at: 'users', message: "NameError: name 'pirnt' is not defined", caption: bi('Ошибку нашли пользователи, когда дошли до этой строки программы. То, чего не проверила сборка, должны проверить тесты, иначе это сделают пользователи. Сообщение ниже в жизни печатает Python: имя pirnt не определено.', 'The users found the error when they reached that line of the program. What the build did not check, tests must check, otherwise the users will. The message below is what Python prints in real life: the name pirnt is not defined.') },
       });
       return steps;
     }
