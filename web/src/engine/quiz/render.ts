@@ -266,6 +266,8 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
     }
   }
 
+  update();
+
   const show = (g: QuizGrade, extra?: Node) => {
     clear(feedback);
     if (!showFeedback) {
@@ -273,16 +275,14 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
       return;
     }
     feedback.append(
-      h('p.q-result', { class: g.correct ? 'ok' : 'err' }, h('span.st-icon', { 'aria-hidden': 'true' }, g.correct ? '✓' : '⨯'), t(g.correct ? UI.correct : UI.wrong), !g.correct && g.score > 0 ? h('span.muted', {}, ` · ${Math.round(g.score * 100)}%`) : null),
+      h('p.q-result', { class: g.correct ? 'ok' : 'err' }, h('span.st-icon', { 'aria-hidden': 'true' }, g.correct ? '✓' : '⨯'), t(g.correct ? UI.correct : UI.wrong), !g.correct && g.score > 0 ? h('span.muted', {}, t(bi(' · Часть ответа верна.', ' · Part of the answer is correct.'))) : null),
       ...g.feedback.map((b) => h('div.q-why', {}, md(b))),
     );
     if (extra) feedback.append(extra);
     if (!g.correct || item.kind === 'predict-output') {
       const again = h('button.btn.ghost', { type: 'button' }, icon('repeat'), t(UI.retry));
       again.addEventListener('click', () => {
-        clear(feedback);
-        root.querySelectorAll<HTMLInputElement>('input,select,textarea,button').forEach((x) => (x.disabled = false));
-        update();
+        mountQuiz(root, item, ctx);
       });
       feedback.append(again);
     }
@@ -333,6 +333,13 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
       for (const lab of root.querySelectorAll<HTMLElement>('.q-option')) {
         const o = 'options' in item ? item.options?.find((x) => x.id === lab.dataset.id) : undefined;
         lab.classList.toggle('is-right', !!o?.correct && g.correct);
+      }
+      if (item.kind === 'match') {
+        root.querySelectorAll<HTMLElement>('.q-match-row').forEach((row, i) => {
+          const pair = item.pairs[i];
+          row.classList.add((a as Record<string, string>)[pair.id] === pair.id ? 'is-right' : 'is-wrong');
+          row.append(h('span.q-correction', {}, qtext(pair.right)));
+        });
       }
       root.querySelectorAll<HTMLInputElement>('.q-body input, .q-body select, .q-body textarea, .q-body button').forEach((x) => (x.disabled = true));
     }

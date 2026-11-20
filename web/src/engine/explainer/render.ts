@@ -73,6 +73,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   let steps: Step[] = model.run(params, broken);
   let idx = 0;
   let maxSeen = -1;
+  let introStarted = false;
   let completed = false;
   let playing = 0;
   let speed = 1;
@@ -106,6 +107,13 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     ...[0.5, 1, 2].map((v) => h('option', { value: v, selected: v === 1 }, `${v}×`)),
   ) as HTMLSelectElement;
 
+  for (const [button, label] of [[playBtn, L.play], [backBtn, L.back], [fwdBtn, L.fwd], [firstBtn, L.first], [lastBtn, L.last]] as const) {
+    button.title = t(label);
+    button.append(h('span', {}, t(label)));
+  }
+
+  const mobileNotes = h('div.ex-mobile-notes');
+  const mobileNodes = h('details.ex-mobile-nodes', {}, h('summary', {}, t(bi('Элементы схемы', 'Diagram elements'))), ...d.nodes.map(n => h('button.btn.ghost.small', { type: 'button', onclick: () => { selected = n.id; showCard(n.id, n.card, txt(n.label)); } }, txt(n.label))));
   const canvasEl = h('div.ex-canvas', {}, svg, h('p.ex-hint', {}, t(L.hintClick)));
   const introBox = model.intro ? h('div.ex-intro', { role: 'note' }) : null;
   const legendBox = model.legend?.length ? drawLegend(model.legend) : null;
@@ -119,6 +127,8 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     // the step controls sit right above the picture, under the settings that shape it
     h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks)),
     h('div.ex-stage', {}, canvasEl, h('div.ex-side', {}, deltaBox, card)),
+    mobileNotes,
+    mobileNodes,
     brokeLine,
     caption,
     metricsBox,
@@ -502,6 +512,11 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const placed = label.getBBox();
       labelObstacles.push({ x: placed.x, y: placed.y, w: placed.width, h: placed.height });
     }
+    clear(mobileNotes);
+    for (const [id, text] of Object.entries(st?.say ?? {})) {
+      const node = d.nodes.find(n => n.id === id);
+      mobileNotes.append(h('p', {}, node ? h('strong', {}, txt(node.label), '. ') : null, ...renderInline(t(text))));
+    }
     drawSays(st, frame.states, tokenBoxes);
     fitCamera(tokenBoxes);
     keepInView(animateFrom !== undefined);
@@ -512,11 +527,15 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     if (brokeAt) {
       brokeLine.hidden = false;
       clear(brokeLine);
-      brokeLine.append(h('span.st-icon.err', { 'aria-hidden': 'true' }, '⨯'), h('div', {}, ...(/^[A-ZА-ЯЁ]/.test(t(brokeAt.caption)) ? [h('strong', {}, t(brokeAt.caption))] : [h('strong', {}, t(model.stopLabel ?? L.stoppedAt)), ' — ', t(brokeAt.caption)]), h('pre.tool-msg', {}, brokeAt.message)));
+      brokeLine.append(h('span.st-icon.err', { 'aria-hidden': 'true' }, '⨯'), h('div', {}, ...(/^[A-ZА-ЯЁ]/.test(t(brokeAt.caption)) ? [h('strong', {}, ...renderInline(t(brokeAt.caption)))] : [h('strong', {}, t(model.stopLabel ?? L.stoppedAt)), ' — ', t(brokeAt.caption)]), h('pre.tool-msg', {}, brokeAt.message)));
     } else brokeLine.hidden = true;
     clear(metricsBox);
     const m = st?.metrics ?? {};
     for (const spec of model.metrics ?? []) {
+      if (st?.metricText?.[spec.id] !== undefined) {
+        metricsBox.append(h('div', {}, h('dt', {}, t(spec.label)), h('dd', {}, txt(st.metricText[spec.id]))));
+        continue;
+      }
       if (!(spec.id in m)) continue;
       metricsBox.append(h('div', {}, h('dt', {}, t(spec.label)), h('dd', {}, `${formatNum(m[spec.id])}${spec.unit ? ' ' + txt(spec.unit) : ''}`)));
     }
@@ -675,6 +694,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   }
 
   function go(i: number, animate = true) {
+    if (pending) return;
     const prev = idx;
     idx = Math.max(0, Math.min(steps.length - 1, i));
     el.dataset.feedbackStep = steps[idx]?.id ?? String(idx);
@@ -694,7 +714,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   /** "How to use" before the first step; afterwards it folds into a details line. */
   function drawIntro() {
     if (!introBox || !model.intro) return;
-    const fresh = maxSeen <= 0;
+    const fresh = maxSeen <= 0 && !introStarted;
     fwdBtn.classList.toggle('ex-cue', fresh);
     if (introBox.dataset.fresh === String(fresh)) return;
     introBox.dataset.fresh = String(fresh);
@@ -703,7 +723,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       put(
         introBox,
         h('div.ex-intro-text', {}, renderMd(t(model.intro))),
-        h('button.btn.primary.ex-intro-go', { type: 'button', onclick: () => go(idx + 1) }, t(L.start), ' ', icon('next')),
+        h('button.btn.primary.ex-intro-go', { type: 'button', onclick: () => { introStarted = true; go(0, false); } }, t(L.start), ' ', icon('next')),
       );
     } else put(introBox, h('details.ex-intro-more', {}, h('summary', {}, t(L.howTo)), renderMd(t(model.intro))));
   }
@@ -711,7 +731,8 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   function stop() {
     if (playing) clearTimeout(playing);
     playing = 0;
-    playBtn.replaceChildren(icon('play'));
+    playBtn.replaceChildren(icon('play'), h('span', {}, t(L.play)));
+    playBtn.title = t(L.play);
     playBtn.setAttribute('aria-label', t(L.play));
   }
   /** How long a step stays on screen while playing: enough to read its caption and callouts at 1×. */
@@ -724,9 +745,11 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     return Math.min(14000, Math.max(3000, ms)) / speed;
   }
   function play() {
+    if (pending) return;
     if (playing) return stop();
     if (idx >= steps.length - 1) go(0, false);
-    playBtn.replaceChildren(icon('pause'));
+    playBtn.replaceChildren(icon('pause'), h('span', {}, t(L.pause)));
+    playBtn.title = t(L.pause);
     playBtn.setAttribute('aria-label', t(L.pause));
     const tick = () => {
       if (idx >= steps.length - 1) return stop();
@@ -756,7 +779,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const spec = model.metrics?.find((x) => x.id === k);
       return h('span.ex-mdelta', { class: v > 0 ? 'up' : 'down' }, `${v > 0 ? '+' : ''}${formatNum(v)}${spec?.unit ? ' ' + txt(spec.unit) : ''} ${spec ? t(spec.label) : k}`);
     });
-    put(deltaBox, h('h4', {}, t(L.changed)), h('p', {}, t(delta)), chips.length ? h('div.ex-mdeltas', {}, ...chips) : null);
+    put(deltaBox, h('h4', {}, t(L.changed)), h('p', {}, ...renderInline(t(delta))), chips.length ? h('div.ex-mdeltas', {}, ...chips) : null);
     // the one-line delta also sits next to the knob that changed
     const near = el.querySelector(`[data-knob="${CSS.escape(change.id)}"] .knob-delta`);
     for (const other of el.querySelectorAll('.knob-delta')) other.textContent = '';
@@ -764,11 +787,12 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   }
 
   function askPrediction(p: Pending) {
+    stop();
     pending = p;
     clear(predictBox);
     predictBox.hidden = false;
     predictBox.append(
-      h('p.ex-predict-q', {}, h('strong', {}, t(L.predict)), ' ', t(p.predict.prompt)),
+      h('p.ex-predict-q', {}, h('strong', {}, t(L.predict)), ' ', ...renderInline(t(p.predict.prompt))),
       h(
         'div.ex-predict-opts',
         {},
@@ -779,6 +803,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
               type: 'button',
               onclick: () => {
                 const prevSteps = steps;
+                pending = null;
                 p.apply();
                 const right = p.predict.resolve(prevSteps, steps);
                 const ok = right === o.id;
@@ -790,7 +815,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
                     'p.ex-predict-result',
                     { class: ok ? 'ok' : 'warn' },
                     h('span.st-icon', { 'aria-hidden': 'true' }, ok ? '✓' : '!'),
-                    h('span', {}, `${t(L.youSaid)}: ${t(o.text)}. ${t(L.happened)}: ${rightText ? t(rightText) : '—'}. ${ok ? t(L.right) : t(L.notRight)}.`),
+                    h('span', {}, ok ? `${t(L.right)}. ${t(o.text)}` : `${t(L.youSaid)}: ${t(o.text)}. ${t(L.happened)}: ${rightText ? t(rightText) : '—'}. ${t(L.notRight)}.`),
                   ),
                 );
                 pending = null;
@@ -799,6 +824,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
             t(o.text),
           ),
         ),
+        h('button.btn.ghost', { type: 'button', onclick: () => { pending = null; p.apply(); predictBox.hidden = true; } }, t(bi('Пропустить прогноз', 'Skip prediction'))),
         h(
           'button.btn.ghost',
           {
@@ -821,10 +847,13 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       revertUi();
       return;
     }
+    predictBox.hidden = true;
+    clear(predictBox);
     const prevParams = { ...params };
     const change: ModelChange = { kind: 'param', id: spec.id, from: params[spec.id], to: value };
     const apply = () => {
       params = { ...params, [spec.id]: value };
+      for (const other of model.params) if (other.shownWhen && !other.shownWhen(params)) params[other.id] = other.default;
       recompute(change, prevParams);
       updateKnobValues();
     };

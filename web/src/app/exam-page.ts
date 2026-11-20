@@ -8,8 +8,11 @@ import { registerFeedbackSnapshot } from '../engine/feedback/data';
 // questions (weight 0, the interview-readiness mark), the result, the path
 // through the documentation, and a protocol to download.
 
+import { referenceAnswer } from '../engine/quiz/review';
+import { readDraft, writeDraft, clearDraft } from '../core/draft';
+import { renderInline } from '../core/markdown';
 import { clear, put, downloadFile, h, icon } from '../core/dom';
-import { bi, fmt, lang, t, UI } from '../core/i18n';
+import { bi, count, fmt, lang, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
 import { href } from '../core/router';
 import { store } from '../core/store';
@@ -123,7 +126,7 @@ export function examPage(id: string): Page {
         'ul.ex2-facts',
         {},
         exam.minutes ? h('li', {}, icon('bolt'), ' ', `${exam.minutes} ${t(E.minutes)}. `, t(exam.hardTimer ? E.hard : E.soft)) : null,
-        h('li', {}, icon('check'), ' ', t(fmt(E.pass, { p: Math.round(exam.pass * 100) })), critical ? ` ${critical} ${t(E.critical)}.` : ''),
+        h('li', {}, icon('check'), ' ', t(fmt(E.pass, { p: Math.round(exam.pass * 100) })), critical ? ` ${count(critical, ['критическое задание', 'критических задания', 'критических заданий'], ['critical task', 'critical tasks'])}.` : ''),
         h('li', {}, icon('doc'), ' ', `${t(E.allowed)}: `, exam.allowedDocs.join(', ')),
       ),
       h('blockquote.ex2-honesty', {}, t(HONESTY)),
@@ -141,10 +144,15 @@ export function examPage(id: string): Page {
   const run = (mode: 'exam' | 'training') => {
     disposeAll();
     clear(root);
-    const seed = newSeed();
+    const key = `exam/${exam.id}/${mode}`;
+    const draft = readDraft<{ seed: string; started: string; results: [string, number][] }>(key);
+    const seed = draft?.seed ?? newSeed();
     const tasks = pickTasks(exam, seed);
-    const started = new Date();
-    const results = new Map<string, number>(tasks.map((x) => [x.id, 0]));
+    const started = draft ? new Date(draft.started) : new Date();
+    const results = new Map<string, number>(draft?.results ?? tasks.map((x) => [x.id, 0]));
+    const save = () => writeDraft(key, { seed, started: started.toISOString(), results: [...results] });
+    const setResult = (id: string, score: number) => { results.set(id, score); save(); };
+    save();
     let submitted = false;
     const timer = h('span.exam-timer', { 'aria-live': 'off' });
     const tick = () => {
@@ -164,7 +172,6 @@ export function examPage(id: string): Page {
         timer.classList.toggle('over', exam.minutes - elapsed <= 10);
       }
     };
-    tick();
     const iv = window.setInterval(tick, 1000);
     mounts.push({ dispose: () => clearInterval(iv) });
     const docsBtn = h('button.btn.ghost.small', { type: 'button', onclick: () => openDoc({}, { mode: 'exam', allowed: exam.allowedDocs, via: 'exam' }) }, icon('doc'), t(E.docs));
@@ -177,11 +184,11 @@ export function examPage(id: string): Page {
     if (tabLab) mounts.push(tabLab.mounted);
     tasks.forEach((task, i) => {
       const host = h('div');
-      const tags = [`${task.weight} ${t(E.pts)}`, task.critical ? t(E.critical) : '', task.beyond ? t(E.beyond) : ''].filter(Boolean).join(' · ');
+      const tags = [count(task.weight, ['балл', 'балла', 'баллов'], ['point', 'points']), task.critical ? t(E.critical) : '', task.beyond ? t(E.beyond) : ''].filter(Boolean).join(' · ');
       list.append(h('li.ex2-card', { 'data-feedback-id': task.id, 'data-critical': task.critical ? 'true' : undefined }, h('p.ex2-card-head', {}, h('span', {}, `${t(E.task)} ${i + 1}`), h('span.muted', {}, tags)), host));
-      if (task.kind === 'quiz') mounts.push(mountQuiz(host, task.item, { context: 'exam', feedback: mode === 'training', md: (b) => prose(b), onAnswered: (g) => results.set(task.id, g.correct ? 1 : g.score) }));
+      if (task.kind === 'quiz') mounts.push(mountQuiz(host, task.item, { context: 'exam', feedback: mode === 'training', md: (b) => prose(b), onAnswered: (g) => setResult(task.id, g.correct ? 1 : g.score) }));
       else if (task.kind === 'real') {
-        const card = mountRealCard(task.real, { feedback: mode === 'training', onScore: (sc) => results.set(task.id, sc) });
+        const card = mountRealCard(task.real, { feedback: mode === 'training', onScore: (sc) => setResult(task.id, sc) });
         realCards.push(card);
         put(host, prose(task.real.prompt), card.el);
       } else
@@ -195,7 +202,7 @@ export function examPage(id: string): Page {
             index: 0,
             count: 1,
             exam: mode === 'exam',
-            onTaskPass: () => results.set(task.id, 1),
+            onTaskPass: () => setResult(task.id, 1),
           }),
         );
     });
@@ -224,9 +231,10 @@ export function examPage(id: string): Page {
           {},
           prose(q.prompt),
           h('textarea.ex2-answer', { rows: 5, 'aria-label': t(q.prompt) }),
+          h('button.btn.ghost', { type: 'button', onclick: (e: Event) => { const button = e.currentTarget as HTMLElement; (button.nextElementSibling as HTMLElement).hidden = false; button.remove(); } }, t(bi('Сравнить с эталоном', 'Compare with the reference'))),
           h(
             'fieldset.ex2-points',
-            {},
+            { hidden: true },
             h('legend', {}, t(E.points)),
             ...q.keyPoints.map((kp, i) => {
               const box = h('input', { type: 'checkbox' }) as HTMLInputElement;
@@ -241,6 +249,7 @@ export function examPage(id: string): Page {
   };
 
   const result = (mode: 'exam' | 'training', seed: string, tasks: ExamTask[], results: Map<string, number>, started: Date, finished: Date, explain: ExamProtocol['explain']) => {
+    clearDraft(`exam/${exam.id}/${mode}`);
     const s = scoreExam(exam, tasks, results);
     store.record({ kind: 'exam.result', exam: exam.id, mode, score: s.score, passed: mode === 'exam' && s.passed });
     const minutes = Math.max(1, Math.round((finished.getTime() - started.getTime()) / 60000));
@@ -279,7 +288,7 @@ export function examPage(id: string): Page {
         {},
         ...tasks.map((x) => {
           const ok = (results.get(x.id) ?? 0) >= 1;
-          return h('li', { class: ok ? 'ok' : x.critical ? 'err' : 'skip' }, h('span.st-icon', { 'aria-hidden': 'true' }, ok ? '✓' : x.critical ? '⨯' : '·'), h('span', {}, taskTitle(x)), h('span.muted.small', {}, ` — ${x.weight} ${t(E.pts)}${x.critical ? ', ' + t(E.critical) : ''}${x.beyond ? ', ' + t(E.beyond) : ''}`));
+          return h('li', { class: ok ? 'ok' : x.critical ? 'err' : 'skip' }, h('span.st-icon', { 'aria-hidden': 'true' }, ok ? '✓' : x.critical ? '⨯' : '·'), h('div', {}, ...renderInline(taskTitle(x)), x.kind === 'quiz' ? referenceAnswer(x.item) : null), h('span.muted.small', {}, ` — ${count(x.weight, ['балл', 'балла', 'баллов'], ['point', 'points'])}${x.critical ? ', ' + t(E.critical) : ''}${x.beyond ? ', ' + t(E.beyond) : ''}`));
         }),
       ),
       explain.length ? h('p', {}, t(proto.readinessMark ? E.ready : E.notReady)) : null,

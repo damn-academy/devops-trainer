@@ -90,6 +90,9 @@ describe('add-ons in kube-lite', () => {
     file(m, 'db.yaml', db);
     await run(m, 'kubectl apply -f db.yaml');
     await run(m, 'cluster ff 30s');
+    const changedClass = await m.exec(`kubectl patch pvc data -p '{"spec":{"storageClassName":"other"}}'`);
+    expect(changedClass.exit).not.toBe(0);
+    expect(changedClass.out).toContain('immutable');
     expect(await run(m, 'kubectl get pvc data')).toMatch(/data\s+Bound\s+pvc-/);
     expect(await run(m, 'kubectl get pv')).toContain('default/data');
     expect(await run(m, 'kubectl get pods -l app=db')).toContain('Running');
@@ -113,6 +116,9 @@ describe('add-ons in kube-lite', () => {
     file(m, 'db.yaml', SCENARIOS.find((s) => s.id === 'disk')!.files!['db.yaml']);
     await run(m, 'kubectl apply -f db.yaml');
     await run(m, 'cluster ff 30s');
+    const changedClass = await m.exec(`kubectl patch pvc data -p '{"spec":{"storageClassName":"other"}}'`);
+    expect(changedClass.exit).not.toBe(0);
+    expect(changedClass.out).toContain('immutable');
     expect(await run(m, 'kubectl get pvc data')).toMatch(/Pending\s+csi-hostpath-sc/);
     expect(await run(m, 'kubectl get events')).toContain("Waiting for a volume to be created either by the external provisioner 'hostpath.csi.k8s.io'");
     m.dispose();

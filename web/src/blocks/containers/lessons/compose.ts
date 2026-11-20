@@ -181,7 +181,7 @@ export const composeLesson: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: dockerHost({ cwd: '~/shop', files: [{ path: '~/shop/compose.yaml', content: COMPOSE_RACE }] }, { pull: ['postgres:17-alpine', 'trainer/api:1.0', 'nginx:1.30-alpine', 'alpine:3.22'] }),
-      intro: bi('В каталоге `~/shop` лежит compose.yaml с базой и API. Редактора на машине нет, поэтому файл удобно переписать целиком командой `cat > compose.yaml <<\'EOF\'`: после неё вставьте текст файла и закончите его строкой `EOF`. Машина учебная, и сломать её нельзя, а кнопка «Сбросить экран» вернёт исходный файл.', '`~/shop` holds a compose.yaml with a database and an API. There is no editor on the machine, so the file is easiest to rewrite whole with `cat > compose.yaml <<\'EOF\'`: after it paste the file text and end it with an `EOF` line. The machine is a training one and cannot be broken, and the “Reset this screen” button brings the original file back.'),
+      intro: bi('В каталоге `~/shop` лежит compose.yaml с базой и API. Редактора на машине нет, поэтому файл удобно переписать целиком командой `cat > compose.yaml <<\'EOF\'`: после неё вставьте текст файла и закончите его строкой `EOF`. Машина учебная, и сломать её нельзя, а кнопка «Сбросить машину» вернёт исходный файл.', '`~/shop` holds a compose.yaml with a database and an API. There is no editor on the machine, so the file is easiest to rewrite whole with `cat > compose.yaml <<\'EOF\'`: after it paste the file text and end it with an `EOF` line. The machine is a training one and cannot be broken, and the “Reset this screen” button brings the original file back.'),
       tasks: [
         {
           id: 'up',

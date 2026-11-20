@@ -1,4 +1,4 @@
-// The machine as a whole: uname, hostname, uptime, free, nproc, dmesg,
+// The machine as a whole: uname, hostname, uptime, free, nproc, lscpu, dmesg,
 // reboot; disks and mounts (lsblk, blkid, mkfs.ext4, mount, umount,
 // findmnt); what the machine sees of the network (ip, ss, curl, ping); SSH
 // keys and logging in to an account on the same machine (ssh-keygen, ssh,
@@ -169,6 +169,14 @@ const nproc: ShellCommand = {
   },
 };
 
+const lscpu: ShellCommand = {
+  ...cmdDoc({ name: 'lscpu', summary: bi('Показать устройство процессора.', 'Show CPU architecture.'), whatis: 'display information about CPU architecture', synopsis: ['lscpu'], description: 'Display CPU architecture, logical processor count and model.', seeAlso: 'nproc(1)' }),
+  run(ctx) {
+    ctx.out('Architecture:             x86_64\nCPU op-mode(s):           32-bit, 64-bit\nCPU(s):                   1\nOn-line CPU(s) list:      0\nThread(s) per core:       1\nCore(s) per socket:       1\nSocket(s):                1\nModel name:               Simulated x86 CPU\n');
+    return 0;
+  },
+};
+
 const dmesg: ShellCommand = {
   ...cmdDoc({
     name: 'dmesg',
@@ -289,8 +297,10 @@ const blkid: ShellCommand = {
   run(ctx) {
     const m = M(ctx);
     if (ctx.user.uid !== 0) return 2;
-    ctx.out('/dev/sda1: UUID="3b8f6c1e-5d1a-4f6e-9a57-2c1f0e7d9a10" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="6a2e7c11-01"\n');
-    for (const f of disks(m).fs) ctx.out(`/dev/${f.dev}: UUID="${f.uuid}" BLOCK_SIZE="4096" TYPE="${f.type}"\n`);
+    const requested = ctx.argv.slice(1);
+    const show = (dev: string) => !requested.length || requested.includes(dev);
+    if (show('/dev/sda1')) ctx.out('/dev/sda1: UUID="3b8f6c1e-5d1a-4f6e-9a57-2c1f0e7d9a10" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="6a2e7c11-01"\n');
+    for (const f of disks(m).fs) if (show(`/dev/${f.dev}`)) ctx.out(`/dev/${f.dev}: UUID="${f.uuid}" BLOCK_SIZE="4096" TYPE="${f.type}"\n`);
     return 0;
   },
 };
@@ -1140,4 +1150,4 @@ const apropos: ShellCommand = {
   },
 };
 
-export const SYSTEM_COMMANDS: ShellCommand[] = [uname, hostname, hostnamectl, uptime, free, nproc, dmesg, reboot, lsblk, blkid, mkfs, mount, umount, findmnt, ip, ss, curl, ping, sshKeygen, ssh, sshCopyId, crontab, whatis, apropos];
+export const SYSTEM_COMMANDS: ShellCommand[] = [uname, hostname, hostnamectl, uptime, free, nproc, lscpu, dmesg, reboot, lsblk, blkid, mkfs, mount, umount, findmnt, ip, ss, curl, ping, sshKeygen, ssh, sshCopyId, crontab, whatis, apropos];

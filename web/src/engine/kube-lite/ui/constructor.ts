@@ -72,11 +72,11 @@ const L = {
   see: bi('Как посмотреть', 'How to look at it'),
   without: bi('Если убрать', 'If you remove it'),
   variant: bi('Какой сетевой плагин стоит', 'Which network plugin is installed'),
-  wrongZone: bi('Этот компонент живёт в другой зоне: ', 'This component lives in another zone: '),
+  wrongZone: bi('Этот компонент нужно разместить в другой зоне: ', 'Place this component in another zone: '),
   running: bi('Кластер запускается…', 'Starting the cluster…'),
   verdictOk: bi('Все компоненты на месте и соединены: кластер ведёт себя как настоящий.', 'Every component is in place and wired: the cluster behaves like a real one.'),
   verdictMissing: bi('Выключено, потому что блока нет на холсте, к нему нет провода или его слой выключен: ', 'Switched off because the block is not on the canvas, not wired, or its layer is off: '),
-  pick: bi('Нажмите на любой блок или провод, и появится карточка с его объяснением.', 'Press any block or wire — it explains itself.'),
+  pick: bi('Нажмите на любой блок или провод, и появится карточка с его объяснением.', 'Press any block or wire to open its explanation.'),
   result: bi('Что показал прогон', 'What the run showed'),
   layerOff: bi('слой выключен', 'layer is off'),
 };
@@ -111,6 +111,8 @@ function placeWireLabels(labels: { text: SVGTextElement; a: { x: number; y: numb
 
 interface Props {
   preset?: 'empty' | 'full';
+  cni?: 'choice';
+  scenarios?: string[];
   /** 'core' (default): control plane, node, network; 'all': every layer with the add-ons. */
   layers?: 'core' | 'all' | LayerId[];
 }
@@ -122,7 +124,7 @@ function mountConstructor(root: HTMLElement, props: unknown, ctx: WidgetCtx): Mo
   const layers: LayerId[] = p.layers === 'all' ? ALL_LAYERS : Array.isArray(p.layers) ? p.layers : CORE_LAYERS;
   const extended = layers.some((l) => !CORE_LAYERS.includes(l));
   const comps = COMPONENTS.filter((c) => c.layer === 'client' || layers.includes(c.layer));
-  const scenarios = SCENARIOS.filter((sc) => scenarioLayers(sc).every((l) => layers.includes(l)) && (extended || sc.id !== 'netpol'));
+  const scenarios = SCENARIOS.filter((sc) => scenarioLayers(sc).every((l) => layers.includes(l)) && (p.scenarios ? p.scenarios.includes(sc.id) : extended || sc.id !== 'netpol'));
   const st: CanvasState = { placed: ['kubectl'], wires: [], off: [], cni: extended ? 'calico' : 'k3s' };
   const fullState = () => {
     st.placed = comps.map((c) => c.id);
@@ -291,7 +293,7 @@ function mountConstructor(root: HTMLElement, props: unknown, ctx: WidgetCtx): Mo
         h('p', {}, h('strong', {}, `${t(L.without)}. `), t(c.without)),
         h('p', {}, h('a', { href: c.doc, target: '_blank', rel: 'noopener' }, c.docLabel)),
       );
-      if (c.id === 'cni' && extended) {
+      if (c.id === 'cni' && (extended || p.cni === 'choice')) {
         const box = h('fieldset.kc-variants', {}, h('legend', {}, t(L.variant)));
         for (const v of CNI_VARIANTS) {
           const input = h('input', { type: 'radio', name: radioName, value: v.id, checked: st.cni === v.id ? true : undefined }) as HTMLInputElement;

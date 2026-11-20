@@ -172,7 +172,8 @@ export function mountAiSettings(el: HTMLElement): Mounted {
       h('div.row', {}, saveBtn, forgetBtn),
       status,
       h('p.small.muted', {}, t(T.advice)),
-      h('p.small.muted', {}, t(T.storage)),
+      h('p.small.muted', {}, t(bi('Ключ хранится зашифрованным только в этом браузере и не входит в файл прогресса.', 'The key is encrypted in this browser and is not included in progress exports.'))),
+      h('details', {}, h('summary', {}, t(bi('Подробнее', 'Details'))), h('p.small.muted', {}, t(T.storage))),
       h('details.ai-sees', {}, h('summary', {}, h('strong', {}, t(T.sees))), envelope),
     );
   };

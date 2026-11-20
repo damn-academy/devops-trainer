@@ -195,7 +195,7 @@ const lesson: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: lab,
-      intro: bi('Машина в симуляторе: можно ломать, «Сбросить экран» вернёт её к началу.', 'A machine in the simulator: break it freely, “Reset this screen” brings it back.'),
+      intro: bi('Машина в симуляторе: можно ломать, «Сбросить машину» вернёт её к началу.', 'A machine in the simulator: break it freely, “Reset this screen” brings it back.'),
       tasks: [
         {
           id: 'mkdir',

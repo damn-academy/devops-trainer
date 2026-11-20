@@ -258,6 +258,10 @@ describe('`flow` in the terminal and facts.flow', () => {
     const m = await mk('p5');
     const st = stripAnsi((await m.exec('flow status')).out);
     expect(st).toContain('Analysis');
+    expect((await m.exec('flow backlog')).out).toContain('B1');
+    expect((await m.exec('flow status --all')).out).not.toMatch(/ \+\d/);
+    expect((await m.exec('flow metrics')).out).toContain('money net (RUB)');
+    expect((await m.exec('flow goal')).out).toContain('money net:');
     expect((await m.exec('flow wip analysis 2')).exit).toBe(0);
     expect((await m.exec('flow wip nowhere 2')).exit).toBe(2);
     expect((await m.exec('flow move B1 test')).exit).toBe(1);

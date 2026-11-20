@@ -295,7 +295,7 @@ describe('text tools', () => {
     expect(runAwk('$2 > 1 {print $1}', 'x 1\ny 2\nz 3\n', undefined)).toBe('y\nz\n');
     expect(runAwk('{n[$1]++} END {for (k in n) print k, n[k]}', 'a\nb\na\n', undefined)).toBe('a 2\nb 1\n');
     expect(runJq('.items[].name', '{"items":[{"name":"a"},{"name":"b"}]}', true).out).toBe('a\nb\n');
-    expect(diffLines(['a', 'b'], ['a', 'c']).map((d) => d.op + d.line)).toEqual([' a', '+c', '-b']);
+    expect(diffLines(['a', 'b'], ['a', 'c']).map((d) => d.op + d.line)).toEqual([' a', '-b', '+c']);
   });
 
   it('find, sort -k, cut, tr, sha256sum, tar round trip', async () => {

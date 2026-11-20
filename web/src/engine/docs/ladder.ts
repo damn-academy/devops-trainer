@@ -1,8 +1,4 @@
-// The documentation ladder (01 §11.3, 08 §4.3). The step is kept per
-// documentation source and never goes down. Inside a block it rises with the
-// module position, so forcing (DL4) reaches every learner; in a new block a
-// source starts no lower than one step under what was reached before; three
-// tasks in a row without H4–H5 lift the source one step early.
+// Documentation support is bounded by the lesson and learner level.
 
 import type { BlockId, DocSource, DocStep, HintLevel, Level } from '../../core/types';
 
@@ -23,8 +19,8 @@ export function scheduleStep(level: Level, index: number, count: number): DocSte
     intermediate: [2, 3, 4],
     experienced: [3, 4, 4],
   };
-  if (level === 'beginner' && index === count - 1 && count > 1) return 4;
-  return table[level][third];
+
+  return Math.min(startStep(level) + Math.max(0, index), table[level][third]) as DocStep;
 }
 
 export interface LadderInput {
@@ -37,21 +33,19 @@ export interface LadderInput {
   stored?: { step: DocStep; block: BlockId; streak: number };
   /** Task or lesson override (08 §4.3 doc_step). A forced step wins over the schedule. */
   override?: DocStep;
+  lessonStep?: DocStep;
   exam?: boolean;
 }
 
 /** The step a learner is on for one source at one place of the course. */
 export function effectiveStep(i: LadderInput): DocStep {
   if (i.exam) return 5;
-  let step = Math.max(startStep(i.level), scheduleStep(i.level, i.index, i.count));
-  if (i.stored) {
-    const carried = i.stored.block === i.block ? i.stored.step : Math.max(1, i.stored.step - 1);
-    // Early rise: three tasks in a row at this step without H4–H5.
-    const early = i.stored.streak >= 3 ? Math.min(4, i.stored.step + 1) : i.stored.step;
-    step = Math.max(step, carried, i.stored.block === i.block ? early : carried);
-  }
-  if (i.override) step = Math.max(step, i.override);
-  return Math.min(5, step) as DocStep;
+  const scheduled = scheduleStep(i.level, i.index, i.count);
+  const earlyBlock = ['orientation', 'orient', 'methodology'].includes(i.block);
+  const ceiling = i.level === 'beginner' && earlyBlock ? 2 : 4;
+  const lesson = Math.min(ceiling, i.lessonStep ?? scheduled, startStep(i.level) + Math.max(0, i.index));
+  // A task may offer more help, but cannot remove help promised by its lesson.
+  return Math.max(1, Math.min(lesson, i.override ?? lesson)) as DocStep;
 }
 
 export interface HintPolicy {

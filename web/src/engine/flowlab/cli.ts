@@ -7,7 +7,7 @@ import type { CmdContext, FactsProvider, SetupHook, ShellCommand, SimMachineApi,
 import { bots, passLine } from './bots';
 import { finished, metrics } from './metrics';
 import { scenario } from './scenarios';
-import { act, colName, createState, endDay, inColumn, limitOf, workColumns } from './sim';
+import { act, capacity, colName, createState, endDay, inColumn, limitOf, workColumns } from './sim';
 import type { Action, FlowMetrics, Scenario, Stage, State, WorkStage } from './types';
 
 /** The flowlab run attached to a simulated machine. Survives snapshots and reset. */
@@ -58,7 +58,7 @@ const STAGES: Record<string, Stage> = { backlog: 'backlog', ready: 'backlog', an
 
 const pad = (s: string, n: number) => (s.length >= n ? s.slice(0, n) : s + ' '.repeat(n - s.length));
 
-function board(sc: Scenario, s: State): string {
+function board(sc: Scenario, s: State, all = false): string {
   const lines: string[] = [];
   lines.push(`${sc.title.en} · seed ${s.seed} · day ${s.history.length + (s.finished ? 0 : 1)} of ${sc.days}${s.finished ? ' · finished' : ''}`);
   for (const col of sc.columns) {
@@ -66,8 +66,14 @@ function board(sc: Scenario, s: State): string {
     const lim = limitOf(s, col);
     const head = `${pad(colName(sc, col).en, 10)} ${String(cards.length).padStart(2)}${lim !== null ? `/${lim}` : '  '}`;
     const people = s.people.filter((p) => p.station === col).map((p) => p.role);
-    const shown = col === 'done' ? `${cards.length} delivered` : cards.slice(0, 8).map((c) => `${c.id}${c.sub === 'done' && col !== 'backlog' ? '✓' : ''}`).join(' ') + (cards.length > 8 ? ` +${cards.length - 8}` : '');
+    const shown = col === 'done' ? `${cards.length} delivered` : cards.slice(0, all ? undefined : 8).map((c) => `${c.id}${c.sub === 'done' && col !== 'backlog' ? '✓' : ''}`).join(' ') + (!all && cards.length > 8 ? ` +${cards.length - 8}` : '');
     lines.push(`  ${head}  ${people.length ? `[${people.join(',')}] ` : ''}${shown}`);
+    if (col !== 'backlog' && col !== 'done') {
+      const stage = col as WorkStage;
+      const cap = s.people.filter(p => p.station === col).reduce((sum, p) => sum + capacity(sc, s.seed, p, s.day) * (p.skills.includes(stage) ? 1 : 0.5), 0);
+      const remaining = cards.reduce((sum, c) => sum + Math.max(0, (c.work[stage] ?? 0) - (c.done[stage] ?? 0)), 0);
+      lines.push(`    capacity today: ${cap}; work remaining: ${remaining}`);
+    }
   }
   if (sc.hasOps) {
     const ops = s.cards.filter((c) => c.stage === 'ops' && (c.visibleFrom ?? 0) <= s.day);
@@ -83,6 +89,7 @@ function board(sc: Scenario, s: State): string {
 function metricsText(m: FlowMetrics, sc: Scenario): string {
   const rows: [string, string | number][] = [
     ['done (delivered)', m.doneCount],
+    ['money net (RUB)', m.moneyNet],
     ['wip average', m.wipAvg],
     ['throughput / day', m.thAvg],
     ['cycle time p50 (d)', m.cycleP50],
@@ -161,9 +168,12 @@ function run(ctx: CmdContext): number {
     return true;
   };
   switch (sub) {
+    case 'backlog':
+      ctx.out(s.cards.filter(c => c.stage === 'backlog' && (c.visibleFrom ?? 0) <= s.day).map(c => `${c.id}  ${c.title.en}`).join('\n') + '\n');
+      return 0;
     case 'status':
     case 'board':
-      ctx.out(board(sc, s));
+      ctx.out(board(sc, s, args.includes('--all')));
       return 0;
     case 'wip': {
       const st = parseStage(args[0]);
@@ -266,7 +276,7 @@ function run(ctx: CmdContext): number {
     case 'goal': {
       const m = metrics(s, sc);
       const line = passLine(sc, s.seed);
-      ctx.out(`${sc.goal.en}\n  done so far: ${m.doneCount}; pass line: ${Math.ceil(line.doneCount)} done, cycle time p85 ≤ ${line.cycleP85} d\n`);
+      ctx.out(`${sc.goal.en}\n  done so far: ${m.doneCount}; pass line: ${Math.ceil(line.doneCount)} done, cycle time p85 ≤ ${line.cycleP85} d; money net: ${m.moneyNet} RUB\n`);
       return 0;
     }
     case 'reset':

@@ -545,13 +545,19 @@ if any error occurs and -q is not given, the exit status is 2.`,
   run(ctx) {
     const a = parseArgs(ctx.argv.slice(1), {
       short: 'EFivcnlqsHhowxrR',
-      withValue: 'e',
-      long: { 'extended-regexp': 'E', 'fixed-strings': 'F', 'ignore-case': 'i', 'invert-match': 'v', count: 'c', 'line-number': 'n', 'files-with-matches': 'l', quiet: 'q', silent: 'q', 'with-filename': 'H', 'no-filename': 'h', 'only-matching': 'o', 'word-regexp': 'w', 'line-regexp': 'x', recursive: 'r', 'dereference-recursive': 'R', regexp: 'e', color: 'color' },
+      withValue: 'eABCm',
+      long: { 'extended-regexp': 'E', 'fixed-strings': 'F', 'ignore-case': 'i', 'invert-match': 'v', count: 'c', 'line-number': 'n', 'files-with-matches': 'l', quiet: 'q', silent: 'q', 'with-filename': 'H', 'no-filename': 'h', 'only-matching': 'o', 'word-regexp': 'w', 'line-regexp': 'x', recursive: 'r', 'dereference-recursive': 'R', regexp: 'e', 'after-context': 'A', 'before-context': 'B', context: 'C', 'max-count': 'm', color: 'color' },
     });
     if (a.error) {
       ctx.err(`grep: ${a.error}\nUsage: grep [OPTION]... PATTERNS [FILE]...\nTry 'grep --help' for more information.\n`);
       return 2;
     }
+    for (const flag of ['A', 'B', 'C', 'm']) {
+      if (a.values[flag] !== undefined && !/^\d+$/.test(a.values[flag])) return 2;
+    }
+    const limit = a.values.m === undefined ? Infinity : Number(a.values.m);
+    const before = Number(a.values.B ?? a.values.C ?? 0);
+    const after = Number(a.values.A ?? a.values.C ?? 0);
     const f = a.flags;
     if (ctx.argv[0] === 'egrep') f.add('E');
     const ops = [...a.operands];
@@ -622,19 +628,29 @@ if any error occurs and -q is not given, the exit status is 2.`,
       const label = file === '-' ? '(standard input)' : file;
       const lines = text.split('\n');
       if (text.endsWith('\n')) lines.pop();
-      let count = 0;
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (re.test(line) === f.has('v')) continue;
-        count++;
-        any = true;
+      const matched = new Set<number>();
+      for (let i = 0; i < lines.length && matched.size < limit; i++) {
+        if (re.test(lines[i]) !== f.has('v')) matched.add(i);
+      }
+      const count = matched.size;
+      any ||= count > 0;
+      const shownIndices = new Set<number>();
+      for (const i of matched) for (let j = Math.max(0, i - before); j <= Math.min(lines.length - 1, i + after); j++) shownIndices.add(j);
+      let last = -1;
+      for (const i of [...shownIndices].sort((a, b) => a - b)) {
         if (f.has('q') || f.has('c') || f.has('l')) continue;
-        const prefix = (many ? `${ctx.isatty ? `\x1b[35m${label}\x1b[36m:\x1b[0m` : `${label}:`}` : '') + (f.has('n') ? (ctx.isatty ? `\x1b[32m${i + 1}\x1b[36m:\x1b[0m` : `${i + 1}:`) : '');
+        const line = lines[i];
+        const hit = matched.has(i);
+        if (f.has('o') && !hit) continue;
+        if ((before || after) && last >= 0 && i > last + 1) ctx.out('--\n');
+        last = i;
+        const sep = hit ? ':' : '-';
+        const prefix = (many ? `${label}${sep}` : '') + (f.has('n') ? `${i + 1}${sep}` : '');
         if (f.has('o') && !f.has('v')) {
-          for (const m of line.matchAll(new RegExp(re.source, re.flags + 'g'))) if (m[0]) ctx.out(prefix + (ctx.isatty ? `\x1b[1;31m${m[0]}\x1b[0m` : m[0]) + '\n');
+          for (const m of line.matchAll(new RegExp(re.source, re.flags + 'g'))) if (m[0]) ctx.out(prefix + m[0] + '\n');
           continue;
         }
-        const shown = ctx.isatty && !f.has('v') ? line.replace(new RegExp(re.source, re.flags + 'g'), (m) => (m ? `\x1b[1;31m${m}\x1b[0m` : m)) : line;
+        const shown = ctx.isatty && hit && !f.has('v') ? line.replace(new RegExp(re.source, re.flags + 'g'), (m) => (m ? `\x1b[1;31m${m}\x1b[0m` : m)) : line;
         ctx.out(prefix + shown + '\n');
       }
       if (f.has('q') && any) return 0;

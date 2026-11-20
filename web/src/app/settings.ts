@@ -39,7 +39,7 @@ export function settingsPage(): Page {
     store.persisted === true
       ? t(bi('Браузер обещал не удалять данные курса.', 'The browser promised to keep the course data.'))
       : store.persisted === false
-        ? t(bi('Браузер может удалить данные сам (например, Safari — после 7 дней без визитов). Выгружай файл прогресса.', 'The browser may clear the data on its own (Safari does after 7 days without visits). Export a progress file.'))
+        ? t(bi('Браузер может удалить данные сам (например, Safari — после 7 дней без визитов). Выгружайте файл прогресса.', 'The browser may clear the data on its own (Safari does after 7 days without visits). Export a progress file.'))
         : t(bi('Браузер не сообщает, сохранит ли он данные.', 'The browser does not say whether it will keep the data.'));
 
   const exportBtn = h('button.btn', { type: 'button' }, icon('download'), t(UI.export));
@@ -104,7 +104,7 @@ export function settingsPage(): Page {
       h(
         'p',
         {},
-        t(bi('Прогресс сохраняется сам после каждого действия. Он хранится только в этом браузере; перенести на другое устройство — файлом.', 'Progress saves itself after every action. It lives only in this browser; move it to another device with a file.')),
+        t(bi('Прогресс сохраняется сам после каждого действия. Чтобы перенести его на другое устройство, нажмите «Выгрузить прогресс», передайте файл и откройте его кнопкой «Загрузить прогресс» в настройках на другом устройстве.', 'Progress saves itself after every action. It lives only in this browser; move it to another device with a file.')),
       ),
       h('p.small.muted', {}, persistLine, store.volatile ? ' ' + t(bi('Хранилище недоступно: прогресс живёт до закрытия вкладки.', 'Storage is unavailable: progress lives until the tab is closed.')) : ''),
       h('p.small.muted', {}, `${t(bi('Событий в журнале', 'Events in the log'))}: ${p.meta.events}${p.meta.lastExportAt ? ` · ${t(bi('последняя выгрузка', 'last export'))}: ${p.meta.lastExportAt.slice(0, 10)}` : ''}`),

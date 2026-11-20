@@ -65,7 +65,7 @@ const terminal: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: {},
-      intro: bi('Ниже работает учебная машина. Она запущена в вашем же браузере и устроена так же, как настоящий сервер. Сломать её не страшно: кнопка «Сбросить экран» над терминалом возвращает в исходное состояние не только экран, но и всю машину, со всеми её файлами и настройками.','This is a training machine running in your browser, built like a real server. Breaking it is no worry: the “Reset this screen” button above the terminal brings back not only the screen but the whole machine, with all its files and settings.'),
+      intro: bi('Ниже работает учебная машина. Она запущена в вашем же браузере и устроена так же, как настоящий сервер. Сломать её не страшно: кнопка «Сбросить машину» над терминалом возвращает в исходное состояние не только экран, но и всю машину, со всеми её файлами и настройками.','This is a training machine running in your browser, built like a real server. Breaking it is no worry: the “Reset this screen” button above the terminal brings back not only the screen but the whole machine, with all its files and settings.'),
       tasks: [
         {
           id: 'date',

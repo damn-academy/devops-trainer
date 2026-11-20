@@ -11,7 +11,7 @@ import type { Block, Lesson } from './types';
 export const MANIFEST_VERSION = 1;
 
 /** What the route map shows of a lesson. */
-export type LessonStub = Pick<Lesson, 'id' | 'block' | 'title' | 'tier' | 'minutes'>;
+export type LessonStub = Pick<Lesson, 'id' | 'block' | 'title' | 'tier' | 'minutes' | 'introduces' | 'uses'>;
 
 /**
  * A block without its placement tasks (they carry check functions; `placementCount`
@@ -34,7 +34,7 @@ export function toManifest(r: Source): Manifest {
   return {
     version: MANIFEST_VERSION,
     blocks: r.orderedBlocks(true).map(({ placement, sources: _s, ...b }) => ({ ...b, placementCount: placement.length })),
-    lessons: r.orderedLessons().map(({ id, block, title, tier, minutes }) => ({ id, block, title, tier, minutes })),
+    lessons: r.orderedLessons().map(({ id, block, title, tier, minutes, introduces, uses }) => ({ id, block, title, tier, minutes, introduces, uses })),
   };
 }
 
@@ -42,7 +42,7 @@ export function toManifest(r: Source): Manifest {
 export function fromManifest(m: Manifest): { blocks: Block[]; lessons: Lesson[]; placements: Map<string, number> } {
   return {
     blocks: m.blocks.map(({ placementCount: _n, ...b }) => ({ ...b, placement: [], sources: { en: [], ru: [] } })),
-    lessons: m.lessons.map((l) => ({ ...l, introduces: [], uses: [], sections: [], sources: { en: [], ru: [] } })),
+    lessons: m.lessons.map((l) => ({ ...l, introduces: l.introduces ?? [], uses: l.uses ?? [], sections: [], sources: { en: [], ru: [] } })),
     placements: new Map(m.blocks.map((b) => [b.id, b.placementCount])),
   };
 }

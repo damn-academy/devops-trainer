@@ -304,3 +304,28 @@
   .kc-canvas { overflow-x: auto; }
   .kc-canvas svg { min-width: 620px; }
 }
+
+/* Step labels remain readable when controls wrap on a phone. */
+.ex-buttons .icon-btn { width: auto; height: auto; min-height: 36px; padding: 6px 8px; gap: 5px; font-size: .8rem; }
+.q-match-row.is-wrong { border-left: 3px solid var(--c-err); }
+.q-match-row.is-right { border-left: 3px solid var(--c-ok); }
+.q-correction { grid-column: 1 / -1; overflow-wrap: anywhere; }
+.pace input { width: 5rem; }
+.route-mark { font-size: .8rem; }
+.badge.tier, .route-meta .badge { text-transform: none; }
+
+.ex-mobile-notes, .ex-mobile-nodes { display: none; }
+@media (max-width: 600px) {
+  .ex-canvas .ex-svg { min-width: 0; width: 100%; }
+  .ex-canvas { overflow: visible; }
+  .ex-svg .l-say { display: none; }
+  .ex-mobile-notes, .ex-mobile-nodes { display: block; font-size: .95rem; }
+  .ex-mobile-nodes button { display: block; text-align: left; }
+  .ex-stage { display: block; }
+  .q-match-row { grid-template-columns: minmax(0, 1fr); }
+  .q-match select { max-width: 100%; white-space: normal; }
+}
+
+.lab.lab-expanded { grid-template-columns: minmax(0, 1fr); }
+.lab-expanded .lab-right { grid-column: 1 / -1; }
+.lab-bar { flex-wrap: wrap; }

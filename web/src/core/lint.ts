@@ -103,6 +103,10 @@ export function lintQuizItem(q: QuizItem, where: string, issues: LintIssue[]): v
       if (q.steps.length < 2) issues.push({ level: 'error', where, msg: 'order needs at least two steps' });
       break;
     case 'match':
+      for (const language of ['ru', 'en'] as const) {
+        const values = q.pairs.map(p => (typeof p.right === 'string' ? p.right : p.right[language]).trim());
+        if (new Set(values).size !== values.length) issues.push({ level: 'error', where, msg: `match has duplicate right-hand labels (${language})` });
+      }
       if (q.pairs.length < 2) issues.push({ level: 'error', where, msg: 'match needs at least two pairs' });
       break;
     case 'fill-command':

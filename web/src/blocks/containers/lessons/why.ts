@@ -143,7 +143,7 @@ export const whyLesson: Lesson = {
       step: 'try',
       machine: 'sim',
       setup: dockerHost(),
-      intro: bi('Перед вами машина в симуляторе, на которой установлен Docker. Команды `docker` подробно разобраны в следующем уроке, а сейчас их достаточно повторить и посмотреть на результат. Машина учебная, и сломать её нельзя. Что бы вы ни набрали, кнопка «Сбросить экран» вернёт её в исходное состояние.', 'A simulated machine with Docker. We take the `docker` commands apart in the next lesson; for now it is enough to repeat them and look at the result. The machine is a training one and cannot be broken. Whatever you type, the “Reset this screen” button brings it back to where it started.'),
+      intro: bi('Перед вами машина в симуляторе, на которой установлен Docker. Команды `docker` подробно разобраны в следующем уроке, а сейчас их достаточно повторить и посмотреть на результат. Машина учебная, и сломать её нельзя. Что бы вы ни набрали, кнопка «Сбросить машину» вернёт её в исходное состояние.', 'A simulated machine with Docker. We take the `docker` commands apart in the next lesson; for now it is enough to repeat them and look at the result. The machine is a training one and cannot be broken. Whatever you type, the “Reset this screen” button brings it back to where it started.'),
       tasks: [
         {
           id: 'one-kernel',

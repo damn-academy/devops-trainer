@@ -3,6 +3,7 @@
 // (kubectl explain output, web snapshots). Pages are split into sections with
 // anchors, so the ladder can point at a section and highlight one line.
 
+import { lang } from '../../core/i18n';
 import type { DocPage, DocRef, DocSource, ShellCommand } from '../../core/types';
 
 export class Corpus {
@@ -133,6 +134,7 @@ export function refLabel(ref: DocRef, c: Corpus = corpus): string {
   if (ref.label) return ref.label;
   if (ref.page) {
     const p = c.get(ref.page);
+    if (lang() === 'ru') return `Справка по ${(p?.title ?? ref.page).replace(/\(\w+\)$/, '')}`;
     return [p?.title ?? ref.page, ref.anchor, ref.line].filter(Boolean).join(' · ');
   }
   if (ref.url) {

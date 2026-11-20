@@ -13,7 +13,7 @@ import { renderInline } from '../core/markdown';
 import { mountQuiz } from '../engine/quiz/render';
 import { chosenLevel, conceptLink, emptyState, setTitle, sourcesBlock, type Page } from './common';
 import { examsOfBlock } from './exam-page';
-import { lessonStatus } from './lesson';
+import { lessonStatus, placementDisposition, remainingShare } from './status';
 import { mountLab } from './terminal-section';
 
 function levelChooser(b: Block, onChange: () => void): HTMLElement {
@@ -55,6 +55,9 @@ export function blockPage(id: string): Page {
     const lessons = b.lessons.map((x) => registry.lessons.get(x)).filter(Boolean) as NonNullable<ReturnType<typeof registry.lessons.get>>[];
     const explainers = [...registry.explainers.values()].filter((e) => e.block === b.id);
     const last = store.state.placement[b.id]?.slice(-1)[0];
+    const remaining = lessons.filter(l => lessonStatus(l) !== 'done');
+    const nextBlock = registry.orderedBlocks(false).find(block => block.order > b.order);
+    const continueTarget = remaining[0] ? href({ name: 'lesson', id: remaining[0].id }) : nextBlock ? href({ name: 'block', id: nextBlock.id }) : href({ name: 'home' });
     put(
       root,
       h(
@@ -66,11 +69,12 @@ export function blockPage(id: string): Page {
         b.checklistStep ? h('p.muted', {}, `${t(UI.checklistStep)} ${b.checklistStep}`) : null,
       ),
       h('section', {}, h('h2', {}, t(UI.chooseLevel)), levelChooser(b, draw)),
+      last ? h('section.placement-progress', {}, h('p', {}, t(bi('Осталось пройти ', 'Remaining: ')), count(remaining.length, ['урок', 'урока', 'уроков'], ['lesson', 'lessons']), b.hours ? `, ≈ ${Math.ceil(b.hours[chosenLevel(b.id) ?? 'beginner'] * remainingShare(b.id))} ${t(UI.hours)}.` : '.'), h('a.btn.primary', { href: continueTarget }, remaining.length ? t(UI.continue) : t(bi('К следующему блоку', 'Next block')))) : null,
       b.placement.length
         ? h(
             'section.placement-entry',
             {},
-            h('p', {}, t(bi('Короткая проверка подтвердит выбор: 5–10 заданий, практика проверяется по состоянию машины.', 'A short check confirms your choice: 5–10 tasks; practice is checked by the state of the machine.'))),
+            h('p', {}, t(bi('Выберите уровень проверки. На следующей странице указано число заданий для каждого уровня.', 'A short check confirms your choice: 5–10 tasks; practice is checked by the state of the machine.'))),
             last ? h('p.muted.small', {}, `${t(bi('Последняя проверка', 'Last check'))}: ${t(UI.levels[last.claimed])} — ${last.passed ? t(bi('пройдена', 'passed')) : t(bi('не пройдена', 'not passed'))}, ${Math.round(last.score * 100)}%`) : null,
             h('a.btn.ghost', { href: href({ name: 'placement', id: b.id }) }, icon('check'), t(UI.checkLevel)),
           )
@@ -93,8 +97,9 @@ export function blockPage(id: string): Page {
                 {},
                 h('a', { href: href({ name: 'lesson', id: l.id }) }, t(l.title)),
                 ' ',
+                placementDisposition(l) ? h('span.badge', {}, t(placementDisposition(l) === 'covered' ? bi('Зачтено проверкой. Можно пропустить.', 'Covered by placement. You may skip.') : placementDisposition(l) === 'required' ? bi('Обязательный урок по итогам проверки.', 'Required after placement.') : bi('Можно пройти по желанию.', 'Optional.'))) : null,
                 l.tier !== 'core' ? h('span.badge.tier', {}, t(UI.tiers[l.tier])) : null,
-                l.summary ? h('p.small.muted', {}, t(l.summary)) : null,
+                l.summary ? h('p.small.muted', {}, ...renderInline(t(l.summary))) : null,
                 l.introduces.length ? h('p.small', {}, h('span.k', {}, t(UI.introduces)), ' ', ...l.introduces.flatMap((c, i) => [i ? ', ' : '', conceptLink(c)])) : null,
               ),
             );

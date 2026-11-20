@@ -396,6 +396,10 @@ export function validate(c: Cluster, o: Obj, info: KindInfo, prev: Obj | undefin
       if (prev && prev.spec.clusterIP && spec.clusterIP !== prev.spec.clusterIP) errs.push(`spec.clusterIPs[0]: Invalid value: []string{"${spec.clusterIP}"}: may not change once set`);
       break;
     }
+    case 'PersistentVolumeClaim': {
+      if (prev && prev.spec?.storageClassName !== undefined && prev.spec.storageClassName !== o.spec?.storageClassName) errs.push('spec.storageClassName: Forbidden: field is immutable');
+      break;
+    }
     case 'ConfigMap':
     case 'Secret': {
       if (prev?.immutable && (!deepEqual(prev.data, o.data) || !deepEqual(prev.binaryData, o.binaryData))) errs.push('data: Forbidden: field is immutable when `immutable` is set');

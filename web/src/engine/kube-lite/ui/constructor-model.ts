@@ -24,7 +24,7 @@ export interface Layer {
 
 export const LAYERS: Layer[] = [
   { id: 'cp', label: bi('Управляющий слой', 'Control plane'), family: 'cp', what: bi('API-сервер, etcd, планировщик и контроллеры: они хранят желаемое состояние и решают, что где запустить.', 'The API server, etcd, the scheduler and the controllers: they keep the desired state and decide what runs where.') },
-  { id: 'node', label: bi('Узел', 'Node'), family: 'node', what: bi('kubelet и рантайм контейнеров на каждой машине: они запускают поды, которые назначил планировщик.', 'The kubelet and the container runtime on every machine: they start the pods the scheduler assigned.') },
+  { id: 'node', label: bi('Узел', 'Node'), family: 'node', what: bi('kubelet и среда запуска контейнеров на каждой машине: они запускают поды, которые назначил планировщик.', 'The kubelet and the container runtime on every machine: they start the pods the scheduler assigned.') },
   { id: 'net', label: bi('Сеть кластера', 'Cluster network'), family: 'l3', what: bi('Сетевой плагин даёт подам адреса, kube-proxy ведёт запросы к сервисам, CoreDNS отвечает на имена.', 'The network plugin gives pods addresses, kube-proxy routes requests to Services, CoreDNS answers names.') },
   { id: 'ingress', label: bi('Вход снаружи', 'Traffic in'), family: 'l7', what: bi('MetalLB даёт сервису адрес в сети офиса, а контроллер входа Traefik по правилам Gateway API ведёт запрос по имени сайта к нужному сервису.', 'MetalLB gives a Service an address on the office network, and the Traefik ingress controller routes a request by host name to the right Service by Gateway API rules.') },
   { id: 'certs', label: bi('Сертификаты', 'Certificates'), family: 'tls', what: bi('cert-manager выпускает сертификаты HTTPS и кладёт их в Secret, откуда их берёт контроллер входа.', 'cert-manager issues HTTPS certificates into Secrets the ingress controller serves.') },
@@ -147,7 +147,7 @@ export const COMPONENTS: Comp[] = [
   {
     id: 'controller-manager',
     label: 'kube-controller-manager',
-    sub: bi('петли сверки', 'reconcile loops'),
+    sub: bi('цикл согласования', 'reconcile loops'),
     layer: 'cp',
     x: 460,
     y: 128,
@@ -181,7 +181,7 @@ export const COMPONENTS: Comp[] = [
   {
     id: 'runtime',
     label: 'containerd',
-    sub: bi('рантайм контейнеров', 'container runtime'),
+    sub: bi('среда запуска контейнеров', 'container runtime'),
     layer: 'node',
     x: 300,
     y: 270,
@@ -204,7 +204,7 @@ export const COMPONENTS: Comp[] = [
     y: 270,
     what: bi('Сетевой плагин: по команде ADD создаёт поду интерфейс, выдаёт IP-адрес из podCIDR узла и прописывает маршрут, а между узлами строит маршруты или туннель. Некоторые плагины ещё и применяют NetworkPolicy.', 'The network plugin: on ADD it creates the pod interface, gives it an IP from the node podCIDR and adds the route; between nodes it builds routes or a tunnel. Some plugins also enforce NetworkPolicy.'),
     who: bi('Исполняемый файл в /opt/cni/bin и конфиг в /etc/cni/net.d на каждом узле; демон плагина работает DaemonSet’ом.', 'A binary in /opt/cni/bin and a config in /etc/cni/net.d on every node; the plugin daemon is a DaemonSet.'),
-    talks: bi('Плагин вызывает рантайм контейнеров; демон плагина смотрит API-сервер, если плагин применяет NetworkPolicy.', 'The runtime calls the plugin; the plugin daemon watches the API server if it enforces NetworkPolicy.'),
+    talks: bi('Плагин вызывает среда запуска контейнеров; демон плагина смотрит API-сервер, если плагин применяет NetworkPolicy.', 'The runtime calls the plugin; the plugin daemon watches the API server if it enforces NetworkPolicy.'),
     hands: bi('Поду плагин даёт интерфейс и IP-адрес, а если поддерживает политики, ещё и правила, кого к поду пускать.', 'It hands the pod an interface and an IP and, if it supports policies, the rules of who may reach it.'),
     see: "kubectl get node worker-1 -o jsonpath='{.spec.podCIDR}'",
     doc: 'https://kubernetes.io/docs/concepts/cluster-administration/networking/',

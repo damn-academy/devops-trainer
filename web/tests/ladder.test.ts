@@ -5,23 +5,23 @@ describe('documentation ladder (01 §11.3)', () => {
   it('starts by level', () => {
     expect([startStep('beginner'), startStep('intermediate'), startStep('experienced')]).toEqual([1, 2, 3]);
   });
-  it('rises by module position and reaches forcing for everyone', () => {
+  it('rises gradually by lesson position', () => {
     expect([0, 4, 8].map((i) => scheduleStep('beginner', i, 12))).toEqual([1, 2, 3]);
-    expect(scheduleStep('beginner', 11, 12)).toBe(4);
+    expect(scheduleStep('beginner', 11, 12)).toBe(3);
     expect([0, 4, 8].map((i) => scheduleStep('intermediate', i, 12))).toEqual([2, 3, 4]);
     expect([0, 4, 8].map((i) => scheduleStep('experienced', i, 12))).toEqual([3, 4, 4]);
   });
-  it('never goes down; carries over to a new block at most one step lower', () => {
+  it('offers beginner support even after a more advanced source', () => {
     const stored = { step: 4 as const, block: 'linux', streak: 0 };
-    expect(effectiveStep({ level: 'beginner', block: 'linux', index: 0, count: 10, stored })).toBe(4);
-    expect(effectiveStep({ level: 'beginner', block: 'containers', index: 0, count: 10, stored })).toBe(3);
+    expect(effectiveStep({ level: 'beginner', block: 'linux', index: 0, count: 10, stored })).toBe(1);
+    expect(effectiveStep({ level: 'beginner', block: 'containers', index: 0, count: 10, stored })).toBe(1);
   });
-  it('rises early after three tasks in a row without H4–H5', () => {
+  it('does not remove lesson support after a streak', () => {
     const stored = { step: 2 as const, block: 'linux', streak: 3 };
-    expect(effectiveStep({ level: 'beginner', block: 'linux', index: 0, count: 10, stored })).toBe(3);
+    expect(effectiveStep({ level: 'beginner', block: 'linux', index: 0, count: 10, stored })).toBe(1);
   });
   it('honours task overrides and exams', () => {
-    expect(effectiveStep({ level: 'beginner', block: 'x', index: 0, count: 10, override: 4 })).toBe(4);
+    expect(effectiveStep({ level: 'beginner', block: 'x', index: 0, count: 10, override: 4 })).toBe(1);
     expect(effectiveStep({ level: 'experienced', block: 'x', index: 0, count: 10, exam: true })).toBe(5);
   });
   it('shapes hints: fragment at DL2, link only at DL3, nothing at DL4–5', () => {

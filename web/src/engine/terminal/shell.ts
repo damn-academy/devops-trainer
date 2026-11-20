@@ -5,6 +5,7 @@
 // implements the Machine interface, so the terminal widget and the checks do
 // not know they talk to a simulator.
 
+import { bi, t } from '../../core/i18n';
 import type {
   CmdContext,
   Cred,
@@ -1042,6 +1043,9 @@ export class SimMachine implements SimMachineApi {
       await this.systemd.settleBoot();
       await this.systemd.settle();
     }
+    if (exit === 2 && /syntax error/.test(out) && /<[^<>\n]+>/.test(line)) {
+      out += '\nВместо текста в угловых скобках подставьте своё значение без скобок. Например, ssh <IP> нужно заменить на ssh 192.0.2.10.\n';
+    }
     out += this.jobNotes();
     const effects = this.effects;
     this.effects = [];
@@ -1624,6 +1628,7 @@ export class SimMachine implements SimMachineApi {
           return 127;
         }
         io.writeErr(`${io.frame.root && io.frame.root !== '/' ? 'sh' : 'bash'}: ${name}: command not found\n`);
+        if (['nano', 'vim', 'vi', 'edit'].includes(name)) io.writeErr(t(bi('Для изменения файла в этом терминале используйте sed или запишите текст командой printf с перенаправлением >. В лаборатории с настоящим Linux можно открыть nano или vim.\n', 'Use sed or printf with > to edit files in this terminal. The real Linux lab supports nano and vim.\n')));
         return 127;
       case 'dir':
         io.writeErr(`bash: ${name}: Is a directory\n`);

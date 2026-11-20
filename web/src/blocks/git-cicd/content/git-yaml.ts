@@ -329,7 +329,7 @@ const repoLesson: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: { cwd: '~/site', files: siteFiles(), ext: { git: { config: CONFIG } } },
-      intro: bi('В каталоге `~/site` лежат две страницы сайта кафе, а репозитория там ещё нет. Сломать учебную машину нельзя, потому что кнопка «Сбросить экран» над терминалом возвращает её в исходное состояние.', '`~/site` holds two pages of the café site. There is no repository yet. You cannot break the training machine: the “Reset this screen” button above the terminal returns it to the starting state.'),
+      intro: bi('В каталоге `~/site` лежат две страницы сайта кафе, а репозитория там ещё нет. Сломать учебную машину нельзя, потому что кнопка «Сбросить машину» над терминалом возвращает её в исходное состояние.', '`~/site` holds two pages of the café site. There is no repository yet. You cannot break the training machine: the “Reset this screen” button above the terminal returns it to the starting state.'),
       tasks: [
         {
           id: 'whoami',

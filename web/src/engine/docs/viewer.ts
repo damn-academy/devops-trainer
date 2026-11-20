@@ -5,14 +5,18 @@
 //   exam  (DL5): only the allowed corpus, no links outside
 // Every opening is logged as doc.open — the doc trail for the mentor and the review.
 
+import { renderMd } from '../../core/markdown';
 import { clear, h, icon } from '../../core/dom';
-import { bi, t, UI, type Bi } from '../../core/i18n';
+import { bi, lang, t, UI, type Bi } from '../../core/i18n';
 import { store } from '../../core/store';
 import type { DocPage, DocRef, DocSource } from '../../core/types';
 import { corpus, refLabel, sourceOf } from './corpus';
 
 /** What each conventional section is for, shown in the margin (DL2 anatomy). */
 export const ANATOMY: Record<string, Bi> = {
+  MEASURES: bi('Какие показатели измеряются', 'Measures'),
+  ARTIFACTS: bi('Какие результаты работы сохраняются', 'Artifacts'),
+  POLICY: bi('Какие правила действуют', 'Policy'),
   NAME: bi('как называется и что делает — одной строкой', 'what it is called and what it does, in one line'),
   SYNOPSIS: bi('как вызывать: [в скобках] — необязательное, ... — можно повторить', 'how to call it: [brackets] are optional, ... may repeat'),
   DESCRIPTION: bi('что делает подробно', 'what it does, in detail'),
@@ -64,10 +68,10 @@ export function renderPage(
         'aria-current': isTarget ? 'true' : undefined,
         onclick: () => {
           if (o.onSection) o.onSection(s.id);
-          else body.querySelector(`[data-section="${CSS.escape(s.id)}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          body.querySelector(`[data-section="${CSS.escape(s.id)}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
         },
       },
-      h('span.doc-map-name', {}, s.title ?? s.id),
+      h('span.doc-map-name', {}, lang() === 'ru' && ANATOMY[s.id] ? t(ANATOMY[s.id]) : s.title ?? s.id),
       label && o.mode !== 'exam' ? h('span.doc-map-why', {}, t(label)) : null,
     );
     nav.append(navItem);
@@ -80,7 +84,7 @@ export function renderPage(
       h(
         'section.doc-sec',
         { 'data-section': s.id, class: dim ? 'dim' : isTarget ? 'target' : undefined },
-        h('h4', {}, s.title ?? s.id),
+        h('h4', {}, lang() === 'ru' && ANATOMY[s.id] ? t(ANATOMY[s.id]) : s.title ?? s.id),
         h('pre', {}, ...lines.flat()),
       ),
     );
@@ -132,7 +136,7 @@ export function openDoc(ref: DocRef, o: OpenOptions = {}): boolean {
   document.body.append(panel);
   requestAnimationFrame(() => panel?.classList.add('open'));
   panel.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeDoc();
+    if (e.key === 'Escape' || (e.key === 'q' && !(e.target instanceof HTMLInputElement))) closeDoc();
   });
   if (mode === 'exam') showExam(panel, o.allowed ?? [], page, ref);
   else if (page) showPage(panel, page, ref, mode, o.via, !o.keepFocus);
@@ -157,6 +161,7 @@ function showPage(root: HTMLElement, page: DocPage, ref: DocRef, mode: DocMode, 
   const holder = h('div.doc-holder');
   const draw = (m: DocMode) => {
     clear(holder);
+    if (m === 'peek' && ref.gloss) holder.append(h('aside.doc-gloss', {}, renderMd(t(ref.gloss))));
     holder.append(renderPage(page, { mode: m, anchor: ref.anchor, line: ref.line, query }));
     if (m === 'peek') {
       holder.append(
@@ -235,13 +240,14 @@ export function docFragment(ref: DocRef): HTMLElement | null {
   const mini = h(
     'div.frag-map',
     {},
-    ...page.sections.map((s) => h('span', { class: s.id === sec.id ? 'on' : undefined, title: ANATOMY[s.id] ? t(ANATOMY[s.id]) : undefined }, s.title ?? s.id)),
+    ...page.sections.map((s) => h('span', { class: s.id === sec.id ? 'on' : undefined, title: ANATOMY[s.id] ? t(ANATOMY[s.id]) : undefined }, lang() === 'ru' && ANATOMY[s.id] ? t(ANATOMY[s.id]) : s.title ?? s.id)),
   );
   const lines = sec.body.split('\n').map((ln) => [h('span.doc-line', { class: ref.line && ln.includes(ref.line) ? 'hl' : undefined }, ln), '\n']);
   return h(
     'figure.doc-fragment',
     {},
     h('figcaption', {}, h('strong', {}, page.title), ' · ', sec.title ?? sec.id, ANATOMY[sec.id] ? h('span.muted', {}, ` — ${t(ANATOMY[sec.id])}`) : null),
+    ref.gloss ? h('aside.doc-gloss', {}, renderMd(t(ref.gloss))) : null,
     mini,
     h('pre', {}, ...lines.flat()),
     h('button.btn.ghost.small', { type: 'button', onclick: () => openDoc({ page: page.id }, { mode: 'page', via: 'hint' }) }, t(UI.wholePage)),

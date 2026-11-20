@@ -1,7 +1,7 @@
 // Smaller pages: an explainer on its own, the review queue, a block exam.
 
 import { clear, h, icon } from '../core/dom';
-import { bi, t, UI } from '../core/i18n';
+import { bi, count, t, UI } from '../core/i18n';
 import { dueConcepts } from '../core/progress';
 import { registry } from '../core/registry';
 import { href } from '../core/router';
@@ -95,7 +95,7 @@ export function examPage(id: string): Page {
     const list = h('ol.exam-tasks');
     for (const task of exam.tasks) {
       const host = h('div');
-      list.append(h('li', {}, h('p.small.muted', {}, `${task.weight} ${t(bi('балл.', 'pts'))}${task.critical ? ' · ' + t(bi('критическое', 'critical')) : ''}${task.beyond ? ' · ' + t(bi('вне курса', 'beyond the course')) : ''}`), host));
+      list.append(h('li', {}, h('p.small.muted', {}, `${count(task.weight, ['балл', 'балла', 'баллов'], ['point', 'points'])}${task.critical ? ' · ' + t(bi('критическое', 'critical')) : ''}${task.beyond ? ' · ' + t(bi('вне курса', 'beyond the course')) : ''}`), host));
       if (task.kind === 'quiz') mounts.push(mountQuiz(host, task.item, { context: 'exam', feedback: mode === 'training', onAnswered: (g) => results.set(task.id, g.correct) }));
       else if (task.kind === 'task')
         mounts.push(
