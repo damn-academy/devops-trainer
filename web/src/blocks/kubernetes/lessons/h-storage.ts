@@ -16,6 +16,10 @@ import { R, S, src } from '../sources';
 const k8s = (f: Facts) => f.k8s as K8sFacts;
 const claim = (f: Facts | undefined, name: string): Obj | undefined => (f ? k8s(f).objects.find((o) => o.kind === 'PersistentVolumeClaim' && o.metadata?.namespace === 'default' && o.metadata?.name === name) : undefined);
 const podsOf = (f: Facts | undefined, app: string) => (f ? k8s(f).pods.filter((p) => p.ns === 'default' && p.labels.app === app) : []);
+const lastOut = (f: Facts) => ((f.term as { main?: { out: string }[] } | undefined)?.main ?? []).at(-1)?.out ?? '';
+/** Pod web-1 was recreated by the same StatefulSet and mounted the same claim with the same volume. */
+const sameWeb1 = (f: Facts, start?: Facts) =>
+  objOf(f, 'StatefulSet', 'default', 'web')?.metadata?.uid === objOf(start, 'StatefulSet', 'default', 'web')?.metadata?.uid && !!podOf(f, 'default', 'web-1')?.ready && podOf(f, 'default', 'web-1')?.uid !== podOf(start, 'default', 'web-1')?.uid && !!claimOf(f, 'default', 'data-web-1')?.spec?.volumeName && claimOf(f, 'default', 'data-web-1')?.spec?.volumeName === claimOf(start, 'default', 'data-web-1')?.spec?.volumeName && !!stsOf(f, 'default', 'web')?.ordinals.find((o) => o.name === 'web-1')?.pvcs.includes('data-web-1');
 const deployUid = (f: Facts | undefined, name: string) => (f ? k8s(f).objects.find((o) => o.kind === 'Deployment' && o.metadata?.namespace === 'default' && o.metadata?.name === name)?.metadata?.uid : undefined);
 
 export const storageQuiz: QuizItem[] = [
@@ -316,8 +320,8 @@ export const storageLesson: Lesson = {
       machine: 'sim',
       setup: STS_LAB,
       intro: bi(
-        'В кластере стоит CSI-драйвер со StorageClass по умолчанию, а в namespace default работает под `client`, из которого удобно обращаться к другим подам. В файле `web.yaml` описаны безголовый Service `web` и StatefulSet `web` на три реплики с шаблоном заявки `data` на 1 ГиБ.',
-        'The cluster has a CSI driver with a default StorageClass, and in namespace default runs pod `client`, handy for calling other pods. `web.yaml` describes a headless Service `web` and a StatefulSet `web` with three replicas and a claim template `data` of 1 GiB.',
+        'В кластере стоит CSI-драйвер со StorageClass по умолчанию, а в namespace default работает под `client`, из которого удобно обращаться к другим подам. В файле `web.yaml` описаны безголовый Service `web` и StatefulSet `web` на три реплики с шаблоном заявки `data` на 1 ГиБ, которая монтируется в каталог `/data`, и с томом emptyDir для временных файлов в каталоге `/cache`.',
+        'The cluster has a CSI driver with a default StorageClass, and in namespace default runs pod `client`, handy for calling other pods. `web.yaml` describes a headless Service `web` and a StatefulSet `web` with three replicas, a claim template `data` of 1 GiB mounted at `/data` and an emptyDir volume for temporary files at `/cache`.',
       ),
       tasks: [
         {
@@ -360,8 +364,8 @@ export const storageLesson: Lesson = {
       step: 'explain',
       title: bi('Что происходит с репликой и её диском', 'What happens to a replica and its disk'),
       body: bi(
-        'Под базы данных рано или поздно удаляют: узел уходит на обслуживание, контейнер завершается аварийно, кто-то ошибается командой. В следующей работе StatefulSet `web` уже работает, и вы проверите три вещи, о которых спрашивают на собеседовании. Пересозданный под получает прежнее имя и прежнюю заявку. При уменьшении числа реплик поды удаляются с конца, а их заявки остаются. При увеличении реплики возвращаются к своим прежним заявкам.\n\nОбратите внимание, кто здесь что делает. Данные никто не копирует и не переносит. Новый под `web-1` получает заявку `data-web-1` потому, что имя заявки вычисляется из имени пода, а заявка по-прежнему связана со своим томом. Если бы том был каталогом на выключенном узле, под `web-1` ждал бы этого узла, а не запускался с пустым диском в другом месте.',
-        'Sooner or later a database pod is deleted: a node goes into maintenance, a container crashes, someone makes a mistake with a command. In the next lab StatefulSet `web` already runs, and you will check three things interviews ask about. A recreated pod gets its old name and its old claim. When the replica count goes down, pods are removed from the end, and their claims stay. When it goes up, the replicas return to their old claims.\n\nNotice who does what here. Nobody copies or moves the data. The new pod `web-1` gets claim `data-web-1` because the claim name is computed from the pod name, and the claim is still bound to its volume. If the volume were a directory on a switched-off node, pod `web-1` would wait for that node rather than start somewhere else with an empty disk.',
+        'Под базы данных рано или поздно удаляют: узел уходит на обслуживание, контейнер завершается аварийно, кто-то ошибается командой. В следующей работе StatefulSet `web` уже работает, и вы проверите три вещи, о которых спрашивают на собеседовании. Пересозданный под получает прежнее имя и прежнюю заявку, а с ней и файлы, которые прежний под записал на диск, тогда как файлы тома emptyDir пропадают вместе с подом. При уменьшении числа реплик поды удаляются с конца, а их заявки остаются. При увеличении реплики возвращаются к своим прежним заявкам.\n\nОбратите внимание, кто здесь что делает. Данные никто не копирует и не переносит. Новый под `web-1` получает заявку `data-web-1` потому, что имя заявки вычисляется из имени пода, а заявка по-прежнему связана со своим томом. Если бы том был каталогом на выключенном узле, под `web-1` ждал бы этого узла, а не запускался с пустым диском в другом месте.',
+        'Sooner or later a database pod is deleted: a node goes into maintenance, a container crashes, someone makes a mistake with a command. In the next lab StatefulSet `web` already runs, and you will check three things interviews ask about. A recreated pod gets its old name and its old claim, and with it the files the old pod wrote to the disk, while the files of an emptyDir volume disappear with the pod. When the replica count goes down, pods are removed from the end, and their claims stay. When it goes up, the replicas return to their old claims.\n\nNotice who does what here. Nobody copies or moves the data. The new pod `web-1` gets claim `data-web-1` because the claim name is computed from the pod name, and the claim is still bound to its volume. If the volume were a directory on a switched-off node, pod `web-1` would wait for that node rather than start somewhere else with an empty disk.',
       ),
     },
     {
@@ -371,26 +375,43 @@ export const storageLesson: Lesson = {
       machine: 'sim',
       setup: STS_RUNNING,
       intro: bi(
-        'StatefulSet `web` из прошлой работы уже запущен на три реплики, и у каждой есть своя заявка. Перед первым заданием посмотрите на исходное состояние командой `kubectl get pods,pvc`, чтобы потом было с чем сравнить.',
-        'StatefulSet `web` from the previous lab already runs with three replicas, each with its own claim. Before the first task look at the starting state with `kubectl get pods,pvc`, so that you have something to compare with later.',
+        'StatefulSet `web` из прошлой работы уже запущен на три реплики, и у каждой есть своя заявка, смонтированная в каталог `/data`. Кроме того, у каждого пода есть том emptyDir, смонтированный в каталог `/cache`. Перед первым заданием посмотрите на исходное состояние командой `kubectl get pods,pvc`, чтобы потом было с чем сравнить.',
+        'StatefulSet `web` from the previous lab already runs with three replicas, each with its own claim mounted at `/data`. Besides, every pod has an emptyDir volume mounted at `/cache`. Before the first task look at the starting state with `kubectl get pods,pvc`, so that you have something to compare with later.',
       ),
       tasks: [
         {
           id: 'same-name',
-          prompt: bi('Удалите под `web-1` и убедитесь, что вместо него появился под с тем же именем, который подключил ту же заявку с тем же томом.', 'Delete pod `web-1` and make sure a pod with the same name took its place and mounted the same claim with the same volume.'),
+          prompt: bi(
+            'Запишите в под `web-1` два файла: строку `order-42` в файл `/data/orders.txt` на его заявке и строку `session-7` в файл `/cache/session.txt` на томе emptyDir. Затем удалите под `web-1`, дождитесь нового пода с тем же именем и прочитайте в нём файл `/data/orders.txt`.',
+            'Write two files into pod `web-1`: the line `order-42` into `/data/orders.txt` on its claim and the line `session-7` into `/cache/session.txt` on the emptyDir volume. Then delete pod `web-1`, wait for the new pod with the same name and read `/data/orders.txt` in it.',
+          ),
           check: {
-            when: (f, start) => objOf(f, 'StatefulSet', 'default', 'web')?.metadata?.uid === objOf(start, 'StatefulSet', 'default', 'web')?.metadata?.uid && !!podOf(f, 'default', 'web-1')?.ready && podOf(f, 'default', 'web-1')?.uid !== podOf(start, 'default', 'web-1')?.uid && !!claimOf(f, 'default', 'data-web-1')?.spec?.volumeName && claimOf(f, 'default', 'data-web-1')?.spec?.volumeName === claimOf(start, 'default', 'data-web-1')?.spec?.volumeName && !!stsOf(f, 'default', 'web')?.ordinals.find((o) => o.name === 'web-1')?.pvcs.includes('data-web-1'),
+            when: sameWeb1,
+            stdout: /^order-42\s*$/,
             fail: [
               { if: ((f: Facts, start?: Facts) => objOf(f, 'StatefulSet', 'default', 'web')?.metadata?.uid !== objOf(start, 'StatefulSet', 'default', 'web')?.metadata?.uid) as (f: Facts) => boolean, say: bi('Вы пересоздали сам StatefulSet, а нужно было удалить один под. Перезагрузите страницу и удалите только `web-1`.', 'You recreated the StatefulSet itself, and only one pod was to be deleted. Reload the page and delete only `web-1`.') },
-              { if: (f) => !claimOf(f, 'default', 'data-web-1'), say: bi('Заявки `data-web-1` больше нет, а вместе с ней и тома: в классе записано `reclaimPolicy: Delete`. Удалять нужно было только под, поэтому перезагрузите страницу и попробуйте ещё раз.', 'Claim `data-web-1` is gone, and the volume with it: the class says `reclaimPolicy: Delete`. Only the pod was to be deleted, so reload the page and try again.') },
+              { if: (f) => !claimOf(f, 'default', 'data-web-1'), say: bi('Заявки `data-web-1` больше нет, а вместе с ней и тома с файлом: в классе записано `reclaimPolicy: Delete`. Удалять нужно было только под, поэтому перезагрузите страницу и попробуйте ещё раз.', 'Claim `data-web-1` is gone, and the volume with the file went with it: the class says `reclaimPolicy: Delete`. Only the pod was to be deleted, so reload the page and try again.') },
+              { if: (f) => /No such file or directory/.test(lastOut(f)) && /\/data\/orders\.txt/.test(lastOut(f)), say: bi('Файла `/data/orders.txt` в поде нет. Скорее всего, его не записали до удаления пода: запишите строку командой `kubectl exec web-1 -- sh -c \'echo order-42 > /data/orders.txt\'`, удалите под ещё раз и снова прочитайте файл.', 'There is no `/data/orders.txt` in the pod. Most likely it was not written before the pod was deleted: write the line with `kubectl exec web-1 -- sh -c \'echo order-42 > /data/orders.txt\'`, delete the pod again and read the file once more.') },
             ],
           },
-          chips: 'kubectl delete pod web-1 && kubectl get pods,pvc',
-          concepts: ['k8s.statefulset', 'k8s.pvc'],
+          chips: "kubectl exec web-1 -- sh -c 'echo order-42 > /data/orders.txt'",
+          concepts: ['k8s.statefulset', 'k8s.pvc', 'k8s.volume'],
           hints: {
-            H1: bi('Удалите под обычной командой `kubectl delete pod web-1`, а затем посмотрите на поды и заявки.', 'Delete the pod with the ordinary `kubectl delete pod web-1`, then look at the pods and the claims.'),
-            H2: bi('В выводе `kubectl get pods` у `web-1` будет маленький возраст, то есть это новый под. Какую заявку он подключил, покажет `kubectl get pod web-1 -o jsonpath=\'{.spec.volumes[0].persistentVolumeClaim.claimName}\'`, а столбец VOLUME у `kubectl get pvc data-web-1` останется прежним.', 'In `kubectl get pods`, `web-1` will have a small age, so it is a new pod. `kubectl get pod web-1 -o jsonpath=\'{.spec.volumes[0].persistentVolumeClaim.claimName}\'` shows which claim it mounted, and the VOLUME column of `kubectl get pvc data-web-1` stays the same.'),
-            H3: bi('Под с тем же номером StatefulSet создаёт сам, удалять или создавать заявку не нужно. Если под долго не появляется, подождите несколько секунд и выполните `kubectl get pods` ещё раз.', 'The StatefulSet creates the pod with the same number by itself; there is no need to delete or create a claim. If the pod takes a while, wait a few seconds and run `kubectl get pods` again.'),
+            H1: bi('Файл в поде записывают командой оболочки внутри контейнера: `kubectl exec web-1 -- sh -c \'echo order-42 > /data/orders.txt\'`. Так же запишите второй файл в каталог `/cache`.', 'A file is written in a pod by a shell command inside the container: `kubectl exec web-1 -- sh -c \'echo order-42 > /data/orders.txt\'`. Write the second file into `/cache` the same way.'),
+            H2: bi('Затем выполните `kubectl delete pod web-1` и `kubectl get pods`: у нового `web-1` будет маленький возраст. Прочитайте файл командой `kubectl exec web-1 -- cat /data/orders.txt`.', 'Then run `kubectl delete pod web-1` and `kubectl get pods`: the new `web-1` has a small age. Read the file with `kubectl exec web-1 -- cat /data/orders.txt`.'),
+            H3: bi('Строка `order-42` вернулась потому, что новый под подключил ту же заявку `data-web-1`, а заявка по-прежнему связана с тем же томом. Убедитесь в этом: столбец VOLUME у `kubectl get pvc data-web-1` остался прежним.', 'The line `order-42` came back because the new pod mounted the same claim `data-web-1`, and the claim is still bound to the same volume. Confirm it: the VOLUME column of `kubectl get pvc data-web-1` stays the same.'),
+          },
+        },
+        {
+          id: 'emptydir',
+          prompt: bi('В новом поде `web-1` прочитайте файл `/cache/session.txt` и объясните себе, почему его там нет.', 'In the new pod `web-1` read `/cache/session.txt` and work out why it is not there.'),
+          check: { when: sameWeb1, stdout: /can't open '\/cache\/session\.txt': No such file or directory/ },
+          chips: 'kubectl exec web-1 -- cat /cache/session.txt',
+          concepts: ['k8s.volume'],
+          hints: {
+            H1: bi('Прочитайте файл той же командой `cat`, что в прошлом задании, только с путём `/cache/session.txt`.', 'Read the file with the same `cat` as in the previous task, only with the path `/cache/session.txt`.'),
+            H2: bi('Выполните `kubectl exec web-1 -- cat /cache/session.txt`. Команда ответит, что файла нет.', 'Run `kubectl exec web-1 -- cat /cache/session.txt`. The command answers that there is no such file.'),
+            H3: bi('В каталог `/cache` смонтирован том emptyDir из урока о конфигурации. kubelet создаёт такой том вместе с подом и удаляет вместе с подом, поэтому новый под `web-1` получил пустой каталог, хотя имя у пода прежнее.', 'Directory `/cache` is an emptyDir volume from the configuration lesson. The kubelet creates it with the pod and deletes it with the pod, so the new pod `web-1` got an empty directory, although its name is the old one.'),
           },
         },
         {
