@@ -200,14 +200,14 @@ export const accessLesson: Lesson = {
           id: 'dev-list',
           prompt: bi('Теперь выясните, что можно разработчику `developer` в namespace prod.', 'Now find out what the developer `developer` may do in namespace prod.'),
           check: {
-            stdout: /^Resources\s+Non-Resource URLs\s+Resource Names\s+Verbs\s*$/,
+            stdout: /^(?![\s\S]*^\*\.\*)Resources\s+Non-Resource URLs\s+Resource Names\s+Verbs[\s\S]*selfsubject/m,
             fail: [{ if: (f) => /can-i/.test(lastLine(f)) && !/(--as[ =]developer|--context[ =]developer)/.test(lastLine(f)), say: bi('Команда ответила за того, кто её выполнил. Чтобы спросить за разработчика, добавьте `--as=developer` или выполните её в его контексте флагом `--context developer`, а namespace задайте флагом `-n prod`.', 'The command answered for whoever ran it. To ask for the developer, add `--as=developer` or run it in their context with `--context developer`, and set the namespace with `-n prod`.') }],
           },
           chips: 'kubectl auth can-i --list --as=developer -n prod',
           concepts: ['k8s.rbac'],
           hints: {
             H1: bi('Нужна та же команда, что в прошлом задании, но от имени разработчика и в namespace prod.', 'You need the same command as in the previous task, but on behalf of the developer and in namespace prod.'),
-            H2: bi('Выполните `kubectl auth can-i --list --as=developer -n prod`. В ответе будет одна строка заголовков и ни одной строки прав: разработчику не выдано ничего.', 'Run `kubectl auth can-i --list --as=developer -n prod`. The answer has a header line and not a single line of rights: the developer has been granted nothing.'),
+            H2: bi('Выполните `kubectl auth can-i --list --as=developer -n prod`. В ответе будут только строки `selfsubjectaccessreviews` и `selfsubjectrulesreviews`. Эти права есть у любого пользователя: они разрешают спросить у кластера о своих правах. Больше разработчику не выдано ничего.', 'Run `kubectl auth can-i --list --as=developer -n prod`. The answer has only the `selfsubjectaccessreviews` and `selfsubjectrulesreviews` rows. Every user has them: they allow asking the cluster about one’s own rights. The developer has been granted nothing else.'),
             H3: bi('Если в ответе появилась строка со звёздочками, команда ответила за вас, а не за разработчика: проверьте, что флаг `--as=developer` попал в команду.', 'If a line of asterisks appears, the command answered for you, not for the developer: check that `--as=developer` got into the command.'),
           },
         },

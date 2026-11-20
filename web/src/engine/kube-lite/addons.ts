@@ -294,12 +294,12 @@ function setStatus(c: Cluster, obj: Obj, status: Obj): void {
 
 /** Run every add-on controller once (called on each tick while the API works). */
 export function runAddons(c: Cluster): void {
+  if (c.components['controller-manager']) pvBinder(c);
   if (!c.addons) return;
   if (running(c, 'metallb-controller')) metallb(c);
   if (running(c, 'traefik')) traefikStatus(c);
   if (running(c, 'cert-manager')) certManager(c);
   if (c.components['controller-manager']) {
-    pvBinder(c);
     if (c.now - c.addons.hpaSyncAt >= 15_000) {
       c.addons.hpaSyncAt = c.now;
       for (const h of c.list('HorizontalPodAutoscaler')) hpa(c, h);
@@ -682,8 +682,16 @@ function pvBinder(c: Cluster): void {
       const d = defaultClass(c);
       if (d) pvc = c.put({ ...pvc, spec: { ...pvc.spec, storageClassName: d.metadata.name } });
     }
-    const pv = c.list('PersistentVolume').find((v) => v.spec?.claimRef?.uid === pvc.metadata.uid || (v.spec?.claimRef && `${v.spec.claimRef.namespace}/${v.spec.claimRef.name}` === claimKey(pvc) && !v.spec.claimRef.uid));
+    const pv = c.list('PersistentVolume').find((v) => v.spec?.claimRef?.uid === pvc.metadata.uid || (v.spec?.claimRef && `${v.spec.claimRef.namespace}/${v.spec.claimRef.name}` === claimKey(pvc) && !v.spec.claimRef.uid))
+      ?? c.list('PersistentVolume').find(v => !v.spec?.claimRef && (!v.status?.phase || v.status.phase === 'Available')
+        && (!pvc.spec.volumeName || pvc.spec.volumeName === v.metadata.name)
+        && (v.spec.storageClassName ?? '') === (pvc.spec.storageClassName ?? '')
+        && bytes(v.spec.capacity?.storage ?? '0') >= bytes(pvc.spec.resources?.requests?.storage ?? '0')
+        && (pvc.spec.accessModes ?? []).every((mode: string) => (v.spec.accessModes ?? []).includes(mode))
+        && (v.spec.volumeMode ?? 'Filesystem') === (pvc.spec.volumeMode ?? 'Filesystem')
+        && Object.entries(pvc.spec.selector?.matchLabels ?? {}).every(([key, value]) => v.metadata.labels?.[key] === value));
     if (pv) {
+      if (pv.spec.claimRef?.uid !== pvc.metadata.uid) c.put({ ...pv, spec: { ...pv.spec, claimRef: { apiVersion: 'v1', kind: 'PersistentVolumeClaim', name: pvc.metadata.name, namespace: pvc.metadata.namespace, uid: pvc.metadata.uid } } });
       const bound = c.put({
         ...pvc,
         metadata: { ...pvc.metadata, annotations: { ...(pvc.metadata.annotations ?? {}), 'pv.kubernetes.io/bind-completed': 'yes', 'pv.kubernetes.io/bound-by-controller': 'yes' } },

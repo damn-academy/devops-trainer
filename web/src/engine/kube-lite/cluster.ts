@@ -85,6 +85,7 @@ export interface ClusterOptions {
 }
 
 export interface ClusterState {
+  volumeFiles?: Record<string, Record<string, string>>;
   helmRepos?: Record<string, string>;
   authorizationDecisions?: Obj[];
   v: 1;
@@ -148,6 +149,7 @@ type Listener = (c: Change, obj: Obj | undefined) => void;
 
 export class Cluster {
   authorizationDecisions: Obj[] = [];
+  volumeFiles: Record<string, Record<string, string>> = {};
   helmRepos: Record<string, string> = {};
   now: number;
   rv: number;
@@ -395,7 +397,11 @@ export class Cluster {
     if (!prev) return undefined;
     this.objs.delete(k);
     this.rv++;
-    if (prev.kind === 'Pod') delete this.runtime[prev.metadata.uid];
+    if (prev.kind === 'Pod') {
+      delete this.runtime[prev.metadata.uid];
+      for (const key of Object.keys(this.volumeFiles)) if (key.startsWith(`pod:${prev.metadata.uid}:`)) delete this.volumeFiles[key];
+    }
+    if (prev.kind === 'PersistentVolume') delete this.volumeFiles[`pv:${prev.metadata.uid}`];
     if (prev.kind === 'CustomResourceDefinition') {
       const info = crdKind(prev);
       if (info) {
@@ -723,7 +729,7 @@ export class Cluster {
         if (this.components.apiserver && this.components.etcd) {
           if (this.components['controller-manager']) runControllers(this);
           if (this.components.scheduler) runScheduler(this);
-          if (this.addons) runAddons(this);
+          runAddons(this);
         }
         if ((this.components['kube-proxy'] || (this.addons?.proxyReplacement && this.components.cni)) && this.components.apiserver) this.proxy = proxyTable(this);
         if (this.rv === before) break;
@@ -754,6 +760,7 @@ export class Cluster {
       nextClusterIP: this.nextClusterIP,
       nextNodePort: this.nextNodePort,
       addons: this.addons,
+      volumeFiles: this.volumeFiles,
       helmRepos: this.helmRepos,
       authorizationDecisions: this.authorizationDecisions,
     } satisfies ClusterState);
@@ -778,6 +785,7 @@ export class Cluster {
     this.nextClusterIP = s.nextClusterIP;
     this.nextNodePort = s.nextNodePort;
     this.addons = s.addons ?? null;
+    this.volumeFiles = s.volumeFiles ?? {};
     this.helmRepos = s.helmRepos ?? {};
     this.authorizationDecisions = s.authorizationDecisions ?? [];
   }

@@ -1,3 +1,4 @@
+import { runPodWorkloadCommand } from './kubectl';
 import { ApiError, type Cluster } from './cluster';
 import { b64 } from './admission';
 import { apiClient, authorize, canI, identity, trustedCluster } from './rbac';
@@ -18,6 +19,11 @@ export function podApi(c: Cluster, pod: Obj, argv: string[], files: Record<strin
   try {
     if (cmd === 'kubectl') {
       if (!Object.values(files).includes(serviceAccountToken(pod))) throw new ApiError(401, 'Unauthorized', 'Unauthorized');
+      const commandAt = args.findIndex((a, i) => !a.startsWith('-') && !['-n', '--namespace', '--context', '--kubeconfig', '--as', '--as-group'].includes(args[i - 1] ?? ''));
+      if (['set', 'rollout', 'run'].includes(args[commandAt])) {
+        if (args.some(a => /^--(?:as|as-group|context|kubeconfig)(?:=|$)/.test(a))) throw new Error('identity overrides are not supported by in-pod kubectl');
+        return runPodWorkloadCommand(client, pod.metadata.namespace, [args[commandAt], ...args.slice(0, commandAt), ...args.slice(commandAt + 1)]);
+      }
       const p = parseArgs(args, [{ long: 'output', short: 'o', value: true }, { long: 'filename', short: 'f', value: true }, { long: 'all-namespaces', short: 'A' }, { long: 'subresource', value: true }]);
       if (p.error || p.unsupported) throw new Error(p.error ?? `unsupported flag ${p.unsupported}`);
       if (str(p, 'as')) throw new Error('impersonation is not supported by in-pod kubectl');

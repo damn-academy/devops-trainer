@@ -1,3 +1,4 @@
+import { templateWithoutHash } from './controllers';
 import { apiClient, identity } from './rbac';
 // Training charts use deterministic renderers; values are merged like Helm values files.
 import YAML from 'yaml';
@@ -6,7 +7,7 @@ import { bi } from '../../core/i18n';
 import { b64, unb64 } from './admission';
 import type { Cluster } from './cluster';
 import { clusterOf } from './state';
-import { clone, mergePatch, pad, parseDuration, type Obj } from './util';
+import { clone, deepEqual, mergePatch, pad, parseDuration, type Obj } from './util';
 import { parseArgs, str, bool, list } from './kubectl/args';
 
 const charts: Record<string, Obj> = {
@@ -49,7 +50,7 @@ export function renderChart(chart: string, name: string, ns: string, overrides: 
 const manifests = (objects: Obj[]) => objects.map(o => YAML.stringify(o)).join('---\n');
 const latest = (releases: HelmRelease[]) => [...new Map(releases.map(r => [`${r.namespace}/${r.name}`, r])).values()];
 export function runHelm(c: Cluster, argv: string[], readFile: (path: string) => string): { out: string; err: string; code: number } {
-  const p = parseArgs(argv, [{ long: 'set', value: true, multi: true }, { long: 'values', short: 'f', value: true, multi: true }, { long: 'install', short: 'i' }, { long: 'all-namespaces', short: 'A' }, { long: 'all', short: 'a' }, { long: 'create-namespace' }, { long: 'wait' }, { long: 'timeout', value: true }, { long: 'reuse-values' }, { long: 'keep-history' }, { long: 'output', short: 'o', value: true }]);
+  const p = parseArgs(argv, [{ long: 'kube-context', value: true }, { long: 'set', value: true, multi: true }, { long: 'values', short: 'f', value: true, multi: true }, { long: 'install', short: 'i' }, { long: 'all-namespaces', short: 'A' }, { long: 'all', short: 'a' }, { long: 'create-namespace' }, { long: 'wait' }, { long: 'timeout', value: true }, { long: 'reuse-values' }, { long: 'keep-history' }, { long: 'output', short: 'o', value: true }]);
   const ns = str(p, 'namespace') ?? 'default';
   const [cmd, name, arg] = p.args;
   try {
@@ -120,14 +121,25 @@ export function runHelm(c: Cluster, argv: string[], readFile: (path: string) => 
         const r: HelmRelease = { name, namespace: ns, revision: (current?.revision ?? 0) + 1, chart, status: 'deployed', values: v, manifest: rendered, updated: new Date(c.now).toISOString(), description: current ? 'Upgrade complete' : 'Install complete' };
         for (const o of rendered) c.apply(o);
         for (const old of current?.manifest ?? []) if (!rendered.some(o => o.kind === old.kind && o.metadata.name === old.metadata.name) && c.get(old.kind, ns, old.metadata.name)) c.delete(old.kind, ns, old.metadata.name);
-        if (current) save(c, { ...current, status: 'superseded' });
         save(c, r);
         if (bool(p, 'wait')) {
           const timeout = parseDuration(str(p, 'timeout') ?? '5m');
           const deadline = c.now + timeout;
-          while (c.now < deadline && rendered.some(o => o.spec?.replicas !== undefined && (c.get(o.kind, ns, o.metadata.name)?.status?.readyReplicas ?? 0) < o.spec.replicas)) c.advance(Math.min(1000, deadline - c.now));
-          if (rendered.some(o => o.spec?.replicas !== undefined && (c.get(o.kind, ns, o.metadata.name)?.status?.readyReplicas ?? 0) < o.spec.replicas)) { save(c, { ...r, status: 'failed', description: 'context deadline exceeded' }); throw new Error('context deadline exceeded'); }
+          const pending = () => rendered.some(o => {
+            if (o.spec?.replicas === undefined) return false;
+            const live = c.get(o.kind, ns, o.metadata.name);
+            if (live?.kind === 'Deployment') {
+              const rs = c.list('ReplicaSet', ns).find(rs => rs.metadata.ownerReferences?.some((owner: Obj) => owner.uid === live.metadata.uid) && deepEqual(templateWithoutHash(rs.spec.template), templateWithoutHash(live.spec.template)));
+              if ((rs?.status?.readyReplicas ?? 0) < o.spec.replicas) return true;
+            }
+            return !live || (live.status?.observedGeneration ?? 0) < live.metadata.generation
+              || (live.status?.readyReplicas ?? 0) < o.spec.replicas
+              || (live.status?.updatedReplicas ?? 0) < o.spec.replicas;
+          });
+          while (c.now < deadline && pending()) c.advance(Math.min(1000, deadline - c.now));
+          if (pending()) { save(c, { ...r, status: 'failed', description: 'context deadline exceeded' }); throw new Error('context deadline exceeded'); }
         }
+        for (const deployed of history.filter(r => r.status === 'deployed')) save(c, { ...deployed, status: 'superseded' });
         out = `Release "${name}" ${current ? 'has been upgraded' : 'has been installed'}. Happy Helming!\n` + status(r); break;
       }
       case 'list': {
@@ -147,7 +159,7 @@ export function runHelm(c: Cluster, argv: string[], readFile: (path: string) => 
         if (!target) throw new Error(`release has no revision ${arg ?? 0}`);
         for (const o of target.manifest) c.apply(o, { dryRun: true });
         for (const o of target.manifest) c.apply(o);
-        save(c, { ...old, status: 'superseded' });
+        for (const deployed of history.filter(r => r.status === 'deployed')) save(c, { ...deployed, status: 'superseded' });
         save(c, { ...clone(target), revision: old.revision + 1, status: 'deployed', updated: new Date(c.now).toISOString(), description: `Rollback to ${target.revision}` });
         out = 'Rollback was a success! Happy Helming!\n'; break;
       }
@@ -166,6 +178,17 @@ export function runHelm(c: Cluster, argv: string[], readFile: (path: string) => 
 export function helmCommand(): ShellCommand {
   return { name: 'helm', summary: bi('Управление учебными Helm charts', 'Manage training Helm charts'), async run(ctx) { const cluster = clusterOf(ctx.machine);
     let namespace = 'default', user = 'default';
-    try { const config = YAML.parse(ctx.machine.rootFs.readFile(ctx.machine.vars.KUBECONFIG ?? `${ctx.machine.user().home}/.kube/config`)); const context = config.contexts.find((c: Obj) => c.name === config['current-context'])?.context; namespace = context?.namespace ?? 'default'; user = context?.user ?? 'default'; } catch { /* Use the training cluster's default context. */ }
-    const r = runHelm(apiClient(cluster, identity(user)), ['--namespace', namespace, ...ctx.argv.slice(1)], path => ctx.fs.readFile(path)); ctx.out(r.out); ctx.err(r.err); return r.code; } };
+    const args = ctx.argv.slice(1);
+    const at = args.findIndex(a => a === '--kube-context' || a.startsWith('--kube-context='));
+    const requested = at < 0 ? undefined : args[at].includes('=') ? args[at].slice('--kube-context='.length) : args[at + 1];
+    try {
+      const config = YAML.parse(ctx.machine.rootFs.readFile(ctx.machine.vars.KUBECONFIG ?? `${ctx.machine.user().home}/.kube/config`));
+      const contextName = requested ?? config['current-context'];
+      const context = config.contexts.find((c: Obj) => c.name === contextName)?.context;
+      if (!context) { ctx.err(`Error: context "${contextName}" does not exist\n`); return 1; }
+      namespace = context.namespace ?? 'default'; user = context.user ?? 'default';
+    } catch {
+      if (requested !== undefined) { ctx.err(`Error: context "${requested}" does not exist\n`); return 1; }
+    }
+    const r = runHelm(apiClient(cluster, identity(user)), ['--namespace', namespace, ...args], path => ctx.fs.readFile(path)); ctx.out(r.out); ctx.err(r.err); return r.code; } };
 }

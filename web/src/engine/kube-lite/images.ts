@@ -45,6 +45,7 @@ export const IMAGES: Record<string, ImageBehaviour> = {
   'trainer/hog:1.0': { size: 3_145_728, ports: [], logs: ['allocating {env:MEM_MB} MiB'], memMiB: 'MEM_MB', tools: ['sh', 'cat'] },
   'trainer/job:1.0': { size: 2_097_152, ports: [], logs: ['working for {env:DURATION} seconds'], fromEnv: true, tools: ['sh'] },
   'busybox:1.37': { size: 2_202_009, ports: [], logs: [], tools: ['sh', 'cat', 'ls', 'env', 'printenv', 'hostname', 'echo', 'wget', 'nslookup', 'sleep'] },
+  'nginx:1.27': { size: 72_351_744, ports: [80], http: ['/'], logs: ['/docker-entrypoint.sh: Configuration complete; ready for start up'], body: '<!DOCTYPE html><title>Welcome to nginx!</title>', tools: ['sh', 'cat', 'ls', 'env', 'printenv', 'hostname', 'echo', 'curl'] },
   'nginx:1.29': { size: 72_351_744, ports: [80], http: ['/'], logs: ['/docker-entrypoint.sh: Configuration complete; ready for start up'], body: '<!DOCTYPE html><title>Welcome to nginx!</title>', tools: ['sh', 'cat', 'ls', 'env', 'printenv', 'hostname', 'echo', 'curl'] },
   'rancher/mirrored-coredns-coredns:1.12.3': { size: 21_430_272, ports: [53, 8080, 8181, 9153], http: ['/health', '/ready'], logs: ['.:53', '[INFO] plugin/reload: Running configuration SHA512 = 1b226df79860026c6a52e67daa10d7f0d57ec5b023288ec00c5e05f93523c894564e15b91770d3a07ae1cfbe861d15b37d4a0027e69c546ab112970993a3b03b', 'CoreDNS-1.12.3', 'linux/amd64, go1.24.6, 4b8d1a4'], tools: [] },
   // Cluster add-ons (the layered constructor).

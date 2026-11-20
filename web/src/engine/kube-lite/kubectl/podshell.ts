@@ -19,6 +19,34 @@ export interface ExecOut {
   code: number;
 }
 
+const containerKey = (c: Cluster, pod: Obj, ct: Obj) => `pod:${pod.metadata.uid}:container:${ct.name}:${c.runtime[pod.metadata.uid]?.containers.find(cr => cr.name === ct.name)?.restartCount ?? 0}`;
+
+/** Volume data follows the PV identity; emptyDir follows the Pod identity. */
+function volumeKey(c: Cluster, pod: Obj, volume: Obj): string | undefined {
+  if (volume.emptyDir) return `pod:${pod.metadata.uid}:volume:${volume.name}`;
+  if (volume.persistentVolumeClaim) {
+    const claim = c.get('PersistentVolumeClaim', pod.metadata.namespace, volume.persistentVolumeClaim.claimName);
+    const pv = claim?.status?.phase === 'Bound' && c.get('PersistentVolume', undefined, claim.spec.volumeName);
+    if (pv) return `pv:${pv.metadata.uid}`;
+  }
+  return undefined;
+}
+function writeFile(c: Cluster, pod: Obj, ct: Obj, path: string, value: string, append: boolean): string | undefined {
+  if (path === '/dev/null') return;
+  const mount = [...(ct.volumeMounts ?? [])].sort((a, b) => b.mountPath.length - a.mountPath.length).find(m => path === m.mountPath || path.startsWith(m.mountPath.replace(/\/$/, '') + '/'));
+  let key = containerKey(c, pod, ct), relative = path;
+  if (mount) {
+    const volume = (pod.spec.volumes ?? []).find((v: Obj) => v.name === mount.name);
+    if (mount.readOnly || volume?.configMap || volume?.secret || volume?.projected || volume?.persistentVolumeClaim?.readOnly) return 'Read-only file system';
+    const volumeId = volume && volumeKey(c, pod, volume);
+    if (!volumeId) return 'No such file or directory';
+    key = volumeId;
+    relative = [mount.subPath, path.slice(mount.mountPath.replace(/\/$/, '').length).replace(/^\//, '')].filter(Boolean).join('/');
+  }
+  const files = c.volumeFiles[key] ??= {};
+  files[relative] = (append ? files[relative] ?? '' : '') + value;
+}
+
 /** Files a container sees: mounts from volumes, resolv.conf, hostname, the SA token. */
 export function podFiles(c: Cluster, pod: Obj, ct: Obj): Record<string, string> {
   const ns = pod.metadata.namespace;
@@ -27,6 +55,7 @@ export function podFiles(c: Cluster, pod: Obj, ct: Obj): Record<string, string> 
     '/etc/hostname': `${pod.metadata.name}\n`,
     '/etc/hosts': `# Kubernetes-managed hosts file.\n127.0.0.1\tlocalhost\n${pod.status?.podIP ?? ''}\t${pod.metadata.name}\n`,
   };
+  Object.assign(files, c.volumeFiles[containerKey(c, pod, ct)] ?? {});
   const vols: Obj[] = pod.spec.volumes ?? [];
   for (const m of ct.volumeMounts ?? []) {
     const v = vols.find((x) => x.name === m.name);
@@ -47,8 +76,14 @@ export function podFiles(c: Cluster, pod: Obj, ct: Obj): Record<string, string> 
       files[`${dir}/namespace`] = ns;
       files[`${dir}/token`] = serviceAccountToken(pod);
       files[`${dir}/ca.crt`] = '-----BEGIN CERTIFICATE-----\nMIIBdzCCAR2gAwIBAgIBADAKBggqhkjOPQQDAjAjMSEwHwYDVQQDDBhrM3Mtc2Vy\n-----END CERTIFICATE-----\n';
-    } else if (v.emptyDir) {
+    } else if (v.emptyDir || v.persistentVolumeClaim) {
       files[`${dir}/`] = '';
+      const key = volumeKey(c, pod, v);
+      for (const [path, content] of Object.entries(key ? c.volumeFiles[key] ?? {} : {})) {
+        if (!m.subPath) files[`${dir}/${path}`] = content;
+        else if (path === m.subPath) files[dir] = content;
+        else if (path.startsWith(m.subPath + '/')) files[`${dir}/${path.slice(m.subPath.length + 1)}`] = content;
+      }
     }
   }
   return files;
@@ -60,6 +95,25 @@ function tokenize(line: string): string[] {
   let m: RegExpExecArray | null;
   while ((m = re.exec(line))) out.push(m[1] ?? m[2] ?? m[3]);
   return out;
+}
+
+function shellParts(line: string): string[] {
+  const parts: string[] = [];
+  let text = '', quote = '', escaped = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (escaped) { text += ch; escaped = false; continue; }
+    if (ch === '\\' && quote !== "'") { text += ch; escaped = true; continue; }
+    if (quote) { text += ch; if (ch === quote) quote = ''; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; text += ch; continue; }
+    const op = line.slice(i, i + 2);
+    if (ch === ';' || ch === '>' || op === '&&') {
+      parts.push(text); text = '';
+      if (op === '>>' || op === '&&') { parts.push(op); i++; } else parts.push(ch);
+    } else text += ch;
+  }
+  parts.push(text);
+  return parts;
 }
 
 /** Run one command line inside a container. */
@@ -75,13 +129,27 @@ export function podExec(c: Cluster, pod: Obj, ct: Obj, argv: string[]): ExecOut 
     let res: ExecOut = { out: '', err: '', code: 0 };
     let all = '';
     let errs = '';
-    for (const part of (args[1] ?? '').split(/\s*(?:;|&&)\s*/)) {
+    const parts = shellParts(args[1] ?? '');
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (part === ';') continue;
+      if (part === '&&') { if (res.code !== 0) break; continue; }
       if (!part.trim()) continue;
       const expanded = part.replace(/\$\(cat\s+([^()]+)\)/g, (_m, path: string) => podFiles(c, pod, ct)[path.trim()] ?? '');
+      const redirect = parts[i + 1] === '>' || parts[i + 1] === '>>';
+      let path: string | undefined;
+      let append = false;
+      if (redirect) {
+        append = parts[i + 1] === '>>';
+        path = tokenize(parts[i + 2] ?? '')[0]; i += 2;
+        if (!path) return { out: all, err: errs + 'sh: syntax error: missing redirection target\n', code: 2 };
+        const error = writeFile(c, pod, ct, path, '', append);
+        if (error) { res = { out: '', err: `sh: can't create ${path}: ${error}\n`, code: 1 }; errs += res.err; continue; }
+      }
       res = podExec(c, pod, ct, tokenize(expanded));
+      if (path) { writeFile(c, pod, ct, path, res.out, true); res.out = ''; }
       all += res.out;
       errs += res.err;
-      if (res.code !== 0) break;
     }
     return { out: all, err: errs, code: res.code };
   }
