@@ -80,7 +80,7 @@ func hostOnly(port int, next http.Handler) http.Handler {
 // origin) or an origin named with --allow-origin, never from the VMs.
 func (s *Server) guard(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.Host, profile.HostIP+":") {
+		if strings.HasPrefix(r.Host, profile.HostIP+":") || !fromLoopback(r) {
 			http.Error(w, "dtlab: the API is for the course page on this computer", http.StatusForbidden)
 			return
 		}
@@ -220,6 +220,29 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+// fromLoopback: the request came in on a loopback listener. On Hyper-V the
+// agent also listens on the host's lab address for the VMs, and a VM could
+// name 127.0.0.1 in its Host header there.
+func fromLoopback(r *http.Request) bool {
+	a, ok := r.Context().Value(http.LocalAddrContextKey).(net.Addr)
+	if !ok {
+		return true
+	}
+	host, _, err := net.SplitHostPort(a.String())
+	if err != nil {
+		return false
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+// ListenVMs opens the agent's port on the host's address on the lab
+// network, for VMs on Hyper-V's internal switch (QEMU VMs reach the
+// loopback listener through the lab switch).
+func ListenVMs(port int) (net.Listener, error) {
+	return net.Listen("tcp", net.JoinHostPort(profile.HostIP, strconv.Itoa(port)))
 }
 
 // Listen opens the agent's port on loopback.

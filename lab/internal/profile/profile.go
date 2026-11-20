@@ -207,8 +207,8 @@ func Recommend(i hostinfo.Info) Recommendation {
 	}
 	sort.SliceStable(r.Fits, func(a, b int) bool { return Profiles[r.Fits[a]].MinHostMiB < Profiles[r.Fits[b]].MinHostMiB })
 	if len(r.Fits) == 0 {
-		r.Reasons = append(r.Reasons, fmt.Sprintf("%d MiB of memory, %d CPUs and %d GiB free disk are below the light profile (8 GB, 2 CPUs, 10 GB free)", i.MemMiB, i.CPUs, i.DiskFreeMiB/1024))
-		r.Reasons = append(r.Reasons, "use the course in the browser alone (4 GB is enough)")
+		r.Reasons = append(r.Reasons, belowLight(i)...)
+		r.Reasons = append(r.Reasons, "until then, use the course in the browser alone (4 GB is enough)")
 		return r
 	}
 	r.Profile = r.Fits[len(r.Fits)-1]
@@ -224,4 +224,20 @@ func Recommend(i hostinfo.Info) Recommendation {
 		r.Reasons = append(r.Reasons, "this computer is itself a VM: the lab runs, more slowly")
 	}
 	return r
+}
+
+// belowLight names what keeps the host below the light profile, and only that.
+func belowLight(i hostinfo.Info) []string {
+	p := Profiles["light"]
+	var out []string
+	if i.MemMiB*100 < p.MinHostMiB*95 {
+		out = append(out, fmt.Sprintf("%d MiB of memory is below the light profile's %d GB", i.MemMiB, p.MinHostMiB/1024))
+	}
+	if i.CPUs < p.MinCPUs {
+		out = append(out, fmt.Sprintf("%d CPUs are below the light profile's %d", i.CPUs, p.MinCPUs))
+	}
+	if i.DiskFreeMiB < p.MinDiskGiB*1024 {
+		out = append(out, fmt.Sprintf("%.1f GiB free disk at %s is below the light profile's %d GB: free some space, or set DTLAB_HOME to a folder on a disk with more", float64(i.DiskFreeMiB)/1024, i.DiskPath, p.MinDiskGiB))
+	}
+	return out
 }

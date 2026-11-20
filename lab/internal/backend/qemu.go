@@ -51,6 +51,10 @@ func QMPPort(vm profile.VM) int {
 	return 7900 + int(ip[3])
 }
 
+// EventsPort is a second QEMU monitor of a VM under WHPX, on which the lab
+// agent hears why QEMU ended (see WatchReset).
+func EventsPort(vm profile.VM) int { return QMPPort(vm) + 50 }
+
 // Args builds the qemu-system command line of a VM.
 func (q *QEMU) Args(vm profile.VM, d Disks) []string {
 	dir := q.VMDir(vm.Name)
@@ -93,7 +97,49 @@ func (q *QEMU) Args(vm profile.VM, d Disks) []string {
 		"-serial", "chardev:console",
 		"-qmp", "tcp:127.0.0.1:"+strconv.Itoa(QMPPort(vm))+",server=on,wait=off",
 		"-display", "none")
+	if q.Accel == "whpx" {
+		// Under WHPX a reset after Linux has run stops the VM with
+		// "WHPX: Unexpected VP exit code 4" (QEMU 11.1, either irqchip), so a
+		// reboot powers QEMU off instead and the agent starts it again.
+		a = append(a, "-action", "reboot=shutdown",
+			"-qmp", "tcp:127.0.0.1:"+strconv.Itoa(EventsPort(vm))+",server=on,wait=off")
+	}
 	return a
+}
+
+// WatchReset follows a VM's events monitor until QEMU ends and reports
+// whether it ended because the guest rebooted (SHUTDOWN, reason
+// guest-reset), as opposed to a power-off or a kill.
+func WatchReset(ctx context.Context, port int) (bool, error) {
+	c, err := net.DialTimeout("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(port)), 3*time.Second)
+	if err != nil {
+		return false, err
+	}
+	defer c.Close()
+	go func() { <-ctx.Done(); c.Close() }()
+	r := bufio.NewReader(c)
+	if _, err := r.ReadBytes('\n'); err != nil { // greeting
+		return false, err
+	}
+	if err := json.NewEncoder(c).Encode(map[string]string{"execute": "qmp_capabilities"}); err != nil {
+		return false, err
+	}
+	reset := false
+	for {
+		line, err := r.ReadBytes('\n')
+		if err != nil {
+			return reset, nil // QEMU has ended
+		}
+		var ev struct {
+			Event string `json:"event"`
+			Data  struct {
+				Reason string `json:"reason"`
+			} `json:"data"`
+		}
+		if json.Unmarshal(line, &ev) == nil && ev.Event == "SHUTDOWN" {
+			reset = ev.Data.Reason == "guest-reset"
+		}
+	}
 }
 
 // Start copies the firmware variables on first boot and starts QEMU.

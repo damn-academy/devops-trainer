@@ -45,17 +45,26 @@ func Ensure(path string) (string, error) {
 	return line, nil
 }
 
-// Args is the ssh command to a VM's forwarded port on loopback. Host keys
-// are kept in the lab's own known_hosts, so the learner's file stays clean.
-func Args(key, knownHosts, user string, port int, tty bool, command ...string) ([]string, error) {
+// Args is the ssh command to a VM: its forwarded port on loopback (QEMU,
+// host 127.0.0.1) or its own address (Hyper-V, port 22). Host keys are
+// kept in the lab's own known_hosts, so the learner's file stays clean.
+func Args(key, knownHosts, user, host string, port int, tty bool, command ...string) ([]string, error) {
 	if port <= 0 {
 		return nil, errors.New("this VM has no SSH (kuberoot is reached with kubectl)")
+	}
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	// One alias per VM: the forwarded port on loopback, the address otherwise.
+	alias := "dtlab-" + strconv.Itoa(port)
+	if host != "127.0.0.1" {
+		alias = "dtlab-" + host
 	}
 	a := []string{"ssh", "-i", key, "-p", strconv.Itoa(port),
 		"-o", "IdentitiesOnly=yes",
 		"-o", "StrictHostKeyChecking=accept-new",
 		"-o", "UserKnownHostsFile=" + knownHosts,
-		"-o", "HostKeyAlias=dtlab-" + strconv.Itoa(port),
+		"-o", "HostKeyAlias=" + alias,
 		"-o", "ConnectTimeout=10",
 		"-o", "LogLevel=ERROR"}
 	if tty {
@@ -63,6 +72,6 @@ func Args(key, knownHosts, user string, port int, tty bool, command ...string) (
 	} else {
 		a = append(a, "-o", "BatchMode=yes")
 	}
-	a = append(a, user+"@127.0.0.1")
+	a = append(a, user+"@"+host)
 	return append(a, command...), nil
 }

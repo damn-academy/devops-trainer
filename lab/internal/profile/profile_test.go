@@ -82,3 +82,14 @@ func TestRecommend(t *testing.T) {
 		t.Errorf("no virtualisation: %+v", r)
 	}
 }
+
+func TestRecommendNamesOnlyWhatIsShort(t *testing.T) {
+	i := hostinfo.Info{CPUs: 10, MemMiB: 16384, DiskFreeMiB: 7756, DiskPath: "/home/x/.dtlab", Virt: hostinfo.Virt{Accel: "hvf", Detail: "Hypervisor.framework"}}
+	r := Recommend(i)
+	if r.Profile != "" || len(r.Reasons) != 2 {
+		t.Fatalf("%+v", r)
+	}
+	if !strings.Contains(r.Reasons[0], "7.6 GiB free disk at /home/x/.dtlab") || strings.Contains(r.Reasons[0], "memory") || strings.Contains(r.Reasons[0], "CPUs") {
+		t.Errorf("%q", r.Reasons[0])
+	}
+}
