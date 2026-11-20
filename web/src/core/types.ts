@@ -645,6 +645,8 @@ export interface FactsProvider {
 export interface SetupHook {
   key: string;
   apply(m: SimMachineApi, value: unknown): void | Promise<void>;
+  /** Called after setup (including its script) completes, even without an ext entry. */
+  complete?(m: SimMachineApi): void | Promise<void>;
 }
 
 // ── Quiz items (08 §3.10, 10 §2) ───────────────────────────────────────────

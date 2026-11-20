@@ -333,7 +333,6 @@ describe('`flow` in the terminal and facts.flow', () => {
       'flow auto on', 'flow wip analysis 2', 'flow wip dev 3', 'flow wip test 2',
       'flow policy pull cd3', 'flow policy deploy train:2', 'flow station DEV-2 test',
     ] }, { registry: reg });
-    session(m).captureSetup();
     const initial = (await m.facts()).flow;
     await m.exec('flow auto off');
     await m.exec('flow policy deploy manual');
@@ -360,5 +359,37 @@ describe('`flow` in the terminal and facts.flow', () => {
     const { baseline, reference } = bots(P5, P5.defaultSeed);
     expect(baseline.doneCount).toBe(3);
     expect(reference.doneCount).toBe(6);
+  });
+
+  it('captures setup scripts that start a scenario and advance days without ext.flow', async () => {
+    const m = await createSimMachine({ script: [
+      'flow reset s1 7', 'flow auto on', 'flow wip analysis 2',
+      'flow next 2', 'flow decide s1-promo top', 'flow next',
+    ] }, { registry: reg });
+    const initial = structuredClone(session(m).s);
+    expect(initial!.history).toHaveLength(3);
+    expect(initial!.decided['s1-promo']).toBe('top');
+    const snap = await m.snapshot();
+    const restored = await mk('p5');
+    await restored.restore(snap);
+    for (const machine of [m, restored]) {
+      for (let i = 0; i < 2; i++) {
+        await machine.exec('flow next 15');
+        await machine.exec('flow reset');
+        expect(session(machine).s).toEqual(initial);
+      }
+    }
+  });
+
+  it('keeps scenario defaults for setups without scripts and legacy snapshots', async () => {
+    const m = await mk('s2');
+    const initial = structuredClone(session(m).s);
+    await m.exec('flow auto on');
+    await m.exec('flow next 2');
+    await m.exec('flow reset');
+    expect(session(m).s).toEqual(initial);
+    session(m).restore({ id: 's2', seed: initial!.seed, actions: [[{ k: 'policy', auto: true }], []] });
+    await m.exec('flow reset');
+    expect(session(m).s).toEqual(initial);
   });
 });
