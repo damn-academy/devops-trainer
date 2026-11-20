@@ -223,8 +223,10 @@ export function applyDefaults(c: Cluster, obj: Obj, info: KindInfo, prev: Obj | 
       else delete spec.externalTrafficPolicy;
       if (spec.type === 'LoadBalancer') {
         spec.allocateLoadBalancerNodePorts ??= true;
-        // k3s ServiceLB: the node addresses become the external IPs.
-        o.status = { loadBalancer: { ingress: c.nodes.filter((n) => n.power).map((n) => ({ ip: n.ip, ipMode: 'VIP' })) } };
+        // k3s ServiceLB: the node addresses become the external IPs. With
+        // add-ons the address comes from a load-balancer provider (MetalLB) or never.
+        if (c.addons) o.status = prev?.spec?.type === 'LoadBalancer' && prev.status ? prev.status : { loadBalancer: {} };
+        else o.status = { loadBalancer: { ingress: c.nodes.filter((n) => n.power).map((n) => ({ ip: n.ip, ipMode: 'VIP' })) } };
       } else o.status = { loadBalancer: {} };
       break;
     }
@@ -238,7 +240,31 @@ export function applyDefaults(c: Cluster, obj: Obj, info: KindInfo, prev: Obj | 
       break;
     }
     case 'Ingress':
-      o.status = prev?.status ?? { loadBalancer: { ingress: c.nodes.map((n) => ({ ip: n.ip })) } };
+      // Without add-ons: k3s Traefik behind ServiceLB publishes the node addresses.
+      // With add-ons the ingress controller writes the address, if one runs.
+      o.status = prev?.status ?? (c.addons ? { loadBalancer: {} } : { loadBalancer: { ingress: c.nodes.map((n) => ({ ip: n.ip })) } });
+      break;
+    case 'PersistentVolumeClaim': {
+      const spec = (o.spec ??= {});
+      spec.volumeMode ??= 'Filesystem';
+      spec.accessModes ??= ['ReadWriteOnce'];
+      o.status = prev?.status ?? { phase: 'Pending' };
+      break;
+    }
+    case 'PersistentVolume':
+      o.spec ??= {};
+      o.spec.persistentVolumeReclaimPolicy ??= 'Retain';
+      o.spec.volumeMode ??= 'Filesystem';
+      o.status = prev?.status ?? { phase: 'Available' };
+      break;
+    case 'StorageClass':
+      o.reclaimPolicy ??= 'Delete';
+      o.volumeBindingMode ??= 'Immediate';
+      break;
+    case 'HorizontalPodAutoscaler':
+      o.spec ??= {};
+      o.spec.minReplicas ??= 1;
+      o.status = prev?.status ?? { currentReplicas: 0, desiredReplicas: 0, currentMetrics: null };
       break;
     case 'CustomResourceDefinition':
       o.status = prev?.status ?? o.status ?? {};

@@ -31,6 +31,7 @@ import { archQuiz, architectureLesson, deployQuiz, deploymentsLesson, operatorQu
 import { dnsLesson, dnsQuiz, ingressLesson, ingressQuiz, networkLesson, networkQuiz, serviceQuiz, servicesLesson, troubleQuiz, troubleshootLesson } from './lessons/c-network';
 import { configLesson, configQuiz, healthLesson, healthQuiz, helmLesson, helmQuiz } from './lessons/d-config';
 import { netpolLesson, netpolQuiz } from './lessons/c2-netpol';
+import { addonsLesson, addonsQuiz } from './lessons/g-addons';
 import { realQuiz, singleNodeLesson } from './lessons/e-real';
 import { KUBEADM_LESSONS, stage2Quiz } from './lessons/f-kubeadm';
 import { placementFor } from './placement';
@@ -39,7 +40,7 @@ import { R, S, src } from './sources';
 // The newer exams are a chunk of their own (see exams-extra.ts).
 const { EXTRA_EXAMS } = await import('./exams-extra');
 
-const quiz = [...whyQuiz, ...podQuiz, ...reconcileQuiz, ...deployQuiz, ...archQuiz, ...operatorQuiz, ...networkQuiz, ...serviceQuiz, ...dnsQuiz, ...ingressQuiz, ...netpolQuiz, ...troubleQuiz, ...configQuiz, ...healthQuiz, ...helmQuiz, ...realQuiz, ...stage2Quiz];
+const quiz = [...whyQuiz, ...podQuiz, ...reconcileQuiz, ...deployQuiz, ...archQuiz, ...operatorQuiz, ...networkQuiz, ...serviceQuiz, ...dnsQuiz, ...ingressQuiz, ...netpolQuiz, ...troubleQuiz, ...configQuiz, ...healthQuiz, ...helmQuiz, ...addonsQuiz, ...realQuiz, ...stage2Quiz];
 const placement = placementFor(quiz);
 
 const stage1: Block = {
@@ -74,6 +75,7 @@ const stage1: Block = {
     'k8s-1.config',
     'k8s-1.health',
     'k8s-1.helm',
+    'k8s-1.addons',
   ],
   sources: src([S.overview, S.components, S.networking, S.kubectl], [R.what, R.components, R.cheatsheet]),
   docSources: ['kubectl-explain', 'help', 'kubernetes.io'],
@@ -103,7 +105,7 @@ const stage2: Block = {
 
 export default defineModule({
   blocks: [stage1, stage2],
-  lessons: [whyLesson, firstPodLesson, reconcileLesson, deploymentsLesson, architectureLesson, operatorsLesson, networkLesson, servicesLesson, dnsLesson, ingressLesson, netpolLesson, troubleshootLesson, configLesson, healthLesson, helmLesson, singleNodeLesson, ...KUBEADM_LESSONS],
+  lessons: [whyLesson, firstPodLesson, reconcileLesson, deploymentsLesson, architectureLesson, operatorsLesson, networkLesson, servicesLesson, dnsLesson, ingressLesson, netpolLesson, troubleshootLesson, configLesson, healthLesson, helmLesson, addonsLesson, singleNodeLesson, ...KUBEADM_LESSONS],
   concepts: CONCEPTS,
   quiz,
   explainers: [dispatchModel, reconcileModel, loopChainModel, rollingModel, schedulerModel, applyPathModel, nodeDownModel, podNetworkModel, servicePathModel, ndotsModel, ingressPathModel, netpolModel, kubeadmInitModel, tlsBootstrapModel, etcdRestoreModel, upgradeModel].map((m) => fromModel(m as never)),
