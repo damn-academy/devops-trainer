@@ -150,7 +150,7 @@ export const kubeadmInitModel = defineModel<P>({
       s.push({
         id: 'fail',
         label: bi('стоп', 'stop'),
-        caption: bi('init останавливается, не успев записать ни одного файла. Такая ошибка лучше всех остальных, потому что её причина понятна, а исправить её дёшево.', 'init stops before writing a file: the best kind of error, clear and cheap.'),
+        caption: bi('Команда kubeadm init останавливается, не успев записать ни одного файла. Такая ошибка лучше всех остальных, потому что её причина понятна, а исправить её дёшево.', 'init stops before writing a file: the best kind of error, clear and cheap.'),
         focus: ['kadm'],
         say: { kadm: bi('kubeadm видит, что пересылка пакетов выключена, и прекращает работу.', 'kubeadm sees forwarding off and stops.') },
         states: { kadm: 'err' },
@@ -197,7 +197,7 @@ export const kubeadmInitModel = defineModel<P>({
       s.push({
         id: 'nokubelet',
         label: 'kubelet',
-        caption: bi('kubelet завершается при запуске, и файлы в manifests никто не читает. kubeadm четыре минуты ждёт, что kubelet станет здоровым, и сдаётся.', 'The kubelet exits at start; nobody reads the manifests; init waits four minutes.'),
+        caption: bi('Агент kubelet завершается при запуске, и файлы в manifests никто не читает. kubeadm четыре минуты ждёт, что kubelet станет здоровым, и сдаётся.', 'The kubelet exits at start; nobody reads the manifests; init waits four minutes.'),
         focus: ['kadm'],
         reveal: ['klet', 'e-read'],
         say: { kadm: bi('kubeadm ждёт здоровый kubelet и не дожидается.', 'kubeadm waits for a healthy kubelet in vain.') },
@@ -222,7 +222,7 @@ export const kubeadmInitModel = defineModel<P>({
       s.push({
         id: 'flap',
         label: bi('перезапуски', 'flapping'),
-        caption: bi('kubelet и containerd по-разному понимают, где лежат контрольные группы (cgroup) контейнеров. Поды управляющего слоя раз за разом завершаются и запускаются снова, и API-сервер отвечает через раз.', 'The kubelet and containerd disagree on cgroups: the control plane keeps restarting.'),
+        caption: bi('Агент kubelet и среда запуска containerd по-разному понимают, где лежат контрольные группы (cgroup) контейнеров. Поды управляющего слоя раз за разом завершаются и запускаются снова, и API-сервер отвечает через раз.', 'The kubelet and containerd disagree on cgroups: the control plane keeps restarting.'),
         focus: ['klet'],
         say: { klet: bi('kubelet снова и снова перезапускает API-сервер и etcd.', 'The kubelet restarts the API server and etcd again and again.') },
         states: { api: 'warn', etcd: 'warn' },
@@ -257,9 +257,9 @@ export const kubeadmInitModel = defineModel<P>({
       s.push({
         id: 'expired',
         label: 'x509',
-        caption: bi('Прошёл год, и сертификаты компонентов вместе с admin.conf истекли. kubectl больше не может представиться API-серверу, и связь kubelet с ним тоже обрывается.', 'A year later the certificates and admin.conf have expired: kubectl and the kubelet lose the API.'),
+        caption: bi('Прошёл год, и сертификаты управляющего слоя, которые выпустил kubeadm, истекли вместе с admin.conf. Истёк и сертификат, которым API-сервер представляется клиентам, поэтому и kubectl, и kubelet получают ошибку x509 и не могут с ним работать. Клиентский сертификат самого kubelet при этом продлевается автоматически, пока срок не вышел, так что после починки узлы возвращаются в кластер без повторного join. Чинят это командой kubeadm certs renew all и перезапуском статических подов, а проверяют заранее командой kubeadm certs check-expiration.', 'A year later the control plane certificates kubeadm issued have expired together with admin.conf. The certificate the API server presents to its clients has expired too, so kubectl and the kubelet both get an x509 error and cannot work with it. The kubelet’s own client certificate is rotated automatically while it is still valid, so after the fix the nodes come back without another join. The fix is kubeadm certs renew all and a restart of the static pods; check in advance with kubeadm certs check-expiration.'),
         focus: ['pki'],
-        say: { pki: bi('Срок сертификатов компонентов истёк.', 'The component certificates have expired.') },
+        say: { pki: bi('Срок сертификатов управляющего слоя истёк.', 'The control plane certificates have expired.') },
         states: { pki: 'err', confs: 'err' },
         values: { pki: t(bi('сертификаты истекли', 'leaf: expired')) },
         metrics: { files: 31, days: cert.leafLeftDays },

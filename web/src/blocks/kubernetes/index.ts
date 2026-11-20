@@ -1,7 +1,7 @@
 // The Kubernetes block (05): stage 1 in the browser (k8s-1) and stage 2–3 on
 // real machines (k8s-2). The engine — kube-lite, kubectl, the widgets — lives
 // in src/engine/kube-lite; this module is the textbook on top of it.
-// k8s-2 covers stage 2: one k3s node, then kubeadm on three real VMs.
+// k8s-2 covers stage 2: one kuberoot node (the local lab or your own VM), then kubeadm on three real VMs.
 
 import { defineModule } from '../../core/define';
 import { bi } from '../../core/i18n';
@@ -32,6 +32,9 @@ import { dnsLesson, dnsQuiz, ingressLesson, ingressQuiz, networkLesson, networkQ
 import { configLesson, configQuiz, healthLesson, healthQuiz, helmLesson, helmQuiz } from './lessons/d-config';
 import { netpolLesson, netpolQuiz } from './lessons/c2-netpol';
 import { addonsLesson, addonsQuiz } from './lessons/g-addons';
+import { storageLesson, storageQuiz } from './lessons/h-storage';
+import { scalingLesson, scalingQuiz } from './lessons/i-scaling';
+import { accessLesson, accessQuiz } from './lessons/j-access';
 import { realQuiz, singleNodeLesson } from './lessons/e-real';
 import { KUBEADM_LESSONS, stage2Quiz } from './lessons/f-kubeadm';
 import { placementFor } from './placement';
@@ -40,7 +43,7 @@ import { R, S, src } from './sources';
 // The newer exams are a chunk of their own (see exams-extra.ts).
 const { EXTRA_EXAMS } = await import('./exams-extra');
 
-const quiz = [...whyQuiz, ...podQuiz, ...reconcileQuiz, ...deployQuiz, ...archQuiz, ...operatorQuiz, ...networkQuiz, ...serviceQuiz, ...dnsQuiz, ...ingressQuiz, ...netpolQuiz, ...troubleQuiz, ...configQuiz, ...healthQuiz, ...helmQuiz, ...addonsQuiz, ...realQuiz, ...stage2Quiz];
+const quiz = [...whyQuiz, ...podQuiz, ...reconcileQuiz, ...deployQuiz, ...archQuiz, ...operatorQuiz, ...networkQuiz, ...serviceQuiz, ...dnsQuiz, ...ingressQuiz, ...netpolQuiz, ...troubleQuiz, ...configQuiz, ...storageQuiz, ...healthQuiz, ...scalingQuiz, ...helmQuiz, ...accessQuiz, ...addonsQuiz, ...realQuiz, ...stage2Quiz];
 const placement = placementFor(quiz);
 
 const stage1: Block = {
@@ -48,8 +51,8 @@ const stage1: Block = {
   order: 60,
   title: bi('Kubernetes, этап 1', 'Kubernetes, stage 1'),
   summary: bi(
-    'Kubernetes на кластере в браузере: из каких блоков он состоит, как работает цикл согласования, что такое поды и Deployment, как планировщик и kubelet запускают поды, что делает оператор, как устроена сеть Kubernetes от пода до входа снаружи и как настраивать поды и следить за их здоровьем.',
-    'Kubernetes from blocks, the reconcile loop, pods, Deployments, the scheduler and the kubelet, an operator, Kubernetes networking end to end, configuration and pod health — on a cluster in the browser.',
+    'Kubernetes на кластере в браузере: из каких блоков он состоит, как работает цикл согласования, что такое поды и Deployment, как планировщик и kubelet запускают поды, что делает оператор, как устроена сеть Kubernetes от пода до входа снаружи, как настраивать поды, хранить их данные, следить за их здоровьем и масштабировать под нагрузкой и кто с какими правами работает с кластером.',
+    'Kubernetes from blocks, the reconcile loop, pods, Deployments, the scheduler and the kubelet, an operator, Kubernetes networking end to end, configuration, data, pod health, scaling under load and access rights — on a cluster in the browser.',
   ),
   checklistStep: '05',
   requires: ['containers'],
@@ -58,7 +61,7 @@ const stage1: Block = {
     intermediate: bi('Запускал kubectl apply по инструкции', 'kubectl apply by instructions'),
     experienced: bi('Сам пишу манифесты и готовлюсь к уровню CKA', 'Writes manifests, aims at CKA level'),
   },
-  hours: { beginner: 85, intermediate: 54, experienced: 31 },
+  hours: { beginner: 87, intermediate: 55, experienced: 32 },
   lessons: [
     'k8s-1.why',
     'k8s-1.first-pod',
@@ -73,8 +76,11 @@ const stage1: Block = {
     'k8s-1.netpol',
     'k8s-1.troubleshoot',
     'k8s-1.config',
+    'k8s-1.storage',
     'k8s-1.health',
+    'k8s-1.scaling',
     'k8s-1.helm',
+    'k8s-1.access',
     'k8s-1.addons',
   ],
   sources: src([S.overview, S.components, S.networking, S.kubectl], [R.what, R.components, R.cheatsheet]),
@@ -87,17 +93,17 @@ const stage2: Block = {
   id: 'k8s-2',
   order: 70,
   title: bi('Kubernetes, этап 2: настоящие машины', 'Kubernetes, stage 2: real machines'),
-  summary: bi('Сначала один настоящий узел на k3s с Gateway и Helm, а затем кластер kubeadm на трёх виртуальных машинах, которые вы заказываете сами: подготовка узлов, init и join, сертификаты и статические поды, Cilium, снимок и восстановление etcd, обновление, поломка и починка. Результат проверяется по фактам кластера и по выводу команд, а уборка в конце обязательна.', 'One real node on k3s with a Gateway and Helm, then a kubeadm cluster on three VMs you order yourself: node preparation, init and join, certificates and static pods, Cilium, an etcd snapshot and restore, an upgrade, a break and a repair. The check is by the cluster’s facts and by command output, the cleanup is mandatory.'),
+  summary: bi('Сначала один настоящий узел kuberoot в локальной лаборатории курса или на своей машине, с Gateway, Helm, StatefulSet и правами доступа, а затем кластер kubeadm на трёх виртуальных машинах, которые вы заказываете сами: подготовка узлов, init и join, сертификаты и статические поды, Cilium, снимок и восстановление etcd, обновление, поломка и починка. Результат проверяется по фактам кластера и по выводу команд, а уборка в конце обязательна.', 'One real kuberoot node in the course’s local lab or on your own machine, with a Gateway, Helm, a StatefulSet and access rights, then a kubeadm cluster on three VMs you order yourself: node preparation, init and join, certificates and static pods, Cilium, an etcd snapshot and restore, an upgrade, a break and a repair. The check is by the cluster’s facts and by command output, the cleanup is mandatory.'),
   checklistStep: '05',
   requires: ['k8s-1'],
   levels: {
-    beginner: bi('Прошёл этап 1 и иду по полному чеклисту', 'Finished stage 1; follows the full checklist'),
-    intermediate: bi('Прошёл этап 1, и чеклист нужен мне только как каркас', 'Finished stage 1; the checklist as a skeleton'),
-    experienced: bi('Прошёл этап 1 и собираю кластер с нуля по документации', 'Finished stage 1; builds from scratch with the documentation'),
+    beginner: bi('Кластера своими руками ещё не ставил и иду по полному чеклисту', 'Has never installed a cluster by hand; follows the full checklist'),
+    intermediate: bi('Ставил одноузловой кластер вроде k3s, kind или minikube, но kubeadm не запускал', 'Has installed a one-node cluster such as k3s, kind or minikube, never ran kubeadm'),
+    experienced: bi('Собирал кластер через kubeadm и восстанавливал etcd из снимка', 'Has built a cluster with kubeadm and restored etcd from a snapshot'),
   },
   hours: { beginner: 14, intermediate: 12, experienced: 10 },
   lessons: ['k8s-2.single-node', ...KUBEADM_LESSONS.map((l) => l.id)],
-  sources: src([S.k3s, S.kubeadm, S.etcdRecovery, S.skew], [R.installKubeadm, R.what]),
+  sources: src([S.kuberoot, S.kubeadm, S.etcdRecovery, S.skew], [R.installKubeadm, R.what]),
   docSources: ['kubernetes.io', 'help'],
   placement: placement.stage2,
   exam: 'k8s-2.exam',
@@ -105,7 +111,7 @@ const stage2: Block = {
 
 export default defineModule({
   blocks: [stage1, stage2],
-  lessons: [whyLesson, firstPodLesson, reconcileLesson, deploymentsLesson, architectureLesson, operatorsLesson, networkLesson, servicesLesson, dnsLesson, ingressLesson, netpolLesson, troubleshootLesson, configLesson, healthLesson, helmLesson, addonsLesson, singleNodeLesson, ...KUBEADM_LESSONS],
+  lessons: [whyLesson, firstPodLesson, reconcileLesson, deploymentsLesson, architectureLesson, operatorsLesson, networkLesson, servicesLesson, dnsLesson, ingressLesson, netpolLesson, troubleshootLesson, configLesson, storageLesson, healthLesson, scalingLesson, helmLesson, accessLesson, addonsLesson, singleNodeLesson, ...KUBEADM_LESSONS],
   concepts: CONCEPTS,
   quiz,
   explainers: [dispatchModel, reconcileModel, loopChainModel, rollingModel, schedulerModel, applyPathModel, nodeDownModel, podNetworkModel, servicePathModel, ndotsModel, ingressPathModel, netpolModel, kubeadmInitModel, tlsBootstrapModel, etcdRestoreModel, upgradeModel].map((m) => fromModel(m as never)),

@@ -8,7 +8,7 @@ import type { Facts, PlacementTask, QuizItem } from '../../core/types';
 import type { K8sFacts } from '../../engine/kube-lite/facts';
 import type { Obj } from '../../engine/kube-lite/util';
 import { EXAM_SETUPS } from './exam';
-import { DEPLOY_LAB, NETPOL_LAB, SERVICE_BROKEN, TROUBLE_LAB, ns } from './setups';
+import { DEPLOY_LAB, NETPOL_LAB, SCALING_LAB, SERVICE_BROKEN, STORAGE_LAB, TROUBLE_LAB, WEB_HPA, ns } from './setups';
 
 const k8s = (f: Facts) => f.k8s as K8sFacts;
 const reach = (f: Facts, from: string, to: string) => k8s(f).reach?.find((r) => r.from === from && r.to === to)?.status ?? 0;
@@ -172,6 +172,41 @@ export function placementFor(quiz: QuizItem[]) {
     },
     { id: 'k8s.place.e6', level: 'experienced', key: false, concepts: ['k8s.networkpolicy'], kind: 'quiz', item: pick('k8s.q.np.or', 'k8s.place.q.or') },
     { id: 'k8s.place.e7', level: 'experienced', key: false, concepts: ['k8s.networkpolicy', 'k8s.cni'], kind: 'quiz', item: pick('k8s.q.tr.cni', 'k8s.place.q.cni') },
+    { id: 'k8s.place.i7', level: 'intermediate', key: false, concepts: ['k8s.pvc', 'k8s.pv'], kind: 'quiz', item: pick('k8s.q.st.node', 'k8s.place.q.pvcnode') },
+    {
+      id: 'k8s.place.e8',
+      level: 'experienced',
+      key: false,
+      concepts: ['k8s.pvc', 'k8s.storageclass', 'k8s.csi'],
+      kind: 'task',
+      setup: STORAGE_LAB,
+      task: {
+        id: 'pvc',
+        prompt: bi('Под приложения `reports` в namespace `default` не запускается. Найдите причину и почините его, не удаляя Deployment `reports`.', 'The `reports` pod in namespace `default` does not start. Find the cause and fix it without deleting Deployment `reports`.'),
+        check: {
+          when: (f, start) => {
+            const uid = (x?: Facts) => (x ? k8s(x).objects.find((o) => o.kind === 'Deployment' && o.metadata?.name === 'reports')?.metadata?.uid : undefined);
+            const pvc = k8s(f).objects.find((o) => o.kind === 'PersistentVolumeClaim' && o.metadata?.name === 'reports');
+            return pvc?.status?.phase === 'Bound' && k8s(f).pods.some((p) => p.labels.app === 'reports' && p.ready) && !!uid(f) && (!start || uid(f) === uid(start));
+          },
+        },
+      },
+    },
+    {
+      id: 'k8s.place.e9',
+      level: 'experienced',
+      key: false,
+      concepts: ['k8s.hpa', 'k8s.metrics-server', 'k8s.resources'],
+      kind: 'task',
+      setup: { ...SCALING_LAB, ext: { k8s: { ...(SCALING_LAB.ext as { k8s: Record<string, unknown> }).k8s, manifests: [...((SCALING_LAB.ext as { k8s: { manifests: string[] } }).k8s.manifests), WEB_HPA] } } },
+      task: {
+        id: 'hpa',
+        prompt: bi('У HPA `web` в столбце TARGETS стоит «<unknown>». Добейтесь, чтобы он показывал загрузку в процентах.', 'HPA `web` shows “<unknown>” in TARGETS. Make it show the load in percent.'),
+        check: { when: (f) => (k8s(f).objects.find((o) => o.kind === 'HorizontalPodAutoscaler' && o.metadata?.name === 'web')?.status?.currentMetrics ?? []).length > 0 },
+      },
+    },
+    { id: 'k8s.place.e10', level: 'experienced', key: false, concepts: ['k8s.rbac'], kind: 'quiz', item: pick('k8s.q.acc.binding', 'k8s.place.q.rbac') },
+    { id: 'k8s.place.e11', level: 'experienced', key: false, concepts: ['k8s.oidc'], kind: 'quiz', item: pick('k8s.q.acc.fired', 'k8s.place.q.oidc') },
   ];
 
   const stage2: PlacementTask[] = [

@@ -80,7 +80,7 @@ export const netpolLesson: Lesson = {
   title: bi('Как NetworkPolicy решает, кто к кому может обращаться', 'NetworkPolicy: who may call whom'),
   summary: bi('По умолчанию в кластере всё открыто. В уроке вы узнаете, как работает запрет по умолчанию (default-deny), как записывают правила from и to, в чём ловушка «И» и «ИЛИ», зачем исходящему трафику правило для DNS и какой плагин всё это исполняет.', 'By default everything is open. default-deny, the from and to rules, the AND/OR trap, egress and the DNS rule, the plugin that enforces it all.'),
   introduces: ['k8s.networkpolicy', 'k8s.default-deny'],
-  uses: ['k8s.network-model', 'k8s.cni', 'k8s.label', 'k8s.namespace', 'k8s.cluster-dns', 'k8s.service'],
+  uses: ['k8s.network-model', 'k8s.cni', 'k8s.label', 'k8s.namespace', 'k8s.cluster-dns', 'k8s.service', 'k8s.kube-proxy', 'k8s.addon'],
   tier: 'core',
   minutes: 45,
   sources: src([S.netpol, S.networking], [R.service, R.wikiIptables]),
@@ -212,6 +212,27 @@ export const netpolLesson: Lesson = {
         },
       ],
     },
+    {
+      id: 'cni-intro',
+      kind: 'text',
+      step: 'review',
+      title: bi('Кто исполняет политики и как это видно в конструкторе кластера', 'Who enforces policies, and how the cluster constructor shows it'),
+      body: bi(
+        'Политики, которые вы писали, исполняет сетевой плагин, тот самый блок CNI из конструктора кластера. От выбора плагина зависит, что кластер умеет. flannel даёт подам адреса и связывает узлы, но политики не применяет: объект NetworkPolicy лежит в API, а пакеты проходят. Calico применяет политики правилами в ядре каждого узла, а запросы к сервисам по-прежнему ведёт kube-proxy. Cilium применяет политики и вдобавок сам ведёт запросы к сервисам программами eBPF, поэтому в кластере с ним kube-proxy можно не ставить. Конструктор ниже собран целиком, со слоем входа снаружи из прошлого урока, а сетевой плагин выбирается в карточке блока CNI.',
+        'The policies you wrote are enforced by the network plugin, the very CNI block of the cluster constructor. The choice of plugin decides what the cluster can do. flannel gives pods addresses and links the nodes, but does not enforce policies: the NetworkPolicy object sits in the API, and packets pass. Calico enforces policies with kernel rules on every node, while kube-proxy still routes Service traffic. Cilium enforces policies and also routes Service traffic itself with eBPF programs, so a cluster with it can do without kube-proxy. The constructor below is fully assembled, with the traffic-in layer from the previous lesson, and the network plugin is chosen in the card of the CNI block.',
+      ),
+    },
+    {
+      id: 'cni-howto',
+      kind: 'text',
+      role: 'howto',
+      step: 'review',
+      body: bi(
+        'Нажмите на блок CNI на холсте и выберите в его карточке Calico, затем запустите сценарий «Закрыть сервис политикой»: под `web` с меткой `app=web` получит ответ, а запрос пода `client` оборвётся по тайм-ауту. Выберите flannel и запустите сценарий ещё раз: политика та же, но оба запроса пройдут, и тренажёр объяснит почему. Напоследок выберите Cilium, уберите с холста kube-proxy кнопкой в его карточке и запустите «Запрос к Service по имени»: запрос пройдёт, потому что сервисы теперь ведёт сам сетевой плагин.',
+        'Press the CNI block on the canvas, choose Calico in its card, then run the scenario “Close a Service with a policy”: pod `web` labelled `app=web` gets an answer, and the request of pod `client` times out. Choose flannel and run the scenario again: the policy is the same, but both requests pass, and the trainer explains why. Finally choose Cilium, remove kube-proxy from the canvas with the button in its card, and run “A request to a Service by name”: the request passes, because the network plugin now routes Services itself.',
+      ),
+    },
+    { id: 'constructor', kind: 'widget', step: 'review', widget: 'k8s.constructor', props: { preset: 'full', layers: ['cp', 'node', 'net', 'ingress'] } },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: netpolQuiz.map((q) => q.id) },
   ],
 };
