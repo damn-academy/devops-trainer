@@ -1,3 +1,4 @@
+import { editCommand } from './editor';
 // Shell built-ins: they change the shell itself, so they cannot be programs.
 
 import { bi } from '../../../core/i18n';
@@ -197,4 +198,4 @@ A simulated bash: runs a script file line by line, with $1…$9, $# and $@.`,
   },
 };
 
-export const BUILTINS: ShellCommand[] = [cd, exportCmd, unset, trueCmd, falseCmd, exit, history, sh];
+export const BUILTINS: ShellCommand[] = [editCommand, cd, exportCmd, unset, trueCmd, falseCmd, exit, history, sh];

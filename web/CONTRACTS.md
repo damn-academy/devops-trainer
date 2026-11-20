@@ -257,3 +257,17 @@ the author's `hints.H4/H5` text only. Terminal widgets dispatch
 `src/engine/pwa/vite-plugin.ts`): app shell and all chunks precached; v86
 engine/images cached on first use or by Settings → Offline; a new version
 waits and is applied on the button or on moving to another lesson.
+
+
+### Cross-terminal goal source
+
+A simulator terminal may declare `setup.ext.goalSource: "<mountLab key>"`.
+This explicitly checks all its tasks against the source terminal's facts and
+initial facts (including delta checks). Both mounts must have the same
+`lessonId`. The value is the source's full storage key, not a section title.
+Without this property, each terminal continues to check its own machine.
+Commands and resets on the source notify mounted goal subscribers. A missing,
+unmounted, or other-lesson source never falls back to the checking terminal.
+Machines, persistence keys and reset buttons remain independent; this contract
+shares goal evidence only. Dispose removes the source and its subscriptions.
+Content must opt in; existing lessons are not implicitly joined by lesson id.

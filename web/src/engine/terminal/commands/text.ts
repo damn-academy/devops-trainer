@@ -504,9 +504,11 @@ function parseSed(script: string, ere: boolean): SedCmd[] | string {
         readAddr();
       }
       if (addr.length) cmd.addr = addr;
+      while (i < s.length && /[ \t]/.test(s[i])) i++;
       if (s[i] === '!') {
         cmd.neg = true;
         i++;
+        while (i < s.length && /[ \t]/.test(s[i])) i++;
       }
       const op = s[i++];
       if (op === 's') {

@@ -230,6 +230,7 @@ const subs: Record<string, Sub> = {
         else io.out(`Your branch and '${up.ref}' have diverged,\nand have ${ahead} and ${behind} different commits each, respectively.\n  (use "git pull" if you want to integrate the remote branch with yours)\n`);
       } else if (up) io.out(`Your branch is based on '${up.ref}', but the upstream is gone.\n  (use "git branch --unset-upstream" to fixup)\n`);
     }
+    if (repo.fs.exists(repo.p('rebase-merge/state'))) io.out('Rebase in progress. Resolve and stage conflicts, then run git rebase --continue.\n  (use git rebase --skip or git rebase --abort to skip or cancel)\n');
     const merging = io.ctx.fs.exists(repo.p('MERGE_HEAD'));
     if (!head) io.out('\nNo commits yet\n');
     if (merging) {
@@ -383,6 +384,24 @@ const subs: Record<string, Sub> = {
 
   commit(io, args) {
     const repo = openRepo(io);
+    // Expand short option groups; -m consumes the remainder or the next argument.
+    let messageValue = false;
+    args = args.flatMap(arg => {
+      if (messageValue) { messageValue = false; return [arg]; }
+      if (arg === '--message') { messageValue = true; return [arg]; }
+      if (!/^-[aqm]/.test(arg) || arg.startsWith('--')) return [arg];
+      const result: string[] = [];
+      for (let i = 1; i < arg.length; i++) {
+        const flag = arg[i];
+        result.push(`-${flag}`);
+        if (flag === 'm') {
+          if (arg.slice(i + 1)) result.push(arg.slice(i + 1));
+          else messageValue = true;
+          break;
+        }
+      }
+      return result;
+    });
     const msgs: string[] = [];
     let all = false;
     let allowEmpty = false;
@@ -1186,8 +1205,9 @@ const subs: Record<string, Sub> = {
       io.err('(trainer) interactive rebase needs an editor for the todo list, which this terminal does not have; run git rebase <upstream> without -i\n');
       return 1;
     }
-    if (args.includes('--abort') || args.includes('--continue')) {
-      io.err('fatal: No rebase in progress?\n');
+    if (args.some(a => ['--abort', '--continue', '--skip'].includes(a))) return resumeRebase(io, repo, args);
+    if (repo.fs.exists(repo.p('rebase-merge/state'))) {
+      io.err('fatal: A rebase is already in progress.\n');
       return 128;
     }
     const rest = args.filter((a) => !a.startsWith('-'));
@@ -1427,60 +1447,97 @@ function threeWay(repo: Repo, base: FlatTree, ours: FlatTree, theirs: FlatTree, 
   return { files, conflicts, conflictEntries, texts, messages };
 }
 
-/**
- * Replay the commits of the current branch that `upstream` does not have on top
- * of it, one by one, as `git rebase` does. Merge commits are dropped, as git does
- * without --rebase-merges. A conflict stops the replay and leaves the branch as
- * it was: the simulator has no `rebase --continue`.
- */
-function rebaseOnto(io: Io, repo: Repo, upstream: string, upName: string): number {
-  const head = repo.headOid();
-  const branch = repo.currentBranch();
-  if (!head) {
-    io.err('fatal: invalid upstream\n');
+interface RebaseState {
+  original: string;
+  branch: string | null;
+  upstream: string;
+  todo: string[];
+}
+
+function saveRebase(repo: Repo, state: RebaseState): void {
+  repo.fs.mkdir(repo.p('rebase-merge'), { parents: true });
+  repo.fs.writeFile(repo.p('rebase-merge/state'), JSON.stringify(state));
+}
+
+function clearRebase(repo: Repo): void {
+  repo.fs.unlink(repo.p('rebase-merge/state'));
+  repo.fs.rmdir(repo.p('rebase-merge'));
+}
+
+function resumeRebase(io: Io, repo: Repo, args: string[]): number {
+  if (!repo.fs.exists(repo.p('rebase-merge/state'))) {
+    io.err('fatal: No rebase in progress?\n');
     return 128;
   }
+  const state: RebaseState = JSON.parse(repo.fs.readFile(repo.p('rebase-merge/state')));
+  if (args.includes('--abort')) {
+    repo.checkoutTree(repo.commitFiles(state.original), { from: unionTree(repo) });
+    repo.setHead(state.branch ? { branch: state.branch } : { oid: state.original }, 'rebase (abort)');
+    clearRebase(repo);
+    return 0;
+  }
+  if (args.includes('--continue')) {
+    const status = repo.status();
+    if (status.conflicted.length || status.unstaged.length) {
+      io.err('error: Resolve all conflicts and stage the changes with git add before continuing.\n');
+      return 1;
+    }
+    const c = repo.readCommit(state.todo[0]);
+    const tip = repo.writeCommit({ tree: repo.buildTree(repo.indexAsTree()), parents: [repo.headOid()!], author: c.author, committer: repo.person(), message: c.message });
+    repo.advanceHead(tip, 'rebase (continue)');
+  } else repo.checkoutTree(repo.commitFiles(repo.headOid()), { from: unionTree(repo) });
+  state.todo.shift();
+  return replayRebase(io, repo, state);
+}
+
+function replayRebase(io: Io, repo: Repo, state: RebaseState): number {
+  while (state.todo.length) {
+    saveRebase(repo, state);
+    const oid = state.todo[0];
+    const c = repo.readCommit(oid);
+    const res = threeWay(repo, repo.commitFiles(c.parents[0] ?? null), repo.commitFiles(repo.headOid()), repo.commitFiles(oid), 'HEAD', `${short(oid)} (${c.message.split('\n')[0]})`);
+    applyMergeResult(repo, res);
+    if (res.conflicts.length) {
+      for (const p of res.conflicts) io.out(`CONFLICT (content): Merge conflict in ${p}\n`);
+      io.err(`error: could not apply ${short(oid)}... ${c.message.split('\n')[0]}\nResolve and stage conflicts, then run git rebase --continue; or use --skip or --abort.\n`);
+      return 1;
+    }
+    const tip = repo.writeCommit({ tree: repo.buildTree(repo.indexAsTree()), parents: [repo.headOid()!], author: c.author, committer: repo.person(), message: c.message });
+    repo.advanceHead(tip, 'rebase (pick)');
+    state.todo.shift();
+  }
+  if (state.branch) {
+    repo.writeRef(`refs/heads/${state.branch}`, repo.headOid()!, 'rebase (finish)');
+    repo.setHead({ branch: state.branch }, 'rebase (finish)');
+  }
+  clearRebase(repo);
+  io.out(`Successfully rebased and updated refs/heads/${state.branch ?? 'HEAD'}.\n`);
+  return 0;
+}
+
+/** Replay first-parent commits, preserving a conflicted replay in the VFS. */
+function rebaseOnto(io: Io, repo: Repo, upstream: string, _upName: string): number {
+  const head = repo.headOid();
+  const branch = repo.currentBranch();
+  if (!head) { io.err('fatal: invalid upstream\n'); return 128; }
   if (repo.isAncestor(upstream, head)) {
     io.out(`Current branch ${branch ?? 'HEAD'} is up to date.\n`);
     return 0;
   }
   const dirty = repo.status();
-  if (dirty.staged.length || dirty.unstaged.length) {
+  if (dirty.staged.length || dirty.unstaged.length || dirty.conflicted.length) {
     io.err('error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.\n');
     return 1;
-  }
-  if (repo.isAncestor(head, upstream)) {
-    repo.checkoutTree(repo.commitFiles(upstream), { from: unionTree(repo) });
-    repo.advanceHead(upstream, `rebase (finish): returning to refs/heads/${branch ?? 'HEAD'}`);
-    io.out(`Successfully rebased and updated refs/heads/${branch ?? 'HEAD'}.\n`);
-    return 0;
   }
   const theirs = repo.ancestors(upstream);
   const todo: string[] = [];
   for (let c: string | undefined = head; c && !theirs.has(c); c = repo.readCommit(c).parents[0]) todo.unshift(c);
-  const replay = todo.filter((c) => repo.readCommit(c).parents.length < 2);
-  let tip = upstream;
-  for (const oid of replay) {
-    const c = repo.readCommit(oid);
-    const res = threeWay(repo, repo.commitFiles(c.parents[0] ?? null), repo.commitFiles(tip), repo.commitFiles(oid), upName, `${short(oid)} (${c.message.split('\n')[0]})`);
-    if (res.conflicts.length) {
-      for (const p of res.conflicts) io.out(`CONFLICT (content): Merge conflict in ${p}\n`);
-      io.err(`error: could not apply ${short(oid)}... ${c.message.split('\n')[0]}\n(trainer) this simulator cannot continue a rebase after a conflict, so the branch was left exactly as it was before the rebase. Resolve the conflict with a merge instead: git pull --no-rebase, or git merge ${upName}.\n`);
-      return 1;
-    }
-    const files: FlatTree = new Map(res.files);
-    const idx = new Map<string, IndexEntry>();
-    for (const [p, e] of files) idx.set(p, { oid: e.oid, mode: e.mode });
-    const prevIdx = repo.readIndex();
-    repo.writeIndex(idx);
-    const tree = repo.buildTree(repo.indexAsTree());
-    repo.writeIndex(prevIdx);
-    tip = repo.writeCommit({ tree, parents: [tip], author: c.author, committer: repo.person(), message: c.message });
-  }
-  repo.checkoutTree(repo.commitFiles(tip), { from: unionTree(repo) });
-  repo.advanceHead(tip, `rebase (finish): refs/heads/${branch ?? 'HEAD'} onto ${upstream}`);
-  io.out(`Successfully rebased and updated refs/heads/${branch ?? 'HEAD'}.\n`);
-  return 0;
+  const state = { original: head, branch, upstream, todo: todo.filter(c => repo.readCommit(c).parents.length < 2) };
+  saveRebase(repo, state);
+  repo.fs.writeFile(repo.p('ORIG_HEAD'), head + '\n');
+  repo.checkoutTree(repo.commitFiles(upstream), { from: unionTree(repo) });
+  repo.setHead({ oid: upstream }, 'rebase (start)');
+  return replayRebase(io, repo, state);
 }
 
 function applyMergeResult(repo: Repo, res: ThreeWay): void {

@@ -544,6 +544,8 @@ export class Kernel implements Snapshotable {
     const saved = vfs.hooks;
     vfs.hooks = {};
     try {
+      let ipForward = '0\n';
+      try { ipForward = vfs.readFileAs('/proc/sys/net/ipv4/ip_forward', ROOT_CRED); } catch { /* first proc mount */ }
       for (const name of vfs.readdirAs('/proc', ROOT_CRED)) this.rmTree(`/proc/${name}`);
       const w = (p: string, text: string) => {
         vfs.writeFileAs(p, text, ROOT_CRED);
@@ -624,6 +626,10 @@ export class Kernel implements Snapshotable {
       w('/proc/cpuinfo', 'processor\t: 0\nvendor_id\t: GenuineIntel\nmodel name\t: Simulated x86 CPU\ncpu MHz\t\t: 2400.000\ncpu cores\t: 1\n');
       w('/proc/mounts', this.mountsText());
       d('/proc/sys');
+      d('/proc/sys/net');
+      d('/proc/sys/net/ipv4');
+      w('/proc/sys/net/ipv4/ip_forward', ipForward);
+      vfs.chmodAs('/proc/sys/net/ipv4/ip_forward', 0o644, ROOT_CRED);
       d('/proc/sys/kernel');
       w('/proc/sys/kernel/hostname', extra.hostname + '\n');
       w('/proc/sys/kernel/dmesg_restrict', '1\n');

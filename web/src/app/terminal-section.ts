@@ -1,3 +1,4 @@
+import { lessonGoalSources } from '../engine/terminal/goal-sources';
 import { registerFeedbackSnapshot } from '../engine/feedback/data';
 import { snapshotForFeedback } from '../engine/terminal/feedback';
 // A lab: terminal on a simulated machine with goals checked by state after
@@ -63,6 +64,9 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   const passed = new Set(o.tasks.filter((x) => store.state.tasks[taskKey(x)]).map((x) => x.id));
   const hintsOpened = new Map<string, number>();
   let disposed = false;
+  const sourceKey = typeof o.setup.ext?.goalSource === 'string' ? o.setup.ext.goalSource : undefined;
+  let unregisterSource: (() => void) | undefined;
+  let unsubscribeSource: (() => void) | undefined;
 
   const goals = h('ol.lab-goals');
   const termBox = h('div.lab-term-box');
@@ -83,7 +87,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     key: o.key, level: o.level,
     ...(machine ? await snapshotForFeedback(machine, startSnap) : { unavailable: 'Machine is starting' }),
     goals: o.tasks.map(task => ({ id: task.id, prompt: t(task.prompt), check: task.check,
-      result: machine ? evaluateCheck(task.check, machine.factsSync(), startFacts) : null })),
+      result: !sourceKey && machine ? evaluateCheck(task.check, machine.factsSync(), startFacts) : null })),
   }));
 
   const stepFor = (task: Task): DocStep => {
@@ -176,12 +180,16 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
 
   const check = async (attempted = false) => {
     if (!machine) return;
-    const facts = await machine.facts();
+    const source = sourceKey && o.lessonId ? lessonGoalSources.get(o.lessonId, sourceKey) : undefined;
+    if (sourceKey && !source) return;
+    const facts = await (source ? source.facts() : machine.facts());
+    if (disposed) return;
+    const initial = source?.initial ?? startFacts;
     let changed = false;
     let failSay: string | null = null;
     for (const task of o.tasks) {
       if (passed.has(task.id)) continue;
-      const r = evaluateCheck(task.check, facts, startFacts);
+      const r = evaluateCheck(task.check, facts, initial);
       if (r.pass) {
         passed.add(task.id);
         changed = true;
@@ -220,6 +228,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     }
     if (disposed) return;
     machine = fresh;
+    if (o.lessonId) unregisterSource = lessonGoalSources.register(o.lessonId, o.key, { facts: () => fresh.facts(), initial: startFacts! });
     clear(termBox);
     term = await mountTerminal(termBox, {
       machine,
@@ -227,6 +236,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       onCommand: () => {
         void machine!.snapshot().then((sn) => store.saveSnapshot(o.key, sn));
         void check(true);
+        if (o.lessonId) lessonGoalSources.changed(o.lessonId, o.key);
       },
       onDoc: (ref) => openDoc(ref, { mode: 'page', via: 'terminal', keepFocus: true }),
     });
@@ -246,15 +256,19 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     await machine.restore(startSnap);
     store.saveSnapshot(o.key, startSnap, 0);
     term?.reset();
+    if (o.lessonId) lessonGoalSources.changed(o.lessonId, o.key);
     toast(t(TL.resetDone));
   });
 
+  if (sourceKey && o.lessonId) unsubscribeSource = lessonGoalSources.subscribe(o.lessonId, sourceKey, () => { void check(); });
   renderGoals();
   void start();
 
   return {
     dispose() {
       unregisterFeedback();
+      unregisterSource?.();
+      unsubscribeSource?.();
       disposed = true;
       term?.dispose();
       machine?.dispose();

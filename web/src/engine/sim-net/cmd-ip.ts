@@ -34,13 +34,14 @@ function linkLine(i: Iface, n: number, mode: boolean): string {
   return `${head}\n${l2}`;
 }
 
-function addrBlock(i: Iface, n: number): string {
+function addrBlock(i: Iface, n: number, leaseSeconds?: number): string {
   const out = [linkLine(i, n, false)];
   for (const a of i.addrs) {
     const c = parseCidr(a);
     if (i.name === 'lo') out.push(`    inet ${a} scope host lo`);
     else out.push(`    inet ${a} brd ${fmtIp(broadcastOf(c))} scope global ${a.startsWith('169.254.') ? '' : ''}${i.name}`);
-    out.push('       valid_lft forever preferred_lft forever');
+    const lifetime = leaseSeconds === undefined ? 'forever' : `${leaseSeconds}sec`;
+    out.push(`       valid_lft ${lifetime} preferred_lft ${lifetime}`);
   }
   if (i.name === 'lo') out.push('    inet6 ::1/128 scope host noprefixroute', '       valid_lft forever preferred_lft forever');
   else if (i.up) out.push(`    inet6 ${linkLocal6(i.mac)}/64 scope link proto kernel_ll`, '       valid_lft forever preferred_lft forever');
@@ -84,7 +85,7 @@ function ipAddr(ctx: CmdContext, h: Host, args: string[], brief: boolean): numbe
       }
       return 0;
     }
-    ctx.out(list.map(({ i, n }) => addrBlock(i, n)).join('\n') + '\n');
+    ctx.out(list.map(({ i, n }) => addrBlock(i, n, h.dhcpLease?.iface === i.name ? Math.max(0, h.dhcpLease.lease - Math.floor((net(ctx).world.clock - (h.dhcpLease.acquiredAt ?? net(ctx).world.clock)) / 1000)) : undefined)).join('\n') + '\n');
     return 0;
   }
   if (sub === 'help') {
@@ -571,6 +572,9 @@ Options:
         }
         return notSimulated(ctx, `sysctl -w ${k}`);
       }
+      if (!['0', '1'].includes(v.trim())) { ctx.err('sysctl: invalid argument\n'); return 1; }
+      ctx.machine.rootFs.mkdir('/proc/sys/net/ipv4', { parents: true });
+      ctx.machine.rootFs.writeFile('/proc/sys/net/ipv4/ip_forward', v.trim() + '\n');
       h.ipForward = v.trim() === '1';
       ctx.out(`${k} = ${h.ipForward ? 1 : 0}\n`);
     }

@@ -1,3 +1,4 @@
+import { stringify as stringifyYaml } from 'yaml';
 // kubectl on the "cluster from code" stand. kube-lite's kubectl attaches a
 // cluster of its own to every machine, so on a stand host it would print three
 // Ready k3s nodes whether or not kubeadm has joined them. When the kubeconfig
@@ -18,6 +19,8 @@ const NODE_KINDS = new Set(['nodes', 'node', 'no']);
 
 interface NodesQuery {
   kubeconfig?: string;
+  format?: 'json' | 'yaml';
+  describe?: boolean;
   wide: boolean;
   names: boolean;
   noHeaders: boolean;
@@ -33,10 +36,11 @@ export function parseNodesQuery(args: string[]): NodesQuery | null {
     if (a === '--kubeconfig') q.kubeconfig = args[++i];
     else if (a.startsWith('--kubeconfig=')) q.kubeconfig = a.slice('--kubeconfig='.length);
     else if (a === '--no-headers' || a === '--no-headers=true') q.noHeaders = true;
-    else if (a === '-o' || a === '--output' || /^(-o=?|--output=)(wide|name)$/.test(a)) {
+    else if (a === '-o' || a === '--output' || /^(-o=?|--output=)(wide|name|json|yaml)$/.test(a)) {
       const v = a === '-o' || a === '--output' ? args[++i] : a.replace(/^(-o=?|--output=)/, '');
       if (v === 'wide') q.wide = true;
       else if (v === 'name') q.names = true;
+      else if (v === 'json' || v === 'yaml') q.format = v;
       else return null;
     }
     else if (a.startsWith('-')) return null;
@@ -44,7 +48,8 @@ export function parseNodesQuery(args: string[]): NodesQuery | null {
   }
   const [verb, kind, name, ...rest] = pos;
   const k = kind?.split('/')[0];
-  if (verb !== 'get' || !k || !NODE_KINDS.has(k) || rest.length) return null;
+  if (!['get', 'describe'].includes(verb) || !k || !NODE_KINDS.has(k) || rest.length) return null;
+  if (verb === 'describe') q.describe = true;
   q.name = kind.includes('/') ? kind.split('/')[1] : name;
   return q;
 }
@@ -75,6 +80,15 @@ export function nodesTable(db: ClusterDb, now: number, ready: (name: string) => 
   if (q.name) {
     if (!db.members[q.name]) return { out: '', err: `Error from server (NotFound): nodes "${q.name}" not found\n`, code: 1 };
     names = [q.name];
+  }
+  if (q.format || q.describe) {
+    const items = names.map(name => {
+      const member = db.members[name];
+      return { apiVersion: 'v1', kind: 'Node', metadata: { name, creationTimestamp: new Date(member.joinedAt).toISOString(), labels: member.role === 'control-plane' ? { 'node-role.kubernetes.io/control-plane': '' } : {} }, spec: {}, status: { addresses: [{ type: 'InternalIP', address: member.ip }, { type: 'Hostname', address: name }], nodeInfo: { kubeletVersion: member.version, containerRuntimeVersion: 'containerd://2.1.4' }, conditions: [{ type: 'Ready', status: ready(name) ? 'True' : 'False' }] } };
+    });
+    const value = q.name ? items[0] : { apiVersion: 'v1', kind: 'List', items };
+    const out = q.describe ? items.map(n => `Name:               ${n.metadata.name}\nRoles:              ${db.members[n.metadata.name].role}\nInternalIP:         ${n.status.addresses[0].address}\nKubelet Version:    ${n.status.nodeInfo.kubeletVersion}\nConditions:\n  Ready  ${n.status.conditions[0].status}\n`).join('\n') : q.format === 'yaml' ? stringifyYaml(value) : JSON.stringify(value, null, 2) + '\n';
+    return { out, err: '', code: 0 };
   }
   if (!names.length) return { out: '', err: 'No resources found\n', code: 0 };
   if (q.names) return { out: names.map((n) => `node/${n}\n`).join(''), err: '', code: 0 };

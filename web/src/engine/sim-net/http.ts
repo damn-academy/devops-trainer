@@ -292,7 +292,12 @@ export function serveHttp(w: World, io: FileIo | undefined, hostId: string, svc:
     return respond(w, 500, 'internal error: database unavailable\n', server, [], t);
   }
   const route = app.routes[req.path] ?? app.routes[Object.keys(app.routes).filter((k) => k.endsWith('*') && req.path.startsWith(k.slice(0, -1))).sort((a, b) => b.length - a.length)[0] ?? ''] ?? (req.path === '/' ? undefined : undefined);
-  if (!route) return respond(w, 404, 'not found\n', server);
+  if (!route) {
+    const body = server.startsWith('SimpleHTTP/')
+      ? '<!DOCTYPE HTML>\n<html lang="en">\n<head><meta charset="utf-8"><title>Error response</title></head>\n<body>\n<h1>Error response</h1>\n<p>Error code: 404</p>\n<p>Message: File not found.</p>\n<p>Error code explanation: 404 - Nothing matches the given URI.</p>\n</body>\n</html>\n'
+      : 'not found\n';
+    return respond(w, 404, body, server);
+  }
   const delay = route.delay ?? 0.004;
   w.clock += delay * 1000;
   if (app.log) appendHostFile(w, io, hostId, '/var/log/app.log', app.log.replace('{path}', req.path).replace('{delay}', delay.toFixed(1)).replace('{date}', errLogDate(w.clock)) + '\n');

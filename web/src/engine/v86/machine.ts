@@ -77,6 +77,11 @@ export interface MachineAssets {
   bootSnapshots?: Record<string, BootSnapshot>;
 }
 
+/** Bash expands the hostname at each prompt, including after a clone changes it. */
+export function interactivePrompt(): string {
+  return `"\\[$(printf '\\033')]777;dt;\\$?;\\$PWD$(printf '\\007')\\]\\u@\\$(hostname):\\w\\\\$ "`;
+}
+
 const BUILDROOT_CMDLINE = 'tsc=reliable mitigations=off random.trust_cpu=on console=ttyS0';
 
 export async function defaultAssets(profileId: ProfileId = 'buildroot'): Promise<MachineAssets> {
@@ -440,7 +445,7 @@ export class V86Machine implements Machine {
    * produced by printf inside the guest, so nothing raw goes through the line editor.
    */
   private async bootstrap(): Promise<void> {
-    const ps1 = `"\\[$(printf '\\033')]777;dt;\\$?;\\$PWD$(printf '\\007')\\]\\u@\\h:\\w\\\\$ "`;
+    const ps1 = interactivePrompt();
     const lines = [
       'stty -echo',
       `echo $$ > /tmp/.dt-shell; export PS1=${ps1}; cd /root 2>/dev/null || cd /`,
@@ -487,7 +492,18 @@ export class V86Machine implements Machine {
     // The clock of a restored machine shows the moment of the snapshot (09 §1.4.4).
     await this.svcRun(`date -s @${Math.floor(Date.now() / 1000)} >/dev/null`);
     // A resumed lab keeps whatever the learner changed (even the hostname); a fresh clone gets its identity.
-    if (!this.resumed) await this.applyIdentity(false);
+    if (!this.resumed) {
+      await this.applyIdentity(false);
+      // Published snapshots may contain bash's cached \h from the image host.
+      // Reinstall the prompt in the interactive shell, not the service shell.
+      this.forwarding = false;
+      try {
+        this.write(` export PS1=${interactivePrompt()}; printf '\\036PROMPT_READY\\n'\n`, false);
+        await this.waitFor(/\x1ePROMPT_READY/, 60_000);
+      } finally {
+        this.forwarding = true;
+      }
+    }
     this.tracker.restore({ records: [], last: null });
     this.write('\r');
   }

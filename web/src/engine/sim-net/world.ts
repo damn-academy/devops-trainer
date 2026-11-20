@@ -56,6 +56,8 @@ export interface NfRule {
 }
 
 export interface NfChain {
+  pkts?: number;
+  bytes?: number;
   policy?: 'ACCEPT' | 'DROP';
   rules: NfRule[];
 }
@@ -213,13 +215,15 @@ export interface Host {
   /** Short role for diagrams and cards. */
   role?: string;
   /** DHCP client state on the local host. */
-  dhcpLease?: { iface: string; addr: string; server: string; lease: number };
+  dhcpLease?: { iface: string; addr: string; server: string; lease: number; acquiredAt?: number; dns?: string[]; router?: string; mask?: number };
 }
 
 export interface Segment {
   id: string;
   /** One-way latency of the segment in milliseconds. */
   latency: number;
+  /** Link rate used for packet serialization; defaults to 100 Mbit/s. */
+  bandwidthMbps?: number;
   kind: 'lan' | 'wifi' | 'wan' | 'core' | 'loop';
   /** Drop every packet that matches (a fault of the scenario). */
   dropProto?: Proto;
@@ -404,7 +408,9 @@ export function walkChain(table: NfTable, chain: string, p: PktView, depth = 0):
 export function filterVerdict(h: Host, chain: 'INPUT' | 'FORWARD' | 'OUTPUT', p: PktView): Verdict {
   const v = walkChain(h.nf.filter, chain, p);
   if (v && v !== 'RETURN') return v;
-  return { verdict: h.nf.filter[chain]?.policy === 'DROP' ? 'DROP' : 'ACCEPT', chain };
+  const policy = h.nf.filter[chain];
+  if (policy) { policy.pkts = (policy.pkts ?? 0) + 1; policy.bytes = (policy.bytes ?? 0) + p.len; }
+  return { verdict: policy?.policy === 'DROP' ? 'DROP' : 'ACCEPT', chain };
 }
 
 function natRule(table: NfTable, chain: string, p: PktView, depth = 0): NfRule | null {
@@ -677,7 +683,7 @@ export function transmit(w: World, from: string, pkt0: Packet): Delivery {
     const seg = egress.seg ? w.segs[egress.seg] : undefined;
     const peer = arpResolve(w, h, route.dev, nh, srcFor(h, route) ?? p.src);
     if (!peer) return stop(local ? 'arp-no-reply' : `arp-no-reply:${h.id}`, h, srcFor(h, route));
-    const lat = seg?.latency ?? 0.1;
+    const lat = (seg?.latency ?? 0.1) + (p.len + 14) * 8 / ((seg?.bandwidthMbps ?? 100) * 1000);
     record(w, { host: h.id, iface: egress.name, dir: 'out', srcMac: egress.mac, dstMac: peer.iface.mac, l3: 'ip', proto: p.proto, src: p.src, dst: p.dst, sport: p.sport, dport: p.dport, ttl: p.ttl, info: p.info, len: p.len });
     w.clock += lat;
     ms += lat;

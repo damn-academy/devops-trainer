@@ -1,3 +1,5 @@
+import { netOf } from '../../sim-net/state';
+import { nginxCommand } from '../../sim-net/cmd-tools';
 // systemctl, journalctl, systemd-run, systemd-cgls, systemd-analyze on top of
 // the systemd model (systemd.ts). Messages follow systemd 257 (Debian 13).
 
@@ -61,6 +63,9 @@ const systemctl: ShellCommand = {
     const [cmd = 'list-units', ...units] = rest;
     const root = ctx.user.uid === 0;
     const names = units.map(N);
+    if (cmd === 'reload' && names.length === 1 && names[0] === 'nginx.service' && netOf(m).local.services.some(s => s.kind === 'nginx')) {
+      return nginxCommand.run({ ...ctx, argv: ['nginx', '-s', 'reload'] });
+    }
     await sd.settle();
     switch (cmd) {
       case 'start':
@@ -531,4 +536,15 @@ const systemdAnalyze: ShellCommand = {
   },
 };
 
-export const SYSTEMD_COMMANDS: ShellCommand[] = [systemctl, journalctl, systemdRun, systemdCgls, systemdAnalyze];
+const serviceCommand: ShellCommand = {
+  name: 'service',
+  summary: bi('управлять службой', 'control a service'),
+  help: 'service NAME start|stop|restart|reload|status',
+  run(ctx) {
+    const [, name, action] = ctx.argv;
+    if (!name || !action) { ctx.err('usage: service NAME ACTION\n'); return 2; }
+    return systemctl.run({ ...ctx, argv: ['systemctl', action, name] });
+  },
+};
+
+export const SYSTEMD_COMMANDS: ShellCommand[] = [serviceCommand, systemctl, journalctl, systemdRun, systemdCgls, systemdAnalyze];
