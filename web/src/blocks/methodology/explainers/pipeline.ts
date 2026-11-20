@@ -43,6 +43,9 @@ export function pipeNumbers(p: P, rollback: boolean): PipeNumbers {
   return { leadHours, risk: Math.round(risk * 100), diagnose: diagnoseMinutes(p.batch, false, true), restore: restoreMinutes(rollback), deploysPerWeek: Math.round(((5 * CHANGES_PER_DAY) / p.batch) * 10) / 10 };
 }
 
+/** Whether the parameters make continuous integration: an automatic build after every merge and at least some machine checks. */
+const hasCI = (p: P) => p.build === 'auto' && p.automation > 0;
+
 const ALL = ['merge', 'build', 'checks', 'staging', 'gate', 'batch', 'prod', 'prev', 'g-ci', 'e-build', 'e-checks', 'e-staging', 'e-gate', 'e-prod', 'e-deploy', 'e-rollback'];
 const H = (h: number) => nWord(h, ['час', 'часа', 'часов'], ['hour', 'hours']);
 const MIN = (m: number) => nWord(m, ['минуту', 'минуты', 'минут'], ['minute', 'minutes']);
@@ -56,8 +59,8 @@ export const pipelineModel = defineModel<P>({
   block: 'methodology',
   title: b('Как изменение проходит путь от слияния до рабочего сайта', 'How a change travels from the merge to the working site'),
   summary: b(
-    'Схема показывает путь одного изменения после того, как разработчик слил его в общую ветку. Изменение проходит сборку, автоматические проверки, стенд, выпуск и партию, а затем попадает на рабочий сайт с выкладкой. Пунктирная рамка показывает, где заканчивается непрерывная интеграция. Под схемой считается, сколько часов изменение идёт до рабочего сайта, насколько рискованна одна выкладка, сколько выкладок бывает в неделю и сколько минут займёт восстановление, если выкладка сломает сайт.',
-    'The diagram shows the path of one change after a developer merged it into the shared branch. The change goes through the build, the automated checks, staging, the release and the batch, and then reaches the working site with a deployment. The dashed frame shows where continuous integration ends. Under the diagram you see how many hours the change takes to reach the working site, how risky one deployment is, how many deployments happen a week and how many minutes recovery takes if a deployment breaks the site.',
+    'Схема показывает путь одного изменения после того, как разработчик слил его в общую ветку. Изменение проходит сборку, автоматические проверки, стенд, выпуск и партию, а затем попадает на рабочий сайт с выкладкой. Пунктирная рамка показывает, где заканчивается непрерывная интеграция. Под схемой считается, сколько часов изменение идёт до рабочего сайта, насколько рискованна одна выкладка, сколько выкладок бывает в неделю, сколько минут займёт восстановление, если выкладка сломает сайт, и сколько минут потом уйдёт на поиск виноватого изменения.',
+    'The diagram shows the path of one change after a developer merged it into the shared branch. The change goes through the build, the automated checks, staging, the release and the batch, and then reaches the working site with a deployment. The dashed frame shows where continuous integration ends. Under the diagram you see how many hours the change takes to reach the working site, how risky one deployment is, how many deployments happen a week, how many minutes recovery takes if a deployment breaks the site, and how many minutes it then takes to find the faulty change.',
   ),
   intro: b(
     'Схема собирается по шагам, и сейчас на ней видны только слитое изменение и рабочий сайт. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый шаг конвейера появляется, когда до него доходит изменение, и говорит в облачке, что он делает. Карточка на линии показывает, сколько времени изменение ждёт на этом переходе.\n\nПосле первого прохода переключите в «Параметрах» сборку на автоматическую, а выпуск на «конвейер сам», и посмотрите, как это меняет путь и название практики. Потом уменьшите число изменений в одной выкладке и следите за риском.',
@@ -187,11 +190,13 @@ export const pipelineModel = defineModel<P>({
     { id: 'risk', label: b('риск одной выкладки', 'risk of one deployment'), unit: '%' },
     { id: 'freq', label: b('выкладок в неделю', 'deployments a week') },
     { id: 'restore', label: b('восстановление после сбоя, минут', 'recovery after a failure, minutes') },
+    { id: 'diagnose', label: b('поиск виноватого изменения, минут', 'finding the faulty change, minutes') },
   ],
   run(p, broken): Step[] {
     const noRb = broken.has('no-rollback');
     const n = pipeNumbers(p, !noRb);
-    const metrics = { lead: n.leadHours, risk: n.risk, freq: n.deploysPerWeek, restore: n.diagnose + n.restore };
+    // Recovery is the time until the customers can pay again. With a rollback the cause is looked for after that, so it does not count.
+    const metrics = { lead: n.leadHours, risk: n.risk, freq: n.deploysPerWeek, restore: noRb ? n.diagnose + n.restore : n.restore, diagnose: n.diagnose };
     const humanHours = Math.round((1 - p.automation / 100) * 6 * 10) / 10;
     const fillHours = Math.round(((p.batch - 1) / 2) * 4 * 10) / 10;
     const steps: Step[] = [];
@@ -247,10 +252,14 @@ export const pipelineModel = defineModel<P>({
     });
     steps.push({
       id: 'ci',
-      label: b('конец CI', 'end of CI'),
-      caption: b('Здесь заканчивается непрерывная интеграция. Изменение слито в общую ветку, собрано и проверено машиной, но до рабочего сайта ещё не дошло.', 'Continuous integration ends here. The change is merged into the shared branch, built and checked by a machine, but it has not reached the working site yet.'),
+      label: b('граница CI', 'end of CI'),
+      caption: hasCI(p)
+        ? b('Здесь заканчивается непрерывная интеграция. Изменение слито в общую ветку, собрано и проверено машиной, но до рабочего сайта ещё не дошло.', 'Continuous integration ends here. The change is merged into the shared branch, built and checked by a machine, but it has not reached the working site yet.')
+        : p.build === 'auto'
+          ? b('Рамка отмечает, где заканчивалась бы непрерывная интеграция, но её здесь нет. Сборка запускается сама, а машина не проверяет ничего, и изменение проверил только человек. Непрерывной интеграцией это станет, когда каждое слияние будут проверять и автотесты.', 'The frame marks where continuous integration would end, but there is none here. The build starts by itself, while the machine checks nothing, and only a person has checked the change. It becomes continuous integration once automated tests check every merge too.')
+          : b('Рамка отмечает, где заканчивалась бы непрерывная интеграция, но её здесь нет. Сборку запускают вручную, когда найдётся время, а не сразу после каждого слияния. Непрерывной интеграцией это станет, когда каждое слияние будут сами собирать и проверять машины.', 'The frame marks where continuous integration would end, but there is none here. The build is started by hand when someone finds the time, not right after every merge. It becomes continuous integration once machines build and check every merge by themselves.'),
       focus: ['g-ci', 'checks'],
-      say: { checks: b('Проверки пройдены, и на этом непрерывная интеграция заканчивается.', 'The checks passed: continuous integration ends here.') },
+      say: { checks: hasCI(p) ? b('Проверки пройдены, и на этом непрерывная интеграция заканчивается.', 'The checks passed: continuous integration ends here.') : b('Проверки пройдены, но непрерывной интеграции здесь нет.', 'The checks passed, but there is no continuous integration here.') },
       reveal: ['g-ci'],
       states: { checks: 'ok' },
     });
@@ -268,7 +277,7 @@ export const pipelineModel = defineModel<P>({
         ? {
             id: 'gate-auto',
             label: b('сам', 'auto'),
-            caption: b('Кнопки здесь нет, и всё, что прошло проверки, конвейер выпускает сам, без решения человека. Такая практика называется непрерывным развёртыванием.', 'There is no button: the pipeline releases everything that passed the checks by itself, without a human decision. This practice is called continuous deployment.'),
+            caption: gateAuto(p),
             focus: ['e-gate', 'gate'],
             say: { gate: b('Конвейер сам выпускает изменение, которое прошло проверки.', 'The pipeline itself releases the change that passed the checks.') },
             tokens: [{ edge: 'e-gate', label: b('без ожидания', 'no wait') }],
@@ -278,7 +287,9 @@ export const pipelineModel = defineModel<P>({
         : {
             id: 'gate-button',
             label: b('кнопка', 'button'),
-            caption: b('Изменение готово к выпуску в любой момент, а выпускает его человек одной кнопкой, обычно в течение нескольких часов. Такая практика называется непрерывной доставкой. Изменение всегда готово к выпуску, а когда его выпускать, решает человек.', 'The change is ready to be released at any moment, and a person releases it with one button, usually within a few hours. This is continuous delivery: it is always ready, and a person decides when to release.'),
+            caption: hasCI(p)
+              ? b('Изменение готово к выпуску в любой момент, а выпускает его человек одной кнопкой, обычно в течение нескольких часов. Такая практика называется непрерывной доставкой: изменение всегда готово к выпуску, а когда его выпускать, решает человек.', 'The change is ready to be released at any moment, and a person releases it with one button, usually within a few hours. This is continuous delivery: it is always ready, and a person decides when to release.')
+              : b('Выпускает изменение человек одной кнопкой, обычно в течение нескольких часов. Непрерывной доставкой такую практику назвали бы, если бы каждое изменение сначала само собиралось и проверялось машиной, а здесь этого нет.', 'A person releases the change with one button, usually within a few hours. This would be called continuous delivery if every change were first built and checked by a machine by itself, and here it is not.'),
             focus: ['e-gate', 'gate'],
             say: { gate: b('Изменение ждёт, пока человек нажмёт кнопку «Выпустить».', 'The change waits for a person to press “Release”.') },
             tokens: [{ edge: 'e-gate', label: b('4 ч', '4 h') }],
@@ -354,8 +365,10 @@ export const pipelineModel = defineModel<P>({
           : fmtn(b('Сборку снова запускают вручную, и путь до рабочего сайта теперь занимает {l1} вместо {l0}.', 'The build is started by hand again: the path to the working site takes {l1} instead of {l0}.'), v);
       case 'last':
         return c.last === 'auto'
-          ? fmtn(b('Конвейер теперь выпускает изменения сам, и это уже непрерывное развёртывание. Путь до рабочего сайта занимает {l1} вместо {l0}, потому что ожидание кнопки исчезло.', 'The pipeline now releases changes itself, and this is continuous deployment. The path to the working site takes {l1} instead of {l0}, because the wait for the button is gone.'), v)
-          : b('Выпуск снова идёт по кнопке, и такая практика называется непрерывной доставкой. Выпустить изменение можно в любой момент, но решение принимает человек.', 'A button again, and this is continuous delivery: a change can be released at any moment, but a person decides.');
+          ? join(gateAuto(c as P), fmtn(b('Путь до рабочего сайта занимает {l1} вместо {l0}, потому что ожидание кнопки исчезло.', 'The path to the working site takes {l1} instead of {l0}, because the wait for the button is gone.'), v))
+          : hasCI(c as P)
+            ? b('Выпуск снова идёт по кнопке, и такая практика называется непрерывной доставкой. Выпустить изменение можно в любой момент, но решение принимает человек.', 'A button again, and this is continuous delivery: a change can be released at any moment, but a person decides.')
+            : b('Выпуск снова идёт по кнопке. Непрерывной доставкой это станет, когда каждое изменение будет само собираться и проверяться машиной.', 'A button again. It becomes continuous delivery once every change is built and checked by a machine by itself.');
       case 'automation':
         return fmtn(b('Машина теперь выполняет {y} % проверок вместо {x} %. Риск одной выкладки теперь {r1} % вместо {r0} %, а путь до рабочего сайта занимает {l1} вместо {l0}.', 'A machine now runs {y}% of the checks instead of {x}%. The risk of one deployment is {r1}% instead of {r0}%, the path to the working site {l1} instead of {l0}.'), { x: a.automation as number, y: c.automation as number, ...v });
       default:
@@ -363,3 +376,17 @@ export const pipelineModel = defineModel<P>({
     }
   },
 });
+
+/** What a release without a button is, given the rest of the pipeline. */
+function gateAuto(p: P): Bi {
+  if (!hasCI(p))
+    return b('Кнопки здесь нет, и конвейер выпускает изменения сам. Но непрерывной интеграции здесь нет, потому что после слияния изменение либо не собирается сразу само, либо его не проверяют автотесты. Поэтому непрерывным развёртыванием такую практику назвать нельзя, ведь непрерывное развёртывание опирается на непрерывную интеграцию.', 'There is no button, and the pipeline releases changes by itself. But there is no continuous integration here, because after the merge the change is either not built by itself at once or not checked by automated tests. So this practice cannot be called continuous deployment, since continuous deployment rests on continuous integration.');
+  if (p.batch > 1)
+    return fmtn(b('Кнопки здесь нет, и конвейер выпускает изменения сам, но копит их в партии по {b}, поэтому изменение уходит на рабочий сайт не сразу после проверок. Непрерывным развёртыванием такую практику называют, когда каждое проверенное изменение уходит отдельно и сразу.', 'There is no button, and the pipeline releases changes by itself, but it collects them into batches of {b}, so a change does not go to the working site right after the checks. Continuous deployment is when every checked change goes out on its own and at once.'), { b: nWord(p.batch, ['изменение', 'изменения', 'изменений'], ['change', 'changes']) });
+  return b('Кнопки здесь нет, и всё, что прошло проверки, конвейер выпускает сам, без решения человека. Такая практика называется непрерывным развёртыванием.', 'There is no button: the pipeline releases everything that passed the checks by itself, without a human decision. This practice is called continuous deployment.');
+}
+
+/** Sentences joined with spaces, empty ones dropped. */
+function join(...parts: Bi[]): Bi {
+  return { ru: parts.map((x) => x.ru).filter(Boolean).join(' '), en: parts.map((x) => x.en).filter(Boolean).join(' ') };
+}

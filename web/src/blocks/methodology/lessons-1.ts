@@ -27,8 +27,8 @@ export const business: Lesson = {
       levels: ['beginner'],
       title: bi('Как устроен этот курс', 'How this course works'),
       body: bi(
-        'В этом курсе мы часто будем просить вас вспомнить и предсказать, а не перечитать. Так учиться медленнее, зато через неделю вы запомните заметно больше. Ошибаться в предсказаниях нормально, это часть работы, и на оценку ошибки не влияют, потому что очков и рейтингов в курсе нет.',
-        'We will often ask you to recall and to predict rather than to reread. It feels slower, but a week later you remember noticeably more. Wrong predictions are part of the work: they do not count against you, and there are no points or rankings here.',
+        'В этом курсе мы часто будем просить вас вспомнить и предсказать, а не перечитать. Так учиться медленнее, зато через неделю вы запомните заметно больше. Ошибаться в предсказаниях нормально, это часть работы, и ошибки ни на что не влияют, потому что оценок за ответы и рейтингов в курсе нет.',
+        'We will often ask you to recall and to predict rather than to reread. It feels slower, but a week later you remember noticeably more. Wrong predictions are part of the work: they do not count against you, and there are no marks for answers or rankings here.',
       ),
     },
     {
@@ -205,8 +205,19 @@ export const board: Lesson = {
       step: 'explain',
       title: bi('Цена переключения между задачами', 'The price of switching'),
       body: bi(
-        'Если у человека начато несколько задач, часть его времени уходит на [[method.switching|переключение между задачами]]: нужно вспомнить, где остановился, и заново собрать в голове всю картину. Джеральд Вайнберг в книге «Quality Software Management» оценил, сколько времени при этом остаётся на полезную работу:\n\n- при одной задаче 100 %;\n- при двух 80 %;\n- при трёх 60 %;\n- при четырёх 40 %;\n- при пяти и больше 25 %.\n\nОставшееся время к тому же делится между задачами. Объём работы в тренажёре меряют очками. Допустим, у разработчика шесть задач, а за день он может сделать работу на 3 очка. Тогда на каждую задачу в день приходится 3 × 0,25 / 6 = 0,125 очка, и задача размером в 3 очка будет готова через 24 дня. Если бы он делал задачи по одной, каждая была бы готова за день. Цифры Вайнберга — оценка, полученная из практики, а не закон природы, но в тренажёре ниже они служат правилом модели.',
-        'A person with several started tasks loses part of the time on [[method.switching|context switching]]: remembering where they stopped, rebuilding the whole context in their mind. In “Quality Software Management” Gerald Weinberg estimated how much time is left for useful work:\n\n- one task: 100%;\n- two: 80%;\n- three: 60%;\n- four: 40%;\n- five or more: 25%.\n\nWhat is left is also split between the tasks. The trainer measures work in points. If a developer has six tasks and a capacity of 3 points of work a day, each gets 3 × 0.25 / 6 = 0.125 points. A 3-point task will be ready in 24 days, while one at a time each would be ready in a day. Weinberg’s figures are an estimate from practice, not a law of nature; in the trainer below they are a rule of the model.',
+        'Если у человека начато несколько задач, часть его времени уходит на [[method.switching|переключение между задачами]]: нужно вспомнить, где остановился, и заново собрать в голове всю картину. Джеральд Вайнберг в книге «Quality Software Management» оценил, сколько времени при этом остаётся на полезную работу:\n\n- при одной задаче 100 %;\n- при двух 80 %;\n- при трёх 60 %;\n- при четырёх 40 %;\n- при пяти и больше 25 %.\n\nОставшееся время к тому же делится между задачами. Объём работы в тренажёре меряют очками, и это мера работы, а не оценка за ваши решения. Допустим, у разработчика шесть задач, а за день он может сделать работу на 3 очка. Тогда на каждую задачу в день приходится 3 × 0,25 / 6 = 0,125 очка, и задача размером в 3 очка будет готова через 24 дня. Если бы он делал задачи по одной, каждая была бы готова за день. Цифры Вайнберга — оценка, полученная из практики, а не закон природы, но в тренажёре ниже они служат правилом модели.',
+        'A person with several started tasks loses part of the time on [[method.switching|context switching]]: remembering where they stopped, rebuilding the whole context in their mind. In “Quality Software Management” Gerald Weinberg estimated how much time is left for useful work:\n\n- one task: 100%;\n- two: 80%;\n- three: 60%;\n- four: 40%;\n- five or more: 25%.\n\nWhat is left is also split between the tasks. The trainer measures work in points, a measure of work rather than a score for your decisions. If a developer has six tasks and a capacity of 3 points of work a day, each gets 3 × 0.25 / 6 = 0.125 points. A 3-point task will be ready in 24 days, while one at a time each would be ready in a day. Weinberg’s figures are an estimate from practice, not a law of nature; in the trainer below they are a rule of the model.',
+      ),
+    },
+    {
+      id: 'practice-howto',
+      kind: 'text',
+      role: 'howto',
+      step: 'practice',
+      title: bi('Как работать с тренажёром', 'How to use the trainer'),
+      body: bi(
+        'В тренажёре у вас один разработчик, на доске он подписан DEV-1. Сейчас перед ним шесть задач, а на второй день владелец продукта пришлёт служебную записку и добавит ещё шесть. Мощность разработчика каждый день одна и та же, 3 очка, и случайностей в этом прогоне нет. Карточку в работу вытягивают перетаскиванием в следующую колонку или нажимают на неё и потом на стрелку, а кнопка «Закончить день» переводит доску на следующий день. Цель выполнена, если к концу восьмого дня у покупателей не меньше шести готовых задач. Деньги, которые магазин недополучает, пока задача ждёт, в этом прогоне не считают, поэтому счётчик потерь от задержки остаётся на нуле, а деньги появятся в тренажёрах следующих уроков.',
+        'The trainer has one developer, marked DEV-1 on the board. There are six tasks in front of them now, and on day 2 the product owner sends a memo and adds six more. The developer’s capacity is the same every day, 3 points, and there is no randomness in this run. A card is pulled into work by dragging it into the next column or by pressing it and then its arrow, and the “End the day” button moves the board to the next day. The goal is met if at least six finished tasks are with the customers by the end of day 8. The money the shop misses while a task waits is not counted in this run, so the cost-of-delay counter stays at zero; money comes in the trainers of the next lessons.',
       ),
     },
     {
@@ -261,6 +272,18 @@ export const flow: Lesson = {
       ),
     },
     {
+      id: 'kanban-guide-help',
+      kind: 'callout',
+      tone: 'note',
+      step: 'explain',
+      levels: ['beginner'],
+      title: bi('Как читать английское руководство', 'How to read the English guide'),
+      body: bi(
+        'Kanban Guide написан по-английски, поэтому вот перевод названий его разделов. Definition of Kanban означает «что такое Kanban», Definition of Workflow означает «определение потока», а Flow Measures означает «метрики потока». Фраза «four mandatory flow measures», которую вы встретите в одном из разделов, переводится как «четыре обязательные метрики потока».',
+        'The Kanban Guide is written in English, so here is what its section titles mean. Definition of Kanban is what Kanban is, Definition of Workflow is the definition of the flow, and Flow Measures are the measures of the flow. The phrase “four mandatory flow measures”, which you will meet in one of the sections, means the four measures every Kanban team must track.',
+      ),
+    },
+    {
       id: 'anatomy',
       kind: 'docs',
       step: 'explain',
@@ -276,11 +299,10 @@ export const flow: Lesson = {
       id: 'find',
       kind: 'docs',
       step: 'practice',
-      levels: ['intermediate', 'experienced'],
       mode: 'find',
       prompt: bi(
-        'В терминале запущена маленькая доска, с ней работает команда `flow`. Найдите в странице руководства этой команды (`man flow`), как поставить лимит WIP, и поставьте колонке «Анализ» (analysis) лимит 2.',
-        'A small board runs in the terminal: the `flow` command. Find in its manual page (`man flow`) how to set a WIP limit, and give the Analysis column a limit of 2.',
+        'В терминале запущена маленькая доска, с ней работает команда `flow`. Найдите в странице руководства этой команды (`man flow`), как поставить лимит WIP, и поставьте колонке «Анализ» (analysis) лимит 2. Доска учебная, и сломать её нельзя: если ошибётесь, введите команду ещё раз с другим числом.',
+        'A small board runs in the terminal: the `flow` command. Find in its manual page (`man flow`) how to set a WIP limit, and give the Analysis column a limit of 2. This is a training board and cannot be broken: if you make a mistake, enter the command again with another number.',
       ),
       ref: { page: 'man/flow.1', anchor: 'OPTIONS', line: 'wip COLUMN N' },
       terminal: {
@@ -292,7 +314,7 @@ export const flow: Lesson = {
           docStep: 3,
           chips: 'flow wip analysis 2',
           concepts: ['method.wip'],
-          hints: { H1: bi('Команда, которая ставит лимит, начинается со слова `flow` и названия настройки.', 'The command for a limit starts with `flow` and the name of the setting.'), H2: bi('Нужное описание есть в разделе OPTIONS страницы `man flow`.', 'The OPTIONS section of `man flow`.') },
+          hints: { H1: bi('Команда, которая ставит лимит, начинается со слова `flow` и названия настройки.', 'The command for a limit starts with `flow` and the name of the setting.'), H2: bi('Нужное описание есть в разделе OPTIONS страницы `man flow`, в строке, которая начинается со слова wip.', 'The OPTIONS section of `man flow`, the line that starts with wip.'), H3: bi('Наберите `flow wip analysis 2` и нажмите Enter.', 'Type `flow wip analysis 2` and press Enter.') },
         },
       },
     },
@@ -316,8 +338,8 @@ export const little: Lesson = {
       kind: 'text',
       step: 'hook',
       body: bi(
-        'В колонках «в работе» у команды в среднем 12 карточек, а заканчивает она в среднем 3 карточки в день. Сколько дней в среднем проходит от начала работы над карточкой до её готовности? Прикиньте ответ, прежде чем читать дальше.',
-        'On average the team has 12 cards in its “doing” columns. It finishes 3 cards a day on average. How many days on average pass from the start of work on a card until it is done? Estimate the answer before you read on.',
+        'В колонках «в работе» у команды в среднем 12 карточек, а заканчивает она в среднем 3 карточки в день. Сколько дней в среднем проходит от начала работы над карточкой до её готовности? Такую задачу дают и на собеседованиях, потому что по ответу видно, понимает ли человек, откуда берутся сроки. Прикиньте ответ, прежде чем читать дальше.',
+        'On average the team has 12 cards in its “doing” columns. It finishes 3 cards a day on average. How many days on average pass from the start of work on a card until it is done? This is also asked at interviews, because the answer shows whether a person understands where deadlines come from. Estimate the answer before you read on.',
       ),
     },
     {
@@ -326,8 +348,19 @@ export const little: Lesson = {
       step: 'explain',
       title: bi('Закон Литтла', 'Little’s law'),
       body: bi(
-        'Ответ равен четырём дням. Его даёт [[method.little|закон Литтла]]: Джон Литтл доказал его в 1961 году для очередей, а для потока работы закон записывают так:\n\n```text\nсреднее WIP = пропускная способность × среднее время цикла\nсреднее время цикла = среднее WIP / пропускная способность\n```\n\nДвенадцать делим на три и получаем четыре. Отсюда главный вывод: если пропускная способность прежняя, а начатой работы вдвое больше, то и каждая карточка идёт вдвое дольше. Начинать больше не значит заканчивать больше.\n\nУ закона есть условия, и Дэниел Ваканти подчёркивает три из них для потока работы: всё начатое когда-нибудь заканчивается, незавершённой работы в начале и в конце периода примерно поровну, а средний возраст карточек не растёт. Если WIP всё время растёт, равенство не выполняется: система нестабильна, и тогда сначала нужно остановить этот рост, а считать уже потом.',
-        'The answer is 4 days, and it comes from [[method.little|Little’s law]], proved by John Little in 1961 for queues and stated for a flow of work like this:\n\n```text\naverage WIP = throughput × average cycle time\naverage cycle time = average WIP / throughput\n```\n\n12 / 3 = 4. Hence the main conclusion: with the same throughput, twice as much started work means twice as long for every card. Starting more does not mean finishing more.\n\nThe law has conditions, and Daniel Vacanti stresses them for a flow of work: everything started eventually finishes; there is about as much work in progress at the start of the period as at its end; the average age of cards does not grow. If WIP keeps growing, the equality does not hold — the system is unstable, and the first thing to do is to stop the growth, not to calculate.',
+        'Ответ равен четырём дням. Его даёт [[method.little|закон Литтла]]: Джон Литтл доказал его в 1961 году для очередей, а для потока работы закон записывают так:\n\n```text\nсредняя незавершённая работа = пропускная способность × среднее время цикла\nсреднее время цикла = средняя незавершённая работа / пропускная способность\n```\n\nДвенадцать делим на три и получаем четыре. Отсюда главный вывод: если пропускная способность прежняя, а начатой работы вдвое больше, то и каждая карточка идёт вдвое дольше. Начинать больше не значит заканчивать больше.\n\nЗакон работает, пока система стабильна, то есть пока незавершённой работы не становится день ото дня больше. Если она всё время растёт, равенство не выполняется, и тогда сначала останавливают этот рост, а считают уже потом.',
+        'The answer is 4 days, and it comes from [[method.little|Little’s law]], proved by John Little in 1961 for queues and stated for a flow of work like this:\n\n```text\naverage WIP = throughput × average cycle time\naverage cycle time = average WIP / throughput\n```\n\n12 / 3 = 4. Hence the main conclusion: with the same throughput, twice as much started work means twice as long for every card. Starting more does not mean finishing more.\n\nThe law holds while the system is stable, that is, while the work in progress does not grow from day to day. If it keeps growing, the equality does not hold, and then the growth is stopped first and the calculation comes later.',
+      ),
+    },
+    {
+      id: 'little-conditions',
+      kind: 'text',
+      step: 'explain',
+      levels: ['intermediate', 'experienced'],
+      title: bi('Условия закона Литтла', 'The conditions of Little’s law'),
+      body: bi(
+        'Дэниел Ваканти подчёркивает для потока работы три условия закона. Всё начатое когда-нибудь заканчивается, незавершённой работы в начале и в конце периода примерно поровну, а средний возраст карточек не растёт. Если хотя бы одно условие нарушено, время цикла, посчитанное по формуле, расходится с временем цикла законченных карточек, и верить тогда нужно законченным карточкам.',
+        'Daniel Vacanti stresses three conditions of the law for a flow of work: everything started eventually finishes; there is about as much work in progress at the start of the period as at its end; the average age of cards does not grow. If any of them is broken, the cycle time from the formula differs from the cycle time of finished cards, and then the finished cards are what to trust.',
       ),
     },
     {
@@ -336,18 +369,41 @@ export const little: Lesson = {
       step: 'explain',
       title: bi('Как обещать срок с уверенностью', 'A promise with confidence'),
       body: bi(
-        'Для обещаний среднее не годится, потому что примерно половина карточек идёт дольше среднего. Поэтому сроки обещают по процентилю. Отсортируйте времена цикла последних 20 карточек по возрастанию. Семнадцатое значение в этом ряду и есть [[method.percentile|85-й процентиль]]: 85 % карточек шли не дольше его. Если оно равно 8 дням, владельцу бизнеса можно уверенно сказать: «85 задач из 100 таких мы заканчиваем за 8 дней или быстрее». Середину того же ряда называют медианой, или 50-м процентилем.',
-        'An average is no good for promises: about half of the cards take longer than average. That is why deadlines are promised by a percentile. Sort the cycle times of the last 20 cards in ascending order: the seventeenth value is the [[method.percentile|85th percentile]] — 85% of the cards took no longer than that. If it equals 8 days, you can confidently tell the business owner: “85 out of 100 such tasks we finish in 8 days or less.” The middle of the same series is called the median (the 50th percentile).',
+        'Для обещаний среднее не годится. У времени цикла длинный хвост: несколько очень долгих карточек тянут среднее вверх, и всё равно заметная часть карточек, обычно около трети, идёт дольше среднего. Поэтому сроки обещают по процентилю. Отсортируйте времена цикла последних 20 карточек по возрастанию. Семнадцатое значение в этом ряду и есть [[method.percentile|85-й процентиль]]: 85 % карточек шли не дольше его. Если оно равно 8 дням, владельцу бизнеса можно уверенно сказать: «85 задач из 100 таких мы заканчиваем за 8 дней или быстрее». Середину того же ряда называют медианой, или 50-м процентилем: дольше медианы идёт половина карточек.',
+        'An average is no good for promises. Cycle time has a long tail: a few very long cards pull the average up, and still a noticeable share of the cards, usually about a third, take longer than average. That is why deadlines are promised by a percentile. Sort the cycle times of the last 20 cards in ascending order: the seventeenth value is the [[method.percentile|85th percentile]] — 85% of the cards took no longer than that. If it equals 8 days, you can confidently tell the business owner: “85 out of 100 such tasks we finish in 8 days or less.” The middle of the same series is called the median (the 50th percentile): half of the cards take longer than the median.',
+      ),
+    },
+    {
+      id: 'cfd-beginner',
+      kind: 'text',
+      step: 'explain',
+      levels: ['beginner'],
+      title: bi('Как читать накопительную диаграмму потока', 'How to read the cumulative flow diagram'),
+      body: bi(
+        'В тренажёре ниже вам встретится [[method.cfd|накопительная диаграмма потока]]. Она показывает, сколько карточек лежало в каждой колонке доски в каждый день. Колонки сложены на ней цветными полосами одна над другой, и внизу лежит полоса «готово». Чтобы понять, что происходит с потоком, достаточно двух признаков. Если какая-то полоса день ото дня становится шире, в этой колонке копится работа, потому что туда приходит больше, чем уходит. Если нижняя граница полосы «готово» перестала подниматься, значит, до покупателей ничего не доходит.',
+        'In the trainer below you will meet a [[method.cfd|cumulative flow diagram]]. It shows how many cards were in each column of the board on each day. The columns are stacked on it as coloured bands, one above another, with the “done” band at the bottom. Two signs are enough to understand what is happening to the flow. If a band gets wider day after day, work is piling up in that column, because more comes in than goes out. If the top edge of the “done” band stops rising, nothing is reaching the customers.',
       ),
     },
     {
       id: 'cfd',
       kind: 'text',
       step: 'explain',
+      levels: ['intermediate', 'experienced'],
       title: bi('Как читать накопительную диаграмму потока', 'The cumulative flow diagram'),
       body: bi(
-        '[[method.cfd|Накопительная диаграмма потока]] (cumulative flow diagram, CFD) показывает, сколько карточек лежало в каждой колонке в каждый день. Колонки сложены на ней полосами одна над другой: внизу «готово», над ней «проверка», выше «разработка» и так далее. Читают диаграмму так:\n\n- **расстояние по вертикали** между верхней границей полосы «готово» и верхней границей колонок в работе равно WIP в этот день;\n- **расстояние по горизонтали** между днём, когда верхняя граница колонок в работе поднялась до какой-то высоты, и днём, когда до той же высоты дошла верхняя граница «готово», примерно равно времени цикла;\n- **расширяющаяся полоса** означает колонку, в которой копится работа, потому что туда приходит больше, чем уходит;\n- **горизонтальная граница «готово»** означает, что до покупателей ничего не доходит.\n\nВ тренажёре ниже команде из четырёх человек каждое утро приносят две новые задачи. Сначала пройдите несколько дней без лимитов, потом поставьте лимиты и посмотрите, как меняются полосы и время цикла.',
-        'A [[method.cfd|cumulative flow diagram]] (CFD) shows, for each day, how many cards are in which column. The columns stack up as bands, one above another: “done” at the bottom, “testing” above it, “development” higher, and so on. How to read it:\n\n- the **vertical distance** between the top edge of “done” and the top edge of the in-progress columns is the WIP on that day;\n- the **horizontal distance** between the moment the work edge reached some height and the moment the “done” edge reached the same height is roughly the cycle time;\n- a **widening band** is a column where work piles up: more comes in than goes out;\n- a **flat “done” edge** means nothing reaches the customers.\n\nIn the trainer below a team of four gets two new tasks every morning. First run a few days without limits, then set them and watch how the bands and the cycle time change.',
+        '[[method.cfd|Накопительная диаграмма потока]] (cumulative flow diagram, CFD) показывает, сколько карточек лежало в каждой колонке в каждый день. Колонки сложены на ней полосами одна над другой: внизу «готово», над ней «проверка», выше «разработка» и так далее. Читают диаграмму так:\n\n- **расстояние по вертикали** между верхней границей полосы «готово» и верхней границей колонок в работе равно WIP в этот день;\n- **расстояние по горизонтали** между днём, когда верхняя граница колонок в работе поднялась до какой-то высоты, и днём, когда до той же высоты дошла верхняя граница «готово», примерно равно времени цикла;\n- **расширяющаяся полоса** означает колонку, в которой копится работа, потому что туда приходит больше, чем уходит;\n- **горизонтальная граница «готово»** означает, что до покупателей ничего не доходит.',
+        'A [[method.cfd|cumulative flow diagram]] (CFD) shows, for each day, how many cards are in which column. The columns stack up as bands, one above another: “done” at the bottom, “testing” above it, “development” higher, and so on. How to read it:\n\n- the **vertical distance** between the top edge of “done” and the top edge of the in-progress columns is the WIP on that day;\n- the **horizontal distance** between the moment the work edge reached some height and the moment the “done” edge reached the same height is roughly the cycle time;\n- a **widening band** is a column where work piles up: more comes in than goes out;\n- a **flat “done” edge** means nothing reaches the customers.',
+      ),
+    },
+    {
+      id: 'practice-howto',
+      kind: 'text',
+      role: 'howto',
+      step: 'practice',
+      title: bi('Как работать с тренажёром', 'How to use the trainer'),
+      body: bi(
+        'В тренажёре команда из четырёх человек: владелец продукта (на доске он подписан PO) разбирает задачи, двое разработчиков (DEV-1 и DEV-2) пишут код, тестировщик (QA) проверяет. Каждое утро приходят две новые задачи, а сколько работы каждый успеет за день, решает бросок кубика от 1 до 6. Сначала пройдите несколько дней без лимитов и посмотрите, как растут полосы на диаграмме. Потом нажмите кнопку «сначала», поставьте колонкам лимиты кнопками «−» и «+» и сравните время цикла. Если отметить галочку «строгие лимиты», доска не даст вытянуть карточку в колонку сверх лимита, а без неё лимит только подсвечивает переполнение.\n\nНа карточках написано, сколько рублей в день магазин недополучает, пока задача не дошла до покупателей. Подробно об этих деньгах и о том, как по ним выбирать порядок работы, пойдёт речь через два урока. Тренажёр одновременно проводит на тех же бросках кубика прогон «без методологии», в котором нет лимитов и всё срочное сразу берут в работу. Цель выполнена, если 85-й процентиль времени цикла и потери от задержки у вас ниже, чем в этом прогоне. Разбор в конце покажет ваши числа и числа прогона «без методологии» рядом.',
+        'The trainer has a team of four: the product owner (marked PO on the board) analyses the tasks, two developers (DEV-1 and DEV-2) write the code, and a tester (QA) checks it. Two new tasks arrive every morning, and how much work each person gets done in a day is decided by a roll of a die from 1 to 6. First go through a few days without limits and watch the bands on the diagram grow. Then press “restart”, give the columns limits with the “−” and “+” buttons and compare the cycle time. With the “strict limits” box ticked the board will not let you pull a card into a column beyond its limit; without it the limit only highlights the overflow.\n\nThe cards show how many rubles a day the shop loses while the task has not reached the customers. How to choose the order of work by this money is covered in detail two lessons later. On the same dice the trainer also plays a “baseline” run with no limits, where everything urgent goes straight into work. The goal is met if your 85th percentile of cycle time and your losses from delay are lower than in that run. The debrief at the end shows your numbers and the baseline’s side by side.',
       ),
     },
     { id: 'practice', kind: 'widget', step: 'practice', widget: 'flowlab.board', props: { scenario: 's1' } },
