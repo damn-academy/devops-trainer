@@ -33,3 +33,20 @@ it('checks declared source goals on source commands while default terminals rema
     expect(independent.querySelector('.goal.done')).toBeNull();
   } finally { mounts.forEach(m => m.dispose()); }
 });
+
+
+it('shows the authored H3 after the documentation fragment at DL2', async () => {
+  const root = document.createElement('div');
+  const mounted = mountLab(root, { key: 'hints/fragment', block: 'methodology', level: 'intermediate', index: 0, count: 1,
+    setup: {}, tasks: [{ id: 'hint', prompt: { ru: 'Задание', en: 'Task' }, check: { when: 'flow.finished=1' },
+      docRef: { page: 'man/flow.1', anchor: 'OPTIONS', line: 'station ROLE COLUMN' },
+      hints: { H3: { ru: 'Наберите flow station DEV-2 test.', en: 'Type flow station DEV-2 test.' } } }] });
+  try {
+    await vi.waitFor(() => expect(root.querySelector('.hints button')).not.toBeNull());
+    (root.querySelector('.hints button') as HTMLButtonElement).click();
+    const hint = root.querySelector('.hint')!;
+    expect(hint.querySelector('.doc-fragment')).not.toBeNull();
+    expect(hint.textContent?.replace(/\s/g, ' ')).toContain('flow station DEV-2 test');
+    expect(hint.lastElementChild?.lastElementChild?.textContent?.replace(/\s/g, ' ')).toContain('flow station DEV-2 test');
+  } finally { mounted.dispose(); }
+});

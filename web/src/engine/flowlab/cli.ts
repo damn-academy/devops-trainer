@@ -10,17 +10,22 @@ import { scenario } from './scenarios';
 import { act, capacity, colName, createState, endDay, inColumn, limitOf, workColumns } from './sim';
 import type { Action, FlowMetrics, Scenario, Stage, State, WorkStage } from './types';
 
+interface FlowReplay { id: string; seed: number; actions: Action[][] }
+interface FlowSnapshot extends FlowReplay { setup?: FlowReplay | null }
+
 /** The flowlab run attached to a simulated machine. Survives snapshots and reset. */
 export class FlowSession implements Snapshotable {
   sc: Scenario | null = null;
   s: State | null = null;
   /** Actions per day, to rebuild the state on restore. */
   private actions: Action[][] = [];
+  private setup: FlowReplay | null = null;
 
   start(id: string, seed?: number): void {
     this.sc = scenario(id);
     this.s = createState(this.sc, seed ?? this.sc.defaultSeed);
     this.actions = [[]];
+    this.setup = null;
   }
 
   act(a: Action) {
@@ -34,17 +39,30 @@ export class FlowSession implements Snapshotable {
     this.actions.push([]);
   }
 
+  captureSetup(): void {
+    this.setup = this.sc && this.s
+      ? structuredClone({ id: this.sc.id, seed: this.s.seed, actions: this.actions }) : null;
+  }
+
+  reset(seed = this.s!.seed): void {
+    const setup = this.setup;
+    this.restore(setup ? { ...setup, seed, setup } : { id: this.sc!.id, seed, actions: [[]] });
+  }
+
   snapshot(): unknown {
-    return this.sc && this.s ? { id: this.sc.id, seed: this.s.seed, actions: this.actions } : null;
+    return this.sc && this.s ? structuredClone({ id: this.sc.id, seed: this.s.seed, actions: this.actions, setup: this.setup }) : null;
   }
 
   restore(snap: unknown): void {
-    const v = snap as { id: string; seed: number; actions: Action[][] } | null;
+    const v = structuredClone(snap) as FlowSnapshot | null;
     if (!v) {
       this.sc = this.s = null;
+      this.actions = [];
+      this.setup = null;
       return;
     }
     this.start(v.id, v.seed);
+    this.setup = v.setup ?? null;
     v.actions.forEach((day, i) => {
       for (const a of day) this.act(a);
       if (i < v.actions.length - 1) this.next();
@@ -280,7 +298,7 @@ function run(ctx: CmdContext): number {
       return 0;
     }
     case 'reset':
-      f.start(sc.id, args[0] ? Number(args[0]) : s.seed);
+      f.reset(args[0] ? Number(args[0]) : s.seed);
       ctx.out(board(f.sc!, f.s!));
       return 0;
   }
@@ -321,7 +339,19 @@ export const flowFacts: FactsProvider = {
       finished: ok(s.finished),
       done: { count: me.doneCount, byType },
       metrics: me,
-      policies: { wip, pullOrder: s.policies.pullOrder, deploy: s.policies.deploy.mode },
+      people: Object.fromEntries(s.people.map(p => [p.role, { station: p.station }])),
+      policies: {
+        wip, pullOrder: s.policies.pullOrder, deploy: s.policies.deploy.mode,
+        deployEvery: s.policies.deploy.mode === 'train' ? s.policies.deploy.every : null,
+        auto: ok(s.policies.auto),
+      },
+      // Routine work / available operations capacity over the last ten completed days.
+      // Unlike metrics.opsToilShare10 this excludes unplanned incident work.
+      ops: { toilShare10: (() => {
+        const days = s.history.slice(-10);
+        const cap = days.reduce((sum, day) => sum + day.ops.capacity, 0);
+        return cap ? days.reduce((sum, day) => sum + day.ops.toil, 0) / cap : 0;
+      })() },
       bots: { baseline: b.baseline, reference: b.reference },
       passLine: line,
       pass: {

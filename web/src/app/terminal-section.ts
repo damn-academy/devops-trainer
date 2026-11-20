@@ -140,7 +140,10 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     const shown = hintsOpened.get(task.id) ?? 0;
     const available = pol.allowed.filter((hl) => task.hints?.[hl] || (hl === 'H3' && task.docRef && pol.h3 !== 'text'));
     const renderHint = (hl: HintLevel) => {
-      if (hl === 'H3' && task.docRef && pol.h3 === 'fragment') return docFragment({ ...task.docRef, gloss: task.docRef.gloss ?? task.hints?.H3 ?? task.hints?.H2 }) ?? prose(task.hints?.H3 ?? bi('', ''));
+      if (hl === 'H3' && task.docRef && pol.h3 === 'fragment') {
+        const fragment = docFragment({ ...task.docRef, gloss: task.docRef.gloss ?? task.hints?.H2 });
+        return h('div', {}, ...(fragment ? [fragment] : []), ...(task.hints?.H3 ? [prose(task.hints.H3)] : []));
+      }
       if (hl === 'H3' && task.docRef && pol.h3 === 'link')
         return h('p', {}, t(bi('Ответ — на этой странице: ', 'The answer is on this page: ')), docChip({ page: task.docRef.page, url: task.docRef.url, label: refLabel({ page: task.docRef.page, url: task.docRef.url }) }));
       return prose(task.hints![hl]!);
