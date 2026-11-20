@@ -406,7 +406,7 @@ const processes: Lesson = {
           chips: 'ps',
           hints: {
             H1: bi('Поищите на странице, как задать собственный набор колонок и как отсортировать по одной из них.', 'Look in the page for how to choose your own set of columns and how to sort by one of them.'),
-            H2: bi('Понадобятся два флага. Флаг `-e` вместе с флагом `-o` и списком имён колонок через запятую выводит все процессы только с этими колонками, а флаг `--sort` упорядочивает строки по колонке, и знак минус перед её именем ставит самые большие значения первыми. Имена колонок перечислены в разделе STANDARD FORMAT SPECIFIERS.', 'You need two flags. `-e` with `-o` and a comma-separated list of column names prints every process with only those columns, and `--sort` orders the lines by a column, with a minus before its name putting the biggest values first. The column names are listed in STANDARD FORMAT SPECIFIERS.'),
+            H2: bi('Понадобятся два флага. Флаг `-e` вместе с флагом `-o` и списком имён колонок выводит все процессы только с этими колонками, причём имена пишут через запятую без пробелов: `-o pid,rss,comm`. Флаг `--sort` упорядочивает строки по одной колонке, а знак минус перед её именем ставит самые большие значения первыми, поэтому сортировка по памяти записывается как `--sort=-rss`. Вывод команды отправьте в файл знаком `>` из урока о потоках.', 'You need two flags. `-e` with `-o` and a list of column names prints every process with only those columns, and the names are written with commas and no spaces: `-o pid,rss,comm`. `--sort` orders the lines by one column, and a minus before its name puts the biggest values first, so sorting by memory is written `--sort=-rss`. Send the output into the file with `>` from the streams lesson.'),
           },
         },
       },
@@ -920,6 +920,18 @@ const disks: Lesson = {
           solutionTokens: ['df -i', '--inodes', 'IFree', 'iavail'],
         },
       },
+    },
+    {
+      id: 'interview',
+      kind: 'callout',
+      tone: 'why',
+      step: 'review',
+      levels: ['experienced'],
+      title: bi('Что из этого урока спрашивают на собеседовании и где это пригодится дальше', 'What interviews ask from this lesson and where it helps later'),
+      body: bi(
+        'Вопросы о дисках на собеседовании обычно начинаются с ночного случая: сервер пишет `No space left on device`, и нужно рассказать, что вы проверите и в каком порядке. Ответы на типичные вопросы уже есть в этом уроке:\n\n- почему `df` и `du` показывают разное: удалённый файл всё ещё держит открытым процесс, и найти его помогает `sudo lsof +L1`;\n- почему место может кончиться при свободных байтах: на файловой системе закончились inode, например из-за миллиона мелких файлов кэша;\n- почему в `/etc/fstab` пишут UUID, а не `/dev/sdb`: имена устройств сдвигаются, когда подключают ещё один диск;\n- чем жёсткая ссылка отличается от символической и почему жёсткую нельзя сделать на другую файловую систему: номер inode имеет смысл только внутри своей файловой системы.\n\nМонтирование встретится вам снова, когда курс дойдёт до Docker. Команда `docker run -v /srv/data:/data` монтирует каталог машины внутрь изолированного приложения тем же способом, что и `mount --bind`, а данные, которые приложение записало мимо такого каталога, пропадают, когда приложение удаляют вместе с его файлами.',
+        'Disk questions at an interview usually start with a night case: a server says `No space left on device`, and you have to tell what you check and in what order. This lesson already holds the answers to the usual questions:\n\n- why `df` and `du` disagree: a deleted file is still held open by a process, and `sudo lsof +L1` finds it;\n- why space can run out while bytes are free: the file system ran out of inodes, for example because of a million small cache files;\n- why `/etc/fstab` uses a UUID and not `/dev/sdb`: device names shift when another disk is attached;\n- how a hard link differs from a symbolic one and why a hard link cannot point into another file system: an inode number makes sense only inside its own file system.\n\nMounting comes back once the course reaches Docker. `docker run -v /srv/data:/data` mounts a directory of the machine inside an isolated application in the same way as `mount --bind`, and the data the application wrote outside such a directory is gone once the application is removed together with its files.',
+      ),
     },
     { id: 'quiz', kind: 'quiz', step: 'exit', items: ['linux.q.uuid', 'linux.q.mount-hide', 'linux.q.df-du', 'linux.q.links'] },
   ],
