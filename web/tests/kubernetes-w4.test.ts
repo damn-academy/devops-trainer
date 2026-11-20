@@ -16,6 +16,7 @@ import { certState } from '../src/blocks/kubernetes/explainers/kubeadm-init';
 import { tokenValid } from '../src/blocks/kubernetes/explainers/tls-bootstrap';
 import { restoreOutcome } from '../src/blocks/kubernetes/explainers/etcd-restore';
 import { skewProblems } from '../src/blocks/kubernetes/explainers/upgrade';
+import { statefulWeb } from '../src/blocks/kubernetes/setups';
 
 const DENY = 'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: default-deny\n  namespace: pay\nspec:\n  podSelector: {}\n  policyTypes:\n  - Ingress\n';
 const ALLOW_AND = 'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: allow-frontend\n  namespace: pay\nspec:\n  podSelector:\n    matchLabels:\n      app: pay\n  ingress:\n  - from:\n    - namespaceSelector:\n        matchLabels:\n          kubernetes.io/metadata.name: shop\n      podSelector:\n        matchLabels:\n          role: frontend\n    ports:\n    - port: 80\n';
@@ -103,6 +104,8 @@ const EXAM_SOLUTIONS: Record<string, string[]> = {
   config: ['kubectl create configmap web-config --from-literal=GREETING=Hello', 'kubectl patch deployment web -p \'{"spec":{"template":{"spec":{"containers":[{"name":"web","envFrom":[{"configMapRef":{"name":"web-config"}}]}]}}}}\'', 'cluster ff 60s'],
   netpol: ['kubectl apply -f ns.yaml', 'cluster ff 2s'],
   grace: ['kubectl patch deployment web -p \'{"spec":{"template":{"spec":{"terminationGracePeriodSeconds":5}}}}\'', 'cluster ff 30s'],
+  rbac: ['kubectl -n shop create role log-reader --verb=get,list,watch --resource=pods,pods/log', 'kubectl -n shop create rolebinding developer-logs --role=log-reader --user=developer'],
+  sts: [`cat > queue.yaml <<'EOF'\n${statefulWeb('queue')}EOF`, 'kubectl apply -f queue.yaml', 'cluster ff 60s'],
 };
 
 describe('the stage-1 exam', () => {

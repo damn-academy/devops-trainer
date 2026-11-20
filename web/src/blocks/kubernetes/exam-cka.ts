@@ -1,4 +1,4 @@
-// The CKA-style exam of stage 1 (05 §10.2, exam E; 10 §6): sixteen practical
+// The CKA-style exam of stage 1 (05 §10.2, exam E; 10 §6): eighteen practical
 // tasks on kube-lite, 120 minutes, pass at 66%, no critical tasks — the shape
 // of the Linux Foundation exam, not its content. Each task has its own small
 // cluster; the documentation reader is limited to `kubectl explain`, `--help`
@@ -10,7 +10,8 @@ import { bi } from '../../core/i18n';
 import type { Exam, Facts, TerminalSetup } from '../../core/types';
 import type { K8sFacts } from '../../engine/kube-lite/facts';
 import type { Obj } from '../../engine/kube-lite/util';
-import { WEB_DEPLOY, client, deploy, ns, svc } from './setups';
+import { deploymentsInCoreGroup, may, podOf, sa } from './rbac-facts';
+import { WEB_DEPLOY, client, deploy, ns, statefulWeb, svc } from './setups';
 
 const k8s = (f: Facts) => f.k8s as K8sFacts;
 const obj = (f: Facts | undefined, kind: string, nsName: string | undefined, name: string): Obj | undefined =>
@@ -139,19 +140,23 @@ export const CKA_SETUPS = {
   batch: setup([]),
   deadline: setup([], { files: [{ path: '~/import.yaml', content: IMPORT_JOB }] }),
   limit: setup(history(['trainer/web:8080', 'trainer/web:2.1', 'trainer/web:1.0', 'trainer/web:1.1']), { k8s: { settle: 180_000 } }),
+  team: setup([ns('app-team1'), ns('app-team2')]),
+  db: setup([statefulWeb('db')], { k8s: { addons: ['csi-hostpath'], settle: 60_000 } }),
 };
+
+const CICD = sa('app-team1', 'cicd-token');
 
 export const ckaExam: Exam = {
   id: 'k8s-1.exam.cka',
   block: 'k8s-1',
   title: bi('Практика в духе экзамена CKA', 'A CKA-style practical'),
   intro: bi(
-    'Шестнадцать задач на 120 минут, как на экзамене Certified Kubernetes Administrator. У каждой задачи свой кластер, и каждая проверяется по состоянию кластера, а не по набранным командам. Порог прохождения — 66 %, критических задач нет, но веса у задач разные. Три задачи требуют полей, которых не было в уроках: их ищут в `kubectl explain` и на страницах kubernetes.io, как на настоящем экзамене. Эта практика необязательна, а зачётным для блока остаётся экзамен «Смена в кластере».',
-    'Sixteen tasks in 120 minutes, as at the Certified Kubernetes Administrator exam: each has its own cluster, each is checked by the state of the cluster, not by the commands typed. The pass mark is 66%, there are no critical tasks, but the weights differ. Three tasks need fields the lessons never showed: you look them up in `kubectl explain` and on the kubernetes.io pages, as at the real exam. This is an optional part of the block: the block exam is still “A shift on the cluster”.',
+    'Восемнадцать задач на 120 минут, как на экзамене Certified Kubernetes Administrator. У каждой задачи свой кластер, и каждая проверяется по состоянию кластера, а не по набранным командам. Порог прохождения — 66 %, критических задач нет, но веса у задач разные. Три задачи требуют полей, которых не было в уроках: их ищут в `kubectl explain` и на страницах kubernetes.io, как на настоящем экзамене. Эта практика необязательна, а зачётным для блока остаётся экзамен «Смена в кластере».',
+    'Eighteen tasks in 120 minutes, as at the Certified Kubernetes Administrator exam: each has its own cluster, each is checked by the state of the cluster, not by the commands typed. The pass mark is 66%, there are no critical tasks, but the weights differ. Three tasks need fields the lessons never showed: you look them up in `kubectl explain` and on the kubernetes.io pages, as at the real exam. This is an optional part of the block: the block exam is still “A shift on the cluster”.',
   ),
   story: bi(
-    'Вас взяли администратором кластера в компанию, где до этого кластером занимались все понемногу. За первую неделю пришло шестнадцать заявок от команд, по одной на кластер. Задачи не зависят друг от друга, поэтому начинайте с тех, которые знаете, и не тратьте на одну больше десяти минут.',
-    'You have been hired as the cluster administrator at a company where everybody looked after the cluster a little until now. The first week brings sixteen requests from the teams, one per cluster. The tasks are independent: start with the ones you know and do not get stuck on one for longer than ten minutes.',
+    'Вас взяли администратором кластера в компанию, где до этого кластером занимались все понемногу. За первую неделю пришло восемнадцать заявок от команд, по одной на кластер. Задачи не зависят друг от друга, поэтому начинайте с тех, которые знаете, и не тратьте на одну больше десяти минут.',
+    'You have been hired as the cluster administrator at a company where everybody looked after the cluster a little until now. The first week brings eighteen requests from the teams, one per cluster. The tasks are independent: start with the ones you know and do not get stuck on one for longer than ten minutes.',
   ),
   minutes: 120,
   pass: 0.66,
@@ -455,6 +460,50 @@ export const ckaExam: Exam = {
           fail: [{ if: (f) => !containers(obj(f, 'Deployment', 'default', 'catalog')).some((c) => !!c.livenessProbe), say: bi('Проверка жизнеспособности пропала, и каталог, который зависнет после запуска, теперь никто не перезапустит.', 'The liveness probe is gone: nobody will restart the catalogue now if it hangs after the start.') }],
         },
         concepts: ['k8s.probe'],
+      },
+    },
+    {
+      id: 'rbac',
+      weight: 2,
+      kind: 'task',
+      setup: CKA_SETUPS.team,
+      task: {
+        id: 'cka-rbac',
+        prompt: bi(
+          'Конвейеру команды app-team1 нужен свой доступ. Создайте ClusterRole `deployment-clusterrole`, которая разрешает только создавать Deployment, StatefulSet и DaemonSet. Создайте в namespace `app-team1` сервисный аккаунт `cicd-token` и выдайте ему эту роль только в namespace `app-team1`.',
+          'The app-team1 pipeline needs access of its own. Create a ClusterRole `deployment-clusterrole` that only allows creating Deployments, StatefulSets and DaemonSets. Create a service account `cicd-token` in namespace `app-team1` and grant it this role in namespace `app-team1` only.',
+        ),
+        check: {
+          when: (f) =>
+            !!obj(f, 'ClusterRole', undefined, 'deployment-clusterrole') && !!obj(f, 'ServiceAccount', 'app-team1', 'cicd-token') &&
+            ['deployments', 'statefulsets', 'daemonsets'].every((r) => may(f, CICD, 'create', r, 'app-team1')) &&
+            !may(f, CICD, 'create', 'deployments', 'app-team2') && !may(f, CICD, 'delete', 'deployments', 'app-team1') && !may(f, CICD, 'get', 'secrets', 'app-team1'),
+          fail: [
+            { if: (f) => deploymentsInCoreGroup(f), say: bi('В ClusterRole Deployment, StatefulSet и DaemonSet записаны в пустой группе API, а они лежат в группе apps. Группу указывают в имени ресурса, например `--resource=deployments.apps,statefulsets.apps,daemonsets.apps`.', 'The ClusterRole puts Deployments, StatefulSets and DaemonSets into the empty API group, and they are in the group apps. Name the group: `--resource=deployments.apps,statefulsets.apps,daemonsets.apps`.') },
+            { if: (f) => may(f, CICD, 'create', 'deployments', 'app-team2'), say: bi('Аккаунт может создавать Deployment и в app-team2, то есть роль выдана на весь кластер. Нужна RoleBinding в app-team1, а не ClusterRoleBinding.', 'The account can create Deployments in app-team2 too, so the role covers the whole cluster. A RoleBinding in app-team1 is needed, not a ClusterRoleBinding.') },
+          ],
+        },
+        concepts: ['k8s.rbac', 'k8s.serviceaccount'],
+      },
+    },
+    {
+      id: 'sts',
+      weight: 2,
+      kind: 'task',
+      setup: CKA_SETUPS.db,
+      task: {
+        id: 'cka-sts',
+        prompt: bi(
+          'Новую версию базы `db` проверяют на одной реплике. Обновите StatefulSet `db` до образа `trainer/web:1.1` так, чтобы новую версию получила только реплика `db-2`, а `db-0` и `db-1` остались на `trainer/web:1.0`. StatefulSet не пересоздавайте, заявки не удаляйте.',
+          'The new version of database `db` is tested on one replica. Update StatefulSet `db` to the image `trainer/web:1.1` so that only replica `db-2` gets the new version, and `db-0` and `db-1` stay on `trainer/web:1.0`. Do not recreate the StatefulSet or delete the claims.',
+        ),
+        check: {
+          when: (f, start) =>
+            sameObject(f, start, 'StatefulSet', 'default', 'db') && podOf(f, 'default', 'db-2')?.image === 'trainer/web:1.1' && !!podOf(f, 'default', 'db-2')?.ready && podOf(f, 'default', 'db-0')?.image === 'trainer/web:1.0' && podOf(f, 'default', 'db-1')?.image === 'trainer/web:1.0' &&
+            ['data-db-0', 'data-db-1', 'data-db-2'].every((c) => !!obj(f, 'PersistentVolumeClaim', 'default', c) && obj(f, 'PersistentVolumeClaim', 'default', c)?.metadata?.uid === obj(start, 'PersistentVolumeClaim', 'default', c)?.metadata?.uid),
+          fail: [{ if: (f) => podOf(f, 'default', 'db-1')?.image === 'trainer/web:1.1', say: bi('Новую версию получила и реплика db-1, значит, обновление пошло без partition. Верните прежний образ и поставьте `spec.updateStrategy.rollingUpdate.partition: 2` до смены образа.', 'Replica db-1 got the new version too, so the update ran without a partition. Bring the old image back and set `spec.updateStrategy.rollingUpdate.partition: 2` before changing the image.') }],
+        },
+        concepts: ['k8s.statefulset', 'k8s.rolling-update'],
       },
     },
     {
