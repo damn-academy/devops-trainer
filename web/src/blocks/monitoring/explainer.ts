@@ -462,7 +462,7 @@ export const monModel = defineModel<P>({
         focus: ['e-alert', 'am'],
         reveal: ['am', 'e-alert'],
         tokens: [{ edge: 'e-alert', label: 'severity="page"' }],
-        say: { am: bi('Alertmanager видит метку severity="page" и выбирает получателя pager.', 'Alertmanager sees severity="page" and picks the pager receiver.') },
+        say: { am: bi('Alertmanager видит метку `severity="page"` и выбирает получателя `pager`.', 'Alertmanager sees `severity="page"` and picks the `pager` receiver.') },
         values: { am: 'receiver: pager' },
         metrics: m,
       },
