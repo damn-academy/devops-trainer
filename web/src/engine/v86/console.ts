@@ -1,3 +1,4 @@
+import { registerFeedbackSnapshot } from '../feedback/data';
 // The terminal of a real machine: xterm.js connected byte for byte to the
 // guest's serial console ttyS0. Unlike the simulator's terminal, line editing,
 // history and Tab completion are the guest shell's own (BusyBox ash), exactly
@@ -15,6 +16,8 @@ export interface ConsoleHandle {
 }
 
 export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: number } = {}): Promise<ConsoleHandle> {
+  el.dataset.feedbackLab = m.id;
+  const unregisterFeedback = registerFeedbackSnapshot(el, () => m.snapshotForFeedback());
   const { Terminal, FitAddon } = await loadXterm();
   const term = new Terminal({
     fontFamily: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
@@ -71,6 +74,7 @@ export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: n
     },
     write: (text: string) => term.write(text.replace(/\r?\n/g, '\r\n')),
     dispose() {
+      unregisterFeedback();
       offOut();
       offPhase();
       offCmd();

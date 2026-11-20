@@ -184,6 +184,7 @@ export class V86Machine implements Machine {
   private bootBanner?: string;
   private onReboot: 'disk' | 'media';
   /** Tail of the console, for facts after a boot from disk (no service channel there). */
+  private feedbackFacts: Facts | null = null;
   private consoleTail = '';
   private rebooting = false;
   /** True when start() continued the learner's own saved machine. */
@@ -608,7 +609,7 @@ export class V86Machine implements Machine {
    * fstab, lvm, svc, fw, dns, boot) to the ones the predicates asked for.
    */
   async facts(scope?: string[]): Promise<Facts> {
-    if (this.bootFrom === 'disk') return this.diskBootFacts();
+    if (this.bootFrom === 'disk') return this.feedbackFacts = this.diskBootFacts();
     const svcPid = Number((await this.svcRun('cat /tmp/.dt-svc')).out.trim()) || undefined;
     const scopes = this.lab ? [...new Set([...this.scopes, ...(scope ?? [])])].filter((s) => (LAB_SCOPES as readonly string[]).includes(s)) : [];
     const lab = scopes.length ? parseLabFacts((await this.svcRun(labFactsScript(scopes))).out) : {};
@@ -620,7 +621,7 @@ export class V86Machine implements Machine {
     // The service shell's own `ss` and `ps` children are not the learner's listeners.
     const hidden = new Set(r.procs.filter((p) => !procs.includes(p)).map((p) => p.pid));
     if (lab.listen) lab.listen = lab.listen.filter((l) => !l.pid || !hidden.has(l.pid));
-    return {
+    return this.feedbackFacts = {
       schema: 'dt.facts/v1',
       env: { kind: 'v86', machine: this.id, kernel: r.kernel, at: new Date().toISOString(), boot: this.boot, profile: this.profile.id, bootFrom: this.bootFrom },
       user: { name: user.name, uid: user.uid, gid: user.gid },
@@ -651,6 +652,12 @@ export class V86Machine implements Machine {
       term: { main: [] },
       console: { text: screen.slice(-2048), login: /login:\s*$/.test(screen) },
     } as Facts;
+  }
+
+  /** Feedback deliberately excludes VM memory and disk snapshots. */
+  async snapshotForFeedback() {
+    return { machine: this.id, phase: this.phase, history: this.tracker.snapshot().records,
+      console: this.consoleTail.slice(-32000), facts: this.feedbackFacts, factsSource: 'last successful check' };
   }
 
   // ── snapshots ───────────────────────────────────────────────────────────

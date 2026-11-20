@@ -1,3 +1,4 @@
+import { mountFeedback } from '../engine/feedback/ui';
 // The app shell: top bar (course name, route, review, settings, language,
 // theme), the weekly "export or sign in" line, and the page outlet.
 
@@ -115,6 +116,7 @@ export function startApp(root: HTMLElement): void {
     footer.replaceChildren(h('p', {}, t(bi('Прогресс сохраняется в этом браузере после каждого действия. Курс не игра: без очков, значков и серий.', 'Progress is saved in this browser after every action. The course is not a game: no points, badges or streaks.'))));
     if (!keepScroll) window.scrollTo({ top: 0 });
   };
+  mountFeedback();
   onRoute((r) => show(r));
   onLangChange(() => show(route, true));
 }
