@@ -55,6 +55,15 @@ const L = {
 /** "1 ряд", "3 ряда", "8 рядов" / "1 series". */
 export const seriesCount = (n: number): string => count(n, ['ряд', 'ряда', 'рядов'], ['series', 'series']);
 
+/**
+ * The quiet-day datasets share the generator's clock with the incident day,
+ * so the workbench shows them a week earlier: the version and latency seen in
+ * the first lessons then belong to another day than the outage. Only the
+ * shown date moves; whole days keep the clock on the chart axis unchanged.
+ */
+const DAY = 86_400_000;
+const SHOWN_SHIFT: Partial<Record<Incident, number>> = { none: -7 * DAY, restart: -7 * DAY };
+
 const PALETTE = ['var(--c-l3)', 'var(--c-flow)', 'var(--c-warn)', 'var(--c-ci-deploy)', 'var(--c-l7)', 'var(--c-ok)', 'var(--c-cp)', 'var(--c-err)'];
 
 function fmtNum(v: number): string {
@@ -96,6 +105,7 @@ function chart(series: { labels: Labels; samples: [number, number][] }[], start:
 
 export function mountWorkbench(el: HTMLElement, props: WorkbenchProps, ctx: Pick<WidgetCtx, 'complete' | 'record'>): Mounted {
   const db = dataset(props.incident ?? 'none');
+  const shift = SHOWN_SHIFT[props.incident ?? 'none'] ?? 0;
   const goals = props.goals ?? [];
   const met = new Set<string>();
   /** The near-miss explanation of each unmet goal after the last run of the learner's own query. */
@@ -217,7 +227,7 @@ export function mountWorkbench(el: HTMLElement, props: WorkbenchProps, ctx: Pick
       return;
     }
     if (lastR.type === 'matrix') {
-      out.append(h('table.wb-table', {}, h('tbody', {}, ...lastR.data.slice(0, 50).map((x) => h('tr', {}, h('td', {}, formatLabels(x.labels)), h('td.num', {}, x.samples.map((p) => `${fmtNum(p[1])} @${p[0] / 1000}`).join('\n')))))));
+      out.append(h('table.wb-table', {}, h('tbody', {}, ...lastR.data.slice(0, 50).map((x) => h('tr', {}, h('td', {}, formatLabels(x.labels)), h('td.num', {}, x.samples.map((p) => `${fmtNum(p[1])} @${(p[0] + shift) / 1000}`).join('\n')))))));
       return;
     }
     if (!lastR.data.length) {
@@ -235,7 +245,7 @@ export function mountWorkbench(el: HTMLElement, props: WorkbenchProps, ctx: Pick
       props.alert ? h('div.wb-alert', {}, h('p.wb-alert-tag', {}, h('span.st-icon.err', { 'aria-hidden': 'true' }, '!'), ` ${t(L.firing)}: `, h('strong', {}, props.alert.name)), h('p', {}, t(props.alert.summary)), h('p.wb-alert-labels', {}, ...Object.entries(props.alert.labels).map(([k, v]) => h('code', {}, `${k}=${v}`)))) : null,
       goals.length ? h('div.wb-goals-box', {}, h('h4.lab-h', {}, t(L.goals)), goalsBox) : null,
       h('div.wb-q', {}, input, h('button.btn.primary.small', { type: 'button', onclick: () => run() }, t(L.run))),
-      h('p.muted.small', {}, `${t(L.at)}: ${new Date(db.end).toISOString().replace('T', ' ').slice(0, 16)} UTC`),
+      h('p.muted.small', {}, `${t(L.at)}: ${new Date(db.end + shift).toISOString().replace('T', ' ').slice(0, 16)} UTC`),
       tabs,
       out,
     ),
