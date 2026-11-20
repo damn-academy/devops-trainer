@@ -3,6 +3,7 @@ import { maskSecrets } from '../ai/prompt.ts';
 export const MAX_BYTES = 256 * 1024;
 export const categories = ['text', 'unclear', 'broken', 'crash', 'suggestion', 'other'] as const;
 export interface Report {
+  type?: 'report' | 'contact'; followToken?: string;
   schema: 'dt.feedback/v1'; id: string; time: string; category: string; message: string; contact: string;
   website: string; context: Record<string, unknown>; attachments: Record<string, unknown>; omitted: string[];
 }

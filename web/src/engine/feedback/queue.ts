@@ -1,4 +1,5 @@
 import { openDB } from 'idb';
+import { remember } from './threads';
 import type { Report } from './data';
 export interface Entry { id: string; body: string; attempts: number; next: number; blocked?: boolean }
 export interface QueueStore { put(entry: Entry): Promise<unknown>; all(): Promise<Entry[]>; remove(id: string): Promise<unknown> }
@@ -9,7 +10,7 @@ export function indexedQueue(): QueueStore {
 export class FeedbackQueue {
   private running = false;
   constructor(private store: QueueStore, private endpoint: string, private send: typeof fetch = (...args) => fetch(...args), private now = Date.now) {}
-  async enqueue(report: Report) { await this.store.put({ id: report.id, body: JSON.stringify(report), attempts: 0, next: 0 }); }
+  async enqueue(report: Report) { if (report.followToken) await remember(report); await this.store.put({ id: report.id, body: JSON.stringify(report), attempts: 0, next: 0 }); }
   async flush(): Promise<string[]> {
     if (this.running || !this.endpoint) return [];
     this.running = true;

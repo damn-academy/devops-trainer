@@ -66,7 +66,9 @@ func TestDedup(t *testing.T) {
 }
 func TestReceive(t *testing.T) {
 	s := testServer(t)
-	raw, _ := json.Marshal(sample())
+	report := sample()
+	report.FollowToken = strings.Repeat("a", 64)
+	raw, _ := json.Marshal(report)
 	var zipped bytes.Buffer
 	gz := gzip.NewWriter(&zipped)
 	gz.Write(raw)

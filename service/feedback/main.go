@@ -36,6 +36,8 @@ var statuses = []string{"new", "triaged", "fixed", "wontfix", "duplicate"}
 var idPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]{8,80}$`)
 
 type Report struct {
+	Type        string         `json:"type,omitempty"`
+	FollowToken string         `json:"followToken,omitempty"`
 	Schema      string         `json:"schema"`
 	ID          string         `json:"id"`
 	Time        string         `json:"time"`
@@ -54,6 +56,7 @@ type Item struct {
 	Notes    string `json:"notes"`
 	Dedup    string `json:"dedup"`
 	Received string `json:"received"`
+	Thread   Thread `json:"thread"`
 }
 
 func validate(r Report) error {
@@ -63,7 +66,13 @@ func validate(r Report) error {
 	if _, err := time.Parse(time.RFC3339Nano, r.Time); err != nil {
 		return errors.New("invalid time")
 	}
-	if r.Contact != "" {
+	if r.Type != "" && r.Type != "report" && r.Type != "contact" {
+		return errors.New("invalid type")
+	}
+	if r.FollowToken != "" && !regexp.MustCompile(`^[a-f0-9]{64}$`).MatchString(r.FollowToken) {
+		return errors.New("invalid token")
+	}
+	if r.Contact != "" && !regexp.MustCompile(`^@[A-Za-z0-9_]{5,32}$`).MatchString(r.Contact) {
 		a, e := mail.ParseAddress(r.Contact)
 		if e != nil || a.Address != r.Contact || len(r.Contact) > 254 {
 			return errors.New("invalid contact")
@@ -93,6 +102,7 @@ type bucket struct {
 type limiter struct {
 	mu      sync.Mutex
 	entries map[string]bucket
+	max     int
 }
 
 func (l *limiter) allow(ip string, now time.Time) bool {
@@ -110,7 +120,11 @@ func (l *limiter) allow(ip string, now time.Time) bool {
 	if b.count == 0 {
 		b.since = now
 	}
-	if b.count >= 20 || (len(l.entries) >= 10000 && b.count == 0) {
+	limit := l.max
+	if limit == 0 {
+		limit = 20
+	}
+	if b.count >= limit || (len(l.entries) >= 10000 && b.count == 0) {
 		return false
 	}
 	b.count++
@@ -123,6 +137,7 @@ type server struct {
 	origins               map[string]bool
 	token, user, password string
 	limit                 limiter
+	followLimit           limiter
 	csrf                  string
 }
 
@@ -147,19 +162,52 @@ func openDB(dsn string) (*sql.DB, error) {
 		db.Close()
 		return nil, e
 	}
+	if e = threadSchema(db); e != nil {
+		db.Close()
+		return nil, e
+	}
 	return db, nil
 }
 func (s *server) save(r Report) (bool, error) {
+	secret := r.FollowToken
+	r.FollowToken = ""
 	b, e := json.Marshal(r)
 	if e != nil {
 		return false, e
 	}
-	result, e := s.db.Exec(`INSERT INTO feedback(id,payload,block,lesson,category,dedup,received) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO NOTHING`, r.ID, string(b), str(r.Context, "block"), str(r.Context, "lesson"), r.Category, dedup(r), time.Now().UTC().Format(time.RFC3339Nano))
+	tx, e := s.db.Begin()
+	if e != nil {
+		return false, e
+	}
+	defer tx.Rollback()
+	result, e := tx.Exec(`INSERT INTO feedback(id,payload,block,lesson,category,dedup,received) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO NOTHING`, r.ID, string(b), str(r.Context, "block"), str(r.Context, "lesson"), r.Category, dedup(r), time.Now().UTC().Format(time.RFC3339Nano))
 	if e != nil {
 		return false, e
 	}
 	n, e := result.RowsAffected()
-	return n > 0, e
+	if e != nil {
+		return false, e
+	}
+	if n > 0 {
+		kind := r.Type
+		if kind == "" {
+			kind = "report"
+		}
+		hash := ""
+		if secret != "" {
+			hash = tokenHash(secret)
+		}
+		_, e = tx.Exec("INSERT INTO threads(id,secret,kind) VALUES($1,$2,$3)", r.ID, hash, kind)
+		if e != nil {
+			return false, e
+		}
+	} else if secret != "" {
+		var hash string
+		if tx.QueryRow("SELECT secret FROM threads WHERE id=$1", r.ID).Scan(&hash) != nil || !equal(hash, tokenHash(secret)) {
+			return false, errors.New("id conflict")
+		}
+	}
+	return n > 0, tx.Commit()
 }
 func (s *server) list(q url.Values) ([]Item, error) {
 	query := `SELECT payload,status,tags,notes,dedup,received FROM feedback WHERE 1=1`
@@ -209,6 +257,7 @@ func (s *server) auth(r *http.Request) bool {
 func (s *server) handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/feedback", s.receive)
+	mux.HandleFunc("/api/feedback/", s.follow)
 	mux.HandleFunc("/admin", s.admin)
 	mux.HandleFunc("/admin/", s.admin)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -293,6 +342,9 @@ func (s *server) receive(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, e.Error(), 400)
 		return
 	}
+	if report.FollowToken == "" {
+		report.FollowToken = randomToken()
+	}
 	created, e := s.save(report)
 	if e != nil {
 		log.Print("feedback persistence failed")
@@ -304,7 +356,7 @@ func (s *server) receive(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
-	json.NewEncoder(w).Encode(map[string]string{"id": report.ID})
+	json.NewEncoder(w).Encode(map[string]string{"id": report.ID, "followToken": report.FollowToken})
 }
 func (s *server) admin(w http.ResponseWriter, r *http.Request) {
 	if !s.auth(r) {
@@ -329,14 +381,15 @@ func (s *server) admin(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid values", 400)
 			return
 		}
-		note := ""
-		if strings.TrimSpace(r.Form.Get("note")) != "" {
-			note = time.Now().UTC().Format(time.RFC3339) + " " + r.Form.Get("note") + "\n"
-		}
-		_, e := s.db.Exec(`UPDATE feedback SET status=$1,tags=$2,notes=notes || $3 WHERE id=$4`, status, r.Form.Get("tags"), note, r.Form.Get("id"))
-		if e != nil {
-			http.Error(w, "storage unavailable", 503)
+		if e := s.updateThread(r); e != nil {
+			http.Error(w, "invalid update", 400)
 			return
+		}
+		if r.Form.Get("notify") == "on" && strings.TrimSpace(r.Form.Get("reply")) != "" {
+			items, e := s.list(url.Values{"id": {r.Form.Get("id")}})
+			if e == nil && len(items) == 1 {
+				go notifyContact(items[0].Report.Contact, r.Form.Get("reply"))
+			}
 		}
 		http.Redirect(w, r, "/admin?id="+url.QueryEscape(r.Form.Get("id")), 303)
 		return
@@ -364,27 +417,41 @@ func (s *server) admin(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	filtered := []Item{}
+	for _, i := range items {
+		kind := i.Report.Type
+		if kind == "" {
+			kind = "report"
+		}
+		if wanted := r.URL.Query().Get("type"); wanted != "" && wanted != kind {
+			continue
+		}
+		i.Thread, _ = s.thread(i.Report.ID)
+		i.Thread.Replies, _ = s.adminReplies(i.Report.ID)
+		filtered = append(filtered, i)
+	}
+	items = filtered
 	q := r.URL.Query()
 	q.Del("id")
 	data := struct {
-		Items       []Item
-		Detail      bool
-		CSRF, Query string
-		Statuses    []string
-	}{items, r.URL.Query().Get("id") != "", s.csrf, q.Encode(), statuses}
+		Items              []Item
+		Detail             bool
+		CSRF, Query, Build string
+		Statuses           []string
+	}{items, r.URL.Query().Get("id") != "", s.csrf, q.Encode(), env("BUILD_ID", "development"), statuses}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if e = adminTemplate.Execute(w, data); e != nil {
 		log.Print("admin render failed")
 	}
 }
 
-var adminTemplate = template.Must(template.New("admin").Funcs(template.FuncMap{"pretty": func(v any) string { b, _ := json.MarshalIndent(v, "", "  "); return string(b) }, "terminal": func(i Item) string {
+var adminTemplate = template.Must(template.New("admin").Funcs(template.FuncMap{"markdown": markdownLight, "status": statusLabel, "pretty": func(v any) string { b, _ := json.MarshalIndent(v, "", "  "); return string(b) }, "terminal": func(i Item) string {
 	v := i.Report.Attachments["transcript"]
 	if s, ok := v.(string); ok {
 		return s
 	}
 	return ""
-}}).Parse(`<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Сообщения учеников · Learner feedback</title><style>body{font:16px system-ui;background:#f3f5f8;color:#172437;max-width:1200px;margin:40px auto;padding:20px}h1{font-size:30px}a{color:#235b9a}table{border-collapse:collapse;width:100%;background:white}td,th{text-align:left;padding:14px;border-bottom:1px solid #ddd}input,select,button,textarea{font:inherit;padding:8px;margin:5px}label{display:inline-block}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:white;padding:20px;border-radius:8px}.terminal{background:#101923;color:#bfe9cd;font:13px monospace}article{background:white;padding:24px;margin:20px 0}textarea{display:block;width:90%}</style><h1>Сообщения учеников / Learner feedback</h1><p><a href="/admin">Все сообщения / All reports</a> · <a href="/admin/export?{{.Query}}">Скачать JSON / Export JSON</a> · <a href="/admin/export?{{.Query}}&amp;format=jsonl">Скачать JSONL / Export JSONL</a></p><form method="get"><label>Блок / Block <input name="block"></label><label>Урок / Lesson <input name="lesson"></label><label>Категория / Category <select name="category"><option value="">Все / All</option><option>text</option><option>unclear</option><option>broken</option><option>crash</option><option>suggestion</option><option>other</option></select></label><label>Статус / Status <select name="status"><option value="">Все / All</option>{{range .Statuses}}<option>{{.}}</option>{{end}}</select></label><label>С даты / From <input type="date" name="from"></label><label>По дату / To <input type="date" name="to"></label><button>Найти сообщения / Filter</button></form>{{if .Detail}}{{range .Items}}<article><h2>{{.Report.Message}}</h2><p>{{.Received}} · {{.Status}} · {{.Report.Contact}}</p><p>Признак совпадения / Dedup hint: {{.Dedup}}</p><h3>Команды и вывод / Terminal</h3><pre class="terminal">{{terminal .}}</pre><h3>Контекст и приложения / Context and attachments</h3><pre>{{pretty .Report}}</pre><h3>Заметки / Notes</h3><pre>{{.Notes}}</pre><form method="post"><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="id" value="{{.Report.ID}}"><label>Статус / Status <select name="status">{{$status:=.Status}}{{range $.Statuses}}<option {{if eq . $status}}selected{{end}}>{{.}}</option>{{end}}</select></label><label>Метки / Tags <input name="tags" value="{{.Tags}}"></label><label>Добавить заметку / Add a note <textarea name="note" maxlength="8000"></textarea></label><button>Сохранить изменения / Save changes</button></form></article>{{end}}{{else}}<table><thead><tr><th>Дата / Date</th><th>Место / Location</th><th>Сообщение / Message</th><th>Статус / Status</th><th>Совпадение / Dedup</th></tr></thead><tbody>{{range .Items}}<tr><td>{{.Received}}</td><td>{{index .Report.Context "block"}}<br>{{index .Report.Context "lesson"}}</td><td><a href="/admin?id={{.Report.ID}}">{{.Report.Message}}</a><br>{{.Report.Category}}</td><td>{{.Status}}<br>{{.Tags}}</td><td>{{.Dedup}}</td></tr>{{else}}<tr><td colspan="5">Сообщений пока нет. / No reports yet.</td></tr>{{end}}</tbody></table>{{end}}</html>`))
+}}).Parse(`<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Сообщения учеников · Learner feedback</title><style>body{font:16px system-ui;background:#f3f5f8;color:#172437;max-width:1200px;margin:40px auto;padding:20px}h1{font-size:30px}a{color:#235b9a}table{border-collapse:collapse;width:100%;background:white}td,th{text-align:left;padding:14px;border-bottom:1px solid #ddd}input,select,button,textarea{font:inherit;padding:8px;margin:5px}label{display:inline-block}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:white;padding:20px;border-radius:8px}.terminal{background:#101923;color:#bfe9cd;font:13px monospace}article{background:white;padding:24px;margin:20px 0}textarea{display:block;width:90%}</style><h1>Сообщения учеников / Learner feedback</h1><p><a href="/admin?type=report">Сообщения о курсе</a> · <a href="/admin?type=contact">Письма автору</a> · <a href="/admin/export?{{.Query}}">Скачать JSON / Export JSON</a> · <a href="/admin/export?{{.Query}}&amp;format=jsonl">Скачать JSONL / Export JSONL</a></p><form method="get"><label>Блок / Block <input name="block"></label><label>Урок / Lesson <input name="lesson"></label><label>Категория / Category <select name="category"><option value="">Все / All</option><option>text</option><option>unclear</option><option>broken</option><option>crash</option><option>suggestion</option><option>other</option></select></label><label>Статус / Status <select name="status"><option value="">Все / All</option>{{range .Statuses}}<option>{{.}}</option>{{end}}</select></label><label>С даты / From <input type="date" name="from"></label><label>По дату / To <input type="date" name="to"></label><button>Найти сообщения / Filter</button></form>{{if .Detail}}{{range .Items}}<article><h2>{{.Report.Message}}</h2><p>{{.Received}} · {{status .Status}} · {{.Report.Contact}}</p><p>Признак совпадения / Dedup hint: {{.Dedup}}</p><h3>Команды и вывод / Terminal</h3><pre class="terminal">{{terminal .}}</pre><h3>Контекст и приложения / Context and attachments</h3><pre>{{pretty .Report}}</pre><h3>Переписка</h3>{{range .Thread.Replies}}<p>{{.Author}} · {{.Time}}</p><div style="white-space:pre-wrap">{{markdown .Message}}</div>{{end}}<h3>Заметки / Notes</h3><pre>{{.Notes}}</pre><form method="post"><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="id" value="{{.Report.ID}}"><label>Статус / Status <select name="status">{{$status:=.Status}}{{range $.Statuses}}<option value="{{.}}" {{if eq . $status}}selected{{end}}>{{status .}}</option>{{end}}</select></label><label>Метки / Tags <input name="tags" value="{{.Tags}}"></label><label>Добавить заметку / Add a note <textarea name="note" maxlength="8000"></textarea></label><label>Ответьте ученику.<textarea name="reply" maxlength="12000"></textarea></label><label><input type="checkbox" name="notify">Уведомить по указанному адресу.</label><label>Исправлено в сборке.<input name="fixedBuild" value="{{if .Thread.FixedBuild}}{{.Thread.FixedBuild}}{{else}}{{$.Build}}{{end}}"></label><label>Объединить с сообщением по его номеру.<input name="merge"></label><button>Сохранить изменения</button></form></article>{{end}}{{else}}<table><thead><tr><th>Дата / Date</th><th>Место / Location</th><th>Сообщение / Message</th><th>Статус / Status</th><th>Совпадение / Dedup</th></tr></thead><tbody>{{range .Items}}<tr><td>{{.Received}}</td><td>{{index .Report.Context "block"}}<br>{{index .Report.Context "lesson"}}</td><td><a href="/admin?id={{.Report.ID}}">{{.Report.Message}}</a><br>{{.Report.Category}}</td><td>{{status .Status}}<br>{{.Tags}}</td><td>{{.Dedup}}</td></tr>{{else}}<tr><td colspan="5">Сообщений пока нет. / No reports yet.</td></tr>{{end}}</tbody></table>{{end}}</html>`))
 
 func env(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
@@ -403,7 +470,7 @@ func main() {
 		log.Fatal("set ADMIN_TOKEN or ADMIN_USER and ADMIN_PASSWORD")
 	}
 	csrfHash := sha256.Sum256([]byte(token + "\x00" + password + "\x00csrf"))
-	s := &server{db: db, origins: map[string]bool{}, token: token, user: user, password: password, csrf: hex.EncodeToString(csrfHash[:])}
+	s := &server{followLimit: limiter{max: 240}, db: db, origins: map[string]bool{}, token: token, user: user, password: password, csrf: hex.EncodeToString(csrfHash[:])}
 	for _, o := range strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",") {
 		if o = strings.TrimSpace(o); o != "" {
 			s.origins[o] = true

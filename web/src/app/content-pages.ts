@@ -1,3 +1,4 @@
+import { messagesPage } from '../engine/feedback/messages';
 // Every page except the route map. Loaded together with the full content
 // (shell.ts), so the home page does not download lessons, labs or engines.
 
@@ -27,6 +28,8 @@ export function renderPage(r: Exclude<Route, { name: 'home' }>): Page {
       return explainerPage(r.id);
     case 'exam':
       return examPage(r.id);
+    case 'messages':
+      return messagesPage();
     case 'settings':
       return settingsPage();
     case 'review':

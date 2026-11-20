@@ -189,6 +189,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     clear(status);
     if (failSay && !o.exam) status.append(h('p.lab-fail', {}, h('span.st-icon.warn', { 'aria-hidden': 'true' }, '!'), h('span', {}, ...renderInline(failSay))));
     const pending = o.tasks.find(task => !passed.has(task.id));
+    if (attempted || !pending) el.dataset.feedbackFailed = String(!!pending);
     if (pending && attempted && !o.exam) status.append(externalButton({ lessonId: o.lessonId, level: o.level, task: t(pending.prompt) }));
     if (changed) {
       renderGoals();

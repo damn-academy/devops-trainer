@@ -2,6 +2,7 @@ import type { Plugin } from 'vite';
 import { appendFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { gunzipSync } from 'node:zlib';
+import { request } from 'node:http';
 import { execFileSync } from 'node:child_process';
 import { MAX_BYTES, categories } from './data.ts';
 /** Development only: never installs a production receiver or reads stored reports over HTTP. */
@@ -15,6 +16,12 @@ export function feedbackPlugin(): Plugin {
     },
     configureServer(server) {
       server.middlewares.use('/api/feedback', async (req, res) => {
+        if (process.env.FEEDBACK_SERVICE_URL) {
+          const upstream = new URL('/api/feedback' + (req.url === '/' ? '' : req.url), process.env.FEEDBACK_SERVICE_URL);
+          const proxy = request(upstream, { method: req.method, headers: req.headers }, response => { res.writeHead(response.statusCode ?? 502, response.headers); response.pipe(res); });
+          proxy.on('error', () => { res.statusCode = 502; res.end('Feedback service unavailable'); });
+          req.pipe(proxy); return;
+        }
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
         const origin = req.headers.origin;
         if (origin && new URL(origin).host !== req.headers.host) { res.statusCode = 403; res.end(); return; }
@@ -26,7 +33,8 @@ export function feedbackPlugin(): Plugin {
           const report = JSON.parse(data.toString());
           if (report.schema !== 'dt.feedback/v1' || !categories.includes(report.category) || !report.message?.trim() || report.website || !report.id) throw new Error('Invalid report');
           const dir = resolve(server.config.root, '.feedback'); await mkdir(dir, { recursive: true });
-          await appendFile(resolve(dir, 'reports.jsonl'), JSON.stringify(report) + '\n', { mode: 0o600 });
+          const { followToken: _secret, ...safeReport } = report;
+          await appendFile(resolve(dir, 'reports.jsonl'), JSON.stringify(safeReport) + '\n', { mode: 0o600 });
           res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ id: report.id }));
         } catch { res.statusCode = 400; res.end('Invalid report'); }
       });

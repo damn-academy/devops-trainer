@@ -2,18 +2,21 @@ import { lang, onLangChange } from '../../core/i18n';
 import { categories, prepare, separateTerminal, selectionContext, snapshots, type Report } from './data';
 import { collectContext, listenFeedback, recentErrors, transcript } from './context';
 import { FeedbackQueue, indexedQueue } from './queue';
+import { endpoint, newToken, checkThreads, follows, unread, saveFollow } from './threads';
 import './feedback.css';
 const word = (ru: string, en: string) => lang() === 'ru' ? ru : en;
 const button = (text: string, action: () => void) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.onclick = action; return b; };
 export function mountFeedback(): void {
   listenFeedback();
-  const queue = new FeedbackQueue(indexedQueue(), import.meta.env.VITE_FEEDBACK_URL ?? (import.meta.env.DEV ? '/api/feedback' : ''));
+  const queue = new FeedbackQueue(indexedQueue(), endpoint());
   const status = document.createElement('p'); status.className = 'feedback-status'; status.role = 'status';
   document.body.append(status);
-  const flush = async () => { try { if ((await queue.flush()).length) status.textContent = word('Сообщение отправлено.', 'Your report has been sent.'); } catch { /* IndexedDB may be unavailable in private mode. */ } };
+  let toastTimer: ReturnType<typeof setTimeout>;
+  const toast = (text: string) => { clearTimeout(toastTimer); toastTimer = setTimeout(() => status.replaceChildren(), 12000); status.replaceChildren(document.createTextNode(text + ' ')); const link = document.createElement('a'); link.href = '#/messages'; link.textContent = word('Мои сообщения', 'My messages'); status.append(link); };
+  const flush = async () => { try { if ((await queue.flush()).length) toast(word('Сообщение отправлено.', 'Your report has been sent.')); } catch { /* IndexedDB may be unavailable in private mode. */ } };
   window.addEventListener('online', () => void flush()); setInterval(() => void flush(), 30000); void flush();
   let opened = false;
-  async function open(target?: Element, selected?: unknown) {
+  async function open(target?: Element, selected?: unknown, type: 'report' | 'contact' = 'report') {
     if (opened) return; opened = true;
     const focus = document.activeElement as HTMLElement | null;
     if (!target) {
@@ -21,61 +24,90 @@ export function mountFeedback(): void {
       if (!target) target = [...document.querySelectorAll('.lsec,[data-model],.ex2-card')].find(el => {
         const rect = el.getBoundingClientRect(); return rect.top < innerHeight / 2 && rect.bottom > innerHeight / 2;
       });
+      target ??= [...document.querySelectorAll('.lsec')].find(el => { const rect = el.getBoundingClientRect(); return rect.bottom > 0 && rect.top < innerHeight; });
     }
     const dialog = document.createElement('dialog'); dialog.className = 'feedback-dialog';
-    dialog.setAttribute('aria-label', word('Сообщить о проблеме', 'Report a problem'));
+    dialog.setAttribute('aria-label', type === 'contact' ? word('Написать автору', 'Contact the author') : word('Сообщить о проблеме', 'Report a problem'));
     const form = document.createElement('form');
-    const title = document.createElement('h2'); title.textContent = word('Сообщить о проблеме', 'Report a problem');
-    const privacy = document.createElement('p'); privacy.textContent = word('После нажатия «Отправить» мы получим ваш текст, сведения об открытом месте курса и выбранные ниже приложения.', 'After you press Send, we receive your message, the course location and the attachments selected below.');
+    const title = document.createElement('h2'); title.textContent = type === 'contact' ? word('Написать автору', 'Contact the author') : word('Сообщить о проблеме', 'Report a problem');
     const field = (name: string, input: HTMLElement) => { const label = document.createElement('label'); label.append(name, input); form.append(label); };
-    form.append(title, privacy);
-    const category = document.createElement('select'); category.name = 'category';
-    const ru = ['Ошибка в тексте или факте', 'Непонятно', 'Не работает', 'Среда упала или зависла', 'Предложение', 'Другое'];
-    const en = ['Text or factual error', 'Unclear explanation', 'Something does not work', 'Environment crashed or froze', 'Suggestion', 'Other'];
-    categories.forEach((v,i) => category.add(new Option((lang() === 'ru' ? ru : en)[i], v)));
-    field(word('Выберите тему сообщения.', 'Choose a category.'), category);
+    form.append(title);
+    let category = target?.closest('.lab')?.matches('[data-feedback-failed="true"]') || target?.closest('.lab')?.querySelector('.lab-fail,[data-feedback-failed="true"],.fail,.failed,.err,.no,[data-correct="false"]') || target?.closest('.lsec')?.querySelector('.lab-fail,[data-feedback-failed="true"],.lab .fail,.lab .err,.lab .no') ? 'broken' : 'other';
+    const chips = document.createElement('div'); chips.className = 'feedback-chips'; chips.setAttribute('aria-label', 'Тему можно уточнить.'); chips.role = 'group';
+    const ru = ['Ошибка в тексте', 'Непонятно', 'Не работает', 'Среда зависла', 'Предложение', 'Другое'];
+    const en = ['Text error', 'Unclear', 'Not working', 'Frozen', 'Suggestion', 'Other'];
+    categories.forEach((v, i) => {
+      const chip = button((lang() === 'ru' ? ru : en)[i], () => { category = v; for (const c of chips.children) c.setAttribute('aria-pressed', String(c === chip)); });
+      chip.dataset.category = v; chip.setAttribute('aria-pressed', String(v === category)); chips.append(chip);
+    });
+    if (type === 'report') form.append(chips);
+    if (type === 'report' && matchMedia('(pointer: coarse)').matches) {
+      const places = [...document.querySelectorAll<HTMLElement>('.lsec')];
+      const place = document.createElement('select'); place.add(new Option('Об открытой странице.', ''));
+      places.forEach((el,i) => { const option = new Option(el.querySelector('h2,h3')?.textContent ?? 'Раздел ' + (i + 1), String(i)); option.selected = el === target || !!target && el.contains(target); place.add(option); });
+      place.onchange = () => { target = place.value === '' ? undefined : places[Number(place.value)]; };
+      field('О каком месте вы хотите сообщить?', place);
+    }
     const message = document.createElement('textarea'); message.name = 'message'; message.required = true; message.maxLength = 12000; message.rows = 4;
-    field(word('Расскажите, что произошло.', 'Describe what happened.'), message);
-    const contact = document.createElement('input'); contact.type = 'email'; contact.name = 'contact'; contact.maxLength = 254;
-    field(word('Оставьте почту, если хотите получить ответ.', 'Leave your email if you would like a reply.'), contact);
+    field(type === 'contact' ? word('Напишите автору.', 'Write to the author.') : word('Расскажите, что произошло.', 'Describe what happened.'), message);
+    const contact = document.createElement('input'); contact.type = 'text'; contact.name = 'contact'; contact.maxLength = 254;
+    if (type === 'contact') { field(word('Если хотите, оставьте почту или имя в Telegram, которое начинается с @.', 'Optionally leave your email or Telegram @username.'), contact);
+      const email = import.meta.env.VITE_AUTHOR_EMAIL; if (email && /^[^\s@]+@[^\s@]+$/.test(email)) { const link = document.createElement('a'); link.href = 'mailto:' + email; link.textContent = word('Можно написать по электронной почте.', 'You can also send an email.'); form.append(link); }
+    }
     const trap = document.createElement('input'); trap.name = 'website'; trap.tabIndex = -1; trap.autocomplete = 'off'; trap.className = 'feedback-trap'; trap.setAttribute('aria-hidden', 'true'); form.append(trap);
     const preview = document.createElement('pre'); preview.tabIndex = 0; preview.setAttribute('aria-label', word('Точный состав сообщения', 'Exact report payload'));
-    const send = document.createElement('button'); send.type = 'submit'; send.textContent = word('Отправить', 'Send'); send.disabled = true;
+    const send = document.createElement('button'); send.type = 'submit'; send.textContent = word('Отправить', 'Send'); send.disabled = false;
     const close = () => dialog.close();
-    form.append(preview, send, button(word('Отмена', 'Cancel'), close)); dialog.append(form); document.body.append(dialog); dialog.showModal();
+    const details = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = word('Вместе с сообщением уйдут: место в курсе и вывод терминала', 'Included: course location and terminal output'); details.append(summary, preview);
+    if (type === 'report') { const label = document.createElement('label'); label.append('Если хотите, оставьте почту или имя в Telegram для ответа.', contact); details.append(label); form.append(details); }
+    const error = document.createElement('p'); error.role = 'status'; form.append(error);
+    form.append(send, button(word('Отмена', 'Cancel'), close)); dialog.append(form); document.body.append(dialog); dialog.showModal(); message.focus();
     dialog.addEventListener('close', () => { dialog.remove(); opened = false; focus?.focus(); });
-    const base: Report = { schema: 'dt.feedback/v1', id: crypto.randomUUID(), time: new Date().toISOString(), category: 'text', message: '', contact: '', website: '', context: collectContext(target, selected), attachments: {}, omitted: [] };
-    preview.textContent = word('Собираем сведения о среде…', 'Collecting environment details…');
-    const environment = await snapshots(target?.closest('.lab') ?? undefined);
-    const attachments: Record<string, unknown> = { errors: recentErrors() };
-    if (Object.keys(environment).length || transcript()) {
+    const base: Report = { schema: 'dt.feedback/v1', id: crypto.randomUUID(), time: new Date().toISOString(), type, category: 'other', message: '', contact: '', website: '', context: type === 'contact' ? {} : collectContext(target, selected), attachments: {}, omitted: [] };
+    const attachments: Record<string, unknown> = {};
+    const collecting = type === 'contact' ? Promise.resolve() : snapshots(target?.closest('.lab') ?? undefined).then(environment => {
+      attachments.errors = recentErrors();
       const separated = separateTerminal(environment);
       attachments.transcript = (JSON.stringify(separated.records, null, 2).slice(-32000) + '\n' + transcript()).slice(-64000);
       attachments.environment = separated.state;
-    }
-    const checks = new Map<string, HTMLInputElement>();
-    const labels: Record<string,string> = { errors: word('Приложить последние ошибки приложения.', 'Attach recent application errors.'), transcript: word('Приложить команды и вывод терминала.', 'Attach terminal commands and output.'), environment: word('Приложить состояние среды и результаты проверок.', 'Attach environment state and check results.') };
-    for (const key of Object.keys(attachments)) {
-      const label = document.createElement('label'); const input = document.createElement('input'); input.type = 'checkbox'; input.checked = true;
-      checks.set(key,input); label.append(input, labels[key]); form.insertBefore(label, preview);
+    });
+    if (type === 'report' && endpoint()) {
+      const context = collectContext(target);
+      const query = new URLSearchParams(Object.entries(context).filter(([k,v]) => ['route','section','task','quiz','examCard','explainer','step'].includes(k) && typeof v === 'string') as [string,string][]);
+      const hintURL = endpoint() + '/hint?' + query;
+      void fetch(hintURL, { credentials: 'omit', signal: AbortSignal.timeout(5000) }).then(r => r.ok ? r.json() : null).then(hint => {
+        if (!hint?.open || !dialog.isConnected) return;
+        const hintLine = document.createElement('p'); hintLine.className = 'feedback-hint'; hintLine.append('Об этом месте уже сообщили, мы разбираемся. ');
+        const same = button('У меня то же самое', () => {
+          same.disabled = true;
+          void fetch(hintURL, { method: 'POST', credentials: 'omit', signal: AbortSignal.timeout(10000) }).then(r => { if (!r.ok) throw new Error(); close(); toast('Спасибо, мы учли ваше сообщение.'); }).catch(() => { same.disabled = false; error.textContent = 'Не удалось отправить сообщение. Попробуйте ещё раз.'; });
+        });
+        hintLine.append(same); form.insertBefore(hintLine, chips);
+      }).catch(() => {});
     }
     let payload: Report;
+    let sending = false; const followToken = newToken();
     const refresh = () => {
       try {
-        payload = prepare({ ...base, category: category.value, message: message.value, contact: contact.value, website: trap.value, omitted: [], attachments: Object.fromEntries(Object.entries(attachments).filter(([k]) => checks.get(k)?.checked)) });
-        preview.textContent = JSON.stringify(payload, null, 2); send.disabled = false;
+        payload = prepare({ ...base, category, message: message.value, contact: contact.value, website: trap.value, omitted: [], context: type === 'contact' ? {} : collectContext(target, selected), attachments });
+        preview.textContent = JSON.stringify(payload, null, 2); send.disabled = sending;
       } catch { preview.textContent = word('Сообщение слишком большое. Сократите текст.', 'The report is too large. Shorten your message.'); send.disabled = true; }
     };
-    form.addEventListener('input', refresh); refresh();
+    form.addEventListener('input', refresh); refresh(); void collecting.then(refresh);
+    form.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); form.requestSubmit(); } });
     form.onsubmit = async e => {
-      e.preventDefault(); refresh(); if (send.disabled) return; send.disabled = true;
+      e.preventDefault();
+      const address = contact.value.trim();
+      if (address && !/^(?:[^\s@]+@[^\s@]+\.[^\s@]+|@[A-Za-z0-9_]{5,32})$/.test(address)) { error.textContent = 'Проверьте адрес почты или имя в Telegram, которое начинается с @.'; if (type === 'report') details.open = true; contact.focus(); return; }
+      if (sending || send.disabled || !message.value.trim()) return; sending = true; send.disabled = true; await collecting; refresh(); send.disabled = true;
       try {
-        await queue.enqueue(payload!); close();
-        status.textContent = word('Сообщение сохранено и будет отправлено, когда появится сеть и сервер станет доступен.', 'Your report is saved and will be sent when the network and server are available.');
+        await queue.enqueue({ ...payload!, followToken }); close();
+        toast(word('Сообщение сохранено и ожидает отправки.', 'Your message is saved and waiting to be sent.'));
         void flush();
-      } catch { send.disabled = false; preview.textContent = word('Браузер не смог сохранить сообщение. Скопируйте текст и попробуйте ещё раз.', 'The browser could not save your report. Copy your message and try again.'); }
+      } catch { sending = false; send.disabled = false; error.textContent = word('Браузер не смог сохранить сообщение. Скопируйте текст и попробуйте ещё раз.', 'The browser could not save your report. Copy your message and try again.'); }
     };
   }
+  window.addEventListener('feedback-contact', () => void open(undefined, undefined, 'contact'));
   const global = button(word('Сообщить о проблеме', 'Report a problem'), () => void open()); global.className = 'feedback-launch'; document.body.append(global);
   onLangChange(() => { global.textContent = word('Сообщить о проблеме', 'Report a problem'); decorate(); });
   const select = button(word('Комментировать', 'Comment'), () => void open(selectionTarget, selected)); select.className = 'feedback-selection'; select.hidden = true; document.body.append(select);
@@ -103,5 +135,23 @@ export function mountFeedback(): void {
     if (!records.some(r => [...r.addedNodes].some(n => n instanceof Element && !n.matches('.feedback-comment')))) return;
     if (!scheduled) { scheduled = true; requestAnimationFrame(() => { scheduled = false; decorate(); }); }
   }).observe(document.getElementById('main')!, { childList: true, subtree: true });
+  const updates = async () => {
+    const entries = await follows();
+    document.querySelectorAll('.feedback-menu').forEach(el => {
+      el.classList.toggle('has-unread', entries.some(unread));
+      el.setAttribute('aria-label', entries.some(unread) ? 'Мои сообщения. Есть новые ответы.' : 'Мои сообщения');
+    });
+    for (const f of entries) {
+      if (f.fixedSeen || f.thread?.status !== 'fixed' || String(f.context.route).split('/').slice(0,3).join('/') !== location.hash.split('?')[0].split('/').slice(0,3).join('/')) continue;
+      const section = typeof f.context.section === 'string' ? document.getElementById('s-' + f.context.section) : document.getElementById('main');
+      if (!section) continue;
+      const note = document.createElement('p'); note.className = 'feedback-fixed'; note.textContent = 'Это место исправили по вашему сообщению. Спасибо.'; section.prepend(note);
+      f.fixedSeen = true; await saveFollow(f);
+    }
+  };
+  window.addEventListener('feedback-page', () => { void updates().catch(() => {}); });
+  window.addEventListener('feedback-updated', () => { void updates().catch(() => {}); });
+  void checkThreads().then(updates).catch(() => {});
+  setInterval(() => void checkThreads().catch(() => {}), 3600000);
   decorate();
 }
