@@ -4,7 +4,7 @@
 // by equivalence with a reference query or by a predicate over the result.
 
 import type { Mounted, WidgetCtx, WidgetReg } from '../../core/types';
-import { bi, t, type Bi } from '../../core/i18n';
+import { bi, count, t, type Bi } from '../../core/i18n';
 import { clear, h, s } from '../../core/dom';
 import { dataset, exposition, type Incident, type Labels } from './prom/data';
 import { equivalent, formatLabels, query, queryRange, type Result } from './prom/promql';
@@ -20,6 +20,8 @@ export interface WorkbenchGoal {
   /** Shown after the goal is met: what the evidence means. */
   then?: Bi;
   hint?: Bi;
+  /** Near misses: after a run that did not meet the goal, the first that holds explains what is still wrong. */
+  miss?: { test: (r: Result, q: string) => boolean; say: Bi }[];
 }
 
 export interface WorkbenchProps {
@@ -41,7 +43,6 @@ const L = {
   graph: bi('График', 'Graph'),
   targets: bi('Цели (/metrics)', 'Targets (/metrics)'),
   empty: bi('Запрос вернул пустой результат, потому что ни один ряд не подошёл под условия.', 'The query returned an empty result, because no series matched the conditions.'),
-  series: bi('рядов', 'series'),
   goals: bi('Что найти', 'What to find'),
   done: bi('Найдено', 'Found'),
   placeholder: bi('Выражение PromQL, например rate(http_requests_total[5m])', 'A PromQL expression, e.g. rate(http_requests_total[5m])'),
@@ -50,6 +51,9 @@ const L = {
   ago: bi('мин назад', 'min ago'),
   now: bi('сейчас', 'now'),
 };
+
+/** "1 ряд", "3 ряда", "8 рядов" / "1 series". */
+export const seriesCount = (n: number): string => count(n, ['ряд', 'ряда', 'рядов'], ['series', 'series']);
 
 const PALETTE = ['var(--c-l3)', 'var(--c-flow)', 'var(--c-warn)', 'var(--c-ci-deploy)', 'var(--c-l7)', 'var(--c-ok)', 'var(--c-cp)', 'var(--c-err)'];
 
@@ -94,6 +98,8 @@ export function mountWorkbench(el: HTMLElement, props: WorkbenchProps, ctx: Pick
   const db = dataset(props.incident ?? 'none');
   const goals = props.goals ?? [];
   const met = new Set<string>();
+  /** The near-miss explanation of each unmet goal after the last run of the learner's own query. */
+  const missed = new Map<string, Bi>();
   let tab: 'table' | 'graph' | 'targets' = 'table';
   let lastQ = props.query ?? '';
   let lastR: Result | null = null;
@@ -103,17 +109,20 @@ export function mountWorkbench(el: HTMLElement, props: WorkbenchProps, ctx: Pick
   const out = h('div.wb-out', { 'aria-live': 'polite' });
   const goalsBox = h('ol.wb-goals');
   const tabs = h('div.wb-tabs', { role: 'tablist' });
-  const run = () => {
+  // The query a lesson starts with is only shown, never counted: otherwise a
+  // goal could tick before the learner has typed anything.
+  const run = (own = true) => {
     lastQ = input.value.trim();
     error = '';
     lastR = null;
+    missed.clear();
     if (!lastQ) return draw();
     try {
       lastR = query(db, lastQ);
     } catch (e) {
       error = (e as Error).message;
     }
-    if (lastR) {
+    if (lastR && own) {
       for (const g of goals) {
         if (met.has(g.id)) continue;
         let ok = false;
@@ -125,11 +134,21 @@ export function mountWorkbench(el: HTMLElement, props: WorkbenchProps, ctx: Pick
         if (ok) {
           met.add(g.id);
           ctx.record({ kind: 'x.obs.evidence', goal: g.id, query: lastQ });
+          continue;
         }
+        const r = lastR;
+        const say = g.miss?.find((m) => {
+          try {
+            return m.test(r, lastQ);
+          } catch {
+            return false;
+          }
+        })?.say;
+        if (say) missed.set(g.id, say);
       }
       if (goals.length && met.size === goals.length) ctx.complete();
     }
-    ctx.record({ kind: 'x.obs.query', ok: !error });
+    if (own) ctx.record({ kind: 'x.obs.query', ok: !error });
     draw();
   };
   input.addEventListener('keydown', (e) => {
@@ -142,7 +161,22 @@ export function mountWorkbench(el: HTMLElement, props: WorkbenchProps, ctx: Pick
     clear(goalsBox);
     for (const g of goals) {
       const ok = met.has(g.id);
-      goalsBox.append(h('li.goal', { class: ok ? 'done' : '' }, h('span.goal-mark', { 'aria-hidden': 'true' }, ok ? '✓' : ''), h('div.goal-body', {}, h('p.goal-text', {}, t(g.prompt)), ok && g.then ? h('p.wb-then', {}, t(g.then)) : !ok && g.hint ? h('details.wb-hint', {}, h('summary', {}, t(bi('Подсказка', 'Hint'))), h('p', {}, t(g.hint))) : null)));
+      const miss = !ok ? missed.get(g.id) : undefined;
+      goalsBox.append(
+        h(
+          'li.goal',
+          { class: ok ? 'done' : '' },
+          h('span.goal-mark', { 'aria-hidden': 'true' }, ok ? '✓' : ''),
+          h(
+            'div.goal-body',
+            {},
+            h('p.goal-text', {}, t(g.prompt)),
+            ok && g.then ? h('p.wb-then', {}, t(g.then)) : null,
+            miss ? h('p.wb-miss', {}, t(miss)) : null,
+            !ok && g.hint ? h('details.wb-hint', {}, h('summary', {}, t(bi('Подсказка', 'Hint'))), h('p', {}, t(g.hint))) : null,
+          ),
+        ),
+      );
     }
   };
   const draw = () => {
@@ -175,7 +209,7 @@ export function mountWorkbench(el: HTMLElement, props: WorkbenchProps, ctx: Pick
         return;
       }
       out.append(chart(series, start, db.end), h('ul.wb-legend', {}, ...series.slice(0, PALETTE.length).map((x, i) => h('li', {}, h('span.wb-swatch', { style: `background:${PALETTE[i]}` }), formatLabels(x.labels)))));
-      if (series.length > PALETTE.length) out.append(h('p.muted.small', {}, `+${series.length - PALETTE.length} ${t(L.series)}`));
+      if (series.length > PALETTE.length) out.append(h('p.muted.small', {}, `+${seriesCount(series.length - PALETTE.length)}`));
       return;
     }
     if (lastR.type === 'scalar' || lastR.type === 'string') {
@@ -190,7 +224,7 @@ export function mountWorkbench(el: HTMLElement, props: WorkbenchProps, ctx: Pick
       out.append(h('p.muted', {}, t(L.empty)));
       return;
     }
-    out.append(h('p.muted.small', {}, `${lastR.data.length} ${t(L.series)}`), h('table.wb-table', {}, h('tbody', {}, ...lastR.data.slice(0, 60).map((x) => h('tr', {}, h('td', {}, formatLabels(x.labels)), h('td.num', {}, fmtNum(x.value)))))));
+    out.append(h('p.muted.small', {}, seriesCount(lastR.data.length)), h('table.wb-table', {}, h('tbody', {}, ...lastR.data.slice(0, 60).map((x) => h('tr', {}, h('td', {}, formatLabels(x.labels)), h('td.num', {}, fmtNum(x.value)))))));
   };
   clear(el);
   el.append(
@@ -200,13 +234,13 @@ export function mountWorkbench(el: HTMLElement, props: WorkbenchProps, ctx: Pick
       props.title ? h('h3.wb-title', {}, t(props.title)) : null,
       props.alert ? h('div.wb-alert', {}, h('p.wb-alert-tag', {}, h('span.st-icon.err', { 'aria-hidden': 'true' }, '!'), ` ${t(L.firing)}: `, h('strong', {}, props.alert.name)), h('p', {}, t(props.alert.summary)), h('p.wb-alert-labels', {}, ...Object.entries(props.alert.labels).map(([k, v]) => h('code', {}, `${k}=${v}`)))) : null,
       goals.length ? h('div.wb-goals-box', {}, h('h4.lab-h', {}, t(L.goals)), goalsBox) : null,
-      h('div.wb-q', {}, input, h('button.btn.primary.small', { type: 'button', onclick: run }, t(L.run))),
+      h('div.wb-q', {}, input, h('button.btn.primary.small', { type: 'button', onclick: () => run() }, t(L.run))),
       h('p.muted.small', {}, `${t(L.at)}: ${new Date(db.end).toISOString().replace('T', ' ').slice(0, 16)} UTC`),
       tabs,
       out,
     ),
   );
-  if (lastQ) run();
+  if (lastQ) run(false);
   else draw();
   if (!goals.length) ctx.complete();
   return { dispose() {}, describe: () => `PromQL: ${lastQ} → ${lastR?.type === 'vector' ? `${lastR.data.length} series` : error || 'no result'}; goals ${met.size}/${goals.length}` };

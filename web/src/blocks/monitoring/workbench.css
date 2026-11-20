@@ -34,3 +34,4 @@
 .wb-alert-tag { display: flex; gap: 6px; align-items: center; }
 .wb-alert-labels { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.8rem; }
 @media (max-width: 600px) { .wb-q { grid-template-columns: minmax(0, 1fr); } }
+.wb-miss { margin: 4px 0 0; color: var(--ink-2); font-family: var(--font-text); font-size: 0.92rem; border-left: 2px solid var(--c-warn); padding-left: 8px; }

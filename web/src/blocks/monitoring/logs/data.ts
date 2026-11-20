@@ -121,7 +121,7 @@ export function generateLogs(incident: Incident = 'none', seed = 11): LogDb {
       out.entries.push({ ts: t, line: JSON.stringify(rec) });
       if (on && status !== 500 && ms > 1800) {
         const tw = t - 1;
-        out.entries.push({ ts: tw, line: JSON.stringify({ ts: iso(tw), level: 'warn', msg: 'slow request', route: r.route, duration_ms: ms, db_queries: items + 1, trace_id: traceId }) });
+        out.entries.push({ ts: tw, line: JSON.stringify({ ts: iso(tw), level: 'warn', msg: 'slow request', route: r.route, duration_ms: ms, db_queries: items, trace_id: traceId }) });
       }
       if (status === 500 && on) err.entries.push({ ts: t, line: `goroutine 4711 [running]:\nerror: acquire connection: context deadline exceeded after 2s (pool size 20, in use 20)` });
       // Traces of the last hour: every /checkout and every error, a fifth of the rest (sampling).

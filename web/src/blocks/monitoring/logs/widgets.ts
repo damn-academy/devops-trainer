@@ -4,7 +4,8 @@
 // query, the trace and the span that are open.
 
 import type { Mounted, WidgetCtx, WidgetReg } from '../../../core/types';
-import { bi, t, type Bi } from '../../../core/i18n';
+import { bi, count, t, type Bi } from '../../../core/i18n';
+import { seriesCount } from '../workbench';
 import { clear, h } from '../../../core/dom';
 import type { Incident, Labels } from '../prom/data';
 import { iso, logDataset, type Span, type Trace } from './data';
@@ -33,8 +34,6 @@ const L = {
   goals: bi('Что найти', 'What to find'),
   hint: bi('Подсказка', 'Hint'),
   empty: bi('Ни одна строка журнала не подошла под запрос.', 'No log line matched the query.'),
-  lines: bi('строк', 'lines'),
-  series: bi('рядов', 'series'),
   range: bi('за последний час, сначала новые', 'over the last hour, newest first'),
   labels: bi('Метки потоков', 'Stream labels'),
   at: bi('момент запроса', 'evaluated at'),
@@ -78,7 +77,8 @@ export function mountLogs(el: HTMLElement, props: LogsProps, ctx: Pick<WidgetCtx
   const out = h('div.wb-out', { 'aria-live': 'polite' });
   const goalsBox = h('div');
   const labelsBox = h('div.lx-labels');
-  const run = () => {
+  // The query a lesson starts with is only shown, never counted towards the goals.
+  const run = (own = true) => {
     lastQ = input.value.trim();
     error = '';
     lastR = null;
@@ -89,7 +89,7 @@ export function mountLogs(el: HTMLElement, props: LogsProps, ctx: Pick<WidgetCtx
         error = (e as Error).message;
       }
     }
-    if (lastR) {
+    if (lastR && own) {
       for (const g of goals) {
         if (met.has(g.id)) continue;
         let ok = false;
@@ -105,7 +105,7 @@ export function mountLogs(el: HTMLElement, props: LogsProps, ctx: Pick<WidgetCtx
       }
       if (goals.length && met.size === goals.length) ctx.complete();
     }
-    ctx.record({ kind: 'x.obs.logquery', ok: !error });
+    if (own) ctx.record({ kind: 'x.obs.logquery', ok: !error });
     draw();
   };
   input.addEventListener('keydown', (e) => {
@@ -141,13 +141,13 @@ export function mountLogs(el: HTMLElement, props: LogsProps, ctx: Pick<WidgetCtx
     }
     if (lastR.type === 'vector') {
       if (!lastR.data.length) return void out.append(h('p.muted', {}, t(L.empty)));
-      out.append(h('p.muted.small', {}, `${lastR.data.length} ${t(L.series)}`), h('table.wb-table', {}, h('tbody', {}, ...lastR.data.slice(0, 60).map((x) => h('tr', {}, h('td', {}, formatLogLabels(x.labels)), h('td.num', {}, String(Number.isInteger(x.value) ? x.value : +x.value.toFixed(4))))))));
+      out.append(h('p.muted.small', {}, seriesCount(lastR.data.length)), h('table.wb-table', {}, h('tbody', {}, ...lastR.data.slice(0, 60).map((x) => h('tr', {}, h('td', {}, formatLogLabels(x.labels)), h('td.num', {}, String(Number.isInteger(x.value) ? x.value : +x.value.toFixed(4))))))));
       return;
     }
     const rows = flatEntries(lastR);
     if (!rows.length) return void out.append(h('p.muted', {}, t(L.empty)));
     out.append(
-      h('p.muted.small', {}, `${rows.length} ${t(L.lines)} · ${t(L.range)}`),
+      h('p.muted.small', {}, `${count(rows.length, ['строка', 'строки', 'строк'], ['line', 'lines'])} · ${t(L.range)}`),
       h(
         'ol.lx-lines',
         {},
@@ -170,14 +170,14 @@ export function mountLogs(el: HTMLElement, props: LogsProps, ctx: Pick<WidgetCtx
       {},
       props.title ? h('h3.wb-title', {}, t(props.title)) : null,
       goalsBox,
-      h('div.wb-q', {}, input, h('button.btn.primary.small', { type: 'button', onclick: run }, t(L.run))),
+      h('div.wb-q', {}, input, h('button.btn.primary.small', { type: 'button', onclick: () => run() }, t(L.run))),
       h('p.muted.small', {}, `${t(L.at)}: ${iso(db.end).replace('T', ' ').replace('Z', '')} UTC`),
       h('details.lx-browser', {}, h('summary', {}, t(L.labels)), labelsBox),
       out,
     ),
   );
   drawLabels();
-  if (lastQ) run();
+  if (lastQ) run(false);
   else draw();
   if (!goals.length) ctx.complete();
   return { dispose() {}, describe: () => `LogQL: ${lastQ} → ${lastR ? (lastR.type === 'streams' ? `${flatEntries(lastR).length} lines` : lastR.type) : error || 'no result'}; goals ${met.size}/${goals.length}` };
@@ -211,9 +211,8 @@ const T = {
   any: bi('любой', 'any'),
   min: bi('Длительность от, мс', 'Duration from, ms'),
   id: bi('trace_id', 'trace_id'),
-  found: bi('трейсов найдено, показаны самые долгие', 'traces found, the longest are shown'),
+  longest: bi('показаны самые долгие', 'the longest are shown'),
   none: bi('Ничего не найдено.', 'Nothing found.'),
-  spans: bi('спанов', 'spans'),
   attrs: bi('Атрибуты спана', 'Span attributes'),
   logs: bi('Строки журнала с этим trace_id', 'Log lines with this trace_id'),
   pick: bi('Выберите спан на водопаде, чтобы увидеть его атрибуты.', 'Pick a span on the waterfall to see its attributes.'),
@@ -268,7 +267,7 @@ export function mountTraces(el: HTMLElement, props: TracesProps, ctx: Pick<Widge
     else {
       const top = [...hits].sort((a, b) => b.spans[0].duration - a.spans[0].duration).slice(0, 12);
       listBox.append(
-        h('p.muted.small', {}, `${hits.length} ${t(T.found)}`),
+        h('p.muted.small', {}, `${count(hits.length, ['трейс найден', 'трейса найдено', 'трейсов найдено'], ['trace found', 'traces found'])}, ${t(T.longest)}`),
         h(
           'table.wb-table.tv-table',
           {},
@@ -282,7 +281,7 @@ export function mountTraces(el: HTMLElement, props: TracesProps, ctx: Pick<Widge
                 h('td', {}, h('button.tv-link', { type: 'button', onclick: () => open(tr) }, tr.traceId.slice(0, 12) + '…')),
                 h('td', {}, `${tr.spans[0].name}`),
                 h('td.num', {}, `${tr.spans[0].duration} ms`),
-                h('td.num', {}, `${tr.spans.length} ${t(T.spans)}`),
+                h('td.num', {}, count(tr.spans.length, ['спан', 'спана', 'спанов'], ['span', 'spans'])),
                 h('td', {}, tr.spans.some((s) => s.status === 'error') ? h('span.tv-err', {}, 'error') : ''),
               ),
             ),
