@@ -27,7 +27,7 @@ import type { SparseDiskData } from './sparse-disk';
 import { loadState, saveCompressedState, saveState } from './state-cache';
 
 /** Bump when the bootstrap below changes: old saved states no longer match it. */
-export const BOOTSTRAP_VERSION = 3;
+export const BOOTSTRAP_VERSION = 4;
 
 export interface Identity {
   hostname: string;
@@ -456,7 +456,11 @@ export class V86Machine implements Machine {
     if (this.lab) lines.unshift('set +o history 2>/dev/null');
     if (this.lab) lines.splice(lines.length - 1, 0, 'history -c 2>/dev/null; set -o history 2>/dev/null');
     this.write(lines.join('\n') + '\n', false);
-    await this.waitFor(/\x1eREADY/, 60_000);
+    // READY is printed before bash expands PS1. Its $(hostname) can still be
+    // waiting for an asynchronous 9p read, which a VM snapshot cannot resume.
+    // Include the final prompt in this same wait (serial batches may contain
+    // both), so the saved interactive shell is actually ready for input.
+    await this.waitFor(/\x1eREADY[\s\S]*[#$%] (\x1b\[\?2004h)?$/, 60_000);
     // The service shell needs a moment to start; probe it until it answers.
     for (let i = 0; i < 50; i++) {
       const r = await Promise.race([this.svcRun('echo ok'), new Promise<null>((res) => setTimeout(() => res(null), 400))]);
@@ -782,8 +786,9 @@ export function identityScript(id: Identity, o: { sshd: boolean; newKeys: boolea
         `umask 077; printf '%s' ${shq(o.random.privateKey)} > /etc/ssh/ssh_host_ed25519_key`,
         `printf '%s\\n' ${shq(o.random.publicKey!)} > /etc/ssh/ssh_host_ed25519_key.pub`,
       ] : ["ssh-keygen -q -t ed25519 -N '' -f /etc/ssh/ssh_host_ed25519_key"]),
-      // OpenRC reload validates and rereads the new keys without its stop/start delay.
-      'rc-service -q sshd reload >/dev/null 2>&1',
+      // Reload only sends SIGHUP: it can return before sshd has reopened its
+      // listeners. Wait for a restart before declaring the clone ready.
+      'rc-service -q sshd restart >/dev/null 2>&1',
     );
   }
   return ['set -e', ...lines].join('\n');
