@@ -6,6 +6,7 @@
 import type { ShellCommand } from '../../core/types';
 import { bi } from '../../core/i18n';
 import type { Cluster, ComponentId } from './cluster';
+import { GIT_URL, gitCommit, newAddonState, outsideHttp } from './addons';
 import { httpFrom, iptablesSave, nodeIpAddr, nodeIpRoute } from './network';
 import { k8sState, machineNow } from './state';
 import { age, iso, pad, parseDuration } from './util';
@@ -45,6 +46,15 @@ Usage:
   cluster etcd [PREFIX]                keys in etcd (/registry/...) with their
                                        resourceVersion
   cluster timeline [N]                 the last N changes in the store (watch log)
+  cluster curl [-sS] [-k] URL          a request from a computer in the office
+                                       network (192.168.56.0/24, like the nodes):
+                                       names under .example point at 192.168.56.240
+  cluster git push FILE... -m MESSAGE  commit files to apps/ of the team's Git
+                                       repository and push them to main
+  cluster git rm FILE -m MESSAGE       delete apps/FILE in a new commit
+  cluster git log                      the commits of main, newest first
+  cluster load DEPLOYMENT CPU          the users' requests cost the pods of a
+                                       Deployment CPU together (900m, 0 to stop)
 `;
 
 function etcdKey(c: Cluster, kind: string, ns: string | undefined, name: string): string {
@@ -206,11 +216,91 @@ export function clusterCommand(): ShellCommand {
           ctx.out(pad([['RV', 'WHEN', 'EVENT', 'OBJECT'], ...rows]));
           return 0;
         }
+        case 'curl': {
+          const args = ctx.argv.slice(2);
+          const url = args.filter((x) => !x.startsWith('-')).pop();
+          if (!url) {
+            ctx.err("curl: try 'curl --help' or 'curl --manual' for more information\n");
+            return 2;
+          }
+          const flags = args.filter((x) => x.startsWith('-')).join('');
+          const silent = /s/.test(flags.replace(/--\w+/g, '')) || args.includes('--silent');
+          const showErr = /S/.test(flags) || !silent;
+          const r = outsideHttp(c, url, { insecure: /k/.test(flags.replace(/--\w+/g, '')) || args.includes('--insecure') });
+          if (!r.ok) {
+            if (showErr) ctx.err(r.error + '\n');
+            return r.exit;
+          }
+          if (/i/.test(flags.replace(/--\w+/g, ''))) ctx.out(`HTTP/1.1 ${r.status} ${r.status === 200 ? 'OK' : r.status === 404 ? 'Not Found' : r.status === 308 ? 'Permanent Redirect' : r.status === 503 ? 'Service Temporarily Unavailable' : ''}\n\n`);
+          ctx.out((r.body ?? '') + '\n');
+          return 0;
+        }
+        case 'git': {
+          c.addons ??= newAddonState();
+          const st = c.addons;
+          if (a === 'log') {
+            for (const cm of [...st.git].reverse()) ctx.out(`\x1b[33m${cm.sha.slice(0, 7)}\x1b[0m ${cm.message}\n`);
+            return 0;
+          }
+          if (a !== 'push' && a !== 'rm') {
+            ctx.err('cluster: usage: cluster git push FILE... -m MESSAGE | cluster git rm FILE -m MESSAGE | cluster git log\n');
+            return 2;
+          }
+          const rest = ctx.argv.slice(3);
+          const mi = rest.indexOf('-m');
+          const message = mi >= 0 ? (rest[mi + 1] ?? '') : '';
+          const paths = rest.filter((_, i) => i !== mi && i !== mi + 1);
+          if (!paths.length || !message) {
+            ctx.err(`cluster: usage: cluster git ${a} FILE... -m MESSAGE\n`);
+            return 2;
+          }
+          const files: Record<string, string | null> = {};
+          for (const f of paths) {
+            const base = f.split('/').pop()!;
+            if (a === 'rm') files[`apps/${base}`] = null;
+            else {
+              try {
+                files[`apps/${base}`] = ctx.fs.readFile(f);
+              } catch {
+                ctx.err(`fatal: pathspec '${f}' did not match any files\n`);
+                return 128;
+              }
+            }
+          }
+          const { commit, parent, changed } = gitCommit(c, files, message);
+          if (!changed.length) {
+            st.git.pop();
+            ctx.out('On branch main\nnothing to commit, working tree clean\n');
+            return 1;
+          }
+          const lines = changed.map((p) => (files[p] === null ? ` delete mode 100644 ${p}` : !(p in parent.files) ? ` create mode 100644 ${p}` : '')).filter(Boolean);
+          const ins = changed.reduce((n, p) => n + (files[p] ? files[p]!.split('\n').filter(Boolean).length : 0), 0);
+          const del = changed.reduce((n, p) => n + (parent.files[p] ? parent.files[p].split('\n').filter(Boolean).length : 0), 0);
+          ctx.out(`[main ${commit.sha.slice(0, 7)}] ${message}\n ${changed.length} file${changed.length > 1 ? 's' : ''} changed${ins ? `, ${ins} insertion${ins > 1 ? 's' : ''}(+)` : ''}${del ? `, ${del} deletion${del > 1 ? 's' : ''}(-)` : ''}\n${lines.map((l) => l + '\n').join('')}To ${GIT_URL}\n   ${parent.sha.slice(0, 7)}..${commit.sha.slice(0, 7)}  main -> main\n`);
+          return 0;
+        }
+        case 'load': {
+          const ms = /^(\d+)m?$/.exec(b ?? '');
+          if (!a || !ms) {
+            ctx.err('cluster: usage: cluster load DEPLOYMENT CPU (for example 900m; 0 stops the load)\n');
+            return 2;
+          }
+          const ns = 'default';
+          if (!c.get('Deployment', ns, a)) {
+            ctx.err(`cluster: no Deployment "${a}" in ${ns}\n`);
+            return 1;
+          }
+          c.addons ??= newAddonState();
+          const m = b!.endsWith('m') ? Number(ms[1]) : Number(ms[1]) * 1000;
+          c.addons.load[`${ns}/${a}`] = m;
+          ctx.out(m ? `${a}: the users' requests now cost its pods ${m}m of CPU together\n` : `${a}: no load from users\n`);
+          return 0;
+        }
         default:
           ctx.err(`cluster: unknown subcommand "${verb}"\n\n${CLUSTER_HELP}`);
           return 2;
       }
     },
-    complete: () => ['status', 'ff', 'power', 'stop', 'start', 'iptables', 'ip', 'open', 'etcd', 'timeline'],
+    complete: () => ['status', 'ff', 'power', 'stop', 'start', 'iptables', 'ip', 'open', 'etcd', 'timeline', 'curl', 'git', 'load'],
   };
 }

@@ -163,6 +163,9 @@ export function podExec(c: Cluster, pod: Obj, ct: Obj, argv: string[]): ExecOut 
       const wIdx = args.indexOf('-w');
       const writeOut = wIdx >= 0 ? args[wIdx + 1] : undefined;
       const toNull = args.includes('/dev/null');
+      const mt = args.findIndex((a) => a === '-m' || a === '--max-time');
+      const maxTime = mt >= 0 ? Number(args[mt + 1]) : NaN;
+      if (!r.ok && r.exit === 28 && maxTime > 0) r.error = `curl: (28) Connection timed out after ${Math.round(maxTime * 1000) + 2} milliseconds`;
       if (!r.ok) {
         if (name === 'wget') return { out: '', err: `wget: can't connect to remote host: ${r.exit === 6 ? 'Name does not resolve' : r.exit === 7 ? 'Connection refused' : 'Connection timed out'}\n`, code: 1 };
         return { out: writeOut ? writeOut.replace('%{http_code}', '000') : '', err: silent && !args.some((a) => a.includes('S')) ? '' : r.error + '\n', code: r.exit };

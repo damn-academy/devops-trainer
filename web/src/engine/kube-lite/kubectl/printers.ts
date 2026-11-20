@@ -50,6 +50,12 @@ function external(s: Obj): string {
   return '<none>';
 }
 
+const MODES: Record<string, string> = { ReadWriteOnce: 'RWO', ReadOnlyMany: 'ROX', ReadWriteMany: 'RWX', ReadWriteOncePod: 'RWOP' };
+const accessModes = (m: string[] | undefined) => (m ?? []).map((x) => MODES[x] ?? x).join(',');
+const condOf = (o: Obj, type: string) => (o.status?.conditions ?? []).find((x: Obj) => x.type === type);
+const condStatus = (o: Obj, type: string) => condOf(o, type)?.status ?? '';
+const condMessage = (o: Obj, type: string) => condOf(o, type)?.message ?? '';
+
 function selectorStr(sel: Obj | undefined): string {
   if (!sel) return '<none>';
   const ml = Object.entries(sel.matchLabels ?? sel).filter(([, v]) => typeof v === 'string');
@@ -194,6 +200,54 @@ export function tableFor(c: Cluster, kind: string): Table {
       return { head: ['NAME', 'HOLDER', 'AGE'], rows: (l) => [l.metadata.name, l.spec?.holderIdentity ?? '', ago(c, l.metadata.creationTimestamp)] };
     case 'CustomResourceDefinition':
       return { head: ['NAME', 'CREATED AT'], rows: (d) => [d.metadata.name, d.metadata.creationTimestamp] };
+    case 'PersistentVolumeClaim':
+      return {
+        head: ['NAME', 'STATUS', 'VOLUME', 'CAPACITY', 'ACCESS MODES', 'STORAGECLASS', 'VOLUMEATTRIBUTESCLASS', 'AGE'],
+        rows: (v) => [v.metadata.name, v.status?.phase ?? 'Pending', v.spec?.volumeName ?? '', v.status?.capacity?.storage ?? '', accessModes(v.status?.accessModes ?? (v.status?.phase === 'Bound' ? v.spec?.accessModes : [])), v.spec?.storageClassName ?? '<unset>', '<unset>', ago(c, v.metadata.creationTimestamp)],
+        wideHead: ['VOLUMEMODE'],
+        wide: (v) => [v.spec?.volumeMode ?? 'Filesystem'],
+      };
+    case 'PersistentVolume':
+      return {
+        head: ['NAME', 'CAPACITY', 'ACCESS MODES', 'RECLAIM POLICY', 'STATUS', 'CLAIM', 'STORAGECLASS', 'VOLUMEATTRIBUTESCLASS', 'REASON', 'AGE'],
+        rows: (v) => [v.metadata.name, v.spec?.capacity?.storage ?? '', accessModes(v.spec?.accessModes), v.spec?.persistentVolumeReclaimPolicy ?? 'Retain', v.status?.phase ?? 'Available', v.spec?.claimRef ? `${v.spec.claimRef.namespace}/${v.spec.claimRef.name}` : '', v.spec?.storageClassName ?? '', '<unset>', '', ago(c, v.metadata.creationTimestamp)],
+      };
+    case 'StorageClass':
+      return {
+        head: ['NAME', 'PROVISIONER', 'RECLAIMPOLICY', 'VOLUMEBINDINGMODE', 'ALLOWVOLUMEEXPANSION', 'AGE'],
+        rows: (v) => [`${v.metadata.name}${v.metadata.annotations?.['storageclass.kubernetes.io/is-default-class'] === 'true' ? ' (default)' : ''}`, v.provisioner, v.reclaimPolicy ?? 'Delete', v.volumeBindingMode ?? 'Immediate', String(!!v.allowVolumeExpansion), ago(c, v.metadata.creationTimestamp)],
+      };
+    case 'IngressClass':
+      return { head: ['NAME', 'CONTROLLER', 'PARAMETERS', 'AGE'], rows: (v) => [v.metadata.name, v.spec?.controller ?? '', '<none>', ago(c, v.metadata.creationTimestamp)] };
+    case 'HorizontalPodAutoscaler':
+      return {
+        head: ['NAME', 'REFERENCE', 'TARGETS', 'MINPODS', 'MAXPODS', 'REPLICAS', 'AGE'],
+        rows: (v) => {
+          const m = (v.spec?.metrics ?? []).find((x: Obj) => x.type === 'Resource');
+          const want = m?.resource?.target?.averageUtilization;
+          const cur = (v.status?.currentMetrics ?? []).find((x: Obj) => x.type === 'Resource')?.resource?.current?.averageUtilization;
+          const targets = m ? `${m.resource.name}: ${cur === undefined ? '<unknown>' : `${cur}%`}/${want}%` : '<none>';
+          return [v.metadata.name, `${v.spec?.scaleTargetRef?.kind}/${v.spec?.scaleTargetRef?.name}`, targets, String(v.spec?.minReplicas ?? 1), String(v.spec?.maxReplicas ?? ''), String(v.status?.currentReplicas ?? 0), ago(c, v.metadata.creationTimestamp)];
+        },
+      };
+    case 'Certificate':
+      return { head: ['NAME', 'READY', 'SECRET', 'AGE'], rows: (v) => [v.metadata.name, condStatus(v, 'Ready'), v.spec?.secretName ?? '', ago(c, v.metadata.creationTimestamp)] };
+    case 'CertificateRequest':
+      return { head: ['NAME', 'APPROVED', 'DENIED', 'READY', 'ISSUER', 'REQUESTER', 'AGE'], rows: (v) => [v.metadata.name, condStatus(v, 'Approved'), condStatus(v, 'Denied'), condStatus(v, 'Ready'), v.spec?.issuerRef?.name ?? '', v.spec?.username ?? '', ago(c, v.metadata.creationTimestamp)] };
+    case 'ClusterIssuer':
+      return { head: ['NAME', 'READY', 'AGE'], rows: (v) => [v.metadata.name, condStatus(v, 'Ready'), ago(c, v.metadata.creationTimestamp)] };
+    case 'GitRepository':
+      return { head: ['NAME', 'URL', 'AGE', 'READY', 'STATUS'], rows: (v) => [v.metadata.name, v.spec?.url ?? '', ago(c, v.metadata.creationTimestamp), condStatus(v, 'Ready'), condMessage(v, 'Ready')] };
+    case 'Kustomization':
+      return { head: ['NAME', 'AGE', 'READY', 'STATUS'], rows: (v) => [v.metadata.name, ago(c, v.metadata.creationTimestamp), condStatus(v, 'Ready'), condMessage(v, 'Ready')] };
+    case 'GatewayClass':
+      return { head: ['NAME', 'CONTROLLER', 'ACCEPTED', 'AGE'], rows: (v) => [v.metadata.name, v.spec?.controllerName ?? '', condStatus(v, 'Accepted') || 'Unknown', ago(c, v.metadata.creationTimestamp)] };
+    case 'Gateway':
+      return { head: ['NAME', 'CLASS', 'ADDRESS', 'PROGRAMMED', 'AGE'], rows: (v) => [v.metadata.name, v.spec?.gatewayClassName ?? '', (v.status?.addresses ?? []).map((a: Obj) => a.value).join(','), condStatus(v, 'Programmed') || 'Unknown', ago(c, v.metadata.creationTimestamp)] };
+    case 'HTTPRoute':
+      return { head: ['NAME', 'HOSTNAMES', 'AGE'], rows: (v) => [v.metadata.name, JSON.stringify(v.spec?.hostnames ?? []), ago(c, v.metadata.creationTimestamp)] };
+    case 'IPAddressPool':
+      return { head: ['NAME', 'AUTO ASSIGN', 'AVOID BUGGY IPS', 'ADDRESSES'], rows: (v) => [v.metadata.name, String(v.spec?.autoAssign ?? true), String(!!v.spec?.avoidBuggyIPs), JSON.stringify(v.spec?.addresses ?? [])] };
     default:
       return { head: ['NAME', 'AGE'], rows: (o) => [o.metadata.name, ago(c, o.metadata.creationTimestamp)] };
   }

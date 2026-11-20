@@ -3,6 +3,7 @@
 
 import YAML from 'yaml';
 import type { SimMachineApi, Snapshotable } from '../../core/types';
+import type { AddonId } from './addons';
 import { Cluster, type ClusterOptions, type Components } from './cluster';
 import { parseManifests } from './manifests';
 import { runKubectl } from './kubectl/index';
@@ -26,6 +27,10 @@ export interface K8sSetup {
   after?: { power?: Record<string, boolean>; components?: Partial<Components>; kubelet?: Record<string, boolean> };
   /** Start without CoreDNS (constructor runs). */
   bare?: boolean;
+  /** Add-ons installed at boot: ingress-nginx, metallb, csi-hostpath, cert-manager, metrics-server, flux, prometheus… */
+  addons?: AddonId[];
+  /** The CNI replaces kube-proxy (Cilium). */
+  proxyReplacement?: boolean;
   seed?: number;
 }
 
@@ -81,7 +86,7 @@ export function kubeconfigYaml(namespace: string | undefined, contexts: Record<s
 export async function applyK8sSetup(m: SimMachineApi, value: unknown): Promise<void> {
   const v = (value ?? {}) as K8sSetup;
   const st = k8sState(m);
-  const c = new Cluster({ nodes: v.nodes, components: v.bare ? { ...v.components, coredns: false } : v.components, controlPlaneTaint: v.controlPlaneTaint, bare: v.bare, seed: v.seed });
+  const c = new Cluster({ nodes: v.nodes, components: v.bare ? { ...v.components, coredns: false } : v.components, controlPlaneTaint: v.controlPlaneTaint, bare: v.bare, seed: v.seed, addons: v.addons, proxyReplacement: v.proxyReplacement });
   st.cluster = c;
   const login = m.users.find((u) => u.name === 'learner') ?? m.users.find((u) => u.uid >= 1000);
   for (const u of [login, m.users.find((x) => x.name === 'root')]) {

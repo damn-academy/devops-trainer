@@ -13,6 +13,7 @@
 // terminal's "Reset this screen" and saved progress work without special
 // cases. Nothing here touches the DOM.
 
+import { installAddons, newAddonState, runAddons, type AddonId, type AddonState } from './addons';
 import { lookupImage } from './images';
 import { KindTable, apiVersionOf, type KindInfo } from './kinds';
 import { applyDefaults, validate } from './admission';
@@ -76,6 +77,10 @@ export interface ClusterOptions {
   /** Skip the kube-system workloads (CoreDNS) — the constructor builds them itself. */
   bare?: boolean;
   seed?: number;
+  /** Add-ons installed at boot (the layered constructor); undefined: a plain k3s-like cluster. */
+  addons?: AddonId[];
+  /** The CNI replaces kube-proxy (Cilium with kubeProxyReplacement). */
+  proxyReplacement?: boolean;
 }
 
 export interface ClusterState {
@@ -97,6 +102,7 @@ export interface ClusterState {
   lastReal: number | null;
   nextClusterIP: number;
   nextNodePort: number;
+  addons?: AddonState | null;
 }
 
 export interface ProxyTable {
@@ -152,6 +158,8 @@ export class Cluster {
   lastReal: number | null = null;
   nextClusterIP = 20;
   nextNodePort = 30080;
+  /** Add-ons and their controllers' memory; null on a plain cluster (Ingress status as k3s ServiceLB gives). */
+  addons: AddonState | null = null;
   private objs = new Map<string, Obj>();
   private listeners = new Set<Listener>();
   /** Set while a tick runs controllers: writes they make are not "user" writes. */
@@ -180,6 +188,7 @@ export class Cluster {
       memory: '4015948Ki',
       labels: {},
     }));
+    if (o.addons || o.proxyReplacement) this.addons = newAddonState(o.addons ?? [], !!o.proxyReplacement);
     this.boot(o);
   }
 
@@ -284,6 +293,7 @@ export class Cluster {
       // CoreDNS sits on the control-plane node, as in a fresh k3s.
       this.nodes[0].images.push('rancher/mirrored-coredns-coredns:1.12.3');
     }
+    if (this.addons?.installed.length) installAddons(this, this.addons.installed);
     this.advance(30_000);
     // Everything that exists at boot is "a few days old", as on a cluster you are given.
     const back = 4 * 86_400_000 - 30_000;
@@ -706,8 +716,9 @@ export class Cluster {
         if (this.components.apiserver && this.components.etcd) {
           if (this.components['controller-manager']) runControllers(this);
           if (this.components.scheduler) runScheduler(this);
+          if (this.addons) runAddons(this);
         }
-        if (this.components['kube-proxy'] && this.components.apiserver) this.proxy = proxyTable(this);
+        if ((this.components['kube-proxy'] || (this.addons?.proxyReplacement && this.components.cni)) && this.components.apiserver) this.proxy = proxyTable(this);
         if (this.rv === before) break;
       }
     } finally {
@@ -735,6 +746,7 @@ export class Cluster {
       lastReal: this.lastReal,
       nextClusterIP: this.nextClusterIP,
       nextNodePort: this.nextNodePort,
+      addons: this.addons,
     } satisfies ClusterState);
   }
 
@@ -756,6 +768,7 @@ export class Cluster {
     this.lastReal = s.lastReal;
     this.nextClusterIP = s.nextClusterIP;
     this.nextNodePort = s.nextNodePort;
+    this.addons = s.addons ?? null;
   }
 
   /** Image behaviour for a container, with the node cache. */

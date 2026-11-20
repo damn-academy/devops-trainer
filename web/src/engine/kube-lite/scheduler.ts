@@ -117,15 +117,29 @@ export function failedMessage(results: FilterResult[]): string {
   return `0/${total} nodes are available: ${count(reasons).join(', ')}. preemption: 0/${total} nodes are available: ${pre.join(', ')}.`;
 }
 
+/** The VolumeBinding PreFilter: a claim that does not exist or is not bound yet stops the pod before any node is looked at. */
+export function volumeProblem(c: Cluster, pod: Obj): string | undefined {
+  for (const v of pod.spec.volumes ?? []) {
+    const name = v.persistentVolumeClaim?.claimName;
+    if (!name) continue;
+    const pvc = c.get('PersistentVolumeClaim', pod.metadata.namespace, name);
+    if (!pvc) return `persistentvolumeclaim "${name}" not found`;
+    if (pvc.status?.phase !== 'Bound') return 'pod has unbound immediate PersistentVolumeClaims';
+  }
+  return undefined;
+}
+
 /** One scheduling pass: every pending pod without a node. */
 export function runScheduler(c: Cluster): void {
   const pods = c.list('Pod').filter((p) => !p.spec.nodeName && !p.metadata.deletionTimestamp && (p.spec.schedulerName ?? 'default-scheduler') === 'default-scheduler');
   pods.sort((a, b) => (b.spec.priority ?? 0) - (a.spec.priority ?? 0) || a.metadata.creationTimestamp.localeCompare(b.metadata.creationTimestamp));
   for (const pod of pods) {
-    const results = filterNodes(c, pod);
+    const vol = volumeProblem(c, pod);
+    const results = vol ? [] : filterNodes(c, pod);
     const fit = results.filter((r) => r.ok);
-    if (!fit.length) {
-      const msg = failedMessage(results);
+    if (vol || !fit.length) {
+      const n = c.list('Node').length;
+      const msg = vol ? `0/${n} nodes are available: ${vol}. preemption: 0/${n} nodes are available: ${n} Preemption is not helpful for scheduling.` : failedMessage(results);
       const cond = (pod.status?.conditions ?? []).find((x: Obj) => x.type === 'PodScheduled');
       if (!cond || cond.message !== msg) {
         c.putStatus(pod, { ...pod.status, phase: 'Pending', conditions: [{ type: 'PodScheduled', status: 'False', reason: 'Unschedulable', message: msg, lastProbeTime: null, lastTransitionTime: iso(c.now) }] });

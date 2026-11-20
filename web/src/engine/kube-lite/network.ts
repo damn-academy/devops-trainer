@@ -5,6 +5,7 @@
 // request from a pod walks the same ladder a learner debugs: DNS → Service →
 // EndpointSlice → pod → NetworkPolicy.
 
+import { prometheusHttp } from './addons';
 import { selects } from './admission';
 import type { Cluster } from './cluster';
 import { controllerOf, resolveTargetPort } from './controllers';
@@ -210,13 +211,15 @@ function askPod(c: Cluster, src: Obj | null, pod: Obj, port: number, path: strin
     trace.push(`${pod.metadata.name} is still warming up`);
     return { ok: false, exit: 52, error: 'curl: (52) Empty reply from server', trace };
   }
-  if (!img.http.includes(path)) {
+  const bare = path.split('?')[0];
+  if (!img.http.includes(bare)) {
     trace.push(`${pod.metadata.name} answers 404 for ${path}`);
     return { ok: true, status: 404, body: '404 page not found', exit: 0, pod: pod.metadata.name, trace };
   }
   const env = Object.fromEntries((ct.env ?? []).filter((e: Obj) => e.value !== undefined).map((e: Obj) => [e.name, String(e.value)]));
   let body = (img.body ?? 'ok').replace(/\{pod\}/g, pod.metadata.name).replace(/\{ip\}/g, ip);
-  if (path === '/healthz' || path === '/ready') body = 'ok';
+  if (img.handler === 'prometheus') body = prometheusHttp(c, path);
+  else if (path === '/healthz' || path === '/ready') body = 'ok';
   else if (env.GREETING) body = `${env.GREETING}! ${body}`;
   trace.push(`${pod.metadata.name} (${ip}:${port}) answers 200`);
   return { ok: true, status: 200, body, exit: 0, pod: pod.metadata.name, trace };

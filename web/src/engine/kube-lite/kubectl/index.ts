@@ -7,6 +7,7 @@ import YAML from 'yaml';
 import type { CmdContext, ShellCommand, SimMachineApi } from '../../../core/types';
 import { bi } from '../../../core/i18n';
 import { b64 } from '../admission';
+import { metricsAvailable, podUsage } from '../addons';
 import { ApiError, Cluster, K8S_VERSION } from '../cluster';
 import { controllerOf, podReady, templateWithoutHash } from '../controllers';
 import { imageRef, lookupImage } from '../images';
@@ -138,7 +139,7 @@ function writeKubeconfig(m: SimMachineApi, kc: Kubeconfig): void {
 function resolveKind(x: Ctx, word: string): KindInfo {
   const info = x.c.kinds.resolve(word);
   if (!info) {
-    const known = ['statefulsets', 'sts', 'cronjobs', 'cj', 'persistentvolumeclaims', 'pvc', 'persistentvolumes', 'pv', 'storageclasses', 'sc', 'roles', 'rolebindings', 'clusterroles', 'clusterrolebindings', 'horizontalpodautoscalers', 'hpa', 'gateways', 'httproutes', 'poddisruptionbudgets', 'pdb', 'limitranges', 'resourcequotas', 'ingressclasses', 'gatewayclasses', 'certificatesigningrequests', 'csr', 'controllerrevisions'];
+    const known = ['statefulsets', 'sts', 'cronjobs', 'cj', 'roles', 'rolebindings', 'clusterroles', 'clusterrolebindings', 'poddisruptionbudgets', 'pdb', 'limitranges', 'resourcequotas', 'certificatesigningrequests', 'csr', 'controllerrevisions'];
     const plain = word.toLowerCase().split('.')[0];
     const extra = known.includes(plain) || known.includes(plain + 's') ? `\n${TRAINER} this resource is not in the training cluster yet; it exists on the real stage.` : '';
     fail(`error: the server doesn't have a resource type "${word}"${extra}`);
@@ -1415,6 +1416,46 @@ function cmdApiResources(x: Ctx): void {
   else x.out(pad(bool(x.p, 'no-headers') ? rows : [['NAME', 'SHORTNAMES', 'APIVERSION', 'NAMESPACED', 'KIND'], ...rows]));
 }
 
+/** kubectl top: the Metrics API that metrics-server serves (absent without it). */
+function cmdTop(x: Ctx): void {
+  const what = x.p.args[0] ?? '';
+  if (!['pod', 'pods', 'po', 'node', 'nodes', 'no'].includes(what)) fail(`error: unknown command "${what}" for "kubectl top"\n\nDid you mean this?\n\tnode\n\tpod`);
+  if (!metricsAvailable(x.c)) fail('error: Metrics API not available');
+  const mi = (b: number) => `${Math.round(b / 2 ** 20)}Mi`;
+  if (what.startsWith('no')) {
+    const rows = x.c.nodes
+      .filter((n) => n.power && n.kubelet)
+      .map((n) => {
+        const pods = x.c.list('Pod').filter((p) => p.spec.nodeName === n.name && p.status?.phase === 'Running');
+        const cpu = 60 + pods.reduce((s, p) => s + podUsage(x.c, p).cpu, 0);
+        const mem = 720 * 2 ** 20 + pods.reduce((s, p) => s + podUsage(x.c, p).memory, 0);
+        const capCpu = Number(n.cpu) * 1000;
+        const capMem = Number(n.memory.replace(/Ki$/, '')) * 1024;
+        return [n.name, `${cpu}m`, `${Math.round((cpu / capCpu) * 100)}%`, mi(mem), `${Math.round((mem / capMem) * 100)}%`];
+      });
+    x.out(pad([['NAME', 'CPU(cores)', 'CPU(%)', 'MEMORY(bytes)', 'MEMORY(%)'], ...rows]));
+    return;
+  }
+  const allNs = bool(x.p, 'all-namespaces');
+  const sel = str(x.p, 'selector');
+  const name = x.p.args[1];
+  let pods = x.c.list('Pod', allNs ? undefined : x.ns).filter((p) => p.status?.phase === 'Running' && !p.metadata.deletionTimestamp);
+  if (sel) pods = pods.filter((p) => matchLabels(sel, p.metadata.labels));
+  if (name) {
+    pods = pods.filter((p) => p.metadata.name === name);
+    if (!pods.length) fail(`Error from server (NotFound): pods "${name}" not found`);
+  }
+  if (!pods.length) {
+    x.err(allNs ? 'No resources found\n' : `No resources found in ${x.ns} namespace.\n`);
+    return;
+  }
+  const rows = pods.map((p) => {
+    const u = podUsage(x.c, p);
+    return [...(allNs ? [p.metadata.namespace] : []), p.metadata.name, `${u.cpu}m`, mi(u.memory)];
+  });
+  x.out(pad([[...(allNs ? ['NAMESPACE'] : []), 'NAME', 'CPU(cores)', 'MEMORY(bytes)'], ...rows]));
+}
+
 function cmdEvents(x: Ctx): void {
   const allNs = bool(x.p, 'all-namespaces');
   let evs = objectsOf(x, x.c.kinds.byKind('Event')!, allNs);
@@ -1582,7 +1623,7 @@ export async function runKubectl(m: SimMachineApi, cluster: Cluster | null, argv
         x.out(`\x1b[0;32mKubernetes control plane\x1b[0m is running at \x1b[0;33mhttps://127.0.0.1:6443\x1b[0m\n${c.get('Service', 'kube-system', 'kube-dns') ? '\x1b[0;32mCoreDNS\x1b[0m is running at \x1b[0;33mhttps://127.0.0.1:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy\x1b[0m\n' : ''}\nTo further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.\n`);
         break;
       case 'top':
-        fail('error: Metrics API not available');
+        cmdTop(x);
         break;
       case 'edit':
         fail(`${TRAINER} kubectl edit opens a text editor on the object. In the training terminal change objects with kubectl apply -f <file>, kubectl patch, kubectl set image or kubectl scale — the API server sees the same update.`);
