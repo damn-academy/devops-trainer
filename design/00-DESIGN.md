@@ -482,6 +482,8 @@ From the Sankofa engine (`~/projects/sankofa-int/web/src/features`) we carry ove
 
 ### 6.12. Our own fast engine: RV64 with JIT
 
+**Owner decision (20.11.2026): kuberoot instead of k3s.** Wherever the course itself brings up real Kubernetes (the RV64 engine in the browser, the local lab on the learner's computer, the "one real node" stage), it uses kuberoot (github.com/tym83/kuberoot): a distribution with its own kernel, installer and node API, built for amd64 and arm64. The RV64 engine needs a riscv64 build of kuberoot, a separate task of the track. k3s, kind and minikube stay in lessons only as common industry options the learner should know about.
+
 The main limitation of v86 is not speed but word size: it emulates 32-bit x86, while k3s, containerd, kubelet and Cilium are built only for 64 bits. So real Kubernetes in the browser is impossible right now, and the course relies on the hybrid (section 6.5). Our own 64-bit engine removes this limitation. CheerpX does not serve as a model: it is fast because it throws out the kernel, and the kernel is exactly what the course runs real Linux for.
 
 **Decision.** Our own full computer emulation on RISC-V 64 (RV64GC, the privileged architecture with Sv39) with a JIT to WebAssembly. RISC-V was chosen over x86-64: the instruction set is small and regular, and a decoder and JIT can be written in months rather than years; Debian, Alpine, k3s and containerd are already built for `riscv64`. The learner will see `riscv64` in `uname -m` — this does not matter for the lab tasks, and on the "where are you" screen it is even an extra occasion to talk about processor architectures. The reference point for checking behavior is Fabrice Bellard's TinyEMU (RV64 without a JIT, already boots Linux in the browser).
