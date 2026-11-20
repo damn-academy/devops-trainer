@@ -17,10 +17,10 @@ import { runModel } from './explainers/run';
 import { systemModel } from './explainers/system';
 import { togetherModel } from './explainers/together';
 import { insideLesson, insideQuiz, netLesson, netQuiz, requestsLesson, requestsQuiz, systemLesson, systemQuiz, textLesson, textQuiz } from './lessons-1';
-import { placesLesson, placesQuiz, releaseLesson, releaseQuiz, rentLesson, rentQuiz, teamLesson, teamQuiz, togetherLesson, togetherQuiz } from './lessons-2';
+import { placesLesson, placesQuiz, releaseLesson, releaseQuiz, rentLesson, rentQuiz, reviewQuiz, teamLesson, teamQuiz, togetherLesson, togetherQuiz } from './lessons-2';
 
 export const LESSONS = [insideLesson, systemLesson, textLesson, netLesson, requestsLesson, rentLesson, releaseLesson, placesLesson, togetherLesson, teamLesson];
-export const QUIZ = [...insideQuiz, ...systemQuiz, ...textQuiz, ...netQuiz, ...requestsQuiz, ...rentQuiz, ...releaseQuiz, ...placesQuiz, ...togetherQuiz, ...teamQuiz];
+export const QUIZ = [...insideQuiz, ...systemQuiz, ...textQuiz, ...netQuiz, ...requestsQuiz, ...rentQuiz, ...releaseQuiz, ...placesQuiz, ...togetherQuiz, ...teamQuiz, ...reviewQuiz];
 
 export default defineModule({
   blocks: [block],
