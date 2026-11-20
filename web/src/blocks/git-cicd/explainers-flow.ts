@@ -104,10 +104,10 @@ export const mergeModel = defineModel<MergeP>({
       default: false,
       near: 'm',
       predict: {
-        prompt: bi('В main новых коммитов не было, но вы запускаете git merge --no-ff feature. Появится ли коммит слияния?', 'main did not move on, but you run git merge --no-ff feature. Will a merge commit appear?'),
+        prompt: bi('Вы запускаете git merge --no-ff feature, а ветки остаются в том состоянии, которое сейчас выбрано в группе «Что произошло в ветках». Появится ли коммит слияния?', 'You run git merge --no-ff feature, and the branches stay as “What happened on the branches” now shows. Will a merge commit appear?'),
         options: [
-          { id: 'yes', text: bi('Да, потому что флаг --no-ff запрещает передвигать ветку без коммита слияния', 'Yes: --no-ff forbids the fast-forward') },
-          { id: 'no', text: bi('Нет, потому что соединять нечего и main передвинется вперёд', 'No: there is nothing to join, main just moves') },
+          { id: 'yes', text: bi('Да, потому что флаг --no-ff запрещает передвигать ветку без коммита слияния, даже когда передвинуть её можно', 'Yes, because --no-ff forbids moving the branch without a merge commit, even when it could be moved') },
+          { id: 'no', text: bi('Нет, если в main не было новых коммитов: тогда соединять нечего, и main передвинется вперёд', 'No, if main had no new commits: then there is nothing to join, and main moves forward') },
         ],
         resolve: (_p, n) => (metric(n, 'created') > 0 ? 'yes' : 'no'),
       },
