@@ -226,6 +226,9 @@ describe('gitops controller', () => {
     let a = await app();
     expect(a.status?.sync?.status).toBe('Synced');
     expect(a.status?.health?.status).toBe('Healthy');
+    // Argo CD's printer columns, as kubectl shows them for the CRD.
+    expect((await m.exec('kubectl get application -n argocd')).out).toMatch(/NAME\s+SYNC STATUS\s+HEALTH STATUS\nshop\s+Synced\s+Healthy/);
+    expect((await m.exec('kubectl get application -n argocd -o wide')).out).toMatch(/REVISION\s+PROJECT\nshop\s+Synced\s+Healthy\s+[0-9a-f]{7,}\s+default/);
     // drift by hand is reverted
     await sh(m, 'kubectl scale deployment shop -n shop --replicas=5', 'kubectl get deploy shop -n shop');
     a = await app();

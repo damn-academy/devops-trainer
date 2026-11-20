@@ -67,6 +67,32 @@ describe('hcl', () => {
     expect(evaluate(b[0].attrs[0].expr, scope)).toBe('web-prod');
     expect(evaluate(b[0].attrs[1].expr, scope)).toBe(4);
   });
+  it('evaluates for expressions, heredoc interpolation and %{ for } directives', () => {
+    const vms = [{ name: 'worker-1', public_ip: '1.1.1.1' }, { name: 'worker-2', public_ip: '2.2.2.2' }];
+    const scope = { vars: {}, locals: new Map(), resources: (t: string, n: string) => (t === 'edu_vm' && n === 'worker' ? vms : undefined) };
+    const src = [
+      'output "a" {',
+      '  value = join("\\n", [for w in edu_vm.worker : "${w.name} ansible_host=${w.public_ip}"])',
+      '}',
+      'output "b" {',
+      '  value = <<-EOT',
+      '    [workers]',
+      '    %{ for w in edu_vm.worker ~}',
+      '    ${w.name}',
+      '    %{ endfor ~}',
+      '    $${literal}',
+      '    EOT',
+      '}',
+      'output "c" {',
+      '  value = [for i, w in edu_vm.worker : i if w.name != "worker-1"]',
+      '}',
+      '',
+    ].join('\n');
+    const [a, b, c] = parseHcl(src, 'main.tf');
+    expect(evaluate(a.attrs[0].expr, scope)).toBe('worker-1 ansible_host=1.1.1.1\nworker-2 ansible_host=2.2.2.2');
+    expect(evaluate(b.attrs[0].expr, scope)).toBe('[workers]\nworker-1\nworker-2\n${literal}\n');
+    expect(evaluate(c.attrs[0].expr, scope)).toEqual([1]);
+  });
   it('reports a missing brace with the line', () => {
     try {
       parseHcl('resource "edu_vm" "web" {\n  name = "web"\n', 'main.tf');
