@@ -85,7 +85,7 @@ export const QUIZ: QuizItem[] = [
     concepts: ['k8s.cgroup-driver'],
     prompt: bi('Сопоставьте каждый шаг подготовки узла с тем, зачем он нужен.', 'Match each step of node preparation with what it is for.'),
     pairs: [
-      { id: 'swap', left: bi('swap выключен и убран из fstab', 'swap is off and removed from fstab'), right: bi('kubelet по умолчанию не запускается со swap, а без правки fstab swap снова включится после перезагрузки', 'by default the kubelet does not start with swap, and without the fstab edit swap comes back after a reboot') },
+      { id: 'swap', left: bi('строка swap удалена из fstab', 'the swap line is removed from fstab'), right: bi('kubelet по умолчанию не запускается со swap, а пока строка swap есть в fstab, swap снова включится после перезагрузки', 'by default the kubelet does not start with swap, and while the swap line is in fstab, swap comes back after a reboot') },
       { id: 'fwd', left: 'net.ipv4.ip_forward = 1', right: bi('узел пересылает пакеты подов между сетевыми интерфейсами', 'the node forwards pod packets between network interfaces') },
       { id: 'cg', left: 'SystemdCgroup = true', right: bi('containerd и kubelet управляют cgroup одним способом, через systemd', 'containerd and the kubelet manage cgroups the same way, through systemd') },
       { id: 'pin', left: bi('репозиторий v1.36 и версия пакета в коде', 'the v1.36 repository and the package version in the code'), right: bi('Kubernetes обновляется по решению человека, а не командой apt upgrade', 'Kubernetes is upgraded by a person’s decision, not by apt upgrade') },
@@ -194,11 +194,11 @@ export const QUIZ: QuizItem[] = [
     id: 'k8s-3.q.pull',
     kind: 'mcq',
     concepts: ['cicd.gitops-pull'],
-    prompt: bi('Чем выкладка через GitOps отличается от шага `kubectl apply` в конвейере CI?', 'How does a GitOps release differ from a `kubectl apply` step in a CI pipeline?'),
+    prompt: bi('Чем выкладка через GitOps отличается от шага `kubectl apply` в пайплайне CI?', 'How does a GitOps release differ from a `kubectl apply` step in a CI pipeline?'),
     options: [
-      { id: 'pull', text: bi('Агент внутри кластера сам забирает состояние из Git и постоянно поддерживает его, а конвейеру не нужен доступ к кластеру', 'An agent inside the cluster pulls the state from Git itself and keeps it all the time, and the pipeline needs no cluster access'), correct: true },
+      { id: 'pull', text: bi('Агент внутри кластера сам забирает состояние из Git и постоянно поддерживает его, а пайплайну не нужен доступ к кластеру', 'An agent inside the cluster pulls the state from Git itself and keeps it all the time, and the pipeline needs no cluster access'), correct: true },
       { id: 'faster', text: bi('GitOps доставляет изменения в кластер быстрее', 'GitOps rolls changes out faster'), why: bi('Скорость примерно одинакова, а при опросе раз в три минуты GitOps бывает даже медленнее. GitOps выигрывает тем, что кластер сам постоянно поддерживает состояние из Git.', 'The speed is about the same, and with a three-minute poll GitOps can even be slower. The gain is elsewhere.') },
-      { id: 'once', text: bi('Ничем не отличается, потому что в обоих случаях манифесты применяются один раз', 'There is no difference, because in both cases the manifests are applied once'), why: bi('Конвейер применяет манифесты один раз и больше о них не вспоминает. Контроллер GitOps сверяет состояние снова и снова и поэтому замечает ручную правку.', 'A pipeline applies the manifests once and forgets them. A GitOps controller compares again and again, and so it notices a manual edit.') },
+      { id: 'once', text: bi('Ничем не отличается, потому что в обоих случаях манифесты применяются один раз', 'There is no difference, because in both cases the manifests are applied once'), why: bi('Пайплайн применяет манифесты один раз и больше о них не вспоминает. Контроллер GitOps сверяет состояние снова и снова и поэтому замечает ручную правку.', 'A pipeline applies the manifests once and forgets them. A GitOps controller compares again and again, and so it notices a manual edit.') },
     ],
   },
   {
