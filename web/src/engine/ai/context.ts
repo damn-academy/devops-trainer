@@ -59,8 +59,7 @@ export function currentTask(l: Lesson | undefined, root: ParentNode | null = typ
   const id = el?.dataset.task;
   const task = id ? lessonTasks(l).find((x) => x.id === id) : undefined;
   if (!task) return null;
-  const tag = el?.querySelector('.dl-tag')?.getAttribute('title');
-  const dl = tag ? Number(tag.replace(/\D/g, '')) : undefined;
+  const dl = Number(el?.dataset.docStep) || undefined;
   return { task, docStep: dl || task.docStep || (task.beyond ? 4 : undefined) };
 }
 

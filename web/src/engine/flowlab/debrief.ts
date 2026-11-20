@@ -130,7 +130,7 @@ export function mountDebrief(root: HTMLElement, sc: Scenario, s: State, o: Debri
     h(
       'section.fl-d-sec',
       {},
-      h('h4', {}, t(bi('2. Ваш прогон и два эталона на том же зерне', '2. Your run and two references on the same seed'))),
+      h('h4', {}, t(bi('2. Ваш результат и два эталона при одинаковых исходных условиях', '2. Your run and two references on the same seed'))),
       h('p.small.muted', {}, t(bi('«Без методологии» — без лимитов, первым пришёл — первым взят, всё срочное сразу в работу, без улучшений. «Эталон» — лимит «люди на этапе + 1», вытягивание по CD3, помощь узкому месту, улучшения сразу, частые выкладки. Кубики и события у всех трёх одни и те же.', '“Baseline”: no limits, first come first served, everything urgent straight into work, no improvements. “Reference”: a limit of people on the stage + 1, pull by CD3, help for the bottleneck, improvements at once, frequent deployments. All three get the same dice and events.'))),
       h(
         'table.fl-compare',
@@ -191,8 +191,8 @@ export function mountDebrief(root: HTMLElement, sc: Scenario, s: State, o: Debri
     h(
       'div.fl-d-actions',
       {},
-      h('button.btn', { type: 'button', onclick: () => o.again(s.seed) }, icon('repeat'), t(bi('Ещё раз с тем же зерном', 'Again with the same seed'))),
-      h('button.btn', { type: 'button', onclick: () => o.again((s.seed * 7919 + 13) % 100000) }, t(bi('С новым зерном', 'With a new seed'))),
+      h('button.btn', { type: 'button', onclick: () => o.again(s.seed) }, icon('repeat'), t(bi('Повторить с теми же исходными условиями', 'Again with the same seed'))),
+      h('button.btn', { type: 'button', onclick: () => o.again((s.seed * 7919 + 13) % 100000) }, t(bi('Начать с другими исходными условиями', 'With a new seed'))),
     ),
   );
   drawStep();

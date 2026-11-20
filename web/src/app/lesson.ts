@@ -1,6 +1,7 @@
 // The lesson page: sections in order (re-ordered for Experienced: the
 // challenge comes first, 08 §5.2), progress auto-saved after every section.
 
+import { renderInline } from '../core/markdown';
 import { h, icon } from '../core/dom';
 import { bi, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
@@ -75,7 +76,7 @@ export function lessonPage(id: string, focusSection?: string): Page {
       {},
       h('nav.crumbs', { 'aria-label': 'breadcrumbs' }, h('a', { href: href({ name: 'home' }) }, t(UI.map)), ' › ', block ? h('a', { href: href({ name: 'block', id: block.id }) }, t(block.title)) : null),
       h('h1', {}, t(lesson.title)),
-      lesson.summary ? h('p.lede', {}, t(lesson.summary)) : null,
+      lesson.summary ? h('p.lede', {}, ...renderInline(t(lesson.summary))) : null,
       h(
         'div.lesson-meta',
         {},
@@ -90,6 +91,7 @@ export function lessonPage(id: string, focusSection?: string): Page {
     body,
     doneBanner,
     sourcesBlock(lesson.sources),
+    lesson.verifiedVersion ? h('footer.small.muted', {}, t(bi(`Сверено с версией ${lesson.verifiedVersion}.`, `Verified with version ${lesson.verifiedVersion}.`))) : null,
     h(
       'nav.lesson-nav',
       {},

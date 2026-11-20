@@ -632,7 +632,7 @@ export class Systemd implements Snapshotable {
   async restart(name: string): Promise<{ ok: boolean; lines: string[] }> {
     const s = this.units.get(name);
     if (s?.mainPid) this.stop(name);
-    if (s) {
+    if (s && s.result !== 'start-limit-hit') {
       s.result = 'success';
       if (s.active === 'failed') s.active = 'inactive';
     }

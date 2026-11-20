@@ -6,8 +6,11 @@
 // "guessing" does not count. Failed tasks become gaps, never a silent
 // downgrade; a retake opens in 72 hours with another variant.
 
+import { referenceAnswer } from '../engine/quiz/review';
+import { readDraft, writeDraft, clearDraft } from '../core/draft';
+import { renderInline } from '../core/markdown';
 import { clear, put, h, icon } from '../core/dom';
-import { bi, fmt, lang, t, UI } from '../core/i18n';
+import { bi, count, fmt, lang, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
 import { href, navigate } from '../core/router';
 import { store } from '../core/store';
@@ -24,7 +27,7 @@ const P = {
     'Choose the level you want to confirm. Tasks come one at a time, and the first is the easiest. There are no hints and no mentor during the check.',
   ),
   rules: bi(
-    'Зачёт — 80% заданий и все ключевые. Практика проверяется по состоянию машины, любой путь к нужному состоянию засчитывается. Время пишется, но не валит проверку.',
+    'Зачёт — 80% заданий и все ключевые. Практика проверяется по состоянию машины, любой путь к нужному состоянию засчитывается. Время сохраняется, но на результат не влияет.',
     'To pass: 80% of the tasks and every key one. Practice is checked by the state of the machine: any way to the right state counts. Time is recorded but never fails the check.',
   ),
   beginner: bi('Новичку проверка не нужна: блок начинается с первого урока.', 'Beginners need no check: the block starts from the first lesson.'),
@@ -40,7 +43,7 @@ const P = {
   passed: bi('Уровень подтверждён', 'Level confirmed'),
   passedGaps: bi('Зачтено, кроме нескольких тем', 'Confirmed, except a few topics'),
   notYet: bi('Эти темы пройдём вместе', 'We will go through these topics together'),
-  gapsLine: bi('Темы, уроки по которым откроются и на твоём уровне:', 'Topics whose lessons open even at your level:'),
+  gapsLine: bi('Темы, уроки по которым откроются и на вашем уровне:', 'Topics whose lessons open even at your level:'),
   details: bi('Подробности', 'Details'),
   guessedLine: bi('Верно, но с пометкой «угадываю» — не засчитано:', 'Right but marked “guessing” — not counted:'),
   choose: bi('Уровень не понижается сам. Выберите, как идти дальше:', 'Your level is never lowered for you. Choose how to go on:'),
@@ -48,7 +51,7 @@ const P = {
   stay: bi('Остаться на уровне «{l}» с обязательными уроками по этим темам', 'Stay at “{l}” with the lessons on these topics required'),
   retake72: bi('Повторить проверку другим вариантом можно через 72 часа.', 'You can retake the check with another variant in 72 hours.'),
   moduleRoute: bi('Это была вторая попытка. Дальше проверка идёт по модулям: перед каждым уроком можно сдать его итоговую проверку и пропустить урок, если она сдана.', 'That was the second attempt. From here the check goes module by module: before each lesson you can take its exit check and skip the lesson if you pass.'),
-  time: bi('Время', 'Time'),
+  time: bi('время', 'Time'),
   variant: bi('вариант', 'variant'),
   ofN: bi('из', 'of'),
 };
@@ -88,7 +91,7 @@ export function placementPage(id: string): Page {
           const st = retakeState(history(), l, now);
           const v = nextVariant(b.placement, l, history());
           const n = tasksOf(b.placement, l, v).length;
-          const note = st.confirmed ? `✓ ${t(P.confirmed)}` : st.moduleByModule ? t(P.modules) : st.opensAt ? t(fmt(P.opens, { d: fmtDate(st.opensAt) })) : `${n} ${t(P.tasks)}`;
+          const note = st.confirmed ? `✓ ${t(P.confirmed)}` : st.moduleByModule ? t(P.modules) : st.opensAt ? t(fmt(P.opens, { d: fmtDate(st.opensAt) })) : count(n, ['задание', 'задания', 'заданий'], ['task', 'tasks']);
           return h(
             'button.level-card',
             { type: 'button', role: 'listitem', disabled: !st.allowed, onclick: () => run(l, v) },
@@ -104,17 +107,22 @@ export function placementPage(id: string): Page {
   const run = (claimed: Level, variant: number) => {
     disposeAll();
     const tasks = tasksOf(b.placement, claimed, variant);
-    const answers = new Map<string, PlacementAnswer>();
-    const started = Date.now();
-    let i = 0;
+    const key = `placement/${b.id}`;
+    const saved = readDraft<{ claimed: Level; variant: number; started: number; index: number; answers: PlacementAnswer[] }>(key);
+    const draft = saved?.claimed === claimed && saved.variant === variant ? saved : undefined;
+    const answers = new Map<string, PlacementAnswer>((draft?.answers ?? []).map(a => [a.id, a]));
+    const started = draft?.started ?? Date.now();
+    let i = draft?.index ?? 0;
+    const save = () => writeDraft(key, { claimed, variant, started, index: i, answers: [...answers.values()] });
 
     const step = () => {
+      save();
       disposeAll();
       clear(root);
       if (i >= tasks.length) return done(claimed, tasks, [...answers.values()], Date.now() - started);
       const p = tasks[i];
       const host = h('div.pl-host');
-      const nextBtn = h('button.btn.primary', { type: 'button', onclick: () => (i++, step()) }, i === tasks.length - 1 ? t(P.finish) : t(P.next), icon('next')) as HTMLButtonElement;
+      const nextBtn = h('button.btn.primary', { type: 'button', onclick: () => { if (p.kind === 'task' && !answers.has(p.id)) answers.set(p.id, { id: p.id, right: false, guessed: false }); i++; step(); } }, i === tasks.length - 1 ? t(P.finish) : t(P.next), icon('next')) as HTMLButtonElement;
       const skipBtn = h('button.btn.ghost', { type: 'button', onclick: () => (answers.set(p.id, { id: p.id, right: false }), i++, step()) }, t(P.skip));
       if (p.kind === 'quiz') {
         nextBtn.disabled = true;
@@ -126,13 +134,15 @@ export function placementPage(id: string): Page {
             onAnswered: (g) => {
               const conf = (store.state.quiz[p.item.id]?.confidence.slice(-1)[0] ?? 1) as Confidence;
               answers.set(p.id, { id: p.id, right: g.correct, guessed: conf === 1 });
+              save();
               nextBtn.disabled = false;
+              save();
               skipBtn.remove();
             },
           }),
         );
       } else {
-        answers.set(p.id, { id: p.id, right: false });
+
         mounts.push(
           mountLab(host, {
             key: `placement/${b.id}/${claimed}/${p.id}/${started}`,
@@ -145,6 +155,7 @@ export function placementPage(id: string): Page {
             exam: true,
             onTaskPass: () => {
               answers.set(p.id, { id: p.id, right: true });
+              save();
               skipBtn.remove();
             },
           }),
@@ -166,12 +177,17 @@ export function placementPage(id: string): Page {
     step();
   };
 
-  const done = (claimed: Level, tasks: PlacementTask[], answers: PlacementAnswer[], ms: number) => {
+  const done = (claimed: Level, tasks: PlacementTask[], answers: PlacementAnswer[], ms: number, replay = false) => {
     disposeAll();
+    clearDraft(`placement/${b.id}`);
+    if (!answers.some(a => a.right || a.guessed !== undefined)) { choose(); return; }
     const r = scorePlacement(tasks, answers);
     const prior = history().filter((x) => x.claimed === claimed && !x.passed).length;
-    store.record({ kind: 'placement.result', block: b.id, claimed, passed: r.passed, score: r.score, failed: r.failed, concepts: r.concepts, gaps: r.gaps });
-    if (r.passed) store.record({ kind: 'level.set', block: b.id, level: claimed, via: 'placement' });
+    if (!replay) {
+      store.record({ kind: 'placement.result', block: b.id, claimed, passed: r.passed, score: r.score, failed: r.failed, concepts: r.concepts, gaps: r.gaps });
+      if (r.passed) store.record({ kind: 'level.set', block: b.id, level: claimed, via: 'placement' });
+      writeDraft(`placement-result/${b.id}`, { claimed, ids: tasks.map(t => t.id), answers, ms });
+    }
     clear(root);
     const lower = LEVELS[Math.max(0, LEVELS.indexOf(claimed) - 1)];
     const gapLinks = r.gaps.length ? h('p', {}, t(P.gapsLine), ' ', ...r.gaps.flatMap((c, k) => [k ? ', ' : '', registry.concepts.has(c) ? conceptLink(c) : c])) : null;
@@ -179,9 +195,10 @@ export function placementPage(id: string): Page {
       'details.pl-details',
       {},
       h('summary', {}, t(P.details)),
+      h('button.btn.ghost.small', { type: 'button', onclick: choose }, t(bi('Выбрать новую проверку', 'Choose a new check'))),
       h('p.small', {}, `${r.counted} / ${r.total} (${Math.round(r.score * 100)}%), ${t(bi('нужно', 'needed'))} ${r.needed}; ${r.keysOk ? t(bi('все ключевые выполнены', 'every key task done')) : t(bi('не все ключевые выполнены', 'not every key task done'))}; ${t(P.time)} ${Math.max(1, Math.round(ms / 60000))} ${t(bi('мин', 'min'))}`),
       r.guessed.length ? h('p.small', {}, t(P.guessedLine), ' ', r.guessed.map((x) => taskPrompt(tasks.find((y) => y.id === x)!)).join('; ')) : null,
-      h('ul.placement-results', {}, ...tasks.map((x) => h('li', { class: r.failed.includes(x.id) ? 'err' : 'ok' }, h('span.st-icon', { 'aria-hidden': 'true' }, r.failed.includes(x.id) ? '·' : '✓'), taskPrompt(x)))),
+      h('ul.placement-results', {}, ...tasks.map((x) => h('li', { class: r.failed.includes(x.id) ? 'err' : 'ok' }, h('span.st-icon', { 'aria-hidden': 'true' }, r.failed.includes(x.id) ? '·' : '✓'), h('div', {}, ...renderInline(taskPrompt(x)), x.kind === 'quiz' ? referenceAnswer(x.item) : null)))),
     );
     if (r.passed) {
       put(root, 
@@ -211,6 +228,13 @@ export function placementPage(id: string): Page {
     );
   };
 
-  choose();
+  const saved = readDraft<{ claimed: Level; variant: number }>(`placement/${b.id}`);
+  if (saved && claimable.includes(saved.claimed)) run(saved.claimed, saved.variant);
+  else {
+    const result = readDraft<{ claimed: Level; ids: string[]; answers: PlacementAnswer[]; ms: number }>(`placement-result/${b.id}`);
+    const tasks = result?.ids.map(id => b.placement.find(t => t.id === id));
+    if (result && tasks?.length && tasks.every((t): t is PlacementTask => !!t)) done(result.claimed, tasks, result.answers, result.ms, true);
+    else choose();
+  }
   return { el: root, dispose: disposeAll };
 }

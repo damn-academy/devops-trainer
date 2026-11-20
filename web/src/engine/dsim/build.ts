@@ -339,7 +339,7 @@ const fmtS = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
 /** Run a build; prints BuildKit-like progress and returns the image (or null on error). */
 export async function build(m: SimMachineApi, st: DockerSnapshot, o: BuildOpts, io: Out): Promise<ImageRec | null> {
   const fs = m.rootFs;
-  const ctxDir = fs.resolve(o.context);
+  const ctxDir = fs.resolve(o.context.startsWith('/') ? o.context : `${m.cwd()}/${o.context}`);
   const dfPath = o.file ? (o.file.startsWith('/') ? o.file : `${ctxDir}/${o.file}`.replace(/\/\.\//g, '/')) : `${ctxDir}/Dockerfile`;
   const lines: string[] = [];
   const say = (s: string) => lines.push(s);

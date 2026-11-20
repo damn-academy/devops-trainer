@@ -301,17 +301,17 @@ describe('containers: second persona round', () => {
     expect(fails({ request: 'egress' })).toBe(false);
   });
 
-  it('explains the build-context error in the Dockerfile lab and accepts grep for the namespaces goal', async () => {
+  it('resolves the build context from the current directory in the Dockerfile lab and accepts grep for the namespaces goal', async () => {
     const lesson = block.lessons!.find((l) => l.id === 'containers.dockerfile')!;
     const sec = lesson.sections.find((s) => s.id === 'lab') as TerminalSection;
     const m = await createSimMachine(fast(sec.setup));
     await m.exec('cd ~/site');
     await m.exec("echo 'FROM nginx:1.30-alpine' > Dockerfile");
-    await m.exec('docker build -t site:1.0 .');
+    expect((await m.exec('docker build -t site:1.0 .')).exit).toBe(0);
     const site = (sec.tasks as Task[]).find((t) => t.id === 'site')!;
     const res = evaluateCheck(site.check, await m.facts());
     expect(res.pass).toBe(false);
-    expect(res.say?.ru).toContain('В этом тренажёре контекст сборки');
+    expect(res.say?.ru ?? '').not.toContain('В этом тренажёре контекст сборки');
     const a = await solve('containers.anatomy', 'lab', { spec: ['crun spec'], namespaces: ['grep -n namespaces config.json'] });
     expect(a.namespaces).toBe(true);
   });

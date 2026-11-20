@@ -134,6 +134,8 @@ export interface Lesson {
   minutes?: number;
   sections: Section[];
   sources: Sources;
+  /** Software version used to verify this lesson. */
+  verifiedVersion?: string;
   /** Override of the documentation ladder step for this lesson (08 §4.3). */
   docStep?: DocStep;
 }
@@ -252,6 +254,8 @@ export type DocSource =
  * highlight (a substring). `url` is used for sources not yet in the corpus.
  */
 export interface DocRef {
+  /** Learner-facing explanation of the referenced lines. */
+  gloss?: Bi;
   page?: string;
   anchor?: string;
   line?: string;
@@ -1104,6 +1108,8 @@ export interface Step {
   fill?: Record<string, number>;
   /** Counters shown under the diagram at this step (not folded: each step gives the full set it wants). */
   metrics?: Record<string, number>;
+  /** Text or unavailable metric values; these never participate in deltas. */
+  metricText?: Record<string, QText>;
   /** The process stops here because of a break: where, the real tool message, why. */
   broken?: { at: string; message: string; caption: Bi };
 }

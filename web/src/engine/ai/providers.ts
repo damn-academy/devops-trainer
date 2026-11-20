@@ -86,7 +86,7 @@ export const PROVIDERS: ProviderPreset[] = [
     defaultModel: 'qwen2.5:7b',
     keyUrl: 'https://ollama.com/download',
     note: bi(
-      'Модель работает на твоём компьютере: без ключа, без денег, без сети. Ollama нужно разрешить запросы с адреса курса — команды ниже.',
+      'Модель работает на вашем компьютере: без ключа, без денег, без сети. Ollama нужно разрешить запросы с адреса курса — команды ниже.',
       'The model runs on your own computer: no key, no money, no network. Ollama must allow requests from the course address — see the commands below.',
     ),
     cost: bi('бесплатно; нужна видеокарта или терпение', 'free; needs a GPU or patience'),

@@ -104,7 +104,8 @@ export function metricDelta(prev: Step[], next: Step[]): Record<string, number> 
   const b = next[next.length - 1]?.metrics ?? {};
   const out: Record<string, number> = {};
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
-    const d = (b[k] ?? 0) - (a[k] ?? 0);
+    if (typeof a[k] !== 'number' || typeof b[k] !== 'number') continue;
+    const d = b[k] - a[k];
     if (d) out[k] = d;
   }
   return out;

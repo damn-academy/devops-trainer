@@ -138,7 +138,7 @@ export const insideLesson: Lesson = {
       machine: 'sim',
       setup: desk(),
       intro: bi(
-        'Перед вами учебная машина, которая работает в окне вашего браузера. У неё нет ни окон, ни значков, и разговаривают с ней текстом. Как это устроено, мы разберём в третьем уроке этого блока, а пока достаточно напечатать то, что написано в задании, нажать Enter и прочитать ответ. Ошибиться здесь не страшно, потому что кнопка «Сбросить экран» над терминалом в любой момент вернёт машину в исходное состояние.',
+        'Перед вами учебная машина, которая работает в окне вашего браузера. У неё нет ни окон, ни значков, и разговаривают с ней текстом. Как это устроено, мы разберём в третьем уроке этого блока, а пока достаточно напечатать то, что написано в задании, нажать Enter и прочитать ответ. Ошибиться здесь не страшно, потому что кнопка «Сбросить машину» над терминалом в любой момент вернёт машину в исходное состояние.',
         'This is a training machine that runs in your browser window. It has no windows or icons, and you talk to it in text. How that works we take apart in two lessons; for now it is enough to type what the task says, press Enter and read the answer. Nothing can be broken here, because the “Reset this screen” button above the terminal returns the machine to its starting state at any moment.',
       ),
       tasks: [
@@ -181,7 +181,7 @@ export const insideLesson: Lesson = {
       machine: 'sim',
       setup: desk(),
       intro: bi(
-        'Это та же учебная машина. Если что-то пойдёт не так, кнопка «Сбросить экран» над терминалом вернёт её в исходное состояние.',
+        'Это та же учебная машина. Если что-то пойдёт не так, кнопка «Сбросить машину» над терминалом вернёт её в исходное состояние.',
         'This is the same training machine. If something goes wrong, the “Reset this screen” button above the terminal returns it to its starting state.',
       ),
       tasks: [

@@ -5,6 +5,7 @@ import { snapshotForFeedback } from './feedback';
 // (history, cursor keys, Ctrl+A/E/U/K/W/C/L, Tab completion, paste) and a
 // less-like pager for `man`, so the machine only sees complete lines.
 
+import { closeDoc } from '../docs/viewer';
 import type { DocRef, ExecResult, Machine } from '../../core/types';
 import { needsMore, SimMachine } from './shell';
 
@@ -142,11 +143,12 @@ export async function mountTerminal(el: HTMLElement, o: TerminalOptions): Promis
     term.write(out);
   };
   const openPager = (title: string, text: string) => {
-    pager = { lines: text.replace(/\n$/, '').split('\n'), top: 0, title };
+    pager = { lines: /^[\w.+-]+\(\w+\)$/.test(title) ? wrapPagerText(text, term.cols) : text.replace(/\n$/, '').split('\n'), top: 0, title };
     term.write('\x1b[?1049h');
     drawPager();
   };
   const closePager = () => {
+    closeDoc();
     pager = null;
     term.write('\x1b[?1049l');
     prompt();
@@ -395,3 +397,19 @@ export async function mountTerminal(el: HTMLElement, o: TerminalOptions): Promis
 }
 
 export { visibleLen };
+
+/** Wrap prose in man pages before pagination so long lines do not hide rows. */
+export function wrapPagerText(text: string, columns: number): string[] {
+  const width = Math.max(10, columns);
+  return text.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').replace(/\n$/, '').split('\n').flatMap(line => {
+    const out: string[] = [];
+    while (line.length > width) {
+      const space = line.lastIndexOf(' ', width);
+      const split = space > 0 ? space : width;
+      out.push(line.slice(0, split));
+      line = line.slice(split).trimStart();
+    }
+    out.push(line);
+    return out;
+  });
+}

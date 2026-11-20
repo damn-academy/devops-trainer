@@ -101,7 +101,7 @@ export const ROUTE: RouteEntry[] = [
     segment: '3',
     title: bi('Сети', 'Networks'),
     summary: bi(
-      'Карта интернета, слои руками, конверты OSI и TCP/IP, DNS, DHCP, NAT, netfilter, HTTP, TLS, SSH, прокси, VPN, сети внутри одного ядра и траблшутинг по уровням.',
+      'Вы проследите путь запроса через интернет, разберётесь с DNS, DHCP, HTTP, TLS и SSH, настроите маршруты и научитесь искать сетевые неисправности по уровням.',
       'A map of the internet, the layers by hand, OSI and TCP/IP envelopes, DNS, DHCP, NAT, netfilter, HTTP, TLS, SSH, proxies, VPN, networks inside one kernel and layer-by-layer troubleshooting.',
     ),
     checklistStep: '03',

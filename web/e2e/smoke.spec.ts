@@ -184,7 +184,8 @@ test.describe('phone width', () => {
 
 test('explainer edge labels do not sit on boxes', async ({ page }) => {
   await open(page, '#/explainer/net.map');
-  await page.waitForTimeout(800);
+  await expect(page.locator('svg.ex-svg')).toBeVisible();
+  await page.waitForTimeout(400);
   const hits = await page.evaluate(() => {
     const svg = document.querySelector('svg.ex-svg')!;
     const boxes = [...svg.querySelectorAll('g.node:not(.shape-bar) .node-shape')].map((n) => (n as SVGGraphicsElement).getBBox());

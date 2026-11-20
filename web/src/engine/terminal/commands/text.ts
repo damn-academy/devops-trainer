@@ -1175,7 +1175,7 @@ export function diffLines(a: string[], b: string[]): { op: ' ' | '-' | '+'; line
       out.push({ op: ' ', line: a[i] });
       i++;
       j++;
-    } else if (j < m && (i >= n || dp[i][j + 1] >= dp[i + 1][j])) out.push({ op: '+', line: b[j++] });
+    } else if (j < m && (i >= n || dp[i][j + 1] > dp[i + 1][j])) out.push({ op: '+', line: b[j++] });
     else out.push({ op: '-', line: a[i++] });
   }
   return out;
@@ -1219,7 +1219,8 @@ const diff: ShellCommand = {
     }
     const d = diffLines(lines(ta), lines(tb));
     if (a.flags.has('u')) {
-      ctx.out(`--- ${fa}\n+++ ${fb}\n`);
+      const stamp = (path: string) => new Date(ctx.fs.stat(path)?.mtime ?? 0).toISOString().replace('T', ' ');
+      ctx.out(`--- ${fa}\t${stamp(fa)}\n+++ ${fb}\t${stamp(fb)}\n`);
       const la = lines(ta).length;
       const lb = lines(tb).length;
       ctx.out(`@@ -1,${la} +1,${lb} @@\n`);

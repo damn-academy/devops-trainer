@@ -160,7 +160,7 @@ export const anatomyLesson: Lesson = {
         {
           id: 'spec',
           prompt: bi('В каталоге `/root/box` создайте файл config.json с настройками по умолчанию командой `crun spec`.', 'In `/root/box` create the default config.json with `crun spec`.'),
-          check: { when: "files['/root/box/config.json'].type=f", fail: [{ if: "!files['/root/box/rootfs']", say: bi('Каталог rootfs пропал. Верните машину в исходное состояние кнопкой «Сбросить экран».', 'The rootfs directory is gone: reset the machine with “Reset this screen”.') }] },
+          check: { when: "files['/root/box/config.json'].type=f", fail: [{ if: "!files['/root/box/rootfs']", say: bi('Каталог rootfs пропал. Верните машину в исходное состояние кнопкой «Сбросить машину».', 'The rootfs directory is gone: reset the machine with “Reset this screen”.') }] },
           chips: 'crun spec',
           concepts: ['docker.bundle'],
           docRef: { page: 'help/crun', anchor: 'USAGE', line: 'spec' },

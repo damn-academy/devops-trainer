@@ -79,7 +79,7 @@ function autoMode(): TutorMode {
   const w = where();
   if (w.exam) return 'exam';
   const ct = currentTask(w.lesson);
-  if (ct) return (ct.docStep ?? 0) >= 4 || ct.task.beyond ? 'docs' : 'practice';
+  if (ct) return (ct.docStep ?? (ct.task.beyond ? 4 : 0)) >= 4 ? 'docs' : 'practice';
   return w.lesson ? 'explain' : 'free';
 }
 
@@ -164,7 +164,7 @@ function draw(o: TutorOptions) {
     'p.tutor-ctx.small.muted',
     {},
     w.lesson ? `${t(w.lesson.title)}` : t(bi('Вне урока', 'Outside a lesson')),
-    ct ? ` · ${t(ct.task.prompt).replace(/[`*[\]]/g, '').slice(0, 90)}${ct.docStep ? ` · DL${ct.docStep}` : ''}` : '',
+    ct ? ` · ${t(ct.task.prompt).replace(/[`*[\]]/g, '').slice(0, 90)}` : '',
   );
   panel.append(seg, h('p.small.tutor-help', {}, t(T.modeHelp[state.mode])), ctxLine);
 
@@ -184,9 +184,9 @@ function draw(o: TutorOptions) {
   if (state.mode === 'practice' && ct) {
     const used = state.hints.get(ct.task.id) ?? 0;
     const next = nextHintStep(used, ct.docStep);
-    const hb = h('button.btn.ghost.small', { type: 'button', disabled: !next }, icon('eye'), next ? `${t(T.nextHint)}: ${next}` : t(T.noMoreHints));
+    const hb = h('button.btn.ghost.small', { type: 'button', disabled: !next }, icon('eye'), next ? `${t(T.nextHint)} ${Number(next.slice(1))}` : t(T.noMoreHints));
     hb.addEventListener('click', () => next && void send(t(T.hintAsk), o, next));
-    panel.append(h('div.tutor-ladder', {}, hb, h('span.small.muted', {}, used ? `H${used}/5` : 'H0/5')));
+    panel.append(h('div.tutor-ladder', {}, hb, h('span.small.muted', {}, t(bi(`Открыто подсказок: ${used} из 5.`, `Hints opened: ${used} of 5.`)))));
   }
 
   const ta = h('textarea.tutor-input', { rows: 3, placeholder: t(state.mode === 'docs' ? T.placeholderDocs : T.placeholder) }) as HTMLTextAreaElement;

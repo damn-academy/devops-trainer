@@ -34,6 +34,7 @@ export interface LabOptions {
   count: number;
   /** Exam mode: DL5, no hints, no mentor. */
   exam?: boolean;
+  lessonStep?: DocStep;
   /** Keep goals hidden until checked (placement). */
   quietGoals?: boolean;
   onAllDone?(): void;
@@ -66,12 +67,13 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   const goals = h('ol.lab-goals');
   const termBox = h('div.lab-term-box');
   const status = h('div.lab-status', { 'aria-live': 'polite' });
+  const expandBtn = h('button.btn.ghost.small', { type: 'button', 'aria-pressed': 'false' }, t(bi('Расширить терминал', 'Expand terminal')));
   const resetBtn = h('button.btn.ghost.small', { type: 'button' }, icon('repeat'), t(UI.reset));
   const el = h(
     'div.lab',
     { 'data-exam': o.exam ? 'true' : undefined },
     h('div.lab-left', {}, o.intro ? prose(o.intro) : null, h('h4.lab-h', {}, t(UI.goals)), goals, status),
-    h('div.lab-right', {}, h('div.lab-bar', {}, h('span.lab-env', {}, icon('term'), t(TL.sim)), resetBtn), termBox),
+    h('div.lab-right', {}, h('div.lab-bar', {}, h('span.lab-env', {}, icon('term'), t(TL.sim)), expandBtn, resetBtn), termBox),
   );
   clear(root);
   root.append(el);
@@ -87,7 +89,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   const stepFor = (task: Task): DocStep => {
     const source = task.docRef ? sourceOf(task.docRef) : 'man';
     const stored = store.state.docLadder[source];
-    const base = { level: o.level, block: o.block ?? '', index: o.index, count: o.count, stored, exam: o.exam };
+    const base = { level: o.level, block: o.block ?? '', index: o.index, count: o.count, stored, exam: o.exam, lessonStep: o.lessonStep };
     // The schedule moves the learner's step for the source; a task's own docStep (forcing) applies to that task only.
     const scheduled = effectiveStep(base);
     if (!o.exam && o.block && scheduled < 5 && shouldRecord(scheduled, stored, o.block)) store.record({ kind: 'doc.step', source, step: scheduled, block: o.block });
@@ -101,7 +103,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       const done = passed.has(task.id);
       const step = stepFor(task);
       const pol = hintPolicy(step);
-      const li = h('li.goal', { class: [done ? 'done' : '', task === current ? 'current' : ''].filter(Boolean).join(' '), 'data-task': task.id });
+      const li = h('li.goal', { class: [done ? 'done' : '', task === current ? 'current' : ''].filter(Boolean).join(' '), 'data-task': task.id, 'data-doc-step': step });
       li.append(h('span.goal-mark', { 'aria-hidden': 'true' }, done ? '✓' : String(i + 1)), h('div.goal-body', {}, prose(task.prompt, 'goal-text')));
       const body = li.querySelector('.goal-body')!;
       if (done) {
@@ -110,11 +112,11 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
         continue;
       }
       const meta = h('div.goal-meta');
-      if (task.docRef && pol.docref) meta.append(docChip(task.docRef));
+      if (task.docRef && pol.docref) meta.append(docChip({ ...task.docRef, gloss: task.docRef.gloss ?? task.hints?.H3 ?? task.hints?.H2 }));
       if (task.docRef && step === 3) meta.append(h('button.docref', { type: 'button', onclick: () => openDoc({ page: task.docRef!.page, url: task.docRef!.url }, { mode: 'page', via: 'docref' }) }, icon('doc'), h('span', {}, `${t(TL.page)}: ${refLabel({ page: task.docRef.page, url: task.docRef.url })}`)));
       body.append(meta);
       if (task.chips && pol.chips !== 'none' && !o.exam) {
-        const words = pol.chips === 'name' ? [task.chips.split(/\s+/)[0]] : task.chips.split(/\s+/);
+        const words = pol.chips === 'name' ? [task.chips.split(/\s+/)[0]] : [task.chips];
         body.append(
           h(
             'div.chips',
@@ -134,12 +136,12 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     const shown = hintsOpened.get(task.id) ?? 0;
     const available = pol.allowed.filter((hl) => task.hints?.[hl] || (hl === 'H3' && task.docRef && pol.h3 !== 'text'));
     const renderHint = (hl: HintLevel) => {
-      if (hl === 'H3' && task.docRef && pol.h3 === 'fragment') return docFragment(task.docRef) ?? prose(task.hints?.H3 ?? bi('', ''));
+      if (hl === 'H3' && task.docRef && pol.h3 === 'fragment') return docFragment({ ...task.docRef, gloss: task.docRef.gloss ?? task.hints?.H3 ?? task.hints?.H2 }) ?? prose(task.hints?.H3 ?? bi('', ''));
       if (hl === 'H3' && task.docRef && pol.h3 === 'link')
         return h('p', {}, t(bi('Ответ — на этой странице: ', 'The answer is on this page: ')), docChip({ page: task.docRef.page, url: task.docRef.url, label: refLabel({ page: task.docRef.page, url: task.docRef.url }) }));
       return prose(task.hints![hl]!);
     };
-    available.slice(0, shown).forEach((hl) => box.append(h('div.hint', {}, h('span.hint-tag', {}, hl), renderHint(hl))));
+    available.slice(0, shown).forEach((hl, i) => box.append(h('div.hint', {}, h('span.hint-tag', {}, t(bi(`Подсказка ${i + 1} из ${available.length}`, `Hint ${i + 1} of ${available.length}`))), renderHint(hl))));
     if (shown < available.length) {
       const next = available[shown];
       box.append(
@@ -154,11 +156,14 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
             },
           },
           icon('eye'),
-          `${t(TL.nextHint)} ${shown + 1}/${available.length}`,
+          t(bi(`Подсказка ${shown + 1} из ${available.length}`, `Hint ${shown + 1} of ${available.length}`)),
         ),
       );
     }
-    if (!available.length && step >= 4) box.append(h('p.muted.small', {}, t(TL.noHints)));
+    if (!available.length && step >= 4) {
+      box.append(h('p.muted.small', {}, t(TL.noHints)));
+      if (task.docRef) box.append(docChip({ ...task.docRef, gloss: task.docRef.gloss ?? task.hints?.H3 ?? task.hints?.H2 }));
+    }
     if (shown >= available.length && available.length > 0) box.append(externalButton({ lessonId: o.lessonId, level: o.level, task: t(task.prompt) }));
     if (pol.mentor !== 'off') box.append(askBox({ mode: pol.mentor === 'docs' ? 'docs' : 'practice', level: o.level, lessonId: o.lessonId, task: { id: taskKey(task), prompt: t(task.prompt), solutionTokens: task.solutionTokens } }));
     return box;
@@ -187,7 +192,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       } else if (!failSay && r.say && task === o.tasks.find((x) => !passed.has(x.id))) failSay = t(r.say);
     }
     clear(status);
-    if (failSay && !o.exam) status.append(h('p.lab-fail', {}, h('span.st-icon.warn', { 'aria-hidden': 'true' }, '!'), h('span', {}, ...renderInline(failSay))));
+    if (attempted && failSay && !o.exam) status.append(h('p.lab-fail', {}, h('span.st-icon.warn', { 'aria-hidden': 'true' }, '!'), h('span', {}, ...renderInline(failSay))));
     const pending = o.tasks.find(task => !passed.has(task.id));
     if (attempted || !pending) el.dataset.feedbackFailed = String(!!pending);
     if (pending && attempted && !o.exam) status.append(externalButton({ lessonId: o.lessonId, level: o.level, task: t(pending.prompt) }));
@@ -205,7 +210,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     const fresh = await createSimMachine(o.setup);
     startSnap = await fresh.snapshot();
     startFacts = await fresh.facts();
-    const saved = o.exam ? undefined : await store.loadSnapshot<unknown>(o.key);
+    const saved = await store.loadSnapshot<unknown>(o.key);
     if (saved) {
       try {
         await fresh.restore(saved);
@@ -220,7 +225,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       machine,
       rows: 14,
       onCommand: () => {
-        void machine!.snapshot().then((sn) => !o.exam && store.saveSnapshot(o.key, sn));
+        void machine!.snapshot().then((sn) => store.saveSnapshot(o.key, sn));
         void check(true);
       },
       onDoc: (ref) => openDoc(ref, { mode: 'page', via: 'terminal', keepFocus: true }),
@@ -229,8 +234,15 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     void check();
   };
 
+  expandBtn.addEventListener('click', () => {
+    const expanded = el.classList.toggle('lab-expanded');
+    expandBtn.setAttribute('aria-pressed', String(expanded));
+    expandBtn.textContent = t(expanded ? bi('Вернуть обычную ширину', 'Restore width') : bi('Расширить терминал', 'Expand terminal'));
+  });
+
   resetBtn.addEventListener('click', async () => {
     if (!machine || !startSnap) return;
+    if (!window.confirm(t(bi('Вернуть машину к исходному состоянию? Изменения файлов и настроек будут потеряны.', 'Restore the initial machine state? File and configuration changes will be lost.')))) return;
     await machine.restore(startSnap);
     store.saveSnapshot(o.key, startSnap, 0);
     term?.reset();

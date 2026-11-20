@@ -5,7 +5,7 @@
 
 import YAML from 'yaml';
 import type { CmdContext, ShellCommand, SimMachineApi } from '../../../core/types';
-import { bi } from '../../../core/i18n';
+import { bi, t } from '../../../core/i18n';
 import { b64 } from '../admission';
 import { metricsAvailable, podUsage } from '../addons';
 import { ApiError, Cluster, K8S_VERSION } from '../cluster';
@@ -141,7 +141,7 @@ function resolveKind(x: Ctx, word: string): KindInfo {
   if (!info) {
     const known = ['statefulsets', 'sts', 'cronjobs', 'cj', 'roles', 'rolebindings', 'clusterroles', 'clusterrolebindings', 'poddisruptionbudgets', 'pdb', 'limitranges', 'resourcequotas', 'certificatesigningrequests', 'csr', 'controllerrevisions'];
     const plain = word.toLowerCase().split('.')[0];
-    const extra = known.includes(plain) || known.includes(plain + 's') ? `\n${TRAINER} this resource is not in the training cluster yet; it exists on the real stage.` : '';
+    const extra = known.includes(plain) || known.includes(plain + 's') ? `\n${t(bi('Этот ресурс доступен в лаборатории с настоящим кластером.', 'This resource is available in the real cluster lab.'))}` : '';
     fail(`error: the server doesn't have a resource type "${word}"${extra}`);
   }
   return info!;

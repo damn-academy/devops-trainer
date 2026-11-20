@@ -40,7 +40,7 @@ export function askBox(o: AskOptions): HTMLElement {
         h(
           'p.muted',
           {},
-          t(bi('Можно скопировать запрос в любой чат с нейросетью или подключить наставника в ', 'You can copy a prompt into any AI chat or connect the tutor in ')),
+          t(bi('Можно скопировать запрос в любой чат с нейросетью или подключить наставника в разделе ', 'You can copy a prompt into any AI chat or connect the tutor in ')),
           h('a', { href: href({ name: 'settings' }) }, t(UI.settings)),
           '.',
         ),

@@ -63,7 +63,7 @@ function parseDig(args: string[]): { o: DigOpts; error?: string; unsupported?: s
     } else if (a === '-t') o.type = (args[++i] ?? 'A').toUpperCase();
     else if (a === '-x') return { o, unsupported: '-x' };
     else if (a.startsWith('-')) return { o, unsupported: a };
-    else if (TYPES.has(a.toUpperCase()) && o.name) o.type = a.toUpperCase();
+    else if (TYPES.has(a.toUpperCase())) o.type = a.toUpperCase();
     else if (!o.name) o.name = a;
     else if (TYPES.has(a.toUpperCase())) o.type = a.toUpperCase();
   }
