@@ -26,6 +26,8 @@ export interface Parsed {
 
 /** Global flags of every command. */
 export const GLOBAL: FlagDef[] = [
+  { long: 'as', value: true },
+  { long: 'as-group', value: true, multi: true },
   { long: 'namespace', short: 'n', value: true },
   { long: 'context', value: true },
   { long: 'kubeconfig', value: true },

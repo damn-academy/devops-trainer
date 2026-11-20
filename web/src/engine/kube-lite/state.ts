@@ -21,6 +21,8 @@ export interface K8sSetup {
   settle?: number;
   /** Namespace of the default context. */
   namespace?: string;
+  /** Bootstrap deployment roles in scenario namespaces (default: true when namespace is set). */
+  trainingDeployer?: boolean;
   /** Extra contexts in the kubeconfig: name → namespace. */
   contexts?: Record<string, string>;
   /** Node power or component changes after the manifests ("the cluster you are given is broken"). */
@@ -73,11 +75,11 @@ export function kubeconfigYaml(namespace: string | undefined, contexts: Record<s
   const cfg = {
     apiVersion: 'v1',
     clusters: [{ cluster: { 'certificate-authority-data': 'LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJkekNDQVIyZ0F3SUJBZ0lCQURBS0JnZ3Foa2pPUFFRREFqQWpNU0V3SHdZRFZRUUREQmhyTTNNdGMyVnkKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=', server: 'https://127.0.0.1:6443' }, name: 'default' }],
-    contexts: [ctx('default', namespace), ...Object.entries(contexts).map(([n, ns]) => ctx(n, ns))],
+    contexts: [ctx('default', namespace), ...Object.entries(contexts).map(([n, ns]) => ctx(n, ns)), ...['developer', 'deployer'].filter(name => !(name in contexts)).map(name => ({ name, context: { cluster: 'default', user: name, namespace: namespace ?? 'default' } }))],
     'current-context': 'default',
     kind: 'Config',
     preferences: {},
-    users: [{ name: 'default', user: { 'client-certificate-data': 'LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJrVENDQVRlZ0F3SUJBZ0lJUkVEQUNURUQKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=', 'client-key-data': 'LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUhSRURBQ1RFRAotLS0tLUVORCBFQyBQUklWQVRFIEtFWS0tLS0tCg==' } }],
+    users: [...['developer', 'deployer'].map(name => ({ name, user: { token: `kube-lite-user:${name}` } })), { name: 'default', user: { 'client-certificate-data': 'LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJrVENDQVRlZ0F3SUJBZ0lJUkVEQUNURUQKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=', 'client-key-data': 'LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUhSRURBQ1RFRAotLS0tLUVORCBFQyBQUklWQVRFIEtFWS0tLS0tCg==' } }],
   };
   return YAML.stringify(cfg);
 }
@@ -106,6 +108,20 @@ export async function applyK8sSetup(m: SimMachineApi, value: unknown): Promise<v
         console.warn('k8s setup manifest failed', (e as Error).message);
       }
     }
+  }
+  // Existing CI scenarios provide a namespaced deployment identity. Its permissions
+  // are ordinary objects that lessons can inspect, revoke or replace.
+  const deploymentNamespaces = v.namespace && v.trainingDeployer !== false ? c.list('Namespace').map(n => n.metadata.name as string).filter(ns => ns === v.namespace || !['default', 'kube-system', 'kube-public', 'kube-node-lease'].includes(ns)) : [];
+  for (const namespace of deploymentNamespaces) {
+    const apiVersion = 'rbac.authorization.k8s.io/v1';
+    const metadata = { name: 'training-deployer', namespace };
+    if (!c.get('Role', namespace, metadata.name)) c.create({ apiVersion, kind: 'Role', metadata, rules: [
+      { apiGroups: ['apps'], resources: ['deployments', 'statefulsets'], verbs: ['get', 'list', 'watch', 'create', 'update', 'patch'] },
+      { apiGroups: ['apps'], resources: ['replicasets', 'controllerrevisions'], verbs: ['get', 'list', 'watch'] },
+      { apiGroups: [''], resources: ['services'], verbs: ['get', 'list', 'watch', 'create', 'update', 'patch'] },
+      { apiGroups: [''], resources: ['pods', 'pods/log', 'events'], verbs: ['get', 'list', 'watch'] },
+    ] });
+    if (!c.get('RoleBinding', namespace, metadata.name)) c.create({ apiVersion, kind: 'RoleBinding', metadata, roleRef: { apiGroup: 'rbac.authorization.k8s.io', kind: 'Role', name: metadata.name }, subjects: [{ kind: 'User', apiGroup: 'rbac.authorization.k8s.io', name: 'deployer' }] });
   }
   if (v.kubectl?.length) {
     for (const line of v.kubectl) await runKubectl(m, c, line.split(/\s+/).filter(Boolean).slice(line.startsWith('kubectl') ? 1 : 0), { quiet: true });

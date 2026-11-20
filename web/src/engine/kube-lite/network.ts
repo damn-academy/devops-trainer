@@ -6,9 +6,9 @@
 // EndpointSlice → pod → NetworkPolicy.
 
 import { prometheusHttp } from './addons';
-import { selects } from './admission';
+import { selects, selectsMap } from './admission';
 import type { Cluster } from './cluster';
-import { controllerOf, resolveTargetPort } from './controllers';
+import { controllerOf, resolveTargetPort, podReady } from './controllers';
 import { lookupImage } from './images';
 import { podProcessUp } from './kubelet';
 import { kubeProxyHash, type Obj } from './util';
@@ -45,6 +45,12 @@ function lookupName(c: Cluster, fqdn: string): string[] | null {
   const zone = `.svc.${CLUSTER_DOMAIN}`;
   if (name.endsWith(zone)) {
     const parts = name.slice(0, -zone.length).split('.');
+    if (parts.length === 3) {
+      const [hostname, svc, ns] = parts;
+      const service = c.get('Service', ns, svc);
+      if (service?.spec.clusterIP !== 'None') return null;
+      return c.list('Pod', ns).filter(p => p.spec.hostname === hostname && p.spec.subdomain === svc && selectsMap(service.spec.selector, p.metadata.labels) && (service.spec.publishNotReadyAddresses || podReady(p)) && !p.metadata.deletionTimestamp).map(p => p.status?.podIP).filter(Boolean);
+    }
     if (parts.length === 2) {
       const [svc, ns] = parts;
       const s = c.get('Service', ns, svc);

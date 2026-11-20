@@ -1,3 +1,4 @@
+import { pad } from '../util';
 // `kubectl describe`: the human-readable view with the Events at the bottom
 // (the first place to look when something does not start). Layout follows
 // kubectl v1.37 describers.
@@ -400,6 +401,16 @@ function describeJob(c: Cluster, j: Obj): string {
 /** describe for every kind; unknown kinds fall back to a YAML-ish dump with events. */
 export function describe(c: Cluster, o: Obj): string {
   switch (o.kind) {
+    case 'ServiceAccount':
+      return kv([['Name', o.metadata.name], ['Namespace', o.metadata.namespace], ['Labels', Object.entries(o.metadata.labels ?? {}).map(([k, v]) => `${k}=${v}`).join(',') || '<none>'], ['Annotations', Object.entries(o.metadata.annotations ?? {}).map(([k, v]) => `${k}: ${v}`).join(',') || '<none>'], ['Image pull secrets', (o.imagePullSecrets ?? []).map((s: Obj) => s.name).join(', ') || '<none>'], ['Mountable secrets', (o.secrets ?? []).map((s: Obj) => s.name).join(', ') || '<none>'], ['Tokens', '<none>'], ['Events', '<none>']], 20);
+    case 'Role':
+    case 'ClusterRole':
+      return kv([['Name', o.metadata.name], ...(o.metadata.namespace ? [['Namespace', o.metadata.namespace] as [string, string]] : [])], 14) + 'PolicyRule:\n' + pad([['  Resources', 'Non-Resource URLs', 'Resource Names', 'Verbs'], ...(o.rules ?? []).map((r: Obj) => ['  ' + (r.resources ?? []).map((v: string) => (r.apiGroups ?? ['']).map((g: string) => v + (g ? '.' + g : '')).join(',')).join(','), '[' + (r.nonResourceURLs ?? []).join(' ') + ']', '[' + (r.resourceNames ?? []).join(' ') + ']', '[' + r.verbs.join(' ') + ']'])]);
+    case 'RoleBinding':
+    case 'ClusterRoleBinding':
+      return kv([['Name', o.metadata.name], ...(o.metadata.namespace ? [['Namespace', o.metadata.namespace] as [string, string]] : [])], 14) + `Role:\n  Kind:  ${o.roleRef.kind}\n  Name:  ${o.roleRef.name}\nSubjects:\n` + pad([['  Kind', 'Name', 'Namespace'], ...(o.subjects ?? []).map((s: Obj) => ['  ' + s.kind, s.name, s.namespace ?? ''])]);
+    case 'StatefulSet':
+      return kv([['Name', o.metadata.name], ['Namespace', o.metadata.namespace], ['Service Name', o.spec.serviceName], ['Replicas', `${o.spec.replicas} desired | ${o.status?.replicas ?? 0} total`], ['Update Strategy', o.spec.updateStrategy.type], ['Pods Status', `${o.status?.readyReplicas ?? 0} Running / ${o.spec.replicas - (o.status?.readyReplicas ?? 0)} Waiting`]], 18) + podTemplateBlock(c, o.spec.template, o.metadata.namespace) + 'Volume Claims:\n' + (o.spec.volumeClaimTemplates ?? []).map((v: Obj) => `  Name: ${v.metadata.name}\n  StorageClass: ${v.spec.storageClassName ?? ''}\n  Capacity: ${v.spec.resources?.requests?.storage ?? ''}\n`).join('') + eventsBlock(c, o);
     case 'Pod':
       return describePod(c, o);
     case 'Deployment':

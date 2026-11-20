@@ -1,3 +1,4 @@
+import { helmReleases } from './helm';
 // facts.k8s (09 §2.2 extension): the same shape from the simulator and from
 // a real cluster (the blob of trainer-check.sh), so one predicate checks
 // both:
@@ -41,6 +42,9 @@ export interface NodeFact {
 
 export interface K8sFacts {
   env: 'sim' | 'real';
+  rbac?: { objects: Obj[]; decisions: Obj[] };
+  statefulsets?: Obj[];
+  helm?: { releases: Obj[]; revisions: Obj[] };
   context?: string;
   objects: Obj[];
   pods: PodFact[];
@@ -129,6 +133,9 @@ export function clusterFacts(c: Cluster): K8sFacts {
     });
   return {
     env: 'sim',
+    rbac: { objects: objects.filter(o => ['ServiceAccount', 'Role', 'RoleBinding', 'ClusterRole', 'ClusterRoleBinding'].includes(o.kind)), decisions: JSON.parse(JSON.stringify(c.authorizationDecisions)) },
+    statefulsets: c.list('StatefulSet').map(s => ({ ns: s.metadata.namespace, name: s.metadata.name, replicas: s.spec.replicas, ready: s.status?.readyReplicas ?? 0, currentRevision: s.status?.currentRevision, updateRevision: s.status?.updateRevision, ordinals: c.list('Pod', s.metadata.namespace).filter(p => controllerOf(p)?.uid === s.metadata.uid).map(p => ({ name: p.metadata.name, ordinal: Number(p.metadata.labels?.['apps.kubernetes.io/pod-index']), ready: podReady(p), pvcs: (p.spec.volumes ?? []).filter((v: Obj) => v.persistentVolumeClaim).map((v: Obj) => v.persistentVolumeClaim.claimName) })), pvcs: c.list('PersistentVolumeClaim', s.metadata.namespace).filter(p => (s.spec.volumeClaimTemplates ?? []).some((t: Obj) => p.metadata.name.startsWith(`${t.metadata.name}-${s.metadata.name}-`) && /^\d+$/.test(p.metadata.name.slice(`${t.metadata.name}-${s.metadata.name}-`.length)))).map(p => ({ name: p.metadata.name, phase: p.status?.phase, volume: p.spec.volumeName })) })),
+    helm: { releases: [...new Map(helmReleases(c).map(r => [`${r.namespace}/${r.name}`, r])).values()], revisions: helmReleases(c) },
     context: 'default',
     objects,
     ...summarizeObjects(objects),
