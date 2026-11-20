@@ -10,11 +10,13 @@
 // when the alert fires and leaves.
 
 import { defineModel } from '../../core/define';
-import { bi, type Bi } from '../../core/i18n';
+import { bi, pluralRu, type Bi } from '../../core/i18n';
 import type { ElementState, Step } from '../../core/types';
 import { card } from '../git-cicd/explainers';
 
 type P = { scrape: string; window: number; forMin: number; groupWait: number };
+/** "1 значение", "3 значения", "20 значений" / "20 values". */
+const valuesOf = (n: number): Bi => bi(`${n} ${pluralRu(n, ['значение', 'значения', 'значений'])}`, `${n} ${n === 1 ? 'value' : 'values'}`);
 const last = (s: Step[]) => s[s.length - 1]?.metrics ?? {};
 
 /** Fills {k} with a string, a number (decimal comma in Russian) or a Bi. */
@@ -241,9 +243,9 @@ export const monModel = defineModel<P>({
       label: bi('Сколько минут условие должно держаться, прежде чем алерт сработает (for)', 'How many minutes the condition must hold before the alert fires (for)'),
       kind: 'range',
       min: 0,
-      max: 10,
+      max: 15,
       step: 1,
-      default: 5,
+      default: 10,
       near: 'rule',
       predict: {
         prompt: bi('Вы меняете for, а всё остальное оставляете как есть. Как изменится время от первой ошибки до сообщения дежурному?', 'You change `for` and leave everything else as it is. How does the time from the first error to the message change?'),
@@ -307,7 +309,9 @@ export const monModel = defineModel<P>({
   ],
   run(p, broken) {
     const n = monNumbers(p);
-    const m = { samples: n.samples, detect: n.detect };
+    // The time to the message is shown only when a message does arrive.
+    const delivered = n.ok && !broken.has('target-down') && !broken.has('am-down');
+    const m: Record<string, number> = delivered ? { samples: n.samples, detect: n.detect } : { samples: n.samples };
     const s = Number(p.scrape);
     const steps: Step[] = [
       {
@@ -368,7 +372,7 @@ export const monModel = defineModel<P>({
       {
         id: 'store',
         label: 'TSDB',
-        caption: fb(bi('Prometheus дописывает полученное значение в конец ряда вместе со временем опроса. Правило будет считать скорость за окно {w} мин, а при опросе раз в {s} секунд в такое окно помещается {n} значений.', 'Prometheus appends the value to the end of the series together with the scrape time. The rule will compute the rate over a {w} min window, and with a scrape every {s} seconds such a window holds {n} values.'), { s, w: p.window, n: n.samples }),
+        caption: fb(bi('Prometheus дописывает полученное значение в конец ряда вместе со временем опроса. Правило будет считать скорость за окно {w} мин, а при опросе раз в {s} секунд в такое окно помещается {n}.', 'Prometheus appends the value to the end of the series together with the scrape time. The rule will compute the rate over a {w} min window, and with a scrape every {s} seconds such a window holds {n}.'), { s, w: p.window, n: valuesOf(n.samples) }),
         focus: ['e-store', 'tsdb'],
         reveal: ['tsdb', 'e-store'],
         tokens: [{ edge: 'e-store', label: bi('(время, 37)', '(time, 37)') }],
@@ -501,9 +505,10 @@ export const monModel = defineModel<P>({
     const d0 = last(prev).detect ?? 0;
     const d1 = last(next).detect ?? 0;
     if (change.id === 'window' || change.id === 'scrape') {
-      if (next.some((s) => s.broken)) return fb(bi('Теперь в окне всего {n} значений счётчика, а для скорости нужно хотя бы два. Правило возвращает пустой результат и не сработает. Окно должно быть не короче четырёх интервалов опроса.', 'Now the window holds only {n} counter values, and a rate needs at least two. The rule returns an empty result and will not fire. The window must be at least four scrape intervals long.'), { n: last(next).samples ?? 0 });
-      return fb(bi('Теперь в окне {n} значений счётчика. Чем окно длиннее, тем ровнее кривая, но тем медленнее она реагирует на начало аварии.', 'Now the window holds {n} counter values. The longer the window, the smoother the curve, but the slower it reacts to the start of an outage.'), { n: last(next).samples ?? 0, w: b.window });
+      if (next.some((s) => s.broken)) return fb(bi('Теперь в окне всего {n} счётчика, а для скорости нужно хотя бы два. Правило возвращает пустой результат и не сработает. Окно должно быть не короче четырёх интервалов опроса.', 'Now the window holds only {n} of the counter, and a rate needs at least two. The rule returns an empty result and will not fire. The window must be at least four scrape intervals long.'), { n: valuesOf(last(next).samples ?? 0) });
+      return fb(bi('Теперь в окне {n} счётчика. Чем окно длиннее, тем ровнее кривая, но тем медленнее она реагирует на начало аварии.', 'Now the window holds {n} of the counter. The longer the window, the smoother the curve, but the slower it reacts to the start of an outage.'), { n: valuesOf(last(next).samples ?? 0), w: b.window });
     }
+    if (last(next).detect === undefined) return bi('Сейчас сообщение до дежурного не доходит, поэтому время до него схема не показывает. Выключите поломку или сделайте окно правила длиннее, и тогда изменение этого параметра станет видно по счётчику под схемой.', 'The message does not reach the on-call engineer now, so the diagram shows no time to it. Switch off the break or make the rule window longer, and then the change of this parameter shows in the counter under the diagram.');
     return fb(bi('Время от первой ошибки до сообщения изменилось с {a} до {b} секунд.', 'The time from the first error to the message changed from {a} to {b} seconds.'), { a: d0, b: d1 });
   },
 });

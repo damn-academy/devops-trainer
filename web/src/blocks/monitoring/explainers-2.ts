@@ -284,12 +284,17 @@ export const logModel = defineModel<LogP>({
 
 type TraceP = { queries: number; dbMs: number; sampling: string };
 
+/** The Collector counts an order as slow when it takes longer than this. */
+const SLOW_MS = 1000;
+
 export function traceNumbers(p: TraceP, broken: ReadonlySet<string>): { total: number; db: number; kept: number; traces: number } {
   const wait = p.queries > 8 ? (p.queries - 8) * 60 : 1;
   const db = wait + p.queries * p.dbMs;
   const total = 2 + 3 + db + 4 + 2;
   const errShare = p.queries > 8 ? 0.25 : 0.003;
-  const kept = broken.has('collector-down') ? 0 : p.sampling === '100' ? 1000 : p.sampling === '10' ? 100 : Math.max(1, Math.round(errShare * 1000));
+  // Tail sampling keeps every error, every order slower than SLOW_MS and one in a hundred of the rest.
+  const keepShare = total > SLOW_MS ? 1 : errShare + (1 - errShare) * 0.01;
+  const kept = broken.has('collector-down') ? 0 : p.sampling === '100' ? 1000 : p.sampling === '10' ? 100 : Math.max(1, Math.round(keepShare * 1000));
   return { total, db, kept, traces: broken.has('no-propagation') ? 2 : 1 };
 }
 
@@ -542,7 +547,9 @@ export const traceModel = defineModel<TraceP>({
           ? bi('Collector сохраняет каждый трейс. В хранилище видно всё, но хранить трейс на каждый заказ дорого, и на нагруженном сервисе так почти не делают.', 'The Collector keeps every trace. Everything is visible, but keeping a trace of every order is expensive, and on a busy service this is rarely done.')
           : p.sampling === '10'
             ? bi('Ещё в начале запроса библиотека решила записывать каждый десятый трейс. В тот момент никто не знал, будет ли заказ медленным, поэтому девять из десяти медленных заказов останутся без трейса.', 'At the very start of the request the library decided to record every tenth trace. At that moment nobody knew whether the order would be slow, so nine out of ten slow orders are left without a trace.')
-            : fb(bi('Collector дожидается конца трейса и только потом решает, что сохранить. Он оставляет все ошибки и все медленные заказы, а из обычных почти ничего. Из 1000 трейсов в хранилище попадает {k}, и это как раз те, что нужны для разбора.', 'The Collector waits for the trace to end and only then decides what to keep. It keeps every error and every slow order, and almost none of the ordinary ones. Out of 1000 traces {k} reach the store, and they are just the ones an investigation needs.'), { k: n.kept }),
+            : n.total > SLOW_MS
+              ? fb(bi('Collector дожидается конца трейса и только потом решает, что сохранить. Он оставляет все ошибки и все заказы дольше одной секунды, а из остальных только один из ста. Сейчас каждый заказ идёт {t} мс, то есть медленными оказываются все заказы, поэтому в хранилище попадают все {k} трейсов из 1000.', 'The Collector waits for the trace to end and only then decides what to keep. It keeps every error and every order longer than one second, and only one in a hundred of the rest. Now every order takes {t} ms, so all of them are slow, and all {k} traces out of 1000 reach the store.'), { k: n.kept, t: n.total })
+              : fb(bi('Collector дожидается конца трейса и только потом решает, что сохранить. Он оставляет все ошибки и все заказы дольше одной секунды, а из остальных только один из ста. Из 1000 трейсов в хранилище попадает {k}, и среди них все те, что нужны для разбора.', 'The Collector waits for the trace to end and only then decides what to keep. It keeps every error and every order longer than one second, and only one in a hundred of the rest. Out of 1000 traces {k} reach the store, and among them are all the ones an investigation needs.'), { k: n.kept }),
       focus: ['coll', 'e-export'],
       reveal: ['tempo', 'e-export'],
       tokens: [{ edge: 'e-export', label: fb(bi('{k} из 1000', '{k} of 1000'), { k: n.kept }) }],

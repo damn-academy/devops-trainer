@@ -111,12 +111,15 @@ export function generate(o: GenOptions = {}): Tsdb {
     const upS: Series = { labels: { __name__: 'up', job: ins.job, instance: ins.instance }, samples: [] };
     const startS: Series = { labels: { __name__: 'process_start_time_seconds', job: ins.job, instance: ins.instance }, samples: [] };
     const acc = new Map<string, number>();
+    // Counts of requests are whole numbers: the expected count accumulates as a
+    // fraction and the counter shows its floor, which keeps it monotonic and the
+    // buckets cumulative. Only _sum (seconds) stays fractional.
     const add = (m: Map<string, Series>, l: Labels, t: number, inc: number) => {
       const k = seriesKey(l);
       if (!m.has(k)) m.set(k, { labels: l, samples: [] });
       const v = (acc.get(k) ?? 0) + inc;
       acc.set(k, v);
-      m.get(k)!.samples.push([t, Math.round(v * 1000) / 1000]);
+      m.get(k)!.samples.push([t, l.__name__.endsWith('_sum') ? Math.round(v * 1000) / 1000 : Math.floor(v + 1e-9)]);
     };
     let restarted = false;
     for (let i = 0; i <= steps; i++) {
