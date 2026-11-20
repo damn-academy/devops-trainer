@@ -337,7 +337,7 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
       root.querySelectorAll<HTMLInputElement>('.q-body input, .q-body select, .q-body textarea, .q-body button').forEach((x) => (x.disabled = true));
     }
     show(g, extra);
-    if (!g.correct && showFeedback && ctx.context !== 'exam' && ctx.context !== 'placement') feedback.append(externalButton(answeredQuiz(item, a, g, actual)));
+    if (showFeedback && ctx.context !== 'exam' && ctx.context !== 'placement') feedback.append(externalButton(answeredQuiz(item, a, g, actual)));
     ctx.onAnswered?.(g, first);
   });
 
