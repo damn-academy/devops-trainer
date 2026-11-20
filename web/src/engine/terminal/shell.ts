@@ -2137,6 +2137,7 @@ export class SimMachine implements SimMachineApi {
     this.lastExit = 0;
     this.jobs = this.jobs.filter((j) => j.state === 'Running' || j.state === 'Stopped');
     this.tick();
+    for (const hook of this.registry.setup) await hook.complete?.(this);
   }
 }
 

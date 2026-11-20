@@ -373,4 +373,7 @@ export const flowSetup: SetupHook = {
     const v = value as { scenario: string; seed?: number };
     session(m).start(v.scenario, v.seed);
   },
+  complete(m) {
+    session(m).captureSetup();
+  },
 };

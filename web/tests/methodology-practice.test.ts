@@ -108,7 +108,7 @@ describe('lesson 6, the bottleneck: the beginner finds the slow stage and swarms
     const both = await play(l, ['flow next 4', 'flow station DEV-1 test', 'flow station DEV-2 test', 'flow next 6']);
     expect(both.flow.done.count).toBe(4);
     expect(both.say('swarm')).toContain('оба разработчика');
-    expect((await play(l, ['flow reset', 'flow station DEV-2 test', 'flow next 10'])).say('swarm')).toContain('Сбросить машину');
+    expect((await play(l, ['flow wip analysis none', 'flow wip dev none', 'flow wip test none', 'flow station DEV-2 test', 'flow next 10'])).say('swarm')).toContain('flow reset');
   });
 
   it('requires one developer at testing even when the delivery count is sufficient', async () => {
@@ -124,8 +124,8 @@ describe('lesson 6, the bottleneck: the beginner finds the slow stage and swarms
     expect(evaluateCheck(check, facts).pass).toBe(false);
   });
 
-  it('the reset button keeps the limits of the setup', async () => {
-    const r = await play(l, ['flow next 10', 'restart', 'flow next 4', 'flow status', 'flow station DEV-2 test', 'flow next 6']);
+  it.each(['restart', 'flow reset'])('%s keeps the limits of the setup', async (reset) => {
+    const r = await play(l, ['flow next 10', reset, 'flow next 4', 'flow status', 'flow station DEV-2 test', 'flow next 6']);
     expect(r.passed.has('swarm')).toBe(true);
   });
 });
@@ -157,7 +157,7 @@ describe('lesson 7, batches: queue the promo tasks and pull by CD3', () => {
     expect(skipped.say('result')).toContain('одной партией');
     expect((await play(l, ['flow next 15', 'flow decide s1-promo refuse'])).say('promo')).toContain('40 000');
     expect((await play(l, ['flow next 15', 'flow decide s1-promo top', 'flow next 15', 'flow metrics'])).say('result')).toContain('по старшинству');
-    expect((await play(l, ['flow reset', 'flow next 15', 'flow decide s1-promo top', 'flow next 15'])).say('result')).toContain('Сбросить машину');
+    expect((await play(l, ['flow auto off', 'flow next 15', 'flow decide s1-promo top', 'flow next 15'])).say('result')).toContain('flow reset');
   });
 });
 
@@ -223,7 +223,7 @@ describe('lesson 11, DORA: deployments every two days against every five', () =>
     expect((await play(l, ['flow policy deploy manual'])).say('often')).toContain('flow deploy');
     expect((await play(l, [...RUN, 'flow metrics'])).say('compare')).toContain('второй прогон повторит первый');
     expect((await play(l, ['flow policy deploy train:2', ...answers('automate', 'review', 'freeze'), 'flow metrics'])).say('compare')).toContain('заморозкой');
-    expect((await play(l, ['flow reset', 'flow policy deploy train:2', ...RUN, 'flow metrics'])).say('compare')).toContain('Сбросить машину');
+    expect((await play(l, ['flow wip dev none', 'flow policy deploy train:2', ...RUN, 'flow metrics'])).say('compare')).toContain('flow reset');
   });
 });
 
