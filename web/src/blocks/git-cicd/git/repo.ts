@@ -400,7 +400,15 @@ export class Repo {
     let base = m[1];
     const suffix = m[2];
     let oid: string | null = null;
-    if (base === 'HEAD' || base === '@' || base === '') oid = this.headOid();
+    const at = /^(.*)@\{(\d+)\}$/.exec(base);
+    if (at) {
+      // HEAD@{2}, main@{1}: where the reference was n moves ago, from its reflog.
+      const name = at[1] === '' || at[1] === 'HEAD' ? 'HEAD' : `refs/heads/${at[1].replace(/^refs\/heads\//, '')}`;
+      const log = this.readReflog(name).reverse();
+      const e = log[Number(at[2])];
+      if (!e) throw new GitError(`fatal: log for '${at[1] || 'HEAD'}' only has ${log.length} entries`);
+      oid = e.to;
+    } else if (base === 'HEAD' || base === '@' || base === '') oid = this.headOid();
     else if (base === 'MERGE_HEAD' || base === 'ORIG_HEAD') oid = this.fs.exists(this.p(base)) ? this.fs.readFile(this.p(base)).trim() : null;
     else {
       base = base.replace(/^refs\//, '');

@@ -2,7 +2,8 @@
 // has no full-screen editor, so the command opens an editor panel over the
 // page, waits until the learner saves or closes it and writes the file with
 // the learner's permissions — like nano, but in a dialog. Ctrl+S saves,
-// Esc closes without saving. Tab inserts two spaces (YAML never uses tabs).
+// Esc closes without saving. Tab inserts two spaces (YAML never uses tabs),
+// and Enter keeps the indentation of the current line.
 
 import type { ShellCommand } from '../../../core/types';
 import { bi, t } from '../../../core/i18n';
@@ -11,7 +12,7 @@ import './edit.css';
 const L = {
   save: bi('Сохранить', 'Save'),
   close: bi('Закрыть', 'Close'),
-  hint: bi('Сочетание Ctrl+S сохраняет файл, клавиша Esc закрывает редактор без сохранения, а клавиша Tab вставляет два пробела.', 'Ctrl+S saves, Esc closes without saving. Tab inserts two spaces.'),
+  hint: bi('Сочетание Ctrl+S сохраняет файл, клавиша Esc закрывает редактор без сохранения, клавиша Tab вставляет два пробела, а новая строка после Enter начинается с того же отступа, что и предыдущая.', 'Ctrl+S saves, Esc closes without saving, Tab inserts two spaces, and a new line after Enter starts with the same indentation as the previous one.'),
   newFile: bi('новый файл', 'new file'),
 };
 
@@ -86,6 +87,14 @@ function openEditor(path: string, text: string, isNew: boolean): Promise<string 
         e.preventDefault();
         const s = ta.selectionStart;
         ta.setRangeText('  ', s, ta.selectionEnd, 'end');
+        sync();
+      } else if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // Keep the indentation of the current line: in YAML the indent is the structure.
+        e.preventDefault();
+        const s = ta.selectionStart;
+        const lineStart = ta.value.lastIndexOf('\n', s - 1) + 1;
+        const indent = /^[ ]*/.exec(ta.value.slice(lineStart, s))![0];
+        ta.setRangeText('\n' + indent, s, ta.selectionEnd, 'end');
         sync();
       } else if (e.key === 'Escape') {
         e.preventDefault();

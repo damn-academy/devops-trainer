@@ -258,7 +258,7 @@ async function mr(ctx: CmdContext, args: string[]): Promise<number> {
   if (sub === 'view') {
     const tgt = forge.repo.readRef(`refs/heads/${m.target}`);
     const behind = tgt && head ? [...forge.repo.ancestors(tgt)].filter((x) => !forge.repo.ancestors(head).has(x)).length : 0;
-    ctx.out(`title:\t${m.title}\nstate:\t${m.state}\nauthor:\t${m.author}\nsource:\t${m.source}\ntarget:\t${m.target}\npipeline:\t${pipe ? `#${pipe.id} ${pipe.status}` : 'none'}\n${behind ? `behind:\t${m.source} is ${behind} commit(s) behind ${m.target}\n` : ''}url:\thttps://forge.edu/${forge.project}/-/merge_requests/${m.iid}\n`);
+    ctx.out(`title:\t${m.title}\nstate:\t${m.state}\nauthor:\t${m.author}\nsource:\t${m.source}\ntarget:\t${m.target}\npipeline:\t${pipe ? `#${pipe.id} ${pipe.status} (source: ${pipe.source})` : 'none'}\n${behind ? `behind:\t${m.source} is ${behind} commit(s) behind ${m.target}\n` : ''}url:\thttps://forge.edu/${forge.project}/-/merge_requests/${m.iid}\n`);
     for (const n of m.notes) ctx.out(`\n${n.author}: ${n.body}\n`);
     return 0;
   }

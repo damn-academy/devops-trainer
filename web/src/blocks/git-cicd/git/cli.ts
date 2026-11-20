@@ -715,14 +715,20 @@ const subs: Record<string, Sub> = {
     const repo = openRepo(io);
     let create: string | null = null;
     let target: string | null = null;
+    let detach = false;
     for (let i = 0; i < args.length; i++) {
       const a = args[i];
       if (a === '-c' || a === '--create' || a === '-C') create = args[++i] ?? null;
+      else if (a === '-d' || a === '--detach') detach = true;
       else if (a === '-' ) target = '@{-1}';
       else if (a.startsWith('-')) return usage(io, 'switch', `unknown option '${a}'`);
       else target = a;
     }
     if (create) return switchTo(io, repo, create, { create: true, start: target ?? undefined });
+    if (detach) {
+      const rev = target ?? 'HEAD';
+      return detachTo(io, repo, resolveOrThrow(repo, rev), rev);
+    }
     if (!target) {
       io.err('fatal: missing branch or commit argument\n');
       return 128;
@@ -1010,10 +1016,7 @@ const subs: Record<string, Sub> = {
     const rebase = args.includes('--rebase') || repo.config('pull.rebase') === 'true';
     const mergeOk = args.includes('--no-rebase') || args.includes('--ff') || args.includes('--no-ff') || repo.config('pull.rebase') === 'false' || repo.config('pull.ff');
     if (head && !repo.isAncestor(head, theirs) && !repo.isAncestor(theirs, head)) {
-      if (rebase) {
-        io.err('error: rebase is not available in this simulator; use `git pull --no-rebase` (merge) instead\n');
-        return 1;
-      }
+      if (rebase) return rebaseOnto(io, repo, theirs, `${remote}/${remoteBranch}`);
       if (!mergeOk) {
         io.err(
           "hint: You have divergent branches and need to specify how to reconcile them.\nhint: You can do so by running one of the following commands sometime before\nhint: your next pull:\nhint:\nhint:   git config pull.rebase false  # merge\nhint:   git config pull.rebase true   # rebase\nhint:   git config pull.ff only       # fast-forward only\nhint:\nhint: You can replace \"git config\" with \"git config --global\" to set a default\nhint: preference for all repositories. You can also pass --rebase, --no-rebase,\nhint: or --ff-only on the command line to override the configured default per\nhint: invocation.\nfatal: Need to specify how to reconcile divergent branches.\n",
@@ -1175,6 +1178,27 @@ const subs: Record<string, Sub> = {
       if (s.unstaged.length) io.out(`Unstaged changes after reset:\n${s.unstaged.map((e) => `${e.kind === 'deleted' ? 'D' : 'M'}\t${e.path}`).join('\n')}\n`);
     }
     return 0;
+  },
+
+  rebase(io, args) {
+    const repo = openRepo(io);
+    if (args.some((a) => a === '-i' || a === '--interactive')) {
+      io.err('(trainer) interactive rebase needs an editor for the todo list, which this terminal does not have; run git rebase <upstream> without -i\n');
+      return 1;
+    }
+    if (args.includes('--abort') || args.includes('--continue')) {
+      io.err('fatal: No rebase in progress?\n');
+      return 128;
+    }
+    const rest = args.filter((a) => !a.startsWith('-'));
+    const branch = repo.currentBranch();
+    const up = rest[0] ?? (branch ? upstreamOf(repo, branch)?.ref : undefined);
+    if (!up) {
+      io.err('There is no tracking information for the current branch.\nPlease specify which branch you want to rebase against.\n\n    git rebase <branch>\n\n');
+      return 1;
+    }
+    const target = resolveOrThrow(repo, up);
+    return rebaseOnto(io, repo, target, up);
   },
 
   reflog(io) {
@@ -1403,6 +1427,62 @@ function threeWay(repo: Repo, base: FlatTree, ours: FlatTree, theirs: FlatTree, 
   return { files, conflicts, conflictEntries, texts, messages };
 }
 
+/**
+ * Replay the commits of the current branch that `upstream` does not have on top
+ * of it, one by one, as `git rebase` does. Merge commits are dropped, as git does
+ * without --rebase-merges. A conflict stops the replay and leaves the branch as
+ * it was: the simulator has no `rebase --continue`.
+ */
+function rebaseOnto(io: Io, repo: Repo, upstream: string, upName: string): number {
+  const head = repo.headOid();
+  const branch = repo.currentBranch();
+  if (!head) {
+    io.err('fatal: invalid upstream\n');
+    return 128;
+  }
+  if (repo.isAncestor(upstream, head)) {
+    io.out(`Current branch ${branch ?? 'HEAD'} is up to date.\n`);
+    return 0;
+  }
+  const dirty = repo.status();
+  if (dirty.staged.length || dirty.unstaged.length) {
+    io.err('error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.\n');
+    return 1;
+  }
+  if (repo.isAncestor(head, upstream)) {
+    repo.checkoutTree(repo.commitFiles(upstream), { from: unionTree(repo) });
+    repo.advanceHead(upstream, `rebase (finish): returning to refs/heads/${branch ?? 'HEAD'}`);
+    io.out(`Successfully rebased and updated refs/heads/${branch ?? 'HEAD'}.\n`);
+    return 0;
+  }
+  const theirs = repo.ancestors(upstream);
+  const todo: string[] = [];
+  for (let c: string | undefined = head; c && !theirs.has(c); c = repo.readCommit(c).parents[0]) todo.unshift(c);
+  const replay = todo.filter((c) => repo.readCommit(c).parents.length < 2);
+  let tip = upstream;
+  for (const oid of replay) {
+    const c = repo.readCommit(oid);
+    const res = threeWay(repo, repo.commitFiles(c.parents[0] ?? null), repo.commitFiles(tip), repo.commitFiles(oid), upName, `${short(oid)} (${c.message.split('\n')[0]})`);
+    if (res.conflicts.length) {
+      for (const p of res.conflicts) io.out(`CONFLICT (content): Merge conflict in ${p}\n`);
+      io.err(`error: could not apply ${short(oid)}... ${c.message.split('\n')[0]}\n(trainer) this simulator cannot continue a rebase after a conflict, so the branch was left exactly as it was before the rebase. Resolve the conflict with a merge instead: git pull --no-rebase, or git merge ${upName}.\n`);
+      return 1;
+    }
+    const files: FlatTree = new Map(res.files);
+    const idx = new Map<string, IndexEntry>();
+    for (const [p, e] of files) idx.set(p, { oid: e.oid, mode: e.mode });
+    const prevIdx = repo.readIndex();
+    repo.writeIndex(idx);
+    const tree = repo.buildTree(repo.indexAsTree());
+    repo.writeIndex(prevIdx);
+    tip = repo.writeCommit({ tree, parents: [tip], author: c.author, committer: repo.person(), message: c.message });
+  }
+  repo.checkoutTree(repo.commitFiles(tip), { from: unionTree(repo) });
+  repo.advanceHead(tip, `rebase (finish): refs/heads/${branch ?? 'HEAD'} onto ${upstream}`);
+  io.out(`Successfully rebased and updated refs/heads/${branch ?? 'HEAD'}.\n`);
+  return 0;
+}
+
 function applyMergeResult(repo: Repo, res: ThreeWay): void {
   const all: FlatTree = new Map(res.files);
   for (const [p, e] of res.conflictEntries) all.set(p, { oid: e.oid, mode: e.mode });
@@ -1493,6 +1573,7 @@ function switchTo(io: Io, repo: Repo, name: string, o: { create?: boolean; start
   if (target && target !== head) {
     const err = carryOver(io, repo, head, target, 'checkout');
     if (err) return err;
+    if (!o.create && head && !repo.currentBranch()) warnLeftBehind(io, repo, head);
   }
   if (o.create) {
     if (target) repo.writeRef(`refs/heads/${name}`, target, `branch: Created from ${o.start ?? 'HEAD'}`);
@@ -1516,6 +1597,18 @@ function switchTo(io: Io, repo: Repo, name: string, o: { create?: boolean; start
     }
   }
   return 0;
+}
+
+/** Leaving a detached HEAD: name the commits no branch or tag reaches any more, as git does. */
+function warnLeftBehind(io: Io, repo: Repo, head: string): void {
+  const reach = new Set<string>();
+  for (const [, oid] of repo.branches()) for (const a of repo.ancestors(oid)) reach.add(a);
+  for (const [, oid] of repo.tags()) for (const a of repo.ancestors(repo.peel(oid))) reach.add(a);
+  const lost: string[] = [];
+  for (let c: string | undefined = head; c && !reach.has(c); c = repo.readCommit(c).parents[0]) lost.push(c);
+  if (!lost.length) return;
+  const n = lost.length;
+  io.err(`Warning: you are leaving ${n} commit${n === 1 ? '' : 's'} behind, not connected to\nany of your branches:\n\n${lost.slice(0, 4).map((c) => `  ${short(c)} ${repo.readCommit(c).message.split('\n')[0]}`).join('\n')}\n\nIf you want to keep ${n === 1 ? 'it' : 'them'} by creating a new branch, this may be a good time\nto do so with:\n\n git branch <new-branch-name> ${short(lost[0])}\n\n`);
 }
 
 function detachTo(io: Io, repo: Repo, oid: string, rev: string): number {

@@ -12,6 +12,7 @@ import { ForgeProject, onForgePush, type ForgeState, type PushEvent } from '../g
 import { publish } from '../shared/hub';
 import { decide, globMatch, parseCi, type CiConfig, type CiJob, type When } from './config';
 import { registerBuiltImage, shareCluster } from './kube';
+import { k8sState } from '../../../engine/kube-lite/state';
 import { dockerModel, jobFallbacks, npmModel, type JobContext } from './models';
 
 export const RUNNER_VERSION = '18.5.0';
@@ -72,6 +73,9 @@ const IMAGES: Record<string, RegExp> = {
   ubuntu: /^(latest|22\.04|24\.04|26\.04)$/,
   busybox: /^latest$/,
   'bitnami/kubectl': /^(latest|1\.\d+(\.\d+)?)$/,
+  'bitnamilegacy/kubectl': /^(latest|1\.\d+(\.\d+)?)$/,
+  'alpine/k8s': /^1\.\d+\.\d+$/,
+  'registry.k8s.io/kubectl': /^v1\.\d+\.\d+$/,
   'alpine/helm': /^(latest|[34]\.\d+(\.\d+)?)$/,
   'hashicorp/terraform': /^(latest|1\.\d+(\.\d+)?)$/,
   'ghcr.io/opentofu/opentofu': /^(latest|1\.\d+(\.\d+)?)$/,
@@ -115,6 +119,8 @@ function jobRegistry(): TerminalRegistry {
 }
 
 // ── helpers ──
+
+const clusterClock = (m: SimMachineApi): number => k8sState(m).cluster?.now ?? 0;
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 63);
 
@@ -510,8 +516,10 @@ async function runJob(machine: SimMachineApi, forge: ForgeProject, p: PipelineRe
   const runLines = async (cmds: string[]) => {
     for (const line of cmds) {
       log(`\x1b[32;1m$ ${line}\x1b[0;m`);
+      const before = clusterClock(m);
       const r = await m.exec(line);
-      seconds += 0.4;
+      // kubectl rollout status and wait advance the shared cluster clock: that time is the job's time too.
+      seconds += 0.4 + Math.max(0, clusterClock(m) - before) / 1000;
       const out = r.out.replace(/\n$/, '');
       if (out) log(out);
       if (r.exit !== 0) return r.exit;

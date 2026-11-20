@@ -11,10 +11,11 @@
 import { defineModel } from '../../core/define';
 import { bi, fmt, t as tx, type Bi } from '../../core/i18n';
 import type { Step } from '../../core/types';
-import { card, hiddenExcept } from './explainers';
+import { card, fmtBi, hiddenExcept, sec } from './explainers';
 
 const last = (s: Step[]) => s[s.length - 1]?.metrics ?? {};
 const metric = (s: Step[], id: string) => last(s)[id] ?? 0;
+const join = (x: Bi, y: Bi): Bi => ({ ru: `${x.ru} ${y.ru}`, en: `${x.en} ${y.en}` });
 
 // ── E-MERGE: what git merge does with two branches ──────────────────────────
 
@@ -512,10 +513,11 @@ export const artifactsModel = defineModel<ArtP>({
         id: 'push2',
         label: bi('новый push', 'a new push'),
         caption: p.lockChanged ? bi('Следующий коммит меняет package-lock.json, то есть набор зависимостей стал другим.', 'The next commit changes package-lock.json: the dependencies are different now.') : bi('Следующий коммит меняет только страницы сайта, а package-lock.json остаётся прежним.', 'The next commit changes only the site pages.'),
-        focus: ['lock', 'e-key'],
-        reveal: ['lock', 'e-key'],
-        tokens: [{ edge: 'e-key', label: p.key === 'branch' ? 'npm-main' : p.lockChanged ? 'b7d2e9…' : 'a3f1c0…' }],
-        say: { lock: p.key === 'branch' ? bi('Ключ составлен из имени ветки, поэтому файл зависимостей на него не влияет, и ключ остаётся npm-main.', 'The key is made of the branch name, so the dependency file does not affect it and the key stays npm-main.') : p.lockChanged ? bi('Файл зависимостей изменился, поэтому ключ кэша, вычисленный из его хэша, тоже стал другим.', 'The dependency file changed, so the cache key computed from its hash changed too.') : bi('Файл зависимостей не изменился, поэтому ключ кэша остаётся прежним.', 'The dependency file did not change, so the cache key stays the same.') },
+        // With a key by branch the lock file does not feed the key: no line from it to the cache.
+        focus: p.key === 'branch' ? ['lock'] : ['lock', 'e-key'],
+        reveal: p.key === 'branch' ? ['lock'] : ['lock', 'e-key'],
+        tokens: p.key === 'branch' ? [] : [{ edge: 'e-key', label: p.lockChanged ? 'b7d2e9…' : 'a3f1c0…' }],
+        say: { lock: p.key === 'branch' ? bi('Ключ составлен из имени ветки, поэтому файл зависимостей на него не влияет, линии от файла к кэшу на этом шаге нет, и ключ остаётся npm-main.', 'The key is made of the branch name, so the dependency file does not affect it and the key stays npm-main.') : p.lockChanged ? bi('Файл зависимостей изменился, поэтому ключ кэша, вычисленный из его хэша, тоже стал другим.', 'The dependency file changed, so the cache key computed from its hash changed too.') : bi('Файл зависимостей не изменился, поэтому ключ кэша остаётся прежним.', 'The dependency file did not change, so the cache key stays the same.') },
         states: { lock: p.lockChanged ? 'warn' : 'on' },
         values: { lock: tx(p.lockChanged ? bi('изменился', 'changed') : bi('не менялся', 'unchanged')) },
         metrics: { npm1: 52, npm2: 0, delivered: 2 },
@@ -557,8 +559,11 @@ export const artifactsModel = defineModel<ArtP>({
     }
     const a1 = metric(prev, 'npm2');
     const b1 = metric(next, 'npm2');
-    if (change.id === 'key') return b.key === 'lock' ? fmt(bi('Теперь ключ вычисляется из lock-файла, и полка меняется вместе с зависимостями. npm ci во второй сборке занимает {b} секунд вместо {a}.', 'A key by the lock file: the shelf changes along with the dependencies. npm ci in the second build: {a} → {b} s.'), { a: a1, b: b1 }) : fmt(bi('Теперь ключ составлен из имени ветки, и у каждой ветки своя полка. npm ci во второй сборке занимает {b} секунд вместо {a}.', 'A key by branch: each branch has its own shelf. npm ci in the second build: {a} → {b} s.'), { a: a1, b: b1 });
-    return fmt(bi('npm ci во второй сборке занимает {b} секунд вместо {a}. Если кэш не нашёлся, сборка идёт дольше, но не ломается.', 'npm ci in the second build: {a} → {b} s. A cache miss slows down but breaks nothing.'), { a: a1, b: b1 });
+    const time = a1 !== b1
+      ? fmtBi(bi('npm ci во второй сборке раньше занимал {a}, а теперь занимает {b}.', 'npm ci in the second build took {a} and now takes {b}.'), { a: sec(a1), b: sec(b1) })
+      : fmtBi(bi('Время npm ci во второй сборке не изменилось и по-прежнему составляет {b}, потому что эта правка не повлияла на то, найдёт ли сборка свою полку в кэше.', 'The npm ci time in the second build did not change and is still {b}: whether the shelf is found stayed as it was after this change.'), { b: sec(b1) });
+    const lead = change.id === 'key' ? (b.key === 'lock' ? bi('Теперь ключ вычисляется из lock-файла, и полка меняется вместе с зависимостями.', 'The key is now computed from the lock file, and the shelf changes along with the dependencies.') : bi('Теперь ключ составлен из имени ветки, и у каждой ветки своя полка.', 'The key is now made of the branch name, and every branch has its own shelf.')) : bi('Если кэш не нашёлся, сборка идёт дольше, но не ломается.', 'A cache miss slows the build down but breaks nothing.');
+    return join(lead, time);
   },
 });
 
@@ -629,7 +634,7 @@ export const dagModel = defineModel<DagP>({
       { id: 'e-bt', from: 'build', to: 'test', label: 'needs: [build]', card: card(bi('Явная зависимость: test стартует, как только build закончилась успешно, и скачивает артефакты только от неё.', 'An explicit dependency: test starts as soon as build succeeds and downloads artifacts only from it.'), bi('Зависимость записываете вы в `.gitlab-ci.yml`.', 'You, in .gitlab-ci.yml.'), undefined, { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'needs' }) },
       { id: 'e-lt', from: 'lint', to: 'test', via: [[300, 280], [300, 110]], label: bi('конец стадии build', 'end of the build stage'), labelAt: 0.35, dashed: true, card: card(bi('Неявная зависимость по стадиям: без needs джоба test ждёт каждую джобу предыдущей стадии, даже ту, которая ей не нужна.', 'The implicit dependency of stages: without needs, test waits for every job of the earlier stage, even one it does not need.'), bi('Зависимость задаёт порядок в ключе `stages`.', 'The stages order.'), undefined, { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'stages' }) },
       { id: 'e-td', from: 'test', to: 'deploy', label: bi('выкладка после тестов', 'deploy after the tests'), card: card(bi('Выкладка начинается после тестов. Без needs она ждёт конца всей стадии test, а с `needs: [test]` ждёт только джобу test.', 'The deploy starts after the tests. Without needs it waits for the whole test stage; with `needs: [test]` only for the test job.'), bi('Зависимость записываете вы.', 'You.')) },
-      { id: 'e-clock', from: 'deploy', to: 'clock', via: [[836, 280]], label: bi('последняя джоба', 'the last job'), labelAt: 0.4, card: card(bi('Пайплайн закончен тогда, когда закончилась его последняя джоба.', 'The pipeline is over when its last job is.'), bi('Время считает сервер.', 'The forge.')) },
+      { id: 'e-clock', from: 'deploy', to: 'clock', via: [[836, 280]], label: bi('конец последней джобы', 'end of the last job'), labelAt: 0.4, card: card(bi('Пайплайн закончен тогда, когда закончилась его последняя джоба. Обычно это выкладка, но если медленный линтер идёт дольше всей остальной цепочки, пайплайн заканчивается вместе с ним.', 'The pipeline is over when its last job is.'), bi('Время считает сервер.', 'The forge.')) },
     ],
   },
   params: [
@@ -716,7 +721,9 @@ export const dagModel = defineModel<DagP>({
       return invalid;
     }
     const t = dagTimes(p);
-    const total = t.deploy[1];
+    // The pipeline ends with its last job: with needs the slow linter may outlast the deploy.
+    const total = Math.max(t.deploy[1], t.lint[1]);
+    const lintLast = t.lint[1] > t.deploy[1];
     const two = p.runners >= 2;
     const steps: Step[] = [
       {
@@ -742,8 +749,8 @@ export const dagModel = defineModel<DagP>({
       },
       {
         id: 'tests',
-        label: bi(`${t.test[0]} с`, `${t.test[0]} s`),
-        caption: fmt(bi('Джоба test стартует на {s}-й секунде и идёт 30 секунд.', 'test starts at second {s}.'), { s: t.test[0] }),
+        label: bi(`${t.test[0]}–${t.test[1]} с`, `${t.test[0]}–${t.test[1]} s`),
+        caption: fmt(bi('Джоба test стартует на {s}-й секунде, идёт 30 секунд и заканчивается на {e}-й.', 'test starts at second {s}, runs 30 seconds and ends at second {e}.'), { s: t.test[0], e: t.test[1] }),
         focus: ['test'],
         say: { test: fmt(bi('Тесты стартуют на {s}-й секунде пайплайна.', 'The tests start at second {s} of the pipeline.'), { s: t.test[0] }) },
         states: { test: 'ok', lint: t.lint[1] <= t.test[0] ? 'ok' : 'on' },
@@ -751,36 +758,39 @@ export const dagModel = defineModel<DagP>({
       },
       {
         id: 'deploy',
-        label: bi(`${t.deploy[0]} с`, `${t.deploy[0]} s`),
+        label: bi(`${t.deploy[0]}–${t.deploy[1]} с`, `${t.deploy[0]}–${t.deploy[1]} s`),
         caption: p.needs ? bi('У выкладки записано `needs: [test]`, поэтому она стартует сразу после тестов.', 'With needs: [test] the deploy starts right after the tests.') : bi('Выкладка ждёт, пока закончится вся стадия test.', 'The deploy waits for the test stage to end.'),
         focus: ['e-td', 'deploy'],
         reveal: ['deploy', 'e-td'],
         tokens: [{ edge: 'e-td', label: bi('тесты прошли', 'tests passed') }],
         say: { deploy: fmt(bi('Выкладка стартует на {s}-й секунде, как только закончились тесты.', 'The deploy starts at second {s}, as soon as the tests are done.'), { s: t.deploy[0] }) },
-        states: { deploy: 'ok', lint: 'ok' },
+        states: { deploy: 'ok', lint: t.lint[1] <= t.deploy[0] ? 'ok' : 'on' },
         metrics: { testStart: t.test[0], total: 0 },
       },
       {
         id: 'done',
         label: bi(`${total} с`, `${total} s`),
-        caption: fmt(bi('Последняя джоба закончилась, и весь пайплайн занял {t} секунд.', 'The pipeline is done in {t} s.'), { t: total }),
-        focus: ['clock', 'e-clock'],
+        caption: lintLast
+          ? fmtBi(bi('Выкладка закончилась на {d}-й секунде, но линтер ещё шёл. Пайплайн считается законченным, когда закончилась его последняя джоба, поэтому он занял {t}. Тесты и выкладка от линтера больше не зависят, но общее время ограничено самой долгой джобой.', 'The deploy ended at second {d}, but the linter was still running. A pipeline is over when its last job is, so it took {t}. The tests and the deploy no longer depend on the linter, but the total is bounded by the longest job.'), { d: t.deploy[1], t: sec(total) })
+          : fmtBi(bi('Последней закончилась выкладка, и весь пайплайн занял {t}.', 'The deploy finished last, and the whole pipeline took {t}.'), { t: sec(total) }),
+        focus: lintLast ? ['clock', 'lint'] : ['clock', 'e-clock'],
         reveal: ['clock', 'e-clock'],
-        say: { clock: fmt(bi('Сервер отмечает, что пайплайн закончился на {t}-й секунде.', 'The server marks that the pipeline ended at second {t}.'), { t: total }) },
-        states: { clock: 'ok' },
+        say: { clock: fmt(bi('Сервер отмечает, что пайплайн закончился на {t}-й секунде вместе с последней джобой {j}.', 'The server marks that the pipeline ended at second {t}, together with its last job, {j}.'), { t: total, j: lintLast ? 'lint' : 'deploy_staging' }) },
+        states: { clock: 'ok', lint: 'ok' },
         values: { clock: tx(bi(`${total} с`, `${total} s`)) },
         metrics: { testStart: t.test[0], total },
       },
     ];
     return steps;
   },
-  explainDelta(prev, next, change, a, b): Bi {
+  explainDelta(prev, next, change, _a, b): Bi {
     if (change.kind === 'break') return change.on ? bi('needs ссылается на исключённую джобу, поэтому пайплайн не создаётся вовсе.', 'needs on an excluded job: the pipeline is not created at all.') : bi('Поломку убрали, и джоба build снова входит в пайплайн.', 'The break is removed: build is in the pipeline again.');
     const t0 = metric(prev, 'total');
     const t1 = metric(next, 'total');
-    if (change.id === 'needs') return b.needs ? fmt(bi('needs включены, и весь пайплайн теперь занимает {b} секунд вместо {a}.', 'needs on: the whole pipeline {a} → {b} s.'), { a: t0, b: t1 }) : fmt(bi('needs выключены, и весь пайплайн теперь занимает {b} секунд вместо {a}.', 'needs off: the whole pipeline {a} → {b} s.'), { a: t0, b: t1 });
-    if (change.id === 'lint') return b.needs ? fmt(bi('Линтер теперь идёт {y} секунд вместо {x}, а весь пайплайн занимает {b} секунд вместо {a}. С needs тесты от линтера не зависят.', 'lint {x} → {y} s: the whole pipeline {a} → {b} s. With needs the tests do not depend on it.'), { x: a.lint, y: b.lint, a: t0, b: t1 }) : fmt(bi('Линтер теперь идёт {y} секунд вместо {x}, а весь пайплайн занимает {b} секунд вместо {a}. Без needs медленный линтер задерживает все следующие стадии.', 'lint {x} → {y} s: the whole pipeline {a} → {b} s. Without needs the slow linter holds everyone back.'), { x: a.lint, y: b.lint, a: t0, b: t1 });
-    return fmt(bi('Раннеров теперь {y} вместо {x}, и весь пайплайн занимает {b} секунд вместо {a}. needs сокращают ожидание зависимостей, но свободных раннеров они не заменяют.', '{x} → {y} runners: the whole pipeline {a} → {b} s. needs cut the wait for dependencies, but do not replace free runners.'), { x: a.runners, y: b.runners, a: t0, b: t1 });
+    const total = t0 === t1 ? bi('Время всего пайплайна не изменилось.', 'The whole pipeline time did not change.') : fmtBi(bi('Раньше пайплайн занимал {a}, а теперь занимает {b}.', 'The pipeline took {a} before and takes {b} now.'), { a: sec(t0), b: sec(t1) });
+    if (change.id === 'needs') return join(b.needs ? bi('Ключ needs включён, и тесты больше не ждут линтер.', 'needs are on, and the tests no longer wait for the linter.') : bi('Ключ needs выключен, и тесты снова ждут конца всей стадии build.', 'needs are off, and the tests wait for the whole build stage again.'), total);
+    if (change.id === 'lint') return join(fmtBi(b.needs ? bi('Линтер теперь идёт {y}. С needs тесты от него не зависят, но пайплайн не может закончиться раньше линтера.', 'lint now takes {y}. With needs the tests do not depend on it, but the pipeline cannot end before the linter.') : bi('Линтер теперь идёт {y}. Без needs медленный линтер задерживает все следующие стадии.', 'lint now takes {y}. Without needs the slow linter holds back every later stage.'), { y: sec(b.lint) }), total);
+    return join(fmt(bi('Свободных раннеров теперь {y}. Ключ needs сокращает ожидание зависимостей, но свободных раннеров не заменяет.', 'There are now {y} free runners. needs cut the wait for dependencies, but do not replace free runners.'), { y: b.runners }), total);
   },
 });
 
@@ -821,7 +831,7 @@ export const kubeDeployModel = defineModel<KdP>({
     width: 960,
     height: 470,
     nodes: [
-      { id: 'job', label: bi('джоба deploy', 'deploy job'), icon: 'container', work: 'dots', sub: 'bitnami/kubectl', family: 'node', shape: 'rack', x: 24, y: 40, w: 184, h: 84, card: card(bi('Джоба выкладки, которая выполняется в образе с kubectl. В push-модели она сама выступает клиентом кластера, и её команды идут прямо в API-сервер.', 'The deploy job in an image with kubectl. In the push model it is the cluster’s client: its commands go straight to the API server.'), bi('Джобу выполняет раннер, и по правилам её запускают только из main.', 'A runner; by the rules, only from main.'), 'glab ci trace deploy') },
+      { id: 'job', label: bi('джоба deploy', 'deploy job'), icon: 'container', work: 'dots', sub: 'alpine/k8s', family: 'node', shape: 'rack', x: 24, y: 40, w: 184, h: 84, card: card(bi('Джоба выкладки, которая выполняется в образе с kubectl. В push-модели она сама выступает клиентом кластера, и её команды идут прямо в API-сервер.', 'The deploy job in an image with kubectl. In the push model it is the cluster’s client: its commands go straight to the API server.'), bi('Джобу выполняет раннер, и по правилам её запускают только из main.', 'A runner; by the rules, only from main.'), 'glab ci trace deploy') },
       { id: 'reg', label: bi('реестр образов', 'image registry'), icon: 'database', sub: 'site:1a2b3c4d', family: 'store', shape: 'buffer', x: 24, y: 210, w: 184, h: 60, card: card(bi('Сюда стадия build положила образ с тегом коммита. Тег 1a2b3c4d никогда не будет указывать на другой образ, а тег latest переходит на новый образ при каждой сборке.', 'The build stage put the image here, tagged with the commit. The tag 1a2b3c4d will never point to another image, while latest moves with every build.'), bi('Образ отправила сюда джоба сборки командой `docker push`.', 'docker push from the build job.'), 'glab ci trace build-image') },
       { id: 'kcfg', label: 'KUBECONFIG', icon: 'lock', sub: 'File · Protected', family: 'obj', shape: 'doc', x: 24, y: 340, w: 184, h: 60, card: card(bi('Ключ сервисного аккаунта deployer: адрес кластера, токен и пространство имён staging. Переменная имеет тип File, поэтому раннер записывает её в файл, а kubectl находит этот файл по пути в `$KUBECONFIG`. Пометка Protected означает, что ключ получают только пайплайны защищённых веток.', 'The key of the deployer service account: the cluster address, a token, the staging namespace. A File-type variable: the runner writes it to a file and kubectl finds it by the path in $KUBECONFIG. Protected: only pipelines of protected branches get the key.'), bi('Ключ выдаёт администратор кластера, а вы кладёте его в настройки проекта.', 'The cluster administrator issues it; you put it into the project settings.'), 'glab variable list') },
       { id: 'api', label: 'API server', icon: 'server', work: 'spin', sub: 'staging', family: 'cp', shape: 'hex', x: 330, y: 150, w: 176, h: 76, card: card(bi('Единственный вход в кластер. API-сервер проверяет, кто пришёл и что ему разрешено: аккаунт deployer может менять Deployment в пространстве имён staging, но не узлы и не другие пространства имён.', 'The only door of the cluster. It checks who came and what they may do: deployer may change Deployments in staging, but not nodes and not other namespaces.'), bi('API-сервер входит в состав кластера.', 'The cluster.'), 'kubectl auth can-i patch deployments -n staging') },
@@ -926,7 +936,7 @@ export const kubeDeployModel = defineModel<KdP>({
   metrics: [
     { id: 'newPods', label: bi('число готовых подов новой версии', 'ready pods of the new version') },
     { id: 'oldPods', label: bi('число подов прежней версии', 'pods of the previous version') },
-    { id: 'jobOk', label: bi('джоба выкладки зелёная (1 да, 0 нет)', 'deploy job green (1/0)') },
+    { id: 'jobOk', label: bi('успешно завершённых джоб выкладки', 'deploy jobs finished successfully') },
   ],
   run(p, broken) {
     const pull = p.mode === 'pull';
@@ -997,8 +1007,8 @@ export const kubeDeployModel = defineModel<KdP>({
         tokens: [{ edge: 'e-roll', label: 'site:1a2b3c4d' }],
         say: { rsNew: crash ? bi('Новые поды стартуют и через три секунды аварийно завершаются, поэтому старые поды продолжают работать.', 'The new pods start and crash three seconds later, so the old pods keep running.') : bi('Новый ReplicaSet запускает три пода новой версии, а старые поды уходят по одному.', 'The new ReplicaSet starts three pods of the new version while the old pods leave one by one.') },
         states: { dep: 'ok', rsNew: crash ? 'err' : 'ok', rsOld: crash ? 'ok' : 'off' },
-        values: { dep: 'image: site:1a2b3c4d', rsNew: crash ? '0/3 CrashLoopBackOff' : '3/3', rsOld: crash ? '2/3' : '0/3' },
-        metrics: { newPods: crash ? 0 : 3, oldPods: crash ? 2 : 0, jobOk: 1 },
+        values: { dep: 'image: site:1a2b3c4d', rsNew: crash ? '0/1 CrashLoopBackOff' : '3/3', rsOld: crash ? '3/3' : '0/3' },
+        metrics: { newPods: crash ? 0 : 3, oldPods: crash ? 3 : 0, jobOk: 1 },
       });
       if (crash)
         steps.push({
@@ -1008,7 +1018,7 @@ export const kubeDeployModel = defineModel<KdP>({
           focus: ['agent', 'rsNew'],
           say: { agent: bi('Агент видит, что новые поды аварийно завершаются, и помечает приложение как Degraded.', 'The agent sees the new pods crashing and marks the application as Degraded.') },
           states: { agent: 'err' },
-          metrics: { newPods: 0, oldPods: 2, jobOk: 1 },
+          metrics: { newPods: 0, oldPods: 3, jobOk: 1 },
           broken: { at: 'agent', message: 'web  Synced  Degraded  Back-off restarting failed container web in pod web-6mzdx…', caption: bi('В pull-модели состояние выкладки показывает агент, а откат выполняют коммитом в репозиторий конфигурации.', 'in the pull model the agent shows the rollout’s health, and a rollback is a commit.') },
         });
       return steps;
@@ -1080,15 +1090,15 @@ export const kubeDeployModel = defineModel<KdP>({
       id: 'roll',
       label: 'rollout',
       caption: crash
-        ? bi('Новый ReplicaSet запускает поды, они стартуют и через три секунды аварийно завершаются. Старые поды ещё отвечают на запросы, но контроллер уже начал их убирать.', 'The new ReplicaSet brings up pods; they start and crash three seconds later. The old pods still serve requests, but the controller has already begun removing them.')
+        ? bi('Новый ReplicaSet запускает один под сверх трёх старых. По умолчанию постепенное обновление разрешает 25 процентов лишних подов с округлением вверх и 25 процентов недоступных с округлением вниз, то есть для трёх реплик один лишний под и ни одного недоступного. Новый под стартует и через три секунды аварийно завершается, поэтому контроллер не убирает ни одного старого пода, и все три продолжают отвечать на запросы.', 'The new ReplicaSet starts one pod on top of the three old ones. By default a rolling update allows 25 percent extra pods rounded up and 25 percent unavailable rounded down, which for three replicas is one extra pod and none unavailable. The new pod starts and crashes three seconds later, so the controller removes none of the old pods, and all three keep serving requests.')
         : bi('Новый шаблон пода получает новый хэш и новый ReplicaSet. Новые поды становятся готовыми, а старые уходят по одному.', 'A new template, a new pod-template-hash, a new ReplicaSet. New pods become ready, old ones leave one by one.'),
       focus: ['e-roll', 'rsNew', 'e-old', 'rsOld'],
       reveal: ['e-roll', 'rsNew', 'e-old'],
       tokens: [{ edge: 'e-roll', label: 'site:1a2b3c4d' }],
-      say: { rsNew: crash ? bi('Новые поды стартуют и через три секунды аварийно завершаются, и контроллер раз за разом их перезапускает.', 'The new pods start and crash three seconds later, and the controller restarts them again and again.') : bi('Новый ReplicaSet запускает три пода новой версии, а старые поды уходят по одному.', 'The new ReplicaSet starts three pods of the new version while the old pods leave one by one.') },
+      say: { rsNew: crash ? bi('Новый под стартует и через три секунды аварийно завершается, и kubelet раз за разом его перезапускает.', 'The new pods start and crash three seconds later, and the controller restarts them again and again.') : bi('Новый ReplicaSet запускает три пода новой версии, а старые поды уходят по одному.', 'The new ReplicaSet starts three pods of the new version while the old pods leave one by one.') },
       states: { rsNew: crash ? 'err' : 'ok', rsOld: crash ? 'warn' : 'off' },
-      values: { rsNew: crash ? '0/3 CrashLoopBackOff' : '3/3', rsOld: crash ? '2/3' : '0/3' },
-      metrics: { newPods: crash ? 0 : 3, oldPods: crash ? 2 : 0, jobOk: p.wait ? 0 : 1 },
+      values: { rsNew: crash ? '0/1 CrashLoopBackOff' : '3/3', rsOld: crash ? '3/3' : '0/3' },
+      metrics: { newPods: crash ? 0 : 3, oldPods: crash ? 3 : 0, jobOk: p.wait ? 0 : 1 },
     });
     if (!p.wait) {
       steps.push(
@@ -1100,7 +1110,7 @@ export const kubeDeployModel = defineModel<KdP>({
               focus: ['job', 'rsNew'],
               say: { job: bi('Джоба не ждала окончания выкладки и завершилась успешно, хотя новые поды аварийно завершаются.', 'The job did not wait for the rollout and finished successfully, although the new pods are crashing.') },
               states: { job: 'ok', rsNew: 'err' },
-              metrics: { newPods: 0, oldPods: 2, jobOk: 1 },
+              metrics: { newPods: 0, oldPods: 3, jobOk: 1 },
               broken: { at: 'rsNew', message: 'pod/web-6mzdx-dr9ck   0/1   CrashLoopBackOff   3   2m', caption: bi('Без kubectl rollout status пайплайн не знает, чем закончилась выкладка.', 'without rollout status the pipeline does not know how the rollout ended.') },
             }
           : {
@@ -1125,7 +1135,7 @@ export const kubeDeployModel = defineModel<KdP>({
         tokens: [{ edge: 'e-wait', label: bi('поды не готовы', 'pods not ready') }],
         say: { job: bi('Джоба 120 секунд ждёт готовности новых подов, не дожидается её и завершается с кодом 1.', 'The job waits 120 seconds for the new pods to become ready, gives up and exits with code 1.') },
         states: { job: 'err' },
-        metrics: { newPods: 0, oldPods: 2, jobOk: 0 },
+        metrics: { newPods: 0, oldPods: 3, jobOk: 0 },
         broken: { at: 'job', message: 'Waiting for deployment "web" rollout to finish: 1 out of 3 new replicas have been updated...\nerror: timed out waiting for the condition\nERROR: Job failed: exit code 1', caption: bi('Джоба с when: on_failure выполняет kubectl rollout undo, и тестовый стенд возвращается к прежней ревизии.', 'a job with when: on_failure runs kubectl rollout undo, and staging returns to the previous revision.') },
       });
       return steps;
