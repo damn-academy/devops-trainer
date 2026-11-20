@@ -235,6 +235,19 @@ export const QUIZ: QuizItem[] = [
       { id: 'argo', left: 'Argo CD', right: bi('манифесты в Git на нужной ревизии', 'the manifests in Git at the given revision') },
     ],
   },
+  {
+    id: 'k8s-3.q.layers',
+    kind: 'mcq',
+    concepts: ['cicd.gitops-pull', 'iac.idempotence'],
+    prompt: bi('Кластер собран кодом, приложение выложено через Argo CD. Ночью коллега зашёл на worker-1 и руками поменял в файле `/etc/containerd/config.toml` значение SystemdCgroup на false. Что первым покажет это расхождение с кодом?', 'The cluster is built by code, the application is released through Argo CD. At night a colleague logged in to worker-1 and set SystemdCgroup to false in `/etc/containerd/config.toml` by hand. What is the first to show this difference from the code?'),
+    options: [
+      { id: 'ansible', text: bi('Прогон `ansible-playbook site.yml --check`, потому что роль containerd сравнит свой шаблон с файлом на узле и сообщит changed', 'A run of `ansible-playbook site.yml --check`, because the containerd role compares its template with the file on the node and reports changed'), correct: true },
+      { id: 'plan', text: bi('Команда `terraform plan`, потому что она сравнивает код с облаком и найдёт изменённую машину', '`terraform plan`, because it compares the code with the cloud and finds the changed machine'), why: bi('Terraform видит машину как ресурс облака: образ, размер, сеть и метки. Файлы внутри машины он не читает, поэтому план ответит No changes.', 'Terraform sees the machine as a cloud resource: image, size, network and labels. It does not read files inside the machine, so the plan answers No changes.') },
+      { id: 'argo', text: bi('Argo CD, потому что selfHeal возвращает к Git любую ручную правку в кластере', 'Argo CD, because selfHeal brings any manual edit in the cluster back to Git'), why: bi('Argo CD сравнивает только объекты Kubernetes из репозитория манифестов. Файл на узле не объект Kubernetes, и Application останется в состоянии Synced.', 'Argo CD compares only Kubernetes objects from the manifests repository. A file on a node is not a Kubernetes object, and the Application stays Synced.') },
+      { id: 'nodes', text: bi('Команда `kubectl get nodes`, потому что узел сразу перейдёт в состояние NotReady', '`kubectl get nodes`, because the node turns NotReady at once'), why: bi('Узел продолжит работать и останется в состоянии Ready, потому что containerd читает свой файл конфигурации только при запуске и до перезапуска работает со старой настройкой. Поэтому такая правка опасна тем, что сработает не сейчас, а при следующей перезагрузке узла.', 'The node keeps working and stays Ready, because containerd reads its configuration file only at start and keeps the old setting until a restart. That is what makes such an edit dangerous: it takes effect not now but at the next reboot of the node.') },
+    ],
+    explain: bi('Каждый инструмент сверяет только свой слой: Terraform сверяет машины, Ansible сверяет то, что настроено на машинах, а Argo CD сверяет объекты в кластере. Ручную правку внутри узла найдёт только тот, кто этот узел описывает.', 'Every tool compares only its own layer: Terraform the machines, Ansible what is set up on them, Argo CD the objects in the cluster. A manual edit inside a node is found only by whoever describes that node.'),
+  },
   // ── operate ──
   {
     id: 'k8s-3.q.skew',

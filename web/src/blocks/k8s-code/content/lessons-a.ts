@@ -383,7 +383,7 @@ export const L_KUBEADM: Lesson = {
         },
         {
           id: 'join',
-          prompt: bi('Присоедините `worker-1` и `worker-2` командой, которую напечатал init, причём одной командой на всю группу `workers`. После этого `cilium status` должен показать Ready: 3/3.', 'Join `worker-1` and `worker-2` with the command init printed — one command for the `workers` group. `cilium status` must show Ready: 3/3.'),
+          prompt: bi('Присоедините `worker-1` и `worker-2` командой, которую напечатал init, причём одной командой на всю группу `workers`. После этого `cilium status` должен показать Ready: 3/3, а команда `ansible cp-1 -b -a "kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes"` должна вывести три узла в состоянии Ready.', 'Join `worker-1` and `worker-2` with the command init printed — one command for the `workers` group. `cilium status` must show Ready: 3/3, and `ansible cp-1 -b -a "kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes"` must list three Ready nodes.'),
           check: {
             when: (f: Facts) => readyNodes(f) === 3,
             fail: [

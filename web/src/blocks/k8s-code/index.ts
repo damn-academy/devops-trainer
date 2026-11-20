@@ -14,6 +14,7 @@ import { KCODE_DOCS } from './docs';
 import { codeModel, gitopsModel } from './explainers';
 import { gitopsSetupHook } from './gitops';
 import { ciliumCommand, kubeadmCommand, kubeadmHelpPages } from './kubeadm';
+import { kcodeKubectl } from './kubectl';
 import { kcodeFactsProvider, kcodeSetupHook } from './stand';
 
 export default defineModule({
@@ -22,7 +23,7 @@ export default defineModule({
   concepts: CONCEPTS,
   quiz: QUIZ,
   explainers: [fromModel(codeModel), fromModel(gitopsModel)],
-  commands: [kubeadmCommand, ciliumCommand],
+  commands: [kubeadmCommand, ciliumCommand, kcodeKubectl],
   docs: [...kubeadmHelpPages(), ...KCODE_DOCS],
   exams: [EXAM],
   facts: [kcodeFactsProvider],
