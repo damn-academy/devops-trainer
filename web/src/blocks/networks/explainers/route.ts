@@ -104,7 +104,6 @@ export const routeModel = defineModel<P>({
       id: 'no-default',
       label: b('У компьютера h1 удалён маршрут по умолчанию', 'h1’s default route is deleted'),
       remove: ['t1'],
-      layer: 'L3',
       predict: {
         prompt: b('У компьютера h1 нет маршрута по умолчанию, а адрес 10.0.2.10 лежит вне его подсети. Где остановится пакет?', 'h1 has no default route. Where does the packet to 10.0.2.10 stop?'),
         options: [
@@ -118,7 +117,6 @@ export const routeModel = defineModel<P>({
       id: 'r1-off',
       label: b('Маршрутизатор r1 выключен', 'Router r1 is off'),
       remove: ['r1'],
-      layer: 'L2',
       predict: {
         prompt: b('Маршрутизатор r1 выключен, а маршрут через него у h1 остался. Что напечатает ping на компьютере h1?', 'The router is off. What will ping on h1 print?'),
         options: [
@@ -180,7 +178,7 @@ export const routeModel = defineModel<P>({
       label: b('кадр 1', 'frame 1'),
       caption: fmt(b('Компьютер h1 отправляет кадр от MAC-адреса {a} к MAC-адресу {r}. Внутри кадра лежит IP-пакет от 10.0.1.10 к 10.0.2.10 с TTL, равным {t}.', 'Frame: MAC {a} → MAC {r}. Inside, an IP packet 10.0.1.10 → 10.0.2.10, TTL {t}.'), { a: M.h1, r: M.r1a, t: p.ttl }),
       focus: ['l1', 'r1'],
-      tokens: [{ edge: 'l1', label: `TTL ${p.ttl}` }],
+      tokens: [{ edge: 'l1', label: `MAC …01:10 → …01:01 · IP .1.10 → .2.10 · TTL ${p.ttl}` }],
       say: { h1: b('Компьютер h1 отправляет кадр на MAC-адрес шлюза, а внутри лежит пакет для h2.', 'h1 sends a frame to the gateway’s MAC with a packet for h2 inside.') },
       metrics: { routers: 0 },
     });
@@ -207,7 +205,7 @@ export const routeModel = defineModel<P>({
         say: { r1: b('Маршрутизатор r1 видит, что TTL стал нулём, выбрасывает пакет и сообщает об этом компьютеру h1.', 'r1 sees TTL reach zero, drops the packet and tells h1.') },
         states: { r1: 'warn' },
         metrics: { routers: 1 },
-        broken: { at: 'r1', message: '$ ping -c 1 -t 1 10.0.2.10\nPING 10.0.2.10 (10.0.2.10) 56(84) bytes of data.\nFrom 10.0.1.1 icmp_seq=1 Time to live exceeded', caption: b('На этом правиле построена команда traceroute: он отправляет пакеты с TTL 1, 2, 3 и так далее, и каждый маршрутизатор на пути называет себя в таком сообщении.', 'this is how traceroute works: TTL 1, 2, 3… — and every router on the way names itself.') },
+        broken: { at: 'r1', message: '$ ping -c 1 -t 1 10.0.2.10\nPING 10.0.2.10 (10.0.2.10) 56(84) bytes of data.\nFrom 10.0.1.1 icmp_seq=1 Time to live exceeded', caption: b('На этом правиле построена команда traceroute: она отправляет пакеты с TTL 1, 2, 3 и так далее, и каждый маршрутизатор на пути называет себя в таком сообщении.', 'this is how traceroute works: TTL 1, 2, 3… — and every router on the way names itself.') },
       });
       return steps;
     }
@@ -225,7 +223,7 @@ export const routeModel = defineModel<P>({
       label: b('кадр 2', 'frame 2'),
       caption: fmt(b('Маршрутизатор r1 собирает новый кадр от MAC-адреса {r} к MAC-адресу {h}. IP-адреса в пакете не изменились, а TTL теперь равен {t}. Компьютер h2 получает эхо-запрос.', 'A new frame: MAC {r} → MAC {h}. The IP addresses did not change; TTL is now {t}. h2 receives the echo request.'), { r: M.r1b, h: M.h2, t: p.ttl - 1 }),
       focus: ['l2', 'h2'],
-      tokens: [{ edge: 'l2', label: `TTL ${p.ttl - 1}` }],
+      tokens: [{ edge: 'l2', label: `MAC …02:01 → …02:10 · IP .1.10 → .2.10 · TTL ${p.ttl - 1}` }],
       say: { h2: b('Компьютер h2 получает эхо-запрос от h1.', 'h2 receives h1’s echo request.') },
       states: { h2: 'on', l2: 'on', t3: 'on' },
       metrics: { ttl: p.ttl - 1, routers: 1 },

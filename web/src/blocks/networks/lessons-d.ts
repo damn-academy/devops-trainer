@@ -84,6 +84,6 @@ export const linuxLab: Lesson = {
     },
     lab('firewall', 'firewall', 'practice'),
     lab('dnsmasq', 'dnsmasq', 'practice'),
-    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.lab.vlan-trunk', 'net.q.lab.bridge', 'net.q.lab.veth', 'net.q.lab.netns-order', 'net.q.lab.nft-order', 'net.q.lab.dnsmasq'] },
+    { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ['net.q.lab.vlan-trunk', 'net.q.lab.bridge', 'net.q.lab.veth', 'net.q.lab.netns-order', 'net.q.lab.nft-order', 'net.q.lab.dnsmasq', 'net.q.lab.svi'] },
   ],
 };

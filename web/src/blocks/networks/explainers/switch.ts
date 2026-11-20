@@ -127,7 +127,6 @@ export const switchModel = defineModel<P>({
       id: 'unplug',
       label: b('Кабель компьютера B выдернут из порта 2', 'B’s cable is pulled out of port 2'),
       remove: ['p2', 'b'],
-      layer: 'L1',
       predict: {
         prompt: b('Кабель компьютера B выдернут из коммутатора, и A отправляет компьютеру B кадр. Что A получит от коммутатора или от компьютера B?', 'B’s cable is pulled out of the switch, and A sends B a frame. What does A get from the switch or from computer B?'),
         options: [

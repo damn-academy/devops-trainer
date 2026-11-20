@@ -130,7 +130,6 @@ export const mapModel = defineModel<P>({
       id: 'cable',
       label: b('Якорь судна перебил подводный кабель', 'A ship’s anchor cut the submarine cable'),
       remove: ['cable', 'e-cable'],
-      layer: 'L1',
       predict: {
         prompt: b('Якорь судна перебил подводный кабель, по которому шёл трафик к сайту. Что увидят пользователи в первые секунды?', 'A ship’s anchor cut the cable. What do users see in the first seconds?'),
         options: [
@@ -145,7 +144,6 @@ export const mapModel = defineModel<P>({
       id: 'leak',
       label: b('Транзитный оператор по ошибке объявил адреса сайта своими', 'The transit carrier wrongly announces the site’s addresses as its own'),
       remove: ['e-tr-cable'],
-      layer: 'L3',
       predict: {
         prompt: b('Транзитный оператор по ошибке объявил всем соседям, что адреса 198.51.100.0/24 находятся у него, хотя сайт стоит в другом дата-центре. Что будет с пакетами к сайту?', 'The transit carrier mistakenly told everyone “198.51.100.0/24 is mine”. What happens to packets for the site?'),
         options: [

@@ -29,6 +29,7 @@ const L = {
   http: 'networks.http',
   tls: 'networks.tls',
   proxy: 'networks.proxy',
+  vpn: 'networks.vpn',
   trouble: 'networks.troubleshooting',
   linuxLab: 'networks.linux-lab',
 };
@@ -171,6 +172,12 @@ export const concepts: Concept[] = [
   C('net.upstream', L.proxy, ['upstream', 'upstream'], ['Сервер приложения, которому прокси пересылает запрос; в nginx группа таких серверов описывается блоком upstream.', 'The backend a proxy passes a request to; in nginx, a group of servers in an upstream block.'], { scan: false }),
   C('net.lb', L.proxy, ['балансировщик нагрузки', 'load balancer'], ['Прокси, который распределяет запросы между несколькими серверами приложения. Балансировщик L4 видит адреса и порты, а балансировщик L7 читает HTTP.', 'A proxy that spreads requests across several backends: L4 sees addresses and ports, L7 sees HTTP.'], { scan: false }),
   C('net.cdn', L.proxy, ['CDN', 'CDN'], ['Сеть доставки контента, то есть копии страниц и файлов на серверах рядом с пользователями.', 'A content delivery network: copies of pages and files on servers near the users.']),
+
+  // ── VPN ──
+  C('net.vpn', L.vpn, ['VPN', 'VPN'], ['Виртуальная частная сеть: шифрованный туннель, в котором пакеты одной сети целиком вкладываются в пакеты, идущие через интернет, так что удалённая машина становится частью этой сети.', 'A virtual private network: an encrypted tunnel in which the packets of one network are put whole into packets that cross the internet, so that a remote machine becomes part of that network.'], {
+    scan: false,
+    docRef: { url: 'https://www.wireguard.com/#conceptual-overview', label: 'WireGuard · conceptual overview' },
+  }),
 
   // ── troubleshooting ──
   C('net.layers-method', L.trouble, ['поиск неисправности по уровням', 'layer-by-layer troubleshooting'], ['Порядок поиска неисправности, в котором первым делом выясняют, на каком уровне сломалась работа. Каждый шаг подтверждают командой и меняют только одну вещь за раз.', 'The method: the first question in a failure is which layer broke; every step is confirmed with a command, one change at a time.'], {

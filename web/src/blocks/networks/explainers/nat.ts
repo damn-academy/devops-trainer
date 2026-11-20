@@ -8,13 +8,19 @@
 // along the line as a card with the source address it carries at that moment.
 
 import { defineModel } from '../../../core/define';
-import { bi, fmt, t } from '../../../core/i18n';
+import { bi, fmt, pluralRu, t } from '../../../core/i18n';
 import type { ElementState, Step } from '../../../core/types';
 import { b, brokenAt, card, DOC, edge, lastMetric, node } from './kit';
 
 type P = { devices: number; inbound: boolean };
 
 const HIDDEN: Record<string, ElementState> = Object.fromEntries(['server', 'ct', 'wan', 'rec'].map((id) => [id, 'hidden' as ElementState]));
+/** The first conntrack lines in the short form the callout shows: “.23:51234 → :40001”. */
+const ctRows = (n: number) => {
+  const shown = Array.from({ length: Math.min(n, 3) }, (_, i) => `.${23 + i}:51234 → :${40001 + i}`).join(', ');
+  return n > 3 ? `${shown} …` : shown;
+};
+
 const rows = (n: number) => t(bi(`записей: ${n}`, `${n} ${n === 1 ? 'entry' : 'entries'}`));
 
 export const natModel = defineModel<P>({
@@ -33,7 +39,7 @@ export const natModel = defineModel<P>({
   legend: [
     { mark: 'active', text: b('блок, который работает сейчас', 'the block working now') },
     { mark: 'say', text: b('что этот блок делает', 'what it does') },
-    { mark: 'token', text: b('пакет и адрес отправителя на этом участке', 'the packet and its source address on this segment') },
+    { mark: 'token', text: b('пакет на этом участке: по пути к сайту на карточке адрес отправителя, на обратном пути адрес получателя', 'the packet on this segment: on the way to the site the card shows the source address, on the way back the destination address') },
     { mark: 'icon:terminal', text: b('ноутбук', 'laptop') },
     { mark: 'icon:router', text: b('роутер с NAT', 'router with NAT') },
     { mark: 'icon:server', text: b('сервер сайта', 'the site’s server') },
@@ -69,7 +75,7 @@ export const natModel = defineModel<P>({
       default: 1,
       near: 'ct',
       predict: {
-        prompt: b('Дома 20 устройств, и у роутера один публичный адрес. По какому признаку роутер разберёт, какому устройству отдать ответ?', 'There are 20 devices at home and the router has one public address. How are their answers told apart?'),
+        prompt: b('Дома сразу несколько устройств открывают сайты, а у роутера один публичный адрес. По какому признаку роутер разберёт, какому устройству отдать ответ?', 'Several devices at home open sites at once, and the router has one public address. How does the router tell which device an answer is for?'),
         options: [
           { id: 'port', text: b('По внешнему порту, потому что у каждого соединения он свой', 'By the outside port: every connection gets its own') },
           { id: 'mac', text: b('По MAC-адресам устройств', 'By the devices’ MAC addresses') },
@@ -197,7 +203,7 @@ export const natModel = defineModel<P>({
       label: b('обратно', 'back'),
       caption: b('Ответ приходит на 203.0.113.7:40001. Роутер находит строку в conntrack и меняет получателя обратно на 192.168.1.23:51234, так что ноутбук ничего не замечает.', 'The answer arrives at 203.0.113.7:40001. The router finds the line in conntrack and rewrites the destination back: 192.168.1.23:51234. The laptop noticed nothing.'),
       focus: ['router', 'ct', 'lan'],
-      tokens: [{ edge: 'wan', reverse: true, label: '→ :40001' }, { edge: 'lan', reverse: true, label: '→ .23:51234' }],
+      tokens: [{ edge: 'wan', reverse: true, label: b('кому: 203.0.113.7:40001', 'to: 203.0.113.7:40001') }, { edge: 'lan', reverse: true, label: b('кому: .23:51234', 'to: .23:51234') }],
       say: { router: b('Роутер находит в conntrack, что порт 40001 принадлежит ноутбуку, и передаёт ему ответ.', 'The router finds that port 40001 belongs to the laptop and passes the reply on.') },
       states: { laptop: 'ok' },
       metrics: { entries: n },
@@ -206,9 +212,9 @@ export const natModel = defineModel<P>({
       steps.push({
         id: 'many',
         label: b('много устройств', 'many'),
-        caption: fmt(b('В квартире {n} устройств, и у всех один внешний адрес. Различает их только внешний порт, который у каждого соединения свой. На один адрес приходится 65 535 портов, и облачный шлюз NAT, через который идут тысячи соединений к одному сайту, может их исчерпать.', 'There are {n} devices at home — all with one outside address. Only the outside port tells them apart: every connection has its own. There are 65,535 ports per address — a cloud NAT gateway runs out of them with thousands of connections to one site.'), { n }),
+        caption: fmt(b('В квартире {d}, и у всех один внешний адрес. Различает их только внешний порт, который у каждого соединения свой. На один адрес приходится 65 535 портов, и облачный шлюз NAT, через который идут тысячи соединений к одному сайту, может их исчерпать.', 'There are {n} devices at home, all with one outside address. Only the outside port tells them apart: every connection has its own. There are 65,535 ports per address — a cloud NAT gateway runs out of them with thousands of connections to one site.'), { n, d: `${n} ${pluralRu(n, ['устройство', 'устройства', 'устройств'])}` }),
         focus: ['ct'],
-        say: { ct: fmt(b('В таблице {n} записей, и у каждой свой внешний порт.', '{n} entries, each with its own outside port.'), { n }) },
+        say: { ct: fmt(b('Записи различаются только внешним портом: {rows}.', 'The entries differ only in the outside port: {rows}.'), { rows: ctRows(n) }) },
         values: { ct: rows(n) },
         metrics: { entries: n },
       });
@@ -223,6 +229,6 @@ export const natModel = defineModel<P>({
       return bb.inbound
         ? b('Без записи в conntrack снаружи внутрь не пройти, поэтому NAT сам по себе работает как фильтр входящих соединений.', 'Without a conntrack entry nothing gets in from outside: NAT works as a filter of incoming connections by itself.')
         : b('Соединение снова исходящее, и NAT его пропускает.', 'An outgoing connection again: NAT lets it through.');
-    return fmt(b('Число устройств изменилось с {a} до {b}, и в conntrack теперь {b} записей, у каждой свой внешний порт.', 'Devices {a} → {b}: {b} conntrack lines, each with its own outside port.'), { a: lastMetric(prev, 'entries') ?? 0, b: lastMetric(next, 'entries') ?? (bb.devices as number) });
+    return fmt(b('Число устройств изменилось с {a} до {b}, и в conntrack теперь столько же записей, у каждой свой внешний порт.', 'Devices {a} → {b}: {b} conntrack lines, each with its own outside port.'), { a: lastMetric(prev, 'entries') ?? 0, b: lastMetric(next, 'entries') ?? (bb.devices as number) });
   },
 });
