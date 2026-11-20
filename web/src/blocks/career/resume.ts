@@ -189,13 +189,28 @@ export const BRIDGES: { from: Bi; to: Bi; why: Bi }[] = [
     why: bi('Умение управлять потоком работ пригодится и на канбан-доске, и на дежурствах.', 'Understanding the flow of work is the same logic as in kanban and on-call.'),
   },
   {
+    from: bi('Учитель, преподаватель', 'Teacher'),
+    to: bi('Готовил методические материалы и инструкции, объяснял сложные темы группам до N человек', 'Prepared teaching materials and instructions, explained complex topics to groups of up to N people'),
+    why: bi('Документацию, инструкции для дежурных и объяснения для разработчиков в DevOps пишут каждый день.', 'In DevOps, documentation, runbooks and explanations for developers are written every day.'),
+  },
+  {
+    from: bi('Обработка данных в лаборатории или в исследовании', 'Data processing in a lab or a research project'),
+    to: bi('Запускал и дорабатывал обработку данных на сервере с Linux, автоматизировал построение графиков на Python', 'Ran and improved data processing on a Linux server, automated plotting in Python'),
+    why: bi('Работа с сервером Linux и скриптами составляет основу повседневной работы DevOps-инженера.', 'Working with a Linux server and scripts is the core of a DevOps engineer’s daily work.'),
+  },
+  {
     from: bi('Тестировщик', 'QA engineer'),
     to: bi('Автоматизировал тесты и встроил их в CI', 'Automated tests and wired them into CI'),
     why: bi('Непрерывная интеграция лежит в основе профессии.', 'CI is the core of the profession.'),
   },
   {
-    from: bi('Программист', 'Software developer'),
-    to: bi('Писал Dockerfile и конвейеры для своих сервисов, участвовал в разборе инцидентов (пишите, только если это было)', 'Wrote Dockerfiles and pipelines for my services, took part in incident reviews — only if you did'),
+    from: bi('Программист (выбирайте, только если это было)', 'Software developer (pick only if you did it)'),
+    to: bi('Писал Dockerfile и конвейеры для своих сервисов, участвовал в разборе инцидентов', 'Wrote Dockerfiles and pipelines for my services, took part in incident reviews'),
     why: bi('Это путь в DevOps со стороны разработки.', 'This is the way into DevOps from development.'),
+  },
+  {
+    from: bi('Программист, который уже отвечает за CI или стенды (пункт внутри настоящей должности)', 'A developer already responsible for CI or the stands (a bullet inside the real position)'),
+    to: bi('Отвечал за конвейер CI и TLS-сертификаты тестовых стендов', 'Was responsible for the CI pipeline and the TLS certificates of the test stands'),
+    why: bi('Это настоящая работа DevOps, которую вы уже делаете, и её можно проверить.', 'This is real DevOps work you already do, and it can be checked.'),
   },
 ];

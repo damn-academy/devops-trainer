@@ -11,6 +11,8 @@ export interface VocabTerm {
   re: string;
   /** Route block ids that teach it; empty for things outside the course. */
   blocks: string[];
+  /** Any one of the blocks teaches it fully (Argo CD is taught both in CI-to-Kubernetes and in the cluster from code); otherwise all are needed. */
+  anyBlock?: boolean;
 }
 
 export const VOCAB: VocabTerm[] = [
@@ -33,7 +35,7 @@ export const VOCAB: VocabTerm[] = [
   { id: 'gh-actions', label: 'GitHub Actions', re: 'github actions', blocks: ['cicd'] },
   { id: 'k8s', label: 'Kubernetes', re: 'kubernetes|k8s|кубернетес|openshift|k3s', blocks: ['k8s-1', 'k8s-2'] },
   { id: 'helm', label: 'Helm', re: 'helm', blocks: ['k8s-2'] },
-  { id: 'argocd', label: 'Argo CD', re: 'argo ?cd|gitops|flux', blocks: ['k8s-2'] },
+  { id: 'argocd', label: 'Argo CD', re: 'argo ?cd|gitops|flux', blocks: ['cicd-k8s', 'k8s-3'], anyBlock: true },
   { id: 'kubeadm', label: 'kubeadm', re: 'kubeadm|cilium|calico|etcd', blocks: ['k8s-3'] },
   { id: 'terraform', label: 'Terraform', re: 'terraform|opentofu|terragrunt', blocks: ['iac'] },
   { id: 'ansible', label: 'Ansible', re: 'ansible', blocks: ['iac'] },
@@ -56,7 +58,7 @@ export const VOCAB: VocabTerm[] = [
   { id: 'virt', label: 'virtualization', re: 'kvm|vmware|proxmox|виртуализац[а-я]*|virtuali[sz]ation|openstack', blocks: [] },
 ];
 
-const REQUIRED_HEAD = /(требовани|обязательн|ожидаем|что мы ждём|что мы ждем|нужно уметь|необходим|requirements|must have|you have|what we expect|qualifications)/i;
+const REQUIRED_HEAD = /(требовани|требуется|обязательн|ожидаем|ждём|ждем|нужно уметь|нужно знать|необходим|мы ищем|что нужно|ваш опыт|навыки|requirements|must have|you have|you need|you will need|what we expect|we are looking|qualifications|skills)/i;
 const DESIRED_HEAD = /(будет плюсом|будет преимуществ|желательн|приветствуется|nice to have|bonus|preferred|a plus|would be great)/i;
 const OTHER_HEAD = /(обязанност|задачи|чем заниматься|что делать|мы предлагаем|условия|responsibilities|what you will do|we offer|benefits|о компании|about us)/i;
 
@@ -96,8 +98,8 @@ export function extractRequirements(text: string, vocab: VocabTerm[] = VOCAB): R
       if (!prev || (required && !prev.required)) found.set(t.id, { term: t, required, line });
     }
   }
-  // A more specific term covers its general neighbour on the same line (GitLab CI ⊃ CI/CD, docker compose ⊃ Docker).
-  const covers: Record<string, string> = { 'gitlab-ci': 'cicd', 'gh-actions': 'cicd', compose: 'docker' };
+  // A more specific term covers its general neighbour on the same line (GitLab CI ⊃ CI/CD, Argo CD ⊃ CI/CD, docker compose ⊃ Docker).
+  const covers: Record<string, string> = { 'gitlab-ci': 'cicd', 'gh-actions': 'cicd', argocd: 'cicd', compose: 'docker' };
   for (const [specific, general] of Object.entries(covers)) {
     const s = found.get(specific);
     const g = found.get(general);
@@ -111,14 +113,16 @@ export type Credit = 0 | 0.5 | 1;
 export interface AnalysisRow {
   req: Requirement;
   credit: Credit;
-  /** What the learner has: 'exam' | 'lessons' | 'started' | 'none' | 'outside'. */
-  status: 'exam' | 'lessons' | 'started' | 'none' | 'outside';
+  /** What the learner has: 'exam' | 'lessons' | 'started' | 'none' | 'outside', or 'known' for an outside skill the learner marked as theirs. */
+  status: 'exam' | 'lessons' | 'started' | 'none' | 'outside' | 'known';
 }
 
 export interface Analysis {
   rows: AnalysisRow[];
   total: number;
   required: number;
+  /** Whether the text separates required items from nice-to-have ones at all. */
+  hasRequired: boolean;
   verdict: 'apply' | 'almost' | 'not-yet' | 'empty';
   /** Blocks to work on before the interview, most valuable first. */
   toLearn: string[];
@@ -128,16 +132,23 @@ export interface Analysis {
 export const APPLY_TOTAL = 0.6;
 export const APPLY_REQUIRED = 0.5;
 
-/** stateOf(block) says what the learner has done in a course block. */
-export function analyze(reqs: Requirement[], stateOf: (block: string) => 'exam' | 'lessons' | 'started' | 'none'): Analysis {
+/**
+ * stateOf(block) says what the learner has done in a course block; `known`
+ * holds the ids of skills outside the course that the learner marked as
+ * their own (experience from an earlier job).
+ */
+export function analyze(reqs: Requirement[], stateOf: (block: string) => 'exam' | 'lessons' | 'started' | 'none', known: ReadonlySet<string> = new Set()): Analysis {
+  const rank = { none: 0, started: 1, lessons: 2, exam: 3 } as const;
   const rows: AnalysisRow[] = reqs.map((req) => {
-    if (!req.term.blocks.length) return { req, credit: 0, status: 'outside' };
+    if (!req.term.blocks.length) return known.has(req.term.id) ? { req, credit: 1, status: 'known' } : { req, credit: 0, status: 'outside' };
     const states = req.term.blocks.map(stateOf);
-    const best = states.includes('exam') ? 'exam' : states.every((s) => s === 'lessons' || s === 'exam') ? 'lessons' : states.some((s) => s !== 'none') ? 'started' : 'none';
+    const best = req.term.anyBlock
+      ? states.reduce((a, b) => (rank[b] > rank[a] ? b : a), 'none' as 'exam' | 'lessons' | 'started' | 'none')
+      : states.includes('exam') ? 'exam' : states.every((s) => s === 'lessons' || s === 'exam') ? 'lessons' : states.some((s) => s !== 'none') ? 'started' : 'none';
     const credit: Credit = best === 'exam' || best === 'lessons' ? 1 : best === 'started' ? 0.5 : 0;
     return { req, credit, status: best };
   });
-  // A required item weighs twice a nice-to-have one: the table's "Weight" column.
+  // A required item weighs twice a nice-to-have one.
   const weight = (r: AnalysisRow) => (r.req.required ? 2 : 1);
   const mean = (xs: AnalysisRow[]) => {
     const w = xs.reduce((s, r) => s + weight(r), 0);
@@ -150,5 +161,5 @@ export function analyze(reqs: Requirement[], stateOf: (block: string) => 'exam' 
   const gain = new Map<string, number>();
   for (const r of rows) if (r.credit < 1) for (const b of r.req.term.blocks) gain.set(b, (gain.get(b) ?? 0) + (r.req.required ? 2 : 1) * (1 - r.credit));
   const toLearn = [...gain.entries()].sort((a, b) => b[1] - a[1]).map(([b]) => b);
-  return { rows, total, required, verdict, toLearn, outside: rows.filter((r) => r.status === 'outside').map((r) => r.req.term.label) };
+  return { rows, total, required, hasRequired: req.length > 0 && req.length < rows.length, verdict, toLearn, outside: rows.filter((r) => r.status === 'outside').map((r) => r.req.term.label) };
 }

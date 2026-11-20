@@ -19,12 +19,16 @@ type P = { rate: number; reply: number; letter: boolean; tech: number };
 
 /** Days each stage takes on average (apply → reply waits a week). */
 export const STAGE_DAYS = { reply: 7, screen: 3, tech: 5, final: 4, offer: 2 };
+/** An application with no reply stays on the board until it is closed after 14 days (the card-age rule). */
+export const SILENT_DAYS = 14;
 const SCREEN = 0.5;
 const FINAL = 0.5;
 
 export interface FunnelNumbers {
   perWeek: { reply: number; screen: number; tech: number; final: number; offer: number };
   wip: number;
+  /** Average weeks a card spends on the board, so that wip = rate × avgWeeks (Little's law). */
+  avgWeeks: number;
   pathWeeks: number;
   /** Expected weeks until the first offer: the path plus the wait for one offer to come through. */
   weeksToOffer: number;
@@ -39,9 +43,10 @@ export function funnelNumbers(p: P, paused = false): FunnelNumbers {
   const final = tech * FINAL;
   const offer = final;
   const pathDays = STAGE_DAYS.reply + STAGE_DAYS.screen + STAGE_DAYS.tech + STAGE_DAYS.final + STAGE_DAYS.offer;
-  const wip = rate * (STAGE_DAYS.reply / 7) + reply * (STAGE_DAYS.screen / 7) + screen * (STAGE_DAYS.tech / 7) + tech * (STAGE_DAYS.final / 7) + final * (STAGE_DAYS.offer / 7);
+  const silent = rate - reply;
+  const wip = reply * (STAGE_DAYS.reply / 7) + silent * (SILENT_DAYS / 7) + reply * (STAGE_DAYS.screen / 7) + screen * (STAGE_DAYS.tech / 7) + tech * (STAGE_DAYS.final / 7) + final * (STAGE_DAYS.offer / 7);
   const weeksToOffer = offer > 0 ? pathDays / 7 + 1 / offer : Infinity;
-  return { perWeek: { reply, screen, tech, final, offer }, wip, pathWeeks: pathDays / 7, weeksToOffer };
+  return { perWeek: { reply, screen, tech, final, offer }, wip, avgWeeks: rate ? wip / rate : 0, pathWeeks: pathDays / 7, weeksToOffer };
 }
 
 const card = (whatRu: string, whatEn: string, whoRu: string, whoEn: string) => ({ what: bi(whatRu, whatEn), who: bi(whoRu, whoEn) });
@@ -189,7 +194,7 @@ export const funnelModel = defineModel<P>({
     const n = funnelNumbers(p, paused);
     const pw = n.perWeek;
     const fill = (x: number) => Math.min(1, x / 12);
-    const m = { wip: Math.round(n.wip), offers: Math.round(pw.offer * 100) / 100, weeks: Number.isFinite(n.weeksToOffer) ? Math.round(n.weeksToOffer) : 999 };
+    const m = { wip: Math.round(n.wip), offers: Math.round(pw.offer * 100) / 100, weeks: Math.round(n.weeksToOffer) };
     const start = startWith(ALL, 'apply', 'offer');
     if (paused) {
       const live = funnelNumbers(p, false);
@@ -197,13 +202,13 @@ export const funnelModel = defineModel<P>({
         {
           id: 'stop',
           label: bi('пауза', 'pause'),
-          caption: bi('Вы перестали отправлять отклики. Карточки, которые уже идут по воронке, ещё движутся, но новых в первую колонку не приходит.', 'You stopped sending applications. Cards already in the funnel still move, but no new ones arrive.'),
+          caption: bi('Вы перестали отправлять отклики. Карточки, которые уже идут по воронке, ещё движутся, но новых в первую колонку не приходит. Срок до первого предложения схема больше не считает. Карточки, которые уже в пути, ещё могут дойти до предложения, но других карточек не будет, и если ни одна из этих не дойдёт до конца, предложения не будет вовсе.', 'You stopped sending applications. Cards already in the funnel still move, but no new ones arrive. The diagram no longer counts the time to the first offer. The cards already on the way may still reach an offer, but no others will follow, and if none of them gets through, there will be no offer at all.'),
           focus: ['apply'],
           say: { apply: bi('Новых откликов нет, поэтому в первую колонку ничего не приходит.', 'No new applications arrive.') },
           states: { ...start, e1: 'off' },
           values: { apply: t(perWeek(0)) },
           fill: { apply: 0 },
-          metrics: { wip: Math.round(live.wip), offers: 0, weeks: 999 },
+          metrics: { wip: Math.round(live.wip), offers: 0 },
         },
         {
           id: 'empty',
@@ -214,7 +219,7 @@ export const funnelModel = defineModel<P>({
           say: { reply: bi('Прошло три недели, и в колонках не осталось ни одной карточки.', 'After three weeks the columns are empty.') },
           states: { reply: 'warn', screen: 'warn', tech: 'warn', final: 'warn' },
           fill: { reply: 0, screen: 0, tech: 0, final: 0 },
-          metrics: { wip: 0, offers: 0, weeks: 999 },
+          metrics: { wip: 0, offers: 0 },
           broken: { at: 'apply', message: 'applications this week: 0\nin progress after 3 weeks: 0', caption: bi('на первой колонке. Поиск работы устроен как поток, и стоит остановить отклики, как через три недели в воронке не останется ни одной карточки, а значит, и ни одного будущего предложения.', 'at the first column. The search works as a flow, and once you stop applying, in three weeks not a single card is left in the funnel, and so not a single future offer.') },
         },
       ];
@@ -306,7 +311,7 @@ export const funnelModel = defineModel<P>({
       {
         id: 'little',
         label: bi('итог', 'total'),
-        caption: fmtb(bi('Теперь можно сложить всё вместе. По закону Литтла число карточек в работе равно числу откликов в неделю, умноженному на число недель, которые карточка проводит в пути, и у вас в работе около {w}. Первое предложение придёт примерно через {k}, потому что три недели занимает путь одной карточки и ещё нужно дождаться, пока хотя бы одна карточка пройдёт все этапы.', 'Now add it up. By Little’s law the cards in progress equal the weekly flow times the weeks on the way: about {w}. The first offer comes in about {k}: three weeks of path plus the wait for one card to get through.'), { w: nouned(m.wip, ['карточки', 'карточек', 'карточек'], ['card', 'cards']), k: weeks(m.weeks) }),
+        caption: fmtb(bi('Теперь можно сложить всё вместе. По закону Литтла число карточек в работе равно числу откликов в неделю, умноженному на среднее время, которое карточка проводит на доске. Большинство карточек остаются без ответа и закрываются через две недели, а путь тех, что прошли дальше, занимает до трёх недель, поэтому в среднем карточка лежит на доске {aw}. Получается {r} × {a} ≈ {w} в работе. Первое предложение придёт примерно через {k}. Три недели из этого срока занимает путь одной карточки, а остальное время уходит на ожидание, потому что до конца доходит лишь малая часть карточек.', 'Now add it up. By Little’s law the cards in progress equal the applications a week times the average time a card spends on the board. Most cards get no reply and are closed after two weeks, while those that move on take up to three weeks, so on average a card stays on the board {aw}. That gives {r} × {a} ≈ {w} in progress. The first offer comes in about {k}: three weeks of path plus the wait for one card to get through.'), { r: p.rate, a: num1(n.avgWeeks), aw: weeks(n.avgWeeks), w: nouned(m.wip, ['карточка', 'карточки', 'карточек'], ['card', 'cards']), k: weeks(m.weeks) }),
         focus: ['offer'],
         say: { offer: fmtb(bi('Первое предложение придёт примерно через {k}.', 'The first offer: in about {k}.'), { k: weeks(m.weeks) }) },
         states: { offer: 'ok' },

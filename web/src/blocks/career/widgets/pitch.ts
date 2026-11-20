@@ -16,7 +16,9 @@ const P = {
   timer: bi('Читайте вслух с таймером', 'Read it aloud with the timer'),
   startT: bi('Старт', 'Start'),
   stopT: bi('Стоп', 'Stop'),
-  parts: bi('Что есть в тексте', 'What the text has'),
+  parts: bi('Отметьте части, которые есть в вашем тексте', 'Tick the parts your text has'),
+  noParts: bi('части не отмечены', 'no parts ticked'),
+  noPartsHint: bi('Отметьте в списке выше части, которые есть в тексте, и нажмите «Замерить» ещё раз.', 'Tick the parts your text has in the list above and press “Measure” again.'),
   measure: bi('Замерить', 'Measure'),
   dur: bi('Длительность', 'Duration'),
   durEst: bi('оценка по числу слов', 'estimated from the word count'),
@@ -33,11 +35,11 @@ const P = {
 };
 
 const PARTS = [
-  bi('Кто я и откуда, одной фразой и без извинений', 'Who I am and where I come from, in one sentence and without apologies'),
-  bi('Что я умею и чем это подтверждается (экзамены, проекты со ссылками)', 'What I can do — with proof (exams, projects with links)'),
-  bi('Одна история о том, какая была проблема, что я сделал и что изменилось', 'One story about what the problem was, what I did and what changed'),
+  bi('Кто вы и откуда, одной фразой и без извинений', 'Who you are and where you come from, in one sentence and without apologies'),
+  bi('Что вы умеете и чем это подтверждается, например сданными экзаменами и проектами со ссылками', 'What you can do and what proves it, for example passed exams and projects with links'),
+  bi('Одна история о том, какая была проблема, что вы сделали и что изменилось', 'One story about what the problem was, what you did and what changed'),
   bi('Почему DevOps, то есть мост от прежнего опыта к новой работе', 'Why DevOps, that is, the bridge from earlier experience to the new job'),
-  bi('Что я ищу, то есть роль и формат работы', 'What I am looking for, that is, the role and the work format'),
+  bi('Что вы ищете, то есть роль и формат работы', 'What you are looking for, that is, the role and the work format'),
 ];
 
 interface PitchMetrics {
@@ -106,12 +108,13 @@ export const pitchWidget: WidgetReg = {
           {},
           h('tbody', {},
             row(t(P.dur), `${m.seconds} ${lang() === 'ru' ? 'с' : 's'} (${t(m.timer ? P.durTimer : P.durEst)})`, m.seconds >= 60 && m.seconds <= 90, '60–90', prev ? `${t(P.last)}: ${prev.seconds}` : undefined),
-            row(t(bi('Части структуры', 'Parts of the structure')), `${m.parts} / 5`, m.parts === 5, '5', prev ? `${t(P.last)}: ${prev.parts}` : undefined),
+            row(t(bi('Части структуры', 'Parts of the structure')), m.parts ? `${m.parts} / 5` : t(P.noParts), m.parts === 5, '5', prev ? `${t(P.last)}: ${prev.parts}` : undefined),
             row(`${t(P.fillers)} ${t(P.per15)}`, m.fillersPer15.toFixed(1), m.fillersPer15 < 1, '< 1', prev ? `${t(P.last)}: ${prev.fillersPer15.toFixed(1)}` : undefined),
             row(t(P.apologies), String(m.apologies), m.apologies === 0, '0', prev ? `${t(P.last)}: ${prev.apologies}` : undefined),
             row(t(P.concrete), t(m.concrete ? P.yes : P.no), m.concrete, t(P.yes)),
           ),
         ),
+        m.parts ? null : h('p.small', {}, t(P.noPartsHint)),
       );
     });
     clear(el);

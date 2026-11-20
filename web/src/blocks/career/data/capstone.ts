@@ -32,7 +32,7 @@ export const CAPSTONE: CapstonePart[] = [
       i('A5', 'Четыре золотых сигнала, алерт на долю ошибок с `for:`, доставка в мессенджер', 'Four golden signals, an error-ratio alert with `for:`, delivery to a messenger', 'Правило загружено, цели `up == 1`, текст пришедшего алерта', 'Rule loaded, targets `up == 1`, the text of the delivered alert'),
       i('A6', 'Вход по ключам, пароль выключен, межсетевой экран, секретов в репозитории нет', 'Key-only login, passwords off, a firewall, no secrets in the repository', '`sshd -T`, правила межсетевого экрана, поиск секретов в репозитории', '`sshd -T`, the firewall rules, a secret scan of the repository'),
       i('A7', 'Задача, которой не было в курсе, решённая по документации: PodDisruptionBudget, распределение по узлам или автомасштабирование', 'A task beyond the course from the documentation: a PodDisruptionBudget, spreading across nodes or autoscaling', 'Объекты в кластере', 'Objects in the cluster'),
-      i('A8', 'Вся система создаётся из кода с нуля в пустом проекте', 'Everything comes up from code from scratch in an empty project', 'Время и вывод финальной сборки, все проверки A3–A6 на свежих машинах', 'The time and output of the final build, every A3–A6 check on fresh machines'),
+      i('A8', 'Вся система создаётся из кода с нуля в пустом проекте', 'Everything comes up from code from scratch in an empty project', 'Время и вывод финальной сборки, все проверки пунктов 3–6 на свежих машинах', 'The time and output of the final build, every check of items 3–6 on fresh machines'),
     ],
   },
   {
@@ -53,7 +53,7 @@ export const CAPSTONE: CapstonePart[] = [
   },
   {
     id: 'cleanup',
-    title: bi('Уборка', 'Cleanup'),
+    title: bi('Г. Убрать за собой', 'D. Clean up'),
     items: [
       i('D1', 'Команда `terraform destroy` выводит `Destroy complete! Resources: N destroyed.`, где N равно числу ресурсов в состоянии Terraform', '`terraform destroy` prints `Destroy complete! Resources: N destroyed.`, where N equals the number of resources in the Terraform state', 'Вывод команды', 'The command output'),
       i('D2', 'Пустой `terraform state list` и пустой список машин провайдера по метке экзамена', 'An empty `terraform state list` and an empty provider machine list with the exam label', 'Вывод в JSON', 'The JSON output'),
