@@ -86,7 +86,7 @@ export const sshModel = defineModel<P>({
       near: 'known',
       group: bi('Как проверяют сервер', 'How the server is checked'),
       predict: {
-        prompt: bi('Сервер переустановили, и ключ хоста у него теперь новый, а в known_hosts записан старый. Что сделает клиент?', 'The server was reinstalled and now has a new host key, while known_hosts holds the old one. What does the client do?'),
+        prompt: bi('Вы выбираете другой вариант того, что клиент знает о сервере. Сравните ключ, который пришлёт сервер, с тем, что записано в known_hosts в выбранном вами варианте. Что сделает клиент?', 'You choose another case of what the client knows about the server. Compare the key the server sends with what known_hosts holds in the case you chose. What does the client do?'),
         options: [
           { id: 'refuse', text: bi('Откажется подключаться и выведет громкое предупреждение', 'It refuses to connect and prints a loud warning') },
           { id: 'ask', text: bi('Спросит вас, доверять ли новому ключу', 'It asks you whether to trust the new key') },

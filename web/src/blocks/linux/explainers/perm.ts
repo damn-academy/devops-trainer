@@ -34,6 +34,8 @@ const WHO: Record<string, { name: string; uid: number; groups: string[]; label: 
   root: { name: 'root', uid: 0, groups: ['root'], label: bi('root, администратор машины', 'root') },
 };
 
+const BIT_LABEL: Record<'r' | 'w' | 'x', Bi> = { r: bi('бит чтения r', 'read bit r'), w: bi('бит записи w', 'write bit w'), x: bi('бит запуска x', 'run bit x') };
+
 const ACTIONS: Record<string, { bit: 'r' | 'w' | 'x'; onDir: boolean; label: Bi; verb: Bi; cmd: string; okCard: string }> = {
   read: { bit: 'r', onDir: false, label: bi('прочитать файл index.html (команда cat)', 'read the file (cat)'), verb: bi('прочитать файл index.html', 'read') , cmd: 'cat index.html', okCard: '<html>…' },
   write: { bit: 'w', onDir: false, label: bi('изменить файл index.html', 'change the file'), verb: bi('изменить файл index.html', 'change') , cmd: 'echo >> index.html', okCard: 'OK' },
@@ -417,7 +419,7 @@ export const permModel = defineModel<P>({
     const objName = act.onDir ? bi('каталога', 'the directory') : bi('файла', 'the file');
     steps.push({
       id: 'q1',
-      label: 'u?',
+      label: bi('проверка владельца', 'owner check'),
       caption:
         who.name === 'anna'
           ? fmtb(bi('Первый вопрос: владелец ли вы? Да, владелец {f} anna, поэтому решает первая тройка, а на группу и остальных система уже не смотрит.', 'You are the owner. The first triad decides; the group and others are not looked at.'), { f: objName })
@@ -431,7 +433,7 @@ export const permModel = defineModel<P>({
     if (d.triad !== 'u')
       steps.push({
         id: 'q2',
-        label: 'g?',
+        label: bi('проверка группы', 'group check'),
         caption:
           d.triad === 'g'
             ? bi('Второй вопрос: входите ли вы в группу файла? Да, группа dev есть в списке ваших групп, поэтому решает вторая тройка.', 'The file’s group dev is one of yours. The second triad decides.')
@@ -445,7 +447,7 @@ export const permModel = defineModel<P>({
     if (d.triad === 'o')
       steps.push({
         id: 'q3',
-        label: 'o',
+        label: bi('права остальных', 'others’ rights'),
         caption: fmtb(bi('Пользователь {w} не владелец и не участник группы dev, поэтому система применяет к нему третью тройку, права «остальных».', '{w} is neither the owner nor in dev: the “others” triad decides.'), { w: who.name }),
         focus: ['e-o', 'to'],
         reveal: ['e-o', 'to'],
@@ -457,7 +459,7 @@ export const permModel = defineModel<P>({
     const edge = { u: 'r-u', g: 'r-g', o: 'r-o' }[d.triad];
     steps.push({
       id: 'bit',
-      label: act.bit,
+      label: BIT_LABEL[act.bit],
       caption: d.allowed
         ? fmt(bi('В тройке `{t}` есть бит {b}, который нужен для этого действия, поэтому система его разрешает.', 'The triad `{t}` has the {b} bit: allowed.'), { t: triad, b: act.bit })
         : fmt(bi('В тройке `{t}` нет бита {b}, который нужен для этого действия, поэтому система отказывает. Бит в другой тройке не поможет, потому что решает только выбранная тройка.', 'The triad `{t}` lacks the {b} bit: refused, even if another triad has it.'), { t: triad, b: act.bit }),

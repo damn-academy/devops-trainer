@@ -12,6 +12,7 @@
 import { defineModel } from '../../../core/define';
 import { bi, count, fmt as fill, pluralRu, type Bi } from '../../../core/i18n';
 import type { DiagramNode, ElementState, Step } from '../../../core/types';
+import { fmtb } from './util';
 
 type P = { lines: number; errors: number; sorted: boolean; stderr: string };
 
@@ -37,6 +38,8 @@ export interface PipeNumbers {
   printed: number;
   top: string;
   topCount: number;
+  /** Bytes the program before the last one writes into the last pipe (one address and a newline per matched line). */
+  tailBytes: number;
 }
 
 export function pipeNumbers(p: P): PipeNumbers {
@@ -50,7 +53,14 @@ export function pipeNumbers(p: P): PipeNumbers {
     else runs.push({ ip, n: 1 });
   }
   const best = [...runs].sort((a, b) => b.n - a.n)[0];
-  return { lines: log.length, matched: matched.length, distinct: new Set(matched).size, printed: runs.length, top: best?.ip ?? '-', topCount: best?.n ?? 0 };
+  const tailBytes = matched.reduce((sum, ip) => sum + ip.length + 1, 0);
+  return { lines: log.length, matched: matched.length, distinct: new Set(matched).size, printed: runs.length, top: best?.ip ?? '-', topCount: best?.n ?? 0, tailBytes };
+}
+
+/** A pipe holds 64 KiB: a writer whose whole output fits finishes before the reader leaves and gets no SIGPIPE. */
+export const PIPE_BYTES = 65536;
+export function getsSigpipe(n: PipeNumbers): boolean {
+  return n.tailBytes > PIPE_BYTES;
 }
 
 const doc = {
@@ -203,7 +213,7 @@ export const pipeModel = defineModel<P>({
     ],
   },
   params: [
-    { id: 'lines', label: bi('Сколько строк в журнале', 'How many lines the log has'), kind: 'range', min: 20, max: 2000, step: 20, default: 400, near: 'log', group: bi('Какой журнал читает конвейер', 'Which log the pipeline reads') },
+    { id: 'lines', label: bi('Сколько строк в журнале', 'How many lines the log has'), kind: 'range', min: 20, max: 20000, step: 20, default: 400, near: 'log', group: bi('Какой журнал читает конвейер', 'Which log the pipeline reads') },
     {
       id: 'errors',
       label: bi('Какая доля запросов закончилась ошибкой 500', 'What share of requests ended with a 500 error'),
@@ -275,12 +285,13 @@ export const pipeModel = defineModel<P>({
       remove: ['e-r3'],
       boundary: 'process',
       predict: {
-        prompt: bi('Вместо uniq в конце стоит head -1: она прочитала одну строку и завершилась. Что произойдёт с sort, если ей ещё есть что писать в трубу?', 'Instead of uniq the last command is head -1: it read one line and exited. What happens to sort if it still has data to write into the pipe?'),
+        prompt: bi('Вместо uniq в конце стоит head -1: она прочитала одну строку и завершилась. Труба между sort и head вмещает 64 КиБ, а sort пишет в неё по адресу на каждую строку, прошедшую через grep. Учтите, сколько строк прошло через grep при нынешних параметрах. Что будет с sort?', 'Instead of uniq the last command is head -1: it read one line and exited. The pipe between sort and head holds 64 KiB, and sort writes one address into it for every line that passed grep. Take into account how many lines pass grep with the current parameters. What happens to sort?'),
         options: [
-          { id: 'sigpipe', text: bi('Ядро пошлёт ей сигнал SIGPIPE, и sort завершится', 'The kernel sends it SIGPIPE, and sort ends') },
+          { id: 'fits', text: bi('Весь вывод sort поместится в трубу, и sort завершится с кодом 0', 'All of sort’s output fits into the pipe, and sort ends with code 0') },
+          { id: 'sigpipe', text: bi('Вывод в трубу не поместится, ядро пошлёт sort сигнал SIGPIPE, и она завершится с кодом 141', 'The output does not fit, the kernel sends sort SIGPIPE, and it ends with code 141') },
           { id: 'wait', text: bi('Программа sort будет ждать читателя бесконечно', 'sort waits for a reader forever') },
         ],
-        resolve: () => 'sigpipe',
+        resolve: (_p, next) => (next.some((s) => s.id === 'sigpipe') ? 'sigpipe' : 'fits'),
       },
     },
   ],
@@ -384,15 +395,33 @@ export const pipeModel = defineModel<P>({
         metrics: { lines: n.lines, matched: n.matched, distinct: n.distinct, printed: n.matched ? 1 : 0 },
       });
       const writer = p.sorted ? 'sort' : 'cut';
+      const kibOut = Math.ceil(n.tailBytes / 1024);
+      const line = p.sorted ? "grep ' 500 ' access.log | cut -d' ' -f1 | sort | head -1" : "grep ' 500 ' access.log | cut -d' ' -f1 | head -1";
+      if (!getsSigpipe(n)) {
+        steps.push({
+          id: 'fits',
+          label: bi('всё в трубе', 'all in the pipe'),
+          caption: fill(bi('Программа {w} пишет в трубу около {k} КиБ, а труба вмещает 64 КиБ. Поэтому весь вывод поместился в трубу ещё до того, как head завершилась, и {w} закончила работу с кодом 0, а сигнала SIGPIPE не было. Ядро посылает SIGPIPE, только когда читатель ушёл, а пишущей программе ещё есть что записать. Увеличьте число строк в журнале и долю ошибок, чтобы вывод перестал помещаться в трубу.', '{w} writes about {k} KiB into the pipe, and the pipe holds 64 KiB. So the whole output fitted into the pipe before head exited, and {w} finished with code 0, with no SIGPIPE. The kernel sends SIGPIPE only when the reader has left while the writer still has something to write. Raise the number of log lines and the share of errors so that the output no longer fits into the pipe.'), { w: writer, k: kibOut }),
+          focus: [writer, 'p3'],
+          say: { [writer]: fill(bi('Программа {w} записала в трубу всё, что у неё было, и спокойно завершилась.', '{w} wrote everything it had into the pipe and finished normally.'), { w: writer }) },
+          states: { [writer]: 'ok' },
+          values: { p3: `${Math.min(64, kibOut)} / 64 KiB` },
+          fill: { p3: Math.min(1, n.tailBytes / PIPE_BYTES) },
+          metrics: { lines: n.lines, matched: n.matched, distinct: n.distinct, printed: n.matched ? 1 : 0 },
+        });
+        return steps;
+      }
       steps.push({
         id: 'sigpipe',
         label: 'SIGPIPE',
-        caption: bi('Пишущая программа пытается записать следующую строку в трубу, у которой не осталось читателя. Ядро посылает ей сигнал SIGPIPE, и она завершается с кодом 141, то есть 128 плюс номер сигнала 13. Ошибкой такое завершение не считается, потому что благодаря ему конвейер не тратит силы на данные, которые никто не прочитает.', 'The writing program tries to write the next line into a pipe that has no reader left. The kernel sends it SIGPIPE, and it ends with code 141, that is, 128 plus the signal number 13. This ending does not count as a fault, because it keeps the pipeline from wasting work on data nobody will read.'),
+        caption: fill(bi('Программе {w} нужно записать около {k} КиБ, а труба вмещает только 64 КиБ. Когда труба заполнилась, читателя у неё уже не было, и следующая попытка записи приносит пишущей программе сигнал SIGPIPE. Она завершается с кодом 141, то есть 128 плюс номер сигнала 13. Ошибкой такое завершение не считается, потому что благодаря ему конвейер не тратит силы на данные, которые никто не прочитает.', '{w} has about {k} KiB to write, and the pipe holds only 64 KiB. When the pipe filled up, it no longer had a reader, and the next attempt to write brings the writer SIGPIPE. It ends with code 141, that is, 128 plus the signal number 13. This ending does not count as a fault, because it keeps the pipeline from wasting work on data nobody will read.'), { w: writer, k: kibOut }),
         focus: [writer, 'p3'],
         say: { [writer]: bi('Ядро посылает программе сигнал SIGPIPE, потому что из трубы больше никто не читает.', 'The kernel sends the program SIGPIPE, because nobody reads from the pipe any more.') },
         states: { [writer]: 'err' },
+        values: { p3: '64 / 64 KiB' },
+        fill: { p3: 1 },
         metrics: { lines: n.lines, matched: n.matched, distinct: n.distinct, printed: n.matched ? 1 : 0 },
-        broken: { at: writer, message: "$ grep ' 500 ' access.log | cut -d' ' -f1 | sort | head -1; echo \"${PIPESTATUS[@]}\"\n10.0.0.12\n0 0 141 0", caption: bi('Код 141 складывается из 128 и номера сигнала 13, то есть процесс завершился по сигналу SIGPIPE. Узнают это по числу 141 в переменной PIPESTATUS, где оболочка хранит коды всех команд конвейера.', 'Code 141 is 128 plus signal number 13, so the process ended because of SIGPIPE. You recognise it by 141 in PIPESTATUS, where the shell keeps the codes of all the commands of the pipeline.') },
+        broken: { at: writer, message: `$ ${line}; echo "\${PIPESTATUS[@]}"\n10.0.0.12\n${p.sorted ? '0 0 141 0' : '0 141 0'}`, caption: bi('Код 141 складывается из 128 и номера сигнала 13, то есть процесс завершился по сигналу SIGPIPE. Узнают это по числу 141 в переменной PIPESTATUS, где оболочка хранит коды всех команд конвейера. На маленьком выводе, который целиком помещается в трубу, сигнала не будет, и там же окажется 0.', 'Code 141 is 128 plus signal number 13, so the process ended because of SIGPIPE. You recognise it by 141 in PIPESTATUS, where the shell keeps the codes of all the commands of the pipeline. With a small output that fits into the pipe whole there is no signal, and the same place holds 0.') },
       });
       return steps;
     }
@@ -437,7 +466,15 @@ export const pipeModel = defineModel<P>({
     }
     switch (change.id) {
       case 'lines':
-        return fmt(bi('В журнале было {a} строк, а стало {b}. Через grep прошло {m} строк, а разных адресов по-прежнему {d}, потому что в журнале их всего пять.', 'The log had {a} lines and now has {b}. {m} passed grep, and there are still {d} distinct addresses, because the log has only five.'), { a: a.lines as number, b: b.lines as number, m: m(next).matched ?? 0, d: m(next).distinct ?? 0 });
+      {
+        const d0 = m(prev).distinct ?? 0;
+        const d1 = m(next).distinct ?? 0;
+        const tail = d0 === d1
+          ? fmt(bi('а разных адресов по-прежнему {d}, потому что в журнале их всего пять', 'and there are still {d} distinct addresses, because the log has only five'), { d: d1 })
+          : fmt(bi('а разных адресов стало {d} вместо {d0}, потому что в {b} строк попадает другая часть из пяти адресов журнала', 'and there are now {d} distinct addresses instead of {d0}, because {b} lines take in a different part of the log’s five addresses'), { d: d1, d0, b: b.lines as number });
+        const whole = fmtb(bi('В журнале было {a} строк, а стало {b}. Через grep прошло {m} строк, {t}.', 'The log had {a} lines and now has {b}. {m} passed grep, {t}.'), { a: a.lines as number, b: b.lines as number, m: m(next).matched ?? 0, t: tail });
+        return { ru: agreeRu(whole.ru), en: whole.en };
+      }
       case 'errors':
         return (m(next).matched ?? 0) === 0
           ? bi('В журнале не осталось ни одной строки с кодом 500. Программа grep ничего не пропустила, остальные получили пустой ввод и ничего не напечатали. Поломки здесь нет, и результат пуст только потому, что в журнале больше нет нужных строк.', 'The log has no line with code 500 left. grep let nothing through, the others got empty input and printed nothing. This is not a fault: the result is empty because the log no longer has the lines you look for.')
