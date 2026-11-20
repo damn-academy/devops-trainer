@@ -98,6 +98,14 @@ describe('ci config', () => {
     expect(decide(job, { CI_PIPELINE_SOURCE: 'push' }, ['docs/a/b.md']).included).toBe(true);
     expect(decide(job, { CI_PIPELINE_SOURCE: 'push' }, ['src/x.js']).included).toBe(false);
   });
+  it('lets a rule without when inherit the job-level when, as GitLab does', () => {
+    const env = { CI_PIPELINE_SOURCE: 'push', CI_COMMIT_BRANCH: 'main', CI_DEFAULT_BRANCH: 'main' };
+    const parsed = parseCi('deploy_production:\n  script: [./deploy.sh]\n  when: manual\n  rules:\n    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH\n');
+    expect(parsed.errors).toEqual([]);
+    expect(decide(parsed.config!.jobs[0], env, []).when).toBe('manual');
+    const own = parseCi('deploy_production:\n  script: [./deploy.sh]\n  when: manual\n  rules:\n    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH\n      when: on_success\n').config!.jobs[0];
+    expect(decide(own, env, []).when).toBe('on_success');
+  });
   it('knows images', () => {
     expect(imageExists('node:24-alpine')).toBe(true);
     expect(imageExists('nod:24')).toBe(false);
