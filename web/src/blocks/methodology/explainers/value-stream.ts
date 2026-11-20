@@ -10,6 +10,7 @@
 
 import { defineModel } from '../../../core/define';
 import type { ElementState, Step } from '../../../core/types';
+import { t } from '../../../core/i18n';
 import { b, card, edge, fmtn, hiddenExcept, lastMetrics, node, nWord, type Bi } from './kit';
 
 const H = (h: number) => nWord(h, ['час', 'часа', 'часов'], ['hour', 'hours']);
@@ -65,8 +66,8 @@ export const valueStreamModel = defineModel<P>({
     'How the card “Card payments” walks the path from the customers’ request to a working feature on the site. At each stage the card is worked on for a few hours, and between the stages it waits; the diagram counts the hours of work and the hours of waiting separately. Under the diagram these hours add up, together with the length of the whole path in working days and the flow efficiency.',
   ),
   intro: b(
-    'Схема собирается по шагам, и сейчас на ней видны только идея и покупатели, к которым эта идея должна прийти. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый этап появляется, когда до него доходит карточка. Облачко у подсвеченного блока говорит, что этот блок делает или почему карточка у него ждёт, а карточка на линии показывает, сколько часов она ждёт.\n\nКогда карточка дойдёт до покупателей, сократите в «Параметрах» ожидание дня выкладки и посмотрите, как изменится длина пути, а потом включите поломку в блоке «Сломать».',
-    'The diagram builds up step by step, and for now it shows only the idea and the customers it should reach. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each stage appears when the card reaches it. The callout at the highlighted block says what the block does or why the card waits there, and the card on the line shows how many hours it waits.\n\nOnce the card reaches the customers, shorten the wait for the deployment day in “Parameters” and see how the length of the path changes, then switch on the break in “Break it”.',
+    'Схема собирается по шагам, и сейчас на ней видны только идея и покупатели, к которым эта идея должна прийти. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждый этап появляется, когда до него доходит карточка. Облачко у подсвеченного блока говорит, что этот блок делает или почему карточка у него ждёт, а карточка на линии показывает, сколько часов она ждёт.\n\nПосле первого прохода меняйте «Параметры» и включайте поломки в блоке «Сломать», а схема объяснит, что изменилось и почему.',
+    'The diagram builds up step by step, and for now it shows only the idea and the customers it should reach. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each stage appears when the card reaches it. The callout at the highlighted block says what the block does or why the card waits there, and the card on the line shows how many hours it waits.\n\nAfter the first pass change the “Parameters” and switch on the breaks in “Break it”, and the diagram explains what changed and why.',
   ),
   legend: [
     { mark: 'active', text: b('этап, на котором карточка сейчас', 'the stage where the card is now') },
@@ -119,9 +120,9 @@ export const valueStreamModel = defineModel<P>({
       predict: {
         prompt: b('Вы меняете, сколько часов изменение ждёт дня выкладки. Часы работы на этапах никто не трогает. Что произойдёт с путём карточки?', 'You change how many hours a change waits for the deployment day. Nobody touches the hours of work at the stages. What happens to the card’s path?'),
         options: [
-          { id: 'path', text: b('Путь изменится на столько же часов, а часов работы останется столько же', 'The path changes by the same number of hours, and the hours of work stay the same') },
-          { id: 'work', text: b('Вместе с путём изменится и число часов работы над карточкой', 'The hours of work on the card change along with the path') },
-          { id: 'none', text: b('Путь не изменится, потому что ожидание в путь не входит и считаются только часы работы', 'The path does not change, because waiting is not part of the path and only the hours of work count') },
+          { id: 'path', text: b('Путь изменится на те же часы, а работы останется столько же', 'The path changes by the same hours, and the work stays the same') },
+          { id: 'work', text: b('Вместе с путём изменятся и часы работы', 'The hours of work change along with the path') },
+          { id: 'none', text: b('Путь не изменится, ведь в него входят только часы работы', 'The path stays the same, since only work hours count in it') },
         ],
         resolve: (prev, next) => (lastMetrics(next).work !== lastMetrics(prev).work ? 'work' : lastMetrics(next).days !== lastMetrics(prev).days ? 'path' : 'none'),
       },
@@ -140,9 +141,9 @@ export const valueStreamModel = defineModel<P>({
       predict: {
         prompt: b('Вы меняете, сколько карточек команда ведёт одновременно. Люди и часы работы на каждой карточке остаются прежними. Что произойдёт с путём одной карточки?', 'You change how many cards the team runs at once. The people and the hours of work on each card stay the same. What happens to the path of one card?'),
         options: [
-          { id: 'longer', text: b('Чем больше карточек начато, тем длиннее путь, потому что очереди к ревьюеру и тестировщику растут', 'The more cards are started, the longer the path, because the queues to the reviewer and the tester grow') },
-          { id: 'same', text: b('Путь не изменится, потому что работы на карточке остаётся столько же', 'The path does not change, because the card needs as much work as before') },
-          { id: 'shorter', text: b('Чем больше карточек начато, тем короче путь, потому что все люди заняты делом', 'The more cards are started, the shorter the path, because everyone is busy') },
+          { id: 'longer', text: b('Чем больше карточек начато, тем длиннее путь', 'The more cards are started, the longer the path') },
+          { id: 'same', text: b('Путь останется прежним', 'The path stays the same') },
+          { id: 'shorter', text: b('Чем больше карточек начато, тем короче путь', 'The more cards are started, the shorter the path') },
         ],
         resolve: (prev, next) => {
           const a = lastMetrics(prev).days ?? 0;
@@ -254,7 +255,7 @@ export const valueStreamModel = defineModel<P>({
         say: { customers: b('Покупатель оплатил заказ картой, а заказ не подтвердился, и покупатель пишет в поддержку.', 'A customer paid by card, but the order was not confirmed; they write to support.') },
         states: { defect: 'err', customers: 'err' },
         metrics: { work: n.work, wait: n.wait, days: n.days, eff: n.efficiency },
-        broken: { at: 'customers', message: 'Support ticket #4821: "Paid by card, the order is not confirmed."', caption: b('ошибку нашёл покупатель, а не проверка, поэтому исправление снова проходит весь путь от идеи до выкладки.', 'a customer found the mistake, not the test stage, so the fix walks the whole path again, from the idea to the deployment.') },
+        broken: { at: 'customers', message: t(b('Обращение в поддержку #4821: «Оплатил картой, а заказ не подтверждён».', 'Support ticket #4821: "Paid by card, the order is not confirmed."')), caption: b('ошибку нашёл покупатель, а не проверка, поэтому исправление снова проходит весь путь от идеи до выкладки.', 'a customer found the mistake, not the test stage, so the fix walks the whole path again, from the idea to the deployment.') },
       });
     }
     return steps;

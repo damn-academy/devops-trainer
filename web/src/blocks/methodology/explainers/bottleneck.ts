@@ -12,6 +12,7 @@
 
 import { defineModel } from '../../../core/define';
 import type { Step } from '../../../core/types';
+import { t } from '../../../core/i18n';
 import { b, card, edge, fmtn, hiddenExcept, lastMetrics, node, nWord, ruNum, type Bi } from './kit';
 
 type P = { arrivals: number; dev: number; test: number; limit: boolean; focus: boolean; swarm: boolean };
@@ -142,8 +143,8 @@ export const bottleneckModel = defineModel<P>({
     'Ten working days of a team of two developers, a reviewer and a tester. New tasks arrive every morning, and each stage finishes as many tasks a day as its capacity allows, but no more than lies in front of it. Under the diagram you see how many tasks have reached the customers, how many are in progress now, and how many days on average the tasks that reached the customers in the last three days spent in progress.',
   ),
   intro: b(
-    'Схема собирается по шагам, и сейчас на ней видны только утренняя очередь новых задач и покупатели. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Сначала по одному появятся этапы, и каждый скажет, сколько задач в день он успевает, а потом пойдут десять рабочих дней. В каждый день подсвечен этап, перед которым скопилась самая длинная очередь, а полоска в очереди показывает, сколько задач в ней ждёт.\n\nПосле первого прохода ускорьте в «Параметрах» разработку и проверьте, изменится ли число готовых задач. Затем верните её и по очереди включите шаги Голдратта.',
-    'The diagram builds up step by step, and for now it shows only the morning queue of new tasks and the customers. Press “Start from the first step”, then go on with “Step forward” above the diagram. First the stages appear one by one, each saying how many tasks a day it can finish, and then ten working days run. On each day the stage with the longest queue in front of it is highlighted, and the bar in the queue shows how many tasks wait there.\n\nAfter the first pass, speed up development in “Parameters” and check whether the number of finished tasks changes. Then set it back and switch on Goldratt’s steps one at a time.',
+    'Схема собирается по шагам, и сейчас на ней видны только утренняя очередь новых задач и покупатели. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Сначала по одному появятся этапы, и каждый скажет, сколько задач в день он успевает, а потом пойдут десять рабочих дней. В каждый день подсвечен этап, перед которым скопилась самая длинная очередь, а полоска в очереди показывает, сколько задач в ней ждёт.\n\nПосле первого прохода меняйте «Параметры» и включайте поломки в блоке «Сломать», а схема объяснит, что изменилось и почему.',
+    'The diagram builds up step by step, and for now it shows only the morning queue of new tasks and the customers. Press “Start from the first step”, then go on with “Step forward” above the diagram. First the stages appear one by one, each saying how many tasks a day it can finish, and then ten working days run. On each day the stage with the longest queue in front of it is highlighted, and the bar in the queue shows how many tasks wait there.\n\nAfter the first pass change the “Parameters” and switch on the breaks in “Break it”, and the diagram explains what changed and why.',
   ),
   legend: [
     { mark: 'active', text: b('этап, на который стоит смотреть сейчас', 'the stage to look at now') },
@@ -215,9 +216,9 @@ export const bottleneckModel = defineModel<P>({
       predict: {
         prompt: b('Вы включаете или выключаете лимит, при котором новую задачу не берут, пока в работе восемь задач. Как изменится время цикла, то есть сколько дней одна задача проводит в работе?', 'You switch the limit on or off: no new task is started while eight are in progress. How does the cycle time change, that is, how many days one task spends in progress?'),
         options: [
-          { id: 'shorter', text: b('С лимитом время цикла короче, потому что задачи меньше ждут в очередях', 'With the limit the cycle time is shorter, because tasks wait less in queues') },
-          { id: 'same', text: b('Время цикла не зависит от лимита', 'The cycle time does not depend on the limit') },
-          { id: 'longer', text: b('С лимитом время цикла длиннее, потому что разработчики простаивают', 'With the limit the cycle time is longer, because the developers stand idle') },
+          { id: 'shorter', text: b('С лимитом время цикла станет короче', 'With the limit the cycle time gets shorter') },
+          { id: 'same', text: b('Время цикла останется прежним', 'The cycle time stays the same') },
+          { id: 'longer', text: b('С лимитом время цикла станет длиннее', 'With the limit the cycle time gets longer') },
         ],
         resolve: (prev, next) => {
           const a = lastMetrics(prev).cycle ?? 0;
@@ -239,10 +240,14 @@ export const bottleneckModel = defineModel<P>({
       predict: {
         prompt: b('Тестировщика нет, а разработчики и ревьюер работают как обычно. Что произойдёт за десять дней?', 'The tester is away, while the developers and the reviewer work as usual. What happens in ten days?'),
         options: [
-          { id: 'pile', text: b('Задачи будут копиться в очереди к проверке, и до покупателей не дойдёт ни одна', 'Tasks pile up in the queue to testing, and none reaches the customers') },
-          { id: 'faster', text: b('Остальные успеют больше, потому что их никто не задерживает', 'The others get more done, because nobody holds them up') },
+          { id: 'pile', text: b('До покупателей не дойдёт ни одной задачи', 'Not a single task reaches the customers') },
+          { id: 'some', text: b('До покупателей дойдёт меньше задач, чем обычно', 'Fewer tasks than usual reach the customers') },
+          { id: 'same', text: b('До покупателей дойдёт столько же задач, сколько обычно', 'As many tasks as usual reach the customers') },
         ],
-        resolve: (_p, next) => ((lastMetrics(next).done ?? 0) === 0 ? 'pile' : 'faster'),
+        resolve: (prev, next) => {
+          const d = lastMetrics(next).done ?? 0;
+          return d === 0 ? 'pile' : d < (lastMetrics(prev).done ?? 0) ? 'some' : 'same';
+        },
       },
     },
   ],
@@ -378,7 +383,7 @@ export const bottleneckModel = defineModel<P>({
         states: { 'q-test': d.qTest > 6 ? 'warn' : 'on', 'q-review': d.qReview > 6 ? 'warn' : 'on', done: d.done > 0 ? 'ok' : 'on' },
         metrics: metricsOf(d, th),
       };
-      if (removed && day === DAYS) st.broken = { at: 'q-test', message: `queue before testing: ${d.qTest} tasks\ndone: 0`, caption: b('без проверки поток стоит, и всё, что сделала разработка, копится в очереди и не приносит покупателям никакой пользы.', 'without testing the flow stands still, and everything development made piles up in the queue and gives the customers nothing.') };
+      if (removed && day === DAYS) st.broken = { at: 'q-test', message: t(b(`в очереди к проверке: ${nWord(d.qTest, ['задача', 'задачи', 'задач'], ['task', 'tasks']).ru}\nу покупателей: 0`, `queue before testing: ${nWord(d.qTest, ['задача', 'задачи', 'задач'], ['task', 'tasks']).en}\ndone: 0`)), caption: b('без проверки поток стоит, и всё, что сделала разработка, копится в очереди и не приносит покупателям никакой пользы.', 'without testing the flow stands still, and everything development made piles up in the queue and gives the customers nothing.') };
       steps.push(st);
     });
     const last = r.days[DAYS - 1];

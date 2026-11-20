@@ -402,7 +402,7 @@ export const quiz: QuizItem[] = [
       { id: 'tests', text: bi('Автотесты', 'Automated tests'), why: bi('На этом шаге заканчивается непрерывная интеграция.', 'Continuous integration ends here.') },
       { id: 'staging', text: bi('Выкладка на стенд', 'Deployment to staging') },
       { id: 'check', text: bi('Проверки на стенде', 'Checks on staging') },
-      { id: 'prod', text: bi('Выкладка на рабочий сайт', 'Deployment to production'), why: bi('Если выкладывает человек кнопкой, это непрерывная доставка, а если конвейер сам, это непрерывное развёртывание.', 'By a button: continuous delivery; by itself: continuous deployment.') },
+      { id: 'prod', text: bi('Выкладка на рабочий сайт', 'Deployment to production'), why: bi('Выкладка на рабочий сайт идёт последней, потому что до покупателей должно дойти только то, что уже собрано, прошло автотесты и проверено на стенде. На стенд изменение выкладывают тем же способом, каким потом выложат на рабочий сайт, поэтому к последнему шагу проверена и сама выкладка.', 'Deployment to production comes last, because only what is already built, passed the automated tests and was checked on staging may reach the customers. Staging is deployed the same way production will be, so by the last step the deployment itself has been checked too.') },
     ],
   },
   // ── methodology.dora ──
@@ -588,6 +588,20 @@ export const quiz: QuizItem[] = [
     ],
   },
   {
+    id: 'method.q.devops-what',
+    kind: 'mcq',
+    concepts: ['method.devops', 'method.devops-engineer'],
+    prompt: bi('В вакансии DevOps-инженера перечислены полтора десятка программ: для запуска приложений, для описания серверов кодом, для автоматической сборки и выкладки и для мониторинга. Какое утверждение о DevOps верно?', 'A DevOps engineer job ad lists about fifteen programs: for running applications, for describing servers as code, for automated builds and deployments and for monitoring. Which statement about DevOps is true?'),
+    options: [
+      { id: 'way', text: bi('DevOps — способ работы, при котором разработка и эксплуатация вместе отвечают за быстрые и надёжные изменения, а программы из вакансии помогают этого добиться', 'DevOps is a way of working in which development and operations together own fast and reliable changes, and the programs in the ad help to get there'), correct: true },
+      { id: 'tools', text: bi('DevOps — набор инструментов, и чем больше программ из списка человек знает, тем лучше он владеет DevOps', 'DevOps is a set of tools, and the more programs from the list a person knows, the better they know DevOps'), why: bi('Программы в таких списках меняются каждые несколько лет, а задача остаётся прежней. Команда может пользоваться всеми программами из вакансии и при этом выкладывать изменения раз в квартал и искать виноватых после каждого сбоя, и DevOps у неё не будет. На собеседовании поэтому спрашивают не только, как работает программа, но и какое ожидание или какой риск в потоке ценности она убирает.', 'The programs in such lists change every few years, while the job stays the same. A team can use every program in the ad and still deploy once a quarter and look for someone to blame after every outage, and it will not have DevOps. That is why interviews ask not only how a program works but also which wait or which risk in the value stream it removes.') },
+      { id: 'admin', text: bi('DevOps — новое название должности системного администратора, который умеет работать с Kubernetes', 'DevOps is a new name for the job of a system administrator who can work with Kubernetes'), why: bi('Должность DevOps-инженера существует, но сам DevOps — договорённость всей команды, а не обязанность одного человека. Kubernetes служит лишь одной из программ для запуска приложений, и многие команды работают по DevOps без него. В курсе Kubernetes идёт после блоков о Linux, о сетях и об упаковке приложений, потому что без них его устройство не понять, и начинать с него не нужно.', 'The DevOps engineer job exists, but DevOps itself is an agreement of the whole team, not one person’s duty. Kubernetes is just one of the programs for running applications, and many teams practise DevOps without it. In the course Kubernetes comes after the blocks on Linux, on networks and on packaging applications, because without them its design cannot be understood, and there is no need to start with it.') },
+      { id: 'no-ops', text: bi('DevOps — это когда разработчики сами выкладывают изменения и дежурят, а эксплуатации больше нет', 'DevOps is when the developers deploy and go on call themselves, and operations is gone'), why: bi('Общая ответственность не отменяет работы эксплуатации: кто-то по-прежнему следит за серверами, бюджетом ошибок и оповещениями. Меняется другое: у разработки и эксплуатации появляется общая цель, а рутину и выкладки берёт на себя автоматизация.', 'Shared responsibility does not abolish operations work: someone still looks after the servers, the error budget and the alerts. What changes is that development and operations get a common goal, and automation takes over the toil and the deployments.') },
+    ],
+    explain: bi('Полное определение из этого урока говорит о методологии, общей ответственности и трёх путях. Программы появляются в нём только как средство: автоматизация служит одной из пяти опор CALMS.', 'The full definition in this lesson speaks of a methodology, shared responsibility and the Three Ways. Programs appear in it only as a means: automation is one of the five pillars of CALMS.'),
+    refs: { lesson: 'methodology.culture' },
+  },
+  {
     id: 'method.q.westrum',
     kind: 'mcq',
     concepts: ['method.westrum'],
@@ -649,6 +663,52 @@ export const examItems: QuizItem[] = [
       { id: 'c', text: bi('Функцию C, потому что её CD3 равен 5 000, у B он равен 4 000, а у A 3 000', 'Feature C, because its CD3 is 5,000, B’s is 4,000 and A’s is 3,000'), correct: true },
       { id: 'a', text: bi('Функцию A, потому что у неё самая высокая стоимость задержки', 'Feature A, because its cost of delay is the highest'), why: bi('Стоимость задержки нужно делить на длительность работы. Функция A дорогая, но занимает команду пять недель, и всё это время остальные функции тоже ждут.', 'The cost of delay must be divided by the duration. Feature A is expensive, but it keeps the team busy for five weeks, and all that time the other features wait too.') },
       { id: 'b', text: bi('Функцию B, потому что её делать быстрее всех', 'Feature B, because it is the quickest to build'), why: bi('Короткая работа сама по себе ещё не повод начинать с неё. У B стоимость задержки на неделю работы меньше, чем у C.', 'Short work alone is no reason to start with it. B’s cost of delay per week of work is lower than C’s.') },
+    ],
+  },
+  {
+    id: 'method.q.exam.ci-cd',
+    kind: 'match',
+    concepts: ['method.ci', 'method.cdelivery', 'method.cdeployment'],
+    prompt: bi('Сопоставьте процесс команды и практику, которая у неё есть.', 'Match the team’s process with the practice it has.'),
+    pairs: [
+      { id: 'ci', left: bi('Все сливают изменения в общую ветку по нескольку раз в день, каждое слияние собирается и проходит автотесты, а выпуск на рабочий сайт неделю готовят вручную: собирают отдельную сборку и пишут инструкцию для эксплуатации', 'Everyone merges into the shared branch several times a day, every merge is built and passes the automated tests, and a release to production takes a week of manual preparation: a separate build and written instructions for operations'), right: bi('только непрерывная интеграция', 'continuous integration only'), why: bi('Непрерывная интеграция у команды есть, а непрерывной доставки нет. Проверенное изменение нельзя выпустить в любой момент, потому что каждый выпуск превращается в отдельный ручной проект.', 'Integration is there, delivery is not: a checked change cannot be released at any moment, because every release becomes a manual project.') },
+      { id: 'cdel', left: bi('Любую проверенную сборку из общей ветки дежурный может выпустить одной командой хоть в пятницу вечером, но выпускать ли её сейчас, решает владелец продукта', 'The on-call engineer can release any checked build from the shared branch with one command, even on a Friday evening, but whether to release it now is the product owner’s decision'), right: bi('непрерывная доставка', 'continuous delivery'), why: bi('Изменение всегда готово к выпуску, а решение о выпуске принимает человек. Этим доставка и отличается от развёртывания.', 'The change is always ready to release, and a person makes the release decision. That is what tells delivery from deployment.') },
+      { id: 'cdep', left: bi('Через двадцать минут после слияния изменение работает у покупателей, если все проверки прошли, и ни одного решения человека на этом пути нет', 'Twenty minutes after the merge the change runs for the customers if every check passed, with no human decision on the way'), right: bi('непрерывное развёртывание', 'continuous deployment') },
+    ],
+  },
+  {
+    id: 'method.q.exam.blameless',
+    kind: 'mcq',
+    concepts: ['method.postmortem'],
+    prompt: bi('В черновике разбора написано: «Дежурный проспал срочное оповещение, и сбой длился лишний час». Какая запись подходит для разбора без поиска виноватых?', 'The postmortem draft says: “The on-call engineer slept through the page, and the outage lasted an extra hour.” Which entry fits a blameless postmortem?'),
+    options: [
+      { id: 'cond', text: bi('Оповещение звонило только на один телефон, а эскалация к запасному дежурному через 15 минут не была настроена', 'The page rang only one phone, and escalation to the secondary after 15 minutes was not set up'), correct: true },
+      { id: 'human', text: bi('Сбой затянулся из-за человеческого фактора', 'The outage dragged on because of the human factor'), why: bi('Слова «человеческий фактор» снова называют причиной человека, только безлично. Из такой записи не следует ни одной задачи, которую можно поставить на доску.', 'The words “human factor” again name a person as the cause, only impersonally. No task that could go on the board follows from such an entry.') },
+      { id: 'warn', text: bi('Дежурному сделано замечание, и в следующий раз он будет внимательнее', 'The on-call engineer was reprimanded and will be more careful next time'), why: bi('Замечание направлено против человека, а условия остались прежними: следующий дежурный, который крепко спит, проспит то же самое оповещение.', 'A reprimand is aimed at a person, while the conditions stay the same: the next on-call engineer who sleeps soundly will sleep through the same page.') },
+    ],
+    explain: bi('Способствующий фактор описывает условие, которое можно изменить. Здесь таким условием стала ненастроенная эскалация к запасному дежурному, и из записи сразу следует задача: настроить её.', 'A contributing factor describes a condition that can be changed. Here it is the missing escalation to the secondary, and a task follows from the entry at once: set it up.'),
+  },
+  {
+    id: 'method.q.exam.five-steps',
+    kind: 'mcq',
+    concepts: ['method.five-steps', 'method.swarming'],
+    prompt: bi('Проверка стала узким местом. Руководитель предлагает нанять второго тестировщика. При этом единственный тестировщик полдня проводит на совещаниях, а разработчики, пока их задачи ждут проверки, начинают новые функции. Что по пяти шагам Голдратта нужно сделать до найма?', 'Testing has become the bottleneck. The manager suggests hiring a second tester. Meanwhile the only tester spends half the day in meetings, and the developers, while their tasks wait for testing, start new features. What should be done before hiring, by Goldratt’s five steps?'),
+    options: [
+      { id: 'exploit', text: bi('Освободить тестировщика от совещаний и поставить лимит, чтобы свободные разработчики помогали проверке, а не начинали новое', 'Free the tester from meetings and set a limit so that free developers help with testing instead of starting new work'), correct: true },
+      { id: 'hire', text: bi('Сразу нанять второго тестировщика, потому что так проблема решится быстрее всего', 'Hire a second tester at once, because that solves the problem fastest'), why: bi('Найм относится к четвёртому шагу, «расширить». Он дорогой и медленный: человека ещё нужно найти и ввести в работу, а половина времени нынешнего тестировщика тем временем так и уходит на совещания.', 'Hiring is the fourth step, “elevate”. It is expensive and slow: the person still has to be found and brought up to speed, while half of the current tester’s time keeps going to meetings.') },
+      { id: 'dev', text: bi('Ускорить разработку, чтобы задачи приходили к проверке раньше', 'Speed up development so that tasks reach testing sooner'), why: bi('Разработка стоит перед узким местом. Если её ускорить, очередь перед проверкой вырастет, а до покупателей будет доходить столько же задач, сколько раньше.', 'Development is in front of the bottleneck. Speeding it up grows the queue before testing, while as many tasks as before reach the customers.') },
+      { id: 'limit', text: bi('Увеличить лимит колонки «Проверка», чтобы в неё помещалось больше задач', 'Raise the limit of the Testing column so that more tasks fit into it'), why: bi('Больший лимит удлиняет очередь, но тестировщик от этого быстрее не станет, и проблема только спрячется.', 'A higher limit lengthens the queue, but the tester gets no faster, and the problem only hides.') },
+    ],
+  },
+  {
+    id: 'method.q.exam.approval',
+    kind: 'mcq',
+    concepts: ['method.dora', 'method.batch'],
+    prompt: bi('Команда выкладывает изменения раз в месяц партией из 40 изменений. Доля неудачных изменений равна 35 %, а восстановление после неудачной выкладки занимает полдня. Руководитель хочет, чтобы перед каждой выкладкой изменения согласовывал ещё и отдел вне команды. Что по данным исследований DORA скорее улучшит обе группы метрик?', 'The team deploys once a month in a batch of 40 changes. The change fail rate is 35%, and recovery after a failed deployment takes half a day. The manager wants every deployment to be approved by a department outside the team as well. By DORA research, what is more likely to improve both groups of metrics?'),
+    options: [
+      { id: 'small', text: bi('Выкладывать чаще и меньшими партиями, с автотестами и откатом', 'Deploy more often in smaller batches, with automated tests and rollback'), correct: true },
+      { id: 'approve', text: bi('Добавить согласование вне команды, потому что лишняя пара глаз поймает больше ошибок', 'Add the outside approval, because an extra pair of eyes catches more mistakes'), why: bi('В книге «Accelerate» описан этот результат: согласование изменений людьми вне команды замедляет доставку и при этом не снижает долю неудачных изменений. Партия от согласования не уменьшается, а ожидание становится длиннее.', '“Accelerate” describes this finding: approval of changes by people outside the team slows delivery and does not lower the change fail rate. The batch does not get smaller from an approval, while the wait gets longer.') },
+      { id: 'rarer', text: bi('Выкладывать раз в квартал, чтобы поводов для сбоя стало меньше', 'Deploy once a quarter, so that there are fewer chances for an outage'), why: bi('Если выкладывать реже, в каждую выкладку попадёт ещё больше изменений: риск каждой выкладки вырастет, а виноватое изменение будет ещё труднее найти.', 'Deploying less often puts even more changes into each deployment: the risk of each one grows, and the faulty change is even harder to find.') },
     ],
   },
 ];
