@@ -73,22 +73,105 @@ export const interviewQuiz: QuizItem[] = [
       { id: 'faster', text: bi('По digest образ скачивается быстрее', 'A pull by digest is faster'), why: bi('Скорость скачивания та же самая, а digest нужен для воспроизводимости и защиты от подмены.', 'The speed is the same; it is about reproducibility and protection from substitution.') },
     ],
   },
+  {
+    id: 'containers.q.iv-php',
+    kind: 'mcq',
+    concepts: ['docker.container', 'docker.network'],
+    prompt: bi('Сайт на Laravel работает так: nginx отдаёт статику, а запросы к PHP передаёт в PHP-FPM. Как его разумнее всего разложить по контейнерам?', 'A Laravel site works like this: nginx serves the static files and passes PHP requests to PHP-FPM. What is the most sensible way to split it into containers?'),
+    options: [
+      { id: 'two', text: bi('Два контейнера в одной сети Compose: nginx передаёт PHP-запросы по FastCGI на имя `php` и порт 9000, а код приложения лежит в образе PHP-FPM', 'Two containers on one Compose network: nginx passes PHP requests over FastCGI to the name `php` and port 9000, and the application code lives in the PHP-FPM image'), correct: true },
+      { id: 'one', text: bi('Один контейнер, в котором nginx и PHP-FPM запускает менеджер процессов supervisord', 'One container in which the supervisord process manager starts both nginx and PHP-FPM'), why: bi('Так тоже работает, но первым процессом становится supervisord, журналы двух программ смешиваются, а перезапустить или масштабировать одну программу без другой нельзя. На собеседовании ждут ответа «один процесс на контейнер» и умения объяснить, почему.', 'This works too, but supervisord becomes the first process, the logs of the two programs mix, and one program cannot be restarted or scaled without the other. An interviewer expects “one process per container” and an explanation why.') },
+      { id: 'host', text: bi('nginx оставить на хосте, а в контейнер поместить только PHP-FPM с опубликованным портом 9000', 'Keep nginx on the host and put only PHP-FPM in a container with port 9000 published'), why: bi('Опубликованный порт FastCGI открыт всей сети, а настройки nginx снова лежат вне репозитория. Внутри сети Compose nginx дотягивается до PHP-FPM по имени без всякой публикации.', 'A published FastCGI port is open to the whole network, and the nginx settings again sit outside the repository. Inside a Compose network nginx reaches PHP-FPM by name without any publishing.') },
+    ],
+    explain: bi('Статику nginx получает либо из своего образа, куда её копируют при сборке, либо из общего тома. Каталог `storage` с загрузками пользователей подключают томом, иначе он пропадёт вместе с контейнером.', 'nginx gets the static files either from its own image, where they are copied during the build, or from a shared volume. The `storage` directory with user uploads is attached as a volume, otherwise it vanishes with the container.'),
+    refs: { lesson: 'containers.compose' },
+  },
+  {
+    id: 'containers.q.iv-ci-cache',
+    kind: 'mcq',
+    concepts: ['docker.build-cache'],
+    prompt: bi('На ноутбуке повторная сборка образа занимает секунды, а в CI каждая сборка идёт с нуля и длится пять минут. Dockerfile тот же. В чём причина?', 'On a laptop a repeated image build takes seconds, while in CI every build starts from scratch and takes five minutes. The Dockerfile is the same. What is the cause?'),
+    options: [
+      { id: 'runner', text: bi('Машина CI каждый раз новая, и кэша прошлых сборок на ней нет. Кэш хранят в реестре флагами `--cache-from` и `--cache-to` у `docker buildx build`', 'The CI machine is new every time and has no cache of earlier builds. The cache is kept in a registry with the `--cache-from` and `--cache-to` flags of `docker buildx build`'), correct: true },
+      { id: 'order', text: bi('В Dockerfile неправильный порядок инструкций', 'The instructions in the Dockerfile are in the wrong order'), why: bi('Тогда и на ноутбуке каждая правка кода пересобирала бы зависимости. Здесь медленно только там, где кэша нет вовсе.', 'Then every code edit would rebuild the dependencies on the laptop too. Here it is slow only where there is no cache at all.') },
+      { id: 'nocache', text: bi('CI всегда собирает с флагом `--no-cache`', 'CI always builds with the `--no-cache` flag'), why: bi('Такого правила нет. Флаг `--no-cache` ставят сознательно, например для ночной сборки со свежими пакетами.', 'There is no such rule. The `--no-cache` flag is set on purpose, for example for a nightly build with fresh packages.') },
+    ],
+    refs: { lesson: 'containers.dockerfile' },
+  },
+  {
+    id: 'containers.q.iv-one-image',
+    kind: 'mcq',
+    concepts: ['docker.image', 'docker.env'],
+    prompt: bi('Для тестового стенда и рабочего сервера нужны разные адреса базы данных. Сколько образов собирать?', 'The test environment and the production server need different database addresses. How many images do you build?'),
+    options: [
+      { id: 'one', text: bi('Один образ на обе среды, а адрес базы передают при запуске переменной окружения или файлом настроек', 'One image for both environments, with the database address passed at start as an environment variable or a settings file'), correct: true },
+      { id: 'two', text: bi('Два образа, в каждый из которых при сборке вписан свой адрес', 'Two images, each with its own address written in during the build'), why: bi('Тогда на рабочий сервер попадает сборка, которую никто не проверял на стенде. Смысл образа в том, что проверенные байты, тот же digest, уходят дальше без изменений.', 'Then production gets a build nobody tested on the test environment. The point of an image is that the tested bytes, the same digest, move on unchanged.') },
+    ],
+    refs: { lesson: 'containers.first-steps' },
+  },
+  {
+    id: 'containers.q.iv-logs',
+    kind: 'mcq',
+    concepts: ['docker.lifecycle'],
+    prompt: bi('Куда приложению в контейнере писать свой журнал?', 'Where should an application in a container write its log?'),
+    options: [
+      { id: 'stdout', text: bi('В stdout и stderr: их сохраняет Docker, читает `docker logs`, а дальше их забирает агент сбора журналов. Размер журнала ограничивают параметрами `max-size` и `max-file`', 'To stdout and stderr: Docker keeps them, `docker logs` reads them, and a log collection agent picks them up from there. The log size is limited with `max-size` and `max-file`'), correct: true },
+      { id: 'file', text: bi('В файл `/var/log/app.log` внутри контейнера, как на обычном сервере', 'To the file `/var/log/app.log` inside the container, as on an ordinary server'), why: bi('Файл растёт в записываемом слое, пропадает вместе с контейнером, а `docker logs` его не видит. Если программа умеет писать только в файл, этот файл делают ссылкой на `/dev/stdout`, как в образе nginx.', 'The file grows in the writable layer, vanishes with the container, and `docker logs` does not see it. If a program can only write to a file, the file is made a link to `/dev/stdout`, as in the nginx image.') },
+    ],
+    refs: { lesson: 'containers.boundaries' },
+  },
+  {
+    id: 'containers.q.iv-health',
+    kind: 'mcq',
+    concepts: ['docker.lifecycle'],
+    prompt: bi('У контейнера есть HEALTHCHECK, и проверка три раза подряд не прошла. Что сделает сам Docker без Compose и оркестратора?', 'A container has a HEALTHCHECK, and the check failed three times in a row. What does Docker itself do, without Compose or an orchestrator?'),
+    options: [
+      { id: 'mark', text: bi('Пометит контейнер как unhealthy, и больше ничего не произойдёт, процесс продолжит работать', 'It marks the container unhealthy and does nothing else: the process keeps running'), correct: true },
+      { id: 'restart', text: bi('Перезапустит контейнер по политике `--restart`', 'It restarts the container according to the `--restart` policy'), why: bi('Политика перезапуска срабатывает, только когда процесс завершился. Статус unhealthy читают Compose в условии `service_healthy` и оркестраторы, а сам Docker контейнер не трогает.', 'The restart policy fires only when the process has exited. The unhealthy status is read by Compose in the `service_healthy` condition and by orchestrators, while Docker itself leaves the container alone.') },
+      { id: 'stop', text: bi('Остановит контейнер, чтобы на него не шли запросы', 'It stops the container so that requests no longer reach it'), why: bi('Docker не управляет трафиком и не останавливает контейнер из-за проверки. Убрать неготовую копию из балансировки умеет оркестратор.', 'Docker does not manage traffic and does not stop a container because of a check. Taking a not-ready copy out of load balancing is an orchestrator’s job.') },
+    ],
+    refs: { lesson: 'containers.compose' },
+  },
+  {
+    id: 'containers.q.iv-latest',
+    kind: 'mcq',
+    concepts: ['docker.digest', 'docker.dockerfile'],
+    prompt: bi('Чем плоха строка `FROM node:latest` в Dockerfile рабочего сервиса?', 'What is wrong with the line `FROM node:latest` in the Dockerfile of a production service?'),
+    options: [
+      { id: 'repro', text: bi('Сборка невоспроизводима: тег перевесят, и завтра тот же Dockerfile соберётся на другой версии Node. Версию фиксируют тегом, а для полной точности digest', 'The build is not reproducible: the tag will be moved, and tomorrow the same Dockerfile builds on another Node version. The version is pinned with a tag, and for full precision with a digest'), correct: true },
+      { id: 'fresh', text: bi('Ничем, потому что latest всегда самая свежая и потому самая безопасная версия', 'Nothing, because latest is always the freshest and therefore the safest version'), why: bi('latest означает только тег, который владелец репозитория повесил последним, и он может указывать на версию с другим мажорным номером. Обновления безопасности получают пересборкой с явной версией.', 'latest is only the tag the repository owner hung last, and it may point to a version with another major number. Security updates come from rebuilding with an explicit version.') },
+    ],
+    refs: { lesson: 'containers.image' },
+  },
+  {
+    id: 'containers.q.iv-sock',
+    kind: 'mcq',
+    concepts: ['docker.security-profile'],
+    prompt: bi('Конвейер CI собирает образы внутри контейнера, и чтобы `docker build` там работал, в контейнер подключили сокет хоста: `-v /var/run/docker.sock:/var/run/docker.sock`. Чем это рискованно?', 'A CI pipeline builds images inside a container, and to make `docker build` work there the host socket was mounted into the container: `-v /var/run/docker.sock:/var/run/docker.sock`. What is the risk?'),
+    options: [
+      { id: 'root', text: bi('Любой шаг сборки управляет демоном хоста и может запустить контейнер с корнем хоста внутри, то есть получает root на машине CI', 'Any build step controls the host daemon and can start a container with the host root inside, that is, it gets root on the CI machine'), correct: true },
+      { id: 'ro', text: bi('Ничем, потому что сокет подключён только для сборки и демон выполняет лишь `docker build`', 'None, because the socket is mounted only for builds and the daemon runs only `docker build`'), why: bi('Демон выполняет любой запрос, пришедший через сокет, и не знает, кто его прислал. Через тот же сокет можно выполнить `docker run --privileged -v /:/host`.', 'The daemon runs any request that comes through the socket and does not know who sent it. The same socket allows `docker run --privileged -v /:/host`.') },
+      { id: 'slow', text: bi('Сборки станут медленнее, потому что запросы идут через лишний слой', 'Builds become slower, because requests go through an extra layer'), why: bi('Скорость тут ни при чём, потому что сокет даёт прямой доступ к тому же демону. Опасность в правах, а не в скорости.', 'Speed has nothing to do with it: the socket gives direct access to the same daemon. The danger is in the rights, not the speed.') },
+    ],
+    explain: bi('Вместо сокета в CI берут сборщики, которым не нужен демон с правами root, например BuildKit в режиме rootless или kaniko, либо отдельную виртуальную машину для каждого запуска.', 'Instead of the socket, CI uses builders that need no root daemon, such as BuildKit in rootless mode or kaniko, or a separate virtual machine for each run.'),
+    refs: { lesson: 'containers.security' },
+  },
 ];
 
-/** The twelve interview questions (04 §19): new items above plus items from the chapters. */
+/** The twelve interview questions (04 §19): situations that the lessons did not ask about, plus five general items above. */
 const TWELVE = [
   'containers.q.image-vs-container',
-  'containers.q.bug-order',
-  'containers.q.entrypoint-cmd',
+  'containers.q.iv-php',
+  'containers.q.iv-one-image',
   'containers.q.copy-add',
-  'containers.q.volume-vs-bind',
-  'containers.q.dns-default',
-  'containers.q.multistage-why',
+  'containers.q.iv-ci-cache',
   'containers.q.shrink',
-  'containers.q.root-is-root',
-  'containers.q.code-137',
+  'containers.q.iv-latest',
   'containers.q.tag-digest',
-  'containers.q.chain-order',
+  'containers.q.iv-logs',
+  'containers.q.iv-health',
+  'containers.q.code-137',
+  'containers.q.iv-sock',
 ];
 
 export const interviewLesson: Lesson = {
@@ -97,7 +180,7 @@ export const interviewLesson: Lesson = {
   title: bi('Как подготовиться к вопросам о контейнерах на собеседовании', 'How to prepare for interview questions about containers'),
   summary: bi('В этом уроке вы соберёте ответ на вопрос «чем контейнер отличается от виртуальной машины» и ответите на двенадцать вопросов, которые задают на собеседованиях DevOps-инженеров.', 'In this lesson you will build the answer to “how does a container differ from a virtual machine” and answer twelve questions that DevOps engineer interviews ask.'),
   introduces: [],
-  uses: ['docker.vm-vs-container', 'docker.image', 'docker.dockerfile', 'docker.volume', 'docker.network', 'docker.security-profile', 'docker.runtime'],
+  uses: ['docker.vm-vs-container', 'docker.image', 'docker.dockerfile', 'docker.volume', 'docker.network', 'docker.security-profile', 'docker.runtime', 'docker.build-cache', 'docker.env', 'docker.lifecycle', 'docker.digest', 'docker.container', 'docker.multistage', 'docker.layer', 'docker.pid1'],
   tier: 'core',
   minutes: 25,
   sources: {
@@ -110,8 +193,8 @@ export const interviewLesson: Lesson = {
       kind: 'text',
       step: 'hook',
       body: bi(
-        'Вопрос «чем контейнер отличается от виртуальной машины?» задают почти на каждом собеседовании DevOps-инженера, и ответа «контейнер легче» здесь мало, потому что от вас ждут объяснения через устройство. Хороший ответ строится по плану «что это, как работает, что из этого следует, когда что выбирать». Контейнер остаётся процессом хоста, у которого пространства имён ограничивают то, что он видит, а cgroup ограничивает, сколько ресурсов он потребляет, и ядро у всех контейнеров общее. Виртуальная машина работает на виртуальном железе и несёт за гипервизором собственное ядро. Отсюда следуют различия в размере, скорости запуска, плотности размещения и силе изоляции. Чужой код и программы, которым нужно другое ядро, запускают в виртуальных машинах, плотные однородные сервисы — в контейнерах, а на практике их используют вместе.\n\nСоберите этот ответ из карточек, а потом ответьте на двенадцать вопросов. После каждого ответа вы увидите разбор и ссылку на урок, где об этом рассказано.',
-        'The question “how does a container differ from a virtual machine?” comes up at almost every DevOps engineer interview, and the expected answer is not “a container is lighter” but an explanation through how they work. A good answer follows the scheme “what it is → how it works → consequences → when to use which”: a container is a host process; namespaces limit what it sees, cgroups how much it consumes, the kernel is shared; a VM emulates hardware and carries its own kernel behind a hypervisor; hence size, start time, density and strength of isolation; untrusted code and another kernel go to VMs, dense uniform services to containers, and in real life — both together.\n\nBuild this answer from the cards, then go through twelve questions. After each answer — a review and a link to the lesson.',
+        'Вопрос «чем контейнер отличается от виртуальной машины?» задают почти на каждом собеседовании DevOps-инженера, и ответа «контейнер легче» здесь мало, потому что от вас ждут объяснения через устройство. Хороший ответ строится по плану «что это, как работает, что из этого следует, когда что выбирать». Контейнер остаётся процессом хоста, у которого пространства имён ограничивают то, что он видит, а cgroup ограничивает, сколько ресурсов он потребляет, и ядро у всех контейнеров общее. Виртуальная машина работает на виртуальном железе и несёт за гипервизором собственное ядро. Отсюда следуют различия в размере, скорости запуска, плотности размещения и силе изоляции. Чужой код и программы, которым нужно другое ядро, запускают в виртуальных машинах, плотные однородные сервисы — в контейнерах, а на практике их используют вместе.\n\nСоберите этот ответ из карточек, а потом ответьте на двенадцать вопросов. Большая часть из них построена на рабочих ситуациях, которых в уроках не было, поэтому повторить ответ из урока не получится, придётся применить модель. После каждого ответа вы увидите разбор и ссылку на урок, где об этом рассказано.',
+        'The question “how does a container differ from a virtual machine?” comes up at almost every DevOps engineer interview, and the expected answer is not “a container is lighter” but an explanation through how they work. A good answer follows the scheme “what it is → how it works → consequences → when to use which”: a container is a host process; namespaces limit what it sees, cgroups how much it consumes, the kernel is shared; a VM emulates hardware and carries its own kernel behind a hypervisor; hence size, start time, density and strength of isolation; untrusted code and another kernel go to VMs, dense uniform services to containers, and in real life — both together.\n\nBuild this answer from the cards, then go through twelve questions. Most of them are built on work situations the lessons did not show, so you cannot repeat an answer from a lesson and have to apply the model. After each answer you will see a review and a link to the lesson.',
       ),
     },
     { id: 'builder', kind: 'quiz', step: 'practice', title: bi('Соберите ответ из карточек', 'Answer builder'), items: ['containers.q.answer-plan', 'containers.q.vm-vs-ct'] },

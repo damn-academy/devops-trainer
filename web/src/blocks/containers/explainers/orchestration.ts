@@ -124,7 +124,23 @@ const servers = (n: number) => word(n, ['сервер', 'сервера', 'се�
 const serversOn = (n: number): Bi => ({ ru: `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'сервере' : 'серверах'}`, en: `${n} ${n === 1 ? 'server' : 'servers'}` });
 const vms = (n: number) => word(n, ['виртуальную машину', 'виртуальные машины', 'виртуальных машин'], ['virtual machine', 'virtual machines']);
 const containers = (n: number) => word(n, ['контейнер', 'контейнера', 'контейнеров'], ['container', 'containers']);
-const mins = (x: number): Bi => (Number.isInteger(x) ? word(x, ['минуту', 'минуты', 'минут'], ['minute', 'minutes']) : { ru: `${dec(x).ru} минуты`, en: `${dec(x).en} minutes` });
+const secs = (n: number) => word(n, ['секунду', 'секунды', 'секунд'], ['second', 'seconds']);
+/** A duration given in minutes, said in words: under two minutes in seconds («65 секунд»), otherwise in minutes and the remaining seconds. */
+const mins = (x: number): Bi => {
+  const total = Math.round(x * 60);
+  if (total < 120 && total % 60 !== 0) return secs(total);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  const mw = word(m, ['минуту', 'минуты', 'минут'], ['minute', 'minutes']);
+  return s ? { ru: `${mw.ru} ${secs(s).ru}`, en: `${mw.en} ${secs(s).en}` } : mw;
+};
+/** True when a counter in minutes reads better in seconds: a fraction of a minute under two minutes. */
+const inSeconds = (x: number) => x < 2 && !Number.isInteger(x);
+/** Counters of time: under two minutes in seconds, otherwise in whole minutes. */
+const putTime = (out: Record<string, number>, id: string, x: number) => {
+  if (inSeconds(x)) out[`${id}S`] = Math.round(x * 60);
+  else out[id] = Math.round(x);
+};
 
 const BM = ['bm-admin', 'bm-a', 'bm-rest', 'e-bm-a', 'e-bm-rest'];
 const VM = ['vm-admin', 'vm-mgr', 'vm-a', 'vm-rest', 'e-vm-admin', 'e-vm-hb', 'e-vm-act'];
@@ -1250,7 +1266,9 @@ const srvRest = (c: number) => ({ x: c + 148, y: ROW.srv, w: SW, h: SH });
 
 const METRIC = (w: World, wn: Bi) => [
   { id: `${w}Down`, label: fmtb(bi('{w}: простой', '{w}: downtime'), { w: wn }), unit: { ru: 'мин', en: 'min' } },
+  { id: `${w}DownS`, label: fmtb(bi('{w}: простой', '{w}: downtime'), { w: wn }), unit: { ru: 'с', en: 's' } },
   { id: `${w}Manual`, label: fmtb(bi('{w}: ручная работа', '{w}: manual work'), { w: wn }), unit: { ru: 'мин', en: 'min' } },
+  { id: `${w}ManualS`, label: fmtb(bi('{w}: ручная работа', '{w}: manual work'), { w: wn }), unit: { ru: 'с', en: 's' } },
   { id: `${w}Woken`, label: fmtb(bi('{w}: разбудили', '{w}: woken'), { w: wn }), unit: { ru: 'чел.', en: 'people' } },
   { id: `${w}Risk`, label: fmtb(bi('{w}: риск ошибки', '{w}: risk of a mistake'), { w: wn }), unit: { ru: 'из 3', en: 'of 3' } },
 ];
@@ -1599,8 +1617,8 @@ export const orchestrationModel = defineModel<P>({
       m.risk = totals[x.world].risk;
       const metrics: Record<string, number> = {};
       for (const w of started) {
-        metrics[`${w}Down`] = acc[w].down;
-        metrics[`${w}Manual`] = acc[w].manual;
+        putTime(metrics, `${w}Down`, acc[w].down);
+        putTime(metrics, `${w}Manual`, acc[w].manual);
         metrics[`${w}Woken`] = acc[w].woken;
         metrics[`${w}Risk`] = acc[w].risk;
       }

@@ -159,11 +159,11 @@ export const buildModel = defineModel<P>({
     },
     {
       id: 'rm-later',
-      label: bi('Кэш pip удаляют отдельной инструкцией RUN rm -rf /root/.cache', 'RUN rm -rf /root/.cache on a separate line'),
+      label: bi('Кэш pip удаляют отдельной инструкцией RUN rm -rf /root/.cache в конце Dockerfile', 'The pip cache is removed by a separate RUN rm -rf /root/.cache at the end of the Dockerfile'),
       remove: ['e-out'],
       boundary: 'storage',
       predict: {
-        prompt: bi('Кэш pip удаляют следующей инструкцией, `RUN rm -rf /root/.cache`. Станет ли образ меньше?', 'The pip cache is deleted by the next RUN rm instruction. Will the image get smaller?'),
+        prompt: bi('В конец Dockerfile дописали отдельную инструкцию `RUN rm -rf /root/.cache`, которая удаляет кэш pip, оставшийся после `pip install`. Станет ли образ меньше?', 'A separate `RUN rm -rf /root/.cache` instruction was added at the end of the Dockerfile to delete the pip cache left by `pip install`. Will the image get smaller?'),
         options: [
           { id: 'no', text: bi('Нет, потому что файлы остались в предыдущем слое, а сверху легли только пометки об удалении', 'No, because the files stay in the previous layer; on top there is only a deletion mark') },
           { id: 'yes', text: bi('Да, на размер кэша pip', 'Yes, by the size of the cache') },
@@ -258,7 +258,7 @@ export const buildModel = defineModel<P>({
       steps.push({
         id: 'rm',
         label: 'RUN rm',
-        caption: bi('Инструкция `RUN rm -rf /root/.cache` создаёт новый слой, в котором лежат только пометки об удалении. Предыдущий слой с кэшем pip остался в образе целиком, поэтому образ не уменьшился.', '`RUN rm -rf /root/.cache` makes a new layer of deletion marks. The previous layer with the cache is still there — the image did not shrink.'),
+        caption: bi('Инструкция `RUN rm -rf /root/.cache`, дописанная в конец Dockerfile, выполняется последней и создаёт новый слой, в котором лежат только пометки об удалении. Предыдущий слой с кэшем pip остался в образе целиком, поэтому образ не уменьшился.', '`RUN rm -rf /root/.cache`, added at the end of the Dockerfile, runs last and makes a new layer of deletion marks. The previous layer with the cache is still there — the image did not shrink.'),
         focus: ['n-image', 'e-out'],
         reveal: ['n-image', 'e-out'],
         say: { 'n-image': bi('В образе остался слой с кэшем pip, а сверху лежит слой с пометками об удалении.', 'The image keeps the layer with the pip cache plus a layer of deletion marks.') },
