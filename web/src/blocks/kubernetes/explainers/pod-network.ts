@@ -251,7 +251,7 @@ export const podNetworkModel = defineModel<P>({
       s.push({
         id: 'fw',
         label: 'UDP 8472',
-        caption: bi('worker-1 отправляет UDP-пакет второму узлу, но межсетевой экран облака пропускает только порты 22 и 443 и молча отбрасывает UDP 8472.', 'The cloud firewall lets only 22 and 443 through and silently drops UDP 8472.'),
+        caption: bi('Узел worker-1 отправляет UDP-пакет второму узлу, но межсетевой экран облака пропускает только порты 22 и 443 и молча отбрасывает UDP 8472.', 'The cloud firewall lets only 22 and 443 through and silently drops UDP 8472.'),
         focus: ['eth1', 'e-wire'],
         reveal: ['net', 'e-wire', 'eth2'],
         say: { eth1: bi('worker-1 отправляет пакет на порт UDP 8472, но ответа нет, потому что межсетевой экран пакет отбросил.', 'worker-1 sends to UDP 8472; the firewall drops it.') },

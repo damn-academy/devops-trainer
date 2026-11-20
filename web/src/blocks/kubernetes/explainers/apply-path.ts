@@ -373,7 +373,7 @@ export const applyPathModel = defineModel<P>({
       s.push({
         id: 'cni',
         label: 'CNI',
-        caption: bi('containerd вызывает плагин сети, чтобы дать песочнице IP-адрес, но плагина на узле нет. Песочница без сети не создаётся, а без песочницы не запустить и контейнер.', 'containerd calls the network plugin, but there is none: no sandbox, no container.'),
+        caption: bi('Среда запуска containerd вызывает плагин сети, чтобы дать песочнице IP-адрес, но плагина на узле нет. Песочница без сети не создаётся, а без песочницы не запустить и контейнер.', 'containerd calls the network plugin, but there is none: no sandbox, no container.'),
         focus: ['crt', 'e-cni'],
         reveal: ['cni', 'e-cni'],
         say: { crt: bi('containerd не находит плагин сети и не может создать песочницу.', 'containerd finds no network plugin.') },

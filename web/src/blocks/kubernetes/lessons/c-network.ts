@@ -6,7 +6,7 @@
 import { bi } from '../../../core/i18n';
 import type { Facts, Lesson, QuizItem } from '../../../core/types';
 import type { K8sFacts } from '../../../engine/kube-lite/facts';
-import { DNS_BROKEN, DNS_LAB, INGRESS_LAB, SERVICE_BROKEN, SERVICE_LAB, TROUBLE_LAB } from '../setups';
+import { DNS_BROKEN, DNS_LAB, GATEWAY_LAB, INGRESS_LAB, SERVICE_BROKEN, SERVICE_LAB, TROUBLE_LAB } from '../setups';
 import { R, S, src } from '../sources';
 
 const k8s = (f: Facts) => f.k8s as K8sFacts;
@@ -212,6 +212,20 @@ export const serviceQuiz: QuizItem[] = [
       { id: 'broken', text: bi('kube-proxy сломан', 'kube-proxy is broken'), why: bi('Если бы kube-proxy был сломан, Service не отвечал бы вовсе, а не перекашивал доли.', 'A broken kube-proxy would stop answers altogether, not skew the shares.') },
     ],
   },
+  {
+    id: 'k8s.q.svc.relabel',
+    kind: 'mcq',
+    concepts: ['k8s.service', 'k8s.label', 'k8s.endpointslice'],
+    prompt: bi(
+      'Service `web` с селектором `app: web` работал, пока коллега не пересоздал Deployment `web`, поменяв метку подов и в селекторе, и в шаблоне на `app: web-v2`. Образ и порт 80 остались прежними, а `curl http://web` теперь получает отказ в соединении. Почему?',
+      'Service `web` with selector `app: web` worked until a colleague recreated Deployment `web` with the pod label changed to `app: web-v2` in both its selector and its template. The image and port 80 stayed, and `curl http://web` now gets “connection refused”. Why?',
+    ),
+    options: [
+      { id: 'label', text: bi('Service выбирает поды по меткам, и под селектор `app: web` больше не подходит ни один под, поэтому EndpointSlice пуст', 'A Service picks pods by labels, no pod matches `app: web` any more, so the EndpointSlice is empty'), correct: true },
+      { id: 'name', text: bi('Service ищет поды по имени, а имена новых подов изменились вместе с хешем ReplicaSet', 'A Service finds pods by name, and the new pods got new names with the ReplicaSet hash'), why: bi('Имена подов Service не интересуют: поды каждый раз получают новые имена, и если бы Service искал по имени, он ломался бы при каждой выкладке. Проверьте `kubectl get endpointslices -l kubernetes.io/service-name=web`: адресов там нет.', 'A Service does not care about pod names: pods get new names every time, and a Service searching by name would break with every rollout. Check `kubectl get endpointslices -l kubernetes.io/service-name=web`: there are no addresses.') },
+      { id: 'port', text: bi('Service ищет поды по номеру порта, и порт 80 у новых подов занят', 'A Service finds pods by port number, and port 80 is taken in the new pods'), why: bi('Порт говорит, куда отправить пакет уже выбранному поду, а сам выбор делает селектор. Порт здесь не менялся.', 'The port says where to send a packet to a pod already chosen; the choice itself is made by the selector. The port did not change here.') },
+    ],
+  },
 ];
 
 export const servicesLesson: Lesson = {
@@ -269,8 +283,8 @@ export const servicesLesson: Lesson = {
       kind: 'text',
       step: 'explain',
       body: bi(
-        'Из такого устройства следуют три типичные поломки. Если селектор не совпадает с метками подов, EndpointSlice пуст, kube-proxy пишет правило, которое сразу отклоняет соединение (`REJECT`), и curl получает отказ в соединении. Если неверен `targetPort`, пакет приходит в под на порт, где никто не слушает, и под отвечает отказом. Если kube-proxy остановлен, старые правила продолжают работать, а для новых Service правил нет, и запрос остаётся без ответа, пока не истечёт тайм-аут.',
-        'Hence three typical breaks. The selector does not match the labels — the EndpointSlice is empty, kube-proxy writes a rule that rejects the connection at once (`REJECT`), and curl gets "connection refused". A wrong `targetPort` — the packet arrives at a pod port where nobody listens, and the pod answers RST. kube-proxy is stopped — old rules live on, but new Services get no rules, and a request hangs until it times out.',
+        'Из такого устройства следуют три типичные поломки. Если селектор не совпадает с метками подов, EndpointSlice пуст, kube-proxy пишет правило, которое сразу отклоняет соединение (`REJECT`), и curl получает отказ в соединении. Если неверен `targetPort`, пакет приходит в под на порт, где никто не слушает, и под отвечает отказом. Если kube-proxy остановлен, старые правила продолжают работать, а для новых Service правил нет, и запрос остаётся без ответа, пока не истечёт тайм-аут.\n\nService выбирает поды только по меткам. Имя пода, имя Deployment и номер порта в этом выборе не участвуют: если поды переименовали, а метки оставили прежними, Service продолжит работать, а если сменили метку, он перестанет находить поды, даже когда имена остались те же. Порт `targetPort` можно задать не числом, а именем порта из описания контейнера. В поде пишут `ports: [{name: http, containerPort: 8080}]`, а в Service `targetPort: http`, и тогда при переезде приложения на другой порт поправить нужно только под. Если же имя в Service не совпадёт ни с одним именем порта в поде, контроллер EndpointSlice не узнает, на какой порт вести пакеты, и до пода соединение не дойдёт.',
+        'Hence three typical breaks. The selector does not match the labels — the EndpointSlice is empty, kube-proxy writes a rule that rejects the connection at once (`REJECT`), and curl gets "connection refused". A wrong `targetPort` — the packet arrives at a pod port where nobody listens, and the pod answers RST. kube-proxy is stopped — old rules live on, but new Services get no rules, and a request hangs until it times out.\n\nA Service selects pods by labels only. The pod name, the Deployment name and the port number take no part in it: rename the pods but keep the labels, and the Service keeps working; change the label, and it stops finding the pods even with the same names. `targetPort` can be the name of a container port instead of a number. The pod says `ports: [{name: http, containerPort: 8080}]`, the Service says `targetPort: http`, and when the application moves to another port only the pod has to change. If the name in the Service matches no port name in the pod, the EndpointSlice controller does not learn which port to send packets to, and the connection does not reach the pod.',
       ),
     },
     {
@@ -436,7 +450,7 @@ export const dnsLesson: Lesson = {
       tasks: [
         {
           id: 'resolv',
-          prompt: bi('Посмотрите, что записано в файле resolv.conf пода `client`.', 'Look at the resolv.conf of pod `client`.'),
+          prompt: bi('Посмотрите, что записано в файле resolv.conf пода `client` из namespace `shop`.', 'Look at the resolv.conf of pod `client` in namespace `shop`.'),
           check: { stdout: /search shop\.svc\.cluster\.local svc\.cluster\.local cluster\.local[\s\S]*ndots:5/ },
           chips: 'kubectl -n shop exec client -- cat /etc/resolv.conf',
           hints: { H1: bi('Под работает в namespace shop, поэтому не забудьте флаг -n.', 'The pod is in namespace shop: do not forget -n.') },
@@ -528,18 +542,46 @@ export const ingressQuiz: QuizItem[] = [
       { id: 'pod', text: bi('Только на узле, где работает под', 'Only on the node where the pod runs'), why: bi('kube-proxy записывает правило KUBE-NODEPORTS на всех узлах. Если на узле нет пода, пакет уйдёт к поду на соседнем узле (при externalTrafficPolicy: Cluster).', 'kube-proxy writes the KUBE-NODEPORTS rule on every node; with no pod on the node the packet goes to a pod on another one (with externalTrafficPolicy: Cluster).') },
     ],
   },
+  {
+    id: 'k8s.q.in.nocontroller',
+    kind: 'mcq',
+    concepts: ['k8s.ingress', 'k8s.addon'],
+    prompt: bi(
+      'В новом кластере вы создали Ingress для `blog.example`, и `kubectl apply` ответил «created». Контроллера входа в кластере нет. Что увидит браузер?',
+      'In a new cluster you created an Ingress for `blog.example`, and `kubectl apply` said "created". There is no ingress controller in the cluster. What does the browser see?',
+    ),
+    options: [
+      { id: 'nothing', text: bi('Ничего не откроется: Ingress лежит в API как заявка, а исполнять его некому, и порт 80 на узлах никто не слушает', 'Nothing opens: the Ingress sits in the API as a request, nobody executes it, and nobody listens on port 80 of the nodes'), correct: true },
+      { id: 'port', text: bi('Сайт откроется, потому что Ingress сам открывает порт 80 на узлах', 'The site opens, because an Ingress opens port 80 on the nodes by itself'), why: bi('Объект Ingress только записывает правила. Порт открывает и запросы ведёт контроллер входа, обычный под с обратным прокси, а без него это поле в etcd, как Website без оператора.', 'An Ingress object is only a record of rules. The ingress controller, an ordinary pod with a reverse proxy, opens the port and routes requests; without it this is a field in etcd, like a Website without its operator.') },
+      { id: 'proxy', text: bi('Сайт откроется, потому что запрос обработает kube-proxy', 'The site opens, because kube-proxy handles the request'), why: bi('kube-proxy знает адреса и порты сервисов, а имён сайтов и путей в HTTP не видит, поэтому правила Ingress он не исполняет.', 'kube-proxy knows Service addresses and ports but does not see host names and paths in HTTP, so it does not execute Ingress rules.') },
+    ],
+  },
+  {
+    id: 'k8s.q.in.where',
+    kind: 'mcq',
+    concepts: ['k8s.ingress', 'k8s.addon', 'k8s.scheduler'],
+    prompt: bi(
+      'В кластере три управляющих узла и пять рабочих. На какой узел устанавливать контроллер входа и куда направить DNS-запись сайта?',
+      'A cluster has three control-plane nodes and five workers. Which node do you install the ingress controller on, and where should the site’s DNS record point?',
+    ),
+    options: [
+      { id: 'api', text: bi('Ни на какой: вы отдаёте манифесты контроллера API-серверу, узлы его подам выбирает планировщик, а DNS-запись указывает на внешний адрес балансировщика перед узлами', 'None: you give the controller’s manifests to the API server, the scheduler picks nodes for its pods, and the DNS record points at the external address of the load balancer in front of the nodes'), correct: true },
+      { id: 'master', text: bi('На первый управляющий узел, как службу systemd, а DNS-запись направить на его IP-адрес', 'On the first control-plane node as a systemd service, with the DNS record at its IP'), why: bi('Так ставят программы на обычный сервер, но контроллер входа — дополнение кластера, которое работает подами. Если направить DNS на один узел, сайт пропадёт вместе с этим узлом.', 'That is how programs go onto an ordinary server, but an ingress controller is a cluster add-on that runs as pods. A DNS record at one node makes the site disappear with that node.') },
+      { id: 'each', text: bi('На каждый рабочий узел вручную, а в DNS перечислить все пять адресов', 'On every worker by hand, with all five addresses in DNS'), why: bi('Если нужен под на каждом узле, это делает DaemonSet, но ставить руками ничего не нужно. А DNS со списком узлов не знает, какой узел жив, поэтому перед узлами ставят балансировщик, например MetalLB или облачный.', 'A pod on every node is a DaemonSet’s job, and nothing is installed by hand. And DNS with a list of nodes does not know which node is alive, so a load balancer goes in front of the nodes, such as MetalLB or a cloud one.') },
+    ],
+  },
 ];
 
 export const ingressLesson: Lesson = {
   id: 'k8s-1.ingress',
   block: 'k8s-1',
   title: bi('Как запросы попадают в кластер снаружи через NodePort, LoadBalancer, Ingress и Gateway API', 'The way in: NodePort, LoadBalancer, Ingress and Gateway API'),
-  summary: bi('Как запрос из интернета доходит до пода и откуда берутся ошибки 502 и 504.', 'How a request from the internet reaches a pod, and where 502 and 504 come from.'),
-  introduces: ['k8s.nodeport', 'k8s.ingress', 'k8s.gateway-api'],
-  uses: ['k8s.service', 'k8s.clusterip', 'k8s.kube-proxy'],
+  summary: bi('Как запрос из интернета доходит до пода, какие дополнения кластера исполняют правила Ingress и Gateway API, почему правило без контроллера ничего не открывает и откуда берутся ошибки 502 и 504.', 'How a request from the internet reaches a pod, which cluster add-ons execute Ingress and Gateway API rules, why a rule without a controller opens nothing, and where 502 and 504 come from.'),
+  introduces: ['k8s.nodeport', 'k8s.ingress', 'k8s.gateway-api', 'k8s.addon'],
+  uses: ['k8s.service', 'k8s.clusterip', 'k8s.kube-proxy', 'k8s.controller', 'k8s.operator', 'k8s.crd'],
   tier: 'core',
-  minutes: 35,
-  sources: src([S.service, S.ingress, S.gateway, S.gatewayApi, S.ingressNginx], [R.service, R.wikiProxy]),
+  minutes: 45,
+  sources: src([S.service, S.ingress, S.gateway, S.gatewayApi, S.traefikGateway, S.ingressNginx], [R.service, R.wikiProxy]),
   sections: [
     {
       id: 'explain',
@@ -551,6 +593,48 @@ export const ingressLesson: Lesson = {
         'A ClusterIP is reachable only from inside the cluster. To let external traffic in, a Service has two more types.\n\n[[k8s.nodeport|NodePort]] opens a port from the 30000–32767 range on **every** node and leads it to the Service (the `KUBE-NODEPORTS` rule). A client only needs the IP of any node. LoadBalancer is the next step: something outside gives the Service an external IP and puts a load balancer in front of the nodes. In a cloud the cloud controller does it, in k3s the built-in ServiceLB, in your own data centre MetalLB.\n\nFor websites that is not enough: you need rules by host name and path, TLS, redirects. That is the job of the reverse proxy from the networks block, run in the cluster as pods — an ingress controller. Its rules are written as an [[k8s.ingress|Ingress]] object (the historical way: host + path → service) or with the [[k8s.gateway-api|Gateway API]]: a GatewayClass describes the implementation (infrastructure), a Gateway the entry point (the cluster admin), an HTTPRoute the routes of an application (its team). The Ingress API is frozen, and the most popular controller, ingress-nginx, was retired in March 2026; new clusters build the way in on the Gateway API.\n\nIt matters where errors come from. The proxy opens a **new** connection to the Service. If there are no ready pods, the 503 is written by the proxy. If the pod dropped the connection — 502. If the pod takes longer than the proxy is willing to wait — 504, and that is the proxy too: the application is still working on its answer at that moment.',
       ),
     },
+    {
+      id: 'controller',
+      kind: 'text',
+      step: 'explain',
+      title: bi('Правила пишете вы, а исполняет их дополнение кластера', 'You write the rules, and a cluster add-on executes them'),
+      body: bi(
+        'С объектами Ingress и HTTPRoute чаще всего ошибаются одинаково: создают объект, видят в ответе `created` и ждут, что сайт откроется. Но объект — только заявка, записанная в API, как Website из урока об операторах, пока для него не было оператора. Исполняет правила контроллер входа, а в собственном дата-центре внешний адрес сервису типа LoadBalancer выдаёт MetalLB. Ни того, ни другого в самом Kubernetes нет. Это [[k8s.addon|дополнения кластера]], программы, которые ставят поверх Kubernetes. Каждое из них устроено как контроллер: работает подами, через API-сервер следит за своими объектами и делает шаг навстречу желаемому, а свои виды объектов добавляет через CustomResourceDefinition. Поэтому контроллер входа не ставят «на узел», как службу на обычный сервер: его манифесты отдают API-серверу, узлы его подам выбирает планировщик, а DNS-запись сайта указывает на внешний адрес перед узлами, а не на один из них.\n\nКонтроллер берёт только свои правила. Ingress он узнаёт по полю `ingressClassName`, где записано имя IngressClass этого контроллера, а HTTPRoute по полю `parentRefs`, где названы Gateway и его namespace. Если в поле опечатка или назван контроллер, которого в кластере нет, объект лежит в API, ошибки нигде не видно, а запрос получает 404 от контроллера, у которого нет правила для этого имени сайта. Узнают такую поломку по статусу объекта: у Ingress пуст столбец ADDRESS, а у HTTPRoute пусто поле `status.parents`, потому что ни один Gateway этот маршрут не принял.',
+        'Ingress and HTTPRoute objects are most often misread the same way: you create the object, see `created` in the answer and expect the site to open. But an object is only a request written into the API, like the Website from the operators lesson before it had an operator. The rules are executed by an ingress controller, and in your own data centre MetalLB gives a LoadBalancer Service its external address. Neither is part of Kubernetes itself. They are [[k8s.addon|cluster add-ons]], programs installed on top of Kubernetes. Each is built as a controller: it runs as pods, watches its objects through the API server and takes a step towards the desired state, and it adds its own kinds through a CustomResourceDefinition. That is why an ingress controller is not installed “on a node” like a service on an ordinary server: its manifests go to the API server, the scheduler picks nodes for its pods, and the site’s DNS record points at the external address in front of the nodes, not at one of them.\n\nA controller takes only its own rules. It recognises an Ingress by `ingressClassName`, which holds the name of this controller’s IngressClass, and an HTTPRoute by `parentRefs`, which names a Gateway and its namespace. If the field has a typo or names a controller the cluster does not have, the object sits in the API, no error is visible anywhere, and the request gets a 404 from a controller that has no rule for this host name. Such a break shows in the object’s status: an Ingress has an empty ADDRESS column, and an HTTPRoute has nothing in `status.parents`, because no Gateway accepted it.',
+      ),
+    },
+    {
+      id: 'layers',
+      kind: 'callout',
+      tone: 'note',
+      step: 'explain',
+      title: bi('Четыре вещи с похожими названиями', 'Four things with similar names'),
+      body: bi(
+        'Ingress и Gateway API — это два вида объектов Kubernetes для одного и того же: правил, по которым HTTP-запросы снаружи по имени сайта и пути попадают в Service. Ingress старше и заморожен, Gateway API новее и делит правила между администратором и командами. Внешний API-шлюз, например Kong или облачный API Gateway, — это отдельный продукт перед приложениями, который проверяет ключи клиентов, считает лимиты запросов и ведёт учёт, и стоять он может как в кластере, так и вне его. Сеть сервисов (service mesh), например Istio или Linkerd, отвечает за трафик между сервисами внутри кластера: шифрует его взаимным TLS, повторяет неудачные запросы и показывает, кто к кому обращается.\n\nДля внутренних соединений Ingress и Gateway не нужны вовсе. Если сервис внутри кластера обращается к базе PostgreSQL или к очереди RabbitMQ по TCP, ему хватает обычного Service с постоянным адресом и именем из урока о DNS.',
+        'Ingress and the Gateway API are two kinds of Kubernetes objects for the same thing: the rules by which outside HTTP requests reach a Service by host name and path. Ingress is older and frozen, the Gateway API is newer and splits the rules between the administrator and the teams. An external API gateway, such as Kong or a cloud API Gateway, is a separate product in front of applications that checks client keys, counts request limits and keeps records, and it can stand inside the cluster or outside it. A service mesh, such as Istio or Linkerd, handles traffic between services inside the cluster: it encrypts it with mutual TLS, retries failed requests and shows who calls whom.\n\nInternal connections need neither Ingress nor a Gateway. If a service inside the cluster talks to a PostgreSQL database or a RabbitMQ queue over TCP, an ordinary Service with a stable address and a name from the DNS lesson is enough.',
+      ),
+    },
+    {
+      id: 'blocks-intro',
+      kind: 'text',
+      step: 'look',
+      title: bi('Конструктор кластера со слоем входа снаружи', 'The cluster constructor with the traffic-in layer'),
+      body: bi(
+        'Конструктор из урока об устройстве кластера растёт вместе с курсом, и теперь в нём появился первый слой дополнений, вход снаружи, из двух блоков: MetalLB и контроллера входа Traefik. Холст стал выше: под узлами появилась зона дополнений, которые работают подами на тех же узлах. Дополнения подключены к API-серверу общей серой шиной справа, потому что с кластером они разговаривают одинаково, а пунктирная стрелка от MetalLB к Traefik показывает, что MetalLB выдаёт адрес сервису Traefik. Сценарий «Сайт снаружи по имени» запускает учебный кластер из того, что включено, выкладывает магазин с маршрутом HTTPRoute и обращается к нему с ноутбука в сети офиса. Сетевой плагин здесь можно выбирать в его карточке, а сценарий «Закрыть сервис политикой» разберёт урок о сетевых политиках, который идёт следом.',
+        'The constructor from the lesson on how a cluster works grows with the course, and now it has its first layer of add-ons, traffic in, with two blocks: MetalLB and the Traefik ingress controller. The canvas is taller: under the nodes there is a zone of add-ons that run as pods on those nodes. Add-ons are wired to the API server by the grey bus on the right, because they all talk to the cluster the same way, and the dashed arrow from MetalLB to Traefik shows that MetalLB gives the Traefik Service its address. The scenario “The site from outside by name” starts the training cluster from what is switched on, deploys a shop with an HTTPRoute and calls it from a laptop on the office network. The network plugin can be chosen in its card here, and the scenario “Close a Service with a policy” belongs to the network policy lesson that comes next.',
+      ),
+    },
+    {
+      id: 'blocks-howto',
+      kind: 'text',
+      role: 'howto',
+      step: 'try',
+      body: bi(
+        'Нажмите кнопку сценария «Сайт снаружи по имени», пока на холсте собрано всё: запрос из офиса дойдёт до пода магазина. Затем выключите слой «Вход снаружи», нажав на его название в легенде, и запустите сценарий ещё раз: запрос до магазина не дойдёт, а тренажёр назовёт блок, которого не хватило. Потом включите слой обратно, откройте карточку MetalLB, нажмите «Убрать с холста» и сравните вывод: Gateway останется без адреса, а сервис Traefik будет с EXTERNAL-IP «<pending>». Напоследок уберите Traefik, оставив MetalLB, и посмотрите, что запрос получит, когда адрес есть, а исполнять маршрут некому.',
+        'Press the scenario button “The site from outside by name” while everything is on the canvas: the request from the office reaches a shop pod. Then switch off the layer “Traffic in” by pressing its name in the legend and run the scenario again: the request does not reach the shop, and the trainer names the missing block. Switch the layer back on, open the MetalLB card, press “Remove from the canvas” and compare: the Gateway has no address, and the Traefik Service shows EXTERNAL-IP “<pending>”. Finally remove Traefik while keeping MetalLB, and see what the request gets when an address exists but nobody executes the route.',
+      ),
+    },
+    { id: 'constructor', kind: 'widget', step: 'try', widget: 'k8s.constructor', props: { preset: 'full', layers: ['cp', 'node', 'net', 'ingress'] } },
     {
       id: 'look-intro',
       kind: 'text',
@@ -589,8 +673,48 @@ export const ingressLesson: Lesson = {
         },
       ],
     },
+    {
+      id: 'lab-gw',
+      kind: 'terminal',
+      step: 'practice',
+      machine: 'sim',
+      setup: GATEWAY_LAB,
+      intro: bi(
+        'В этом кластере стоят оба дополнения входа: MetalLB раздаёт адреса из сети офиса, а Traefik исполняет правила Gateway API и Ingress. Администратор кластера создал Gateway в namespace `traefik`. Коллега написал два файла, чтобы открыть Service `web` снаружи: маршрут `route.yaml` для shop.example и Ingress `blog.yaml` для blog.example. Оба файла API примет, но ни один сайт не откроется. Команда `cluster curl` выполняется на ноутбуке в сети офиса, где DNS направляет имена вида `*.example` на адрес Traefik.',
+        'This cluster has both traffic-in add-ons: MetalLB hands out office network addresses, and Traefik executes Gateway API and Ingress rules. The cluster administrator created a Gateway in namespace `traefik`. A colleague wrote two files to open Service `web` from outside: the route `route.yaml` for shop.example and the Ingress `blog.yaml` for blog.example. The API accepts both files, yet neither site opens. `cluster curl` runs on a laptop on the office network, where DNS points names like `*.example` at Traefik’s address.',
+      ),
+      tasks: [
+        {
+          id: 'route',
+          prompt: bi('Примените `route.yaml`, найдите, почему `cluster curl http://shop.example/` получает 404, и добейтесь ответа от пода `web`.', 'Apply `route.yaml`, find out why `cluster curl http://shop.example/` gets 404, and get an answer from a `web` pod.'),
+          check: {
+            when: (f: Facts) => k8s(f).objects.some((o) => o.kind === 'HTTPRoute' && o.metadata?.name === 'web' && (o.spec?.parentRefs ?? []).some((r: { name?: string; namespace?: string }) => r.name === 'traefik-gateway' && r.namespace === 'traefik')),
+            stdout: /Hello from web-/,
+          },
+          chips: 'kubectl apply -f route.yaml && kubectl describe httproute web && kubectl get gateway -A',
+          concepts: ['k8s.gateway-api', 'k8s.addon'],
+          hints: {
+            H1: bi('Посмотрите, принял ли маршрут хоть один Gateway: в выводе `kubectl describe httproute web` раздел Status пуст. Затем сравните имя в `parentRefs` с тем, что показывает `kubectl get gateway -A`.', 'See whether any Gateway accepted the route: in `kubectl describe httproute web` the Status section is empty. Then compare the name in `parentRefs` with what `kubectl get gateway -A` shows.'),
+            H2: bi('Gateway называется `traefik-gateway`. Поправьте файл командой `sed -i \'s/shop-gateway/traefik-gateway/\' route.yaml`, примените его снова и выполните `cluster curl http://shop.example/`.', 'The Gateway is called `traefik-gateway`. Fix the file with `sed -i \'s/shop-gateway/traefik-gateway/\' route.yaml`, apply it again and run `cluster curl http://shop.example/`.'),
+          },
+        },
+        {
+          id: 'class',
+          prompt: bi('Примените `blog.yaml` и добейтесь, чтобы `cluster curl http://blog.example/` получал ответ от пода `web`.', 'Apply `blog.yaml` and make `cluster curl http://blog.example/` get an answer from a `web` pod.'),
+          check: {
+            when: "k8s.objects[kind=Ingress][metadata.name=blog].spec.ingressClassName='traefik'",
+            stdout: /Hello from web-/,
+          },
+          chips: 'kubectl apply -f blog.yaml && kubectl get ingress,ingressclass',
+          concepts: ['k8s.ingress', 'k8s.addon'],
+          hints: {
+            H1: bi('Сравните столбец CLASS в выводе `kubectl get ingress` со списком классов в `kubectl get ingressclass`. Контроллера с классом nginx в этом кластере нет, поэтому у Ingress пустой ADDRESS.', 'Compare the CLASS column of `kubectl get ingress` with the classes in `kubectl get ingressclass`. There is no controller with class nginx in this cluster, so the Ingress has an empty ADDRESS.'),
+            H2: bi('Поле `ingressClassName` можно поменять на месте: `kubectl patch ingress blog --type=merge -p \'{"spec":{"ingressClassName":"traefik"}}\'`, а потом снова выполните `cluster curl http://blog.example/`.', '`ingressClassName` can be changed in place: `kubectl patch ingress blog --type=merge -p \'{"spec":{"ingressClassName":"traefik"}}\'`, then run `cluster curl http://blog.example/` again.'),
+          },
+        },
+      ],
+    },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: ingressQuiz.map((q) => q.id) },
-    { id: 'note', kind: 'callout', tone: 'note', step: 'review', body: bi('Учебный кластер в браузере объекты Gateway и HTTPRoute не исполняет. На этапе 2, в настоящем k3s, вы включите поддержку Gateway API во встроенном Traefik и опубликуете через него свой сервис.', 'Gateways and HTTPRoutes are not executed in the browser training cluster yet; at stage 2, on a real k3s, you will enable the Gateway API provider of the built-in Traefik and publish your service through it.') },
   ],
 };
 

@@ -55,8 +55,22 @@ export const deployQuiz: QuizItem[] = [
     concepts: ['k8s.revision'],
     prompt: bi('Верните Deployment `web` к ревизии 1.', 'Return Deployment `web` to revision 1.'),
     template: 'kubectl rollout undo deployment/web ___',
-    answers: ['kubectl rollout undo deployment/web --to-revision=1', 'kubectl rollout undo deploy/web --to-revision=1', 'kubectl rollout undo deployment web --to-revision=1'],
+    answers: ['kubectl rollout undo deployment/web --to-revision=1', 'kubectl rollout undo deploy/web --to-revision=1', 'kubectl rollout undo deployment web --to-revision=1', 'kubectl rollout undo deployment/web --to-revision 1', 'kubectl rollout undo deploy/web --to-revision 1', 'kubectl rollout undo deployment web --to-revision 1', 'kubectl rollout undo --to-revision=1 deployment/web', 'kubectl rollout undo --to-revision 1 deployment/web'],
     misconceptions: [{ match: '--revision=1', why: bi('У команды history флаг --revision показывает ревизию, а у команды undo номер ревизии, к которой нужно вернуться, задаёт флаг --to-revision.', '--revision of history shows a revision; for undo the target is set by --to-revision.') }],
+  },
+  {
+    id: 'k8s.q.dep.restart',
+    kind: 'mcq',
+    concepts: ['k8s.deployment', 'k8s.rolling-update', 'k8s.revision'],
+    prompt: bi(
+      'Чем команда `kubectl rollout restart deployment/web` отличается от `kubectl delete pod web-5d78b9c7f4-x2k9p`, если и после той, и после другой в списке появляются новые поды?',
+      'How does `kubectl rollout restart deployment/web` differ from `kubectl delete pod web-5d78b9c7f4-x2k9p`, if after either one new pods appear in the list?',
+    ),
+    options: [
+      { id: 'right', text: bi('Команда restart меняет шаблон пода, появляется новая ревизия, и все поды заменяются постепенно с учётом maxSurge и maxUnavailable, а команда delete убирает один под, и ReplicaSet создаёт ему замену по тому же шаблону', 'restart changes the pod template, a new revision appears, and all pods are replaced gradually by maxSurge and maxUnavailable, whereas delete removes one pod and the ReplicaSet creates a replacement from the same template'), correct: true },
+      { id: 'same', text: bi('Ничем не отличается, потому что обе команды удаляют поды, а ReplicaSet создаёт новые', 'Nothing: both delete pods, and the ReplicaSet creates new ones'), why: bi('Результат похож, но путь разный. restart записывает в шаблон аннотацию `kubectl.kubernetes.io/restartedAt`, поэтому контроллер Deployment заводит новый ReplicaSet и выкладывает его постепенно, а `kubectl rollout history` покажет новую ревизию. После delete ревизия та же, и работает только контроллер ReplicaSet.', 'The result looks alike, the path differs. restart writes the annotation `kubectl.kubernetes.io/restartedAt` into the template, so the Deployment controller creates a new ReplicaSet and rolls it out gradually, and `kubectl rollout history` shows a new revision. After delete the revision is the same, and only the ReplicaSet controller works.') },
+      { id: 'node', text: bi('restart перезапускает контейнеры на тех же узлах, а delete переносит под на другой узел', 'restart restarts the containers on the same nodes, whereas delete moves the pod to another node'), why: bi('В обоих случаях появляются новые поды, и узел для каждого заново выбирает планировщик. Контейнеры на месте перезапускает только kubelet, когда процесс в контейнере завершился.', 'Both create new pods, and the scheduler picks a node for each anew. Only the kubelet restarts containers in place, when the process in a container has exited.') },
+    ],
   },
 ];
 
@@ -107,7 +121,7 @@ export const deploymentsLesson: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: DEPLOY_LAB,
-      intro: bi('В файле `web.yaml` описан Deployment на четыре реплики с maxSurge 1 и maxUnavailable 1. Команда `kubectl get rs -w` будет показывать, как меняются ReplicaSet во время выкладки.', '`web.yaml` is a Deployment of four replicas with maxSurge 1 and maxUnavailable 1. `kubectl get rs -w` shows how the ReplicaSets change.'),
+      intro: bi('В файле `web.yaml` описан Deployment на четыре реплики с maxSurge 1 и maxUnavailable 1, проверкой готовности и полем `minReadySeconds: 10`. Это поле просит контроллер считать новый под доступным, только когда тот пробыл готовым десять секунд подряд. Так под, который на мгновение ответил и сразу аварийно завершился, не даст контроллеру убрать ещё один старый под, и в рабочих кластерах это поле ставят как раз поэтому. Команда `kubectl get rs -w` будет показывать, как меняются ReplicaSet во время выкладки.', '`web.yaml` is a Deployment of four replicas with maxSurge 1 and maxUnavailable 1, a readiness probe and `minReadySeconds: 10`. This field asks the controller to count a new pod as available only after it has stayed ready for ten seconds in a row. So a pod that answered for a moment and then crashed does not let the controller remove one more old pod, and production clusters set the field for exactly this reason. `kubectl get rs -w` shows how the ReplicaSets change during the rollout.'),
       tasks: [
         {
           id: 'apply',
@@ -131,7 +145,7 @@ export const deploymentsLesson: Lesson = {
           prompt: bi('Выложите версию со сломанным образом `trainer/web:2.0` и посмотрите, что стало со старыми подами и с самой выкладкой.', 'Roll out the broken `trainer/web:2.0` and see what happened to the old pods and to the rollout.'),
           check: { when: "k8s.deployments[name=web][image='trainer/web:2.0']#=1 && k8s.deployments[name=web].available>=3" },
           chips: 'kubectl set image deployment/web web=trainer/web:2.0 && kubectl get pods',
-          hints: { H1: bi('Команда та же, меняется только тег. Потом выполните `kubectl get pods`: часть подов старые и готовые, а контейнеры новых подов раз за разом аварийно завершаются.', 'The same command, another tag. Then `kubectl get pods`: some pods are old and ready, the new ones crash.') },
+          hints: { H1: bi('Команда та же, меняется только тег. Потом выполните `kubectl get rs,pods`: у старого ReplicaSet остаются три готовых пода, у нового два пода, контейнеры которых раз за разом аварийно завершаются, и выкладка стоит, как на схеме.', 'The same command, another tag. Then `kubectl get rs,pods`: the old ReplicaSet keeps three ready pods, the new one has two pods whose containers crash again and again, and the rollout stands still, as in the diagram.') },
         },
         {
           id: 'undo',
@@ -204,7 +218,7 @@ export const archQuiz: QuizItem[] = [
     id: 'k8s.q.arch.label',
     kind: 'label',
     concepts: ['k8s.control-plane', 'k8s.kubelet'],
-    prompt: bi('Подпишите схему, чтобы было видно, какие компоненты обмениваются запросами друг с другом.', 'Label the diagram: who talks to whom.'),
+    prompt: bi('Подпишите схему, чтобы было видно, какие компоненты обмениваются запросами друг с другом. Оба крайних блока верхнего ряда разговаривают только с API-сервером, поэтому различает их цвет: блок справа окрашен иначе, чем два других блока верхнего ряда, потому что в нём стоит хранилище.', 'Label the diagram: who talks to whom. Both outer blocks of the top row talk only to the API server, so the colour tells them apart: the block on the right is coloured differently from the other two blocks of the top row, because it holds the storage.'),
     diagram: {
       width: 600,
       height: 200,
@@ -442,6 +456,15 @@ export const operatorsLesson: Lesson = {
   sources: src([S.operator, S.crd, S.controller], [R.controller, R.objects]),
   sections: [
     {
+      id: 'hook',
+      kind: 'text',
+      step: 'hook',
+      body: bi(
+        'Базу данных PostgreSQL в кластере можно запустить обычным Deployment, но тогда всё, что отличает базу от сайта, остаётся на вас: кто из трёх серверов главный, как переключиться на реплику, когда главный сервер пропал, как снимать резервные копии и обновлять версию без потери данных. Поэтому в рабочих кластерах базы, очереди и сертификаты обслуживают операторы. Вы пишете один короткий объект «нужен кластер PostgreSQL на три узла с копией каждую ночь», а программа, которая знает, как это сделать, создаёт всё остальное и чинит его, когда что-то ломается. На собеседовании часто спрашивают, чем оператор отличается от готового набора манифестов, и к концу урока вы ответите: манифесты один раз применяют, а оператор работает постоянно и держит систему в нужном состоянии.',
+        'You can run a PostgreSQL database in a cluster as an ordinary Deployment, but then everything that makes a database different from a website stays on you: which of three servers is the primary, how to fail over to a replica when the primary is gone, how to take backups and upgrade the version without losing data. That is why production clusters leave databases, queues and certificates to operators. You write one short object, “a PostgreSQL cluster on three nodes with a backup every night”, and a program that knows how to do it creates everything else and repairs it when something breaks. Interviews often ask how an operator differs from a ready set of manifests, and by the end of the lesson you will answer: manifests are applied once, while an operator keeps running and holds the system in the desired state.',
+      ),
+    },
+    {
       id: 'explain',
       kind: 'text',
       step: 'explain',
@@ -490,8 +513,8 @@ export const operatorsLesson: Lesson = {
       step: 'practice',
       title: bi('Напишите оператор', 'Write the operator'),
       body: bi(
-        'Теперь воплотите Website в работающее приложение. Функция `reconcile(site, k)` вызывается для каждого объекта Website. Соберите в ней желаемый Deployment, прочитайте существующий, создайте его, если его нет, и поправьте число реплик, если оно разошлось с желаемым. Потом меняйте число реплик кнопкой, удалите Deployment руками и убедитесь, что оператор вернёт его. Цель достигнута, когда Deployment с четырьмя репликами снова на месте. В конце удалите сам Website: благодаря ownerReferences всё остальное удалится вслед за ним.',
-        'Now make Website true. The function `reconcile(site, k)` is called for every Website: build the desired Deployment, read the existing one, create it if there is none and fix the replicas if they differ. Then change the replicas with a button, delete the Deployment by hand — the operator brings it back. The goal is reached when the Deployment with four replicas is back. Finally delete the Website itself: ownerReferences clean up the rest.',
+        'Объект Website из лабораторной работы выше лежит в API, но исполнять его некому. Напишите для него оператор, который превратит каждый Website в работающее приложение. Функция `reconcile(site, k)` вызывается для каждого объекта Website. Соберите в ней желаемый Deployment, прочитайте существующий, создайте его, если его нет, и поправьте число реплик, если оно разошлось с желаемым. Потом меняйте число реплик кнопкой, удалите Deployment руками и убедитесь, что оператор вернёт его. Цель достигнута, когда Deployment с четырьмя репликами снова на месте. В конце удалите сам Website: благодаря ownerReferences всё остальное удалится вслед за ним.',
+        'The Website object from the lab above sits in the API, but nobody executes it. Write an operator for it that turns every Website into a running application. The function `reconcile(site, k)` is called for every Website: build the desired Deployment, read the existing one, create it if there is none and fix the replicas if they differ. Then change the replicas with a button, delete the Deployment by hand — the operator brings it back. The goal is reached when the Deployment with four replicas is back. Finally delete the Website itself: ownerReferences clean up the rest.',
       ),
     },
     {

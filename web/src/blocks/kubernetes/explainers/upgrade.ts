@@ -145,7 +145,7 @@ export const upgradeModel = defineModel<P>({
       s.push({
         id: 'held',
         label: 'apt',
-        caption: bi('apt не меняет закреплённые пакеты. Сначала нужно снять закрепление командой apt-mark unhold kubeadm, поставить нужную версию и закрепить пакет снова.', 'apt will not change held packages: unhold, install, hold again.'),
+        caption: bi('Менеджер пакетов apt не меняет закреплённые пакеты. Сначала нужно снять закрепление командой apt-mark unhold kubeadm, поставить нужную версию и закрепить пакет снова.', 'apt will not change held packages: unhold, install, hold again.'),
         focus: ['you'],
         say: { you: bi('apt отказывается менять закреплённый пакет kubeadm.', 'apt refuses to change the held kubeadm.') },
         states: { you: 'err' },
@@ -158,7 +158,7 @@ export const upgradeModel = defineModel<P>({
       s.push({
         id: 'skip',
         label: bi('скачок', 'skip'),
-        caption: bi('kubeadm отказывается перепрыгивать минорную версию, потому что переходы API и настроек рассчитаны на шаг в одну версию.', 'kubeadm refuses to skip a minor: migrations are one step each.'),
+        caption: bi('Программа kubeadm отказывается перепрыгивать минорную версию, потому что переходы API и настроек рассчитаны на шаг в одну версию.', 'kubeadm refuses to skip a minor: migrations are one step each.'),
         focus: ['you'],
         reveal: ['skew', 'e-rule'],
         say: { you: bi('kubeadm сверяет версии с правилом и отказывается прыгать через v1.37.', 'kubeadm refuses to jump over 1.37.') },

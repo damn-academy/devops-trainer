@@ -139,7 +139,10 @@ export const FIRST_POD: TerminalSetup = { hostname: 'laptop', files: [{ path: '~
 
 export const RS_LAB: TerminalSetup = { hostname: 'laptop', files: [{ path: '~/rs.yaml', content: WEB_RS }], ext: { k8s: {} } };
 
-export const DEPLOY_LAB: TerminalSetup = { hostname: 'laptop', files: [{ path: '~/web.yaml', content: WEB_DEPLOY }], ext: { k8s: {} } };
+/** The lab's Deployment: minReadySeconds keeps a pod that was ready for a moment and then crashed from counting as available. */
+export const WEB_DEPLOY_LAB = WEB_DEPLOY.replace('spec:\n  replicas: 4\n', 'spec:\n  replicas: 4\n  minReadySeconds: 10\n');
+
+export const DEPLOY_LAB: TerminalSetup = { hostname: 'laptop', files: [{ path: '~/web.yaml', content: WEB_DEPLOY_LAB }], ext: { k8s: {} } };
 
 /** The Deployment already rolled out to revision 2 (1.0 → 1.1), for history and undo tasks. */
 export const DEPLOY_HISTORY: TerminalSetup = {
@@ -281,3 +284,45 @@ export const DNS_BROKEN: TerminalSetup = {
 
 export { labelled };
 export { deploy, svc, ns, client };
+
+// ── Data that outlives a pod (k8s-1.storage) ──
+
+const pvc = (name: string, cls?: string) => `apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: ${name}\nspec:\n${cls ? `  storageClassName: ${cls}\n` : ''}  accessModes:\n  - ReadWriteOnce\n  resources:\n    requests:\n      storage: 1Gi\n`;
+const withClaim = (name: string, claim: string, image: string) =>
+  `apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: ${name}\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: ${name}\n  template:\n    metadata:\n      labels:\n        app: ${name}\n    spec:\n      containers:\n      - name: ${name}\n        image: ${image}\n        volumeMounts:\n        - name: data\n          mountPath: /data\n      volumes:\n      - name: data\n        persistentVolumeClaim:\n          claimName: ${claim}\n`;
+
+/** The database runs on its claim already; a colleague's reports app waits on a claim for a StorageClass that does not exist. */
+export const STORAGE_LAB: TerminalSetup = {
+  hostname: 'laptop',
+  files: [
+    { path: '~/db.yaml', content: `${pvc('data')}---\n${withClaim('db', 'data', 'redis:8')}` },
+    { path: '~/reports.yaml', content: `${pvc('reports', 'fast')}---\n${withClaim('reports', 'reports', 'trainer/web:1.0')}` },
+  ],
+  ext: { k8s: { addons: ['csi-hostpath'], manifests: [pvc('data'), withClaim('db', 'data', 'redis:8'), pvc('reports', 'fast'), withClaim('reports', 'reports', 'trainer/web:1.0')] } },
+};
+
+// ── Scaling by load (k8s-1.scaling) ──
+
+export const WEB_HPA = `apiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: web\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: web\n  minReplicas: 1\n  maxReplicas: 6\n  metrics:\n  - type: Resource\n    resource:\n      name: cpu\n      target:\n        type: Utilization\n        averageUtilization: 50\n`;
+
+/** metrics-server is installed; Deployment web has no CPU request yet, so an HPA on it cannot compute utilisation. */
+export const SCALING_LAB: TerminalSetup = {
+  hostname: 'laptop',
+  files: [{ path: '~/hpa.yaml', content: WEB_HPA }],
+  ext: { k8s: { addons: ['metrics-server'], manifests: [deploy('web', 'default', 1, 'trainer/web:1.0', { app: 'web' })] } },
+};
+
+// ── The way in through a controller (k8s-1.ingress) ──
+
+const route = (gateway: string) => `apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: web\nspec:\n  parentRefs:\n  - name: ${gateway}\n    namespace: traefik\n  hostnames:\n  - shop.example\n  rules:\n  - backendRefs:\n    - name: web\n      port: 80\n`;
+const blogIngress = (cls: string) => `apiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: blog\nspec:\n  ingressClassName: ${cls}\n  rules:\n  - host: blog.example\n    http:\n      paths:\n      - path: /\n        pathType: Prefix\n        backend:\n          service:\n            name: web\n            port:\n              number: 80\n`;
+
+/** MetalLB and Traefik are installed; the files a colleague wrote point at a Gateway and an IngressClass that do not exist. */
+export const GATEWAY_LAB: TerminalSetup = {
+  hostname: 'laptop',
+  files: [
+    { path: '~/route.yaml', content: route('shop-gateway') },
+    { path: '~/blog.yaml', content: blogIngress('nginx') },
+  ],
+  ext: { k8s: { addons: ['metallb', 'traefik'], manifests: [deploy('web', 'default', 2, 'trainer/web:1.0', { app: 'web' }), WEB_SVC] } },
+};
