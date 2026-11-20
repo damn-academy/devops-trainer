@@ -126,3 +126,17 @@
   .explainer[data-model="containers.orchestration"] > .ex-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .explainer[data-model="containers.orchestration"] > .ex-metrics dd { white-space: nowrap; }
 }
+
+.ex-viewport { min-width: 0; }
+.ex-mobile-caption { display: none; }
+@media (max-width: 600px) {
+  .ex-viewport { overflow: auto; width: 100%; height: 340px; overscroll-behavior: contain; }
+  .explainer[data-frame] .ex-viewport .ex-svg { max-height: none; max-width: none; min-width: 0; display: block; }
+  .ex-mobile-caption { display: block; }
+  .ex-step-caption { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; line-height: 1.4; }
+  .ex-step-caption.expanded { display: block; max-height: 35vh; overflow: auto; }
+  .ex-step-caption p { margin: 0; }
+  .ex-mobile-caption input { width: 90px; vertical-align: middle; }
+  .explainer > .ex-caption { display: none; }
+}
+.progress-transfer textarea { display: block; width: 100%; overflow-wrap: anywhere; }

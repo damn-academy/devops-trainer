@@ -763,6 +763,8 @@ export type Confidence = 1 | 2 | 3;
 
 export type PlacementTask = {
   id: string;
+  /** Optional real-machine evidence checked with an existing exam rubric. */
+  realEvidence?: { exam: string; task: string };
   /** The claimed level this task belongs to. */
   level: Level;
   /** Key task: must pass regardless of the score. */

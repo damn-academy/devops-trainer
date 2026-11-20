@@ -6,6 +6,7 @@
 import { corpus as globalCorpus, Corpus } from '../engine/docs/corpus';
 import { createTerminalRegistry, terminalRegistry, type TerminalRegistry } from '../engine/terminal/registry';
 import { fromManifest, type Manifest } from './manifest';
+import { addClusterEvidence } from './placement-evidence';
 import { ROUTE, type RouteEntry } from './route';
 import type { Block, BlockModule, Concept, Exam, ExplainerReg, Lesson, Mentor, QuizItem, SettingsSectionReg, WidgetReg } from './types';
 
@@ -117,6 +118,12 @@ export function buildRegistry(mods: ModuleMap, opts: { terminal?: TerminalRegist
     } catch (e) {
       errors.push((e as Error).message);
     }
+  }
+  for (const block of blocks.values()) {
+    addClusterEvidence(block, exams);
+    const minutes = [...lessons.values()].filter(l => l.block === block.id).reduce((sum, l) => sum + (l.minutes ?? 0), 0);
+    const hours = minutes / 60;
+    block.hours = { beginner: hours, intermediate: hours, experienced: hours };
   }
   settings.sort((a, b) => a.order - b.order);
 

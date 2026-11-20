@@ -6,6 +6,7 @@
 // "guessing" does not count. Failed tasks become gaps, never a silent
 // downgrade; a retake opens in 72 hours with another variant.
 
+import { mountRealCard, mountRealLab } from './real/panel';
 import { referenceAnswer } from '../engine/quiz/review';
 import { readDraft, writeDraft, clearDraft } from '../core/draft';
 import { renderInline } from '../core/markdown';
@@ -141,6 +142,22 @@ export function placementPage(id: string): Page {
             },
           }),
         );
+      } else if (p.realEvidence) {
+        const exam = registry.exams.get(p.realEvidence.exam);
+        const task = exam?.tasks.find(t => t.id === p.realEvidence!.task);
+        if (exam?.real && task?.kind === 'real') {
+          const card = mountRealCard(task.real, { feedback: false, onScore: score => {
+            if (score < 1) return;
+            answers.set(p.id, { id: p.id, right: true }); save(); skipBtn.remove();
+          } });
+          const lab = mountRealLab({ ...exam, id: `placement.${b.id}`, real: {
+            ...exam.real,
+            prepare: [],
+            order: bi('Для этой проверки достаточно управляющего узла cp-1 в вашем кластере kubeadm, в том числе в локальной лаборатории dtlab; рабочие узлы не требуются. Выполните на cp-1 показанную ниже команду и вставьте полученный блок данных.', 'This check only needs the cp-1 control-plane node of your kubeadm cluster, including a local dtlab cluster; worker nodes are not required. Run the command below on cp-1 and paste the resulting facts block.'),
+          } }, `${claimed}/${started}`, facts => card.update(facts));
+          host.append(prose(p.task.prompt), lab.el, card.el);
+          mounts.push(lab);
+        }
       } else {
 
         mounts.push(

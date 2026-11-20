@@ -14,11 +14,11 @@ const M = (ctx: CmdContext) => ctx.machine as unknown as SimMachine;
 const under = (dir: string, name: string) => (dir.endsWith('/') ? dir + name : `${dir}/${name}`);
 
 /** Copy a file or a tree. Returns false on error (already reported). */
-function copyTree(ctx: CmdContext, src: string, dst: string, o: { recursive: boolean; preserve: boolean; verbose: boolean; noClobber: boolean }): boolean {
+function copyTree(ctx: CmdContext, src: string, dst: string, o: { recursive: boolean; noDereference?: boolean; preserve: boolean; verbose: boolean; noClobber: boolean }): boolean {
   const fs = ctx.fs;
   let st: Stat | null;
   try {
-    st = fs.stat(src);
+    st = o.noDereference ? fs.lstat(src) : fs.stat(src);
   } catch (e) {
     fsErr(ctx, e, src, 'cannot stat');
     return false;
@@ -53,6 +53,11 @@ function copyTree(ctx: CmdContext, src: string, dst: string, o: { recursive: boo
     if (exists?.type === 'd') {
       ctx.err(`cp: cannot overwrite directory '${dst}' with non-directory\n`);
       return false;
+    }
+    if (st.type === 'l' && o.noDereference) {
+      if (exists) fs.unlink(dst);
+      fs.symlink(fs.readlink(src), dst);
+      return true;
     }
     const data = fs.readFile(src);
     fs.writeFile(dst, data, { mode: st.mode & 0o777 });
@@ -97,9 +102,9 @@ const cp: ShellCommand = {
     seeAlso: 'mv(1), install(1), rsync(1)',
   }),
   run(ctx) {
-    const a = parseArgs(ctx.argv.slice(1), { short: 'aRrpvnTfi', withValue: 't', long: { archive: 'a', recursive: 'r', verbose: 'v', 'no-clobber': 'n', 'target-directory': 't', 'no-target-directory': 'T', preserve: 'p', force: 'f', interactive: 'i' } });
+    const a = parseArgs(ctx.argv.slice(1), { short: 'aRrpvnTfiP', withValue: 't', long: { archive: 'a', recursive: 'r', verbose: 'v', 'no-clobber': 'n', 'target-directory': 't', 'no-target-directory': 'T', preserve: 'p', force: 'f', interactive: 'i' } });
     if (a.error) return usageError(ctx, a.error);
-    const o = { recursive: a.flags.has('r') || a.flags.has('R') || a.flags.has('a'), preserve: a.flags.has('p') || a.flags.has('a'), verbose: a.flags.has('v'), noClobber: a.flags.has('n') };
+    const o = { noDereference: ['P', 'r', 'R', 'a'].some(f => a.flags.has(f)), recursive: a.flags.has('r') || a.flags.has('R') || a.flags.has('a'), preserve: a.flags.has('p') || a.flags.has('a'), verbose: a.flags.has('v'), noClobber: a.flags.has('n') };
     let srcs = a.operands;
     let target = a.values.t;
     if (!target) {

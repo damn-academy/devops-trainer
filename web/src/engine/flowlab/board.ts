@@ -13,6 +13,7 @@ import type { Mounted, WidgetCtx } from '../../core/types';
 import { budgetGauge, cfdChart, scatterChart, throughputChart } from './charts';
 import { mountDebrief } from './debrief';
 import { little, metrics } from './metrics';
+import { goalConditions } from './goals';
 import { money } from './money';
 import { scenario } from './scenarios';
 import { act, canMove, colName, createState, endDay, inColumn, limitOf, predict, workColumns } from './sim';
@@ -391,7 +392,7 @@ export function mountBoard(root: HTMLElement, props: unknown, ctx: WidgetCtx): M
               t(bi('строгие лимиты', 'strict limits')),
             )
           : null,
-        h('button.btn.ghost.small', { type: 'button', onclick: () => restart(s.seed), title: t(bi('Начать сначала с тем же зерном', 'Start again with the same seed')) }, icon('repeat'), t(bi('сначала', 'restart'))),
+        h('button.btn.ghost.small', { type: 'button', onclick: () => restart(s.seed), title: t(bi('Начать сначала с тем же вариантом случайных событий', 'Start again with the same seed')) }, icon('repeat'), t(bi('сначала', 'restart'))),
       ),
     );
   };
@@ -572,7 +573,7 @@ export function mountBoard(root: HTMLElement, props: unknown, ctx: WidgetCtx): M
     put(
       el,
       topEl(),
-      h('div.fl-brief', {}, h('p', {}, t(sc.brief)), h('p.fl-goal', {}, t(sc.goal))),
+      h('div.fl-brief', {}, h('p', {}, t(sc.brief)), h('p.fl-goal', {}, t(sc.goal)), h('ul.fl-goal-conditions', {}, ...goalConditions(sc, s).map(goal => h('li', {}, t(goal.text))))),
       noteEl(),
       predictEl(),
       policyEl(),

@@ -98,6 +98,7 @@ export function metrics(s: State, sc: Scenario): FlowMetrics {
     budgetLeftMin: r2(budgetMin - bad),
     budgetLeftRatio: budgetMin ? r2((budgetMin - bad) / budgetMin) : 0,
     saleBadMinutes: r2(saleBad),
+    extraSpending: Math.max(0, -s.money.extra),
     codLost: Math.round(s.money.codLost),
     downtimeLost: Math.round(s.money.downtimeLost),
     moneyNet: Math.round(s.money.revenue - s.money.codLost - s.money.downtimeLost + s.money.extra),

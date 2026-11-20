@@ -8,6 +8,7 @@ import { bi } from '../../core/i18n';
 import type { CmdContext, ShellCommand, Snapshotable } from '../../core/types';
 import { ContainerSession, openContainer } from './cmachine';
 import { dockerOf } from './engine';
+import { normalize } from '../terminal/vfs';
 import { readHostTree } from './rootfs';
 import type { ContainerRec } from './state';
 
@@ -70,7 +71,10 @@ function readSpec(ctx: CmdContext, bundle: string): Record<string, unknown> | st
   const p = `${bundle}/config.json`;
   if (!ctx.fs.exists(p)) return `cannot open \`${p}\`: No such file or directory`;
   try {
-    return JSON.parse(ctx.fs.readFile(p));
+    const spec = JSON.parse(ctx.fs.readFile(p));
+    if (!spec || typeof spec !== 'object' || Array.isArray(spec)) return 'invalid configuration: expected an OCI object';
+    if (spec.root?.path !== undefined && typeof spec.root.path !== 'string') return 'invalid configuration: root.path must be a string';
+    return spec;
   } catch (e) {
     return `parse config.json: ${(e as Error).message}`;
   }
@@ -135,7 +139,8 @@ Report bugs to https://github.com/containers/crun/issues.`,
           ctx.err(`crun: ${spec}\n`);
           return 1;
         }
-        const root = `${bundle}/${(spec.root as { path?: string })?.path ?? 'rootfs'}`;
+        const rootPath = (spec.root as { path?: string })?.path ?? 'rootfs';
+        const root = normalize(rootPath.startsWith('/') ? rootPath : `${bundle}/${rootPath}`);
         if (!ctx.fs.exists(root)) {
           ctx.err(`crun: cannot open \`${root}\`: No such file or directory\n`);
           return 1;
@@ -158,8 +163,9 @@ Report bugs to https://github.com/containers/crun/issues.`,
           return 1;
         }
         const spec = readSpec(ctx, rec.bundle);
-        if (typeof spec === 'string') return 1;
-        const root = `${rec.bundle}/${(spec.root as { path?: string })?.path ?? 'rootfs'}`;
+        if (typeof spec === 'string') { ctx.err(`crun: ${spec}\n`); return 1; }
+        const rootPath = (spec.root as { path?: string })?.path ?? 'rootfs';
+        const root = normalize(rootPath.startsWith('/') ? rootPath : `${rec.bundle}/${rootPath}`);
         return startRec(ctx, rec, spec, root, (spec.process ?? {}) as { args?: string[]; terminal?: boolean });
       }
       case 'state': {

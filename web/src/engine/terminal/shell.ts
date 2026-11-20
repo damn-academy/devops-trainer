@@ -1351,7 +1351,7 @@ export class SimMachine implements SimMachineApi {
   }
 
   /** Expand one word into fields: variables, $(…), field splitting, ~ and globs. */
-  private async expand(w: Word, frame: Frame): Promise<string[]> {
+  private async expand(w: Word, frame: Frame, assignment = false): Promise<string[]> {
     const fields: string[] = [];
     let cur = '';
     let has = false;
@@ -1362,6 +1362,10 @@ export class SimMachine implements SimMachineApi {
       if (p.kind === 'lit') {
         let text = p.text;
         if (idx === 0 && !p.quoted && (text === '~' || text.startsWith('~/'))) text = (this.vars.HOME ?? this.user().home) + text.slice(1);
+        if (assignment && !p.quoted) {
+          const home = this.vars.HOME ?? this.user().home;
+          text = text.replace(/(^|:|^[A-Za-z_][A-Za-z0-9_]*=)~(?=\/|:|$)/g, (match, prefix: string, offset: number) => prefix || idx === 0 || offset > 0 ? prefix + home : match);
+        }
         cur += text;
         globbable += p.quoted ? text.replace(/[*?[\]]/g, '\\$&') : text;
         has = true;
@@ -1482,7 +1486,7 @@ export class SimMachine implements SimMachineApi {
   private async runSimple(cmd: SimpleCommand, stdin: string, frame: Frame, last: boolean, piped: boolean, inPipeline: boolean): Promise<{ stdout: string; exit: number }> {
     void piped;
     const env: Record<string, string> = {};
-    for (const a of cmd.assigns) env[a.name] = (await this.expand(a.value, frame)).join(' ');
+    for (const a of cmd.assigns) env[a.name] = (await this.expand(a.value, frame, true)).join(' ');
     const argv: string[] = [];
     for (let i = 0; i < cmd.words.length; i++) {
       const w = cmd.words[i];
@@ -1490,7 +1494,7 @@ export class SimMachine implements SimMachineApi {
         argv.push(...this.aliases.get(w[0].text)!.split(/\s+/).filter(Boolean));
         continue;
       }
-      argv.push(...(await this.expand(w, frame)));
+      argv.push(...(await this.expand(w, frame, ['export', 'readonly', 'declare', 'local'].includes(argv[0]) && w[0]?.kind === 'lit' && /^[A-Za-z_][A-Za-z0-9_]*=/.test(w[0].text))));
     }
     const as = this.runAs(frame);
     const fs = this.fsFor(as.user, () => frame.cwd ?? this.cwdPath, frame.root, as.capEff);

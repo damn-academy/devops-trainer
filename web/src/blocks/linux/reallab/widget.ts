@@ -8,6 +8,7 @@
 //
 // Loaded on first mount only (index.ts wraps it in lazyWidget).
 
+import { deadline } from '../../../engine/v86/deadline';
 import { evaluateCheck } from '../../../core/check';
 import { clear, h, icon, toast } from '../../../core/dom';
 import { bi, fmt, t, type Bi } from '../../../core/i18n';
@@ -277,32 +278,40 @@ export function mountRealLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx): 
       m.onOutput((text) => {
         if (/login:\s*$/.test(text) && m.bootFrom === 'disk') schedule(500);
       });
-      consoles.set(name, await mountConsole(boxes.get(name)!, m, { rows: props.rows ?? 18 }));
+      consoles.set(name, await mountConsole(boxes.get(name)!, m, { rows: props.rows ?? 18, inputReady: () => ready }));
     };
     const poll = window.setInterval(() => props.machines.forEach((m) => void attach(m.name)), 80);
     try {
-      const boots = await l.start((name) => {
+      const boots = await deadline(l.start((name) => {
         void attach(name);
         const next = props.machines[props.machines.findIndex((m) => m.name === name) + 1];
         if (next) {
           clear(status);
           status.append(h('p.v86-phase', {}, h('span.v86-spinner', { 'aria-hidden': 'true' }), h('span', {}, t(fmt(T.booting, { name: next.name })))));
         }
-      });
+      }), 180_000, t(bi('Машины не загрузились за три минуты. Перезагрузите страницу и повторите запуск.', 'The machines did not boot within three minutes. Reload the page and try again.')));
       window.clearInterval(poll);
       await Promise.all(props.machines.map((m) => attach(m.name)));
       if (disposed) return l.dispose();
       clear(status);
       status.append(h('p.v86-phase', {}, h('span.v86-spinner', { 'aria-hidden': 'true' }), h('span', {}, t(T.setup))));
-      const fresh = props.machines.filter((m) => !l.machine(m.name).resumed);
-      for (const m of fresh) for (const cmd of m.setup ?? []) await l.exec(m.name, cmd);
-      for (const m of props.machines) {
+      status.append(h('p', {}, t(bi('Терминалы начнут принимать команды, когда подготовка всех машин завершится.', 'Terminals will accept commands once all machines are prepared.'))));
+      await Promise.all(props.machines.map(async m => {
+        const progress = h('p', { 'data-machine': m.name });
+        status.append(progress);
         const mm = l.machine(m.name);
-        if (mm.bootFrom === 'image') {
-          startSnaps.set(m.name, await mm.snapshot());
-          startFacts.set(m.name, await mm.facts());
+        const bounded = <T>(operation: Promise<T>) => deadline(operation, 90_000, t(bi(`Подготовка машины ${m.name} заняла больше 90 секунд. Перезагрузите страницу и повторите запуск.`, `Preparing ${m.name} exceeded 90 seconds. Reload and try again.`)));
+        if (!mm.resumed) for (const [i, cmd] of (m.setup ?? []).entries()) {
+          progress.textContent = t(bi(`Машина ${m.name} выполняет команду подготовки ${i + 1} из ${m.setup!.length}.`, `${m.name} is running setup command ${i + 1} of ${m.setup!.length}.`));
+          await bounded(l.exec(m.name, cmd));
         }
-      }
+        if (mm.bootFrom === 'image') {
+          progress.textContent = t(bi(`Для машины ${m.name} сохраняется начальное состояние.`, `Saving the initial state of ${m.name}.`));
+          startSnaps.set(m.name, await bounded(mm.snapshot()));
+          startFacts.set(m.name, await bounded(mm.facts()));
+        }
+        progress.textContent = t(bi(`Машина ${m.name} готова к работе.`, `${m.name} is ready.`));
+      }));
       const first = boots[props.machines[0].name];
       clear(status);
       bootLine.textContent = first ? ` · ${t(fmt(first.kind === 'cold' ? T.cold : T.restored, { s: sec(first.ms) }))}` : '';
@@ -315,6 +324,8 @@ export function mountRealLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx): 
       consoles.get(active)?.focus();
       schedule(0);
     } catch (e) {
+      ready = false;
+      l.dispose();
       window.clearInterval(poll);
       clear(status);
       status.append(h('p.v86-phase', { 'data-phase': 'error' }, h('span.st-icon.err', { 'aria-hidden': 'true' }, '⨯'), h('span', {}, t(T.error))), h('p.small.err', {}, (e as Error).message));

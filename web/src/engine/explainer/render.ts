@@ -112,9 +112,21 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     button.append(h('span', {}, t(label)));
   }
 
+  const stepCaption = h('div.ex-step-caption');
+  const expandCaption = h('button.btn.ghost.small', { type: 'button', 'aria-expanded': 'false' }, t(bi('Развернуть пояснение', 'Expand caption')));
+  expandCaption.addEventListener('click', () => {
+    const expanded = stepCaption.classList.toggle('expanded');
+    expandCaption.setAttribute('aria-expanded', String(expanded));
+    expandCaption.textContent = t(expanded ? bi('Свернуть пояснение', 'Collapse caption') : bi('Развернуть пояснение', 'Expand caption'));
+  });
+  let focusedStep = -1;
+  let zoom = 1;
+  const zoomControl = h('input', { type: 'range', min: 1, max: 2, step: 0.25, value: 1, 'aria-label': t(bi('Масштаб схемы', 'Diagram zoom')) }) as HTMLInputElement;
+  zoomControl.addEventListener('input', () => { zoom = Number(zoomControl.value); focusedStep = -1; paint(); });
   const mobileNotes = h('div.ex-mobile-notes');
   const mobileNodes = h('details.ex-mobile-nodes', {}, h('summary', {}, t(bi('Элементы схемы', 'Diagram elements'))), ...d.nodes.map(n => h('button.btn.ghost.small', { type: 'button', onclick: () => { selected = n.id; showCard(n.id, n.card, txt(n.label)); } }, txt(n.label))));
-  const canvasEl = h('div.ex-canvas', {}, svg, h('p.ex-hint', {}, t(L.hintClick)));
+  const viewport = h('div.ex-viewport', { tabindex: 0, 'aria-label': t(bi('Схему можно прокручивать в любую сторону.', 'Scroll the diagram in any direction.')) }, svg);
+  const canvasEl = h('div.ex-canvas', {}, viewport, h('p.ex-hint', {}, t(L.hintClick)));
   const introBox = model.intro ? h('div.ex-intro', { role: 'note' }) : null;
   const legendBox = model.legend?.length ? drawLegend(model.legend) : null;
   const el = h(
@@ -125,7 +137,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     predictBox,
     introBox,
     // the step controls sit right above the picture, under the settings that shape it
-    h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks)),
+    h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks), h('div.ex-mobile-caption', {}, stepCaption, expandCaption, zoomControl)),
     h('div.ex-stage', {}, canvasEl, h('div.ex-side', {}, deltaBox, card)),
     mobileNotes,
     mobileNodes,
@@ -519,11 +531,11 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     }
     drawSays(st, frame.states, tokenBoxes);
     fitCamera(tokenBoxes);
-    keepInView(animateFrom !== undefined);
 
     // caption, broken line, metrics, stepper
     clear(caption);
-    if (st) caption.append(renderMd(t(st.caption)));
+    clear(stepCaption);
+    if (st) { caption.append(renderMd(t(st.caption))); stepCaption.append(renderMd(t(st.caption))); }
     if (brokeAt) {
       brokeLine.hidden = false;
       clear(brokeLine);
@@ -565,6 +577,29 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     const y = Math.min(...boxes.map((b) => b.y)) - 20 - (d.topPadding ?? 0);
     const target = [x, y, Math.max(...boxes.map((b) => b.x + b.w)) + 20 - x, Math.max(...boxes.map((b) => b.y + b.h)) + 20 - y];
     cancelAnimationFrame(cameraAnim);
+    if (window.matchMedia?.('(max-width: 600px)').matches) {
+      // Preserve authored geometry, but never shrink labels below 12 screen pixels.
+      const labels = [...svg.querySelectorAll<SVGTextElement>('.node-label')];
+      const smallest = Math.min(12, ...labels.map(label => parseFloat(getComputedStyle(label).fontSize) || 12));
+      const scale = Math.max(1, 12.05 / smallest) * zoom;
+      svg.style.width = `${target[2] * scale}px`;
+      svg.style.height = `${target[3] * scale}px`;
+      svg.setAttribute('viewBox', target.join(' '));
+      svg.dataset.camera = target.join(' ');
+      if (focusedStep !== idx) {
+        const st = steps[idx];
+        const ids = [...Object.keys(st?.say ?? {}), ...(st?.focus ?? [])];
+        const node = ids.map(id => d.nodes.find(n => n.id === id)).find(Boolean) ?? d.nodes[0];
+        if (node) {
+          viewport.scrollLeft = (node.x + node.w / 2 - target[0]) * scale - viewport.clientWidth / 2;
+          viewport.scrollTop = (node.y + node.h / 2 - target[1]) * scale - viewport.clientHeight / 2;
+        }
+        focusedStep = idx;
+      }
+      return;
+    }
+    svg.style.removeProperty('width');
+    svg.style.removeProperty('height');
     const from = (svg.dataset.camera ?? target.join(' ')).split(' ').map(Number);
     const start = performance.now();
     const update = (now: number) => {
@@ -662,6 +697,15 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
 
   /** On a narrow screen the diagram scrolls sideways: bring the acting node and its callout into view. */
   function keepInView(smooth: boolean) {
+    if (window.matchMedia?.('(max-width: 600px)').matches) {
+      if (smooth) {
+        // A sticky caption must not cover the acting node after a step change.
+        const bar = el.querySelector('.ex-stepper')!.getBoundingClientRect();
+        const top = viewport.getBoundingClientRect().top;
+        if (top < bar.bottom) window.scrollBy({ top: top - bar.bottom - 8, behavior: 'instant' });
+      }
+      return;
+    }
     if (canvasEl.scrollWidth <= canvasEl.clientWidth + 4) return;
     const targets = [...layerSay.querySelectorAll('g.say'), ...svg.querySelectorAll('g.node.acting, g.node.focus')] as SVGGraphicsElement[];
     if (!targets.length) return;
@@ -709,6 +753,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     }
     paint(animate ? prev : undefined);
     drawIntro();
+    keepInView(animate);
   }
 
   /** "How to use" before the first step; afterwards it folds into a details line. */
@@ -1052,8 +1097,11 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   drawTicks();
   go(0, false);
 
+  const onResize = () => { focusedStep = -1; paint(); };
+  window.addEventListener('resize', onResize);
   return {
     dispose() {
+      window.removeEventListener('resize', onResize);
       disposed = true;
       stop();
       cancelAnimationFrame(cameraAnim);

@@ -6,6 +6,7 @@
 import { clear, h, icon, put } from '../../core/dom';
 import { bi, fmt, lang, t, type Bi } from '../../core/i18n';
 import type { NewEvent } from '../../core/types';
+import { goalConditions } from './goals';
 import { money, RUB_PER_USD } from './money';
 import { bots, counterfactuals } from './bots';
 import { cfdChart, linesChart } from './charts';
@@ -44,6 +45,9 @@ export function mountDebrief(root: HTMLElement, sc: Scenario, s: State, o: Debri
     { label: bi('Незавершённая работа, в среднем', 'Work in progress, average'), key: 'wipAvg', fmt: String, better: 'low' },
     { label: bi('Потери от задержки', 'Cost of delay'), key: 'codLost', fmt: money, better: 'low' },
   ];
+  rows.push({ label: bi('Итог по деньгам', 'Net money'), key: 'moneyNet', fmt: money, better: 'high' });
+  rows.push({ label: bi('Дополнительные расходы', 'Extra spending'), key: 'extraSpending', fmt: money, better: 'low' });
+  if (sc.sale) rows.push({ label: bi('Простой во время распродажи, в минутах', 'Sale downtime, minutes'), key: 'saleBadMinutes', fmt: String, better: 'low' });
   if (sc.hasOps) rows.push({ label: bi('Потери от сбоев', 'Outage losses'), key: 'downtimeLost', fmt: money, better: 'low' });
   if (sc.columns.includes('deploy'))
     rows.push(
@@ -102,7 +106,7 @@ export function mountDebrief(root: HTMLElement, sc: Scenario, s: State, o: Debri
     const d2 = b.reference.moneyNet - me.moneyNet;
     const rub = (x: number) => `${Math.round(x).toLocaleString('ru-RU')} ₽`;
     const usd = (x: number) => `$${Math.round(x / RUB_PER_USD).toLocaleString('en-US')}`;
-    const ru = `${d1 >= 0 ? `На ${rub(d1)} лучше команды без методологии` : `На ${rub(-d1)} хуже команды без методологии`}, ${d2 > 0 ? `на ${rub(d2)} хуже эталона` : `на ${rub(-d2)} лучше эталона`}.`;
+    const ru = `По деньгам результат вашей команды оказался ${d1 >= 0 ? `на ${rub(d1)} лучше команды без методологии` : `на ${rub(-d1)} хуже команды без методологии`}, ${d2 > 0 ? `на ${rub(d2)} хуже эталона` : `на ${rub(-d2)} лучше эталона`}.`;
     const en = `${d1 >= 0 ? `${usd(d1)} better than the team without the method` : `${usd(-d1)} worse than the team without the method`}, ${d2 > 0 ? `${usd(d2)} behind the reference` : `${usd(-d2)} ahead of the reference`}.`;
     return { ru, en };
   };
@@ -126,6 +130,7 @@ export function mountDebrief(root: HTMLElement, sc: Scenario, s: State, o: Debri
     el,
     h('header.fl-debrief-head', {}, h('h3', {}, t(fmt(bi('Разбор: «{t}»', 'Debrief: “{e}”'), { t: sc.title.ru, e: sc.title.en }))), h('button.btn.ghost.small', { type: 'button', onclick: o.back }, icon('prev'), t(bi('К доске', 'Back to the board')))),
     h('p.lede', {}, t(sc.goal)),
+    h('ul.fl-goal-results', {}, ...goalConditions(sc, s).map(goal => h('li', { 'data-met': String(goal.met) }, t(goal.text), ' ', t(goal.met ? bi('Условие выполнено.', 'Condition met.') : bi('Условие не выполнено.', 'Condition not met.'))))),
     h('section.fl-d-sec', {}, h('h4', {}, t(bi('1. Ваш прогон по шагам', '1. Your run step by step'))), stepper),
     h(
       'section.fl-d-sec',

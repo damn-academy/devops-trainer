@@ -301,8 +301,7 @@ export function effectSentence(key: keyof FlowMetrics, you: number, other: numbe
 export function counterfactuals(sc: Scenario, played: State, top = 3): Counterfactual[] {
   const trace = policyTrace(played);
   if (!trace.length) return [];
-  const base = replayPolicy(sc, played.seed, trace);
-  const you = metrics(base, sc);
+  const you = metrics(played, sc);
   const sc_ = scales(sc, played.seed);
   const keys = keysFor(sc);
   const out: Counterfactual[] = [];

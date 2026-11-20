@@ -3,6 +3,7 @@
 // shows the placeholder so the whole course is visible from day one.
 // `folder` names the src/blocks/<folder> that owns the block.
 
+import { ROUTE_HOURS } from './route-hours';
 import { bi, type Bi } from './i18n';
 import type { Level } from './types';
 
@@ -38,7 +39,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Закрывается тремя вопросами', 'Closed with three questions'),
       experienced: bi('Закрывается тремя вопросами', 'Closed with three questions'),
     },
-    hours: { beginner: 6, intermediate: 0, experienced: 0 },
+    hours: ROUTE_HOURS['orient'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'methodology',
@@ -56,7 +57,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Видел тикеты, релизы и доски, не различает CI и CD', 'Has seen tickets, releases and boards; does not tell CI from CD'),
       experienced: bi('Работал с пайплайном, участвовал в разборе инцидента', 'Worked with a pipeline, took part in an incident review'),
     },
-    hours: { beginner: 21, intermediate: 13, experienced: 8 },
+    hours: ROUTE_HOURS['methodology'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'linux',
@@ -74,7 +75,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Открывал терминал, ставил пакеты по инструкции', 'Has opened a terminal and installed packages by instructions'),
       experienced: bi('Пишет скрипты, не знает systemd, журналов, /proc, ядра', 'Writes scripts; does not know systemd, logs, /proc, the kernel'),
     },
-    hours: { beginner: 73, intermediate: 47, experienced: 27 },
+    hours: ROUTE_HOURS['linux'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'git-yaml',
@@ -92,7 +93,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Коммитил через IDE', 'Has committed from an IDE'),
       experienced: bi('Ветки и merge request, правил CI-файл', 'Branches and merge requests, has edited a CI file'),
     },
-    hours: { beginner: 15, intermediate: 10, experienced: 5 },
+    hours: ROUTE_HOURS['git-yaml'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'networks',
@@ -110,7 +111,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Настраивал роутер, пинговал, не знает подсетей и NAT', 'Has set up a router and pinged; does not know subnets and NAT'),
       experienced: bi('Свободно с HTTP и curl, слаб в маршрутизации, NAT, TLS', 'Fluent with HTTP and curl; weak in routing, NAT, TLS'),
     },
-    hours: { beginner: 52, intermediate: 34, experienced: 20 },
+    hours: ROUTE_HOURS['networks'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'containers',
@@ -128,7 +129,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Запускал docker run по README', 'Has run docker run from a README'),
       experienced: bi('Пишет Dockerfile, не знает bundle, цепочку рантайма, PID 1', 'Writes Dockerfiles; does not know the bundle, the runtime chain, PID 1'),
     },
-    hours: { beginner: 47, intermediate: 30, experienced: 18 },
+    hours: ROUTE_HOURS['containers'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'cicd',
@@ -146,7 +147,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Видел зелёные галочки CI', 'Has seen green CI ticks'),
       experienced: bi('Правил CI-файл, не строил пайплайн до выкладки', 'Has edited a CI file, never built a pipeline up to deployment'),
     },
-    hours: { beginner: 19, intermediate: 13, experienced: 8 },
+    hours: ROUTE_HOURS['cicd'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'k8s-1',
@@ -165,7 +166,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('kubectl apply по инструкции', 'kubectl apply by instructions'),
       experienced: bi('Сам пишет манифесты и чарты, цель — уровень CKA', 'Writes manifests and charts, aims at CKA level'),
     },
-    hours: { beginner: 85, intermediate: 54, experienced: 31 },
+    hours: ROUTE_HOURS['k8s-1'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'cicd-k8s',
@@ -183,7 +184,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Выкатывал в кластер руками', 'Has rolled out to a cluster by hand'),
       experienced: bi('Писал джобы с kubectl или helm', 'Has written jobs with kubectl or helm'),
     },
-    hours: { beginner: 4, intermediate: 3, experienced: 2 },
+    hours: ROUTE_HOURS['cicd-k8s'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
     requires: ['cicd', 'k8s-1'],
   },
   {
@@ -203,7 +204,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Прошёл этап 1', 'Finished stage 1'),
       experienced: bi('Прошёл этап 1', 'Finished stage 1'),
     },
-    hours: { beginner: 14, intermediate: 12, experienced: 10 },
+    hours: ROUTE_HOURS['k8s-2'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'iac',
@@ -221,7 +222,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Запускал готовый код', 'Has run ready-made code'),
       experienced: bi('Писал небольшие конфигурации, не знает state, ролей, идемпотентности', 'Has written small configs; does not know state, roles, idempotence'),
     },
-    hours: { beginner: 29, intermediate: 19, experienced: 11 },
+    hours: ROUTE_HOURS['iac'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'k8s-3',
@@ -240,7 +241,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Каркас, остальное сам', 'A skeleton, the rest on your own'),
       experienced: bi('С нуля', 'From scratch'),
     },
-    hours: { beginner: 32, intermediate: 27, experienced: 22 },
+    hours: ROUTE_HOURS['k8s-3'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'monitoring',
@@ -258,7 +259,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Смотрел готовые дашборды', 'Has looked at ready-made dashboards'),
       experienced: bi('Писал алерты или PromQL, работал с Zabbix', 'Has written alerts or PromQL, worked with Zabbix'),
     },
-    hours: { beginner: 24, intermediate: 16, experienced: 9 },
+    hours: ROUTE_HOURS['monitoring'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'final',
@@ -276,7 +277,7 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Один экзамен для всех уровней', 'One exam for every level'),
       experienced: bi('Плюс эксплуатация kubeadm', 'Plus kubeadm operations'),
     },
-    hours: { beginner: 40, intermediate: 35, experienced: 30 },
+    hours: ROUTE_HOURS['final'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
   {
     id: 'career',
@@ -294,6 +295,6 @@ export const ROUTE: RouteEntry[] = [
       intermediate: bi('Нетехнические IT-собеседования', 'Non-technical IT interviews'),
       experienced: bi('Технические собеседования разработчиком или админом', 'Technical interviews as a developer or admin'),
     },
-    hours: { beginner: 25, intermediate: 22, experienced: 18 },
+    hours: ROUTE_HOURS['career'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
 ];

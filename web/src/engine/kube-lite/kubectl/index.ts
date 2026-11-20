@@ -1,3 +1,4 @@
+import { editText } from '../../terminal/commands/editor';
 import { statefulRevisions } from '../statefulset';
 import { apiClient, identity, canI, rulesFor, authorize } from '../rbac';
 // kubectl for kube-lite (05 §5.5). Output follows kubectl v1.37; a flag
@@ -1711,7 +1712,7 @@ export async function runKubectl(m: SimMachineApi, cluster: Cluster | null, argv
         cmdTop(x);
         break;
       case 'edit':
-        fail(`${TRAINER} kubectl edit opens a text editor on the object. In the training terminal change objects with kubectl apply -f <file>, kubectl patch, kubectl set image or kubectl scale — the API server sees the same update.`);
+        fail(t(bi(`${TRAINER} Сохраните объект командой kubectl get TYPE NAME -o yaml > /tmp/object.yaml, откройте файл командой edit /tmp/object.yaml, затем примените изменения командой kubectl apply -f /tmp/object.yaml.`, `${TRAINER} Save the object with kubectl get TYPE NAME -o yaml > /tmp/object.yaml, edit it with edit /tmp/object.yaml, then apply it with kubectl apply -f /tmp/object.yaml.`)));
     }
     return { out, err, code: 0 };
   } catch (e) {
@@ -1729,6 +1730,16 @@ export function kubectlCommand(): ShellCommand {
     help: HELP[''],
     handlesHelp: true,
     async run(ctx) {
+      if (ctx.argv[1] === 'edit') {
+        const target = ctx.argv.slice(2);
+        const current = await runKubectl(ctx.machine, k8sCluster(ctx.machine), ['get', ...target, '-o', 'yaml'], { fs: ctx.fs });
+        if (current.code) { ctx.err(current.err); return current.code; }
+        return editText(ctx, current.out, async text => {
+          const applied = await runKubectl(ctx.machine, k8sCluster(ctx.machine), ['apply', '-f', '-'], { stdin: text, fs: ctx.fs });
+          if (applied.code) throw new Error(applied.err);
+          ctx.out(applied.out);
+        });
+      }
       const r = await runKubectl(ctx.machine, k8sCluster(ctx.machine), ctx.argv.slice(1), { stdin: ctx.stdin, fs: ctx.fs });
       if (r.out) ctx.out(r.out);
       if (r.err) ctx.err(r.err);

@@ -23,7 +23,7 @@ export function bootProgress(elapsedMs: number, previousMs?: number): { elapsed:
   return { elapsed, remaining: expected === undefined ? undefined : Math.max(0, expected - elapsed), overdue: expected !== undefined && elapsed > expected };
 }
 
-export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: number } = {}): Promise<ConsoleHandle> {
+export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: number; inputReady?: () => boolean } = {}): Promise<ConsoleHandle> {
   el.dataset.feedbackLab = m.id;
   const unregisterFeedback = registerFeedbackSnapshot(el, () => m.snapshotForFeedback());
   const { Terminal, FitAddon } = await loadXterm();
@@ -77,7 +77,7 @@ export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: n
   el.prepend(progress);
   const drawProgress = () => {
     const p = bootProgress(performance.now() - started, previous);
-    const estimate = p.remaining === undefined ? '' : p.overdue
+    const estimate = p.remaining === undefined ? t(bi(' · первый запуск обычно занимает от 30 секунд до 3 минут.', ' · a first start usually takes 30 seconds to 3 minutes.')) : p.overdue
       ? t(bi(' · дольше предыдущего запуска', ' · taking longer than the previous start'))
       : t(bi(` · примерно ещё ${p.remaining} с по предыдущему запуску`, ` · about ${p.remaining} s left based on the previous start`));
     label.textContent = t(bi(`Подготовка Linux: ${p.elapsed} с`, `Preparing Linux: ${p.elapsed} s`)) + estimate;
@@ -112,7 +112,7 @@ export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: n
     if (m.phase === 'ready' || showBootLog) term.write(text);
   });
   const onData = term.onData((d) => {
-    if (m.phase === 'ready') m.write(d);
+    if (m.phase === 'ready' && (o.inputReady?.() ?? true)) m.write(d);
   });
   const offCmd = m.on((ev) => {
     if (ev.t !== 'cmd.done') return;
@@ -123,7 +123,7 @@ export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: n
   return {
     focus: () => term.focus(),
     type(text: string) {
-      if (m.phase !== 'ready') return;
+      if (m.phase !== 'ready' || o.inputReady?.() === false) return;
       // Ctrl+U clears what is on the line; the text is then typed into the guest's editor.
       m.write('\x15' + text);
       term.focus();

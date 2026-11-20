@@ -6,7 +6,7 @@
 
 import './kube.css';
 import { clear, h } from '../../../core/dom';
-import { bi, t, type Bi } from '../../../core/i18n';
+import { bi, t, lang, type Bi } from '../../../core/i18n';
 import type { Mounted, WidgetCtx, WidgetReg } from '../../../core/types';
 import { ApiError, Cluster } from '../cluster';
 import { SandboxRunner, authorize, reconcileInProcess, type Action, type Grant, type ReconcileResult } from '../sandbox';
@@ -234,7 +234,7 @@ const L = {
   noWorker: bi('Этот браузер не умеет запускать Web Worker: код ученика без песочницы мы не выполняем.', 'This browser cannot start a Web Worker: we do not run learner code without the sandbox.'),
   goal: bi('Цель', 'Goal'),
   reached: bi('Петля привела фактическое к желаемому и держит его.', 'The loop brought the actual state to the desired one and keeps it there.'),
-  sandbox: bi('Код выполняется в изолированном воркере: без сети и без доступа к хранилищу тренажёра, не дольше 200 мс за вызов.', 'The code runs in an isolated worker: no network, no access to the trainer’s storage, at most 200 ms per call.'),
+  sandbox: bi('Код выполняется в отдельной среде: без сети и без доступа к хранилищу тренажёра, не дольше 200 мс за вызов.', 'The code runs in an isolated worker: no network, no access to the trainer’s storage, at most 200 ms per call.'),
 };
 
 function mountLab(root: HTMLElement, props: unknown, ctx: WidgetCtx): Mounted {
@@ -244,6 +244,7 @@ function mountLab(root: HTMLElement, props: unknown, ctx: WidgetCtx): Mounted {
   const runner = SandboxRunner.available() ? new SandboxRunner(200) : null;
   const code = h('textarea.kl-code', { spellcheck: 'false', 'aria-label': 'reconcile' }) as HTMLTextAreaElement;
   code.value = ctx.level === 'beginner' ? ex.starter.beginner : ex.starter.other;
+  if (lang() === 'ru') code.value = code.value.split('\n').map(line => line.replace(/\/\/.*$/, '').trimEnd()).filter((line, i, lines) => line || lines[i - 1]).join('\n');
   const status = h('p.kl-status', { 'aria-live': 'polite' });
   const log = h('pre.kx-pre.kl-log', { 'aria-live': 'polite' });
   const desired = h('div.kl-col');
@@ -349,7 +350,7 @@ function mountLab(root: HTMLElement, props: unknown, ctx: WidgetCtx): Mounted {
       h(
         'div.kl',
         {},
-        h('div.kx', {}, code, h('div.kx-row', {}, startBtn, stepBtn, counter), h('p.kx-note', {}, t(L.sandbox))),
+        h('div.kx', {}, h('p', {}, t(bi('Функция получает текущее состояние объекта при каждом вызове. Сначала прочитайте зависимый объект с помощью k.get, затем сравните его с желаемым состоянием и вызовите k.create, k.update или k.delete, только если требуется изменение.', 'On every call, the function receives the current object. Read its dependent object with k.get, compare it with the desired state, and call k.create, k.update or k.delete only when a change is needed.'))), code, h('div.kx-row', {}, startBtn, stepBtn, counter), h('p.kx-note', {}, t(L.sandbox))),
         h('div.kx', {}, worldBtns, h('div.kl-loop', {}, desired, h('div.kl-arc', {}, '⟳', h('br'), t(L.loop)), actual), status, log),
       ),
     ),

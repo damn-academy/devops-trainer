@@ -1,5 +1,5 @@
 import { bi } from '../../../core/i18n';
-import type { ShellCommand } from '../../../core/types';
+import type { CmdContext, ShellCommand } from '../../../core/types';
 import type { SimMachine } from '../shell';
 
 /** A small line editor: keep file writes subject to the invoking user's VFS permissions. */
@@ -10,7 +10,12 @@ export const editCommand: ShellCommand = {
   run(ctx) {
     if (ctx.argv.length !== 2) { ctx.err('usage: edit FILE\n'); return 2; }
     const path = ctx.fs.resolve(ctx.argv[1]);
-    let original = ctx.fs.exists(path) ? ctx.fs.readFile(path) : '';
+    return editText(ctx, ctx.fs.exists(path) ? ctx.fs.readFile(path) : '', text => ctx.fs.writeFile(path, text));
+  },
+};
+
+/** Reuse the terminal editor for API objects; failed saves leave the buffer open. */
+export function editText(ctx: CmdContext, original: string, save: (text: string) => void | Promise<void>): number {
     let lines = original ? original.replace(/\n$/, '').split('\n') : [];
     const print = () => lines.map((line, i) => `${i + 1}\t${line}\n`).join('');
     ctx.out(`${editCommand.help}\n${print()}`);
@@ -24,7 +29,7 @@ export const editCommand: ShellCommand = {
         if (line === ':w' || line === ':wq') {
           try {
             const text = lines.join('\n') + (lines.length ? '\n' : '');
-            ctx.fs.writeFile(path, text);
+            await save(text);
             original = text;
             return result(`${lines.length} lines written\n`, 0, line === ':wq');
           } catch (error) { return result(`edit: ${(error as Error).message}\n`, 1); }
@@ -40,5 +45,4 @@ export const editCommand: ShellCommand = {
       },
     });
     return 0;
-  },
-};
+}
