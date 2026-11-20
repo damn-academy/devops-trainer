@@ -246,6 +246,14 @@ export function tableFor(c: Cluster, kind: string): Table {
       return { head: ['NAME', 'CLASS', 'ADDRESS', 'PROGRAMMED', 'AGE'], rows: (v) => [v.metadata.name, v.spec?.gatewayClassName ?? '', (v.status?.addresses ?? []).map((a: Obj) => a.value).join(','), condStatus(v, 'Programmed') || 'Unknown', ago(c, v.metadata.creationTimestamp)] };
     case 'HTTPRoute':
       return { head: ['NAME', 'HOSTNAMES', 'AGE'], rows: (v) => [v.metadata.name, JSON.stringify(v.spec?.hostnames ?? []), ago(c, v.metadata.creationTimestamp)] };
+    case 'Application':
+      // Argo CD's printer columns; REVISION and PROJECT have priority 10 and show with -o wide.
+      return {
+        head: ['NAME', 'SYNC STATUS', 'HEALTH STATUS'],
+        rows: (v) => [v.metadata.name, v.status?.sync?.status ?? '', v.status?.health?.status ?? ''],
+        wideHead: ['REVISION', 'PROJECT'],
+        wide: (v) => [v.status?.sync?.revision ?? '', v.spec?.project ?? ''],
+      };
     case 'IPAddressPool':
       return { head: ['NAME', 'AUTO ASSIGN', 'AVOID BUGGY IPS', 'ADDRESSES'], rows: (v) => [v.metadata.name, String(v.spec?.autoAssign ?? true), String(!!v.spec?.avoidBuggyIPs), JSON.stringify(v.spec?.addresses ?? [])] };
     default:
