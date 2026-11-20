@@ -92,14 +92,30 @@ func (lab *Lab) qemuBins() (system, img string) {
 			return filepath.Join(d, system+ext), filepath.Join(d, img+ext)
 		}
 	}
+	// PATH, then where QEMU's own installer puts it (not on PATH on Windows).
+	if p, err := hostinfo.LookTool(system); err == nil {
+		system = p
+		if q, err := hostinfo.LookTool(img); err == nil {
+			img = q
+		} else if c := filepath.Join(filepath.Dir(p), img+ext); fileExists(c) {
+			img = c
+		}
+	}
 	return system, img
 }
+
+func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }
 
 func (lab *Lab) realBackend(st *State) (backend.Backend, error) {
 	switch st.Backend.Name {
 	case "qemu":
 		bin, _ := lab.qemuBins()
-		fw, err := backend.FindFirmware(backend.FirmwareCandidates(lab.GOOS, lab.Arch, filepath.Join(lab.L.Backends(), "qemu")))
+		cands := backend.FirmwareCandidates(lab.GOOS, lab.Arch, filepath.Join(lab.L.Backends(), "qemu"))
+		if filepath.IsAbs(bin) {
+			// The firmware QEMU ships next to itself (share\ on Windows).
+			cands = append(backend.FirmwareCandidates(lab.GOOS, lab.Arch, filepath.Dir(bin))[:1], cands...)
+		}
+		fw, err := backend.FindFirmware(cands)
 		if err != nil {
 			return nil, err
 		}
@@ -203,6 +219,7 @@ func (lab *Lab) Up(ctx context.Context, o UpOptions) error {
 	if choice.Name == "hyperv" {
 		_ = lab.M.Add(manifest.Item{Kind: manifest.HyperVNet, Path: backend.HyperVSwitch})
 		_ = lab.M.Add(manifest.Item{Kind: manifest.HyperVNAT, Path: backend.HyperVNAT})
+		_ = lab.M.Add(manifest.Item{Kind: manifest.HyperVFW, Path: backend.HyperVFirewall})
 	}
 	lab.fetchKubectl(ctx)
 	if err := lab.EnsureAgent(ctx, st); err != nil {
@@ -247,6 +264,7 @@ func (lab *Lab) Up(ctx context.Context, o UpOptions) error {
 		if err := lab.waitVM(wctx, st, v); err != nil {
 			return fmt.Errorf("%s: %w", v.Name, err)
 		}
+		st.keepStatus(lab.State)
 		_ = st.Save(lab.L.State())
 		lab.Log("%s ready (%s)", v.Name, time.Since(t).Round(time.Second))
 	}
@@ -312,23 +330,30 @@ func (lab *Lab) prepareDisks(ctx context.Context, st *State, be backend.Backend,
 			if out, err := lab.R.Run(ctx, qemuImg, imgCreateArgs(sys, "", v.DiskGiB, ext)...); err != nil {
 				return d, fmt.Errorf("system disk: %v: %s", err, out)
 			}
+			if err := unsparse(sys, ext); err != nil {
+				return d, err
+			}
 		}
 	default:
 		hv := st.Backend.Name == "hyperv"
 		name := UbuntuImage(lab.Arch, hv)
 		base := filepath.Join(lab.L.Images(), name)
 		if _, err := os.Stat(base); os.IsNotExist(err) {
-			sum, err := sumFor(ctx, joinURL(lab.Src.UbuntuBase, "SHA256SUMS"), name)
-			if err != nil && strings.Contains(lab.Src.UbuntuBase, "://") {
+			src := lab.Src.ubuntuBase(hv)
+			sum, err := sumFor(ctx, joinURL(src, "SHA256SUMS"), name)
+			if err != nil && strings.Contains(src, "://") {
 				return d, fmt.Errorf("Ubuntu image checksum: %w", err)
 			}
-			if err := fetch(ctx, joinURL(lab.Src.UbuntuBase, name), base, sum, lab.Log); err != nil {
+			if err := fetch(ctx, joinURL(src, name), base, sum, lab.Log); err != nil {
 				return d, err
 			}
 		}
 		if _, err := os.Stat(sys); os.IsNotExist(err) {
 			if out, err := lab.R.Run(ctx, qemuImg, imgCreateArgs(sys, base, v.DiskGiB, ext)...); err != nil {
 				return d, fmt.Errorf("system disk: %v: %s", err, out)
+			}
+			if err := unsparse(sys, ext); err != nil {
+				return d, err
 			}
 		}
 		if hv {
@@ -340,6 +365,18 @@ func (lab *Lab) prepareDisks(ctx context.Context, st *State, be backend.Backend,
 		}
 	}
 	return d, nil
+}
+
+// unsparse: Hyper-V attaches no sparse VHDX, and qemu-img writes them
+// sparse on Windows.
+func unsparse(disk, format string) error {
+	if format != "vhdx" {
+		return nil
+	}
+	if err := backend.Unsparse(disk); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("%s: clearing the sparse attribute Hyper-V refuses: %w", disk, err)
+	}
+	return nil
 }
 
 // imgCreateArgs: an overlay on the cached image (QEMU), or a full copy
@@ -366,10 +403,9 @@ func (lab *Lab) kuberootMedia(ctx context.Context, st *State, v *VMState) (strin
 		return "", err
 	}
 	version, _ := os.ReadFile(filepath.Join(art, "VERSION"))
+	// No kernel arguments: on both backends the lab's DHCP gives the node
+	// its address, the router and resolvers.
 	args := ""
-	if st.Backend.Name == "hyperv" {
-		args = kuberoot.KernelArgs("eth1", v.IP, profile.Prefix, "1.1.1.1")
-	}
 	raw := filepath.Join(lab.L.VM(v.Name), "media.raw.img")
 	cmd := kuberoot.MkimageArgs(mkPath, lab.Arch, art, strings.TrimSpace(string(version)), lab.L.Trust(), raw, args)
 	if out, err := lab.R.Run(ctx, cmd[0], cmd[1:]...); err != nil {
@@ -380,6 +416,9 @@ func (lab *Lab) kuberootMedia(ctx context.Context, st *State, v *VMState) (strin
 		_, qemuImg := lab.qemuBins()
 		if out, err := lab.R.Run(ctx, qemuImg, "convert", "-q", "-O", "vhdx", raw, vhdx); err != nil {
 			return "", fmt.Errorf("media to VHDX: %v: %s", err, out)
+		}
+		if err := unsparse(vhdx, "vhdx"); err != nil {
+			return "", err
 		}
 		_ = os.Remove(raw)
 		return vhdx, nil
@@ -428,13 +467,40 @@ func (lab *Lab) waitVM(ctx context.Context, st *State, v *VMState) error {
 	})
 }
 
-func (lab *Lab) nodeClient(v *VMState) (*kuberoot.Client, error) {
+func (lab *Lab) nodeClient(st *State, v *VMState) (*kuberoot.Client, error) {
 	a, err := kuberoot.LoadAdmin(lab.L.Trust())
 	if err != nil {
 		return nil, err
 	}
-	server := "https://127.0.0.1:" + strconv.Itoa(nodeAPIPort(v.VM))
-	return kuberoot.NewClient(server, a)
+	host, port := reach(st, v.VM, 50000)
+	return kuberoot.NewClient("https://"+net.JoinHostPort(host, strconv.Itoa(port)), a)
+}
+
+// reach is where the host finds a VM's port: the port the lab switch
+// publishes on loopback with QEMU, the VM's own address on Hyper-V, whose
+// internal switch gives the host an address on the lab network.
+func reach(st *State, v profile.VM, guest int) (string, int) {
+	if st.Backend.Name == "hyperv" {
+		return v.IP, guest
+	}
+	switch guest {
+	case 22:
+		return "127.0.0.1", v.SSHPort
+	case 50000:
+		return "127.0.0.1", nodeAPIPort(v)
+	case 6443:
+		return "127.0.0.1", apiPort(v)
+	}
+	return "127.0.0.1", guest
+}
+
+// sshArgs is the ssh command to a VM wherever the backend puts it.
+func (lab *Lab) sshArgs(st *State, v profile.VM, tty bool, command ...string) ([]string, error) {
+	if v.SSHPort <= 0 {
+		return sshkey.Args("", "", "", "", 0, false)
+	}
+	host, port := reach(st, v, 22)
+	return sshkey.Args(lab.L.SSHKey(), lab.L.KnownHosts(), cloudinit.User, host, port, tty, command...)
 }
 
 func nodeAPIPort(v profile.VM) int {
@@ -458,7 +524,7 @@ func apiPort(v profile.VM) int {
 // waitKuberoot: the live media's node API, then the installation onto the
 // system disk, the installed slot Good, and the cluster's kubeconfig.
 func (lab *Lab) waitKuberoot(ctx context.Context, st *State, v *VMState) error {
-	c, err := lab.nodeClient(v)
+	c, err := lab.nodeClient(st, v)
 	if err != nil {
 		return err
 	}
@@ -496,7 +562,12 @@ func (lab *Lab) waitKuberoot(ctx context.Context, st *State, v *VMState) error {
 	}); err != nil {
 		return err
 	}
-	host := kuberoot.RewriteServer(kc, "https://127.0.0.1:"+strconv.Itoa(apiPort(v.VM)), v.IP)
+	apiHost, apiP := reach(st, v.VM, 6443)
+	tlsName := v.IP
+	if apiHost == v.IP {
+		tlsName = ""
+	}
+	host := kuberoot.RewriteServer(kc, "https://"+net.JoinHostPort(apiHost, strconv.Itoa(apiP)), tlsName)
 	if err := os.WriteFile(lab.L.Kubeconfig(), []byte(host), 0o600); err != nil {
 		return err
 	}
@@ -539,7 +610,7 @@ func (lab *Lab) ExecStdin(ctx context.Context, vm, command, stdin string) ([]byt
 	if v == nil {
 		return nil, fmt.Errorf("no VM %q in the lab", vm)
 	}
-	args, err := sshkey.Args(lab.L.SSHKey(), lab.L.KnownHosts(), cloudinit.User, v.SSHPort, false, command)
+	args, err := lab.sshArgs(st, v.VM, false, command)
 	if err != nil {
 		return nil, err
 	}
@@ -559,7 +630,7 @@ func (lab *Lab) SSHArgs(vm string, command []string) ([]string, error) {
 	if v.Kind == profile.Kuberoot {
 		return nil, fmt.Errorf("%s is kuberoot: it has no shell; use kubectl --kubeconfig %s", vm, lab.L.Kubeconfig())
 	}
-	return sshkey.Args(lab.L.SSHKey(), lab.L.KnownHosts(), cloudinit.User, v.SSHPort, len(command) == 0, command...)
+	return lab.sshArgs(st, v.VM, len(command) == 0, command...)
 }
 
 // Facts runs a check script for a VM and returns the block. Defaults by

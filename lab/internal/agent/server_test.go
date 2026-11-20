@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -102,5 +103,27 @@ func TestSeedsAndScriptsForVMs(t *testing.T) {
 	}
 	if w := do(h, "GET", "/", "10.10.1.254:7788", nil, ""); w.Code != 404 {
 		t.Error("VMs should not get the course:", w.Code)
+	}
+}
+
+// On Hyper-V a VM reaches the agent on the host's lab address and may name
+// 127.0.0.1 in its Host header: the listener it came in on decides.
+func TestAPIRefusedOnTheVMListener(t *testing.T) {
+	s, _ := server(t)
+	h := s.Handler()
+	hdr := map[string]string{"Content-Type": "application/json", "X-DTLab": "1"}
+	for local, want := range map[string]int{"10.10.1.254:7788": 403, "127.0.0.1:7788": 200} {
+		r := httptest.NewRequest("GET", "/api/v1/status", nil)
+		r.Host = "127.0.0.1:7788"
+		for k, v := range hdr {
+			r.Header.Set(k, v)
+		}
+		addr, _ := net.ResolveTCPAddr("tcp", local)
+		r = r.WithContext(context.WithValue(r.Context(), http.LocalAddrContextKey, addr))
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if w.Code != want {
+			t.Errorf("came in on %s: %d, want %d", local, w.Code, want)
+		}
 	}
 }

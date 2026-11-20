@@ -2,10 +2,12 @@ package lab
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tym83/devops-trainer/lab/internal/backend"
 	"github.com/tym83/devops-trainer/lab/internal/collect"
@@ -182,5 +184,85 @@ func TestImgCreateArgs(t *testing.T) {
 	}
 	if got := strings.Join(imgCreateArgs("d.qcow2", "", 10, "qcow2"), " "); got != "create -q -f qcow2 d.qcow2 10G" {
 		t.Error(got)
+	}
+}
+
+func TestUbuntuImageForHyperV(t *testing.T) {
+	src := DefaultSources()
+	if UbuntuImage("amd64", true) != "ubuntu-24.04-server-cloudimg-amd64.img" || src.ubuntuBase(true) != "https://cloud-images.ubuntu.com/releases/noble/release/" {
+		t.Error("Hyper-V needs the server image, whose kernel has the Hyper-V drivers:", UbuntuImage("amd64", true), src.ubuntuBase(true))
+	}
+	if UbuntuImage("amd64", false) != "ubuntu-24.04-minimal-cloudimg-amd64.img" || !strings.Contains(src.ubuntuBase(false), "/minimal/") {
+		t.Error("QEMU keeps the minimal image")
+	}
+}
+
+// Hyper-V has no lab switch publishing ports on loopback: the host reaches
+// the VMs at their own addresses on the internal switch.
+func TestReachByBackend(t *testing.T) {
+	p := profile.Profiles["light"]
+	vms := profile.Plan(p, p.Default)
+	var learner, kr profile.VM
+	for _, v := range vms {
+		switch v.Kind {
+		case profile.Learner:
+			learner = v
+		case profile.Kuberoot:
+			kr = v
+		}
+	}
+	q := &State{Backend: backend.Choice{Name: "qemu"}}
+	if h, port := reach(q, learner, 22); h != "127.0.0.1" || port != learner.SSHPort {
+		t.Error("qemu ssh:", h, port)
+	}
+	if h, port := reach(q, kr, 50000); h != "127.0.0.1" || port != nodeAPIPort(kr) {
+		t.Error("qemu node API:", h, port)
+	}
+	hv := &State{Backend: backend.Choice{Name: "hyperv"}}
+	if h, port := reach(hv, learner, 22); h != learner.IP || port != 22 {
+		t.Error("hyperv ssh:", h, port)
+	}
+	if h, port := reach(hv, kr, 6443); h != kr.IP || port != 6443 {
+		t.Error("hyperv API:", h, port)
+	}
+	l := &Lab{L: paths.New(t.TempDir())}
+	a, err := l.sshArgs(hv, learner, false, "true")
+	if err != nil || !strings.Contains(strings.Join(a, " "), "learner@"+learner.IP) || !strings.Contains(strings.Join(a, " "), "HostKeyAlias=dtlab-"+learner.IP) {
+		t.Error(a, err)
+	}
+}
+
+func TestKeepStatusFromDisk(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "state.json")
+	disk := &State{VMs: []VMState{{VM: profile.VM{Name: "kr-1"}, Status: backend.Status{Running: true, PID: 42}}}}
+	if err := disk.Save(path); err != nil {
+		t.Fatal(err)
+	}
+	mem := &State{VMs: []VMState{{VM: profile.VM{Name: "kr-1"}, Status: backend.Status{Running: true, PID: 7}, Installed: true}}}
+	mem.keepStatus(func() (*State, error) { return LoadState(path) })
+	if mem.VMs[0].Status.PID != 42 || !mem.VMs[0].Installed {
+		t.Errorf("%+v", mem.VMs[0])
+	}
+	if err := mem.Save(path); err != nil {
+		t.Fatal(err)
+	}
+	if left, _ := filepath.Glob(path + ".*.tmp"); len(left) != 0 {
+		t.Error("temporary files left:", left)
+	}
+}
+
+func TestRetryBind(t *testing.T) {
+	n := 0
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	retryBind(ctx, func(string, ...any) {}, "test", func() error {
+		n++
+		if n < 2 {
+			return errors.New("tentative")
+		}
+		return nil
+	})
+	if n != 2 {
+		t.Error(n)
 	}
 }

@@ -21,6 +21,9 @@ type Sources struct {
 	// UbuntuBase: the directory of the Ubuntu 24.04 minimal cloud images
 	// (about 250 MB for amd64), with its SHA256SUMS.
 	UbuntuBase string
+	// UbuntuServerBase: the directory of the full Ubuntu 24.04 server cloud
+	// images, for Hyper-V (DTLAB_UBUNTU_SERVER_URL).
+	UbuntuServerBase string
 	// Kuberoot: a URL or a local directory given instead of kuberoot's
 	// GitHub release: either a release's assets with their manifest
 	// (kuberoot-edge.json), or a build's own layout, <arch>/{vmlinuz.efi,
@@ -37,11 +40,15 @@ type Sources struct {
 // DefaultSources: Canonical's images, kuberoot's releases, dl.k8s.io.
 func DefaultSources() Sources {
 	s := Sources{
-		UbuntuBase: "https://cloud-images.ubuntu.com/minimal/releases/noble/release/",
-		Kubectl:    "https://dl.k8s.io/release/",
+		UbuntuBase:       "https://cloud-images.ubuntu.com/minimal/releases/noble/release/",
+		UbuntuServerBase: "https://cloud-images.ubuntu.com/releases/noble/release/",
+		Kubectl:          "https://dl.k8s.io/release/",
 	}
 	if v := os.Getenv("DTLAB_UBUNTU_URL"); v != "" {
 		s.UbuntuBase = v
+	}
+	if v := os.Getenv("DTLAB_UBUNTU_SERVER_URL"); v != "" {
+		s.UbuntuServerBase = v
 	}
 	if v := os.Getenv("DTLAB_KUBEROOT_URL"); v != "" {
 		s.Kuberoot = v
@@ -49,14 +56,24 @@ func DefaultSources() Sources {
 	return s
 }
 
-// UbuntuImage is the file name of the image for an architecture; Hyper-V
-// takes the Azure build, whose kernel has the Hyper-V drivers the minimal
-// (linux-kvm) kernel lacks.
+// UbuntuImage is the file name of the image for an architecture, and the
+// directory it is in. Hyper-V takes the full server image: its "virtual"
+// kernel has Hyper-V's storage and network drivers, which the minimal
+// image's linux-kvm kernel lacks. (Canonical's Azure image has them too,
+// but it is a VHD in a tarball and its cloud-init reads only Azure's
+// metadata, never a NoCloud seed.)
 func UbuntuImage(arch string, hyperV bool) string {
 	if hyperV {
-		return "ubuntu-24.04-server-cloudimg-amd64-azure.vhd.tar.gz"
+		return "ubuntu-24.04-server-cloudimg-" + arch + ".img"
 	}
 	return "ubuntu-24.04-minimal-cloudimg-" + arch + ".img"
+}
+
+func (s Sources) ubuntuBase(hyperV bool) string {
+	if hyperV {
+		return s.UbuntuServerBase
+	}
+	return s.UbuntuBase
 }
 
 var httpClient = &http.Client{Timeout: 30 * time.Minute}

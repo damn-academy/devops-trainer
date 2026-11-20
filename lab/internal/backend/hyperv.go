@@ -9,20 +9,24 @@ import (
 )
 
 // HyperV runs the VMs as Generation 2 Hyper-V machines on an internal
-// switch "dtlab" with NAT, the host at the gateway address. Ubuntu VMs get
-// their address from network-config on a seed ISO; kuberoot gets a second
-// card on the Default Switch for the internet and its lab address as a
-// kernel argument, because Hyper-V's internal switch has no DHCP.
+// switch "dtlab" with NAT, the host at the gateway address. The switch has
+// no DHCP of its own: the lab agent answers on it (package labdhcp), and
+// Ubuntu VMs also carry their address in network-config on a seed ISO.
+// Every VM has one card, as with QEMU; none depends on the Default Switch,
+// which Windows Server does not have.
 type HyperV struct {
 	R Runner
 	// VMDir: where the VM's configuration and checkpoints go.
 	VMDir func(name string) string
 }
 
-// Switch and NAT names, recorded in the manifest when dtlab makes them.
+// Switch, NAT and firewall rule names, recorded in the manifest when dtlab
+// makes them. The rule lets the VMs reach the agent (DHCP, the check
+// scripts, kubectl) through Windows' firewall, on the lab switch only.
 const (
-	HyperVSwitch = "dtlab"
-	HyperVNAT    = "dtlab"
+	HyperVSwitch   = "dtlab"
+	HyperVNAT      = "dtlab"
+	HyperVFirewall = "dtlab-lab"
 )
 
 func (h *HyperV) Name() string       { return "hyperv" }
@@ -49,6 +53,7 @@ func PrepareScript() string {
 		fmt.Sprintf("$if = Get-NetAdapter -Name %s", ps("vEthernet ("+HyperVSwitch+")")),
 		fmt.Sprintf("foreach ($a in @(%s, %s)) { if (-not (Get-NetIPAddress -InterfaceIndex $if.ifIndex -IPAddress $a -ErrorAction SilentlyContinue)) { New-NetIPAddress -InterfaceIndex $if.ifIndex -IPAddress $a -PrefixLength %d | Out-Null } }", ps(profile.Gateway), ps(profile.HostIP), profile.Prefix),
 		fmt.Sprintf("if (-not (Get-NetNat -Name %s -ErrorAction SilentlyContinue)) { New-NetNat -Name %s -InternalIPInterfaceAddressPrefix %s | Out-Null; 'made:nat' }", ps(HyperVNAT), ps(HyperVNAT), ps(profile.Subnet)),
+		fmt.Sprintf("if (-not (Get-NetFirewallRule -Name %s -ErrorAction SilentlyContinue)) { New-NetFirewallRule -Name %s -DisplayName 'dtlab: the lab VMs reach the lab agent' -Direction Inbound -InterfaceAlias %s -Action Allow | Out-Null; 'made:firewall' }", ps(HyperVFirewall), ps(HyperVFirewall), ps("vEthernet ("+HyperVSwitch+")")),
 	}, "; ")
 }
 
@@ -59,8 +64,8 @@ func (h *HyperV) Prepare(ctx context.Context) error {
 
 // TeardownScript removes the NAT and the switch.
 func TeardownScript() string {
-	return fmt.Sprintf("Get-NetNat -Name %s -ErrorAction SilentlyContinue | Remove-NetNat -Confirm:$false; Get-VMSwitch -Name %s -ErrorAction SilentlyContinue | Remove-VMSwitch -Force",
-		ps(HyperVNAT), ps(HyperVSwitch))
+	return fmt.Sprintf("Get-NetFirewallRule -Name %s -ErrorAction SilentlyContinue | Remove-NetFirewallRule; Get-NetNat -Name %s -ErrorAction SilentlyContinue | Remove-NetNat -Confirm:$false; Get-VMSwitch -Name %s -ErrorAction SilentlyContinue | Remove-VMSwitch -Force",
+		ps(HyperVFirewall), ps(HyperVNAT), ps(HyperVSwitch))
 }
 
 func (h *HyperV) Teardown(ctx context.Context) error {
@@ -88,8 +93,6 @@ func CreateScript(vm profile.VM, d Disks, dir string) string {
 	if d.Media != "" {
 		s = append(s,
 			fmt.Sprintf("Add-VMHardDiskDrive -VMName %s -Path %s", n, ps(d.Media)),
-			// The internet for kuberoot: a second card on the Default Switch (eth1 is the lab card).
-			fmt.Sprintf("Add-VMNetworkAdapter -VMName %s -SwitchName 'Default Switch'", n),
 			// System disk first: empty on the first boot, so the media boots.
 			fmt.Sprintf("$d = Get-VMHardDiskDrive -VMName %s; Set-VMFirmware -VMName %s -BootOrder $d", n, n),
 		)
@@ -126,17 +129,18 @@ func (h *HyperV) Remove(ctx context.Context, vm profile.VM) error {
 
 // SeedISOScript writes a NoCloud seed ISO (volume label CIDATA, Joliet
 // names) from a directory with Windows' own image mastering API, so no ISO
-// tool needs to be installed.
+// tool needs to be installed. The image comes as a COM IStream, which
+// PowerShell cannot read by itself (it has no RemoteRead to call), so a few
+// lines of C# copy it; an empty result is an error, never a silent seed.
 func SeedISOScript(srcDir, iso string) string {
 	return strings.Join([]string{
+		"$ErrorActionPreference = 'Stop'",
+		"Add-Type -TypeDefinition 'public static class DtlabIso { public static void Write(string path, object image) { var s = (System.Runtime.InteropServices.ComTypes.IStream)image; var buf = new byte[65536]; var n = System.Runtime.InteropServices.Marshal.AllocHGlobal(4); var o = System.IO.File.Create(path); try { while (true) { s.Read(buf, buf.Length, n); int r = System.Runtime.InteropServices.Marshal.ReadInt32(n); if (r <= 0) break; o.Write(buf, 0, r); } } finally { o.Close(); System.Runtime.InteropServices.Marshal.FreeHGlobal(n); } } }'",
 		"$fs = New-Object -ComObject IMAPI2FS.MsftFileSystemImage",
 		"$fs.FileSystemsToCreate = 3", // ISO9660 + Joliet
 		"$fs.VolumeName = 'CIDATA'",
 		fmt.Sprintf("$fs.Root.AddTree(%s, $false)", ps(srcDir)),
-		"$img = $fs.CreateResultImage()",
-		fmt.Sprintf("$out = [System.IO.File]::Create(%s)", ps(iso)),
-		"$st = $img.ImageStream; $buf = New-Object byte[] 2048; $n = 0",
-		"while ($true) { $r = 0; $st.RemoteRead($buf, 2048, [ref]$r); if ($r -le 0) { break }; $out.Write($buf, 0, $r) }",
-		"$out.Close()",
+		fmt.Sprintf("[DtlabIso]::Write(%s, $fs.CreateResultImage().ImageStream)", ps(iso)),
+		fmt.Sprintf("if ((Get-Item %s).Length -lt 32768) { throw 'the seed ISO came out empty' }", ps(iso)),
 	}, "; ")
 }

@@ -1,11 +1,16 @@
 package backend
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tym83/devops-trainer/lab/internal/profile"
 )
@@ -75,6 +80,9 @@ func TestQEMUArgsMacArmKuberoot(t *testing.T) {
 
 func TestQEMUArgsWindowsWHPX(t *testing.T) {
 	q := &QEMU{GOOS: "windows", Arch: "amd64", Accel: "whpx", Firmware: Firmware{"c", "v"}, VMDir: func(n string) string { return n }}
+	if a := joined(q.Args(vms()["learner"], Disks{System: "d"})); !strings.Contains(a, "-action reboot=shutdown -qmp tcp:127.0.0.1:7960,server=on,wait=off") {
+		t.Error("whpx: a reboot must end QEMU, with an events monitor for the agent:", a)
+	}
 	if a := joined(q.Args(vms()["learner"], Disks{System: "d"})); !strings.Contains(a, "-accel whpx,kernel-irqchip=off -cpu max") {
 		t.Error(a)
 	}
@@ -133,19 +141,26 @@ func TestChoose(t *testing.T) {
 
 func TestHyperVScripts(t *testing.T) {
 	s := CreateScript(vms()["kr-1"], Disks{System: `C:\l\kr-1\disk.vhdx`, Media: `C:\l\kr-1\media.vhdx`}, `C:\l\kr-1`)
-	for _, want := range []string{"-Generation 2", "-MemoryStartupBytes 2048MB", "-EnableSecureBoot Off", "-StaticMacAddress '525400d7011e'", "'Default Switch'", "-BootOrder $d", "Start-VM -Name 'dtlab-kr-1'"} {
+	for _, want := range []string{"-Generation 2", "-MemoryStartupBytes 2048MB", "-EnableSecureBoot Off", "-StaticMacAddress '525400d7011e'", "-BootOrder $d", "Start-VM -Name 'dtlab-kr-1'"} {
 		if !strings.Contains(s, want) {
 			t.Errorf("create script lacks %q:\n%s", want, s)
 		}
 	}
+	if strings.Contains(s, "Default Switch") {
+		t.Error("kuberoot must not need the Default Switch (Windows Server has none); the agent's DHCP gives it the router")
+	}
 	p := PrepareScript()
-	for _, want := range []string{"New-VMSwitch -Name 'dtlab' -SwitchType Internal", "New-NetNat -Name 'dtlab' -InternalIPInterfaceAddressPrefix '10.10.1.0/24'", "'10.10.1.1'"} {
+	for _, want := range []string{"New-NetFirewallRule -Name 'dtlab-lab'", "-InterfaceAlias 'vEthernet (dtlab)'", "New-VMSwitch -Name 'dtlab' -SwitchType Internal", "New-NetNat -Name 'dtlab' -InternalIPInterfaceAddressPrefix '10.10.1.0/24'", "'10.10.1.1'"} {
 		if !strings.Contains(p, want) {
 			t.Errorf("prepare lacks %q", want)
 		}
 	}
-	if !strings.Contains(TeardownScript(), "Remove-VMSwitch") || !strings.Contains(SeedISOScript(`C:\s`, `C:\s.iso`), "CIDATA") {
+	if !strings.Contains(TeardownScript(), "Remove-VMSwitch") || !strings.Contains(TeardownScript(), "Remove-NetFirewallRule") || !strings.Contains(SeedISOScript(`C:\s`, `C:\s.iso`), "CIDATA") {
 		t.Error("teardown or seed script")
+	}
+	seed := SeedISOScript(`C:\s`, `C:\s.iso`)
+	if strings.Contains(seed, "RemoteRead") || !strings.Contains(seed, "ComTypes.IStream") || !strings.Contains(seed, "$ErrorActionPreference = 'Stop'") {
+		t.Error("the seed ISO must be copied through IStream.Read, and a failure must stop the script:", seed)
 	}
 	if ps("it's") != "'it''s'" {
 		t.Error("quoting")
@@ -162,4 +177,65 @@ func TestFirmwareCandidates(t *testing.T) {
 	if _, err := FindFirmware([]Firmware{{"/nope", "/nope"}}); err == nil {
 		t.Error("missing firmware found")
 	}
+}
+
+// fakeQMP serves one QMP session: the greeting, a reply to
+// qmp_capabilities, then the given events, then it closes (QEMU ends).
+func fakeQMP(t *testing.T, events ...string) int {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	go func() {
+		c, err := ln.Accept()
+		ln.Close()
+		if err != nil {
+			return
+		}
+		defer c.Close()
+		fmt.Fprintln(c, `{"QMP": {"version": {}}}`)
+		bufio.NewReader(c).ReadBytes('\n')
+		fmt.Fprintln(c, `{"return": {}}`)
+		for _, e := range events {
+			fmt.Fprintln(c, e)
+		}
+	}()
+	return ln.Addr().(*net.TCPAddr).Port
+}
+
+func TestWatchReset(t *testing.T) {
+	reboot := fakeQMP(t, `{"event": "RESET", "data": {"guest": true, "reason": "guest-reset"}}`,
+		`{"event": "SHUTDOWN", "data": {"guest": true, "reason": "guest-reset"}}`)
+	if got, err := WatchReset(context.Background(), reboot); !got || err != nil {
+		t.Error("a guest reboot must be seen:", got, err)
+	}
+	off := fakeQMP(t, `{"event": "POWERDOWN"}`, `{"event": "SHUTDOWN", "data": {"guest": true, "reason": "guest-shutdown"}}`)
+	if got, _ := WatchReset(context.Background(), off); got {
+		t.Error("a power-off is not a reboot")
+	}
+	killed := fakeQMP(t)
+	if got, _ := WatchReset(context.Background(), killed); got {
+		t.Error("a kill is not a reboot")
+	}
+}
+
+func TestExecStartKeepsTempInLabDir(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("uses sh")
+	}
+	dir := t.TempDir()
+	log := filepath.Join(dir, "qemu.log")
+	pid, err := Exec{}.Start("sh", []string{"-c", "echo $TMPDIR $TMP $TEMP"}, log)
+	if err != nil || pid == 0 {
+		t.Fatal(pid, err)
+	}
+	want := strings.Repeat(dir+" ", 3)
+	for i := 0; i < 50; i++ {
+		if raw, _ := os.ReadFile(log); string(raw) == strings.TrimSpace(want)+"\n" {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	raw, _ := os.ReadFile(log)
+	t.Errorf("temporary directory of the started program: %q", raw)
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -44,7 +45,7 @@ type Virt struct {
 func Detect(dir string) Info {
 	i := Info{OS: runtime.GOOS, Arch: runtime.GOARCH, CPUs: runtime.NumCPU(), DiskPath: dir, Tools: map[string]string{}}
 	for _, t := range toolNames() {
-		if p, err := exec.LookPath(t); err == nil {
+		if p, err := LookTool(t); err == nil {
 			i.Tools[t] = p
 		}
 	}
@@ -61,6 +62,46 @@ func Detect(dir string) Info {
 	}
 	detect(&i, probe)
 	return i
+}
+
+// ToolDirs are the directories searched after PATH: where the official
+// installers put programs without adding them to PATH (QEMU's Windows
+// installer installs into %ProgramFiles%\qemu and leaves PATH alone).
+func ToolDirs(goos string, getenv func(string) string) []string {
+	if goos != "windows" {
+		return nil
+	}
+	var dirs []string
+	seen := map[string]bool{}
+	for _, v := range []string{"ProgramFiles", "ProgramW6432"} {
+		if p := strings.TrimRight(getenv(v), `\`); p != "" && !seen[strings.ToLower(p)] {
+			seen[strings.ToLower(p)] = true
+			dirs = append(dirs, p+`\qemu`)
+		}
+	}
+	if len(dirs) == 0 {
+		dirs = append(dirs, `C:\Program Files\qemu`)
+	}
+	return dirs
+}
+
+// LookTool finds a program on PATH, then in ToolDirs.
+func LookTool(name string) (string, error) {
+	p, err := exec.LookPath(name)
+	if err == nil {
+		return p, nil
+	}
+	ext := ""
+	if runtime.GOOS == "windows" {
+		ext = ".exe"
+	}
+	for _, d := range ToolDirs(runtime.GOOS, os.Getenv) {
+		c := filepath.Join(d, name+ext)
+		if st, serr := os.Stat(c); serr == nil && !st.IsDir() {
+			return c, nil
+		}
+	}
+	return "", err
 }
 
 func parent(p string) string {
@@ -97,4 +138,10 @@ func run(name string, args ...string) string {
 		return ""
 	}
 	return strings.TrimSpace(string(out))
+}
+
+// whpxAnswer reads WHvGetCapability(WHvCapabilityCodeHypervisorPresent):
+// usable only when the call succeeds (S_OK) and says yes.
+func whpxAnswer(hresult uintptr, present uint32) bool {
+	return hresult == 0 && present != 0
 }

@@ -26,7 +26,8 @@ const (
 	HyperVVM   Kind = "hyperv-vm"  // a Hyper-V virtual machine
 	HyperVNet  Kind = "hyperv-switch"
 	HyperVNAT  Kind = "hyperv-netnat"
-	HostVMProc Kind = "qemu-vm" // a QEMU VM: its directory under vms/ and its process
+	HyperVFW   Kind = "hyperv-firewall" // the firewall rule for the lab switch
+	HostVMProc Kind = "qemu-vm"         // a QEMU VM: its directory under vms/ and its process
 )
 
 // Item is one created thing.
@@ -115,7 +116,7 @@ func (m *Manifest) Has(k Kind, path string) bool {
 // Ordered lists the items in removal order: VMs before their networks,
 // networks before backends, data, PATH entries, and the binary last.
 func (m *Manifest) Ordered() []Item {
-	rank := map[Kind]int{HostVMProc: 0, HyperVVM: 0, HyperVNAT: 1, HyperVNet: 2, Backend: 3, Dir: 4, File: 5, PathEntry: 6, Binary: 7}
+	rank := map[Kind]int{HostVMProc: 0, HyperVVM: 0, HyperVNAT: 1, HyperVFW: 1, HyperVNet: 2, Backend: 3, Dir: 4, File: 5, PathEntry: 6, Binary: 7}
 	out := append([]Item(nil), m.Items...)
 	sort.SliceStable(out, func(a, b int) bool { return rank[out[a].Kind] < rank[out[b].Kind] })
 	return out

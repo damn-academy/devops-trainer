@@ -76,8 +76,34 @@ func (s *State) Save(path string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(path+".tmp", raw, 0o600); err != nil {
+	// A file of its own per writer: `dtlab up` and the agent may both save.
+	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".*.tmp")
+	if err != nil {
 		return err
 	}
-	return os.Rename(path+".tmp", path)
+	if _, err := f.Write(raw); err != nil {
+		f.Close()
+		os.Remove(f.Name())
+		return err
+	}
+	if err := f.Close(); err != nil {
+		os.Remove(f.Name())
+		return err
+	}
+	return os.Rename(f.Name(), path)
+}
+
+// keepStatus takes the VMs' process status from the saved state: while
+// `dtlab up` waits, the agent may have started a rebooted VM again under a
+// new process id, and saving the older one would lose that process.
+func (s *State) keepStatus(load func() (*State, error)) {
+	cur, err := load()
+	if err != nil {
+		return
+	}
+	for i := range s.VMs {
+		if c := cur.VM(s.VMs[i].Name); c != nil && c.Status.PID != 0 {
+			s.VMs[i].Status = c.Status
+		}
+	}
 }

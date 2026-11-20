@@ -3,12 +3,11 @@
 package hostinfo
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
 )
 
 type memoryStatusEx struct {
@@ -39,27 +38,33 @@ func detect(i *Info, dir string) {
 	}
 	v := windows.RtlGetVersion()
 	i.OSVersion = "Windows " + itoa(int(v.MajorVersion)) + "." + itoa(int(v.MinorVersion)) + " build " + itoa(int(v.BuildNumber))
-	sys := os.Getenv("SystemRoot")
-	if sys == "" {
-		sys = `C:\Windows`
+	if k, err := registry.OpenKey(registry.LOCAL_MACHINE, `HARDWARE\DESCRIPTION\System\CentralProcessor\0`, registry.QUERY_VALUE); err == nil {
+		if name, _, err := k.GetStringValue("ProcessorNameString"); err == nil {
+			i.CPUModel = strings.TrimSpace(name)
+		}
+		k.Close()
 	}
 	// WHPX: the Windows Hypervisor Platform feature (Home editions too).
-	_, whpxErr := os.Stat(filepath.Join(sys, "System32", "WinHvPlatform.dll"))
+	// WinHvPlatform.dll is there with the feature off, and a hypervisor is
+	// present whenever Hyper-V, virtualisation-based security or an outer
+	// hypervisor runs, so neither tells; WHvGetCapability is what QEMU asks.
+	whpx := whpxUsable()
 	// Hyper-V: the PowerShell module and a running hypervisor (Pro, Enterprise, Education).
 	hv := run("powershell", "-NoProfile", "-NonInteractive", "-Command",
 		"if (Get-Command Get-VM -ErrorAction SilentlyContinue) { try { Get-VMHost | Out-Null; 'yes' } catch { 'denied' } } else { 'no' }")
 	i.Virt.HyperV = hv == "yes"
-	present := strings.EqualFold(run("powershell", "-NoProfile", "-NonInteractive", "-Command", "(Get-CimInstance Win32_ComputerSystem).HypervisorPresent"), "True")
 	switch {
 	case i.Virt.HyperV:
 		i.Virt.Detail = "Hyper-V"
 	case hv == "denied":
 		i.Virt.Detail = "Hyper-V is on, but this user is not in the Hyper-V Administrators group"
 	}
-	if whpxErr == nil && present {
+	if whpx {
 		i.Virt.Accel = "whpx"
 		if i.Virt.Detail == "" {
 			i.Virt.Detail = "Windows Hypervisor Platform"
+		} else {
+			i.Virt.Detail += " and the Windows Hypervisor Platform"
 		}
 	}
 	if i.Virt.Detail == "" {
@@ -79,4 +84,17 @@ func itoa(n int) string {
 		n /= 10
 	}
 	return string(b[p:])
+}
+
+// whpxUsable asks the Windows Hypervisor Platform whether it can run VMs:
+// WHvGetCapability(WHvCapabilityCodeHypervisorPresent), as QEMU does.
+func whpxUsable() bool {
+	dll := windows.NewLazySystemDLL("WinHvPlatform.dll")
+	proc := dll.NewProc("WHvGetCapability")
+	if proc.Find() != nil {
+		return false
+	}
+	var present, written uint32
+	hr, _, _ := proc.Call(0, uintptr(unsafe.Pointer(&present)), 4, uintptr(unsafe.Pointer(&written)))
+	return whpxAnswer(hr, present)
 }

@@ -22,6 +22,8 @@ func objectQuery(it manifest.Item) (get, remove string) {
 	case manifest.PathEntry: // windows:user-path, Line = the directory dtlab added
 		get = "([Environment]::GetEnvironmentVariable('Path','User') -split ';') -contains " + ps(it.Line)
 		return "(" + get + ")", "$p = ([Environment]::GetEnvironmentVariable('Path','User') -split ';' | Where-Object { $_ -ne " + ps(it.Line) + " }) -join ';'; [Environment]::SetEnvironmentVariable('Path', $p, 'User')"
+	case manifest.HyperVFW:
+		return "Get-NetFirewallRule -Name " + ps(it.Path), "Remove-NetFirewallRule -Name " + ps(it.Path)
 	case manifest.HyperVNAT:
 		return "Get-NetNat -Name " + ps(it.Path), "Remove-NetNat -Name " + ps(it.Path) + " -Confirm:$false"
 	}

@@ -70,7 +70,7 @@ func Plan(m *manifest.Manifest, root string, probe Prober) []Entry {
 }
 
 func rank(k manifest.Kind) int {
-	return map[manifest.Kind]int{manifest.HostVMProc: 0, manifest.HyperVVM: 0, manifest.HyperVNAT: 1, manifest.HyperVNet: 2, manifest.Backend: 3, manifest.Dir: 4, manifest.File: 5, manifest.PathEntry: 6, manifest.Binary: 7}[k]
+	return map[manifest.Kind]int{manifest.HostVMProc: 0, manifest.HyperVVM: 0, manifest.HyperVNAT: 1, manifest.HyperVFW: 1, manifest.HyperVNet: 2, manifest.Backend: 3, manifest.Dir: 4, manifest.File: 5, manifest.PathEntry: 6, manifest.Binary: 7}[k]
 }
 
 // Prober checks and removes objects outside the file system (Hyper-V).
@@ -190,7 +190,11 @@ func Run(ctx context.Context, es []Entry, o Options) Result {
 			}
 			r.Scheduled, err = removeSelf(e.Item.Path)
 		default:
-			err = o.Prober.Remove(ctx, e.Item)
+			// StopVMs (dtlab destroy) has usually removed the VMs and the
+			// network already: only what is still there is removed here.
+			if o.Prober.Exists(e.Item) {
+				err = o.Prober.Remove(ctx, e.Item)
+			}
 		}
 		if err != nil {
 			o.Log("%s %s: %v", e.Item.Kind, e.Item.Path, err)
@@ -296,6 +300,15 @@ func removeLine(file, line string) error {
 		mode = st.Mode().Perm()
 	}
 	return os.WriteFile(file, []byte(strings.Join(out, "\n")), mode)
+}
+
+// deleteLaterCmdLine is the cmd.exe command line that deletes p once the
+// running dtlab has exited: it tries every second for a minute, since dtlab
+// may still be checking for leftovers when the first try comes. /S keeps the
+// quotes around the path, which may have spaces, as they are.
+func deleteLaterCmdLine(p string) string {
+	q := `"` + p + `"`
+	return `cmd /S /C "for /L %i in (1,1,60) do @(ping -n 2 127.0.0.1 >NUL & del /F /Q ` + q + ` 2>NUL & if not exist ` + q + ` exit)"`
 }
 
 // removeSelf deletes the program; on Windows a running .exe cannot be
