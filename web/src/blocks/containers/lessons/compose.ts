@@ -181,7 +181,7 @@ export const composeLesson: Lesson = {
       step: 'practice',
       machine: 'sim',
       setup: dockerHost({ cwd: '~/shop', files: [{ path: '~/shop/compose.yaml', content: COMPOSE_RACE }] }, { pull: ['postgres:17-alpine', 'trainer/api:1.0', 'nginx:1.30-alpine', 'alpine:3.22'] }),
-      intro: bi('В каталоге `~/shop` лежит compose.yaml с базой и API. Редактора на машине нет, поэтому файл удобно переписать целиком командой `cat > compose.yaml <<\'EOF\'`: после неё вставьте текст файла и закончите его строкой `EOF`. Машина учебная, и сломать её нельзя, а кнопка «Сбросить машину» вернёт исходный файл.', '`~/shop` holds a compose.yaml with a database and an API. There is no editor on the machine, so the file is easiest to rewrite whole with `cat > compose.yaml <<\'EOF\'`: after it paste the file text and end it with an `EOF` line. The machine is a training one and cannot be broken, and the “Reset this screen” button brings the original file back.'),
+      intro: bi('В каталоге `~/shop` лежит compose.yaml с базой и API. Редактора на машине нет, поэтому файл удобно переписать целиком командой `cat > compose.yaml <<\'EOF\'`: после неё вставьте текст файла и закончите его строкой `EOF`. Машина учебная, и сломать её нельзя, а кнопка «Сбросить машину» вернёт исходный файл.', '`~/shop` holds a compose.yaml with a database and an API. There is no editor on the machine, so the file is easiest to rewrite whole with `cat > compose.yaml <<\'EOF\'`: after it paste the file text and end it with an `EOF` line. The machine is a training one and cannot be broken, and the “Reset machine” button brings the original file back.'),
       tasks: [
         {
           id: 'up',
@@ -201,7 +201,10 @@ export const composeLesson: Lesson = {
           chips: 'cat > compose.yaml <<EOF … EOF; docker compose up -d --force-recreate',
           concepts: ['docker.healthcheck'],
           docRef: web('compose/how-tos/startup-order'),
-          hints: { H1: bi('Нужны две правки: блок `healthcheck` у сервиса db и длинная форма `depends_on` с условием у сервиса api.', 'Two edits: a `healthcheck` block for db, the long form of `depends_on` with a condition for api.') },
+          hints: {
+            H1: bi('Нужны две правки: блок `healthcheck` у сервиса db и длинная форма `depends_on` с условием у сервиса api.', 'Two edits: a `healthcheck` block for db, the long form of `depends_on` with a condition for api.'),
+            H2: bi('У сервиса db под полем `volumes` добавьте блок проверки готовности, а у сервиса api замените короткий список `depends_on` длинной формой. Отступы считаются пробелами, по два на каждый уровень вложенности:\n\n```yaml\n  db:\n    healthcheck:\n      test: ["CMD-SHELL", "pg_isready -U postgres"]\n      interval: 2s\n      retries: 10\n  api:\n    depends_on:\n      db:\n        condition: service_healthy\n```\n\nФайл удобнее переписать целиком командой `cat > compose.yaml <<\'EOF\'`, сохранив в нём остальные поля исходного файла.', 'Under the `volumes` field of the db service add a readiness check block, and in the api service replace the short `depends_on` list with the long form. Indentation is counted in spaces, two per nesting level:\n\n```yaml\n  db:\n    healthcheck:\n      test: ["CMD-SHELL", "pg_isready -U postgres"]\n      interval: 2s\n      retries: 10\n  api:\n    depends_on:\n      db:\n        condition: service_healthy\n```\n\nThe file is easier to rewrite whole with `cat > compose.yaml <<\'EOF\'`, keeping the other fields of the original file.'),
+          },
         },
         {
           id: 'persist',
