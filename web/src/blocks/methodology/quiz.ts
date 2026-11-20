@@ -612,6 +612,102 @@ export const quiz: QuizItem[] = [
       { id: 'gen', text: bi('Генеративная', 'Generative'), why: bi('В генеративной культуре новость сразу ушла бы к тем, кто может её исправить.', 'In a generative culture the news would have gone at once to those who can fix it.') },
     ],
   },
+  // ── questions about the learner's own runs on the board in the terminal ──
+  {
+    id: 'method.q.practice-wip',
+    kind: 'mcq',
+    concepts: ['method.wip', 'method.switching'],
+    prompt: bi(
+      'На доске в практике без лимитов за пять дней не закончилась ни одна задача, а в работе одновременно было в среднем 14 карточек. С лимитами «люди плюс один» те же четыре человека закончили шесть задач, и каждая прошла путь за три дня. Почему лимит ускорил работу, хотя мощность людей не изменилась?',
+      'On the practice board without limits not one task was finished in five days, and on average 14 cards were in progress at once. With the limits “people plus one” the same four people finished six tasks, and each went through in three days. Why did the limit speed the work up, although people’s capacity did not change?',
+    ),
+    options: [
+      { id: 'switch', text: bi('У каждого человека стало меньше карточек сразу, меньше времени уходило на переключение, и карточки доходили до конца', 'Each person had fewer cards at once, less time went on switching, and the cards got finished'), correct: true },
+      { id: 'cap', text: bi('Лимит прибавил людям мощности', 'The limit gave people more capacity'), why: bi('Мощность в этом прогоне каждый день одна и та же, 3 очка у каждого человека. Изменилось только то, на сколько карточек эта мощность делилась.', 'Capacity in this run is the same every day, 3 points for each person. Only the number of cards it was split between changed.') },
+      { id: 'drop', text: bi('Лимит убрал с доски лишние задачи', 'The limit removed the extra tasks from the board'), why: bi('Задачи никуда не делись: они ждали в очереди слева, пока для них освободится место. Ожидание в очереди ничего не стоит, а лишняя карточка в работе отнимает у человека время.', 'The tasks did not go anywhere: they waited in the queue on the left until there was room for them. Waiting in a queue costs nothing, while an extra card in progress takes a person’s time.') },
+    ],
+    explain: bi(
+      'Без лимитов автопилот затянул все 14 карточек к владельцу продукта. При пяти задачах и больше у человека остаётся полезной четверть времени, и эта четверть делилась ещё на 14 частей. С лимитом у него было две карточки, и каждая заканчивалась за день.',
+      'Without limits the autopilot pulled all 14 cards to the product owner. With five or more tasks a person keeps a quarter of the time for useful work, and that quarter was split into 14 parts more. With the limit there were two cards, and each was finished in a day.',
+    ),
+    refs: { lesson: 'methodology.flow' },
+  },
+  {
+    id: 'method.q.practice-swarm',
+    kind: 'mcq',
+    concepts: ['method.bottleneck', 'method.swarming'],
+    prompt: bi(
+      'На доске в практике к пятому дню в колонке `dev` стояли три карточки с галочкой, а тестировщик проверял одну. Когда к проверке перешёл DEV-2, за десять дней было готово семь задач вместо пяти. Почему перестановка помогла, хотя DEV-2 проверяет вдвое медленнее тестировщика?',
+      'On the practice board by day 5 the `dev` column had three ticked cards, and the tester was checking one. When DEV-2 moved to testing, seven tasks were done in ten days instead of five. Why did the move help, although DEV-2 tests half as fast as the tester?',
+    ),
+    options: [
+      { id: 'flow', text: bi('Система выдаёт столько, сколько успевает её самый медленный этап, а каждая карточка, которую проверил DEV-2, уходила к покупателям', 'The system delivers as much as its slowest stage manages, and every card DEV-2 checked went to the customers'), correct: true },
+      { id: 'dev', text: bi('Разработка стала работать быстрее', 'Development started working faster'), why: bi('Разработчиков на этапе стало меньше, а не больше. Готовых карточек в колонке `dev` и так было больше, чем успевала забрать проверка.', 'There were fewer developers on the stage, not more. The `dev` column already had more finished cards than testing could take.') },
+      { id: 'both', text: bi('Если бы к проверке перешли оба разработчика, вышло бы ещё больше', 'Had both developers moved to testing, even more would have been done'), why: bi('Тогда новый код никто не пишет, и через пару дней проверять становится нечего. В тренажёре так выходит четыре задачи вместо семи.', 'Then nobody writes new code, and after a couple of days there is nothing to test. In the trainer that gives four tasks instead of seven.') },
+    ],
+    explain: bi(
+      'Час простоя проверки потерян для всей системы, и восполнить его может только помощь узкому месту. Время второго разработчика, наоборот, было лишним, потому что его карточки всё равно ждали проверки.',
+      'An hour of testing standing idle is lost for the whole system, and only help for the bottleneck can make it up. The second developer’s time, on the contrary, was spare, because their cards waited for testing anyway.',
+    ),
+    refs: { lesson: 'methodology.bottleneck' },
+  },
+  {
+    id: 'method.q.practice-batch',
+    kind: 'mcq',
+    concepts: ['method.batch', 'method.cod'],
+    prompt: bi(
+      'На доске в практике на тех же бросках кубика ответ «начать все пять промо-задач сразу» даёт 85-й процентиль времени цикла в 12–13 дней, а очередь по стоимости задержки вместе с порядком CD3 даёт 5 дней. Откуда такая разница?',
+      'On the practice board, with the same dice, the answer “start all five promo tasks at once” gives an 85th percentile of cycle time of 12–13 days, and a queue by cost of delay together with the CD3 order gives 5 days. Where does the difference come from?',
+    ),
+    options: [
+      { id: 'wip', text: bi('Пять карточек разом увеличили незавершённую работу, и по закону Литтла каждая карточка пошла дольше, а очередь пускала их в работу по одной', 'Five cards at once raised the work in progress, and by Little’s law every card took longer, while the queue let them into work one at a time'), correct: true },
+      { id: 'order', text: bi('Порядок CD3 ставит промо-задачи в самый конец', 'The CD3 order puts the promo tasks at the very end'), why: bi('CD3 ставит вперёд задачи, дорогие в пересчёте на день работы, а промо-задачи как раз дорогие. Разницу дал не порядок, а то, сколько карточек вошло в работу одновременно.', 'CD3 puts first the tasks that are expensive per day of work, and the promo tasks are expensive. The difference came not from the order but from how many cards entered work at once.') },
+      { id: 'luck', text: bi('Во втором прогоне броски кубика оказались удачнее', 'The dice were luckier in the second run'), why: bi('Броски кубика в обоих прогонах одни и те же: тренажёр проигрывает одинаковые броски, поэтому разницу дали только ваши решения.', 'The dice are the same in both runs: the trainer replays the same rolls, so only your decisions made the difference.') },
+    ],
+    explain: bi(
+      'Это игра с монетами из начала урока, только на доске. Большая партия разом входит в работу и делит между собой внимание людей, а маленькая проходит путь быстро и освобождает место следующей.',
+      'This is the coin game from the start of the lesson, only on a board. A big batch enters work at once and splits people’s attention between its cards, while a small one goes through fast and makes room for the next.',
+    ),
+    refs: { lesson: 'methodology.batch' },
+  },
+  {
+    id: 'method.q.practice-sprint',
+    kind: 'mcq',
+    concepts: ['method.scrum'],
+    prompt: bi(
+      'На обзоре спринта в практике команда показала шесть готовых задач, а в колонках остались начатые карточки. Что из этого Scrum Guide называет инкрементом?',
+      'At the Sprint Review in the practice the team showed six finished tasks, and started cards were left in the columns. Which of these does the Scrum Guide call the Increment?',
+    ),
+    options: [
+      { id: 'done', text: bi('Шесть готовых задач, которые отвечают определению готовности', 'The six finished tasks that meet the Definition of Done'), correct: true },
+      { id: 'all', text: bi('Все карточки, которые побывали в работе за спринт', 'All the cards that were in progress during the Sprint'), why: bi('Начатая, но не законченная карточка покупателю ничего не даёт. Инкремент составляет только то, что отвечает определению готовности.', 'A started but unfinished card gives the customer nothing. The Increment is only what meets the Definition of Done.') },
+      { id: 'limits', text: bi('Лимиты, которые команда поставила на планировании', 'The limits the team set at the planning'), why: bi('Лимиты помогают решить, сколько работы взять, но они остаются частью плана, а результатом спринта служит готовая часть продукта.', 'The limits help to decide how much work to take, but they stay part of the plan, while the result of a Sprint is a finished piece of the product.') },
+    ],
+    explain: bi(
+      'Инкрементом называют работающую часть продукта, готовую к концу спринта. Поэтому на обзоре показывают законченное, а начатые карточки по Scrum Guide возвращаются в бэклог продукта, и владелец продукта решает, когда их продолжить.',
+      'The Increment is the working piece of the product that is ready by the end of the Sprint. So the review shows what is finished, and by the Scrum Guide started items go back to the Product Backlog, where the Product Owner decides when to continue them.',
+    ),
+    refs: { lesson: 'methodology.agile' },
+  },
+  {
+    id: 'method.q.practice-dora',
+    kind: 'mcq',
+    concepts: ['method.dora', 'method.batch'],
+    prompt: bi(
+      'В практике вы перевели выкладку с «раз в пять дней» на «раз в два дня», и выкладок стало примерно вдвое больше. Что при этом случилось со временем внесения изменения и почему?',
+      'In the practice you moved the deployments from “every five days” to “every two days”, and there were about twice as many of them. What happened to change lead time, and why?',
+    ),
+    options: [
+      { id: 'shorter', text: bi('Оно сократилось, потому что готовое изменение меньше ждёт ближайшей выкладки и уходит в меньшей партии', 'It got shorter, because a finished change waits less for the next deployment and leaves in a smaller batch'), correct: true },
+      { id: 'longer', text: bi('Оно выросло, потому что эксплуатация тратит на выкладки больше времени', 'It grew, because operations spends more time on deployments'), why: bi('Каждая ручная выкладка забирает у эксплуатации два очка работы, но изменения стали гораздо меньше ждать ближайшей выкладки, и это перевешивает.', 'Each manual deployment takes two points of work from operations, but changes now wait much less for the next deployment, and that outweighs it.') },
+      { id: 'same', text: bi('Не изменилось, потому что разработчики пишут код с прежней скоростью', 'It did not change, because the developers write code at the same speed'), why: bi('Время внесения изменения отсчитывают с момента, когда код уже написан, поэтому скорость разработчиков на него почти не влияет. Почти всё это время изменение ждёт выкладки.', 'Change lead time is counted from the moment the code is already written, so the developers’ speed barely affects it. Almost all of that time the change waits for a deployment.') },
+    ],
+    explain: bi(
+      'Это механика маленьких партий из урока о партиях. Чем чаще уходит выкладка, тем меньше в ней изменений и тем меньше каждое из них ждёт, а данные DORA показывают, что у большинства команд стабильность от этого не страдает.',
+      'This is the mechanics of small batches from the lesson on batches. The more often a deployment leaves, the fewer changes it holds and the less each of them waits, and the DORA data show that for most teams stability does not suffer from it.',
+    ),
+    refs: { lesson: 'methodology.dora' },
+  },
 ];
 
 /**
