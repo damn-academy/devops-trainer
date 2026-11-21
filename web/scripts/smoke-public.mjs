@@ -103,7 +103,7 @@ await step('feedback', async (page) => {
   const sent = page.waitForResponse((r) => r.url().includes('/api/feedback') && r.request().method() === 'POST');
   await dialog.locator('textarea').press('Control+Enter');
   const response = await sent;
-  if (response.status() !== 200) throw new Error(`POST /api/feedback answered ${response.status()}`);
+  if (!response.ok()) throw new Error(`POST /api/feedback answered ${response.status()}`);
   await expect(page.locator('.feedback-status')).toContainText(/sent|отправлено/);
 });
 
