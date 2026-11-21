@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -459,6 +460,21 @@ func env(key, fallback string) string {
 	}
 	return fallback
 }
+
+// envLimit reads a per-hour request limit; behind a proxy that hides client
+// addresses every learner shares one bucket, so the operator must size it.
+func envLimit(key string, fallback int) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	n, e := strconv.Atoi(v)
+	if e != nil || n < 1 {
+		log.Fatalf("%s must be a positive integer", key)
+	}
+	return n
+}
+
 func main() {
 	db, e := openDB(env("DATABASE_URL", "feedback.sqlite"))
 	if e != nil {
@@ -470,7 +486,7 @@ func main() {
 		log.Fatal("set ADMIN_TOKEN or ADMIN_USER and ADMIN_PASSWORD")
 	}
 	csrfHash := sha256.Sum256([]byte(token + "\x00" + password + "\x00csrf"))
-	s := &server{followLimit: limiter{max: 240}, db: db, origins: map[string]bool{}, token: token, user: user, password: password, csrf: hex.EncodeToString(csrfHash[:])}
+	s := &server{limit: limiter{max: envLimit("REPORT_LIMIT_PER_HOUR", 20)}, followLimit: limiter{max: envLimit("FOLLOW_LIMIT_PER_HOUR", 240)}, db: db, origins: map[string]bool{}, token: token, user: user, password: password, csrf: hex.EncodeToString(csrfHash[:])}
 	for _, o := range strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",") {
 		if o = strings.TrimSpace(o); o != "" {
 			s.origins[o] = true

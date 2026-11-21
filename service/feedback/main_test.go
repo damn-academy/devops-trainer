@@ -52,6 +52,16 @@ func TestRateLimit(t *testing.T) {
 		t.Fatal("independent bucket or refill failed")
 	}
 }
+func TestEnvLimit(t *testing.T) {
+	t.Setenv("REPORT_LIMIT_PER_HOUR", "")
+	if envLimit("REPORT_LIMIT_PER_HOUR", 20) != 20 {
+		t.Fatal("default not used")
+	}
+	t.Setenv("REPORT_LIMIT_PER_HOUR", "500")
+	if envLimit("REPORT_LIMIT_PER_HOUR", 20) != 500 {
+		t.Fatal("configured limit not used")
+	}
+}
 func TestDedup(t *testing.T) {
 	a, b := sample(), sample()
 	b.ID = "another-123"

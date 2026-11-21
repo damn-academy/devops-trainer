@@ -1,0 +1,51 @@
+# Rendered by deploy.sh: JOB_NAME, GIT_URL, GIT_SHA, DT_HOST and REGISTRIES are replaced.
+# Builds both images inside the cluster: the workstation uploads nothing.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: JOB_NAME
+  namespace: devops-trainer
+  labels: {app.kubernetes.io/name: build, app.kubernetes.io/part-of: devops-trainer}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 5400
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: build, app.kubernetes.io/part-of: devops-trainer}
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: tools
+          image: golang:1.26-bookworm
+          command: [bash, /scripts/build.sh, tools]
+          env: &env
+            - {name: GIT_URL, value: 'GIT_URL'}
+            - {name: GIT_SHA, value: 'GIT_SHA'}
+            - {name: DT_HOST, value: 'DT_HOST'}
+            - {name: REGISTRIES, value: 'REGISTRIES'}
+            - {name: GOCACHE, value: /work/.go-cache}
+            - {name: GOPATH, value: /work/.go}
+          resources:
+            requests: {cpu: 500m, memory: 512Mi}
+            limits: {memory: 2Gi}
+          volumeMounts: &mounts
+            - {name: work, mountPath: /work}
+            - {name: scripts, mountPath: /scripts}
+            - {name: shm, mountPath: /dev/shm}
+      containers:
+        - name: images
+          image: mcr.microsoft.com/playwright:v1.65.1-noble
+          command: [bash, /scripts/build.sh, images]
+          env: *env
+          resources:
+            requests: {cpu: 500m, memory: 2Gi}
+            limits: {memory: 4Gi}
+          volumeMounts: *mounts
+      volumes:
+        - name: work
+          emptyDir: {sizeLimit: 12Gi}
+        - name: scripts
+          configMap: {name: build-script}
+        - name: shm
+          emptyDir: {medium: Memory, sizeLimit: 512Mi}

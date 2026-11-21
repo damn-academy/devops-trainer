@@ -1,0 +1,154 @@
+# Rendered by deploy.sh: WEB_IMAGE, FEEDBACK_IMAGE, DT_HOST, BUILD_ID and FEEDBACK_NODE are replaced.
+# The Secret feedback-secrets (ADMIN_TOKEN) is created by deploy.sh, never committed.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devops-trainer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: devops-trainer
+  labels: {app.kubernetes.io/name: web, app.kubernetes.io/part-of: devops-trainer}
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector: {matchLabels: {app.kubernetes.io/name: web}}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: web, app.kubernetes.io/part-of: devops-trainer}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 101, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: web
+          image: WEB_IMAGE
+          ports: [{name: http, containerPort: 8080}]
+          readinessProbe: {httpGet: {path: /healthz, port: http}}
+          livenessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 20}
+          resources:
+            requests: {cpu: 20m, memory: 32Mi}
+            limits: {memory: 128Mi}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: devops-trainer
+spec:
+  selector: {app.kubernetes.io/name: web}
+  ports: [{name: http, port: 80, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feedback
+  namespace: devops-trainer
+  labels: {app.kubernetes.io/name: feedback, app.kubernetes.io/part-of: devops-trainer}
+spec:
+  replicas: 1 # SQLite: one writer.
+  revisionHistoryLimit: 5
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app.kubernetes.io/name: feedback}}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: feedback, app.kubernetes.io/part-of: devops-trainer}
+    spec:
+      # SQLite lives on the node's disk (/var survives reboots on Talos), so the
+      # pod is pinned to one node. A PVC would be better, but the stand's
+      # tenant quota leaves no room for the CDI importer that provisions one.
+      nodeSelector: {kubernetes.io/hostname: FEEDBACK_NODE}
+      securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+      initContainers:
+        - name: data-owner
+          image: busybox:1.37
+          command: [sh, -c, 'chown 65532:65532 /data && chmod 700 /data']
+          securityContext: {runAsNonRoot: false, runAsUser: 0, allowPrivilegeEscalation: false, capabilities: {drop: [ALL], add: [CHOWN, FOWNER]}}
+          resources:
+            requests: {cpu: 5m, memory: 8Mi}
+            limits: {memory: 32Mi}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+      containers:
+        - name: feedback
+          image: FEEDBACK_IMAGE
+          ports: [{name: http, containerPort: 6101}]
+          env:
+            - {name: ADDR, value: ':6101'}
+            - {name: DATABASE_URL, value: /data/feedback.sqlite}
+            - {name: ALLOWED_ORIGINS, value: 'https://DT_HOST'}
+            - {name: BUILD_ID, value: 'BUILD_ID'}
+            # The ingress hides client addresses (SSL passthrough), so every
+            # learner shares one bucket: these are effectively global limits.
+            - {name: REPORT_LIMIT_PER_HOUR, value: '300'}
+            - {name: FOLLOW_LIMIT_PER_HOUR, value: '3000'}
+            - {name: TMPDIR, value: /tmp}
+          envFrom:
+            - secretRef: {name: feedback-secrets}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 20m, memory: 32Mi}
+            limits: {memory: 256Mi}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+            - {name: tmp, mountPath: /tmp}
+          readinessProbe: {httpGet: {path: /healthz, port: http}}
+          livenessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 20}
+      volumes:
+        - name: data
+          hostPath: {path: /var/local/devops-trainer/feedback, type: DirectoryOrCreate}
+        - name: tmp
+          emptyDir: {sizeLimit: 64Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feedback
+  namespace: devops-trainer
+spec:
+  selector: {app.kubernetes.io/name: feedback}
+  ports: [{name: http, port: 6101, targetPort: http}]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  namespace: devops-trainer
+  annotations:
+    # Same ClusterIssuer as the Sankofa museum and dormer ingresses.
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [DT_HOST]
+      secretName: devops-trainer-tls
+  rules:
+    - host: DT_HOST
+      http:
+        paths:
+          - {path: /, pathType: Prefix, backend: {service: {name: web, port: {name: http}}}}
+---
+# Separate object so the access log can be off: thread URLs carry ?token=.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: feedback
+  namespace: devops-trainer
+  annotations:
+    nginx.ingress.kubernetes.io/enable-access-log: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [DT_HOST]
+      secretName: devops-trainer-tls
+  rules:
+    - host: DT_HOST
+      http:
+        paths:
+          - {path: /api/feedback, pathType: Prefix, backend: {service: {name: feedback, port: {name: http}}}}
+          - {path: /admin, pathType: Prefix, backend: {service: {name: feedback, port: {name: http}}}}
