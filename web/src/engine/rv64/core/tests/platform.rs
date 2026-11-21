@@ -360,6 +360,21 @@ fn lazy_virtio_block_defers_completion_then_restores_pending_request() {
     assert_eq!(c.memory.physical_read(status,1,Access::Read).unwrap(),0);
 }
 #[test]
+fn virtio_block_one_mib_request_includes_header_and_status() {
+    let mut c = Cpu::new(2 * 1024 * 1024);
+    c.memory.devices.disk = vec![0x5a; 1024 * 1024];
+    let h = RAM_BASE + 0x4000;
+    let status = RAM_BASE + 0x5000;
+    let data = RAM_BASE + 0x10000;
+    let (_, used) = queue(&mut c, 0x10000000, 0,
+        &[(h, 16, 1), (data, 1024 * 1024, 3), (status, 1, 2)]);
+    c.service_devices();
+    assert_eq!(c.memory.devices.read(0x10000070).unwrap() & 64, 0);
+    assert_eq!(c.memory.physical_read(used + 2, 2, Access::Read).unwrap(), 1);
+    assert_eq!(c.memory.physical_read(status, 1, Access::Read).unwrap(), 0);
+    assert_eq!(c.memory.physical_read(data + 1024 * 1024 - 1, 1, Access::Read).unwrap(), 0x5a);
+}
+#[test]
 fn virtio_rng_and_network_receive() {
     for (base, data) in [(0x10003000,vec![1,2,3]),(0x10001000,vec![4,5,6])] {
         let mut c=Cpu::new(0x10000); let buf=RAM_BASE+0x4000;

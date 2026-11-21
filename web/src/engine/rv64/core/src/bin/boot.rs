@@ -18,6 +18,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or("earlycon=sbi console=hvc0 rdinit=/bin/sh loglevel=7 nokaslr");
     let memory_mb = std::env::var("RV64_MEMORY_MB").ok().map(|v| v.parse::<usize>()).transpose()?.unwrap_or(512);
     let mut cpu = Cpu::new(memory_mb * 1024 * 1024);
+    let network = std::env::var("RV64_NET_PORT").ok().map(|port| -> std::io::Result<_> {
+        let socket = std::net::UdpSocket::bind("127.0.0.1:0")?;
+        socket.connect(format!("127.0.0.1:{port}"))?;
+        socket.set_nonblocking(true)?;
+        Ok(socket)
+    }).transpose()?;
     if let Some(path) = std::env::var_os("RV64_DISK") { cpu.memory.devices.disk = std::fs::read(path)?; }
     let entry = RAM_BASE + 0x200000;
     let rd = RAM_BASE + 0x8000000;
@@ -51,6 +57,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut output = String::new();
     let mut sent = false;
     let mut shell = false;
+    let probe = std::env::var_os("RV64_PROBE").is_some();
+    let mut probe_complete = false;
+    let mut ready_reported = false;
     while start.elapsed() < Duration::from_secs(seconds) && !cpu.stopped {
         cpu.time((start.elapsed().as_nanos() / 100) as u64);
         if cpu.memory.devices.entropy.len() < 4096 {
@@ -59,6 +68,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             cpu.memory.devices.entropy.extend(entropy);
         }
         cpu.service_devices();
+        if let Some(socket) = &network {
+            while let Some(frame) = cpu.memory.devices.net_tx.pop_front() {
+                socket.send(&frame)?;
+            }
+            let mut frame = [0u8; 65536];
+            loop {
+                match socket.recv(&mut frame) {
+                    Ok(n) if n >= 14 => cpu.memory.devices.net_rx.push_back(frame[..n].to_vec()),
+                    Ok(_) => {},
+                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => break,
+                    Err(e) => return Err(e.into()),
+                }
+            }
+        }
         if trace {
             for _ in 0..4096 {
                 if let Err(t) = cpu.step() {
@@ -119,6 +142,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             shell = true;
             break;
         }
+        if probe && !ready_reported && output.contains("\nRV64_NODE_READY") {
+            eprintln!("BOOT_READY_MS={}", start.elapsed().as_millis());
+            ready_reported = true;
+        }
+        if probe && output.contains("\nRV64_PROBE_DONE") {
+            probe_complete = true;
+            break;
+        }
         if benchmark
             && (output.contains("\nRV64_BENCH_DONE\r\n") || output.contains("\nRV64_BENCH_DONE\n"))
         {
@@ -145,15 +176,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     eprintln!(
-        "elapsed_ms={} retired={} effective_mips={:.3} shell={shell}",
+        "elapsed_ms={} retired={} effective_mips={:.3} shell={shell} probe_complete={probe_complete}",
         start.elapsed().as_millis(),
         cpu.retired,
         cpu.retired as f64 / start.elapsed().as_secs_f64() / 1e6
     );
     eprintln!("SBI_TIME_CALLS={} STIMECMP_WRITES={}",cpu.sbi_timer_calls,cpu.stimecmp_writes);
-    if !shell {
+    if !shell && !probe_complete {
         eprintln!("{}", cpu.memory.devices.diagnostics(&cpu.memory));
-        return Err("shell acceptance marker not reached".into());
+        return Err("guest acceptance marker not reached".into());
     }
     Ok(())
 }

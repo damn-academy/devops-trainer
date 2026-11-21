@@ -1,9 +1,11 @@
 import { RV64Machine } from './machine';
+import { createRV64Network } from './network';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown };
 let machine: RV64Machine | undefined;
+const services = createRV64Network(async path => path === 'probe.txt' ? { body: new TextEncoder().encode('RV64_LOCAL_HTTP_OK\n') } : null);
 try {
   const [kernel, initrd] = await Promise.all(['/rv64/vmlinuz.efi', '/rv64/alpine.cpio'].map(async u => (await fetch(u)).arrayBuffer()));
-  machine = new RV64Machine({ id: 'integration', kernel, initrd, httpDisk: { url: '/rv64/integration-disk.bin', bytes: 512, version: 'integration-5a-v1' }, cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr' });
+  machine = new RV64Machine({ id: 'integration', kernel, initrd, network: services.network, httpDisk: { url: '/rv64/integration-disk.bin', bytes: 512, version: 'integration-5a-v1' }, cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr' });
   await new Promise<void>((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error('boot timeout')), 90000);
     let text = '';
@@ -11,6 +13,8 @@ try {
   });
   const diskRead = await machine.exec('od -An -tu1 -N1 /dev/vda');
   if (!/\b90\b/.test(diskRead.out)) throw new Error(`lazy disk read failed: ${diskRead.out}`);
+  const net = await machine.exec('ip link set eth0 up && udhcpc -i eth0 -n -q && ip -4 addr show eth0 && nslookup mirror.lab 10.0.0.1 && wget -qO- http://mirror.lab/probe.txt');
+  if (net.exit || !net.out.includes('10.0.0.10') || !net.out.includes('RV64_LOCAL_HTTP_OK')) throw new Error(`network failed: ${net.out}`);
   await machine.exec('echo checkpoint-before > /tmp/checkpoint');
   machine.watchPaths(['/tmp/checkpoint']);
   const before = await machine.facts();
@@ -21,6 +25,6 @@ try {
   await machine.restore(snapshot); // Back-to-back requests must not lose the pause flag.
   const after = await machine.facts();
   if (after.files['/tmp/checkpoint']?.text !== before.files['/tmp/checkpoint']?.text) throw new Error('restore did not restore guest file');
-  host.rv64Result = { type: 'integration', facts: before.schema, lazyDiskByte: 90, kernel: before.env.kernel, snapshotBytes: snapshot.state.length, restoredFile: after.files['/tmp/checkpoint'] };
+  host.rv64Result = { type: 'integration', network: net.out, facts: before.schema, lazyDiskByte: 90, kernel: before.env.kernel, snapshotBytes: snapshot.state.length, restoredFile: after.files['/tmp/checkpoint'] };
 } catch (error) { host.rv64Result = { type: 'error', error: String(error) }; }
-finally { machine?.dispose(); }
+finally { machine?.dispose(); services.dispose(); }

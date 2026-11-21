@@ -22,6 +22,10 @@ copy_wasm() {
 case "${1:-help}" in
   sync) sync_core ;;
   copy-wasm) copy_wasm ;;
+  test-isa)
+    sync_core
+    k exec rv64-dev -- bash -ceu 'cd /work/src/core; RV64_ISA_DIR=/work/tests/isa cargo test --release --test upstream -- --ignored --nocapture'
+    ;;
   cargo)
     shift
     sync_core
@@ -41,5 +45,5 @@ case "${1:-help}" in
     '
     if [[ $1 == wasm ]]; then copy_wasm; fi
     ;;
-  *) echo 'Usage: scripts/rv64-dev.sh sync | cargo <args...> | bootstrap | wasm | build-wasm | copy-wasm'; exit 2 ;;
+  *) echo 'Usage: scripts/rv64-dev.sh sync | cargo <args...> | test-isa | bootstrap | wasm | build-wasm | copy-wasm'; exit 2 ;;
 esac

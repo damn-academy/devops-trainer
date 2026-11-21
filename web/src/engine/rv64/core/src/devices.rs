@@ -445,7 +445,11 @@ fn chain(mem: &Memory, q: Queue, mut idx: u16) -> Result<Vec<Desc>, ()> {
         let len = read(mem, p + 8, 4)? as u32;
         let flags = read(mem, p + 12, 2)? as u16;
         total += len as u64;
-        if total > 1024 * 1024 || flags & 4 != 0 {
+        // Linux may submit a 1 MiB data request plus its header/status. No
+        // SIZE_MAX is advertised, so a private 1 MiB chain limit is invalid.
+        // Bound the used length to its u32 wire representation; every buffer
+        // is independently RAM-checked below and traversal is queue-bounded.
+        if total > u32::MAX as u64 || flags & 4 != 0 {
             return Err(());
         }
         if len != 0 {
