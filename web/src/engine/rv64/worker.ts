@@ -1,12 +1,22 @@
 import { ByteRing, FrameRing } from './ring';
+import { HTTPBlockDevice, type HTTPDisk } from './block';
 // All async work finishes before entering the hart loop. Runtime input uses SAB only.
 interface Core {
+  set_mac(mac: Uint8Array): void;
+  snapshot(): Uint8Array;
+  restore(state: Uint8Array): void;
+  ticks(): number;
+  lazy_disk(bytes: number): void;
+  disk_missing(): Uint32Array;
+  disk_chunk(index: number, bytes: Uint8Array): void;
   run(count: number, ticks: number): number;
   net_receive(data: Uint8Array): void;
   net_take(): Uint8Array;
   disk(data: Uint8Array): void;
   free(): void;
   take_disk(): Uint8Array;
+  disk_state(): Uint8Array;
+  restore_disk(state: Uint8Array): void;
   stimecmp_writes(): number;
   input(data: Uint8Array): void;
   entropy(data: Uint8Array): void;
@@ -20,7 +30,7 @@ interface Core {
 interface Init {
   input: SharedArrayBuffer; output: SharedArrayBuffer; control: SharedArrayBuffer;
   netIn?: SharedArrayBuffer; netOut?: SharedArrayBuffer; disk?: ArrayBuffer;
-  kernel?: ArrayBuffer; initrd?: ArrayBuffer; program?: ArrayBuffer; cmdline?: string; memoryMB: number;
+  kernel?: ArrayBuffer; initrd?: ArrayBuffer; program?: ArrayBuffer; cmdline?: string; memoryMB: number; mac?: Uint8Array; httpDisk?: HTTPDisk;
 }
 self.onmessage = async ({ data }: MessageEvent<Init>) => {
   self.onmessage = null;
@@ -29,6 +39,9 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
     const mod = await import(/* @vite-ignore */ url);
     await mod.default();
     let core = new mod.Engine(data.memoryMB) as Core;
+    if (data.mac) core.set_mac(data.mac);
+    const disk = data.httpDisk ? new HTTPBlockDevice(data.httpDisk) : undefined;
+    if (disk) core.lazy_disk(disk.image.bytes);
     if (data.disk) core.disk(new Uint8Array(data.disk));
     if (data.program) core.load_program(new Uint8Array(data.program));
     else core.boot(new Uint8Array(data.kernel!), new Uint8Array(data.initrd!), data.cmdline ?? 'earlycon=sbi console=hvc0 rdinit=/bin/sh nokaslr');
@@ -38,11 +51,33 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
     const netOut = data.netOut ? new FrameRing(new ByteRing(data.netOut)) : undefined;
     const entropy = new Uint8Array(4096);
     let entropyAt = -Infinity;
+    let timeOffset = 0;
     let busyMicros = 0;
     let pending: Uint8Array = new Uint8Array(0);
     self.postMessage({ type: 'ready' });
     for (;;) {
       // Load the wake sequence BEFORE draining input: this closes the lost-wakeup window.
+      if (Atomics.load(control, 5)) {
+        const request = await new Promise<{ op: string; state?: Uint8Array; pending?: Uint8Array }>(resolve => {
+          self.onmessage = ({ data }) => { self.onmessage = null; resolve(data); };
+          self.postMessage({ type: 'paused' });
+        });
+        try {
+          if (request.op === 'snapshot') {
+            const state = core.snapshot();
+            self.postMessage({ type: 'checkpoint', state, pending }, [state.buffer]);
+          } else {
+            core.restore(request.state!); pending = request.pending ?? new Uint8Array(0);
+            timeOffset = core.ticks() - performance.now() * 10000;
+            entropyAt = -Infinity;
+            self.postMessage({ type: 'restored' });
+          }
+        } catch (error) { self.postMessage({ type: 'checkpoint-error', error: String(error) }); }
+        // Main thread copies ring state while the hart is quiescent.
+        await new Promise<void>(resolve => {
+          self.onmessage = () => { self.onmessage = null; resolve(); };
+        });
+      }
       const wake = Atomics.load(input.words, 2);
       if (Atomics.load(control, 0)) break;
       for (const frame of netIn?.read() ?? []) core.net_receive(frame);
@@ -55,9 +90,12 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
         if (pending.length) { const seq = Atomics.load(output.words, 2); Atomics.wait(output.words, 2, seq, 1); continue; }
       }
       const runStart = performance.now();
-      const state = core.run(4096, now * 10000);
+      const state = core.run(4096, now * 10000 + timeOffset);
       busyMicros += (performance.now() - runStart) * 1000;
       Atomics.store(control, 4, Math.round(busyMicros));
+      if (disk) {
+        for (const index of core.disk_missing()) core.disk_chunk(index, await disk.chunk(index));
+      }
       pending = core.output();
       for (let frame = core.net_take(); frame.length; frame = core.net_take()) {
         if (!netOut?.write(frame)) Atomics.add(control, 2, 1);
@@ -65,9 +103,11 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
       Atomics.store(control, 3, core.stimecmp_writes());
       Atomics.store(control, 1, Math.floor(core.retired() / 1000));
       if (state === 3) {
-        const disk = core.take_disk();
+        const savedDisk = core.disk_state();
         core.free(); core = new mod.Engine(data.memoryMB) as Core;
-        if (disk.length) core.disk(disk);
+        core.restore_disk(savedDisk);
+        if (data.mac) core.set_mac(data.mac);
+        timeOffset = 0;
         core.boot(new Uint8Array(data.kernel!), new Uint8Array(data.initrd!), data.cmdline ?? 'earlycon=sbi console=hvc0 rdinit=/init nokaslr');
         entropyAt = -Infinity; self.postMessage({ type: 'reset' }); continue;
       }

@@ -41,12 +41,23 @@ impl Engine {
             .map_err(|e| JsValue::from_str(&format!("program: {e:?}")))?;
         Ok(())
     }
+    pub fn snapshot(&self) -> Result<Vec<u8>, JsValue> {
+        self.cpu.snapshot().map_err(|e| JsValue::from_str(&e))
+    }
+    pub fn restore(&mut self, data: &[u8]) -> Result<(), JsValue> {
+        self.cpu.restore(data).map_err(|e| JsValue::from_str(&e))
+    }
+    pub fn ticks(&self) -> f64 { self.cpu.memory.host_ticks as f64 }
     pub fn input(&mut self, data: &[u8]) {
         self.cpu.input.extend(data);
         self.cpu.memory.devices.input.extend(data);
     }
     pub fn entropy(&mut self, data: &[u8]) {
         self.cpu.memory.devices.entropy.extend(data);
+    }
+    pub fn set_mac(&mut self, mac: &[u8]) -> Result<(), JsValue> {
+        if mac.len() != 6 || mac[0] & 1 != 0 { return Err(JsValue::from_str("invalid unicast MAC")); }
+        self.cpu.memory.devices.mac.copy_from_slice(mac); Ok(())
     }
     pub fn net_receive(&mut self, data: &[u8]) {
         self.cpu.memory.devices.net_rx.push_back(data.to_vec());
@@ -60,7 +71,24 @@ impl Engine {
             .unwrap_or_default()
     }
     pub fn stimecmp_writes(&self) -> f64 { self.cpu.stimecmp_writes as f64 }
+    pub fn disk_state(&self) -> Result<Vec<u8>, JsValue> {
+        let d = &self.cpu.memory.devices;
+        bincode::serialize(&(&d.disk, d.disk_bytes, &d.disk_chunks)).map_err(|e| JsValue::from_str(&e.to_string()))
+    }
+    pub fn restore_disk(&mut self, state: &[u8]) -> Result<(), JsValue> {
+        let (disk, bytes, chunks) = bincode::deserialize(state).map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let d = &mut self.cpu.memory.devices;
+        d.disk = disk; d.disk_bytes = bytes; d.disk_chunks = chunks;
+        Ok(())
+    }
     pub fn take_disk(&mut self) -> Vec<u8> { std::mem::take(&mut self.cpu.memory.devices.disk) }
+    pub fn lazy_disk(&mut self, bytes: f64) { self.cpu.memory.devices.disk_bytes = bytes as u64; }
+    pub fn disk_missing(&mut self) -> Vec<u32> {
+        std::mem::take(&mut self.cpu.memory.devices.disk_missing).into_iter().map(|i| i as u32).collect()
+    }
+    pub fn disk_chunk(&mut self, index: u32, bytes: &[u8]) -> Result<(), JsValue> {
+        self.cpu.memory.devices.disk_chunk(index as u64, bytes.to_vec()).map_err(|e| JsValue::from_str(&e))
+    }
     pub fn disk(&mut self, data: &[u8]) {
         self.cpu.memory.devices.disk = data.to_vec();
     }

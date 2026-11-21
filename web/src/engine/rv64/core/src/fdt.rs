@@ -85,8 +85,11 @@ pub fn build(ram_size: u64, initrd_start: u64, initrd_len: u64, cmdline: &str) -
     f.text("status", "okay");
     f.text(
         "riscv,isa",
-        "rv64imafdc_zicsr_zifencei_zicntr_zba_zbb_zbs_sstc",
+        "rv64imafdc_zicsr_zifencei_zicntr_zba_zbb_zbs_sstc_svadu",
     );
+    f.text("riscv,isa-base", "rv64i");
+    f.prop("riscv,isa-extensions", b"i\0m\0a\0f\0d\0c\0zicsr\0zifencei\0zicntr\0zba\0zbb\0zbs\0sstc\0svadu\0");
+    f.prop("riscv,has-stimecmp", &[]);
     f.text("mmu-type", "riscv,sv39");
     f.begin("interrupt-controller");
     f.num("#interrupt-cells", &[1]);
@@ -101,12 +104,18 @@ pub fn build(ram_size: u64, initrd_start: u64, initrd_len: u64, cmdline: &str) -
     f.num("#size-cells", &[2]);
     f.text("compatible", "simple-bus");
     f.prop("ranges", &[]);
+    f.begin("clint@2000000");
+    f.text("compatible", "riscv,clint0");
+    f.num("reg", &[0, 0x02000000, 0, 0x10000]);
+    f.num("interrupts-extended", &[1, 3, 1, 7]);
+    f.end();
     f.begin("plic@c000000");
     f.text("compatible", "riscv,plic0");
     f.num("reg", &[0, 0xc000000, 0, 0x4000000]);
     f.num("#interrupt-cells", &[1]);
     f.prop("interrupt-controller", &[]);
     f.num("riscv,ndev", &[31]);
+    f.num("riscv,max-priority", &[7]);
     f.num("phandle", &[2]);
     f.num("interrupts-extended", &[1, 11, 1, 9]);
     f.end();
@@ -114,6 +123,7 @@ pub fn build(ram_size: u64, initrd_start: u64, initrd_len: u64, cmdline: &str) -
         let addr = 0x10000000 + j * 0x1000;
         f.begin(&format!("virtio@{addr:x}"));
         f.text("compatible", "virtio,mmio");
+        f.prop("dma-coherent", &[]);
         f.num("reg", &[0, addr, 0, 0x1000]);
         f.num("interrupt-parent", &[2]);
         f.num("interrupts", &[j + 1]);

@@ -1,10 +1,12 @@
 //! SBI 2.0, single-hart platform. No firmware instruction stream is needed.
 use crate::{Access, Cpu, Mode};
-const EXTENSIONS: [u64; 8] = [
-    0x10, 0x54494d45, 0x735049, 0x52464e43, 0x48534d, 0x53525354, 0x4442434e, 0,
+const EXTENSIONS: [u64; 17] = [
+    0x10, 0x54494d45, 0x735049, 0x52464e43, 0x48534d, 0x53525354, 0x4442434e, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0x504d55,
 ];
 impl Cpu {
     pub fn boot_supervisor(&mut self, entry: u64, dtb: u64) {
+        self.memory.pmpcfg[0] = 0x1f;
+        self.memory.pmpaddr[0] = (1 << 54) - 1;
         self.pc = entry;
         self.mode = Mode::S;
         self.x[10] = 0;
@@ -14,7 +16,9 @@ impl Cpu {
         self.csr[0x106] = 7;
         self.csr[0x303] = 0x222;
         self.csr[0x302] = 0xb1ff;
-        self.csr[0x30a] = (1 << 63) | 1;
+        self.csr[0x30a] = (1 << 63) | (1 << 61);
+        self.memory.adue = true;
+        self.csr[0x300] = (self.csr[0x300] & !(3 << 11)) | (1 << 11);
     }
     pub(crate) fn sbi_call(&mut self) {
         let ext = self.x[17];
@@ -34,9 +38,18 @@ impl Cpu {
                 self.x[10] = self.input.pop_front().map(|v| v as u64).unwrap_or(u64::MAX);
                 return;
             }
+            (3, _) => self.csr[0x344] &= !2,
+            (4..=7, _) => {
+                let mask = if a == 0 { Ok(1) } else { self.memory.physical_read(a, 8, Access::Read) };
+                match mask {
+                    Ok(mask) if mask & 1 != 0 => { if ext == 4 { self.csr[0x344] |= 2; } else { self.memory.flush(); } }
+                    Ok(_) => {}, Err(_) => error = -5,
+                }
+            }
             (8, _) => self.stopped = true,
+            (0x504d55, 0) => value = 0,
             (0x10, 0) => value = 2 << 24,
-            (0x10, 1) => value = 0x0a000000, // experimental implementation ID
+            (0x10, 1) => value = 0x10000000, // experimental implementation ID
             (0x10, 2) => value = 1,
             (0x10, 3) => value = EXTENSIONS.contains(&a) as u64,
             (0x10, 4..=6) => {}

@@ -38,8 +38,9 @@ bindgen JS/types and optimized wasm to gitignored `web/public/rv64/`.
 `sync` uploads sources without compiling. No command runs local Cargo.
 Sync extracts into a temporary PVC directory, then replaces `/work/src/core`, so
 deleted local files do not survive remotely. Do not run concurrent sync/builds.
-`copy-wasm` fetches an existing build and checks SHA-256 before replacing local
-artifacts. Binaryen is pinned to 123; Debian Binaryen 108 breaks bindgen table exports.
+`copy-wasm` fetches an existing build in small retryable, hex-encoded chunks
+(`scripts/rv64-copy-wasm.py`) and checks all SHA-256 hashes before replacing local
+artifacts. This avoids repeated truncation of gzip streams through the API proxy. Binaryen is pinned to 123; Debian Binaryen 108 breaks bindgen table exports.
 
 ## Delete only these objects
 
@@ -136,3 +137,21 @@ and terminate that process. Pod deletion also terminates it.
 PID file removed. Only Pod `rv64-dev` and PVC `rv64-dev-work` remain from this
 task. The separate `rv64-dev-files.yaml` is an optional transfer workaround,
 not a service that should normally be deployed.
+
+## Second-pass verification
+
+`node src/engine/rv64/measure.mjs --integration` (from web/) boots Linux,
+reads a lazy HTTP range disk, collects dt.facts/v1, saves a sparse checkpoint,
+mutates a guest file and restores/checks its prior contents. `--boot --profile`
+saves Chrome V8 CPU tracing to gitignored `public/rv64/results/worker-trace.json`;
+profiled throughput is not comparable with normal measurements.
+
+The pod has linux-perf installed, but the host denies task-clock events
+(perf_event_paranoid=3). Do not change host permissions/sysctls to bypass this.
+
+Full kuberoot media can be exercised natively with `RV64_DISK=/work/guest/kuberoot/media.img`
+and cmdline `earlycon=sbi console=hvc0 rdinit=/init nokaslr
+kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs
+kuberoot.mode=install kuberoot.dev kuberoot.verbose`. It reaches stage-two kinit;
+the standalone runner has no DHCP peer, so it cannot provision a node. Its shell
+marker is intentionally not a valid acceptance criterion for kinit.

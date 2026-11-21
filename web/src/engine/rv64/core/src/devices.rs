@@ -1,7 +1,7 @@
 //! Modern virtio-mmio split queues and a single-hart PLIC.
 use crate::{Access, Memory};
 use std::collections::VecDeque;
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, serde::Serialize, serde::Deserialize)]
 struct Queue {
     size: u32,
     ready: u32,
@@ -10,6 +10,7 @@ struct Queue {
     used: u64,
     last: u16,
 }
+#[derive(serde::Serialize, serde::Deserialize)]
 struct Virtio {
     id: u32,
     feature_sel: u32,
@@ -34,6 +35,7 @@ impl Virtio {
         }
     }
 }
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Devices {
     dev: [Virtio; 4],
     priority: [u32; 32],
@@ -43,7 +45,11 @@ pub struct Devices {
     pub console: Vec<u8>,
     pub input: VecDeque<u8>,
     pub entropy: VecDeque<u8>,
+    pub mac: [u8; 6],
     pub disk: Vec<u8>,
+    pub disk_bytes: u64,
+    pub disk_chunks: std::collections::BTreeMap<u64, Vec<u8>>,
+    pub disk_missing: Vec<u64>,
     pub net_rx: VecDeque<Vec<u8>>,
     pub net_tx: VecDeque<Vec<u8>>,
 }
@@ -63,13 +69,36 @@ impl Default for Devices {
             console: vec![],
             input: VecDeque::new(),
             entropy: VecDeque::new(),
+            mac: [2, 0x44, 0x54, 0, 0, 1],
             disk: vec![],
+            disk_bytes: 0,
+            disk_chunks: Default::default(),
+            disk_missing: vec![],
             net_rx: VecDeque::new(),
             net_tx: VecDeque::new(),
         }
     }
 }
 impl Devices {
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn diagnostics(&self, mem: &Memory) -> String {
+        self.dev.iter().map(|d| format!("id={} status={:#x} irq={} queues={:?}", d.id, d.status, d.irq,
+            d.queues.iter().map(|q| (q.ready, q.size, q.last, read(mem,q.avail+2,2),read(mem,q.used+2,2))).collect::<Vec<_>>() )).collect::<Vec<_>>().join("\n")
+    }
+
+    pub const BLOCK_CHUNK: u64 = 256 * 1024;
+    pub fn disk_size(&self) -> u64 { if self.disk_bytes != 0 { self.disk_bytes } else { self.disk.len() as u64 } }
+    pub fn disk_chunk(&mut self, index: u64, data: Vec<u8>) -> Result<(), String> {
+        let start = index.checked_mul(Self::BLOCK_CHUNK).ok_or("disk chunk overflow")?;
+        let expected = self.disk_bytes.saturating_sub(start).min(Self::BLOCK_CHUNK) as usize;
+        if expected == 0 || data.len() != expected { return Err("invalid disk chunk length".into()); }
+        self.disk_chunks.entry(index).or_insert(data);
+        Ok(())
+    }
+
+    fn features(id: u32) -> u64 {
+        (1 << 32) | match id { 2 => (1 << 2) | (1 << 6) | (1 << 9), 1 => (1 << 5) | (1 << 16), _ => 0 }
+    }
     fn pending(&self) -> u32 {
         self.dev
             .iter()
@@ -77,10 +106,10 @@ impl Devices {
             .fold(0, |p, (i, d)| p | if d.irq != 0 { 1 << (i + 1) } else { 0 })
             & !self.claimed
     }
-    fn best(&self, ctx: usize) -> u32 {
+    fn best(&self, ctx: usize, threshold: u32) -> u32 {
         let p = self.pending() & self.enable[ctx];
         let mut best = 0;
-        let mut priority = self.threshold[ctx];
+        let mut priority = threshold;
         for i in 1..32 {
             if p & (1 << i) != 0 && self.priority[i] > priority {
                 best = i;
@@ -90,7 +119,7 @@ impl Devices {
         best as u32
     }
     pub fn interrupts(&self) -> u64 {
-        ((self.best(0) != 0) as u64) << 11 | ((self.best(1) != 0) as u64) << 9
+        ((self.best(0, self.threshold[0]) != 0) as u64) << 11 | ((self.best(1, self.threshold[1]) != 0) as u64) << 9
     }
     pub fn read(&mut self, addr: u64) -> Option<u64> {
         if (0xc000000..0x10000000).contains(&addr) {
@@ -103,7 +132,7 @@ impl Devices {
                 0x200000 => self.threshold[0],
                 0x201000 => self.threshold[1],
                 0x200004 | 0x201004 => {
-                    let v = self.best(((off - 0x200004) / 4096) as usize);
+                    let v = self.best(((off - 0x200004) / 4096) as usize, 0);
                     if v != 0 {
                         self.claimed |= 1 << v;
                     }
@@ -123,13 +152,7 @@ impl Devices {
             4 => 2,
             8 => d.id,
             12 => 0x4454524e,
-            0x10 => {
-                if d.feature_sel == 1 {
-                    1
-                } else {
-                    0
-                }
-            }
+            0x10 => if d.feature_sel < 2 { (Self::features(d.id) >> (d.feature_sel * 32)) as u32 } else { 0 },
             0x34 => {
                 if d.queue < 2 {
                     128
@@ -142,8 +165,14 @@ impl Devices {
             0x60 => d.irq,
             0x70 => d.status,
             0xfc => 0,
-            0x100 if d.id == 2 => (self.disk.len() as u64 / 512) as u32,
-            0x104 if d.id == 2 => ((self.disk.len() as u64 / 512) >> 32) as u32,
+            0x100 if d.id == 2 => (self.disk_size() / 512) as u32,
+            0x104 if d.id == 2 => ((self.disk_size() / 512) >> 32) as u32,
+            0x10c if d.id == 2 => 126,
+            0x114 if d.id == 2 => 512,
+            0x120 if d.id == 2 => 1 | (1 << 16),
+            0x100 if d.id == 1 => u32::from_le_bytes(self.mac[..4].try_into().unwrap()),
+            0x104 if d.id == 1 => self.mac[4] as u32 | ((self.mac[5] as u32) << 8) | (1 << 16),
+            0x108 if d.id == 1 => 1,
             _ => 0,
         } as u64)
     }
@@ -156,7 +185,10 @@ impl Devices {
                 0x2080 => self.enable[1] = v,
                 0x200000 => self.threshold[0] = v & 7,
                 0x201000 => self.threshold[1] = v & 7,
-                0x200004 | 0x201004 if v < 32 => self.claimed &= !(1 << v),
+                0x200004 | 0x201004 if v < 32 => {
+                    let ctx = ((off - 0x200004) / 4096) as usize;
+                    if self.enable[ctx] & (1 << v) != 0 { self.claimed &= !(1 << v); }
+                }
                 _ => {}
             }
             return true;
@@ -180,7 +212,7 @@ impl Devices {
                     *d = Virtio::new(d.id)
                 } else {
                     d.status = v;
-                    if v & 8 != 0 && (d.driver & !(1u64 << 32) != 0 || d.driver & (1 << 32) == 0) {
+                    if v & 8 != 0 && (d.driver & !Self::features(d.id) != 0 || d.driver & (1 << 32) == 0) {
                         d.status &= !8
                     }
                 }
@@ -206,7 +238,7 @@ impl Devices {
     pub fn service(&mut self, mem: &mut Memory) {
         for dev in 0..4 {
             for qi in 0..2 {
-                if self.dev[dev].status & 4 == 0 || self.dev[dev].status & 128 != 0 {
+                if self.dev[dev].status & 4 == 0 || self.dev[dev].status & (128 | 64) != 0 {
                     continue;
                 }
                 let mut q = self.dev[dev].queues[qi];
@@ -217,15 +249,15 @@ impl Devices {
                     || !range(mem, q.avail, 6 + q.size as u64 * 2)
                     || !range(mem, q.used, 6 + q.size as u64 * 8)
                 {
-                    self.dev[dev].status |= 64;
+                    self.dev[dev].status |= 64; self.dev[dev].irq |= 2;
                     continue;
                 }
                 let Ok(avail) = read(mem, q.avail + 2, 2) else {
-                    self.dev[dev].status |= 64;
+                    self.dev[dev].status |= 64; self.dev[dev].irq |= 2;
                     continue;
                 };
                 if (avail as u16).wrapping_sub(q.last) > q.size as u16 {
-                    self.dev[dev].status |= 64;
+                    self.dev[dev].status |= 64; self.dev[dev].irq |= 2;
                     continue;
                 }
                 for _ in 0..q.size {
@@ -237,6 +269,27 @@ impl Devices {
                         || (dev == 1 && qi == 0 && self.net_rx.is_empty())
                     {
                         break;
+                    }
+                    // Keep the descriptor pending while the host fetches immutable base
+                    // chunks. Preflight the whole request before any guest/DMA mutation.
+                    if dev == 0 && qi == 0 && self.disk_bytes != 0 {
+                        if let Ok(head) = read(mem, q.avail + 4 + 2 * (q.last as u64 % q.size as u64), 2) {
+                            if let Ok(ds) = chain(mem, q, head as u16) {
+                                if ds.len() >= 2 {
+                                    if let (Ok(op), Ok(sector)) = (read(mem, ds[0].addr, 4), read(mem, ds[0].addr + 8, 8)) {
+                                        let bytes: u64 = ds[1..ds.len()-1].iter().map(|d| d.len as u64).sum();
+                                        if let Some(start) = sector.checked_mul(512) {
+                                            if op <= 1 && bytes > 0 && start.checked_add(bytes).map_or(false, |end| end <= self.disk_bytes) {
+                                                for i in start / Self::BLOCK_CHUNK..=(start + bytes - 1) / Self::BLOCK_CHUNK {
+                                                    if !self.disk_chunks.contains_key(&i) && !self.disk_missing.contains(&i) { self.disk_missing.push(i); }
+                                                }
+                                                if !self.disk_missing.is_empty() { break; }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     let result = (|| -> Result<(), ()> {
                         let head =
@@ -278,14 +331,13 @@ impl Devices {
                                     }
                                     frame.extend(bytes(mem, d.addr, d.len)?);
                                 }
-                                if frame.len() < 12 {
-                                    return Err(());
-                                }
-                                self.net_tx.push_back(frame[12..].to_vec());
+                                if frame.len() >= 12 + 14 { self.net_tx.push_back(frame[12..].to_vec()); }
                             }
                             (1, 0) => {
                                 let frame = self.net_rx.pop_front().ok_or(())?;
-                                let data = [vec![0; 12], frame].concat();
+                                let mut header = vec![0; 12];
+                                header[10] = 1; // Modern virtio_net_hdr.num_buffers, not an Ethernet header.
+                                let data = [header, frame].concat();
                                 let mut pos = 0;
                                 for d in &chain {
                                     if d.flags & 2 == 0 {
@@ -318,7 +370,9 @@ impl Devices {
                                 let sector = read(mem, h.addr + 8, 8)?;
                                 let mut offset = sector.checked_mul(512).ok_or(())?;
                                 let mut status = 0u64;
-                                if op > 1 {
+                                if op == 4 {
+                                    // RAM-backed overlay writes are committed before completing OUT.
+                                } else if op > 1 {
                                     status = 2
                                 } else {
                                     for d in &chain[1..chain.len() - 1] {
@@ -326,7 +380,7 @@ impl Devices {
                                             return Err(());
                                         }
                                         let stop = offset.checked_add(d.len as u64).ok_or(())?;
-                                        if stop > self.disk.len() as u64 {
+                                        if stop > self.disk_size() {
                                             status = 1;
                                             break;
                                         }
@@ -336,12 +390,14 @@ impl Devices {
                                                     mem,
                                                     d.addr + j as u64,
                                                     1,
-                                                    self.disk[offset as usize + j as usize] as u64,
+                                                    if self.disk_bytes == 0 { self.disk[offset as usize + j as usize] as u64 }
+                                                    else { let p = offset + j as u64; self.disk_chunks[&(p / Self::BLOCK_CHUNK)][(p % Self::BLOCK_CHUNK) as usize] as u64 },
                                                 )?;
                                                 written += 1
                                             } else {
-                                                self.disk[offset as usize + j as usize] =
-                                                    read(mem, d.addr + j as u64, 1)? as u8;
+                                                let value = read(mem, d.addr + j as u64, 1)? as u8;
+                                                if self.disk_bytes == 0 { self.disk[offset as usize + j as usize] = value; }
+                                                else { let p = offset + j as u64; self.disk_chunks.get_mut(&(p / Self::BLOCK_CHUNK)).ok_or(())?[(p % Self::BLOCK_CHUNK) as usize] = value; }
                                             }
                                         }
                                         offset = stop;
@@ -358,11 +414,11 @@ impl Devices {
                         write(mem, slot + 4, 4, written)?;
                         write(mem, q.used + 2, 2, used.wrapping_add(1) as u64)?;
                         q.last = q.last.wrapping_add(1);
-                        self.dev[dev].irq |= 1;
+                        if read(mem, q.avail, 2)? & 1 == 0 { self.dev[dev].irq |= 1; }
                         Ok(())
                     })();
                     if result.is_err() {
-                        self.dev[dev].status |= 64;
+                        self.dev[dev].status |= 64; self.dev[dev].irq |= 2;
                         break;
                     }
                 }

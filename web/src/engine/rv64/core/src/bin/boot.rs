@@ -16,7 +16,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .get(4)
         .map(String::as_str)
         .unwrap_or("earlycon=sbi console=hvc0 rdinit=/bin/sh loglevel=7 nokaslr");
-    let mut cpu = Cpu::new(512 * 1024 * 1024);
+    let memory_mb = std::env::var("RV64_MEMORY_MB").ok().map(|v| v.parse::<usize>()).transpose()?.unwrap_or(512);
+    let mut cpu = Cpu::new(memory_mb * 1024 * 1024);
+    if let Some(path) = std::env::var_os("RV64_DISK") { cpu.memory.devices.disk = std::fs::read(path)?; }
     let entry = RAM_BASE + 0x200000;
     let rd = RAM_BASE + 0x8000000;
     let dtb = RAM_BASE + 0x4000000;
@@ -150,6 +152,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     eprintln!("SBI_TIME_CALLS={} STIMECMP_WRITES={}",cpu.sbi_timer_calls,cpu.stimecmp_writes);
     if !shell {
+        eprintln!("{}", cpu.memory.devices.diagnostics(&cpu.memory));
         return Err("shell acceptance marker not reached".into());
     }
     Ok(())

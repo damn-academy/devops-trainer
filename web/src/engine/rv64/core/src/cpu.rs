@@ -1,5 +1,5 @@
 use crate::memory::{Access, Memory, RAM_BASE};
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[repr(u64)]
 pub enum Mode {
     U = 0,
@@ -28,11 +28,19 @@ fn word(v: u64) -> u64 {
 }
 const SSTATUS: u64 =
     (1 << 1) | (1 << 5) | (1 << 8) | (3 << 13) | (1 << 18) | (1 << 19) | (3 << 32) | (1 << 63);
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Cpu {
+    #[cfg(not(target_arch = "wasm32"))]
+    #[serde(skip)]
+    pub trace_enabled: bool,
+    #[cfg(not(target_arch = "wasm32"))]
+    #[serde(skip)]
+    pub last_trace: Option<TraceEvent>,
     pub x: [u64; 32],
     pub f: [u64; 32],
     pub pc: u64,
     pub mode: Mode,
+    #[serde(with = "serde_big_array::BigArray")]
     pub csr: [u64; 4096],
     pub memory: Memory,
     pub retired: u64,
@@ -48,9 +56,16 @@ pub struct Cpu {
     reservation: Option<(u64, usize)>,
     wrote_instret: bool,
 }
+#[cfg(not(target_arch = "wasm32"))]
+#[derive(Clone, Copy, Debug)]
+pub enum TraceEvent { Instruction { pc: u64, raw: u32 }, Trap { pc: u64, trap: Trap, target: u64 } }
 impl Cpu {
     pub fn new(bytes: usize) -> Self {
         let mut cpu = Self {
+            #[cfg(not(target_arch = "wasm32"))]
+            trace_enabled: false,
+            #[cfg(not(target_arch = "wasm32"))]
+            last_trace: None,
             x: [0; 32],
             f: [0; 32],
             pc: RAM_BASE,
@@ -82,10 +97,15 @@ impl Cpu {
             | (1 << 20);
         cpu.csr[0x300] = (2 << 32) | (2 << 34);
         cpu.csr[0x14d] = u64::MAX;
+        cpu.csr[0x30a] = 1 << 61;
         cpu
     }
     pub fn time(&mut self, ticks: u64) {
-        self.memory.time = self.memory.time.max(ticks);
+        self.memory.time = self.memory.time.wrapping_add(ticks.saturating_sub(self.memory.host_ticks));
+        self.memory.host_ticks = self.memory.host_ticks.max(ticks);
+        self.refresh_timer();
+    }
+    fn refresh_timer(&mut self) {
         self.csr[0x344] = (self.csr[0x344] & !((1 << 7) | (1 << 3)))
             | ((self.memory.time >= self.memory.mtimecmp) as u64) << 7
             | (self.memory.msip as u64) << 3;
@@ -99,6 +119,10 @@ impl Cpu {
             cause: 2,
             value: ins as u64,
         }
+    }
+    fn status(&self) -> u64 {
+        let raw = self.csr[0x300] & !(1 << 63);
+        raw | (((raw >> 13) & 3 == 3) as u64) << 63
     }
     pub fn read_csr(&self, n: usize) -> Result<u64, Trap> {
         let err = Trap { cause: 2, value: 0 };
@@ -127,14 +151,19 @@ impl Cpu {
             1 => self.csr[3] & 31,
             2 => (self.csr[3] >> 5) & 7,
             3 => self.csr[3],
-            0x100 => self.csr[0x300] & SSTATUS,
+            0x100 => self.status() & SSTATUS,
+            0x300 => self.status(),
             0x104 => self.csr[0x304] & self.csr[0x303],
             0x144 => self.csr[0x344] & self.csr[0x303],
             0xc00 | 0xb00 => self.cycles,
             0xc01 => self.memory.time,
             0xc02 | 0xb02 => self.retired,
-            0xf11..=0xf15 | 0x10a | 0x3a0..=0x3af | 0x3b0..=0x3ef => 0,
-            0x7a0 => u64::MAX,
+            0xf11..=0xf15 | 0x10a => 0,
+            0x3a0 | 0x3a2 => {
+                let base = (n - 0x3a0) * 4;
+                (0..8).fold(0, |v, i| v | ((self.memory.pmpcfg[base+i] as u64) << (i*8)))
+            }
+            0x3b0..=0x3bf => self.memory.pmpaddr[n - 0x3b0],
             0x105
             | 0x106
             | 0x140..=0x143
@@ -167,18 +196,48 @@ impl Cpu {
             }
             0x100 => {
                 self.csr[0x300] =
-                    (self.csr[0x300] & !SSTATUS) | (v & SSTATUS & !(3 << 32)) | (2 << 32)
+                    (self.csr[0x300] & !SSTATUS) | (v & SSTATUS & !((3 << 32) | (1 << 63))) | (2 << 32)
             }
             0x104 => self.csr[0x304] = (self.csr[0x304] & !self.csr[0x303]) | (v & self.csr[0x303]),
             0x144 => self.csr[0x344] = (self.csr[0x344] & !2) | (v & 2),
-            0x344 => self.csr[n] = (self.csr[n] & !0x222) | (v & 0x222),
-            0x301 | 0x7a0 | 0x10a | 0x3a0..=0x3af | 0x3b0..=0x3ef => {}
+            0x344 => {
+                let mask = if self.csr[0x30a] & (1 << 63) != 0 { 0x202 } else { 0x222 };
+                self.csr[n] = (self.csr[n] & !mask) | (v & mask);
+            }
+            0x301 | 0x10a => {}
+            0x3a0 | 0x3a2 => {
+                let base = (n - 0x3a0) * 4;
+                for i in 0..8 {
+                    if self.memory.pmpcfg[base+i] & 128 == 0 {
+                        let mut cfg = (v >> (i*8)) as u8 & 0x9f;
+                        if cfg & 3 == 2 { cfg &= !2; }
+                        self.memory.pmpcfg[base+i] = cfg;
+                    }
+                }
+                self.memory.flush();
+            }
+            0x3b0..=0x3bf => {
+                let i = n - 0x3b0;
+                if self.memory.pmpcfg[i] & 128 == 0 && !(i < 15 && self.memory.pmpcfg[i+1] & 0x98 == 0x88) {
+                    self.memory.pmpaddr[i] = v & ((1 << 54) - 1);
+                    self.memory.flush();
+                }
+            }
             0x14d => {
                 self.stimecmp_writes += 1;
                 self.csr[n] = v;
-                self.time(self.memory.time);
+                self.refresh_timer();
             }
-            0x300 => self.csr[n] = (v & !((3 << 32) | (3 << 34))) | (2 << 32) | (2 << 34),
+            0x300 => {
+                let mask = (1<<1)|(1<<3)|(1<<5)|(1<<7)|(1<<8)|(3<<11)|(3<<13)|(1<<17)|(1<<18)|(1<<19)|(1<<20)|(1<<21)|(1<<22);
+                self.csr[n] = (v & mask) | (2 << 32) | (2 << 34);
+                if (self.csr[n] >> 11) & 3 == 2 { self.csr[n] &= !(3 << 11); }
+            }
+            0x30a => {
+                self.csr[n] = v & ((1 << 63) | (1 << 61));
+                self.memory.adue = v & (1 << 61) != 0;
+                self.memory.flush(); self.refresh_timer();
+            }
             0x180 => {
                 if v >> 60 == 0 || v >> 60 == 8 {
                     self.csr[n] = v;
@@ -199,6 +258,8 @@ impl Cpu {
         Ok(())
     }
     pub fn trap(&mut self, t: Trap) {
+        #[cfg(not(target_arch = "wasm32"))]
+        let fault_pc = self.pc;
         let interrupt = t.cause >> 63 != 0;
         let cause = t.cause & !(1 << 63);
         let deleg = self.csr[if interrupt { 0x303 } else { 0x302 }];
@@ -231,12 +292,13 @@ impl Cpu {
             };
         self.waiting = false;
         self.reservation = None;
+        #[cfg(not(target_arch = "wasm32"))]
+        if self.trace_enabled { self.last_trace = Some(TraceEvent::Trap { pc: fault_pc, trap: t, target: self.pc }); }
     }
     fn interrupt(&mut self) -> bool {
         let pending = self.csr[0x344] & self.csr[0x304];
-        if pending != 0 {
-            self.waiting = false;
-        }
+        if pending == 0 { return false; }
+        self.waiting = false;
         for i in [11, 3, 7, 9, 1, 5] {
             if pending & (1 << i) == 0 {
                 continue;
@@ -267,8 +329,16 @@ impl Cpu {
         }
         let p = self
             .memory
-            .translate(a, access, self.mode, self.csr[0x180], self.csr[0x300])?;
+            .translate_size(a, n, access, self.mode, self.csr[0x180], self.csr[0x300])?;
         if (0xc000000..0x10004000).contains(&p) && access != Access::Fetch {
+            // Device-specific virtio configuration permits byte/halfword reads
+            // (Linux reads the MAC with readb), unlike transport registers.
+            if (0x10000000..0x10004000).contains(&p) && p & 0xfff >= 0x100 && matches!(n, 1 | 2 | 4) {
+                if let Some(v) = self.memory.devices.read(p & !3) {
+                    return Ok((v >> ((p & 3) * 8)) & (u32::MAX as u64 >> ((4-n)*8)));
+                }
+            }
+            if n != 4 || a & 3 != 0 { return Err(Trap { cause: 5, value: a }); }
             if let Some(v) = self.memory.devices.read(p) {
                 return Ok(v);
             }
@@ -290,7 +360,7 @@ impl Cpu {
                     self.csr[0x300],
                 )?;
                 if p < RAM_BASE || p - RAM_BASE >= self.memory.ram.len() as u64 {
-                    return Err(Trap { cause: 6, value: a });
+                    return Err(Trap { cause: 7, value: a });
                 }
                 addresses[j] = p;
             }
@@ -300,54 +370,60 @@ impl Cpu {
             }
             return Ok(());
         }
-        let p = self.memory.translate(
-            a,
+        let p = self.memory.translate_size(
+            a, n,
             Access::Write,
             self.mode,
             self.csr[0x180],
             self.csr[0x300],
         )?;
         self.reservation = None;
-        if (0xc000000..0x10004000).contains(&p) && self.memory.devices.write(p, v as u32) {
-            return Ok(());
+        if (0xc000000..0x10004000).contains(&p) {
+            if n != 4 || a & 3 != 0 { return Err(Trap { cause: 7, value: a }); }
+            if self.memory.devices.write(p, v as u32) { return Ok(()); }
         }
         self.memory
             .physical_write(p, n, v)
             .map_err(|t| Trap { value: a, ..t })
     }
     pub fn step(&mut self) -> Result<(), Trap> {
+        #[cfg(not(target_arch = "wasm32"))]
+        { self.last_trace = None; }
         if self.csr[0x320] & 1 == 0 {
             self.cycles = self.cycles.wrapping_add(1);
         }
         if self.interrupt() || self.waiting || self.stopped {
             return Ok(());
         }
+        self.wrote_instret = false;
         if self.pc & 1 != 0 {
             return Err(Trap {
                 cause: 0,
                 value: self.pc,
             });
         }
-        let lo = self.load(self.pc, 2, Access::Fetch)? as u32;
-        let (ins, len) = if lo & 3 == 3 {
-            (
-                lo | ((self.load(self.pc.wrapping_add(2), 2, Access::Fetch)? as u32) << 16),
-                4,
-            )
-        } else {
-            (
-                crate::compressed::expand(lo as u16).ok_or(self.illegal(lo))?,
-                2,
-            )
-        };
-        self.execute(ins, len).map_err(|t| {
-            if t.cause == 2 {
-                self.illegal(if len == 2 { lo } else { ins })
+        let pa = self.memory.translate(self.pc, Access::Fetch, self.mode, self.csr[0x180], self.csr[0x300])?;
+        let decoded = if let Some(d) = self.memory.decoded(pa) { d } else {
+            // Cross-page instructions must independently translate the upper half.
+            let lo = self.load(self.pc, 2, Access::Fetch)? as u32;
+            if lo & 3 == 3 {
+                let raw = lo | ((self.load(self.pc.wrapping_add(2), 2, Access::Fetch)? as u32) << 16);
+                crate::decoded::Decoded::new(raw, raw, 4)
             } else {
-                t
+                crate::decoded::Decoded::new(lo, crate::compressed::expand(lo as u16).ok_or(self.illegal(lo))?, 2)
             }
+        };
+        if self.pc & 4095 != 4094 {
+            self.memory.translate_size(self.pc, decoded.len as usize, Access::Fetch, self.mode, self.csr[0x180], self.csr[0x300])?;
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        let trace_pc = self.pc;
+        self.execute_decoded(decoded).map_err(|t| {
+            if t.cause == 2 { self.illegal(decoded.raw) } else { t }
         })?;
         self.x[0] = 0;
+        #[cfg(not(target_arch = "wasm32"))]
+        if self.trace_enabled { self.last_trace = Some(TraceEvent::Instruction { pc: trace_pc, raw: decoded.raw }); }
         if !self.wrote_instret && self.csr[0x320] & 4 == 0 {
             self.retired = self.retired.wrapping_add(1);
         }
@@ -370,7 +446,7 @@ impl Cpu {
             }
         }
     }
-    fn execute(&mut self, i: u32, len: u64) -> Result<(), Trap> {
+    pub(crate) fn execute(&mut self, i: u32, len: u64) -> Result<(), Trap> {
         let rd = ((i >> 7) & 31) as usize;
         let rs1 = ((i >> 15) & 31) as usize;
         let rs2 = ((i >> 20) & 31) as usize;
@@ -536,8 +612,8 @@ impl Cpu {
                     });
                 }
                 let access = if op == 2 { Access::Read } else { Access::Write };
-                let pa = self.memory.translate(
-                    a,
+                let pa = self.memory.translate_size(
+                    a, size,
                     access,
                     self.mode,
                     self.csr[0x180],

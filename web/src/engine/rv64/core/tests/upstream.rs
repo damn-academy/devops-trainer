@@ -22,11 +22,11 @@ fn riscv_tests() {
     let (mut pass, mut fail, mut unsupported) = (0, 0, 0);
     for path in paths {
         let name = path.file_name().unwrap().to_string_lossy();
-        if name == "rv64mi-p-pmpaddr" {
-            // This upstream test explicitly assumes at least one PMP entry.
-            // R1 exposes zero PMP entries, per verification/SPEC-CHECKLIST.md §2.6.
+        // This test unconditionally accesses tselect and assumes Sdtrig exists.
+        // Sdtrig is outside our ISA; absent trigger CSRs must trap, not fake a pass.
+        if name == "rv64mi-p-breakpoint" {
             unsupported += 1;
-            println!("UNSUPPORTED {name}: requires PMP entries (R1 has none)");
+            println!("UNSUPPORTED {name}: optional Sdtrig trigger CSRs are absent");
             continue;
         }
         let mut cpu = Cpu::new(16 * 1024 * 1024);

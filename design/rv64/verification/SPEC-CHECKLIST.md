@@ -128,7 +128,7 @@ the interpreter but must honor addr/ASID granularity when a real TLB exists — 
   to the event-wait mechanism (per the R1 execution model: `Atomics.wait` in wasm).
 - Zicntr counter-enable CSRs: `mcounteren`/`scounteren` bits CY/TM/IR (+ HP bits 3–31
   read-only-0 without Zihpm). `mcycle`/`minstret` free-running; `mcountinhibit` respected.
-- PMP: **OUT** — no `pmpcfg`/`pmpaddr` entries, no locked regions, `Smepmp` out.
+- PMP: **IN (second-pass user requirement)** — 16 TOR/NA4/NAPOT entries, locks, MPRV and page-table access checks; unlocked all-address-space entry at SBI boot. `Smepmp` remains out.
   CSRs read 0 if implemented at all.
 
 ### 2.7 Explicitly OUT (do not advertise, do not implement)

@@ -1,7 +1,14 @@
-import type { Machine, ExecResult, Facts, SimEvent } from '../../core/types';
+import type { Machine, ExecResult, Facts, SimEvent, TermRecord } from '../../core/types';
 import { ByteRing, FrameRing } from './ring';
+import type { HTTPDisk } from './block';
+import { factsScript, parseFacts, shq, watchedPaths } from '../v86/protocol';
+import { LAB_SCOPES, labFactsScript, parseLabFacts, scopesOf } from '../v86/lab-facts';
 import type { L2Switch } from '../v86/switch';
-export interface RV64Options { id: string; kernel: ArrayBuffer; initrd: ArrayBuffer; memoryMB?: number; cmdline?: string; disk?: ArrayBuffer; network?: L2Switch }
+export interface RV64Options { id: string; kernel: ArrayBuffer; initrd: ArrayBuffer; memoryMB?: number; cmdline?: string; disk?: ArrayBuffer; network?: L2Switch; httpDisk?: HTTPDisk }
+interface RV64Snapshot {
+  format: 'dt.rv64.snapshot/v1'; state: Uint8Array; pending: Uint8Array;
+  rings: Uint8Array[]; history: TermRecord[]; lastExit: number; diskIdentity: string;
+}
 /** Experimental engine: opt in with VITE_RV64=1. No lesson imports this module. */
 export class RV64Machine implements Machine {
   readonly kind = 'rv64' as const;
@@ -18,13 +25,22 @@ export class RV64Machine implements Machine {
   private listeners = new Set<(event: SimEvent) => void>();
   private timer: ReturnType<typeof setInterval>;
   private disposed = false;
+  private diskIdentity: string;
+  private checkpoint?: { request: { op: string; state?: Uint8Array; pending?: Uint8Array }; resolve: (value: any) => void; reject: (error: Error) => void; restore?: RV64Snapshot };
+  private frozen = false;
+  private watch = new Set<string>();
+  private scopes = new Set<string>();
+  private history: TermRecord[] = [];
+  private lastExit = 0;
   private pending?: { marker: string; out: string; resolve: (r: ExecResult) => void; reject: (e: Error) => void; timeout: ReturnType<typeof setTimeout> };
   constructor(options: RV64Options) {
     if (import.meta.env.VITE_RV64 !== '1') throw new Error('RV64 is disabled; use VITE_RV64=1');
     if (!crossOriginIsolated || typeof SharedArrayBuffer === 'undefined') throw new Error('RV64 needs COOP/COEP and SharedArrayBuffer');
     this.id = options.id;
+    this.diskIdentity = JSON.stringify(options.httpDisk ?? null);
     this.network = options.network;
     this.network?.addPort(this.id, { mode: 'access' }, frame => {
+      if (this.frozen) { this.emit('rv64.net.drop'); return; }
       if (!this.netIn.write(frame)) this.emit('rv64.net.drop');
       Atomics.add(this.input.words, 2, 1); Atomics.notify(this.input.words, 2);
     });
@@ -33,19 +49,37 @@ export class RV64Machine implements Machine {
       this.worker.onerror = (e) => { const error = new Error(e.message); reject(error); this.fail(error); };
       this.worker.onmessage = ({ data }) => {
         if (data.type === 'ready') resolve();
+        if (data.type === 'paused' && this.checkpoint) this.worker.postMessage(this.checkpoint.request);
+        if (['checkpoint', 'restored', 'checkpoint-error'].includes(data.type) && this.checkpoint) {
+          const p = this.checkpoint; this.checkpoint = undefined;
+          Atomics.store(this.control, 5, 0);
+          if (data.type === 'checkpoint-error') p.reject(new Error(data.error));
+          else if (data.type === 'checkpoint') p.resolve({ format: 'dt.rv64.snapshot/v1', state: data.state, pending: data.pending,
+            rings: this.rings().map(r => new Uint8Array(r).slice()), history: [...this.history], lastExit: this.lastExit, diskIdentity: this.diskIdentity } satisfies RV64Snapshot);
+          else {
+            p.restore!.rings.forEach((r, i) => new Uint8Array(this.rings()[i]).set(r));
+            this.history = [...p.restore!.history]; this.lastExit = p.restore!.lastExit;
+            this.decoder = new TextDecoder(); p.resolve(undefined);
+          }
+          this.frozen = false; this.worker.postMessage({ op: 'resume' });
+        }
         if (data.type === 'error') { const error = new Error(data.error); reject(error); this.fail(error); }
         if (data.type === 'stopped') this.emit('rv64.stopped');
       };
     });
     const { network: _network, ...boot } = options;
-    this.worker.postMessage({ ...boot, netIn: this.netIn.ring.buffer, netOut: this.netOut.ring.buffer, memoryMB: options.memoryMB ?? 512, input: this.input.buffer, output: this.output.buffer, control: this.control.buffer });
+    let hash = 2166136261;
+    for (const byte of new TextEncoder().encode(this.id)) hash = Math.imul(hash ^ byte, 16777619);
+    const mac = new Uint8Array([2, 0x44, hash >>> 24, hash >>> 16, hash >>> 8, hash]);
+    this.worker.postMessage({ ...boot, mac, netIn: this.netIn.ring.buffer, netOut: this.netOut.ring.buffer, memoryMB: options.memoryMB ?? 512, input: this.input.buffer, output: this.output.buffer, control: this.control.buffer });
     this.timer = setInterval(() => this.drain(), 8);
   }
   private emit(t: string, extra: Record<string, unknown> = {}): void {
     for (const fn of this.listeners) fn({ t, at: Date.now(), machine: this.id, ...extra });
   }
-  private fail(error: Error): void { if (this.pending) { clearTimeout(this.pending.timeout); this.pending.reject(error); this.pending = undefined; } this.emit('rv64.error', { error: error.message }); }
+  private fail(error: Error): void { this.checkpoint?.reject(error); this.checkpoint = undefined; if (this.pending) { clearTimeout(this.pending.timeout); this.pending.reject(error); this.pending = undefined; } this.emit('rv64.error', { error: error.message }); }
   private drain(): void {
+    if (this.frozen) return;
     for (const frame of this.netOut.read()) this.network?.receive(this.id, frame);
     const bytes = this.output.read();
     if (!bytes.length) return;
@@ -61,12 +95,20 @@ export class RV64Machine implements Machine {
   }
   send(text: string): void {
     if (this.disposed) throw new Error('RV64 machine is disposed');
+    if (this.frozen) throw new Error('RV64 checkpoint in progress');
     const data = new TextEncoder().encode(text);
     const free = this.input.bytes.length - ((Atomics.load(this.input.words, 1) - Atomics.load(this.input.words, 0)) >>> 0);
     if (data.length > free) throw new Error('RV64 input ring is full');
     this.input.write(data);
   }
   async exec(line: string): Promise<ExecResult> {
+    const result = await this.command(line);
+    this.lastExit = result.exit;
+    this.history.push({ line, ...result });
+    this.history = this.history.slice(-20);
+    return result;
+  }
+  private async command(line: string): Promise<ExecResult> {
     await this.ready;
     if (this.pending) throw new Error('RV64 command already running');
     // The marker is printed by printf, and cannot match the echoed command line.
@@ -79,12 +121,47 @@ export class RV64Machine implements Machine {
     });
   }
   prompt(): string { return '# '; }
-  async facts(): Promise<Facts> { throw new Error('RV64 guest facts collector is not implemented'); }
-  async snapshot(): Promise<unknown> { throw new Error('RV64 snapshots are planned for R3'); }
-  async restore(_snapshot: unknown): Promise<void> { throw new Error('RV64 snapshots are planned for R3'); }
+  watchPaths(paths: string[]): void { for (const path of paths) this.watch.add(path); }
+  watchPredicates(predicates: (string | undefined)[]): void { this.watchPaths(watchedPaths(predicates)); for (const scope of scopesOf(predicates)) this.scopes.add(scope); }
+  async facts(scope: string[] = []): Promise<Facts> {
+    const scopes = [...new Set([...this.scopes, ...scope])].filter(s => (LAB_SCOPES as readonly string[]).includes(s));
+    // Quote the multiline collector as one shell command, avoiding interactive
+    // continuation prompts and echoed source being parsed as guest facts.
+    const script = `echo $$ > /tmp/.dt-rv64-shell; ${factsScript([...this.watch], '/tmp/.dt-rv64-shell')}
+${labFactsScript(scopes)}`;
+    const result = await this.command(`eval "$(printf %s ${shq(btoa(String.fromCharCode(...new TextEncoder().encode(script))))} | base64 -d)"`);
+    if (result.exit !== 0) throw new Error(`RV64 facts collector exited ${result.exit}`);
+    const r = parseFacts(result.out);
+    if (!r.kernel) throw new Error('RV64 facts collector returned no kernel');
+    const shell = r.procs.find(p => p.pid === r.shellPid);
+    const uid = shell?.uid ?? 0;
+    const user = r.users.find(u => u.uid === uid);
+    return { schema: 'dt.facts/v1', env: { kind: 'rv64', machine: this.id, kernel: r.kernel, at: new Date().toISOString() },
+      user: { name: user?.name ?? String(uid), uid, gid: user?.gid ?? uid }, cwd: r.shellCwd ?? '/',
+      hostname: r.hostname, vars: { '?': String(this.lastExit) }, procs: r.procs, files: r.files,
+      users: r.users, groups: r.groups, term: { main: [...this.history] }, ...parseLabFacts(result.out) };
+  }
+  private rings(): SharedArrayBuffer[] { return [this.input.buffer, this.output.buffer, this.netIn.ring.buffer, this.netOut.ring.buffer]; }
+  private async checkpointCall(op: string, restore?: RV64Snapshot): Promise<any> {
+    await this.ready;
+    if (this.disposed || this.pending || this.checkpoint) throw new Error('RV64 machine is busy or disposed');
+    this.frozen = true;
+    return new Promise((resolve, reject) => {
+      this.checkpoint = { request: { op, state: restore?.state, pending: restore?.pending }, resolve, reject, restore };
+      Atomics.store(this.control, 5, 1); Atomics.add(this.input.words, 2, 1); Atomics.notify(this.input.words, 2);
+    });
+  }
+  async snapshot(): Promise<RV64Snapshot> { return this.checkpointCall('snapshot'); }
+  async restore(snapshot: unknown): Promise<void> {
+    const s = snapshot as RV64Snapshot;
+    if (s?.format !== 'dt.rv64.snapshot/v1' || s.diskIdentity !== this.diskIdentity || !(s.state instanceof Uint8Array) || !(s.pending instanceof Uint8Array)
+      || !Array.isArray(s.rings) || s.rings.length !== 4 || s.rings.some((r, i) => !(r instanceof Uint8Array) || r.length !== this.rings()[i].byteLength)) throw new Error('Invalid RV64 snapshot');
+    await this.checkpointCall('restore', s);
+  }
   on(fn: (ev: SimEvent) => void): () => void { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; }
   dispose(): void {
     if (this.disposed) return;
+    this.checkpoint?.reject(new Error("RV64 machine disposed")); this.checkpoint = undefined;
     this.network?.removePort(this.id);
     this.disposed = true; Atomics.store(this.control, 0, 1); Atomics.add(this.input.words, 2, 1); Atomics.notify(this.input.words, 2);
     this.worker.terminate(); clearInterval(this.timer); this.fail(new Error('RV64 machine disposed')); this.listeners.clear();

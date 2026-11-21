@@ -16,15 +16,7 @@ sync_core() {
     '
 }
 copy_wasm() {
-  local dest="$ROOT/web/public/rv64" stage
-  mkdir -p "$dest"
-  stage=$(mktemp -d "$dest/.transfer.XXXXXX")
-  k exec rv64-dev -- bash -ceu 'cd /work/out; sha256sum rv64_core.js rv64_core_bg.wasm rv64_core.d.ts rv64_core_bg.wasm.d.ts' > "$stage/SHA256SUMS"
-  k exec rv64-dev -- tar -C /work/out -czf - rv64_core.js rv64_core_bg.wasm rv64_core.d.ts rv64_core_bg.wasm.d.ts |
-    tar -C "$stage" -xzf -
-  (cd "$stage" && shasum -a 256 -c SHA256SUMS)
-  mv "$stage"/* "$dest/"
-  rmdir "$stage"
+  python3 "$ROOT/scripts/rv64-copy-wasm.py"
 }
 
 case "${1:-help}" in
@@ -38,16 +30,16 @@ case "${1:-help}" in
   bootstrap)
     k exec -i rv64-dev -- bash -se < "$ROOT/scripts/rv64-dev-bootstrap.sh"
     ;;
-  wasm)
+  wasm|build-wasm)
     sync_core
     k exec rv64-dev -- bash -ceu '
       cd /work/src/core
       cargo build --lib --locked --release --target wasm32-unknown-unknown
       mkdir -p /work/out
-      wasm-bindgen /work/target/wasm32-unknown-unknown/release/rv64_core.wasm --target web --out-dir /work/out --out-name rv64_core
-      /work/tools/binaryen-version_123/bin/wasm-opt -O3 /work/out/rv64_core_bg.wasm -o /work/out/rv64_core_bg.wasm
+      wasm-bindgen /work/target/wasm32-unknown-unknown/release/rv64_core.wasm --target web --keep-debug --out-dir /work/out --out-name rv64_core
+      /work/tools/binaryen-version_123/bin/wasm-opt -O3 -g /work/out/rv64_core_bg.wasm -o /work/out/rv64_core_bg.wasm
     '
-    copy_wasm
+    if [[ $1 == wasm ]]; then copy_wasm; fi
     ;;
-  *) echo 'Usage: scripts/rv64-dev.sh sync | cargo <args...> | bootstrap | wasm | copy-wasm'; exit 2 ;;
+  *) echo 'Usage: scripts/rv64-dev.sh sync | cargo <args...> | bootstrap | wasm | build-wasm | copy-wasm'; exit 2 ;;
 esac

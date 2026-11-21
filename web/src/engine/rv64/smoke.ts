@@ -8,7 +8,7 @@ worker.onmessage = ({ data }) => {
   if (data.type === 'smoke' || data.type === 'error') {
     host.rv64Result = data;
     document.querySelector('#console')!.textContent = JSON.stringify(data);
-    worker.terminate();
+    if (!new URLSearchParams(location.search).has('profile')) worker.terminate();
   }
 };
 worker.onerror = (e) => { host.rv64Result = { type: 'error', error: e.message }; };
@@ -34,7 +34,7 @@ if (boot) {
       host.rv64Result = { type: 'boot', stimecmpWrites: Atomics.load(ctl, 3), bootMs: (host as typeof host & { bootMs?: number }).bootMs, benchmarkSeconds: seconds,
         busyMips: (Atomics.load(ctl, 1) * 1000 - retiredStart) / (Atomics.load(ctl, 4) - busyStart),
         effectiveMips: (Atomics.load(ctl, 1) * 1000 - retiredStart) / seconds / 1e6, totalMs: performance.now() - start, console: text };
-      clearInterval(timer); worker.terminate();
+      clearInterval(timer); if (!new URLSearchParams(location.search).has('profile')) worker.terminate();
     }
   }, 8);
   worker.postMessage({ input: input.buffer, output: output.buffer, control, kernel, initrd, memoryMB: 512, cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr' });

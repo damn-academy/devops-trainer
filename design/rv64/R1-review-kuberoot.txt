@@ -1,0 +1,165 @@
+[    0.000000] Booting Linux on hartid 0
+[    0.000000] Linux version 6.18.62-kuberoot (root@builder) (riscv64-linux-gnu-gcc (Debian 12.2.0-13) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #4 SMP Sat Nov 21 13:49:06 UTC 2026
+[    0.000000] Machine model: RV64 R1 single hart
+[    0.000000] SBI specification v2.0 detected
+[    0.000000] SBI implementation ID=0x10000000 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] SBI IPI extension detected
+[    0.000000] SBI RFENCE extension detected
+[    0.000000] SBI SRST extension detected
+[    0.000000] SBI DBCN extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000] SBI HSM extension detected
+[    0.000000] riscv: base ISA extensions acdfim
+[    0.000000] riscv: ELF capabilities acdfim
+[    0.000000] Ticket spinlock: enabled
+[    0.000000] percpu: Embedded 30 pages/cpu s84248 r8192 d30440 u122880
+[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.mode=install kuberoot.dev kuberoot.verbose
+[    0.000000] Unknown kernel command line parameters "nokaslr", will be passed to user space.
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 131072
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=1.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+[    0.000000] RCU Tasks Trace: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000000] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.000288] riscv-timer: Timer interrupt in S-mode is available via sstc extension
+[    0.003701] Console: colour dummy device 80x25
+[    0.004567] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)
+[    0.005442] pid_max: default: 32768 minimum: 301
+[    0.007071] LSM: initializing lsm=capability
+[    0.009421] Mount-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.009800] Mountpoint-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.049180] riscv: ELF compat mode unsupported
+[    0.049444] ASID allocator using 16 bits (65536 entries)
+[    0.052109] rcu: Hierarchical SRCU implementation.
+[    0.052230] rcu: 	Max phase no-delay instances is 1000.
+[    0.060027] EFI services will not be available.
+[    0.062318] smp: Bringing up secondary CPUs ...
+[    0.062556] smp: Brought up 1 node, 1 CPU
+[    0.064489] Memory: 453012K/524288K available (9537K kernel code, 5353K rwdata, 4096K rodata, 2341K init, 393K bss, 68832K reserved, 0K cma-reserved)
+[    0.072207] devtmpfs: initialized
+[    0.097539] posixtimers hash table entries: 512 (order: 1, 8192 bytes, linear)
+[    0.098006] futex hash table entries: 256 (16384 bytes on 1 NUMA nodes, total 16 KiB, linear).
+[    0.101238] pinctrl core: initialized pinctrl subsystem
+[    0.104054] DMI not present or invalid.
+[    0.120762] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.126966] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    0.127562] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.127784] audit: initializing netlink subsys (disabled)
+[    0.133723] thermal_sys: Registered thermal governor 'step_wise'
+[    0.134452] audit: type=2000 audit(0.124:1): state=initialized audit_enabled=0 res=1
+[    0.135181] cpuidle: using governor menu
+[    0.161249] cpu0: rdtime lacks granularity needed to measure unaligned access speed
+[    0.242914] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.243155] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.248487] ACPI: Interpreter disabled.
+[    0.249513] iommu: Default domain type: Translated
+[    0.249758] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.293653] SCSI subsystem initialized
+[    0.316312] vgaarb: loaded
+[    0.317842] clocksource: Switched to clocksource riscv_clocksource
+[    0.328603] pnp: PnP ACPI: disabled
+[    0.802365] NET: Registered PF_INET protocol family
+[    0.806120] IP idents hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.843694] tcp_listen_portaddr_hash hash table entries: 256 (order: 0, 4096 bytes, linear)
+[    0.844167] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.844513] TCP established hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.846104] TCP bind hash table entries: 4096 (order: 5, 131072 bytes, linear)
+[    0.848483] TCP: Hash tables configured (established 4096 bind 4096)
+[    0.849393] UDP hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.850088] UDP-Lite hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.852768] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.853382] PCI: CLS 0 bytes, default 64
+[    0.864141] Initialise system trusted keyrings
+[    0.902107] Unpacking initramfs...
+[    0.966232] workingset: timestamp_bits=46 max_order=17 bucket_order=0
+[    0.970352] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.970965] fuse: init (API version 7.45)
+[    0.990455] 9p: Installing v9fs 9p2000 file system support
+[    5.376677] NET: Registered PF_ALG protocol family
+[    5.377103] Key type asymmetric registered
+[    5.377217] Asymmetric key parser 'x509' registered
+[    5.378269] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 250)
+[    6.965190] Freeing initrd memory: 20800K
+[    8.750354] io scheduler mq-deadline registered
+[    8.750685] io scheduler kyber registered
+[    8.751191] io scheduler bfq registered
+[    8.756966] riscv-plic: plic@c000000: mapped 31 interrupts with 1 handlers for 2 contexts.
+progress pc=0xffffffff80300d98 retired=372791074 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[    9.725106] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    9.779217] printk: legacy console [hvc0] enabled
+[    9.779569] printk: legacy bootconsole [sbi0] disabled
+[    9.788676] random: crng init done
+[    9.851483] loop: module loaded
+[    9.852747] virtio_blk virtio0: 1/0/0 default/read/poll queues
+[    9.856281] virtio_blk virtio0: [vda] 845824 512-byte logical blocks (433 MB/413 MiB)
+[    9.882068]  vda: vda1
+[    9.937838] tun: Universal TUN/TAP device driver, 1.6
+[    9.955771] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[    9.973182] riscv-pmu-sbi: SBI PMU extension is available
+[    9.974203] riscv-pmu-sbi: 0 firmware and 0 hardware counters
+[    9.975041] riscv-pmu-sbi: Perf sampling/filtering is not supported as sscof extension is not available
+[    9.984294] IPVS: Registered protocols (TCP, UDP)
+[    9.985327] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+[    9.988951] IPVS: ipvs loaded.
+[    9.989670] IPVS: [rr] scheduler registered.
+[    9.994025] Initializing XFRM netlink socket
+[    9.995636] NET: Registered PF_INET6 protocol family
+[   10.011548] Segment Routing with IPv6
+[   10.012783] In-situ OAM (IOAM) with IPv6
+[   10.014884] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[   10.023769] NET: Registered PF_PACKET protocol family
+[   10.025388] Bridge firewalling registered
+[   10.027981] 8021q: 802.1Q VLAN Support v1.8
+[   10.029672] 9pnet: Installing 9P2000 support
+[   10.031139] Key type dns_resolver registered
+[   10.033959] NET: Registered PF_VSOCK protocol family
+[   10.192503] Loading compiled-in X.509 certificates
+[   10.304889] Loaded X.509 cert 'Build time autogenerated kernel key: edae1ab5e37dadd23f1471322a492b2e9cb18efa'
+[   10.498923] clk: Disabling unused clocks
+[   10.499566] PM: genpd: Disabling unused power domains
+[   10.530517] Freeing unused kernel image (initmem) memory: 2340K
+[   10.532874] Run /init as init process
+[   11.398286] loop0: detected capacity change from 0 to 559336
+progress pc=0xffffffff80946414 retired=755882340 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946408 retired=1159020176 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80475068 retired=1564807341 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kinit] kuberoot booting, kernel 6.18.62-kuberoot, uptime 42s
+[kinit] distribution edge
+[kinit] module drbd: open /lib/modules/6.18.62-kuberoot/extra/drbd.ko: no such file or directory
+[kinit] module drbd_transport_tcp: open /lib/modules/6.18.62-kuberoot/extra/drbd_transport_tcp.ko: no such file or directory
+progress pc=0xffffffff80946c36 retired=1678312627 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946c36 retired=1679257438 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946c36 retired=1680170080 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kinit] network failed (attempt 1), retrying in 2s: dhcp on eth0: unable to receive an offer: got an error while the discovery request: context deadline exceeded
+elapsed_ms=75000 retired=1682637057 effective_mips=22.435 shell=false
+SBI_TIME_CALLS=0 STIMECMP_WRITES=25059
+id=2 status=0xf irq=0 queues=[(1, 128, 89, Ok(89), Ok(89)), (0, 0, 0, Err(()), Err(()))]
+id=1 status=0xf irq=0 queues=[(1, 128, 0, Ok(128), Ok(0)), (1, 128, 11, Ok(11), Ok(11))]
+id=3 status=0xf irq=0 queues=[(1, 128, 0, Ok(128), Ok(0)), (1, 128, 146, Ok(146), Ok(146))]
+id=4 status=0xf irq=0 queues=[(1, 128, 7, Ok(7), Ok(7)), (0, 0, 0, Err(()), Err(()))]
+Error: "shell acceptance marker not reached"
