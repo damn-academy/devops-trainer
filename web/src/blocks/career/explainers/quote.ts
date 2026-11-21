@@ -193,7 +193,7 @@ export const quoteModel = defineModel<P>({
         focus: ['quote', 'e-q'],
         reveal: ['quote', 'e-q'],
         tokens: [{ edge: 'e-q', label: bi('3 и цитата', '3 and a quote') }],
-        say: { quote: fmtb(bi('В доказательство балла нейросеть приводит фразу «{q}».', 'As proof the AI quotes “{q}”.'), { q: c.q }) },
+        say: { quote: bi('Нейросеть подкрепляет балл 3 цитатой.', 'The AI backs the 3 with a quote.') },
         values: { quote: tr(`${words(c.q.ru)} ${pluralRu(words(c.q.ru), ['слово', 'слова', 'слов'])}`, `${words(c.q.ru)} words`), score: '3?' },
         metrics: { dist: 0, tol, score: 3 },
       },
