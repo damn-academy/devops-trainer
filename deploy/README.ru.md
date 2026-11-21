@@ -21,7 +21,7 @@ nginx отдаёт на каждый ответ `Cross-Origin-Opener-Policy: sam
 
 - Копия стенда Sankofa в `~/projects/sankofa-int` (или путь в `SANKOFA_ROOT`):
   `hack/stand/env.sh` задаёт `km` — это `kubectl` с kubeconfig кластера museum
-  и явным `--context`; `hack/stand/push.sh` кладёт образы в реестр на узлах.
+  и явным `--context`; реестр на узлах работает в пространстве имён `sankofa-registry`.
 - node и npm, go, `ko` и `crane` (в `~/go/bin`), `openssl`, `curl`.
   Docker и виртуальные машины на рабочем компьютере не запускаются: образы
   собираются через `crane append` и `ko`.

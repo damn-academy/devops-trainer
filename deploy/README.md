@@ -21,8 +21,8 @@ files are precompressed with gzip; the stock nginx image has no brotli module.
 
 - A checkout of the Sankofa stand at `~/projects/sankofa-int` (or `SANKOFA_ROOT`):
   `hack/stand/env.sh` defines `km`, which is `kubectl` with the museum
-  kubeconfig and an explicit `--context`; `hack/stand/push.sh` pushes images
-  to the node-local registry.
+  kubeconfig and an explicit `--context`; the node-local registry
+  runs in the `sankofa-registry` namespace.
 - node and npm, go, `ko` and `crane` (in `~/go/bin`), `openssl`, `curl`.
   No Docker or VMs run on the workstation: images are assembled with
   `crane append` and `ko`.

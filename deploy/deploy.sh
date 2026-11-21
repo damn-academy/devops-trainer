@@ -4,8 +4,8 @@
 #   deploy/deploy.sh          # reuse the lab image and boot snapshots if built
 #   deploy/deploy.sh --lab    # rebuild the Alpine lab image and the snapshots
 #
-# Requires the Sankofa stand checkout (env.sh with km, push.sh, the node-local
-# registry), node/npm, go, ko and crane. Nothing runs in Docker on this machine.
+# Requires the Sankofa stand checkout (env.sh with km, the node-local
+# registry in sankofa-registry), node/npm, go, ko and crane. Nothing runs in Docker on this machine.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 repo=$PWD
@@ -65,9 +65,29 @@ cd "$repo/service/feedback"
 KO_DOCKER_REPO=localhost:5000/sankofa CGO_ENABLED=0 ko build --bare --platform=linux/amd64 --push=false \
   --tarball="$work/feedback.tar" . >/dev/null
 
-# 4. Push to the node-local registry of every node (push.sh changes directory).
-WEB_IMAGE=$(cd "$stand" && hack/stand/push.sh devops-trainer-web "$work/web.tar" | tail -1)
-FEEDBACK_IMAGE=$(cd "$stand" && hack/stand/push.sh devops-trainer-feedback "$work/feedback.tar" | tail -1)
+# 4. Push to the node-local registry of every node, like the stand's push.sh,
+# but through a port-forward on a free port: push.sh's fixed port may already
+# be held by another forward. Upload once, then copy inside the cluster.
+push() {
+  local name=$1 tar=$2 pods first firstip port pf ref digest i
+  pods=($(km -n sankofa-registry get pods -l app=registry -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.podIP}{"\n"}{end}' | sort))
+  first=${pods[0]} firstip=${pods[1]}
+  port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+  km -n sankofa-registry port-forward "pod/$first" "$port:5000" >/dev/null 2>&1 &
+  pf=$!
+  for _ in $(seq 1 30); do curl -sf "http://127.0.0.1:$port/v2/" >/dev/null && break; sleep 0.5; done
+  ref=$(crane push --insecure "$tar" "127.0.0.1:$port/sankofa/$name:dev") || { kill $pf; return 1; }
+  kill $pf 2>/dev/null || true
+  digest=${ref##*@}
+  for ((i = 2; i < ${#pods[@]}; i += 2)); do
+    km -n sankofa-registry run "copy-$name-$RANDOM" --rm -i --quiet --restart=Never \
+      --image=gcr.io/go-containerregistry/crane:v0.20.3 -- \
+      copy --insecure "$firstip:5000/sankofa/$name@$digest" "${pods[$((i + 1))]}:5000/sankofa/$name:dev" >/dev/null
+  done
+  echo "localhost:5000/sankofa/$name@$digest"
+}
+FEEDBACK_IMAGE=$(push devops-trainer-feedback "$work/feedback.tar" | tail -1)
+WEB_IMAGE=$(push devops-trainer-web "$work/web.tar" | tail -1)
 for ref in "$WEB_IMAGE" "$FEEDBACK_IMAGE"; do
   [[ $ref =~ ^localhost:5000/sankofa/devops-trainer-[a-z]+@sha256:[a-f0-9]{64}$ ]] || { echo "push failed: $ref" >&2; exit 1; }
 done
