@@ -1,0 +1,21 @@
+2026-11-21 final checkpoint
+
+UPSTREAM RESULT pass=173 fail=0 unsupported=1
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+ARCH_SIGNATURES pass=266 fail=0 build_fail=0
+
+Native final benchmark:
+Correct operation validated. See readme.txt for run and reporting rules.
+CoreMark 1.0 : 110.381368 / GCCHomebrew Clang 22.1.8 -O2 zig cc riscv64 static / Heap
+RV64_BENCH_DONE
+COREMARK_WALL_SECONDS=28.142694687 COREMARK_EFFECTIVE_MIPS=40.01005705115121
+elapsed_ms=41751 retired=1570664954 effective_mips=37.620 shell=true
+SBI_TIME_CALLS=0 STIMECMP_WRITES=20417
+
+Host: TypeScript typecheck passed; vitest rv64-ring.test.ts 4 passed.

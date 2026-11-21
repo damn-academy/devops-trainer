@@ -1,0 +1,16 @@
+Rust official image: rust:1.85.1-bookworm
+Resolved image: sha256:e51d0265072d2d9d5d320f6a44dde6b9ef13653b035098febd68cce8fa7c0bc4
+wasm-bindgen crate/CLI: 0.2.100
+Binaryen: version_123; linux x86_64 release archive SHA256 e959f2170af4c20c552e9de3a0253704d6a9d2766e8fdb88e4d6ac4bae9388fe
+GNU riscv64-unknown-elf-gcc: 12.2.0 (Debian bookworm package)
+riscv-tests: 3df703cd52d5f0d8224e3c50bf03c6cb70efff98
+riscv-test-env: 6de71edb142be36319e380ce782c3d1830c65d68
+Spike: 982f078e65ab52d5d9a91248c2178f5399df7783 (1.1.1-dev)
+Spike ISA for upstream tests: rv64imafdc_zicsr_zifencei_zicntr_zba_zbb_zbs_zicclsm
+riscv-arch-test: 0eb7c22ae2b42ac7423eb46d1bc3701fc4f47baa (tag 3.0.0)
+Architectural subset: rv64i_m/{I,M,C,D}, TEST_CASE_1, 266 ELFs; direct Spike signatures, not RISCOF/ACT4 certification
+rustc_apfloat: 0.2.3+llvm-462a31f5a5ab, vendored overflow-flag fix; see core/vendor/rustc_apfloat/RV64-PATCH.md
+ieee-apsqrt: 0.1.1
+Kernel: kuberoot Linux 6.18.62, vmlinuz.efi SHA256 39759207282480c0db1e2f9d3cc7e3f9162a8406572b3e535ac1284a3ea5c6c7
+Alpine: 3.24.4 riscv64 minirootfs SHA256 010683db6c73b3ad1c334fc8f93f64ae748ef67ae6d69e964929aeaf8517bff3
+CoreMark: R0 prebuilt web/public/rv64-r0/build/guest-bin/coremark (static riscv64, -O2, same benchmark binary)

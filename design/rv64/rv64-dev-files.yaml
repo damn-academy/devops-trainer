@@ -1,0 +1,14 @@
+# Temporary public artifact download endpoint; delete immediately after transfer.
+apiVersion: v1
+kind: Service
+metadata:
+  name: rv64-dev-files
+  namespace: tenant-kuberoot
+spec:
+  type: LoadBalancer
+  selector:
+    app: rv64-dev
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8081

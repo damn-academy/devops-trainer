@@ -1,0 +1,24 @@
+[package]
+name = "rv64-core"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "=0.2.100"
+
+[dependencies]
+rustc_apfloat = "=0.2.3"
+ieee-apsqrt = "=0.1.1"
+
+[profile.release]
+lto = true
+codegen-units = 1
+
+
+[patch.crates-io]
+rustc_apfloat = { path = "vendor/rustc_apfloat" }

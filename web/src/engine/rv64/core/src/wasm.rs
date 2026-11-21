@@ -1,0 +1,99 @@
+use crate::{fdt, Cpu, RAM_BASE};
+use wasm_bindgen::prelude::*;
+#[wasm_bindgen]
+pub struct Engine {
+    cpu: Cpu,
+}
+#[wasm_bindgen]
+impl Engine {
+    #[wasm_bindgen(constructor)]
+    pub fn new(memory_mb: u32) -> Result<Engine, JsValue> {
+        if !(32..=1024).contains(&memory_mb) {
+            return Err(JsValue::from_str("memory must be 32..1024 MiB"));
+        }
+        Ok(Self {
+            cpu: Cpu::new(memory_mb as usize * 1024 * 1024),
+        })
+    }
+    pub fn boot(&mut self, kernel: &[u8], initrd: &[u8], cmdline: &str) -> Result<(), JsValue> {
+        let entry = RAM_BASE + 0x200000;
+        let rd = RAM_BASE + 0x8000000;
+        let dtb = RAM_BASE + 0x4000000;
+        let tree = fdt::build(
+            self.cpu.memory.ram.len() as u64,
+            rd,
+            initrd.len() as u64,
+            cmdline,
+        );
+        for (a, data) in [(entry, kernel), (rd, initrd), (dtb, tree.as_slice())] {
+            self.cpu
+                .memory
+                .load_image(a, data)
+                .map_err(|e| JsValue::from_str(&format!("image load: {e:?}")))?;
+        }
+        self.cpu.boot_supervisor(entry, dtb);
+        Ok(())
+    }
+    pub fn load_program(&mut self, program: &[u8]) -> Result<(), JsValue> {
+        self.cpu
+            .memory
+            .load_image(RAM_BASE, program)
+            .map_err(|e| JsValue::from_str(&format!("program: {e:?}")))?;
+        Ok(())
+    }
+    pub fn input(&mut self, data: &[u8]) {
+        self.cpu.input.extend(data);
+        self.cpu.memory.devices.input.extend(data);
+    }
+    pub fn entropy(&mut self, data: &[u8]) {
+        self.cpu.memory.devices.entropy.extend(data);
+    }
+    pub fn net_receive(&mut self, data: &[u8]) {
+        self.cpu.memory.devices.net_rx.push_back(data.to_vec());
+    }
+    pub fn net_take(&mut self) -> Vec<u8> {
+        self.cpu
+            .memory
+            .devices
+            .net_tx
+            .pop_front()
+            .unwrap_or_default()
+    }
+    pub fn stimecmp_writes(&self) -> f64 { self.cpu.stimecmp_writes as f64 }
+    pub fn take_disk(&mut self) -> Vec<u8> { std::mem::take(&mut self.cpu.memory.devices.disk) }
+    pub fn disk(&mut self, data: &[u8]) {
+        self.cpu.memory.devices.disk = data.to_vec();
+    }
+    pub fn run(&mut self, instructions: u32, time_ticks: f64) -> u32 {
+        self.cpu.time(time_ticks as u64);
+        self.cpu.service_devices();
+        self.cpu.run(instructions);
+        if self.cpu.reset_requested {
+            3
+        } else if self.cpu.stopped {
+            2
+        } else if self.cpu.waiting {
+            1
+        } else {
+            0
+        }
+    }
+    pub fn output(&mut self) -> Vec<u8> {
+        let mut out = std::mem::take(&mut self.cpu.console);
+        out.append(&mut self.cpu.memory.devices.console);
+        out
+    }
+    pub fn deadline_ms(&self) -> f64 {
+        let deadline = self.cpu.csr[0x14d].min(self.cpu.memory.mtimecmp);
+        deadline.saturating_sub(self.cpu.memory.time) as f64 / 10000.0
+    }
+    pub fn retired(&self) -> f64 {
+        self.cpu.retired as f64
+    }
+    pub fn pc(&self) -> u64 {
+        self.cpu.pc
+    }
+    pub fn register(&self, index: u32) -> u64 {
+        self.cpu.x.get(index as usize).copied().unwrap_or(0)
+    }
+}

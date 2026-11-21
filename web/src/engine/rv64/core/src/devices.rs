@@ -1,0 +1,428 @@
+//! Modern virtio-mmio split queues and a single-hart PLIC.
+use crate::{Access, Memory};
+use std::collections::VecDeque;
+#[derive(Clone, Copy, Default)]
+struct Queue {
+    size: u32,
+    ready: u32,
+    desc: u64,
+    avail: u64,
+    used: u64,
+    last: u16,
+}
+struct Virtio {
+    id: u32,
+    feature_sel: u32,
+    driver_sel: u32,
+    driver: u64,
+    queue: u32,
+    status: u32,
+    irq: u32,
+    queues: [Queue; 2],
+}
+impl Virtio {
+    fn new(id: u32) -> Self {
+        Self {
+            id,
+            feature_sel: 0,
+            driver_sel: 0,
+            driver: 0,
+            queue: 0,
+            status: 0,
+            irq: 0,
+            queues: [Queue::default(); 2],
+        }
+    }
+}
+pub struct Devices {
+    dev: [Virtio; 4],
+    priority: [u32; 32],
+    enable: [u32; 2],
+    threshold: [u32; 2],
+    claimed: u32,
+    pub console: Vec<u8>,
+    pub input: VecDeque<u8>,
+    pub entropy: VecDeque<u8>,
+    pub disk: Vec<u8>,
+    pub net_rx: VecDeque<Vec<u8>>,
+    pub net_tx: VecDeque<Vec<u8>>,
+}
+impl Default for Devices {
+    fn default() -> Self {
+        Self {
+            dev: [
+                Virtio::new(2),
+                Virtio::new(1),
+                Virtio::new(3),
+                Virtio::new(4),
+            ],
+            priority: [0; 32],
+            enable: [0; 2],
+            threshold: [0; 2],
+            claimed: 0,
+            console: vec![],
+            input: VecDeque::new(),
+            entropy: VecDeque::new(),
+            disk: vec![],
+            net_rx: VecDeque::new(),
+            net_tx: VecDeque::new(),
+        }
+    }
+}
+impl Devices {
+    fn pending(&self) -> u32 {
+        self.dev
+            .iter()
+            .enumerate()
+            .fold(0, |p, (i, d)| p | if d.irq != 0 { 1 << (i + 1) } else { 0 })
+            & !self.claimed
+    }
+    fn best(&self, ctx: usize) -> u32 {
+        let p = self.pending() & self.enable[ctx];
+        let mut best = 0;
+        let mut priority = self.threshold[ctx];
+        for i in 1..32 {
+            if p & (1 << i) != 0 && self.priority[i] > priority {
+                best = i;
+                priority = self.priority[i];
+            }
+        }
+        best as u32
+    }
+    pub fn interrupts(&self) -> u64 {
+        ((self.best(0) != 0) as u64) << 11 | ((self.best(1) != 0) as u64) << 9
+    }
+    pub fn read(&mut self, addr: u64) -> Option<u64> {
+        if (0xc000000..0x10000000).contains(&addr) {
+            let off = addr - 0xc000000;
+            return Some(match off {
+                0..=0x7c => self.priority[(off / 4) as usize],
+                0x1000 => self.pending(),
+                0x2000 => self.enable[0],
+                0x2080 => self.enable[1],
+                0x200000 => self.threshold[0],
+                0x201000 => self.threshold[1],
+                0x200004 | 0x201004 => {
+                    let v = self.best(((off - 0x200004) / 4096) as usize);
+                    if v != 0 {
+                        self.claimed |= 1 << v;
+                    }
+                    v
+                }
+                _ => 0,
+            } as u64);
+        }
+        if !(0x10000000..0x10004000).contains(&addr) {
+            return None;
+        }
+        let d = &self.dev[((addr - 0x10000000) / 4096) as usize];
+        let off = addr & 4095;
+        let q = d.queues.get(d.queue as usize).copied().unwrap_or_default();
+        Some(match off {
+            0 => 0x74726976,
+            4 => 2,
+            8 => d.id,
+            12 => 0x4454524e,
+            0x10 => {
+                if d.feature_sel == 1 {
+                    1
+                } else {
+                    0
+                }
+            }
+            0x34 => {
+                if d.queue < 2 {
+                    128
+                } else {
+                    0
+                }
+            }
+            0x38 => q.size,
+            0x44 => q.ready,
+            0x60 => d.irq,
+            0x70 => d.status,
+            0xfc => 0,
+            0x100 if d.id == 2 => (self.disk.len() as u64 / 512) as u32,
+            0x104 if d.id == 2 => ((self.disk.len() as u64 / 512) >> 32) as u32,
+            _ => 0,
+        } as u64)
+    }
+    pub fn write(&mut self, addr: u64, v: u32) -> bool {
+        if (0xc000000..0x10000000).contains(&addr) {
+            let off = addr - 0xc000000;
+            match off {
+                4..=0x7c => self.priority[(off / 4) as usize] = v & 7,
+                0x2000 => self.enable[0] = v,
+                0x2080 => self.enable[1] = v,
+                0x200000 => self.threshold[0] = v & 7,
+                0x201000 => self.threshold[1] = v & 7,
+                0x200004 | 0x201004 if v < 32 => self.claimed &= !(1 << v),
+                _ => {}
+            }
+            return true;
+        }
+        if !(0x10000000..0x10004000).contains(&addr) {
+            return false;
+        }
+        let d = &mut self.dev[((addr - 0x10000000) / 4096) as usize];
+        let off = addr & 4095;
+        match off {
+            0x14 => d.feature_sel = v,
+            0x24 => d.driver_sel = v,
+            0x20 if d.driver_sel < 2 => {
+                let shift = d.driver_sel * 32;
+                d.driver = (d.driver & !(0xffffffffu64 << shift)) | ((v as u64) << shift)
+            }
+            0x30 => d.queue = v,
+            0x64 => d.irq &= !v,
+            0x70 => {
+                if v == 0 {
+                    *d = Virtio::new(d.id)
+                } else {
+                    d.status = v;
+                    if v & 8 != 0 && (d.driver & !(1u64 << 32) != 0 || d.driver & (1 << 32) == 0) {
+                        d.status &= !8
+                    }
+                }
+            }
+            _ => {
+                if let Some(q) = d.queues.get_mut(d.queue as usize) {
+                    match off {
+                        0x38 if v <= 128 && v.is_power_of_two() => q.size = v,
+                        0x44 => q.ready = v & 1,
+                        0x80 => q.desc = (q.desc & !0xffffffff) | v as u64,
+                        0x84 => q.desc = (q.desc & 0xffffffff) | ((v as u64) << 32),
+                        0x90 => q.avail = (q.avail & !0xffffffff) | v as u64,
+                        0x94 => q.avail = (q.avail & 0xffffffff) | ((v as u64) << 32),
+                        0xa0 => q.used = (q.used & !0xffffffff) | v as u64,
+                        0xa4 => q.used = (q.used & 0xffffffff) | ((v as u64) << 32),
+                        _ => {}
+                    }
+                }
+            }
+        }
+        true
+    }
+    pub fn service(&mut self, mem: &mut Memory) {
+        for dev in 0..4 {
+            for qi in 0..2 {
+                if self.dev[dev].status & 4 == 0 || self.dev[dev].status & 128 != 0 {
+                    continue;
+                }
+                let mut q = self.dev[dev].queues[qi];
+                if q.ready == 0 || q.size == 0 {
+                    continue;
+                }
+                if !range(mem, q.desc, q.size as u64 * 16)
+                    || !range(mem, q.avail, 6 + q.size as u64 * 2)
+                    || !range(mem, q.used, 6 + q.size as u64 * 8)
+                {
+                    self.dev[dev].status |= 64;
+                    continue;
+                }
+                let Ok(avail) = read(mem, q.avail + 2, 2) else {
+                    self.dev[dev].status |= 64;
+                    continue;
+                };
+                if (avail as u16).wrapping_sub(q.last) > q.size as u16 {
+                    self.dev[dev].status |= 64;
+                    continue;
+                }
+                for _ in 0..q.size {
+                    if q.last == avail as u16 {
+                        break;
+                    }
+                    if (dev == 2 && qi == 0 && self.input.is_empty())
+                        || (dev == 3 && self.entropy.is_empty())
+                        || (dev == 1 && qi == 0 && self.net_rx.is_empty())
+                    {
+                        break;
+                    }
+                    let result = (|| -> Result<(), ()> {
+                        let head =
+                            read(mem, q.avail + 4 + 2 * (q.last as u64 % q.size as u64), 2)? as u16;
+                        let chain = chain(mem, q, head)?;
+                        let mut written = 0;
+                        match (dev, qi) {
+                            (2, 1) => {
+                                for d in &chain {
+                                    if d.flags & 2 != 0 {
+                                        return Err(());
+                                    }
+                                    let data = bytes(mem, d.addr, d.len)?;
+                                    self.console.extend(data);
+                                }
+                            }
+                            (2, 0) | (3, 0) => {
+                                let source = if dev == 2 {
+                                    &mut self.input
+                                } else {
+                                    &mut self.entropy
+                                };
+                                for d in &chain {
+                                    if d.flags & 2 == 0 {
+                                        return Err(());
+                                    }
+                                    for j in 0..d.len {
+                                        let Some(b) = source.pop_front() else { break };
+                                        write(mem, d.addr + j as u64, 1, b as u64)?;
+                                        written += 1;
+                                    }
+                                }
+                            }
+                            (1, 1) => {
+                                let mut frame = Vec::new();
+                                for d in &chain {
+                                    if d.flags & 2 != 0 {
+                                        return Err(());
+                                    }
+                                    frame.extend(bytes(mem, d.addr, d.len)?);
+                                }
+                                if frame.len() < 12 {
+                                    return Err(());
+                                }
+                                self.net_tx.push_back(frame[12..].to_vec());
+                            }
+                            (1, 0) => {
+                                let frame = self.net_rx.pop_front().ok_or(())?;
+                                let data = [vec![0; 12], frame].concat();
+                                let mut pos = 0;
+                                for d in &chain {
+                                    if d.flags & 2 == 0 {
+                                        return Err(());
+                                    }
+                                    for j in 0..d.len {
+                                        if pos == data.len() {
+                                            break;
+                                        }
+                                        write(mem, d.addr + j as u64, 1, data[pos] as u64)?;
+                                        pos += 1;
+                                        written += 1;
+                                    }
+                                }
+                            }
+                            (0, 0) => {
+                                if chain.len() < 2 {
+                                    return Err(());
+                                }
+                                let h = chain[0];
+                                let end = *chain.last().unwrap();
+                                if h.flags & 2 != 0
+                                    || h.len < 16
+                                    || end.flags & 2 == 0
+                                    || end.len < 1
+                                {
+                                    return Err(());
+                                }
+                                let op = read(mem, h.addr, 4)?;
+                                let sector = read(mem, h.addr + 8, 8)?;
+                                let mut offset = sector.checked_mul(512).ok_or(())?;
+                                let mut status = 0u64;
+                                if op > 1 {
+                                    status = 2
+                                } else {
+                                    for d in &chain[1..chain.len() - 1] {
+                                        if (op == 0) != (d.flags & 2 != 0) {
+                                            return Err(());
+                                        }
+                                        let stop = offset.checked_add(d.len as u64).ok_or(())?;
+                                        if stop > self.disk.len() as u64 {
+                                            status = 1;
+                                            break;
+                                        }
+                                        for j in 0..d.len {
+                                            if op == 0 {
+                                                write(
+                                                    mem,
+                                                    d.addr + j as u64,
+                                                    1,
+                                                    self.disk[offset as usize + j as usize] as u64,
+                                                )?;
+                                                written += 1
+                                            } else {
+                                                self.disk[offset as usize + j as usize] =
+                                                    read(mem, d.addr + j as u64, 1)? as u8;
+                                            }
+                                        }
+                                        offset = stop;
+                                    }
+                                }
+                                write(mem, end.addr, 1, status)?;
+                                written += 1;
+                            }
+                            _ => return Err(()),
+                        }
+                        let used = read(mem, q.used + 2, 2)? as u16;
+                        let slot = q.used + 4 + (used as u64 % q.size as u64) * 8;
+                        write(mem, slot, 4, head as u64)?;
+                        write(mem, slot + 4, 4, written)?;
+                        write(mem, q.used + 2, 2, used.wrapping_add(1) as u64)?;
+                        q.last = q.last.wrapping_add(1);
+                        self.dev[dev].irq |= 1;
+                        Ok(())
+                    })();
+                    if result.is_err() {
+                        self.dev[dev].status |= 64;
+                        break;
+                    }
+                }
+                self.dev[dev].queues[qi] = q;
+            }
+        }
+    }
+}
+#[derive(Clone, Copy)]
+struct Desc {
+    addr: u64,
+    len: u32,
+    flags: u16,
+}
+fn chain(mem: &Memory, q: Queue, mut idx: u16) -> Result<Vec<Desc>, ()> {
+    let mut out = Vec::new();
+    let mut total = 0u64;
+    for _ in 0..q.size {
+        if idx as u32 >= q.size {
+            return Err(());
+        }
+        let p = q.desc + idx as u64 * 16;
+        let addr = read(mem, p, 8)?;
+        let len = read(mem, p + 8, 4)? as u32;
+        let flags = read(mem, p + 12, 2)? as u16;
+        total += len as u64;
+        if total > 1024 * 1024 || flags & 4 != 0 {
+            return Err(());
+        }
+        if len != 0 {
+            read(mem, addr, 1)?;
+            read(mem, addr.checked_add(len as u64 - 1).ok_or(())?, 1)?;
+        }
+        out.push(Desc { addr, len, flags });
+        if flags & 1 == 0 {
+            return Ok(out);
+        }
+        idx = read(mem, p + 14, 2)? as u16;
+    }
+    Err(())
+}
+fn read(mem: &Memory, addr: u64, n: usize) -> Result<u64, ()> {
+    let off = addr.checked_sub(crate::RAM_BASE).ok_or(())?;
+    if off.checked_add(n as u64).ok_or(())? > mem.ram.len() as u64 {
+        return Err(());
+    }
+    mem.physical_read(addr, n, Access::Read).map_err(|_| ())
+}
+fn write(mem: &mut Memory, addr: u64, n: usize, v: u64) -> Result<(), ()> {
+    read(mem, addr, n)?;
+    mem.physical_write(addr, n, v).map_err(|_| ())
+}
+fn bytes(mem: &Memory, addr: u64, n: u32) -> Result<Vec<u8>, ()> {
+    (0..n)
+        .map(|j| read(mem, addr + j as u64, 1).map(|v| v as u8))
+        .collect()
+}
+
+fn range(mem: &Memory, addr: u64, size: u64) -> bool {
+    addr.checked_sub(crate::RAM_BASE)
+        .and_then(|off| off.checked_add(size))
+        .is_some_and(|end| end <= mem.ram.len() as u64)
+}
