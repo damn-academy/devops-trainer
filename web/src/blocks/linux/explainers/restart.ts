@@ -17,7 +17,7 @@ const CAUSE: Record<string, { sig?: string; code: number; text: Bi; how: Bi; log
   exit1: { code: 1, text: bi('программа сама завершается с кодом 1', 'the program exits by itself with code 1'), how: bi('программа завершилась с кодом 1', 'the program exited with code 1'), log: 'code=exited, status=1/FAILURE' },
   kill: { sig: 'KILL', code: 137, text: bi('кто-то посылает ей сигнал KILL (kill -9)', 'someone sends it KILL (kill -9)'), how: bi('процесс был завершён сигналом KILL', 'the process was ended by KILL'), log: 'code=killed, status=9/KILL' },
   term: { sig: 'TERM', code: 143, text: bi('кто-то посылает ей сигнал TERM (kill)', 'someone sends it TERM (kill)'), how: bi('процесс был завершён сигналом TERM', 'the process was ended by TERM'), log: 'code=killed, status=15/TERM' },
-  oom: { sig: 'KILL', code: 137, text: bi('ядро завершает её из-за нехватки памяти', 'the kernel ends it because memory ran out'), how: bi('ядро завершило процесс сигналом KILL, потому что на машине кончилась память', 'the kernel ended the process with KILL because the machine ran out of memory'), log: 'code=killed, status=9/KILL' },
+  oom: { sig: 'KILL', code: 137, text: bi('ядро завершает её из-за нехватки памяти', 'the kernel ends it because memory ran out'), how: bi('ядро завершило процесс сигналом KILL, потому что на машине кончилась память', 'the kernel ended the process with KILL because the machine had no free memory left'), log: 'code=killed, status=9/KILL' },
 };
 
 /** Does Restart= restart after this kind of exit? (systemd.service(5), table "Exit causes and the effect of the Restart= settings") */
@@ -92,10 +92,10 @@ const startWith = (...shown: string[]): Record<string, ElementState> => Object.f
 
 /** Why the restarts never reach the limit, from the actual knobs. */
 function stableWhy(p: P): Bi {
-  if (p.after >= 10) return fmtb(bi('Программа работает {s} с, то есть дольше окна в 10 секунд, поэтому к каждому новому запуску прежние запуски уже выпали из счёта, и лимит так и не наступает. Служба продолжает перезапускаться после каждого сбоя.', 'The program runs {s} s, longer than the 10-second window, so by every new start the earlier starts have dropped out of the count, and the limit never comes. The service keeps restarting after every failure.'), { s: sb(ruNum(p.after), String(p.after)) });
+  if (p.after >= 10) return fmtb(bi('Программа работает {s} с, то есть дольше окна в 10 секунд, поэтому к каждому новому запуску прежние запуски уже выпали из счёта. Лимит так и не наступает, и служба перезапускается после каждого сбоя.', 'The program runs {s} s, longer than the 10-second window, so by every new start the earlier starts have dropped out of the count. The limit never comes, and the service restarts after every failure.'), { s: sb(ruNum(p.after), String(p.after)) });
   const gap = Math.round((p.after + p.restartSec) * 10) / 10;
   const fit = Math.ceil(10 / Math.max(0.1, gap));
-  return fmtb(bi('Между двумя запусками проходит {g} с, потому что к работе программы добавляется пауза RestartSec=. Поэтому в окно 10 секунд помещается не больше {f}, а systemd разрешает {b}, и лимит так и не наступает. Служба продолжает перезапускаться после каждого сбоя.', 'Between two starts {g} s pass, because the RestartSec= pause is added to the program’s run. So no more than {f} fit into the 10-second window, while systemd allows {b}, and the limit never comes. The service keeps restarting after every failure.'), { g: sb(ruNum(gap), String(gap)), f: sb(startsGenRu(fit), startsEn(fit)), b: sb(startsRu(p.burst), startsEn(p.burst)) });
+  return fmtb(bi('Между двумя запусками проходит {g} с, потому что к работе программы добавляется пауза RestartSec=. Поэтому в окно 10 секунд помещается не больше {f}, а systemd разрешает {b}, и служба перезапускается после каждого сбоя.', 'Between two starts {g} s pass, because the RestartSec= pause is added to the program’s run. So no more than {f} fit into the 10-second window, while systemd allows {b}, and the service restarts after every failure.'), { g: sb(ruNum(gap), String(gap)), f: sb(startsGenRu(fit), startsEn(fit)), b: sb(startsRu(p.burst), startsEn(p.burst)) });
 }
 
 /**
@@ -353,7 +353,7 @@ export const restartModel = defineModel<P>({
           focus: ['e-crash', 'main'],
           reveal: ['autorestart', 'e-crash'],
           tokens: [{ edge: 'e-crash', label: c.sig ? `SIG${c.sig}` : `exit ${c.code}` }],
-          say: { main: broken.has('no-binary') ? bi('Процесса нет, потому что файла программы не существует.', 'There is no process, because the program file does not exist.') : fmtb(bi('Главный процесс завершился, и в журнале видно, что {c}.', 'The main process ended, and the journal shows that {c}.'), { c: c.how }) },
+          say: { main: broken.has('no-binary') ? bi('Процесса нет, потому что файла программы не существует.', 'There is no process, because the program file does not exist.') : bi('Главный процесс завершился, и systemd записывает причину в журнал.', 'The main process ended, and systemd writes the reason to the journal.') },
           states: { main: 'err', active: 'off' },
           values,
           fill,
@@ -395,7 +395,7 @@ export const restartModel = defineModel<P>({
         steps.push({
           id: 'limit',
           label: bi('лимит', 'limit'),
-          caption: fmtb(bi('За 10 секунд службу запускали уже {b} раз, и следующий запуск лимит не разрешает. systemd пишет в журнал «Start request repeated too quickly», ставит причину start-limit-hit и больше не делает ни одной попытки, пока вы не выполните `systemctl reset-failed`.', 'The service was started {b} times within 10 seconds, and the limit does not allow the next start. systemd writes “Start request repeated too quickly” to the journal, sets the reason start-limit-hit and makes no more attempts until you run `systemctl reset-failed`.'), { b: p.burst }),
+          caption: fmtb(bi('За 10 секунд службу запускали уже {b} раз, и следующий запуск лимит не разрешает. Поэтому systemd больше не делает ни одной попытки, пока вы не выполните `systemctl reset-failed`.', 'The service was started {b} times within 10 seconds, and the limit does not allow the next start. So systemd makes no more attempts until you run `systemctl reset-failed`.'), { b: p.burst }),
           focus: ['limit', 'e-fail', 'failed'],
           reveal: ['failed', 'e-fail', 'journal', 'e-log'],
           tokens: [{ edge: 'e-fail', label: 'start-limit-hit' }],
@@ -411,10 +411,10 @@ export const restartModel = defineModel<P>({
           id: 'stable',
           label: broken.has('manual-stop') ? 'stop' : bi('работает', 'running'),
           caption: broken.has('manual-stop')
-            ? bi('Вы набрали `systemctl stop app`. systemd сам посылает процессу сигнал TERM и переводит службу в состояние inactive. Это остановка по команде, а не сбой, поэтому настройка Restart= здесь не действует, какое бы значение у неё ни стояло.', 'You typed `systemctl stop app`. systemd itself sends the process TERM and moves the service to inactive. This is a stop on command, not a failure, so Restart= does not apply, whatever its value.')
+            ? bi('Вы набрали `systemctl stop app`. systemd сам посылает процессу сигнал TERM и переводит службу в состояние inactive. Это остановка по команде, а не сбой, поэтому настройка Restart= здесь не действует при любом значении.', 'You typed `systemctl stop app`. systemd itself sends the process TERM and moves the service to inactive. This is a stop on command, not a failure, so Restart= does not apply, whatever its value.')
             : stableWhy(p),
           focus: broken.has('manual-stop') ? ['inactive'] : ['active', 'limit'],
-          say: broken.has('manual-stop') ? { inactive: bi('systemd остановил службу по вашей команде и не будет её перезапускать.', 'systemd stopped the service on your command and will not restart it.') } : { active: bi('Служба работает, и счётчик попыток не растёт.', 'The service runs, and the attempt counter does not grow.') },
+          say: broken.has('manual-stop') ? { inactive: bi('systemd остановил службу по вашей команде и не перезапустит её.', 'systemd stopped the service on your command and will not restart it.') } : { active: bi('Служба снова работает, а лимит запусков так и не наступил.', 'The service runs again, and the start limit never came.') },
           states: broken.has('manual-stop') ? { inactive: 'on', active: 'off', main: 'off' } : { active: 'ok' },
           values,
           fill,

@@ -158,7 +158,7 @@ export const pipeModel = defineModel<P>({
     height: 540,
     nodes: [
       proc('grep', "grep ' 500 '", 16, bi('Программа grep оставляет только строки, в которых есть ` 500 `, то есть ответы с ошибкой сервера. Остальные строки дальше не идут.', 'grep keeps only the lines with ` 500 `, the answers with a server error. Other lines go no further.'), "grep -c ' 500 ' access.log", 'man/grep.1'),
-      proc('cut', "cut -d' ' -f1", 260, bi('Программа cut берёт из каждой строки первое поле, если поля разделены пробелом. В журнале первым полем стоит адрес клиента.', 'cut takes the first field of every line when the fields are separated by a space. In the log the first field is the client address.'), "cut -d' ' -f1 access.log | head -3", 'man/cut.1'),
+      proc('cut', "cut -d' ' -f1", 260, bi('Программа cut берёт из каждой строки первое поле, если поля разделены пробелом. В журнале первым полем стоит адрес клиента.', 'cut takes the first field of every line when the fields are separated by a space. In the log the first field is the client address.'), "cut -d' ' -f1 access.log | less", 'man/cut.1'),
       proc('sort', 'sort', 504, bi('Программа sort упорядочивает строки. Прежде чем напечатать первую строку, она должна прочитать весь ввод до конца, поэтому её вывод появляется весь сразу.', 'sort puts the lines in order. Before it can print the first line it must read the whole input, which is why its output appears all at once.'), 'sort --help', 'man/sort.1'),
       proc('uniq', 'uniq -c', 748, bi('Программа uniq -c склеивает одинаковые строки, которые стоят подряд, и пишет, сколько их было. Склеивает она только соседние строки, поэтому перед ней нужна команда sort.', 'uniq -c merges identical lines that come in a row and writes how many there were. It merges only adjacent lines, which is why it needs sort in front of it.'), 'uniq --help', 'man/uniq.1'),
       {
@@ -171,7 +171,7 @@ export const pipeModel = defineModel<P>({
         y: 250,
         w: 176,
         h: 56,
-        card: { what: bi('Журнал веб-сервера, в котором на каждый запрос приходится одна строка: адрес клиента, метод, путь и код ответа.', 'A web server log with one line per request: the client address, the method, the path and the response code.'), who: bi('Журнал пишет веб-сервер, а grep открывает этот файл сам, по имени, которое получил аргументом.', 'The web server writes the log, and grep opens the file itself, by the name it got as an argument.'), see: 'head -3 access.log' },
+        card: { what: bi('Журнал веб-сервера, в котором на каждый запрос приходится одна строка: адрес клиента, метод, путь и код ответа.', 'A web server log with one line per request: the client address, the method, the path and the response code.'), who: bi('Журнал пишет веб-сервер, а grep открывает этот файл сам, по имени, которое получил аргументом.', 'The web server writes the log, and grep opens the file itself, by the name it got as an argument.'), see: 'less access.log' },
       },
       {
         id: 'tty',
@@ -281,11 +281,11 @@ export const pipeModel = defineModel<P>({
     },
     {
       id: 'early-exit',
-      label: bi('Последняя команда читает одну строку и завершается (| head -1)', 'The last command reads one line and exits (| head -1)'),
+      label: bi('Последняя команда читает одну строку и завершается', 'The last command reads one line and exits'),
       remove: ['e-r3'],
       boundary: 'process',
       predict: {
-        prompt: bi('Вместо uniq в конце стоит head -1: она прочитала одну строку и завершилась. Труба между sort и head вмещает 64 КиБ, а sort пишет в неё по адресу на каждую строку, прошедшую через grep. Учтите, сколько строк прошло через grep при нынешних параметрах. Что будет с sort?', 'Instead of uniq the last command is head -1: it read one line and exited. The pipe between sort and head holds 64 KiB, and sort writes one address into it for every line that passed grep. Take into account how many lines pass grep with the current parameters. What happens to sort?'),
+        prompt: bi('Вместо uniq в конце стоит команда `head -1`, которая прочитала одну строку и завершилась. Труба между sort и этой командой вмещает 64 КиБ, а sort пишет в неё по адресу на каждую строку, прошедшую через grep. Учтите, сколько строк прошло через grep при нынешних параметрах. Что будет с sort?', 'Instead of uniq the last command is `head -1`, which read one line and exited. The pipe between sort and that command holds 64 KiB, and sort writes one address into it for every line that passed grep. Take into account how many lines pass grep with the current parameters. What happens to sort?'),
         options: [
           { id: 'fits', text: bi('Весь вывод sort поместится в трубу, и sort завершится с кодом 0', 'All of sort’s output fits into the pipe, and sort ends with code 0') },
           { id: 'sigpipe', text: bi('Вывод в трубу не поместится, ядро пошлёт sort сигнал SIGPIPE, и она завершится с кодом 141', 'The output does not fit, the kernel sends sort SIGPIPE, and it ends with code 141') },
@@ -309,7 +309,7 @@ export const pipeModel = defineModel<P>({
     steps.push({
       id: 'start',
       label: bi('запуск', 'start'),
-      caption: bi('Оболочка запустила четыре программы одновременно, каждую в отдельном процессе. Друг о друге эти программы не знают: каждая читает свой поток 0 и пишет в свой поток 1, а соединяют их трубы, которые оболочка попросила создать у ядра.', 'The shell started four programs at once, each in its own process. The programs know nothing of each other: each reads its stream 0 and writes to its stream 1, and they are connected by pipes the shell asked the kernel to create.'),
+      caption: bi('Оболочка запустила четыре программы одновременно, каждую в отдельном процессе. Друг о друге эти программы не знают, потому что каждая читает свой поток 0 и пишет в свой поток 1, а соединяют их трубы от ядра.', 'The shell started four programs at once, each in its own process. The programs know nothing of each other, because each reads its stream 0 and writes to its stream 1, and pipes from the kernel connect them.'),
       focus: ['grep', 'cut', 'sort', 'uniq'],
       say: { grep: bi('Все четыре процесса уже запущены и ждут, когда к ним придут данные.', 'All four processes are already running and wait for data to arrive.') },
       states: startWith('log', 'grep', 'cut', 'sort', 'uniq'),
@@ -372,7 +372,7 @@ export const pipeModel = defineModel<P>({
       steps.push({
         id: 'eof',
         label: bi('конец данных', 'end of data'),
-        caption: bi('Программы grep и cut закончили работу и завершились, и их концы труб закрылись. Для sort это означает конец данных, поэтому она сразу печатает в третью трубу все адреса по порядку, и одинаковые адреса теперь стоят рядом.', 'grep and cut finished and exited, and their pipe ends closed. For sort this means the end of data, so it at once prints all the addresses in order into the third pipe, and identical addresses now stand next to each other.'),
+        caption: bi('Программы grep и cut завершились, и их концы труб закрылись. Для sort это означает конец данных, поэтому она сразу печатает в третью трубу все адреса по порядку, и одинаковые адреса теперь стоят рядом.', 'grep and cut finished and exited, and their pipe ends closed. For sort this means the end of data, so it at once prints all the addresses in order into the third pipe, and identical addresses now stand next to each other.'),
         focus: ['sort', 'e-w3', 'p3'],
         reveal: ['e-w3', 'p3'],
         tokens: [{ edge: 'e-w3', label: fmt(bi('{m} адресов по порядку', '{m} addresses in order'), { m: n.matched }) }],
@@ -386,11 +386,11 @@ export const pipeModel = defineModel<P>({
     if (broken.has('early-exit')) {
       steps.push({
         id: 'head',
-        label: 'head -1',
+        label: bi('одна строка', 'one line'),
         caption: bi('Последняя команда прочитала одну строку и завершилась, поэтому читать из третьей трубы больше некому.', 'The last command read one line and exited, so nobody is left to read the third pipe.'),
         focus: ['uniq', 'p3'],
         reveal: p.sorted ? [] : ['p3', 'e-w3'],
-        say: { uniq: bi('Команда head -1 прочитала первую строку, напечатала её и завершилась.', 'head -1 read the first line, printed it and exited.') },
+        say: { uniq: bi('Команда `head -1` прочитала первую строку, напечатала её и завершилась.', '`head -1` read the first line, printed it and exited.') },
         states: { uniq: 'off', 'e-r3': 'off' },
         metrics: { lines: n.lines, matched: n.matched, distinct: n.distinct, printed: n.matched ? 1 : 0 },
       });
@@ -401,12 +401,20 @@ export const pipeModel = defineModel<P>({
         steps.push({
           id: 'fits',
           label: bi('всё в трубе', 'all in the pipe'),
-          caption: fill(bi('Программа {w} пишет в трубу около {k} КиБ, а труба вмещает 64 КиБ. Поэтому весь вывод поместился в трубу ещё до того, как head завершилась, и {w} закончила работу с кодом 0, а сигнала SIGPIPE не было. Ядро посылает SIGPIPE, только когда читатель ушёл, а пишущей программе ещё есть что записать. Увеличьте число строк в журнале и долю ошибок, чтобы вывод перестал помещаться в трубу.', '{w} writes about {k} KiB into the pipe, and the pipe holds 64 KiB. So the whole output fitted into the pipe before head exited, and {w} finished with code 0, with no SIGPIPE. The kernel sends SIGPIPE only when the reader has left while the writer still has something to write. Raise the number of log lines and the share of errors so that the output no longer fits into the pipe.'), { w: writer, k: kibOut }),
+          caption: fill(bi('Программа {w} пишет в трубу около {k} КиБ, а труба вмещает 64 КиБ. Поэтому весь вывод поместился в трубу ещё до того, как `head` завершилась, и {w} закончила работу с кодом 0.', '{w} writes about {k} KiB into the pipe, and the pipe holds 64 KiB. So the whole output fitted into the pipe before `head` exited, and {w} finished with code 0.'), { w: writer, k: kibOut }),
           focus: [writer, 'p3'],
           say: { [writer]: fill(bi('Программа {w} записала в трубу всё, что у неё было, и спокойно завершилась.', '{w} wrote everything it had into the pipe and finished normally.'), { w: writer }) },
           states: { [writer]: 'ok' },
           values: { p3: `${Math.min(64, kibOut)} / 64 KiB` },
           fill: { p3: Math.min(1, n.tailBytes / PIPE_BYTES) },
+          metrics: { lines: n.lines, matched: n.matched, distinct: n.distinct, printed: n.matched ? 1 : 0 },
+        });
+        steps.push({
+          id: 'no-sigpipe',
+          label: bi('без SIGPIPE', 'no SIGPIPE'),
+          caption: fill(bi('Сигнала SIGPIPE программа {w} не получила, потому что ядро посылает его, только когда читатель ушёл, а пишущей программе ещё есть что записать. Увеличьте число строк в журнале и долю ошибок, и вывод перестанет помещаться в трубу.', '{w} got no SIGPIPE, because the kernel sends it only when the reader has left while the writer still has data to write. Raise the number of log lines and the share of errors, and the output will no longer fit into the pipe.'), { w: writer }),
+          focus: ['p3'],
+          say: { p3: bi('Труба приняла весь вывод, хотя читать из неё уже некому.', 'The pipe took the whole output, though no one reads it now.') },
           metrics: { lines: n.lines, matched: n.matched, distinct: n.distinct, printed: n.matched ? 1 : 0 },
         });
         return steps;
