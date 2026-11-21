@@ -1,4 +1,4 @@
-# Rendered by deploy.sh: WEB_IMAGE, FEEDBACK_IMAGE, DT_HOST and BUILD_ID are replaced.
+# Rendered by deploy.sh: WEB_IMAGE, FEEDBACK_IMAGE, DT_HOST, BUILD_ID and FEEDBACK_NODE are replaced.
 # The Secret feedback-secrets (ADMIN_TOKEN) is created by deploy.sh, never committed.
 apiVersion: v1
 kind: Namespace
@@ -40,16 +40,6 @@ spec:
   selector: {app.kubernetes.io/name: web}
   ports: [{name: http, port: 80, targetPort: http}]
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: feedback-data
-  namespace: devops-trainer
-spec:
-  accessModes: [ReadWriteOnce]
-  resources:
-    requests: {storage: 1Gi}
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -65,7 +55,21 @@ spec:
     metadata:
       labels: {app.kubernetes.io/name: feedback, app.kubernetes.io/part-of: devops-trainer}
     spec:
-      securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, fsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+      # SQLite lives on the node's disk (/var survives reboots on Talos), so the
+      # pod is pinned to one node. A PVC would be better, but the stand's
+      # tenant quota leaves no room for the CDI importer that provisions one.
+      nodeSelector: {kubernetes.io/hostname: FEEDBACK_NODE}
+      securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
+      initContainers:
+        - name: data-owner
+          image: busybox:1.37
+          command: [sh, -c, 'chown 65532:65532 /data && chmod 700 /data']
+          securityContext: {runAsNonRoot: false, runAsUser: 0, allowPrivilegeEscalation: false, capabilities: {drop: [ALL], add: [CHOWN, FOWNER]}}
+          resources:
+            requests: {cpu: 5m, memory: 8Mi}
+            limits: {memory: 32Mi}
+          volumeMounts:
+            - {name: data, mountPath: /data}
       containers:
         - name: feedback
           image: FEEDBACK_IMAGE
@@ -96,7 +100,7 @@ spec:
           livenessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 20}
       volumes:
         - name: data
-          persistentVolumeClaim: {claimName: feedback-data}
+          hostPath: {path: /var/mnt/devops-trainer/feedback, type: DirectoryOrCreate}
         - name: tmp
           emptyDir: {sizeLimit: 64Mi}
 ---

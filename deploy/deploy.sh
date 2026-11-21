@@ -3,6 +3,8 @@
 #
 #   deploy/deploy.sh            # build the pushed HEAD in the cluster and roll it out
 #   deploy/deploy.sh --smoke    # the same, then run deploy/smoke.sh
+#   BUILD_JOB=build-... deploy/deploy.sh   # reuse the images of a finished build
+#                                          # Job, e.g. after a manifest-only change
 #
 # Everything heavy runs in a build Job inside the cluster (deploy/build/):
 # the course, the v86 assets, the Alpine lab image, the boot snapshots
@@ -33,15 +35,19 @@ if ! km -n $ns get secret feedback-secrets >/dev/null 2>&1; then
   km -n $ns create secret generic feedback-secrets --from-literal=ADMIN_TOKEN="$(openssl rand -hex 32)" >/dev/null
 fi
 
-# 2. Build in the cluster.
-registries=$(km -n sankofa-registry get pods -l app=registry -o jsonpath='{range .items[*]}{.status.podIP}{" "}{end}')
-[[ -n $registries ]] || { echo 'no registry pods' >&2; exit 1; }
-job=build-$short-$(date +%H%M%S)
-km -n $ns create configmap build-script --from-file="$repo/deploy/build/build.sh" --dry-run=client -o yaml | km apply -f - >/dev/null
-sed -e "s#JOB_NAME#$job#g" -e "s#'GIT_URL'#'$GIT_URL'#" -e "s#'GIT_SHA'#'$sha'#" \
-  -e "s#'DT_HOST'#'$DT_HOST'#" -e "s#'REGISTRIES'#'${registries% }'#" \
-  "$repo/deploy/build/job.yaml" | km apply -f -
-echo "Building $short in job/$job (logs: km -n $ns logs -f job/$job -c images)"
+# 2. Build in the cluster (or reuse a finished build).
+job=${BUILD_JOB:-}
+if [[ -z $job ]]; then
+  registries=$(km -n sankofa-registry get pods -l app=registry -o jsonpath='{range .items[*]}{.status.podIP}{" "}{end}')
+  [[ -n $registries ]] || { echo 'no registry pods' >&2; exit 1; }
+  job=build-$short-$(date +%H%M%S)
+  km -n $ns create configmap build-script --from-file="$repo/deploy/build/build.sh" --dry-run=client -o yaml | km apply -f - >/dev/null
+  sed -e "s#JOB_NAME#$job#g" -e "s#'GIT_URL'#'$GIT_URL'#" -e "s#'GIT_SHA'#'$sha'#" \
+    -e "s#'DT_HOST'#'$DT_HOST'#" -e "s#'REGISTRIES'#'${registries% }'#" \
+    "$repo/deploy/build/job.yaml" | km apply -f -
+  echo "Building $short in job/$job (logs: km -n $ns logs -f job/$job -c images)"
+fi
+short=$(km -n $ns get job "$job" -o jsonpath='{.spec.template.spec.initContainers[0].env[?(@.name=="GIT_SHA")].value}' | cut -c1-12)
 until status=$(km -n $ns get job "$job" -o jsonpath='{.status.succeeded}{.status.failed}') && [[ -n $status ]]; do sleep 15; done
 km -n $ns logs "job/$job" -c images --tail=200 > "$work/build.log" 2>&1 || true
 if [[ $(km -n $ns get job "$job" -o jsonpath='{.status.succeeded}') != 1 ]]; then
@@ -56,8 +62,10 @@ for ref in "$WEB_IMAGE" "$FEEDBACK_IMAGE"; do
   [[ $ref =~ ^localhost:5000/sankofa/devops-trainer-[a-z]+@sha256:[a-f0-9]{64}$ ]] || { echo "no image digest in the build log: '$ref'" >&2; exit 1; }
 done
 
-# 3. Apply and wait.
-sed -e "s#WEB_IMAGE#$WEB_IMAGE#g" -e "s#FEEDBACK_IMAGE#$FEEDBACK_IMAGE#g" \
+# 3. Apply and wait. The feedback pod stays on the node that holds its SQLite file.
+node=$(km -n $ns get deploy feedback -o jsonpath='{.spec.template.spec.nodeSelector.kubernetes\.io/hostname}' 2>/dev/null || true)
+[[ -n $node ]] || node=$(km get nodes --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[0].metadata.name}')
+sed -e "s#FEEDBACK_NODE#$node#g" -e "s#WEB_IMAGE#$WEB_IMAGE#g" -e "s#FEEDBACK_IMAGE#$FEEDBACK_IMAGE#g" \
   -e "s#DT_HOST#$DT_HOST#g" -e "s#'BUILD_ID'#'$short'#g" \
   "$repo/deploy/devops-trainer.yaml" | km apply -f -
 km -n $ns rollout status deploy/web --timeout=300s

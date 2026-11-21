@@ -7,7 +7,7 @@ cluster in the workshop Cozystack) at
 | Path | Served by |
 |---|---|
 | `/` | `web`: nginx-unprivileged with the built course and the v86 images |
-| `/api/feedback` | `feedback`: the Go service from `service/feedback`, SQLite on a PVC |
+| `/api/feedback` | `feedback`: the Go service from `service/feedback`, SQLite on the node's disk |
 | `/admin` | `feedback`: the review UI, HTTP Basic auth |
 
 nginx sends `Cross-Origin-Opener-Policy: same-origin` and
@@ -57,6 +57,26 @@ the first goal of the in-tab cloud lab, a feedback report sent through the
 course and found in the admin UI. The admin token reaches the Job from the
 Secret and is not printed. Each smoke run leaves one report marked
 "Deployment smoke check" in the admin UI.
+
+Only the manifest changed? Reuse the images of a finished build Job (they are
+kept for a day) instead of building again:
+
+```sh
+km -n devops-trainer get jobs -l app.kubernetes.io/name=build
+BUILD_JOB=build-<commit>-<time> deploy/deploy.sh
+```
+
+## Storage of the reports
+
+SQLite lives in `/var/mnt/devops-trainer/feedback` on one node of the museum
+cluster (a `hostPath`; `/var` survives reboots on Talos), and the `feedback` pod
+is pinned to that node with a `nodeSelector`; `deploy.sh` keeps the node of the
+running Deployment. A PVC would be the better home, but the stand's tenant
+quota (`tenant-sankofa`, `requests.cpu`) leaves no room for the CDI importer
+pod that provisions a new volume, so a PVC stays `Pending`. If that node is
+replaced, the reports on it are lost: export them regularly (see below). Once
+the quota allows, switch the `data` volume in `devops-trainer.yaml` back to a
+PVC.
 
 ## Admin UI
 
@@ -110,11 +130,14 @@ curl -fsS -H "Authorization: Bearer $token" \
 ## Delete everything
 
 Deleting the namespace removes the Deployments, Services, Ingresses, the
-Secret with the admin token, the TLS certificate and the PVC with all reports:
+Secret with the admin token and the TLS certificate:
 
 ```sh
 km delete namespace devops-trainer
 ```
+
+The SQLite file stays on the node in `/var/mnt/devops-trainer/feedback` until
+the node is replaced.
 
 Images stay in the node-local registry (`sankofa/devops-trainer-web`,
 `sankofa/devops-trainer-feedback`) until the stand's registry is cleaned.
@@ -123,8 +146,7 @@ Images stay in the node-local registry (`sankofa/devops-trainer-web`,
 
 Namespace `devops-trainer`: build and smoke Jobs (kept for a day), ConfigMap
 `build-script`, Deployments `web` (2 replicas) and `feedback`
-(1 replica, `Recreate`), Services `web` and `feedback`, PVC `feedback-data`
-(1 Gi, default StorageClass), Secret `feedback-secrets`, Ingresses `web` and
+(1 replica, `Recreate`), Services `web` and `feedback`, Secret `feedback-secrets`, Ingresses `web` and
 `feedback` (the latter with the access log off, because thread URLs carry a
 token), Certificate and Secret `devops-trainer-tls` from the `letsencrypt`
 ClusterIssuer.

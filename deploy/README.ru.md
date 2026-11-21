@@ -7,7 +7,7 @@ Cozystack воркшопов) по адресу
 | Путь | Кто отвечает |
 |---|---|
 | `/` | `web`: nginx-unprivileged с собранным курсом и образами v86 |
-| `/api/feedback` | `feedback`: сервис на Go из `service/feedback`, SQLite на PVC |
+| `/api/feedback` | `feedback`: сервис на Go из `service/feedback`, SQLite на диске узла |
 | `/admin` | `feedback`: панель разбора сообщений, вход по HTTP Basic |
 
 nginx отдаёт на каждый ответ `Cross-Origin-Opener-Policy: same-origin` и
@@ -57,6 +57,25 @@ deploy/smoke.sh             # только проверка в браузере
 из курса и найденное в панели. Токен администратора попадает в Job из
 Secret и не печатается. После каждой проверки в панели остаётся одно
 сообщение с текстом «Deployment smoke check».
+
+Поменялся только манифест? Возьмите образы из завершённого Job сборки (они
+хранятся сутки), чтобы не собирать заново:
+
+```sh
+km -n devops-trainer get jobs -l app.kubernetes.io/name=build
+BUILD_JOB=build-<коммит>-<время> deploy/deploy.sh
+```
+
+## Где хранятся сообщения
+
+SQLite лежит в `/var/mnt/devops-trainer/feedback` на одном узле кластера museum
+(`hostPath`; на Talos каталог `/var` переживает перезагрузку), а под
+`feedback` привязан к этому узлу через `nodeSelector`; `deploy.sh` сохраняет
+узел работающего Deployment. Лучше хранить базу на PVC, но квота тенанта стенда
+(`tenant-sankofa`, `requests.cpu`) не оставляет места для пода-импортёра CDI,
+который создаёт новый том, и PVC остаётся в `Pending`. Если узел заменят,
+сообщения с него пропадут, поэтому регулярно делайте выгрузку (см. ниже). Когда
+квота позволит, верните том `data` в `devops-trainer.yaml` на PVC.
 
 ## Панель отзывов
 
@@ -110,11 +129,14 @@ curl -fsS -H "Authorization: Bearer $token" \
 ## Удалить всё
 
 Удаление пространства имён убирает Deployment, Service, Ingress, Secret с
-токеном, сертификат TLS и PVC со всеми сообщениями:
+токеном и сертификат TLS:
 
 ```sh
 km delete namespace devops-trainer
 ```
+
+Файл SQLite остаётся на узле в `/var/mnt/devops-trainer/feedback`, пока узел
+не заменят.
 
 Образы остаются в реестре на узлах (`sankofa/devops-trainer-web`,
 `sankofa/devops-trainer-feedback`), пока реестр стенда не почистят.
@@ -123,8 +145,7 @@ km delete namespace devops-trainer
 
 Пространство имён `devops-trainer`: Job сборки и проверки (хранятся сутки),
 ConfigMap `build-script`, Deployment `web` (2 реплики) и `feedback`
-(1 реплика, `Recreate`), Service `web` и `feedback`, PVC `feedback-data`
-(1 Гиб, StorageClass по умолчанию), Secret `feedback-secrets`, Ingress `web` и
+(1 реплика, `Recreate`), Service `web` и `feedback`, Secret `feedback-secrets`, Ingress `web` и
 `feedback` (у второго выключен журнал запросов: в адресах переписки есть
 токен), Certificate и Secret `devops-trainer-tls` от ClusterIssuer
 `letsencrypt`.
