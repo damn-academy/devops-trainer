@@ -26,6 +26,14 @@ files are precompressed with gzip; the stock nginx image has no brotli module.
 - git, `kubectl`, `curl` and `openssl` on the workstation. Nothing is built
   there: no Docker, no VMs, no large uploads.
 
+The public host also has to be listed in the outer ingress of the stand: the
+workshop cluster lets through only the hosts in
+`spec.addons.ingressNginx.hosts` of the Cozystack application
+`kubernetes.apps.cozystack.io/museum` (namespace `tenant-sankofa`, kubeconfig
+`~/workshop.txt`, context `admin@workshop`). `devops-trainer.sankofa.workshop.aenix.io`
+was added there once, next to `dormer.sankofa.workshop.aenix.io`. Without it the
+host answers `default backend - 404` and cert-manager cannot pass HTTP-01.
+
 ## Redeploy
 
 Commit and push the branch you want to deploy, then:

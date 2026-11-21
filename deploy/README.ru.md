@@ -27,6 +27,14 @@ nginx отдаёт на каждый ответ `Cross-Origin-Opener-Policy: sam
   ничего не собирает: ни Docker, ни виртуальных машин, ни загрузки больших
   файлов.
 
+Публичный хост должен быть ещё и во внешнем ingress стенда: кластер воркшопов
+пропускает только хосты из `spec.addons.ingressNginx.hosts` приложения Cozystack
+`kubernetes.apps.cozystack.io/museum` (пространство имён `tenant-sankofa`,
+kubeconfig `~/workshop.txt`, контекст `admin@workshop`).
+`devops-trainer.sankofa.workshop.aenix.io` добавлен туда один раз, рядом с
+`dormer.sankofa.workshop.aenix.io`. Без этого хост отвечает
+`default backend - 404`, и cert-manager не проходит проверку HTTP-01.
+
 ## Выкатить заново
 
 Закоммитьте и запушьте ветку, которую нужно выкатить, затем:
