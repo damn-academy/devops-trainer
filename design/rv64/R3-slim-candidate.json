@@ -1,0 +1,14 @@
+{
+  "source": "builder:/work/emulator/out/riscv64",
+  "publication": "candidate, checked before QEMU matrix completion",
+  "guestMemoryMiB": 768,
+  "requestedProfile": "emulator",
+  "observedTimescale": 60,
+  "kernelSha256": "db43c7264ee97779f9271ebb6c57e90df675d7ab768462e01115d84d4f7cd598",
+  "initrdSha256": "94b045bb7f4b3e0c0c12cd0dcb5f229c1733a430569ad0eba2d280dae0d716bf",
+  "rootfsSha256": "9c676d7b3f7ffcfa988b29f2bae72136f77b5af21ab5eac2b6d53ae8075f8328",
+  "controlSha256": "a87019474b1fdfbc135b35b44074a4b386276f77da19fb0d3ba46ebdb661e41c",
+  "probeBytes": 269484032,
+  "probeSha256": "35a17d039f958642557ee898af6611145f84953a54cc5df01d2bdbe0f3911d86",
+  "wasmSha256": "d4e6bc8b3dfc654a2645e1957f6272784203fc648c43f0b24eb548b216c427c7"
+}

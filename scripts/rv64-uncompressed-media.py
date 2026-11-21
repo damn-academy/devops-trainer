@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pod-only measurement image: same extracted kuberoot root, uncompressed SquashFS.
+"""Pod-only measurement image: extracted kuberoot root, optional compressed SquashFS.
 No kernel/build changes. The source media is read only; output is a separate GPT/FAT image.
 """
 import os
@@ -8,13 +8,20 @@ import subprocess
 import zlib
 from pathlib import Path
 assert os.environ.get('CARGO_HOME') == '/work/cargo', 'run in rv64-dev only'
-base = Path('/work/guest/kuberoot')
-squash = base / 'uncompressed.squashfs'
-if squash.exists():
+base = Path(os.environ.get('RV64_MEDIA_ROOT', '/work/guest/kuberoot'))
+compressed = os.environ.get('RV64_MEDIA_COMPRESSED') == '1'
+name = os.environ.get('RV64_MEDIA_NAME', 'probe' if compressed else 'uncompressed')
+if not name or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in name):
+    raise SystemExit('invalid media output name')
+squash = base / (name + '.squashfs')
+out = base / (name + '.img')
+if not (base / 'root/usr/sbin/kinit').is_file():
+    raise SystemExit('extracted root is incomplete: missing usr/sbin/kinit')
+if squash.exists() or out.exists():
     raise SystemExit('output already exists; choose/remove the old experimental output explicitly')
-subprocess.run(['mksquashfs', str(base/'root'), str(squash), '-noappend', '-noI', '-noD', '-noF', '-noX', '-processors', '2'], check=True)
+subprocess.run(['mksquashfs', str(base/'root'), str(squash), '-noappend', *(['-comp', 'zstd'] if compressed else ['-noI', '-noD', '-noF', '-noX']), '-processors', '2'], check=True)
 sectors = ((squash.stat().st_size + 128*1024*1024 + 1048575)//1048576)*2048
-with (base/'media.img').open('rb') as f:
+with Path(os.environ.get('RV64_MEDIA_TEMPLATE', str(base/'media.img'))).open('rb') as f:
     mbr = bytearray(f.read(512)); header = bytearray(f.read(512)); entries = bytearray(f.read(128*128))
 assert header[:8] == b'EFI PART'
 # Reuse the published media partition's type, UUID and KUBEROOT-MEDIA name.
@@ -32,7 +39,6 @@ backup = bytearray(header)
 struct.pack_into('<QQ', backup, 24, sectors-1, 1)
 struct.pack_into('<Q', backup, 72, sectors-33)
 crc(backup)
-out = base/'uncompressed.img'
 with out.open('wb') as f:
     f.truncate(sectors*512); f.write(mbr); f.write(header); f.write(entries)
     f.seek((sectors-33)*512); f.write(entries); f.write(backup)

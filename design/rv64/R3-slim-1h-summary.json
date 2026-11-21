@@ -1,0 +1,21 @@
+{
+  "resultType": "error",
+  "error": "Error: kuberoot probe timeout",
+  "readyObservedSeconds": null,
+  "getPodsSeconds": [],
+  "podStartSeconds": [],
+  "probeDone": false,
+  "observedSeconds": 899.0266850000024,
+  "busyMips": 158.47434623752923,
+  "effectiveMips": 139.15636273577314,
+  "tlsTimeoutLines": 46,
+  "postStartFailures": [
+    "[kuberoot-control] F0101 00:05:14.335410      65 hooks.go:203] PostStartHook \"start-service-ip-repair-controllers\" failed: unable to perform initial IP and Port allocation check (timeout)"
+  ],
+  "restarts": [
+    "[kinit] kuberoot-control exited (code 255), restarting in 1s",
+    "[kinit] kuberoot-control exited (code 1), restarting in 2s"
+  ],
+  "wasmSha256": "6c0c9b874017e2ace816a8c49b9fc65f1f47024709886ede4da2d43425abdf24",
+  "jitSourceSha256": "0e3766f4827dc08b9afa82ef3c3cfe42e7721f5e76ae51b566d849919b1512af"
+}

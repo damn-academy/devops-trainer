@@ -1,0 +1,50 @@
+[kinit] zram swap: 359 MiB, compressed RAM cap 179 MiB
+[kinit] timing profile: emulator=true timescale=60
+[kinit] distribution slim
+[kinit] eth0: 10.0.0.10/24 via [10.0.0.1]
+[kuberoot-control] E0101 00:07:20.571150      67 kubelet_node_status.go:396] "Error getting the current node from lister" err="node \"kuberoot-3d2fa0\" not found"
+[kuberoot-control] E0101 00:07:20.589150      67 node.go:133] "Timed out waiting for node to exist" node="kuberoot-3d2fa0"
+[kuberoot-control] I0101 00:07:20.597835      67 server.go:731] "Can't determine this node's IP, assuming loopback; if this is incorrect, please set the --bind-address flag"
+[kuberoot-control] E0101 00:07:20.608525      67 kubelet.go:3596] "Unable to register mirror pod because node is not registered yet" err="node \"kuberoot-3d2fa0\" not found" node="kuberoot-3d2fa0"
+[kuberoot-control] E0101 00:07:35.791595      67 kubelet.go:3596] "Unable to register mirror pod because node is not registered yet" err="node \"kuberoot-3d2fa0\" not found" node="kuberoot-3d2fa0"
+[kuberoot-control] I0101 00:07:36.005660      67 node.go:209] "NodeIPs changed for the node" node="kuberoot-3d2fa0" newNodeIPs=["10.0.0.10"] oldNodeIPs=null
+[kinit] kuberoot-control exited (code 1), restarting in 1s
+[kuberoot-node] E0101 00:07:41.562005      61 alternatives.go:31] alternative labels: Get "https://127.0.0.1:6443/api/v1/nodes/kuberoot-3d2fa0": dial tcp 127.0.0.1:6443: connect: connection refused
+[kuberoot-control] I0101 00:07:43.665450     254 options.go:262] external host was not specified, using 10.0.0.10
+[kuberoot-control] E0101 00:12:26.432570     254 kubelet.go:2860] "Housekeeping took longer than expected" err="housekeeping took too long" expected="1s" actual="2.081s"
+RV64_NODE_READY
+747.84 1.00
+[kuberoot-control] I0101 00:12:28.724510     254 reflector.go:1261] "Warning: event bookmark expired" err="k8s.io/client-go@v0.37.0/tools/cache/reflector.go:343: awaiting required bookmark event for initial events stream, no events received for 15.242435s"
+kuberoot-3d2fa0   Ready    control-plane   5m3s   v1.37.2   10.0.0.10     <none>        kuberoot 0.1.0-dev (slim)   6.18.62-kuberoot (riscv64)   containerd://2.4.2
+RV64_GET_PODS_BEGIN
+757.97 1.00
+[kuberoot-control] E0101 00:12:38.544865     254 replica_set.go:640] "Unhandled Error" err="sync \"local-path-storage/local-path-provisioner-5759c85cfc\" failed with read version: 393 is not as new as written version: 414 for group resource replicasets.apps"
+775.62 1.00
+RV64_GET_PODS_END
+RV64_GET_PODS_BEGIN
+775.67 1.00
+[containerd] time="1970-01-01T00:12:57.182880000Z" level=info msg="RunPodSandbox for name:\"coredns-665ccd99c-6zfmq\" uid:\"a3cb1a68-dc0c-4bfe-828f-e2f5e4d806cc\" namespace:\"kube-system\""
+821.93 1.00
+RV64_GET_PODS_END
+RV64_GET_PODS_BEGIN
+821.99 1.00
+[kuberoot-control] I0101 00:13:42.254220     254 reflector.go:1261] "Warning: event bookmark expired" err="k8s.io/client-go@v0.37.0/tools/cache/reflector.go:343: awaiting required bookmark event for initial events stream, no events received for 1m28.8308551s"
+842.64 1.00
+RV64_GET_PODS_END
+RV64_POD_START_BEGIN
+842.69 1.00
+[kuberoot-control] [36mINFO[0m[1970-01-01T00:14:04.391315Z] Slow SQL: SELECT current_rev, compact_rev, id, name, created, deleted, create_revision, prev_revision, lease, value, old_value FROM (SELECT MAX(id) AS current_rev FROM kine) AS current_rev, (SELECT MAX(prev_revision) AS compact_rev FROM kine WHERE name = 'compact_rev_key') AS compact_rev, kine WHERE id > 440 ORDER BY id ASC LIMIT 500  [36mduration[0m=2.157755s [36mname[0m=AfterAllOldVal [36mstarted[0m="1970-01-01T00:14:02.2310551Z"
+[kuberoot-control] E0101 00:14:14.737455     254 kubelet.go:2860] "Housekeeping took longer than expected" err="housekeeping took too long" expected="1s" actual="1.058s"
+I0101 00:14:17.332605     566 round_trippers.go:632] "Response" verb="POST" url="https://127.0.0.1:6443/api/v1/namespaces/default/pods?fieldManager=kubectl-run&timeout=2m0s" status="201 Created" milliseconds=4133
+[33;1mWarning:[0m would violate PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "rv64-busybox" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "rv64-busybox" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "rv64-busybox" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "rv64-busybox" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+pod/rv64-busybox created
+RV64_CREATE_STATUS=0
+[kuberoot-control] I0101 00:14:19.066850     254 reflector.go:1261] "Warning: event bookmark expired" err="k8s.io/client-go@v0.37.0/tools/cache/reflector.go:343: awaiting required bookmark event for initial events stream, no events received for 2m5.5934499s"
+[kuberoot-control] I0101 00:14:20.866190     254 reflector.go:1261] "Warning: event bookmark expired" err="k8s.io/client-go@v0.37.0/tools/cache/reflector.go:343: awaiting required bookmark event for initial events stream, no events received for 2m7.390495s"
+[kuberoot-control] E0101 00:15:42.375270     254 pod_workers.go:1338] "Error syncing pod, skipping" err="failed to \"StartContainer\" for \"coredns\" with ImagePullBackOff: \"Back-off pulling image \\\"docker.io/coredns/coredns:1.14.7@sha256:7efd3c635b03efd68c4e8398fc45f0d993d0e9ab016f72c1cefb0fd6d01aa286\\\": ErrImagePull: failed to pull and unpack image \\\"docker.io/coredns/coredns@sha256:7efd3c635b03efd68c4e8398fc45f0d993d0e9ab016f72c1cefb0fd6d01aa286\\\": failed to resolve image: failed to do request: Head \\\"https://registry-1.docker.io/v2/coredns/coredns/manifests/sha256:7efd3c635b03efd68c4e8398fc45f0d993d0e9ab016f72c1cefb0fd6d01aa286\\\": dial tcp: lookup registry-1.docker.io on 10.0.0.1:53: server misbehaving\"" pod="kube-system/coredns-665ccd99c-6zfmq" podUID="a3cb1a68-dc0c-4bfe-828f-e2f5e4d806cc"
+pod/rv64-busybox condition met
+[kuberoot-control] I0101 00:15:44.700370     254 pod_startup_latency_tracker.go:144] "Observed pod startup duration" pod="default/rv64-busybox" podStartSLOduration=88.6966801 podStartE2EDuration="1m28.6966801s" totalImagesPullingTime="0s" totalInitContainerRuntime="0s" isStatefulPod=false podCreationTimestamp="1970-01-01 00:14:16 +0000 UTC" imagePullSessionsCount=0 imagePullSessionsStartsCount=0 observedRunningTime="1970-01-01 00:15:44.6341151 +0000 UTC m=+485.876310001" watchObservedRunningTime="1970-01-01 00:15:44.6966801 +0000 UTC m=+485.938875001"
+944.83 1.01
+RV64_POD_START_END
+[kuberoot-control] I0101 00:15:48.678200     254 reflector.go:1261] "Warning: event bookmark expired" err="k8s.io/client-go@v0.37.0/tools/cache/reflector.go:343: awaiting required bookmark event for initial events stream, no events received for 3m35.2048999s"
+[kuberoot-control] I0101 00:15:50.514240     254 stats.go:119] "Error getting keys" err="Timeout: Too large resource version: 494, current: 493"

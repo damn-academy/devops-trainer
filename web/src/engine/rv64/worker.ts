@@ -15,6 +15,7 @@ interface Core {
   snapshot(): Uint8Array;
   restore(state: Uint8Array): void;
   ticks(): number;
+  guest_ticks(): number;
   lazy_disk(bytes: number): void;
   disk_missing(): Uint32Array;
   disk_chunk(index: number, bytes: Uint8Array): void;
@@ -86,6 +87,7 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
       if (performance.now() - metricsAt >= 1000) {
         metricsAt = performance.now();
         self.postMessage({ type: 'metrics', metrics: { elapsedMs: metricsAt - startedAt,
+          hostMonotonicMs: metricsAt, hostTicks: core.ticks(), guestTicks: core.guest_ticks(), timebaseHz: 10_000_000,
           retired: core.retired(), jitRetired: core.jit_retired(), busyMilliseconds: busyMicros / 1000,
           waitMs, diskMs, diskActiveMs: diskActiveMs + (diskTasks.size ? performance.now() - diskActiveStart : 0), diskPending: diskTasks.size, compilerYieldMs, compiler: jit.stats(), counters: JSON.parse(core.metrics()) } });
       }

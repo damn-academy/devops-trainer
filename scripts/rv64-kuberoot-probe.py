@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 assert os.environ.get('CARGO_HOME') == '/work/cargo', 'run in rv64-dev only'
-root = Path('/work/guest/kuberoot/root')
+root = Path(os.environ.get('RV64_PROBE_ROOT', '/work/guest/kuberoot/root'))
 init = root / 'usr/sbin/kinit'
 original = init.with_name('kinit.real')
 if not original.exists():
@@ -34,6 +34,15 @@ while [ ! -f "$KUBECONFIG" ]; do
 done
 echo RV64_CONFIG_CREATED
 (
+  /bin/busybox sleep 120
+  echo RV64_READYZ_BEGIN
+  /bin/busybox cat /proc/uptime /proc/cmdline
+  kubectl --request-timeout=120s get --raw='/readyz?verbose'
+  echo "RV64_READYZ_STATUS=$?"
+  /bin/busybox cat /proc/uptime
+  echo RV64_READYZ_END
+) &
+(
   while [ ! -S /run/containerd/containerd.sock ]; do /bin/busybox sleep 2; done
   for archive in /usr/share/kuberoot/rv64-images/*.tar; do
     ctr -n k8s.io images import "$archive" || exit 1
@@ -41,7 +50,7 @@ echo RV64_CONFIG_CREATED
   echo RV64_IMAGES_IMPORTED
 ) &
 importer=$!
-until kubectl --request-timeout=10s get nodes -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | /bin/busybox grep -q True; do
+until kubectl --request-timeout=120s get nodes -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | /bin/busybox grep -q True; do
   /bin/busybox sleep 10
 done
 echo RV64_NODE_READY
@@ -58,8 +67,15 @@ done
 wait "$importer"
 echo RV64_POD_START_BEGIN
 /bin/busybox cat /proc/uptime
-kubectl run rv64-busybox --image=docker.io/library/busybox:1.37.0 --image-pull-policy=Never --restart=Never -- /bin/sh -c 'sleep 3600'
-kubectl wait --for=condition=Ready pod/rv64-busybox --timeout=180s
+if /bin/busybox timeout -s QUIT 180 kubectl run rv64-busybox --request-timeout=120s --v=6 --image=docker.io/library/busybox:1.37.0 --image-pull-policy=Never --restart=Never -- /bin/sh -c 'sleep 3600'; then
+  echo RV64_CREATE_STATUS=0
+else
+  code=$?
+  echo RV64_CREATE_STATUS=$code
+  # A timed-out create may have committed. Check before claiming failure or retrying.
+  kubectl get pod rv64-busybox --request-timeout=120s -o wide || { echo RV64_PROBE_FAILED; exit 1; }
+fi
+kubectl wait --for=condition=Ready pod/rv64-busybox --timeout=300s --request-timeout=320s || { echo RV64_PROBE_FAILED; exit 1; }
 /bin/busybox cat /proc/uptime
 echo RV64_POD_START_END
 kubectl get pods -A -o wide
@@ -68,4 +84,4 @@ echo RV64_PROBE_DONE
 ''')
 profile = root / 'usr/share/kuberoot/profile.yaml'
 profile.write_text(profile.read_text().replace('packages: true', 'packages: false'))
-print('Installed console probe; kinit remains PID 1. Disabled remote package subscription in probe image only.')
+print('Installed console probe; kinit remains PID 1. Any explicit packages: true setting was replaced with false in this probe only.')

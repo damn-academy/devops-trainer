@@ -12,15 +12,15 @@ let text = '';
 let readyMs: number | undefined;
 try {
   const [kernel, initrd, media] = await Promise.all([
-    fetch('/rv64/vmlinuz.efi').then(r => { if (!r.ok) throw new Error('missing kernel'); return r.arrayBuffer(); }),
-    fetch('/rv64/kuberoot-initrd.cpio').then(r => { if (!r.ok) throw new Error('missing initrd'); return r.arrayBuffer(); }),
-    fetch('/rv64/kuberoot-media.json').then(r => { if (!r.ok) throw new Error('missing media manifest'); return r.json(); }),
+    fetch('/rv64/slim-vmlinuz.efi').then(r => { if (!r.ok) throw new Error('missing kernel'); return r.arrayBuffer(); }),
+    fetch('/rv64/slim-initrd.cpio').then(r => { if (!r.ok) throw new Error('missing initrd'); return r.arrayBuffer(); }),
+    fetch('/rv64/slim-media.json').then(r => { if (!r.ok) throw new Error('missing media manifest'); return r.json(); }),
   ]);
   const start = performance.now();
   services.dhcp.on(e => events.push({ ms: performance.now() - start, dhcp: e }));
-  machine = new RV64Machine({ id: 'kuberoot', kernel, initrd, memoryMB: 1024,
+  machine = new RV64Machine({ id: 'kuberoot', kernel, initrd, memoryMB: 768,
     network: services.network, httpDisk: media, jitThreshold: Number(params.get('jit') ?? 50),
-    cmdline: 'earlycon=sbi console=hvc0 nokaslr kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose' });
+    cmdline: 'earlycon=sbi console=hvc0 nokaslr kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator' });
   await new Promise<void>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('kuberoot probe timeout')), Number(params.get('seconds') ?? 900) * 1000);
     machine!.on(e => {
@@ -30,6 +30,7 @@ try {
       text += String(e.text);
       document.querySelector('#console')!.textContent = text;
       if (readyMs === undefined && text.includes('\nRV64_NODE_READY\n')) readyMs = performance.now() - start;
+      if (text.includes('\nRV64_PROBE_FAILED\n')) { clearTimeout(timer); reject(new Error('kuberoot probe command failed')); }
       if (text.includes('\nRV64_PROBE_DONE\n')) { clearTimeout(timer); resolve(); }
     });
   });

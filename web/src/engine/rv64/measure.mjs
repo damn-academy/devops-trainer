@@ -10,6 +10,7 @@ for (const file of ['jit-compiler.ts','jit.ts','compiler.worker.ts','worker.ts']
 const jitSourceSha256 = sourceHash.digest('hex');
 const label = process.env.RV64_RESULT_NAME;
 if (label && !/^[A-Za-z0-9_-]+$/.test(label)) throw new Error('Invalid result name');
+const smp = process.argv.includes('--smp-substrate');
 const trace = process.argv.includes("--jit-trace");
 const gates = process.argv.includes("--jit-gates");
 const integration = process.argv.includes("--integration");
@@ -29,7 +30,7 @@ try {
   if (integration) { mkdirSync('public/rv64', { recursive: true }); writeFileSync('public/rv64/integration-disk.bin', new Uint8Array(512).fill(90)); }
   const page = await browser.newPage();
   if (gates || trace || kuberoot) {
-    const progress = setInterval(async () => { if (kuberoot) console.error('METRICS', JSON.stringify(await page.evaluate(() => globalThis.rv64LatestMetrics).catch(() => null))); console.error((await page.locator("#console").textContent().catch(() => "loading"))?.slice(-1500)); }, 30000);
+    const progress = setInterval(async () => { if (kuberoot) console.error('METRICS', JSON.stringify(await page.evaluate(() => globalThis.rv64LatestMetrics).catch(() => null))); const consoleText = await page.locator("#console").textContent().catch(() => "loading"); if (kuberoot && label && consoleText) writeFileSync(`public/rv64/results/${label}-console.txt`, consoleText); console.error(consoleText?.slice(-1500)); }, 30000);
     page.once("close", () => clearInterval(progress));
   }
   let stopProfile;
@@ -52,7 +53,7 @@ try {
     else { start(); await started; }
     stopProfile = async () => { clearTimeout(startTimer); return started ? stop() : { traceEvents: events }; };
   }
-  await page.goto(`http://localhost:${port}/src/engine/rv64/${trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&jit=${jit}` : trace && process.argv.includes("--single-step") ? "?single=1" : ""}`);
+  await page.goto(`http://localhost:${port}/src/engine/rv64/${smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&jit=${jit}` : trace && process.argv.includes("--single-step") ? "?single=1" : ""}`);
   try {
     await page.waitForFunction(() => globalThis.rv64Result, undefined, { timeout: Number(process.env.RV64_TIMEOUT_MS) || (gates || trace ? 900000 : kuberoot ? 930000 : boot || integration ? 300000 : 30000) });
   } catch (error) {
@@ -71,5 +72,5 @@ try {
     const speedup = result.result.busyMips / baseline.result.busyMips;
     if (!(speedup >= 3 && result.result.busyMips >= 250)) throw new Error(`JIT speed gate failed: ${speedup}x, ${result.result.busyMips} busy MIPS`);
   }
-  if (!result.isolated || (trace ? result.result.type !== "jit-trace" || !result.result.pass : gates ? result.result.type !== "jit-gates" || !result.result.pass : kuberoot ? result.result.type !== 'kuberoot' : integration ? result.result.type !== 'integration' : boot ? result.result.type !== 'boot' || !result.result.console.includes('Correct operation validated') || result.result.stimecmpWrites <= 0 : result.result.type !== 'smoke' || result.result.value !== '42' || result.result.retired !== 2)) throw new Error('RV64 smoke failed');
+  if (!result.isolated || (smp ? result.result.type !== 'smp-substrate' || !result.result.pass : trace ? result.result.type !== "jit-trace" || !result.result.pass : gates ? result.result.type !== "jit-gates" || !result.result.pass : kuberoot ? result.result.type !== 'kuberoot' : integration ? result.result.type !== 'integration' : boot ? result.result.type !== 'boot' || !result.result.console.includes('Correct operation validated') || result.result.stimecmpWrites <= 0 : result.result.type !== 'smoke' || result.result.value !== '42' || result.result.retired !== 2)) throw new Error('RV64 smoke failed');
 } finally { if (browser) await browser.close(); vite.kill(); }

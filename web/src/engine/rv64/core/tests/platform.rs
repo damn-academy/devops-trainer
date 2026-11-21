@@ -547,3 +547,50 @@ fn reclaimed_code_page_stops_invalidating_until_refetched() {
     assert_eq!(m.metrics.dma_code_pages, 1);
     assert_eq!(m.decoded(base).unwrap().ins, 0x00300093);
 }
+
+#[test]
+fn smp_device_tree_has_unique_harts_and_interrupt_contexts() {
+    use std::collections::BTreeMap;
+    for harts in [1, 2, 4] {
+        let tree = rv64_core::fdt::build_harts(768 << 20, RAM_BASE + 0x8000000, 1024, "console=hvc0", harts);
+        let word = |at: usize| u32::from_be_bytes(tree[at..at + 4].try_into().unwrap());
+        let mut at = word(8) as usize;
+        let strings = word(12) as usize;
+        let mut stack = Vec::<String>::new();
+        let mut props = BTreeMap::new();
+        loop {
+            let token = word(at); at += 4;
+            match token {
+                1 => {
+                    let end = at + tree[at..].iter().position(|b| *b == 0).unwrap();
+                    stack.push(String::from_utf8(tree[at..end].to_vec()).unwrap());
+                    at = (end + 4) & !3;
+                }
+                2 => { stack.pop().unwrap(); }
+                3 => {
+                    let len = word(at) as usize;
+                    let off = strings + word(at + 4) as usize;
+                    let end = off + tree[off..].iter().position(|b| *b == 0).unwrap();
+                    let name = std::str::from_utf8(&tree[off..end]).unwrap();
+                    at += 8;
+                    props.insert(format!("{}/{}", stack.join("/"), name), tree[at..at+len].to_vec());
+                    at = (at + len + 3) & !3;
+                }
+                9 => break,
+                _ => panic!("invalid FDT token {token}"),
+            }
+        }
+        let cells = |key: &str| -> Vec<u32> {
+            props[key].chunks_exact(4).map(|b| u32::from_be_bytes(b.try_into().unwrap())).collect()
+        };
+        assert_eq!(cells("/cpus/timebase-frequency"), [10_000_000]);
+        for hart in 0..harts {
+            assert_eq!(cells(&format!("/cpus/cpu@{hart:x}/reg")), [hart]);
+            assert_eq!(cells(&format!("/cpus/cpu@{hart:x}/interrupt-controller/phandle")), [hart + 1]);
+        }
+        assert_eq!(cells("/soc/plic@c000000/phandle"), [harts + 1]);
+        assert_eq!(cells("/soc/plic@c000000/interrupts-extended"), (1..=harts).flat_map(|h| [h, 11, h, 9]).collect::<Vec<_>>());
+        assert_eq!(cells("/soc/clint@2000000/interrupts-extended"), (1..=harts).flat_map(|h| [h, 3, h, 7]).collect::<Vec<_>>());
+        assert_eq!(cells("/soc/virtio@10002000/interrupt-parent"), [harts + 1]);
+    }
+}

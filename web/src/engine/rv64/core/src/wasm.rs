@@ -95,6 +95,7 @@ impl Engine {
     pub fn jit_install(&mut self, id: u32, slot: u32, count: u32) { self.cpu.jit.ready.insert(id, (slot, count)); }
     pub fn jit_table(&self) -> JsValue { wasm_bindgen::function_table() }
     pub fn jit_threshold(&mut self, threshold: u32) { self.cpu.jit.threshold = threshold; self.cpu.jit.at_entry = true; }
+    pub fn guest_ticks(&self) -> f64 { self.cpu.memory.time as f64 }
     pub fn ticks(&self) -> f64 { self.cpu.memory.host_ticks as f64 }
     pub fn input(&mut self, data: &[u8]) {
         self.cpu.input.extend(data);

@@ -1,0 +1,11 @@
+{
+  "samples": 962,
+  "timebaseHz": 10000000,
+  "wallMs": 961837.2099999785,
+  "guestMs": 961837.2401,
+  "guestToWallRatio": 1.0000000312942994,
+  "guestMinusHostDeltaTicks": 0,
+  "guestBacksteps": 0,
+  "maxHostSampleLagMs": 64.55509999285277,
+  "retired": 118062720304
+}
