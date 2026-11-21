@@ -298,7 +298,7 @@ export const incidentModel = defineModel<P>({
               label: b('подтверждение', 'ack'),
               caption: at(b('Дежурный подтверждает оповещение за пару минут. Теперь сбой за ним, и остальные знают, что им занимаются.', 'The on-call engineer acknowledges the page within a couple of minutes. The outage is now theirs, and everyone knows it is being handled.')),
               focus: ['e-page', 'oncall'],
-              say: { oncall: b('Дежурный подтверждает оповещение и тем самым говорит остальным: «беру».', 'The on-call engineer acknowledges the page and so tells the others: “mine”.') },
+              say: { oncall: b('Дежурный подтверждает оповещение, и остальные видят, что сбой он берёт на себя.', 'The on-call engineer acknowledges the page, and the others see that the outage is theirs.') },
               tokens: [{ edge: 'e-page', label: b('оплата сломана', 'checkout broken') }],
               reveal: ['e-page', 'oncall'],
               metrics: m(),
@@ -309,24 +309,20 @@ export const incidentModel = defineModel<P>({
     steps.push({
       id: 's4',
       label: b('статус', 'status'),
-      caption: at(b('Первое сообщение о статусе уходит в канал сразу, хотя причина ещё неизвестна. В сообщении сказано, что команда видит, что она делает и когда напишет снова. Владелец бизнеса читает канал и не отвлекает дежурного вопросами.', 'The first status update goes to the channel at once, although the cause is still unknown. The update says what the team sees, what it does and when it will write again. The business owner reads the channel instead of distracting the on-call engineer.')),
+      caption: at(b('Дежурный сразу пишет в канал первое сообщение о статусе, хотя причина ещё неизвестна. Владелец бизнеса читает этот канал и не отвлекает дежурного вопросами.', 'The on-call engineer posts the first status update to the channel at once, although the cause is still unknown. The business owner reads the channel instead of distracting the on-call engineer.')),
       focus: ['e-status', 'status'],
-      say: { status: b('«Мы видим, что не проходят оплаты, и ищем причину. Следующее сообщение напишем через 30 минут».', '“We see that payments fail and are looking for the cause. We will post the next update in 30 minutes.”') },
+      say: { status: b('«Не проходят оплаты, ищем причину. Следующее сообщение будет через 30 минут».', '“Payments fail, we are looking for the cause. Next update in 30 minutes.”') },
       tokens: [{ edge: 'e-status', label: b('статус 1', 'status 1') }],
       reveal: ['e-status', 'status'],
       states: responder === 'backup' ? { 'e-status': 'on' } : {},
       metrics: m(),
     });
-    t += p.rollback ? n.locate : n.diagnose;
-    const slow = p.runbook ? b('', '') : b(', вдвое дольше обычного, потому что инструкции для дежурного нет', ', twice as long as usual, because there is no runbook');
+    // Diagnosis in two steps: first the log names the last deployment, then the on-call engineer decides what to do with it.
+    t += n.locate;
     steps.push({
       id: 's5',
       label: b('диагностика', 'diagnose'),
-      caption: at(
-        p.rollback
-          ? fmtn(b('Диагностика начинается с вопроса, что менялось последним. Дежурный открывает журнал выкладок и за {l} находит, что последней была выкладка #41 из {b}.{r} Искать среди них виноватое изменение ночью он не станет, потому что быстрее вернуть прошлую версию сайта целиком.', 'Diagnosis starts with the question of what changed last. The on-call engineer opens the deployment log and in {l} finds that the last one was deployment #41 with {b}.{r} They will not look for the faulty change among them at night, because putting the whole previous version back is faster.'), { b: CH(batch), l: MIN(n.locate), r: p.runbook ? b('', '') : b(' Без инструкции для дежурного на это ушло вдвое больше времени, чем обычно.', ' Without a runbook this took twice as long as usual.') })
-          : fmtn(b('Диагностика начинается с вопроса, что менялось последним. Журнал выкладок отвечает, что последней была выкладка #41 из {b}. Откатить её нельзя, поэтому дежурному приходится ночью искать виноватое изменение среди них, и на это уходит {d}{r}.', 'Diagnosis starts with the question of what changed last. The deployment log answers that the last one was deployment #41 with {b}. It cannot be rolled back, so the on-call engineer has to look for the faulty change among them at night, which takes {d}{r}.'), { b: CH(batch), d: MIN(n.diagnose), r: slow }),
-      ),
+      caption: at(fmtn(b('Дежурный начинает с вопроса, что менялось последним, открывает журнал выкладок и за {l} находит, что последней была выкладка #41 из {b}.{r}', 'The on-call engineer first asks what changed last, opens the deployment log and in {l} finds that the last one was deployment #41 with {b}.{r}'), { b: CH(batch), l: MIN(n.locate), r: p.runbook ? b('', '') : b(' Без инструкции для дежурного это заняло вдвое больше времени.', ' Without a runbook this took twice as long.') })),
       focus: ['e-diag', 'log'],
       say: { log: fmtn(b('Последней была выкладка #41 из {b}, и её подозревают первой.', 'The last one was deployment #41 with {b}, and it is suspected first.'), { b: CH(batch) }) },
       tokens: [{ edge: 'e-diag', label: b('что менялось?', 'what changed?') }, { edge: 'e-diag', reverse: true, label: fmtn(b('#41, {b}', '#41, {b}'), { b: nWord(batch, ['изменение', 'изменения', 'изменений'], ['change', 'changes']) }) }],
@@ -335,13 +331,28 @@ export const incidentModel = defineModel<P>({
       values: { log: `#41 · ${batch}` },
       metrics: m(),
     });
+    if (!p.rollback) t += n.diagnose - n.locate;
+    const which = batch === 1 ? b('где ошибка в единственном изменении выкладки', 'where the mistake in the only change is') : fmtn(b('какое из {b} виновато', 'which of the {b} is to blame'), { b: CH(batch) });
+    steps.push({
+      id: 's5-decide',
+      label: b('решение', 'decide'),
+      caption: at(
+        p.rollback
+          ? fmtn(b('Выяснять ночью, {w}, дежурный не станет, потому что быстрее вернуть на сайт прошлую версию целиком.', 'The on-call engineer will not work out at night {w}, because putting the whole previous version back is faster.'), { w: which })
+          : fmtn(b('Откатить выкладку #41 нельзя, поэтому дежурному приходится ночью выяснять, {w}. Поиск занимает {d}{r}.', 'Deployment #41 cannot be rolled back, so the on-call engineer has to work out at night {w}. The search takes {d}{r}.'), { w: which, d: MIN(n.diagnose), r: p.runbook ? b('', '') : b(', вдвое дольше обычного, потому что инструкции для дежурного нет', ', twice as long as usual, because there is no runbook') }),
+      ),
+      focus: [noRota ? 'backup' : 'oncall'],
+      say: { [noRota ? 'backup' : 'oncall']: p.rollback ? b('Дежурный решает откатить выкладку #41 целиком.', 'The on-call engineer decides to roll back deployment #41 as a whole.') : b('Дежурный перебирает изменения выкладки #41 одно за другим.', 'The on-call engineer goes through the changes of #41 one by one.') },
+      states: { log: 'ok' },
+      metrics: m(),
+    });
     t += n.restore;
     steps.push(
       p.rollback
         ? {
             id: 's6',
             label: b('откат', 'rollback'),
-            caption: at(fmtn(b('Дежурный смягчает сбой. Одной командой он возвращает на сайт прошлую версию #40, и за {r} доля ошибок падает до нуля. {w}', 'The on-call engineer mitigates the outage. With one command they put the previous version #40 back on the site, and within {r} the error share falls to zero. {w}'), { r: MIN(n.restore), w: batch === 1 ? fmtn(b('Ошибку в единственном изменении выкладки #41 будут спокойно искать днём, и на это уйдёт {d}.', 'The mistake in the only change of #41 will be looked for calmly in the daytime; that takes {d}.'), { d: MIN(n.diagnose) }) : fmtn(b('Какое из {b} сломало оплату, будут спокойно выяснять днём, и на это уйдёт {d}.', 'Which of the {b} broke the checkout will be worked out calmly in the daytime; that takes {d}.'), { b: CH(batch), d: MIN(n.diagnose) }) })),
+            caption: at(fmtn(b('Дежурный смягчает сбой. Одной командой он возвращает на сайт прошлую версию #40, и за {r} доля ошибок падает до нуля. {w}', 'The on-call engineer mitigates the outage: one command puts version #40 back, and within {r} the error share falls to zero. {w}'), { r: MIN(n.restore), w: batch === 1 ? fmtn(b('Ошибку в единственном изменении выкладки #41 будут спокойно искать днём, и на это уйдёт {d}.', 'The mistake in the only change of #41 is looked for calmly in the daytime, in {d}.'), { d: MIN(n.diagnose) }) : fmtn(b('Какое из {b} сломало оплату, будут спокойно выяснять днём, и на это уйдёт {d}.', 'Which of the {b} broke the checkout is worked out calmly in the daytime, in {d}.'), { b: CH(batch), d: MIN(n.diagnose) }) })),
             focus: ['e-rollback', 'service'],
             say: { service: b('На сайте снова версия #40, и заказы проходят.', 'The site runs version #40 again, and orders go through.') },
             tokens: [{ edge: 'e-rollback', label: b('вернуть #40', 'restore #40') }],
@@ -366,18 +377,26 @@ export const incidentModel = defineModel<P>({
     steps.push({
       id: 's7',
       label: b('восстановлено', 'restored'),
-      caption: at(fmtn(b('Дежурный проверяет по тем же графикам, по которым заметили сбой, что заказы проходят, и пишет итоговый статус. Сбой длился {m}, что составляет {bm} плохой работы, то есть {pc} месячного бюджета ошибок, а магазин недополучил {x} выручки.', 'The on-call engineer checks on the same graphs that showed the outage that orders go through, and posts the final status. The outage lasted {m}, which is {bm} of bad service, or {pc} of the monthly error budget, and the shop lost {x} of revenue.'), { m: MIN(n.downtime), bm: nWord(n.bad, ['минута', 'минуты', 'минут'], ['minute', 'minutes']), pc: pct(n.budgetPct), x: money(n.lost) })),
+      caption: at(b('Дежурный проверяет по тем же графикам, по которым заметили сбой, что заказы снова проходят, и пишет в канал итоговый статус.', 'The on-call engineer checks on the same graphs that showed the outage that orders go through again, and posts the final status to the channel.')),
       focus: ['status'],
       say: { status: fmtn(b('«Сервис восстановлен. Сбой длился {m}, разбор проведём завтра».', '“The service is restored. The outage lasted {m}; we will hold the review tomorrow.”'), { m: MIN(n.downtime) }) },
       states: { status: 'ok' },
       metrics: m(true),
     });
     steps.push({
+      id: 's7-cost',
+      label: b('цена сбоя', 'cost'),
+      caption: at(fmtn(b('Сбой длился {m}, но не проходила только часть заказов, поэтому плохой работы набралось {bm}, то есть {pc} месячного бюджета ошибок. Магазин недополучил {x} выручки.', 'The outage lasted {m}, but only part of the orders failed, so the bad service adds up to {bm}, or {pc} of the monthly error budget. The shop lost {x} of revenue.'), { m: MIN(n.downtime), bm: nWord(n.bad, ['минуту', 'минуты', 'минут'], ['minute', 'minutes']), pc: pct(n.budgetPct), x: money(n.lost) })),
+      focus: ['service'],
+      states: { status: 'ok', service: 'ok' },
+      metrics: m(true),
+    });
+    steps.push({
       id: 's8',
       label: b('хронология', 'timeline'),
-      caption: b('На следующий день команда пишет разбор. Хронологию собирают из журнала выкладок, графиков, канала статуса и обращений в поддержку. Главный вопрос разбора состоит в том, что было видно в каждый момент, а вопрос «кто ошибся» на разборе не задают.', 'The next day the team writes the review. The timeline is assembled from the deployment log, the graphs, the status channel and the support tickets. The central question of the review is what could be seen at each moment; the question “who made the mistake” is not asked.'),
+      caption: b('На следующий день команда пишет разбор и собирает хронологию из журнала выкладок, графиков, канала статуса и обращений в поддержку. На разборе спрашивают, что было видно в каждый момент, а не кто ошибся.', 'The next day the team writes the review and assembles the timeline from the deployment log, the graphs, the status channel and the support tickets. The review asks what could be seen at each moment, not who made the mistake.'),
       focus: ['e-timeline', 'postmortem'],
-      say: { postmortem: b('Команда собирает факты по времени и выясняет, что было видно в каждый момент.', 'The team collects facts by time and finds out what could be seen at each moment.') },
+      say: { postmortem: b('Команда раскладывает факты по времени.', 'The team lays out the facts by time.') },
       tokens: [{ edge: 'e-timeline', label: b('факты по времени', 'facts by time') }],
       reveal: ['e-timeline', 'postmortem'],
       metrics: m(true),

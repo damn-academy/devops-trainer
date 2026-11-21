@@ -7,6 +7,9 @@ import { bi, t, type Bi } from '../../../core/i18n';
 import type { ColorFamily, DiagramEdge, DiagramNode, DocRef, ElementCard, ElementState, QText, Step } from '../../../core/types';
 
 export const b = bi;
+
+/** Characters of caption and callouts a step may hold: the player reads 3 s + 65 ms a character and caps a step at 22 s. */
+export const STEP_CHARS = 292;
 export type { Bi };
 
 export const card = (what: [string, string], who: [string, string], doc?: DocRef, see?: string): ElementCard => ({ what: bi(what[0], what[1]), who: bi(who[0], who[1]), doc, see });

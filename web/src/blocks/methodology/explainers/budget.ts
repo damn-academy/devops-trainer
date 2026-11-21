@@ -112,7 +112,7 @@ export const budgetModel = defineModel<P>({
       edge('e-size', 'slo', 'budget', b('(1 − SLO) × 30 дней', '(1 − SLO) × 30 days'), card(['Из цели получается бюджет, и при цели 99,9 % он равен 43,2 минуты за 30 дней.', 'The target gives the budget, and at 99.9% it equals 43.2 minutes over 30 days.'], ['Бюджет получается из цели простой арифметикой, и вручную его никто не пересчитывает.', 'The budget follows from the target by plain arithmetic; nobody recomputes it by hand.'])),
       edge('e-spend', 'outage', 'budget', b('минуты × доля ошибок', 'minutes × error share'), card(['По этой линии сбой забирает из бюджета плохие минуты, и их столько, сколько получится, если умножить длительность сбоя на долю неуспешных запросов.', 'Along this line the outage takes bad minutes from the budget, as many as its duration multiplied by the share of failing requests.'], ['Минуты списывает мониторинг.', 'Monitoring deducts the minutes.'])),
       edge('e-burn', 'outage', 'burn', b('доля ошибок', 'error share'), card(['Мониторинг смотрит, какая доля запросов не проходит прямо сейчас, и делит её на допустимую долю.', 'Monitoring looks at what share of requests fails right now and divides it by the allowed share.'], ['Долю считает мониторинг по окнам времени.', 'Monitoring computes it over time windows.'])),
-      edge('e-alert', 'burn', 'alert', b('выше порога?', 'above a threshold?'), card(['Скорость сравнивают с тремя порогами из SRE Workbook, которые равны 14,4, 6 и 1.', 'The rate is compared with three thresholds from the SRE Workbook, which are 14.4, 6 and 1.'], ['Скорость с порогами сравнивает правило оповещения.', 'The alerting rule compares the rate with the thresholds.'], ALERTING)),
+      edge('e-alert', 'burn', 'alert', b('выше порога?', 'above a threshold?'), card(['Скорость сравнивают с тремя порогами из SRE Workbook, которые равны 14,4, 6 и 1.', 'The rate is compared with three thresholds from the SRE Workbook, which are 14.4, 6 and 1.'], ['Скорость с порогами сравнивает правило, которое отправляет оповещение.', 'The rule that sends the alert compares the rate with the thresholds.'], ALERTING)),
       edge('e-policy', 'budget', 'policy', b('бюджет превышен?', 'budget exceeded?'), card(['Решение о заморозке выпусков принимают по остатку бюджета за окно, у нашего магазина это последние 30 дней, а не по ощущению.', 'The release freeze is decided on what is left of the budget over the window, the last 30 days for our shop, not on a feeling.'], ['Решение принимают команда и бизнес, следуя политике бюджета.', 'The team and the business decide, following the budget policy.'], POLICY), { labelAt: 0.3 }),
     ],
   },
@@ -201,11 +201,11 @@ export const budgetModel = defineModel<P>({
       {
         id: 'size',
         label: b('бюджет', 'budget'),
-        caption: fmtn(b('Из цели получается бюджет ошибок. Допустимая доля плохой работы равна {e}, а в 30 днях 43 200 минут, поэтому на плохую работу можно потратить {b}, примерно {w} в неделю.{x}', 'The target gives the error budget. The allowed share of bad service is {e}, and 30 days have 43,200 minutes, so {b} of bad service may be spent, about {w} a week.{x}'), {
+        caption: fmtn(b('Из цели получается бюджет ошибок. Допустимая доля плохой работы равна {e}, а в 30 днях 43 200 минут, поэтому бюджет равен {b}, примерно {w} в неделю.{x}', 'The target gives the error budget. The allowed share of bad service is {e}, and 30 days have 43,200 minutes, so the budget is {b}, about {w} a week.{x}'), {
           e: pct(String(allowed)),
           b: dur(n.budget),
           w: dur((n.budget / 30) * 7),
-          x: p.earlier ? fmtn(b(' Из них {y} команда уже израсходовала раньше, за последние 30 дней.', ' Of these, the team already used {y} earlier, in the last 30 days.'), { y: durAcc(p.earlier) }) : b('', ''),
+          x: p.earlier ? fmtn(b(' Из них {y} команда уже израсходовала за последние 30 дней.', ' The team already used {y} of it in the last 30 days.'), { y: durAcc(p.earlier) }) : b('', ''),
         }),
         focus: ['e-size', 'budget'],
         say: { budget: fmtn(b('В бюджете {b} плохой работы на 30 дней.', 'The budget holds {b} of bad service for 30 days.'), { b: dur(n.budget) }) },
@@ -243,7 +243,7 @@ export const budgetModel = defineModel<P>({
       steps.push({
         id: 'cpu',
         label: b('процессор', 'CPU'),
-        caption: b('Оповещение смотрит на загрузку процессора, а не на долю ошибок. Процессор загружен на 35 %, сервер работает спокойно, а оплата при этом не проходит. Оповещение молчит, и о сбое первыми узнают покупатели.', 'The alert watches CPU load, not the error share. The CPU is at 35%, the server runs calmly, and yet payments fail. The alert stays silent, and the customers learn about the outage first.'),
+        caption: b('Оповещение смотрит на загрузку процессора, а не на долю ошибок. Процессор загружен на 35 %, а оплата при этом не проходит. Оповещение молчит, и о сбое первыми узнают покупатели.', 'The alert watches CPU load, not the error share. The CPU is at 35%, and yet payments fail. The alert stays silent, and the customers learn about the outage first.'),
         focus: ['alert'],
         say: { alert: b('Процессор загружен на 35 %, правило считает, что всё спокойно, и дежурного никто не будит.', 'The CPU is at 35%, the rule considers everything calm, and nobody wakes the on-call engineer.') },
         reveal: ['alert'],
