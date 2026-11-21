@@ -12,6 +12,11 @@ tools)
   git -C "$work/src" checkout --quiet "$GIT_SHA"
   mkdir -p "$work/bin" "$work/feedback/rootfs"
   (cd "$work/src/service/feedback" && CGO_ENABLED=0 GOFLAGS=-trimpath go build -ldflags='-s -w' -o "$work/feedback/rootfs/feedback" .)
+  # The lab image embeds the OpenTofu provider `lab` (web/scripts/iac.mjs builds
+  # it the same way when Go is on PATH; the Playwright image has no Go).
+  version=$(sed -n "s/^const PROVIDER_VERSION = '\(.*\)';/\1/p" "$work/src/web/scripts/iac.mjs")
+  (cd "$work/src/tools/terraform-provider-lab" && CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -trimpath -buildvcs=false \
+    -ldflags "-s -w -buildid= -X main.version=$version" -o "dist/linux_386/terraform-provider-lab_v$version" .)
   GOBIN="$work/bin" CGO_ENABLED=0 go install github.com/google/go-containerregistry/cmd/crane@v0.20.3
   ;;
 images)
