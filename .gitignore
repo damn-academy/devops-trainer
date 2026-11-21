@@ -15,3 +15,6 @@ source/
 web/.cache/
 web/.feedback/
 web/shots/
+
+# Generated explainer lint report
+web/explainer-lint-report.json
