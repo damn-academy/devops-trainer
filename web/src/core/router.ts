@@ -9,6 +9,7 @@
 //   #/review               the review queue
 //   #/lab/<id>             a standalone lab page (widget `lab:<id>`, e.g. the multi-machine lab)
 //   #/local-lab            how to install the local lab dtlab on your own computer
+//   #/about                the «Справка» section (optionally #/about/<page>: use, how, deploy, contribute)
 
 export type Route =
   | { name: 'home' }
@@ -22,6 +23,7 @@ export type Route =
   | { name: 'review' }
   | { name: 'lab'; id: string }
   | { name: 'local-lab' }
+  | { name: 'about'; page?: string }
   | { name: 'notfound'; path: string };
 
 export function parseRoute(hash: string): Route {
@@ -47,6 +49,10 @@ export function parseRoute(hash: string): Route {
     case 'exam':
     case 'lab':
       if (id && parts.length === 2) return { name: head, id };
+      break;
+    case 'about':
+      if (parts.length === 1) return { name: 'about' };
+      if (id && parts.length === 2) return { name: 'about', page: id };
       break;
     case 'messages':
     case 'settings':
@@ -83,6 +89,8 @@ export function href(r: Route): string {
       return `#/lab/${e(r.id)}`;
     case 'local-lab':
       return '#/local-lab';
+    case 'about':
+      return r.page ? `#/about/${e(r.page)}` : '#/about';
     case 'notfound':
       return `#/${r.path}`;
   }

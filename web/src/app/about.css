@@ -1,0 +1,45 @@
+/* The «Справка» section (#/about): a tab row of five pages, readable prose,
+   and the diagram of the three kinds of machines, which reflows from a row of
+   groups at desktop width to a single column on a phone. */
+.about { max-width: 820px; }
+.ab-kicker { margin: 0 0 6px; font: 600 0.8rem/1.2 var(--font-ui); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.ab-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 20px; padding-bottom: 12px; border-bottom: 1px solid var(--line); font-family: var(--font-ui); }
+.ab-tab { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2); text-decoration: none; font-size: 0.9rem; background: var(--surface); }
+.ab-tab:hover { border-color: var(--line-2); color: var(--ink); }
+.ab-tab[aria-current='page'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.ab-toc { margin: 12px 0 8px; font-family: var(--font-ui); font-size: 0.9rem; }
+.ab-toc summary { cursor: pointer; color: var(--muted); }
+.ab-toc ol { margin: 8px 0 0; padding-left: 1.4em; }
+.ab-toc-link { background: none; border: 0; padding: 2px 0; color: var(--link); font: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.ab-sec { margin: 32px 0; }
+.ab-sec h2 { font-size: 1.35rem; }
+.ab-sec .codeblock, .ab-sec pre { max-width: 100%; overflow-x: auto; }
+.ab-pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 40px 0 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+
+.ab-diagram { margin: 20px 0 8px; }
+.ab-dg { display: flex; flex-direction: column; align-items: stretch; gap: 0; font-family: var(--font-ui); }
+.ab-zone { border: 1px solid var(--line-2); border-radius: var(--r-lg); padding: 12px; background: var(--bg-2); }
+.ab-zone-title, .ab-group-title { margin: 0 0 8px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.ab-groups { display: grid; grid-template-columns: 1.15fr 1fr 0.7fr; gap: 10px; }
+.ab-group { border: 1px solid var(--line); border-radius: var(--r); padding: 10px; background: var(--surface); }
+.ab-group.ab-exp { border-style: dashed; border-color: var(--line-2); background: transparent; }
+.ab-nodes { display: flex; flex-wrap: wrap; gap: 6px; }
+.ab-group .ab-nodes { flex-direction: column; align-items: stretch; }
+.ab-node { padding: 6px 10px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--surface); color: var(--ink); font: 500 0.86rem/1.25 var(--font-ui); text-align: left; cursor: pointer; }
+.ab-node:hover { border-color: var(--focus); }
+.ab-node:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ab-node[aria-pressed='true'] { border-color: var(--focus); box-shadow: inset 0 0 0 1px var(--focus); background: var(--highlight); }
+.ab-node.ab-exp { border-style: dashed; }
+.ab-base { margin-top: 0; }
+.ab-link { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; padding: 8px 4px; color: var(--ink-2); font-size: 0.82rem; text-align: center; }
+.ab-zone .ab-link { padding: 10px 4px; }
+.ab-arrow { font-size: 1.05rem; color: var(--focus); }
+.ab-diagram figcaption { margin-top: 10px; }
+.ab-card { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--line); border-left: 3px solid var(--focus); border-radius: var(--r); background: var(--surface); min-height: 3.2rem; }
+.ab-card h3 { margin: 0 0 4px; font: 600 1rem/1.3 var(--font-ui); }
+.ab-card p { margin: 0; }
+
+@media (max-width: 720px) {
+  .ab-groups { grid-template-columns: 1fr; }
+  .ab-group .ab-nodes { flex-direction: row; flex-wrap: wrap; }
+}

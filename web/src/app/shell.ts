@@ -116,6 +116,17 @@ export function startApp(root: HTMLElement): void {
     clear(main);
     main.append(page.el);
     footer.replaceChildren(h('p', {}, t(bi('Прогресс сохраняется в этом браузере после каждого действия. Курс не игра: без очков, значков и серий.', 'Progress is saved in this browser after every action. The course is not a game: no points, badges or streaks.'))));
+    footer.append(
+      h(
+        'p.foot-links',
+        {},
+        h('a', { href: href({ name: 'about' }) }, t(bi('Справка о курсе', 'About the course'))),
+        ' · ',
+        h('a', { href: href({ name: 'about', page: 'deploy' }) }, t(bi('Развернуть у себя', 'Run it yourself'))),
+        ' · ',
+        h('a', { href: href({ name: 'about', page: 'contribute' }) }, t(bi('Как поучаствовать', 'Contributing'))),
+      ),
+    );
     footer.append(h('button.btn.ghost', { type: 'button', onclick: () => window.dispatchEvent(new Event('feedback-contact')) }, t(bi('Написать автору', 'Contact the author'))));
     window.dispatchEvent(new Event('feedback-page'));
     if (!keepScroll) window.scrollTo({ top: 0 });

@@ -156,6 +156,13 @@ export function settingsPage(): Page {
       h('p', {}, t(bi('Для уроков и экзаменов на настоящих машинах программа dtlab бесплатно запускает виртуальные машины курса на вашем компьютере, а когда они больше не нужны, одной командой убирает их за собой.', 'For lessons and exams on real machines the dtlab program runs the course’s virtual machines on your computer for free, and removes them with one command when they are no longer needed.'))),
       h('a.btn', { href: href({ name: 'local-lab' }) }, t(bi('Как поставить лабораторию', 'How to install the lab'))),
     ),
+    h(
+      'section.settings-sec',
+      { 'data-id': 'about' },
+      h('h2', {}, t(bi('Справка о курсе', 'About the course'))),
+      h('p', {}, t(bi('В справке рассказано, как пользоваться курсом и как он устроен, как развернуть его в своей компании или школе и как предложить в него исправление.', 'The help tells how to use the course and how it is built, how to run it in your own company or school and how to propose a fix to it.'))),
+      h('a.btn', { href: href({ name: 'about' }) }, t(bi('Открыть справку', 'Open the help'))),
+    ),
     ...extra,
     aiPlaceholder,
     h('section.settings-sec', {}, h('h2', {}, t(bi('Опасная зона', 'Danger zone'))), resetBtn),

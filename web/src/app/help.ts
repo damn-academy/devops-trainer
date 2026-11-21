@@ -2,7 +2,8 @@
 // newcomer asks before trusting the course — where progress is kept without
 // an account, how levels and the level check work, how to read a diagram,
 // how to report a problem, what the AI button sends, and where the local lab
-// page is. It is a dialog over the current page, not a page of its own.
+// page is. It is a dialog over the current page, not a page of its own; the
+// full «Справка» section is #/about (about.ts), linked from the last section of the panel.
 
 import { h } from '../core/dom';
 import { bi, t, type Bi } from '../core/i18n';
@@ -72,12 +73,21 @@ export const HELP_SECTIONS: HelpSection[] = [
       'Lessons and exams on real machines do not require renting servers in a cloud. The dtlab program runs the course’s virtual machines on your own computer for free, that is, separate computers with their own system that run inside yours. How to install it is told on the page “A lab on your own computer”.',
     ),
   },
+  {
+    id: 'about',
+    title: bi('Где прочитать о курсе подробнее', 'Where to read more about the course'),
+    body: bi(
+      'Эта панель отвечает на самые частые вопросы. В разделе [«Справка о курсе»](#/about) подробно рассказано, что это за курс и как им пользоваться, как устроены симуляторы и настоящий Linux во вкладке, как [развернуть курс](#/about/deploy) в своей компании или школе и как [предложить в него исправление](#/about/contribute).',
+      'This panel answers the most common questions. The [“About the course”](#/about) section tells in detail what the course is and how to use it, how the simulators and real Linux in the tab are built, how to [run the course](#/about/deploy) in your own company or school and how to [propose a fix](#/about/contribute) to it.',
+    ),
+  },
 ];
 
 const MORE = bi('Подробнее', 'More');
 const CLOSE = bi('Закрыть справку', 'Close help');
 const OPEN = bi('Открыть справку о том, как устроен курс', 'Open help on how the course works');
 export const LOCAL_LAB_LINK = bi('Лаборатория на своём компьютере', 'A lab on your own computer');
+
 
 let active: { close: () => void } | null = null;
 
@@ -108,6 +118,7 @@ export function openHelp(opener?: HTMLElement): HTMLDialogElement | null {
       h('div.prose', {}, renderMd(t(s.body))),
       s.more ? h('details.help-more', {}, h('summary', {}, t(MORE)), h('div.prose', {}, renderMd(t(s.more)))) : null,
       s.id === 'lab' ? h('p', {}, h('a.btn.small', { href: href({ name: 'local-lab' }) }, t(LOCAL_LAB_LINK))) : null,
+      s.id === 'about' ? h('p', {}, h('a.btn.small', { href: href({ name: 'about' }) }, t(bi('Открыть справку о курсе', 'Open “About the course”')))) : null,
     ),
   );
   dialog.append(
