@@ -85,3 +85,26 @@ echo RV64_PROBE_DONE
 profile = root / 'usr/share/kuberoot/profile.yaml'
 profile.write_text(profile.read_text().replace('packages: true', 'packages: false'))
 print('Installed console probe; kinit remains PID 1. Any explicit packages: true setting was replaced with false in this probe only.')
+
+# Snapshot fixtures need wall time before any certificate is issued. Keep the
+# ordinary diagnostic image unchanged unless explicitly building this fixture.
+if os.environ.get('RV64_PROBE_SNAPSHOT') == '1':
+    init.write_text("""#!/bin/sh
+for arg in $(/bin/busybox cat /proc/cmdline); do
+  case "$arg" in rv64.epoch=*) /bin/busybox date -u -s "@${arg#rv64.epoch=}" || exit 1;; esac
+done
+/bin/sh /usr/share/kuberoot/rv64-probe.sh >/dev/console 2>&1 &
+exec /usr/sbin/kinit.real
+""")
+    probe = root / 'usr/share/kuberoot/rv64-probe.sh'
+    text = probe.read_text().replace('echo RV64_NODE_READY\nset -e', 'echo RV64_NODE_READY\n/bin/busybox sleep 2\nset -e')
+    text = text.replace('kubectl get nodes -o wide', """echo RV64_RECHECK_BEGIN
+/bin/busybox date -u
+until kubectl --request-timeout=120s get nodes -o wide; do
+  echo RV64_RECHECK_RETRY
+  /bin/busybox sleep 1
+done
+kubectl --request-timeout=120s get nodes -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | /bin/busybox grep -q True || { echo RV64_PROBE_FAILED; exit 1; }
+echo RV64_RECHECK_READY""", 1)
+    text = text.replace('kubectl get pods -A\n', 'kubectl --request-timeout=120s get pods -A || { echo RV64_PROBE_FAILED; exit 1; }\n')
+    probe.write_text(text)

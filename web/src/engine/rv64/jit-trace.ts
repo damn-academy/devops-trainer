@@ -7,6 +7,21 @@ try {
   const [kernel, initrd] = await Promise.all(['/rv64/vmlinuz.efi','/rv64/alpine.cpio'].map(async u => new Uint8Array(await (await fetch(u)).arrayBuffer())));
   const core = new mod.Engine(256), reference = new mod.Engine(256);
   for (const c of [core,reference]) c.boot(kernel,initrd,'earlycon=sbi console=hvc0 rdinit=/init nokaslr');
+  const lazy = new URLSearchParams(location.search).has('lazy');
+  const pages = new Map<number, Uint8Array>();
+  let pageFaults = 0;
+  if (lazy) {
+    const present = new Uint8Array(256 * 4);
+    for (let i = 0; i < present.length; i++) {
+      const bytes = reference.snapshot_ram(i);
+      if (bytes.some((b: number) => b !== 0)) { pages.set(i, bytes); present[i] = 1; }
+    }
+    Object.assign(globalThis, { rv64SnapshotPage: (i: number, target: Uint8Array) => {
+      const bytes = pages.get(i); if (!bytes) throw new Error(`Unexpected lazy trace page ${i}`);
+      target.set(bytes); pageFaults++;
+    } });
+    core.restore_paged(reference.snapshot_metadata(), present);
+  }
   core.jit_threshold(1);
   const singleStep = new URLSearchParams(location.search).has("single");
   if (singleStep) core.test_single_step();
@@ -29,9 +44,11 @@ try {
         document.querySelector('#console')!.textContent = JSON.stringify({instructions,boundaries,jitRetired:core.jit_retired()});
       }
     }
+    const executionFaults = pageFaults;
+    if (lazy) for (const i of pages.keys()) core.snapshot_ram(i);
     if (!core.test_equal(reference,true)) throw new Error('final RAM divergence');
     const counters = JSON.parse(core.metrics());
     if (!singleStep && jit.tailCalls && !counters.jit_chains) throw new Error('trace did not exercise tail chaining');
-    host.rv64Result = { counters, type:'jit-trace', pass:true, instructions, boundaries, jitRetired:core.jit_retired(), compiled:jit.compiled, cache:jit.stats(), milliseconds:performance.now()-start, singleStep, scope:singleStep ? 'CPU state after every instruction with one-instruction JIT blocks; exact full RAM at end' : 'CPU state at block exits; exact full RAM at end' };
+    host.rv64Result = { counters, lazy, executionFaults, type:'jit-trace', pass:true, instructions, boundaries, jitRetired:core.jit_retired(), compiled:jit.compiled, cache:jit.stats(), milliseconds:performance.now()-start, singleStep, scope:singleStep ? 'CPU state after every instruction with one-instruction JIT blocks; exact full RAM at end' : 'CPU state at block exits; exact full RAM at end' };
   } finally { channel.port1.close(); channel.port2.close(); jit.dispose(); core.free(); reference.free(); }
 } catch(error) { host.rv64Result = { type:'error', error:String(error) }; }

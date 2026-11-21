@@ -594,3 +594,64 @@ fn smp_device_tree_has_unique_harts_and_interrupt_contexts() {
         assert_eq!(cells("/soc/virtio@10002000/interrupt-parent"), [harts + 1]);
     }
 }
+
+#[test]
+fn paged_snapshot_hydrates_fetch_stores_and_dma_without_replaying() {
+    let mut c = Cpu::new(524288);
+    c.x[10] = 40;
+    c.memory.devices.disk_bytes = 524288;
+    c.memory.devices.disk_chunk(0, vec![7; 262144]).unwrap();
+    c.memory.devices.disk_chunk(1, vec![8; 262144]).unwrap();
+    c.memory.devices.disk_dirty.insert(1);
+    let metadata = c.snapshot_metadata().unwrap();
+    assert_eq!(c.memory.devices.disk_chunks.len(), 2); // Export doesn't mutate live cache.
+    let mut r = Cpu::new(524288);
+    assert!(r.restore_paged(&metadata, &[1]).is_err());
+    r.restore_paged(&metadata, &[1, 1]).unwrap();
+    assert!(!r.memory.devices.disk_chunks.contains_key(&0));
+    assert_eq!(r.memory.devices.disk_chunks[&1][0], 8);
+    r.memory.page_loader = Some(|index, page| {
+        page.fill(0x5a);
+        if index == 0 { page[..4].copy_from_slice(&0x00150513u32.to_le_bytes()); }
+    });
+    r.step().unwrap(); assert_eq!(r.x[10], 41); // Instruction fetch faults in RAM.
+    // A partial store must fetch old neighbouring bytes before the write.
+    r.memory.physical_write(RAM_BASE+262144, 1, 0xab).unwrap();
+    assert_eq!(r.memory.physical_read(RAM_BASE+262144, 2, Access::Read).unwrap(), 0x5aab);
+    let state = r.snapshot().unwrap();
+    c.restore(&state).unwrap();
+    assert_eq!(c.memory.physical_read(RAM_BASE+262144, 2, Access::Read).unwrap(), 0x5aab);
+}
+
+#[test]
+fn lazy_snapshot_resumes_virtqueue_dma_exactly_once() {
+    thread_local! { static RAM: std::cell::RefCell<Vec<u8>> = const { std::cell::RefCell::new(Vec::new()) }; }
+    let mut c = Cpu::new(262144);
+    let buf = RAM_BASE + 0x8000;
+    let (_, used) = queue(&mut c, 0x10003000, 0, &[(buf, 2, 2)]);
+    c.memory.devices.entropy.extend([41, 42]);
+    RAM.with(|ram| *ram.borrow_mut() = c.memory.ram.clone());
+    let metadata = c.snapshot_metadata().unwrap();
+    let mut r = Cpu::new(262144);
+    r.restore_paged(&metadata, &[1]).unwrap();
+    r.memory.page_loader = Some(|_, page| RAM.with(|ram| page.copy_from_slice(&ram.borrow())));
+    r.service_devices();
+    assert_eq!(r.memory.physical_read(buf, 2, Access::Read).unwrap(), 0x2a29);
+    assert_eq!(r.memory.physical_read(used+2, 2, Access::Read).unwrap(), 1);
+    r.service_devices();
+    assert_eq!(r.memory.physical_read(used+2, 2, Access::Read).unwrap(), 1);
+    assert!(r.memory.devices.entropy.is_empty());
+}
+
+#[test]
+fn lazy_snapshot_hydrates_page_tables_before_ad_update() {
+    thread_local! { static RAM: std::cell::RefCell<Vec<u8>> = const { std::cell::RefCell::new(Vec::new()) }; }
+    let (memory, satp) = mapping();
+    let mut c = Cpu::new(0x10000); c.memory = memory;
+    RAM.with(|ram| *ram.borrow_mut() = c.memory.ram.clone());
+    let metadata = c.snapshot_metadata().unwrap();
+    let mut r = Cpu::new(0x10000); r.restore_paged(&metadata, &[1]).unwrap();
+    r.memory.page_loader = Some(|_, page| RAM.with(|ram| page.copy_from_slice(&ram.borrow())));
+    assert_eq!(r.memory.translate(123, Access::Write, Mode::U, satp, 0).unwrap(), RAM_BASE+0x3000+123);
+    assert_eq!(r.memory.physical_read(RAM_BASE+0x2000, 8, Access::Read).unwrap() & 0xc0, 0xc0);
+}

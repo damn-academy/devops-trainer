@@ -1,7 +1,12 @@
+import { savePagedSnapshot } from './paged-snapshot';
+import { SnapshotPager } from './snapshot-pager';
+import { sha256, diskIdentity, sameDiskIdentity } from './snapshot';
+import type { RV64Snapshot } from './snapshot';
 import { JitRuntime } from './jit';
 import { ByteRing, FrameRing } from './ring';
 import { HTTPBlockDevice, type HTTPDisk } from './block';
-// All async work finishes before entering the hart loop. Runtime input uses SAB only.
+// CPU execution is synchronous; host I/O yields at explicit boundaries or
+// waits on the snapshot loader mailbox. Runtime console input uses SAB.
 interface Core {
   metrics(): string;
   jit_retired(): number;
@@ -14,6 +19,9 @@ interface Core {
   set_mac(mac: Uint8Array): void;
   snapshot(): Uint8Array;
   restore(state: Uint8Array): void;
+  restore_paged(state: Uint8Array, present: Uint8Array): void;
+  snapshot_metadata(): Uint8Array;
+  snapshot_ram(index: number): Uint8Array;
   ticks(): number;
   guest_ticks(): number;
   lazy_disk(bytes: number): void;
@@ -40,33 +48,55 @@ interface Core {
 interface Init {
   input: SharedArrayBuffer; output: SharedArrayBuffer; control: SharedArrayBuffer;
   netIn?: SharedArrayBuffer; netOut?: SharedArrayBuffer; disk?: ArrayBuffer;
-  kernel?: ArrayBuffer; initrd?: ArrayBuffer; program?: ArrayBuffer; cmdline?: string; memoryMB: number; jitThreshold?: number; mac?: Uint8Array; httpDisk?: HTTPDisk;
+  kernel?: ArrayBuffer; initrd?: ArrayBuffer; program?: ArrayBuffer; cmdline?: string; memoryMB: number; snapshot?: RV64Snapshot; snapshotURL?: string; jitThreshold?: number; mac?: Uint8Array; httpDisk?: HTTPDisk;
 }
 self.onmessage = async ({ data }: MessageEvent<Init>) => {
   self.onmessage = null;
   let cleanup = () => {};
+  let pager: SnapshotPager | undefined;
   try {
     const url = new URL('/rv64/rv64_core.js', self.location.origin).href;
     const mod = await import(/* @vite-ignore */ url);
     const wasm = await mod.default();
+    let present: Uint8Array | undefined;
+    if (data.snapshotURL) {
+      if (data.snapshot) throw new Error('Choose snapshot or snapshotURL');
+      const wasmHash = await sha256(new Uint8Array(await (await fetch('/rv64/rv64_core_bg.wasm')).arrayBuffer()));
+      const loaded = await SnapshotPager.open(data.snapshotURL, data.memoryMB, wasmHash);
+      pager = loaded.pager; present = loaded.present; data.snapshot = loaded.state;
+      if (!sameDiskIdentity(data.snapshot.diskIdentity, diskIdentity(data.httpDisk))) throw new Error('Snapshot disk identity mismatch');
+      [data.input, data.output, data.netIn!, data.netOut!].forEach((ring, i) => {
+        if (!ring || ring.byteLength !== data.snapshot!.rings[i]?.byteLength) throw new Error('Snapshot ring geometry mismatch');
+        new Uint8Array(ring).set(data.snapshot!.rings[i]);
+      });
+    }
     const threshold = data.jitThreshold ?? 50;
     let core = new mod.Engine(data.memoryMB) as Core;
-    core.jit_threshold(threshold);
     const createJit = () => new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow, { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) });
     let jit = createJit();
     if (data.mac) core.set_mac(data.mac);
     const disk = data.httpDisk ? new HTTPBlockDevice(data.httpDisk) : undefined;
     if (disk) core.lazy_disk(disk.image.bytes);
     if (data.disk) core.disk(new Uint8Array(data.disk));
-    if (data.program) core.load_program(new Uint8Array(data.program));
+    if (data.snapshot && present) core.restore_paged(data.snapshot.state, present);
+    else if (data.snapshot) core.restore(data.snapshot.state);
+    else if (data.program) core.load_program(new Uint8Array(data.program));
     else core.boot(new Uint8Array(data.kernel!), new Uint8Array(data.initrd!), data.cmdline ?? 'earlycon=sbi console=hvc0 rdinit=/bin/sh nokaslr');
+    // Cpu restore intentionally discards JIT caches, including its threshold.
+    // Reapply policy AFTER restoring; otherwise a fresh snapshot worker silently
+    // runs the interpreter forever.
+    core.jit_threshold(threshold);
     const input = new ByteRing(data.input), output = new ByteRing(data.output);
     const control = new Int32Array(data.control);
     const netIn = data.netIn ? new FrameRing(new ByteRing(data.netIn)) : undefined;
     const netOut = data.netOut ? new FrameRing(new ByteRing(data.netOut)) : undefined;
     const entropy = new Uint8Array(4096);
     let entropyAt = -Infinity;
-    let timeOffset = 0;
+    // Advance guest time by real suspension duration. Cpu::time consumes host
+    // deltas, preserving any guest mtime writes. Old in-memory checkpoints keep
+    // their historical frozen-clock semantics when no timestamp is present.
+    const restoredOffset = (capturedAt?: number) => core.ticks() + Math.max(0, Date.now() - (capturedAt ?? Date.now())) * 10000 - performance.now() * 10000;
+    let timeOffset = data.snapshot ? restoredOffset(data.snapshot.capturedAt) : 0;
     let busyMicros = 0;
     let waitMs = 0, diskMs = 0, compilerYieldMs = 0, metricsAt = 0;
     const diskTasks = new Map<number, Promise<void>>();
@@ -74,6 +104,7 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
     let diskActiveStart = 0, diskActiveMs = 0;
     const settleDisk = async () => { await Promise.all(diskTasks.values()); if (diskError) throw diskError; };
     const startedAt = performance.now();
+    const initialRetired = core.retired();
     const wait = (words: Int32Array, index: number, value: number, timeout: number) => {
       const start = performance.now(); Atomics.wait(words, index, value, timeout); waitMs += performance.now() - start;
     };
@@ -81,31 +112,63 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
     const channel = new MessageChannel();
     cleanup = () => { jit.dispose(); channel.port1.close(); channel.port2.close(); };
     const yieldCompiler = () => new Promise<void>(resolve => { channel.port1.onmessage = () => resolve(); channel.port2.postMessage(0); });
-    let pending: Uint8Array = new Uint8Array(0);
-    self.postMessage({ type: 'ready' });
+    let pending: Uint8Array = data.snapshot?.pending ?? new Uint8Array(0);
+    self.postMessage({ type: 'ready', history: data.snapshot?.history, lastExit: data.snapshot?.lastExit });
+    data.snapshot = undefined;
     for (;;) {
       if (performance.now() - metricsAt >= 1000) {
         metricsAt = performance.now();
         self.postMessage({ type: 'metrics', metrics: { elapsedMs: metricsAt - startedAt,
+          snapshotFaults: pager?.faults ?? 0, snapshotFaultMs: pager?.faultMs ?? 0,
           hostMonotonicMs: metricsAt, hostTicks: core.ticks(), guestTicks: core.guest_ticks(), timebaseHz: 10_000_000,
-          retired: core.retired(), jitRetired: core.jit_retired(), busyMilliseconds: busyMicros / 1000,
+          retired: core.retired(), retiredSinceStart: core.retired() - initialRetired, jitRetired: core.jit_retired(), busyMilliseconds: busyMicros / 1000,
           waitMs, diskMs, diskActiveMs: diskActiveMs + (diskTasks.size ? performance.now() - diskActiveStart : 0), diskPending: diskTasks.size, compilerYieldMs, compiler: jit.stats(), counters: JSON.parse(core.metrics()) } });
       }
       // Load the wake sequence BEFORE draining input: this closes the lost-wakeup window.
       if (Atomics.load(control, 5)) {
-        const request = await new Promise<{ op: string; state?: Uint8Array; pending?: Uint8Array }>(resolve => {
+        const request = await new Promise<{ op: string; state?: Uint8Array; pending?: Uint8Array; capturedAt?: number; uploadURL?: string; certificateAudit?: boolean; wrapper?: RV64Snapshot }>(resolve => {
           self.onmessage = ({ data }) => { self.onmessage = null; resolve(data); };
           self.postMessage({ type: 'paused' });
         });
         try {
           await settleDisk();
-          if (request.op === 'snapshot') {
+          if (request.op === 'export') {
+            const capturedAt = Math.round(Date.now() - Math.max(0, performance.now() - (core.ticks() - timeOffset) / 10000));
+            const wasmHash = await sha256(new Uint8Array(await (await fetch('/rv64/rv64_core_bg.wasm')).arrayBuffer()));
+            const certs = new Set<string>();
+            let tail = '';
+            const readRAM = (index: number) => {
+              const bytes = core.snapshot_ram(index);
+              if (request.certificateAudit) {
+                const text = tail + new TextDecoder('latin1').decode(bytes);
+                for (const match of text.matchAll(/-----BEGIN CERTIFICATE-----[A-Za-z0-9+/=\r\n]+-----END CERTIFICATE-----/g)) certs.add(match[0]);
+                tail = text.slice(-8192);
+              }
+              return bytes;
+            };
+            const manifest = await savePagedSnapshot({ ...request.wrapper!, state: core.snapshot_metadata(), pending, capturedAt }, data.memoryMB, wasmHash,
+              readRAM, async (name, bytes) => {
+                const response = await fetch(`${request.uploadURL}${name}`, { method: 'POST', body: bytes as Uint8Array<ArrayBuffer> });
+                if (!response.ok) throw new Error(`Snapshot upload: HTTP ${response.status}`);
+              }, !request.certificateAudit);
+            if (request.certificateAudit) {
+              const response = await fetch(`${request.uploadURL}certificates.pem`, { method: 'POST', body: [...certs].join('\n') });
+              if (!response.ok) throw new Error('Snapshot certificate audit failed');
+              const validity = await response.json();
+              if (!Number.isSafeInteger(validity.validFrom) || !Number.isSafeInteger(validity.validUntil) || validity.validFrom > Date.now() || validity.validUntil <= Date.now()) throw new Error('Invalid snapshot certificate window');
+              manifest.validFrom = validity.validFrom; manifest.validUntil = validity.validUntil;
+              const published = await fetch(`${request.uploadURL}paged.json`, { method: 'POST', body: JSON.stringify(manifest) });
+              if (!published.ok) throw new Error('Snapshot publication failed');
+            }
+            self.postMessage({ type: 'exported', manifest });
+          } else if (request.op === 'snapshot') {
+            const capturedAt = Math.round(Date.now() - Math.max(0, performance.now() - (core.ticks() - timeOffset) / 10000));
             const state = core.snapshot();
-            self.postMessage({ type: 'checkpoint', state, pending }, [state.buffer]);
+            self.postMessage({ type: 'checkpoint', state, pending, capturedAt }, [state.buffer]);
           } else {
             jit.dispose(); jit = createJit();
             core.restore(request.state!); core.jit_threshold(threshold); pending = request.pending ?? new Uint8Array(0);
-            timeOffset = core.ticks() - performance.now() * 10000;
+            timeOffset = restoredOffset(request.capturedAt);
             entropyAt = -Infinity;
             self.postMessage({ type: 'restored' });
           }
@@ -174,5 +237,5 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
       if (state === 1 && !pending.length) wait(input.words, 2, wake, Math.min(core.deadline_ms(), diskTasks.size ? 1 : 1000));
     }
   } catch (error) { self.postMessage({ type: 'error', error: String(error) }); }
-  finally { cleanup(); }
+  finally { cleanup(); pager?.dispose(); }
 };

@@ -73,6 +73,11 @@ pub struct Memory {
     #[serde(with = "crate::snapshot::ram")]
     pub ram: Vec<u8>,
     #[serde(skip)]
+    pub(crate) lazy_ram: Vec<bool>,
+    #[cfg(not(target_arch = "wasm32"))]
+    #[serde(skip)]
+    pub page_loader: Option<fn(u32, &mut [u8])>,
+    #[serde(skip)]
     code: Vec<Option<Box<[Decoded; 2048]>>>,
     pub devices: crate::devices::Devices,
     #[serde(skip, default = "empty_tlb")]
@@ -101,6 +106,9 @@ impl Memory {
             jit_pages: vec![0; (bytes + 4095) / 4096],
             devices: Default::default(),
             ram: vec![0; bytes],
+            lazy_ram: vec![],
+            #[cfg(not(target_arch = "wasm32"))]
+            page_loader: None,
             code: (0..(bytes + 4095) / 4096).map(|_| None).collect(),
             tlb: [[EMPTY; 256]; 3],
             time: 0,
@@ -119,6 +127,20 @@ impl Memory {
         self.jit_epoch = self.jit_epoch.wrapping_add(1);
         self.tlb = [[EMPTY; 256]; 3];
     }
+    pub(crate) fn ensure_ram(&mut self, start: usize, size: usize) {
+        if self.lazy_ram.is_empty() || size == 0 || start.checked_add(size).map_or(true, |end| end > self.ram.len()) { return; }
+        for index in start / 262144..=(start + size - 1) / 262144 {
+            if self.lazy_ram[index] {
+                let end = ((index + 1) * 262144).min(self.ram.len());
+                let page = &mut self.ram[index * 262144..end];
+                #[cfg(target_arch = "wasm32")]
+                crate::wasm::snapshot_page(index as u32, page);
+                #[cfg(not(target_arch = "wasm32"))]
+                self.page_loader.expect("lazy snapshot requires a page loader")(index as u32, page);
+                self.lazy_ram[index] = false;
+            }
+        }
+    }
     pub fn load_image(&mut self, addr: u64, data: &[u8]) -> Result<(), Trap> {
         let start = addr
             .checked_sub(RAM_BASE)
@@ -127,6 +149,7 @@ impl Memory {
         let end = start
             .checked_add(data.len())
             .ok_or(Access::Write.fault(addr))?;
+        self.ensure_ram(start, data.len());
         let dest = self
             .ram
             .get_mut(start..end)
@@ -141,8 +164,9 @@ impl Memory {
         Ok(())
     }
     #[inline]
-    pub fn physical_read(&self, addr: u64, size: usize, access: Access) -> Result<u64, Trap> {
+    pub fn physical_read(&mut self, addr: u64, size: usize, access: Access) -> Result<u64, Trap> {
         if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| *off <= self.ram.len() as u64) {
+            self.ensure_ram(off as usize, size);
             if let Some(bytes) = self
                 .ram
                 .get(off as usize..(off as usize).saturating_add(size))
@@ -170,6 +194,7 @@ impl Memory {
     #[inline]
     pub fn physical_write(&mut self, addr: u64, size: usize, value: u64) -> Result<(), Trap> {
         if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| *off <= self.ram.len() as u64) {
+            self.ensure_ram(off as usize, size);
             if let Some(bytes) = self
                 .ram
                 .get_mut(off as usize..(off as usize).saturating_add(size))
@@ -207,6 +232,7 @@ impl Memory {
         if let Some(cache) = &self.code[page] {
             if cache[slot].len != 0 { return Some(cache[slot]); }
         }
+        self.ensure_ram(off, 4);
         self.jit_code[page] = 1;
         let raw = u32::from_le_bytes(self.ram[off..off + 4].try_into().unwrap());
         let d = if raw & 3 == 3 { Decoded::new(raw, raw, 4) }
@@ -251,6 +277,10 @@ impl Memory {
         }
         let pa = self.translate_inner(va, access, mode, satp, status)?;
         self.pmp_check(pa, size, access, effective).map_err(|t| Trap { value: va, ..t })?;
+        // A JIT TLB entry may enable raw wasm RAM loads/stores. Hydrate the
+        // physical page BEFORE setting pmp_page; interpreter, PTE A/D and DMA
+        // accesses also hydrate through physical_read/write/load_image.
+        if let Some(off) = pa.checked_sub(RAM_BASE) { self.ensure_ram(off as usize, size); }
         if effective != Mode::M && satp >> 60 == 8 && self.pmp_check(pa & !4095, 4096, access, effective).is_ok() {
             self.tlb[kind][index].pmp_page = true;
         }

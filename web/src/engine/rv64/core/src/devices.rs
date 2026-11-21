@@ -48,6 +48,8 @@ pub struct Devices {
     pub mac: [u8; 6],
     pub disk: Vec<u8>,
     pub disk_bytes: u64,
+    #[serde(skip)]
+    pub disk_dirty: std::collections::BTreeSet<u64>,
     pub disk_chunks: std::collections::BTreeMap<u64, Vec<u8>>,
     pub disk_missing: Vec<u64>,
     pub net_rx: VecDeque<Vec<u8>>,
@@ -73,6 +75,7 @@ impl Default for Devices {
             disk: vec![],
             disk_bytes: 0,
             disk_chunks: Default::default(),
+            disk_dirty: Default::default(),
             disk_missing: vec![],
             net_rx: VecDeque::new(),
             net_tx: VecDeque::new(),
@@ -82,8 +85,14 @@ impl Default for Devices {
 impl Devices {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn diagnostics(&self, mem: &Memory) -> String {
+        // Diagnostics never fault pages in or mutate the inspected machine.
+        let peek = |addr: u64| -> Option<u16> {
+            let off = addr.checked_sub(crate::RAM_BASE)? as usize;
+            if mem.lazy_ram.get(off / 262144).copied().unwrap_or(false) { return None; }
+            Some(u16::from_le_bytes(mem.ram.get(off..off.checked_add(2)?)?.try_into().ok()?))
+        };
         self.dev.iter().map(|d| format!("id={} status={:#x} irq={} queues={:?}", d.id, d.status, d.irq,
-            d.queues.iter().map(|q| (q.ready, q.size, q.last, read(mem,q.avail+2,2),read(mem,q.used+2,2))).collect::<Vec<_>>() )).collect::<Vec<_>>().join("\n")
+            d.queues.iter().map(|q| (q.ready, q.size, q.last, peek(q.avail+2),peek(q.used+2))).collect::<Vec<_>>() )).collect::<Vec<_>>().join("\n")
     }
 
     pub const BLOCK_CHUNK: u64 = 256 * 1024;
@@ -397,7 +406,7 @@ impl Devices {
                                             } else {
                                                 let value = read(mem, d.addr + j as u64, 1)? as u8;
                                                 if self.disk_bytes == 0 { self.disk[offset as usize + j as usize] = value; }
-                                                else { let p = offset + j as u64; self.disk_chunks.get_mut(&(p / Self::BLOCK_CHUNK)).ok_or(())?[(p % Self::BLOCK_CHUNK) as usize] = value; }
+                                                else { let p = offset + j as u64; self.disk_dirty.insert(p / Self::BLOCK_CHUNK); self.disk_chunks.get_mut(&(p / Self::BLOCK_CHUNK)).ok_or(())?[(p % Self::BLOCK_CHUNK) as usize] = value; }
                                             }
                                         }
                                         offset = stop;
@@ -433,7 +442,7 @@ struct Desc {
     len: u32,
     flags: u16,
 }
-fn chain(mem: &Memory, q: Queue, mut idx: u16) -> Result<Vec<Desc>, ()> {
+fn chain(mem: &mut Memory, q: Queue, mut idx: u16) -> Result<Vec<Desc>, ()> {
     let mut out = Vec::new();
     let mut total = 0u64;
     for _ in 0..q.size {
@@ -464,7 +473,7 @@ fn chain(mem: &Memory, q: Queue, mut idx: u16) -> Result<Vec<Desc>, ()> {
     }
     Err(())
 }
-fn read(mem: &Memory, addr: u64, n: usize) -> Result<u64, ()> {
+fn read(mem: &mut Memory, addr: u64, n: usize) -> Result<u64, ()> {
     let off = addr.checked_sub(crate::RAM_BASE).ok_or(())?;
     if off.checked_add(n as u64).ok_or(())? > mem.ram.len() as u64 {
         return Err(());
@@ -475,7 +484,7 @@ fn write(mem: &mut Memory, addr: u64, n: usize, v: u64) -> Result<(), ()> {
     read(mem, addr, n)?;
     mem.physical_write(addr, n, v).map_err(|_| ())
 }
-fn bytes(mem: &Memory, addr: u64, n: u32) -> Result<Vec<u8>, ()> {
+fn bytes(mem: &mut Memory, addr: u64, n: u32) -> Result<Vec<u8>, ()> {
     (0..n)
         .map(|j| read(mem, addr + j as u64, 1).map(|v| v as u8))
         .collect()

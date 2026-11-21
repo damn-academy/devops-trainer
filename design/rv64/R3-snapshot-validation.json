@@ -1,0 +1,99 @@
+{
+  "native": {
+    "platform": 39,
+    "snapshot_format_unit": 1,
+    "upstream_pass": 173,
+    "upstream_unsupported": 1
+  },
+  "typescript": {
+    "typecheck": true,
+    "vitest_pass": 35
+  },
+  "browser": {
+    "R3-lazy-single": {
+      "lazy": true,
+      "executionFaults": 27,
+      "type": "jit-trace",
+      "pass": true,
+      "instructions": 2000000,
+      "boundaries": 2000000,
+      "jitRetired": 1999785,
+      "compiled": 20416,
+      "cache": {
+        "compiled": 20416,
+        "queued": 0,
+        "inflight": 0,
+        "pending": 0,
+        "latencyMeanMs": 0.07564042910910139,
+        "latencyMaxMs": 21.92500001192093,
+        "cacheClears": 0,
+        "evicted": 19456,
+        "installed": 960,
+        "tailCalls": true
+      },
+      "milliseconds": 21457.069999992847,
+      "singleStep": true,
+      "scope": "CPU state after every instruction with one-instruction JIT blocks; exact full RAM at end",
+      "wasmSha256": "27685993bf66eaad77b57e782985acc9616c5bf575e7dc9219840170c94f4f58",
+      "sourceSha256": "6a175766209c52814973d6f43c3fd9253a674992d057f6ec627cc5ca9d6fe22e"
+    },
+    "R3-lazy-trace": {
+      "lazy": true,
+      "executionFaults": 60,
+      "type": "jit-trace",
+      "pass": true,
+      "instructions": 20000005,
+      "boundaries": 784815,
+      "jitRetired": 19959151,
+      "compiled": 4587,
+      "cache": {
+        "compiled": 4587,
+        "queued": 0,
+        "inflight": 0,
+        "pending": 0,
+        "latencyMeanMs": 0.12769239139057906,
+        "latencyMaxMs": 13.175000011920929,
+        "cacheClears": 0,
+        "evicted": 3584,
+        "installed": 1003,
+        "tailCalls": true
+      },
+      "milliseconds": 9013.42000001669,
+      "singleStep": false,
+      "scope": "CPU state at block exits; exact full RAM at end",
+      "wasmSha256": "27685993bf66eaad77b57e782985acc9616c5bf575e7dc9219840170c94f4f58",
+      "sourceSha256": "6a175766209c52814973d6f43c3fd9253a674992d057f6ec627cc5ca9d6fe22e"
+    },
+    "R3-paged-gates": {
+      "type": "jit-gates",
+      "pass": true,
+      "cases": 439,
+      "allPassed": true,
+      "wasmSha256": "27685993bf66eaad77b57e782985acc9616c5bf575e7dc9219840170c94f4f58",
+      "sourceSha256": "6a175766209c52814973d6f43c3fd9253a674992d057f6ec627cc5ca9d6fe22e"
+    },
+    "R3-paged-integration-final": {
+      "type": "integration",
+      "restoreInitializedMs": 258.7849999666214,
+      "pagedStats": {
+        "retired": 755993000,
+        "busyMilliseconds": 479.66,
+        "jitCompiled": 3653,
+        "jitRetired": 2997000
+      },
+      "restoredUptime": 69.06,
+      "facts": "dt.facts/v1",
+      "lazyDiskByte": 90,
+      "kernel": "6.18.62-kuberoot",
+      "snapshotBytes": 53002628,
+      "wasmSha256": "27685993bf66eaad77b57e782985acc9616c5bf575e7dc9219840170c94f4f58",
+      "sourceSha256": "ac8e602511c0b2e3c3ea2792fc950a46e02b6c4a16239707b1006d6f521e7120"
+    }
+  },
+  "endToEndKubernetes": {
+    "ready": true,
+    "getPods": true,
+    "podReady": false,
+    "error": "Error: kuberoot probe command failed"
+  }
+}

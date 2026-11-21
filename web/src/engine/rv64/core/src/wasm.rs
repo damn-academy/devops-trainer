@@ -1,6 +1,11 @@
 use crate::{fdt, Cpu, RAM_BASE};
 use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SnapshotPage)]
+    pub(crate) fn snapshot_page(index: u32, page: &mut [u8]);
+}
+#[wasm_bindgen]
 pub struct Engine {
     cpu: Cpu,
 }
@@ -41,18 +46,31 @@ impl Engine {
             .map_err(|e| JsValue::from_str(&format!("program: {e:?}")))?;
         Ok(())
     }
-    pub fn snapshot(&self) -> Result<Vec<u8>, JsValue> {
+    pub fn snapshot(&mut self) -> Result<Vec<u8>, JsValue> {
         self.cpu.snapshot().map_err(|e| JsValue::from_str(&e))
     }
     pub fn restore(&mut self, data: &[u8]) -> Result<(), JsValue> {
         self.cpu.restore(data).map_err(|e| JsValue::from_str(&e))
+    }
+    pub fn snapshot_metadata(&mut self) -> Result<Vec<u8>, JsValue> {
+        self.cpu.snapshot_metadata().map_err(|e| JsValue::from_str(&e))
+    }
+    pub fn snapshot_ram(&mut self, index: u32) -> Result<Vec<u8>, JsValue> {
+        let start = index as usize * 262144;
+        if start >= self.cpu.memory.ram.len() { return Err(JsValue::from_str("RAM chunk out of range")); }
+        let size = (self.cpu.memory.ram.len() - start).min(262144);
+        self.cpu.memory.ensure_ram(start, size);
+        Ok(self.cpu.memory.ram[start..start+size].to_vec())
+    }
+    pub fn restore_paged(&mut self, metadata: &[u8], present: &[u8]) -> Result<(), JsValue> {
+        self.cpu.restore_paged(metadata, present).map_err(|e| JsValue::from_str(&e))
     }
     // Trusted conformance fixtures only; this is the existing test ELF loader.
     pub fn test_elf(&mut self, bytes: &[u8]) -> Vec<u64> {
         let symbols = crate::elf::load(&mut self.cpu, bytes);
         ["tohost", "begin_signature", "end_signature"].iter().map(|s| symbols.get(*s).copied().unwrap_or(0)).collect()
     }
-    pub fn test_read(&self, address: u64) -> u64 {
+    pub fn test_read(&mut self, address: u64) -> u64 {
         self.cpu.memory.physical_read(address, 8, crate::Access::Read).unwrap()
     }
     pub fn test_single_step(&mut self) { self.jit_clear(); self.cpu.jit.single_step = true; }
@@ -128,10 +146,18 @@ impl Engine {
         let (disk, bytes, chunks) = bincode::deserialize(state).map_err(|e| JsValue::from_str(&e.to_string()))?;
         let d = &mut self.cpu.memory.devices;
         d.disk = disk; d.disk_bytes = bytes; d.disk_chunks = chunks;
+        d.disk_dirty = d.disk_chunks.keys().copied().collect();
         Ok(())
     }
     pub fn take_disk(&mut self) -> Vec<u8> { std::mem::take(&mut self.cpu.memory.devices.disk) }
     pub fn lazy_disk(&mut self, bytes: f64) { self.cpu.memory.devices.disk_bytes = bytes as u64; }
+    pub fn disk_cached(&self) -> Vec<u32> { self.cpu.memory.devices.disk_chunks.keys().map(|i| *i as u32).collect() }
+    pub fn disk_prune(&mut self, index: u32, base: &[u8]) -> bool {
+        let d = &mut self.cpu.memory.devices;
+        if d.disk_chunks.get(&(index as u64)).is_some_and(|bytes| bytes == base) {
+            d.disk_dirty.remove(&(index as u64)); true
+        } else { false }
+    }
     pub fn disk_missing(&mut self) -> Vec<u32> {
         std::mem::take(&mut self.cpu.memory.devices.disk_missing).into_iter().map(|i| i as u32).collect()
     }

@@ -362,3 +362,228 @@ RV64_RESULT_NAME=R3-emulator-diag-1h RV64_PROBE_SECONDS=1800 RV64_TIMEOUT_MS=186
 This overwrites the ignored raw result with the same name; choose a new result
 name to preserve the completed run. The final combined RV64 Vitest run passed
 **29/29 tests across 6 files**, and TypeScript typecheck passed.
+
+## Ready snapshots continuation — 2026-11-21
+
+Work continues on `feat/rv64-r0`, starting at `dda1f2f`, without commits.
+Rust builds and tests remain confined to `tenant-kuberoot/rv64-dev` with context
+`admin@workshop`; local Chromium runs are sequential, one browser instance.
+
+### Snapshot implementation
+
+`RV64Machine` accepts `snapshotURL` for a `dt.rv64.paged/v1` artifact, and
+`exportSnapshot(uploadURL, certificateAudit)` exports a quiescent machine.
+CPU registers, CSRs, reservations, virtio queues, interrupts, pending console
+bytes, all four host rings, writable disk chunks, and clock state are retained.
+Immutable HTTP disk cache is omitted; a separate dirty-chunk set preserves
+writes. Restoring an older eager checkpoint conservatively marks its disk cache
+as dirty so a subsequent export cannot discard an overlay.
+
+RAM is transported in independent gzip members, each covering at most 256 KiB.
+Within each member, only nonzero 4-KiB pages are stored; the page index reconstructs
+zero pages without payload. Members have content-addressed `.bin` names and
+SHA-256 checks. The extension is deliberate: Vite serves `.gz` with HTTP
+`Content-Encoding: gzip`, which transparently changes the bytes before the
+application can validate/decompress the artifact. Metadata is compressed in
+bounded chunks, separately from RAM. The Rust sparse v1 decoder now streams
+pages directly into RAM instead of retaining a second `Vec<Vec<page>>` copy.
+
+The emulated memory access path faults absent RAM groups into a dedicated loader
+Worker. The hart synchronously waits on a SharedArrayBuffer mailbox; the loader
+uses exact HTTP Range responses, Cache Storage, checksum verification and gzip
+decompression. This preserves the in-progress instruction/device operation;
+it does not unwind or replay a partially completed virtqueue request. Fetch,
+ordinary stores, partial stores, page-table A/D updates, image writes and DMA
+all hydrate before accessing bytes. A JIT TLB entry receives its fast-path
+permission bit only after hydration. The wasm RAM address space is still fully
+allocated/zeroed: this is lazy **guest content hydration**, not host OS mmap or
+reduced virtual address-space reservation. Fetch granularity is 256 KiB, not a
+separate HTTP request for each 4-KiB page.
+
+Compiled JIT code and translation/decoded caches are rebuilt after restore.
+Host network services/remote TCP peers are external, as in the earlier snapshot
+contract. A restored snapshot retains its original node identity and MAC; the
+measurement uses a fresh isolated host network.
+
+### Clock and certificate changes
+
+Old kuberoot measurements ran with guest wall time in 1970. The separate
+`probe-snapshot.img` fixture sets wall time from `rv64.epoch=` before kinit
+creates certificates. It preserves the emulator timing profile and the existing
+published/candidate images. A checkpoint records the host wall timestamp
+corresponding to its saved host ticks. On restore, elapsed real suspension time
+is added through the host-tick offset; the normal 10-MHz guest time rate remains
+unchanged. Timestamp-free legacy in-memory snapshots keep the previous frozen
+clock semantics.
+
+The build harness audits public PEM certificates found in RAM using Node's
+X509 parser, requires both API-server and admin certificates, and records the
+intersection of the discovered kuberoot-issued validity windows. It publishes
+the paged index after this audit; the loader rejects an out-of-window restore.
+This is not certificate renewal. Certificate evidence and actual restored API
+success are recorded with the measurements below.
+
+### Development checks and initial failure
+
+The first clock-corrected Chromium boot reached Node Ready at **626.534680 s**.
+The old monolithic `snapshot()` then failed with `RuntimeError: unreachable`,
+before producing an artifact. Allocation pressure is a likely cause, not a
+proven diagnosis. No restore number is attributed to this failed attempt.
+Evidence: ignored `results/R3-snapshot-capture.json`.
+
+The replacement exports metadata and RAM groups directly from the stopped
+Worker, without materializing one giant Rust/JS snapshot buffer. The small Linux
+integration test passes this actual export API and then constructs a new
+`RV64Machine` from the paged URL: **279.770 ms** to engine initialization,
+followed by successful restored file, disk and HTTP-network checks. This is
+**not** a kuberoot Ready measurement. A separate +60-s suspension test observes
+guest uptime **69.40 s**, proving time advances across restore rather than
+remaining frozen. Evidence: ignored `results/R3-paged-integration.json`.
+
+Native checks: **39 platform tests + 1 sparse-format unit test**, and **173**
+supported upstream ISA tests pass; the existing single Sdtrig exclusion remains.
+New cases cover lazy fetch, partial stores, PTE A/D updates, pending virtqueue
+DMA exactly once, dirty disk preservation, and byte-compatible sparse encoding.
+
+### First paged artifact and startup-JIT regression
+
+The first paged build reached Node Ready at **622.690170 s** and published all
+members successfully. Its raw result is marked error because the harness called
+`dispose()` before resolving its capture promise; the disposal event rejected
+that promise. That cleanup ordering is fixed. The artifact was independently
+checked against every member SHA-256 and retained at
+`web/public/rv64/snapshots/kuberoot-first/`, with its original media manifest in
+`slim-snapshot-first-media.json`. RAM: 2,984 groups, 185,490 nonzero 4-KiB pages,
+**240,440,292 compressed bytes**; CPU/device metadata: **2,584,630 raw bytes**.
+The certificate intersection is 2026-11-21 21:16:35 UTC through
+2027-11-21 22:16:34 UTC. No expiry/not-yet-valid error occurred during restore.
+
+Its first restore did not prove Ready: `kubectl get nodes` reported TLS handshake
+timeout, and the old `set -e` probe stopped before GET-pods. At 148.574 s the
+worker had executed **6,706,427,093 instructions entirely in the interpreter**:
+JIT compiled=0, retired=0. Initial startup applied the JIT threshold before
+`Cpu::restore`, whose deliberately empty JIT state reset that threshold to zero.
+The worker must reapply the policy **after** restoring, just as the existing
+in-place restore path already does. The final integration test adds a real
+`jitRetired > 0` assertion; initialization time alone did not expose this bug.
+This aborted run is not a snapshot performance acceptance result. Its streamed
+console is `results/R3-paged-restore-console.txt`; the next fixture retries the
+Ready query after transient TLS failures and explicitly marks failed GET-pods.
+
+Sequential Chromium correctness gates with the final Rust binary
+`27685993bf66eaad77b57e782985acc9616c5bf575e7dc9219840170c94f4f58`:
+
+- 439/439 ISA/signature cases pass.
+- Demand-paged JIT versus eager interpreter: **2,000,000 single-step boundaries**,
+  27 execution-time RAM faults, exact CPU state and final RAM; **21.457070 s**.
+- Demand-paged superblocks: **20,000,005 instructions / 784,815 boundaries**,
+  60 execution-time RAM faults, exact CPU state and final RAM; **9.013420 s**.
+- TypeScript typecheck and **34/34 Vitest tests across 8 files** pass, including
+  corrupt-cache refresh and rejection of servers that ignore Range.
+
+These are single-hart pager/JIT checks, not per-hart SMP trace-diffs. Durable
+validation summary: `R3-snapshot-validation.json`.
+
+### Final measured artifact, restore, and remaining gates
+
+**Partial result, not R3 acceptance.** The second paged fixture successfully
+boots, exports, and restores a Ready node. The startup-JIT regression is fixed
+by applying the threshold after CPU restore. Final small-Linux integration
+initializes in **258.785 ms**, restores file/disk/network, advances the clock,
+and actually executes JIT code (3,653 compiled blocks, 2,997,000 reported JIT
+instructions in its final sample). Typecheck and the final **35/35** RV64 Vitest
+checks pass. Base-disk identity now uses immutable version plus geometry; legacy
+identities containing a URL are accepted, allowing the build-time loopback
+medium to be relocated to a course asset host without changing its contents.
+
+Final build input is the separate
+`/work/guest/slim-emulator/probe-snapshot-retry.img`, 269,484,032 bytes, SHA-256
+`ced14b4008ab18d7b57806e43bd365ad94e022328e6fe1b0f5882e060b0dc758`.
+Published builder images were not changed. The temporary intermediate SquashFS
+was removed after packing; both snapshot probe media are retained.
+
+Artifact: ignored `web/public/rv64/snapshots/kuberoot/paged.json` and its
+content-addressed members. **238,185,484 bytes of compressed RAM**, 186,537
+nonzero pages in 2,984 groups; metadata **3,088,310 raw / 3,067,269 compressed
+bytes**, including host wrapper sections in the compressed figure. Every member
+was independently checked against its length and SHA-256. Certificate windows
+cover the actual restore, with earliest expiry **2027-11-21 22:34:24 UTC**;
+public certificate evidence is in `R3-snapshot-certificates.json`.
+
+| Boundary, one hart | Observed | Acceptance |
+| --- | ---: | --- |
+| Build-time cold boot → Node Ready | 746.589870 s | Build cost, not restore |
+| Ready observation → export complete | 31.417245 s | Build cost |
+| Restore request → engine initialized | **0.517400 s** | Not a Kubernetes health check |
+| Restore request → fresh `kubectl get nodes` row reports Ready | **62.053750 s** | **Fails ≤5 s** |
+| First `kubectl get pods -A` | **9.81 s** | **Fails ≤0.5 s** |
+| Next two GET-pods calls | 9.30 / 12.72 s | Informational |
+| Pod-create HTTP response | **201 Created, 444 ms** | Not pod readiness |
+| BusyBox pod Ready | **Not reached within the 300-s wait** | **Fails ≤3 s** |
+
+This is a fresh Chromium context with cold Cache Storage. Compressed RAM assets
+are served locally by Vite; immutable base media comes through the pod range
+server. At the final 425.866425-s sample there were **2,886** demand faults,
+**6.298385 s** cumulative synchronous fault time, and **31.951050 s** base-disk
+active time (overlapping execution, not additive latency). JIT retired
+28,305,652,525 of 29,477,762,354 instructions executed since restore. The saved
+absolute retirement counter is reported separately; it must not be divided by
+post-restore runtime to claim inflated MIPS.
+
+The Ready query succeeded without retry markers, and all three GET-pods calls
+completed. There were no certificate-expiry/not-yet-valid errors. The overall
+probe nevertheless correctly returns error because BusyBox did not become
+Ready. Repeated expired-initial-bookmark warnings occur in client-go reflectors;
+no precise scheduler/kubelet cause is claimed from these warnings alone. The
+artifact is therefore **experimental**, not an accepted lesson environment.
+Raw evidence: ignored `results/R3-paged-retry-{capture,restore}.json` and the
+restore console. Durable numbers: `R3-snapshot-summary.json`.
+
+Reproduction after starting the range server in rv64-dev:
+
+```sh
+# Inside the pod:
+python3 /work/rv64-serve-media.py /work/guest/slim-emulator/probe-snapshot-retry.img 18082
+# Local terminal:
+KUBECONFIG=$HOME/workshop.txt kubectl port-forward --context admin@workshop \
+  -n tenant-kuberoot pod/rv64-dev 18082:18082
+cd web
+RV64_RESULT_NAME=R3-paged-repeat \
+RV64_SNAPSHOT_RESTORE=/rv64/snapshots/kuberoot/paged.json \
+RV64_PROBE_SECONDS=1200 RV64_TIMEOUT_MS=1260000 \
+node src/engine/rv64/measure.mjs --kuberoot
+```
+
+To build another artifact, use `RV64_SNAPSHOT_CAPTURE=1` instead of the restore
+variable. That writes the default `public/rv64/snapshots/kuberoot` destination;
+retain/rename an earlier artifact before rebuilding. The snapshot probe variant
+is installed with `RV64_PROBE_SNAPSHOT=1` when preparing the extracted root.
+The retained `slim-snapshot-media.json` supplies the measured medium identity.
+
+The engine wrapper path for a lesson is now:
+
+```ts
+const machine = new RV64Machine({
+  id: 'kuberoot', memoryMB: 768, kernel, initrd, httpDisk: media, network,
+  snapshotURL: '/rv64/snapshots/kuberoot/paged.json',
+});
+await machine.ready; // Engine initialization; check Kubernetes readiness separately.
+```
+
+Outstanding work remains substantive:
+
+- Reach actual Ready/API budgets, including cold JIT warmup, base-media I/O and
+  post-clock-jump service recovery; sub-second engine initialization alone is
+  not success. Resolve the post-restore BusyBox readiness failure before lesson
+  adoption. A full-machine snapshot does not checkpoint external host peers.
+- **SMP was not integrated in this continuation.** CPU-per-Worker shared RAM,
+  SBI HSM/IPI/RFENCE, per-hart TLB/JIT shootdowns, Linux 2/4-hart boots, per-hart
+  single-step trace-diffs and 2/4-hart kuberoot timings remain as listed earlier.
+  No single-hart pager or existing atomic-substrate result is substituted for
+  any of these gates.
+- The guest still uses 768 MiB and the emulator timing profile; this does not
+  establish the design's 512-MiB guest budget or normal production timing.
+
+Final local checks include Python probe syntax and `git diff --check`. No commits
+were created. The test browsers closed after their runs; measurement-only range
+servers and port-forwards are cleaned up separately, preserving all artifacts.

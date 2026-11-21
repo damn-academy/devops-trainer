@@ -1,0 +1,54 @@
+// @vitest-environment node
+import { webcrypto } from 'node:crypto';
+import { describe, it, expect, vi } from 'vitest';
+import { loadRAMChunk, RAM_CHUNK, savePagedSnapshot, validatePaged } from '../src/engine/rv64/paged-snapshot';
+vi.stubGlobal('crypto', webcrypto);
+const wasm = 'a'.repeat(64);
+describe('demand-paged RAM transport', () => {
+  it('omits zero pages, uses an exact range, and reconstructs untouched neighbours', async () => {
+    const files = new Map<string, Uint8Array>();
+    const manifest = await savePagedSnapshot({ format: 'dt.rv64.snapshot/v1', state: new Uint8Array([1]), pending: new Uint8Array(),
+      rings: Array.from({ length: 4 }, () => new Uint8Array()), diskIdentity: 'disk', history: [], lastExit: 0, capturedAt: Date.now() }, 32, wasm,
+      index => { const block = new Uint8Array(RAM_CHUNK); if (index === 3) { block[4096] = 42; block[63 * 4096] = 7; } return block; },
+      async (name, bytes) => { files.set(name, bytes); });
+    validatePaged(manifest, 32, wasm);
+    expect(manifest.ram.filter(Boolean)).toHaveLength(1);
+    const chunk = manifest.ram[3]!;
+    expect(chunk.pages).toEqual([1, 63]);
+    const fetcher = vi.fn(async (_url: string, options: RequestInit) => {
+      expect(options.headers).toEqual({ Range: `bytes=0-${chunk.bytes - 1}` });
+      return new Response(files.get(`${chunk.sha256}.bin`) as Uint8Array<ArrayBuffer>, { status: 206,
+        headers: { 'Content-Range': `bytes 0-${chunk.bytes - 1}/${chunk.bytes}` } });
+    });
+    vi.stubGlobal('fetch', fetcher);
+    const ram = await loadRAMChunk('https://fixture.test/paged.json', chunk);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(ram[4096]).toBe(42); expect(ram[63 * 4096]).toBe(7);
+    ram[4096] = ram[63 * 4096] = 0;
+    expect(ram.every(b => b === 0)).toBe(true);
+    chunk.pages = [2, 1];
+    expect(() => validatePaged(manifest, 32, wasm)).toThrow('index');
+  });
+});
+
+it('validates cached bytes and rejects a server ignoring Range', async () => {
+  const { sha256 } = await import('../src/engine/rv64/snapshot');
+  const packed = new Uint8Array(4096).fill(42);
+  const compressed = new Uint8Array(await new Response(new Blob([packed]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+  const chunk = { sha256: await sha256(compressed), bytes: compressed.length, pages: [2] };
+  const cache = new Map<string, Response>();
+  vi.stubGlobal('caches', { open: async () => ({ match: async (key: string) => cache.get(key)?.clone(),
+    put: async (key: string, value: Response) => { cache.set(key, value.clone()); }, delete: async (key: string) => cache.delete(key) }) });
+  const fetcher = vi.fn(async () => new Response(compressed, { status: 206, headers: { 'Content-Range': `bytes 0-${chunk.bytes - 1}/${chunk.bytes}` } }));
+  vi.stubGlobal('fetch', fetcher);
+  expect((await loadRAMChunk('https://fixture.test/paged.json', chunk))[8192]).toBe(42);
+  await loadRAMChunk('https://fixture.test/paged.json', chunk);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  cache.set(`https://fixture.test/${chunk.sha256}.bin`, new Response(new Uint8Array([0])));
+  await loadRAMChunk('https://fixture.test/paged.json', chunk);
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  cache.clear();
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(compressed)));
+  await expect(loadRAMChunk('https://fixture.test/paged.json', chunk)).rejects.toThrow('Range');
+  vi.stubGlobal('caches', undefined);
+});

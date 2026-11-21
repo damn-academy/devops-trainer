@@ -1,15 +1,16 @@
 import type { Machine, ExecResult, Facts, SimEvent, TermRecord } from '../../core/types';
 import { ByteRing, FrameRing } from './ring';
 import type { HTTPDisk } from './block';
+import { diskIdentity, sameDiskIdentity, type RV64Snapshot } from './snapshot';
+export type { RV64Snapshot } from './snapshot';
 import { factsScript, parseFacts, shq, watchedPaths } from '../v86/protocol';
 import { LAB_SCOPES, labFactsScript, parseLabFacts, scopesOf } from '../v86/lab-facts';
 import type { L2Switch } from '../v86/switch';
-export interface RV64Options { id: string; kernel: ArrayBuffer; initrd: ArrayBuffer; memoryMB?: number; jitThreshold?: number; cmdline?: string; disk?: ArrayBuffer; network?: L2Switch; httpDisk?: HTTPDisk }
-interface RV64Snapshot {
-  format: 'dt.rv64.snapshot/v1'; state: Uint8Array; pending: Uint8Array;
-  rings: Uint8Array[]; history: TermRecord[]; lastExit: number; diskIdentity: string;
-}
-/** Experimental engine: opt in with VITE_RV64=1. No lesson imports this module. */
+export interface RV64Options { id: string; kernel: ArrayBuffer; initrd: ArrayBuffer; memoryMB?: number; jitThreshold?: number; cmdline?: string; disk?: ArrayBuffer; network?: L2Switch; httpDisk?: HTTPDisk; snapshot?: RV64Snapshot; snapshotURL?: string }
+/** Experimental engine: opt in with VITE_RV64=1. snapshotURL accepts the paged
+ * build artifact; ready means the restored engine can execute, not a Kubernetes
+ * health assertion. Large Ready nodes should use exportSnapshot(), since the
+ * legacy in-memory snapshot() materializes the entire serialized state. */
 export class RV64Machine implements Machine {
   readonly kind = 'rv64' as const;
   readonly id: string;
@@ -27,7 +28,7 @@ export class RV64Machine implements Machine {
   private timer: ReturnType<typeof setInterval>;
   private disposed = false;
   private diskIdentity: string;
-  private checkpoint?: { request: { op: string; state?: Uint8Array; pending?: Uint8Array }; resolve: (value: any) => void; reject: (error: Error) => void; restore?: RV64Snapshot };
+  private checkpoint?: { request: { op: string; state?: Uint8Array; pending?: Uint8Array; capturedAt?: number; uploadURL?: string; certificateAudit?: boolean }; resolve: (value: any) => void; reject: (error: Error) => void; restore?: RV64Snapshot };
   private frozen = false;
   private watch = new Set<string>();
   private scopes = new Set<string>();
@@ -38,7 +39,13 @@ export class RV64Machine implements Machine {
     if (import.meta.env.VITE_RV64 !== '1') throw new Error('RV64 is disabled; use VITE_RV64=1');
     if (!crossOriginIsolated || typeof SharedArrayBuffer === 'undefined') throw new Error('RV64 needs COOP/COEP and SharedArrayBuffer');
     this.id = options.id;
-    this.diskIdentity = JSON.stringify(options.httpDisk ?? null);
+    if (options.snapshot && options.snapshotURL) throw new Error('Choose snapshot or snapshotURL');
+    if (options.snapshot) {
+      this.validateSnapshot(options.snapshot, diskIdentity(options.httpDisk));
+      options.snapshot.rings.forEach((r, i) => new Uint8Array(this.rings()[i]).set(r));
+      this.history = [...options.snapshot.history]; this.lastExit = options.snapshot.lastExit;
+    }
+    this.diskIdentity = diskIdentity(options.httpDisk);
     this.network = options.network;
     this.network?.addPort(this.id, { mode: 'access' }, frame => {
       if (this.frozen) { this.emit('rv64.net.drop'); return; }
@@ -50,14 +57,16 @@ export class RV64Machine implements Machine {
       this.worker.onerror = (e) => { const error = new Error(e.message); reject(error); this.fail(error); };
       this.worker.onmessage = ({ data }) => {
         if (data.type === 'metrics') { this.metrics = data.metrics; this.emit('rv64.metrics', { metrics: data.metrics }); }
-        if (data.type === 'ready') resolve();
-        if (data.type === 'paused' && this.checkpoint) this.worker.postMessage(this.checkpoint.request);
-        if (['checkpoint', 'restored', 'checkpoint-error'].includes(data.type) && this.checkpoint) {
+        if (data.type === 'ready') { if (data.history) { this.history = data.history; this.lastExit = data.lastExit; } resolve(); }
+        if (data.type === 'paused' && this.checkpoint) this.worker.postMessage({ ...this.checkpoint.request,
+          wrapper: { format: 'dt.rv64.snapshot/v1', rings: this.rings().map(r => new Uint8Array(r).slice()), history: [...this.history], lastExit: this.lastExit, diskIdentity: this.diskIdentity } });
+        if (['checkpoint', 'exported', 'restored', 'checkpoint-error'].includes(data.type) && this.checkpoint) {
           const p = this.checkpoint; this.checkpoint = undefined;
           Atomics.store(this.control, 5, 0);
           if (data.type === 'checkpoint-error') p.reject(new Error(data.error));
+          else if (data.type === 'exported') p.resolve(data.manifest);
           else if (data.type === 'checkpoint') p.resolve({ format: 'dt.rv64.snapshot/v1', state: data.state, pending: data.pending,
-            rings: this.rings().map(r => new Uint8Array(r).slice()), history: [...this.history], lastExit: this.lastExit, diskIdentity: this.diskIdentity } satisfies RV64Snapshot);
+            rings: this.rings().map(r => new Uint8Array(r).slice()), history: [...this.history], lastExit: this.lastExit, diskIdentity: this.diskIdentity, capturedAt: data.capturedAt } satisfies RV64Snapshot);
           else {
             p.restore!.rings.forEach((r, i) => new Uint8Array(this.rings()[i]).set(r));
             this.history = [...p.restore!.history]; this.lastExit = p.restore!.lastExit;
@@ -73,7 +82,7 @@ export class RV64Machine implements Machine {
     let hash = 2166136261;
     for (const byte of new TextEncoder().encode(this.id)) hash = Math.imul(hash ^ byte, 16777619);
     const mac = new Uint8Array([2, 0x44, hash >>> 24, hash >>> 16, hash >>> 8, hash]);
-    this.worker.postMessage({ ...boot, mac, netIn: this.netIn.ring.buffer, netOut: this.netOut.ring.buffer, memoryMB: options.memoryMB ?? 512, input: this.input.buffer, output: this.output.buffer, control: this.control.buffer });
+    this.worker.postMessage({ ...boot, snapshotURL: options.snapshotURL ? new URL(options.snapshotURL, location.href).href : undefined, mac, netIn: this.netIn.ring.buffer, netOut: this.netOut.ring.buffer, memoryMB: options.memoryMB ?? 512, input: this.input.buffer, output: this.output.buffer, control: this.control.buffer });
     this.timer = setInterval(() => this.drain(), 8);
   }
   executionStats() {
@@ -148,21 +157,26 @@ ${labFactsScript(scopes)}`;
       users: r.users, groups: r.groups, term: { main: [...this.history] }, ...parseLabFacts(result.out) };
   }
   private rings(): SharedArrayBuffer[] { return [this.input.buffer, this.output.buffer, this.netIn.ring.buffer, this.netOut.ring.buffer]; }
-  private async checkpointCall(op: string, restore?: RV64Snapshot): Promise<any> {
+  private async checkpointCall(op: string, restore?: RV64Snapshot, uploadURL?: string, certificateAudit = false): Promise<any> {
     await this.ready;
     if (this.disposed || this.pending || this.checkpoint) throw new Error('RV64 machine is busy or disposed');
     this.frozen = true;
     return new Promise((resolve, reject) => {
-      this.checkpoint = { request: { op, state: restore?.state, pending: restore?.pending }, resolve, reject, restore };
+      this.checkpoint = { request: { op, uploadURL, certificateAudit, state: restore?.state, pending: restore?.pending, capturedAt: restore?.capturedAt }, resolve, reject, restore };
       Atomics.store(this.control, 5, 1); Atomics.add(this.input.words, 2, 1); Atomics.notify(this.input.words, 2);
     });
   }
+  async exportSnapshot(uploadURL: string, certificateAudit = false): Promise<unknown> { return this.checkpointCall('export', undefined, new URL(uploadURL, location.href).href, certificateAudit); }
   async snapshot(): Promise<RV64Snapshot> { return this.checkpointCall('snapshot'); }
   async restore(snapshot: unknown): Promise<void> {
+    this.validateSnapshot(snapshot, this.diskIdentity);
+    await this.checkpointCall('restore', snapshot as RV64Snapshot);
+  }
+  private validateSnapshot(snapshot: unknown, diskIdentity: string): void {
     const s = snapshot as RV64Snapshot;
-    if (s?.format !== 'dt.rv64.snapshot/v1' || s.diskIdentity !== this.diskIdentity || !(s.state instanceof Uint8Array) || !(s.pending instanceof Uint8Array)
+    if ((s?.capturedAt !== undefined && (!Number.isSafeInteger(s.capturedAt) || s.capturedAt <= 0 || s.capturedAt > Date.now() + 60000)) || s?.format !== 'dt.rv64.snapshot/v1' || !sameDiskIdentity(s.diskIdentity, diskIdentity) || !(s.state instanceof Uint8Array) || !(s.pending instanceof Uint8Array)
       || !Array.isArray(s.rings) || s.rings.length !== 4 || s.rings.some((r, i) => !(r instanceof Uint8Array) || r.length !== this.rings()[i].byteLength)) throw new Error('Invalid RV64 snapshot');
-    await this.checkpointCall('restore', s);
+
   }
   on(fn: (ev: SimEvent) => void): () => void { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; }
   dispose(): void {

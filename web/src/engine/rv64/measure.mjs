@@ -1,12 +1,12 @@
 // Browser-only host work: Rust/wasm must already have been built in rv64-dev.
 import { spawn } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { createHash, X509Certificate } from 'node:crypto';
+import { mkdirSync, writeFileSync, readFileSync, renameSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 const port = 5198;
 const wasmSha256 = createHash('sha256').update(readFileSync('public/rv64/rv64_core_bg.wasm')).digest('hex');
 const sourceHash = createHash('sha256');
-for (const file of ['jit-compiler.ts','jit.ts','compiler.worker.ts','worker.ts']) sourceHash.update(file).update(readFileSync(`src/engine/rv64/${file}`));
+for (const file of ['jit-compiler.ts','jit.ts','compiler.worker.ts','worker.ts','snapshot.ts','paged-snapshot.ts','snapshot-pager.ts','snapshot-loader.worker.ts']) sourceHash.update(file).update(readFileSync(`src/engine/rv64/${file}`));
 const jitSourceSha256 = sourceHash.digest('hex');
 const label = process.env.RV64_RESULT_NAME;
 if (label && !/^[A-Za-z0-9_-]+$/.test(label)) throw new Error('Invalid result name');
@@ -29,6 +29,27 @@ try {
   browser = await chromium.launch({ headless: true });
   if (integration) { mkdirSync('public/rv64', { recursive: true }); writeFileSync('public/rv64/integration-disk.bin', new Uint8Array(512).fill(90)); }
   const page = await browser.newPage();
+  if (process.env.RV64_SNAPSHOT_CAPTURE === '1' || integration) {
+    const destination = `public/rv64/snapshots/${integration ? 'integration' : 'kuberoot'}`;
+    mkdirSync(destination, { recursive: true });
+    await page.route('**/snapshot-upload/*', async route => {
+      const name = new URL(route.request().url()).pathname.split('/').pop();
+      if (!/^(?:[a-f0-9]{64}\.bin|manifest\.json|paged\.json|certificates\.pem)$/.test(name)) return route.abort();
+      if (name === 'certificates.pem') {
+        const certs = [...route.request().postData().matchAll(/-----BEGIN CERTIFICATE-----[A-Za-z0-9+/=\r\n]+-----END CERTIFICATE-----/g)]
+          .flatMap(m => { try { return [new X509Certificate(m[0])]; } catch { return []; } })
+          .filter(c => c.issuer.includes('kuberoot'));
+        if (!certs.some(c => c.subject.includes('CN=kube-apiserver')) || !certs.some(c => c.subject.includes('CN=kuberoot-admin'))) return route.fulfill({ status: 422, body: 'Missing server/admin certificates' });
+        const certificates = certs.map(c => ({ subject: c.subject, issuer: c.issuer, fingerprint: c.fingerprint256, validFrom: c.validFrom, validTo: c.validTo }));
+        const summary = { validFrom: Math.max(...certs.map(c => Date.parse(c.validFrom))), validUntil: Math.min(...certs.map(c => Date.parse(c.validTo))), certificates };
+        writeFileSync(`${destination}/certificate-validity.json`, JSON.stringify(summary, null, 2));
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(summary) });
+      }
+      writeFileSync(`${destination}/${name}.tmp`, route.request().postDataBuffer());
+      renameSync(`${destination}/${name}.tmp`, `${destination}/${name}`);
+      await route.fulfill({ status: 204 });
+    });
+  }
   if (gates || trace || kuberoot) {
     const progress = setInterval(async () => { if (kuberoot) console.error('METRICS', JSON.stringify(await page.evaluate(() => globalThis.rv64LatestMetrics).catch(() => null))); const consoleText = await page.locator("#console").textContent().catch(() => "loading"); if (kuberoot && label && consoleText) writeFileSync(`public/rv64/results/${label}-console.txt`, consoleText); console.error(consoleText?.slice(-1500)); }, 30000);
     page.once("close", () => clearInterval(progress));
@@ -53,7 +74,7 @@ try {
     else { start(); await started; }
     stopProfile = async () => { clearTimeout(startTimer); return started ? stop() : { traceEvents: events }; };
   }
-  await page.goto(`http://localhost:${port}/src/engine/rv64/${smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&jit=${jit}` : trace && process.argv.includes("--single-step") ? "?single=1" : ""}`);
+  await page.goto(`http://localhost:${port}/src/engine/rv64/${smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&jit=${jit}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
   try {
     await page.waitForFunction(() => globalThis.rv64Result, undefined, { timeout: Number(process.env.RV64_TIMEOUT_MS) || (gates || trace ? 900000 : kuberoot ? 930000 : boot || integration ? 300000 : 30000) });
   } catch (error) {

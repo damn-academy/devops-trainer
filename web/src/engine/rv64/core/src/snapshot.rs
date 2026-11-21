@@ -3,7 +3,11 @@ use crate::Cpu;
 use bincode::Options;
 const MAGIC: &[u8; 8] = b"DTRV64\0\x01";
 impl Cpu {
-    pub fn snapshot(&self) -> Result<Vec<u8>, String> {
+    pub fn snapshot(&mut self) -> Result<Vec<u8>, String> {
+        self.memory.ensure_ram(0, self.memory.ram.len());
+        self.encode_snapshot()
+    }
+    fn encode_snapshot(&self) -> Result<Vec<u8>, String> {
         let mut out = MAGIC.to_vec();
         bincode::DefaultOptions::new().with_fixint_encoding()
             .serialize_into(&mut out, self).map_err(|e| e.to_string())?;
@@ -17,32 +21,112 @@ impl Cpu {
         if restored.memory.ram.len() != self.memory.ram.len() || restored.pc & 1 != 0 || restored.x[0] != 0 {
             return Err("snapshot machine configuration mismatch".into());
         }
+        restored.memory.devices.disk_dirty = restored.memory.devices.disk_chunks.keys().copied().collect();
         restored.memory.reset_caches();
         *self = restored;
         Ok(())
     }
+    /// Same CPU/device encoding as v1, with RAM externalized and immutable
+    /// HTTP disk cache dropped. Dirty disk chunks remain part of metadata.
+    pub fn snapshot_metadata(&mut self) -> Result<Vec<u8>, String> {
+        let ram = std::mem::take(&mut self.memory.ram);
+        let mut clean = std::collections::BTreeMap::new();
+        let d = &mut self.memory.devices;
+        let all = std::mem::take(&mut d.disk_chunks);
+        for (i, chunk) in all {
+            if d.disk_dirty.contains(&i) { d.disk_chunks.insert(i, chunk); }
+            else { clean.insert(i, chunk); }
+        }
+        let result = self.encode_snapshot();
+        self.memory.ram = ram;
+        self.memory.devices.disk_chunks.append(&mut clean);
+        result
+    }
+    pub fn restore_paged(&mut self, metadata: &[u8], present: &[u8]) -> Result<(), String> {
+        let size = self.memory.ram.len();
+        if present.len() != (size + 262143) / 262144 || present.iter().any(|b| *b > 1) {
+            return Err("invalid lazy RAM bitmap".into());
+        }
+        let mut restored = Cpu::new(0);
+        restored.restore(metadata)?;
+        // Validation completed before touching the running machine.
+        restored.memory.ram = std::mem::take(&mut self.memory.ram);
+        restored.memory.ram.fill(0);
+        restored.memory.lazy_ram = present.iter().map(|b| *b != 0).collect();
+        restored.memory.reset_caches();
+        *self = restored;
+        Ok(())
+    }
+
 }
 
-// Eager sparse RAM encoding; lazy page loading belongs to R3. Zero pages
-// consume no payload, keeping cold-machine snapshots within browser memory.
+// Legacy eager sparse encoding. Paged checkpoints externalize RAM through
+// snapshot_metadata; zero pages consume no payload in either representation.
 pub(crate) mod ram {
-    use serde::{Serialize, Deserialize, Serializer, Deserializer};
+    use serde::{Serialize, Serializer, Deserializer};
     pub fn serialize<S: Serializer>(ram: &[u8], serializer: S) -> Result<S::Ok, S::Error> {
         let pages: Vec<(usize, &[u8])> = ram.chunks(4096).enumerate()
             .filter(|(_, bytes)| bytes.iter().any(|b| *b != 0)).collect();
         (ram.len(), pages).serialize(serializer)
     }
     pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<u8>, D::Error> {
-        let (size, pages): (usize, Vec<(usize, Vec<u8>)>) = Deserialize::deserialize(deserializer)?;
-        if size > 1024 * 1024 * 1024 { return Err(serde::de::Error::custom("snapshot RAM exceeds limit")); }
-        let mut ram = vec![0; size]; let mut previous = None;
-        for (index, bytes) in pages {
-            let start = index.checked_mul(4096).ok_or_else(|| serde::de::Error::custom("RAM page overflow"))?;
-            if start >= size || bytes.len() != (size-start).min(4096) || previous.map_or(false, |p| index <= p) {
-                return Err(serde::de::Error::custom("invalid snapshot RAM page"));
+        use serde::de::{DeserializeSeed, Error, SeqAccess, Visitor};
+        struct Pages<'a>(&'a mut [u8]);
+        impl<'de> DeserializeSeed<'de> for Pages<'_> {
+            type Value = ();
+            fn deserialize<D: Deserializer<'de>>(self, d: D) -> Result<(), D::Error> {
+                struct PageVisitor<'a>(&'a mut [u8]);
+                impl<'de> Visitor<'de> for PageVisitor<'_> {
+                    type Value = ();
+                    fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { f.write_str("ordered nonzero RAM pages") }
+                    fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<(), A::Error> {
+                        let mut previous = None;
+                        while let Some((index, bytes)) = seq.next_element::<(usize, Vec<u8>)>()? {
+                            let start = index.checked_mul(4096).ok_or_else(|| A::Error::custom("RAM page overflow"))?;
+                            if start >= self.0.len() || bytes.len() != (self.0.len()-start).min(4096) || previous.map_or(false, |p| index <= p) {
+                                return Err(A::Error::custom("invalid snapshot RAM page"));
+                            }
+                            self.0[start..start+bytes.len()].copy_from_slice(&bytes); previous = Some(index);
+                        }
+                        Ok(())
+                    }
+                }
+                d.deserialize_seq(PageVisitor(self.0))
             }
-            ram[start..start+bytes.len()].copy_from_slice(&bytes); previous = Some(index);
         }
-        Ok(ram)
+        struct RamVisitor;
+        impl<'de> Visitor<'de> for RamVisitor {
+            type Value = Vec<u8>;
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { f.write_str("RAM size and sparse pages") }
+            fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Vec<u8>, A::Error> {
+                let size: usize = seq.next_element()?.ok_or_else(|| A::Error::custom("missing RAM size"))?;
+                if size > 1024 * 1024 * 1024 { return Err(A::Error::custom("snapshot RAM exceeds limit")); }
+                let mut ram = vec![0; size];
+                seq.next_element_seed(Pages(&mut ram))?.ok_or_else(|| A::Error::custom("missing RAM pages"))?;
+                Ok(ram)
+            }
+        }
+        // Decode directly into RAM: retaining Vec<Vec<page>> would duplicate
+        // nearly the entire guest working set during a Ready-node restore.
+        deserializer.deserialize_tuple(2, RamVisitor)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use bincode::Options;
+    #[derive(serde::Serialize, serde::Deserialize)]
+    struct Ram(#[serde(with = "super::ram")] Vec<u8>);
+    #[test]
+    fn streaming_ram_preserves_v1_bytes_and_rejects_bad_page_order() {
+        let options = bincode::DefaultOptions::new().with_fixint_encoding();
+        let legacy = (8192usize, vec![(1usize, vec![7u8; 4096])]);
+        let bytes = options.serialize(&legacy).unwrap();
+        let restored: Ram = options.deserialize(&bytes).unwrap();
+        assert_eq!(restored.0[..4096], [0;4096]);
+        assert_eq!(options.serialize(&restored).unwrap(), bytes);
+        for pages in [vec![(1usize, vec![7u8;4096]), (0, vec![8;4096])], vec![(0,vec![7;4096]),(0,vec![8;4096])], vec![(2,vec![7;4096])], vec![(0,vec![7;4095])]] {
+            assert!(options.deserialize::<Ram>(&options.serialize(&(8192usize,pages)).unwrap()).is_err());
+        }
     }
 }

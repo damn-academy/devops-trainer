@@ -20,11 +20,27 @@ try {
   const before = await machine.facts();
   if (before.schema !== 'dt.facts/v1' || !before.files['/tmp/checkpoint']?.text?.includes('checkpoint-before')) throw new Error(`bad facts ${JSON.stringify(before)}`);
   const snapshot = await machine.snapshot();
+  snapshot.capturedAt! -= 60000; // Real suspension, not a scaled guest clock.
   await machine.exec('echo checkpoint-after > /tmp/checkpoint');
   await machine.restore(snapshot);
   await machine.restore(snapshot); // Back-to-back requests must not lose the pause flag.
   const after = await machine.facts();
   if (after.files['/tmp/checkpoint']?.text !== before.files['/tmp/checkpoint']?.text) throw new Error('restore did not restore guest file');
-  host.rv64Result = { type: 'integration', network: net.out, facts: before.schema, lazyDiskByte: 90, kernel: before.env.kernel, snapshotBytes: snapshot.state.length, restoredFile: after.files['/tmp/checkpoint'] };
+  const clock = await machine.exec("cat /proc/uptime");
+  const uptime = Number(clock.out.match(/\n(\d+\.\d+) /)?.[1]);
+  if (!(uptime >= 60)) throw new Error(`Restore clock did not advance: ${clock.out}`);
+  await machine.exportSnapshot('/snapshot-upload/');
+  machine.dispose();
+  const restoreStart = performance.now();
+  machine = new RV64Machine({ id: 'integration', kernel, initrd, network: services.network,
+    httpDisk: { url: '/rv64/integration-disk.bin', bytes: 512, version: 'integration-5a-v1' },
+    snapshotURL: '/rv64/snapshots/integration/paged.json', cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr' });
+  await machine.ready;
+  const restoreInitializedMs = performance.now() - restoreStart;
+  const lazy = await machine.exec('cat /tmp/checkpoint; od -An -tu1 -N1 /dev/vda; wget -qO- http://mirror.lab/probe.txt');
+  if (lazy.exit || !lazy.out.includes('checkpoint-before') || !/\b90\b/.test(lazy.out) || !lazy.out.includes('RV64_LOCAL_HTTP_OK')) throw new Error(`Paged restore failed: ${lazy.out}`);
+  const pagedStats = machine.executionStats();
+  if (pagedStats.jitRetired <= 0) throw new Error('Snapshot startup left JIT disabled');
+  host.rv64Result = { type: 'integration', restoreInitializedMs, pagedStats, restoredUptime: uptime, network: net.out, facts: before.schema, lazyDiskByte: 90, kernel: before.env.kernel, snapshotBytes: snapshot.state.length, restoredFile: after.files['/tmp/checkpoint'] };
 } catch (error) { host.rv64Result = { type: 'error', error: String(error) }; }
 finally { machine?.dispose(); services.dispose(); }

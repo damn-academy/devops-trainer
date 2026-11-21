@@ -1,0 +1,111 @@
+{
+  "validFrom": 1795296865000,
+  "validUntil": 1826836464000,
+  "certificates": [
+    {
+      "subject": "CN=kuberoot-ca",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "D2:4E:F2:DF:66:12:4D:C7:F2:57:AB:08:1F:9F:5F:54:9E:78:C4:2A:03:42:DC:82:4B:CD:5F:88:68:87:BE:C9",
+      "validFrom": "Nov 21 21:34:24 2026 GMT",
+      "validTo": "Nov 21 22:34:24 2036 GMT"
+    },
+    {
+      "subject": "CN=kuberoot-front-proxy-ca",
+      "issuer": "CN=kuberoot-front-proxy-ca",
+      "fingerprint": "FE:14:FF:A8:AC:A9:FE:70:4D:E3:80:7E:B6:D4:04:06:A7:A6:DE:E7:71:85:5A:26:80:7B:55:71:0C:85:61:68",
+      "validFrom": "Nov 21 21:34:25 2026 GMT",
+      "validTo": "Nov 21 22:34:25 2036 GMT"
+    },
+    {
+      "subject": "O=system:masters\nCN=kuberoot-admin",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "3F:4C:15:B8:22:77:5A:82:29:85:22:84:41:5C:F5:FA:1A:C9:DE:9A:84:C0:8B:3A:C7:E7:73:D7:31:B8:0C:F2",
+      "validFrom": "Nov 21 21:34:24 2026 GMT",
+      "validTo": "Nov 21 22:34:24 2027 GMT"
+    },
+    {
+      "subject": "CN=kube-apiserver",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "CA:91:DF:7D:E2:9E:0E:A7:25:98:E4:F7:B9:44:93:64:F9:2B:2B:38:3F:AA:CD:1E:3F:AB:C2:C3:84:20:45:1F",
+      "validFrom": "Nov 21 21:34:24 2026 GMT",
+      "validTo": "Nov 21 22:34:24 2027 GMT"
+    },
+    {
+      "subject": "O=system:masters\nCN=kube-apiserver-kubelet-client",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "74:56:C1:80:AD:B7:56:F8:F2:1E:FE:D7:FB:18:BF:C1:69:18:F5:45:5D:3B:F3:E8:48:8B:5D:BB:DF:62:88:E4",
+      "validFrom": "Nov 21 21:34:24 2026 GMT",
+      "validTo": "Nov 21 22:34:24 2027 GMT"
+    },
+    {
+      "subject": "CN=front-proxy-client",
+      "issuer": "CN=kuberoot-front-proxy-ca",
+      "fingerprint": "95:67:75:FF:8D:87:8E:E5:45:4C:67:E7:D4:58:9B:F1:19:31:78:43:48:91:5F:70:05:1E:06:61:47:66:2E:26",
+      "validFrom": "Nov 21 21:34:25 2026 GMT",
+      "validTo": "Nov 21 22:34:25 2027 GMT"
+    },
+    {
+      "subject": "CN=system:kube-scheduler",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "AB:17:09:3C:11:E4:21:1F:EB:B4:6B:12:0E:11:D2:A9:D1:01:F1:44:8B:9C:32:CF:86:9D:46:63:60:DE:4D:9A",
+      "validFrom": "Nov 21 21:34:24 2026 GMT",
+      "validTo": "Nov 21 22:34:24 2027 GMT"
+    },
+    {
+      "subject": "CN=system:kube-proxy",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "47:94:52:6F:EF:7D:74:1F:11:AD:A3:AA:8D:C5:B3:E3:3F:34:72:71:9D:52:75:BD:B8:E5:CB:F9:70:B4:C0:A7",
+      "validFrom": "Nov 21 21:34:24 2026 GMT",
+      "validTo": "Nov 21 22:34:24 2027 GMT"
+    },
+    {
+      "subject": "CN=kuberoot-3d2fa0",
+      "issuer": "CN=kuberoot-node-ca kuberoot-3d2fa0",
+      "fingerprint": "59:9F:75:5A:2E:D0:03:C8:31:2C:95:3B:B0:AF:43:65:21:4A:7F:6D:CE:A9:56:DD:79:EB:0C:06:F6:FA:F9:1B",
+      "validFrom": "Nov 21 21:34:24 2026 GMT",
+      "validTo": "Nov 21 22:34:24 2027 GMT"
+    },
+    {
+      "subject": "CN=kuberoot-3d2fa0",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "DB:22:51:67:E8:1D:8F:E7:30:8F:F2:4D:6D:4D:47:3B:B2:12:7E:57:E0:77:E1:43:97:02:25:BB:53:40:E0:CF",
+      "validFrom": "Nov 21 21:34:25 2026 GMT",
+      "validTo": "Nov 21 22:34:25 2027 GMT"
+    },
+    {
+      "subject": "CN=kuberoot-node-ca kuberoot-3d2fa0",
+      "issuer": "CN=kuberoot-node-ca kuberoot-3d2fa0",
+      "fingerprint": "F5:CE:D4:1B:48:81:89:BE:A8:59:3A:18:13:96:5B:B2:62:D9:B4:58:41:74:49:65:B0:A7:8D:A8:CA:67:DC:B1",
+      "validFrom": "Nov 21 21:34:24 2026 GMT",
+      "validTo": "Nov 21 22:34:24 2036 GMT"
+    },
+    {
+      "subject": "CN=kuberoot:node-api",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "3D:54:85:8F:DA:1C:C9:3E:EF:19:EA:D3:FB:32:16:CD:AC:78:A3:40:0A:5F:3F:BD:93:15:4F:EF:88:AC:FB:E6",
+      "validFrom": "Nov 21 21:34:25 2026 GMT",
+      "validTo": "Nov 21 22:34:25 2027 GMT"
+    },
+    {
+      "subject": "CN=kuberoot-node.kube-system.svc",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "F4:63:F4:E4:81:07:D9:36:D2:1E:80:D2:C2:F1:AE:C1:B6:50:30:83:BA:62:A0:E5:D5:AB:73:C4:38:67:7E:41",
+      "validFrom": "Nov 21 21:34:25 2026 GMT",
+      "validTo": "Nov 21 22:34:25 2027 GMT"
+    },
+    {
+      "subject": "O=system:nodes\nCN=system:node:kuberoot-3d2fa0",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "BD:C0:BD:52:3E:D3:7F:34:82:76:4C:99:C8:A4:CF:32:5B:90:20:F2:1F:15:54:C4:57:73:DD:82:09:A7:F7:E7",
+      "validFrom": "Nov 21 21:34:25 2026 GMT",
+      "validTo": "Nov 21 22:34:25 2027 GMT"
+    },
+    {
+      "subject": "CN=system:kube-controller-manager",
+      "issuer": "CN=kuberoot-ca",
+      "fingerprint": "01:E1:E5:A5:D8:AF:43:9A:11:0E:A4:F8:15:1E:67:61:38:90:73:9C:1D:56:F3:BC:2A:7F:AA:37:B8:1E:83:52",
+      "validFrom": "Nov 21 21:34:24 2026 GMT",
+      "validTo": "Nov 21 22:34:24 2027 GMT"
+    }
+  ]
+}
