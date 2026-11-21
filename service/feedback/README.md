@@ -22,6 +22,8 @@ Build the course with `VITE_FEEDBACK_URL=https://feedback.example/api/feedback`.
 | `ALLOWED_ORIGINS` | Comma-separated exact course origins; no wildcard |
 | `ADMIN_TOKEN` | Admin bearer token; also Basic password for username `token` |
 | `ADMIN_USER`, `ADMIN_PASSWORD` | Alternative Basic credentials |
+| `REPORT_LIMIT_PER_HOUR` | Reports per client address per hour, default 20 |
+| `FOLLOW_LIMIT_PER_HOUR` | Thread reads and replies per client address per hour, default 240 |
 | `GITHUB_REPO`, `GITHUB_TOKEN` | Enable issue notices only when both are set; fine-grained issue-write token |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Enable Telegram notices only when both are set |
 
