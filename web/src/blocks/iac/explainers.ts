@@ -63,7 +63,7 @@ export const tfModel = defineModel<TfP>({
   legend: [
     { mark: 'active', text: bi('участник, который работает сейчас', 'the participant working now') },
     { mark: 'say', text: bi('что этот участник делает', 'what that participant does') },
-    { mark: 'token', text: bi('что передаётся дальше: адрес и ID, ответ облака, запрос на изменение', 'what is handed on: an address and an ID, the cloud’s answer, a change request') },
+    { mark: 'token', text: bi('что передаётся дальше, например адрес и ID, ответ облака или запрос на изменение', 'what is handed on, such as an address and an ID, the cloud’s answer or a change request') },
     { mark: 'icon:file', text: bi('код в файле main.tf', 'the code in main.tf') },
     { mark: 'icon:process', text: bi('программа terraform', 'the terraform program') },
     { mark: 'icon:database', text: bi('файл state, в котором Terraform хранит сведения о созданных ресурсах', 'the state file, where Terraform keeps what it knows about the resources it created') },
@@ -92,7 +92,7 @@ export const tfModel = defineModel<TfP>({
         w: 220,
         h: 64,
         card: card(
-          bi('Код, который описывает, какими ресурсы должны быть: сеть, машину edu_vm.web и DNS-запись. О том, какие ресурсы существуют на самом деле, код ничего не знает.', 'The code that describes what the resources should be like: a network, the machine edu_vm.web and a DNS record. The code knows nothing about which resources really exist.'),
+          bi('Код, который описывает, какими должны быть сеть, машина edu_vm.web и DNS-запись. О том, какие ресурсы существуют на самом деле, код ничего не знает.', 'The code that describes what the network, the machine edu_vm.web and the DNS record should be like. The code knows nothing about which resources really exist.'),
           bi('Код пишете вы и храните его в Git вместе с остальным кодом команды.', 'You write the code and keep it in Git with the rest of the team’s code.'),
           'cat main.tf',
         ),
@@ -296,14 +296,24 @@ export const tfModel = defineModel<TfP>({
         id: 'parse',
         label: bi('код', 'code'),
         caption: bi(
-          'Terraform читает файлы .tf в каталоге и находит три ресурса: сеть, машину edu_vm.web и DNS-запись. Машина ссылается на сеть, а запись на машину, поэтому создавать их можно только в таком порядке. По этим ссылкам Terraform строит граф зависимостей, то есть схему того, какой ресурс от какого зависит.',
-          'Terraform reads the .tf files in the directory and finds three resources: a network, the machine edu_vm.web and a DNS record. The machine refers to the network and the record to the machine, so they can be created only in that order, and Terraform builds a graph from these references.',
+          'Terraform читает файлы .tf в каталоге и находит в них три ресурса: сеть, машину edu_vm.web и DNS-запись.',
+          'Terraform reads the .tf files in the directory and finds three resources in them: a network, the machine edu_vm.web and a DNS record.',
         ),
         focus: ['e-read', 'core'],
         tokens: [{ edge: 'e-read', label: 'main.tf' }],
         say: { core: fb(bi('Terraform читает код и видит, что машина edu_vm.web должна работать на образе {i} с {c} ядрами.', 'Terraform reads the code and sees that the machine edu_vm.web must run the {i} image with {c} cores.'), { i: p.change === 'image' ? 'debian-13' : 'ubuntu-24.04', c: codeCores }) },
         values: { code: codeSub, vm: `cores ${cloudCores} · ubuntu-24.04` },
         states: hiddenExcept(TF_ALL, 'code', 'core', 'e-read'),
+      },
+      {
+        id: 'graph',
+        label: bi('граф', 'graph'),
+        caption: bi(
+          'Машина ссылается на сеть, а DNS-запись ссылается на машину. По этим ссылкам Terraform строит граф зависимостей, то есть схему того, какой ресурс от какого зависит.',
+          'The machine refers to the network, and the DNS record refers to the machine. From these references Terraform builds a dependency graph, a map of which resource depends on which.',
+        ),
+        focus: ['core'],
+        say: { core: bi('Граф говорит Terraform, что сеть нужна раньше машины, а машина раньше DNS-записи.', 'The graph tells Terraform that the network comes before the machine, and the machine before the DNS record.') },
       },
     ];
     if (lost) {
@@ -320,9 +330,9 @@ export const tfModel = defineModel<TfP>({
       steps.push({
         id: 'plan',
         label: 'plan',
-        caption: bi('План предлагает создать все три ресурса. Облако при этом никто не трогал, но связь Terraform с ним потеряна: apply попытается создать вторую сеть и вторую машину рядом с работающими, а если имена в облаке должны быть уникальными, остановится с ошибкой о занятом имени.', 'The plan proposes to create all three resources. Nobody touched the cloud, but Terraform’s link to it is lost: apply would try to create a second network and a second machine next to the running ones, and if names in the cloud must be unique, it stops with an error about a taken name.'),
+        caption: bi('План предлагает создать все три ресурса. Облако никто не трогал, но Terraform потерял связь со своими ресурсами, поэтому apply попытается создать вторую сеть и вторую машину рядом с работающими.', 'The plan proposes to create all three resources. Nobody touched the cloud, but Terraform has lost the link to its resources, so apply would create a second network and a second machine next to the running ones.'),
         focus: ['core'],
-        say: { core: bi('Terraform сравнивает код с пустым state и решает, что все три ресурса нужно создать.', 'Terraform compares the code with an empty memory and decides that all three resources must be created.') },
+        say: { core: bi('Если имена в облаке должны быть уникальными, apply остановится с ошибкой о занятом имени.', 'If cloud names must be unique, apply stops with a taken-name error.') },
         states: { core: 'err' },
         values: { core: 'Plan: 3 to add' },
         metrics: m,
@@ -348,17 +358,17 @@ export const tfModel = defineModel<TfP>({
         focus: ['e-drift', 'console'],
         reveal: ['console', 'e-drift', 'vm'],
         tokens: [{ edge: 'e-drift', label: 'cores = 4' }],
-        say: { console: bi('Дежурный меняет в консоли число ядер машины vm-4f66 с 2 на 4, потому что ночью сайту не хватало мощности.', 'The on-call engineer changes the cores of vm-4f66 from 2 to 4 in the console, because the site lacked capacity at night.') },
+        say: { console: bi('Дежурный добавляет машине ядра, потому что ночью сайту не хватало мощности.', 'The on-call engineer adds cores, because the site lacked capacity at night.') },
         states: { vm: 'warn' },
       });
     const callCloud = (id: string, what: Bi): Step => ({
       id,
       label: '429',
-      caption: bi('Облако отвечает на запрос ошибкой 429 Too Many Requests, и Terraform прекращает работу. Машина и файл state остались такими, какими были до запуска, поэтому следующий запуск начнётся с того же места.', 'The cloud answers the request with 429 Too Many Requests, and Terraform stops. The machine and the state file are as they were before the run, so the next run starts from the same place.'),
+      caption: bi('Облако отвечает ошибкой 429 Too Many Requests, и Terraform прекращает работу. Машина и файл state остались такими же, как до запуска, и следующий запуск начнётся с того же места.', 'The cloud answers with 429 Too Many Requests, and Terraform stops. The machine and the state file are as they were before the run, and the next run starts from the same place.'),
       focus: ['e-refresh', 'api'],
       reveal: ['api', 'e-refresh'],
       tokens: [{ edge: 'e-refresh', label: what }],
-      say: { api: bi('API облака отклоняет запрос, потому что от этого ключа доступа пришло слишком много запросов за короткое время.', 'The cloud API rejects the request, because too many requests came from this access key in a short time.') },
+      say: { api: bi('API облака отказывает, потому что Terraform прислал слишком много запросов за короткое время.', 'The cloud API refuses, because Terraform sent too many requests in a short time.') },
       states: { api: 'err', 'e-refresh': 'err' },
       metrics: { add: 0, change: 0, destroy: 0, down: 0 },
       broken: { at: 'api', message: '│ Error: reading VM vm-4f66: 429 Too Many Requests: rate limit of the training API exceeded, retry later', caption: bi('Ошибка 429 означает, что облако ограничивает число запросов. Ничего не сломалось, поэтому подождите и запустите Terraform снова, а в CI не запускайте одновременно много пайплайнов, которые обращаются к одному облаку.', 'Error 429 means the cloud limits the number of requests. Nothing is broken: wait and run Terraform again, and in CI do not run many pipelines against one cloud at once.') },
@@ -378,7 +388,7 @@ export const tfModel = defineModel<TfP>({
         focus: ['e-refresh', 'api'],
         reveal: ['api', 'e-refresh', 'vm', 'e-apply'],
         tokens: [{ edge: 'e-refresh', label: 'GET vm-4f66' }, { edge: 'e-refresh', reverse: true, label: `cores = ${cloudCores}` }],
-        say: { api: fb(bi('API облака читает машину vm-4f66 и отвечает, что сейчас у неё {c} ядра и образ ubuntu-24.04.', 'The cloud API reads vm-4f66 and answers that it now has {c} cores and the ubuntu-24.04 image.'), { c: cloudCores }) },
+        say: { api: fb(bi('API облака отвечает, что у машины vm-4f66 сейчас {c} ядра.', 'The cloud API answers that vm-4f66 now has {c} cores.'), { c: cloudCores }) },
         states: { api: 'ok' },
       });
     } else {
@@ -395,18 +405,18 @@ export const tfModel = defineModel<TfP>({
     }
     const diff =
       p.change === 'image'
-        ? bi('Образ работающей машины облако поменять не может, поэтому план помечает строку с образом «# forces replacement» и предлагает пересоздать машину (знак -/+). У новой машины будет новый адрес, поэтому DNS-запись www, которая ссылается на адрес машины, план тоже предлагает изменить на месте (знак ~).', 'The cloud cannot change the image of a running machine, so the plan marks the image line “# forces replacement” and proposes to recreate the machine (the sign -/+). The new machine gets a new address, so the plan also proposes to update in place the DNS record www, which refers to the machine’s address (the sign ~).')
+        ? bi('Образ работающей машины облако поменять не может, поэтому план помечает строку с образом «# forces replacement» и предлагает пересоздать машину (знак -/+).', 'The cloud cannot change the image of a running machine, so the plan marks the image line “# forces replacement” and proposes to recreate the machine (the sign -/+).')
         : p.change === 'cores'
-          ? bi('Число ядер облако умеет менять на месте, поэтому план предлагает изменить машину, не пересоздавая её (знак ~, «update in-place»), и вместо 2 ядер у машины станет 4.', 'The cloud can change the number of cores in place, so the plan proposes to change the machine without recreating it (the sign ~, “update in-place”), and the machine gets 4 cores instead of 2.')
+          ? bi('Число ядер облако умеет менять на месте, поэтому план предлагает изменить машину, не пересоздавая её (знак ~, «update in-place»), и дать ей 4 ядра вместо 2.', 'The cloud can change the number of cores in place, so the plan proposes to change the machine without recreating it (the sign ~, “update in-place”) and give it 4 cores instead of 2.')
           : p.change === 'drift' && p.refresh
-            ? bi('В коде записано 2 ядра, а у машины теперь 4. Код описывает желаемое состояние, поэтому план предлагает вернуть машине 2 ядра и тем самым отменить правку дежурного.', 'The code says 2 cores, while the machine now has 4. The code describes the desired state, so the plan proposes to give the machine 2 cores back and thereby undo the on-call engineer’s edit.')
+            ? bi('В коде записано 2 ядра, а у машины теперь 4. Код описывает желаемое состояние, поэтому план предлагает вернуть машине 2 ядра и отменить правку дежурного.', 'The code says 2 cores, while the machine now has 4. The code describes the desired state, so the plan proposes to give the machine 2 cores back and undo the on-call engineer’s edit.')
             : bi('Код совпадает с тем, что Terraform знает о машине, и план сообщает «No changes. Your infrastructure matches the configuration».', 'The code matches what Terraform knows about the machine, and the plan reports “No changes. Your infrastructure matches the configuration”.');
     steps.push({
       id: 'diff',
       label: 'plan',
       caption: diff,
       focus: ['core'],
-      say: { core: fb(bi('Terraform сравнивает код с тем, что знает о машине, и считает, сколько ресурсов нужно создать ({a}), сколько изменить ({c}) и сколько удалить ({d}).', 'Terraform compares the code with what it knows about the machine and counts how many resources to add ({a}), to change ({c}) and to destroy ({d}).'), { a: n.add, c: n.change, d: n.destroy }) },
+      say: { core: p.change === 'image' ? bi('У новой машины будет новый адрес, поэтому Terraform предлагает изменить на месте и DNS-запись www (знак ~).', 'The new machine gets a new address, so Terraform also proposes to update the DNS record www in place (the sign ~).') : total ? fb(bi('Terraform подводит итог плана строкой «Plan: {a} to add, {c} to change, {d} to destroy».', 'Terraform sums up the plan in the line “Plan: {a} to add, {c} to change, {d} to destroy”.'), { a: n.add, c: n.change, d: n.destroy }) : bi('Terraform не находит разницы и ничего не предлагает менять.', 'Terraform finds no difference and proposes no change.') },
       states: { core: total ? 'warn' : 'ok', ...(total ? { code: 'warn' } : {}) },
       values: { core: `+${n.add} ~${n.change} -${n.destroy}` },
       metrics: m,
@@ -422,12 +432,12 @@ export const tfModel = defineModel<TfP>({
             id: 'apply',
             label: 'apply',
             caption: p.cbd
-              ? bi('Настройка create_before_destroy меняет порядок: облако сначала создаёт новую машину vm-4f9a с образом debian-13, затем Terraform направляет DNS-запись на её адрес и только потом удаляет старую машину. Сервер у сайта есть всё время, но клиенты, которые запомнили старый адрес, увидят новый, только когда истечёт срок хранения DNS-записи, поэтому старую машину на практике удаляют не сразу. Какое-то время в облаке работают две машины, и за обе приходится платить.', 'create_before_destroy changes the order: the cloud first creates the new machine vm-4f9a with debian-13, then Terraform points the DNS record at its address and only then destroys the old machine. The site has a server all the time, but clients that remembered the old address see the new one only when the DNS record’s caching time runs out, so in practice the old machine is not removed at once. For a while two machines run in the cloud, and you pay for both.')
-              : bi('Облако сначала удаляет старую машину vm-4f66 и только потом создаёт новую vm-4f9a с образом debian-13, после чего Terraform направляет DNS-запись на новый адрес. Новая машина загружается около 40 секунд, и всё это время сайту отвечать некому.', 'The cloud first destroys the old machine vm-4f66 and only then creates the new vm-4f9a with debian-13, after which Terraform points the DNS record at the new address. While the new machine boots, about 40 seconds, nobody answers for the site.'),
+              ? bi('Настройка create_before_destroy меняет порядок. Облако сначала создаёт новую машину vm-4f9a с образом debian-13, Terraform направляет на неё DNS-запись, и только потом облако удаляет старую машину.', 'create_before_destroy changes the order. The cloud first creates the new vm-4f9a with debian-13, Terraform points the DNS record at it, and only then the cloud destroys the old machine.')
+              : bi('Облако сначала удаляет старую машину vm-4f66 и только потом создаёт новую vm-4f9a с образом debian-13, после чего Terraform направляет DNS-запись на новый адрес.', 'The cloud first destroys the old machine vm-4f66 and only then creates the new vm-4f9a with debian-13, after which Terraform points the DNS record at the new address.'),
             focus: ['e-apply', 'vm'],
             reveal: ['api', 'e-apply', 'vm'],
             tokens: [{ edge: 'e-apply', label: p.cbd ? 'POST, PATCH dns, DELETE' : 'DELETE, POST, PATCH dns' }],
-            say: { vm: p.cbd ? bi('Новая машина vm-4f9a уже работает, и только после этого облако удаляет старую vm-4f66.', 'The new machine vm-4f9a is already running, and only then the cloud destroys the old vm-4f66.') : bi('Старой машины vm-4f66 больше нет, а новая vm-4f9a ещё загружается, поэтому сайт около 40 секунд не отвечает.', 'The old machine vm-4f66 is gone, and the new vm-4f9a is still booting, so the site does not answer for about 40 seconds.') },
+            say: { vm: p.cbd ? bi('Сервер у сайта есть всё время, потому что vm-4f9a работает раньше, чем исчезает vm-4f66.', 'The site always has a server, because vm-4f9a runs before vm-4f66 goes away.') : bi('Новая машина vm-4f9a загружается около 40 секунд, и всё это время сайту отвечать некому.', 'The new machine vm-4f9a boots for about 40 seconds, and all that time nobody answers for the site.') },
             states: { vm: 'ok', api: 'ok' },
             values: { vm: 'vm-4f9a · debian-13' },
             metrics: m,
@@ -448,13 +458,22 @@ export const tfModel = defineModel<TfP>({
             metrics: m,
           };
     steps.push(applyStep);
+    if (p.change === 'image' && p.cbd)
+      steps.push({
+        id: 'overlap',
+        label: bi('две машины', 'two machines'),
+        caption: bi('У такого порядка есть цена. Клиенты, которые запомнили старый адрес, узнают новый, только когда истечёт срок хранения DNS-записи, поэтому на практике старую машину удаляют не сразу, а немного погодя.', 'This order has a price. Clients that remembered the old address learn the new one only when the DNS record’s caching time runs out, so in practice the old machine is removed not at once but a little later.'),
+        focus: ['vm'],
+        say: { vm: bi('Пока работают обе машины, vm-4f66 и vm-4f9a, платить приходится за две.', 'While both machines, vm-4f66 and vm-4f9a, are running, you pay for two.') },
+        metrics: m,
+      });
     steps.push({
       id: 'write',
       label: 'state',
-      caption: bi('Terraform записывает в файл state новые сведения о машине. При каждой записи он увеличивает номер версии state, который хранится в поле serial, поэтому serial растёт с 4 до 5. Следующий plan начнётся с этих сведений и, если ничего не изменится, покажет «No changes».', 'Terraform writes the new facts about the machine into the state file. On every write it raises the state’s version number, kept in the serial field, so serial grows from 4 to 5. The next plan starts from these facts and, if nothing changes, shows “No changes”.'),
+      caption: bi('Terraform записывает в файл state новые сведения о машине и увеличивает номер версии файла, который хранится в поле serial, с 4 до 5. Следующий plan начнётся с этих сведений и, если ничего не изменится, покажет «No changes».', 'Terraform writes the new facts about the machine into the state file and raises the file’s version number, kept in the serial field, from 4 to 5. The next plan starts from these facts and, if nothing changes, shows “No changes”.'),
       focus: ['e-state', 'state'],
       tokens: [{ edge: 'e-state', reverse: true, label: 'serial 5' }],
-      say: { state: bi('В файл state записано, какой стала машина после изменения, и его версия теперь 5.', 'The state file records what the machine is like after the change, and its version is now 5.') },
+      say: { state: bi('Файл state теперь знает, какой стала машина.', 'The state file now knows what the machine has become.') },
       values: { state: 'serial 5' },
       states: { state: 'ok', core: 'ok' },
       metrics: m,
@@ -680,11 +699,11 @@ export const ansModel = defineModel<AnsP>({
       {
         id: 'facts',
         label: bi('факты', 'facts'),
-        caption: bi('Перед первой задачей Ansible заходит на каждый хост по SSH и запускает там модуль setup. Модуль собирает факты о хосте: семейство системы, адреса, объём памяти, и эти факты потом можно использовать в условиях и шаблонах.', 'Before the first task Ansible logs in to every host over SSH and runs the setup module there. The module gathers facts about the host: the system family, the addresses, the amount of memory, and these facts can later be used in conditions and templates.'),
+        caption: bi('Перед первой задачей Ansible заходит на каждый хост по SSH и запускает там модуль setup. Модуль собирает факты о хосте, например семейство системы, адреса и объём памяти, и их потом можно использовать в условиях и шаблонах.', 'Before the first task Ansible logs in to every host over SSH and runs the setup module there. The module gathers facts about the host, such as its system family, addresses and memory, for later use in conditions and templates.'),
         focus: ['ctl', 'e1', 'e2', 'e3'],
         reveal: ['h1', 'h2', 'h3', 'e1', 'e2', 'e3'],
         tokens: each(HOSTS, 'setup'),
-        say: { ctl: bi('Ansible отправляет на каждый хост модуль setup, чтобы узнать, что это за машина.', 'Ansible sends the setup module to every host to learn what kind of machine it is.') },
+        say: { ctl: bi('Ansible узнаёт, что за машина каждый хост.', 'Ansible learns what kind of machine each host is.') },
         states: st(HOSTS, 'on'),
       },
     ];
@@ -731,7 +750,7 @@ export const ansModel = defineModel<AnsP>({
         focus: ['e-notify', 'hq'],
         reveal: ['hq', 'e-notify'],
         tokens: [{ edge: 'e-notify', label: 'Reload nginx' }],
-        say: { hq: fb(bi('В очередь встаёт обработчик «Reload nginx» для хостов {h}, где конфигурация изменилась.', 'The handler “Reload nginx” is queued for {h}, where the config changed.'), { h: live.map((h) => HOST_NAME[h]).join(', ') }) },
+        say: { hq: fb(bi('Обработчик «Reload nginx» ждёт в очереди для хостов {h}.', 'The handler “Reload nginx” waits in the queue for {h}.'), { h: live.map((h) => HOST_NAME[h]).join(', ') }) },
         fill: { hq: live.length / 3 },
         values: { hq: `Reload nginx × ${live.length}` },
       });
@@ -741,13 +760,13 @@ export const ansModel = defineModel<AnsP>({
       label: p.task === 'shell' ? 'shell' : 'lineinfile',
       caption:
         p.task === 'shell'
-          ? fb(bi('Задача shell выполняет команду `echo "Managed by Ansible" >> /etc/motd`. Команда не знает, каким должен быть файл, она лишь дописывает строку в конец, поэтому задача на каждом прогоне отвечает changed. После прогона номер {r} строка «Managed by Ansible» записана в файле {n}.', 'The shell task runs `echo "Managed by Ansible" >> /etc/motd`. The command does not know what the file should be like, it only appends a line, so the task answers changed on every run. After run {r} the line “Managed by Ansible” is in the file {e}.'), { r: p.run, n: p.run === 1 ? 'один раз' : `${p.run} ${pluralRu(p.run, ['раз', 'раза', 'раз'])}`, e: p.run === 1 ? 'once' : `${p.run} times` })
+          ? bi('Задача shell выполняет команду `echo "Managed by Ansible" >> /etc/motd`. Команда не знает, каким должен быть файл, и лишь дописывает строку в конец, поэтому задача отвечает changed на каждом прогоне.', 'The shell task runs `echo "Managed by Ansible" >> /etc/motd`. The command does not know what the file should be like and just appends a line, so the task answers changed on every run.')
           : first
             ? bi('Задача lineinfile проверяет, есть ли в /etc/motd строка «Managed by Ansible». Строки нет, поэтому модуль добавляет её и отвечает changed.', 'The lineinfile task checks whether /etc/motd has the line “Managed by Ansible”. It does not, so the module adds it and answers changed.')
             : bi('Задача lineinfile находит строку «Managed by Ansible» в /etc/motd и ничего не меняет. Повторный прогон не изменил этот файл, и это свойство задачи называется идемпотентностью.', 'The lineinfile task finds the line “Managed by Ansible” in /etc/motd and changes nothing. The repeated run left the file alone, and this property of a task is called idempotence.'),
       focus: ['ctl', ...live.map(edgeOf)],
       tokens: each(live, motdChanged ? 'changed' : 'ok'),
-      say: { ctl: p.task === 'shell' ? bi('Модуль shell выполняет команду echo и дописывает в /etc/motd ещё одну строку, не проверяя, есть ли она уже.', 'The shell module runs echo and appends one more line to /etc/motd without checking whether it is already there.') : motdChanged ? bi('Модуль lineinfile не находит нужной строки в /etc/motd и добавляет её.', 'The lineinfile module does not find the line in /etc/motd and adds it.') : bi('Модуль lineinfile находит нужную строку в /etc/motd и оставляет файл как есть.', 'The lineinfile module finds the line in /etc/motd and leaves the file as it is.') },
+      say: { ctl: p.task === 'shell' ? fb(bi('После прогона номер {r} строка «Managed by Ansible» записана в /etc/motd {n}.', 'After run {r} the line “Managed by Ansible” is in /etc/motd {e}.'), { r: p.run, n: p.run === 1 ? 'один раз' : `${p.run} ${pluralRu(p.run, ['раз', 'раза', 'раз'])}`, e: p.run === 1 ? 'once' : `${p.run} times` }) : motdChanged ? bi('Модуль lineinfile не находит нужной строки в /etc/motd и добавляет её.', 'The lineinfile module does not find the line in /etc/motd and adds it.') : bi('Модуль lineinfile находит нужную строку в /etc/motd и оставляет файл как есть.', 'The lineinfile module finds the line in /etc/motd and leaves the file as it is.') },
       states: st(live, motdChanged ? 'warn' : 'ok'),
       values: Object.fromEntries(live.map((h) => [h, t(fb(bi('строк в /etc/motd: {n}', 'lines in /etc/motd: {n}'), { n: motdLines }))])),
     });
@@ -755,11 +774,11 @@ export const ansModel = defineModel<AnsP>({
       id: 'service',
       label: 'service',
       caption: fail2
-        ? bi('Задача «nginx is running» проверяет, что служба nginx запущена. На web1 и web3 она работает, а на web2 не запускается, потому что порт 80 там занят другой программой. Ansible исключает web2 из дальнейшего выполнения плейбука.', 'The task “nginx is running” checks that the nginx service is running. On web1 and web3 it runs, but on web2 it does not start, because another program holds port 80 there. Ansible drops web2 from the play.')
+        ? bi('Задача «nginx is running» проверяет, что служба nginx запущена. На web1 и web3 она работает, а на web2 задача завершается с ошибкой, и Ansible исключает web2 из дальнейшего выполнения плейбука.', 'The task “nginx is running” checks that the nginx service is running. On web1 and web3 it runs, but on web2 the task fails, and Ansible drops web2 from the play.')
         : bi('Задача «nginx is running» проверяет, что служба nginx запущена. Она уже работает, поэтому модуль service ничего не делает и отвечает ok.', 'The task “nginx is running” checks that the nginx service is running. It already is, so the service module does nothing and answers ok.'),
       focus: fail2 ? ['e2', 'h2'] : ['ctl', ...live.map(edgeOf)],
       tokens: live.map((h) => ({ edge: edgeOf(h), label: fail2 && h === 'h2' ? 'FAILED' : 'ok' })),
-      say: fail2 ? { h2: bi('На web2 служба nginx не запускается, потому что порт 80 уже занят, и задача завершается с ошибкой.', 'On web2 the nginx service does not start, because port 80 is taken, and the task fails.') } : { ctl: bi('Модуль service на каждом хосте видит, что nginx работает, и ничего не трогает.', 'On every host the service module sees that nginx is running and touches nothing.') },
+      say: fail2 ? { h2: bi('Порт 80 на web2 занят другой программой, поэтому nginx здесь не запускается.', 'Another program holds port 80 on web2, so nginx cannot start here.') } : { ctl: bi('Модуль service на каждом хосте видит, что nginx работает, и ничего не трогает.', 'On every host the service module sees that nginx is running and touches nothing.') },
       states: { ...st(alive, 'ok'), ...(fail2 ? { h2: 'err' as ElementState, e2: 'err' as ElementState } : {}) },
       ...(fail2
         ? { broken: { at: 'h2', message: 'fatal: [web2]: FAILED! => {"changed": false, "msg": "Unable to start service nginx: Job for nginx.service failed because the control process exited with error code."}', caption: bi('Хост, на котором задача завершилась с ошибкой, Ansible исключает из дальнейшего выполнения плейбука, и обработчики на нём не выполняются, хотя конфигурация уже изменилась. Ключ --force-handlers заставляет Ansible выполнить уведомлённые обработчики и на таком хосте.', 'A host where a task failed leaves the play, and handlers do not run on it, although its config already changed. The --force-handlers key makes Ansible run notified handlers on such a host too.') } }
@@ -770,11 +789,11 @@ export const ansModel = defineModel<AnsP>({
         ? {
             id: 'handler',
             label: 'handler',
-            caption: fb(bi('В конце сценария Ansible выполняет обработчик «Reload nginx» по одному разу на каждом хосте, где конфигурация изменилась и задачи прошли: на {h}. nginx перечитывает новую конфигурацию.{x}', 'At the end of the play Ansible runs the handler “Reload nginx” once on every host whose config changed and whose tasks passed: on {h}. nginx rereads the new config.{x}'), { h: alive.map((h) => HOST_NAME[h]).join(', '), x: fail2 ? bi(' На web2 nginx новую конфигурацию не получит, потому что Ansible исключил этот хост из выполнения раньше.', ' On web2 nginx does not get the new config, because the host left the play earlier.') : '' }),
+            caption: fb(bi('В конце сценария Ansible выполняет обработчик «Reload nginx» на каждом хосте, где изменилась конфигурация и все задачи прошли, то есть на {h}, и nginx там перечитывает новую конфигурацию.', 'At the end of the play Ansible runs the handler “Reload nginx” on every host whose config changed and whose tasks all passed, that is on {h}, and nginx there rereads the new config.'), { h: alive.map((h) => HOST_NAME[h]).join(', ') }),
             focus: ['hq', ...alive.map(edgeOf)],
             reveal: ['hq', 'e-notify'],
             tokens: each(alive, 'reload'),
-            say: { hq: fb(bi('Ansible выполняет обработчик «Reload nginx» {n}, по одному разу на каждом хосте, и очередь пустеет.', 'Ansible runs the handler “Reload nginx” {e}, once on every host, and the queue empties.'), { n: TIMES_RU[n.handlers] ?? String(n.handlers), e: TIMES_EN[n.handlers] ?? String(n.handlers) }) },
+            say: { hq: fail2 ? bi('На web2 обработчик не выполняется, потому что Ansible исключил этот хост раньше.', 'The handler does not run on web2, because Ansible dropped that host earlier.') : fb(bi('Обработчик выполняется {n}, по разу на хост, и очередь пустеет.', 'The handler runs {e}, once per host, and the queue empties.'), { n: TIMES_RU[n.handlers] ?? String(n.handlers), e: TIMES_EN[n.handlers] ?? String(n.handlers) }) },
             fill: { hq: 0 },
             values: { hq: `${n.handlers} × Reload nginx` },
           }
@@ -796,12 +815,12 @@ export const ansModel = defineModel<AnsP>({
         n.changed === 0
           ? fb(bi('PLAY RECAP показывает changed={c} и failed={f}. Повторный прогон ничего не изменил, значит, плейбук описывает состояние хостов, а не действия, и его можно запускать сколько угодно раз.', 'PLAY RECAP shows changed={c} and failed={f}. The repeated run changed nothing, so the playbook describes the state of the hosts rather than actions, and it can be run any number of times.'), { c: n.changed, f: n.failed })
           : first && n.failed
-            ? fb(bi('PLAY RECAP показывает changed={c} и failed={f}. Изменения на первом прогоне ожидаемы, ведь хосты были пустыми, а failed={f} означает, что Ansible исключил из прогона хост с поломкой. Без поломок первый прогон дал бы failed=0.', 'PLAY RECAP shows changed={c} and failed={f}. Changes on the first run are expected, since the hosts were empty, while failed={f} means Ansible dropped the broken host from the run. Without breaks the first run would give failed=0.'), { c: n.changed, f: n.failed })
+            ? fb(bi('PLAY RECAP показывает changed={c} и failed={f}. Изменения на первом прогоне ожидаемы, ведь хосты были пустыми, а failed={f} значит, что хост с поломкой Ansible исключил из прогона.', 'PLAY RECAP shows changed={c} and failed={f}. Changes on the first run are expected, since the hosts were empty, while failed={f} means Ansible dropped the broken host from the run.'), { c: n.changed, f: n.failed })
           : first
             ? fb(bi('PLAY RECAP показывает changed={c} и failed={f}. На первом прогоне так и должно быть, ведь хосты были пустыми. Настоящей проверкой плейбука служит второй прогон, на котором changed должно стать нулём.', 'PLAY RECAP shows changed={c} and failed={f}. On the first run that is as it should be: the hosts were empty. The real test of a playbook is the second run, where changed must drop to zero.'), { c: n.changed, f: n.failed })
             : fb(bi('PLAY RECAP показывает changed={c} и failed={f}. Повторный прогон снова что-то изменил, значит, одна из задач описывает действие, а не состояние, и её нужно переписать.', 'PLAY RECAP shows changed={c} and failed={f}. The repeated run changed something again, so one of the tasks describes an action rather than a state and must be rewritten.'), { c: n.changed, f: n.failed }),
       focus: ['ctl'],
-      say: { ctl: fb(bi('ansible-playbook подводит итог прогона и печатает для каждого хоста, сколько задач ответили ok, changed и failed.', 'ansible-playbook sums up the run and prints for every host how many tasks answered ok, changed and failed.'), { c: n.changed, f: n.failed }) },
+      say: { ctl: bi('ansible-playbook печатает итог прогона отдельно по каждому хосту.', 'ansible-playbook prints the summary of the run for each host separately.') },
       states: { ctl: n.failed ? 'warn' : 'ok' },
       metrics: { changed: n.changed, failed: n.failed, handlers: n.handlers },
     });
