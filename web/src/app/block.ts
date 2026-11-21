@@ -66,7 +66,6 @@ export function blockPage(id: string): Page {
         h('nav.crumbs', {}, h('a', { href: href({ name: 'home' }) }, t(UI.map))),
         h('h1', {}, t(b.title)),
         h('p.lede', {}, t(b.summary)),
-        b.checklistStep ? h('p.muted', {}, `${t(UI.checklistStep)} ${b.checklistStep}`) : null,
       ),
       h('section', {}, h('h2', {}, t(UI.chooseLevel)), levelChooser(b, draw)),
       last ? h('section.placement-progress', {}, h('p', {}, t(bi('Осталось пройти ', 'Remaining: ')), count(remaining.length, ['урок', 'урока', 'уроков'], ['lesson', 'lessons']), b.hours ? `, ≈ ${Math.ceil(b.hours[chosenLevel(b.id) ?? 'beginner'] * remainingShare(b.id))} ${t(UI.hours)}.` : '.'), h('a.btn.primary', { href: continueTarget }, remaining.length ? t(UI.continue) : t(bi('К следующему блоку', 'Next block')))) : null,
