@@ -1,7 +1,7 @@
 import { exportWithFeedback } from '../engine/feedback/threads';
 import { mountFeedback } from '../engine/feedback/ui';
-// The app shell: top bar (course name, route, review, settings, language,
-// theme), the weekly "export or sign in" line, and the page outlet.
+// The app shell: top bar (course name, route, review, settings, help,
+// language, theme), the weekly "export or sign in" line, and the page outlet.
 
 import { clear, h, icon, downloadFile } from '../core/dom';
 import { bi, lang, onLangChange, setLang, t, UI } from '../core/i18n';
@@ -9,6 +9,7 @@ import { loadRegistry, registry } from '../core/registry';
 import { href, onRoute, type Route } from '../core/router';
 import { store } from '../core/store';
 import type { Page } from './common';
+import { helpButton } from './help';
 import { homePage } from './home';
 import { getTheme, setTheme, shownTheme } from './theme';
 
@@ -41,7 +42,7 @@ function topBar(current: Route): HTMLElement {
     {},
     h('a.brand', { href: href({ name: 'home' }) }, h('span.brand-mark', { 'aria-hidden': 'true' }, icon('term')), h('span', {}, t(UI.course))),
     h('nav.topnav', {}, nav({ name: 'home' }, t(UI.map), 'map'), nav({ name: 'review' }, t(UI.review), 'repeat'), nav({ name: 'settings' }, t(UI.settings), 'gear'), h('a.nav-link.feedback-menu', { href: '#/messages' }, icon('ask'), h('span', {}, t(bi('Мои сообщения', 'My messages'))))),
-    h('div.top-tools', {}, langBtn, themeBtn),
+    h('div.top-tools', {}, helpButton(), langBtn, themeBtn),
   );
 }
 
