@@ -9,9 +9,11 @@ const result = spawnSync(process.execPath, [fileURLToPath(new URL('../node_modul
 if (result.error) console.error(result.error);
 process.exitCode = result.status ?? 1;
 
-if (result.status === 0) {
-  const report = JSON.parse(readFileSync(new URL('../explainer-lint-report.json', import.meta.url), 'utf8'));
-  console.log('Explainer lint: warnings only; deduplicated across scenarios and levels.');
+// The test writes the report before asserting, so it is fresh even when blocking findings fail the run.
+let report;
+try { report = JSON.parse(readFileSync(new URL('../explainer-lint-report.json', import.meta.url), 'utf8')); } catch { report = undefined; }
+if (report) {
+  console.log('Explainer lint: concept and reading-time fail the run; style, coverage and runtime are warnings; deduplicated across scenarios and levels.');
   const totals = {};
   for (const [folder, block] of Object.entries(report.blocks)) {
     console.log(`${folder}: ${Object.entries(block.counts).map(([key, n]) => `${key}=${n}`).join(', ')} (${block.runs} runs)`);
