@@ -95,8 +95,12 @@ describe('orchestration: the numbers', () => {
 
 describe('orchestration: the step sequences', () => {
   it('plays the worlds in order and introduces each when its turn comes', () => {
-    expect(ids()).toEqual(['fire-bm-alert', 'fire-bm-wake', 'fire-bm-restore', 'fire-vm-hb', 'fire-vm-restart', 'fire-vm-mail', 'fire-k8s-hb', 'fire-k8s-wait', 'fire-k8s-schedule', 'fire-k8s-state']);
-    expect(ids({ orchestrator: false }).slice(6)).toEqual(['fire-ct-nobody', 'fire-ct-wake', 'fire-ct-run']);
+    expect(ids()).toEqual([
+      'fire-bm-alert', 'fire-bm-odds', 'fire-bm-wake', 'fire-bm-restore', 'fire-bm-risk',
+      'fire-vm-mgr', 'fire-vm-hb', 'fire-vm-restart', 'fire-vm-boot', 'fire-vm-mail', 'fire-vm-cond',
+      'fire-k8s-orch', 'fire-k8s-hb', 'fire-k8s-wait', 'fire-k8s-why', 'fire-k8s-schedule', 'fire-k8s-start', 'fire-k8s-total', 'fire-k8s-state', 'fire-k8s-data',
+    ]);
+    expect(ids({ orchestrator: false }).slice(11)).toEqual(['fire-ct-nobody', 'fire-ct-alert', 'fire-ct-wake', 'fire-ct-image', 'fire-ct-run', 'fire-ct-data']);
     expect(ids({ event: 'deploy', staleTemplate: true })).toContain('deploy-vm-drift');
     for (const event of EVENTS)
       for (const orchestrator of [true, false]) {
