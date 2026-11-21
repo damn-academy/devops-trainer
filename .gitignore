@@ -18,3 +18,6 @@ web/shots/
 
 # Generated explainer lint report
 web/explainer-lint-report.json
+# RV64 track, stage R0: TinyEMU, Alpine riscv64 images and build output,
+# fetched and built by web/src/engine/rv64-r0/*.sh|mjs (see manifest.json)
+web/public/rv64-r0/

@@ -1,0 +1,44 @@
+#!/bin/sh
+# Bring up a single-member etcd and kube-apiserver inside the guest and time
+# the moments the course cares about. Prints "R0K <event> ms=<since start>".
+now() { read u _ < /proc/uptime; echo $(( ${u%.*} * 1000 + (1${u#*.} - 100) * 10 )); }
+s0=$(now)
+ms() { echo $(( $(now) - s0 )); }
+mkdir -p /var/lib/r0 && cd /var/lib/r0
+[ -f sa.key ] || /usr/local/bin/r0keygen > sa.key
+echo "R0K keygen ms=$(ms)"
+export ETCD_UNSUPPORTED_ARCH=riscv64
+a=$(now); etcd --version >/dev/null 2>&1; b=$(now); echo "R0K etcd-version ms=$((b - a))"
+a=$(now); kube-apiserver --version >/dev/null 2>&1; b=$(now); echo "R0K apiserver-version ms=$((b - a))"
+s0=$(now)
+echo 'r0token,admin,admin,system:masters' > tokens.csv
+ETCD_UNSUPPORTED_ARCH=riscv64 etcd --data-dir /var/lib/r0/etcd --listen-client-urls http://127.0.0.1:2379 \
+  --advertise-client-urls http://127.0.0.1:2379 --listen-peer-urls http://127.0.0.1:2380 \
+  --unsafe-no-fsync --log-level info > /tmp/etcd.log 2>&1 &
+# wait_for NAME LOG LIMIT_S CMD...: poll CMD, give up after LIMIT_S and show the log
+wait_for() {
+  n=$1; log=$2; lim=$3; shift 3; i=0
+  until "$@" >/dev/null 2>&1; do
+    sleep 0.5; i=$((i + 1))
+    if [ $i -ge $((lim * 2)) ]; then echo "R0K $n-timeout ms=$(ms)"; tail -n 15 "$log" | sed 's/^/R0L /'; return 1; fi
+  done
+  echo "R0K $n-ready ms=$(ms)"
+}
+wait_for etcd /tmp/etcd.log 180 wget -q -O /dev/null http://127.0.0.1:2379/health || exit 1
+kube-apiserver --etcd-servers=http://127.0.0.1:2379 --cert-dir=/var/lib/r0/certs \
+  --service-account-key-file=sa.key --service-account-signing-key-file=sa.key \
+  --service-account-issuer=https://kubernetes.default.svc --token-auth-file=tokens.csv \
+  --authorization-mode=AlwaysAllow --service-cluster-ip-range=10.43.0.0/16 \
+  --advertise-address=10.0.2.15 --bind-address=127.0.0.1 --secure-port=6443 \
+  --enable-priority-and-fairness=false --v=0 > /tmp/apiserver.log 2>&1 &
+K="kubectl --server=https://127.0.0.1:6443 --token=r0token --insecure-skip-tls-verify"
+wait_for apiserver /tmp/apiserver.log 1500 $K get --raw=/readyz || exit 1
+for i in 1 2 3; do
+  a=$(now); $K get pods -A >/dev/null 2>&1; rc=$?; b=$(now)
+  echo "R0K get-pods-$i rc=$rc ms=$((b - a))"
+done
+a=$(now); $K get --raw=/readyz >/dev/null 2>&1; b=$(now)
+echo "R0K get-raw-readyz ms=$((b - a))"
+echo "R0K rss-kb apiserver=$(grep VmRSS /proc/$(pidof kube-apiserver)/status | awk '{print $2}') etcd=$(grep VmRSS /proc/$(pidof etcd)/status | awk '{print $2}')"
+free -m | sed 's/^/R0K free /'
+echo "R0K done"

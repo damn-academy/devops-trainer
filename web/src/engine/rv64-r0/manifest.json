@@ -1,0 +1,83 @@
+{
+  "purpose": "RV64 track, stage R0: third-party inputs of the TinyEMU baseline measurement. Downloaded by fetch.mjs into web/public/rv64-r0/dl (gitignored), verified by SHA-256. Nothing here is redistributed by the course.",
+  "fetchedOn": "2026-11-21",
+  "sources": [
+    {
+      "file": "tinyemu-2019-12-21.tar.gz",
+      "url": "https://bellard.org/tinyemu/tinyemu-2019-12-21.tar.gz",
+      "version": "2019-12-21 (latest release)",
+      "sha256": "be8351f2121819b3172fcedce5cb1826fa12c87da1b7ed98f269d3e802a05555",
+      "license": "MIT (MIT-LICENSE.txt; slirp/ is BSD-style, not built here)",
+      "use": "emulator source, rebuilt to wasm by build-tinyemu.sh"
+    },
+    {
+      "file": "jslinux-2019-12-21.tar.gz",
+      "url": "https://bellard.org/tinyemu/jslinux-2019-12-21.tar.gz",
+      "version": "2019-12-21",
+      "sha256": "c57e46f8eab6656cd9ce5c7e2825230177919b147c8c2befd1f327bbdf254088",
+      "license": "MIT for the TinyEMU build; bbl (riscv-pk) BSD-3-Clause; Linux kernel GPL-2.0; busybox root GPL-2.0",
+      "use": "precompiled TinyEMU wasm (reference engine), bbl64.bin, Linux 4.15 kernel-riscv64.bin, busybox root image",
+      "files": {
+        "riscvemu64-wasm.js": "1637ea50d0a5b4cb138eac6a02d8654c696e5315b7d5c1c78b63e8e2b29fd601",
+        "riscvemu64-wasm.wasm": "4e4d5d60713bab852a1e95b673fbb26d805010b8acbffce9a860e4f3fb88196b",
+        "bbl64.bin": "293610cea7af6c75e4a8337e16c0d62834becbf31ffd9cca35e0c211602349db",
+        "kernel-riscv64.bin": "65ca70a6560a730396ab61488d1cf46089b32da5af7e535e03c180cd5bcc8e75"
+      }
+    },
+    {
+      "file": "diskimage-linux-riscv-2018-09-23.tar.gz",
+      "url": "https://bellard.org/tinyemu/diskimage-linux-riscv-2018-09-23.tar.gz",
+      "version": "2018-09-23",
+      "sha256": "808ecc1b32efdd76103172129b77b46002a616dff2270664207c291e4fde9e14",
+      "license": "riscv-pk BSD-3-Clause; Linux GPL-2.0 (patches/ included); busybox GPL-2.0",
+      "use": "kernel config and patches of the TinyEMU Linux 4.15 kernel (reference for R1 device model)"
+    },
+    {
+      "file": "alpine-minirootfs-3.24.4-riscv64.tar.gz",
+      "url": "https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/riscv64/alpine-minirootfs-3.24.4-riscv64.tar.gz",
+      "version": "Alpine 3.24.4",
+      "sha256": "010683db6c73b3ad1c334fc8f93f64ae748ef67ae6d69e964929aeaf8517bff3",
+      "license": "various (musl MIT, busybox GPL-2.0, apk-tools GPL-2.0)",
+      "use": "guest root filesystem; checksum matches latest-releases.yaml of the release"
+    },
+    {
+      "file": "apk/kubectl-1.36.1-r2.apk",
+      "url": "https://dl-cdn.alpinelinux.org/alpine/v3.24/community/riscv64/kubectl-1.36.1-r2.apk",
+      "version": "1.36.1-r2",
+      "sha256": "b761ea288725082d42c697257bc6eb3c3add4b9ed97662001cd1de763f95be95",
+      "license": "Apache-2.0",
+      "use": "real kubectl for riscv64 (size matches the signed APKINDEX)"
+    },
+    {
+      "file": "apk/kube-apiserver-1.36.1-r2.apk",
+      "url": "https://dl-cdn.alpinelinux.org/alpine/v3.24/community/riscv64/kube-apiserver-1.36.1-r2.apk",
+      "version": "1.36.1-r2",
+      "sha256": "11ba74500927bed76011c13cb421f0522d26b06204a6b4efe8bdd6bc6ff663eb",
+      "license": "Apache-2.0",
+      "use": "real kube-apiserver for riscv64"
+    },
+    {
+      "file": "apk/etcd-3.6.11-r3.apk",
+      "url": "https://dl-cdn.alpinelinux.org/alpine/v3.24/community/riscv64/etcd-3.6.11-r3.apk",
+      "version": "3.6.11-r3",
+      "sha256": "d0f4964142ef03763a1bdfeae399d410e501b36108aa0b2c2eb4460721a06ab1",
+      "license": "Apache-2.0",
+      "use": "real etcd for riscv64"
+    },
+    {
+      "file": "coremark-v1.01.tar.gz",
+      "url": "https://github.com/eembc/coremark/archive/refs/tags/v1.01.tar.gz",
+      "version": "v1.01",
+      "sha256": "99c5a6d63af85a281b4e4d6ccb522c446653c435dfec9455ad73ef9e71f28bde",
+      "license": "Apache-2.0 with the EEMBC CoreMark acceptable-use agreement (LICENSE.md)",
+      "use": "CPU benchmark, cross-compiled with zig cc -target riscv64-linux-musl -O2 -static"
+    }
+  ],
+  "tools": {
+    "emscripten": "6.0.9 (Homebrew)",
+    "go": "1.26.5, GOARCH=riscv64 GORISCV64=rva20u64 CGO_ENABLED=0",
+    "zig": "0.17.1 (C cross-compiler for CoreMark)",
+    "e2fsprogs": "1.47.4 (mke2fs -d, debugfs)",
+    "playwright-chromium": "HeadlessChrome 159.0.8154.6"
+  }
+}
