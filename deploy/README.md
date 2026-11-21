@@ -68,7 +68,7 @@ BUILD_JOB=build-<commit>-<time> deploy/deploy.sh
 
 ## Storage of the reports
 
-SQLite lives in `/var/mnt/devops-trainer/feedback` on one node of the museum
+SQLite lives in `/var/local/devops-trainer/feedback` on one node of the museum
 cluster (a `hostPath`; `/var` survives reboots on Talos), and the `feedback` pod
 is pinned to that node with a `nodeSelector`; `deploy.sh` keeps the node of the
 running Deployment. A PVC would be the better home, but the stand's tenant
@@ -136,7 +136,7 @@ Secret with the admin token and the TLS certificate:
 km delete namespace devops-trainer
 ```
 
-The SQLite file stays on the node in `/var/mnt/devops-trainer/feedback` until
+The SQLite file stays on the node in `/var/local/devops-trainer/feedback` until
 the node is replaced.
 
 Images stay in the node-local registry (`sankofa/devops-trainer-web`,

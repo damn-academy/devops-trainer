@@ -100,7 +100,7 @@ spec:
           livenessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 20}
       volumes:
         - name: data
-          hostPath: {path: /var/mnt/devops-trainer/feedback, type: DirectoryOrCreate}
+          hostPath: {path: /var/local/devops-trainer/feedback, type: DirectoryOrCreate}
         - name: tmp
           emptyDir: {sizeLimit: 64Mi}
 ---

@@ -68,7 +68,7 @@ BUILD_JOB=build-<коммит>-<время> deploy/deploy.sh
 
 ## Где хранятся сообщения
 
-SQLite лежит в `/var/mnt/devops-trainer/feedback` на одном узле кластера museum
+SQLite лежит в `/var/local/devops-trainer/feedback` на одном узле кластера museum
 (`hostPath`; на Talos каталог `/var` переживает перезагрузку), а под
 `feedback` привязан к этому узлу через `nodeSelector`; `deploy.sh` сохраняет
 узел работающего Deployment. Лучше хранить базу на PVC, но квота тенанта стенда
@@ -135,7 +135,7 @@ curl -fsS -H "Authorization: Bearer $token" \
 km delete namespace devops-trainer
 ```
 
-Файл SQLite остаётся на узле в `/var/mnt/devops-trainer/feedback`, пока узел
+Файл SQLite остаётся на узле в `/var/local/devops-trainer/feedback`, пока узел
 не заменят.
 
 Образы остаются в реестре на узлах (`sankofa/devops-trainer-web`,
