@@ -39,15 +39,35 @@ const ask = (prompt: Bi, right: Exclude<Boundary, 'all'>) => ({ prompt, options:
 const dd = (page: string, anchor?: string) => ({ page: `web/docs.docker.com/${page}`, anchor });
 
 /** What one side looks like under the current knobs: the caption, the callout and the value on the side. */
-export function sideView(boundary: Exclude<Boundary, 'all'>, p: P): { caption: Bi; say: Bi; value: string; ok: boolean } {
+type SideView = { caption: Bi; say: Bi; value: string; ok: boolean; more?: { caption: Bi; say: Bi } };
+
+export function sideView(boundary: Exclude<Boundary, 'all'>, p: P): SideView {
   switch (boundary) {
     case 'kernel':
       return p.platform === 'arm64'
         ? { caption: bi('Образ собран под процессор arm64, а ядро хоста работает на x86_64. Своего ядра у контейнера нет, и чужие машинные команды процессор выполнить не может, поэтому запуск заканчивается ошибкой `exec format error`.', 'The image is built for arm64 and the host kernel is x86_64. A container has no kernel of its own and the CPU cannot run foreign instructions: `exec format error`.'), say: bi('Ядро x86_64 не может выполнить программу, собранную под arm64.', 'An x86_64 kernel cannot run a program built for arm64.'), value: 'exec format error', ok: false }
-        : { caption: bi('Через эту границу проходят системные вызовы процесса. Ядро одно на всех, поэтому `uname -r` внутри контейнера и снаружи показывает одно и то же, платформа образа должна совпадать с процессором хоста, а параметры ядра (sysctl) делятся на те, что принадлежат пространству имён, как net.*, и общие для всего хоста.', 'System calls go through this boundary. There is one kernel, so `uname -r` is the same inside and out, the image platform must match the host CPU, and sysctls split into those owned by a namespace (net.*) and those of the whole host.'), say: bi('Каждый системный вызов процесса уходит в общее ядро хоста.', 'Every system call of the process goes to the shared host kernel.'), value: 'linux/amd64 · 6.12', ok: true };
+        : {
+            caption: bi('Через эту границу проходят системные вызовы процесса. Ядро одно на всех, поэтому `uname -r` внутри контейнера и снаружи показывает одно и то же, а платформа образа должна совпадать с процессором хоста.', 'System calls of the process go through this boundary. There is one kernel for all, so `uname -r` shows the same inside the container and outside, and the image platform must match the host CPU.'),
+            say: bi('Каждый системный вызов процесса уходит в общее ядро хоста.', 'Every system call of the process goes to the shared host kernel.'),
+            value: 'linux/amd64 · 6.12',
+            ok: true,
+            more: {
+              caption: bi('Параметры ядра, которые меняют командой sysctl, тоже делятся на две группы. Одни принадлежат пространству имён контейнера, как параметры net.*, а другие общие для всего хоста, и изнутри контейнера их не меняют.', 'Kernel parameters set with sysctl fall into two groups too. Some belong to the container’s namespace, like net.*, and the rest are shared by the whole host and are not changed from inside a container.'),
+              say: bi('Параметры net.* у контейнера свои, а остальные общие с хостом.', 'The net.* parameters are the container’s own.'),
+            },
+          };
     case 'network': {
-      const map: Record<string, { caption: Bi; say: Bi; value: string; ok: boolean }> = {
-        bridge: { caption: bi('В сети bridge, которую Docker даёт по умолчанию, контейнер подключён парой veth к мосту docker0 и получает адрес вида 172.17.0.x. Наружу он выходит через NAT, а внутрь к нему можно попасть только через `-p`, то есть через правило DNAT. Встроенного DNS по именам контейнеров в этой сети нет.', 'The default bridge network: a veth into the docker0 bridge, an address 172.17.0.x, NAT outwards, inwards only through `-p` (a DNAT rule). No embedded DNS for container names here.'), say: bi('Пакеты идут через veth в мост docker0, а снаружи внутрь только через -p.', 'Packets go through a veth into docker0; inwards only through -p.'), value: 'docker0 · 172.17.0.2', ok: true },
+      const map: Record<string, SideView> = {
+        bridge: {
+          caption: bi('В сети bridge, которую Docker даёт по умолчанию, контейнер подключён парой veth к мосту docker0 и получает адрес вида 172.17.0.x. Наружу его пакеты выходят через NAT.', 'In the bridge network, which Docker gives by default, the container is attached to the docker0 bridge by a veth pair and gets an address like 172.17.0.x. Its packets go out through NAT.'),
+          say: bi('Пакеты идут через veth в мост docker0, а наружу уходят через NAT.', 'Packets go through a veth into docker0 and leave through NAT.'),
+          value: 'docker0 · 172.17.0.2',
+          ok: true,
+          more: {
+            caption: bi('Внутрь к контейнеру можно попасть только через флаг `-p`, то есть через правило DNAT. Встроенного DNS, который находил бы контейнеры по именам, в этой сети нет.', 'From outside the container can be reached only through the `-p` flag, that is through a DNAT rule. This network has no embedded DNS that would find containers by name.'),
+            say: bi('Снаружи пакеты попадают внутрь только по правилу DNAT, которое создаёт флаг -p.', 'From outside packets get in only by the DNAT rule that the -p flag creates.'),
+          },
+        },
         user: { caption: bi('В пользовательской сети, созданной командой `docker network create app`, у контейнеров свой мост и своя подсеть, а встроенный DNS на адресе 127.0.0.11 позволяет им находить друг друга по имени.', 'A user-defined network (`docker network create app`): its own bridge and subnet, and the embedded DNS at 127.0.0.11 — containers find each other by name.'), say: bi('Контейнеры этой сети находят друг друга по имени через DNS 127.0.0.11.', 'Containers of this network find each other by name through DNS 127.0.0.11.'), value: 'app · 172.18.0.2 · DNS 127.0.0.11', ok: true },
         host: { caption: bi('С флагом `--network host` своего пространства имён net у контейнера нет, и процесс слушает порты хоста напрямую. Флаг `-p` здесь не нужен и ничего не делает.', '`--network host`: no net namespace of its own, the process listens on the host’s ports directly; `-p` is not needed and does nothing.'), say: bi('Процесс слушает порты хоста напрямую, потому что своей сети у него нет.', 'The process listens on the host’s ports; it has no network of its own.'), value: 'host network', ok: true },
         none: { caption: bi('С флагом `--network none` в пространстве имён есть только интерфейс lo, и пакеты не ходят ни наружу, ни внутрь.', '`--network none`: only lo in the namespace. Nothing in, nothing out.'), say: bi('В сети none есть только lo, и наружу пакеты не уходят.', 'Network none has only lo; no packet leaves.'), value: 'lo only', ok: false },
@@ -55,7 +75,7 @@ export function sideView(boundary: Exclude<Boundary, 'all'>, p: P): { caption: B
       return map[p.net] ?? map.bridge;
     }
     case 'storage': {
-      const map: Record<string, { caption: Bi; say: Bi; value: string; ok: boolean }> = {
+      const map: Record<string, SideView> = {
         upper: { caption: bi('Каталог `/data` лежит в записываемом слое контейнера, а этот слой существует, пока существует контейнер. После `docker rm` данных больше нет, и новый `docker run` начнёт с чистого образа.', '`/data` lives in the writable layer: it lives exactly as long as the container. `docker rm` and the data is gone; a new `docker run` starts from the image.'), say: bi('Данные пишутся в записываемый слой и пропадут вместе с контейнером.', 'The data goes into the writable layer and will vanish with the container.'), value: 'upper: gone on rm', ok: false },
         volume: { caption: bi('Том (`-v data:/data`) хранится в каталоге, которым управляет Docker, и существует отдельно от контейнера. Удалите контейнер, запустите новый с тем же томом, и данные будут на месте.', 'A volume (`-v data:/data`): a directory Docker manages, outside the container’s life. Remove the container, start a new one with the same volume — the data is there.'), say: bi('Данные пишутся в том, который переживёт удаление контейнера.', 'The data goes into a volume that outlives the container.'), value: 'volume data: survives rm', ok: true },
         bind: { caption: bi('Bind mount (`-v /srv/data:/data`) подключает каталог хоста как есть. Правки видны с обеих сторон сразу, а файлы образа, которые лежали по этому пути, становятся не видны.', 'A bind mount (`-v /srv/data:/data`): a host directory as it is. Edits show on both sides, and the image’s files at that path are hidden.'), say: bi('Каталог /data совпадает с каталогом хоста /srv/data и виден с обеих сторон.', '/data is the host directory /srv/data, seen from both sides.'), value: '/srv/data ↔ /data', ok: true },
@@ -64,15 +84,33 @@ export function sideView(boundary: Exclude<Boundary, 'all'>, p: P): { caption: B
       return map[p.data] ?? map.volume;
     }
     case 'process':
-      return { caption: bi('Через эту границу от shim приходят сигналы, а обратно уходят код выхода и сведения о дочерних процессах. Если у PID 1 нет обработчика сигнала, ядро этот сигнал ему не доставляет, поэтому `docker stop` ждёт 10 секунд и заканчивается кодом 137, а если PID 1 не забирает коды выхода дочерних процессов, копятся зомби. В обоих случаях помогает флаг `--init`.', 'Signals from the shim come in through this boundary; the exit code and children go out. PID 1 without a handler never gets the signal — hence `docker stop` taking 10 seconds and code 137; zombies pile up if PID 1 does not reap children. `--init` helps.'), say: bi('shim посылает процессу сигналы и ждёт его код выхода.', 'The shim sends signals to the process and waits for its exit code.'), value: 'PID 1 · SIGTERM → 10 s → SIGKILL', ok: true };
+      return {
+        caption: bi('Через эту границу от shim приходят сигналы, а обратно уходят код выхода и сведения о дочерних процессах. Если у PID 1 нет обработчика сигнала, ядро этот сигнал ему не доставляет.', 'Signals from the shim come in through this boundary, and the exit code and news of child processes go back. If PID 1 has no handler for a signal, the kernel does not deliver that signal to it.'),
+        say: bi('shim посылает процессу сигналы и ждёт его код выхода.', 'The shim sends signals to the process and waits for its exit code.'),
+        value: 'PID 1 · SIGTERM → 10 s → SIGKILL',
+        ok: true,
+        more: {
+          caption: bi('Поэтому `docker stop` ждёт 10 секунд и заканчивается кодом 137. А если PID 1 не забирает коды выхода дочерних процессов, копятся зомби. В обоих случаях помогает флаг `--init`.', 'That is why `docker stop` waits 10 seconds and ends with code 137. And if PID 1 does not collect its children’s exit codes, zombies pile up. In both cases the `--init` flag helps.'),
+          say: bi('Без обработчика SIGTERM Docker ждёт 10 секунд и посылает SIGKILL.', 'Without a SIGTERM handler Docker waits 10 seconds and sends SIGKILL.'),
+        },
+      };
     case 'io':
       return p.logs === 'file'
-        ? { caption: bi('Приложение пишет журнал в файл внутри контейнера, а shim забирает только стандартные потоки stdout и stderr, поэтому `docker logs` ничего не показывает. Образ nginx обходит это ограничение, делая свой файл `access.log` ссылкой на `/dev/stdout`.', 'The application writes its log into a file inside the container. The shim holds only stdout and stderr — `docker logs` is empty. The nginx image solves it with a link access.log → /dev/stdout.'), say: bi('Журнал уходит в файл внутри контейнера, и docker logs его не видит.', 'The log goes into a file inside the container; docker logs does not see it.'), value: 'docker logs: (empty)', ok: false }
-        : { caption: bi('Потоки stdout и stderr процесса забирает shim и передаёт драйверу журналов (по умолчанию json-file), а тот записывает их в файл на хосте. Оттуда их и читает `docker logs`. Ротации по умолчанию нет, её включают параметры max-size и max-file.', 'The shim holds the process’s stdout and stderr and passes them to the log driver (json-file by default), which writes a file on the host. That is where `docker logs` reads. There is no rotation by default: max-size and max-file set it.'), say: bi('Строки stdout уходят через shim в файл журнала на хосте.', 'stdout lines go through the shim into a log file on the host.'), value: 'stdout → json-file', ok: true };
+        ? { caption: bi('Приложение пишет журнал в файл внутри контейнера, а shim забирает только потоки stdout и stderr, поэтому `docker logs` ничего не показывает. Образ nginx обходит это ограничение, делая свой файл `access.log` ссылкой на `/dev/stdout`.', 'The application writes its log into a file inside the container. The shim holds only stdout and stderr — `docker logs` is empty. The nginx image solves it with a link access.log → /dev/stdout.'), say: bi('Журнал уходит в файл, и docker logs его не видит.', 'The log goes into a file, and docker logs does not see it.'), value: 'docker logs: (empty)', ok: false }
+        : { caption: bi('Потоки stdout и stderr процесса забирает shim и передаёт драйверу журналов (по умолчанию json-file), а тот пишет их в файл на хосте, откуда их читает `docker logs`. Ротации по умолчанию нет, её включают параметры max-size и max-file.', 'The shim takes the process’s stdout and stderr and passes them to the log driver (json-file by default), which writes them to a host file that `docker logs` reads. Rotation is off by default; max-size and max-file turn it on.'), say: bi('Строки stdout уходят через shim в файл журнала на хосте.', 'stdout lines go through the shim into a log file on the host.'), value: 'stdout → json-file', ok: true };
     case 'identity':
       return p.uid !== 0
-        ? { caption: { ru: `Процесс работает под UID ${p.uid}, а каталог хоста, подключённый через bind mount, принадлежит root и открыт с правами 755. Без пространства имён пользователей UID остаётся одним и тем же числом внутри и снаружи контейнера, поэтому запись заканчивается ошибкой Permission denied.`, en: `The process runs as UID ${p.uid}, and the bind-mounted host directory belongs to root with mode 755. A UID is a number, the same inside and outside (without a user namespace): writing gives Permission denied.` }, say: { ru: `UID ${p.uid} пишет в каталог root с правами 755 и получает отказ.`, en: `UID ${p.uid} writes to root’s 755 directory and is refused.` }, value: `uid ${p.uid} → root 755: EACCES`, ok: false }
-        : { caption: bi('Через эту границу процесс получает переменные окружения, секреты и пользователя, от имени которого работает. Без пространства имён пользователей root в контейнере остаётся тем же UID 0 в ядре, только с урезанным набором привилегий ядра (capabilities), и файлы, которые он создаёт в bind mount, на хосте принадлежат root.', 'Environment variables, secrets and the user. Without a user namespace, root in a container is the same UID 0 in the kernel, only cut down by capabilities; files it creates in a bind mount belong to root on the host.'), say: bi('Процесс стартует с переменными окружения и от имени UID 0.', 'The process starts with its environment variables as UID 0.'), value: 'uid 0 · env · secrets', ok: true };
+        ? { caption: { ru: `Процесс работает под UID ${p.uid}, а каталог хоста из bind mount принадлежит root с правами 755. Без пространства имён пользователей UID внутри и снаружи контейнера одно и то же число, поэтому запись заканчивается ошибкой Permission denied.`, en: `The process runs as UID ${p.uid}, and the bind-mounted host directory belongs to root with mode 755. A UID is a number, the same inside and outside (without a user namespace): writing gives Permission denied.` }, say: { ru: `UID ${p.uid} получает отказ при записи в каталог root.`, en: `UID ${p.uid} writes to root’s 755 directory and is refused.` }, value: `uid ${p.uid} → root 755: EACCES`, ok: false }
+        : {
+            caption: bi('Через эту границу процесс получает переменные окружения, секреты и пользователя, от имени которого работает.', 'Through this boundary the process gets its environment variables, secrets and the user it runs as.'),
+            say: bi('Процесс стартует с переменными окружения и от имени UID 0.', 'The process starts with its environment variables as UID 0.'),
+            value: 'uid 0 · env · secrets',
+            ok: true,
+            more: {
+              caption: bi('Без пространства имён пользователей root в контейнере остаётся тем же UID 0 в ядре, только с урезанным набором привилегий ядра (capabilities). Поэтому файлы, которые он создаёт в bind mount, на хосте принадлежат root.', 'Without a user namespace, root in a container is the same UID 0 in the kernel, only with a cut-down set of kernel privileges (capabilities). So the files it creates in a bind mount belong to root on the host.'),
+              say: bi('Файлы, которые root создал в контейнере, на хосте тоже принадлежат root.', 'Files root created in the container belong to root on the host too.'),
+            },
+          };
   }
 }
 
@@ -205,6 +243,15 @@ export const boundariesModel = defineModel<P>({
         values: { [NODE[s]]: v.value },
         metrics: { sidesOk: okCount },
       });
+      if (v.more)
+        steps.push({
+          id: `boundary-${s}-more`,
+          label: SIDE_NAMES[s],
+          caption: v.more.caption,
+          focus: [NODE[s]],
+          say: { [NODE[s]]: v.more.say },
+          metrics: { sidesOk: okCount },
+        });
     }
     for (const b of broken) {
       const info = BREAK_MSG[b];

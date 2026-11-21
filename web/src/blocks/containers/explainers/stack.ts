@@ -230,21 +230,31 @@ export const stackModel = defineModel<P>({
         states: startWith(ALL, 'bm-apps', 'bm-os', 'bm-hw', 'e-bm-sys', 'e-bm-hw'),
         values: { 'bm-apps': 'libssl 1.1 · 3.0', 'vm-apps': count(p.apps, n.vmFit), 'ct-apps': count(p.apps, n.ctFit) },
       },
-      p.conflict
-        ? {
+      ...(p.conflict
+        ? ([{
             id: 'conflict',
             label: bi('конфликт', 'conflict'),
             caption: bi(
-              'Приложению A нужна libssl версии 1.1, а приложению B версии 3.0. Каталог `/usr/lib` один на всю систему, и когда администратор поставил версию 3.0 для B, приложение A перестало запускаться. Так и выглядит проблема окружений: у разработчика на ноутбуке всё работало, потому что там своя система со своими версиями.',
-              'A needs libssl 1.1 and B needs 3.0. There is one `/usr/lib` for the whole system: when the administrator installed 3.0 for B, A stopped starting. That is the environment problem: on the developer’s laptop it worked, because the laptop has its own system with its own versions.',
+              'Приложению A нужна libssl версии 1.1, а приложению B версии 3.0. Каталог `/usr/lib` один на всю систему, и когда администратор поставил версию 3.0 для B, приложение A перестало запускаться.',
+              'Application A needs libssl 1.1, and application B needs 3.0. There is one `/usr/lib` for the whole system, and when the administrator installed 3.0 for B, application A stopped starting.',
             ),
             focus: ['bm-os', 'e-bm-sys'],
             tokens: [{ edge: 'e-bm-sys', label: 'libssl.so.1.1?' }],
             say: { 'bm-os': bi('Система ищет для приложения A libssl 1.1, но в /usr/lib лежит только версия 3.0.', 'The system looks for libssl 1.1 for A, but /usr/lib holds only 3.0.') },
             states: { 'bm-apps': 'err' },
             values: { 'bm-apps': 'A: libssl.so.1.1 not found' },
-          }
-        : {
+          },
+          {
+            id: 'env',
+            label: bi('окружение', 'environment'),
+            caption: bi(
+              'Так выглядит проблема окружений. У разработчика на ноутбуке приложение A работало, потому что там своя система со своими версиями библиотек, а на сервере версии другие.',
+              'This is what the environment problem looks like. On the developer’s laptop application A worked, because the laptop has its own system with its own library versions, and the server has other versions.',
+            ),
+            focus: ['bm-apps'],
+            say: { 'bm-apps': bi('Приложение A не запускается на сервере, хотя на ноутбуке разработчика работало.', 'Application A does not start on the server, although it worked on the developer’s laptop.') },
+          }] as Step[])
+        : ([{
             id: 'conflict',
             label: bi('общая библиотека', 'shared library'),
             caption: bi(
@@ -256,14 +266,26 @@ export const stackModel = defineModel<P>({
             say: { 'bm-os': bi('Система находит в /usr/lib libssl 3.0, и она подходит обоим приложениям.', 'The system finds libssl 3.0 in /usr/lib, and it suits both apps.') },
             states: { 'bm-apps': 'ok' },
             values: { 'bm-apps': 'libssl 3.0 · 3.0' },
-          },
+          }] as Step[])),
       {
         id: 'hyp',
         label: bi('гипервизор', 'hypervisor'),
+        caption: bi(
+          'Первое решение состоит в том, чтобы дать каждому приложению отдельный компьютер. Сервер на каждое приложение стоит дорого, поэтому на второй сервер ставят гипервизор, то есть программу, которая делит одно железо на несколько компьютеров.',
+          'The first solution is to give each application a separate computer. A server per application is expensive, so the second server gets a hypervisor, a program that divides one piece of hardware into several computers.',
+        ),
+        focus: ['vm-hyp'],
+        reveal: ['vm-hw', 'vm-hyp', 'e-vm-hw'],
+        say: { 'vm-hyp': bi('Гипервизор работает прямо поверх железа.', 'The hypervisor runs right on top of the hardware.') },
+        metrics: { vmMem: n.vmMem, vmLost: n.vmLost },
+      },
+      {
+        id: 'hyp-vms',
+        label: bi('виртуальные машины', 'virtual machines'),
         caption: fmt(
           bi(
-            'Первое решение состоит в том, чтобы дать каждому приложению отдельный компьютер. Покупать по серверу на приложение дорого, поэтому на второй сервер ставят гипервизор, то есть программу, которая делит одно железо на несколько виртуальных машин и каждой показывает её собственные процессоры, память и диск. Сейчас на этом сервере {nRu}.',
-            'The first solution is to give each application a separate computer. A server per application is expensive, so the second server gets a hypervisor: a program that divides one piece of hardware into several virtual machines and shows each its own CPUs, memory and disk. There are {n} machines now.',
+            'Такие компьютеры называют виртуальными машинами. Гипервизор показывает каждой из них её собственные процессоры, память и диск, и сейчас на этом сервере {nRu}.',
+            'These computers are called virtual machines. The hypervisor shows each of them its own CPUs, memory and disk, and there are {n} machines on this server now.',
           ),
           { n: vmRun, nRu: `${vmRun > 1 && !(vmRun % 10 === 1 && vmRun % 100 !== 11) ? 'работают' : 'работает'} ${vmRun} ${pluralRu(vmRun, ['виртуальная машина', 'виртуальные машины', 'виртуальных машин'])}` },
         ),
@@ -277,15 +299,15 @@ export const stackModel = defineModel<P>({
         label: bi('гостевая ОС', 'guest OS'),
         caption: fmt(
           bi(
-            'Внутри каждой виртуальной машины устанавливают полноценную операционную систему со своим ядром и службами. Такая гостевая система занимает около {os} МиБ памяти ещё до того, как запустилось приложение, и загружается десятки секунд.',
-            'Inside each virtual machine a complete operating system is installed, with its own kernel and services. This guest system takes about {os} MiB of memory before the application has even started, and it boots for tens of seconds.',
+            'Внутри каждой виртуальной машины устанавливают полноценную операционную систему со своим ядром и службами. Такая гостевая система занимает около {os} МиБ памяти ещё до запуска приложения и загружается десятки секунд.',
+            'Inside each virtual machine a complete operating system is installed, with its own kernel and services. This guest system takes about {os} MiB of memory before the application starts, and it boots for tens of seconds.',
           ),
           { os: STACK.guestOsMiB },
         ),
         focus: ['vm-guest', 'e-vm-virt'],
         reveal: ['vm-guest', 'e-vm-virt'],
         tokens: [{ edge: 'e-vm-virt', label: `${STACK.guestOsMiB} MiB × ${vmRun}` }],
-        say: { 'vm-guest': bi('В каждой ВМ загружается своё ядро и своя система, и каждая занимает 1 ГиБ памяти ещё до приложения.', 'Each VM boots its own kernel and system, and each takes 1 GiB before the application.') },
+        say: { 'vm-guest': bi('Каждая ВМ загружает своё ядро и свою систему.', 'Each VM boots its own kernel and its own system.') },
         values: { 'vm-guest': `${STACK.guestOsMiB} MiB × ${vmRun}` },
         metrics: { vmMem: n.vmMem, vmStart: n.vmStart / 1000, vmLost: n.vmLost },
       },
@@ -319,27 +341,50 @@ export const stackModel = defineModel<P>({
         id: 'ct-rt',
         label: bi('рантайм', 'runtime'),
         caption: bi(
-          'Docker и его рантайм остаются обычными программами на этом сервере. Чтобы запустить контейнер, рантайм просит ядро создать новый процесс, показать ему собственные файлы, процессы и сеть (это делают пространства имён) и ограничить его память и процессор (это делает cgroup). Оба механизма вы знаете по блоку Linux.',
-          'Docker and its runtime are ordinary programs on this server. To start a container, the runtime asks the kernel to create a new process, show it its own files, processes and network (namespaces do that) and limit its memory and CPU (a cgroup does that). You know both from the Linux block.',
+          'Docker и его рантайм остаются обычными программами на этом сервере. Чтобы запустить контейнер, рантайм просит ядро создать новый процесс и показать ему собственные файлы, процессы и сеть. Это делают пространства имён из блока Linux.',
+          'Docker and its runtime are ordinary programs on this server. To start a container, the runtime asks the kernel to create a new process and show it its own files, processes and network. Namespaces from the Linux block do that.',
         ),
         focus: ['ct-rt', 'e-ct-rt'],
         reveal: ['ct-rt', 'e-ct-rt'],
         tokens: [{ edge: 'e-ct-rt', label: 'clone(CLONE_NEW*)' }],
-        say: { 'ct-rt': bi('Рантайм просит ядро создать процесс в новых пространствах имён и поставить его в cgroup с лимитами.', 'The runtime asks the kernel for a process in new namespaces, in a cgroup with limits.') },
+        say: { 'ct-rt': bi('Рантайм просит ядро о процессе в новых пространствах имён.', 'The runtime asks the kernel for a process in new namespaces.') },
+        metrics: vmM,
+      },
+      {
+        id: 'ct-cg',
+        label: 'cgroup',
+        caption: bi(
+          'Затем рантайм просит ядро ограничить память и процессор нового процесса. Это делает cgroup, второй механизм из блока Linux, и контейнер не сможет занять больше, чем ему отвели.',
+          'Then the runtime asks the kernel to limit the new process’s memory and CPU. A cgroup does that, the second mechanism from the Linux block, and the container cannot take more than it was given.',
+        ),
+        focus: ['ct-rt', 'e-ct-rt'],
+        tokens: [{ edge: 'e-ct-rt', label: 'cgroup memory.max' }],
+        say: { 'ct-rt': bi('Рантайм ставит новый процесс в cgroup с лимитами памяти и процессора.', 'The runtime puts the new process into a cgroup with memory and CPU limits.') },
         metrics: vmM,
       },
       {
         id: 'ct-apps',
         label: bi('контейнеры', 'containers'),
         caption: bi(
-          'Контейнер приложения A получает собственный набор файлов с libssl 1.1, контейнер B — набор с версией 3.0, и конфликт исчезает так же, как с виртуальными машинами. Но гостевой системы здесь нет, потому что каждый контейнер остаётся обычным процессом хоста и отправляет свои системные вызовы прямо в общее ядро.',
-          'A’s container gets its own set of files with libssl 1.1, B’s container a set with 3.0, and the conflict disappears just as with VMs. But there is no guest system: each container is an ordinary host process that sends its system calls straight into the shared kernel.',
+          'Контейнер приложения A получает собственный набор файлов с libssl 1.1, а контейнер приложения B набор с версией 3.0. Конфликт исчезает так же, как с виртуальными машинами.',
+          'Application A’s container gets its own set of files with libssl 1.1, and application B’s container a set with 3.0. The conflict disappears just as with virtual machines.',
         ),
-        focus: ['ct-apps', 'e-ct-sys'],
+        focus: ['ct-apps'],
         reveal: ['ct-apps', 'e-ct-sys'],
-        tokens: [{ edge: 'e-ct-sys', label: 'open libssl.so.1.1' }],
         say: { 'ct-apps': bi('Каждый контейнер видит свой каталог /usr/lib со своей libssl.', 'Each container sees its own /usr/lib with its own libssl.') },
         states: { 'ct-apps': 'ok' },
+        metrics: all,
+      },
+      {
+        id: 'ct-syscalls',
+        label: bi('без гостевой ОС', 'no guest OS'),
+        caption: bi(
+          'Гостевой системы здесь нет. Каждый контейнер остаётся обычным процессом хоста и отправляет свои системные вызовы прямо в общее ядро.',
+          'There is no guest system here. Each container stays an ordinary host process and sends its system calls straight into the shared kernel.',
+        ),
+        focus: ['ct-apps', 'e-ct-sys'],
+        tokens: [{ edge: 'e-ct-sys', label: 'open libssl.so.1.1' }],
+        say: { 'ct-apps': bi('Процесс контейнера обращается прямо к ядру хоста, без гостевой системы.', 'The container process calls the host kernel directly, with no guest system.') },
         metrics: all,
       },
       {
@@ -362,14 +407,28 @@ export const stackModel = defineModel<P>({
         label: bi('+ контейнер', '+ container'),
         caption: fmt(
           bi(
-            'Новому контейнеру загружать нечего, потому что ядро уже работает. Запуск сводится к созданию процесса и занимает около {ct} мс, а памяти контейнер займёт {app} МиБ на приложение и примерно {ov} МиБ сверху. На {appsRu} сервер с ВМ тратит {vmm} МиБ памяти, а сервер с контейнерами {ctm} МиБ.',
-            'A new container has nothing to boot, because the kernel is already running. Starting it means creating a process, about {ct} ms, and it takes {app} MiB for the application plus about {ov} MiB. For {apps} applications the VM server spends {vmm} MiB and the container server {ctm} MiB.',
+            'Новому контейнеру загружать нечего, потому что ядро уже работает. Запуск сводится к созданию процесса и занимает около {ct} мс, а памяти контейнер займёт {app} МиБ на приложение и примерно {ov} МиБ сверху.',
+            'A new container has nothing to boot, because the kernel is already running. Starting it means creating a process, about {ct} ms, and it takes {app} MiB for the application plus about {ov} MiB more.',
           ),
-          { ct: STACK.containerStartMs, app: STACK.appMiB, ov: STACK.containerOverheadMiB, apps: p.apps, appsRu: `${p.apps} ${pluralRu(p.apps, ['приложение', 'приложения', 'приложений'])}`, vmm: n.vmMem, ctm: n.ctMem },
+          { ct: STACK.containerStartMs, app: STACK.appMiB, ov: STACK.containerOverheadMiB },
         ),
         focus: ['ct-apps'],
-        say: { 'ct-apps': fmt(bi('Для нового контейнера ядро создаёт новый процесс, и он готов примерно за {ms} мс.', 'A new container is a new process, ready in about {ms} ms.'), { ms: STACK.containerStartMs }) },
+        say: { 'ct-apps': fmt(bi('Для нового контейнера ядро создаёт процесс, готовый примерно за {ms} мс.', 'For a new container the kernel creates a process, ready in about {ms} ms.'), { ms: STACK.containerStartMs }) },
         states: { 'vm-guest': 'on' },
+        metrics: all,
+      },
+      {
+        id: 'memory',
+        label: bi('итог памяти', 'memory in total'),
+        caption: fmt(
+          bi(
+            'Теперь сравним, сколько памяти занимают оба сервера. На {appsRu} сервер с ВМ тратит {vmm} МиБ, а сервер с контейнерами {ctm} МиБ, и вся разница приходится на гостевые системы.',
+            'Now compare how much memory the two servers take. For {apps} applications the VM server spends {vmm} MiB and the container server {ctm} MiB, and the whole difference is the guest systems.',
+          ),
+          { apps: p.apps, appsRu: `${p.apps} ${pluralRu(p.apps, ['приложение', 'приложения', 'приложений'])}`, vmm: n.vmMem, ctm: n.ctMem },
+        ),
+        focus: ['ct-hw'],
+        say: { 'ct-hw': bi('Сервер с контейнерами тратит память только на ядро хоста и сами приложения.', 'The container server spends memory only on the host kernel and the applications themselves.') },
         metrics: all,
       },
     ];
@@ -396,13 +455,13 @@ export const stackModel = defineModel<P>({
         label: bi('уязвимость', 'vulnerability'),
         caption: fmt(
           bi(
-            'В ядре нашли уязвимость, через которую процесс может выйти за границы своего контейнера. Граница между контейнерами проходит внутри того самого ядра, в котором нашли дыру, а ядро у них общее. Поэтому под угрозой {nRu}.',
-            'A kernel vulnerability lets a process escape its container. Containers share the kernel, so all {n} containers of the third server are at risk: the boundary between them runs inside the very kernel that has the hole.',
+            'В ядре нашли уязвимость, через которую процесс может выйти за границы своего контейнера. Граница между контейнерами проходит внутри этого общего ядра, поэтому под угрозой {nRu}.',
+            'A kernel vulnerability lets a process escape its container. The boundary between containers runs inside this shared kernel, so {n} at risk.',
           ),
-          { n: ctRun, nRu: ctRun === 1 ? 'оказывается и единственный контейнер третьего сервера, и сам сервер' : `оказываются все ${ctRun} ${pluralRu(ctRun, ['контейнер', 'контейнера', 'контейнеров'])} третьего сервера` },
+          { n: ctRun === 1 ? 'the only container of the third server and the server itself are' : `all ${ctRun} containers of the third server are`, nRu: ctRun === 1 ? 'оказывается и единственный контейнер третьего сервера, и сам сервер' : `оказываются все ${ctRun} ${pluralRu(ctRun, ['контейнер', 'контейнера', 'контейнеров'])} третьего сервера` },
         ),
         focus: ['ct-kernel'],
-        say: { 'ct-kernel': ctRun === 1 ? bi('Через уязвимость в ядре процесс контейнера может добраться до самого сервера.', 'Through the hole in the kernel the container’s process can reach the server itself.') : bi('Через уязвимость в общем ядре процесс одного контейнера может добраться до всех остальных.', 'Through the hole in the shared kernel one container’s process can reach all the others.') },
+        say: { 'ct-kernel': ctRun === 1 ? bi('Через уязвимость в ядре процесс контейнера доберётся до самого сервера.', 'Through the kernel vulnerability the container’s process can reach the server itself.') : bi('Через уязвимость в ядре процесс одного контейнера доберётся до остальных.', 'Through the kernel vulnerability one container’s process can reach the others.') },
         states: { 'ct-kernel': 'err', 'ct-apps': 'warn' },
         values: { 'ct-apps': `${ctRun} / ${ctRun} at risk` },
         metrics: all,
@@ -411,13 +470,24 @@ export const stackModel = defineModel<P>({
         id: 'vuln-vm',
         label: bi('одна ВМ', 'one VM'),
         caption: bi(
-          'На втором сервере та же уязвимость затрагивает только одну виртуальную машину, потому что у каждой ВМ своё ядро, а между машинами стоит гипервизор. Поэтому чужой, недоверенный код запускают в ВМ или в песочницах вроде gVisor и Kata Containers.',
-          'On the second server the same vulnerability affects only one VM: each VM has its own kernel, and the hypervisor stands between the machines. That is why untrusted code runs in VMs or in sandboxes such as gVisor and Kata Containers.',
+          'На втором сервере та же уязвимость затрагивает только одну виртуальную машину, потому что у каждой ВМ своё ядро, а между машинами стоит гипервизор.',
+          'On the second server the same vulnerability affects only one virtual machine, because each VM has its own kernel, and the hypervisor stands between the machines.',
         ),
         focus: ['vm-guest'],
-        say: { 'vm-guest': bi('Уязвимое ядро есть в каждой ВМ, но вырваться можно только из своей машины, а дальше стоит гипервизор.', 'Each VM has the vulnerable kernel, but escaping leads only out of its own machine; the hypervisor is beyond.') },
+        say: { 'vm-guest': bi('Через уязвимость процесс выходит только за пределы своего ядра, внутри своей ВМ.', 'Through the vulnerability a process gets only past its own kernel, inside its own VM.') },
         states: { 'vm-guest': 'warn' },
         values: { 'vm-guest': `1 / ${vmRun} at risk` },
+        metrics: all,
+      });
+      steps.push({
+        id: 'sandbox',
+        label: bi('песочница', 'sandbox'),
+        caption: bi(
+          'Поэтому чужой, недоверенный код запускают в виртуальных машинах или в песочницах вроде gVisor и Kata Containers. У них между программой и ядром хоста стоит ещё одна граница.',
+          'That is why untrusted code is run in virtual machines or in sandboxes such as gVisor and Kata Containers. They put one more boundary between the program and the host kernel.',
+        ),
+        focus: ['vm-hyp'],
+        say: { 'vm-hyp': bi('Гипервизор не пускает процесс из одной ВМ к соседним машинам.', 'The hypervisor keeps a process of one VM away from the neighbouring machines.') },
         metrics: all,
       });
     } else {
@@ -436,11 +506,22 @@ export const stackModel = defineModel<P>({
         id: 'boundary-ct',
         label: bi('в ядре', 'in the kernel'),
         caption: bi(
-          'У контейнеров граница проходит внутри одного ядра. Держат её пространства имён и cgroup, а ещё несколько механизмов ядра, которые урезают права процесса; о них подробно рассказывает урок о безопасности. Поэтому контейнер изолирует слабее виртуальной машины, зато он легче и запускается быстрее.',
-          'For containers the boundary runs inside one kernel. Namespaces and cgroups hold it, together with a few more kernel mechanisms that cut down the rights of a process; the security lesson covers them in detail. A container therefore isolates less strongly than a VM, but it is lighter and starts faster.',
+          'У контейнеров граница проходит внутри одного ядра. Её держат пространства имён и cgroup, а ещё несколько механизмов ядра, которые урезают права процесса. О них подробно рассказывает урок о безопасности.',
+          'For containers the boundary runs inside one kernel. Namespaces and cgroups hold it, together with a few more kernel mechanisms that cut down the rights of a process. The security lesson covers them in detail.',
         ),
         focus: ['ct-kernel'],
         say: { 'ct-kernel': bi('Контейнеры отделяет друг от друга само ядро хоста, одно на всех.', 'The host kernel itself, one for all, separates the containers.') },
+        metrics: all,
+      });
+      steps.push({
+        id: 'boundary-cmp',
+        label: bi('сравнение', 'comparison'),
+        caption: bi(
+          'Поэтому контейнер изолирует приложения слабее, чем виртуальная машина, зато он легче и запускается быстрее.',
+          'So a container isolates applications less strongly than a virtual machine, but it is lighter and starts faster.',
+        ),
+        focus: ['ct-apps'],
+        say: { 'ct-apps': bi('Контейнеры отделены друг от друга слабее, чем ВМ, зато занимают меньше памяти.', 'Containers are separated less strongly than VMs, but take less memory.') },
         metrics: all,
       });
     }
@@ -449,11 +530,11 @@ export const stackModel = defineModel<P>({
         id: 'kernel',
         label: 'Windows',
         caption: bi(
-          'Одной из программ нужен Windows. В виртуальную машину можно поставить любую систему с её собственным ядром, а контейнер пользуется ядром хоста. Программа для Windows на ядре Linux не запустится, сколько файлов Windows ни положи в образ контейнера.',
-          'One program needs Windows. A VM can hold any OS with its own kernel; a container uses the host kernel. A Windows program will not run on a Linux kernel, whatever Windows files you put into the image.',
+          'Одной из программ нужен Windows. Виртуальная машина может нести любую систему со своим ядром, а контейнер работает на ядре хоста. Программа для Windows на ядре Linux не запустится, сколько файлов Windows ни положи в контейнер.',
+          'One program needs Windows. A virtual machine can carry any system with its own kernel, while a container runs on the host kernel. A Windows program will not run on a Linux kernel, whatever files you put into the container.',
         ),
         focus: ['ct-apps'],
-        say: { 'ct-apps': bi('Ядро Linux не умеет выполнять программу для Windows и отвечает exec format error.', 'The Linux kernel cannot run a Windows program and answers exec format error.') },
+        say: { 'ct-apps': bi('Ядро Linux отвечает на такую программу ошибкой exec format error.', 'The Linux kernel answers such a program with exec format error.') },
         states: { 'ct-apps': 'err', 'vm-apps': 'ok' },
         values: { 'ct-apps': 'exec format error' },
         metrics: all,
@@ -483,7 +564,7 @@ export const stackModel = defineModel<P>({
           'The kernel is shared by all the containers of the third server. When it crashes, all of them stop at once, because none of them has a kernel of its own to carry on with.',
         ),
         focus: ['ct-kernel'],
-        say: { 'ct-kernel': bi('Ядро остановилось, и вместе с ним остановились все процессы сервера, включая контейнеры.', 'The kernel stopped, and every process of the server stopped with it, containers included.') },
+        say: { 'ct-kernel': bi('Ядро остановилось, и с ним все процессы сервера, включая контейнеры.', 'The kernel stopped, and with it every process of the server, containers included.') },
         states: { 'ct-kernel': 'err', 'ct-apps': 'err', 'ct-rt': 'off' },
         metrics: all,
         broken: { at: 'ct-kernel', message: 'Kernel panic - not syncing: Fatal exception in interrupt', caption: bi('Работа остановилась на ядре третьего сервера. Не работает ни один контейнер, потому что своего ядра у них нет.', 'Work stopped at the kernel of the third server. No container runs, because they have no kernel of their own.') },

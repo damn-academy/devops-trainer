@@ -283,10 +283,10 @@ export const imageModel = defineModel<P>({
         steps.push({
           id: 'copyup',
           label: 'copy-up',
-          caption: bi('Процесс дописывает строку в `/etc/nginx/nginx.conf`. Этот файл лежит в нижнем слое, а писать туда нельзя, поэтому ядро сначала целиком копирует файл наверх (это называется copy-up) и меняет уже копию. Команда `docker diff` покажет `C /etc/nginx/nginx.conf`.', '`echo … >> /etc/nginx/nginx.conf`: the file is in a lower layer, which cannot be written. The kernel first copies it whole to the top (copy-up) and then changes the copy. `docker diff` shows `C /etc/nginx/nginx.conf`.'),
+          caption: bi('Процесс дописывает строку в `/etc/nginx/nginx.conf` из нижнего слоя. Писать туда нельзя, поэтому ядро сначала целиком копирует файл наверх (это называется copy-up) и меняет копию. Команда `docker diff` покажет `C /etc/nginx/nginx.conf`.', 'The process appends a line to `/etc/nginx/nginx.conf` from a lower layer. That layer cannot be written, so the kernel first copies the whole file up (called copy-up) and changes the copy. `docker diff` shows `C /etc/nginx/nginx.conf`.'),
           focus: ['upper', 'e-upper'],
           tokens: [{ edge: 'e-upper', label: 'nginx.conf', reverse: true }],
-          say: { upper: bi('Ядро копирует nginx.conf из слоя 2 наверх и меняет копию.', 'The kernel copies nginx.conf up from layer 2 and changes the copy.') },
+          say: { upper: bi('Ядро копирует nginx.conf наверх и меняет копию.', 'The kernel copies nginx.conf up and changes the copy.') },
           states: { l2: 'warn' },
           values: { upper: 'C /etc/nginx/nginx.conf' },
           metrics: { ...base, upperBytes: 662 },
@@ -295,11 +295,21 @@ export const imageModel = defineModel<P>({
         steps.push({
           id: 'whiteout',
           label: 'whiteout',
-          caption: bi('Процесс удаляет `/usr/share/nginx/html/index.html`. Изменить нижний слой нельзя, поэтому наверху появляется пометка об удалении (whiteout). В ядре такая пометка выглядит как символьное устройство 0:0, а в архиве слоя как файл `.wh.index.html`. Процесс файла больше не видит, но в образе файл остался и по-прежнему занимает место.', '`rm /usr/share/nginx/html/index.html`: the lower layer cannot change, so a deletion mark appears on top (a whiteout: a 0:0 character device in the kernel, `.wh.index.html` in a layer tar). The file is hidden, yet it is still in the image and takes space.'),
+          caption: bi('Процесс удаляет `/usr/share/nginx/html/index.html`. Изменить нижний слой нельзя, поэтому наверху появляется пометка об удалении, которую называют whiteout. Процесс файла больше не видит, но в образе файл остался и занимает место.', 'The process deletes `/usr/share/nginx/html/index.html`. The lower layer cannot change, so a deletion mark called a whiteout appears on top. The process no longer sees the file, but the file is still in the image and takes space.'),
           focus: ['upper'],
-          say: { upper: bi('Наверху появляется пометка об удалении, а сам файл остаётся в слое 2.', 'A deletion mark appears on top; the file itself stays in layer 2.') },
+          say: { upper: bi('Сам файл остаётся в слое 2, а наверху лежит пометка.', 'The file itself stays in layer 2, with a mark on top.') },
           states: { l2: 'warn' },
           values: { upper: 'D /usr/share/nginx/html/index.html' },
+          metrics: base,
+        });
+      if (p.action === 'delete')
+        steps.push({
+          id: 'whiteout-form',
+          label: '.wh.',
+          caption: bi('Как выглядит такая пометка? В ядре это символьное устройство с номером 0:0 на месте удалённого файла, а в архиве слоя это пустой файл `.wh.index.html` рядом с местом, где лежал файл.', 'What does such a mark look like? In the kernel it is a character device numbered 0:0 in place of the deleted file, and in the layer archive it is an empty file `.wh.index.html` next to where the file was.'),
+          focus: ['upper'],
+          say: { upper: bi('В архиве верхнего слоя пометка хранится как пустой файл .wh.index.html.', 'In the top layer’s archive the mark is kept as an empty file .wh.index.html.') },
+          values: { upper: 'c 0:0 index.html · .wh.index.html' },
           metrics: base,
         });
     }
