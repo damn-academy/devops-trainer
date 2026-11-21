@@ -15,8 +15,8 @@ import type { ElementState, Step } from '../../core/types';
 import { card } from '../git-cicd/explainers';
 import { fb } from './explainer';
 
-/** "1 ядро", "2 ядра", "0,5 ядра" in Russian and the bare number in English. */
-/** "3,8 ГБ" or "420 МБ" in Russian and the number of megabytes in English. */
+/** "1 ядро", "2 ядра", "0,5 ядра" in Russian and the bare number in English. */
+/** "3,8 ГБ" or "420 МБ" in Russian and the number of megabytes in English. */
 const volume = (mb: number): Bi => bi(mb >= 1000 ? `${(mb / 1000).toFixed(1).replace('.', ',')} ГБ` : `${mb} МБ`, String(mb));
 const cores = (n: number): Bi =>
   bi(Number.isInteger(n) ? `${n} ${pluralRu(n, ['ядро', 'ядра', 'ядер'])}` : `${String(n).replace('.', ',')} ядра`, String(n));
@@ -145,12 +145,20 @@ export const logModel = defineModel<LogP>({
       {
         id: 'write',
         label: 'stdout',
-        caption: json
-          ? bi('Сервису api не удалось оформить заказ, и он пишет об этом строку в стандартный вывод. Строка записана в формате JSON, и у каждого сведения в ней есть своё имя: уровень error, маршрут /checkout, код ответа 500, длительность и trace_id. Поэтому потом любое поле можно будет взять по имени.', 'The api service failed to place an order and writes a line about it to standard output. The line is JSON: every piece of information has a name, the level error, the route /checkout, the status 500, the duration and the trace_id. So later any field can be taken out by name.')
-          : bi('Сервису api не удалось оформить заказ, и он пишет об этом строку в стандартный вывод. Строка записана свободным текстом, который удобно читать человеку, а программе, чтобы достать из неё код ответа, придётся угадывать, где в тексте стоит число.', 'The api service failed to place an order and writes a line about it to standard output. The line is free text, which is easy for a human to read, but a program that wants the status code out of it will have to guess where in the text the number stands.'),
+        caption: bi('Сервису api не удалось оформить заказ, и он пишет об этом строку в стандартный вывод. Куда строка попадёт дальше, процесс не знает, потому что доставкой строк занимается инфраструктура.', 'The api service failed to place an order and writes a line about it to standard output. Where the line goes next the process does not know, because delivering lines is the infrastructure’s job.'),
         focus: ['app'],
-        say: { app: json ? bi('Процесс api пишет в стандартный вывод строку JSON с уровнем error и кодом 500.', 'The api process writes a JSON line with level error and status 500 to standard output.') : bi('Процесс api пишет в стандартный вывод строку текста: ERROR checkout failed (500).', 'The api process writes a text line to standard output: ERROR checkout failed (500).') },
+        say: { app: bi('Процесс api пишет в стандартный вывод строку об ошибке заказа.', 'The api process writes a line about the failed order to standard output.') },
         states: hide(LOG_ALL, 'app'),
+        metrics: m,
+      },
+      {
+        id: 'format',
+        label: json ? 'JSON' : bi('текст', 'text'),
+        caption: json
+          ? bi('Строка записана в формате JSON, и у каждого сведения в ней есть своё имя: уровень error, маршрут /checkout, код ответа 500, длительность и trace_id. Поэтому потом любое поле можно будет взять по имени.', 'The line is written as JSON, and every piece of information in it has a name: the level error, the route /checkout, the status 500, the duration and the trace_id. So later any field can be taken out by name.')
+          : bi('Строка записана свободным текстом. Человеку его читать удобно, а программе, чтобы достать из строки код ответа, придётся угадывать, где в тексте стоит число.', 'The line is written as free text. It is easy for a human to read, but a program that wants the status code out of the line will have to guess where in the text the number stands.'),
+        focus: ['app'],
+        say: { app: json ? bi('Процесс api пишет строку JSON с уровнем error и кодом 500.', 'The api process writes a JSON line with level error and status 500.') : bi('Процесс api пишет строку текста ERROR checkout failed (500).', 'The api process writes the text line ERROR checkout failed (500).') },
         metrics: m,
       },
       {
@@ -179,22 +187,32 @@ export const logModel = defineModel<LogP>({
       },
     ];
     if (broken.has('loki-down')) {
-      steps.push({
-        id: 'down',
-        label: bi('отправка не удалась', 'push failed'),
-        caption: bi('Агент отправляет пачку строк, но Loki отвечает ошибкой 503 и пачку не принимает. Агент не выбрасывает строки, а запоминает, до какого места дочитал файл, и повторяет отправку со всё более длинными паузами. Строки пропадут, только если среда контейнеров успеет заменить файл новым раньше, чем Loki заработает.', 'The agent sends a batch of lines, but Loki answers 503 and does not accept it. The agent does not throw the lines away but remembers how far it has read the file and retries with longer and longer pauses. The lines are lost only if the container runtime replaces the file with a new one before Loki works again.'),
-        focus: ['agent', 'e-push'],
-        reveal: ['index', 'e-push'],
-        tokens: [{ edge: 'e-push', label: bi('пачка строк', 'batch of lines') }],
-        say: { agent: bi('Агент получает ответ 503, держит позицию в файле и повторяет отправку.', 'The agent gets 503, holds its place in the file and retries.') },
-        states: { agent: 'warn', index: 'err', 'e-push': 'err' },
-        metrics: m,
-        broken: {
-          at: 'e-push',
-          message: 'level=warn component=loki.write msg="error sending batch, will retry" status=503 error="server returned HTTP status 503 Service Unavailable (503)"',
-          caption: bi('на отправке строк в Loki. Узнают такую поломку по предупреждениям в журнале самого агента и по провалу на графике числа строк. О провале должен сообщать отдельный алерт на конвейер журналов, иначе дыру обнаружат в день инцидента, когда журнал понадобится.', 'at sending lines to Loki. You recognise this break by the warnings in the agent’s own log and by a gap in the line-count graph. A separate alert on the log pipeline should report the gap; otherwise it is found on the day of an incident, when the log is needed.'),
+      steps.push(
+        {
+          id: 'down',
+          label: bi('отправка не удалась', 'push failed'),
+          caption: bi('Агент отправляет пачку строк, но Loki отвечает ошибкой 503 и пачку не принимает. Агент не выбрасывает строки, а повторяет отправку со всё более длинными паузами.', 'The agent sends a batch of lines, but Loki answers 503 and does not accept it. The agent does not throw the lines away but retries with longer and longer pauses.'),
+          focus: ['agent', 'e-push'],
+          reveal: ['index', 'e-push'],
+          tokens: [{ edge: 'e-push', label: bi('пачка строк', 'batch of lines') }],
+          say: { agent: bi('Агент получает от Loki ответ 503 и откладывает отправку.', 'The agent gets 503 from Loki and puts the sending off.') },
+          states: { agent: 'warn', index: 'err', 'e-push': 'err' },
+          metrics: m,
         },
-      });
+        {
+          id: 'hold',
+          label: bi('ожидание', 'waiting'),
+          caption: bi('Пока Loki не работает, агент помнит, до какого места дочитал файл. Строки пропадут, только если среда контейнеров успеет заменить файл новым раньше, чем Loki снова начнёт принимать пачки.', 'While Loki is down, the agent remembers how far it has read the file. The lines are lost only if the container runtime replaces the file with a new one before Loki accepts batches again.'),
+          focus: ['agent'],
+          say: { agent: bi('Агент держит своё место в файле и ждёт, когда Loki заработает.', 'The agent holds its place in the file and waits for Loki to work again.') },
+          metrics: m,
+          broken: {
+            at: 'e-push',
+            message: 'level=warn component=loki.write msg="error sending batch, will retry" status=503 error="server returned HTTP status 503 Service Unavailable (503)"',
+            caption: bi('на отправке строк в Loki. Узнают такую поломку по предупреждениям в журнале самого агента и по провалу на графике числа строк. О провале должен сообщать отдельный алерт на конвейер журналов, иначе дыру обнаружат в день инцидента, когда журнал понадобится.', 'at sending lines to Loki. You recognise this break by the warnings in the agent’s own log and by a gap in the line-count graph. A separate alert on the log pipeline should report the gap; otherwise it is found on the day of an incident, when the log is needed.'),
+          },
+        },
+      );
       return steps;
     }
     steps.push(
@@ -202,12 +220,12 @@ export const logModel = defineModel<LogP>({
         id: 'push',
         label: bi('индекс', 'index'),
         caption: p.userLabel
-          ? fb(bi('Loki записывает в индекс набор меток строки. Каждый пользователь дал свой набор меток, а значит, и свой поток, и потоков уже {s}. Индекс разбух в двадцать тысяч раз, хотя строк не прибавилось ни одной.', 'Loki writes the line’s label set into the index. Every user gave a label set of their own, and so a stream of their own: there are {s} streams already. The index has swelled twenty thousand times, though not a single line was added.'), { s: n.streams })
+          ? fb(bi('Loki записывает в индекс набор меток строки. Каждый пользователь даёт свой набор меток, а значит, и свой поток, и потоков уже {s}. Индекс разбух в двадцать тысяч раз, хотя строк не прибавилось ни одной.', 'Loki writes the line’s label set into the index. Every user now gives a label set and so a stream of their own, and there are {s} streams already. The index grew twenty thousand times, though not one line was added.'), { s: n.streams })
           : fb(bi('Агент отправляет пачку строк в Loki. Loki записывает в индекс только наборы меток, и таких наборов, то есть потоков, у сервиса api всего {s}. Индекс маленький, поэтому выбрать нужные потоки можно быстро.', 'The agent sends a batch of lines to Loki. Loki writes only the label sets into the index, and the api service has just {s} such sets, that is, streams. The index is small, so the right streams can be selected quickly.'), { s: n.streams }),
         focus: ['e-push', 'index'],
         reveal: ['index', 'e-push'],
         tokens: [{ edge: 'e-push', label: bi('пачка строк', 'batch of lines') }],
-        say: { index: fb(bi('Loki записывает в индекс только метки, и потоков в нём сейчас {s}.', 'Loki writes only the labels into the index, and it now holds {s} streams.'), { s: n.streams }) },
+        say: { index: fb(bi('Loki записывает в индекс метки, и потоков в нём сейчас {s}.', 'Loki writes the labels into the index, which now holds {s} streams.'), { s: n.streams }) },
         states: { index: p.userLabel ? 'warn' : 'ok', agent: 'ok' },
         values: { index: `${n.streams} streams` },
         fill: { index: p.userLabel ? 1 : 0.15 },
@@ -217,12 +235,12 @@ export const logModel = defineModel<LogP>({
         id: 'store',
         label: bi('куски', 'chunks'),
         caption: p.userLabel
-          ? bi('Сами строки Loki сжимает и складывает кусками в хранилище, отдельно для каждого потока. Но теперь в каждом потоке по нескольку строк, и куски получаются крошечными. Хранить такие куски дорого, а запросу придётся открывать тысячи кусков вместо нескольких.', 'Loki compresses the lines themselves and stores them in chunks, separately for each stream. But now each stream holds a few lines, and the chunks come out tiny. Such chunks are expensive to keep, and a query has to open thousands of chunks instead of a few.')
+          ? bi('Сами строки Loki сжимает и складывает кусками в хранилище, отдельно для каждого потока. Теперь в каждом потоке всего по нескольку строк, поэтому куски получаются крошечными, и запросу придётся открывать тысячи кусков вместо нескольких.', 'Loki compresses the lines themselves and stores them in chunks, separately for each stream. Now each stream holds just a few lines, so the chunks come out tiny, and a query has to open thousands of chunks instead of a few.')
           : fb(bi('Сами строки Loki сжимает и складывает кусками в хранилище, без индекса по содержимому. При {r} строках в секунду за сутки набирается около {mb} строк. Хранить их дёшево, но найти слово в тексте можно только перебором.', 'Loki compresses the lines themselves and stores them in chunks, with no index on their content. At {r} lines per second about {mb} MB of lines pile up per day. They are cheap to keep, but a word in the text can only be found by scanning.'), { r: p.rate, mb: volume(n.mbDay) }),
         focus: ['e-store', 'chunks'],
         reveal: ['chunks', 'e-store'],
         tokens: [{ edge: 'e-store', label: 'gzip' }],
-        say: { chunks: p.userLabel ? bi('Строки раскладываются по тысячам крошечных кусков, по одному на пользователя.', 'The lines are spread over thousands of tiny chunks, one per user.') : fb(bi('Loki сжимает строки и складывает их кусками в хранилище, где за сутки набирается около {mb}.', 'Loki compresses the lines and stores them in chunks, where about {mb} MB pile up a day.'), { mb: volume(n.mbDay) }) },
+        say: { chunks: p.userLabel ? bi('Строки раскладываются по тысячам крошечных кусков.', 'The lines are spread over thousands of tiny chunks.') : fb(bi('За сутки в хранилище набирается около {mb} строк.', 'About {mb} MB of lines pile up in storage per day.'), { mb: volume(n.mbDay) }) },
         states: { chunks: p.userLabel ? 'warn' : 'on' },
         fill: { chunks: Math.min(1, p.rate / 2000) },
         metrics: m,
@@ -242,12 +260,12 @@ export const logModel = defineModel<LogP>({
         id: 'scan',
         label: bi('фильтр', 'filter'),
         caption: json
-          ? bi('Дальше Loki перебирает строки выбранных потоков. Шаг `| json` разбирает каждую строку на поля, а шаг `| status >= 500` сравнивает код ответа как число. Запрос находит все ответы с ошибкой, и только их, как бы ни менялся текст сообщения.', 'Next Loki scans the lines of the selected streams. The | json step parses every line into fields, and the | status >= 500 compares the status as a number. Every error answer is found, and only those, however the message text changes.')
-          : bi('Дальше Loki перебирает строки выбранных потоков. Поля status в свободном тексте нет, поэтому код приходится выискивать регулярным выражением |~ "ERROR .* \\(5\\d\\d\\)". Стоит разработчику поменять текст сообщения, и запрос перестанет находить ошибки, а никто об этом не узнает.', 'Next Loki scans the lines of the selected streams. Free text has no status field, so the code has to be fished out with the regular expression |~ "ERROR .* \\(5\\d\\d\\)". If a developer changes the message text, the query stops finding errors without a word.'),
+          ? bi('Дальше Loki перебирает строки выбранных потоков. Шаг `| json` разбирает каждую строку на поля, а шаг `| status >= 500` сравнивает код ответа как число. Поэтому запрос найдёт все ответы с ошибкой, как бы ни менялся текст сообщения.', 'Next Loki scans the lines of the selected streams. The `| json` step parses every line into fields, and the `| status >= 500` step compares the status as a number. So the query finds every error answer, however the message text changes.')
+          : bi('Loki перебирает строки выбранных потоков, но поля status в свободном тексте нет, поэтому код приходится выискивать регулярным выражением `|~ "ERROR .* \\(5\\d\\d\\)"`. Если разработчик поменяет текст сообщения, запрос молча перестанет находить ошибки.', 'Loki scans the selected streams, but free text has no status field, so the code has to be fished out with the regular expression `|~ "ERROR .* \\(5\\d\\d\\)"`. If a developer changes the message text, the query silently stops finding errors.'),
         focus: ['query', 'e-scan'],
         reveal: ['e-scan'],
         tokens: [{ edge: 'e-scan', label: json ? '| json | status >= 500' : '|~ "ERROR …(5\\d\\d)"' }],
-        say: { query: json ? bi('Запрос разбирает строки на поля и оставляет те, где status не меньше 500.', 'The query parses lines into fields and keeps those where status is at least 500.') : bi('Запрос ищет код ответа в тексте регулярным выражением и надеется, что формат не менялся.', 'The query looks for the status in the text with a regular expression and hopes the format has not changed.') },
+        say: { query: json ? bi('Запрос оставляет строки, где status не меньше 500.', 'The query keeps the lines where status is at least 500.') : bi('Запрос выискивает код ответа в тексте строки.', 'The query fishes the status out of the line text.') },
         states: { chunks: json ? 'ok' : 'warn' },
         metrics: m,
       },
@@ -430,35 +448,45 @@ export const traceModel = defineModel<TraceP>({
     steps.push({
       id: 'root',
       label: 'frontend',
-      caption: bi('Пользователь нажимает «Оформить заказ», и запрос POST /checkout приходит во frontend. Библиотека OpenTelemetry во frontend создаёт случайный идентификатор трейса `4bf92f…` и открывает первый спан, корневой. Он будет длиться, пока заказ не закончится.', 'The user presses “Place order”, and the POST /checkout request reaches frontend. The OpenTelemetry library in frontend creates a random trace ID 4bf92f… and opens the first, root span. It will last until the order is finished.'),
+      caption: bi('Пользователь нажимает «Оформить заказ», и запрос POST /checkout приходит во frontend. Библиотека OpenTelemetry во frontend создаёт случайный идентификатор трейса `4bf92f…` и открывает первый, корневой спан, который продлится до конца заказа.', 'The user presses “Place order”, and the POST /checkout request reaches frontend. The OpenTelemetry library in frontend creates a random trace ID `4bf92f…` and opens the first, root span, which lasts until the order is finished.'),
       focus: ['front'],
-      say: { front: bi('frontend получает заказ, создаёт trace_id `4bf92f…` и открывает корневой спан.', 'frontend gets the order, creates the trace_id 4bf92f… and opens the root span.') },
+      say: { front: bi('frontend открывает корневой спан трейса `4bf92f…`.', 'frontend opens the root span of trace `4bf92f…`.') },
       states: hide(TRACE_ALL, 'front'),
       values: { front: 'trace 4bf92f…' },
       metrics: m(),
     });
     ms += 3;
-    steps.push({
-      id: 'call',
-      label: 'traceparent',
-      caption: split
-        ? bi('frontend вызывает api и передаёт заголовок traceparent, но api его не читает, потому что библиотеку забыли подключить к его HTTP-серверу. Поэтому api считает, что запрос пришёл ниоткуда, и начинает собственный трейс с новым идентификатором `9d1e07…`.', 'frontend calls api and passes the traceparent header, but api does not read it, because the library was not plugged into its HTTP server. So api thinks the request came from nowhere and starts its own trace with a new ID 9d1e07….')
-        : bi('frontend вызывает api и добавляет к запросу заголовок traceparent, в котором записаны тот же trace_id и номер своего спана. api читает заголовок, оставляет trace_id прежним и записывает спан frontend родителем своего спана. Так операции двух сервисов попадают в один трейс.', 'frontend calls api and adds the traceparent header to the request, which holds the same trace_id and the number of its own span. api reads the header, keeps the trace_id and records the frontend span as the parent of its own. That is how the operations of two services end up in one trace.'),
-      focus: ['e-call', 'api'],
-      reveal: ['api', 'e-call'],
-      tokens: [{ edge: 'e-call', label: '00-4bf92f…-01' }],
-      say: { api: split ? bi('api не читает заголовок и начинает свой трейс `9d1e07…`.', 'api does not read the header and starts its own trace 9d1e07….') : bi('api читает traceparent и продолжает трейс `4bf92f…` своим спаном.', 'api reads traceparent and continues trace 4bf92f… with its own span.') },
-      states: { api: split ? 'warn' : 'on', 'e-call': split ? 'err' : 'on' },
-      values: { api: split ? 'trace 9d1e07… (new)' : 'trace 4bf92f…' },
-      metrics: m(),
-    });
+    steps.push(
+      {
+        id: 'call',
+        label: 'traceparent',
+        caption: bi('frontend вызывает api и добавляет к запросу заголовок traceparent. В заголовке записаны тот же trace_id `4bf92f…` и номер спана frontend, из которого сделан вызов.', 'frontend calls api and adds the traceparent header to the request. The header holds the same trace_id `4bf92f…` and the number of the frontend span the call is made from.'),
+        focus: ['front', 'e-call'],
+        reveal: ['api', 'e-call'],
+        tokens: [{ edge: 'e-call', label: '00-4bf92f…-01' }],
+        say: { front: bi('frontend передаёт в заголовке traceparent свой trace_id и номер своего спана.', 'frontend passes its trace_id and its span number in the traceparent header.') },
+        metrics: m(),
+      },
+      {
+        id: 'parent',
+        label: bi('спан api', 'api span'),
+        caption: split
+          ? bi('api заголовок не читает, потому что библиотеку OpenTelemetry забыли подключить к его HTTP-серверу. Поэтому api считает, что запрос пришёл ниоткуда, и начинает собственный трейс с новым идентификатором `9d1e07…`.', 'api does not read the header, because the OpenTelemetry library was not plugged into its HTTP server. So api thinks the request came from nowhere and starts its own trace with a new ID `9d1e07…`.')
+          : bi('api читает заголовок, оставляет trace_id прежним и записывает спан frontend родителем своего спана. Так операции двух сервисов попадают в один трейс.', 'api reads the header, keeps the trace_id and records the frontend span as the parent of its own. That is how the operations of two services end up in one trace.'),
+        focus: ['api'],
+        say: { api: split ? bi('api не читает заголовок и начинает свой трейс `9d1e07…`.', 'api does not read the header and starts its own trace `9d1e07…`.') : bi('api читает traceparent и продолжает трейс `4bf92f…` своим спаном.', 'api reads traceparent and continues trace `4bf92f…` with its own span.') },
+        states: { api: split ? 'warn' : 'on', 'e-call': split ? 'err' : 'on' },
+        values: { api: split ? 'trace 9d1e07… (new)' : 'trace 4bf92f…' },
+        metrics: m(),
+      },
+    );
     const wait = p.queries > 8 ? (p.queries - 8) * 60 : 1;
     ms += wait;
     steps.push({
       id: 'pool',
       label: 'db.pool.acquire',
       caption: wait > 1
-        ? fb(bi('Чтобы обратиться к базе, api берёт соединение из пула. Но каждый заказ теперь делает {q} запросов и держит соединение дольше, и все 20 соединений пула заняты другими заказами. Спан db.pool.acquire ждёт свободного соединения {w} мс, и на водопаде это самая длинная полоска.', 'To go to the database, api takes a connection from the pool. But every order now makes {q} queries and holds its connection longer, and all 20 pool connections are busy with other orders. The db.pool.acquire span waits {w} ms for a free connection, and on the waterfall it is the longest bar.'), { q: p.queries, w: wait })
+        ? fb(bi('Каждый заказ теперь делает {q} запросов к базе и дольше держит соединение из пула, поэтому все 20 соединений заняты другими заказами. Спан db.pool.acquire ждёт свободного соединения {w} мс, и на водопаде это самая длинная полоска.', 'Every order now makes {q} database queries and holds its pool connection longer, so all 20 connections are busy with other orders. The db.pool.acquire span waits {w} ms for a free connection and is the longest bar on the waterfall.'), { q: p.queries, w: wait })
         : bi('Чтобы обратиться к базе, api берёт соединение из пула. Свободные соединения есть, и спан db.pool.acquire длится меньше миллисекунды.', 'To go to the database, api takes a connection from the pool. There are free connections, and the db.pool.acquire span takes less than a millisecond.'),
       focus: ['api'],
       say: { api: wait > 1 ? fb(bi('api ждёт свободное соединение с базой уже {w} мс.', 'api has been waiting {w} ms for a free database connection.'), { w: wait }) : bi('api сразу получает свободное соединение из пула.', 'api gets a free connection from the pool at once.') },
@@ -471,12 +499,12 @@ export const traceModel = defineModel<TraceP>({
       id: 'sql',
       label: `SELECT ×${p.queries}`,
       caption: p.queries > 1
-        ? fb(bi('api отправляет в базу {q} одинаковых запросов SELECT products, по одному на каждый товар корзины, и каждый длится {d} мс. На водопаде они выстраиваются лесенкой из коротких полосок, а вместе занимают {t} мс. Так выглядит ошибка, когда программа забыла объединить запросы в один.', 'api sends {q} identical SELECT products queries to the database, one per cart item, each taking {d} ms. On the waterfall they line up as a staircase of short bars and together take {t} ms. That is what it looks like when a program forgot to merge the queries into one.'), { q: p.queries, d: p.dbMs, t: p.queries * p.dbMs })
+        ? fb(bi('api отправляет в базу {q} одинаковых запросов SELECT products, по одному на товар корзины и по {d} мс каждый. На водопаде они выстраиваются лесенкой и вместе занимают {t} мс. Так выглядит программа, которая не объединила запросы в один.', 'api sends {q} identical SELECT products queries to the database, one per cart item and {d} ms each. On the waterfall they line up as a staircase and together take {t} ms. This is what a program does when it forgets to merge queries into one.'), { q: p.queries, d: p.dbMs, t: p.queries * p.dbMs })
         : fb(bi('api отправляет в базу один запрос, который сразу достаёт все товары корзины. Он длится {d} мс.', 'api sends the database one query that fetches every cart item at once. It takes {d} ms.'), { d: p.dbMs }),
       focus: ['e-sql', 'db'],
       reveal: ['db', 'e-sql'],
       tokens: [{ edge: 'e-sql', label: `SELECT products ×${p.queries}` }],
-      say: { db: p.queries > 1 ? fb(bi('База выполняет {q} одинаковых запросов, по {d} мс каждый.', 'The database runs {q} identical queries, {d} ms each.'), { q: p.queries, d: p.dbMs }) : fb(bi('База выполняет один запрос за {d} мс.', 'The database runs one query in {d} ms.'), { d: p.dbMs }) },
+      say: { db: p.queries > 1 ? fb(bi('База выполняет {q} одинаковых запросов один за другим.', 'The database runs {q} identical queries in a row.'), { q: p.queries }) : fb(bi('База выполняет один запрос за {d} мс.', 'The database runs one query in {d} ms.'), { d: p.dbMs }) },
       states: { db: p.queries > 8 ? 'warn' : 'ok' },
       values: { db: `SELECT products ×${p.queries}` },
       metrics: m(),
@@ -509,11 +537,11 @@ export const traceModel = defineModel<TraceP>({
       steps.push({
         id: 'lost',
         label: bi('спаны пропали', 'spans lost'),
-        caption: bi('Библиотека OpenTelemetry в api пытается отправить пачку спанов в Collector и получает отказ в соединении. Повторив попытку несколько раз, она выбрасывает пачку. Пользователи этого не замечают, потому что спаны отправляются отдельно от заказа и уже после ответа.', 'The OpenTelemetry library in api tries to send a batch of spans to the Collector and gets connection refused. After a few retries it drops the batch. Users notice nothing, because spans are sent separately from the order and after the answer.'),
+        caption: bi('Библиотека OpenTelemetry в api отправляет пачку спанов в Collector, получает отказ в соединении и после нескольких попыток выбрасывает пачку. Пользователи этого не замечают, потому что спаны уходят отдельно от заказа и уже после ответа.', 'The OpenTelemetry library in api sends a batch of spans to the Collector, gets connection refused and drops the batch after a few retries. Users notice nothing, because spans leave separately from the order and after the answer.'),
         focus: ['api', 'e-otlp-a'],
         reveal: ['coll', 'e-otlp-f', 'e-otlp-a'],
         tokens: [{ edge: 'e-otlp-a', label: fb(bi('{s} спанов', '{s} spans'), { s: p.queries + 2 }) }],
-        say: { api: bi('api не может отправить спаны в Collector и после нескольких попыток выбрасывает их.', 'api cannot send its spans to the Collector and drops them after a few attempts.') },
+        say: { api: bi('api не может отправить спаны и выбрасывает их.', 'api cannot send its spans and drops them.') },
         states: { coll: 'err', 'e-otlp-a': 'err', 'e-otlp-f': 'err' },
         metrics: m(),
         broken: {
@@ -547,9 +575,7 @@ export const traceModel = defineModel<TraceP>({
           ? bi('Collector сохраняет каждый трейс. В хранилище видно всё, но хранить трейс на каждый заказ дорого, и на нагруженном сервисе так почти не делают.', 'The Collector keeps every trace. Everything is visible, but keeping a trace of every order is expensive, and on a busy service this is rarely done.')
           : p.sampling === '10'
             ? bi('Ещё в начале запроса библиотека решила записывать каждый десятый трейс. В тот момент никто не знал, будет ли заказ медленным, поэтому девять из десяти медленных заказов останутся без трейса.', 'At the very start of the request the library decided to record every tenth trace. At that moment nobody knew whether the order would be slow, so nine out of ten slow orders are left without a trace.')
-            : n.total > SLOW_MS
-              ? fb(bi('Collector дожидается конца трейса и только потом решает, что сохранить. Он оставляет все ошибки и все заказы дольше одной секунды, а из остальных только один из ста. Сейчас каждый заказ идёт {t} мс, то есть медленными оказываются все заказы, поэтому в хранилище попадают все {k} трейсов из 1000.', 'The Collector waits for the trace to end and only then decides what to keep. It keeps every error and every order longer than one second, and only one in a hundred of the rest. Now every order takes {t} ms, so all of them are slow, and all {k} traces out of 1000 reach the store.'), { k: n.kept, t: n.total })
-              : fb(bi('Collector дожидается конца трейса и только потом решает, что сохранить. Он оставляет все ошибки и все заказы дольше одной секунды, а из остальных только один из ста. Из 1000 трейсов в хранилище попадает {k}, и среди них все те, что нужны для разбора.', 'The Collector waits for the trace to end and only then decides what to keep. It keeps every error and every order longer than one second, and only one in a hundred of the rest. Out of 1000 traces {k} reach the store, and among them are all the ones an investigation needs.'), { k: n.kept }),
+            : bi('Collector дожидается конца трейса и только потом решает, что сохранить. Он оставляет все ошибки и все заказы дольше одной секунды, а из остальных заказов только один из ста.', 'The Collector waits for the trace to end and only then decides what to keep. It keeps every error and every order longer than one second, and only one in a hundred of the other orders.'),
       focus: ['coll', 'e-export'],
       reveal: ['tempo', 'e-export'],
       tokens: [{ edge: 'e-export', label: fb(bi('{k} из 1000', '{k} of 1000'), { k: n.kept }) }],
@@ -558,13 +584,24 @@ export const traceModel = defineModel<TraceP>({
       values: { tempo: split ? '2 traces / order' : '1 trace / order' },
       metrics: m(),
     });
+    if (p.sampling === 'errors')
+      steps.push({
+        id: 'kept',
+        label: bi('сохранено', 'kept'),
+        caption: n.total > SLOW_MS
+          ? fb(bi('Сейчас каждый заказ идёт {t} мс, то есть медленными оказываются все заказы. Поэтому в хранилище попадают все {k} трейсов из 1000.', 'Now every order takes {t} ms, so all of the orders are slow. That is why all {k} traces out of 1000 reach the store.'), { k: n.kept, t: n.total })
+          : fb(bi('Из 1000 трейсов в хранилище попадает {k}, и среди них все те, что нужны для разбора ошибок и медленных заказов.', 'Out of 1000 traces {k} reach the store, and among them are all the ones needed to investigate errors and slow orders.'), { k: n.kept }),
+        focus: ['tempo'],
+        say: { tempo: fb(bi('Хранилище получает {k} из 1000 трейсов.', 'The store receives {k} of 1000 traces.'), { k: n.kept }) },
+        metrics: m(),
+      });
     if (split)
       steps.push({
         id: 'split',
         label: bi('два трейса', 'two traces'),
-        caption: bi('В хранилище лежат два трейса одного заказа: короткий трейс frontend без единой операции внутри и отдельный трейс api. Водопада, который показывал бы заказ целиком, больше нет, и понять, где ушло время, по трейсу frontend нельзя.', 'The store holds two traces of one order: a short frontend trace with no operations inside and a separate api trace. There is no waterfall showing the whole order any more, and the frontend trace cannot tell you where the time went.'),
+        caption: bi('В хранилище лежат два трейса одного заказа: короткий трейс frontend без операций внутри и отдельный трейс api. Водопада всего заказа больше нет, и по трейсу frontend не понять, где ушло время.', 'The store holds two traces of one order: a short frontend trace with no operations inside and a separate api trace. There is no waterfall of the whole order, and the frontend trace cannot tell where the time went.'),
         focus: ['tempo'],
-        say: { tempo: bi('В хранилище лежат два трейса одного заказа: `4bf92f…` от frontend и `9d1e07…` от api.', 'The store holds two traces of one order: 4bf92f… from frontend and 9d1e07… from api.') },
+        say: { tempo: bi('В хранилище лежат трейс `4bf92f…` от frontend и трейс `9d1e07…` от api.', 'The store holds trace `4bf92f…` from frontend and trace `9d1e07…` from api.') },
         states: { tempo: 'err' },
         metrics: m(),
         broken: {
@@ -733,13 +770,13 @@ export const cgModel = defineModel<CgP>({
         focus: ['proc'],
         say: { proc: fb(bi('Процесс api работает и занимает {u} Mi памяти.', 'The api process runs and takes {u} Mi of memory.'), { u: used }) },
         states: hide(CG_ALL, 'proc'),
-        values: { proc: `RSS ${used} Mi` },
+        values: { proc: `RSS ${used} Mi` },
         metrics: m,
       },
       {
         id: 'acct',
         label: 'cgroup',
-        caption: fb(bi('Ядро узла учитывает каждую страницу памяти и каждый отрезок процессорного времени процесса в cgroup его контейнера. В файле memory.current сейчас {u} Mi при лимите memory.max {l} Mi, а в cpu.max записано «{q} 100000», что означает {q} микросекунд процессора на каждые 100 000 микросекунд времени, то есть {c}.', 'The node kernel accounts every page of memory and every slice of CPU time of the process in its container’s cgroup. memory.current now says {u} Mi against the memory.max limit of {l} Mi, and cpu.max says “{q} 100000”, which means {q} microseconds of CPU for every 100,000, that is {c} cores.'), { u: used, l: p.memLimit, q: quota, c: cores(lim) }),
+        caption: fb(bi('Ядро узла учитывает каждую страницу памяти и каждый отрезок процессорного времени процесса в cgroup его контейнера. В файле memory.current сейчас {u} Mi при лимите memory.max {l} Mi.', 'The node kernel accounts every page of memory and every slice of CPU time of the process in its container’s cgroup. memory.current now says {u} Mi against the memory.max limit of {l} Mi.'), { u: used, l: p.memLimit }),
         focus: ['e-acct', 'cg'],
         reveal: ['cg', 'e-acct'],
         tokens: [{ edge: 'e-acct', label: bi('память и время CPU', 'memory and CPU time') }],
@@ -748,28 +785,57 @@ export const cgModel = defineModel<CgP>({
         values: { cg: `memory.max ${p.memLimit}Mi · cpu.max ${quota} 100000` },
         metrics: m,
       },
+      {
+        id: 'quota',
+        label: 'cpu.max',
+        caption: fb(bi('Лимит процессора записан в файле cpu.max как «{q} 100000». Это значит, что процесс может тратить {q} микросекунд процессорного времени на каждые 100 000 микросекунд, то есть {c}.', 'The CPU limit is written in cpu.max as “{q} 100000”. This means the process may spend {q} microseconds of CPU time in every 100,000 microseconds, that is {c} cores.'), { q: quota, c: cores(lim) }),
+        focus: ['cg'],
+        say: { cg: fb(bi('Квота процессора в файле cpu.max составляет {c}.', 'The CPU quota in cpu.max comes to {c} cores.'), { c: cores(lim) }) },
+        metrics: m,
+      },
     ];
     if (n.oom)
-      steps.push({
-        id: 'oom',
-        label: 'OOMKilled',
-        caption: fb(bi('Процесс просит {u} Mi памяти, а лимит контейнера {l} Mi. Освободить ядру нечего, поэтому оно завершает процесс сигналом KILL и записывает в memory.events строку oom_kill 1. Kubelet видит, что контейнер завершился, и запускает его заново, а корзины пользователей, которые хранились в памяти процесса, пропадают.', 'The process asks for {u} Mi of memory, and the container limit is {l} Mi. The kernel has nothing to free, so it ends the process with the KILL signal and writes oom_kill 1 into memory.events. The kubelet sees the container has ended and starts it again, and the users’ carts kept in the process memory are gone.'), { u: p.memUse, l: p.memLimit }),
-        focus: ['cg', 'proc'],
-        say: { cg: fb(bi('Процесс вышел за лимит {l} Mi, и ядро завершает его (OOM kill).', 'The process went over the {l} Mi limit: the kernel ends it (OOM kill).'), { l: p.memLimit }) },
-        states: { proc: 'err', cg: 'err' },
-        values: { proc: 'OOMKilled · restarts 1' },
-        metrics: m,
-      });
+      steps.push(
+        {
+          id: 'oom',
+          label: 'OOMKilled',
+          caption: fb(bi('Процесс просит {u} Mi памяти, а лимит контейнера {l} Mi. Освободить ядру нечего, поэтому оно завершает процесс сигналом KILL и записывает в memory.events строку oom_kill 1.', 'The process asks for {u} Mi of memory, and the container limit is {l} Mi. The kernel has nothing to free, so it ends the process with the KILL signal and writes oom_kill 1 into memory.events.'), { u: p.memUse, l: p.memLimit }),
+          focus: ['cg', 'proc'],
+          say: { cg: fb(bi('Процесс вышел за лимит {l} Mi, и ядро завершает его (OOM kill).', 'The process went over the {l} Mi limit, so the kernel ends it (OOM kill).'), { l: p.memLimit }) },
+          states: { proc: 'err', cg: 'err' },
+          metrics: m,
+        },
+        {
+          id: 'restart',
+          label: bi('перезапуск', 'restart'),
+          caption: bi('Kubelet видит, что контейнер завершился, и запускает его заново. Корзины пользователей, которые хранились в памяти процесса, при этом пропадают.', 'The kubelet sees that the container has ended and starts it again. The users’ carts kept in the process memory are lost on the way.'),
+          focus: ['proc'],
+          say: { proc: bi('Контейнер api запущен заново, и счётчик его перезапусков вырос до 1.', 'The api container is started again, and its restart count has grown to 1.') },
+          values: { proc: 'OOMKilled · restarts 1' },
+          metrics: m,
+        },
+      );
     if (n.throttle > 0.1)
-      steps.push({
-        id: 'throttle',
-        label: bi('троттлинг', 'throttling'),
-        caption: fb(bi('Процессу нужно {need}, а квота контейнера равна {lim}. В каждом периоде длиной 100 мс процесс быстро расходует свою квоту и до конца периода ждёт. Так проходит {pct} % периодов. Счётчик nr_throttled в cpu.stat растёт, ответы становятся медленнее, а график потребления процессора спокойно показывает ровно {lim}.', 'The process needs {need} cores, and the container quota is {lim}. In every 100 ms period the process quickly uses up its quota and waits until the period ends. {pct} % of periods go like this. The nr_throttled counter in cpu.stat grows, answers get slower, and the CPU usage graph calmly shows exactly {lim} cores.'), { need: cores(Number(p.cpuNeed)), lim: cores(lim), pct: Math.round(n.throttle * 100) }),
-        focus: ['cg'],
-        say: { cg: fb(bi('Ядро притормаживает процесс, потому что в {pct} % периодов по 100 мс квота кончается раньше времени.', 'The kernel holds the process back, because in {pct} % of the 100 ms periods the quota runs out early.'), { pct: Math.round(n.throttle * 100) }) },
-        states: { cg: 'warn' },
-        metrics: m,
-      });
+      steps.push(
+        {
+          id: 'throttle',
+          label: bi('троттлинг', 'throttling'),
+          caption: fb(bi('Процессу нужно {need}, а квота контейнера составляет {lim}. В каждом периоде длиной 100 мс процесс быстро расходует свою квоту и до конца периода ждёт. Так проходит {pct} % периодов.', 'The process needs {need} cores, and the container quota is {lim}. In every 100 ms period the process quickly uses up its quota and waits until the period ends. {pct} % of periods go like this.'), { need: cores(Number(p.cpuNeed)), lim: cores(lim), pct: Math.round(n.throttle * 100) }),
+          focus: ['cg'],
+          say: { cg: bi('Ядро притормаживает процесс, когда квота в периоде кончается раньше времени.', 'The kernel holds the process back when the quota of a period runs out early.') },
+          states: { cg: 'warn' },
+          metrics: m,
+        },
+        {
+          id: 'slow',
+          label: bi('медленные ответы', 'slow answers'),
+          caption: fb(bi('Ответы процесса становятся медленнее, а график потребления процессора спокойно показывает ровно {lim}. Поэтому по одному этому графику троттлинг не заметить, и смотреть нужно на счётчики в cpu.stat.', 'The process answers more slowly, while the CPU usage graph calmly shows exactly {lim} cores. So this graph alone does not reveal throttling, and you need to look at the counters in cpu.stat.'), { lim: cores(lim) }),
+          focus: ['cg'],
+          say: { cg: fb(bi('Счётчик nr_throttled в файле cpu.stat растёт и показывает {pct} % периодов с троттлингом.', 'The nr_throttled counter in cpu.stat grows and shows {pct} % of periods throttled.'), { pct: Math.round(n.throttle * 100) }) },
+          states: { cg: 'warn' },
+          metrics: m,
+        },
+      );
     steps.push({
       id: 'cad',
       label: 'cAdvisor',
@@ -786,8 +852,8 @@ export const cgModel = defineModel<CgP>({
       id: 'spec',
       label: bi('объект пода', 'pod object'),
       caption: n.oom
-        ? fb(bi('Вторым источником сведений служит объект пода в API Kubernetes. В нём записано, сколько контейнеру положено (limits.memory: {l}Mi), а в статусе kubelet уже отметил, что контейнер перезапускался один раз и в последний раз завершился с причиной OOMKilled.', 'The second source is the pod object in the Kubernetes API. It says what the container is entitled to (limits.memory: {l}Mi), and in the status the kubelet has already noted that the container restarted once and last ended with the reason OOMKilled.'), { l: p.memLimit })
-        : fb(bi('Вторым источником сведений служит объект пода в API Kubernetes. В нём записано, сколько контейнеру положено (limits.memory: {l}Mi), а в статусе записаны фаза пода и число перезапусков контейнера. Ни лимитов из манифеста, ни числа перезапусков ядро не знает, потому что эти сведения есть только в API.', 'The second source is the pod object in the Kubernetes API. It says what the container is entitled to (limits.memory: {l}Mi), and the status holds the pod phase and the container’s restart count. The kernel knows neither the limits from the manifest nor the restart count, because this information exists only in the API.'), { l: p.memLimit }),
+        ? fb(bi('Вторым источником сведений служит объект пода в API Kubernetes. В нём записан лимит контейнера (limits.memory: {l}Mi), а в статусе kubelet отметил один перезапуск и причину последнего завершения OOMKilled.', 'The second source is the pod object in the Kubernetes API. It holds the container limit (limits.memory: {l}Mi), and in its status the kubelet has noted one restart and the last termination reason OOMKilled.'), { l: p.memLimit })
+        : fb(bi('Вторым источником сведений служит объект пода в API Kubernetes. В нём записан лимит контейнера (limits.memory: {l}Mi), а в статусе записаны фаза пода и число перезапусков. Ядро этих сведений не знает, потому что они есть только в API.', 'The second source is the pod object in the Kubernetes API. It holds the container limit (limits.memory: {l}Mi), and its status holds the pod phase and the restart count. The kernel knows none of this, because only the API has it.'), { l: p.memLimit }),
       focus: ['spec'],
       reveal: ['spec'],
       say: { spec: n.oom ? bi('В статусе пода записаны restartCount 1 и причина OOMKilled.', 'The pod status holds restartCount 1 and the reason OOMKilled.') : fb(bi('В объекте пода записан лимит {l}Mi и restartCount 0.', 'The pod object holds the {l}Mi limit and restartCount 0.'), { l: p.memLimit }) },
@@ -799,10 +865,10 @@ export const cgModel = defineModel<CgP>({
       steps.push({
         id: 'ksmdown',
         label: bi('источник пропал', 'source gone'),
-        caption: bi('kube-state-metrics остановлен, и в Prometheus нет ни одного ряда kube_*. Вместо нулей в хранилище пусто, поэтому правило на число перезапусков получает пустой результат и молчит точно так же, как молчало бы в здоровом кластере.', 'kube-state-metrics is stopped, and Prometheus has no kube_* series at all. Instead of zeros the store holds nothing, so the restart rule gets an empty result and stays silent exactly as it would in a healthy cluster.'),
+        caption: bi('kube-state-metrics остановлен, и в Prometheus нет ни одного ряда kube_*. Вместо нулей в хранилище пусто, поэтому правило на число перезапусков получает пустой результат и молчит так же, как молчало бы в здоровом кластере.', 'kube-state-metrics is stopped, and Prometheus has no kube_* series at all. Instead of zeros the store holds nothing, so the restart rule gets an empty result and stays silent as it would in a healthy cluster.'),
         focus: ['ksm', 'e-watch'],
         reveal: ['ksm', 'e-watch'],
-        say: { ksm: bi('kube-state-metrics не работает, и ряды kube_* не появляются вовсе.', 'kube-state-metrics is not running, and the kube_* series do not appear at all.') },
+        say: { ksm: bi('kube-state-metrics не работает, и ряды kube_* не появляются.', 'kube-state-metrics is not running, so no kube_* series appear.') },
         states: { ksm: 'err', 'e-watch': 'err' },
         metrics: m,
         broken: {
@@ -831,27 +897,35 @@ export const cgModel = defineModel<CgP>({
       {
         id: 'scrape',
         label: 'scrape',
-        caption: bi('Prometheus по расписанию забирает оба набора рядов: container_* у kubelet каждого узла и kube_* у kube-state-metrics. У рядов из двух источников общие метки namespace, pod и container, поэтому их можно соединить в одном запросе.', 'Prometheus fetches both sets of series on schedule: container_* from every node’s kubelet and kube_* from kube-state-metrics. The series from the two sources share the namespace, pod and container labels, so they can be joined in one query.'),
+        caption: bi('Prometheus забирает оба набора рядов: container_* у kubelet каждого узла и kube_* у kube-state-metrics. У рядов из двух источников общие метки namespace, pod и container, поэтому их можно соединить в одном запросе.', 'Prometheus fetches both sets of series: container_* from every node’s kubelet and kube_* from kube-state-metrics. The series from the two sources share the namespace, pod and container labels, so they can be joined in one query.'),
         focus: ['prom', 'e-s1', 'e-s2'],
         reveal: ['prom', 'e-s1', 'e-s2'],
         tokens: [
           { edge: 'e-s1', reverse: true, label: 'container_*' },
           { edge: 'e-s2', reverse: true, label: 'kube_*' },
         ],
-        say: { prom: bi('Prometheus забирает ряды container_* у kubelet и kube_* у kube-state-metrics.', 'Prometheus fetches container_* from the kubelet and kube_* from kube-state-metrics.') },
+        say: { prom: bi('Prometheus забирает оба набора рядов по расписанию.', 'Prometheus fetches both sets of series on schedule.') },
         states: { prom: 'ok' },
         metrics: m,
       },
       {
         id: 'answer',
         label: 'PromQL',
-        caption: fb(bi('Запрос делит занятую память на лимит и получает {r}, а доля периодов с троттлингом равна {t}. Вместе с числом перезапусков это и есть три вопроса метода USE к контейнеру: насколько занят ресурс, ждёт ли процесс и были ли ошибки.', 'The query divides the memory used by the limit and gets {r}, and the share of throttled periods is {t}. Together with the restart count these are the three USE questions for a container: how busy the resource is, whether the process waits and whether there were errors.'), { r: m.ratio, t: n.throttle }),
+        caption: fb(bi('Запрос делит занятую память на лимит и получает {r}, а доля периодов с троттлингом равна {t}.', 'The query divides the memory used by the limit and gets {r}, and the share of throttled periods is {t}.'), { r: m.ratio, t: n.throttle }),
         focus: ['answer', 'e-q'],
         reveal: ['answer', 'e-q'],
         tokens: [{ edge: 'e-q', label: `ratio ${m.ratio}` }],
         say: { answer: fb(bi('Запрос показывает, что память занята на {r} от лимита, доля периодов с троттлингом равна {t}, а перезапусков было {k}.', 'The query shows that memory is at {r} of the limit, the share of throttled periods is {t}, and there were {k} restarts.'), { r: m.ratio, t: n.throttle, k: m.restarts }) },
         states: { answer: n.oom || n.throttle > 0.1 ? 'warn' : 'ok' },
         values: { answer: `${m.ratio} · ${n.throttle}` },
+        metrics: m,
+      },
+      {
+        id: 'use',
+        label: 'USE',
+        caption: bi('Эти два числа вместе с числом перезапусков отвечают на три вопроса метода USE к контейнеру: насколько занят ресурс, ждёт ли процесс и были ли ошибки.', 'These two numbers together with the restart count answer the three USE questions for a container: how busy the resource is, whether the process waits and whether there were errors.'),
+        focus: ['answer'],
+        say: { answer: bi('По трём числам видно, насколько контейнер близок к своим лимитам.', 'The three numbers show how close the container is to its limits.') },
         metrics: m,
       },
     );
