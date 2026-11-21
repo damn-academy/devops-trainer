@@ -36,7 +36,7 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function wordRe(words: string[]): RegExp | null {
+export function wordRe(words: string[]): RegExp | null {
   const ws = words.map((w) => w.trim()).filter(Boolean);
   if (!ws.length) return null;
   return new RegExp(`(?<![\\p{L}\\p{N}_.-])(?:${ws.map(escapeRe).join('|')})(?![\\p{L}\\p{N}_-])`, 'iu');
