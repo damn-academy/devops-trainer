@@ -196,7 +196,7 @@ export const togetherModel = defineModel<P>({
           tokens: [{ edge: 'e-mailB', label: bi('файл Бориса', 'Boris’s file') }],
           say: { shared: bi('Файл Бориса лёг поверх файла Анны, и её правка пропала.', 'Boris’s file replaced Anna’s; her edit is gone.') },
           states: { shared: 'err', anna: 'warn' },
-          values: { shared: tr('menu.txt · файл Бориса', 'menu.txt · Boris’s'), anna: tr(`${annaLine} (пропала)`, `${annaLine} (lost)`) },
+          values: { shared: tr('menu.txt · файл Бориса', 'menu.txt · Boris’s'), anna: tr('правка Анны пропала из общего меню', 'Anna’s edit is lost from the shared menu') },
           metrics: { review: 0, lost: 1 },
           broken: { at: 'shared', message: 'menu.txt (final).txt, menu.txt (final 2).txt, menu-boris-FINAL.txt', caption: bi('Правка Анны пропала из общей копии. Без программы, которая соединяет правки, побеждает тот, кто сохранил файл последним. Ниже перечислены файлы, которые в жизни скапливаются в такой папке: «окончательный», «окончательный 2», «Бориса, ОКОНЧАТЕЛЬНЫЙ».', 'Anna’s edit vanished from the shared copy. Without a program that joins edits, whoever saved the file last wins. Below are the files that pile up in such a folder in real life: “final”, “final 2”, “Boris’s, FINAL”.') },
         },

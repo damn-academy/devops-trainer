@@ -140,7 +140,7 @@ export const releaseModel = defineModel<P>({
       label: bi('Выпуски кладут на полку без номеров, под именем «последняя»', 'Releases go onto the shelf without numbers, as “latest”'),
       remove: ['e-tag'],
       predict: {
-        prompt: bi('Выпуски кладут на полку без номеров, под именем «последняя». Пользователь пишет: «в последней версии ошибка». Что будет дальше?', 'Releases go onto the shelf as “latest”. A user writes: “the latest version has a bug”. What next?'),
+        prompt: bi('Выпуски кладут на полку без номеров, под именем «последняя». Пользователь сообщает, что в последней версии есть ошибка. Что будет дальше?', 'Releases go onto the shelf as “latest”. A user reports that the latest version has a bug. What happens next?'),
         options: [
           { id: 'lost', text: bi('Непонятно, о какой сборке речь и к какой возвращаться', 'Nobody knows which build is meant or which to go back to') },
           { id: 'fine', text: bi('Всё ясно, потому что последняя версия всегда одна', 'All is clear, because there is always one latest version') },

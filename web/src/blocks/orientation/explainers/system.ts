@@ -36,7 +36,7 @@ export const systemModel = defineModel<P>({
   title: bi('Операционная система между программами и железом', 'The operating system between programs and hardware'),
   summary: bi(
     'Программы не пишут на диск сами и не берут себе память и процессор, а просят об этом операционную систему. Схема показывает три такие просьбы подряд: редактор сохраняет файл, браузер просит память для новой вкладки, а несколько программ делят одно ядро процессора.',
-    'Programs neither write to the disk themselves nor take memory and the processor: they ask the operating system. The diagram shows three such requests: the editor saves a file, the browser asks for memory for a new tab, and several programs share one processor core.',
+    'Programs neither write to the disk themselves nor take memory and the processor: they ask the operating system. The diagram shows a program asking three times in a row: the editor saves a file, the browser asks for memory for a new tab, and several programs share one processor core.',
   ),
   intro: bi(
     'Сейчас на схеме только редактор, в котором вы нажали «Сохранить», и диск. Нажмите «Начать с первого шага», и вы увидите, кто на самом деле записывает файл на диск.',
@@ -45,7 +45,7 @@ export const systemModel = defineModel<P>({
   legend: [
     { mark: 'active', text: bi('часть, которая работает сейчас', 'the part working now') },
     { mark: 'say', text: bi('что она делает', 'what it does') },
-    { mark: 'token', text: bi('просьба программы или ответ системы', 'a program’s request or the system’s answer') },
+    { mark: 'token', text: bi('просьба программы или ответ системы', 'what a program asks for, or the system’s answer') },
     { mark: 'icon:lock', text: bi('операционная система распоряжается железом', 'the operating system: in charge of the hardware') },
     { mark: 'icon:file', text: bi('редактор текста', 'the text editor') },
     { mark: 'icon:browser', text: bi('браузер', 'the browser') },
@@ -161,7 +161,7 @@ export const systemModel = defineModel<P>({
       },
     ],
     edges: [
-      { id: 'e-save', from: 'editor', to: 'os', via: [[150, 168]], label: bi('сохрани notes.txt', 'save notes.txt'), card: card(bi('Редактор просит систему: «запиши вот этот текст в файл notes.txt в папке notes».', 'The editor’s request: “write this text into notes.txt”.'), bi('Просьбу отправляет редактор, когда вы нажимаете «Сохранить».', 'The editor, when you press “Save”.')) },
+      { id: 'e-save', from: 'editor', to: 'os', via: [[150, 168]], label: bi('сохрани notes.txt', 'save notes.txt'), card: card(bi('По этой линии редактор просит систему записать ваш текст в файл notes.txt в папке notes.', 'Along this line the editor asks the system to write your text into the file notes.txt in the notes folder.'), bi('Просьбу отправляет редактор, когда вы нажимаете «Сохранить».', 'The editor sends it when you press “Save”.')) },
       { id: 'e-write', from: 'os', to: 'disk', via: [[150, 232]], label: bi('блоки файла', 'file blocks'), card: card(bi('Система находит на диске свободные блоки, записывает туда текст и запоминает, что эти блоки теперь принадлежат файлу notes.txt.', 'The system finds free blocks, writes the text and remembers they are notes.txt.'), bi('Блоки записывает операционная система.', 'The operating system.'), { see: 'ls -l notes' }) },
       { id: 'e-mem', from: 'browser', to: 'os', via: [[480, 168]], label: bi('дай памяти', 'give me memory'), card: card(bi('Каждая новая вкладка означает, что браузер снова просит систему выделить ему ещё немного памяти.', 'Every new tab means the browser again asks the system for a little more memory.'), bi('Память просит браузер.', 'The browser.')) },
       { id: 'e-alloc', from: 'os', to: 'memory', via: [[480, 232]], label: bi('свой участок', 'its own piece'), card: card(bi('Система выделяет программе отдельный участок памяти. Залезть в чужой участок программа не сможет, потому что система этого не позволит.', 'The system gives the program its own piece of memory and keeps it out of others’.'), bi('Участок выделяет операционная система.', 'The operating system.')) },
@@ -233,8 +233,8 @@ export const systemModel = defineModel<P>({
         id: 'press',
         label: bi('«Сохранить»', '“Save”'),
         caption: bi(
-          'Вы нажали «Сохранить» в редакторе. Чтобы текст пережил выключение, его нужно записать на диск, но редактор не знает, какие места на диске свободны, а какие заняты другими файлами. Этот учёт ведёт операционная система, поэтому редактор не пишет на диск сам, а обращается к ней.',
-          'You pressed “Save”. The text must go to the disk, but the editor does not know which places there are free; the operating system keeps that account, so the editor asks it.',
+          'Вы нажали «Сохранить», и текст нужно записать на диск, чтобы он пережил выключение. Но редактор не знает, какие места на диске свободны, а какие заняты. Этот учёт ведёт операционная система, поэтому редактор обращается к ней.',
+          'You pressed “Save”, and the text must go to the disk to survive a power-off. But the editor does not know which places on the disk are free and which are taken. The operating system keeps that account, so the editor turns to it.',
         ),
         focus: ['editor'],
         say: { editor: bi('Редактору нужно записать файл notes.txt на диск.', 'The editor needs to write notes.txt to the disk.') },
@@ -277,12 +277,12 @@ export const systemModel = defineModel<P>({
     steps.push(
       {
         id: 'ask',
-        label: bi('просьба', 'request'),
-        caption: bi('Редактор просит систему записать текст в файл notes.txt в папке notes. Сам редактор при этом ждёт ответа.', 'The editor hands the system a request: write the text into notes.txt. It waits for the answer.'),
+        label: bi('просьба', 'asking'),
+        caption: bi('Редактор просит систему записать текст в файл notes.txt в папке notes. Сам редактор при этом ждёт ответа.', 'The editor asks the system to write the text into the file notes.txt in the notes folder. Meanwhile the editor itself waits for the answer.'),
         focus: ['e-save', 'os'],
         reveal: ['os', 'e-save'],
         tokens: [{ edge: 'e-save', label: bi('сохрани notes.txt', 'save notes.txt') }],
-        say: { os: bi('Система принимает просьбу редактора сохранить файл notes.txt.', 'The system takes the editor’s request to save notes.txt.') },
+        say: { os: bi('Система принимает просьбу редактора сохранить файл notes.txt.', 'The system takes on the job of saving notes.txt for the editor.') },
         states: { os: 'on' },
         metrics,
       },
@@ -336,25 +336,42 @@ export const systemModel = defineModel<P>({
         caption: turns
           ? fmtb(
               bi(
-                'Процессор сейчас нужен {n}, а у него {c}. Поэтому система даёт каждой программе по {s} мс и переключает процессор на следующую, {w} раз в секунду. Каждой достаётся {sh}% времени процессора, но перерывы так коротки, что музыка не прерывается, а буквы появляются сразу.',
-                '{n} want the processor and it has {c}. The system gives each {s} ms and moves on, {w} times a second; each gets {sh}%.',
+                'Процессор сейчас нужен {n}, а у него {c}. Поэтому система даёт каждой программе поработать {s} мс, а потом переключает процессор на следующую программу.',
+                'Right now {n} need the processor, and it has {c}. So the system lets each program work for {s} ms and then switches the processor to the next program.',
               ),
-              { n: bi(progsDat(p.programs), `${p.programs} programs`), c: bi(cores(c), `${c} core(s)`), s: SLICE_MS, w: n.switches, sh: n.share },
+              { n: bi(progsDat(p.programs), `${p.programs} programs`), c: bi(cores(c), c === 4 ? '4 cores' : '1 core'), s: SLICE_MS },
             )
-          : fmtb(bi('Процессор нужен {n}, а у него {c}. Каждой программе досталось своё ядро, поэтому очереди нет, и никому не приходится ждать.', '{n} programs, {c} cores: each has a core of its own, there is no queue.'), { n: bi(progsDat(p.programs), `${p.programs}`), c: bi(cores(c), `${c}`) }),
+          : fmtb(bi('Процессор нужен {n}, а у него {c}. Каждой программе досталось своё ядро, поэтому очереди нет, и никому не приходится ждать.', '{n} programs need the processor, and it has {c}. Each program has a core of its own, so there is no queue, and nobody has to wait.'), { n: bi(progsDat(p.programs), `${p.programs}`), c: bi(cores(c), c === 4 ? '4 cores' : '1 core') }),
         focus: ['e-turns', 'cpu'],
         reveal: ['cpu', 'e-turns'],
         tokens: [{ edge: 'e-turns', label: turns ? bi(`по ${SLICE_MS} мс каждой`, `${SLICE_MS} ms each`) : bi('по ядру каждой', 'a core each') }],
         say: {
           cpu: turns
-            ? fmtb(bi('Ядро выполняет программы по очереди и переключается между ними {w} раз в секунду.', 'The core runs the programs in turns and switches between them {w} times a second.'), { w: n.switches })
-            : bi('У каждой программы своё ядро, и ждать очереди не нужно.', 'Each program has its own core.'),
+            ? fmtb(bi('Ядро выполняет программы по очереди, по {s} мс каждую.', 'The core runs the programs in turns, {s} ms each.'), { s: SLICE_MS })
+            : bi('У каждой программы своё ядро, и ждать очереди не нужно.', 'Each program has its own core and does not wait in a queue.'),
         },
         states: { cpu: n.share < 30 ? 'warn' : 'on' },
         values: { cpu: tr(`${cores(c)} · по ${n.share} % каждой`, `${c === 4 ? '4 cores' : '1 core'} · ${n.share}% each`) },
         metrics,
       },
     );
+    if (turns)
+      steps.push({
+        id: 'share',
+        label: bi('доля времени', 'share of time'),
+        caption: fmtb(
+          bi(
+            'Система переключает процессор {w} раз в секунду, и каждой программе достаётся {sh} % его времени. Перерывы так коротки, что музыка не прерывается, а буквы появляются сразу, поэтому кажется, что программы работают одновременно.',
+            'The system switches the processor {w} times a second, and each program gets {sh}% of its time. The breaks are so short that the music does not stop and the letters appear at once, so the programs seem to run at the same time.',
+          ),
+          { w: n.switches, sh: n.share },
+        ),
+        focus: ['cpu'],
+        say: { cpu: fmtb(bi('Каждой программе достаётся {sh} % времени ядра.', 'Each program gets {sh}% of the core’s time.'), { sh: n.share }) },
+        states: { cpu: n.share < 30 ? 'warn' : 'on' },
+        values: { cpu: tr(`${cores(c)} · по ${n.share} % каждой`, `${c === 4 ? '4 cores' : '1 core'} · ${n.share}% each`) },
+        metrics,
+      });
     return steps;
   },
   explainDelta(_prev, next, change, a, b): Bi {
