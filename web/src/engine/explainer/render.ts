@@ -786,8 +786,8 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     if (!st) return 3000;
     let chars = t(st.caption).length;
     for (const v of Object.values(st.say ?? {})) chars += t(v).length;
-    const ms = 2200 + chars * 45; // ~45 ms per character is a calm reading pace
-    return Math.min(14000, Math.max(3000, ms)) / speed;
+    const ms = 3000 + chars * 65; // ~65 ms per character: time to read the caption and look at the picture
+    return Math.min(22000, Math.max(4500, ms)) / speed;
   }
   function play() {
     if (pending) return;
