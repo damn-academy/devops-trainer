@@ -128,7 +128,7 @@ export const dispatchModel = defineModel<P>({
         label: bi('нет списка', 'no list'),
         caption: bi('Диспетчер собирается разложить контейнеры, но списка того, что должно работать, нет, потому что о нём помнили только люди, а записать его никто не успел. Поэтому неизвестно, какие контейнеры нужны и сколько их, и работа останавливается, не начавшись.', 'The dispatcher is about to place containers, but there is no list: only people remembered it. Nobody knows which containers are needed and how many, so the work stops before it starts.'),
         focus: [me],
-        say: { [me]: bi('Диспетчер ищет список того, что должно работать, и не находит его.', 'The dispatcher looks for the list and finds none.') },
+        say: { [me]: bi('Диспетчер ищет список и не находит его.', 'The dispatcher looks for the list and finds none.') },
         states: { ...first, list: 'err' },
         metrics: { minutes: 0 },
         broken: { at: 'list', message: 'cat /srv/ops/services.txt: No such file or directory', caption: bi('ещё до первого запуска. Без описания того, что должно работать, диспетчеру не на что опереться: он не знает, какие контейнеры раскладывать и какие восстанавливать после сбоя. Поэтому сначала нужен список, а всё остальное потом.', 'before the first start: without a description of what must run there is nothing to place or restore from; the list comes first.') },
@@ -138,9 +138,9 @@ export const dispatchModel = defineModel<P>({
     s.push({
       id: 'list',
       label: bi('список', 'list'),
-      caption: bi('Всё начинается со списка, в котором записаны пять контейнеров и память, которая нужна каждому из них. Всего контейнерам нужно 5 ГБ, а на трёх серверах есть 12 ГБ, так что место найдётся, если разложить контейнеры с умом.', 'It starts with the list: five containers and the memory each needs, 5 GB in all, while the three servers have 12 GB.'),
+      caption: bi('Всё начинается со списка, в котором записаны пять контейнеров и память для каждого. Всего контейнерам нужно 5 ГБ, а на трёх серверах есть 12 ГБ, так что место найдётся, если разложить их с умом.', 'It starts with the list: five containers and the memory each needs, 5 GB in all, while the three servers have 12 GB.'),
       focus: ['list'],
-      say: { list: bi('В списке два контейнера shop по 512 МБ, два контейнера api по 1 ГБ и один контейнер cache на 2 ГБ.', 'The list: shop ×2 at 512 MB, api ×2 at 1 GB, cache at 2 GB.') },
+      say: { list: bi('В списке два контейнера shop по 512 МБ, два контейнера api по 1 ГБ и контейнер cache на 2 ГБ.', 'The list: shop ×2 at 512 MB, api ×2 at 1 GB, cache at 2 GB.') },
       states: first,
       metrics: minutes(),
     });
@@ -218,11 +218,11 @@ export const dispatchModel = defineModel<P>({
         id: 'update',
         label: bi('версия 2', 'version 2'),
         caption: hand
-          ? bi('Утром выходит версия 2 магазина. Вы заменяете контейнеры shop по одному: запускаете новый, проверяете, что он отвечает, и только потом останавливаете старый. Так сайт всё время работает, но на две замены уходит около 20 минут.', 'Shop v2: you replace the shop containers one at a time, start new, check, stop old. The site keeps working, but it takes about 20 minutes.')
+          ? bi('Утром выходит версия 2 магазина. Вы заменяете контейнеры shop по одному: запускаете новый, проверяете, что он отвечает, и только потом останавливаете старый. Сайт всё время работает, но две замены занимают около 20 минут.', 'Shop v2: you replace the shop containers one at a time, start new, check, stop old. The site keeps working, but it takes about 20 minutes.')
           : bi('Программа заменяет контейнеры shop по одному тем же способом, что и вы, и сама проверяет, что каждый новый контейнер отвечает.', 'The program replaces the shop containers one by one the same way and checks each new one itself.'),
         focus: [me, ...where],
         tokens: where.map((e) => ({ edge: e, label: 'shop v2' })),
-        say: { [me]: bi('Диспетчер запускает новый контейнер shop, проверяет его и только потом останавливает старый.', 'The dispatcher starts a new shop, checks it, then stops the old one.') },
+        say: { [me]: bi('Диспетчер меняет контейнеры shop по одному, не останавливая сайт.', 'The dispatcher replaces the shop containers one by one without stopping the site.') },
         values: { list: 'shop v2 ×2 · api ×2 · cache' },
         metrics: minutes(),
       });
@@ -230,9 +230,9 @@ export const dispatchModel = defineModel<P>({
     s.push({
       id: 'three',
       label: bi('три работы', 'three jobs'),
-      caption: bi('Оглянитесь на пройденные шаги: диспетчер выбирал сервер для каждого контейнера, следил, чтобы серверы работали, и держал перед глазами список. Эти три работы Kubernetes делает вместо вас, и в следующих уроках у каждой появится своё имя.', 'Look back: the dispatcher chose a server for each container, watched the servers and kept the list at hand. Kubernetes does these three jobs for you; each gets a name in the next lessons.'),
+      caption: bi('Оглянитесь на пройденные шаги: диспетчер выбирал сервер для каждого контейнера, следил за серверами и держал перед глазами список. Эти три работы Kubernetes делает вместо вас, и в следующих уроках у каждой появится своё имя.', 'Look back: the dispatcher chose a server for each container, watched the servers and kept the list at hand. Kubernetes does these three jobs for you; each gets a name in the next lessons.'),
       focus: [me],
-      say: { [me]: bi('Диспетчер выбирает место, следит за серверами и помнит список, и так всё время, пока работает сервис.', 'The dispatcher picks a place, watches the servers and remembers the list, for as long as the service runs.') },
+      say: { [me]: bi('Диспетчер выбирает место, следит за серверами и помнит список.', 'The dispatcher picks a place, watches the servers and remembers the list.') },
       metrics: minutes(),
     });
     return s;

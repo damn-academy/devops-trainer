@@ -196,13 +196,22 @@ export const nodeDownModel = defineModel<P>({
     s.push({
       id: 'unknown',
       label: `t = ${p.grace}`,
-      caption: fmt(bi('Lease не продлевали дольше {g} с, и контроллер узлов помечает worker-2: ставит ему состояние Ready=Unknown и запрет unreachable:NoExecute. Под web-b становится неготовым и выпадает из списка, по которому kube-proxy раздаёт запросы, поэтому с этого момента запросы перестают пропадать.', 'The Lease is older than {g} s: the node gets Ready=Unknown and the unreachable taint; web-b leaves the endpoints and requests stop being lost.'), { g: p.grace }),
+      caption: fmt(bi('Lease не продлевали дольше {g} с, поэтому контроллер узлов помечает worker-2 недоступным. Он ставит узлу состояние Ready=Unknown и запрет unreachable:NoExecute, который не даёт подам оставаться там бесконечно.', 'The Lease is older than {g} s, so the node controller marks worker-2 unreachable. It gives the node Ready=Unknown and the unreachable:NoExecute taint, which keeps pods from staying on the node forever.'), { g: p.grace }),
       focus: ['nlc', 'e-check', 'e-taint'],
       reveal: ['nlc', 'api', 'e-check', 'e-taint'],
       tokens: [{ edge: 'e-taint', label: 'Ready=Unknown' }],
       say: { nlc: fmt(bi('Контроллер видит, что Lease не продлевали {g} с, и помечает worker-2 недоступным.', 'The controller sees {g} s of silence and marks worker-2 unreachable.'), { g: p.grace }) },
       states: { w2: 'warn' },
-      values: { w2: 'NotReady · web-b NotReady', lease: renewed(`${p.grace} с`, `${p.grace}s`) },
+      values: { w2: 'NotReady', lease: renewed(`${p.grace} с`, `${p.grace}s`) },
+      metrics: { t: p.grace, lost: n.lost, ready: 3 },
+    });
+    s.push({
+      id: 'unready',
+      label: `t = ${p.grace}`,
+      caption: bi('Раз узел недоступен, под web-b на нём тоже становится неготовым и выпадает из списка, по которому kube-proxy раздаёт запросы. Поэтому с этого момента запросы перестают пропадать, хотя замены у пода ещё нет.', 'Since the node is unreachable, web-b on it becomes not ready too and drops out of the list kube-proxy sends requests to. From now on requests stop being lost, although the pod has no replacement yet.'),
+      focus: ['w2'],
+      say: { w2: bi('Под web-b на недоступном узле больше не получает запросов.', 'web-b on the unreachable node gets no more requests.') },
+      values: { w2: 'NotReady · web-b NotReady' },
       metrics: { t: p.grace, lost: n.lost, ready: 2 },
     });
     const evictAt = p.grace + p.toleration;
@@ -222,11 +231,11 @@ export const nodeDownModel = defineModel<P>({
     s.push({
       id: 'evict',
       label: `t = ${evictAt}`,
-      caption: fmt(bi('Прошло ещё {t} с, то есть время, которое под готов ждать на недоступном узле, и под web-b помечается к удалению. Окончательно удалить под некому, потому что kubelet на выключенном узле не работает, и под остаётся в состоянии Terminating.', 'After {t} s more web-b is marked for deletion; with the kubelet down it hangs in Terminating.'), { t: p.toleration }),
+      caption: fmt(bi('Прошло ещё {t} с, то есть столько, сколько под готов ждать на недоступном узле, и под web-b помечается к удалению. Удалить его до конца некому, потому что kubelet на выключенном узле не работает, и под остаётся в состоянии Terminating.', 'After {t} s more web-b is marked for deletion; with the kubelet down it hangs in Terminating.'), { t: p.toleration }),
       focus: ['api', 'e-evict'],
       reveal: ['e-evict'],
       tokens: [{ edge: 'e-evict', label: 'Terminating' }],
-      say: { api: bi('Время ожидания пода истекло, и web-b помечается к удалению.', 'tolerationSeconds is over; web-b is marked for deletion.') },
+      say: { api: bi('Срок ожидания пода истёк, и web-b помечается к удалению.', 'tolerationSeconds is over; web-b is marked for deletion.') },
       values: { w2: 'web-b Terminating' },
       metrics: { t: evictAt, lost: n.lost, ready: 2 },
     });
@@ -237,7 +246,7 @@ export const nodeDownModel = defineModel<P>({
       focus: ['rs', 'e-create'],
       reveal: ['rs', 'e-create'],
       tokens: [{ edge: 'e-create', label: 'web-d' }],
-      say: { rs: bi('Контроллер ReplicaSet создаёт под web-d вместо пода на выключенном узле.', 'The ReplicaSet controller creates web-d.') },
+      say: { rs: bi('Контроллер ReplicaSet создаёт под web-d.', 'The ReplicaSet controller creates the replacement, web-d.') },
       values: { w3: 'web-c, web-d Running' },
       states: { w3: 'ok' },
       metrics: { t: evictAt + 5, lost: n.lost, ready: 3 },
@@ -264,7 +273,7 @@ export const nodeDownModel = defineModel<P>({
       case 'grace':
         return fmt(bi('Срок ожидания теперь {g} с, и на выключенный узел ушло {b} запросов вместо {a}: пока узел не помечен, на него идёт треть запросов.', 'Grace {g} s: lost {a} → {b}; until marked, a third of the requests goes to it.'), { g: b.grace as number, a: metric(prev, 'lost'), b: metric(next, 'lost') });
       case 'toleration':
-        return fmt(bi('Под теперь ждёт {t} с, и замена появляется на {r}-й секунде. Чем короче ожидание, тем быстрее переезд, но тем чаще поды переезжают зря после короткого сбоя сети. Число потерянных запросов при этом не меняется: через {g} с узел помечают недоступным, под выпадает из EndpointSlice, и запросы на него больше не идут.', 'tolerationSeconds {t}: the replacement appears at {r} s. Shorter means faster moves, and more needless ones. The lost requests do not change: after {g} s the node is marked unreachable, the pod drops out of the EndpointSlice, and no more requests go to it.'), { t: b.toleration as number, r: metric(next, 't'), g: b.grace as number });
+        return fmt(bi('Под теперь ждёт {t} с, и замена появляется на {r}-й секунде. Чем короче ожидание, тем быстрее переезд, но тем чаще поды переезжают зря после короткого сбоя сети. Число потерянных запросов при этом не меняется: через {g} с узел помечают недоступным, под выпадает из списка, по которому kube-proxy раздаёт запросы, и запросы на него больше не идут.', 'tolerationSeconds {t}: the replacement appears at {r} s. Shorter means faster moves, and more needless ones. The lost requests do not change: after {g} s the node is marked unreachable, the pod drops out of the list kube-proxy sends requests to, and no more requests go to it.'), { t: b.toleration as number, r: metric(next, 't'), g: b.grace as number });
       case 'back':
         return b.back === 'never'
           ? bi('Узел не включают, и поды переезжают по таймерам.', 'The node never returns: the pods move on the timers.')

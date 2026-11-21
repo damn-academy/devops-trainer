@@ -63,7 +63,7 @@ export const kubeadmInitModel = defineModel<P>({
   block: 'k8s-2',
   title: bi('Что делает kubeadm init', 'What kubeadm init does'),
   summary: bi(
-    'kubeadm сам ничего не запускает. Он только записывает файлы: сертификаты, файлы kubeconfig и манифесты статических подов. Управляющий слой кластера из этих манифестов запускает kubelet. Схема проходит фазы init по порядку и показывает, на какой из них всплывает каждая забытая подготовка узла.',
+    'kubeadm сам ничего не запускает. Он только записывает на диск сертификаты, файлы kubeconfig и манифесты статических подов. Управляющий слой кластера из этих манифестов запускает kubelet. Схема проходит фазы init по порядку и показывает, на какой из них всплывает каждая забытая подготовка узла.',
     'kubeadm writes files; the kubelet starts the control plane from them. The diagram walks the phases and shows where each forgotten preparation surfaces.',
   ),
   intro: bi(
@@ -254,16 +254,34 @@ export const kubeadmInitModel = defineModel<P>({
       metrics: { files: 31, days: cert.leafLeftDays },
     });
     if (cert.expired)
-      s.push({
-        id: 'expired',
-        label: 'x509',
-        caption: bi('Прошёл год, и сертификаты управляющего слоя, которые выпустил kubeadm, истекли вместе с admin.conf. Истёк и сертификат, которым API-сервер представляется клиентам, поэтому и kubectl, и kubelet получают ошибку x509 и не могут с ним работать. Клиентский сертификат самого kubelet при этом продлевается автоматически, пока срок не вышел, так что после починки узлы возвращаются в кластер без повторного join. Чинят это командой kubeadm certs renew all и перезапуском статических подов, а проверяют заранее командой kubeadm certs check-expiration.', 'A year later the control plane certificates kubeadm issued have expired together with admin.conf. The certificate the API server presents to its clients has expired too, so kubectl and the kubelet both get an x509 error and cannot work with it. The kubelet’s own client certificate is rotated automatically while it is still valid, so after the fix the nodes come back without another join. The fix is kubeadm certs renew all and a restart of the static pods; check in advance with kubeadm certs check-expiration.'),
-        focus: ['pki'],
-        say: { pki: bi('Срок сертификатов управляющего слоя истёк.', 'The control plane certificates have expired.') },
-        states: { pki: 'err', confs: 'err' },
-        values: { pki: t(bi('сертификаты истекли', 'leaf: expired')) },
-        metrics: { files: 31, days: cert.leafLeftDays },
-      });
+      s.push(
+        {
+          id: 'expired',
+          label: 'x509',
+          caption: bi('Прошёл год, и сертификаты управляющего слоя, которые выпустил kubeadm, истекли вместе с admin.conf. Истёк и сертификат, которым API-сервер представляется клиентам, поэтому и kubectl, и kubelet получают ошибку x509 и не могут с ним работать.', 'A year later the control plane certificates kubeadm issued have expired together with admin.conf. The certificate the API server presents to its clients has expired too, so kubectl and the kubelet both get an x509 error and cannot work with it.'),
+          focus: ['pki'],
+          say: { pki: bi('Срок сертификатов управляющего слоя истёк.', 'The control plane certificates have expired.') },
+          states: { pki: 'err', confs: 'err' },
+          values: { pki: t(bi('сертификаты истекли', 'leaf: expired')) },
+          metrics: { files: 31, days: cert.leafLeftDays },
+        },
+        {
+          id: 'expired-kubelet',
+          label: bi('kubelet', 'kubelet'),
+          caption: bi('Клиентский сертификат самого kubelet при этом продлевается автоматически, пока его срок не вышел. Поэтому после починки управляющего слоя узлы возвращаются в кластер без повторного join.', 'The kubelet’s own client certificate is renewed automatically while it is still valid. So once the control plane is fixed, the nodes come back without another join.'),
+          focus: ['klet'],
+          say: { klet: bi('kubelet заранее продлил свой клиентский сертификат.', 'The kubelet renewed its own client certificate in time.') },
+          metrics: { files: 31, days: cert.leafLeftDays },
+        },
+        {
+          id: 'expired-fix',
+          label: bi('починка', 'fix'),
+          caption: bi('Истёкшие сертификаты продлевают командой kubeadm certs renew all и затем перезапускают статические поды управляющего слоя. Чтобы до этого не доходить, срок проверяют заранее командой kubeadm certs check-expiration.', 'Expired certificates are renewed with kubeadm certs renew all, and then the control plane static pods are restarted. To avoid getting there, check the dates in advance with kubeadm certs check-expiration.'),
+          focus: ['kadm'],
+          say: { kadm: bi('kubeadm выпускает сертификаты управляющего слоя заново.', 'kubeadm issues the control plane certificates anew.') },
+          metrics: { files: 31, days: cert.leafLeftDays },
+        },
+      );
     else if (p.months > 0)
       s.push({
         id: 'aging',

@@ -125,15 +125,15 @@ const diagram = {
     box('ctrl', bi('Контроллер Deployment', 'Deployment controller'), 'cp', 'hex', [380, 150, 200, 60], 'process', bi('На каждом шаге контроллер решает одно: добавить подов новому ReplicaSet, убрать подов у старого или подождать, пока новые поды станут готовы. Границы ему задают maxSurge и maxUnavailable.', 'At each step it decides: scale up the new ReplicaSet, scale down the old one, or wait for readiness, within maxSurge and maxUnavailable.'), CM, { see: 'kubectl rollout status deploy/web', doc: D.deployment }),
     box('old', bi('Старый ReplicaSet, версия 1.0', 'Old ReplicaSet, 1.0'), 'obj', 'buffer', [40, 262, 320, 78], 'container', bi('ReplicaSet со старым шаблоном. Во время выкладки контроллер уменьшает число его подов до нуля, но сам объект оставляет, потому что по нему работает откат командой `kubectl rollout undo`.', 'The ReplicaSet with the old template; scaled to zero but kept for `kubectl rollout undo`.'), bi('ReplicaSet создал контроллер Deployment при прошлой выкладке.', 'Created by the Deployment controller at the last rollout.'), { see: 'kubectl get rs', doc: D.rs, sub: '' }),
     box('new', bi('Новый ReplicaSet, версия 1.1', 'New ReplicaSet, 1.1'), 'obj', 'buffer', [600, 262, 320, 78], 'container', bi('ReplicaSet с новым шаблоном. Число его подов растёт, но в расчёт границ под входит только тогда, когда стал готов (Ready).', 'The ReplicaSet with the new template; a pod counts only once it is Ready.'), bi('ReplicaSet создаёт контроллер Deployment в начале выкладки.', 'Created by the Deployment controller when the rollout starts.'), { see: 'kubectl get rs -w', doc: D.rs, sub: '' }),
-    box('svc', bi('Service web', 'Service web'), 'l4', 'pill', [360, 396, 240, 56], 'switch', bi('Service отправляет запросы только на готовые поды, причём обоих ReplicaSet сразу. Поэтому во время выкладки пользователям отвечают и версия 1.0, и версия 1.1.', 'Sends requests only to Ready pods of both ReplicaSets, so during the rollout both versions answer.'), bi('Service создаёте вы.', 'You create it.'), { see: 'kubectl get endpointslices -l kubernetes.io/service-name=web', doc: D.service }),
+    box('svc', bi('Service web', 'Service web'), 'l4', 'pill', [360, 396, 240, 56], 'switch', bi('Service отправляет запросы только на готовые поды, причём обоих ReplicaSet сразу. Поэтому во время выкладки пользователям отвечают и версия 1.0, и версия 1.1.', 'Sends requests only to Ready pods of both ReplicaSets, so during the rollout both versions answer.'), bi('Service создаёте вы.', 'You create it.'), { see: 'kubectl describe service web', doc: D.service }),
   ],
   edges: [
     edge('e-you', 'you', 'deploy', bi('новый образ', 'new image'), bi('Команда меняет образ в шаблоне Deployment.', 'The command changes the image in the template.'), bi('Запрос отправляет kubectl.', 'kubectl.')),
     edge('e-watch', 'deploy', 'ctrl', bi('новая ревизия', 'new revision'), bi('Контроллер узнаёт о новой ревизии шаблона из события watch.', 'The controller learns of the new revision from a watch event.'), CM),
     edge('e-old', 'ctrl', 'old', bi('убрать поды', 'scale down'), bi('Контроллер уменьшает replicas старого ReplicaSet. В событиях это видно как «Scaled down replica set».', 'The controller lowers the old ReplicaSet’s replicas: “Scaled down replica set”.'), CM, { via: [[200, 180]], labelAt: 0.15 }),
     edge('e-new', 'ctrl', 'new', bi('добавить поды', 'scale up'), bi('Контроллер увеличивает replicas нового ReplicaSet. В событиях это видно как «Scaled up replica set».', 'The controller raises the new ReplicaSet’s replicas: “Scaled up replica set”.'), CM, { via: [[760, 180]], labelAt: 0.85 }),
-    edge('e-svc-old', 'svc', 'old', bi('запросы к 1.0', 'requests to 1.0'), bi('Запросы пользователей к готовым подам старой версии.', 'User requests to Ready old pods.'), bi('Список готовых подов ведёт контроллер EndpointSlice.', 'The EndpointSlice controller keeps the list.'), { via: [[200, 424]] }),
-    edge('e-svc-new', 'svc', 'new', bi('запросы к 1.1', 'requests to 1.1'), bi('Запросы пользователей к готовым подам новой версии.', 'User requests to Ready new pods.'), bi('Список готовых подов ведёт контроллер EndpointSlice.', 'The EndpointSlice controller keeps the list.'), { via: [[760, 424]] }),
+    edge('e-svc-old', 'svc', 'old', bi('запросы к 1.0', 'requests to 1.0'), bi('Запросы пользователей к готовым подам старой версии.', 'User requests to Ready old pods.'), bi('Список готовых подов для Service ведёт отдельный контроллер Kubernetes.', 'A separate Kubernetes controller keeps the list of ready pods for the Service.'), { via: [[200, 424]] }),
+    edge('e-svc-new', 'svc', 'new', bi('запросы к 1.1', 'requests to 1.1'), bi('Запросы пользователей к готовым подам новой версии.', 'User requests to Ready new pods.'), bi('Список готовых подов для Service ведёт отдельный контроллер Kubernetes.', 'A separate Kubernetes controller keeps the list of ready pods for the Service.'), { via: [[760, 424]] }),
   ],
 };
 
@@ -157,7 +157,7 @@ export const rollingModel = defineModel<P>({
     ...LEGEND_BASE,
     mark('icon:file', 'объект Deployment', 'the Deployment object'),
     mark('icon:process', 'контроллер Deployment', 'the Deployment controller'),
-    mark('icon:container', 'ReplicaSet и его поды; полоса внизу — доля готовых', 'a ReplicaSet and its pods; the bar shows the share ready'),
+    mark('icon:container', 'ReplicaSet и его поды, а полоса внизу показывает долю готовых', 'a ReplicaSet and its pods; the bar shows the share ready'),
     mark('icon:switch', 'Service, который раздаёт запросы', 'the Service spreading requests'),
     mark('wait', 'поды созданы, но ещё не готовы', 'pods created, not ready yet'),
     mark('ok', 'поды готовы и получают запросы', 'pods ready and serving'),
@@ -364,29 +364,40 @@ export const rollingModel = defineModel<P>({
           metrics,
         });
       else if (a.what === 'stuck')
-        s.push({
-          id: `a${i}-stuck`,
-          label: bi('застряла', 'stuck'),
-          caption: bi('Контейнеры новых подов аварийно завершаются сразу после запуска, поды переходят в состояние CrashLoopBackOff и не становятся готовыми. Контроллер ждёт: если убрать ещё один старый под, готовых станет меньше, чем разрешает maxUnavailable. Поэтому старые поды, которые ещё остались, продолжают отвечать пользователям.', 'New pods crash, go into CrashLoopBackOff and never become ready. The controller waits: removing more old pods would break maxUnavailable.'),
-          focus: ['new'],
-          say: { new: bi('Контейнеры новых подов аварийно завершаются сразу после запуска, поэтому поды не становятся готовыми.', 'New pods crash on start and never become ready.') },
-          values: vals(a),
-          fill,
-          states: { new: 'err' },
-          metrics,
-          broken: {
-            at: 'new',
-            message: '$ kubectl rollout status deploy/web\nWaiting for deployment "web" rollout to finish: 1 out of 4 new replicas have been updated...\nerror: deployment "web" exceeded its progress deadline',
-            caption: bi('на новых подах, которые не становятся готовыми. Через progressDeadlineSeconds у Deployment появится условие Progressing=False с причиной ProgressDeadlineExceeded. Это сигнал вам или системе сборки, а не откат, и вернуть старую версию нужно самим командой `kubectl rollout undo`.', 'at the new pods. After progressDeadlineSeconds the Deployment gets Progressing=False, ProgressDeadlineExceeded: a signal, not a rollback; roll back with `kubectl rollout undo`.'),
+        s.push(
+          {
+            id: `a${i}-stuck`,
+            label: bi('не готовы', 'not ready'),
+            caption: bi('Контейнеры новых подов аварийно завершаются сразу после запуска. kubelet перезапускает их снова и снова, но поды так и не становятся готовыми.', 'The containers of the new pods crash right after they start. The kubelet restarts them again and again, but the pods never become ready.'),
+            focus: ['new'],
+            say: { new: bi('Новые поды не становятся готовыми, потому что их контейнеры аварийно завершаются.', 'The new pods never become ready, because their containers crash.') },
+            values: vals(a),
+            fill,
+            states: { new: 'err' },
+            metrics,
           },
-        });
+          {
+            id: `a${i}-wait`,
+            label: bi('застряла', 'stuck'),
+            caption: bi('Контроллер Deployment ждёт и больше не убирает старые поды. Если убрать ещё один, готовых станет меньше, чем разрешает maxUnavailable, поэтому оставшиеся старые поды продолжают отвечать пользователям.', 'The Deployment controller waits and removes no more old pods. Removing one more would leave fewer ready pods than maxUnavailable allows, so the remaining old pods keep answering users.'),
+            focus: ['ctrl'],
+            say: { ctrl: bi('Контроллер ждёт, пока новые поды станут готовыми, и выкладка стоит.', 'The controller waits for the new pods to become ready, and the rollout stands still.') },
+            states: { new: 'err' },
+            metrics,
+            broken: {
+              at: 'new',
+              message: '$ kubectl rollout status deploy/web\nWaiting for deployment "web" rollout to finish: 1 out of 4 new replicas have been updated...\nerror: deployment "web" exceeded its progress deadline',
+              caption: bi('на новых подах, которые не становятся готовыми. Через progressDeadlineSeconds у Deployment появится условие Progressing=False с причиной ProgressDeadlineExceeded. Это сигнал вам или системе сборки, а не откат, и вернуть старую версию нужно самим командой `kubectl rollout undo`.', 'at the new pods. After progressDeadlineSeconds the Deployment gets Progressing=False, ProgressDeadlineExceeded: a signal, not a rollback; roll back with `kubectl rollout undo`.'),
+            },
+          },
+        );
       else if (a.what === 'done')
         s.push({
           id: `a${i}-done`,
           label: bi('готово', 'done'),
-          caption: fmtb(bi('Выкладка закончена. Подов новой версии работает столько, сколько нужно ({r}), а у старого ReplicaSet не осталось ни одного пода. Сам старый ReplicaSet контроллер не удаляет, потому что по нему работает откат. Команда `kubectl rollout status` печатает: deployment "web" successfully rolled out.', 'Done: {r} of the new version run, the old ReplicaSet is at zero and kept for a rollback.'), { r: num(R, ...PODS) }),
+          caption: fmtb(bi('Выкладка закончена, и подов новой версии работает столько, сколько нужно ({r}). У старого ReplicaSet подов не осталось, но сам объект контроллер не удаляет, потому что он нужен для отката.', 'The rollout is over, and as many new-version pods run as needed ({r}). The old ReplicaSet has no pods left, but the controller keeps the object itself, because a rollback needs it.'), { r: num(R, ...PODS) }),
           focus: ['ctrl'],
-          say: { ctrl: bi('Контроллер видит, что все поды новой версии готовы, и заканчивает выкладку.', 'The controller sees all new pods ready and finishes.') },
+          say: { ctrl: bi('Контроллер заканчивает выкладку, и `kubectl rollout status` сообщает об успехе.', 'The controller finishes the rollout, and `kubectl rollout status` reports success.') },
           values: vals(a),
           fill,
           states: { new: 'ok', old: 'off' },

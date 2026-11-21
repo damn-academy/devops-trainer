@@ -162,11 +162,11 @@ export const ingressPathModel = defineModel<P>({
         ? {
             id: 'local',
             label: 'Local',
-            caption: bi('При externalTrafficPolicy: Local узел отправляет запрос только на под прокси, который работает на нём самом, и адрес отправителя не подменяет. Поэтому прокси видит настоящий адрес пользователя. Узел, на котором пода прокси нет, на запросы не отвечает, и балансировщик исключает его.', 'Local: only to a proxy pod on this node, no SNAT: the proxy sees the real client IP.'),
+            caption: bi('При externalTrafficPolicy: Local узел отправляет запрос только на под прокси на этом же узле и адрес отправителя не подменяет, поэтому прокси видит настоящий адрес пользователя. Узел без пода прокси не отвечает, и балансировщик исключает его.', 'With externalTrafficPolicy: Local the node sends it only to a proxy pod on the same node and keeps the sender address, so the proxy sees the real client address. A node without a proxy pod does not answer, and the load balancer drops it.'),
             focus: ['node', 'e-dnat'],
             reveal: ['proxy', 'e-dnat'],
             tokens: [{ edge: 'e-dnat', label: 'src 203.0.113.50' }],
-            say: { node: bi('Узел отправляет запрос на под прокси на себе и оставляет адрес пользователя.', 'The node sends to its own proxy pod, keeping the client address.') },
+            say: { node: bi('Узел передаёт запрос своему поду прокси.', 'The node hands the request to its own proxy pod.') },
             metrics: { status: 0, seconds: 0 },
           }
         : {
@@ -185,12 +185,12 @@ export const ingressPathModel = defineModel<P>({
       label: p.api === 'gateway' ? 'HTTPRoute' : 'Ingress',
       caption:
         p.api === 'gateway'
-          ? bi('Прокси находит правило HTTPRoute: сайт shop.example.test и путь / ведут на Service web, порт 80. В Gateway API обязанности разделены: GatewayClass описывает инфраструктуру, Gateway настраивает администратор кластера, а HTTPRoute пишет команда приложения.', 'The proxy finds the HTTPRoute: shop.example.test, / → web:80. Roles: GatewayClass, Gateway, HTTPRoute.')
+          ? bi('Прокси находит правило HTTPRoute, которое ведёт сайт shop.example.test с путём / на Service web, порт 80. В Gateway API инфраструктуру описывает GatewayClass, Gateway настраивает администратор, а HTTPRoute пишет команда приложения.', 'The proxy finds the HTTPRoute that sends site shop.example.test with path / to Service web, port 80. In Gateway API the GatewayClass describes the infrastructure, the administrator sets up the Gateway, and the application team writes the HTTPRoute.')
           : bi('Прокси находит правило Ingress: сайт shop.example.test и путь / ведут на Service web, порт 80. API Ingress заморожен, а самый распространённый контроллер ingress-nginx снят с поддержки в марте 2026 года.', 'The proxy finds the Ingress rule; Ingress is frozen, ingress-nginx retired in March 2026.'),
       focus: ['proxy', 'e-route'],
       reveal: ['route', 'e-route'],
       tokens: [{ edge: 'e-route', label: 'shop.example.test /' }],
-      say: { proxy: bi('Прокси ищет правило для сайта shop.example.test и пути /.', 'The proxy matches shop.example.test and /.') },
+      say: { proxy: bi('Прокси ищет правило для shop.example.test и пути /.', 'The proxy matches shop.example.test and /.') },
       metrics: { status: 0, seconds: 0 },
     });
     if (broken.has('no-pods')) {

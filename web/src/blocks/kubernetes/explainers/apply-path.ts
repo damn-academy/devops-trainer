@@ -16,7 +16,7 @@ import { D, anyBroken, box, edge, fmtb, idsOf, LEGEND_BASE, mark, metric, num, o
 
 type P = { replicas: number; cached: boolean; rbac: boolean; quota: boolean; upto: string };
 
-const STATIC = bi('Работает статическим подом на управляющем узле.', 'A static pod on the control-plane node.');
+const STATIC = bi('Этот процесс работает на управляющем узле, и kubelet этого узла запускает его прямо из файла на диске.', 'This process runs on the control-plane node, and the kubelet there starts it straight from a file on disk.');
 const ON_NODE = bi('Работает службой systemd на каждом узле.', 'A systemd service on every node.');
 
 const diagram = {
@@ -42,7 +42,7 @@ const diagram = {
     edge('e-kubelet', 'kubelet', 'api', bi('мои поды и их статус', 'my pods and their status'), bi('kubelet следит за подами своего узла и записывает их состояние.', 'Watches its node’s pods and writes their status.'), bi('kubelet', 'kubelet'), { via: [[150, 286], [470, 286]], labelAt: 0.5 }),
     edge('e-cri', 'kubelet', 'crt', bi('создать под', 'create pod'), bi('kubelet по интерфейсу CRI просит containerd создать песочницу пода, а потом контейнер.', 'Over CRI: create the sandbox, then the container.'), bi('kubelet', 'kubelet'), { doc: D.cri }),
     edge('e-cni', 'crt', 'cni', bi('дать сеть', 'network'), bi('containerd вызывает плагин сети с командой ADD и параметрами песочницы.', 'containerd runs the plugin with ADD.'), bi('containerd', 'containerd'), { doc: D.cni }),
-    edge('e-proxy', 'proxy', 'api', bi('адреса готовых подов', 'ready pod addresses'), bi('kube-proxy получает адреса готовых подов из EndpointSlice и переписывает правила.', 'Gets ready pod addresses from EndpointSlices and rewrites rules.'), bi('kube-proxy', 'kube-proxy'), { via: [[150, 530], [940, 530], [940, 80]], labelAt: 0.38 }),
+    edge('e-proxy', 'proxy', 'api', bi('адреса готовых подов', 'ready pod addresses'), bi('kube-proxy получает от API-сервера список адресов готовых подов каждого Service и по нему переписывает правила.', 'kube-proxy gets from the API server the list of ready pod addresses of every Service and rewrites the rules from it.'), bi('kube-proxy', 'kube-proxy'), { via: [[150, 530], [940, 530], [940, 80]], labelAt: 0.38 }),
     edge('e-dns', 'dns', 'api', bi('имена Service', 'Service names'), bi('CoreDNS знает имена и адреса всех Service.', 'CoreDNS knows every Service name.'), bi('CoreDNS', 'CoreDNS'), { via: [[380, 518], [730, 518], [730, 108]], labelAt: 0.65 }),
   ],
   groups: [
@@ -70,7 +70,7 @@ export const applyPathModel = defineModel<P>({
     ...LEGEND_BASE,
     mark('icon:server', 'API-сервер, через который идут все записи', 'the API server all writes go through'),
     mark('icon:database', 'хранилище etcd', 'etcd'),
-    mark('icon:process', 'управляющий процесс: контроллеры, планировщик, kubelet', 'a managing process'),
+    mark('icon:process', 'управляющий процесс, то есть контроллер, планировщик или kubelet', 'a managing process, that is a controller, the scheduler or the kubelet'),
     mark('icon:container', 'среда запуска контейнеров', 'the container runtime'),
     mark('ok', 'шаг этого компонента выполнен', 'this component’s step is done'),
     mark('err', 'здесь путь оборвался', 'the path broke here'),
@@ -426,7 +426,7 @@ export const applyPathModel = defineModel<P>({
       s.push({
         id: 'svc',
         label: 'Service',
-        caption: bi('Под готов, и его адрес попал в EndpointSlice, но kube-proxy не работает и правил на узлах не пишет. Поэтому запрос на адрес Service никуда не уходит.', 'The pod is ready and listed, but kube-proxy writes no rules: a request to the Service address goes nowhere.'),
+        caption: bi('Под готов, и его адрес попал в список готовых подов сервиса web, но kube-proxy не работает и правил на узлах не пишет. Поэтому запрос на адрес Service никуда не уходит.', 'The pod is ready and listed, but kube-proxy writes no rules: a request to the Service address goes nowhere.'),
         focus: ['kubectl'],
         reveal: ['proxy'],
         say: { kubectl: bi('Запрос curl к Service web не получает ответа.', 'A curl to Service web gets no answer.') },
@@ -441,10 +441,10 @@ export const applyPathModel = defineModel<P>({
     s.push({
       id: 'svc',
       label: 'Service',
-      caption: bi('Адрес готового пода попадает в EndpointSlice сервиса web, kube-proxy получает его и дописывает на каждом узле правило, по которому пакеты к адресу Service отправляются на этот под.', 'The pod’s address enters the EndpointSlice; kube-proxy adds a rule on every node.'),
+      caption: bi('Адрес готового пода попадает в список готовых подов сервиса web. kube-proxy получает этот адрес и дописывает на каждом узле правило, по которому пакеты к адресу Service отправляются на этот под.', 'The pod’s address enters the list of ready pods of Service web. kube-proxy gets the address and adds a rule on every node that sends packets for the Service address to this pod.'),
       focus: ['proxy', 'e-proxy'],
       reveal: ['proxy', 'e-proxy'],
-      tokens: [{ edge: 'e-proxy', label: 'EndpointSlice', reverse: true }],
+      tokens: [{ edge: 'e-proxy', label: bi('адрес пода', 'pod address'), reverse: true }],
       say: { proxy: bi('kube-proxy дописывает правило, по которому пакеты к Service web отправляются на новый под.', 'kube-proxy adds a rule for Service web.') },
       states: { proxy: 'ok' },
       metrics: m(),

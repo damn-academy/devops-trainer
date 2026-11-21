@@ -222,7 +222,7 @@ export const servicePathModel = defineModel<P>({
     const probs = ruleProbabilities(readyIdx.length).map((x) => x.toFixed(2));
     const probsRu = probs.map((x) => x.replace('.', ','));
     const modeText: Record<string, Bi> = {
-      iptables: fmt(bi('kube-proxy получает адреса и записывает в ядро цепочку правил. Первое правило выбирает свой под с вероятностью {p0r}, следующее делит остаток, и так до последнего. Вероятности {pr} выглядят неравными, но каждому поду в итоге достаётся одинаковая доля соединений.', 'kube-proxy writes the chain; probabilities {p}: each rule splits what is left, so the shares are equal.'), { p0: probs[0] ?? '1', p: probs.join(', '), p0r: probsRu[0] ?? '1', pr: probsRu.join('; ') }),
+      iptables: fmt(bi('kube-proxy записывает в ядро цепочку правил. Первое правило выбирает свой под с вероятностью {p0r}, каждое следующее делит остаток. Вероятности {pr} кажутся неравными, но каждому поду достаётся одинаковая доля соединений.', 'kube-proxy writes a chain of rules into the kernel. The first rule picks its pod with probability {p0}, each next one splits what is left. The probabilities {p} look unequal, yet every pod gets an equal share.'), { p0: probs[0] ?? '1', p: probs.join(', '), p0r: probsRu[0] ?? '1', pr: probsRu.join('; ') }),
       nftables: bi('kube-proxy в режиме nftables записывает в ядро таблицу, в которой случайное число выбирает один из готовых подов одной операцией. Логика та же, что у iptables, только короче.', 'nftables: a random number picks a ready pod in one operation.'),
       ipvs: bi('В режиме IPVS адрес Service назначен служебному интерфейсу kube-ipvs0, а соединения распределяет модуль ядра IPVS. Этот режим объявлен устаревшим, и в новых кластерах используют iptables или nftables.', 'IPVS: the ClusterIP sits on kube-ipvs0 and the IPVS module balances; the mode is deprecated.'),
     };
@@ -233,7 +233,7 @@ export const servicePathModel = defineModel<P>({
       focus: ['kp', 'e-watch', 'e-rules'],
       reveal: ['kp', 'e-watch', 'e-rules', 'nf'],
       tokens: [{ edge: 'e-rules', label: p.mode === 'nftables' ? `numgen mod ${readyIdx.length}` : `${readyIdx.length} × KUBE-SEP` }],
-      say: { kp: bi('kube-proxy переписывает правила ядра по списку готовых подов.', 'kube-proxy rewrites the kernel rules from the ready pods.') },
+      say: { kp: bi('kube-proxy переписывает правила в ядре узла.', 'kube-proxy rewrites the rules in the node’s kernel.') },
       values: { nf: p.mode === 'nftables' ? `numgen random mod ${readyIdx.length}` : `KUBE-SVC → ${readyIdx.length} × KUBE-SEP` },
       metrics: zero,
     });
@@ -290,9 +290,9 @@ export const servicePathModel = defineModel<P>({
         ? bi('Сто запросов идут по одному соединению. Правило выбирает под только при открытии соединения, а потом ядро ведёт всё соединение на тот же под. Поэтому все сто запросов попадают на один под, и балансировка выглядит неравной.', '100 requests on one connection: the rule picks a pod only at connect time, so all go to one pod.')
         : readyIdx.length === 1
           ? bi('Все сто новых соединений ушли на web-1, потому что других готовых подов за Service нет.', 'All 100 new connections went to web-1, because there are no other ready pods behind the Service.')
-          : fmtb(bi('Правила выбирают под случайно, поэтому в среднем каждому из {n} подов достаётся одинаковая доля из ста новых соединений: {d}. В настоящем кластере числа от раза к разу немного отличаются от средних.', 'The rules pick a pod at random, so on average each of the {n} pods gets an equal share of the 100 new connections: {d}. In a real cluster the numbers differ a little from the average each time.'), { n: readyIdx.length, d: readyIdx.map((i, k) => `web-${i + 1} ${dist[k]}`).join(', ') }),
+          : fmtb(bi('Правила выбирают под случайно, поэтому каждому из {n} подов в среднем достаётся равная доля из ста новых соединений: {d}. В настоящем кластере числа каждый раз немного отличаются от средних.', 'The rules pick a pod at random, so each of the {n} pods gets on average an equal share of the 100 new connections: {d}. In a real cluster the numbers differ a little from the average each time.'), { n: readyIdx.length, d: readyIdx.map((i, k) => `web-${i + 1} ${dist[k]}`).join(', ') }),
       focus: ['client'],
-      say: { client: p.keepalive ? bi('Под client отправляет сто запросов по одному и тому же соединению.', 'client sends 100 requests over one connection.') : bi('Под client открывает сто новых соединений, по одному на запрос.', 'client opens 100 new connections.') },
+      say: { client: p.keepalive ? bi('Под client отправляет сто запросов по одному и тому же соединению.', 'client sends 100 requests over one connection.') : bi('Под client открывает сто новых соединений.', 'client opens 100 new connections.') },
       metrics,
     });
     return s;
