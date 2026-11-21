@@ -257,10 +257,10 @@ export const pipelineModel = defineModel<P>({
       caption: hasCI(p)
         ? b('Здесь заканчивается непрерывная интеграция. Изменение слито в общую ветку, собрано и проверено машиной, но до рабочего сайта ещё не дошло.', 'Continuous integration ends here. The change is merged into the shared branch, built and checked by a machine, but it has not reached the working site yet.')
         : p.build === 'auto'
-          ? b('Рамка отмечает, где заканчивалась бы непрерывная интеграция, но её здесь нет. Сборка запускается сама, а машина не проверяет ничего, и изменение проверил только человек. Непрерывной интеграцией это станет, когда каждое слияние будут проверять и автотесты.', 'The frame marks where continuous integration would end, but there is none here. The build starts by itself, while the machine checks nothing, and only a person has checked the change. It becomes continuous integration once automated tests check every merge too.')
-          : b('Рамка отмечает, где заканчивалась бы непрерывная интеграция, но её здесь нет. Сборку запускают вручную, когда найдётся время, а не сразу после каждого слияния. Непрерывной интеграцией это станет, когда каждое слияние будут сами собирать и проверять машины.', 'The frame marks where continuous integration would end, but there is none here. The build is started by hand when someone finds the time, not right after every merge. It becomes continuous integration once machines build and check every merge by themselves.'),
+          ? b('Рамка отмечает, где заканчивалась бы непрерывная интеграция, но её здесь нет. Сборка запускается сама, а изменение проверил только человек. Непрерывной интеграцией это станет, когда каждое слияние будут проверять и автотесты.', 'The frame marks where continuous integration would end, but there is none here. The build starts by itself, while only a person has checked the change. It becomes continuous integration once automated tests check every merge too.')
+          : b('Рамка отмечает, где заканчивалась бы непрерывная интеграция, но её здесь нет, потому что сборку запускают вручную, а не после каждого слияния. Непрерывной интеграцией это станет, когда каждое слияние будут собирать и проверять машины.', 'The frame marks where continuous integration would end, but there is none here, because the build is started by hand, not after every merge. It becomes continuous integration once machines build and check every merge.'),
       focus: ['g-ci', 'checks'],
-      say: { checks: hasCI(p) ? b('Проверки пройдены, и на этом непрерывная интеграция заканчивается.', 'The checks passed: continuous integration ends here.') : b('Проверки пройдены, но непрерывной интеграции здесь нет.', 'The checks passed, but there is no continuous integration here.') },
+      say: { checks: hasCI(p) ? b('Проверки пройдены, и на этом непрерывная интеграция заканчивается.', 'The checks passed: continuous integration ends here.') : b('Проверки пройдены, но непрерывной интеграции нет.', 'The checks passed, but there is no continuous integration.') },
       reveal: ['g-ci'],
       states: { checks: 'ok' },
     });
@@ -280,7 +280,7 @@ export const pipelineModel = defineModel<P>({
             label: b('сам', 'auto'),
             caption: gateAuto(p),
             focus: ['e-gate', 'gate'],
-            say: { gate: b('Конвейер сам выпускает изменение, которое прошло проверки.', 'The pipeline itself releases the change that passed the checks.') },
+            say: { gate: b('Конвейер сам выпускает проверенное изменение.', 'The pipeline releases the checked change by itself.') },
             tokens: [{ edge: 'e-gate', label: b('без ожидания', 'no wait') }],
             reveal: ['e-gate', 'gate'],
             states: { staging: 'ok', gate: 'ok' },
@@ -330,9 +330,9 @@ export const pipelineModel = defineModel<P>({
       steps.push({
         id: 'hotfix',
         label: b('исправление', 'hotfix'),
-        caption: fmtn(b('Допустим, выкладка сломала оплату. Откатиться нельзя, поэтому команда {w}, а потом пишет срочное исправление и выкладывает его ещё раз, на что уходит ещё {r}. Получается вторая, внеплановая выкладка.', 'Suppose the deployment broke the checkout. There is no rollback, so the team spends {w}, then writes an urgent fix and deploys it again, {r} more. That makes a second, unplanned deployment.'), { w: p.batch === 1 ? fmtn(b('{d} ищет ошибку в единственном изменении', '{d} looking for the mistake in the only change'), { d: MIN(n.diagnose) }) : fmtn(b('{d} выясняет, какое из {b} виновато', '{d} working out which of the {b} is to blame'), { d: MIN(n.diagnose), b: CH(p.batch) }), r: MIN(n.restore) }),
+        caption: fmtn(b('Допустим, выкладка сломала оплату. Откатиться нельзя, поэтому команда {w}, потом пишет срочное исправление и за {r} выкладывает его. Это вторая, внеплановая выкладка.', 'Suppose the deployment broke the checkout. With no rollback the team spends {w}, then writes an urgent fix and deploys it in {r}, a second, unplanned deployment.'), { w: p.batch === 1 ? fmtn(b('{d} ищет ошибку в единственном изменении', '{d} looking for the mistake in the only change'), { d: MIN(n.diagnose) }) : fmtn(b('{d} выясняет, какое из {b} виновато', '{d} working out which of the {b} is to blame'), { d: MIN(n.diagnose), b: CH(p.batch) }), r: MIN(n.restore) }),
         focus: ['prod'],
-        say: { prod: fmtn(b('Оплата сломана, и сайт починят новой выкладкой только через {t}.', 'The checkout is broken; a new deployment will fix the site only in {t}.'), { t: MIN(n.diagnose + n.restore) }) },
+        say: { prod: fmtn(b('Оплата не работает, и починит её только новая выкладка через {t}.', 'The checkout is down until a new deployment in {t}.'), { t: MIN(n.diagnose + n.restore) }) },
         states: { prod: 'err' },
         metrics,
         broken: { at: 'prod', message: `deploy #42 (hotfix, unplanned): fix for checkout\nrecovery: ${n.diagnose + n.restore} min`, caption: b('без отката сайт чинят новой выкладкой, а это занимает больше времени, несёт больше риска и добавляет ещё одну выкладку.', 'without a rollback the site is fixed with a new deployment: it takes longer, it is a new risk, and it is one more deployment.') },
@@ -341,9 +341,9 @@ export const pipelineModel = defineModel<P>({
       steps.push({
         id: 'rollback',
         label: b('если сбой', 'if it fails'),
-        caption: fmtn(b('А если выкладка всё же сломает сайт, дежурный за {r} вернёт прошлую версию, и покупатели снова смогут платить. {w}', 'And if the deployment does break the site, the on-call engineer puts the previous version back in {r}, and the customers can pay again. {w}'), { w: p.batch === 1 ? fmtn(b('Ошибку в изменении найдут потом, спокойно, и на это уйдёт {d}.', 'The mistake in the change is found later, calmly; that takes {d}.'), { d: MIN(n.diagnose) }) : fmtn(b('Какое из {b} виновато, выяснят потом, спокойно, и на это уйдёт {d}.', 'Which of the {b} is to blame is worked out later, calmly; that takes {d}.'), { b: CH(p.batch), d: MIN(n.diagnose) }), r: MIN(n.restore) }),
+        caption: fmtn(b('А если выкладка всё же сломает сайт, дежурный за {r} вернёт прошлую версию, и покупатели снова смогут платить. {w}', 'And if the deployment does break the site, the on-call engineer puts the previous version back in {r}, and the customers can pay again. {w}'), { w: p.batch === 1 ? fmtn(b('Ошибку в изменении найдут потом, спокойно, и на это уйдёт {d}.', 'The mistake is found later, calmly, in {d}.'), { d: MIN(n.diagnose) }) : fmtn(b('Какое из {b} виновато, выяснят потом, спокойно, и на это уйдёт {d}.', 'Which of the {b} is to blame is found later, calmly, in {d}.'), { b: CH(p.batch), d: MIN(n.diagnose) }), r: MIN(n.restore) }),
         focus: ['e-rollback', 'prev'],
-        say: { prev: fmtn(b('Прошлая версия хранится наготове, поэтому откат займёт {r}.', 'The previous version is kept ready: a rollback takes {r}.'), { r: MIN(n.restore) }) },
+        say: { prev: fmtn(b('Прошлая версия хранится наготове, поэтому откат займёт {r}.', 'The previous version is kept ready, so a rollback takes {r}.'), { r: MIN(n.restore) }) },
         tokens: [{ edge: 'e-rollback', label: 'v41' }],
         reveal: ['prev', 'e-rollback'],
         metrics,
@@ -381,9 +381,9 @@ export const pipelineModel = defineModel<P>({
 /** What a release without a button is, given the rest of the pipeline. */
 function gateAuto(p: P): Bi {
   if (!hasCI(p))
-    return b('Кнопки здесь нет, и конвейер выпускает изменения сам. Но непрерывной интеграции здесь нет, потому что после слияния изменение либо не собирается сразу само, либо его не проверяют автотесты. Поэтому непрерывным развёртыванием такую практику назвать нельзя, ведь непрерывное развёртывание опирается на непрерывную интеграцию.', 'There is no button, and the pipeline releases changes by itself. But there is no continuous integration here, because after the merge the change is either not built by itself at once or not checked by automated tests. So this practice cannot be called continuous deployment, since continuous deployment rests on continuous integration.');
+    return b('Кнопки нет, и конвейер выпускает изменения сам. Но непрерывным развёртыванием это не назвать, потому что оно опирается на непрерывную интеграцию, а её здесь нет, ведь изменение после слияния не собирается само или не проверяется автотестами.', 'There is no button, and the pipeline releases changes by itself. Yet this is not continuous deployment, which rests on continuous integration, and there is none here: after the merge the change is not built at once or not checked by tests.');
   if (p.batch > 1)
-    return fmtn(b('Кнопки здесь нет, и конвейер выпускает изменения сам, но копит их в партии по {b}, поэтому изменение уходит на рабочий сайт не сразу после проверок. Непрерывным развёртыванием такую практику называют, когда каждое проверенное изменение уходит отдельно и сразу.', 'There is no button, and the pipeline releases changes by itself, but it collects them into batches of {b}, so a change does not go to the working site right after the checks. Continuous deployment is when every checked change goes out on its own and at once.'), { b: nWord(p.batch, ['изменение', 'изменения', 'изменений'], ['change', 'changes']) });
+    return fmtn(b('Кнопки нет, и конвейер выпускает изменения сам, но копит их в партии по {b}, поэтому изменение уходит на рабочий сайт не сразу. Непрерывным развёртыванием практику называют, только когда каждое проверенное изменение уходит отдельно и сразу.', 'There is no button, and the pipeline releases changes by itself, but it collects them into batches of {b}, so a change does not go out at once. Continuous deployment is when every checked change goes out on its own and at once.'), { b: nWord(p.batch, ['изменение', 'изменения', 'изменений'], ['change', 'changes']) });
   return b('Кнопки здесь нет, и всё, что прошло проверки, конвейер выпускает сам, без решения человека. Такая практика называется непрерывным развёртыванием.', 'There is no button: the pipeline releases everything that passed the checks by itself, without a human decision. This practice is called continuous deployment.');
 }
 

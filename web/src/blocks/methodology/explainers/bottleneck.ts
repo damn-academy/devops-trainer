@@ -13,7 +13,7 @@
 import { defineModel } from '../../../core/define';
 import type { Step } from '../../../core/types';
 import { t } from '../../../core/i18n';
-import { b, card, edge, fmtn, hiddenExcept, lastMetrics, node, nWord, ruNum, type Bi } from './kit';
+import { b, card, edge, fmtn, hiddenExcept, lastMetrics, node, nWord, ruNum, STEP_CHARS, type Bi } from './kit';
 
 type P = { arrivals: number; dev: number; test: number; limit: boolean; focus: boolean; swarm: boolean };
 
@@ -324,9 +324,9 @@ export const bottleneckModel = defineModel<P>({
         ? b('Самым медленным этапом сейчас стала проверка, и её мощность равна нулю. Посмотрим, что это значит для десяти дней работы.', 'The slowest stage now is testing, and its capacity is zero. Let us see what that means for ten days of work.')
         : bn === 'arrivals'
           ? fmtn(b('Новых задач приходит {s} в день, меньше, чем успевает любой этап. Поэтому команду сейчас сдерживают не её этапы, а поток новых задач. {l}', 'New tasks arrive at {s} a day, fewer than any stage manages. So the team is held back now not by its stages but by the flow of new tasks. {l}'), { s: T(slowest), l: limitNote })
-          : fmtn(b('Самый медленный этап здесь {n}, и он успевает {s} в день. Как бы быстро ни работали остальные, до покупателей каждый день будет доходить не больше задач, чем успевает этот этап. {l}', 'The slowest stage here is {n}, and it manages {s} a day. However fast the others work, no more tasks a day will reach the customers than this stage manages. {l}'), { n: STAGE_NAME[bn], s: TA(slowest), l: limitNote }),
+          : fmtn(b('Самый медленный этап здесь {n}, и этот этап успевает {s} в день. Как бы быстро ни работали остальные этапы, больше задач в день до покупателей не дойдёт. {l}', 'The slowest stage here is {n}, and it manages {s} a day. However fast the other stages work, no more tasks a day will reach the customers. {l}'), { n: STAGE_NAME[bn], s: TA(slowest), l: limitNote }),
       focus: ['done', 'e-done'],
-      say: { done: removed ? b('Сюда не дойдёт ничего, пока проверять некому.', 'Nothing will get here while nobody can test.') : b('Сюда каждый день будет приходить не больше задач, чем успевает самый медленный этап.', 'No more tasks a day will come here than the slowest stage manages.') },
+      say: { done: removed ? b('Сюда не дойдёт ничего, пока проверять некому.', 'Nothing will get here while nobody can test.') : fmtn(b('Сюда будет доходить не больше {s} в день.', 'No more than {s} a day will get here.'), { s: TG(slowest) }) },
       reveal: ['done', 'e-done'],
       states: removed ? { 'e-done': 'off' } : {},
       metrics: zero,
@@ -370,7 +370,11 @@ export const bottleneckModel = defineModel<P>({
         }
         if (!parts.length) parts.push(fmtn(b('До покупателей пока не дошло ни одной задачи, а в работе уже {w}.', 'No task has reached the customers yet, and {w} are already in progress.'), { w: T(d.wip) }));
       }
-      const caption = day === 1 ? parts[0] : prefixDay(day, parts);
+      // One idea per step: when the news of a day do not fit one step, the rest goes to a second step of the same day.
+      const fits = (xs: Bi[]) => { const c = join(...xs); return Math.max(c.ru.length + say.ru.length, c.en.length + say.en.length) <= STEP_CHARS - 12; };
+      let head = parts.length;
+      while (head > 1 && !fits(parts.slice(0, head))) head--;
+      const caption = day === 1 ? parts[0] : prefixDay(day, parts.slice(0, head));
       const st: Step = {
         id: `d${day}`,
         label: `${day}`,
@@ -385,13 +389,19 @@ export const bottleneckModel = defineModel<P>({
       };
       if (removed && day === DAYS) st.broken = { at: 'q-test', message: t(b(`в очереди к проверке: ${nWord(d.qTest, ['задача', 'задачи', 'задач'], ['task', 'tasks']).ru}\nу покупателей: 0`, `queue before testing: ${nWord(d.qTest, ['задача', 'задачи', 'задач'], ['task', 'tasks']).en}\ndone: 0`)), caption: b('без проверки поток стоит, и всё, что сделала разработка, копится в очереди и не приносит покупателям никакой пользы.', 'without testing the flow stands still, and everything development made piles up in the queue and gives the customers nothing.') };
       steps.push(st);
+      if (head < parts.length) {
+        // The continuation repeats the picture of the day without the callout and the moving card; a break, if any, stops the day on its last step.
+        const { say: _say, tokens: _tokens, ...rest } = st;
+        delete st.broken;
+        steps.push({ ...rest, id: `d${day}-more`, label: b('очередь', 'queue'), caption: prefixDay(day, parts.slice(head)), focus: [worst] });
+      }
     });
     const last = r.days[DAYS - 1];
     const mid = r.days[4];
     const recentOut = r1(r.days.slice(-4).reduce((a, x) => a + x.out, 0) / 4);
     const stability =
       last.wip > mid.wip
-        ? fmtn(b('Незавершённая работа всё это время росла, с {w5} на пятый день до {w10} к концу. Такая система нестабильна, закон Литтла к ней не применяют, и каждая следующая задача будет ждать дольше предыдущей.', 'The work in progress kept growing, from {w5} on day 5 to {w10} at the end. Such a system is unstable, Little’s law does not apply to it, and each next task will wait longer than the one before.'), { w5: TG(mid.wip), w10: TG(last.wip) })
+        ? fmtn(b('Незавершённая работа росла с {w5} на пятый день до {w10} к концу. Такая система нестабильна, закон Литтла к ней не применяют, и каждая новая задача будет ждать дольше предыдущей.', 'The work in progress grew from {w5} on day 5 to {w10} at the end. Such a system is unstable, Little’s law does not apply to it, and each new task will wait longer than the one before.'), { w5: TG(mid.wip), w10: TG(last.wip) })
         : fmtn(b('Незавершённая работа перестала расти и держится на {w}, поэтому и время цикла дальше расти не будет.', 'The work in progress stopped growing and stays at {w}, so the cycle time will not grow further either.'), { w: TA(last.wip) });
     const cycleNote = r.cycle !== null ? fmtn(b('Задачи, которые дошли до покупателей за последние три дня, провели в работе в среднем {c}.', 'The tasks that reached the customers in the last three days spent {c} in progress on average.'), { c: Td(r.cycle) }) : b('', '');
     steps.push({
@@ -399,18 +409,24 @@ export const bottleneckModel = defineModel<P>({
       label: b('итог', 'total'),
       caption: removed
         ? b('За десять дней до покупателей не дошло ни одной задачи. Поток идёт со скоростью самого медленного этапа, а скорость проверки здесь равна нулю.', 'In ten days not a single task reached the customers. The flow moves at the speed of its slowest stage, and the speed of testing here is zero.')
-        : join(
-            bn === 'arrivals'
-              ? fmtn(b('За {n} дней до покупателей дошло {x}. Новых задач приходит меньше, чем успевает даже самый медленный этап, поэтому команду сейчас ограничивают не этапы, а поток новых задач.', 'In {n} days {x} reached the customers. Fewer new tasks arrive than even the slowest stage manages, so the team is now limited not by its stages but by the flow of new tasks.'), { n: DAYS, x: T(r.done) })
-              : fmtn(b('За {n} дней до покупателей дошло {x}. В последние дни до них доходило в среднем по {o} в день, то есть примерно столько, сколько успевает самый медленный этап, {s}, а первые дни ушли на то, чтобы задачи до него добрались.', 'In {n} days {x} reached the customers. In the last days about {o} a day reached them, roughly what the slowest stage, {s}, manages, and the first days went on the tasks getting that far.'), { n: DAYS, x: T(r.done), o: TA(recentOut), s: STAGE_NAME[bn] }),
-            cycleNote,
-            stability,
-          ),
+        : bn === 'arrivals'
+          ? fmtn(b('За {n} дней до покупателей дошло {x}. Новых задач приходит меньше, чем успевает даже самый медленный этап, поэтому команду сейчас ограничивают не этапы, а поток новых задач.', 'In {n} days {x} reached the customers. Fewer new tasks arrive than even the slowest stage manages, so the team is now limited not by its stages but by the flow of new tasks.'), { n: DAYS, x: T(r.done) })
+          : fmtn(b('За {n} дней до покупателей дошло {x}. В последние дни до них доходило в среднем по {o} в день, то есть примерно столько, сколько успевает самый медленный этап, {s}, а первые дни ушли на то, чтобы задачи до него добрались.', 'In {n} days {x} reached the customers. In the last days about {o} a day reached them, roughly what the slowest stage, {s}, manages, and the first days went on the tasks getting that far.'), { n: DAYS, x: T(r.done), o: TA(recentOut), s: STAGE_NAME[bn] }),
       focus: removed ? ['q-test'] : ['done'],
       say: removed ? { 'q-test': fmtn(b('Здесь скопилось {q}, а до покупателей не дошло ни одной задачи.', '{q} piled up here, and the customers have zero.'), { q: T(last.qTest) }) } : { done: fmtn(b('За десять дней сюда дошло {x}.', 'In ten days {x} got here.'), { x: T(r.done) }) },
       states: removed ? { done: 'off' } : { done: 'ok' },
       metrics: metricsOf(last, r.throughput),
     });
+    // The second half of the total: how long the tasks took and whether the system is stable.
+    if (!removed)
+      steps.push({
+        id: 'sum-wip',
+        label: b('устойчивость', 'stability'),
+        caption: join(cycleNote, stability),
+        focus: ['q-test', 'q-review'],
+        states: { done: 'ok' },
+        metrics: metricsOf(last, r.throughput),
+      });
     return steps;
   },
   explainDelta(_prev, next, change, a, c): Bi {
