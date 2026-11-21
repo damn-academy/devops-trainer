@@ -13,6 +13,7 @@ process.exitCode = result.status ?? 1;
 let report;
 try { report = JSON.parse(readFileSync(new URL('../explainer-lint-report.json', import.meta.url), 'utf8')); } catch { report = undefined; }
 if (report) {
+  console.log('Term scan: prose only; Markdown code, broken output, and literal output/commands on technical surfaces are excluded.');
   console.log('Explainer lint: concept and reading-time fail the run; style, coverage and runtime are warnings; deduplicated across scenarios and levels.');
   const totals = {};
   for (const [folder, block] of Object.entries(report.blocks)) {
