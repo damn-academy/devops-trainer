@@ -41,18 +41,18 @@ export const mapModel = defineModel<P>({
     'The path of a request from a laptop at home to the shop’s server in a data centre in another country. The diagram shows whose networks the request crosses, how those networks agree with each other and why distance adds a delay nothing can remove. The counters under the diagram show the round-trip time (RTT) and the number of networks on the way.',
   ),
   intro: b(
-    'Схема соберётся по шагам, и сейчас на ней только ноутбук и домашний роутер. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждая следующая сеть появляется, когда до неё доходит запрос, а облачко у подсвеченного участника говорит, что он делает.\n\nПосле первого прохода выключите точку обмена трафиком, включите копию сайта в CDN, подвиньте расстояние до дата-центра и попробуйте обе поломки в блоке «Сломать».',
-    'The diagram builds itself step by step: now it shows only the laptop and the home router. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each next network appears when the request reaches it, and the callout at the highlighted participant says what it does.\n\nAfter the first pass switch the exchange point off, turn on the site copy in a CDN, move the distance to the data centre and try both breaks in “Break it”.',
+    'Схема соберётся по шагам, и сейчас на ней только ноутбук и домашний роутер. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждая следующая сеть появляется, когда до неё доходит запрос, а облачко у подсвеченного участника говорит, что он делает.\n\nПосле первого прохода выключите точку обмена трафиком, включите копию сайта в вашем городе, подвиньте расстояние до дата-центра и попробуйте обе поломки в блоке «Сломать».',
+    'The diagram builds itself step by step: now it shows only the laptop and the home router. Press “Start from the first step”, then go on with “Step forward” above the diagram. Each next network appears when the request reaches it, and the callout at the highlighted participant says what it does.\n\nAfter the first pass switch the exchange point off, turn on the site copy in your city, move the distance to the data centre and try both breaks in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('участник, который работает сейчас', 'the participant working now') },
     { mark: 'say', text: b('что он делает', 'what it does') },
-    { mark: 'token', text: b('что передаётся дальше: запрос, адреса сети, файл', 'what is handed on: a request, a block of addresses, a file') },
+    { mark: 'token', text: b('что передаётся дальше, например запрос, блок адресов или файл', 'what is handed on, for example a request, a block of addresses or a file') },
     { mark: 'icon:terminal', text: b('ноутбук', 'laptop') },
     { mark: 'icon:router', text: b('роутер или сеть оператора', 'a router or an operator’s network') },
     { mark: 'icon:switch', text: b('точка обмена трафиком', 'exchange point') },
     { mark: 'icon:server', text: b('дата-центр с сервером сайта', 'the data centre with the site’s server') },
-    { mark: 'icon:cloud', text: b('копия сайта в CDN', 'site copy in a CDN') },
+    { mark: 'icon:cloud', text: b('копия сайта в вашем городе', 'site copy in your city') },
     { mark: 'icon:dns', text: b('корневой сервер DNS', 'root DNS server') },
     { mark: 'ok', text: b('путь пройден', 'the path is done') },
     { mark: 'err', text: b('здесь пакеты пропадают', 'packets vanish here') },
@@ -63,25 +63,25 @@ export const mapModel = defineModel<P>({
     height: 456,
     nodes: [
       node('laptop', b('Ноутбук', 'Laptop'), 'user', [24, 196, 128, 56], card(['Ваш компьютер. Адрес 192.168.1.23 в домашней сети ему выдал роутер.', 'Your computer. The router gave it the address 192.168.1.23 in the home network.'], ['Ноутбуком пользуетесь вы сами.', 'You.'], 'ip a'), { sub: '192.168.1.23', icon: 'terminal' }),
-      node('router', b('Домашний роутер', 'Home router'), 'l3', [184, 196, 144, 56], card(['В одной коробке собраны три устройства: коммутатор, роутер и точка доступа Wi-Fi. Внутри квартиры у роутера адрес 192.168.1.1, а снаружи адрес, который выдал провайдер. Зачем роутеру два адреса, вы узнаете в уроке про NAT.', 'Three devices in one box: a switch, a router and a Wi-Fi access point. Inside it is 192.168.1.1; outside it has the address the provider gave it. Why there are two addresses is the NAT lesson.'], ['Роутер ставит провайдер, или вы покупаете его сами.', 'The provider, or you, having bought it in a shop.'], 'ip r'), { sub: '203.0.113.7', icon: 'router' }),
+      node('router', b('Домашний роутер', 'Home router'), 'l3', [184, 196, 144, 56], card(['В одной коробке собраны коммутатор, роутер и точка доступа Wi-Fi. Внутри квартиры у роутера адрес 192.168.1.1, а снаружи адрес, который выдал провайдер. Зачем роутеру два адреса, вы узнаете в уроке про NAT.', 'One box holds a switch, a router and a Wi-Fi access point. Inside the flat the router has the address 192.168.1.1, and outside it has the address the provider gave it. Why a router needs two addresses you will learn in the NAT lesson.'], ['Роутер ставит провайдер, или вы покупаете его сами.', 'The provider, or you, having bought it in a shop.'], 'ip r'), { sub: '203.0.113.7', icon: 'router' }),
       node('isp', b('Провайдер', 'Provider (ISP)'), 'l3', [360, 196, 144, 56], card(['Сеть провайдера называется автономной системой. Ею управляет одна компания, у неё свой номер (ASN, здесь 64500) и свои блоки адресов.', 'The provider’s network is an autonomous system: a network under one administration with its own number (ASN) and its own address blocks.'], ['Сетью управляет компания-провайдер, а номер автономной системы выдаёт региональный регистратор, в Европе это RIPE NCC.', 'The provider company; the AS number comes from a regional registry (RIPE NCC in Europe).'], 'traceroute -n shop.example', DOC.cfBgp), { sub: 'AS 64500', icon: 'router' }),
       node('ixp', b('Точка обмена трафиком', 'Exchange point (IXP)'), 'l2', [536, 88, 152, 56], card(['Точка обмена трафиком (IXP) устроена как большой коммутатор, к которому подключены десятки сетей. Подключённые сети передают друг другу трафик напрямую и не платят посреднику; такой обмен называют пирингом. Примеры точек обмена: MSK-IX в Москве, DE-CIX во Франкфурте.', 'A large switch that dozens of networks connect to. Neighbours exchange traffic directly (peering) without paying a middleman. Examples: MSK-IX, DE-CIX.'], ['Точку обмена держит независимая организация, а участники платят ей за подключение.', 'An independent organisation; members pay for a port.'], undefined, DOC.cfIxp), { icon: 'switch' }),
       node('transit', b('Транзитный оператор', 'Transit carrier'), 'l3', [536, 308, 152, 56], card(['Крупная сеть, которая за деньги передаёт трафик туда, куда у вашего провайдера нет собственного пути.', 'A large network that carries traffic for money to places your provider has no direct path to.'], ['Сетью управляет магистральный оператор связи.', 'A backbone carrier.']), { sub: 'AS 64502', icon: 'router' }),
       node('cable', b('Подводный кабель', 'Submarine cable'), 'l1', [720, 188, 112, 72], card(['Оптоволоконный кабель, проложенный по дну моря. Свет в стекле проходит около 200 000 километров в секунду, то есть тратит примерно 5 микросекунд на каждый километр, и быстрее сигнал передать нельзя.', 'Optical fibre on the sea floor. Light in glass travels about 200,000 km/s — roughly 5 µs per kilometre. Nothing is faster.'], ['Кабели прокладывают консорциумы операторов связи и облачных компаний.', 'A consortium of carriers and cloud companies.'], undefined, DOC.cableMap)),
       node('dc', b('Дата-центр', 'Data centre'), 'node', [864, 188, 128, 72], card(['Здание со стойками серверов, в котором работает сайт магазина. Внутри стоят свой роутер на границе сети, коммутаторы и серверы. Эту часть пути вы разберёте подробно в следующих уроках.', 'A building with racks of servers. The site lives here: an edge router, switches, servers. We build this part later in the course.'], ['Дата-центр принадлежит хостинг-провайдеру или облаку.', 'A hosting provider or a cloud.']), { shape: 'rack', sub: 'AS 64501', icon: 'server' }),
-      node('cdn', b('Копия сайта (CDN)', 'Site copy (CDN)'), 'l7', [184, 40, 144, 48], card(['Сервер сети доставки контента (CDN) в вашем городе. Он хранит копии картинок и страниц сайта, чтобы их не приходилось каждый раз передавать через океан.', 'A content delivery network server in your city. It keeps copies of images and pages so they do not cross the ocean.'], ['Сервер держит компания CDN по договору с владельцем сайта.', 'A CDN company under contract with the site owner.'], undefined, DOC.cfCdn), { icon: 'cloud' }),
-      node('root', b('Корневой сервер DNS', 'Root DNS'), 'l7', [168, 376, 192, 56], card(['Вершина системы имён интернета. У корневых серверов 13 имён, от a.root-servers.net до m.root-servers.net, но за ними стоят более полутора тысяч серверов по всему миру. Серверы одного имени объявляют один и тот же адрес (это называется anycast), и BGP приводит вас к ближайшему из них.', 'The top of the naming system. 13 names a…m.root-servers.net and behind them more than fifteen hundred servers worldwide sharing the same addresses (anycast): BGP brings you to the nearest one.'], ['Корневые серверы держат 12 организаций-операторов, а работу координирует IANA.', '12 operator organisations, coordinated by IANA.'], 'dig . NS', DOC.rootServers), { sub: 'a.root-servers.net', icon: 'dns' }),
+      node('cdn', b('Копия сайта', 'Site copy'), 'l7', [184, 40, 144, 48], card(['Сервер в вашем городе, на котором лежат копии картинок и страниц сайта магазина. Благодаря ему эти файлы не приходится каждый раз передавать через океан. Как устроены такие серверы и как они узнают, что копия устарела, вы разберёте в уроке о прокси.', 'A server in your city that holds copies of the shop site’s images and pages. Thanks to it these files do not have to cross the ocean every time. How such servers work and how they learn that a copy is out of date you will see in the lesson on proxies.'], ['Сервер держит компания, которая по договору с владельцем сайта хранит копии его файлов во многих городах.', 'A company that, under contract with the site owner, keeps copies of the site’s files in many cities.']), { icon: 'cloud' }),
+      node('root', b('Корневой сервер DNS', 'Root DNS'), 'l7', [168, 376, 192, 56], card(['Вершина системы имён интернета. У корневых серверов 13 имён, от a.root-servers.net до m.root-servers.net, но за ними стоят более полутора тысяч серверов по всему миру. Серверы одного имени объявляют один и тот же адрес из многих городов сразу, и BGP приводит вас к ближайшему из них.', 'The top of the internet’s naming system. The root servers have 13 names, from a.root-servers.net to m.root-servers.net, but more than fifteen hundred servers around the world stand behind them. The servers of one name announce the same address from many cities at once, and BGP brings you to the nearest one.'], ['Корневые серверы держат 12 организаций-операторов, а работу координирует IANA.', '12 operator organisations, coordinated by IANA.'], 'dig . NS', DOC.rootServers), { sub: 'a.root-servers.net', icon: 'dns' }),
     ],
     edges: [
       edge('e-wifi', 'laptop', 'router', 'Wi-Fi', card(['Радиоканал между ноутбуком и точкой доступа в роутере. Вся квартира образует одну локальную сеть 192.168.1.0/24.', 'A radio link between the laptop and the access point in the router. The whole flat is one local network, 192.168.1.0/24.'], ['Радиоканал создаёт точка доступа в роутере.', 'The access point in the router.'])),
       edge('e-fiber', 'router', 'isp', b('оптика 1 Гбит/с', 'fibre 1 Gbit/s'), card(['Кабель от дома до узла провайдера. На этом кабеле кончается ваша сеть и начинается сеть провайдера.', 'The cable from the building to the provider’s node. Your network ends here and someone else’s begins.'], ['Кабель прокладывает провайдер.', 'The provider.'])),
       edge('e-peer', 'isp', 'ixp', b('пиринг', 'peering'), card(['Прямой обмен трафиком между соседними сетями через точку обмена. По протоколу BGP каждая сеть сообщает соседям, какие адреса находятся у неё.', 'Direct traffic exchange between neighbouring networks through an IXP. Over BGP each network tells its neighbours which addresses are in it.'], ['О пиринге договариваются инженеры двух сетей.', 'Engineers of two networks, by mutual agreement.'], undefined, DOC.rfc4271), { via: [[432, 116]], labelAt: 0.42 }),
       edge('e-transit', 'isp', 'transit', b('транзит за плату', 'paid transit'), card(['Если прямого соседства нет, провайдер платит транзитному оператору, и трафик идёт длинным путём.', 'Without a direct neighbour the provider pays a transit carrier, and traffic takes the long way.'], ['Транзит покупают по договору провайдера с оператором.', 'A contract between the provider and the carrier.']), { via: [[432, 336]], labelAt: 0.42 }),
-      edge('e-ixp-cable', 'ixp', 'cable', b('к сети сайта', 'to the site’s network'), card(['Объявление BGP от сети сайта: «адреса 198.51.100.0/24 доступны через меня». Соседние сети поверили этому объявлению и отправляют пакеты к сайту этой дорогой.', 'A BGP announcement: “network 198.51.100.0/24 is reachable through me”. Neighbours believed it and send packets this way.'], ['Объявления рассылают роутеры на границах сетей.', 'Routers at the edges of networks (BGP).'], undefined, DOC.rfc4271), { via: [[776, 116]], labelAt: 0.4 }),
+      edge('e-ixp-cable', 'ixp', 'cable', b('к сети сайта', 'to the site’s network'), card(['По этой дороге сеть сайта объявляет по BGP, что адреса 198.51.100.0/24 доступны через неё. Соседние сети поверили этому объявлению и отправляют пакеты к сайту этой дорогой.', 'Along this road the site’s network announces over BGP that the addresses 198.51.100.0/24 are reachable through it. The neighbouring networks believed the announcement and send packets for the site this way.'], ['Объявления рассылают роутеры на границах сетей.', 'Routers at the edges of networks (BGP).'], undefined, DOC.rfc4271), { via: [[776, 116]], labelAt: 0.4 }),
       edge('e-tr-cable', 'transit', 'cable', b('через AS 64502', 'via AS 64502'), card(['Путь через транзитного оператора. На нём на одну автономную систему больше, а сам путь длиннее на несколько тысяч километров.', 'The path through the transit carrier: one more autonomous system and a few thousand kilometres longer.'], ['Этот путь выбирает BGP, когда короткого пути нет.', 'BGP chooses this path when there is no shorter one.']), { via: [[776, 336]], labelAt: 0.4 }),
       edge('e-cable', 'cable', 'dc', b('5 мкс на км', '5 µs per km'), card(['Задержка в кабеле равна его длине в километрах, умноженной на 5 микросекунд. От Москвы до Франкфурта около 2 000 километров, это 10 миллисекунд в одну сторону, а от Москвы до Нью-Йорка около 7 500 километров, это 37 миллисекунд.', 'Propagation delay: distance × 5 µs. Moscow to Frankfurt is about 2,000 km, 10 ms one way; Moscow to New York about 7,500 km, 37 ms.'], ['Эту задержку задаёт физика, и никто не может её уменьшить.', 'Physics.'])),
-      edge('e-cdn', 'isp', 'cdn', b('копия рядом', 'copy nearby'), card(['Узел CDN стоит в сети провайдера или на ближайшей точке обмена, поэтому путь до него занимает пару миллисекунд.', 'The CDN node sits in the provider’s network or at the nearest exchange point: a couple of milliseconds away.'], ['Узел ставит компания CDN.', 'The CDN.']), { via: [[384, 64]], labelAt: 0.35 }),
-      edge('e-root', 'isp', 'root', 'anycast', card(['Один и тот же адрес объявлен из многих мест сразу, и BGP ведёт пакеты к ближайшему экземпляру сервера. Поэтому корень DNS быстро отвечает в любой стране.', 'One address is announced from many places at once; BGP leads to the nearest instance. That is how the DNS root answers fast in any country.'], ['Адреса объявляют операторы корневых серверов.', 'The root server operators.'], 'dig @198.41.0.4 . NS', DOC.rootServers), { via: [[384, 404]], labelAt: 0.15 }),
+      edge('e-cdn', 'isp', 'cdn', b('копия рядом', 'copy nearby'), card(['Сервер с копией сайта стоит в сети провайдера или на ближайшей точке обмена, поэтому путь до него занимает пару миллисекунд.', 'The server with the site copy sits in the provider’s network or at the nearest exchange point, so the path to it takes a couple of milliseconds.'], ['Сервер ставит компания, которая хранит копии сайта.', 'The company that keeps the site copies.']), { via: [[384, 64]], labelAt: 0.35 }),
+      edge('e-root', 'isp', 'root', b('к ближайшему экземпляру', 'to the nearest instance'), card(['Один и тот же адрес объявлен из многих мест сразу, и BGP ведёт пакеты к ближайшему экземпляру сервера. Поэтому корень DNS быстро отвечает в любой стране.', 'One address is announced from many places at once; BGP leads to the nearest instance. That is how the DNS root answers fast in any country.'], ['Адреса объявляют операторы корневых серверов.', 'The root server operators.'], 'dig @198.41.0.4 . NS', DOC.rootServers), { via: [[384, 404]], labelAt: 0.15 }),
     ],
   },
   params: [
@@ -110,12 +110,12 @@ export const mapModel = defineModel<P>({
     {
       id: 'cdn',
       group: b('Что сделал владелец сайта', 'What the site owner did'),
-      label: b('Копии картинок и стилей сайта лежат в CDN в вашем городе', 'Copies of the site’s images and styles are in a CDN in your city'),
+      label: b('Копии картинок и стилей сайта лежат на сервере в вашем городе', 'Copies of the site’s images and styles are on a server in your city'),
       kind: 'toggle',
       default: false,
       near: 'cdn',
       predict: {
-        prompt: b('Владелец сайта положил копии картинок в CDN, у которого есть узел в вашем городе. Как изменится время загрузки картинок?', 'The site owner put copies of the images into a CDN with a node in your city. How does the image load time change?'),
+        prompt: b('Владелец сайта положил копии картинок на сервер в вашем городе, а сам сайт остался в дата-центре за океаном. Как изменится время загрузки картинок?', 'The site owner put copies of the images on a server in your city, and the site itself stayed in the data centre across the ocean. How does the image load time change?'),
         options: [
           { id: 'faster', text: b('Картинки будут загружаться быстрее, потому что придут из вашего города', 'Faster: images come from your own city') },
           { id: 'same', text: b('Время не изменится, потому что сайт остался тем же', 'The same: it is the same site') },
@@ -156,7 +156,7 @@ export const mapModel = defineModel<P>({
   ],
   metrics: [
     { id: 'rtt', label: b('время до сайта и обратно', 'round trip to the site'), unit: { ru: 'мс', en: 'ms' } },
-    { id: 'cdn', label: b('время до копии в CDN и обратно', 'round trip to the CDN copy'), unit: { ru: 'мс', en: 'ms' } },
+    { id: 'cdn', label: b('время до копии сайта и обратно', 'round trip to the site copy'), unit: { ru: 'мс', en: 'ms' } },
     { id: 'ases', label: b('автономных систем на пути', 'autonomous systems on the way') },
   ],
   run(p, broken): Step[] {
@@ -180,7 +180,7 @@ export const mapModel = defineModel<P>({
       id: 'city',
       label: b('город', 'city'),
       caption: p.cgnat
-        ? b('Роутер передаёт пакет провайдеру. Но внешний адрес роутера 100.64.12.7 принадлежит диапазону, который провайдер делит между многими клиентами (CGNAT). Значит, ваш роутер сам стоит за чужим роутером, который подменяет адреса многих клиентов (такая подмена называется NAT, и ей посвящён отдельный урок), и подключиться к вам снаружи нельзя, как бы вы ни настроили свой роутер.', 'The router hands the packet to the provider. But its outside address 100.64.12.7 is the provider’s shared range (CGNAT): your router itself sits behind someone else’s router that rewrites the addresses of many customers (this rewriting is called NAT and has a lesson of its own), and nobody outside can connect to you, however you set up your own router.')
+        ? b('Роутер передаёт пакет провайдеру. Но внешний адрес роутера 100.64.12.7 взят из диапазона, который провайдер делит между многими клиентами. Такую схему называют CGNAT, и что она значит для вас, объясняет следующий шаг.', 'The router hands the packet to the provider. But its outside address 100.64.12.7 comes from a range the provider shares among many customers. This is called CGNAT, and the next step explains what it means for you.')
         : b('Роутер передаёт пакет провайдеру. Сеть провайдера называется автономной системой AS 64500: ею управляет одна компания, у неё свой номер и свои адреса.', 'The router hands the packet to the provider. The provider’s network is autonomous system AS 64500: one administration, its own number, its own addresses.'),
       focus: ['router', 'e-fiber'],
       tokens: [{ edge: 'e-fiber', label: b('запрос', 'request') }],
@@ -188,14 +188,25 @@ export const mapModel = defineModel<P>({
       states: { isp: 'on', 'e-fiber': 'on' },
       metrics: { rtt: (L.wifi + L.access) * 2, ases: 1 },
     });
+    if (p.cgnat) {
+      steps.push({
+        id: 'cgnat',
+        label: b('общий адрес', 'shared address'),
+        caption: b('Значит, ваш роутер сам стоит за роутером провайдера, который подменяет адреса многих клиентов одним своим. Такая подмена называется NAT, и ей посвящён отдельный урок. Поэтому подключиться к вам снаружи нельзя.', 'So your router itself sits behind the provider’s router, which replaces the addresses of many customers with one of its own. This rewriting is called NAT and has a lesson of its own. That is why nobody outside can connect to you.'),
+        focus: ['isp'],
+        say: { isp: b('Провайдер подменяет адрес 100.64.12.7 своим.', 'The provider replaces 100.64.12.7 with its own.') },
+        states: {},
+        metrics: { rtt: (L.wifi + L.access) * 2, ases: 1 },
+      });
+    }
     if (p.ixp && !leak) {
       steps.push({
         id: 'country',
         label: b('страна', 'country'),
-        caption: b('Сайт находится в другой сети, AS 64501. Обе сети подключены к точке обмена трафиком и передают пакеты друг другу напрямую. Какие адреса находятся в какой сети, они заранее сообщили друг другу по протоколу BGP.', 'The site is in another network, AS 64501. Both networks are connected to an exchange point and swap packets directly. They agreed over BGP which addresses belong to whom.'),
+        caption: b('Сайт находится в другой сети, AS 64501. Обе сети подключены к точке обмена трафиком и передают пакеты друг другу напрямую, а какие адреса в какой сети, они заранее сообщили друг другу по BGP.', 'The site is in another network, AS 64501. Both networks are connected to an exchange point and pass packets directly, and they told each other over BGP in advance which addresses each one holds.'),
         focus: ['isp', 'e-peer', 'ixp'],
-        tokens: [{ edge: 'e-peer', label: b('запрос', 'request') }, { edge: 'e-ixp-cable', reverse: true, label: b('анонс 198.51.100.0/24', 'announce 198.51.100.0/24') }],
-        say: { isp: b('Провайдер знает из анонса BGP, что адреса сайта доступны через точку обмена, и отправляет пакет туда.', 'The provider knows from a BGP announcement that the site is reachable via the exchange point and sends the packet there.') },
+        tokens: [{ edge: 'e-peer', label: b('запрос', 'request') }, { edge: 'e-ixp-cable', reverse: true, label: b('объявление 198.51.100.0/24', 'announcement 198.51.100.0/24') }],
+        say: { isp: b('Из объявления BGP провайдер знает дорогу к сайту и отправляет пакет на точку обмена.', 'A BGP announcement told the provider the way, so it sends the packet to the exchange point.') },
         states: { ixp: 'on', 'e-peer': 'on', 'e-ixp-cable': 'on' },
         metrics: { rtt: Math.round((L.wifi + L.access + L.middle) * 20) / 10, ases },
       });
@@ -237,8 +248,8 @@ export const mapModel = defineModel<P>({
         metrics: { ases },
         broken: {
           at: 'cable',
-          message: '$ ping -c 3 shop.example\nPING shop.example (198.51.100.20) 56(84) bytes of data.\nFrom 198.18.0.2 icmp_seq=1 Destination Net Unreachable\n\n--- shop.example ping statistics ---\n3 packets transmitted, 0 received, +1 errors, 100% packet loss',
-          caption: b('Через несколько секунд или минут BGP проложит путь через другой кабель. Связь вернётся, но задержка станет больше, потому что новый путь длиннее.', 'within seconds to minutes BGP reroutes through another cable: the connection comes back, with more delay.'),
+          message: '$ ping -c 3 shop.example\nPING shop.example (198.51.100.20) 56(84) bytes of data.\n\n--- shop.example ping statistics ---\n3 packets transmitted, 0 received, 100% packet loss, time 2043ms',
+          caption: b('Через несколько секунд или минут BGP проложит путь через другой кабель. Связь вернётся, но задержка станет больше, потому что новый путь длиннее.', 'Within seconds or minutes BGP lays a path through another cable. The connection comes back, but the delay grows, because the new path is longer.'),
         },
       });
       return steps;
@@ -267,20 +278,20 @@ export const mapModel = defineModel<P>({
     });
     steps.push({
       id: 'cdn',
-      label: 'CDN',
+      label: b('копия рядом', 'copy nearby'),
       caption: p.cdn
-        ? fmt(b('Копии картинок и стилей сайта лежат на узле CDN в вашем городе, поэтому путь до них и обратно занимает {c} мс вместо {o} мс до дата-центра. Свет быстрее не пойдёт, поэтому выигрыш получают за счёт расстояния: копия лежит ближе к вам.', 'The site’s images and styles have a copy on a CDN node in your city: {c} ms round trip instead of {o} ms to the data centre. Light will not go faster, so the gain comes from distance: the copy is closer to you.'), { c: L.cdnRtt, o: L.rtt })
-        : b('Копий сайта поблизости нет, поэтому каждая картинка приходит из дата-центра через подводный кабель. Включите копию сайта в CDN и посмотрите, как изменятся счётчики.', 'There are no copies nearby: every image travels from the data centre through the cable. Turn the CDN on and watch the counters.'),
+        ? fmt(b('Копии картинок и стилей сайта лежат на сервере в вашем городе, поэтому путь до них и обратно занимает {c} мс вместо {o} мс до дата-центра. Свет быстрее не пойдёт, и выигрыш получают за счёт расстояния, потому что копия лежит ближе к вам.', 'The site’s images and styles have copies on a server in your city, so the round trip to them takes {c} ms instead of {o} ms to the data centre. Light will not go faster, so the gain comes from the copy being closer to you.'), { c: L.cdnRtt, o: L.rtt })
+        : b('Копий сайта поблизости нет, поэтому каждая картинка приходит из дата-центра через подводный кабель. Включите копию сайта в вашем городе и посмотрите, как изменятся счётчики.', 'There are no copies nearby, so every image travels from the data centre through the submarine cable. Turn on the site copy in your city and watch how the counters change.'),
       focus: p.cdn ? ['cdn', 'e-cdn'] : ['dc', 'e-cable'],
       tokens: p.cdn ? [{ edge: 'e-cdn', label: 'app.css' }] : [{ edge: 'e-cable', label: 'app.css', reverse: true }],
-      say: p.cdn ? { cdn: b('Узел CDN в вашем городе отдаёт копию файла стилей app.css.', 'The CDN node in your city serves its copy of app.css.') } : { dc: b('Сервер в дата-центре отправляет файл стилей app.css через океан.', 'The server in the data centre sends app.css across the ocean.') },
+      say: p.cdn ? { cdn: b('Сервер в вашем городе отдаёт копию файла стилей app.css.', 'The server in your city serves its copy of the stylesheet app.css.') } : { dc: b('Сервер в дата-центре отправляет файл стилей app.css через океан.', 'The server in the data centre sends app.css across the ocean.') },
       states: p.cdn ? { cdn: 'on', 'e-cdn': 'on' } : {},
       metrics: { rtt: L.rtt, ...(p.cdn ? { cdn: L.cdnRtt } : {}), ases },
     });
     steps.push({
       id: 'root',
       label: b('корень DNS', 'DNS root'),
-      caption: b('Недалеко от провайдера работает экземпляр корневого сервера DNS. Таких экземпляров больше полутора тысяч, у всех один адрес (anycast), и BGP приводит вас к ближайшему. Зачем нужен корневой сервер, вы узнаете в уроке про систему имён.', 'Somewhere near the provider an instance of a root DNS server answers. There are more than fifteen hundred such instances with one address (anycast), and BGP brings you to the nearest one. Why the root is needed is the DNS lesson.'),
+      caption: b('Недалеко от провайдера работает экземпляр корневого сервера DNS. Таких экземпляров больше полутора тысяч, у всех один адрес, и BGP приводит вас к ближайшему. Зачем нужен корневой сервер, расскажет урок о DNS.', 'Near the provider an instance of a root DNS server is running. There are more than fifteen hundred such instances, all with one address, and BGP brings you to the nearest one. The DNS lesson explains why the root is needed.'),
       focus: ['root', 'e-root'],
       tokens: [{ edge: 'e-root', label: '. NS?' }],
       say: { root: b('Ближайший экземпляр корневого сервера DNS отвечает на вопрос провайдера.', 'The nearest root DNS instance answers the provider’s question.') },
@@ -291,8 +302,8 @@ export const mapModel = defineModel<P>({
       id: 'whole',
       label: b('весь путь', 'the path'),
       caption: p.ixp
-        ? b('Весь путь пройден: ваша сеть, сеть провайдера, точка обмена трафиком, подводный кабель и дата-центр. У каждого участка свой хозяин. В следующих уроках вы разберёте, что передаётся по этим линиям.', 'The whole path: your network → the provider’s network → the IXP → the cable → the data centre. Each part has its own owner. Next we go inside: what exactly travels along this line.')
-        : b('Весь путь пройден: ваша сеть, сеть провайдера, транзитный оператор, подводный кабель и дата-центр. У каждого участка свой хозяин. В следующих уроках вы разберёте, что передаётся по этим линиям.', 'The whole path: your network → the provider’s network → transit → the cable → the data centre. Each part has its own owner. Next we go inside: what exactly travels along this line.'),
+        ? b('Запрос прошёл весь путь через вашу сеть, сеть провайдера, точку обмена трафиком, подводный кабель и дата-центр. У каждого участка свой хозяин, а что передаётся по этим линиям, вы разберёте в следующих уроках.', 'The request has crossed the whole path through your network, the provider’s network, the exchange point, the submarine cable and the data centre. Each part has its own owner, and what travels along these lines you will see in the next lessons.')
+        : b('Запрос прошёл весь путь через вашу сеть, сеть провайдера, транзитного оператора, подводный кабель и дата-центр. У каждого участка свой хозяин, а что передаётся по этим линиям, вы разберёте в следующих уроках.', 'The request has crossed the whole path through your network, the provider’s network, the transit carrier, the submarine cable and the data centre. Each part has its own owner, and what travels along these lines you will see in the next lessons.'),
       focus: ['e-wifi', 'e-fiber', p.ixp ? 'e-peer' : 'e-transit', p.ixp ? 'e-ixp-cable' : 'e-tr-cable', 'e-cable'],
       states: { laptop: 'ok', dc: 'ok' },
       metrics: { rtt: L.rtt, ...(p.cdn ? { cdn: L.cdnRtt } : {}), ases },
@@ -315,8 +326,8 @@ export const mapModel = defineModel<P>({
           : fmt(b('Без точки обмена трафик пошёл через транзитного оператора. Время пути туда и обратно изменилось с {a} до {b} мс, а на пути появилась ещё одна автономная система.', 'Without the IXP traffic goes through a transit carrier: RTT {a} → {b} ms and one extra autonomous system.'), { a: r0, b: r1 });
       case 'cdn':
         return bb.cdn
-          ? fmt(b('Картинки и стили теперь приходят из вашего города за {c} мс, а путь до дата-центра по-прежнему занимает {o} мс.', 'CDN on: static files arrive in {c} ms from your city; the data centre is still {o} ms away.'), { c: mapLatency(bb).cdnRtt, o: r1 })
-          : b('Копий в CDN больше нет, и каждый файл снова приходит из дата-центра.', 'CDN off: every file travels from the data centre again.');
+          ? fmt(b('Картинки и стили теперь приходят из вашего города за {c} мс, а путь до дата-центра по-прежнему занимает {o} мс.', 'Images and styles now arrive from your city in {c} ms, while the path to the data centre still takes {o} ms.'), { c: mapLatency(bb).cdnRtt, o: r1 })
+          : b('Копий сайта в вашем городе больше нет, и каждый файл снова приходит из дата-центра.', 'There are no site copies in your city any more, and every file comes from the data centre again.');
       case 'distance':
         return fmt(b('Расстояние изменилось с {a} до {b} км. Один только кабель теперь добавляет {ms} мс в одну сторону, а время пути туда и обратно изменилось с {r0} до {r1} мс.', '{a} → {b} km: the cable alone adds {ms} ms one way. RTT {r0} → {r1} ms.'), {
           a: a.distance as number,

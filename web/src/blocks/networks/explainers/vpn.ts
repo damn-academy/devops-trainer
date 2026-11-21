@@ -54,7 +54,7 @@ export const vpnModel = defineModel<P>({
     nodes: [
       node('laptop', b('Ноутбук', 'Laptop'), 'user', [16, 56, 180, 72], card(['Ноутбук дома. У него два интерфейса: обычный eth0 с адресом домашней сети и интерфейс VPN wg0 с адресом 10.20.99.5 из сети офиса. Какой интерфейс получит пакет, ядро решает по таблице маршрутов, как в уроке о маршрутизации.', 'The laptop at home. It has two interfaces: the usual eth0 with a home network address and the VPN interface wg0 with the address 10.20.99.5 from the office network. Which interface gets a packet is decided by the kernel from the routing table, as in the routing lesson.'], ['Интерфейс wg0 создаёт программа wg-quick по файлу настроек, который выдал администратор офиса.', 'The wg0 interface is created by wg-quick from the configuration file the office administrator handed out.'], 'ip route get 10.20.3.7'), { icon: 'terminal', sub: 'eth0 192.168.1.23' }),
       node('wg0', b('Интерфейс wg0', 'Interface wg0'), 'tls', [16, 232, 180, 72], card(['Виртуальный сетевой интерфейс WireGuard. Всё, что ядро отправляет в wg0, WireGuard шифрует ключом собеседника, вкладывает в датаграмму UDP и отправляет на адрес шлюза через обычный интерфейс. Из-за второго заголовка пакет становится на 60 байт длиннее, а при внешнем IPv6 на 80, поэтому у wg0 по умолчанию MTU 1420, то есть 1500 − 80.', 'A virtual WireGuard network interface. Everything the kernel sends into wg0, WireGuard encrypts with the peer’s key, puts into a UDP datagram and sends to the gateway’s address through the ordinary interface. The second header makes the packet 60 bytes longer, or 80 with IPv6 outside, so wg0 has an MTU of 1420 by default, that is 1500 − 80.'], ['Ключи и адрес шлюза записаны в /etc/wireguard/wg0.conf.', 'The keys and the gateway address are in /etc/wireguard/wg0.conf.'], 'wg show wg0', WG_DOC), { icon: 'lock', sub: '10.20.99.5/32' }),
-      node('router', b('Домашний роутер', 'Home router'), 'l3', [276, 56, 180, 72], card(['Роутер сети, к которой подключён ноутбук: домашний, в кафе или в гостинице. Для него туннель выглядит обычной датаграммой UDP, и он делает с ней то же, что с любым пакетом из квартиры: подменяет адрес отправителя своим публичным адресом.', 'The router of the network the laptop is on: at home, in a café or in a hotel. To it the tunnel is an ordinary UDP datagram, and it does what it does with any packet from the flat: replaces the source address with its public one.'], ['Роутер принадлежит вам, кафе или гостинице, и о VPN он ничего не знает.', 'The router belongs to you, the café or the hotel, and it knows nothing about the VPN.'], 'conntrack -L -p udp'), { icon: 'router', sub: '203.0.113.7' }),
+      node('router', b('Домашний роутер', 'Home router'), 'l3', [276, 56, 180, 72], card(['Роутер той сети, к которой подключён ноутбук, будь то квартира, кафе или гостиница. Для него туннель выглядит обычной датаграммой UDP, и он делает с ней то же, что с любым пакетом из квартиры: подменяет адрес отправителя своим публичным адресом.', 'The router of the network the laptop is on, be it a flat, a café or a hotel. To it the tunnel is an ordinary UDP datagram, and it does what it does with any packet from the flat: replaces the source address with its public one.'], ['Роутер принадлежит вам, кафе или гостинице, и о VPN он ничего не знает.', 'The router belongs to you, the café or the hotel, and it knows nothing about the VPN.'], 'conntrack -L -p udp'), { icon: 'router', sub: '203.0.113.7' }),
       node('net', b('Интернет', 'Internet'), 'l3', [516, 56, 180, 72], card(['Сети провайдеров между квартирой и офисом. Всё, что здесь видно постороннему, это внешний заголовок: адрес квартиры, адрес шлюза офиса и порт 51820. Адреса внутренней сети, протокол и содержимое спрятаны внутри зашифрованной части.', 'The providers’ networks between the flat and the office. All an outsider sees here is the outer header: the flat’s address, the office gateway’s address and port 51820. The internal addresses, the protocol and the contents are hidden inside the encrypted part.'], ['Участки принадлежат провайдерам и другим сетям.', 'These segments belong to providers and other networks.']), { icon: 'cloud' }),
       node('gw', b('Шлюз VPN офиса', 'Office VPN gateway'), 'tls', [756, 56, 220, 72], card(['Машина на границе офиса с публичным адресом. Она принимает датаграммы на порт 51820, проверяет, каким ключом они зашифрованы, расшифровывает и отправляет исходный пакет во внутреннюю сеть как обычный маршрутизатор. Пакеты, которые она не может проверить, она молча выбрасывает.', 'A machine at the office border with a public address. It accepts datagrams on port 51820, checks which key they are encrypted with, decrypts them and sends the original packet into the office network like an ordinary router. Packets it cannot verify it drops silently.'], ['Шлюз настраивает администратор офиса и записывает в него открытые ключи всех, кого пускает.', 'The office administrator sets the gateway up and records in it the public keys of everyone allowed in.'], 'wg show', WG_DOC), { icon: 'lock', sub: '203.0.113.40:51820' }),
       node('srv', b('Сервер мониторинга', 'Monitoring server'), 'node', [756, 232, 220, 72], card(['Сервер во внутренней сети офиса с частным адресом. Из интернета до него не добраться, а пакет из туннеля он получает от адреса 10.20.99.5, как от любой машины офиса.', 'A server in the office network with a private address. It cannot be reached from the internet, and it receives the packet from the tunnel from the address 10.20.99.5, as from any office machine.'], ['Сервер обслуживает команда эксплуатации.', 'The operations team runs the server.'], 'ip route'), { icon: 'server', sub: '10.20.3.7' }),
@@ -142,20 +142,27 @@ export const vpnModel = defineModel<P>({
     steps.push({
       id: 'route',
       label: b('маршрут', 'route'),
-      caption: b('Браузер на ноутбуке открывает http://10.20.3.7:3000/, страницу мониторинга в сети офиса. Ядро ищет маршрут: строка 10.20.0.0/16 dev wg0 подходит к адресу точнее, чем default, поэтому пакет уходит не в eth0, а в интерфейс wg0.', 'The browser on the laptop opens http://10.20.3.7:3000/, the monitoring page in the office network. The kernel looks for a route: the line 10.20.0.0/16 dev wg0 matches the address more precisely than default, so the packet goes not into eth0 but into the wg0 interface.'),
+      caption: b('Браузер на ноутбуке открывает http://10.20.3.7:3000/, страницу мониторинга в сети офиса. Ядро ищет маршрут: строка 10.20.0.0/16 dev wg0 подходит к адресу точнее, чем default, поэтому пакет уходит не в eth0, а в интерфейс wg0.', 'The browser on the laptop opens http://10.20.3.7:3000/, the monitoring page in the office network. The line 10.20.0.0/16 dev wg0 matches the address more precisely than default, so the kernel sends the packet into wg0, not eth0.'),
       focus: ['laptop', 'route'],
       tokens: [{ edge: 'route', label: '10.20.99.5 → 10.20.3.7' }],
-      say: { laptop: b('Ядро выбирает для адреса 10.20.3.7 маршрут через wg0.', 'The kernel picks the route through wg0 for 10.20.3.7.') },
+      say: { laptop: b('Ядро выбирает для адреса 10.20.3.7 маршрут через wg0.', 'The kernel routes 10.20.3.7 through wg0.') },
       states: { ...hide(), laptop: 'on', wg0: 'on', route: 'on' },
     });
     steps.push({
       id: 'wrap',
       label: b('шифрование', 'encryption'),
-      caption: b('WireGuard шифрует пакет целиком, вместе с его заголовком и частными адресами, и кладёт результат в новую датаграмму UDP, адресованную шлюзу офиса 203.0.113.40 на порт 51820. Теперь у пакета два заголовка IP: внешний виден всем, а внутренний спрятан в зашифрованной части.', 'WireGuard encrypts the whole packet, with its header and private addresses, and puts the result into a new UDP datagram addressed to the office gateway 203.0.113.40, port 51820. The packet now has two IP headers: the outer one is visible to all, the inner one is hidden in the encrypted part.'),
+      caption: b('WireGuard шифрует пакет целиком, вместе с его заголовком и частными адресами, и кладёт результат в новую датаграмму UDP, адресованную шлюзу офиса 203.0.113.40 на порт 51820.', 'WireGuard encrypts the whole packet, with its header and private addresses, and puts the result into a new UDP datagram addressed to the office gateway 203.0.113.40, port 51820.'),
       focus: ['wg0', 'out'],
       tokens: [{ edge: 'out', label: 'UDP → 203.0.113.40:51820 {…}' }],
       say: { wg0: b('WireGuard шифрует пакет и вкладывает его в датаграмму UDP к шлюзу.', 'WireGuard encrypts the packet and wraps it into a UDP datagram to the gateway.') },
       states: { out: 'on', router: 'on' },
+    });
+    steps.push({
+      id: 'headers',
+      label: b('два заголовка', 'two headers'),
+      caption: b('Теперь у пакета два заголовка IP. Внешний заголовок с адресами ноутбука и шлюза видит каждый, кто передаёт датаграмму, а внутренний, с частными адресами офиса, спрятан в зашифрованной части.', 'The packet now has two IP headers. The outer header with the addresses of the laptop and the gateway is visible to everyone who passes the datagram on, and the inner one, with the office’s private addresses, is hidden in the encrypted part.'),
+      focus: ['out'],
+      tokens: [{ edge: 'out', label: 'UDP → 203.0.113.40:51820 {…}' }],
     });
     if (broken.has('udp-blocked')) {
       steps.push({
@@ -174,19 +181,19 @@ export const vpnModel = defineModel<P>({
     steps.push({
       id: 'nat',
       label: b('NAT', 'NAT'),
-      caption: b('Домашний роутер видит обычную датаграмму UDP и подменяет во внешнем заголовке адрес отправителя своим публичным адресом 203.0.113.7, как с любым пакетом из квартиры. Во внутренний пакет роутер не заглядывает: тот зашифрован, а роутеру он и не нужен.', 'The home router sees an ordinary UDP datagram and replaces the source address in the outer header with its public address 203.0.113.7, as with any packet from the flat. The router does not look into the inner packet: it is encrypted, and the router does not need it anyway.'),
+      caption: b('Домашний роутер видит обычную датаграмму UDP и, как с любым пакетом из квартиры, подменяет во внешнем заголовке адрес отправителя своим адресом 203.0.113.7. Во внутренний пакет роутер не заглядывает, потому что тот зашифрован.', 'The home router sees an ordinary UDP datagram and, as with any packet from the flat, replaces the source address in the outer header with its own address 203.0.113.7. The router does not look into the inner packet, because it is encrypted.'),
       focus: ['router', 'wan1'],
       tokens: [{ edge: 'wan1', label: '203.0.113.7 → 203.0.113.40 {…}' }],
-      say: { router: b('Роутер подменяет адрес отправителя во внешнем заголовке.', 'The router replaces the source address in the outer header.') },
+      say: { router: b('Роутер подменяет адрес во внешнем заголовке.', 'The router swaps the address in the outer header.') },
       states: { wan1: 'on', net: 'on' },
     });
     steps.push({
       id: 'wire',
       label: b('в интернете', 'on the internet'),
-      caption: b('По интернету идёт зашифрованная датаграмма. Провайдер и любой на пути видят только внешний заголовок: адрес квартиры, адрес шлюза офиса и порт 51820. К какому серверу внутри офиса вы обращаетесь и что передаёте, им не видно.', 'An encrypted datagram travels over the internet. The provider and anyone on the path see only the outer header: the flat’s address, the office gateway’s address and port 51820. Which server inside the office you talk to and what you send is not visible to them.'),
+      caption: b('По интернету идёт зашифрованная датаграмма. Провайдер и любой на пути видят только внешний заголовок: адрес квартиры, адрес шлюза офиса и порт 51820. К какому серверу внутри офиса вы обращаетесь и что передаёте, им не видно.', 'The encrypted datagram crosses the internet. The provider and anyone on the path see only the outer header, with the flat’s address, the gateway’s address and port 51820. Which office server you talk to and what you send, they cannot see.'),
       focus: ['net', 'wan2'],
       tokens: [{ edge: 'wan2', label: 'UDP 51820 {…}' }],
-      say: { net: b('Сети провайдеров передают датаграмму, не видя, что у неё внутри.', 'The providers’ networks pass the datagram on without seeing what is inside.') },
+      say: { net: b('Сети провайдеров передают датаграмму, не видя, что у неё внутри.', 'The providers pass the datagram on unopened.') },
       states: { wan2: 'on', gw: 'on' },
     });
     if (broken.has('no-peer')) {
@@ -204,43 +211,51 @@ export const vpnModel = defineModel<P>({
     steps.push({
       id: 'unwrap',
       label: b('расшифровка', 'decryption'),
-      caption: b('Шлюз проверяет, что датаграмма зашифрована ключом ноутбука, расшифровывает её и достаёт исходный пакет 10.20.99.5 → 10.20.3.7. Дальше шлюз работает как обычный маршрутизатор и отправляет этот пакет во внутреннюю сеть офиса.', 'The gateway checks that the datagram is encrypted with the laptop’s key, decrypts it and takes out the original packet 10.20.99.5 → 10.20.3.7. From here the gateway works as an ordinary router and sends this packet into the office network.'),
+      caption: b('Шлюз проверяет, что датаграмма зашифрована ключом ноутбука, расшифровывает её и достаёт исходный пакет 10.20.99.5 → 10.20.3.7. Дальше шлюз работает как обычный маршрутизатор и отправляет этот пакет во внутреннюю сеть офиса.', 'The gateway checks that the datagram is encrypted with the laptop’s key, decrypts it and takes out the original packet 10.20.99.5 → 10.20.3.7. From here the gateway works as an ordinary router and sends it into the office network.'),
       focus: ['gw', 'lan'],
       tokens: [{ edge: 'lan', label: '10.20.99.5 → 10.20.3.7' }],
-      say: { gw: b('Шлюз расшифровывает датаграмму и пересылает исходный пакет в офисную сеть.', 'The gateway decrypts the datagram and forwards the original packet into the office network.') },
+      say: { gw: b('Шлюз пересылает исходный пакет в сеть офиса.', 'The gateway forwards the packet into the office network.') },
       states: { lan: 'on', srv: 'on' },
     });
     if (broken.has('no-route-back')) {
       steps.push({
         id: 'lost',
         label: b('ответ не туда', 'answer astray'),
-        caption: b('Сервер получает запрос и отвечает на адрес 10.20.99.5, но маршрута к этой сети у него нет, и ответ уходит по маршруту default обычному шлюзу офиса, который о VPN ничего не знает. Это тот же «пинг в одну сторону», что в уроке о маршрутизации: запрос дошёл, а ответ нет.', 'The server gets the request and answers to 10.20.99.5, but it has no route to that network, so the answer leaves by the default route to the office’s ordinary gateway, which knows nothing about the VPN. It is the same one-way ping as in the routing lesson: the request arrived, the answer did not.'),
+        caption: b('Сервер получает запрос и отвечает на адрес 10.20.99.5, но маршрута к этой сети у него нет, и ответ уходит по маршруту default обычному шлюзу офиса, который о VPN ничего не знает.', 'The server gets the request and answers to 10.20.99.5, but it has no route to that network, so the answer leaves by the default route to the office’s ordinary gateway, which knows nothing about the VPN.'),
         focus: ['srv'],
         say: { srv: b('Сервер отправляет ответ по маршруту default, мимо шлюза VPN.', 'The server sends the answer by the default route, past the VPN gateway.') },
         states: { srv: 'err' },
-        broken: { at: 'srv', message: `${PING_LOST}\n$ ssh monitor tcpdump -n -c 2 icmp\n10:02:11.400 IP 10.20.99.5 > 10.20.3.7: ICMP echo request, id 7, seq 1, length 64\n10:02:11.400 IP 10.20.3.7 > 10.20.99.5: ICMP echo reply, id 7, seq 1, length 64`, caption: b('Захват на сервере показывает и пришедшие запросы, и отправленные ответы, а до ноутбука ответы не доходят. Значит, на пути обратно нет маршрута к адресам VPN: его добавляют на сервере или на обычном шлюзе офиса.', 'A capture on the server shows both the incoming requests and the answers sent, yet the answers never reach the laptop. So the way back has no route to the VPN addresses: it is added on the server or on the office’s ordinary gateway.') },
+        broken: { at: 'srv', message: `${PING_LOST}\n$ ssh monitor tcpdump -n -c 2 icmp\n10:02:11.400 IP 10.20.99.5 > 10.20.3.7: ICMP echo request, id 7, seq 1, length 64\n10:02:11.400 IP 10.20.3.7 > 10.20.99.5: ICMP echo reply, id 7, seq 1, length 64`, caption: b('Это тот же «пинг в одну сторону», что в уроке о маршрутизации: запрос дошёл, а ответ нет. Захват на сервере показывает и пришедшие запросы, и отправленные ответы, а до ноутбука ответы не доходят. Значит, на пути обратно нет маршрута к адресам VPN: его добавляют на сервере или на обычном шлюзе офиса.', 'It is the same one-way ping as in the routing lesson: the request arrived, the answer did not. A capture on the server shows both the incoming requests and the answers sent, yet the answers never reach the laptop. So the way back has no route to the VPN addresses: it is added on the server or on the office’s ordinary gateway.') },
       });
       return steps;
     }
     steps.push({
       id: 'reply',
       label: b('ответ', 'answer'),
-      caption: b('Сервер видит запрос от адреса 10.20.99.5, как от любой машины офиса, и отвечает. Маршрут к 10.20.99.0/24 ведёт через шлюз VPN, поэтому ответ проходит тот же путь в обратную сторону: шлюз шифрует его, вкладывает в датаграмму к роутеру квартиры, а wg0 на ноутбуке расшифровывает.', 'The server sees the request from 10.20.99.5, as from any office machine, and answers. The route to 10.20.99.0/24 leads through the VPN gateway, so the answer takes the same path back: the gateway encrypts it and wraps it into a datagram to the flat’s router, and wg0 on the laptop decrypts it.'),
+      caption: b('Сервер видит запрос от адреса 10.20.99.5, как от любой машины офиса, и отвечает. Маршрут к сети 10.20.99.0/24 ведёт через шлюз VPN, поэтому ответ уходит к шлюзу.', 'The server sees the request from 10.20.99.5, as from any office machine, and answers. The route to the network 10.20.99.0/24 leads through the VPN gateway, so the answer goes to the gateway.'),
       focus: ['srv', 'lan'],
       tokens: [{ edge: 'lan', reverse: true, label: '10.20.3.7 → 10.20.99.5' }],
       say: { srv: b('Сервер отвечает на адрес 10.20.99.5 через шлюз VPN.', 'The server answers 10.20.99.5 through the VPN gateway.') },
+    });
+    steps.push({
+      id: 'back',
+      label: b('обратно', 'back'),
+      caption: b('Дальше ответ проходит тот же путь в обратную сторону. Шлюз шифрует его и вкладывает в датаграмму к роутеру квартиры, а интерфейс wg0 на ноутбуке расшифровывает ответ и отдаёт его браузеру.', 'From here the answer takes the same path back. The gateway encrypts it and wraps it into a datagram to the flat’s router, and the wg0 interface on the laptop decrypts the answer and hands it to the browser.'),
+      focus: ['gw', 'wg0', 'laptop'],
+      tokens: [{ edge: 'wan2', reverse: true, label: 'UDP 51820 {…}' }],
+      say: { wg0: b('Интерфейс wg0 расшифровывает ответ сервера.', 'The wg0 interface decrypts the server’s answer.') },
       states: { laptop: 'ok' },
     });
     const full = p.mode === 'full';
     steps.push({
       id: 'other',
-      label: b('остальной трафик', 'other traffic'),
+      label: b('прочий трафик', 'other traffic'),
       caption: full
-        ? b('В туннель направлен весь трафик, потому что маршрут default тоже ведёт в wg0. Поэтому даже запрос к shop.example уходит в туннель, выходит в интернет через шлюз офиса, и сайт видит адрес офиса 203.0.113.40, а не адрес квартиры. Так делают, когда весь трафик сотрудников должен проходить через фильтры компании.', 'All traffic is directed into the tunnel: the default route leads into wg0 as well. So even the request to shop.example goes into the tunnel, enters the internet through the office gateway, and the site sees the office address 203.0.113.40, not the flat’s. This is done when all of the staff’s traffic must pass the company’s filters.')
-        : b('Запрос к сайту shop.example под строку 10.20.0.0/16 не подходит, поэтому ядро отправляет его по маршруту default через eth0, мимо туннеля, и сайт видит адрес квартиры. Такой туннель называют разделённым, потому что через офис идёт только трафик к сети офиса.', 'The request to shop.example does not match the line 10.20.0.0/16, so the kernel sends it by the default route through eth0, past the tunnel, and the site sees the flat’s address. Such a tunnel is called split: only traffic to the office network goes through the office.'),
+        ? b('В туннель направлен весь трафик, потому что маршрут default тоже ведёт в wg0. Поэтому даже запрос к shop.example уходит в туннель и выходит в интернет через шлюз офиса, и сайт видит адрес офиса 203.0.113.40, а не адрес квартиры.', 'All traffic goes into the tunnel, because the default route leads into wg0 as well. So even the request to shop.example goes into the tunnel and enters the internet through the office gateway, and the site sees the office address 203.0.113.40, not the flat’s.')
+        : b('Запрос к сайту shop.example под строку 10.20.0.0/16 не подходит, поэтому ядро отправляет его по маршруту default через eth0, мимо туннеля, и сайт видит адрес квартиры. Такой туннель называют разделённым, потому что через офис идёт только трафик к сети офиса.', 'The request to shop.example does not match the line 10.20.0.0/16, so the kernel sends it by the default route through eth0, past the tunnel, and the site sees the flat’s address. Such a tunnel is called split, since only office traffic goes through it.'),
       focus: full ? ['route', 'wg0', 'gw'] : ['direct', 'laptop'],
       tokens: full ? [{ edge: 'route', label: '→ shop.example' }, { edge: 'wan2', label: 'UDP 51820 {…}' }] : [{ edge: 'direct', label: '→ shop.example' }],
-      say: full ? { gw: b('Шлюз офиса выпускает в интернет и запрос к shop.example.', 'The office gateway lets the request to shop.example out to the internet too.') } : { laptop: b('Запрос к shop.example уходит через eth0, мимо туннеля.', 'The request to shop.example leaves through eth0, past the tunnel.') },
+      say: full ? { gw: b('Шлюз выпускает запрос в интернет.', 'The gateway lets the request out.') } : { laptop: b('Запрос уходит мимо туннеля.', 'The request bypasses the tunnel.') },
       states: full ? {} : { direct: 'on' },
     });
     return steps;
@@ -256,7 +271,7 @@ export const vpnModel = defineModel<P>({
       return b('Запрос доходит до сервера, а ответ уходит мимо шлюза VPN, поэтому ping показывает полную потерю, хотя сервер отвечает.', 'The request reaches the server, but the answer goes past the VPN gateway, so ping shows total loss although the server answers.');
     }
     return bb.mode === 'full'
-      ? b('Теперь в туннель идёт весь трафик ноутбука, и сайты видят адрес офиса, а не квартиры.', 'Now all of the laptop’s traffic goes into the tunnel, and sites see the office address, not the flat’s.')
+      ? b('Теперь в туннель идёт весь трафик ноутбука, и сайты видят адрес офиса, а не квартиры. Так настраивают VPN, когда весь трафик сотрудников должен проходить через фильтры компании.', 'Now all of the laptop’s traffic goes into the tunnel, and sites see the office address, not the flat’s. A VPN is set up this way when all of the staff’s traffic must pass the company’s filters.')
       : b('Теперь в туннель идёт только трафик к сети офиса, а остальные запросы уходят мимо него.', 'Now only traffic to the office network goes into the tunnel, and other requests go past it.');
   },
 });
