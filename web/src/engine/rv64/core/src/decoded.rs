@@ -8,6 +8,11 @@ pub struct Decoded {
 }
 fn sx(v: u32, bits: u32) -> u64 { ((v as i32) << (32-bits) >> (32-bits)) as i64 as u64 }
 impl Decoded {
+    #[cfg(target_arch = "wasm32")]
+    #[inline]
+    pub(crate) fn jit_boundary(&self) -> bool {
+        match self.op { 13|16|17 => true, 0 => crate::jit::ends_block(self.ins), _ => false }
+    }
     pub fn new(raw: u32, ins: u32, len: u64) -> Self {
         let f = (ins >> 12) & 7; let top = ins >> 25;
         let mut d = Self { raw, ins, len, imm: sx(ins >> 20, 12), op: 0, rd: (ins >> 7) as u8 & 31, rs1: (ins >> 15) as u8 & 31, rs2: (ins >> 20) as u8 & 31, f: f as u8 };

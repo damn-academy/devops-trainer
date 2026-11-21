@@ -13,6 +13,7 @@ worker.onmessage = ({ data }) => {
 };
 worker.onerror = (e) => { host.rv64Result = { type: 'error', error: e.message }; };
 const boot = new URLSearchParams(location.search).has('boot');
+const jitThreshold = Number(new URLSearchParams(location.search).get('jit') ?? 50);
 if (boot) {
   const start = performance.now(); let text = ''; let sent = false; let benchStart = 0; let retiredStart = 0; let busyStart = 0;
   const decoder = new TextDecoder(); const ctl = new Int32Array(control);
@@ -31,11 +32,11 @@ if (boot) {
     }
     if (text.includes('\nRV64_BENCH_DONE\n')) {
       const seconds = (performance.now() - benchStart) / 1000;
-      host.rv64Result = { type: 'boot', stimecmpWrites: Atomics.load(ctl, 3), bootMs: (host as typeof host & { bootMs?: number }).bootMs, benchmarkSeconds: seconds,
+      host.rv64Result = { type: 'boot', jitThreshold, jitCompiled: Atomics.load(ctl, 6), jitRetired: Atomics.load(ctl, 7) * 1000, stimecmpWrites: Atomics.load(ctl, 3), bootMs: (host as typeof host & { bootMs?: number }).bootMs, benchmarkSeconds: seconds,
         busyMips: (Atomics.load(ctl, 1) * 1000 - retiredStart) / (Atomics.load(ctl, 4) - busyStart),
         effectiveMips: (Atomics.load(ctl, 1) * 1000 - retiredStart) / seconds / 1e6, totalMs: performance.now() - start, console: text };
       clearInterval(timer); if (!new URLSearchParams(location.search).has('profile')) worker.terminate();
     }
   }, 8);
-  worker.postMessage({ input: input.buffer, output: output.buffer, control, kernel, initrd, memoryMB: 512, cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr' });
+  worker.postMessage({ input: input.buffer, output: output.buffer, control, kernel, initrd, memoryMB: 512, jitThreshold, cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr' });
 } else worker.postMessage({ input: input.buffer, output: output.buffer, control, program: program.buffer, memoryMB: 32 });

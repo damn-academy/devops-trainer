@@ -4,7 +4,7 @@ import type { HTTPDisk } from './block';
 import { factsScript, parseFacts, shq, watchedPaths } from '../v86/protocol';
 import { LAB_SCOPES, labFactsScript, parseLabFacts, scopesOf } from '../v86/lab-facts';
 import type { L2Switch } from '../v86/switch';
-export interface RV64Options { id: string; kernel: ArrayBuffer; initrd: ArrayBuffer; memoryMB?: number; cmdline?: string; disk?: ArrayBuffer; network?: L2Switch; httpDisk?: HTTPDisk }
+export interface RV64Options { id: string; kernel: ArrayBuffer; initrd: ArrayBuffer; memoryMB?: number; jitThreshold?: number; cmdline?: string; disk?: ArrayBuffer; network?: L2Switch; httpDisk?: HTTPDisk }
 interface RV64Snapshot {
   format: 'dt.rv64.snapshot/v1'; state: Uint8Array; pending: Uint8Array;
   rings: Uint8Array[]; history: TermRecord[]; lastExit: number; diskIdentity: string;
@@ -73,6 +73,10 @@ export class RV64Machine implements Machine {
     const mac = new Uint8Array([2, 0x44, hash >>> 24, hash >>> 16, hash >>> 8, hash]);
     this.worker.postMessage({ ...boot, mac, netIn: this.netIn.ring.buffer, netOut: this.netOut.ring.buffer, memoryMB: options.memoryMB ?? 512, input: this.input.buffer, output: this.output.buffer, control: this.control.buffer });
     this.timer = setInterval(() => this.drain(), 8);
+  }
+  executionStats() {
+    return { retired: Atomics.load(this.control,1)*1000, busyMilliseconds: Atomics.load(this.control,4)/1000,
+      jitCompiled: Atomics.load(this.control,6), jitRetired: Atomics.load(this.control,7)*1000 };
   }
   private emit(t: string, extra: Record<string, unknown> = {}): void {
     for (const fn of this.listeners) fn({ t, at: Date.now(), machine: this.id, ...extra });

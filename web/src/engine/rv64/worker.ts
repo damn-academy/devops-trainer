@@ -1,7 +1,13 @@
+import { JitRuntime } from './jit';
 import { ByteRing, FrameRing } from './ring';
 import { HTTPBlockDevice, type HTTPDisk } from './block';
 // All async work finishes before entering the hart loop. Runtime input uses SAB only.
 interface Core {
+  jit_retired(): number;
+  jit_threshold(n: number): void;
+  jit_install(id: number, slot: number, count: number): void;
+  jit_clear(): void;
+  jit_table(): WebAssembly.Table;
   set_mac(mac: Uint8Array): void;
   snapshot(): Uint8Array;
   restore(state: Uint8Array): void;
@@ -30,15 +36,20 @@ interface Core {
 interface Init {
   input: SharedArrayBuffer; output: SharedArrayBuffer; control: SharedArrayBuffer;
   netIn?: SharedArrayBuffer; netOut?: SharedArrayBuffer; disk?: ArrayBuffer;
-  kernel?: ArrayBuffer; initrd?: ArrayBuffer; program?: ArrayBuffer; cmdline?: string; memoryMB: number; mac?: Uint8Array; httpDisk?: HTTPDisk;
+  kernel?: ArrayBuffer; initrd?: ArrayBuffer; program?: ArrayBuffer; cmdline?: string; memoryMB: number; jitThreshold?: number; mac?: Uint8Array; httpDisk?: HTTPDisk;
 }
 self.onmessage = async ({ data }: MessageEvent<Init>) => {
   self.onmessage = null;
+  let cleanup = () => {};
   try {
     const url = new URL('/rv64/rv64_core.js', self.location.origin).href;
     const mod = await import(/* @vite-ignore */ url);
-    await mod.default();
+    const wasm = await mod.default();
+    const threshold = data.jitThreshold ?? 50;
     let core = new mod.Engine(data.memoryMB) as Core;
+    core.jit_threshold(threshold);
+    const createJit = () => new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow);
+    let jit = createJit();
     if (data.mac) core.set_mac(data.mac);
     const disk = data.httpDisk ? new HTTPBlockDevice(data.httpDisk) : undefined;
     if (disk) core.lazy_disk(disk.image.bytes);
@@ -53,6 +64,10 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
     let entropyAt = -Infinity;
     let timeOffset = 0;
     let busyMicros = 0;
+    let yieldAt = performance.now();
+    const channel = new MessageChannel();
+    cleanup = () => { jit.dispose(); channel.port1.close(); channel.port2.close(); };
+    const yieldCompiler = () => new Promise<void>(resolve => { channel.port1.onmessage = () => resolve(); channel.port2.postMessage(0); });
     let pending: Uint8Array = new Uint8Array(0);
     self.postMessage({ type: 'ready' });
     for (;;) {
@@ -67,7 +82,8 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
             const state = core.snapshot();
             self.postMessage({ type: 'checkpoint', state, pending }, [state.buffer]);
           } else {
-            core.restore(request.state!); pending = request.pending ?? new Uint8Array(0);
+            jit.dispose(); jit = createJit();
+            core.restore(request.state!); core.jit_threshold(threshold); pending = request.pending ?? new Uint8Array(0);
             timeOffset = core.ticks() - performance.now() * 10000;
             entropyAt = -Infinity;
             self.postMessage({ type: 'restored' });
@@ -77,6 +93,11 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
         await new Promise<void>(resolve => {
           self.onmessage = () => { self.onmessage = null; resolve(); };
         });
+      }
+      if (threshold && performance.now() - yieldAt >= 8) {
+        jit.flush(); await yieldCompiler(); yieldAt = performance.now();
+        Atomics.store(control, 6, jit.compiled);
+        Atomics.store(control, 7, Math.floor(core.jit_retired() / 1000));
       }
       const wake = Atomics.load(input.words, 2);
       if (Atomics.load(control, 0)) break;
@@ -104,7 +125,8 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
       Atomics.store(control, 1, Math.floor(core.retired() / 1000));
       if (state === 3) {
         const savedDisk = core.disk_state();
-        core.free(); core = new mod.Engine(data.memoryMB) as Core;
+        jit.dispose(); jit = createJit();
+        core.free(); core = new mod.Engine(data.memoryMB) as Core; core.jit_threshold(threshold);
         core.restore_disk(savedDisk);
         if (data.mac) core.set_mac(data.mac);
         timeOffset = 0;
@@ -116,4 +138,5 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
       if (state === 1 && !pending.length) Atomics.wait(input.words, 2, wake, Math.min(core.deadline_ms(), 1000));
     }
   } catch (error) { self.postMessage({ type: 'error', error: String(error) }); }
+  finally { cleanup(); }
 };

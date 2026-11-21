@@ -30,6 +30,7 @@ impl Access {
     }
 }
 #[derive(Clone, Copy)]
+#[repr(C)]
 struct Tlb {
     tag: u64,
     pa: u64,
@@ -38,6 +39,16 @@ struct Tlb {
     valid: bool,
     pmp_page: bool,
 }
+// Generated wasm uses this explicit C ABI, checked at compile time.
+const _: () = {
+    assert!(std::mem::size_of::<Tlb>() == 40);
+    assert!(std::mem::offset_of!(Tlb, tag) == 0);
+    assert!(std::mem::offset_of!(Tlb, pa) == 8);
+    assert!(std::mem::offset_of!(Tlb, context) == 16);
+    assert!(std::mem::offset_of!(Tlb, satp) == 24);
+    assert!(std::mem::offset_of!(Tlb, valid) == 32);
+    assert!(std::mem::offset_of!(Tlb, pmp_page) == 33);
+};
 const EMPTY: Tlb = Tlb {
     tag: 0,
     pa: 0,
@@ -49,6 +60,12 @@ const EMPTY: Tlb = Tlb {
 use crate::decoded::Decoded;
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Memory {
+    #[serde(skip)]
+    pub(crate) jit_epoch: u64,
+    #[serde(skip)]
+    pub(crate) jit_pages: Vec<u64>,
+    #[serde(skip)]
+    pub(crate) jit_code: Vec<u8>,
     #[serde(with = "crate::snapshot::ram")]
     pub ram: Vec<u8>,
     #[serde(skip)]
@@ -68,10 +85,15 @@ fn empty_tlb() -> [[Tlb; 256]; 3] { [[EMPTY; 256]; 3] }
 impl Memory {
     pub(crate) fn reset_caches(&mut self) {
         self.flush();
+        self.jit_code = vec![0; (self.ram.len() + 4095) / 4096];
+        self.jit_pages = vec![0; (self.ram.len() + 4095) / 4096];
         self.code = (0..(self.ram.len() + 4095) / 4096).map(|_| None).collect();
     }
     pub fn new(bytes: usize) -> Self {
         Self {
+            jit_epoch: 0,
+            jit_code: vec![0; (bytes + 4095) / 4096],
+            jit_pages: vec![0; (bytes + 4095) / 4096],
             devices: Default::default(),
             ram: vec![0; bytes],
             code: (0..(bytes + 4095) / 4096).map(|_| None).collect(),
@@ -85,7 +107,10 @@ impl Memory {
             pmpaddr: [0; 16],
         }
     }
+    #[cfg(target_arch = "wasm32")]
+    pub(crate) fn jit_tlb_ptr(&self, kind: usize) -> u64 { self.tlb[kind].as_ptr() as u64 }
     pub fn flush(&mut self) {
+        self.jit_epoch = self.jit_epoch.wrapping_add(1);
         self.tlb = [[EMPTY; 256]; 3];
     }
     pub fn load_image(&mut self, addr: u64, data: &[u8]) -> Result<(), Trap> {
@@ -102,7 +127,10 @@ impl Memory {
             .ok_or(Access::Write.fault(addr))?;
         dest.copy_from_slice(data);
         if !data.is_empty() {
-            for page in start / 4096..=(end - 1) / 4096 { self.code[page] = None; }
+            for page in start / 4096..=(end - 1) / 4096 {
+                if self.jit_code[page] != 0 { self.jit_pages[page] = self.jit_pages[page].wrapping_add(1); }
+                self.code[page] = None;
+            }
         }
         Ok(())
     }
@@ -144,6 +172,8 @@ impl Memory {
                 bytes.copy_from_slice(&value.to_le_bytes()[..size]);
                 let first = off as usize / 4096;
                 let last = (off as usize + size - 1) / 4096;
+                if self.jit_code[first] != 0 { self.jit_pages[first] = self.jit_pages[first].wrapping_add(1); }
+                if last != first && self.jit_code[last] != 0 { self.jit_pages[last] = self.jit_pages[last].wrapping_add(1); }
                 self.code[first] = None;
                 if last != first { self.code[last] = None; }
                 return Ok(());
@@ -171,6 +201,7 @@ impl Memory {
         if let Some(cache) = &self.code[page] {
             if cache[slot].len != 0 { return Some(cache[slot]); }
         }
+        self.jit_code[page] = 1;
         let raw = u32::from_le_bytes(self.ram[off..off + 4].try_into().unwrap());
         let d = if raw & 3 == 3 { Decoded::new(raw, raw, 4) }
             else { Decoded::new(raw & 65535, crate::compressed::expand(raw as u16)?, 2) };

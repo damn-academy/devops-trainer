@@ -1,11 +1,21 @@
 // Browser-only host work: Rust/wasm must already have been built in rv64-dev.
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 const port = 5198;
+const wasmSha256 = createHash('sha256').update(readFileSync('public/rv64/rv64_core_bg.wasm')).digest('hex');
+const sourceHash = createHash('sha256');
+for (const file of ['jit-compiler.ts','jit.ts','compiler.worker.ts','worker.ts']) sourceHash.update(file).update(readFileSync(`src/engine/rv64/${file}`));
+const jitSourceSha256 = sourceHash.digest('hex');
+const label = process.env.RV64_RESULT_NAME;
+if (label && !/^[A-Za-z0-9_-]+$/.test(label)) throw new Error('Invalid result name');
+const trace = process.argv.includes("--jit-trace");
+const gates = process.argv.includes("--jit-gates");
 const integration = process.argv.includes("--integration");
 const kuberoot = process.argv.includes('--kuberoot');
 const boot = process.argv.includes("--boot");
+const jit = process.env.RV64_JIT_THRESHOLD ?? "50";
 const vite = spawn('node', ['node_modules/vite/bin/vite.js', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, VITE_RV64: '1' } });
 let browser;
 const profile = process.argv.includes("--profile");
@@ -18,6 +28,10 @@ try {
   browser = await chromium.launch({ headless: true });
   if (integration) { mkdirSync('public/rv64', { recursive: true }); writeFileSync('public/rv64/integration-disk.bin', new Uint8Array(512).fill(90)); }
   const page = await browser.newPage();
+  if (gates || trace || kuberoot) {
+    const progress = setInterval(async () => { console.error((await page.locator("#console").textContent().catch(() => "loading"))?.slice(-1500)); }, 30000);
+    page.once("close", () => clearInterval(progress));
+  }
   let stopProfile;
   if (profile) {
     const cdp = await browser.newBrowserCDPSession();
@@ -30,17 +44,24 @@ try {
       return { traceEvents: events };
     };
   }
-  await page.goto(`http://localhost:${port}/src/engine/rv64/${kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? (profile ? "?boot=1&profile=1" : "?boot=1") : ""}`);
+  await page.goto(`http://localhost:${port}/src/engine/rv64/${trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : trace && process.argv.includes("--single-step") ? "?single=1" : ""}`);
   try {
-    await page.waitForFunction(() => globalThis.rv64Result, undefined, { timeout: Number(process.env.RV64_TIMEOUT_MS) || (kuberoot ? 930000 : boot || integration ? 300000 : 30000) });
+    await page.waitForFunction(() => globalThis.rv64Result, undefined, { timeout: Number(process.env.RV64_TIMEOUT_MS) || (gates || trace ? 900000 : kuberoot ? 930000 : boot || integration ? 300000 : 30000) });
   } catch (error) {
     console.error(await page.locator('#console').textContent().catch(() => 'No guest console'));
     throw error;
   }
-  const result = await page.evaluate(() => ({ result: globalThis.rv64Result, isolated: crossOriginIsolated, userAgent: navigator.userAgent }));
+  const measured = await page.evaluate(() => ({ result: globalThis.rv64Result, isolated: crossOriginIsolated, userAgent: navigator.userAgent }));
+  const result = { ...measured, wasmSha256, jitSourceSha256 };
   mkdirSync('public/rv64/results', { recursive: true });
   if (stopProfile) writeFileSync('public/rv64/results/worker-trace.json', JSON.stringify(await stopProfile()));
-  writeFileSync(`public/rv64/results/${kuberoot ? 'kuberoot' : integration ? "integration" : boot ? "boot" : "smoke"}.json`, JSON.stringify(result, null, 2));
+  writeFileSync(`public/rv64/results/${label ?? (trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : boot ? "boot" : "smoke")}.json`, JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result));
-  if (!result.isolated || (kuberoot ? result.result.type !== 'kuberoot' : integration ? result.result.type !== 'integration' : boot ? result.result.type !== 'boot' || !result.result.console.includes('Correct operation validated') || result.result.stimecmpWrites <= 0 : result.result.type !== 'smoke' || result.result.value !== '42' || result.result.retired !== 2)) throw new Error('RV64 smoke failed');
+  if (process.argv.includes('--speed-gate')) {
+    const baseline = JSON.parse(readFileSync(`public/rv64/results/${process.env.RV64_BASELINE_RESULT}.json`, 'utf8'));
+    if (baseline.wasmSha256 !== wasmSha256 || baseline.jitSourceSha256 !== jitSourceSha256) throw new Error('Speed baseline must use the same build');
+    const speedup = result.result.busyMips / baseline.result.busyMips;
+    if (!(speedup >= 3 && result.result.busyMips >= 250)) throw new Error(`JIT speed gate failed: ${speedup}x, ${result.result.busyMips} busy MIPS`);
+  }
+  if (!result.isolated || (trace ? result.result.type !== "jit-trace" || !result.result.pass : gates ? result.result.type !== "jit-gates" || !result.result.pass : kuberoot ? result.result.type !== 'kuberoot' : integration ? result.result.type !== 'integration' : boot ? result.result.type !== 'boot' || !result.result.console.includes('Correct operation validated') || result.result.stimecmpWrites <= 0 : result.result.type !== 'smoke' || result.result.value !== '42' || result.result.retired !== 2)) throw new Error('RV64 smoke failed');
 } finally { if (browser) await browser.close(); vite.kill(); }

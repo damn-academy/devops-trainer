@@ -30,6 +30,9 @@ const SSTATUS: u64 =
     (1 << 1) | (1 << 5) | (1 << 8) | (3 << 13) | (1 << 18) | (1 << 19) | (3 << 32) | (1 << 63);
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Cpu {
+    #[cfg(target_arch = "wasm32")]
+    #[serde(skip)]
+    pub(crate) jit: crate::jit::Jit,
     #[cfg(not(target_arch = "wasm32"))]
     #[serde(skip)]
     pub trace_enabled: bool,
@@ -53,7 +56,7 @@ pub struct Cpu {
     pub stimecmp_writes: u64,
     pub console: Vec<u8>,
     pub sbi: bool,
-    reservation: Option<(u64, usize)>,
+    pub(crate) reservation: Option<(u64, usize)>,
     wrote_instret: bool,
 }
 #[cfg(not(target_arch = "wasm32"))]
@@ -62,6 +65,8 @@ pub enum TraceEvent { Instruction { pc: u64, raw: u32 }, Trap { pc: u64, trap: T
 impl Cpu {
     pub fn new(bytes: usize) -> Self {
         let mut cpu = Self {
+            #[cfg(target_arch = "wasm32")]
+            jit: Default::default(),
             #[cfg(not(target_arch = "wasm32"))]
             trace_enabled: false,
             #[cfg(not(target_arch = "wasm32"))]
@@ -387,6 +392,8 @@ impl Cpu {
             .map_err(|t| Trap { value: a, ..t })
     }
     pub fn step(&mut self) -> Result<(), Trap> {
+        #[cfg(target_arch = "wasm32")]
+        if self.jit.threshold != 0 { self.jit.at_entry = true; }
         #[cfg(not(target_arch = "wasm32"))]
         { self.last_trace = None; }
         if self.csr[0x320] & 1 == 0 {
@@ -422,6 +429,10 @@ impl Cpu {
             if t.cause == 2 { self.illegal(decoded.raw) } else { t }
         })?;
         self.x[0] = 0;
+        #[cfg(target_arch = "wasm32")]
+        if self.jit.threshold != 0 {
+            self.jit.at_entry = decoded.jit_boundary();
+        }
         #[cfg(not(target_arch = "wasm32"))]
         if self.trace_enabled { self.last_trace = Some(TraceEvent::Instruction { pc: trace_pc, raw: decoded.raw }); }
         if !self.wrote_instret && self.csr[0x320] & 4 == 0 {
@@ -437,7 +448,13 @@ impl Cpu {
         self.memory.devices = devices;
     }
     pub fn run(&mut self, count: u32) {
-        for _ in 0..count {
+        let mut remaining = count;
+        while remaining > 0 {
+            #[cfg(target_arch = "wasm32")]
+            { if self.jit.threshold != 0 && (self.jit.at_entry || self.jit.single_step) { let n = self.jit_block(remaining); if n == u32::MAX { break; } if n != 0 { self.jit.at_entry = true; self.jit.attempted += n as u64; remaining -= n; continue; } } }
+            remaining -= 1;
+            #[cfg(target_arch = "wasm32")]
+            { self.jit.attempted += 1; }
             if let Err(t) = self.step() {
                 self.trap(t)
             }
@@ -601,7 +618,7 @@ impl Cpu {
                 self.store(a.wrapping_add(off), if f == 2 { 4 } else { 8 }, self.f[rs2])?;
             }
             0x43 | 0x47 | 0x4b | 0x4f | 0x53 => self.fp(i)?,
-            0x0f if f <= 1 => {}
+            0x0f if f <= 1 => { if f == 1 { self.memory.flush(); } }
             0x2f if f == 2 || f == 3 => {
                 let size = if f == 2 { 4 } else { 8 };
                 let op = i >> 27;

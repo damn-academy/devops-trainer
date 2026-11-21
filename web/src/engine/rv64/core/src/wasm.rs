@@ -47,6 +47,37 @@ impl Engine {
     pub fn restore(&mut self, data: &[u8]) -> Result<(), JsValue> {
         self.cpu.restore(data).map_err(|e| JsValue::from_str(&e))
     }
+    // Trusted conformance fixtures only; this is the existing test ELF loader.
+    pub fn test_elf(&mut self, bytes: &[u8]) -> Vec<u64> {
+        let symbols = crate::elf::load(&mut self.cpu, bytes);
+        ["tohost", "begin_signature", "end_signature"].iter().map(|s| symbols.get(*s).copied().unwrap_or(0)).collect()
+    }
+    pub fn test_read(&self, address: u64) -> u64 {
+        self.cpu.memory.physical_read(address, 8, crate::Access::Read).unwrap()
+    }
+    pub fn test_single_step(&mut self) { self.jit_clear(); self.cpu.jit.single_step = true; }
+    pub fn test_block(&mut self) -> u32 {
+        let n = self.cpu.jit_block(if self.cpu.jit.single_step { 1 } else { 64 });
+        if n == u32::MAX { return 0; }
+        if n != 0 { return n; }
+        self.cpu.run(1); 1
+    }
+    pub fn test_steps(&mut self, n: u32) { self.cpu.run(n); }
+    pub fn test_time(&mut self, ticks: u64) { self.cpu.time(ticks); self.cpu.service_devices(); }
+    pub fn test_equal(&self, other: &Engine, ram: bool) -> bool {
+        self.cpu.pc == other.cpu.pc && self.cpu.x == other.cpu.x && self.cpu.f == other.cpu.f &&
+        self.cpu.mode == other.cpu.mode && self.cpu.csr == other.cpu.csr &&
+        self.cpu.retired == other.cpu.retired && self.cpu.cycles == other.cpu.cycles &&
+        self.cpu.waiting == other.cpu.waiting && self.cpu.stopped == other.cpu.stopped &&
+        (!ram || self.cpu.memory.ram == other.cpu.memory.ram)
+    }
+    pub fn test_attempted(&self) -> f64 { self.cpu.jit.attempted as f64 }
+    pub fn test_cycles(&self) -> f64 { self.cpu.cycles as f64 }
+    pub fn jit_retired(&self) -> f64 { self.cpu.jit.retired as f64 }
+    pub fn jit_clear(&mut self) { self.cpu.jit.entries.clear(); self.cpu.jit.ready.clear(); self.cpu.jit.code.clear(); }
+    pub fn jit_install(&mut self, id: u32, slot: u32, count: u32) { self.cpu.jit.ready.insert(id, (slot, count)); }
+    pub fn jit_table(&self) -> JsValue { wasm_bindgen::function_table() }
+    pub fn jit_threshold(&mut self, threshold: u32) { self.cpu.jit.threshold = threshold; self.cpu.jit.at_entry = true; }
     pub fn ticks(&self) -> f64 { self.cpu.memory.host_ticks as f64 }
     pub fn input(&mut self, data: &[u8]) {
         self.cpu.input.extend(data);

@@ -31,6 +31,6 @@ try {
     });
   });
   if (readyMs === undefined) throw new Error('probe completed without node readiness');
-  result.rv64Result = { type: 'kuberoot', bootReadyMs: readyMs, totalMs: performance.now() - start, events, console: text };
-} catch (error) { result.rv64Result = { type: 'error', error: String(error), bootReadyMs: readyMs, events, console: text }; }
+  result.rv64Result = { type: 'kuberoot', execution: machine.executionStats(), bootReadyMs: readyMs, totalMs: performance.now() - start, events, console: text };
+} catch (error) { result.rv64Result = { type: 'error', error: String(error), execution: machine?.executionStats(), bootReadyMs: readyMs, events, console: text }; }
 finally { machine?.dispose(); services.dispose(); }

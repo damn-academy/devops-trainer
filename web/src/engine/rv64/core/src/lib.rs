@@ -16,5 +16,7 @@ pub use memory::{Access, Memory, RAM_BASE};
 #[cfg(target_arch = "wasm32")]
 mod wasm;
 
-#[cfg(not(target_arch = "wasm32"))]
 pub mod elf;
+
+#[cfg(target_arch = "wasm32")]
+mod jit;
