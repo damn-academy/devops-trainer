@@ -45,7 +45,7 @@ export const mergeModel = defineModel<MergeP>({
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
     { mark: 'say', text: bi('что этот блок делает', 'what that block does') },
-    { mark: 'token', text: bi('что передаётся дальше: ссылка, версии файла', 'what is handed on: a link, file versions') },
+    { mark: 'token', text: bi('что передаётся дальше, например ссылка или версии файла', 'what is handed on, such as a link or file versions') },
     { mark: 'icon:disk', text: bi('коммит', 'a commit') },
     { mark: 'icon:file', text: bi('имя ветки, HEAD или файл проекта', 'a branch name, HEAD or a project file') },
     { mark: 'line', text: bi('ссылка коммита на родителя', 'a commit’s link to its parent') },
@@ -219,7 +219,7 @@ export const mergeModel = defineModel<MergeP>({
         label: 'fast-forward',
         caption: bi('В main новых коммитов не было, поэтому коммит D уже продолжает её историю. Git записывает в main хэш коммита D, и такое слияние называется перемоткой (fast-forward): нового коммита нет, история осталась прямой.', 'main did not move on: D already continues its history. Git just writes D’s hash into main. No new commit; the history stays straight.'),
         focus: ['main', 'd'],
-        say: { main: bi('Git записывает в ветку main хэш коммита D, и main передвигается вперёд без нового коммита.', 'Git writes the hash of D into main, and main moves forward without a new commit.') },
+        say: { main: bi('Ветка main передвигается вперёд на коммит D без нового коммита.', 'Git writes the hash of D into main, and main moves forward without a new commit.') },
         states: { main: 'ok', d: 'ok' },
         values: { main: '→ D' },
         metrics: { created: 0, parents: 1, conflicts: 0 },
@@ -771,11 +771,11 @@ export const dagModel = defineModel<DagP>({
         id: 'done',
         label: bi(`${total} с`, `${total} s`),
         caption: lintLast
-          ? fmtBi(bi('Выкладка закончилась на {d}-й секунде, но линтер ещё шёл. Пайплайн считается законченным, когда закончилась его последняя джоба, поэтому он занял {t}. Тесты и выкладка от линтера больше не зависят, но общее время ограничено самой долгой джобой.', 'The deploy ended at second {d}, but the linter was still running. A pipeline is over when its last job is, so it took {t}. The tests and the deploy no longer depend on the linter, but the total is bounded by the longest job.'), { d: t.deploy[1], t: sec(total) })
+          ? fmtBi(bi('Выкладка закончилась на {d}-й секунде, но линтер ещё работал. Пайплайн заканчивается вместе со своей последней джобой, поэтому он занял {t}. Тесты и выкладка линтера больше не ждут, но общее время задаёт самая долгая джоба.', 'The deploy ended at second {d}, but the linter was still running. A pipeline ends with its last job, so it took {t}. The tests and the deploy no longer wait for the linter, but the longest job sets the total.'), { d: t.deploy[1], t: sec(total) })
           : fmtBi(bi('Последней закончилась выкладка, и весь пайплайн занял {t}.', 'The deploy finished last, and the whole pipeline took {t}.'), { t: sec(total) }),
         focus: lintLast ? ['clock', 'lint'] : ['clock', 'e-clock'],
         reveal: ['clock', 'e-clock'],
-        say: { clock: fmt(bi('Сервер отмечает, что пайплайн закончился на {t}-й секунде вместе с последней джобой {j}.', 'The server marks that the pipeline ended at second {t}, together with its last job, {j}.'), { t: total, j: lintLast ? 'lint' : 'deploy_staging' }) },
+        say: { clock: fmt(bi('Пайплайн закончился на {t}-й секунде вместе с джобой {j}.', 'The pipeline ended at second {t}, together with the job {j}.'), { t: total, j: lintLast ? 'lint' : 'deploy_staging' }) },
         states: { clock: 'ok', lint: 'ok' },
         values: { clock: tx(bi(`${total} с`, `${total} s`)) },
         metrics: { testStart: t.test[0], total },
@@ -816,10 +816,10 @@ export const kubeDeployModel = defineModel<KdP>({
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
     { mark: 'say', text: bi('что этот блок делает', 'what that block does') },
-    { mark: 'token', text: bi('что передаётся дальше: тег, изменение, коммит', 'what is handed on: a tag, a change, a commit') },
+    { mark: 'token', text: bi('что передаётся дальше, например тег, изменение или коммит', 'what is handed on, such as a tag, a change or a commit') },
     { mark: 'icon:container', text: bi('джоба пайплайна или поды одной версии', 'a pipeline job or the pods of one version') },
     { mark: 'icon:server', text: bi('API-сервер кластера', 'the cluster API server') },
-    { mark: 'icon:lock', text: bi('ключ доступа к кластеру', 'the cluster access key') },
+    { mark: 'icon:lock', text: bi('ключ, с которым джоба входит в кластер', 'the key the job uses to reach the cluster') },
     { mark: 'icon:process', text: bi('агент GitOps внутри кластера', 'the GitOps agent inside the cluster') },
     { mark: 'dashed', text: bi('джоба ждёт окончания выкладки', 'the job waits for the rollout to finish') },
     { mark: 'warn', text: bi('Deployment не изменился, или новые поды аварийно завершаются, пока старые ещё работают', 'the Deployment did not change, or the new pods crash while the old ones still run') },
@@ -1086,20 +1086,44 @@ export const kubeDeployModel = defineModel<KdP>({
       values: { dep: 'image: site:1a2b3c4d' },
       metrics: { newPods: 0, oldPods: 3, jobOk: 0 },
     });
-    steps.push({
-      id: 'roll',
-      label: 'rollout',
-      caption: crash
-        ? bi('Новый ReplicaSet запускает один под сверх трёх старых. По умолчанию постепенное обновление разрешает 25 процентов лишних подов с округлением вверх и 25 процентов недоступных с округлением вниз, то есть для трёх реплик один лишний под и ни одного недоступного. Новый под стартует и через три секунды аварийно завершается, поэтому контроллер не убирает ни одного старого пода, и все три продолжают отвечать на запросы.', 'The new ReplicaSet starts one pod on top of the three old ones. By default a rolling update allows 25 percent extra pods rounded up and 25 percent unavailable rounded down, which for three replicas is one extra pod and none unavailable. The new pod starts and crashes three seconds later, so the controller removes none of the old pods, and all three keep serving requests.')
-        : bi('Новый шаблон пода получает новый хэш и новый ReplicaSet. Новые поды становятся готовыми, а старые уходят по одному.', 'A new template, a new pod-template-hash, a new ReplicaSet. New pods become ready, old ones leave one by one.'),
-      focus: ['e-roll', 'rsNew', 'e-old', 'rsOld'],
-      reveal: ['e-roll', 'rsNew', 'e-old'],
-      tokens: [{ edge: 'e-roll', label: 'site:1a2b3c4d' }],
-      say: { rsNew: crash ? bi('Новый под стартует и через три секунды аварийно завершается, и kubelet раз за разом его перезапускает.', 'The new pods start and crash three seconds later, and the controller restarts them again and again.') : bi('Новый ReplicaSet запускает три пода новой версии, а старые поды уходят по одному.', 'The new ReplicaSet starts three pods of the new version while the old pods leave one by one.') },
-      states: { rsNew: crash ? 'err' : 'ok', rsOld: crash ? 'warn' : 'off' },
-      values: { rsNew: crash ? '0/1 CrashLoopBackOff' : '3/3', rsOld: crash ? '3/3' : '0/3' },
-      metrics: { newPods: crash ? 0 : 3, oldPods: crash ? 3 : 0, jobOk: p.wait ? 0 : 1 },
-    });
+    if (crash)
+      steps.push(
+        {
+          id: 'roll',
+          label: 'rollout',
+          caption: bi('Новый ReplicaSet запускает один под сверх трёх старых. По умолчанию обновление разрешает четверть лишних подов с округлением вверх и четверть недоступных с округлением вниз, а для трёх реплик это один лишний под и ни одного недоступного.', 'The new ReplicaSet starts one pod on top of the three old ones. By default an update allows a quarter extra pods rounded up and a quarter unavailable rounded down, which for three replicas is one extra pod and none unavailable.'),
+          focus: ['e-roll', 'rsNew', 'rsOld'],
+          reveal: ['e-roll', 'rsNew', 'e-old'],
+          tokens: [{ edge: 'e-roll', label: 'site:1a2b3c4d' }],
+          say: { rsNew: bi('Рядом с тремя старыми подами появляется один новый.', 'One new pod appears next to the three old ones.') },
+          states: { rsNew: 'on', rsOld: 'ok' },
+          values: { rsNew: '0/1', rsOld: '3/3' },
+          metrics: { newPods: 0, oldPods: 3, jobOk: 0 },
+        },
+        {
+          id: 'crashing',
+          label: 'CrashLoopBackOff',
+          caption: bi('Новый под стартует и через три секунды аварийно завершается. Готовым он не становится, поэтому контроллер не убирает ни одного старого пода, и все три продолжают отвечать на запросы.', 'The new pod starts and crashes three seconds later. It never becomes ready, so the controller removes none of the old pods, and all three keep serving requests.'),
+          focus: ['rsNew', 'e-old', 'rsOld'],
+          say: { rsNew: bi('Под раз за разом аварийно завершается, и kubelet снова его перезапускает.', 'The pod crashes again and again, and the kubelet restarts it each time.') },
+          states: { rsNew: 'err', rsOld: 'warn' },
+          values: { rsNew: '0/1 CrashLoopBackOff', rsOld: '3/3' },
+          metrics: { newPods: 0, oldPods: 3, jobOk: p.wait ? 0 : 1 },
+        },
+      );
+    else
+      steps.push({
+        id: 'roll',
+        label: 'rollout',
+        caption: bi('Новый шаблон пода получает новый хэш и новый ReplicaSet. Новые поды становятся готовыми, а старые уходят по одному.', 'A new template, a new pod-template-hash, a new ReplicaSet. New pods become ready, old ones leave one by one.'),
+        focus: ['e-roll', 'rsNew', 'e-old', 'rsOld'],
+        reveal: ['e-roll', 'rsNew', 'e-old'],
+        tokens: [{ edge: 'e-roll', label: 'site:1a2b3c4d' }],
+        say: { rsNew: bi('Новый ReplicaSet запускает три пода новой версии, а старые поды уходят по одному.', 'The new ReplicaSet starts three pods of the new version while the old pods leave one by one.') },
+        states: { rsNew: 'ok', rsOld: 'off' },
+        values: { rsNew: '3/3', rsOld: '0/3' },
+        metrics: { newPods: 3, oldPods: 0, jobOk: p.wait ? 0 : 1 },
+      });
     if (!p.wait) {
       steps.push(
         crash
