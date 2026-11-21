@@ -39,7 +39,7 @@ spec:
           command: [bash, /scripts/build.sh, images]
           env: *env
           resources:
-            requests: {cpu: "1", memory: 2Gi}
+            requests: {cpu: 500m, memory: 2Gi}
             limits: {memory: 4Gi}
           volumeMounts: *mounts
       volumes:

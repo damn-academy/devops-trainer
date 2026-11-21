@@ -35,7 +35,7 @@ spec:
             - name: ADMIN_TOKEN
               valueFrom: {secretKeyRef: {name: feedback-secrets, key: ADMIN_TOKEN}}
           resources:
-            requests: {cpu: "1", memory: 2Gi}
+            requests: {cpu: 500m, memory: 2Gi}
             limits: {memory: 4Gi}
           volumeMounts:
             - {name: work, mountPath: /work}
