@@ -44,7 +44,6 @@ function blockItem(b: Block, entry: RouteEntry | undefined): HTMLElement {
       h(
         'p.route-meta',
         {},
-        b.checklistStep ? h('span', {}, `${t(UI.checklistStep)} ${b.checklistStep}`) : null,
         lessons.length ? h('span', {}, `${doneN} / ${count(lessons.length, ['урок', 'урока', 'уроков'], ['lesson', 'lessons'])}`) : null,
         b.beginnerOnly ? h('span.badge', {}, t(bi('Для первого знакомства', 'beginners only'))) : null,
       ),
@@ -73,7 +72,7 @@ function placeholderItem(e: RouteEntry): HTMLElement {
       'div.route-body',
       {},
       h('h2', {}, t(e.title)),
-      h('p.route-meta', {}, e.checklistStep ? h('span', {}, `${t(UI.checklistStep)} ${e.checklistStep}`) : null, h('span.badge', {}, t(UI.comingSoon)), e.beginnerOnly ? h('span.badge', {}, t(bi('Для первого знакомства', 'beginners only'))) : null),
+      h('p.route-meta', {}, h('span.badge', {}, t(UI.comingSoon)), e.beginnerOnly ? h('span.badge', {}, t(bi('Для первого знакомства', 'beginners only'))) : null),
       h('p.route-summary', {}, t(e.summary)),
       levelsTable(e.levels, e.hours, undefined),
     ),
