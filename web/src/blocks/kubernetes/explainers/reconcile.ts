@@ -247,9 +247,9 @@ export const reconcileModel = defineModel<P>({
     s.push({
       id: 'actual',
       label: bi('фактическое', 'actual'),
-      caption: bi('Справа показано фактическое состояние, то есть три работающих пода. У каждого в поле `ownerReferences` записан хозяин, ReplicaSet web, поэтому контроллер считает эти поды своими. Пока желаемое и фактическое совпадают, контроллеру делать нечего.', 'On the right the actual state: three running pods, each with ReplicaSet web in `ownerReferences`. While desired and actual match, the controller has nothing to do.'),
+      caption: bi('Справа показано фактическое состояние, то есть три работающих пода. В поле `ownerReferences` у каждого записан ReplicaSet web, поэтому контроллер считает эти поды своими. Пока желаемое и фактическое совпадают, ему делать нечего.', 'On the right the actual state: three running pods, each with ReplicaSet web in `ownerReferences`. While desired and actual match, the controller has nothing to do.'),
       focus: ['pods'],
-      say: { pods: bi('Работают три пода с меткой app=web, и хозяин у каждого ReplicaSet web.', 'Three pods with app=web run, each owned by ReplicaSet web.') },
+      say: { pods: bi('Три пода с меткой app=web работают и принадлежат ReplicaSet web.', 'Three pods with app=web run, each owned by ReplicaSet web.') },
       metrics: zero,
     });
     const change = (id: string, label: Bi, cmd: string, say: Bi, caption: Bi, values: Record<string, string>, fills: Record<string, number>, firstChange: boolean) => {
@@ -283,11 +283,11 @@ export const reconcileModel = defineModel<P>({
       s.push({
         id: 'notify',
         label: 'watch',
-        caption: bi('API-сервер принимает изменение, сохраняет его в etcd и отправляет событие всем, кто подписан на поды и ReplicaSet. Контроллер подписан, и событие приходит в кэш информера, то есть в копию объектов, которую контроллер держит у себя в памяти.', 'The API server accepts the change, stores it in etcd and sends an event to every subscriber; it arrives in the informer cache, the controller’s in-memory copy.'),
+        caption: bi('API-сервер сохраняет изменение в etcd и отправляет событие всем, кто подписан на поды и ReplicaSet. Контроллер подписан, поэтому событие приходит в кэш информера, то есть в копию объектов, которую контроллер держит в памяти.', 'The API server accepts the change, stores it in etcd and sends an event to every subscriber; it arrives in the informer cache, the controller’s in-memory copy.'),
         focus: ['api', 'e-watch'],
         reveal: ['cache', 'e-watch'],
         tokens: [{ edge: 'e-watch', label: ev ? ev.api : 'MODIFIED rs' }],
-        say: { api: bi('API-сервер записывает изменение в etcd и рассылает событие подписчикам.', 'The API server stores the change in etcd and sends an event to subscribers.') },
+        say: { api: bi('API-сервер рассылает событие всем подписчикам.', 'The API server sends the event to every subscriber.') },
         metrics: zero,
       });
       s.push({
@@ -317,22 +317,43 @@ export const reconcileModel = defineModel<P>({
         metrics: zero,
       });
     if (broken.has('no-cm')) {
-      s.push({
-        id: 'stuck',
-        label: bi('стоит', 'stuck'),
-        caption: changed
-          ? bi('Процесс kube-controller-manager остановлен, а вместе с ним не работают кэш информера, очередь ключей и сама петля, потому что все они работают внутри этого процесса. Событий о вмешательстве никто не получает. Желаемое записано в etcd, а поды остаются такими, какими их оставило вмешательство. Когда процесс запустят снова, он заново прочитает объекты из API-сервера, увидит разницу и исправит её.', 'kube-controller-manager is stopped, and with it the informer cache, the work queue and the loop itself, because they all run inside this process. Nobody receives the events about the intervention. The desired state is in etcd, and the pods stay as the intervention left them. When the process is started again, it reads the objects from the API server anew, sees the difference and fixes it.')
-          : bi('Процесс kube-controller-manager остановлен. Сейчас разницы нет, но если под удалят или узел выключится, исправлять это будет некому.', 'kube-controller-manager is stopped; there is no difference now, but nobody would fix one.'),
-        focus: ['ctrl'],
-        say: { ctrl: bi('Процесс kube-controller-manager остановлен, и петля контроллера не работает.', 'The kube-controller-manager process is stopped, and the controller loop does not run.') },
-        states: { ctrl: 'err' },
-        metrics: zero,
-        broken: {
-          at: 'ctrl',
-          message: `$ kubectl get rs web\nNAME   DESIRED   CURRENT   READY   AGE\nweb    ${want}         ${plan.actual}         ${plan.actual}       4d`,
-          caption: bi('на контроллере. Объект в etcd сам ничего не делает, поэтому без kube-controller-manager желаемое и фактическое расходятся надолго. В жизни это видно по тому, что в выводе `kubectl get rs` число DESIRED не совпадает с CURRENT и не меняется.', 'at the controller: an object in etcd does nothing by itself. In real life DESIRED and CURRENT in `kubectl get rs` differ and stay so.'),
-        },
-      });
+      const stopped = bi('Процесс kube-controller-manager остановлен, и петля контроллера не работает.', 'The kube-controller-manager process is stopped, and the controller loop does not run.');
+      const brokenAt = {
+        at: 'ctrl',
+        message: `$ kubectl get rs web\nNAME   DESIRED   CURRENT   READY   AGE\nweb    ${want}         ${plan.actual}         ${plan.actual}       4d`,
+        caption: bi('на контроллере. Объект в etcd сам ничего не делает, поэтому без kube-controller-manager желаемое и фактическое расходятся надолго. В жизни это видно по тому, что в выводе `kubectl get rs` число DESIRED не совпадает с CURRENT и не меняется.', 'at the controller: an object in etcd does nothing by itself. In real life DESIRED and CURRENT in `kubectl get rs` differ and stay so.'),
+      };
+      if (changed) {
+        s.push({
+          id: 'stuck',
+          label: bi('стоит', 'stuck'),
+          caption: bi('Процесс kube-controller-manager остановлен, а вместе с ним не работают кэш информера, очередь ключей и сама петля, потому что все они работают внутри этого процесса. Поэтому событие о вмешательстве никто не получает.', 'kube-controller-manager is stopped, and with it the informer cache, the work queue and the loop itself, because they all run inside this process. So nobody receives the event about the intervention.'),
+          focus: ['ctrl'],
+          say: { ctrl: stopped },
+          states: { ctrl: 'err' },
+          metrics: zero,
+        });
+        s.push({
+          id: 'stuck-wait',
+          label: bi('расхождение', 'divergence'),
+          caption: bi('Желаемое состояние записано в etcd, а поды остаются такими, какими их оставило вмешательство. Когда процесс запустят снова, он заново прочитает объекты из API-сервера, увидит разницу и исправит её.', 'The desired state is in etcd, and the pods stay as the intervention left them. When the process is started again, it reads the objects from the API server anew, sees the difference and fixes it.'),
+          focus: ['ctrl'],
+          say: { ctrl: bi('Контроллер стоит, и разницу между желаемым и фактическим исправить некому.', 'The controller is stopped, and nobody fixes the difference between desired and actual.') },
+          states: { ctrl: 'err' },
+          metrics: zero,
+          broken: brokenAt,
+        });
+      } else
+        s.push({
+          id: 'stuck',
+          label: bi('стоит', 'stuck'),
+          caption: bi('Процесс kube-controller-manager остановлен. Сейчас разницы нет, но если под удалят или узел выключится, исправлять это будет некому.', 'kube-controller-manager is stopped; there is no difference now, but nobody would fix one.'),
+          focus: ['ctrl'],
+          say: { ctrl: stopped },
+          states: { ctrl: 'err' },
+          metrics: zero,
+          broken: brokenAt,
+        });
       return s;
     }
     if (changed || p.paused)
@@ -353,7 +374,7 @@ export const reconcileModel = defineModel<P>({
     const diff = want - plan.actual;
     const cmp =
       p.event === 'image'
-        ? bi('Контроллер сравнивает числа и видит, что желаемых подов {w}, а работает {a}. Образ он не сравнивает, потому что ReplicaSet следит только за количеством. Работающие поды останутся на старом образе, а новый образ получат только поды, созданные позже.', 'Desired {w}, actual {a}. The image is not compared: a ReplicaSet watches only the count. Running pods keep the old image.')
+        ? bi('Контроллер видит, что желаемых подов {w}, а работает {a}. Образ контроллер не сравнивает, потому что ReplicaSet следит только за числом подов. Работающие поды останутся на старом образе, а новый получат только поды, созданные позже.', 'Desired {w}, actual {a}. The image is not compared: a ReplicaSet watches only the count. Running pods keep the old image.')
         : diff > 0
           ? bi('Контроллер сравнивает числа и видит, что желаемых подов {w}, а работает {a}. Не хватает {d}, поэтому контроллер будет создавать поды.', 'Desired {w}, actual {a}: {d} missing, so the controller will create pods.')
           : diff < 0
@@ -364,7 +385,7 @@ export const reconcileModel = defineModel<P>({
       label: bi('сравнить', 'compare'),
       caption: fmt(cmp, { w: want, a: plan.actual, d: diff, n: -diff }),
       focus: ['ctrl'],
-      say: { ctrl: fmt(bi('Контроллер вычитает из {w} желаемых подов {a} работающих и получает разницу {d}.', 'Desired {w}, actual {a}, difference {d}.'), { w: want, a: plan.actual, d: diff }) },
+      say: { ctrl: fmt(bi('Контроллер вычитает из {w} желаемых подов {a} работающих.', 'The controller subtracts the {a} running pods from the {w} desired.'), { w: want, a: plan.actual, d: diff }) },
       values: { ctrl: `${want} − ${plan.actual} = ${diff}` },
       metrics: zero,
     });

@@ -171,12 +171,21 @@ export const podNetworkModel = defineModel<P>({
       s.push({
         id: 'bridge',
         label: bi('мост', 'bridge'),
-        caption: bi('Мост cni0 по адресу получателя пересылает кадр в интерфейс пода B, так же как это делает обычный коммутатор. Ни маршрутизации, ни трансляции адресов здесь нет, и под B видит, что пакет пришёл с 10.42.1.15. Маршруты ядра, сетевые карты узлов и сеть между ними в этом случае не понадобились, поэтому на схеме они остаются бледными.', 'The bridge forwards the frame to B like a switch; no routing, no NAT: B sees 10.42.1.15. Routes, node interfaces and the node network stay pale: they were not needed.'),
+        caption: bi('Мост cni0 по адресу получателя пересылает кадр в интерфейс пода B, так же как это делает обычный коммутатор. Ни маршрутизации, ни трансляции адресов здесь нет, поэтому под B видит, что пакет пришёл с 10.42.1.15.', 'The bridge cni0 forwards the frame to pod B’s interface by the destination address, the way an ordinary switch does. There is no routing and no address translation, so pod B sees the packet come from 10.42.1.15.'),
         focus: ['br1', 'e-b'],
-        reveal: ['e-b', 'rt1', 'eth1', 'net', 'eth2', 'rt2', 'br2', 'c', 'e-up1', 'e-out1', 'e-wire', 'e-in2', 'e-down2', 'e-c'],
+        reveal: ['e-b'],
         tokens: [{ edge: 'e-b', label: '10.42.1.15 → 10.42.1.16', reverse: true }],
         say: { br1: bi('Мост пересылает кадр в интерфейс пода B, как коммутатор.', 'The bridge forwards the frame to pod B.') },
         states: { b: 'ok' },
+        metrics: { hops: 2, overhead: 0 },
+      });
+      s.push({
+        id: 'bridge-done',
+        label: bi('доставлено', 'delivered'),
+        caption: bi('Пакет дошёл до пода B, не покидая узла worker-1. Маршруты ядра, сетевые карты узлов и сеть между ними в этом случае не понадобились, поэтому на схеме они остаются бледными.', 'The packet reached pod B without leaving worker-1. The kernel routes, the node interfaces and the network between the nodes were not needed, so they stay pale in the diagram.'),
+        focus: ['b'],
+        states: Object.fromEntries(['rt1', 'eth1', 'net', 'eth2', 'rt2', 'br2', 'c', 'e-up1', 'e-out1', 'e-wire', 'e-in2', 'e-down2', 'e-c'].map((id) => [id, 'off' as const])),
+        say: { b: bi('Под B получает пакет от соседа по узлу.', 'Pod B gets the packet from its neighbour on the node.') },
         metrics: { hops: 2, overhead: 0 },
       });
       return s;
