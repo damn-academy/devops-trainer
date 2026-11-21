@@ -134,9 +134,9 @@ export const natModel = defineModel<P>({
       steps.push({
         id: 'stop',
         label: b('нет записи', 'nowhere'),
-        caption: b('Записи нет, поэтому роутер не знает, какому из домашних устройств отдать пакет. Пакет адресован самому роутеру, а на этом порту роутера никто не ждёт соединений. Чтобы пустить такой пакет внутрь, нужен проброс порта, то есть правило DNAT.', 'There is no entry — the router does not know which home device should get the packet. It is addressed to the router itself, and nothing waits for it there. To let it in you need port forwarding (DNAT).'),
+        caption: b('Записи нет, поэтому роутер не знает, какому из домашних устройств отдать пакет. Пакет адресован самому роутеру, а на этом порту роутера никто не ждёт соединений. Чтобы пустить такой пакет внутрь, нужен проброс порта, то есть правило DNAT.', 'There is no entry, so the router does not know which home device should get the packet. The packet is addressed to the router itself, and nothing on it waits on this port. To let such a packet in, you need port forwarding, a DNAT rule.'),
         focus: ['router'],
-        say: { router: b('Роутер не знает, кому отдать пакет, и отвечает отказом.', 'The router does not know whom to give the packet to and refuses.') },
+        say: { router: b('Роутер отвечает на пакет отказом.', 'The router answers the packet with a refusal.') },
         states: { router: 'err', laptop: 'off' },
         metrics: { entries: 0 },
         broken: { at: 'router', message: "$ nc -zv -w 3 203.0.113.7 27015\nnc: connect to 203.0.113.7 port 27015 (tcp) failed: Connection refused", caption: b('NAT пропускает соединения изнутри наружу и ответы на них. Новое соединение снаружи без правила DNAT не пройдёт, а если провайдер сам держит вас за общим адресом (CGNAT), не пройдёт и с ним.', 'NAT lets through “inside to outside” and the replies to it. A new connection from outside will not pass without DNAT — and behind the provider’s CGNAT not even with it.') },
@@ -180,10 +180,10 @@ export const natModel = defineModel<P>({
     steps.push({
       id: 'snat',
       label: 'SNAT',
-      caption: b('На выходе из роутера срабатывает правило MASQUERADE. Роутер заменяет отправителя на 203.0.113.7:40001 и записывает в conntrack, что соединение 192.168.1.23:51234 с сайтом 198.51.100.20:443 теперь идёт через внешний порт 40001.', 'POSTROUTING: the MASQUERADE rule. The router replaces the source with 203.0.113.7:40001 and writes to conntrack: “192.168.1.23:51234 ↔ :40001 ↔ 198.51.100.20:443”.'),
+      caption: b('На выходе из роутера срабатывает правило MASQUERADE. Роутер заменяет отправителя на 203.0.113.7:40001 и записывает в conntrack, что соединение 192.168.1.23:51234 с сайтом 198.51.100.20:443 теперь идёт через внешний порт 40001.', 'On the way out the MASQUERADE rule fires. The router replaces the source with 203.0.113.7:40001 and writes into conntrack that the connection from 192.168.1.23:51234 to 198.51.100.20:443 now uses outside port 40001.'),
       focus: ['router', 'rec', 'ct'],
       tokens: [{ edge: 'rec', label: ':51234 ↔ :40001' }],
-      say: { router: b('Роутер ставит на пакет свой адрес 203.0.113.7:40001 и записывает замену в conntrack.', 'The router puts 203.0.113.7:40001 on the packet and records the swap.') },
+      say: { router: b('Роутер ставит на пакет свой адрес и порт 40001.', 'The router puts its own address and port 40001 on the packet.') },
       states: { router: 'on', ct: 'on', rec: 'on' },
       values: { ct: rows(n) },
       metrics: { entries: n },
@@ -212,9 +212,18 @@ export const natModel = defineModel<P>({
       steps.push({
         id: 'many',
         label: b('много устройств', 'many'),
-        caption: fmt(b('В квартире {d}, и у всех один внешний адрес. Различает их только внешний порт, который у каждого соединения свой. На один адрес приходится 65 535 портов, и облачный шлюз NAT, через который идут тысячи соединений к одному сайту, может их исчерпать.', 'There are {n} devices at home, all with one outside address. Only the outside port tells them apart: every connection has its own. There are 65,535 ports per address — a cloud NAT gateway runs out of them with thousands of connections to one site.'), { n, d: `${n} ${pluralRu(n, ['устройство', 'устройства', 'устройств'])}` }),
+        caption: fmt(b('В квартире {d}, и у всех один внешний адрес. Различает их только внешний порт, который у каждого соединения свой.', 'There are {n} devices at home, all with one outside address. Only the outside port tells them apart, and every connection has its own.'), { n, d: `${n} ${pluralRu(n, ['устройство', 'устройства', 'устройств'])}` }),
         focus: ['ct'],
         say: { ct: fmt(b('Записи различаются только внешним портом: {rows}.', 'The entries differ only in the outside port: {rows}.'), { rows: ctRows(n) }) },
+        values: { ct: rows(n) },
+        metrics: { entries: n },
+      });
+    if (n > 1)
+      steps.push({
+        id: 'ports',
+        label: b('предел портов', 'port limit'),
+        caption: b('На один внешний адрес приходится 65 535 портов. Домашнему роутеру их хватает с запасом, а облачный шлюз NAT, через который идут тысячи соединений к одному сайту, может исчерпать порты, и тогда новые соединения перестают открываться.', 'One outside address has 65,535 ports. A home router has more than enough of them, but a cloud NAT gateway that carries thousands of connections to one site can run out of ports, and then new connections stop opening.'),
+        focus: ['router'],
         values: { ct: rows(n) },
         metrics: { entries: n },
       });

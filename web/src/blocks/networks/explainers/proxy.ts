@@ -108,7 +108,7 @@ export const proxyModel = defineModel<P>({
     edges: [
       edge('e-c', 'client', 'nginx', 'GET /report', card(['Запрос клиента. Соединение клиента с nginx в порядке, иначе клиент не получил бы никакого кода ответа.', 'The client’s request. The client’s connection to nginx is fine — otherwise there would be no status code at all.'], ['Запрос отправляет клиент.', 'The client.'])),
       edge('e-1', 'nginx', 'app1', 'proxy_pass', card(['nginx подключается к первому серверу группы upstream и пересылает ему запрос.', 'nginx connects to the first server of the upstream group and forwards the request.'], ['Запрос пересылает nginx.', 'nginx.'], undefined, DOC.nginxNext), { via: [[500, 72]], labelAt: 0.4 }),
-      edge('e-2', 'nginx', 'app2', b('повтор', 'retry'), card(['По умолчанию действует настройка proxy_next_upstream error timeout: после ошибки соединения или истёкшего срока ожидания nginx повторяет запрос на следующем сервере, если повтор безопасен для этого метода.', 'proxy_next_upstream error timeout (the default): after a connection error or a timeout nginx retries on the next server — if the method is idempotent.'], ['Запрос повторяет nginx.', 'nginx.'], undefined, DOC.nginxNext), { via: [[500, 232]], labelAt: 0.4 }),
+      edge('e-2', 'nginx', 'app2', b('повтор', 'retry'), card(['По умолчанию действует настройка proxy_next_upstream error timeout: после ошибки соединения или истёкшего срока ожидания nginx повторяет запрос на следующем сервере, если повтор безопасен для этого метода.', 'The default setting is proxy_next_upstream error timeout: after a connection error or an expired timeout nginx repeats the request on the next server, if a repeat is safe for that method.'], ['Запрос повторяет nginx.', 'nginx.'], undefined, DOC.nginxNext), { via: [[500, 232]], labelAt: 0.4 }),
       edge('e-1d', 'app1', 'db', 'SQL', card(['Запрос приложения к базе данных.', 'The application’s query to the database.'], ['Запрос отправляет приложение.', 'The application.']), { via: [[760, 72], [760, 136]] }),
       edge('e-2d', 'app2', 'db', 'SQL', card(['Запрос второго сервера приложения к той же базе.', 'The second backend’s query to the same database.'], ['Запрос отправляет приложение.', 'The application.']), { via: [[760, 232], [760, 168]] }),
       edge('e-log', 'nginx', 'log', b('строка', 'line'), card(['nginx записывает по одной строке на каждую неудачную попытку, вместе с адресом сервера приложения.', 'One line per failed attempt, with the upstream address.'], ['Строку пишет nginx.', 'nginx.']), { labelAt: 0.75 }),
@@ -269,10 +269,10 @@ export const proxyModel = defineModel<P>({
         steps.push({
           id: `a${n}`,
           label: `${id}: SYN…`,
-          caption: fmt(b('nginx отправляет SYN на {id} и ждёт, но не получает ни отказа, ни ответа. Когда истекают 60 секунд proxy_connect_timeout, в error.log появляется строка «upstream timed out (110: Connection timed out) while connecting to upstream».', 'nginx sends a SYN to {id} and waits: no refusal, no answer. After proxy_connect_timeout (60 s): “upstream timed out (110: Connection timed out) while connecting to upstream”.'), { id }),
+          caption: fmt(b('nginx отправляет SYN на {id} и ждёт, но не получает ни отказа, ни ответа. Когда истекают 60 секунд proxy_connect_timeout, в error.log появляется строка «upstream timed out (110: Connection timed out) while connecting to upstream».', 'nginx sends a SYN to {id} and waits, but gets neither a refusal nor an answer. When the 60 seconds of proxy_connect_timeout run out, error.log gets the line “upstream timed out (110: Connection timed out) while connecting to upstream”.'), { id }),
           focus: [e, id, 'e-log'],
           tokens: [{ edge: e, label: 'SYN' }],
-          say: { nginx: fmt(b('nginx 60 секунд ждёт, пока {id} ответит на SYN, и записывает неудачу в error.log.', 'nginx waits 60 s for {id} to answer the SYN and logs the failure.'), { id }) },
+          say: { nginx: fmt(b('nginx записывает неудачу в error.log.', 'nginx writes the failure to error.log.'), { id }) },
           states: { [id]: 'err', [e]: 'on', ...showLog() },
           values: { log: logLines(n) },
           metrics: { lines: n, waited: t },

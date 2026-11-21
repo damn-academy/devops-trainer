@@ -184,10 +184,10 @@ export const switchModel = defineModel<P>({
         label: b('всем', 'flood'),
         caption: p.broadcast
           ? b('Адрес ff:ff:ff:ff:ff:ff означает «всем», поэтому коммутатор копирует кадр во все порты, кроме порта 1, через который кадр пришёл. Заполненная таблица здесь ничего не меняет.', 'The address ff:ff:ff:ff:ff:ff means “everyone”, so the switch copies the frame to every port except port 1, where it came in. A full table changes nothing here.')
-          : b('Где подключён компьютер B, коммутатор ещё не знает. Поэтому он рассылает копии кадра во все остальные порты. Компьютер B возьмёт кадр себе, а компьютеры C и D увидят в нём чужой MAC-адрес получателя и выбросят кадр.', 'The switch does not know yet where B is, so it floods copies to every other port. B takes the frame; C and D see someone else’s receiver MAC and drop it.'),
+          : b('Где подключён компьютер B, коммутатор ещё не знает. Поэтому он рассылает копии кадра во все остальные порты. Компьютер B возьмёт кадр себе, а компьютеры C и D увидят в нём чужой MAC-адрес получателя и выбросят кадр.', 'The switch does not know yet where computer B is plugged in, so it sends copies of the frame out of every other port. Computer B takes the frame, and computers C and D see someone else’s receiver MAC address in it and drop it.'),
         focus: ['switch', 'p2', 'p3', 'p4'],
         tokens: [{ edge: 'p2', label: b('копия', 'copy') }, { edge: 'p3', label: b('копия', 'copy') }, { edge: 'p4', label: b('копия', 'copy') }],
-        say: { switch: p.broadcast ? b('Коммутатор рассылает копии широковещательного кадра во все порты, кроме порта 1.', 'The switch sends copies of the broadcast frame out of every port except port 1.') : b('Коммутатор не знает, где компьютер B, и рассылает копии кадра во все остальные порты.', 'The switch does not know where B is and floods copies to every other port.') },
+        say: { switch: p.broadcast ? b('Коммутатор рассылает копии широковещательного кадра во все порты, кроме порта 1.', 'The switch sends copies of the broadcast frame out of every port except port 1.') : b('Коммутатор рассылает копии кадра во все остальные порты.', 'The switch sends copies of the frame out of every other port.') },
         states: { p2: 'on', p3: 'on', p4: 'on', b: 'on', c: p.broadcast ? 'on' : 'warn', d: p.broadcast ? 'on' : 'warn' },
         metrics: { flooded: 3, entries: learned.length },
       });
@@ -214,8 +214,8 @@ export const switchModel = defineModel<P>({
         metrics: { flooded: flood ? 3 : 0, entries: learned.length },
         broken: {
           at: 'b',
-          message: '$ ping -c 2 192.168.1.20\nFrom 192.168.1.10 icmp_seq=1 Destination Host Unreachable\nFrom 192.168.1.10 icmp_seq=2 Destination Host Unreachable',
-          caption: b('Кадр пропал на кабеле к компьютеру B. Коммутатор никого не предупредил, потому что на уровне кадров сеть об отказах не сообщает, и кадр либо доходит, либо пропадает молча. Строки «Destination Host Unreachable» в выводе ping печатает не коммутатор, а ядро самого компьютера A: оно спросило сеть, у кого адрес 192.168.1.20, не дождалось ответа и поэтому сообщает, что сосед недоступен. Как устроен этот вопрос, подробно расскажет урок про ARP, а здесь важно, что адрес отправителя в этих строках, 192.168.1.10, принадлежит самому компьютеру A.', 'The frame vanished on the cable to B. The switch warned nobody: at this level of the network there is no refusal, only no answer. The “Destination Host Unreachable” lines in the ping output are printed not by the switch but by the kernel of computer A itself: it asked the network who has 192.168.1.20, got no answer and so reports the neighbour unreachable. The ARP lesson explains that question in detail; what matters here is that the sender address in these lines, 192.168.1.10, belongs to computer A itself.'),
+          message: '$ ping -q -c 2 192.168.1.20\nPING 192.168.1.20 (192.168.1.20) 56(84) bytes of data.\n\n--- 192.168.1.20 ping statistics ---\n2 packets transmitted, 0 received, +2 errors, 100% packet loss, time 1027ms',
+          caption: b('Кадр пропал на кабеле к компьютеру B. Коммутатор никого не предупредил, потому что на уровне кадров сеть об отказах не сообщает, и кадр либо доходит, либо пропадает молча. Команда ping с флагом -q печатает только сводку, и в ней видно, что ни один ответ не пришёл, а ошибок насчитано две («+2 errors»). Эти ошибки насчитал не коммутатор, а ядро самого компьютера A: оно спросило сеть, у кого адрес 192.168.1.20, не дождалось ответа и поэтому считает соседа недоступным. Как устроен этот вопрос, подробно расскажет один из следующих уроков блока.', 'The frame vanished on the cable to B. The switch warned nobody: at this level of the network there is no refusal, only no answer. With the -q flag ping prints only the summary, and it shows that no answer came back and that two errors were counted (“+2 errors”). Those errors were counted not by the switch but by the kernel of computer A itself: it asked the network who has 192.168.1.20, got no answer and so considers the neighbour unreachable. One of the next lessons of the block explains that question in detail.'),
         },
       });
       return steps;
@@ -235,10 +235,10 @@ export const switchModel = defineModel<P>({
     steps.push({
       id: 'again',
       label: b('дальше', 'from now'),
-      caption: b('Теперь коммутатор знает порты обоих компьютеров, и все следующие кадры между A и B идут только по нужным портам. Каждая запись хранится 300 секунд, то есть пять минут, после последнего кадра с этим MAC-адресом.', 'Now the switch knows both, and every further frame between A and B goes only to the right ports. Each entry is kept 300 seconds, five minutes, after the last frame from that MAC.'),
+      caption: b('Теперь коммутатор знает порты обоих компьютеров, и все следующие кадры между A и B идут только по нужным портам. Каждая запись хранится 300 секунд, то есть пять минут, после последнего кадра с этим MAC-адресом.', 'Now the switch knows the ports of both computers, and every further frame between A and B goes only to the right ports. Each entry is kept for 300 seconds, that is five minutes, after the last frame from that MAC address.'),
       focus: ['p1', 'p2'],
       tokens: [{ edge: 'p1', label: b('кадр → B', 'frame → B') }, { edge: 'p2', label: b('кадр → B', 'frame → B') }],
-      say: { switch: b('Коммутатор знает порты обоих компьютеров и больше не рассылает их кадры во все порты.', 'The switch knows both ports and no longer floods their frames.') },
+      say: { switch: b('Коммутатор больше не рассылает кадры A и B во все порты.', 'The switch no longer sends the frames of A and B out of every port.') },
       states: { a: 'ok', b: 'ok', switch: 'ok' },
       metrics: { flooded: flood ? 3 : 0, entries: after.length },
     });

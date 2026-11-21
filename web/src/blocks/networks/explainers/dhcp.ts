@@ -173,7 +173,7 @@ export const dhcpModel = defineModel<P>({
     steps.push({
       id: 'request',
       label: 'Request',
-      caption: b('Клиент снова отправляет сообщение всем: «Беру этот адрес у этого сервера». Так остальные серверы узнают, что их предложения отклонены.', 'The client broadcasts again: “I take this address from this server.” This also tells other servers their offers were declined.'),
+      caption: b('Клиент снова отправляет сообщение всем компьютерам сети и пишет в нём, что берёт адрес у выбранного сервера. Так остальные серверы узнают, что их предложения отклонены.', 'The client again sends a message to every computer on the network and says in it that it takes the address from the chosen server. This is how the other servers learn that their offers were declined.'),
       focus: ['laptop', edgeId],
       tokens: [{ edge: edgeId, label: 'Request' }],
       say: { laptop: b('Ноутбук объявляет всем, чьё предложение он принимает.', 'The laptop announces to all whose offer it takes.') },
@@ -212,9 +212,17 @@ export const dhcpModel = defineModel<P>({
     steps.push({
       id: 'renew',
       label: 'T1',
-      caption: fmt(b('Адрес выдан не навсегда. Когда пройдёт половина срока аренды, то есть через {w1}, клиент попросит продлить её у своего сервера; этот момент называют T1. Если свой сервер промолчит, то по прошествии 87,5 % срока, через {w2}, клиент спросит любой сервер в сети; этот момент называют T2.', 'A lease is not forever. At half its time (T1 = {t1} s) the client asks its own server to renew; if that one is silent, at 87.5 % (T2 = {t2} s) it asks anyone.'), { t1, t2, w1: fmtTime(t1).ru, w2: fmtTime(t2).ru }),
+      caption: fmt(b('Адрес выдан не навсегда, а на срок аренды. Когда пройдёт половина срока, то есть через {w1}, клиент попросит свой сервер продлить аренду. Этот момент называют T1.', 'The address is not given forever but for the lease time. When half of that time has passed, that is after {e1}, the client will ask its own server to renew the lease. This moment is called T1.'), { w1: fmtTime(t1).ru, e1: fmtTime(t1).en }),
       focus: ['laptop', 'router'],
-      say: { laptop: b('Ноутбук запоминает, когда нужно будет продлить аренду адреса.', 'The laptop notes when to renew the lease.') },
+      say: { laptop: b('Ноутбук запоминает, когда нужно будет продлить аренду адреса.', 'The laptop notes when to renew the address lease.') },
+      metrics: { msgs: 4, t1 },
+    });
+    steps.push({
+      id: 'rebind',
+      label: 'T2',
+      caption: fmt(b('Если свой сервер к моменту T1 не ответит, клиент подождёт, пока пройдёт 87,5 % срока аренды, то есть через {w2}, и попросит о продлении любой сервер в сети. Этот запасной момент называют T2.', 'If its own server does not answer at T1, the client waits until 87.5 % of the lease time has passed, that is after {e2}, and asks any server on the network to renew. This fallback moment is called T2.'), { w2: fmtTime(t2).ru, e2: fmtTime(t2).en }),
+      focus: ['laptop'],
+      say: { laptop: b('Ноутбук запоминает и запасной момент, когда спросит любой сервер.', 'The laptop also notes the fallback moment when it will ask any server.') },
       metrics: { msgs: 4, t1, t2 },
     });
     return steps;

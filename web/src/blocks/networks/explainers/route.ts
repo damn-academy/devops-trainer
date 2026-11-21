@@ -199,22 +199,22 @@ export const routeModel = defineModel<P>({
       steps.push({
         id: 'ttl0',
         label: 'TTL 0',
-        caption: b('Маршрутизатор r1 уменьшает TTL с 1 до 0, а пакет с нулевым TTL дальше не идёт. Поэтому r1 выбрасывает пакет и отправляет компьютеру h1 со своего адреса сообщение ICMP «Time to live exceeded», то есть «время жизни истекло».', 'r1 decrements TTL: 1 → 0. A packet with zero TTL goes no further. r1 drops it and sends h1 an ICMP “Time to live exceeded” message from its own address.'),
+        caption: b('Маршрутизатор r1 уменьшает TTL с 1 до 0, а пакет с нулевым TTL дальше не идёт. Поэтому r1 выбрасывает пакет и отправляет компьютеру h1 со своего адреса сообщение ICMP «Time to live exceeded», то есть «время жизни истекло».', 'Router r1 decrements the TTL from 1 to 0, and a packet with a zero TTL goes no further. So r1 drops the packet and sends computer h1, from its own address, the ICMP message “Time to live exceeded”.'),
         focus: ['r1', 'l1'],
         tokens: [{ edge: 'l1', reverse: true, label: 'ICMP time exceeded' }],
-        say: { r1: b('Маршрутизатор r1 видит, что TTL стал нулём, выбрасывает пакет и сообщает об этом компьютеру h1.', 'r1 sees TTL reach zero, drops the packet and tells h1.') },
+        say: { r1: b('Маршрутизатор r1 выбрасывает пакет с нулевым TTL.', 'Router r1 drops the packet with a zero TTL.') },
         states: { r1: 'warn' },
         metrics: { routers: 1 },
-        broken: { at: 'r1', message: '$ ping -c 1 -t 1 10.0.2.10\nPING 10.0.2.10 (10.0.2.10) 56(84) bytes of data.\nFrom 10.0.1.1 icmp_seq=1 Time to live exceeded', caption: b('На этом правиле построена команда traceroute: она отправляет пакеты с TTL 1, 2, 3 и так далее, и каждый маршрутизатор на пути называет себя в таком сообщении.', 'this is how traceroute works: TTL 1, 2, 3… — and every router on the way names itself.') },
+        broken: { at: 'r1', message: '$ ping -c 1 -t 1 10.0.2.10\nPING 10.0.2.10 (10.0.2.10) 56(84) bytes of data.\nFrom 10.0.1.1 icmp_seq=1 Time to live exceeded', caption: b('На этом правиле построена команда traceroute: она отправляет пакеты с TTL 1, 2, 3 и так далее, и каждый маршрутизатор на пути называет себя в таком сообщении.', 'The traceroute command is built on this rule: it sends packets with TTL 1, 2, 3 and so on, and every router on the way names itself in such a message.') },
       });
       return steps;
     }
     steps.push({
       id: 'at-r1',
       label: b('на r1', 'at r1'),
-      caption: fmt(b('Маршрутизатор r1 снимает кадр, читает IP-адрес получателя, уменьшает TTL с {a} до {b} и пересчитывает контрольную сумму заголовка. Самая длинная подходящая строка в его таблице говорит, что сеть 10.0.2.0/24 подключена к интерфейсу eth1.', 'r1 strips the frame, reads the destination IP, decrements TTL {a} → {b} and recomputes the header checksum. The longest matching line in its table is 10.0.2.0/24 dev eth1.'), { a: p.ttl, b: p.ttl - 1 }),
+      caption: fmt(b('Маршрутизатор r1 снимает кадр, читает IP-адрес получателя, уменьшает TTL с {a} до {b} и пересчитывает контрольную сумму заголовка. Самая длинная подходящая строка в его таблице говорит, что сеть 10.0.2.0/24 подключена к интерфейсу eth1.', 'Router r1 strips the frame, reads the destination IP address, decrements the TTL from {a} to {b} and recomputes the header checksum. The longest matching line in its table says that network 10.0.2.0/24 is connected to interface eth1.'), { a: p.ttl, b: p.ttl - 1 }),
       focus: ['r1', 't2'],
-      say: { r1: b('Маршрутизатор r1 уменьшает TTL и находит в своей таблице интерфейс eth1 для сети 10.0.2.0/24.', 'r1 decrements TTL and finds eth1 for 10.0.2.0/24 in its table.') },
+      say: { r1: b('Маршрутизатор r1 выбирает интерфейс eth1.', 'Router r1 picks interface eth1.') },
       states: { r1: 'on', t2: 'on' },
       metrics: { routers: 1 },
     });

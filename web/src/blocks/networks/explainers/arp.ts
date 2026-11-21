@@ -137,7 +137,7 @@ export const arpModel = defineModel<P>({
     steps.push({
       id: 'who-has',
       label: 'who-has',
-      caption: b('Компьютер A спрашивает всю сеть: «У кого адрес 192.168.1.20? Ответьте 192.168.1.10». Кадр с вопросом адресован ff:ff:ff:ff:ff:ff, поэтому коммутатор рассылает его во все порты.', 'The host asks everyone: “Who has 192.168.1.20? Tell 192.168.1.10.” The frame is addressed to ff:ff:ff:ff:ff:ff; the switch floods it to every port.'),
+      caption: b('Компьютер A спрашивает всю сеть, у кого адрес 192.168.1.20, и просит ответить на адрес 192.168.1.10. Кадр с вопросом адресован ff:ff:ff:ff:ff:ff, поэтому коммутатор рассылает его во все порты.', 'Computer A asks the whole network who has the address 192.168.1.20 and asks for the answer to be sent to 192.168.1.10. The frame with the question is addressed to ff:ff:ff:ff:ff:ff, so the switch sends it out of every port.'),
       focus: ['sw', 'l1', 'l2', 'l3'],
       tokens: [{ edge: 'l1', label: 'who-has .20' }, { edge: 'l2', label: 'who-has .20' }, { edge: 'l3', label: 'who-has .20' }],
       say: { sw: b('Коммутатор рассылает широковещательный вопрос во все порты.', 'The switch floods the broadcast question to every port.') },
@@ -148,15 +148,15 @@ export const arpModel = defineModel<P>({
       steps.push({
         id: 'retry',
         label: b('повтор вопроса', 'again'),
-        caption: b('На вопрос никто не ответил. Ядро повторяет его ещё дважды с паузой в секунду, а потом прекращает попытки, потому что соседа с таким адресом в сети, судя по всему, нет.', 'No answer. The kernel asks twice more, a second apart, and gives up: there is no neighbour with that address on the network.'),
+        caption: b('На вопрос никто не ответил. Ядро повторяет его ещё дважды с паузой в секунду, а потом прекращает попытки, потому что соседа с таким адресом в сети, судя по всему, нет.', 'Nobody answered the question. The kernel repeats it twice more, a second apart, and then stops trying, because there seems to be no neighbour with that address on the network.'),
         focus: ['h1'],
         say: { h1: b('Компьютер A трижды задал вопрос, не получил ответа и сообщает, что сосед недоступен.', 'A asked three times, got no answer and reports the neighbour unreachable.') },
         states: { h1: 'err', h2: 'off' },
         metrics: { arp: 3 },
         broken: {
           at: 'h1',
-          message: '$ ping -c 2 192.168.1.20\nPING 192.168.1.20 (192.168.1.20) 56(84) bytes of data.\nFrom 192.168.1.10 icmp_seq=1 Destination Host Unreachable\nFrom 192.168.1.10 icmp_seq=2 Destination Host Unreachable',
-          caption: b('Ошибку пишет сам отправитель, и это видно по строке «From 192.168.1.10». Пакет даже не ушёл в сеть, потому что не нашлось, кому отдать кадр.', 'the sender itself reports the error (From 192.168.1.10): the packet never left — there was nobody to hand the frame to.'),
+          message: '$ ping -q -c 2 192.168.1.20\nPING 192.168.1.20 (192.168.1.20) 56(84) bytes of data.\n\n--- 192.168.1.20 ping statistics ---\n2 packets transmitted, 0 received, +2 errors, 100% packet loss, time 1027ms\n$ ip neigh show 192.168.1.20\n192.168.1.20 dev eth0 FAILED',
+          caption: b('Ошибки насчитал сам отправитель, и это видно по кэшу ARP: запись о соседе 192.168.1.20 помечена словом FAILED, то есть на вопрос никто не ответил. Пакет даже не ушёл в сеть, потому что не нашлось, кому отдать кадр.', 'The sender itself counted the errors, and the ARP cache shows it: the entry for the neighbour 192.168.1.20 is marked FAILED, which means nobody answered the question. The packet never even left for the network, because there was nobody to hand the frame to.'),
         },
       });
       return steps;
