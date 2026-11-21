@@ -58,7 +58,7 @@ export const requestModel = defineModel<P>({
   title: bi('Запрос к серверу и ответ', 'A request to a server and the answer'),
   summary: bi(
     'Вы открываете каталог чайного магазина. Браузер отправляет запрос, сеть доставляет его на сервер магазина, запрос ждёт своей очереди, программа магазина составляет страницу из каталога и присылает ответ. Под схемой растёт водопад, похожий на расписание дня: каждому шагу, который занял время, в нём соответствует своя полоска, и чем дольше шаг, тем она длиннее.',
-    'You open the tea shop’s catalogue. The browser sends a request, the network delivers it to the shop’s server, the request waits its turn, the shop program builds the page from the catalogue and sends the answer. Under the diagram a waterfall grows that looks like a day’s timetable: every step that took time has its own bar in it, and the longer the step, the longer the bar.',
+    'You open the tea shop’s catalogue. The browser sends a request, the network delivers it to the shop’s server, the request waits its turn, the shop program puts the page together from the catalogue and sends the answer. Under the diagram a waterfall grows that looks like a day’s timetable: every step that took time has its own bar in it, and the longer the step, the longer the bar.',
   ),
   intro: bi(
     'Сейчас на схеме только ваш браузер. Нажмите «Начать с первого шага», и браузер отправит запрос серверу магазина.',
@@ -89,7 +89,7 @@ export const requestModel = defineModel<P>({
       { id: 'others', label: bi('Другие покупатели', 'Other shoppers'), icon: 'user', sub: '50 / s', family: 'user', x: 272, y: 224, w: 192, h: 64, card: card(bi('Браузеры других покупателей служат такими же клиентами, как ваш браузер. Сервер у магазина один на всех, и их запросы встают в ту же очередь, что и ваш.', 'Clients like you; their requests join the same queue.'), bi('Эти запросы отправляют люди со всей страны, которые зашли в магазин одновременно с вами.', 'People who visited the shop at the same time.')) },
       { id: 'queue', label: bi('Очередь', 'Queue'), icon: 'server', sub: '0', family: 'gauge', shape: 'buffer', x: 552, y: 56, w: 184, h: 64, card: card(bi('В очереди ждут запросы, которые пришли, пока программа магазина была занята предыдущими. Чем ближе загрузка сервера к ста процентам, тем длиннее очередь. Полоска внизу показывает, насколько она заполнена.', 'Requests that arrived while the program was busy; the closer the load to 100%, the longer the queue.'), bi('Очередь держит операционная система сервера, пока программа не возьмёт следующий запрос.', 'The server’s operating system holds it.')) },
       { id: 'app', label: bi('Программа магазина', 'Shop program'), icon: 'process', sub: { ru: '5 мс / request', en: '5 ms / request' }, family: 'process', x: 552, y: 224, w: 184, h: 64, card: card(bi('Программа магазина круглые сутки ждёт запросов и отвечает на них. На один запрос у неё уходит около 5 мс, так что за секунду она успевает ответить на 200 запросов.', 'Waits for requests and answers them: about 5 ms each, 200 a second.'), bi('Программу запустили на сервере и не выключают.', 'Started on the server and never switched off.')) },
-      { id: 'data', label: bi('Каталог', 'Catalogue'), icon: 'database', sub: 'teas.db', family: 'store', x: 776, y: 224, w: 160, h: 64, card: card(bi('В каталоге хранятся данные, из которых программа составляет страницу: названия чаёв, цены и остатки на складе.', 'The data the page is built from: names, prices, stock.'), bi('Каталог хранится на диске сервера.', 'Kept on the server’s disk.')) },
+      { id: 'data', label: bi('Каталог', 'Catalogue'), icon: 'database', sub: 'teas.db', family: 'store', x: 776, y: 224, w: 160, h: 64, card: card(bi('В каталоге хранятся данные, из которых программа составляет страницу: названия чаёв, цены и остатки на складе.', 'The catalogue keeps the data the program makes the page from: the names of the teas, the prices and the stock.'), bi('Каталог хранится на диске сервера.', 'Kept on the server’s disk.')) },
     ],
     groups: [{ id: 'server', label: bi('Сервер магазина', 'The shop’s server'), around: ['queue', 'app', 'data'], family: 'node', pad: 16, card: card(bi('Сервер магазина представляет собой компьютер в дата-центре, который работает без перерыва и обслуживает всех, кто к нему обратится. Экрана и клавиатуры у него обычно нет, и с ним говорят командами по сети.', 'A computer in a data centre that runs without a break and serves everyone.'), bi('Магазин арендует сервер или ставит свой.', 'The shop rents it or puts in its own.')) }],
     edges: [
@@ -97,7 +97,7 @@ export const requestModel = defineModel<P>({
       { id: 'e-others', from: 'others', to: 'net', label: bi('запросы других покупателей', 'their requests'), card: card(bi('Запросы других покупателей идут к серверу той же дорогой.', 'Other shoppers’ requests travel the same road.'), bi('Их отправляют браузеры других покупателей.', 'Their browsers.')) },
       { id: 'e-net', from: 'net', to: 'queue', label: bi('доставка', 'delivery'), card: card(bi('Сеть доставила запрос до сервера магазина.', 'The network has delivered the request.'), bi('Запрос доставляют провайдеры.', 'The providers.')) },
       { id: 'e-take', from: 'queue', to: 'app', label: bi('следующий запрос', 'next request'), card: card(bi('Закончив с предыдущим запросом, программа берёт из очереди следующий.', 'Once free, the program takes the next request.'), bi('Запрос берёт программа магазина.', 'The shop program.')) },
-      { id: 'e-read', from: 'app', to: 'data', label: bi('цены', 'prices'), card: card(bi('Программа читает из каталога названия и цены и составляет из них страницу.', 'The program reads the catalogue and builds the page.'), bi('Каталог читает программа магазина.', 'The shop program.')) },
+      { id: 'e-read', from: 'app', to: 'data', label: bi('цены', 'prices'), card: card(bi('Программа читает из каталога названия и цены и составляет из них страницу.', 'The program reads names and prices from the catalogue and makes the page from them.'), bi('Каталог читает программа магазина.', 'The shop program.')) },
       {
         id: 'e-resp',
         from: 'app',
@@ -211,7 +211,7 @@ export const requestModel = defineModel<P>({
       {
         id: 'ask',
         label: bi('запрос', 'request'),
-        caption: bi('Вы открыли каталог магазина. Браузер, то есть клиент, составляет короткий запрос: «дайте, пожалуйста, страницу /catalog». Сам по себе сервер страницу не пришлёт, потому что он даже не знает о вас, пока запрос не придёт.', 'You opened the catalogue. The browser, the client, writes a short request: “please give me /catalog”. The server will not send anything by itself.'),
+        caption: bi('Вы открыли каталог магазина. Браузер, то есть клиент, составляет короткий запрос, в котором просит сервер прислать страницу /catalog. Сам по себе сервер страницу не пришлёт, потому что он даже не знает о вас, пока запрос не придёт.', 'You opened the shop’s catalogue. The browser, that is, the client, writes a short request asking the server for the page /catalog. The server will not send the page by itself, because it does not even know about you until the request arrives.'),
         focus: ['browser'],
         say: { browser: bi('Браузер просит у сервера страницу /catalog.', 'The browser asks the server for the page /catalog.') },
         states: { ...startWith(ALL, 'browser'), browser: 'on' },
@@ -259,11 +259,11 @@ export const requestModel = defineModel<P>({
       steps.push({
         id: 'refused',
         label: bi('отказ', 'refused'),
-        caption: bi('Запрос дошёл до сервера, но программы, которая принимает запросы, на нём нет, потому что её остановили. Операционная система сервера сразу отвечает браузеру отказом, потому что принять запрос некому. Браузер узнаёт об этом за время дороги туда и обратно.', 'The request reached the server, but the program that takes requests is not there, because it was stopped. The server’s operating system at once answers the browser with a refusal, because there is nobody to take the request. The browser learns of it in the time of the road there and back.'),
+        caption: bi('Запрос дошёл до сервера, но программу магазина, которая принимает запросы, остановили. Принять запрос некому, поэтому операционная система сервера сразу отвечает браузеру отказом, и браузер узнаёт об этом за время дороги туда и обратно.', 'The request reached the server, but the shop program that takes requests was stopped. Nobody can take the request, so the server’s operating system answers the browser with a refusal at once, and the browser learns of it in the time of the road there and back.'),
         focus: ['server', 'app'],
         reveal: ['server', 'app', 'queue', 'e-net'],
         tokens: [{ edge: 'e-net', label: 'GET /catalog' }],
-        say: { app: bi('Программа магазина остановлена, и запрос принять некому.', 'The shop program is stopped; nobody takes the request.') },
+        say: { app: bi('Программа магазина остановлена.', 'The shop program is stopped.') },
         states: { app: 'err', queue: 'off' },
         metrics: m(n.net * 2),
         broken: { at: 'app', message: 'curl: (7) Failed to connect to shop.example port 443: Connection refused', caption: bi('Запрос остановился на сервере. Сервером называют машину вместе с работающей программой, а без программы машина может только отказать. Мгновенный отказ в жизни означает, что машина на связи, но нужная программа не запущена. Так об этой поломке сообщает программа curl, которая отправляет запросы из терминала: «не удалось подключиться к shop.example, в соединении отказано». Число 443 в сообщении служит номером, по которому браузер обращается к программе магазина.', 'The request stopped at the server. A server is the machine together with a running program, and without the program the machine can only refuse. An instant refusal means in real life that the machine is reachable but the needed program is not running. This is how curl prints this break: “failed to connect to shop.example, connection refused”. The number 443 in the message is the number by which the browser reaches the shop program.') },
@@ -336,7 +336,7 @@ export const requestModel = defineModel<P>({
       {
         id: 'read',
         label: bi('каталог', 'catalogue'),
-        caption: bi('Программа читает из каталога названия и цены и составляет из них страницу. На всю работу с одним запросом у неё уходит около 5 мс.', 'The program reads names and prices and builds the page: about 5 ms per request.'),
+        caption: bi('Программа читает из каталога названия и цены и составляет из них страницу. На всю работу с одним запросом у неё уходит около 5 мс.', 'The program reads names and prices from the catalogue and makes the page from them. All the work on one request takes it about 5 ms.'),
         focus: ['e-read', 'data'],
         reveal: ['data', 'e-read'],
         tokens: [{ edge: 'e-read', label: bi('цены чаёв', 'tea prices'), reverse: true }],

@@ -52,12 +52,12 @@ export const runModel = defineModel<P>({
   ),
   intro: bi(
     'Схема соберётся у вас на глазах, а сейчас на ней только вы и диск, на котором лежит программа. Нажмите «Начать с первого шага», и вы увидите, что происходит после двойного щелчка по значку.',
-    'The diagram builds itself as you go, and now it shows only you and the disk the program lies on. Press “Start from the first step”, and you will see what happens after a double click on the icon.',
+    'The diagram will fill in before your eyes, and now it shows only you and the disk the program lies on. Press “Start from the first step”, and you will see what happens after a double click on the icon.',
   ),
   legend: [
     { mark: 'active', text: bi('часть компьютера, которая работает сейчас', 'the part working now') },
     { mark: 'say', text: bi('что эта часть делает', 'what that part does') },
-    { mark: 'token', text: bi('что передаётся дальше: копия программы, инструкции, буквы, файл', 'what is handed on: the program, instructions, letters, a file') },
+    { mark: 'token', text: bi('что одна часть передаёт другой, например копию программы, инструкции, буквы или файл', 'what one part hands to another, such as a copy of the program, instructions, letters or a file') },
     { mark: 'icon:user', text: bi('вы за компьютером', 'you at the computer') },
     { mark: 'icon:disk', text: bi('диск хранит файлы и после выключения', 'the disk: keeps files after power-off') },
     { mark: 'icon:switch', text: bi('память работает быстро, но пустеет без питания', 'memory: fast, but empty without power') },
@@ -98,7 +98,7 @@ export const runModel = defineModel<P>({
         w: 208,
         h: 64,
         card: card(
-          bi('Процессор выполняет инструкции: складывает два числа, сравнивает их, переходит к другой инструкции. Он делает это миллиарды раз в секунду, но берёт инструкции и данные только из памяти, а с диском напрямую не работает.', 'Carries out instructions: add two numbers, compare, jump to another instruction. It does so billions of times a second, but takes instructions and data only from memory.'),
+          bi('Процессор выполняет инструкции, например складывает два числа, сравнивает их или переходит к другой инструкции. Он делает это миллиарды раз в секунду, но берёт инструкции и данные только из памяти, а с диском напрямую не работает.', 'The processor carries out instructions, such as adding two numbers, comparing them or jumping to another instruction. It does so billions of times a second, but it takes instructions and data only from memory and does not work with the disk directly.'),
           bi('Процессор стоит на главной плате компьютера и выглядит как одна микросхема. В ноутбуке её не видно под системой охлаждения.', 'A chip on the main board; in a laptop it hides under the cooling system.'),
           { see: 'nproc', doc: { page: 'man/nproc.1', anchor: 'DESCRIPTION' } },
         ),
