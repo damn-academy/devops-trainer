@@ -67,6 +67,8 @@ web/      the application (Vite + TypeScript): src/core, src/app, src/engine, sr
 - [`web/README.md`](web/README.md) — the application: commands, structure, tests.
 - [`web/CONTRACTS.md`](web/CONTRACTS.md) — how blocks and engines plug in.
 - [`web/STATUS.md`](web/STATUS.md) — what is done, partial and missing.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to run the tests, how lessons, diagrams and labs are built, and how to send a change.
+- [`deploy/README.md`](deploy/README.md) and [`service/feedback/README.md`](service/feedback/README.md) — how to run the course and the feedback service yourself. The course has the same in its help section, `#/about`.
 
 ## Credits
 

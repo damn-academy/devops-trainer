@@ -4,6 +4,7 @@ import { messagesPage } from '../engine/feedback/messages';
 
 import { UI } from '../core/i18n';
 import { href, type Route } from '../core/router';
+import { aboutPage } from './about';
 import { blockPage } from './block';
 import { emptyState, type Page } from './common';
 import { examPage } from './exam-page';
@@ -39,6 +40,8 @@ export function renderPage(r: Exclude<Route, { name: 'home' }>): Page {
       return labPage(r.id);
     case 'local-lab':
       return localLabPage();
+    case 'about':
+      return aboutPage(r.page);
     case 'notfound':
       return { el: emptyState(UI.notFound, undefined, { label: UI.backHome, href: href({ name: 'home' }) }) };
   }

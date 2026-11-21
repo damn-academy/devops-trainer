@@ -67,6 +67,8 @@ web/      приложение (Vite + TypeScript): src/core, src/app, src/engin
 - [`web/README.ru.md`](web/README.ru.md) — приложение: команды, структура, тесты.
 - [`web/CONTRACTS.ru.md`](web/CONTRACTS.ru.md) — как подключаются блоки и движки.
 - [`web/STATUS.ru.md`](web/STATUS.ru.md) — что сделано, что частично, чего нет.
+- [`CONTRIBUTING.ru.md`](CONTRIBUTING.ru.md) — как запустить тесты, как устроены уроки, схемы и лаборатории и как прислать изменение.
+- [`deploy/README.ru.md`](deploy/README.ru.md) и [`service/feedback/README.ru.md`](service/feedback/README.ru.md) — как развернуть курс и сервис обратной связи у себя. То же самое есть в справке внутри курса, `#/about`.
 
 ## Благодарности
 
