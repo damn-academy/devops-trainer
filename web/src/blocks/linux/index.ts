@@ -16,7 +16,7 @@ import { batchExport, ISOLATION_EXAM } from './exam-isolation';
 import { ACCESS_EXAM, DISK_EXAM } from './exam-real';
 import { bootModel } from './explainers/boot';
 import { execModel } from './explainers/exec';
-import { isolationModel } from './explainers/isolation';
+import { isolationModel, wallsModel } from './explainers/isolation';
 import { permModel } from './explainers/perm';
 import { pipeModel } from './explainers/pipe';
 import { restartModel } from './explainers/restart';
@@ -318,6 +318,6 @@ export default defineModule({
   exams: [exam, DISK_EXAM, ISOLATION_EXAM, ACCESS_EXAM],
   docs: LINUX_DOCS,
   commands: [hello, batchExport],
-  explainers: [fromModel(execModel), fromModel(pipeModel), fromModel(permModel), fromModel(restartModel), fromModel(bootModel), fromModel(isolationModel), fromModel(sshModel), fromModel(installModel)],
+  explainers: [fromModel(execModel), fromModel(pipeModel), fromModel(permModel), fromModel(restartModel), fromModel(bootModel), fromModel(wallsModel), fromModel(isolationModel), fromModel(sshModel), fromModel(installModel)],
   widgets: labWidgets,
 });

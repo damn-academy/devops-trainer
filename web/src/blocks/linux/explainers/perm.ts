@@ -96,10 +96,10 @@ export const permModel = defineModel<P>({
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
     { mark: 'say', text: bi('что этот блок делает', 'what that block does') },
-    { mark: 'token', text: bi('что передаётся дальше: команда, тройка битов, ответ', 'what is handed on: the command, a triad, the answer') },
+    { mark: 'token', text: bi('метка на линии, которая несёт команду, тройку битов или ответ', 'a tag on a line carrying the command, a triad or the answer') },
     { mark: 'icon:folder', text: bi('каталог на пути', 'a directory on the path') },
     { mark: 'icon:file', text: bi('файл', 'the file') },
-    { mark: 'icon:lock', text: bi('тройка прав: для кого она и какие в ней биты', 'a triad: whom it is for and its bits') },
+    { mark: 'icon:lock', text: bi('тройка прав с подписью, для кого она и какие в ней биты', 'a triad labelled with whom it is for and its bits') },
     { mark: 'ok', text: bi('этап пройден', 'stage passed') },
     { mark: 'err', text: bi('здесь система отказала', 'the system refused here') },
     { mark: 'pale', text: bi('тройка не про этого пользователя', 'a triad not about this user') },
@@ -304,7 +304,6 @@ export const permModel = defineModel<P>({
     const octal = octalOf(p);
     const steps: Step[] = [];
     const goal = act.onDir ? 'www' : 'target';
-    const goalName = act.onDir ? '/srv/www' : 'index.html';
     const answer = (allowed: boolean) => {
       steps.push({
         id: 'answer',
@@ -324,13 +323,13 @@ export const permModel = defineModel<P>({
       label: bi('запрос', 'request'),
       caption: fmtb(
         bi(
-          'Пользователь {w} хочет {a}. Режим {tg} сейчас {m}: числом он записывается как {o}, а буквами его задаёт команда `chmod {s}`. Сначала система проверит каталоги на пути, а потом выберет одну из трёх троек.',
-          '{w} wants to {a}: `{t}` with mode {m} ({o}, or `chmod {s}`). First the directories on the path, then one of three triads.',
+          'Пользователь {w} хочет {a} и набирает команду `{c}`. Прежде чем выполнить её, система проверит, разрешено ли это действие пользователю {w}.',
+          '{w} wants to {a} and types `{c}`. Before running it, the system checks whether {w} is allowed this action.',
         ),
-        { w: who.name, a: act.verb, t: goalName, tg: bi(act.onDir ? 'каталога /srv/www' : 'файла index.html', goalName), m: mode, o: octal, s: symbolicOf(p) },
+        { w: who.name, a: act.verb, c: act.cmd },
       ),
       focus: ['who'],
-      say: { who: fmtb(bi('Пользователь {w} набирает команду `{c}`, потому что хочет {a}.', '{w} types `{c}` to {a}.'), { w: who.name, c: act.cmd, a: act.verb }) },
+      say: { who: fmtb(bi('Пользователь {w} набирает команду `{c}`.', '{w} types `{c}`.'), { w: who.name, c: act.cmd }) },
       values: {
         who: `${who.name} · uid ${who.uid}`,
         target: `${mode.replace(/^d/, '-')} anna dev`,
@@ -341,6 +340,19 @@ export const permModel = defineModel<P>({
         result: '?',
       },
       states: startWith('who', goal),
+    });
+    steps.push({
+      id: 'mode',
+      label: bi('режим', 'mode'),
+      caption: fmtb(
+        bi(
+          'Режим {tg} сейчас {m}. Числом этот режим записывается как {o}, а буквами его задаёт команда `chmod {s}`. Сначала система проверит каталоги на пути, а потом выберет одну из трёх троек режима.',
+          'The mode of {tg} is now {m}. As a number this mode is written {o}, and in letters `chmod {s}` sets it. First the system checks the directories on the path, then it picks one of the mode’s three triads.',
+        ),
+        { tg: bi(act.onDir ? 'каталога /srv/www' : 'файла index.html', act.onDir ? 'the directory /srv/www' : 'the file index.html'), m: mode, o: octal, s: symbolicOf(p) },
+      ),
+      focus: [goal],
+      say: { [goal]: fmtb(bi('У {tg} режим {m}, то есть {o}.', '{tg} has mode {m}, that is {o}.'), { tg: bi(act.onDir ? 'каталога /srv/www' : 'файла index.html', act.onDir ? 'The directory /srv/www' : 'The file index.html'), m: mode, o: octal }) },
     });
     if (d.triad === 'root') {
       steps.push({
@@ -358,22 +370,21 @@ export const permModel = defineModel<P>({
       answer(d.allowed);
       return steps;
     }
-    const others = (dir: string, bits: string) => fmtb(bi('Система проверяет каталог {d}. Пользователь {w} не владелец этого каталога и не входит в его группу, поэтому для него действуют права остальных, {b}', 'The system checks {d}. {w} is neither its owner nor in its group, so the “others” triad {b} applies'), { d: dir, w: who.name, b: bits });
     if (d.stoppedAt === 'srv') {
       steps.push({
         id: 'srv',
         label: '/srv',
         caption: fmt(
           bi(
-            'Проверка остановилась на первом же каталоге. Каталог /srv принадлежит root, поэтому для пользователя {w} решает тройка «остальных», а в ней теперь нет бита x. Пройти сквозь каталог нельзя, и до файла проверка так и не дошла.',
-            'The very first directory: /srv has no x for “others”, so it cannot be passed. The check never reached the file.',
+            'Проверка остановилась на первом же каталоге. Каталог /srv принадлежит root, а в тройке «остальных» теперь нет бита x, поэтому пройти сквозь каталог нельзя, и до файла проверка не дошла.',
+            'The check stopped at the very first directory. /srv belongs to root, and the “others” triad now has no x, so the directory cannot be passed and the check never reached the file.',
           ),
           { w: who.name },
         ),
         focus: ['e-srv', 'srv'],
         reveal: ['srv', 'e-srv', 'result'],
         tokens: [{ edge: 'e-srv', label: act.cmd }],
-        say: { srv: fmtb(bi('{o}. Бита x среди этих прав нет, поэтому пройти через каталог к файлу нельзя.', '{o}. There is no x, so there is no way through.'), { o: others('/srv', 'r--') }) },
+        say: { srv: fmtb(bi('Для пользователя {w} действуют права остальных r--, а бита x в них нет.', 'For {w} the “others” triad r-- applies, and it has no x.'), { w: who.name }) },
         states: { srv: 'err', 'e-srv': 'err', result: 'err' },
         values: { srv: 'drwxr-xr-- root root', result: 'Permission denied' },
         broken: { at: 'srv', message: `${act.cmd.split(' ')[0]}: /srv/www/${act.onDir ? '' : 'index.html'}: Permission denied`.replace('/: ', ': '), caption: bi('Проверка остановилась на каталоге /srv, ещё до того, как система посмотрела на сам файл. Файл в порядке, но пройти к нему через каталог нельзя, и это самая частая причина отказа.', 'at the directory /srv, before the file. The file itself is fine, but you cannot pass through the directory to it, and that is the most common cause of a refusal.') },
@@ -384,11 +395,11 @@ export const permModel = defineModel<P>({
     steps.push({
       id: 'srv',
       label: '/srv',
-      caption: bi('Чтобы добраться до файла, система сначала проходит каталог /srv. Он принадлежит root, поэтому для anna, bob и eve здесь действует тройка «остальных» r-x. Бит x в ней есть, и каталог можно пройти.', 'To reach the file the system first passes /srv. It belongs to root, so for anna, bob and eve the “others” triad r-x applies. It has x: the directory can be passed.'),
+      caption: bi('Чтобы добраться до файла, система сначала проходит каталог /srv. Он принадлежит root, поэтому для anna, bob и eve здесь действует тройка «остальных» r-x. Бит x в ней есть, и каталог можно пройти.', 'To reach the file the system first passes /srv. It belongs to root, so for anna, bob and eve the “others” triad r-x applies. It has x, so the directory can be passed.'),
       focus: ['e-srv', 'srv'],
       reveal: ['srv', 'e-srv'],
       tokens: [{ edge: 'e-srv', label: act.cmd }],
-      say: { srv: fmtb(bi('{o}. Бит x среди этих прав есть, поэтому система пропускает пользователя дальше.', '{o}. It has x, so the system lets the user through.'), { o: others('/srv', 'r-x') }) },
+      say: { srv: fmtb(bi('Для пользователя {w} действуют права остальных r-x, и бит x в них есть.', 'For {w} the “others” triad r-x applies, and it has x.'), { w: who.name }) },
       states: { srv: 'ok' },
     });
     const wwwTriad = who.name === 'anna' ? 'rwx' : who.groups.includes('dev') ? 'r-x' : '--x';
@@ -397,21 +408,21 @@ export const permModel = defineModel<P>({
       steps.push({
         id: 'www',
         label: '/srv/www',
-        caption: fmtb(bi('Следующий каталог, /srv/www, принадлежит anna и группе dev. Для {w} здесь действует тройка {n}, {t}. Бит x в ней есть, и этот каталог тоже можно пройти.', 'Next, /srv/www belongs to anna and group dev. For {w} the {n} triad {t} applies. It has x: passed as well.'), { w: who.name, n: wwwWhose, t: wwwTriad }),
+        caption: fmtb(bi('Следующий каталог, /srv/www, принадлежит anna и группе dev. Для {w} здесь действует тройка {n}, {t}. Бит x в ней есть, и этот каталог тоже можно пройти.', 'The next directory, /srv/www, belongs to anna and group dev. For {w} the {n} triad {t} applies here. It has x, so this directory can be passed as well.'), { w: who.name, n: wwwWhose, t: wwwTriad }),
         focus: ['e-www', 'www'],
         reveal: ['www', 'e-www'],
         tokens: [{ edge: 'e-www', label: act.cmd }],
-        say: { www: fmtb(bi('Система проверяет каталог /srv/www. Для пользователя {w} здесь действуют права {n}, {t}, в них есть бит x, и система пропускает его к файлу.', 'The system checks /srv/www. For {w} the {n} triad {t} applies; it has x, so the system lets the user through to the file.'), { w: who.name, n: wwwWhose, t: wwwTriad }) },
+        say: { www: fmtb(bi('Для пользователя {w} здесь действуют права {n} {t} с битом x, поэтому система пропускает его к файлу.', 'For {w} the {n} triad {t} with x applies here, so the system lets the user through to the file.'), { w: who.name, n: wwwWhose, t: wwwTriad }) },
         states: { www: 'ok' },
       });
       steps.push({
         id: 'target',
         label: bi('файл', 'file'),
-        caption: fmtb(bi('Путь пройден, и теперь система смотрит на режим самого файла: {m}. Это три тройки: {u} для владельца anna, {g} для группы dev и {o} для всех остальных. Решать будет ровно одна из них.', 'The path is passed; now the file’s own mode: {m}, three triads: {u} for the owner anna, {g} for group dev, {o} for everyone else. Exactly one of them will decide.'), { m: mode, u: p.u, g: p.g, o: p.o }),
+        caption: fmtb(bi('Путь пройден, и теперь система смотрит на режим самого файла {m}. В нём три тройки, {u} для владельца anna, {g} для группы dev и {o} для всех остальных, и решать будет ровно одна из них.', 'The path is passed, and now the system looks at the file’s own mode {m}. It has three triads, {u} for the owner anna, {g} for group dev and {o} for everyone else, and exactly one of them will decide.'), { m: mode, u: p.u, g: p.g, o: p.o }),
         focus: ['e-target', 'target'],
         reveal: ['e-target'],
         tokens: [{ edge: 'e-target', label: act.cmd }],
-        say: { target: fmtb(bi('Система читает права файла, {m}. В них три тройки, и сейчас система выберет ту одну, которая относится к этому пользователю.', 'The system reads the file’s mode {m}. It has three triads, and the system will now pick the one that applies to this user.'), { m: mode }) },
+        say: { target: fmtb(bi('Система читает права файла {m} и выбирает одну тройку.', 'The system reads the file’s mode {m} and picks one triad.'), { m: mode }) },
       });
     }
     const asker = `uid ${who.uid}`;
@@ -480,11 +491,12 @@ export const permModel = defineModel<P>({
         ? bi('Бит x у каталога /srv снят, и проверка останавливается на первом же каталоге. Права самого файла теперь ничего не решают.', 'Without x on /srv the check stops at the first directory: the file’s own mode no longer matters.')
         : bi('Бит x у каталога /srv вернули, и путь к файлу снова открыт.', 'x is back on /srv: the path can be passed again.');
     const ok = finalAnswer(next) === 'ok';
-    const verdict = ok ? bi('действие разрешено', 'allowed') : bi('система отказывает', 'refused');
+    const verdict = ok ? bi('действие разрешено', 'the action is allowed') : bi('система отказывает', 'the system refuses');
+    const modeVerdict = ok ? bi('выбранный пользователь может выполнить это действие', 'the chosen user may perform this action') : bi('выбранному пользователю система в этом действии отказывает', 'the system refuses the chosen user this action');
     if (change.id === 'u' || change.id === 'g' || change.id === 'o') {
-      return fmtb(bi('Режим изменился с {a} на {b}. Для выбранного пользователя и действия ответ теперь такой: {v}.', 'Mode {a} → {b}: for this user and action, {v}.'), { a: octalOf(a as P), b: octalOf(b as P), v: verdict });
+      return fmtb(bi('Режим изменился с {a} на {b}, и теперь {v}.', 'The mode changed from {a} to {b}, and now {v}.'), { a: octalOf(a as P), b: octalOf(b as P), v: modeVerdict });
     }
-    if (change.id === 'who') return fmtb(bi('Теперь к файлу обращается {w}. Система выбирает для этого пользователя свою тройку, и ответ такой: {v}.', 'Now {w} asks: the check picks their triad, and the answer is: {v}.'), { w: (b as P).who, v: verdict });
-    return fmtb(bi('Новому действию нужен другой бит, и ответ теперь такой: {v}.', 'A different action needs a different bit: {v}.'), { v: verdict });
+    if (change.id === 'who') return fmtb(bi('Теперь к файлу обращается {w}. Система выбирает тройку, которая относится к {w}, и {v}.', 'Now {w} is asking. The system picks the triad that applies to {w}, and {v}.'), { w: (b as P).who, v: verdict });
+    return fmtb(bi('Новому действию нужен другой бит, и теперь {v}.', 'The new action needs a different bit, and now {v}.'), { v: verdict });
   },
 });

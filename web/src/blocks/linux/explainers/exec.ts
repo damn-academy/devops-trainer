@@ -59,7 +59,7 @@ export const execModel = defineModel<P>({
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
     { mark: 'say', text: bi('что этот блок делает', 'what that block does') },
-    { mark: 'token', text: bi('что передаётся дальше: имя программы, системный вызов, код завершения', 'what is handed on: the program name, a system call, the exit code') },
+    { mark: 'token', text: bi('метка на линии, которая несёт имя программы, системный вызов или код завершения', 'a tag on a line carrying the program name, a system call or the exit code') },
     { mark: 'icon:process', text: bi('процесс, то есть оболочка или её копия', 'a process: the shell or its copy') },
     { mark: 'icon:file', text: bi('файл, в который уходит вывод', 'the file the output goes to') },
     { mark: 'dashed', text: bi('код завершения возвращается оболочке', 'the exit code goes back to the shell') },
@@ -310,7 +310,7 @@ export const execModel = defineModel<P>({
       label: bi('слова', 'words'),
       caption:
         p.form === 'cd'
-          ? bi('Вы нажали Enter, и оболочка читает строку `cd /tmp`. В ней два слова: имя команды `cd` и один аргумент `/tmp`.', 'You pressed Enter, and the shell reads `cd /tmp`. It has two words: the command name `cd` and one argument `/tmp`.')
+          ? bi('Вы нажали Enter, и оболочка читает строку `cd /tmp`. В строке два слова, имя команды `cd` и один аргумент `/tmp`.', 'You pressed Enter, and the shell reads `cd /tmp`. The line has two words, the command name `cd` and one argument `/tmp`.')
           : bi('Вы нажали Enter, и оболочка делит строку на слова `ls`, `-l` и `/etc`. Перенаправление `> list.txt` она откладывает отдельно, потому что выполнит его сама, а программа о нём не узнает.', 'You pressed Enter, and the shell splits the line into the words `ls`, `-l` and `/etc`. The redirection `> list.txt` it puts aside, because it will do it itself and the program will not know about it.'),
       focus: ['e-words', 'bash'],
       tokens: [{ edge: 'e-words', label: p.form === 'cd' ? 'cd /tmp' : 'ls -l /etc' }],
@@ -323,9 +323,9 @@ export const execModel = defineModel<P>({
       steps.push({
         id: 'builtin',
         label: 'cd',
-        caption: bi('Команда `cd` встроена в оболочку, и оболочка меняет свой собственный текущий каталог. Если бы она запустила для `cd` отдельный процесс, тот сменил бы каталог только себе и сразу завершился, а каталог самой оболочки остался бы прежним.', '`cd` is built into the shell, and the shell changes its own current directory. If it started a separate process for `cd`, that process would change only its own directory and finish at once, while the shell’s directory stayed the same.'),
+        caption: bi('Команда `cd` встроена в оболочку, и оболочка меняет свой собственный текущий каталог. Отдельный процесс сменил бы каталог только себе и сразу завершился, а каталог оболочки остался бы прежним.', '`cd` is built into the shell, and the shell changes its own current directory. A separate process would change only its own directory and finish at once, while the shell’s directory stayed the same.'),
         focus: ['bash'],
-        say: { bash: bi('Оболочка сама меняет свой текущий каталог на /tmp, не создавая нового процесса.', 'The shell changes its own current directory to /tmp without creating a new process.') },
+        say: { bash: bi('Оболочка сама меняет свой каталог на /tmp без нового процесса.', 'The shell itself changes its directory to /tmp without a new process.') },
         values: { bash: 'PID 2210 · cwd /tmp' },
         states: { bash: 'ok' },
         metrics: m({}),
@@ -346,12 +346,12 @@ export const execModel = defineModel<P>({
       id: 'lookup',
       label: 'PATH',
       caption: path.found
-        ? fmt(bi('В имени `ls` нет знака `/`, поэтому оболочка ищет программу по каталогам PATH. Она проверяет каталоги по порядку, на {n}-м находит `{f}` и дальше не ищет. Оболочка запускает первую найденную программу, даже если дальше по списку есть другая с тем же именем.', 'The name `ls` has no `/`, so the shell looks for the program in the PATH directories. It checks the directories in order, finds `{f}` in directory number {n} and stops looking. The shell runs the first program it finds, even if another one with the same name comes later on the list.'), { n: n.checked, f: path.found })
+        ? fmt(bi('В имени `ls` нет знака `/`, поэтому оболочка ищет программу по каталогам PATH. Она проверяет их по порядку, на {n}-м находит `{f}` и дальше не ищет, даже если ниже по списку есть программа с тем же именем.', 'The name `ls` has no `/`, so the shell looks for the program in the PATH directories. It checks them in order, finds `{f}` in directory number {n} and stops looking, even if a program with the same name comes later on the list.'), { n: n.checked, f: path.found })
         : bi('В имени `ls` нет знака `/`, поэтому оболочка ищет программу по PATH. Но в списке остался единственный каталог `/opt/tools/bin`, и программы `ls` в нём нет.', 'The name `ls` has no `/`, so the shell looks for the program in PATH. But the list has only one directory left, `/opt/tools/bin`, and there is no `ls` in it.'),
       focus: ['e-lookup', 'path'],
       reveal: ['path', 'e-lookup'],
       tokens: [{ edge: 'e-lookup', label: 'ls?' }],
-      say: { path: path.found ? fmt(bi('Оболочка проверяет каталоги списка по очереди и находит программу {f}.', 'The shell checks the directories in order and finds {f}.'), { f: path.found }) : bi('Оболочка проверяет каталог /opt/tools/bin и не находит в нём программу ls.', 'The shell checks /opt/tools/bin and does not find ls there.') },
+      say: { path: path.found ? bi('Оболочка нашла программу и больше не ищет.', 'The shell found the program and stops searching.') : bi('Оболочка проверила /opt/tools/bin, и программы ls там нет.', 'The shell checked /opt/tools/bin, and there is no ls there.') },
       values: { path: path.dirs.join(':') },
       states: { path: path.found ? 'ok' : 'err' },
       metrics: m({ checked: n.checked }),
@@ -365,7 +365,7 @@ export const execModel = defineModel<P>({
         say: { bash: bi('Оболочка печатает «command not found», то есть «команда не найдена», и ставит код 127.', 'The shell prints “command not found” and sets code 127.') },
         states: { bash: 'err' },
         metrics: m({ checked: n.checked, status: 127 }),
-        broken: { at: 'path', message: 'bash: ls: command not found', caption: bi('Список PATH заменили целиком, и каталог `/usr/bin` из него выпал. Новый каталог нужно добавлять к списку, например так: `PATH="$PATH:/opt/tools/bin"`. Узнать такую поломку можно по тому, что перестают находиться все обычные команды сразу.', 'PATH was replaced as a whole, and `/usr/bin` dropped out of it. A new directory must be added to the list, for example `PATH="$PATH:/opt/tools/bin"`. You recognise this break because all the usual commands stop being found at once.') },
+        broken: { at: 'path', message: 'bash: ls: command not found', caption: bi('Список PATH заменили целиком, и каталог `/usr/bin` из него выпал. Новый каталог нужно добавлять к прежнему списку командой `PATH="$PATH:/opt/tools/bin"`. Узнать такую поломку можно по тому, что перестают находиться все обычные команды сразу.', 'PATH was replaced as a whole, and `/usr/bin` dropped out of it. A new directory must be added to the old list with `PATH="$PATH:/opt/tools/bin"`. You recognise this break because all the usual commands stop being found at once.') },
       });
       return steps;
     }
@@ -443,7 +443,7 @@ export const execModel = defineModel<P>({
       focus: ['e-exec', 'child'],
       reveal: ['e-exec', 'kernel'],
       tokens: [{ edge: 'e-exec', label: `execve ${path.found}` }],
-      say: { child: fmt(bi('Теперь в процессе {n} работает ls, а вывод всё так же идёт в файл.', 'Process {n} now runs ls, and its output stream is still connected to the file.'), { n: pid }) },
+      say: { child: fmt(bi('Теперь в процессе {n} работает ls, а вывод всё так же идёт в файл.', 'Process {n} now runs ls, and its output still goes to the file.'), { n: pid }) },
       values: { child: `PID ${pid} · ls` },
       metrics: m({ checked: n.checked, forks: n.forks, execs: 1 }),
     });
@@ -475,7 +475,7 @@ export const execModel = defineModel<P>({
       steps.push({
         id: 'nowait',
         label: '&',
-        caption: bi('Знак `&` в конце строки велит оболочке не ждать завершения программы. Оболочка сразу печатает номер задания `[1] 2231` и новое приглашение, а `ls` работает рядом. О том, что задание закончилось, оболочка сообщит позже строкой `[1]+ Done`.', 'The `&` at the end of the line tells the shell not to wait for the program. The shell at once prints the job number `[1] 2231` and a new prompt while `ls` runs alongside. The shell reports later that the job ended with the line `[1]+ Done`.'),
+        caption: bi('Знак `&` в конце строки велит оболочке не ждать завершения программы. Оболочка сразу печатает номер задания `[1] 2231` и новое приглашение, а позже сообщит строкой `[1]+ Done`, что `ls` закончила работу.', 'The `&` at the end of the line tells the shell not to wait for the program. The shell at once prints the job number `[1] 2231` and a new prompt, and later reports with `[1]+ Done` that `ls` has finished.'),
         focus: ['e-prompt', 'tty'],
         reveal: ['e-prompt', 'tty'],
         tokens: [{ edge: 'e-prompt', label: '[1] 2231' }],
@@ -488,9 +488,9 @@ export const execModel = defineModel<P>({
       steps.push({
         id: 'zombie',
         label: 'Z',
-        caption: bi('Программа `ls` завершилась, но родитель не вызвал wait и не забрал её код. От процесса осталась строка в таблице процессов с кодом завершения, и такой процесс называют зомби. Память ядро уже освободило, а номер 2231 остаётся занятым.', '`ls` finished, but the parent did not call wait and did not collect its code. What is left of the process is a line in the process table with the exit code, and such a process is called a zombie. The kernel has already freed the memory, but number 2231 stays taken.'),
+        caption: bi('Программа `ls` завершилась, но родитель не вызвал wait и не забрал её код. От процесса осталась строка в таблице процессов, и такой процесс называют зомби. Память ядро уже освободило, а номер 2231 остаётся занятым.', '`ls` finished, but the parent did not call wait to collect its code. Only a line in the process table is left, and such a process is called a zombie. The kernel has freed the memory, but number 2231 stays taken.'),
         focus: ['child'],
-        say: { child: bi('Процесс 2231 завершился, но его код никто не забрал, поэтому он остаётся в таблице как зомби.', 'Process 2231 finished, but nobody collected its code, so it stays in the table as a zombie.') },
+        say: { child: bi('Код процесса 2231 никто не забрал, и процесс стал зомби.', 'Nobody collected the code of process 2231, and it became a zombie.') },
         states: { child: 'warn', 'e-wait': 'err' },
         reveal: ['e-wait'],
         values: { child: 'PID 2231 · <defunct>' },
