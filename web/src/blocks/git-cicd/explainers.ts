@@ -72,7 +72,7 @@ export const gitModel = defineModel<GitP>({
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
     { mark: 'say', text: bi('что этот блок делает', 'what that block does') },
-    { mark: 'token', text: bi('что передаётся дальше: хэш объекта, снимок, коммиты', 'what is handed on: an object hash, a snapshot, commits') },
+    { mark: 'token', text: bi('что передаётся дальше, например хэш объекта, снимок или коммиты', 'what is handed on, such as an object hash, a snapshot or commits') },
     { mark: 'icon:file', text: bi('файл или содержимое файла (blob)', 'a file or a file’s content (blob)') },
     { mark: 'icon:database', text: bi('индекс, черновик следующего коммита', 'the index, the draft of the next commit') },
     { mark: 'icon:folder', text: bi('снимок каталога (tree)', 'a snapshot of a directory (tree)') },
@@ -214,7 +214,7 @@ export const gitModel = defineModel<GitP>({
         label: bi('ещё правка', 'edit again'),
         caption: bi('Вы меняете файл ещё раз, но в индексе остался объект с прошлой версией. Команда `git status` теперь покажет файл дважды: в разделе «Changes to be committed» и в разделе «Changes not staged for commit».', 'You edit the file again. The index still holds the blob of the previous version: git status shows the file both under "Changes to be committed" and "Changes not staged".'),
         focus: ['file', 'index'],
-        say: { file: bi('Вы снова изменили файл, но эта правка в индекс не попала, потому что git add вы больше не запускали.', 'You edited the file again, but this edit is not in the index because you did not run git add again.') },
+        say: { file: bi('Вы снова изменили файл, но `git add` больше не запускали, и эта правка в индекс не попала.', 'You edited the file again, but this edit is not in the index because you did not run git add again.') },
         states: { file: 'warn', index: 'warn' },
         values: { file: t(bi('снова изменён', 'modified again')) },
         metrics: { ...m0, objects: 1 },
@@ -362,7 +362,7 @@ export const ciModel = defineModel<CiP>({
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
     { mark: 'say', text: bi('что этот блок делает', 'what that block does') },
-    { mark: 'token', text: bi('что передаётся дальше: коммит, джобы, файлы, образ', 'what is handed on: a commit, jobs, files, an image') },
+    { mark: 'token', text: bi('что передаётся дальше, например коммит, джобы, файлы или образ', 'what is handed on, such as a commit, jobs, files or an image') },
     { mark: 'icon:server', text: bi('сервер команды (forge)', 'the team server (forge)') },
     { mark: 'icon:container', text: bi('раннер, который выполняет джобу в контейнере', 'a runner running a job in a container') },
     { mark: 'icon:disk', text: bi('хранилище файлов на сервере', 'file storage on the server') },
@@ -476,18 +476,30 @@ export const ciModel = defineModel<CiP>({
       },
     ];
     if (broken.has('no-runner')) {
-      steps.push({
-        id: 'stuck',
-        label: 'stuck',
-        caption: bi('Раннеры спрашивают работу, но джоба требует тег docker, а такого тега нет ни у одного раннера. Поэтому джоба остаётся в очереди, GitLab помечает её как stuck, и она ждёт, пока не появится подходящий раннер или пока GitLab не снимет её по тайм-ауту. Схема показывает первые десять минут ожидания: время ожидания растёт, а время всего пайплайна остаётся нулевым, потому что пайплайн не закончился.', 'Runners ask for work, but the job needs the docker tag and no runner has it. The job stays in the queue, GitLab marks it stuck, and it waits until a matching runner appears or GitLab drops it on a timeout. The diagram shows the first ten minutes of waiting: the wait grows, and the whole pipeline time stays at zero because the pipeline has not finished.'),
-        focus: ['queue', 'runner'],
-        reveal: ['runner'],
-        say: { queue: bi('Джоба требует раннер с тегом docker, такого раннера нет, и джоба продолжает ждать в очереди.', 'The job needs a runner with the docker tag; there is none, so the job keeps waiting in the queue.') },
-        states: { runner: 'off', queue: 'warn' },
-        fill: { queue: 0.8 },
-        metrics: { build: 0, wait: 600, total: 0 },
-        broken: { at: 'queue', message: "This job is stuck because you don't have any active runners online or available with any of these tags assigned to them: docker", caption: bi('Теги джобы должны совпадать с тегами раннера. Исправьте тег в файле пайплайна или попросите администратора зарегистрировать раннер с нужным тегом.', 'the job tags must match the runner tags; fix the tag or register a runner.') },
-      });
+      steps.push(
+        {
+          id: 'stuck',
+          label: 'stuck',
+          caption: bi('Раннеры спрашивают у сервера работу, но джоба требует тег docker, а такого тега нет ни у одного раннера. Поэтому джобу никто не забирает, и GitLab помечает её как stuck.', 'Runners ask the server for work, but the job needs the docker tag and no runner has it. Nobody takes the job, and GitLab marks it stuck.'),
+          focus: ['queue', 'runner'],
+          reveal: ['runner'],
+          say: { queue: bi('Джоба требует раннер с тегом docker, такого раннера нет, и джоба остаётся в очереди.', 'The job needs a runner with the docker tag; there is none, so the job stays in the queue.') },
+          states: { runner: 'off', queue: 'warn' },
+          fill: { queue: 0.6 },
+          metrics: { build: 0, wait: 60, total: 0 },
+        },
+        {
+          id: 'waiting',
+          label: bi('ожидание', 'waiting'),
+          caption: bi('Джоба ждёт, пока не появится подходящий раннер или пока GitLab не снимет её по тайм-ауту. Схема показывает первые десять минут: время ожидания растёт, а время пайплайна остаётся нулевым, потому что пайплайн не закончился.', 'The job waits until a matching runner appears or GitLab drops it on a timeout. The diagram shows the first ten minutes: the wait grows, and the pipeline time stays at zero because the pipeline has not finished.'),
+          focus: ['queue'],
+          say: { queue: bi('Джоба по-прежнему стоит в очереди, и время её ожидания растёт.', 'The job is still in the queue, and its waiting time grows.') },
+          states: { runner: 'off', queue: 'warn' },
+          fill: { queue: 0.8 },
+          metrics: { build: 0, wait: 600, total: 0 },
+          broken: { at: 'queue', message: "This job is stuck because you don't have any active runners online or available with any of these tags assigned to them: docker", caption: bi('Теги джобы должны совпадать с тегами раннера. Исправьте тег в файле пайплайна или попросите администратора зарегистрировать раннер с нужным тегом.', 'the job tags must match the runner tags; fix the tag or register a runner.') },
+        },
+      );
       return steps;
     }
     steps.push({
@@ -548,7 +560,7 @@ export const ciModel = defineModel<CiP>({
       steps.push({
         id: 'failed',
         label: 'failed',
-        caption: bi('Скрипт `./test.sh` вернул код 1, поэтому джоба test помечена как failed, а build-image и выкладки пропущены. Версия с ошибкой не попала ни на один сервер, а пайплайн закончился на тесте, поэтому его время не включает выкладку.', './test.sh returned 1: the job failed, and build-image and the deploys are skipped. The broken version went nowhere.'),
+        caption: bi('Скрипт `./test.sh` вернул код 1, поэтому джоба test помечена как failed, а build-image и выкладки пропущены. Версия с ошибкой не попала ни на один сервер, и время пайплайна не включает выкладку.', './test.sh returned 1: the job failed, and build-image and the deploys are skipped. The broken version went nowhere.'),
         focus: ['runner'],
         say: { runner: bi('Тест нашёл ошибку и вернул код 1, поэтому раннер помечает джобу как failed.', 'The test found an error and returned code 1, so the runner marks the job as failed.') },
         states: { runner: 'err' },
@@ -572,11 +584,21 @@ export const ciModel = defineModel<CiP>({
     steps.push({
       id: 'image',
       label: 'image',
-      caption: bi('Джоба build-image собирает образ и отправляет его в реестр с тегом 1a2b3c4d. Это короткий хэш коммита из переменной $CI_COMMIT_SHORT_SHA: GitLab берёт восемь первых знаков, а git log --oneline показывает семь, поэтому коммит 1a2b3c4 и тег 1a2b3c4d обозначают одно и то же. Этот тег становится неизменным именем этой версии.', 'build-image builds the image and pushes it to the registry tagged with the commit, 1a2b3c4d. It is the short commit hash from $CI_COMMIT_SHORT_SHA: GitLab takes the first eight characters, while git log --oneline shows seven, so commit 1a2b3c4 and tag 1a2b3c4d name the same thing. The tag becomes the unchanging name of this version.'),
+      caption: bi('Джоба build-image собирает образ и отправляет его в реестр с тегом 1a2b3c4d, то есть с коротким хэшем коммита. Этот тег становится неизменным именем этой версии.', 'build-image builds the image and pushes it to the registry tagged 1a2b3c4d, the short commit hash. The tag becomes the unchanging name of this version.'),
       focus: ['e-img', 'reg'],
       reveal: ['reg', 'e-img'],
       tokens: [{ edge: 'e-img', label: ':1a2b3c4d' }],
       say: { reg: bi('Реестр сохраняет образ сайта с тегом 1a2b3c4d, который совпадает с коммитом.', 'The registry stores the site image with the tag 1a2b3c4d, which matches the commit.') },
+      states: { reg: 'ok' },
+      fill: { reg: 0.5 },
+      metrics: { build: n.build, wait: n.queueWait, total: n.total - 16 },
+    });
+    steps.push({
+      id: 'tag',
+      label: bi('тег', 'tag'),
+      caption: bi('Тег берётся из переменной $CI_COMMIT_SHORT_SHA. GitLab записывает в неё восемь первых знаков хэша, а `git log --oneline` показывает семь, поэтому коммит 1a2b3c4 и тег 1a2b3c4d обозначают одно и то же.', 'The tag comes from the $CI_COMMIT_SHORT_SHA variable. GitLab puts the first eight characters of the hash into it, while git log --oneline shows seven, so commit 1a2b3c4 and tag 1a2b3c4d name the same thing.'),
+      focus: ['reg'],
+      say: { reg: bi('В реестре теперь лежит образ, по тегу которого можно найти его коммит.', 'The registry now holds an image whose tag leads back to its commit.') },
       states: { reg: 'ok' },
       fill: { reg: 0.5 },
       metrics: { build: n.build, wait: n.queueWait, total: n.total - 16 },
