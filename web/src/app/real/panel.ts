@@ -36,6 +36,7 @@ const L = {
   waiting: bi('ждём факты с', 'waiting for facts from'),
   privacy: bi('Блок разбирается здесь, в браузере, и никуда не уходит.', 'The block is decoded here, in the browser, and goes nowhere.'),
   code: bi('Одноразовый код этой попытки', 'The one-time code of this attempt'),
+  local: bi('Машины не обязательно заказывать в облаке: локальная лаборатория dtlab бесплатно запускает виртуальные машины курса на вашем компьютере, а команда `dtlab facts` снимает с них блок для поля экзамена. Как её поставить, рассказано на странице [«Лаборатория на своём компьютере»](#/local-lab).', 'The machines do not have to be ordered in a cloud: the local lab dtlab runs the course’s virtual machines on your computer for free, and the `dtlab facts` command takes the block for the exam’s box from them. How to install it is told on the page [“A lab on your own computer”](#/local-lab).'),
 };
 
 function store(key: string): { get(k: string): string; set(k: string, v: string): void } {
@@ -148,7 +149,7 @@ export function mountRealLab(exam: Exam & { real: RealLab }, key: string, onChan
     'section.rl-lab',
     {},
     h('h2', {}, t(L.machines)),
-    h('details.rl-order', { open: true }, h('summary', {}, t(L.order)), h('p', {}, ...renderInline(t(lab.order)))),
+    h('details.rl-order', { open: true }, h('summary', {}, t(L.order)), h('p', {}, ...renderInline(t(lab.order))), h('p.small.rl-local', {}, ...renderInline(t(L.local)))),
     h('p.small', {}, t(L.addresses)),
     addrInputs,
     lab.prepare?.length ? h('div', {}, h('h3', {}, t(L.prepare)), ...lab.prepare.map((s) => scriptBlock(s.name, s.on, s.note, s.text))) : null,

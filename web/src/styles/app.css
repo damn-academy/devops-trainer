@@ -156,3 +156,49 @@
 .howto .prose, .howto p, .howto li { font-family: var(--font-ui); font-size: inherit; line-height: inherit; }
 .howto-tag { display: flex; align-items: center; gap: 6px; font: 650 0.74rem/1 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
 .howto-tag .ic { width: 14px; height: 14px; }
+
+/* The «?» help panel of the top bar and the local lab page. */
+.help-btn { font: 650 1rem/1 var(--font-ui); color: var(--ink-2); border-color: var(--line-2); border-radius: 50%; width: 32px; height: 32px; }
+.help-btn[aria-expanded='true'] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.help-dialog { width: min(520px, calc(100vw - 2 * var(--gutter))); max-height: calc(100vh - 84px); margin: 64px max(var(--gutter), calc((100vw - 1180px) / 2 + var(--gutter))) auto auto; padding: 0; overflow: hidden; border: 1px solid var(--line-2); border-radius: 12px; background: var(--surface); color: var(--ink); box-shadow: 0 12px 40px #0003; display: flex; flex-direction: column; }
+.help-dialog:not([open]) { display: none; }
+.help-dialog::backdrop { background: #0003; }
+.help-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 12px 8px 20px; border-bottom: 1px solid var(--line); }
+.help-head h2 { margin: 0; font-size: 1.2rem; }
+.help-close { font-size: 1.4rem; line-height: 1; }
+.help-body { overflow: auto; padding: 4px 20px 16px; }
+.help-sec { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.help-sec:last-of-type { border-bottom: 0; }
+.help-sec h3 { margin: 0 0 6px; font-size: 1rem; }
+.help-sec .prose p { margin: 0 0 8px; font-size: 0.93rem; line-height: 1.5; }
+.help-more summary { cursor: pointer; color: var(--link); font-size: 0.9rem; }
+.help-more[open] summary { margin-bottom: 6px; }
+@media (max-width: 640px) {
+  .help-dialog { margin: 56px auto auto; max-height: calc(100vh - 72px); }
+}
+
+.local-lab { max-width: 820px; }
+.ll-sec { margin: 32px 0; }
+.ll-sec h2 { font-size: 1.35rem; }
+.ll-sec h3 { font-size: 1.05rem; margin: 20px 0 8px; }
+.ll-table-wrap { overflow-x: auto; margin: 12px 0; border: 1px solid var(--line); border-radius: var(--r); }
+.ll-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.ll-table th, .ll-table td { padding: 8px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.ll-table th { background: var(--bg-2); font-weight: 600; white-space: nowrap; }
+.ll-table tr:last-child td { border-bottom: 0; }
+.ll-table .ll-cell p, .ll-table td > p { margin: 0; }
+.ll-remove td:first-child { white-space: nowrap; }
+.ll-os { margin: 10px 0; border: 1px solid var(--line); border-radius: var(--r); padding: 0 16px; background: var(--surface); }
+.ll-os > summary { cursor: pointer; padding: 12px 0; font: 600 1rem/1.3 var(--font-ui); }
+.ll-os[open] > summary { border-bottom: 1px solid var(--line); }
+.ll-os .codeblock, .ll-sec .codeblock { max-width: 100%; }
+.ll-os pre, .ll-sec pre { overflow-x: auto; }
+.ll-files { margin: 0 0 16px; }
+.rl-local { margin-top: 8px; }
+@media (max-width: 640px) {
+  .ll-table { min-width: 560px; }
+  .ll-remove { min-width: 0; }
+  .ll-remove thead { display: none; }
+  .ll-remove, .ll-remove tbody, .ll-remove tr, .ll-remove td { display: block; }
+  .ll-remove td:first-child { padding-bottom: 0; border-bottom: 0; }
+}

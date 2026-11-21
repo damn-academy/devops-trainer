@@ -6,9 +6,11 @@ import { exportWithFeedback, importFeedback } from '../engine/feedback/threads';
 import { downloadFile, h, icon, pickFile, toast } from '../core/dom';
 import { bi, lang, LANGS, setLang, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
+import { href } from '../core/router';
 import { store } from '../core/store';
 import type { Mounted } from '../core/types';
 import { setTitle, type Page } from './common';
+import { LOCAL_LAB_LINK } from './help';
 import { getTheme, isCalm, setCalm, setTheme, type Theme } from './theme';
 
 export function settingsPage(): Page {
@@ -146,6 +148,13 @@ export function settingsPage(): Page {
       h('p.small.muted', {}, `${t(bi('Событий в журнале', 'Events in the log'))}: ${p.meta.events}${p.meta.lastExportAt ? ` · ${t(bi('последняя выгрузка', 'last export'))}: ${p.meta.lastExportAt.slice(0, 10)}` : ''}`),
       h('div.row', {}, transferBtn, exportBtn, importBtn), h('p', {}, t(bi('Отправьте ссылку на другое устройство и откройте её в течение 15 минут, чтобы загрузить прогресс.', 'Send the link to the other device and open it within 15 minutes to import progress.'))), transferBox,
       h('p.small.muted', {}, t(bi('Вход по ссылке на почту, через GitHub или Google появится позже — тогда журнал будет синхронизироваться.', 'Sign-in by e-mail link, GitHub or Google comes later; then the log will sync.'))),
+    ),
+    h(
+      'section.settings-sec',
+      { 'data-id': 'local-lab' },
+      h('h2', {}, t(LOCAL_LAB_LINK)),
+      h('p', {}, t(bi('Для уроков и экзаменов на настоящих машинах программа dtlab бесплатно запускает виртуальные машины курса на вашем компьютере, а когда они больше не нужны, одной командой убирает их за собой.', 'For lessons and exams on real machines the dtlab program runs the course’s virtual machines on your computer for free, and removes them with one command when they are no longer needed.'))),
+      h('a.btn', { href: href({ name: 'local-lab' }) }, t(bi('Как поставить лабораторию', 'How to install the lab'))),
     ),
     ...extra,
     aiPlaceholder,

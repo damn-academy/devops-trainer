@@ -9,6 +9,7 @@ import { emptyState, type Page } from './common';
 import { examPage } from './exam-page';
 import { placementPage } from './exam-placement';
 import { labPage } from './lab-page';
+import { localLabPage } from './local-lab';
 import { lessonPage } from './lesson';
 import { explainerPage } from './pages';
 import { reviewPage } from './review-page';
@@ -36,6 +37,8 @@ export function renderPage(r: Exclude<Route, { name: 'home' }>): Page {
       return reviewPage();
     case 'lab':
       return labPage(r.id);
+    case 'local-lab':
+      return localLabPage();
     case 'notfound':
       return { el: emptyState(UI.notFound, undefined, { label: UI.backHome, href: href({ name: 'home' }) }) };
   }
