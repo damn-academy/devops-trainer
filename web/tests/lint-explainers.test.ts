@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
+import { arpModel } from '../src/blocks/networks/explainers/arp';
+import { switchModel } from '../src/blocks/networks/explainers/switch';
 import { buildRegistry } from '../src/core/registry';
-import { collectExplainerTexts, explainerReadingMs, lintExplainers } from '../src/core/lint-explainers';
+import { collectExplainerTexts, explainerReadingMs, explainerTermText, lintExplainers } from '../src/core/lint-explainers';
 import { lintRuStyle } from '../scripts/lint-ru-style.mjs';
 import type { Block, Lesson, ProcessModel, Step } from '../src/core/types';
 const bi = (ru: string, en = ru) => ({ ru, en });
@@ -92,4 +94,49 @@ it('accepts concepts from earlier route lessons and reports delta exceptions', (
   expect(report.blocks.folder.findings.filter(f => f.kind === 'concept' && f.lesson === 'l2')).toEqual([]);
   model.explainDelta = () => { throw new Error('bad delta'); };
   expect(lintExplainers(reg).blocks.folder.findings.some(f => f.kind === 'runtime' && f.path === 'explainDelta')).toBe(true);
+});
+
+
+it('exempts code and tool output without hiding prose on the same surfaces', () => {
+  const text = (path: string, value: string) => explainerTermText({ path, text: value, language: 'shared' });
+  expect(text('caption', 'Before `process` after.\n```sh\nprocess\n```\nStill prose.')).not.toContain('process');
+  expect(text('caption', 'Before ``process `code` process`` after.')).toBe('Before   after.');
+  expect(text('caption', 'Before\n~~~sh\nprocess\n~~~\nAfter')).not.toContain('process');
+  expect(text('steps.s.broken.message', 'process failed')).toBe('');
+  expect(text('steps.s.broken.output', 'process failed')).toBe('');
+  expect(text('steps.s.broken.caption', 'process failed')).toBe('process failed');
+  for (const path of ['diagram.0.sub', 'steps.s.values.n', 'steps.s.tokens.0']) {
+    for (const output of ['$ ping -c 2 process', 'ping -c 2 process', 'From 192.168.1.10 icmp_seq=1 Destination Host Unreachable', 'icmp_seq=1', 'HTTP/2 200']) {
+      expect(text(path, output)).toBe('');
+      expect(text(path, output + '\nThe process stopped.')).toBe('The process stopped.');
+    }
+    expect(text(path, 'process')).toBe('process');
+    expect(text(path, 'ping uses the process')).toBe('ping uses the process');
+  }
+  expect(text('caption', 'ping uses the process')).toBe('ping uses the process');
+});
+
+it('checks explanatory captions and token prose while ignoring terminal surfaces', () => {
+  const { reg, model } = fixture();
+  model.diagram.nodes[0].sub = 'process=1';
+  model.run = () => [{ ...step('`process`'), values: { n: 'process=1' },
+    tokens: [{ edge: 'e', label: 'ping -c 2 process' }, { edge: 'e', label: bi('процесса', 'process') }],
+    broken: { at: 'n', message: 'process failed', caption: bi('процесса', 'process') },
+  }];
+  const paths = lintExplainers(reg).blocks.folder.findings.filter(f => f.kind === 'concept').map(f => f.path);
+  for (const path of ['diagram.0.sub', 'steps.s.caption', 'steps.s.values.n', 'steps.s.tokens.0', 'steps.s.broken.message']) expect(paths).not.toContain(path);
+  for (const path of ['steps.s.tokens.1', 'steps.s.broken.caption', 'diagram.0.card.what']) expect(paths).toContain(path);
+});
+
+
+it('keeps realistic ping failures and their sender explanation in both network models', () => {
+  const cases: [ProcessModel, string][] = [[arpModel, 'off'], [switchModel, 'unplug']];
+  for (const [model, failure] of cases) {
+    const params = Object.fromEntries(model.params.map(p => [p.id, p.default]));
+    const broken = model.run(params, new Set([failure])).find(s => s.broken)?.broken;
+    expect(broken).toBeDefined();
+    expect(broken!.message).toContain('$ ping -c 2 192.168.1.20');
+    for (const n of [1, 2]) expect(broken!.message).toContain(`From 192.168.1.10 icmp_seq=${n} Destination Host Unreachable`);
+    for (const lang of ['ru', 'en'] as const) expect(broken!.caption[lang]).toContain('192.168.1.10');
+  }
 });

@@ -155,8 +155,8 @@ export const arpModel = defineModel<P>({
         metrics: { arp: 3 },
         broken: {
           at: 'h1',
-          message: '$ ping -q -c 2 192.168.1.20\nPING 192.168.1.20 (192.168.1.20) 56(84) bytes of data.\n\n--- 192.168.1.20 ping statistics ---\n2 packets transmitted, 0 received, +2 errors, 100% packet loss, time 1027ms\n$ ip neigh show 192.168.1.20\n192.168.1.20 dev eth0 FAILED',
-          caption: b('Ошибки насчитал сам отправитель, и это видно по кэшу ARP: запись о соседе 192.168.1.20 помечена словом FAILED, то есть на вопрос никто не ответил. Пакет даже не ушёл в сеть, потому что не нашлось, кому отдать кадр.', 'The sender itself counted the errors, and the ARP cache shows it: the entry for the neighbour 192.168.1.20 is marked FAILED, which means nobody answered the question. The packet never even left for the network, because there was nobody to hand the frame to.'),
+          message: '$ ping -c 2 192.168.1.20\nPING 192.168.1.20 (192.168.1.20) 56(84) bytes of data.\nFrom 192.168.1.10 icmp_seq=1 Destination Host Unreachable\nFrom 192.168.1.10 icmp_seq=2 Destination Host Unreachable\n$ ip neigh show 192.168.1.20\n192.168.1.20 dev eth0 FAILED',
+          caption: b('Ошибку пишет сам отправитель, и это видно по строке «From 192.168.1.10». В ARP-кэше запись о соседе помечена словом FAILED, то есть на вопрос никто не ответил. Пакет даже не ушёл в сеть, потому что не нашлось, кому отдать кадр.', 'The sender itself reports the error, as the “From 192.168.1.10” line shows. The ARP cache marks the neighbour FAILED, meaning nobody answered the question. The packet never left for the network because there was nobody to hand the frame to.'),
         },
       });
       return steps;

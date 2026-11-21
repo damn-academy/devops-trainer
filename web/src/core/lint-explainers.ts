@@ -51,6 +51,31 @@ export function collectExplainerTexts(value: unknown, path = '', out: ExplainerT
   return out;
 }
 
+/** Commands and literal output are exempt only on technical display surfaces.
+ * Unrecognised text stays prose; authors can mark other code with Markdown backticks.
+ * Filter line by line so a prose explanation beside output is still checked.
+ */
+export function explainerTermText({ path, text }: ExplainerText): string {
+  if (/(?:^|\.)broken\.(?:message|output)(?:\.|$)/.test(path)) return '';
+  const clean = text
+    .replace(/(^|\n) {0,3}(`{3,}|~{3,})[^\n]*\n[\s\S]*?(?:\n {0,3}\2[ \t]*(?=\n|$)|$)/g, '$1 ')
+    .replace(/(`+)[\s\S]*?\1(?!`)/g, ' ');
+  if (!/(?:^|\.)diagram\.\d+\.sub$|(?:^|\.)values\.[^.]+$|(?:^|\.)tokens\.\d+$/.test(path)) return plainText(clean);
+  return plainText(clean.split('\n').filter(line => {
+    const s = line.trim();
+    // Shell prompts, command invocations, and protocol request/status lines.
+    if (/^(?:[$#] |[\w.-]+@[\w.-]+:[^\s]*[$#] )/.test(s)) return false;
+    if (/^(?:sudo\s+)?(?:ping|ip|ss|dig|curl|wget|traceroute|tcpdump|docker|kubectl|git|systemctl|journalctl|nft|iptables|cat|tail|grep|ps|kill|chmod|ls)\s+(?:-\S+|\/\S+|\d+(?:\.\d+){3}|https?:\/\/\S+)(?:\s|$)/.test(s)) return false;
+    if (/^(?:ip (?:neigh|addr|route|link)|docker (?:run|build|exec|inspect)|kubectl (?:get|describe|apply)|git (?:log|diff|show|status)|systemctl (?:status|start|stop))(?:\s|$)/.test(s)) return false;
+    if (/^(?:GET|POST|PUT|DELETE|HEAD|PATCH) \/|^HTTP\/\d/.test(s)) return false;
+    // ping output, neighbour-table rows, and standalone key=value records.
+    if (/^(?:From \d+(?:\.\d+){3} |\d+ bytes from |PING |--- .* ping statistics ---|\d+ packets transmitted,)/.test(s)) return false;
+    if (/^\d+(?:\.\d+){3}\s+dev\s+/.test(s)) return false;
+    if (/^[\w.-]+=[^\s]+(?:\s+[\w.-]+=[^\s]+)*$/.test(s)) return false;
+    return true;
+  }).join('\n'));
+}
+
 /** Mirrors render.ts readingTime at 1×, BEFORE its 22 s cap. Guarded by a source-contract test. */
 export function explainerReadingMs(step: Step, language: 'ru' | 'en'): number {
   return Math.max(4500, 3000 + 65 * (step.caption[language].length + Object.values(step.say ?? {}).reduce((n, bi) => n + bi[language].length, 0)));
@@ -59,7 +84,7 @@ export function explainerReadingMs(step: Step, language: 'ru' | 'en'): number {
 export function lintExplainers(reg: Registry): ExplainerReport {
   const report: ExplainerReport = {
     version: 1,
-    policy: 'Warnings only. Each placement and exposed level; defaults + placement overrides; each choice, toggle and range endpoint; one break at a time; forward/reverse deltas. No Cartesian product. Same-lesson introduction requires a term or glossary link in an earlier visible section. Findings deduplicated across levels/scenarios.',
+    policy: 'Concept and reading-time findings fail the CLI; other findings are warnings. Term scanning excludes Markdown code, broken output, and recognised literal output/commands on technical surfaces. Each placement and exposed level; defaults + placement overrides; each choice, toggle and range endpoint; one break at a time; forward/reverse deltas. No Cartesian product. Same-lesson introduction requires a term or glossary link in an earlier visible section. Findings deduplicated across levels/scenarios.',
     blocks: {},
   };
   const concepts = [...reg.concepts.values()].filter(c => c.scan !== false).map(c => ({
@@ -99,9 +124,9 @@ export function lintExplainers(reg: Registry): ExplainerReport {
         const scan = (texts: ExplainerText[], scenario = 'static') => {
           block.texts += texts.length;
           for (const text of texts) {
+            const clean = explainerTermText(text);
             if (placement) for (const { c, ru, en } of concepts) {
               if (known.has(c.id)) continue;
-              const clean = plainText(text.text);
               const hit = (text.language !== 'en' ? ru?.exec(clean)?.[0] : undefined) ?? (text.language !== 'ru' ? en?.exec(clean)?.[0] : undefined);
               if (hit) add({ ...text, kind: 'concept', concept: c.id, introducedIn: c.introducedIn,
                 message: `term "${hit}" appears in explainer ${e.id} step ${text.step ?? '(static)'} before lesson ${c.introducedIn} introduces it` }, scenario);
