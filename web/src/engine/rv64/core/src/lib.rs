@@ -1,5 +1,6 @@
 //! R1 interpreter. Host time is injected, never inferred from instruction count.
 mod bits;
+pub mod metrics;
 mod compressed;
 pub use compressed::expand as expand_compressed;
 mod decoded;

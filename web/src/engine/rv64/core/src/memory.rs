@@ -61,10 +61,14 @@ use crate::decoded::Decoded;
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Memory {
     #[serde(skip)]
+    pub metrics: crate::metrics::Metrics,
+    #[serde(skip)]
     pub(crate) jit_epoch: u64,
     #[serde(skip)]
     pub(crate) jit_pages: Vec<u64>,
     #[serde(skip)]
+    // Live decoded/translated pages, not a sticky history of all executed RAM.
+    // An invalidation advances the generation and clears this bit until refetch.
     pub(crate) jit_code: Vec<u8>,
     #[serde(with = "crate::snapshot::ram")]
     pub ram: Vec<u8>,
@@ -91,6 +95,7 @@ impl Memory {
     }
     pub fn new(bytes: usize) -> Self {
         Self {
+            metrics: Default::default(),
             jit_epoch: 0,
             jit_code: vec![0; (bytes + 4095) / 4096],
             jit_pages: vec![0; (bytes + 4095) / 4096],
@@ -110,6 +115,7 @@ impl Memory {
     #[cfg(target_arch = "wasm32")]
     pub(crate) fn jit_tlb_ptr(&self, kind: usize) -> u64 { self.tlb[kind].as_ptr() as u64 }
     pub fn flush(&mut self) {
+        self.metrics.tlb_flushes += 1;
         self.jit_epoch = self.jit_epoch.wrapping_add(1);
         self.tlb = [[EMPTY; 256]; 3];
     }
@@ -128,7 +134,7 @@ impl Memory {
         dest.copy_from_slice(data);
         if !data.is_empty() {
             for page in start / 4096..=(end - 1) / 4096 {
-                if self.jit_code[page] != 0 { self.jit_pages[page] = self.jit_pages[page].wrapping_add(1); }
+                if self.jit_code[page] != 0 { self.metrics.dma_code_pages += 1; self.jit_pages[page] = self.jit_pages[page].wrapping_add(1); self.jit_code[page] = 0; }
                 self.code[page] = None;
             }
         }
@@ -172,8 +178,8 @@ impl Memory {
                 bytes.copy_from_slice(&value.to_le_bytes()[..size]);
                 let first = off as usize / 4096;
                 let last = (off as usize + size - 1) / 4096;
-                if self.jit_code[first] != 0 { self.jit_pages[first] = self.jit_pages[first].wrapping_add(1); }
-                if last != first && self.jit_code[last] != 0 { self.jit_pages[last] = self.jit_pages[last].wrapping_add(1); }
+                if self.jit_code[first] != 0 { self.metrics.store_code_pages += 1; self.jit_pages[first] = self.jit_pages[first].wrapping_add(1); self.jit_code[first] = 0; }
+                if last != first && self.jit_code[last] != 0 { self.metrics.store_code_pages += 1; self.jit_pages[last] = self.jit_pages[last].wrapping_add(1); self.jit_code[last] = 0; }
                 self.code[first] = None;
                 if last != first { self.code[last] = None; }
                 return Ok(());
@@ -233,6 +239,7 @@ impl Memory {
     }
     #[inline(always)]
     pub fn translate_size(&mut self, va: u64, size: usize, access: Access, mode: Mode, satp: u64, status: u64) -> Result<u64, Trap> {
+        self.metrics.tlb_requests += 1;
         let effective = if access != Access::Fetch && mode == Mode::M && status & (1 << 17) != 0 { Mode::from_bits((status >> 11) & 3) } else { mode };
         let context = effective as u64 | (status & ((1 << 18) | (1 << 19)));
         let index = ((va >> 12) & 255) as usize;
@@ -287,6 +294,7 @@ impl Memory {
     #[inline(never)]
     fn walk(&mut self, va: u64, access: Access, effective: Mode, satp: u64, status: u64, kind: usize, index: usize, context: u64) -> Result<u64, Trap> {
         let fault = access.page_fault(va);
+        self.metrics.tlb_walks += 1;
         let mut table = (satp & ((1 << 44) - 1)) << 12;
         for level in (0..=2).rev() {
             let pte_addr = table + ((va >> (12 + 9 * level)) & 511) * 8;

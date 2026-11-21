@@ -21,6 +21,7 @@ export class RV64Machine implements Machine {
   private input = ByteRing.create();
   private output = ByteRing.create();
   private control = new Int32Array(new SharedArrayBuffer(32));
+  private metrics?: Record<string, unknown>;
   private decoder = new TextDecoder();
   private listeners = new Set<(event: SimEvent) => void>();
   private timer: ReturnType<typeof setInterval>;
@@ -48,6 +49,7 @@ export class RV64Machine implements Machine {
     this.ready = new Promise((resolve, reject) => {
       this.worker.onerror = (e) => { const error = new Error(e.message); reject(error); this.fail(error); };
       this.worker.onmessage = ({ data }) => {
+        if (data.type === 'metrics') { this.metrics = data.metrics; this.emit('rv64.metrics', { metrics: data.metrics }); }
         if (data.type === 'ready') resolve();
         if (data.type === 'paused' && this.checkpoint) this.worker.postMessage(this.checkpoint.request);
         if (['checkpoint', 'restored', 'checkpoint-error'].includes(data.type) && this.checkpoint) {
@@ -75,7 +77,7 @@ export class RV64Machine implements Machine {
     this.timer = setInterval(() => this.drain(), 8);
   }
   executionStats() {
-    return { retired: Atomics.load(this.control,1)*1000, busyMilliseconds: Atomics.load(this.control,4)/1000,
+    return { diagnostics: this.metrics, retired: Atomics.load(this.control,1)*1000, busyMilliseconds: Atomics.load(this.control,4)/1000,
       jitCompiled: Atomics.load(this.control,6), jitRetired: Atomics.load(this.control,7)*1000 };
   }
   private emit(t: string, extra: Record<string, unknown> = {}): void {

@@ -10,7 +10,7 @@ try {
   core.jit_threshold(1);
   const singleStep = new URLSearchParams(location.search).has("single");
   if (singleStep) core.test_single_step();
-  const jit = new JitRuntime(wasm.memory, core.jit_table(), (id,slot,count) => core.jit_install(id,slot,count), () => core.jit_clear(), wasm.jit_slow);
+  const jit = new JitRuntime(wasm.memory, core.jit_table(), (id,slot,count) => core.jit_install(id,slot,count), () => core.jit_clear(), wasm.jit_slow, { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids), limit: 1024 });
   const channel = new MessageChannel();
   const yieldTask = () => new Promise<void>(resolve => { channel.port1.onmessage=()=>resolve(); channel.port2.postMessage(0); });
   let instructions = 0, boundaries = 0, tickAt = 0, yieldAt = performance.now();
@@ -30,6 +30,8 @@ try {
       }
     }
     if (!core.test_equal(reference,true)) throw new Error('final RAM divergence');
-    host.rv64Result = { type:'jit-trace', pass:true, instructions, boundaries, jitRetired:core.jit_retired(), compiled:jit.compiled, milliseconds:performance.now()-start, singleStep, scope:singleStep ? 'CPU state after every instruction with one-instruction JIT blocks; exact full RAM at end' : 'CPU state at block exits; exact full RAM at end' };
+    const counters = JSON.parse(core.metrics());
+    if (!singleStep && jit.tailCalls && !counters.jit_chains) throw new Error('trace did not exercise tail chaining');
+    host.rv64Result = { counters, type:'jit-trace', pass:true, instructions, boundaries, jitRetired:core.jit_retired(), compiled:jit.compiled, cache:jit.stats(), milliseconds:performance.now()-start, singleStep, scope:singleStep ? 'CPU state after every instruction with one-instruction JIT blocks; exact full RAM at end' : 'CPU state at block exits; exact full RAM at end' };
   } finally { channel.port1.close(); channel.port2.close(); jit.dispose(); core.free(); reference.free(); }
 } catch(error) { host.rv64Result = { type:'error', error:String(error) }; }

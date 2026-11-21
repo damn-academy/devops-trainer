@@ -29,7 +29,7 @@ try {
   if (integration) { mkdirSync('public/rv64', { recursive: true }); writeFileSync('public/rv64/integration-disk.bin', new Uint8Array(512).fill(90)); }
   const page = await browser.newPage();
   if (gates || trace || kuberoot) {
-    const progress = setInterval(async () => { console.error((await page.locator("#console").textContent().catch(() => "loading"))?.slice(-1500)); }, 30000);
+    const progress = setInterval(async () => { if (kuberoot) console.error('METRICS', JSON.stringify(await page.evaluate(() => globalThis.rv64LatestMetrics).catch(() => null))); console.error((await page.locator("#console").textContent().catch(() => "loading"))?.slice(-1500)); }, 30000);
     page.once("close", () => clearInterval(progress));
   }
   let stopProfile;
@@ -37,14 +37,22 @@ try {
     const cdp = await browser.newBrowserCDPSession();
     const events = [];
     cdp.on('Tracing.dataCollected', ({ value }) => events.push(...value));
-    await cdp.send('Tracing.start', { categories: 'disabled-by-default-v8.cpu_profiler', options: 'sampling-frequency=1000' });
-    stopProfile = async () => {
+    let started, stopped, startTimer, stopTimer;
+    const stop = () => stopped ??= (async () => {
+      clearTimeout(stopTimer); await started;
       const complete = new Promise(resolve => cdp.once('Tracing.tracingComplete', resolve));
       await cdp.send('Tracing.end'); await complete;
       return { traceEvents: events };
+    })();
+    const start = () => {
+      started = cdp.send('Tracing.start', { categories: '-*,disabled-by-default-v8.cpu_profiler', options: 'sampling-frequency=1000' });
+      if (process.env.RV64_PROFILE_DURATION_MS) stopTimer = setTimeout(() => { stop().catch(error => console.error('Profile error', error)); }, Number(process.env.RV64_PROFILE_DURATION_MS));
     };
+    if (process.env.RV64_PROFILE_DELAY_MS) startTimer = setTimeout(start, Number(process.env.RV64_PROFILE_DELAY_MS));
+    else { start(); await started; }
+    stopProfile = async () => { clearTimeout(startTimer); return started ? stop() : { traceEvents: events }; };
   }
-  await page.goto(`http://localhost:${port}/src/engine/rv64/${trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : trace && process.argv.includes("--single-step") ? "?single=1" : ""}`);
+  await page.goto(`http://localhost:${port}/src/engine/rv64/${trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&jit=${jit}` : trace && process.argv.includes("--single-step") ? "?single=1" : ""}`);
   try {
     await page.waitForFunction(() => globalThis.rv64Result, undefined, { timeout: Number(process.env.RV64_TIMEOUT_MS) || (gates || trace ? 900000 : kuberoot ? 930000 : boot || integration ? 300000 : 30000) });
   } catch (error) {

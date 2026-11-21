@@ -74,7 +74,24 @@ impl Engine {
     pub fn test_attempted(&self) -> f64 { self.cpu.jit.attempted as f64 }
     pub fn test_cycles(&self) -> f64 { self.cpu.cycles as f64 }
     pub fn jit_retired(&self) -> f64 { self.cpu.jit.retired as f64 }
-    pub fn jit_clear(&mut self) { self.cpu.jit.entries.clear(); self.cpu.jit.ready.clear(); self.cpu.jit.code.clear(); }
+    pub fn metrics(&self) -> String { self.cpu.memory.metrics.json() }
+    pub fn jit_clear(&mut self) { self.cpu.memory.metrics.jit_cache_clears += 1; self.cpu.jit.entries.clear(); self.cpu.jit.chain.clear(); self.cpu.jit.ready.clear(); self.cpu.jit.code.clear(); }
+    // Called only at a host quiescent boundary, before recycling table slots.
+    pub fn jit_usage(&self, ids: &[u32]) -> f64 {
+        ids.iter().map(|id| self.cpu.jit.last_used.get(*id as usize).copied().unwrap_or(0)).max().unwrap_or(0) as f64
+    }
+    pub fn jit_evict(&mut self, ids: &[u32]) {
+        let ids: std::collections::HashSet<u32> = ids.iter().copied().collect();
+        self.cpu.memory.metrics.jit_cache_evictions += ids.len() as u64;
+        self.cpu.jit.ready.retain(|id, _| !ids.contains(id));
+        self.cpu.jit.code.retain(|_, (id, _)| !ids.contains(id));
+        for entry in &mut self.cpu.jit.chain {
+            if ids.contains(&entry.id) { entry.slot = 0; }
+        }
+        for entry in &mut self.cpu.jit.entries {
+            if entry.as_ref().is_some_and(|e| ids.contains(&e.id)) { *entry = None; }
+        }
+    }
     pub fn jit_install(&mut self, id: u32, slot: u32, count: u32) { self.cpu.jit.ready.insert(id, (slot, count)); }
     pub fn jit_table(&self) -> JsValue { wasm_bindgen::function_table() }
     pub fn jit_threshold(&mut self, threshold: u32) { self.cpu.jit.threshold = threshold; self.cpu.jit.at_entry = true; }

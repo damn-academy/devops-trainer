@@ -3,10 +3,13 @@ import { ByteRing, FrameRing } from './ring';
 import { HTTPBlockDevice, type HTTPDisk } from './block';
 // All async work finishes before entering the hart loop. Runtime input uses SAB only.
 interface Core {
+  metrics(): string;
   jit_retired(): number;
   jit_threshold(n: number): void;
   jit_install(id: number, slot: number, count: number): void;
   jit_clear(): void;
+  jit_usage(ids: Uint32Array): number;
+  jit_evict(ids: Uint32Array): void;
   jit_table(): WebAssembly.Table;
   set_mac(mac: Uint8Array): void;
   snapshot(): Uint8Array;
@@ -48,7 +51,7 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
     const threshold = data.jitThreshold ?? 50;
     let core = new mod.Engine(data.memoryMB) as Core;
     core.jit_threshold(threshold);
-    const createJit = () => new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow);
+    const createJit = () => new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow, { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) });
     let jit = createJit();
     if (data.mac) core.set_mac(data.mac);
     const disk = data.httpDisk ? new HTTPBlockDevice(data.httpDisk) : undefined;
@@ -64,6 +67,15 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
     let entropyAt = -Infinity;
     let timeOffset = 0;
     let busyMicros = 0;
+    let waitMs = 0, diskMs = 0, compilerYieldMs = 0, metricsAt = 0;
+    const diskTasks = new Map<number, Promise<void>>();
+    let diskError: unknown;
+    let diskActiveStart = 0, diskActiveMs = 0;
+    const settleDisk = async () => { await Promise.all(diskTasks.values()); if (diskError) throw diskError; };
+    const startedAt = performance.now();
+    const wait = (words: Int32Array, index: number, value: number, timeout: number) => {
+      const start = performance.now(); Atomics.wait(words, index, value, timeout); waitMs += performance.now() - start;
+    };
     let yieldAt = performance.now();
     const channel = new MessageChannel();
     cleanup = () => { jit.dispose(); channel.port1.close(); channel.port2.close(); };
@@ -71,6 +83,12 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
     let pending: Uint8Array = new Uint8Array(0);
     self.postMessage({ type: 'ready' });
     for (;;) {
+      if (performance.now() - metricsAt >= 1000) {
+        metricsAt = performance.now();
+        self.postMessage({ type: 'metrics', metrics: { elapsedMs: metricsAt - startedAt,
+          retired: core.retired(), jitRetired: core.jit_retired(), busyMilliseconds: busyMicros / 1000,
+          waitMs, diskMs, diskActiveMs: diskActiveMs + (diskTasks.size ? performance.now() - diskActiveStart : 0), diskPending: diskTasks.size, compilerYieldMs, compiler: jit.stats(), counters: JSON.parse(core.metrics()) } });
+      }
       // Load the wake sequence BEFORE draining input: this closes the lost-wakeup window.
       if (Atomics.load(control, 5)) {
         const request = await new Promise<{ op: string; state?: Uint8Array; pending?: Uint8Array }>(resolve => {
@@ -78,6 +96,7 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
           self.postMessage({ type: 'paused' });
         });
         try {
+          await settleDisk();
           if (request.op === 'snapshot') {
             const state = core.snapshot();
             self.postMessage({ type: 'checkpoint', state, pending }, [state.buffer]);
@@ -94,11 +113,13 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
           self.onmessage = () => { self.onmessage = null; resolve(); };
         });
       }
-      if (threshold && performance.now() - yieldAt >= 8) {
-        jit.flush(); await yieldCompiler(); yieldAt = performance.now();
+      if (performance.now() - yieldAt >= 8) {
+        const yieldStart = performance.now();
+        jit.flush(); await yieldCompiler(); yieldAt = performance.now(); compilerYieldMs += yieldAt - yieldStart;
         Atomics.store(control, 6, jit.compiled);
         Atomics.store(control, 7, Math.floor(core.jit_retired() / 1000));
       }
+      if (diskError) throw diskError;
       const wake = Atomics.load(input.words, 2);
       if (Atomics.load(control, 0)) break;
       for (const frame of netIn?.read() ?? []) core.net_receive(frame);
@@ -108,14 +129,26 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
       if (now - entropyAt > 1000) { crypto.getRandomValues(entropy); core.entropy(entropy); entropyAt = now; }
       if (pending.length) {
         pending = pending.slice(output.write(pending));
-        if (pending.length) { const seq = Atomics.load(output.words, 2); Atomics.wait(output.words, 2, seq, 1); continue; }
+        if (pending.length) { const seq = Atomics.load(output.words, 2); wait(output.words, 2, seq, 1); continue; }
       }
       const runStart = performance.now();
       const state = core.run(4096, now * 10000 + timeOffset);
       busyMicros += (performance.now() - runStart) * 1000;
       Atomics.store(control, 4, Math.round(busyMicros));
       if (disk) {
-        for (const index of core.disk_missing()) core.disk_chunk(index, await disk.chunk(index));
+        // Disk completion is a device event. Let other guest tasks run while
+        // HTTP is in flight; callbacks install chunks only at event-loop yields.
+        for (const index of core.disk_missing()) {
+          if (diskTasks.has(index)) continue;
+          if (!diskTasks.size) diskActiveStart = performance.now();
+          const task = disk.chunk(index).then(bytes => core.disk_chunk(index, bytes))
+            .catch(error => { diskError = error; })
+            .finally(() => {
+              diskTasks.delete(index);
+              if (!diskTasks.size) diskActiveMs += performance.now() - diskActiveStart;
+            });
+          diskTasks.set(index, task);
+        }
       }
       pending = core.output();
       for (let frame = core.net_take(); frame.length; frame = core.net_take()) {
@@ -124,6 +157,7 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
       Atomics.store(control, 3, core.stimecmp_writes());
       Atomics.store(control, 1, Math.floor(core.retired() / 1000));
       if (state === 3) {
+        await settleDisk();
         const savedDisk = core.disk_state();
         jit.dispose(); jit = createJit();
         core.free(); core = new mod.Engine(data.memoryMB) as Core; core.jit_threshold(threshold);
@@ -135,7 +169,7 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
       }
       if (state === 2) { self.postMessage({ type: 'stopped' }); break; }
       if (data.program && state === 1) { self.postMessage({ type: 'smoke', value: core.register(10).toString(), retired: core.retired() }); }
-      if (state === 1 && !pending.length) Atomics.wait(input.words, 2, wake, Math.min(core.deadline_ms(), 1000));
+      if (state === 1 && !pending.length) wait(input.words, 2, wake, Math.min(core.deadline_ms(), diskTasks.size ? 1 : 1000));
     }
   } catch (error) { self.postMessage({ type: 'error', error: String(error) }); }
   finally { cleanup(); }

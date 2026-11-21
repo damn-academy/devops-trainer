@@ -53,6 +53,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bench_retired = 0;
     let mut faults = 0;
     let trace = std::env::var_os("RV64_TRACE").is_some();
+    let mut busy = Duration::ZERO;
+    let mut idle = Duration::ZERO;
     let mut last = Instant::now();
     let mut output = String::new();
     let mut sent = false;
@@ -82,6 +84,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
+        let run_start = Instant::now();
         if trace {
             for _ in 0..4096 {
                 if let Err(t) = cpu.step() {
@@ -114,6 +117,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         } else {
             cpu.run(4096);
         }
+        busy += run_start.elapsed();
         cpu.console.append(&mut cpu.memory.devices.console);
         if !cpu.console.is_empty() {
             stdout.write_all(&cpu.console)?;
@@ -165,13 +169,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             output.drain(..50000);
         }
         if cpu.waiting {
+            let idle_start = Instant::now();
             std::thread::sleep(Duration::from_micros(50));
+            idle += idle_start.elapsed();
         }
         if last.elapsed() > Duration::from_secs(10) {
             eprintln!(
                 "progress pc={:#x} retired={} scause={} stval={:#x} mcause={} mtval={:#x}",
                 cpu.pc, cpu.retired, cpu.csr[0x142], cpu.csr[0x143], cpu.csr[0x342], cpu.csr[0x343]
             );
+            eprintln!("METRICS {}", cpu.memory.metrics.json());
             last = Instant::now();
         }
     }
@@ -181,6 +188,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         cpu.retired,
         cpu.retired as f64 / start.elapsed().as_secs_f64() / 1e6
     );
+    eprintln!("METRICS {}", cpu.memory.metrics.json());
+    eprintln!("BUSY_MS={} IDLE_MS={} BUSY_MIPS={} JIT_AVAILABLE=false", busy.as_secs_f64()*1000.0, idle.as_secs_f64()*1000.0, cpu.retired as f64 / busy.as_secs_f64() / 1e6);
     eprintln!("SBI_TIME_CALLS={} STIMECMP_WRITES={}",cpu.sbi_timer_calls,cpu.stimecmp_writes);
     if !shell && !probe_complete {
         eprintln!("{}", cpu.memory.devices.diagnostics(&cpu.memory));

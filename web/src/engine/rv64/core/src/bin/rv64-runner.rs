@@ -82,6 +82,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     if let Some(out) = &mut trace { out.flush()?; }
+    if args.iter().any(|a| a == "--metrics") { eprintln!("METRICS {}", cpu.memory.metrics.json()); }
     if result != 1 {
         return Err(format!(
             "tohost={result:#x}, pc={:#x}, mcause={}, mtval={:#x}",

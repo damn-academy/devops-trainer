@@ -12,7 +12,7 @@ try {
     const core = new mod.Engine(32);
     const symbols = core.test_elf(Uint8Array.from(atob(fixture.elf), c => c.charCodeAt(0))) as BigUint64Array;
     core.jit_threshold(1);
-    const jit = new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow);
+    const jit = new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow, { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) });
     let value = 0n; const start = performance.now(); let yieldAt = start;
     const attempts = () => core.test_attempted?.() ?? core.test_cycles();
     try {

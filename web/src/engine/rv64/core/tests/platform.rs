@@ -524,3 +524,26 @@ fn virtio_configuration_supports_linux_mac_byte_reads() {
     assert_eq!(c.load(0x10001106,2,Access::Read).unwrap(),1);
     assert_eq!(c.load(0x10001000,1,Access::Read).unwrap_err().cause,5);
 }
+
+#[test]
+fn reclaimed_code_page_stops_invalidating_until_refetched() {
+    let mut m = rv64_core::memory::Memory::new(8192);
+    let base = rv64_core::RAM_BASE;
+    m.load_image(base, &0x00100093u32.to_le_bytes()).unwrap();
+    assert_eq!(m.decoded(base).unwrap().ins, 0x00100093);
+    m.physical_write(base + 128, 8, 1).unwrap();
+    assert_eq!(m.metrics.store_code_pages, 1);
+    // The entire old generation is already invalid. Stores to a reclaimed data
+    // page must not keep treating it as translated code forever.
+    m.physical_write(base + 136, 8, 2).unwrap();
+    assert_eq!(m.metrics.store_code_pages, 1);
+    assert_eq!(m.decoded(base).unwrap().ins, 0x00100093);
+    m.physical_write(base, 4, 0x00200093).unwrap();
+    assert_eq!(m.metrics.store_code_pages, 2);
+    assert_eq!(m.decoded(base).unwrap().ins, 0x00200093);
+    m.load_image(base, &0x00300093u32.to_le_bytes()).unwrap();
+    assert_eq!(m.metrics.dma_code_pages, 1);
+    m.load_image(base + 256, &[0; 8]).unwrap();
+    assert_eq!(m.metrics.dma_code_pages, 1);
+    assert_eq!(m.decoded(base).unwrap().ins, 0x00300093);
+}

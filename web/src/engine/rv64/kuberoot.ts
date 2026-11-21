@@ -6,6 +6,8 @@ const result = globalThis as typeof globalThis & { rv64Result?: unknown };
 const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
 let machine: RV64Machine | undefined;
 const events: unknown[] = [];
+const samples: unknown[] = [];
+const params = new URLSearchParams(location.search);
 let text = '';
 let readyMs: number | undefined;
 try {
@@ -17,11 +19,12 @@ try {
   const start = performance.now();
   services.dhcp.on(e => events.push({ ms: performance.now() - start, dhcp: e }));
   machine = new RV64Machine({ id: 'kuberoot', kernel, initrd, memoryMB: 1024,
-    network: services.network, httpDisk: media,
+    network: services.network, httpDisk: media, jitThreshold: Number(params.get('jit') ?? 50),
     cmdline: 'earlycon=sbi console=hvc0 nokaslr kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose' });
   await new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('kuberoot probe timeout')), 900000);
+    const timer = setTimeout(() => reject(new Error('kuberoot probe timeout')), Number(params.get('seconds') ?? 900) * 1000);
     machine!.on(e => {
+      if (e.t === 'rv64.metrics') { samples.push(e.metrics); Object.assign(globalThis, { rv64LatestMetrics: e.metrics }); document.querySelector('#metrics')!.textContent = JSON.stringify(e.metrics, null, 2); return; }
       if (e.t === 'rv64.error') { clearTimeout(timer); reject(new Error(String(e.error))); }
       if (e.t !== 'rv64.console') return;
       text += String(e.text);
@@ -31,6 +34,6 @@ try {
     });
   });
   if (readyMs === undefined) throw new Error('probe completed without node readiness');
-  result.rv64Result = { type: 'kuberoot', execution: machine.executionStats(), bootReadyMs: readyMs, totalMs: performance.now() - start, events, console: text };
-} catch (error) { result.rv64Result = { type: 'error', error: String(error), execution: machine?.executionStats(), bootReadyMs: readyMs, events, console: text }; }
+  result.rv64Result = { type: 'kuberoot', execution: machine.executionStats(), bootReadyMs: readyMs, totalMs: performance.now() - start, events, samples, console: text };
+} catch (error) { result.rv64Result = { type: 'error', error: String(error), execution: machine?.executionStats(), bootReadyMs: readyMs, events, samples, console: text }; }
 finally { machine?.dispose(); services.dispose(); }

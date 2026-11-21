@@ -245,6 +245,7 @@ impl Cpu {
             }
             0x180 => {
                 if v >> 60 == 0 || v >> 60 == 8 {
+                    if self.csr[n] != v { self.memory.metrics.satp_changes += 1; }
                     self.csr[n] = v;
                     self.memory.flush();
                 }
@@ -267,6 +268,10 @@ impl Cpu {
         let fault_pc = self.pc;
         let interrupt = t.cause >> 63 != 0;
         let cause = t.cause & !(1 << 63);
+        if cause < 16 {
+            if interrupt { self.memory.metrics.interrupts[cause as usize] += 1; }
+            else { self.memory.metrics.exceptions[cause as usize] += 1; }
+        }
         let deleg = self.csr[if interrupt { 0x303 } else { 0x302 }];
         let supervisor = self.mode != Mode::M && cause < 64 && deleg & (1 << cause) != 0;
         let status = self.csr[0x300];
@@ -336,6 +341,7 @@ impl Cpu {
             .memory
             .translate_size(a, n, access, self.mode, self.csr[0x180], self.csr[0x300])?;
         if (0xc000000..0x10004000).contains(&p) && access != Access::Fetch {
+            self.memory.metrics.mmio += 1;
             // Device-specific virtio configuration permits byte/halfword reads
             // (Linux reads the MAC with readb), unlike transport registers.
             if (0x10000000..0x10004000).contains(&p) && p & 0xfff >= 0x100 && matches!(n, 1 | 2 | 4) {
@@ -384,6 +390,7 @@ impl Cpu {
         )?;
         self.reservation = None;
         if (0xc000000..0x10004000).contains(&p) {
+            self.memory.metrics.mmio += 1;
             if n != 4 || a & 3 != 0 { return Err(Trap { cause: 7, value: a }); }
             if self.memory.devices.write(p, v as u32) { return Ok(()); }
         }
@@ -436,6 +443,7 @@ impl Cpu {
         #[cfg(not(target_arch = "wasm32"))]
         if self.trace_enabled { self.last_trace = Some(TraceEvent::Instruction { pc: trace_pc, raw: decoded.raw }); }
         if !self.wrote_instret && self.csr[0x320] & 4 == 0 {
+            self.memory.metrics.interpreter_retired += 1;
             self.retired = self.retired.wrapping_add(1);
         }
         self.wrote_instret = false;
@@ -464,6 +472,11 @@ impl Cpu {
         }
     }
     pub(crate) fn execute(&mut self, i: u32, len: u64) -> Result<(), Trap> {
+        match i & 127 {
+            0x2f => self.memory.metrics.atomic_helpers += 1,
+            0x07|0x27|0x43|0x47|0x4b|0x4f|0x53 => self.memory.metrics.fp_helpers += 1,
+            _ => {},
+        }
         let rd = ((i >> 7) & 31) as usize;
         let rs1 = ((i >> 15) & 31) as usize;
         let rs2 = ((i >> 20) & 31) as usize;
@@ -618,7 +631,7 @@ impl Cpu {
                 self.store(a.wrapping_add(off), if f == 2 { 4 } else { 8 }, self.f[rs2])?;
             }
             0x43 | 0x47 | 0x4b | 0x4f | 0x53 => self.fp(i)?,
-            0x0f if f <= 1 => { if f == 1 { self.memory.flush(); } }
+            0x0f if f <= 1 => { if f == 1 { self.memory.metrics.fence_i += 1; self.memory.flush(); } }
             0x2f if f == 2 || f == 3 => {
                 let size = if f == 2 { 4 } else { 8 };
                 let op = i >> 27;
@@ -768,7 +781,7 @@ impl Cpu {
                             if self.mode == Mode::S && self.csr[0x300] & (1 << 20) != 0 {
                                 return Err(self.illegal(i));
                             }
-                            self.memory.flush();
+                            self.memory.metrics.sfence_vma += 1; self.memory.flush();
                         }
                         _ => return Err(self.illegal(i)),
                     }

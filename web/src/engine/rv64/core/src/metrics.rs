@@ -1,0 +1,68 @@
+//! Non-architectural counters, excluded from snapshots. TLB requests cover Rust paths only.
+#[derive(Default)]
+pub struct Metrics {
+    pub jit_lookups: u64,
+    pub jit_context_hits: u64,
+    pub jit_code_reuse: u64,
+    pub jit_dispatches: u64,
+    pub jit_chains: u64,
+    pub jit_pending: u64,
+    pub jit_cold: u64,
+    pub jit_queue_full: u64,
+    pub jit_cache_clears: u64,
+    pub jit_cache_evictions: u64,
+    pub store_code_pages: u64,
+    pub dma_code_pages: u64,
+    pub tlb_flushes: u64,
+    pub fence_i: u64,
+    pub sfence_vma: u64,
+    pub satp_changes: u64,
+    pub sbi_fences: u64,
+    pub inline_tlb_checks: u64,
+    pub inline_tlb_misses: u64,
+    pub tlb_requests: u64,
+    pub tlb_walks: u64,
+    pub mmio: u64,
+    pub sbi_ecalls: u64,
+    pub atomic_helpers: u64,
+    pub fp_helpers: u64,
+    pub memory_helpers: u64,
+    pub interpreter_retired: u64,
+    pub exceptions: [u64; 16],
+    pub interrupts: [u64; 16],
+}
+impl Metrics {
+    pub fn json(&self) -> String {
+        let mut fields = Vec::new();
+        fields.push(format!("\"jit_chains\":{}", self.jit_chains));
+        fields.push(format!("\"jit_cache_evictions\":{}", self.jit_cache_evictions));
+        fields.push(format!("\"inline_tlb_checks\":{}", self.inline_tlb_checks));
+        fields.push(format!("\"inline_tlb_misses\":{}", self.inline_tlb_misses));
+        fields.push(format!("\"jit_lookups\":{}", self.jit_lookups));
+        fields.push(format!("\"jit_context_hits\":{}", self.jit_context_hits));
+        fields.push(format!("\"jit_code_reuse\":{}", self.jit_code_reuse));
+        fields.push(format!("\"jit_dispatches\":{}", self.jit_dispatches));
+        fields.push(format!("\"jit_pending\":{}", self.jit_pending));
+        fields.push(format!("\"jit_cold\":{}", self.jit_cold));
+        fields.push(format!("\"jit_queue_full\":{}", self.jit_queue_full));
+        fields.push(format!("\"jit_cache_clears\":{}", self.jit_cache_clears));
+        fields.push(format!("\"store_code_pages\":{}", self.store_code_pages));
+        fields.push(format!("\"dma_code_pages\":{}", self.dma_code_pages));
+        fields.push(format!("\"tlb_flushes\":{}", self.tlb_flushes));
+        fields.push(format!("\"fence_i\":{}", self.fence_i));
+        fields.push(format!("\"sfence_vma\":{}", self.sfence_vma));
+        fields.push(format!("\"satp_changes\":{}", self.satp_changes));
+        fields.push(format!("\"sbi_fences\":{}", self.sbi_fences));
+        fields.push(format!("\"tlb_requests\":{}", self.tlb_requests));
+        fields.push(format!("\"tlb_walks\":{}", self.tlb_walks));
+        fields.push(format!("\"mmio\":{}", self.mmio));
+        fields.push(format!("\"sbi_ecalls\":{}", self.sbi_ecalls));
+        fields.push(format!("\"atomic_helpers\":{}", self.atomic_helpers));
+        fields.push(format!("\"fp_helpers\":{}", self.fp_helpers));
+        fields.push(format!("\"memory_helpers\":{}", self.memory_helpers));
+        fields.push(format!("\"interpreter_retired\":{}", self.interpreter_retired));
+        fields.push(format!("\"exceptions\":{:?}", self.exceptions));
+        fields.push(format!("\"interrupts\":{:?}", self.interrupts));
+        format!("{{{}}}", fields.join(","))
+    }
+}

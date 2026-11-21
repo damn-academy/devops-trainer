@@ -21,6 +21,7 @@ impl Cpu {
         self.csr[0x300] = (self.csr[0x300] & !(3 << 11)) | (1 << 11);
     }
     pub(crate) fn sbi_call(&mut self) {
+        self.memory.metrics.sbi_ecalls += 1;
         let ext = self.x[17];
         let fid = self.x[16];
         let a = self.x[10];
@@ -42,7 +43,7 @@ impl Cpu {
             (4..=7, _) => {
                 let mask = if a == 0 { Ok(1) } else { self.memory.physical_read(a, 8, Access::Read) };
                 match mask {
-                    Ok(mask) if mask & 1 != 0 => { if ext == 4 { self.csr[0x344] |= 2; } else { self.memory.flush(); } }
+                    Ok(mask) if mask & 1 != 0 => { if ext == 4 { self.csr[0x344] |= 2; } else { self.memory.metrics.sbi_fences += 1; self.memory.flush(); } }
                     Ok(_) => {}, Err(_) => error = -5,
                 }
             }
@@ -62,7 +63,7 @@ impl Cpu {
             }
             (0x52464e43, 0..=2) => {
                 if b == u64::MAX || (b == 0 && a & 1 != 0) {
-                    self.memory.flush();
+                    self.memory.metrics.sbi_fences += 1; self.memory.flush();
                 } else if a != 0 {
                     error = -3;
                 }
