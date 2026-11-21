@@ -96,7 +96,7 @@ export const codeModel = defineModel<CodeP>({
   legend: [
     { mark: 'active', text: bi('участник, который работает сейчас', 'the participant working now') },
     { mark: 'say', text: bi('облачко с тем, что делает подсвеченный участник', 'the callout with what the highlighted participant does') },
-    { mark: 'token', text: bi('карточка с тем, что участник передаёт следующему: код, машины, адреса, роли, токен', 'what it hands on: code, machines, addresses, roles, a token') },
+    { mark: 'token', text: bi('карточка на линии с тем, что участник передаёт следующему, например с кодом, машинами, адресами, ролями или токеном', 'the card on a line with what a participant hands on, such as code, machines, addresses, roles or a token') },
     { mark: 'icon:file', text: bi('файл с кодом в репозитории или файл инвентаря', 'a code file in the repository or the inventory file') },
     { mark: 'icon:terminal', text: bi('команда, которую запускаете вы или пайплайн', 'a command you or the pipeline run') },
     { mark: 'icon:cloud', text: bi('API облака, которое создаёт машины', 'the cloud API that creates the machines') },
@@ -310,11 +310,19 @@ export const codeModel = defineModel<CodeP>({
       steps.push({
         id: 'plan',
         label: bi('план', 'plan'),
-        caption: bi('Control plane уже обновлён до v1.37 командой kubeadm upgrade apply на cp-1, а рабочие узлы ещё на v1.36. Теперь плейбук обновит каждый рабочий узел: выведет его из работы (drain), поставит пакеты новой версии, выполнит kubeadm upgrade node, перезапустит kubelet и вернёт узел в работу (uncordon).', 'The control plane is already on v1.37 after kubeadm upgrade apply on cp-1, while the workers are still on v1.36. Now the playbook upgrades every worker: drains it, installs the new packages, runs kubeadm upgrade node, restarts the kubelet and puts the node back (uncordon).'),
+        caption: bi('Control plane на cp-1 уже обновлён до v1.37 командой kubeadm upgrade apply, а рабочие узлы ещё на v1.36. Kubernetes разрешает kubelet отставать от control plane на несколько версий, поэтому рабочие узлы обновляют после него и по очереди.', 'The control plane on cp-1 is already on v1.37 after kubeadm upgrade apply, while the workers are still on v1.36. Kubernetes lets the kubelet lag a few versions behind the control plane, so the workers are upgraded after it, one after another.'),
         focus: ['ans'],
-        say: { ans: bi('Ansible начинает сценарий обновления рабочих узлов. Control plane уже работает на версии v1.37, поэтому рабочие узлы можно обновлять.', 'Ansible starts the play that upgrades the workers. The control plane already runs v1.37, so the workers may be upgraded.') },
+        say: { ans: bi('Ansible начинает обновлять рабочие узлы.', 'Ansible starts upgrading the workers.') },
         states: { ...hiddenAll(['code', 'tf', 'cloud', 'inv', 'e-read', 'e-api', 'e-out', 'e-inv', 'e-join1', 'e-join2', 'e-init']), ...noW2, cp: 'ok', plane: 'ok' },
         values: { cp: 'v1.37.1', w1: 'v1.36.4', ...(two ? { w2: 'v1.36.4' } : {}), ...w2v },
+        metrics: { ...base, replicas: 3, ready: n.vms, changed: 0, minutes: 0 },
+      });
+      steps.push({
+        id: 'how',
+        label: bi('порядок', 'order'),
+        caption: bi('Каждый рабочий узел сценарий обновляет одинаково. Он выводит узел из работы командой drain, ставит пакеты новой версии, выполняет kubeadm upgrade node, перезапускает kubelet и возвращает узел в работу командой uncordon.', 'The play upgrades every worker the same way. It takes the node out of service with drain, installs the new packages, runs kubeadm upgrade node, restarts the kubelet and puts the node back into service with uncordon.'),
+        focus: ['ans'],
+        say: { ans: bi('Ansible выполнит эти пять задач на каждом рабочем узле.', 'Ansible will run these five tasks on every worker.') },
         metrics: { ...base, replicas: 3, ready: n.vms, changed: 0, minutes: 0 },
       });
       if (p.serial === 'all') {
@@ -324,10 +332,10 @@ export const codeModel = defineModel<CodeP>({
           caption:
             W === 1
               ? bi('Настройка serial разрешает обновлять все узлы сразу, но рабочий узел здесь один, так что результат будет тем же, что и при обновлении по одному. Команда drain выселяет поды приложения с worker-1, и переехать им некуда, потому что на cp-1 поды приложения не запускаются.', 'serial lets all nodes be upgraded at once, but there is only one worker here, so the result is the same as one at a time. drain evicts the application pods from worker-1, and they have nowhere to go, because cp-1 runs no application pods.')
-              : fb(bi('Настройка serial разрешает обновлять все узлы сразу, поэтому Ansible выводит из работы все {n} {r} одновременно. Команда drain выселяет поды приложения со всех рабочих узлов, и переехать им некуда, потому что на cp-1 поды приложения не запускаются.', 'serial lets all nodes be upgraded at once, so Ansible drains all {n} workers at the same time. drain evicts the application pods from every worker, and they have nowhere to go, because cp-1 runs no application pods.'), { n: W, r: workersRu(W) }),
+              : fb(bi('Настройка serial разрешает обновлять все узлы сразу, поэтому Ansible выводит из работы {r} одновременно. Выселенным подам приложения переехать некуда, потому что на cp-1 поды приложения не запускаются.', 'serial lets all nodes be upgraded at once, so Ansible drains {r} at the same time. The evicted application pods have nowhere to go, because cp-1 runs no application pods.'), { r: W === 2 ? bi('оба рабочих узла', 'both workers') : bi(`все ${W} ${workersRu(W)}`, `all ${W} workers`) }),
           focus: ['ans', 'e-ssh-w1', 'e-ssh-w2'],
           tokens: sshTokens(bi('drain', 'drain')).slice(1),
-          say: { ans: W === 1 ? bi('Ansible выполняет kubectl drain на единственном рабочем узле, и приложение остаётся без единого готового пода.', 'Ansible runs kubectl drain on the only worker, and the application is left without a single ready pod.') : bi('Ansible выполняет kubectl drain на всех рабочих узлах сразу, и приложение остаётся без единого готового пода.', 'Ansible runs kubectl drain on every worker at once, and the application is left without a single ready pod.') },
+          say: { ans: W === 1 ? bi('Ansible выполняет kubectl drain на единственном рабочем узле, и приложение остаётся без единого готового пода.', 'Ansible runs kubectl drain on the only worker, and the application is left without a single ready pod.') : bi('Ansible выполняет kubectl drain на всех рабочих узлах сразу.', 'Ansible runs kubectl drain on every worker at once.') },
           states: { w1: 'warn', ...w2('warn') },
           values: { w1: 'Ready,SchedulingDisabled', ...(two ? { w2: 'Ready,SchedulingDisabled' } : {}) },
           metrics: { ...base, replicas: 0, ready: n.vms, changed: W, minutes: 4 },
@@ -336,7 +344,7 @@ export const codeModel = defineModel<CodeP>({
           id: 'up-all',
           label: 'uncordon',
           caption: W === 1
-            ? bi('Узел worker-1 обновился до v1.37 и вернулся в работу, поды приложения снова запущены. Но несколько минут приложение не отвечало ни одному пользователю: одного рабочего узла мало, чтобы обновлять кластер без простоя.', 'worker-1 is on v1.37 and back in service, and the application pods run again. But for a few minutes the application answered no user: one worker is not enough to upgrade a cluster without downtime.')
+            ? bi('Узел worker-1 обновился до v1.37 и вернулся в работу, поды приложения снова запущены. Но несколько минут приложение не отвечало ни одному пользователю, потому что одного рабочего узла мало, чтобы обновлять кластер без простоя.', 'worker-1 is on v1.37 and back in service, and the application pods run again. But for a few minutes the application answered no user, because one worker is not enough to upgrade a cluster without downtime.')
             : bi('Рабочие узлы обновились до v1.37 и вернулись в работу, поды приложения снова запущены. Но несколько минут приложение не отвечало ни одному пользователю.', 'The workers are on v1.37 and back in service, and the application pods run again. But for a few minutes the application answered no user.'),
           focus: ['w1', 'w2'],
           say: { w1: W === 1 ? bi('Узел worker-1 работает на версии v1.37 и снова принимает поды.', 'worker-1 runs v1.37 and takes pods again.') : bi('Узел worker-1 работает на версии v1.37 и снова принимает поды, как и остальные рабочие узлы.', 'worker-1 runs v1.37 and takes pods again, like the other workers.') },
@@ -354,14 +362,16 @@ export const codeModel = defineModel<CodeP>({
           label: `drain ${k}`,
           caption:
             W === 1
-              ? bi('Настройка serial: 1 означает, что сценарий проходит рабочие узлы по одному. Но рабочий узел здесь один, и когда drain выселяет с него поды, переехать им некуда, поэтому на время обновления у приложения не остаётся ни одного готового пода.', 'serial: 1 means the play goes over the workers one by one. But there is only one worker, and when drain evicts its pods they have nowhere to go, so for the upgrade the application is left without a single ready pod.')
-              : fb(bi('Настройка serial: 1 означает, что сценарий проходит рабочие узлы по одному. Сейчас обновляется только worker-{k}: drain выселяет с него поды, и они переезжают на соседние узлы. Команда kubectl get nodes покажет у этого узла состояние Ready,SchedulingDisabled, то есть узел исправен, но новых подов не принимает.', 'serial: 1 means the play goes over the workers one by one. Only worker-{k} is upgraded now: drain evicts its pods, and they move to the neighbours. kubectl get nodes shows this node as Ready,SchedulingDisabled, that is, the node is healthy but takes no new pods.'), { k }),
+              ? bi('Настройка serial: 1 означает, что сценарий проходит рабочие узлы по одному. Но рабочий узел здесь один, и подам, которые выселяет drain, переехать некуда, поэтому на время обновления у приложения нет готовых подов.', 'serial: 1 means the play goes over the workers one by one. But there is only one worker, and when drain evicts its pods they have nowhere to go, so for the upgrade the application is left without a single ready pod.')
+              : k === 1
+                ? bi('Настройка serial: 1 означает, что сценарий проходит рабочие узлы по одному. Первым идёт worker-1, и drain выселяет с него поды на соседние узлы.', 'serial: 1 means the play goes over the workers one by one. worker-1 comes first, and drain evicts its pods to the neighbouring nodes.')
+                : fb(bi('Сценарий переходит к узлу worker-{k}, и команда drain выселяет с него поды на соседние узлы, в том числе на уже обновлённые.', 'The play moves on to worker-{k}, and drain evicts its pods to the neighbouring nodes, including the ones already upgraded.'), { k }),
           focus: [e, id],
           tokens: [{ edge: e, label: 'drain' }],
           say: {
             [id]: W === 1
-              ? bi('Узел worker-1 выведен из работы, и новые поды на него не назначаются. Другого рабочего узла нет, поэтому выселенным подам приложения переехать некуда.', 'worker-1 is out of service, and no new pods are scheduled to it. There is no other worker, so the evicted application pods have nowhere to go.')
-              : fb(bi('Узел worker-{k} выведен из работы: новые поды на него не назначаются, а старые переезжают на другие узлы.', 'worker-{k} is out of service: no new pods are scheduled to it, and the old ones move to other nodes.'), { k: k === 2 && W > 2 ? `2…${W}` : k }),
+              ? bi('Узел worker-1 выведен из работы, и новые поды на него не назначаются.', 'worker-1 is out of service, and no new pods are scheduled to it.')
+              : fb(bi('Узел worker-{k} исправен, но новых подов не принимает, и kubectl get nodes показывает у него Ready,SchedulingDisabled.', 'worker-{k} is healthy but takes no new pods, and kubectl get nodes shows it as Ready,SchedulingDisabled.'), { k }),
           },
           states: { [id]: 'warn' },
           values: { [id]: 'Ready,SchedulingDisabled' },
@@ -372,12 +382,12 @@ export const codeModel = defineModel<CodeP>({
           label: `uncordon ${k}`,
           caption:
             W === 1
-              ? bi('Узел worker-1 обновился до v1.37, команда uncordon вернула его в работу, и поды приложения запустились снова. Но пока узел обновлялся, приложение не отвечало пользователям: одного рабочего узла мало, чтобы обновлять кластер без простоя.', 'worker-1 is on v1.37, uncordon put it back into service, and the application pods started again. But while the node was being upgraded the application answered no user: one worker is not enough to upgrade a cluster without downtime.')
+              ? bi('Узел worker-1 обновился до v1.37, и поды приложения запустились снова. Но пока узел обновлялся, приложение не отвечало пользователям, потому что одного рабочего узла мало, чтобы обновлять кластер без простоя.', 'worker-1 is on v1.37, and the application pods started again. But while the node was being upgraded the application answered no user, because one worker is not enough to upgrade a cluster without downtime.')
               : k === W
-                ? fb(bi('Узел worker-{k} обновился до v1.37 и снова принимает поды. Это был последний рабочий узел, поэтому сценарий на нём заканчивается: все узлы работают на новой версии, а приложение всё это время отвечало пользователям.', 'worker-{k} is on v1.37 and takes pods again. It was the last worker, so the play ends here: every node runs the new version, and the application answered users all along.'), { k })
+                ? fb(bi('Узел worker-{k} обновился до v1.37 и снова принимает поды. Это был последний рабочий узел, поэтому сценарий на нём заканчивается. Все узлы работают на новой версии, а приложение всё это время отвечало пользователям.', 'worker-{k} is on v1.37 and takes pods again. It was the last worker, so the play ends here. Every node runs the new version, and the application answered users all along.'), { k })
                 : fb(bi('Узел worker-{k} обновился до v1.37 и снова принимает поды, поэтому сценарий переходит к следующему узлу. Приложение всё это время отвечало пользователям.', 'worker-{k} is on v1.37 and takes pods again, so the play moves to the next node. The application answered users all along.'), { k }),
           focus: [id],
-          say: { [id]: fb(bi('Узел worker-{k} работает на версии v1.37, и команда uncordon вернула его в работу.', 'worker-{k} runs v1.37, and uncordon put it back into service.'), { k }) },
+          say: { [id]: fb(bi('Команда uncordon вернула узел worker-{k} в работу.', 'uncordon put worker-{k} back into service.'), { k }) },
           states: { [id]: 'ok' },
           values: { [id]: 'v1.37.1' },
           metrics: { ...base, replicas: 3, ready: n.vms, changed: k * 4, minutes: k * 4 },
@@ -414,7 +424,7 @@ export const codeModel = defineModel<CodeP>({
         focus: ['code', 'e-read', 'tf'],
         reveal: ['e-read'],
         tokens: [{ edge: 'e-read', label: 'infra/*.tf' }],
-        say: { tf: bi('Terraform сравнивает код с облаком и видит, что сеть и машины ещё не созданы.', 'Terraform compares the code with the cloud and sees that the network and the machines do not exist yet.') },
+        say: { tf: bi('Terraform не находит в облаке ни сети, ни машин.', 'Terraform finds neither the network nor the machines in the cloud.') },
         states: first ? { ...hiddenAll(CODE_ALL.filter((id) => id !== 'code' && id !== 'tf')) } : {},
         metrics: { ...base, vms: 0, ready: 0, changed: 0, minutes: 0 },
       });
@@ -474,14 +484,14 @@ export const codeModel = defineModel<CodeP>({
       label: bi('подготовка', 'prepare'),
       caption: second
         ? bi('Роли подготовки проходят все узлы и ничего не меняют: swap уже выключен, модули ядра и параметры sysctl на месте, пакеты установлены. Каждая задача отвечает ok.', 'The preparation roles go over every node and change nothing: swap is already off, the kernel modules and sysctl values are in place, the packages are installed. Every task answers ok.')
-        : fb(bi('Ansible готовит узлы по {f} за раз: выключает swap, загружает модули ядра, включает пересылку пакетов, ставит containerd с драйвером cgroup systemd и пакеты Kubernetes закреплённой версии. На это уходит {m} мин.', 'Ansible prepares the nodes {f} at a time: turns swap off, loads the kernel modules, turns on packet forwarding, installs containerd with the systemd cgroup driver and the Kubernetes packages of the pinned version. It takes {m} min.'), { f: p.forks, m: n.prepMin }),
+        : fb(bi('На каждом узле Ansible выключает swap, загружает модули ядра, включает пересылку пакетов, ставит containerd с драйвером cgroup systemd и пакеты Kubernetes закреплённой версии. Узлы готовятся по {f} за раз, и подготовка занимает {m} мин.', 'On every node Ansible turns swap off, loads the kernel modules, turns on packet forwarding and installs containerd with the systemd cgroup driver and the pinned Kubernetes packages. With {f} nodes at a time the preparation takes {m} min.'), { f: p.forks, m: n.prepMin }),
       focus: ['ans', 'e-inv', 'e-ssh-cp', 'e-ssh-w1', 'e-ssh-w2'],
       reveal: ['ans', 'e-inv', 'e-ssh-cp', 'e-ssh-w1', ...(two ? ['e-ssh-w2'] : [])],
       tokens: sshTokens(bi('роли', 'roles')),
       say: {
         ans: second
           ? bi('Ansible проходит роли подготовки на всех узлах и видит, что каждая настройка уже на месте.', 'Ansible runs the preparation roles on every node and sees that every setting is already in place.')
-          : fb(bi('Ansible заходит на узлы по SSH, по {f} за раз, и выполняет на них роли подготовки.', 'Ansible connects to the nodes over SSH, {f} at a time, and runs the preparation roles on them.'), { f: p.forks }),
+          : fb(bi('Ansible заходит на узлы по SSH, по {f} за раз.', 'Ansible connects to {f} nodes at a time over SSH.'), { f: p.forks }),
       },
       states: { ans: 'on', cp: 'ok', w1: 'ok', ...w2('ok') },
       values: broken.has('swap') ? { cp: 'swap on' } : {},
@@ -494,7 +504,7 @@ export const codeModel = defineModel<CodeP>({
         caption: bi('Роль kubeadm_init запускает kubeadm init, и он начинает с проверок узла перед запуском (preflight). На cp-1 включён swap, а kubelet по умолчанию со swap не работает, поэтому kubeadm останавливается и ничего не меняет на узле.', 'The kubeadm_init role runs kubeadm init, which starts with the pre-flight checks of the node. Swap is on on cp-1, and by default the kubelet does not run with swap, so kubeadm stops and changes nothing on the node.'),
         focus: ['cp', 'e-init'],
         reveal: ['plane', 'e-init'],
-        say: { cp: bi('Проверки kubeadm находят на cp-1 включённый swap и останавливают kubeadm init с ошибкой.', 'The kubeadm checks find swap on on cp-1 and stop kubeadm init with an error.') },
+        say: { cp: bi('Проверки kubeadm находят на cp-1 включённый swap.', 'The kubeadm checks find swap on on cp-1.') },
         states: { cp: 'err', 'e-init': 'err', plane: 'off' },
         metrics: { ...base, ready: 0, changed: prepChanged, minutes: 2 + n.prepMin },
         broken: { at: 'cp', message: 'error execution phase preflight: [preflight] Some fatal errors occurred:\n\t[ERROR Swap]: running with swap on is not supported. Please disable swap', caption: bi('Проверки kubeadm находят неподготовленный узел, но не исправляют его. Поэтому подготовкой занимается роль k8s_prereq, а сообщение ERROR Swap означает, что эта роль не убрала строку swap из /etc/fstab.', 'The kubeadm checks find an unprepared node but do not fix it. That is why the k8s_prereq role prepares the node, and ERROR Swap means that role did not remove the swap line from /etc/fstab.') },
@@ -510,7 +520,7 @@ export const codeModel = defineModel<CodeP>({
           label: 'init',
           caption: bi('Без параметра creates задача kubeadm init выполняется снова, хотя cp-1 уже стал control plane. Проверки kubeadm находят занятый порт 6443 и манифесты, которые уже лежат на месте, и останавливают команду.', 'Without creates the kubeadm init task runs again, although cp-1 is already a control plane. The kubeadm checks find port 6443 busy and the manifests already in place, and stop the command.'),
           focus: ['cp', 'e-init'],
-          say: { cp: bi('kubeadm init второй раз запускается на готовом control plane, и его проверки находят занятый порт 6443.', 'kubeadm init runs a second time on a ready control plane, and its checks find port 6443 busy.') },
+          say: { cp: bi('Проверки kubeadm находят на cp-1 занятый порт 6443.', 'The kubeadm checks find port 6443 busy on cp-1.') },
           states: { cp: 'err', 'e-init': 'err' },
           metrics: { ...base, ready: n.vms, changed: 0, minutes: 1 },
           broken: { at: 'cp', message: PREFLIGHT_AGAIN, caption: NO_CREATES_WHY },
@@ -520,9 +530,9 @@ export const codeModel = defineModel<CodeP>({
       steps.push({
         id: 'skip',
         label: 'creates',
-        caption: bi('Задачи kubeadm init и kubeadm join пропущены, потому что файлы admin.conf и kubelet.conf, указанные в creates, уже есть на узлах. Роль cilium тоже пропущена, потому что её файл в /etc/cni/net.d уже на месте.', 'The kubeadm init and kubeadm join tasks are skipped, because the admin.conf and kubelet.conf files named in creates already exist on the nodes. The cilium role is skipped too: its file in /etc/cni/net.d is in place.'),
+        caption: bi('Задачи kubeadm init и kubeadm join пропущены, потому что файлы admin.conf и kubelet.conf, указанные в creates, уже есть на узлах. Роль cilium тоже пропущена, потому что её файл в /etc/cni/net.d на месте.', 'The kubeadm init and kubeadm join tasks are skipped, because the admin.conf and kubelet.conf files named in creates already exist on the nodes. The cilium role is skipped too, because its file in /etc/cni/net.d is in place.'),
         focus: ['cp', 'w1', 'w2'],
-        say: { cp: bi('На cp-1 уже есть файл /etc/kubernetes/admin.conf, поэтому Ansible пропускает kubeadm init и отвечает ok.', 'cp-1 already has /etc/kubernetes/admin.conf, so Ansible skips kubeadm init and answers ok.') },
+        say: { cp: bi('Ansible видит на cp-1 файл admin.conf и пропускает kubeadm init.', 'Ansible sees admin.conf on cp-1 and skips kubeadm init.') },
         states: { plane: 'ok', cni: broken.has('nocni') ? 'off' : 'ok' },
         metrics: { ...base, ready: broken.has('nocni') ? 0 : n.vms, changed: 0, minutes: 1 },
       });
@@ -542,13 +552,23 @@ export const codeModel = defineModel<CodeP>({
     steps.push({
       id: 'init',
       label: 'init',
-      caption: bi('Роль kubeadm_init запускает kubeadm init с конфигурационным файлом. kubeadm пишет сертификаты, файлы kubeconfig и манифесты, а kubelet запускает по манифестам компоненты control plane. На узле появляется файл /etc/kubernetes/admin.conf, и при следующих прогонах параметр creates будет пропускать эту задачу по этому файлу.', 'The kubeadm_init role runs kubeadm init with a configuration file. kubeadm writes certificates, kubeconfig files and manifests, and the kubelet starts the control-plane components from the manifests. /etc/kubernetes/admin.conf appears on the node, and on later runs creates will skip this task by it.'),
-      focus: ['cp', 'e-init', 'plane'],
-      reveal: ['plane', 'e-init'],
+      caption: bi('Роль kubeadm_init запускает kubeadm init, и он пишет на cp-1 сертификаты, файлы kubeconfig и манифесты компонентов control plane. Один из этих файлов, admin.conf, при следующих прогонах скажет параметру creates, что задача уже выполнена.', 'The kubeadm_init role runs kubeadm init, which writes the certificates, the kubeconfig files and the control-plane manifests on cp-1. One of these files, admin.conf, tells creates on later runs that the task is already done.'),
+      focus: ['cp', 'e-init'],
+      reveal: ['e-init'],
       tokens: [{ edge: 'e-init', label: 'manifests/*.yaml' }],
-      say: { plane: bi('kubelet на cp-1 запускает etcd, kube-apiserver, kube-controller-manager и kube-scheduler из манифестов, которые написал kubeadm.', 'The kubelet on cp-1 starts etcd, kube-apiserver, kube-controller-manager and kube-scheduler from the manifests kubeadm wrote.') },
-      states: { plane: 'ok', cp: 'ok' },
+      say: { cp: bi('kubeadm пишет файлы в /etc/kubernetes.', 'kubeadm writes files into /etc/kubernetes.') },
+      states: { cp: 'ok' },
       values: { cp: 'NotReady' },
+      metrics: { ...base, ready: 0, changed: prepChanged + 2, minutes: 4 + n.prepMin },
+    });
+    steps.push({
+      id: 'plane',
+      label: 'control plane',
+      caption: bi('kubelet на cp-1 следит за каталогом /etc/kubernetes/manifests и запускает по манифестам из него компоненты control plane. Узел пока остаётся в состоянии NotReady, потому что сети подов в кластере ещё нет.', 'The kubelet on cp-1 watches /etc/kubernetes/manifests and starts the control-plane components from the manifests in it. The node stays NotReady for now, because the cluster has no pod network yet.'),
+      focus: ['e-init', 'plane'],
+      reveal: ['plane'],
+      say: { plane: bi('kubelet запускает etcd, kube-apiserver, kube-controller-manager и kube-scheduler.', 'The kubelet starts etcd, kube-apiserver, kube-controller-manager and kube-scheduler.') },
+      states: { plane: 'ok' },
       metrics: { ...base, ready: 0, changed: prepChanged + 2, minutes: 4 + n.prepMin },
     });
     if (!broken.has('nocni'))
@@ -585,11 +605,11 @@ export const codeModel = defineModel<CodeP>({
     steps.push({
       id: 'join',
       label: 'join',
-      caption: fb(bi('Роль kubeadm_join запускает kubeadm join: {w} предъявляют токен присоединения и регистрируются в кластере. На каждом узле появляется файл kubelet.conf, и по нему параметр creates будет пропускать join при следующих прогонах.', 'The kubeadm_join role runs kubeadm join: {w} present the bootstrap token and register in the cluster. kubelet.conf appears on every node, and creates will skip join by it on later runs.'), { w: fb(bi('{n} {r}', '{n} workers'), { n: W, r: workersRu(W) }) }),
+      caption: fb(bi('Роль kubeadm_join запускает kubeadm join, и {w} предъявляют токен присоединения и регистрируются в кластере. На каждом узле появляется файл kubelet.conf, по которому creates пропустит join при следующих прогонах.', 'The kubeadm_join role runs kubeadm join, and {w} present the bootstrap token and register in the cluster. kubelet.conf appears on every node, and by it creates skips join on later runs.'), { w: fb(bi('{n} {r}', '{n} workers'), { n: W, r: workersRu(W) }) }),
       focus: ['w1', 'w2', 'e-join1', 'e-join2'],
       reveal: ['e-join1', ...(two ? ['e-join2'] : [])],
       tokens: [{ edge: 'e-join1', label: bi('токен', 'token') }, ...(two ? [{ edge: 'e-join2', label: bi('токен', 'token') }] : [])],
-      say: { w1: bi('Узел worker-1 предъявляет control plane токен присоединения и получает в ответ свой сертификат kubelet.', 'worker-1 presents the bootstrap token to the control plane and gets its own kubelet certificate in return.') },
+      say: { w1: bi('Узел worker-1 получает в ответ на токен свой сертификат kubelet.', 'worker-1 gets its own kubelet certificate for the token.') },
       states: { w1: 'ok', ...w2('ok') },
       metrics: { ...base, ready, changed: prepChanged + 3 + W, minutes: n.totalMin },
     });
@@ -623,7 +643,7 @@ export const codeModel = defineModel<CodeP>({
         label: bi('ещё раз', 'again'),
         caption: bi('Теперь Ansible выполняет контрольный повторный прогон. Без параметра creates задача kubeadm init выполняется на узле, который уже стал control plane, и проверки kubeadm останавливают её с ошибкой.', 'Now Ansible makes the check run. Without creates the kubeadm init task runs on a node that is already a control plane, and the kubeadm checks stop it with an error.'),
         focus: ['cp', 'e-init'],
-        say: { cp: bi('kubeadm init второй раз запускается на готовом control plane, и его проверки находят занятый порт 6443.', 'kubeadm init runs a second time on a ready control plane, and its checks find port 6443 busy.') },
+        say: { cp: bi('Проверки kubeadm находят на cp-1 занятый порт 6443.', 'The kubeadm checks find port 6443 busy on cp-1.') },
         states: { cp: 'err', 'e-init': 'err' },
         metrics: { ...base, ready, changed: 0, minutes: n.totalMin + 1 },
         broken: { at: 'cp', message: PREFLIGHT_AGAIN, caption: NO_CREATES_WHY },
@@ -633,9 +653,9 @@ export const codeModel = defineModel<CodeP>({
     steps.push({
       id: 'again',
       label: 'changed=0',
-      caption: bi('Контрольный повторный прогон ничего не меняет. Задачи kubeadm init и kubeadm join пропущены по параметру creates, и в сводке PLAY RECAP стоит changed=0. Это значит, что код описывает состояние кластера, а не список действий.', 'The check run changes nothing. The kubeadm init and kubeadm join tasks are skipped by creates, and PLAY RECAP says changed=0. This means the code describes a state of the cluster, not a list of actions.'),
+      caption: bi('Контрольный повторный прогон ничего не меняет. Задачи kubeadm init и kubeadm join пропущены по параметру creates, и в сводке PLAY RECAP стоит changed=0, а значит, код описывает состояние кластера, а не список действий.', 'The check run changes nothing. The kubeadm init and kubeadm join tasks are skipped by creates, and PLAY RECAP says changed=0. This means the code describes a state of the cluster, not a list of actions.'),
       focus: ['ans'],
-      say: { ans: bi('Ansible прогоняет тот же код ещё раз, и ни одна задача ничего не меняет.', 'Ansible runs the same code once more, and no task changes anything.') },
+      say: { ans: bi('Ansible прогоняет тот же код ещё раз и ничего не меняет.', 'Ansible runs the same code once more and changes nothing.') },
       states: { ans: 'ok' },
       metrics: { ...base, ready, changed: 0, minutes: n.totalMin + 1 },
     });
@@ -691,7 +711,7 @@ export const gitopsModel = defineModel<GitP>({
   legend: [
     { mark: 'active', text: bi('участник, который работает сейчас', 'the participant working now') },
     { mark: 'say', text: bi('облачко с тем, что делает подсвеченный участник', 'the callout with what the highlighted participant does') },
-    { mark: 'token', text: bi('карточка с тем, что участник передаёт: коммит, ревизию, изменение объекта', 'what it hands on: a commit, a revision, an object change') },
+    { mark: 'token', text: bi('карточка на линии с тем, что участник передаёт, например с коммитом, ревизией или изменением объекта', 'the card on a line with what a participant hands on, such as a commit, a revision or an object change') },
     { mark: 'icon:user', text: bi('человек, то есть автор коммита или коллега с доступом к кластеру', 'a person, that is the commit author or a colleague with cluster access') },
     { mark: 'icon:database', text: bi('репозиторий манифестов в Git', 'the manifests repository in Git') },
     { mark: 'icon:process', text: bi('контроллер Argo CD', 'the Argo CD controller') },
@@ -862,7 +882,7 @@ export const gitopsModel = defineModel<GitP>({
           caption: bi('Политика разрешает контроллеру возвращать ручные правки (selfHeal), поэтому через несколько секунд он применяет файл из Git, и реплик снова две. Ручная правка не переживает следующего цикла сверки.', 'The policy lets the controller undo manual edits (selfHeal), so a few seconds later it applies the file from Git, and there are two replicas again. A manual edit does not survive the next comparison.'),
           focus: ['ctrl', 'e-sync', 'deploy'],
           tokens: [{ edge: 'e-sync', label: 'replicas: 2' }],
-          say: { ctrl: bi('Контроллер применяет deployment.yaml из Git и возвращает Deployment к двум репликам.', 'The controller applies deployment.yaml from Git and brings the Deployment back to two replicas.') },
+          say: { ctrl: bi('Контроллер возвращает Deployment shop к двум репликам.', 'The controller brings the Deployment shop back to two replicas.') },
           values: { deploy: '2 × trainer/web:1.0', app: 'Synced · Healthy' },
           states: { deploy: 'ok', app: 'ok' },
           metrics: { replicas: 2, drift: 0, minutes: 0.1 },
@@ -948,7 +968,7 @@ export const gitopsModel = defineModel<GitP>({
       focus: ['ctrl', 'app', 'e-app'],
       reveal: ['app', 'e-app', 'api', 'e-sync', 'e-live', 'deploy'],
       tokens: [{ edge: 'e-app', label: 'syncPolicy' }],
-      say: { ctrl: del ? bi('Контроллер находит в кластере Service shop, файла которого в Git больше нет.', 'The controller finds the Service shop in the cluster, whose file Git no longer has.') : bi('Контроллер видит, что в Git записан образ 1.1, а в кластере работает 1.0.', 'The controller sees Git says image 1.1 while the cluster runs 1.0.') },
+      say: { ctrl: del ? bi('Контроллер находит Service shop, у которого нет файла в Git.', 'The controller finds the Service shop with no file in Git.') : bi('Контроллер видит, что в Git записан образ 1.1, а в кластере работает 1.0.', 'The controller sees Git says image 1.1 while the cluster runs 1.0.') },
       values: { app: 'OutOfSync · Healthy' },
       states: { app: 'warn' },
       metrics: { replicas: 2, drift: 1 },
@@ -959,7 +979,7 @@ export const gitopsModel = defineModel<GitP>({
         label: bi('ожидание', 'waiting'),
         caption: bi('Автоматическая синхронизация выключена, поэтому контроллер только показывает разницу. Синхронизацию запускает человек: кнопкой в интерфейсе Argo CD, командой argocd app sync или полем operation в Application.', 'Automated sync is off, so the controller only shows the difference. A person starts the sync: with a button in the Argo CD UI, with argocd app sync or with the operation field of the Application.'),
         focus: ['app'],
-        say: { app: bi('Application shop остаётся в состоянии OutOfSync и ждёт, пока синхронизацию запустит человек.', 'The Application shop stays OutOfSync and waits for a person to start the sync.') },
+        say: { app: bi('Application shop ждёт в состоянии OutOfSync.', 'The Application shop waits in OutOfSync.') },
         states: { app: 'warn' },
         metrics: { replicas: 2, drift: 1 },
       });
@@ -998,7 +1018,7 @@ export const gitopsModel = defineModel<GitP>({
       caption: bi('Политика разрешает синхронизацию без человека (automated), поэтому контроллер применяет deployment.yaml новой ревизии через API-сервер. В Deployment теперь записан образ 1.1, и начинается обычное поэтапное обновление подов.', 'The policy allows a sync without a person (automated), so the controller applies deployment.yaml of the new revision through the API server. The Deployment now says image 1.1, and an ordinary rolling update begins.'),
       focus: ['ctrl', 'e-sync', 'api', 'e-live', 'deploy'],
       tokens: [{ edge: 'e-sync', label: 'image: 1.1' }],
-      say: { deploy: bi('Контроллер применил deployment.yaml из новой ревизии, и в Deployment shop теперь записан образ trainer/web:1.1.', 'The controller applied deployment.yaml from the new revision, and the Deployment shop now says trainer/web:1.1.') },
+      say: { deploy: bi('В Deployment shop теперь записан образ trainer/web:1.1.', 'The Deployment shop now says trainer/web:1.1.') },
       values: { deploy: '2 × trainer/web:1.1', app: 'Synced · Progressing' },
       states: { deploy: 'on', app: 'wait' },
       metrics: { replicas: 2, drift: 0, minutes: 3.1 },
