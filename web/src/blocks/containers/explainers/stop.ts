@@ -186,12 +186,20 @@ export const stopModel = defineModel<P>({
       steps.push({
         id: 'forward',
         label: bi('передал', 'forwarded'),
-        caption: fmtb(bi('tini работает как PID 1 с обработчиками сигналов и пересылает {s} дочернему процессу. Python уже не первый процесс, поэтому сигнал без обработчика сразу завершает его с кодом {c}, то есть 128 плюс номер сигнала. Заодно tini забирает коды выхода завершившихся процессов, и зомби не копятся.', 'tini is PID 1 with handlers: it forwards {s} to the child. Python is no longer PID 1, so a signal without a handler ends it: code {c} = 128 + the signal number. tini also reaps zombies.'), { s: sig, c: r.code }),
+        caption: fmtb(bi('tini работает как PID 1 с обработчиками сигналов и пересылает {s} дочернему процессу. Python уже не первый процесс, поэтому сигнал без обработчика сразу завершает его с кодом {c}, то есть 128 плюс номер сигнала.', 'tini runs as PID 1 with signal handlers and forwards {s} to its child. Python is no longer the first process, so a signal without a handler ends it at once with code {c}, that is 128 plus the signal number.'), { s: sig, c: r.code }),
         focus: ['child', 'e-fwd'],
         reveal: ['e-fwd'],
         tokens: [{ edge: 'e-fwd', label: sig }],
         say: { child: fmtb(bi('python получает {s} и завершается с кодом {c}.', 'python gets {s} and exits with code {c}.'), { s: sig, c: r.code }) },
         states: { child: 'ok', pid1: 'ok' },
+        metrics: { ms: r.ms, code: r.code, zombies: 0 },
+      });
+      steps.push({
+        id: 'reap',
+        label: 'wait()',
+        caption: bi('Заодно tini делает то, чего не умеет приложение в роли PID 1. Он вызывает wait() и забирает коды выхода всех завершившихся процессов контейнера, поэтому зомби в списке процессов не копятся.', 'Along the way tini does what an application acting as PID 1 cannot. It calls wait() and collects the exit codes of every exited process in the container, so zombies do not pile up in the process table.'),
+        focus: ['pid1'],
+        say: { pid1: bi('tini забирает коды выхода завершившихся процессов, и зомби не остаётся.', 'tini collects the exit codes of exited processes, and no zombies are left.') },
         metrics: { ms: r.ms, code: r.code, zombies: 0 },
       });
     } else if (r.rule === 'handler') {
@@ -236,11 +244,11 @@ export const stopModel = defineModel<P>({
       steps.push({
         id: 'kill',
         label: 'SIGKILL',
-        caption: bi('Время вышло, и Docker посылает SIGKILL. Этот сигнал нельзя перехватить, поэтому ядро завершает PID 1, а вместе с ним и все процессы его пространства имён. Код выхода равен 137, то есть 128 + 9, потому что номер сигнала KILL равен 9.', 'Time is up: SIGKILL. It cannot be caught — the kernel kills PID 1 and the whole pid namespace with it. Code 137 = 128 + 9.'),
+        caption: bi('Время вышло, и Docker посылает SIGKILL. Этот сигнал нельзя перехватить, поэтому ядро завершает PID 1 и вместе с ним все процессы его пространства имён. Код выхода равен 137, то есть 128 плюс 9, номер сигнала KILL.', 'Time is up, and Docker sends SIGKILL. This signal cannot be caught, so the kernel ends PID 1 and every process of its namespace with it. The exit code is 137, that is 128 plus 9, the number of the KILL signal.'),
         focus: ['pid1', 'e-sigkill'],
         reveal: ['e-sigkill'],
         tokens: [{ edge: 'e-sigkill', label: 'SIGKILL' }],
-        say: { pid1: bi('SIGKILL принудительно завершает PID 1, и код выхода равен 137.', 'SIGKILL ends PID 1 by force, exit code 137.') },
+        say: { pid1: bi('SIGKILL принудительно завершает PID 1 с кодом 137.', 'SIGKILL ends PID 1 by force with code 137.') },
         states: { pid1: 'err', child: 'off', timer: 'on' },
         metrics: { ms: r.ms, code: 137, zombies },
       });
@@ -249,12 +257,21 @@ export const stopModel = defineModel<P>({
       steps.push({
         id: 'zombie',
         label: bi('зомби', 'zombies'),
-        caption: bi('PID 1 никогда не вызывает wait(), поэтому завершившиеся дочерние процессы остаются в списке процессов как зомби, `[sh] <defunct>`. Исправляется это тем же средством, что и с сигналами: в контейнере должен работать настоящий init, который включают флагом `--init` или ставят в ENTRYPOINT в виде tini.', 'PID 1 never calls wait(): exited children stay in the process table as zombies `[sh] <defunct>`. The fix is the same — an init: `--init` or tini in ENTRYPOINT.'),
+        caption: bi('Приложение в роли PID 1 никогда не вызывает wait(), поэтому завершившиеся дочерние процессы остаются в списке процессов как зомби. В выводе `ps` они выглядят как строки `[sh] <defunct>`.', 'The application acting as PID 1 never calls wait(), so exited child processes stay in the process table as zombies. In the output of `ps` they show up as `[sh] <defunct>` lines.'),
         focus: ['child'],
         reveal: ['child'],
         say: { child: bi('Завершившиеся дочерние процессы ждут, пока PID 1 заберёт их коды выхода.', 'Exited children wait for PID 1 to collect their exit codes.') },
         states: { child: 'warn' },
         values: { child: '[sh] <defunct> × 12' },
+        metrics: { ms: r.ms, code: r.code, zombies },
+      });
+    if (zombies)
+      steps.push({
+        id: 'zombie-fix',
+        label: '--init',
+        caption: bi('Исправляется это тем же средством, что и с сигналами. В контейнере должен работать настоящий init, который включают флагом `--init` или ставят в ENTRYPOINT в виде tini.', 'The fix is the same as with signals. A real init has to run in the container, switched on with the `--init` flag or put into ENTRYPOINT as tini.'),
+        focus: ['pid1'],
+        say: { pid1: bi('Настоящий init на месте PID 1 забирал бы коды выхода дочерних процессов.', 'A real init in place of PID 1 would collect the exit codes of its children.') },
         metrics: { ms: r.ms, code: r.code, zombies },
         broken: { at: 'pid1', message: '  PID USER     TIME  COMMAND\n    1 root      0:00 python app.py\n   23 root      0:00 [sh] <defunct>\n   24 root      0:00 [sh] <defunct>', caption: bi('Проблема находится в PID 1. Настоящий init забирает коды выхода дочерних процессов, а приложение в роли PID 1 обычно этого не делает.', 'The problem sits in PID 1. A real init collects its children’s exit codes, and an application acting as PID 1 usually does not.') },
       });

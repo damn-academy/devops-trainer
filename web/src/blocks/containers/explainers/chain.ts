@@ -235,7 +235,7 @@ export const chainModel = defineModel<P>({
     steps.push({
       id: 'clone',
       label: 'clone',
-      caption: fmtb(bi('runc просит ядро создать дочерний процесс `runc init` в новых пространствах имён, поставить его в cgroup с лимитом memory.max = {m} ({mb}) и сменить ему корень на подготовленный снимок. Программы контейнера в этом процессе ещё нет, он ждёт команды start, а runc, выполнявший `runc create`, на этом завершается.', 'runc asks the kernel to create a child process, `runc init`, in new namespaces, put it into a cgroup with memory.max = {m} ({mb}) and change its root to the prepared snapshot. The container program is not in this process yet, it waits for the start command, and the runc that ran `runc create` exits here.'), { m: mem, mb: p.memory ? bi(`это ${p.memory} МиБ`, `that is ${p.memory} MiB`) : bi('то есть без лимита', 'that is, no limit') }),
+      caption: fmtb(bi('runc просит ядро создать дочерний процесс `runc init` в новых пространствах имён, поставить его в cgroup с лимитом memory.max = {m} ({mb}) и сменить ему корень на подготовленный снимок.', 'runc asks the kernel to create a child process, `runc init`, in new namespaces, put it into a cgroup with memory.max = {m} ({mb}) and change its root to the prepared snapshot.'), { m: mem, mb: p.memory ? bi(`это ${p.memory} МиБ`, `that is ${p.memory} MiB`) : bi('то есть без лимита', 'that is, no limit') }),
       focus: ['kernel', 'e-clone'],
       reveal: ['e-clone'],
       tokens: [{ edge: 'e-clone', label: 'clone(CLONE_NEW*)' }],
@@ -243,11 +243,28 @@ export const chainModel = defineModel<P>({
       values: { kernel: `clone(NEWPID|NEWNS|${p.network === 'host' ? '' : 'NEWNET|'}NEWUTS|NEWIPC|NEWCGROUP) · memory.max=${mem}` },
       metrics: { total: t },
     });
+    steps.push({
+      id: 'created',
+      label: 'runc create',
+      caption: bi('Программы контейнера в процессе `runc init` пока нет, и процесс ждёт команды start. Сам runc, который выполнял команду `runc create`, на этом завершается, а контейнер остаётся созданным, но не запущенным.', 'The container program is not in the `runc init` process yet, and the process waits for the start command. The runc that ran `runc create` exits here, and the container stays created but not started.'),
+      focus: ['runc'],
+      say: { runc: bi('runc завершается, а созданный им процесс runc init ждёт команды start.', 'runc exits, and the runc init process it created waits for the start command.') },
+      metrics: { total: t },
+    });
     t += 20;
     steps.push({
       id: 'start',
+      label: 'runc start',
+      caption: bi('Shim ещё раз ненадолго вызывает runc, теперь командой `runc start`. Эта команда только подаёт знак ожидающему процессу `runc init` и сразу завершается.', 'The shim calls runc once more, briefly, now with `runc start`. This command only signals the waiting `runc init` process and exits at once.'),
+      focus: ['shim', 'e-runc'],
+      tokens: [{ edge: 'e-runc', label: 'runc start' }],
+      say: { shim: bi('Shim вызывает runc start, чтобы ожидающий процесс запустил программу контейнера.', 'The shim calls runc start so that the waiting process runs the container program.') },
+      metrics: { total: t },
+    });
+    steps.push({
+      id: 'exec',
       label: 'execve',
-      caption: bi('Shim ещё раз ненадолго вызывает runc, теперь командой `runc start`. Эта команда только подаёт знак ожидающему процессу `runc init` и сразу завершается, а `runc init` системным вызовом execve заменяет себя программой контейнера. Номер процесса не меняется, поэтому nginx остаётся дочерним процессом shim, а ни одного процесса runc к этому времени уже нет.', 'The shim calls runc once more, briefly, now with `runc start`. This command only signals the waiting `runc init` process and exits at once, and `runc init` replaces itself with the container program through the execve system call. The process number does not change, so nginx stays a child of the shim, and no runc process is left by then.'),
+      caption: bi('Процесс `runc init` системным вызовом execve заменяет себя программой контейнера. Номер процесса не меняется, поэтому nginx остаётся дочерним процессом shim, а процессов runc к этому времени уже нет.', 'The `runc init` process replaces itself with the container program through the execve system call. The process number does not change, so nginx stays a child of the shim, and no runc process is left by then.'),
       focus: ['nginx', 'e-exec'],
       reveal: ['nginx', 'e-exec'],
       tokens: [{ edge: 'e-exec', label: 'execve /docker-entrypoint.sh' }],
@@ -258,11 +275,19 @@ export const chainModel = defineModel<P>({
     steps.push({
       id: 'done',
       label: bi('итог', 'done'),
-      caption: bi('Клиент получил идентификатор контейнера и завершился, поэтому он бледный, как и runc. Работать остаются dockerd, containerd, shim и nginx, и их рамки зелёные. В выводе `ps -ef --forest` на хосте видна цепочка containerd-shim-runc-v2 → nginx: master → worker.', 'The CLI got the container ID and exited, so it is pale, like runc. dockerd, containerd, the shim and nginx keep running, and their outlines are green; `ps -ef --forest` on the host shows containerd-shim-runc-v2 → nginx: master → worker.'),
+      caption: bi('Клиент получил идентификатор контейнера и завершился, поэтому он бледный, как и runc. Работать остаются dockerd, containerd, shim и nginx, и их рамки зелёные.', 'The client got the container ID and exited, so it is pale, like runc. dockerd, containerd, the shim and nginx keep running, and their outlines are green.'),
       focus: ['shim', 'e-parent', 'dockerd', 'containerd', 'nginx'],
       reveal: ['e-parent'],
       say: { shim: bi('shim остаётся родителем nginx, держит его вывод и ждёт кода выхода.', 'The shim stays nginx’s parent, holds its output and waits for the exit code.') },
       states: { cli: 'off', runc: 'off', dockerd: 'ok', containerd: 'ok', shim: 'ok', nginx: 'ok' },
+      metrics: { total: t },
+    });
+    steps.push({
+      id: 'forest',
+      label: 'ps -ef --forest',
+      caption: bi('Ту же цепочку на настоящем сервере показывает команда `ps -ef --forest`. В её дереве процесс nginx: master стоит под процессом containerd-shim-runc-v2, а под ним работают процессы nginx: worker.', 'On a real server the command `ps -ef --forest` shows the same chain. In its tree the nginx: master process sits under the containerd-shim-runc-v2 process, and the nginx: worker processes run under it.'),
+      focus: ['shim', 'e-parent'],
+      say: { shim: bi('В дереве процессов хоста nginx стоит под shim, а не под Docker.', 'In the host’s process tree nginx sits under the shim, not under Docker.') },
       metrics: { total: t },
     });
     return steps;

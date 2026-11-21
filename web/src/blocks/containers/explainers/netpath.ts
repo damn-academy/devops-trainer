@@ -185,12 +185,19 @@ export const netPathModel = defineModel<P>({
       steps.push({
         id: 'dnat',
         label: 'DNAT',
-        caption: bi('Когда контейнер web запускали с `-p 8080:80`, dockerd записал для порта 8080 правило DNAT. Ядро меняет адрес назначения на адрес контейнера web, 172.17.0.3, и порт 80, и передаёт пакет на мост docker0. Для запроса на localhost с самого хоста Docker по умолчанию поручает эту работу небольшому процессу docker-proxy: он слушает порт 8080 хоста и открывает своё соединение на тот же адрес 172.17.0.3:80, так что путь пакета до контейнера получается тем же.', 'When the web container was started with `-p 8080:80`, dockerd wrote a DNAT rule for port 8080. The kernel changes the destination to the web container’s address, 172.17.0.3, and port 80, and passes the packet to the docker0 bridge. For a request to localhost from the host itself Docker by default hands this job to a small process, docker-proxy: it listens on host port 8080 and opens its own connection to the same 172.17.0.3:80, so the packet takes the same path to the container.'),
+        caption: bi('Когда контейнер web запускали с `-p 8080:80`, dockerd записал для порта 8080 правило DNAT. Ядро меняет адрес назначения на адрес контейнера web, 172.17.0.3, и порт 80, и передаёт пакет на мост docker0.', 'When the web container was started with `-p 8080:80`, dockerd wrote a DNAT rule for port 8080. The kernel changes the destination to the web container’s address, 172.17.0.3, and port 80, and passes the packet to the docker0 bridge.'),
         focus: ['nat', 'e-nat'],
         reveal: ['bridge', 'e-nat'],
         tokens: [{ edge: 'e-nat', label: '→ 172.17.0.3:80' }],
         values: { nat: 'DNAT :8080 → 172.17.0.3:80' },
         say: { nat: bi('Ядро переписывает адрес назначения по правилу DNAT.', 'The kernel rewrites the destination address by the DNAT rule.') },
+      });
+      steps.push({
+        id: 'proxy',
+        label: 'docker-proxy',
+        caption: bi('Запрос на localhost с самого хоста Docker по умолчанию передаёт небольшому процессу docker-proxy. Тот слушает порт 8080 хоста и открывает своё соединение на тот же адрес 172.17.0.3:80, поэтому путь до контейнера остаётся тем же.', 'By default Docker hands a request to localhost from the host itself to a small process, docker-proxy. It listens on host port 8080 and opens its own connection to the same 172.17.0.3:80, so the path to the container stays the same.'),
+        focus: ['nat'],
+        say: { nat: bi('docker-proxy сам открывает соединение с 172.17.0.3:80.', 'docker-proxy connects to 172.17.0.3:80 itself.') },
       });
       steps.push({
         id: 'veth',
@@ -201,17 +208,25 @@ export const netPathModel = defineModel<P>({
         tokens: [{ edge: 'e-web', label: '172.17.0.3:80' }],
         say: { bridge: bi('Мост передаёт пакет контейнеру web.', 'The bridge passes the packet to the web container.') },
       });
-      if (local)
+      if (local) {
         steps.push({
           id: 'reset',
-          label: 'RST',
-          caption: bi('Приложение в контейнере web слушает адрес 127.0.0.1, то есть только интерфейс lo своего контейнера. Пакет пришёл на eth0, слушателя на этом адресе нет, и ядро контейнера отвечает отказом. curl видит не отказ, а сброс соединения, потому что его соединение уже принял docker-proxy на хосте и, получив отказ от контейнера, обрывает его.', 'The application in the web container listens on 127.0.0.1, only its own container’s lo interface. The packet arrived on eth0, nobody listens on that address, and the container’s kernel refuses it. curl sees a reset rather than a refusal, because docker-proxy on the host had already accepted curl’s connection and drops it once the container refuses.'),
+          label: bi('отказ', 'refused'),
+          caption: bi('Приложение в контейнере web слушает адрес 127.0.0.1, то есть только интерфейс lo своего контейнера. Пакет пришёл на eth0, слушателя на этом адресе нет, и ядро контейнера отвечает отказом.', 'The application in the web container listens on 127.0.0.1, only its own container’s lo interface. The packet arrived on eth0, nobody listens on that address, and the container’s kernel refuses it.'),
           focus: ['web'],
           states: { web: 'err' },
           say: { web: bi('На адресе 172.17.0.3 порт 80 никто не слушает.', 'Nobody listens on port 80 at 172.17.0.3.') },
+        });
+        steps.push({
+          id: 'rst',
+          label: 'RST',
+          caption: bi('curl видит не отказ, а сброс соединения. Его соединение уже принял docker-proxy на хосте, и, получив отказ от контейнера, docker-proxy обрывает это соединение.', 'curl sees a reset rather than a refusal. docker-proxy on the host had already accepted curl’s connection, and once the container refuses, docker-proxy drops that connection.'),
+          focus: ['curl'],
+          states: { curl: 'err' },
+          say: { curl: bi('curl получает сброс соединения от docker-proxy.', 'curl gets a connection reset from docker-proxy.') },
           broken: { at: 'web', message: 'curl: (56) Recv failure: Connection reset by peer', caption: bi('Запрос остановился внутри контейнера. Публикация порта работает, а чинить нужно настройку приложения: оно должно слушать 0.0.0.0, то есть все интерфейсы контейнера.', 'The request stopped inside the container. The port publishing works, and what needs fixing is the application setting: it must listen on 0.0.0.0, that is, every interface of the container.') },
         });
-      else
+      } else
         steps.push({
           id: 'answer',
           label: bi('ответ', 'answer'),
@@ -303,11 +318,11 @@ export const netPathModel = defineModel<P>({
       steps.push({
         id: 'lo-self',
         label: 'lo',
-        caption: bi('Программа в api подключается к localhost:5432 и рассчитывает попасть на базу хоста. Но у контейнера своё пространство имён net, и localhost в нём означает интерфейс lo самого контейнера api. Пакет даже не выходит из контейнера.', 'The program in api connects to localhost:5432 and expects to reach the host database. But the container has its own net namespace, and localhost in it means the lo interface of the api container itself. The packet does not even leave the container.'),
+        caption: bi('Программа в api подключается к localhost:5432 и рассчитывает попасть на базу хоста. Но у контейнера своё пространство имён net, и localhost в нём означает интерфейс lo самого контейнера api. Пакет даже не выходит из контейнера.', 'The program in api connects to localhost:5432, expecting to reach the host database. But the container has its own net namespace, where localhost means the api container’s own lo interface. The packet never leaves the container.'),
         focus: ['api'],
         states: { ...first(['api', 'hostdb']), api: 'err', hostdb: 'off' },
         values: { api: 'lo 127.0.0.1' },
-        say: { api: bi('Пакет на localhost:5432 остаётся на интерфейсе lo контейнера api.', 'The packet to localhost:5432 stays on the api container’s lo interface.') },
+        say: { api: bi('Пакет на localhost:5432 остаётся на интерфейсе lo контейнера api.', 'The packet to localhost:5432 stays on api’s lo interface.') },
         broken: { at: 'api', message: 'psql: error: connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused', caption: bi('Запрос остановился внутри контейнера api, потому что на его собственном lo порт 5432 никто не слушает. До службы хоста ведут адрес шлюза моста или имя host.docker.internal, а localhost ведёт в сам контейнер.', 'The request stopped inside the api container, because nobody listens on port 5432 on its own lo. The bridge gateway address or the name host.docker.internal lead to a host service, while localhost leads into the container itself.') },
       });
       return steps;
@@ -328,20 +343,20 @@ export const netPathModel = defineModel<P>({
       steps.push({
         id: 'hosts',
         label: '/etc/hosts',
-        caption: bi('Программа в api подключается к host.docker.internal:5432. Флаг `--add-host=host.docker.internal:host-gateway` записал это имя в /etc/hosts контейнера вместе с адресом шлюза моста, 172.17.0.1. Этот адрес принадлежит самому хосту, его интерфейсу docker0.', 'The program in api connects to host.docker.internal:5432. The flag `--add-host=host.docker.internal:host-gateway` wrote this name into the container’s /etc/hosts together with the bridge gateway address, 172.17.0.1. That address belongs to the host itself, to its docker0 interface.'),
+        caption: bi('Программа в api подключается к host.docker.internal:5432. Флаг `--add-host=host.docker.internal:host-gateway` записал это имя в /etc/hosts контейнера с адресом шлюза 172.17.0.1, то есть интерфейса docker0 самого хоста.', 'The program in api connects to host.docker.internal:5432. The flag `--add-host=host.docker.internal:host-gateway` wrote this name into the container’s /etc/hosts with the gateway address 172.17.0.1, the host’s own docker0 interface.'),
         focus: ['api'],
         states: first(['api']),
         values: { api: '172.17.0.1 host.docker.internal' },
-        say: { api: bi('api находит в /etc/hosts адрес 172.17.0.1 для имени host.docker.internal.', 'api finds the address 172.17.0.1 for host.docker.internal in /etc/hosts.') },
+        say: { api: bi('api находит это имя в /etc/hosts с адресом 172.17.0.1.', 'api finds 172.17.0.1 for this name in /etc/hosts.') },
       });
       steps.push({
         id: 'gw',
         label: 'veth',
-        caption: bi('Пакет на 172.17.0.1 выходит из api по паре veth на мост docker0. Адрес назначения принадлежит хосту, поэтому мост отдаёт пакет не другому контейнеру, а сетевому стеку самого хоста.', 'The packet to 172.17.0.1 leaves api through its veth pair onto the docker0 bridge. The destination address belongs to the host, so the bridge hands the packet not to another container but to the host’s own network stack.'),
+        caption: bi('Пакет на 172.17.0.1 выходит из api по паре veth на мост docker0. Адрес назначения принадлежит хосту, поэтому мост отдаёт пакет не другому контейнеру, а сетевому стеку самого хоста.', 'The packet to 172.17.0.1 leaves api through its veth pair onto docker0. The address belongs to the host, so the bridge hands the packet to the host’s own network stack, not to another container.'),
         focus: ['bridge', 'e-api'],
         reveal: ['bridge', 'e-api'],
         tokens: [{ edge: 'e-api', label: '172.17.0.1:5432' }],
-        say: { bridge: bi('Мост передаёт пакет хосту, потому что адрес 172.17.0.1 принадлежит ему.', 'The bridge passes the packet to the host, because the address 172.17.0.1 belongs to it.') },
+        say: { bridge: bi('Мост передаёт пакет хосту, потому что адрес 172.17.0.1 принадлежит ему.', 'The bridge passes the packet to the host, which owns 172.17.0.1.') },
       });
       if (p.hostLocalOnly)
         steps.push({

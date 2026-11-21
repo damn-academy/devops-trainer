@@ -15,24 +15,27 @@ import { startWith } from './util';
 
 type P = { workload: string };
 
-const PLACE: Record<string, { tower: 'cloud' | 'metal' | 'kubevirt'; node: string; why: Bi; say: Bi }> = {
+const PLACE: Record<string, { tower: 'cloud' | 'metal' | 'kubevirt'; node: string; why: Bi; say: Bi; nest: Bi }> = {
   service: {
     tower: 'metal',
     node: 'm-pods',
-    why: bi('Десяток собственных веб-сервисов одной команды плотнее всего укладывается контейнерами прямо на железе, потому что ядро здесь одно, а гостевых систем, которые занимали бы память, нет. Код свой, поэтому границы внутри одного ядра здесь достаточно.', 'Uniform services of one team pack most densely as containers straight on the hardware: one kernel, no guest OSes.'),
-    say: bi('Свои сервисы лучше всего ставить сюда, потому что ядро здесь одно на все поды и память не уходит на гостевые системы.', 'Our own services go here: one kernel for all pods, no memory spent on guest systems.'),
+    why: bi('Десяток собственных веб-сервисов одной команды плотнее всего укладывается контейнерами прямо на железе, потому что ядро здесь одно, а гостевых систем, которые занимали бы память, нет. Код свой, поэтому границы внутри одного ядра достаточно.', 'A dozen web services of one team pack most densely as containers right on the hardware, because there is one kernel and no guest systems to take memory. The code is their own, so a boundary inside one kernel is enough.'),
+    say: bi('Свои сервисы лучше всего ставить в эту башню.', 'Our own services are best put into this tower.'),
+    nest: bi('Здесь контейнеры работают прямо на железе, и ВМ под ними нет.', 'Here the containers run right on the hardware, with no VM under them.'),
   },
   untrusted: {
     tower: 'cloud',
     node: 'c-vm',
-    why: bi('Код чужих клиентов лучше отделить гипервизором. Каждый клиент получает свою виртуальную машину со своим ядром, а его контейнеры работают уже внутри неё, поэтому уязвимость в ядре одного клиента не задевает соседей.', 'Somebody else’s code is better kept behind a hypervisor: every cloud customer gets a VM with its own kernel, and containers run inside it.'),
-    say: bi('Чужой код лучше всего запускать здесь, потому что у каждого клиента своя ВМ со своим ядром, а между ВМ стоит гипервизор.', 'Outside code goes here: each customer has a VM with its own kernel, and the hypervisor stands between VMs.'),
+    why: bi('Код чужих клиентов лучше отделить гипервизором. Каждый клиент получает свою виртуальную машину со своим ядром, а его контейнеры работают уже внутри неё, поэтому уязвимость в ядре одного клиента не задевает соседей.', 'Other customers’ code is better kept apart by a hypervisor. Each customer gets a virtual machine with its own kernel, and their containers run inside it, so a vulnerability in one customer’s kernel does not touch the neighbours.'),
+    say: bi('Чужой код лучше запускать здесь, за гипервизором.', 'Other people’s code is best run here, behind the hypervisor.'),
+    nest: bi('Здесь контейнеры клиента работают внутри его ВМ.', 'Here the customer’s containers run inside their VM.'),
   },
   windows: {
     tower: 'kubevirt',
     node: 'v-guest',
-    why: bi('Программе для Windows нужно своё ядро, а значит, и виртуальная машина. KubeVirt запускает её как обычный под. Гипервизор QEMU работает процессом в контейнере virt-launcher, а размещает этот под Kubernetes.', 'The program needs its own kernel — so a VM. KubeVirt runs it as a pod: QEMU runs in the virt-launcher container and Kubernetes schedules it.'),
-    say: bi('Программу для Windows лучше всего ставить сюда, потому что в ВМ можно поставить Windows с её собственным ядром.', 'The Windows program goes here: a VM can run Windows with its own kernel.'),
+    why: bi('Программе для Windows нужно своё ядро, а значит, и виртуальная машина. KubeVirt запускает её как обычный под. Гипервизор QEMU работает процессом в контейнере virt-launcher, а размещает этот под Kubernetes.', 'A Windows program needs its own kernel, and so a virtual machine. KubeVirt runs it as an ordinary pod. The QEMU hypervisor runs as a process in the virt-launcher container, and Kubernetes places that pod.'),
+    say: bi('Программу для Windows лучше ставить сюда, в ВМ с ядром Windows.', 'The Windows program is best put here, in a VM with a Windows kernel.'),
+    nest: bi('Здесь ВМ с Windows работает внутри пода virt-launcher.', 'Here the Windows VM runs inside the virt-launcher pod.'),
   },
 };
 
@@ -216,10 +219,18 @@ export const nestingModel = defineModel<P>({
       {
         id: 'choice',
         label: bi('куда', 'where'),
-        caption: { ru: `${place.why.ru} Контейнер и виртуальная машина не соперничают друг с другом, а служат слоями, которые вкладывают друг в друга, когда задаче нужна более сильная изоляция.`, en: `${place.why.en} The conclusion: containers and VMs are not rivals but layers nested in each other as isolation requires.` },
+        caption: place.why,
         focus: [place.node],
         say: { [place.node]: place.say },
         states: { [place.node]: 'ok' },
+        metrics,
+      },
+      {
+        id: 'layers',
+        label: bi('слои', 'layers'),
+        caption: bi('Контейнер и виртуальная машина не соперничают друг с другом. Это слои, которые вкладывают друг в друга, когда задаче нужна более сильная изоляция.', 'Containers and virtual machines are not rivals. They are layers nested in each other when a task needs stronger isolation.'),
+        focus: [place.node],
+        say: { [place.node]: place.nest },
         metrics,
       },
     ];
