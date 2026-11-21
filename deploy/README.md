@@ -21,25 +21,42 @@ files are precompressed with gzip; the stock nginx image has no brotli module.
 
 - A checkout of the Sankofa stand at `~/projects/sankofa-int` (or `SANKOFA_ROOT`):
   `hack/stand/env.sh` defines `km`, which is `kubectl` with the museum
-  kubeconfig and an explicit `--context`; the node-local registry
-  runs in the `sankofa-registry` namespace.
-- node and npm, go, `ko` and `crane` (in `~/go/bin`), `openssl`, `curl`.
-  No Docker or VMs run on the workstation: images are assembled with
-  `crane append` and `ko`.
+  kubeconfig and an explicit `--context`. The node-local registry runs in the
+  `sankofa-registry` namespace.
+- git, `kubectl`, `curl` and `openssl` on the workstation. Nothing is built
+  there: no Docker, no VMs, no large uploads.
 
 ## Redeploy
 
+Commit and push the branch you want to deploy, then:
+
 ```sh
-deploy/deploy.sh          # build the course and the service, push, apply, check
-deploy/deploy.sh --lab    # also rebuild the Alpine lab image and the boot snapshots
+deploy/deploy.sh            # build the pushed HEAD in the cluster, roll it out, check
+deploy/deploy.sh --smoke    # the same, then the browser smoke check
+deploy/smoke.sh             # only the smoke check
 ```
 
-The lab image (`npm run build:lab-image`) and the boot snapshots
-(`npm run build:lab-snapshots`, which boots v86 in headless Chromium) are reused
-when `web/public/v86/lab/manifest.json` already lists snapshots. Pass `--lab`
-after changing the lab image scripts, `lab/` or the v86 version. Images are
-referenced by digest; the script waits for both rollouts and checks the public
-`index.html`, the isolation headers and that `/admin` asks for credentials.
+`deploy.sh` starts the Job `build-<commit>-<time>` (`deploy/build/job.yaml`,
+script `deploy/build/build.sh`). A Go stage clones the commit from GitHub and
+builds the feedback binary, the OpenTofu provider of the lab image and `crane`.
+A Playwright stage runs `npm ci`, fetches the stock v86 assets, builds the
+Alpine lab image and the boot snapshots (v86 in headless Chromium), builds the
+course with `VITE_FEEDBACK_URL=https://<host>/api/feedback`, assembles the
+nginx image with `crane append` and pushes both images to the registry of
+every node. The script then applies `devops-trainer.yaml` with the image
+digests, waits for both rollouts and checks the public `index.html`, the
+isolation headers and that `/admin` asks for credentials. A build takes about
+15–25 minutes; follow it with
+`km -n devops-trainer logs -f job/<name> -c images`. Finished Jobs are removed
+after a day.
+
+`smoke.sh` runs `web/scripts/smoke-public.mjs` as a Job, also in the cluster:
+the home page (and that it is cross-origin isolated), an explainer, a goal in
+the simulated terminal, a real-Linux v86 lab started from its boot snapshot,
+the first goal of the in-tab cloud lab, a feedback report sent through the
+course and found in the admin UI. The admin token reaches the Job from the
+Secret and is not printed. Each smoke run leaves one report marked
+"Deployment smoke check" in the admin UI.
 
 ## Admin UI
 
@@ -104,7 +121,8 @@ Images stay in the node-local registry (`sankofa/devops-trainer-web`,
 
 ## Objects
 
-Namespace `devops-trainer`: Deployments `web` (2 replicas) and `feedback`
+Namespace `devops-trainer`: build and smoke Jobs (kept for a day), ConfigMap
+`build-script`, Deployments `web` (2 replicas) and `feedback`
 (1 replica, `Recreate`), Services `web` and `feedback`, PVC `feedback-data`
 (1 Gi, default StorageClass), Secret `feedback-secrets`, Ingresses `web` and
 `feedback` (the latter with the access log off, because thread URLs carry a
