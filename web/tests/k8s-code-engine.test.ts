@@ -3,19 +3,15 @@
 // cluster equal to a forge repository.
 
 import { describe, expect, it } from 'vitest';
-import { writeFileSync } from 'node:fs';
 import '../src/core/registry';
 import { createSimMachine, type SimMachine } from '../src/engine/terminal/shell';
 import type { KcodeFacts } from '../src/blocks/k8s-code/stand';
 
-const P = '/private/tmp/claude-501/-Users-tym83/eb7387cd-748a-40ee-b298-f6ea9cbddca0/scratchpad/engine.txt';
-let LOG = '';
 async function sh(m: SimMachine, ...lines: string[]): Promise<string> {
   let out = '';
   for (const l of lines) {
     const r = await m.exec(l);
     out += r.out;
-    LOG += `$ ${l}\n${r.out}\n`;
   }
   return out;
 }
@@ -127,7 +123,6 @@ describe('cluster from code stand', () => {
     write(m, '/home/learner/ops/prepare.yml', PREPARE);
     await sh(m, 'ansible-playbook prepare.yml', 'ansible-playbook prepare.yml');
     f = await kc(m);
-    writeFileSync(P, LOG + JSON.stringify(f.hosts, null, 1));
     expect(f.hosts.every((h) => h.swapOff && h.ipForward && h.systemdCgroup && h.repo && h.packages.includes('kubeadm'))).toBe(true);
     await sh(m, 'ansible cp-1 -b -a "kubeadm init --pod-network-cidr=10.244.0.0/16"');
     f = await kc(m);
@@ -149,7 +144,6 @@ describe('cluster from code stand', () => {
     f = await kc(m);
     expect(f.hosts.length).toBe(0);
     expect(f.cluster.initialized).toBe(false);
-    writeFileSync(P, LOG);
   });
 });
 
@@ -208,7 +202,6 @@ spec:
 
 describe('gitops controller', () => {
   it('syncs, self-heals and prunes', async () => {
-    LOG = '';
     const m = await createSimMachine({
       hostname: 'ops',
       cwd: '~',
@@ -222,7 +215,6 @@ describe('gitops controller', () => {
     await sh(m, 'kubectl apply -n argocd -f app.yaml', 'kubectl get applications -n argocd', 'kubectl get deploy -n shop');
     const app = async () => ((await m.facts()).k8s as { objects: { kind: string; metadata: { name: string }; status?: { sync?: { status: string; revision: string }; health?: { status: string } } }[] }).objects.find((o) => o.kind === 'Application' && o.metadata.name === 'shop')!;
     await sh(m, 'kubectl get pods -n shop', 'kubectl get crd', 'kubectl get application shop -n argocd -o yaml');
-    writeFileSync(P + '.gitops', LOG);
     let a = await app();
     expect(a.status?.sync?.status).toBe('Synced');
     expect(a.status?.health?.status).toBe('Healthy');
@@ -236,13 +228,11 @@ describe('gitops controller', () => {
     // a new commit is rolled out; a deleted file is pruned
     write(m, '/home/learner/shop-deploy/k8s/deployment.yaml', DEPLOY('trainer/web:1.1', 3));
     await sh(m, 'cd shop-deploy', 'git rm k8s/service.yaml', 'git commit -a -m "shop v1.1"', 'git push', 'kubectl get deploy,svc -n shop', 'kubectl get application shop -n argocd -o custom-columns=SYNC:.status.sync.status,HEALTH:.status.health.status,REV:.status.sync.revision');
-    writeFileSync(P + '.gitops', LOG);
     a = await app();
     expect(a.status?.sync?.status).toBe('Synced');
     const k = (await m.facts()).k8s as { deployments: { name: string; image: string; replicas: number }[]; services: { ns: string; name: string }[] };
     expect(k.deployments.find((d) => d.name === 'shop')?.image).toBe('trainer/web:1.1');
     expect(k.services.some((s) => s.ns === 'shop' && s.name === 'shop')).toBe(false);
-    writeFileSync(P + '.gitops', LOG);
   });
 });
 
@@ -250,9 +240,8 @@ import { clusterStand, opsFiles, preparedStand, stand } from '../src/blocks/k8s-
 
 describe('stands of block 9', () => {
   it('site.yml with roles brings the cluster up and is idempotent; a rebuild works', async () => {
-    LOG = '';
     const m = await createSimMachine(stand({ applied: true, ops: opsFiles() }));
-    try {
+    {
       await sh(m, 'cat inventory.ini', 'ansible-playbook site.yml');
       let f = await kc(m);
       expect(f.cluster.nodes.filter((n) => n.ready).length).toBe(3);
@@ -264,8 +253,6 @@ describe('stands of block 9', () => {
       await sh(m, 'cd ../ops', 'ansible-playbook site.yml');
       f = await kc(m);
       expect(f.cluster.nodes.filter((n) => n.ready).length).toBe(3);
-    } finally {
-      writeFileSync(P + '.site', LOG);
     }
   });
 
