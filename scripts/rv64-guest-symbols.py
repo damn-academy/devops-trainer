@@ -4,6 +4,7 @@
 Run against the *actual guest binaries*, not a rebuild. Output includes SHA-256.
 No third-party packages or execution of guest code required.
 """
+import base64
 import hashlib
 import json
 import struct
@@ -22,6 +23,7 @@ def symbols(path):
     def cstr(data, off):
         return data[off:data.index(b'\0', off)].decode('utf8', errors='replace')
     found = []
+    unwind = None
     for s in sections:
         name = cstr(b, strings[4] + s[0])
         if s[1] == 2:  # SHT_SYMTAB
@@ -46,7 +48,7 @@ def symbols(path):
                 # RISC-V minimum instruction quantum may be 2.
                 if p[:6] != b'\xf1\xff\xff\xff\x00\x00' or p[7] != 8:
                     raise ValueError('unsupported Go pclntab header')
-            nfunc, _, text, fnames, _, _, _, funcs = struct.unpack_from('<8Q', p, 8)
+            nfunc, _, text, fnames, _, _, pctab, funcs = struct.unpack_from('<8Q', p, 8)
             if text == 0:
                 # External Go linking leaves pcHeader.textStart zero. Runtime
                 # uses moduledata.text instead (Go 1.20+ runtime/symtab.go).
@@ -56,12 +58,17 @@ def symbols(path):
                 text = struct.unpack_from('<Q', b, module[4] + 176)[0]
             if not any(x[2] & 4 and x[3] <= text < x[3] + x[5] for x in sections):
                 raise ValueError('Go text base outside executable sections')
+            unwind = {'quantum': p[6], 'pctab': base64.b64encode(p[pctab:funcs]).decode(), 'functions': []}
             for i in range(nfunc):
                 entry, record = struct.unpack_from('<II', p, funcs + 8 * i)
                 end = struct.unpack_from('<I', p, funcs + 8 * (i + 1))[0]
                 nameoff = struct.unpack_from('<i', p, funcs + record + 4)[0]
-                found.append([text + entry, text + end, cstr(p, fnames + nameoff)])
-    return {'path': str(path), 'sha256': hashlib.sha256(b).hexdigest(),
+                name = cstr(p, fnames + nameoff)
+                found.append([text + entry, text + end, name])
+                pcsp = struct.unpack_from('<I', p, funcs + record + 16)[0]
+                flags = p[funcs + record + 41]
+                unwind['functions'].append([hex(text + entry), hex(text + end), name, pcsp, flags])
+    return {'path': str(path), 'sha256': hashlib.sha256(b).hexdigest(), 'goUnwind': unwind,
             'functions': sorted(set((hex(a), hex(z), n) for a, z, n in found), key=lambda x: int(x[0], 16))}
 
 

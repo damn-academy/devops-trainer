@@ -50,3 +50,43 @@ mod tests {
         assert!(task_comm(&m, satp, 0x1000).is_none());
     }
 }
+
+/// Sample a resident user stack without changing PTE A/D, TLB, lazy pages or MMIO.
+/// None means unavailable; callers retain a validity bitmap rather than inventing zeros.
+pub(crate) fn stack_word(memory: &Memory, satp: u64, address: u64) -> Option<u64> {
+    if satp >> 60 != 8 || address & 7 != 0 || address >> 38 != 0 { return None; }
+    let mut table = (satp & ((1 << 44) - 1)) << 12;
+    for level in (0..3).rev() {
+        let pte = u64::from_le_bytes(resident(memory, table + ((address >> (12 + level * 9)) & 511) * 8, 8)?.try_into().ok()?);
+        if pte & 1 == 0 || pte & 6 == 4 || pte >> 54 != 0 { return None; }
+        let ppn = (pte >> 10) & ((1 << 44) - 1);
+        if pte & 10 != 0 {
+            let mask = (1u64 << (12 + level * 9)) - 1;
+            if pte & 18 != 18 || (ppn << 12) & mask != 0 { return None; }
+            return Some(u64::from_le_bytes(resident(memory, (ppn << 12) | (address & mask), 8)?.try_into().ok()?));
+        }
+        table = ppn << 12;
+    }
+    None
+}
+
+#[cfg(test)]
+mod stack_tests {
+    use super::*;
+    #[test]
+    fn stack_observer_requires_user_readable_resident_mapping() {
+        let mut m = Memory::new(1024 * 1024);
+        let pte = ((RAM_BASE >> 12) << 10) | 0x13;
+        m.ram[..8].copy_from_slice(&pte.to_le_bytes());
+        m.ram[4096..4104].copy_from_slice(&42u64.to_le_bytes());
+        let satp = (8 << 60) | (RAM_BASE >> 12);
+        assert_eq!(stack_word(&m, satp, 4096), Some(42));
+        assert_eq!(&m.ram[..8], &pte.to_le_bytes());
+        assert!(stack_word(&m, satp, 4097).is_none());
+        m.ram[0] &= !16;
+        assert!(stack_word(&m, satp, 4096).is_none());
+        m.ram[0] |= 16; m.lazy_ram = vec![true; 4];
+        assert!(stack_word(&m, satp, 4096).is_none());
+        assert!(m.lazy_ram.iter().all(|v| *v));
+    }
+}

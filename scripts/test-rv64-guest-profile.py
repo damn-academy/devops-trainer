@@ -23,7 +23,7 @@ class ProfileTests(unittest.TestCase):
         names = b'\0.text\0.gopclntab\0.go.module\0.shstrtab\0'
         b[0x480:0x480+len(names)] = names
         sections = [(0, 0, 0, 0, 0, 0), (1, 1, 6, 0x5500000, 0x100, 16),
-                    (7, 1, 2, 0x200000, 0x200, 128), (18, 1, 2, 0x300000, 0x300, 192),
+                    (7, 1, 2, 0x200000, 0x200, 160), (18, 1, 2, 0x300000, 0x300, 192),
                     (29, 3, 0, 0, 0x480, len(names))]
         for i, fields in enumerate(sections):
             struct.pack_into('<IIQQQQIIQQ', b, 0x500+64*i, *fields, 0, 0, 1, 0)

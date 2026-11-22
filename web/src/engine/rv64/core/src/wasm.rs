@@ -250,9 +250,18 @@ impl Engine {
                         task.checked_add(self.profile_comm_offset as u64)
                             .and_then(|a| crate::profile::task_comm(&self.cpu.memory, self.cpu.csr[0x180], a))
                     } else { None }.unwrap_or([0; 2]);
-                    let row = [self.cpu.pc, self.cpu.csr[0x180], self.cpu.mode as u64,
+                    let mut row = [0; 44];
+                    row[..9].copy_from_slice(&[self.cpu.pc, self.cpu.csr[0x180], self.cpu.mode as u64,
                         self.cpu.x[4], self.cpu.csr[0x140], self.cpu.memory.time,
-                        self.cpu.jit.attempted, comm[0], comm[1]];
+                        self.cpu.jit.attempted, comm[0], comm[1]]);
+                    row[9] = self.cpu.x[1]; row[10] = self.cpu.x[2];
+                    if self.cpu.mode == crate::Mode::U {
+                        for j in 0..32 {
+                            if let Some(word) = self.cpu.x[2].checked_add(j * 8).and_then(|a| crate::profile::stack_word(&self.cpu.memory, self.cpu.csr[0x180], a)) {
+                                row[11] |= 1 << j; row[12 + j as usize] = word;
+                            }
+                        }
+                    }
                     if self.profile_samples.len() < 65536 { self.profile_samples.push(row); }
                     else { self.profile_dropped += 1; }
                     self.profile_left = self.profile_interval;
@@ -298,7 +307,9 @@ impl Engine {
         self.profile_dropped = 0;
         for (i, row) in self.profile_samples.drain(..).enumerate() {
             if i != 0 { out.push(','); }
-            write!(out, "[\"{:x}\",\"{:x}\",{},\"{:x}\",\"{:x}\",{},{},\"{:x}\",\"{:x}\"]", row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8]).unwrap();
+            write!(out, "[\"{:x}\",\"{:x}\",{},\"{:x}\",\"{:x}\",{},{},\"{:x}\",\"{:x}\"", row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8]).unwrap();
+            for word in &row[9..] { write!(out, ",\"{word:x}\"").unwrap(); }
+            out.push(']');
         }
         out.push_str("]}"); out
     }
