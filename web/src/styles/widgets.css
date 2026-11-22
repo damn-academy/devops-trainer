@@ -131,8 +131,10 @@
 .ex-svg .edge.carrying .edge-label { opacity: 0.12; }
 
 /* ── lab: goals + terminal ── */
-.lab { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 18px; align-items: start; }
-@media (max-width: 960px) { .lab { grid-template-columns: minmax(0, 1fr); } }
+.lab { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
+.lab-left { max-width: var(--measure); }
+.lab-right { width: 100%; max-width: calc(var(--measure) + 8ch); }
+.lab.lab-expanded .lab-right { max-width: none; }
 .lab > * { min-width: 0; }
 .lab-term-box { overflow: hidden; }
 .lab-h { margin: 0 0 8px; font-family: var(--font-ui); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
@@ -330,5 +332,5 @@
 }
 
 .lab.lab-expanded { grid-template-columns: minmax(0, 1fr); }
-.lab-expanded .lab-right { grid-column: 1 / -1; }
+.lab-expanded .lab-right { max-width: none; }
 .lab-bar { flex-wrap: wrap; }

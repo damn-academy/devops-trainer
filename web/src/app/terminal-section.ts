@@ -244,6 +244,9 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       },
       onDoc: (ref) => openDoc(ref, { mode: 'page', via: 'terminal', keepFocus: true }),
     });
+    // A blinking cursor in the box that just appeared answers "where do I type?" before it is asked.
+    // Keep hands off when the learner has deliberately focused something else on the page.
+    if (!document.activeElement || document.activeElement === document.body) term.focus();
     if (passed.size === o.tasks.length && o.tasks.length) o.onAllDone?.();
     void check();
   };
