@@ -23,6 +23,16 @@ export default defineConfig({
     target: 'es2022',
     assetsInlineLimit: 0,
     chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        // The lab definitions of the Linux block (~76 kB of exam and machine
+        // data) stay out of the block chunk: they are only needed together
+        // with the emulator UI, which already loads lazily.
+        manualChunks(id: string) {
+          if (id.endsWith('src/blocks/linux/reallab/labs.ts')) return 'linux-labs';
+        },
+      },
+    },
   },
   test: {
     include: ['tests/**/*.test.ts', 'src/**/*.test.ts'],
