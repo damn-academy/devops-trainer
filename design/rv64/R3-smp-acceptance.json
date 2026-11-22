@@ -1,0 +1,137 @@
+[
+  {
+    "name": "R3-smp-linux",
+    "result": {
+      "type": "smp-linux",
+      "pass": true,
+      "samples": [
+        {
+          "harts": 2,
+          "shellMs": 51364.794999957085,
+          "evidence": [
+            "[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init",
+            "[    0.690825] smp: Brought up 1 node, 2 CPUs",
+            "~ # cat /sys/devices/system/cpu/online; echo SMP_SHELL_OK",
+            "0-1",
+            "SMP_SHELL_OK"
+          ]
+        },
+        {
+          "harts": 4,
+          "shellMs": 178922.92500001192,
+          "evidence": [
+            "[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init",
+            "[    1.652365] smp: Brought up 1 node, 4 CPUs",
+            "~ # cat /sys/devices/system/cpu/online; echo SMP_SHELL_OK",
+            "0-3",
+            "SMP_SHELL_OK"
+          ]
+        }
+      ]
+    },
+    "isolated": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/159.0.8154.6 Safari/537.36",
+    "wasmSha256": "3bf099897f947e1cb0f4118ed52fca7b69b907171c92f3463ab3a4c491cd2d35",
+    "jitSourceSha256": "f50b9be8e8f9b72289bd6672ab72fc240143fdfa1c034ca3d03a2a07778e04c9"
+  },
+  {
+    "name": "R3-smp-linux-unlocked-loads",
+    "result": {
+      "type": "smp-linux",
+      "pass": true,
+      "samples": [
+        {
+          "harts": 2,
+          "shellMs": 20388.830000042915,
+          "evidence": [
+            "[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init",
+            "[    0.469225] smp: Brought up 1 node, 2 CPUs",
+            "~ # \u001b[6ncat /sys/devices/system/cpu/online; echo SMP_SHELL_OK",
+            "0-1",
+            "SMP_SHELL_OK"
+          ]
+        },
+        {
+          "harts": 4,
+          "shellMs": 30818.185000002384,
+          "evidence": [
+            "[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init",
+            "[    0.856150] smp: Brought up 1 node, 4 CPUs",
+            "~ # \u001b[6ncat /sys/devices/system/cpu/online; echo SMP_SHELL_OK",
+            "0-3",
+            "SMP_SHELL_OK"
+          ]
+        }
+      ]
+    },
+    "isolated": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/159.0.8154.6 Safari/537.36",
+    "wasmSha256": "7948b87039e12641a0ce481dceaaf6466f7d7ca1d24837bab8f30e9fb2de393b",
+    "jitSourceSha256": "f50b9be8e8f9b72289bd6672ab72fc240143fdfa1c034ca3d03a2a07778e04c9"
+  },
+  {
+    "name": "R3-smp-trace",
+    "result": {
+      "type": "smp-trace",
+      "pass": true,
+      "samples": [
+        {
+          "harts": 2,
+          "rows": [
+            {
+              "hart": 0,
+              "pass": true,
+              "steps": 100000,
+              "jitRetired": 100000,
+              "ms": 1006.0949999690056
+            },
+            {
+              "hart": 1,
+              "pass": true,
+              "steps": 100000,
+              "jitRetired": 100000,
+              "ms": 1006.1999999880791
+            }
+          ]
+        },
+        {
+          "harts": 4,
+          "rows": [
+            {
+              "hart": 0,
+              "pass": true,
+              "steps": 100000,
+              "jitRetired": 100000,
+              "ms": 1076.1550000309944
+            },
+            {
+              "hart": 1,
+              "pass": true,
+              "steps": 100000,
+              "jitRetired": 100000,
+              "ms": 1079.5199999809265
+            },
+            {
+              "hart": 2,
+              "pass": true,
+              "steps": 100000,
+              "jitRetired": 100000,
+              "ms": 1075.3500000238419
+            },
+            {
+              "hart": 3,
+              "pass": true,
+              "steps": 100000,
+              "jitRetired": 100000,
+              "ms": 1076.8349999785423
+            }
+          ]
+        }
+      ]
+    },
+    "isolated": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/159.0.8154.6 Safari/537.36",
+    "wasmSha256": "7948b87039e12641a0ce481dceaaf6466f7d7ca1d24837bab8f30e9fb2de393b",
+    "jitSourceSha256": "f50b9be8e8f9b72289bd6672ab72fc240143fdfa1c034ca3d03a2a07778e04c9"
+  }
+]

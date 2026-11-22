@@ -1,6 +1,6 @@
 # R3 work log — slim boot, deadlines, and SMP foundations
 
-2026-11-21, `feat/rv64-r0`. No commits. **Partial: one-hart Node Ready and BusyBox Ready achieved; SMP/Linux gates are not accepted.**
+2026-11-21, `feat/rv64-r0`. No commits. **Historical baseline: one-hart Node Ready and BusyBox Ready achieved. See the CPU-per-Worker continuation at the end for new Linux 2/4-hart acceptance and remaining gaps.**
 Rust compilation/tests run only in `tenant-kuberoot/rv64-dev`, context
 `admin@workshop`. Chromium runs locally, one browser at a time.
 
@@ -1296,3 +1296,121 @@ and attainment of all three budgets are still outstanding.
 - Final result files: `R3-profile-v2-{gates,trace}.json` under ignored results.
   Task-created symbol HTTP server and port-forward were stopped; all measurement
   browsers closed. No commits were made.
+
+## CPU-per-Worker SMP continuation (2026-11-21/22)
+
+This continuation implements a real experimental multi-hart engine, beyond the
+previous atomic substrate. **Full brief acceptance is still pending**: Linux
+2/4-hart shell and synthetic per-hart JIT differentials pass; kuberoot measurement
+results and the profile-driven changes are recorded below as they are verified.
+No commits; kuberoot checkout remains read-only. Existing `web/vite.config.ts`
+changes predate this continuation and were preserved.
+
+### Shared execution and coherence
+
+- `smp-cpu.worker.ts`: one CPU and one private wasm instance per Worker, operating
+  on a common shared WebAssembly RAM. Registers, CSRs, TLB, compiled functions,
+  and compiler state are per hart. A separate device Engine in Worker 0 owns
+  virtio and PLIC; secondary MMIO uses bounded synchronous shared-mailbox RPC.
+  HTTP disk completion and Ethernet use host event-loop yields.
+- Shared RAM never becomes an aliased Rust `Vec`. Physical fetch/load/store,
+  JIT slow helpers, virtqueue DMA, and LR/SC/AMO route through the shared bus.
+  PTE A/D writes use full-PTE compare/exchange and retry a changed walk.
+  Generated direct RAM accesses see zero private RAM length and take the helper;
+  generated arithmetic executes normally. No unsynchronized JIT memory fast path.
+- Ordinary aligned reads use atomic wasm loads without the writer lock. Subword
+  stores merge under the writer lock. All writers invalidate the conservative
+  LR reservation epoch, including same-value writes and byte DMA. AMOs are
+  indivisible. Code-page generations change on writes and are checked at JIT
+  entry. Shared instruction decoding reads the shared bytes, without a stale
+  private decoded cache. The initial signed-W-read/LWU bug was caught by Linux
+  boot, fixed, and the failing run is not counted as acceptance.
+- SBI HSM start/stop/status, IPI masks/broadcast, and RFENCE requests are connected
+  to the CPUs. An ecall yields before waiting for remote fence completion, so
+  concurrent callers continue servicing incoming fences. Target ACK follows its
+  own TLB/JIT invalidation. RFENCE ranges/ASIDs conservatively flush the target.
+  Per-hart SSTC and eight PLIC contexts support four harts.
+- The ordinary single-hart snapshot format is deliberately rejected for shared
+  CPUs: saving only one hart and an empty private RAM would be corrupt. An
+  all-hart barrier, pending-operation/device state, and shared-RAM snapshot format
+  remain necessary before measuring SMP restore. The standard lesson machine is
+  not silently switched to this experimental engine.
+
+### Measured Linux and trace gates
+
+One headless Chromium instance, sequential runs. Linux uses 256 MiB and the
+existing Alpine initramfs. `initcall_blacklist=jent_mod_init` is an explicit
+experimental cmdline: the jitter-entropy initcall spent prolonged time in SHA3
+under emulation; virtio-rng still receives host cryptographic entropy. This is
+not a TLS/certificate bypass or a change to published kuberoot sources.
+
+| Shared read implementation | Harts | Launch → shell command + online-CPU response |
+|---|---:|---:|
+| Writer lock also taken for reads | 2 | 51.365 s |
+| Writer lock also taken for reads | 4 | 178.923 s |
+| Atomic loads without writer lock | 2 | 20.389 s |
+| Atomic loads without writer lock | 4 | 30.818 s |
+
+Each row is one observation, not a distribution. Both topologies actually report
+`0-1` / `0-3` from `/sys/devices/system/cpu/online` and execute the shell marker.
+The removal of read-lock contention is an engine fix, not a claimed kuberoot
+Ready/get-pods/pod-start improvement.
+
+Per-hart single-instruction JIT differential: **100,000 instructions per hart**,
+**600,000 total** across the 2- and 4-Worker runs, all compiled, exact CPU state and
+scratch-memory comparison after every instruction. Oracle: the ordinary owned-RAM
+interpreter. Scope is a synthetic shared-code/disjoint-data program exercising
+loads/stores/AMO/LR/arithmetic, not a Linux boot trace or concurrent LR/SC oracle.
+SC is omitted from this differential because unrelated hart writes can legally
+invalidate the conservative reservation; separate contention tests cover ABA,
+same-value writes, and SC failure. Full Linux per-hart trace replay remains open.
+
+Compact evidence: `R3-smp-acceptance.json`. Full console/results are retained in
+ignored `web/public/rv64/results/R3-smp-{linux,linux-unlocked-loads,trace}.json`.
+Reproduce sequentially from `web/`:
+
+```sh
+RV64_RESULT_NAME=smp-linux node src/engine/rv64/measure.mjs --smp-linux
+RV64_RESULT_NAME=smp-trace node src/engine/rv64/measure.mjs --smp-trace
+RV64_RESULT_NAME=smp-kuberoot node src/engine/rv64/measure.mjs --smp-kuberoot
+```
+
+### Profile follow-up: instrumentation and source evidence
+
+The sampled row keeps its original nine fields and appends RA, SP, a 32-bit
+validity mask, and 32 resident stack words. Missing words remain explicitly
+invalid. The observer only reads user-readable resident Sv39 mappings; it never
+hydrates snapshot pages, changes A/D, services MMIO, or fills TLBs. Disabled
+profiling still does no stack reads. The bounded capture adds profiling overhead
+and is not to be used for unprofiled performance comparisons.
+
+`rv64-guest-symbols.py` now also exports exact Go pclntab pcsp metadata;
+`rv64-guest-callers.py` follows pcsp-proven return slots (up to eight frames),
+stopping at missing words, stack-switch functions, unknown frame sizes, or a
+cycle. It does not scan arbitrary stack words and label them as callers.
+Observer and unwinder tests cover nonresident pages, U/R permissions, unmodified
+PTEs, multiple caller frames, missing stack windows, and stack switches.
+
+Read-only source inspection found an important restriction on the proposed fix:
+local `k8s.io/klog/v2@v2.140.0/klog.go` calls `runtime.Caller` unconditionally in
+`loggingT.header` before `formatHeader` checks `skipHeaders`. Therefore neither
+`-skip_headers` nor `-logtostderr` alone proves removal of this stack walk. This
+is source evidence, **not call-site sample attribution**. Do not change logging
+on that hypothesis until the sampled caller chain identifies the source. If klog
+is confirmed, suppress the originating verbosity level or change the experimental
+logging implementation before its Caller call, retaining needed diagnostics.
+
+No claim is made yet that TLS reuse/session tickets, certificates, gettext/cache,
+or RAM/GOGC/zram tuning has improved any of the three requested kuberoot metrics.
+Any required kuberoot source patch belongs in a separate experimental build;
+`/Users/tym83/projects/kuberoot` has not been edited.
+
+Additional source evidence: current kuberoot `pkg/pki/pki.go`, `pkg/pki/reissue.go`
+and `cmd/kinit/pki.go` already generate ECDSA P-256 keys, including service-account
+keys. A blind "switch to ECDSA" patch against this checkout would not establish
+that the older guest fixture or every TLS peer changed. The exact control ELF's
+SHA-256 was verified as
+`a87019474b1fdfbc135b35b44074a4b386276f77da19fb0d3ba46ebdb661e41c`;
+its 235,389 Go function records and pcsp data are retained in ignored
+`profile-symbols/control-callers.json.gz`. Transfer was compressed in the pod and
+SHA-256 checked over a loopback port-forward after direct exec transfers truncated.

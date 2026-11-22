@@ -10,6 +10,9 @@ for (const file of ['restore-clock.ts','jit-compiler.ts','jit.ts','compiler.work
 const jitSourceSha256 = sourceHash.digest('hex');
 const label = process.env.RV64_RESULT_NAME;
 if (label && !/^[A-Za-z0-9_-]+$/.test(label)) throw new Error('Invalid result name');
+const smpKuberoot = process.argv.includes('--smp-kuberoot');
+const smpTrace = process.argv.includes('--smp-trace');
+const smpLinux = process.argv.includes('--smp-linux');
 const smp = process.argv.includes('--smp-substrate');
 const trace = process.argv.includes("--jit-trace");
 const gates = process.argv.includes("--jit-gates");
@@ -19,6 +22,7 @@ const boot = process.argv.includes("--boot");
 const jit = process.env.RV64_JIT_THRESHOLD ?? "50";
 const vite = spawn('node', ['node_modules/vite/bin/vite.js', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, VITE_RV64: '1', RV64_MEASURE: '1' } });
 let browser;
+for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, async () => { if (browser) await browser.close(); vite.kill(); process.exit(130); });
 const profile = process.argv.includes("--profile");
 try {
   await new Promise((resolve, reject) => {
@@ -56,7 +60,7 @@ try {
       await route.fulfill({ status: 204 });
     });
   }
-  if (gates || trace || kuberoot) {
+  if (gates || trace || kuberoot || smpLinux || smpKuberoot) {
     const progress = setInterval(async () => { if (kuberoot) console.error('METRICS', JSON.stringify(await page.evaluate(() => globalThis.rv64LatestMetrics).catch(() => null))); const consoleText = await page.locator("#console").textContent().catch(() => "loading"); if (kuberoot && label && consoleText) writeFileSync(`public/rv64/results/${label}-console.txt`, consoleText); console.error(consoleText?.slice(-1500)); }, 30000);
     page.once("close", () => clearInterval(progress));
   }
@@ -80,7 +84,7 @@ try {
     else { start(); await started; }
     stopProfile = async () => { clearTimeout(startTimer); return started ? stop() : { traceEvents: events }; };
   }
-  await page.goto(`http://localhost:${port}/src/engine/rv64/${smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&guestProfile=${Number(process.env.RV64_GUEST_PROFILE_INTERVAL) || 0}&memory=${Number(process.env.RV64_MEMORY_MB) || 768}&jit=${jit}&clock=${process.env.RV64_RESTORE_CLOCK ?? 'elapsed'}${process.env.RV64_MEDIA_MANIFEST ? `&media=${encodeURIComponent(process.env.RV64_MEDIA_MANIFEST)}` : ''}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
+  await page.goto(`http://localhost:${port}/src/engine/rv64/${smpKuberoot ? 'smp-kuberoot' : smpTrace ? 'smp-trace' : smpLinux ? 'smp-linux' : smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&guestProfile=${Number(process.env.RV64_GUEST_PROFILE_INTERVAL) || 0}&memory=${Number(process.env.RV64_MEMORY_MB) || 768}&jit=${jit}&clock=${process.env.RV64_RESTORE_CLOCK ?? 'elapsed'}${process.env.RV64_MEDIA_MANIFEST ? `&media=${encodeURIComponent(process.env.RV64_MEDIA_MANIFEST)}` : ''}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
   let diagnosticTimer;
   if (process.env.RV64_DIAG_FILE) {
     const command = readFileSync(process.env.RV64_DIAG_FILE, 'utf8');
@@ -93,7 +97,7 @@ try {
     page.once('close', () => clearTimeout(diagnosticTimer));
   }
   try {
-    await page.waitForFunction(() => globalThis.rv64Result, undefined, { timeout: Number(process.env.RV64_TIMEOUT_MS) || (gates || trace ? 900000 : kuberoot ? 930000 : boot || integration ? 300000 : 30000) });
+    await page.waitForFunction(() => globalThis.rv64Result, undefined, { timeout: Number(process.env.RV64_TIMEOUT_MS) || (smpKuberoot ? 1830000 : smpTrace ? 250000 : smpLinux ? 1830000 : gates || trace ? 900000 : kuberoot ? 930000 : boot || integration ? 300000 : 30000) });
   } catch (error) {
     console.error(await page.locator('#console').textContent().catch(() => 'No guest console'));
     throw error;
@@ -110,5 +114,5 @@ try {
     const speedup = result.result.busyMips / baseline.result.busyMips;
     if (!(speedup >= 3 && result.result.busyMips >= 250)) throw new Error(`JIT speed gate failed: ${speedup}x, ${result.result.busyMips} busy MIPS`);
   }
-  if (!result.isolated || (smp ? result.result.type !== 'smp-substrate' || !result.result.pass : trace ? result.result.type !== "jit-trace" || !result.result.pass : gates ? result.result.type !== "jit-gates" || !result.result.pass : kuberoot ? result.result.type !== 'kuberoot' : integration ? result.result.type !== 'integration' : boot ? result.result.type !== 'boot' || !result.result.console.includes('Correct operation validated') || result.result.stimecmpWrites <= 0 : result.result.type !== 'smoke' || result.result.value !== '42' || result.result.retired !== 2)) throw new Error('RV64 smoke failed');
+  if (!result.isolated || (smpKuberoot ? result.result.type !== 'smp-kuberoot' || !result.result.pass : smpTrace ? result.result.type !== 'smp-trace' || !result.result.pass : smpLinux ? result.result.type !== 'smp-linux' || !result.result.pass : smp ? result.result.type !== 'smp-substrate' || !result.result.pass : trace ? result.result.type !== "jit-trace" || !result.result.pass : gates ? result.result.type !== "jit-gates" || !result.result.pass : kuberoot ? result.result.type !== 'kuberoot' : integration ? result.result.type !== 'integration' : boot ? result.result.type !== 'boot' || !result.result.console.includes('Correct operation validated') || result.result.stimecmpWrites <= 0 : result.result.type !== 'smoke' || result.result.value !== '42' || result.result.retired !== 2)) throw new Error('RV64 smoke failed');
 } finally { if (browser) await browser.close(); vite.kill(); }
