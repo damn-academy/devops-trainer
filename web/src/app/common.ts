@@ -37,8 +37,47 @@ document.addEventListener?.('keydown', (e) => {
   if (e.key === 'Escape') closeCard();
 });
 document.addEventListener?.('click', (e) => {
-  if (openCard && !(e.target as Element).closest?.('.gloss-card, .term')) closeCard();
+  if (openCard && !(e.target as Element).closest?.('.gloss-card, .term, .tip-btn')) closeCard();
 });
+
+/** Place a floating card under its anchor, clamped to the viewport. */
+function floatCard(anchor: HTMLElement, card: HTMLElement): void {
+  document.body.append(card);
+  const r = anchor.getBoundingClientRect();
+  const w = Math.min(340, window.innerWidth - 32);
+  card.style.width = `${w}px`;
+  card.style.left = `${Math.max(16, Math.min(window.innerWidth - w - 16, r.left + window.scrollX))}px`;
+  card.style.top = `${r.bottom + window.scrollY + 8}px`;
+  openCard = card;
+}
+
+/** A "?" mark that shows the longer explanation on hover, focus or tap. */
+export function infoTip(text: Bi): HTMLElement {
+  const tip = h('span.tip-btn', { tabindex: '0', 'aria-label': t(bi('Подробнее об уровне', 'About this level')) }, '?');
+  let mine: HTMLElement | null = null;
+  const open = () => {
+    closeCard();
+    mine = h('div.gloss-card', { role: 'tooltip' }, h('p', { style: 'margin:0' }, t(text)));
+    floatCard(tip, mine);
+  };
+  const close = () => {
+    if (openCard && openCard === mine) closeCard();
+    mine = null;
+  };
+  tip.addEventListener('pointerenter', open);
+  tip.addEventListener('focusin', open);
+  tip.addEventListener('pointerleave', close);
+  tip.addEventListener('focusout', close);
+  // A tap must not steal focus (the focusin above would open the card and
+  // this click would immediately close it again), so keep focus where it was.
+  tip.addEventListener('pointerdown', (e) => e.preventDefault());
+  tip.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (openCard && openCard === mine) close();
+    else open();
+  });
+  return tip;
+}
 
 /** A glossary link: opens a small card with the term, one sentence and where it was introduced. */
 export function conceptLink(id: string, words?: string): HTMLElement {
@@ -50,21 +89,17 @@ export function conceptLink(id: string, words?: string): HTMLElement {
     closeCard();
     if (!c) return;
     const lesson = registry.lessons.get(c.introducedIn);
-    const card = h(
-      'div.gloss-card',
-      { role: 'dialog', 'aria-label': t(c.term) },
-      h('strong', {}, t(c.term)),
-      h('p', {}, t(c.short)),
-      lesson ? h('a.small', { href: href({ name: 'lesson', id: lesson.id }) }, `${t(bi('Вводится в уроке', 'Introduced in'))}: ${t(lesson.title)}`) : null,
-      c.docRef ? docChip(c.docRef, 'glossary') : null,
+    floatCard(
+      btn,
+      h(
+        'div.gloss-card',
+        { role: 'dialog', 'aria-label': t(c.term) },
+        h('strong', {}, t(c.term)),
+        h('p', {}, t(c.short)),
+        lesson ? h('a.small', { href: href({ name: 'lesson', id: lesson.id }) }, `${t(bi('Вводится в уроке', 'Introduced in'))}: ${t(lesson.title)}`) : null,
+        c.docRef ? docChip(c.docRef, 'glossary') : null,
+      ),
     );
-    document.body.append(card);
-    const r = btn.getBoundingClientRect();
-    const w = Math.min(340, window.innerWidth - 32);
-    card.style.width = `${w}px`;
-    card.style.left = `${Math.max(16, Math.min(window.innerWidth - w - 16, r.left + window.scrollX))}px`;
-    card.style.top = `${r.bottom + window.scrollY + 8}px`;
-    openCard = card;
   });
   return btn;
 }

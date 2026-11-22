@@ -10,6 +10,7 @@ import { href } from '../core/router';
 import { store } from '../core/store';
 import { LEVELS, type Block, type Level } from '../core/types';
 import type { Page } from './common';
+import { infoTip } from './common';
 import { chosenLevel, lessonStatus, remainingShare, setTitle } from './status';
 
 function levelsTable(levels: Record<Level, import('../core/i18n').Bi>, hours: Record<Level, number> | undefined, chosen: Level | undefined): HTMLElement {
@@ -20,8 +21,7 @@ function levelsTable(levels: Record<Level, import('../core/i18n').Bi>, hours: Re
       h(
         'div.level',
         { class: chosen === l ? 'chosen' : undefined },
-        h('dt', {}, t(UI.levels[l]), hours && hours[l] ? h('span.hours', {}, `≈ ${Number(hours[l].toFixed(2))} ${t(UI.hours)}`) : null),
-        h('dd', {}, t(levels[l])),
+        h('dt', {}, t(UI.levels[l]), infoTip(levels[l]), hours && hours[l] ? h('span.hours', {}, `≈ ${Number(hours[l].toFixed(2))} ${t(UI.hours)}`) : null),
       ),
     ),
   );
@@ -36,7 +36,7 @@ function blockItem(b: Block, entry: RouteEntry | undefined): HTMLElement {
   return h(
     'li.route-item',
     { 'data-block': b.id, class: doneN === lessons.length && lessons.length ? 'complete' : started ? 'started' : undefined },
-    h('div.route-mark', { 'aria-hidden': 'true' }, h('span', {}, entry?.segment === 'F' ? t(bi('Вводный', 'Intro')) : entry?.segment ?? String(b.order))),
+    h('div.route-mark', { 'aria-hidden': 'true' }, h('span', {}, entry?.segment === 'F' ? '0' : entry?.segment ?? String(b.order))),
     h(
       'div.route-body',
       {},
@@ -67,7 +67,7 @@ function placeholderItem(e: RouteEntry): HTMLElement {
   return h(
     'li.route-item.placeholder',
     { 'data-block': e.id },
-    h('div.route-mark', { 'aria-hidden': 'true' }, h('span', {}, e.segment === 'F' ? t(bi('Вводный', 'Intro')) : e.segment)),
+    h('div.route-mark', { 'aria-hidden': 'true' }, h('span', {}, e.segment === 'F' ? '0' : e.segment)),
     h(
       'div.route-body',
       {},
