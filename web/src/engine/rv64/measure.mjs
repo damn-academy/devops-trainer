@@ -63,7 +63,7 @@ try {
     });
   }
   if (gates || trace || kuberoot || smpLinux || smpKuberoot) {
-    const progress = setInterval(async () => { if (kuberoot) console.error('METRICS', JSON.stringify(await page.evaluate(() => globalThis.rv64LatestMetrics).catch(() => null))); const consoleText = await page.locator("#console").textContent().catch(() => "loading"); if (kuberoot && label && consoleText) writeFileSync(`public/rv64/results/${label}-console.txt`, consoleText); console.error(consoleText?.slice(-1500)); }, 30000);
+    const progress = setInterval(async () => { if (kuberoot || smpKuberoot) console.error('METRICS', JSON.stringify(await page.evaluate(() => globalThis.rv64LatestMetrics).catch(() => null))); const consoleText = await page.locator("#console").textContent().catch(() => "loading"); if ((kuberoot || smpKuberoot) && label && consoleText) writeFileSync(`public/rv64/results/${label}-console.txt`, consoleText); console.error(consoleText?.slice(-1500)); }, 30000);
     page.once("close", () => clearInterval(progress));
   }
   let stopProfile;
@@ -86,7 +86,7 @@ try {
     else { start(); await started; }
     stopProfile = async () => { clearTimeout(startTimer); return started ? stop() : { traceEvents: events }; };
   }
-  await page.goto(`http://localhost:${port}/src/engine/rv64/${smpKuberoot ? 'smp-kuberoot' : smpSnapshot ? 'smp-snapshot' : smpTraceLinux ? 'smp-trace-linux' : smpTrace ? 'smp-trace' : smpLinux ? 'smp-linux' : smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&guestProfile=${Number(process.env.RV64_GUEST_PROFILE_INTERVAL) || 0}&memory=${Number(process.env.RV64_MEMORY_MB) || 768}&jit=${jit}&clock=${process.env.RV64_RESTORE_CLOCK ?? 'elapsed'}${process.env.RV64_MEDIA_MANIFEST ? `&media=${encodeURIComponent(process.env.RV64_MEDIA_MANIFEST)}` : ''}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
+  await page.goto(`http://localhost:${port}/src/engine/rv64/${smpKuberoot ? 'smp-kuberoot' : smpSnapshot ? 'smp-snapshot' : smpTraceLinux ? 'smp-trace-linux' : smpTrace ? 'smp-trace' : smpLinux ? 'smp-linux' : smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot || smpKuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&guestProfile=${Number(process.env.RV64_GUEST_PROFILE_INTERVAL) || 0}&memory=${Number(process.env.RV64_MEMORY_MB) || 768}&jit=${jit}&clock=${process.env.RV64_RESTORE_CLOCK ?? 'elapsed'}${process.env.RV64_MEDIA_MANIFEST ? `&media=${encodeURIComponent(process.env.RV64_MEDIA_MANIFEST)}` : ''}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
   let diagnosticTimer;
   if (process.env.RV64_DIAG_FILE) {
     const command = readFileSync(process.env.RV64_DIAG_FILE, 'utf8');

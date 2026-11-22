@@ -137,6 +137,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
           if (restore.blob) core.smp_restore(restore.blob);
           if (device && restore.deviceBlob) device.smp_restore(restore.deviceBlob);
           restore = undefined;
+          ram.clearReservation();
           freshJit();
         }
         Atomics.store(snap, 2 + d.hart, 0);
