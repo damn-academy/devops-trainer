@@ -131,11 +131,20 @@ Runs: `npm run test:e2e:v86` (browser), `V86_LAB=1`, `V86_TF=1`, `V86_CLOUDLAB=1
 4. **Technical labels in English in Russian mode.** Ethernet, IP and TCP header fields (`Destination MAC`, `TTL`…), columns like `READY` and command names are deliberately left in English, as in Wireshark and kubectl.
 5. **Packet label at the target.** On the last segment of an edge, a packet's label may touch the frame of the node it is travelling to. Static labels are not affected.
 6. **The Kubernetes constructor on a phone** scrolls sideways inside its frame. Dragging blocks there is awkward; the "tap a block → tap a block" buttons work.
-7. **v86 has been tested** only in headless Chrome and Node. It has not been tested on real Safari and iOS.
+7. **v86 has been tested** only in headless Chrome and Node. It has not been tested on real Safari and iOS; a manual checklist is at the end of the file.
 8. **The Monitoring sandbox is thinner than the others:** 10 terminal tasks; the rest of the practice happens in the PromQL and logs workbenches.
-9. **A workaround in the k8s-3 tests.** The tests for the `k8s-3.nodes` lab write the inventory from state directly, because `terraform output -raw` used not to work. It works now, and the tests can be switched to the real command.
-10. **The browser is slower than Node.** The 512 MB cloud workstation took 119 s to boot in Chromium against 32–38 s in Node, and the two Networks machines 74–101 s (the Mac was busy with parallel jobs); after the first boot the snapshot helps — 12 s for two machines.
-11. **The Linux block chunk is 703 KB**, just over the 700 KB warning limit: the lab data (`reallab/labs.ts`) ends up in the chunk together with the lessons.
+9. **The browser is slower than Node.** The 512 MB cloud workstation took 119 s to boot in Chromium against 32–38 s in Node, and the two Networks machines 74–101 s (the Mac was busy with parallel jobs); after the first boot the snapshot helps — 12 s for two machines.
+
+## Manual checklist for Safari and iOS
+
+The course engine and v86 are tested automatically only in Chromium and Node. Until this checklist is walked through on real hardware, Safari and iOS do not count as verified. You need Safari on macOS and an iPhone or iPad with Safari; about 20 minutes.
+
+1. Open the course, switch to Russian: the home page renders without console errors and the service worker registers.
+2. Walk a lesson with a terminal (`linux.terminal`): the terminal answers and the step check fires.
+3. Open the v86 lab (the `#/lab/linux-disk` page or a lesson with the lab widget): the machine boots to a shell and the boot snapshot restores. The console must show no `SharedArrayBuffer` or origin-isolation errors (Safari has supported COOP/COEP since 15.2, but the server must send the headers to Safari too).
+4. Open an explainer (`net.ip` or `containers.orchestration`): the diagram animates and the steps advance.
+5. On iOS repeat steps 1–3; one v86 machine should fit the device's memory.
+6. Record the OS and Safari versions, the machine boot time and the console errors (Web Inspector; on iOS via a connected Mac, or repeat the steps in Safari with an iPhone emulation).
 
 ## Backlog
 
