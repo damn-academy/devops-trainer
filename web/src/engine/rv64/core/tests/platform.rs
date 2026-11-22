@@ -584,6 +584,8 @@ fn smp_device_tree_has_unique_harts_and_interrupt_contexts() {
             props[key].chunks_exact(4).map(|b| u32::from_be_bytes(b.try_into().unwrap())).collect()
         };
         assert_eq!(cells("/cpus/timebase-frequency"), [10_000_000]);
+        if harts > 1 { assert_eq!(props["/soc/clint@2000000/status"], b"disabled\0"); }
+        else { assert!(!props.contains_key("/soc/clint@2000000/status")); }
         for hart in 0..harts {
             assert_eq!(cells(&format!("/cpus/cpu@{hart:x}/reg")), [hart]);
             assert_eq!(cells(&format!("/cpus/cpu@{hart:x}/interrupt-controller/phandle")), [hart + 1]);

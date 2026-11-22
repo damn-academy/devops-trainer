@@ -42,6 +42,10 @@ pub struct Devices {
     enable: [u32; 2],
     threshold: [u32; 2],
     claimed: u32,
+    #[serde(skip)]
+    extra_enable: [u32; 6],
+    #[serde(skip)]
+    extra_threshold: [u32; 6],
     pub console: Vec<u8>,
     pub input: VecDeque<u8>,
     pub entropy: VecDeque<u8>,
@@ -68,6 +72,8 @@ impl Default for Devices {
             enable: [0; 2],
             threshold: [0; 2],
             claimed: 0,
+            extra_enable: [0; 6],
+            extra_threshold: [0; 6],
             console: vec![],
             input: VecDeque::new(),
             entropy: VecDeque::new(),
@@ -115,8 +121,15 @@ impl Devices {
             .fold(0, |p, (i, d)| p | if d.irq != 0 { 1 << (i + 1) } else { 0 })
             & !self.claimed
     }
+    fn enabled(&self, ctx: usize) -> u32 { if ctx < 2 { self.enable[ctx] } else { self.extra_enable[ctx - 2] } }
+    fn limit(&self, ctx: usize) -> u32 { if ctx < 2 { self.threshold[ctx] } else { self.extra_threshold[ctx - 2] } }
+    pub fn hart_interrupts(&self, hart: usize) -> u64 {
+        if hart >= 4 { return 0; }
+        ((self.best(hart * 2, self.limit(hart * 2)) != 0) as u64) << 11 |
+        ((self.best(hart * 2 + 1, self.limit(hart * 2 + 1)) != 0) as u64) << 9
+    }
     fn best(&self, ctx: usize, threshold: u32) -> u32 {
-        let p = self.pending() & self.enable[ctx];
+        let p = self.pending() & self.enabled(ctx);
         let mut best = 0;
         let mut priority = threshold;
         for i in 1..32 {
@@ -140,7 +153,9 @@ impl Devices {
                 0x2080 => self.enable[1],
                 0x200000 => self.threshold[0],
                 0x201000 => self.threshold[1],
-                0x200004 | 0x201004 => {
+                0x2100..=0x2380 if off % 128 == 0 => self.extra_enable[((off - 0x2100) / 128) as usize],
+                0x202000..=0x207000 if off % 4096 == 0 => self.extra_threshold[((off - 0x202000) / 4096) as usize],
+                0x200004..=0x207004 if off % 4096 == 4 => {
                     let v = self.best(((off - 0x200004) / 4096) as usize, 0);
                     if v != 0 {
                         self.claimed |= 1 << v;
@@ -194,9 +209,11 @@ impl Devices {
                 0x2080 => self.enable[1] = v,
                 0x200000 => self.threshold[0] = v & 7,
                 0x201000 => self.threshold[1] = v & 7,
-                0x200004 | 0x201004 if v < 32 => {
+                0x2100..=0x2380 if off % 128 == 0 => self.extra_enable[((off - 0x2100) / 128) as usize] = v,
+                0x202000..=0x207000 if off % 4096 == 0 => self.extra_threshold[((off - 0x202000) / 4096) as usize] = v & 7,
+                0x200004..=0x207004 if off % 4096 == 4 && v < 32 => {
                     let ctx = ((off - 0x200004) / 4096) as usize;
-                    if self.enable[ctx] & (1 << v) != 0 { self.claimed &= !(1 << v); }
+                    if self.enabled(ctx) & (1 << v) != 0 { self.claimed &= !(1 << v); }
                 }
                 _ => {}
             }

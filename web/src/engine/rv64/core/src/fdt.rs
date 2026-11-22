@@ -1,5 +1,4 @@
-//! Flattened device tree writer. Multi-hart topology is preparatory: the current
-//! Engine still calls build(), which advertises exactly one runnable hart.
+//! Flattened device tree writer for the single-hart and experimental SMP engines.
 use crate::RAM_BASE;
 struct Fdt {
     structure: Vec<u8>,
@@ -116,6 +115,9 @@ pub fn build_harts(ram_size: u64, initrd_start: u64, initrd_len: u64, cmdline: &
     f.prop("ranges", &[]);
     f.begin("clint@2000000");
     f.text("compatible", "riscv,clint0");
+    // SMP timers/IPIs are supplied by SBI/SSTC; the legacy MMIO CLINT is
+    // single-hart only. Do not advertise a usable multi-hart MMIO device.
+    if harts > 1 { f.text("status", "disabled"); }
     f.num("reg", &[0, 0x02000000, 0, 0x10000]);
     let clint: Vec<u32> = (1..=harts).flat_map(|h| [h, 3, h, 7]).collect();
     f.num("interrupts-extended", &clint);
