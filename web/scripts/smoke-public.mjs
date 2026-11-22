@@ -4,10 +4,10 @@
 // lab booted from the snapshot, the in-tab cloud lab, and a feedback report
 // stored by the service and visible in the admin UI.
 //
-//   DT_URL=https://devops-trainer.sankofa.workshop.aenix.io ADMIN_TOKEN=... node scripts/smoke-public.mjs
+//   DT_URL=https://damn.academy ADMIN_TOKEN=... node scripts/smoke-public.mjs
 import { chromium, expect } from '@playwright/test';
 
-const base = (process.env.DT_URL ?? 'https://devops-trainer.sankofa.workshop.aenix.io').replace(/\/$/, '') + '/';
+const base = (process.env.DT_URL ?? 'https://damn.academy').replace(/\/$/, '') + '/';
 const token = process.env.ADMIN_TOKEN;
 const results = [];
 const browser = await chromium.launch({ headless: true });
