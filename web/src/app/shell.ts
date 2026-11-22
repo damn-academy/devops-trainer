@@ -127,7 +127,18 @@ export function startApp(root: HTMLElement): void {
         h('a', { href: href({ name: 'about', page: 'contribute' }) }, t(bi('Как поучаствовать', 'Contributing'))),
       ),
     );
-    footer.append(h('button.btn.ghost', { type: 'button', onclick: () => window.dispatchEvent(new Event('feedback-contact')) }, t(bi('Написать автору', 'Contact the author'))));
+    const exportBtn = h('button.btn.ghost', { type: 'button' }, icon('download'), t(UI.export));
+    exportBtn.addEventListener('click', async () => {
+      downloadFile(`devops-trainer-progress-${new Date().toISOString().slice(0, 10)}.json`, await exportWithFeedback(store.exportJSON()));
+    });
+    footer.append(
+      h(
+        'div.foot-actions',
+        {},
+        exportBtn,
+        h('button.btn.ghost', { type: 'button', onclick: () => window.dispatchEvent(new Event('feedback-contact')) }, t(bi('Написать автору', 'Contact the author'))),
+      ),
+    );
     window.dispatchEvent(new Event('feedback-page'));
     if (!keepScroll) window.scrollTo({ top: 0 });
   };
