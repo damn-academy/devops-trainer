@@ -91,7 +91,6 @@
 .ex-intro-text { flex: 1 1 340px; max-width: var(--measure); }
 .ex-intro-text p { margin: 0; }
 .ex-intro-text p + p { margin-top: 6px; }
-.ex-intro-go { flex: none; display: inline-flex; align-items: center; gap: 6px; }
 .ex-intro:has(details) { padding: 0; border: 0; background: none; margin: 0 0 8px; }
 .ex-intro-more summary { cursor: pointer; font: 500 0.85rem var(--font-ui); color: var(--ink-2); }
 .ex-intro-more p { margin: 6px 0 0; max-width: var(--measure); }

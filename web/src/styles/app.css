@@ -79,7 +79,6 @@
 .level-card:hover { border-color: var(--ink-2); }
 .level-card[aria-checked='true'] { border-color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
 .level-name { font-weight: 650; }
-.level-desc { font-size: 0.9rem; color: var(--ink-2); }
 @media (max-width: 720px) { .level-chooser { grid-template-columns: 1fr; } }
 .placement-entry { margin: 20px 0; padding: 16px; border: 1px dashed var(--line-2); border-radius: var(--r-lg); max-width: 900px; }
 .lesson-list { list-style: none; padding: 0; max-width: 860px; }

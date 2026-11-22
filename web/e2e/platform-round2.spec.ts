@@ -9,9 +9,6 @@ test('first step, labelled controls and phone diagram fit', async ({ page }) => 
   await page.locator('.explainer-list a').first().click();
   const ex = page.locator('.explainer').first();
   await expect(ex.locator('.ex-counter')).toContainText('Шаг 1 /');
-  const start = ex.getByRole('button', { name: 'Начать с первого шага' });
-  if (await start.isVisible()) await start.click();
-  await expect(ex.locator('.ex-counter')).toContainText('Шаг 1 /');
   await expect(ex.getByRole('button', { name: 'Шаг вперёд', exact: true })).toContainText('Шаг вперёд');
   await ex.getByRole('button', { name: 'Шаг вперёд', exact: true }).click();
   await expect(ex.locator('.ex-counter')).toContainText('Шаг 2 /');
