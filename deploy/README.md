@@ -2,7 +2,7 @@
 
 The course and the feedback service run on the Sankofa stand (the `museum`
 cluster in the workshop Cozystack) at
-<https://devops-trainer.sankofa.workshop.aenix.io>.
+<https://damn.academy>.
 
 | Path | Served by |
 |---|---|
@@ -30,8 +30,12 @@ The public host also has to be listed in the outer ingress of the stand: the
 workshop cluster lets through only the hosts in
 `spec.addons.ingressNginx.hosts` of the Cozystack application
 `kubernetes.apps.cozystack.io/museum` (namespace `tenant-sankofa`, kubeconfig
-`~/workshop.txt`, context `admin@workshop`). `devops-trainer.sankofa.workshop.aenix.io`
-was added there once, next to `dormer.sankofa.workshop.aenix.io`. Without it the
+`~/workshop.txt`, context `admin@workshop`). `damn.academy` and `www.damn.academy` were added there, next to
+`dormer.sankofa.workshop.aenix.io`. DNS for `damn.academy` (GoDaddy) points the
+apex `A` record at the workshop ingress, `95.217.172.133`, and `www` is a `CNAME`
+to the apex; `www` and the old stand address
+`devops-trainer.sankofa.workshop.aenix.io` permanently redirect to
+`https://damn.academy`. Without the hosts entry the
 host answers `default backend - 404` and cert-manager cannot pass HTTP-01.
 
 ## Redeploy
@@ -88,7 +92,7 @@ PVC.
 
 ## Admin UI
 
-Open <https://devops-trainer.sankofa.workshop.aenix.io/admin>. User name
+Open <https://damn.academy/admin>. User name
 `token`, password: the admin token from the Secret, which `deploy.sh`
 generates once and never prints:
 
@@ -132,7 +136,7 @@ The service image has no shell or `cat`; export through the admin API:
 ```sh
 token=$(km -n devops-trainer get secret feedback-secrets -o jsonpath='{.data.ADMIN_TOKEN}' | base64 -d)
 curl -fsS -H "Authorization: Bearer $token" \
-  'https://devops-trainer.sankofa.workshop.aenix.io/admin/export?format=jsonl' > feedback.jsonl
+  'https://damn.academy/admin/export?format=jsonl' > feedback.jsonl
 ```
 
 ## Delete everything

@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 repo=$PWD
 source "${SANKOFA_ROOT:-$HOME/projects/sankofa-int}/hack/stand/env.sh"
-DT_HOST=${DT_HOST:-devops-trainer.sankofa.workshop.aenix.io}
+DT_HOST=${DT_HOST:-damn.academy}
 GIT_URL=${GIT_URL:-https://github.com/tym83/devops-trainer}
 ns=devops-trainer
 sha=$(git rev-parse HEAD)

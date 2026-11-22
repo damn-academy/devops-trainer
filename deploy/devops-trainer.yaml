@@ -121,11 +121,12 @@ metadata:
   annotations:
     # Same ClusterIssuer as the Sankofa museum and dormer ingresses.
     cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:
-    - hosts: [DT_HOST]
-      secretName: devops-trainer-tls
+    - hosts: [DT_HOST, www.DT_HOST]
+      secretName: web-tls
   rules:
     - host: DT_HOST
       http:
@@ -145,10 +146,30 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts: [DT_HOST]
-      secretName: devops-trainer-tls
+      secretName: web-tls
   rules:
     - host: DT_HOST
       http:
         paths:
           - {path: /api/feedback, pathType: Prefix, backend: {service: {name: feedback, port: {name: http}}}}
           - {path: /admin, pathType: Prefix, backend: {service: {name: feedback, port: {name: http}}}}
+---
+# The first testers got the stand address; keep their links working.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: legacy-host
+  namespace: devops-trainer
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/permanent-redirect: https://DT_HOST$request_uri
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [devops-trainer.sankofa.workshop.aenix.io]
+      secretName: devops-trainer-tls
+  rules:
+    - host: devops-trainer.sankofa.workshop.aenix.io
+      http:
+        paths:
+          - {path: /, pathType: Prefix, backend: {service: {name: web, port: {name: http}}}}

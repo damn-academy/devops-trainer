@@ -2,7 +2,7 @@
 
 Курс и сервис отзывов работают на стенде Sankofa (кластер `museum` в
 Cozystack воркшопов) по адресу
-<https://devops-trainer.sankofa.workshop.aenix.io>.
+<https://damn.academy>.
 
 | Путь | Кто отвечает |
 |---|---|
@@ -31,8 +31,11 @@ nginx отдаёт на каждый ответ `Cross-Origin-Opener-Policy: sam
 пропускает только хосты из `spec.addons.ingressNginx.hosts` приложения Cozystack
 `kubernetes.apps.cozystack.io/museum` (пространство имён `tenant-sankofa`,
 kubeconfig `~/workshop.txt`, контекст `admin@workshop`).
-`devops-trainer.sankofa.workshop.aenix.io` добавлен туда один раз, рядом с
-`dormer.sankofa.workshop.aenix.io`. Без этого хост отвечает
+`damn.academy` и `www.damn.academy` добавлены туда рядом с
+`dormer.sankofa.workshop.aenix.io`. В DNS `damn.academy` (GoDaddy) запись `A`
+для корня смотрит на ingress воркшопов, `95.217.172.133`, а `www` — `CNAME` на
+корень; `www` и старый адрес стенда `devops-trainer.sankofa.workshop.aenix.io`
+навсегда перенаправляются на `https://damn.academy`. Без записи в hosts хост отвечает
 `default backend - 404`, и cert-manager не проходит проверку HTTP-01.
 
 ## Выкатить заново
@@ -87,7 +90,7 @@ SQLite лежит в `/var/local/devops-trainer/feedback` на одном узл
 
 ## Панель отзывов
 
-Откройте <https://devops-trainer.sankofa.workshop.aenix.io/admin>. Имя
+Откройте <https://damn.academy/admin>. Имя
 пользователя — `token`, пароль — токен администратора из Secret. `deploy.sh`
 создаёт его один раз и нигде не печатает. Прочитать токен:
 
@@ -131,7 +134,7 @@ km -n devops-trainer rollout undo deploy/feedback            # предыдущ�
 ```sh
 token=$(km -n devops-trainer get secret feedback-secrets -o jsonpath='{.data.ADMIN_TOKEN}' | base64 -d)
 curl -fsS -H "Authorization: Bearer $token" \
-  'https://devops-trainer.sankofa.workshop.aenix.io/admin/export?format=jsonl' > feedback.jsonl
+  'https://damn.academy/admin/export?format=jsonl' > feedback.jsonl
 ```
 
 ## Удалить всё
