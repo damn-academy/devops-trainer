@@ -49,7 +49,8 @@
 .ex-mdeltas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .ex-mdelta { font: 500 0.8rem/1 var(--font-mono); padding: 4px 6px; border-radius: 4px; border: 1px solid var(--line-2); }
 
-.ex-caption { font-family: var(--font-text); font-size: 1.1rem; min-height: 1.6em; margin: 10px 0 4px; max-width: var(--measure); }
+/* The step caption is a live region of the player, not prose: it sits in a framed strip under the stage. */
+.ex-caption { font-family: var(--font-text); font-size: 1.02rem; min-height: 1.6em; margin: 10px 0 4px; padding: 10px 14px; border: 1px solid var(--line); border-left: 3px solid var(--focus); border-radius: var(--r); background: var(--bg-2); }
 .ex-caption p { margin: 0; }
 .ex-broken { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--r); background: var(--c-err-bg); margin: 8px 0; font-size: 0.94rem; }
 .ex-broken[hidden] { display: none; }

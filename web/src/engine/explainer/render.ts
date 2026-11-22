@@ -36,7 +36,6 @@ const L = {
   cardDoc: bi('Где написано', 'Where it is written'),
   stoppedAt: bi('Остановилось', 'Stopped'),
   howTo: bi('Как пользоваться схемой', 'How to use the diagram'),
-  start: bi('Начать с первого шага', 'Start from the first step'),
   legend: bi('Как читать схему', 'How to read the diagram'),
   speed: bi('Скорость', 'Speed'),
   hintClick: bi('Нажмите на любой элемент схемы, и появится карточка с его объяснением.', 'Click any element of the diagram to open a card that explains it.'),
@@ -73,7 +72,6 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   let steps: Step[] = model.run(params, broken);
   let idx = 0;
   let maxSeen = -1;
-  let introStarted = false;
   let completed = false;
   let playing = 0;
   let speed = 1;
@@ -759,17 +757,13 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   /** "How to use" before the first step; afterwards it folds into a details line. */
   function drawIntro() {
     if (!introBox || !model.intro) return;
-    const fresh = maxSeen <= 0 && !introStarted;
+    const fresh = maxSeen <= 0;
     fwdBtn.classList.toggle('ex-cue', fresh);
     if (introBox.dataset.fresh === String(fresh)) return;
     introBox.dataset.fresh = String(fresh);
     clear(introBox);
     if (fresh) {
-      put(
-        introBox,
-        h('div.ex-intro-text', {}, renderMd(t(model.intro))),
-        h('button.btn.primary.ex-intro-go', { type: 'button', onclick: () => { introStarted = true; go(0, false); } }, t(L.start), ' ', icon('next')),
-      );
+      put(introBox, h('div.ex-intro-text', {}, renderMd(t(model.intro))));
     } else put(introBox, h('details.ex-intro-more', {}, h('summary', {}, t(L.howTo)), renderMd(t(model.intro))));
   }
 
