@@ -1,0 +1,1 @@
+I1122 01:10:35.040135      67 setters.go:552] "Node became not ready" node="kuberoot-3d2fa0" condition={"type":"Ready","status":"False","lastHeartbeatTime":"2026-11-22T01:10:35Z","lastTransitionTime":"2026-11-22T01:10:35Z","reason":"KubeletNotReady","message":"PLEG is not healthy: pleg was last seen active 9m58.3405001s ago; threshold is 3m0s"}

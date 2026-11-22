@@ -6,7 +6,7 @@ import { chromium } from '@playwright/test';
 const port = 5198;
 const wasmSha256 = createHash('sha256').update(readFileSync('public/rv64/rv64_core_bg.wasm')).digest('hex');
 const sourceHash = createHash('sha256');
-for (const file of ['jit-compiler.ts','jit.ts','compiler.worker.ts','worker.ts','snapshot.ts','paged-snapshot.ts','snapshot-pager.ts','snapshot-loader.worker.ts']) sourceHash.update(file).update(readFileSync(`src/engine/rv64/${file}`));
+for (const file of ['restore-clock.ts','jit-compiler.ts','jit.ts','compiler.worker.ts','worker.ts','snapshot.ts','paged-snapshot.ts','snapshot-pager.ts','snapshot-loader.worker.ts']) sourceHash.update(file).update(readFileSync(`src/engine/rv64/${file}`));
 const jitSourceSha256 = sourceHash.digest('hex');
 const label = process.env.RV64_RESULT_NAME;
 if (label && !/^[A-Za-z0-9_-]+$/.test(label)) throw new Error('Invalid result name');
@@ -17,7 +17,7 @@ const integration = process.argv.includes("--integration");
 const kuberoot = process.argv.includes('--kuberoot');
 const boot = process.argv.includes("--boot");
 const jit = process.env.RV64_JIT_THRESHOLD ?? "50";
-const vite = spawn('node', ['node_modules/vite/bin/vite.js', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, VITE_RV64: '1' } });
+const vite = spawn('node', ['node_modules/vite/bin/vite.js', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, VITE_RV64: '1', RV64_MEASURE: '1' } });
 let browser;
 const profile = process.argv.includes("--profile");
 try {
@@ -30,7 +30,9 @@ try {
   if (integration) { mkdirSync('public/rv64', { recursive: true }); writeFileSync('public/rv64/integration-disk.bin', new Uint8Array(512).fill(90)); }
   const page = await browser.newPage();
   if (process.env.RV64_SNAPSHOT_CAPTURE === '1' || integration) {
-    const destination = `public/rv64/snapshots/${integration ? 'integration' : 'kuberoot'}`;
+    const snapshotName = integration ? 'integration' : process.env.RV64_SNAPSHOT_NAME ?? 'kuberoot';
+    if (!/^[A-Za-z0-9_-]+$/.test(snapshotName)) throw new Error('Invalid snapshot name');
+    const destination = `public/rv64/snapshots/${snapshotName}`;
     mkdirSync(destination, { recursive: true });
     await page.route('**/snapshot-upload/*', async route => {
       const name = new URL(route.request().url()).pathname.split('/').pop();
@@ -74,7 +76,18 @@ try {
     else { start(); await started; }
     stopProfile = async () => { clearTimeout(startTimer); return started ? stop() : { traceEvents: events }; };
   }
-  await page.goto(`http://localhost:${port}/src/engine/rv64/${smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&jit=${jit}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
+  await page.goto(`http://localhost:${port}/src/engine/rv64/${smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&memory=${Number(process.env.RV64_MEMORY_MB) || 768}&jit=${jit}&clock=${process.env.RV64_RESTORE_CLOCK ?? 'elapsed'}${process.env.RV64_MEDIA_MANIFEST ? `&media=${encodeURIComponent(process.env.RV64_MEDIA_MANIFEST)}` : ''}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
+  let diagnosticTimer;
+  if (process.env.RV64_DIAG_FILE) {
+    const command = readFileSync(process.env.RV64_DIAG_FILE, 'utf8');
+    diagnosticTimer = setTimeout(async () => {
+      try {
+        const diagnostic = await page.evaluate(command => globalThis.rv64Machine.exec(command), command);
+        writeFileSync(`public/rv64/results/${label ?? 'kuberoot'}-diagnostic.json`, JSON.stringify(diagnostic, null, 2));
+      } catch (error) { console.error('DIAGNOSTIC', String(error)); }
+    }, Number(process.env.RV64_DIAG_DELAY_MS) || 900000);
+    page.once('close', () => clearTimeout(diagnosticTimer));
+  }
   try {
     await page.waitForFunction(() => globalThis.rv64Result, undefined, { timeout: Number(process.env.RV64_TIMEOUT_MS) || (gates || trace ? 900000 : kuberoot ? 930000 : boot || integration ? 300000 : 30000) });
   } catch (error) {

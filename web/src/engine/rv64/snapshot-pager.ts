@@ -5,6 +5,8 @@ export class SnapshotPager {
   private mailbox = new SharedArrayBuffer(16 + RAM_CHUNK);
   private words = new Int32Array(this.mailbox, 0, 4);
   private buffer = new Uint8Array(this.mailbox, 16);
+  private trace: { index: number; startMs: number; durationMs: number }[] = [];
+  drainTrace() { return this.trace.splice(0); }
   faults = 0;
   faultMs = 0;
   constructor(private manifest: PagedManifest, private url: string) {
@@ -12,9 +14,11 @@ export class SnapshotPager {
   }
   async start(): Promise<void> {
     await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Snapshot loader startup timeout')), 30000);
+      // A hot pack is one large transfer, unlike a single 256-KiB demand fault.
+      const timer = setTimeout(() => reject(new Error('Snapshot loader startup timeout')), this.manifest.hot ? 120000 : 30000);
       this.loader.onerror = event => { clearTimeout(timer); reject(new Error(event.message)); };
       this.loader.onmessage = ({ data }) => {
+        if (data.error) { clearTimeout(timer); reject(new Error(data.error)); }
         if (data.ready) { clearTimeout(timer); resolve(); }
       };
       this.loader.postMessage({ manifest: this.manifest, url: this.url, mailbox: this.mailbox });
@@ -32,7 +36,9 @@ export class SnapshotPager {
       }
       if (Atomics.load(this.words, 0) !== 1) throw new Error(`Snapshot page ${index} could not be loaded`);
       page.set(this.buffer);
-      this.faults++; this.faultMs += performance.now() - start;
+      const durationMs = performance.now() - start;
+      this.trace.push({ index, startMs: start, durationMs });
+      this.faults++; this.faultMs += durationMs;
     } });
   }
   dispose(): void { this.loader.terminate(); }

@@ -42,11 +42,11 @@ spec:
         requests:
           cpu: 500m
           memory: 2Gi
-          ephemeral-storage: 100Mi
+          ephemeral-storage: 1Gi
         limits:
           cpu: '4'
           memory: 8Gi
-          ephemeral-storage: 2Gi
+          ephemeral-storage: 8Gi
       volumeMounts:
         - {name: work, mountPath: /work}
   volumes:

@@ -1,3 +1,4 @@
+import { restoreTimeOffset } from './restore-clock';
 import { savePagedSnapshot } from './paged-snapshot';
 import { SnapshotPager } from './snapshot-pager';
 import { sha256, diskIdentity, sameDiskIdentity } from './snapshot';
@@ -48,7 +49,7 @@ interface Core {
 interface Init {
   input: SharedArrayBuffer; output: SharedArrayBuffer; control: SharedArrayBuffer;
   netIn?: SharedArrayBuffer; netOut?: SharedArrayBuffer; disk?: ArrayBuffer;
-  kernel?: ArrayBuffer; initrd?: ArrayBuffer; program?: ArrayBuffer; cmdline?: string; memoryMB: number; snapshot?: RV64Snapshot; snapshotURL?: string; jitThreshold?: number; mac?: Uint8Array; httpDisk?: HTTPDisk;
+  kernel?: ArrayBuffer; initrd?: ArrayBuffer; program?: ArrayBuffer; cmdline?: string; memoryMB: number; snapshot?: RV64Snapshot; snapshotURL?: string; restoreClock?: 'elapsed' | 'continuous'; jitThreshold?: number; mac?: Uint8Array; httpDisk?: HTTPDisk;
 }
 self.onmessage = async ({ data }: MessageEvent<Init>) => {
   self.onmessage = null;
@@ -92,10 +93,10 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
     const netOut = data.netOut ? new FrameRing(new ByteRing(data.netOut)) : undefined;
     const entropy = new Uint8Array(4096);
     let entropyAt = -Infinity;
-    // Advance guest time by real suspension duration. Cpu::time consumes host
-    // deltas, preserving any guest mtime writes. Old in-memory checkpoints keep
-    // their historical frozen-clock semantics when no timestamp is present.
-    const restoredOffset = (capturedAt?: number) => core.ticks() + Math.max(0, Date.now() - (capturedAt ?? Date.now())) * 10000 - performance.now() * 10000;
+    // Legacy default advances suspension time; the explicit continuous policy
+    // resumes saved guest time without expiring leases/timers during suspension.
+    const restoredOffset = (capturedAt?: number) => restoreTimeOffset(core.ticks(), capturedAt,
+      data.restoreClock ?? 'elapsed', Date.now(), performance.now());
     let timeOffset = data.snapshot ? restoredOffset(data.snapshot.capturedAt) : 0;
     let busyMicros = 0;
     let waitMs = 0, diskMs = 0, compilerYieldMs = 0, metricsAt = 0;
@@ -119,8 +120,8 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
       if (performance.now() - metricsAt >= 1000) {
         metricsAt = performance.now();
         self.postMessage({ type: 'metrics', metrics: { elapsedMs: metricsAt - startedAt,
-          snapshotFaults: pager?.faults ?? 0, snapshotFaultMs: pager?.faultMs ?? 0,
-          hostMonotonicMs: metricsAt, hostTicks: core.ticks(), guestTicks: core.guest_ticks(), timebaseHz: 10_000_000,
+          restoreClock: data.restoreClock ?? 'elapsed', snapshotFaultTrace: pager?.drainTrace() ?? [], snapshotFaults: pager?.faults ?? 0, snapshotFaultMs: pager?.faultMs ?? 0,
+          hostMonotonicMs: metricsAt, hostTickOffset: timeOffset, hostTicks: core.ticks(), guestTicks: core.guest_ticks(), timebaseHz: 10_000_000,
           retired: core.retired(), retiredSinceStart: core.retired() - initialRetired, jitRetired: core.jit_retired(), busyMilliseconds: busyMicros / 1000,
           waitMs, diskMs, diskActiveMs: diskActiveMs + (diskTasks.size ? performance.now() - diskActiveStart : 0), diskPending: diskTasks.size, compilerYieldMs, compiler: jit.stats(), counters: JSON.parse(core.metrics()) } });
       }

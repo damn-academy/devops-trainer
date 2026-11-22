@@ -13,7 +13,7 @@ tests are allowed. Always specify the context **after** the kubectl subcommand.
 
 Preflight on 2026-11-21: ResourceQuota had 850m CPU request headroom;
 no PVC/storage quota. Existing filesystem PVC uses `replicated`.
-Pod requests 500m/2Gi, limits 4 CPU/8Gi, root ephemeral limit 2Gi.
+Pod requests 500m/2Gi, limits 4 CPU/8Gi, root ephemeral limit originally 2Gi (raised to 8Gi for the R3 image workspace).
 Cargo registry, targets, source, rustup (including wasm target), tool builds,
 APT cache and temporary files all live on the PVC. APT-installed binaries
 live in the container root; check its usage after installation.
@@ -58,7 +58,7 @@ kubectl delete pvc rv64-dev-work --context admin@workshop -n tenant-kuberoot
 
 Pod and PVC created. Bootstrap/build/test results are recorded in `R1-LOG.md`.
 Final checkpoint: Running, zero restarts, PVC 9.3Gi used / 15Gi provisioned.
-`df /` describes the node-backed overlay capacity, not the 2Gi container
+`df /` describes the node-backed overlay capacity, not the configured container
 ephemeral-storage allowance; do not use that capacity as permission to fill it.
 
 ## Repeat verification in the existing pod
@@ -155,3 +155,8 @@ kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs
 kuberoot.mode=install kuberoot.dev kuberoot.verbose`. It reaches stage-two kinit;
 the standalone runner has no DHCP peer, so it cannot provision a node. Its shell
 marker is intentionally not a valid acceptance criterion for kinit.
+
+R3 restore continuation: ephemeral request/limit are now 1Gi/8Gi. A 2Gi-limit
+eviction during temporary image preparation demonstrated that `df /tmp` does
+not reflect the pod limit. Keep the PVC intact on pod replacement; retain
+important image/log artifacts locally or on the PVC before terminating a pod.

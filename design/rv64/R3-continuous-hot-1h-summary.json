@@ -1,0 +1,74 @@
+{
+  "source": "web/public/rv64/results/R3-continuous-hot-1h.json",
+  "type": "error",
+  "error": "Error: kuberoot probe command failed",
+  "wasmSha256": "27685993bf66eaad77b57e782985acc9616c5bf575e7dc9219840170c94f4f58",
+  "sourceSha256": "f2ed715aae638dba307790f09e47b66dc5528c45b920d3b3160dc0ab6b4f0ea1",
+  "clock": "continuous",
+  "engineReadyMs": 682.2250000238419,
+  "nodeReadyMs": 22279.42500001192,
+  "getPodsSeconds": [
+    10.11
+  ],
+  "podStartSeconds": [],
+  "probeDone": false,
+  "rcuStalls": 0,
+  "expiredBookmarks": 86,
+  "samples": [
+    {
+      "elapsedMs": 1406.9449999928474,
+      "snapshotFaults": 1114,
+      "snapshotFaultMs": 1001.7349994778633,
+      "retiredSinceStart": 11725175,
+      "jitRetired": 8872967,
+      "busyMilliseconds": 1385.2699990868568,
+      "waitMs": 0,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 12.660000264644623
+    },
+    {
+      "elapsedMs": 5407.5199999809265,
+      "snapshotFaults": 2147,
+      "snapshotFaultMs": 2843.0249986052513,
+      "retiredSinceStart": 95832048,
+      "jitRetired": 80987122,
+      "busyMilliseconds": 5310.385000169277,
+      "waitMs": 0,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 57.010000705718994
+    },
+    {
+      "elapsedMs": 10410.069999992847,
+      "snapshotFaults": 2611,
+      "snapshotFaultMs": 3974.959998369217,
+      "retiredSinceStart": 419118752,
+      "jitRetired": 383701761,
+      "busyMilliseconds": 10165.574995696545,
+      "waitMs": 0,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 115.1950011253357
+    },
+    {
+      "elapsedMs": 30423.769999980927,
+      "snapshotFaults": 2773,
+      "snapshotFaultMs": 4458.914997935295,
+      "retiredSinceStart": 2132623592,
+      "jitRetired": 1989039701,
+      "busyMilliseconds": 29502.069995701313,
+      "waitMs": 0,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 312.9749999642372
+    },
+    {
+      "elapsedMs": 60426.91500002146,
+      "snapshotFaults": 2851,
+      "snapshotFaultMs": 4752.139997720718,
+      "retiredSinceStart": 6460104656,
+      "jitRetired": 6167346435,
+      "busyMilliseconds": 57791.695009589195,
+      "waitMs": 13.560000002384186,
+      "diskActiveMs": 2103.539999783039,
+      "compilerYieldMs": 825.0950008630753
+    }
+  ]
+}

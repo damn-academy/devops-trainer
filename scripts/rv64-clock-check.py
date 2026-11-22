@@ -27,6 +27,9 @@ print(json.dumps(dict(
     guestToWallRatio=guest/wall,
     guestMinusHostDeltaTicks=last['guestTicks']-first['guestTicks']-host_delta,
     guestBacksteps=sum(b['guestTicks'] < a['guestTicks'] for a,b in zip(samples,samples[1:])),
-    maxHostSampleLagMs=max(s['hostMonotonicMs']-s['hostTicks']*1000/hz for s in samples),
+    # Restores rebase host ticks. Without the saved offset, an absolute lag
+    # would incorrectly include the entire pre-snapshot guest uptime.
+    maxHostSampleLagMs=(max(s['hostMonotonicMs']-(s['hostTicks']-s['hostTickOffset'])*1000/hz for s in samples)
+                        if all('hostTickOffset' in s for s in samples) else None),
     retired=last['retired']-first['retired'],
 ), indent=2))

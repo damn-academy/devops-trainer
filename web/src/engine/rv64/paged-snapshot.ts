@@ -2,7 +2,7 @@ import { sha256, saveSnapshot, validateManifest, type RV64Snapshot, type Snapsho
 export const RAM_CHUNK = 256 * 1024;
 export interface RAMChunk { sha256: string; bytes: number; pages: number[] }
 export interface PagedManifest {
-  format: 'dt.rv64.paged/v1'; validFrom?: number; validUntil?: number; machine: SnapshotManifest; ram: (RAMChunk | null)[];
+  format: 'dt.rv64.paged/v1'; hot?: { sha256: string; bytes: number; indices: number[] }; validFrom?: number; validUntil?: number; machine: SnapshotManifest; ram: (RAMChunk | null)[];
 }
 export function validatePaged(m: PagedManifest, memoryMB: number, wasmSha256: string): void {
   if (m?.format !== 'dt.rv64.paged/v1') throw new Error('Unsupported paged snapshot');
@@ -13,6 +13,10 @@ export function validatePaged(m: PagedManifest, memoryMB: number, wasmSha256: st
     (!c || !/^[a-f0-9]{64}$/.test(c.sha256) || !Number.isSafeInteger(c.bytes) || c.bytes <= 0 || c.bytes > RAM_CHUNK + 65536
       || !Array.isArray(c.pages) || c.pages.length === 0 || c.pages.length > 64
       || c.pages.some((p, i) => !Number.isInteger(p) || p < 0 || p >= 64 || (i > 0 && p <= c.pages[i - 1]))))) throw new Error('Invalid paged RAM index');
+  if (m.hot && (!/^[a-f0-9]{64}$/.test(m.hot.sha256) || !Number.isSafeInteger(m.hot.bytes) || m.hot.bytes <= 0
+    || !Array.isArray(m.hot.indices) || !m.hot.indices.length || new Set(m.hot.indices).size !== m.hot.indices.length
+    || m.hot.indices.some(i => !Number.isInteger(i) || !m.ram?.[i])
+    || m.hot.indices.reduce((sum, i) => sum + m.ram[i]!.bytes, 0) !== m.hot.bytes)) throw new Error('Invalid snapshot hot set');
 }
 export async function savePagedSnapshot(snapshot: RV64Snapshot, memoryMB: number, wasmSha256: string,
   ram: (index: number) => Uint8Array, write: (name: string, data: Uint8Array) => Promise<void>, publish = true): Promise<PagedManifest> {
@@ -36,11 +40,12 @@ export async function savePagedSnapshot(snapshot: RV64Snapshot, memoryMB: number
 /** One range fetch per group of at most 64 pages. Zero pages have no payload.
  * A separate loader Worker runs this while the hart blocks in Atomics.wait;
  * there is no async unwind, guest trap, or replay of a partially executed DMA. */
-export async function loadRAMChunk(base: string, chunk: RAMChunk): Promise<Uint8Array> {
+export async function loadRAMChunk(base: string, chunk: RAMChunk, prefetched?: Uint8Array): Promise<Uint8Array> {
   const url = new URL(`${chunk.sha256}.bin`, base).href;
-  const cache = typeof caches === 'undefined' ? undefined : await caches.open('dt-rv64-snapshot-v1').catch(() => undefined);
-  let bytes: Uint8Array | undefined;
-  const cached = await cache?.match(url);
+  const cache = prefetched || typeof caches === 'undefined' ? undefined : await caches.open('dt-rv64-snapshot-v1').catch(() => undefined);
+  let bytes: Uint8Array | undefined = prefetched;
+  if (bytes && (bytes.length !== chunk.bytes || await sha256(bytes) !== chunk.sha256)) throw new Error('Snapshot prefetched RAM checksum mismatch');
+  const cached = !bytes ? await cache?.match(url) : undefined;
   if (cached) {
     const value = new Uint8Array(await cached.arrayBuffer());
     if (value.length === chunk.bytes && await sha256(value) === chunk.sha256) bytes = value;
@@ -65,5 +70,22 @@ export async function loadRAMChunk(base: string, chunk: RAMChunk): Promise<Uint8
   if (count !== packed.length) throw new Error('Truncated snapshot RAM');
   const result = new Uint8Array(RAM_CHUNK);
   chunk.pages.forEach((p, i) => result.set(packed.subarray(i * 4096, (i + 1) * 4096), p * 4096));
+  return result;
+}
+
+/** Fetch the recorded working set once; member hashes remain independently checked. */
+export async function prefetchRAM(base: string, manifest: PagedManifest): Promise<Map<number, Uint8Array>> {
+  const result = new Map<number, Uint8Array>();
+  const hot = manifest.hot;
+  if (!hot) return result;
+  const response = await fetch(new URL(`${hot.sha256}.bin`, base).href, { headers: { Range: `bytes=0-${hot.bytes - 1}` } });
+  if (response.status !== 206 || response.headers.get('Content-Range') !== `bytes 0-${hot.bytes - 1}/${hot.bytes}`) throw new Error('Snapshot hot set requires exact Range responses');
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  if (bytes.length !== hot.bytes || await sha256(bytes) !== hot.sha256) throw new Error('Snapshot hot set checksum mismatch');
+  let offset = 0;
+  for (const index of hot.indices) {
+    const length = manifest.ram[index]!.bytes;
+    result.set(index, bytes.subarray(offset, offset + length)); offset += length;
+  }
   return result;
 }

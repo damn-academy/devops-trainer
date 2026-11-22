@@ -587,3 +587,337 @@ Outstanding work remains substantive:
 Final local checks include Python probe syntax and `git diff --check`. No commits
 were created. The test browsers closed after their runs; measurement-only range
 servers and port-forwards are cleaned up separately, preserving all artifacts.
+
+## Restore clock / hot RAM / pod diagnostics continuation — 2026-11-21
+
+Branch remains `feat/rv64-r0`; no commits. The first measurements below retain
+CPU wasm `27685993bf66eaad77b57e782985acc9616c5bf575e7dc9219840170c94f4f58`
+and the original `snapshots/kuberoot/paged.json`. No Rust source/build is needed
+for the clock policy or loader changes. Chromium runs sequentially locally.
+
+### What the original 62 seconds contain
+
+The retained original restore has, at 61.625 s, 4,874,537,471 retired instructions,
+4,645,455,553 JIT instructions, 56.481 s in the execution loop, 2.813 s idle wait,
+0.757 s compiler yields and 2,831 RAM-group faults taking 5.782 s. Execution-loop
+time **includes** synchronous pager waits; disk-active time (15.935 s) overlaps
+execution and must not be added to those values. By 9.567 s it had faulted 2,563
+groups (4.930 s), versus 2,722 groups (5.379 s) by 29.570 s. Thus RAM transport
+alone does not account for the 62-second API boundary. There is substantial
+cold JIT/guest CPU work and API/controller recovery. The original console starts
+with an RCU stall and repeatedly reports expired initial-watch bookmarks.
+It does not establish a Node lease expiry as the cause of that specific run.
+
+A new elapsed-clock replay provides a more specific failure: kubelet emits
+`Node became not ready`, reason `KubeletNotReady`, with
+`container runtime is down, PLEG is not healthy: pleg was last seen active
+42m38.773345s ago; threshold is 3m0s`. The node lifecycle controller subsequently
+attempts a `node.kubernetes.io/not-ready:NoSchedule` taint. This is direct evidence
+that suspension-time advancement expires runtime/PLEG health, not merely a stale
+Node lease hypothesis. This replay has a much older snapshot than the original
+62-second run; the two suspension durations must not be conflated.
+
+### Implemented clock A/B and hot-set transport
+
+`RV64Options.restoreClock` accepts `elapsed` (existing default) or `continuous`.
+Continuous mode anchors host monotonic time to saved CPU ticks, excludes suspended
+time, and retains the normal 10 MHz rate after resumption. Both initial and
+in-place restore use the same helper. Certificate-window validation remains in
+force. `RV64_RESTORE_CLOCK` selects the policy in the measurement harness.
+
+Pager telemetry now records RAM group index, fault start and duration in each
+metrics batch. `scripts/rv64-hot-snapshot.py MANIFEST TRAINING_RESULT OUTPUT_DIR
+5` packages a training restore's first five seconds into a single immutable,
+SHA-256-addressed Range object. Use this as a build-time training/publication
+step before evaluating fresh contexts. The manifest's optional `hot` index is
+validated, the complete packed response and each member are checked, and sparse
+page hydration still occurs through the existing fault path. Missing hot entries
+continue to use ordinary Range loads. This is not eager hydration of all RAM.
+
+The retained trained artifact `snapshots/kuberoot-hot/paged.json` contains
+1,226 groups / 95,706,557 compressed bytes, pack SHA-256
+`fb5f424148521a2540ed769a419f8dff04a3749f8ff47c026abdc6e9d283b04b`.
+Its training source is the continuous/local result below; it is not a separate
+successful cold-build acceptance result. Source members are hard-linked into a
+separate output directory; the original snapshot is unchanged.
+
+### Measured A/B results so far (one hart, cold browser contexts)
+
+The first remote-disk continuous attempt is **rejected**: port-forward lost its
+connection and the engine reported `Failed to fetch`. Its streamed output also
+showed page restarts during development. Measurement mode now disables Vite
+watch/HMR. The following runs use a locally served, whole-file SHA-256-verified
+copy of exactly the original 269,484,032-byte base medium
+`ced14b4008ab18d7b57806e43bd365ad94e022328e6fe1b0f5882e060b0dc758`.
+This removes port-forward availability from the guest disk path.
+
+| Variant | Engine initialized | Fresh Node Ready row | GET-pods durations | Pod start |
+| --- | ---: | ---: | --- | --- |
+| Continuous, demand RAM | 0.711 s | 34.413 s | 13.15 / 8.43 / 50.89 s | No create: CLI discovery TLS handshake timeout; subsequent GET returns NotFound |
+| Elapsed, demand RAM | 0.561 s | Not observed before probe failure | Not reached | Not reached; PLEG NotReady described above |
+| Continuous, one hot Range | 0.682 s | 22.279 s | 10.11 s; next GET fails | Not reached |
+
+These are observations, **not** acceptance of the <=5 s / <=0.5 s / <=3 s gates.
+Continuous runs have zero RCU-stall messages but retain many expired-bookmark
+warnings (96 and 86 respectively). The hot-set run fails on a later GET; the
+non-prefetched continuous run fails before POST, distinct from the original
+successful POST followed by a 300-second Ready timeout. These failures must not
+be reported as image-pull failures of the BusyBox workload. Addon pulls from
+registry-1.docker.io do fail DNS on the intentionally isolated network.
+
+Durable summaries: `R3-{continuous-local,elapsed-local,continuous-hot}-1h-summary.json`.
+Full JSON and guest console: ignored `web/public/rv64/results/` with those names.
+The three runs use the same recorded engine source hash
+`f2ed715aae638dba307790f09e47b66dc5528c45b920d3b3160dc0ab6b4f0ea1`.
+Host pressure and background artifact transfers are not controlled; differences
+between individual runs are not a statistically isolated prefetch speedup.
+
+### Pod fixture and capture gate
+
+`rv64-kuberoot-probe.py` now waits for successful image import before the capture
+marker, imports digest names as well as tags, and dumps node/lease/pod/event and
+containerd image/container/task state on pod-readiness failure. Optional
+`RV64_PROBE_SETTLE=1` additionally requires addon pods Ready and a BusyBox
+create/wait/delete cycle before emitting the snapshot capture marker. A failure
+must preserve diagnostics and must not publish a lesson snapshot.
+
+`rv64-slim-offline-images.py` verifies the riscv64 entries in the exact slim
+addon indexes and preserves their platform manifest digests in OCI archives:
+
+- CoreDNS 1.14.7: `5a03868dca97830fa491f036b883630dd2dc4993f909d283ac072c2399e476c0`.
+- local-path-provisioner v0.0.37: `b92124d1376d790f5e2e23cf41fbd8ef7ac9bc7df59842fb96c2e335764c2b89`.
+
+Only the extracted experimental root's addon references are narrowed to these
+platform digests. The BusyBox helper uses the already imported 1.37.0 tag rather
+than asking the offline runtime for an unavailable multi-platform index. Pause
+remains provided by kinit's bundled archive. Published builder artifacts are
+unchanged. The new root is under `/tmp/rv64-restore-diagnostic` inside rv64-dev:
+the PVC had only 109 MiB free; no existing source/build/test trees were deleted.
+
+The settled medium is 306,184,192 bytes, SHA-256
+`0dfde8c8c4b2aafd729bc3cc536dd635c60d2b29dcbdd3f5535467f3e8768530`,
+served locally using `slim-settled-media.json`. Its capture destination is separate
+(`RV64_SNAPSHOT_NAME=kuberoot-settled`), preserving earlier snapshots.
+
+The source audit also confirms the old emulator profile scales kubelet
+`syncFrequency` from 1 minute to **1 hour**, alongside status/report periods.
+That is a recovery-latency concern, not by itself proof of why an event-driven
+new-pod start failed. No builder source was edited during this audit.
+
+Real `trainer/web`, `trainer/client`, `trainer/hog`, `trainer/job` riscv64 images
+or Dockerfiles are not present in the checked repository/mirror assets. Their
+existing `kube-lite/images.ts` entries describe simulated behaviour. Their actual
+image/source location was requested; addon and BusyBox preparation proceeds
+independently. They are not falsely marked as preloaded.
+
+The first-five-second physical group list and nonzero-page counts are retained
+in `R3-hot-set.json`. Fault granularity is 256 KiB; this does not identify every
+individual 4-KiB page actually accessed within a fetched group.
+
+### Development-pod incident and recovery
+
+The temporary extracted root, several diagnostic packing outputs and diagnostic
+QEMU package installation exceeded rv64-dev's **2Gi ephemeral-storage limit**.
+Kubernetes evicted the pod (`Failed/Evicted`, explicitly `Pod ephemeral local
+storage usage exceeds the total limit of containers 2Gi`). Looking at free
+space on the backing overlay was insufficient; this was a task-caused resource
+planning error. The task-owned failed pod was replaced from its manifest,
+raising ephemeral request/limit to 1Gi/8Gi. PVC was unchanged. The replacement
+is Ready on ws2; `cargo --version`, Python, C compiler, saved wasm and
+`/work/tools/bin/wasm-bindgen` were checked. No other pod was changed.
+
+Before eviction a diagnostic, isolated-network QEMU run of the same settled
+medium confirmed import of BusyBox, CoreDNS and local-path archives and reached
+`RV64_SETTLE_BEGIN`. Its full temporary log was lost with the evicted root;
+no QEMU Ready/performance result is claimed. The hypothesis that `--digests`
+itself hung import was not confirmed. Chromium also subsequently emitted
+`RV64_IMAGES_IMPORTED`; its local media, console and measurements were unaffected
+by the development pod's loss. Extra unpublished packing variants from that
+investigation were temporary only and are not used for any reported result.
+
+The three clock audits (`R3-*-1h-clock.json` matching the new result names) show
+zero backsteps and exact equality of injected-host and guest tick deltas.
+Continuous runtime is not slowed: measured guest/wall ratios are 1.000030 and
+1.000116. Elapsed replay is 1.001230 over 81 s; sampling endpoints differ by
+~99.7 ms. The old audit's absolute sample-lag formula was invalid after restore
+because it ignored the host tick offset. New telemetry exports `hostTickOffset`;
+the audit now reports null absolute lag for legacy samples lacking it, rather
+than a large negative "lag". Relative clock-rate evidence remains usable.
+
+### Settled capture failure and recovery fixture
+
+`R3-settled-capture-1h` timed out after 2,100 s without reaching the capture
+marker; no usable settled snapshot was published. Its summary and selected
+failure evidence are retained alongside this log. All three offline archives
+were imported around 688 s, but this did not establish pod readiness. The guest
+registered its node around 869 s, then kube-proxy's missing NodeIPs caused
+`os.Exit(1)` in the combined control process, restarting the other components.
+PodCIDR assignment and CNI initialization were delayed. Later kine exited the
+whole combined process after `Transaction commit failed: sql: transaction has
+already been committed or rolled back`. The failing compaction started about
+five seconds earlier. The retained old kinit binary lacks the newer builder's
+scaled `--compact-timeout` option; kine's default is five seconds.
+
+`scripts/rv64-emulator-recovery.py` prepares an **experimental extracted root**:
+sets `KINE_COMPACT_TIMEOUT=5m`, restores kubelet status/report/sync cadences to
+10s/5m/1m, and gives kube-proxy an independent supervisor by changing its service
+name (the combine predicate matches names). The original multicall executable
+and symlink dispatch are preserved. This is a fixture workaround; the upstream
+builder has not been changed. Optional console access is limited to these
+isolated diagnostic fixtures.
+
+A QEMU diagnostic of recovery-v2 reached kubelet Ready and generated its CNI
+configuration, then identified an additional concrete offline-image problem:
+containerd imported tags and generated `import-<date>@sha256:...` names, whereas
+addons requested `repo@<platform-digest>` names absent from its image catalog.
+Both CoreDNS and local-path attempted Docker Hub and failed DNS resolution.
+The offline-image script now keeps archive verification against exact riscv64
+manifest digests, but references the imported tags with `imagePullPolicy: Never`
+in the experimental addons. Merely importing content blobs is insufficient.
+QEMU is diagnostic evidence only, never a Chromium timing substitute.
+
+Validation after the host changes: all 38 tests in nine RV64 Vitest files pass,
+TypeScript typecheck passes, Python scripts parse, and `node --check measure.mjs`
+passes. These include existing SMP **substrate** tests, not integrated multi-hart
+CPU execution; there are still no valid 2/4-hart kuberoot measurements.
+
+Recovery-v3 medium: 306,184,192 bytes, SHA-256
+`f092ef9d857c4e1282826b36041350de0df3b7576a876701595bfe5e750da359`.
+Its offline addon tags use Never, and the original binary hashes are unchanged.
+`R3-recovery-capture-1h` was stopped diagnostically before Ready, preserving its
+full result/console/samples through the harness error path; it is not a natural
+2,700-second timeout. Direct console access through the existing harness's Node
+inspector showed 264,708 KiB used zram swap, `swappiness=180`, memory PSI
+`some avg10=73.14`, `full avg10=32.14`. Browser DNS was correctly 10.0.0.1.
+The structured command output is `R3-recovery-768-memory.json`. No second local
+Chromium instance was used. No snapshot was published from this failed capture.
+
+QEMU's isolated user network supplied no DNS: its empty resolver made CoreDNS
+exit with `plugin/forward: no valid upstream addresses found`. Setting a resolver
+and recreating that diagnostic pod made CoreDNS 1/1 Running. This is specific to
+that QEMU network and does not justify changing browser DNS. In QEMU 768 MiB,
+reducing swappiness from 180 to 10 after pressure developed did not recover the
+system; PSI worsened, so this tuning was **not** applied to the browser fixture.
+A separate 1536-MiB QEMU diagnostic had zero memory PSI and reached Node Ready;
+addon readiness still required inspection. It is not a browser performance result.
+
+The browser harness now accepts `RV64_MEMORY_MB` (default remains 768; current
+wasm limit remains 1024). The follow-up capture explicitly uses 1024 MiB and a
+separate artifact name. Increasing memory does not establish the design's
+512-MiB budget, nor does it replace the required multi-hart implementation.
+
+### Addon probe cadence: confirmed additional readiness blocker
+
+The retained kinit binary scales addon probes by 60: CoreDNS readiness
+`periodSeconds=600`; local-path startup has initial delay/period **300 s**, and
+readiness also has initial delay/period **300 s**. These values were read from
+live Pod YAML. On the zero-PSI 1536-MiB QEMU diagnostic both containers were
+Running but unready despite local-path logging `Health server started` and
+`Provisioner started`. Restoring periods to 5/10 s and initial delays to their
+normal values, while retaining timeoutSeconds=60, made both Deployments
+successfully roll out. This separates probe latency from image pull and memory
+pressure. The opt-in settled probe now applies those strategic patches and
+waits for rollout before testing BusyBox.
+
+For the already-running 1024-MiB Chromium capture, the same commands were
+injected through the existing console. Its original probe (PID 51) was stopped
+with SIGSTOP before Node Ready, while import continued; a separate script waits
+for the Deployments, patches/waits for rollout, then resumes the original probe.
+This is explicitly an instrumented capture, not an untouched cold-boot benchmark.
+The immutable recovery-v3 medium remains the same; the resulting snapshot, if
+successful, includes the corrected live Kubernetes objects. The updated build
+probe reproduces the patches for future fixture builds.
+
+The corrected QEMU diagnostic then created a **new** BusyBox pod with Never and
+observed Ready in **7.92 s** (guest uptime 627.52 → 635.44). Kubelet reported
+7.193 s creation-to-Running and zero image-pulling time. Evidence is retained in
+`R3-qemu-pod-evidence.txt`; QEMU was stopped after saving the log. This establishes
+that the offline image/runtime/CNI path can work, not a Chromium pod timing.
+At the first direct 1024-MiB Chromium memory check, zram usage and both PSI totals
+were zero (`R3-recovery-1024-memory.json`), whereas 768 MiB had substantial stalls.
+
+### Completed browser fixture and final 1-hart comparison
+
+The 1024-MiB capture passed addon readiness and BusyBox create/Ready/delete.
+`R3-recovery-1024-capture-1h` reached its settled capture marker at **1307.740 s**;
+export completed at **1359.089 s**. These are instrumented **cold capture** times,
+not restore times. Warmup's console `created` → `condition met` interval was
+75.135 s; it is not substituted for the separately bracketed restore pod test.
+
+Artifact: `web/public/rv64/snapshots/kuberoot-recovery-1024/paged.json`, SHA-256
+`43cfd378596de5df0127bbc4ed0b5dfcc77ca6ee03035ce2a085ce54a919b13d`.
+All 4,010 content-addressed members were SHA-256 verified; combined member bytes
+381,118,511. Kernel/initrd/CPU wasm are unchanged. The recovery-v3 media identity
+is required. These large artifacts/results are retained locally under ignored
+`web/public/rv64`; summaries/evidence are tracked alongside this log.
+
+Fresh isolated Chromium contexts, **1 hart, 1024 MiB, JIT threshold 50**, same
+CPU wasm and engine source hash
+`17f7c4c30dc066b1d582c78424bb12a0de53c11c9c740d185d35e254eb150b67`:
+
+| Restore policy / RAM loading | Engine ready | Restore → node Ready | First get pods | New BusyBox → Ready | Probe |
+|---|---:|---:|---:|---:|---|
+| Continuous / demand | 0.770 s | **41.927 s** | **12.96 s** | **68.73 s** | Done |
+| Continuous / hot pack | 1.068 s | **43.577 s** | **11.91 s** | **98.83 s** | Done |
+| Elapsed / same hot pack | 1.202 s | **85.194 s** | **10.79 s** | **82.90 s** | Done |
+
+Each is one run, not a distribution. Host load and evolving restored guest
+scheduling can affect results; do not infer a reliable pod-speed regression or
+improvement from their difference. All new pods used preloaded BusyBox with Never,
+and final lists showed BusyBox and both addons Ready. The old 768-MiB fixture's
+22.279-s best restore is **not** comparable to this healthier, larger fixture.
+
+Elapsed replay explicitly emitted KubeletNotReady: PLEG last active
+**9m58.3405001s** ago versus a **3m** threshold, then recovered. The selected log
+line is retained in `R3-recovery-elapsed-evidence.txt`. This is direct evidence for
+timer expiry caused by suspended-time injection, not proof that the node
+controller's lease expiry was the sole cause. Continuous excludes suspension
+only; real-time guest runtime rate and host-side certificate validity checks
+remain intact. Clock audits are saved for all three completed restores.
+
+The new hot pack contains 1,556 groups, 96,427 nonzero 4-KiB pages,
+128,594,917 compressed bytes; SHA-256
+`0d55a82e88b208a7d16ded0346a10272d5651d4cc5ffbe3277ba6597d6cc23e2`.
+The build-time training step uses the demand run's initial five seconds.
+`R3-recovery-hot-set.json` records physical group addresses and fault timings.
+At roughly 40 seconds, demand-fault wait was 9.589 s versus 7.266 s with the pack.
+The one-Range prefetch reduced paging cost but **did not improve total Ready** in
+this comparison. It remains optional, as does the continuous clock; neither is
+silently made the product default.
+
+Reproduce from `web/` (one invocation/browser at a time; use a fresh result name):
+
+```sh
+RV64_RESULT_NAME=recovery-continuous \
+RV64_MEMORY_MB=1024 RV64_RESTORE_CLOCK=continuous \
+RV64_SNAPSHOT_RESTORE=/rv64/snapshots/kuberoot-recovery-1024/paged.json \
+RV64_MEDIA_MANIFEST=/rv64/slim-recovery-media.json \
+RV64_PROBE_SECONDS=900 RV64_TIMEOUT_MS=930000 \
+node src/engine/rv64/measure.mjs --kuberoot
+```
+
+For hot replay use `kuberoot-recovery-1024-hot/paged.json`; for the elapsed variant
+also set `RV64_RESTORE_CLOCK=elapsed`. The original snapshot remains preserved.
+A new source-built fixture should run the updated settled probe, which applies
+probe-cadence patches itself rather than relying on the live console intervention.
+
+### Remaining work and final validation
+
+- Restore is faster with continuous time in the completed comparison, but is
+  **not instant**: ~42 s Ready and ~12 s first CLI still remain, dominated by CPU/
+  cold JIT/control-plane work beyond the measured ~7–10 s RAM fault waits.
+- Pods now start in Chromium using the verified 1024-MiB fixture. This does not
+  meet the 512-MiB design budget or prove the original 768-MiB fixture healthy.
+- Real `trainer/*` lesson images still require their riscv64 image/source location;
+  simulator-only definitions were not relabeled as real preloaded containers.
+- **Integrated SMP is not implemented.** CPU-per-hart state/shared RAM, SBI
+  HSM/IPI/RFENCE integration, per-hart TLB/JIT shootdowns and trace-diff remain.
+  Existing 2/4-Worker atomic/mailbox substrate tests are not a multi-hart CPU.
+  Therefore 2- and 4-hart restore/get-pods/pod-start results are **not measured**.
+- No Rust source was changed or built in this continuation. Host TypeScript
+  typecheck, 38 RV64 tests, Python parsing, generated guest-probe `sh -n`, harness
+  syntax and `git diff --check` passed. No commits were made.
+
+Diagnostic QEMU runs were stopped after log capture; task-created port-forwards
+and fixture HTTP server were closed. rv64-dev remains 1/1 Ready with its PVC
+preserved and the documented 8Gi ephemeral limit.

@@ -6,10 +6,12 @@ export type { RV64Snapshot } from './snapshot';
 import { factsScript, parseFacts, shq, watchedPaths } from '../v86/protocol';
 import { LAB_SCOPES, labFactsScript, parseLabFacts, scopesOf } from '../v86/lab-facts';
 import type { L2Switch } from '../v86/switch';
-export interface RV64Options { id: string; kernel: ArrayBuffer; initrd: ArrayBuffer; memoryMB?: number; jitThreshold?: number; cmdline?: string; disk?: ArrayBuffer; network?: L2Switch; httpDisk?: HTTPDisk; snapshot?: RV64Snapshot; snapshotURL?: string }
+export interface RV64Options { id: string; kernel: ArrayBuffer; initrd: ArrayBuffer; memoryMB?: number; jitThreshold?: number; cmdline?: string; disk?: ArrayBuffer; network?: L2Switch; httpDisk?: HTTPDisk; snapshot?: RV64Snapshot; snapshotURL?: string; restoreClock?: 'elapsed' | 'continuous' }
 /** Experimental engine: opt in with VITE_RV64=1. snapshotURL accepts the paged
  * build artifact; ready means the restored engine can execute, not a Kubernetes
- * health assertion. Large Ready nodes should use exportSnapshot(), since the
+ * health assertion. restoreClock='continuous' excludes suspended time; the
+ * default 'elapsed' includes it. Certificate checks remain active in both modes.
+ * Large Ready nodes should use exportSnapshot(), since the
  * legacy in-memory snapshot() materializes the entire serialized state. */
 export class RV64Machine implements Machine {
   readonly kind = 'rv64' as const;
@@ -82,7 +84,7 @@ export class RV64Machine implements Machine {
     let hash = 2166136261;
     for (const byte of new TextEncoder().encode(this.id)) hash = Math.imul(hash ^ byte, 16777619);
     const mac = new Uint8Array([2, 0x44, hash >>> 24, hash >>> 16, hash >>> 8, hash]);
-    this.worker.postMessage({ ...boot, snapshotURL: options.snapshotURL ? new URL(options.snapshotURL, location.href).href : undefined, mac, netIn: this.netIn.ring.buffer, netOut: this.netOut.ring.buffer, memoryMB: options.memoryMB ?? 512, input: this.input.buffer, output: this.output.buffer, control: this.control.buffer });
+    this.worker.postMessage({ ...boot, restoreClock: options.restoreClock, snapshotURL: options.snapshotURL ? new URL(options.snapshotURL, location.href).href : undefined, mac, netIn: this.netIn.ring.buffer, netOut: this.netOut.ring.buffer, memoryMB: options.memoryMB ?? 512, input: this.input.buffer, output: this.output.buffer, control: this.control.buffer });
     this.timer = setInterval(() => this.drain(), 8);
   }
   executionStats() {
