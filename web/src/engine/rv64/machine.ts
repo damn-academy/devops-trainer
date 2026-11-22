@@ -6,7 +6,7 @@ export type { RV64Snapshot } from './snapshot';
 import { factsScript, parseFacts, shq, watchedPaths } from '../v86/protocol';
 import { LAB_SCOPES, labFactsScript, parseLabFacts, scopesOf } from '../v86/lab-facts';
 import type { L2Switch } from '../v86/switch';
-export interface RV64Options { id: string; kernel: ArrayBuffer; initrd: ArrayBuffer; memoryMB?: number; jitThreshold?: number; cmdline?: string; disk?: ArrayBuffer; network?: L2Switch; httpDisk?: HTTPDisk; snapshot?: RV64Snapshot; snapshotURL?: string; restoreClock?: 'elapsed' | 'continuous' }
+export interface RV64Options { id: string; kernel: ArrayBuffer; initrd: ArrayBuffer; memoryMB?: number; jitThreshold?: number; guestProfileInterval?: number; guestProfileTaskCommOffset?: number; cmdline?: string; disk?: ArrayBuffer; network?: L2Switch; httpDisk?: HTTPDisk; snapshot?: RV64Snapshot; snapshotURL?: string; restoreClock?: 'elapsed' | 'continuous' }
 /** Experimental engine: opt in with VITE_RV64=1. snapshotURL accepts the paged
  * build artifact; ready means the restored engine can execute, not a Kubernetes
  * health assertion. restoreClock='continuous' excludes suspended time; the

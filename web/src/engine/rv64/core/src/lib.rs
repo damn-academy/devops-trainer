@@ -10,6 +10,7 @@ pub mod fdt;
 mod float;
 pub mod memory;
 mod sbi;
+mod profile;
 pub(crate) mod snapshot;
 pub use cpu::{Cpu, Mode, Trap};
 pub use memory::{Access, Memory, RAM_BASE};

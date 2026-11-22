@@ -1,0 +1,22 @@
+{
+  "source": "R3-warm-client-1h.json",
+  "exit": 0,
+  "measurements": [
+    {
+      "transport": "direct",
+      "seconds": 14.21
+    },
+    {
+      "transport": "proxy",
+      "seconds": 9.04
+    },
+    {
+      "transport": "direct",
+      "seconds": 17.89
+    },
+    {
+      "transport": "proxy",
+      "seconds": 7.77
+    }
+  ]
+}

@@ -29,6 +29,10 @@ try {
   browser = await chromium.launch({ headless: true });
   if (integration) { mkdirSync('public/rv64', { recursive: true }); writeFileSync('public/rv64/integration-disk.bin', new Uint8Array(512).fill(90)); }
   const page = await browser.newPage();
+  if (process.env.RV64_POST_DIAG_FILE) {
+    const command = readFileSync(process.env.RV64_POST_DIAG_FILE, 'utf8');
+    await page.addInitScript(command => { globalThis.rv64PostProbeCommand = command; }, command);
+  }
   if (process.env.RV64_SNAPSHOT_CAPTURE === '1' || integration) {
     const snapshotName = integration ? 'integration' : process.env.RV64_SNAPSHOT_NAME ?? 'kuberoot';
     if (!/^[A-Za-z0-9_-]+$/.test(snapshotName)) throw new Error('Invalid snapshot name');
@@ -76,7 +80,7 @@ try {
     else { start(); await started; }
     stopProfile = async () => { clearTimeout(startTimer); return started ? stop() : { traceEvents: events }; };
   }
-  await page.goto(`http://localhost:${port}/src/engine/rv64/${smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&memory=${Number(process.env.RV64_MEMORY_MB) || 768}&jit=${jit}&clock=${process.env.RV64_RESTORE_CLOCK ?? 'elapsed'}${process.env.RV64_MEDIA_MANIFEST ? `&media=${encodeURIComponent(process.env.RV64_MEDIA_MANIFEST)}` : ''}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
+  await page.goto(`http://localhost:${port}/src/engine/rv64/${smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&guestProfile=${Number(process.env.RV64_GUEST_PROFILE_INTERVAL) || 0}&memory=${Number(process.env.RV64_MEMORY_MB) || 768}&jit=${jit}&clock=${process.env.RV64_RESTORE_CLOCK ?? 'elapsed'}${process.env.RV64_MEDIA_MANIFEST ? `&media=${encodeURIComponent(process.env.RV64_MEDIA_MANIFEST)}` : ''}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
   let diagnosticTimer;
   if (process.env.RV64_DIAG_FILE) {
     const command = readFileSync(process.env.RV64_DIAG_FILE, 'utf8');

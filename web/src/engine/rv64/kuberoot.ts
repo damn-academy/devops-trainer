@@ -21,6 +21,8 @@ try {
     fetch('/rv64/slim-initrd.cpio').then(r => { if (!r.ok) throw new Error('missing initrd'); return r.arrayBuffer(); }),
     fetch(params.get('media') ?? (params.has('capture') || params.has('restore') ? '/rv64/slim-snapshot-media.json' : '/rv64/slim-media.json')).then(r => { if (!r.ok) throw new Error('missing media manifest'); return r.json(); }),
   ]);
+  const profileKernel = Number(params.get('guestProfile')) > 0;
+  if (profileKernel && await sha256(new Uint8Array(kernel)) !== 'db43c7264ee97779f9271ebb6c57e90df675d7ab768462e01115d84d4f7cd598') throw new Error('task_comm offset requires the audited kernel');
   const start = requestedAt;
   const wasmSha256 = await sha256(new Uint8Array(await (await fetch('/rv64/rv64_core_bg.wasm')).arrayBuffer()));
   const snapshotURL = params.get('restore') ?? undefined;
@@ -31,7 +33,7 @@ try {
   let saving: Promise<void> | undefined;
   services.dhcp.on(e => events.push({ ms: performance.now() - start, dhcp: e }));
   machine = new RV64Machine({ id: 'kuberoot', kernel, initrd, memoryMB,
-    restoreClock: params.get('clock') === 'continuous' ? 'continuous' : 'elapsed', network: services.network, httpDisk: media, snapshot, snapshotURL: snapshotURL?.endsWith('/paged.json') ? snapshotURL : undefined, jitThreshold: Number(params.get('jit') ?? 50),
+    guestProfileInterval: Number(params.get('guestProfile') ?? 0), guestProfileTaskCommOffset: profileKernel ? 1704 : 0, restoreClock: params.get('clock') === 'continuous' ? 'continuous' : 'elapsed', network: services.network, httpDisk: media, snapshot, snapshotURL: snapshotURL?.endsWith('/paged.json') ? snapshotURL : undefined, jitThreshold: Number(params.get('jit') ?? 50),
     cmdline: 'earlycon=sbi console=hvc0 nokaslr kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000) });
   Object.assign(globalThis, { rv64Machine: machine });
   void machine.ready.then(() => { engineReadyMs = performance.now() - start; }, () => {});
@@ -62,6 +64,14 @@ try {
   });
   if (readyMs === undefined) throw new Error('probe completed without node readiness');
   await saving;
-  result.rv64Result = { type: 'kuberoot', memoryMB, snapshotManifest: savedManifest, loadedMs, engineReadyMs, restored: !!snapshotURL, execution: machine.executionStats(), bootReadyMs: readyMs, restoreReadyMs: snapshotURL ? readyMs : undefined, totalMs: performance.now() - start, events, samples, console: text };
-} catch (error) { result.rv64Result = { type: 'error', memoryMB, error: String(error), execution: machine?.executionStats(), bootReadyMs: readyMs, engineReadyMs, events, samples, console: text }; }
+  if (Number(params.get('guestProfile')) > 0) await new Promise(resolve => setTimeout(resolve, 1100));
+  const totalMs = performance.now() - start;
+  const command = (globalThis as typeof globalThis & { rv64PostProbeCommand?: string }).rv64PostProbeCommand;
+  let postProbe: unknown;
+  if (command) {
+    try { postProbe = await machine.exec(command); }
+    catch (error) { postProbe = { error: String(error) }; }
+  }
+  result.rv64Result = { type: 'kuberoot', profileRequestedAt: requestedAt, memoryMB, postProbe, snapshotManifest: savedManifest, loadedMs, engineReadyMs, restored: !!snapshotURL, execution: machine.executionStats(), bootReadyMs: readyMs, restoreReadyMs: snapshotURL ? readyMs : undefined, totalMs, events, samples, console: text };
+} catch (error) { result.rv64Result = { type: 'error', profileRequestedAt: requestedAt, memoryMB, error: String(error), execution: machine?.executionStats(), bootReadyMs: readyMs, engineReadyMs, events, samples, console: text }; }
 finally { machine?.dispose(); services.dispose(); }

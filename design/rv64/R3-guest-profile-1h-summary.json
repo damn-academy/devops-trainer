@@ -1,0 +1,79 @@
+{
+  "source": "web/public/rv64/results/R3-guest-profile-1h.json",
+  "type": "kuberoot",
+  "error": null,
+  "wasmSha256": "a1990863f6e6cbfc0c8867d4c960570584d0382975a66f7b5760c9aba31721ee",
+  "sourceSha256": "04cdf398ecb2e734a1523cc364b73bcbc49be126e8e38f1f82f289dfbc241c77",
+  "memoryMB": 1024,
+  "clock": "continuous",
+  "engineReadyMs": 959.7450000047684,
+  "nodeReadyMs": 51722.94499999285,
+  "getPodsSeconds": [
+    9.05,
+    7.85,
+    12.03
+  ],
+  "podStartSeconds": [
+    97.8
+  ],
+  "probeDone": true,
+  "rcuStalls": 0,
+  "expiredBookmarks": 176,
+  "samples": [
+    {
+      "elapsedMs": 1218.3100000023842,
+      "snapshotFaults": 446,
+      "snapshotFaultMs": 1111.9049999713898,
+      "retiredSinceStart": 1691488,
+      "jitRetired": 761700,
+      "busyMilliseconds": 1208.6299998760223,
+      "waitMs": 0,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 6.105000138282776
+    },
+    {
+      "elapsedMs": 5282.409999966621,
+      "snapshotFaults": 1596,
+      "snapshotFaultMs": 4134.155000329018,
+      "retiredSinceStart": 31031072,
+      "jitRetired": 24635562,
+      "busyMilliseconds": 5228.774999976158,
+      "waitMs": 0,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 35.35000020265579
+    },
+    {
+      "elapsedMs": 10287.669999957085,
+      "snapshotFaults": 2411,
+      "snapshotFaultMs": 6499.13499969244,
+      "retiredSinceStart": 151980067,
+      "jitRetired": 132811248,
+      "busyMilliseconds": 10143.395001411438,
+      "waitMs": 0,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 83.35499948263168
+    },
+    {
+      "elapsedMs": 30306.8599999547,
+      "snapshotFaults": 3582,
+      "snapshotFaultMs": 10222.859999477863,
+      "retiredSinceStart": 1153925699,
+      "jitRetired": 1055912167,
+      "busyMilliseconds": 29611.345007181168,
+      "waitMs": 0,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 307.8099992275238
+    },
+    {
+      "elapsedMs": 60309.22499996424,
+      "snapshotFaults": 3656,
+      "snapshotFaultMs": 10588.354999601841,
+      "retiredSinceStart": 3391785595,
+      "jitRetired": 3153960192,
+      "busyMilliseconds": 58340.82501220703,
+      "waitMs": 13.115000069141388,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 811.514998793602
+    }
+  ]
+}

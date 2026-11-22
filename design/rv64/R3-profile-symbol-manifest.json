@@ -1,0 +1,90 @@
+{
+  "kernelSourceSha256": "db43c7264ee97779f9271ebb6c57e90df675d7ab768462e01115d84d4f7cd598",
+  "kernelRecovery": "vmlinux-to-elf 1.4.0 --e-machine 243 --bit-size 64",
+  "commOffset": 1704,
+  "binaries": [
+    {
+      "path": "/work/guest/slim-emulator/root/usr/bin/kubectl",
+      "sha256": "6de88e9ab2635eb02b4a311082af884fef27da136b79d28f4288b52abe5029c7"
+    },
+    {
+      "path": "/work/guest/slim-emulator/root/usr/bin/kuberoot-control",
+      "sha256": "a87019474b1fdfbc135b35b44074a4b386276f77da19fb0d3ba46ebdb661e41c"
+    },
+    {
+      "path": "/work/guest/slim-emulator/root/usr/bin/containerd",
+      "sha256": "44acdb2964489fa35a7fe5c50001217e1f7bdcc677c6163f24b1752ea8607ea7"
+    },
+    {
+      "path": "/work/guest/slim-emulator/root/usr/bin/kuberoot-node",
+      "sha256": "0a788de2b4531c90c31a324bc4f84810541faf19fc650b4436c777516a1e2b42"
+    },
+    {
+      "path": "/work/guest/slim-emulator/root/usr/sbin/kinit.real",
+      "sha256": "da30c8a762498db9659ac1be9da655beea8048ee29a39fcfd0ddb534076d6632"
+    },
+    {
+      "path": "/work/guest/slim-emulator/root/usr/bin/containerd-shim-runc-v2",
+      "sha256": "065d094a1e305e07ebca2d4f917b4eccacceaf6256cdf5eeef862634ad33db23"
+    },
+    {
+      "path": "web/public/rv64/profile-symbols/vmlinux",
+      "sha256": "b97a3ebd54f24dd005e641ed9580e2d00c160768911a707b06b53f120b3257d1"
+    }
+  ],
+  "mappings": [
+    {
+      "satp": "kernel",
+      "symbolSha256": "b97a3ebd54f24dd005e641ed9580e2d00c160768911a707b06b53f120b3257d1",
+      "bias": "0"
+    },
+    {
+      "comm": "kubectl",
+      "process": "kubectl",
+      "symbolSha256": "6de88e9ab2635eb02b4a311082af884fef27da136b79d28f4288b52abe5029c7",
+      "bias": "0"
+    },
+    {
+      "comm": "kuberoot-contro",
+      "process": "kuberoot-control",
+      "symbolSha256": "a87019474b1fdfbc135b35b44074a4b386276f77da19fb0d3ba46ebdb661e41c",
+      "bias": "0"
+    },
+    {
+      "comm": "containerd",
+      "process": "containerd",
+      "symbolSha256": "44acdb2964489fa35a7fe5c50001217e1f7bdcc677c6163f24b1752ea8607ea7",
+      "bias": "0"
+    },
+    {
+      "comm": "kuberoot-node",
+      "process": "kuberoot-node",
+      "symbolSha256": "0a788de2b4531c90c31a324bc4f84810541faf19fc650b4436c777516a1e2b42",
+      "bias": "0"
+    },
+    {
+      "comm": "kinit.real",
+      "process": "kinit.real",
+      "symbolSha256": "da30c8a762498db9659ac1be9da655beea8048ee29a39fcfd0ddb534076d6632",
+      "bias": "0"
+    },
+    {
+      "comm": "kinit",
+      "process": "kinit.real",
+      "symbolSha256": "da30c8a762498db9659ac1be9da655beea8048ee29a39fcfd0ddb534076d6632",
+      "bias": "0"
+    },
+    {
+      "comm": "kube-proxy",
+      "process": "kube-proxy",
+      "symbolSha256": "a87019474b1fdfbc135b35b44074a4b386276f77da19fb0d3ba46ebdb661e41c",
+      "bias": "0"
+    },
+    {
+      "comm": "containerd-shim",
+      "process": "containerd-shim",
+      "symbolSha256": "065d094a1e305e07ebca2d4f917b4eccacceaf6256cdf5eeef862634ad33db23",
+      "bias": "0"
+    }
+  ]
+}

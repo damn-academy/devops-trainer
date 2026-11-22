@@ -8,6 +8,11 @@ extern "C" {
 #[wasm_bindgen]
 pub struct Engine {
     cpu: Cpu,
+    profile_interval: u32,
+    profile_left: u32,
+    profile_samples: Vec<[u64; 9]>,
+    profile_dropped: u64,
+    profile_comm_offset: u32,
 }
 #[wasm_bindgen]
 impl Engine {
@@ -18,6 +23,11 @@ impl Engine {
         }
         Ok(Self {
             cpu: Cpu::new(memory_mb as usize * 1024 * 1024),
+            profile_interval: 0,
+            profile_left: 0,
+            profile_samples: Vec::new(),
+            profile_dropped: 0,
+            profile_comm_offset: 0,
         })
     }
     pub fn boot(&mut self, kernel: &[u8], initrd: &[u8], cmdline: &str) -> Result<(), JsValue> {
@@ -170,7 +180,35 @@ impl Engine {
     pub fn run(&mut self, instructions: u32, time_ticks: f64) -> u32 {
         self.cpu.time(time_ticks as u64);
         self.cpu.service_devices();
-        self.cpu.run(instructions);
+        if self.profile_interval == 0 {
+            self.cpu.run(instructions);
+        } else {
+            let mut left = instructions;
+            while left > 0 {
+                let budget = left.min(self.profile_left);
+                let before = self.cpu.jit.attempted;
+                self.cpu.run(budget);
+                let used = (self.cpu.jit.attempted - before) as u32;
+                left -= used;
+                self.profile_left -= used;
+                if self.profile_left == 0 {
+                    // Instruction-attempt samples, including traps, not wall time.
+                    // Hex serialization below preserves full Sv39/64-bit addresses.
+                    let task = if self.cpu.mode == crate::Mode::U { self.cpu.csr[0x140] } else { self.cpu.x[4] };
+                    let comm = if self.profile_comm_offset != 0 {
+                        task.checked_add(self.profile_comm_offset as u64)
+                            .and_then(|a| crate::profile::task_comm(&self.cpu.memory, self.cpu.csr[0x180], a))
+                    } else { None }.unwrap_or([0; 2]);
+                    let row = [self.cpu.pc, self.cpu.csr[0x180], self.cpu.mode as u64,
+                        self.cpu.x[4], self.cpu.csr[0x140], self.cpu.memory.time,
+                        self.cpu.jit.attempted, comm[0], comm[1]];
+                    if self.profile_samples.len() < 65536 { self.profile_samples.push(row); }
+                    else { self.profile_dropped += 1; }
+                    self.profile_left = self.profile_interval;
+                }
+                if used == 0 || self.cpu.waiting || self.cpu.stopped { break; }
+            }
+        }
         if self.cpu.reset_requested {
             3
         } else if self.cpu.stopped {
@@ -195,6 +233,23 @@ impl Engine {
     }
     pub fn pc(&self) -> u64 {
         self.cpu.pc
+    }
+    pub fn profile_configure(&mut self, interval: u32) {
+        self.profile_interval = interval;
+        self.profile_left = interval;
+        self.profile_samples.clear();
+        self.profile_dropped = 0;
+    }
+    pub fn profile_task_comm(&mut self, offset: u32) { self.profile_comm_offset = offset; }
+    pub fn profile_drain(&mut self) -> String {
+        use std::fmt::Write;
+        let mut out = format!("{{\"interval\":{},\"dropped\":{},\"rows\":[", self.profile_interval, self.profile_dropped);
+        self.profile_dropped = 0;
+        for (i, row) in self.profile_samples.drain(..).enumerate() {
+            if i != 0 { out.push(','); }
+            write!(out, "[\"{:x}\",\"{:x}\",{},\"{:x}\",\"{:x}\",{},{},\"{:x}\",\"{:x}\"]", row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8]).unwrap();
+        }
+        out.push_str("]}"); out
     }
     pub fn register(&self, index: u32) -> u64 {
         self.cpu.x.get(index as usize).copied().unwrap_or(0)

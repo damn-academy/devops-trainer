@@ -1,0 +1,49 @@
+
+/work/out/slim/riscv64/vmlinuz.efi:     file format binary
+
+
+Disassembly of section .data:
+
+000000000027f4be <.data+0x27f4be>:
+  27f4be:	7179                	add	sp,sp,-48
+  27f4c0:	f022                	sd	s0,32(sp)
+  27f4c2:	ec26                	sd	s1,24(sp)
+  27f4c4:	e84a                	sd	s2,16(sp)
+  27f4c6:	e44e                	sd	s3,8(sp)
+  27f4c8:	e052                	sd	s4,0(sp)
+  27f4ca:	f406                	sd	ra,40(sp)
+  27f4cc:	1800                	add	s0,sp,48
+  27f4ce:	892a                	mv	s2,a0
+  27f4d0:	852e                	mv	a0,a1
+  27f4d2:	89ae                	mv	s3,a1
+  27f4d4:	8a32                	mv	s4,a2
+  27f4d6:	006d1097          	auipc	ra,0x6d1
+  27f4da:	782080e7          	jalr	1922(ra) # 0x950c58
+  27f4de:	47bd                	li	a5,15
+  27f4e0:	44bd                	li	s1,15
+  27f4e2:	00a7e363          	bltu	a5,a0,0x27f4e8
+  27f4e6:	84aa                	mv	s1,a0
+  27f4e8:	00000013          	nop
+  27f4ec:	8626                	mv	a2,s1
+  27f4ee:	85ce                	mv	a1,s3
+  27f4f0:	6a890513          	add	a0,s2,1704
+  27f4f4:	006d1097          	auipc	ra,0x6d1
+  27f4f8:	2a8080e7          	jalr	680(ra) # 0x95079c
+  27f4fc:	6a848513          	add	a0,s1,1704
+  27f500:	4641                	li	a2,16
+  27f502:	8e05                	sub	a2,a2,s1
+  27f504:	4581                	li	a1,0
+  27f506:	954a                	add	a0,a0,s2
+  27f508:	006d1097          	auipc	ra,0x6d1
+  27f50c:	514080e7          	jalr	1300(ra) # 0x950a1c
+  27f510:	85d2                	mv	a1,s4
+  27f512:	854a                	mv	a0,s2
+  27f514:	e5c430ef          	jal	0x1c2b70
+  27f518:	70a2                	ld	ra,40(sp)
+  27f51a:	7402                	ld	s0,32(sp)
+  27f51c:	64e2                	ld	s1,24(sp)
+  27f51e:	6942                	ld	s2,16(sp)
+  27f520:	69a2                	ld	s3,8(sp)
+  27f522:	6a02                	ld	s4,0(sp)
+  27f524:	6145                	add	sp,sp,48
+  27f526:	8082                	ret

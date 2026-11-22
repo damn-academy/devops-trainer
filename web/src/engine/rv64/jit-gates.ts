@@ -12,6 +12,8 @@ try {
     const core = new mod.Engine(32);
     const symbols = core.test_elf(Uint8Array.from(atob(fixture.elf), c => c.charCodeAt(0))) as BigUint64Array;
     core.jit_threshold(1);
+    core.profile_configure(257);
+    let lastProfileAttempt = 0;
     const jit = new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow, { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) });
     let value = 0n; const start = performance.now(); let yieldAt = start;
     const attempts = () => core.test_attempted?.() ?? core.test_cycles();
@@ -19,6 +21,12 @@ try {
       for (let n = 0; attempts() < 2000000 && performance.now() - start < 60000; n++) {
         const before = attempts();
         core.run(256, Math.floor(before / 10));
+        const profile = JSON.parse(core.profile_drain());
+        if (profile.dropped) throw new Error("profile overflow");
+        for (const row of profile.rows) {
+          if (row[6] - lastProfileAttempt !== 257) throw new Error("profile instruction spacing");
+          lastProfileAttempt = row[6];
+        }
         value = core.test_read(symbols[0]!);
         if (value) break;
         jit.flush();

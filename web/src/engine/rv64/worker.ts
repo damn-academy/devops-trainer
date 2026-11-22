@@ -10,6 +10,9 @@ import { HTTPBlockDevice, type HTTPDisk } from './block';
 // waits on the snapshot loader mailbox. Runtime console input uses SAB.
 interface Core {
   metrics(): string;
+  profile_configure(interval: number): void;
+  profile_task_comm(offset: number): void;
+  profile_drain(): string;
   jit_retired(): number;
   jit_threshold(n: number): void;
   jit_install(id: number, slot: number, count: number): void;
@@ -49,7 +52,7 @@ interface Core {
 interface Init {
   input: SharedArrayBuffer; output: SharedArrayBuffer; control: SharedArrayBuffer;
   netIn?: SharedArrayBuffer; netOut?: SharedArrayBuffer; disk?: ArrayBuffer;
-  kernel?: ArrayBuffer; initrd?: ArrayBuffer; program?: ArrayBuffer; cmdline?: string; memoryMB: number; snapshot?: RV64Snapshot; snapshotURL?: string; restoreClock?: 'elapsed' | 'continuous'; jitThreshold?: number; mac?: Uint8Array; httpDisk?: HTTPDisk;
+  kernel?: ArrayBuffer; initrd?: ArrayBuffer; program?: ArrayBuffer; cmdline?: string; memoryMB: number; guestProfileInterval?: number; guestProfileTaskCommOffset?: number; snapshot?: RV64Snapshot; snapshotURL?: string; restoreClock?: 'elapsed' | 'continuous'; jitThreshold?: number; mac?: Uint8Array; httpDisk?: HTTPDisk;
 }
 self.onmessage = async ({ data }: MessageEvent<Init>) => {
   self.onmessage = null;
@@ -87,6 +90,10 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
     // Reapply policy AFTER restoring; otherwise a fresh snapshot worker silently
     // runs the interpreter forever.
     core.jit_threshold(threshold);
+    const profileInterval = data.guestProfileInterval ?? 0;
+    if (!Number.isSafeInteger(profileInterval) || profileInterval < 0 || profileInterval > 0xffffffff) throw new Error("Invalid guest profile interval");
+    core.profile_configure(profileInterval);
+    core.profile_task_comm(data.guestProfileTaskCommOffset ?? 0);
     const input = new ByteRing(data.input), output = new ByteRing(data.output);
     const control = new Int32Array(data.control);
     const netIn = data.netIn ? new FrameRing(new ByteRing(data.netIn)) : undefined;
@@ -120,6 +127,7 @@ self.onmessage = async ({ data }: MessageEvent<Init>) => {
       if (performance.now() - metricsAt >= 1000) {
         metricsAt = performance.now();
         self.postMessage({ type: 'metrics', metrics: { elapsedMs: metricsAt - startedAt,
+          guestProfile: profileInterval ? JSON.parse(core.profile_drain()) : undefined,
           restoreClock: data.restoreClock ?? 'elapsed', snapshotFaultTrace: pager?.drainTrace() ?? [], snapshotFaults: pager?.faults ?? 0, snapshotFaultMs: pager?.faultMs ?? 0,
           hostMonotonicMs: metricsAt, hostTickOffset: timeOffset, hostTicks: core.ticks(), guestTicks: core.guest_ticks(), timebaseHz: 10_000_000,
           retired: core.retired(), retiredSinceStart: core.retired() - initialRetired, jitRetired: core.jit_retired(), busyMilliseconds: busyMicros / 1000,

@@ -921,3 +921,378 @@ probe-cadence patches itself rather than relying on the live console interventio
 Diagnostic QEMU runs were stopped after log capture; task-created port-forwards
 and fixture HTTP server were closed. rv64-dev remains 1/1 Ready with its PVC
 preserved and the documented 8Gi ephemeral limit.
+
+
+## Guest instruction profiler and warm-client experiment — 2026-11-21 (local)
+
+**Partial delivery: guest profiling and a measured transport experiment are complete;
+latency budgets and integrated SMP are not achieved. No commits.** Existing user
+changes in `web/vite.config.ts` were preserved. Rust builds and the observer test
+ran only in `tenant-kuberoot/rv64-dev`, context `admin@workshop`. All Chromium
+runs were local/headless and sequential, one browser at a time.
+
+### Sampling, attribution, and reproducibility
+
+`Engine.profile_configure(N)` samples after every N **instruction attempts**,
+including fault/interrupt boundaries; it does not infer CPU time from retirement.
+The JIT's remaining instruction budget is capped at the next sample boundary.
+Default N=0 keeps the original run path. Measurements use N=100003 (prime to
+reduce periodic aliasing), not a sample only at each 4096-instruction host call.
+Rows contain PC, full satp, privilege, tp, sscratch, guest ticks, attempted count,
+and two little-endian words holding Linux task comm. Address fields are hex
+strings, avoiding JavaScript's 53-bit integer limit. Hart is explicitly 0.
+A bounded 65,536-row queue drains with each metrics second and reports drops;
+there were **zero drops**. This is a flat instruction-frequency profile, not an
+inclusive call-stack profile or a wall-time attribution of blocked operations.
+
+The observer reads task comm at offset **1704**, verified in this kernel's
+`__set_task_comm` machine code (`R3-task-comm-offset.txt`): the memcpy destination
+is task+1704, followed by zero-fill to 16 bytes. It uses supervisor tp / user
+sscratch and a separate read-only Sv39 walk. It never faults missing snapshot
+pages in, writes A/D bits, changes the architectural TLB, or reads MMIO. Missing
+pages, invalid pointers, and non-printable names stay unknown. The harness pins
+this offset to kernel SHA-256
+`db43c7264ee97779f9271ebb6c57e90df675d7ab768462e01115d84d4f7cd598`.
+The native test checks the no-hydration/no-A-bit-update property. A task comm is
+not a PID or an exec history; rows retain satp, including its ASID, to distinguish
+CLI invocations. Kernel threads may borrow another process's address space.
+
+The original riscv64 debug vmlinux was not found in rv64-dev or the inspected
+builder directories (the available original vmlinux files were x86/arm64).
+[vmlinux-to-elf](https://github.com/marin-m/vmlinux-to-elf) 1.4.0 recovered the
+embedded kallsyms into an ELF symbol carrier using `--e-machine 243 --bit-size 64`.
+This is **not original DWARF vmlinux**. Symbols identify Linux 6.18.62-kuberoot;
+addresses of `__set_task_comm` and memcpy were checked against the exact EFI
+machine code. The recovery tool's guessed ELF load base is not used to execute
+the ELF or map guest RAM; its recovered symbol addresses are used directly.
+
+`scripts/rv64-guest-symbols.py` extracts ELF symbols and stripped Go pclntab from
+the actual retained fixture binaries. External Go linking leaves pcHeader's
+textStart zero: the extractor validates and uses `.go.module` moduledata.text,
+rather than silently assigning incorrect low addresses. A synthetic external-link
+fixture tests this case. Exact executable digests, comm mappings and kernel
+provenance are in `R3-profile-symbol-manifest.json`. Mappings cover kubectl,
+control, node, containerd, containerd-shim, kinit and the independent kube-proxy
+multicall alias. CoreDNS/provisioner/BusyBox user-code symbols remain incomplete;
+unknown samples are preserved rather than attributed to the nearest other binary.
+
+The final profile is `R3-guest-profile-v2-1h.json` in this design directory;
+full rows/events/console are in ignored
+`web/public/rv64/results/R3-guest-profile-v2-1h.json`. Symbol tables and recovered
+ELF are retained in ignored `web/public/rv64/profile-symbols/`. Report generation:
+
+```sh
+python3 scripts/rv64-guest-profile.py   web/public/rv64/results/R3-guest-profile-v2-1h.json   --symbols web/public/rv64/profile-symbols/all.json.gz   --maps web/public/rv64/profile-symbols/maps.json
+```
+
+Final observer wasm SHA-256:
+`9966e4022438bca76c087484077091da17f4a341e17aa5d4972602d9b6e8858c`.
+CPU serialization and snapshot format are unchanged: observer state is on Engine,
+not Cpu. Separate diagnostic indexes `kuberoot-recovery-1024-profile` and
+`kuberoot-recovery-1024-profile-v2` pin their respective observer builds; immutable
+RAM members are hard-linked and the source manifest hash/rebinding reason is
+recorded in `profile-provenance.json`. The original snapshot index is unchanged;
+no runtime manifest validation was bypassed and no lesson snapshot was republished.
+The first instrumented build is preserved under `profile-build-v1`.
+
+For the final profiling run, from web/:
+
+```sh
+RV64_RESULT_NAME=R3-guest-profile-v2-1h RV64_GUEST_PROFILE_INTERVAL=100003 RV64_MEMORY_MB=1024 RV64_RESTORE_CLOCK=continuous RV64_SNAPSHOT_RESTORE=/rv64/snapshots/kuberoot-recovery-1024-profile-v2/paged.json RV64_MEDIA_MANIFEST=/rv64/slim-recovery-media.json RV64_PROBE_SECONDS=600 RV64_TIMEOUT_MS=630000 node src/engine/rv64/measure.mjs --kuberoot
+```
+
+The report aligns guest ticks through each batch's host monotonic anchor to the
+harness request origin. It brackets the first GET and pod operation by console
+markers; serial delivery has finite latency, and sampled time is last injected
+host time, so boundaries are not instruction-exact wall timestamps. The harness
+waits an extra metrics interval at completion to retain the last partial second.
+The earlier v1 exploratory result lacks the precise request-origin field and is
+explicitly marked approximate; do not substitute it for the v2 tables below.
+
+### Measurements and findings
+
+All runs below are 1 hart, 1024 MiB, continuous clock, same recovery-v3 base disk.
+They are single observations under evolving host/guest load, not paired estimates
+of profiler overhead or proof of a product speedup.
+
+| Variant | Restore → Node Ready | First GET pods | Pod → Ready |
+|---|---:|---:|---:|
+| Earlier accepted baseline (previous section) | 41.927 s | 12.96 s | 68.73 s |
+| PC/satp-only exploratory profile v1 | 51.723 s | 9.05 s | 97.80 s |
+| Profile v2 with task comm | 68.322 s | 9.76 s | 83.64 s |
+| Same final wasm, sampling disabled | 47.238 s | 17.98 s | 99.92 s |
+| 2 harts | **Not implemented/measured** | — | — |
+| 4 harts | **Not implemented/measured** | — | — |
+| Requested budget | ≤5 s | ≤0.5 s | ≤3 s |
+
+V2 GET repetitions: **9.76 / 9.13 / 20.05 s**. Unprofiled repetitions:
+**17.98 / 10.74 / 9.14 s**. Summaries retain exact boundaries; table durations use
+guest uptime, while profile windows use console-event wall time. V2 runtime
+clock ratio is **1.00003445**, zero backsteps and zero injected/guest tick-delta
+mismatch (`R3-guest-profile-v2-1h-clock.json`). Around the first 40 seconds,
+snapshot-fault wait was **10.477 s**; disk-fetch wait was **0**. The busy timer
+includes synchronous RAM-fault waits and must not be added to them again.
+
+- First GET: kubectl accounts for **3095/8779 = 35.3%** of all samples; control
+  accounts for **3256/8779 = 37.1%**. In kubectl, regexp.tryBacktrack plus flate
+  deflate/findMatch are **704/3095 = 22.7%** of CLI instruction samples. CLI-side
+  CPU work is confirmed, but this flat profile alone cannot separate package
+  initialization, discovery/cache serialization, and response processing.
+- Control's runtime.pcvalue/step/tracebackPCs/textAddr/findfunc are prominent.
+  These prove stack/PC metadata work, **not that all of it is GC**. GC scanning
+  functions also appear explicitly. P-256 arithmetic and crypto bigmod occur
+  in control/node/CLI; avoid claiming every such sample is certificate verify
+  rather than ECDHE or another cryptographic operation.
+- The run has **187 expired-bookmark warnings**. This supports an unhealthy
+  watch workload but does not by itself prove a watch-cache re-list bottleneck.
+- zram work is directly observed: `kswapd0` executes
+  `LZ4_compress_fast_extState` (611 pod-window samples, **0.90%** of that entire
+  window, before other reclaim/compression functions). It is not reasonable to
+  claim that zram alone explains the ~84-second pod start.
+- A physical-host fsync wait is ruled out for this backend: virtio block operation
+  4 is an immediate completion on the RAM overlay (`core/src/devices.rs`), and
+  disk-fetch wait is zero. SQLite/query/filesystem/journal CPU cost is not ruled
+  out. Switching kine to tmpfs cannot remove a physical durability wait that
+  this emulator already does not perform.
+- Kernel ZSTD decompression and memcpy occur, but do not identify image snapshot
+  unpack on their own. The tested BusyBox was preloaded with Never; the profile
+  must not relabel all filesystem decompression as a registry pull/unpack.
+
+### Measured optional persistent transport
+
+`scripts/rv64-warm-client-probe.sh` starts a real `kubectl proxy` bound only to
+127.0.0.1:18001, waits for its upstream readyz, then interleaves ordinary real
+kubectl GETs and real kubectl GETs with `--server=http://127.0.0.1:18001`. The
+proxy holds the upstream client/connection. No fake output, CLI replacement,
+kubeconfig mutation, certificate change or TLS verification disablement is used.
+The shell runs in a subshell and its EXIT trap kills its own proxy. Probe exit=0.
+This is an explicit transport diagnostic, **not a claim of transparent equivalence
+for every kubectl context/auth/TLS/upgrade option**, and is not enabled by default.
+
+| Order | Transport | GET pods |
+|---|---|---:|
+| 1 | Direct | 14.21 s |
+| 2 | Persistent upstream client via loopback proxy | 9.04 s |
+| 3 | Direct | 17.89 s |
+| 4 | Persistent upstream client via loopback proxy | 7.77 s |
+
+Both pairs improved, but neither meets 0.5 s and four non-randomized observations
+are not a distribution. Each command still starts the large CLI, and the helper
+also consumes RAM/CPU. Startup cost of the helper is excluded from this warm
+transport comparison; it must be included or amortized by a future snapshot.
+No restore or pod-start speedup is claimed for this diagnostic. Durable evidence:
+`R3-warm-client-comparison.json`, `R3-warm-client-1h-summary.json`; full result and
+command output are in ignored `web/public/rv64/results/R3-warm-client-1h.json`.
+
+Reproduce the unprofiled restore plus post-probe comparison with the same command
+above, omit RV64_GUEST_PROFILE_INTERVAL and set
+`RV64_POST_DIAG_FILE=../scripts/rv64-warm-client-probe.sh` and a fresh result name.
+Post-probe work is excluded from the main restore/pod total time.
+
+### Profile tables
+
+Shares below are percentages of **all instruction samples in the window**, not
+percentages of elapsed seconds or of only the named process. Process labels show
+comm (normalized to the matching executable) and the last five satp hex digits;
+full satp/ASID keys are preserved in the JSON. All top-50 rows resolved. Unknowns
+outside those rows remain in the denominator.
+
+#### restore-first-40s
+
+15,977 samples; 689 unresolved (4.31%); zero queue drops.
+
+| Rank | Process / satp suffix | Function | Samples | Share |
+|---:|---|---|---:|---:|
+| 1 | kuberoot-control / 836a7 | `runtime.pcvalue` | 403 | 2.522% |
+| 2 | kuberoot-control / 836a7 | `runtime.step` | 321 | 2.009% |
+| 3 | kuberoot-control / 836a7 | `memcpy` | 287 | 1.796% |
+| 4 | kubectl / 8f7f5 | `regexp.(*Regexp).tryBacktrack` | 253 | 1.584% |
+| 5 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Mul` | 235 | 1.471% |
+| 6 | kubectl / 8f7f5 | `memcpy` | 224 | 1.402% |
+| 7 | kubectl / 8f7f5 | `compress/flate.(*compressor).deflate` | 221 | 1.383% |
+| 8 | kubectl / 8f7f5 | `compress/flate.(*compressor).findMatch` | 217 | 1.358% |
+| 9 | kuberoot-control / 836a7 | `runtime.selectgo` | 143 | 0.895% |
+| 10 | kuberoot-node / 8365c | `memcpy` | 140 | 0.876% |
+| 11 | kuberoot-control / 836a7 | `runtime.tracebackPCs` | 124 | 0.776% |
+| 12 | kuberoot-control / 836a7 | `runtime.(*moduledata).textAddr` | 121 | 0.757% |
+| 13 | kuberoot-control / 836a7 | `runtime.unlock2` | 112 | 0.701% |
+| 14 | kuberoot-control / 836a7 | `psi_group_change` | 91 | 0.570% |
+| 15 | kuberoot-control / 836a7 | `update_load_avg` | 91 | 0.570% |
+| 16 | kuberoot-control / 836a7 | `ZSTD_decompressSequences_default.constprop.0` | 88 | 0.551% |
+| 17 | kuberoot-control / 836a7 | `__update_load_avg_se` | 84 | 0.526% |
+| 18 | kuberoot-node / 8365c | `crypto/internal/fips140/nistec/fiat.p256Mul` | 83 | 0.519% |
+| 19 | kuberoot-control / 836a7 | `runtime.(*unwinder).resolveInternal` | 82 | 0.513% |
+| 20 | kuberoot-control / 836a7 | `internal/runtime/atomic.Xchg8` | 80 | 0.501% |
+| 21 | kubectl / 8f7f5 | `runtime.tryDeferToSpanScan` | 74 | 0.463% |
+| 22 | containerd / 83676 | `psi_group_change` | 71 | 0.444% |
+| 23 | kubectl / 8f7f5 | `runtime.scanObject` | 71 | 0.444% |
+| 24 | kuberoot-control / 836a7 | `__update_load_avg_cfs_rq` | 70 | 0.438% |
+| 25 | kubectl / 8f7f5 | `runtime.scanObjectsSmall` | 70 | 0.438% |
+| 26 | kuberoot-control / 836a7 | `runtime.findfunc` | 70 | 0.438% |
+| 27 | kubectl / 8f7f5 | `runtime.mallocgcSmallScanNoHeader` | 64 | 0.401% |
+| 28 | kuberoot-control / 836a7 | `runtime.mallocgcSmallScanNoHeader` | 63 | 0.394% |
+| 29 | containerd / 83676 | `__update_load_avg_se` | 62 | 0.388% |
+| 30 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Add` | 61 | 0.382% |
+| 31 | kubectl / 8f7f5 | `regexp.(*inputString).step` | 55 | 0.344% |
+| 32 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Selectznz` | 55 | 0.344% |
+| 33 | coredns / 82a13 | `psi_group_change` | 54 | 0.338% |
+| 34 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Square` | 54 | 0.338% |
+| 35 | kuberoot-control / 836a7 | `runtime.memmove` | 53 | 0.332% |
+| 36 | containerd / 83676 | `__schedule` | 52 | 0.325% |
+| 37 | kubectl / 8f7f5 | `runtime.memmove` | 52 | 0.325% |
+| 38 | kubectl / 8f7f5 | `hash/crc32.slicingUpdate` | 52 | 0.325% |
+| 39 | kuberoot-control / 836a7 | `runtime.(*unwinder).next` | 51 | 0.319% |
+| 40 | kubectl / 8f7f5 | `ZSTD_decompressSequences_default.constprop.0` | 50 | 0.313% |
+| 41 | kuberoot-control / 836a7 | `runtime.lock2` | 48 | 0.300% |
+| 42 | kuberoot-control / 836a7 | `crypto/internal/fips140/bigmod.(*Nat).montgomeryMul` | 45 | 0.282% |
+| 43 | containerd-shim / 80d79 | `psi_group_change` | 43 | 0.269% |
+| 44 | containerd / 83676 | `update_load_avg` | 43 | 0.269% |
+| 45 | kuberoot-control / 836a7 | `update_curr` | 42 | 0.263% |
+| 46 | containerd-shim / 80d79 | `runtime.scanObjectsSmall` | 42 | 0.263% |
+| 47 | containerd-shim / 80ca4 | `psi_group_change` | 41 | 0.257% |
+| 48 | containerd-shim / 80ca4 | `runtime.scanObjectsSmall` | 41 | 0.257% |
+| 49 | kuberoot-control / 836a7 | `regexp.(*Regexp).tryBacktrack` | 41 | 0.257% |
+| 50 | kuberoot-node / 8365c | `ZSTD_decompressSequences_default.constprop.0` | 40 | 0.250% |
+
+#### first-get-pods
+
+8,779 samples; 174 unresolved (1.98%); zero queue drops.
+
+| Rank | Process / satp suffix | Function | Samples | Share |
+|---:|---|---|---:|---:|
+| 1 | kubectl / 82be5 | `regexp.(*Regexp).tryBacktrack` | 267 | 3.041% |
+| 2 | kuberoot-control / 836a7 | `runtime.pcvalue` | 242 | 2.757% |
+| 3 | kubectl / 82be5 | `compress/flate.(*compressor).deflate` | 229 | 2.608% |
+| 4 | kuberoot-control / 836a7 | `runtime.step` | 225 | 2.563% |
+| 5 | kubectl / 82be5 | `compress/flate.(*compressor).findMatch` | 208 | 2.369% |
+| 6 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Mul` | 156 | 1.777% |
+| 7 | kubectl / 82be5 | `runtime.scanObjectsSmall` | 108 | 1.230% |
+| 8 | kubectl / 82be5 | `runtime.tryDeferToSpanScan` | 107 | 1.219% |
+| 9 | kuberoot-control / 836a7 | `runtime.selectgo` | 101 | 1.150% |
+| 10 | kuberoot-control / 836a7 | `runtime.tracebackPCs` | 90 | 1.025% |
+| 11 | kubectl / 82be5 | `runtime.scanObject` | 87 | 0.991% |
+| 12 | kuberoot-node / 8365c | `crypto/internal/fips140/nistec/fiat.p256Mul` | 87 | 0.991% |
+| 13 | kuberoot-control / 836a7 | `vendor/golang.org/x/crypto/chacha20.(*Cipher).xorKeyStreamBlocksGeneric` | 83 | 0.945% |
+| 14 | kubectl / 82be5 | `runtime.memmove` | 72 | 0.820% |
+| 15 | kubectl / 82be5 | `runtime.findObject` | 64 | 0.729% |
+| 16 | kubectl / 82be5 | `runtime.mallocgcSmallScanNoHeader` | 58 | 0.661% |
+| 17 | kuberoot-control / 836a7 | `runtime.unlock2` | 57 | 0.649% |
+| 18 | kubectl / 82be5 | `runtime.memhashFallback` | 56 | 0.638% |
+| 19 | kuberoot-control / 836a7 | `runtime.(*moduledata).textAddr` | 54 | 0.615% |
+| 20 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Add` | 54 | 0.615% |
+| 21 | kuberoot-control / 836a7 | `runtime.findfunc` | 52 | 0.592% |
+| 22 | kuberoot-control / 836a7 | `runtime.(*unwinder).resolveInternal` | 48 | 0.547% |
+| 23 | kubectl / 82be5 | `hash/crc32.slicingUpdate` | 45 | 0.513% |
+| 24 | kubectl / 82be5 | `regexp.(*inputString).step` | 44 | 0.501% |
+| 25 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Square` | 42 | 0.478% |
+| 26 | kuberoot-control / 836a7 | `crypto/internal/fips140/bigmod.(*Nat).montgomeryMul` | 41 | 0.467% |
+| 27 | kuberoot-control / 836a7 | `encoding/json.unquoteBytes` | 40 | 0.456% |
+| 28 | kuberoot-control / 836a7 | `internal/runtime/atomic.Xchg8` | 39 | 0.444% |
+| 29 | kuberoot-control / 836a7 | `runtime.lock2` | 39 | 0.444% |
+| 30 | kuberoot-control / 836a7 | `runtime.memmove` | 39 | 0.444% |
+| 31 | kubectl / 82be5 | `crypto/internal/fips140/sha256.block` | 39 | 0.444% |
+| 32 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Selectznz` | 38 | 0.433% |
+| 33 | kuberoot-control / 836a7 | `runtime.mallocgcSmallScanNoHeader` | 37 | 0.421% |
+| 34 | kubectl / 82be5 | `crypto/internal/fips140/nistec/fiat.p256Mul` | 37 | 0.421% |
+| 35 | kubectl / 82be5 | `runtime.nextFreeFast` | 34 | 0.387% |
+| 36 | kuberoot-control / 836a7 | `__update_load_avg_se` | 33 | 0.376% |
+| 37 | kuberoot-control / 836a7 | `encoding/json.checkValid` | 33 | 0.376% |
+| 38 | kubectl / 82be5 | `github.com/chai2010/gettext-go/po.decodePoString` | 33 | 0.376% |
+| 39 | kubectl / 82be5 | `compress/flate.(*huffmanBitWriter).writeTokens` | 31 | 0.353% |
+| 40 | kubectl / 82be5 | `runtime.(*mspan).writeHeapBitsSmall` | 30 | 0.342% |
+| 41 | kubectl / 82be5 | `runtime.scanblock` | 30 | 0.342% |
+| 42 | kubectl / 82be5 | `internal/bytealg.Count` | 29 | 0.330% |
+| 43 | kuberoot-control / 836a7 | `runtime.(*unwinder).next` | 28 | 0.319% |
+| 44 | kubectl / 82be5 | `runtime.typePointers.next` | 28 | 0.319% |
+| 45 | kuberoot-control / 836a7 | `psi_group_change` | 27 | 0.308% |
+| 46 | kubectl / 82be5 | `compress/flate.(*huffmanBitWriter).writeCode` | 26 | 0.296% |
+| 47 | kuberoot-node / 8365c | `crypto/internal/fips140/nistec/fiat.p256Add` | 25 | 0.285% |
+| 48 | kuberoot-control / 836a7 | `runtime.memhashFallback` | 24 | 0.273% |
+| 49 | kuberoot-control / 836a7 | `runtime.memclrNoHeapPointers` | 24 | 0.273% |
+| 50 | kuberoot-control / 836a7 | `runtime.mallocgc` | 24 | 0.273% |
+
+#### pod-start
+
+67,898 samples; 2,976 unresolved (4.38%); zero queue drops.
+
+| Rank | Process / satp suffix | Function | Samples | Share |
+|---:|---|---|---:|---:|
+| 1 | kuberoot-control / 836a7 | `runtime.pcvalue` | 2187 | 3.221% |
+| 2 | kuberoot-control / 836a7 | `runtime.step` | 1710 | 2.518% |
+| 3 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Mul` | 1088 | 1.602% |
+| 4 | kuberoot-control / 836a7 | `runtime.selectgo` | 906 | 1.334% |
+| 5 | kuberoot-control / 836a7 | `runtime.tracebackPCs` | 627 | 0.923% |
+| 6 | kuberoot-control / 836a7 | `runtime.(*moduledata).textAddr` | 617 | 0.909% |
+| 7 | kswapd0 / 836a7 | `LZ4_compress_fast_extState` | 611 | 0.900% |
+| 8 | kuberoot-control / 836a7 | `runtime.unlock2` | 484 | 0.713% |
+| 9 | kuberoot-control / 836a7 | `runtime.mallocgcSmallScanNoHeader` | 479 | 0.705% |
+| 10 | kuberoot-control / 836a7 | `vendor/golang.org/x/crypto/chacha20.(*Cipher).xorKeyStreamBlocksGeneric` | 453 | 0.667% |
+| 11 | kuberoot-control / 836a7 | `runtime.findfunc` | 427 | 0.629% |
+| 12 | kuberoot-control / 836a7 | `runtime.memmove` | 422 | 0.622% |
+| 13 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Add` | 414 | 0.610% |
+| 14 | kuberoot-control / 836a7 | `internal/runtime/atomic.Xchg8` | 387 | 0.570% |
+| 15 | kuberoot-control / 836a7 | `runtime.(*unwinder).resolveInternal` | 356 | 0.524% |
+| 16 | kuberoot-node / 8365c | `crypto/internal/fips140/nistec/fiat.p256Mul` | 317 | 0.467% |
+| 17 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Square` | 316 | 0.465% |
+| 18 | kuberoot-control / 836a7 | `runtime.lock2` | 305 | 0.449% |
+| 19 | kuberoot-control / 836a7 | `encoding/json.unquoteBytes` | 301 | 0.443% |
+| 20 | kuberoot-control / 836a7 | `psi_group_change` | 297 | 0.437% |
+| 21 | containerd / 83676 | `runtime.scanObjectsSmall` | 284 | 0.418% |
+| 22 | kuberoot-control / 836a7 | `runtime.(*unwinder).next` | 280 | 0.412% |
+| 23 | kubectl / 8f52f | `regexp.(*Regexp).tryBacktrack` | 270 | 0.398% |
+| 24 | kuberoot-control / 836a7 | `__update_load_avg_se` | 266 | 0.392% |
+| 25 | kuberoot-node / 8365c | `memcpy` | 266 | 0.392% |
+| 26 | kuberoot-control / 836a7 | `update_load_avg` | 256 | 0.377% |
+| 27 | kubectl / 8f7c6 | `regexp.(*Regexp).tryBacktrack` | 254 | 0.374% |
+| 28 | containerd / 83676 | `runtime.tryDeferToSpanScan` | 250 | 0.368% |
+| 29 | kubectl / 8f7c6 | `compress/flate.(*compressor).deflate` | 234 | 0.345% |
+| 30 | kuberoot-control / 836a7 | `runtime.memhashFallback` | 233 | 0.343% |
+| 31 | kuberoot-control / 836a7 | `crypto/internal/fips140/bigmod.(*Nat).montgomeryMul` | 232 | 0.342% |
+| 32 | kuberoot-control / 836a7 | `runtime.nextFreeFast` | 231 | 0.340% |
+| 33 | kswapd0 / 82471 | `LZ4_compress_fast_extState` | 231 | 0.340% |
+| 34 | kubectl / 8f52f | `compress/flate.(*compressor).findMatch` | 229 | 0.337% |
+| 35 | kswapd0 / 82a13 | `LZ4_compress_fast_extState` | 227 | 0.334% |
+| 36 | kuberoot-control / 836a7 | `runtime.mallocgc` | 224 | 0.330% |
+| 37 | containerd / 83676 | `psi_group_change` | 222 | 0.327% |
+| 38 | kuberoot-control / 836a7 | `runtime.(*mspan).writeHeapBitsSmall` | 221 | 0.325% |
+| 39 | kswapd0 / 836a7 | `memcpy` | 211 | 0.311% |
+| 40 | kuberoot-control / 836a7 | `crypto/internal/fips140/nistec/fiat.p256Selectznz` | 210 | 0.309% |
+| 41 | kubectl / 8f52f | `compress/flate.(*compressor).deflate` | 207 | 0.305% |
+| 42 | kuberoot-control / 836a7 | `__update_load_avg_cfs_rq` | 206 | 0.303% |
+| 43 | kubectl / 8f7c6 | `compress/flate.(*compressor).findMatch` | 205 | 0.302% |
+| 44 | containerd / 83676 | `__update_load_avg_se` | 194 | 0.286% |
+| 45 | runc / 82765 | `memcpy` | 194 | 0.286% |
+| 46 | kuberoot-control / 836a7 | `encoding/json.checkValid` | 190 | 0.280% |
+| 47 | kswapd0 / 80d79 | `LZ4_compress_fast_extState` | 185 | 0.272% |
+| 48 | kuberoot-control / 836a7 | `runtime.newInlineUnwinder` | 183 | 0.270% |
+| 49 | containerd / 83676 | `update_load_avg` | 176 | 0.259% |
+| 50 | kuberoot-control / 836a7 | `runtime.sellock` | 170 | 0.250% |
+
+### Scope still outstanding
+
+The new evidence supports prioritizing repeated CLI work, control-plane stack/
+crypto work, and RAM-fault cost; it does not justify blindly switching certificates,
+disabling SQLite synchronization, or lowering GOGC. Those changes have **not** been
+implemented or measured. A persistent discovery-cache snapshot, init/GC-specific
+trace, and a broader warmed-client experiment remain useful next experiments.
+No performance setting was silently made the lesson default.
+
+**Integrated SMP remains unimplemented.** No CPU-per-hart shared-RAM engine,
+SBI HSM/IPI/RFENCE routing, per-hart TLB/JIT shootdown integration, per-hart
+trace differential, or Linux/kuberoot 2/4-hart acceptance was added in this work.
+The existing substrate cannot be presented as those results. Step 3 of the brief
+and attainment of all three budgets are still outstanding.
+
+### Final checks for this continuation
+
+- Final wasm Chromium ISA/JIT: **439/439**, with N=257 profiling enabled and
+  exact attempted-instruction spacing checked at every drained sample.
+- Final wasm Chromium trace-diff: **20,000,005 instructions / 784,815 boundaries**,
+  exact CPU state at block exits and full RAM at completion; pass (9.107 s).
+  This is one-hart validation, not an SMP trace gate.
+- Read-only Sv39 observer native test: **1/1**, built/run only in rv64-dev.
+- Host TypeScript typecheck, **38/38 RV64 Vitest tests**, **3/3 Python profiler/
+  symbolizer tests**, harness syntax, probe `sh -n`, and `git diff --check`: pass.
+- Final result files: `R3-profile-v2-{gates,trace}.json` under ignored results.
+  Task-created symbol HTTP server and port-forward were stopped; all measurement
+  browsers closed. No commits were made.
