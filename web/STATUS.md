@@ -136,3 +136,7 @@ Runs: `npm run test:e2e:v86` (browser), `V86_LAB=1`, `V86_TF=1`, `V86_CLOUDLAB=1
 9. **A workaround in the k8s-3 tests.** The tests for the `k8s-3.nodes` lab write the inventory from state directly, because `terraform output -raw` used not to work. It works now, and the tests can be switched to the real command.
 10. **The browser is slower than Node.** The 512 MB cloud workstation took 119 s to boot in Chromium against 32–38 s in Node, and the two Networks machines 74–101 s (the Mac was busy with parallel jobs); after the first boot the snapshot helps — 12 s for two machines.
 11. **The Linux block chunk is 703 KB**, just over the 700 KB warning limit: the lab data (`reallab/labs.ts`) ends up in the chunk together with the lessons.
+
+## Backlog
+
+1. **SEO and GEO for damn.academy.** The course now has its own domain and should be discoverable by search engines and AI search (ChatGPT, Perplexity, Google AI Overviews): `robots.txt` and `sitemap.xml`, canonical URLs and `hreflang` for the Russian and English versions, per-block and per-lesson `title`, `description` and Open Graph images, schema.org markup (`Course`, `LearningResource`), `llms.txt`, lesson text served without JavaScript (prerendering), Google Search Console and Bing Webmaster Tools.
