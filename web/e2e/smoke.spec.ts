@@ -44,7 +44,7 @@ test.describe('shell', () => {
   test('theme toggle switches light and dark', async ({ page }) => {
     await open(page, '#/');
     const before = await page.locator('html').getAttribute('data-theme');
-    await page.locator('.top-tools .icon-btn').click();
+    await page.getByRole('button', { name: 'Theme' }).click();
     const after = await page.locator('html').getAttribute('data-theme');
     expect(after).not.toBe(before);
     expect(['light', 'dark']).toContain(after);
