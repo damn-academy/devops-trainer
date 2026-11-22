@@ -475,7 +475,7 @@ fn chain(mem: &mut Memory, q: Queue, mut idx: u16) -> Result<Vec<Desc>, ()> {
 }
 fn read(mem: &mut Memory, addr: u64, n: usize) -> Result<u64, ()> {
     let off = addr.checked_sub(crate::RAM_BASE).ok_or(())?;
-    if off.checked_add(n as u64).ok_or(())? > mem.ram.len() as u64 {
+    if off.checked_add(n as u64).ok_or(())? > mem.ram_size() as u64 {
         return Err(());
     }
     mem.physical_read(addr, n, Access::Read).map_err(|_| ())
@@ -493,5 +493,5 @@ fn bytes(mem: &mut Memory, addr: u64, n: u32) -> Result<Vec<u8>, ()> {
 fn range(mem: &Memory, addr: u64, size: u64) -> bool {
     addr.checked_sub(crate::RAM_BASE)
         .and_then(|off| off.checked_add(size))
-        .is_some_and(|end| end <= mem.ram.len() as u64)
+        .is_some_and(|end| end <= mem.ram_size() as u64)
 }

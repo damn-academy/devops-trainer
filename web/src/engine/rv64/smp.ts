@@ -1,4 +1,4 @@
-// R3 shared-memory substrate. Not yet connected to Cpu's owned Vec RAM.
+// Shared RAM and SBI mailboxes for the experimental CPU-per-Worker interpreter.
 // All harts and DMA must use this write protocol before SMP can be enabled.
 import { uleb } from './jit-compiler';
 const string = (s: string) => [s.length, ...new TextEncoder().encode(s)];
@@ -44,14 +44,15 @@ export type Amo = 'swap' | 'add' | 'xor' | 'and' | 'or' | 'min' | 'max' | 'minu'
 
 /** Conservative global reservation epoch and lock. ABA writes invalidate LR.
  * False SC failures from unrelated writes are permitted. No unlocked stores,
- * including JIT stores and DMA, may bypass this protocol in a future SMP core.
+ * including JIT stores and DMA, may bypass this protocol. Ordinary reads use
+ * atomic wasm loads; they do not require the writer lock.
  * Layout: lock at 0, epoch at 8, guest data starts at 64.
  */
 export class SharedHartMemory {
   private reservation?: Reservation;
   private words: Int32Array;
   private wasm: AtomicExports;
-  constructor(readonly memory: WebAssembly.Memory, module: WebAssembly.Module) {
+  constructor(readonly memory: WebAssembly.Memory, module: WebAssembly.Module, private generations?: Int32Array) {
     if (!(memory.buffer instanceof SharedArrayBuffer)) throw new Error('SMP requires shared wasm memory');
     this.words = new Int32Array(memory.buffer);
     this.wasm = new WebAssembly.Instance(module, { env: { memory } }).exports as unknown as AtomicExports;
@@ -63,20 +64,30 @@ export class SharedHartMemory {
     while (Atomics.compareExchange(this.words, 0, 0, 1) !== 0) Atomics.wait(this.words, 0, 1, 10);
     try { return body(); } finally { Atomics.store(this.words, 0, 0); Atomics.notify(this.words, 0, 1); }
   }
-  private read(address: number, size: 4 | 8): bigint {
+  private read(address: number, size: 1 | 2 | 4 | 8): bigint {
     const value = this.wasm.load(address - address % 8);
-    return size === 8 ? value : BigInt.asIntN(32, value >> BigInt(address % 8 * 8));
+    return size === 8 ? value : size === 4 ? BigInt.asIntN(32, value >> BigInt(address % 8 * 8)) : BigInt.asUintN(size * 8, value >> BigInt(address % 8 * 8));
   }
-  private write(address: number, size: 4 | 8, value: bigint) {
+  private write(address: number, size: 1 | 2 | 4 | 8, value: bigint) {
     if (size === 8) this.wasm.store(address, value);
     else {
-      const aligned = address - address % 8, shift = BigInt(address % 8 * 8), mask = 0xffffffffn << shift;
-      this.wasm.store(aligned, (this.wasm.load(aligned) & ~mask) | ((value & 0xffffffffn) << shift));
+      const aligned = address - address % 8, shift = BigInt(address % 8 * 8), bits = (1n << BigInt(size * 8)) - 1n, mask = bits << shift;
+      this.wasm.store(aligned, (this.wasm.load(aligned) & ~mask) | ((value & bits) << shift));
     }
     this.wasm.add(8, 1n);
+    if (this.generations) Atomics.add(this.generations, Math.floor((address - 64) / 4096), 1);
   }
-  load(address: number, size: 4 | 8): bigint { this.check(address, size); return this.locked(() => this.read(address, size)); }
-  store(address: number, size: 4 | 8, value: bigint) { this.check(address, size); this.locked(() => this.write(address, size, value)); }
+  load(address: number, size: 1 | 2 | 4 | 8): bigint { this.check(address, size); return this.read(address, size); }
+  store(address: number, size: 1 | 2 | 4 | 8, value: bigint) { this.check(address, size); this.locked(() => this.write(address, size, value)); }
+  clearReservation() { this.reservation = undefined; }
+  cas(address: number, expected: bigint, value: bigint): bigint {
+    this.check(address, 8);
+    return this.locked(() => {
+      const old = this.read(address, 8);
+      if (BigInt.asUintN(64, old) === BigInt.asUintN(64, expected)) this.write(address, 8, value);
+      return old;
+    });
+  }
   lr(address: number, size: 4 | 8): bigint {
     this.check(address, size);
     return this.locked(() => {
@@ -98,7 +109,9 @@ export class SharedHartMemory {
     return this.locked(() => {
       if (size === 8 && (op === 'add' || op === 'swap')) {
         const old = this.wasm[op](address, value);
-        this.wasm.add(8, 1n); return old;
+        this.wasm.add(8, 1n);
+        if (this.generations) Atomics.add(this.generations, Math.floor((address - 64) / 4096), 1);
+        return old;
       }
       const old = this.read(address, size), bits = size * 8;
       const a = BigInt.asIntN(bits, old), b = BigInt.asIntN(bits, value);

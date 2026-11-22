@@ -60,6 +60,9 @@ const EMPTY: Tlb = Tlb {
 use crate::decoded::Decoded;
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Memory {
+    /// Experimental external shared RAM; never serialized as a single-hart snapshot.
+    #[serde(skip)]
+    pub shared_bytes: usize,
     #[serde(skip)]
     pub metrics: crate::metrics::Metrics,
     #[serde(skip)]
@@ -92,14 +95,16 @@ pub struct Memory {
 }
 fn empty_tlb() -> [[Tlb; 256]; 3] { [[EMPTY; 256]; 3] }
 impl Memory {
+    pub fn ram_size(&self) -> usize { if self.shared_bytes == 0 { self.ram.len() } else { self.shared_bytes } }
     pub(crate) fn reset_caches(&mut self) {
         self.flush();
-        self.jit_code = vec![0; (self.ram.len() + 4095) / 4096];
-        self.jit_pages = vec![0; (self.ram.len() + 4095) / 4096];
-        self.code = (0..(self.ram.len() + 4095) / 4096).map(|_| None).collect();
+        self.jit_code = vec![0; (self.ram_size() + 4095) / 4096];
+        self.jit_pages = vec![0; (self.ram_size() + 4095) / 4096];
+        self.code = (0..(self.ram_size() + 4095) / 4096).map(|_| None).collect();
     }
     pub fn new(bytes: usize) -> Self {
         Self {
+            shared_bytes: 0,
             metrics: Default::default(),
             jit_epoch: 0,
             jit_code: vec![0; (bytes + 4095) / 4096],
@@ -128,10 +133,10 @@ impl Memory {
         self.tlb = [[EMPTY; 256]; 3];
     }
     pub(crate) fn ensure_ram(&mut self, start: usize, size: usize) {
-        if self.lazy_ram.is_empty() || size == 0 || start.checked_add(size).map_or(true, |end| end > self.ram.len()) { return; }
+        if self.lazy_ram.is_empty() || size == 0 || start.checked_add(size).map_or(true, |end| end > self.ram_size()) { return; }
         for index in start / 262144..=(start + size - 1) / 262144 {
             if self.lazy_ram[index] {
-                let end = ((index + 1) * 262144).min(self.ram.len());
+                let end = ((index + 1) * 262144).min(self.ram_size());
                 let page = &mut self.ram[index * 262144..end];
                 #[cfg(target_arch = "wasm32")]
                 crate::wasm::snapshot_page(index as u32, page);
@@ -144,12 +149,18 @@ impl Memory {
     pub fn load_image(&mut self, addr: u64, data: &[u8]) -> Result<(), Trap> {
         let start = addr
             .checked_sub(RAM_BASE)
-            .filter(|off| *off <= self.ram.len() as u64)
+            .filter(|off| *off <= self.ram_size() as u64)
             .ok_or(Access::Write.fault(addr))? as usize;
         let end = start
             .checked_add(data.len())
             .ok_or(Access::Write.fault(addr))?;
         self.ensure_ram(start, data.len());
+        #[cfg(target_arch = "wasm32")]
+        if self.shared_bytes != 0 {
+            if end > self.shared_bytes { return Err(Access::Write.fault(addr)); }
+            crate::wasm::shared_image(start as u32, data);
+            return Ok(());
+        }
         let dest = self
             .ram
             .get_mut(start..end)
@@ -165,7 +176,14 @@ impl Memory {
     }
     #[inline]
     pub fn physical_read(&mut self, addr: u64, size: usize, access: Access) -> Result<u64, Trap> {
-        if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| *off <= self.ram.len() as u64) {
+        #[cfg(target_arch = "wasm32")]
+        if self.shared_bytes != 0 {
+            if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| off.checked_add(size as u64).is_some_and(|end| end <= self.shared_bytes as u64)) {
+                if !matches!(size, 1 | 2 | 4 | 8) { return Err(access.fault(addr)); }
+                return Ok(crate::wasm::shared_access(0, off as u32, size as u32, 0));
+            }
+        }
+        if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| *off <= self.ram_size() as u64) {
             self.ensure_ram(off as usize, size);
             if let Some(bytes) = self
                 .ram
@@ -193,7 +211,15 @@ impl Memory {
     }
     #[inline]
     pub fn physical_write(&mut self, addr: u64, size: usize, value: u64) -> Result<(), Trap> {
-        if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| *off <= self.ram.len() as u64) {
+        #[cfg(target_arch = "wasm32")]
+        if self.shared_bytes != 0 {
+            if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| off.checked_add(size as u64).is_some_and(|end| end <= self.shared_bytes as u64)) {
+                if !matches!(size, 1 | 2 | 4 | 8) { return Err(Access::Write.fault(addr)); }
+                crate::wasm::shared_access(1, off as u32, size as u32, value);
+                return Ok(());
+            }
+        }
+        if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| *off <= self.ram_size() as u64) {
             self.ensure_ram(off as usize, size);
             if let Some(bytes) = self
                 .ram
@@ -225,8 +251,17 @@ impl Memory {
     // Cache is physically indexed. Every RAM writer, including virtqueue DMA,
     // goes through physical_write/load_image and invalidates the affected page.
     pub fn decoded(&mut self, pa: u64) -> Option<Decoded> {
-        let off = pa.checked_sub(RAM_BASE).filter(|off| *off < self.ram.len() as u64)? as usize;
-        if off & 1 != 0 || off.checked_add(4)? > self.ram.len() || off & 4095 == 4094 { return None; }
+        #[cfg(target_arch = "wasm32")]
+        if self.shared_bytes != 0 {
+            let off = pa.checked_sub(RAM_BASE)?;
+            if off & 1 != 0 || off & 4095 == 4094 || off + 4 > self.shared_bytes as u64 { return None; }
+            let raw = (crate::wasm::shared_access(0, off as u32, 2, 0) as u32) |
+                ((crate::wasm::shared_access(0, off as u32 + 2, 2, 0) as u32) << 16);
+            return if raw & 3 == 3 { Some(Decoded::new(raw, raw, 4)) }
+                else { Some(Decoded::new(raw & 65535, crate::compressed::expand(raw as u16)?, 2)) };
+        }
+        let off = pa.checked_sub(RAM_BASE).filter(|off| *off < self.ram_size() as u64)? as usize;
+        if off & 1 != 0 || off.checked_add(4)? > self.ram_size() || off & 4095 == 4094 { return None; }
         let page = off / 4096;
         let slot = (off & 4095) / 2;
         if let Some(cache) = &self.code[page] {
@@ -332,6 +367,8 @@ impl Memory {
             let mut pte = self
                 .physical_read(pte_addr, 8, Access::Read)
                 .map_err(|_| access.fault(va))?;
+            #[cfg(target_arch = "wasm32")]
+            let original_pte = pte;
             if pte & 1 == 0 || pte & 6 == 4 || pte >> 54 != 0 {
                 return Err(fault);
             }
@@ -368,8 +405,14 @@ impl Memory {
                 if !self.adue { return Err(fault); }
                 pte |= ad;
                 self.pmp_check(pte_addr, 8, Access::Write, Mode::S).map_err(|_| access.fault(va))?;
-                self.physical_write(pte_addr, 8, pte)
-                    .map_err(|_| access.fault(va))?;
+                #[cfg(target_arch = "wasm32")]
+                if self.shared_bytes != 0 {
+                    // Restart the walk if another hart changed the PTE.
+                    let old = crate::wasm::shared_cas((pte_addr - RAM_BASE) as u32, original_pte, pte);
+                    if old != original_pte { return self.walk(va, access, effective, satp, status, kind, index, context); }
+                } else { self.physical_write(pte_addr, 8, pte).map_err(|_| access.fault(va))?; }
+                #[cfg(not(target_arch = "wasm32"))]
+                self.physical_write(pte_addr, 8, pte).map_err(|_| access.fault(va))?;
             }
             let pa = base | (va & low_mask);
             self.tlb[kind][index] = Tlb {

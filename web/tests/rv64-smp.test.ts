@@ -95,3 +95,17 @@ it('validates all SBI hart targets before publishing and handles broadcast', asy
   expect(tickets.map(t => t.hart)).toEqual([2]);
   expect(() => bus.targets(1n, 1n << 64n)).toThrow(RangeError);
 });
+
+it('preserves adjacent bytes and invalidates LR on byte DMA and PTE CAS', () => {
+  const [a, b] = machine();
+  a!.store(64, 8, 0x1122334455667788n);
+  for (let offset = 0; offset < 8; offset++) expect(a!.load(64 + offset, 1)).toBe((0x1122334455667788n >> BigInt(offset * 8)) & 255n);
+  a!.lr(64, 8); b!.store(67, 1, 0xffn);
+  expect(a!.sc(64, 8, 0n)).toBe(false);
+  expect(a!.load(64, 8)).toBe(0x11223344ff667788n);
+  a!.lr(64, 8);
+  expect(b!.cas(64, 0n, 1n)).toBe(0x11223344ff667788n);
+  expect(a!.sc(64, 8, 7n)).toBe(true);
+  a!.lr(64, 8); expect(b!.cas(64, 7n, 7n)).toBe(7n);
+  expect(a!.sc(64, 8, 0n)).toBe(false);
+});

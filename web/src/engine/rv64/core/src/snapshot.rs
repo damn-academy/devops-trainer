@@ -8,6 +8,7 @@ impl Cpu {
         self.encode_snapshot()
     }
     fn encode_snapshot(&self) -> Result<Vec<u8>, String> {
+        if self.memory.shared_bytes != 0 { return Err("SMP requires an all-hart snapshot barrier and shared RAM image".into()); }
         let mut out = MAGIC.to_vec();
         bincode::DefaultOptions::new().with_fixint_encoding()
             .serialize_into(&mut out, self).map_err(|e| e.to_string())?;

@@ -4,13 +4,23 @@ use wasm_bindgen::prelude::*;
 extern "C" {
     #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SnapshotPage)]
     pub(crate) fn snapshot_page(index: u32, page: &mut [u8]);
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedAccess)]
+    pub(crate) fn shared_access(op: u32, offset: u32, size: u32, value: u64) -> u64;
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedImage)]
+    pub(crate) fn shared_image(offset: u32, bytes: &[u8]);
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedCas)]
+    pub(crate) fn shared_cas(offset: u32, expected: u64, value: u64) -> u64;
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedGeneration)]
+    pub(crate) fn shared_generation(page: u32) -> u32;
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedMmio)]
+    pub(crate) fn shared_mmio(write: bool, address: u64, size: u32, value: u64) -> u64;
 }
 #[wasm_bindgen]
 pub struct Engine {
     cpu: Cpu,
     profile_interval: u32,
     profile_left: u32,
-    profile_samples: Vec<[u64; 9]>,
+    profile_samples: Vec<[u64; 44]>,
     profile_dropped: u64,
     profile_comm_offset: u32,
 }

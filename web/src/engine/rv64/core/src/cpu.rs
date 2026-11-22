@@ -340,6 +340,11 @@ impl Cpu {
         let p = self
             .memory
             .translate_size(a, n, access, self.mode, self.csr[0x180], self.csr[0x300])?;
+        #[cfg(target_arch = "wasm32")]
+        if self.memory.shared_bytes != 0 && (0xc000000..0x10004000).contains(&p) && access != Access::Fetch {
+            if !((0x10000000..0x10004000).contains(&p) && p & 0xfff >= 0x100 && matches!(n, 1 | 2 | 4)) && (n != 4 || a & 3 != 0) { return Err(Trap { cause: 5, value: a }); }
+            return Ok(crate::wasm::shared_mmio(false, p, n as u32, 0));
+        }
         if (0xc000000..0x10004000).contains(&p) && access != Access::Fetch {
             self.memory.metrics.mmio += 1;
             // Device-specific virtio configuration permits byte/halfword reads
@@ -370,7 +375,7 @@ impl Cpu {
                     self.csr[0x180],
                     self.csr[0x300],
                 )?;
-                if p < RAM_BASE || p - RAM_BASE >= self.memory.ram.len() as u64 {
+                if p < RAM_BASE || p - RAM_BASE >= self.memory.ram_size() as u64 {
                     return Err(Trap { cause: 7, value: a });
                 }
                 addresses[j] = p;
@@ -389,6 +394,11 @@ impl Cpu {
             self.csr[0x300],
         )?;
         self.reservation = None;
+        #[cfg(target_arch = "wasm32")]
+        if self.memory.shared_bytes != 0 && (0xc000000..0x10004000).contains(&p) {
+            if n != 4 || a & 3 != 0 { return Err(Trap { cause: 7, value: a }); }
+            crate::wasm::shared_mmio(true, p, n as u32, v); return Ok(());
+        }
         if (0xc000000..0x10004000).contains(&p) {
             self.memory.metrics.mmio += 1;
             if n != 4 || a & 3 != 0 { return Err(Trap { cause: 7, value: a }); }
@@ -649,6 +659,15 @@ impl Cpu {
                     self.csr[0x180],
                     self.csr[0x300],
                 )?;
+                #[cfg(target_arch = "wasm32")]
+                if self.memory.shared_bytes != 0 {
+                    if !matches!(op, 0 | 1 | 2 | 3 | 4 | 8 | 12 | 16 | 20 | 24 | 28) || (op == 2 && rs2 != 0) { return Err(self.illegal(i)); }
+                    if pa < RAM_BASE || pa.checked_add(size as u64).map_or(true, |end| end > RAM_BASE + self.memory.shared_bytes as u64) { return Err(Trap { cause: if op == 2 { 5 } else { 7 }, value: a }); }
+                    let old = crate::wasm::shared_access(op + 16, (pa - RAM_BASE) as u32, size as u32, b);
+                    self.x[rd] = if size == 4 && op != 3 { word(old) } else { old };
+                    self.pc = next;
+                    return Ok(());
+                }
                 if op == 3 {
                     let success = self.reservation == Some((pa, size));
                     self.reservation = None;
