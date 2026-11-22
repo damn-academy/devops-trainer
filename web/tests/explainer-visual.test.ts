@@ -75,7 +75,6 @@ describe('explainer: a picture built from zero', () => {
     const node = (id: string) => root.querySelector(`g.node[data-id="${id}"]`)!;
     expect(node('b').getAttribute('class')).toContain('st-hidden');
     expect(node('b').getAttribute('aria-hidden')).toBe('true');
-    (root.querySelector('.ex-intro-go') as HTMLButtonElement).click();
     expect(root.querySelector('.ex-counter')!.textContent).toContain('1 /');
     (root.querySelector('button[aria-label="Шаг вперёд"]') as HTMLButtonElement).click();
     expect(node('b').getAttribute('class')).not.toContain('st-hidden');
@@ -117,7 +116,6 @@ describe('explainer: one focus, the acting node and its callout', () => {
     const root = document.createElement('div');
     document.body.append(root);
     const m = mountModel(root, tiny, ctx());
-    (root.querySelector('.ex-intro-go') as HTMLButtonElement).click();
     expect(root.querySelector('.ex-counter')!.textContent).toContain('1 /');
     (root.querySelector('button[aria-label="Шаг вперёд"]') as HTMLButtonElement).click();
     const tok = root.querySelector('g.token.card')!;
@@ -157,7 +155,6 @@ describe('explainer: pictograms, legend, intro, knobs, breaks, stop label', () =
     expect(root.querySelectorAll('.ex-legend-item')).toHaveLength(2);
     expect(root.querySelector('.ex-legend .lg-icon path')!.getAttribute('d')).toBe(NODE_ICONS.dns);
     expect(root.querySelector('.ex-intro-text')!.textContent).toContain('Начать');
-    (root.querySelector('.ex-intro-go') as HTMLButtonElement).click();
     expect(root.querySelector('.ex-counter')!.textContent).toContain('1 /');
     (root.querySelector('button[aria-label="Шаг вперёд"]') as HTMLButtonElement).click();
     expect(root.querySelector('.ex-intro-text')).toBeNull();
