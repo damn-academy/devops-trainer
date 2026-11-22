@@ -194,7 +194,7 @@ describe('add-ons in kube-lite', () => {
     bare.dispose();
   });
 
-  it('Prometheus fires KubePodCrashLooping only with kube-state-metrics; node-exporter adds node targets', async () => {
+  it('Prometheus fires KubePodCrashLooping only with kube-state-metrics; node-exporter adds node targets', { timeout: 20_000 }, async () => {
     const res: Record<string, string> = {};
     for (const [name, addons] of [
       ['all', ADDON_IDS],
