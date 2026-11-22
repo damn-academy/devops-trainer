@@ -31,16 +31,12 @@ async function sh(m: SimMachine, ...lines: string[]): Promise<string> {
 }
 const passes = async (m: SimMachine, t: Task, start?: Facts) => evaluateCheck(t.check, await m.facts(), start).pass;
 
-/** `terraform output -raw inventory > …` — falls back to the state while tfsim reads the name as `-raw`. */
+/** `terraform output -raw inventory > …`, the same command the lessons teach. */
 async function inventory(m: SimMachine): Promise<void> {
   const back = m.cwd();
   const r = await m.exec(`cd ${INFRA} && terraform output -raw inventory > ${OPS}/inventory.ini`);
   await m.exec(`cd ${back}`);
-  const text = m.rootFs.exists(`${OPS}/inventory.ini`) ? m.rootFs.readFile(`${OPS}/inventory.ini`) : '';
-  if (r.exit !== 0 || !text.includes('[control_plane]')) {
-    const st = JSON.parse(m.rootFs.readFile(`${INFRA}/terraform.tfstate`)) as { outputs: Record<string, { value: string }> };
-    write(m, `${OPS}/inventory.ini`, st.outputs.inventory.value);
-  }
+  if (r.exit !== 0) throw new Error(`terraform output -raw inventory failed: ${r.err || r.out}`);
 }
 
 describe('block 9 content', () => {

@@ -240,16 +240,11 @@ export const kcodeSetupHook: SetupHook = {
       const owner = m.users.find((u) => u.name === 'learner');
       if (owner) chownTree(fs, v.apply, owner.uid, owner.gid);
       if (v.inventory) {
-        try {
-          const st = JSON.parse(fs.readFile(`${v.apply}/terraform.tfstate`)) as { outputs?: Record<string, { value: unknown }> };
-          const inv = st.outputs?.inventory?.value;
-          if (typeof inv === 'string') {
-            fs.writeFile(v.inventory, inv);
-            if (owner) fs.chown(v.inventory, owner.uid, owner.gid);
-          }
-        } catch {
-          /* no state: the lesson shows the error */
+        const out = await m.exec(`cd ${v.apply} && terraform output -raw inventory > ${v.inventory}`);
+        if (out.exit === 0) {
+          if (owner) fs.chown(v.inventory, owner.uid, owner.gid);
         }
+        /* no outputs yet: the lesson shows the error */
       }
     }
     syncHosts(m);

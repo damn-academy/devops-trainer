@@ -29,11 +29,7 @@ async function inventory(m: SimMachine): Promise<void> {
   const back = m.cwd();
   const r = await m.exec(`cd ${INFRA} && terraform output -raw inventory > ${OPS}/inventory.ini`);
   await m.exec(`cd ${back}`);
-  const text = m.rootFs.exists(`${OPS}/inventory.ini`) ? m.rootFs.readFile(`${OPS}/inventory.ini`) : '';
-  if (r.exit !== 0 || !text.includes('[control_plane]')) {
-    const st = JSON.parse(m.rootFs.readFile(`${INFRA}/terraform.tfstate`)) as { outputs: Record<string, { value: string }> };
-    write(m, `${OPS}/inventory.ini`, st.outputs.inventory.value);
-  }
+  if (r.exit !== 0) throw new Error(`terraform output -raw inventory failed: ${r.err || r.out}`);
 }
 
 async function revertRelease(m: SimMachine): Promise<void> {
