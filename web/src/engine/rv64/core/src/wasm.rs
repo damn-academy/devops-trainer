@@ -80,6 +80,9 @@ impl Engine {
     pub fn smp_device_write(&mut self, address: u64, value: u32) { self.cpu.memory.devices.write(address, value); }
     pub fn smp_devices(&mut self) { self.cpu.service_devices(); }
     pub fn smp_interrupts(&self, hart: u32) -> u64 { self.cpu.memory.devices.hart_interrupts(hart as usize) }
+    /// Quiesced all-hart barrier piece: this hart's (or the device engine's) state, no RAM.
+    pub fn smp_snapshot(&self) -> Result<Vec<u8>, JsValue> { self.cpu.smp_snapshot().map_err(|e| JsValue::from_str(&e)) }
+    pub fn smp_restore(&mut self, data: &[u8]) -> Result<(), JsValue> { self.cpu.smp_restore(data).map_err(|e| JsValue::from_str(&e)) }
     pub fn boot(&mut self, kernel: &[u8], initrd: &[u8], cmdline: &str) -> Result<(), JsValue> {
         let entry = RAM_BASE + 0x200000;
         let rd = RAM_BASE + 0x8000000;
@@ -131,6 +134,16 @@ impl Engine {
         ["tohost", "begin_signature", "end_signature"].iter().map(|s| symbols.get(*s).copied().unwrap_or(0)).collect()
     }
     pub fn test_hart(&mut self, hart: u32) { self.cpu.csr[0xf14] = hart as u64; }
+    // Per-instruction trace capture for real-boot replay evidence.
+    pub fn test_trace(&mut self, on: bool) { self.cpu.trace_enabled = on; }
+    /// [kind, pcLo, pcHi, x0Lo, x0Hi, x1Lo, x1Hi]; kind 0 = instruction (x0=raw), 1 = trap (x0=cause, x1=value).
+    pub fn test_last_trace(&self) -> Vec<u64> {
+        match &self.cpu.last_trace {
+            Some(crate::cpu::TraceEvent::Instruction { pc, raw }) => vec![0, *pc & 0xffffffff, *pc >> 32, *raw as u64, 0, 0, 0],
+            Some(crate::cpu::TraceEvent::Trap { pc, trap, target }) => vec![1, *pc & 0xffffffff, *pc >> 32, trap.cause, 0, *target & 0xffffffff, *target >> 32],
+            None => vec![],
+        }
+    }
     pub fn test_read(&mut self, address: u64) -> u64 {
         self.cpu.memory.physical_read(address, 8, crate::Access::Read).unwrap()
     }

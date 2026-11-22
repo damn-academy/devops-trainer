@@ -2,6 +2,9 @@
 use crate::Cpu;
 use bincode::Options;
 const MAGIC: &[u8; 8] = b"DTRV64\0\x01";
+/// SMP envelope: per-hart CPUs, the device CPU, control words and the shared
+/// RAM page stream are assembled by the host; each Cpu blob carries this magic.
+pub const MAGIC_SMP: &[u8; 8] = b"DTRV64\0\x02";
 impl Cpu {
     pub fn snapshot(&mut self) -> Result<Vec<u8>, String> {
         self.memory.ensure_ram(0, self.memory.ram.len());
@@ -9,10 +12,37 @@ impl Cpu {
     }
     fn encode_snapshot(&self) -> Result<Vec<u8>, String> {
         if self.memory.shared_bytes != 0 { return Err("SMP requires an all-hart snapshot barrier and shared RAM image".into()); }
-        let mut out = MAGIC.to_vec();
+        self.encode_with(MAGIC)
+    }
+    fn encode_with(&self, magic: &[u8; 8]) -> Result<Vec<u8>, String> {
+        let mut out = magic.to_vec();
         bincode::DefaultOptions::new().with_fixint_encoding()
             .serialize_into(&mut out, self).map_err(|e| e.to_string())?;
         Ok(out)
+    }
+    /// One quiesced SMP hart (or the shared device engine): full CPU state,
+    /// no RAM — the host owns the shared image.
+    pub fn smp_snapshot(&self) -> Result<Vec<u8>, String> {
+        if self.memory.shared_bytes == 0 { return Err("not a shared CPU".into()); }
+        self.encode_with(MAGIC_SMP)
+    }
+    pub fn smp_restore(&mut self, data: &[u8]) -> Result<(), String> {
+        if self.memory.shared_bytes == 0 { return Err("restore target is not a shared CPU".into()); }
+        if !data.starts_with(MAGIC_SMP) { return Err("unsupported RV64 SMP CPU blob".into()); }
+        let mut restored: Cpu = bincode::DefaultOptions::new().with_fixint_encoding()
+            .with_limit(data.len() as u64).reject_trailing_bytes()
+            .deserialize(&data[8..]).map_err(|e| e.to_string())?;
+        if restored.pc & 1 != 0 || restored.x[0] != 0 {
+            return Err("SMP machine configuration mismatch".into());
+        }
+        // Per-hart blobs carry unused private device/queue state; only the
+        // device engine's blob is authoritative, and caches are always rebuilt.
+        // Shared geometry is a property of the restoring runtime, not the blob:
+        // shared_bytes is never serialized (see Memory), so adopt ours.
+        restored.memory.shared_bytes = self.memory.shared_bytes;
+        restored.memory.reset_caches();
+        *self = restored;
+        Ok(())
     }
     pub fn restore(&mut self, data: &[u8]) -> Result<(), String> {
         if !data.starts_with(MAGIC) { return Err("unsupported RV64 snapshot version".into()); }

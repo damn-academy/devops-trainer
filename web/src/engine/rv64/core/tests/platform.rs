@@ -705,3 +705,43 @@ fn smp_ecall_yields_before_the_next_instruction() {
     c.run(1);
     assert_eq!(c.x[5], 1);
 }
+
+#[test]
+fn smp_hart_snapshot_round_trips_without_ram_and_rejects_mismatch() {
+    let mut a = Cpu::new(0);
+    a.memory.shared_bytes = 32 << 20;
+    a.csr[0xf14] = 2;
+    a.pc = RAM_BASE + 0x1234;
+    a.x[5] = 0x1122334455667788;
+    a.csr[0x300] = 0x1800;
+    a.memory.mtimecmp = 77_000_000;
+    a.memory.msip = true;
+    a.retired = 123_456;
+    a.waiting = true;
+    let blob = a.smp_snapshot().unwrap();
+    let mut b = Cpu::new(0);
+    b.memory.shared_bytes = 32 << 20;
+    b.smp_restore(&blob).unwrap();
+    assert_eq!(b.csr[0xf14], 2);
+    assert_eq!(b.pc, a.pc);
+    assert_eq!(b.x[5], a.x[5]);
+    assert_eq!(b.csr[0x300], a.csr[0x300]);
+    assert_eq!(b.memory.mtimecmp, 77_000_000);
+    assert!(b.memory.msip);
+    assert_eq!(b.retired, 123_456);
+    assert!(b.waiting);
+    // A transient in-flight SBI request must not leak into the blob.
+    b.smp_request = Some([1; 8]);
+    let transient = b.smp_snapshot().unwrap();
+    let mut c = Cpu::new(0);
+    c.memory.shared_bytes = 32 << 20;
+    c.smp_restore(&transient).unwrap();
+    assert_eq!(c.smp_request, None);
+    let mut wrong = Cpu::new(0);
+    assert!(wrong.smp_restore(&blob).is_err());
+    let mut truncated = Cpu::new(0);
+    truncated.memory.shared_bytes = 32 << 20;
+    assert!(truncated.smp_restore(&blob[..blob.len() - 1]).is_err());
+    let single = Cpu::new(4096);
+    assert!(single.smp_snapshot().is_err());
+}

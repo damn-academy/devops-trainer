@@ -9,6 +9,9 @@ interface Init {
   mail: SharedArrayBuffer; control: SharedArrayBuffer; kernel?: Uint8Array; initrd?: Uint8Array;
   httpDisk?: HTTPDisk;
   program?: Uint8Array; cmdline?: string;
+  trace?: { steps: number };
+  /** Snapshot coordination: [0]=requestEpoch, [1]=resumeEpoch, [2+hart]=captured. */
+  snap?: SharedArrayBuffer;
 }
 self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
   self.onmessage = null;
@@ -19,8 +22,9 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     const url = new URL('/rv64/rv64_core.js', self.location.origin).href;
     const mod = await import(/* @vite-ignore */ url); const wasm = await mod.default();
     const core = new mod.Engine(32); core.smp_configure(d.hart, d.bytes);
-    const jit = new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow,
+    const newJitRuntime = () => new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow,
       { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) });
+    let jitRuntime = newJitRuntime();
     core.jit_threshold(50);
     const device = d.hart === 0 ? new mod.Engine(32) : undefined;
     device?.smp_configure(0, d.bytes);
@@ -91,12 +95,54 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     self.postMessage({ type: 'ready', hart: d.hart });
     let pending: FenceTicket[] | undefined;
     let lastReport = performance.now(), lastEntropy = -Infinity;
+    // All-hart snapshot barrier state: quiesce, capture, wait for the host to
+    // re-install the shared image and blobs, then restore and resume.
+    let snapEpoch = 0; let restore: { blob?: Uint8Array; deviceBlob?: Uint8Array } | undefined;
+    const freshJit = () => { jitRuntime.dispose(); jitRuntime = newJitRuntime(); };
+    // Real-boot trace capture: pure interpreter (JIT off, threshold 0) on a fixed
+    // tick quantum, so guest time advances deterministically while a hart runs;
+    // a waiting hart keeps advancing time without retiring instructions.
+    let traced = 0, traceTicks = 0n; let stream: Uint32Array | undefined;
+    if (d.trace) {
+      core.jit_threshold(0); core.test_trace(true);
+      stream = new Uint32Array(d.trace.steps * 7);
+      traceTicks = 1_000_000n;
+    }
     // Input messages are processed between execution batches.
-    self.onmessage = ({ data }) => { if (data.input && device) device.input(data.input); if (data.frame && device) device.net_receive(data.frame); };
+    self.onmessage = ({ data }) => {
+      if (data.snapshot) snapEpoch = data.snapshot as number;
+      if (data.restore) restore = data.restore;
+      if (data.input && device) device.input(data.input);
+      if (data.frame && device) device.net_receive(data.frame);
+    };
     const channel = new MessageChannel();
     const yieldHost = () => new Promise<void>(resolve => { channel.port1.onmessage = () => resolve(); channel.port2.postMessage(0); });
     let yielded = performance.now();
+    const snap = d.snap ? new Int32Array(d.snap) : undefined;
     while (!Atomics.load(words, 15)) {
+      // All-hart snapshot barrier: drain outstanding work, capture this hart,
+      // then wait for the host to re-install the image and blobs and resume.
+      if (snap && snapEpoch > 0 && Atomics.load(snap, 0) === snapEpoch && !Atomics.load(snap, 2 + d.hart)) {
+        for (let i = 0; i < 200000 && (pending || [...Array(d.harts).keys()].some(h => h !== d.hart && Atomics.load(words, h * 16 + 2) === 1)); i++) {
+          service(); await yieldHost();
+        }
+        if (pending) throw Error('snapshot barrier: fences did not drain');
+        if (device) { while (diskTasks.size) await Promise.all(diskTasks.values()); service(); if (diskTasks.size) throw Error('snapshot barrier: disk did not drain'); }
+        const blob = core.smp_snapshot();
+        const deviceBlob = device?.smp_snapshot();
+        self.postMessage({ type: 'snapshot', hart: d.hart, blob, deviceBlob }, [blob.buffer, deviceBlob?.buffer].filter(Boolean) as Transferable[]);
+        Atomics.store(snap, 2 + d.hart, 1); Atomics.notify(snap, 2 + d.hart);
+        while (Atomics.load(snap, 1) < snapEpoch) await yieldHost();
+        if (restore) {
+          if (restore.blob) core.smp_restore(restore.blob);
+          if (device && restore.deviceBlob) device.smp_restore(restore.deviceBlob);
+          restore = undefined;
+          freshJit();
+        }
+        Atomics.store(snap, 2 + d.hart, 0);
+        snapEpoch = 0;
+        self.postMessage({ type: 'resumed', hart: d.hart });
+      }
       service();
       const state = Atomics.load(words, base);
       if (state === 2) {
@@ -105,7 +151,25 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
       }
       if (pending && pending.every(t => bus.completed(t))) { core.smp_reply(0n, 0n); pending = undefined; }
       if (Atomics.load(words, base) === 0 && !pending) {
-        const status = core.smp_run(2048, (performance.timeOrigin + performance.now() - d.epoch) * 10000, BigInt(Atomics.load(words, base + 1)));
+        let status: number;
+        if (stream) {
+          status = core.smp_run(1, traceTicks, BigInt(Atomics.load(words, base + 1)));
+          traceTicks += 10n;
+          if (status === 0) {
+            const ev = core.test_last_trace();
+            if (ev.length >= 7) {
+              for (let w = 0; w < 7; w++) stream[traced * 7 + w] = Number(ev[w]);
+              traced++;
+              if (traced === d.trace!.steps) {
+                core.jit_threshold(50); core.test_trace(false);
+                self.postMessage({ type: 'trace', hart: d.hart, buffer: stream.buffer }, [stream.buffer]);
+                stream = undefined;
+              }
+            }
+          }
+        } else {
+          status = core.smp_run(2048, (performance.timeOrigin + performance.now() - d.epoch) * 10000, BigInt(Atomics.load(words, base + 1)));
+        }
         const request: BigUint64Array = core.smp_request();
         if (request.length) {
           const [ext, fid, a, b, c] = Array.from(request) as [bigint, bigint, bigint, bigint, bigint];
@@ -132,12 +196,12 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
         } else if (status === 2) { Atomics.store(words, 15, 1); self.postMessage({ type: 'stopped', hart: d.hart }); }
         const out: Uint8Array = core.output(); if (out.length) self.postMessage({ type: 'console', hart: d.hart, bytes: out });
       }
-      if (device && performance.now() - lastEntropy > 100) { device.entropy(crypto.getRandomValues(new Uint8Array(4096))); lastEntropy = performance.now(); }
+      if (device && performance.now() - lastEntropy > 100) { device.entropy(d.trace ? new Uint8Array(4096) : crypto.getRandomValues(new Uint8Array(4096))); lastEntropy = performance.now(); }
       if (performance.now() - lastReport > 1000) {
-        self.postMessage({ type: 'metrics', hart: d.hart, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jit.compiled, pc: String(core.pc()), state: Atomics.load(words, base) }); lastReport = performance.now();
+        self.postMessage({ type: 'metrics', hart: d.hart, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, pc: String(core.pc()), state: Atomics.load(words, base) }); lastReport = performance.now();
       }
       // Yield to host input without blocking the device server or incoming fences.
-      if (performance.now() - yielded >= 8) { jit.flush(); await yieldHost(); yielded = performance.now(); }
+      if (performance.now() - yielded >= 8) { jitRuntime.flush(); await yieldHost(); yielded = performance.now(); }
     }
   } catch (e) { self.postMessage({ type: 'error', hart: d.hart, error: String(e) }); }
 };

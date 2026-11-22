@@ -35,10 +35,8 @@ pub struct Cpu {
     #[cfg(target_arch = "wasm32")]
     #[serde(skip)]
     pub(crate) jit: crate::jit::Jit,
-    #[cfg(not(target_arch = "wasm32"))]
     #[serde(skip)]
     pub trace_enabled: bool,
-    #[cfg(not(target_arch = "wasm32"))]
     #[serde(skip)]
     pub last_trace: Option<TraceEvent>,
     pub x: [u64; 32],
@@ -61,7 +59,6 @@ pub struct Cpu {
     pub(crate) reservation: Option<(u64, usize)>,
     wrote_instret: bool,
 }
-#[cfg(not(target_arch = "wasm32"))]
 #[derive(Clone, Copy, Debug)]
 pub enum TraceEvent { Instruction { pc: u64, raw: u32 }, Trap { pc: u64, trap: Trap, target: u64 } }
 impl Cpu {
@@ -70,9 +67,7 @@ impl Cpu {
             smp_request: None,
             #[cfg(target_arch = "wasm32")]
             jit: Default::default(),
-            #[cfg(not(target_arch = "wasm32"))]
             trace_enabled: false,
-            #[cfg(not(target_arch = "wasm32"))]
             last_trace: None,
             x: [0; 32],
             f: [0; 32],
@@ -268,7 +263,6 @@ impl Cpu {
         Ok(())
     }
     pub fn trap(&mut self, t: Trap) {
-        #[cfg(not(target_arch = "wasm32"))]
         let fault_pc = self.pc;
         let interrupt = t.cause >> 63 != 0;
         let cause = t.cause & !(1 << 63);
@@ -306,7 +300,6 @@ impl Cpu {
             };
         self.waiting = false;
         self.reservation = None;
-        #[cfg(not(target_arch = "wasm32"))]
         if self.trace_enabled { self.last_trace = Some(TraceEvent::Trap { pc: fault_pc, trap: t, target: self.pc }); }
     }
     fn interrupt(&mut self) -> bool {
@@ -415,8 +408,7 @@ impl Cpu {
     pub fn step(&mut self) -> Result<(), Trap> {
         #[cfg(target_arch = "wasm32")]
         if self.jit.threshold != 0 { self.jit.at_entry = true; }
-        #[cfg(not(target_arch = "wasm32"))]
-        { self.last_trace = None; }
+        self.last_trace = None;
         if self.csr[0x320] & 1 == 0 {
             self.cycles = self.cycles.wrapping_add(1);
         }
@@ -444,7 +436,6 @@ impl Cpu {
         if self.pc & 4095 != 4094 {
             self.memory.translate_size(self.pc, decoded.len as usize, Access::Fetch, self.mode, self.csr[0x180], self.csr[0x300])?;
         }
-        #[cfg(not(target_arch = "wasm32"))]
         let trace_pc = self.pc;
         self.execute_decoded(decoded).map_err(|t| {
             if t.cause == 2 { self.illegal(decoded.raw) } else { t }
@@ -454,7 +445,6 @@ impl Cpu {
         if self.jit.threshold != 0 {
             self.jit.at_entry = decoded.jit_boundary();
         }
-        #[cfg(not(target_arch = "wasm32"))]
         if self.trace_enabled { self.last_trace = Some(TraceEvent::Instruction { pc: trace_pc, raw: decoded.raw }); }
         if !self.wrote_instret && self.csr[0x320] & 4 == 0 {
             self.memory.metrics.interpreter_retired += 1;
