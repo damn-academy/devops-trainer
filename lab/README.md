@@ -113,3 +113,20 @@ dtlab builds for linux/amd64, linux/arm64, darwin/amd64, darwin/arm64 and window
 ## Status
 
 Works end to end on Linux with KVM: `check`, `up` for all parts, `status`, `ssh`, `facts` (CLI and API), `serve`, `down`, `up` again, `destroy`, `install`, `uninstall`. On Windows (Windows Server 2025, the same 24H2 base as Windows 11, in a VM with nested virtualisation, 4 vCPU and 5 GiB) `check`, `up --profile light`, `status`, `ssh`, `facts`, a reboot inside a VM and `uninstall` work with both the Windows Hypervisor Platform and Hyper-V: the light lab came up in 5 min 44 s with QEMU and WHPX and in 2 min 8 s with Hyper-V, where kuberoot boots with its own Hyper-V drivers and installs onto `sda`; `uninstall` left the registry, PATH, Hyper-V and the network as they were. Not yet: the local git server and registry, the "take facts from the lab" button on the exam page, a macOS run (no macOS VM can be run legally in the test cluster), and a bundled QEMU. Known on Windows: QEMU under WHPX cannot reset a VM once Linux has run in it, so a reboot powers QEMU off and the lab agent starts it again; with Hyper-V, whose NAT passes packets as they are, a host whose uplink MTU is below 1500 (a VPN, PPPoE) can stall TLS from the VMs, which QEMU's lab switch does not. kuberoot comes from its GitHub release (the latest, or `--kuberoot-version 1.2.3`), checked against the release's manifest; `--kuberoot <url or directory>` takes a mirror, a copy of a release or a build instead. See [DESIGN.md](DESIGN.md) §11.
+
+## Manual check on macOS and a real Windows 11
+
+There is no automated macOS run (a macOS VM cannot be started legally in the test cluster), and Windows was checked inside a VM. Until this checklist is walked through on real hardware, support for these systems is "expected to work". It takes one computer, 30–40 minutes and 10–20 GB of disk.
+
+1. `dtlab check` — finds QEMU and Hypervisor.framework (macOS) or the Windows Hypervisor Platform (Windows 11: a Windows feature, then a reboot); suggests a profile.
+2. `dtlab up --profile light` — the learner machine and `kr-1` boot, and kuberoot installs onto its disk (a Good slot appears in the output).
+3. `dtlab status` — every machine is green.
+4. `dtlab ssh learner` — passwordless login; `ping kr-1` from the learner machine answers.
+5. `kubectl --kubeconfig ~/.dtlab/config/kuberoot.kubeconfig get nodes` — the node is Ready.
+6. The course in a browser: `dtlab serve --course web/dist`, open <http://127.0.0.1:7788/>, walk a lesson that uses a machine; the "collect facts" button on the exam page sees the lab.
+7. A reboot from inside: run `reboot` on `kr-1` — the node becomes Ready again. With WHPX on Windows this looks like QEMU powering off and the lab agent starting it again — a known behaviour, not an error.
+8. `dtlab down`, then `dtlab up` — the machines and all work on them are still there.
+9. `dtlab destroy`, then `dtlab uninstall --yes` — the disk space is freed and nothing is left in `~/.dtlab` (`%LOCALAPPDATA%\dtlab` on Windows).
+10. On Windows whose main interface MTU is below 1500 (a VPN, PPPoE), run `curl -v https://github.com` from the learner machine — TLS must not stall (the Hyper-V NAT passes packets as they are).
+
+Record the results in [STATUS](../web/STATUS.md): the OS version, how long step 2 took, any deviations.
