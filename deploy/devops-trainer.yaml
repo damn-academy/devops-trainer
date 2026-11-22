@@ -113,6 +113,59 @@ spec:
   selector: {app.kubernetes.io/name: feedback}
   ports: [{name: http, port: 6101, targetPort: http}]
 ---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: feedback-backup
+  namespace: devops-trainer
+  labels: {app.kubernetes.io/name: feedback-backup, app.kubernetes.io/part-of: devops-trainer}
+spec:
+  # Nightly export of the reports through the admin API. The JSON lands next to
+  # the SQLite file: this survives database corruption, but not the loss of the
+  # node itself, so copy the exports off the stand regularly.
+  schedule: '23 3 * * *'
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 7200
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          # The export must land on the node that holds the database directory.
+          nodeSelector: {kubernetes.io/hostname: FEEDBACK_NODE}
+          securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532}
+          initContainers:
+            - name: backup-owner
+              image: busybox:1.37
+              command: [sh, -c, 'chown 65532:65532 /backup && chmod 700 /backup']
+              securityContext: {runAsNonRoot: false, runAsUser: 0, allowPrivilegeEscalation: false, capabilities: {drop: [ALL], add: [CHOWN, FOWNER]}}
+              resources: {requests: {cpu: 5m, memory: 8Mi}, limits: {memory: 32Mi}}
+              volumeMounts:
+                - {name: backup, mountPath: /backup}
+          containers:
+            - name: export
+              image: busybox:1.37
+              command: [sh, -c]
+              args:
+                - |
+                  set -eu
+                  wget -q -O "/backup/feedback-$(date +%Y%m%d).json" --header="Authorization: Bearer $ADMIN_TOKEN" http://feedback:6101/admin/export
+                  ls -t /backup/feedback-*.json | tail -n +15 | xargs -r rm -f
+              env:
+                - name: ADMIN_TOKEN
+                  valueFrom: {secretKeyRef: {name: feedback-secrets, key: ADMIN_TOKEN}}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities: {drop: [ALL]}
+              resources: {requests: {cpu: 5m, memory: 8Mi}, limits: {memory: 32Mi}}
+              volumeMounts:
+                - {name: backup, mountPath: /backup}
+          volumes:
+            - name: backup
+              hostPath: {path: /var/local/devops-trainer/feedback-backup, type: DirectoryOrCreate}
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

@@ -131,7 +131,20 @@ is not rolled back.
 
 ## Back up the reports
 
-The service image has no shell or `cat`; export through the admin API:
+A CronJob `feedback-backup` exports the reports every night (03:23 in the
+cluster's schedule) through the admin API and keeps the last 14 exports in
+`/var/local/devops-trainer/feedback-backup` on the same node that holds the
+SQLite file. This survives database corruption but not the loss of the node,
+so copy the exports off the stand regularly. Check the schedule and the runs:
+
+```sh
+source ~/projects/sankofa-int/hack/stand/env.sh
+km -n devops-trainer get cronjob feedback-backup
+km -n devops-trainer get jobs -l app.kubernetes.io/name=feedback-backup
+```
+
+Manual export through the admin API (the service image has no shell or
+`cat`):
 
 ```sh
 token=$(km -n devops-trainer get secret feedback-secrets -o jsonpath='{.data.ADMIN_TOKEN}' | base64 -d)
@@ -158,7 +171,8 @@ Images stay in the node-local registry (`sankofa/devops-trainer-web`,
 
 Namespace `devops-trainer`: build and smoke Jobs (kept for a day), ConfigMap
 `build-script`, Deployments `web` (2 replicas) and `feedback`
-(1 replica, `Recreate`), Services `web` and `feedback`, Secret `feedback-secrets`, Ingresses `web` and
+(1 replica, `Recreate`), Services `web` and `feedback`, CronJob
+`feedback-backup` (nightly export of the reports to the node disk), Secret `feedback-secrets`, Ingresses `web` and
 `feedback` (the latter with the access log off, because thread URLs carry a
 token), Certificate and Secret `devops-trainer-tls` from the `letsencrypt`
 ClusterIssuer.

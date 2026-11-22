@@ -129,7 +129,19 @@ km -n devops-trainer rollout undo deploy/feedback            # предыдущ�
 
 ## Резервная копия сообщений
 
-В образе сервиса нет ни оболочки, ни `cat`, поэтому выгружайте через API панели:
+CronJob `feedback-backup` каждую ночь (03:23 по расписанию кластера)
+выгружает сообщения через API панели и хранит последние 14 выгрузок в
+`/var/local/devops-trainer/feedback-backup` на том же узле, где лежит SQLite.
+Это спасает от порчи базы, но не от потери узла — периодически копируйте
+выгрузки со стенда. Проверить расписание и прогоны:
+
+```sh
+source ~/projects/sankofa-int/hack/stand/env.sh
+km -n devops-trainer get cronjob feedback-backup
+km -n devops-trainer get jobs -l app.kubernetes.io/name=feedback-backup
+```
+
+Ручная выгрузка через API панели (в образе сервиса нет ни оболочки, ни `cat`):
 
 ```sh
 token=$(km -n devops-trainer get secret feedback-secrets -o jsonpath='{.data.ADMIN_TOKEN}' | base64 -d)
@@ -156,7 +168,8 @@ km delete namespace devops-trainer
 
 Пространство имён `devops-trainer`: Job сборки и проверки (хранятся сутки),
 ConfigMap `build-script`, Deployment `web` (2 реплики) и `feedback`
-(1 реплика, `Recreate`), Service `web` и `feedback`, Secret `feedback-secrets`, Ingress `web` и
+(1 реплика, `Recreate`), Service `web` и `feedback`, CronJob
+`feedback-backup` (ночная выгрузка отзывов на диск узла), Secret `feedback-secrets`, Ingress `web` и
 `feedback` (у второго выключен журнал запросов: в адресах переписки есть
 токен), Certificate и Secret `devops-trainer-tls` от ClusterIssuer
 `letsencrypt`.
