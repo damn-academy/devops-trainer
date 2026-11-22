@@ -11,7 +11,7 @@ import { store } from '../core/store';
 import { LEVELS, type Block, type Level, type Mounted, type PlacementTask } from '../core/types';
 import { renderInline } from '../core/markdown';
 import { mountQuiz } from '../engine/quiz/render';
-import { chosenLevel, conceptLink, emptyState, setTitle, sourcesBlock, type Page } from './common';
+import { chosenLevel, conceptLink, emptyState, infoTip, setTitle, sourcesBlock, type Page } from './common';
 import { examsOfBlock } from './exam-page';
 import { lessonStatus, placementDisposition, remainingShare } from './status';
 import { mountLab } from './terminal-section';
@@ -33,8 +33,7 @@ function levelChooser(b: Block, onChange: () => void): HTMLElement {
             onChange();
           },
         },
-        h('span.level-name', {}, t(UI.levels[l])),
-        h('span.level-desc', {}, t(b.levels[l])),
+        h('span.level-name', {}, t(UI.levels[l]), infoTip(b.levels[l])),
         b.hours?.[l] ? h('span.hours', {}, `≈ ${Number(b.hours[l].toFixed(2))} ${t(UI.hours)}`) : null,
       ),
     ),
@@ -74,6 +73,8 @@ export function blockPage(id: string): Page {
             'section.placement-entry',
             {},
             h('p', {}, t(bi('Выберите уровень проверки. На следующей странице указано число заданий для каждого уровня.', 'A short check confirms your choice: 5–10 tasks; practice is checked by the state of the machine.'))),
+            // TODO(ru): the Russian wording below is an English placeholder until the owner supplies the final text.
+            h('p.small.muted', {}, t(bi('TODO(ru): Not sure which level to choose? Take the check and we will recommend one.', 'Not sure which level to choose? Take the check and we will recommend one.'))),
             last ? h('p.muted.small', {}, `${t(bi('Последняя проверка', 'Last check'))}: ${t(UI.levels[last.claimed])} — ${last.passed ? t(bi('пройдена', 'passed')) : t(bi('не пройдена', 'not passed'))}, ${Math.round(last.score * 100)}%`) : null,
             h('a.btn.ghost', { href: href({ name: 'placement', id: b.id }) }, icon('check'), t(UI.checkLevel)),
           )
@@ -140,7 +141,7 @@ export function placementPage(id: string): Page {
       h('nav.crumbs', {}, h('a', { href: href({ name: 'block', id: b.id }) }, t(b.title))),
       h('h1', {}, t(UI.checkLevel)),
       h('p.lede', {}, t(bi('Выберите уровень, который хотите подтвердить. Подсказок и наставника на проверке нет.', 'Choose the level you want to confirm. There are no hints and no mentor during the check.'))),
-      h('div.level-chooser', {}, ...claimable.map((l) => h('button.level-card', { type: 'button', onclick: () => run(l) }, h('span.level-name', {}, t(UI.levels[l])), h('span.level-desc', {}, t(b.levels[l]))))),
+      h('div.level-chooser', {}, ...claimable.map((l) => h('button.level-card', { type: 'button', onclick: () => run(l) }, h('span.level-name', {}, t(UI.levels[l]), infoTip(b.levels[l]))))),
     );
   };
 
