@@ -21,15 +21,12 @@ const write = (m: SimMachine, path: string, text: string) => {
   m.rootFs.writeFile(path, text);
   m.rootFs.chown(path, 1000, 1000);
 };
-/** `terraform output -raw inventory > …`; until tfsim reads flags before the name, write the same text. */
+/** `terraform output -raw inventory > …`, the same command the lessons teach. */
 export async function emitInventory(m: SimMachine, dir = '/home/learner/infra', to = '/home/learner/ops/inventory.ini'): Promise<void> {
   const back = m.cwd();
   const r = await m.exec(`cd ${dir} && terraform output -raw inventory > ${to}`);
   await m.exec(`cd ${back}`);
-  if (r.exit !== 0 || !m.rootFs.readFile(to).includes('[control_plane]')) {
-    const state = JSON.parse(m.rootFs.readFile(`${dir}/terraform.tfstate`)) as { outputs: Record<string, { value: string }> };
-    write(m, to, state.outputs.inventory.value);
-  }
+  if (r.exit !== 0) throw new Error(`terraform output -raw inventory failed: ${r.err || r.out}`);
 }
 const kc = async (m: SimMachine) => (await m.facts()).kcode as KcodeFacts;
 

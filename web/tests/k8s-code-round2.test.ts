@@ -94,8 +94,7 @@ describe('nodes lab: a counted ping', () => {
     const m = await createSimMachine(l.setup);
     write(m, `${INFRA}/main.tf`, TF_HEAD + TF_CP + TF_WORKERS + TF_INVENTORY);
     await sh(m, 'cd ~/infra', 'terraform init', 'terraform apply -auto-approve');
-    const st = JSON.parse(m.rootFs.readFile(`${INFRA}/terraform.tfstate`)) as { outputs: Record<string, { value: string }> };
-    write(m, `${OPS}/inventory.ini`, st.outputs.inventory.value);
+    await sh(m, `terraform output -raw inventory > ${OPS}/inventory.ini`);
     await sh(m, 'cd ~/ops');
     expect(await sh(m, 'ansible all -m ansible.builtin.ping | grep -c SUCCESS')).toBe('3\n');
     expect((await check(m, l.tasks[1])).pass).toBe(true);
