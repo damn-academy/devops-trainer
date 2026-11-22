@@ -1086,12 +1086,11 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       paint();
     }
   });
-  svg.addEventListener('click', () => {
-    if (selected) {
-      selected = null;
-      card.hidden = true;
-      paint();
-    }
+  el.addEventListener('pointerdown', (e) => {
+    if (!selected || e.composedPath().includes(card)) return;
+    selected = null;
+    card.hidden = true;
+    paint();
   });
 
   drawTicks();
