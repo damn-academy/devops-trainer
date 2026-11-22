@@ -1,4 +1,4 @@
-//! SBI 2.0, single-hart platform. No firmware instruction stream is needed.
+//! SBI 2.0. Shared harts yield HSM/IPI/RFENCE to the host mailbox coordinator.
 use crate::{Access, Cpu, Mode};
 const EXTENSIONS: [u64; 17] = [
     0x10, 0x54494d45, 0x735049, 0x52464e43, 0x48534d, 0x53525354, 0x4442434e, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0x504d55,
@@ -9,7 +9,7 @@ impl Cpu {
         self.memory.pmpaddr[0] = (1 << 54) - 1;
         self.pc = entry;
         self.mode = Mode::S;
-        self.x[10] = 0;
+        self.x[10] = self.csr[0xf14];
         self.x[11] = dtb;
         self.sbi = true;
         self.csr[0x306] = 7;
@@ -27,6 +27,10 @@ impl Cpu {
         let a = self.x[10];
         let b = self.x[11];
         let c = self.x[12];
+        if self.memory.shared_bytes != 0 && matches!(ext, 0x735049 | 0x52464e43 | 0x48534d | 4..=7) {
+            self.smp_request = Some([ext, fid, a, b, c, self.x[13], self.x[14], self.x[15]]);
+            return;
+        }
         let (mut error, mut value) = (0i64, 0u64);
         match (ext, fid) {
             (0, _) | (0x54494d45, 0) => {

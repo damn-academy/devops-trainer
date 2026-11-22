@@ -30,6 +30,8 @@ const SSTATUS: u64 =
     (1 << 1) | (1 << 5) | (1 << 8) | (3 << 13) | (1 << 18) | (1 << 19) | (3 << 32) | (1 << 63);
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Cpu {
+    #[serde(skip)]
+    pub smp_request: Option<[u64; 8]>,
     #[cfg(target_arch = "wasm32")]
     #[serde(skip)]
     pub(crate) jit: crate::jit::Jit,
@@ -65,6 +67,7 @@ pub enum TraceEvent { Instruction { pc: u64, raw: u32 }, Trap { pc: u64, trap: T
 impl Cpu {
     pub fn new(bytes: usize) -> Self {
         let mut cpu = Self {
+            smp_request: None,
             #[cfg(target_arch = "wasm32")]
             jit: Default::default(),
             #[cfg(not(target_arch = "wasm32"))]
@@ -163,7 +166,8 @@ impl Cpu {
             0xc00 | 0xb00 => self.cycles,
             0xc01 => self.memory.time,
             0xc02 | 0xb02 => self.retired,
-            0xf11..=0xf15 | 0x10a => 0,
+            0xf14 => self.csr[0xf14],
+            0xf11..=0xf13 | 0xf15 | 0x10a => 0,
             0x3a0 | 0x3a2 => {
                 let base = (n - 0x3a0) * 4;
                 (0..8).fold(0, |v, i| v | ((self.memory.pmpcfg[base+i] as u64) << (i*8)))
@@ -476,7 +480,7 @@ impl Cpu {
             if let Err(t) = self.step() {
                 self.trap(t)
             }
-            if self.waiting || self.stopped {
+            if self.waiting || self.stopped || self.smp_request.is_some() {
                 break;
             }
         }

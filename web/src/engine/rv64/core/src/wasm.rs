@@ -40,6 +40,46 @@ impl Engine {
             profile_comm_offset: 0,
         })
     }
+    /// Experimental hart. RAM belongs to the host shared bus; JIT RAM uses helpers.
+    pub fn smp_configure(&mut self, hart: u32, bytes: u32) -> Result<(), JsValue> {
+        if hart >= 4 || bytes < 32 * 1024 * 1024 || bytes > 1024 * 1024 * 1024 { return Err(JsValue::from_str("invalid SMP geometry")); }
+        self.cpu = Cpu::new(0);
+        self.cpu.memory.shared_bytes = bytes as usize;
+        self.cpu.memory.jit_pages = vec![0; bytes as usize / 4096];
+        self.cpu.csr[0xf14] = hart as u64;
+        Ok(())
+    }
+    pub fn smp_boot(&mut self, kernel: &[u8], initrd: &[u8], cmdline: &str, harts: u32) -> Result<(), JsValue> {
+        if !matches!(harts, 2 | 4) || self.cpu.memory.shared_bytes == 0 { return Err(JsValue::from_str("invalid SMP boot")); }
+        let rd = RAM_BASE + 0x8000000; let dtb = RAM_BASE + 0x4000000;
+        let tree = fdt::build_harts(self.cpu.memory.shared_bytes as u64, rd, initrd.len() as u64, cmdline, harts);
+        for (a, data) in [(RAM_BASE + 0x200000, kernel), (rd, initrd), (dtb, tree.as_slice())] {
+            self.cpu.memory.load_image(a, data).map_err(|e| JsValue::from_str(&format!("image load: {e:?}")))?;
+        }
+        self.cpu.boot_supervisor(RAM_BASE + 0x200000, dtb); Ok(())
+    }
+    pub fn smp_start(&mut self, entry: u64, opaque: u64) {
+        self.cpu.x = [0; 32]; self.cpu.csr[0x180] = 0;
+        self.cpu.csr[0x304] = 0; self.cpu.csr[0x344] = 0;
+        self.cpu.waiting = false; self.cpu.stopped = false;
+        self.cpu.boot_supervisor(entry, opaque);
+        self.cpu.csr[0x300] &= !(1 << 1);
+        self.cpu.memory.flush();
+    }
+    pub fn smp_request(&mut self) -> Vec<u64> { self.cpu.smp_request.take().map_or_else(Vec::new, |v| v.to_vec()) }
+    pub fn smp_reply(&mut self, error: i64, value: u64) { self.cpu.x[10] = error as u64; self.cpu.x[11] = value; }
+    pub fn smp_ipi(&mut self) { self.cpu.csr[0x344] |= 2; }
+    pub fn smp_fence(&mut self) { self.cpu.memory.flush(); self.jit_clear(); }
+    pub fn smp_run(&mut self, count: u32, ticks: f64, external: u64) -> u32 {
+        self.cpu.time(ticks as u64);
+        self.cpu.csr[0x344] = (self.cpu.csr[0x344] & !((1 << 11) | (1 << 9))) | external;
+        self.cpu.run(count);
+        if self.cpu.stopped { 2 } else if self.cpu.waiting { 1 } else { 0 }
+    }
+    pub fn smp_device_read(&mut self, address: u64) -> u64 { self.cpu.memory.devices.read(address).unwrap_or(0) }
+    pub fn smp_device_write(&mut self, address: u64, value: u32) { self.cpu.memory.devices.write(address, value); }
+    pub fn smp_devices(&mut self) { self.cpu.service_devices(); }
+    pub fn smp_interrupts(&self, hart: u32) -> u64 { self.cpu.memory.devices.hart_interrupts(hart as usize) }
     pub fn boot(&mut self, kernel: &[u8], initrd: &[u8], cmdline: &str) -> Result<(), JsValue> {
         let entry = RAM_BASE + 0x200000;
         let rd = RAM_BASE + 0x8000000;
@@ -90,6 +130,7 @@ impl Engine {
         let symbols = crate::elf::load(&mut self.cpu, bytes);
         ["tohost", "begin_signature", "end_signature"].iter().map(|s| symbols.get(*s).copied().unwrap_or(0)).collect()
     }
+    pub fn test_hart(&mut self, hart: u32) { self.cpu.csr[0xf14] = hart as u64; }
     pub fn test_read(&mut self, address: u64) -> u64 {
         self.cpu.memory.physical_read(address, 8, crate::Access::Read).unwrap()
     }

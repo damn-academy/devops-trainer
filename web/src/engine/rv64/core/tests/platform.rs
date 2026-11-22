@@ -655,3 +655,51 @@ fn lazy_snapshot_hydrates_page_tables_before_ad_update() {
     assert_eq!(r.memory.translate(123, Access::Write, Mode::U, satp, 0).unwrap(), RAM_BASE+0x3000+123);
     assert_eq!(r.memory.physical_read(RAM_BASE+0x2000, 8, Access::Read).unwrap() & 0xc0, 0xc0);
 }
+
+#[test]
+fn smp_plic_routes_and_claims_across_four_harts() {
+    for hart in 0..4 {
+        let mut c = Cpu::new(0x10000);
+        queue(&mut c, 0x10003000, 0, &[(RAM_BASE + 0x4000, 1, 2)]);
+        c.memory.devices.entropy.push_back(1);
+        let context = hart * 2 + 1;
+        c.memory.devices.write(0xc000010, 1);
+        c.memory.devices.write(0xc002000 + context as u64 * 128, 16);
+        c.service_devices();
+        for target in 0..4 { assert_eq!(c.memory.devices.hart_interrupts(target), if target == hart { 1 << 9 } else { 0 }); }
+        let claim = 0xc200004 + context as u64 * 4096;
+        assert_eq!(c.memory.devices.read(claim), Some(4));
+        for target in 0..4 { assert_eq!(c.memory.devices.hart_interrupts(target), 0); }
+        c.memory.devices.write(claim, 4);
+        assert_eq!(c.memory.devices.hart_interrupts(hart), 1 << 9);
+    }
+}
+
+#[test]
+fn smp_hart_identity_and_snapshot_rejection() {
+    let mut c = Cpu::new(4096);
+    c.csr[0xf14] = 3;
+    assert_eq!(c.read_csr(0xf14), Ok(3));
+    c.boot_supervisor(RAM_BASE, 42);
+    assert_eq!((c.x[10], c.x[11]), (3, 42));
+    c.memory.shared_bytes = 32 << 20;
+    assert!(c.snapshot().unwrap_err().contains("all-hart"));
+    assert!(c.snapshot_metadata().unwrap_err().contains("all-hart"));
+}
+
+#[test]
+fn smp_ecall_yields_before_the_next_instruction() {
+    let mut c = Cpu::new(4096);
+    c.boot_supervisor(RAM_BASE, 0);
+    c.memory.load_image(RAM_BASE, &[0x73, 0, 0, 0, 0x93, 0x02, 0x10, 0]).unwrap();
+    c.memory.shared_bytes = 4096;
+    c.x[17] = 0x52464e43; c.x[16] = 1; c.x[10] = 3; c.x[11] = 1;
+    c.run(100);
+    assert_eq!(c.retired, 1);
+    assert_eq!(c.pc, RAM_BASE + 4);
+    assert_eq!(c.x[5], 0);
+    assert_eq!(c.smp_request, Some([0x52464e43, 1, 3, 1, 0, 0, 0, 0]));
+    c.smp_request = None;
+    c.run(1);
+    assert_eq!(c.x[5], 1);
+}
