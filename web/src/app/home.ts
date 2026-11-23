@@ -2,7 +2,7 @@
 // levels and a "show what you know" entry. Progress is a map of skills, not
 // points.
 
-import { h, icon } from '../core/dom';
+import { clear, h, icon, put } from '../core/dom';
 import { bi, count, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
 import { ROUTE, type RouteEntry } from '../core/route';
@@ -13,21 +13,41 @@ import type { Page } from './common';
 import { infoTip } from './common';
 import { chosenLevel, lessonStatus, remainingShare, setDescription, setTitle } from './status';
 
-function levelsTable(levels: Record<Level, import('../core/i18n').Bi>, hours: Record<Level, number> | undefined, chosen: Level | undefined): HTMLElement {
+// Level tiles double as the level picker: choosing here is the same record as
+// the chooser on the block page, so "continue" and the pace estimate see it.
+function levelsTable(b: Block, chosen: Level | undefined, onChange: () => void): HTMLElement {
   return h(
     'dl.levels',
-    {},
+    { role: 'radiogroup', 'aria-label': t(UI.chooseLevel) },
     ...LEVELS.map((l) =>
       h(
         'div.level',
         { class: chosen === l ? 'chosen' : undefined },
-        h('dt', {}, t(UI.levels[l]), infoTip(levels[l]), hours && hours[l] ? h('span.hours', {}, `≈ ${Number(hours[l].toFixed(2))} ${t(UI.hours)}`) : null),
+        h('dt', {},
+          h('button.level-pick', {
+            type: 'button',
+            role: 'radio',
+            'aria-checked': chosen === l ? 'true' : 'false',
+            onclick: () => {
+              store.record({ kind: 'level.set', block: b.id, level: l, via: 'choice' });
+              onChange();
+            },
+          }, t(UI.levels[l])),
+          infoTip(b.levels[l])),
       ),
     ),
   );
 }
 
-function blockItem(b: Block, entry: RouteEntry | undefined): HTMLElement {
+function staticLevelsTable(levels: Record<Level, import('../core/i18n').Bi>): HTMLElement {
+  return h(
+    'dl.levels',
+    {},
+    ...LEVELS.map((l) => h('div.level', {}, h('dt', {}, t(UI.levels[l]), infoTip(levels[l])))),
+  );
+}
+
+function blockItem(b: Block, entry: RouteEntry | undefined, onChange: () => void): HTMLElement {
   const lessons = b.lessons.map((id) => registry.lessons.get(id)).filter(Boolean) as NonNullable<ReturnType<typeof registry.lessons.get>>[];
   const doneN = lessons.filter((l) => lessonStatus(l) === 'done').length;
   const nextLesson = lessons.find((l) => lessonStatus(l) !== 'done');
@@ -48,7 +68,7 @@ function blockItem(b: Block, entry: RouteEntry | undefined): HTMLElement {
         b.beginnerOnly ? h('span.badge', {}, t(bi('Для первого знакомства', 'beginners only'))) : null,
       ),
       h('p.route-summary', {}, t(b.summary)),
-      levelsTable(b.levels, b.hours ?? entry?.hours, chosen),
+      levelsTable(b, chosen, onChange),
       h(
         'div.route-actions',
         {},
@@ -74,7 +94,7 @@ function placeholderItem(e: RouteEntry): HTMLElement {
       h('h2', {}, t(e.title)),
       h('p.route-meta', {}, h('span.badge', {}, t(UI.comingSoon)), e.beginnerOnly ? h('span.badge', {}, t(bi('Для первого знакомства', 'beginners only'))) : null),
       h('p.route-summary', {}, t(e.summary)),
-      levelsTable(e.levels, e.hours, undefined),
+      staticLevelsTable(e.levels),
     ),
   );
 }
@@ -82,13 +102,15 @@ function placeholderItem(e: RouteEntry): HTMLElement {
 export function homePage(): Page {
   setTitle();
   setDescription(t(bi('Интерактивный учебник и тренажёр входа в DevOps: настоящий Linux в браузере, облако во вкладке, квизы и экзамены. Бесплатно, на русском и английском.', 'An interactive textbook and trainer for getting into DevOps: real Linux in the browser, a cloud in a tab, quizzes and exams. Free, in Russian and English.')));
-  const items = registry.routeMap();
-  const anyProgress = Object.keys(store.state.lessons).length > 0;
-  const el = h(
-    'div.home',
-    {},
-    h(
-      'section.hero',
+  const root = h('div.home');
+  const draw = () => {
+    clear(root);
+    const items = registry.routeMap();
+    const anyProgress = Object.keys(store.state.lessons).length > 0;
+    put(
+      root,
+      h(
+        'section.hero',
       {},
       h('p.kicker', {}, t(bi('Интерактивный учебник', 'An interactive textbook'))),
       h('h1', {}, t(UI.course)),
@@ -103,10 +125,12 @@ export function homePage(): Page {
       paceControl(),
       anyProgress ? null : h('p.small.muted', {}, t(bi('Регистрация не нужна: прогресс сохраняется в этом браузере после каждого действия.', 'No sign-up: progress is saved in this browser after every action.'))),
     ),
-    h('h2.route-title', {}, t(UI.map)),
-    h('ol.route', {}, ...items.map((it) => (it.kind === 'block' ? blockItem(it.block, it.entry) : placeholderItem(it.entry)))),
-  );
-  return { el };
+      h('h2.route-title', {}, t(UI.map)),
+      h('ol.route', {}, ...items.map((it) => (it.kind === 'block' ? blockItem(it.block, it.entry, draw) : placeholderItem(it.entry)))),
+    );
+  };
+  draw();
+  return { el: root };
 }
 
 export function durationWeeks(hours: number, weekly: number): number {
