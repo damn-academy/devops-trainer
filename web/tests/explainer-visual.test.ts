@@ -148,12 +148,12 @@ describe('explainer: pictograms, legend, intro, knobs, breaks, stop label', () =
     expect(defaultWork(undefined)).toBe('pulse');
   });
 
-  it('shows the legend, the intro before the first step and a details line after', () => {
+  it('hides the legend by owner decision, keeps the intro before the first step and a details line after', () => {
     const root = document.createElement('div');
     document.body.append(root);
     const m = mountModel(root, tiny, ctx());
-    expect(root.querySelectorAll('.ex-legend-item')).toHaveLength(2);
-    expect(root.querySelector('.ex-legend .lg-icon path')!.getAttribute('d')).toBe(NODE_ICONS.dns);
+    // The owner review removed legends everywhere: the diagram itself must carry the meaning.
+    expect(root.querySelectorAll('.ex-legend-item')).toHaveLength(0);
     expect(root.querySelector('.ex-intro-text')!.textContent).toContain('Начать');
     expect(root.querySelector('.ex-counter')!.textContent).toContain('1 /');
     (root.querySelector('button[aria-label="Шаг вперёд"]') as HTMLButtonElement).click();
