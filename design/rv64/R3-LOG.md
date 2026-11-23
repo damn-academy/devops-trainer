@@ -1532,3 +1532,26 @@ Evidence: `R3-smp-trace-linux.json`.
 coordination buffer as `2 + HARTS * 4` = 10 bytes, which is not a multiple
 of 4, so every worker died constructing its `Int32Array` view; the buffer
 is `(2 + HARTS) * 4` now. **Result: PASS. After the buffer fix both harts booted Alpine to a shell, the barrier captured all harts in 1.76 s, the sparse image holds 11,818 nonzero 4 KiB pages (48.4 MB of the 256 MiB guest region), and after the whole shared buffer was wiped and only those pages reinstalled — plus one generation bump per page — both harts restored their state and answered the shell marker `RESTORED_OK_42`. Evidence: `R3-smp-snapshot.json`.
+
+### 2026-11-22 (session 3, late) — reservation granules: kept as a fix, refuted as the kuberoot cause
+
+The 3000 s kuberoot SMP window was rerun on top of cb43301
+(granule reservation sets) and **the signature is unchanged**: topology 1
+reaches `RV64_CONFIG_CREATED` and `RV64_READYZ_BEGIN` (guest uptime ~495 s at
+the readyz probe, idle ~120 s), then the recovery profile reboots the node and
+a fresh kernel boot begins; the run was stopped after two identical boot
+cycles (~19 min) instead of spending the rest of the window. Evidence:
+`R3-smp-kuberoot-granule-console.txt`. **Conclusion: the conservative global
+reservation epoch was a real deviation from hardware (and the granule change
+is kept — the substrate gates and SMP Linux validate it), but it was not the
+cause of the kuberoot SMP stall.** The futex live-lock hypothesis built on it
+is refuted as the explanation for the post-READYZ grind. What the refutation
+buys: the stall is elsewhere — candidates now are Go runtime sched/timer
+behaviour across harts, kube-apiserver/kine deadline interactions under the
+SMP slowdown, or the recovery profile's health window being shorter than the
+SMP time-to-ready (boot 1 was rebooted at ~700 s host while the one-hart
+baseline reaches Ready at ~743 s cold: a 2-hart boot that is merely ~2x slower
+would need >1400 s, and the recovery window is shorter than that). The next
+measurement must be made with the guest sampling profiler attached after
+READYZ_BEGIN (RV64_GUEST_PROFILE_INTERVAL), so the stall is attacked from
+sample-proven hotspots, not from the next guess.
