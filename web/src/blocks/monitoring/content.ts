@@ -683,7 +683,7 @@ export const block: Block = {
   id: 'monitoring',
   order: 100,
   title: bi('Мониторинг', 'Monitoring'),
-  summary: bi('Как узнавать об авариях раньше пользователей и быстро находить их причину. Вы научитесь читать временные ряды и метки, писать запросы PromQL со скоростями, агрегацией и квантилями, ставить алерты и настраивать Alertmanager, разбирать инцидент по метрикам, искать по журналам на языке LogQL, читать трейсы и следить за подами в Kubernetes по методу USE.', 'How to learn about outages before users do and find their cause quickly. You will learn to read time series and labels, write PromQL queries with rates, aggregation and quantiles, set alerts and configure Alertmanager, investigate an incident with metrics, search logs with LogQL, read traces and watch pods in Kubernetes by the USE method.'),
+  summary: bi('Вы научитесь узнавать об авариях раньше пользователей и быстро находить их причину: читать временные ряды и метки, писать запросы PromQL со скоростями, агрегацией и квантилями, ставить алерты и настраивать Alertmanager, разбирать инцидент по метрикам, искать по журналам на языке LogQL, читать трейсы и следить за подами в Kubernetes по методу USE.', 'You learn to find out about outages before users do and find their cause quickly: to read time series and labels, write PromQL queries with rates, aggregation and quantiles, set alerts and configure Alertmanager, investigate an incident with metrics, search logs with LogQL, read traces and watch pods in Kubernetes by the USE method.'),
   checklistStep: '07',
   levels: {
     beginner: bi('Ни разу не видел дашбордов мониторинга', 'Has never seen a monitoring dashboard'),

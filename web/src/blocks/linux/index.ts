@@ -293,8 +293,8 @@ const block: Block = {
   order: 20,
   title: bi('Linux', 'Linux'),
   summary: bi(
-    'В этом блоке вы научитесь работать в оболочке, с файлами и правами, с потоками и конвейерами, с процессами и сигналами. Вы напишете скрипты, поставите пакеты, разберётесь со службами и журналами, с дисками, с изоляцией и лимитами ядра, с сетью глазами машины и со входом по SSH.',
-    'In this block you learn to work with the shell, files and permissions, streams and pipelines, processes and signals. You write scripts, install packages, and learn services and logs, disks, the kernel’s isolation and limits, the network through the machine’s eyes and SSH logins.',
+    'В этом блоке вы научитесь работать в оболочке командной строки, с файлами и правами, с потоками ввода-вывода, с процессами и сигналами. Вы напишете скрипты, поставите пакеты, разберётесь со службами и журналами, с дисками, с изоляцией и лимитами ядра, с сетью глазами машины и со входом по SSH.',
+    'In this block you learn to work in the command-line shell, with files and permissions, with input and output streams, with processes and signals. You write scripts, install packages, and learn services and logs, disks, the kernel’s isolation and limits, the network through the machine’s eyes and SSH logins.',
   ),
   checklistStep: '02',
   levels: {
