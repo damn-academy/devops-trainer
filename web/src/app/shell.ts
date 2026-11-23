@@ -39,6 +39,10 @@ function topBar(current: Route): HTMLElement {
     { role: 'group', 'aria-label': t(UI.language) },
     ...(['ru', 'en'] as const).map((l) => h('button', { type: 'button', 'aria-pressed': lang() === l ? 'true' : 'false', onclick: () => setLang(l) }, l.toUpperCase())),
   );
+  const exportBtn = h('button.icon-btn', { type: 'button', 'aria-label': t(UI.exportProgress), title: t(UI.exportProgress) }, icon('download'));
+  exportBtn.addEventListener('click', async () => {
+    downloadFile(`devops-trainer-progress-${new Date().toISOString().slice(0, 10)}.json`, await exportWithFeedback(store.exportJSON()));
+  });
   return h(
     'header.topbar',
     {},
@@ -52,7 +56,7 @@ function topBar(current: Route): HTMLElement {
       nav({ name: 'settings' }, t(UI.settings), 'gear'),
       h('a.nav-link.feedback-menu', { href: '#/messages' }, icon('ask'), h('span', {}, t(bi('Мои сообщения', 'My messages')))),
     ),
-    h('div.top-tools', {}, helpButton(), langBtn, themeBtn),
+    h('div.top-tools', {}, helpButton(), exportBtn, langBtn, themeBtn),
   );
 }
 

@@ -129,7 +129,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   const el = h(
     'div.explainer',
     { tabindex: 0, 'data-model': model.id, 'data-frame': model.frame ?? 'fixed' },
-    h('header.ex-head', {}, h('h3', {}, t(model.title)), model.summary ? h('p.ex-summary', {}, ...renderInline(t(model.summary))) : null),
+    h('header.ex-head', {}, h('h3', {}, t(model.title))),
     h('div.ex-controls', {}, knobBox, breakBox),
     predictBox,
     introBox,
