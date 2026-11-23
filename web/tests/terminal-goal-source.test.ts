@@ -4,7 +4,7 @@ import type { SimMachine } from '../src/engine/terminal/shell';
 const terminals = vi.hoisted(() => [] as { machine: SimMachine; onCommand(): void }[]);
 vi.mock('../src/engine/terminal/widget', () => ({ mountTerminal: async (_root: HTMLElement, options: typeof terminals[number]) => {
   terminals.push(options);
-  return { dispose() {}, type() {}, reset() {} };
+  return { dispose() {}, type() {}, reset() {}, focus() {} };
 } }));
 vi.mock('../src/core/store', () => ({ store: {
   state: { tasks: {}, docLadder: {}, docTrail: [] },
