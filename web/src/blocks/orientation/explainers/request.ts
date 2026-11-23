@@ -61,8 +61,8 @@ export const requestModel = defineModel<P>({
     'You open the tea shop’s catalogue. The browser sends a request, the network delivers it to the shop’s server, the request waits its turn, the shop program puts the page together from the catalogue and sends the answer. Under the diagram a waterfall grows that looks like a day’s timetable: every step that took time has its own bar in it, and the longer the step, the longer the bar.',
   ),
   intro: bi(
-    'Сейчас на схеме только ваш браузер. Нажмите «Начать с первого шага», и браузер отправит запрос серверу магазина.',
-    'Now the diagram shows only your browser. Press “Start from the first step”, and the browser sends a request to the shop’s server.',
+    'Сейчас на схеме только ваш браузер. Нажмите «Шаг вперёд», и браузер отправит запрос серверу магазина.',
+    'Now the diagram shows only your browser. Press “Step forward”, and the browser sends a request to the shop’s server.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },

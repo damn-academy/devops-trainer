@@ -59,8 +59,8 @@ export const rentModel = defineModel<P>({
     'You order a server in a cloud provider’s panel, the provider places it on a rack in its data centre, you work with it over the network, and the bill grows every hour the machine exists.',
   ),
   intro: bi(
-    'Сейчас на схеме только вы и панель облака, то есть сайт провайдера, на котором заказывают машины. Нажмите «Начать с первого шага», и вы закажете машину напрокат.',
-    'Now the diagram shows only you and the cloud panel, that is, the provider’s site where machines are ordered. Press “Start from the first step”, and you will order a machine for hire.',
+    'Сейчас на схеме только вы и панель облака, то есть сайт провайдера, на котором заказывают машины. Нажмите «Шаг вперёд», и вы закажете машину напрокат.',
+    'Now the diagram shows only you and the cloud panel, that is, the provider’s site where machines are ordered. Press “Step forward”, and you will order a machine for hire.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },

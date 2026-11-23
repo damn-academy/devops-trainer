@@ -39,8 +39,8 @@ export const systemModel = defineModel<P>({
     'Programs neither write to the disk themselves nor take memory and the processor: they ask the operating system. The diagram shows a program asking three times in a row: the editor saves a file, the browser asks for memory for a new tab, and several programs share one processor core.',
   ),
   intro: bi(
-    'Сейчас на схеме только редактор, в котором вы нажали «Сохранить», и диск. Нажмите «Начать с первого шага», и вы увидите, кто на самом деле записывает файл на диск.',
-    'Now the diagram shows only the editor where you pressed “Save” and the disk. Press “Start from the first step”, and you will see who really writes the file to the disk.',
+    'Сейчас на схеме только редактор, в котором вы нажали «Сохранить», и диск. Нажмите «Шаг вперёд», и вы увидите, кто на самом деле записывает файл на диск.',
+    'Now the diagram shows only the editor where you pressed “Save” and the disk. Press “Step forward”, and you will see who really writes the file to the disk.',
   ),
   legend: [
     { mark: 'active', text: bi('часть, которая работает сейчас', 'the part working now') },

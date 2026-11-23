@@ -49,8 +49,8 @@ export const releaseModel = defineModel<P>({
     'A programmer edits the program’s text, the build turns it into a runnable file, the file gets a version number and goes onto the shelf of releases, and the users decide by the number whether to upgrade. They now run 1.4.2.',
   ),
   intro: bi(
-    'Сейчас на схеме только программист и исходный код. Нажмите «Начать с первого шага», и вы увидите, как правка программиста становится выпуском с номером.',
-    'Now the diagram shows only the programmer and the source code. Press “Start from the first step”, and you will see how the programmer’s edit becomes a numbered release.',
+    'Сейчас на схеме только программист и исходный код. Нажмите «Шаг вперёд», и вы увидите, как правка программиста становится выпуском с номером.',
+    'Now the diagram shows only the programmer and the source code. Press “Step forward”, and you will see how the programmer’s edit becomes a numbered release.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },
