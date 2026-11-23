@@ -73,7 +73,7 @@ impl Engine {
     pub fn smp_run(&mut self, count: u32, ticks: f64, external: u64) -> u32 {
         self.cpu.time(ticks as u64);
         self.cpu.csr[0x344] = (self.cpu.csr[0x344] & !((1 << 11) | (1 << 9))) | external;
-        self.cpu.run(count);
+        self.profiled_run_once(count);
         if self.cpu.stopped { 2 } else if self.cpu.waiting { 1 } else { 0 }
     }
     pub fn smp_device_read(&mut self, address: u64) -> u64 { self.cpu.memory.devices.read(address).unwrap_or(0) }
@@ -244,44 +244,7 @@ impl Engine {
     pub fn run(&mut self, instructions: u32, time_ticks: f64) -> u32 {
         self.cpu.time(time_ticks as u64);
         self.cpu.service_devices();
-        if self.profile_interval == 0 {
-            self.cpu.run(instructions);
-        } else {
-            let mut left = instructions;
-            while left > 0 {
-                let budget = left.min(self.profile_left);
-                let before = self.cpu.jit.attempted;
-                self.cpu.run(budget);
-                let used = (self.cpu.jit.attempted - before) as u32;
-                left -= used;
-                self.profile_left -= used;
-                if self.profile_left == 0 {
-                    // Instruction-attempt samples, including traps, not wall time.
-                    // Hex serialization below preserves full Sv39/64-bit addresses.
-                    let task = if self.cpu.mode == crate::Mode::U { self.cpu.csr[0x140] } else { self.cpu.x[4] };
-                    let comm = if self.profile_comm_offset != 0 {
-                        task.checked_add(self.profile_comm_offset as u64)
-                            .and_then(|a| crate::profile::task_comm(&self.cpu.memory, self.cpu.csr[0x180], a))
-                    } else { None }.unwrap_or([0; 2]);
-                    let mut row = [0; 44];
-                    row[..9].copy_from_slice(&[self.cpu.pc, self.cpu.csr[0x180], self.cpu.mode as u64,
-                        self.cpu.x[4], self.cpu.csr[0x140], self.cpu.memory.time,
-                        self.cpu.jit.attempted, comm[0], comm[1]]);
-                    row[9] = self.cpu.x[1]; row[10] = self.cpu.x[2];
-                    if self.cpu.mode == crate::Mode::U {
-                        for j in 0..32 {
-                            if let Some(word) = self.cpu.x[2].checked_add(j * 8).and_then(|a| crate::profile::stack_word(&self.cpu.memory, self.cpu.csr[0x180], a)) {
-                                row[11] |= 1 << j; row[12 + j as usize] = word;
-                            }
-                        }
-                    }
-                    if self.profile_samples.len() < 65536 { self.profile_samples.push(row); }
-                    else { self.profile_dropped += 1; }
-                    self.profile_left = self.profile_interval;
-                }
-                if used == 0 || self.cpu.waiting || self.cpu.stopped { break; }
-            }
-        }
+        self.profiled_run(instructions);
         if self.cpu.reset_requested {
             3
         } else if self.cpu.stopped {
@@ -291,6 +254,62 @@ impl Engine {
         } else {
             0
         }
+    }
+    fn profiled_run(&mut self, instructions: u32) {
+        if self.profile_interval == 0 {
+            self.cpu.run(instructions);
+            return;
+        }
+        let mut left = instructions;
+        while left > 0 {
+            let budget = left.min(self.profile_left);
+            let before = self.cpu.jit.attempted;
+            self.cpu.run(budget);
+            let used = (self.cpu.jit.attempted - before) as u32;
+            left -= used;
+            self.profile_left -= used;
+            if self.profile_left == 0 { self.profile_sample(); }
+            if used == 0 || self.cpu.waiting || self.cpu.stopped { break; }
+        }
+    }
+    /// Single-shot profiling for SMP: one cpu.run per call, exactly matching the
+    /// scheduling granularity the SMP workers had before profiling existed. The
+    /// multi-chunk loop in profiled_run lets a hart burn its remaining budget
+    /// without yielding to the event loop, which perturbs cross-hart timing.
+    fn profiled_run_once(&mut self, instructions: u32) {
+        if self.profile_interval == 0 {
+            self.cpu.run(instructions);
+            return;
+        }
+        let before = self.cpu.jit.attempted;
+        self.cpu.run(instructions);
+        let used = (self.cpu.jit.attempted - before) as u32;
+        if used >= self.profile_left { self.profile_sample(); }
+        else { self.profile_left -= used; }
+    }
+    fn profile_sample(&mut self) {
+        // Instruction-attempt samples, including traps, not wall time.
+        // Hex serialization below preserves full Sv39/64-bit addresses.
+        let task = if self.cpu.mode == crate::Mode::U { self.cpu.csr[0x140] } else { self.cpu.x[4] };
+        let comm = if self.profile_comm_offset != 0 {
+            task.checked_add(self.profile_comm_offset as u64)
+                .and_then(|a| crate::profile::task_comm(&self.cpu.memory, self.cpu.csr[0x180], a))
+        } else { None }.unwrap_or([0; 2]);
+        let mut row = [0; 44];
+        row[..9].copy_from_slice(&[self.cpu.pc, self.cpu.csr[0x180], self.cpu.mode as u64,
+            self.cpu.x[4], self.cpu.csr[0x140], self.cpu.memory.time,
+            self.cpu.jit.attempted, comm[0], comm[1]]);
+        row[9] = self.cpu.x[1]; row[10] = self.cpu.x[2];
+        if self.cpu.mode == crate::Mode::U {
+            for j in 0..32 {
+                if let Some(word) = self.cpu.x[2].checked_add(j * 8).and_then(|a| crate::profile::stack_word(&self.cpu.memory, self.cpu.csr[0x180], a)) {
+                    row[11] |= 1 << j; row[12 + j as usize] = word;
+                }
+            }
+        }
+        if self.profile_samples.len() < 65536 { self.profile_samples.push(row); }
+        else { self.profile_dropped += 1; }
+        self.profile_left = self.profile_interval;
     }
     pub fn output(&mut self) -> Vec<u8> {
         let mut out = std::mem::take(&mut self.cpu.console);
