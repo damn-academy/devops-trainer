@@ -25,3 +25,4 @@ __pycache__/
 web/public/rv64-r0/
 web/public/rv64/
 web/src/engine/rv64/core/target/
+scratchpad/
