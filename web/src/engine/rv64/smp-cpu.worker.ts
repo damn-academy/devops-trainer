@@ -10,6 +10,9 @@ interface Init {
   httpDisk?: HTTPDisk;
   program?: Uint8Array; cmdline?: string;
   trace?: { steps: number };
+  /** Guest sampling profiler: interval in guest instructions (0 = off). */
+  guestProfile?: number;
+  guestProfileTaskCommOffset?: number;
   /** Snapshot coordination: [0]=requestEpoch, [1]=resumeEpoch, [2+hart]=captured. */
   snap?: SharedArrayBuffer;
 }
@@ -26,6 +29,8 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
       { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) });
     let jitRuntime = newJitRuntime();
     core.jit_threshold(50);
+    const profileInterval = d.guestProfile ?? 0;
+    if (profileInterval) { core.profile_configure(profileInterval); core.profile_task_comm(d.guestProfileTaskCommOffset ?? 0); }
     const device = d.hart === 0 ? new mod.Engine(32) : undefined;
     device?.smp_configure(0, d.bytes);
     const disk = device && d.httpDisk ? new HTTPBlockDevice(d.httpDisk) : undefined;
@@ -199,7 +204,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
       }
       if (device && performance.now() - lastEntropy > 100) { device.entropy(d.trace ? new Uint8Array(4096) : crypto.getRandomValues(new Uint8Array(4096))); lastEntropy = performance.now(); }
       if (performance.now() - lastReport > 1000) {
-        self.postMessage({ type: 'metrics', hart: d.hart, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, pc: String(core.pc()), state: Atomics.load(words, base) }); lastReport = performance.now();
+        self.postMessage({ type: 'metrics', hart: d.hart, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, pc: String(core.pc()), state: Atomics.load(words, base), guestProfile: profileInterval ? JSON.parse(core.profile_drain()) : undefined }); lastReport = performance.now();
       }
       // Yield to host input without blocking the device server or incoming fences.
       if (performance.now() - yielded >= 8) { jitRuntime.flush(); await yieldHost(); yielded = performance.now(); }

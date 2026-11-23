@@ -6,6 +6,7 @@ const output = document.querySelector('#console')!;
 const samples: unknown[] = [];
 const params = new URLSearchParams(location.search);
 const seconds = Number(params.get('seconds') ?? 900);
+const guestProfile = Number(params.get('guestProfile') ?? 0) || 0;
 try {
   const [kernel, initrd, httpDisk] = await Promise.all([
     fetch('/rv64/slim-vmlinuz.efi').then(r => r.arrayBuffer()).then(b => new Uint8Array(b)),
@@ -41,7 +42,7 @@ try {
               if (text.includes('\nRV64_PROBE_DONE\n')) { clearTimeout(timeout); resolve(); }
             }
           };
-          w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk,
+          w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk, guestProfile, guestProfileTaskCommOffset: guestProfile ? 1704 : 0,
             kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
             cmdline: 'earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000) });
         }
