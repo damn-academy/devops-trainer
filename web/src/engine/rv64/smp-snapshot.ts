@@ -13,7 +13,7 @@ try {
   const generations = new SharedArrayBuffer(bytes / 4096 * 4), epoch = performance.timeOrigin + performance.now();
   const control = new SharedArrayBuffer(HARTS * 64), ctl = new Int32Array(control);
   for (let h = 0; h < HARTS; h++) ctl[h * 16] = 1;
-  const snap = new SharedArrayBuffer(2 + HARTS * 4), sv = new Int32Array(snap);
+  const snap = new SharedArrayBuffer((2 + HARTS) * 4), sv = new Int32Array(snap);
   const workers: Worker[] = []; let text = '';
   const snapshots = new Map<number, { blob: Uint8Array; deviceBlob?: Uint8Array }>();
   let shellReady = false, error: string | undefined;

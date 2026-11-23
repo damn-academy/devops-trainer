@@ -102,11 +102,11 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     // Real-boot trace capture: pure interpreter (JIT off, threshold 0) on a fixed
     // tick quantum, so guest time advances deterministically while a hart runs;
     // a waiting hart keeps advancing time without retiring instructions.
-    let traced = 0, traceTicks = 0n; let stream: Uint32Array | undefined;
+    let traced = 0, traceTicks = 0; let stream: Uint32Array | undefined;
     if (d.trace) {
       core.jit_threshold(0); core.test_trace(true);
       stream = new Uint32Array(d.trace.steps * 7);
-      traceTicks = 1_000_000n;
+      traceTicks = 1_000_000;
     }
     // Input messages are processed between execution batches.
     self.onmessage = ({ data }) => {
@@ -155,7 +155,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
         let status: number;
         if (stream) {
           status = core.smp_run(1, traceTicks, BigInt(Atomics.load(words, base + 1)));
-          traceTicks += 10n;
+          traceTicks += 10;
           if (status === 0) {
             const ev = core.test_last_trace();
             if (ev.length >= 7) {

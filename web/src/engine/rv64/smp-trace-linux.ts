@@ -41,7 +41,7 @@ try {
           };
           w.postMessage({ hart, harts: HARTS, bytes, memory, module, mail, control, generations, epoch, trace: { steps: TRACE_STEPS },
             kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
-            cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init rv64.epoch=' + Math.floor(Date.now() / 1000) });
+            cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init rv64.epoch=1800000000' });
         }
       });
     } finally { Atomics.store(ctl, 15, 1); workers.forEach(w => w.terminate()); }
