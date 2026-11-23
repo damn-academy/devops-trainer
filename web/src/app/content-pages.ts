@@ -15,12 +15,15 @@ import { lessonPage } from './lesson';
 import { explainerPage } from './pages';
 import { reviewPage } from './review-page';
 import { coursesPage } from './courses-page';
+import { professionPage } from './home';
 import { settingsPage } from './settings';
 
 export { closeDoc } from '../engine/docs/viewer';
 
 export function renderPage(r: Exclude<Route, { name: 'home' }>): Page {
   switch (r.name) {
+    case 'profession':
+      return professionPage(r.id);
     case 'block':
       return blockPage(r.id);
     case 'placement':

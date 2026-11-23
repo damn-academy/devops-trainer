@@ -6,7 +6,7 @@ import { effectiveStep } from '../src/engine/docs/ladder';
 import { mountQuiz } from '../src/engine/quiz/render';
 import { metricDelta } from '../src/engine/explainer/geometry';
 import { createSimMachine, stripAnsi } from '../src/engine/terminal/shell';
-import { durationWeeks, homePage } from '../src/app/home';
+import { durationWeeks, professionPage } from '../src/app/home';
 import { readDraft, writeDraft, clearDraft } from '../src/core/draft';
 import { placementPage } from '../src/app/exam-placement';
 import { renderPage, docFragment } from '../src/engine/docs/viewer';
@@ -49,7 +49,7 @@ it('rejects ambiguous matching labels', () => {
 it('formats plurals and recomputes the personal pace', () => {
   expect([1, 3, 11, 22].map(n => pluralRu(n, ['задание', 'задания', 'заданий']))).toEqual(['задание', 'задания', 'заданий', 'задания']);
   expect(durationWeeks(480, 5)).toBe(96);
-  const root = homePage().el; const input = root.querySelector<HTMLInputElement>('.pace input')!;
+  const root = professionPage('devops').el; const input = root.querySelector<HTMLInputElement>('.pace input')!;
   const initial = root.querySelector('.time')!.textContent;
   input.value = '5'; input.dispatchEvent(new Event('input'));
   expect(root.querySelector('.time')!.textContent).not.toBe(initial);

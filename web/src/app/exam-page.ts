@@ -25,6 +25,7 @@ import { conceptLink, emptyState, levelFor, prose, setTitle, type Page } from '.
 import { mountRealCard, mountRealLab, type RealCardView } from './real/panel';
 import { mountLab } from './terminal-section';
 import './exam.css';
+import { crumbProfession } from './common';
 
 /** Exams of a block: the one named in Block.exam first, then any other exam whose `block` is this block. */
 export function examsOfBlock(blockId: string): Exam[] {
@@ -110,7 +111,7 @@ export function examPage(id: string): Page {
   const root = h('div.exam.ex2');
   const mounts: Mounted[] = [];
   const disposeAll = () => mounts.splice(0).forEach((m) => m.dispose());
-  const crumbs = () => h('nav.crumbs', {}, h('a', { href: href({ name: 'home' }) }, t(UI.map)), block ? [' › ', h('a', { href: href({ name: 'block', id: block.id }) }, t(block.title))] : null);
+  const crumbs = () => h('nav.crumbs', {}, crumbProfession(), block ? [' › ', h('a', { href: href({ name: 'block', id: block.id }) }, t(block.title))] : null);
 
   const intro = () => {
     disposeAll();

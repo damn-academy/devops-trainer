@@ -10,6 +10,7 @@ import { store } from '../core/store';
 import type { Level, Mounted, Section } from '../core/types';
 import { conceptLink, emptyState, levelBadge, levelFor, setDescription, setTitle, sourcesBlock, type Page } from './common';
 import { renderSection } from './sections';
+import { crumbProfession } from './common';
 
 /** Experienced learners start with the challenge: the first practice section moves up after the hook. */
 export function orderSections(sections: Section[], level: Level): Section[] {
@@ -75,7 +76,7 @@ export function lessonPage(id: string, focusSection?: string): Page {
     h(
       'header.lesson-head',
       {},
-      h('nav.crumbs', { 'aria-label': 'breadcrumbs' }, h('a', { href: href({ name: 'home' }) }, t(UI.map)), ' › ', block ? h('a', { href: href({ name: 'block', id: block.id }) }, t(block.title)) : null),
+      h('nav.crumbs', { 'aria-label': 'breadcrumbs' }, crumbProfession(), ' › ', block ? h('a', { href: href({ name: 'block', id: block.id }) }, t(block.title)) : null),
       h('h1', {}, t(lesson.title)),
       lesson.summary ? h('p.lede', {}, ...renderInline(t(lesson.summary))) : null,
       h(

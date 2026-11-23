@@ -38,8 +38,13 @@ const open = async (page, route) => {
 
 await step('home', async (page) => {
   await open(page, '#/');
-  await expect(page.locator('ol.route > li').first()).toBeVisible();
+  await expect(page.locator('ul.catalog-grid li').first()).toBeVisible();
   if (!(await page.evaluate(() => self.crossOriginIsolated))) throw new Error('page is not cross-origin isolated');
+});
+
+await step('profession', async (page) => {
+  await open(page, '#/profession/devops');
+  await expect(page.locator('ol.route > li').first()).toBeVisible();
 });
 
 await step('explainer', async (page) => {

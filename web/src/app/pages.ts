@@ -11,6 +11,7 @@ import { openDoc } from '../engine/docs/viewer';
 import { mountQuiz } from '../engine/quiz/render';
 import { conceptLink, emptyState, levelFor, prose, setTitle, type Page } from './common';
 import { mountLab } from './terminal-section';
+import { crumbProfession } from './common';
 
 export function explainerPage(id: string): Page {
   const reg = registry.explainers.get(id);
@@ -22,7 +23,7 @@ export function explainerPage(id: string): Page {
   const el = h(
     'div.explainer-page',
     {},
-    h('nav.crumbs', {}, h('a', { href: href({ name: 'home' }) }, t(UI.map)), block ? [' › ', h('a', { href: href({ name: 'block', id: block.id }) }, t(block.title))] : null),
+    h('nav.crumbs', {}, crumbProfession(), block ? [' › ', h('a', { href: href({ name: 'block', id: block.id }) }, t(block.title))] : null),
     host,
     reg.concepts?.length ? h('p.small', {}, h('span.k', {}, t(bi('Понятия', 'Concepts'))), ' ', ...reg.concepts.flatMap((c, i) => [i ? ', ' : '', conceptLink(c)])) : null,
   );

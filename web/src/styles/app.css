@@ -207,3 +207,12 @@
   .ll-remove, .ll-remove tbody, .ll-remove tr, .ll-remove td { display: block; }
   .ll-remove td:first-child { padding-bottom: 0; border-bottom: 0; }
 }
+
+/* Catalog: the platform home lists professions and courses as tiles. */
+.catalog-section { margin-top: 1.6em; }
+.catalog-grid { list-style: none; padding: 0; margin: 0.4em 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.catalog-tile { display: block; border: 1px solid var(--line-2); border-radius: 12px; padding: 16px 18px; text-decoration: none; color: inherit; background: var(--bg); }
+.catalog-tile:hover { border-color: var(--ink); }
+.catalog-kind { display: block; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.catalog-title { display: block; font-size: 1.4rem; font-weight: 600; margin: 4px 0 6px; }
+.catalog-summary { display: block; font-size: 0.95rem; color: var(--muted); }
