@@ -51,6 +51,10 @@
 
 /* The step caption is a live region of the player, not prose: it sits in a framed strip under the stage. */
 .ex-caption { font-family: var(--font-text); font-size: 1.02rem; min-height: 1.6em; margin: 10px 0 4px; padding: 10px 14px; border: 1px solid var(--line); border-left: 3px solid var(--focus); border-radius: var(--r); background: var(--bg-2); }
+/* The step caption floats over the canvas as its own layer: it never changes
+   the diagram's width or squeezes it, the complaint from the owner review. */
+.ex-stage > .ex-caption { position: absolute; left: 8px; bottom: 8px; z-index: 24; width: min(430px, 56%); margin: 0; font-size: .95rem; box-shadow: 0 3px 14px rgb(0 0 0 / .14); max-height: 46%; overflow: auto; }
+@media (max-width: 900px) { .ex-stage > .ex-caption { width: min(430px, 72%); } }
 .ex-caption p { margin: 0; }
 .ex-broken { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--r); background: var(--c-err-bg); margin: 8px 0; font-size: 0.94rem; }
 .ex-broken[hidden] { display: none; }

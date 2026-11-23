@@ -136,6 +136,6 @@
   .ex-step-caption.expanded { display: block; max-height: 35vh; overflow: auto; }
   .ex-step-caption p { margin: 0; }
   .ex-mobile-caption input { width: 90px; vertical-align: middle; }
-  .explainer > .ex-caption { display: none; }
+  .ex-stage > .ex-caption { display: none; }
 }
 .progress-transfer textarea { display: block; width: 100%; overflow-wrap: anywhere; }

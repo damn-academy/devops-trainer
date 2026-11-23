@@ -6,7 +6,7 @@
 
 import { calm, clear, h, icon, put, s } from '../../core/dom';
 import { bi, lang, t, type Bi } from '../../core/i18n';
-import type { DiagramGroup, DiagramNode, ElementCard, ExplainerCtx, ExplainerReg, LegendMark, ModelChange, Mounted, ParamSpec, Prediction, ProcessModel, QText, Step } from '../../core/types';
+import type { DiagramGroup, DiagramNode, ElementCard, ExplainerCtx, ExplainerReg, ModelChange, Mounted, ParamSpec, Prediction, ProcessModel, QText, Step } from '../../core/types';
 import { renderInline, renderMd } from '../../core/markdown';
 import { docChip } from '../docs/viewer';
 import { fitSub, tidyDiagram, overlap, placeLabel, type Box } from './tidy';
@@ -126,7 +126,6 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   const viewport = h('div.ex-viewport', { tabindex: 0, 'aria-label': t(bi('Схему можно прокручивать в любую сторону.', 'Scroll the diagram in any direction.')) }, svg);
   const canvasEl = h('div.ex-canvas', {}, viewport, h('p.ex-hint', {}, t(L.hintClick)));
   const introBox = model.intro ? h('div.ex-intro', { role: 'note' }) : null;
-  const legendBox = model.legend?.length ? drawLegend(model.legend) : null;
   const el = h(
     'div.explainer',
     { tabindex: 0, 'data-model': model.id, 'data-frame': model.frame ?? 'fixed' },
@@ -136,14 +135,12 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     introBox,
     // the step controls sit right above the picture, under the settings that shape it
     h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks), h('div.ex-mobile-caption', {}, stepCaption, expandCaption, zoomControl)),
-    h('div.ex-stage', {}, canvasEl, h('div.ex-side', {}, deltaBox, card)),
+    h('div.ex-stage', {}, canvasEl, h('div.ex-side', {}, deltaBox, card), caption),
     mobileNotes,
     mobileNodes,
     brokeLine,
-    caption,
     metricsBox,
     waterfallBox,
-    legendBox,
   );
   clear(root);
   root.append(el);
@@ -304,15 +301,6 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       s('circle.icon-disc', { cx, cy, r }),
       s('circle.icon-spin', { cx, cy, r: r + 3 }),
       s('path.icon-glyph', { d: NODE_ICONS[n.icon!], transform: `translate(${(cx - 12 * k).toFixed(1)} ${(cy - 12 * k).toFixed(1)}) scale(${k})` }),
-    );
-  }
-
-  function drawLegend(items: NonNullable<ProcessModel['legend']>): HTMLElement {
-    return h(
-      'div.ex-legend',
-      { role: 'list', 'aria-label': t(L.legend) },
-      h('span.ex-legend-title', {}, t(L.legend)),
-      ...items.map((it) => h('span.ex-legend-item', { role: 'listitem' }, legendMark(it.mark), h('span', {}, ...renderInline(t(it.text))))),
     );
   }
 
@@ -1163,24 +1151,4 @@ function formatParam(spec: ParamSpec, v: unknown): string {
   return `${formatNum(Number(v))}${spec.unit ? ' ' + txt(spec.unit) : ''}`;
 }
 
-/** A small drawing of what a legend line explains, in the diagram's own style. */
-function legendMark(mark: LegendMark): SVGElement {
-  const box = (cls: string, extra: SVGElement[] = []) => s('svg.lg-mark', { viewBox: '0 0 34 20', width: 34, height: 20, class: cls }, s('rect.lg-box', { x: 3, y: 3, width: 28, height: 14, rx: 3 }), ...extra);
-  if (mark.startsWith('icon:')) {
-    const name = mark.slice(5) as keyof typeof NODE_ICONS;
-    return s('svg.lg-mark.lg-icon', { viewBox: '0 0 34 20', width: 34, height: 20 }, s('circle.icon-disc', { cx: 17, cy: 10, r: 9.5 }), s('path.icon-glyph', { d: NODE_ICONS[name] ?? '', transform: 'translate(9.8 2.8) scale(0.6)' }));
-  }
-  switch (mark) {
-    case 'active':
-      return box('lg-active', [s('rect.lg-halo', { x: 0.5, y: 0.5, width: 33, height: 19, rx: 5 })]);
-    case 'token':
-      return s('svg.lg-mark.lg-token', { viewBox: '0 0 34 20', width: 34, height: 20 }, s('line.lg-line', { x1: 0, y1: 10, x2: 34, y2: 10 }), s('rect.token-bg', { x: 5, y: 3.5, width: 24, height: 13, rx: 3 }), s('path.token-env', { d: 'M10 7 h10 v6.5 h-10 Z M10 7 l5 3.6 l5 -3.6' }));
-    case 'say':
-      return s('svg.lg-mark.lg-say', { viewBox: '0 0 34 20', width: 34, height: 20 }, s('path.say-bubble', { d: bubblePath({ x: 2, y: 1.5, w: 30, h: 12 }, 'top', [12, 19], 4, 3.5) }));
-    case 'line':
-    case 'dashed':
-      return s('svg.lg-mark', { viewBox: '0 0 34 20', width: 34, height: 20, class: `lg-${mark}` }, s('line.lg-line', { x1: 2, y1: 10, x2: 32, y2: 10 }));
-    default:
-      return box(`lg-${mark}`);
-  }
-}
+
