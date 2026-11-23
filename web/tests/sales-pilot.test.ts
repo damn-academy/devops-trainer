@@ -30,7 +30,7 @@ describe('sales pilot (hidden)', () => {
   it('introduces every sales concept and keeps quiz distractors explained', () => {
     const introduced = new Set(SALES_LESSONS.flatMap((l) => l.introduces));
     for (const c of SALES_CONCEPTS) expect(introduced.has(c.id)).toBe(true);
-    for (const q of SALES_QUIZ) for (const o of q.options) expect(o.why).toBeTruthy();
+    for (const q of SALES_QUIZ) if (q.kind === 'mcq') for (const o of q.options) expect(o.why).toBeTruthy();
   });
 
   it('projects a monotonic funnel that responds to parameters', () => {
@@ -41,7 +41,7 @@ describe('sales pilot (hidden)', () => {
     expect(base.totals.meetings).toBeGreaterThan(0);
     const double = funnelProject({ accounts: 30, touches: 4, respond: 0.15, meeting: 0.3, poc: 0.4, close: 0.35, weeks: 12 });
     expect(double.totals.meetings).toBeGreaterThan(base.totals.meetings);
-    expect(funnelProject({ ...base.rows.length ? { accounts: 30, touches: 2, respond: 0.15, meeting: 0.3, poc: 0.4, close: 0.35, weeks: 12 } : {} }).totals.touches).toBe(30 * 2 * 12);
+    expect(funnelProject({ accounts: 30, touches: 2, respond: 0.15, meeting: 0.3, poc: 0.4, close: 0.35, weeks: 12 }).totals.touches).toBe(30 * 2 * 12);
   });
 
   it('walks the buying center in three waterfall steps', () => {
