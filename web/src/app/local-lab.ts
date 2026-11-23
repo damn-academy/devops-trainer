@@ -10,7 +10,7 @@ import { LAB_REMOVAL } from '../engine/locallab/client';
 import { prose, setTitle, type Page } from './common';
 import { LOCAL_LAB_LINK } from './help';
 
-export const DTLAB_REPO = 'https://github.com/tym83/devops-trainer';
+export const DTLAB_REPO = 'https://github.com/damn-academy/devops-trainer';
 
 /**
  * The ready-made dtlab builds on the repository's GitHub releases. Set

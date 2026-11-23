@@ -1,4 +1,4 @@
-module github.com/tym83/devops-trainer/tools/terraform-provider-lab
+module github.com/damn-academy/devops-trainer/tools/terraform-provider-lab
 
 go 1.26.5
 

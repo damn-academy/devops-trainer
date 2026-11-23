@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tym83/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
 )
 
 const key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExample dtlab"

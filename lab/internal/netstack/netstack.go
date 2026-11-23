@@ -22,7 +22,7 @@ import (
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/containers/gvisor-tap-vsock/pkg/virtualnetwork"
 
-	"github.com/tym83/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
 )
 
 // GatewayMAC of the virtual gateway.

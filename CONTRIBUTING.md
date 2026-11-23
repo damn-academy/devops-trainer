@@ -6,7 +6,7 @@ The course is open and can be improved: by fixing mistakes and inaccuracies, rew
 
 ## How the repository is organised
 
-The whole course is in one repository, [tym83/devops-trainer](https://github.com/tym83/devops-trainer).
+The whole course is in one repository, [damn-academy/devops-trainer](https://github.com/damn-academy/devops-trainer).
 
 - `web/` holds the application itself, in TypeScript and Vite without a UI framework. `web/src/core` has the types, registry, router, store and linter, `web/src/app` the pages, `web/src/engine` the engines (terminal, diagrams, questions, documentation, simulators, v86, AI, offline), `web/src/blocks` the content of the blocks, one directory per block, and `web/tests` and `web/e2e` the tests.
 - `design/` holds the design documents; the main one is [`design/00-DESIGN.md`](design/00-DESIGN.md).
@@ -58,7 +58,7 @@ The last two linters are heuristic, so every finding is worth reading by eye, an
 
 ## How to report a problem
 
-A mistake in a text, a diagram or a task is easiest to send from the course itself with “Report a problem”, or by selecting the text and pressing “Comment”: the message names the place in the course by itself and attaches the terminal output. The reply appears on the “My messages” page. Bugs in the code, proposals about how the course works, and everything about the dtlab lab and the feedback service are better described in a [GitHub issue](https://github.com/tym83/devops-trainer/issues): what you did, what you expected to see and what you actually saw, plus the browser and the system.
+A mistake in a text, a diagram or a task is easiest to send from the course itself with “Report a problem”, or by selecting the text and pressing “Comment”: the message names the place in the course by itself and attaches the terminal output. The reply appears on the “My messages” page. Bugs in the code, proposals about how the course works, and everything about the dtlab lab and the feedback service are better described in a [GitHub issue](https://github.com/damn-academy/devops-trainer/issues): what you did, what you expected to see and what you actually saw, plus the browser and the system.
 
 ## How to shape a change
 

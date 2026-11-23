@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tym83/devops-trainer/lab/internal/agent"
-	"github.com/tym83/devops-trainer/lab/internal/backend"
-	"github.com/tym83/devops-trainer/lab/internal/hostinfo"
-	"github.com/tym83/devops-trainer/lab/internal/labdhcp"
-	"github.com/tym83/devops-trainer/lab/internal/netstack"
-	"github.com/tym83/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/agent"
+	"github.com/damn-academy/devops-trainer/lab/internal/backend"
+	"github.com/damn-academy/devops-trainer/lab/internal/hostinfo"
+	"github.com/damn-academy/devops-trainer/lab/internal/labdhcp"
+	"github.com/damn-academy/devops-trainer/lab/internal/netstack"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
 )
 
 // RunAgent is `dtlab agent` (and `dtlab serve` in the foreground): the lab

@@ -10,7 +10,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tym83/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
 )
 
 // Disks a VM boots from, prepared by the lab before Start.

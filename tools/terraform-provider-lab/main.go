@@ -11,7 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 
-	"github.com/tym83/devops-trainer/tools/terraform-provider-lab/internal/lab"
+	"github.com/damn-academy/devops-trainer/tools/terraform-provider-lab/internal/lab"
 )
 
 // version is set at build time with -ldflags "-X main.version=...".

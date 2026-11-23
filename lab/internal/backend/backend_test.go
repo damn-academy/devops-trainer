@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tym83/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
 )
 
 type fakeRunner struct {

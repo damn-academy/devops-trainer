@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tym83/devops-trainer/lab/internal/hostinfo"
+	"github.com/damn-academy/devops-trainer/lab/internal/hostinfo"
 )
 
 // Kind is what a VM is for.

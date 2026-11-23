@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tym83/devops-trainer/lab/internal/kuberoot"
+	"github.com/damn-academy/devops-trainer/lab/internal/kuberoot"
 )
 
 // release serves a kuberoot release's assets as GitHub does, flat, with

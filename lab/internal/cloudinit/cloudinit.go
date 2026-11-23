@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tym83/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
 )
 
 // User is the account the learner logs in with, as in a cloud image.
