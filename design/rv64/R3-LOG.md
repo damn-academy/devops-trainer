@@ -1414,3 +1414,121 @@ SHA-256 was verified as
 its 235,389 Go function records and pcsp data are retained in ignored
 `profile-symbols/control-callers.json.gz`. Transfer was compressed in the pod and
 SHA-256 checked over a loopback port-forward after direct exec transfers truncated.
+
+### 2026-11-22 (session 2) — kuberoot SMP first window, trace + snapshot infrastructure
+
+**kuberoot on 2/4 harts, first observation (900 s probe window).** One headless
+Chromium, sequential topologies, 1 GiB shared RAM each, slim kernel/initrd and
+local `slim-recovery-media.json`. wasm build `a6f845b3…` (pre-trace-ungate).
+Result file: `R3-smp-kuberoot-900s-window.json`. **Not accepted: both topologies
+hit the 900 s harness window without `RV64_NODE_READY`.** One observation per
+topology, not a distribution:
+
+| Harts | Reached by 900 s | Missing |
+|---|---|---|
+| 2 | `RV64_CONFIG_CREATED`, `RV64_READYZ_BEGIN` (console line 246/419) | `RV64_NODE_READY`, get-pods, pod-start |
+| 4 | `RV64_CONFIG_CREATED`, `RV64_READYZ_BEGIN` (console line 557/560) | `RV64_NODE_READY`, get-pods, pod-start |
+
+Both boots progress well past `smp: Brought up` and the kallsyms-style symbol
+dump; neither stalls — the window is simply too small for the readiness probe.
+measure.mjs did not forward `?seconds=` to the smp-kuberoot page (fixed: it now
+routes the probe parameters exactly like the one-hart kuberoot scenario, and the
+progress interval writes the console capture and metrics for it too). A rerun
+with a 3000 s per-topology window is in flight. No Node Ready / get-pods /
+pod-start claim is made from this observation.
+
+**Deterministic per-hart trace capture (replaces the synthetic-only
+differential; the synthetic 600,000-instruction gate stays).** Cpu trace fields
+were native-only and are now compiled on wasm32 behind the same `trace_enabled`
+switch; the worker trace mode runs the pure interpreter (JIT threshold 0) on a
+fixed 10-tick quantum with fixed virtio-rng bytes, so a hart's guest time is a
+function of its retired instructions and a waiting hart still advances time.
+The smp-trace-linux harness boots Alpine on 2 harts twice under identical
+inputs and compares per-hart event streams word for word (7 words per event:
+kind, pc lo/hi, payload), reporting the common prefix and the first divergence
+event with context. Pass gate: `smp: Brought up` in both runs plus full
+capture length; prefix length is reported as evidence, because communicating
+harts may legitimately interleave differently between runs. Measurements land
+in `R3-smp-trace-linux.json`.
+
+**All-hart snapshot barrier and restore.** New `smp_snapshot`/`smp_restore` Cpu
+entry points encode one quiesced hart (or the device engine) without RAM under
+`DTRV64\0\x02`; shared geometry is adopted from the restore target because
+`shared_bytes` is never serialized, transient SBI requests stay unserialized,
+and caches are rebuilt. The worker barrier drains fence tickets, in-flight MMIO
+RPCs and disk chunk fetches before capture; the host reinstalls the sparse
+shared-RAM image (nonzero 4 KiB pages), bumps every code-page generation, and
+the worker resumes with a fresh JIT runtime. The smp-snapshot harness proves
+image sufficiency by wiping the whole shared buffer and reinstalling only the
+captured pages before answering a shell arithmetic marker after restore.
+Native platform tests: 43 pass. Evidence lands in `R3-smp-snapshot.json`.
+
+Commit `5c8b2bf` carries both capabilities plus the measure.mjs routing.
+
+**Working hypothesis while the 3000 s window runs (not a claim).** After
+`RV64_READYZ_BEGIN` both harts keep retiring (~2 MIPS each in the metrics
+stream, billions of instructions) with PCs stable inside kernel futex paths,
+and the probe eventually gives up: the signature is Go lock/atomic contention
+under the conservative LR reservation, where any write anywhere bumps one
+global epoch and so an SC on futex word X fails whenever another hart writes
+unrelated data. Every failed SC restarts the Go lock acquisition, which is
+exactly the live-lock-like grind observed. The correct-by-hardware shape is a
+reservation granule (bump a per-128-byte epoch on write; SC fails only when
+its own granules changed), which would make unrelated traffic stop
+invalidating futex SCs. This is recorded as the next engine experiment and is
+NOT yet a sample-proven cause; no engine change is made on this hypothesis
+alone.
+
+The 11:44 retry was aborted at ~95 min: saving source files while the vite
+dev server was live reloaded the harness page mid-measurement (the engine is
+unaffected, but the page restarted its topology loop), and the reloaded phase
+then outlived its own 900 s timer without the expected timeout firing through
+the saturated renderer — the run was no longer a clean single observation, so
+it was stopped rather than reported. Lesson recorded for every future
+measurement: no source edits under `web/` while a measurement runs, and the
+runner must be started after the last edit. A fresh runner (probe-parameter
+forwarding in place, `?seconds=3000` reaching the page) restarted the
+measurement; nothing from the aborted attempt is counted as evidence.
+
+### 2026-11-22 (session 3) — 3000 s kuberoot window: recovery reboot loop; trace and snapshot harnesses fixed and run
+
+**kuberoot on 2/4 harts, 3000 s window: not accepted — no topology reached
+`RV64_NODE_READY`.** wasm build `3de38f33…` (same as the 900 s window). The
+single headless Chromium ran topology 1 (2 harts, 1 GiB shared RAM, slim
+assets) and was killed by the harness-level 7500 s timeout still inside
+topology 1; topology 2 (4 harts) never started. Evidence:
+`R3-smp-kuberoot-3000s-console.txt`. The console shows a **recovery reboot
+loop**: each kernel boot reaches `RV64_CONFIG_CREATED` and
+`RV64_READYZ_BEGIN` (the recovery profile
+`RV64_RECOVERY_PROFILE_COMPACT_5M_STATUS_10S_SYNC_1M` is announced), prints
+one `568.15 120.68`-style probe line, then a fresh kernel command line
+appears — the node reboots rather than becoming Ready. At least three boots
+were observed this way; `smp: Brought up` appears once per boot. This is the
+same post-`READYZ_BEGIN` grind as the 900 s window, now with the reboot
+machinery visible: the node never leaves the grind before the recovery
+health checks fire. Together with the stable-PC futex-path MIPS stream from
+the 900 s metrics, this keeps the conservative global reservation epoch as
+the leading explanation (any write anywhere invalidates every SC) and makes
+the reservation-granule experiment the next engine step before any further
+kuberoot SMP measurement. One observation, not a distribution.
+
+**Deterministic per-hart trace on a real SMP boot: PASS.** Two bugs sat in
+the session-2 code and only fired on the first real browser run. (1) The
+trace path in `smp-cpu.worker.ts` passed a BigInt tick quantum to
+`smp_run(count: u32, ticks: f64, …)` — wasm-bindgen glue cannot convert
+BigInt to f64, so both harts died instantly with `TypeError: Cannot convert
+a BigInt value to a number`; the quantum is a plain number now. (2) The
+harness put `Date.now()` into `rv64.epoch=`, so the two "identical" runs
+had different inputs; the epoch is a fixed constant now. After the fixes,
+both runs booted Alpine on 2 harts to `smp: Brought up` and captured the
+full 1,000,000 events per hart (7,000,000 words each, ~4.6 s per run):
+hart 0's stream is bit-identical across runs (FNV 2359275194 in both);
+hart 1 matches word-for-word for 55,294 words (7,899 events) and then
+diverges, which is the expected interleaving-dependent region — worker
+scheduling between the two harts is not part of the deterministic input.
+Evidence: `R3-smp-trace-linux.json`.
+
+**SMP snapshot harness: fixed and run.** `smp-snapshot.ts` sized its
+coordination buffer as `2 + HARTS * 4` = 10 bytes, which is not a multiple
+of 4, so every worker died constructing its `Int32Array` view; the buffer
+is `(2 + HARTS) * 4` now. **Result: PASS. After the buffer fix both harts booted Alpine to a shell, the barrier captured all harts in 1.76 s, the sparse image holds 11,818 nonzero 4 KiB pages (48.4 MB of the 256 MiB guest region), and after the whole shared buffer was wiped and only those pages reinstalled — plus one generation bump per page — both harts restored their state and answered the shell marker `RESTORED_OK_42`. Evidence: `R3-smp-snapshot.json`.
