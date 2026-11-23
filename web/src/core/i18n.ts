@@ -141,6 +141,7 @@ export const UI = {
   hours: bi('ч', 'h'),
   notFound: bi('Такой страницы нет', 'No such page'),
   backHome: bi('К программе', 'Back to the syllabus'),
+  exportProgress: bi('Выгрузить прогресс', 'Export progress'),
   check: bi('Проверить', 'Check'),
   retry: bi('Ещё раз', 'Try again'),
   correct: bi('Верно', 'Correct'),
@@ -166,5 +167,5 @@ export const UI = {
   wholePage: bi('Вся страница', 'Whole page'),
   openDocs: bi('Открыть документацию', 'Open documentation'),
   fromHere: bi('это отсюда', 'this is from'),
-  ask: bi('Спросить', 'Ask'),
+  ask: bi('Спросить нейросеть', 'Ask the AI'),
 } as const;

@@ -50,7 +50,7 @@ const T = {
   connect: bi('Подключить', 'Connect'),
   placeholder: bi('Что непонятно? Ctrl+Enter — отправить', 'What is unclear? Ctrl+Enter to send'),
   placeholderDocs: bi('Где вы уже смотрели? Что нашли?', 'Where have you looked? What did you find?'),
-  send: bi('Спросить', 'Ask'),
+  send: bi('Спросить нейросеть', 'Ask the AI'),
   stop: bi('Остановить', 'Stop'),
   nextHint: bi('Следующая подсказка', 'Next hint'),
   hintAsk: bi('Дай следующую подсказку к заданию.', 'Give me the next hint for the task.'),
