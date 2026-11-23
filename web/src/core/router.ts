@@ -21,6 +21,7 @@ export type Route =
   | { name: 'messages' }
   | { name: 'settings' }
   | { name: 'review' }
+  | { name: 'courses' }
   | { name: 'lab'; id: string }
   | { name: 'local-lab' }
   | { name: 'about'; page?: string }
@@ -57,6 +58,7 @@ export function parseRoute(hash: string): Route {
     case 'messages':
     case 'settings':
     case 'review':
+    case 'courses':
     case 'local-lab':
       if (parts.length === 1) return { name: head };
       break;
@@ -85,6 +87,8 @@ export function href(r: Route): string {
       return '#/settings';
     case 'review':
       return '#/review';
+    case 'courses':
+      return '#/courses';
     case 'lab':
       return `#/lab/${e(r.id)}`;
     case 'local-lab':
