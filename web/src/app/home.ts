@@ -6,7 +6,7 @@ import { clear, h, icon, put } from '../core/dom';
 import { bi, count, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
 import { ROUTE, type RouteEntry } from '../core/route';
-import { href } from '../core/router';
+import { href, navigate } from '../core/router';
 import { store } from '../core/store';
 import { LEVELS, type Block, type Level } from '../core/types';
 import type { Page } from './common';
@@ -14,8 +14,9 @@ import { infoTip } from './common';
 import { chosenLevel, lessonStatus, remainingShare, setDescription, setTitle } from './status';
 
 // Level tiles double as the level picker: choosing here is the same record as
-// the chooser on the block page, so "continue" and the pace estimate see it.
-function levelsTable(b: Block, chosen: Level | undefined, onChange: () => void): HTMLElement {
+// the chooser on the block page, and it opens the block right away — there is
+// no separate "continue" button to hunt for.
+function levelsTable(b: Block, chosen: Level | undefined): HTMLElement {
   return h(
     'dl.levels',
     { role: 'radiogroup', 'aria-label': t(UI.chooseLevel) },
@@ -30,7 +31,7 @@ function levelsTable(b: Block, chosen: Level | undefined, onChange: () => void):
             'aria-checked': chosen === l ? 'true' : 'false',
             onclick: () => {
               store.record({ kind: 'level.set', block: b.id, level: l, via: 'choice' });
-              onChange();
+              navigate({ name: 'block', id: b.id });
             },
           }, t(UI.levels[l])),
           infoTip(b.levels[l])),
@@ -47,12 +48,12 @@ function staticLevelsTable(levels: Record<Level, import('../core/i18n').Bi>): HT
   );
 }
 
-function blockItem(b: Block, entry: RouteEntry | undefined, onChange: () => void): HTMLElement {
+function blockItem(b: Block, entry: RouteEntry | undefined): HTMLElement {
   const lessons = b.lessons.map((id) => registry.lessons.get(id)).filter(Boolean) as NonNullable<ReturnType<typeof registry.lessons.get>>[];
   const doneN = lessons.filter((l) => lessonStatus(l) === 'done').length;
-  const nextLesson = lessons.find((l) => lessonStatus(l) !== 'done');
   const started = !!store.state.placement[b.id]?.length || lessons.some((l) => lessonStatus(l) !== 'new');
   const chosen = chosenLevel(b.id);
+  const hasPlacement = !!registry.placementCount(b.id);
   return h(
     'li.route-item',
     { 'data-block': b.id, class: doneN === lessons.length && lessons.length ? 'complete' : started ? 'started' : undefined },
@@ -68,17 +69,16 @@ function blockItem(b: Block, entry: RouteEntry | undefined, onChange: () => void
         b.beginnerOnly ? h('span.badge', {}, t(bi('Для первого знакомства', 'beginners only'))) : null,
       ),
       h('p.route-summary', {}, t(b.summary)),
-      levelsTable(b, chosen, onChange),
-      h(
-        'div.route-actions',
-        {},
-        nextLesson
-          ? h('a.btn.primary', { href: href({ name: 'lesson', id: nextLesson.id }) }, t(started ? UI.continue : UI.start), icon('next'))
-          : lessons.length
-            ? h('span.badge.ok', {}, '✓ ', t(UI.done))
-            : null,
-        registry.placementCount(b.id) ? h('a.btn.ghost', { href: href({ name: 'placement', id: b.id }) }, icon('check'), t(UI.checkLevel)) : null,
-      ),
+      levelsTable(b, chosen),
+      lessons.length && doneN === lessons.length ? h('p.route-done', {}, h('span.badge.ok', {}, '✓ ', t(UI.done))) : null,
+      hasPlacement
+        ? h(
+            'div.route-actions',
+            {},
+            h('p.small.muted', {}, t(UI.checkLevelHint)),
+            h('a.btn.ghost', { href: href({ name: 'placement', id: b.id }) }, icon('check'), t(UI.checkLevel)),
+          )
+        : null,
     ),
   );
 }
@@ -101,7 +101,7 @@ function placeholderItem(e: RouteEntry): HTMLElement {
 
 export function homePage(): Page {
   setTitle();
-  setDescription(t(bi('Интерактивный учебник и тренажёр входа в DevOps: настоящий Linux в браузере, облако во вкладке, квизы и экзамены. Бесплатно, на русском и английском.', 'An interactive textbook and trainer for getting into DevOps: real Linux in the browser, a cloud in a tab, quizzes and exams. Free, in Russian and English.')));
+  setDescription(t(bi('damn.academy — платформа интерактивных профессий и курсов. Профессия DevOps-инженера: настоящие машины в браузере, практика от первой команды до Kubernetes. На русском и английском, бесплатно.', 'damn.academy is a platform of interactive professions and courses. The DevOps engineer profession: real machines in the browser, practice from your first command to Kubernetes. In Russian and English, for free.')));
   const root = h('div.home');
   const draw = () => {
     clear(root);
@@ -111,22 +111,31 @@ export function homePage(): Page {
       root,
       h(
         'section.hero',
-      {},
-      h('p.kicker', {}, t(bi('Интерактивный учебник', 'An interactive textbook'))),
-      h('h1', {}, t(UI.course)),
-      h('p.lede', {}, t(UI.tagline)),
-      h(
-        'ul.pillars',
         {},
-        h('li', {}, h('strong', {}, t(bi('Учебник.', 'Textbook.'))), ' ', t(bi('Связная теория: термин появляется только после того, как его ввели.', 'Coherent theory: a term appears only after it has been introduced.'))),
-        h('li', {}, h('strong', {}, t(bi('Процессы.', 'Processes.'))), ' ', t(bi('Схемы, которые вы ведёте сами: шаги, ручки, «сломайте».', 'Diagrams you drive yourself: steps, knobs, “break it”.'))),
-        h('li', {}, h('strong', {}, t(bi('Документация.', 'Documentation.'))), ' ', t(bi('От «это отсюда» до экзамена, где открыта только она.', 'From “this is from” to an exam where it is all you have.'))),
+        h('p.kicker', {}, t(bi('Профессия', 'A profession'))),
+        h('h1', {}, t(bi('DevOps-инженер', 'DevOps engineer'))),
+        h(
+          'p.lede',
+          {},
+          t(bi('Здравствуйте! Это damn.academy — платформа, где профессии и курсы проходятся с практикой на настоящих машинах, прямо в браузере. Цель этой профессии — научить вас выпускать изменения в работающие сервисы быстро и без сбоев: от первой команды в терминале до Kubernetes в облаке. За время обучения вы научитесь работать в командной строке Linux, собирать и выкладывать приложения, настраивать сети и контейнеры, запускать Kubernetes и замечать аварии раньше пользователей.', 'Welcome! This is damn.academy, a platform where professions and courses are taken with practice on real machines, right in the browser. The goal of this profession is to teach you to ship changes to running services quickly and without failures: from your first command in the terminal to Kubernetes in the cloud. Along the way you will learn the Linux command line, building and shipping applications, networks and containers, running Kubernetes, and noticing incidents before your users do.')),
+        ),
+        h(
+          'ul.pillars',
+          {},
+          h('li', {}, h('strong', {}, t(bi('Учебник.', 'Textbook.'))), ' ', t(bi('Связная теория: термин появляется только после того, как его ввели.', 'Coherent theory: a term appears only after it has been introduced.'))),
+          h('li', {}, h('strong', {}, t(bi('Процессы.', 'Processes.'))), ' ', t(bi('Схемы, которые вы ведёте сами: шаги, ручки, «сломайте».', 'Diagrams you drive yourself: steps, knobs, “break it”.'))),
+          h('li', {}, h('strong', {}, t(bi('Документация.', 'Documentation.'))), ' ', t(bi('От «это отсюда» до экзамена, где открыта только она.', 'From “this is from” to an exam where it is all you have.'))),
+        ),
+        h(
+          'p.how',
+          {},
+          t(bi('Обучение идёт на трёх уровнях — «Новичок», «Средний» и «Опытный»: выберите свой в каждом блоке. Сначала вы работаете в собранных окружениях по готовым рецептам, со временем — всё чаще самостоятельно, по документации. Виртуальный наставник отвечает прямо на страницах курса, на вашем собственном ключе. Для экспериментов поднимите локальное окружение у себя на машине или, что предпочтительнее, арендуйте виртуальные машины в облаке.', 'The course runs at three levels — Beginner, Intermediate and Experienced: pick yours in each block. At first you work in prepared environments following ready recipes; over time, more and more on your own, reading the documentation. A virtual mentor answers right on the course pages, using your own API key. For experiments, set up a local environment on your machine or, preferably, rent virtual machines in the cloud.')),
+        ),
+        paceControl(),
+        anyProgress ? null : h('p.small.muted', {}, t(bi('Регистрация не нужна: прогресс сохраняется в этом браузере после каждого действия.', 'No sign-up: progress is saved in this browser after every action.'))),
       ),
-      paceControl(),
-      anyProgress ? null : h('p.small.muted', {}, t(bi('Регистрация не нужна: прогресс сохраняется в этом браузере после каждого действия.', 'No sign-up: progress is saved in this browser after every action.'))),
-    ),
       h('h2.route-title', {}, t(UI.map)),
-      h('ol.route', {}, ...items.map((it) => (it.kind === 'block' ? blockItem(it.block, it.entry, draw) : placeholderItem(it.entry)))),
+      h('ol.route', {}, ...items.map((it) => (it.kind === 'block' ? blockItem(it.block, it.entry) : placeholderItem(it.entry)))),
     );
   };
   draw();
