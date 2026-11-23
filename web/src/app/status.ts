@@ -21,6 +21,17 @@ export function setTitle(...parts: string[]): void {
   document.title = [...parts.filter(Boolean), t(UI.course)].join(' · ');
 }
 
+/** Keep <meta name="description"> in sync with the open page for crawlers that render JS. */
+export function setDescription(text: string): void {
+  let el = document.querySelector<HTMLMetaElement>('head meta[name="description"]');
+  if (!el) {
+    el = document.createElement('meta');
+    el.name = 'description';
+    document.head.append(el);
+  }
+  el.content = text;
+}
+
 /** A passed placement covers the block except the reported gaps. */
 export function placementDisposition(l: Lesson): 'covered' | 'required' | 'optional' | undefined {
   const level = chosenLevel(l.block);

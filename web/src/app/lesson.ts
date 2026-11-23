@@ -8,7 +8,7 @@ import { registry } from '../core/registry';
 import { href } from '../core/router';
 import { store } from '../core/store';
 import type { Level, Mounted, Section } from '../core/types';
-import { conceptLink, emptyState, levelBadge, levelFor, setTitle, sourcesBlock, type Page } from './common';
+import { conceptLink, emptyState, levelBadge, levelFor, setDescription, setTitle, sourcesBlock, type Page } from './common';
 import { renderSection } from './sections';
 
 /** Experienced learners start with the challenge: the first practice section moves up after the hook. */
@@ -32,6 +32,7 @@ export function lessonPage(id: string, focusSection?: string): Page {
   const index = block ? block.lessons.indexOf(lesson.id) : 0;
   const total = block ? block.lessons.length : 1;
   setTitle(t(lesson.title), block ? t(block.title) : '');
+  setDescription(t(lesson.summary));
   store.record({ kind: 'lesson.open', lesson: lesson.id });
 
   const sections = orderSections(lesson.sections, level);

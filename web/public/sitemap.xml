@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The course is a single-page app with hash routing, so https://damn.academy/
+     is the only crawlable URL today; lesson routes live behind '#/' fragments
+     that crawlers do not send. Serving lesson text without JavaScript
+     (prerendering or path-based routes) is tracked separately. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://damn.academy/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
