@@ -46,7 +46,7 @@ export const ROUTE: RouteEntry[] = [
     order: 10,
     folder: 'methodology',
     segment: '1',
-    title: bi('Методология', 'Methodology'),
+    title: bi('Методология DevOps', 'DevOps methodology'),
     summary: bi(
       'Зачем бизнесу DevOps, поток работы от идеи до прода, Kanban, CI и CD как идея, инциденты и разбор без поиска виноватых.',
       'Why a business needs DevOps, the flow of work from idea to production, Kanban, CI and CD as ideas, incidents and blameless reviews.',
@@ -120,8 +120,8 @@ export const ROUTE: RouteEntry[] = [
     segment: '4',
     title: bi('Контейнеры', 'Containers'),
     summary: bi(
-      'Контейнер своими руками, образ и слои, Dockerfile, сети и тома, шесть границ контейнера, рантайм узла и настоящий Docker на ВМ.',
-      'A container by hand, images and layers, Dockerfile, networks and volumes, the six boundaries of a container, the node runtime and real Docker on a VM.',
+      'Вы соберёте контейнер своими руками из механизмов ядра, разберётесь, из каких слоёв состоит образ и как его собрать по Dockerfile, настроите сети и тома, узнаете, чем контейнер отделён от машины и как по этим признакам искать причину поломки, посмотрите, кто запускает контейнеры на узле после команды docker run, и запустите настоящий Docker на виртуальной машине.',
+      'You build a container by hand from the kernel’s mechanisms, see what layers an image consists of and how to build it from a Dockerfile, set up networks and volumes, learn how a container is separated from the machine and how to find the cause of a failure by these signs, see which programs start containers on the node after the docker run command, and run real Docker on a virtual machine.',
     ),
     checklistStep: '04',
     levels: {

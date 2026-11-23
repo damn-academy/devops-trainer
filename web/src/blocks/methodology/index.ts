@@ -223,8 +223,8 @@ const block: Block = {
   title: entry.title,
   // The route entry's summary speaks jargon (прод, CI, CD) to a beginner who has just left Orientation; the block says it in words.
   summary: bi(
-    'Зачем бизнесу DevOps, как работа идёт от идеи до рабочего сайта, как доска задач помогает ей не застревать, зачем сборку, проверку и выкладку изменений поручают машине и как команда разбирает сбои, не ища виноватых.',
-    'Why a business needs DevOps, how work goes from an idea to the working site, how a task board keeps it from getting stuck, why the build, the checks and the deployment of changes are handed to a machine, and how a team reviews outages without looking for someone to blame.',
+    'Зачем бизнесу DevOps, как работа идёт от идеи до работающего сервиса, как доска задач помогает ей не застревать, зачем сборку, проверку и выкладку изменений поручают машине и как команда разбирает сбои, не ища виноватых.',
+    'Why a business needs DevOps, how work goes from an idea to a working service, how a task board keeps it from getting stuck, why the build, the checks and the deployment of changes are handed to a machine, and how a team reviews outages without looking for someone to blame.',
   ),
   checklistStep: entry.checklistStep,
   // The route entry describes the levels in fragments; the block page shows them as sentences.
