@@ -3,7 +3,7 @@ import { expect, it, vi } from 'vitest';
 import type { SimMachine } from '../engine/terminal/shell';
 const terminals = vi.hoisted(() => [] as { machine: SimMachine; onCommand(): void }[]);
 vi.mock('../engine/terminal/widget', () => ({ mountTerminal: async (_: HTMLElement, options: typeof terminals[number]) => {
-  terminals.push(options); return { dispose() {}, type() {}, reset() {} };
+  terminals.push(options); return { dispose() {}, type() {}, reset() {}, focus() {} };
 } }));
 import { mountLab } from './terminal-section';
 import { MemoryBackend, store } from '../core/store';
