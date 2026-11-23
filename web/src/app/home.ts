@@ -1,9 +1,10 @@
-// Home: the course route map (00 §2.1) — blocks in order, each with its three
-// levels and a "show what you know" entry. Progress is a map of skills, not
-// points.
+// Home is the platform catalog: a short "what is this site" and tiles of
+// professions and courses — the two structural units. A profession page
+// carries the program of blocks (it used to be the home page).
 
 import { clear, h, icon, put } from '../core/dom';
 import { bi, count, t, UI } from '../core/i18n';
+import { productById, visibleProducts, productRoute, type Product } from '../core/products';
 import { registry } from '../core/registry';
 import { ROUTE, type RouteEntry } from '../core/route';
 import { href, navigate } from '../core/router';
@@ -99,9 +100,13 @@ function placeholderItem(e: RouteEntry): HTMLElement {
   );
 }
 
-export function homePage(): Page {
-  setTitle();
-  setDescription(t(bi('damn.academy — платформа интерактивных профессий и курсов. Профессия DevOps-инженера: настоящие машины в браузере, практика от первой команды до Kubernetes. На русском и английском, бесплатно.', 'damn.academy is a platform of interactive professions and courses. The DevOps engineer profession: real machines in the browser, practice from your first command to Kubernetes. In Russian and English, for free.')));
+export function professionPage(id: string): Page {
+  const product = productById(id);
+  if (!product || product.kind !== 'profession') {
+    return { el: h('div.profession', {}, h('p.muted', {}, t(bi('Такой профессии пока нет.', 'There is no such profession yet.')))) };
+  }
+  setTitle(t(product.title));
+  setDescription(t(product.summary));
   const root = h('div.home');
   const draw = () => {
     clear(root);
@@ -113,7 +118,7 @@ export function homePage(): Page {
         'section.hero',
         {},
         h('p.kicker', {}, t(bi('Профессия', 'A profession'))),
-        h('h1', {}, t(bi('DevOps-инженер', 'DevOps engineer'))),
+        h('h1', {}, t(product.title)),
         h(
           'p.lede',
           {},
@@ -163,4 +168,55 @@ function paceControl(): HTMLElement {
   });
   draw();
   return h('div.pace', {}, h('label', {}, t(bi('Сколько часов в неделю вы готовы заниматься? ', 'How many hours a week can you study? ')), input), output);
+}
+
+function productTile(p: Product): HTMLElement {
+  return h(
+    'li.catalog-item',
+    { 'data-kind': p.kind },
+    h(
+      'a.catalog-tile',
+      { href: href(productRoute(p)) },
+      h('span.catalog-kind', {}, t(p.kind === 'profession' ? bi('Профессия', 'Profession') : bi('Курс', 'Course'))),
+      h('span.catalog-title', {}, t(p.title)),
+      h('span.catalog-summary', {}, t(p.summary)),
+    ),
+  );
+}
+
+// Home: the platform catalog. A short explanation of what the site is, then
+// professions and courses as tiles — each opens its own page.
+export function homePage(): Page {
+  setTitle();
+  const professions = visibleProducts('profession');
+  const courses = visibleProducts('course');
+  return {
+    el: h(
+      'div.home.catalog',
+      {},
+      h(
+        'section.hero',
+        {},
+        h('p.kicker', {}, t(bi('Учебная платформа', 'A learning platform'))),
+        h('h1', {}, 'damn.academy'),
+        h(
+          'p.lede',
+          {},
+          t(bi('Интерактивные профессии и курсы с практикой на настоящих машинах: Linux прямо в браузере, облачные стенды, виртуальный наставник. Регистрация не нужна — прогресс хранится в вашем браузере.', 'Interactive professions and courses with practice on real machines: Linux right in the browser, cloud stands, a virtual mentor. No sign-up — progress stays in your browser.')),
+        ),
+      ),
+      h(
+        'section.catalog-section',
+        {},
+        h('h2', {}, t(bi('Профессии', 'Professions'))),
+        h('ul.catalog-grid', {}, ...professions.map(productTile)),
+      ),
+      h(
+        'section.catalog-section',
+        {},
+        h('h2', {}, t(bi('Курсы', 'Courses'))),
+        courses.length ? h('ul.catalog-grid', {}, ...courses.map(productTile)) : h('p.small.muted', {}, t(bi('Курсы появятся чуть позже.', 'Courses are coming soon.'))),
+      ),
+    ),
+  };
 }

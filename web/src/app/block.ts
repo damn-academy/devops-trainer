@@ -15,6 +15,7 @@ import { chosenLevel, conceptLink, emptyState, infoTip, setDescription, setTitle
 import { examsOfBlock } from './exam-page';
 import { lessonStatus, placementDisposition, remainingShare } from './status';
 import { mountLab } from './terminal-section';
+import { crumbProfession } from './common';
 
 function levelChooser(b: Block, onChange: () => void): HTMLElement {
   const current = chosenLevel(b.id);
@@ -62,7 +63,7 @@ export function blockPage(id: string): Page {
       h(
         'header.block-head',
         {},
-        h('nav.crumbs', {}, h('a', { href: href({ name: 'home' }) }, t(UI.map))),
+        h('nav.crumbs', {}, crumbProfession()),
         h('h1', {}, t(b.title)),
         h('p.lede', {}, t(b.summary)),
       ),

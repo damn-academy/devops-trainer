@@ -21,6 +21,7 @@ import { mountQuiz } from '../engine/quiz/render';
 import { conceptLink, emptyState, prose, setTitle, type Page } from './common';
 import { mountLab } from './terminal-section';
 import './exam.css';
+import { crumbProfession } from './common';
 
 const P = {
   lede: bi(
@@ -80,7 +81,7 @@ export function placementPage(id: string): Page {
     clear(root);
     const now = new Date();
     put(root, 
-      h('nav.crumbs', {}, h('a', { href: href({ name: 'home' }) }, t(UI.map)), ' › ', h('a', { href: href({ name: 'block', id: b.id }) }, t(b.title))),
+      h('nav.crumbs', {}, crumbProfession(), ' › ', h('a', { href: href({ name: 'block', id: b.id }) }, t(b.title))),
       h('h1', {}, t(UI.checkLevel)),
       h('p.lede', {}, t(P.lede)),
       h('p.small.muted', {}, t(P.rules)),

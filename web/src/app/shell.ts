@@ -8,6 +8,7 @@ import { bi, lang, onLangChange, setLang, t, UI } from '../core/i18n';
 import { loadRegistry, registry } from '../core/registry';
 import { href, onRoute, type Route } from '../core/router';
 import { store } from '../core/store';
+import { visibleProducts } from '../core/products';
 import type { Page } from './common';
 import { helpButton } from './help';
 import { homePage } from './home';
@@ -26,6 +27,7 @@ async function loadContent(): Promise<ContentPages> {
 function topBar(current: Route): HTMLElement {
   const nav = (r: Route, label: string, ic: Parameters<typeof icon>[0]) =>
     h('a.nav-link', { href: href(r), 'aria-current': current.name === r.name ? 'page' : undefined }, icon(ic), h('span', {}, label));
+  const profession = visibleProducts('profession')[0];
   const themeBtn = h('button.icon-btn', { type: 'button', 'aria-label': t(UI.theme), title: t(UI.theme) }, icon(shownTheme() === 'dark' ? 'moon' : 'sun'));
   themeBtn.addEventListener('click', () => {
     const next = getTheme() === 'auto' ? (shownTheme() === 'dark' ? 'light' : 'dark') : getTheme() === 'dark' ? 'light' : 'dark';
@@ -41,7 +43,15 @@ function topBar(current: Route): HTMLElement {
     'header.topbar',
     {},
     h('a.brand', { href: href({ name: 'home' }) }, h('span.brand-mark', { 'aria-hidden': 'true' }, icon('term')), h('span', {}, t(UI.course))),
-    h('nav.topnav', {}, nav({ name: 'home' }, t(UI.map), 'map'), nav({ name: 'review' }, t(UI.review), 'repeat'), nav({ name: 'settings' }, t(UI.settings), 'gear'), h('a.nav-link.feedback-menu', { href: '#/messages' }, icon('ask'), h('span', {}, t(bi('Мои сообщения', 'My messages'))))),
+    h(
+      'nav.topnav',
+      {},
+      profession ? nav({ name: 'profession', id: profession.id }, t(profession.title), 'map') : null,
+      nav({ name: 'review' }, t(UI.review), 'repeat'),
+      nav({ name: 'about' }, t(bi('Справка', 'Help')), 'book'),
+      nav({ name: 'settings' }, t(UI.settings), 'gear'),
+      h('a.nav-link.feedback-menu', { href: '#/messages' }, icon('ask'), h('span', {}, t(bi('Мои сообщения', 'My messages')))),
+    ),
     h('div.top-tools', {}, helpButton(), langBtn, themeBtn),
   );
 }

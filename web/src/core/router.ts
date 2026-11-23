@@ -1,5 +1,6 @@
 // Hash routes, so the static build works from any folder and offline.
-//   #/                     home: the course route map
+//   #/                     home: the platform catalog (professions and courses)
+//   #/profession/<id>      a profession: goal, skills, the program of blocks
 //   #/block/<id>           a block: levels, placement entry, lessons
 //   #/block/<id>/placement the "show what you know" check
 //   #/lesson/<id>          a lesson (optionally #/lesson/<id>/<section>)
@@ -13,6 +14,7 @@
 
 export type Route =
   | { name: 'home' }
+  | { name: 'profession'; id: string }
   | { name: 'block'; id: string }
   | { name: 'placement'; id: string }
   | { name: 'lesson'; id: string; section?: string }
@@ -39,6 +41,9 @@ export function parseRoute(hash: string): Route {
   });
   const [head, id, extra] = parts;
   switch (head) {
+    case 'profession':
+      if (id && parts.length === 2) return { name: 'profession', id };
+      break;
     case 'block':
       if (id && extra === 'placement' && parts.length === 3) return { name: 'placement', id };
       if (id && parts.length === 2) return { name: 'block', id };
@@ -71,6 +76,8 @@ export function href(r: Route): string {
   switch (r.name) {
     case 'home':
       return '#/';
+    case 'profession':
+      return `#/profession/${e(r.id)}`;
     case 'block':
       return `#/block/${e(r.id)}`;
     case 'placement':

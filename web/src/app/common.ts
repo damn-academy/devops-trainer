@@ -2,6 +2,7 @@
 
 import { clear, h, icon } from '../core/dom';
 import { bi, t, UI, type Bi } from '../core/i18n';
+import { defaultProfession } from '../core/products';
 import { renderMd } from '../core/markdown';
 import { registry } from '../core/registry';
 import { href } from '../core/router';
@@ -149,4 +150,13 @@ export function emptyState(title: Bi, body?: Bi, action?: { label: Bi; href: str
 export function replace(el: HTMLElement, ...children: Node[]): void {
   clear(el);
   el.append(...children);
+}
+
+// Breadcrumb back to the profession a block or lesson belongs to; falls back
+// to the platform catalog when no profession is published yet.
+export function crumbProfession(): HTMLElement {
+  const prof = defaultProfession();
+  return prof
+    ? h('a', { href: href({ name: 'profession', id: prof.id }) }, t(prof.title))
+    : h('a', { href: href({ name: 'home' }) }, t(bi('Начало', 'Start')));
 }
