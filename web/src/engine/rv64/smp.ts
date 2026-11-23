@@ -39,23 +39,43 @@ interface AtomicExports {
   swap(address: number, value: bigint): bigint;
   cas(address: number, expected: bigint, value: bigint): bigint;
 }
-export interface Reservation { address: number; size: 4 | 8; epoch: bigint }
+export interface Reservation { address: number; size: 4 | 8; epoch: number }
 export type Amo = 'swap' | 'add' | 'xor' | 'and' | 'or' | 'min' | 'max' | 'minu' | 'maxu';
 
-/** Conservative global reservation epoch and lock. ABA writes invalidate LR.
- * False SC failures from unrelated writes are permitted. No unlocked stores,
- * including JIT stores and DMA, may bypass this protocol. Ordinary reads use
- * atomic wasm loads; they do not require the writer lock.
- * Layout: lock at 0, epoch at 8, guest data starts at 64.
- */
+// Reservation sets in 128-byte granules, one epoch counter per granule. Real
+// hardware tracks a reservation set (typically a cache line) per hart, not a
+// global flag: a store to an unrelated granule must not kill another hart's
+// SC. Every hart must share one table: browser workers pass it explicitly
+// (each worker is its own realm, so a module-level map is NOT shared there);
+// the WeakMap fallback only covers several harts in one realm, like the unit
+// tests. Int32 wraparound needs ~4G writes to one granule between LR and SC,
+// which cannot happen inside one scheduler quantum.
+// No unlocked stores, including JIT stores and DMA, may bypass this protocol;
+// ordinary reads use atomic wasm loads and do not require the writer lock.
+// Layout: lock at 0, legacy global epoch at 8 (kept for metrics, no longer
+// gates SC), guest data starts at 64.
+export const RESERVATION_GRANULE = 128;
+const fallbackGranuleTables = new WeakMap<WebAssembly.Memory, Int32Array>();
 export class SharedHartMemory {
   private reservation?: Reservation;
   private words: Int32Array;
   private wasm: AtomicExports;
-  constructor(readonly memory: WebAssembly.Memory, module: WebAssembly.Module, private generations?: Int32Array) {
+  private granules: Int32Array;
+  constructor(readonly memory: WebAssembly.Memory, module: WebAssembly.Module, private generations?: Int32Array, granules?: Int32Array) {
     if (!(memory.buffer instanceof SharedArrayBuffer)) throw new Error('SMP requires shared wasm memory');
-    this.words = new Int32Array(memory.buffer);
+    const buffer: SharedArrayBuffer = memory.buffer;
+    this.words = new Int32Array(buffer);
     this.wasm = new WebAssembly.Instance(module, { env: { memory } }).exports as unknown as AtomicExports;
+    if (granules) {
+      this.granules = granules;
+    } else {
+      let table = fallbackGranuleTables.get(memory);
+      if (!table) {
+        table = new Int32Array(new SharedArrayBuffer(Math.ceil(buffer.byteLength / 128) * 4));
+        fallbackGranuleTables.set(memory, table);
+      }
+      this.granules = table;
+    }
   }
   private check(address: number, size: number) {
     if (!Number.isInteger(address) || address < 64 || address % size || address + size > this.memory.buffer.byteLength) throw new RangeError('unaligned/out-of-bounds shared RAM');
@@ -75,6 +95,7 @@ export class SharedHartMemory {
       this.wasm.store(aligned, (this.wasm.load(aligned) & ~mask) | ((value & bits) << shift));
     }
     this.wasm.add(8, 1n);
+    Atomics.add(this.granules, Math.floor(address / 128), 1);
     if (this.generations) Atomics.add(this.generations, Math.floor((address - 64) / 4096), 1);
   }
   load(address: number, size: 1 | 2 | 4 | 8): bigint { this.check(address, size); return this.read(address, size); }
@@ -91,7 +112,7 @@ export class SharedHartMemory {
   lr(address: number, size: 4 | 8): bigint {
     this.check(address, size);
     return this.locked(() => {
-      this.reservation = { address, size, epoch: this.wasm.load(8) };
+      this.reservation = { address, size, epoch: Atomics.load(this.granules, Math.floor(address / 128)) };
       return this.read(address, size);
     });
   }
@@ -100,7 +121,7 @@ export class SharedHartMemory {
     this.reservation = undefined;
     this.check(address, size);
     return this.locked(() => {
-      if (!reservation || reservation.address !== address || reservation.size !== size || reservation.epoch !== this.wasm.load(8)) return false;
+      if (!reservation || reservation.address !== address || reservation.size !== size || reservation.epoch !== Atomics.load(this.granules, Math.floor(address / 128))) return false;
       this.write(address, size, value); return true;
     });
   }
@@ -110,6 +131,7 @@ export class SharedHartMemory {
       if (size === 8 && (op === 'add' || op === 'swap')) {
         const old = this.wasm[op](address, value);
         this.wasm.add(8, 1n);
+        Atomics.add(this.granules, Math.floor(address / 128), 1);
         if (this.generations) Atomics.add(this.generations, Math.floor((address - 64) / 4096), 1);
         return old;
       }

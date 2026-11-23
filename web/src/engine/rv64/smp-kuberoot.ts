@@ -1,4 +1,4 @@
-import { atomicModule, HartMailboxes } from './smp';
+import { atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
 import { createRV64Network } from './network';
 import { fetchSource } from '../labhost/mirror';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown; rv64LatestMetrics?: unknown };
@@ -18,6 +18,7 @@ try {
     const module = atomicModule(pages), mail = new HartMailboxes(harts).words.buffer;
     const control = new SharedArrayBuffer(harts * 64), ctl = new Int32Array(control);
     const generations = new SharedArrayBuffer(bytes / 4096 * 4), epoch = performance.timeOrigin + performance.now();
+    const granules = new SharedArrayBuffer(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
     const workers: Worker[] = [], start = performance.now(), events: { ms: number; consoleEnd: number }[] = [], metrics: unknown[] = [];
     let text = '', error: string | undefined;
@@ -40,7 +41,7 @@ try {
               if (text.includes('\nRV64_PROBE_DONE\n')) { clearTimeout(timeout); resolve(); }
             }
           };
-          w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, epoch, httpDisk,
+          w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk,
             kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
             cmdline: 'earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000) });
         }

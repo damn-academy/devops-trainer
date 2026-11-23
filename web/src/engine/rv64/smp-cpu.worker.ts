@@ -5,7 +5,7 @@ import { JitRuntime } from './jit';
 import { SharedHartMemory, HartMailboxes, type Amo, type FenceTicket } from './smp';
 interface Init {
   hart: number; harts: number; bytes: number; memory: WebAssembly.Memory; module: WebAssembly.Module;
-  generations: SharedArrayBuffer; epoch: number;
+  generations: SharedArrayBuffer; granules: SharedArrayBuffer; epoch: number;
   mail: SharedArrayBuffer; control: SharedArrayBuffer; kernel?: Uint8Array; initrd?: Uint8Array;
   httpDisk?: HTTPDisk;
   program?: Uint8Array; cmdline?: string;
@@ -17,7 +17,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
   self.onmessage = null;
   try {
     const words = new Int32Array(d.control), wide = new BigUint64Array(d.control);
-    const bus = new HartMailboxes(d.harts, d.mail), ram = new SharedHartMemory(d.memory, d.module, new Int32Array(d.generations));
+    const bus = new HartMailboxes(d.harts, d.mail), ram = new SharedHartMemory(d.memory, d.module, new Int32Array(d.generations), new Int32Array(d.granules));
     const base = d.hart * 16;
     const url = new URL('/rv64/rv64_core.js', self.location.origin).href;
     const mod = await import(/* @vite-ignore */ url); const wasm = await mod.default();

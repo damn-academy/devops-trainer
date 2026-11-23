@@ -6,7 +6,7 @@ self.onmessage = async ({ data: d }) => {
   try {
     const mod = await import(/* @vite-ignore */ new URL('/rv64/rv64_core.js', self.location.origin).href), wasm = await mod.default();
     const generations = new Int32Array(d.generations);
-    const ram = new SharedHartMemory(d.memory, d.module, generations);
+    const ram = new SharedHartMemory(d.memory, d.module, generations, new Int32Array(d.granules));
     Object.assign(globalThis, {
       rv64SharedGeneration: (page: number) => Atomics.load(generations, page) >>> 0,
       rv64SharedAccess: (op: number, off: number, size: 1 | 2 | 4 | 8, value: bigint) => {

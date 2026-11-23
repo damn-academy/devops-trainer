@@ -1,6 +1,6 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it } from 'vitest';
-import { atomicModule, SharedHartMemory } from '../src/engine/rv64/smp';
+import { atomicModule, SharedHartMemory, RESERVATION_GRANULE } from '../src/engine/rv64/smp';
 function machine() {
   const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
   const module = atomicModule(1);
@@ -39,19 +39,20 @@ describe('R3 shared wasm RAM substrate (not integrated CPU)', () => {
 for (const harts of [2, 4]) it(`${harts} actual Workers contend on one wasm memory without lost AMOs`, async () => {
   const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
   const module = atomicModule(1), barrier = new SharedArrayBuffer(4);
+  const granules = new SharedArrayBuffer(Math.ceil(65536 / RESERVATION_GRANULE) * 4);
   const workers: Worker[] = [];
   try {
     await Promise.all(Array.from({ length: harts }, () => new Promise<void>((resolve, reject) => {
       const worker = new Worker(`
         const { parentPort, workerData } = require('node:worker_threads');
         const Hart = (${SharedHartMemory.toString()});
-        const h = new Hart(workerData.memory, workerData.module);
+        const h = new Hart(workerData.memory, workerData.module, undefined, new Int32Array(workerData.granules));
         const gate = new Int32Array(workerData.barrier);
         Atomics.add(gate, 0, 1); Atomics.notify(gate, 0);
         for (;;) { const n = Atomics.load(gate, 0); if (n === workerData.harts) break; Atomics.wait(gate, 0, n, 100); }
         for (let i = 0; i < 10000; i++) h.amo(64, 8, 'add', 1n);
         parentPort.postMessage('done');
-      `, { eval: true, workerData: { memory, module, barrier, harts } });
+      `, { eval: true, workerData: { memory, module, barrier, granules, harts } });
       workers.push(worker); worker.on('error', reject);
       worker.on('message', () => resolve());
       worker.on('exit', code => { if (code) reject(new Error(`worker exit ${code}`)); });

@@ -1,8 +1,8 @@
 // R3 substrate gate only: this Worker does not execute a RISC-V Cpu yet.
 import { SharedHartMemory } from './smp';
-self.onmessage = ({ data }: MessageEvent<{ memory: WebAssembly.Memory; module: WebAssembly.Module; barrier: SharedArrayBuffer; harts: number }>) => {
+self.onmessage = ({ data }: MessageEvent<{ memory: WebAssembly.Memory; module: WebAssembly.Module; barrier: SharedArrayBuffer; granules: SharedArrayBuffer; harts: number }>) => {
   try {
-    const ram = new SharedHartMemory(data.memory, data.module);
+    const ram = new SharedHartMemory(data.memory, data.module, undefined, new Int32Array(data.granules));
     const gate = new Int32Array(data.barrier);
     Atomics.add(gate, 0, 1); Atomics.notify(gate, 0);
     for (;;) { const n = Atomics.load(gate, 0); if (n === data.harts) break; Atomics.wait(gate, 0, n, 100); }

@@ -1,4 +1,4 @@
-import { atomicModule, HartMailboxes } from './smp';
+import { atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown };
 const output = document.querySelector('#console')!;
 const samples: unknown[] = [];
@@ -11,6 +11,7 @@ try {
     const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
     const module = atomicModule(pages), mail = new HartMailboxes(harts).words.buffer;
     const generations = new SharedArrayBuffer(bytes / 4096 * 4), epoch = performance.timeOrigin + performance.now();
+    const granules = new SharedArrayBuffer(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
     const control = new SharedArrayBuffer(harts * 64), ctl = new Int32Array(control);
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
     const workers: Worker[] = [], start = performance.now(); let text = '', sent = false;
@@ -37,7 +38,7 @@ try {
               }
             }
           };
-          w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, epoch, kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd });
+          w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd });
         }
       });
     } finally { Atomics.store(ctl, 15, 1); workers.forEach(w => w.terminate()); }

@@ -1,4 +1,4 @@
-import { atomicModule, HartMailboxes } from './smp';
+import { atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown };
 const output = document.querySelector('#console')!;
 const HARTS = 2;
@@ -11,6 +11,7 @@ try {
   const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
   const module = atomicModule(pages), mail = new HartMailboxes(HARTS).words.buffer;
   const generations = new SharedArrayBuffer(bytes / 4096 * 4), epoch = performance.timeOrigin + performance.now();
+  const granules = new SharedArrayBuffer(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
   const control = new SharedArrayBuffer(HARTS * 64), ctl = new Int32Array(control);
   for (let h = 0; h < HARTS; h++) ctl[h * 16] = 1;
   const snap = new SharedArrayBuffer((2 + HARTS) * 4), sv = new Int32Array(snap);
@@ -31,7 +32,7 @@ try {
       if (data.type === 'resumed' && data.hart !== undefined) resumed.add(data.hart);
       if (data.type === 'snapshot' && data.hart !== undefined && data.blob) snapshots.set(data.hart, { blob: data.blob, deviceBlob: data.deviceBlob });
     };
-    w.postMessage({ hart, harts: HARTS, bytes, memory, module, mail, control, generations, epoch, snap,
+    w.postMessage({ hart, harts: HARTS, bytes, memory, module, mail, control, generations, granules, epoch, snap,
       kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
       cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init rv64.epoch=' + Math.floor(Date.now() / 1000) });
   }
