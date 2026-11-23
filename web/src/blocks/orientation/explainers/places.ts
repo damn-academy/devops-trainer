@@ -28,8 +28,8 @@ export const placesModel = defineModel<P>({
     'The same build of the shop, version 1.5.0, goes to the developer’s laptop, the test stand and production. Next to it in each place lies its own settings file, and only that file tells the program where to send payments.',
   ),
   intro: bi(
-    'Сейчас на схеме только сборка 1.5.0. Нажмите «Начать с первого шага», и сборка отправится в путь от ноутбука разработчика к покупателям.',
-    'Now the diagram shows only build 1.5.0. Press “Start from the first step”, and the build sets off from the developer’s laptop towards the customers.',
+    'Сейчас на схеме только сборка 1.5.0. Нажмите «Шаг вперёд», и сборка отправится в путь от ноутбука разработчика к покупателям.',
+    'Now the diagram shows only build 1.5.0. Press “Step forward”, and the build sets off from the developer’s laptop towards the customers.',
   ),
   legend: [
     { mark: 'active', text: bi('то, что работает сейчас', 'what works now') },

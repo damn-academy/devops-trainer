@@ -82,7 +82,7 @@ export function blockPage(id: string): Page {
       h(
         'section',
         {},
-        h('h2', {}, t(UI.lessons), ' ', h('span.muted', {}, count(lessons.length, ['урок', 'урока', 'уроков'], ['lesson', 'lessons']))),
+        h('h2', {}, t(UI.lessons)),
         h(
           'ol.lesson-list',
           {},

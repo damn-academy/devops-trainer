@@ -26,8 +26,8 @@ export const togetherModel = defineModel<P>({
     'Anna and Boris change prices in the tea shop’s menu. Each edits a copy; a collaboration program compares both with the shared one, joins the edits and records who changed what. If two people changed the same line differently, it asks a person.',
   ),
   intro: bi(
-    'Сейчас на схеме только общая копия меню. Нажмите «Начать с первого шага», и Анна с Борисом возьмут себе по копии.',
-    'Now the diagram shows only the shared copy of the menu. Press “Start from the first step”, and Anna and Boris each take a copy.',
+    'Сейчас на схеме только общая копия меню. Нажмите «Шаг вперёд», и Анна с Борисом возьмут себе по копии.',
+    'Now the diagram shows only the shared copy of the menu. Press “Step forward”, and Anna and Boris each take a copy.',
   ),
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },

@@ -51,8 +51,8 @@ export const runModel = defineModel<P>({
     'You double-click the icon of the “Notes” program. The program lies on the disk, so it is first copied into memory, then the processor carries out its instructions and a window appears. The letter you type in that window lives only in memory until you press “Save”.',
   ),
   intro: bi(
-    'Схема соберётся у вас на глазах, а сейчас на ней только вы и диск, на котором лежит программа. Нажмите «Начать с первого шага», и вы увидите, что происходит после двойного щелчка по значку.',
-    'The diagram will fill in before your eyes, and now it shows only you and the disk the program lies on. Press “Start from the first step”, and you will see what happens after a double click on the icon.',
+    'Схема соберётся у вас на глазах, а сейчас на ней только вы и диск, на котором лежит программа. Нажмите «Шаг вперёд», и вы увидите, что происходит после двойного щелчка по значку.',
+    'The diagram will fill in before your eyes, and now it shows only you and the disk the program lies on. Press “Step forward”, and you will see what happens after a double click on the icon.',
   ),
   legend: [
     { mark: 'active', text: bi('часть компьютера, которая работает сейчас', 'the part working now') },
