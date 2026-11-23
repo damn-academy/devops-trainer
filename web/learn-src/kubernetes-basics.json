@@ -1,0 +1,39 @@
+{
+  "slug": "kubernetes-basics",
+  "courseLinks": [
+    { "href": "/#/block/k8s-1", "ru": "Блок «Kubernetes, этап 1» — кластер в браузере", "en": "Kubernetes stage 1 — a cluster in the browser" },
+    { "href": "/#/block/k8s-2", "ru": "Блок «Kubernetes, этап 2» — настоящий узел", "en": "Kubernetes stage 2 — a real node" }
+  ],
+  "ru": {
+    "title": "Kubernetes для начинающих: что это, из чего состоит кластер и с чего начать",
+    "description": "Kubernetes работает как пульт управления флотом контейнеров: кластер сам размещает поды, восстанавливает их после сбоев и выкатывает новые версии без простоя. Разбираем архитектуру для тех, кто видит её впервые.",
+    "h1": "Kubernetes для начинающих",
+    "intro": "Kubernetes отвечает на простой вопрос: как запускать сотни контейнеров на десятке машин и не делать этого вручную. Вы описываете желаемое состояние, а кластер непрерывно подтягивает действительное к нему: перезапускает завершившиеся контейнеры, распределяет нагрузку, выкатывает новые версии без остановки сервиса. Вход в тему труден, но эти затраты окупаются.",
+    "sections": [
+      { "h2": "Задача, которую решает Kubernetes", "body": ["Запускать контейнеры вручную на многих машинах нельзя: машины ломаются, нагрузка смещается, а выпуск новой версии должен происходить без простоя. Нужен кто-то, кто постоянно следит, принимает решения и действует. Этим кем-то служит плоскость управления кластера."] },
+      { "h2": "Из чего состоит кластер", "body": ["Управляющие узлы принимают решения, а рабочие выполняют работу. Самая маленькая единица кластера называется подом; обычно в поде работает один контейнер. Deployment описывает желаемое состояние: сколько копий сервиса работает и из какого образа. Service даёт стабильный сетевой адрес подам, которые то появляются, то исчезают. Движок всего этого — цикл согласования: сравнить желаемое с действительным, сделать шаг, повторить."] },
+      { "h2": "Как учиться без своего железа", "body": ["В этом курсе вы собираете работающий кластер Kubernetes в браузере, из блоков: видно каждое решение плоскости управления, ничего не спрятано в чёрный ящик. Затем вы повторяете всё то же самое на настоящем узле."] }
+    ],
+    "blocks": ["Архитектура: управляющие и рабочие узлы", "Поды, ReplicaSet, Deployment", "Service и Ingress", "Цикл согласования и самовосстановление"],
+    "faq": [
+      { "q": "Нужен ли Kubernetes небольшой команде?", "a": "Небольшой команде Kubernetes нередко не нужен: кластер окупается, когда сервисов и команд становится много, а содержать его ради одного приложения — лишняя работа." },
+      { "q": "Что учить перед Kubernetes?", "a": "Linux, сети и контейнеры. Без этой базы кластер останется чёрным ящиком, в котором непонятно, что происходит." }
+    ]
+  },
+  "en": {
+    "title": "Kubernetes for beginners: what it is, what a cluster is made of, where to start",
+    "description": "Kubernetes is the control panel for a fleet of containers. Pods, Deployments, Services, the reconciliation loop — the architecture explained for someone meeting it for the first time.",
+    "h1": "Kubernetes for beginners",
+    "intro": "Kubernetes answers a simple question: how do you run a hundred containers on a dozen machines without doing it by hand. You describe the desired state; the cluster keeps dragging reality toward it — restarting what died, spreading the load, rolling out new versions without downtime. The learning curve is real, but so is the payoff.",
+    "sections": [
+      { "h2": "The problem Kubernetes solves", "body": ["Manually starting containers across many machines does not scale: machines fail, load shifts, releases need to happen without downtime. Something must watch, decide and act continuously. That something is the cluster's control plane."] },
+      { "h2": "What a cluster is made of", "body": ["Control-plane nodes take decisions; worker nodes run workloads. A pod is the smallest unit, usually one container. A Deployment describes the desired state — how many replicas, which image. A Service gives stable network access to a moving fleet of pods. The reconciliation loop is the engine: compare desired with actual, act, repeat."] },
+      { "h2": "Learning without your own hardware", "body": ["In this course you assemble a working Kubernetes cluster from pieces right in the browser — every control-plane decision is visible, nothing is a black box. Then you repeat it on a real node."] }
+    ],
+    "blocks": ["Architecture: control plane and workers", "Pods, ReplicaSets, Deployments", "Services and Ingress", "The reconciliation loop and self-healing"],
+    "faq": [
+      { "q": "Does a small team need Kubernetes?", "a": "Honest answer: often no. Kubernetes pays off as the number of services and teams grows." },
+      { "q": "What should I learn before Kubernetes?", "a": "Linux, networks and containers — without them a cluster stays a black box." }
+    ]
+  }
+}

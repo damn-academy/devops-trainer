@@ -1,0 +1,38 @@
+{
+  "slug": "linux-for-beginners",
+  "courseLinks": [
+    { "href": "/#/block/linux", "ru": "Блок «Linux» — от оболочки до сервисов", "en": "The Linux block — from the shell to services" }
+  ],
+  "ru": {
+    "title": "Linux для начинающих: учебник по командной строке и основам системы",
+    "description": "Linux стоит под большинством серверов в интернете и под всеми серьёзными инструментами DevOps. Учебный путь для новичка: командная строка, оболочка, файлы, пользователи, пакеты — с настоящими машинами для практики.",
+    "h1": "Linux для начинающих",
+    "intro": "Linux — это операционная система, на которой работает большинство серверов в интернете, облачные машины и каждый контейнер. Учить Linux — значит учить командную строку: оболочка работает быстрее графического интерфейса, складывается в скрипты и одинакова на любой машине. Командной строке по книге не научиться, поэтому в этом курсе вы набираете каждую команду сами на настоящей машине.",
+    "sections": [
+      { "h2": "Почему Linux", "body": ["Большинство серверов в интернете работают на Linux, облака и контейнеры устроены на нём, а инструменты DevOps сначала появляются под Linux и только потом портируют куда-либо. Системы, которые вам предстоит обслуживать, тоже почти наверняка работают на Linux. Знание оконного интерфейса плохо переносится с машины на машину, а знание оболочки переносится везде."] },
+      { "h2": "С чего начать", "body": ["Учитесь в таком порядке: сначала оболочка и навигация по файлам, затем пользователи, права и процессы, потом пакеты, сервисы и их журналы, и дальше потоки ввода-вывода и обработка текста, где команды соединяют между собой, как трубы, — вывод одной команды становится входом следующей. Каждый шаг занимает часы, а не недели, когда настоящая машина отвечает на каждую команду."] },
+      { "h2": "Как учиться", "body": ["В курсе вам дают настоящую машину в браузере: каждую команду вы набираете сами, каждое задание проверяется автоматически, а поломки заложены в уроки нарочно, чтобы вы чинили их тут же, пока система под рукой."] }
+    ],
+    "blocks": ["Оболочка и файловая система", "Пользователи, права, процессы", "Пакеты, сервисы, журналы", "Pipe и обработка текста"],
+    "faq": [
+      { "q": "Какой дистрибутив выбрать новичку?", "a": "Ubuntu или Debian встречаются чаще всего, и учебных материалов по ним больше, чем по любым другим системам." },
+      { "q": "Нужно ли ставить Linux вместо основной системы?", "a": "Нет, хватит браузера, потому что виртуальная машина уже встроена в курс, а если хочется отдельного сервера, подойдёт любой недорогой облачный хостинг." }
+    ]
+  },
+  "en": {
+    "title": "Linux for beginners: a hands-on command-line textbook",
+    "description": "Linux runs most servers and all serious DevOps tooling. A beginner path through the command line, files, users, packages and services — with real machines to practise on.",
+    "h1": "Linux for beginners",
+    "intro": "Linux is the operating system under most of the internet's servers, under cloud VMs and under every container. Learning it means learning the command line: the shell is faster, scriptable and the same on every machine. You only learn it by typing commands yourself.",
+    "sections": [
+      { "h2": "Why Linux", "body": ["Most servers on the internet run Linux. Clouds and containers are Linux. DevOps tooling appears on Linux first, and production systems you will operate are Linux. GUI knowledge transfers poorly; shell knowledge transfers everywhere."] },
+      { "h2": "Where to start", "body": ["Learn in this order: the shell and moving around the filesystem; users, permissions and processes; packages and services with their logs; streams, pipes and text processing. Each step takes hours, not weeks, when a real machine answers every command."] },
+      { "h2": "How to practise", "body": ["The course gives you a real machine in the browser: every command is typed by you, every task is checked automatically, and breaking things is part of the design — you fix them right there."] }
+    ],
+    "blocks": ["The command-line shell and the filesystem", "Users, permissions, processes", "Packages, services, logs", "Pipes and text processing"],
+    "faq": [
+      { "q": "Which distribution should a beginner pick?", "a": "Ubuntu or Debian — the most common, with the most learning material." },
+      { "q": "Do I need to install Linux as my main system?", "a": "No. A browser is enough — a virtual machine in the course, or any cheap cloud VM." }
+    ]
+  }
+}

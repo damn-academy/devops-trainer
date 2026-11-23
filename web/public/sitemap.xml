@@ -1,12 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- The course is a single-page app with hash routing, so https://damn.academy/
-     is the only crawlable URL today; lesson routes live behind '#/' fragments
-     that crawlers do not send. Serving lesson text without JavaScript
-     (prerendering or path-based routes) is tracked separately. -->
+<!-- The interactive course is a single-page app with hash routing, so its
+     lesson routes live behind '#/' fragments that crawlers do not send; the
+     landing URL is the app's entry point. Search-facing topic pages are
+     statically prerendered under /learn/ (RU) and /en/learn/ (EN) with
+     hreflang pairs — see web/learn-src and web/scripts/build-learn.mjs. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://damn.academy/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+  <url><loc>https://damn.academy/learn/devops-basics/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://damn.academy/learn/linux-for-beginners/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://damn.academy/learn/docker-containers-explained/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://damn.academy/learn/kubernetes-basics/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://damn.academy/learn/ci-cd-pipeline/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://damn.academy/learn/prometheus-monitoring/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://damn.academy/en/learn/devops-basics/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://damn.academy/en/learn/linux-for-beginners/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://damn.academy/en/learn/docker-containers-explained/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://damn.academy/en/learn/kubernetes-basics/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://damn.academy/en/learn/ci-cd-pipeline/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://damn.academy/en/learn/prometheus-monitoring/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
 </urlset>
