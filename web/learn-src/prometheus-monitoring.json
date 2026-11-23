@@ -1,0 +1,38 @@
+{
+  "slug": "prometheus-monitoring",
+  "courseLinks": [
+    { "href": "/#/block/monitoring", "ru": "Блок «Мониторинг» — алерты, логи, трейсы", "en": "The monitoring block — alerts, logs, traces" }
+  ],
+  "ru": {
+    "title": "Мониторинг и Prometheus: метрики, алерты и поиск причин аварий",
+    "description": "Мониторинг показывает, что сломалось и когда это началось, а логи и трейсы объясняют, почему. Разбираем Prometheus, PromQL, алерты и пошаговый разбор инцидента.",
+    "h1": "Мониторинг и Prometheus",
+    "intro": "Мониторинг служит глазами системы. Метрики говорят, что что-то сломалось и когда это началось, а логи и трейсы объясняют, почему и где. Профессиональная цель скромна: узнавать об инциденте раньше пользователей.",
+    "sections": [
+      { "h2": "Три столпа наблюдаемости", "body": ["Первый столп — метрики, то есть числа, меняющиеся во времени: Prometheus собирает их, PromQL запрашивает, алерты срабатывают на них. Второй столп — журналы, то есть отдельные события, которые ищут запросами LogQL в Loki. Третий столп — трейсы, которые следуют за запросом через несколько сервисов. Вместе они отвечают на три вопроса: что случилось, почему и где."] },
+      { "h2": "Алерты без усталости", "body": ["Срабатывание настраивают на симптомы, которые чувствуют пользователи, а не на каждую внутреннюю причину. Alertmanager группирует уведомления и направляет их нужным людям. У каждого алерта есть читаемое имя и ссылка на инструкцию по разбору: алерт, по которому никто не знает, что делать, — шум, а не помощь."] },
+      { "h2": "Разбор инцидента", "body": ["Сначала метрики: они задают рамку времени и охват проблемы. Потом журналы затронутых подов. Затем трейсы, если запрос проходит через несколько сервисов. В курсе вы разбираете настоящий инцидент на учебном кластере в том же порядке."] }
+    ],
+    "blocks": ["Метрики и язык PromQL", "Алерты и Alertmanager", "Журналы и LogQL", "Трейсы и дашборды"],
+    "faq": [
+      { "q": "Чем Prometheus отличается от логов?", "a": "Метрики дают дешёвые числа для трендов и алертов, а логи сохраняют подробные события для расследования. Они дополняют друг друга и не заменяют один другой." },
+      { "q": "Нужна ли Grafana обязательно?", "a": "Нет, Grafana не обязательна. Это удобный слой визуализации поверх Prometheus; слой заменим, но де-факто он стал стандартом, и знать его стоит." }
+    ]
+  },
+  "en": {
+    "title": "Monitoring and Prometheus: metrics, alerts and finding the cause of incidents",
+    "description": "Metrics, logs and traces — the observability trio. What Prometheus and PromQL are for, how alerting stays humane, and how to investigate an incident step by step.",
+    "h1": "Monitoring and Prometheus",
+    "intro": "Monitoring is the system's eyes. Metrics tell you that something is wrong and when it started; logs and traces tell you why and where. The professional goal is simple: learn about an incident before your users tweet about it.",
+    "sections": [
+      { "h2": "The three pillars of observability", "body": ["Metrics are numbers over time — Prometheus scrapes them, PromQL queries them, alerts fire on them. Logs are discrete events — searchable with LogQL in Loki. Traces follow a request across services. Together they answer: what happened, why, and where."] },
+      { "h2": "Alerting without fatigue", "body": ["Alert on symptoms users feel, not on every internal cause. Alertmanager groups and routes notifications. Every alert earns a readable name and a link to a runbook — an alert nobody can act on is just noise."] },
+      { "h2": "Investigating an incident", "body": ["Metrics first, to frame the time window and the blast radius. Then logs of the affected pods. Then traces, if the request crosses services. The course walks through a real incident on a training cluster using exactly this order."] }
+    ],
+    "blocks": ["Metrics and the PromQL language", "Alerts and Alertmanager", "Logs and LogQL", "Traces and dashboards"],
+    "faq": [
+      { "q": "How is Prometheus different from logs?", "a": "Metrics are cheap numbers for trends and alerts; logs are detailed events for investigation." },
+      { "q": "Is Grafana mandatory?", "a": "No — Grafana is a convenient visualization layer over Prometheus. It is replaceable, but it is the de-facto standard." }
+    ]
+  }
+}

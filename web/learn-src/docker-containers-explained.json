@@ -1,0 +1,38 @@
+{
+  "slug": "docker-containers-explained",
+  "courseLinks": [
+    { "href": "/#/block/containers", "ru": "Блок «Контейнеры» — соберёте Docker своими руками", "en": "The containers block — build a container with your own hands" }
+  ],
+  "ru": {
+    "title": "Контейнеры и Docker: как это устроено изнутри",
+    "description": "Контейнер — это изолированный процесс, а не маленькая виртуальная машина. Разбираем по частям механизмы ядра, на которых держится команда docker run: namespace, cgroup, слои образа и Dockerfile.",
+    "h1": "Контейнеры и Docker",
+    "intro": "Контейнер похож на маленькую виртуальную машину, но устроен иначе: это обычный процесс на хосте, надевший изоляцию. Пространства имён прячут от процесса чужую сеть, файлы и другие процессы, cgroups ограничивают потребление ресурсов, а образ — это стопка слоёв файловой системы. Docker — удобная надстройка над этими механизмами ядра, и сами механизмы от неё не меняются.",
+    "sections": [
+      { "h2": "Что такое контейнер на самом деле", "body": ["Пространства имён дают каждому контейнеру собственный вид системы: свою сеть, своё дерево файлов, свою таблицу процессов. Контрольные группы (cgroups) ограничивают процессор и память. Образ — это слои файлов плюс команда запуска. Контейнер — процесс плюс изоляция плюс ограничения, и ничего мистического в нём нет."] },
+      { "h2": "Образ и Dockerfile", "body": ["Dockerfile — рецепт, в котором каждая инструкция добавляет слой, а реестры хранят образы с метками. Маленькие образы собираются быстрее, запускаются быстрее и требуют меньше исправлений. Понимание слоёв объясняет большинство сюрпризов с кэшем сборки."] },
+      { "h2": "Как понять изоляцию практически", "body": ["Чтение помогает, а собственная сборка помогает больше. В курсе вы собираете контейнер из голых механизмов ядра своими руками, и после этого команда docker run перестаёт быть магией: вы видите в ней сокращение, которое сами могли бы написать."] }
+    ],
+    "blocks": ["Пространства имён и cgroups", "Слои образа и сборка по Dockerfile", "Сети и тома", "Кто запускает контейнеры на узле после команды docker run"],
+    "faq": [
+      { "q": "Чем контейнер отличается от виртуальной машины?", "a": "Виртуальная машина эмулирует железо и несёт собственное ядро, а контейнером служит обычный процесс хоста с изоляцией. Поэтому контейнеры легче и быстрее, но делят ядро с хостом." },
+      { "q": "Нужно ли учить Docker перед Kubernetes?", "a": "Да. Kubernetes запускает контейнеры, и без понимания образов и изоляции кластер останется чёрным ящиком." }
+    ]
+  },
+  "en": {
+    "title": "Containers and Docker explained: how they actually work inside",
+    "description": "A container is an isolated process, not a tiny VM. Namespaces, cgroups, image layers and Dockerfiles — the kernel mechanics behind docker run, explained plainly.",
+    "h1": "Containers and Docker",
+    "intro": "A container looks like a small virtual machine but is not one: it is a plain process on the host wearing isolation. Namespaces hide its network, files and processes; cgroups cap its resources; the image is a stack of filesystem layers. Docker is convenient tooling over those kernel mechanisms — the mechanisms stay the same.",
+    "sections": [
+      { "h2": "What a container really is", "body": ["Namespaces give each container its own view: its own network, its own filesystem tree, its own process table. Control groups limit CPU and memory. An image is layers of files plus a startup command. Container = process + isolation + limits, nothing more mystical."] },
+      { "h2": "Images and Dockerfiles", "body": ["A Dockerfile is a recipe where each instruction adds a layer; registries store tagged images; small images build faster, start faster and carry less to patch. Understanding layers explains most build-cache surprises."] },
+      { "h2": "How to actually understand isolation", "body": ["Reading helps; building helps more. In the course you assemble a container from raw kernel pieces with your own hands — after that, docker run stops being magic and becomes a shortcut you could write yourself."] }
+    ],
+    "blocks": ["Namespaces and cgroups", "Image layers and building from a Dockerfile", "Networks and volumes", "What runs containers on a node after docker run"],
+    "faq": [
+      { "q": "How is a container different from a virtual machine?", "a": "A VM emulates hardware and carries its own kernel; a container is a host process with isolation — lighter and faster." },
+      { "q": "Should I learn Docker before Kubernetes?", "a": "Yes. Kubernetes runs containers; without understanding images and isolation it stays magic." }
+    ]
+  }
+}

@@ -9,7 +9,7 @@
     "dev": "vite",
     "fetch:v86": "node scripts/fetch-v86.mjs",
     "build:lab-image": "node scripts/build-lab-image.mjs",
-    "prebuild": "node scripts/fetch-v86.mjs --optional",
+    "prebuild": "node scripts/fetch-v86.mjs --optional && node scripts/build-learn.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173 --strictPort",
     "typecheck": "tsc --noEmit",

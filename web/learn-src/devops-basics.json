@@ -1,0 +1,41 @@
+{
+  "slug": "devops-basics",
+  "courseLinks": [
+    { "href": "/#/block/methodology", "ru": "Блок «Методология DevOps» — с теорией и квизами", "en": "The DevOps methodology block — theory and quizzes" },
+    { "href": "/#/", "ru": "Вся карта курса", "en": "The full course route map" }
+  ],
+  "ru": {
+    "title": "Что такое DevOps: объяснение методологии для новичков",
+    "description": "DevOps — это методология, которая соединяет разработку и эксплуатацию в один поток с автоматическими проверками и выкладкой. Разбираемся, чем DevOps-инженер отличается от системного администратора и с чего начать обучение.",
+    "h1": "Что такое DevOps",
+    "intro": "DevOps — это методология, которая убирает разрыв между теми, кто пишет код, и теми, кто поддерживает его в работе. Раньше разработчик передавал программу системному администратору и считал свою часть законченной; в DevOps одна команда отвечает за результат от идеи до работающего сервиса, а ручные операции заменяет автоматика. DevOps-инженер — специалист, который строит эту автоматику, и спрос на таких людей объясняется желанием компаний выпускать изменения чаще и ломать меньше.",
+    "sections": [
+      { "h2": "Из каких практик состоит DevOps", "body": ["Несколько практик работают вместе. CI/CD собирает, проверяет и выкладывает код автоматически. Инфраструктура как код превращает серверы в описания, которые хранятся в репозитории и воспроизводятся без расхождений. Контейнеры и оркестрация запускают сервисы одинаково на любой машине. Мониторинг и наблюдаемость показывают сбой за секунды, а не по жалобам пользователей. Автоматические проверки не пускают сломанное изменение дальше пайплайна."] },
+      { "h2": "Чем занимается DevOps-инженер", "body": ["В ежедневной работе DevOps-инженер настраивает пайплайны сборки и выкладки, описывает серверы и облачные ресурсы кодом, следит за метриками и участвует в разборе инцидентов. Инструменты меняются каждые несколько лет, но суть работы постоянна: сделать путь от коммита до рабочего сервера коротким, скучным и обратимым, чтобы любое изменение можно было откатить за минуты."] },
+      { "h2": "Как учиться", "body": ["Начните с методологии и базовых терминов, затем переходите к Linux и сетям — на них держится всё остальное. Контейнеры и Kubernetes изучайте после. На каждом шаге работайте на настоящей машине, а не только читайте: набирайте команды, ломайте, чините. Поэтому этот курс устроен так, что каждую тему вы закрепляете практикой."] }
+    ],
+    "blocks": ["Жизненный цикл программы от идеи до работающего сервиса", "Роли в команде и зоны ответственности", "Основные практики и инструменты", "Метрики потока: от коммита до работающего сервиса"],
+    "faq": [
+      { "q": "Нужно ли уметь программировать, чтобы освоить DevOps?", "a": "Базовое программирование нужно: скрипты на Bash и немного Python — ежедневный инструмент автоматизации. Глубокая разработка на уровне программиста не обязательна." },
+      { "q": "Сколько времени занимает вход в профессию?", "a": "Это зависит от вашего фона. При регулярной практике базовую подготовку обычно набирают за три-шесть месяцев." },
+      { "q": "Что учить первым делом?", "a": "Первым делом учите Linux и командную строку: на них стоит всё остальное. Затем переходите к сетям и Git." }
+    ]
+  },
+  "en": {
+    "title": "What is DevOps: a plain-language explanation for beginners",
+    "description": "DevOps is a way of building software where development and operations work as one flow: automated pipelines, infrastructure as code, monitoring. What a DevOps engineer actually does and how to learn it.",
+    "h1": "What is DevOps",
+    "intro": "DevOps is a methodology that closes the gap between writing code and running it in production. Instead of throwing code over a wall to system administrators, one team carries a feature from idea to a working service and back again — with automation at every step. A DevOps engineer is the person who builds that automation.",
+    "sections": [
+      { "h2": "The practices that make up DevOps", "body": ["Several practices work together: CI/CD builds, tests and deploys code automatically; infrastructure as code turns servers into versioned, reproducible definitions; containers and orchestration package and run services the same way everywhere; monitoring and observability make failures visible in seconds instead of user complaints."] },
+      { "h2": "What a DevOps engineer actually does", "body": ["Day to day: setting up build and deploy pipelines, automating servers and cloud resources, watching metrics and joining incident response, helping the team release more often with fewer accidents. The tools change; the job is making the path from commit to production short, boring and reversible."] },
+      { "h2": "How to learn it", "body": ["Start with the methodology and vocabulary, then Linux and networks — the foundation under everything. Containers and Kubernetes come after. At every step, practise on a real machine, not just readings: type the commands, break things, fix them. That is exactly how this course is built."] }
+    ],
+    "blocks": ["The software lifecycle from idea to a working service", "Roles in a team and who owns what", "Core practices and tools", "Flow metrics: from commit to production"],
+    "faq": [
+      { "q": "Do I need to know programming to get into DevOps?", "a": "Basic scripting yes — Bash and a little Python are everyday tools for automation. Deep software development is not required." },
+      { "q": "How long does it take to enter the profession?", "a": "It depends on your background. With steady practice, the foundation takes three to six months." },
+      { "q": "What should I learn first?", "a": "Linux and the command line — everything stands on them. Then networks and Git." }
+    ]
+  }
+}

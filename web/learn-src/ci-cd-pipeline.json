@@ -1,0 +1,38 @@
+{
+  "slug": "ci-cd-pipeline",
+  "courseLinks": [
+    { "href": "/#/block/cicd", "ru": "Блок «CI/CD» — соберёте пайплайн с проверками", "en": "The CI/CD block — build a pipeline with checks" }
+  ],
+  "ru": {
+    "title": "CI/CD: что это и как устроен пайплайн от коммита до рабочего сервера",
+    "description": "CI/CD — непрерывная интеграция и доставка: каждое изменение проходит сборку, тесты и автоматическую выкладку. Разбираем шаги пайплайна на примерах GitLab CI и GitHub Actions.",
+    "h1": "CI/CD",
+    "intro": "CI/CD появился как ответ на болезненную привычку выкладывать изменения редко, вручную и со страхом. Непрерывная интеграция означает, что каждое изменение собирается и проверяется при слиянии, а непрерывная доставка — что путь до рабочего сервера автоматизирован и повторяется без отклонений. В результате путь от коммита до работающего сервиса становится коротким, скучным и предсказуемым.",
+    "sections": [
+      { "h2": "Из каких шагов состоит пайплайн", "body": ["Типичный пайплайн выглядит так: сборка, запуск тестов, упаковка артефакта или образа, выкладка на стенд, проверки после выкладки, затем перенос на рабочий сервер. Каждый шаг автоматизирован и воспроизводим: один и тот же пайплайн запускается на каждое изменение, поэтому сюрпризов становится меньше."] },
+      { "h2": "Почему это меняет работу", "body": ["Ручная выкладка случается редко и пугает, а автоматическая — часто и скучна. Ошибка всплывает через минуты после коммита, который её внёс, а не через неделю. Откат превращается в обычную операцию вместо аварии."] },
+      { "h2": "Что собрать руками", "body": ["Соберите один пайплайн для настоящего репозитория: сборка, тесты, выкладка на учебный кластер. Один собранный пайплайн учит больше, чем десять прочитанных статей, и курс ведёт вас через всю цепочку по шагам."] }
+    ],
+    "blocks": ["Триггеры и раннеры", "Стадии: build, test, deploy", "Артефакты и образы", "Выкладка без простоя и откат"],
+    "faq": [
+      { "q": "Чем CI отличается от CD?", "a": "CI означает, что каждое изменение собирается и проверяется при слиянии. CD означает, что доставка автоматизирована: иногда она доходит до рабочего сервера, а иногда — до стенда, откуда человек нажимает последнюю кнопку сам." },
+      { "q": "Какая система CI/CD лучше?", "a": "Концепции везде одинаковы. Чаще всего начинают с GitLab CI или GitHub Actions, потому что материалов и примеров по ним больше всего." }
+    ]
+  },
+  "en": {
+    "title": "CI/CD: what it is and how a pipeline takes code from commit to production",
+    "description": "Continuous integration and delivery explained: the stages of a pipeline, why automated deploys beat manual ones, and what to build with your own hands first.",
+    "h1": "CI/CD",
+    "intro": "CI/CD is the answer to a painful habit: deploying rarely, by hand, with fear. Continuous integration means every change is built and tested on merge; continuous delivery means the path to production is automated and repeatable. The result is a short, boring, predictable route from commit to running service.",
+    "sections": [
+      { "h2": "The stages of a pipeline", "body": ["A typical pipeline: build, run tests, package an artifact or image, deploy to staging, run checks, promote to production. Every stage is automated and reproducible — the same pipeline runs on every change, so surprises shrink."] },
+      { "h2": "Why it changes how teams work", "body": ["Manual deploys are rare and scary; automated deploys are frequent and dull. Errors surface minutes after the commit that introduced them. Rollback becomes a normal operation instead of an emergency."] },
+      { "h2": "What to build with your hands", "body": ["One pipeline for a real repository — build, tests, deploy to a training cluster. Building it once teaches more than reading about it ten times; the course walks you through exactly that."] }
+    ],
+    "blocks": ["Triggers and runners", "Stages: build, test, deploy", "Artifacts and images", "Zero-downtime deploys and rollback"],
+    "faq": [
+      { "q": "How is CI different from CD?", "a": "CI is integration and checks on every change; CD is automated delivery — sometimes all the way to production, sometimes to a staging button." },
+      { "q": "Which CI/CD system is best?", "a": "The concepts are the same everywhere. GitLab CI and GitHub Actions are the most common starting points." }
+    ]
+  }
+}
