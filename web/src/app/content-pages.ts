@@ -14,6 +14,7 @@ import { localLabPage } from './local-lab';
 import { lessonPage } from './lesson';
 import { explainerPage } from './pages';
 import { reviewPage } from './review-page';
+import { coursesPage } from './courses-page';
 import { settingsPage } from './settings';
 
 export { closeDoc } from '../engine/docs/viewer';
@@ -36,6 +37,8 @@ export function renderPage(r: Exclude<Route, { name: 'home' }>): Page {
       return settingsPage();
     case 'review':
       return reviewPage();
+    case 'courses':
+      return coursesPage();
     case 'lab':
       return labPage(r.id);
     case 'local-lab':
