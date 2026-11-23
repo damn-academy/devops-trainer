@@ -19,7 +19,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tym83/devops-trainer/lab/internal/manifest"
+	"github.com/damn-academy/devops-trainer/lab/internal/manifest"
 )
 
 // Entry is one thing to remove.

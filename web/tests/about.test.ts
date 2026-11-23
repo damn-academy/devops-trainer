@@ -51,7 +51,7 @@ describe('about pages', () => {
           expect(r.name, a.getAttribute('href')!).not.toBe('notfound');
           if (r.name === 'about' && r.page) expect(ABOUT_PAGES.map((x) => x.id)).toContain(r.page);
         }
-        for (const a of el.querySelectorAll<HTMLAnchorElement>('a[href^="http"]')) expect(a.href).toMatch(/^https:\/\/github\.com\/tym83\//);
+        for (const a of el.querySelectorAll<HTMLAnchorElement>('a[href^="http"]')) expect(a.href).toMatch(/^https:\/\/github\.com\/(tym83|damn-academy)\//);
         // Cyrillic stays on the Russian side.
         if (lang === 'en') expect(text(el).replace(/«[^»]*»|“[^”]*”|`[^`]*`/g, '')).not.toMatch(/[а-яё]{4,}/i);
       }
@@ -64,9 +64,9 @@ describe('about pages', () => {
       const { el } = aboutPage(pg.id);
       return text(el);
     }).join('\n');
-    for (const w of ['Apache-2.0', 'tym83/devops-trainer', 'Новичок', 'Лестница документации', 'Мои сообщения', 'Перенести на другое устройство', 'dt.facts/v1', 'v86', 'kube-lite', 'api.cloud.lab', 'git.lab', 'kuberoot', 'RV64', 'экспериментальный', 'Cross-Origin-Embedder-Policy', 'ADMIN_TOKEN', 'ALLOWED_ORIGINS', 'npm ci', 'STYLE-RU.md', 'lint:explainers', 'lint-ru-style', '--signoff', 'kind: Deployment'])
+    for (const w of ['Apache-2.0', 'damn-academy/devops-trainer', 'Новичок', 'Лестница документации', 'Мои сообщения', 'Перенести на другое устройство', 'dt.facts/v1', 'v86', 'kube-lite', 'api.cloud.lab', 'git.lab', 'kuberoot', 'RV64', 'экспериментальный', 'Cross-Origin-Embedder-Policy', 'ADMIN_TOKEN', 'ALLOWED_ORIGINS', 'npm ci', 'STYLE-RU.md', 'lint:explainers', 'lint-ru-style', '--signoff', 'kind: Deployment'])
       expect(all).toContain(w);
-    expect(REPO).toBe('https://github.com/tym83/devops-trainer');
+    expect(REPO).toBe('https://github.com/damn-academy/devops-trainer');
   });
 
   it('shows an empty state for an unknown page', () => {

@@ -8,7 +8,7 @@
 
 import { bi, type Bi } from '../core/i18n';
 
-export const REPO = 'https://github.com/tym83/devops-trainer';
+export const REPO = 'https://github.com/damn-academy/devops-trainer';
 export const KUBEROOT_REPO = 'https://github.com/tym83/kuberoot';
 
 export type AboutPageId = 'what' | 'use' | 'how' | 'deploy' | 'contribute';
@@ -87,11 +87,11 @@ const WHAT: AboutPageDef = {
       'license',
       bi('Лицензия и исходный код', 'Licence and source code'),
       p(
-        `Исходный код курса открыт и лежит на GitHub в репозитории [tym83/devops-trainer](${REPO}). Он распространяется по лицензии Apache-2.0, поэтому курс можно бесплатно ставить у себя, менять и использовать в компании или школе, в том числе в коммерческих целях, если сохранить текст лицензии и уведомления об авторстве. Как развернуть курс, рассказано на странице [«Развернуть у себя»](#/about/deploy), а как предложить исправление, рассказано на странице [«Как поучаствовать»](#/about/contribute).`,
+        `Исходный код курса открыт и лежит на GitHub в репозитории [damn-academy/devops-trainer](${REPO}). Он распространяется по лицензии Apache-2.0, поэтому курс можно бесплатно ставить у себя, менять и использовать в компании или школе, в том числе в коммерческих целях, если сохранить текст лицензии и уведомления об авторстве. Как развернуть курс, рассказано на странице [«Развернуть у себя»](#/about/deploy), а как предложить исправление, рассказано на странице [«Как поучаствовать»](#/about/contribute).`,
         'Порядок тем курса следует открытому чек-листу devops413 для начинающих DevOps-инженеров. Из чек-листа взяты только порядок тем и список областей, а все тексты, схемы и задания курса написаны заново.',
       ),
       p(
-        `The course’s source code is open and lives on GitHub in the repository [tym83/devops-trainer](${REPO}). It is distributed under the Apache-2.0 licence, so the course can be installed, changed and used in a company or a school for free, commercially too, as long as the licence text and the attribution notices are kept. How to deploy the course is told on the page [“Run it yourself”](#/about/deploy), and how to propose a fix on the page [“Contributing”](#/about/contribute).`,
+        `The course’s source code is open and lives on GitHub in the repository [damn-academy/devops-trainer](${REPO}). It is distributed under the Apache-2.0 licence, so the course can be installed, changed and used in a company or a school for free, commercially too, as long as the licence text and the attribution notices are kept. How to deploy the course is told on the page [“Run it yourself”](#/about/deploy), and how to propose a fix on the page [“Contributing”](#/about/contribute).`,
         'The order of topics follows the public devops413 checklist for beginner DevOps engineers. Only the order of topics and the list of areas are taken from the checklist; every text, diagram and task of the course is written anew.',
       ),
     ),
@@ -575,12 +575,12 @@ const CONTRIBUTE: AboutPageDef = {
       'layout',
       bi('Как устроен репозиторий', 'How the repository is organised'),
       p(
-        `Весь курс лежит в одном репозитории [tym83/devops-trainer](${REPO}).`,
+        `Весь курс лежит в одном репозитории [damn-academy/devops-trainer](${REPO}).`,
         '- `web/` содержит само приложение на TypeScript и Vite без UI-фреймворка. В `web/src/core` лежат типы, реестр, маршрутизатор, хранилище и линтер, в `web/src/app` страницы, в `web/src/engine` движки (терминал, схемы, вопросы, документация, симуляторы, v86, нейросеть, офлайн), в `web/src/blocks` содержание блоков, по каталогу на блок, а в `web/tests` и `web/e2e` тесты.\n- `design/` содержит проектную документацию, главный документ в ней `00-DESIGN.ru.md`.\n- `lab/` содержит лабораторию dtlab на Go.\n- `service/feedback/` содержит сервис обратной связи на Go.\n- `tools/terraform-provider-lab/` содержит провайдер Terraform для облака во вкладке.\n- `deploy/` содержит конфигурацию nginx, манифесты Kubernetes и скрипты выкладки.',
         'Блоки и движки подключаются сами: реестр находит их через `import.meta.glob`, поэтому общий список, который нужно править при добавлении блока, отсутствует.',
       ),
       p(
-        `The whole course is in one repository, [tym83/devops-trainer](${REPO}).`,
+        `The whole course is in one repository, [damn-academy/devops-trainer](${REPO}).`,
         '- `web/` holds the application itself, in TypeScript and Vite without a UI framework. `web/src/core` has the types, registry, router, store and linter, `web/src/app` the pages, `web/src/engine` the engines (terminal, diagrams, questions, documentation, simulators, v86, AI, offline), `web/src/blocks` the content of the blocks, one directory per block, and `web/tests` and `web/e2e` the tests.\n- `design/` holds the design documents; the main one is `00-DESIGN.md`.\n- `lab/` holds the dtlab lab, in Go.\n- `service/feedback/` holds the feedback service, in Go.\n- `tools/terraform-provider-lab/` holds the Terraform provider for the cloud in the tab.\n- `deploy/` holds the nginx configuration, Kubernetes manifests and deployment scripts.',
         'Blocks and engines plug in by themselves: the registry finds them through `import.meta.glob`, so there is no shared list to edit when a block is added.',
       ),

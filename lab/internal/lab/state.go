@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tym83/devops-trainer/lab/internal/backend"
-	"github.com/tym83/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/backend"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
 )
 
 // State is what `up` made, kept at <root>/state.json.

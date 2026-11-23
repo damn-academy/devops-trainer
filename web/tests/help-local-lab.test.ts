@@ -100,7 +100,7 @@ describe('local lab page', () => {
       expect(text(el)).toContain('появятся на этой странице');
       expect(el.querySelector('.ll-files')).toBeNull();
     }
-    expect(assetUrl('dtlab-darwin-arm64')).toBe('https://github.com/tym83/devops-trainer/releases/latest/download/dtlab-darwin-arm64');
+    expect(assetUrl('dtlab-darwin-arm64')).toBe('https://github.com/damn-academy/devops-trainer/releases/latest/download/dtlab-darwin-arm64');
   });
 
   it('opens the instructions of the learner’s system first', () => {

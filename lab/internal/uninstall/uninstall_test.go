@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tym83/devops-trainer/lab/internal/manifest"
+	"github.com/damn-academy/devops-trainer/lab/internal/manifest"
 )
 
 func TestUninstallRemovesEverything(t *testing.T) {

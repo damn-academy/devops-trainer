@@ -26,8 +26,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tym83/devops-trainer/lab/internal/collect"
-	"github.com/tym83/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/collect"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
 )
 
 // FactsRequest is the body of POST /api/v1/facts.

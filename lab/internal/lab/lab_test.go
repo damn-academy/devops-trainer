@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tym83/devops-trainer/lab/internal/backend"
-	"github.com/tym83/devops-trainer/lab/internal/collect"
-	"github.com/tym83/devops-trainer/lab/internal/manifest"
-	"github.com/tym83/devops-trainer/lab/internal/paths"
-	"github.com/tym83/devops-trainer/lab/internal/profile"
-	"github.com/tym83/devops-trainer/lab/internal/sshkey"
+	"github.com/damn-academy/devops-trainer/lab/internal/backend"
+	"github.com/damn-academy/devops-trainer/lab/internal/collect"
+	"github.com/damn-academy/devops-trainer/lab/internal/manifest"
+	"github.com/damn-academy/devops-trainer/lab/internal/paths"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/sshkey"
 )
 
 type fakeBackend struct {

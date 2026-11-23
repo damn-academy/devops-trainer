@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/tym83/devops-trainer/lab/internal/kuberoot"
+	"github.com/damn-academy/devops-trainer/lab/internal/kuberoot"
 )
 
 // kuberootRelease reads the manifest of the kuberoot to install: of the

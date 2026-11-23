@@ -18,7 +18,7 @@ stand=${SANKOFA_ROOT:-$HOME/projects/sankofa-int}
 source "$stand/hack/stand/env.sh"
 export DT_HOST=${DT_HOST:-damn.academy}
 [[ $DT_HOST =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] || { echo 'Invalid DT_HOST' >&2; exit 1; }
-GIT_URL=${GIT_URL:-https://github.com/tym83/devops-trainer}
+GIT_URL=${GIT_URL:-https://github.com/damn-academy/devops-trainer}
 ns=devops-trainer
 sha=$(git rev-parse HEAD)
 short=${sha:0:12}

@@ -1,4 +1,4 @@
-module github.com/tym83/devops-trainer/lab
+module github.com/damn-academy/devops-trainer/lab
 
 go 1.26.0
 

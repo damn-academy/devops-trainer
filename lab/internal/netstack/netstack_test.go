@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tym83/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
 )
 
 func TestConfig(t *testing.T) {

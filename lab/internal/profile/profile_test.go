@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tym83/devops-trainer/lab/internal/hostinfo"
+	"github.com/damn-academy/devops-trainer/lab/internal/hostinfo"
 )
 
 func TestPlanStandard(t *testing.T) {
