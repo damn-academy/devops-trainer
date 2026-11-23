@@ -36,7 +36,7 @@ async function inventory(m: SimMachine): Promise<void> {
   const back = m.cwd();
   const r = await m.exec(`cd ${INFRA} && terraform output -raw inventory > ${OPS}/inventory.ini`);
   await m.exec(`cd ${back}`);
-  if (r.exit !== 0) throw new Error(`terraform output -raw inventory failed: ${r.err || r.out}`);
+  if (r.exit !== 0) throw new Error(`terraform output -raw inventory failed: ${r.out}`);
 }
 
 describe('block 9 content', () => {

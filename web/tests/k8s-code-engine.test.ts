@@ -26,7 +26,7 @@ export async function emitInventory(m: SimMachine, dir = '/home/learner/infra', 
   const back = m.cwd();
   const r = await m.exec(`cd ${dir} && terraform output -raw inventory > ${to}`);
   await m.exec(`cd ${back}`);
-  if (r.exit !== 0) throw new Error(`terraform output -raw inventory failed: ${r.err || r.out}`);
+  if (r.exit !== 0) throw new Error(`terraform output -raw inventory failed: ${r.out}`);
 }
 const kc = async (m: SimMachine) => (await m.facts()).kcode as KcodeFacts;
 
