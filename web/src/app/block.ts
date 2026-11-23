@@ -34,7 +34,6 @@ function levelChooser(b: Block, onChange: () => void): HTMLElement {
           },
         },
         h('span.level-name', {}, t(UI.levels[l]), infoTip(b.levels[l])),
-        b.hours?.[l] ? h('span.hours', {}, `≈ ${Number(b.hours[l].toFixed(2))} ${t(UI.hours)}`) : null,
       ),
     ),
   );
