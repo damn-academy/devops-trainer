@@ -135,9 +135,11 @@
 .ex-svg .edge.carrying .edge-label { opacity: 0.12; }
 
 /* ── lab: goals + terminal ── */
-.lab { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
-.lab-left { max-width: var(--measure); }
-.lab-right { width: 100%; max-width: calc(var(--measure) + 8ch); }
+/* The lab sits on the text column, centered like every text section of the
+   lesson: the terminal reads as part of the text, not as a side widget. */
+.lab { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; max-width: 760px; margin-left: auto; margin-right: auto; }
+.lab-left { max-width: none; }
+.lab-right { width: 100%; max-width: none; }
 .lab.lab-expanded .lab-right { max-width: none; }
 .lab > * { min-width: 0; }
 .lab-term-box { overflow: hidden; }
