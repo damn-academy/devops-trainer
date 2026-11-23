@@ -11,7 +11,7 @@ import { store } from '../core/store';
 import { LEVELS, type Block, type Level } from '../core/types';
 import type { Page } from './common';
 import { infoTip } from './common';
-import { chosenLevel, lessonStatus, remainingShare, setTitle } from './status';
+import { chosenLevel, lessonStatus, remainingShare, setDescription, setTitle } from './status';
 
 function levelsTable(levels: Record<Level, import('../core/i18n').Bi>, hours: Record<Level, number> | undefined, chosen: Level | undefined): HTMLElement {
   return h(
@@ -81,6 +81,7 @@ function placeholderItem(e: RouteEntry): HTMLElement {
 
 export function homePage(): Page {
   setTitle();
+  setDescription(t(bi('Интерактивный учебник и тренажёр входа в DevOps: настоящий Linux в браузере, облако во вкладке, квизы и экзамены. Бесплатно, на русском и английском.', 'An interactive textbook and trainer for getting into DevOps: real Linux in the browser, a cloud in a tab, quizzes and exams. Free, in Russian and English.')));
   const items = registry.routeMap();
   const anyProgress = Object.keys(store.state.lessons).length > 0;
   const el = h(

@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# AI crawlers are welcome: the course is free and public, and being cited by
+# AI search is the point of GEO.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://damn.academy/sitemap.xml

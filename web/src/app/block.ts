@@ -11,7 +11,7 @@ import { store } from '../core/store';
 import { LEVELS, type Block, type Level, type Mounted, type PlacementTask } from '../core/types';
 import { renderInline } from '../core/markdown';
 import { mountQuiz } from '../engine/quiz/render';
-import { chosenLevel, conceptLink, emptyState, infoTip, setTitle, sourcesBlock, type Page } from './common';
+import { chosenLevel, conceptLink, emptyState, infoTip, setDescription, setTitle, sourcesBlock, type Page } from './common';
 import { examsOfBlock } from './exam-page';
 import { lessonStatus, placementDisposition, remainingShare } from './status';
 import { mountLab } from './terminal-section';
@@ -48,6 +48,7 @@ export function blockPage(id: string): Page {
     return { el: emptyState(UI.notFound, undefined, { label: UI.backHome, href: href({ name: 'home' }) }) };
   }
   setTitle(t(b.title));
+  setDescription(t(b.summary));
   const root = h('div.block-page');
   const draw = () => {
     clear(root);

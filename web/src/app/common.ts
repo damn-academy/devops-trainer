@@ -9,7 +9,7 @@ import { store } from '../core/store';
 import type { BlockId, DocRef, Level, Sources } from '../core/types';
 import { docChip, openDoc } from '../engine/docs/viewer';
 
-export { chosenLevel, setTitle } from './status';
+export { chosenLevel, setDescription, setTitle } from './status';
 
 export interface Page {
   el: HTMLElement;
