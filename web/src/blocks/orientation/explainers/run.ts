@@ -321,7 +321,7 @@ export const runModel = defineModel<P>({
         say: {
           memory: n.swap
             ? bi('Память переполнена, и части других программ уходят обратно на диск.', 'Memory is full, and pieces of other programs go back to the disk.')
-            : fmtb(bi('В память легла копия «Заметок». Теперь занято {u} из {r} ГБ.', 'A copy of “Notes” is in memory: {u} of {r} GB used.'), { u: ruNum(n.used), r: RAM_GB }),
+            : fmtb(bi('В память легла копия «Заметок» рядом с системой и другими программами. Теперь занято {u} из {r} ГБ.', 'A copy of “Notes” is in memory next to the system and other programs: {u} of {r} GB used.'), { u: ruNum(n.used), r: RAM_GB }),
         },
         states: { memory: n.swap ? 'warn' : 'on', disk: 'on' },
         values: { memory: gb(n.used) },

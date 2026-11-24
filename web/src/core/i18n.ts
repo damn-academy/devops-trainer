@@ -154,7 +154,7 @@ export const UI = {
   whereToLook: bi('Где искать?', 'Where to look?'),
   whereDidYouLook: bi('Где вы уже смотрели? Какие команды справки запускали?', 'Where have you looked already? Which help commands did you run?'),
   reset: bi('Сбросить машину', 'Reset machine'),
-  goals: bi('Цели', 'Goals'),
+  goals: bi('Задания', 'Tasks'),
   export: bi('Выгрузить прогресс', 'Export progress'),
   import: bi('Загрузить прогресс', 'Import progress'),
   progress: bi('Прогресс', 'Progress'),

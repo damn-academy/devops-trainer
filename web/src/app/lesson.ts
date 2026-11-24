@@ -8,7 +8,7 @@ import { registry } from '../core/registry';
 import { href } from '../core/router';
 import { store } from '../core/store';
 import type { Level, Mounted, Section } from '../core/types';
-import { conceptLink, emptyState, levelBadge, levelFor, setDescription, setTitle, sourcesBlock, type Page } from './common';
+import { emptyState, levelBadge, levelFor, setDescription, setTitle, sourcesBlock, type Page } from './common';
 import { renderSection } from './sections';
 import { crumbProfession } from './common';
 
@@ -87,7 +87,6 @@ export function lessonPage(id: string, focusSection?: string): Page {
         lesson.minutes ? h('span.muted', {}, `${lesson.minutes} ${t(bi('мин', 'min'))}`) : null,
         h('span.muted', {}, `${t(bi('Урок', 'Lesson'))} ${index + 1} / ${total}`),
       ),
-      lesson.introduces.length ? h('p.lesson-concepts', {}, h('span.k', {}, t(UI.introduces)), ' ', ...lesson.introduces.flatMap((c, i) => [i ? ', ' : '', conceptLink(c)])) : null,
       bar,
     ),
     body,
