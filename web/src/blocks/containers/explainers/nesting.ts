@@ -55,8 +55,8 @@ export const nestingModel = defineModel<P>({
     'Three setups you meet at work every day: containers inside a cloud VM, Kubernetes straight on your own servers, and a VM inside Kubernetes. Choose in “Parameters” what has to run, and at the last step the diagram shows where it goes and why.',
   ),
   intro: bi(
-    'Сейчас на схеме только железо облачного провайдера и его гипервизор. Нажмите «Начать с первого шага», а дальше переходите от шага к шагу кнопкой «Шаг вперёд». Три башни вырастут по очереди, каждая снизу вверх, от железа к приложению. Облачко у подсвеченного блока говорит, что этот блок делает.\n\nПосле первого прохода выберите в «Параметрах» другую задачу и посмотрите, в какую башню она попадёт на последнем шаге.',
-    'Now the diagram shows only the cloud provider’s hardware and its hypervisor. Press “Start from the first step”, then go on with “Step forward”: three towers grow one after another, each from the hardware up to the application. The callout at the highlighted block says what it does.\n\nAfter the first pass choose another task in “Parameters” and see which tower it goes to at the last step.',
+    'Сейчас на схеме только железо облачного провайдера и его гипервизор. А дальше переходите от шага к шагу кнопкой «Шаг вперёд». Три башни вырастут по очереди, каждая снизу вверх, от железа к приложению. Облачко у подсвеченного блока говорит, что этот блок делает.\n\nПосле первого прохода выберите в «Параметрах» другую задачу и посмотрите, в какую башню она попадёт на последнем шаге.',
+    'Now the diagram shows only the cloud provider’s hardware and its hypervisor. Then go on with “Step forward”: three towers grow one after another, each from the hardware up to the application. The callout at the highlighted block says what it does.\n\nAfter the first pass choose another task in “Parameters” and see which tower it goes to at the last step.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },

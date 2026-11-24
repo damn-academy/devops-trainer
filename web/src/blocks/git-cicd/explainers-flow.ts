@@ -39,8 +39,8 @@ export const mergeModel = defineModel<MergeP>({
     'A branch is a name on a commit. If main did not move on, a merge just moves it to the last commit of the other branch; if both branches moved on, Git compares them with their common ancestor and creates a commit with two parents; if both changed the same lines, it stops and asks you to decide.',
   ),
   intro: bi(
-    'Сейчас на схеме только коммит A и две ветки, которые на него указывают. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Новый коммит появляется на схеме в тот момент, когда Git его записывает. Подсвечен тот блок, который работает сейчас, а облачко рядом с ним говорит, что он делает.\n\nКогда дойдёте до конца, включите в «Параметрах» коммит B в main или флаг `--no-ff` и посмотрите, появится ли коммит слияния.',
-    'For now the diagram shows only commit A and the two branches pointing to it. Press “Start from the first step”, then go on with “Step forward”. New commits appear when they are made; the working block is highlighted and the callout says what it does.\n\nAt the end, switch on commit B on main or the `--no-ff` key in “Parameters” and see whether a merge commit appears.',
+    'Сейчас на схеме только коммит A и две ветки, которые на него указывают. А дальше листайте кнопкой «Шаг вперёд». Новый коммит появляется на схеме в тот момент, когда Git его записывает. Подсвечен тот блок, который работает сейчас, а облачко рядом с ним говорит, что он делает.\n\nКогда дойдёте до конца, включите в «Параметрах» коммит B в main или флаг `--no-ff` и посмотрите, появится ли коммит слияния.',
+    'For now the diagram shows only commit A and the two branches pointing to it. Then go on with “Step forward”. New commits appear when they are made; the working block is highlighted and the callout says what it does.\n\nAt the end, switch on commit B on main or the `--no-ff` key in “Parameters” and see whether a merge commit appears.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
@@ -314,8 +314,8 @@ export const artifactsModel = defineModel<ArtP>({
     'Every job starts on a clean machine. dist/ gets from the build to the test only as an artifact through the forge. The cache lies on the runner under a key and speeds up the next pipeline if the key matches and the job lands on the same runner; if not, the build takes longer but passes.',
   ),
   intro: bi(
-    'Сейчас на схеме только джоба сборки первого пайплайна. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». В верхнем ряду идёт первый пайплайн, внизу второй, а между ними лежат артефакты на сервере и кэш на раннере.\n\nКогда дойдёте до второй сборки, смените в «Параметрах» ключ кэша, измените файл package-lock.json или отправьте сборку на другой раннер и сравните время `npm ci` в счётчиках под схемой.',
-    'For now the diagram shows only the build job of the first pipeline. Press “Start from the first step”, then go on with “Step forward”. The top row is the first pipeline, the bottom one the second; between them are the artifacts on the server and the cache on the runner.\n\nOnce you reach the second build, change the cache key, change package-lock.json or send the build to another runner in “Parameters”, and compare the `npm ci` time in the counters under the diagram.',
+    'Сейчас на схеме только джоба сборки первого пайплайна. А дальше листайте кнопкой «Шаг вперёд». В верхнем ряду идёт первый пайплайн, внизу второй, а между ними лежат артефакты на сервере и кэш на раннере.\n\nКогда дойдёте до второй сборки, смените в «Параметрах» ключ кэша, измените файл package-lock.json или отправьте сборку на другой раннер и сравните время `npm ci` в счётчиках под схемой.',
+    'For now the diagram shows only the build job of the first pipeline. Then go on with “Step forward”. The top row is the first pipeline, the bottom one the second; between them are the artifacts on the server and the cache on the runner.\n\nOnce you reach the second build, change the cache key, change package-lock.json or send the build to another runner in “Parameters”, and compare the `npm ci` time in the counters under the diagram.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
@@ -605,8 +605,8 @@ export const dagModel = defineModel<DagP>({
     'A stage waits for the whole previous stage; needs lets a job start as soon as exactly the jobs it needs are done. A slow linter stops holding back the tests, but the graph must be kept in order: needs on a job that rules removed makes the pipeline invalid.',
   ),
   intro: bi(
-    'Сейчас на схеме только две джобы первой стадии, build и lint. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Подпись каждого шага на шкале показывает, на какой секунде пайплайна этот шаг происходит, а облачко рядом с джобой говорит, что она делает или чего ждёт.\n\nКогда дойдёте до конца, включите в «Параметрах» needs и сравните время всего пайплайна в счётчиках под схемой.',
-    'For now the diagram shows only the two jobs of the first stage, build and lint. Press “Start from the first step”, then go on with “Step forward”. The label of each step on the scale shows the pipeline second at which the step happens, and the callout next to a job says what it does or waits for.\n\nAt the end, switch needs on in “Parameters” and compare the whole pipeline time in the counters under the diagram.',
+    'Сейчас на схеме только две джобы первой стадии, build и lint. А дальше листайте кнопкой «Шаг вперёд». Подпись каждого шага на шкале показывает, на какой секунде пайплайна этот шаг происходит, а облачко рядом с джобой говорит, что она делает или чего ждёт.\n\nКогда дойдёте до конца, включите в «Параметрах» needs и сравните время всего пайплайна в счётчиках под схемой.',
+    'For now the diagram shows only the two jobs of the first stage, build and lint. Then go on with “Step forward”. The label of each step on the scale shows the pipeline second at which the step happens, and the callout next to a job says what it does or waits for.\n\nAt the end, switch needs on in “Parameters” and compare the whole pipeline time in the counters under the diagram.',
   ),
   legend: [
     { mark: 'active', text: bi('джоба, которая работает сейчас', 'the job working now') },
@@ -810,8 +810,8 @@ export const kubeDeployModel = defineModel<KdP>({
     'In the push model the job itself goes to the API server with its own key and changes the image in the Deployment; a new tag gives a new ReplicaSet. rollout status makes the job wait for the result, and a failed rollout turns the pipeline red. In the pull model CI has no key to the cluster: the job commits the tag to a configuration repository, and an agent inside the cluster brings the cluster to what is written there.',
   ),
   intro: bi(
-    'Сейчас на схеме только реестр с новым образом, джоба выкладки и то, что сейчас работает на тестовом стенде: Deployment и его ReplicaSet с подами прежней версии. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд».\n\nКогда пройдёте push-модель до конца, переключите в «Параметрах» модель выкладки на pull, а потом выберите тег latest и сравните, появятся ли новые поды.',
-    'For now the diagram shows only the registry with the new image, the deploy job and what runs on staging now: the Deployment and its ReplicaSet with the pods of the previous version. Press “Start from the first step”, then go on with “Step forward”.\n\nOnce you finish the push model, switch the deployment model to pull in “Parameters”, then choose the latest tag and compare whether new pods appear.',
+    'Сейчас на схеме только реестр с новым образом, джоба выкладки и то, что сейчас работает на тестовом стенде: Deployment и его ReplicaSet с подами прежней версии. А дальше листайте кнопкой «Шаг вперёд».\n\nКогда пройдёте push-модель до конца, переключите в «Параметрах» модель выкладки на pull, а потом выберите тег latest и сравните, появятся ли новые поды.',
+    'For now the diagram shows only the registry with the new image, the deploy job and what runs on staging now: the Deployment and its ReplicaSet with the pods of the previous version. Then go on with “Step forward”.\n\nOnce you finish the push model, switch the deployment model to pull in “Parameters”, then choose the latest tag and compare whether new pods appear.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },

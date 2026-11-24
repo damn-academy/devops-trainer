@@ -29,8 +29,8 @@ export const routeModel = defineModel<P>({
     'Computer h1 (10.0.1.10) pings h2 (10.0.2.10) in the next subnet; router r1 stands between the subnets. The diagram shows how each participant picks a line in its routing table and why the packet’s IP addresses stay the same while the frame’s MAC addresses change on every segment.',
   ),
   intro: b(
-    'Схема соберётся по шагам: сейчас на ней только компьютер h1 и его таблица маршрутов. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а карточка на линии показывает пакет и его TTL.\n\nПосле первого прохода уменьшите TTL до единицы, уберите у h2 маршрут обратно и попробуйте поломки в блоке «Сломать».',
-    'The diagram builds itself step by step: now it shows only h1 and its routing table. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the card on the line shows the packet and its TTL.\n\nAfter the first pass lower the TTL to one, remove h2’s route back and try the breaks in “Break it”.',
+    'Схема соберётся по шагам: сейчас на ней только компьютер h1 и его таблица маршрутов. А дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а карточка на линии показывает пакет и его TTL.\n\nПосле первого прохода уменьшите TTL до единицы, уберите у h2 маршрут обратно и попробуйте поломки в блоке «Сломать».',
+    'The diagram builds itself step by step: now it shows only h1 and its routing table. Then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the card on the line shows the packet and its TTL.\n\nAfter the first pass lower the TTL to one, remove h2’s route back and try the breaks in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('блок, который работает сейчас', 'the block working now') },

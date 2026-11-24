@@ -55,8 +55,8 @@ export const tcpModel = defineModel<TP>({
     'Client 10.0.0.1 connects to port 8080 on server 10.0.0.2. Time runs downwards: every next message is drawn lower, and the slope of an arrow shows that a message takes time to arrive. Under each side’s name you see its socket state.',
   ),
   intro: b(
-    'Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждое сообщение появляется на схеме в тот момент, когда его отправляют, а облачко у подсвеченной стороны говорит, что она делает.\n\nПосле первого прохода закройте порт на сервере, растяните время пути между машинами и включите фильтр в блоке «Сломать».',
-    'Press “Start from the first step”, then go on with “Step forward” above the diagram. Each message appears when it is sent, and the callout at the highlighted side says what it does.\n\nAfter the first pass close the port on the server, stretch the round-trip time and switch on the filter in “Break it”.',
+    'А дальше листайте кнопкой «Шаг вперёд» над схемой. Каждое сообщение появляется на схеме в тот момент, когда его отправляют, а облачко у подсвеченной стороны говорит, что она делает.\n\nПосле первого прохода закройте порт на сервере, растяните время пути между машинами и включите фильтр в блоке «Сломать».',
+    'Then go on with “Step forward” above the diagram. Each message appears when it is sent, and the callout at the highlighted side says what it does.\n\nAfter the first pass close the port on the server, stretch the round-trip time and switch on the filter in “Break it”.',
   ),
   legend: seqLegend,
   stopLabel: b('Соединение не установлено', 'No connection'),
@@ -282,8 +282,8 @@ export const tlsModel = defineModel<LP>({
     'You run curl https://shop.example/. The diagram shows how many round trips pass before the first byte of the answer and what an outsider on the path can see. Labels in curly braces are encrypted messages.',
   ),
   intro: b(
-    'Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Каждое сообщение появляется в тот момент, когда его отправляют, а облачко у подсвеченной стороны говорит, что она делает.\n\nПосле первого прохода растяните время пути до сервера, откройте соединение заранее, переключите версию протокола и включите поломки сертификата в блоке «Сломать».',
-    'Press “Start from the first step”, then go on with “Step forward” above the diagram. Each message appears when it is sent, and the callout at the highlighted side says what it does.\n\nAfter the first pass stretch the RTT, open the connection in advance, switch the protocol version and switch on the certificate breaks in “Break it”.',
+    'А дальше листайте кнопкой «Шаг вперёд» над схемой. Каждое сообщение появляется в тот момент, когда его отправляют, а облачко у подсвеченной стороны говорит, что она делает.\n\nПосле первого прохода растяните время пути до сервера, откройте соединение заранее, переключите версию протокола и включите поломки сертификата в блоке «Сломать».',
+    'Then go on with “Step forward” above the diagram. Each message appears when it is sent, and the callout at the highlighted side says what it does.\n\nAfter the first pass stretch the RTT, open the connection in advance, switch the protocol version and switch on the certificate breaks in “Break it”.',
   ),
   legend: seqLegend,
   stopLabel: b('Запрос не отправлен', 'The request was not sent'),

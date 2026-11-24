@@ -95,8 +95,8 @@ export const loopChainModel = defineModel<P>({
     'No program “runs your command”: four loops each read one object and write another. One change passes through them as a wave.',
   ),
   intro: bi(
-    'Сейчас на схеме вы, API-сервер и Deployment web, в котором записано три пода. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Вы попросите пять подов, и петли будут появляться по одной вместе с объектом, который каждая пишет. Потом смените в «Параметрах» образ вместо числа подов, а затем остановите в блоке «Сломать» одну из петель и посмотрите, где оборвётся волна.',
-    'For now: you, the API server and Deployment web with three pods. Press “Start from the first step” and go on with “Step forward”: you ask for five pods, and the loops appear one by one with the object each writes. Then change the image instead, and stop a loop in “Break it”.',
+    'Сейчас на схеме вы, API-сервер и Deployment web, в котором записано три пода. А дальше листайте кнопкой «Шаг вперёд». Вы попросите пять подов, и петли будут появляться по одной вместе с объектом, который каждая пишет. Потом смените в «Параметрах» образ вместо числа подов, а затем остановите в блоке «Сломать» одну из петель и посмотрите, где оборвётся волна.',
+    'For now: you, the API server and Deployment web with three pods. Go on with “Step forward”: you ask for five pods, and the loops appear one by one with the object each writes. Then change the image instead, and stop a loop in “Break it”.',
   ),
   legend: [
     ...LEGEND_BASE,

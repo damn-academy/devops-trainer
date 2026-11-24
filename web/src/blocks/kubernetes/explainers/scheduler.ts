@@ -109,8 +109,8 @@ export const schedulerModel = defineModel<P>({
     'A new pod has no node; kube-scheduler picks one: filters drop the nodes where it does not fit or may not go, scoring picks the best of the rest, and the choice is written. The scheduler compares requests, not real usage.',
   ),
   intro: bi(
-    'Сейчас на схеме под, очередь и планировщик. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Узлы появятся, когда планировщик начнёт их проверять. Под каждым узлом написано, сколько ресурсов на нём уже занято, а после проверки — почему узел не подошёл или сколько баллов он получил. Потом увеличьте в «Параметрах» запрос памяти так, чтобы под не поместился никуда, и прочитайте сообщение, которое напишет планировщик.',
-    'For now the diagram shows the pod, the queue and the scheduler. Press “Start from the first step”, then go on with “Step forward”. The nodes appear when the scheduler checks them; under each node you see its load, and after the check why it failed or its score. Then raise the memory request in “Parameters” until the pod fits nowhere and read the scheduler’s message.',
+    'Сейчас на схеме под, очередь и планировщик. А дальше листайте кнопкой «Шаг вперёд». Узлы появятся, когда планировщик начнёт их проверять. Под каждым узлом написано, сколько ресурсов на нём уже занято, а после проверки — почему узел не подошёл или сколько баллов он получил. Потом увеличьте в «Параметрах» запрос памяти так, чтобы под не поместился никуда, и прочитайте сообщение, которое напишет планировщик.',
+    'For now the diagram shows the pod, the queue and the scheduler. Then go on with “Step forward”. The nodes appear when the scheduler checks them; under each node you see its load, and after the check why it failed or its score. Then raise the memory request in “Parameters” until the pod fits nowhere and read the scheduler’s message.',
   ),
   legend: [
     ...LEGEND_BASE,

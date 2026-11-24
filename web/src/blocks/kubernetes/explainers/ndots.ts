@@ -65,8 +65,8 @@ export const ndotsModel = defineModel<P>({
     'The pod resolver appends the search domains while the name has fewer dots than ndots: handy for your services, costly for external names.',
   ),
   intro: bi(
-    'Сейчас на схеме под и его файл /etc/resolv.conf. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Приложение попросит адрес api.github.com, и каждый шаг будет одним вариантом имени, который резолвер отправляет в CoreDNS. Имя написано на карточке, которая движется по линии. Следите за счётчиком запросов под схемой, а потом выбирайте в «Параметрах» другие имена.',
-    'For now: the pod and its /etc/resolv.conf. Press “Start from the first step” and go on with “Step forward”: the application asks for api.github.com, and each step is one candidate name sent to CoreDNS, written on the card. Watch the query counter, then pick other names in “Parameters”.',
+    'Сейчас на схеме под и его файл /etc/resolv.conf. А дальше листайте кнопкой «Шаг вперёд». Приложение попросит адрес api.github.com, и каждый шаг будет одним вариантом имени, который резолвер отправляет в CoreDNS. Имя написано на карточке, которая движется по линии. Следите за счётчиком запросов под схемой, а потом выбирайте в «Параметрах» другие имена.',
+    'For now: the pod and its /etc/resolv.conf. Go on with “Step forward”: the application asks for api.github.com, and each step is one candidate name sent to CoreDNS, written on the card. Watch the query counter, then pick other names in “Parameters”.',
   ),
   legend: [
     ...LEGEND_BASE,

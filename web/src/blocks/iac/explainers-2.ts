@@ -82,8 +82,8 @@ export const varModel = defineModel<VarP>({
     'The webserver role writes the line `listen {{ http_port }};` into the nginx config, and `http_port` may be set in seven places. Ansible walks these places from the bottom up, like the steps of a ladder, and a value from a higher step overrides one from a lower step. The order in which files are read decides nothing. Under the name of host web1 you see which port it finally got, and under the diagram you see in how many places the value was set.',
   ),
   intro: bi(
-    'Слева стоят семь мест, где можно задать переменную, от самого слабого внизу до самого сильного вверху. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. За каждый шаг Ansible поднимается по лестнице на одну ступень, и рядом с ним видно, какое значение у переменной сейчас.\n\nКогда дойдёте до хоста web1, включите в «Параметрах» другие места и пройдите лестницу ещё раз.',
-    'On the left are the seven places where the variable may be set, from the weakest at the bottom to the strongest at the top. Press “Start from the first step”, then go on with “Step forward” above the diagram: Ansible climbs one step of the ladder at a time, and next to it you see the variable’s current value.\n\nOnce you reach host web1, switch on other places in “Parameters” and climb the ladder again.',
+    'Слева стоят семь мест, где можно задать переменную, от самого слабого внизу до самого сильного вверху. А дальше листайте кнопкой «Шаг вперёд» над схемой. За каждый шаг Ansible поднимается по лестнице на одну ступень, и рядом с ним видно, какое значение у переменной сейчас.\n\nКогда дойдёте до хоста web1, включите в «Параметрах» другие места и пройдите лестницу ещё раз.',
+    'On the left are the seven places where the variable may be set, from the weakest at the bottom to the strongest at the top. Then go on with “Step forward” above the diagram: Ansible climbs one step of the ladder at a time, and next to it you see the variable’s current value.\n\nOnce you reach host web1, switch on other places in “Parameters” and climb the ladder again.',
   ),
   legend: [
     { mark: 'active', text: bi('ступень, которую Ansible читает сейчас', 'the step Ansible reads now') },
@@ -389,8 +389,8 @@ export const addrModel = defineModel<AddrP>({
     'You moved the description of the site’s machine into a module, and its address in the code changed from edu_vm.web to module.web.edu_vm.this. Terraform recognises its objects only by the address in the state, so without a hint a new address means a new machine to it. A moved block renames the entry in the state without touching the cloud. Under the diagram you see how many machines the plan creates and destroys and how many seconds the site spends without a server.',
   ),
   intro: bi(
-    'Схема соберётся у вас на глазах: сейчас на ней только код и terraform plan. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного участника говорит, что он делает, а карточка на линии показывает, что он передаёт дальше.\n\nСначала пройдите план без блока moved, а потом включите блок в «Параметрах» и сравните.',
-    'The diagram builds itself as you go: now it shows only the code and terraform plan. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted participant says what it does, and the card on the line shows what it hands on.\n\nWalk the plan without the moved block first, then switch the block on in “Parameters” and compare.',
+    'Схема соберётся у вас на глазах: сейчас на ней только код и terraform plan. А дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного участника говорит, что он делает, а карточка на линии показывает, что он передаёт дальше.\n\nСначала пройдите план без блока moved, а потом включите блок в «Параметрах» и сравните.',
+    'The diagram builds itself as you go: now it shows only the code and terraform plan. Then go on with “Step forward” above the diagram. The callout at the highlighted participant says what it does, and the card on the line shows what it hands on.\n\nWalk the plan without the moved block first, then switch the block on in “Parameters” and compare.',
   ),
   legend: ADDR_LEGEND(bi('машина сайта в облаке', 'the site’s machine in the cloud')),
   stopLabel: bi('План остановился', 'The plan stopped'),
@@ -547,8 +547,8 @@ export const importModel = defineModel<AddrP>({
     'At night the on-call engineer created the machine vm-4f91 in the cloud console, and you described it in the code as edu_vm.legacy. For Terraform only what is in the state exists, so without a hint it creates a second identical machine. An import block adds an entry with the existing machine’s ID to the state and creates nothing. Under the diagram you see how many machines the plan creates and how many it takes over.',
   ),
   intro: bi(
-    'Схема соберётся у вас на глазах: сейчас на ней только код и terraform plan. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного участника говорит, что он делает, а карточка на линии показывает, что он передаёт дальше.\n\nСначала пройдите план без блока import, а потом включите блок в «Параметрах» и сравните.',
-    'The diagram builds itself as you go: now it shows only the code and terraform plan. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted participant says what it does, and the card on the line shows what it hands on.\n\nWalk the plan without the import block first, then switch the block on in “Parameters” and compare.',
+    'Схема соберётся у вас на глазах: сейчас на ней только код и terraform plan. А дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного участника говорит, что он делает, а карточка на линии показывает, что он передаёт дальше.\n\nСначала пройдите план без блока import, а потом включите блок в «Параметрах» и сравните.',
+    'The diagram builds itself as you go: now it shows only the code and terraform plan. Then go on with “Step forward” above the diagram. The callout at the highlighted participant says what it does, and the card on the line shows what it hands on.\n\nWalk the plan without the import block first, then switch the block on in “Parameters” and compare.',
   ),
   legend: ADDR_LEGEND(bi('машина, созданная в консоли', 'the machine made in the console')),
   stopLabel: bi('План остановился', 'The plan stopped'),

@@ -124,8 +124,8 @@ export const netpolModel = defineModel<P>({
     'Three pods try to reach pay, frontend also the internet. The policy decides, the enforcer turns it into kernel rules. The diagram walks each connection and says why it passed or was dropped.',
   ),
   intro: bi(
-    'Сейчас на схеме платёжный сервис pay, политика рядом с ним и исполнитель политик в центре, а пунктирные рамки показывают три namespace. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Каждый шаг показывает одно соединение, и подпись объясняет, какое правило его пропустило или отбросило. Зелёная линия означает, что соединение прошло, красная — что пакет отброшен. Потом переключайте в «Параметрах» политику между вариантами «И» и «ИЛИ».',
-    'For now: the pay service, its policy and the enforcer, inside three namespace frames. Press “Start from the first step” and go on with “Step forward”: each step is one connection, and the caption says which rule let it through or dropped it. Green means passed, red dropped. Then switch the policy between AND and OR in “Parameters”.',
+    'Сейчас на схеме платёжный сервис pay, политика рядом с ним и исполнитель политик в центре, а пунктирные рамки показывают три namespace. А дальше листайте кнопкой «Шаг вперёд». Каждый шаг показывает одно соединение, и подпись объясняет, какое правило его пропустило или отбросило. Зелёная линия означает, что соединение прошло, красная — что пакет отброшен. Потом переключайте в «Параметрах» политику между вариантами «И» и «ИЛИ».',
+    'For now: the pay service, its policy and the enforcer, inside three namespace frames. Go on with “Step forward”: each step is one connection, and the caption says which rule let it through or dropped it. Green means passed, red dropped. Then switch the policy between AND and OR in “Parameters”.',
   ),
   legend: [
     ...LEGEND_BASE,

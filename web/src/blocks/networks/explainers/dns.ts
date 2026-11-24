@@ -27,8 +27,8 @@ export const dnsModel = defineModel<P>({
     'You run curl https://shop.example/, and curl needs the server’s address. The diagram shows the first request with all caches empty and a second request for the same name after a set time. Under the resolver’s name you see how many more seconds it keeps the answer.',
   ),
   intro: b(
-    'Схема соберётся по шагам: сейчас на ней только curl, системная библиотека и файл /etc/hosts. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а карточка на линии показывает вопрос или ответ.\n\nПосле первого прохода подвиньте время второго запроса и TTL записи, запишите имя в /etc/hosts, а потом попробуйте обе поломки в блоке «Сломать».',
-    'The diagram builds itself step by step: now it shows only curl, the system library and /etc/hosts. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the card on the line shows a question or an answer.\n\nAfter the first pass move the time of the second request and the record’s TTL, put the name into /etc/hosts, then try both breaks in “Break it”.',
+    'Схема соберётся по шагам: сейчас на ней только curl, системная библиотека и файл /etc/hosts. А дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а карточка на линии показывает вопрос или ответ.\n\nПосле первого прохода подвиньте время второго запроса и TTL записи, запишите имя в /etc/hosts, а потом попробуйте обе поломки в блоке «Сломать».',
+    'The diagram builds itself step by step: now it shows only curl, the system library and /etc/hosts. Then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the card on the line shows a question or an answer.\n\nAfter the first pass move the time of the second request and the record’s TTL, put the name into /etc/hosts, then try both breaks in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('блок, который работает сейчас', 'the block working now') },

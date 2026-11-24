@@ -62,8 +62,8 @@ export const podNetworkModel = defineModel<P>({
     'Every pod has its own IP and pods talk without NAT. How a packet gets there is up to the CNI plugin: a bridge on one node, a route or an envelope between nodes.',
   ),
   intro: bi(
-    'Сейчас на схеме три пода: A и B на узле worker-1 и C на узле worker-2. Нажмите «Начать с первого шага». Под A отправит пакет, и дальше каждый шаг будет одним местом, через которое проходит пакет. Мосты, маршруты и сеть узлов появятся, когда пакет до них дойдёт, а карточка на линии покажет, какие адреса написаны на пакете. Потом поменяйте в «Параметрах» цель и способ доставки между узлами.',
-    'For now three pods: A and B on worker-1, C on worker-2. Press “Start from the first step”: pod A sends a packet, and each step is one place it passes. The card on the line shows the addresses on the packet. Then change the target and the delivery mode in “Parameters”.',
+    'Сейчас на схеме три пода: A и B на узле worker-1 и C на узле worker-2. Под A отправит пакет, и дальше каждый шаг будет одним местом, через которое проходит пакет. Мосты, маршруты и сеть узлов появятся, когда пакет до них дойдёт, а карточка на линии покажет, какие адреса написаны на пакете. Потом поменяйте в «Параметрах» цель и способ доставки между узлами.',
+    'For now three pods: A and B on worker-1, C on worker-2. Pod A sends a packet, and each step is one place it passes. The card on the line shows the addresses on the packet. Then change the target and the delivery mode in “Parameters”.',
   ),
   legend: [
     ...LEGEND_BASE,

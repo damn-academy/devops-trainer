@@ -51,8 +51,8 @@ export const ingressPathModel = defineModel<P>({
     'A request reaches a node port (directly or via a load balancer), then the ingress proxy that picks a Service by host and path, then the pod. The proxy has its own timeout, and 502, 503 and 504 often come from it.',
   ),
   intro: bi(
-    'Сейчас на схеме браузер пользователя и под приложения. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Участники между браузером и подом будут появляться, когда до них дойдёт запрос. Под схемой показан код ответа, который получит браузер. Потом увеличьте в «Параметрах» время ответа пода так, чтобы оно превысило тайм-аут прокси, и посмотрите, кто вернёт ошибку.',
-    'For now: the browser and the pod. Press “Start from the first step” and go on with “Step forward”: the hops appear as the request reaches them. The status code is shown under the diagram. Then raise the pod’s response time above the proxy timeout and see who returns the error.',
+    'Сейчас на схеме браузер пользователя и под приложения. А дальше листайте кнопкой «Шаг вперёд». Участники между браузером и подом будут появляться, когда до них дойдёт запрос. Под схемой показан код ответа, который получит браузер. Потом увеличьте в «Параметрах» время ответа пода так, чтобы оно превысило тайм-аут прокси, и посмотрите, кто вернёт ошибку.',
+    'For now: the browser and the pod. Go on with “Step forward”: the hops appear as the request reaches them. The status code is shown under the diagram. Then raise the pod’s response time above the proxy timeout and see who returns the error.',
   ),
   legend: [
     ...LEGEND_BASE,

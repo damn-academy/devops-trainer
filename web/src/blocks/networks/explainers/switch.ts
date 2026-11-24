@@ -57,8 +57,8 @@ export const switchModel = defineModel<P>({
     'Computer A sends a frame to computer B; all four computers are plugged into one switch. The diagram shows how the switch fills its MAC table and when it sends copies of a frame out of every port. Pale computers did not receive the frame.',
   ),
   intro: b(
-    'Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а карточка на кабеле показывает, кому адресован кадр. Таблица коммутатора растёт под его названием.\n\nПосле первого прохода выберите заполненную таблицу, отправьте кадр всем и включите в блоке «Сломать» выдернутый кабель.',
-    'Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the card on the cable shows whom the frame is addressed to. The switch table grows under its name.\n\nAfter the first pass choose a filled table, send the frame to everyone and switch on the unplugged cable in “Break it”.',
+    'А дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а карточка на кабеле показывает, кому адресован кадр. Таблица коммутатора растёт под его названием.\n\nПосле первого прохода выберите заполненную таблицу, отправьте кадр всем и включите в блоке «Сломать» выдернутый кабель.',
+    'Then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the card on the cable shows whom the frame is addressed to. The switch table grows under its name.\n\nAfter the first pass choose a filled table, send the frame to everyone and switch on the unplugged cable in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('блок, который работает сейчас', 'the block working now') },

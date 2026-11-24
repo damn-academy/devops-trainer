@@ -59,8 +59,8 @@ export const etcdRestoreModel = defineModel<P>({
     'Snapshot from the running etcd, restore from the file into a new directory, then point the static pod at it. Everything written after the snapshot is lost.',
   ),
   intro: bi(
-    'Сейчас на схеме API-сервер и работающий etcd. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». По ходу вы снимете снимок, кластер поработает ещё какое-то время, кто-то удалит namespace, и вы восстановитесь. Инструменты, файл снимка, новый каталог и манифест etcd появятся, когда до них дойдёт дело. Счётчики под схемой покажут, сколько объектов вернулось и сколько потеряно. Потом поменяйте в «Параметрах» инструмент и включите поломки.',
-    'For now: the API server and the running etcd. Press “Start from the first step” and go on with “Step forward”: you take a snapshot, the cluster works on, someone deletes a namespace, and you restore. The counters show objects back and lost. Then change the tool and switch on the breaks.',
+    'Сейчас на схеме API-сервер и работающий etcd. А дальше листайте кнопкой «Шаг вперёд». По ходу вы снимете снимок, кластер поработает ещё какое-то время, кто-то удалит namespace, и вы восстановитесь. Инструменты, файл снимка, новый каталог и манифест etcd появятся, когда до них дойдёт дело. Счётчики под схемой покажут, сколько объектов вернулось и сколько потеряно. Потом поменяйте в «Параметрах» инструмент и включите поломки.',
+    'For now: the API server and the running etcd. Go on with “Step forward”: you take a snapshot, the cluster works on, someone deletes a namespace, and you restore. The counters show objects back and lost. Then change the tool and switch on the breaks.',
   ),
   legend: [
     ...LEGEND_BASE,

@@ -71,8 +71,8 @@ export const servicePathModel = defineModel<P>({
     'A ClusterIP is on no interface: the node kernel replaces it with a pod IP by rules kube-proxy built from the EndpointSlice. The diagram counts how 100 requests spread over the pods.',
   ),
   intro: bi(
-    'Сейчас на схеме под client и три пода сервиса web. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Под client выполнит `curl http://web`, и схема покажет, кто превращает имя web в адрес конкретного пода. Карточка на линии показывает адрес назначения пакета, и следите, как он меняется. Потом меняйте в «Параметрах» число подов и включите повторное использование соединения (keep-alive), а напоследок сломайте селектор или порт в блоке «Сломать».',
-    'For now: pod client and the three pods of Service web. Press “Start from the first step” and go on with “Step forward”: client runs `curl http://web`, and the diagram shows who turns the name into a pod address. Watch the destination on the card change. Then change the pod count and keep-alive, and break the selector or the port.',
+    'Сейчас на схеме под client и три пода сервиса web. А дальше листайте кнопкой «Шаг вперёд». Под client выполнит `curl http://web`, и схема покажет, кто превращает имя web в адрес конкретного пода. Карточка на линии показывает адрес назначения пакета, и следите, как он меняется. Потом меняйте в «Параметрах» число подов и включите повторное использование соединения (keep-alive), а напоследок сломайте селектор или порт в блоке «Сломать».',
+    'For now: pod client and the three pods of Service web. Go on with “Step forward”: client runs `curl http://web`, and the diagram shows who turns the name into a pod address. Watch the destination on the card change. Then change the pod count and keep-alive, and break the selector or the port.',
   ),
   legend: [
     ...LEGEND_BASE,

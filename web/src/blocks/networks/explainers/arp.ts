@@ -23,8 +23,8 @@ export const arpModel = defineModel<P>({
     'Computer A (192.168.1.10) wants to send a packet to its neighbour B (192.168.1.20). It knows the neighbour’s IP address but not the MAC address a frame needs. The diagram shows how ARP asks the whole network and how the answer gets into the ARP cache, shown under each computer’s name.',
   ),
   intro: b(
-    'Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а карточка на кабеле показывает вопрос ARP, ответ на него или сам пакет.\n\nПосле первого прохода включите параметр, при котором сосед уже записан в кэше, а потом выключите компьютер B в блоке «Сломать».',
-    'Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the card on the cable shows the ARP question, its answer or the packet itself.\n\nAfter the first pass switch on the knob that puts the neighbour into the cache, then switch computer B off in “Break it”.',
+    'А дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а карточка на кабеле показывает вопрос ARP, ответ на него или сам пакет.\n\nПосле первого прохода включите параметр, при котором сосед уже записан в кэше, а потом выключите компьютер B в блоке «Сломать».',
+    'Then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the card on the cable shows the ARP question, its answer or the packet itself.\n\nAfter the first pass switch on the knob that puts the neighbour into the cache, then switch computer B off in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('блок, который работает сейчас', 'the block working now') },
