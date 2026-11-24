@@ -111,7 +111,7 @@ export function blockPage(id: string): Page {
         ? h(
             'section',
             {},
-            h('h2', {}, t(bi('Объяснения процессов', 'Process explainers'))),
+            h('h2', {}, t(bi('Интерактивные схемы из уроков', 'Interactive diagrams from the lessons'))),
             h('ul.explainer-list', {}, ...explainers.map((e) => h('li', {}, h('a', { href: href({ name: 'explainer', id: e.id }) }, t(e.title)), e.summary ? h('span.muted', {}, ' — ', ...renderInline(t(e.summary))) : null))),
           )
         : null,
