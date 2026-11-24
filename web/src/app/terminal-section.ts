@@ -8,7 +8,7 @@ import { snapshotForFeedback } from '../engine/terminal/feedback';
 
 import { evaluateCheck } from '../core/check';
 import { clear, h, icon, toast } from '../core/dom';
-import { bi, t, UI, type Bi } from '../core/i18n';
+import { bi, fmt, t, UI, type Bi } from '../core/i18n';
 import { renderInline } from '../core/markdown';
 import { store } from '../core/store';
 import type { BlockId, DocStep, Facts, HintLevel, Level, Mounted, Task, TerminalSetup } from '../core/types';
@@ -69,6 +69,8 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   let unsubscribeSource: (() => void) | undefined;
 
   const goals = h('ol.lab-goals');
+  // Why number 1 is lit and 2 is not: tasks run in order, the caption says which one is now.
+  const progress = h('p.small.muted.lab-progress', { 'aria-live': 'polite' });
   const termBox = h('div.lab-term-box');
   const status = h('div.lab-status', { 'aria-live': 'polite' });
   const expandBtn = h('button.btn.ghost.small', { type: 'button', 'aria-pressed': 'false' }, t(bi('Расширить терминал', 'Expand terminal')));
@@ -76,7 +78,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   const el = h(
     'div.lab',
     { 'data-exam': o.exam ? 'true' : undefined },
-    h('div.lab-left', {}, o.intro ? prose(o.intro) : null, h('h4.lab-h', {}, t(UI.goals)), goals, status),
+    h('div.lab-left', {}, o.intro ? prose(o.intro) : null, h('h4.lab-h', {}, t(UI.goals)), progress, goals, status),
     h('div.lab-right', {}, h('div.lab-bar', {}, h('span.lab-env', {}, icon('term'), t(TL.sim)), expandBtn, resetBtn), termBox),
   );
   clear(root);
@@ -103,6 +105,10 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   const renderGoals = () => {
     clear(goals);
     const current = o.tasks.find((x) => !passed.has(x.id));
+    const idx = current ? o.tasks.indexOf(current) + 1 : o.tasks.length;
+    progress.textContent = current
+      ? t(fmt(bi('Выполняются по очереди сверху вниз: сейчас задание {i} из {n}.', 'They run in order, top to bottom: now task {i} of {n}.'), { i: String(idx), n: String(o.tasks.length) }))
+      : t(bi('Все задания выполнены.', 'All tasks are done.'));
     for (const [i, task] of o.tasks.entries()) {
       const done = passed.has(task.id);
       const step = stepFor(task);
