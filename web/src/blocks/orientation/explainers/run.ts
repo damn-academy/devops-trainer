@@ -47,11 +47,11 @@ export const runModel = defineModel<P>({
   block: 'orient',
   title: bi('Что происходит, когда вы запускаете программу', 'What happens when you start a program'),
   summary: bi(
-    'Вы дважды щёлкаете по значку программы «Заметки». Программа лежит на диске, поэтому её сначала копируют в память, потом процессор выполняет её инструкции, и на экране появляется окно. Письмо, которое вы напечатаете в этом окне, хранится только в памяти, пока вы не нажмёте «Сохранить».',
+    'Вы дважды щёлкаете по иконке программы «Заметки». Программа лежит на диске, поэтому её сначала копируют в память, потом процессор выполняет её инструкции, и на экране появляется окно. Письмо, которое вы напечатаете в этом окне, хранится только в памяти, пока вы не нажмёте «Сохранить».',
     'You double-click the icon of the “Notes” program. The program lies on the disk, so it is first copied into memory, then the processor carries out its instructions and a window appears. The letter you type in that window lives only in memory until you press “Save”.',
   ),
   intro: bi(
-    'Схема соберётся у вас на глазах, а сейчас на ней только вы и диск, на котором лежит программа. Нажмите «Шаг вперёд», и вы увидите, что происходит после двойного щелчка по значку.',
+    'Схема соберётся у вас на глазах, а сейчас на ней только вы и диск, на котором лежит программа. Нажмите «Шаг вперёд», и вы увидите, что происходит после двойного щелчка по иконке.',
     'The diagram will fill in before your eyes, and now it shows only you and the disk the program lies on. Press “Step forward”, and you will see what happens after a double click on the icon.',
   ),
   legend: [
@@ -242,14 +242,14 @@ export const runModel = defineModel<P>({
     },
     {
       id: 'no-disk',
-      label: bi('Файл программы удалили с диска, а значок оставили', 'The program file was deleted from the disk, and the icon was kept'),
+      label: bi('Файл программы удалили с диска, а иконка оставили', 'The program file was deleted from the disk, and the icon was kept'),
       remove: ['disk', 'e-load'],
       boundary: 'storage',
       predict: {
-        prompt: bi('Значок «Заметок» на рабочем столе остался, а файл программы с диска удалили. Что произойдёт, когда вы дважды щёлкнете по значку?', 'The icon is still there, but the program file was deleted. What happens on a double click?'),
+        prompt: bi('Значок «Заметок» на рабочем столе остался, а файл программы с диска удалили. Что произойдёт, когда вы дважды щёлкнете по иконке?', 'The icon is still there, but the program file was deleted. What happens on a double click?'),
         options: [
           { id: 'error', text: bi('Появится ошибка, потому что копировать в память нечего', 'An error appears, because there is nothing to copy into memory') },
-          { id: 'runs', text: bi('Программа запустится, потому что значок и есть программа', 'The program starts, because the icon is the program') },
+          { id: 'runs', text: bi('Программа запустится, потому что иконка и есть программа', 'The program starts, because the icon is the program') },
         ],
         resolve: (_prev, next) => (next.some((s) => s.broken) ? 'error' : 'runs'),
       },
@@ -269,13 +269,13 @@ export const runModel = defineModel<P>({
         label: bi('щелчок', 'click'),
         caption: fmtb(
           bi(
-            'Вы дважды щёлкаете по значку «Заметки». Значок только указывает, где лежит программа, а сама программа хранится на диске в файле размером {s} МБ. Пока её не запустили, это такие же данные, как фотография.',
+            'Вы дважды щёлкаете по иконке «Заметки». Значок только указывает, где лежит программа, а сама программа хранится на диске в файле размером {s} МБ. Пока её не запустили, это такие же данные, как фотография.',
             'You double-click the “Notes” icon. The icon only points to where the program lies; the program itself is a {s} MB file on the disk. Until it is started, it is data like a photo.',
           ),
           { s: p.size },
         ),
         focus: ['you'],
-        say: { you: bi('Вы дважды щёлкаете по значку программы «Заметки».', 'You double-click the “Notes” icon.') },
+        say: { you: bi('Вы дважды щёлкаете по иконке программы «Заметки».', 'You double-click the “Notes” icon.') },
         states: { ...startWith(ALL, 'you', 'disk'), you: 'on' },
         values: { disk: tr(`notes · ${p.size} МБ`, `notes · ${p.size} MB`), memory: gb(before), cpu: tr('3 ГГц', '3 GHz') },
         fill: { memory: before / RAM_GB },
@@ -286,7 +286,7 @@ export const runModel = defineModel<P>({
       steps.push({
         id: 'missing',
         label: bi('файла нет', 'no file'),
-        caption: bi('Компьютер идёт на диск за файлом программы и не находит его, потому что файл удалили, а значок остался. Копировать в память нечего, поэтому программа не запустится, сколько бы вы ни щёлкали.', 'The computer goes to the disk for the program file and does not find it. There is nothing to copy into memory, so the program will not start.'),
+        caption: bi('Компьютер идёт на диск за файлом программы и не находит его, потому что файл удалили, а иконка остался. Копировать в память нечего, поэтому программа не запустится, сколько бы вы ни щёлкали.', 'The computer goes to the disk for the program file and does not find it. There is nothing to copy into memory, so the program will not start.'),
         focus: ['disk'],
         say: { disk: bi('Файла «Заметок» на диске больше нет, и копировать в память нечего.', 'The “Notes” file is gone; there is nothing to copy.') },
         states: { disk: 'err' },

@@ -43,7 +43,7 @@ export const releaseModel = defineModel<P>({
   id: 'orient.release',
   frame: 'visible',
   block: 'orient',
-  title: bi('От исходного кода до выпуска с номером', 'From source code to a numbered release'),
+  title: bi('От исходного кода до релиза с номером', 'From source code to a numbered release'),
   summary: bi(
     'Программист правит текст программы, сборка превращает этот текст в файл, который можно запустить, файл получает номер версии и ложится на полку выпусков, а пользователи по номеру решают, обновляться ли им. Сейчас у пользователей версия 1.4.2.',
     'A programmer edits the program’s text, the build turns it into a runnable file, the file gets a version number and goes onto the shelf of releases, and the users decide by the number whether to upgrade. They now run 1.4.2.',
@@ -55,12 +55,12 @@ export const releaseModel = defineModel<P>({
   legend: [
     { mark: 'active', text: bi('тот, кто работает сейчас', 'the one working now') },
     { mark: 'say', text: bi('что он делает', 'what it does') },
-    { mark: 'token', text: bi('правка, файл программы или номер выпуска', 'the edit, the program file or the number') },
+    { mark: 'token', text: bi('правка, файл программы или номер релиза', 'the edit, the program file or the number') },
     { mark: 'icon:user', text: bi('люди, то есть программист и пользователи', 'people, that is, the programmer and the users') },
     { mark: 'icon:file', text: bi('исходный код', 'source code') },
     { mark: 'icon:process', text: bi('сборка', 'the build') },
     { mark: 'icon:container', text: bi('готовый файл программы', 'the program file') },
-    { mark: 'icon:folder', text: bi('полка выпусков с номерами', 'the shelf of numbered releases') },
+    { mark: 'icon:folder', text: bi('полка релизов с номерами', 'the shelf of numbered releases') },
     { mark: 'warn', text: bi('обновляться без подготовки опасно', 'upgrading blindly is risky') },
     { mark: 'err', text: bi('здесь нашли ошибку или затёрли выпуск', 'the error was found here, or the release lost') },
   ],
@@ -151,7 +151,7 @@ export const releaseModel = defineModel<P>({
   ],
   metrics: [
     { id: 'buildSec', label: bi('время сборки, секунд', 'build time, seconds') },
-    { id: 'released', label: bi('сколько выпусков на полке', 'releases on the shelf') },
+    { id: 'released', label: bi('сколько релизов на полке', 'releases on the shelf') },
   ],
   run(p, broken): Step[] {
     const v = nextVersion(p.change);
@@ -226,7 +226,7 @@ export const releaseModel = defineModel<P>({
         focus: ['e-tag', 'shelf'],
         reveal: ['shelf', 'e-tag', 'users'],
         tokens: [{ edge: 'e-tag', label: 'latest' }],
-        say: { shelf: bi('На полке лежит один файл «последняя», а прежние выпуски затёрты.', 'One “latest” file; the old releases are overwritten.') },
+        say: { shelf: bi('На полке лежит один файл «последняя», а прежние релизы затёрты.', 'One “latest” file; the old releases are overwritten.') },
         states: { shelf: 'err', users: 'warn' },
         values: { shelf: 'latest', users: tr('у всех latest (?)', 'on latest (?)') },
         metrics: { buildSec, released: 1 },
@@ -241,7 +241,7 @@ export const releaseModel = defineModel<P>({
       focus: ['e-tag', 'shelf'],
       reveal: ['shelf', 'e-tag'],
       tokens: [{ edge: 'e-tag', label: v }],
-      say: { shelf: fmtb(bi('На полке появился выпуск {v} рядом с 1.4.1 и 1.4.2.', 'Release {v} joins 1.4.1 and 1.4.2.'), { v }) },
+      say: { shelf: fmtb(bi('На полке появился релиз {v} рядом с 1.4.1 и 1.4.2.', 'Release {v} joins 1.4.1 and 1.4.2.'), { v }) },
       states: { shelf: 'on' },
       values: { shelf: `1.4.1 · 1.4.2 · ${v}`, artifact: v },
       metrics: { buildSec, released: 3 },
@@ -250,7 +250,7 @@ export const releaseModel = defineModel<P>({
       steps.push({
         id: 'crash',
         label: bi('ошибка у людей', 'error for users'),
-        caption: bi('Сборка на Python опечатку не заметила, и выпуск ушёл к пользователям. Ошибку нашли они сами, когда программа дошла до строки с pirnt. Если бы код проверили тестами, ошибку поймали бы до выпуска.', 'The Python build missed the typo; the users found it when the program reached that line. Tests would have caught it.'),
+        caption: bi('Сборка на Python опечатку не заметила, и релиз ушёл к пользователям. Ошибку нашли они сами, когда программа дошла до строки с pirnt. Если бы код проверили тестами, ошибку поймали бы до выпуска.', 'The Python build missed the typo; the users found it when the program reached that line. Tests would have caught it.'),
         focus: ['e-upgrade', 'users'],
         reveal: ['users', 'e-upgrade'],
         tokens: [{ edge: 'e-upgrade', label: v }],
@@ -286,8 +286,8 @@ export const releaseModel = defineModel<P>({
   },
   explainDelta(_prev, next, change, _a, b): Bi {
     if (change.kind === 'break') {
-      if (!change.on) return bi('Поломку выключили, и сборка с выпуском снова проходят до конца.', 'The break is off, and the build and the release go through to the end again.');
-      if (change.id === 'no-number') return bi('Без номеров выпуски сливаются в одну «последнюю», и уже не понять, что стоит у пользователей и куда возвращаться.', 'Without numbers releases merge into one “latest”.');
+      if (!change.on) return bi('Поломку выключили, и сборка с релизом снова проходят до конца.', 'The break is off, and the build and the release go through to the end again.');
+      if (change.id === 'no-number') return bi('Без номеров релизы сливаются в одну «последнюю», и уже не понять, что стоит у пользователей и куда возвращаться.', 'Without numbers releases merge into one “latest”.');
       return next.find((s) => s.broken)?.broken?.at === 'build'
         ? bi('Сборка программы на Go проверяет имена, поэтому опечатка остановила её, и до пользователей ничего не дошло.', 'A compiled build checks names: the typo stopped it.')
         : bi('Сборка программы на Python опечатку пропустила, и её нашли пользователи. В таких случаях выручают тесты.', 'The scripting build let the typo through; tests help here.');

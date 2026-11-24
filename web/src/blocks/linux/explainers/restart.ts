@@ -158,7 +158,7 @@ export const restartModel = defineModel<P>({
       st('inactive', 'inactive', 24, 40, bi('Служба не запущена, и процесса у неё нет. В этом же состоянии служба оказывается после команды `systemctl stop`.', 'The service is not running and has no process. A service is in this state after `systemctl stop` as well.')),
       st('activating', 'activating', 232, 40, bi('systemd запускает программу из строки ExecStart= от имени пользователя, указанного в строке User=.', 'systemd starts the program from ExecStart= as the user given in User=.')),
       st('active', 'active (running)', 440, 40, bi('Главный процесс службы работает. systemd знает его номер, который называется Main PID, и следит за тем, когда процесс завершится.', 'The main process of the service runs. systemd knows its number, called the Main PID, and watches for it to end.')),
-      st('autorestart', 'auto-restart', 476, 200, bi('Процесс завершился с ошибкой, и настройка Restart= велит перезапустить службу. systemd выжидает паузу RestartSec= и пробует запустить службу снова.', 'The process failed, and Restart= says to restart the service. systemd waits out RestartSec= and tries to start the service again.')),
+      st('autorestart', 'auto-restart', 476, 200, bi('Процесс завершился с ошибкой, и настройка Restart= говорит перезапустить службу. systemd выжидает паузу RestartSec= и пробует запустить службу снова.', 'The process failed, and Restart= says to restart the service. systemd waits out RestartSec= and tries to start the service again.')),
       st('failed', 'failed', 250, 200, bi('Перезапуска не будет, и служба помечена как сбойная. Причину systemd записывает в поле Result: например, exit-code, signal, oom-kill или start-limit-hit.', 'There will be no restart, and the service is marked as failed. systemd records the reason in Result: for example exit-code, signal, oom-kill or start-limit-hit.')),
       {
         id: 'main',
@@ -215,7 +215,7 @@ export const restartModel = defineModel<P>({
       { id: 'e-run', from: 'active', to: 'main', label: bi('надзор за процессом', 'watching the process'), card: { what: bi('systemd следит за главным процессом службы и ждёт, когда тот завершится.', 'systemd watches the service’s main process and waits for it to end.'), who: bi('За главным процессом наблюдает systemd.', 'systemd watches the main process.') } },
       { id: 'e-crash', from: 'main', to: 'autorestart', via: [[838, 232]], labelAt: 0.75, label: bi('процесс завершился', 'process ended'), card: { what: bi('Процесс завершился с кодом или по сигналу, и что будет дальше, решает настройка Restart=.', 'The process ended with a code or by a signal, and Restart= decides what follows.'), who: bi('О завершении процесса systemd сообщает ядро сигналом SIGCHLD.', 'The kernel tells systemd about it with SIGCHLD.') } },
       { id: 'e-retry', from: 'autorestart', to: 'activating', via: [[558, 180], [314, 180]], label: bi('новая попытка после RestartSec', 'new attempt after RestartSec'), labelAt: 0.6, card: { what: bi('Пауза RestartSec= прошла, и systemd снова запускает службу, а счётчик попыток растёт.', 'The RestartSec= pause is over, and systemd starts the service again while the attempt counter grows.'), who: bi('Новую попытку запуска делает systemd.', 'systemd makes the new attempt to start.'), doc: sd('systemd.service', 5) } },
-      { id: 'e-fail', from: 'autorestart', to: 'failed', label: bi('прекращение попыток', 'giving up'), card: { what: bi('Служба становится сбойной, если Restart= не велит перезапускать её после такого завершения или если лимит попыток исчерпан.', 'The service becomes failed if Restart= does not ask for a restart after such an end or if the limit of attempts is used up.'), who: bi('Решение прекратить попытки принимает systemd.', 'systemd decides to give up.') } },
+      { id: 'e-fail', from: 'autorestart', to: 'failed', label: bi('прекращение попыток', 'giving up'), card: { what: bi('Служба становится сбойной, если Restart= не говорит перезапускать её после такого завершения или если лимит попыток исчерпан.', 'The service becomes failed if Restart= does not ask for a restart after such an end or if the limit of attempts is used up.'), who: bi('Решение прекратить попытки принимает systemd.', 'systemd decides to give up.') } },
       { id: 'e-count', from: 'autorestart', to: 'limit', label: bi('ещё одна попытка', 'one more attempt'), card: { what: bi('Каждый запуск засчитывается в счётчик за последние StartLimitIntervalSec= секунд.', 'Every start is counted within the last StartLimitIntervalSec= seconds.'), who: bi('Счёт запусков ведёт systemd.', 'systemd keeps the count of starts.') } },
       { id: 'e-log', from: 'failed', to: 'journal', label: bi('запись причины', 'recording the reason'), card: { what: bi('Причина сбоя остаётся в журнале и в выводе `systemctl status`.', 'The reason for the failure stays in the journal and in `systemctl status`.'), who: bi('Причину в журнал записывает systemd.', 'systemd writes the reason to the journal.') } },
     ],
@@ -266,7 +266,7 @@ export const restartModel = defineModel<P>({
       predict: {
         prompt: bi('Вы выбираете новое значение Restart=, а программа завершается по той причине, которая выбрана в группе «Как ведёт себя программа». Перезапустит ли systemd службу после первого завершения при выбранном вами значении?', 'You choose a new Restart= value, while the program ends for the reason chosen in “How the program behaves”. Will systemd restart the service after the first end with the value you chose?'),
         options: [
-          { id: 'yes', text: bi('Да, это значение велит перезапустить службу после такого завершения', 'Yes, this value asks for a restart after such an end') },
+          { id: 'yes', text: bi('Да, это значение говорит перезапустить службу после такого завершения', 'Yes, this value asks for a restart after such an end') },
           { id: 'no', text: bi('Нет, при этом значении служба останется в состоянии failed', 'No, with this value the service stays failed') },
         ],
         resolve: (_p, next) => (next.some((s) => s.id.startsWith('wait')) ? 'yes' : 'no'),
@@ -363,7 +363,7 @@ export const restartModel = defineModel<P>({
         steps.push({
           id: `wait${i}`,
           label: 'RestartSec',
-          caption: fmtb(bi('Настройка Restart={r} велит перезапустить службу после такого завершения. Служба переходит в состояние auto-restart, systemd выжидает {s} с и пишет в журнал «Scheduled restart job, restart counter is at {n}».', 'Restart={r} asks for a restart after such an end. The service moves to auto-restart, systemd waits {s} s and writes “Scheduled restart job, restart counter is at {n}” to the journal.'), { r: p.restart, s: sb(ruNum(p.restartSec), String(p.restartSec)), n: e.n + 1 }),
+          caption: fmtb(bi('Настройка Restart={r} говорит перезапустить службу после такого завершения. Служба переходит в состояние auto-restart, systemd выжидает {s} с и пишет в журнал «Scheduled restart job, restart counter is at {n}».', 'Restart={r} asks for a restart after such an end. The service moves to auto-restart, systemd waits {s} s and writes “Scheduled restart job, restart counter is at {n}” to the journal.'), { r: p.restart, s: sb(ruNum(p.restartSec), String(p.restartSec)), n: e.n + 1 }),
           focus: ['autorestart', 'e-count', 'limit'],
           reveal: ['limit', 'e-count'],
           tokens: [{ edge: 'e-count', label: '+1' }],
@@ -380,7 +380,7 @@ export const restartModel = defineModel<P>({
           caption:
             p.restart === 'on-abnormal' && !c.sig
               ? bi('Настройка on-abnormal не перезапускает службу после ненулевого кода, потому что для systemd выход с кодом считается обычным завершением, а не аварией. Поэтому служба остаётся в состоянии failed.', 'on-abnormal does not restart the service after a non-zero code, because for systemd an exit with a code is an ordinary end, not a crash. So the service stays failed.')
-              : fmtb(bi('Настройка Restart={r} не велит перезапускать службу, поэтому служба переходит в состояние failed. Причину можно прочитать в выводе `systemctl status` и в журнале.', 'Restart={r} does not ask for a restart, so the service moves to failed. The reason is in `systemctl status` and in the journal.'), { r: p.restart }),
+              : fmtb(bi('Настройка Restart={r} не говорит перезапускать службу, поэтому служба переходит в состояние failed. Причину можно прочитать в выводе `systemctl status` и в журнале.', 'Restart={r} does not ask for a restart, so the service moves to failed. The reason is in `systemctl status` and in the journal.'), { r: p.restart }),
           focus: ['e-fail', 'failed'],
           reveal: ['failed', 'e-fail', 'journal', 'e-log'],
           tokens: [{ edge: 'e-fail', label: 'failed' }, { edge: 'e-log', label: 'Result' }],

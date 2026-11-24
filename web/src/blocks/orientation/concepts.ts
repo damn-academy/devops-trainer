@@ -37,7 +37,7 @@ export const concepts: Concept[] = [
   c('source-build', 'исходный код и сборка', 'source code and build', 'Исходный код — это текст программы, который пишут и читают люди. Сборка превращает его в то, что запускает машина.', 'Source code is the text of a program that people write and read. The build turns it into what the machine runs.', 'release', {
     forms: { ru: ['исходный код', 'исходного кода', 'исходным кодом', 'исходном коде', 'сборка', 'сборки', 'сборку', 'сборкой', 'собрать', 'собирает', 'собрали'], en: ['source code', 'build', 'builds', 'built'] },
   }),
-  c('version', 'версия', 'version', 'Номер, который получает каждый выпуск программы, например 1.4.2. По номеру видно, что изменилось и можно ли обновиться без опаски.', 'The number every release of a program gets, such as 1.4.2. The number tells what changed and whether it is safe to upgrade.', 'release', {
+  c('version', 'версия', 'version', 'Номер, который получает каждый релиз программы, например 1.4.2. По номеру видно, что изменилось и можно ли обновиться без опаски.', 'The number every release of a program gets, such as 1.4.2. The number tells what changed and whether it is safe to upgrade.', 'release', {
     forms: { ru: ['версии', 'версию', 'версией', 'версий', 'выпуск', 'выпуска', 'выпуски', 'релиз', 'релиза'], en: ['versions', 'release', 'releases'] },
   }),
   c('environments', 'окружение', 'environment', 'Место, где работает программа: ноутбук разработчика, тестовый стенд или рабочее окружение, которое в командах называют продом. Программа везде одна и та же, а различаются машины и настройки.', 'A place where the program runs: at the developer’s, on the test stand, in production. The program is the same everywhere; the machines and settings differ.', 'places', {

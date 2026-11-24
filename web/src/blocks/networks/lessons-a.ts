@@ -82,7 +82,7 @@ export const internet: Lesson = {
           docRef: { page: 'man/traceroute.8', anchor: 'DESCRIPTION', line: 'time to live' },
           hints: {
             H1: bi('Вам нужна команда, которая показывает маршрутизаторы на пути до сервера.', 'You need the command that shows the routers on the way.'),
-            H2: bi('Это команда traceroute, а флаг -n велит ей показывать адреса и не тратить время на поиск имён.', 'It is traceroute; the -n flag shows addresses without looking up names.'),
+            H2: bi('Это команда traceroute, а флаг -n говорит ей показывать адреса и не тратить время на поиск имён.', 'It is traceroute; the -n flag shows addresses without looking up names.'),
             H3: bi('traceroute -n shop.example', 'traceroute -n shop.example'),
           },
         },

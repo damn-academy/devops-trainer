@@ -185,7 +185,7 @@ export const firstStepsLesson: Lesson = {
           chips: 'docker run hello-world; docker ps -a',
           concepts: ['docker.lifecycle'],
           docRef: help('ps', 'OPTIONS', '--all'),
-          hints: { H1: bi('Команда `docker ps` без флагов показывает только работающие контейнеры.', '`docker ps` without flags shows only running ones.'), H2: bi('Нужен флаг, который велит показать все контейнеры.', 'You need the “show all” flag.') },
+          hints: { H1: bi('Команда `docker ps` без флагов показывает только работающие контейнеры.', '`docker ps` without flags shows only running ones.'), H2: bi('Нужен флаг, который говорит показать все контейнеры.', 'You need the “show all” flag.') },
         },
         {
           id: 'web',
