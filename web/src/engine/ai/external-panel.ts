@@ -11,7 +11,7 @@ import './ai.css';
 
 let closeActive: (() => void) | undefined;
 
-export const EXTERNAL_LABEL = bi('Разобраться с нейросетью', 'Understand with AI');
+export const EXTERNAL_LABEL = bi('Спросить нейросеть', 'Ask the AI');
 export interface ExternalOptions {
   lessonId?: string;
   level?: Level;

@@ -87,11 +87,11 @@ const WHAT: AboutPageDef = {
       'license',
       bi('Лицензия и исходный код', 'Licence and source code'),
       p(
-        `Исходный код курса открыт и лежит на GitHub в репозитории [damn-academy/devops-trainer](${REPO}). Он распространяется по лицензии Apache-2.0, поэтому курс можно бесплатно ставить у себя, менять и использовать в компании или школе, в том числе в коммерческих целях, если сохранить текст лицензии и уведомления об авторстве. Как развернуть курс, рассказано на странице [«Развернуть у себя»](#/about/deploy), а как предложить исправление, рассказано на странице [«Как поучаствовать»](#/about/contribute).`,
+        `Исходный код платформы и курса открыт и лежит на GitHub в репозитории [damn-academy/devops-trainer](${REPO}). Он распространяется по лицензии Apache-2.0, поэтому курс можно бесплатно ставить у себя, менять и использовать в компании или школе, в том числе в коммерческих целях, если сохранить текст лицензии и уведомления об авторстве. Как развернуть курс, рассказано на странице [«Развернуть у себя»](#/about/deploy), а как предложить исправление, рассказано на странице [«Как поучаствовать»](#/about/contribute).`,
         'Порядок тем курса следует открытому чек-листу devops413 для начинающих DevOps-инженеров. Из чек-листа взяты только порядок тем и список областей, а все тексты, схемы и задания курса написаны заново.',
       ),
       p(
-        `The course’s source code is open and lives on GitHub in the repository [damn-academy/devops-trainer](${REPO}). It is distributed under the Apache-2.0 licence, so the course can be installed, changed and used in a company or a school for free, commercially too, as long as the licence text and the attribution notices are kept. How to deploy the course is told on the page [“Run it yourself”](#/about/deploy), and how to propose a fix on the page [“Contributing”](#/about/contribute).`,
+        `The platform and course source code is open and lives on GitHub in the repository [damn-academy/devops-trainer](${REPO}). It is distributed under the Apache-2.0 licence, so the course can be installed, changed and used in a company or a school for free, commercially too, as long as the licence text and the attribution notices are kept. How to deploy the course is told on the page [“Run it yourself”](#/about/deploy), and how to propose a fix on the page [“Contributing”](#/about/contribute).`,
         'The order of topics follows the public devops413 checklist for beginner DevOps engineers. Only the order of topics and the list of areas are taken from the checklist; every text, diagram and task of the course is written anew.',
       ),
     ),
@@ -139,10 +139,10 @@ const USE: AboutPageDef = {
       'review',
       bi('Повторение', 'Review'),
       p(
-        'Понятия из пройденных уроков возвращаются на странице [«Повторение»](#/review). Курс планирует повторение по алгоритму интервального повторения FSRS: понятие, на котором вы ошиблись, возвращается скоро, а понятие, на которое вы уверенно ответили, возвращается через всё больший промежуток.',
+        'Понятия из пройденных уроков возвращаются на странице [«Повторение»](#/review). Курс планирует повторение по алгоритму FSRS — планировщику интервальных повторений, который сам решает, когда пора вспомнить понятие: то, на котором вы ошиблись, возвращается скоро, а понятие, на которое вы уверенно ответили, возвращается через всё больший промежуток.',
       ),
       p(
-        'Concepts from finished lessons come back on the [“Review”](#/review) page. The course schedules review with the FSRS spaced-repetition algorithm: a concept you got wrong comes back soon, and a concept you answered confidently comes back after an ever longer interval.',
+        'Concepts from finished lessons come back on the [“Review”](#/review) page. The course schedules review with FSRS, a spaced-repetition planner that decides on its own when a concept is due: one you got wrong comes back soon, and a concept you answered confidently comes back after an ever longer interval.',
       ),
     ),
     sec(
@@ -169,10 +169,10 @@ const USE: AboutPageDef = {
     ),
     sec(
       'ai',
-      bi('Кнопка «Разобраться с нейросетью» и своя нейросеть', 'The “Understand with AI” button and your own AI'),
+      bi('Виртуальный наставник и своя нейросеть', 'A virtual mentor and your own AI'),
       p(
-        'Когда подсказки к заданию закончились, попытка не удалась или вы ответили на вопрос, рядом появляется кнопка «Разобраться с нейросетью». Кнопка составляет запрос о том, что вы сейчас проходите, и показывает его целиком, а вы можете поправить текст, скопировать его или открыть выбранный чат в новой вкладке. Сам курс ничего нейросетям не отправляет: запрос уходит, только когда вы вставляете его в чат или нажимаете кнопку чата.',
-        'В [настройках](#/settings), в разделе «Ваша нейросеть», можно подключить ключ своего провайдера нейросети, и тогда наставник отвечает внутри курса. Ключ хранится в этом браузере в зашифрованном виде, а запросы уходят из браузера к выбранному провайдеру, минуя сервер курса. Наставник видит урок, пройденные понятия и последние строки терминала, но готового решения задания не получает. На экзаменах и на проверке уровня наставника и кнопки нейросети нет.',
+        'Когда подсказки к заданию закончились, попытка не удалась или вы ответили на вопрос, рядом появляется кнопка «Спросить нейросеть». Она составляет запрос о том, что вы сейчас проходите, и показывает его целиком, а вы можете поправить текст, скопировать его или открыть выбранный чат в новой вкладке. Сам курс ничего нейросетям не отправляет: запрос уходит, только когда вы вставляете его в чат или нажимаете кнопку чата.',
+        'В [настройках](#/settings), в разделе «Ваша нейросеть», можно подключить ключ своего провайдера нейросети, и тогда виртуальный наставник отвечает внутри курса. Ключ хранится в этом браузере в зашифрованном виде, а запросы уходят из браузера к выбранному провайдеру, минуя сервер курса. Наставник видит урок, пройденные понятия и последние строки терминала, но готового решения задания не получает. На экзаменах и на проверке уровня наставника и кнопки нейросети нет.',
       ),
       p(
         'When the hints of a task run out, an attempt fails or you have answered a question, an “Understand with AI” button appears next to it. The button writes a prompt about what you are working on and shows the whole prompt, which you can edit, copy, or open in a chat of your choice in a new tab. The course itself sends nothing to any AI: the prompt leaves only when you paste it into a chat or press a chat’s button.',
@@ -361,8 +361,8 @@ const DEPLOY: AboutPageDef = {
   nav: bi('Развернуть у себя', 'Run it yourself'),
   title: bi('Как развернуть курс у себя', 'How to run the course yourself'),
   lede: bi(
-    'Компания или школа может поставить курс на свой сервер: например, чтобы учить новых сотрудников во внутренней сети, вести группы со своими ответами на вопросы учеников или проводить занятия в классе без интернета. Лицензия Apache-2.0 это разрешает, а для работы курса достаточно обычного веб-сервера.',
-    'A company or a school can put the course on its own server: for example, to teach new employees inside the internal network, to run groups with its own answers to learners’ questions, or to hold classes without the internet. The Apache-2.0 licence allows it, and an ordinary web server is enough for the course to work.',
+    'Компания или школа может поставить учебную платформу на свой сервер: например, чтобы учить новых сотрудников во внутренней сети, вести группы со своими ответами на вопросы учеников или проводить занятия в классе без интернета. Сегодня в составе платформы идёт профессия DevOps-инженера, а устройство каталога позволяет добавлять другие курсы и профессии. Лицензия Apache-2.0 это разрешает, а для работы платформы достаточно обычного веб-сервера. Установочные пакеты под разные операционные системы и сборки с выбранным набором курсов пока готовятся: сейчас развёртывание ставит платформу целиком, а учебные стенды на своих компьютерах ученики поднимают через лабораторию dtlab по странице «Лаборатория на своём компьютере».',
+    'A company or a school can put the learning platform on its own server: for example, to teach new employees inside the internal network, to run groups with its own answers to learners’ questions, or to hold classes without the internet. Today the platform ships with the DevOps engineer profession, and the catalog is built so that other courses and professions can be added. The Apache-2.0 licence allows it, and an ordinary web server is enough for the platform to work. Installers for different operating systems and builds with a chosen set of courses are being prepared: for now the deployment installs the whole platform, and learners raise training stands on their own computers with the dtlab lab described on the “A lab on your own computer” page.',
   ),
   sections: [
     sec(
@@ -630,9 +630,11 @@ const CONTRIBUTE: AboutPageDef = {
       bi('Как сообщить об ошибке', 'How to report a problem'),
       p(
         `Ошибку в тексте, схеме или задании удобнее всего отправить из самого курса кнопкой «Сообщить о проблеме» или выделив текст и нажав «Комментировать»: сообщение само укажет место в курсе и приложит вывод терминала. Ответ появится на странице [«Мои сообщения»](#/messages). Ошибки в коде, предложения по устройству курса и всё, что касается лаборатории dtlab и сервиса обратной связи, лучше описать в [задаче на GitHub](${REPO}/issues): что вы делали, что ожидали увидеть и что увидели на самом деле, а также браузер и систему.`,
+        'Поучаствовать можно и другими способами. Пришлите идею курса или профессии — поможем сделать её на этом движке. Если у вас есть готовый учебный материал, который хотелось бы куда-то выложить, напишите автору через форму обратной связи внизу любой страницы. Платформа некоммерческая и ничего не продаёт: это попытка делиться знаниями с людьми, которым они нужны, а не изобретение очередного стандарта. Со временем появится механика, которая позволит поддержать проект донатом.',
       ),
       p(
         `A mistake in a text, a diagram or a task is easiest to send from the course itself with “Report a problem”, or by selecting the text and pressing “Comment”: the message names the place in the course by itself and attaches the terminal output. The reply appears on the [“My messages”](#/messages) page. Bugs in the code, proposals about how the course works, and everything about the dtlab lab and the feedback service are better described in a [GitHub issue](${REPO}/issues): what you did, what you expected to see and what you actually saw, plus the browser and the system.`,
+        'There are other ways to take part. Send an idea for a course or a profession — we will help build it on this engine. If you have teaching material of your own that you would like to publish, write to the author through the feedback form at the bottom of any page. The platform is non-commercial and sells nothing: it is an attempt to share knowledge with people who need it, not another standard. Over time a way to support the project with a donation will appear.',
       ),
     ),
     sec(

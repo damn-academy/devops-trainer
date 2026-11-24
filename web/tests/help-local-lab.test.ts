@@ -39,7 +39,7 @@ describe('help panel', () => {
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     expect(dialog.querySelectorAll('.help-sec')).toHaveLength(HELP_SECTIONS.length);
     const words = text(dialog);
-    for (const w of ['без логина и пароля', 'приватном окне', 'Перенести на другое устройство', 'Выгрузить прогресс', 'сертификатов', 'Определить уровень', 'Мои сообщения', 'Разобраться с нейросетью', 'ничего нейросетям не отправляет'])
+    for (const w of ['без логина и пароля', 'приватном окне', 'Перенести на другое устройство', 'Выгрузить прогресс', 'пока не планируется', 'Определить уровень', 'Мои сообщения', 'Спросить нейросеть', 'ничего нейросетям не отправляет'])
       expect(words).toContain(w);
     expect(dialog.querySelector('details.help-more summary')!.textContent).toBe('Подробнее');
     expect(dialog.querySelector<HTMLAnchorElement>('a[href="#/local-lab"]')).toBeTruthy();
