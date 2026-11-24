@@ -30,6 +30,8 @@ export interface TutorOptions {
 const T = {
   title: bi('Наставник', 'Tutor'),
   close: bi('Закрыть', 'Close'),
+  collapse: bi('Свернуть наставника', 'Collapse the mentor'),
+  expand: bi('Развернуть наставника', 'Expand the mentor'),
   modes: {
     explain: bi('Объяснить', 'Explain'),
     practice: bi('Задание', 'Task'),
@@ -142,7 +144,16 @@ function draw(o: TutorOptions) {
   clear(panel);
   const closeBtn = h('button.icon-btn', { type: 'button', 'aria-label': t(T.close), title: t(T.close) }, icon('close'));
   closeBtn.addEventListener('click', closeTutor);
-  panel.append(h('header.tutor-head', {}, h('h2', {}, icon('ask'), t(T.title)), closeBtn));
+  // Collapse keeps a slim bar so the learner can reopen the mentor without
+  // losing the thread; the close button removes the panel entirely.
+  const collapseBtn = h('button.icon-btn', { type: 'button', 'aria-label': t(T.collapse), title: t(T.collapse), 'aria-expanded': 'true' }, icon('prev'));
+  collapseBtn.addEventListener('click', () => {
+    const collapsed = panel!.classList.toggle('collapsed');
+    collapseBtn.setAttribute('aria-expanded', String(!collapsed));
+    collapseBtn.title = t(collapsed ? T.expand : T.collapse);
+    collapseBtn.setAttribute('aria-label', collapseBtn.title);
+  });
+  panel.append(h('header.tutor-head', {}, h('h2', {}, icon('ask'), t(T.title)), collapseBtn, closeBtn));
 
   if (state.mode === 'exam') {
     panel.append(h('p.tutor-off', {}, t(T.modeHelp.exam)));
