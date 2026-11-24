@@ -81,7 +81,7 @@ describe('assessment pages', () => {
     const ex = examPage('linux.exam.first-day');
     expect(ex.el.textContent).toContain('CKA');
     const pl = placementPage('career');
-    expect(pl.el.querySelectorAll('.level-card').length).toBe(2);
+    expect(pl.el.querySelectorAll('.level-card').length).toBe(1);
     pl.el.querySelector<HTMLButtonElement>('.level-card')!.click();
     expect(pl.el.querySelector('.quiz-item')).toBeTruthy();
     pl.dispose?.();

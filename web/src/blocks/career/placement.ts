@@ -1,8 +1,9 @@
-// The career diagnostic (01 §4.3, 10 §9.1). Here the level means interview
-// experience, and the check only sets emphasis. Two variants for the retake.
+// The career diagnostic (01 §4.3, 10 §9.1). Owner decision: the interview
+// check is one for everyone — we are all entering DevOps, so there are no
+// separate interview levels. Two variants stay for the retake.
 
 import { bi } from '../../core/i18n';
-import type { Level, PlacementTask, QuizItem } from '../../core/types';
+import type { PlacementTask, QuizItem } from '../../core/types';
 import { orderAsMatch } from './order-fallback';
 
 const structure1: QuizItem = {
@@ -76,18 +77,6 @@ const cv2: QuizItem = {
   ],
 };
 
-/** The experienced learner usually comes from development, so their CV task is a developer's CV. */
-const cvDev: QuizItem = {
-  id: 'career.p.cv.dev',
-  kind: 'multi',
-  prompt: bi('Учебное резюме PHP-разработчика, который переходит в DevOps. Какие строки стоит переписать или убрать? Отметьте все.', 'A training CV of a PHP developer moving to DevOps. Which lines should be rewritten or removed? Mark them all.'),
-  options: [
-    { id: 'duty', text: bi('«Отвечал за разработку на Laravel»', '“Was responsible for development in Laravel”'), correct: true, why: bi('Здесь описана обязанность, а не действие и его результат, и к DevOps эта строка мост не перекидывает.', 'A duty instead of an action and result, and the line builds no bridge to DevOps.') },
-    { id: 'team', text: bi('«Командный игрок, быстро осваиваю новое»', '“Team player, quick to learn new things”'), correct: true, why: bi('Это пустые формулировки, и проверить их нельзя.', 'Empty phrases that cannot be checked.') },
-    { id: 'deploy', text: bi('«Перевёл выкладку с git pull на сервере на конвейер GitLab CI с образами Docker, и выкладка стала занимать 5 минут вместо 40»', '“Moved releases from git pull on the server to a GitLab CI pipeline with Docker images, and a release now takes 5 minutes instead of 40”'), why: bi('Это настоящая работа DevOps внутри должности разработчика, с действием и измеримым результатом.', 'This is real DevOps work inside a developer position, with an action and a measurable result.') },
-    { id: 'compose', text: bi('«Описал окружение разработки в docker compose для команды из 6 человек»', '“Described the development environment in docker compose for a team of 6”'), why: bi('Пункт показывает опыт с контейнерами и пользу для команды, поэтому его стоит оставить.', 'The bullet shows container experience and the benefit to the team, so it is worth keeping.') },
-  ],
-};
 
 const method1: QuizItem = {
   id: 'career.p.504.1',
@@ -124,16 +113,17 @@ const vm: QuizItem = {
   ],
 };
 
-const t = (id: string, level: Level, key: boolean, item: QuizItem, concepts: string[], variant?: number): PlacementTask => ({ id, level, key, concepts, variant, kind: 'quiz', item: orderAsMatch(item) });
+const L = 'intermediate' as const;
+const t = (id: string, key: boolean, item: QuizItem, concepts: string[], variant?: number): PlacementTask => ({ id, level: L, key, concepts, variant, kind: 'quiz', item: orderAsMatch(item) });
 
-export const CAREER_PLACEMENT: PlacementTask[] = (['intermediate', 'experienced'] as Level[]).flatMap((l) => [
-  t(`${l}.structure.1`, l, false, { ...structure1, id: `${structure1.id}.${l}` }, ['career.answer-structure'], 1),
-  t(`${l}.structure.2`, l, false, { ...structure2, id: `${structure2.id}.${l}` }, ['career.answer-structure'], 2),
-  t(`${l}.dontknow.1`, l, true, { ...dontKnow1, id: `${dontKnow1.id}.${l}` }, ['career.dont-know'], 1),
-  t(`${l}.dontknow.2`, l, true, { ...dontKnow2, id: `${dontKnow2.id}.${l}` }, ['career.dont-know'], 2),
-  t(`${l}.cv.1`, l, false, l === 'experienced' ? { ...cvDev, id: `${cvDev.id}.${l}` } : { ...cv1, id: `${cv1.id}.${l}` }, ['career.evidence', 'career.bridge'], 1),
-  t(`${l}.cv.2`, l, false, { ...cv2, id: `${cv2.id}.${l}` }, ['career.evidence', 'career.bridge'], 2),
-  t(`${l}.504.1`, l, true, { ...method1, id: `${method1.id}.${l}` }, ['career.situational', 'career.mitigate-first'], 1),
-  t(`${l}.504.2`, l, true, { ...method2, id: `${method2.id}.${l}` }, ['career.situational', 'career.mitigate-first'], 2),
-  t(`${l}.vm`, l, false, { ...vm, id: `${vm.id}.${l}` }, ['career.q-vm-container']),
-]);
+export const CAREER_PLACEMENT: PlacementTask[] = [
+  t(`${L}.structure.1`, false, { ...structure1, id: `${structure1.id}.${L}` }, ['career.answer-structure'], 1),
+  t(`${L}.structure.2`, false, { ...structure2, id: `${structure2.id}.${L}` }, ['career.answer-structure'], 2),
+  t(`${L}.dontknow.1`, true, { ...dontKnow1, id: `${dontKnow1.id}.${L}` }, ['career.dont-know'], 1),
+  t(`${L}.dontknow.2`, true, { ...dontKnow2, id: `${dontKnow2.id}.${L}` }, ['career.dont-know'], 2),
+  t(`${L}.cv.1`, false, { ...cv1, id: `${cv1.id}.${L}` }, ['career.evidence', 'career.bridge'], 1),
+  t(`${L}.cv.2`, false, { ...cv2, id: `${cv2.id}.${L}` }, ['career.evidence', 'career.bridge'], 2),
+  t(`${L}.504.1`, true, { ...method1, id: `${method1.id}.${L}` }, ['career.situational', 'career.mitigate-first'], 1),
+  t(`${L}.504.2`, true, { ...method2, id: `${method2.id}.${L}` }, ['career.situational', 'career.mitigate-first'], 2),
+  t(`${L}.vm`, false, { ...vm, id: `${vm.id}.${L}` }, ['career.q-vm-container']),
+];
