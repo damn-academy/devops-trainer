@@ -33,8 +33,8 @@ export const natModel = defineModel<P>({
     'Laptop 192.168.1.23 opens site 198.51.100.20. Private addresses lead nowhere on the internet, so the home router replaces the source address with its public one and records the swap in the conntrack table. The card on the line shows the source address the packet carries on that segment.',
   ),
   intro: b(
-    'Схема соберётся по шагам, и сейчас на ней только ноутбук и роутер. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а под таблицей conntrack растёт число записей.\n\nПосле первого прохода добавьте устройств в квартире, включите подключение снаружи и уберите правило NAT в блоке «Сломать».',
-    'The diagram builds itself step by step: now it shows only the laptop and the router. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the entry count grows under the conntrack table.\n\nAfter the first pass add devices at home, switch on the connection from outside and remove the NAT rule in “Break it”.',
+    'Схема соберётся по шагам, и сейчас на ней только ноутбук и роутер. А дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а под таблицей conntrack растёт число записей.\n\nПосле первого прохода добавьте устройств в квартире, включите подключение снаружи и уберите правило NAT в блоке «Сломать».',
+    'The diagram builds itself step by step: now it shows only the laptop and the router. Then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the entry count grows under the conntrack table.\n\nAfter the first pass add devices at home, switch on the connection from outside and remove the NAT rule in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('блок, который работает сейчас', 'the block working now') },

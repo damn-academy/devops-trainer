@@ -56,8 +56,8 @@ export const upgradeModel = defineModel<P>({
     'One minor version at a time, top down: the control plane, then the workers one by one, each drained, upgraded and returned.',
   ),
   intro: bi(
-    'Сейчас на схеме ваша команда kubeadm upgrade, управляющий узел cp-1 и два рабочих узла, и все они на версии v1.36. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Каждый шаг обновляет одну машину, а под узлами видна версия, которая на них работает. Счётчик под схемой показывает, сколько подов приложения оставалось готовыми в худший момент. Потом попробуйте в «Параметрах» сразу v1.38, обратный порядок и обновление без drain.',
-    'For now: your kubeadm upgrade, cp-1 and two workers, all on v1.36. Press “Start from the first step” and go on with “Step forward”: each step upgrades one machine. Then try v1.38 directly, the reverse order and no drain.',
+    'Сейчас на схеме ваша команда kubeadm upgrade, управляющий узел cp-1 и два рабочих узла, и все они на версии v1.36. А дальше листайте кнопкой «Шаг вперёд». Каждый шаг обновляет одну машину, а под узлами видна версия, которая на них работает. Счётчик под схемой показывает, сколько подов приложения оставалось готовыми в худший момент. Потом попробуйте в «Параметрах» сразу v1.38, обратный порядок и обновление без drain.',
+    'For now: your kubeadm upgrade, cp-1 and two workers, all on v1.36. Go on with “Step forward”: each step upgrades one machine. Then try v1.38 directly, the reverse order and no drain.',
   ),
   legend: [
     ...LEGEND_BASE,

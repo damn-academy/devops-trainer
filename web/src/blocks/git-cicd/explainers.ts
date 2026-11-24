@@ -66,8 +66,8 @@ export const gitModel = defineModel<GitP>({
     'You changed one file and want the team to see the edit. `git add` stores the file content as an object and records it in the index, `git commit` builds a snapshot of the project from the index and moves the branch to the new commit, and `git push` sends the team server only the objects it does not have yet.',
   ),
   intro: bi(
-    'Сейчас на схеме только файл, который вы поправили, и индекс. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». На каждом шаге подсвечен тот блок, который работает, облачко рядом с ним говорит, что он делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда дойдёте до сервера, увеличьте в «Параметрах» число файлов в проекте и посмотрите на счётчики под схемой.',
-    'For now the diagram shows only the file you edited and the index. Press “Start from the first step”, then go on with “Step forward”. At every step the working block is highlighted, the callout next to it says what it does, and the card on the line shows what is handed on.\n\nOnce you reach the server, raise the number of files in “Parameters” and watch the counters under the diagram.',
+    'Сейчас на схеме только файл, который вы поправили, и индекс. А дальше листайте кнопкой «Шаг вперёд». На каждом шаге подсвечен тот блок, который работает, облачко рядом с ним говорит, что он делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда дойдёте до сервера, увеличьте в «Параметрах» число файлов в проекте и посмотрите на счётчики под схемой.',
+    'For now the diagram shows only the file you edited and the index. Then go on with “Step forward”. At every step the working block is highlighted, the callout next to it says what it does, and the card on the line shows what is handed on.\n\nOnce you reach the server, raise the number of files in “Parameters” and watch the counters under the diagram.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
@@ -356,8 +356,8 @@ export const ciModel = defineModel<CiP>({
     'The forge reads the pipeline file, runners pick up jobs, the artifact goes from build to deploy, the image goes to the registry, staging updates by itself and production on a human decision.',
   ),
   intro: bi(
-    'Сейчас на схеме только ваш репозиторий и сервер команды. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Подсвечен тот блок, который работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда дойдёте до рабочего сервера, поменяйте в «Параметрах» ветку или число раннеров и следите за счётчиками времени под схемой.',
-    'For now the diagram shows only your repository and the team server. Press “Start from the first step”, then go on with “Step forward”. The working block is highlighted, the callout says what it does, and the card on the line shows what is handed on.\n\nOnce you reach production, change the branch or the number of runners in “Parameters” and watch the time counters under the diagram.',
+    'Сейчас на схеме только ваш репозиторий и сервер команды. А дальше листайте кнопкой «Шаг вперёд». Подсвечен тот блок, который работает, облачко говорит, что он делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда дойдёте до рабочего сервера, поменяйте в «Параметрах» ветку или число раннеров и следите за счётчиками времени под схемой.',
+    'For now the diagram shows only your repository and the team server. Then go on with “Step forward”. The working block is highlighted, the callout says what it does, and the card on the line shows what is handed on.\n\nOnce you reach production, change the branch or the number of runners in “Parameters” and watch the time counters under the diagram.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },

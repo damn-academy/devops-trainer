@@ -33,8 +33,8 @@ export const vpnModel = defineModel<P>({
     'A laptop at home opens a monitoring server with the private address 10.20.3.7 in the office network. The wg0 interface on the laptop encrypts the whole packet and puts it into a UDP datagram to the office gateway, and the gateway takes the original packet out and sends it on. The card on the line shows which packet travels on that segment; curly braces mean the contents are encrypted.',
   ),
   intro: b(
-    'Схема соберётся по шагам, и сейчас на ней только ноутбук и его интерфейс wg0. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает.\n\nПосле первого прохода переключите над схемой, какой трафик идёт в туннель, а потом включите поломки в блоке «Сломать».',
-    'The diagram builds itself step by step: now it shows only the laptop and its wg0 interface. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does.\n\nAfter the first pass switch which traffic goes into the tunnel above the diagram, then switch on the breaks in “Break it”.',
+    'Схема соберётся по шагам, и сейчас на ней только ноутбук и его интерфейс wg0. А дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает.\n\nПосле первого прохода переключите над схемой, какой трафик идёт в туннель, а потом включите поломки в блоке «Сломать».',
+    'The diagram builds itself step by step: now it shows only the laptop and its wg0 interface. Then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does.\n\nAfter the first pass switch which traffic goes into the tunnel above the diagram, then switch on the breaks in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('блок, который работает сейчас', 'the block working now') },

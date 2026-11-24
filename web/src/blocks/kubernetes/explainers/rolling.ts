@@ -150,8 +150,8 @@ export const rollingModel = defineModel<P>({
     'You change the image and the controller replaces old pods with new ones step by step, within two bounds: maxSurge (extra pods above replicas) and maxUnavailable (pods that may be unavailable).',
   ),
   intro: bi(
-    'Сейчас на схеме Deployment, старый ReplicaSet с четырьмя готовыми подами версии 1.0 и Service, который отправляет на них запросы. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Следите за счётчиком «готово в худший момент» под схемой, потому что он показывает, сколько подов отвечало пользователям в самый неудачный момент выкладки. Потом меняйте в «Параметрах» границы выкладки и способ замены.',
-    'For now the diagram shows the Deployment, the old ReplicaSet with four Ready 1.0 pods and the Service sending them requests. Press “Start from the first step”, then go on with “Step forward”. Watch the counter “ready at the worst moment” under the diagram. Then change the rollout bounds and the strategy in “Parameters”.',
+    'Сейчас на схеме Deployment, старый ReplicaSet с четырьмя готовыми подами версии 1.0 и Service, который отправляет на них запросы. А дальше листайте кнопкой «Шаг вперёд». Следите за счётчиком «готово в худший момент» под схемой, потому что он показывает, сколько подов отвечало пользователям в самый неудачный момент выкладки. Потом меняйте в «Параметрах» границы выкладки и способ замены.',
+    'For now the diagram shows the Deployment, the old ReplicaSet with four Ready 1.0 pods and the Service sending them requests. Then go on with “Step forward”. Watch the counter “ready at the worst moment” under the diagram. Then change the rollout bounds and the strategy in “Parameters”.',
   ),
   legend: [
     ...LEGEND_BASE,

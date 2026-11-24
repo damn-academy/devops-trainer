@@ -63,8 +63,8 @@ export const applyPathModel = defineModel<P>({
     'You send a Deployment from web.yaml, and the diagram walks it through every component, from the API request to a ready pod behind a Service. Each component does one job and writes its result through the API server.',
   ),
   intro: bi(
-    'Сейчас на схеме только kubectl и API-сервер, а рамки показывают, где появятся остальные компоненты: вверху пунктирная рамка управляющего слоя кластера, внизу сплошная рамка узла worker-1. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» или нажмите «Проиграть». Компоненты будут появляться по одному, когда до них дойдёт путь. Потом выключайте по одному компоненту в блоке «Сломать» и смотрите, на каком шаге путь оборвётся и какое сообщение вы увидите.',
-    'For now the diagram shows only kubectl and the API server; the frames show where the rest will appear: the control plane at the top, the node worker-1 at the bottom. Press “Start from the first step”, then “Step forward” or “Play”. Then turn off one component at a time in “Break it” and see where the path stops and what message you get.',
+    'Сейчас на схеме только kubectl и API-сервер, а рамки показывают, где появятся остальные компоненты: вверху пунктирная рамка управляющего слоя кластера, внизу сплошная рамка узла worker-1. А дальше листайте кнопкой «Шаг вперёд» или нажмите «Проиграть». Компоненты будут появляться по одному, когда до них дойдёт путь. Потом выключайте по одному компоненту в блоке «Сломать» и смотрите, на каком шаге путь оборвётся и какое сообщение вы увидите.',
+    'For now the diagram shows only kubectl and the API server; the frames show where the rest will appear: the control plane at the top, the node worker-1 at the bottom. Then turn off one component at a time in “Break it” and see where the path stops and what message you get.',
   ),
   legend: [
     ...LEGEND_BASE,

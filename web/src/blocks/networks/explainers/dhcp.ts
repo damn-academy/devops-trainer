@@ -31,8 +31,8 @@ export const dhcpModel = defineModel<P>({
     'The laptop has just joined the home network. It has no address, no gateway, no DNS server; it gets all of them from the DHCP server in the home router in four messages: Discover, Offer, Request and Ack. The laptop’s current address is shown under its name.',
   ),
   intro: b(
-    'Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а карточка на линии показывает, какое сообщение DHCP передаётся.\n\nПосле первого прохода подвиньте срок аренды, а потом по очереди включите в блоке «Сломать» выключенный сервер и второй сервер в сети.',
-    'Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the card on the line shows which DHCP message is passing.\n\nAfter the first pass move the lease time, then switch on, one at a time, the server that is off and the second server on the network in “Break it”.',
+    'А дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко у подсвеченного блока говорит, что он делает, а карточка на линии показывает, какое сообщение DHCP передаётся.\n\nПосле первого прохода подвиньте срок аренды, а потом по очереди включите в блоке «Сломать» выключенный сервер и второй сервер в сети.',
+    'Then go on with “Step forward” above the diagram. The callout at the highlighted block says what it does; the card on the line shows which DHCP message is passing.\n\nAfter the first pass move the lease time, then switch on, one at a time, the server that is off and the second server on the network in “Break it”.',
   ),
   legend: [
     { mark: 'active', text: b('блок, который работает сейчас', 'the block working now') },

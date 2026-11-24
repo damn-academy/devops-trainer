@@ -58,8 +58,8 @@ export const tlsBootstrapModel = defineModel<P>({
     'Trust is built in steps: the CA hash protects the node, the token protects the cluster, and a CSR gives the kubelet its own certificate.',
   ),
   intro: bi(
-    'Сейчас на схеме команда kubeadm join на новом узле и публичный ConfigMap cluster-info. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Каждый шаг добавляет одно звено цепочки доверия, а карточка на линии показывает, что передаётся по линии: хеш, токен, заявка или сертификат. Потом сдвиньте в «Параметрах» время после init дальше срока токена, а в блоке «Сломать» ошибитесь в хеше или выключите автоматическое одобрение заявок.',
-    'For now: kubeadm join on the new node and the public cluster-info. Press “Start from the first step” and go on with “Step forward”: each step adds one link of trust, and the card shows what is handed on. Then move the time past the token’s lifetime, and break the hash or the auto-approval.',
+    'Сейчас на схеме команда kubeadm join на новом узле и публичный ConfigMap cluster-info. А дальше листайте кнопкой «Шаг вперёд». Каждый шаг добавляет одно звено цепочки доверия, а карточка на линии показывает, что передаётся по линии: хеш, токен, заявка или сертификат. Потом сдвиньте в «Параметрах» время после init дальше срока токена, а в блоке «Сломать» ошибитесь в хеше или выключите автоматическое одобрение заявок.',
+    'For now: kubeadm join on the new node and the public cluster-info. Go on with “Step forward”: each step adds one link of trust, and the card shows what is handed on. Then move the time past the token’s lifetime, and break the hash or the auto-approval.',
   ),
   legend: [
     ...LEGEND_BASE,

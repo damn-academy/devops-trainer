@@ -53,8 +53,8 @@ export const execModel = defineModel<P>({
     'You typed `ls -l /etc > list.txt` and pressed Enter. The shell splits the line into words, looks the program up in the PATH directories and makes a copy of itself. The copy sends the output into the file and turns into the program `ls`, while the shell waits for the code the program ends with.',
   ),
   intro: bi(
-    'Сейчас на схеме только набранная строка и оболочка, а остальные участники появятся тогда, когда до них дойдёт очередь. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко рядом с подсвеченным блоком говорит, что этот блок делает, а карточка на линии показывает, что он передаёт дальше.\n\nКогда пройдёте до приглашения, выберите в «Параметрах» команду `cd /tmp` или другой PATH и пройдите путь ещё раз.',
-    'Now the diagram shows only the typed line and the shell; the others appear when their turn comes. Press “Start from the first step”, then go on with “Step forward” above the diagram. The callout next to the highlighted block says what it does, and the card on the line shows what it hands on.\n\nOnce you reach the prompt, choose `cd /tmp` or another PATH in “Parameters” and walk the path again.',
+    'Сейчас на схеме только набранная строка и оболочка, а остальные участники появятся тогда, когда до них дойдёт очередь. А дальше листайте кнопкой «Шаг вперёд» над схемой. Облачко рядом с подсвеченным блоком говорит, что этот блок делает, а карточка на линии показывает, что он передаёт дальше.\n\nКогда пройдёте до приглашения, выберите в «Параметрах» команду `cd /tmp` или другой PATH и пройдите путь ещё раз.',
+    'Now the diagram shows only the typed line and the shell; the others appear when their turn comes. Then go on with “Step forward” above the diagram. The callout next to the highlighted block says what it does, and the card on the line shows what it hands on.\n\nOnce you reach the prompt, choose `cd /tmp` or another PATH in “Parameters” and walk the path again.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },

@@ -67,8 +67,8 @@ export const nodeDownModel = defineModel<P>({
     'Nobody is told “the node is gone”. A controller notices the missing heartbeat, waits, marks the node, waits again, and only then the pods move. The counter shows the requests lost meanwhile.',
   ),
   intro: bi(
-    'Сейчас на схеме три узла и отметка о жизни узла worker-2. Нажмите «Начать с первого шага». У worker-2 выключится питание, и дальше каждый шаг будет моментом времени, подписанным на шкале. Контроллеры появятся, когда начнут действовать. Потом меняйте в «Параметрах» таймеры кластера и момент, когда узел снова включают, и следите за счётчиком потерянных запросов.',
-    'For now: three nodes and worker-2’s Lease. Press “Start from the first step”: worker-2 loses power, and each step is a moment in time. Then change the timers and when the node comes back, and watch the lost-request counter.',
+    'Сейчас на схеме три узла и отметка о жизни узла worker-2. У worker-2 выключится питание, и дальше каждый шаг будет моментом времени, подписанным на шкале. Контроллеры появятся, когда начнут действовать. Потом меняйте в «Параметрах» таймеры кластера и момент, когда узел снова включают, и следите за счётчиком потерянных запросов.',
+    'For now: three nodes and worker-2’s Lease. Worker-2 loses power, and each step is a moment in time. Then change the timers and when the node comes back, and watch the lost-request counter.',
   ),
   legend: [
     ...LEGEND_BASE,

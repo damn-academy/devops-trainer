@@ -123,8 +123,8 @@ export const reconcileModel = defineModel<P>({
     'On the left the desired state: ReplicaSet web wants three pods. On the right the actual state. In the middle the controller’s loop learns of changes, compares and takes a step to close the difference. It does not care what happened: it looks at what is there now.',
   ),
   intro: bi(
-    'Сейчас на схеме три блока: ReplicaSet с желаемым числом подов, контроллер и сами поды. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд». Вы удалите один под, и схема покажет, как это изменение доходит до контроллера и как он возвращает под. Потом выберите в «Параметрах» другое вмешательство или другое число реплик.',
-    'For now the diagram shows three blocks: the ReplicaSet, the controller and the pods. Press “Start from the first step”, then go on with “Step forward”. You will delete a pod and see how the change reaches the controller and how it brings the pod back. Then pick another intervention or another replica count in “Parameters”.',
+    'Сейчас на схеме три блока: ReplicaSet с желаемым числом подов, контроллер и сами поды. А дальше листайте кнопкой «Шаг вперёд». Вы удалите один под, и схема покажет, как это изменение доходит до контроллера и как он возвращает под. Потом выберите в «Параметрах» другое вмешательство или другое число реплик.',
+    'For now the diagram shows three blocks: the ReplicaSet, the controller and the pods. Then go on with “Step forward”. You will delete a pod and see how the change reaches the controller and how it brings the pod back. Then pick another intervention or another replica count in “Parameters”.',
   ),
   legend: [
     ...LEGEND_BASE,

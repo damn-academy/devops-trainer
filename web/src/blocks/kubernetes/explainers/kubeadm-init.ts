@@ -67,8 +67,8 @@ export const kubeadmInitModel = defineModel<P>({
     'kubeadm writes files; the kubelet starts the control plane from them. The diagram walks the phases and shows where each forgotten preparation surfaces.',
   ),
   intro: bi(
-    'Сейчас на схеме только команда kubeadm init. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд», и каждый шаг покажет одну фазу init. Слева появятся файлы, которые kubeadm записывает, внизу kubelet, а справа поды, которые kubelet запускает из этих файлов. Счётчик под схемой показывает, сколько файлов уже записано. Потом включайте по одной поломки в блоке «Сломать» и смотрите, на какой фазе остановится init.',
-    'For now only kubeadm init. Press “Start from the first step” and go on with “Step forward”: each step is a phase. The files appear on the left, the kubelet at the bottom, the pods it starts on the right. Then switch on the breaks one at a time and see where init stops.',
+    'Сейчас на схеме только команда kubeadm init. А дальше листайте кнопкой «Шаг вперёд», и каждый шаг покажет одну фазу init. Слева появятся файлы, которые kubeadm записывает, внизу kubelet, а справа поды, которые kubelet запускает из этих файлов. Счётчик под схемой показывает, сколько файлов уже записано. Потом включайте по одной поломки в блоке «Сломать» и смотрите, на какой фазе остановится init.',
+    'For now only kubeadm init. Go on with “Step forward”: each step is a phase. The files appear on the left, the kubelet at the bottom, the pods it starts on the right. Then switch on the breaks one at a time and see where init stops.',
   ),
   legend: [
     ...LEGEND_BASE,

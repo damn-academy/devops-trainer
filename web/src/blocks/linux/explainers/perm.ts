@@ -90,8 +90,8 @@ export const permModel = defineModel<P>({
     'A user types a command such as `cat /srv/www/index.html`. The system first walks the directories on the path, then picks one of the file’s three triads and answers by it: allow the action or refuse with `Permission denied`.',
   ),
   intro: bi(
-    'Схема соберётся у вас на глазах, а сейчас на ней только пользователь и файл. Нажмите «Начать с первого шага», а дальше листайте кнопкой «Шаг вперёд» над схемой. На каждом шаге подсвечен тот блок, который работает, облачко рядом с ним говорит, что он делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда пройдёте до ответа, выберите в «Параметрах» другого пользователя или другие права и пройдите проверку ещё раз.',
-    'The diagram builds itself as you go: now it shows only the user and the file. Press “Start from the first step”, then go on with “Step forward” above the diagram. At every step the block that is working is highlighted, the callout next to it says what it does, and the card on the line shows what is handed on.\n\nOnce you reach the answer, choose another user or other rights in “Parameters” and walk the check again.',
+    'Схема соберётся у вас на глазах, а сейчас на ней только пользователь и файл. А дальше листайте кнопкой «Шаг вперёд» над схемой. На каждом шаге подсвечен тот блок, который работает, облачко рядом с ним говорит, что он делает, а карточка на линии показывает, что передаётся дальше.\n\nКогда пройдёте до ответа, выберите в «Параметрах» другого пользователя или другие права и пройдите проверку ещё раз.',
+    'The diagram builds itself as you go: now it shows only the user and the file. Then go on with “Step forward” above the diagram. At every step the block that is working is highlighted, the callout next to it says what it does, and the card on the line shows what is handed on.\n\nOnce you reach the answer, choose another user or other rights in “Parameters” and walk the check again.',
   ),
   legend: [
     { mark: 'active', text: bi('блок, который работает сейчас', 'the block working now') },
