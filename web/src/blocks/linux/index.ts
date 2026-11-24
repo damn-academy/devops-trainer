@@ -293,7 +293,7 @@ const block: Block = {
   order: 20,
   title: bi('Linux', 'Linux'),
   summary: bi(
-    'В этом блоке вы научитесь работать в оболочке командной строки, с файлами и правами, с потоками ввода-вывода, с процессами и сигналами. Вы напишете скрипты, поставите пакеты, разберётесь со службами и журналами, с дисками, с изоляцией и лимитами ядра, с сетью глазами машины и со входом по SSH.',
+    'В этом блоке вы научитесь работать в командной строке: с файлами и правами, с потоками ввода-вывода, с процессами и сигналами. Вы напишете скрипты, поставите пакеты, разберётесь со службами и журналами, с дисками, с изоляцией и лимитами ядра, с сетью со стороны машины и со входом по SSH.',
     'In this block you learn to work in the command-line shell, with files and permissions, with input and output streams, with processes and signals. You write scripts, install packages, and learn services and logs, disks, the kernel’s isolation and limits, the network through the machine’s eyes and SSH logins.',
   ),
   checklistStep: '02',
