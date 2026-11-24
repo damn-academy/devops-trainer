@@ -27,7 +27,7 @@ export const insideQuiz: QuizItem[] = [
     id: 'orient.q.match-parts',
     kind: 'match',
     concepts: ['orient.computer'],
-    prompt: bi('Сопоставьте каждую часть компьютера с её работой.', 'Match each part of the computer with its job.'),
+    prompt: bi('Сопоставьте каждую часть компьютера с её функцией.', 'Match each part of the computer with its function.'),
     pairs: [
       { id: 'cpu', left: bi('Процессор', 'Processor'), right: bi('выполняет инструкции одну за другой', 'carries out instructions one after another') },
       { id: 'ram', left: bi('Память', 'Memory'), right: bi('хранит то, с чем компьютер работает сейчас', 'holds what is being worked on right now') },
@@ -380,7 +380,7 @@ export const systemLesson: Lesson = {
       tasks: [
         {
           id: 'where',
-          prompt: bi('В какой папке вы сейчас находитесь? Команда `pwd` напечатает путь к ней.', 'Which folder are you in now? The `pwd` command prints its path.'),
+          prompt: bi('В какой папке вы сейчас находитесь? Команда `pwd` напечатает путь к ней. Эти команды работают в Linux; в Windows пути выглядят иначе, о чём будет отдельная заметка ниже.', 'Which folder are you in now? The `pwd` command prints its path. These commands run on Linux; on Windows paths look different, which a note below covers.'),
           check: { stdout: /^\/home\/learner\n?$/ },
           chips: 'pwd',
           docRef: man('pwd.1'),
@@ -678,7 +678,7 @@ export const netLesson: Lesson = {
       tasks: [
         {
           id: 'ping',
-          prompt: bi('Отправьте магазину три коротких сообщения и посмотрите, за сколько миллисекунд приходит ответ: `ping -c 3 shop.example`. Число после `time=` показывает время пути туда и обратно.', 'Send the shop three short messages and see how many milliseconds the answer takes: `ping -c 3 shop.example`. The number after `time=` is the time there and back.'),
+          prompt: bi('Отправьте магазину три коротких сообщения и посмотрите, за сколько миллисекунд приходит ответ: `ping -c 3 shop.example`. Число после `time=` показывает время пути туда и обратно. В терминале появятся три строки ответа и итог: три пакета отправлено, три получено — задание засчитывается, когда этот итог напечатан.', 'Send the shop three short messages and see how many milliseconds the answer takes: `ping -c 3 shop.example`. The number after `time=` is the time there and back.'),
           check: { stdout: /3 packets transmitted, 3 received/ },
           chips: 'ping -c 3 shop.example',
           docRef: { page: 'help/ping', anchor: 'OPTIONS', line: '-c' },
