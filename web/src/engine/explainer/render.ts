@@ -30,7 +30,7 @@ const L = {
   youSaid: bi('Вы предположили', 'You predicted'),
   happened: bi('Вышло', 'What happened'),
   right: bi('Совпало', 'Right'),
-  notRight: bi('Не совпало — посмотрите, где расходится', 'Not quite — see where it differs'),
+  notRight: bi('Не совпало — посмотрите, какой показатель под схемой изменился', 'Not quite — look at the metric under the diagram and see how it changed'),
   cardWho: bi('Кто создаёт', 'Who creates it'),
   cardSee: bi('Как посмотреть', 'How to look at it'),
   cardDoc: bi('Где написано', 'Where it is written'),

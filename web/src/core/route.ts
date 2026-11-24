@@ -27,7 +27,7 @@ export const ROUTE: RouteEntry[] = [
     order: 5,
     folder: 'orientation',
     segment: 'F',
-    title: bi('Ориентир', 'Orientation'),
+    title: bi('Введение', 'Introduction'),
     summary: bi(
       'Двенадцать опорных понятий: компьютер, программа, файл, ОС, сеть, сервер, клиент и запрос, сборка, версия, окружения, конфигурация, совместная работа над кодом.',
       'Twelve anchor ideas: computer, program, file, OS, network, server, client and request, build, version, environments, configuration, working on code together.',
