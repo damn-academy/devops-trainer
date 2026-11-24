@@ -93,6 +93,16 @@ export const L_RESUME: Lesson = {
   minutes: 40,
   sources: { en: [SRC.jsonresume, SRC.pinEn], ru: [SRC.pinRu, SRC.habrCareer, SRC.hh] },
   sections: [
+
+    {
+      id: 'mentor',
+      kind: 'text',
+      step: 'explain',
+      body: bi(
+        'Резюме проверяют не только по списку правил, но и живым взглядом. Разберите своё резюме с наставником, который уже работает в профессии: на сервисе [getmentor.dev](https://getmentor.dev) можно выбрать ментора по специальности и договориться о разборе. Такой разбор стоит недорого или бесплатен и возвращает больше всего: ментор покажет, что читается не так, как вы задумали, и что спросят на собеседовании.',
+        'A CV is checked not only against a list of rules but by a living eye. Go through your CV with a mentor who already works in the profession: on getmentor.dev you can pick a mentor by specialty and arrange a review. Such a review is cheap or free and pays back the most: the mentor will show what reads differently from what you intended and what the interview will ask about.',
+      ),
+    },
     {
       id: 'hook',
       kind: 'text',
