@@ -373,7 +373,7 @@ export const execModel = defineModel<P>({
       steps.push({
         id: 'noexec-fork',
         label: bi('без копии', 'no copy'),
-        caption: bi('Слово `exec` в начале строки велит оболочке не создавать копию, а самой превратиться в программу. Поэтому номер оболочки 2210 перейдёт к программе `ls`, и когда `ls` завершится, оболочки уже не будет.', 'The word `exec` at the start of the line tells the shell not to make a copy but to turn into the program itself. So the shell’s number 2210 passes to `ls`, and after it ends there will be no shell any more.'),
+        caption: bi('Слово `exec` в начале строки говорит оболочке не создавать копию, а самой превратиться в программу. Поэтому номер оболочки 2210 перейдёт к программе `ls`, и когда `ls` завершится, оболочки уже не будет.', 'The word `exec` at the start of the line tells the shell not to make a copy but to turn into the program itself. So the shell’s number 2210 passes to `ls`, and after it ends there will be no shell any more.'),
         focus: ['bash'],
         say: { bash: bi('Оболочка не создаёт копию, потому что сама станет программой ls.', 'The shell makes no copy, because it will become ls itself.') },
         reveal: ['child'],
@@ -475,7 +475,7 @@ export const execModel = defineModel<P>({
       steps.push({
         id: 'nowait',
         label: '&',
-        caption: bi('Знак `&` в конце строки велит оболочке не ждать завершения программы. Оболочка сразу печатает номер задания `[1] 2231` и новое приглашение, а позже сообщит строкой `[1]+ Done`, что `ls` закончила работу.', 'The `&` at the end of the line tells the shell not to wait for the program. The shell at once prints the job number `[1] 2231` and a new prompt, and later reports with `[1]+ Done` that `ls` has finished.'),
+        caption: bi('Знак `&` в конце строки говорит оболочке не ждать завершения программы. Оболочка сразу печатает номер задания `[1] 2231` и новое приглашение, а позже сообщит строкой `[1]+ Done`, что `ls` закончила работу.', 'The `&` at the end of the line tells the shell not to wait for the program. The shell at once prints the job number `[1] 2231` and a new prompt, and later reports with `[1]+ Done` that `ls` has finished.'),
         focus: ['e-prompt', 'tty'],
         reveal: ['e-prompt', 'tty'],
         tokens: [{ edge: 'e-prompt', label: '[1] 2231' }],

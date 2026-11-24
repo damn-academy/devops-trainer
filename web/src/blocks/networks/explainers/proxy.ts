@@ -319,7 +319,7 @@ export const proxyModel = defineModel<P>({
         steps.push({
           id: `r${n}`,
           label: b('повтор', 'retry'),
-          caption: b('Настройка proxy_next_upstream error timeout велит nginx повторить тот же запрос на следующем сервере группы. Неудачный сервер nginx на 10 секунд помечает недоступным (max_fails=1, fail_timeout=10s).', 'proxy_next_upstream error timeout: nginx retries the same request on the next server of the group and marks the failed one unavailable for 10 seconds (max_fails=1, fail_timeout=10s).'),
+          caption: b('Настройка proxy_next_upstream error timeout заставляет nginx повторить тот же запрос на следующем сервере группы. Неудачный сервер nginx на 10 секунд помечает недоступным (max_fails=1, fail_timeout=10s).', 'proxy_next_upstream error timeout: nginx retries the same request on the next server of the group and marks the failed one unavailable for 10 seconds (max_fails=1, fail_timeout=10s).'),
           focus: ['nginx', 'e-2'],
           tokens: [{ edge: 'e-2', label: `${p.method} /report` }],
           say: { nginx: b('nginx повторяет запрос на следующем сервере приложения.', 'nginx retries on the next backend.') },

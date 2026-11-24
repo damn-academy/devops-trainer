@@ -156,7 +156,7 @@ export const SSH_TASKS: LabGoal[] = [
     chips: 'ssh -f -N -L 8080:localhost:8080 app',
     docRef: { ...obsd('ssh', 1), label: 'ssh(1) · -L' },
     hints: {
-      H1: bi('В записи `-L 8080:localhost:8080` первое число задаёт порт, который туннель слушает на вашей машине, а остальная часть говорит, куда сервер передаёт подключения от своего имени. Флаг `-N` велит не запускать оболочку, а `-f` велит уйти в фон.', 'In `-L 8080:localhost:8080` the first number is the port the tunnel listens on at your machine, and the rest says where the server passes the connections on its own behalf. `-N` says not to start a shell, and `-f` to go to the background.'),
+      H1: bi('В записи `-L 8080:localhost:8080` первое число задаёт порт, который туннель слушает на вашей машине, а остальная часть говорит, куда сервер передаёт подключения от своего имени. Флаг `-N` говорит не запускать оболочку, а `-f` — уйти в фон.', 'In `-L 8080:localhost:8080` the first number is the port the tunnel listens on at your machine, and the rest says where the server passes the connections on its own behalf. `-N` says not to start a shell, and `-f` to go to the background.'),
       H2: bi('Для проверки выполните `curl -s http://127.0.0.1:8080/` на `laptop`.', 'To check, run `curl -s http://127.0.0.1:8080/` on `laptop`.'),
     },
   },

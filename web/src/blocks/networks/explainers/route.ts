@@ -139,7 +139,7 @@ export const routeModel = defineModel<P>({
       label: b('маршрут', 'route'),
       caption: noDef
         ? b('Компьютер h1 ищет в таблице маршрутов строку для адреса 10.0.2.10. В таблице есть только своя подсеть 10.0.1.0/24, а она этому адресу не подходит, так что маршрута нет.', 'h1 looks for a routing line for 10.0.2.10. There is only its own subnet 10.0.1.0/24 — it does not match. There is no route.')
-        : b('Компьютер h1 ищет в таблице маршрутов строку для адреса 10.0.2.10. Своя подсеть 10.0.1.0/24 не подходит, зато подходит строка default, которая велит отправлять такие пакеты через шлюз 10.0.1.1.', 'h1 looks for a routing line for 10.0.2.10. Its own subnet 10.0.1.0/24 does not match; default does: “via gateway 10.0.1.1”.'),
+        : b('Компьютер h1 ищет в таблице маршрутов строку для адреса 10.0.2.10. Своя подсеть 10.0.1.0/24 не подходит, зато подходит строка default, которая говорит отправлять такие пакеты через шлюз 10.0.1.1.', 'h1 looks for a routing line for 10.0.2.10. Its own subnet 10.0.1.0/24 does not match; default does: “via gateway 10.0.1.1”.'),
       focus: ['h1', 't1'],
       say: { h1: noDef ? b('Компьютер h1 не находит в таблице ни одной строки для 10.0.2.10.', 'h1 finds no line for 10.0.2.10.') : b('Компьютер h1 выбирает строку default, и пакет пойдёт через шлюз 10.0.1.1.', 'h1 picks the default line: via gateway 10.0.1.1.') },
       states: { ...HIDDEN, h1: 'on', t1: noDef ? 'err' : 'on' },

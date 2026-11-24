@@ -137,7 +137,7 @@ export const placesModel = defineModel<P>({
     },
   ],
   metrics: [
-    { id: 'builds', label: bi('сколько сборок нужно на один выпуск', 'builds per release') },
+    { id: 'builds', label: bi('сколько сборок нужно на один релиз', 'builds per release') },
     { id: 'checked', label: bi('покупатели получили проверенную сборку', 'customers run the checked build'), unit: '%' },
   ],
   run(p, broken): Step[] {
@@ -177,7 +177,7 @@ export const placesModel = defineModel<P>({
         focus: ['devConf', 'e-dc'],
         reveal: ['devConf', 'e-dc'],
         tokens: [{ edge: 'e-dc', label: 'pay=sandbox' }],
-        say: { devConf: bi('Файл dev.conf велит платить в учебную систему.', 'dev.conf says: pay into the sandbox.') },
+        say: { devConf: bi('Файл dev.conf говорит платить в учебную систему.', 'dev.conf says: pay into the sandbox.') },
         states: { dev: 'ok' },
         metrics,
       });
@@ -209,7 +209,7 @@ export const placesModel = defineModel<P>({
         focus: ['testConf', 'e-tc'],
         reveal: ['testConf', 'e-tc'],
         tokens: [{ edge: 'e-tc', label: 'pay=sandbox' }],
-        say: { testConf: bi('Файл test.conf тоже велит платить в учебную систему.', 'test.conf also says: pay into the sandbox.') },
+        say: { testConf: bi('Файл test.conf тоже говорит платить в учебную систему.', 'test.conf also says: pay into the sandbox.') },
         metrics,
       });
     steps.push({
@@ -261,7 +261,7 @@ export const placesModel = defineModel<P>({
         focus: ['prodConf', 'e-pc'],
         reveal: ['prodConf', 'e-pc'],
         tokens: [{ edge: 'e-pc', label: 'pay=real' }],
-        say: { prodConf: bi('Файл prod.conf велит платить в настоящую платёжную систему.', 'prod.conf says: pay for real.') },
+        say: { prodConf: bi('Файл prod.conf говорит платить в настоящую платёжную систему.', 'prod.conf says: pay for real.') },
         metrics,
       });
     steps.push({
