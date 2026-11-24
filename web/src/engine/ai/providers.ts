@@ -34,7 +34,7 @@ export const PROVIDERS: ProviderPreset[] = [
     defaultModel: 'deepseek-flash',
     keyUrl: 'https://platform.deepseek.com/api_keys',
     note: bi(
-      'Предоплаченный баланс — естественный лимит расходов: положите немного и не волнуйтесь о счёте. Если модели по умолчанию нет, нажмите «Загрузить список» и выберите из того, что отдаёт API.',
+      'Предоплаченный баланс у провайдера — естественный лимит расходов: положите немного на счёт провайдера и не волнуйтесь о счёте. Если модели по умолчанию нет, нажмите «Загрузить список» и выберите из того, что отдаёт API.',
       'A prepaid balance is a natural spending limit: top up a little and stop worrying about the bill. If the default model is not there, press “Load the list” and pick from what the API returns.',
     ),
     cost: bi('≈ $0,3–1 за весь курс', '≈ $0.3–1 for the whole course'),
