@@ -124,6 +124,15 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   const mobileNotes = h('div.ex-mobile-notes');
   const mobileNodes = h('details.ex-mobile-nodes', {}, h('summary', {}, t(bi('Элементы схемы', 'Diagram elements'))), ...d.nodes.map(n => h('button.btn.ghost.small', { type: 'button', onclick: () => { selected = n.id; showCard(n.id, n.card, txt(n.label)); } }, txt(n.label))));
   const viewport = h('div.ex-viewport', { tabindex: 0, 'aria-label': t(bi('Схему можно прокручивать в любую сторону.', 'Scroll the diagram in any direction.')) }, svg);
+  // A click on empty canvas (not on an element) and Escape close the open
+  // card: the popup is a layer over the picture, not a panel that reshapes it.
+  viewport.addEventListener('click', (e) => {
+    if (e.target === svg && !card.hidden) {
+      card.hidden = true;
+      selected = null;
+      paint();
+    }
+  });
   const canvasEl = h('div.ex-canvas', {}, viewport, h('p.ex-hint', {}, t(L.hintClick)));
   const introBox = model.intro ? h('div.ex-intro', { role: 'note' }) : null;
   const el = h(
@@ -144,6 +153,17 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   );
   clear(root);
   root.append(el);
+  // Escape closes whatever popup is open; the popups are layers over the
+  // picture, so dismissing them must not touch the diagram itself.
+  el.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!card.hidden) {
+      card.hidden = true;
+      selected = null;
+      paint();
+    }
+    if (!deltaBox.hidden) deltaBox.hidden = true;
+  });
 
   // ── diagram ──
   const defs = s(
@@ -806,7 +826,21 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const spec = model.metrics?.find((x) => x.id === k);
       return h('span.ex-mdelta', { class: v > 0 ? 'up' : 'down' }, `${v > 0 ? '+' : ''}${formatNum(v)}${spec?.unit ? ' ' + txt(spec.unit) : ''} ${spec ? t(spec.label) : k}`);
     });
-    put(deltaBox, h('h4', {}, t(L.changed)), h('p', {}, ...renderInline(t(delta))), chips.length ? h('div.ex-mdeltas', {}, ...chips) : null);
+    put(
+      deltaBox,
+      h(
+        'div.ex-delta-head',
+        {},
+        h('h4', {}, t(L.changed)),
+        h(
+          'button.icon-btn',
+          { type: 'button', 'aria-label': t(bi('Закрыть пояснение', 'Close the explanation')), onclick: () => (deltaBox.hidden = true) },
+          icon('close'),
+        ),
+      ),
+      h('p', {}, ...renderInline(t(delta))),
+      chips.length ? h('div.ex-mdeltas', {}, ...chips) : null,
+    );
     // the one-line delta also sits next to the knob that changed
     const near = el.querySelector(`[data-knob="${CSS.escape(change.id)}"] .knob-delta`);
     for (const other of el.querySelectorAll('.knob-delta')) other.textContent = '';
