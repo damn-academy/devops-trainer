@@ -297,4 +297,22 @@ export const ROUTE: RouteEntry[] = [
     },
     hours: ROUTE_HOURS['career'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
   },
+  {
+    id: 'pet-projects',
+    order: 130,
+    folder: 'pet-projects',
+    segment: '13',
+    title: bi('Пет-проекты', 'Pet projects'),
+    summary: bi(
+      'Десять самостоятельных проектов на настоящих машинах: у каждого есть последовательный алгоритм и ссылки на уроки курса, а уровень не выбирается — начните с любого проекта и делайте следующий.',
+      'Ten self-driven projects on real machines: each has a sequential algorithm and pointers back to the course lessons, with no level to choose — start with any project and take the next one.',
+    ),
+    checklistStep: null,
+    levels: {
+      beginner: bi('Проекты одинаковы для всех уровней', 'The projects are the same for every level'),
+      intermediate: bi('Проекты одинаковы для всех уровней', 'The projects are the same for every level'),
+      experienced: bi('Проекты одинаковы для всех уровней', 'The projects are the same for every level'),
+    },
+    hours: ROUTE_HOURS['pet-projects'] ?? { beginner: 0, intermediate: 0, experienced: 0 },
+  },
 ];
