@@ -6,6 +6,7 @@
 // source text of every lesson; the English slot of every bi() is a faithful
 // translation, unlike the sales pilot's TODO(ru-en) placeholders.
 
+import { SCITHINK_MODULES } from './structure';
 import { defineModule } from '../../core/define';
 import { bi } from '../../core/i18n';
 import type { Block } from '../../core/types';
@@ -29,6 +30,7 @@ const block: Block = {
     intermediate: bi('Иногда проверяете то, что читаете', 'You sometimes check what you read'),
     experienced: bi('Регулярно разбираете данные и прогнозы', 'You regularly take apart data and forecasts'),
   },
+  modules: SCITHINK_MODULES,
   lessons: SCITHINK_LESSONS.map((l) => l.id),
   sources: { en: [], ru: [] },
   placement: [],
