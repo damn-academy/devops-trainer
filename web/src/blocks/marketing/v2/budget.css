@@ -1,0 +1,7 @@
+.mkt-budget { max-width: 760px; width: 100%; min-width: 0; color: var(--ink); }
+.mkt-budget label { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; margin: 12px 0; font: inherit; }
+.mkt-budget label span { overflow-wrap: anywhere; }
+.mkt-budget input { grid-column: 1 / -1; width: 100%; min-width: 0; accent-color: var(--focus); }
+.mkt-budget svg { display: block; width: 100%; max-width: 760px; }
+.mkt-budget-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+@media (max-width: 480px) { .mkt-budget svg text { font-size: 25px; } }
