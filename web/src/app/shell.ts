@@ -138,7 +138,7 @@ export function startApp(root: HTMLElement): void {
     page = r.name === 'home' || !pages ? homePage() : pages.renderPage(r);
     clear(main);
     main.append(page.el);
-    footer.replaceChildren(h('p', {}, t(bi('Прогресс сохраняется в этом браузере после каждого действия. Здесь учатся, а не играют: без очков, значков и серий.', 'Progress is saved in this browser after every action. The course is not a game: no points, badges or streaks.'))));
+    footer.replaceChildren(h('p', {}, t(bi('Прогресс сохраняется в этом браузере после каждого действия. Здесь учатся, а не играют: без очков, значков и серий.', 'Progress is saved in this browser after every action. This is a place to learn, not to play: no points, badges or streaks.'))));
     footer.append(
       h(
         'p.foot-links',

@@ -67,6 +67,8 @@ for (const lang of ['ru', 'en'] as const) {
     for (const page of [homePage(), coursesPage()]) {
       const shelves = page.el.querySelectorAll('.catalog-shelf');
       expect(shelves).toHaveLength(1);
+      expect(shelves[0]!.querySelector('h2')).toBeNull();
+      expect(shelves[0]!.querySelector(':scope > p')).toBeNull();
       expect([...shelves[0]!.querySelectorAll('.catalog-tile')].map(el => el.getAttribute('href')))
         .toEqual(ids.map(id => `#/course/${id}`));
       for (const course of courses) expect(shelves[0]!.textContent).toContain(course.title[lang]);

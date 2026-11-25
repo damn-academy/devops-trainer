@@ -1,12 +1,12 @@
-# Contributing to DevOps Trainer
+# How to contribute
 
 English · [Русский](CONTRIBUTING.ru.md)
 
-The course is open and can be improved: by fixing mistakes and inaccuracies, rewriting unclear passages, adding tasks, diagrams and lessons, and repairing the simulators. This file tells how the repository is organised and how to shape a change so that it can be accepted quickly. The same text is in the course itself, on the page “About the course → Contributing” (`#/about/contribute`).
+The platform is open and can be improved: by fixing mistakes and inaccuracies, rewriting unclear passages, adding tasks, diagrams, lessons and entire courses, and repairing the simulators. This page tells how the repository is organised and how to shape a change so that it can be accepted quickly.
 
 ## How the repository is organised
 
-The whole course is in one repository, [damn-academy/devops-trainer](https://github.com/damn-academy/devops-trainer).
+The whole platform with all its professions and courses is in one repository, [damn-academy/devops-trainer](https://github.com/damn-academy/devops-trainer).
 
 - `web/` holds the application itself, in TypeScript and Vite without a UI framework. `web/src/core` has the types, registry, router, store and linter, `web/src/app` the pages, `web/src/engine` the engines (terminal, diagrams, questions, documentation, simulators, v86, AI, offline), `web/src/blocks` the content of the blocks, one directory per block, and `web/tests` and `web/e2e` the tests.
 - `design/` holds the design documents; the main one is [`design/00-DESIGN.md`](design/00-DESIGN.md).
@@ -19,7 +19,7 @@ Blocks and engines plug in by themselves: the registry finds them through `impor
 
 ## How to run the course and the tests
 
-Working on the course needs Node.js and npm, and the lab, the service and the provider also need Go.
+Working on the platform needs Node.js and npm, and the lab, the service and the provider also need Go.
 
 ```bash
 cd web
@@ -46,7 +46,7 @@ Every task comes with a reference solution, and the tests run it on the simulato
 
 ## How to write the text
 
-The Russian text of the course follows the guide [`web/STYLE-RU.md`](web/STYLE-RU.md), and its rules are acceptance conditions. We write in full, connected sentences, without chopped phrases, empty intensifiers, calques from English or officialese, and the guide itself collects examples of every ban. Every term is introduced before it is used and is called the same in the text, on the diagram and in the questions. An example in a lesson may rely only on what the learner has already covered on the route. The English side follows the same spirit: plain, complete sentences.
+The Russian text of the professions and courses follows the guide [`web/STYLE-RU.md`](web/STYLE-RU.md), and its rules are acceptance conditions. We write in full, connected sentences, without chopped phrases, empty intensifiers, calques from English or officialese, and the guide itself collects examples of every ban. Every term is introduced before it is used and is called the same in the text, on the diagram and in the questions. An example in a lesson may rely only on what the learner has already covered on the route.
 
 Three linters help keep these rules:
 
@@ -58,7 +58,9 @@ The last two linters are heuristic, so every finding is worth reading by eye, an
 
 ## How to report a problem
 
-A mistake in a text, a diagram or a task is easiest to send from the course itself with “Report a problem”, or by selecting the text and pressing “Comment”: the message names the place in the course by itself and attaches the terminal output. The reply appears on the “My messages” page. Bugs in the code, proposals about how the course works, and everything about the dtlab lab and the feedback service are better described in a [GitHub issue](https://github.com/damn-academy/devops-trainer/issues): what you did, what you expected to see and what you actually saw, plus the browser and the system.
+A mistake in a text, a diagram or a task is easiest to send from the site with “Report a problem”, or by selecting the text and pressing “Comment”: the message names the place on the site by itself and attaches the terminal output. The reply appears on the [“My messages”](https://damn.academy/#/messages) page. Bugs in the code, proposals about how the platform works, and everything about the dtlab lab and the feedback service are better described in a [GitHub issue](https://github.com/damn-academy/devops-trainer/issues): what you did, what you expected to see and what you actually saw, plus the browser and the system.
+
+There are other ways to take part. Send an idea for a course or a profession — we will help build it on this engine. If you have teaching material of your own that you would like to publish, write to the author through the feedback form at the bottom of any page. The platform is non-commercial and sells nothing: it is an attempt to share knowledge with people who need it, not another standard. Over time a way to support the project with a donation will appear.
 
 ## How to shape a change
 
@@ -70,8 +72,8 @@ fix(linux): explain why chmod needs the x bit on directories
 
 Every commit is signed off with `git commit --signoff`, which adds a `Signed-off-by` line and certifies that you have the right to contribute the code under the project’s licence ([Developer Certificate of Origin](https://developercertificate.org/)).
 
-In the pull request description, tell what changed and why, and for changes to the interface or the diagrams attach screenshots at 1440 and 390 pixels wide. One change should solve one problem: a typo fix and a new lesson are better sent separately. All public text in the repository, that is, code, comments, commits and pull request descriptions, is written in English, while Russian stays in the course texts and in files ending in `.ru.md`.
+In the pull request description, tell what changed and why, and for changes to the interface or the diagrams attach screenshots at 1440 and 390 pixels wide. One change should solve one problem: a typo fix and a new lesson are better sent separately. All public text in the repository, that is, code, comments, commits and pull request descriptions, is written in English, while Russian stays in lesson texts and in files ending in `.ru.md`.
 
 ## Licence
 
-The course is distributed under the [Apache-2.0](LICENSE) licence, and everything you send is accepted under the same licence. Third-party components keep their licences: the v86 emulator is under BSD-2-Clause, and Alpine packages and the Linux kernel are under their own licences, which the image build script records in the manifest next to each downloaded file.
+The platform is distributed under the [Apache-2.0](LICENSE) licence, and everything you send is accepted under the same licence. Third-party components keep their licences: the v86 emulator is under BSD-2-Clause, and Alpine packages and the Linux kernel are under their own licences, which the image build script records in the manifest next to each downloaded file.
