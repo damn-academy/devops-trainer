@@ -31,12 +31,7 @@ const SRC = {
   momtest: { title: ['Роб Фитцпатрик, «Мамин тест»', 'Rob Fitzpatrick — The Mom Test'], url: 'https://momtestbook.com/' },
   a16z: { title: ['a16z: от сообщества к коммерциализации открытого кода', 'a16z — Open Source: From Community to Commercialization'], url: 'https://a16z.com/open-source-from-community-to-commercialization/' },
   cncf: { title: ['CNCF: нейтральный дом для облачных проектов', 'CNCF — the neutral home for cloud-native projects'], url: 'https://www.cncf.io/' },
-  hashicorp: { title: ['HashiCorp: переход на Business Source License', 'HashiCorp adopts the Business Source License'], url: 'https://www.hashicorp.com/blog/hashicorp-adopts-business-source-license' },
-  opentofu: { title: ['OpenTofu: открытый форк Terraform', 'OpenTofu — the open-source Terraform fork'], url: 'https://opentofu.org/' },
   gitlab: { title: ['Хендбук GitLab: компания работает на виду', 'The GitLab Handbook'], url: 'https://handbook.gitlab.com/' },
-  grafana: { title: ['Grafana Labs: открытые проекты в основе компании', 'Grafana Labs — open source at the core'], url: 'https://grafana.com/oss/' },
-  confluent: { title: ['Confluent: коммерциализация Kafka', 'Confluent — building a business around Kafka'], url: 'https://www.confluent.io/' },
-  databricks: { title: ['Databricks: платформа вокруг открытого Spark', 'Databricks — the platform around open-source Spark'], url: 'https://www.databricks.com/' },
   diataxis: { title: ['Diátaxis: система технической документации', 'Diátaxis — a systematic approach to documentation'], url: 'https://diataxis.fr/' },
   stripe: { title: ['Документация Stripe как эталон быстрого старта', 'Stripe documentation — a quickstart reference'], url: 'https://docs.stripe.com/' },
 } satisfies Record<string, Src>;
@@ -241,24 +236,6 @@ const LESSON_SPECS: LessonSpec[] = [
     uses: ['product.nrr'],
     quiz: ['product.q.metric-monitor', 'product.q.tiers-blur'],
     src: [SRC.reforge, SRC.highalpha],
-  },
-  {
-    id: 'product.cases',
-    minutes: 14,
-    title: ['Разборы компаний', 'Company case studies'],
-    summary: [
-      'Четыре истории: HashiCorp, GitLab, Grafana и Confluent с Databricks, и один переносимый урок из каждой.',
-      'Four stories — HashiCorp, GitLab, Grafana, and Confluent with Databricks — and one portable lesson from each.',
-    ],
-    hook: [
-      'Теория без примеров остаётся красивой схемой. Этот урок разбирает четыре компании, которые прошли путь открытого продукта: HashiCorp, GitLab, Grafana и Confluent, и достаёт из каждой истории один переносимый урок.',
-      'Theory without examples stays a pretty diagram. This lesson dissects four companies that walked the open-product path — HashiCorp, GitLab, Grafana and Confluent — and takes one portable lesson from each story.',
-    ],
-    principles: [27, 28, 29, 30],
-    introduces: [],
-    uses: ['product.open-core', 'product.plg', 'product.value-metric'],
-    quiz: ['product.q.case-match', 'product.q.case-common'],
-    src: [SRC.hashicorp, SRC.opentofu, SRC.gitlab, SRC.grafana, SRC.confluent, SRC.databricks],
   },
 ];
 
@@ -722,37 +699,6 @@ export const PRODUCT_QUIZ: QuizItem[] = [
       { id: 'trust', text: bi('Конфликтом с сообществом и потерей доверия, которое копилось годами', 'Conflict with the community and the loss of trust, which takes years to build'), correct: true, why: bi('Если вчерашнее бесплатное сегодня платное, сообщество чувствует обман, и форк не заставит себя долго ждать.', 'When yesterday’s free feature becomes paid, the community feels cheated, and a fork will not be long in coming.') },
       { id: 'small', text: bi('Меньшей выручкой от маленьких команд, которые перестанут платить за корпоративную версию', 'Smaller revenue from small teams'), why: bi('Маленькие команды почти не платят в любом случае, и ущерб приходится не на эту строку.', 'Small teams barely pay anyway, so the damage does not land on this line.') },
       { id: 'invoices', text: bi('Сложностью выставления счетов, потому что бухгалтерия не поймёт, за что платят', 'The complexity of invoicing the accountants'), why: bi('Счета выставлять не сложнее, а вот объяснять сообществу, почему граница сдвинулась без предупреждения, сложно.', 'Invoicing is no harder; what is hard is explaining to the community why the boundary moved without warning.') },
-    ],
-  },
-  {
-    id: 'product.q.case-match',
-    kind: 'match',
-    concepts: [],
-    refs: { lesson: 'product.cases' },
-    prompt: bi(
-      'Соедините компанию с главным уроком из её истории.',
-      'Match each company with the main lesson from its story.',
-    ),
-    pairs: [
-      { id: 'hashicorp', left: 'HashiCorp', right: bi('Границу open-core меняют медленно и с сообществом, иначе рынок получит форк', 'Move the open-core boundary slowly and with the community, or the market gets a fork'), why: bi('Переход на Business Source License породил OpenTofu, и доверие пришлось защищать годами.', 'The move to the Business Source License spawned OpenTofu, and trust had to be defended for years.') },
-      { id: 'gitlab', left: 'GitLab', right: bi('Открытость процесса продаёт сама себя и снижает издержки доверия', 'Openness in process sells itself and lowers the cost of trust'), why: bi('Публичный хендбук и публичная дорожная карта работают как функция продукта.', 'The public handbook and the public roadmap work as a product feature.') },
-      { id: 'grafana', left: 'Grafana', right: bi('Расширяются в стороны, а управляемый хостинг становится платным слоем', 'Expand sideways, and managed hosting becomes the paid layer'), why: bi('Каждая новая панель увеличивала ценность платформы без конфликта с сообществом.', 'Every new panel raised the platform’s value without conflicting with the community.') },
-      { id: 'confluent', left: 'Confluent', right: bi('Открытое ядро как канал доверия, деньги — за облако и платформу вокруг него', 'An open core as the trust channel, money from the cloud and platform around it'), why: bi('Kafka остаётся открытой, а выручка приходит из управляемого сервиса и корпоративных возможностей.', 'Kafka stays open, and revenue comes from the managed service and enterprise features.') },
-    ],
-  },
-  {
-    id: 'product.q.case-common',
-    kind: 'mcq',
-    concepts: [],
-    refs: { lesson: 'product.cases' },
-    prompt: bi(
-      'Что общего у всех четырёх историй из разборов?',
-      'What do all four stories in the case studies have in common?',
-    ),
-    options: [
-      { id: 'oss-trust', text: bi('Открытый код как канал доверия, а деньги — за слой для компаний', 'Open source as the trust and distribution channel, money from the layer for companies'), correct: true, why: bi('Все четыре компании строят доверие открытым кодом и берут выручку за корпоративный или управляемый слой.', 'All four companies build trust with open source and take revenue from an enterprise or managed layer.') },
-      { id: 'fixed', text: bi('Фиксированная цена без тарифов для разных размеров клиентов, чтобы не терять маленьких', 'A fixed price with no tiers for different customer sizes'), why: bi('У всех разборов упаковка многослойная и включает бесплатное, командное и корпоративное.', 'Every case study has layered packaging that includes free, team and enterprise tiers.') },
-      { id: 'no-community', text: bi('Отказ от сообщества после выхода на биржу ради квартальной выручки', 'Abandoning the community after going public'), why: bi('Ни одна из компаний не отказывалась от сообщества: споры шли о границах, и сам факт открытости никто не оспаривал.', 'None of the companies abandoned the community: the disputes were about boundaries, not about openness itself.') },
     ],
   },
 ];

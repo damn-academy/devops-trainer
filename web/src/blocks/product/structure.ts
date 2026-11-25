@@ -58,6 +58,10 @@ export const PRODUCT_MODULES: CourseModule[] = [
 ];
 
 export const PRODUCT_SUMMARIES: Record<string, Bi> = {
+  "product.cases": {
+    "ru": "Восемь компаний — HashiCorp, GitLab, Grafana Labs, Elastic, MongoDB, Supabase, Neon и Docker: решения по годам, их цена, последствия и что из этого может повторить компания на двадцать–шестьдесят человек.",
+    "en": "Eight companies — HashiCorp, GitLab, Grafana Labs, Elastic, MongoDB, Supabase, Neon and Docker: decisions over the years, their costs, consequences and what a company of twenty to sixty people can repeat."
+  },
   "product.roadmap": {
     "ru": "Как вести открытую дорожную карту, чтобы она помогала пользователям планировать и не превращалась в список нарушенных обещаний.",
     "en": "How to maintain an open roadmap that helps users plan without turning into a list of broken promises."

@@ -20,7 +20,10 @@ import { regionsWidget } from './regions';
 // Attach the interactive pieces: a quiz set spread over the lessons it checks,
 // the growth-loop scheme to the events lesson (principle 34, the one machine),
 // the regions simulator to the regions lesson.
-const lessons = MARKETING_LESSONS.map((l) => ({ ...l, summary: MARKETING_SUMMARIES[l.id], sections: [...l.sections] }));
+const lessons = MARKETING_MODULES.flatMap(m => m.lessons).map(id => {
+  const l = MARKETING_LESSONS.find(l => l.id === id)!;
+  return { ...l, summary: MARKETING_SUMMARIES[l.id], sections: [...l.sections] };
+});
 const QUIZ_BY_LESSON: Record<string, string[]> = {
   'marketing.fundamentals': ['marketing.q.category', 'marketing.q.icp'],
   'marketing.vaccine': ['marketing.q.sharp'],

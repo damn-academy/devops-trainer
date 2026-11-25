@@ -123,16 +123,6 @@ const MODULE_LESSON: Record<string, LessonSpec> = {
       'The same campaign in the US, Germany and Japan gives three different results — sometimes in reverse. This lesson is about why markets buy differently, and the simulator below shows how identical efforts add up to different revenue.',
     ],
   },
-  J: {
-    id: 'marketing.cases',
-    module: 'I',
-    title: ['Разборы: что сделали HashiCorp, GitLab и другие', 'Case studies: what HashiCorp, GitLab and others did'],
-    minutes: 12,
-    hook: [
-      'Хочется спросить: а кто-нибудь уже делал так? Этот урок — пять разборов: HashiCorp, GitLab, Grafana, MongoDB и Elastic, Vercel и Supabase. Что они сделали, чем это им обошлось и что из этого перенять.',
-      'You want to ask: has anyone actually done this? This lesson is five case studies: HashiCorp, GitLab, Grafana, MongoDB and Elastic, Vercel and Supabase. What exactly they did, what it cost them and what to borrow.',
-    ],
-  },
 };
 
 function moduleBody(items: { n: number; title: string; body: string; today: string }[]): string {
@@ -153,7 +143,6 @@ const INTRODUCES: Record<string, string[]> = {
   G: [],
   H: ['marketing.leading-metric'],
   I: [],
-  J: [],
 };
 
 // Concepts used again after their lesson are listed per lesson; the events
@@ -214,26 +203,6 @@ const SOURCES: Record<string, { en: { title: string; url: string }[]; ru: { titl
   I: {
     en: [{ title: 'Trade.gov — Country Commercial Guides', url: 'https://www.trade.gov/country-commercial-guides' }],
     ru: [{ title: 'Trade.gov — Country Commercial Guides', url: 'https://www.trade.gov/country-commercial-guides' }],
-  },
-  J: {
-    en: [
-      { title: 'HashiCorp', url: 'https://www.hashicorp.com/' },
-      { title: 'GitLab', url: 'https://about.gitlab.com/' },
-      { title: 'Grafana Labs', url: 'https://grafana.com/' },
-      { title: 'MongoDB', url: 'https://www.mongodb.com/' },
-      { title: 'Elastic', url: 'https://www.elastic.co/' },
-      { title: 'Vercel', url: 'https://vercel.com/' },
-      { title: 'Supabase', url: 'https://supabase.com/' },
-    ],
-    ru: [
-      { title: 'HashiCorp', url: 'https://www.hashicorp.com/' },
-      { title: 'GitLab', url: 'https://about.gitlab.com/' },
-      { title: 'Grafana Labs', url: 'https://grafana.com/' },
-      { title: 'MongoDB', url: 'https://www.mongodb.com/' },
-      { title: 'Elastic', url: 'https://www.elastic.co/' },
-      { title: 'Vercel', url: 'https://vercel.com/' },
-      { title: 'Supabase', url: 'https://supabase.com/' },
-    ],
   },
 };
 

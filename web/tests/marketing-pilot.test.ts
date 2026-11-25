@@ -38,7 +38,7 @@ describe('marketing pilot (hidden)', () => {
   });
 
   it('builds one platform lesson per module with the honest note in each', () => {
-    expect(MARKETING_LESSONS).toHaveLength(10 + MARKETING_V2_LESSONS.length);
+    expect(MARKETING_LESSONS).toHaveLength(9 + MARKETING_V2_LESSONS.length);
     for (const l of MARKETING_LESSONS) {
       if (!MARKETING_V2_LESSONS.includes(l)) expect(l.sections.some((s) => s.kind === 'callout')).toBe(true);
       expect(l.sources.en.length).toBeGreaterThan(0);
