@@ -5,7 +5,7 @@ For five years, a company told buyers it built a “hyperconverged cloud platfor
 <!-- section: theory | What a category is -->
 A category is an accepted name for a problem and a class of solutions that buyers use to find suppliers, allocate budgets, and compare offers. The book Play Bigger argues that the market rewards whoever defines a category and becomes its reference point; its frequently cited figure of the leader capturing 76 % of category value comes from a 2014 study of venture-backed companies and describes survivors, so it should be treated as a hypothesis, not a law.
 
-Platform engineering is the clearest recent example. The platformengineering.org community says it grew out of the launch of Humanitec and then built the PlatformCon conference, educational videos, and community channels. This is an example of a vendor supporting a profession and a shared language around the problem its product addresses; such a community is not independent validation of the vendor's position. In the community's 2025 survey of 518 platform-engineering professionals, 35 % of teams had introduced a platform product manager, and nearly half of initiatives operated on budgets below one million dollars. Gartner published a Market Guide for Internal Developer Portals on 31 March 2025 and a Hype Cycle for Platform Engineering on 25 June 2025. A developer portal and a platform are different categories: the portal is the user's entry point, while the platform is responsible for the capabilities and operations beneath it.
+Platform engineering is the clearest recent example. The platformengineering.org community says it grew out of the launch of Humanitec and then built the PlatformCon conference, educational videos, and community channels. This is an example of a vendor supporting a profession and a shared language around the problem its product addresses; such a community is not independent validation of the vendor's position. For volume 4 of its State of Platform Engineering report the community surveyed 518 engineers, and the report describes distinct roles in platform teams, including the platform product manager: the profession already describes itself in words coined around the category. Gartner published a Market Guide for Internal Developer Portals on 31 March 2025 and a Hype Cycle for Platform Engineering on 25 June 2025. A developer portal and a platform are different categories: the portal is the user's entry point, while the platform is responsible for the capabilities and operations beneath it.
 
 CNCF has a Platform Engineering Maturity Model: a description of how companies progress from scattered scripts to an internal developer platform. Syntasso described turning it into an assessment for customers. This is a repeatable category-building mechanism: give buyers a language for diagnosing their situation, then help them do the work the diagnosis reveals.
 
@@ -20,6 +20,7 @@ Complete this task in a document. Write down five phrases your buyers used to de
 <!-- section: sources -->
 - Play Bigger — https://playbigger.com/publications/what-is-category-design
 - platformengineering.org, about the community — https://platformengineering.org/about
+- platformengineering.org, State of Platform Engineering, volume 4 — https://platformengineering.org/blog/announcing-the-state-of-platform-engineering-vol-4
 - Gartner, Market Guide for Internal Developer Portals — https://www.gartner.com/en/documents/6306515 (31.03.2025)
 - CNCF TOC, platform maturity model — https://github.com/cncf/toc/issues/1679
 
@@ -52,5 +53,6 @@ Complete this task in a document. Choose one of the lesson's two events and one 
 - Bitkom, dependence on US clouds — https://www.bitkom.org/Presse/Presseinformation/Wirtschaft-ruft-nach-deutscher-Cloud (11.06.2025)
 - Synergy Research, European cloud providers — https://www.srgresearch.com/articles/european-cloud-providers-local-market-share-now-holds-steady-at-15
 - European Commission, Data Act — https://digital-strategy.ec.europa.eu/en/policies/data-act (applies from 12.09.2025)
-- European Commission, sovereign-cloud tender — https://commission.europa.eu/news-and-media/news/commission-moves-forward-cloud-sovereignty-eur-180-million-tender-2025-10-10_en (10.10.2025, results 17.04.2026)
+- European Commission, sovereign-cloud tender announcement — https://commission.europa.eu/news-and-media/news/commission-moves-forward-cloud-sovereignty-eur-180-million-tender-2025-10-10_en (10.10.2025)
+- European Commission, tender results — https://commission.europa.eu/news-and-media/news/commission-advances-cloud-sovereignty-through-strategic-procurement-2026-04-17_en (17.04.2026)
 - Gaia-X, compliance service — https://compliance.gaia-x.eu/

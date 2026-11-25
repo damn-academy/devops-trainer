@@ -24,6 +24,7 @@ Complete this task with the developer assistant you use and record the results i
 - Anthropic, donating MCP — https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation
 - Supabase, Lovable case — https://supabase.com/customers/lovable
 - Vercel, Markdown documentation — https://vercel.com/docs/agent-resources/markdown-access
+- Vercel, AGENTS.md versus skills experiment — https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals
 - Google, generative search optimization guide — https://developers.google.com/search/docs/fundamentals/ai-optimization-guide (10.07.2026)
 - Supabase, remote MCP server — https://supabase.com/blog/remote-mcp-server (03.10.2025); MCP and security — https://supabase.com/blog/mcp (16.09.2025)
 - Cloudflare, crawl-to-referral ratio — https://blog.cloudflare.com/ai-search-crawl-refer-ratio-on-radar (01.07.2025)

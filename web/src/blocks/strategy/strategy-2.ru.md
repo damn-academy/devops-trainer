@@ -75,4 +75,5 @@ MongoDB в феврале 2026 года рассказала о программ
 - CNCF, новая программа продления сертификаций — https://www.cncf.io/blog/2026/03/23/cncf-introduces-a-new-recertification-program-as-kubestronaut-community-surpasses-3500/ (23.03.2026)
 - O'Reilly, спонсорство — https://www.oreilly.com/content-marketing/available-products.html
 - ScyllaDB University — https://university.scylladb.com/courses/
-- Vercel, доступ к документации в Markdown и AGENTS.md — https://vercel.com/docs/agent-resources/markdown-access
+- Vercel, доступ к документации в Markdown — https://vercel.com/docs/agent-resources/markdown-access
+- Vercel, эксперимент с AGENTS.md и навыками — https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals
