@@ -85,11 +85,15 @@
 <!-- section: theory | Шаблон договора метрики -->
 ```yaml
 metric: account_activation_14d
+question: share of new cloud accounts that reach first value within two weeks
 version: 1
+effective_from: 2026-11-01
 owner: Product Analytics
 grain: external_cloud_account
 cohort: first_account_created_month_utc
-numerator: accounts_reaching_value_v1_within_14_days
+start_event: account_created
+window_days: 14
+numerator: mature_cohort_accounts_reaching_value_v1_within_14_days
 denominator: new_accounts_with_full_14_day_observation
 exclude: [internal, demo, known_duplicate]
 unknown: telemetry_missing_is_reported_separately
@@ -99,7 +103,7 @@ refresh: daily
 change_policy: version_new_definition_and_restate_explicitly
 ```
 
-Шаблон записывает поля определения из первого урока курса — единицу, когорту, числитель, знаменатель, исключения, источник, владельца и версию — так, чтобы их мог прочитать и человек, и программа проверки.
+Шаблон записывает десять полей определения из первого урока курса так, чтобы их мог прочитать и человек, и программа проверки: бизнес-вопрос стоит в поле `question`, числитель и знаменатель — в `numerator` и `denominator`, единица — в `grain`, начало отсчёта и окно — в `start_event` и `window_days`, исключения — в `exclude`, источник — в `source`, владелец — в `owner`, версия и дата её действия — в `version` и `effective_from`. В числителе стоят только аккаунты зрелой когорты, у которых окно уже закончилось, как и в знаменателе.
 
 <!-- section: theory | Ошибки, которые меняют управленческий вывод -->
 | Ошибка | Почему результат неверен | Как исправить |
