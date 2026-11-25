@@ -147,7 +147,7 @@ This is a teaching classification: cases have different causes and profitability
 <!-- /quiz -->
 
 <!-- section: task | Exercise: an event in your segment -->
-Complete the exercise in the document on this page. Find one event in your segment for each of the lesson's four types: economics, architecture and standards, trust, and vendor terms. For each, record a dated primary source, the affected customers, and a verifiable offer your company could make. Mark the event where you are strongest and record the metric the customer would use to measure the result.
+Complete the exercise in the document on this page. Find one event in your segment for each of the five types in the table: vendor terms, economics, architecture and standards, trust, and control and location. For each, record a dated primary source, the affected customers, and a verifiable offer your company could make. Mark the event where you are strongest and record the metric the customer would use to measure the result.
 
 <!-- section: sources -->
 - Grafana Labs, 2026 observability survey — https://grafana.com/observability-survey/2026/ (18.03.2026)
@@ -252,7 +252,7 @@ Examples of packaged offers: an Oracle database assessment listing constructs th
 Service-level, data residency, recovery, and compatibility requirements are mandatory constraints and must not be converted into a discount to total cost of ownership. Show avoided-loss benefits as a separate scenario with an explicit probability; do not add them to direct cash savings. Choose the unit of output for the product: cost per request for an API, cost per transaction at a specified latency for a database, cost per stored gigabyte at a specified query load for logs, and cost per successful job at a specified quality for accelerators.
 
 <!-- section: theory | When to stop -->
-Predefined events disprove the strategy: the incumbent restores an acceptable license; migration fails functional tests; customer urgency disappears; a large incumbent discount makes the offer uneconomic; the team lacks people to support migrations. The Redis and Elastic stories in the previous lesson illustrate why the thesis must be reviewed whenever facts change.
+Predefined events disprove the strategy: the incumbent restores an acceptable license; migration fails functional tests; customer urgency disappears; a large incumbent discount makes the offer uneconomic; the team lacks people to support migrations. The Redis and Elastic stories in the lesson on vendor term changes illustrate why the thesis must be reviewed whenever facts change.
 
 <!-- section: theory | The same method across segments -->
 | Segment | Example event | Example offer |

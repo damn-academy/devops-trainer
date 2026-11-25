@@ -52,7 +52,7 @@ Vendor user conferences bring together the installed base of one stack: Snowflak
 
 Buyer conferences form a separate class. Gartner IT Infrastructure, Operations & Cloud Strategies in the US advertises more than 4 000 attendees and, according to the organizer's 2025 data, 50 % at director level or above and 89 % involved in technology purchasing. For storage, backup, private cloud, and observability, this is a place to meet budget owners.
 
-Local communities are covered in the next lesson.
+Local communities are covered in the lesson on meetups.
 
 <!-- section: theory | How to evaluate an event -->
 1. Define the role and action. For each product, list the user, technical evaluator, budget owner, and partner separately. An event has one main goal: for example, ten problem interviews, three technical evaluations, five meetings on active deals, or two joint integration plans. These outcomes must not be combined into a single “leads” metric.
