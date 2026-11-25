@@ -1,12 +1,8 @@
-// Lessons of the hidden sales pilot, built from the Dream 100 sales school
-// (aenix-org/dream100, SALES-SCHOOL.md). The Russian text is the source
-// material; the English slot of every generated section honestly says the
-// translation is pending (TODO(ru-en)) instead of pretending. Claude owns the
-// prose pass per web/STYLE-RU.md before this block can go public.
+// Dream 100 sales school: Russian principles and their English mirror.
 
 import { bi } from '../../core/i18n';
 import type { Concept, Lesson, QuizItem } from '../../core/types';
-import { SALES_SCHOOL } from './school';
+import { SALES_SCHOOL, SALES_SCHOOL_EN } from './school';
 
 /** The honest note every school lesson carries: one way, not a law. */
 export const HONEST_NOTE = bi(
@@ -77,9 +73,9 @@ const MODULE_LESSON: Record<string, { id: string; title: [string, string]; minut
   },
 };
 
-function moduleBody(letter: string): string {
-  const mod = SALES_SCHOOL.find((m) => m.letter === letter)!;
-  return mod.items.map((it) => `**${it.n}. ${it.title.replace(/\.$/, '')}.** ${it.body}\n\n> Сегодня: ${it.today}`).join('\n\n');
+function moduleBody(letter: string, en = false): string {
+  const mod = (en ? SALES_SCHOOL_EN : SALES_SCHOOL).find((m) => m.letter === letter)!;
+  return mod.items.map((it) => `**${it.n}. ${it.title.replace(/\.$/, '')}.** ${it.body}\n\n> ${en ? 'Today' : 'Сегодня'}: ${it.today}`).join('\n\n');
 }
 
 const INTRODUCES: Record<string, string[]> = {
@@ -115,9 +111,8 @@ function lessonFor(letter: string): Lesson {
         id: 'principles',
         kind: 'text',
         step: 'explain',
-        title: bi(mod.title, mod.title),
-        // TODO(ru-en): translate the school text into English; Russian is the source material.
-        body: bi(moduleBody(letter), `English text is being prepared for this pilot lesson (module ${letter}, ${mod.items.length} principles). Switch to Russian to read the source material.`),
+        title: bi(mod.title, SALES_SCHOOL_EN.find(m => m.letter === letter)!.title),
+        body: bi(moduleBody(letter), moduleBody(letter, true)),
       },
       { id: 'honest', kind: 'callout', tone: 'note', step: 'review', body: HONEST_NOTE },
     ],
@@ -173,11 +168,11 @@ export const SALES_QUIZ: QuizItem[] = [
     id: 'sales.q.threads',
     kind: 'mcq',
     concepts: ['sales.champion'],
-    prompt: bi('Вы ведёте сделку с банком, где решение принимают инженер платформы, руководитель инфраструктуры и руководитель безопасности. Со сколькими людьми в банке стоит поддерживать связь как минимум?', 'What is the minimum number of live contacts to keep in one enterprise account?'),
+    prompt: bi('Вы ведёте сделку с банком, где решение принимают инженер платформы, руководитель инфраструктуры и руководитель безопасности. Со сколькими людьми в банке стоит поддерживать связь как минимум?', "You are working on a bank deal where a platform engineer, the head of infrastructure and the security lead make the decision. What is the minimum number of people at the bank you should stay in contact with?"),
     options: [
-      { id: 'three', text: bi('Не меньше трёх', 'At least three'), correct: true, why: bi('Если вы знаете одного человека, сделка зависит только от него: он может уволиться, потерять интерес или оказаться не тем, кто решает. Здесь в решении участвуют три роли, и с каждой нужна своя связь.', 'One contact is one point of failure: they quit, cool down, or turn out to be the wrong person.') },
-      { id: 'one', text: bi('С одним, но самым влиятельным', 'One, but a golden one'), why: bi('Самый влиятельный человек тоже может уволиться или сменить приоритеты, и тогда сделка останется без единого знакомого в банке.', 'A "golden" contact quits just like any other.') },
-      { id: 'ten', text: bi('Не меньше десяти', 'At least ten'), correct: false, why: bi('Десять человек может понадобиться в очень большой сделке, но здесь в решении участвуют три роли; минимум — по человеку на каждую, а дальше число растёт вместе с числом участников решения.', 'Three to four live contacts already cover the key roles; ten is no longer focus.') },
+      { id: 'three', text: bi('Не меньше трёх', 'At least three'), correct: true, why: bi('Если вы знаете одного человека, сделка зависит только от него: он может уволиться, потерять интерес или оказаться не тем, кто решает. Здесь в решении участвуют три роли, и с каждой нужна своя связь.', "If you know one person, the deal depends entirely on them: they may leave, lose interest or not be the decision maker. Three roles participate in this decision, and each needs its own connection.") },
+      { id: 'one', text: bi('С одним, но самым влиятельным', "One, but the most influential"), why: bi('Самый влиятельный человек тоже может уволиться или сменить приоритеты, и тогда сделка останется без единого знакомого в банке.', "Even the most influential person can leave or change priorities, leaving the deal without a single familiar contact at the bank.") },
+      { id: 'ten', text: bi('Не меньше десяти', 'At least ten'), correct: false, why: bi('Десять человек может понадобиться в очень большой сделке, но здесь в решении участвуют три роли; минимум — по человеку на каждую, а дальше число растёт вместе с числом участников решения.', "A very large deal may need ten people, but this decision involves three roles. The minimum is one person per role; the number grows with the number of decision participants.") },
     ],
   },
   {
@@ -195,11 +190,11 @@ export const SALES_QUIZ: QuizItem[] = [
     id: 'sales.q.objection',
     kind: 'mcq',
     concepts: [],
-    prompt: bi('Руководитель инфраструктуры банка на второй встрече спрашивает: «Вы маленькие, вдруг исчезнете?» До этого он сам предложил пилот. Что, скорее всего, стоит за вопросом?', '"You are small, what if you disappear?" — what is it, in essence?'),
+    prompt: bi('Руководитель инфраструктуры банка на второй встрече спрашивает: «Вы маленькие, вдруг исчезнете?» До этого он сам предложил пилот. Что, скорее всего, стоит за вопросом?', "At the second meeting, the bank’s infrastructure lead asks: “You are small; what if you disappear?” They previously proposed a pilot themselves. What most likely lies behind the question?"),
     options: [
-      { id: 'data', text: bi('Опасение о риске, на которое нужны данные: что будет с системой, если поставщик исчезнет', 'A request for missing data, not a no'), correct: true, why: bi('В этой ситуации человек уже хочет пилот, и вопрос показывает риск, который ему придётся объяснять своему руководству. Помогают факты: открытый код, возможность эксплуатировать систему без поставщика, условия передачи исходного кода и другие клиенты. Не каждое возражение означает запрос данных: если человек прямо отказался, отказ уважают.', 'An objection is a request for information. Here the answer: the code is open, exit-ability is in the architecture.') },
-      { id: 'no', text: bi('Вежливый отказ от пилота', 'A polite "no"'), why: bi('Человек сам предложил пилот и задаёт конкретный вопрос о риске; так отказ обычно не звучит.', 'A "no" sounds like "not now" plus a reason; a reason was given, so something can be closed.') },
-      { id: 'price', text: bi('Просьба о скидке', 'A request for a discount'), why: bi('О цене здесь ничего не сказано; вопрос касается риска.', 'This is a risk question, not a price one.') },
+      { id: 'data', text: bi('Опасение о риске, на которое нужны данные: что будет с системой, если поставщик исчезнет', "A risk concern requiring evidence: what happens to the system if the vendor disappears"), correct: true, why: bi('В этой ситуации человек уже хочет пилот, и вопрос показывает риск, который ему придётся объяснять своему руководству. Помогают факты: открытый код, возможность эксплуатировать систему без поставщика, условия передачи исходного кода и другие клиенты. Не каждое возражение означает запрос данных: если человек прямо отказался, отказ уважают.', "Here the person already wants a pilot, and the question highlights a risk they must explain to management. Helpful facts include open code, operating the system without the vendor, source-code handover terms and other customers. Not every objection asks for information: respect an explicit refusal.") },
+      { id: 'no', text: bi('Вежливый отказ от пилота', "A polite refusal of the pilot"), why: bi('Человек сам предложил пилот и задаёт конкретный вопрос о риске; так отказ обычно не звучит.', "The person proposed the pilot and is asking a specific risk question; that is not how a refusal usually sounds.") },
+      { id: 'price', text: bi('Просьба о скидке', 'A request for a discount'), why: bi('О цене здесь ничего не сказано; вопрос касается риска.', "Nothing here concerns price; the question is about risk.") },
     ],
   },
 ];

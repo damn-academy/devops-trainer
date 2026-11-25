@@ -519,7 +519,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     refs: { lesson: 'product.chasm' },
     prompt: bi(
       'Какая волна, по данным урока на конец 2026 года, выносит вверх категорию открытых облачных платформ?',
-      'Which wave is currently lifting the category of open cloud platforms?',
+      "According to the lesson as of late 2026, which wave is lifting the category of open cloud platforms?",
     ),
     options: [
       { id: 'repatriation', text: bi('Возврат нагрузок из публичных облаков и уход клиентов VMware после смены владельца', 'The repatriation of workloads from public clouds and the exodus of VMware customers after the ownership change'), correct: true, why: bi('Репатриация нагрузок и уход с VMware создают спрос на открытые платформы в собственных центрах обработки данных.', 'Workload repatriation and the VMware exodus create demand for open platforms in on-premise data centres.') },

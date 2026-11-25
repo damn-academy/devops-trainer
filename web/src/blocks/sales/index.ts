@@ -1,9 +1,4 @@
-// Hidden pilot block: the Dream 100 enterprise sales school on the shared
-// course engine. Not on the route map (hidden: true); reachable from the
-// hidden catalog #/courses and by the direct block link. The Russian lesson
-// text is the source material from aenix-org/dream100; the English slot is an
-// honest placeholder (TODO(ru-en)) until the owner's content pipeline passes
-// it. Claude owns the prose per web/STYLE-RU.md.
+// Dream 100 sales school: Russian principles and their English mirror.
 
 import { markdownQuizItems } from '../../core/md-lessons';
 import { DREAM100_LESSONS } from './dream100';
