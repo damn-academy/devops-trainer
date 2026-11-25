@@ -108,10 +108,10 @@ export const PRODUCTS: Product[] = [
       "ru": "Open source: проект, сообщество и управление",
       "en": "Open source: project, community and governance"
     },
-    "card": { "ru": "Управление открытым проектом, сообщество, путь в CNCF и кризисы. В конце — год проекта в инкубаторе.", "en": "Governing an open project, community, the CNCF path and crises. Ends with a year in the incubator." },
+    "card": { "ru": "Управление открытым проектом, сообщество, выбор фонда и его стоимость, кризисы. В конце — год в инкубаторе.", "en": "Governing an open project, community, choosing a foundation and its cost, crises. Ends with a year in the incubator." },
     "summary": {
-      "ru": "Как развивать открытый проект, который создала или поддерживает компания: модели заработка и уроки смены лицензий, управление проектом и нейтральность, участники и менторство, сообщество, путь в CNCF от Sandbox до Graduated, что фонд даёт проектам и компаниям-членам, сигналы использования и кризисы. В конце — год проекта в инкубаторе CNCF в симуляторе.",
-      "en": "How to develop an open project created or supported by a company: revenue models and lessons from license changes, project governance and neutrality, contributors and mentorship, community, the CNCF journey from Sandbox to Graduated, what the foundation offers projects and member companies, usage signals and crises. The course ends with a simulated year for a project in the CNCF incubator."
+      "ru": "Как развивать открытый проект, который создала или поддерживает компания: модели заработка и уроки смены лицензий, управление проектом и нейтральность, участники и менторство, сообщество, выбор юридического дома проекта среди фондов — ASF, Linux Foundation и её отраслевых фондов, Eclipse, NumFOCUS, Conservancy, — права и стоимость передачи на три года, уровни зрелости и льготы на примере CNCF, сигналы использования и кризисы. В конце — год проекта в инкубаторе CNCF в симуляторе.",
+      "en": "How to develop an open project created or supported by a company: revenue models and lessons from license changes, project governance and neutrality, contributors and mentorship, community, choosing a legal home for the project among foundations—ASF, the Linux Foundation and its sub-foundations, Eclipse, NumFOCUS, Conservancy—the rights and three-year cost of a transfer, maturity levels and benefits using CNCF as the example, usage signals and crises. The course ends with a simulated year for a project in the CNCF incubator."
     },
     "subtitle": {
       "ru": "Для мейнтейнеров, основателей и руководителей сообщества открытых инфраструктурных проектов.",
