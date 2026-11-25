@@ -160,8 +160,7 @@ export const correlationModel = defineModel<P>({
       label: bi('Сравнить дни с одинаковой жарой', 'Compare days with equal heat'),
       remove: [],
       predict: {
-        // TODO(ru-prose): Confirm a neutral prediction question without assuming heat explains most of the link.
-        prompt: bi('TODO(ru-prose): prediction question', 'If you compare only days with equal heat, what happens to the r metric?'),
+        prompt: bi('Что станет с показателем r, если сравнивать только дни с одинаковой жарой?', 'If you compare only days with equal heat, what happens to the r metric?'),
         options: [
           { id: 'collapse', text: bi("Связь почти исчезнет", "The association will nearly disappear") },
           { id: 'partial', text: bi("Связь заметно уменьшится, но останется", "The association will decrease but remain") },

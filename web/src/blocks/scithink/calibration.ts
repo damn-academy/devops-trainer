@@ -327,7 +327,7 @@ export function mountCalibration(el: HTMLElement, _props: unknown, ctx: WidgetCt
     }
     if (history.length) root.append(h('details', 'scb-history',
       h('summary', '', t(trainerStrings.history)),
-      // TODO(ru-prose): Explain that repeated known claims measure recall, not transfer of calibration skill.
+      h('p', '', t(bi('Это история проходов на одних и тех же утверждениях. Если вторая кривая лучше первой, вероятно, вы запомнили ответы; калибровку лучше проверять на новых вопросах.', 'This is the history of runs on the same claims. If the second curve is better than the first, you probably remembered the answers; calibration is better checked on new questions.'))),
       ...history.map(entry => { const stats = calibrationStats(CLAIMS, entry.answers); return h('div', '', entry.at, h('div', 'scb-curve', curveSvg(stats))); }),
     ));
   };

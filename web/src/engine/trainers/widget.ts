@@ -1,5 +1,5 @@
 import { h, copyText } from '../../core/dom';
-import { lang, t } from '../../core/i18n';
+import { bi, lang, t } from '../../core/i18n';
 import { renderMd, renderInline } from '../../core/markdown';
 import type { Mounted, WidgetCtx, WidgetReg } from '../../core/types';
 import { ai, type AiService } from '../ai/service';
@@ -59,8 +59,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const draftId = `template.${file}`;
     const input = h('textarea'); input.value = loadDraft(draftId, '');
     input.oninput = () => saveDraft(draftId, input.value);
-    // TODO(ru-prose): Label the explicit template draft finish action.
-    const finish = h('button', { type: 'button', class: 'btn', 'aria-label': 'Finish draft' }, '✓');
+    const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text('finishDraft'));
     finish.onclick = () => { clearDraft(draftId); input.value = ''; ctx.complete(); };
     root.append(h('label', {}, text('input'), input), finish);
 
@@ -119,7 +118,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const round = h('p');
     const attempts = loadAttempts(trainer.id), history = h('div');
     function showHistory() {
-      round.textContent = `${conversations.length + 1} / 5`;
+      round.textContent = `${t(bi("Посетитель", "Visitor"))} ${conversations.length + 1} / 5`;
       history.replaceChildren(h('h4', {}, text('history')));
       attempts.forEach((a, i) => history.append(h('article', { class: 'quiz-item' }, h('h4', {}, `${i + 1} · ${text('user')}`), h('p', { style: 'white-space:pre-wrap' }, ...renderInline(a.input)), h('h4', {}, text('assistant')), renderMd(a.answer))));
     }
@@ -153,9 +152,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     })(); });
     root.append(h('label', {}, text('input'), input), actions(send, ...(kind === 'roleplay' ? [debrief] : []), copy), status, manual, history);
     input.oninput = () => { saveDraft(trainer.id, input.value); sync(); };
-    // TODO(ru-prose): Label the explicit finish/new visitor action and conversation count.
-    const finish = h('button', { type: 'button', class: 'btn' }, '✓');
-    finish.setAttribute('aria-label', 'Finish / next conversation');
+    const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text(kind === 'roleplay' ? 'nextVisitor' : 'finishDraft'));
     finish.onclick = () => { if (busy) return; input.value = ''; clearDraft(trainer.id); if (kind === 'roleplay') { conversations.push([...attempts]); saveDraft(`${trainer.id}.conversations`, conversations); attempts.length = 0; saveAttempts(trainer.id, attempts); showHistory(); } sync(); };
     root.append(...(kind === 'roleplay' ? [round] : []), finish); cleanup.push(svc.onChange(sync), () => request?.abort());
     void svc.ready.then(sync).catch(() => { if (!disposed) status.textContent = text('error'); }); sync();
