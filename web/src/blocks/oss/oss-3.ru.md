@@ -56,7 +56,7 @@ GitHub Discussions живёт рядом с кодом: категории, от
 
 <!-- section: sources -->
 - Slack, хранение истории в бесплатных пространствах — https://slack.com/help/articles/29414264463635-Updates-to-message-and-file-history-on-free-workspaces (с 26.08.2024)
-- Discord, контент открытых серверов в поиске — https://discord.com/blog/ (объявление октябрь 2026)
+- Discord, контент открытых серверов в поиске — https://discord.com/blog/making-content-from-discoverable-servers-easier-to-discover (объявление октябрь 2026)
 - GitHub Discussions — https://docs.github.com/en/discussions/collaborating-with-your-community-using-discussions/about-discussions
 - OpenTofu 1.10 — https://opentofu.org/blog/opentofu-1-10-0/ (23.06.2025)
 - Cilium, годовой отчёт 2025 — https://www.cncf.io/wp-content/uploads/2025/12/cilium-annual-report-2025-final.pdf
