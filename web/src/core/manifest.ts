@@ -3,21 +3,20 @@
 // (src/core/manifest-plugin.ts → `virtual:dt-manifest`), so it never drifts
 // from the content and builders keep writing one index.ts per block. The app
 // paints the home page from it and loads the full registry (lesson bodies,
-// explainers, labs, commands, the documentation corpus, exams, the quiz bank)
+// course modules and summaries, explainers, labs, commands, documentation,
+// exams and the quiz bank)
 // on the first visit to any other page.
 
 import type { Block, Lesson } from './types';
 
-export const MANIFEST_VERSION = 1;
+export const MANIFEST_VERSION = 2;
 
-/** What the route map shows of a lesson. */
-export type LessonStub = Pick<Lesson, 'id' | 'block' | 'title' | 'tier' | 'minutes' | 'introduces' | 'uses'>;
+/** Identity/order for all lessons; progress and duration only for visible route blocks. */
+export type LessonStub = Pick<Lesson, 'id' | 'block' | 'title' | 'tier' | 'minutes'> & Partial<Pick<Lesson, 'introduces'>>;
 
-/**
- * A block without its placement tasks (they carry check functions; `placementCount`
- * keeps their number) and without sources (shown only on the block page).
- */
-export type BlockStub = Omit<Block, 'placement' | 'sources'> & { placementCount: number };
+/** Explicit allowlist: new course detail fields must not grow the first download. */
+export type BlockStub = Pick<Block, 'id' | 'order' | 'title' | 'lessons' | 'hidden' | 'beginnerOnly' | 'hours'>
+  & Partial<Pick<Block, 'summary' | 'levels'>> & { placementCount: number };
 
 export interface Manifest {
   version: typeof MANIFEST_VERSION;
@@ -31,18 +30,35 @@ interface Source {
 }
 
 export function toManifest(r: Source): Manifest {
+  const blocks = r.orderedBlocks(true);
+  const visible = new Set(blocks.filter(b => !b.hidden).map(b => b.id));
   return {
     version: MANIFEST_VERSION,
-    blocks: r.orderedBlocks(true).map(({ placement, sources: _s, ...b }) => ({ ...b, placementCount: placement.length })),
-    lessons: r.orderedLessons().map(({ id, block, title, tier, minutes, introduces, uses }) => ({ id, block, title, tier, minutes, introduces, uses })),
+    blocks: blocks.map(({ id, order, title, lessons, hidden, beginnerOnly, hours, summary, levels, placement }) => ({
+      id, order, title, lessons, placementCount: placement.length,
+      ...(hidden ? { hidden } : { summary, levels }),
+      ...(beginnerOnly ? { beginnerOnly } : {}),
+      ...(hours ? { hours } : {}),
+    })),
+    lessons: r.orderedLessons().map(({ id, block, title, tier, minutes, introduces }) => ({
+      id, block, title, tier,
+      ...(visible.has(block) ? { ...(minutes === undefined ? {} : { minutes }), introduces } : {}),
+    })),
   };
 }
 
 /** Blocks and lessons shaped like the content types; what the manifest leaves out is empty. */
 export function fromManifest(m: Manifest): { blocks: Block[]; lessons: Lesson[]; placements: Map<string, number> } {
   return {
-    blocks: m.blocks.map(({ placementCount: _n, ...b }) => ({ ...b, placement: [], sources: { en: [], ru: [] } })),
-    lessons: m.lessons.map((l) => ({ ...l, introduces: l.introduces ?? [], uses: l.uses ?? [], sections: [], sources: { en: [], ru: [] } })),
+    blocks: m.blocks.map(({ placementCount: _n, ...b }) => ({
+      ...b,
+      summary: b.summary ?? { en: '', ru: '' },
+      levels: b.levels ?? { beginner: { en: '', ru: '' }, intermediate: { en: '', ru: '' }, experienced: { en: '', ru: '' } },
+      checklistStep: null,
+      placement: [],
+      sources: { en: [], ru: [] },
+    })),
+    lessons: m.lessons.map((l) => ({ ...l, introduces: l.introduces ?? [], uses: [], sections: [], sources: { en: [], ru: [] } })),
     placements: new Map(m.blocks.map((b) => [b.id, b.placementCount])),
   };
 }

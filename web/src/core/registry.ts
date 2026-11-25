@@ -175,6 +175,9 @@ export function buildRegistry(mods: ModuleMap, opts: { terminal?: TerminalRegist
 export function registryFromManifest(m: Manifest): Registry {
   const { blocks, lessons, placements } = fromManifest(m);
   const r = buildRegistry({ manifest: { blocks, lessons } }, { terminal: createTerminalRegistry(), corpus: new Corpus() });
+  // Hidden courses omit lesson durations; retain the authored aggregate instead
+  // of the zero computed from their stubs by buildRegistry.
+  for (const b of m.blocks) r.blocks.get(b.id)!.hours = b.hours;
   r.placementCount = (id) => placements.get(id) ?? 0;
   return r;
 }
