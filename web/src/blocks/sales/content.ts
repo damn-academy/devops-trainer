@@ -173,11 +173,11 @@ export const SALES_QUIZ: QuizItem[] = [
     id: 'sales.q.threads',
     kind: 'mcq',
     concepts: ['sales.champion'],
-    prompt: bi('Сколько живых контактов стоит держать в одном энтерпрайз-аккаунте минимум?', 'What is the minimum number of live contacts to keep in one enterprise account?'),
+    prompt: bi('Вы ведёте сделку с банком, где решение принимают инженер платформы, руководитель инфраструктуры и руководитель безопасности. Со сколькими людьми в банке стоит поддерживать связь как минимум?', 'What is the minimum number of live contacts to keep in one enterprise account?'),
     options: [
-      { id: 'three', text: bi('Не меньше трёх', 'At least three'), correct: true, why: bi('Один контакт = одна точка отказа: уволился, охладел, оказался не тем человеком.', 'One contact is one point of failure: they quit, cool down, or turn out to be the wrong person.') },
-      { id: 'one', text: bi('Оного, но золотого', 'One, but a golden one'), why: bi('«Золотой» контакт увольняется так же, как обычный.', 'A "golden" contact quits just like any other.') },
-      { id: 'ten', text: bi('Не меньше десяти', 'At least ten'), correct: false, why: bi('Три-четыре живых контакта уже покрывают ключевые роли; десять — это уже не фокус.', 'Three to four live contacts already cover the key roles; ten is no longer focus.') },
+      { id: 'three', text: bi('Не меньше трёх', 'At least three'), correct: true, why: bi('Если вы знаете одного человека, сделка зависит только от него: он может уволиться, потерять интерес или оказаться не тем, кто решает. Здесь в решении участвуют три роли, и с каждой нужна своя связь.', 'One contact is one point of failure: they quit, cool down, or turn out to be the wrong person.') },
+      { id: 'one', text: bi('С одним, но самым влиятельным', 'One, but a golden one'), why: bi('Самый влиятельный человек тоже может уволиться или сменить приоритеты, и тогда сделка останется без единого знакомого в банке.', 'A "golden" contact quits just like any other.') },
+      { id: 'ten', text: bi('Не меньше десяти', 'At least ten'), correct: false, why: bi('Десять человек может понадобиться в очень большой сделке, но здесь в решении участвуют три роли; минимум — по человеку на каждую, а дальше число растёт вместе с числом участников решения.', 'Three to four live contacts already cover the key roles; ten is no longer focus.') },
     ],
   },
   {
