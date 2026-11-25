@@ -26,7 +26,7 @@ function page(p) {
   const crumbsJson = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'DevOps Trainer', item: 'https://damn.academy/' },
+      { '@type': 'ListItem', position: 1, name: 'damn.academy', item: 'https://damn.academy/' },
       { '@type': 'ListItem', position: 2, name: h1, item: base },
     ],
   };
@@ -62,7 +62,7 @@ function page(p) {
     ${other ? `<link rel="alternate" hreflang="${lang === 'en' ? 'ru' : 'en'}" href="${other}" />` : ''}
     ${other ? `<link rel="alternate" hreflang="x-default" href="${lang === 'en' ? other : base}" />` : ''}
     <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="DevOps Trainer" />
+    <meta property="og:site_name" content="damn.academy" />
     <meta property="og:url" content="${base}" />
     <meta property="og:title" content="${esc(title)}" />
     <meta property="og:description" content="${esc(description)}" />
@@ -97,7 +97,7 @@ function page(p) {
     ${jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j)}</script>`).join('\n    ')}
   </head>
   <body>
-    <nav class="top"><a href="/">DevOps Trainer</a>${langSwitch ? `<a class="lang" href="${other}">${langSwitch}</a>` : ''}</nav>
+    <nav class="top"><a href="/">damn.academy</a>${langSwitch ? `<a class="lang" href="${other}">${langSwitch}</a>` : ''}</nav>
     <main>
       <h1>${esc(h1)}</h1>
       <p class="lede">${esc(intro)}</p>
