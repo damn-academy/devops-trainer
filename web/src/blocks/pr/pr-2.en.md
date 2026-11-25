@@ -22,6 +22,10 @@ A journalist covering a crisis will publish with or without your comment. “No 
 <!-- section: task | Task: a crisis week in the simulator -->
 Complete this task in the “Crisis Week” simulator on this page. Choose a preset company or create your own, and play at least the first four turns, each advancing time by half a day. In each turn, decide whom you inform and what you say, who speaks for the company, and how you respond to a journalist. After the facilitator's review, write down one decision that worked because of its quality and one that succeeded or failed because of circumstances you could not see.
 
+<!-- widget: rubric {"trainer":"pr.crisis-statement"} -->
+
+<!-- widget: deptsim {"scenario":"pr.crisis"} -->
+
 <!-- section: sources -->
 - Tukaani, the xz backdoor — https://tukaani.org/xz-backdoor/
 - Okta, incident root cause — https://sec.okta.com/articles/2023/11/unauthorized-access-oktas-support-case-management-system-root-cause/ (03.11.2023); recommendations — https://sec.okta.com/articles/october-security-incident-recommended-actions/ (29.11.2023)
