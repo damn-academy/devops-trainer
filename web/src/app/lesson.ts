@@ -45,6 +45,7 @@ export function lessonPage(id: string, focusSection?: string): Page {
     (bar.firstChild as HTMLElement).style.width = `${sections.length ? (n / sections.length) * 100 : 0}%`;
   };
   const finished = () => store.state.lessons[lesson.id]?.status === 'done';
+  const doneBanner = h('div.lesson-done', { hidden: !finished() }, h('span.st-icon.ok', { 'aria-hidden': 'true' }, '✓'), t(bi('Урок пройден. Понятия ушли в повторение.', 'Lesson done. Its concepts are now in your review queue.')));
   const markDone = (sid: string) => {
     if (!doneSet.has(sid)) {
       doneSet.add(sid);
@@ -68,7 +69,6 @@ export function lessonPage(id: string, focusSection?: string): Page {
 
   const next = block ? registry.lessons.get(block.lessons[index + 1]) : undefined;
   const prev = block ? registry.lessons.get(block.lessons[index - 1]) : undefined;
-  const doneBanner = h('div.lesson-done', { hidden: !finished() }, h('span.st-icon.ok', { 'aria-hidden': 'true' }, '✓'), t(bi('Урок пройден. Понятия ушли в повторение.', 'Lesson done. Its concepts are now in your review queue.')));
 
   const el = h(
     'article.lesson',
