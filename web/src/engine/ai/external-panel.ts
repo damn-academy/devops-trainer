@@ -1,10 +1,10 @@
-import { copyText, h } from '../../core/dom';
+import { copyText, downloadFile, h } from '../../core/dom';
 import { bi, lang, t } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import { parseRoute } from '../../core/router';
 import { store } from '../../core/store';
 import type { Level, QText, QuizGrade, QuizItem } from '../../core/types';
-import { currentTask, terminalTail, vocabulary, where } from './context';
+import { currentTask, documentDraft, terminalTail, vocabulary, where } from './context';
 import { chatLink, EXTERNAL_CHATS, packExternalPrompt, type ExternalContext } from './external-prompt';
 import { maskSecrets } from './prompt';
 import './ai.css';
@@ -30,6 +30,7 @@ export function externalContext(o: ExternalOptions = {}): ExternalContext {
     block: block ? t(registry.blocks.get(block)?.title ?? bi(block, block)) : undefined,
     lesson: lesson ? t(lesson.title) : undefined, introduced: vocabulary(lesson),
     task: o.task ?? (task ? t(task.prompt) : undefined),
+    draft: o.quiz ? undefined : documentDraft(lesson),
     terminal: terminalTail(), screen: o.screen, ...o.quiz, want: o.want,
   };
 }
@@ -50,7 +51,7 @@ export function openExternalPanel(o: ExternalOptions = {}): void {
   const close = () => { dialog.remove(); window.removeEventListener('hashchange', close); closeActive = undefined; previous?.focus(); };
   closeActive = close;
   const sanitized = () => {
-    const value = maskSecrets(textarea.value).slice(0, 6000);
+    const value = maskSecrets(textarea.value);
     if (value !== textarea.value) {
       textarea.value = value;
       status.textContent = t(bi('Запрос очищен и сокращён. Проверьте его и нажмите кнопку ещё раз.', 'The prompt was masked and trimmed. Review it and press the button again.'));
@@ -60,11 +61,12 @@ export function openExternalPanel(o: ExternalOptions = {}): void {
   };
   const copy = async (value: string) => {
     const ok = await copyText(value);
-    status.textContent = t(ok ? bi('Запрос скопирован. Вставьте его в выбранный чат.', 'The prompt is copied. Paste it into the selected chat.') : bi('Не удалось скопировать запрос. Выделите текст и скопируйте его вручную.', 'Copy failed. Select the text and copy it manually.'));
+    status.textContent = t(ok ? bi('Запрос скопирован. Вставьте его в выбранный чат.', 'The prompt is copied. Paste it into the selected chat.') : bi('Не удалось скопировать. Удерживайте текст для выделения или скачайте файл.', 'Copy failed. Select the text and copy it manually.'));
     return ok;
   };
   const buttons = h('div.external-chats');
   buttons.append(h('button.btn.primary', { type: 'button', onclick: () => { const value = sanitized(); if (value !== null) void copy(value); } }, t(bi('Копировать', 'Copy'))));
+  buttons.append(h('button.btn', { type: 'button', onclick: () => { const value = sanitized(); if (value !== null) downloadFile('prompt.txt', value, 'text/plain;charset=utf-8'); } }, t(bi('Скачать запрос (.txt)', 'Download prompt (.txt)'))));
   for (const chat of EXTERNAL_CHATS) buttons.append(h('button.btn.ghost.small', { type: 'button', onclick: () => {
     const value = sanitized();
     if (value === null || where().exam) return;

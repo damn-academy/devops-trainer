@@ -9,6 +9,8 @@ import { registry } from '../../core/registry';
 import { parseRoute } from '../../core/router';
 import { store } from '../../core/store';
 import type { Lesson, Task } from '../../core/types';
+import { documentTemplate } from '../trainers/document-fields';
+import { loadDraft } from '../trainers/storage';
 import { maskSecrets } from './prompt';
 import type { TutorContext, TutorMode, VocabEntry } from './prompt';
 
@@ -66,6 +68,20 @@ export function currentTask(l: Lesson | undefined, root: ParentNode | null = typ
   }
   const dl = Number(el?.dataset.docStep) || undefined;
   return { task, docStep: dl || task.docStep || (task.beyond ? 4 : undefined) };
+}
+
+/** Live values take precedence over storage, including an explicitly cleared draft. */
+export function documentDraft(l: Lesson | undefined, root: ParentNode | null = typeof document !== 'undefined' ? document : null): string | undefined {
+  if (!l) return undefined;
+  const drafts = l.sections.filter(s => s.kind === 'text' && s.step === 'practice').map(s => {
+    const id = `${l.id}.${s.id}`;
+    const input = Array.from(root?.querySelectorAll<HTMLTextAreaElement>('textarea[data-document-id]') ?? []).find(el => el.dataset.documentId === id);
+    const value = input ? input.value : loadDraft(`document.${id}`, '');
+    const template = s.kind === 'text' ? documentTemplate(id, t(s.title ?? l.title), t(s.body)) : '';
+    const legacy = s.kind === 'text' ? `${t(s.title ?? l.title)}\n\n${t(s.body)}\n\n` : '';
+    return value === template || value === legacy ? '' : value.trim();
+  }).filter(Boolean);
+  return drafts.length ? drafts.join('\n\n') : undefined;
 }
 
 export interface Where {

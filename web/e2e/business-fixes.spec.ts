@@ -56,10 +56,10 @@ for (const width of [1440, 390]) {
       await page.locator('.tutor .external-help').click();
       const preview = page.locator('.external-preview');
       await expect(preview).not.toHaveValue(/я ошибся/);
-      await expect(preview).toHaveValue(/Задание: .+/);
+      await expect(preview).toHaveValue(/Задание и критерии: .+/);
       if (mode !== 'explain') await expect(preview).toHaveValue(new RegExp(`Question for ${mode}`));
       await page.getByRole('button', { name: 'Копировать', exact: true }).click();
-      const copied = await page.evaluate(() => navigator.clipboard.readText()); expect(copied).toContain('Задание:');
+      const copied = await page.evaluate(() => navigator.clipboard.readText()); expect(copied).toContain('Задание и критерии:');
       await page.locator('.external-dialog').screenshot({ path: `/tmp/fix-helper-${mode}-${width}.png` });
       await page.getByRole('button', { name: 'Закрыть', exact: true }).last().click();
     }
