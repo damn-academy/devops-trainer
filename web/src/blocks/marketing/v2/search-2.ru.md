@@ -44,6 +44,8 @@ Wikidata, база структурированных сведений, устр
 - Да, если компания входит в фонд CNCF || Членство в фонде значимости не создаёт.
 <!-- /quiz -->
 
+<!-- widget: template {"file":"llm-panel"} -->
+
 <!-- section: sources -->
 - Profound, источники ссылок в ответах нейросетей — https://www.tryprofound.com/blog/ai-platform-citation-patterns (05.06.2025)
 - Semrush, самые цитируемые сайты — https://www.semrush.com/blog/most-cited-domains-ai/ (10.11.2025)

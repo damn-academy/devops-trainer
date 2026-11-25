@@ -1,3 +1,4 @@
+import { loadDraft, saveDraft } from '../../../engine/trainers/storage';
 import { bi, t } from '../../../core/i18n';
 import type { WidgetReg } from '../../../core/types';
 import './budget.css';
@@ -96,7 +97,10 @@ export const budgetWidget: WidgetReg = {
     const proposed = (props as { total?: number } | null)?.total;
     const total = typeof proposed === 'number' && Number.isFinite(proposed) && proposed >= 0 ? proposed : 10000;
     const initial = () => CHANNELS.map(() => Math.min(10000, Math.floor(total / 10 / 250) * 250));
-    let spends = initial(), single: number[] | undefined;
+    const key = `marketing.budget.v1.${total}`;
+    let spends = loadDraft(key, initial());
+    if (spends.length !== CHANNELS.length || spends.some(v => !Number.isFinite(v) || v < 0 || v > 10000) || spends.reduce((a,b) => a+b,0) > total) spends = initial();
+    let single: number[] | undefined;
     el.classList.add('mkt-budget');
     const node = <K extends keyof HTMLElementTagNameMap>(tag: K, text = '') => { const e = document.createElement(tag); e.textContent = text; return e; };
     el.append(node('h3', t(strings.title)), node('p', t(strings.note)));
@@ -117,6 +121,7 @@ export const budgetWidget: WidgetReg = {
     one.onclick = () => { single = runBudget(spends); draw(); ctx.complete(); };
     reset.onclick = () => { spends = initial(); single = undefined; draw(); };
     function draw() {
+      saveDraft(key, spends);
       inputs.forEach((input, i) => { input.value = String(spends[i]); outputs[i]!.value = `$${spends[i]}`; });
       allocated.textContent = `${t(strings.allocated)}: ${spends.reduce((a, b) => a + b, 0)} / ${total}`;
       const result = simulateBudget(spends);

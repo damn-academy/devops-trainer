@@ -39,7 +39,7 @@ it('requires ten answers and records the current calibration statistics, includi
   const record = vi.fn();
   mounted = mountCalibration(el, undefined, { level: 'beginner', complete, record, openDoc() {} });
   for (const value of [100, 0]) {
-    const show = el.querySelector<HTMLButtonElement>('.scb-btn')!;
+    const show = el.querySelector<HTMLButtonElement>('.scb-actions .scb-btn')!;
     expect(show.disabled).toBe(true);
     show.click();
     expect(el.querySelector('.scb-verdicts')).toBeNull();
@@ -53,7 +53,7 @@ it('requires ten answers and records the current calibration statistics, includi
     show.click();
     expect(record).toHaveBeenLastCalledWith({ kind: 'x.calibration.done', answered: 10, mean: value, shareTrue: 50 });
     expect(el.querySelectorAll('.scb-verdict')).toHaveLength(10);
-    expect(el.querySelectorAll('svg circle')).toHaveLength(1);
+    expect(el.querySelectorAll('.scb-root > .scb-curve svg circle')).toHaveLength(1);
     mounted.dispose();
     mounted = mountCalibration(el, undefined, { level: 'beginner', complete, record, openDoc() {} });
     expect(el.querySelectorAll('.scb-verdict')).toHaveLength(10);

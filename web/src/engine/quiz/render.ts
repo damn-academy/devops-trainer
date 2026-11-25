@@ -142,12 +142,14 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
       const table = h('div.q-match');
       for (const p of item.pairs) {
         const sel = h('select', { 'aria-label': typeof p.left === 'string' ? p.left : t(p.left) }, h('option', { value: '' }, t(Q.pick)), ...rights.map((r) => h('option', { value: r.id }, typeof r.right === 'string' ? r.right : t(r.right)))) as HTMLSelectElement;
+        const selectedText = h('p.q-selected', { 'aria-live': 'polite' });
         sel.addEventListener('change', () => {
+          selectedText.textContent = sel.value ? sel.selectedOptions[0].textContent : '';
           if (sel.value) chosen[p.id] = sel.value;
           else delete chosen[p.id];
           update();
         });
-        table.append(h('div.q-match-row', {}, qtext(p.left, '.q-left'), h('span.q-arrow', { 'aria-hidden': 'true' }, '→'), sel));
+        table.append(h('div.q-match-row', {}, qtext(p.left, '.q-left'), h('span.q-arrow', { 'aria-hidden': 'true' }, '→'), h('div', {}, sel, selectedText)));
       }
       body.append(table);
       answer = () => ({ ...chosen });
