@@ -8,7 +8,7 @@ import world from '../src/sims/world.ru.md?raw';
 import languageRules from '../src/sims/lang-rules.ru.md?raw';
 import { scenarios, registerDepartmentScenarios } from '../src/sims/scenarios';
 import { getScenario } from '../src/engine/deptsim/registry';
-import { buildPrompt, companyText, diceTable, mulberry32, promptSize, randomCompany } from '../src/engine/deptsim/model';
+import { buildPrompt, compatibleCompany, companyText, diceTable, mulberry32, promptSize, randomCompany } from '../src/engine/deptsim/model';
 import { strings } from '../src/engine/deptsim/strings';
 
 const options = { seed: 42, company: 'stratova', difficulty: 'like-life' as const, turns: 6 };
@@ -67,7 +67,10 @@ describe('department content assembly', () => {
   for (const scenario of scenarios) for (const lang of ['ru', 'en'] as const) for (const mode of ['preset', 'custom'] as const) {
     it(`${scenario.id}: ${lang}, ${mode} resolves every placeholder and includes each source once`, () => {
       for (const company of companyLegends) {
-        const prompt = buildPrompt(scenario, { ...options, company: company.id, turns: scenario.turns.default, companyMode: mode, companyConfig: randomCompany(42) }, lang);
+        const opts = { ...options, company: company.id, turns: scenario.turns.default, companyMode: mode, companyConfig: randomCompany(42) };
+        if (!compatibleCompany(scenario, opts)) { expect(() => buildPrompt(scenario, opts, lang)).toThrow('Incubating'); continue; }
+        const prompt = buildPrompt(scenario, opts, lang);
+        if (scenario.id === 'oss.incubation') expect(company.text).toContain('на уровне Incubating');
         expect(prompt).not.toContain('{{');
         expect(prompt).toContain(world);
         expect(prompt).toContain(scenario.department);

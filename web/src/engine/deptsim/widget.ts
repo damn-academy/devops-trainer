@@ -3,7 +3,7 @@ import { lang, t } from '../../core/i18n';
 import type { ChatMessage, WidgetReg, WidgetCtx, Mounted } from '../../core/types';
 import { renderMd } from '../../core/markdown';
 import { ai, type AiService } from '../ai/service';
-import { buildPrompt, companyText, hasFence, promptSize, randomCompany, randomSeed, trimHistory } from './model';
+import { buildPrompt, compatibleCompany, companyText, hasFence, promptSize, randomCompany, randomSeed, trimHistory } from './model';
 import { getScenario } from './registry';
 import { companyGroups, defaultCompanyConfig } from '../../sims/companies';
 import { legends } from './legends';
@@ -51,8 +51,9 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
     root.textContent = t(s.missing);
     return { dispose() { root.remove(); style.remove(); } };
   }
-  const fresh = (): SimGame => ({ version: 1, options: { seed: randomSeed(), company: legends[0].id, companyMode: 'preset', companyConfig: defaultCompanyConfig(), difficulty: 'like-life', turns: scenario.turns.default }, lang: lang(), prompt: '', messages: [], started: false });
+  const fresh = (): SimGame => ({ version: 1, options: { seed: randomSeed(), company: scenario.id === 'oss.incubation' ? 'lumenmesh' : legends[0].id, companyMode: 'preset', companyConfig: defaultCompanyConfig(), difficulty: 'like-life', turns: scenario.turns.default }, lang: lang(), prompt: '', messages: [], started: false });
   let game = loadGame(scenario) ?? fresh();
+  if (!compatibleCompany(scenario, game.options)) game = fresh();
   let disposed = false, busy = false, completed = false, generation = 0;
   let request: ReturnType<SimAi['stream']> | undefined;
   let paneOpen = game.started;
@@ -60,11 +61,12 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   const button = (key: keyof typeof s, action: () => void) => h('button', { class: 'btn', type: 'button', onclick: action }, text(key));
   const status = h('p', { role: 'status', 'aria-live': 'polite' });
   const settings = h('fieldset');
-  const company = h('select', {}, ...legends.map(l => h('option', { value: l.id }, t(l.title))));
+  const company = h('select', {}, ...legends.filter(l => scenario.id !== 'oss.incubation' || l.id === 'lumenmesh').map(l => h('option', { value: l.id }, t(l.title))));
   company.value = game.options.company;
   const companyMode = h('div', { class: 'ds-difficulty', role: 'radiogroup', 'aria-label': text('company') });
   const companyName = `deptsim-company-${++mountId}`;
   for (const value of ['preset', 'custom'] as const) {
+    if (scenario.id === 'oss.incubation' && value === 'custom') continue;
     const radio = h('input', { type: 'radio', name: companyName, value });
     radio.onchange = () => { game.options.companyMode = value; syncCompany(); updatePrompt(); };
     companyMode.append(h('label', {}, radio, text(value)));
@@ -81,6 +83,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
     game.options.companyMode = 'custom'; game.options.companyConfig = randomCompany(game.options.seed);
     syncCompany(); updatePrompt();
   });
+  randomize.hidden = scenario.id === 'oss.incubation';
   function syncCompany() {
     game.options.companyConfig ??= defaultCompanyConfig();
     const mode = game.options.companyMode ?? 'preset';
