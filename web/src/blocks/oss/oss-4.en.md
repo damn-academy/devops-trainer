@@ -30,12 +30,24 @@ Different foundations have different admission routes and trademark rules:
 - Apache Software Foundation accepts projects through its incubator: a proposal, mentors, a podling, code rights checks, public releases, and graduation by board decision. A company cannot buy committer or project committee seats, and the project trademark transfers to the foundation; if the company keeps the old name, the project needs a new one.
 - Linux Foundation provides a shared legal and operational home for collaborative initiatives. Each hosted project has its own charter, and there is no single maturity ladder for all foundation projects. It includes industry foundations with their own rules: CNCF for cloud projects, including observability, storage, networking, and security; OpenSSF for open-source and supply-chain security; LF AI & Data for data and machine learning; PyTorch Foundation, which has united PyTorch, vLLM, DeepSpeed, and Ray since 2025; Agentic AI Foundation for agent infrastructure; and OpenInfra Foundation, which joined Linux Foundation along with OpenStack on 3 June 2025.
 - Eclipse Foundation is a European organization with projects ranging from enterprise Java and Jakarta EE to developer tools, the Internet of Things, and automotive systems. Projects move from proposal through creation review and incubation to maturity with code rights checks, and the trademark transfers to the foundation before project creation.
-- NumFOCUS works with scientific and data projects and offers two routes: affiliation, where the project remains legally independent, and full fiscal sponsorship with rigorous review.
+- NumFOCUS works with scientific and data projects and offers two routes: affiliation, where the project remains legally independent, and full fiscal sponsorship with rigorous review. As of late November 2026, NumFOCUS says it is temporarily not accepting new applications while updating its financial and administrative systems, with no reopening date announced; meanwhile, a scientific project can choose another fiscal sponsor, such as Software Freedom Conservancy, or remain independent.
 - Software Freedom Conservancy accepts free software projects with a public-benefit mission and typically takes about 10 % of project income for accounting, contracts, and asset management.
 - PostgreSQL has no single foundation that owns the project: development takes place in the community, while the nonprofit PGCA holds trademarks and domains. A vendor earns money from services, products, and reputation; a contribution cannot buy PostgreSQL.
 - Rust Foundation supports the language ecosystem and, through Rust Innovation Lab, takes fully funded infrastructure initiatives under its care.
 
 Start the choice with the object of collaboration. For a data engine, compare ASF, LF AI & Data, and an independent community model; for telemetry, CNCF or the home of its main users; for an AI runtime, PyTorch Foundation or Agentic AI Foundation; for a scientific library, NumFOCUS; for Java and edge devices, Eclipse. The shortlist does not automatically assign projects by keyword: check project maturity, license compatibility, a second company willing to support maintainers, brand constraints, and admission timelines.
+
+<!-- section: theory | A route outside CNCF: the Apache Software Foundation example -->
+The following lessons examine CNCF's procedure as the most extensively documented, but the path to another foundation involves the same questions. Here is the Apache Software Foundation route for a company developing an open-source data engine.
+
+1. Read the ASF incubator guides on project proposals and graduation so you know the exit requirements in advance.
+2. Find a champion, an ASF member who will support the project, and two or three mentors. Look through the incubator mailing list and people already working on related Apache projects.
+3. Write a proposal using the incubator template: what the project does, why it needs ASF, its current state, known risks including dependence on one company, and the initial committers and their employers.
+4. Pass the incubator committee vote. Afterwards, the company signs the code rights transfer, contributors sign individual agreements, and the project name is checked for trademark issues and changed if necessary.
+5. Work in the incubator: release versions through votes following the Apache process, write quarterly reports and expand the committer group beyond the company.
+6. Graduate when the community is independent of a single employer and releases follow foundation rules.
+
+Stopping without a transfer is reasonable if there is no second company willing to support maintainers and none is likely within a year, if the company is unwilling to give up the project name, or if the product needs a fast release pace under company control. The evidence table the next lesson builds for CNCF is useful here too: all foundations check independent maintainers, rules, users and a security report.
 
 <!-- section: theory | What was donated in 2024–2026 -->
 - On 22 October 2026, Agentic AI Foundation accepted Agent Skills from Anthropic, Open Responses from OpenAI, OpenEnv from Hugging Face, and OpenSandbox from Alibaba, bringing its project count to ten. A format, isolation environment, or integration contract can be donated separately; the whole commercial agent need not be transferred.
@@ -65,7 +77,7 @@ Complete the exercise in the document on this page. Record four decisions separa
 
 <!-- section: sources -->
 - TODO Group, starting an open-source project — https://todogroup.org/resources/guides/starting-an-open-source-project/ (checked 25.11.2026)
-- Apache Software Foundation, graduation from the incubator — https://incubator.apache.org/guides/graduation.html; trademarks — https://www.apache.org/foundation/marks/naming.html
+- Apache Software Foundation, project proposals — https://incubator.apache.org/guides/proposal.html; graduation from the incubator — https://incubator.apache.org/guides/graduation.html; trademarks — https://www.apache.org/foundation/marks/naming.html
 - Linux Foundation, project hosting — https://www.linuxfoundation.org/projects/hosting
 - CNCF, project lifecycle — https://github.com/cncf/toc/blob/main/process/README.md
 - OpenSSF, technical initiative lifecycle — https://openssf.org/about/tac/technical-initiative-funding/
@@ -119,10 +131,10 @@ Public fee schedules as of late 2026, in dollars per year unless stated otherwis
 | CNCF | Silver from 2 to 50 thousand, or 7 to 70 thousand including Linux Foundation, based on the entire corporate group's headcount; Gold — 100 thousand, Platinum — 350 thousand plus Linux Foundation fees, for three years | A Platinum board seat does not grant sole technical control; a KubeCon booth is paid separately |
 | Linux Foundation | Silver from 5 to 20 thousand by headcount, Gold — 100 thousand, Platinum — 500 thousand | Silver does not include industry foundation fees |
 | OpenSSF | From 1 January 2026, Premier — 250 thousand, General from 5 to 50 thousand plus Linux Foundation | Membership is not a product security audit |
-| LF AI & Data | Premier — 150 thousand plus Linux Foundation, General from 10 to 40 thousand | Case studies and events, not sales |
+| LF AI & Data | Premier — 150 thousand, General from 10 to 40 thousand, both plus Linux Foundation dues | Case studies and events, not sales |
 | Agentic AI Foundation | Gold — 200 thousand, Silver from 5 to 75 thousand plus Linux Foundation; Platinum seats are unavailable on the page | Membership does not imply buyer adoption of a protocol |
 | Apache Software Foundation | Sponsorship rather than membership: from 6 to 125 thousand | Sponsors do not buy change acceptance, releases, or product endorsement |
-| Eclipse Foundation | In euros: from 1 500 to 25 thousand by revenue, strategic membership from 30 to 300 thousand | Working group fees, such as Jakarta EE, are paid separately |
+| Eclipse Foundation | In euros: from 1 500 for companies with revenue below one million euros and fewer than ten employees to 25 thousand by revenue, strategic membership from 30 to 300 thousand | Working group fees, such as Jakarta EE, are paid separately |
 | PostgreSQL (PGCA) | Since February 2026, from donations below 2 500 dollars to 40 thousand | These are donations; PostgreSQL has no participation fee |
 | Software Freedom Conservancy | Usually 10 % of project income | The percentage applies to project income, excluding the vendor company's revenue |
 
@@ -132,8 +144,22 @@ Fees cover membership only. Engineers, documentation, vulnerability response, an
 
 Worked example. Under the current schedule, a company of 40 employees pays 5 thousand to CNCF and 5 thousand to Linux Foundation, totaling 10 thousand per year for Silver. This is the minimum membership fee, not an open-source project budget: if the project has two full-time maintainers, their time costs tens of times more. For the same company, OpenSSF membership including Linux Foundation also costs 10 thousand per year, but the foundations' goals and communities differ, and an identical price does not make the routes interchangeable.
 
+A full three-year calculation looks like this. The assumptions are illustrative: two maintainers each spend half their time on the project at a fully loaded employee cost of $180,000 per year; a quarter of a full-time role goes to security, releases and documentation; legal work and foundation admission cost $20,000 once in the first year; community work costs $15,000 annually, events $25,000 and dues $10,000. “Project funding” here means money the company gives the project itself for infrastructure, audits and contributor travel; maintainer salaries are excluded from that line to avoid double-counting.
+
+| Item | Year 1 | Year 2 | Year 3 |
+|---|---:|---:|---:|
+| Dues | 10 | 10 | 10 |
+| Maintainer time, 2 × 0.5 full-time roles | 180 | 180 | 180 |
+| Security, releases, documentation, 0.25 full-time role | 45 | 45 | 45 |
+| Legal work and foundation admission | 20 | 0 | 0 |
+| Community work | 15 | 15 | 15 |
+| Events | 25 | 25 | 25 |
+| Total, thousands of dollars | 295 | 275 | 275 |
+
+The three-year total is $845,000, of which dues account for $30,000, less than 4%. If some maintainers eventually work for other companies, the maintainer-time line shrinks, which is the economic rationale for the transfer.
+
 <!-- section: theory | How to tell whether donation succeeded -->
-The CHAOSS community offers project sustainability metrics. The contributor absence factor shows how many people account for half the project's activity, and the elephant factor shows how many organizations do. If employees of one company do half the work, the elephant factor is one, and project neutrality remains on paper. Add the number of maintainers outside the company, review time, the project's ability to release without its founding company, vulnerability response speed, and confirmed production users.
+The CHAOSS community offers project sustainability metrics. The contributor absence factor shows how many people account for half the project's activity, and the elephant factor shows how many organizations do. If employees of one company do half the work over the chosen period, such as half the accepted changes in a year, the elephant factor is one. This signals risk: that company's departure will stop the project even if governance rules are neutral. Check governance neutrality separately through the rules and who actually makes decisions. Add the number of maintainers outside the company, review time, the project's ability to release without its founding company, vulnerability response speed, and confirmed production users.
 
 The company's strategy succeeds through lower adoption barriers and a sustainable project; foundation success does not necessarily mean growth in the company's sales pipeline. Record this in the memo in advance so that leadership does not judge the donation by lead count a year later.
 
@@ -143,7 +169,7 @@ The company's strategy succeeds through lower adoption barriers and a sustainabl
 + Membership only; maintainers, security, and documentation are paid separately || The fee is a small part of the cost.
 - Half, because the foundation pays the other half from large members' fees || The foundation does not fund the project proportionally.
 ? After donation, employees of one company still make half the project's contributions. What is the elephant factor?
-+ One: one organization accounts for half the activity || Neutrality remains formal for now.
++ One: one organization accounts for half the activity || The project depends on one organization even if its rules are neutral.
 - Zero, because after donation the project belongs to the foundation rather than the company || The factor is calculated from contributions.
 - Two, because it counts the company and foundation that jointly oversee the project || The foundation is not included in the contribution count.
 ? What can a company write in marketing materials if it has joined a foundation but its project is still under review?

@@ -77,6 +77,8 @@ The 120 of deferred revenue is not the owners’ money: it is an obligation to s
 <!-- section: theory | How a founder should read statements -->
 Each statement answers its own question. The P&L asks whether we make money on the service we deliver: InfraSeed’s gross margin is 73.8%, and the main question is why development and sales cost more than gross profit. The balance sheet asks what we owe and what others owe us: deferred revenue of 120 represents work still to be done. Cash flow asks when cash arrives and leaves; that is the next lesson.
 
+A founder needs one answer today, before any reports: how many months the cash will last. A rough estimate divides freely available cash in the accounts by average net cash outflow over the last three months, meaning the difference between cash paid out and cash received. With 1.2 million in the bank and average monthly outflows exceeding inflows by 60,000, cash will last about 20 months. This is a rough estimate: it misses customer prepayments, future hiring, taxes and one-off payments, which is why lesson four replaces it with a 13-week forecast using actual dates. But if even the rough estimate is below twelve months, start discussing fundraising now.
+
 After each closed month, ask one question from the table above for each line. After three months, you will read the statements faster than the accountant can explain them.
 
 <!-- quiz -->
@@ -129,7 +131,7 @@ January works as follows: net loss −32, depreciation +1, AR −10, prepaid ins
 If direct and indirect methods give different operating cash flow, the books contain an error. Find it before sending the statements to investors.
 
 <!-- section: theory | Why a profitable company can run out of cash -->
-A short example: in January, a company delivers 100 of services and invoices on 90-day terms. It immediately pays 70 in costs. The P&L shows a profit of 30, but cash fell by 70. If the bank held 50, the company cannot make February payroll despite a profitable contract. Loan repayments, equipment purchases, prepaying a cloud commitment, taxes and paying old vendor invoices have the same effect. Annual prepayments work in reverse: they temporarily improve cash, but the service and its delivery costs still lie ahead.
+A short example: in January, a company delivers 100 of services and invoices on 90-day terms. It immediately pays 70 in costs. The P&L shows a profit of 30, but cash fell by 70. If the bank held 100, these costs leave 30, while payroll of 60 falls due in February and the customer will not pay until April. In February, the company cannot make payroll despite a profitable contract. Loan repayments, equipment purchases, prepaying a cloud commitment, taxes and paying old vendor invoices have the same effect. Annual prepayments work in reverse: they temporarily improve cash, but the service and its delivery costs still lie ahead.
 
 Cash-basis accounting records income and expenses when cash moves; accrual accounting records income when earned and expenses when incurred. Investors and auditors expect accrual statements; a toggle in accounting software does not change that. Whether cash-basis accounting is allowed for taxes is governed by separate IRS rules, including Internal Revenue Code Section 448.
 

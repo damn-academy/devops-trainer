@@ -5,7 +5,7 @@ At the monthly meeting, marketing reports that signup-to-payment conversion has 
 <!-- section: theory | Who we are counting -->
 Several different entities coexist in an infrastructure company, and it is easy to substitute one for another without noticing. A website visitor is a person or their browser. A user is a person's account in the product. An organization, or account, is a workspace shared by several users. An open-edition installation is a program running somewhere at an unfamiliar team. A buyer is the legal entity signing a contract. An opportunity is a specific commercial initiative by that buyer.
 
-The working unit for the commercial funnel is the account; for product, it is the account and its workloads; for marketing, first the visitor and then the identified account. One person may work in three organizations, one organization may create two workspaces, and a large customer may buy through several subsidiaries. So the first rule sounds dull and prevents half the mistakes: the numerator and denominator of a metric use the same unit. Dividing user signups by contracts with companies produces a number that measures nothing.
+The working unit for the commercial funnel is the account; for product, it is the account and its workloads; for marketing, first the visitor and then the identified account. One person may work in three organizations, one organization may create two workspaces, and a large customer may buy through several subsidiaries. So the first rule sounds dull and prevents half the mistakes: in proportions and conversions, the numerator and denominator use the same unit, because a proportion answers what share of one group did something. Dividing user signups by contracts with companies does not produce a conversion rate. Other metrics divide quantities of different kinds, and that is fine: acquisition cost is measured in dollars per new customer, revenue per employee in dollars per person. For such ratios, label the resulting unit explicitly and ensure that customers or employees in the denominator are the same entities as in the company's other reports.
 
 <!-- section: theory | The ten fields of a definition -->
 Every metric discussed in meetings needs a written definition. It has ten fields:
@@ -55,7 +55,7 @@ Other companies' benchmarks require even more caution. Reports distinguish obser
 <!-- /quiz -->
 
 <!-- section: task | Task: define three of your metrics -->
-Complete the task in the document on this page. Choose the three metrics most often discussed at your team's meetings and fill in all ten definition fields for each: business question, numerator, denominator, unit, starting point, window, exclusions, source, owner and version. If you do not know an answer, write down whom to ask. Then check whether the numerator and denominator of each metric use the same unit.
+Complete the task in the document on this page. Choose the three metrics most often discussed at your team's meetings and fill in all ten definition fields for each: business question, numerator, denominator, unit, starting point, window, exclusions, source, owner and version. If you do not know an answer, write down whom to ask. Then check whether the numerator and denominator of each proportion use the same unit, and whether ratios such as acquisition cost have their resulting unit labeled.
 
 <!-- section: sources -->
 - KeyBanc Capital Markets and Sapphire Ventures, SaaS Survey 2024 — https://www.cfodesk.co.il/wp-content/uploads/2024/10/2024_kbcm_sapphire_saas_survey.pdf (pp. 3–5)
@@ -84,7 +84,7 @@ Each stage has its own event and denominator:
 - Win: a signed commitment. Win rate is wins divided by wins plus losses; opportunities where the customer makes no decision count as losses.
 - Annual contract value (ACV) and expansion: the annual recurring amount of a new contract excluding one-time services, and growth in the recurring amount from existing customers.
 
-The simple ratio of “new organizations divided by unique visitors this month” is useful operationally but is not a transition probability: an organization may appear without a tracked visit, and one visitor may create several organizations. For the open edition, publish three numbers together: observed active installations, identified active accounts and the share of installations sending telemetry. Missing events from an installation do not mean it is unused.
+The simple ratio of “new organizations divided by unique visitors this month” is useful operationally but is not a transition probability: an organization may appear without a tracked visit, and one visitor may create several organizations. For the open edition, publish three numbers together: observed active installations, identified active accounts and the share of known installations sending telemetry. Known installations are those the company knows about through an agreed panel, support requests or contracts; the total number of installations is unknown, and the report states this limitation explicitly. Missing events from an installation do not mean it is unused.
 
 <!-- section: theory | An end-to-end example with a hundred thousand visitors -->
 Take an illustrative mature cloud cohort where all identifiers are linked and every signup creates one new account:

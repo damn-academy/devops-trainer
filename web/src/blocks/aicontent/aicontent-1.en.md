@@ -23,6 +23,21 @@ The first part allows the worker to write files in the specified folder, the sec
 
 Research was also divided by source: one worker searched open archives and English-language material, another searched in Russian. During preparation of this course, five investigations ran simultaneously this way: finances, metrics, a tool review, dossiers on our projects and material for reworking three other courses. Meanwhile, the lead AI wrote text and waited for notifications that a worker had finished.
 
+<!-- section: theory | A first run for people who do not write code -->
+The command above is a working tool for our editorial team; you do not need to start with it. There are two ways to begin.
+
+The first is a browser chat: Claude, ChatGPT or another AI that accepts file attachments. You only need an account, and a free or the cheapest plan is enough to start. You attach the source and brief, the AI replies with text, and you save the answer to a file. The limitation is that the AI cannot see your folders, run checks itself or assemble a hundred files.
+
+The second is a terminal agent: a program that works in a folder on your computer, reading files, writing new ones and running commands you have authorised. Claude Code, Codex and similar tools work this way; they require installation, account sign-in and usually a paid subscription.
+
+A minimal repeatable example for a content manager using either approach:
+
+1. Create a `first-task` folder with two files: `source.txt`, a transcript of a five-minute talk or any article you have rights to, and `brief.md`, a brief following the next lesson: “Turn source.txt into a 2,000-character company blog post, preserve every number and quotation with its source, mark uncertain passages [check], and write the result to post.md.”
+2. In chat, attach both files and paste the brief. In the terminal, open the folder and give the agent the same task.
+3. Get the `post.md` file and check it yourself: does every number appear in the source, have any unsupported claims appeared, and does the text sound like you?
+
+The human writes the brief, chooses the source and accepts the result; the AI drafts and flags uncertainty. If you find even one invented number at step three, that is a normal outcome for a first run, and the next lesson explains how a brief prevents these errors.
+
 <!-- section: theory | Fictional readers check the finished material -->
 The fourth role belongs to readers who do not exist. For each course, we invented six people with different experience, habits and irritations, and a worker went through the built site as each one, recording where they would abandon the course. The lesson on checks explores this technique in detail; here, what matters is that it covers a weakness in the whole arrangement. AI is worst at checking text it wrote itself, while the editor gets tired and misses things. Other eyes, even fictional ones, find what both miss: an incorrect formula in the product course, contradictory advice in the sales course, quiz questions where the correct answer is always the longest.
 
@@ -35,6 +50,8 @@ Finally, AI has no memory of previous sessions unless it is written down. Everyt
 AI speed is easy to overestimate if you count only generation time. Noy and Zhang's 2023 study in Science found that access to ChatGPT reduced average time on professional writing tasks by 40% and raised quality scores by 18%. Dell'Acqua's experiment with consultants, whose final version appeared in 2026, also found the reverse: on tasks within the model's capabilities, consultants completed 12% more and worked 25% faster, while on a task outside those capabilities the probability of a correct answer fell by roughly 19 percentage points. AI speeds up work where it is strong and makes confident mistakes where it is weak.
 
 Measure the time until the editor accepts the material; time to first draft tells you almost nothing. The full cost of one accepted article, video or lesson includes subscriptions, generations and retries, source-material licences, author, fact-checker and editor time, production editing and corrections after publication. In our projects, every Habr article went through several revision rounds, and a music longread underwent at least fifteen numbered rounds of review by a critic; this work accounted for most of the cost.
+
+An illustrative monthly calculation, with all figures hypothetical. Subscriptions to two AI services cost $220. The editorial team publishes eight articles; for each, the AI produces three drafts on average, two of which are discarded. The author spends 4 hours per article, the fact-checker 2 and the editor 3; at $40 per hour, that is $360 per article or $2,880 for the month. One of the eight articles needs another 2 hours of corrections after publication, costing $80. The total is `220 + 2,880 + 80 = 3,180` dollars for eight accepted articles, about $400 per article, with subscriptions accounting for less than 7%. If an article without AI would take 14 hours of human work, or $560, the saving is about 30%. It becomes visible when you count accepted articles, and shrinks as revisions grow: with five hours of editing instead of three, human work already costs $440 per article, or about $480 including subscriptions and corrections.
 
 <!-- quiz -->
 ? An editorial team assigned language editing of a course to two different AIs to finish faster. What will most likely need fixing?

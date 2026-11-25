@@ -9,8 +9,8 @@ An opportunity's stage is defined by a change in the buyer's state. A seller's a
 |---|---|---|
 | 0. Accepted, initial discovery | Account, use case and owner exist; the meeting happened; pain and next step are confirmed | Acceptance time, meeting attendance rate, transition to a qualified opportunity |
 | 1. Qualified opportunity | Business problem, profile fit, approximate scope and decision process are confirmed | Qualified pipeline created, age, rejection reasons |
-| 2. Technical evaluation, pilot | Success criteria, data, timeline and a technical champion at the customer are agreed | Pilot start, completion and success; technical success separate from commercial win |
-| 3. Business case, solution selected | Technical criteria met; buyer confirms value, budget path and preference | Win conversion, decision-maker coverage, competitor or no decision |
+| 2. Technical evaluation, pilot | The pilot has been completed against pre-agreed success criteria, data and timeline; the customer has a technical champion, and the result is recorded | Pilot start, completion and success; technical success separate from commercial win |
+| 3. Business case, solution selected | Following the evaluation, the buyer confirms value, budget path and preference for our solution | Win conversion, decision-maker coverage, competitor or no decision |
 | 4. Procurement, legal, security | Commercial terms, decision process and clear obstacles exist | Review time, slippage, discount, close-date changes |
 | 5. Won or lost | A commitment is signed or the initiative is explicitly abandoned | Annual revenue, loss reason, cycle duration; go-live separately |
 
@@ -31,7 +31,7 @@ Win rate is calculated in two ways, and both belong together:
 
 If a team wins many small deals and loses large ones, its count-based rate looks good while its value-based rate looks poor. To compare qualification quality, freeze the amount at an agreed stage and show the final amount separately to expose discounts and scope changes.
 
-Stage-to-win conversion is calculated for the cohort entering that stage. If 60 opportunities entered technical evaluation and 24 were won, conversion is 40%. If 10 of the 60 are still open, the ratio of 24 to 50 closed opportunities is called the win rate among closed opportunities, with the 10 open ones shown alongside it. Multiplying stage transitions yields overall conversion only for nested cohorts with identical windows and complete routes. In a real CRM, opportunities skip stages and move backward, so record the counting rule in advance, usually based on first entry date.
+Stage-to-win conversion is calculated for the cohort entering that stage. Take opportunities that entered technical evaluation in the first quarter and a 180-day window that has already ended for all of them. If there are 60 such opportunities and 24 were won within the window, conversion is 40%. If the window has not yet ended and 10 of the 60 are still open, the ratio of 24 to 50 closed opportunities is called the win rate among closed opportunities, with the 10 open ones shown alongside it. Multiplying stage transitions yields overall conversion only for nested cohorts with identical windows and complete routes. In a real CRM, opportunities skip stages and move backward, so record the counting rule in advance, usually based on first entry date.
 
 Cycle duration runs from qualification to close, separately for wins and losses, showing the median and 75th and 90th percentiles. For cycles of 50, 60, 70, 90 and 230 days, the median is 70 and the mean is 100. It helps to show the lead- or PQA-to-win journey alongside it: an opportunity cycle may “shrink” simply because salespeople start creating opportunities later in the CRM.
 
@@ -44,7 +44,7 @@ The stage age of an open opportunity is the time from its latest entry into the 
 - 3.2: pipeline is divided by the full quarterly target; other versions are not normally calculated || That is a valid but different metric.
 - Five, because triple coverage plus wins provides a buffer || That number does not follow from the data.
 ? A team won 30 of 120 opportunities, but only 20% by value. What does that mean?
-- A CRM error: win rates by count and value always match || They match only when amounts are equal.
+- A CRM error: win rates by count and value always match || They match only when the average values of won and lost opportunities are equal.
 + The team loses large deals more often than small ones || That is why both rates are shown together.
 - Salespeople give large discounts, understating won deal value || Discounts appear in a different comparison.
 ? Sixty opportunities entered technical evaluation, 24 were won and 10 remain open. What should the ratio of 24 to 50 be called?

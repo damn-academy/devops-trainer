@@ -7,7 +7,7 @@ Good activation describes a customer's completed job. For an observability syste
 
 It helps to distinguish three levels. Technical activation means the integration works. Value activation means a verifiable useful outcome was achieved. Organizational adoption means usage repeats and covers the necessary teams and workloads.
 
-Fourteen-day activation is the number of accounts activated within 14 days divided by new eligible accounts whose 14 days have already elapsed. If 300 of 1,000 such accounts activated, the rate is 30%. Do not add yesterday's 200 signups to the denominator: those accounts are immature and must not be counted as unsuccessful.
+Fourteen-day activation is calculated for a mature cohort: the number of new eligible accounts whose 14 days have elapsed and that activated within those 14 days, divided by all new eligible accounts whose 14 days have elapsed. If 300 of 1,000 such accounts activated, the rate is 30%. Do not add yesterday's 200 signups to the denominator: those accounts are immature and must not be counted as unsuccessful.
 
 <!-- section: theory | Time to value -->
 Time to value (TTV) is the interval from the start to the first useful outcome. Show two starting points: signup and the actual start of setup. The gap explains waiting for access and approvals. Report the median and 75th and 90th percentiles among activated accounts, alongside activation rate and the share that did not reach value within 14 and 30 days.
@@ -74,21 +74,21 @@ These numbers are a starting hypothesis. A security product may deliver value to
 Check rule quality with two numbers:
 
 - Precision = PQA accounts becoming qualified opportunities within 90 days / mature PQA accounts.
-- Recall = accounts with opportunities flagged by the rule before qualification / all eligible accounts with opportunities.
+- Recall = accounts flagged by the rule before their opportunity was qualified / all eligible accounts that gained a qualified opportunity within the same window. Count an account with two opportunities only once.
 
-With 100 PQAs, 30 becoming opportunities and 50 opportunities in total, precision is 30% and recall 60%. If comparable non-PQA accounts produce opportunities 5% of the time, the rule's observed lift is sixfold. However, this is not the effect of sales calls: good selection alone explains the difference. Test sales impact using a PQA holdout group receiving no calls, incremental annual revenue, and the cost of salesperson and engineer time. Do not optimize the rule for email opens.
+With 100 PQA accounts, of which 30 gained a qualified opportunity within 90 days, and 50 accounts with opportunities over the same period, precision is 30% and recall 60%. If comparable non-PQA accounts produce opportunities 5% of the time, the rule's observed lift is sixfold. However, this is not the effect of sales calls: good selection alone explains the difference. Test sales impact using a PQA holdout group receiving no calls, incremental annual revenue, and the cost of salesperson and engineer time. Do not optimize the rule for email opens.
 
 If the team can handle 40 accounts a week, the quality of the top forty matters; measure precision at that volume. Train and validate scoring models over time, and never use features appearing after opportunity creation: they leak information from the future and make the model look better than it is.
 
 <!-- section: theory | Open-edition telemetry and trust -->
-A customer-hosted open edition is visible to the company only through telemetry, and its design affects community trust. Good practice includes a public list of collected events and fields, a clear explanation of purpose, controls for enabling and disabling collection, and documented sending endpoints and retention periods. For sensitive environments, it is reasonable to ask for consent by default or agree on minimal operational telemetry with the administrator. This is a recommendation, not a claim of a universal legal requirement.
+A customer-hosted open edition is visible to the company mainly through telemetry, but also through support requests, user accounts of their experience and interviews, and its design affects community trust. Good practice includes a public list of collected events and fields, a clear explanation of purpose, controls for enabling and disabling collection, and documented sending endpoints and retention periods. For sensitive environments, it is reasonable to ask for consent by default or agree on minimal operational telemetry with the administrator. This is a recommendation, not a claim of a universal legal requirement.
 
 Do not collect query text, data contents, secrets, private repository paths or resource names for marketing. Use allowlisted event names, volume ranges instead of exact values, pseudonymous installation identifiers and server-side aggregates. Hashing an email address does not make the information anonymous. Operational telemetry, product analytics and commercial data enrichment serve different purposes; permission for one does not imply permission for another.
 
 The consenting sample may differ from isolated enterprise installations with no internet access; show this bias in reports. Mark consent-form changes on activation and retention charts. A GitHub star is a public interest signal, not proof of adoption, authority or consent to a call. Grafana's gcx CLI usage-statistics documentation lists transmitted fields and exclusions and explains how to disable reporting. It is an example of a thorough description, not evidence that the same model suits every open-source project.
 
 <!-- quiz -->
-? Of 100 PQAs, 30 became opportunities. There were 50 opportunities in total, 30 flagged beforehand. What are precision and recall?
+? Of 100 PQA accounts, 30 gained an opportunity. There were 50 accounts with opportunities in total, 30 flagged beforehand. What are the rule's precision and recall?
 - Precision 60%, recall 30%, because recall uses all PQAs as the denominator || Recall uses all opportunities.
 + Precision 30%, recall 60% || 30 of 100 PQAs and 30 of 50 opportunities.
 - Both 30%, because both numerators contain the same 30 accounts || The denominators differ.

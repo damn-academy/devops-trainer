@@ -14,7 +14,8 @@ A fact record in our projects looked like this:
 id: fact-001
 section: recording
 claim: "A verifiable claim in one sentence"
-status: single   # single, confirmed or disputed
+status: single     # confirmed, single, unconfirmed or disputed
+evidence: primary  # primary, secondary or own_observation
 sources:
   - title: "Source title"
     url: "Link"
@@ -22,14 +23,14 @@ sources:
     date: "Source date"
 ```
 
-The status `single` means one source, `confirmed` means two independent sources, and `disputed` means evidence of opposing versions has been found. Two pages retelling the same interview do not count as two sources: at the Sankofa museum, two workers independently opened every source for this purpose, and accepted wordings and translations were tied to checksums so that any record change required rechecking.
+The `evidence` field identifies the kind of evidence: a primary source (the video, recording or document itself), a secondary source (an article, interview or book), or the researcher's own observation. The `status` field says whether the evidence is sufficient: `confirmed` means a primary source directly shows the fact, or two independent secondary sources confirm it; `single` means there is one secondary account; `unconfirmed` means there is no evidence yet; `disputed` means evidence of opposing versions has been found. Two pages retelling the same interview do not count as two sources: at the Sankofa museum, two workers independently opened every source for this purpose, and accepted wordings and translations were tied to checksums so that any record change required rechecking.
 
 Alongside the facts are a source catalogue and a media inventory. The inventory records provenance and rights for each image, video or recording, because “may we publish this?” is easier to resolve before the file enters the text.
 
 <!-- section: theory | What counts as confirmation -->
-The two mistakes at the start of the lesson became two rules. First: an official video, recording, cover or document itself confirms what can be directly seen or heard in it. If the setting is visible in the official video, two written retellings are unnecessary. Two independent accounts are required for circumstances of creation, motives and historical explanations. Your own listening observations are also acceptable, but must be recorded as their own evidence type so they are not mistaken for archival sources.
+The two mistakes at the start of the lesson became two rules. First: an official video, recording, cover or document itself confirms what can be directly seen or heard in it. If an official video is set on an empty beach, two written retellings are unnecessary: the record receives `evidence: primary` and `status: confirmed`. But a frame confirms only what is visible in it. The video does not prove where it was filmed, how the scene was built or whether the beach was a set; such circumstances of creation, motives and historical explanations require two independent accounts. Your own listening observations are also acceptable, but must be recorded as their own evidence type so they are not mistaken for archival sources.
 
-The second rule: lack of confirmation does not mean a dispute. If a sample is absent from the credits, that means “not yet confirmed by sources”; it is not disproof. Use `disputed` only when positive evidence of opposing versions has been found. Without this rule, research turns gaps into disputes that do not exist.
+The second rule: lack of confirmation does not mean a dispute. If a sample is absent from the credits, the record receives the status `unconfirmed`; absence from the credits is not disproof. Use `disputed` only when positive evidence of opposing versions has been found. Without this rule, research turns gaps into disputes that do not exist.
 
 <!-- section: theory | Primary sources and archives -->
 For a historical study of early press coverage of computing devices, we built a search chain: from secondary research to a bibliographic index, then to the exact publication, year, issue and page, then to the digitised primary source and its transcription. Unpublished archival materials required collection, inventory and file numbers. Searches included pre-revolutionary spelling variants and old names. A newspaper mention found only in a later biography was not treated as equivalent to reading the issue itself: it remained unconfirmed until the actual issue was located.
@@ -45,7 +46,7 @@ If an article promises a full specification implementation but the code lacks so
 Deep research modes in ChatGPT, Claude, Gemini, Perplexity and Kimi suit research with web searches; terminal agents with search that write results to files suit repeatable work. Links in a report do not mean every link supports the adjacent sentence: in one dossier, a link supposedly reporting the outcome of a European tender led to its announcement, something found only during verification. A research brief should therefore require a short source quotation beside each fact, and links should be spot-checked while preparing the text.
 
 <!-- quiz -->
-? A band's official video shows filming on an empty beach. The researcher found no two written sources confirming this. What status should the fact receive?
+? A band's official video is set on an empty beach. The researcher found no two written sources confirming this. What status should the fact “the video is set on an empty beach” receive?
 + Confirmed: the official video itself serves as a primary source for what is visible in it || Two independent accounts are needed for circumstances of creation; what is visible in a primary source is confirmed by that source.
 - Disputed until two independent texts about the filming location are found || Missing texts do not make a fact disputed; opposing evidence does.
 - Unconfirmed, because video can be edited while articles undergo editorial review || The band's official video is a primary source; editing does not negate what is visible in it.
@@ -71,7 +72,7 @@ The AI's first texts for the learning platform were grammatical and empty. They 
 <!-- section: theory | Why AI prose is recognisable -->
 AI texts have persistent traits that readers recognise before they can name them. Empty intensifiers—“exactly”, “honestly”, “literally”, “essentially”, “directly”, “really”, “simply”, “precisely”—prove nothing and occupy the space where an argument should be. “Not X but Y” contrasts appear when nobody asserted X: “this is not just a tool but an entire platform”. Sentences use a colon or dash instead of a verb: “Method: the layer first”, “RAM—fast, but forgets everything”. A paragraph's final sentence summarises without adding anything. English metaphors are translated literally into Russian: processes “die”, locks are “let go”, exceptions get “lost”.
 
-Each trait alone is harmless, but together they make prose recognisable and tiring. Since July 2026, Habr's rules have discouraged material partially or fully generated or edited by AI, and moderators restrict such publications. For a technical blog, the issue is therefore not whether to disclose AI involvement, but how to make the text an original piece grounded in your own experience that does not read as generated.
+Each trait alone is harmless, but together they make prose recognisable and tiring. Since July 2026, Habr's rules have discouraged material partially or fully generated or edited by AI, and moderators restrict such publications. This raises two separate questions. The first is permission: whether a particular platform allows text involving AI, and to what extent; Habr allows covers, illustrations and a small supporting fragment in an original technical article, but its rules discourage text written or edited by AI, regardless of recognisable style. The second is quality: even where AI involvement is allowed, readers abandon text with the traits described in this section. Editing answers the second question; platform rules, covered in detail in the lesson on rules, answer the first.
 
 <!-- section: theory | Rules for coherence and precision -->
 These are the main rules we applied to everything from longreads to diagram captions.
@@ -94,6 +95,8 @@ State limitations once and where relevant. In talk slides, the editor removed ba
 
 <!-- section: theory | Two extremes and the middle -->
 Work on the release announcement shows how comments refine each other. The first Russian version was a list of short phrases. The editor demanded connected prose, and the second acquired metaphors, “perhaps”, “finally” and introductory words at every turn. The third found the middle: connected sentences without decoration. This produced a two-part rule: prose must flow, and imagery must be used sparingly.
+
+Here is how this looked in one paragraph. The first version was choppy: “New version. 30% faster. Less memory. Upgrade.” The second was embellished: “Perhaps the moment has finally arrived when the new version, like a refurbished mechanism, runs noticeably faster.” The third was accepted: “The new version processes requests 30% faster and uses less memory, so teams whose clusters are hitting their limits should upgrade.” The facts carried over from the first version to the third, but gained the connection “so” and an audience, without which readers cannot tell whether it applies to them. The second version lost “perhaps” and “finally”, which assert nothing, and the mechanism comparison, which adds no meaning. The 30% figure stayed unchanged: literary editing does not touch facts.
 
 The editor refined the disclaimer rule similarly. First, they asked to remove warnings and frames around text from the interface because they looked like unfinished layout. Then some information proved mandatory, such as disclosure of synthesised voice or consent to data storage, and the rule became: remove administrative caveats, keep necessary disclosures. Record such exceptions alongside the rule, or the next worker will apply it too broadly.
 
@@ -121,7 +124,7 @@ Literary editing must be followed by another fact-check of the version diff: sty
 <!-- /quiz -->
 
 <!-- section: task | Task: a style guide from your own feedback -->
-Complete the task in the document on this page. Take the last three AI texts you edited and list all comments that recurred at least twice. For each, record a rule, what was wrong, a before-and-after example and how to check compliance: visually or mechanically. Then choose one paragraph that best demonstrates the voice you want and make it the reference for future briefs.
+Complete the task in the document on this page. Take the last three AI texts you edited, or, if you have no edits of your own yet, ask an AI to write three paragraphs about any product and revise them, and list all comments that recurred at least twice. For each, record a rule, what was wrong, a before-and-after example and how to check compliance: visually or mechanically. Then choose one paragraph that best demonstrates the voice you want and make it the reference for future briefs.
 
 <!-- section: sources -->
 - Nora Gal. The Living and the Dead Word, Wikipedia article — https://ru.wikipedia.org/wiki/Слово_живое_и_мёртвое (1972 book, later editions)

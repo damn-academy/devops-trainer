@@ -85,11 +85,15 @@ Implement in this order: first agree on ARR and customer identity with finance; 
 <!-- section: theory | A metric contract template -->
 ```yaml
 metric: account_activation_14d
+question: share of new cloud accounts that reach first value within two weeks
 version: 1
+effective_from: 2026-11-01
 owner: Product Analytics
 grain: external_cloud_account
 cohort: first_account_created_month_utc
-numerator: accounts_reaching_value_v1_within_14_days
+start_event: account_created
+window_days: 14
+numerator: mature_cohort_accounts_reaching_value_v1_within_14_days
 denominator: new_accounts_with_full_14_day_observation
 exclude: [internal, demo, known_duplicate]
 unknown: telemetry_missing_is_reported_separately
@@ -99,7 +103,7 @@ refresh: daily
 change_policy: version_new_definition_and_restate_explicitly
 ```
 
-The template records the definition fields from the course's first lesson—unit, cohort, numerator, denominator, exclusions, source, owner and version—in a form both a person and a validation program can read.
+The template records the ten definition fields from the course's first lesson in a form both a person and a validation program can read: the business question is in `question`, numerator and denominator in `numerator` and `denominator`, unit in `grain`, starting point and window in `start_event` and `window_days`, exclusions in `exclude`, source in `source`, owner in `owner`, and version and its effective date in `version` and `effective_from`. Like the denominator, the numerator includes only accounts from the mature cohort whose window has already ended.
 
 <!-- section: theory | Errors that change management conclusions -->
 | Error | Why the result is wrong | How to fix it |

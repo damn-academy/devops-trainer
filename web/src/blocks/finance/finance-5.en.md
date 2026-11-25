@@ -10,7 +10,7 @@ For a calendar-year company, the main dates are:
 - Federal estimated income-tax payments: April 15, June 15, September 15 and December 15 if expected tax after credits is at least $500.
 - Contractor Forms 1099-NEC for 2026 payments: February 1, 2027, because January 31 falls on Sunday.
 - Employee Forms W-2 and W-3 for 2026: also February 1, 2027.
-- Quarterly payroll-tax return, Form 941: the last day of the month following the quarter; federal unemployment tax, Form 940: annually. Payroll taxes themselves are deposited earlier under monthly or semiweekly schedules.
+- Quarterly payroll-tax return, Form 941: the last day of the month following the quarter; federal unemployment tax, Form 940: annually, with the 2026 return due February 1, 2027. Payroll taxes themselves are deposited earlier according to a schedule: if payroll taxes in the lookback period did not exceed $50,000, the company pays monthly, by the 15th of the following month; above that threshold, it pays semiweekly. A new company pays monthly in its first year. The IRS notifies the company of its annual schedule in advance, and it is worth checking at the start of each year.
 - Founder 83(b) election: within thirty days of restricted-stock transfer.
 - Beneficial ownership information (BOI): US-created entities have been exempt since August 2026 under FinCEN’s final rule.
 - State obligations follow their own rules, covered in the next lesson.
@@ -39,7 +39,7 @@ For unamortized 2022–2024 costs, the law provided transition options: deduct t
 Maintain a development-cost register: project, technical uncertainty, work, employee or contractor, work location, hours, cost allocation, domestic or foreign, tax year, elected method and return evidence.
 
 <!-- section: theory | Research credits and payroll-tax offsets -->
-The Section 41 research credit reduces tax; it is not a deduction. A small company may offset payroll taxes even without profit if current-year revenue is below $5 million and no more than five years have elapsed since first revenue. The maximum is $500,000 annually for at most five years. Calculate and substantiate the credit; employing engineers does not qualify automatically.
+The Section 41 research credit reduces tax; it is not a deduction. A small company may offset payroll taxes even without profit if current-year gross receipts are below $5 million and it had no gross receipts earlier than five years before the current year; receipts of related companies are counted together. Check the Form 6765 instructions for the precise conditions. The maximum is $500,000 annually for at most five years. Calculate and substantiate the credit; employing engineers does not qualify automatically.
 
 Work must have a permitted purpose, be technological, and resolve uncertainty through experimentation. Routine support and foreign research do not qualify. A simplified alternative-method example: current costs of one million and a three-year historical average of 600. The unadjusted credit is 14% × (1,000 − 50% × 600) = 98. Electing the reduced credit at a 21% tax rate gives 98 × 79% = 77.4.
 
@@ -99,7 +99,7 @@ After the Supreme Court’s 2018 South Dakota v. Wayfair decision, physical pres
 Texas example: a 10,000 invoice for qualifying data processing at an 8.25% rate has taxable base 8,000 and tax 660; the customer pays 10,660. Company revenue is 10,000; 660 is a liability to the state. Maintain a sales table with product, service description, customer usage location, taxable share, nexus status and date, registration, exemption certificate, rate, tax collected and return number. Automated tax services need correct product codes and registrations; they do not decide legal taxability for the founder.
 
 <!-- section: theory | US and foreign contractors -->
-Collect Form W-9 from US contractors before first payment and verify name and tax ID. From 2026, Form 1099-NEC is required for annual service payments of at least $2,000; the previous threshold was $600. Do not duplicate payments reported by card and payment platforms. Without a correct tax ID, 24% backup withholding applies.
+Collect Form W-9 from US contractors before first payment and verify name and tax ID. From 2026, Form 1099-NEC is required for annual service payments of at least $2,000; the previous threshold was $600. The threshold applies to US contractors who are individuals or partnerships; payments to corporations generally do not require the form, with exceptions such as legal services, while foreign contractors need W-8BEN instead. Do not duplicate payments reported by card and payment platforms. Without a correct tax ID, 24% backup withholding applies.
 
 Collect W-8BEN from a foreign individual and W-8BEN-E from a foreign company. The payer retains the form; it is not “filed with the IRS.” Record where work actually occurred: service income sourcing follows work location, not a US bank or payment currency. Work performed entirely outside the US generally has no US withholding with proper documentation. US work, royalties and treaty claims change the analysis. W-8 does not prove contractor rather than employee status or replace an IP assignment agreement.
 

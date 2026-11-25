@@ -71,6 +71,13 @@ Quantitative checks showed that the translated fragments were 7% longer in total
 
 The errors found are instructive. A missing blank line after a quotation caused Markdown to attribute the next paragraph to the quoted author. Attribution and licence information for the original were missing. Literary editing turned “can help” into an unqualified statement and “often” into “increasingly often”. Applied to written text, the video pipeline left fake timestamps that had to be removed during assembly. Proofreading automatically inserted 675 non-breaking spaces, while a script compared formulas, links and image paths byte for byte before and after.
 
+<!-- section: theory | Repeating the pipeline with your own recording -->
+The pipeline is published as the open-source video-to-article plugin for Claude Code, and you can run it on your own recording in an evening. You need Claude Code with a subscription, ffmpeg and Python 3.10 or newer; the plugin offers to install the remaining packages, including Whisper for transcription, in a separate environment. Install the plugin with two commands in Claude Code: `/plugin marketplace add tym83/video-to-article` and `/plugin install video-to-article@video-to-article`.
+
+For the first run, choose a short recording you have rights to: your own talk or a Creative Commons video, which you can find using the licence filter in YouTube search. Run `/video-to-article` followed by a video link or file path. The plugin asks for the article language, number of illustrations and publication platform, then creates a folder where each stage leaves its own file: the source video and audio, a timestamped transcript, context with a glossary and recognition pitfalls, 2,500-character fragments, processed text for each fragment, the assembled article, a completeness report with length ratios for each fragment, a fact-checker's report, a literary edit with a change log and repeat fact-check, proofreading, five headline options, frames and the final article.
+
+The plugin stops twice for a human decision: after fact-checking and when choosing a headline. On the first run, check three things: whether the completeness report has fragments with ratios substantially below one, what the fact-checker marked FAIL and how it was fixed, and whether literary editing changed any numbers. If any of these went wrong, that is material for your task.
+
 <!-- section: theory | When this pipeline is unnecessary -->
 Fifteen stages and ten roles pay off for long recordings and texts intended to last. A short post based on video needs only transcription, one draft and a read-through. At release, the plugin passed 28 regression tests, but a complete run on a real long video was still the next step, so releasing the tool did not prove it could produce finished articles without an editor. This applies to any pipeline: testing the mechanics does not replace checking results on real material.
 
@@ -80,13 +87,13 @@ Fifteen stages and ten roles pay off for long recordings and texts intended to l
 - Proofreading, because it reads the whole text || Proofreading checks spelling and typography, not meaning.
 - Headline selection, because the editor reads the whole article when choosing an option || Selecting a headline does not include checking every sentence's meaning.
 ? The translated fragments are 7% longer in total than the originals. What does this tell you?
-+ The translator probably omitted nothing, but meaning must be checked separately || Completeness checks catch omissions, not distortions.
++ There are probably no major omissions, but meaning and fragment completeness must be checked separately || Completeness checks catch omissions, not distortions.
 - The translation is wordy and needs cutting by 7% to restore the original's precision || Russian text is usually longer than English; this does not indicate wordiness.
 - The translation is accurate because the difference is under ten percent and within the norm || Length does not prove accuracy of meaning.
 <!-- /quiz -->
 
 <!-- section: task | Task: an article from a recording -->
-Complete the task in the document on this page. Choose a recording of one of your talks, webinars or interviews lasting at least twenty minutes. Map out its conversion into an article: which stages you will retain or combine, who owns facts and who owns language, which checks the text will pass and where the editor decides. Then produce a transcript and first draft of one section, and record what needed fixing.
+Complete the task in the document on this page. Choose a recording of one of your talks, webinars or interviews lasting at least twenty minutes. Map out its conversion into an article: which stages you will retain or combine, who owns facts and who owns language, which checks the text will pass and where the editor decides. Then run the recording through the plugin or manually produce a transcript and first draft of one section, and record what needed fixing.
 
 <!-- section: sources -->
 - video-to-article, open-source Claude Code plugin — https://github.com/tym83/video-to-article (checked 25.11.2026)

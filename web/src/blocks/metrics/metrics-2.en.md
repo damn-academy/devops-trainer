@@ -64,9 +64,14 @@ Formulas:
 - Relative lift = absolute lift / control-group conversion.
 - Incremental customers in the treatment group = treatment-group size × absolute lift.
 
-In the opening example, each group has 1,000 accounts, with 30 buyers in treatment and 20 in control. Absolute lift is one percentage point, relative lift is 50%, and the point estimate is 10 incremental customers. If the campaign cost $30,000, incremental acquisition cost is $3,000 per customer. However, the approximate 95% interval for the difference stretches from about −0.37 to 2.37 points, including zero. The test does not support a confident positive conclusion; the decision to scale the campaign must include that caveat, or the test must be extended.
+In the opening example, each group has 1,000 accounts, with 30 buyers in treatment and 20 in control. Absolute lift is one percentage point, relative lift is 50%, and the point estimate is 10 incremental customers. If the campaign cost $30,000, incremental acquisition cost is $3,000 per customer. However, the approximate 95% interval for the difference stretches from about −0.37 to 2.37 points, including zero. The test does not support a confident positive conclusion; the decision to scale the campaign must include that caveat. Extending a test after seeing its results is acceptable only if the extension was specified in the plan beforehand; otherwise, it is significance hunting, and a new independent test is more reliable.
 
 For specialist-assisted sales, you can randomly assign an offer of help among PQAs. Include all accounts assigned help, even those that did not respond: this is the intention-to-treat principle. Keeping only responders leaves the most interested accounts in treatment and inflates the effect. A regional experiment works when there are enough comparable markets; at a large customer with offices in different countries, information flows between offices and breaks group independence.
+
+<!-- section: theory | How many accounts each group needs -->
+Choose group sizes before starting; otherwise, the test will almost certainly be too small. For comparing two proportions, Lehr's simple rule says that a two-sided test at the 5% level with an 80% chance of detecting an effect if it exists needs approximately `n ≈ 16 × p × (1 − p) / d²` accounts in each group, where `p` is the average expected proportion across the two groups and `d` is the difference you want to detect.
+
+Suppose 2% of accounts buy without the campaign and you hope for 3%. The average proportion is 2.5%, the difference is 1 percentage point, and `16 × 0.025 × 0.975 / 0.0001 = 3,900` accounts are needed in each group. The opening example had 1,000 per group, which is why its interval was so wide. If the company does not have that many target accounts, there are three options: look for a larger effect, measure an intermediate outcome with a higher baseline rate, such as a qualified meeting instead of a purchase, or acknowledge that the test will show nothing in this market. The rule gives a probability of detecting an effect, not a guarantee of an interval excluding zero; for precise calculations, use power calculators in R, Python or spreadsheets.
 
 <!-- section: theory | Marketing mix modelling -->
 Marketing mix modelling (MMM) estimates the relationship between channel spend and outcomes using aggregated time series, allowing for delayed effects, saturation and control variables:
@@ -82,7 +87,7 @@ An interpretation example: the model estimates that $50,000 in spend generated $
 <!-- quiz -->
 ? In treatment, 30 of 1,000 accounts bought; in control, 20 of 1,000 did. The difference interval is −0.37 to 2.37 points. Which conclusion is valid?
 + The point estimate is 10 incremental customers, but the interval includes zero, so there is no confident conclusion || Zero is inside the interval.
-- The campaign brought in 30 customers because all received the email before buying || Twenty would have bought anyway.
+- The campaign brought in 30 customers because all received the email before buying || The control group suggests that about 20 purchases would have happened without the email.
 - The campaign does not work because the interval starts at a negative number || The interval does not prove the absence of an effect either.
 ? Why does a specialist-assistance experiment count all assigned accounts, including nonresponders?
 - Because it is easier: there is no need to work out who responded || The issue is bias.
@@ -95,7 +100,7 @@ An interpretation example: the model estimates that $50,000 in spend generated $
 <!-- /quiz -->
 
 <!-- section: task | Task: plan one experiment -->
-Complete the task in the document on this page. Choose one marketing or sales action whose effect you are unsure about: an email campaign, an offer of engineering help, a webinar or advertising in one region. Write an experiment plan: randomization unit, group sizes, outcome, duration, minimum effect of interest and stopping rule. Then estimate how many accounts you need for the difference interval to exclude zero at the expected effect.
+Complete the task in the document on this page. Choose one marketing or sales action whose effect you are unsure about: an email campaign, an offer of engineering help, a webinar or advertising in one region. Write an experiment plan: randomization unit, group sizes, outcome, duration, minimum effect of interest and stopping rule. Then use the rule from the lesson to estimate how many accounts each group needs for an 80% chance of detecting the expected effect.
 
 <!-- section: sources -->
 - Google Meridian, model specification — https://developers.google.com/meridian/docs/advanced-modeling/model-spec
