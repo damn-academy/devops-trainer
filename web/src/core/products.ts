@@ -89,8 +89,8 @@ export const PRODUCTS: Product[] = [
       "en": "Events and talks"
     },
     "summary": {
-      "ru": "Как получать пользу от событий: вебинары, онлайн-воркшопы с лабораторией, митапы и Kubernetes Community Days как ежедневная работа, заявки и доклады на KubeCon, работа на стенде и конференция без стенда. Отдельно — как считать, окупилось ли событие, и почему число сканов бейджей ничего не говорит. В конце — подготовка к KubeCon за восемь недель в симуляторе.",
-      "en": "How to benefit from events: webinars, online workshops with labs, meetups and Kubernetes Community Days as daily work, proposals and talks at KubeCon, staffing a booth and attending a conference without one. A separate focus is calculating whether an event paid off and why badge scan counts tell you nothing. The course ends with eight weeks of KubeCon preparation in a simulator."
+      "ru": "Как получать пользу от событий: вебинары, онлайн-воркшопы с лабораторией, митапы и Kubernetes Community Days как ежедневная работа, заявки и доклады на KubeCon, своя конференция очно и онлайн, что CNCF даёт проекту для событий, работа на стенде и конференция без стенда. Отдельно — как считать, окупилось ли событие, и почему число сканов бейджей ничего не говорит. В конце — подготовка к KubeCon за восемь недель в симуляторе.",
+      "en": "How to benefit from events: webinars, online workshops with labs, meetups and Kubernetes Community Days as daily work, proposals and talks at KubeCon, running your own conference in person and online, what CNCF offers a project for events, staffing a booth and attending a conference without one. A separate focus is calculating whether an event paid off and why badge scan counts tell you nothing. The course ends with eight weeks of KubeCon preparation in a simulator."
     },
     "subtitle": {
       "ru": "Для DevRel, маркетологов, основателей и инженеров-докладчиков.",
