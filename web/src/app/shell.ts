@@ -138,12 +138,12 @@ export function startApp(root: HTMLElement): void {
     page = r.name === 'home' || !pages ? homePage() : pages.renderPage(r);
     clear(main);
     main.append(page.el);
-    footer.replaceChildren(h('p', {}, t(bi('Прогресс сохраняется в этом браузере после каждого действия. Курс не игра: без очков, значков и серий.', 'Progress is saved in this browser after every action. The course is not a game: no points, badges or streaks.'))));
+    footer.replaceChildren(h('p', {}, t(bi('Прогресс сохраняется в этом браузере после каждого действия. Здесь учатся, а не играют: без очков, значков и серий.', 'Progress is saved in this browser after every action. The course is not a game: no points, badges or streaks.'))));
     footer.append(
       h(
         'p.foot-links',
         {},
-        h('a', { href: href({ name: 'about' }) }, t(bi('Справка о курсе', 'About the course'))),
+        h('a', { href: href({ name: 'about' }) }, t(bi('Справка о платформе', 'About the platform'))),
         ' · ',
         h('a', { href: href({ name: 'about', page: 'deploy' }) }, t(bi('Развернуть у себя', 'Run it yourself'))),
         ' · ',

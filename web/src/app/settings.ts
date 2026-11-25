@@ -159,7 +159,7 @@ export function settingsPage(): Page {
     h(
       'section.settings-sec',
       { 'data-id': 'about' },
-      h('h2', {}, t(bi('Справка о курсе', 'About the course'))),
+      h('h2', {}, t(bi('Справка о платформе', 'About the platform'))),
       h('p', {}, t(bi('В справке рассказано, как пользоваться курсом и как он устроен, как развернуть его в своей компании или школе и как предложить в него исправление.', 'The help tells how to use the course and how it is built, how to run it in your own company or school and how to propose a fix to it.'))),
       h('a.btn', { href: href({ name: 'about' }) }, t(bi('Открыть справку', 'Open the help'))),
     ),

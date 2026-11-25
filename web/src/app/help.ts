@@ -25,7 +25,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'progress',
     title: bi('Как сохраняется прогресс без логина и пароля', 'How progress is saved without a login and password'),
     body: bi(
-      'Курс не просит регистрироваться. Пройденные уроки, ответы, выбранные уровни и ваши сообщения автору записываются в хранилище этого браузера на этом компьютере после каждого действия. На сервер курса прогресс не уходит, поэтому в другом браузере или на другом устройстве курс начнётся с чистого листа.\n\nПрогресс пропадёт, если проходить курс в приватном окне, которое забывает всё при закрытии, или очистить данные сайта в настройках браузера. Safari к тому же сам стирает данные сайта, который вы не открывали семь дней.\n\nЧтобы продолжить на другом устройстве, откройте «Настройки» и нажмите «Перенести на другое устройство»: курс покажет ссылку, которую нужно открыть на втором устройстве в течение 15 минут. Кнопка «Выгрузить прогресс» сохраняет прогресс в файл, который служит и запасной копией, а на другом устройстве этот файл загружают кнопкой «Загрузить прогресс».\n\nВход по ссылке на почту, через GitHub или Google пока не планируется: прогресс переносится между устройствами ссылкой «Перенести на другое устройство» или файлом, как описано выше.',
+      'Платформа не просит регистрироваться. Пройденные уроки, ответы, выбранные уровни и ваши сообщения автору записываются в хранилище этого браузера на этом компьютере после каждого действия. На сервер платформы прогресс не уходит, поэтому в другом браузере или на другом устройстве всё начнётся с чистого листа.\n\nПрогресс пропадёт, если заниматься в приватном окне, которое забывает всё при закрытии, или очистить данные сайта в настройках браузера. Safari к тому же сам стирает данные сайта, который вы не открывали семь дней.\n\nЧтобы продолжить на другом устройстве, откройте «Настройки» и нажмите «Перенести на другое устройство»: платформа покажет ссылку, которую нужно открыть на втором устройстве в течение 15 минут. Кнопка «Выгрузить прогресс» сохраняет прогресс в файл, который служит и запасной копией, а на другом устройстве этот файл загружают кнопкой «Загрузить прогресс».\n\nВход по ссылке на почту, через GitHub или Google пока не планируется: прогресс переносится между устройствами ссылкой «Перенести на другое устройство» или файлом, как описано выше.',
       'The course does not ask you to sign up. Finished lessons, answers, chosen levels and your messages to the author are written to this browser’s storage on this computer after every action. Progress is not sent to the course’s server, so in another browser or on another device the course starts from a clean slate.\n\nProgress is lost if you take the course in a private window, which forgets everything when it closes, or if you clear the site’s data in the browser settings. Safari also erases the data of a site you have not opened for seven days.\n\nTo continue on another device, open “Settings” and press “Transfer to another device”: the course shows a link to open on the second device within 15 minutes. The “Export progress” button saves progress to a file that also serves as a backup, and on the other device the file is loaded with “Import progress”.\n\nSign-in by an e-mail link, GitHub or Google is not planned for now: progress moves between devices with the “Move to another device” link or a file, as described above.',
     ),
   },
@@ -33,7 +33,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'levels',
     title: bi('Как устроены уровни и проверка уровня', 'How levels and the level check work'),
     body: bi(
-      'У каждого блока курса три уровня: «Новичок», «Средний» и «Опытный». Уровень выбирают на странице блока, и от него зависят разделы уроков, которые вы увидите: новичку курс объясняет больше и подробнее, а опытному пропускает вводные разделы.\n\nЕсли тема вам уже знакома, нажмите на странице блока «Определить уровень». Короткая проверка без подсказок и без наставника подтвердит выбранный уровень, а уроки, которые она зачла, можно пропустить. Если проверка не пройдена, курс предложит пройти уроки только по найденным пробелам или выбрать уровень ниже, а повторить проверку с другими заданиями можно через 72 часа.',
+      'В профессии DevOps-инженера у каждого блока три уровня: «Новичок», «Средний» и «Опытный». Уровень выбирают на странице блока, и от него зависят разделы уроков, которые вы увидите: новичку уроки объясняют больше и подробнее, а опытному пропускает вводные разделы.\n\nЕсли тема вам уже знакома, нажмите на странице блока «Определить уровень». Короткая проверка без подсказок и без наставника подтвердит выбранный уровень, а уроки, которые она зачла, можно пропустить. Если проверка не пройдена, платформа предложит пройти уроки только по найденным пробелам или выбрать уровень ниже, а повторить проверку с другими заданиями можно через 72 часа.',
       'Every block of the course has three levels: “Beginner”, “Intermediate” and “Experienced”. You choose the level on the block’s page, and it decides which parts of the lessons you see: a beginner gets more and fuller explanations, an experienced learner skips the introductory parts.\n\nIf you already know the topic, press “Check your level” on the block’s page. A short check without hints or the mentor confirms the chosen level, and the lessons it covers can be skipped. If the check is not passed, the course offers to take only the lessons on the gaps it found or to choose a lower level, and the check can be retaken with other tasks in 72 hours.',
     ),
   },
@@ -53,7 +53,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'report',
     title: bi('Как сообщить о проблеме и прочитать ответ', 'How to report a problem and read the reply'),
     body: bi(
-      'Если в курсе ошибка, что-то непонятно или не работает, нажмите кнопку «Сообщить о проблеме» в правом нижнем углу экрана или выделите текст и нажмите появившуюся кнопку «Комментировать». Перед отправкой можно раскрыть строку под полем сообщения и увидеть всё, что уйдёт вместе с ним: место в курсе и вывод терминала.\n\nОтветы автора появляются на странице «Мои сообщения» в верхнем меню. Аккаунт для этого тоже не нужен: переписка хранится в этом браузере и переносится на другое устройство вместе с файлом прогресса.',
+      'Если в уроке ошибка, что-то непонятно или не работает, нажмите кнопку «Сообщить о проблеме» в правом нижнем углу экрана или выделите текст и нажмите появившуюся кнопку «Комментировать». Перед отправкой можно раскрыть строку под полем сообщения и увидеть всё, что уйдёт вместе с ним: место на сайте и вывод терминала.\n\nОтветы автора появляются на странице «Мои сообщения» в верхнем меню. Аккаунт для этого тоже не нужен: переписка хранится в этом браузере и переносится на другое устройство вместе с файлом прогресса.',
       'If something in the course is wrong, unclear or broken, press “Report a problem” in the bottom right corner of the screen, or select some text and press the “Comment” button that appears. Before sending you can open the line under the message box and see everything that goes with it: the place in the course and the terminal output.\n\nThe author’s replies appear on the “My messages” page in the top menu. No account is needed for that either: the conversation is kept in this browser and moves to another device together with the progress file.',
     ),
   },
@@ -61,7 +61,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'ai',
     title: bi('Что делает кнопка «Спросить нейросеть»', 'What the “Ask the AI” button does'),
     body: bi(
-      'Когда подсказки к заданию закончились, попытка не удалась или вы ответили на вопрос, рядом появляется кнопка «Спросить нейросеть». Она составляет запрос о том, что вы сейчас проходите, и показывает его целиком, а вы можете поправить текст, скопировать его или открыть выбранный чат в новой вкладке. Сам курс ничего нейросетям не отправляет: запрос уходит, только когда вы вставляете его в чат или нажимаете кнопку чата. На экзаменах и на проверке уровня этой кнопки нет.',
+      'Когда подсказки к заданию закончились, попытка не удалась или вы ответили на вопрос, рядом появляется кнопка «Спросить нейросеть». Она составляет запрос о том, что вы сейчас проходите, и показывает его целиком, а вы можете поправить текст, скопировать его или открыть выбранный чат в новой вкладке. Сама платформа ничего нейросетям не отправляет: запрос уходит, только когда вы вставляете его в чат или нажимаете кнопку чата. На экзаменах и на проверке уровня этой кнопки нет.',
       'When the hints of a task run out, an attempt fails or you have answered a question, an “Ask the AI” button appears next to it. The button writes a prompt about what you are working on and shows the whole prompt, which you can edit, copy, or open in a chat of your choice in a new tab. The course itself sends nothing to any AI: the prompt leaves only when you paste it into a chat or press a chat’s button. Exams and level checks do not have this button.',
     ),
   },
@@ -69,15 +69,15 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'lab',
     title: bi('Где взять настоящие машины', 'Where to get real machines'),
     body: bi(
-      'Для уроков и экзаменов на настоящих машинах не обязательно арендовать серверы в облаке. Программа dtlab бесплатно запускает виртуальные машины курса на вашем компьютере, то есть отдельные компьютеры со своей системой, которые работают внутри вашего. Как её поставить, рассказано на странице «Лаборатория на своём компьютере». В блоках про Kubernetes стенд другой: там учебный узел кластера kuberoot, который сначала собирается прямо в браузере по частям, а потом его же разворачивают на своей машине или на арендованном сервере.',
+      'Для уроков и экзаменов на настоящих машинах не обязательно арендовать серверы в облаке. Программа dtlab бесплатно запускает виртуальные машины профессии DevOps-инженера на вашем компьютере, то есть отдельные компьютеры со своей системой, которые работают внутри вашего. Как её поставить, рассказано на странице «Лаборатория на своём компьютере». В блоках про Kubernetes стенд другой: там учебный узел кластера kuberoot, который сначала собирается прямо в браузере по частям, а потом его же разворачивают на своей машине или на арендованном сервере.',
       'Lessons and exams on real machines do not require renting servers in a cloud. The dtlab program runs the course’s virtual machines on your own computer for free, that is, separate computers with their own system that run inside yours. How to install it is told on the page “A lab on your own computer”. The Kubernetes blocks use a different stand: the training cluster node kuberoot, which is first assembled piece by piece right in the browser and then deployed on your own machine or a rented server.',
     ),
   },
   {
     id: 'about',
-    title: bi('Где прочитать о курсе подробнее', 'Where to read more about the course'),
+    title: bi('Где прочитать о платформе подробнее', 'Where to read more about the platform'),
     body: bi(
-      'Эта панель отвечает на самые частые вопросы. В разделе [«Справка о курсе»](#/about) подробно рассказано, что это за курс и как им пользоваться, как устроены симуляторы и настоящий Linux во вкладке, как [развернуть курс](#/about/deploy) в своей компании или школе и как [предложить в него исправление](#/about/contribute).',
+      'Эта панель отвечает на самые частые вопросы. В разделе [«Справка о платформе»](#/about) подробно рассказано, что такое damn.academy и как пользоваться профессиями и курсами, как устроены симуляторы, настоящий Linux во вкладке и симуляторы отделов, как [развернуть платформу](#/about/deploy) в своей компании или школе и как [предложить исправление](#/about/contribute).',
       'This panel answers the most common questions. The [“About the course”](#/about) section tells in detail what the course is and how to use it, how the simulators and real Linux in the tab are built, how to [run the course](#/about/deploy) in your own company or school and how to [propose a fix](#/about/contribute) to it.',
     ),
   },
@@ -85,7 +85,7 @@ export const HELP_SECTIONS: HelpSection[] = [
 
 const MORE = bi('Подробнее', 'More');
 const CLOSE = bi('Закрыть справку', 'Close help');
-const OPEN = bi('Открыть справку о том, как устроен курс', 'Open help on how the course works');
+const OPEN = bi('Открыть справку о том, как устроена платформа', 'Open help on how the platform works');
 export const LOCAL_LAB_LINK = bi('Лаборатория на своём компьютере', 'A lab on your own computer');
 
 
@@ -118,7 +118,7 @@ export function openHelp(opener?: HTMLElement): HTMLDialogElement | null {
       h('div.prose', {}, renderMd(t(s.body))),
       s.more ? h('details.help-more', {}, h('summary', {}, t(MORE)), h('div.prose', {}, renderMd(t(s.more)))) : null,
       s.id === 'lab' ? h('p', {}, h('a.btn.small', { href: href({ name: 'local-lab' }) }, t(LOCAL_LAB_LINK))) : null,
-      s.id === 'about' ? h('p', {}, h('a.btn.small', { href: href({ name: 'about' }) }, t(bi('Открыть справку о курсе', 'Open “About the course”')))) : null,
+      s.id === 'about' ? h('p', {}, h('a.btn.small', { href: href({ name: 'about' }) }, t(bi('Открыть справку о платформе', 'Open “About the platform”')))) : null,
     ),
   );
   dialog.append(
