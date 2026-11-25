@@ -14,7 +14,7 @@ import { localLabPage } from './local-lab';
 import { lessonPage } from './lesson';
 import { explainerPage } from './pages';
 import { reviewPage } from './review-page';
-import { coursesPage } from './courses-page';
+import { coursesPage, professionsPage } from './courses-page';
 import { coursePage } from './course-page';
 import { professionPage } from './home';
 import { settingsPage } from './settings';
@@ -43,6 +43,8 @@ export function renderPage(r: Exclude<Route, { name: 'home' }>): Page {
       return reviewPage();
     case 'courses':
       return coursesPage();
+    case 'professions':
+      return professionsPage();
     case 'course':
       return coursePage(r.id);
     case 'lab':
