@@ -145,7 +145,7 @@ export function lintExplainers(reg: Registry): ExplainerReport {
         const breaks = m.breaks.filter(b => !b.levels || b.levels.includes(level));
         scan(collectExplainerTexts({ title: m.title, summary: m.summary, intro: m.intro, stopLabel: m.stopLabel,
           legend: m.legend?.map(l => l.text),
-          diagram: [...m.diagram.nodes, ...m.diagram.edges, ...(m.diagram.groups ?? [])].map(n => ({ label: n.label, sub: 'sub' in n ? n.sub : undefined, card: { what: n.card.what, who: n.card.who, see: n.card.see, docLabel: n.card.doc?.label, docGloss: n.card.doc?.gloss } })),
+          diagram: [...m.diagram.nodes, ...m.diagram.edges, ...(m.diagram.groups ?? [])].map(n => ({ label: n.label, sub: 'sub' in n ? n.sub : undefined, card: { what: n.card.what, who: n.card.who, look: n.card.look, see: n.card.see, docLabel: n.card.doc?.label, docGloss: n.card.doc?.gloss } })),
           metrics: m.metrics?.map(v => ({ label: v.label, unit: v.unit })),
           params: params.map(p => ({ label: p.label, unit: p.unit, group: p.group, options: p.options?.map(o => o.label), predict: p.predict && { prompt: p.predict.prompt, options: p.predict.options.map(o => o.text) } })),
           breaks: breaks.map(b => ({ label: b.label, layer: b.layer, prompt: b.predict.prompt, options: b.predict.options.map(o => o.text) })),

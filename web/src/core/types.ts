@@ -939,6 +939,8 @@ export type ColorFamily =
 export interface ElementCard {
   what: Bi;
   who: Bi;
+  /** Prose instructions for finding or inspecting the element. */
+  look?: Bi;
   /** A command to look at it: 'ls -l /proc/$$/fd'. */
   see?: string;
   doc?: DocRef;
@@ -1014,6 +1016,8 @@ export interface DiagramGroup {
 
 /** Hand-laid diagram on an 8 px grid; positions are stable across steps. At most 12 nodes per screen. */
 export interface Diagram {
+  /** Alternate node layout below 600 px; edges retain their identities. */
+  narrow?: { width: number; height: number; nodes: DiagramNode[]; edgeVia?: Record<string, [number, number][]> };
   /** Extra space above the drawing, in diagram units. */
   topPadding?: number;
   width: number;

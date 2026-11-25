@@ -25,7 +25,14 @@ it('multiplies the entire funnel without rounding intermediate counts', () => {
       expect(result.break_even).toBeCloseTo(changed.cost / (changed.profit_per_win * changed.win_rate / 100));
       const steps = funnelModel.run(changed, new Set());
       for (const s of steps) {
-        for (const node of funnelModel.diagram.nodes) expect(Number(s.values![node.id])).toBeCloseTo(result[node.id as keyof typeof result], 4);
+        for (const node of funnelModel.diagram.nodes) {
+          const value = s.values![node.id];
+          const exact = result[node.id as keyof typeof result];
+          const expectedCount = ['opps', 'wins'].includes(node.id);
+          expect(Math.abs(Number(value.replace('≈', '')) - exact)).toBeLessThanOrEqual(expectedCount ? 0.051 : 0.5);
+          expect(value.startsWith('≈')).toBe(expectedCount || !Number.isInteger(exact));
+          expect(value).toMatch(expectedCount ? /^≈\d+\.\d$/ : /^≈?\d+$/);
+        }
         expect(s.metrics!.opps).toBe(result.opps);
         expect(s.metrics!.break_even).toBe(result.break_even);
       }
@@ -44,4 +51,13 @@ it('late follow-up reduces meetings and downstream results threefold, preserving
   expect(funnelModel.breaks[0].predict.resolve(a, b)).toBe('lower');
   expect(funnelModel.breaks[0].predict.resolve(a, a)).toBe('same');
   expect(funnelModel.run(defaults, new Set())).toEqual(a);
+});
+
+it('shows rounded counts and all final nodes from the first step', () => {
+  const first = funnelModel.run(defaults, new Set())[0];
+  expect(first.values).toEqual({ scans: '300', target: '45', next: '27', followup: '≈22', meetings: '≈6', opps: '≈1.9', wins: '≈0.5' });
+  expect(first.states).toMatchObject({ scans: 'on', target: 'off', wins: 'off', 'to-wins': 'off' });
+  const nodes = funnelModel.diagram.narrow!.nodes;
+  expect(new Set(nodes.map(n => n.x)).size).toBe(1);
+  expect(nodes.map(n => n.id)).toEqual(funnelModel.diagram.nodes.map(n => n.id));
 });

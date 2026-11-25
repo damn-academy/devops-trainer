@@ -66,7 +66,10 @@ interface Pending {
 }
 
 export function mountModel(root: HTMLElement, model: ProcessModel<Record<string, unknown>>, ctx: ExplainerCtx): Mounted {
-  const d = model.diagram;
+  const diagramForWidth = () => window.matchMedia?.('(max-width: 600px)').matches && model.diagram.narrow
+    ? { ...model.diagram, ...model.diagram.narrow,
+      edges: model.diagram.edges.map(e => ({ ...e, via: model.diagram.narrow!.edgeVia?.[e.id] ?? e.via })) } : model.diagram;
+  let d = diagramForWidth();
   let params: Record<string, unknown> = Object.fromEntries(model.params.map((p) => [p.id, ctx.params?.[p.id] ?? p.default]));
   const broken = new Set<string>();
   let steps: Step[] = model.run(params, broken);
@@ -133,7 +136,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       paint();
     }
   });
-  const canvasEl = h('div.ex-canvas', {}, viewport, h('p.ex-hint', {}, t(L.hintClick)));
+  const canvasEl = h('div.ex-canvas', {}, viewport);
   const introBox = model.intro ? h('div.ex-intro', { role: 'note' }) : null;
   const el = h(
     'div.explainer',
@@ -144,6 +147,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     introBox,
     // the step controls sit right above the picture, under the settings that shape it
     h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks), h('div.ex-mobile-caption', {}, stepCaption, expandCaption, zoomControl)),
+    h('p.ex-hint', {}, t(L.hintClick)),
     h('div.ex-stage', {}, canvasEl, h('div.ex-side', {}, deltaBox, card), caption),
     mobileNotes,
     mobileNodes,
@@ -200,20 +204,23 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     }
   };
 
-  for (const g of d.groups ?? []) drawGroup(g);
-  for (const e of d.edges) {
-    const pts = edgePoints(d, e);
-    const path = s('path.edge-line', { d: pathD(pts), 'marker-end': `url(#arr-${model.id}-n)`, class: e.dashed ? 'dashed' : undefined }) as SVGPathElement;
-    const hit = s('path.edge-hit', { d: pathD(pts) });
-    const { p } = pointAt(pts, e.labelAt ?? 0.5);
-    const label = txt(e.label);
-    const tx = s('text.edge-label', { x: p[0], y: p[1] - 6, 'text-anchor': 'middle' }, label);
-    const fn = activate(e.id, e.card, label);
-    const g = s('g.edge', { 'data-id': e.id, tabindex: 0, role: 'button', 'aria-label': label, onclick: fn, onkeydown: keyActivate(fn) as never }, hit, path, tx);
-    layerEdges.append(g);
-    edgeEls.set(e.id, { g, path, pts });
+  function drawDiagram() {
+    for (const g of d.groups ?? []) drawGroup(g);
+    for (const e of d.edges) {
+      const pts = edgePoints(d, e);
+      const path = s('path.edge-line', { d: pathD(pts), 'marker-end': `url(#arr-${model.id}-n)`, class: e.dashed ? 'dashed' : undefined }) as SVGPathElement;
+      const hit = s('path.edge-hit', { d: pathD(pts) });
+      const { p } = pointAt(pts, e.labelAt ?? 0.5);
+      const label = txt(e.label);
+      const tx = s('text.edge-label', { x: p[0], y: p[1] - 6, 'text-anchor': 'middle' }, label);
+      const fn = activate(e.id, e.card, label);
+      const g = s('g.edge', { 'data-id': e.id, tabindex: 0, role: 'button', 'aria-label': label, onclick: fn, onkeydown: keyActivate(fn) as never }, hit, path, tx);
+      layerEdges.append(g);
+      edgeEls.set(e.id, { g, path, pts });
+    }
+    for (const n of d.nodes) drawNode(n);
   }
-  for (const n of d.nodes) drawNode(n);
+  drawDiagram();
 
   // Once the diagram has a size and fonts are in: fit node labels, place edge labels, fit the viewBox.
   let tidyObs: ResizeObserver | null = null;
@@ -375,6 +382,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       ),
       h('div.ex-card-what', {}, renderMd(t(c.what))),
       h('div.ex-card-who', {}, h('span.k', {}, t(L.cardWho)), ' ', renderMd(t(c.who))),
+      c.look ? h('div.ex-card-look', {}, renderMd(t(c.look))) : null,
       c.see ? h('p.ex-card-see', {}, h('span.k', {}, t(L.cardSee)), ' ', h('code', {}, c.see)) : null,
       c.doc ? h('p.ex-card-doc', {}, h('span.k', {}, t(L.cardDoc)), ' ', docChip(c.doc)) : null,
     );
@@ -584,10 +592,10 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     const target = [x, y, Math.max(...boxes.map((b) => b.x + b.w)) + 20 - x, Math.max(...boxes.map((b) => b.y + b.h)) + 20 - y];
     cancelAnimationFrame(cameraAnim);
     if (window.matchMedia?.('(max-width: 600px)').matches) {
-      // Preserve authored geometry, but never shrink labels below 12 screen pixels.
+      // Fit an authored narrow layout to the viewport; other diagrams retain readable text and scroll.
       const labels = [...svg.querySelectorAll<SVGTextElement>('.node-label')];
       const smallest = Math.min(12, ...labels.map(label => parseFloat(getComputedStyle(label).fontSize) || 12));
-      const scale = Math.max(1, 12.05 / smallest) * zoom;
+      const scale = (model.diagram.narrow ? viewport.clientWidth / target[2] : Math.max(1, 12.05 / smallest)) * zoom;
       svg.style.width = `${target[2] * scale}px`;
       svg.style.height = `${target[3] * scale}px`;
       svg.setAttribute('viewBox', target.join(' '));
@@ -1112,7 +1120,17 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   drawTicks();
   go(0, false);
 
-  const onResize = () => { focusedStep = -1; paint(); };
+  const onResize = () => {
+    const next = diagramForWidth();
+    if (next.nodes !== d.nodes) {
+      d = next;
+      for (const layer of [layerGroups, layerEdges, layerNodes]) clear(layer);
+      nodeEls.clear(); edgeEls.clear(); subEls.clear(); fillEls.clear();
+      drawDiagram();
+      tidyDiagram(svg, d);
+    }
+    focusedStep = -1; paint();
+  };
   window.addEventListener('resize', onResize);
   return {
     dispose() {
