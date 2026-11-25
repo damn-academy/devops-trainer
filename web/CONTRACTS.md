@@ -271,3 +271,43 @@ unmounted, or other-lesson source never falls back to the checking terminal.
 Machines, persistence keys and reset buttons remain independent; this contract
 shares goal evidence only. Dispose removes the source and its subscriptions.
 Content must opt in; existing lessons are not implicitly joined by lesson id.
+
+## Bilingual Markdown lessons
+
+Import `loadMarkdownLessons(files, blockId)` and `markdownQuizItems(lessons)`
+from `src/core/md-lessons.ts`. Pass an eager `?raw` glob of paired `.ru.md` /
+`.en.md` files; register the returned lessons and quiz items in the block module.
+The marketing parser path remains a compatibility re-export.
+
+A file may contain multiple lessons. Start each with
+`<!-- lesson: course.lesson-id | Localized title | 10 -->`, followed by exactly
+one `<!-- section: hook -->`. Use `<!-- section: theory | Title -->` and
+`<!-- section: task | Title -->` for prose. Russian sources are required, last:
+`<!-- section: sources -->`, then `- Source title — https://example.com (date)`.
+English sources may be omitted to reuse Russian references.
+
+Insert `<!-- widget: marketing.budget {"total":10000} -->` anywhere inside
+lesson prose. It creates a practice section at that position; following prose
+resumes the previous section kind. Props must be a JSON object. Other examples:
+`<!-- widget: marketing.dns-lab -->` and
+`<!-- widget: deptsim {"scenario":"marketing.quarter"} -->`.
+Department scenarios are registered once by the deptsim engine module.
+
+Enclose MCQs in `<!-- quiz -->` / `<!-- /quiz -->`. Each item starts with
+`? Question`, followed by one `+ Correct option || Explanation` and one or more
+`- Wrong option || Explanation` lines. Separate items with a blank line.
+IDs are `lesson-id.q1`, `lesson-id.q2`, etc., counted across quiz sections.
+Keep question order stable to preserve progress. RU and EN must mirror lesson
+IDs, minutes, section kinds, widget IDs/props, option order and correct answers.
+Translate all question, option and explanation text. Markers in fenced code
+blocks are literal examples. Invalid markers and translation drift fail loading.
+
+The budget model's parameter table contains teaching assumptions, not market
+estimates. Spend repeats for three months under a monthly ceiling; unused money
+is reserve. Lognormal costs, beta conversion rates, a shared market factor and
+an occasional channel cost shock generate 300 twelve-month paths. Cumulative
+bands are quantiles of path totals, not sums of monthly quantiles.
+The DNS lab uses the existing simulated DNS engine with an isolated fake zone.
+Completion checks a valid DMARC record in `/home/learner/dmarc.txt`, for example
+`echo 'v=DMARC1; p=none; rua=mailto:dmarc@example-cloud.test' > dmarc.txt`.
+No DNS changes are published.
