@@ -55,7 +55,7 @@ function lesson(partial: Omit<Lesson, 'block' | 'tier'> & { tier?: Lesson['tier'
 export const SCITHINK_LESSONS: Lesson[] = [
   lesson({
     id: 'scithink.story',
-    title: bi('Уверенность — не проверка', 'Confidence is not a check'),
+    title: bi('Почему уверенность ничего не проверяет', 'Confidence is not a check'),
     summary: bi(
       'Убедительная история и проверенное утверждение — разные вещи; уверенность говорит о чувстве, и о точности по ней судить нельзя.',
       'A convincing story and a checked claim are different things; confidence reports a feeling, not accuracy.',
@@ -167,7 +167,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
 
   lesson({
     id: 'scithink.correlation',
-    title: bi('Совместный рост — не причина', 'Growing together is not a cause'),
+    title: bi('Почему совместный рост не доказывает причину', 'Growing together is not a cause'),
     summary: bi(
       'Корреляция и причинность: лёд и утопления, третий фактор и обратная причинность; интерактивная схема с двумя ручками и проверкой внутри групп.',
       'Correlation and causation: ice cream and drowning, the third factor and reverse causation; an interactive scheme with two dials and the within-groups check.',
