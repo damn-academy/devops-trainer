@@ -53,7 +53,7 @@ it.each([true, false])('mounts all widgets with configured=%s', async configured
     if (configured) { await vi.waitFor(() => expect(w.host.querySelector('strong')?.textContent).toBe('Useful')); expect(loadAttempts(trainer.id)[0].input).toBe('draft'); }
   }
   expect(setup('signal-feed', { data: 'sales.signal-feed' }, configured).host.textContent).toContain('1/20');
-  expect(setup('boundary', { data: 'product.boundary' }, configured).host.querySelectorAll('select')).toHaveLength(20);
+  expect(setup('boundary', { data: 'product.boundary' }, configured).host.querySelectorAll('[role=radiogroup]')).toHaveLength(20);
   expect(setup('events.roi', {}, configured).host.querySelectorAll('input')).toHaveLength(8);
 });
 it('sends roleplay history and the exact debrief command', async () => {
@@ -70,10 +70,10 @@ it('finishes the feed and lists missed answers', () => {
   expect(w.host.textContent).toContain('Correct answers:'); expect(w.host.textContent).toContain('Your choice: Noise'); expect(w.ctx.complete).toHaveBeenCalledOnce();
 });
 it('reveals boundary scoring and invalidates it after changes', () => {
-  const w = setup('boundary', { data: 'product.boundary' }); const select = w.host.querySelector('select')!;
-  select.value = 'paid'; select.dispatchEvent(new Event('change')); w.button('Show reaction').click();
+  const w = setup('boundary', { data: 'product.boundary' }); const paid = w.host.querySelector<HTMLInputElement>('input[value=paid]')!; const open = w.host.querySelector<HTMLInputElement>('input[value=open]')!;
+  paid.click(); w.button('Show reaction').click();
   expect(w.host.querySelector('[role=status]')?.textContent).toContain('Protests: 1');
-  select.value = 'open'; select.dispatchEvent(new Event('change')); expect(w.host.querySelector('[role=status]')?.textContent).toBe('');
+  open.click(); expect(w.host.querySelector('[role=status]')?.textContent).toBe('');
 });
 it('guards malformed and unavailable storage', () => {
   localStorage.setItem('dt.trainers.x', '[{}]'); expect(loadAttempts('x')).toEqual([]);
@@ -84,13 +84,13 @@ it('guards malformed and unavailable storage', () => {
 
  it('shows matching governance checks, refreshes the document and invalidates stale results', () => {
   const w = setup('governance', { data: 'oss.governance' });
-  expect(w.host.querySelectorAll('fieldset')).toHaveLength(6);
+  expect(w.host.querySelectorAll('[role=radiogroup]')).toHaveLength(6);
   w.button('Compare with the repository').click();
-  expect(w.host.textContent).toContain('последнее голосование было два года назад');
+  expect(w.host.textContent?.replace(/\u00a0/g, ' ')).toContain('Последнее голосование было два года назад');
   const radio = w.host.querySelectorAll<HTMLInputElement>('input[value=B]')[1]; radio.click();
   expect(w.host.querySelector('textarea')?.value).toContain('Кандидата назначает технический директор');
   w.button('Compare with the repository').click();
-  expect(w.host.textContent).toContain('нейтральности нет');
+  expect(w.host.textContent?.replace(/\u00a0/g, ' ')).toContain('Нейтральности нет');
  });
  it('reveals each health answer and completes only on the final question', () => {
   const w = setup('health', { data: 'oss.health' });
