@@ -1,4 +1,4 @@
-import { bi, t } from '../../core/i18n';
+import { bi, lang, t } from '../../core/i18n';
 import type { WidgetReg } from '../../core/types';
 
 export interface RoundInput { founder: number; safes: { amount: number; cap: number }[]; round: number; valuation: number; poolPercent: number; existingPool: number }
@@ -32,7 +32,10 @@ export function franchiseNumbers(p: FranchiseInput) {
   return { authorized, assumed, tax, fee: 50, total: tax + 50, instalments: tax >= 5000 };
 }
 const label = (ru: string, en: string) => t(bi(ru, en));
-const fmt = (n: number) => String(Math.round(n * 1e6) / 1e6);
+// Format only at the display boundary; calculations retain their full precision.
+const fmt = (n: number, maximumFractionDigits = 0) => new Intl.NumberFormat(
+  lang() === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits },
+).format(n).replace(/\u00a0/g, '\u202f');
 const node = <K extends keyof HTMLElementTagNameMap>(tag: K, text = '') => { const e = document.createElement(tag); e.textContent = text; return e; };
 function shell(el: HTMLElement, title: string) {
   const root = node('section'); root.className = 'finance-trainer';
@@ -61,8 +64,8 @@ export const roundWidget: WidgetReg = { id: 'finance.round', mount(el) {
     try {
       const r = roundNumbers(p);
       const names = [label('Основатель', 'Founder'), ...p.safes.map((_, i) => `SAFE ${i + 1}`), label('Невыданный пул', 'Unallocated pool'), label('Новый инвестор', 'New investor')];
-      ui.result.append(table(['', label('Доли до раунда', 'Ownership before the round'), label('После раунда без пула', 'After the round without pool'), label('После раунда с пулом', 'After the round with pool')], names.map((n, i) => [n, ...[r.before, r.withoutPool, r.withPool].map(s => fmt(s.ownership[i]) + ' %')]).concat([
-        [label('Цена акции раунда', 'Round share price'), '—', fmt(r.withoutPool.price), fmt(r.withPool.price)],
+      ui.result.append(table(['', label('Доли до раунда', 'Ownership before the round'), label('После раунда без пула', 'After the round without pool'), label('После раунда с пулом', 'After the round with pool')], names.map((n, i) => [n, ...[r.before, r.withoutPool, r.withPool].map(s => fmt(s.ownership[i], 1) + ' %')]).concat([
+        [label('Цена акции раунда', 'Round share price'), '—', fmt(r.withoutPool.price, 6), fmt(r.withPool.price, 6)],
         [label('Новые акции инвестора', 'New investor shares'), '—', fmt(r.withoutPool.newShares), fmt(r.withPool.newShares)],
       ])));
     } catch { ui.result.append(invalid()); }
@@ -99,7 +102,7 @@ export const franchiseWidget: WidgetReg = { id: 'finance.franchise', mount(el) {
         [label('К уплате (меньший метод)', 'Tax due (lower method)'), fmt(r.tax)],
         [label('Сбор за годовой отчёт', 'Annual report fee'), fmt(r.fee)],
         [label('Всего со сбором', 'Total including fee'), fmt(r.total)],
-      ]), node('p', r.instalments ? label('Платить частями: 40 % к 1 июня, по 20 % к 1 сентября и 1 декабря, остаток к 1 марта', 'Pay instalments: 40% by June 1, 20% each by September 1 and December 1, the remainder by March 1') : label('Рассрочка не требуется: налог меньше 5 000 долларов.', 'Instalments are not required: tax is below $5,000.')));
+      ]), node('p', r.instalments ? label('Платить частями: 40 % к 1 июня, по 20 % к 1 сентября и 1 декабря, остаток к 1 марта', 'Pay instalments: 40% by June 1, 20% each by September 1 and December 1, the remainder by March 1') : label(`Рассрочка не требуется: налог меньше ${fmt(5000)} долларов.`, `Instalments are not required: tax is below $${fmt(5000)}.`)));
     } catch { ui.result.append(invalid()); }
   };
   ui.input('Разрешённые к выпуску акции', 'Authorized shares', p.authorized, n => { p.authorized = n; render(); }, 1, '1');

@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
-import { expect, it } from 'vitest';
+import { afterEach, expect, it } from 'vitest';
 import { roundNumbers, franchiseNumbers, ROUND_DEFAULTS, FRANCHISE_DEFAULTS, roundWidget, franchiseWidget } from '../src/blocks/finance/widgets';
 import { FINANCE_MODULES } from '../src/blocks/finance/structure';
 import { registry } from '../src/core/registry';
 import { parseMarkdownLessons } from '../src/core/md-lessons';
 import { visibleProducts } from '../src/core/products';
 import { setLang } from '../src/core/i18n';
+
+afterEach(() => setLang('ru'));
 
 it('reproduces SAFE conversion and both round prices without intermediate rounding', () => {
   const r = roundNumbers(ROUND_DEFAULTS);
@@ -69,4 +71,48 @@ it('updates accessible widget results and rejects invalid input', () => {
     expect(el.textContent).toContain('Проверьте значения');
     expect(el.textContent).not.toContain('NaN'); mounted.dispose(); expect(el.children).toHaveLength(0);
   }
+});
+
+it.each([
+  { locale: 'ru' as const, decimal: ',', group: '\u202f' },
+  { locale: 'en' as const, decimal: '.', group: ',' },
+])('formats finance outputs in $locale without changing calculations', ({ locale, decimal, group }) => {
+  setLang(locale);
+  const el = document.createElement('div');
+  const mounted = roundWidget.mount(el, {}, {} as never);
+  const rows = () => Array.from(el.querySelectorAll('tbody tr'), row =>
+    Array.from(row.querySelectorAll('td'), cell => cell.textContent));
+  expect(rows()).toEqual([
+    ['85 %', '68 %', `59${decimal}5 %`],
+    ['10 %', '8 %', '7 %'],
+    ['5 %', '4 %', `3${decimal}5 %`],
+    ['0 %', '0 %', '10 %'],
+    ['0 %', '20 %', '20 %'],
+    ['—', `2${decimal}125`, `1${decimal}859375`],
+    ['—', `2${group}352${group}941`, `2${group}689${group}076`],
+  ]);
+  const inputs = el.querySelectorAll('input');
+  inputs[0].value = '3000000';
+  inputs[0].dispatchEvent(new Event('input'));
+  expect(rows()[5][1]).toBe(`5${decimal}666667`);
+  inputs[7].value = '12.34';
+  inputs[7].dispatchEvent(new Event('input'));
+  expect(rows()[3][2]).toBe(`12${decimal}3 %`);
+  inputs[0].value = '17000';
+  inputs[0].dispatchEvent(new Event('input'));
+  expect(rows()[5][1]).toBe(`1${group}000`);
+  mounted.dispose();
+
+  const franchise = franchiseWidget.mount(el, {}, {} as never);
+  expect(rows()).toEqual([
+    [`85${group}165`], [`1${group}200`], [`1${group}200`], ['50'], [`1${group}250`],
+  ]);
+  expect(el.querySelector('.finance-result')!.textContent).toContain(`5${group}000`);
+  const assets = el.querySelectorAll('input')[3];
+  assets.value = '40000000';
+  assets.dispatchEvent(new Event('input'));
+  expect(rows()).toEqual([
+    [`85${group}165`], [`20${group}000`], [`20${group}000`], ['50'], [`20${group}050`],
+  ]);
+  franchise.dispose();
 });
