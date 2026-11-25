@@ -11,7 +11,7 @@ import { MARKETING_V2_LESSONS } from './v2';
 /** The honest note every school lesson carries: one way, not a law. It mirrors
  * the disclaimer of the sales pilot, so the two hidden courses speak alike. */
 export const HONEST_NOTE = bi(
-  'Это один из способов работать, а не закон и не оптимальное решение. Жизнь сложнее любой схемы: многое зависит от контекста — продукта, рынка, людей и момента. Берите то, что применимо к вашей ситуации, и проверяйте на практике.',
+  'Это один из способов работать; законом и единственно верным решением он не служит. Жизнь сложнее любой схемы: многое зависит от контекста — продукта, рынка, людей и момента. Берите то, что применимо к вашей ситуации, и проверяйте на практике.',
   'This is one way of working, not a law and not an optimal solution. Life is more complex than any framework: much depends on context — the product, the market, the people and the moment. Take what applies to your situation and test it in practice.',
 );
 
@@ -129,7 +129,7 @@ const MODULE_LESSON: Record<string, LessonSpec> = {
     title: ['Разборы: что сделали HashiCorp, GitLab и другие', 'Case studies: what HashiCorp, GitLab and others did'],
     minutes: 12,
     hook: [
-      'Хочется спросить: а кто-нибудь уже делал так? Этот урок — пять разборов: HashiCorp, GitLab, Grafana, MongoDB и Elastic, Vercel и Supabase. Что именно они сделали, чем это им обошлось и что из этого перенять.',
+      'Хочется спросить: а кто-нибудь уже делал так? Этот урок — пять разборов: HashiCorp, GitLab, Grafana, MongoDB и Elastic, Vercel и Supabase. Что они сделали, чем это им обошлось и что из этого перенять.',
       'You want to ask: has anyone actually done this? This lesson is five case studies: HashiCorp, GitLab, Grafana, MongoDB and Elastic, Vercel and Supabase. What exactly they did, what it cost them and what to borrow.',
     ],
   },
@@ -264,7 +264,7 @@ export const MARKETING_CONCEPTS: Concept[] = [
     id: 'marketing.messaging',
     term: bi('месседж', 'the message'),
     short: bi(
-      'Фраза о продукте, собранная из слов самих покупателей, а не из слов вендора.',
+      'Фраза о продукте, собранная из слов самих покупателей.',
       'The phrase about the product, assembled from the buyers\' own words rather than the vendor\'s.',
     ),
     introducedIn: 'marketing.fundamentals',
@@ -304,7 +304,7 @@ export const MARKETING_CONCEPTS: Concept[] = [
     id: 'marketing.devrel',
     term: bi('DevRel', 'DevRel'),
     short: bi(
-      'Связь компании с профессией через доклады, ответы на вопросы и наставничество; продаёт доверие, а не продукт.',
+      'Связь компании с профессией через доклады, ответы на вопросы и наставничество; продаёт доверие, продукт идёт следом.',
       'The company\'s relationship with the profession through talks, answers and mentorship; it sells trust, not the product.',
     ),
     introducedIn: 'marketing.community',
@@ -348,7 +348,7 @@ export const MARKETING_QUIZ: QuizItem[] = [
     options: [
       { id: 'cuts', text: bi('Тот, что описан тремя признаками, отсекающими не-покупателя до разговора', 'One described by three traits that cut out non-buyers before any conversation'), correct: true, why: bi('Каждая компания вне портрета съедает касания и не покупает; отсечение видно в деньгах уже через квартал.', 'Every company outside the portrait spends touches and never buys; the savings from cutting them show in money within a quarter.') },
       { id: 'all-leads', text: bi('Тот, что описан всеми, кто когда-либо интересовался продуктом', 'One described by everyone who ever showed interest in the product'), why: bi('Интересовались — не значит покупали; портрет из лидов любого качества размывает и каналы, и метрики.', 'Interested does not mean bought; a portrait built from leads of any quality blurs both channels and metrics.') },
-      { id: 'logos', text: bi('Тот, что описан самыми крупными логотипами отрасли', 'One described by the biggest logos in the industry'), why: bi('Крупный логотип — это размер сделки, а не пригодность; гигант без нужной практики купит не скорее компании с болью.', 'A big logo is deal size, not fit; a giant without the right practice buys no sooner than a company in pain.') },
+      { id: 'logos', text: bi('Тот, что описан самыми крупными логотипами отрасли', 'One described by the biggest logos in the industry'), why: bi('Крупный логотип говорит о размере сделки и ничего не говорит о пригодности; гигант без нужной практики купит не скорее компании с болью.', 'A big logo is deal size, not fit; a giant without the right practice buys no sooner than a company in pain.') },
     ],
   },
   {
@@ -360,7 +360,7 @@ export const MARKETING_QUIZ: QuizItem[] = [
       'According to Ehrenberg-Bass data, where does category growth come from?',
     ),
     options: [
-      { id: 'reach', text: bi('С охвата — с покупателей, которые легко вспоминают продукт и легко его покупают', 'From reach — from buyers who easily recall the product and easily buy it'), correct: true, why: bi('Покупатели «лёгкие»: они мало думают о категории и переключаются быстро, поэтому рынок растёт за счёт новых покупателей, а не глубины у старых.', 'Buyers are "light": they think little about the category and switch fast, so the market grows through new buyers, not depth with old ones.') },
+      { id: 'reach', text: bi('С охвата — с покупателей, которые легко вспоминают продукт и легко его покупают', 'From reach — from buyers who easily recall the product and easily buy it'), correct: true, why: bi('Покупатели «лёгкие»: они мало думают о категории и переключаются быстро, поэтому рынок растёт за счёт новых покупателей больше, чем за счёт глубины у старых.', 'Buyers are "light": they think little about the category and switch fast, so the market grows through new buyers, not depth with old ones.') },
       { id: 'loyalty', text: bi('С лояльности, то есть с глубины отношений с существующими клиентами', 'From loyalty, that is from the depth of relationships with existing customers'), why: bi('Доля лояльных в категории почти не меняется; удвоить её не выходит даже у лидеров рынка.', 'The share of loyal customers in a category barely changes; even market leaders cannot double it.') },
       { id: 'frequency', text: bi('С частоты покупок самыми активными клиентами', 'From how often the most active customers buy'), why: bi('Самые активные клиенты уже купили почти всё, что могут; потолок роста лежит за пределами собственной базы.', 'The most active customers have already bought almost everything they can; the growth ceiling lies outside your own base.') },
     ],
@@ -389,7 +389,7 @@ export const MARKETING_QUIZ: QuizItem[] = [
       'Put the stages of the "one insight, ten pieces" machine in the order it actually works.',
     ),
     steps: [
-      { id: 'insight', text: bi('Инсайт из практики записан и проверен цифрами', 'An insight from practice is written down and checked with numbers'), why: bi('Машина начинается с наблюдения, а не с темы из календаря.', 'The machine starts with an observation, not a topic from the calendar.') },
+      { id: 'insight', text: bi('Инсайт из практики записан и проверен цифрами', 'An insight from practice is written down and checked with numbers'), why: bi('Машина начинается с наблюдения; тема из календаря её не запускает.', 'The machine starts with an observation, not a topic from the calendar.') },
       { id: 'deep', text: bi('Из инсайта собран большой материал', 'A big material is built from the insight'), why: bi('Большой материал несёт инсайт целиком и служит сырьём для всего остального.', 'The big material carries the insight whole and serves as raw material for everything else.') },
       { id: 'pieces', text: bi('Большой материал нарезан на десять кусков', 'The big material is cut into ten pieces'), why: bi('Куски по форматам дают десять каналов без десяти тем.', 'Pieces in different formats give ten channels without ten topics.') },
       { id: 'publish', text: bi('Куски опубликованы на платформах', 'The pieces are published on the platforms'), why: bi('Опубликованный материал начинает распространяться, а распространение важнее производства.', 'A published material starts to spread, and distribution matters more than production.') },
@@ -408,7 +408,7 @@ export const MARKETING_QUIZ: QuizItem[] = [
     options: [
       { id: 'people', text: bi('В личных профилях инженеров, которые строят продукт', 'In the personal profiles of the engineers who build the product'), correct: true, why: bi('Люди читают людей; личный профиль собирает в разы больше внимания, чем корпоративная страница.', 'People read people; a personal profile gathers many times more attention than the company page.') },
       { id: 'corp', text: bi('В корпоративной ленте от имени компании', 'In the corporate feed under the company\'s name'), why: bi('Корпоративная страница остаётся витриной, но машина — это люди, и лента компании машиной не бывает.', 'The company page stays a showcase, but the machine is people, and a company feed never is the machine.') },
-      { id: 'email', text: bi('В платных рассылках по базе контактов', 'In paid mailings to a contact base'), why: bi('Рассылка — это касание, а не место, где профессия собирается; в LinkedIn она собирается в лентах людей.', 'A mailing is a touch, not a place where the profession gathers; on LinkedIn it gathers in people\'s feeds.') },
+      { id: 'email', text: bi('В платных рассылках по базе контактов', 'In paid mailings to a contact base'), why: bi('Рассылка служит касанием, и профессия собирается в других местах; в LinkedIn она собирается в лентах людей.', 'A mailing is a touch, not a place where the profession gathers; on LinkedIn it gathers in people\'s feeds.') },
     ],
   },
   {
@@ -421,8 +421,8 @@ export const MARKETING_QUIZ: QuizItem[] = [
     ),
     options: [
       { id: 'deals', text: bi('Его стали измерять числом сделок и конверсией в покупку', 'It started being measured by the number of deals and conversion to purchase'), correct: true, why: bi('Метрика сделок заставляет продавать на каждой встрече, а доверие, накопленное месяцами, обнуляется с первой продажной фразы.', 'A deals metric makes every meeting sell, and the trust accumulated over months is reset by the first sales line.') },
-      { id: 'healthy', text: bi('Его стали измерять вкладом в сообщество и репутацией', 'It started being measured by contribution to the community and reputation'), why: bi('Это здоровые метрики DevRel: вклад, вовлечённость и репутация, а не конверсия в покупку.', 'These are healthy DevRel metrics: contribution, engagement and reputation, not conversion to purchase.') },
-      { id: 'talks', text: bi('Его стали отправлять на конференции с докладами', 'It started being sent to conferences with talks'), why: bi('Доклады — основная работа DevRel; ломает его не выступление, а измерение, которое превращает встречу в питч.', 'Talks are DevRel\'s core work; what breaks it is not the stage but the measurement that turns a meeting into a pitch.') },
+      { id: 'healthy', text: bi('Его стали измерять вкладом в сообщество и репутацией', 'It started being measured by contribution to the community and reputation'), why: bi('Это здоровые метрики DevRel: вклад, вовлечённость и репутация; конверсию в покупку по ним не меряют.', 'These are healthy DevRel metrics: contribution, engagement and reputation, not conversion to purchase.') },
+      { id: 'talks', text: bi('Его стали отправлять на конференции с докладами', 'It started being sent to conferences with talks'), why: bi('Доклады — основная работа DevRel; ломает его измерение, которое превращает встречу в питч.', 'Talks are DevRel\'s core work; what breaks it is not the stage but the measurement that turns a meeting into a pitch.') },
     ],
   },
   {
@@ -434,7 +434,7 @@ export const MARKETING_QUIZ: QuizItem[] = [
       'What does localisation mean for the Japanese market?',
     ),
     options: [
-      { id: 'adapt', text: bi('Адаптация материалов и продукта под местную практику, включая примеры, нормы, платформы и партнёра соответствующего профиля', 'Adapting the materials and the product to local practice, including examples, norms, platforms and a partner of the right profile'), correct: true, why: bi('Переведённый текст сигнализирует, что вам здесь не важно; локализация — про соответствие местной практике, а не про словарь.', 'Translated text signals that you do not care; localisation is about matching local practice, not about the dictionary.') },
+      { id: 'adapt', text: bi('Адаптация материалов и продукта под местную практику, включая примеры, нормы, платформы и партнёра соответствующего профиля', 'Adapting the materials and the product to local practice, including examples, norms, platforms and a partner of the right profile'), correct: true, why: bi('Переведённый текст сигнализирует, что вам здесь не важно; локализация — про соответствие местной практике, словаря для неё мало.', 'Translated text signals that you do not care; localisation is about matching local practice, not about the dictionary.') },
       { id: 'translate', text: bi('Перевод сайта и документации на японский язык', 'Translating the site and the documentation into Japanese'), why: bi('Перевод — часть работы, но без местных примеров, норм и партнёра он рынок не открывает.', 'Translation is part of the work, but without local examples, norms and a partner it does not open the market.') },
       { id: 'office', text: bi('Открытие офиса в Токио', 'Opening an office in Tokyo'), why: bi('Офис — организационное решение; локализация начинается с того, что покупатель видит в материалах и продукте.', 'An office is an organisational decision; localisation starts with what the buyer sees in the materials and the product.') },
     ],
@@ -449,8 +449,8 @@ export const MARKETING_QUIZ: QuizItem[] = [
     ),
     options: [
       { id: 'touches', text: bi('Покупатель касается вас десятки раз за полгода, и последний клик забирает заслугу всех остальных каналов', 'A buyer touches you dozens of times over half a year, and the last click takes the credit of all the other channels'), correct: true, why: bi('Сделка выигрывается серией касаний — статьёй, докладом, ответом на вопросы; last-click приписывает всё одному последнему касанию.', 'A deal is won by a series of touches — an article, a talk, an answer; last-click attributes everything to one last touch.') },
-      { id: 'count', text: bi('Потому что клики невозможно посчитать', 'Because clicks cannot be counted'), why: bi('Клики считаются легко; враньё не в подсчёте, а в приписывании всей сделки одному касанию.', 'Clicks are easy to count; the lie is not in the counting but in crediting the whole deal to one touch.') },
-      { id: 'memory', text: bi('Потому что покупатель никогда не помнит, где о вас узнал', 'Because the buyer never remembers where they heard of you'), why: bi('Память покупателя действительно кривая, но проблема модели в том, что она строится на кривом воспоминании вместо полного списка касаний.', 'Buyer memory is indeed skewed, but the model\'s problem is that it builds on that skewed memory instead of the full list of touches.') },
+      { id: 'count', text: bi('Потому что клики невозможно посчитать', 'Because clicks cannot be counted'), why: bi('Клики считаются легко; ошибка возникает, когда всю сделку приписывают одному касанию.', 'Clicks are easy to count; the lie is not in the counting but in crediting the whole deal to one touch.') },
+      { id: 'memory', text: bi('Потому что покупатель никогда не помнит, где о вас узнал', 'Because the buyer never remembers where they heard of you'), why: bi('Память покупателя и правда кривая, но проблема модели в том, что она строится на кривом воспоминании вместо полного списка касаний.', 'Buyer memory is indeed skewed, but the model\'s problem is that it builds on that skewed memory instead of the full list of touches.') },
     ],
   },
 ];
