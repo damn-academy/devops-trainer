@@ -292,7 +292,11 @@ export function lintRegistry(reg: Registry): LintIssue[] {
   }
 
   // Glossary scan: a term must not appear in prose before its lesson.
-  const texts = lessons.map((l) => ({ l, at: pos(l.id), bis: lessonTexts(l, reg) }));
+  // Normalise each text once, rather than again for every later concept.
+  const texts = lessons.map((l) => ({
+    l, at: pos(l.id),
+    bis: lessonTexts(l, reg).map(({ path, bi }) => ({ path, ru: plainText(bi.ru), en: plainText(bi.en) })),
+  }));
   for (const c of reg.concepts.values()) {
     if (c.scan === false) continue;
     const at = pos(c.introducedIn);
@@ -301,9 +305,9 @@ export function lintRegistry(reg: Registry): LintIssue[] {
     const en = wordRe([c.term.en, ...(c.forms?.en ?? [])]);
     for (const t of texts) {
       if (t.at >= at) continue;
-      for (const { path, bi } of t.bis) {
-        const hitRu = ru?.exec(plainText(bi.ru));
-        const hitEn = en?.exec(plainText(bi.en));
+      for (const { path, ru: textRu, en: textEn } of t.bis) {
+        const hitRu = ru?.exec(textRu);
+        const hitEn = en?.exec(textEn);
         const hit = hitRu?.[0] ?? hitEn?.[0];
         if (hit) {
           issues.push({ level: 'error', where: `lesson ${t.l.id} ${path}`, msg: `term "${hit}" (${c.id}) appears before ${c.introducedIn} introduces it` });
