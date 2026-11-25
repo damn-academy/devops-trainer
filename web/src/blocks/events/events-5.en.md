@@ -56,6 +56,6 @@ Complete this exercise in a spreadsheet. Choose an upcoming conference your buye
 - Daniel Bryant, KubeCon EU 2024 recap — https://danielbryantuk.medium.com/kubecon-eu-2024-paris-key-takeaways-ad4c1bb7fbfe (27.03.2024)
 - CNCF, KubeCon branding guidelines — https://www.cncf.io/kubecon-cloudnativecon-branding-guidelines/
 - DevOpsDays, information for sponsors — https://devopsdays.org/sponsor/; DevOpsDays London 2025 — https://assets.devopsdays.org/events/2025/london/devopsdays-london-2025-sponsorship-brochure.pdf
-- ContainerDays 2025 — https://www.containerdays.io/pdf/CDS25_Sponsor-Opportunities.pdf
+- ContainerDays 2025 — https://www.containerdays.io/pdf/CDS25_Sponsor-Opportunities.pdf?v=8
 - KCD Czech & Slovak 2025 — https://www.cncf.io/reports/kcd-czech-slovak-2025/; KCD Budapest 2025 — https://www.cncf.io/reports/kcd-budapest-2025/
 - Tailscale, SCaLE 22x — https://tailscale.com/blog/scale-22 (11.03.2025)
