@@ -112,7 +112,14 @@ Create the rights table before deciding. Its rows are:
 - fundraising;
 - commercial packaging.
 
-Columns: the company, individual maintainers, the project committee, and the foundation. If any row has no answer, the project is not ready for a decision.
+For each row, record two states, before and after the transfer, and three distinct powers in each: who owns it, who administers it, and who makes decisions. These may be different parties: the foundation may own the domain, maintainers may administer it, and the project committee may decide to change it. Two completed rows might look like this:
+
+| Item | Owner before | Owner after | Administrator after | Decision-maker after | Governing document |
+|---|---|---|---|---|---|
+| Name and logo | Company | Foundation | Foundation | Foundation under its trademark policy | Trademark transfer agreement |
+| Release signing keys | Company | Project | Two maintainers from different organizations | Project committee | Release rules in the project repository |
+
+If any row has no answer, the project is not ready for a decision.
 
 Checklist for the company team:
 

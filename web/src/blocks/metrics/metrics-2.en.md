@@ -99,6 +99,13 @@ An interpretation example: the model estimates that $50,000 in spend generated $
 + Only with a separately justified win rate and margin, and revenue will arrive with a delay || Conversion and margin translate pipeline into money.
 <!-- /quiz -->
 
+<!-- section: theory | Practice with sample data -->
+The “Northwind Data experiment” file below contains the results of a test planned using this lesson's rule: 3,900 accounts each in the treatment and control groups, with a flag indicating whether each account purchased.
+
+Calculate the share of buyers in each group, the absolute and relative lift, and an approximate 95 % confidence interval for the difference.
+
+Answers. In the control group, 78 accounts purchased, or 2 %; in the treatment group, 117, or 3 %. The absolute lift is one percentage point and the relative lift is 50 %, as in the introductory example. But the interval for the difference now runs from about 0.31 to 1.69 percentage points and excludes zero: with the same proportions, the conclusion became confident only because the groups were large enough.
+
 <!-- section: task | Task: plan one experiment -->
 Complete the task in the document on this page. Choose one marketing or sales action whose effect you are unsure about: an email campaign, an offer of engineering help, a webinar or advertising in one region. Write an experiment plan: randomization unit, group sizes, outcome, duration, minimum effect of interest and stopping rule. Then use the rule from the lesson to estimate how many accounts each group needs for an 80% chance of detecting the expected effect.
 

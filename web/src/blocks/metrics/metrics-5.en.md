@@ -49,6 +49,13 @@ A reliable database can run for a month without an administrator logging in, so 
 + Not necessarily; protected-workload share and successful recovery tests are suitable metrics || The metric should match the job's cadence.
 <!-- /quiz -->
 
+<!-- section: theory | Practice with sample data -->
+The “Northwind Data cohorts” file below describes 600 accounts at a fictional company that registered from January through June 2026. For each account, it records registration and activation dates, dates of PQA, first deal, win or loss, annual contract value, and an internal-account flag. The snapshot date is 1 July 2026.
+
+Do the calculations yourself before reading the answers. First exclude internal accounts. Then calculate 14-day activation for each monthly cohort, keeping only accounts whose 14-day window had elapsed by the snapshot date in both the numerator and denominator. Next, calculate registration-to-win conversion within 180 days for the January, February, and March cohorts.
+
+Answers. There are 60 internal accounts. The 14-day activation rates for January through June are 30, 40, 50, 60, 70, and 80 %; in June, only 50 of 90 accounts were mature, and 40 recent accounts were excluded. Only part of the January cohort, 50 accounts, had reached 180 days; 10 of those were won, or 20 %. For February and March, the window has not yet elapsed, so conversion is undefined; dividing their wins by all registrations would give an understated figure and lead you to conclude that the pipeline had deteriorated.
+
 <!-- section: task | Task: your product's value event -->
 Complete the task in the document on this page. Define three activation levels for your product: technical, value and organizational, with a specific event and window for each. Calculate activation rate and median time to value for the most recent mature monthly cohort, alongside the share that did not reach value within 14 days. Then build a retention table for the three latest cohorts and mark immature cells.
 
