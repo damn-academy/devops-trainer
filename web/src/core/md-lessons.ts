@@ -10,7 +10,12 @@ export interface MarkdownLesson {
   sections: MarkdownSection[];
 }
 
-/** Parse only the authoring markers; leave Markdown and concept links intact. */
+/**
+ * Parse authoring markers; leave Markdown and concept links intact.
+ * Images: standalone ![alt text](media/<course>/file.jpg "Optional caption").
+ * Titles become plain-text figcaptions; use translated alt/caption in RU and EN.
+ * Files belong in public/media/<course>/; lessonMediaPlugin checks existence at build.
+ */
 export function parseMarkdownLessons(raw: string): MarkdownLesson[] {
   const lessons: MarkdownLesson[] = [];
   let lesson: MarkdownLesson | undefined;
