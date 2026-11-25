@@ -8,6 +8,7 @@
 //   #/exam/<id>            a block exam
 //   #/settings             settings
 //   #/review               the review queue
+//   #/course/<id>          a hidden pilot course on its own page
 //   #/lab/<id>             a standalone lab page (widget `lab:<id>`, e.g. the multi-machine lab)
 //   #/local-lab            how to install the local lab dtlab on your own computer
 //   #/about                the «Справка» section (optionally #/about/<page>: use, how, deploy, contribute)
@@ -24,6 +25,7 @@ export type Route =
   | { name: 'settings' }
   | { name: 'review' }
   | { name: 'courses' }
+  | { name: 'course'; id: string }
   | { name: 'lab'; id: string }
   | { name: 'local-lab' }
   | { name: 'about'; page?: string }
@@ -59,6 +61,9 @@ export function parseRoute(hash: string): Route {
     case 'about':
       if (parts.length === 1) return { name: 'about' };
       if (id && parts.length === 2) return { name: 'about', page: id };
+      break;
+    case 'course':
+      if (id && parts.length === 2) return { name: 'course', id };
       break;
     case 'messages':
     case 'settings':
@@ -96,6 +101,8 @@ export function href(r: Route): string {
       return '#/review';
     case 'courses':
       return '#/courses';
+    case 'course':
+      return `#/course/${e(r.id)}`;
     case 'lab':
       return `#/lab/${e(r.id)}`;
     case 'local-lab':
