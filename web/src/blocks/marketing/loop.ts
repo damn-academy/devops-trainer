@@ -36,7 +36,7 @@ export const loopModel = defineModel<P>({
         id: 'insight', label: bi('Инсайт', 'Insight'), family: 'flow', shape: 'hex', x: 40, y: 220, w: 180, h: 84,
         sub: bi('из практики', 'from practice'),
         card: card(
-          'Наблюдение из настоящей работы, которое больше никто не записал. Каждый круг петли начинается здесь, а не в календаре контента.',
+          'Наблюдение из настоящей работы, которое больше никто не записал. Каждый круг петли начинается здесь; календарь контента его не запускает.',
           'Появляется у инженеров и основателей в работе. Проверяется цифрами до того, как становится материалом.',
           'An observation from real work that nobody else has written down. Every pass of the loop starts here, not in the content calendar.',
           'Appears with engineers and founders at work. It is checked with numbers before it becomes a material.',
@@ -67,7 +67,7 @@ export const loopModel = defineModel<P>({
         sub: bi('LinkedIn · YouTube · сообщества', 'LinkedIn · YouTube · communities'),
         card: card(
           'Места, где профессия читает: LinkedIn, X, YouTube, Reddit, профессиональные каталоги. У каждой площадки свои законы формата.',
-          'Ведутся людьми, а не корпоративной страницей: личные профили инженеров, которые строят продукт.',
+          'Их ведут люди через личные профили инженеров, которые строят продукт; страница компании здесь вторична.',
           'The places where the profession reads: LinkedIn, X, YouTube, Reddit, professional catalogues. Each platform has its own format laws.',
           'Run by people, not the company page: the personal profiles of the engineers who build the product.',
         ),
@@ -77,7 +77,7 @@ export const loopModel = defineModel<P>({
         sub: bi('находит через поиск и ленты', 'finds you via search and feeds'),
         card: card(
           'Люди, которые впервые встретили материалы через поиск, ленты и пересылки коллег. Часть из них станет следующими покупателями.',
-          'Приходит сама, если куски отвечают на настоящие вопросы; реклама ускоряет, но не заменяет этот поток.',
+          'Приходит сама, если куски отвечают на настоящие вопросы; реклама ускоряет этот поток, но заменить его не может.',
           'People who met the materials for the first time via search, feeds and forwards from colleagues. Some of them will become the next buyers.',
           'Arrives by itself if the pieces answer real questions; advertising accelerates this flow but does not replace it.',
         ),
@@ -87,7 +87,7 @@ export const loopModel = defineModel<P>({
         sub: bi('вопросы · возражения · задачи', 'questions · objections · tasks'),
         card: card(
           'Ответы, возражения и задачи, которые приносит аудитория. Это сырьё следующего круга: лучшие инсайты приходят из чужих вопросов.',
-          'Собираются в комментариях, issues, письмах и после выступлений; разбираются регулярно, а не когда «найдётся время».',
+          'Собираются в комментариях, issues, письмах и после выступлений; разбираются регулярно, по расписанию.',
           'The answers, objections and tasks the audience brings. This is the raw material of the next pass: the best insights come from other people\'s questions.',
           'Collected in comments, issues, emails and after talks; worked through regularly, not "when there is time".',
         ),
@@ -194,7 +194,7 @@ export const loopModel = defineModel<P>({
       {
         id: 'audience', label: bi('Новая аудитория', 'New audience'),
         caption: bi(
-          'Публикации находят новых людей через поиск и ленты. Это охват: по данным Ehrenberg-Bass рынки растут за счёт него, а не за счёт лояльности.',
+          'Публикации находят новых людей через поиск и ленты. Это охват: по данным Ehrenberg-Bass рынки растут за счёт него больше, чем за счёт лояльности.',
           'The publications find new people through search and feeds. This is reach: by Ehrenberg-Bass data markets grow through it, not through loyalty.',
         ),
         focus: ['i4', 'audience'],
