@@ -220,7 +220,7 @@ describe('authored scenario mounts and company configurator', () => {
   it('switches between presets and custom properties and rejects corrupt saved configurations', () => {
     const scenario = scenarios[1]; const m = mount(false, scenario);
     m.host.querySelector<HTMLInputElement>('input[value=custom]')!.click();
-    expect(loadGame(scenario)!.prompt).toContain('Свойства компании, выбранные игроком:');
+    expect(loadGame(scenario)!.prompt).toContain('Игрок выбрал для компании такие свойства.');
     m.host.querySelector<HTMLInputElement>('input[value=preset]')!.click();
     expect(loadGame(scenario)!.prompt).toContain('Компания Stratova');
     const saved = loadGame(scenario)!;

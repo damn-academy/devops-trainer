@@ -48,7 +48,7 @@ describe('Markdown company content', () => {
   });
   it('assembles custom properties as paragraphs in file order', () => {
     expect(companyText({ ...options, companyMode: 'custom', companyConfig: defaultCompanyConfig() }, 'en'))
-      .toBe('Свойства компании, выбранные игроком:\n\n' + companyGroups.map(g => g.options[0].text).join('\n\n'));
+      .toBe('Игрок выбрал для компании такие свойства.\n\n' + companyGroups.map(g => g.options[0].text).join('\n\n'));
   });
 });
 describe('department content assembly', () => {
