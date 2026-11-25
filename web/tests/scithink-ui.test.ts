@@ -22,7 +22,7 @@ afterEach(() => {
 it.each(['ru', 'en'] as const)('renders the pilot catalog and all course lesson links in %s', (lang) => {
   setLang(lang);
   const catalog = coursesPage();
-  expect(catalog.el.querySelector('a[href="#/block/scithink"]')).toBeTruthy();
+  expect(catalog.el.querySelector('a[href="#/course/scithink"]')).toBeTruthy();
   const page = blockPage('scithink');
   expect(page.el.querySelectorAll('.lesson-list li')).toHaveLength(12);
   for (const lesson of SCITHINK_LESSONS) {
