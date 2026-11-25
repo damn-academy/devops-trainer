@@ -70,7 +70,7 @@ export function lessonPage(id: string, focusSection?: string): Page {
     body.append(r.el);
     if (r.mounted) mounts.push(r.mounted);
     if (s.kind === 'text' && s.step === 'practice' &&
-        ['product.cases', 'marketing.cases', 'pr.analysts', 'pr.press', 'pr.founder', 'oss.cncf-path', 'oss.cncf-benefits', 'oss.revenue', 'scithink.final', 'events.cncf-events', 'events.own-conf', 'events.online-conf'].includes(lesson.id)) {
+        ['product.cases', 'marketing.cases', 'pr.analysts', 'pr.press', 'pr.founder', 'oss.cncf-path', 'oss.cncf-benefits', 'oss.revenue', 'scithink.final', 'events.cncf-events', 'events.own-conf', 'events.online-conf', 'aicontent.team', 'aicontent.brief', 'aicontent.research', 'aicontent.editing', 'aicontent.checks', 'aicontent.visuals', 'aicontent.video', 'aicontent.video-to-article', 'aicontent.bots', 'aicontent.interactive', 'aicontent.publishing', 'aicontent.rules', 'aicontent.tools'].includes(lesson.id)) {
       mounts.push(mountTaskDocument(r.el, `${lesson.id}.${s.id}`, t(s.title ?? lesson.title), t(s.body)));
     }
   }

@@ -157,6 +157,27 @@ export const PRODUCTS: Product[] = [
   },
   {
     "kind": "course",
+    "id": "aicontent",
+    "title": {
+      "ru": "Нейросети в производстве контента",
+      "en": "AI in content production"
+    },
+    "card": {
+      "ru": "Как делать статьи, видео, подкасты, ботов и интерактив с нейросетями: брифы, исследования, редактура, проверки и публикация на реальных проектах.",
+      "en": "How to create articles, videos, podcasts, bots and interactive content with AI: briefs, research, editing, checks and publishing on real projects."
+    },
+    "summary": {
+      "ru": "Как производить контент с нейросетями так, чтобы его не было стыдно публиковать: роли редактора и нейросетей, брифы и журналы, исследование до текста, редактура и проверки, иллюстрации, видео и звук, превращение записи в статью, боты и интерактивные материалы, публикация, правила площадок и инструменты. Курс построен на реальных проектах: учебной платформе, музыкальных лонгридах, техническом подкасте и статьях для Хабра.",
+      "en": "How to produce content with AI that you can be proud to publish: the roles of editors and AI, briefs and logs, research before writing, editing and checks, illustrations, video and audio, turning recordings into articles, bots and interactive material, publishing, platform rules and tools. The course is built on real projects: a learning platform, music longreads, a technical podcast and Habr articles."
+    },
+    "subtitle": {
+      "ru": "Для редакторов, контент-маркетологов, авторов технических блогов и продюсеров видео и подкастов.",
+      "en": "For editors, content marketers, technical bloggers and video and podcast producers."
+    },
+    "shelf": "business"
+  },
+  {
+    "kind": "course",
     "id": "scithink",
     "title": {
       "ru": "Научное мышление",
@@ -194,7 +215,7 @@ export const BUSINESS_SHELF = {
   title: bi('Деловые курсы для инфраструктурных компаний', 'Business courses for infrastructure companies'),
   summary: bi('Курсы для тех, кто продвигает, продаёт и развивает открытый инфраструктурный продукт: каждый можно проходить отдельно, а вместе они складываются в работу компании от продукта до продаж.', 'Courses for people who promote, sell and develop an open infrastructure product: each stands on its own, and together they cover a company’s work from product to sales'),
 };
-const BUSINESS_ORDER = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'scithink'];
+const BUSINESS_ORDER = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'aicontent', 'scithink'];
 export function catalogGroups(products: Product[]): { title?: Bi; summary?: Bi; products: Product[] }[] {
   const ordinary = products.filter(p => !p.shelf);
   const business = products.filter(p => p.shelf === 'business').sort((a, b) => BUSINESS_ORDER.indexOf(a.id) - BUSINESS_ORDER.indexOf(b.id));

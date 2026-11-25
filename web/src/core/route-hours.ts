@@ -94,5 +94,10 @@ export const ROUTE_HOURS: Record<string, Record<import('./types').Level, number>
     "beginner": 8.583333333333334,
     "intermediate": 8.583333333333334,
     "experienced": 8.583333333333334
+  },
+  "aicontent": {
+    "beginner": 5.033333333333333,
+    "intermediate": 5.033333333333333,
+    "experienced": 5.033333333333333
   }
 };
