@@ -42,8 +42,7 @@ export const PRODUCTS: Product[] = [
       "ru": "Для маркетологов, основателей и инженеров DevRel компаний, которые делают Kubernetes-платформы, базы данных, сети и другую инфраструктуру.",
       "en": "For marketers, founders and DevRel engineers at companies building Kubernetes platforms, databases, networks and other infrastructure."
     },
-    "shelf": "business",
-    "hidden": true
+    "shelf": "business"
   },
   {
     "kind": "course",
@@ -60,8 +59,7 @@ export const PRODUCTS: Product[] = [
       "ru": "Для основателей и первых продавцов инфраструктурных компаний, которые продают сами.",
       "en": "For founders and early salespeople at infrastructure companies who sell themselves."
     },
-    "shelf": "business",
-    "hidden": true
+    "shelf": "business"
   },
   {
     "kind": "course",
@@ -78,8 +76,7 @@ export const PRODUCTS: Product[] = [
       "ru": "Для продуктовых менеджеров и технических основателей инфраструктурных и open-source продуктов.",
       "en": "For product managers and technical founders of infrastructure and open-source products."
     },
-    "shelf": "business",
-    "hidden": true
+    "shelf": "business"
   },
   {
     "kind": "course",
@@ -96,8 +93,7 @@ export const PRODUCTS: Product[] = [
       "ru": "Для DevRel, маркетологов, основателей и инженеров-докладчиков.",
       "en": "For DevRel professionals, marketers, founders and engineers who give talks."
     },
-    "shelf": "business",
-    "hidden": true
+    "shelf": "business"
   },
   {
     "kind": "course",
@@ -114,8 +110,7 @@ export const PRODUCTS: Product[] = [
       "ru": "Для мейнтейнеров, основателей и руководителей сообщества открытых инфраструктурных проектов.",
       "en": "For maintainers, founders and community leaders of open infrastructure projects."
     },
-    "shelf": "business",
-    "hidden": true
+    "shelf": "business"
   },
   {
     "kind": "course",
@@ -132,8 +127,7 @@ export const PRODUCTS: Product[] = [
       "ru": "Для основателей и руководителей, которые отвечают за положение компании на рынке на годы вперёд.",
       "en": "For founders and executives responsible for the company’s position in the market for years to come."
     },
-    "shelf": "business",
-    "hidden": true
+    "shelf": "business"
   },
   {
     "kind": "course",
@@ -150,8 +144,7 @@ export const PRODUCTS: Product[] = [
       "ru": "Для тех, кто говорит от имени компании: основателей, руководителей маркетинга и пресс-служб.",
       "en": "For people who speak on behalf of the company: founders, marketing leaders and press teams."
     },
-    "shelf": "business",
-    "hidden": true
+    "shelf": "business"
   },
   {
     "kind": "course",
@@ -168,8 +161,7 @@ export const PRODUCTS: Product[] = [
       "ru": "Для всех, кто принимает решения по данным и хочет отличать доказательство от убедительной истории.",
       "en": "For anyone who makes decisions from data and wants to tell evidence from a persuasive story."
     },
-    "shelf": "business",
-    "hidden": true
+    "shelf": "business"
   }
 ];
 

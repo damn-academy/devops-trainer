@@ -17,12 +17,12 @@ it('assigns all twelve pilot lessons exactly once in source order', () => {
   expect(registry.blocks.get('scithink')?.modules).toEqual(SCITHINK_MODULES);
 });
 
-it('places the hidden course last on the business shelf', () => {
+it('places the public course last on the business shelf', () => {
   const product = PRODUCTS.find(p => p.id === 'scithink');
-  expect(product).toMatchObject({ kind: 'course', hidden: true, shelf: 'business' });
+  expect(product).toMatchObject({ kind: 'course', shelf: 'business' });
   expect(product?.subtitle?.ru).toContain('Для всех');
   expect(catalogGroups(PRODUCTS).at(-1)?.products.at(-1)?.id).toBe('scithink');
-  expect(visibleProducts('course')).not.toContain(product);
+  expect(visibleProducts('course')).toContain(product);
 });
 
 it.each(['ru', 'en'] as const)('renders modules and original summaries in %s', lang => {

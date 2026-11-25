@@ -99,7 +99,7 @@ export function count(n: number, ru: [string, string, string], en: [string, stri
 
 /** Interface strings of the platform itself. Content strings live in the blocks. */
 export const UI = {
-  course: bi('DevOps Trainer', 'DevOps Trainer'),
+  course: bi('damn.academy', 'damn.academy'),
   tagline: bi(
     'Учебник и тренажёр для входа в DevOps: связная теория, процессы, которые можно двигать руками, и привычка читать документацию.',
     'A textbook and trainer for getting into DevOps: coherent theory, processes you drive with your own hands, and the habit of reading documentation.',

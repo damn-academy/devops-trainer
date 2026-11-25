@@ -16,10 +16,10 @@ beforeEach(async () => {
 afterEach(() => setLang('ru'));
 
 describe.each(['ru', 'en'] as const)('product course renders in %s', (language) => {
-  it('keeps the course hidden and links the preview to all registered lessons', () => {
+  it('publishes the course and links the catalog to all registered lessons', () => {
     setLang(language);
-    expect(productById('product')).toMatchObject({ kind: 'course', hidden: true });
-    expect(visibleProducts('course').some((p) => p.id === 'product')).toBe(false);
+    expect(productById('product')).toMatchObject({ kind: 'course' });
+    expect(visibleProducts('course').some((p) => p.id === 'product')).toBe(true);
     const preview = coursesPage();
     expect(preview.el.querySelector('a[href="#/course/product"]')).toBeTruthy();
     const block = registry.blocks.get('product')!;

@@ -56,17 +56,30 @@ for (const lang of ['ru', 'en'] as const) {
     expect(sourcesBlock({ ...s, en: [{ url: 'https://two.test', title: 'Other' }] }).querySelectorAll('.sources-cols ul')).toHaveLength(2);
   });
 }
-it('groups preview courses in shelf order, keeping them hidden on home until published', () => {
-  expect(catalogGroups(PRODUCTS.filter(p => p.kind === 'course'))[0].products.map(p => p.id)).toEqual(['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'scithink']);
-  expect(coursesPage().el.querySelectorAll('.catalog-shelf .catalog-tile')).toHaveLength(8);
-  expect(visibleProducts('course')).toEqual([]);
-  expect(homePage().el.querySelector('.catalog-shelf')).toBeNull();
-  const marketing = PRODUCTS.find(p => p.id === 'marketing')!;
-  try {
-    marketing.hidden = false;
-    expect(homePage().el.querySelector('.catalog-shelf a')?.getAttribute('href')).toBe('#/course/marketing');
-  } finally { marketing.hidden = true; }
-});
+for (const lang of ['ru', 'en'] as const) {
+  it(`shows all business courses on home in shelf order, outside the profession route map in ${lang}`, () => {
+    setLang(lang);
+    const ids = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'scithink'];
+    const courses = visibleProducts('course');
+    expect(courses.map(p => p.id)).toEqual(ids);
+    expect(courses.every(p => p.shelf === 'business')).toBe(true);
+    expect(catalogGroups(courses).map(group => group.products.map(p => p.id))).toEqual([ids]);
+    for (const page of [homePage(), coursesPage()]) {
+      const shelves = page.el.querySelectorAll('.catalog-shelf');
+      expect(shelves).toHaveLength(1);
+      expect([...shelves[0]!.querySelectorAll('.catalog-tile')].map(el => el.getAttribute('href')))
+        .toEqual(ids.map(id => `#/course/${id}`));
+      for (const course of courses) expect(shelves[0]!.textContent).toContain(course.title[lang]);
+      page.dispose?.();
+    }
+    const routeBlocks = registry.routeMap().flatMap(entry => entry.kind === 'block' ? [entry.block.id] : []);
+    expect(routeBlocks).toContain('linux');
+    for (const id of ids) {
+      expect(registry.blocks.get(id)?.hidden, id).toBe(true);
+      expect(routeBlocks, id).not.toContain(id);
+    }
+  });
+}
 
 it('does not repeat a legacy Markdown hook as the lead', () => {
   const lesson = registry.lessons.get('marketing.platforms-linkedin')!;

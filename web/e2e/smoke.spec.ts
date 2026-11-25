@@ -4,38 +4,47 @@
 import { expect, test } from '@playwright/test';
 import { open, runInTerminal, terminalText, watchErrors } from './helpers';
 
-const BLOCKS = ['orient', 'methodology', 'linux', 'git-yaml', 'networks', 'containers', 'cicd', 'k8s-1', 'cicd-k8s', 'k8s-2', 'iac', 'k8s-3', 'monitoring', 'final', 'career'];
+const BLOCKS = ['orient', 'methodology', 'linux', 'git-yaml', 'networks', 'containers', 'cicd', 'k8s-1', 'cicd-k8s', 'k8s-2', 'iac', 'k8s-3', 'monitoring', 'final', 'career', 'pet-projects'];
 
 test.describe('shell', () => {
-  test('home shows the route in design order and switches RU/EN', async ({ page }) => {
+  test('home shows public business courses in order and keeps the profession route separate in RU/EN', async ({ page }) => {
     const errors = watchErrors(page);
+    const courses = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'scithink'];
     await open(page, '#/');
-    const order = await page.locator('ol.route > li').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.block));
-    expect(order).toEqual(BLOCKS);
-    expect(order.indexOf('orient')).toBe(0);
-
-    await page.locator('.lang-switch button', { hasText: 'RU' }).click();
-    await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
-    await expect(page.locator('.hero h1')).toContainText('DevOps');
-    await expect(page.locator('.route-title')).toHaveText('Маршрут');
-    await page.locator('.lang-switch button', { hasText: 'EN' }).click();
-    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.locator('.route-title')).toHaveText('Route');
+    for (const language of ['ru', 'en']) {
+      await page.locator('.lang-switch button', { hasText: language.toUpperCase() }).click();
+      await expect(page.locator('html')).toHaveAttribute('lang', language);
+      await expect(page.locator('header .brand')).toHaveText('damn.academy');
+      await expect(page.locator('.hero h1')).toHaveText('damn.academy');
+      await expect(page.locator('.catalog-shelf .catalog-tile')).toHaveCount(courses.length);
+      expect(await page.locator('.catalog-shelf .catalog-tile').evaluateAll(els => els.map(el => el.getAttribute('href'))))
+        .toEqual(courses.map(id => `#/course/${id}`));
+      await page.locator('.catalog-tile[href="#/profession/devops"]').click();
+      await expect(page.locator('ol.route > li')).toHaveCount(BLOCKS.length);
+      const order = await page.locator('ol.route > li').evaluateAll(els => els.map(el => (el as HTMLElement).dataset.block));
+      expect(order).toEqual(BLOCKS);
+      for (const course of courses) expect(order).not.toContain(course);
+      await expect(page.locator('.route-title')).toHaveText(language === 'ru' ? 'Программа' : 'Syllabus');
+      await page.locator('header .brand').click();
+    }
     expect(errors).toEqual([]);
   });
 
-  test('home paints from the manifest; block modules load on entering a lesson', async ({ page }) => {
+  test('home paints from the manifest; profession content and its lessons load on navigation', async ({ page }) => {
     const errors = watchErrors(page);
     const blockFiles: string[] = [];
     page.on('request', (r) => {
       if (r.url().includes('/src/blocks/')) blockFiles.push(r.url());
     });
     await open(page, '#/');
-    await expect(page.locator('ol.route > li')).toHaveCount(BLOCKS.length);
+    await expect(page.locator('.catalog-shelf .catalog-tile')).toHaveCount(8);
     await page.waitForLoadState('networkidle');
     expect(blockFiles).toEqual([]);
+    await page.locator('.catalog-tile[href="#/profession/devops"]').click();
+    await expect(page.locator('ol.route > li')).toHaveCount(BLOCKS.length);
 
-    await page.locator('ol.route > li[data-block="linux"] .route-actions a.btn.primary').click();
+    await page.locator('ol.route > li[data-block="linux"] h2 a').click();
+    await page.locator('ol.lesson-list li a').first().click();
     await expect(page.locator('main#main .lesson-body')).toBeVisible();
     expect(blockFiles.length).toBeGreaterThan(0);
     expect(errors).toEqual([]);

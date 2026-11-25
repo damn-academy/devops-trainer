@@ -1,4 +1,4 @@
-// The hidden marketing pilot: the school carries 46 principles in ten modules
+// The public marketing course: the school carries 46 principles in ten modules
 // with a full English translation, the ten platform lessons each carry the
 // honest note and bilingual sources, the regions projection is monotonic and
 // rewards localisation, and the growth-loop explainer walks the machine.
@@ -11,7 +11,7 @@ import { MARKETING_SCHOOL } from '../src/blocks/marketing/school';
 
 const BASE = { budget: 20, content: 0.6, localized: 0.3, months: 12, us: 0.5, dach: 0.3, asia: 0.2 };
 
-describe('marketing pilot (hidden)', () => {
+describe('marketing course (public)', () => {
   it('carries the full school: 46 principles in nine source modules', () => {
     expect(MARKETING_SCHOOL).toHaveLength(9);
     expect(MARKETING_SCHOOL.flatMap((m) => m.items)).toHaveLength(46);

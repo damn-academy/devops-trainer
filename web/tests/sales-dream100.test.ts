@@ -4,7 +4,7 @@ import { SALES_LESSONS } from '../src/blocks/sales/content';
 import { DREAM100_LESSONS } from '../src/blocks/sales/dream100';
 import { SALES_MODULES, DREAM100_SUMMARIES } from '../src/blocks/sales/structure';
 import { registry } from '../src/core/registry';
-import { PRODUCTS } from '../src/core/products';
+import { PRODUCTS, visibleProducts } from '../src/core/products';
 import { MemoryBackend, store } from '../src/core/store';
 import { setLang } from '../src/core/i18n';
 import { coursePage } from '../src/app/course-page';
@@ -23,7 +23,8 @@ it('appends Dream 100 as module seven with every sales lesson exactly once', () 
   expect(ids).toEqual(registry.blocks.get('sales')!.lessons);
   expect([...ids].sort()).toEqual([...registry.lessons.values()].filter(l => l.block === 'sales').map(l => l.id).sort());
   expect(registry.blocks.get('sales')!.hidden).toBe(true);
-  expect(PRODUCTS.find(p => p.id === 'sales')).toMatchObject({ hidden: true, shelf: 'business', title: { ru: 'Продажи', en: 'Sales' } });
+  expect(visibleProducts('course')).toContain(PRODUCTS.find(p => p.id === 'sales'));
+  expect(PRODUCTS.find(p => p.id === 'sales')).toMatchObject({ shelf: 'business', title: { ru: 'Продажи', en: 'Sales' } });
   for (const l of SALES_LESSONS) {
     const registered = registry.lessons.get(l.id)!;
     expect(registered.summary).toEqual(l.summary);
