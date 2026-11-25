@@ -20,7 +20,7 @@ Gartner не разрешает придуманные цитаты аналит
 - Gartner, как аналитики работают с вендорами — https://www.gartner.com/en/about/ombuds/news/how-gartner-experts-work-with-vendors (30.06.2025)
 - Gartner, Magic Quadrant — https://www.gartner.com/en/research/magic-quadrant
 - Gartner, правила использования материалов — https://www.gartner.com/en/about/policies/content-compliance; правила для PR — https://www.gartner.com/en/newsroom/media-resources/public-relations-policy
-- Grafana, пресс-релизы — https://grafana.com/press/releases/
+- Grafana, пресс-релизы — https://grafana.com/press/2025/07/10/grafana-labs-named-a-leader-in-2025-gartner-magic-quadrant-for-observability-platforms/
 
 <!-- lesson: pr.press | PR: когда пресс-релиз работает и как говорить с журналистами | 20 -->
 <!-- section: hook -->
@@ -46,7 +46,7 @@ CNCF помогает проектам с объявлениями по уров
 Выполните задание в документе. Выберите одно издание из урока и найдите журналиста, который за последние три месяца писал о вашей категории. Прочитайте три его статьи. Затем запишите, какая история вашей компании могла бы стать новостью для его читателей: какой в ней факт, какие цифры, кто может об этом рассказать, что журналист может проверить сам. Напишите письмо журналисту в шесть-восемь предложений.
 
 <!-- section: sources -->
-- Cision, State of the Media 2025 — https://www.cision.com/resources/research-reports/ (2025)
+- Cision, State of the Media 2025 — https://www.cision.com/about/press-releases/2025-press-releases/cisions-2025-state-of-the-media-report-reveals-a-tipping-point-for-trust-technology-and-pr-journalist-partnerships-302448410/ (2025)
 - Grafana, финансирование и выручка — https://grafana.com/press/2025/09/30/grafana-labs-surpasses-400m-arr-and-7000-customers-gains-new-investors-to-accelerate-global-expansion/ (30.09.2025)
 - Business Wire, цены — https://www.businesswire.com/pricing; EIN Presswire — https://www.einpresswire.com/pricing; PR Newswire — https://www.prnewswire.com/request-pricing/
 - The Register, контакты — https://www.theregister.com/profile/contact/

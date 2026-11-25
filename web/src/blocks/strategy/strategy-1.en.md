@@ -1,0 +1,56 @@
+<!-- lesson: strategy.category | Category: how the market learns to name your problem | 20 -->
+<!-- section: hook -->
+For five years, a company told buyers it built a “hyperconverged cloud platform based on Kubernetes with multi-tenancy support.” Buyers nodded and filed the company under “other.” Once the term “platform engineering” emerged and took hold in the industry, and analysts published reports about it, buyers had a budget under that name, and “where do you fit into this picture?” became the main question at every meeting. This course covers strategy over years: categories, market events, ecosystems and partners, standards and foundations, and AI models as advisers and implementers. The first lesson is about how the market learns to name the problem your product solves, and what a company can do to help.
+
+<!-- section: theory | What a category is -->
+A category is an accepted name for a problem and a class of solutions that buyers use to find suppliers, allocate budgets, and compare offers. The book Play Bigger argues that the market rewards whoever defines a category and becomes its reference point; its frequently cited figure of the leader capturing 76 % of category value comes from a 2014 study of venture-backed companies and describes survivors, so it should be treated as a hypothesis, not a law.
+
+Platform engineering is the clearest recent example. The platformengineering.org community says it grew out of the launch of Humanitec and then built the PlatformCon conference, educational videos, and community channels. This is an example of a vendor supporting a profession and a shared language around the problem its product addresses; such a community is not independent validation of the vendor's position. In the community's 2025 survey of 518 platform-engineering professionals, 35 % of teams had introduced a platform product manager, and nearly half of initiatives operated on budgets below one million dollars. Gartner published a Market Guide for Internal Developer Portals on 31 March 2025 and a Hype Cycle for Platform Engineering on 25 June 2025. A developer portal and a platform are different categories: the portal is the user's entry point, while the platform is responsible for the capabilities and operations beneath it.
+
+CNCF has a platform maturity model initiative, and Syntasso described how it turned that model into a customer assessment. This is a repeatable mechanism for building a category: give buyers a language for diagnosing their situation, then help them carry out the work the diagnosis identifies.
+
+<!-- section: theory | Applying this to a cloud platform -->
+For a platform in the same class as Cozystack, start with a recognizable buyer problem: operating a cloud with tenant isolation, replacing a specific VMware installation, or giving a regional hosting provider a set of managed services. Then show where the platform sits beneath a developer portal and alongside other layers. A new category is justified only if customers repeat your problem definition themselves and partners can deliver work against it.
+
+You can measure category building through independently authored articles about the problem, use of your wording in real procurement requirements, and deployments based on your reference architecture. There is no published rule that invalidates category design; the method has a different limitation: vendor communities, forecasts, and analyst mentions do not prove commercial success on their own.
+
+<!-- section: task | Task: define the problem in the customer's words -->
+Complete this task in a document. Write down five phrases your buyers used to describe their problem in recent conversations, emails, or procurement requests. Use them to formulate one category phrase and one sentence about where your product sits relative to adjacent categories: developer portals, Kubernetes distributions, managed cloud services, and virtualization. Then find three independent articles describing the same problem and record the words they use.
+
+<!-- section: sources -->
+- Play Bigger — https://playbigger.com/publications/what-is-category-design
+- platformengineering.org, about the community — https://platformengineering.org/about
+- Gartner, Market Guide for Internal Developer Portals — https://www.gartner.com/en/documents/6306515 (31.03.2025)
+- CNCF TOC, platform maturity model — https://github.com/cncf/toc/issues/1679
+
+<!-- lesson: strategy.market-events | Market events: leaving VMware and sovereign cloud | 22 -->
+<!-- section: hook -->
+A sales team decided that Broadcom's acquisition of VMware had turned every VMware customer into a buyer of alternatives, and called two hundred companies offering “migration in a month.” Only a few responded, and almost all said the same thing: they had renewed their VMware contract for two years, were negotiating, and were considering their options. This lesson covers two market events that open doors for private-cloud platforms in 2025–2026, and what the data says about them beyond the headlines.
+
+<!-- section: theory | Leaving VMware -->
+In December 2023, Broadcom ended sales of perpetual VMware licenses and renewals of their support, moving customers to subscriptions. This triggered the market opportunity of 2024–2026. A CloudBolt survey in January 2026 of 302 director-level or more senior executives at North American companies with more than one thousand employees found that 86 % were actively reducing their VMware footprint, 54 % were staying but reducing dependence, and 88 % were concerned about future prices; while in 2024, 73 % had expected costs to more than double, only 5 % reported such an increase in the new survey. The survey was vendor-sponsored and measures intentions; it does not count completed migrations.
+
+Alternative suppliers are already reporting results. Vates, the company behind the open-source virtualization platform XCP-ng, reports threefold growth over two years and says 90 % of new customers since 2023 came from VMware; hosting provider Exodata deployed nine independent platforms across six regions with Vates. Microsoft announced that Azure VMware Solution customers buying new nodes after 15 October 2025 must bring a VCF subscription purchased from Broadcom, and that some existing customers face a license-key transition deadline of 1 November 2026. Such procurement changes reopen conversations, but do not mean every affected customer will migrate.
+
+Successful migrations suggest a phased offer: inventory dependencies, select a bounded workload, test backup and recovery, check performance and licensing economics, run both platforms in parallel temporarily, then expand. An honest comparison covers virtual-machine compatibility, networking, storage, recovery, support, staff time, and migration risk. A Kubernetes-based platform should not promise a direct replacement for vSphere until it has demonstrated all of this in practice.
+
+<!-- section: theory | Sovereign cloud in Europe -->
+Bitkom's study, published on 11 June 2025, surveyed 604 German companies with at least twenty employees. 78 % consider Germany too dependent on US cloud providers, 82 % would like competitive German or European hyperscalers, and half of cloud-using companies say US policy has made them reconsider their strategy. Yet in the same study, 65 % would accept none of the proposed disadvantages in exchange for a protected German cloud; only 7 % would pay 10–20 % more, 8 % would accept fewer capabilities, and 12 % slower feature releases. Synergy estimates that European providers hold around 15 % of their regional cloud-infrastructure market, while AWS, Microsoft, and Google together hold around 70 %.
+
+Regulators are turning sovereignty into procurement. The European Data Act has applied since 12 September 2025 and includes measures on switching cloud providers and interoperability, but does not require every EU organization to use a European-owned cloud. On 10 October 2025, the European Commission announced a sovereign-cloud tender worth up to 180 million euros over six years, with eight sovereignty objectives covering legal control, operations, supply chains, technological openness, security, and other areas. On 17 April 2026, the Commission announced four winners: Post Telecom with CleverCloud and OVHcloud, STACKIT, Scaleway, and Proximus with S3NS, Clarence, and Mistral. The announcement states that non-European technologies can meet minimum sovereignty requirements with appropriate controls. Gaia-X provides infrastructure for trust and interoperability rather than acting as a cloud provider, and in November 2025 its head acknowledged that only a few data spaces out of more than one hundred and fifty projects in preparation were delivering value.
+
+For a private-cloud platform, this calls for a sovereignty dossier that maps code access, legal control, remote support, key storage, updates, telemetry, hardware dependencies, and exit procedures to the customer's criteria. Work through a regional operator or consortium if that is how procurement is structured. Neither “hosted in Europe” nor “no non-European technologies” describes the requirements of a real tender.
+
+<!-- section: task | Task: a dossier for one event -->
+Complete this task in a document. Choose one of the lesson's two events and one buyer on your list for whom it matters. For leaving VMware, prepare a phased migration plan for one bounded workload, with success criteria for each stage. For sovereign cloud, fill in a table with your platform's answers to the eight points in the sovereignty dossier, and mark the points where the answer is still weak.
+
+<!-- section: sources -->
+- Broadcom, VMware's transition to subscriptions — https://www.broadcom.com/company/news/articles/cloud/vmware-by-broadcom-business-transformation (December 2023)
+- CloudBolt, 2026 survey — https://www.cloudbolt.io/company/news/new-cloudbolt-research-86-of-companies-actively-reducing-their-vmware-footprint/ (January 2026); Ars Technica on the survey — https://arstechnica.com/information-technology/2026/02/most-vmware-users-still-actively-reducing-their-vmware-footprint-survey-finds/
+- Vates, growth after customers left VMware — https://vates.tech/blog/what-we-heard-in-vienna-and-why-vates-is-investing-in-dach/
+- Microsoft, Azure VMware Solution changes — https://techcommunity.microsoft.com/blog/partnernews/broadcom-vmware-licensing-changes-what-azure-vmware-solution-partners-need-to-kn/4452173
+- Bitkom, dependence on US clouds — https://www.bitkom.org/Presse/Presseinformation/Wirtschaft-ruft-nach-deutscher-Cloud (11.06.2025)
+- Synergy Research, European cloud providers — https://www.srgresearch.com/articles/european-cloud-providers-local-market-share-now-holds-steady-at-15
+- European Commission, Data Act — https://digital-strategy.ec.europa.eu/en/policies/data-act (applies from 12.09.2025)
+- European Commission, sovereign-cloud tender — https://commission.europa.eu/news-and-media/news/commission-moves-forward-cloud-sovereignty-eur-180-million-tender-2025-10-10_en (10.10.2025, results 17.04.2026)
+- Gaia-X, compliance service — https://compliance.gaia-x.eu/

@@ -21,7 +21,7 @@ Cloudflare в июле 2025 года насчитал около 71 тысячи
 Выполните задание с помощником разработчика, которым вы пользуетесь, и в таблице. Дайте ему пять задач из урока, сформулированных для вашего продукта, и запишите для каждой, нашёл ли он нужную документацию, выполнил ли задачу, где ошибся и какие права ему понадобились. Найдите в документации три места, которые помешали агенту, и запишите, как их исправить.
 
 <!-- section: sources -->
-- Anthropic, передача MCP — https://www.anthropic.com/news/donating-the-model-context-protocol
+- Anthropic, передача MCP — https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation
 - Supabase, случай Lovable — https://supabase.com/customers/lovable
 - Vercel, документация в Markdown — https://vercel.com/docs/agent-resources/markdown-access
 - Google, руководство по оптимизации для генеративного поиска — https://developers.google.com/search/docs/fundamentals/ai-optimization-guide (10.07.2026)
