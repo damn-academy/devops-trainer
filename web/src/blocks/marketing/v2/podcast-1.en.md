@@ -38,6 +38,13 @@ For each episode, record the topic, guest, work hours, downloads after 7, 30, an
 <!-- section: task | Task: a first-season plan -->
 Complete this task in a spreadsheet. Choose one format from the lesson and write a podcast name that says what it is about. Find six guests through their published technical work and record the question you are inviting each to discuss. Choose a host, recording software, and editing software, record their prices, and check whether the recording software supports separate tracks for each participant. Schedule recordings of the first two episodes before launch and assign the person who will edit them.
 
+<!-- quiz -->
+? Why should you start a podcast with a six-episode season, with two episodes recorded before launch?
++ More than half of podcasts stop before the seventh episode, usually because of a shortage of people and guests || A backlog of episodes and a backup episode without a guest help you cope with cancellations.
+- Platforms show a podcast only after six episodes || There is no such rule; Spotify's partner program threshold is three episodes.
+- YouTube requires it for a podcast playlist || YouTube does not require this.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - YouTube, a billion podcast viewers — https://blog.youtube/news-and-events/1-billion-monthly-podcast-users/ (26.02.2025); podcasts on televisions in 2025 — https://blog.youtube/news-and-events/podcasts-living-room-in-2025/ (18.12.2025)
 - Edison Research, The Infinite Dial 2025 — https://www.edisonresearch.com/wp-content/uploads/2025/03/The-Infinite-Dial-2025-Presentation.pdf (20.03.2025)

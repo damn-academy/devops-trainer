@@ -18,6 +18,13 @@ A press release about a new version interests a journalist only when there is ne
 <!-- section: task | Task: three article topics and one podcast pitch -->
 Complete this task in a document. List three technical stories from your team that would be useful to engineers at other companies, even if they never use your product. For each, find a publication that runs similar material and read its contributor guidelines. Then choose one podcast your buyers listen to, listen to its two latest episodes, and write the producer a five-to-six-sentence email: who the guest is, what they will discuss, and why it interests this podcast's listeners.
 
+<!-- quiz -->
+? Why did a press release about a new product version fail to interest any publication?
++ An ordinary product release is not news for a publication's readers unless it comes with a result, a market event, or figures || Journalists receive dozens of these emails a day.
+- It should have been sent through a paid agency || Distribution through an agency guarantees republication, but not editorial interest.
+- Publications do not cover open-source projects || They do when there is a story for their readers.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - The New Stack, contributor page — https://thenewstack.io/contributions/ (17.07.2026)
 - CNCF, blog guidelines — https://github.com/cncf/foundation/blob/main/policies-guidance/blog-guidelines.md (checked 25.11.2026)
@@ -46,6 +53,13 @@ The main Russian-language conferences for infrastructure audiences are DevOpsCon
 
 <!-- section: task | Task: a seeding experiment and a plan for two article streams -->
 Complete this task in a spreadsheet. Choose two Telegram channels whose readers match your buyer profile and record their price, stated reach, and cost per thousand views. Create a separate tagged link for each channel to distinguish visits, and record what result after a month you will consider a success: visits, installations, or messages in the project's chat. Then list two Habr article topics for each of the two streams: broad technical stories and analyses of buyers' problems.
+
+<!-- quiz -->
+? What does Habr consider advertising under its June 2026 rules?
++ Content written primarily to generate sales, collect contacts, or build an audience || Such content is allowed in corporate blogs and once in the “I'm promoting myself” section.
+- Any content that mentions a product || Useful links related to the topic are allowed.
+- Only paid placements || The rules assess the purpose of the content.
+<!-- /quiz -->
 
 <!-- section: sources -->
 - Habr, 2026 corporate blog pricing — https://company.habr.com/static/price-resident-ru.pdf (checked 25.11.2026)

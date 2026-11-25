@@ -24,6 +24,18 @@ Other people's newsletters form a separate channel. For an infrastructure audien
 <!-- section: task | Task: a republishing plan for one article -->
 Complete this task in a document. Choose one tutorial from the company's blog. Record which two platforms from this lesson are worth republishing it on and why you chose them, how you will set the canonical link on each, and how you will adapt the headline and opening paragraph to the platform's audience. Then find two newsletters run by others whose readers match your buyer profile, and read the latest three editions of each: what material gets included, and could yours be included too?
 
+<!-- quiz -->
+? Why should you specify a canonical link when republishing an article on dev.to or Medium?
++ So search engines understand where the original is and do not rank the copy above the company website || Without a canonical link, a strong platform will almost certainly outrank the site.
+- So the article appears in the platform's recommendations || The canonical link is for search engines; it does not affect the platform's recommendations.
+- Copyright law requires it || This is a mechanism for search engines, and the law does not require it.
+
+? Can you connect a company blog's RSS feed to daily.dev as a source in 2026?
++ No, since July 2024 daily.dev has stopped adding company blogs as sources and offers Squads instead || The advice to connect your RSS feed to daily.dev is outdated.
+- Yes, it is free and automatic || That was the case before July 2024.
+- Yes, if the blog is in English || The language does not change the rule.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - DEV and Major League Hacking — https://dev.to/devteam/a-new-chapter-dev-is-joining-forces-with-major-league-hacking-mlh-3kfd (18.02.2026)
 - DEV, editor guide — https://dev.to/p/editor_guide (checked 25.11.2026)
@@ -62,6 +74,18 @@ Work in these chats as you would on Reddit: maintainers answer questions in thei
 
 <!-- section: task | Task: a README through a Hacker News reader's eyes -->
 Complete this task in your project's repository or that of any open-source project you know. Open the README and set a timer for thirty seconds. Record which questions from the lesson you found answers to in that time, and which you did not. Then rewrite the first screen of the README so that in thirty seconds a reader learns what the project does, who needs it, and how to get it running in a few minutes.
+
+<!-- quiz -->
+? What should the first screen of a README tell an engineer arriving from Hacker News?
++ What the project does, who needs it, and how to run it in a few minutes || An engineer decides in half a minute whether the project is worth an evening.
+- The company's history and a list of investors || This does not help them decide whether to try the project.
+- A link to a “request a demo” form || An engineer from Hacker News wants to run the project themselves.
+
+? Can you message members of the Kubernetes community Slack with a product offer?
++ No, the rules prohibit unsolicited direct messages and commercial promotion outside designated channels || A member contacted by a salesperson reports it to the moderators, and the account is blocked.
+- Yes, if they belong to a channel related to the product || Channel membership does not constitute consent to sales outreach.
+- Yes, if the message is short || Message length does not change the rules.
+<!-- /quiz -->
 
 <!-- section: sources -->
 - GitHub Docs, READMEs — https://github.com/github/docs/blob/main/content/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes.md (checked 25.11.2026)

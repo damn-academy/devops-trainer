@@ -41,6 +41,20 @@ Do not put installation documentation behind a form: an engineer who needs a com
 <!-- section: task | Task: a measurable quarterly experiment -->
 Complete this task in the “Budget allocation” simulator on this page and in a spreadsheet. Divide a practice budget of $30,000 among three channels from the lesson. For each, record the destination (a comparison page, practice environment, or article), a separate tagged link, the step that will count as a result, and the minimum result required to continue the channel next quarter. Use the simulator to see how saturation and delays affect results after three, six, and twelve months, and how much the outcome varies from run to run.
 
+<!-- widget: marketing.budget -->
+
+<!-- quiz -->
+? How does the pipeline reported in advertising success stories differ from revenue?
++ Pipeline is the total value of potential deals, and usually only a smaller portion closes || The Plaid case reports $382,000 in pipeline; it says nothing about revenue.
+- They are the same thing || Pipeline consists of potential deals, and not all of them close.
+- Pipeline is always exactly five times revenue || The ratio depends on the company's close rate.
+
+? What happened to Reddit Ads targeting in March 2026?
++ Reddit made automatic audience expansion to similar people mandatory for some settings || A narrow audience no longer guarantees narrow delivery.
+- Reddit banned ads in technical communities || There is no such ban.
+- Reddit started showing ads only to community subscribers || Community targeting also reaches people who visited the community in the past 28 days.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - PostHog, paid marketing — https://posthog.com/handbook/marketing/paid; newsletter advertising — https://posthog.com/handbook/content/newsletter-ads; 2026 marketing budget — https://posthog.com/founders/actual-marketing-budget-2026 (24.06.2026)
 - TLDR, Plaid and ThreatSpike case studies — https://advertise.tldr.tech/case-studies/plaid-adds-382k-in-pipeline-with-tldr-campaign-their-best-direct-buy-yet/ (16.09.2025), https://advertise.tldr.tech/case-studies/threatspike-adds-up-to-75000-in-net-new-business-pipeline-per-campaign-with-tldr/ (10.06.2025)

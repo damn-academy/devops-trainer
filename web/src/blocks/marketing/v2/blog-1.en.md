@@ -33,6 +33,18 @@ Do not publish a post just to keep to a schedule: an empty post every week is wo
 <!-- section: task | Task: a quarterly calendar -->
 Complete this task in a spreadsheet. Talk to three team engineers for fifteen minutes each and ask what was hardest in their work over the past quarter, what broke and how they fixed it, and what measurements they took. From their answers, put together six post topics for the quarter and specify each one's format from this lesson, author, editor, and the original data or code it will contain. Mark topics requiring a customer's or lawyer's approval and start seeking that approval early.
 
+<!-- quiz -->
+? Which technical blog post format requires describing the hardware, settings, workload, and how to reproduce the measurement?
++ A benchmark || The PlanetScale and Xata story shows that benchmarks attract both attention and scrutiny from competitors.
+- An incident review || An incident review describes the chain of causes and the changes made; it usually does not include a reproducible measurement.
+- A release announcement || An announcement does not contain measurements.
+
+? How can a small company get posts from engineers without taking up their evenings?
++ An editor interviews an engineer for half an hour and writes a draft; the engineer reviews it, and the post is published under the engineer's name || This is how PostHog's editorial process works: engineers provide the knowledge, and an editor provides the text.
+- Make every engineer write a post every week || PostHog acknowledges that this schedule runs into staffing and quality constraints.
+- Use AI to write posts under engineers' names || Readers notice this kind of writing, and the blog loses its voice.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - PostHog, 2025 newsletter review — https://newsletter.posthog.com/p/the-best-of-product-for-engineers (22.12.2025)
 - PostHog, content handbook — https://posthog.com/handbook/content (checked 25.11.2026)
@@ -66,6 +78,15 @@ For each post, it is useful to record the author, how much time it took, its for
 
 <!-- section: task | Task: a distribution plan for one post -->
 Complete this task in a document. Take one post topic from the calendar you created in the previous lesson. Record five places that should link to it in its first week and the person who will make that happen. Record two platforms where the author will discuss the post, and how the discussion will differ on each. Check the company's blog: is there a visible RSS link, is there a signup form at the end of the post, and does it explain what the person will receive?
+
+<!-- widget: deptsim {"scenario":"marketing.blog"} -->
+
+<!-- quiz -->
+? Why should blog subscriptions be measured relative to the people who saw the subscription form?
++ Otherwise, bots that loaded the page drive the conversion rate down || The denominator should consist of real people who saw the form.
+- It produces higher percentages for the report || The aim of measurement is accuracy; an attractive number in a report achieves nothing.
+- GA4 requires it || This is a choice of measurement method, not something the tool imposes.
+<!-- /quiz -->
 
 <!-- section: sources -->
 - Hugo, RSS templates — https://gohugo.io/templates/rss/ (08.11.2026)
