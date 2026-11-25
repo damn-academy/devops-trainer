@@ -10,7 +10,7 @@ import { store } from '../core/store';
 import type { Level, Mounted, Section } from '../core/types';
 import { emptyState, levelBadge, levelFor, setDescription, setTitle, sourcesBlock, type Page } from './common';
 import { renderSection } from './sections';
-import { crumbProfession } from './common';
+import { blockCrumbs } from './common';
 
 /** Experienced learners start with the challenge: the first practice section moves up after the hook. */
 export function orderSections(sections: Section[], level: Level): Section[] {
@@ -37,6 +37,9 @@ export function lessonPage(id: string, focusSection?: string): Page {
   store.record({ kind: 'lesson.open', lesson: lesson.id });
 
   const sections = orderSections(lesson.sections, level);
+  const hook = lesson.sections.find(s => s.kind === 'text' && s.step === 'hook');
+  const summary = t(lesson.summary);
+  const showSummary = summary && !(hook?.kind === 'text' && t(hook.body).trim() === summary.trim());
   const doneSet = new Set(store.state.lessons[lesson.id]?.sections ?? []);
   const bar = h('div.lesson-progress', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': sections.length, 'aria-label': t(UI.progress) }, h('span'));
   const updateBar = () => {
@@ -76,9 +79,9 @@ export function lessonPage(id: string, focusSection?: string): Page {
     h(
       'header.lesson-head',
       {},
-      h('nav.crumbs', { 'aria-label': 'breadcrumbs' }, crumbProfession(), ' › ', block ? h('a', { href: href({ name: 'block', id: block.id }) }, t(block.title)) : null),
+      blockCrumbs(lesson.block),
       h('h1', {}, t(lesson.title)),
-      lesson.summary ? h('p.lede', {}, ...renderInline(t(lesson.summary))) : null,
+      showSummary ? h('p.lede', {}, ...renderInline(summary)) : null,
       h(
         'div.lesson-meta',
         {},

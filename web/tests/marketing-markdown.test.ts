@@ -1,3 +1,4 @@
+import { MARKETING_MODULES, MARKETING_SUMMARIES } from '../src/blocks/marketing/structure';
 import { describe, expect, it } from 'vitest';
 import { bilingualLessons, loadMarkdownLessons, parseMarkdownLessons } from '../src/blocks/marketing/v2/parser';
 import { MARKETING_V2_LESSONS } from '../src/blocks/marketing/v2';
@@ -118,15 +119,14 @@ describe('marketing Markdown parser', () => {
     }
   });
 
-  it('registers file and lesson order after platforms, with all concepts introduced earlier', () => {
-    const ids = MARKETING_LESSONS.map((l) => l.id);
-    const start = ids.indexOf('marketing.platforms') + 1;
-    expect(ids.slice(start, start + MARKETING_V2_LESSONS.length)).toEqual(MARKETING_V2_LESSONS.map((l) => l.id));
+  it('registers authored module order, with all concepts introduced earlier', () => {
+    const ids = MARKETING_MODULES.flatMap(m => m.lessons);
     expect(registry.blocks.get('marketing')!.lessons).toEqual(ids);
     const introduced = new Set<string>();
-    for (const l of MARKETING_LESSONS) {
+    for (const lessonId of ids) {
+      const l = MARKETING_LESSONS.find(l => l.id === lessonId)!;
       if (MARKETING_V2_LESSONS.includes(l)) {
-        expect(registry.lessons.get(l.id)).toEqual(l);
+        expect(registry.lessons.get(l.id)).toEqual({ ...l, summary: MARKETING_SUMMARIES[l.id] });
         for (const id of l.uses) {
           expect(registry.concepts.has(id), `${l.id}: unknown ${id}`).toBe(true);
           expect(introduced.has(id), `${l.id}: ${id} not introduced earlier`).toBe(true);

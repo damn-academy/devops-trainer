@@ -1,3 +1,4 @@
+import { courseCatalog } from './course-catalog';
 // Home is the platform catalog: a short "what is this site" and tiles of
 // professions and courses — the two structural units. A profession page
 // carries the program of blocks (it used to be the home page).
@@ -170,7 +171,7 @@ function paceControl(): HTMLElement {
   return h('div.pace', {}, h('label', {}, t(bi('Сколько часов в неделю вы готовы заниматься? ', 'How many hours a week can you study? ')), input), output);
 }
 
-function productTile(p: Product): HTMLElement {
+export function productTile(p: Product): HTMLElement {
   return h(
     'li.catalog-item',
     { 'data-kind': p.kind },
@@ -217,7 +218,7 @@ export function homePage(): Page {
         {},
         h('h2', {}, t(bi('Курсы', 'Courses'))),
         h('p.small.muted', {}, t(bi('Короткая прокачка одного отдельного навыка — без смены профессии.', 'A short way to train one specific skill — no career change involved.'))),
-        courses.length ? h('ul.catalog-grid', {}, ...courses.map(productTile)) : h('p.small.muted', {}, t(bi('Курсы появятся чуть позже.', 'Courses are coming soon.'))),
+        courses.length ? courseCatalog(courses, productTile) : h('p.small.muted', {}, t(bi('Курсы появятся чуть позже.', 'Courses are coming soon.'))),
       ),
     ),
   };

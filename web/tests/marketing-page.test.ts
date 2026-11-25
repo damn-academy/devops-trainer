@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
 import { coursePage } from '../src/app/course-page';
-import { MARKETING_LESSONS, HONEST_NOTE } from '../src/blocks/marketing/content';
+import { MARKETING_MODULES } from '../src/blocks/marketing/structure';
 import { setLang } from '../src/core/i18n';
 import { productById, productRoute, visibleProducts } from '../src/core/products';
 import { registry } from '../src/core/registry';
@@ -28,16 +28,16 @@ describe('marketing course page', () => {
       document.body.append(el);
       expect(el.querySelector('h1')?.textContent).toBe(productById('marketing')!.title[lang]);
       const cards = [...el.querySelectorAll<HTMLAnchorElement>('.course-cards a')];
-      expect(cards).toHaveLength(MARKETING_LESSONS.length + 1);
-      for (const [i, lesson] of MARKETING_LESSONS.entries()) {
+      const lessons = MARKETING_MODULES.flatMap(m => m.lessons).map(id => registry.lessons.get(id)!);
+      expect(cards).toHaveLength(lessons.length);
+      for (const [i, lesson] of lessons.entries()) {
         expect(parseRoute(cards[i]!.getAttribute('href')!)).toEqual({ name: 'lesson', id: lesson.id });
         expect(registry.lessons.has(lesson.id)).toBe(true);
-        expect(cards[i]!.querySelector('h2')?.textContent).toBe(lesson.title[lang]);
+        expect(cards[i]!.querySelector('h3')?.textContent).toBe(lesson.title[lang]);
         expect(lesson.summary!.ru.length).toBeGreaterThan(0);
         expect(lesson.summary!.en.length).toBeGreaterThan(0);
       }
-      expect(cards.at(-1)!.getAttribute('href')).toBe('#/block/marketing');
-      expect(el.querySelector('.sfu-note')?.textContent).toBe(HONEST_NOTE[lang]);
+      expect(el.querySelector('.lede')?.textContent).toBe(productById('marketing')!.subtitle![lang]);
       if (lang === 'en') expect(el.textContent).not.toMatch(/[а-яё]/i);
     });
   }

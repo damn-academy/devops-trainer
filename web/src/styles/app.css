@@ -94,7 +94,7 @@
 
 /* ── lesson ── */
 .lesson { max-width: 1080px; margin: 0 auto; }
-.lesson-head, .lesson-body > .lsec[data-kind='text'], .lesson-body > .lsec[data-kind='callout'], .lesson-body > .lsec[data-kind='docs'], .lesson-body > .lsec[data-kind='quiz'], .sources-block, .lesson-done, .lesson-nav { max-width: 760px; margin-left: auto; margin-right: auto; }
+.lesson-body > .lsec[data-kind='widget'], .lesson-head, .lesson-body > .lsec[data-kind='text'], .lesson-body > .lsec[data-kind='callout'], .lesson-body > .lsec[data-kind='docs'], .lesson-body > .lsec[data-kind='quiz'], .sources-block, .lesson-done, .lesson-nav { max-width: 760px; margin-left: auto; margin-right: auto; }
 .lesson-meta { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: 0.88rem; margin: 10px 0; }
 .lesson-concepts { font-size: 0.95rem; margin: 6px 0 14px; }
 .lesson-progress { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 12px 0 8px; }
@@ -216,3 +216,12 @@
 .catalog-kind { display: block; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .catalog-title { display: block; font-size: 1.4rem; font-weight: 600; margin: 4px 0 6px; }
 .catalog-summary { display: block; font-size: 0.95rem; color: var(--muted); }
+
+/* Standalone courses share the catalog card treatment and a readable outline. */
+.course-module { margin-top: 36px; }
+.course-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px; }
+.course-card { display: block; padding: 18px; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; }
+.course-card:hover { background: var(--bg-2); }
+.course-card h2, .course-card h3 { margin: 0 0 10px; font-size: 1.15rem; }
+.course-card p { margin: 0 0 10px; }
+.course-card p:last-child { margin-bottom: 0; }
