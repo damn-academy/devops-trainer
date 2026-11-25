@@ -41,6 +41,17 @@ export const EVENTS_MODULES: CourseModule[] = [
   },
   {
     "title": {
+      "ru": "Своя конференция и события фонда",
+      "en": "Your own conference and foundation events"
+    },
+    "lessons": [
+      "events.own-conf",
+      "events.online-conf",
+      "events.cncf-events"
+    ]
+  },
+  {
+    "title": {
       "ru": "Стенд и конференция без стенда",
       "en": "Booths and conferences without a booth"
     },
@@ -52,6 +63,18 @@ export const EVENTS_MODULES: CourseModule[] = [
 ];
 
 export const EVENTS_SUMMARIES: Record<string, Bi> = {
+  "events.own-conf": {
+    "ru": "Как провести первую собственную конференцию: масштаб, смета по опубликованным бюджетам, неявка и билеты, отбор докладов, которому верят, привлечение участников, интерактив и развлечения, кодекс поведения и результат.",
+    "en": "How to run your first own conference: scale, a budget based on published ones, no-shows and tickets, talk selection people trust, getting attendees, interactive formats and fun, code of conduct and results."
+  },
+  "events.online-conf": {
+    "ru": "Сколько зрителей приходит в эфир онлайн-конференции, какой выбрать формат, время и платформу, кто нужен в команде и как сделать, чтобы зрители разговаривали.",
+    "en": "How many viewers join an online conference live, which format, time and platform to choose, who the team needs and how to get viewers talking."
+  },
+  "events.cncf-events": {
+    "ru": "Что CNCF даёт проекту для событий по уровню зрелости и членству компании: виртуальный саммит, эфиры, KubeCon, событие рядом с ним, KCD и правила названия события.",
+    "en": "What CNCF offers a project for events by maturity level and company membership: a virtual summit, livestreams, KubeCon, a co-located event, KCDs and event naming rules."
+  },
   "events.map": {
     "ru": "Какие бывают события, что даёт каждое, чьи правила на них действуют и как заранее посчитать, сколько возможностей сделок нужно, чтобы событие окупилось.",
     "en": "What kinds of events exist, what each offers, whose rules apply and how to calculate in advance how many sales opportunities an event needs to break even."
