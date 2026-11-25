@@ -24,6 +24,7 @@ Cloudflare в июле 2025 года насчитал около 71 тысячи
 - Anthropic, передача MCP — https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation
 - Supabase, случай Lovable — https://supabase.com/customers/lovable
 - Vercel, документация в Markdown — https://vercel.com/docs/agent-resources/markdown-access
+- Vercel, эксперимент с AGENTS.md и навыками — https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals
 - Google, руководство по оптимизации для генеративного поиска — https://developers.google.com/search/docs/fundamentals/ai-optimization-guide (10.07.2026)
 - Supabase, удалённый сервер MCP — https://supabase.com/blog/remote-mcp-server (03.10.2025); MCP и безопасность — https://supabase.com/blog/mcp (16.09.2025)
 - Cloudflare, соотношение обхода и переходов — https://blog.cloudflare.com/ai-search-crawl-refer-ratio-on-radar (01.07.2025)

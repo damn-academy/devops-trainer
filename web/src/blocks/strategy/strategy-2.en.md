@@ -75,4 +75,5 @@ Complete this task in a table. List the conformance and certification programs r
 - CNCF, new recertification program — https://www.cncf.io/blog/2026/03/23/cncf-introduces-a-new-recertification-program-as-kubestronaut-community-surpasses-3500/ (23.03.2026)
 - O'Reilly, sponsorship — https://www.oreilly.com/content-marketing/available-products.html
 - ScyllaDB University — https://university.scylladb.com/courses/
-- Vercel, Markdown documentation access and AGENTS.md — https://vercel.com/docs/agent-resources/markdown-access
+- Vercel, Markdown documentation access — https://vercel.com/docs/agent-resources/markdown-access
+- Vercel, AGENTS.md versus skills experiment — https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals
