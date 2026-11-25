@@ -58,7 +58,12 @@ export function currentTask(l: Lesson | undefined, root: ParentNode | null = typ
   const el = root.querySelector<HTMLElement>('.goal.current[data-task]');
   const id = el?.dataset.task;
   const task = id ? lessonTasks(l).find((x) => x.id === id) : undefined;
-  if (!task) return null;
+  if (!task) {
+    const sections = l.sections.filter(s => s.kind === 'text' && s.step === 'practice');
+    if (!sections.length) return null;
+    const prompt = sections.map(s => s.kind === 'text' ? t(s.body) : '').join('\n\n');
+    return { task: { id: `${l.id}.markdown-task`, prompt: { ru: prompt, en: prompt }, hints: [] } as unknown as Task };
+  }
   const dl = Number(el?.dataset.docStep) || undefined;
   return { task, docStep: dl || task.docStep || (task.beyond ? 4 : undefined) };
 }

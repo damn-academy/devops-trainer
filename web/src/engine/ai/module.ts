@@ -45,6 +45,7 @@ function installLauncher() {
     const route = location.hash.replace(/^#\/?/, '').split('/')[0];
     btn.hidden = w.exam || !['lesson', 'lab', 'explainer'].includes(route);
     btn.querySelector('span')!.textContent = t(ASK);
+    btn.setAttribute('aria-label', t(ASK)); btn.title = t(ASK);
     const { ai } = await import('./service');
     void ai().lock(w.exam);
     if (w.exam) (await import('./panel')).closeTutor();
