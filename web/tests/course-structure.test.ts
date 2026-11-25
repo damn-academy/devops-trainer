@@ -57,7 +57,7 @@ for (const lang of ['ru', 'en'] as const) {
   });
 }
 it('groups preview courses in shelf order, keeping them hidden on home until published', () => {
-  expect(catalogGroups(PRODUCTS.filter(p => p.kind === 'course'))[0].products.map(p => p.id)).toEqual(['marketing', 'sales', 'events', 'oss']);
+  expect(catalogGroups(PRODUCTS.filter(p => p.kind === 'course'))[0].products.map(p => p.id)).toEqual(['marketing', 'sales', 'events', 'strategy', 'oss', 'pr']);
   expect(coursesPage().el.querySelectorAll('.catalog-shelf .catalog-tile')).toHaveLength(4);
   expect(visibleProducts('course')).toEqual([]);
   expect(homePage().el.querySelector('.catalog-shelf')).toBeNull();
