@@ -42,7 +42,7 @@ for (const course of ['strategy', 'pr']) {
       const lesson = registry.lessons.get(id)!;
       const view = lessonPage(id);
       expect(view.el.querySelector('.lede')?.textContent?.replace(/\s/g, ' ')).toBe(lesson.summary![lang]);
-      expect([...view.el.querySelectorAll('.lesson-nav a')].map(el => el.getAttribute('href'))).toEqual([...(index > 0 ? [`#/lesson/${block.lessons[index - 1]}`] : []), block.lessons[index + 1] ? `#/lesson/${block.lessons[index + 1]}` : `#/block/${course}`]);
+      expect([...view.el.querySelectorAll('.lesson-nav a')].map(el => el.getAttribute('href'))).toEqual([...(index > 0 ? [`#/lesson/${block.lessons[index - 1]}`] : []), block.lessons[index + 1] ? `#/lesson/${block.lessons[index + 1]}` : '#/courses']);
       view.dispose?.();
     }
   });

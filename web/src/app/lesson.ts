@@ -1,3 +1,4 @@
+import { PRODUCTS } from '../core/products';
 import { mountTaskDocument } from '../engine/trainers/document';
 // The lesson page: sections in order (re-ordered for Experienced: the
 // challenge comes first, 08 §5.2), progress auto-saved after every section.
@@ -75,6 +76,7 @@ export function lessonPage(id: string, focusSection?: string): Page {
     }
   }
 
+  const standaloneCourse = PRODUCTS.some(p => p.kind === 'course' && p.id === lesson.block);
   const next = block ? registry.lessons.get(block.lessons[index + 1]) : undefined;
   const prev = block ? registry.lessons.get(block.lessons[index - 1]) : undefined;
 
@@ -105,12 +107,28 @@ export function lessonPage(id: string, focusSection?: string): Page {
       'nav.lesson-nav',
       {},
       prev ? h('a.btn.ghost', { href: href({ name: 'lesson', id: prev.id }) }, icon('prev'), t(prev.title)) : h('span'),
-      next ? h('a.btn.primary', { href: href({ name: 'lesson', id: next.id }) }, t(next.title), icon('next')) : block ? h('a.btn.primary', { href: href(block.id === 'marketing' ? { name: 'course', id: block.id } : { name: 'block', id: block.id }) }, t(block.title), icon('next')) : h('span'),
+      next ? h('a.btn.primary', { href: href({ name: 'lesson', id: next.id }) }, t(next.title), icon('next')) : block ? h('a.btn.primary', { href: href(standaloneCourse ? { name: 'courses' } : { name: 'block', id: block.id }) }, t(standaloneCourse ? bi('Каталог курсов', 'Course catalog') : block.title), icon('next')) : h('span'),
     ),
   );
+  const tableCleanups = Array.from(el.querySelectorAll<HTMLElement>('.md-table-scroll')).map(scroll => {
+    const frame = h('div.md-table-frame');
+    scroll.replaceWith(frame); frame.append(scroll);
+    const hint = h('span.md-table-hint', { 'aria-hidden': 'true', hidden: true }, '→');
+    frame.append(hint);
+    let touched = false;
+    const update = () => {
+      const overflow = scroll.scrollWidth > scroll.clientWidth + 1;
+      frame.classList.toggle('overflowing', overflow && scroll.scrollLeft < scroll.scrollWidth - scroll.clientWidth - 1);
+      hint.hidden = !overflow || touched;
+    };
+    const onScroll = () => { touched = true; update(); };
+    scroll.addEventListener('scroll', onScroll);
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(update); observer?.observe(scroll);
+    return () => { observer?.disconnect(); scroll.removeEventListener('scroll', onScroll); };
+  });
   updateBar();
   if (focusSection) requestAnimationFrame(() => el.querySelector(`#s-${CSS.escape(focusSection)}`)?.scrollIntoView({ block: 'start' }));
-  return { el, dispose: () => mounts.forEach((m) => m.dispose()) };
+  return { el, dispose: () => { tableCleanups.forEach(clean => clean()); mounts.forEach(m => m.dispose()); } };
 }
 
 export { lessonStatus } from './status';

@@ -83,7 +83,7 @@ export function openExternalPanel(o: ExternalOptions = {}): void {
     openTutor({ mode: o.quiz ? 'review' : o.task ? 'practice' : 'explain', question: value });
   } }, t(bi('Спросить здесь', 'Ask here'))));
   dialog.append(h('h2', { id: 'external-title' }, t(EXTERNAL_LABEL)),
-    h('p.small', {}, t(bi('Проверьте запрос перед отправкой. Можно изменить текст и написать, что вы хотите понять.', 'Review the prompt before sharing. You can edit it and describe what you want to understand.'))),
+    h('p.small', {}, t(bi('Проверьте запрос перед отправкой. Можно изменить текст, удалить разделы с черновиками карточек и написать, что вы хотите понять.', 'Review the prompt before sharing. You can edit it, remove card draft sections and describe what you want to understand.'))),
     textarea, buttons, status, h('button.btn.ghost', { type: 'button', onclick: close }, t(bi('Закрыть', 'Close'))));
   dialog.addEventListener('cancel', e => { e.preventDefault(); close(); });
   window.addEventListener('hashchange', close);

@@ -60,7 +60,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     if (csv) root.append(h('p', {}, text('metricsFictional')));
     root.append(h('a', { class: 'btn', href: `${import.meta.env.BASE_URL}templates/${file}${lang() === 'en' ? '-en' : ''}.${csv ? 'csv' : 'xlsx'}`, download: '' }, text(csv ? 'downloadCsv' : 'download')));
     const draftId = `template.${file}`;
-    const input = h('textarea'); input.value = loadDraft(draftId, '');
+    const input = h('textarea', { 'data-template-id': file, 'data-template-title': text(titles[file as keyof typeof titles]) }); input.value = loadDraft(draftId, '');
     input.oninput = () => saveDraft(draftId, input.value);
     const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text('finishDraft'));
     finish.onclick = () => { clearDraft(draftId); input.value = ''; ctx.complete(); };
