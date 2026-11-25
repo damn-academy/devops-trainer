@@ -193,7 +193,7 @@ function canonical(value: unknown): string {
 }
 
 function parseQuestions(body: string) {
-  return body.trim().split(/\n\s*\n/).map(item => {
+  return body.trim().split(/\n\s*\n|\n(?=\? )/).map(item => {
     const [first, ...lines] = item.split('\n');
     if (!first?.startsWith('? ') || !first.slice(2).trim()) throw new Error('Invalid quiz question');
     const options = lines.map(line => {

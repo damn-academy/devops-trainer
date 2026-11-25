@@ -7,10 +7,10 @@ import { productById } from '../src/core/products';
 import { setLang } from '../src/core/i18n';
 import { coursePage } from '../src/app/course-page';
 
-it('includes all seven events lessons exactly once with summaries and resolved references', () => {
+it('includes all ten events lessons exactly once with summaries and resolved references', () => {
   const ids = EVENTS_MODULES.flatMap(m => m.lessons);
   const lessons = [...registry.lessons.values()].filter(l => l.block === 'events');
-  expect(ids).toHaveLength(7);
+  expect(ids).toHaveLength(10);
   expect(new Set(ids).size).toBe(ids.length);
   expect([...ids].sort()).toEqual(lessons.map(l => l.id).sort());
   expect(registry.blocks.get('events')!.lessons).toEqual(ids);
