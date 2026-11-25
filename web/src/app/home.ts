@@ -5,6 +5,7 @@ import { courseCatalog } from './course-catalog';
 
 import { clear, h, icon, put } from '../core/dom';
 import { bi, count, t, UI } from '../core/i18n';
+import { catalogArt } from './catalog-art';
 import { productById, visibleProducts, productRoute, type Product } from '../core/products';
 import { registry } from '../core/registry';
 import { ROUTE, type RouteEntry } from '../core/route';
@@ -171,18 +172,27 @@ function paceControl(): HTMLElement {
   return h('div.pace', {}, h('label', {}, t(bi('Сколько часов в неделю вы готовы заниматься? ', 'How many hours a week can you study? ')), input), output);
 }
 
-export function productTile(p: Product): HTMLElement {
-  return h(
+export function productTile(p: Product, size?: string): HTMLElement {
+  const art = catalogArt(p);
+  const ghost = art.svg.cloneNode(true) as SVGElement;
+  ghost.setAttribute('class', 'catalog-ghost');
+  const item = h(
     'li.catalog-item',
-    { 'data-kind': p.kind },
+    { 'data-kind': p.kind, ...(size ? { 'data-size': size } : {}) },
     h(
       'a.catalog-tile',
       { href: href(productRoute(p)) },
-      h('span.catalog-kind', {}, t(p.kind === 'profession' ? bi('Профессия', 'Profession') : bi('Курс', 'Course'))),
+      ghost,
+      h('span.catalog-head', {},
+        h('span.catalog-badge', {}, art.svg),
+        h('span.catalog-kind', {}, t(p.kind === 'profession' ? bi('Профессия', 'Profession') : bi('Курс', 'Course')))),
       h('span.catalog-title', {}, t(p.title)),
-      h('span.catalog-summary', {}, t(p.summary)),
+      h('span.catalog-summary', {}, t(p.card ?? p.summary)),
+      h('span.catalog-cta', {}, t(p.kind === 'profession' ? bi('Открыть профессию', 'Open the profession') : bi('Открыть курс', 'Open the course'))),
     ),
   );
+  item.style.setProperty('--hue', String(art.hue));
+  return item;
 }
 
 // Home: the platform catalog. A short explanation of what the site is, then
@@ -211,7 +221,7 @@ export function homePage(): Page {
         {},
         h('h2', {}, t(bi('Профессии', 'Professions'))),
         h('p.small.muted', {}, t(bi('Долгий путь к новой профессии: теория, практика, проверки уровня и экзамены.', 'A long road to a new profession: theory, practice, level checks and exams.'))),
-        h('ul.catalog-grid', {}, ...professions.map(productTile)),
+        h('ul.catalog-grid.bento', {}, ...professions.map(p => productTile(p, 'w'))),
       ),
       h(
         'section.catalog-section',

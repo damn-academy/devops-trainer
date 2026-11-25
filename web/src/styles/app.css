@@ -210,12 +210,26 @@
 
 /* Catalog: the platform home lists professions and courses as tiles. */
 .catalog-section { margin-top: 1.6em; }
-.catalog-grid { list-style: none; padding: 0; margin: 0.4em 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-.catalog-tile { display: block; border: 1px solid var(--line-2); border-radius: 12px; padding: 16px 18px; text-decoration: none; color: inherit; background: var(--bg); }
-.catalog-tile:hover { border-color: var(--ink); }
-.catalog-kind { display: block; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.catalog-title { display: block; font-size: 1.4rem; font-weight: 600; margin: 4px 0 6px; }
-.catalog-summary { display: block; font-size: 0.95rem; color: var(--muted); }
+.catalog-grid { list-style: none; padding: 0; margin: 0.4em 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; }
+.catalog-item { --accent: hsl(var(--hue, 238) 68% 52%); display: flex; }
+.catalog-tile { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; flex: 1; border: 1px solid var(--line-2); border-radius: 18px; padding: 20px 22px 22px; text-decoration: none; color: inherit;
+  background: radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--accent) 13%, var(--bg)) 0%, var(--bg) 62%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+.catalog-tile:hover { transform: translateY(-3px); border-color: color-mix(in oklab, var(--accent) 50%, var(--line-2)); box-shadow: 0 14px 32px -18px color-mix(in oklab, var(--accent) 70%, transparent); }
+.catalog-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.catalog-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.catalog-badge { flex: none; width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center;
+  background: linear-gradient(145deg, color-mix(in oklab, var(--accent) 24%, var(--bg)), color-mix(in oklab, var(--accent) 10%, var(--bg)));
+  color: color-mix(in oklab, var(--accent) 88%, var(--ink)); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 26%, transparent);
+  transition: transform 0.25s ease; }
+.catalog-tile:hover .catalog-badge { transform: rotate(-6deg) scale(1.06); }
+.catalog-badge .catalog-icon { width: 28px; height: 28px; }
+.catalog-ghost { position: absolute; z-index: -1; right: -22px; top: -26px; width: 120px; height: 120px; color: var(--accent); opacity: 0.08; transition: opacity 0.2s ease, transform 0.3s ease; }
+.catalog-tile:hover .catalog-ghost { opacity: 0.12; transform: rotate(-8deg); }
+.catalog-kind { display: block; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in oklab, var(--accent) 75%, var(--muted)); }
+.catalog-title { display: block; font-size: 1.32rem; font-weight: 600; line-height: 1.25; margin: 2px 0 0; }
+.catalog-summary { display: block; font-size: 0.95rem; line-height: 1.55; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .catalog-tile, .catalog-badge, .catalog-ghost { transition: none; } .catalog-tile:hover, .catalog-tile:hover .catalog-badge, .catalog-tile:hover .catalog-ghost { transform: none; } }
 
 /* Standalone courses share the catalog card treatment and a readable outline. */
 .course-module { margin-top: 36px; }
@@ -228,3 +242,31 @@
 
 /* Keep the scientific-thinking diagram within the course reading column. */
 .lesson-body > .lsec:has(.explainer[data-model='scithink.correlation']) { max-width: 760px; margin-left: auto; margin-right: auto; }
+
+/* Course catalog as a bento grid: one large card, two medium, a row of small
+   ones and a wide one, so the shelf reads as a composition, not a table. */
+.catalog-grid.bento { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: minmax(150px, auto); grid-auto-flow: row dense; }
+.bento > .catalog-item[data-size="l"] { grid-column: span 3; grid-row: span 2; }
+.bento > .catalog-item[data-size="m"] { grid-column: span 3; }
+.bento > .catalog-item[data-size="s"] { grid-column: span 2; }
+.bento > .catalog-item[data-size="w"] { grid-column: span 4; }
+.catalog-item[data-size="l"] .catalog-tile { padding: 26px 28px 28px; }
+.catalog-item[data-size="l"] .catalog-badge { width: 64px; height: 64px; border-radius: 18px; }
+.catalog-item[data-size="l"] .catalog-badge .catalog-icon { width: 34px; height: 34px; }
+.catalog-item[data-size="l"] .catalog-title { font-size: 1.7rem; }
+.catalog-item[data-size="l"] .catalog-summary { font-size: 1.02rem; }
+.catalog-item[data-size="l"] .catalog-ghost { top: auto; width: 240px; height: 240px; right: -34px; bottom: -40px; }
+.catalog-item[data-size="w"] .catalog-ghost { width: 150px; height: 150px; }
+@media (max-width: 980px) {
+  .catalog-grid.bento { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
+  .bento > .catalog-item[data-size] { grid-column: span 1; grid-row: auto; }
+  .bento > .catalog-item[data-size="l"], .bento > .catalog-item[data-size="w"] { grid-column: span 2; }
+}
+@media (max-width: 620px) {
+  .catalog-grid.bento { grid-template-columns: minmax(0, 1fr); }
+  .bento > .catalog-item[data-size] { grid-column: auto; }
+}
+.catalog-cta { margin-top: auto; padding-top: 14px; font-size: 0.9rem; font-weight: 600; color: color-mix(in oklab, var(--accent) 80%, var(--ink)); }
+.catalog-cta::after { content: '→'; display: inline-block; margin-left: 0.35em; transition: transform 0.2s ease; }
+.catalog-tile:hover .catalog-cta::after { transform: translateX(4px); }
+@media (prefers-reduced-motion: reduce) { .catalog-tile:hover .catalog-cta::after { transform: none; } }
