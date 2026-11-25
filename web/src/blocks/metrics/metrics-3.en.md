@@ -11,7 +11,7 @@ An opportunity's stage is defined by a change in the buyer's state. A seller's a
 | 1. Qualified opportunity | Business problem, profile fit, approximate scope and decision process are confirmed | Qualified pipeline created, age, rejection reasons |
 | 2. Technical evaluation, pilot | The pilot has been completed against pre-agreed success criteria, data and timeline; the customer has a technical champion, and the result is recorded | Pilot start, completion and success; technical success separate from commercial win |
 | 3. Business case, solution selected | Following the evaluation, the buyer confirms value, budget path and preference for our solution | Win conversion, decision-maker coverage, competitor or no decision |
-| 4. Procurement, legal, security | Commercial terms, decision process and clear obstacles exist | Review time, slippage, discount, close-date changes |
+| 4. Procurement, legal, security | Commercial terms agreed, security and legal reviews passed; only the signature remains | Review time, slippage, discount, close-date changes |
 | 5. Won or lost | A commitment is signed or the initiative is explicitly abandoned | Annual revenue, loss reason, cycle duration; go-live separately |
 
 A pilot may succeed technically and lose for budget reasons; do not merge these two outcomes.
@@ -43,18 +43,20 @@ The stage age of an open opportunity is the time from its latest entry into the 
 + Four: $3.2 million in pipeline divided by the remaining $800,000 target || Coverage uses the remaining target.
 - 3.2: pipeline is divided by the full quarterly target; other versions are not normally calculated || That is a valid but different metric.
 - Five, because triple coverage plus wins provides a buffer || That number does not follow from the data.
-? A team won 30 of 120 opportunities, but only 20% by value. What does that mean?
+? Opportunity values are fixed at qualification. A team won 30 of 120 opportunities, but only 20% by value. What does that mean?
 - A CRM error: win rates by count and value always match || They match only when the average values of won and lost opportunities are equal.
 + The team loses large deals more often than small ones || That is why both rates are shown together.
-- Salespeople give large discounts, understating won deal value || Discounts appear in a different comparison.
-? Sixty opportunities entered technical evaluation, 24 were won and 10 remain open. What should the ratio of 24 to 50 be called?
+- Salespeople give large discounts, understating won deal value || Values were fixed at qualification, so discounts do not affect this rate; they show up when compared with final values.
+? Sixty opportunities entered technical evaluation in the first quarter; the 180-day window has not ended, 24 were won and 10 remain open. What should the ratio of 24 to 50 be called?
 - Final stage-to-win conversion, because open opportunities have not yet been lost || Final conversion uses the whole cohort.
 - Loss rate, because 26 opportunities were lost || 24 to 50 is a win rate.
-+ Win rate among closed opportunities, shown alongside the 10 open ones || The cohort is not yet mature.
++ Win rate among closed opportunities, shown alongside the 10 open ones || The cohort window has not ended, and 10 opportunities remain open.
 <!-- /quiz -->
 
 <!-- section: theory | Practice with sample data -->
 The “Northwind Data deal pipeline” file below contains quarter-end snapshots of deals: stage, amount, expected close date, and forecast category. The target for new annual revenue in the third quarter is $1,000,000.
+
+The same opportunity appears in multiple snapshots, so snapshots must not be summed; use the appropriate snapshot for each calculation. Calculate coverage from the September 30 snapshot: wins in the third quarter and open opportunities with a third-quarter close date. This snapshot was taken on the last day of the quarter, so coverage here is diagnostic rather than a forecast at the start of the quarter. Calculate win rates from the June 30 snapshot for opportunities closed between January 1 and June 30. Calculate slippage by taking open opportunities in the March 31 snapshot with second-quarter close dates and checking which have moved past June 30 in the June 30 snapshot. In the `category` column, `pipeline`, `best_case` and `commit` are the forecast categories from the forecasting lesson; `closed_won` means a won opportunity and `closed_lost` a lost one.
 
 Calculate coverage of the remaining third-quarter target, win rates by count and amount for deals closed in the first and second quarters, and second-quarter slippage by count and amount.
 

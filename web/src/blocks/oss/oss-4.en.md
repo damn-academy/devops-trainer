@@ -43,7 +43,7 @@ The following lessons examine CNCF's procedure as the most extensively documente
 1. Read the ASF incubator guides on project proposals and graduation so you know the exit requirements in advance.
 2. Find a champion, an ASF member who will support the project, and two or three mentors. Look through the incubator mailing list and people already working on related Apache projects.
 3. Write a proposal using the incubator template: what the project does, why it needs ASF, its current state, known risks including dependence on one company, and the initial committers and their employers.
-4. Pass the incubator committee vote. Afterwards, the company signs the code rights transfer, contributors sign individual agreements, and the project name is checked for trademark issues and changed if necessary.
+4. Pass the incubator committee vote. Afterwards, the company signs a Software Grant: a non-exclusive copyright and patent license to the foundation, while the company retains copyright ownership. Contributors sign individual contribution agreements granting the same kind of non-exclusive license. The trademark is a separate matter: the project name is checked and transferred to the foundation or changed.
 5. Work in the incubator: release versions through votes following the Apache process, write quarterly reports and expand the committer group beyond the company.
 6. Graduate when the community is independent of a single employer and releases follow foundation rules.
 
@@ -163,7 +163,7 @@ A full three-year calculation looks like this. The assumptions are illustrative:
 | Events | 25 | 25 | 25 |
 | Total, thousands of dollars | 295 | 275 | 275 |
 
-The three-year total is $845,000, of which dues account for $30,000, less than 4%. If some maintainers eventually work for other companies, the maintainer-time line shrinks, which is the economic rationale for the transfer.
+The three-year total is $845,000, of which dues account for $30,000, less than 4%. If some maintainers eventually work for other companies, the company's share of the maintainer-time line shrinks, provided it does not hire replacements. That is the economic rationale for donation from the company's perspective; the project's total cost does not decrease but is shared among several participants.
 
 <!-- section: theory | How to tell whether donation succeeded -->
 The CHAOSS community offers project sustainability metrics. The contributor absence factor shows how many people account for half the project's activity, and the elephant factor shows how many organizations do. If employees of one company do half the work over the chosen period, such as half the accepted changes in a year, the elephant factor is one. This signals risk: that company's departure will stop the project even if governance rules are neutral. Check governance neutrality separately through the rules and who actually makes decisions. Add the number of maintainers outside the company, review time, the project's ability to release without its founding company, vulnerability response speed, and confirmed production users.

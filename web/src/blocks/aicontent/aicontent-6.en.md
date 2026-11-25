@@ -128,7 +128,7 @@ To choose a tool, run a small pilot: give two tools the same real editorial task
 
 <!-- quiz -->
 ? Generating a five-second video costs 20 credits. Why is that insufficient to calculate the cost of an advertising video?
-+ Include all retries, editorial selection, editing and checks: the cost per accepted second || Most generations do not pass selection, and human work often costs more than generation.
++ Include all retries, editorial selection, editing and checks: the cost per accepted second || In our projects, most generations did not pass selection, and human work cost more than generation.
 - Add the subscription cost; nothing else belongs in the video price because the rest is free || Editor time and editing cost money too.
 - It is sufficient if the video was generated on the first attempt and needed no editing before publication || In our projects, first-attempt videos almost never passed selection, and editing is almost always needed.
 ? A video-tool comparison table was published in 2025. Can you use it to choose in late 2026?

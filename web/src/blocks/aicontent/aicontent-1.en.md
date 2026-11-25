@@ -76,7 +76,7 @@ Complete the task in the document on this page. Choose one recurring type of con
 
 <!-- lesson: aicontent.brief | Brief, log and memory: keeping work between sessions | 20 -->
 <!-- section: hook -->
-An AI session can end at any moment: the terminal closes, context runs out, a worker hits a limit or the computer restarts. In one of our projects, a restart destroyed uncommitted results from several background workers, and we had to reconstruct them from briefs and the log. After that, the rule became strict: everything that must survive a session goes into files as work proceeds, before the session ends. This lesson covers three such files—the brief, session log and memory—and offers templates you can reuse.
+An AI session can end at any moment: the terminal closes, context runs out, a worker hits a limit or the computer restarts. In one of our projects, a computer restart interrupted the background workers, and their changes that had not been saved in the repository were lost; we had to reconstruct them from briefs and the log. After that, the rule became strict: everything that must survive a session goes into files as work proceeds, before the session ends. This lesson covers three such files—the brief, session log and memory—and offers templates you can reuse.
 
 <!-- section: theory | The brief as a contract with the worker -->
 A brief is a task written so the worker can complete it without questions. In our projects, a good brief always contained the same parts: the goal and intended audience; input files to read; the folder where writing is allowed and everything that must not be touched; expected output files; language and source rules; prohibitions; verification commands and the condition that defines completion.

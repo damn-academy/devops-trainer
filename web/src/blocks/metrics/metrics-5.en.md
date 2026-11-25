@@ -52,6 +52,8 @@ A reliable database can run for a month without an administrator logging in, so 
 <!-- section: theory | Practice with sample data -->
 The “Northwind Data cohorts” file below describes 600 accounts at a fictional company that registered from January through June 2026. For each account, it records registration and activation dates, dates of PQA, first deal, win or loss, annual contract value, and an internal-account flag. The snapshot date is 1 July 2026.
 
+File columns: `account_id` is the account identifier, `signup_date` the signup date, `activated_at` the first-value date, and `pqa_at`, `first_opp_at`, `won_at` and `lost_at` the dates of PQA, first opportunity, win and loss. `acv_usd` is annual contract value in dollars; `is_internal` is 1 for internal accounts. An empty cell means the event has not occurred. Dates use year-month-day format. An account is activated within 14 days if its activation date is no later than its signup date plus 14 days; it is mature if its signup date plus 14 days is no later than the snapshot date.
+
 Do the calculations yourself before reading the answers. First exclude internal accounts. Then calculate 14-day activation for each monthly cohort, keeping only accounts whose 14-day window had elapsed by the snapshot date in both the numerator and denominator. Next, calculate registration-to-win conversion within 180 days for the January, February, and March cohorts.
 
 Answers. There are 60 internal accounts. The 14-day activation rates for January through June are 30, 40, 50, 60, 70, and 80 %; in June, only 50 of 90 accounts were mature, and 40 recent accounts were excluded. Only part of the January cohort, 50 accounts, had reached 180 days; 10 of those were won, or 20 %. For February and March, the window has not yet elapsed, so conversion is undefined; dividing their wins by all registrations would give an understated figure and lead you to conclude that the pipeline had deteriorated.
@@ -96,8 +98,8 @@ The consenting sample may differ from isolated enterprise installations with no 
 
 <!-- quiz -->
 ? Of 100 PQA accounts, 30 gained an opportunity. There were 50 accounts with opportunities in total, 30 flagged beforehand. What are the rule's precision and recall?
-- Precision 60%, recall 30%, because recall uses all PQAs as the denominator || Recall uses all opportunities.
-+ Precision 30%, recall 60% || 30 of 100 PQAs and 30 of 50 opportunities.
+- Precision 60%, recall 30%, because recall uses all PQAs as the denominator || Recall uses all accounts with opportunities.
++ Precision 30%, recall 60% || 30 of 100 PQA accounts and 30 of 50 accounts with opportunities.
 - Both 30%, because both numerators contain the same 30 accounts || The denominators differ.
 ? PQA accounts produce opportunities six times more often than others. Does this prove the benefit of sales calls?
 + No: selection explains the difference; test calls using a PQA holdout group without calls || Selection quality and action impact are different things.
@@ -110,7 +112,7 @@ The consenting sample may differ from isolated enterprise installations with no 
 <!-- /quiz -->
 
 <!-- section: task | Task: a PQA rule and its validation -->
-Complete the task in the document on this page. Write the first version of your product's PQA rule using four conditions: fit, value, potential and contactability. Using the last six months' data, calculate how many accounts it would have flagged, how many became opportunities and how many opportunities it missed. Then draft a public list of telemetry fields you collect or want to collect and mark those you could do without.
+Complete the task in the document on this page. Write the first version of your product's PQA rule using four conditions: fit, value, potential and contactability. Using the last six months' data, calculate how many accounts it would have flagged, how many of them acquired a qualified opportunity and how many accounts with opportunities the rule missed. Then draft a public list of telemetry fields you collect or want to collect and mark those you could do without.
 
 <!-- section: sources -->
 - Grafana, gcx usage statistics — https://grafana.com/docs/grafana/latest/ai-tools/grafana-cli/gcx/anonymous-usage-statistics/
