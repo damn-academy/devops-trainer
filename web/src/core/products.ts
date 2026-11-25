@@ -82,7 +82,7 @@ export function defaultProfession(): Product | undefined {
 
 export const BUSINESS_SHELF = {
   title: bi('Деловые курсы для инфраструктурных компаний', 'Business courses for infrastructure companies'),
-  summary: bi('Курсы для тех, кто продвигает, продаёт и развивает открытый инфраструктурный продукт: каждый можно проходить отдельно, а вместе они складываются в работу компании от продукта до продаж', 'Courses for people who promote, sell and develop an open infrastructure product: each stands on its own, and together they cover a company’s work from product to sales'),
+  summary: bi('Курсы для тех, кто продвигает, продаёт и развивает открытый инфраструктурный продукт: каждый можно проходить отдельно, а вместе они складываются в работу компании от продукта до продаж.', 'Courses for people who promote, sell and develop an open infrastructure product: each stands on its own, and together they cover a company’s work from product to sales'),
 };
 const BUSINESS_ORDER = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'scithink'];
 export function catalogGroups(products: Product[]): { title?: Bi; summary?: Bi; products: Product[] }[] {
