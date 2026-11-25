@@ -40,8 +40,8 @@ function page(p) {
   const sectionHtml = (sections ?? []).map((s) => `<section><h2>${esc(s.h2)}</h2>${s.body.map((b) => `<p>${esc(b)}</p>`).join('\n')}</section>`).join('\n');
   const linksHtml = links?.length
     ? `<section class="cta"><h2>${lang === 'en' ? 'Practice it in the trainer' : 'Потренироваться в тренажёре'}</h2><p>${lang === 'en'
-        ? 'Reading is one thing. The course gives you a real machine for each topic — type the commands yourself, break things and fix them.'
-        : 'Читать — одно. В курсе по каждой теме есть настоящая машина: команды вы набираете сами, ломаете и чините.'}</p><ul>${links
+        ? 'Professions and courses are structured differently because they teach different things. They share one principle: every concept must be tried, not just read about. In the DevOps engineer profession, practice takes place in a terminal on real machines; in the business courses, it uses diagrams, trainers, spreadsheet templates and simulators of company departments where an AI acts as the facilitator.'
+        : 'Профессии и курсы устроены по-разному, потому что учат разному. Общее у них одно: каждое понятие нужно не только прочитать, но и попробовать. В профессии DevOps-инженера практика идёт в терминале на настоящих машинах, а в деловых курсах — на схемах, в тренажёрах, в шаблонах таблиц и в симуляторах отделов компании, где ведущим выступает нейросеть.'}</p><ul>${links
         .map((l) => `<li><a href="${esc(l.href)}">${esc(l.label)}</a></li>`).join('')}</ul></section>`
     : '';
   const faqHtml = faq?.length
@@ -106,8 +106,8 @@ function page(p) {
       ${linksHtml}
       ${faqHtml}
       <footer>${lang === 'en'
-        ? 'Free interactive DevOps course: real Linux in the browser, a cloud in a tab, quizzes and exams. <a href="/">Open the trainer</a> · <a href="https://github.com/damn-academy/devops-trainer">Source on GitHub</a> (Apache-2.0).'
-        : 'Бесплатный интерактивный курс по DevOps: настоящий Linux в браузере, облако во вкладке, квизы и экзамены. <a href="/">Открыть тренажёр</a> · <a href="https://github.com/damn-academy/devops-trainer">Исходники на GitHub</a> (Apache-2.0).'}</footer>
+        ? 'damn.academy is an open, free platform with professions and courses. It offers the DevOps engineer profession and eight business courses. <a href="/#/profession/devops">DevOps engineer</a> · <a href="/#/courses">Business courses</a> · <a href="https://github.com/damn-academy/devops-trainer">Source on GitHub</a> (Apache-2.0).'
+        : 'damn.academy — открытая бесплатная платформа с профессиями и курсами. Сейчас на платформе одна профессия и восемь курсов. В профессии DevOps-инженера практика идёт в терминале на настоящих машинах, а в деловых курсах — на схемах, в тренажёрах, в шаблонах таблиц и в симуляторах отделов компании, где ведущим выступает нейросеть. <a href="/#/profession/devops">Профессия DevOps-инженер</a> · <a href="/#/courses">Деловые курсы</a> · <a href="https://github.com/damn-academy/devops-trainer">Исходники на GitHub</a> (Apache-2.0).'}</footer>
     </main>
   </body>
 </html>
