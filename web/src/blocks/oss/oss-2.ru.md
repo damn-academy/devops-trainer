@@ -31,6 +31,8 @@ DCO, Developer Certificate of Origin, — это подтверждение уч
 <!-- section: task | Задание: GOVERNANCE.md за вечер -->
 Выполните задание в тренажёре «GOVERNANCE.md за вечер» на этой странице. Соберите файл управления для вымышленного проекта из блоков шаблона CNCF: роли, номинация, снятие, принятие решений, безопасность, кодекс поведения. Затем тренажёр покажет файл CODEOWNERS и права в репозитории этого проекта и найдёт противоречия между тем, что написано в вашем GOVERNANCE.md, и тем, у кого на самом деле есть право слияния. Исправьте противоречия так, чтобы документ описывал действительность.
 
+<!-- widget: governance {"data":"oss.governance"} -->
+
 <!-- section: sources -->
 - CNCF, шаблон GOVERNANCE.md — https://github.com/cncf/project-template/blob/main/GOVERNANCE.md; управление под руководством мейнтейнеров — https://github.com/cncf/project-template/blob/main/GOVERNANCE-maintainer.md; CONTRIBUTING — https://github.com/cncf/project-template/blob/main/CONTRIBUTING.md (проверено 25.11.2026)
 - Kubernetes, роли участников — https://github.com/kubernetes/community/blob/main/community-membership.md
