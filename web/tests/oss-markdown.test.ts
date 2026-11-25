@@ -11,7 +11,7 @@ const files = import.meta.glob<string>('../src/blocks/oss/*.md', {
 describe('OSS course wiring', () => {
   it('includes every authored lesson exactly once in module order with its summary', () => {
     const ids = OSS_MODULES.flatMap(m => m.lessons);
-    expect(ids).toHaveLength(8);
+    expect(ids).toHaveLength(10);
     expect(OSS_MODULES).toHaveLength(5);
     expect(new Set(ids).size).toBe(ids.length);
     expect([...ids].sort()).toEqual(OSS_LESSONS.map(l => l.id).sort());

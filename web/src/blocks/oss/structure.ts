@@ -32,10 +32,12 @@ export const OSS_MODULES: CourseModule[] = [
   },
   {
     "title": {
-      "ru": "CNCF",
-      "en": "CNCF"
+      "ru": "Фонды",
+      "en": "Foundations"
     },
     "lessons": [
+      "oss.foundations",
+      "oss.donation",
       "oss.cncf-path",
       "oss.cncf-benefits"
     ]
@@ -69,13 +71,21 @@ export const OSS_SUMMARIES: Record<string, Bi> = {
     "ru": "Где держать сообщество, как проводить встречи, собирать истории пользователей и строить программу амбассадоров.",
     "en": "Where to host a community, how to run meetings, collect user stories and build an ambassador program."
   },
+  "oss.foundations": {
+    "ru": "Четыре решения, которые смешивают под словами «отдать в фонд», варианты от вклада в чужой проект до нового фонда и как устроены ASF, Linux Foundation и её отраслевые фонды, Eclipse, NumFOCUS, Conservancy и PostgreSQL.",
+    "en": "The four decisions hidden behind \"give it to a foundation\", options from contributing upstream to founding a new foundation, and how ASF, the Linux Foundation and its sub-foundations, Eclipse, NumFOCUS, Conservancy and PostgreSQL work."
+  },
+  "oss.donation": {
+    "ru": "Таблица прав до и после передачи, взносы фондов и стоимость открытого проекта на три года, метрики CHAOSS и служебная записка для руководства.",
+    "en": "A before-and-after rights matrix, foundation dues and the three-year cost of an open project, CHAOSS metrics and a decision memo for leadership."
+  },
   "oss.cncf-path": {
-    "ru": "Что на самом деле проверяет CNCF при переходе проекта на уровни Incubating и Graduated и как собирать доказательства заранее; в конце — год в инкубаторе в симуляторе.",
-    "en": "What CNCF actually checks when projects move to Incubating and Graduated, and how to gather evidence in advance; the lesson ends with a simulated year in incubation."
+    "ru": "На примере CNCF: что проверяет фонд при переходе проекта на уровни Incubating и Graduated и как собирать доказательства заранее; в конце — год в инкубаторе в симуляторе.",
+    "en": "Using CNCF as the example: what a foundation checks when projects move to Incubating and Graduated, and how to gather evidence in advance; the lesson ends with a simulated year in incubation."
   },
   "oss.cncf-benefits": {
-    "ru": "Что фонд даёт компаниям-членам по уровням членства и проектам по уровням зрелости и как этим пользоваться.",
-    "en": "What the foundation offers member companies at each membership tier and projects at each maturity level, and how to use those benefits."
+    "ru": "Что фонд даёт компаниям-членам и проектам на примере CNCF и как это устроено у ASF, OpenSSF, Eclipse и LF AI & Data.",
+    "en": "What a foundation offers member companies and projects, using CNCF as the example, and how ASF, OpenSSF, Eclipse and LF AI & Data compare."
   },
   "oss.revenue": {
     "ru": "Как компании связывают использование открытого проекта с продажами и где эта работа превращается в риск для репутации.",

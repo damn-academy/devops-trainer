@@ -8,7 +8,8 @@ export const EVENTS_MODULES: CourseModule[] = [
       "en": "Event landscape and return on investment"
     },
     "lessons": [
-      "events.map"
+      "events.map",
+      "events.portfolio"
     ]
   },
   {
@@ -23,8 +24,8 @@ export const EVENTS_MODULES: CourseModule[] = [
   },
   {
     "title": {
-      "ru": "Митапы и KCD",
-      "en": "Meetups and KCDs"
+      "ru": "Митапы и местные сообщества",
+      "en": "Meetups and local communities"
     },
     "lessons": [
       "events.local"
@@ -41,8 +42,8 @@ export const EVENTS_MODULES: CourseModule[] = [
   },
   {
     "title": {
-      "ru": "Своя конференция и события фонда",
-      "en": "Your own conference and foundation events"
+      "ru": "Своя конференция и события экосистемы",
+      "en": "Your own conference and ecosystem events"
     },
     "lessons": [
       "events.own-conf",
@@ -72,12 +73,16 @@ export const EVENTS_SUMMARIES: Record<string, Bi> = {
     "en": "How many viewers join an online conference live, which format, time and platform to choose, who the team needs and how to get viewers talking."
   },
   "events.cncf-events": {
-    "ru": "Что CNCF даёт проекту для событий по уровню зрелости и членству компании: виртуальный саммит, эфиры, KubeCon, событие рядом с ним, KCD и правила названия события.",
-    "en": "What CNCF offers a project for events by maturity level and company membership: a virtual summit, livestreams, KubeCon, a co-located event, KCDs and event naming rules."
+    "ru": "Что фонд даёт проекту для событий на примере CNCF — виртуальный саммит, эфиры, главная конференция, KCD, — как это устроено у PostgreSQL, Linux Foundation, OpenInfra и ASF и правила названия события.",
+    "en": "What a foundation offers a project for events, using CNCF as the example—a virtual summit, livestreams, the flagship conference, KCDs—how PostgreSQL, the Linux Foundation, OpenInfra and ASF compare, and event naming rules."
   },
   "events.map": {
     "ru": "Какие бывают события, что даёт каждое, чьи правила на них действуют и как заранее посчитать, сколько возможностей сделок нужно, чтобы событие окупилось.",
     "en": "What kinds of events exist, what each offers, whose rules apply and how to calculate in advance how many sales opportunities an event needs to break even."
+  },
+  "events.portfolio": {
+    "ru": "Четыре класса площадок за пределами одной экосистемы, взвешенная оценка события под профиль клиента, экономика участия и портфели для девяти сегментов инфраструктуры.",
+    "en": "Four classes of venues beyond a single ecosystem, a weighted event score built on the customer profile, participation economics and portfolios for nine infrastructure segments."
   },
   "events.webinars": {
     "ru": "Сколько людей на самом деле приходит на вебинары, какие форматы подходят инженерам и почему запись важнее прямого эфира.",
@@ -88,16 +93,16 @@ export const EVENTS_SUMMARIES: Record<string, Bi> = {
     "en": "How to run practical workshops in browser labs so participants reach a result, and how to verify it."
   },
   "events.local": {
-    "ru": "Как найти все события региона, стать нужным докладчиком, открыть свою группу CNCF и превратить митапы и KCD в ежедневную работу по сорок минут.",
-    "en": "How to find every event in a region, become a speaker people need, start your own CNCF group and turn meetups and KCDs into forty minutes of daily work."
+    "ru": "Как найти все события региона в своей отрасли — от групп пользователей PostgreSQL и глав OWASP до DevOpsDays и KCD, — стать нужным докладчиком, открыть свою группу и превратить это в ежедневную работу по сорок минут.",
+    "en": "How to find every event in your industry across a region—from PostgreSQL user groups and OWASP chapters to DevOpsDays and KCDs—become a speaker people need, start your own group and turn it into forty minutes of daily work."
   },
   "events.cfp": {
-    "ru": "Сколько заявок принимает KubeCon, что отклоняют рецензенты, как писать тезис, готовить демонстрацию и продлевать жизнь доклада.",
-    "en": "How many proposals KubeCon accepts, what reviewers reject, how to write an abstract, prepare a demo and extend the life of a talk."
+    "ru": "Сколько заявок принимают конференции на примере KubeCon, какие ещё пути на сцену бывают, что отклоняют рецензенты, как писать тезис, готовить демонстрацию и продлевать жизнь доклада.",
+    "en": "How many proposals conferences accept, using KubeCon as the example, other routes to the stage, what reviewers reject, how to write an abstract, prepare a demo and extend the life of a talk."
   },
   "events.booth": {
-    "ru": "Сколько стоит стенд на KubeCon, что значат сканы бейджей, кто нужен на стенде и как вести разговор за три минуты.",
-    "en": "How much a KubeCon booth costs, what badge scans mean, who should staff the booth and how to have a three-minute conversation."
+    "ru": "Сколько стоит стенд на разных конференциях, что значат сканы бейджей, кто нужен на стенде и как вести разговор за три минуты.",
+    "en": "How much a booth costs at different conferences, what badge scans mean, who should staff the booth and how to have a three-minute conversation."
   },
   "events.no-booth": {
     "ru": "Как работать на конференции без стенда: встречи за несколько недель, завтраки, ужины и круглые столы, региональные конференции; в конце — симулятор подготовки к KubeCon.",

@@ -111,10 +111,10 @@ export const PRODUCTS: Product[] = [
       "ru": "События и выступления",
       "en": "Events and talks"
     },
-    "card": { "ru": "Вебинары, митапы, доклады на KubeCon, своя конференция и стенд, и как понять, окупилось ли событие.", "en": "Webinars, meetups, KubeCon talks, your own conference and booth, and how to tell whether an event paid off." },
+    "card": { "ru": "Портфель событий под профиль клиента, вебинары, митапы, доклады, своя конференция и стенд, и окупилось ли это.", "en": "An event portfolio built on the customer profile, webinars, meetups, talks, your own conference and booth, and whether it paid off." },
     "summary": {
-      "ru": "Как получать пользу от событий: вебинары, онлайн-воркшопы с лабораторией, митапы и Kubernetes Community Days как ежедневная работа, заявки и доклады на KubeCon, своя конференция очно и онлайн, что CNCF даёт проекту для событий, работа на стенде и конференция без стенда. Отдельно — как считать, окупилось ли событие, и почему число сканов бейджей ничего не говорит. В конце — подготовка к KubeCon за восемь недель в симуляторе.",
-      "en": "How to benefit from events: webinars, online workshops with labs, meetups and Kubernetes Community Days as daily work, proposals and talks at KubeCon, running your own conference in person and online, what CNCF offers a project for events, staffing a booth and attending a conference without one. A separate focus is calculating whether an event paid off and why badge scan counts tell you nothing. The course ends with eight weeks of KubeCon preparation in a simulator."
+      "ru": "Как получать пользу от событий в любом сегменте инфраструктуры: портфель площадок от конференций облачных провайдеров и отраслевых событий вроде PGConf, SREcon, RSAC и NANOG до пользовательских конференций вендоров и местных сообществ, вебинары, онлайн-воркшопы с лабораторией, митапы как ежедневная работа, заявки и доклады, своя конференция очно и онлайн, что фонды дают проекту для событий, работа на стенде и конференция без стенда. Отдельно — как считать, окупилось ли событие, и почему число сканов бейджей ничего не говорит. В конце — подготовка к KubeCon за восемь недель в симуляторе.",
+      "en": "How to benefit from events in any infrastructure segment: a portfolio of venues from cloud provider conferences and industry events such as PGConf, SREcon, RSAC and NANOG to vendor user conferences and local communities, webinars, online workshops with labs, meetups as daily work, proposals and talks, running your own conference in person and online, what foundations offer a project for events, staffing a booth and attending a conference without one. A separate focus is calculating whether an event paid off and why badge scan counts tell you nothing. The course ends with eight weeks of KubeCon preparation in a simulator."
     },
     "subtitle": {
       "ru": "Для DevRel, маркетологов, основателей и инженеров-докладчиков.",
@@ -129,10 +129,10 @@ export const PRODUCTS: Product[] = [
       "ru": "Open source: проект, сообщество и управление",
       "en": "Open source: project, community and governance"
     },
-    "card": { "ru": "Управление открытым проектом, сообщество, путь в CNCF и кризисы. В конце — год проекта в инкубаторе.", "en": "Governing an open project, community, the CNCF path and crises. Ends with a year in the incubator." },
+    "card": { "ru": "Управление открытым проектом, сообщество, выбор фонда и его стоимость, кризисы. В конце — год в инкубаторе.", "en": "Governing an open project, community, choosing a foundation and its cost, crises. Ends with a year in the incubator." },
     "summary": {
-      "ru": "Как развивать открытый проект, который создала или поддерживает компания: модели заработка и уроки смены лицензий, управление проектом и нейтральность, участники и менторство, сообщество, путь в CNCF от Sandbox до Graduated, что фонд даёт проектам и компаниям-членам, сигналы использования и кризисы. В конце — год проекта в инкубаторе CNCF в симуляторе.",
-      "en": "How to develop an open project created or supported by a company: revenue models and lessons from license changes, project governance and neutrality, contributors and mentorship, community, the CNCF journey from Sandbox to Graduated, what the foundation offers projects and member companies, usage signals and crises. The course ends with a simulated year for a project in the CNCF incubator."
+      "ru": "Как развивать открытый проект, который создала или поддерживает компания: модели заработка и уроки смены лицензий, управление проектом и нейтральность, участники и менторство, сообщество, выбор юридического дома проекта среди фондов — ASF, Linux Foundation и её отраслевых фондов, Eclipse, NumFOCUS, Conservancy, — права и стоимость передачи на три года, уровни зрелости и льготы на примере CNCF, сигналы использования и кризисы. В конце — год проекта в инкубаторе CNCF в симуляторе.",
+      "en": "How to develop an open project created or supported by a company: revenue models and lessons from license changes, project governance and neutrality, contributors and mentorship, community, choosing a legal home for the project among foundations—ASF, the Linux Foundation and its sub-foundations, Eclipse, NumFOCUS, Conservancy—the rights and three-year cost of a transfer, maturity levels and benefits using CNCF as the example, usage signals and crises. The course ends with a simulated year for a project in the CNCF incubator."
     },
     "subtitle": {
       "ru": "Для мейнтейнеров, основателей и руководителей сообщества открытых инфраструктурных проектов.",
@@ -147,10 +147,10 @@ export const PRODUCTS: Product[] = [
       "ru": "Стратегия и экосистема",
       "en": "Strategy and ecosystem"
     },
-    "card": { "ru": "Категория и рынок, уход с VMware, партнёры и маркетплейсы, стандарты и нейросети-агенты.", "en": "Category and market, the VMware exodus, partners and marketplaces, standards and AI agents." },
+    "card": { "ru": "Категория, рыночные события от смены лицензий до суверенности, партнёры, стандарты и агенты.", "en": "Category, market events from license changes to sovereignty, partners, standards and agents." },
     "summary": {
-      "ru": "Долгая стратегия инфраструктурной компании: как рынок учится называть вашу задачу, что на самом деле происходит с уходом с VMware и суверенным облаком в Европе, встроенная дистрибуция и партнёры, комиссии маркетплейсов облаков, стандарты, сертификация и обучение, нейросети и агенты как советчики и исполнители.",
-      "en": "The long-term strategy of an infrastructure company: how the market learns to name your problem, what is actually happening with departures from VMware and sovereign cloud in Europe, embedded distribution and partners, cloud marketplace fees, standards, certification and training, AI and agents as advisers and executors."
+      "ru": "Долгая стратегия инфраструктурной компании: как рынок учится называть вашу задачу, как превращать рыночные события в проверенные предложения — смены лицензий и условий у VMware, Oracle, Terraform, Redis и Elasticsearch, стоимость наблюдаемости, возврат из облака, дефицит ускорителей, агенты, инциденты доверия и суверенная инфраструктура в разных регионах, — встроенная дистрибуция и партнёры, комиссии маркетплейсов облаков, стандарты, сертификация и обучение, нейросети и агенты как советчики и исполнители.",
+      "en": "The long-term strategy of an infrastructure company: how the market learns to name your problem, how to turn market events into tested offers—license and term changes at VMware, Oracle, Terraform, Redis and Elasticsearch, observability costs, cloud repatriation, accelerator scarcity, agents, trust incidents and sovereign infrastructure across regions—embedded distribution and partners, cloud marketplace fees, standards, certification and training, AI and agents as advisers and executors."
     },
     "subtitle": {
       "ru": "Для основателей и руководителей, которые отвечают за положение компании на рынке на годы вперёд.",

@@ -106,14 +106,14 @@ export const ROUTE_HOURS: Record<string, Record<import('./types').Level, number>
     "experienced": 2.9166666666666665
   },
   "events": {
-    "beginner": 3.3,
-    "intermediate": 3.3,
-    "experienced": 3.3
+    "beginner": 3.7333333333333334,
+    "intermediate": 3.7333333333333334,
+    "experienced": 3.7333333333333334
   },
   "strategy": {
-    "beginner": 1.7,
-    "intermediate": 1.7,
-    "experienced": 1.7
+    "beginner": 3.066666666666667,
+    "intermediate": 3.066666666666667,
+    "experienced": 3.066666666666667
   },
   "metrics": {
     "beginner": 7,
@@ -126,9 +126,9 @@ export const ROUTE_HOURS: Record<string, Record<import('./types').Level, number>
     "experienced": 1.1666666666666667
   },
   "oss": {
-    "beginner": 2.6666666666666665,
-    "intermediate": 2.6666666666666665,
-    "experienced": 2.6666666666666665
+    "beginner": 3.566666666666667,
+    "intermediate": 3.566666666666667,
+    "experienced": 3.566666666666667
   },
   "finance": {
     "beginner": 5.833333333333333,

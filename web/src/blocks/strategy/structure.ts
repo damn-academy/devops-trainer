@@ -4,12 +4,23 @@ import type { CourseModule } from '../../core/types';
 export const STRATEGY_MODULES: CourseModule[] = [
   {
     "title": {
-      "ru": "Категория и рынок",
-      "en": "Category and market"
+      "ru": "Категория",
+      "en": "Category"
     },
     "lessons": [
-      "strategy.category",
-      "strategy.market-events"
+      "strategy.category"
+    ]
+  },
+  {
+    "title": {
+      "ru": "Рыночные события",
+      "en": "Market events"
+    },
+    "lessons": [
+      "strategy.market-events",
+      "strategy.market-shifts",
+      "strategy.sovereignty",
+      "strategy.event-offer"
     ]
   },
   {
@@ -39,8 +50,20 @@ export const STRATEGY_SUMMARIES: Record<string, Bi> = {
     "en": "How the market learns to name the problem your product solves and what the company can do to help."
   },
   "strategy.market-events": {
-    "ru": "Что говорят данные об уходе с VMware и о суверенном облаке в Европе и как превратить эти события в предложение.",
-    "en": "What the data says about leaving VMware and sovereign cloud in Europe, and how to turn these events into an offer."
+    "ru": "Пять случаев, когда крупный поставщик поменял условия — VMware, Oracle, Terraform, Redis, Elasticsearch, — и какие предложения из этого выросли.",
+    "en": "Five cases where a major vendor changed its terms—VMware, Oracle, Terraform, Redis, Elasticsearch—and the offers that grew out of them."
+  },
+  "strategy.market-shifts": {
+    "ru": "События другого типа: стоимость наблюдаемости, возврат из облака, дефицит ускорителей, агенты и MCP, сбой CrowdStrike и Log4Shell.",
+    "en": "Other kinds of events: observability costs, cloud repatriation, accelerator scarcity, agents and MCP, the CrowdStrike outage and Log4Shell."
+  },
+  "strategy.sovereignty": {
+    "ru": "Четыре региональные модели суверенной инфраструктуры и досье из восьми проверяемых свойств для своего продукта.",
+    "en": "Four regional models of sovereign infrastructure and an eight-property dossier to check your own product against."
+  },
+  "strategy.event-offer": {
+    "ru": "Метод в семь шагов от новости к проверенному предложению: повод у аккаунтов, три гипотезы, карточка проверки, экономика для клиента и критерии остановки.",
+    "en": "A seven-step method from news to a tested offer: account-level triggers, three hypotheses, a test card, customer economics and stop criteria."
   },
   "strategy.ecosystem": {
     "ru": "Встроенная дистрибуция, партнёры, комиссии маркетплейсов облаков и технологические альянсы.",
