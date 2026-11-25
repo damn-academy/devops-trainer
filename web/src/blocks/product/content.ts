@@ -518,7 +518,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     concepts: [],
     refs: { lesson: 'product.chasm' },
     prompt: bi(
-      'Какая волна сейчас выносит вверх категорию открытых облачных платформ?',
+      'Какая волна, по данным урока на конец 2026 года, выносит вверх категорию открытых облачных платформ?',
       'Which wave is currently lifting the category of open cloud platforms?',
     ),
     options: [
@@ -548,11 +548,11 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     concepts: [],
     refs: { lesson: 'product.first-minutes' },
     prompt: bi(
-      'За месяц у продукта тысяча посетителей, триста скачали его, шестьдесят запустили и двенадцать получили результат. Что чинить в первую очередь?',
-      'In a month the product had a thousand visitors, three hundred downloads, sixty launches and twelve successful results. What do you fix first?',
+      'За месяц у продукта тысяча посетителей, триста скачали его, двести десять запустили и двенадцать получили результат. Что чинить в первую очередь?',
+      'In a month the product had a thousand visitors, three hundred downloads, two hundred and ten launches and twelve successful results. What do you fix first?',
     ),
     options: [
-      { id: 'launch-result', text: bi('Переход от запуска к результату, потому что до результата доходят лишь двое из десяти запустивших', 'The launch-to-result transition, because only two of ten who launch reach a result'), correct: true, why: bi('Из шестидесяти запустивших до результата дошли двенадцать, и это самое узкое звено всей воронки.', 'Of the sixty who launched, twelve reached a result — the narrowest step of the whole funnel.') },
+      { id: 'launch-result', text: bi('Переход от запуска к результату, потому что до результата доходит меньше одного из десяти запустивших', 'The launch-to-result transition, because fewer than one in ten who launch reach a result'), correct: true, why: bi('Из двухсот десяти запустивших до результата дошли двенадцать, около шести процентов, тогда как от посещения до скачивания доходят тридцать процентов, а от скачивания до запуска — семьдесят. Это самое узкое звено воронки, и люди теряются на нём уже после того, как потратили время на установку.', 'Of the 210 who launched, twelve reached a result, about six percent, while thirty percent of visitors download and seventy percent of downloads launch. It is the narrowest step, and people drop there after they have already spent time installing.') },
       { id: 'top', text: bi('Верх воронки и привлечение новых посетителей', 'The top of the funnel and visitor acquisition'), why: bi('Лить воду в решето бесполезно: новые посетители стекут через то же отверстие, что и старые.', 'Pouring water into a sieve is useless: new visitors drain through the same hole as the old ones.') },
       { id: 'download', text: bi('Переход от посещения к скачиванию', 'The visit-to-download transition'), why: bi('До скачивания доходят три из десяти посетителей, и хотя переход можно улучшить, он не самый узкий.', 'Three of ten visitors download; the step can be improved, but it is not the narrowest one.') },
     ],
