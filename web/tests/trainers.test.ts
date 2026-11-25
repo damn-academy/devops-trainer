@@ -54,7 +54,7 @@ it.each([true, false])('mounts all widgets with configured=%s', async configured
   }
   expect(setup('signal-feed', { data: 'sales.signal-feed' }, configured).host.textContent).toContain('1/20');
   expect(setup('boundary', { data: 'product.boundary' }, configured).host.querySelectorAll('[role=radiogroup]')).toHaveLength(20);
-  expect(setup('events.roi', {}, configured).host.querySelectorAll('input')).toHaveLength(8);
+  expect(setup('events.roi', {}, configured).host.querySelectorAll('input')).toHaveLength(9);
 });
 it('sends roleplay history and the exact debrief command', async () => {
   const w = setup('roleplay', { trainer: 'events.booth-visitor' }); w.send('hello');
@@ -113,3 +113,17 @@ it('guards malformed and unavailable storage', () => {
   }
   expect(setup('template', { file: '../bad' }).host.querySelector('a')).toBeNull();
  });
+
+it('uses the selected conference segment for connected roleplay and locks it until the next visitor', async () => {
+  const w=setup('roleplay',{trainer:'events.booth-visitor'});
+  const [venue,segment]=w.host.querySelectorAll('select');
+  venue.value='PGConf'; venue.dispatchEvent(new Event('change'));
+  expect(segment.value).toBe('PostgreSQL');
+  w.send('Which database problem brought you here?');
+  await vi.waitFor(()=>expect(w.stream).toHaveBeenCalledOnce());
+  const call=w.stream.mock.calls[0] as unknown as [{messages:{content:string}[]}];
+  expect(call[0].messages[0].content).toContain('PGConf');
+  expect(call[0].messages[0].content).toContain('DBA');
+  await vi.waitFor(()=>expect(venue.disabled).toBe(true));
+  w.button('End the conversation and call the next visitor').click(); expect(venue.disabled).toBe(false);
+});

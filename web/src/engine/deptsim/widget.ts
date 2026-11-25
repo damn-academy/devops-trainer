@@ -1,5 +1,5 @@
 import { h, copyText, downloadFile } from '../../core/dom';
-import { lang, t } from '../../core/i18n';
+import { bi, lang, t } from '../../core/i18n';
 import type { ChatMessage, WidgetReg, WidgetCtx, Mounted } from '../../core/types';
 import { renderMd } from '../../core/markdown';
 import { ai, type AiService } from '../ai/service';
@@ -51,7 +51,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
     root.textContent = t(s.missing);
     return { dispose() { root.remove(); style.remove(); } };
   }
-  const fresh = (): SimGame => ({ version: 1, options: { seed: randomSeed(), company: scenario.id === 'oss.incubation' ? 'lumenmesh' : legends[0].id, companyMode: 'preset', companyConfig: defaultCompanyConfig(), difficulty: 'like-life', turns: scenario.turns.default }, lang: lang(), prompt: '', messages: [], started: false });
+  const fresh = (): SimGame => ({ version: 1, options: { eventFormat: 'no-booth', seed: randomSeed(), company: scenario.id === 'oss.incubation' ? 'lumenmesh' : legends[0].id, companyMode: 'preset', companyConfig: defaultCompanyConfig(), difficulty: 'like-life', turns: scenario.turns.default }, lang: lang(), prompt: '', messages: [], started: false });
   let game = loadGame(scenario) ?? fresh();
   if (!compatibleCompany(scenario, game.options)) game = fresh();
   let disposed = false, busy = false, completed = false, generation = 0;
@@ -104,6 +104,10 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   const length = h('output');
   const seed = h('input', { type: 'number', min: 0, max: 0xffffffff, step: 1, value: game.options.seed });
   settings.append(companyMode, presetCompany, customCompany, randomize, h('div', {}, text('difficulty'), difficulty), h('label', {}, text('turns'), turns, length), h('label', {}, text('seed'), seed));
+  const eventFormat = h('select', {}, h('option', { value: 'no-booth' }, t(bi('Без стенда', 'No booth'))), h('option', { value: 'booth' }, t(bi('Со стендом', 'Booth'))));
+  eventFormat.value = game.options.eventFormat ?? 'no-booth';
+  eventFormat.onchange = () => { game.options.eventFormat = eventFormat.value as 'no-booth' | 'booth'; updatePrompt(); };
+  if (scenario.id === 'events.kubecon') settings.append(h('label', {}, t(bi('Формат участия', 'Participation format')), eventFormat));
   company.onchange = () => { game.options.company = company.value; updatePrompt(); };
   turns.oninput = () => { game.options.turns = Number(turns.value); updatePrompt(); };
   seed.onchange = () => {
@@ -136,7 +140,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   const newGame = button('newGame', () => { confirmation.hidden = false; });
   const exportButton = button('export', () => downloadFile(`${scenario.id}-${game.options.seed}.md`, exportGame(scenario, game), 'text/markdown;charset=utf-8'));
   root.append(h('h3', {}, t(scenario.title)), ...scenario.premise[lang()].split(/\n\s*\n/).slice(0, 2).map(p => h('p', {}, p)), h('p', { class: 'deptsim-note' }, text('note')), settings,
-    h('div', { class: 'ds-actions' }, copy, size, play, newGame, exportButton), longHint, languageNotice, link, promptDetails, fallback, status, confirmation, pane);
+    h('div', { class: 'ds-actions' }, copy, h('button.btn', { type: 'button', onclick: () => downloadFile('prompt.txt', game.prompt, 'text/plain;charset=utf-8') }, t(bi('Скачать запрос (.txt)', 'Download prompt (.txt)'))), status, size, play, newGame, exportButton), longHint, languageNotice, link, promptDetails, fallback, confirmation, pane);
   input.oninput = updateControls;
   input.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void submit(input.value); } };
 
@@ -186,6 +190,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
     stopStream();
     game = fresh(); completed = false; paneOpen = false;
     syncCompany();
+    eventFormat.value = game.options.eventFormat ?? 'no-booth';
     company.value = game.options.company; turns.value = String(game.options.turns); seed.value = String(game.options.seed);
     difficulty.querySelectorAll<HTMLInputElement>('input').forEach(r => { r.checked = r.value === game.options.difficulty; });
     transcript.replaceChildren(); input.value = ''; status.textContent = ''; confirmation.hidden = true;

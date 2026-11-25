@@ -41,7 +41,7 @@ export function boundaryScore(rows: string[][], choices: Choice[]) {
     return s;
   }, { protests: 0, disputed: 0, fine: 0 });
 }
-export const roiDefaults = { cost: 40000, profit: 50000, winRate: .2, target: .15, scans: 300, contacted: .6, meeting: .25, opportunity: .3 };
+export const roiDefaults = { cost: 40000, profit: 50000, winRate: .2, target: .15, dedup: 1, scans: 300, contacted: .6, meeting: .25, opportunity: .3 };
 export type RoiInput = typeof roiDefaults;
 export function breakEven(p: RoiInput) { return { wins: p.cost / p.profit, opportunities: p.winRate === 0 ? (p.cost === 0 ? 0 : Infinity) : p.cost / (p.profit * p.winRate) }; }
 export function simulate(p: RoiInput, seed = 42) {
@@ -62,8 +62,8 @@ export function simulate(p: RoiInput, seed = 42) {
   const binomial = (n: number, share: number) => { let hits = 0; for (let i = 0; i < n; i++) if (random() < share) hits++; return hits; };
   const opportunities: number[] = []; let paidBack = 0;
   for (let i = 0; i < 500; i++) {
-    let n = p.scans;
-    for (const share of [p.target, p.contacted, p.meeting, p.opportunity]) n = binomial(n, beta(share));
+    let n = Math.round(p.scans * p.target * p.dedup);
+    for (const share of [p.contacted, p.meeting, p.opportunity]) n = binomial(n, beta(share));
     opportunities.push(n);
     if (binomial(n, beta(p.winRate)) * p.profit >= p.cost) paidBack++;
   }
