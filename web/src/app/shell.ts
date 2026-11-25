@@ -1,3 +1,4 @@
+import { loadDraft, saveDraft } from '../engine/trainers/storage';
 import { exportWithFeedback } from '../engine/feedback/threads';
 import { mountFeedback } from '../engine/feedback/ui';
 // The app shell: top bar (course name, route, review, settings, help,
@@ -93,6 +94,12 @@ export function startApp(root: HTMLElement): void {
   root.append(h('a.skip', { href: '#main', onclick: (e: Event) => (e.preventDefault(), main.focus()) }, t(bi('К содержанию', 'Skip to content'))), header, loadingLine, main, footer);
 
   let shown = 0;
+  let readingKey: string | undefined;
+  let restoring = false;
+  const saveReading = () => { if (readingKey && !restoring) saveDraft(readingKey, window.scrollY); };
+  window.addEventListener('scroll', saveReading, { passive: true });
+  window.addEventListener('pagehide', saveReading);
+
   const waitForContent = (r: Route, seq: number, keepScroll: boolean) => {
     clear(main);
     loadingLine.textContent = t(bi('Загружаем учебник…', 'Loading the textbook…'));
@@ -110,6 +117,8 @@ export function startApp(root: HTMLElement): void {
     );
   };
   const show = (r: Route, keepScroll = false): void => {
+    saveReading();
+    readingKey = undefined;
     route = r;
     const seq = ++shown;
     contentPages?.closeDoc();
@@ -154,7 +163,17 @@ export function startApp(root: HTMLElement): void {
       ),
     );
     window.dispatchEvent(new Event('feedback-page'));
-    if (!keepScroll) window.scrollTo({ top: 0 });
+    readingKey = r.name === 'lesson' ? `reading.${r.id}` : undefined;
+    if (!keepScroll) {
+      const top = readingKey ? loadDraft(readingKey, 0) : 0;
+      restoring = true;
+      requestAnimationFrame(() => {
+        if (seq !== shown) return;
+        window.scrollTo({ top: Number.isFinite(top) ? top : 0, behavior: 'instant' });
+        restoring = false;
+      });
+    }
+
   };
   mountFeedback();
   onRoute((r) => show(r));

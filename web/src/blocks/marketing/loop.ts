@@ -224,3 +224,9 @@ export const loopModel = defineModel<P>({
     return bi('Шаг показывает, какой этап машины работает и что он передаёт следующему.', 'The step shows which stage of the machine works and what it hands to the next one.');
   },
 });
+
+loopModel.diagram.narrow = {
+  width: 340, height: 910,
+  nodes: loopModel.diagram.nodes.map((n, i) => ({ ...n, x: 95, y: 20 + i * 150, w: 220 })),
+  edgeVia: { i1: [], i2: [], i3: [], i4: [], i5: [], i6: [[25, 805], [25, 60]] },
+};

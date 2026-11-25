@@ -1,3 +1,5 @@
+import { loadDraft, saveDraft } from '../../engine/trainers/storage';
+import { strings as trainerStrings } from '../../engine/trainers/strings';
 // Calibration trainer for the hidden scientific-thinking pilot: ten claims
 // about the world, the learner assigns a probability (0–100%) that each
 // claim is true, then the widget shows the verdicts, the share of true
@@ -243,6 +245,7 @@ export function mountCalibration(el: HTMLElement, _props: unknown, ctx: WidgetCt
   root.className = 'scb-root';
   el.append(style, root);
   const state = loadState();
+  const history = loadDraft<{ at: string; answers: Record<string, number> }[]>('scithink.calibration.history', []);
   let revealed = state.revealed && Object.keys(state.answers).length === CLAIMS.length;
 
   const h = (tag: string, cls: string, ...kids: (Node | string)[]) => {
@@ -262,6 +265,8 @@ export function mountCalibration(el: HTMLElement, _props: unknown, ctx: WidgetCt
       show.onclick = () => {
         const stats = calibrationStats(CLAIMS, state.answers);
         if (stats.answered !== CLAIMS.length) return;
+        history.push({ at: new Date().toISOString(), answers: { ...state.answers } });
+        saveDraft('scithink.calibration.history', history);
         revealed = true;
         state.revealed = true;
         saveState({ answers: state.answers, revealed: true });
@@ -272,7 +277,7 @@ export function mountCalibration(el: HTMLElement, _props: unknown, ctx: WidgetCt
       root.replaceChildren(
         h('div', 'scb-claims', ...CLAIMS.map((c) => {
           const value = state.answers[c.id] ?? 50;
-          const out = h('output', '', `${value}%`);
+          const out = h('output', '', state.answers[c.id] === undefined ? '—' : `${value}%`);
           const input = document.createElement('input');
           input.type = 'range';
           input.min = '0'; input.max = '100'; input.step = '5'; input.value = String(value);
@@ -284,7 +289,9 @@ export function mountCalibration(el: HTMLElement, _props: unknown, ctx: WidgetCt
             show.disabled = calibrationStats(CLAIMS, state.answers).answered !== CLAIMS.length;
             progress.textContent = t(bi(`Отвечено ${calibrationStats(CLAIMS, state.answers).answered} из ${CLAIMS.length}`, `Answered ${calibrationStats(CLAIMS, state.answers).answered} of ${CLAIMS.length}`));
           };
-          return h('div', 'scb-claim', h('p', '', t(c.claim)), h('div', 'scb-slider', input, out));
+          const accept = h('button', 'scb-btn', '50%') as HTMLButtonElement;
+          accept.type = 'button'; accept.onclick = () => { input.value = '50'; input.dispatchEvent(new Event('input')); };
+          return h('div', 'scb-claim', h('p', '', t(c.claim)), h('div', 'scb-slider', input, out), accept);
         })),
         h('div', 'scb-actions', show, progress),
       );
@@ -318,6 +325,11 @@ export function mountCalibration(el: HTMLElement, _props: unknown, ctx: WidgetCt
         h('div', 'scb-actions', again),
       );
     }
+    if (history.length) root.append(h('details', 'scb-history',
+      h('summary', '', t(trainerStrings.history)),
+      // TODO(ru-prose): Explain that repeated known claims measure recall, not transfer of calibration skill.
+      ...history.map(entry => { const stats = calibrationStats(CLAIMS, entry.answers); return h('div', '', entry.at, h('div', 'scb-curve', curveSvg(stats))); }),
+    ));
   };
   render();
   return {

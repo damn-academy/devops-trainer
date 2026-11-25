@@ -1,0 +1,19 @@
+import { h, downloadFile } from '../../core/dom';
+import { t } from '../../core/i18n';
+import type { Mounted } from '../../core/types';
+import { strings } from './strings';
+import { loadDraft, saveDraft } from './storage';
+
+/** An editable local document built from the authored task, without inventing a model answer. */
+export function mountTaskDocument(el: HTMLElement, id: string, title: string, task: string): Mounted {
+  const root = h('div', { class: 'task-document', style: 'display:grid;gap:12px;margin-block:20px' });
+  const input = h('textarea', { rows: 10, style: 'width:100%;font:inherit;box-sizing:border-box' });
+  input.value = loadDraft(`document.${id}`, `${title}\n\n${task}\n\n`);
+  input.oninput = () => saveDraft(`document.${id}`, input.value);
+  // TODO(ru-prose): Label the plain-text document download.
+  const download = h('button', { type: 'button', class: 'btn', 'aria-label': 'Download .txt' }, '↓ .txt');
+  download.onclick = () => downloadFile(`${id}.txt`, input.value, 'text/plain;charset=utf-8');
+  root.append(h('label', {}, t(strings.input), input), download); el.append(root);
+  // TODO(ru-prose): Author filled examples and structured worksheet columns where the task does not specify them.
+  return { dispose() { root.remove(); } };
+}

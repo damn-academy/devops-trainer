@@ -44,6 +44,8 @@ Complete this task using four AI systems your buyers use, such as ChatGPT, Claud
 - Yes, if the company belongs to the CNCF || Foundation membership does not establish notability.
 <!-- /quiz -->
 
+<!-- widget: template {"file":"llm-panel"} -->
+
 <!-- section: sources -->
 - Profound, sources of links in AI answers — https://www.tryprofound.com/blog/ai-platform-citation-patterns (05.06.2025)
 - Semrush, most-cited sites — https://www.semrush.com/blog/most-cited-domains-ai/ (10.11.2025)

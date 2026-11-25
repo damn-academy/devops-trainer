@@ -70,3 +70,5 @@
 .external-chats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .external-help { margin-top: 8px; }
 .external-dialog h2 { margin: 0 0 12px; font-size: 1.5rem; }
+
+@media (max-width:640px){.tutor-launch{position:static;margin:12px;box-shadow:none}.tutor-launch span{max-width:16em;margin-left:8px}}

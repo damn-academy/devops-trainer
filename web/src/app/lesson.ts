@@ -1,3 +1,4 @@
+import { mountTaskDocument } from '../engine/trainers/document';
 // The lesson page: sections in order (re-ordered for Experienced: the
 // challenge comes first, 08 §5.2), progress auto-saved after every section.
 
@@ -68,6 +69,10 @@ export function lessonPage(id: string, focusSection?: string): Page {
     if (doneSet.has(s.id)) r.el.classList.add('seen');
     body.append(r.el);
     if (r.mounted) mounts.push(r.mounted);
+    if (s.kind === 'text' && s.step === 'practice' &&
+        ['pr.analysts', 'pr.press', 'pr.founder', 'oss.cncf-path', 'oss.cncf-benefits', 'oss.revenue', 'scithink.final'].includes(lesson.id)) {
+      mounts.push(mountTaskDocument(r.el, `${lesson.id}.${s.id}`, t(s.title ?? lesson.title), t(s.body)));
+    }
   }
 
   const next = block ? registry.lessons.get(block.lessons[index + 1]) : undefined;
@@ -100,7 +105,7 @@ export function lessonPage(id: string, focusSection?: string): Page {
       'nav.lesson-nav',
       {},
       prev ? h('a.btn.ghost', { href: href({ name: 'lesson', id: prev.id }) }, icon('prev'), t(prev.title)) : h('span'),
-      next ? h('a.btn.primary', { href: href({ name: 'lesson', id: next.id }) }, t(next.title), icon('next')) : block ? h('a.btn.primary', { href: href({ name: 'block', id: block.id }) }, t(block.title), icon('next')) : h('span'),
+      next ? h('a.btn.primary', { href: href({ name: 'lesson', id: next.id }) }, t(next.title), icon('next')) : block ? h('a.btn.primary', { href: href(block.id === 'marketing' ? { name: 'course', id: block.id } : { name: 'block', id: block.id }) }, t(block.title), icon('next')) : h('span'),
     ),
   );
   updateBar();

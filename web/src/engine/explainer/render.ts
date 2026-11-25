@@ -122,7 +122,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   });
   let focusedStep = -1;
   let zoom = 1;
-  const zoomControl = h('input', { type: 'range', min: 1, max: 2, step: 0.25, value: 1, 'aria-label': t(bi('Масштаб схемы', 'Diagram zoom')) }) as HTMLInputElement;
+  const zoomControl = h('input', { type: 'range', min: 1, max: 4, step: 0.25, value: 1, 'aria-label': t(bi('Масштаб схемы', 'Diagram zoom')) }) as HTMLInputElement;
   zoomControl.addEventListener('input', () => { zoom = Number(zoomControl.value); focusedStep = -1; paint(); });
   const mobileNotes = h('div.ex-mobile-notes');
   const mobileNodes = h('details.ex-mobile-nodes', {}, h('summary', {}, t(bi('Элементы схемы', 'Diagram elements'))), ...d.nodes.map(n => h('button.btn.ghost.small', { type: 'button', onclick: () => { selected = n.id; showCard(n.id, n.card, txt(n.label)); } }, txt(n.label))));
@@ -592,15 +592,20 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     const target = [x, y, Math.max(...boxes.map((b) => b.x + b.w)) + 20 - x, Math.max(...boxes.map((b) => b.y + b.h)) + 20 - y];
     cancelAnimationFrame(cameraAnim);
     if (window.matchMedia?.('(max-width: 600px)').matches) {
-      // Fit an authored narrow layout to the viewport; other diagrams retain readable text and scroll.
+      if (!viewport.clientWidth) return;
+      // Start with the complete diagram; the existing zoom control enables close inspection.
+      const overview = model.diagram.narrow || ['scithink.correlation', 'marketing.loop'].includes(model.id);
       const labels = [...svg.querySelectorAll<SVGTextElement>('.node-label')];
       const smallest = Math.min(12, ...labels.map(label => parseFloat(getComputedStyle(label).fontSize) || 12));
-      const scale = (model.diagram.narrow ? viewport.clientWidth / target[2] : Math.max(1, 12.05 / smallest)) * zoom;
+      const scale = (overview ? viewport.clientWidth / target[2] : Math.max(1, 12.05 / smallest)) * zoom;
+      const businessOverview = ['scithink.correlation', 'marketing.loop'].includes(model.id) && zoom === 1;
+      if (businessOverview) viewport.style.height = 'auto';
+      else viewport.style.removeProperty('height');
       svg.style.width = `${target[2] * scale}px`;
       svg.style.height = `${target[3] * scale}px`;
       svg.setAttribute('viewBox', target.join(' '));
       svg.dataset.camera = target.join(' ');
-      if (focusedStep !== idx) {
+      if (!businessOverview && focusedStep !== idx) {
         const st = steps[idx];
         const ids = [...Object.keys(st?.say ?? {}), ...(st?.focus ?? [])];
         const node = ids.map(id => d.nodes.find(n => n.id === id)).find(Boolean) ?? d.nodes[0];
@@ -612,6 +617,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       }
       return;
     }
+    viewport.style.removeProperty('height');
     svg.style.removeProperty('width');
     svg.style.removeProperty('height');
     const from = (svg.dataset.camera ?? target.join(' ')).split(' ').map(Number);
