@@ -9,10 +9,14 @@ import { demoScenario } from '../src/engine/deptsim/demo';
 import { exportGame, mountDeptSim, type SimAi } from '../src/engine/deptsim/widget';
 import { loadGame, storageKey } from '../src/engine/deptsim/storage';
 import type { SimOptions } from '../src/engine/deptsim/types';
+import { scenarios, registerDepartmentScenarios } from '../src/sims/scenarios';
+import { companyGroups } from '../src/sims/companies';
+import { randomCompany } from '../src/engine/deptsim/model';
 import module from '../src/engine/deptsim/module';
 
 const options: SimOptions = { seed: 42, difficulty: 'like-life', company: 'stratova', turns: 4 };
 registerScenarios([demoScenario]);
+registerDepartmentScenarios();
 const mounted: Mounted[] = [];
 beforeEach(() => { localStorage.clear(); setLang('en'); });
 afterEach(() => { mounted.splice(0).forEach(m => m.dispose()); document.body.replaceChildren(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
@@ -33,11 +37,11 @@ function fakeAi(configured = true) {
   };
   return { service, calls, listeners, configure() { status.configured = true; listeners.forEach(fn => fn()); } };
 }
-function mount(configured = true) {
+function mount(configured = true, scenario = demoScenario) {
   const fake = fakeAi(configured);
   const host = document.createElement('div'); document.body.append(host);
   const ctx: WidgetCtx = { level: 'beginner', complete: vi.fn(), record() {}, openDoc() {} };
-  const instance = mountDeptSim(host, { scenario: demoScenario.id }, ctx, fake.service); mounted.push(instance);
+  const instance = mountDeptSim(host, { scenario: scenario.id }, ctx, fake.service); mounted.push(instance);
   const button = (label: string) => [...host.querySelectorAll('button')].find(b => b.textContent === label)!;
   const input = host.querySelector<HTMLTextAreaElement>('.ds-pane textarea')!;
   function send(value: string) { input.value = value; input.dispatchEvent(new Event('input')); button('Send').click(); }
@@ -176,5 +180,61 @@ describe('department simulator widget', () => {
     m.instance.dispose(); m.calls[0].delta('late');
     expect(m.calls[0].abort).toHaveBeenCalled(); expect(m.listeners.size).toBe(0); expect(m.host.children).toHaveLength(0);
     expect(localStorage.getItem(storageKey(demoScenario.id))).toBe(saved);
+  });
+});
+
+// Test-only mounts: exercise real scenario widgets without attaching them to lessons.
+describe('authored scenario mounts and company configurator', () => {
+  it.each(scenarios)('mounts $id with English notice and prompt size', scenario => {
+    const m = mount(false, scenario);
+    expect(m.host.textContent).toContain(scenario.title.en);
+    expect(m.host.textContent).toContain('The game master prompt is in Russian for now; the model will answer in English');
+    expect(m.host.querySelector('.ds-prompt-size')!.textContent).toContain(String(loadGame(scenario)!.prompt.length));
+    expect(m.host.querySelectorAll('.ds-company-config select')).toHaveLength(6);
+    m.button('Copy the prompt').click();
+  });
+  it('randomizes all groups by the entered seed, persists edits, restores and exports custom properties', () => {
+    const scenario = scenarios[0];
+    const m = mount(true, scenario);
+    const seed = m.host.querySelector<HTMLInputElement>('input[type=number]')!;
+    seed.value = '42'; seed.dispatchEvent(new Event('change'));
+    m.button('Random company').click();
+    expect(loadGame(scenario)!.options.companyConfig).toEqual(randomCompany(42));
+    expect(loadGame(scenario)!.options.companyMode).toBe('custom');
+    const selects = [...m.host.querySelectorAll<HTMLSelectElement>('.ds-company-config select')];
+    selects.forEach((select, i) => expect(select.value).toBe(randomCompany(42)[companyGroups[i].key]));
+    selects[0].value = companyGroups[0].options[0].value;
+    selects[0].dispatchEvent(new Event('change'));
+    const saved = loadGame(scenario)!;
+    expect(saved.options.companyConfig!.code).toBe(companyGroups[0].options[0].value);
+    expect(exportGame(scenario, saved)).toContain(companyGroups[0].options[0].text);
+    m.instance.dispose();
+    const restored = mount(true, scenario);
+    expect(loadGame(scenario)!.options).toEqual(saved.options);
+    expect(restored.host.querySelector<HTMLInputElement>('input[value=custom]')!.checked).toBe(true);
+    restored.button('Play here').click();
+    expect(restored.host.querySelector('fieldset')!.disabled).toBe(true);
+    restored.button('New game').click(); restored.button('Start again').click();
+    expect(restored.host.querySelector<HTMLInputElement>('input[value=preset]')!.checked).toBe(true);
+  });
+  it('switches between presets and custom properties and rejects corrupt saved configurations', () => {
+    const scenario = scenarios[1]; const m = mount(false, scenario);
+    m.host.querySelector<HTMLInputElement>('input[value=custom]')!.click();
+    expect(loadGame(scenario)!.prompt).toContain('Свойства компании, выбранные игроком:');
+    m.host.querySelector<HTMLInputElement>('input[value=preset]')!.click();
+    expect(loadGame(scenario)!.prompt).toContain('Компания Stratova');
+    const saved = loadGame(scenario)!;
+    saved.options.companyMode = 'custom'; saved.options.companyConfig = { code: 'invalid' };
+    localStorage.setItem(storageKey(scenario.id), JSON.stringify(saved));
+    expect(loadGame(scenario)).toBeNull();
+  });
+  it('shows the long-message hint only above 60,000 characters', () => {
+    const scenario = { ...scenarios[0], id: 'test.long-prompt', prompt: { ru: 'x'.repeat(60001), en: 'x'.repeat(60001) } };
+    registerScenarios([scenario]);
+    const m = mount(false, scenario);
+    const hint = [...m.host.querySelectorAll('p')].find(p => p.textContent!.includes('Some free chat plans'))!;
+    expect(hint.hidden).toBe(false);
+    const normal = mount(false, scenarios[0]);
+    expect([...normal.host.querySelectorAll('p')].find(p => p.textContent!.includes('Some free chat plans'))!.hidden).toBe(true);
   });
 });
