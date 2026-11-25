@@ -1,3 +1,4 @@
+import { loadDraft, saveDraft } from '../trainers/storage';
 // The tutor side panel: any lesson can open it (the launcher button on lesson
 // and lab pages, or openTutor() from a widget). It streams answers from the
 // learner's own AI, follows the hint ladder H1–H5 in practice, asks "where
@@ -180,7 +181,12 @@ function draw(o: TutorOptions) {
   panel.append(seg, h('p.small.tutor-help', {}, t(T.modeHelp[state.mode])), ctxLine);
 
   if (!ai().status.configured) {
-    panel.append(externalButton({ screen: o.screen?.() }));
+    const question = h('textarea.tutor-input', { rows: 3, placeholder: t(T.placeholder), 'aria-label': t(T.placeholder) }) as HTMLTextAreaElement;
+    const draftId = `helper.${w.lesson?.id ?? 'global'}`;
+    question.value = loadDraft(draftId, '');
+    question.oninput = () => saveDraft(draftId, question.value);
+    panel.append(question, externalButton(() => ({ screen: o.screen?.(), want: question.value })));
+
     panel.append(h('div.tutor-connect', {}, h('p', {}, t(T.notConnected)), h('a.btn.primary.small', { href: href({ name: 'settings' }), onclick: closeTutor }, t(T.connect))));
     return;
   }
