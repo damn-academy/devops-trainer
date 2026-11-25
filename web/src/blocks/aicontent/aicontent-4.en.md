@@ -10,7 +10,7 @@ A useful technique is to build the timeline from actual audio duration: a synthe
 <!-- section: theory | Video generators -->
 Generative video models in 2026 change faster than people can document them. OpenAI closed the Sora 2 and Sora 2 Pro APIs on September 24, 2026, without a direct replacement, so a pipeline can no longer be built on them. Google's Veo 3.1 costs 40 cents per second of video with audio in Cloudflare's catalogue; Runway's Standard plan at $15 per month provides 625 credits, which the service equates to roughly 52 seconds of Gen-4.5 generation; Pika's $10 Starter plan provides 600 credits, with a five-second 720p clip costing 20. HeyGen and Synthesia provide avatars and dubbing.
 
-Measure cost per accepted second: all generations and retries divided by the seconds remaining after the editor selects usable footage. Avatars require consent to use a person's likeness; translation requires terminology checks by a native speaker; advertising requires watching the complete version with audio and subtitles. Generative video works well for backgrounds, cutaways and illustrations, but real screen recordings remain better for explaining how a product works.
+Measure cost per accepted second: all generations and retries divided by the seconds remaining after the editor selects usable footage. Illustrative example with fictional figures: for a 60-second video, the team made 40 generations of 8 seconds each at $1.50 per generation; 12 were usable, totaling 96 seconds, of which 60 made it into the edit. Generation cost $60; editing and review took 3 hours at $40, adding $120. The total is $180, or $3 per accepted second; if the usable share halves and 80 generations are needed, generation costs $120 and the cost per second rises to $4. Avatars require consent to use a person's likeness; translation requires terminology checks by a native speaker; advertising requires watching the complete version with audio and subtitles. Generative video works well for backgrounds, cutaways and illustrations, but real screen recordings remain better for explaining how a product works.
 
 <!-- section: theory | Voice and music -->
 Speech synthesis has become inexpensive: ElevenLabs' $6 monthly Starter plan includes a commercial licence and instant voice cloning, while Creator at $22 includes professional cloning. OpenAI's `tts-1` and `gpt-4o-mini-tts` models have been deprecated with shutdown scheduled for January 6, 2027, and their replacement uses a different interface. Open models such as Piper suit local work. Disclose a synthetic voice to listeners; cloning another person's voice requires consent covering specific languages, channels, duration and advertising. Consent to record an interview does not mean consent to synthesise new lines in that voice.
@@ -27,7 +27,7 @@ Missing audio is the most frustrating video and podcast failure. Once, camera-re
 
 <!-- quiz -->
 ? A synthesised line is a second and a half longer than scripted. How do you prevent lips and subtitles falling out of sync?
-+ Build the timeline from the actual duration of the synthesised audio, not from the script || Fitting the visuals to the real audio makes lips and subtitles align automatically.
++ Build the timeline from the actual duration of the synthesised audio, not from the script || The editing program places the utterance and its caption using the audio timestamps; avatar lip movement still needs visual checking, because utterance duration alone does not guarantee alignment.
 - Speed up the line in an audio editor to the duration specified in the video script || Accelerated speech sounds unnatural, and the next line will drift again.
 - Shorten the line and synthesise it repeatedly until its duration matches the script || This slow trial and error damages the script; adjusting the visuals is easier.
 ? A video render finished without errors. What should happen before publication?
@@ -77,6 +77,37 @@ The pipeline is published as the open-source video-to-article plugin for Claude 
 For the first run, choose a short recording you have rights to: your own talk or a Creative Commons video, which you can find using the licence filter in YouTube search. Run `/video-to-article` followed by a video link or file path. The plugin asks for the article language, number of illustrations and publication platform, then creates a folder where each stage leaves its own file: the source video and audio, a timestamped transcript, context with a glossary and recognition pitfalls, 2,500-character fragments, processed text for each fragment, the assembled article, a completeness report with length ratios for each fragment, a fact-checker's report, a literary edit with a change log and repeat fact-check, proofreading, five headline options, frames and the final article.
 
 The plugin stops twice for a human decision: after fact-checking and when choosing a headline. On the first run, check three things: whether the completeness report has fragments with ratios substantially below one, what the fact-checker marked FAIL and how it was fixed, and whether literary editing changed any numbers. If any of these went wrong, that is material for your task.
+
+<!-- section: theory | Worked example: one excerpt through every text stage -->
+To see the pipeline at work before running it on your own recording, examine an excerpt from a fictional talk about backups. Here is the transcript produced by Whisper:
+
+```text
+[12:04] We made backups every night, and we thought that was enough.
+[12:09] Then we discovered that restoring a hundred-gigabyte database takes
+[12:13] almost four hours, while our customer contract promised two.
+[12:18] We switched to copying the transaction log every five minutes,
+[12:23] and recovery dropped to approximately forty minutes.
+```
+
+Draft section after processing the excerpt:
+
+> The team made backups every night. Restoring a hundred-gigabyte database took four hours, although the contract promised two, so the team switched to copying the transaction log every five minutes and reduced recovery to forty minutes.
+
+The fact-checker's report compares each claim with the transcript:
+
+```text
+1. “backups every night” — PASS, 12:04
+2. “took four hours” — FAIL: the recording says “almost four hours”
+3. “the contract promised two” — PASS, 12:13
+4. “every five minutes” — PASS, 12:18
+5. “reduced recovery to forty minutes” — FAIL: the recording says “to approximately forty minutes”
+```
+
+Corrected and accepted version after copyediting and another fact-check:
+
+> The team made backups every night and thought that was enough. Then it turned out that restoring a hundred-gigabyte database takes almost four hours, while the customer contract promised two. The team switched to copying the transaction log every five minutes, and recovery dropped to approximately forty minutes.
+
+In the Russian original, the draft-to-transcript length ratio is about 0.79, which a completeness check would flag as suspiciously short; the accepted version's ratio is about 1.02. But it was fact-checking, not the length check, that found the draft's meaning errors: twice, the draft turned an approximate number into an exact one. Check the same thing in your own recording: where did the model drop “almost,” “approximately” or “about”?
 
 <!-- section: theory | When this pipeline is unnecessary -->
 Fifteen stages and ten roles pay off for long recordings and texts intended to last. A short post based on video needs only transcription, one draft and a read-through. At release, the plugin passed 28 regression tests, but a complete run on a real long video was still the next step, so releasing the tool did not prove it could produce finished articles without an editor. This applies to any pipeline: testing the mechanics does not replace checking results on real material.
