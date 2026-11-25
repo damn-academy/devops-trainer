@@ -134,3 +134,12 @@ it('rounds third SAFE half steps consistently in the displayed results', () => {
   expect(el.textContent).toContain('57,8 %'); expect(el.textContent).toContain('1,8 %'); expect(el.textContent).toContain('1,804688');
   mounted.dispose();
 });
+it('uses only franchise fields in franchise validation feedback', () => {
+  setLang('en');
+  const host=document.createElement('div');
+  const mounted=franchiseWidget.mount(host, {}, { level:'beginner', complete(){}, record(){}, openDoc(){} });
+  const issued=host.querySelectorAll('input')[1]; issued.value='20000000'; issued.dispatchEvent(new Event('input'));
+  expect(host.querySelector('.finance-result')?.textContent).toContain('issued shares cannot exceed authorized shares');
+  expect(host.querySelector('.finance-result')?.textContent).not.toMatch(/SAFE|pool|founder/);
+  mounted.dispose();
+});

@@ -23,6 +23,7 @@ function reader(book) {
   const functions={
     IF:(condition,yes,no)=>condition?yes:no,
     MOD:(a,b)=>((a%b)+b)%b,
+    MIN:(...args)=>Math.min(...args.map(Number)),
     MAX:(...args)=>Math.max(...args.map(Number)),
     SUM:(...args)=>args.flat().reduce((a,b)=>a+Number(b),0),
     SUMIFS:(values,...conditions)=>values.reduce((sum,value,i)=> {
@@ -87,6 +88,19 @@ for(const suffix of ['', '-en']) {
   for(let r=2;r<=4;r++) near(read(demo.name,`B${r}`),read(demo.name,`C${r}`),`demo ${r}`);
   near(read(cash.name,'N5'),-60,'annual CFO');
   for(let m=13;m<=18;m++) { const c=checks.getColumn(m+2).letter; near(read(checks.name,`${c}2`),0,`extended balance ${m}`); near(read(checks.name,`${c}3`),0,`extended CFO ${m}`); }
+  const originalLife = inputs.getCell('B18').value;
+  for (const life of [originalLife, 6, 18, 24]) {
+    inputs.getCell('B18').value=life; const depreciated=reader(w);
+    const equipment=inputs.getCell('B17').value;
+    for(let m=1;m<=18;m++) {
+      const c=checks.getColumn(m<=12?m+1:m+2).letter;
+      near(depreciated(balance.name,`${c}5`),Math.max(0,equipment*(1-m/life)),`fixed assets life ${life} month ${m}`);
+      near(depreciated(cash.name,`${c}10`),m<=life?equipment/life:0,`depreciation life ${life} month ${m}`);
+      near(depreciated(checks.name,`${c}2`),0,`balance life ${life} month ${m}`);
+      near(depreciated(checks.name,`${c}3`),0,`CFO life ${life} month ${m}`);
+    }
+  }
+  inputs.getCell('B18').value=originalLife;
   inputs.getCell('B21').value=1;
   const driven=reader(w);
   near(driven(pnl.name,'B5'),10,'first driver revenue');

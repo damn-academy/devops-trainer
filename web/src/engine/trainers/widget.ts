@@ -5,7 +5,7 @@ import type { Mounted, WidgetCtx, WidgetReg } from '../../core/types';
 import { ai, type AiService } from '../ai/service';
 import type { ChatMessage } from '../ai/client';
 import { eventVisitor } from './events';
-import { trainers, datasets, systemPrompt, learnerData, copyPrompt, verdict, boundaryScore, breakEven, simulate, roiDefaults, type Verdict, type Choice, type RoiInput } from './model';
+import { trainers, datasets, systemPrompt, learnerData, copyPrompt, verdict, boundaryScore, breakEven, simulate, uniqueTargetAccounts, roiDefaults, type Verdict, type Choice, type RoiInput } from './model';
 import { loadAttempts, saveAttempts, loadDraft, saveDraft, clearDraft } from './storage';
 import { strings as s } from './strings';
 export type TrainerAi = Pick<AiService, 'status' | 'ready' | 'onChange' | 'stream'>;
@@ -57,7 +57,9 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
     title(text(titles[file as keyof typeof titles]), false);
     const csv = file.startsWith('metrics-');
-    if (csv) root.append(h('p', {}, text('metricsFictional')));
+    if (csv) {
+      root.append(h('p', {}, text('metricsFictional')), h('button', { type: 'button', class: 'btn', onclick: () => { void import('../ai/panel').then(({ openTutor }) => openTutor({ mode: 'practice', templateFile: file })); } }, t(bi('Спросить наставника о данных', 'Ask the tutor about the data'))));
+    }
     root.append(h('a', { class: 'btn', href: `${import.meta.env.BASE_URL}templates/${file}${lang() === 'en' ? '-en' : ''}.${csv ? 'csv' : 'xlsx'}`, download: '' }, text(csv ? 'downloadCsv' : 'download')));
     const draftId = `template.${file}`;
     const input = h('textarea', { 'data-template-id': file, 'data-template-title': text(titles[file as keyof typeof titles]) }); input.value = loadDraft(draftId, '');
@@ -93,7 +95,8 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     output.value = governanceMarkdown(governance, choices);
     root.append(button('compareRepository', () => {
       result.replaceChildren(h('h4', {}, text('repositoryFacts')), h('ul', {}, ...governance.facts.map((f, i) => h('li', {}, ...renderInline(i > 0 && fixes[i - 1] ? governanceRemedies[i - 1] + ' ✓' : f)))), h('h4', {}, text('checks')), h('ul', {}, ...applicableChecks(governance, choices, fixes).map(c => h('li', {}, ...explanation(c)))));
-      result.hidden = false; remedies.hidden = false; if (!applicableChecks(governance, choices, fixes).length) ctx.complete();
+      result.hidden = false; remedies.hidden = false;
+      if (!applicableChecks(governance, choices, fixes).length) { result.append(h('p', {}, text('governanceSuccess'))); ctx.complete(); }
     }), remedies, result, h('h4', {}, 'GOVERNANCE.md'), output, button('copyGovernance', () => { void (async () => {
       const copied = await copyText(output.value);
       if (disposed) return;
@@ -185,7 +188,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       if (Object.values(inputs).some(v => !v.value || !Number.isFinite(v.valueAsNumber) || !v.checkValidity()) || !Number.isInteger(p.scans)) { result.textContent = text('invalid'); return; }
       const b = breakEven(p), m = simulate(p);
       const format = (n: number) => Number.isFinite(n) ? n.toLocaleString(lang(), { maximumFractionDigits: 2 }) : '∞';
-      result.replaceChildren(h('p', {}, t(bi('Учебный сценарий', 'Teaching scenario'))), h('p', {}, `${t(bi('Уникальные целевые компании', 'Unique target accounts'))}: ${Math.round(p.scans * p.target * p.dedup)}`), ...([['wins', b.wins], ['opportunities', b.opportunities], ['median', m.median], ['probability', m.probability * 100]] as const).map(([k, v]) => h('p', {}, `${text(k)}: ${format(v)}${k === 'probability' ? '%' : ''}`)), h('p', {}, text('payoff').replace('{n}', String(Math.round(m.probability * 100)))));
+      result.replaceChildren(h('p', {}, t(bi('Учебный сценарий', 'Teaching scenario'))), h('p', {}, `${t(bi('Уникальные целевые компании', 'Unique target accounts'))}: ${uniqueTargetAccounts(p)}`), ...([['wins', b.wins], ['opportunities', b.opportunities], ['median', m.median], ['probability', m.probability * 100]] as const).map(([k, v]) => h('p', {}, `${text(k)}: ${format(v)}${k === 'probability' ? '%' : ''}`)), h('p', {}, text('payoff').replace('{n}', String(Math.round(m.probability * 100)))));
     }
     root.append(fields, h('details', {}, h('summary', {}, t(bi('Допущения модели', 'Model assumptions'))), h('p', {}, text('assumptions'))), result); update();
   } else {

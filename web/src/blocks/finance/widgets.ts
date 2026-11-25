@@ -107,7 +107,7 @@ export const franchiseWidget: WidgetReg = { id: 'finance.franchise', mount(el) {
         [label('Сбор за годовой отчёт', 'Annual report fee'), fmt(r.fee)],
         [label('Всего со сбором', 'Total including fee'), fmt(r.total)],
       ]), node('p', r.instalments ? label('Платить частями: 40 % к 1 июня, по 20 % к 1 сентября и 1 декабря, остаток к 1 марта', 'Pay instalments: 40% by June 1, 20% each by September 1 and December 1, the remainder by March 1') : label(`Рассрочка не требуется: налог меньше ${fmt(5000)} долларов.`, `Instalments are not required: tax is below $${fmt(5000)}.`)));
-    } catch { ui.result.append(invalid()); }
+    } catch { ui.result.append(node('p', label('Проверьте значения: разрешённые и выпущенные акции — положительные целые числа; выпущенных не больше разрешённых; номинал больше нуля, валовые активы неотрицательны.', 'Check the inputs: authorized and issued shares must be positive integers; issued shares cannot exceed authorized shares; par value must be positive and gross assets nonnegative.'))); }
   };
   ui.input('Разрешённые к выпуску акции', 'Authorized shares', p.authorized, n => { p.authorized = n; render(); }, 1, '1');
   ui.input('Выпущенные акции', 'Issued shares', p.issued, n => { p.issued = n; render(); }, 1, '1');

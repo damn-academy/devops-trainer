@@ -210,7 +210,7 @@ Hosting in the country covers only the first item. For database, storage, securi
 <!-- /quiz -->
 
 <!-- section: task | Exercise: your product's sovereignty dossier -->
-Complete the exercise in the document on this page. Fill in the eight items of the sovereignty dossier for your product: how it meets each item today and what evidence supports it. Mark weak answers. Then choose one region from the lesson, find a local operator or integrator through which your product could reach procurement, and record which dossier items the partner covers itself.
+Complete the exercise in the document on this page. Fill in the eight items of the sovereignty dossier for your product: how it meets each item today and what evidence supports it. Example of one evidence chain: procurement requirement “the customer holds the encryption keys” → dossier item “who holds the encryption keys” → evidence: documentation for connecting an external key store and a recording of a test in which a key is revoked and the data becomes inaccessible → evidence boundary: the test shows that the mechanism works, but not how the customer stores its keys. Mark weak answers. Then choose one region from the lesson, find a local operator or integrator through which your product could reach procurement, and record which dossier items the partner covers itself.
 
 <!-- section: sources -->
 - Bitkom, dependence on US clouds — https://www.bitkom.org/Presse/Presseinformation/Wirtschaft-ruft-nach-deutscher-Cloud (11.06.2025)
@@ -295,7 +295,7 @@ The table describes teaching examples, not recommendations for all companies. Ea
 <!-- /quiz -->
 
 <!-- section: task | Exercise: a market opportunity memo -->
-Complete the exercise in the document on this page. Take an event from the dossiers in previous lessons, or, if you have no customer data of your own, use the lesson's illustrative example with a different event, such as the Redis license change, and work through the seven steps: event and deadline, consequence chain, affected accounts with triggers, three hypotheses, packaged offer, benefit calculation for one customer, and stop criteria. Fill in a test card with thresholds and a date. End with a decision: launch a pilot, scale, or stop, and why.
+Complete the exercise in the document on this page. Take an event from the dossiers in previous lessons, or, if you have no customer data of your own, use the lesson’s Oracle migration example, replacing two or three assumptions with your own, such as the support price, migration cost or share of migrated procedures, and work through the seven steps: event and deadline, consequence chain, affected accounts with triggers, three hypotheses, packaged offer, benefit calculation for one customer, and stop criteria. Fill in a test card with thresholds and a date. End with a decision: launch a pilot, scale, or stop, and why.
 
 <!-- section: sources -->
 - Simon Wardley. Finding a path — https://medium.com/wardleymaps/finding-a-path-cdb1249078c0 (2016)

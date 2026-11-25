@@ -140,3 +140,12 @@ it('uses the selected conference segment for connected roleplay and locks it unt
   await vi.waitFor(()=>expect(venue.disabled).toBe(true));
   w.button('End the conversation and call the next visitor').click(); expect(venue.disabled).toBe(false);
 });
+it('shows success and a next step when governance checks are resolved', () => {
+  const w = setup('governance', { data: 'oss.governance' });
+  w.button('Compare with the repository').click();
+  w.host.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(input => input.click());
+  w.button('Compare with the repository').click();
+  expect(w.host.textContent).toContain('All checks passed');
+  expect(w.host.textContent).toContain('Copy GOVERNANCE.md');
+  expect(w.ctx.complete).toHaveBeenCalled();
+});

@@ -1,10 +1,11 @@
 import { copyText, downloadFile, h } from '../../core/dom';
 import { bi, lang, t } from '../../core/i18n';
+import { productById } from '../../core/products';
 import { registry } from '../../core/registry';
 import { parseRoute } from '../../core/router';
 import { store } from '../../core/store';
 import type { Level, QText, QuizGrade, QuizItem } from '../../core/types';
-import { currentTask, documentDraft, terminalTail, vocabulary, where } from './context';
+import { currentTask, templateTask, templateDraft, documentDraft, terminalTail, vocabulary, where } from './context';
 import { chatLink, EXTERNAL_CHATS, packExternalPrompt, type ExternalContext } from './external-prompt';
 import { maskSecrets } from './prompt';
 import './ai.css';
@@ -14,6 +15,7 @@ let closeActive: (() => void) | undefined;
 export const EXTERNAL_LABEL = bi('Спросить нейросеть', 'Ask the AI');
 export interface ExternalOptions {
   lessonId?: string;
+  templateFile?: string;
   level?: Level;
   task?: string;
   screen?: string;
@@ -24,13 +26,24 @@ export function externalContext(o: ExternalOptions = {}): ExternalContext {
   const route = parseRoute(typeof location === 'undefined' ? '' : location.hash);
   const lesson = where().lesson || (o.lessonId && registry.lessons.get(o.lessonId)) || (route.name === 'explainer' ? [...registry.lessons.values()].find(l => l.sections.some(s => s.kind === 'explainer' && s.explainer === route.id)) : undefined);
   const block = lesson?.block;
-  const task = currentTask(lesson)?.task;
+  const task = (templateTask(lesson, o.templateFile) ?? currentTask(lesson))?.task;
+  const dataTasks = o.templateFile ? [] : (lesson?.sections ?? []).flatMap(section => {
+    if (section.kind !== 'widget' || section.widget !== 'template') return [];
+    const file = (section.props as { file?: string } | undefined)?.file;
+    if (!file || !templateDraft(file).trim()) return [];
+    const exercise = templateTask(lesson, file);
+    return exercise ? [`## ${file}\n\n${t(exercise.task.prompt)}`] : [];
+  });
+  const criteria = dataTasks.length
+    ? [...(documentDraft(lesson, undefined, false) && task ? [t(task.prompt)] : []), ...dataTasks].join('\n\n')
+    : task ? t(task.prompt) : undefined;
   return {
     lang: lang(), level: o.level ?? ((block && store.state.levels[block]) || 'beginner'),
+    course: block ? t(productById(block)?.title ?? registry.blocks.get(block)?.title ?? bi(block, block)) : undefined,
     block: block ? t(registry.blocks.get(block)?.title ?? bi(block, block)) : undefined,
     lesson: lesson ? t(lesson.title) : undefined, introduced: vocabulary(lesson),
-    task: o.task ?? (task ? t(task.prompt) : undefined),
-    draft: o.quiz ? undefined : documentDraft(lesson),
+    task: o.task ?? criteria,
+    draft: o.quiz ? undefined : o.templateFile ? templateDraft(o.templateFile) : documentDraft(lesson),
     terminal: terminalTail(), screen: o.screen, ...o.quiz, want: o.want,
   };
 }
@@ -80,7 +93,7 @@ export function openExternalPanel(o: ExternalOptions = {}): void {
     if (value === null || where().exam) return;
     close();
     const { openTutor } = await import('./panel');
-    openTutor({ mode: o.quiz ? 'review' : o.task ? 'practice' : 'explain', question: value });
+    openTutor({ mode: o.quiz ? 'review' : o.task ? 'practice' : 'explain', question: value, templateFile: o.templateFile });
   } }, t(bi('Спросить здесь', 'Ask here'))));
   dialog.append(h('h2', { id: 'external-title' }, t(EXTERNAL_LABEL)),
     h('p.small', {}, t(bi('Проверьте запрос перед отправкой. Можно изменить текст, удалить разделы с черновиками карточек и написать, что вы хотите понять.', 'Review the prompt before sharing. You can edit it, remove card draft sections and describe what you want to understand.'))),
