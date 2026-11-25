@@ -16,6 +16,8 @@ const ART: Record<string, Art> = {
   sales: { hue: 152, paths: ['M12 4a8 8 0 1 0 8 8', 'M12 8a4 4 0 1 0 4 4', 'M12 12l7-7', 'M16.5 4.5 19 5l.5 2.5'] },
   // Three stacked layers of a product.
   product: { hue: 268, paths: ['M12 4 3.5 8.5 12 13l8.5-4.5L12 4Z', 'M3.5 12.5 12 17l8.5-4.5', 'M3.5 16.5 12 21l8.5-4.5'] },
+  // A metric gauge.
+  metrics: { hue: 25, paths: ['M4 18a8 8 0 1 1 16 0', 'M12 18l4-6', 'M7 14.5h.01', 'M12 10h.01', 'M17 14.5h.01'] },
   // A stage microphone.
   finance: { hue: 165, paths: ["M4 19.5h16", "M6.5 16.5v-4", "M11 16.5v-8", "M15.5 16.5v-6", "M5 9l5-4 4 3 5-4", "M16.5 4h2.5v2.5"] },
   events: { hue: 38, paths: ['M9 4.5a3 3 0 0 1 6 0V11a3 3 0 0 1-6 0V4.5Z', 'M5.5 10.5a6.5 6.5 0 0 0 13 0', 'M12 17v3.5', 'M8.5 20.5h7'] },

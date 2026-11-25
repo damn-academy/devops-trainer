@@ -115,6 +115,11 @@ export const ROUTE_HOURS: Record<string, Record<import('./types').Level, number>
     "intermediate": 1.7,
     "experienced": 1.7
   },
+  "metrics": {
+    "beginner": 7,
+    "intermediate": 7,
+    "experienced": 7
+  },
   "pr": {
     "beginner": 1.1666666666666667,
     "intermediate": 1.1666666666666667,

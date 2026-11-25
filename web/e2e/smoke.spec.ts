@@ -9,7 +9,7 @@ const BLOCKS = ['orient', 'methodology', 'linux', 'git-yaml', 'networks', 'conta
 test.describe('shell', () => {
   test('home shows public business courses in order and keeps the profession route separate in RU/EN', async ({ page }) => {
     const errors = watchErrors(page);
-    const courses = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'aicontent', 'scithink'];
+    const courses = ['marketing', 'sales', 'product', 'metrics', 'events', 'oss', 'strategy', 'finance', 'pr', 'aicontent', 'scithink'];
     await open(page, '#/');
     for (const language of ['ru', 'en']) {
       await page.locator('.lang-switch button', { hasText: language.toUpperCase() }).click();
