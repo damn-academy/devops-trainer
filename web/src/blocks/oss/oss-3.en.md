@@ -56,7 +56,7 @@ Complete the exercise in your project's community. Find ten questions from the p
 
 <!-- section: sources -->
 - Slack, history retention in free workspaces — https://slack.com/help/articles/29414264463635-Updates-to-message-and-file-history-on-free-workspaces (from 26.08.2024)
-- Discord, public server content in search — https://discord.com/blog/ (announcement October 2026)
+- Discord, public server content in search — https://discord.com/blog/making-content-from-discoverable-servers-easier-to-discover (announcement October 2026)
 - GitHub Discussions — https://docs.github.com/en/discussions/collaborating-with-your-community-using-discussions/about-discussions
 - OpenTofu 1.10 — https://opentofu.org/blog/opentofu-1-10-0/ (23.06.2025)
 - Cilium, 2025 annual report — https://www.cncf.io/wp-content/uploads/2025/12/cilium-annual-report-2025-final.pdf

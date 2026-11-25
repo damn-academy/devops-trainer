@@ -19,7 +19,7 @@ Complete the exercise in a spreadsheet. Describe which usage signals you collect
 - Scarf — https://app.scarf.sh/; Liquibase and Scarf — https://about.scarf.sh/post/building-a-predictable-icp/ (05.01.2026)
 - Common Room, Pulumi case study — https://www.commonroom.io/customers/pulumi-signals-meetings-booked/
 - Reo.dev, Unstructured case study — https://www.reo.dev/customer-stories/unstructured
-- Word to the Wise, email investigation — https://www.wordtothewise.com/2025/10/ (October 2025)
+- Word to the Wise, email investigation — https://www.wordtothewise.com/2025/10/b2b-spam-strapi-unstructured-and-reo/ (October 2025)
 
 <!-- lesson: oss.crises | Open source project crises: licensing, vulnerabilities, and compromises | 18 -->
 <!-- section: hook -->

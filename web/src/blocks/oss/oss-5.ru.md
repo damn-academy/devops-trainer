@@ -19,7 +19,7 @@
 - Scarf — https://app.scarf.sh/; Liquibase и Scarf — https://about.scarf.sh/post/building-a-predictable-icp/ (05.01.2026)
 - Common Room, случай Pulumi — https://www.commonroom.io/customers/pulumi-signals-meetings-booked/
 - Reo.dev, случай Unstructured — https://www.reo.dev/customer-stories/unstructured
-- Word to the Wise, расследование письма — https://www.wordtothewise.com/2025/10/ (октябрь 2025)
+- Word to the Wise, расследование письма — https://www.wordtothewise.com/2025/10/b2b-spam-strapi-unstructured-and-reo/ (октябрь 2025)
 
 <!-- lesson: oss.crises | Кризисы открытого проекта: лицензия, уязвимость, взлом | 18 -->
 <!-- section: hook -->
