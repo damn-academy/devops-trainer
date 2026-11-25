@@ -65,6 +65,24 @@ export const PRODUCTS: Product[] = [
   },
   {
     "kind": "course",
+    "id": "product",
+    "title": {
+      "ru": "Продукт",
+      "en": "Product"
+    },
+    "summary": {
+      "ru": "Как управлять продуктом, вокруг которого есть открытый проект и сообщество: категория и клин, двигатели роста, граница открытой и платной версии, путь от ранних пользователей к прагматикам, первые минуты с продуктом, документация, непрерывное открытие продукта, открытая дорожная карта и сигналы сообщества. В конце — продуктовый квартал в симуляторе.",
+      "en": "How to manage a product with an open project and community around it: category and wedge, growth engines, the boundary between open and paid editions, the journey from early adopters to pragmatists, the first minutes with the product, documentation, continuous product discovery, an open roadmap and community signals. The course ends with a simulated product quarter."
+    },
+    "subtitle": {
+      "ru": "Для продуктовых менеджеров и технических основателей инфраструктурных и open-source продуктов.",
+      "en": "For product managers and technical founders of infrastructure and open-source products."
+    },
+    "shelf": "business",
+    "hidden": true
+  },
+  {
+    "kind": "course",
     "id": "events",
     "title": {
       "ru": "События и выступления",
