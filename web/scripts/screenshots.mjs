@@ -11,6 +11,7 @@ const filter = process.argv[2];
 
 /** name → [route, element to capture: a selector, 'full' for the whole page, null for the viewport] */
 const SHOTS = [
+  ['marketing-budget', '#/lesson/marketing.paid', '.mkt-budget'],
   ['home', '#/', null],
   ['lesson', '#/lesson/linux.permissions', null],
   ['url-typing', '#/explainer/net.url', 'full'],
@@ -69,7 +70,7 @@ for (const [view, viewport] of VIEWS) {
         if (lang === 'en' && !['home', 'lesson', 'url-typing', 'kanban-board', 'k8s-from-blocks', 'orient-request', 'cluster-from-code'].includes(name)) continue;
         await page.goto(BASE + route);
         await page.waitForTimeout(700);
-        await page.addStyleTag({ content: '.top { position: static !important; } .tutor-launch { display: none !important; }' });
+        await page.addStyleTag({ content: '.top { position: static !important; } .tutor-launch, .feedback-launch { display: none !important; }' });
         if (BEFORE[name]) await BEFORE[name](page);
         const sw = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         if (sw > 0) problems.push(`${name} ${view}/${theme}: horizontal scroll ${sw}px`);
