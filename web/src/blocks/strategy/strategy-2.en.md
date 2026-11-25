@@ -19,6 +19,17 @@ An open-source project with a container image does not automatically become a pr
 <!-- section: theory | Technology alliances -->
 NVIDIA Partner Network distinguishes cloud providers, hardware manufacturers, software vendors, integrators, solution providers, and service partners, with requirements and benefits depending on partner type and competency; saying “we support GPUs” is not enough to qualify. Red Hat's 2025 certification rules distinguish partner-validated products from Red Hat-certified products for commercial software on OpenShift; a compatible application, a certified Operator, and an alternative Kubernetes distribution are different offerings. For a small vendor, a tested reference configuration and a service partner who can install it give buyers more than a broad alliance announcement. Public prices and measured sales growth from these programs for small vendors are unavailable.
 
+<!-- section: theory | Example partner package for a hosting provider -->
+Here is a completed package for the fictional regional hosting provider Westhost, which wants to sell managed databases and Kubernetes clusters on your company's platform.
+
+The partner receives the right to sell services under its own brand, licenses at a 40% discount from end-customer prices, training for two engineers and a dedicated second-line support channel. The partner operates the platform on its hardware, provides first-line support, finds customers and invoices them. Your company releases updates, responds to second-line requests within four working hours, provides training and reviews incidents and plans with the partner quarterly.
+
+The partner pays a monthly rate for each running customer cluster. Deals your company brings are recorded in a shared table and receive a smaller discount. Register each deal before the first customer meeting to avoid ownership disputes. If an incident remains unresolved after eight hours, the partner's support lead calls your on-call engineer; after a day, both company leaders speak.
+
+For the first joint deal, the partner selects one customer needing a managed database. Together you run a month-long pilot. Success means the customer's workload runs on the platform and a one-year contract is signed. Both sides then review the result and decide whether to expand the package.
+
+Explain each term: why a 40% discount instead of 20%, why a four-hour second-line response, and why registration precedes the meeting. A partner may sign unexplained terms but dispute them at the first conflict.
+
 <!-- section: task | Task: one partner package -->
 Complete this task in a document. Choose one partner type for your platform: a hosting provider, an integrator, or a hardware manufacturer. Describe its package using the points in this lesson: what the partner receives, what they do and what you do, how revenue is shared, who owns incidents, and how the first joint deal works. Then calculate how much you would pay the AWS marketplace on a private offer worth 400 000 dollars and on a public container offer for the same amount.
 

@@ -42,6 +42,15 @@ An exclusive is an agreement that one publication gets to publish the news first
 <!-- section: theory | Help from a foundation -->
 CNCF helps projects with announcements according to their maturity level: on entering Incubating, a project blog post, an embargoed media pitch, and a post on announcement day; for releases, webinars, posts, and press outreach. These are services for projects, not a substitute for a PR agency, and the foundation does not guarantee press coverage. Member companies participate in quarterly new-member announcements. The claim that “the Linux Foundation will issue a free press release for any member” is unsupported. The next lesson covers crisis communication, when the news is bad.
 
+<!-- section: theory | Two pitches to a journalist: analysis -->
+Imagine Stratova, a fictional private-cloud platform company. In the past year twelve European hosting providers leaving VMware moved to its platform. One provider in Czechia is willing to discuss its migration on the record. The company has published measurements of cluster costs on its own hardware before and after migration.
+
+The first pitch: “Hello! We are Stratova, the market leader in open cloud platforms. We would like to offer you an exclusive story about our revolutionary platform. We would be happy to give an interview!” The journalist will not read beyond the first line: there is no news, the claims have no evidence, and the relevance to readers is unclear.
+
+The second pitch: “Hello Dan. In October you wrote about European providers recalculating their costs after VMware's new terms. We have data on twelve providers that moved to an open platform this year. One, based in Brno, is willing to discuss the migration costs and what went wrong on the record. Here is a link to cluster cost measurements before and after. If this interests you, our CTO can answer questions this week. If it does not, no reply is needed and I will not follow up.” This pitch connects to the journalist's previous article, offers verifiable facts and an independent speaker, and makes declining easy.
+
+Check your pitch against five questions: does it connect to the journalist's work; does it include a verifiable fact; can someone outside your company confirm the story; do the first two sentences explain the point; and is declining easy? If you have no news of your own, write a pitch using the fictional Stratova facts above.
+
 <!-- section: task | Task: news for one journalist -->
 Complete this task in a document. Choose one publication from the lesson and find a journalist who has covered your category in the last three months. Read three of their articles. Then write down which story from your company could be news for their readers: the fact at its core, the figures, who can discuss it, and what the journalist can verify independently. Write a pitch email of six to eight sentences.
 
