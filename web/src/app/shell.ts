@@ -9,7 +9,6 @@ import { bi, lang, onLangChange, setLang, t, UI } from '../core/i18n';
 import { loadRegistry, registry } from '../core/registry';
 import { href, onRoute, type Route } from '../core/router';
 import { store } from '../core/store';
-import { visibleProducts } from '../core/products';
 import type { Page } from './common';
 import { helpButton } from './help';
 import { homePage } from './home';
@@ -26,9 +25,8 @@ async function loadContent(): Promise<ContentPages> {
 }
 
 function topBar(current: Route): HTMLElement {
-  const nav = (r: Route, label: string, ic: Parameters<typeof icon>[0]) =>
-    h('a.nav-link', { href: href(r), 'aria-current': current.name === r.name ? 'page' : undefined }, icon(ic), h('span', {}, label));
-  const profession = visibleProducts('profession')[0];
+  const nav = (r: Route, label: string, ic: Parameters<typeof icon>[0], also: Route['name'][] = []) =>
+    h('a.nav-link', { href: href(r), 'aria-current': current.name === r.name || also.includes(current.name) ? 'page' : undefined }, icon(ic), h('span', {}, label));
   const themeBtn = h('button.icon-btn', { type: 'button', 'aria-label': t(UI.theme), title: t(UI.theme) }, icon(shownTheme() === 'dark' ? 'moon' : 'sun'));
   themeBtn.addEventListener('click', () => {
     const next = getTheme() === 'auto' ? (shownTheme() === 'dark' ? 'light' : 'dark') : getTheme() === 'dark' ? 'light' : 'dark';
@@ -51,7 +49,8 @@ function topBar(current: Route): HTMLElement {
     h(
       'nav.topnav',
       {},
-      profession ? nav({ name: 'profession', id: profession.id }, t(profession.title), 'map') : null,
+      nav({ name: 'professions' }, t(bi('Профессии', 'Professions')), 'map', ['profession', 'block', 'placement', 'exam']),
+      nav({ name: 'courses' }, t(bi('Курсы', 'Courses')), 'doc', ['course']),
       nav({ name: 'review' }, t(UI.review), 'repeat'),
       nav({ name: 'about' }, t(bi('Справка', 'Help')), 'book'),
       nav({ name: 'settings' }, t(UI.settings), 'gear'),
