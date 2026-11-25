@@ -1,3 +1,4 @@
+import { addExamples } from './template-examples.mjs';
 import ExcelJS from 'exceljs';
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +19,7 @@ export const templates = {
   'llm-panel': [sheet('Ответы LLM', 'LLM responses', 'дата, модель и версия, поиск включён, язык, вопрос, повтор 1–3, упомянут ли продукт, верна ли категория, верна ли лицензия, верны ли возможности, ссылки в ответе, ошибка и вероятный источник', 'date, model and version, search enabled, language, question, repetition 1–3, product mentioned, correct category, correct license, correct capabilities, links in response, error and likely source')],
   'signals-week': [sheet('Сигналы недели', 'Weekly signals', 'источник, задача пользователя, кто сообщил, тип пользователя: пробует/рабочая среда/платит, дословная цитата, ссылка', 'source, user task, reported by, user type: evaluating/production/paying, verbatim quote, link')],
 };
+addExamples(templates, sheet);
 await mkdir(output, { recursive: true });
 for (const [file, sheets] of Object.entries(templates)) for (const en of [false, true]) {
   const workbook = new ExcelJS.Workbook();
@@ -26,6 +28,7 @@ for (const [file, sheets] of Object.entries(templates)) for (const en of [false,
   for (const spec of sheets) {
     const ws = workbook.addWorksheet(en ? spec.en : spec.ru);
     ws.addRow(en ? spec.english : spec.headers);
+    for (const row of spec.rows?.[en ? "en" : "ru"] ?? []) ws.addRow(row);
     ws.views = [{ state: 'frozen', ySplit: 1 }];
     ws.getRow(1).font = { bold: true };
     ws.getRow(1).alignment = { wrapText: true, vertical: 'top' };

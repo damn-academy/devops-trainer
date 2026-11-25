@@ -53,6 +53,8 @@ Start with one long article a month and regular conversations on two platforms y
 <!-- section: task | Task: twelve topics for the year -->
 Complete this exercise in a document. List twelve decisions your company made in the past two years about architecture, licensing, pricing, hiring or customers. For each, record what can be discussed publicly and which figures can be shown. Mark the first three topics and the platforms where excerpts will appear. Then prepare for the founder’s next speaking engagement: record its objective, three facts they can share, off-limits subjects and the hardest audience question with a three-sentence answer.
 
+<!-- widget: template {"file":"pr-founder"} -->
+
 <!-- section: sources -->
 - Y Combinator, interview with James Hawkins — https://www.youtube.com/watch?v=5WN8bfG06Hk (10.12.2025)
 - Redis, AGPLv3 — https://redis.io/blog/agplv3/ (01.05.2025)
