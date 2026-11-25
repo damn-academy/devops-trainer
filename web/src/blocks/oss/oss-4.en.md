@@ -18,6 +18,8 @@ In May 2025, the TOC restructured its technical groups. There are now five: Deve
 <!-- section: task | Exercise: a readiness spreadsheet for the next level -->
 Complete the exercise in a spreadsheet. List all the requirements in the application template for the next level for your project, or for the fictional project in the course simulator. For each requirement, record the evidence you already have, with a link, what is missing, and who is responsible for collecting it. Separately list five to seven users you will ask for interviews and the operational problem each solves with the project.
 
+<!-- widget: deptsim {"scenario":"oss.incubation"} -->
+
 <!-- section: sources -->
 - CNCF, charter — https://github.com/cncf/foundation/blob/main/charter.md
 - CNCF TOC, graduation criteria — https://github.com/cncf/toc/blob/main/process/graduation_criteria.md

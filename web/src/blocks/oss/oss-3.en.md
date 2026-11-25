@@ -18,6 +18,8 @@ CNCF tracks successfully completed internships; applications are not counted. In
 <!-- section: task | Exercise: metrics for your project -->
 Complete the exercise in the “Project Health” simulator on this page or in LFX Insights for your own project. Calculate the median and ninetieth percentile of time to first response to new contributors' pull requests over the past six months, the share of unanswered requests, and the bus factor and elephant factor based on reviews. Find the step in the contributor funnel where the most people are lost, and write down two changes you will make this month to improve it.
 
+<!-- widget: health {"data":"oss.health"} -->
+
 <!-- section: sources -->
 - CHAOSS, time to first response — https://www.chaoss.community/kb/metric-time-to-first-response/
 - CHAOSS, viability metrics — https://www.chaoss.community/viability-metrics-what-its-made-of/ (2023)

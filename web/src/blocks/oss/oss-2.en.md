@@ -31,6 +31,8 @@ A code of conduct works when it is enforced. CNCF's 2025 transparency report des
 <!-- section: task | Exercise: GOVERNANCE.md in an evening -->
 Complete the exercise in the “GOVERNANCE.md in an Evening” simulator on this page. Assemble a governance file for a fictional project from CNCF template blocks: roles, nomination, removal, decision-making, security, and code of conduct. The simulator will then show the project's CODEOWNERS file and repository permissions and identify contradictions between your GOVERNANCE.md and who actually has merge permissions. Resolve the contradictions so that the document describes reality.
 
+<!-- widget: governance {"data":"oss.governance"} -->
+
 <!-- section: sources -->
 - CNCF, GOVERNANCE.md template — https://github.com/cncf/project-template/blob/main/GOVERNANCE.md; maintainer-led governance — https://github.com/cncf/project-template/blob/main/GOVERNANCE-maintainer.md; CONTRIBUTING — https://github.com/cncf/project-template/blob/main/CONTRIBUTING.md (checked 25.11.2026)
 - Kubernetes, contributor roles — https://github.com/kubernetes/community/blob/main/community-membership.md

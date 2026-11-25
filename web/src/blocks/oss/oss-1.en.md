@@ -24,6 +24,8 @@ If a project has been transferred to a foundation, the company can no longer cha
 <!-- section: task | Exercise: the boundary between open source and paid versions -->
 Complete the exercise in the “Boundary Between Open Source and Paid Versions” simulator on this page. Assign twenty features of a fictional platform to its open source or paid version. The simulator will show how the community and buyers react, following the rule discussed in the product course: features needed by an organization as a whole are generally accepted as paid features, while charging for features everyone needs causes dissatisfaction. Then list three features of your own project that you would never move to the paid version, and explain why.
 
+<!-- widget: boundary {"data":"product.boundary"} -->
+
 <!-- section: sources -->
 - Kubermatic, repository — https://github.com/kubermatic/kubermatic
 - Grafana Labs, 400 million dollars in revenue — https://grafana.com/press/2025/09/30/grafana-labs-surpasses-400m-arr-and-7000-customers-gains-new-investors-to-accelerate-global-expansion/ (30.09.2025)
