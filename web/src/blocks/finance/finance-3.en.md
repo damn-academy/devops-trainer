@@ -54,15 +54,15 @@ An escalating-payment contract, for example 60 in year one, 120 in year two and 
 
 <!-- quiz -->
 ? A customer cohort started the year at 100, expanded by 20, contracted by 5 and churned by 10. What are NRR and GRR?
-+ NRR 105%, GRR 85% || NRR includes expansion; GRR includes only losses.
++ NRR 105% and GRR 85%: expansion is included only in the first metric || NRR includes expansion; GRR includes only losses.
 - NRR 105%, GRR 105%, because both metrics use the same customer cohort || GRR excludes expansion and cannot exceed 100%.
-- NRR 85%, GRR 105%, because gross retention includes contract expansion || It is the reverse: only NRR includes expansion.
+- NRR 85%, GRR 105% || It is the reverse: only NRR includes expansion.
 ? Monthly customer churn is 2%. What is annual churn?
-+ About 21.5% || 1 − 0.98¹² ≈ 21.5%: each month’s churn applies to a smaller base.
-- 24%, because twelve months at two percent equals twenty-four percent || The base shrinks each month, so this calculation is wrong.
++ About 21.5%: each month, 98% of the previous base remains || 1 − 0.98¹² ≈ 21.5%: each month’s churn applies to a smaller base.
+- 24%: twelve times two percent || The base shrinks each month, so this calculation is wrong.
 - About 2%, because churn is an average monthly measure and cannot be annualized || Annual churn can be calculated and is much larger than monthly churn.
 ? Ten customers have had no churn over three months. What LTV does the churn formula produce?
-+ The formula is inapplicable: the sample is too small and young || Zero churn does not make LTV infinite; track cohort profit by month.
++ The formula is inapplicable: ten customers over three months is too small and young a sample || Zero churn does not make LTV infinite; track cohort profit by month.
 - Infinite, which is a strong argument for investors in the next funding round || Infinite LTV indicates that the formula has broken down.
 - Three months of revenue, because the company has no more data yet || LTV describes the entire customer lifetime; three months of revenue cannot replace it.
 <!-- /quiz -->
@@ -96,7 +96,7 @@ Distinguish three hiring statuses: offer accepted, role approved and role under 
 <!-- section: theory | Revenue forecasts without a drawn exponential curve -->
 Forecast revenue from what produces it. For self-service purchases: new paying customers equal qualified signups times activation and paid-conversion rates, followed by cohort retention and average revenue. For enterprise sales: new bookings equal productive salespeople times quota times attainment, allowing for rep ramp-up, sales cycles and implementation capacity. Do not add the CRM forecast to sales-capacity forecasts: one validates the other.
 
-Example: two salespeople with annual quotas of 600 and attainment of 60% generate 720 in annual new bookings. If one takes six months to ramp at 50% productivity, effective capacity is 1 + 0.5 × 0.5 = 1.25 reps, or 450 instead of 720. An annual 120 contract signed in December contributes almost no revenue that year.
+Example: two salespeople with annual quotas of 600 thousand and attainment of 60% generate 720 thousand in annual new bookings. If the second salesperson works at 50% productivity for the first six months and at full productivity for the second six months, effective capacity is 1 + 0.5 × 0.5 + 0.5 × 1 = 1.75 reps, or 630 thousand instead of 720 thousand. An annual 120 thousand contract signed in December contributes almost no revenue that year.
 
 A discount changes more than it seems. A million units at ten cents generates 100 in revenue; delivery cost of four cents per unit is 40, leaving gross profit of 60. A 20% discount at the same volume gives revenue of 80 and profit of 40: price fell 20%, but profit fell 33%. Restoring profit of 60 requires selling 1.5 million units, 50% more. A discounted annual prepayment improves cash but reduces lifetime contract profit; the decision must show both lines.
 
@@ -112,9 +112,9 @@ At seed stage, investors need understandable drivers, 18–24 months of cash vis
 ? A founder delays two engineering hires by three months to save money. What else must change in the model?
 + Revenue: the product may launch later, making savings without this adjustment fictitious || Hiring scenarios are connected to revenue drivers.
 - Nothing, because hiring only affects company expenses and revenue is independent || Without people, product development and sales move more slowly.
-- Only payroll taxes, because they begin when employees start || Taxes move with salary automatically; revenue is the key issue.
+- Only payroll taxes || Taxes move with salary automatically; revenue is the key issue.
 ? Unit price is cut by 20% and unit cost is 40% of the original price. How much must volume rise to preserve gross profit?
-+ By 50% || Unit profit falls from six cents to four, requiring one and a half times the volume.
++ By 50%: profit per unit falls from 60 to 40 || Unit profit falls from six cents to four, requiring one and a half times the volume.
 - By 20%, the same percentage as the price cut, to offset the discount || The discount consumes unit profit, which is much smaller than revenue.
 - By 25%, because the company must recover one fifth of its lost revenue || Calculate using unit profit.
 <!-- /quiz -->

@@ -22,7 +22,7 @@ Delaware offers two corporate franchise-tax methods, and the company pays the lo
 
 The example company has ten million authorized shares, eight million issued shares, par value of $0.00001 and gross assets of two million. Authorized-shares tax: 250 + 999 × 85 = $85,165. Under assumed capital, assumed par equals assets divided by issued shares: two million / eight million = $0.25. Assumed capital is 0.25 × ten million = 2.5 million; tax is 3 × 400 = 1,200, or 1,250 including the fee. Delaware notices often show the authorized-shares calculation; you need not pay it, because the second method is permitted and selected when filing. This formula is simplified for one low-par-value share class; use the official calculator for multiple classes or no-par shares. Gross assets are neither net assets nor the investor valuation.
 
-If tax exceeds $5,000, pay instalments: 40% by June 1, 20% each by September 1 and December 1, and the remainder by March 1. Late payment brings a $200 penalty and 1.5% monthly interest.
+If tax is $5,000 or more, pay instalments: 40% by June 1, 20% each by September 1 and December 1, and the remainder by March 1. Late payment brings a $200 penalty and 1.5% monthly interest.
 
 <!-- section: theory | Income tax: a book loss does not mean zero tax -->
 The federal corporate income-tax rate is 21% of taxable income; neither revenue nor bank cash is the tax base. A corporation generally files Form 1120 even without profit. State taxes are calculated separately.
@@ -55,9 +55,9 @@ Claim the credit on Form 6765 with the income-tax return, then apply it on Form 
 - No, only companies with US GAAP book profits pay income tax || Financial reporting and tax use different rules.
 - No, startups are exempt from federal income tax until Series B || No such exemption exists.
 ? In November 2026, can a company elect retroactive Section 174A treatment for 2022–2024 costs?
-+ No, the deadline expired July 6, 2026 || The September 2026 procedure does not extend it; check what was elected on time.
++ No, the deadline for electing retroactive application expired July 6, 2026 || The September 2026 procedure does not extend it; check what was elected on time.
 - Yes, until filing the 2026 return, which can include all previous years together || The retroactive election was limited to July 2026.
-- Yes, if the company is small and 2025 revenue did not exceed $31 million || Size provided eligibility, but the election deadline has passed.
+- Yes, if the company is small || Size provided eligibility, but the election deadline has passed.
 <!-- /quiz -->
 
 <!-- section: task | Task: tax calendar and franchise tax -->
@@ -81,7 +81,7 @@ Use the “Delaware franchise tax” trainer on this page: enter your company’
 
 <!-- lesson: finance.taxes-people | States, contractors, payroll and founder shares | 28 -->
 <!-- section: hook -->
-A company is incorporated in Delaware, but its first employee lives in California. From that day, it may face California registration, franchise tax starting at $800 annually, state payroll taxes and unemployment insurance. A designer in Portugal needs Form W-8BEN, not a 1099. Employee options and founder shares provide QSBS tax benefits, made more generous in 2025, but only if an 83(b) election is timely filed. This lesson covers state obligations, SaaS sales tax, US and foreign contractors, payroll taxes, QSBS and 83(b), beneficial ownership reporting and audits.
+A company is incorporated in Delaware, but its first employee lives in California. From that day, it may face California registration, franchise tax starting at $800 annually, state payroll taxes and unemployment insurance. A designer in Portugal needs Form W-8BEN, not a 1099. Founder and employee shares may qualify for QSBS tax benefits, which became more generous in 2025. For shares subject to a repurchase right, a timely 83(b) election largely determines the holding period and tax basis; an unexercised option does not itself provide this benefit. This lesson covers state obligations, SaaS sales tax, US and foreign contractors, payroll taxes, QSBS and 83(b), beneficial ownership reporting and audits.
 
 <!-- section: theory | States: four separate obligations -->
 Delaware incorporation does not remove obligations elsewhere, and there are four distinct types. Foreign qualification means registration of an out-of-state company: a Delaware corporation operating in California, not a foreign-country company. State income or franchise tax follows the state’s nexus rules. Sales tax has its own economic-nexus rules. Employer registration covers withholding and unemployment insurance. One remote employee can create several obligations at once.
@@ -126,7 +126,7 @@ FinCEN’s August 2026 final rule exempted US-created entities and their owners 
 ? A Portuguese freelance designer works remotely from Lisbon. Which form should you collect?
 + W-8BEN, recording that the work occurs outside the US || A foreign individual needs W-8BEN; service income sourcing follows work location.
 - W-9, because the company pays dollars from a US bank account || Currency and payer bank do not determine the form.
-- 1099-NEC, because annual payments exceeded $2,000 || 1099 reporting is for US contractors.
+- 1099-NEC, as for any contractor || 1099 reporting is for US contractors.
 ? A founder receives shares vesting over four years and does not file 83(b). What may happen?
 + Each vesting can create taxable income at the shares’ current value || Without the election, appreciation is taxed as shares vest.
 - Nothing, because QSBS exempts founders from tax on their shares || QSBS concerns stock sales and does not replace 83(b).

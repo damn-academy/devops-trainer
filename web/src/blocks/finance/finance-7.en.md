@@ -32,7 +32,7 @@ A founder who checks the banking app daily can still miss an approaching cash sh
 For every board-dashboard metric, show actual, prior period, budget, latest forecast, downside, definition version and source update time side by side. A green metric backed by stale data is an interface error. All thresholds here are starting rules for a small company, not industry standards; adapt them to size and stage.
 
 <!-- section: theory | The stories behind these rules -->
-These rules have practical roots. Bench in December 2024 showed that access to books must not depend on one supplier. Kubient and Comscore showed that revenue unsupported by delivered services eventually gets corrected, at a cost. Dynamoid showed that book losses do not guarantee zero tax. Rippling and Roku during SVB’s collapse showed that bank cash is not the same as cash available for payroll. Gumroad in 2019 cut three quarters of its team and survived as a smaller profitable business; Buffer in 2016 hired faster than cash grew. None proves a single cause of success or failure, but each shows a check that should have happened earlier.
+These rules have practical roots. Bench in December 2024 showed that access to books must not depend on one supplier. Kubient and Comscore showed that revenue unsupported by delivered services eventually gets corrected, at a cost. Dynamoid showed that book losses do not guarantee zero tax. Rippling and Roku during SVB’s collapse showed that bank cash is not the same as cash available for payroll. After an unsuccessful fundraising attempt, Gumroad cut most of its team and, as its founder recounted in 2019, survived as a smaller profitable business; Buffer in 2016 hired faster than cash grew. None proves a single cause of success or failure, but each shows a check that should have happened earlier.
 
 <!-- section: theory | The first 30 days -->
 If company finances are disorganized, you can put them in order within a month.
@@ -46,7 +46,7 @@ If company finances are disorganized, you can put them in order within a month.
 <!-- quiz -->
 ? A dashboard metric is green, but bank data has not updated for three days. What does this mean?
 + An interface error: a metric backed by stale data cannot be trusted || Show source update times alongside every metric.
-- Everything is fine because bank cash cannot change much in three days || Payroll or a large refund can occur in three days.
+- Everything is fine; the data is almost fresh || Payroll or a large refund can occur in three days.
 - Recolor the metric yellow and wait for the week-end data update || Data failures should be fixed immediately.
 ? Downside runway without another round is eight months. What do the dashboard rules call for?
 + Prepare financing or spending cuts because runway is below twelve months || Eight months leaves little time for a round that takes several months.

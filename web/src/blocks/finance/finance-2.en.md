@@ -46,7 +46,7 @@ The Bench lesson is that access to your books must not depend on one supplier. E
 ? The cloud provider’s invoice has not arrived by the end of March. What should happen to March’s expense?
 + Accrue it using console data and replace the accrual with the invoice in April || March expense belongs in March; otherwise the month’s margin is wrong.
 - Nothing: record the expense in April when the invoice arrives and is paid from the bank || That makes March look better and April worse than they actually were.
-- Record and retain March’s expense, then also record the April invoice in April || This doubles the expense; reverse the accrual when the invoice arrives.
+- Record both the March expense and the April invoice || This doubles the expense; reverse the accrual when the invoice arrives.
 <!-- /quiz -->
 
 <!-- section: task | Task: close calendar and control matrix -->
@@ -73,7 +73,7 @@ A thirteen-week cash forecast is a founder’s main tool and can be assembled in
 
 Weekly rows include: opening cash (the reconciled bank balance for week one); existing AR collections by expected payment week, regardless of revenue month; renewals and prepayments by contract date; usage collections allowing for billing and payment delays; wages, payroll taxes and benefits by payment calendar; hosting based on usage forecasts, invoice dates and credit expiry; approved vendor invoices; taxes, legal and insurance; other approved spending; equipment purchases and debt principal separately; and financing separately, with no unsigned round in the base case. At the bottom: closing cash, a minimum buffer (for example, the next payroll, taxes and four weeks of mandatory payments), and headroom above the buffer, highlighted red when negative.
 
-Example: opening cash 500 and a floor of 150, in thousands. Customers pay 30 weekly, with a large payment of 100 in week three. Payroll including taxes is 100 every two weeks, hosting 20 weekly, other expenses 10 weekly and 40 in week five.
+Example: opening cash 500 and a floor of 150, in thousands. Customers pay 30 weekly, with a large payment of 100 replacing the usual 30 in week three. Payroll including taxes is 100 every two weeks, hosting 20 weekly, other expenses 10 weekly and 40 in week five.
 
 | Week | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -103,14 +103,14 @@ If the company pays contractors in euros, FX affects both cash and profit. A €
 ? There is $1.7 million in the bank, net burn is $5,000 monthly, and two annual prepayments arrived this year. How should runway be stated?
 + By the month when forecast cash first falls below the minimum buffer || Dividing cash by average burn hides prepayments, seasonality and future hiring.
 - 340 months, because that is cash divided by the company’s current net burn || This relies on one-off prepayments and ignores future spending.
-- Infinite, because the company is near break-even and barely uses cash || Prepayments require service delivery, and hiring and growth change burn.
+- Infinite, because the company barely uses cash || Prepayments require service delivery, and hiring and growth change burn.
 ? Can the base cash forecast include a round with a signed term sheet?
 + No; until cash is received, the round remains a separate upside scenario || A term sheet does not guarantee closing, while spending decisions must be made beforehand.
-- Yes, because investors almost always complete a deal after signing a term sheet || Deals fail after term sheets too; the forecast must show the risk.
+- Yes, because the term sheet is already signed || Deals fail after term sheets too; the forecast must show the risk.
 - Yes, but include only half the amount to allow for a delayed closing || Half the cash will not arrive: the round either closes or does not.
 ? A company holds $3 million across two accounts at one bank. How much is FDIC-insured?
 + Up to $250,000 for the company at that bank, regardless of account count || The limit applies by depositor, bank and ownership category.
-- Up to $500,000, with $250,000 for each company account at that bank || Multiple accounts at one bank do not multiply the limit.
+- Up to $500,000, with $250,000 per account || Multiple accounts at one bank do not multiply the limit.
 - All $3 million, because authorities guarantee every startup deposit after SVB || Protecting all SVB deposits was a one-off government decision.
 <!-- /quiz -->
 

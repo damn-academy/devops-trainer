@@ -45,12 +45,12 @@ The financial data room for the next round contains closed monthly statements fo
 <!-- quiz -->
 ? An investor requires a 10% post-round option pool included in pre-money valuation. Who pays for the pool?
 + All prior holders, including the founder and SAFE holders || The new investor retains its share; the pool dilutes pre-round holders.
-- The new investor, because the pool is created alongside its round investment || A pre-money pool does not dilute the new investor.
+- The new investor || A pre-money pool does not dilute the new investor.
 - Everyone, including the new investor, proportionally to post-round ownership || That would apply to a post-money pool; this one is pre-money.
 ? An investor with a 1× non-participating preference invested five million for 20%. The company sells for ten million. What does the investor receive?
-+ Five million, its preference || The five-million preference exceeds 20% of ten million.
++ Five million: the preference exceeds its 20% share of the sale price || The five-million preference exceeds 20% of ten million.
 - Two million, its 20% of the sale, because preferences apply only in bankruptcy || Preferences apply on company sales, and the investor chooses the greater amount.
-- Seven million: the five-million preference plus 20% of the remaining five million || That describes a participating preference; this one is non-participating.
+- Six million: the preference plus 20% of the remainder || That describes a participating preference; this one is non-participating.
 <!-- /quiz -->
 
 <!-- section: task | Task: the round calculator -->
@@ -101,12 +101,12 @@ Checks: allocated prices sum to the contract price; cumulative revenue does not 
 
 <!-- quiz -->
 ? A customer buys service access and distinct implementation for 110, with standalone prices of 120 and 20. How much revenue is allocated to implementation?
-+ About 15.7 || Allocate contract price in proportion to standalone prices: 110 × 20 / 140.
++ About 15.7 thousand: the discount is allocated in proportion to standalone prices || Allocate contract price in proportion to standalone prices: 110 × 20 / 140.
 - 20, the standalone implementation price, with the remainder allocated to access || The discount is allocated proportionally across obligations.
 - Zero, because implementation is part of the subscription and recognized with access || Distinct implementation has its own revenue allocation.
 ? A three-year contract provides identical access with payments of 60, 120 and 180. What is first-year revenue?
-+ 120, if there is one uniform obligation || Increasing payments do not mean increasing service: revenue is 360 / 36 months.
-- 60, the amount the customer pays in the first year under the contract || Payments and revenue differ when service is uniform.
++ 120 thousand, if there is one obligation and access is the same for all three years || Increasing payments do not mean increasing service: revenue is 360 / 36 months.
+- 60 thousand, as paid in the first year || Payments and revenue differ when service is uniform.
 - 360, because the contract covers the full term and cannot be canceled || Revenue is recognized as service is provided.
 <!-- /quiz -->
 

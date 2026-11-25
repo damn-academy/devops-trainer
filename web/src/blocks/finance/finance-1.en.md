@@ -81,16 +81,16 @@ After each closed month, ask one question from the table above for each line. Af
 
 <!-- quiz -->
 ? A customer paid $240,000 on January 1 for a year’s subscription in advance. How much revenue does the company report for January?
-+ $20,000, with $220,000 remaining as deferred revenue || Revenue is recognized as the service is provided: one twelfth each month.
-- $240,000, because the cash is already in the bank and the customer cannot get a refund || Bank cash does not mean earned revenue; the company still owes the service.
++ $20,000 for January, with $220,000 remaining as deferred revenue until year-end || Revenue is recognized as the service is provided: one twelfth each month.
+- $240,000, because the cash has already arrived || Bank cash does not mean earned revenue; the company still owes the service.
 - Zero, because revenue is recognized only at year-end when the entire service is delivered || Service is provided evenly, so revenue is recognized monthly.
 ? Investors contributed $600,000 to the company. How does this affect the statements?
 + Cash and equity rise by 600, with no increase in revenue or profit || Investor contributions are financing, unrelated to business operations.
 - Revenue rises by 600 because the company received money from outside parties for its shares || Selling shares is financing, not selling services.
-- Liabilities rise by 600 because the company must return the money to investors || Equity investment is generally not debt; money is returned only on a sale or under specific terms.
+- Liabilities rise by 600: the money will have to be returned || Equity investment is generally not debt; money is returned only on a sale or under specific terms.
 ? The company has $120,000 of deferred revenue on December 31. What does this mean for the founder?
 + It has already received cash for six months of services it still owes || This is a liability: some cash will be needed for future delivery costs.
-- It is revenue customers have not paid, which must be collected before quarter-end || Unpaid revenue is reflected in accounts receivable.
+- It is unpaid revenue that must be collected || Unpaid revenue is reflected in accounts receivable.
 - It is cash the company can freely spend on hiring and marketing next year || The cash has arrived, but it comes with an obligation to provide service.
 <!-- /quiz -->
 
@@ -149,10 +149,10 @@ Track departments, products, customers, states and currencies as dimensions inst
 ? A company is losing money, yet its cash increased this month. What is the most likely explanation for a subscription business?
 + A customer paid a year in advance, so cash arrived before revenue || Prepayment increases deferred revenue and cash; revenue appears monthly.
 - The accountant made a mistake, because a loss always reduces bank cash in the same month || Losses and cash flow differ in timing; that is normal.
-- The company sold equipment and included the proceeds in operating cash flow || Selling equipment belongs in investing cash flow.
+- The company sold equipment || Selling equipment belongs in investing cash flow.
 ? An engineer spends half their time on call for customers’ production cloud service and half building the next version. How should their salary be allocated?
 + Half to COGS and half to R&D, based on time records || On-call work delivers the customer service; the new version is development.
-- All to R&D, because engineers traditionally belong in research and development || This understates COGS and makes margins look better than they are.
+- All to R&D, as with all engineers || This understates COGS and makes margins look better than they are.
 - All to COGS, because the cloud service cannot work without this engineer || Developing the next version is not necessary to deliver the current service.
 <!-- /quiz -->
 

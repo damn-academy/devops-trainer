@@ -27,7 +27,7 @@ A vendor demo is insufficient. Ask the vendor to process ten real contracts and 
 <!-- quiz -->
 ? An eight-person company is choosing finance tools. What is most important to establish first?
 + One general ledger and a person responsible for monthly close || Without a close owner, every service provides incomplete data.
-- A financial-modeling and subscription-metrics service for investor dashboards || Dashboards without closed books show unverified numbers.
+- A financial-modeling service for investors || Dashboards without closed books show unverified numbers.
 - Two ledgers with different accountants to reconcile against each other monthly || Two authoritative ledgers create discrepancies, not control.
 ? How should you test accounting software before purchasing?
 + Process ten real complex contracts and check exports and change logs || Simple demo data does not show how the service handles your contracts.
@@ -79,7 +79,7 @@ Promises such as “up to 98% automatic categorization” or “round-the-clock 
 <!-- quiz -->
 ? Stripe paid $1,050 into the bank. What should be recorded?
 + A transfer from Stripe clearing to the bank, with no new revenue || Revenue was recognized when service was delivered; payout moves cash between accounts.
-- Revenue of 1,050 because customer cash reached the company bank account || This duplicates revenue already recognized at invoicing.
+- Revenue of $1,050 || This duplicates revenue already recognized at invoicing.
 - Revenue of 1,080 and a fee of 30 to show the customer’s full payment || Revenue and fees were already recorded at payment; payout does not repeat them.
 ? A Stripe webhook arrived twice. How do you avoid duplicating the entry?
 + Check a key combining system, object ID, event type and version; skip processed events || Redelivery is normal webhook behavior and the workflow must account for it.
