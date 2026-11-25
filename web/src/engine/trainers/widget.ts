@@ -8,7 +8,9 @@ import { trainers, datasets, systemPrompt, learnerData, copyPrompt, verdict, bou
 import { loadAttempts, saveAttempts } from './storage';
 import { strings as s } from './strings';
 export type TrainerAi = Pick<AiService, 'status' | 'ready' | 'onChange' | 'stream'>;
-type Kind = 'rubric' | 'roleplay' | 'signal-feed' | 'boundary' | 'events.roi';
+import { governance, health, applicableChecks, governanceMarkdown, type Option } from './oss';
+let instance = 0;
+type Kind = 'governance' | 'health' | 'template' | 'rubric' | 'roleplay' | 'signal-feed' | 'boundary' | 'events.roi';
 const css = `.course-trainer{width:100%;max-width:760px;margin-inline:auto;display:grid;gap:16px;overflow-wrap:anywhere}.course-trainer *{box-sizing:border-box;min-width:0}.course-trainer label{display:grid;gap:6px}.course-trainer textarea{width:100%;min-height:120px;resize:vertical;font:inherit}.course-trainer input,.course-trainer select,.course-trainer textarea{color:inherit;background:var(--bg);border:1px solid var(--line,#888);border-radius:6px;padding:8px}.course-trainer .tr-actions{display:flex;flex-wrap:wrap;gap:8px}.course-trainer article{border:1px solid var(--line,#888);border-radius:8px;padding:14px}.course-trainer pre{white-space:pre-wrap}.course-trainer [hidden]{display:none!important}.course-trainer button[aria-pressed=true]{outline:2px solid currentColor}.course-trainer .tr-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.course-trainer [role=status]:empty{display:none}`;
 export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: WidgetCtx, service?: TrainerAi): Mounted {
   const root = h('section', { class: 'course-trainer' }), style = h('style', {}, css);
@@ -25,7 +27,50 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     if (russian && lang() === 'en') root.append(h('p', {}, text('notice')));
   };
   const id = props && typeof props === 'object' ? ('trainer' in props ? props.trainer : 'data' in props ? props.data : undefined) : undefined;
-  if (kind === 'rubric' || kind === 'roleplay') {
+  if (kind === 'template') {
+    const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined;
+    const titles = { dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek' } as const;
+    if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
+    title(text(titles[file as keyof typeof titles]), false);
+    root.append(h('a', { class: 'btn', href: `/templates/${file}${lang() === 'en' ? '-en' : ''}.xlsx`, download: '' }, text('download')));
+  } else if (kind === 'governance') {
+    if (id !== 'oss.governance') { root.textContent = text('missing'); return mounted; }
+    title(governance.title); root.append(h('p', {}, governance.description));
+    const choices: Record<string, Option> = Object.fromEntries(governance.groups.map(g => [g.name, 'A']));
+    const result = h('div', { hidden: true, 'aria-live': 'polite' });
+    const output = h('textarea', { readonly: true, 'aria-label': 'GOVERNANCE.md', rows: 16 });
+    const prefix = `governance-${++instance}`;
+    governance.groups.forEach((group, i) => {
+      const field = h('fieldset', {}, h('legend', {}, group.name));
+      (['A', 'B'] as const).forEach(option => {
+        const radio = h('input', { type: 'radio', name: `${prefix}-${i}`, value: option, checked: option === 'A' });
+        radio.onchange = () => { choices[group.name] = option; output.value = governanceMarkdown(governance, choices); result.hidden = true; };
+        field.append(h('label', {}, radio, `${option}: ${group.options[option]}`));
+      }); root.append(field);
+    });
+    output.value = governanceMarkdown(governance, choices);
+    root.append(button('compareRepository', () => {
+      result.replaceChildren(h('h4', {}, text('repositoryFacts')), h('ul', {}, ...governance.facts.map(f => h('li', {}, f))), h('h4', {}, text('checks')), h('ul', {}, ...applicableChecks(governance, choices).map(c => h('li', {}, c))));
+      result.hidden = false; ctx.complete();
+    }), result, h('h4', {}, 'GOVERNANCE.md'), output, button('copyGovernance', () => { void (async () => {
+      const copied = await copyText(output.value);
+      if (disposed) return;
+      status.textContent = text(copied ? 'documentCopied' : 'documentFallback');
+      if (!copied) { output.focus(); output.select(); }
+    })(); }), status);
+  } else if (kind === 'health') {
+    if (id !== 'oss.health') { root.textContent = text('missing'); return mounted; }
+    title(health.title); root.append(h('p', {}, health.description), h('ul', {}, ...health.metrics.map(m => h('li', {}, m))));
+    let index = 0; const card = h('article'); root.append(card);
+    function draw() {
+      const question = health.questions[index], input = h('textarea');
+      const answer = h('div', { hidden: true, 'aria-live': 'polite' }, h('p', {}, question.answer));
+      const reveal = button('showDebrief', () => { answer.hidden = false; reveal.disabled = true; if (index === health.questions.length - 1) ctx.complete(); });
+      if (index < health.questions.length - 1) answer.append(button('next', () => { index++; draw(); }));
+      card.replaceChildren(h('p', {}, `${index + 1}/${health.questions.length}`), h('h4', {}, question.question), h('label', {}, text('input'), input), reveal, answer);
+    }
+    draw();
+  } else if (kind === 'rubric' || kind === 'roleplay') {
     const trainer = trainers.find(v => v.id === id && (kind === 'roleplay' ? v.id === 'events.booth-visitor' : v.id !== 'events.booth-visitor'));
     if (!trainer) { root.textContent = text('missing'); return mounted; }
     const svc = service ?? ai(); title(trainer.title); root.append(renderMd(trainer.rubric));
@@ -117,4 +162,4 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   }
   return mounted;
 }
-export const widgets: WidgetReg[] = (['rubric', 'roleplay', 'signal-feed', 'boundary', 'events.roi'] as const).map(id => ({ id, mount: (el, props, ctx) => mountTrainer(id, el, props, ctx) }));
+export const widgets: WidgetReg[] = (['rubric', 'roleplay', 'signal-feed', 'boundary', 'events.roi', 'governance', 'health', 'template'] as const).map(id => ({ id, mount: (el, props, ctx) => mountTrainer(id, el, props, ctx) }));
