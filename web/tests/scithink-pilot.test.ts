@@ -58,17 +58,17 @@ describe('scientific thinking pilot (hidden)', () => {
 
   it('collapses the spurious link under the within-groups break and keeps a real one', () => {
     const base = correlationModel.run({ strength: 60, confounder: 70 }, new Set());
-    expect(base).toHaveLength(3);
-    expect(base[2]!.metrics?.r).toBe(60);
-    expect(base[2]!.metrics?.left).toBe(18);
+    expect(base.map((s) => s.id)).toEqual(['data', 'data-voice', 'factor', 'factor-voice', 'verdict']);
+    expect(base.at(-1)!.metrics?.r).toBe(60);
+    expect(base.at(-1)!.metrics?.left).toBe(18);
     expect(base.some((s) => s.broken)).toBe(false);
 
     const broken = correlationModel.run({ strength: 60, confounder: 70 }, new Set(['within']));
-    expect(broken[2]!.metrics?.r).toBe(18);
+    expect(broken.at(-1)!.metrics?.r).toBe(18);
     expect(broken.some((s) => s.broken)).toBe(true);
 
     const real = correlationModel.run({ strength: 80, confounder: 0 }, new Set(['within']));
-    expect(real[2]!.metrics?.r).toBe(80);
+    expect(real.at(-1)!.metrics?.r).toBe(80);
     expect(real.some((s) => s.broken)).toBe(false);
   });
 
