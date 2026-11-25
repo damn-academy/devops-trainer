@@ -3,8 +3,9 @@ import { lang, t } from '../../core/i18n';
 import type { ChatMessage, WidgetReg, WidgetCtx, Mounted } from '../../core/types';
 import { renderMd } from '../../core/markdown';
 import { ai, type AiService } from '../ai/service';
-import { buildPrompt, hasFence, randomSeed, trimHistory } from './model';
+import { buildPrompt, companyText, hasFence, promptSize, randomCompany, randomSeed, trimHistory } from './model';
 import { getScenario } from './registry';
+import { companyGroups, defaultCompanyConfig } from '../../sims/companies';
 import { legends } from './legends';
 import { loadGame, saveGame } from './storage';
 import { strings as s } from './strings';
@@ -36,7 +37,7 @@ let mountId = 0;
 export function exportGame(scenario: SimScenario, game: SimGame): string {
   const l = game.lang;
   const o = game.options;
-  return [`# ${scenario.title[l]}`, `${s.seed[l]}: ${o.seed}`, `${s.company[l]}: ${legends.find(c => c.id === o.company)!.title[l]} (${o.company})`, `${s.difficulty[l]}: ${s[o.difficulty][l]}`, `${s.turns[l]}: ${o.turns} × ${scenario.turnUnit[l]}`,
+  return [`# ${scenario.title[l]}`, `${s.seed[l]}: ${o.seed}`, `${s.company[l]}: ${o.companyMode === 'custom' ? companyText(o, l) : `${legends.find(c => c.id === o.company)!.title[l]} (${o.company})`}`, `${s.difficulty[l]}: ${s[o.difficulty][l]}`, `${s.turns[l]}: ${o.turns} × ${scenario.turnUnit[l]}`,
     ...game.messages.map(m => `## ${m.role === 'assistant' ? s.assistant[l] : s.user[l]}\n\n${m.content}`)].join('\n\n') + '\n';
 }
 
@@ -50,7 +51,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
     root.textContent = t(s.missing);
     return { dispose() { root.remove(); style.remove(); } };
   }
-  const fresh = (): SimGame => ({ version: 1, options: { seed: randomSeed(), company: legends[0].id, difficulty: 'like-life', turns: scenario.turns.default }, lang: lang(), prompt: '', messages: [], started: false });
+  const fresh = (): SimGame => ({ version: 1, options: { seed: randomSeed(), company: legends[0].id, companyMode: 'preset', companyConfig: defaultCompanyConfig(), difficulty: 'like-life', turns: scenario.turns.default }, lang: lang(), prompt: '', messages: [], started: false });
   let game = loadGame(scenario) ?? fresh();
   let disposed = false, busy = false, completed = false, generation = 0;
   let request: ReturnType<SimAi['stream']> | undefined;
@@ -61,6 +62,33 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   const settings = h('fieldset');
   const company = h('select', {}, ...legends.map(l => h('option', { value: l.id }, t(l.title))));
   company.value = game.options.company;
+  const companyMode = h('div', { class: 'ds-difficulty', role: 'radiogroup', 'aria-label': text('company') });
+  const companyName = `deptsim-company-${++mountId}`;
+  for (const value of ['preset', 'custom'] as const) {
+    const radio = h('input', { type: 'radio', name: companyName, value });
+    radio.onchange = () => { game.options.companyMode = value; syncCompany(); updatePrompt(); };
+    companyMode.append(h('label', {}, radio, text(value)));
+  }
+  const presetCompany = h('label', {}, text('preset'), company);
+  const customCompany = h('div', { class: 'ds-company-config' });
+  const configSelects = companyGroups.map(group => {
+    const select = h('select', {}, ...group.options.map(o => h('option', { value: o.value }, o.label)));
+    select.onchange = () => { game.options.companyConfig![group.key] = select.value; updatePrompt(); };
+    customCompany.append(h('label', {}, group.label, select));
+    return select;
+  });
+  const randomize = button('randomCompany', () => {
+    game.options.companyMode = 'custom'; game.options.companyConfig = randomCompany(game.options.seed);
+    syncCompany(); updatePrompt();
+  });
+  function syncCompany() {
+    game.options.companyConfig ??= defaultCompanyConfig();
+    const mode = game.options.companyMode ?? 'preset';
+    companyMode.querySelectorAll<HTMLInputElement>('input').forEach(r => { r.checked = r.value === mode; });
+    presetCompany.hidden = mode !== 'preset'; customCompany.hidden = mode !== 'custom';
+    configSelects.forEach((select, i) => { select.value = game.options.companyConfig![companyGroups[i].key]; });
+  }
+  syncCompany();
   const difficulty = h('div', { class: 'ds-difficulty', role: 'radiogroup', 'aria-label': text('difficulty') });
   const radioName = `deptsim-difficulty-${++mountId}`;
   for (const value of ['soft', 'like-life', 'hard'] as Difficulty[]) {
@@ -72,7 +100,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   const turns = h('input', { type: 'range', min: scenario.turns.min, max: scenario.turns.max, step: 1, value: game.options.turns });
   const length = h('output');
   const seed = h('input', { type: 'number', min: 0, max: 0xffffffff, step: 1, value: game.options.seed });
-  settings.append(h('label', {}, text('company'), company), h('div', {}, text('difficulty'), difficulty), h('label', {}, text('turns'), turns, length), h('label', {}, text('seed'), seed));
+  settings.append(companyMode, presetCompany, customCompany, randomize, h('div', {}, text('difficulty'), difficulty), h('label', {}, text('turns'), turns, length), h('label', {}, text('seed'), seed));
   company.onchange = () => { game.options.company = company.value; updatePrompt(); };
   turns.oninput = () => { game.options.turns = Number(turns.value); updatePrompt(); };
   seed.onchange = () => {
@@ -81,6 +109,9 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
     seed.value = String(game.options.seed); updatePrompt();
   };
   const promptText = h('pre');
+  const size = h('span', { class: 'ds-prompt-size', 'aria-live': 'polite' });
+  const longHint = h('p', { hidden: true }, text('longPrompt'));
+  const languageNotice = h('p', { hidden: !(scenario.russianPrompt && lang() === 'en') }, text('russianPrompt'));
   const promptDetails = h('details', {}, h('summary', {}, text('show')), promptText);
   const fallback = h('textarea', { readonly: true, hidden: true, 'aria-label': text('fallback') });
   const copy = button('copy', () => { void (async () => {
@@ -102,7 +133,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   const newGame = button('newGame', () => { confirmation.hidden = false; });
   const exportButton = button('export', () => downloadFile(`${scenario.id}-${game.options.seed}.md`, exportGame(scenario, game), 'text/markdown;charset=utf-8'));
   root.append(h('h3', {}, t(scenario.title)), ...scenario.premise[lang()].split(/\n\s*\n/).slice(0, 2).map(p => h('p', {}, p)), h('p', {}, text('note')), settings,
-    h('div', { class: 'ds-actions' }, copy, play, newGame, exportButton), link, promptDetails, fallback, status, confirmation, pane);
+    h('div', { class: 'ds-actions' }, copy, size, play, newGame, exportButton), longHint, languageNotice, link, promptDetails, fallback, status, confirmation, pane);
   input.oninput = updateControls;
   input.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void submit(input.value); } };
 
@@ -126,6 +157,9 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   function updatePrompt() {
     if (!game.started) { game.lang = lang(); game.prompt = buildPrompt(scenario!, game.options, game.lang); }
     promptText.textContent = game.prompt;
+    const measure = promptSize(game.prompt);
+    size.textContent = `${measure.characters} ${text('characters')} · ${measure.tokens} ${text('tokens')}`;
+    longHint.hidden = measure.characters <= 60000;
     length.textContent = `${game.options.turns} × ${scenario!.turnUnit[game.lang]}`;
     fallback.hidden = true;
     persist();
@@ -148,6 +182,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   function reset() {
     stopStream();
     game = fresh(); completed = false; paneOpen = false;
+    syncCompany();
     company.value = game.options.company; turns.value = String(game.options.turns); seed.value = String(game.options.seed);
     difficulty.querySelectorAll<HTMLInputElement>('input').forEach(r => { r.checked = r.value === game.options.difficulty; });
     transcript.replaceChildren(); input.value = ''; status.textContent = ''; confirmation.hidden = true;
