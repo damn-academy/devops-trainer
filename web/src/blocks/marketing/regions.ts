@@ -74,24 +74,24 @@ export interface RegionsResult { regions: RegionResult[]; totalDeals: number; ef
 export function regionsProject(p: RegionsParams): RegionsResult {
   const effort = p.us + p.dach + p.asia;
   const share = { us: effort ? p.us / effort : 0, dach: effort ? p.dach / effort : 0, asia: effort ? p.asia / effort : 0 };
-  const contentFactor = 0.4 + 0.9 * p.content; // sponsorships bring attention without trust
   const regions = REGIONS.map((r): RegionResult => {
     const rows: RegionsRow[] = [];
     let deals = 0;
     const fit = Math.min(1, r.englishFit + r.localGain * p.localized);
-    const monthlyLeads = p.budget * 1000 * share[r.key] * r.depth * 0.02 * contentFactor * fit;
-    const monthlyOpps = monthlyLeads * r.opp;
+    let leads = 0, opportunities = 0;
     for (let month = 1; month <= p.months; month++) {
-      // the machine warms up: assets accumulate and start working for themselves
-      const ramp = Math.min(1, 0.3 + month * 0.07);
-      // deals lag the pipeline: the first meetings of the quarter close later
-      deals += monthlyOpps * r.win * ramp * (month > 1 ? 1 : 0.4);
-      rows.push({
-        month,
-        leads: Math.round(monthlyLeads * month * ramp * 10) / 10,
-        opportunities: Math.round(monthlyOpps * month * ramp * 100) / 100,
-        deals: Math.round(deals * 100) / 100,
-      });
+      // Content displaces immediate outbound, takes three months to mature,
+      // and saturates. These coefficients are illustrative, not calibrated.
+      const maturity = Math.min(1, Math.max(0, month - 3) / 9);
+      const channelFactor = (1 - p.content) + 2 * Math.sqrt(p.content) * maturity;
+      const monthlyLeads = p.budget * 1000 * share[r.key] * r.depth * 0.02 * channelFactor * fit;
+      const monthlyOpps = monthlyLeads * r.opp;
+      leads += monthlyLeads;
+      opportunities += monthlyOpps;
+      deals += monthlyOpps * r.win * (month > 1 ? 1 : 0.4);
+      rows.push({ month, leads: Math.round(leads * 10) / 10,
+        opportunities: Math.round(opportunities * 100) / 100,
+        deals: Math.round(deals * 100) / 100 });
     }
     const last = rows[rows.length - 1] ?? { leads: 0, opportunities: 0, deals: 0 };
     return { key: r.key, label: r.label, rows, totals: { leads: last.leads, opportunities: last.opportunities, deals: last.deals } };
@@ -161,6 +161,7 @@ export function mountRegions(el: HTMLElement, _props: unknown): Mounted {
           h('td', '', String(x.totals.leads)),
           h('td', '', String(x.totals.opportunities)),
           h('td', '', String(x.totals.deals)))))),
+      h('p', 'sfu-note', t(bi('TODO(ru-prose)', 'Illustrative model, not a revenue forecast. Content uses the same budget as outbound. Outbound contributes immediately; content starts after month 3 and reaches full effect in month 12, with diminishing returns. Monthly channel factor = (1 − content share) + 2 × √content share × maturity. Regional reach, fit and conversion coefficients are fixed assumptions, not calibrated market data.'))),
       h('p', 'sfu-note', t(HONEST_NOTE)),
     );
   };
