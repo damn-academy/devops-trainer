@@ -616,13 +616,13 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     kind: 'mcq',
     concepts: ['scithink.base-rate'],
     prompt: bi(
-      'Болезнь встречается у 1 человека из 1000. Тест обнаруживает её у 9 из 10 больных и ошибается примерно в 5 случаях из 100 у здоровых. Вы получили положительный результат. Что вероятнее всего вы стоите перед?',
+      'Болезнь встречается у 1 человека из 1000. Тест обнаруживает её у 9 из 10 больных и ошибается примерно в 5 случаях из 100 у здоровых. Вы получили положительный результат. Что, скорее всего, означает этот результат?',
       'A disease occurs in 1 person per 1000. A test detects it in 9 of 10 sick people and errs in about 5 cases per 100 among the healthy. You received a positive result. What most likely faces you?',
     ),
     options: [
       {
         id: 'false-alarm',
-        text: bi('Скорее всего это ложная тревога, ведь среди положительных результатов настоящих больных около 2%', 'Most likely a false alarm, because among positive results about 2% are genuine cases'),
+        text: bi('Скорее всего, это ложная тревога: настоящих больных среди положительных около 2 %', 'Most likely a false alarm, because among positive results about 2% are genuine cases'),
         correct: true,
         why: bi('На тысяче человек тест находит 1 больного и ошибается примерно у 50 здоровых; 1 из 51 — это около 2%.', 'Per thousand people the test finds 1 sick person and errs for about 50 healthy ones; 1 of 51 is about 2%.'),
       },
@@ -633,7 +633,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'fifty',
-        text: bi('Ситуацией пятьдесят на пятьдесят', 'A fifty-fifty situation'),
+        text: bi('Шансы примерно пятьдесят на пятьдесят, потому что тест либо прав, либо ошибся', 'A fifty-fifty situation'),
         why: bi('Шансы складываются из базовой ставки и качества теста вместе; никакой «пятьдесят на пятьдесят» в условиях нет.', 'The odds combine the base rate and the test’s quality together; there is no "fifty-fifty" in the conditions.'),
       },
     ],
@@ -678,13 +678,13 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'nothing-distribution',
-        text: bi('Что конкретный человек дожил до 90; о том, что обычно бывает с курящими, один случай не говорит', 'That a particular person lived to 90; one case says nothing about what usually happens to smokers'),
+        text: bi('Только то, что один человек дожил до 90; про курящих в целом это ничего не говорит', 'That a particular person lived to 90; one case says nothing about what usually happens to smokers'),
         correct: true,
         why: bi('История правдива, но выборка из одного не показывает распределение исходов; на него смотрят по большим группам.', 'The story is true, but a sample of one does not show the distribution of outcomes; that is looked at over large groups.'),
       },
       {
         id: 'safe',
-        text: bi('Что курение безвредно, раз есть такой пример', 'That smoking is harmless, since such an example exists'),
+        text: bi('Что курение безвредно хотя бы для части людей, раз есть такой пример', 'That smoking is harmless, since such an example exists'),
         why: bi('«В среднем» никогда не означало «со всеми»; доживший до 90 курильщик укладывается в картину, где курение сокращает жизнь в среднем.', '"On average" never meant "with everyone"; a smoker who lived to ninety fits a picture where smoking shortens life on average.'),
       },
       {
@@ -706,7 +706,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'luck',
-        text: bi('Выдающийся заход включал удачу, которая редко повторяется дважды, поэтому следующий результат ближе к обычному уровню', 'An outstanding attempt included luck, which rarely repeats twice, so the next result is closer to the usual level'),
+        text: bi('В выдающемся заходе была удача, и следующий ближе к обычному уровню', 'An outstanding attempt included luck, which rarely repeats twice, so the next result is closer to the usual level'),
         correct: true,
         why: bi('После необычно хорошего или необычно плохого замера следующий чаще ближе к среднему сам по себе, без всяких причин искать в хвале или ругани.', 'After an unusually good or unusually bad measurement the next one is usually closer to the mean on its own, with no cause to seek in praise or scolding.'),
       },
@@ -717,7 +717,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'talent',
-        text: bi('Курсанты зазнаются от похвалы и перестают стараться', 'Cadets get conceited from praise and stop trying'),
+        text: bi('Курсанты зазнаются от похвалы и на следующем заходе перестают стараться', 'Cadets get conceited from praise and stop trying'),
         why: bi('Такой механизм нужно было бы показать отдельно; наблюдение само по себе объясняется возвратом к среднему.', 'Such a mechanism would have to be shown separately; the observation itself is explained by the return to the mean.'),
       },
     ],
@@ -734,7 +734,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'observation',
-        text: bi('Лишь наблюдение, что любители шоколада жалуются реже, а причина этого по таким данным неизвестна', 'Only an observation that chocolate lovers complain less often, while the cause is unknown from such data'),
+        text: bi('Лишь наблюдение: любители шоколада жалуются реже, причина неизвестна', 'Only an observation that chocolate lovers complain less often, while the cause is unknown from such data'),
         correct: true,
         why: bi('Без группы сравнения возможны и другие объяснения: те, кто двигается больше, и шоколад едят, и устают иначе; новость описывает совместность, и действия шоколада она не доказывает.', 'Without a comparison group other explanations are possible: people who move more both eat chocolate and tire differently; the news describes co-occurrence, not chocolate’s effect.'),
       },
@@ -762,13 +762,13 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'drawer',
-        text: bi('Публикационное смещение: о найденном эффекте пишут чаще, чем о том, что эффекта не вышло, и лента перекошена в сторону сенсаций', 'Publication bias: a found effect gets written about more often than a missing one, and the feed tilts toward sensations'),
+        text: bi('Публикационное смещение: о найденном эффекте пишут чаще, чем об отсутствии эффекта', 'Publication bias: a found effect gets written about more often than a missing one, and the feed tilts toward sensations'),
         correct: true,
         why: bi('Журналы охотнее печатают «нашли», журналисты охотнее перепечатывают сенсацию, поэтому одинокое «исследование показало» — кандидат на перепроверку.', 'Journals prefer printing "we found", journalists prefer reprinting a sensation, so a lonely "a study shows" is a candidate for re-checking.'),
       },
       {
         id: 'money',
-        text: bi('Все исследования покупаются за деньги и потому недостоверны', 'All research is bought with money and therefore unreliable'),
+        text: bi('Исследования оплачивают заинтересованные компании, и поэтому их результатам нельзя доверять', 'All research is bought with money and therefore unreliable'),
         why: bi('Существование спонсорских искажений не делает ложным каждое исследование; слабость одинокого заголовка объясняется смещением публикаций, и подкуп всех подряд для этого не нужен.', 'Sponsorship distortions exist, but they do not make every study false; the weakness of a lonely headline is explained by publication bias, not by everyone being bribed.'),
       },
       {
@@ -790,7 +790,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'emotion',
-        text: bi('Эмоциональная нагрузка, при которой страх и возмущение должны сработать раньше, чем включится проверка', 'Emotional load, in which fear and outrage are meant to trigger before checking starts'),
+        text: bi('Эмоциональная нагрузка: страх срабатывает раньше проверки', 'Emotional load, in which fear and outrage are meant to trigger before checking starts'),
         correct: true,
         why: bi('Громкость и запугивание подменяют аргумент; против них работает пауза и три обычных вопроса про наблюдение, сравнение и опровержение.', 'Loudness and scare tactics substitute for an argument; a pause and the usual three questions about observation, comparison and refutation work against them.'),
       },
@@ -818,7 +818,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'strawman',
-        text: bi('Подмену тезиса: рекомендации сократить сахар приписали намерение всё запретить, и это намерение опровергли', 'Replacing the thesis: a recommendation to cut sugar was credited as an intent to ban it all, and that intent was refuted'),
+        text: bi('Подмену тезиса: рекомендацию сократить сахар выдали за намерение запретить его совсем', 'Replacing the thesis: a recommendation to cut sugar was credited as an intent to ban it all, and that intent was refuted'),
         correct: true,
         why: bi('Самый убедительный аргумент статьи разбивает утверждение, которого никто не делал; настоящий тезис скучнее и осторожнее.', 'The article’s most convincing argument demolishes a claim nobody made; the real thesis is more boring and careful.'),
       },
@@ -829,7 +829,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'numbers',
-        text: bi('Игру с цифрами: доли заменены процентами', 'A numbers trick: shares replaced with percents'),
+        text: bi('Игру с цифрами: доли детей и взрослых заменены одним общим процентом', 'A numbers trick: shares replaced with percents'),
         why: bi('Цифр в примере нет вовсе; приём чисто словесный.', 'There are no numbers in the example at all; the move is purely verbal.'),
       },
     ],
@@ -846,18 +846,18 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'ceiling',
-        text: bi('Потолок в лучшем случае: когда-то, с кем-то и при каком-то замере случалось и 90%; типичного результата фраза не называет', 'A ceiling in the best case: 90% once happened with someone under some measurement; the phrase names no typical result'),
+        text: bi('Лучший случай, а типичного результата фраза не называет', 'A ceiling in the best case: 90% once happened with someone under some measurement; the phrase names no typical result'),
         correct: true,
         why: bi('«До» превращает выброс в обещание; стоит спросить, 90% какой группы, при каком замере и что стало с остальными.', '"Up to" turns an outlier into a promise; one should ask: 90% of which group, measured how, and what happened to the rest.'),
       },
       {
         id: 'typical',
-        text: bi('Типичный результат: в среднем девяносто из ста видят эффект', 'A typical result: on average ninety out of a hundred see an effect'),
+        text: bi('Типичный результат: в среднем девяносто покупателей из ста видят эффект', 'A typical result: on average ninety out of a hundred see an effect'),
         why: bi('«До» как раз отказывается говорить про среднее или типичное; оно говорит о самом высоком наблюденном значении.', '"Up to" precisely refuses to speak about the mean or the typical; it speaks about the highest observed value.'),
       },
       {
         id: 'nothing',
-        text: bi('Ничего: цифры в рекламе никогда не бывают правдой', 'Nothing: numbers in advertising are never true'),
+        text: bi('Ничего: цифры в рекламе всегда выдуманы, и проверять их бессмысленно', 'Nothing: numbers in advertising are never true'),
         why: bi('Проблема не в том, что цифра выдумана, а в том, что она подобрана так, чтобы ничего не значить; цифре нельзя приписывать и полную ложь.', 'The problem is not that the number is invented, but that it is chosen to mean nothing; the number cannot be credited with being a complete lie either.'),
       },
     ],
@@ -874,18 +874,18 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'median',
-        text: bi('Как изменилась медиана — значение, ниже которого осталась половина жителей', 'How the median changed — the value below which half the residents remain'),
+        text: bi('Как изменилась медиана дохода, ниже которой осталась половина жителей', 'How the median changed — the value below which half the residents remain'),
         correct: true,
         why: bi('Медиана показывает типичного жителя; среднее могло вырасти из-за нескольких очень больших доходов, не изменив жизни большинства.', 'The median shows the typical resident; the mean can grow because of a few very large incomes without changing life for most.'),
       },
       {
         id: 'sum',
-        text: bi('Какова теперь суммарная выручка всех жителей вместе', 'What the residents’ total revenue is now'),
+        text: bi('Какова теперь суммарная выручка всех жителей вместе и как она росла', 'What the residents’ total revenue is now'),
         why: bi('Сумма и среднее связаны напрямую и растут вместе; вопрос про сумму повторяет исходное утверждение другими словами.', 'The sum and the mean are directly linked and grow together; asking about the sum repeats the original claim in other words.'),
       },
       {
         id: 'richest',
-        text: bi('Кто самый богатый житель района в этом году', 'Who the richest resident of the district is this year'),
+        text: bi('Кто самый богатый житель района в этом году и сколько он зарабатывает', 'Who the richest resident of the district is this year'),
         why: bi('Судьба одного человека — это снова выборка из одного, она не показывает, что стало с большинством.', 'The fate of one person is again a sample of one; it does not show what happened to most.'),
       },
     ],
@@ -902,18 +902,18 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'compare',
-        text: bi('Сравнить эти улицы с похожими улицами без новых фонарей за тот же период', 'Compare these streets with similar streets without the new lights over the same period'),
+        text: bi('Сравнить с похожими улицами без новых фонарей за тот же период', 'Compare these streets with similar streets without the new lights over the same period'),
         correct: true,
         why: bi('Без сравнения падение можно списать на случайный спад, сезонность и регрессию к среднему после неудачного периода; сравнение отделяет эффект фонарей от всего остального.', 'Without a comparison, the drop can be written off to a random decline, seasonality and regression to the mean after a bad period; the comparison separates the lights’ effect from everything else.'),
       },
       {
         id: 'interview',
-        text: bi('Спросить водителей, стало ли им светлее и безопаснее', 'Ask drivers whether it became brighter and safer for them'),
+        text: bi('Спросить водителей и пешеходов, стало ли им светлее и безопаснее ездить', 'Ask drivers whether it became brighter and safer for them'),
         why: bi('Самооценка участников — впечатление, замером её считать нельзя; урок про «попробовал и помогло» показывал, что такое наблюдение не решает вопрос о причине.', 'Participants’ self-assessment is an impression, not a measurement; the "tried it and it helped" lesson showed that such observation does not settle the question of cause.'),
       },
       {
         id: 'brighter',
-        text: bi('Померить освещённость улиц люксометром', 'Measure the streets’ brightness with a lux meter'),
+        text: bi('Померить освещённость улиц люксометром до и после замены фонарей', 'Measure the streets’ brightness with a lux meter'),
         why: bi('Яркость фонарей и влияние яркости на аварийность — разные вопросы; люксометр ответит на первый, а вывод новости — про второй.', 'The brightness of the lights and the effect of brightness on accidents are different questions; the lux meter answers the first, while the news item’s conclusion is about the second.'),
       },
     ],
@@ -930,18 +930,18 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'share',
-        text: bi('Сколько из 20 добровольцев «заметили результат» и что замеряли самооценкой', 'How many exactly of the 20 volunteers "noticed a result" and what exactly was measured by self-assessment'),
+        text: bi('Сколько из 20 добровольцев заметили результат и что они оценивали', 'How many exactly of the 20 volunteers "noticed a result" and what exactly was measured by self-assessment'),
         correct: true,
         why: bi('«До 92%» от 20 человек — это 18 человек в лучшем случае, а самооценка без сравнения с плацебо не отличает эффект крема от ожидания; цифры и способ замера решают здесь всё.', '"Up to 92%" of 20 people is 18 people at best, and self-assessment without comparison to a placebo does not separate the cream’s effect from expectation; the numbers and the measurement method decide everything here.'),
       },
       {
         id: 'cream',
-        text: bi('Есть ли в креме пептиды', 'Whether the cream contains peptides'),
+        text: bi('Есть ли в креме пептиды и в какой концентрации они действуют на кожу', 'Whether the cream contains peptides'),
         why: bi('Состав крема не спорит с заявленным «исследованием»; даже при честном составе вывод про 92% остаётся необоснованным.', 'The cream’s composition does not argue with the claimed "research"; even with an honest composition the 92% claim stays unsupported.'),
       },
       {
         id: 'design',
-        text: bi('Красиво ли оформлена упаковка', 'How nicely the packaging is designed'),
+        text: bi('Сколько стоит крем по сравнению с похожими кремами других марок', 'How nicely the packaging is designed'),
         why: bi('Оформление не относится к проверке утверждения; вопросы реестра сомнений касаются наблюдения, сравнения и замера.', 'Design is irrelevant to checking the claim; the register’s questions concern observation, comparison and measurement.'),
       },
     ],

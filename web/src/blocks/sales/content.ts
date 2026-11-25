@@ -159,9 +159,9 @@ export const SALES_QUIZ: QuizItem[] = [
     concepts: ['sales.champion'],
     prompt: bi('Сделка зависла: контакт в аккаунте отвечает «всё ок, двигаемся», но никакого движения нет три месяца. Чего не хватает по MEDDIC?', 'A deal is stuck: the contact says "all good, moving" but nothing has moved for three months. Which part of MEDDIC is missing?'),
     options: [
-      { id: 'champion', text: bi('Чемпиона, которому это выгодно лично', 'A champion with a personal stake'), correct: true, why: bi('«Всё ок» без личной выгоды контакта = вежливый отказ. Чемпион двигает, когда ему самому нужен результат.', '"All good" without the contact\'s personal stake is a polite no. A champion pushes when they need the result themselves.') },
-      { id: 'price', text: bi('Скидки', 'A discount'), why: bi('Цена не двигает сделку без внутреннего продавца.', 'Price does not move a deal without an internal seller.') },
-      { id: 'demo', text: bi('Ещё одной демонстрации', 'Another demo'), why: bi('Демо решает вопрос «что это», а не «почему они должны это купить сейчас».', 'A demo answers "what is it", not "why should they buy it now".') },
+      { id: 'champion', text: bi('Внутреннего сторонника', 'A champion with a personal stake'), correct: true, why: bi('«Всё ок» без личной выгоды контакта = вежливый отказ. Чемпион двигает, когда ему самому нужен результат.', '"All good" without the contact\'s personal stake is a polite no. A champion pushes when they need the result themselves.') },
+      { id: 'price', text: bi('Скидки, которая сдвинет решение к концу квартала', 'A discount'), why: bi('Цена не двигает сделку без внутреннего продавца.', 'Price does not move a deal without an internal seller.') },
+      { id: 'demo', text: bi('Ещё одной демонстрации для инженеров, которые не были на первой', 'Another demo'), why: bi('Демо решает вопрос «что это», а не «почему они должны это купить сейчас».', 'A demo answers "what is it", not "why should they buy it now".') },
     ],
   },
   {
@@ -181,9 +181,9 @@ export const SALES_QUIZ: QuizItem[] = [
     concepts: ['sales.trigger'],
     prompt: bi('Какое первое касание обычно работает лучше холодного письма с просьбой о звонке?', 'Which first touch usually works better than a cold email asking for a call?'),
     options: [
-      { id: 'value', text: bi('Касание с ценностью: инсайт, расчёт, наблюдение', 'A touch with value: an insight, a calculation, an observation'), correct: true, why: bi('Обратимое касание с пользой почти невозможно испортить и не требит доверие.', 'A reversible value-first touch can hardly be spoiled and does not spend trust.') },
-      { id: 'blast', text: bi('Рассылка по базе Apollo в 500 адресов', 'An Apollo blast to 500 addresses'), why: bi('Бласт в exec = спам-папка; Apollo — это карта закупочного центра, не рассыльщик.', 'A blast to execs lands in spam; Apollo is a map of the buying center, not a sender.') },
-      { id: 'cto', text: bi('Питч генеральному директору напрямую', 'A pitch straight to the CEO'), why: bi('Холодный питч в CTO обычно мимо; к эконом-покупателю заходят через тёплого чемпиона.', 'A cold pitch to a CTO usually misses; you reach the economic buyer through a warm champion.') },
+      { id: 'value', text: bi('Касание, которое что-то даёт человеку: расчёт, наблюдение о его задаче', 'A touch with value: an insight, a calculation, an observation'), correct: true, why: bi('Обратимое касание с пользой почти невозможно испортить и не требит доверие.', 'A reversible value-first touch can hardly be spoiled and does not spend trust.') },
+      { id: 'blast', text: bi('Рассылка по базе Apollo в 500 адресов с персональным первым предложением', 'An Apollo blast to 500 addresses'), why: bi('Бласт в exec = спам-папка; Apollo — это карта закупочного центра, не рассыльщик.', 'A blast to execs lands in spam; Apollo is a map of the buying center, not a sender.') },
+      { id: 'cto', text: bi('Короткое письмо генеральному директору напрямую с предложением встречи', 'A pitch straight to the CEO'), why: bi('Холодный питч в CTO обычно мимо; к эконом-покупателю заходят через тёплого чемпиона.', 'A cold pitch to a CTO usually misses; you reach the economic buyer through a warm champion.') },
     ],
   },
   {
@@ -192,9 +192,9 @@ export const SALES_QUIZ: QuizItem[] = [
     concepts: [],
     prompt: bi('Руководитель инфраструктуры банка на второй встрече спрашивает: «Вы маленькие, вдруг исчезнете?» До этого он сам предложил пилот. Что, скорее всего, стоит за вопросом?', "At the second meeting, the bank’s infrastructure lead asks: “You are small; what if you disappear?” They previously proposed a pilot themselves. What most likely lies behind the question?"),
     options: [
-      { id: 'data', text: bi('Опасение о риске, на которое нужны данные: что будет с системой, если поставщик исчезнет', "A risk concern requiring evidence: what happens to the system if the vendor disappears"), correct: true, why: bi('В этой ситуации человек уже хочет пилот, и вопрос показывает риск, который ему придётся объяснять своему руководству. Помогают факты: открытый код, возможность эксплуатировать систему без поставщика, условия передачи исходного кода и другие клиенты. Не каждое возражение означает запрос данных: если человек прямо отказался, отказ уважают.', "Here the person already wants a pilot, and the question highlights a risk they must explain to management. Helpful facts include open code, operating the system without the vendor, source-code handover terms and other customers. Not every objection asks for information: respect an explicit refusal.") },
-      { id: 'no', text: bi('Вежливый отказ от пилота', "A polite refusal of the pilot"), why: bi('Человек сам предложил пилот и задаёт конкретный вопрос о риске; так отказ обычно не звучит.', "The person proposed the pilot and is asking a specific risk question; that is not how a refusal usually sounds.") },
-      { id: 'price', text: bi('Просьба о скидке', 'A request for a discount'), why: bi('О цене здесь ничего не сказано; вопрос касается риска.', "Nothing here concerns price; the question is about risk.") },
+      { id: 'data', text: bi('Опасение о риске, на которое нужны данные о том, что будет с системой без поставщика', "A risk concern requiring evidence: what happens to the system if the vendor disappears"), correct: true, why: bi('В этой ситуации человек уже хочет пилот, и вопрос показывает риск, который ему придётся объяснять своему руководству. Помогают факты: открытый код, возможность эксплуатировать систему без поставщика, условия передачи исходного кода и другие клиенты. Не каждое возражение означает запрос данных: если человек прямо отказался, отказ уважают.', "Here the person already wants a pilot, and the question highlights a risk they must explain to management. Helpful facts include open code, operating the system without the vendor, source-code handover terms and other customers. Not every objection asks for information: respect an explicit refusal.") },
+      { id: 'no', text: bi('Вежливый отказ от пилота, который он не решается сказать прямо', "A polite refusal of the pilot"), why: bi('Человек сам предложил пилот и задаёт конкретный вопрос о риске; так отказ обычно не звучит.', "The person proposed the pilot and is asking a specific risk question; that is not how a refusal usually sounds.") },
+      { id: 'price', text: bi('Просьба о скидке за то, что банк берёт на себя риск работы с маленьким поставщиком', 'A request for a discount'), why: bi('О цене здесь ничего не сказано; вопрос касается риска.', "Nothing here concerns price; the question is about risk.") },
     ],
   },
 ];
