@@ -1,3 +1,6 @@
+import { markdownQuizItems } from '../../core/md-lessons';
+import { PRODUCT_MODULES, PRODUCT_SUMMARIES } from './structure';
+import { PRODUCT_V2_LESSONS } from './v2';
 // Hidden pilot block "Продукт": how B2B and open-source products are built,
 // on the shared course engine. Not on the route map (hidden: true); reachable
 // from the hidden catalog #/courses and by the direct block link. Russian is
@@ -14,7 +17,11 @@ import { valuemetricWidget } from './valuemetric';
 // Attach the interactive pieces: the boundary model to the open-core lesson,
 // the value-metric model to the pricing lesson. Each gets a text section
 // before it that says what the model shows and what the knobs mean.
-const lessons = PRODUCT_LESSONS.map((l) => ({ ...l, sections: [...l.sections] }));
+const allLessons = [...PRODUCT_LESSONS, ...PRODUCT_V2_LESSONS];
+const lessons = PRODUCT_MODULES.flatMap(m => m.lessons).map(id => {
+  const l = allLessons.find(l => l.id === id)!;
+  return { ...l, summary: PRODUCT_SUMMARIES[l.id] ?? l.summary, sections: [...l.sections] };
+});
 
 const opencore = lessons.find((l) => l.id === 'product.opencore')!;
 opencore.sections.splice(3, 0,
@@ -54,6 +61,7 @@ const block: Block = {
     experienced: bi('Отвечаете за направление', 'Owning a direction'),
   },
   hours: { beginner: 2.5, intermediate: 1.5, experienced: 1 },
+  modules: PRODUCT_MODULES,
   lessons: lessons.map((l) => l.id),
   sources: {
     en: [...new Map(lessons.flatMap((l) => l.sources.en).map((s) => [s.url, s])).values()],
@@ -66,6 +74,6 @@ export default defineModule({
   blocks: [block],
   lessons,
   concepts: PRODUCT_CONCEPTS,
-  quiz: PRODUCT_QUIZ,
+  quiz: [...PRODUCT_QUIZ, ...markdownQuizItems(lessons)],
   widgets: [opencoreWidget, valuemetricWidget],
 });
