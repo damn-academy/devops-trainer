@@ -79,7 +79,7 @@ const MODULE_LESSON: Record<string, { id: string; title: [string, string]; minut
 
 function moduleBody(letter: string): string {
   const mod = SALES_SCHOOL.find((m) => m.letter === letter)!;
-  return mod.items.map((it) => `**${it.n}. ${it.title}.** ${it.body}\n\n> Сегодня: ${it.today}`).join('\n\n');
+  return mod.items.map((it) => `**${it.n}. ${it.title.replace(/\.$/, '')}.** ${it.body}\n\n> Сегодня: ${it.today}`).join('\n\n');
 }
 
 const INTRODUCES: Record<string, string[]> = {
@@ -115,7 +115,7 @@ function lessonFor(letter: string): Lesson {
         id: 'principles',
         kind: 'text',
         step: 'explain',
-        title: bi(`Модуль ${letter}. ${mod.title}`, `Module ${letter}. ${mod.title}`),
+        title: bi(mod.title, mod.title),
         // TODO(ru-en): translate the school text into English; Russian is the source material.
         body: bi(moduleBody(letter), `English text is being prepared for this pilot lesson (module ${letter}, ${mod.items.length} principles). Switch to Russian to read the source material.`),
       },
