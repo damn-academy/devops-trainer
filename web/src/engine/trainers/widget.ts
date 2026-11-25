@@ -5,10 +5,10 @@ import type { Mounted, WidgetCtx, WidgetReg } from '../../core/types';
 import { ai, type AiService } from '../ai/service';
 import type { ChatMessage } from '../ai/client';
 import { trainers, datasets, systemPrompt, learnerData, copyPrompt, verdict, boundaryScore, breakEven, simulate, roiDefaults, type Verdict, type Choice, type RoiInput } from './model';
-import { loadAttempts, saveAttempts } from './storage';
+import { loadAttempts, saveAttempts, loadDraft, saveDraft, clearDraft } from './storage';
 import { strings as s } from './strings';
 export type TrainerAi = Pick<AiService, 'status' | 'ready' | 'onChange' | 'stream'>;
-import { governance, health, applicableChecks, governanceMarkdown, type Option } from './oss';
+import { governance, health, governanceRemedies, applicableChecks, governanceMarkdown, type Option } from './oss';
 let instance = 0;
 type Kind = 'governance' | 'health' | 'template' | 'rubric' | 'roleplay' | 'signal-feed' | 'boundary' | 'events.roi';
 const css = `
@@ -56,10 +56,19 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
     title(text(titles[file as keyof typeof titles]), false);
     root.append(h('a', { class: 'btn', href: `/templates/${file}${lang() === 'en' ? '-en' : ''}.xlsx`, download: '' }, text('download')));
+    const draftId = `template.${file}`;
+    const input = h('textarea'); input.value = loadDraft(draftId, '');
+    input.oninput = () => saveDraft(draftId, input.value);
+    // TODO(ru-prose): Label the explicit template draft finish action.
+    const finish = h('button', { type: 'button', class: 'btn', 'aria-label': 'Finish draft' }, '✓');
+    finish.onclick = () => { clearDraft(draftId); input.value = ''; ctx.complete(); };
+    root.append(h('label', {}, text('input'), input), finish);
+
   } else if (kind === 'governance') {
     if (id !== 'oss.governance') { root.textContent = text('missing'); return mounted; }
     title(governance.title); root.append(h('p', {}, ...renderInline(governance.description)));
-    const choices: Record<string, Option> = Object.fromEntries(governance.groups.map(g => [g.name, 'A']));
+    const choices = loadDraft<Record<string, Option>>(id, Object.fromEntries(governance.groups.map(g => [g.name, 'A'])));
+    const fixes = loadDraft<Record<string, boolean>>(`${id}.fixes`, {});
     const result = h('div', { class: 'tr-feedback', hidden: true, 'aria-live': 'polite' });
     const output = h('textarea', { readonly: true, 'aria-label': 'GOVERNANCE.md', rows: 16 });
     const prefix = `governance-${++instance}`;
@@ -68,16 +77,22 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       const options = h('div', { class: 'q-options' });
       const field = h('div', { class: 'quiz-item', role: 'radiogroup', 'aria-labelledby': headingId }, h('h4', { id: headingId, class: 'tr-heading' }, ...renderInline(group.name)), options);
       (['A', 'B'] as const).forEach(option => {
-        const radio = h('input', { type: 'radio', name: `${prefix}-${i}`, value: option, checked: option === 'A' });
-        radio.onchange = () => { choices[group.name] = option; output.value = governanceMarkdown(governance, choices); result.hidden = true; };
+        const radio = h('input', { type: 'radio', name: `${prefix}-${i}`, value: option, checked: option === choices[group.name] });
+        radio.onchange = () => { choices[group.name] = option; saveDraft(id, choices); output.value = governanceMarkdown(governance, choices); result.hidden = true; };
         options.append(h('label', { class: 'q-option' }, radio, h('span', {}, ...renderInline(`${option}: ${group.options[option]}`))));
       }); root.append(field);
     });
+    const remedies = h('div', { hidden: true });
+    governanceRemedies.forEach((remedy, i) => {
+      const toggle = h('input', { type: 'checkbox', checked: !!fixes[i] });
+      toggle.onchange = () => { fixes[i] = toggle.checked; saveDraft(`${id}.fixes`, fixes); result.hidden = true; };
+      remedies.append(h('label', { class: 'q-option' }, toggle, remedy));
+    });
     output.value = governanceMarkdown(governance, choices);
     root.append(button('compareRepository', () => {
-      result.replaceChildren(h('h4', {}, text('repositoryFacts')), h('ul', {}, ...governance.facts.map(f => h('li', {}, ...renderInline(f)))), h('h4', {}, text('checks')), h('ul', {}, ...applicableChecks(governance, choices).map(c => h('li', {}, ...explanation(c)))));
-      result.hidden = false; ctx.complete();
-    }), result, h('h4', {}, 'GOVERNANCE.md'), output, button('copyGovernance', () => { void (async () => {
+      result.replaceChildren(h('h4', {}, text('repositoryFacts')), h('ul', {}, ...governance.facts.map((f, i) => h('li', {}, ...renderInline(i > 0 && fixes[i - 1] ? governanceRemedies[i - 1] + ' ✓' : f)))), h('h4', {}, text('checks')), h('ul', {}, ...applicableChecks(governance, choices, fixes).map(c => h('li', {}, ...explanation(c)))));
+      result.hidden = false; remedies.hidden = false; if (!applicableChecks(governance, choices, fixes).length) ctx.complete();
+    }), remedies, result, h('h4', {}, 'GOVERNANCE.md'), output, button('copyGovernance', () => { void (async () => {
       const copied = await copyText(output.value);
       if (disposed) return;
       status.textContent = text(copied ? 'documentCopied' : 'documentFallback');
@@ -86,12 +101,13 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   } else if (kind === 'health') {
     if (id !== 'oss.health') { root.textContent = text('missing'); return mounted; }
     title(health.title); root.append(h('p', {}, ...renderInline(health.description)), h('ul', {}, ...health.metrics.map(m => h('li', {}, ...renderInline(m)))));
-    let index = 0; const card = h('article', { class: 'quiz-item' }); root.append(card);
+    let index = Math.max(0, Math.min(health.questions.length - 1, loadDraft(`${id}.index`, 0))); const card = h('article', { class: 'quiz-item' }); root.append(card);
     function draw() {
       const question = health.questions[index], input = h('textarea');
+      input.value = loadDraft(`${id}.${index}`, ''); input.oninput = () => saveDraft(`${id}.${index}`, input.value);
       const answer = h('div', { class: 'tr-feedback', hidden: true, 'aria-live': 'polite' }, h('p', {}, ...explanation(question.answer)));
       const reveal = button('showDebrief', () => { answer.hidden = false; reveal.disabled = true; if (index === health.questions.length - 1) ctx.complete(); });
-      if (index < health.questions.length - 1) answer.append(button('next', () => { index++; draw(); }));
+      if (index < health.questions.length - 1) answer.append(button('next', () => { index++; saveDraft(`${id}.index`, index); draw(); }));
       card.replaceChildren(h('p', {}, `${index + 1}/${health.questions.length}`), h('h4', {}, ...renderInline(question.question)), h('label', {}, text('input'), input), reveal, answer);
     }
     draw();
@@ -99,13 +115,17 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const trainer = trainers.find(v => v.id === id && (kind === 'roleplay' ? v.id === 'events.booth-visitor' : v.id !== 'events.booth-visitor'));
     if (!trainer) { root.textContent = text('missing'); return mounted; }
     const svc = service ?? ai(); title(trainer.title); root.append(renderMd(trainer.rubric));
+    const conversations = loadDraft<import('./storage').Attempt[][]>(`${trainer.id}.conversations`, []);
+    const round = h('p');
     const attempts = loadAttempts(trainer.id), history = h('div');
     function showHistory() {
+      round.textContent = `${conversations.length + 1} / 5`;
       history.replaceChildren(h('h4', {}, text('history')));
       attempts.forEach((a, i) => history.append(h('article', { class: 'quiz-item' }, h('h4', {}, `${i + 1} · ${text('user')}`), h('p', { style: 'white-space:pre-wrap' }, ...renderInline(a.input)), h('h4', {}, text('assistant')), renderMd(a.answer))));
     }
     showHistory();
     const input = h('textarea'), manual = h('textarea', { readonly: true, 'aria-label': text('copy'), hidden: true });
+    input.value = loadDraft(trainer.id, '');
     let busy = false, request: ReturnType<TrainerAi['stream']> | undefined;
     const sync = () => { if (disposed) return; send.disabled = busy || !svc.status.configured || svc.status.locked || !input.value.trim(); debrief.disabled = busy || !svc.status.configured || svc.status.locked; status.textContent = busy ? text('busy') : !svc.status.configured || svc.status.locked ? text('settings') : ''; };
     async function submit(value: string) {
@@ -119,7 +139,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
         request = svc.stream({ messages, maxTokens: 2400, temperature: kind === 'roleplay' ? .7 : .3 }, () => {});
         const answer = await request.done;
         if (disposed) return;
-        attempts.push({ input: value, answer }); saveAttempts(trainer!.id, attempts); showHistory(); input.value = ''; ctx.complete();
+        attempts.push({ input: value, answer }); saveAttempts(trainer!.id, attempts); showHistory(); ctx.complete();
       } catch { failed = true; }
       finally { busy = false; request = undefined; if (!disposed) { sync(); if (failed) status.textContent = text('error'); } }
     }
@@ -132,7 +152,12 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       else if (!disposed) { manual.hidden = false; manual.value = prompt; manual.focus(); manual.select(); status.textContent = text('fallback'); }
     })(); });
     root.append(h('label', {}, text('input'), input), actions(send, ...(kind === 'roleplay' ? [debrief] : []), copy), status, manual, history);
-    input.oninput = sync; cleanup.push(svc.onChange(sync), () => request?.abort());
+    input.oninput = () => { saveDraft(trainer.id, input.value); sync(); };
+    // TODO(ru-prose): Label the explicit finish/new visitor action and conversation count.
+    const finish = h('button', { type: 'button', class: 'btn' }, '✓');
+    finish.setAttribute('aria-label', 'Finish / next conversation');
+    finish.onclick = () => { if (busy) return; input.value = ''; clearDraft(trainer.id); if (kind === 'roleplay') { conversations.push([...attempts]); saveDraft(`${trainer.id}.conversations`, conversations); attempts.length = 0; saveAttempts(trainer.id, attempts); showHistory(); } sync(); };
+    root.append(...(kind === 'roleplay' ? [round] : []), finish); cleanup.push(svc.onChange(sync), () => request?.abort());
     void svc.ready.then(sync).catch(() => { if (!disposed) status.textContent = text('error'); }); sync();
   } else if (kind === 'events.roi') {
     title(text('roi'), false);
@@ -156,13 +181,13 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     if (!data) { root.textContent = text('missing'); return mounted; }
     title(data.title);
     if (kind === 'boundary') {
-      const choices: Choice[] = data.rows.map(() => 'open'), reveals: HTMLElement[] = [];
+      const choices: Choice[] = loadDraft(data.id, data.rows.map(() => 'open' as Choice)), reveals: HTMLElement[] = [];
       data.rows.forEach((row, i) => {
         const name = `boundary-${++instance}`, headingId = `${name}-heading`;
         const options = h('div', { class: 'q-options', role: 'radiogroup', 'aria-labelledby': headingId });
         for (const value of ['open', 'paid'] as const) {
-          const radio = h('input', { type: 'radio', name, value, checked: value === 'open' });
-          radio.onchange = () => { choices[i] = value; reveals.forEach(r => { r.hidden = true; }); status.textContent = ''; };
+          const radio = h('input', { type: 'radio', name, value, checked: value === choices[i] });
+          radio.onchange = () => { choices[i] = value; saveDraft(data!.id, choices); reveals.forEach(r => { r.hidden = true; }); status.textContent = ''; };
           options.append(h('label', { class: 'q-option' }, radio, h('span', {}, text(value))));
         }
         const reveal = h('div', { class: 'tr-feedback', hidden: true }, h('p', {}, ...explanation(`${text('expected')}: ${row[1]}`)), h('p', {}, ...explanation(row[2])), h('p', {}, ...explanation(row[3]))); reveals.push(reveal);
@@ -170,7 +195,8 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       });
       root.append(button('reaction', () => { reveals.forEach(r => { r.hidden = false; }); const score = boundaryScore(data.rows, choices); status.textContent = (Object.keys(score) as (keyof typeof score)[]).map(k => `${text(k)}: ${score[k]}`).join(' · '); ctx.complete(); }), status);
     } else {
-      let index = 0; const answers: { choice: Verdict; action: string }[] = [], card = h('article', { class: 'quiz-item' }); root.append(card);
+      const saved = loadDraft<{ index: number; answers: { choice: Verdict; action: string }[]; choice?: Verdict; action: string; revealed: boolean }>(data.id, { index: 0, answers: [], action: '', revealed: false });
+      let index = saved.index; const answers = saved.answers, card = h('article', { class: 'quiz-item' }); root.append(card);
       function draw() {
         card.replaceChildren();
         if (index === data!.rows.length) {
@@ -178,14 +204,18 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
           card.append(h('h4', {}, `${text('score')}: ${index - misses.length}/${index}`), h('h4', {}, text('misses')));
           misses.forEach(({ r, i }) => card.append(h('article', { class: 'quiz-item' }, h('p', {}, ...renderInline(r[0])), h('p', {}, `${text('chosen')}: ${text(answers[i].choice)}`), h('p', {}, ...renderInline(answers[i].action)), ...r.slice(1).map(line => h('p', {}, ...explanation(line)))))); ctx.complete(); return;
         }
-        const row = data!.rows[index]; let choice: Verdict | undefined;
+        const row = data!.rows[index]; let choice: Verdict | undefined = saved.choice;
+        const persist = () => saveDraft(data!.id, { index, answers, choice, action: action.value, revealed: action.disabled });
         const action = h('textarea'), reveal = button('reveal', () => {
           if (!choice) return; answers.push({ choice, action: action.value });
           buttons.forEach(b => { b.disabled = true; }); action.disabled = true; reveal.disabled = true;
-          card.append(h('p', {}, ...explanation(row[1])), h('p', {}, ...explanation(row[2])), h('p', {}, ...explanation(row[3])), button('next', () => { index++; draw(); }));
-        }); reveal.disabled = true;
-        const buttons = (['signal', 'noise', 'verify'] as const).map(v => { const b = button(v, () => { choice = v; buttons.forEach(x => x.setAttribute('aria-pressed', String(x === b))); reveal.disabled = false; }); b.className = 'q-option'; b.setAttribute('aria-pressed', 'false'); return b; });
-        card.append(h('p', {}, `${index + 1}/${data!.rows.length}`), h('p', {}, ...renderInline(row[0])), h('div', { class: 'q-options', role: 'group', 'aria-label': text('chosen') }, ...buttons), h('label', {}, text('action'), action), reveal);
+          card.append(h('p', {}, ...explanation(row[1])), h('p', {}, ...explanation(row[2])), h('p', {}, ...explanation(row[3])), button('next', () => { index++; saved.choice = undefined; saved.action = ''; saved.revealed = false; saveDraft(data!.id, { index, answers, action: '', revealed: false }); draw(); }));
+          persist();
+        }); reveal.disabled = !choice;
+        const buttons = (['signal', 'noise', 'verify'] as const).map(v => { const b = button(v, () => { choice = v; persist(); buttons.forEach(x => x.setAttribute('aria-pressed', String(x === b))); reveal.disabled = false; }); b.className = 'q-option'; b.setAttribute('aria-pressed', String(choice === v)); return b; });
+        action.value = saved.action; action.oninput = persist;
+        if (saved.revealed) { answers.pop(); reveal.click(); }
+        card.prepend(h('p', {}, `${index + 1}/${data!.rows.length}`), h('p', {}, ...renderInline(row[0])), h('div', { class: 'q-options', role: 'group', 'aria-label': text('chosen') }, ...buttons), h('label', {}, text('action'), action), reveal);
       }
       draw();
     }
