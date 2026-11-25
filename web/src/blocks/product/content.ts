@@ -10,7 +10,7 @@ import { PRODUCT_PROGRAM } from './principles';
 
 /** The honest note every lesson of this course carries: one way, not a law. */
 export const PRODUCT_HONEST_NOTE = bi(
-  'Это один из способов работать, а не закон и не оптимальное решение. Жизнь сложнее любой схемы: многое зависит от контекста — продукта, рынка, людей и момента. Берите то, что применимо к вашей ситуации, и проверяйте на практике.',
+  'Это один из способов работать; законом и единственно верным решением он не служит. Жизнь сложнее любой схемы: многое зависит от контекста — продукта, рынка, людей и момента. Берите то, что применимо к вашей ситуации, и проверяйте на практике.',
   'This is one way of working, not a law and not an optimal solution. Life is more complex than any framework: much depends on context — the product, the market, the people and the moment. Take what applies to your situation and test it in practice.',
 );
 
@@ -179,7 +179,7 @@ const LESSON_SPECS: LessonSpec[] = [
       'A weekly contact with users instead of a scheduled research phase, and Teresa Torres’s opportunity-solution tree.',
     ],
     hook: [
-      'Дорожная карта на год составлена, а через квартал выясняется, что половина пунктов никому не нужна. Этот урок про то, как держать продукт в контакте с реальностью каждую неделю, а не раз в плановый период.',
+      'Дорожная карта на год составлена, а через квартал выясняется, что половина пунктов никому не нужна. Этот урок про то, как держать продукт в контакте с реальностью каждую неделю, без ожидания следующего планового периода.',
       'The year-long roadmap is written, and a quarter later half of its items turn out to be needed by no one. This lesson is about keeping the product in touch with reality every week, not once per planning cycle.',
     ],
     principles: [16, 17],
@@ -197,7 +197,7 @@ const LESSON_SPECS: LessonSpec[] = [
       'RICE prioritization, the roadmap as a list of what we do not do, telling signal from noise, and conversations by The Mom Test.',
     ],
     hook: [
-      'Запросов больше, чем людей, в десять раз, и каждый кажется срочным. Этот урок про то, как честно выбирать, что делать, и как говорить «нет», не разрушая отношения с клиентами.',
+      'Запросов больше, чем людей, в десять раз, и каждый кажется срочным. Этот урок про то, как выбирать, что делать, без самообмана, и как говорить «нет», не разрушая отношения с клиентами.',
       'There are ten times more requests than people, and every one feels urgent. This lesson is about choosing honestly what to do and how to say no without wrecking customer relationships.',
     ],
     principles: [18, 19, 20],
@@ -493,7 +493,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     ),
     options: [
       { id: 'nrr', text: bi('Чистое удержание выручки, потому что выручка выросла внутри существующего клиента', 'Net revenue retention, because revenue grew inside an existing customer'), correct: true, why: bi('Чистое удержание выше ста процентов означает, что клиенты платят больше, чем год назад, и компания растёт без новых сделок.', 'Net retention above one hundred percent means customers pay more than a year ago, and the company grows without new deals.') },
-      { id: 'cac', text: bi('Стоимость привлечения клиента, потому что клиент вырос сам по себе', 'Customer acquisition cost, because the customer grew on their own'), why: bi('Эта сделка ничего не привлекала: клиент уже был внутри, и важен рост внутри него, а не цена входа.', 'This deal acquired nothing: the customer was already inside, and the growth inside them matters, not the entry price.') },
+      { id: 'cac', text: bi('Стоимость привлечения клиента, потому что клиент вырос сам по себе', 'Customer acquisition cost, because the customer grew on their own'), why: bi('Эта сделка ничего не привлекала: клиент уже был внутри, и важен рост внутри него, и цена входа здесь вторична.', 'This deal acquired nothing: the customer was already inside, and the growth inside them matters, not the entry price.') },
       { id: 'conversion', text: bi('Конверсия пробной версии в оплату, потому что клиент когда-то начинал маленьким', 'Trial-to-paid conversion, because the customer once started small'), why: bi('Клиент давно платит, и здесь измеряется не первый платёж, а расширение со временем.', 'The customer has paid for a long time; what is measured here is expansion over time, not the first payment.') },
     ],
   },
@@ -507,9 +507,9 @@ export const PRODUCT_QUIZ: QuizItem[] = [
       'Enthusiasts put the product on new machines every week, while cautious companies answer “let’s see in a year”. What lies between these groups?',
     ),
     options: [
-      { id: 'chasm', text: bi('Пропасть между ранними последователями и прагматиками, которых интересует чужой опыт, а не новизна', 'The chasm between early adopters and pragmatists, who care about others’ experience, not novelty'), correct: true, why: bi('Прагматик покупает по примеру других, и продукт, который восторгает энтузиастов, проваливается у него без эталонных историй.', 'A pragmatist buys on others’ example, and a product that delights enthusiasts fails with them without lighthouse stories.') },
-      { id: 'price', text: bi('Вопрос цены, который решается скидкой к концу квартала', 'A pricing question solved with a quarter-end discount'), why: bi('«Посмотрим через год» говорит про доверие и привычку, а не про деньги, и скидка пропасть не переходит.', '“Let’s see in a year” is about trust and habit, not money, and a discount does not cross the chasm.') },
-      { id: 'features', text: bi('Недостаток возможностей для больших компаний', 'A lack of features for large companies'), why: bi('Чаще всего возможностей хватает, а не хватает примеров успешного использования в похожих компаниях.', 'More often the features are enough; what is missing are examples of successful use in similar companies.') },
+      { id: 'chasm', text: bi('Пропасть между ранними последователями и прагматиками, которых интересует чужой опыт больше новизны', 'The chasm between early adopters and pragmatists, who care about others’ experience, not novelty'), correct: true, why: bi('Прагматик покупает по примеру других, и продукт, который восторгает энтузиастов, проваливается у него без эталонных историй.', 'A pragmatist buys on others’ example, and a product that delights enthusiasts fails with them without lighthouse stories.') },
+      { id: 'price', text: bi('Вопрос цены, который решается скидкой к концу квартала', 'A pricing question solved with a quarter-end discount'), why: bi('«Посмотрим через год» говорит про доверие и привычку, деньги здесь вторичны, и скидка пропасть не переходит.', '“Let’s see in a year” is about trust and habit, not money, and a discount does not cross the chasm.') },
+      { id: 'features', text: bi('Недостаток возможностей для больших компаний', 'A lack of features for large companies'), why: bi('Чаще всего возможностей хватает, и не хватает примеров успешного использования в похожих компаниях.', 'More often the features are enough; what is missing are examples of successful use in similar companies.') },
     ],
   },
   {
@@ -539,7 +539,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     options: [
       { id: 'habit', text: bi('Текущий способ работы, который говорит «не буду ничего менять»', 'The current way of working that says “I won’t change anything”'), correct: true, why: bi('Переключение стоит усилий, и большинство пользователей выбирает привычку, если первый успех откладывается.', 'Switching costs effort, and most users choose the habit when the first success is delayed.') },
       { id: 'rival', text: bi('Другой продукт той же категории с похожими возможностями', 'Another product of the same category with similar features'), why: bi('До сравнения с конкурентами дело доходит редко: пользователь уходит раньше, на шаге установки и первого запуска.', 'The comparison with competitors rarely happens: the user leaves earlier, at install and first launch.') },
-      { id: 'setup', text: bi('Сложность настройки, которая путает в первый запуск', 'The setup complexity that confuses the first run'), why: bi('Сложность настройки — препятствие на пути, а не конкурент: конкурент — отказ от изменений.', 'Setup complexity is an obstacle on the path, not a competitor: the competitor is refusal to change.') },
+      { id: 'setup', text: bi('Сложность настройки, которая путает в первый запуск', 'The setup complexity that confuses the first run'), why: bi('Сложность настройки остаётся препятствием на пути; настоящий конкурент — отказ от изменений.', 'Setup complexity is an obstacle on the path, not a competitor: the competitor is refusal to change.') },
     ],
   },
   {
@@ -599,7 +599,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     steps: [
       { id: 'outcome', text: bi('Желаемый исход', 'Desired outcome'), why: bi('Дерево начинается с исхода, который команда хочет получить для бизнеса.', 'The tree starts with the outcome the team wants for the business.') },
       { id: 'opportunity', text: bi('Возможность из жизни пользователя', 'An opportunity from the user’s life'), why: bi('Исход ветвится в возможности, то есть в боли и желания пользователей.', 'The outcome branches into opportunities, the pains and desires of users.') },
-      { id: 'solution', text: bi('Решение этой возможности', 'A solution for that opportunity'), why: bi('Только после возможности придумывают решения, а не наоборот.', 'Solutions are invented only after the opportunity, not before.') },
+      { id: 'solution', text: bi('Решение этой возможности', 'A solution for that opportunity'), why: bi('Решения придумывают только после того, как найдена возможность.', 'Solutions are invented only after the opportunity, not before.') },
       { id: 'experiment', text: bi('Эксперимент для проверки решения', 'An experiment to test the solution'), why: bi('Каждое решение проверяют экспериментом, прежде чем строить его в продукте.', 'Every solution is tested with an experiment before it is built into the product.') },
     ],
   },
@@ -614,7 +614,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     ),
     options: [
       { id: 'order', text: bi('Порядок дерева, потому что сначала ищут возможность, а решение придумывают после', 'The order of the tree: the opportunity comes first, and the solution is invented after'), correct: true, why: bi('Дерево Торрес переворачивает этот порядок и переводит спор с идеи на карту целиком.', 'Torres’s tree flips this order and moves the argument from the idea to the whole map.') },
-      { id: 'ambition', text: bi('Недостаток амбиций у команды', 'A lack of ambition in the team'), why: bi('Амбиции тут ни при чём: проблема в порядке мышления, а не в размере замысла.', 'Ambition is not the issue: the problem is the order of thinking, not the size of the vision.') },
+      { id: 'ambition', text: bi('Недостаток амбиций у команды', 'A lack of ambition in the team'), why: bi('Амбиции тут ни при чём: проблема в порядке мышления, и размер замысла ни при чём.', 'Ambition is not the issue: the problem is the order of thinking, not the size of the vision.') },
       { id: 'velocity', text: bi('Скорость релизов, которая падает от долгих обсуждений', 'Release velocity, which long discussions slow down'), why: bi('Скорость релизов не спасает от решения без задачи, потому что оно так и не найдёт своих пользователей.', 'Release velocity does not save a solution without a job, because it will never find its users.') },
     ],
   },
@@ -639,7 +639,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     concepts: [],
     refs: { lesson: 'product.priorities' },
     prompt: bi(
-      'Что из этого сигнал для дорожной карты, а не шум?',
+      'Что из этого сигнал для дорожной карты, а что шум?',
       'Which of these is a signal for the roadmap rather than noise?',
     ),
     options: [
@@ -659,7 +659,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
       'By the rules of The Mom Test, which question to a user is asked correctly?',
     ),
     options: [
-      { id: 'past', text: bi('«Расскажите, как вы решали эту задачу в прошлый раз и сколько это стоило»', '“Tell me how you solved this job last time and what it cost you”'), correct: true, why: bi('Вопрос о прошлом поведении и потраченных деньгах даёт проверяемые факты, а не вежливые обещания.', 'A question about past behaviour and spent money gives verifiable facts rather than polite promises.') },
+      { id: 'past', text: bi('«Расскажите, как вы решали эту задачу в прошлый раз и сколько это стоило»', '“Tell me how you solved this job last time and what it cost you”'), correct: true, why: bi('Вопрос о прошлом поведении и потраченных деньгах даёт проверяемые факты вместо вежливых обещаний.', 'A question about past behaviour and spent money gives verifiable facts rather than polite promises.') },
       { id: 'future', text: bi('«Вы бы купили продукт, который решает эту задачу автоматически?»', '“Would you buy a product that solves this job automatically?”'), why: bi('О гипотетическом будущем люди отвечают вежливо и неправдиво, ведь «купил бы» ничего не стоит.', 'About the hypothetical future people answer politely and untruthfully, because “I would buy it” costs nothing.') },
       { id: 'opinion', text: bi('«Как вам идея такого продукта, нравится ли она вам?»', '“How do you like the idea of such a product, do you like it?”'), why: bi('Мнение об идее не предсказывает покупку: люди хвалят идеи из вежливости и не покупают потом.', 'An opinion about the idea does not predict a purchase: people praise ideas out of politeness and then do not buy.') },
     ],
@@ -691,7 +691,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     options: [
       { id: 'default', text: bi('Дефолт экосистемы, потому что его получают готовым и не меняют без причины', 'The ecosystem default, because it arrives ready-made and is not changed without a reason'), correct: true, why: bi('Дефолт выбирают без выбора, и каждый следующий пользователь приходит уже с установленным продуктом.', 'The default is chosen without choosing, and every next user arrives with the product already installed.') },
       { id: 'cheap', text: bi('Самая низкая цена на рынке среди похожих продуктов', 'The lowest price on the market among similar products'), why: bi('Цена конкурирует в момент покупки, а дефолт работает до всякой покупки.', 'Price competes at the moment of purchase, while the default works before any purchase.') },
-      { id: 'ads', text: bi('Самая широкая рекламная кампания среди конкурентов', 'The widest advertising campaign among competitors'), why: bi('Реклама покупает внимание, а не привычку, и привычку покупает только статус дефолта.', 'Advertising buys attention, not habit, and only the status of the default buys habit.') },
+      { id: 'ads', text: bi('Самая широкая рекламная кампания среди конкурентов', 'The widest advertising campaign among competitors'), why: bi('Реклама покупает внимание; привычку даёт только положение решения по умолчанию.', 'Advertising buys attention, not habit, and only the status of the default buys habit.') },
     ],
   },
   {
@@ -752,7 +752,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     options: [
       { id: 'oss-trust', text: bi('Открытый код как канал доверия и распространения, а деньги — за слой для компаний', 'Open source as the trust and distribution channel, money from the layer for companies'), correct: true, why: bi('Все четыре компании строят доверие открытым кодом и берут выручку за корпоративный или управляемый слой.', 'All four companies build trust with open source and take revenue from an enterprise or managed layer.') },
       { id: 'fixed', text: bi('Фиксированная цена без тарифов для разных размеров клиентов', 'A fixed price with no tiers for different customer sizes'), why: bi('У всех разборов упаковка многослойная и включает бесплатное, командное и корпоративное.', 'Every case study has layered packaging that includes free, team and enterprise tiers.') },
-      { id: 'no-community', text: bi('Отказ от сообщества после выхода на биржу', 'Abandoning the community after going public'), why: bi('Ни одна из компаний не отказывалась от сообщества: споры шли о границах, а не о самом факте открытости.', 'None of the companies abandoned the community: the disputes were about boundaries, not about openness itself.') },
+      { id: 'no-community', text: bi('Отказ от сообщества после выхода на биржу', 'Abandoning the community after going public'), why: bi('Ни одна из компаний не отказывалась от сообщества: споры шли о границах, и сам факт открытости никто не оспаривал.', 'None of the companies abandoned the community: the disputes were about boundaries, not about openness itself.') },
     ],
   },
 ];
