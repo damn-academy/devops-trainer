@@ -7,7 +7,9 @@ it('parses the authored blocks without leaking sections across boundaries', () =
   expect(g.facts).toHaveLength(4); expect(g.checks).toHaveLength(9);
   g.groups.forEach(group => { expect(group.options.A).toBeTruthy(); expect(group.options.B).toBeTruthy(); });
   expect(h.metrics).toHaveLength(9); expect(h.questions).toHaveLength(5);
-  expect(h.questions[0]).toEqual({ question: 'Чему равен фактор автобуса по ревью?', answer: 'двум; если эти двое уйдут, ревью встанет.' });
+  expect(h.questions[0].question).toContain('наименьшее число людей');
+  expect(h.questions[0].answer).toContain('одному: половину ревью делает Анна');
+  expect(h.questions[0].answer).toContain('81 %');
   expect(() => parseGovernance('')).toThrow('Missing data');
 });
 it('maps every short check name for all 64 selections and always includes the unconditional check', () => {
