@@ -9,8 +9,8 @@ export const strings = {
   allocated: bi('Распределено из месячного бюджета, долларов', 'Allocated / monthly budget, USD'),
   single: bi('Показать один прогон', 'One run'), reset: bi('Вернуть исходное распределение', 'Reset'),
   legend: bi('График показывает возможности сделок по месяцам. Сплошная линия — медиана трёхсот прогонов, полоса — разброс, в который попадают восемь прогонов из десяти, пунктир — один случайный прогон.', 'Sales opportunities: median — solid line; 10–90% — band; one run — dashed line.'),
-  month: bi('Месяц', 'Month'), total: bi('Сколько возможностей сделок накопится: медиана и разброс восьми прогонов из десяти', 'Cumulative opportunities (median and 10–90%)'),
-  funnel: bi('Как сужается воронка: квалифицированные посещения, затем активации, затем возможности сделок, медианы с накоплением', 'Qualified visits → activations → opportunities (cumulative medians)'),
+  month: bi('Месяц', 'Month'), total: bi('Сколько возможностей сделок накопится, по медиане и разбросу восьми прогонов из десяти', 'Cumulative opportunities (median and 10–90%)'),
+  funnel: bi('Как сужается воронка от квалифицированных посещений к активациям и возможностям сделок, медианы с накоплением', 'Qualified visits → activations → opportunities (cumulative medians)'),
   channels: [bi('Спонсорство рассылки', 'Newsletter sponsorship'), bi('Спонсорство подкаста', 'Podcast sponsorship'), bi('Reddit Ads', 'Reddit Ads'), bi('LinkedIn Thought Leader Ads', 'LinkedIn Thought Leader Ads'), bi('LinkedIn Document Ads', 'LinkedIn Document Ads'), bi('Поиск Google по категории', 'Google Search: category'), bi('Поиск Google по названиям конкурентов', 'Google Search: competitor names'), bi('EthicalAds и другая контекстная реклама', 'EthicalAds / contextual'), bi('Ретаргетинг', 'Retargeting'), bi('Спонсорство автора на YouTube', 'YouTube creator sponsorship')],
 };
 
