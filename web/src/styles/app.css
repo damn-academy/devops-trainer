@@ -225,3 +225,6 @@
 .course-card h2, .course-card h3 { margin: 0 0 10px; font-size: 1.15rem; }
 .course-card p { margin: 0 0 10px; }
 .course-card p:last-child { margin-bottom: 0; }
+
+/* Keep the scientific-thinking diagram within the course reading column. */
+.lesson-body > .lsec:has(.explainer[data-model='scithink.correlation']) { max-width: 760px; margin-left: auto; margin-right: auto; }
