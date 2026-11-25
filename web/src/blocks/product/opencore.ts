@@ -56,8 +56,7 @@ export function opencoreProject(p: OpencoreParams, months = 12): OpencoreResult 
 /** One honest sentence about the current outcome, shown under the counters. */
 export function opencoreVerdict(r: OpencoreResult): { ru: string; en: string } {
   void r;
-  // TODO(ru-prose): Neutral limitation note: no price elasticity, churn, costs, competition or willingness to pay.
-  return { ru: '', en: 'This model excludes price elasticity, churn, costs, competition and willingness to pay.' };
+  return { ru: 'Модель не учитывает, как цена влияет на число покупателей, отток клиентов, расходы компании, конкурентов и готовность платить, поэтому советовать по ней цену нельзя: она показывает только, как граница версий меняет рост, доверие и долю платящих.', en: 'This model excludes price elasticity, churn, costs, competition and willingness to pay.' };
 }
 
 const KNOBS: { key: keyof OpencoreParams; min: number; max: number; step: number; label: [string, string]; fmt: (v: number) => string }[] = [
@@ -136,7 +135,7 @@ export function mountOpencore(el: HTMLElement, _props: unknown): Mounted {
           h('td', '', String(row.revenue)),
           h('td', '', String(row.trust)))))),
       h('p', 'poc-note', t(PRODUCT_HONEST_NOTE)),
-      // TODO(ru-prose): Explain nearest-integer payer rounding before revenue and the illustrative adoption/conversion/trust coefficients.
+      h('p', 'poc-note', t(bi('Как считается модель. Число платящих компаний округляется до целого, и выручка считается от этого целого числа, поэтому она равна числу платящих, умноженному на цену. Коэффициенты роста, доли платящих и доверия ниже — учебные допущения, а не измерения: они показывают направление влияния границы, а не его величину.', 'How the model works. Paying companies are rounded to a whole number, and revenue is computed from that number, so it equals paying companies times price. The growth, conversion and trust coefficients below are teaching assumptions, not measurements: they show the direction of the boundary effect, not its size.'))),
       h('pre', 'poc-formula', `companies₀ = 80; trust₀ = 85
 growth = max(0.005, 0.03 + 0.09 × breadth − 0.08 × boundary)
 conversion = (0.015 + 0.06 × boundary) × (trust < 45 ? 0.6 : 1)

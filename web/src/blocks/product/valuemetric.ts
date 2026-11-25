@@ -179,7 +179,7 @@ export function mountValuemetric(el: HTMLElement, _props: unknown): Mounted {
             h('td', '', String(row.predictability)));
         })))),
       h('p', 'pvm-note', t(PRODUCT_HONEST_NOTE)),
-      // TODO(ru-prose): Explain units per customer, illustrative growth multipliers and fixed predictability scores.
+      h('p', 'pvm-note', t(bi('Как считается таблица. Месячная выручка — число клиентов × сколько единиц метрики у одного клиента × цена единицы; число единиц на клиента для каждой метрики задано в модели. Рост за год умножается на поправку: для оплаты по пользователям рост берётся под корнем, потому что число людей растёт медленнее нагрузки, для гигабайтов — с множителем 1,4, для запросов — 0,85. Предсказуемость счёта — постоянная учебная оценка для каждой метрики, ползунки её не меняют. Все поправки иллюстративные и не взяты из исследований.', 'How the table is computed. Monthly revenue is customers × units of the metric per customer × unit price; units per customer are fixed in the model per metric. Yearly growth is adjusted: per-user pricing takes the square root of growth because headcount grows slower than load, gigabytes use a 1.4 multiplier, requests 0.85. Bill predictability is a fixed teaching score per metric that the sliders do not change. All adjustments are illustrative, not taken from research.'))),
       h('pre', 'pvm-formula', VALUE_METRICS.map(m => `${t(bi(...m.label))}: ${params.customers} × ${m.units} × ${params.price} = ${Math.round(params.customers * m.units * params.price)}; × ${m.id === 'user' ? '√growth' : m.id === 'gb' ? 'growth × 1.4' : m.id === 'request' ? 'growth × 0.85' : 'growth'}; ${m.predictability}/100`).join('\n')),
     );
   };

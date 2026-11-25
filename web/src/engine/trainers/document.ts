@@ -10,10 +10,8 @@ export function mountTaskDocument(el: HTMLElement, id: string, title: string, ta
   const input = h('textarea', { rows: 10, style: 'width:100%;font:inherit;box-sizing:border-box' });
   input.value = loadDraft(`document.${id}`, `${title}\n\n${task}\n\n`);
   input.oninput = () => saveDraft(`document.${id}`, input.value);
-  // TODO(ru-prose): Label the plain-text document download.
-  const download = h('button', { type: 'button', class: 'btn', 'aria-label': 'Download .txt' }, '↓ .txt');
+  const download = h('button', { type: 'button', class: 'btn' }, t(strings.downloadTxt));
   download.onclick = () => downloadFile(`${id}.txt`, input.value, 'text/plain;charset=utf-8');
   root.append(h('label', {}, t(strings.input), input), download); el.append(root);
-  // TODO(ru-prose): Author filled examples and structured worksheet columns where the task does not specify them.
   return { dispose() { root.remove(); } };
 }

@@ -29,7 +29,7 @@ it.each([['rubric', 'pr.crisis-statement'], ['roleplay', 'events.booth-visitor']
   const a = trainer(kind, id); change(a.el.querySelector('textarea')!, 'Unsent draft'); a.mounted.dispose();
   const b = trainer(kind, id); expect(b.el.querySelector('textarea')!.value).toBe('Unsent draft');
   expect(service.stream).not.toHaveBeenCalled();
-  b.el.querySelector<HTMLButtonElement>('button[aria-label^="Finish"]')!.click(); b.mounted.dispose();
+  b.el.querySelector<HTMLButtonElement>('button[data-finish]')!.click(); b.mounted.dispose();
   expect(trainer(kind, id).el.querySelector('textarea')!.value).toBe('');
 });
 it('isolates drafts and tolerates unavailable storage', () => {
