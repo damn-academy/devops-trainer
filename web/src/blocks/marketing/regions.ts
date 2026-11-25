@@ -161,7 +161,7 @@ export function mountRegions(el: HTMLElement, _props: unknown): Mounted {
           h('td', '', String(x.totals.leads)),
           h('td', '', String(x.totals.opportunities)),
           h('td', '', String(x.totals.deals)))))),
-      h('p', 'sfu-note', t(bi('TODO(ru-prose)', 'Illustrative model, not a revenue forecast. Content uses the same budget as outbound. Outbound contributes immediately; content starts after month 3 and reaches full effect in month 12, with diminishing returns. Monthly channel factor = (1 − content share) + 2 × √content share × maturity. Regional reach, fit and conversion coefficients are fixed assumptions, not calibrated market data.'))),
+      h('p', 'sfu-note', t(bi('Учебная модель, а не прогноз выручки. Контент и исходящие касания делят один бюджет. Исходящие касания дают результат сразу; контент начинает работать после третьего месяца, выходит на полную силу к двенадцатому, и каждый следующий вложенный в него доллар даёт меньше предыдущего. Месячный множитель канала равен (1 − доля контента) + 2 × √(доля контента) × зрелость контента. Коэффициенты охвата, соответствия покупателю и конверсии по регионам — постоянные допущения, а не данные о рынке.', 'Illustrative model, not a revenue forecast. Content uses the same budget as outbound. Outbound contributes immediately; content starts after month 3 and reaches full effect in month 12, with diminishing returns. Monthly channel factor = (1 − content share) + 2 × √content share × maturity. Regional reach, fit and conversion coefficients are fixed assumptions, not calibrated market data.'))),
       h('p', 'sfu-note', t(HONEST_NOTE)),
     );
   };

@@ -192,7 +192,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       });
       root.append(button('reaction', () => { reveals.forEach(r => { r.hidden = false; }); const score = boundaryScore(data.rows, choices); status.textContent = (Object.keys(score) as (keyof typeof score)[]).map(k => `${text(k)}: ${score[k]}`).join(' · '); ctx.complete(); }), status);
     } else {
-      root.append(h('p', { class: 'tr-caveat' }, t(bi('TODO(ru-prose)', 'Only the signal classification is scored. Your action is saved for self-review against the worked explanation; it does not affect the score.'))));
+      root.append(h('p', { class: 'tr-caveat' }, t(bi('Оценивается только то, как вы классифицировали сигнал. Ваше действие сохраняется, чтобы вы сами сравнили его с разбором; на оценку оно не влияет.', 'Only the signal classification is scored. Your action is saved for self-review against the worked explanation; it does not affect the score.'))));
       const saved = loadDraft<{ index: number; answers: { choice: Verdict; action: string }[]; choice?: Verdict; action: string; revealed: boolean }>(data.id, { index: 0, answers: [], action: '', revealed: false });
       let index = saved.index; const answers = saved.answers, card = h('article', { class: 'quiz-item' }); root.append(card);
       function draw() {

@@ -23,7 +23,7 @@ export function addExamples(templates, sheet) {
     ['Вопросы в чате сообщества','перенести виртуальные машины между кластерами','P002','рабочая среда','как перенести виртуальные машины между кластерами','https://product.example/chat/2'],
     ['Записи звонков продаж','обновления','P003','пробует','покупатели боятся обновлений','https://product.example/calls/3'],
     ['Обращения в поддержку платных клиентов','журнал действий администраторов для регулятора','P004','платит','банку нужен журнал действий администраторов для регулятора','https://product.example/support/4'],
-    ['Данные продукта','установка','P005','пробует','TODO(ru-prose)','https://product.example/telemetry/5'],
+    ['Данные продукта','установка','P005','пробует','учебное событие: установка остановилась на настройке сети; слов пользователя нет','https://product.example/telemetry/5'],
   ], [
     ['Issues','installation','P001','evaluating','Installation fails on one network card model','https://product.example/issues/1'],
     ['Community chat','move VMs between clusters','P002','production','How can I move VMs between clusters?','https://product.example/chat/2'],
@@ -31,7 +31,7 @@ export function addExamples(templates, sheet) {
     ['Paid support','administrator audit log for the regulator','P004','paying','The bank needs an administrator audit log for the regulator','https://product.example/support/4'],
     ['Product data','installation','P005','evaluating','Synthetic event: installation stopped at network setup; no user quotation','https://product.example/telemetry/5'],
   ]);
-  rows(templates['llm-panel'][0], [[date,'MODEL-VERSION','', 'ru','TODO(ru-prose)','1','','','','','','']], [[date,'MODEL-VERSION','','en','What is the license?',1,'','','','','','']]);
+  rows(templates['llm-panel'][0], [[date,'MODEL-VERSION','', 'ru','Под какой лицензией распространяется продукт?','1','','','','','','']], [[date,'MODEL-VERSION','','en','What is the license?',1,'','','','','','']]);
   templates['pr-briefing'] = [sheet('Заявка на брифинг','Briefing request','компания, исследование, формат, автор, задача покупателя, модель развёртывания, три конкурента, клиенты, что нового, доказательства','company, research, format, author, buyer problem, deployment model, three competitors, customers, what is new, evidence')];
   rows(templates['pr-briefing'][0], [['Stratova','','','','уходят с VMware','платформа частного облака','','провайдер из Чехии','за год к ней перешли двенадцать европейских хостинг-провайдеров','замеры стоимости кластера на своём оборудовании до и после перехода']], [['Stratova','','','','leaving VMware','private cloud platform','','provider in Czechia','Twelve European hosting providers migrated in a year','Cluster cost measurements on own hardware before and after migration']]);
   templates['pr-news'] = [sheet('Новость','News package','компания, журналист, факт, цифры, кто может об этом рассказать, что журналист может проверить сам, письмо','company, journalist, fact, numbers, independent speaker, verifiable evidence, pitch')];
