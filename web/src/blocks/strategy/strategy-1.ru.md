@@ -18,7 +18,7 @@
 Выполните задание в документе. Выпишите пять фраз, которыми ваши покупатели описывали свою задачу в последних разговорах, письмах или заявках на закупку. Сформулируйте из них одну фразу-категорию и одно предложение о том, где ваш продукт стоит относительно соседних категорий: портала разработчика, дистрибутива Kubernetes, управляемого сервиса облака, виртуализации. Затем найдите три независимых текста, где кто-то описывает ту же задачу, и запишите, какими словами.
 
 <!-- section: sources -->
-- Play Bigger — https://www.playbigger.com/
+- Play Bigger — https://playbigger.com/publications/what-is-category-design
 - platformengineering.org, о сообществе — https://platformengineering.org/about
 - Gartner, Market Guide for Internal Developer Portals — https://www.gartner.com/en/documents/6306515 (31.03.2025)
 - CNCF TOC, модель зрелости платформ — https://github.com/cncf/toc/issues/1679
@@ -45,12 +45,12 @@
 Выполните задание в документе. Выберите одно из двух событий урока и одного покупателя из вашего списка, для которого оно важно. Для ухода с VMware составьте план поэтапной миграции на одну ограниченную нагрузку с критериями успеха каждого этапа. Для суверенного облака заполните таблицу из восьми пунктов досье суверенности с ответами вашей платформы и отметьте пункты, где ответ пока слабый.
 
 <!-- section: sources -->
-- Broadcom, переход VMware на подписку — https://www.broadcom.com/company/news/ (декабрь 2023)
-- CloudBolt, опрос 2026 года — https://www.cloudbolt.io/ (январь 2026); Ars Technica об опросе — https://arstechnica.com/information-technology/2026/02/most-vmware-users-still-actively-reducing-
-- Vates, рост после ухода клиентов с VMware — https://vates.tech/blog/
-- Microsoft, изменения Azure VMware Solution — https://learn.microsoft.com/azure/azure-vmware/
-- Bitkom, зависимость от облаков США — https://www.bitkom.org/Presse/ (11.06.2025)
-- Synergy Research, европейские облачные провайдеры — https://www.srgresearch.com/
+- Broadcom, переход VMware на подписку — https://www.broadcom.com/company/news/articles/cloud/vmware-by-broadcom-business-transformation (декабрь 2023)
+- CloudBolt, опрос 2026 года — https://www.cloudbolt.io/company/news/new-cloudbolt-research-86-of-companies-actively-reducing-their-vmware-footprint/ (январь 2026); Ars Technica об опросе — https://arstechnica.com/information-technology/2026/02/most-vmware-users-still-actively-reducing-their-vmware-footprint-survey-finds/
+- Vates, рост после ухода клиентов с VMware — https://vates.tech/blog/what-we-heard-in-vienna-and-why-vates-is-investing-in-dach/
+- Microsoft, изменения Azure VMware Solution — https://techcommunity.microsoft.com/blog/partnernews/broadcom-vmware-licensing-changes-what-azure-vmware-solution-partners-need-to-kn/4452173
+- Bitkom, зависимость от облаков США — https://www.bitkom.org/Presse/Presseinformation/Wirtschaft-ruft-nach-deutscher-Cloud (11.06.2025)
+- Synergy Research, европейские облачные провайдеры — https://www.srgresearch.com/articles/european-cloud-providers-local-market-share-now-holds-steady-at-15
 - Европейская комиссия, Data Act — https://digital-strategy.ec.europa.eu/en/policies/data-act (действует с 12.09.2025)
-- Европейская комиссия, тендер на суверенное облако — https://commission.europa.eu/news-and-media/news/ (10.10.2025, итоги 17.04.2026)
+- Европейская комиссия, тендер на суверенное облако — https://commission.europa.eu/news-and-media/news/commission-moves-forward-cloud-sovereignty-eur-180-million-tender-2025-10-10_en (10.10.2025, итоги 17.04.2026)
 - Gaia-X, сервис соответствия — https://compliance.gaia-x.eu/

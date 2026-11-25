@@ -26,13 +26,13 @@ NVIDIA Partner Network различает облачных провайдеро�
 - Supabase for Platforms — https://supabase.com/blog/introducing-supabase-for-platforms (05.12.2025); случай Lovable — https://supabase.com/customers/lovable
 - Vercel, интеграции — https://vercel.com/docs/integrations (04.12.2025)
 - Sidero, партнёры — https://www.siderolabs.com/partners
-- Vates, суверенная ИТ-инфраструктура и Exodata — https://vates.tech/blog/
+- Vates, суверенная ИТ-инфраструктура и Exodata — https://vates.tech/blog/what-sovereign-it-looks-like-in-practice-the-exodata-use-case-with-vates/
 - AWS Marketplace, комиссии — https://docs.aws.amazon.com/marketplace/latest/userguide/listing-fees.html
 - Google Cloud, доля выручки маркетплейса — https://cloud.google.com/terms/marketplace-revenue-share-schedule (с 21.04.2025)
 - Microsoft, вопросы издателей маркетплейса — https://learn.microsoft.com/en-us/partner-center/marketplace-offers/marketplace-faq-publisher-guide
-- Grafana и AWS — https://grafana.com/press/2026/03/10/ (10.03.2026)
+- Grafana и AWS — https://grafana.com/press/2026/03/10/grafana-labs-signs-strategic-collaboration-agreement-with-aws-to-accelerate-open-observability-adoption-at-scale/ (10.03.2026)
 - NVIDIA Partner Network — https://www.nvidia.com/en-us/about-nvidia/partners/
-- Red Hat, правила сертификации для OpenShift 2025 — https://docs.redhat.com/en/documentation/red_hat_software_certification/2025/
+- Red Hat, правила сертификации для OpenShift 2025 — https://docs.redhat.com/en/documentation/red_hat_software_certification/2025//html-single/red_hat_openshift_software_certification_policy_guide/index
 
 <!-- lesson: strategy.standards | Стандарты, фонды, сертификация и обучение | 20 -->
 <!-- section: hook -->
@@ -57,11 +57,11 @@ MongoDB в феврале 2026 года рассказала о программ
 
 <!-- section: sources -->
 - CNCF, жизненный цикл проектов — https://contribute.cncf.io/projects/lifecycle/
-- Anthropic, передача MCP фонду — https://www.anthropic.com/news/donating-the-model-context-protocol (декабрь 2025)
+- Anthropic, передача MCP фонду — https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation (декабрь 2025)
 - CNCF, годовой отчёт 2025 — https://www.cncf.io/reports/cncf-annual-report-2025/ (24.02.2026)
 - CNCF, проверка Certified Kubernetes — https://github.com/cncf/k8s-conformance/blob/master/reviewing.md
-- CNCF, запуск Kubernetes AI Conformance — https://www.cncf.io/announcements/2025/11/11/cncf-launches-certified-kubernetes-ai-conformance-program-to-standardize-ai-workloads-on-kubernetes/ (11.11.2025); рост программы — https://www.cncf.io/announcements/2026/03/24/ (24.03.2026)
-- CNCF, новая программа продления сертификаций — https://www.cncf.io/blog/2026/03/23/ (23.03.2026)
-- O'Reilly, спонсорство — https://www.oreilly.com/content-marketing/
+- CNCF, запуск Kubernetes AI Conformance — https://www.cncf.io/announcements/2025/11/11/cncf-launches-certified-kubernetes-ai-conformance-program-to-standardize-ai-workloads-on-kubernetes/ (11.11.2025); рост программы — https://www.cncf.io/announcements/2026/03/24/cncf-nearly-doubles-certified-kubernetes-ai-platforms/ (24.03.2026)
+- CNCF, новая программа продления сертификаций — https://www.cncf.io/blog/2026/03/23/cncf-introduces-a-new-recertification-program-as-kubestronaut-community-surpasses-3500/ (23.03.2026)
+- O'Reilly, спонсорство — https://www.oreilly.com/content-marketing/available-products.html
 - ScyllaDB University — https://university.scylladb.com/courses/
 - Vercel, доступ к документации в Markdown и AGENTS.md — https://vercel.com/docs/agent-resources/markdown-access
