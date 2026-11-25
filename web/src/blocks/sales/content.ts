@@ -10,62 +10,68 @@ import { SALES_SCHOOL } from './school';
 
 /** The honest note every school lesson carries: one way, not a law. */
 export const HONEST_NOTE = bi(
-  'Это один из способов работать, а не закон и не оптимальное решение. Жизнь сложнее любой схемы: многое зависит от контекста — продукта, рынка, людей и момента. Берите то, что применимо к вашей ситуации, и проверяйте на практике.',
+  'Это один из способов работать; законом и единственно верным решением он не служит. Жизнь сложнее любой схемы: многое зависит от контекста — продукта, рынка, людей и момента. Берите то, что применимо к вашей ситуации, и проверяйте на практике.',
   'This is one way of working, not a law and not an optimal solution. Life is more complex than any framework: much depends on context — the product, the market, the people and the moment. Take what applies to your situation and test it in practice.',
 );
 
-const MODULE_LESSON: Record<string, { id: string; title: [string, string]; minutes: number; hook: [string, string] }> = {
+const MODULE_LESSON: Record<string, { id: string; title: [string, string]; minutes: number; hook: [string, string]; summary?: [string, string] }> = {
   A: {
     id: 'sales.fundamentals',
     title: ['Фундамент сложных продаж', 'The foundation of complex sales'],
+    summary: ['Почему крупная сделка — это работа с закупочным комитетом, как устроены MEDDIC и поводы для разговора, и десять принципов с действием на каждый день.', 'Why a large deal is work with a buying committee, how MEDDIC and triggers work, and ten principles with an action for each day.'],
     minutes: 15,
     hook: [
-      'Enterprise-сделка — это не «продать продукт», а провести закупочный комитет покупателя через его собственный процесс. Этот курс — ежедневная практика: одна тема, одно действие сегодня.',
+      'Крупная сделка с корпоративным покупателем похожа на проводку закупочного комитета через его собственный процесс принятия решения: показать продукт для этого мало. Курс построен как ежедневная практика, в которой на каждый день приходятся одна тема и одно действие.',
       'An enterprise deal is not "selling a product" but guiding the buyer\'s procurement committee through their own process. This school is a daily practice: one topic, one action today.',
     ],
   },
   B: {
     id: 'sales.roles',
     title: ['Роли закупочного центра', 'The roles of the buying center'],
+    summary: ['Семь ролей закупочного центра, как распознать чемпиона и экономического покупателя и с чего начинать разговор с каждым.', 'The seven roles of the buying center, how to recognise the champion and the economic buyer, and how to open the conversation with each.'],
     minutes: 12,
     hook: [
-      'Внутри аккаунта нет «клиента» — есть семь ролей, и каждая покупает по-своему. Схема ниже показывает, кто есть кто и как заходить к каждому.',
+      'Внутри компании-покупателя продукт выбирают семь разных ролей, и каждая покупает по-своему. Схема ниже показывает, кто за что отвечает и как начинать разговор с каждым.',
       'Inside an account there is no "the customer" — there are seven roles, and each buys differently. The diagram below shows who is who and how to approach each.',
     ],
   },
   C: {
     id: 'sales.segments',
     title: ['Типы компаний: как они покупают', 'Company types: how they buy'],
+    summary: ['Как покупают банки, телеком-операторы, хостинг-провайдеры и облака для нейросетей и что из этого следует для первого шага и длины сделки.', 'How banks, telecom operators, hosting providers and AI clouds buy, and what that means for the first step and the length of the deal.'],
     minutes: 10,
     hook: [
-      'Банк, телко и AI-облако покупают один и тот же продукт по-разному. Сегмент определяет первый шаг, цикл и козыри.',
+      'Банк, телеком-оператор и облако для нейросетей покупают один и тот же продукт по-разному. От сегмента зависят первый шаг, длина сделки и сильные стороны, на которые стоит опираться.',
       'A bank, a telecom and an AI cloud buy the same product differently. The segment decides the first step, the cycle and the winning cards.',
     ],
   },
   D: {
     id: 'sales.regions',
     title: ['Регионы и культура', 'Regions and culture'],
+    summary: ['Как культура покупки в США, Германии, Австрии и Швейцарии, в Японии и других регионах меняет презентацию, темп и решения.', 'How buying culture in the US, Germany, Austria and Switzerland, Japan and other regions changes the pitch, the pace and the decisions.'],
     minutes: 10,
     hook: [
-      'Один и тот же питч в США, DACH и Японии работает по-разному — вплоть до обратного эффекта. Культура покупки — часть продукта, который вы «продаёте».',
+      'Одна и та же презентация в США, в Германии, Австрии и Швейцарии и в Японии действует по-разному, иногда даже отталкивает. Культура покупки становится частью того, что вы продаёте.',
       'The same pitch works differently in the US, DACH and Japan — sometimes in reverse. Buying culture is part of what you "sell".',
     ],
   },
   E: {
     id: 'sales.touches',
     title: ['Тактика касаний', 'The tactics of touches'],
+    summary: ['Как поводы для разговора, частота и каналы касаний складываются во встречи и сделки, с симулятором воронки.', 'How triggers, frequency and channels of touches add up to meetings and deals, with the funnel simulator.'],
     minutes: 12,
     hook: [
-      'Касание по триггеру конвертит в разы лучше рассылки. Симулятор воронки ниже показывает, как параметры касаний складываются в встречи и сделки за квартал.',
+      'Письмо или звонок по поводу, который действительно произошёл у покупателя, приводит к разговору в разы чаще массовой рассылки. Симулятор воронки ниже показывает, как частота и качество касаний складываются во встречи и сделки за квартал.',
       'A trigger-based touch converts many times better than a blast. The funnel simulator below shows how touch parameters add up to meetings and deals per quarter.',
     ],
   },
   F: {
     id: 'sales.asymmetry',
-    title: ['Founder-led против гигантов', 'Founder-led against giants'],
+    title: ['Продажи силами основателя против гигантов', 'Founder-led sales against giants'],
+    summary: ['Как маленькому вендору с продажами силами основателя выигрывать у гигантов за счёт скорости, внимания и гибкости.', 'How a small founder-led vendor wins against giants through speed, attention and flexibility.'],
     minutes: 8,
     hook: [
-      'Маленький вендор против гиганта — проигрышная позиция только если играть по его правилам. Асимметрия — актив.',
+      'Маленький вендор проигрывает гиганту, когда играет по правилам гиганта. Разница в размере даёт маленькой компании свои преимущества: скорость, внимание основателя и гибкость, которых у гиганта нет.',
       'A small vendor against a giant only loses if playing by the giant\'s rules. Asymmetry is an asset.',
     ],
   },
@@ -97,7 +103,7 @@ function lessonFor(letter: string): Lesson {
     id: spec.id,
     block: 'sales',
     title: bi(spec.title[0], spec.title[1]),
-    summary: bi(`Модуль ${letter}: ${mod.title}. ${mod.items.length} принципов с задачей на каждый день.`, `Module ${letter}: ${mod.title}. ${mod.items.length} principles with a task for each day.`),
+    summary: spec.summary ? bi(spec.summary[0], spec.summary[1]) : bi(`Модуль ${letter}: ${mod.title}.`, `Module ${letter}: ${mod.title}.`),
     introduces: INTRODUCES[letter] ?? [],
     uses: [],
     tier: 'core',

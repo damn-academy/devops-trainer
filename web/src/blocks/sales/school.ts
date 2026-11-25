@@ -288,7 +288,7 @@ export const SALES_SCHOOL: SchoolModule[] = [
   },
   {
     "letter": "F",
-    "title": "Founder-led против гигантов",
+    "title": "Продажи силами основателя против гигантов",
     "items": [
       {
         "n": 43,
