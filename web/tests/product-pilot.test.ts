@@ -1,7 +1,6 @@
-// The hidden "Продукт" pilot: 30 principles in eight modules become 11
-// lessons, every lesson carries the honest note and real sources in both
-// languages, every thinking task is adapted into the quiz bank, and the two
-// widget models respond to their parameters the way the lessons describe.
+// The hidden product pilot retains its complete bilingual source program.
+// The remaining TypeScript lessons carry sources, quizzes and the honest note;
+// the two widget models respond to the parameters described in the lessons.
 import { describe, expect, it } from 'vitest';
 import { PRODUCT_CONCEPTS, PRODUCT_LESSONS, PRODUCT_QUIZ } from '../src/blocks/product/content';
 import { OPENCORE_DEFAULTS, opencoreProject, opencoreVerdict } from '../src/blocks/product/opencore';
@@ -30,8 +29,8 @@ describe('product pilot (hidden)', () => {
     }
   });
 
-  it('builds 11 lessons with the honest note, sources and quizzes in each', () => {
-    expect(PRODUCT_LESSONS).toHaveLength(11);
+  it('builds 10 TypeScript lessons with the honest note, sources and quizzes in each', () => {
+    expect(PRODUCT_LESSONS).toHaveLength(10);
     const bank = new Set(PRODUCT_QUIZ.map((q) => q.id));
     for (const l of PRODUCT_LESSONS) {
       expect(l.sections.some((s) => s.kind === 'callout')).toBe(true);

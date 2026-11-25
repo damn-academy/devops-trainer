@@ -236,8 +236,8 @@ export const MARKETING_SUMMARIES: Record<string, Bi> = {
     "en": "How people buy in the US, Germany, Austria, Switzerland and Asia, with a regional simulator."
   },
   "marketing.cases": {
-    "ru": "Что сделали HashiCorp, GitLab, Grafana, MongoDB и Elastic, Vercel и Supabase и что из этого перенять.",
-    "en": "What HashiCorp, GitLab, Grafana, MongoDB and Elastic, Vercel and Supabase did and what you can adopt."
+    "ru": "Как HashiCorp, GitLab, Grafana Labs, Supabase, Neon, Docker и Elastic превращали распространение открытого продукта в покупателей, во что им это обходилось и где сообщение сработало против компании.",
+    "en": "How HashiCorp, GitLab, Grafana Labs, Supabase, Neon, Docker and Elastic turned the spread of an open product into customers, what it cost them and where their message worked against the company."
   },
   "marketing.sim-quarter": {
     "ru": "Квартал в отделе маркетинга: вы распоряжаетесь бюджетом и людьми, а исход решений зависит от вас, конкурентов, рынка и скрытых обстоятельств.",

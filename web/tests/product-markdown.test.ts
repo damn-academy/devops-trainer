@@ -28,7 +28,7 @@ describe('product course integration', () => {
   });
 
   it('mirrors all Markdown section and widget positions and props in English', () => {
-    expect(PRODUCT_V2_LESSONS.map(l => l.id)).toEqual(['product.roadmap', 'product.signals']);
+    expect(PRODUCT_V2_LESSONS.map(l => l.id)).toEqual(['product.cases', 'product.roadmap', 'product.signals']);
     for (const [path, ru] of Object.entries(files).filter(([p]) => p.endsWith('.ru.md'))) {
       const shape = (text: string) => parseMarkdownLessons(text).map(l => ({ id: l.id, sections: l.sections.map(s => ({ kind: s.kind, widget: s.widget, props: s.props })) }));
       expect(shape(files[path.replace('.ru.md', '.en.md')]!)).toEqual(shape(ru));
@@ -36,7 +36,7 @@ describe('product course integration', () => {
     for (const l of PRODUCT_V2_LESSONS) for (const s of l.sections) {
       if (s.kind === 'widget') expect(registry.widgets.has(s.widget), s.widget).toBe(true);
     }
-    expect(PRODUCT_V2_LESSONS[1]!.sections.filter(s => s.kind === 'widget').map(s => s.widget)).toEqual(['template', 'deptsim']);
+    expect(PRODUCT_V2_LESSONS.find(l => l.id === 'product.signals')!.sections.filter(s => s.kind === 'widget').map(s => s.widget)).toEqual(['template', 'deptsim']);
   });
 
   it('registers a hidden product on the business shelf with bilingual catalog copy', () => {
