@@ -132,7 +132,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   const confirmation = h('div', { hidden: true }, text('confirm'), h('div', { class: 'ds-actions' }, button('reset', reset), button('cancel', () => { confirmation.hidden = true; })));
   const newGame = button('newGame', () => { confirmation.hidden = false; });
   const exportButton = button('export', () => downloadFile(`${scenario.id}-${game.options.seed}.md`, exportGame(scenario, game), 'text/markdown;charset=utf-8'));
-  root.append(h('h3', {}, t(scenario.title)), ...scenario.premise[lang()].split(/\n\s*\n/).slice(0, 2).map(p => h('p', {}, p)), h('p', {}, text('note')), settings,
+  root.append(h('h3', {}, t(scenario.title)), ...scenario.premise[lang()].split(/\n\s*\n/).slice(0, 2).map(p => h('p', {}, p)), settings,
     h('div', { class: 'ds-actions' }, copy, size, play, newGame, exportButton), longHint, languageNotice, link, promptDetails, fallback, status, confirmation, pane);
   input.oninput = updateControls;
   input.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void submit(input.value); } };
