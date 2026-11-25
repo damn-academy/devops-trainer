@@ -11,4 +11,4 @@ Before starting, choose a preset company or build your own: its code model, reve
 Play a game to the end and save it to a file. From the game master's review, write down the three main decisions, the reason each succeeded or failed, and which of the five chance multipliers had the strongest effect. Then play a second game with the same company and a different game number, and compare which decisions you changed.
 
 <!-- section: sources -->
-- All sources from the course modules; the world rules and the game master's rules are described in the simulator prompt itself.
+- Research dossiers of the business track — https://github.com/damn-academy/devops-trainer/tree/main/design/research/business (25.11.2026)
