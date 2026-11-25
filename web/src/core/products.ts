@@ -85,6 +85,27 @@ export const PRODUCTS: Product[] = [
   },
   {
     "kind": "course",
+    "id": "metrics",
+    "title": {
+      "ru": "Метрики маркетинга, продаж и продукта",
+      "en": "Marketing, sales and product metrics"
+    },
+    "card": {
+      "ru": "Как считать воронку, атрибуцию, прогноз, ARR, удержание и активацию так, чтобы все отделы получали одинаковые числа.",
+      "en": "How to calculate the funnel, attribution, forecasts, ARR, retention and activation so that every department gets the same numbers."
+    },
+    "summary": {
+      "ru": "Сквозной курс о метриках инфраструктурной компании с открытой версией, облачным сервисом и отделом продаж: определения и когорты, воронка от посетителя до расширения, атрибуция и эксперименты, воронка сделок и прогноз, повторяющаяся выручка и эффективность роста, активация, PQA и выручка от потребления, дашборды и единый источник истины. Все формулы показаны на сквозных учебных примерах, а публичные цифры компаний разобраны по первоисточникам.",
+      "en": "An end-to-end course on metrics for an infrastructure company with an open edition, a cloud service and a sales team: definitions and cohorts, the funnel from visitor to expansion, attribution and experiments, sales pipeline and forecasting, recurring revenue and growth efficiency, activation, PQA and consumption revenue, dashboards and a single source of truth. Every formula is illustrated through connected teaching examples, and public company figures are examined using primary sources."
+    },
+    "subtitle": {
+      "ru": "Для маркетологов, руководителей продаж, продакт-менеджеров, аналитиков и основателей.",
+      "en": "For marketers, sales leaders, product managers, analysts and founders."
+    },
+    "shelf": "business"
+  },
+  {
+    "kind": "course",
     "id": "events",
     "title": {
       "ru": "События и выступления",
@@ -194,7 +215,7 @@ export const BUSINESS_SHELF = {
   title: bi('Деловые курсы для инфраструктурных компаний', 'Business courses for infrastructure companies'),
   summary: bi('Курсы для тех, кто продвигает, продаёт и развивает открытый инфраструктурный продукт: каждый можно проходить отдельно, а вместе они складываются в работу компании от продукта до продаж.', 'Courses for people who promote, sell and develop an open infrastructure product: each stands on its own, and together they cover a company’s work from product to sales'),
 };
-const BUSINESS_ORDER = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'scithink'];
+const BUSINESS_ORDER = ['marketing', 'sales', 'product', 'metrics', 'events', 'oss', 'strategy', 'pr', 'scithink'];
 export function catalogGroups(products: Product[]): { title?: Bi; summary?: Bi; products: Product[] }[] {
   const ordinary = products.filter(p => !p.shelf);
   const business = products.filter(p => p.shelf === 'business').sort((a, b) => BUSINESS_ORDER.indexOf(a.id) - BUSINESS_ORDER.indexOf(b.id));

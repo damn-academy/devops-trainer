@@ -3,7 +3,7 @@ import { registry } from '../src/core/registry';
 
 // Business-course quizzes must not be solvable by option length alone:
 // the correct option may be the unique longest or the unique shortest only in a minority of questions.
-const COURSES = ['marketing.', 'product.', 'sales.', 'scithink.'];
+const COURSES = ['marketing.', 'product.', 'sales.', 'scithink.', 'metrics.'];
 it('keeps option length from giving away the answer in business courses', () => {
   const all = new Map(registry.quiz);
   for (const lesson of registry.lessons.values()) for (const s of lesson.sections) if (s.kind === 'quiz') for (const q of s.items) if (typeof q !== 'string') all.set(q.id, q);
