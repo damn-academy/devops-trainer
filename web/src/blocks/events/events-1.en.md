@@ -24,6 +24,8 @@ Event results take time. In 2026, Dreamdata calculated an average of 281 days fr
 <!-- section: task | Exercise: return-on-investment calculator -->
 Complete the exercise in the “Event return on investment” simulator on this page. Set the full cost of a conference booth, including all expenses from the lesson, profit per deal, and your company's opportunity win rate. Check how many opportunities you need to break even. Then vary the share of scanned attendees who match your target audience, the share contacted within the first two days, and the share of meetings that took place. See which values make the booth pay off in most runs and which make it almost never pay off.
 
+<!-- widget: events.roi -->
+
 <!-- section: sources -->
 - CNCF, 2026 sponsorship packages — https://events.linuxfoundation.org/wp-content/uploads/2025/12/sponsor-cncf-2026_120425.pdf (version 04.12.2025)
 - DevOpsDays, information for sponsors — https://devopsdays.org/sponsor/ (checked 25.11.2026)
