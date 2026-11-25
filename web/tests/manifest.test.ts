@@ -17,6 +17,36 @@ describe('course manifest', () => {
 
   it('stays light enough for the first visit', () => {
     expect(json.length).toBeLessThan(120_000);
+    expect(new TextEncoder().encode(json).byteLength).toBeLessThan(120_000);
+  });
+
+  it('keeps course details out even as their content grows', () => {
+    const detail = { ru: 'Подробности'.repeat(10_000), en: 'Details'.repeat(10_000) };
+    const expanded = toManifest({
+      orderedBlocks: () => registry.orderedBlocks(true).map(b => ({
+        ...b,
+        modules: [{ title: detail, lessons: b.lessons }],
+        ...(b.hidden ? { summary: detail, levels: { beginner: detail, intermediate: detail, experienced: detail } } : {}),
+      })),
+      orderedLessons: () => registry.orderedLessons().map(l => ({
+        ...l, summary: detail,
+        ...(registry.blocks.get(l.block)!.hidden ? { minutes: 999, introduces: ['course.detail'] } : {}),
+      })),
+    });
+    expect(expanded).toEqual(manifest);
+  });
+
+  it('preserves route descriptions, duration and placement progress inputs', () => {
+    const light = registryFromManifest(manifest);
+    for (const b of registry.orderedBlocks(false)) {
+      expect(light.blocks.get(b.id)).toMatchObject({ title: b.title, summary: b.summary, levels: b.levels, hours: b.hours });
+      for (const id of b.lessons) {
+        const l = registry.lessons.get(id)!;
+        expect(light.lessons.get(id)).toMatchObject({ introduces: l.introduces, tier: l.tier });
+        expect(light.lessons.get(id)?.minutes).toBe(l.minutes);
+      }
+    }
+    for (const b of registry.orderedBlocks(true)) expect(light.blocks.get(b.id)?.hours).toEqual(b.hours);
   });
 
   it('gives the same route map as the full registry', () => {
