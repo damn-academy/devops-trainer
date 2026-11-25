@@ -19,13 +19,13 @@ const card = (whatRu: string, whoRu: string, whatEn: string, whoEn: string) => (
 export const buyingModel = defineModel<P>({
   id: 'sales.buying',
   block: 'sales',
-  title: bi('Закупочный центр: кто реально покупает', 'The buying center: who actually buys'),
+  title: bi('Кто в компании участвует в покупке', 'The buying center: who actually buys'),
   summary: bi(
-    'Семь ролей решают сделку по-разному. Пройдите три шага тёплого водопада и откройте карточки ролей кликом.',
+    'В крупной покупке участвуют семь ролей, и каждая решает свою часть. Пройдите три шага сделки и откройте карточки ролей щелчком.',
     'Seven roles decide a deal in different ways. Step through the three warm-waterfall steps and open the role cards by clicking.',
   ),
   intro: bi(
-    'Нажимайте «Шаг вперёд» — подсветится, кто работает на каждом этапе. Клик по роли открывает её карточку: чем она живёт и как к ней заходить.',
+    'Нажимайте «Шаг вперёд», и схема подсветит, кто участвует на каждом этапе. Щелчок по роли открывает карточку о том, что этому человеку важно и как с ним начать разговор.',
     'Press "Step forward" — who works at each stage is highlighted. Click a role to open its card: what it cares about and how to approach it.',
   ),
   concepts: ['sales.champion', 'sales.economic-buyer'],
@@ -34,30 +34,30 @@ export const buyingModel = defineModel<P>({
     height: 520,
     nodes: [
       {
-        id: 'champion', label: bi('Чемпион', 'Champion'), family: 'flow', shape: 'hex', x: 40, y: 210, w: 170, h: 84,
-        sub: bi('Platform Eng / Infra', 'Platform Eng / Infra'),
+        id: 'champion', label: bi('Внутренний сторонник', 'Champion'), family: 'flow', shape: 'hex', x: 40, y: 210, w: 170, h: 84,
+        sub: bi('инженер платформы', 'Platform Eng / Infra'),
         card: card(
-          'Внутренний человек, который продаёт за вас, когда вас нет в комнате. Здесь живёт боль (TCO, ops, lock-in), сюда примут инженер-к-инженеру. Вход в аккаунт — отсюда.',
-          'Ищите в LinkedIn по роли в команде платформы. Без чемпиона сделки нет.',
+          'Человек внутри компании, который объясняет коллегам, зачем нужна покупка, когда вас нет на встрече. Обычно это инженер или руководитель платформы: он сам платит за эксплуатацию, ручную работу и зависимость от одного поставщика и говорит с вами на одном языке. С него чаще всего начинается разговор с компанией.',
+          'Ищите его в LinkedIn по роли в команде платформы. Без внутреннего сторонника сделка обычно останавливается.',
           'The insider who sells for you when you are not in the room. The pain lives here (TCO, ops, lock-in) and you are accepted engineer-to-engineer. This is the door into the account.',
           'Find them on LinkedIn by their platform team role. No champion, no deal.',
         ),
       },
       {
-        id: 'validator', label: bi('Инженеры-валидаторы', 'Engineer validators'), family: 'process', shape: 'box', x: 300, y: 60, w: 190, h: 72,
-        sub: bi('SRE / DevOps', 'SRE / DevOps'),
+        id: 'validator', label: bi('Инженеры, которые проверяют', 'Engineer validators'), family: 'process', shape: 'box', x: 300, y: 60, w: 190, h: 72,
+        sub: bi('эксплуатация', 'SRE / DevOps'),
         card: card(
-          'Гуглят ваши доки и репу в тот же вечер. Один баг в демо — и вся экспертиза обнулена. Проверяют, что вы не врёте.',
-          'Перед тех-разговором убедитесь, что цифры и демо чистые.',
+          'Инженеры эксплуатации в тот же вечер откроют вашу документацию и репозиторий и попробуют повторить демонстрацию. Ошибка в демонстрации подрывает доверие ко всему остальному, что вы сказали.',
+          'Перед техническим разговором проверьте, что демонстрация работает и каждую цифру можно воспроизвести.',
           'They google your docs and repo the same evening. One bug in a demo resets all your credibility. They check that you do not lie.',
           'Before a technical call, make sure the numbers and the demo are clean.',
         ),
       },
       {
         id: 'architect', label: bi('Архитектор', 'Architect'), family: 'process', shape: 'box', x: 560, y: 60, w: 170, h: 72,
-        sub: bi('decision criteria', 'decision criteria'),
+        sub: bi('критерии выбора', 'decision criteria'),
         card: card(
-          'Пишет критерии, по которым вас будут сравнивать. Повлияете на критерии — почти выиграли. Узнайте, есть ли у аккаунта «стандарт», против которого вас будут мерить.',
+          'Архитектор решает, по каким требованиям будут сравнивать продукты. Если требования честно отражают задачу и ваш продукт в ней силён, вы на полпути к победе. Узнайте, есть ли у компании принятый стандарт, с которым вас будут сравнивать.',
           'Спросите чемпиона, кто пишет стандарты и когда их пересматривают.',
           'Writes the criteria you will be compared against. Influence the criteria and you have almost won. Find out if the account has a "standard" you will be measured against.',
           'Ask the champion who writes the standards and when they are reviewed.',
@@ -65,10 +65,10 @@ export const buyingModel = defineModel<P>({
       },
       {
         id: 'econ', label: bi('Экономический покупатель', 'Economic buyer'), family: 'l7', shape: 'hex', x: 330, y: 380, w: 210, h: 84,
-        sub: bi('CTO / Head of Infra', 'CTO / Head of Infra'),
+        sub: bi('технический директор', 'CTO / Head of Infra'),
         card: card(
-          'Подписывает бюджет и говорит «да». Холодным питчем сверху заходить мимо: к нему приходят, когда чемпион тёплый и может вас занести.',
-          'Не пишите в CTO раньше, чем есть чемпион.',
+          'Подписывает бюджет и принимает решение. Холодное письмо ему обычно остаётся без ответа; к нему приходят, когда внутренний сторонник уже заинтересован и может сам о вас рассказать.',
+          'Не пишите техническому директору, пока не нашли внутреннего сторонника.',
           'Signs the budget and says yes. Cold top-down pitches miss: you arrive when the champion is warm and can carry you in.',
           'Do not write to the CTO before you have a champion.',
         ),
@@ -77,26 +77,26 @@ export const buyingModel = defineModel<P>({
         id: 'sponsor', label: bi('Спонсор', 'Sponsor'), family: 'tls', shape: 'pill', x: 640, y: 390, w: 150, h: 64,
         sub: bi('владелец «почему сейчас»', 'owns the "why now"'),
         card: card(
-          'BU-VP, у которого горит: renewal, мандат, cost-cutting. Даёт сделке приоритет и деньги. Это владелец триггера «почему сейчас».',
-          'Найдите, у кого в аккаунте болит бизнес-триггер.',
+          'Руководитель направления, у которого есть срочная причина: истекает договор с прежним поставщиком, руководство требует сократить расходы или регулятор выпустил новое требование. Он даёт сделке приоритет и деньги.',
+          'Найдите в компании руководителя, у которого есть срочная причина заняться вашей задачей.',
           'A BU-VP with a burning issue: renewal, mandate, cost-cutting. Gives the deal priority and money. Owns the "why now" trigger.',
           'Find who in the account has a burning business trigger.',
         ),
       },
       {
-        id: 'ciso', label: bi('CISO', 'CISO'), family: 'neutral', shape: 'box', x: 790, y: 200, w: 150, h: 72,
+        id: 'ciso', label: bi('Безопасность', 'CISO'), family: 'neutral', shape: 'box', x: 790, y: 200, w: 150, h: 72,
         card: card(
-          'Не тормоз, а союзник при правильном заходе. Важны exit-ability, supply-chain, аудируемость. Open source — козырь: код можно проверить.',
-          'Сформулируйте одну фразу «почему OSS снижает ваш риск».',
+          'Руководитель безопасности может стать союзником. Его волнует, сможет ли компания уйти от поставщика без потерь, откуда берутся компоненты продукта и можно ли проверить, что продукт делает. Открытый код помогает ответить на эти вопросы.',
+          'Запишите одно предложение о том, почему открытый код снижает риски компании, и проверьте, что каждое слово в нём можно доказать.',
           'Not a blocker but an ally when approached right. Cares about exit-ability, supply chain, auditability. Open source is your card: the code can be checked.',
           'Prepare one sentence on "why open source lowers your risk".',
         ),
       },
       {
-        id: 'proc', label: bi('Procurement', 'Procurement'), family: 'neutral', shape: 'box', x: 790, y: 320, w: 150, h: 72,
+        id: 'proc', label: bi('Закупки', 'Procurement'), family: 'neutral', shape: 'box', x: 790, y: 320, w: 150, h: 72,
         card: card(
-          'Про контракт, риск и цену; подключается, когда бизнес уже решил. Придёте через них рано — застрянете.',
-          'Не ведите сделку через procurement, пока нет чемпиона и эконом-покупателя.',
+          'Отдел закупок отвечает за договор, риски и цену и обычно подключается, когда продукт уже выбрали. Если начать с закупок, вас сравнят только по цене. В государственных компаниях и некоторых банках закупки ведут процесс с самого начала, и их правила нужно узнать сразу.',
+          'Узнайте, как в компании устроена закупка, но не начинайте с неё, пока нет внутреннего сторонника и решения руководителя.',
           'About contract, risk and price; joins once the business has decided. Come through them early and you stall.',
           'Do not run the deal through procurement before the champion and the economic buyer are in.',
         ),
@@ -104,19 +104,19 @@ export const buyingModel = defineModel<P>({
     ],
     edges: [
       {
-        id: 'in', from: 'champion', to: 'validator', label: bi('техразбор', 'tech review'),
+        id: 'in', from: 'champion', to: 'validator', label: bi('техническая проверка', 'tech review'),
         card: card(
-          'Чемпион просит валидаторов проверить, что вы не врёте. Демо и цифры должны быть безупречны.',
+          'Внутренний сторонник просит инженеров эксплуатации проверить продукт. Демонстрация и цифры должны воспроизводиться.',
           'Первый фильтр качества в аккаунте.',
           'The champion asks the validators to check you are not lying. The demo and numbers must be spotless.',
           'The account\'s first quality gate.',
         ),
       },
       {
-        id: 'carry', from: 'champion', to: 'econ', label: bi('заносит к бюджету', 'carries to the budget'),
+        id: 'carry', from: 'champion', to: 'econ', label: bi('знакомит с тем, кто решает о бюджете', 'carries to the budget'),
         card: card(
-          'Тёплый чемпион заносит вас к экономическому покупателю. Холодный питч в CTO — обычно мимо.',
-          'Главный переход сделки: чемпион продаёт за вас.',
+          'Заинтересованный внутренний сторонник знакомит вас с тем, кто решает о бюджете. Холодное письмо техническому директору обычно остаётся без ответа.',
+          'Это главный переход сделки: внутренний сторонник объясняет ценность продукта за вас.',
           'A warm champion carries you to the economic buyer. A cold pitch to the CTO usually misses.',
           'The deal\'s main transition: the champion sells for you.',
         ),
@@ -124,8 +124,8 @@ export const buyingModel = defineModel<P>({
       {
         id: 'why', from: 'sponsor', to: 'econ', label: bi('даёт «почему сейчас»', 'gives the "why now"'),
         card: card(
-          'Спонсор даёт сделке приоритет и деньги: это его горящий renewal, мандат или cost-cutting.',
-          'Без спонсора сделку откладывают вечно.',
+          'Спонсор даёт сделке приоритет и деньги, потому что у него есть срочная причина: продление договора, требование руководства или регулятора.',
+          'Без спонсора покупку откладывают из квартала в квартал.',
           'The sponsor gives the deal priority and money: his burning renewal, mandate or cost-cutting.',
           'Without a sponsor the deal is postponed forever.',
         ),
@@ -133,7 +133,7 @@ export const buyingModel = defineModel<P>({
       {
         id: 'crit', from: 'architect', to: 'econ', label: bi('критерии выбора', 'selection criteria'),
         card: card(
-          'Архитектор определяет, по каким критериям вас сравнивают. Повлияли на критерии — почти выиграли.',
+          'Архитектор определяет, по каким требованиям сравнивают продукты, и эти требования пишут до сравнения.',
           'Критерии пишут до сравнения вендоров.',
           'The architect decides the criteria you are compared on. Influence the criteria and you have almost won.',
           'Criteria are written before vendors are compared.',
@@ -142,7 +142,7 @@ export const buyingModel = defineModel<P>({
       {
         id: 'risk', from: 'ciso', to: 'proc', label: bi('риск → контракт', 'risk → contract'),
         card: card(
-          'CISO снимает риск, procurement переводит в контракт. Это конец сделки, не её начало.',
+          'Безопасность проверяет риски, закупки превращают решение в договор. Обычно это последние шаги сделки.',
           'Сюда приходят после решения бизнеса.',
           'The CISO clears the risk, procurement turns it into a contract. This is the end of the deal, not its start.',
           'You arrive here after the business has decided.',
@@ -158,29 +158,29 @@ export const buyingModel = defineModel<P>({
       {
         id: 'start', label: bi('Старт', 'Start'),
         caption: bi(
-          'Начинаете с чемпиона: инженер-к-инженеру, с его болью. Одновременно валидаторы проверяют каждое слово.',
+          'Вы начинаете с внутреннего сторонника и говорите с ним о его задаче на инженерном языке. Тем временем инженеры эксплуатации проверяют каждое ваше слово.',
           'You start with the champion: engineer to engineer, with their pain. Meanwhile the validators check every word.',
         ),
         focus: ['champion', 'validator', 'in'],
-        say: { champion: bi('«Покажи, как это реально работает» — вход через боль, не через презентацию.', '"Show me how it really works" — enter through pain, not a deck.') },
+        say: { champion: bi('«Покажите, как это работает на нашей задаче». Разговор начинается с проблемы клиента, презентация подождёт.', '"Show me how it really works" — enter through pain, not a deck.') },
       },
       {
         id: 'carry', label: bi('К бюджету', 'To the budget'),
         caption: bi(
-          'Тёплый чемпион заносит вас к экономическому покупателю. Спонсор добавляет «почему сейчас», архитектор — критерии выбора.',
+          'Внутренний сторонник знакомит вас с тем, кто решает о бюджете. Спонсор приносит срочную причину, архитектор — требования, по которым будут сравнивать.',
           'A warm champion carries you to the economic buyer. The sponsor adds the "why now", the architect the selection criteria.',
         ),
         focus: ['carry', 'why', 'crit', 'econ', 'sponsor', 'architect'],
-        say: { econ: bi('«Зачем нам это менять именно сейчас?» — вопрос спонсора, отвечает чемпион.', '"Why change this right now?" — the sponsor\'s question, answered by the champion.') },
+        say: { econ: bi('«Зачем нам это менять сейчас?» Это вопрос руководителя, и отвечает на него внутренний сторонник.', '"Why change this right now?" — the sponsor\'s question, answered by the champion.') },
       },
       {
         id: 'close', label: bi('Риск и контракт', 'Risk and contract'),
         caption: bi(
-          'Когда бизнес решил, подключаются CISO (риск, exit-ability) и procurement (контракт). Приходить к ним первым — застрять.',
+          'Когда руководители решили, подключаются безопасность с вопросами о рисках и о том, как уйти от поставщика, и закупки с договором. Если начать с них, сделка обычно застревает.',
           'Once the business has decided, the CISO (risk, exit-ability) and procurement (contract) join. Coming to them first means stalling.',
         ),
         focus: ['ciso', 'proc', 'risk'],
-        say: { ciso: bi('«А если вы исчезнете?» — ответ: код открыт, exit-ability в архитектуре.', '"What if you disappear?" — the answer: the code is open, exit-ability is in the architecture.') },
+        say: { ciso: bi('«А если вы исчезнете?» Отвечайте, что код открыт и систему можно эксплуатировать без поставщика.', '"What if you disappear?" — the answer: the code is open, exit-ability is in the architecture.') },
       },
     ];
   },
