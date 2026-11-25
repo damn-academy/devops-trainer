@@ -108,7 +108,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
     if (seed.value && Number.isInteger(n) && n >= 0 && n <= 0xffffffff) game.options.seed = n;
     seed.value = String(game.options.seed); updatePrompt();
   };
-  const promptText = h('pre');
+  const promptText = h('pre', { class: 'ds-prompt' });
   const size = h('span', { class: 'ds-prompt-size', 'aria-live': 'polite' });
   const longHint = h('p', { hidden: true }, text('longPrompt'));
   const languageNotice = h('p', { hidden: !(scenario.russianPrompt && lang() === 'en') }, text('russianPrompt'));
