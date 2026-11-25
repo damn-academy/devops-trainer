@@ -53,10 +53,12 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   const id = props && typeof props === 'object' ? ('trainer' in props ? props.trainer : 'data' in props ? props.data : undefined) : undefined;
   if (kind === 'template') {
     const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined;
-    const titles = { 'infraseed-model': 'infraseedModel', 'cash-13w': 'cash13w', dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
+    const titles = { 'metrics-cohorts': 'metricsCohorts', 'metrics-pipeline': 'metricsPipeline', 'metrics-forecast': 'metricsForecast', 'metrics-arr': 'metricsArr', 'metrics-arr-start': 'metricsArrStart', 'metrics-ab': 'metricsAb', 'infraseed-model': 'infraseedModel', 'cash-13w': 'cash13w', dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
     if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
     title(text(titles[file as keyof typeof titles]), false);
-    root.append(h('a', { class: 'btn', href: `/templates/${file}${lang() === 'en' ? '-en' : ''}.xlsx`, download: '' }, text('download')));
+    const csv = file.startsWith('metrics-');
+    if (csv) root.append(h('p', {}, text('metricsFictional')));
+    root.append(h('a', { class: 'btn', href: `${import.meta.env.BASE_URL}templates/${file}${lang() === 'en' ? '-en' : ''}.${csv ? 'csv' : 'xlsx'}`, download: '' }, text(csv ? 'downloadCsv' : 'download')));
     const draftId = `template.${file}`;
     const input = h('textarea'); input.value = loadDraft(draftId, '');
     input.oninput = () => saveDraft(draftId, input.value);

@@ -1,0 +1,13 @@
+{
+  "control_n": 3900,
+  "treatment_n": 3900,
+  "control_conversions": 78,
+  "treatment_conversions": 117,
+  "control_rate": 0.02,
+  "treatment_rate": 0.03,
+  "absolute_lift": 0.01,
+  "relative_lift": 0.5,
+  "ci_low": 0.00307390812088457,
+  "ci_high": 0.01692609187911543,
+  "excludes_zero": true
+}

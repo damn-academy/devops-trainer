@@ -1,6 +1,14 @@
 import { bi } from '../../core/i18n';
 // TODO(prose): Russian UI drafts; content files belong to the prose owner.
 export const strings = {
+  metricsCohorts: bi('Northwind Data: когорты', 'Northwind Data: cohorts'),
+  metricsPipeline: bi('Northwind Data: сделки', 'Northwind Data: pipeline'),
+  metricsForecast: bi('Northwind Data: прогноз', 'Northwind Data: forecast'),
+  metricsArr: bi('Northwind Data: изменения ARR', 'Northwind Data: ARR movements'),
+  metricsArrStart: bi('Northwind Data: начальный ARR', 'Northwind Data: starting ARR'),
+  metricsAb: bi('Northwind Data: эксперимент', 'Northwind Data: experiment'),
+  metricsFictional: bi('Northwind Data — вымышленная компания. Данные синтетические, суммы в USD.', 'Northwind Data is fictional. All data is synthetic; amounts are in USD.'),
+  downloadCsv: bi('Скачать данные (CSV)', 'Download data (CSV)'),
   // TODO(prose): Review Russian drafts for OSS widgets and template cards.
   compareRepository: bi('Сверить правила с репозиторием проекта', 'Compare with the repository'),
   repositoryFacts: bi('Что на самом деле в репозитории', 'Repository facts'), checks: bi('Где правила расходятся с практикой', 'Checks'),

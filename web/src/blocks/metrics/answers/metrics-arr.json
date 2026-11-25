@@ -1,0 +1,13 @@
+{
+  "start": 1000000,
+  "new": 200000,
+  "expansion": 100000,
+  "contraction": -20000,
+  "churn": -100000,
+  "end": 1180000,
+  "grr": 0.88,
+  "nrr": 0.98,
+  "starting_logos": 100,
+  "churned_logos": 10,
+  "logo_churn": 0.1
+}

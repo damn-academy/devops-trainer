@@ -1,0 +1,55 @@
+{
+  "snapshot": "2026-07-01",
+  "internal_excluded": 60,
+  "activation_14d": {
+    "2026-01": {
+      "eligible": 90,
+      "activated": 27,
+      "rate": 0.3
+    },
+    "2026-02": {
+      "eligible": 90,
+      "activated": 36,
+      "rate": 0.4
+    },
+    "2026-03": {
+      "eligible": 90,
+      "activated": 45,
+      "rate": 0.5
+    },
+    "2026-04": {
+      "eligible": 90,
+      "activated": 54,
+      "rate": 0.6
+    },
+    "2026-05": {
+      "eligible": 90,
+      "activated": 63,
+      "rate": 0.7
+    },
+    "2026-06": {
+      "eligible": 50,
+      "activated": 40,
+      "rate": 0.8
+    }
+  },
+  "activation_immature_excluded": 40,
+  "conversion_180d": {
+    "2026-01": {
+      "eligible": 50,
+      "won": 10,
+      "rate": 0.2
+    },
+    "2026-02": {
+      "eligible": 0,
+      "won": 0,
+      "rate": null
+    },
+    "2026-03": {
+      "eligible": 0,
+      "won": 0,
+      "rate": null
+    }
+  },
+  "conversion_immature_excluded": 220
+}

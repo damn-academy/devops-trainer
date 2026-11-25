@@ -1,0 +1,19 @@
+{
+  "q3_target": 1000000,
+  "q3_won": 300000,
+  "q3_remaining_target": 700000,
+  "q3_open_pipeline": 1400000,
+  "q3_coverage": 2,
+  "q1_q2_won_count": 12,
+  "q1_q2_lost_count": 8,
+  "q1_q2_won_value": 600000,
+  "q1_q2_lost_value": 600000,
+  "count_win_rate": 0.6,
+  "value_win_rate": 0.5,
+  "q2_slippage_base_count": 12,
+  "q2_slippage_count": 2,
+  "q2_slippage_share": 0.16666666666666666,
+  "q2_slippage_base_value": 800000,
+  "q2_slippage_value": 200000,
+  "q2_slippage_value_share": 0.25
+}

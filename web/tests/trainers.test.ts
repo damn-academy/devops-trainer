@@ -114,6 +114,19 @@ it('guards malformed and unavailable storage', () => {
   expect(setup('template', { file: '../bad' }).host.querySelector('a')).toBeNull();
  });
 
+it.each(['ru', 'en'] as const)('registers fictional metrics CSV downloads in %s', language => {
+  setLang(language);
+  for (const file of ['metrics-cohorts', 'metrics-pipeline', 'metrics-forecast', 'metrics-arr', 'metrics-arr-start', 'metrics-ab']) {
+    const w = setup('template', { file });
+    const link = w.host.querySelector('a')!;
+    expect(link.getAttribute('href')).toBe(`/templates/${file}${language === 'en' ? '-en' : ''}.csv`);
+    expect(link.hasAttribute('download')).toBe(true);
+    expect(link.textContent).toContain('CSV');
+    expect(w.host.textContent).toContain('Northwind Data');
+    expect(w.host.textContent).toContain(language === 'en' ? 'fictional' : 'вымышленная');
+  }
+});
+
 it('uses the selected conference segment for connected roleplay and locks it until the next visitor', async () => {
   const w=setup('roleplay',{trainer:'events.booth-visitor'});
   const [venue,segment]=w.host.querySelectorAll('select');
