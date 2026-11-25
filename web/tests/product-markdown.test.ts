@@ -4,7 +4,7 @@ import { PRODUCT_LESSONS } from '../src/blocks/product/content';
 import { PRODUCT_MODULES, PRODUCT_SUMMARIES } from '../src/blocks/product/structure';
 import { PRODUCT_V2_LESSONS } from '../src/blocks/product/v2';
 import { parseMarkdownLessons } from '../src/core/md-lessons';
-import { catalogGroups, productById } from '../src/core/products';
+import { catalogGroups, productById, visibleProducts } from '../src/core/products';
 
 const files = import.meta.glob<string>('../src/blocks/product/v2/*.md', { query: '?raw', import: 'default', eager: true });
 
@@ -39,9 +39,10 @@ describe('product course integration', () => {
     expect(PRODUCT_V2_LESSONS.find(l => l.id === 'product.signals')!.sections.filter(s => s.kind === 'widget').map(s => s.widget)).toEqual(['template', 'deptsim']);
   });
 
-  it('registers a hidden product on the business shelf with bilingual catalog copy', () => {
+  it('registers a public product on the business shelf with bilingual catalog copy', () => {
     const p = productById('product')!;
-    expect(p).toMatchObject({ hidden: true, shelf: 'business', title: { ru: 'Продукт', en: 'Product' } });
+    expect(visibleProducts('course')).toContain(p);
+    expect(p).toMatchObject({ shelf: 'business', title: { ru: 'Продукт', en: 'Product' } });
     expect(p.subtitle!.en).toContain('product managers');
     expect(catalogGroups([p])[0]!.products).toEqual([p]);
     expect(registry.blocks.get('product')!.hidden).toBe(true);

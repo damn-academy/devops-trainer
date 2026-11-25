@@ -1,4 +1,4 @@
-// The hidden scientific-thinking pilot: twelve lessons with the honest note
+// The public scientific-thinking course: twelve lessons with the honest note
 // and the self-check note in each, a quiz bank with explained distractors,
 // the correlation explainer whose spurious link collapses under the
 // within-groups break, and the calibration trainer over ten balanced claims.
@@ -7,9 +7,9 @@ import { CLAIMS, calibrationStats } from '../src/blocks/scithink/calibration';
 import { correlationModel } from '../src/blocks/scithink/correlation';
 import { HONEST_NOTE, SCITHINK_CONCEPTS, SCITHINK_LESSONS, SCITHINK_QUIZ, SELFCHECK_NOTE } from '../src/blocks/scithink/content';
 import scithinkModule from '../src/blocks/scithink/index';
-import { PRODUCTS } from '../src/core/products';
+import { PRODUCTS, visibleProducts } from '../src/core/products';
 
-describe('scientific thinking pilot (hidden)', () => {
+describe('scientific thinking course (public)', () => {
   it('carries twelve lessons, every one with both honest notes, sources and minutes', () => {
     expect(SCITHINK_LESSONS).toHaveLength(12);
     for (const l of SCITHINK_LESSONS) {
@@ -32,10 +32,11 @@ describe('scientific thinking pilot (hidden)', () => {
     }
   });
 
-  it('registers a hidden course product and a hidden block with all lessons', () => {
+  it('publishes the course while keeping its block off the profession map with all lessons', () => {
     const product = PRODUCTS.find((p) => p.id === 'scithink');
     expect(product?.kind).toBe('course');
-    expect(product?.hidden).toBe(true);
+    expect(visibleProducts('course')).toContain(product);
+    expect(product?.hidden).not.toBe(true);
     const block = scithinkModule.blocks![0]!;
     expect(block.id).toBe('scithink');
     expect(block.hidden).toBe(true);

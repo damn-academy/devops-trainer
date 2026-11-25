@@ -1,4 +1,4 @@
-// The hidden sales pilot: the funnel projection is monotonic and bounded, and
+// The public sales course: the funnel projection is monotonic and bounded, and
 // the buying-center explainer builds the three waterfall steps with cards on
 // every role.
 import { describe, expect, it } from 'vitest';
@@ -7,7 +7,7 @@ import { SALES_CONCEPTS, SALES_LESSONS, SALES_QUIZ } from '../src/blocks/sales/c
 import { funnelProject } from '../src/blocks/sales/funnel';
 import { SALES_SCHOOL } from '../src/blocks/sales/school';
 
-describe('sales pilot (hidden)', () => {
+describe('sales course (public)', () => {
   it('carries the full school: 46 principles in six modules', () => {
     expect(SALES_SCHOOL).toHaveLength(6);
     expect(SALES_SCHOOL.flatMap((m) => m.items)).toHaveLength(46);

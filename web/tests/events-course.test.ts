@@ -3,7 +3,7 @@ import { expect, it } from 'vitest';
 import { registry } from '../src/core/registry';
 import { parseMarkdownLessons } from '../src/core/md-lessons';
 import { EVENTS_MODULES, EVENTS_SUMMARIES } from '../src/blocks/events/structure';
-import { productById } from '../src/core/products';
+import { productById, visibleProducts } from '../src/core/products';
 import { setLang } from '../src/core/i18n';
 import { coursePage } from '../src/app/course-page';
 
@@ -21,7 +21,8 @@ it('includes all ten events lessons exactly once with summaries and resolved ref
     for (const section of lesson.sections) if (section.kind === 'widget') expect(registry.widgets.has(section.widget), section.widget).toBe(true);
   }
   expect(registry.errors).toEqual([]);
-  expect(productById('events')).toMatchObject({ hidden: true, shelf: 'business' });
+  expect(visibleProducts('course')).toContain(productById('events'));
+  expect(productById('events')).toMatchObject({ shelf: 'business' });
   expect(registry.blocks.get('events')!.hidden).toBe(true);
 });
 

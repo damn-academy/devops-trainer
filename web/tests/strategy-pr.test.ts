@@ -26,8 +26,8 @@ for (const course of ['strategy', 'pr']) {
       for (const section of lesson.sections) if (section.kind === 'widget') expect(registry.widgets.has(section.widget), section.widget).toBe(true);
     }
     expect(block.hidden).toBe(true);
-    expect(productById(course)).toMatchObject({ hidden: true, shelf: 'business' });
-    expect(visibleProducts('course').some(product => product.id === course)).toBe(false);
+    expect(productById(course)).toMatchObject({ shelf: 'business' });
+    expect(visibleProducts('course').some(product => product.id === course)).toBe(true);
   });
   for (const lang of ['ru', 'en'] as const) it(`${course}: renders modules, summaries and lesson navigation in ${lang}`, () => {
     setLang(lang);

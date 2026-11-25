@@ -13,10 +13,10 @@ afterEach(() => {
 });
 
 describe('oss course page', () => {
-  it('keeps the pilot hidden and reachable by its direct route', () => {
+  it('publishes the course with its direct route while keeping its block off the profession map', () => {
     const product = productById('oss')!;
-    expect(product.hidden).toBe(true);
-    expect(visibleProducts('course')).not.toContain(product);
+    expect(product.hidden).not.toBe(true);
+    expect(visibleProducts('course')).toContain(product);
     expect(parseRoute(href(productRoute(product)))).toEqual({ name: 'course', id: 'oss' });
     expect(registry.blocks.get('oss')?.hidden).toBe(true);
   });

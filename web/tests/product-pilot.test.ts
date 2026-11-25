@@ -1,4 +1,4 @@
-// The hidden product pilot retains its complete bilingual source program.
+// The public product course retains its complete bilingual source program.
 // The remaining TypeScript lessons carry sources, quizzes and the honest note;
 // the two widget models respond to the parameters described in the lessons.
 import { describe, expect, it } from 'vitest';
@@ -7,7 +7,7 @@ import { OPENCORE_DEFAULTS, opencoreProject, opencoreVerdict } from '../src/bloc
 import { PRODUCT_PROGRAM } from '../src/blocks/product/principles';
 import { VALUEMETRIC_DEFAULTS, VALUE_METRICS, valuemetricProject } from '../src/blocks/product/valuemetric';
 
-describe('product pilot (hidden)', () => {
+describe('product course (public)', () => {
   it('carries the full program: 30 principles across the module data, bilingual', () => {
     expect(PRODUCT_PROGRAM.length).toBeGreaterThanOrEqual(8);
     const principles = PRODUCT_PROGRAM.flatMap((m) => m.principles);
