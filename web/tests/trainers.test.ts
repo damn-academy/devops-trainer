@@ -43,7 +43,7 @@ it('calculates break-even and reproducible Monte Carlo including endpoint shares
   expect(simulate({ ...roiDefaults, winRate: 0 }).probability).toBe(0);
   expect(simulate({ ...roiDefaults, target: 1, contacted: 1, meeting: 1, opportunity: 1, winRate: 1 })).toEqual({ median: 300, probability: 1 });
 });
-it('registers exactly the requested widgets', () => expect(module.widgets?.map(w => w.id)).toEqual(['rubric', 'roleplay', 'signal-feed', 'boundary', 'events.roi']));
+it('registers exactly the requested widgets', () => expect(module.widgets?.map(w => w.id)).toEqual(['rubric', 'roleplay', 'signal-feed', 'boundary', 'events.roi', 'governance', 'health', 'template']));
 it.each([true, false])('mounts all widgets with configured=%s', async configured => {
   for (const trainer of trainers) {
     const kind = trainer.id === 'events.booth-visitor' ? 'roleplay' : 'rubric';
@@ -81,3 +81,35 @@ it('guards malformed and unavailable storage', () => {
   vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw Error(); });
   expect(loadAttempts('x')).toEqual([]); expect(() => saveAttempts('x', [])).not.toThrow();
 });
+
+ it('shows matching governance checks, refreshes the document and invalidates stale results', () => {
+  const w = setup('governance', { data: 'oss.governance' });
+  expect(w.host.querySelectorAll('fieldset')).toHaveLength(6);
+  w.button('Compare with the repository').click();
+  expect(w.host.textContent).toContain('последнее голосование было два года назад');
+  const radio = w.host.querySelectorAll<HTMLInputElement>('input[value=B]')[1]; radio.click();
+  expect(w.host.querySelector('textarea')?.value).toContain('Кандидата назначает технический директор');
+  w.button('Compare with the repository').click();
+  expect(w.host.textContent).toContain('нейтральности нет');
+ });
+ it('reveals each health answer and completes only on the final question', () => {
+  const w = setup('health', { data: 'oss.health' });
+  expect(w.host.querySelectorAll('li')).toHaveLength(9);
+  for (let i = 0; i < 5; i++) {
+    expect(w.host.querySelector('article')?.textContent).toContain(`${i + 1}/5`);
+    expect(w.host.querySelector('[aria-live=polite]')?.hasAttribute('hidden')).toBe(true);
+    expect(w.ctx.complete).not.toHaveBeenCalled();
+    w.button('Show analysis').click();
+    if (i < 4) w.button('Next').click();
+  }
+  expect(w.ctx.complete).toHaveBeenCalledOnce();
+ });
+ it.each(['ru', 'en'] as const)('links every template in %s', language => {
+  setLang(language);
+  for (const file of ['dream100', 'event-map', 'llm-panel', 'signals-week']) {
+    const w = setup('template', { file });
+    expect(w.host.querySelector('a')?.getAttribute('href')).toBe(`/templates/${file}${language === 'en' ? '-en' : ''}.xlsx`);
+    expect(w.host.querySelector('a')?.hasAttribute('download')).toBe(true);
+  }
+  expect(setup('template', { file: '../bad' }).host.querySelector('a')).toBeNull();
+ });

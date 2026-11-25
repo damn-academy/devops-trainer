@@ -1,6 +1,18 @@
 import { bi } from '../../core/i18n';
 // TODO(prose): Russian UI drafts; content files belong to the prose owner.
 export const strings = {
+  // TODO(prose): Review Russian drafts for OSS widgets and template cards.
+  compareRepository: bi('Сверить с репозиторием', 'Compare with the repository'),
+  repositoryFacts: bi('Факты репозитория', 'Repository facts'), checks: bi('Проверки', 'Checks'),
+  showDebrief: bi('Показать разбор', 'Show analysis'),
+  copyGovernance: bi('Скопировать GOVERNANCE.md', 'Copy GOVERNANCE.md'),
+  documentCopied: bi('Текст скопирован.', 'Document copied.'),
+  documentFallback: bi('Текст выделен. Скопируйте его сочетанием клавиш.', 'Copy the selected document using your keyboard.'),
+  download: bi('Скачать шаблон XLSX', 'Download XLSX template'),
+  dream100: bi('Компании Dream 100', 'Dream 100 accounts'),
+  eventMap: bi('Карта мероприятий', 'Event map'),
+  llmPanel: bi('Панель проверки ответов LLM', 'LLM response panel'),
+  signalsWeek: bi('Сигналы за неделю', 'Weekly product signals'),
   // TODO(en-trainers): Replace notice once translated content is available.
   notice: bi('', "This trainer's content is in Russian for now"),
   missing: bi('Тренажёр с таким названием в курсе не найден.', 'Trainer not found.'),
