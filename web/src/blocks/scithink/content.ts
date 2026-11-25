@@ -82,7 +82,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
       },
       {
         id: 'practice', kind: 'text', step: 'practice',
-        title: bi('Практика: разберите одно «очевидное»', 'Practice: take one "obvious" claim'),
+        title: bi('Разберите одно «очевидное» утверждение', 'Practice: take one "obvious" claim'),
         body: bi(
           'Возьмите последнее утверждение, которое вы недавно приняли или отвергли, не проверяя: из новости, рекламы, разговора или собственной привычки. Запишите его одним предложением и задайте ему три вопроса из этого урока.\n\nЧто наблюдали: есть ли наблюдение, или только чужая уверенность? Как сравнивали: с чем сопоставляли? Чему вывод противоречил бы: какой результат опроверг бы утверждение? Если на какой-то вопрос не нашлось ответа, это не повод расстраиваться — это и есть находка: вы нашли место, где убеждение держится на впечатлении.',
           'Take the last claim you recently accepted or rejected without checking: from news, advertising, a conversation, or your own habit. Write it down in one sentence and ask it the three questions from this lesson.\n\nWhat was observed: is there any observation at all, or only someone else’s confidence? How was it compared: compared with what? Which results would the conclusion rule out: what result would disprove the claim? If you cannot answer one of the questions, that is no reason to be upset — it is a finding: you have located the spot where the belief rests on an impression.',
@@ -95,7 +95,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
 
   lesson({
     id: 'scithink.base-rate',
-    title: bi('Базовая ставка: что обычно бывает', 'The base rate: what usually happens'),
+    title: bi('Базовая ставка, или как часто это обычно бывает', 'The base rate: what usually happens'),
     summary: bi(
       'Прежде чем верить тесту или истории, спросите, как часто это бывает вообще; разбор примера с редкой болезнью.',
       'Before trusting a test or a story, ask how often it happens at all; a worked example with a rare disease.',
@@ -205,7 +205,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
       },
       {
         id: 'practice', kind: 'text', step: 'practice',
-        title: bi('Практика: три пары из жизни', 'Practice: three pairs from life'),
+        title: bi('Три пары совпадений из жизни', 'Practice: three pairs from life'),
         body: bi(
           'Разберите три пары явлений и для каждой назовите наиболее вероятную структуру: настоящая причина, третий фактор или обратная причинность.\n\nПервая пара: у людей с зонтами одежда мокрее, чем у людей без зонтов. Здесь нет тайны: дождь мокнет сам и заставляет брать зонты, это общая причина. Вторая пара: дети, которые много смотрят телевизор, чаще показывают агрессивное поведение. Здесь возможны все варианты: телевизор влияет на ребёнка, возбудимые дети тянутся к яркому экрану, а может, обстановка дома двигает и экран, и поведение; без сравнения не выбрать. Третья пара: в городах, где много полиции, больше преступлений. Полиция не вызывает преступления: туда, где преступлений и так много, направляют больше патрулей, и причинность идёт в обратную сторону.\n\nПолезное упражнение на будущее: всякий раз, когда видите красивый график «одно растёт вместе с другим», спросите, какой третий фактор мог бы двигать обеими линиями, и как выглядело бы сравнение внутри групп, где этот фактор одинаков.',
           'Take three pairs of phenomena and name the most likely structure for each: a real cause, a third factor, or reverse causation.\n\nFirst pair: people with umbrellas have wetter clothes than people without umbrellas. There is no mystery here: rain makes people wet and makes them carry umbrellas — a common cause. Second pair: children who watch a lot of television show aggressive behaviour more often. Every option is possible here: television affects the child, excitable children reach for the bright screen, or the atmosphere at home drives both the screen and the behaviour; without a comparison you cannot choose. Third pair: cities with more police have more crime. The police do not cause crime: more patrols are sent where crime is already high, so causation runs the other way.\n\nA useful exercise for the future: whenever you see a pretty graph of "one thing rising together with another", ask which third factor could drive both lines, and what a comparison within groups where that factor is equal would look like.',
@@ -245,7 +245,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
       },
       {
         id: 'practice', kind: 'text', step: 'practice',
-        title: bi('Практика: чек-лист убедительной проверки', 'Practice: the convincing-check checklist'),
+        title: bi('Чек-лист убедительной проверки', 'Practice: the convincing-check checklist'),
         body: bi(
           'Вот короткий чек-лист, который можно применять к любому «это работает».\n\n- Есть ли группа сравнения, похожая на ту, что получала средство.\n- Совпали ли группы по важным признакам: возраст, тяжесть состояния, обстановка.\n- Знали ли участники, что они получают.\n- Замеряли результат одинаково в обеих группах.\n- Сколько случаев вошло в проверку: один рассказ, десять человек или тысяча.\n\nПримените этот чек-лист к последнему совету, который вам помог «наверняка»: чем из списка этот совет располагает, чего не хватает, и какой пункт вы бы проверили первым.',
           'Here is a short checklist you can apply to any "it works".\n\n- Is there a comparison group similar to the one that received the remedy.\n- Do the groups match on the things that matter: age, severity, circumstances.\n- Did participants know what exactly they were receiving.\n- Was the outcome measured the same way in both groups.\n- How many cases entered the check: one story, ten people, or a thousand.\n\nApply this checklist to the last piece of advice that helped you "for sure": which items does the advice have, which are missing, and which one would you check first.',
@@ -294,7 +294,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
 
   lesson({
     id: 'scithink.calibration',
-    title: bi('Калибровка: учимся говорить «не знаю» в процентах', 'Calibration: learning to say "I don’t know" in percent'),
+    title: bi('Как научиться говорить «не знаю» в процентах', 'Calibration: learning to say "I don’t know" in percent'),
     summary: bi(
       'Уверенность и доля правоты — разные вещи; тренажёр: десять утверждений, уверенность в процентах, кривая калибровки.',
       'Confidence and the share of being right are different things; a trainer: ten claims, percent confidence, a calibration curve.',
@@ -370,7 +370,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
       },
       {
         id: 'practice', kind: 'text', step: 'practice',
-        title: bi('Практика: новость о находке', 'Practice: a news item about a find'),
+        title: bi('Разбор новости о находке', 'Practice: a news item about a find'),
         body: bi(
           'Устройте пересчёт для новостной ситуации. Скрининговая программа нашла у одного жителя из ста заболевание, которое до скрининга встречалось у одного из тысячи. Можно ли по этой новости сказать, что скрининг «в десять раз увеличил число больных»?\n\nПройдите те же три шага. Сначала базовая ставка: одна тысяча человек, один больной. Потом данные: скрининг показывает заболевание у девяти из десяти настоящих больных и ошибается примерно в пяти случаях из ста у здоровых — посчитайте, сколько настоящих находок и сколько ложных тревог даст проверка тысячи. Потом пересмотренная оценка: чему равна доля настоящих находок среди всех, кого скрининг показал больными, и что из этого следует для заголовка про «десять раз».\n\nЕсли счёт сошёлся, вы только что применили [[scithink.bayes]] к живой публикации: стартовая частота задала масштаб, данные — перекос, и заголовок «в десять раз» рассыпался, потому что сравнивал находки программы с базовой ставкой, хотя сравнивать нужно было с долей настоящих больных среди найденных.',
           'Run the recount for a news situation. A screening programme found a disease in one resident per hundred, while before the screening the disease occurred in one per thousand. Can this news item say that the screening "made the number of sick people ten times larger"?\n\nMake the same three steps. First the base rate: a thousand people, one sick person. Then the data: the screening shows the disease in nine of ten real cases and errs in about five cases per hundred among the healthy — compute how many true finds and how many false alarms a check of a thousand will produce. Then the revised estimate: what is the share of true finds among everyone the screening flagged, and what follows for the "ten times" headline.\n\nIf the numbers work out, you have just applied [[scithink.bayes]] to a live publication: the starting frequency set the scale, the data set the tilt, and the "ten times" headline fell apart because it compared the programme’s finds with the base rate instead of with the share of truly sick among those found.',
@@ -383,7 +383,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
 
   lesson({
     id: 'scithink.fakes',
-    title: bi('Фейки и манипуляции: три приёма', 'Fakes and manipulations: three moves'),
+    title: bi('Три приёма фейков и манипуляций', 'Fakes and manipulations: three moves'),
     summary: bi(
       'Эмоциональная нагрузка, подмена тезиса и поддельная экспертиза — как их узнавать и что делать вместо возмущения.',
       'Emotional load, replacing the thesis and fake expertise — how to spot them and what to do instead of getting angry.',
@@ -419,7 +419,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
 
   lesson({
     id: 'scithink.numbers',
-    title: bi('Цифры в рекламе: три трюка', 'Numbers in advertising: three tricks'),
+    title: bi('Три трюка с цифрами в рекламе', 'Numbers in advertising: three tricks'),
     summary: bi(
       '«До 90%», среднее вместо медианы и ось без нуля — как читать живые примеры из рекламных текстов.',
       '"Up to 90%", the average instead of the median, and an axis without zero — how to read real examples from advertising.',
@@ -487,7 +487,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
 
   lesson({
     id: 'scithink.final',
-    title: bi('Итоговая проверка: реестр сомнений', 'The final check: the doubt register'),
+    title: bi('Итоговая проверка по реестру сомнений', 'The final check: the doubt register'),
     summary: bi(
       'Три текста — новость, реклама и пост — и реестр «что проверил, каким способом, какой вывод».',
       'Three texts — news, advertising and a post — and the register of "what I checked, how, and what I concluded".',
@@ -514,7 +514,7 @@ export const SCITHINK_LESSONS: Lesson[] = [
       },
       {
         id: 'register', kind: 'text', step: 'practice',
-        title: bi('Реестр сомнений: шаблон', 'The doubt register: template'),
+        title: bi('Шаблон реестра сомнений', 'The doubt register: template'),
         body: bi(
           'Ведите реестр по этому шаблону — на бумаге, в заметках или в голове. Одна строка на одно проверяемое утверждение.\n\n- Утверждение записывается одним предложением и своими словами, без слов автора текста.\n- Что проверил — какой вопрос курса вы применили, будь то базовая ставка, сравнение, выборка, источник или калибровка.\n- Способ — где и как вы смотрели, будь то сам текст, сноска, память или независимый источник.\n- Вывод — что осталось от утверждения после проверки, то есть подтвердилось оно, рассыпалось или осталось открытым.\n\nДля первого текста начните с главного утверждения — «яркий свет сократил аварийность вдвое». Что из пройденного здесь работает и с чем сравнивать? Что было бы без фонарей? Почему «первый квартал» — это срок и для эффекта, и для случайного спада? Ответы на эти вопросы пишутся в реестр обычным языком.',
           'Keep the register by this template — on paper, in notes, or in your head. One line per checkable claim.\n\n- The claim is written in one sentence and in your own words, without the author’s wording.\n- What I checked — which question of the course you applied: the base rate, comparison, sample, source, or calibration.\n- Method — where and how you looked: the text itself, a footnote, memory, or an independent source.\n- Conclusion — what remains of the claim after the check: confirmed, fell apart, or still open.\n\nFor the first text, start with the main claim — "bright light halved accidents". Which of the course’s tools works here, and what would you compare it with at all? What would it have been without the lights? Why is "the first quarter" a period long enough both for an effect and for a random drop? The answers to these questions go into the register in plain language.',
