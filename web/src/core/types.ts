@@ -86,7 +86,13 @@ export interface Concept {
  * several blocks — the git-cicd folder exports `git-yaml` and `cicd`, the
  * kubernetes folder the three stages.
  */
+export interface CourseModule {
+  title: Bi;
+  lessons: LessonId[];
+}
+
 export interface Block {
+  modules?: CourseModule[];
   id: BlockId;
   /** Position on the route. Use the numbers of ROUTE in core/route.ts. */
   order: number;

@@ -1,3 +1,4 @@
+import { MARKETING_MODULES, MARKETING_SUMMARIES } from './structure';
 import { budgetWidget } from './v2/budget';
 import { dnsLabWidget, dnsSetup } from './v2/dns-lab';
 // Hidden pilot block: the marketing school for infrastructure and open-source
@@ -19,7 +20,7 @@ import { regionsWidget } from './regions';
 // Attach the interactive pieces: a quiz set spread over the lessons it checks,
 // the growth-loop scheme to the events lesson (principle 34, the one machine),
 // the regions simulator to the regions lesson.
-const lessons = MARKETING_LESSONS.map((l) => ({ ...l, sections: [...l.sections] }));
+const lessons = MARKETING_LESSONS.map((l) => ({ ...l, summary: MARKETING_SUMMARIES[l.id], sections: [...l.sections] }));
 const QUIZ_BY_LESSON: Record<string, string[]> = {
   'marketing.fundamentals': ['marketing.q.category', 'marketing.q.icp'],
   'marketing.vaccine': ['marketing.q.sharp'],
@@ -61,6 +62,7 @@ const block: Block = {
     experienced: bi('Отвечаете за стратегию и бюджет', 'Owning strategy and budget'),
   },
   hours: { beginner: 2.2, intermediate: 1.4, experienced: 1 },
+  modules: MARKETING_MODULES,
   lessons: lessons.map((l) => l.id),
   sources: { en: [], ru: [] },
   placement: [],

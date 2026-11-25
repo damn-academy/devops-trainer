@@ -1,8 +1,8 @@
 // Shared pieces of the app pages: levels, glossary links, sources, prose.
 
 import { clear, h, icon } from '../core/dom';
-import { bi, t, UI, type Bi } from '../core/i18n';
-import { defaultProfession } from '../core/products';
+import { bi, t, UI, lang, type Bi } from '../core/i18n';
+import { defaultProfession, productById } from '../core/products';
 import { renderMd } from '../core/markdown';
 import { registry } from '../core/registry';
 import { href } from '../core/router';
@@ -123,7 +123,7 @@ export function sourcesBlock(s: Sources): HTMLElement {
     'section.sources-block',
     {},
     h('h3', {}, t(UI.sources)),
-    h('div.sources-cols', {}, h('div', {}, h('h4', {}, t(UI.sourcesRu)), list(s.ru)), h('div', {}, h('h4', {}, t(UI.sourcesEn)), list(s.en))),
+    sameSourceUrls(s) ? list(s[lang()]) : h('div.sources-cols', {}, h('div', {}, h('h4', {}, t(UI.sourcesRu)), list(s.ru)), h('div', {}, h('h4', {}, t(UI.sourcesEn)), list(s.en))),
   );
 }
 
@@ -159,4 +159,18 @@ export function crumbProfession(): HTMLElement {
   return prof
     ? h('a', { href: href({ name: 'profession', id: prof.id }) }, t(prof.title))
     : h('a', { href: href({ name: 'home' }) }, t(bi('Начало', 'Start')));
+}
+
+export function sameSourceUrls(s: Sources): boolean {
+  const ru = new Set(s.ru.map(x => x.url));
+  const en = new Set(s.en.map(x => x.url));
+  return ru.size === en.size && [...ru].every(url => en.has(url));
+}
+
+export function blockCrumbs(id: string): HTMLElement {
+  const product = productById(id);
+  const block = registry.blocks.get(id);
+  return h('nav.crumbs', { 'aria-label': 'breadcrumbs' },
+    product?.kind === 'course' ? h('a', { href: href({ name: 'courses' }) }, t(bi('Курсы', 'Courses'))) : crumbProfession(),
+    ' › ', h('a', { href: href(product?.kind === 'course' ? { name: 'course', id } : { name: 'block', id }) }, t(product?.title ?? block?.title ?? bi(id, id))));
 }

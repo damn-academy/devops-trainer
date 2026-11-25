@@ -120,6 +120,14 @@ export function buildRegistry(mods: ModuleMap, opts: { terminal?: TerminalRegist
     }
   }
   for (const block of blocks.values()) {
+    if (block.modules) {
+      const ids = block.modules.flatMap(m => m.lessons);
+      const owned = [...lessons.values()].filter(l => l.block === block.id).map(l => l.id);
+      if (new Set(ids).size !== ids.length || ids.length !== owned.length || owned.some(id => !ids.includes(id))) {
+        errors.push(`block "${block.id}" modules must include every lesson exactly once`);
+      }
+      block.lessons = ids;
+    }
     addClusterEvidence(block, exams);
     const minutes = [...lessons.values()].filter(l => l.block === block.id).reduce((sum, l) => sum + (l.minutes ?? 0), 0);
     const hours = minutes / 60;
