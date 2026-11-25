@@ -1,3 +1,5 @@
+import { budgetWidget } from './v2/budget';
+import { dnsLabWidget, dnsSetup } from './v2/dns-lab';
 // Hidden pilot block: the marketing school for infrastructure and open-source
 // vendors on international markets, on the shared course engine. Not on the
 // route map (hidden: true); reachable from the hidden course page
@@ -5,6 +7,7 @@
 // the source material; the English slot is a faithful full translation.
 // Claude owns the prose per web/STYLE-RU.md.
 
+import { markdownQuizItems } from '../../core/md-lessons';
 import { defineModule } from '../../core/define';
 import { bi } from '../../core/i18n';
 import type { Block } from '../../core/types';
@@ -67,7 +70,8 @@ export default defineModule({
   blocks: [block],
   lessons,
   concepts: MARKETING_CONCEPTS,
-  quiz: MARKETING_QUIZ,
+  quiz: [...MARKETING_QUIZ, ...markdownQuizItems(lessons)],
   explainers: [fromModel(loopModel)],
-  widgets: [regionsWidget],
+  widgets: [regionsWidget, budgetWidget, dnsLabWidget],
+  setup: [dnsSetup],
 });
