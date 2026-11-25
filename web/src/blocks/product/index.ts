@@ -55,7 +55,10 @@ const block: Block = {
   },
   hours: { beginner: 2.5, intermediate: 1.5, experienced: 1 },
   lessons: lessons.map((l) => l.id),
-  sources: { en: [], ru: [] },
+  sources: {
+    en: [...new Map(lessons.flatMap((l) => l.sources.en).map((s) => [s.url, s])).values()],
+    ru: [...new Map(lessons.flatMap((l) => l.sources.ru).map((s) => [s.url, s])).values()],
+  },
   placement: [],
 };
 
