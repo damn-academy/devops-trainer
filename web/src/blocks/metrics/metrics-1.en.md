@@ -28,7 +28,9 @@ Versions matter because definitions change. If the qualified-lead threshold was 
 <!-- section: theory | Cohort conversion and immature observations -->
 The most common mistake in funnel reports is dividing current-month events by events in that same month. November payments are divided by November signups, although most payers signed up in September and October. Proper conversion is calculated by cohort: a group of entities entering the initial stage in the same period:
 
-`CR(A→B; W) = number of entities in cohort A reaching B no later than W after entering A / number of entities in cohort A whose window W has already ended`.
+`CR(A→B; W) = number of entities in cohort A whose window W has ended and that reached B no later than W after entering A / number of entities in cohort A whose window W has already ended`.
+
+The numerator and denominator use the same set of mature entities: including a recent signup that managed to pay within a week in the numerator would inflate conversion.
 
 Take a 90-day window. At the end of November, the October signup cohort has not yet lived through its 90 days. Those who have not paid yet still have time, and this cannot be counted as failure. Such observations are called immature. Reports always show cohort size, age and the number of open observations alongside conversion. Immature outcomes must not be counted as rejections: otherwise every fresh cohort will look worse than older ones, and the team will look for a problem that does not exist.
 

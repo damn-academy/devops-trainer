@@ -99,7 +99,7 @@ refresh: daily
 change_policy: version_new_definition_and_restate_explicitly
 ```
 
-This template expresses the same ten fields from the course's first lesson in a form both a person and a validation program can read.
+The template records the definition fields from the course's first lesson—unit, cohort, numerator, denominator, exclusions, source, owner and version—in a form both a person and a validation program can read.
 
 <!-- section: theory | Errors that change management conclusions -->
 | Error | Why the result is wrong | How to fix it |

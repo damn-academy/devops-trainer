@@ -109,7 +109,7 @@ Use survey benchmarks cautiously: Benchmarkit's 2026 report gives median payback
 + Record the cost-allocation policy and compare only numbers under the same policy || Both figures are valid under their respective rules.
 - Choose the lower figure because investors compare companies using the best value || A lower figure without a policy is misleading.
 - Take the average, 10 months, to avoid overstating or understating the result || The average of two policies describes neither.
-? Why cannot the simple LTV formula be used when NRR exceeds 100%?
+? Why cannot net revenue churn be substituted into the simple LTV formula when NRR exceeds 100%?
 - Because with high retention, lifetime value always equals annual revenue || That is not true.
 - Because the formula ignores gross margin, which falls at high NRR || Margin is in the formula.
 + Net churn becomes negative, producing a negative or infinite value || Use cohort gross profit over a limited horizon.

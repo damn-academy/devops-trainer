@@ -1,6 +1,6 @@
 <!-- lesson: metrics.activation | Activation, time to value and retention cohorts | 28 -->
 <!-- section: hook -->
-The product team reports that median time to first value fell from four hours to two. But the share of activated accounts fell from 40% to 30% in the same quarter. Difficult customers stopped reaching the outcome, and the median among those remaining improved by itself. Time to value without the share that never reached it is misleading. This lesson explains how to define activation, calculate time to value and retention, and why login counts mean very little for infrastructure.
+The product team reports that median time to first value fell from four hours to two. But the share of activated accounts fell from 40% to 30% in the same quarter. Perhaps difficult customers stopped reaching the outcome, and the median among those remaining improved by itself. Time to value without the share that never reached it is misleading. This lesson explains how to define activation, calculate time to value and retention, and why login counts mean very little for infrastructure.
 
 <!-- section: theory | What counts as activation -->
 Good activation describes a customer's completed job. For an observability system, it means the customer's own production data arrived, a query ran and the user found the required signal. For an infrastructure-as-code tool, it means successfully deploying the customer's own resources. For a database, it means loading their own data and running a useful query. For a security product, it means scanning a repository and investigating at least one finding. The product team defines the specific event for its product; it should not borrow it from someone else's report.
@@ -36,7 +36,7 @@ A reliable database can run for a month without an administrator logging in, so 
 
 <!-- quiz -->
 ? Median time to value halved, while activation fell from 40% to 30%. How should this be understood?
-+ Difficult customers stopped reaching the outcome, improving the median among those remaining || Read time to value alongside activation rate.
++ Difficult customers probably stopped reaching the outcome, improving the median among those remaining || Read time to value alongside activation rate.
 - The product became simpler and customers get value twice as fast as before || That is true only for those who made it through.
 - It is a data error because the median and activation rate always move together || They can move in opposite directions.
 ? The September cohort has a dash in month three of the cohort table. What does it mean?
