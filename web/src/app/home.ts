@@ -172,6 +172,18 @@ function paceControl(): HTMLElement {
   return h('div.pace', {}, h('label', {}, t(bi('Сколько часов в неделю вы готовы заниматься? ', 'How many hours a week can you study? ')), input), output);
 }
 
+// Facts that set a profession apart from a course: its size and how it is checked.
+function professionFacts(): HTMLElement {
+  const hours = Math.round(ROUTE.reduce((sum, e) => sum + (e.hours.beginner ?? 0), 0) / 10) * 10;
+  const facts = [
+    t(count(ROUTE.length, ['блок', 'блока', 'блоков'], ['block', 'blocks'])),
+    hours ? t(bi(`около ${hours} часов`, `about ${hours} hours`)) : null,
+    t(bi('три уровня', 'three levels')),
+    t(bi('экзамены на настоящих машинах', 'exams on real machines')),
+  ].filter(Boolean) as string[];
+  return h('span.catalog-facts', {}, ...facts.map(f => h('span.catalog-fact', {}, f)));
+}
+
 export function productTile(p: Product, size?: string): HTMLElement {
   const art = catalogArt(p);
   const ghost = art.svg.cloneNode(true) as SVGElement;
@@ -188,7 +200,8 @@ export function productTile(p: Product, size?: string): HTMLElement {
         h('span.catalog-kind', {}, t(p.kind === 'profession' ? bi('Профессия', 'Profession') : bi('Курс', 'Course')))),
       h('span.catalog-title', {}, t(p.title)),
       h('span.catalog-summary', {}, t(p.card ?? p.summary)),
-      h('span.catalog-cta', {}, t(p.kind === 'profession' ? bi('Открыть профессию', 'Open the profession') : bi('Открыть курс', 'Open the course'))),
+      size === 'hero' ? professionFacts() : null,
+      h('span.catalog-cta', {}, t(p.kind === 'profession' ? bi('Начать профессию', 'Start the profession') : bi('Открыть курс', 'Open the course'))),
     ),
   );
   item.style.setProperty('--hue', String(art.hue));
@@ -221,7 +234,7 @@ export function homePage(): Page {
         {},
         h('h2', {}, t(bi('Профессии', 'Professions'))),
         h('p.small.muted', {}, t(bi('Долгий путь к новой профессии: теория, практика, проверки уровня и экзамены.', 'A long road to a new profession: theory, practice, level checks and exams.'))),
-        h('ul.catalog-grid.bento', {}, ...professions.map(p => productTile(p, 'w'))),
+        h('ul.catalog-grid.bento', {}, ...professions.map(p => productTile(p, 'hero'))),
       ),
       h(
         'section.catalog-section',
