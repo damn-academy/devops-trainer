@@ -1,0 +1,45 @@
+<!-- lesson: marketing.search-llm | How AI systems describe your product and how to correct them | 20 -->
+<!-- section: hook -->
+A head of infrastructure asks ChatGPT which open-source platforms can be used to build a private cloud on Kubernetes. The AI names five projects. Your product is on the list, but described as a “Kubernetes distribution for developers,” with a license you changed two years ago and a feature the product never had. The manager crosses you off the list, and you never find out. This lesson covers where AI systems get product information, what research shows about their source selection, and honest ways a company can get itself described correctly.
+
+<!-- section: theory | Where AI gets its knowledge of a product -->
+AI answers questions about a product in two ways. The first relies on what the model remembered during training: internet texts collected before a certain date. The second is search at the time of the question: ChatGPT, Perplexity, Gemini, Claude, and Google Search answers find pages, read them, and assemble an answer with links. Training information becomes outdated; search information depends on which pages were found and what they say.
+
+Two conclusions follow. A model's mistakes about your product often come from old or contradictory texts online, including your own. And the fastest way to correct an answer is through pages the AI finds in search: documentation, the README, comparison pages, Reddit discussions, and industry media articles.
+
+<!-- section: theory | Which sources AI systems cite -->
+Research shows that different AI systems favor different sources and that these preferences change quickly. Profound analyzed 680 million links in AI answers from August 2024 to June 2025: Wikipedia accounted for around 7.8% of all links in ChatGPT answers, Reddit for around 6.6% in Perplexity answers, and Reddit and YouTube for around 2% each in Google Overviews. The frequently repeated figure that “47.9% of ChatGPT links lead to Wikipedia” counts the share only among the ten most-cited sites; Wikipedia's share of all links is much smaller. From July to October 2025, Semrush asked 230 thousand questions weekly and saw the share of ChatGPT answers linking to Reddit fall from around 60% to 10% within one month. In 2026, Muck Rack found sources in 96% of ChatGPT answers, 82% of Gemini answers, and 55% of Claude answers, with each model having its own leading source.
+
+None of these studies measured questions about choosing infrastructure, so they do not support the conclusion that “AI prefers Reddit to documentation.” The reliable conclusion is different: the list of sites most frequently cited today may change next quarter, and a strategy built around one site is unreliable.
+
+In 2025, Ahrefs compared 75 thousand brands and found that visibility in Google AI Overviews was more strongly associated with the number of brand mentions online than with the number of links to the brand's site. This is a correlation: well-known companies are mentioned more often and have many other advantages. But it suggests that third-party writing about a product matters to AI systems at least as much as the company's own website.
+
+<!-- section: theory | Can you influence an answer? -->
+Two Ahrefs experiments show that AI answers change, but unevenly. In the first, researchers invented a nonexistent brand, asked eight AI systems 56 questions with false premises, then published an official brand FAQ page alongside contradictory third-party texts. GPT-4 and GPT-5 subsequently cited the official page in around 84% of the answers checked, while other AI systems behaved differently. In the second experiment, in 2026, researchers published self-promotional material for a well-known brand and a little-known conference. The little-known conference began appearing in 72 answers where it had not appeared before, and in 82% of those, the AI linked to the new material. For the well-known brand, the new material produced only 6% of new mentions; the rest came from third-party sources. At the same time, in 43% of answers citing the conference's material, the AI did not name the conference itself.
+
+These experiments suggest that a company's own pages help more when the company is little known and has little written about it online, and that a link to your page does not mean the AI recommends your product. Neither experiment proved that mass-producing pages for AI systems works, and Google considers such production spam.
+
+<!-- section: theory | What a company should do -->
+Start with a fact sheet: a short document recording the product category in one sentence, its license, the project's governance structure, installation method, what the product is responsible for and what the customer is responsible for, and the relationship between the open-source project and the company. Then check that the README, documentation overview, architecture page, company website, and third-party profiles say the same thing. If the product is easily confused with a neighboring category, explain the difference on the same page: how a cloud-building platform differs from a Kubernetes distribution, a cluster management system, a managed service, and an application platform, and which layer your product provides.
+
+Correct inaccurate third-party descriptions through ordinary means: email the author or publication with facts, or edit an outdated Stack Overflow answer while disclosing your connection to the product. Google recommends correcting inaccuracies on the original page and reporting errors through the product's own feedback form; neither changes the answer instantly. Do not publish reviews from fictional users or commission manipulated discussions: that is deception, and platforms look for it.
+
+<!-- section: theory | Wikipedia and Wikidata -->
+Wikipedia is among the most-cited sources, so many companies want an article about themselves. English Wikipedia's rules require significant coverage in multiple reliable, independent sources for an article about a company or project; press releases, a company's own blog, funding news, GitHub stars, and foundation membership do not establish notability. Employees, founders, and hired contractors have a conflict of interest, and Wikipedia asks them not to edit articles about their organization directly, but to propose changes on the talk page with references to independent sources and to disclose payment. An agency promising a guaranteed article is promising something the Wikipedia community does not allow.
+
+Wikidata, a database of structured information, has its own rules: an item can be created if the entity is clearly described in serious, publicly available sources. Wikidata entries should distinguish a company from a software project when they are separate entities.
+
+<!-- section: task | Task: an AI panel -->
+Complete this task using four AI systems your buyers use, such as ChatGPT, Claude, Gemini, and Perplexity, and the course spreadsheet. Prepare ten questions your buyer would ask when choosing: about the category, competitor comparisons, installation, security, licensing, and project governance. Ask every question of each AI system three times in a new conversation, because repeated AI answers vary greatly: in a late-2025 SparkToro study, the same recommendation list recurred in fewer than one in a hundred cases. Record whether the product is mentioned, whether its category, license, and capabilities are described correctly, and which pages the AI cites. Mark errors and find a page each could have come from. Repeat the panel a month later using the same questions.
+
+<!-- section: sources -->
+- Profound, sources of links in AI answers — https://www.tryprofound.com/blog/ai-platform-citation-patterns (05.06.2025)
+- Semrush, most-cited sites — https://www.semrush.com/blog/most-cited-domains-ai/ (10.11.2025)
+- Muck Rack, What Is AI Reading — https://media.muckrack.com/documents/What_Is_AI_Reading__May_2026.pdf (May 2026)
+- Ahrefs, brands and AI Overview visibility — https://ahrefs.com/blog/ai-overview-brand-correlation/ (26.05.2025)
+- Ahrefs, made-up brand experiment — https://ahrefs.com/blog/ai-vs-made-up-brand-experiment/ (10.12.2025)
+- Ahrefs, self-promotional content experiment — https://ahrefs.com/blog/self-promotional-content-ai-seo-experiment/ (06.07.2026)
+- SparkToro, inconsistent AI recommendations — https://sparktoro.com/blog/new-research-ais-are-highly-inconsistent-when-recommending-brands-or-products-marketers-should-take-care-when-tracking-ai-visibility/ (27.01.2026)
+- Google, factuality and attribution in generative search — https://developers.google.com/search/docs/fundamentals/gen-ai-attribution-factuality (checked 25.11.2026)
+- Wikipedia, organizational notability — https://en.wikipedia.org/wiki/Wikipedia:Notability_(organizations_and_companies); conflict of interest — https://en.wikipedia.org/wiki/Wikipedia:Conflict_of_interest (checked 25.11.2026)
+- Wikidata, notability — https://www.wikidata.org/wiki/Wikidata:Notability (checked 25.11.2026)
