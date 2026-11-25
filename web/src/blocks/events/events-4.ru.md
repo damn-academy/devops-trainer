@@ -24,6 +24,8 @@ CNCF публикует числа заявок на KubeCon. На KubeCon Europ
 <!-- section: task | Задание: аннотация для рецензента -->
 Выполните задание в тренажёре «Тезис доклада для программного комитета» на этой странице. Напишите аннотацию доклада о задаче, которую решила ваша команда, по пяти вопросам из урока. Нейросеть-рецензент оценит её по рубрике программных комитетов: польза для слушателя, отсутствие рекламы, конкретность, новизна, воспроизводимость. Переписывайте аннотацию, пока каждая часть рубрики не получит оценку не ниже четырёх из пяти, и сохраните итоговый текст.
 
+<!-- widget: rubric {"trainer":"events.cfp-review"} -->
+
 <!-- section: sources -->
 - CNCF, отбор KubeCon Europe 2024 — https://www.cncf.io/blog/2024/01/30/inside-the-numbers-the-kubecon-cloudnativecon-selection-process-for-europe-2024/ (30.01.2024)
 - CNCF, отбор KubeCon North America 2024 — https://www.cncf.io/blog/2024/08/19/inside-the-numbers-the-kubecon-cloudnativecon-selection-process-for-north-america-2024/ (19.08.2024)
