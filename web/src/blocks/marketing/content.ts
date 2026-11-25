@@ -162,21 +162,19 @@ const USES: Record<string, string[]> = {
   G: ['marketing.growth-loop'],
 };
 
-const REFORGE = 'https://www.reforge.com/';
-
 const SOURCES: Record<string, { en: { title: string; url: string }[]; ru: { title: string; url: string }[] }> = {
   A: {
     en: [
       { title: 'April Dunford — Obviously Awesome', url: 'https://www.aprildunford.com/' },
       { title: 'Play Bigger', url: 'https://www.playbigger.com/' },
-      { title: 'Reforge — Marketing Strategy', url: REFORGE },
-      { title: 'Reforge — Mastering Product-Led Growth', url: REFORGE },
+      { title: 'Reforge — Marketing Strategy', url: 'https://www.reforge.com/courses/marketing-strategy' },
+      { title: 'Reforge — Mastering Product-Led Growth', url: 'https://www.reforge.com/courses/mastering-product-growth' },
     ],
     ru: [
       { title: 'April Dunford — Obviously Awesome', url: 'https://www.aprildunford.com/' },
       { title: 'Play Bigger', url: 'https://www.playbigger.com/' },
-      { title: 'Reforge — Marketing Strategy', url: REFORGE },
-      { title: 'Reforge — Mastering Product-Led Growth', url: REFORGE },
+      { title: 'Reforge — Marketing Strategy', url: 'https://www.reforge.com/courses/marketing-strategy' },
+      { title: 'Reforge — Mastering Product-Led Growth', url: 'https://www.reforge.com/courses/mastering-product-growth' },
     ],
   },
   B: {
@@ -184,8 +182,8 @@ const SOURCES: Record<string, { en: { title: string; url: string }[]; ru: { titl
     ru: [{ title: 'Byron Sharp — How Brands Grow (Ehrenberg-Bass Institute)', url: 'https://www.howbrandsgrow.com/' }],
   },
   C: {
-    en: [{ title: 'Reforge — Mastering SEO/AEO (Ethan Smith)', url: REFORGE }],
-    ru: [{ title: 'Reforge — Mastering SEO/AEO (Ethan Smith)', url: REFORGE }],
+    en: [{ title: 'Reforge — Mastering SEO/AEO (Ethan Smith)', url: 'https://www.reforge.com/courses/mastering-search-ai-optimization-(seo)' }],
+    ru: [{ title: 'Reforge — Mastering SEO/AEO (Ethan Smith)', url: 'https://www.reforge.com/courses/mastering-search-ai-optimization-(seo)' }],
   },
   D: {
     en: [{ title: 'Jonah Berger — Contagious', url: 'https://jonahberger.com/' }],
@@ -210,8 +208,8 @@ const SOURCES: Record<string, { en: { title: string; url: string }[]; ru: { titl
     ru: [{ title: 'KubeCon + CloudNativeCon', url: 'https://www.cncf.io/kubecon-cloudnativecon-events/' }],
   },
   H: {
-    en: [{ title: 'Reforge — Marketing Attribution', url: REFORGE }],
-    ru: [{ title: 'Reforge — Marketing Attribution', url: REFORGE }],
+    en: [{ title: 'Reforge — Marketing Attribution', url: 'https://www.reforge.com/courses/mastering-marketing-attribution' }],
+    ru: [{ title: 'Reforge — Marketing Attribution', url: 'https://www.reforge.com/courses/mastering-marketing-attribution' }],
   },
   I: {
     en: [{ title: 'Trade.gov — Country Commercial Guides', url: 'https://www.trade.gov/country-commercial-guides' }],
@@ -471,7 +469,7 @@ export const MARKETING_SCHOOL_EN: SchoolModule[] = [
       {
         n: 2,
         title: 'ICP: three traits that cut out the non-buyer.',
-        body: 'The portrait of the ideal buyer is useful not for what it includes but for what it cuts out. Three traits by which a company clearly does not fit save half the budget: such companies do not buy no matter how warmly you treat them. Describe the portrait through traits visible before any conversation: company size, stack, practice maturity, region.',
+        body: "The ideal customer profile is useful for what it excludes. Record three traits that clearly disqualify a company, and avoid spending advertising, emails and sales time on those companies. Savings depend on how many current contacts have those traits; calculate this from your own database. Describe the profile through traits visible before a conversation: company size, stack, practice maturity and region.",
         today: 'From your last three deals, write down the traits the buyers had in common, and three traits by which you yourself turn a company away.'
       },
       {
@@ -501,8 +499,8 @@ export const MARKETING_SCHOOL_EN: SchoolModule[] = [
       {
         n: 7,
         title: 'A vaccine: marketing on buyer data.',
-        body: 'The research of the Ehrenberg-Bass institute, collected by Byron Sharp in "How Brands Grow", says something uncomfortable: markets grow through reach, not loyalty. Buyers in a category are "light": they think little about it and switch easily, so the companies that grow are easy to buy (physical availability) and easy to remember (mental availability). This is a vaccine against infobusiness content marketing: the advice to "warm your audience up", "sell through value" and "build loyalty" sounds smart and works against growth.',
-        today: 'Write down two numbers: how many new buyers came last quarter and how many minutes pass from the first visit to the first result. Close one of the two gaps.'
+        body: "Research by the Ehrenberg-Bass Institute, collected by Byron Sharp in “How Brands Grow”, makes an uncomfortable point: markets grow through reach more than loyalty. Category buyers are “light”: they think little about it and switch easily, so growing companies are easy to buy (physical availability) and recall (mental availability). This guards against infobusiness advice such as “warm up your audience” and “build loyalty”. Sharp’s research concerns brands within a category: brand share grows primarily through new buyers, with loyalty following share. A company spending only on people who already know it therefore grows more slowly than one expanding the pool of people who can recall and easily buy it.",
+        today: "Record two numbers: how many new companies tried the product for the first time last quarter, and how many minutes pass from the first site visit to a working result. If fewer new companies tried it than in the previous quarter, work on reach: where people can first discover you. If the first result takes over an hour, work on availability: simplify installation and the first documentation step."
       }
     ]
   },
@@ -555,7 +553,7 @@ export const MARKETING_SCHOOL_EN: SchoolModule[] = [
       {
         n: 14,
         title: 'LinkedIn: people, not the company page.',
-        body: 'People read people: the personal profile of an engineer or a founder gathers many times more attention than the company page. So run the personal profiles of the people who actually build the product — in the first person, about the work, with the author\'s name on every material. The company page stays a showcase, but the machine is people.',
+        body: "People read people: posts from engineers’ and founders’ personal profiles usually get more reactions and comments than company-page posts, although the study covered in the platforms module found almost as many impressions. Develop the personal profiles of those actually building the product: first-person writing about their work, with the author named in each piece. The company page remains a showcase, but people drive the work.",
         today: 'Pick two engineers ready to write and help them set up their profiles: a photo, a role, three topics.'
       },
       {
@@ -627,7 +625,7 @@ export const MARKETING_SCHOOL_EN: SchoolModule[] = [
       {
         n: 24,
         title: 'DevRel is not sales.',
-        body: 'Developer relations (DevRel) builds trust between the company and the profession: talks, answers in issues, mentorship. Sales arrive by themselves, as a consequence, but measuring DevRel by deals means breaking it: with the first sales line, the trust accumulated over months is reset. DevRel\'s metrics are contribution, engagement and reputation, not conversion to purchase.',
+        body: "Developer relations (DevRel) builds trust between a company and a profession through talks, issue responses and mentoring. Sales do not follow immediately or directly, so a sales quota undermines DevRel: when a DevRel engineer sells in issue replies, trust built over months disappears. Its main metrics are contribution, engagement and reputation. Still measure the business connection differently: count how many companies that later bought had previously attended talks, joined chat or participated in issues, and compare over six months or a year.",
         today: 'Split your DevRel\'s tasks into two columns — where they answer to the profession and where to the business — and remove everything that sells directly from the first column.'
       },
       {
@@ -687,8 +685,8 @@ export const MARKETING_SCHOOL_EN: SchoolModule[] = [
       {
         n: 33,
         title: 'A talk beats sponsorship.',
-        body: 'A sponsorship package buys visibility for one day, while a talk buys an opinion for years. A person who heard your thought remembers it; a person who saw a logo does not. Money given for sponsorship is almost always better spent on speaker travel, recordings and reusing the materials.',
-        today: 'Review the budget of one conference and decide what in it stays with people after day zero.'
+        body: "A sponsorship package buys a day of visibility; a talk shapes opinions for years. Someone who hears your idea remembers it; someone who sees a logo does not. For a small company whose talks are accepted, sponsorship money is often better spent on speaker travel, recordings and reuse. Sponsorship is justified when you need meetings with specific people at a booth, when your talk was rejected or when sponsorship includes a program slot; the Events and Talks course shows how to calculate this.",
+        today: "Review one conference budget and decide which expenses will produce something afterward: a talk recording, an article or meetings with specific people."
       },
       {
         n: 34,

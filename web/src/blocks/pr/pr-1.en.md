@@ -13,7 +13,7 @@ Bring a working product, the buyer's problem, the deployment model, named compet
 Gartner does not allow invented analyst quotes praising a vendor or product. Quotes for a press release must come from published research, usually no more than twelve months old, and require approval from the compliance department; an analyst's spoken remarks cannot be published. Public prices for subscriptions, consultations, and report reprint rights are unavailable, so keep briefings, paid advisory work, research access, reprint licenses, and agency services as separate budget lines.
 
 <!-- section: task | Task: a briefing request -->
-Complete this task in a document. Find the research on Gartner's, Forrester's, or IDC's website that is closest to your category, and record its name, format, and author. Prepare a briefing request: the buyer's problem, deployment model, three competitors, two customers willing to speak, and what new information you can offer the analyst.
+Complete this task in a document. Find the research on Gartner's, Forrester's, or IDC's website that is closest to your category, and record its name, format, and author. Prepare a briefing request: the buyer's problem, deployment model, three competitors, customers willing to speak, and what new information you can offer the analyst. Name a customer only with their written agreement to speak to the analyst. If none have agreed, say so and describe deployments without names. The request is ready when the analyst can understand the problem, how you differ from three competitors and what evidence you can show.
 
 <!-- section: sources -->
 - Gartner, vendor briefings — https://www.gartner.com/en/contact/vendor-briefings

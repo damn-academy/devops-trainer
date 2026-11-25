@@ -23,7 +23,7 @@ Before announcing the change, identify affected open-version users and their cur
 Publish where open-version users will see it: release notes, the project blog, the mailing list and community meetings. Decision makers should join the discussions. A small footnote in release notes is likely to start a thread accusing the company of closing the project.
 
 <!-- section: task | Assignment: a roadmap with three horizons -->
-Do this assignment in a document or in your project's GitHub Projects. Divide your current plans into three horizons. For each item, record the user problem, discussion link, owner, and edition. Find items with dates and check whom each date depends on. Draft a quarterly roadmap review in five or six paragraphs.
+Do this assignment in a document or in your project's GitHub Projects. Divide your current plans into three horizons. For each item, record the user problem, discussion link, owner, and edition. Find items with dates and check whom each date depends on. Draft a quarterly roadmap review in five or six paragraphs. If your plans include moving a feature between editions, draft its announcement and check that it answers every question in the section on changing the boundary.
 
 <!-- section: sources -->
 - CNCF TOC, incubation and graduation application templates — https://github.com/cncf/toc/tree/main/.github/ISSUE_TEMPLATE

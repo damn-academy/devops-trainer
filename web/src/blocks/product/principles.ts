@@ -114,7 +114,7 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Жадная граница провоцирует форк и сжигает доверие сообщества, щедрая превращает продукт в благотворительность. Границу держат в одном месте годами и двигают её медленно, объясняя каждый шаг сообществу.',
         ],
         bodyEn: [
-          'Open-core means the product’s core is open and separate features are paid. The boundary decision matters more than the price decision: the free part must solve one job completely for a small team, or people will not start using the product. The paid part is what a company pays for without haggling: security, scale, compliance, support.',
+          'Open-core means the product’s core is open and separate features are paid. The boundary decision matters more than the price decision: the free part must solve one job completely for a small team, or people will not start using the product. The paid part usually consists of capabilities large companies need and small teams rarely do: corporate-directory single sign-on, audit logs, multi-cluster operations, regulatory compliance and support with a guaranteed response time. Security cannot be divided this way: vulnerability fixes and secure defaults must be in the open version, or small teams remain vulnerable and the community rightly accuses the company of selling security.',
           'A greedy boundary provokes a fork and burns the community’s trust; a generous one turns the product into charity. The boundary is kept in one place for years and moved slowly, with every step explained to the community.',
         ],
         task: [
@@ -131,7 +131,7 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         ],
         bodyEn: [
           'Enter a company with a small deal: one team, one cluster, one month. Prove the value on something small, and expansion becomes a formality, because you already work inside the client. This is how revenue grows inside existing customers, and the share of this growth is measured by NRR, net revenue retention.',
-          'An NRR above 100% means the company grows even without new customers: the old ones pay more than last year. Acquiring a new customer costs several times more than expanding an old one, which makes land-and-expand the main engine of subscription economics. In the OpenView and High Alpha benchmarks the median NRR stays around 110%, and the best companies go beyond 120%.',
+          'An NRR above 100% means the company grows even without new customers: the old ones pay more than last year. Acquiring a new customer costs several times more than expanding an old one, which makes land-and-expand the main engine of subscription economics. In the OpenView 2023 and High Alpha 2024 benchmarks, private SaaS companies had median NRR around 100–110%, with the best above 120%. This is a comparison point, not a norm for every category and stage.',
         ],
         task: [
           'Посчитайте, какую долю выручки за последний год компания получила от клиентов, которые уже платили год назад. Если эта цифра ниже 100%, найдите, где клиенты сокращают использование.',
@@ -331,7 +331,7 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         ],
         bodyEn: [
           "Intercom's RICE method scores an idea with four numbers. Reach is how many people or companies the change touches in a chosen period, such as a quarter. Impact is how much it changes their behaviour, on a scale from 0.25 to 3. Confidence is how far you trust these estimates, in percent. Effort is how many person-months the work takes. The score is reach times impact times confidence, divided by effort. For example, a feature for 400 companies a quarter with impact 1, confidence 50% and effort of 2 person-months scores 400 × 1 × 0.5 / 2 = 100, while a feature for 100 companies with impact 2, confidence 80% and effort of 1 person-month scores 160. Scores help compare ideas but do not replace decisions: an urgent security fix or a commitment to a customer goes ahead of the queue, and such exceptions are named openly.",
-          "A real roadmap is a list of what you will not do, with explanations of why. Resources are finite, and every spoken ‘yes’ means ten unspoken ‘noes’ that the team must remember.", // TODO(en-review)
+          "A useful roadmap names both what the team will do and what it deliberately will not do, explaining each choice. Resources are finite, so accepting one piece of work means declining another; the team should see these refusals as clearly as its plans.", // TODO(en-review)
         ],
         task: [
           'Возьмите текущий план работ и выпишите пять вещей, которые вы сознательно не делаете, с причиной к каждой.',
@@ -455,7 +455,7 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         ],
         bodyEn: [
           "Tie the price to how the customer measures benefit: per node, per user, per gigabyte, per request. A good metric grows with the customer’s success and is clear before purchase; a bad one punishes the customer for growth or prevents you from growing with them.", // TODO(en-review)
-          "Research by Patrick Campbell and ProfitWell, now part of Paddle, shows that packaging and the metric matter as much as the price level itself. Teams that revisit the metric once a year grow faster than those that raise prices without changing packaging.", // TODO(en-review)
+          "Research by Patrick Campbell and ProfitWell, now part of Paddle, shows that packaging and the metric matter as much as the price level itself. In their data, companies that regularly revisit packaging and the price metric more often grow faster than those that only raise prices. This is an observation from ProfitWell’s customer sample, not proof that revision itself causes growth.", // TODO(en-review)
         ],
         task: [
           'Выпишите, от чего клиент считает свою выгоду от продукта, и выберите единицу, которой эту выгоду можно измерить без вреда для доверия к продукту.',
