@@ -1,3 +1,4 @@
+import { loadDraft, saveDraft } from '../../engine/trainers/storage';
 // Value-metric chooser for the hidden "Продукт" pilot: pick the unit you
 // charge for (node, user, gigabyte, million requests) and see how the
 // revenue scales with the customer's growth and how predictable the bill
@@ -100,7 +101,10 @@ const KNOBS: { key: 'customers' | 'price' | 'growth'; min: number; max: number; 
   { key: 'growth', min: 1, max: 5, step: 0.5, label: ['Рост клиента за год, во сколько раз', 'Customer growth per year, times'], fmt: (v) => `×${v}` },
 ];
 
+let instance = 0;
 const css = `
+.pvm-results { display:grid;gap:14px;min-width:0; }
+.pvm-formula {white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
 .pvm-root { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .pvm-choice { display: flex; flex-wrap: wrap; gap: 6px; }
 .pvm-choice button { border: 1px solid var(--line, #d8dee9); background: transparent; border-radius: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
@@ -112,7 +116,8 @@ const css = `
 .pvm-totals { display: flex; flex-wrap: wrap; gap: 16px; }
 .pvm-total b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
 .pvm-verdict { font-size: 13px; border-left: 3px solid var(--accent, #2f6fdd); padding: 6px 10px; }
-.pvm-table { table-layout: fixed; overflow-wrap: anywhere; width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.pvm-table-scroll { overflow:auto; }
+.pvm-table { min-width:560px; width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .pvm-table th, .pvm-table td { text-align: right; padding: 3px 8px; border-bottom: 1px solid var(--line, #d8dee9); }
 .pvm-table th:nth-child(-n+2), .pvm-table td:nth-child(-n+2) { text-align: left; }
 .pvm-table tr.on td { background: color-mix(in srgb, var(--accent, #2f6fdd) 8%, transparent); }
@@ -125,12 +130,26 @@ export function mountValuemetric(el: HTMLElement, _props: unknown): Mounted {
   const root = document.createElement('div');
   root.className = 'pvm-root';
   el.append(style, root);
-  const params: ValuemetricParams = { ...VALUEMETRIC_DEFAULTS };
+  const params: ValuemetricParams = { ...VALUEMETRIC_DEFAULTS, ...loadDraft<Partial<ValuemetricParams>>('product.valuemetric', {}) };
   const h = (tag: string, cls: string, ...kids: (Node | string)[]) => { const e = document.createElement(tag); if (cls) e.className = cls; e.append(...kids); return e; };
   const total = (label: string, value: number | string) => { const d = document.createElement('div'); d.className = 'pvm-total'; const b = document.createElement('b'); b.textContent = String(value); d.append(label, b); return d; };
+  const inputPrefix = `${++instance}-pvm`;
+  const results = h('div', 'pvm-results');
+  root.append(h('div', 'pvm-knobs', ...KNOBS.map((k) => {
+        const input = document.createElement('input');
+        input.type = 'range'; input.min = String(k.min); input.max = String(k.max); input.step = String(k.step); input.value = String(params[k.key]);
+        const out = document.createElement('output');
+        out.textContent = k.fmt(params[k.key]);
+        input.oninput = () => { params[k.key] = Number(input.value) as never; out.textContent = k.fmt(Number(input.value)); render(); };
+        input.setAttribute('aria-label', t(bi(k.label[0], k.label[1])));
+        const label = h('label', '', h('span', '', t(bi(k.label[0], k.label[1]))), out);
+        input.id = `${inputPrefix}-${k.key}`; label.setAttribute('for', input.id);
+        return h('div', 'pvm-knob', label, input);
+      })), results);
   const render = () => {
+    saveDraft('product.valuemetric', params);
     const r = valuemetricProject(params);
-    root.replaceChildren(
+    results.replaceChildren(
       h('div', 'pvm-choice', ...VALUE_METRICS.map((m) => {
         const b = document.createElement('button');
         b.type = 'button';
@@ -139,20 +158,13 @@ export function mountValuemetric(el: HTMLElement, _props: unknown): Mounted {
         b.onclick = () => { params.metric = m.id; render(); };
         return b;
       })),
-      h('div', 'pvm-knobs', ...KNOBS.map((k) => {
-        const input = document.createElement('input');
-        input.type = 'range'; input.min = String(k.min); input.max = String(k.max); input.step = String(k.step); input.value = String(params[k.key]);
-        const out = document.createElement('output');
-        out.textContent = k.fmt(params[k.key]);
-        input.oninput = () => { params[k.key] = Number(input.value) as never; out.textContent = k.fmt(Number(input.value)); render(); };
-        return h('div', 'pvm-knob', h('label', '', h('span', '', t(bi(k.label[0], k.label[1]))), out), input);
-      })),
+
       h('div', 'pvm-totals',
         total(t(bi('Выручка сейчас, тыс ₽ в месяц', 'Revenue now, kRUB per month')), r.chosen.mrrNow),
         total(t(bi('Выручка через год', 'Revenue in a year')), r.chosen.mrrYear),
         total(t(bi('Предсказуемость счёта из 100', 'Bill predictability out of 100')), r.chosen.predictability)),
       h('p', 'pvm-verdict', t(bi(r.chosen.spec.verdict[0], r.chosen.spec.verdict[1]))),
-      h('table', 'pvm-table',
+      h('div', 'pvm-table-scroll', h('table', 'pvm-table',
         h('thead', '', h('tr', '',
           h('th', '', t(bi('Метрика', 'Metric'))),
           h('th', '', t(bi('Сейчас', 'Now'))),
@@ -165,8 +177,10 @@ export function mountValuemetric(el: HTMLElement, _props: unknown): Mounted {
             h('td', '', String(row.mrrNow)),
             h('td', '', String(row.mrrYear)),
             h('td', '', String(row.predictability)));
-        }))),
+        })))),
       h('p', 'pvm-note', t(PRODUCT_HONEST_NOTE)),
+      // TODO(ru-prose): Explain units per customer, illustrative growth multipliers and fixed predictability scores.
+      h('pre', 'pvm-formula', VALUE_METRICS.map(m => `${t(bi(...m.label))}: ${params.customers} × ${m.units} × ${params.price} = ${Math.round(params.customers * m.units * params.price)}; × ${m.id === 'user' ? '√growth' : m.id === 'gb' ? 'growth × 1.4' : m.id === 'request' ? 'growth × 0.85' : 'growth'}; ${m.predictability}/100`).join('\n')),
     );
   };
   render();

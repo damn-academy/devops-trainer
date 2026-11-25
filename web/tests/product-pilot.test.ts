@@ -73,7 +73,8 @@ describe('product pilot (hidden)', () => {
     const pricey = opencoreProject({ ...OPENCORE_DEFAULTS, price: 12 });
     expect(pricey.totals.revenue).toBeGreaterThan(base.totals.revenue); // revenue follows the price
     const verdict = opencoreVerdict(greedy);
-    expect(verdict.ru.length).toBeGreaterThan(0);
+    expect(verdict.ru).not.toContain('попробуйте поднять');
+    base.rows.forEach(row => expect(row.revenue).toBe(row.paying * OPENCORE_DEFAULTS.price));
     expect(verdict.en.length).toBeGreaterThan(0);
   });
 
