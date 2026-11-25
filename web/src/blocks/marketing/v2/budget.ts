@@ -2,17 +2,15 @@ import { bi, t } from '../../../core/i18n';
 import type { WidgetReg } from '../../../core/types';
 import './budget.css';
 
-// TODO(prose): review all Russian UI drafts in this strings object.
 export const strings = {
-  title: bi('Бюджет каналов', 'Channel budget'),
-  note: bi('Учебные допущения, не рыночные данные. Расходы повторяются 3 месяца; последствия показаны за 12 месяцев. Неиспользованный бюджет остаётся в резерве.', 'Teaching assumptions, not market data. Spend repeats for 3 months; consequences span 12 months. Unallocated budget stays in reserve.'),
-  allocated: bi('Распределено / бюджет в месяц, USD', 'Allocated / monthly budget, USD'),
-  single: bi('Один прогон', 'One run'), reset: bi('Сбросить', 'Reset'),
-  legend: bi('Возможности продаж: медиана — сплошная линия; 10–90% — полоса; один прогон — пунктир.', 'Sales opportunities: median — solid line; 10–90% — band; one run — dashed line.'),
-  month: bi('Месяц', 'Month'), total: bi('Накопленные возможности продаж (медиана и 10–90%)', 'Cumulative opportunities (median and 10–90%)'),
-  // TODO(prose): replace the new RU placeholder; existing RU slots stay untouched.
-  funnel: bi('Qualified visits → activations → opportunities (cumulative medians)', 'Qualified visits → activations → opportunities (cumulative medians)'),
-  channels: [bi('Спонсорство рассылки', 'Newsletter sponsorship'), bi('Спонсорство подкаста', 'Podcast sponsorship'), bi('Reddit Ads', 'Reddit Ads'), bi('LinkedIn Thought Leader Ads', 'LinkedIn Thought Leader Ads'), bi('LinkedIn Document Ads', 'LinkedIn Document Ads'), bi('Google Search: категория', 'Google Search: category'), bi('Google Search: конкуренты', 'Google Search: competitor names'), bi('EthicalAds / контекст', 'EthicalAds / contextual'), bi('Ретаргетинг', 'Retargeting'), bi('Спонсорство YouTube-автора', 'YouTube creator sponsorship')],
+  title: bi('Распределение бюджета по каналам', 'Channel budget'),
+  note: bi('Модель построена на учебных допущениях, близких к опубликованным отраслевым данным, и прогнозом для вашей компании не служит. Распределение повторяется три месяца подряд, а последствия видны на графике за двенадцать месяцев; нераспределённые деньги остаются в резерве.', 'Teaching assumptions, not market data. Spend repeats for 3 months; consequences span 12 months. Unallocated budget stays in reserve.'),
+  allocated: bi('Распределено из месячного бюджета, долларов', 'Allocated / monthly budget, USD'),
+  single: bi('Показать один прогон', 'One run'), reset: bi('Вернуть исходное распределение', 'Reset'),
+  legend: bi('График показывает возможности сделок по месяцам. Сплошная линия — медиана трёхсот прогонов, полоса — разброс, в который попадают восемь прогонов из десяти, пунктир — один случайный прогон.', 'Sales opportunities: median — solid line; 10–90% — band; one run — dashed line.'),
+  month: bi('Месяц', 'Month'), total: bi('Сколько возможностей сделок накопится: медиана и разброс восьми прогонов из десяти', 'Cumulative opportunities (median and 10–90%)'),
+  funnel: bi('Как сужается воронка: квалифицированные посещения, затем активации, затем возможности сделок, медианы с накоплением', 'Qualified visits → activations → opportunities (cumulative medians)'),
+  channels: [bi('Спонсорство рассылки', 'Newsletter sponsorship'), bi('Спонсорство подкаста', 'Podcast sponsorship'), bi('Reddit Ads', 'Reddit Ads'), bi('LinkedIn Thought Leader Ads', 'LinkedIn Thought Leader Ads'), bi('LinkedIn Document Ads', 'LinkedIn Document Ads'), bi('Поиск Google по категории', 'Google Search: category'), bi('Поиск Google по названиям конкурентов', 'Google Search: competitor names'), bi('EthicalAds и другая контекстная реклама', 'EthicalAds / contextual'), bi('Ретаргетинг', 'Retargeting'), bi('Спонсорство автора на YouTube', 'YouTube creator sponsorship')],
 };
 
 // Teaching calibration, not a forecast. CPL anchors: course research, Metadata
