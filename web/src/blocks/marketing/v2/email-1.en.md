@@ -29,6 +29,20 @@ Double opt-in, where a person clicks a link in an email after subscribing, is no
 <!-- section: task | Task: check your mailing domain -->
 Complete this task in the terminal on this page. The practice domain `mail.example-cloud.test` sends the company's newsletter, and some messages do not reach Gmail. Inspect its records with `dig TXT mail.example-cloud.test`, `dig TXT selector1._domainkey.mail.example-cloud.test`, and `dig TXT _dmarc.mail.example-cloud.test`. Identify which Gmail requirement the domain does not meet and write down the corrected record. Then check your company's real mailing domain with the same commands and open its latest newsletter in Gmail: does the mail app show an unsubscribe button beside the sender's name?
 
+<!-- widget: marketing.dns-lab -->
+
+<!-- quiz -->
+? Why does the email open rate no longer measure readers' interest?
++ With privacy protection enabled, Apple Mail loads messages in the background, triggering the pixel for unread emails || It is more useful to count clicks excluding bots, replies, unsubscribes, and actions taken after the email.
+- Email clients stopped displaying images || The cause is background loading of emails; images have nothing to do with it.
+- Opens are prohibited by law || The law does not prohibit them.
+
+? What spam complaint rate does Google recommend staying below?
++ Stay below 0.1% and never reach 0.3% || At 0.3% or above, Gmail applies penalties.
+- 1% || This is far above the threshold.
+- No threshold has been set || Gmail publishes thresholds in its sender requirements.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - PostHog, how we built email onboarding — https://posthog.com/blog/how-we-built-email-onboarding (18.02.2025)
 - PostHog, newsletter handbook — https://posthog.com/handbook/content/newsletter (checked 25.11.2026)

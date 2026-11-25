@@ -31,6 +31,18 @@ AI answers primarily take clicks from simple questions with short answers. An en
 <!-- section: task | Task: your own sample of queries -->
 Complete this task in your website's Google Search Console, if you have access, or using the lesson's practice data. Choose twenty queries without the company name for which the site ranked in the top three both a year ago and now. Compare their impressions, clicks, and click-through rates for the same month in both years, on the same device type. Mark queries that now have an AI Overview. Record where clicks have declined and which pages could win them back: pages with exact commands, measurements, or comparisons that are absent from the short answer.
 
+<!-- quiz -->
+? What does Ahrefs' finding that queries with an AI Overview received 58% fewer clicks than expected mean?
++ Out of a hundred expected clicks on the top position, about forty-two arrived || This figure does not represent a loss of 58% of a site's total traffic.
+- Websites lost 58% of all their traffic || The study measured the click-through rate for the top position in specific queries.
+- The click-through rate fell by 58 percentage points || The click-through rate was about seven per hundred impressions, so it could not fall by 58 points.
+
+? Does a page need special markup to appear in a Google AI Overview?
++ No, it needs normal indexing and eligibility to display a snippet || Google says no special optimization for AI is required.
+- Yes, it needs an llms.txt file || Google explicitly says llms.txt does not affect ranking.
+- Yes, it needs FAQ markup || Google stopped showing FAQ rich results in May 2026.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - Google, core algorithm and spam policy update — https://developers.google.com/search/blog/2024/03/core-update-spam-policies (05.03.2024)
 - Google, site reputation abuse — https://developers.google.com/search/blog/2024/11/site-reputation-abuse (19.11.2024); EEA change — https://developers.google.com/search/blog/2026/08/update-site-reputation-policy (28.08.2026)

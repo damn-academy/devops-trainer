@@ -25,6 +25,13 @@ An A/B test, where half of visitors see one page variant and half another, almos
 <!-- section: task | Task: separate the two websites' responsibilities -->
 Complete this task in a spreadsheet. Open an open-source project's website and the website of the company that created it, such as your own project or any CNCF project with a commercial vendor. In two columns, list the information available on each site and mark information from this lesson's list that appears on both or is missing from both. Then follow both buyer paths, self-directed and through the company, and record where you got stuck and how many clicks it took to reach installation and the contact form.
 
+<!-- quiz -->
+? Where should you keep installation instructions for an open-source project and the company's commercial commitments?
++ Installation instructions in the project documentation and commitments on the company website, with links between them || Copied descriptions have to be updated in two places, and readers confuse software capabilities with contractual commitments.
+- Everything on the company website || This makes the project lose its neutrality.
+- Everything in the project documentation || One company's commercial commitments should not live on a neutral project's website.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - CNCF, project neutrality — https://contribute.cncf.io/projects/best-practices/community/vendor-neutrality/ (checked 25.11.2026)
 - Similarweb, kubernetes.io and tailscale.com — https://www.similarweb.com/website/kubernetes.io/, https://www.similarweb.com/website/tailscale.com/ (October 2026)

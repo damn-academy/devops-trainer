@@ -30,6 +30,13 @@ For multilingual documentation, Google accepts language-version annotations thro
 <!-- section: task | Task: accepting a documentation site -->
 Complete this task on your project's documentation site or that of any open-source project. Open three pages—installation, upgrading, and troubleshooting—with JavaScript disabled and record what disappeared. Check robots.txt and sitemap: does the sitemap include preview-site or old-domain addresses? Find the project's installation instructions in a search engine and check which version they cover. Then ask a developer assistant how to install the project and check which pages it used and whether its command is correct.
 
+<!-- quiz -->
+? Which OpenAI crawler collects pages for search in ChatGPT?
++ OAI-SearchBot || GPTBot collects training data, while ChatGPT-User visits at a user's request in a conversation.
+- GPTBot || GPTBot is associated with model training.
+- Googlebot || This is Google's crawler.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - CNCF, documentation assessment criteria — https://contribute.cncf.io/techdocs/analysis/criteria/ (checked 25.11.2026)
 - CNCF, KubeVirt documentation analysis — https://contribute.cncf.io/techdocs/analyses/2026/kubevirt/analysis/ (2026)

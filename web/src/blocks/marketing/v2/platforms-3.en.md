@@ -29,6 +29,13 @@ Reactions under a post say little, so measure what happens afterward: visits to 
 <!-- section: task | Task: one idea on three platforms -->
 Complete this task in drafts on three platforms. Take one observation from your team, such as why virtual machines in Kubernetes start more slowly on a particular storage system and how you fixed it. Write a post for X without a link, using a diagram or code; a post for Bluesky with a question for peers and a hashtag; and a post for LinkedIn with context for a head of infrastructure. Compare the three texts and check that each communicates the main idea without the other two.
 
+<!-- quiz -->
+? What had Buffer found about posts with links on X by August 2025?
++ For accounts without Premium, median engagement on posts with links had fallen to zero || More than half of these posts received no reactions at all; they could still have had impressions and clicks.
+- X banned links in posts || There is no ban; engagement changed.
+- Posts with links began getting more reach || Buffer's data shows the opposite for accounts without a subscription.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - xAI, open-source X recommendations code — https://github.com/xai-org/x-algorithm (updates 13.08–13.10.2026)
 - Buffer, links on X — https://buffer.com/resources/links-on-x/ (14.10.2025)
@@ -66,6 +73,18 @@ In July 2025, YouTube clarified its monetization rules for repetitive and unorig
 
 <!-- section: task | Task: a plan for one demonstration -->
 Complete this task in a document. List the five questions new users most often ask in your project's chat or issues. For the most frequent question, outline a ten-to-fifteen-minute video: what the viewer will see in the first thirty seconds, which chapters it will contain, what failure you will show and how to fix it, and which link you will include in the description. Record where you will share the video link a month after publication.
+
+<!-- quiz -->
+? Why does a technical demonstration on YouTube accumulate views slowly over a long time?
++ People find it by searching for a specific task, and engineers keep entering those queries for years || Recommendations bring a spike, while search brings a long tail.
+- YouTube deliberately slows the distribution of technical videos || There is no such rule.
+- Technical videos are shown only to subscribers || People find videos through search and recommendations; a subscription is not required.
+
+? Why could Shorts views jump after March 31, 2025 without any improvement to the videos?
++ YouTube began counting every start and replay as a view, with no minimum watch time || The previous counting method was retained as “engaged views.”
+- YouTube began promoting infrastructure companies' Shorts || There was no such announcement.
+- Shorts became longer || Length affects the format, but does not explain the jump in views.
+<!-- /quiz -->
 
 <!-- section: sources -->
 - Tailscale, 50,000 YouTube subscribers — https://tailscale.com/blog/50k-youtube-subscribers (20.11.2025)

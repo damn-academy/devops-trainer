@@ -25,6 +25,18 @@ Do not post the same announcement in several communities on the same day: member
 <!-- section: task | Task: three answers and one post -->
 Complete this task on Reddit from your own account, listing your employer in your profile. Over two weeks, find three questions in one relevant community that you can answer better than anyone else in the thread, and answer them in detail, without mentioning the product unless it solves the questioner's problem. Then read that community's rules and draft one post about a technical problem your team solved. Reread the draft through a moderator's eyes: does it contain anything useful to someone who will never use your product?
 
+<!-- quiz -->
+? Does Reddit have a rule of nine useful posts for every one about yourself?
++ Reddit dropped it as a site-wide rule in 2017, but individual communities may keep their own || Each community's moderators decide on self-promotion, so read the rules on the community page.
+- Yes, it is a rule across all of Reddit || Reddit dropped the site-wide wording in 2017.
+- No, self-promotion is allowed everywhere on Reddit || Site-wide rules prohibit spam, and community moderators set their own limits on promotion.
+
+? What happens if you ask employees to vote for the company's post?
++ Reddit tracks coordinated votes, and both the account and the domain are penalized || Vote manipulation is explicitly prohibited by the site-wide spam rules.
+- The post will reach the top of the community faster || The platform detects coordinated votes and does not count them.
+- Nothing, as long as real people are voting || Real people voting by arrangement are still manipulating votes.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - Reddit, spam rules — https://support.reddithelp.com/hc/en-us/articles/360043504051-Spam (checked 25.11.2026)
 - Reddit, State of spam (removal of the general 9:1 rule) — https://www.reddit.com/r/modnews/comments/6bj5de/state_of_spam/ (2017)
@@ -57,6 +69,18 @@ Lobsters is a small community about programming and computing, which people join
 
 <!-- section: task | Task: a Show HN draft -->
 Complete this task in a document. Write a Show HN headline for your project without evaluative language, then an opening comment of five to seven sentences: who you are, what you made, how it works, what its limitations are, and what you want to ask. Check whether someone can try the project in ten minutes without registration; if not, record what needs to be done to make that possible. Then list the five most uncomfortable questions people will ask in the comments and answer each in two or three sentences.
+
+<!-- quiz -->
+? What can you submit to Show HN?
++ Something you made yourself that people can try || Blog posts, newsletters, waiting lists, and ordinary announcements are not accepted in Show HN.
+- An announcement of a future product with a waiting list || The Show HN rules explicitly exclude waiting lists.
+- A press release about a funding round || Business news is not accepted in Show HN.
+
+? How should you choose when to post on Hacker News?
++ When the author is available and can spend several hours responding to comments || Timing affects responses less than people tend to think, while the author's presence in the comments always matters.
+- Only on Tuesday morning Pacific time || Syften's study does not support such a universal rule.
+- At night, when there is less competition || Nighttime hours brought slightly more responses for Show HN, but 62% of posts received none; timing is not the main factor.
+<!-- /quiz -->
 
 <!-- section: sources -->
 - Hacker News, Show HN rules — https://news.ycombinator.com/showhn.html (checked 25.11.2026)

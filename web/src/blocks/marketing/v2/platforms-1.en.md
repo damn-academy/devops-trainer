@@ -24,6 +24,18 @@ People do the work on platforms, and a company logo is trusted less than a perso
 <!-- section: task | Task: your company's platform map -->
 Complete this task in a spreadsheet, a document, or on paper. List four roles from your buyer profile, such as a platform engineer, a head of infrastructure, a security specialist, and a chief financial officer. For each role, name two platforms that person visits every week, then check your assumptions and record how you know: from customer conversations or from a guess. Next, for each platform, record which of the three roles it will play, which person in the company will work on it, and how many hours a week that will take. If the total exceeds the hours you have available, cross out the platforms where you have no one with an established reputation.
 
+<!-- quiz -->
+? A marketer wants to choose platforms for an infrastructure product. Where should they start?
++ With the roles in the buyer profile and where people in each role spend time every week || The audience matters more than the platform's size: engineers and executives read different places, so choose a platform for a specific person.
+- With the platform that has the most users || Pew's survey says 84% of Americans use YouTube, but that represents the country's population; the survey did not study platform engineers and infrastructure leaders separately.
+- With platforms where the company already has an account || A company account on a platform says nothing about whether your buyer is there.
+
+? Why does the same release announcement, posted in eight places in one evening, underperform almost everywhere?
++ Platforms have different audiences, rules, and distribution mechanisms, so one announcement does not fit them all || On Hacker News and Reddit, a release announcement looks like advertising, while newsletter subscribers expect it.
+- Platforms penalize posting on the same day || There is no universal rule about posting on the same day; the problem is that the format does not fit each platform.
+- Release announcements never interest anyone || In a newsletter and release notes, a release announcement is appropriate and useful.
+<!-- /quiz -->
+
 <!-- section: sources -->
 - Pew Research Center, Americans' Social Media Use 2025 — https://www.pewresearch.org/internet/2025/11/20/americans-social-media-use-2025/ (20.11.2025)
 - Metricool, LinkedIn Study 2026 — https://metricool.com/wp-content/uploads/Linkedin-Study-2026-EN.pdf (April 2026)
@@ -59,6 +71,18 @@ Do not buy into groups that exchange likes or use programs that automatically co
 
 <!-- section: task | Task: one engineer's post and one document -->
 Complete this task on LinkedIn or in a draft. Take one technical problem your team solved in the past month and write a personal post on behalf of the engineer who solved it: describe the situation in the first line, then what you tried, what worked, and what did not, ending with a question for readers to which the author does not have a ready answer. Next, turn the same topic into a six-to-eight-page document for the company page: a diagram, steps, figures, and a conclusion. After two weeks, compare who reacted to each post: how many of them work at companies that fit your buyer profile.
+
+<!-- quiz -->
+? What did LinkedIn announce it would demote in the feed in March 2026?
++ Generic recycled posts, engagement bait, automated comments, and engagement pods || LinkedIn's announcement of March 12, 2026 states this explicitly.
+- All posts with links || Metricool's study found that links on company pages even correlated with greater reach; there is no blanket ban on links.
+- Posts longer than a thousand characters || The announcement says nothing about post length.
+
+? What does the claim that employees have ten times the reach of a company page show?
++ It is a figure from a 2016 LinkedIn publication, and there are no recent measurements for infrastructure companies || It is repeated as fact, but it does not serve as current evidence.
+- It is a finding from Metricool's 2026 study || Metricool compared engagement: 2.6 reactions per hundred impressions for personal profiles versus 1.6 for company pages.
+- It is an official rule of the LinkedIn feed || LinkedIn does not publish multipliers for employees.
+<!-- /quiz -->
 
 <!-- section: sources -->
 - LinkedIn, Improving the Feed — https://news.linkedin.com/2026/ImprovingTheFeed (12.03.2026)
