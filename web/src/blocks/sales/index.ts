@@ -5,6 +5,9 @@
 // honest placeholder (TODO(ru-en)) until the owner's content pipeline passes
 // it. Claude owns the prose per web/STYLE-RU.md.
 
+import { markdownQuizItems } from '../../core/md-lessons';
+import { DREAM100_LESSONS } from './dream100';
+import { SALES_MODULES, DREAM100_SUMMARIES } from './structure';
 import { defineModule } from '../../core/define';
 import { bi } from '../../core/i18n';
 import type { Block } from '../../core/types';
@@ -28,6 +31,8 @@ touches.sections.splice(2, 0, {
 const last = lessons[lessons.length - 1]!;
 last.sections.splice(last.sections.length - 1, 0, { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: SALES_QUIZ.map((q) => q.id) });
 
+lessons.push(...DREAM100_LESSONS.map(l => ({ ...l, summary: DREAM100_SUMMARIES[l.id], sections: [...l.sections] })));
+
 const block: Block = {
   id: 'sales',
   order: 990,
@@ -44,6 +49,7 @@ const block: Block = {
     experienced: bi('Ведете сложные сделки', 'Running complex deals'),
   },
   hours: { beginner: 2, intermediate: 1.2, experienced: 0.8 },
+  modules: SALES_MODULES,
   lessons: lessons.map((l) => l.id),
   sources: { en: [], ru: [] },
   placement: [],
@@ -53,7 +59,7 @@ export default defineModule({
   blocks: [block],
   lessons,
   concepts: SALES_CONCEPTS,
-  quiz: SALES_QUIZ,
+  quiz: [...SALES_QUIZ, ...markdownQuizItems(lessons)],
   explainers: [fromModel(buyingModel)],
   widgets: [funnelWidget],
 });

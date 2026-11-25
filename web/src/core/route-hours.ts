@@ -75,14 +75,24 @@ export const ROUTE_HOURS: Record<string, Record<import('./types').Level, number>
     "intermediate": 5.75,
     "experienced": 5.75
   },
+  "pet-projects": {
+    "beginner": 5.166666666666667,
+    "intermediate": 5.166666666666667,
+    "experienced": 5.166666666666667
+  },
   "demo": {
     "beginner": 0.4166666666666667,
     "intermediate": 0.4166666666666667,
     "experienced": 0.4166666666666667
   },
   "sales": {
-    "beginner": 1.1166666666666667,
-    "intermediate": 1.1166666666666667,
-    "experienced": 1.1166666666666667
+    "beginner": 3.3833333333333333,
+    "intermediate": 3.3833333333333333,
+    "experienced": 3.3833333333333333
+  },
+  "marketing": {
+    "beginner": 8.583333333333334,
+    "intermediate": 8.583333333333334,
+    "experienced": 8.583333333333334
   }
 };
