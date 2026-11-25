@@ -52,7 +52,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   const id = props && typeof props === 'object' ? ('trainer' in props ? props.trainer : 'data' in props ? props.data : undefined) : undefined;
   if (kind === 'template') {
     const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined;
-    const titles = { dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
+    const titles = { 'infraseed-model': 'infraseedModel', 'cash-13w': 'cash13w', dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
     if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
     title(text(titles[file as keyof typeof titles]), false);
     root.append(h('a', { class: 'btn', href: `/templates/${file}${lang() === 'en' ? '-en' : ''}.xlsx`, download: '' }, text('download')));

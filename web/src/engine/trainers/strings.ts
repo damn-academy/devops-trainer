@@ -14,6 +14,8 @@ export const strings = {
   downloadTxt: bi('Скачать текст (.txt)', 'Download text (.txt)'),
   prBriefing: bi('Заявка на брифинг', 'Briefing request'),
   prNews: bi('Новость для одного журналиста', 'News package'),
+  infraseedModel: bi('Модель InfraSeed', 'InfraSeed model'),
+  cash13w: bi('Прогноз денег на 13 недель', '13-week cash forecast'),
   prFounder: bi('Двенадцать тем на год', 'Founder topics'),
   dream100: bi('Шаблон «Dream 100»: восемь листов для учёта компаний, людей и отношений', 'Dream 100 accounts'),
   eventMap: bi('Шаблон «Карта событий»: группы, сроки заявок и договорённости с организаторами', 'Event map'),

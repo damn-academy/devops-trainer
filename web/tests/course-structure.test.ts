@@ -59,7 +59,7 @@ for (const lang of ['ru', 'en'] as const) {
 for (const lang of ['ru', 'en'] as const) {
   it(`shows all business courses on home in shelf order, outside the profession route map in ${lang}`, () => {
     setLang(lang);
-    const ids = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'scithink'];
+    const ids = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'finance', 'pr', 'scithink'];
     const courses = visibleProducts('course');
     expect(courses.map(p => p.id)).toEqual(ids);
     expect(courses.every(p => p.shelf === 'business')).toBe(true);

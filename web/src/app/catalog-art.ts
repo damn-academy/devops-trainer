@@ -17,6 +17,7 @@ const ART: Record<string, Art> = {
   // Three stacked layers of a product.
   product: { hue: 268, paths: ['M12 4 3.5 8.5 12 13l8.5-4.5L12 4Z', 'M3.5 12.5 12 17l8.5-4.5', 'M3.5 16.5 12 21l8.5-4.5'] },
   // A stage microphone.
+  finance: { hue: 165, paths: ["M4 19.5h16", "M6.5 16.5v-4", "M11 16.5v-8", "M15.5 16.5v-6", "M5 9l5-4 4 3 5-4", "M16.5 4h2.5v2.5"] },
   events: { hue: 38, paths: ['M9 4.5a3 3 0 0 1 6 0V11a3 3 0 0 1-6 0V4.5Z', 'M5.5 10.5a6.5 6.5 0 0 0 13 0', 'M12 17v3.5', 'M8.5 20.5h7'] },
   // A git branch that merges back.
   oss: { hue: 184, paths: ['M7 4.5v15', 'M7 15.5c0-3.5 10-2.5 10-7', 'M7 6.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z', 'M17 8.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z', 'M7 21.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z'] },
