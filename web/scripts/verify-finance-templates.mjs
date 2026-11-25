@@ -79,10 +79,32 @@ for(const suffix of ['', '-en']) {
     near(read(balance.name,`${c}2`),ending[m],`cash ${m+1}`);
     near(read(pnl.name,`${c}5`),revenues[m],`revenue ${m+1}`); near(read(pnl.name,`${c}17`),net[m],`income ${m+1}`);
   }
+  near(read(balance.name,'O8'),0,'January accountant liability settled');
+  near(read(balance.name,'O2'),1905.2,'January cash after accountant payment');
+  near(read(cash.name,'O5'),201.2,'January direct CFO after accountant payment');
+  near(read(cash.name,'O16'),201.2,'January indirect CFO after accountant payment');
   const demo=w.worksheets[6];
   for(let r=2;r<=4;r++) near(read(demo.name,`B${r}`),read(demo.name,`C${r}`),`demo ${r}`);
   near(read(cash.name,'N5'),-60,'annual CFO');
   for(let m=13;m<=18;m++) { const c=checks.getColumn(m+2).letter; near(read(checks.name,`${c}2`),0,`extended balance ${m}`); near(read(checks.name,`${c}3`),0,`extended CFO ${m}`); }
+  inputs.getCell('B21').value=1;
+  const driven=reader(w);
+  near(driven(pnl.name,'B5'),10,'first driver revenue');
+  near(driven(pnl.name,'M5'),120,'December driver revenue');
+  const driverCash=driven(balance.name,'M2');
+  for(let m=1;m<=18;m++) { const c=checks.getColumn(m<=12?m+1:m+2).letter; near(driven(checks.name,`${c}2`),0,`driver balance ${m}`); near(driven(checks.name,`${c}3`),0,`driver CFO ${m}`); }
+  inputs.getCell('B22').value=4;
+  const delayed=reader(w);
+  near(delayed(pnl.name,'B5'),0,'no revenue before launch');
+  near(delayed(pnl.name,'E5'),10,'first revenue at delayed launch');
+  near(delayed(pnl.name,'M5'),90,'delayed December revenue');
+  near(delayed(balance.name,'M2'),driverCash-360,'launch shift changes December cash');
+  for (const scenario of [driven,delayed]) for(let m=1;m<=18;m++) {
+    const c=checks.getColumn(m<=12?m+1:m+2).letter;
+    near(scenario(checks.name,`${c}2`),0,`driver balance ${m}`);
+    near(scenario(checks.name,`${c}3`),0,`driver CFO ${m}`);
+  }
+  inputs.getCell('B21').value=0; inputs.getCell('B22').value=1;
   // Each named person/vacancy enters expenses and cash from their own start month.
   for(const [r,start,cost,status] of [[2,7,17.7,0],[3,10,12,1],[4,13,8,2]]) {
     hiring.getCell(r,1).value=`Person ${r}`; hiring.getCell(r,2).value='Engineer';
