@@ -19,15 +19,14 @@ describe('product pilot (hidden)', () => {
       for (const field of [p.title, p.task] as const) {
         expect(field[0].length).toBeGreaterThan(0);
         expect(field[1].length).toBeGreaterThan(0);
-        expect(field[0]).toMatch(/[а-яё]/i);
         expect(field[1]).toMatch(/[a-z]/i);
       }
-      for (const [ru, en] of [p.body, p.bodyEn]) {
-        expect(ru.length).toBeGreaterThan(0);
-        expect(en).toHaveLength(ru.length);
-        for (const para of ru) expect(para).toMatch(/[а-яё]/i);
-        for (const para of en) expect(para).toMatch(/[a-z]/i);
-      }
+      // Company names keep their original spelling in Russian titles.
+      expect(p.task[0]).toMatch(/[а-яё]/i);
+      expect(p.body.length).toBeGreaterThan(0);
+      expect(p.bodyEn).toHaveLength(p.body.length);
+      for (const para of p.body) expect(para).toMatch(/[а-яё]/i);
+      for (const para of p.bodyEn) expect(para).toMatch(/[a-z]/i);
     }
   });
 
