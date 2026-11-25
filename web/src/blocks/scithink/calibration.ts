@@ -258,8 +258,12 @@ export function mountCalibration(el: HTMLElement, _props: unknown, ctx: WidgetCt
       const progress = h('span', 'scb-progress', t(bi(`Отвечено ${stats.answered} из ${CLAIMS.length}`, `Answered ${stats.answered} of ${CLAIMS.length}`)));
       const show = h('button', 'scb-btn', t(bi('Показать, что правда', 'Show what is true'))) as HTMLButtonElement;
       show.type = 'button';
+      show.disabled = stats.answered !== CLAIMS.length;
       show.onclick = () => {
+        const stats = calibrationStats(CLAIMS, state.answers);
+        if (stats.answered !== CLAIMS.length) return;
         revealed = true;
+        state.revealed = true;
         saveState({ answers: state.answers, revealed: true });
         ctx.record({ kind: 'x.calibration.done', answered: stats.answered, mean: Math.round(stats.mean), shareTrue: Math.round(stats.shareTrue) });
         ctx.complete();
@@ -277,6 +281,7 @@ export function mountCalibration(el: HTMLElement, _props: unknown, ctx: WidgetCt
             state.answers[c.id] = Number(input.value);
             out.textContent = `${input.value}%`;
             saveState(state);
+            show.disabled = calibrationStats(CLAIMS, state.answers).answered !== CLAIMS.length;
             progress.textContent = t(bi(`Отвечено ${calibrationStats(CLAIMS, state.answers).answered} из ${CLAIMS.length}`, `Answered ${calibrationStats(CLAIMS, state.answers).answered} of ${CLAIMS.length}`));
           };
           return h('div', 'scb-claim', h('p', '', t(c.claim)), h('div', 'scb-slider', input, out));
@@ -288,6 +293,7 @@ export function mountCalibration(el: HTMLElement, _props: unknown, ctx: WidgetCt
       again.type = 'button';
       again.onclick = () => {
         state.answers = {};
+        state.revealed = false;
         revealed = false;
         saveState({ answers: {}, revealed: false });
         render();
