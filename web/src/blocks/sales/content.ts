@@ -195,11 +195,11 @@ export const SALES_QUIZ: QuizItem[] = [
     id: 'sales.q.objection',
     kind: 'mcq',
     concepts: [],
-    prompt: bi('«Вы маленькие, вдруг исчезнете?» — что это по смыслу?', '"You are small, what if you disappear?" — what is it, in essence?'),
+    prompt: bi('Руководитель инфраструктуры банка на второй встрече спрашивает: «Вы маленькие, вдруг исчезнете?» До этого он сам предложил пилот. Что, скорее всего, стоит за вопросом?', '"You are small, what if you disappear?" — what is it, in essence?'),
     options: [
-      { id: 'data', text: bi('Запрос недостающих данных, а не отказ', 'A request for missing data, not a no'), correct: true, why: bi('Возражение = запрос информации. Ответ здесь: код открыт, exit-ability заложена в архитектуру.', 'An objection is a request for information. Here the answer: the code is open, exit-ability is in the architecture.') },
-      { id: 'no', text: bi('Вежливое «нет»', 'A polite "no"'), why: bi('«Нет» звучит как «не сейчас» + причина; здесь причина названа — значит, есть что закрыть.', 'A "no" sounds like "not now" plus a reason; a reason was given, so something can be closed.') },
-      { id: 'price', text: bi('Просьба о скидке', 'A request for a discount'), why: bi('Это вопрос риска, а не цены.', 'This is a risk question, not a price one.') },
+      { id: 'data', text: bi('Опасение о риске, на которое нужны данные: что будет с системой, если поставщик исчезнет', 'A request for missing data, not a no'), correct: true, why: bi('В этой ситуации человек уже хочет пилот, и вопрос показывает риск, который ему придётся объяснять своему руководству. Помогают факты: открытый код, возможность эксплуатировать систему без поставщика, условия передачи исходного кода и другие клиенты. Не каждое возражение означает запрос данных: если человек прямо отказался, отказ уважают.', 'An objection is a request for information. Here the answer: the code is open, exit-ability is in the architecture.') },
+      { id: 'no', text: bi('Вежливый отказ от пилота', 'A polite "no"'), why: bi('Человек сам предложил пилот и задаёт конкретный вопрос о риске; так отказ обычно не звучит.', 'A "no" sounds like "not now" plus a reason; a reason was given, so something can be closed.') },
+      { id: 'price', text: bi('Просьба о скидке', 'A request for a discount'), why: bi('О цене здесь ничего не сказано; вопрос касается риска.', 'This is a risk question, not a price one.') },
     ],
   },
 ];
