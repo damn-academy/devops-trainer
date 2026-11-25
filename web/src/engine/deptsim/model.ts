@@ -38,7 +38,12 @@ export function companyText(opts: SimOptions, lang: Lang): string {
   return company.text[lang];
 }
 export function promptSize(prompt: string) { return { characters: prompt.length, tokens: Math.ceil(prompt.length / 3.5) }; }
+export function compatibleCompany(scenario: SimScenario, opts: SimOptions): boolean {
+  // This scenario has a fixed Incubating project; custom companies do not encode CNCF maturity.
+  return scenario.id !== 'oss.incubation' || (opts.companyMode !== 'custom' && opts.company === 'lumenmesh');
+}
 export function buildPrompt(scenario: SimScenario, opts: SimOptions, lang: Lang): string {
+  if (!compatibleCompany(scenario, opts)) throw new Error('Scenario requires the Incubating Lumenmesh legend');
   const values: Record<string, string> = {
     SEED: String(opts.seed >>> 0), DICE: diceTable(opts.seed), DIFFICULTY: difficultyTexts[opts.difficulty][lang],
     TURNS: String(opts.turns), TURN_UNIT: scenario.turnUnit[lang], COMPANY: companyText(opts, lang), WORLD: scenario.world ?? '', DEPARTMENT: scenario.department ?? '', LANG_RULES: strings.langRules[lang],
