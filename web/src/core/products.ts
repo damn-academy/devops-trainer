@@ -83,24 +83,6 @@ export const PRODUCTS: Product[] = [
   },
   {
     "kind": "course",
-    "id": "strategy",
-    "title": {
-      "ru": "Стратегия и экосистема",
-      "en": "Strategy and ecosystem"
-    },
-    "summary": {
-      "ru": "Долгая стратегия инфраструктурной компании: как рынок учится называть вашу задачу, что на самом деле происходит с уходом с VMware и суверенным облаком в Европе, встроенная дистрибуция и партнёры, комиссии маркетплейсов облаков, стандарты, сертификация и обучение, нейросети и агенты как советчики и исполнители.",
-      "en": "The long-term strategy of an infrastructure company: how the market learns to name your problem, what is actually happening with departures from VMware and sovereign cloud in Europe, embedded distribution and partners, cloud marketplace fees, standards, certification and training, AI and agents as advisers and executors."
-    },
-    "subtitle": {
-      "ru": "Для основателей и руководителей, которые отвечают за положение компании на рынке на годы вперёд.",
-      "en": "For founders and executives responsible for the company’s position in the market for years to come."
-    },
-    "shelf": "business",
-    "hidden": true
-  },
-  {
-    "kind": "course",
     "id": "oss",
     "title": {
       "ru": "Open source: проект, сообщество и управление",
@@ -113,6 +95,24 @@ export const PRODUCTS: Product[] = [
     "subtitle": {
       "ru": "Для мейнтейнеров, основателей и руководителей сообщества открытых инфраструктурных проектов.",
       "en": "For maintainers, founders and community leaders of open infrastructure projects."
+    },
+    "shelf": "business",
+    "hidden": true
+  },
+  {
+    "kind": "course",
+    "id": "strategy",
+    "title": {
+      "ru": "Стратегия и экосистема",
+      "en": "Strategy and ecosystem"
+    },
+    "summary": {
+      "ru": "Долгая стратегия инфраструктурной компании: как рынок учится называть вашу задачу, что на самом деле происходит с уходом с VMware и суверенным облаком в Европе, встроенная дистрибуция и партнёры, комиссии маркетплейсов облаков, стандарты, сертификация и обучение, нейросети и агенты как советчики и исполнители.",
+      "en": "The long-term strategy of an infrastructure company: how the market learns to name your problem, what is actually happening with departures from VMware and sovereign cloud in Europe, embedded distribution and partners, cloud marketplace fees, standards, certification and training, AI and agents as advisers and executors."
+    },
+    "subtitle": {
+      "ru": "Для основателей и руководителей, которые отвечают за положение компании на рынке на годы вперёд.",
+      "en": "For founders and executives responsible for the company’s position in the market for years to come."
     },
     "shelf": "business",
     "hidden": true
