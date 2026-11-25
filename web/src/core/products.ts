@@ -35,12 +35,22 @@ export const PRODUCTS: Product[] = [
     ),
     hidden: true, // Owner reviews the pilot before it goes public; reachable at #/courses.
   },
+  {
+    kind: 'course',
+    id: 'marketing',
+    title: bi('Маркетинг', 'Marketing'),
+    summary: bi(
+      'Пилот курса: 46 принципов маркетинга инфраструктурных и open-source продуктов на международных рынках, с квизами, схемой петли роста и симулятором регионов.',
+      'Course pilot: 46 principles of marketing for infrastructure and open-source vendors on international markets, with quizzes, the growth-loop scheme and the regions simulator.',
+    ),
+    hidden: true, // Owner reviews the pilot before it goes public; reachable at #/course/marketing.
+  },
 ];
 
 export const visibleProducts = (kind: Product['kind']): Product[] => PRODUCTS.filter((p) => p.kind === kind && !p.hidden);
 
 export function productRoute(p: Product): Route {
-  return p.kind === 'profession' ? { name: 'profession', id: p.id } : { name: 'courses' };
+  return p.kind === 'profession' ? { name: 'profession', id: p.id } : { name: 'course', id: p.id };
 }
 
 export function productById(id: string): Product | undefined {
