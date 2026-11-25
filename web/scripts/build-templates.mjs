@@ -1,3 +1,4 @@
+import { buildFinanceTemplates } from './finance-templates.mjs';
 import { addExamples } from './template-examples.mjs';
 import ExcelJS from 'exceljs';
 import { mkdir } from 'node:fs/promises';
@@ -46,3 +47,5 @@ for (const [file, sheets] of Object.entries(templates)) for (const en of [false,
   }
   await workbook.xlsx.writeFile(`${output}/${file}${en ? '-en' : ''}.xlsx`);
 }
+
+await buildFinanceTemplates(output);

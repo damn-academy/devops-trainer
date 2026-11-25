@@ -139,6 +139,27 @@ export const PRODUCTS: Product[] = [
   },
   {
     "kind": "course",
+    "id": "finance",
+    "shelf": "business",
+    "title": {
+      "ru": "Финансы и учёт для основателя",
+      "en": "Finance for founders"
+    },
+    "card": {
+      "ru": "Отчёты, деньги, метрики, модель, раунды и налоги американского стартапа на одном сквозном примере с таблицами и калькуляторами.",
+      "en": "Statements, cash, metrics, modeling, funding rounds and US startup taxes through one worked example with spreadsheets and calculators."
+    },
+    "summary": {
+      "ru": "Финансы американского стартапа для основателя без финансового образования: P&L, баланс и движение денег на сквозном примере, закрытие месяца и контроль, прогноз денег на тринадцать недель, метрики подписочного бизнеса, финансовая модель от найма, SAFE и пул опционов, признание выручки, федеральные налоги, Делавэр и штаты, инструменты, автоматизация и дашборд основателя.",
+      "en": "US startup finance for founders without a finance background: P&L, balance sheet and cash flow through a worked example, month-end close and controls, a thirteen-week cash forecast, subscription business metrics, a hiring-driven financial model, SAFEs and option pools, revenue recognition, federal, Delaware and state taxes, tools, automation and the founder’s dashboard."
+    },
+    "subtitle": {
+      "ru": "Для основателей и операционных директоров американских стартапов, которые хотят понимать свои цифры без бухгалтерского образования.",
+      "en": "For founders and COOs of US startups who want to understand their numbers without an accounting background."
+    }
+  },
+  {
+    "kind": "course",
     "id": "pr",
     "title": {
       "ru": "PR и коммуникации",
@@ -215,7 +236,7 @@ export const BUSINESS_SHELF = {
   title: bi('Деловые курсы для инфраструктурных компаний', 'Business courses for infrastructure companies'),
   summary: bi('Курсы для тех, кто продвигает, продаёт и развивает открытый инфраструктурный продукт: каждый можно проходить отдельно, а вместе они складываются в работу компании от продукта до продаж.', 'Courses for people who promote, sell and develop an open infrastructure product: each stands on its own, and together they cover a company’s work from product to sales'),
 };
-const BUSINESS_ORDER = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'aicontent', 'scithink'];
+const BUSINESS_ORDER = ['marketing', 'sales', 'product', 'metrics', 'events', 'oss', 'strategy', 'finance', 'pr', 'aicontent', 'scithink'];
 export function catalogGroups(products: Product[]): { title?: Bi; summary?: Bi; products: Product[] }[] {
   const ordinary = products.filter(p => !p.shelf);
   const business = products.filter(p => p.shelf === 'business').sort((a, b) => BUSINESS_ORDER.indexOf(a.id) - BUSINESS_ORDER.indexOf(b.id));
