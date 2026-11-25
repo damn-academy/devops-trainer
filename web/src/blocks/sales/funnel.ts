@@ -2,7 +2,7 @@
 // parameters add up to meetings, POCs and deals over a quarter. The model is
 // deliberately simple and openly says so: it is one way to reason about a
 // pipeline, not a law (the honest note is part of the UI, per the pilot
-// requirement). TODO(ru-en): English UI pass.
+// requirement).
 
 import { bi, t } from '../../core/i18n';
 import type { Mounted, WidgetReg } from '../../core/types';
@@ -36,21 +36,30 @@ const KNOBS: { key: keyof FunnelParams; min: number; max: number; step: number; 
 ];
 
 export interface FunnelRow { week: number; meetings: number; pocs: number; deals: number }
-export interface FunnelResult { rows: FunnelRow[]; totals: { meetings: number; pocs: number; deals: number; touches: number } }
+export interface FunnelResult { rows: FunnelRow[]; totals: { meetings: number; pocs: number; deals: number; touches: number; negativeReplies: number; unsubscribes: number } }
 
 /** The deterministic projection the widget draws; extracted for tests. */
 export function funnelProject(p: FunnelParams): FunnelResult {
   let meetings = 0, pocs = 0;
   const rows: FunnelRow[] = [];
-  const weeklyTouches = p.accounts * p.touches;
+  const excess = Math.max(0, p.touches - 3);
+  const negativeRate = Math.min(0.8, 0.04 * excess ** 2);
+  const unsubscribeRate = 0.02 * excess;
+  let activeAccounts = p.accounts, negativeReplies = 0, unsubscribes = 0, touches = 0;
   for (let week = 1; week <= p.weeks; week++) {
-    meetings += weeklyTouches * p.respond * p.meeting;
+    const sent = activeAccounts * p.touches;
+    touches += sent;
+    negativeReplies += sent * p.respond * negativeRate;
+    const lost = activeAccounts * unsubscribeRate;
+    unsubscribes += lost;
+    meetings += sent * (1 - negativeRate) * p.respond * p.meeting;
+    activeAccounts -= lost;
     pocs += meetings * 0.15 * p.poc; // a running pipeline converts steadily, not instantly
     const deals = pocs * p.close * 0.25;
     rows.push({ week, meetings: Math.round(meetings * 10) / 10, pocs: Math.round(pocs * 10) / 10, deals: Math.round(deals * 100) / 100 });
   }
   const last = rows[rows.length - 1]!;
-  return { rows, totals: { meetings: Math.round(last.meetings), pocs: Math.round(last.pocs * 10) / 10, deals: Math.round(last.deals * 100) / 100, touches: weeklyTouches * p.weeks } };
+  return { rows, totals: { meetings: Math.round(last.meetings), pocs: Math.round(last.pocs * 10) / 10, deals: Math.round(last.deals * 100) / 100, touches: Math.round(touches), negativeReplies: Math.round(negativeReplies * 10) / 10, unsubscribes: Math.round(unsubscribes * 10) / 10 } };
 }
 
 const css = `
@@ -92,11 +101,14 @@ export function mountFunnel(el: HTMLElement, _props: unknown): Mounted {
         total(t(bi('Встреч за квартал', 'Meetings per quarter')), r.totals.meetings),
         total(t(bi('POC', 'POCs')), r.totals.pocs),
         total(t(bi('Сделок', 'Deals')), r.totals.deals),
-        total(t(bi('Всего касаний', 'Total touches')), r.totals.touches)),
+        total(t(bi('Всего касаний', 'Total touches')), r.totals.touches),
+        total(t(bi('TODO(ru-prose)', 'Negative replies')), r.totals.negativeReplies),
+        total(t(bi('TODO(ru-prose)', 'Unsubscribes')), r.totals.unsubscribes)),
       h('div', 'sfu-bars', ...r.rows.map((row) => { const i = document.createElement('i'); i.style.height = `${Math.max(2, (row.meetings / maxMeetings) * 100)}%`; i.title = `${t(bi('Неделя', 'Week'))} ${row.week}: ${row.meetings}`; return i; })),
       h('table', 'sfu-table',
         h('thead', '', h('tr', '', h('th', '', t(bi('Неделя', 'Week'))), h('th', '', t(bi('Встреч накоплено', 'Meetings (cum.'))), h('th', '', t(bi('POC накоплено', 'POCs (cum.'))), h('th', '', t(bi('Сделок накоплено', 'Deals (cum.'))))),
         h('tbody', '', ...r.rows.map((row) => h('tr', '', h('td', '', String(row.week)), h('td', '', String(row.meetings)), h('td', '', String(row.pocs)), h('td', '', String(row.deals)))))),
+      h('p', 'sfu-note', t(bi('TODO(ru-prose)', 'Illustrative account-level model. Above three touches per account per week, the negative share of replies rises by 4% × (touches − 3)², capped at 80%; weekly unsubscribes rise by 2% × (touches − 3). Unsubscribed accounts receive no later touches; negative replies do not become meetings. Fractional counts are expectations, not people. This threshold is not permission to exceed the Dream 100 limit of three touches per person in three weeks.'))),
       h('p', 'sfu-note', t(HONEST_NOTE)),
     );
   };
