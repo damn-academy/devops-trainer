@@ -577,7 +577,7 @@ export const SCITHINK_CONCEPTS: Concept[] = [
     id: 'scithink.placebo',
     term: bi('плацебо', 'placebo'),
     short: bi('Нейтральная пустышка, которую сравнивают с настоящим средством, чтобы отделить эффект от ожидания.', 'A neutral dummy compared with a real remedy to separate the effect from expectation.'),
-    introducedIn: 'scithink.studies',
+    introducedIn: 'scithink.control',
     scan: false,
   },
   {

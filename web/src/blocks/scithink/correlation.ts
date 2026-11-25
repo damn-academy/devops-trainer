@@ -177,9 +177,12 @@ export const correlationModel = defineModel<P>({
           { r: observed },
         ),
         focus: ['ice', 'drown', 'e-link'],
-        say: {
-          ice: bi('Мои продажи растут, и рядом растёт число случаев на воде. Красиво выходит, что я виноват.', 'My sales rise, and next to me the number of water accidents rises. It makes a neat picture with me as the culprit.'),
-        },
+        metrics: { r: observed, left },
+      },
+      {
+        id: 'data-voice', label: bi('данные', 'data'),
+        focus: ['ice'],
+        caption: bi('Мои продажи растут, и рядом растёт число случаев на воде. Красиво выходит, что я виноват.', 'My sales rise, and next to me the number of water accidents rises. It makes a neat picture with me as the culprit.'),
         metrics: { r: observed, left },
       },
       {
@@ -189,9 +192,12 @@ export const correlationModel = defineModel<P>({
           'The third participant turns out to be the heat. Sales of ice cream rise from it, and it draws people to the water, so both lines rise with the temperature, while the direct link between ice cream and drownings may be missing entirely. This participant rarely makes it into headlines.',
         ),
         focus: ['heat', 'e-heat-ice', 'e-heat-drown'],
-        say: {
-          heat: bi('Это я двигаю обеих, и покупателей к мороженому, и людей к воде. Этот совместный рост делаю я.', 'I am the one moving both, the buyers to the ice cream and the people to the water. I make this joint rise happen.'),
-        },
+        metrics: { r: observed, left },
+      },
+      {
+        id: 'factor-voice', label: bi('третий фактор', 'third factor'),
+        focus: ['heat'],
+        caption: bi('Это я двигаю обеих, и покупателей к мороженому, и людей к воде. Этот совместный рост делаю я.', 'I am the one moving both, the buyers to the ice cream and the people to the water. I make this joint rise happen.'),
         metrics: { r: observed, left },
       },
     ];
