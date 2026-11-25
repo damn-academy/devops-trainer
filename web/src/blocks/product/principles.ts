@@ -151,6 +151,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Спрос на категорию чаще создают события снаружи, а не ваш маркетинг. Смена владельца VMware и уход клиентов Broadcom, возврат нагрузок из публичных облаков в собственные центры обработки данных, требования суверенитета данных, дефицит видеокарт — каждая такая волна выносит целые категории продуктов вверх почти без затрат.',
           'Работа против волны превращает каждую сделку в борьбу за внимание, работа на волне даёт многократный рост при тех же усилиях. Поэтому вопрос «почему сейчас» стоит рядом с вопросом «почему мы».',
         ],
+        bodyEn: [
+          "Demand for a category is more often created by outside events than by your marketing. VMware changing owners and customers leaving Broadcom, workloads returning from public clouds to private data centres, data sovereignty requirements, GPU shortages: each such wave lifts entire product categories almost without expenditure.", // TODO(en-review)
+          "Working against the wave turns every deal into a struggle for attention; riding it delivers many times the growth for the same effort. That is why the question ‘why now’ belongs alongside ‘why us’.", // TODO(en-review)
+        ],
         task: [
           'Выпишите две волны, которые сейчас идут на ваш рынок, и одно действие, которое вы сделаете в ближайший месяц, чтобы встать на каждую из них.',
           'Write down two waves hitting your market right now and one action per wave you will take this month to ride them.',
@@ -162,6 +166,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'Плацдарм — один узкий сегмент, который вы берёте целиком и где становитесь эталоном: например, не «облако для всех», а «платформа для медицинских стартапов Европы». В новой категории никто никому ничего не обязан, и только концентрация даёт критическую массу историй успеха.',
           'Из плацдарма расширяются по соседям: те, кто доверяет соседям по отрасли. Широкая атака силами маленькой команды распыляет и продукт, и рассказ.',
+        ],
+        bodyEn: [
+          "A beachhead is one narrow segment you capture completely and become the benchmark in: for example, not ‘a cloud for everyone’, but ‘a platform for European medical startups’. In a new category nobody owes anyone anything, and only concentration creates a critical mass of success stories.", // TODO(en-review)
+          "You expand from the beachhead into neighbouring segments: those who trust their industry peers. A broad attack by a small team spreads both the product and its story too thin.", // TODO(en-review)
         ],
         task: [
           'Опишите свой плацдарм: один сегмент, в котором вы уже первый или можете им стать за квартал, и назовите ближайший соседний сегмент.',
@@ -175,6 +183,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'С гиперскейлером не играют в его игру: он выигрывает широтой каталога, ценой при масштабе и договорами на миллион. Выигрывают там, где он структурно слаб: открытый код, который можно проверить, нейтральность по отношению к чужим облакам, работа в собственном центре обработки данных, экспертиза и скорость маленькой команды.',
           'Покупатель выбирает вас не потому, что вы лучше во всём, а потому что две-три вещи, важные для его ситуации, у вас сильнее. Задача продукта — сделать эти две-три вещи очевидными и измеримыми.',
         ],
+        bodyEn: [
+          "Do not play a hyperscaler at its own game: it wins on catalogue breadth, price at scale and million-dollar contracts. Win where it is structurally weak: open code that can be inspected, neutrality towards other clouds, operation in a private data centre, expertise and the speed of a small team.", // TODO(en-review)
+          "Buyers choose you not because you are better at everything, but because you are stronger at two or three things that matter to their situation. The product’s job is to make those two or three things obvious and measurable.", // TODO(en-review)
+        ],
         task: [
           'Назовите две вещи, в которых гиперскейлер структурно не может вас обойти, и проверьте, что ваш сайт и документация подсвечивают в первую очередь их.',
           'Name two things a hyperscaler structurally cannot beat you at, and check that your site and documentation highlight exactly those.',
@@ -186,6 +198,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'Между ранними последователями, которые любят новое, и прагматиками, которые покупают только по примеру других, лежит пропасть. Продукт, который восторгает энтузиастов, проваливается у осторожного большинства: прагматик спрашивает, кто ещё так работает и к кому позвонить за опытом.',
           'Пропасть переходят не новыми возможностями, а эталонными клиентами из одного сегмента, целым решением задачи и доверием. Книга Джеффри Мура «Пересечение пропасти» описывает этот переход как отдельную кампанию с плацдармом и эталонными историями, а не как продолжение того же движения.',
+        ],
+        bodyEn: [
+          "A chasm separates early adopters who love new things from pragmatists who buy only by following others. A product that delights enthusiasts fails with the cautious majority: the pragmatist asks who else works this way and whom they can call to hear about the experience.", // TODO(en-review)
+          "You cross the chasm with reference customers from one segment, a complete solution to the job and trust, rather than new features. Geoffrey Moore’s book Crossing the Chasm describes this transition as a separate campaign with a beachhead and reference stories, rather than a continuation of the same movement.", // TODO(en-review)
         ],
         task: [
           'Определите, на какой стороне пропасти находится ваш рынок сейчас, и назовите одного эталонного клиента, который поможет перейти на другую.',
@@ -205,6 +221,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Пользователь решает, оставится ли он с продуктом, в первые минуты знакомства: скачал, запустил, получил результат. Этот путь измеряют в минутах и называют временем до первой ценности, и каждый шаг, который его удлиняет, стоит части аудитории.',
           'Главный конкурент в этот момент не другой продукт, а привычка, которая говорит «не буду ничего менять». Поэтому первый успех должен случиться раньше первой настройки, первого звонка и первого чтения документации целиком.',
         ],
+        bodyEn: [
+          "Users decide whether to stay with a product in their first minutes with it: download, launch, get a result. This journey is measured in minutes and called time to value, and every step that lengthens it costs you part of the audience.", // TODO(en-review)
+          "The main competitor at this moment is not another product but the habit that says ‘I will not change anything’. The first success must therefore come before the first configuration, the first call and the first reading of the entire documentation.", // TODO(en-review)
+        ],
         task: [
           'Пройдите путь нового пользователя от скачивания до первого результата с секундомером и выпишите каждый шаг, на котором он может остановиться.',
           'Walk the new-user path from download to first result with a stopwatch, and write down every step where the user might stop.',
@@ -216,6 +236,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'Знакомство с продуктом устроено как воронка: посетитель становится скачавшим, скачавший — запустившим, запустивший получает результат, получивший возвращается, вернувшийся платит. Каждый переход измеряют, и чинят самое узкое звено, а не усугубляют верх воронки.',
           'Усиление верха при дырявом низу напоминает литье воды в решето: новые посетители стекают через то же отверстие, что и вчерашние. Воронка показывает, где продукт расходует ваши усилия впустую.',
+        ],
+        bodyEn: [
+          "Getting to know a product works as a funnel: a visitor downloads, the downloader launches, the launcher gets a result, the person who got a result returns, and the returning user pays. Measure every transition and fix the narrowest step instead of adding more pressure at the top of the funnel.", // TODO(en-review)
+          "Strengthening the top while the bottom leaks is like pouring water into a sieve: new visitors drain through the same hole as yesterday’s. The funnel shows where the product wastes your effort.", // TODO(en-review)
         ],
         task: [
           'Постройте воронку знакомства за последний месяц с числами на каждом переходе и найдите самое узкое звено.',
@@ -229,6 +253,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Для инфраструктурного продукта документация — часть интерфейса: по ней ставят первый эксперимент вечером в пятницу и по ней же ищут ответ в три часа ночи. Страница быстрого старта важнее маркетинговой страницы, потому что по ней решают, остаться ли с продуктом.',
           'Плохая документация обнуляет хороший продукт в первый же вечер. Система Diátaxis делит документацию на четыре части по задаче читателя: обучение, задачи, справка и объяснения, и эта рамка помогает держать каждую часть на своём месте.',
         ],
+        bodyEn: [
+          "For an infrastructure product, documentation is part of the interface: people use it for their first experiment on a Friday evening and to find an answer at three in the morning. The quickstart page matters more than the marketing page because it determines whether people stay with the product.", // TODO(en-review)
+          "Bad documentation cancels out a good product on the very first evening. The Diátaxis system divides documentation into four parts by the reader’s task: tutorials, how-to guides, reference and explanation. This framework helps keep each part in its place.", // TODO(en-review)
+        ],
         task: [
           'Откройте страницу быстрого старта вашего продукта глазами новичка и выпишите три места, в которых он собьётся или бросит.',
           'Open your product’s quickstart page with a newcomer’s eyes and write down three places where they would stumble or give up.',
@@ -240,6 +268,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'Для инженера интерфейс продукта — это прежде всего API и командная строка, а не картинки в браузере. Они должны быть предсказуемыми, обратимо совместимыми и удобными для скриптов: разработчик читает API раньше, чем маркетинговую страницу, и по нему решает, вписывается ли продукт в его работу.',
           'Неудобный API превращает каждый вызов в переговоры, удобный делает продукт частью привычки. Поэтому изменения в API планируют как изменения в публичном договоре, с версиями и миграциями.',
+        ],
+        bodyEn: [
+          "For an engineer, the product interface is primarily its API and command line, rather than pictures in a browser. They must be predictable, backward compatible and convenient for scripts: developers read the API before the marketing page and use it to decide whether the product fits their work.", // TODO(en-review)
+          "An awkward API turns every call into a negotiation; a convenient one makes the product a habit. API changes are therefore planned as changes to a public contract, with versions and migrations.", // TODO(en-review)
         ],
         task: [
           'Попробуйте выполнить главную задачу продукта, не открывая веб-интерфейс, одним лишь API или командной строкой, и запишите каждый раздражающий шаг.',
@@ -259,6 +291,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Открытие продукта — не фаза перед составлением дорожной карты, а еженедельная практика коротких контактов с пользователями, сфокусированных на исходах. Тереза Торрес описывает её как привычку команды из трёх человек, а не как проект на квартал.',
           'Решения, принятые без свежего контакта с реальностью, стареют быстрее, чем код. Если последний разговор с пользователем был больше месяца назад, команда управляет по карте прошлого года.',
         ],
+        bodyEn: [
+          "Product discovery is not a phase before drawing up the roadmap, but a weekly practice of short contacts with users focused on outcomes. Teresa Torres describes it as a habit of a three-person team, rather than a quarterly project.", // TODO(en-review)
+          "Decisions made without fresh contact with reality age faster than code. If the last conversation with a user was more than a month ago, the team is navigating by last year’s map.", // TODO(en-review)
+        ],
         task: [
           'Назначьте на следующую неделю два получасовых разговора с пользователями и выпишите желаемый исход, о котором пойдёт речь.',
           'Schedule two thirty-minute conversations with users for next week and write down the outcome they will be about.',
@@ -270,6 +306,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'Карта продукта строится как дерево: желаемый исход ветвится в возможности, то в боли и желания пользователей, возможности ветвятся в решения, решения — в эксперименты. Сначала ищут возможность, потом придумывают решение, а не наоборот.',
           'Команды влюбляются в решения и начинают искать им применение, и тогда каждая фича защищается эмоциями. Дерево переворачивает порядок: обсуждают карту, а не любимую идею, и спор идёт о том, какая ветвь ведёт к исходу быстрее.',
+        ],
+        bodyEn: [
+          "The product map is built as a tree: the desired outcome branches into opportunities, meaning users’ pains and desires; opportunities branch into solutions, and solutions into experiments. Find the opportunity first and then devise the solution, rather than the reverse.", // TODO(en-review)
+          "Teams fall in love with solutions and start looking for uses for them, so every feature is defended emotionally. The tree reverses the order: discuss the map rather than a favourite idea, and argue about which branch leads to the outcome faster.", // TODO(en-review)
         ],
         task: [
           'Нарисуйте дерево для одного желаемого исхода: выпишите три возможности и по два решения к каждой. Отметьте, какое решение вы уже проверили бы экспериментом.',
@@ -289,6 +329,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'RICE оценивает идею четырьмя числами: охват, влияние, уверенность и трудоёмкость. Деление уверенности и трудоёмкости на прочие множители делает оценку честной: иллюзии дорого обходятся, и RICE показывает, чем вы жертвуете ради каждой строчки плана.',
           'Настоящая дорожная карта — это список того, чего вы не будете делать, с объяснением почему. Ресурсы конечны, и каждое сказанное «да» — это десять несказанных «нет», которые команда обязана помнить.',
         ],
+        bodyEn: [
+          "RICE evaluates an idea with four numbers: reach, impact, confidence and effort. Dividing confidence and effort by the other factors makes the estimate honest: illusions are expensive, and RICE shows what you sacrifice for every line of the plan.", // TODO(en-review)
+          "A real roadmap is a list of what you will not do, with explanations of why. Resources are finite, and every spoken ‘yes’ means ten unspoken ‘noes’ that the team must remember.", // TODO(en-review)
+        ],
         task: [
           'Возьмите текущий план работ и выпишите пять вещей, которые вы сознательно не делаете, с причиной к каждой.',
           'Take the current plan and write down five things you deliberately do not do, with a reason for each.',
@@ -301,6 +345,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Громкий запрос не равен важному запросу: самые настойчивые голоса редко принадлежат самым массовым пользователям. Сигнал повторяется, связан с ценностью и приходит от целевого сегмента; шум единичен, громок и приходит не от вашего сегмента.',
           'Запросы прилетают от тех, кто уже пользуется продуктом, а рынок, который вы ещё не взяли, молчит. Поэтому продукт решают не по громкости входящих писем, а по совпадению запросов с данными использования и стратегией.',
         ],
+        bodyEn: [
+          "A loud request is not the same as an important request: the most persistent voices rarely belong to the most numerous users. Signal repeats, relates to value and comes from the target segment; noise is isolated, loud and comes from outside your segment.", // TODO(en-review)
+          "Requests come from people already using the product, while the market you have not yet captured remains silent. Product decisions therefore follow the agreement between requests, usage data and strategy, rather than the volume of incoming mail.", // TODO(en-review)
+        ],
         task: [
           'Разделите последние двадцать входящих запросов на сигнал и шум и проверьте свою раскладку по данным использования: согласуются ли они.',
           'Split the last twenty incoming requests into signal and noise, then check your split against usage data: do they agree?',
@@ -312,6 +360,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'Команда обязана пользоваться своим продуктом каждый день, а релизы должны проходить проверку сообществом раньше, чем доходят до платящих клиентов. Своя боль читается мгновенно: то, что раздражает вас, раздражает и клиентов, только они молчат.',
           'В разговорах с пользователями работает правило Роба Фитцпатрика из книги «Мамин тест»: спрашивайте о прошлом поведении и потраченных деньгах, а не о мнениях и гипотетическом будущем. Люди говорят неправду о том, что «купили бы», но честны о том, что уже сделали, и о том, сколько это стоило.',
+        ],
+        bodyEn: [
+          "The team must use its own product every day, and releases must be tested by the community before reaching paying customers. Your own pain is immediately apparent: what irritates you also irritates customers, but they stay silent.", // TODO(en-review)
+          "Conversations with users follow Rob Fitzpatrick’s rule from The Mom Test: ask about past behaviour and money spent, rather than opinions and a hypothetical future. People are untruthful about what they ‘would buy’, but honest about what they have already done and how much it cost.", // TODO(en-review)
         ],
         task: [
           'Перепишите три вопроса, которые вы обычно задаёте пользователям, так, чтобы каждый был о прошлом поведении, а не о будущем мнении.',
@@ -331,6 +383,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Сообщество даёт продукту доверие, бесплатное тестирование и идеи, продукт даёт сообществу повод собираться. Петля работает, когда кормят её в обе стороны: выходят релизы, которые обсуждают, и обсуждения, которые влияют на следующие релизы.',
           'Одностороннее чтение, при котором компания только берёт из сообщества, выжигает его: вклад без ответа быстро прекращается. Замкнутая петля, напротив, ускоряет и продукт, и сообщество с каждым циклом.',
         ],
+        bodyEn: [
+          "The community gives the product trust, free testing and ideas; the product gives the community a reason to gather. The loop works when both directions are fed: releases prompt discussions, and discussions influence subsequent releases.", // TODO(en-review)
+          "A one-way approach in which the company only takes from the community burns it out: contributions without a response soon stop. A closed loop, by contrast, accelerates both the product and the community with each cycle.", // TODO(en-review)
+        ],
         task: [
           'Назовите один случай за последний квартал, когда сообщество изменило ваш план работ, или создайте канал, через который такие случаи начнут происходить.',
           'Name one case from the last quarter when the community changed your plan, or create the channel where such cases would start happening.',
@@ -342,6 +398,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'Платят компании за то, что нужно им и не обязательно сообществу: корпоративный слой с единым входом и аудитом, поддержка с обязательствами, управляемый хостинг, которому отдают операционную боль. Такая граница не обесценивает открытую часть и потому держится годами.',
           'Резкая смена лицензии, которая закрывает то, что вчера было открыто, сжигает доверие за ночь: переход HashiCorp на Business Source License породил OpenTofu, и рынок получил второй продукт там, где вчера был один. Урок стоит запомнить до того, как менять лицензию, а не после.',
+        ],
+        bodyEn: [
+          "Companies pay for what they need and the community does not necessarily need: an enterprise layer with single sign-on and auditing, support with commitments, managed hosting that takes over operational pain. This boundary does not devalue the open part and therefore lasts for years.", // TODO(en-review)
+          "A sudden licence change that closes what was open yesterday burns trust overnight: HashiCorp’s move to the Business Source License spawned OpenTofu, and the market gained a second product where there had been one. Remember this lesson before changing the licence, rather than afterwards.", // TODO(en-review)
         ],
         task: [
           'Проверьте каждую платную возможность: нужна ли она компаниям и одновременно не нужна сообществу. Выпишите одно исключение и решите, что с ним делать.',
@@ -355,6 +415,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Передача проекта нейтральному фонду вроде CNCF или Apache превращает управление в актив: покупатель верит, что проект не исчезнет вместе с продажей компании, а конкуренты соглашаются вкладываться в общий код. Нейтральность снижает риск зависимости от вендора и открывает двери энтерпрайзу.',
           'Даже без фонда видимые правила игры помогают: кто принимает решения, как попасть в список поддерживающих, кому принадлежит марка. Репозиторий, за которым стоит одна компания, и репозиторий под крылом фонда покупают по-разному.',
         ],
+        bodyEn: [
+          "Transferring a project to a neutral foundation such as CNCF or Apache turns governance into an asset: buyers trust that the project will not disappear when the company is sold, and competitors agree to contribute to shared code. Neutrality reduces vendor lock-in risk and opens enterprise doors.", // TODO(en-review)
+          "Even without a foundation, visible rules help: who makes decisions, how to become a maintainer, who owns the trademark. A repository backed by one company and a repository under a foundation’s wing are bought differently.", // TODO(en-review)
+        ],
         task: [
           'Опишите, кому принадлежат марка и репозиторий вашего проекта сегодня и что с ними произойдёт при продаже компании.',
           'Describe who owns your project’s brand and repository today, and what happens to them if the company is sold.',
@@ -366,6 +430,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'Самая сильная позиция на рынке — стать дефолтом экосистемы: образом, чартом или дистрибутивом, которые ставят по умолчанию. Дефолт выигрывает без борьбы, потому что его не выбирают и его не меняют: каждый следующий пользователь получает его готовым.',
           'Статус дефолта даёт воронку, которую не купить рекламой: примеры — Terraform в инфраструктуре, Prometheus в наблюдаемости, Kubernetes в оркестрации. Путь туда лежит через плацдарм и через то, чтобы дефолт был заметно проще альтернатив.',
+        ],
+        bodyEn: [
+          "The strongest market position is to become the ecosystem default: the image, chart or distribution installed by default. The default wins without a fight because people neither choose it nor change it: every subsequent user receives it ready-made.", // TODO(en-review)
+          "Default status provides a funnel that advertising cannot buy: examples include Terraform in infrastructure, Prometheus in observability and Kubernetes in orchestration. The path there runs through a beachhead and making the default noticeably simpler than the alternatives.", // TODO(en-review)
         ],
         task: [
           'Назовите одно место, где ваш продукт может стать дефолтом, будь то образ, чарт, шаблон или дистрибутив, и один шаг, который приблизит его к этому месту.',
@@ -385,6 +453,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Цену привязывают к тому, как клиент считает свою выгоду: за узел, за пользователя, за гигабайт, за запрос. Хорошая метрика растёт вместе с успехом клиента и понятна до покупки, плохая наказывает клиента за рост или не даёт вам расти вместе с ним.',
           'Исследования Patrick Campbell и ProfitWell, которое теперь входит в Paddle, показывают, что упаковка и метрика решают не меньше, чем сам уровень цены. Команды, которые пересматривают метрику раз в год, растут быстрее тех, кто повышает цену без изменения упаковки.',
         ],
+        bodyEn: [
+          "Tie the price to how the customer measures benefit: per node, per user, per gigabyte, per request. A good metric grows with the customer’s success and is clear before purchase; a bad one punishes the customer for growth or prevents you from growing with them.", // TODO(en-review)
+          "Research by Patrick Campbell and ProfitWell, now part of Paddle, shows that packaging and the metric matter as much as the price level itself. Teams that revisit the metric once a year grow faster than those that raise prices without changing packaging.", // TODO(en-review)
+        ],
         task: [
           'Выпишите, от чего клиент считает свою выгоду от продукта, и выберите единицу, которой эту выгоду можно измерить без вреда для доверия к продукту.',
           'Write down what the customer measures their product benefit by, and pick the unit that measures this benefit honestly without harming trust.',
@@ -396,6 +468,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'Упаковка — это интерфейс цены: ряд тарифов от бесплатного до корпоративного, с чёткой границей «за что платят». Правильные тарифы продают сами: клиент видит, где находится сейчас, и понимает, что получит на следующем уровне.',
           'Бесплатный тариф — инструмент распространения, платные — фильтр серьёзности, и размытая граница между ними создаёт конфликт с сообществом. Раз в год упаковку пересматривают так же спокойно, как метрику ценности.',
+        ],
+        bodyEn: [
+          "Packaging is the interface of pricing: a range of tiers from free to enterprise, with a clear boundary defining what people pay for. The right tiers sell themselves: customers see where they are now and understand what they get at the next level.", // TODO(en-review)
+          "The free tier is a distribution tool, paid tiers filter for seriousness, and a blurred boundary between them creates conflict with the community. Review packaging once a year as calmly as you review the value metric.", // TODO(en-review)
         ],
         task: [
           'Выпишите, что сегодня точно лежит в бесплатной части вашего продукта, а что точно в корпоративной, и сверьте списки с опубликованной страницей цен.',
@@ -415,6 +491,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Terraform стал дефолтом управления инфраструктурой через открытый код и экосистему провайдеров, которую писало само сообщество. Монетизация шла через облако и корпоративные возможности, пока в 2023 году компания не перевела продукты на Business Source License.',
           'Смена лицензии породила OpenTofu под крылом Linux Foundation, и рынок получил открытый форк там, где вчера была одна экосистема. Урок HashiCorp в том, что границу open-core меняют медленно и с сообществом, а одно решение может стоить годов доверия.',
         ],
+        bodyEn: [
+          "Terraform became the infrastructure management default through open source and a provider ecosystem written by the community itself. Monetization came through the cloud and enterprise features until the company moved its products to the Business Source License in 2023.", // TODO(en-review)
+          "The licence change spawned OpenTofu under the Linux Foundation’s wing, and the market gained an open fork where previously there had been one ecosystem. HashiCorp’s lesson is that the open-core boundary should change slowly and with the community, while one decision can cost years of trust.", // TODO(en-review)
+        ],
         task: [
           'Выпишите один урок из истории HashiCorp, который применим к границе между открытой и платной частью вашего продукта, и проверьте, не повторяете ли вы их ошибку в миниатюре.',
           'Write down one lesson from HashiCorp’s story that applies to the boundary between your product’s open and paid parts, and check that you are not repeating their mistake in miniature.',
@@ -426,6 +506,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'GitLab продаёт не набор функций, а способ работать: всё в одном репозитории, публичный хендбук компании и публичная же дорожная карта. Прозрачность используют как функцию продукта, а движение строят одновременно снизу, через разработчиков, и сверху, через обещание DevOps-трансформации.',
           'Открытость процесса снижает издержки доверия: покупатель может заранее посмотреть, как компания принимает решения и что появится в продукте в следующем году. Это доступный приём для команд любого размера.',
+        ],
+        bodyEn: [
+          "GitLab sells a way of working rather than a set of features: everything in one repository, a public company handbook and a public roadmap. Transparency is used as a product feature, and the movement is built both from the bottom through developers and from the top through the promise of DevOps transformation.", // TODO(en-review)
+          "An open process reduces the cost of trust: buyers can see in advance how the company makes decisions and what will appear in the product next year. This is an approach available to teams of any size.", // TODO(en-review)
         ],
         task: [
           'Выберите один элемент публичности GitLab, будь то открытый план или открытый хендбук, и оцените, что помешает вашей команде сделать то же самое в масштабе одной страницы.',
@@ -439,6 +523,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'Grafana начиналась как открытый инструмент визуализации и расширялась в стороны: метрики, логи, трассировки, нагрузочное тестирование. Каждая новая панель увеличивала ценность платформы, не вступая в конфликт с сообществом, а управляемый хостинг стал платным слоем, за который компании платят без сомнений.',
           'Движение Grafana описывают как community-led со sales-assist сверху: сообщество и открытый код приводят пользователей, а крупные сделки с облачными контрактами доводят люди. Это ровно гибрид, который мы разбирали в модуле про движки роста.',
         ],
+        bodyEn: [
+          "Grafana began as an open visualization tool and expanded sideways into metrics, logs, traces and load testing. Each new panel increased the platform’s value without conflicting with the community, while managed hosting became a paid layer that companies willingly pay for.", // TODO(en-review)
+          "Grafana’s movement is described as community-led with sales-assist on top: the community and open source bring users, while people close large deals with cloud contracts. This is exactly the hybrid covered in the growth engines module.", // TODO(en-review)
+        ],
         task: [
           'Назовите «панель» вашего продукта: соседнюю задачу, которую решают те же пользователи, и проверьте, может ли она вырасти из открытой части без конфликта с сообществом.',
           'Name your product’s “panel”: an adjacent job solved by the same users, and check whether it can grow out of the open part without conflicting with the community.',
@@ -450,6 +538,10 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         body: [
           'Confluent и Databricks построили компании на открытых проектах, Kafka и Spark, а деньги взяли за слой вокруг ядра: облако, платформу, поддержку масштаба. Открытый проект работает как канал доверия и распространения, а платный слой — как операционная боль, которую компании отдают с радостью.',
           'Обе истории показывают один путь: ядро остаётся открытым и нейтральным, а выручка приходит из управляемого сервиса и корпоративных возможностей. Когда защищать стало облачную выручку, лицензии пошли ужесточаться — и рынок снова напомнил, как хрупко доверие.',
+        ],
+        bodyEn: [
+          "Confluent and Databricks built companies on open projects, Kafka and Spark, and charged for the layer around the core: the cloud, the platform and support at scale. The open project acts as a channel for trust and distribution, while the paid layer takes over operational pain that companies are happy to hand off.", // TODO(en-review)
+          "Both stories show one path: the core remains open and neutral, while revenue comes from a managed service and enterprise features. When cloud revenue needed protecting, licences began to tighten, and the market once again demonstrated how fragile trust is.", // TODO(en-review)
         ],
         task: [
           'Назовите место в вашем продукте, где операционная боль клиента достаточно сильна, чтобы за её снятие платили регулярно, и проверьте, лежит ли оно в открытой части случайно.',
