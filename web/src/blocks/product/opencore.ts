@@ -1,3 +1,4 @@
+import { loadDraft, saveDraft } from '../../engine/trainers/storage';
 // Parametric model of the open-core boundary for the hidden "Продукт" pilot:
 // how the placement of the free/paid boundary changes adoption, paying
 // accounts, revenue and community trust over twelve months. The model is
@@ -38,13 +39,13 @@ export function opencoreProject(p: OpencoreParams, months = 12): OpencoreResult 
     trust = Math.max(5, Math.min(100, trust - Math.max(0, p.boundary - 0.35) * 8 - Math.max(0, 0.45 - p.breadth) * 4));
     companies *= 1 + growth * (trust / 100);
     const conv = trust < 45 ? conversion * 0.6 : conversion;
-    const paying = companies * conv;
+    const paying = Math.round(companies * conv);
     const revenue = paying * p.price;
     rows.push({
       month,
       companies: Math.round(companies),
       paying: Math.round(paying),
-      revenue: Math.round(revenue),
+      revenue: Math.round(revenue * 100) / 100,
       trust: Math.round(trust),
     });
   }
@@ -54,29 +55,9 @@ export function opencoreProject(p: OpencoreParams, months = 12): OpencoreResult 
 
 /** One honest sentence about the current outcome, shown under the counters. */
 export function opencoreVerdict(r: OpencoreResult): { ru: string; en: string } {
-  const { trust, paying, revenue } = r.totals;
-  if (trust < 45) {
-    return {
-      ru: 'Граница слишком жадная: доверие сообщества падает, и рост платящих компаний замедляется там, где нужна скорость.',
-      en: 'The boundary is too greedy: community trust falls, and the growth of paying companies slows exactly where speed is needed.',
-    };
-  }
-  if (paying < 3) {
-    return {
-      ru: 'Доверие в порядке, но платят почти никто: бесплатная версия решает слишком много, и продавать нечего.',
-      en: 'Trust is fine, but almost nobody pays: the free version does too much, and there is nothing left to sell.',
-    };
-  }
-  if (revenue < 30) {
-    return {
-      ru: 'Модель работает, но цена слишком низкая для корпоративного слоя: попробуйте поднять её, прежде чем двигать границу.',
-      en: 'The model works, but the price is too low for the enterprise layer: try raising it before moving the boundary.',
-    };
-  }
-  return {
-    ru: 'Граница стоит ровно там, где бесплатное решает задачу маленькой команды, а компании платят за свой слой.',
-    en: 'The boundary sits exactly where the free tier solves a small team’s job and companies pay for their own layer.',
-  };
+  void r;
+  // TODO(ru-prose): Neutral limitation note: no price elasticity, churn, costs, competition or willingness to pay.
+  return { ru: '', en: 'This model excludes price elasticity, churn, costs, competition and willingness to pay.' };
 }
 
 const KNOBS: { key: keyof OpencoreParams; min: number; max: number; step: number; label: [string, string]; fmt: (v: number) => string }[] = [
@@ -85,7 +66,10 @@ const KNOBS: { key: keyof OpencoreParams; min: number; max: number; step: number
   { key: 'price', min: 1, max: 20, step: 0.5, label: ['Цена платной версии, тыс ₽ в месяц', 'Paid version price, kRUB per month'], fmt: (v) => String(v) },
 ];
 
+let instance = 0;
 const css = `
+.poc-results { display:grid;gap:14px;min-width:0; }
+.poc-formula {white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
 .poc-root { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .poc-knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 10px 18px; }
 .poc-knob label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
@@ -108,22 +92,29 @@ export function mountOpencore(el: HTMLElement, _props: unknown): Mounted {
   const root = document.createElement('div');
   root.className = 'poc-root';
   el.append(style, root);
-  const params: OpencoreParams = { ...OPENCORE_DEFAULTS };
+  const params: OpencoreParams = { ...OPENCORE_DEFAULTS, ...loadDraft<Partial<OpencoreParams>>('product.opencore', {}) };
   const h = (tag: string, cls: string, ...kids: (Node | string)[]) => { const e = document.createElement(tag); if (cls) e.className = cls; e.append(...kids); return e; };
   const total = (label: string, value: number | string) => { const d = document.createElement('div'); d.className = 'poc-total'; const b = document.createElement('b'); b.textContent = String(value); d.append(label, b); return d; };
-  const render = () => {
-    const r = opencoreProject(params);
-    const maxCompanies = Math.max(1, ...r.rows.map((x) => x.companies));
-    const verdict = opencoreVerdict(r);
-    root.replaceChildren(
-      h('div', 'poc-knobs', ...KNOBS.map((k) => {
+  const inputPrefix = `${++instance}-poc`;
+  const results = h('div', 'poc-results');
+  root.append(h('div', 'poc-knobs', ...KNOBS.map((k) => {
         const input = document.createElement('input');
         input.type = 'range'; input.min = String(k.min); input.max = String(k.max); input.step = String(k.step); input.value = String(params[k.key]);
         const out = document.createElement('output');
         out.textContent = k.fmt(params[k.key]);
         input.oninput = () => { params[k.key] = Number(input.value) as never; out.textContent = k.fmt(Number(input.value)); render(); };
-        return h('div', 'poc-knob', h('label', '', h('span', '', t(bi(k.label[0], k.label[1]))), out), input);
-      })),
+        input.setAttribute('aria-label', t(bi(k.label[0], k.label[1])));
+        const label = h('label', '', h('span', '', t(bi(k.label[0], k.label[1]))), out);
+        input.id = `${inputPrefix}-${k.key}`; label.setAttribute('for', input.id);
+        return h('div', 'poc-knob', label, input);
+      })), results);
+  const render = () => {
+    saveDraft('product.opencore', params);
+    const r = opencoreProject(params);
+    const maxCompanies = Math.max(1, ...r.rows.map((x) => x.companies));
+    const verdict = opencoreVerdict(r);
+    results.replaceChildren(
+
       h('div', 'poc-totals',
         total(t(bi('Компаний с продуктом', 'Companies with the product')), r.totals.companies),
         total(t(bi('Платящих компаний', 'Paying companies')), r.totals.paying),
@@ -145,6 +136,14 @@ export function mountOpencore(el: HTMLElement, _props: unknown): Mounted {
           h('td', '', String(row.revenue)),
           h('td', '', String(row.trust)))))),
       h('p', 'poc-note', t(PRODUCT_HONEST_NOTE)),
+      // TODO(ru-prose): Explain nearest-integer payer rounding before revenue and the illustrative adoption/conversion/trust coefficients.
+      h('pre', 'poc-formula', `companies₀ = 80; trust₀ = 85
+growth = max(0.005, 0.03 + 0.09 × breadth − 0.08 × boundary)
+conversion = (0.015 + 0.06 × boundary) × (trust < 45 ? 0.6 : 1)
+trust = clamp(trust − max(0, boundary − 0.35) × 8 − max(0, 0.45 − breadth) × 4, 5, 100)
+companies ×= 1 + growth × trust / 100
+paying = round(companies × conversion)
+${r.totals.paying} × ${params.price} = ${r.totals.revenue}`),
     );
   };
   render();

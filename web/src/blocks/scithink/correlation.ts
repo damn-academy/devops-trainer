@@ -24,6 +24,19 @@ const finalLeft = (steps: Step[]): number => steps[steps.length - 1]?.metrics?.l
 
 const residualOf = (p: P) => Math.round((Math.round(p.strength) * (100 - Math.round(p.confounder))) / 100);
 
+export function correlationChange(observed: number, left: number): 'collapse' | 'partial' | 'stay' {
+  const ratio = observed ? left / observed : 1;
+  return ratio < .2 ? 'collapse' : ratio <= .9 ? 'partial' : 'stay';
+}
+const comparisonCaption = (observed: number, left: number): Bi => {
+  const captions = {
+    collapse: bi("Сравнение дней с одинаковой жарой убрало почти всю связь: показатель r упал с {observed} до {left}. В этой модели совместный рост мороженого и утоплений создавала жара, и без её влияния он почти исчез. Так выглядит ложная связь, которую ловят на сравнении внутри групп.", "Comparing days with equal heat removed almost all the association: r fell from {observed} to {left}. Heat generated almost all the joint change in this model."),
+    partial: bi("Сравнение дней с одинаковой жарой уменьшило связь: показатель r упал с {observed} до {left}. Жара объясняла часть совместного роста, а оставшаяся часть ничем в модели не объяснена: это может быть другая общая причина, случайность или прямое влияние, и одно сравнение между ними не выбирает.", "Comparing days with equal heat reduced the association: r fell from {observed} to {left}. The remainder is unexplained: another common cause, chance or a direct effect are possible."),
+    stay: bi("Сравнение дней с одинаковой жарой почти не изменило связь: показатель r остался около {left}. Жара эту связь не объясняет, но причину это ещё не доказывает: связь может создавать другой общий фактор, которого нет на схеме.", "Comparing days with equal heat barely changed the association: r remains near {left}. Heat does not explain it, but another common cause is still possible."),
+  };
+  return fmt(captions[correlationChange(observed, left)], { observed, left });
+};
+
 export const correlationModel = defineModel<P>({
   id: 'scithink.correlation',
   block: 'scithink',
@@ -145,14 +158,16 @@ export const correlationModel = defineModel<P>({
     {
       id: 'within',
       label: bi('Сравнить дни с одинаковой жарой', 'Compare days with equal heat'),
-      remove: ['e-link'],
+      remove: [],
       predict: {
-        prompt: bi('Большую часть видимой связи объясняет жара. Если сравнивать только дни с одинаковой жарой, что станет с показателем r?', 'Most of the visible link is explained by heat. If you compare only days with equal heat, what happens to the r metric?'),
+        // TODO(ru-prose): Confirm a neutral prediction question without assuming heat explains most of the link.
+        prompt: bi('TODO(ru-prose): prediction question', 'If you compare only days with equal heat, what happens to the r metric?'),
         options: [
-          { id: 'collapse', text: bi('Связь сойдёт почти на нет, ведь обеими линиями двигала жара', 'The link will nearly vanish: heat drove both lines') },
-          { id: 'stay', text: bi('Связь останется прежней', 'The link will stay the same') },
+          { id: 'collapse', text: bi("Связь почти исчезнет", "The association will nearly disappear") },
+          { id: 'partial', text: bi("Связь заметно уменьшится, но останется", "The association will decrease but remain") },
+          { id: 'stay', text: bi("Связь почти не изменится", "The association will barely change") },
         ],
-        resolve: (_prev, next) => (next.some((s) => s.broken) ? 'collapse' : 'stay'),
+        resolve: (_prev, next) => correlationChange(next[0].metrics!.r, finalLeft(next)),
       },
     },
   ],
@@ -165,7 +180,7 @@ export const correlationModel = defineModel<P>({
     const explained = Math.round(p.confounder);
     const left = residualOf(p);
     const isolated = broken.has('within');
-    const collapse = left < observed;
+
     const steps: Step[] = [
       {
         id: 'data', label: bi('данные', 'data'),
@@ -216,43 +231,13 @@ export const correlationModel = defineModel<P>({
       });
       return steps;
     }
-    if (collapse) {
-      steps.push({
-        id: 'within', label: bi('внутри групп', 'within groups'),
-        caption: fmt(
-          bi(
-            'Теперь сравниваем только дни с одинаковой жарой, и жара больше не смещает картину. Совместный рост падает с {r} до {left} баллов из 100, потому что обеими линиями двигала жара. Связь, которая осталась бы, только если бы её двигало нечто другое, здесь не выдержала проверки.',
-            'Now we compare only days with equal heat, and heat no longer distorts the picture. The joint rise falls from {r} to {left} points out of 100, because heat drove both lines. A link that would survive only if something else drove it did not pass this check.',
-          ),
-          { r: observed, left },
-        ),
-        focus: ['e-link', 'heat'],
-        metrics: { r: left, left },
-        broken: {
-          at: 'e-link',
-          message: `r ${observed} → ${left}`,
-          caption: fmt(
-            bi(
-              'Сравнение внутри одинаковой жары оборвало цепочку на прямой связи: совместный рост был наведён жарой, и без её влияния он почти исчез. Так выглядит ложная связь, которую ловят на сравнении внутри групп.',
-              'Comparing within equal heat broke the chain at the direct link: the joint rise was induced by heat, and without its influence it nearly disappeared. This is what a spurious link looks like when caught by a within-groups comparison.',
-            ),
-            {},
-          ),
-        },
-      });
-      return steps;
-    }
+    const caption = comparisonCaption(observed, left);
     steps.push({
       id: 'within', label: bi('внутри групп', 'within groups'),
-      caption: fmt(
-        bi(
-          'Сравниваем дни с одинаковой жарой, но связь остаётся прежней, {r} баллов из 100. Жара здесь ни при чём, и если совместный рост держится при неподвижной жаре, сомневаться стоит уже в самой паре: возможно, причина ищется не там.',
-          'We compare days with equal heat, but the link stays the same, {r} points out of 100. Heat is not involved here, and if the joint rise holds with heat fixed, the doubt moves to the pair itself: perhaps the cause lies elsewhere.',
-        ),
-        { r: observed },
-      ),
-      focus: ['e-link', 'heat'],
-      metrics: { r: observed, left },
+      caption, focus: ['e-link', 'heat'], metrics: { r: left, left },
+      ...(correlationChange(observed, left) === 'collapse' ? {
+        broken: { at: 'e-link', message: `r ${observed} → ${left}`, caption },
+      } : {}),
     });
     return steps;
   },
@@ -274,3 +259,10 @@ export const correlationModel = defineModel<P>({
     });
   },
 });
+
+// Reuse authored labels/cards; a phone needs a readable overview of all three nodes.
+correlationModel.diagram.narrow = {
+  width: 340, height: 520,
+  nodes: correlationModel.diagram.nodes.map(n => ({ ...n, x: 60, y: ({ heat: 20, ice: 210, drown: 400 } as Record<string, number>)[n.id] })),
+  edgeVia: { 'e-link': [], 'e-heat-ice': [], 'e-heat-drown': [[25, 60], [25, 440]] },
+};

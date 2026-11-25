@@ -65,7 +65,7 @@ describe('scientific thinking pilot (hidden)', () => {
 
     const broken = correlationModel.run({ strength: 60, confounder: 70 }, new Set(['within']));
     expect(broken.at(-1)!.metrics?.r).toBe(18);
-    expect(broken.some((s) => s.broken)).toBe(true);
+    expect(broken.some((s) => s.broken)).toBe(false);
 
     const real = correlationModel.run({ strength: 80, confounder: 0 }, new Set(['within']));
     expect(real.at(-1)!.metrics?.r).toBe(80);
@@ -90,7 +90,7 @@ describe('scientific thinking pilot (hidden)', () => {
     }
     const on = m.run(defaults, new Set(['within']));
     const resolvedBreak = m.breaks[0]!.predict.resolve(base, on);
-    expect(['collapse', 'stay']).toContain(resolvedBreak);
+    expect(resolvedBreak).toBe('partial');
     const delta = m.explainDelta(base, on, { kind: 'break', id: 'within', on: true }, defaults, defaults);
     expect(delta.ru).toContain('18');
     expect(delta.en.length).toBeGreaterThan(0);
