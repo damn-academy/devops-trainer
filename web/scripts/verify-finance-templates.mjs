@@ -22,7 +22,8 @@ function reader(book) {
   };
   const functions={
     IF:(condition,yes,no)=>condition?yes:no,
-    MOD:(a,b)=>a%b,
+    MOD:(a,b)=>((a%b)+b)%b,
+    MAX:(...args)=>Math.max(...args.map(Number)),
     SUM:(...args)=>args.flat().reduce((a,b)=>a+Number(b),0),
     SUMIFS:(values,...conditions)=>values.reduce((sum,value,i)=> {
       const matches=conditions.every((item,k)=> {
@@ -67,7 +68,7 @@ function reader(book) {
 }
 for(const suffix of ['', '-en']) {
   const w=new ExcelJS.Workbook(); await w.xlsx.readFile(`${dir}/infraseed-model${suffix}.xlsx`); const read=reader(w);
-  assert.equal(w.worksheets.length,6);
+  assert.equal(w.worksheets.length,7);
   const [inputs,pnl,cash,balance,checks,hiring]=w.worksheets;
   const ending=[1336,1286,1231.2,1195.6,1149.2,1098,1906,1863.2,1815.6,1787.2,1748,1704];
   const revenues=[30,32,46,36,38,52,62,64,78,68,70,84];
@@ -78,10 +79,29 @@ for(const suffix of ['', '-en']) {
     near(read(balance.name,`${c}2`),ending[m],`cash ${m+1}`);
     near(read(pnl.name,`${c}5`),revenues[m],`revenue ${m+1}`); near(read(pnl.name,`${c}17`),net[m],`income ${m+1}`);
   }
-  for(let r=5;r<=7;r++) near(read(checks.name,`D${r}`),0,`annual check ${r}`);
-  near(read(cash.name,'N5'),-60,'annual CFO'); near(read(hiring.name,'B8'),17.7,'loaded monthly'); near(read(hiring.name,'B9'),129.2,'July hire'); near(read(hiring.name,'B10'),106.2,'delayed hires');
+  const demo=w.worksheets[6];
+  for(let r=2;r<=4;r++) near(read(demo.name,`B${r}`),read(demo.name,`C${r}`),`demo ${r}`);
+  near(read(cash.name,'N5'),-60,'annual CFO');
+  for(let m=13;m<=18;m++) { const c=checks.getColumn(m+2).letter; near(read(checks.name,`${c}2`),0,`extended balance ${m}`); near(read(checks.name,`${c}3`),0,`extended CFO ${m}`); }
+  // Each named person/vacancy enters expenses and cash from their own start month.
+  for(const [r,start,cost,status] of [[2,7,17.7,0],[3,10,12,1],[4,13,8,2]]) {
+    hiring.getCell(r,1).value=`Person ${r}`; hiring.getCell(r,2).value='Engineer';
+    hiring.getCell(r,3).value=(suffix?['In post','Offer','Open']:['В штате','Оффер','Открыта'])[status];
+    hiring.getCell(r,4).value=start; hiring.getCell(r,5).value=cost;
+  }
+  const hired=reader(w);
+  near(hired(pnl.name,'H11')-read(pnl.name,'H11'),17.7,'July hire in R&D');
+  near(hired(pnl.name,'Q11')-read(pnl.name,'Q11'),37.7,'all three hires in month 15');
+  near(hired(balance.name,'M2'),1704-17.7*6-12*3,'hiring changes cash');
+  for(let m=1;m<=18;m++) { const c=checks.getColumn(m<=12?m+1:m+2).letter; near(hired(checks.name,`${c}2`),0,`hired balance ${m}`); near(hired(checks.name,`${c}3`),0,`hired CFO ${m}`); }
+  hiring.getCell('D2').value=10; hiring.getCell('D3').value=13;
+  near(reader(w)(balance.name,'M2')-hired(balance.name,'M2'),3*(17.7+12),'delaying two hires');
+  for(let r=2;r<=4;r++) hiring.getCell(r,1).value=null;
   // Prove live input dependencies: more cash changes cash and equity equally.
   inputs.getCell('B2').value=1300; const changed=reader(w); near(changed(balance.name,'M2'),1804,'changed opening cash'); near(changed(checks.name,'M2'),0,'changed balance check');
+  inputs.getCell('B2').value=750; const own=reader(w);
+  for(let m=1;m<=18;m++) { const c=checks.getColumn(m<=12?m+1:m+2).letter; near(own(checks.name,`${c}2`),0,`own opening balance ${m}`); near(own(checks.name,`${c}3`),0,`own CFO ${m}`); }
+  assert.equal(checks.getCell('D5').value,null);
   const q=new ExcelJS.Workbook(); await q.xlsx.readFile(`${dir}/cash-13w${suffix}.xlsx`); const [events,weekly]=q.worksheets, weeklyRead=reader(q);
   const expected=[500,400,470,370,340,240,240,140,140,40,40,-60,-60];
   expected.forEach((v,i)=>near(weeklyRead(weekly.name,`${String.fromCharCode(66+i)}7`),v,`week ${i+1}`));
@@ -91,5 +111,27 @@ for(const suffix of ['', '-en']) {
   const row=events.getRows(2,events.rowCount-1).find(r=>r.getCell(7).value===100 && r.getCell(4).value===weekly.getCell('A3').value);
   row.getCell(6).value=new Date(+row.getCell(6).value+21*86400000); const moved=reader(q);
   near(moved(weekly.name,'D7'),370,'delayed week 3 receipt'); near(moved(weekly.name,'G7'),240,'received in week 6');
-  console.log(`${suffix||'RU'}: formulas evaluated; 12 balanced months, matching CFO, cash 1704, revenue 660, income -162.8; all 13 weekly balances match.`);
+  // A newly entered event needs no copied formulas, for every type and scenario.
+  const fresh=new ExcelJS.Workbook(); await fresh.xlsx.readFile(`${dir}/cash-13w${suffix}.xlsx`);
+  const [e,ws]=fresh.worksheets;
+  const rowNumber=47;
+  const scenarios=suffix?['Base','Upside','Downside']:['Основной','Лучший','Худший'];
+  for(const scenario of scenarios) for(let type=0;type<4;type++) {
+    ws.getCell('B10').value=scenario;
+    e.getCell(rowNumber,7).value=null; const before=reader(fresh)(ws.name,'B7');
+    e.getCell(rowNumber,4).value=ws.getCell(type+3,1).value;
+    e.getCell(rowNumber,6).value=new Date('2026-11-30T00:00:00Z');
+    e.getCell(rowNumber,7).value=50; e.getCell(rowNumber,9).value=scenario;
+    near(reader(fresh)(ws.name,'B7'),before+(type===0?50:-50),`new event ${scenario}/${type}`);
+  }
+  e.getCell(rowNumber,4).value=ws.getCell('A3').value;
+  e.getCell(rowNumber,7).value=100; e.getCell(rowNumber,12).value=40;
+  e.getCell(rowNumber,11).value=new Date('2026-11-30T00:00:00Z');
+  e.getCell(rowNumber,6).value=new Date('2026-12-07T00:00:00Z');
+  const partial=reader(fresh);
+  near(partial(e.name,`O${rowNumber}`),60,'partial remains open');
+  near(partial(ws.name,'B3'),40,'actual payment in week 1');
+  near(partial(ws.name,'C3'),60,'remaining payment in week 2');
+  assert.ok(e.getCell('N301').formula && e.getCell('O301').formula);
+  console.log(`${suffix||'RU'}: formulas evaluated; 18 balanced months, matching CFO; hiring and opening-cash changes reconcile; all 13 weekly balances, new events and partial receipts match.`);
 }

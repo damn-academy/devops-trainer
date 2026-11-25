@@ -20,6 +20,10 @@ export function roundNumbers(p: RoundInput) {
     const quantities = shares.map((s, i) => i === shares.length - 2 ? s + extra : i === shares.length - 1 ? newShares : s);
     return { ownership: quantities.map(s => 100 * s / (pre + newShares)), price, newShares, shares: quantities };
   };
+  // The cap-only equations are valid only while every nonzero SAFE's cap binds.
+  // Check both displayed round variants; a pool top-up can lower the round price.
+  const lowestRoundPrice = p.valuation / (total + extraPool);
+  if (p.safes.some(s => s.amount > 0 && lowestRoundPrice < s.cap / total - Number.EPSILON * Math.max(1, lowestRoundPrice))) throw new Error('cap-not-binding');
   return { before: stage(0, false), withoutPool: stage(0, true), withPool: stage(extraPool, true) };
 }
 export interface FranchiseInput { authorized: number; issued: number; par: number; assets: number }
@@ -35,7 +39,7 @@ const label = (ru: string, en: string) => t(bi(ru, en));
 // Format only at the display boundary; calculations retain their full precision.
 const fmt = (n: number, maximumFractionDigits = 0) => new Intl.NumberFormat(
   lang() === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits },
-).format(n).replace(/\u00a0/g, '\u202f');
+).format(Math.round((n + Math.sign(n) * Number.EPSILON * Math.max(1, Math.abs(n))) * 10 ** maximumFractionDigits) / 10 ** maximumFractionDigits).replace(/\u00a0/g, '\u202f');
 const node = <K extends keyof HTMLElementTagNameMap>(tag: K, text = '') => { const e = document.createElement(tag); e.textContent = text; return e; };
 function shell(el: HTMLElement, title: string) {
   const root = node('section'); root.className = 'finance-trainer';
@@ -68,7 +72,7 @@ export const roundWidget: WidgetReg = { id: 'finance.round', mount(el) {
         [label('Цена акции раунда', 'Round share price'), '—', fmt(r.withoutPool.price, 6), fmt(r.withPool.price, 6)],
         [label('Новые акции инвестора', 'New investor shares'), '—', fmt(r.withoutPool.newShares), fmt(r.withPool.newShares)],
       ])));
-    } catch { ui.result.append(invalid()); }
+    } catch (e) { ui.result.append(e instanceof Error && e.message === 'cap-not-binding' ? node('p', label('Цена раунда ниже цены по потолку SAFE. Этот калькулятор не считает такую конвертацию. Результат скрыт.', 'The round price is below a SAFE cap price. This calculator does not support that conversion. The result is hidden.')) : invalid()); }
   };
   const fields = () => {
     ui.fields.replaceChildren();

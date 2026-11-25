@@ -116,3 +116,21 @@ it.each([
   ]);
   franchise.dispose();
 });
+
+it('blocks cap-only results below the cap price, including the pool top-up, and accepts equality', () => {
+  expect(() => roundNumbers({...ROUND_DEFAULTS, valuation:1_000_000, existingPool:2_000_000, poolPercent:0})).toThrow('cap-not-binding');
+  const base={...ROUND_DEFAULTS,poolPercent:0};
+  expect(() => roundNumbers({...base,valuation:10_000_000})).not.toThrow();
+  expect(() => roundNumbers({...base,valuation:9_999_999})).toThrow('cap-not-binding');
+  expect(() => roundNumbers({...base,valuation:10_000_000,poolPercent:10})).toThrow('cap-not-binding');
+  expect(roundNumbers({...base,poolPercent:20}).withPool.ownership[0]).toBeCloseTo(51);
+  expect(roundNumbers({...base,existingPool:2_000_000}).withPool.ownership[0]).toBeCloseTo(54.4);
+});
+it('rounds third SAFE half steps consistently in the displayed results', () => {
+  const el=document.createElement('div'); const mounted=roundWidget.mount(el,{},{} as never);
+  [...el.querySelectorAll('button')].find(b=>b.textContent==='Добавить SAFE')!.click();
+  const amount=[...el.querySelectorAll('label')].find(l=>l.textContent==='SAFE: сумма (3)')!.querySelector('input')!;
+  amount.value='250000'; amount.dispatchEvent(new Event('input'));
+  expect(el.textContent).toContain('57,8 %'); expect(el.textContent).toContain('1,8 %'); expect(el.textContent).toContain('1,804688');
+  mounted.dispose();
+});
