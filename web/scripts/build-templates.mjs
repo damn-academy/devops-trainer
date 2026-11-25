@@ -23,7 +23,7 @@ addExamples(templates, sheet);
 await mkdir(output, { recursive: true });
 for (const [file, sheets] of Object.entries(templates)) for (const en of [false, true]) {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'DevOps Trainer';
+  workbook.creator = 'damn.academy';
   workbook.created = workbook.modified = new Date('2026-01-01T00:00:00Z');
   for (const spec of sheets) {
     const ws = workbook.addWorksheet(en ? spec.en : spec.ru);
