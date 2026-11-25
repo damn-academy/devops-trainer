@@ -62,15 +62,26 @@ function sources(body: string): SourceLink[] {
   return body.split('\n').filter((line) => line.trim()).flatMap((line) => {
     if (!line.trim().startsWith('- ')) throw new Error(`Invalid source: ${line}`);
     const sharedDate = / \(([^()\n]+)\)$/.exec(line)?.[1];
-    // Authors sometimes group URLs or separately dated references in one bullet.
+    // Preserve grouped references, individual dates, and undated source links.
     return line.trim().slice(2).split(/;\s+(?=[^;]+ — https?:\/\/)/).flatMap((entry) => {
-      const match = /^(.+?) — (https?:\/\/\S+(?:, https?:\/\/\S+)*)(?: \(([^\n]+)\))?$/.exec(entry);
-      if (!match || !(match[3] ?? sharedDate)) throw new Error(`Invalid source: ${line}`);
-      return match[2]!.split(', ').map((address) => {
-        const url = new URL(address);
-        if (!url.hostname) throw new Error(`Invalid source URL: ${line}`);
-        return { title: match[1]!, url: address, note: bi((match[3] ?? sharedDate)!, (match[3] ?? sharedDate)!) };
-      });
+      const heading = /^(.+?) — (.+)$/.exec(entry);
+      if (!heading) throw new Error(`Invalid source: ${line}`);
+      const refs = heading[2]!;
+      const links: SourceLink[] = [];
+      let end = 0;
+      for (const match of refs.matchAll(/(https?:\/\/[^\s,;]+)(?: \(([^\n]+?)\))?/g)) {
+        const separator = refs.slice(end, match.index).trim();
+        if (links.length ? ![',', 'и', 'and'].includes(separator) : separator !== '') {
+          throw new Error(`Invalid source separator: ${line}`);
+        }
+        const address = match[1]!;
+        if (!new URL(address).hostname) throw new Error(`Invalid source URL: ${line}`);
+        const date = match[2] ?? sharedDate;
+        links.push({ title: heading[1]!, url: address, ...(date ? { note: bi(date, date) } : {}) });
+        end = match.index + match[0].length;
+      }
+      if (!links.length || refs.slice(end).trim()) throw new Error(`Invalid source: ${line}`);
+      return links;
     });
   });
 }

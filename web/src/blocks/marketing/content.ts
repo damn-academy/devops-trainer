@@ -6,6 +6,7 @@
 import { bi, pluralRu } from '../../core/i18n';
 import type { Concept, Lesson, QuizItem } from '../../core/types';
 import { MARKETING_SCHOOL, type SchoolModule } from './school';
+import { MARKETING_V2_LESSONS } from './v2';
 
 /** The honest note every school lesson carries: one way, not a law. It mirrors
  * the disclaimer of the sales pilot, so the two hidden courses speak alike. */
@@ -824,4 +825,7 @@ function lessonFor(letter: string): Lesson {
   };
 }
 
-export const MARKETING_LESSONS: Lesson[] = Object.keys(MODULE_LESSON).map(lessonFor);
+export const MARKETING_LESSONS: Lesson[] = Object.keys(MODULE_LESSON).flatMap((letter) => {
+  const lesson = lessonFor(letter);
+  return lesson.id === 'marketing.platforms' ? [lesson, ...MARKETING_V2_LESSONS] : [lesson];
+});

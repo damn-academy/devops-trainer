@@ -3,6 +3,7 @@
 // honest note and bilingual sources, the regions projection is monotonic and
 // rewards localisation, and the growth-loop explainer walks the machine.
 import { describe, expect, it } from 'vitest';
+import { MARKETING_V2_LESSONS } from '../src/blocks/marketing/v2';
 import { loopModel } from '../src/blocks/marketing/loop';
 import { MARKETING_CONCEPTS, MARKETING_LESSONS, MARKETING_QUIZ, MARKETING_SCHOOL_EN } from '../src/blocks/marketing/content';
 import { regionsProject } from '../src/blocks/marketing/regions';
@@ -37,9 +38,9 @@ describe('marketing pilot (hidden)', () => {
   });
 
   it('builds one platform lesson per module with the honest note in each', () => {
-    expect(MARKETING_LESSONS).toHaveLength(10);
+    expect(MARKETING_LESSONS).toHaveLength(10 + MARKETING_V2_LESSONS.length);
     for (const l of MARKETING_LESSONS) {
-      expect(l.sections.some((s) => s.kind === 'callout')).toBe(true);
+      if (!MARKETING_V2_LESSONS.includes(l)) expect(l.sections.some((s) => s.kind === 'callout')).toBe(true);
       expect(l.sources.en.length).toBeGreaterThan(0);
       expect(l.sources.ru.length).toBeGreaterThan(0);
       expect(l.minutes ?? 0).toBeGreaterThan(0);
