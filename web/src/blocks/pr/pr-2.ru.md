@@ -22,6 +22,10 @@
 <!-- section: task | Задание: неделя кризиса в симуляторе -->
 Выполните задание в симуляторе «Неделя кризиса» на этой странице. Выберите готовую компанию или соберите свою и пройдите хотя бы первые четыре хода, в которые время идёт по полдня. В каждом ходе решите, кому и что вы сообщаете, кто говорит от имени компании и что вы отвечаете журналисту. После разбора ведущего выпишите одно решение, которое сработало благодаря качеству, и одно, которое сработало или провалилось из-за обстоятельств, которых вы не видели.
 
+<!-- widget: rubric {"trainer":"pr.crisis-statement"} -->
+
+<!-- widget: deptsim {"scenario":"pr.crisis"} -->
+
 <!-- section: sources -->
 - Tukaani, бэкдор в xz — https://tukaani.org/xz-backdoor/
 - Okta, причины инцидента — https://sec.okta.com/articles/2023/11/unauthorized-access-oktas-support-case-management-system-root-cause/ (03.11.2023); рекомендации — https://sec.okta.com/articles/october-security-incident-recommended-actions/ (29.11.2023)
