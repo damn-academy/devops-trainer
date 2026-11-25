@@ -27,11 +27,11 @@ Missing audio is the most frustrating video and podcast failure. Once, camera-re
 
 <!-- quiz -->
 ? A synthesised line is a second and a half longer than scripted. How do you prevent lips and subtitles falling out of sync?
-+ Build the timeline from the actual duration of the synthesised audio || Fitting the visuals to the real audio makes lips and subtitles align automatically.
++ Build the timeline from the actual duration of the synthesised audio, not from the script || Fitting the visuals to the real audio makes lips and subtitles align automatically.
 - Speed up the line in an audio editor to the duration specified in the video script || Accelerated speech sounds unnatural, and the next line will drift again.
 - Shorten the line and synthesise it repeatedly until its duration matches the script || This slow trial and error damages the script; adjusting the visuals is easier.
 ? A video render finished without errors. What should happen before publication?
-+ Watch and listen to the final file || A successful process does not guarantee there is no Canvas error in the frame or that the file contains audio.
++ Watch and listen to the entire final file, from the first second to the last || A successful process does not guarantee there is no Canvas error in the frame or that the file contains audio.
 - Nothing, because render errors always appear in program output and stop execution || An error may appear in the picture without any output message.
 - Check the file size: if it is larger than expected, audio and visuals are present || File size says nothing about frame contents.
 <!-- /quiz -->
@@ -67,7 +67,7 @@ Delivery to a site ends with a CMS draft or a prepared change request; the edito
 <!-- section: theory | Translating a scientific article -->
 We applied the same pipeline to a Russian translation of the scientific article Keeping CALM. First we prepared the written source and a shared terminology glossary, then translated 28 fragments, checked completeness, assembled the text without rearranging the author's argument, compared it with the source, performed literary editing, a repeat fact-check of the diff, proofreading, Habr export and separate terminology and style checks. The final file contained 60,000 characters.
 
-Quantitative checks showed that the translated fragments were 7% longer in total than the originals, with each of the 28 within the allowed range, meaning the translator had omitted nothing. Fact-checking preserved the sequence of all 48 citations, 48 bibliography entries, 30 formulas and the footnotes. “Ready to publish” meant no blocking errors remained, but there were still 2 major issues, 8 minor ones and 5 nitpicks for the editor to address.
+Quantitative checks showed that the translated fragments were 7% longer in total than the originals, with each of the 28 within the allowed range, so major omissions are unlikely; this check does not catch distortions of meaning. Fact-checking preserved the sequence of all 48 citations, 48 bibliography entries, 30 formulas and the footnotes. “Ready to publish” meant no blocking errors remained, but there were still 2 major issues, 8 minor ones and 5 nitpicks for the editor to address.
 
 The errors found are instructive. A missing blank line after a quotation caused Markdown to attribute the next paragraph to the quoted author. Attribution and licence information for the original were missing. Literary editing turned “can help” into an unqualified statement and “often” into “increasingly often”. Applied to written text, the video pipeline left fake timestamps that had to be removed during assembly. Proofreading automatically inserted 675 non-breaking spaces, while a script compared formulas, links and image paths byte for byte before and after.
 
@@ -76,8 +76,8 @@ Fifteen stages and ten roles pay off for long recordings and texts intended to l
 
 <!-- quiz -->
 ? After literary editing of a talk-based article, “this approach may help” became “this approach helps”. Which pipeline stage should catch it?
-+ The repeat fact-check of the version diff after literary editing || Style changes modality, and only a version comparison finds this.
-- Proofreading, because it checks the whole article before final assembly || Proofreading checks spelling and typography, not meaning.
++ The repeat fact-check of the version diff that follows literary editing || Style changes modality, and only a version comparison finds this.
+- Proofreading, because it reads the whole text || Proofreading checks spelling and typography, not meaning.
 - Headline selection, because the editor reads the whole article when choosing an option || Selecting a headline does not include checking every sentence's meaning.
 ? The translated fragments are 7% longer in total than the originals. What does this tell you?
 + The translator probably omitted nothing, but meaning must be checked separately || Completeness checks catch omissions, not distortions.

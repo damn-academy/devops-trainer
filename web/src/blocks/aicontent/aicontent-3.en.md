@@ -38,8 +38,8 @@ AI-text detectors are unsuitable for quality checks. OpenAI withdrew its classif
 - Because the fact-checker uses a weaker model that cannot be trusted with style editing || It is about role separation, not model strength.
 - Because editing costs more while a report costs less for the same benefit to the article || Cost is not the main point; independent checking is.
 ? A worker took a course as six fictional learners and found two blockers. How should the team report describe this check?
-+ As modelling learner behaviour to find defects before live testing || Personas are a model, not research with real people, and must not be presented as a user survey.
-- As user research with six respondents and qualitative analysis of their answers || There were no respondents; this is modelling.
++ As modelling learner behaviour to find defects before testing with real people || Personas are a model, not research with real people, and must not be presented as a user survey.
+- As user research with six respondents || There were no respondents; this is modelling.
 - As an automated test guaranteeing learners will not drop out after the fixes || A model gives no guarantees; it reduces risk.
 <!-- /quiz -->
 
@@ -80,13 +80,13 @@ A generative illustration does not automatically confer exclusive copyright. The
 
 <!-- quiz -->
 ? A technical article about a new command needs to show how it works. What should you choose?
-+ A terminal recording of the command actually running, converted to a GIF || A documentary recording confirms the command ran and produced that output.
++ A terminal recording of the command actually running, converted to a GIF animation || A documentary recording confirms the command ran and produced that output.
 - A tidy SVG diagram showing the command's steps more clearly than terminal output || A diagram does not prove the command works; technical readers need real output.
-- A generated terminal illustration in the brand style to make the article look more expensive || Generated “output” presents fiction as fact.
+- A generated terminal illustration in the brand style || Generated “output” presents fiction as fact.
 ? Scrolling a longread reveals a hole in the background beneath a moving figure. What should change?
 + Draw the background without figures and each complete figure on its own transparent layer || Cutting figures from a combined image leaves holes; patches do not fix this.
 - Regenerate the same scene at higher resolution so the holes become invisible || Resolution does not fill the hole behind the figure.
-- Paint over the hole with neighbouring pixel colours in an image editor after generation || This patch breaks at a different offset.
+- Paint over the hole in an image editor after generation || This patch breaks at a different offset.
 <!-- /quiz -->
 
 <!-- section: task | Task: an article's media inventory -->

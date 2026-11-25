@@ -38,11 +38,11 @@ Measure the time until the editor accepts the material; time to first draft tell
 
 <!-- quiz -->
 ? An editorial team assigned language editing of a course to two different AIs to finish faster. What will most likely need fixing?
-+ Different voices across lessons and diverging wording between versions || This happened on the learning platform: editing by different workers introduced bureaucratic language and made the Russian and English versions diverge.
++ Different voices across lessons and diverging wording for the same terms between versions || This happened on the learning platform: editing by different workers introduced bureaucratic language and made the Russian and English versions diverge.
 - Nothing, provided both AIs receive the same style guide and identical brief || Even with one guide, two models write differently; one worker must own the voice.
 - Only typos, because modern AIs write with flawless grammar and identical style || Grammar is not the main problem here; style, terminology and wording diverge.
 ? How should you measure the benefit of AI in producing an article?
-+ By the time until the editor accepts it, including checks and revisions || Time to first draft excludes revision rounds and fact-checking, which account for most of the work.
++ By the time until the editor accepts it, including all checks and revisions || Time to first draft excludes revision rounds and fact-checking, which account for most of the work.
 - By draft generation time, because the remaining work would exist without AI too || Without AI, there would be fewer revisions elsewhere; compare the full cycle through acceptance.
 - By the number of words AI writes per minute multiplied by the author's rate || Generation speed says nothing about how much text will need rewriting.
 <!-- /quiz -->
@@ -71,7 +71,7 @@ For research, the brief adds a fact format. In the music feature brief, the work
 <!-- section: theory | The session log -->
 The session log is a `SESSION_LOG.md` file in the project folder, created by the lead AI before its first significant action. It has three parts. “Goal” is one sentence stating what we are doing and why. “Current state” is a single overwritten block answering “where are we if I return in an hour”: files, branches, addresses, what works and what does not. “Next step” names one specific command or action. Below is a log to which every significant event is appended with its time: a change applied, a decision made, an error found and its workaround, a switch between tools.
 
-The main logging rule is to write immediately after the event. If the AI takes three steps in a row, the log is updated after the third; otherwise, an interrupted session erases the part hardest to reconstruct. On the learning platform, the log once saved a deployment: a cluster update replaced nodes midway through deployment, and the log showed which commit had already been built, which had not, and that the feedback database had been on a removed node.
+The main logging rule is to write immediately after the event. The log is updated after each significant step, and if the AI takes three steps in a row without an entry, one must be added no later than the third step; otherwise, an interrupted session erases the part hardest to reconstruct. On the learning platform, the log once saved a deployment: a cluster update replaced nodes midway through deployment, and the log showed which commit had already been built, which had not, and that the feedback database had been on a removed node.
 
 <!-- section: theory | Memory and handover -->
 Memory is a set of short files the lead AI reads at the beginning of every session. In our projects there are three kinds: project status (done, in progress, next), an editorial rule with a reason and example (such as rules on literal translations or Habr headlines), and a tool's technical peculiarity (such as Google Sheets formulas collapsing arrays into a single value). Every editorial rule recorded in memory turns a one-off comment into a requirement for all later briefs.
@@ -87,11 +87,11 @@ An editorial rule in memory looks like this: the rule itself; what was wrong wit
 
 <!-- quiz -->
 ? An AI took three steps in a row: built an image, deployed it and found a configuration error. When should it update the session log?
-+ After each step, without waiting for the work to finish || An interrupted session erases the latest steps, so write the log immediately.
++ After each of the three steps, without waiting for the work to finish or the end-of-day review || An interrupted session erases the latest steps, so write the log immediately.
 - At the end of the working day, once it is clear which steps mattered || If the session ends earlier, nobody will be left to record them.
 - Only after finding the error, because successful steps are visible in commit history || Deployment and builds may leave no commit; the log covers everything significant.
 ? The lead AI's memory says an article is not published yet. What should it do before reporting this to the editor?
-+ Check the status against the platform, repository and log || Memory becomes outdated: one audit found 16 of 19 “unfinished” tasks were closed.
++ Check the status against the platform itself, the article's repository and the session log || Memory becomes outdated: one audit found 16 of 19 “unfinished” tasks were closed.
 - Nothing, because the lead AI's memory updates automatically after every publication || Memory updates only when something is written into it.
 - Delete the memory entry so it does not interfere with future sessions || The entry may still be needed; first check whether it is accurate.
 <!-- /quiz -->

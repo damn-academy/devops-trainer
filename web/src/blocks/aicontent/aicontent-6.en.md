@@ -24,11 +24,11 @@ Before publication, fill in a short card: platform; a link to its rules and the 
 
 <!-- quiz -->
 ? A browser assistant inserted text and every image into a Habr draft. What happens next?
-+ The editor checks the draft and presses Publish themselves || The assistant prepares the draft; the human retains the publication decision.
-- The assistant publishes the article because the brief specified a publication time || Automated publication on an external platform requires separate authorisation and checks.
++ The editor checks the draft on the platform and presses the Publish button themselves || The assistant prepares the draft; the human retains the publication decision.
+- The assistant publishes the article itself at the time specified in the brief || Automated publication on an external platform requires separate authorisation and checks.
 - The article can be considered published because Habr shows drafts to the author's subscribers || Only the author sees the draft.
 ? A blog is published in English and German. The editor corrected a fact in the English post. What else is needed?
-+ Apply the correction to the German version in the same change || Language versions are corrected together or they diverge.
++ Apply the correction to the German version in the same change, in the same commit || Language versions are corrected together or they diverge.
 - Nothing; the translator will fix the German version in the next scheduled blog update || Until then, readers will see different facts in different versions.
 - Remove the German version until the translator checks it against the corrected English one || Removal breaks language links and search visibility.
 <!-- /quiz -->
@@ -76,7 +76,7 @@ Major newsrooms publish AI policies with recurring principles: a human is respon
 
 <!-- quiz -->
 ? A company wants to publish AI-written articles on Habr with a disclosure. What do Habr's rules since July 2026 say?
-+ Habr discourages such material, and disclosure alone does not permit it || The rules allow illustrations and small supporting fragments in an original article, not labelled AI texts.
++ Habr discourages such material, and a label disclosing AI use alone does not permit it || The rules allow illustrations and small supporting fragments in an original article, not labelled AI texts.
 - Habr allows such articles if a label at the beginning says AI wrote the text || A label does not remove the restriction; an original article based on the author's experience is needed.
 - Habr allows such articles only in corporate blogs of companies paying for publication || The AI rule applies to every publication.
 ? An “AI-generated” label reduced reader trust in headlines in an experiment. What should an editorial team infer?

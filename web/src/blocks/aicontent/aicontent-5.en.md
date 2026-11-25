@@ -26,12 +26,12 @@ A community chat bot operates under the platform's and chat's rules. Automated u
 <!-- quiz -->
 ? An AI fixed a bot bug and also changed an already approved line. How can this be prevented?
 + Keep approved text separate from code and export it byte for byte || When text lives in a separate file, code edits do not touch it.
-- Prohibit AI from touching the bot's code and edit it only manually after each season || This removes the pipeline's speed; separating text from code is enough.
+- Prohibit AI from touching the bot's code || This removes the pipeline's speed; separating text from code is enough.
 - Reread every season line after each bot code change before launching the tournament || This is slow and unreliable; file separation prevents the problem.
 ? How should you test a tournament bot before launching it in the community?
 + Run the whole season with accelerated time and a fake platform API || This checks votes, text and protection against sending to the main chat.
 - Start it in the main chat at night when few participants are around and watch the first battles || Participants will see errors, and fixes will have to happen live.
-- Ask AI to read the bot's code and confirm that it contains no errors || Reading code does not replace running the whole scenario.
+- Ask AI to read the code and confirm that there are no errors || Reading code does not replace running the whole scenario.
 <!-- /quiz -->
 
 <!-- section: task | Task: a game format for your community -->
@@ -71,8 +71,8 @@ The main difficulty is that AI indulges the player and produces optimistic outco
 
 <!-- quiz -->
 ? When should the editor see an interactive longread's storyboard?
-+ Before drawing layers and programming scenes || Revising a storyboard is cheaper than reworking a finished scene.
-- After the first scene is assembled, so the editor can see what the result will look like || If the storyboard is wrong, the assembled scene will have to be discarded.
++ Before drawing layers and programming scenes, so revisions are inexpensive || Revising a storyboard is cheaper than reworking a finished scene.
+- After the first scene is assembled, so there is something to show || If the storyboard is wrong, the assembled scene will have to be discarded.
 - At the end, with the whole longread, to avoid distracting the editor with intermediate versions || Late storyboard revisions are the most expensive.
 ? An AI simulator host almost always gives the player successful outcomes. How can this be fixed?
 + Give the host pre-generated random numbers it must consume in order || A roll table with a recorded seed prevents the model from substituting optimism for randomness.
