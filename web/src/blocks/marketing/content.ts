@@ -356,8 +356,8 @@ export const MARKETING_QUIZ: QuizItem[] = [
     kind: 'mcq',
     concepts: ['marketing.reach'],
     prompt: bi(
-      'По данным Ehrenberg-Bass, откуда берётся рост категории?',
-      'According to Ehrenberg-Bass data, where does category growth come from?',
+      'По данным Ehrenberg-Bass, за счёт чего бренд прежде всего растёт внутри своей категории?',
+      'According to Ehrenberg-Bass data, what mainly drives a brand\'s growth within its category?',
     ),
     options: [
       { id: 'reach', text: bi('С охвата — с покупателей, которые легко вспоминают продукт и легко его покупают', 'From reach — from buyers who easily recall the product and easily buy it'), correct: true, why: bi('Покупатели «лёгкие»: они мало думают о категории и переключаются быстро, поэтому рынок растёт за счёт новых покупателей больше, чем за счёт глубины у старых.', 'Buyers are "light": they think little about the category and switch fast, so the market grows through new buyers, not depth with old ones.') },
