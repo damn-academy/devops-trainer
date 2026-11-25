@@ -57,7 +57,7 @@ export function opencoreVerdict(r: OpencoreResult): { ru: string; en: string } {
   const { trust, paying, revenue } = r.totals;
   if (trust < 45) {
     return {
-      ru: 'Граница слишком жадная: доверие сообщества падает, и рост платящих компаний замедляется именно там, где нужна скорость.',
+      ru: 'Граница слишком жадная: доверие сообщества падает, и рост платящих компаний замедляется там, где нужна скорость.',
       en: 'The boundary is too greedy: community trust falls, and the growth of paying companies slows exactly where speed is needed.',
     };
   }
