@@ -23,6 +23,8 @@ Assign an owner to each contact and send the promised material within two busine
 <!-- section: task | Exercise: three minutes at the booth -->
 Complete the exercise in the “Three minutes at the booth” simulator on this page. The AI plays a conference visitor with a hidden role, environment, and stage in the selection process. In three turns, establish who you are speaking to, describe the relevant part of the product, and agree on a next step. After the conversation, the simulator will reveal the visitor's role so you can compare it with your notes. Complete five conversations with different visitors.
 
+<!-- widget: roleplay {"trainer":"events.booth-visitor"} -->
+
 <!-- section: sources -->
 - CNCF, 2026 sponsorship packages — https://events.linuxfoundation.org/wp-content/uploads/2025/12/sponsor-cncf-2026_120425.pdf (04.12.2025)
 - Flagship event sponsorship terms — https://www.lfopensource.cn/kubecon-cloudnativecon-openinfra-summit-pytorch-conference-china/sponsor/ (2026)
@@ -48,6 +50,8 @@ Regional conferences have their own terms. DevOpsDays London 2025 offered standa
 
 <!-- section: task | Exercise: plan a trip without a booth -->
 Complete this exercise in a spreadsheet. Choose an upcoming conference your buyers attend. Find ten people from target companies in the speaker and sponsor lists, and record a reason to contact each one. Plan one side event: format, discussion question, eight guests, venue, and budget. Then calculate the full cost of the trip without a booth and compare it with the cost of the smallest booth, including all the expenses from the course's first lesson.
+
+<!-- widget: deptsim {"scenario":"events.kubecon"} -->
 
 <!-- section: sources -->
 - CNCF, 2026 sponsorship packages — https://events.linuxfoundation.org/wp-content/uploads/2025/12/sponsor-cncf-2026_120425.pdf (04.12.2025); 2025 packages — https://events.linuxfoundation.org/wp-content/uploads/2025/01/lf-global-sponsorship_2025_010925.pdf (09.01.2025)

@@ -24,6 +24,8 @@ After the conference, collect the official recording, slides, commands, and any 
 <!-- section: task | Exercise: an abstract for a reviewer -->
 Complete the exercise in the “Talk proposal for the program committee” simulator on this page. Write an abstract about a problem your team solved, using the five questions from the lesson. An AI reviewer will assess it against a program committee rubric: audience value, absence of advertising, specificity, novelty, and reproducibility. Rewrite the abstract until every part of the rubric scores at least four out of five, and save the final text.
 
+<!-- widget: rubric {"trainer":"events.cfp-review"} -->
+
 <!-- section: sources -->
 - CNCF, KubeCon Europe 2024 selection — https://www.cncf.io/blog/2024/01/30/inside-the-numbers-the-kubecon-cloudnativecon-selection-process-for-europe-2024/ (30.01.2024)
 - CNCF, KubeCon North America 2024 selection — https://www.cncf.io/blog/2024/08/19/inside-the-numbers-the-kubecon-cloudnativecon-selection-process-for-north-america-2024/ (19.08.2024)

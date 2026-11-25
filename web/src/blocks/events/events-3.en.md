@@ -45,6 +45,8 @@ Count registrations, attendees, substantive conversations, labs started and comp
 <!-- section: task | Exercise: map a region in one week -->
 Complete this exercise in the course's “Event map” spreadsheet. Choose a region and, over a week, find at least twenty groups and events there using six sources from the lesson. Fill in the spreadsheet fields for each and mark which groups have met in the last three months. Prepare a speaker package and send two initial emails to organizers following the lesson's guidelines. At the end of the week, record how many minutes a day this work took.
 
+<!-- widget: template {"file":"event-map"} -->
+
 <!-- section: sources -->
 - CNCF, 2025 annual report — https://www.cncf.io/reports/cncf-annual-report-2025/ (24.02.2026)
 - CNCF, KCD 2025 — https://www.cncf.io/blog/2024/10/30/mark-your-calendars-here-come-the-2025-kubernetes-community-days/ (30.10.2024); KCD rules — https://www.cncf.io/kcds/faq/ (checked 25.11.2026)
