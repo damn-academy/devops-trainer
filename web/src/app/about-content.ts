@@ -608,6 +608,18 @@ const CONTRIBUTE: AboutPageDef = {
   ),
   sections: [
     sec(
+      'own-course',
+      bi('Свой курс, идея курса или заявка на курс', 'Your own course, a course idea or a course request'),
+      p(
+        'Если у вас есть свой курс, учебные материалы или только идея курса и вы хотите выпустить его на этой платформе, мы поможем бесплатно. Вместе продумаем, чему курс учит и для кого он, соберём исследование и проверим факты, напишем уроки или отредактируем ваши, придумаем практику — задания, схемы, тренажёры и симуляторы, — прогоним курс через вымышленных учеников, которые находят непонятные места до живых людей, и опубликуем его. Авторство остаётся за вами, а курс выходит под той же открытой лицензией, что и вся платформа.',
+        'Если готового курса нет, но вам нужен курс на какую-то тему, пришлите заявку: кому он нужен, чему должен научить и почему существующие курсы не подходят. Написать можно кнопкой «Написать автору» внизу любой страницы или в [задаче на GitHub](' + REPO + '/issues/new). Как устроены курсы изнутри, рассказано ниже на этой странице.',
+      ),
+      p(
+        'If you have your own course, teaching material or just an idea for a course and want to publish it on this platform, we will help for free. Together we will work out what the course teaches and for whom, gather the research and check the facts, write the lessons or edit yours, design the practice — tasks, diagrams, trainers and simulators — run the course past fictional learners who find unclear places before real people do, and publish it. You remain the author, and the course is released under the same open licence as the whole platform.',
+        'If there is no course yet but you need one on some topic, send a request: who needs it, what it should teach and why existing courses do not fit. You can write with the “Contact the author” button at the bottom of any page or in a [GitHub issue](' + REPO + '/issues/new). How courses are built inside is described further down this page.',
+      ),
+    ),
+    sec(
       'layout',
       bi('Как устроен репозиторий', 'How the repository is organised'),
       p(

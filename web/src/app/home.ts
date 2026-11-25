@@ -228,6 +228,17 @@ export function homePage(): Page {
           {},
           t(bi('Открытая бесплатная платформа с профессиями и курсами. В каждом из них, кроме текста, есть практика: где-то терминал с настоящим Linux прямо в браузере, где-то схемы, которые можно ломать, тренажёры и симуляторы отделов компании с нейросетью в роли ведущего. Регистрация не нужна: прогресс хранится в вашем браузере.', 'An open, free platform with professions and courses. Besides text, each of them has practice: in some, a terminal with real Linux right in the browser, in others diagrams you can break, trainers and simulators of company departments with an AI as the game master. No sign-up: progress stays in your browser.')),
         ),
+        h(
+          'p.hero-contribute',
+          {},
+          t(bi('Есть свой курс или идея курса и нужна помощь с подготовкой и оформлением? Хотите, чтобы появился курс на нужную вам тему? Платформа открыта, её код лежит ', 'Have your own course or a course idea and need help preparing and publishing it? Want a course on a topic you need? The platform is open, its code is ')),
+          h('a', { href: 'https://github.com/damn-academy/devops-trainer', target: '_blank', rel: 'noopener' }, t(bi('на GitHub', 'on GitHub'))),
+          t(bi(', и мы бесплатно помогаем довести идею до опубликованного курса. Прочитайте страницу ', ', and we help turn an idea into a published course for free. Read ')),
+          h('a', { href: '#/about/contribute' }, t(bi('«Как поучаствовать»', '“Contributing”'))),
+          t(bi(' и ', ' and ')),
+          h('a', { href: '#', onclick: (e: Event) => { e.preventDefault(); window.dispatchEvent(new Event('feedback-contact')); } }, t(bi('напишите автору платформы', 'write to the author of the platform'))),
+          t(bi('.', '.')),
+        ),
       ),
       h(
         'section.catalog-section',
