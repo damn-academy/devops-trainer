@@ -126,10 +126,10 @@ export const PRODUCTS: Product[] = [
       "ru": "Стратегия и экосистема",
       "en": "Strategy and ecosystem"
     },
-    "card": { "ru": "Категория и рынок, уход с VMware, партнёры и маркетплейсы, стандарты и нейросети-агенты.", "en": "Category and market, the VMware exodus, partners and marketplaces, standards and AI agents." },
+    "card": { "ru": "Категория, рыночные события от смены лицензий до суверенности, партнёры, стандарты и агенты.", "en": "Category, market events from license changes to sovereignty, partners, standards and agents." },
     "summary": {
-      "ru": "Долгая стратегия инфраструктурной компании: как рынок учится называть вашу задачу, что на самом деле происходит с уходом с VMware и суверенным облаком в Европе, встроенная дистрибуция и партнёры, комиссии маркетплейсов облаков, стандарты, сертификация и обучение, нейросети и агенты как советчики и исполнители.",
-      "en": "The long-term strategy of an infrastructure company: how the market learns to name your problem, what is actually happening with departures from VMware and sovereign cloud in Europe, embedded distribution and partners, cloud marketplace fees, standards, certification and training, AI and agents as advisers and executors."
+      "ru": "Долгая стратегия инфраструктурной компании: как рынок учится называть вашу задачу, как превращать рыночные события в проверенные предложения — смены лицензий и условий у VMware, Oracle, Terraform, Redis и Elasticsearch, стоимость наблюдаемости, возврат из облака, дефицит ускорителей, агенты, инциденты доверия и суверенная инфраструктура в разных регионах, — встроенная дистрибуция и партнёры, комиссии маркетплейсов облаков, стандарты, сертификация и обучение, нейросети и агенты как советчики и исполнители.",
+      "en": "The long-term strategy of an infrastructure company: how the market learns to name your problem, how to turn market events into tested offers—license and term changes at VMware, Oracle, Terraform, Redis and Elasticsearch, observability costs, cloud repatriation, accelerator scarcity, agents, trust incidents and sovereign infrastructure across regions—embedded distribution and partners, cloud marketplace fees, standards, certification and training, AI and agents as advisers and executors."
     },
     "subtitle": {
       "ru": "Для основателей и руководителей, которые отвечают за положение компании на рынке на годы вперёд.",
