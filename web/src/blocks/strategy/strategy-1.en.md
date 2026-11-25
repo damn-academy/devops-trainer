@@ -81,7 +81,7 @@ Complete the exercise in the document on this page. Choose one major vendor's ch
 - CloudBolt, 2026 survey — https://www.cloudbolt.io/company/news/new-cloudbolt-research-86-of-companies-actively-reducing-their-vmware-footprint/ (January 2026)
 - Nutanix, transition from VMware — https://www.nutanix.com/vmware-alternative/transition (checked 25.11.2026)
 - Vates, growth after customers left VMware — https://vates.tech/blog/what-we-heard-in-vienna-and-why-vates-is-investing-in-dach/
-- AWS, The New York Times' migration from Oracle — https://aws.amazon.com/blogs/database/the-new-york-times-cut-oracle-migration-time-from-18-to-5-months/ (26.10.2026)
+- AWS, The New York Times' migration from Oracle — https://aws.amazon.com/blogs/database/the-new-york-times-cut-oracle-migration-time-from-18-months-to-18-weeks/ (26.10.2026)
 - AWS, Oracle-to-PostgreSQL schema conversion guide — https://docs.aws.amazon.com/dms/latest/sbs/chap-oracle-postgresql.migration-process.database-schema-conversion.html
 - IBM, EDB Postgres Enterprise — https://www.ibm.com/products/postgres-enterprise/pricing
 - HashiCorp, Business Source License — https://www.hashicorp.com/en/bsl
