@@ -3,7 +3,7 @@
 // Russian text is the source material; the English slot of every section is a
 // faithful full translation. Claude owns the prose pass per web/STYLE-RU.md.
 
-import { bi, count } from '../../core/i18n';
+import { bi, pluralRu } from '../../core/i18n';
 import type { Concept, Lesson, QuizItem } from '../../core/types';
 import { MARKETING_SCHOOL, type SchoolModule } from './school';
 
@@ -802,8 +802,8 @@ function lessonFor(letter: string): Lesson {
     block: 'marketing',
     title: bi(spec.title[0], spec.title[1]),
     summary: bi(
-      `${headingRu}: ${count(items.length, ['принцип', 'принципа', 'принципов'], ['principle', 'principles'])} с задачей на каждый день.`,
-      `${headingEn}: ${count(items.length, ['принцип', 'принципа', 'принципов'], ['principle', 'principles'])} with a task for each day.`,
+      `${headingRu}: ${items.length} ${pluralRu(items.length, ['принцип', 'принципа', 'принципов'])} с задачей на каждый день.`,
+      `${headingEn}: ${items.length} ${items.length === 1 ? 'principle' : 'principles'} with a task for each day.`,
     ),
     introduces: INTRODUCES[letter] ?? [],
     uses: USES[letter] ?? [],
