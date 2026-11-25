@@ -14,13 +14,14 @@ import { href } from '../../core/router';
 import { store } from '../../core/store';
 import type { HintLevel } from '../../core/types';
 import { AiError, type ChatMessage } from './client';
-import { currentTask, gather, where } from './context';
+import { currentTask, templateTask, gather, where } from './context';
 import { nextHintStep, suggestedCommands, type BuiltPrompt, type TutorMode } from './prompt';
 import { ai, ERRORS } from './service';
 import { turn } from './tutor';
 import './ai.css';
 
 export interface TutorOptions {
+  templateFile?: string;
   mode?: TutorMode;
   /** A question to send right away. */
   question?: string;
@@ -171,7 +172,7 @@ function draw(o: TutorOptions) {
     seg.append(h('label', {}, r, h('span', {}, t(T.modes[m]))));
   }
   const w = where();
-  const ct = currentTask(w.lesson);
+  const ct = templateTask(w.lesson, o.templateFile) ?? currentTask(w.lesson);
   const ctxLine = h(
     'p.tutor-ctx.small.muted',
     {},
@@ -185,7 +186,7 @@ function draw(o: TutorOptions) {
     const draftId = `helper.${w.lesson?.id ?? 'global'}`;
     question.value = loadDraft(draftId, '');
     question.oninput = () => saveDraft(draftId, question.value);
-    panel.append(question, externalButton(() => ({ screen: o.screen?.(), want: question.value })));
+    panel.append(question, externalButton(() => ({ screen: o.screen?.(), templateFile: o.templateFile, want: question.value })));
 
     panel.append(h('div.tutor-connect', {}, h('p', {}, t(T.notConnected)), h('a.btn.primary.small', { href: href({ name: 'settings' }), onclick: closeTutor }, t(T.connect))));
     return;
@@ -235,7 +236,7 @@ async function send(question: string, o: TutorOptions, hintStep?: HintLevel) {
   const list = thread();
   if (!list || !panel) return;
   const w = where();
-  const ct = currentTask(w.lesson);
+  const ct = templateTask(w.lesson, o.templateFile) ?? currentTask(w.lesson);
   const taskId = ct?.task.id;
   const used = taskId ? (state.hints.get(taskId) ?? 0) : 0;
   const mode = state.mode;

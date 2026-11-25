@@ -121,10 +121,16 @@ export function lessonPage(id: string, focusSection?: string): Page {
       frame.classList.toggle('overflowing', overflow && scroll.scrollLeft < scroll.scrollWidth - scroll.clientWidth - 1);
       hint.hidden = !overflow || touched;
     };
-    const onScroll = () => { touched = true; update(); };
+    const onScroll = () => { if (scroll.scrollLeft > 0) touched = true; update(); };
     scroll.addEventListener('scroll', onScroll);
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(update); observer?.observe(scroll);
-    return () => { observer?.disconnect(); scroll.removeEventListener('scroll', onScroll); };
+    const table = scroll.querySelector('table');
+    if (table) observer?.observe(table);
+    const frameId = requestAnimationFrame(update);
+    window.addEventListener('resize', update);
+    let disposed = false;
+    void document.fonts?.ready.then(() => { if (!disposed) update(); });
+    return () => { disposed = true; cancelAnimationFrame(frameId); observer?.disconnect(); window.removeEventListener('resize', update); scroll.removeEventListener('scroll', onScroll); };
   });
   updateBar();
   if (focusSection) requestAnimationFrame(() => el.querySelector(`#s-${CSS.escape(focusSection)}`)?.scrollIntoView({ block: 'start' }));

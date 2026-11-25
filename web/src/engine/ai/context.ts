@@ -70,8 +70,32 @@ export function currentTask(l: Lesson | undefined, root: ParentNode | null = typ
   return { task, docStep: dl || task.docStep || (task.beyond ? 4 : undefined) };
 }
 
+const practiceCsv = import.meta.glob<string>('../../../public/templates/metrics-*.csv', { query: '?raw', import: 'default', eager: true });
+
+/** Bind a data card to its lesson's sample-data exercise, not the business task. */
+export function templateTask(l: Lesson | undefined, file?: string): ReturnType<typeof currentTask> {
+  if (!l || !file?.startsWith('metrics-')) return null;
+  if (!l.sections.some(s => s.kind === 'widget' && s.widget === 'template' && (s.props as { file?: string } | undefined)?.file === file)) return null;
+  const practice = l.sections.find(s => s.kind === 'text' && s.title?.ru === 'Практика на учебных данных');
+  if (practice?.kind !== 'text') return null;
+  const filename = `${file}${lang() === 'en' ? '-en' : ''}.csv`;
+  const csv = practiceCsv[`../../../public/templates/${filename}`];
+  if (!csv) return null;
+  const rows = csv.trim().split(/\r?\n/);
+  const summary = lang() === 'ru'
+    ? `Файл: ${filename}. Колонки: ${rows[0]}. Строк данных: ${rows.length - 1}.`
+    : `File: ${filename}. Columns: ${rows[0]}. Data rows: ${rows.length - 1}.`;
+  const prompt = `${t(practice.body)}\n\n${summary}`;
+  return { task: { id: `${l.id}.${file}`, prompt: { ru: prompt, en: prompt }, hints: [] } as unknown as Task };
+}
+
+export function templateDraft(file: string, root: ParentNode | null = typeof document !== 'undefined' ? document : null): string {
+  const input = Array.from(root?.querySelectorAll<HTMLTextAreaElement>('textarea[data-template-id]') ?? []).find(el => el.dataset.templateId === file);
+  return input ? input.value : loadDraft(`template.${file}`, '');
+}
+
 /** Live values take precedence over storage, including an explicitly cleared draft. */
-export function documentDraft(l: Lesson | undefined, root: ParentNode | null = typeof document !== 'undefined' ? document : null): string | undefined {
+export function documentDraft(l: Lesson | undefined, root: ParentNode | null = typeof document !== 'undefined' ? document : null, includeTemplates = true): string | undefined {
   if (!l) return undefined;
   const drafts = l.sections.filter(s => s.kind === 'text' && s.step === 'practice').map(s => {
     const id = `${l.id}.${s.id}`;
@@ -81,7 +105,7 @@ export function documentDraft(l: Lesson | undefined, root: ParentNode | null = t
     const legacy = s.kind === 'text' ? `${t(s.title ?? l.title)}\n\n${t(s.body)}\n\n` : '';
     return value === template || value === legacy || !value.trim() ? '' : `## ${t(s.kind === 'text' ? s.title ?? l.title : l.title)}\n\n${value.trim()}`;
   }).filter(Boolean);
-  for (const section of l.sections) {
+  for (const section of includeTemplates ? l.sections : []) {
     if (section.kind !== 'widget' || section.widget !== 'template') continue;
     const props = section.props;
     const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined;
