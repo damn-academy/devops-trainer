@@ -17,28 +17,42 @@ export async function buildFinanceTemplates(output) {
     ];
     inputs.addRow([tr('Драйвер, тыс. $','Driver, $000'),tr('Значение','Value')]);
     driverLabels.forEach((l,i) => inputs.addRow([tr(...l),financeExample.drivers[i]]));
+    [
+      [tr('Использовать драйверы: 1 — да, 0 — исходный пример','Use drivers: 1 = yes, 0 = original example'),0],
+      [tr('Месяц запуска продукта','Product launch month'),1],
+      [tr('Регистрации в месяц','Monthly signups'),100],
+      [tr('Конверсия в оплату, доля','Paid conversion, fraction'),0.1],
+      [tr('ACV, тыс. $','ACV, $000'),12],
+      [tr('Драйверы: новые клиенты платят ACV при регистрации; выручка признаётся за 12 месяцев, продление ежегодно, отток не моделируется.','Drivers: new customers pay ACV at signup; revenue is recognized over 12 months, renewals are annual, churn is not modeled.')],
+    ].forEach(row => inputs.addRow(row));
+    for (const [row, min, max] of [[21,0,1],[22,1,18]]) inputs.getCell(row,2).dataValidation = {type:'whole',operator:'between',formulae:[min,max],showErrorMessage:true,errorStyle:'stop'};
+    inputs.getCell('B24').dataValidation = {type:'decimal',operator:'between',formulae:[0,1],showErrorMessage:true,errorStyle:'stop'};
+    for (const row of [23,25]) inputs.getCell(row,2).dataValidation = {type:'decimal',operator:'greaterThanOrEqual',formulae:[0],showErrorMessage:true,errorStyle:'stop'};
     const months = en ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] : ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
     const init = (s, labels, total=true) => { s.addRow([tr('Строка, тыс. $','Line, $000'),...months,...(total?[tr('Год / на конец года','Year / year-end')]:[])]); labels.forEach(l => s.addRow([tr(...l)])); };
     init(pnl,[['Выручка от подписок','Subscriptions'],['Выручка от потребления','Usage'],['Выручка от услуг','Services'],['Выручка всего','Revenue'],['Хостинг для клиентов','Hosting COGS'],['Поддержка','Support COGS'],['Внедрения','Services COGS'],['Себестоимость (COGS)','COGS'],['Валовая прибыль','Gross profit'],['Разработка и дополнительный найм','R&D and additional hiring'],['Продажи и маркетинг (S&M)','S&M'],['Общие расходы со страховкой и амортизацией','G&A including insurance and depreciation'],['Операционные расходы','Operating expenses'],['Операционная прибыль (EBIT)','EBIT'],['Процентный доход','Interest income'],['Чистая прибыль','Net income']]);
     init(cash,[['Поступления от клиентов','Cash from customers'],['Полученные проценты','Interest received'],['Операционные выплаты','Operating payments'],['Деньги от операционной деятельности: прямой метод','CFO: direct'],['Покупка оборудования','CFI'],['Финансирование','CFF'],['Изменение денег','Net cash change'],['Чистая прибыль','Net income'],['Амортизация','Depreciation'],['Изменение дебиторской задолженности, минус','Negative change in AR'],['Изменение расходов будущих периодов, минус','Negative change in prepaids'],['Изменение кредиторской задолженности','Change in AP'],['Изменение начисленных обязательств','Change in accruals'],['Изменение отложенной выручки','Change in deferred revenue'],['Деньги от операционной деятельности: косвенный метод','CFO: indirect']]);
     init(balance,[['Деньги','Cash'],['Дебиторская задолженность','AR'],['Расходы будущих периодов','Prepaid expenses'],['Основные средства за вычетом амортизации','PP&E net'],['Активы','Assets'],['Кредиторская задолженность','AP'],['Начисленные обязательства','Accrued expenses'],['Отложенная выручка','Deferred revenue'],['Обязательства','Liabilities'],['Вложенный капитал','Contributed capital'],['Накопленный убыток','Accumulated deficit'],['Капитал','Equity'],['Активы − обязательства − капитал','Assets − liabilities − equity']]);
     init(checks,[['Баланс: должно быть 0','Balance: must be 0'],['Прямой − косвенный метод: должно быть 0','Direct − indirect CFO: must be 0']],false);
+    pnl.getCell('A18').value=tr('Выручка от драйверов','Driver-based revenue');
     for (let m=1;m<=18;m++) {
       const col=m<=12?m+1:m+2, prevCol=m===13?13:col-1;
       const c=pnl.getColumn(col).letter, prev=pnl.getColumn(prevCol).letter;
       if(m>12) for(const sh of [pnl,cash,balance,checks]) sh.getCell(1,col).value=`${months[(m-1)%12]} 2`;
       const H=ref(hiring,hiring.getColumn(m+6).letter,32);
       const P=r=>ref(pnl,c,r), B=r=>ref(balance,c,r), C=r=>ref(cash,c,r), old=(s,r)=>m===1?'0':ref(s,prev,r);
-      const formulas=[`${inp(3)}/12+IF(${m}>=7,${inp(4)}/12,0)`,`${inp(5)}+${inp(6)}*(${m}-1)`,`IF(MOD(${m},3)=0,${inp(7)},0)`,`SUM(${c}2:${c}4)`,`${inp(8)}+${inp(9)}*(${m}-1)`,inp(10),`IF(MOD(${m},3)=0,${inp(11)},0)`,`SUM(${c}6:${c}8)`,`${c}5-${c}9`,`${inp(12)}+${H}`,inp(13),`${inp(14)}+${inp(16)}/12+${inp(17)}/${inp(18)}+IF(${m}=12,${inp(15)},0)`,`SUM(${c}11:${c}13)`,`${c}10-${c}14`,inp(19),`${c}15+${c}16`];
+      f(pnl,18,col,`MAX(0,${m}-${inp(22)}+1)*${inp(23)}*${inp(24)}*${inp(25)}/12`);
+      const receipts = `IF(${inp(21)}=1,IF(${m}>=${inp(22)},${inp(23)}*${inp(24)}*${inp(25)}*(1+IF(${m}>=${inp(22)}+12,1,0)),0),IF(MOD(${m}-1,12)=0,${inp(3)},0)+IF(MOD(${m}-7,12)=0,${inp(4)},0))`;
+      const formulas=[`IF(${inp(21)}=1,${c}18,${inp(3)}/12+IF(${m}>=7,${inp(4)}/12,0))`,`IF(${inp(21)}=1,0,${inp(5)}+${inp(6)}*(${m}-1))`,`IF(${inp(21)}=1,0,IF(MOD(${m},3)=0,${inp(7)},0))`,`SUM(${c}2:${c}4)`,`${inp(8)}+${inp(9)}*(${m}-1)`,inp(10),`IF(MOD(${m},3)=0,${inp(11)},0)`,`SUM(${c}6:${c}8)`,`${c}5-${c}9`,`${inp(12)}+${H}`,inp(13),`${inp(14)}+${inp(16)}/12+${inp(17)}/${inp(18)}+IF(${m}=12,${inp(15)},0)`,`SUM(${c}11:${c}13)`,`${c}10-${c}14`,inp(19),`${c}15+${c}16`];
       formulas.forEach((v,i)=>f(pnl,i+2,col,v));
       [
-        `IF(MOD(${m}-1,12)=0,${inp(3)},0)+IF(MOD(${m}-7,12)=0,${inp(4)},0)+${old(pnl,3)}+${old(pnl,4)}`,
-        inp(19),`-(${old(pnl,6)}+${P(7)}+${P(8)}+${inp(12)}+${H}+${inp(13)}+${inp(14)}+IF(MOD(${m}-1,12)=0,${inp(16)},0))`,
+        `${receipts}+${old(pnl,3)}+${old(pnl,4)}`,
+        inp(19),`-(${old(pnl,6)}+${P(7)}+${P(8)}+${inp(12)}+${H}+${inp(13)}+${inp(14)}+IF(MOD(${m}-1,12)=0,${inp(16)},0)+IF(${m}=13,${inp(15)},0))`,
         `SUM(${c}2:${c}4)`,`IF(${m}=1,-${inp(17)},0)`,`IF(${m}=7,${inp(20)},0)`,`SUM(${c}5:${c}7)`,
         P(17),`${inp(17)}/${inp(18)}`,`-(${B(3)}-${old(balance,3)})`,`-(${B(4)}-${old(balance,4)})`,`${B(7)}-${old(balance,7)}`,`${B(8)}-${old(balance,8)}`,`${B(9)}-${old(balance,9)}`,`SUM(${c}9:${c}15)`,
       ].forEach((v,i)=>f(cash,i+2,col,v));
       [
-        `${m===1?inp(2):old(balance,2)}+${C(8)}`,`${P(3)}+${P(4)}`,`${inp(16)}*(11-MOD(${m}-1,12))/12`,`${inp(17)}-${m}*${inp(17)}/${inp(18)}`,`SUM(${c}2:${c}5)`,P(6),`IF(${m}>=12,${inp(15)},0)`,`${old(balance,9)}+IF(MOD(${m}-1,12)=0,${inp(3)},0)+IF(MOD(${m}-7,12)=0,${inp(4)},0)-${P(2)}`,`SUM(${c}7:${c}9)`,`${inp(2)}+IF(${m}>=7,${inp(20)},0)`,`${old(balance,12)}+${P(17)}`,`${c}11+${c}12`,`${c}6-${c}10-${c}13`,
+        `${m===1?inp(2):old(balance,2)}+${C(8)}`,`${P(3)}+${P(4)}`,`${inp(16)}*(11-MOD(${m}-1,12))/12`,`${inp(17)}-${m}*${inp(17)}/${inp(18)}`,`SUM(${c}2:${c}5)`,P(6),`IF(${m}=12,${inp(15)},0)`,`${old(balance,9)}+${receipts}-${P(2)}`,`SUM(${c}7:${c}9)`,`${inp(2)}+IF(${m}>=7,${inp(20)},0)`,`${old(balance,12)}+${P(17)}`,`${c}11+${c}12`,`${c}6-${c}10-${c}13`,
       ].forEach((v,i)=>f(balance,i+2,col,v));
       f(checks,2,col,B(14)); f(checks,3,col,`${C(5)}-${C(16)}`);
     }

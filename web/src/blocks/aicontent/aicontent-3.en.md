@@ -72,8 +72,22 @@ The third method uses a generative model to draw illustrations. For interactive 
 
 An illustration brief should specify palette, aspect ratio and dimensions, scene list, layers and their movement, filename rules and a contact sheet showing all results together. On a phone, show the illustration full-screen first and let text move over it later; otherwise text hides the scene before viewers have time to see it.
 
+This is what the result looks like in the Sankofa museum's published longread about the recording of Sea Lion Woman. On a computer, text runs down the left while the scene on the right changes as you scroll: a house, a truck carrying recording equipment, a circle of children. Each scene is assembled from a background and separate figures, so movement leaves no holes in the background.
+
+![The longread's first scene on a computer: text on the left, a drawing of a house on the right](media/aicontent/slg-1.jpg "Sea Lion Girls longread, first scene at a width of 1280 pixels")
+
+![The truck scene with a place label on the map](media/aicontent/slg-3.jpg "The same article further down the page: a new scene has replaced the previous one, with the place label drawn on a separate layer")
+
+On a phone, the order is different: the whole scene appears first, and only then does text move over it.
+
+![A circle of children on a phone screen, with a paragraph of text below](media/aicontent/slg-m.jpg "The same longread at a width of 390 pixels")
+
 <!-- section: theory | Diagrams and interactive explanations -->
 Interactive diagrams explaining a process step by step are a separate illustration type. Feedback on platform diagrams produced rules useful for static diagrams too. Begin with a familiar situation and three to five elements, one idea per step. An arrow alone explains nothing: highlight the active element, pass the result as a visible object and label the action. Every line and icon explains itself with a label, and a click opens a card; there is no separate legend. Elements stay in place from the first step rather than jumping, labels remain long enough to read, and the diagram fits on screen.
+
+Here is how this looks in the learning platform's diagram tracing a request from the browser to the database in 18 steps. Step controls and a scale labelled with the stages sit at the top; the active element is highlighted in the centre with an action label, and clicking any element opens an explanation card.
+
+![Interactive diagram: step controls, stage scale, and a Browser element with an action label](media/aicontent/schema.jpg "The Path of a Website Request diagram on damn.academy, step one of eighteen")
 
 <!-- section: theory | Rights to illustrations -->
 A generative illustration does not automatically confer exclusive copyright. The U.S. Copyright Office's 2025 report says protection covers human contributions: creative selection, arrangement and transformation of AI material, while text prompts alone are generally insufficient. Service terms such as “you own the output” do not replace legal requirements. For a commercial illustration, keep four records: rights to source material, service terms on the generation date, consent from depicted people and the history of human work on the image. Recordings and videos downloaded for research do not become publishable media: use official embeds on the site.

@@ -4,6 +4,7 @@
 // into DOM nodes, never into innerHTML.
 
 import { h } from './dom';
+import { markdownImage } from './markdown-image';
 import { lang as currentLang, type Lang } from './i18n';
 
 const LINK = /\[\[([a-z0-9][\w.-]*)(?:\|([^\]]+))?\]\]/g;
@@ -116,6 +117,17 @@ export function renderMd(md: string, o: MdOptions = {}): DocumentFragment {
       i++;
       const code = body.join('\n');
       frag.append(o.code ? o.code(code, fence[1]) : h('pre', { class: `code lang-${fence[1] || 'text'}` }, h('code', {}, code)));
+      continue;
+    }
+    const image = markdownImage(line);
+    if (image) {
+      flush();
+      const src = `${import.meta.env.BASE_URL}${image.src}`;
+      frag.append(h('figure.md-image', {},
+        h('a', { href: src, target: '_blank', rel: 'noopener noreferrer' },
+          h('img', { src, alt: image.alt, loading: 'lazy', decoding: 'async' })),
+        image.caption !== undefined ? h('figcaption', {}, image.caption) : null));
+      i++;
       continue;
     }
     const headers = tableCells(line);

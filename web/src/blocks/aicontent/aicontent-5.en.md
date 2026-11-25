@@ -8,7 +8,7 @@ A community game format is a system with a script and state, rather than a colle
 The editor intervened in game content just as in an article. They rejected the calculation questions AI proposed for season three: they are boring to solve in chat, and the answer depends on who calculates fastest. Short cases with precise incident descriptions and video briefings replaced them. The rules must be explainable in a minute: elaborate bonuses and multipliers, which AI readily adds, obscure how to win.
 
 <!-- section: theory | The bot as a stateful program -->
-The tournament bot publishes battles, accepts votes, calculates results and advances to the next battle. Its most important component is state: if the bot restarts mid-season or you replace one video's text, the tournament must resume from the same place. In the version where the bot runs as a pod in a Google Sheets and Apps Script environment, code, media and state occupy separate volumes, so replacing text or video does not reset scores.
+The tournament bot publishes battles, accepts votes, calculates results and advances to the next battle. Its most important component is state: if the bot restarts mid-season or you replace one video's text, the tournament must resume from the same place. The transferable idea is simple: bot code, media and tournament state are stored separately, so replacing text or video does not reset scores. In a typical bot, this means code lives in a repository, videos in a folder or file storage, and state in a database or at least a separate spreadsheet. In our tournament, the bot ran in an unusual environment: the author's experimental layer on top of Google Sheets and Apps Script that simulates Kubernetes containers and volumes. You do not need to recreate it to apply the same idea.
 
 A separate script exports season text and media into one `season.json` file, preserving them byte for byte as the editor approved them. This prevents a common error: AI “improving” an already approved line while editing the bot's code.
 
@@ -18,7 +18,7 @@ Do not test the bot in a live chat. A test with a fake Telegram API accelerates 
 Bot work invites endless trials: start it, look, fix a small detail, ask a person to check manually, start again. In our projects, the editor stopped this with a rule: incorporate each trial's result into the implementation immediately, and test the entire target scenario. Trials for their own sake do not bring launch closer.
 
 <!-- section: theory | Environment-specific behaviour -->
-Every bot environment has traps worth recording. In Apps Script, `ContentService` returned a 302 response to Telegram's webhook, causing Telegram to retry delivery; `HtmlService.createHtmlOutput('ok')` returned 200, while duplicates still had to be filtered separately. Code in a string did not automatically declare the necessary OAuth permissions, so they had to be specified in the manifest. Creating an asynchronous function through a constructor did not work, so the bot adopted a synchronous contract. Record such findings in the lead AI's memory so the next bot does not repeat the same mistakes.
+Every bot environment has traps worth recording. Here are the traps of ordinary Apps Script, without the extra layer: in Apps Script, `ContentService` returned a 302 response to Telegram's webhook, causing Telegram to retry delivery; `HtmlService.createHtmlOutput('ok')` returned 200, while duplicates still had to be filtered separately. Code in a string did not automatically declare the necessary OAuth permissions, so they had to be specified in the manifest. Creating an asynchronous function through a constructor did not work, so the bot processed each command to completion before responding, without deferred operations. Record such findings in the lead AI's memory so the next bot does not repeat the same mistakes.
 
 <!-- section: theory | Platform rules and boundaries -->
 A community chat bot operates under the platform's and chat's rules. Automated unsolicited messages and impersonating people violate most platforms' rules, and X prohibits unauthorised account automation. A game bot that participants voluntarily add to their chat and vote in is a different matter. Participants' personal data and message contents are not published in material about the tournament.
@@ -79,6 +79,13 @@ The main difficulty is that AI indulges the player and produces optimistic outco
 - Add a request to be stricter and punish the player more often for poor decisions || Models follow such requests inconsistently; external randomness is needed.
 - Replace AI with a calculator giving fixed outcomes for every player decision || This removes the different outcomes of one decision that make the simulator useful.
 <!-- /quiz -->
+
+
+Below is an actual simulator from the PR course: a week of crisis. You do not need an AI key to try it: choose a company and difficulty, click “Copy prompt” or “Download prompt” and paste the text into any AI chat. The host will describe Monday morning and two stories that have landed on the press team's desk, then ask what you do. After each turn, it records the game state so you can resume another day.
+
+![Simulator screen: company selection, difficulty, number of turns, and buttons to copy and download the prompt](media/aicontent/sim.jpg "The simulator before the game starts")
+
+<!-- widget: deptsim {"scenario":"pr.crisis"} -->
 
 <!-- section: task | Task: storyboard one interactive piece -->
 Complete the task in the document on this page. Choose a topic for interactive material: a longread, a lesson with a diagram or a simulator. Create a storyboard of five to seven scenes: what the reader sees, what they do, what changes and what text accompanies the scene. For each, record which facts you need and from where, which illustrations you will make and how, and how you will check the scene in a browser on a phone and a computer.

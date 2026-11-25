@@ -79,8 +79,17 @@ export function documentDraft(l: Lesson | undefined, root: ParentNode | null = t
     const value = input ? input.value : loadDraft(`document.${id}`, '');
     const template = s.kind === 'text' ? documentTemplate(id, t(s.title ?? l.title), t(s.body)) : '';
     const legacy = s.kind === 'text' ? `${t(s.title ?? l.title)}\n\n${t(s.body)}\n\n` : '';
-    return value === template || value === legacy ? '' : value.trim();
+    return value === template || value === legacy || !value.trim() ? '' : `## ${t(s.kind === 'text' ? s.title ?? l.title : l.title)}\n\n${value.trim()}`;
   }).filter(Boolean);
+  for (const section of l.sections) {
+    if (section.kind !== 'widget' || section.widget !== 'template') continue;
+    const props = section.props;
+    const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined;
+    if (typeof file !== 'string') continue;
+    const input = Array.from(root?.querySelectorAll<HTMLTextAreaElement>('textarea[data-template-id]') ?? []).find(el => el.dataset.templateId === file);
+    const value = input ? input.value : loadDraft(`template.${file}`, '');
+    if (value.trim()) drafts.push(`## ${input?.dataset.templateTitle ?? file}\n\n${value.trim()}`);
+  }
   return drafts.length ? drafts.join('\n\n') : undefined;
 }
 

@@ -49,7 +49,7 @@ test('second persona pass: models, templates, language mirrors and saved work', 
   const draft = page.locator('.course-trainer textarea').first();
   await draft.fill('A saved sales draft'); await page.reload(); await expect(draft).toHaveValue('A saved sales draft');
   await page.goto('/#/lesson/marketing.sim-quarter');
-  await expect(page.locator('.lesson-nav a').last()).toHaveAttribute('href','#/course/marketing');
+  await expect(page.locator('.lesson-nav a').last()).toHaveAttribute('href','#/courses');
   await page.locator('.lesson-nav').screenshot({path:'/tmp/fix2-marketing-course-back.png'});
   for (const lesson of ['events.labs','events.cfp','events.no-booth','oss.why','pr.crisis','product.opencore','product.gtm','product.discovery','product.pricing','product.roadmap','scithink.story','scithink.correlation','scithink.control','scithink.bayes','scithink.calibration','scithink.fakes','scithink.numbers','scithink.forecasts','scithink.final','strategy.category','strategy.ecosystem','strategy.agents','sales.d100-presence']) {
     await page.goto(`/#/lesson/${lesson}`);

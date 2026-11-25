@@ -1,3 +1,4 @@
+import { lessonMediaPlugin } from './src/core/lesson-media-plugin.ts';
 import { feedbackPlugin } from './src/engine/feedback/vite-plugin.ts';
 import { defineConfig } from 'vitest/config';
 import { manifestPlugin } from './src/core/manifest-plugin.ts';
@@ -16,7 +17,7 @@ export default defineConfig({
   base: './',
   // virtual:dt-manifest: the light course manifest the home page paints from;
   // sw.js + manifest.webmanifest for offline use (design 09 §3.2).
-  plugins: [feedbackPlugin(), publicRawPlugin(), manifestPlugin(), pwaPlugin()],
+  plugins: [lessonMediaPlugin(), feedbackPlugin(), publicRawPlugin(), manifestPlugin(), pwaPlugin()],
   server: { headers: isolation },
   preview: { headers: isolation },
   build: {

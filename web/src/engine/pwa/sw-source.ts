@@ -15,6 +15,7 @@ export function strategyFor(url: string, scope: string, mode: string, method: st
   if (method !== 'GET') return 'skip';
   if (!url.startsWith(scope)) return 'skip';
   const path = url.slice(scope.length).split('?')[0].split('#')[0];
+  if (path.startsWith('media/')) return 'network'; // Avoid unbounded large-media caches.
   if (path.startsWith('api/')) return 'network';
   if (mode === 'navigate' || path === '' || path === 'index.html') return 'navigate';
   if (path.startsWith('v86/') || /(^|\/)v86[^/]*\.(wasm|js)$/.test(path)) return 'v86';
