@@ -43,7 +43,7 @@ it('publishes all thirteen supplied finance lessons in six modules', () => {
   const ids=FINANCE_MODULES.flatMap(m=>m.lessons);
   expect(ids).toHaveLength(13); expect(new Set(ids).size).toBe(13);
   expect(registry.blocks.get('finance')!.lessons).toEqual(ids);
-  expect(visibleProducts('course').filter(p=>p.shelf==='business').map(p=>p.id)).toEqual(['marketing','sales','product','events','oss','strategy','finance','pr','scithink']);
+  expect(visibleProducts('course').filter(p=>p.shelf==='business').map(p=>p.id)).toEqual(['marketing', 'sales', 'product', 'metrics', 'events', 'oss', 'strategy', 'finance', 'pr', 'aicontent', 'scithink']);
   for(const id of ids) {
     const lesson=registry.lessons.get(id)!; expect(lesson.summary?.en).toBeTruthy();
     for(const s of lesson.sections) if(s.kind==='widget') expect(registry.widgets.has(s.widget),s.widget).toBe(true);
