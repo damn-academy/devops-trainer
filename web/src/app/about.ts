@@ -14,7 +14,7 @@ import { ABOUT_PAGES, ABOUT_TITLE, type AboutPageDef, type AboutPageId } from '.
 
 export { ABOUT_PAGES, ABOUT_TITLE } from './about-content';
 
-export const ABOUT_LINK = bi('Справка о курсе', 'About the course');
+export const ABOUT_LINK = bi('Справка о платформе', 'About the platform');
 
 export function aboutHref(page?: AboutPageId): string {
   return href({ name: 'about', page: page && page !== 'what' ? page : undefined });
