@@ -86,8 +86,8 @@ const KNOBS: { key: keyof OpencoreParams; min: number; max: number; step: number
 ];
 
 const css = `
-.poc-root { display: grid; gap: 14px; }
-.poc-knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px 18px; }
+.poc-root { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.poc-knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 10px 18px; }
 .poc-knob label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
 .poc-knob output { font-variant-numeric: tabular-nums; color: var(--accent, #2f6fdd); }
 .poc-knob input[type=range] { width: 100%; }
@@ -96,7 +96,7 @@ const css = `
 .poc-verdict { font-size: 13px; border-left: 3px solid var(--accent, #2f6fdd); padding: 6px 10px; }
 .poc-bars { display: flex; align-items: flex-end; gap: 3px; height: 72px; }
 .poc-bars i { flex: 1; background: var(--accent, #2f6fdd); opacity: .75; border-radius: 2px 2px 0 0; min-height: 2px; }
-.poc-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.poc-table { table-layout: fixed; overflow-wrap: anywhere; width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .poc-table th, .poc-table td { text-align: right; padding: 3px 8px; border-bottom: 1px solid var(--line, #d8dee9); }
 .poc-table th:first-child, .poc-table td:first-child { text-align: left; }
 .poc-note { font-size: 13px; color: var(--muted, #5a6577); border-left: 3px solid var(--accent, #2f6fdd); padding: 6px 10px; }

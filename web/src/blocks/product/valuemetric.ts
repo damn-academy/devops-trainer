@@ -101,18 +101,18 @@ const KNOBS: { key: 'customers' | 'price' | 'growth'; min: number; max: number; 
 ];
 
 const css = `
-.pvm-root { display: grid; gap: 14px; }
+.pvm-root { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .pvm-choice { display: flex; flex-wrap: wrap; gap: 6px; }
 .pvm-choice button { border: 1px solid var(--line, #d8dee9); background: transparent; border-radius: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
 .pvm-choice button.on { border-color: var(--accent, #2f6fdd); background: var(--accent, #2f6fdd); color: #fff; }
-.pvm-knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px 18px; }
+.pvm-knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 10px 18px; }
 .pvm-knob label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
 .pvm-knob output { font-variant-numeric: tabular-nums; color: var(--accent, #2f6fdd); }
 .pvm-knob input[type=range] { width: 100%; }
 .pvm-totals { display: flex; flex-wrap: wrap; gap: 16px; }
 .pvm-total b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
 .pvm-verdict { font-size: 13px; border-left: 3px solid var(--accent, #2f6fdd); padding: 6px 10px; }
-.pvm-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.pvm-table { table-layout: fixed; overflow-wrap: anywhere; width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .pvm-table th, .pvm-table td { text-align: right; padding: 3px 8px; border-bottom: 1px solid var(--line, #d8dee9); }
 .pvm-table th:nth-child(-n+2), .pvm-table td:nth-child(-n+2) { text-align: left; }
 .pvm-table tr.on td { background: color-mix(in srgb, var(--accent, #2f6fdd) 8%, transparent); }
