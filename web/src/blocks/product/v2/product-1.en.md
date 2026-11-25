@@ -15,6 +15,13 @@ Plans change, and that is fine if the change is visible. When an item slips or i
 
 A roadmap gathers feedback when people can discuss it: votes on issues, community meetings that review roadmap items, and user surveys. Votes show interest, not need: a hundred votes from people who tried the project on a laptop carry less weight than three production deployments that cannot upgrade without a feature. So record who is voting alongside the votes.
 
+<!-- section: theory | Announcing a change to the boundary between versions -->
+Changing the boundary between open and paid versions is a particularly risky roadmap change. Prepare it as a separate release. First distinguish the code license, availability of ready-made builds, and the version that includes each feature. Linkerd did not change its license in 2024, but stopped producing its own stable builds; users perceived that as closing the project. Explain exactly what changes and what stays the same.
+
+Before announcing the change, identify affected open-version users and their current usage. Specify what existing users receive: how long the feature remains open in their branch, security fixes, and a migration path. Set announcement and effective dates far enough apart for users to plan, normally at least one release. Name the decision makers and those answering questions in issues and chat. Explain where feedback is collected and what would trigger reconsideration.
+
+Publish where open-version users will see it: release notes, the project blog, the mailing list and community meetings. Decision makers should join the discussions. A small footnote in release notes is likely to start a thread accusing the company of closing the project.
+
 <!-- section: task | Assignment: a roadmap with three horizons -->
 Do this assignment in a document or in your project's GitHub Projects. Divide your current plans into three horizons. For each item, record the user problem, discussion link, owner, and edition. Find items with dates and check whom each date depends on. Draft a quarterly roadmap review in five or six paragraphs.
 
@@ -39,6 +46,13 @@ Once a week, the product manager sets aside an hour for signals. They read new i
 Signals from different users carry different weight, and this needs to be visible. Forty beginners who cannot install the project tell you about the first few minutes and activation. Three production deployments that cannot upgrade tell you about retention and trust. One large customer asking for a feature “just for us” tells you about a deal, but not necessarily about the product. Priorities are decided by value and cost, allowing for uncertainty in the estimates, as discussed in the lesson on continuous discovery.
 
 Signals should come back to the people who provided them. If a request is accepted for development, say so in the issue and add it to the roadmap; if it is rejected, explain why. A community that sees it is being heard sends more signals of higher quality.
+
+<!-- section: theory | Saying no to a customer and sales -->
+A large customer's request is neither an automatic commitment nor automatic noise: investigate it first. Suppose sales brings two requests. A bank wants integration with its audit system and promises a larger contract. A hosting provider requests the same capability in a different form. The team can deliver one large item this quarter, and half its capacity is already committed to a Kubernetes update needed to keep community installations working.
+
+First find the underlying job: the bank needs an administrator activity log for regulators; the provider needs the same log for customers. That shared job is a signal. Then explain the opportunity cost: what would be displaced and the consequences. Offer alternatives: a common audit log next quarter; a narrow customer-funded implementation now that will become part of the product; or a refusal with a workaround through the existing API. The product manager and sales lead make the decision together. Only the person accountable for delivery dates makes the customer commitment.
+
+Record a refusal just as you would an acceptance: in an issue or request table, with its reason, the alternative offered and the condition for reopening it, such as two more requests from that segment. Explain the decision personally, give a review date and honor it. A refusal followed by a promised review protects the relationship better than an unfulfilled commitment.
 
 <!-- section: task | Assignment: a week of signals -->
 Do this assignment in the “A week of signals” template, which you can download on this page. Over one week, collect at least twenty signals from the lesson's five sources and record each using the table's fields. Group signals by user problem and find three problems mentioned across several sources. For each, record the opportunity it adds to the discovery tree and a small experiment to test it.
