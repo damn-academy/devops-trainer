@@ -20,5 +20,5 @@ export function professionsPage(): Page {
     h('nav.crumbs', {}, h('a', { href: '#/' }, t(bi('Начало', 'Start'))), ' › ', t(bi('Профессии', 'Professions'))),
     h('h1', {}, t(bi('Профессии', 'Professions'))),
     h('p.lede', {}, t(bi('Профессия — долгий путь к новой работе: теория, практика, проверки уровня и экзамены.', 'A profession is a long road to a new job: theory, practice, level checks and exams.'))),
-    h('ul.catalog-grid.bento', {}, ...PRODUCTS.filter(p => p.kind === 'profession' && !p.hidden).map(p => productTile(p, 'w')))) };
+    h('ul.catalog-grid.bento', {}, ...PRODUCTS.filter(p => p.kind === 'profession' && !p.hidden).map(p => productTile(p, 'hero')))) };
 }
