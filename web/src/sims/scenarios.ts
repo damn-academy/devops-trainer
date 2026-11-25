@@ -42,4 +42,9 @@ export const scenarios: SimScenario[] = [
     turns: { min: 6, max: 12, default: 12 }, turnUnit: { ru: "месяц", en: "one month" },
     prompt: { ru: core, en: core }, world, department: department6, russianPrompt: true },
 ];
-export function registerDepartmentScenarios(): void { registerScenarios(scenarios); }
+let registered = false;
+export function registerDepartmentScenarios(): void {
+  if (registered) return;
+  registerScenarios(scenarios);
+  registered = true;
+}
