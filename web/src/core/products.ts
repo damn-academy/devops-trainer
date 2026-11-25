@@ -80,6 +80,24 @@ export const PRODUCTS: Product[] = [
     },
     "shelf": "business",
     "hidden": true
+  },
+  {
+    "kind": "course",
+    "id": "oss",
+    "title": {
+      "ru": "Open source: проект, сообщество и управление",
+      "en": "Open source: project, community and governance"
+    },
+    "summary": {
+      "ru": "Как развивать открытый проект, который создала или поддерживает компания: модели заработка и уроки смены лицензий, управление проектом и нейтральность, участники и менторство, сообщество, путь в CNCF от Sandbox до Graduated, что фонд даёт проектам и компаниям-членам, сигналы использования и кризисы. В конце — год проекта в инкубаторе CNCF в симуляторе.",
+      "en": "How to develop an open project created or supported by a company: revenue models and lessons from license changes, project governance and neutrality, contributors and mentorship, community, the CNCF journey from Sandbox to Graduated, what the foundation offers projects and member companies, usage signals and crises. The course ends with a simulated year for a project in the CNCF incubator."
+    },
+    "subtitle": {
+      "ru": "Для мейнтейнеров, основателей и руководителей сообщества открытых инфраструктурных проектов.",
+      "en": "For maintainers, founders and community leaders of open infrastructure projects."
+    },
+    "shelf": "business",
+    "hidden": true
   }
 ];
 
