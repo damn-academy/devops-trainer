@@ -91,8 +91,53 @@ export const ROUTE_HOURS: Record<string, Record<import('./types').Level, number>
     "experienced": 3.3833333333333333
   },
   "marketing": {
-    "beginner": 8.583333333333334,
-    "intermediate": 8.583333333333334,
-    "experienced": 8.583333333333334
+    "beginner": 8.783333333333333,
+    "intermediate": 8.783333333333333,
+    "experienced": 8.783333333333333
+  },
+  "product": {
+    "beginner": 3.2,
+    "intermediate": 3.2,
+    "experienced": 3.2
+  },
+  "scithink": {
+    "beginner": 2.9166666666666665,
+    "intermediate": 2.9166666666666665,
+    "experienced": 2.9166666666666665
+  },
+  "events": {
+    "beginner": 3.7333333333333334,
+    "intermediate": 3.7333333333333334,
+    "experienced": 3.7333333333333334
+  },
+  "strategy": {
+    "beginner": 3.066666666666667,
+    "intermediate": 3.066666666666667,
+    "experienced": 3.066666666666667
+  },
+  "metrics": {
+    "beginner": 7,
+    "intermediate": 7,
+    "experienced": 7
+  },
+  "pr": {
+    "beginner": 1.1666666666666667,
+    "intermediate": 1.1666666666666667,
+    "experienced": 1.1666666666666667
+  },
+  "oss": {
+    "beginner": 3.566666666666667,
+    "intermediate": 3.566666666666667,
+    "experienced": 3.566666666666667
+  },
+  "finance": {
+    "beginner": 5.833333333333333,
+    "intermediate": 5.833333333333333,
+    "experienced": 5.833333333333333
+  },
+  "aicontent": {
+    "beginner": 5.033333333333333,
+    "intermediate": 5.033333333333333,
+    "experienced": 5.033333333333333
   }
 };

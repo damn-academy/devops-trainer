@@ -1,3 +1,4 @@
+import { eventDepartment } from './events';
 import type { ChatMessage, Lang } from '../../core/types';
 import { companyGroups, validCompanyConfig } from '../../sims/companies';
 import { legends } from './legends';
@@ -46,7 +47,7 @@ export function buildPrompt(scenario: SimScenario, opts: SimOptions, lang: Lang)
   if (!compatibleCompany(scenario, opts)) throw new Error('Scenario requires the Incubating Lumenmesh legend');
   const values: Record<string, string> = {
     SEED: String(opts.seed >>> 0), DICE: diceTable(opts.seed), DIFFICULTY: difficultyTexts[opts.difficulty][lang],
-    TURNS: String(opts.turns), TURN_UNIT: scenario.turnUnit[lang], COMPANY: companyText(opts, lang), WORLD: scenario.world ?? '', DEPARTMENT: scenario.department ?? '', LANG_RULES: strings.langRules[lang],
+    TURNS: String(opts.turns), TURN_UNIT: scenario.turnUnit[lang], COMPANY: companyText(opts, lang), WORLD: scenario.world ?? '', DEPARTMENT: scenario.id === 'events.kubecon' ? eventDepartment(opts) : scenario.department ?? '', LANG_RULES: strings.langRules[lang],
   };
   const prompt = scenario.prompt[lang].replace(/\{\{(\w+)\}\}/g, (match, key: string) => values[key] ?? match);
   if (prompt.includes('{{')) throw new Error(`Unresolved prompt placeholder in ${scenario.id}`);

@@ -73,7 +73,8 @@ describe('department content assembly', () => {
         if (scenario.id === 'oss.incubation') expect(company.text).toContain('на уровне Incubating');
         expect(prompt).not.toContain('{{');
         expect(prompt).toContain(world);
-        expect(prompt).toContain(scenario.department);
+        if (scenario.id === 'events.kubecon') expect(prompt).toContain('Participation format: no booth');
+        else expect(prompt).toContain(scenario.department);
         expect(prompt).toContain(lang === 'ru' ? languageRules : strings.langRules.en);
         expect(prompt.split('Таблица случайных чисел')).toHaveLength(2);
         expect(prompt).not.toContain(strings.diceRules[lang]);

@@ -82,6 +82,19 @@ export function renderInline(md: string, o: MdOptions = {}): Node[] {
   return inline(md, o);
 }
 
+/** Split GFM cells without splitting escaped pipes or inline code. */
+export function tableCells(line: string): string[] {
+  const cells: string[] = []; let cell = '', ticks = 0;
+  const text = line.trim().replace(/^\|/, '').replace(/(?<!\\)\|$/, '');
+  for (let j = 0; j < text.length; j++) {
+    if (text[j] === '\\' && text[j + 1] === '|') { cell += '|'; j++; }
+    else if (text[j] === '`') { const run = text.slice(j).match(/^`+/)![0]; ticks = ticks === run.length ? 0 : ticks || run.length; cell += run; j += run.length - 1; }
+    else if (text[j] === '|' && !ticks) { cells.push(cell.trim()); cell = ''; }
+    else cell += text[j];
+  }
+  cells.push(cell.trim()); return cells;
+}
+
 /** Render markdown-lite to a fragment. */
 export function renderMd(md: string, o: MdOptions = {}): DocumentFragment {
   const frag = document.createDocumentFragment();
@@ -103,6 +116,19 @@ export function renderMd(md: string, o: MdOptions = {}): DocumentFragment {
       i++;
       const code = body.join('\n');
       frag.append(o.code ? o.code(code, fence[1]) : h('pre', { class: `code lang-${fence[1] || 'text'}` }, h('code', {}, code)));
+      continue;
+    }
+    const headers = tableCells(line);
+    const separators = tableCells(lines[i + 1] ?? '');
+    if (line.includes('|') && headers.length === separators.length && separators.every(c => /^:?-{3,}:?$/.test(c))) {
+      flush();
+      const align = separators.map(c => c.startsWith(':') && c.endsWith(':') ? 'center' : c.endsWith(':') ? 'right' : 'left');
+      const row = (cells: string[], header = false) => h('tr', {}, ...headers.map((_, col) =>
+        h(header ? 'th' : 'td', { ...(header ? { scope: 'col' } : {}), style: `text-align:${align[col]}` }, ...inline(cells[col] ?? '', o))));
+      const body = h('tbody'); i += 2;
+      while (i < lines.length && lines[i].trim() && lines[i].includes('|')) body.append(row(tableCells(lines[i++])));
+      frag.append(h('div.md-table-scroll', { tabindex: 0, role: 'region', 'aria-label': (o.lang ?? currentLang()) === 'ru' ? 'Таблица: прокрутка по горизонтали' : 'Table: scroll horizontally' },
+        h('table', {}, h('thead', {}, row(headers, true)), body)));
       continue;
     }
     const head = /^(#{2,4})\s+(.*)$/.exec(line);

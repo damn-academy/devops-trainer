@@ -70,7 +70,7 @@ export function lessonPage(id: string, focusSection?: string): Page {
     body.append(r.el);
     if (r.mounted) mounts.push(r.mounted);
     if (s.kind === 'text' && s.step === 'practice' &&
-        ['product.cases', 'marketing.cases', 'pr.analysts', 'pr.press', 'pr.founder', 'oss.cncf-path', 'oss.cncf-benefits', 'oss.revenue', 'scithink.final', 'events.cncf-events', 'events.own-conf', 'events.online-conf'].includes(lesson.id)) {
+        ['product.cases', 'marketing.cases', 'pr.analysts', 'pr.press', 'pr.founder', 'oss.cncf-path', 'oss.cncf-benefits', 'oss.revenue', 'scithink.final', 'events.cncf-events', 'events.own-conf', 'events.online-conf', 'aicontent.team', 'aicontent.brief', 'aicontent.research', 'aicontent.editing', 'aicontent.checks', 'aicontent.visuals', 'aicontent.video', 'aicontent.video-to-article', 'aicontent.bots', 'aicontent.interactive', 'aicontent.publishing', 'aicontent.rules', 'aicontent.tools', 'finance.statements', 'finance.cash-vs-profit', 'finance.close', 'finance.runway', 'finance.metrics', 'finance.model', 'finance.safe', 'finance.revenue', 'finance.taxes-federal', 'finance.taxes-people', 'finance.tools', 'finance.automation', 'finance.dashboard', 'metrics.contract', 'metrics.funnel', 'metrics.attribution', 'metrics.lift', 'metrics.channels', 'metrics.pipeline', 'metrics.forecast', 'metrics.arr', 'metrics.efficiency', 'metrics.activation', 'metrics.pqa', 'metrics.usage', 'metrics.dashboards', 'metrics.truth', 'metrics.stories', 'strategy.market-events', 'strategy.market-shifts', 'strategy.sovereignty', 'strategy.event-offer', 'oss.foundations', 'oss.donation', 'events.portfolio'].includes(lesson.id)) {
       mounts.push(mountTaskDocument(r.el, `${lesson.id}.${s.id}`, t(s.title ?? lesson.title), t(s.body)));
     }
   }

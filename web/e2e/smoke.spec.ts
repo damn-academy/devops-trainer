@@ -9,7 +9,7 @@ const BLOCKS = ['orient', 'methodology', 'linux', 'git-yaml', 'networks', 'conta
 test.describe('shell', () => {
   test('home shows public business courses in order and keeps the profession route separate in RU/EN', async ({ page }) => {
     const errors = watchErrors(page);
-    const courses = ['marketing', 'sales', 'product', 'events', 'oss', 'strategy', 'pr', 'scithink'];
+    const courses = ['marketing', 'sales', 'product', 'metrics', 'events', 'oss', 'strategy', 'finance', 'pr', 'aicontent', 'scithink'];
     await open(page, '#/');
     for (const language of ['ru', 'en']) {
       await page.locator('.lang-switch button', { hasText: language.toUpperCase() }).click();
@@ -37,7 +37,7 @@ test.describe('shell', () => {
       if (r.url().includes('/src/blocks/')) blockFiles.push(r.url());
     });
     await open(page, '#/');
-    await expect(page.locator('.catalog-shelf .catalog-tile')).toHaveCount(8);
+    await expect(page.locator('.catalog-shelf .catalog-tile')).toHaveCount(9);
     await page.waitForLoadState('networkidle');
     expect(blockFiles).toEqual([]);
     await page.locator('.catalog-tile[href="#/profession/devops"]').click();

@@ -39,3 +39,9 @@ export function addExamples(templates, sheet) {
   templates['pr-founder'] = [sheet('Двенадцать тем на год','Founder topics','решение, что из него можно рассказать публично, какие цифры можно показать, три темы, площадки, цель выступления, три факта, о чём говорить нельзя, самый неудобный вопрос из зала, ответ','decision, public material, publishable figures, first three topics, platforms, talk objective, three facts, off limits, hardest audience question, answer')];
   rows(templates['pr-founder'][0], [['решение об архитектуре','разбор стоимости','сколько стоил кластер на своём оборудовании','1','сайт компании или проекта','','','','','']], [['architecture decision','cost breakdown','Cluster cost on own hardware',1,'company or project website','','','','','']]);
 }
+
+// Finance examples use $000 throughout, except dates and percentages.
+export const financeExample = {
+  drivers: [1200, 240, 240, 10, 2, 12, 4, .8, 4, 6, 35, 12, 7, 2, 12, 36, 36, 2, 600],
+  weekly: { opening: 500, floor: 150, clients: [30,30,100,30,30,30,30,30,30,30,30,30,30], payroll: [0,100,0,100,0,100,0,100,0,100,0,100,0], hosting: Array(13).fill(20), other: [10,10,10,10,40,10,10,10,10,10,10,10,10] },
+};

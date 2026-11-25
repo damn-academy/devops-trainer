@@ -1,9 +1,10 @@
-import { h, copyText } from '../../core/dom';
+import { h, copyText, downloadFile } from '../../core/dom';
 import { bi, lang, t } from '../../core/i18n';
 import { renderMd, renderInline } from '../../core/markdown';
 import type { Mounted, WidgetCtx, WidgetReg } from '../../core/types';
 import { ai, type AiService } from '../ai/service';
 import type { ChatMessage } from '../ai/client';
+import { eventVisitor } from './events';
 import { trainers, datasets, systemPrompt, learnerData, copyPrompt, verdict, boundaryScore, breakEven, simulate, roiDefaults, type Verdict, type Choice, type RoiInput } from './model';
 import { loadAttempts, saveAttempts, loadDraft, saveDraft, clearDraft } from './storage';
 import { strings as s } from './strings';
@@ -52,7 +53,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   const id = props && typeof props === 'object' ? ('trainer' in props ? props.trainer : 'data' in props ? props.data : undefined) : undefined;
   if (kind === 'template') {
     const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined;
-    const titles = { dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
+    const titles = { 'infraseed-model': 'infraseedModel', 'cash-13w': 'cash13w', dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
     if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
     title(text(titles[file as keyof typeof titles]), false);
     root.append(h('a', { class: 'btn', href: `/templates/${file}${lang() === 'en' ? '-en' : ''}.xlsx`, download: '' }, text('download')));
@@ -113,6 +114,17 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   } else if (kind === 'rubric' || kind === 'roleplay') {
     const trainer = trainers.find(v => v.id === id && (kind === 'roleplay' ? v.id === 'events.booth-visitor' : v.id !== 'events.booth-visitor'));
     if (!trainer) { root.textContent = text('missing'); return mounted; }
+    const venue = h('select', {}, ...['KubeCon', 'PGConf', 'SREcon', 'RSAC', 'NANOG', 'Vendor user conference', 'Other'].map(v => h('option', { value: v }, v)));
+    const segment = h('select', {}, ...['Kubernetes', 'PostgreSQL', 'SRE', 'Security', 'Networking', 'Vendor users', 'Other'].map(v => h('option', { value: v }, v)));
+    venue.value = loadDraft(`${trainer.id}.venue`, 'KubeCon');
+    segment.value = loadDraft(`${trainer.id}.segment`, 'Kubernetes');
+    venue.onchange = () => {
+      segment.value = ({ KubeCon: 'Kubernetes', PGConf: 'PostgreSQL', SREcon: 'SRE', RSAC: 'Security', NANOG: 'Networking', 'Vendor user conference': 'Vendor users', Other: 'Other' } as Record<string, string>)[venue.value];
+      saveDraft(`${trainer.id}.venue`, venue.value); saveDraft(`${trainer.id}.segment`, segment.value); manual.hidden = true; manual.value = '';
+    };
+    segment.onchange = () => { saveDraft(`${trainer.id}.segment`, segment.value); manual.hidden = true; manual.value = ''; };
+    const activeTrainer = () => kind === 'roleplay' ? eventVisitor(trainer!, venue.value, segment.value) : trainer!;
+    if (kind === 'roleplay') root.append(h('label', {}, t(bi('Конференция', 'Conference')), venue), h('label', {}, t(bi('Сегмент', 'Segment')), segment));
     const svc = service ?? ai(); title(trainer.title); root.append(renderMd(trainer.rubric));
     const conversations = loadDraft<import('./storage').Attempt[][]>(`${trainer.id}.conversations`, []);
     const round = h('p');
@@ -123,14 +135,14 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       attempts.forEach((a, i) => history.append(h('article', { class: 'quiz-item' }, h('h4', {}, `${i + 1} · ${text('user')}`), h('p', { style: 'white-space:pre-wrap' }, ...renderInline(a.input)), h('h4', {}, text('assistant')), renderMd(a.answer))));
     }
     showHistory();
-    const input = h('textarea'), manual = h('textarea', { readonly: true, 'aria-label': text('copy'), hidden: true });
+    const input = h('textarea'), manual = h('textarea', { 'aria-label': text('copy'), hidden: true });
     input.value = loadDraft(trainer.id, '');
     let busy = false, request: ReturnType<TrainerAi['stream']> | undefined;
-    const sync = () => { if (disposed) return; send.disabled = busy || !svc.status.configured || svc.status.locked || !input.value.trim(); debrief.disabled = busy || !svc.status.configured || svc.status.locked; status.textContent = busy ? text('busy') : !svc.status.configured || svc.status.locked ? text('settings') : ''; };
+    const sync = () => { if (disposed) return; venue.disabled = segment.disabled = busy || attempts.length > 0; send.disabled = busy || !svc.status.configured || svc.status.locked || !input.value.trim(); debrief.disabled = busy || !svc.status.configured || svc.status.locked; status.textContent = busy ? text('busy') : !svc.status.configured || svc.status.locked ? text('settings') : ''; };
     async function submit(value: string) {
       if (busy || !svc.status.configured || svc.status.locked || !value.trim()) return;
       busy = true; sync();
-      const messages: ChatMessage[] = [{ role: 'system', content: systemPrompt(trainer!) }];
+      const messages: ChatMessage[] = [{ role: 'system', content: systemPrompt(activeTrainer()) }];
       if (kind === 'roleplay') for (const a of attempts) messages.push({ role: 'user', content: a.input === 'Разбор' ? a.input : learnerData(a.input) }, { role: 'assistant', content: a.answer });
       messages.push({ role: 'user', content: kind === 'roleplay' && value === 'Разбор' ? value : learnerData(value) });
       let failed = false;
@@ -144,16 +156,17 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     }
     const send = button(kind === 'rubric' ? 'check' : 'send', () => { void submit(input.value); });
     const debrief = button('debrief', () => { void submit('Разбор'); });
+    const currentPrompt = () => copyPrompt(activeTrainer(), kind === 'roleplay' ? attempts.map(a => `${text('user')}: ${a.input}\n${text('assistant')}: ${a.answer}`).join('\n\n') + '\n\n' + input.value : input.value);
     const copy = button('copy', () => { void (async () => {
-      const transcript = kind === 'roleplay' ? attempts.map(a => `${text('user')}: ${a.input}\n${text('assistant')}: ${a.answer}`).join('\n\n') + '\n\n' + input.value : input.value;
-      const prompt = copyPrompt(trainer, transcript);
+      const prompt = !manual.hidden ? manual.value : currentPrompt();
       if (await copyText(prompt)) { if (!disposed) status.textContent = text('copied'); }
       else if (!disposed) { manual.hidden = false; manual.value = prompt; manual.focus(); manual.select(); status.textContent = text('fallback'); }
     })(); });
-    root.append(h('label', {}, text('input'), input), actions(send, ...(kind === 'roleplay' ? [debrief] : []), copy), status, manual, history);
-    input.oninput = () => { saveDraft(trainer.id, input.value); sync(); };
+    const download = button('downloadPrompt', () => downloadFile('prompt.txt', !manual.hidden ? manual.value : currentPrompt(), 'text/plain;charset=utf-8'));
+    root.append(h('label', {}, text('input'), input), actions(send, ...(kind === 'roleplay' ? [debrief] : []), copy, download), status, manual, history);
+    input.oninput = () => { saveDraft(trainer.id, input.value); manual.hidden = true; manual.value = ''; sync(); };
     const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text(kind === 'roleplay' ? 'nextVisitor' : 'finishDraft'));
-    finish.onclick = () => { if (busy) return; input.value = ''; clearDraft(trainer.id); if (kind === 'roleplay') { conversations.push([...attempts]); saveDraft(`${trainer.id}.conversations`, conversations); attempts.length = 0; saveAttempts(trainer.id, attempts); showHistory(); } sync(); };
+    finish.onclick = () => { if (busy) return; input.value = ''; manual.value = ''; manual.hidden = true; clearDraft(trainer.id); if (kind === 'roleplay') { conversations.push([...attempts]); saveDraft(`${trainer.id}.conversations`, conversations); attempts.length = 0; saveAttempts(trainer.id, attempts); showHistory(); } sync(); };
     root.append(...(kind === 'roleplay' ? [round] : []), finish); cleanup.push(svc.onChange(sync), () => request?.abort());
     void svc.ready.then(sync).catch(() => { if (!disposed) status.textContent = text('error'); }); sync();
   } else if (kind === 'events.roi') {
@@ -170,9 +183,9 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       if (Object.values(inputs).some(v => !v.value || !Number.isFinite(v.valueAsNumber) || !v.checkValidity()) || !Number.isInteger(p.scans)) { result.textContent = text('invalid'); return; }
       const b = breakEven(p), m = simulate(p);
       const format = (n: number) => Number.isFinite(n) ? n.toLocaleString(lang(), { maximumFractionDigits: 2 }) : '∞';
-      result.replaceChildren(...([['wins', b.wins], ['opportunities', b.opportunities], ['median', m.median], ['probability', m.probability * 100]] as const).map(([k, v]) => h('p', {}, `${text(k)}: ${format(v)}${k === 'probability' ? '%' : ''}`)), h('p', {}, text('payoff').replace('{n}', String(Math.round(m.probability * 100))))); 
+      result.replaceChildren(h('p', {}, t(bi('Учебный сценарий', 'Teaching scenario'))), h('p', {}, `${t(bi('Уникальные целевые компании', 'Unique target accounts'))}: ${Math.round(p.scans * p.target * p.dedup)}`), ...([['wins', b.wins], ['opportunities', b.opportunities], ['median', m.median], ['probability', m.probability * 100]] as const).map(([k, v]) => h('p', {}, `${text(k)}: ${format(v)}${k === 'probability' ? '%' : ''}`)), h('p', {}, text('payoff').replace('{n}', String(Math.round(m.probability * 100)))));
     }
-    root.append(fields, h('p', {}, text('assumptions')), result); update();
+    root.append(fields, h('details', {}, h('summary', {}, t(bi('Допущения модели', 'Model assumptions'))), h('p', {}, text('assumptions'))), result); update();
   } else {
     const data = datasets.find(d => d.id === id && d.id === (kind === 'boundary' ? 'product.boundary' : 'sales.signal-feed'));
     if (!data) { root.textContent = text('missing'); return mounted; }

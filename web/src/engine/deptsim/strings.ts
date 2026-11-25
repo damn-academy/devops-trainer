@@ -21,7 +21,7 @@ export const strings = {
   copy: bi('Скопировать промпт', 'Copy the prompt'),
   copied: bi('Промпт скопирован.', 'Prompt copied.'),
   show: bi('Показать промпт', 'Show the prompt'),
-  fallback: bi('Браузер не дал скопировать текст сам. Текст промпта выделен, скопируйте его сочетанием клавиш.', 'Copy the selected text.'),
+  fallback: bi('Не удалось скопировать. Удерживайте текст для выделения или скачайте файл.', 'Copy the selected text.'),
   play: bi('Играть здесь', 'Play here'),
   settings: bi('Чтобы играть здесь, подключите нейросеть в разделе «Настройки», «Ваш ИИ».', 'Settings → Your AI'),
   send: bi('Отправить', 'Send'),
