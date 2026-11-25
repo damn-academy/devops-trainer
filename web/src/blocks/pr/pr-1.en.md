@@ -15,6 +15,8 @@ Gartner does not allow invented analyst quotes praising a vendor or product. Quo
 <!-- section: task | Task: a briefing request -->
 Complete this task in a document. Find the research on Gartner's, Forrester's, or IDC's website that is closest to your category, and record its name, format, and author. Prepare a briefing request: the buyer's problem, deployment model, three competitors, customers willing to speak, and what new information you can offer the analyst. Name a customer only with their written agreement to speak to the analyst. If none have agreed, say so and describe deployments without names. The request is ready when the analyst can understand the problem, how you differ from three competitors and what evidence you can show.
 
+<!-- widget: template {"file":"pr-briefing"} -->
+
 <!-- section: sources -->
 - Gartner, vendor briefings — https://www.gartner.com/en/contact/vendor-briefings
 - Gartner, how analysts work with vendors — https://www.gartner.com/en/about/ombuds/news/how-gartner-experts-work-with-vendors (30.06.2025)
@@ -53,6 +55,8 @@ Check your pitch against five questions: does it connect to the journalist's wor
 
 <!-- section: task | Task: news for one journalist -->
 Complete this task in a document. Choose one publication from the lesson and find a journalist who has covered your category in the last three months. Read three of their articles. Then write down which story from your company could be news for their readers: the fact at its core, the figures, who can discuss it, and what the journalist can verify independently. Write a pitch email of six to eight sentences.
+
+<!-- widget: template {"file":"pr-news"} -->
 
 <!-- section: sources -->
 - Cision, State of the Media 2025 — https://www.cision.com/about/press-releases/2025-press-releases/cisions-2025-state-of-the-media-report-reveals-a-tipping-point-for-trust-technology-and-pr-journalist-partnerships-302448410/ (2025)

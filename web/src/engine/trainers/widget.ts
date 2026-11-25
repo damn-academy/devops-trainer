@@ -52,7 +52,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   const id = props && typeof props === 'object' ? ('trainer' in props ? props.trainer : 'data' in props ? props.data : undefined) : undefined;
   if (kind === 'template') {
     const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined;
-    const titles = { dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek' } as const;
+    const titles = { dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
     if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
     title(text(titles[file as keyof typeof titles]), false);
     root.append(h('a', { class: 'btn', href: `/templates/${file}${lang() === 'en' ? '-en' : ''}.xlsx`, download: '' }, text('download')));
@@ -192,6 +192,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       });
       root.append(button('reaction', () => { reveals.forEach(r => { r.hidden = false; }); const score = boundaryScore(data.rows, choices); status.textContent = (Object.keys(score) as (keyof typeof score)[]).map(k => `${text(k)}: ${score[k]}`).join(' · '); ctx.complete(); }), status);
     } else {
+      root.append(h('p', { class: 'tr-caveat' }, t(bi('TODO(ru-prose)', 'Only the signal classification is scored. Your action is saved for self-review against the worked explanation; it does not affect the score.'))));
       const saved = loadDraft<{ index: number; answers: { choice: Verdict; action: string }[]; choice?: Verdict; action: string; revealed: boolean }>(data.id, { index: 0, answers: [], action: '', revealed: false });
       let index = saved.index; const answers = saved.answers, card = h('article', { class: 'quiz-item' }); root.append(card);
       function draw() {

@@ -32,6 +32,8 @@ Wikidata, a database of structured information, has its own rules: an item can b
 <!-- section: task | Task: an AI panel -->
 Complete this task using four AI systems your buyers use, such as ChatGPT, Claude, Gemini, and Perplexity, and the course spreadsheet. Prepare ten questions your buyer would ask when choosing: about the category, competitor comparisons, installation, security, licensing, and project governance. Ask every question of each AI system three times in a new conversation, because repeated AI answers vary greatly: in a late-2025 SparkToro study, the same recommendation list recurred in fewer than one in a hundred cases. Record whether the product is mentioned, whether its category, license, and capabilities are described correctly, and which pages the AI cites. Mark errors and find a page each could have come from. Repeat the panel a month later using the same questions.
 
+<!-- widget: template {"file":"llm-panel"} -->
+
 <!-- quiz -->
 ? Why do you need to repeat each question several times when checking how AI systems describe a product?
 + Answers vary greatly between repetitions: in SparkToro's study, the recommendation list repeated in fewer than one case out of a hundred || Only the frequency of mentions across many repetitions is reliable.
@@ -43,8 +45,6 @@ Complete this task using four AI systems your buyers use, such as ChatGPT, Claud
 - Yes, if the article is neutral || The conflict of interest remains even if the text is neutral.
 - Yes, if the company belongs to the CNCF || Foundation membership does not establish notability.
 <!-- /quiz -->
-
-<!-- widget: template {"file":"llm-panel"} -->
 
 <!-- section: sources -->
 - Profound, sources of links in AI answers — https://www.tryprofound.com/blog/ai-platform-citation-patterns (05.06.2025)
