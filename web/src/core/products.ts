@@ -152,6 +152,24 @@ export const PRODUCTS: Product[] = [
     },
     "shelf": "business",
     "hidden": true
+  },
+  {
+    "kind": "course",
+    "id": "scithink",
+    "title": {
+      "ru": "Научное мышление",
+      "en": "Scientific thinking"
+    },
+    "summary": {
+      "ru": "Как проверять утверждения и не обманываться: уверенность и проверка, базовая ставка, совпадение и причина, исследования в новостях, калибровка собственных оценок, байесовский пересчёт, фейки, манипуляции с цифрами и почему эксперты промахиваются. Курс пригодится каждому, кто читает отчёты, бенчмарки и чужие случаи успеха.",
+      "en": "How to check claims and avoid fooling yourself: confidence versus checking, base rates, coincidence and cause, studies in the news, calibrating your own estimates, Bayesian updating, fakes, number tricks and why experts miss. Useful to anyone who reads reports, benchmarks and other people's success stories."
+    },
+    "subtitle": {
+      "ru": "Для всех, кто принимает решения по данным и хочет отличать доказательство от убедительной истории.",
+      "en": "For anyone who makes decisions from data and wants to tell evidence from a persuasive story."
+    },
+    "shelf": "business",
+    "hidden": true
   }
 ];
 
