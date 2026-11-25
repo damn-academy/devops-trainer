@@ -8,11 +8,16 @@ export interface SimScenario {
   turns: { min: number; max: number; default: number };
   turnUnit: Bi;
   prompt: { ru: string; en: string };
+  world?: string;
+  department?: string;
+  russianPrompt?: boolean;
 }
 export type Difficulty = 'soft' | 'like-life' | 'hard';
 export interface SimOptions {
   seed: number;
   company: string;
+  companyMode?: 'preset' | 'custom';
+  companyConfig?: Record<string, string>;
   difficulty: Difficulty;
   turns: number;
 }

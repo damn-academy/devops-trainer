@@ -11,7 +11,7 @@ import { loadGame, storageKey } from '../src/engine/deptsim/storage';
 import type { SimOptions } from '../src/engine/deptsim/types';
 import module from '../src/engine/deptsim/module';
 
-const options: SimOptions = { seed: 42, difficulty: 'like-life', company: 'startup', turns: 4 };
+const options: SimOptions = { seed: 42, difficulty: 'like-life', company: 'stratova', turns: 4 };
 registerScenarios([demoScenario]);
 const mounted: Mounted[] = [];
 beforeEach(() => { localStorage.clear(); setLang('en'); });
@@ -59,7 +59,7 @@ describe('department simulator model', () => {
     });
   });
   it.each(['ru', 'en'] as const)('fills every placeholder in %s for all difficulties and companies', l => {
-    for (const difficulty of ['soft', 'like-life', 'hard'] as const) for (const company of ['startup', 'growth', 'established']) {
+    for (const difficulty of ['soft', 'like-life', 'hard'] as const) for (const company of ['stratova', 'brineworks', 'lumenmesh']) {
       const prompt = buildPrompt(demoScenario, { ...options, difficulty, company }, l);
       expect(prompt).not.toContain('{{'); expect(prompt).toContain('42');
       expect(prompt).toContain(demoScenario.turnUnit[l]); expect(prompt).toContain(diceTable(42));

@@ -1,8 +1,3 @@
-import { strings as s } from './strings';
-
-/** TODO(prose): Replace these three placeholder company legends. */
-export const legends = [
-  { id: 'startup', title: s.startupTitle, text: s.startupText },
-  { id: 'growth', title: s.growthTitle, text: s.growthText },
-  { id: 'established', title: s.establishedTitle, text: s.establishedText },
-] as const;
+import { companyLegends } from '../../sims/companies';
+// TODO(en-prompts): Company prose follows the Russian GM prompt for now.
+export const legends = companyLegends.map(l => ({ id: l.id, title: { ru: l.label, en: l.label }, text: { ru: l.text, en: l.text } }));
