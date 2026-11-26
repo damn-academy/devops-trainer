@@ -27,7 +27,7 @@ else
   echo 'Skipping .deb/.rpm: nfpm is not installed.' >&2
 fi
 if command -v makensis >/dev/null 2>&1; then
-  makensis -V2 -DVERSION="$version" -DBINARY="$out/dtlab-windows-amd64.exe" -DOUT="$out/dtlab-windows-amd64-setup.exe" packaging/dtlab.nsi
+  makensis -V2 -DVERSION="$version" -DBINARY="$out/dtlab-windows-amd64.exe" -DPATHSCRIPT="$PWD/packaging/path.ps1" -DOUT="$out/dtlab-windows-amd64-setup.exe" packaging/dtlab.nsi
 else
   echo 'Skipping the Windows installer: makensis (NSIS) is not installed.' >&2
 fi

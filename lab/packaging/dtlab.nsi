@@ -1,11 +1,9 @@
 ; Windows installer for dtlab: Program Files\dtlab, system PATH, Apps & features entry.
-; Build: makensis -DVERSION=1.2.3 -DBINARY=/path/dtlab-windows-amd64.exe -DOUT=/path/setup.exe dtlab.nsi
+; Build: makensis -DVERSION=1.2.3 -DBINARY=/path/dtlab-windows-amd64.exe -DPATHSCRIPT=path.ps1 -DOUT=/path/setup.exe dtlab.nsi
 Unicode true
 !include "x64.nsh"
 !include "LogicLib.nsh"
-!include "WordFunc.nsh"
 
-!define ENVKEY "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
 !define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\dtlab"
 
 Name "dtlab ${VERSION}"
@@ -33,23 +31,15 @@ Section "dtlab"
   SetOutPath "$INSTDIR"
   File "/oname=dtlab.exe" "${BINARY}"
   WriteUninstaller "$INSTDIR\uninstall.exe"
-  ; Append to the system PATH only when it is not there yet. A PATH longer than
-  ; NSIS can read safely is left untouched: writing a truncated value would break it.
-  ReadRegStr $0 HKLM "${ENVKEY}" "Path"
-  StrLen $1 $0
-  ${If} $1 >= ${NSIS_MAX_STRLEN}
-    DetailPrint "PATH is too long to edit safely; run $INSTDIR\dtlab.exe directly or add $INSTDIR to PATH yourself."
-  ${Else}
-    ${WordFind} "$0" "$INSTDIR" "E+1{" $2
-    ${If} ${Errors}
-      ${If} $0 == ""
-        WriteRegExpandStr HKLM "${ENVKEY}" "Path" "$INSTDIR"
-      ${Else}
-        WriteRegExpandStr HKLM "${ENVKEY}" "Path" "$0;$INSTDIR"
-      ${EndIf}
-      SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=5000
-    ${EndIf}
+  File "/oname=path.ps1" "${PATHSCRIPT}"
+  ; PowerShell edits PATH through the registry API: no NSIS string limit, and
+  ; the other entries stay unexpanded.
+  nsExec::ExecToLog 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\path.ps1" add "$INSTDIR"'
+  Pop $0
+  ${If} $0 != 0
+    DetailPrint "Could not add $INSTDIR to PATH (exit $0); run $INSTDIR\dtlab.exe directly."
   ${EndIf}
+  SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=5000
   WriteRegStr HKLM "${UNINSTKEY}" "DisplayName" "dtlab"
   WriteRegStr HKLM "${UNINSTKEY}" "DisplayVersion" "${VERSION}"
   WriteRegStr HKLM "${UNINSTKEY}" "Publisher" "damn.academy"
@@ -65,20 +55,11 @@ Function un.onInit
 FunctionEnd
 
 Section "Uninstall"
-  ReadRegStr $0 HKLM "${ENVKEY}" "Path"
-  StrLen $1 $0
-  ${If} $1 < ${NSIS_MAX_STRLEN}
-    ${un.WordReplace} "$0" ";$INSTDIR" "" "+" $2
-    ${un.WordReplace} "$2" "$INSTDIR;" "" "+" $2
-    ${If} $2 == "$INSTDIR"
-      StrCpy $2 ""
-    ${EndIf}
-    ${If} $2 != $0
-      WriteRegExpandStr HKLM "${ENVKEY}" "Path" "$2"
-      SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=5000
-    ${EndIf}
-  ${EndIf}
+  nsExec::ExecToLog 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\path.ps1" remove "$INSTDIR"'
+  Pop $0
+  SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=5000
   Delete "$INSTDIR\dtlab.exe"
+  Delete "$INSTDIR\path.ps1"
   Delete "$INSTDIR\uninstall.exe"
   RMDir "$INSTDIR"
   DeleteRegKey HKLM "${UNINSTKEY}"
