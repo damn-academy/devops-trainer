@@ -1,0 +1,124 @@
+{
+  "lines": [
+    {
+      "line": 1,
+      "raw_seconds": 5.423219954648526,
+      "padded_seconds": 5.619002267573697,
+      "encoded_seconds": 5.619002
+    },
+    {
+      "line": 2,
+      "raw_seconds": 3.699138321995465,
+      "padded_seconds": 3.7460090702947846,
+      "encoded_seconds": 3.746009
+    },
+    {
+      "line": 3,
+      "raw_seconds": 5.348888888888889,
+      "padded_seconds": 5.512993197278911,
+      "encoded_seconds": 5.512993
+    }
+  ],
+  "clips": [
+    {
+      "file": "before.mp4",
+      "before_duration": "17.000000",
+      "after_duration": "17.000000",
+      "video_sha256": "SHA256=68a137db99a00fedd72ef142087edda45f8a11e1e37976915e30bcb84bf931d8",
+      "anchors_ms": [
+        0,
+        4000,
+        8000
+      ]
+    },
+    {
+      "file": "after.mp4",
+      "before_duration": "17.000000",
+      "after_duration": "17.000000",
+      "video_sha256": "SHA256=d5e8b84f4e31631efebb8cfaa90d25410966cb4beaf592c28af0c69bdd6fabae",
+      "anchors_ms": [
+        300,
+        6200,
+        10400
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "command": "espeak-ng -v ru -s 160 -f /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/line-1.txt -w /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/line-1.wav",
+      "wall_seconds": 0.07706712500657886
+    },
+    {
+      "command": "ffmpeg -v error -y -i /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/line-1.wav -af aresample=44100,apad,atrim=end_sample=247798 -c:a aac -b:a 96k /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-1.m4a",
+      "wall_seconds": 0.15029358401079662
+    },
+    {
+      "command": "ffprobe -v error -show_streams -show_format -of json /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-1.m4a",
+      "wall_seconds": 0.03209737499128096
+    },
+    {
+      "command": "espeak-ng -v ru -s 160 -f /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/line-2.txt -w /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/line-2.wav",
+      "wall_seconds": 0.021420709002995864
+    },
+    {
+      "command": "ffmpeg -v error -y -i /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/line-2.wav -af aresample=44100,apad,atrim=end_sample=165199 -c:a aac -b:a 96k /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-2.m4a",
+      "wall_seconds": 0.09896129099070095
+    },
+    {
+      "command": "ffprobe -v error -show_streams -show_format -of json /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-2.m4a",
+      "wall_seconds": 0.030929708009352908
+    },
+    {
+      "command": "espeak-ng -v ru -s 160 -f /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/line-3.txt -w /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/line-3.wav",
+      "wall_seconds": 0.0200196249934379
+    },
+    {
+      "command": "ffmpeg -v error -y -i /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/line-3.wav -af aresample=44100,apad,atrim=end_sample=243123 -c:a aac -b:a 96k /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-3.m4a",
+      "wall_seconds": 0.15044987498549744
+    },
+    {
+      "command": "ffprobe -v error -show_streams -show_format -of json /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-3.m4a",
+      "wall_seconds": 0.027652541000861675
+    },
+    {
+      "command": "ffprobe -v error -show_streams -show_format -of json /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/before.mp4",
+      "wall_seconds": 0.0379921660060063
+    },
+    {
+      "command": "ffmpeg -v error -i /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/before.mp4 -map 0:v:0 -c copy -f hash -hash sha256 -",
+      "wall_seconds": 0.03901591699104756
+    },
+    {
+      "command": "ffmpeg -v error -y -i /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/before.mp4 -i /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-1.m4a -i /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-2.m4a -i /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-3.m4a -filter_complex '[1:a]adelay=0:all=1[a0];[2:a]adelay=4000:all=1[a1];[3:a]adelay=8000:all=1[a2];[a0][a1][a2]amix=inputs=3:normalize=0,apad,atrim=duration=17[a]' -map 0:v:0 -map '[a]' -c:v copy -c:a aac -b:a 96k -movflags +faststart /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/before.mp4",
+      "wall_seconds": 0.26824666699394584
+    },
+    {
+      "command": "ffprobe -v error -show_streams -show_format -of json /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/before.mp4",
+      "wall_seconds": 0.031672417011577636
+    },
+    {
+      "command": "ffmpeg -v error -i /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/before.mp4 -map 0:v:0 -c copy -f hash -hash sha256 -",
+      "wall_seconds": 0.03438745898893103
+    },
+    {
+      "command": "ffprobe -v error -show_streams -show_format -of json /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/after.mp4",
+      "wall_seconds": 0.03303983301157132
+    },
+    {
+      "command": "ffmpeg -v error -i /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/after.mp4 -map 0:v:0 -c copy -f hash -hash sha256 -",
+      "wall_seconds": 0.03811020901775919
+    },
+    {
+      "command": "ffmpeg -v error -y -i /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/after.mp4 -i /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-1.m4a -i /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-2.m4a -i /Users/tym83/projects/devops-trainer-wave3/web/public/media/aicontent/video-kit/line-3.m4a -filter_complex '[1:a]adelay=300:all=1[a0];[2:a]adelay=6200:all=1[a1];[3:a]adelay=10400:all=1[a2];[a0][a1][a2]amix=inputs=3:normalize=0,apad,atrim=duration=17[a]' -map 0:v:0 -map '[a]' -c:v copy -c:a aac -b:a 96k -movflags +faststart /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/after.mp4",
+      "wall_seconds": 0.31568062500446104
+    },
+    {
+      "command": "ffprobe -v error -show_streams -show_format -of json /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/after.mp4",
+      "wall_seconds": 0.03225300001213327
+    },
+    {
+      "command": "ffmpeg -v error -i /var/folders/q9/rz9f_rhj1fz9b113mpl140880000gn/T/video-kit-espeak-sciknro4/after.mp4 -map 0:v:0 -c copy -f hash -hash sha256 -",
+      "wall_seconds": 0.034000499988906085
+    }
+  ]
+}
