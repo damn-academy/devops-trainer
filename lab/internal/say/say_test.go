@@ -28,8 +28,14 @@ func TestRussianLocale(t *testing.T) {
 		{map[string]string{"LC_ALL": "ru_UA.UTF-8", "LANG": "en_GB.UTF-8"}, true},
 		{map[string]string{"LANG": "C.UTF-8"}, false},
 	}
+	if !russian(func(string) string { return "" }, func() bool { return true }) {
+		t.Error("with no locale variables the system language decides")
+	}
+	if russian(func(string) string { return "en_US.UTF-8" }, func() bool { return true }) {
+		t.Error("a locale variable wins over the system language")
+	}
 	for _, c := range cases {
-		if got := russian(func(k string) string { return c.env[k] }); got != c.want {
+		if got := russian(func(k string) string { return c.env[k] }, func() bool { return false }); got != c.want {
 			t.Errorf("%v: got %v", c.env, got)
 		}
 	}

@@ -19,16 +19,17 @@ import (
 )
 
 // Russian reports whether the process locale asks for Russian. As in POSIX,
-// the first of LC_ALL, LC_MESSAGES and LANG that is set decides.
-func Russian() bool { return russian(os.Getenv) }
+// the first of LC_ALL, LC_MESSAGES and LANG that is set decides; when none
+// is set, the system's own language does (Windows sets no LANG).
+func Russian() bool { return russian(os.Getenv, systemRussian) }
 
-func russian(get func(string) string) bool {
+func russian(get func(string) string, system func() bool) bool {
 	for _, k := range []string{"LC_ALL", "LC_MESSAGES", "LANG"} {
 		if v := get(k); v != "" {
 			return strings.HasPrefix(strings.ToLower(v), "ru")
 		}
 	}
-	return false
+	return system()
 }
 
 // T returns s in Russian when ru is set and the catalogue knows it.
