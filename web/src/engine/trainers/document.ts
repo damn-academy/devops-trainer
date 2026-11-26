@@ -23,8 +23,8 @@ export function mountTaskDocument(el: HTMLElement, id: string, title: string, ta
   input.value = saved === `${title}\n\n${task}\n\n` ? template : saved;
   input.dataset.documentTemplate = template;
   input.oninput = () => saveDraft(`document.${id}`, input.value);
-  const download = h('button', { type: 'button', class: 'btn' }, t(strings.downloadTxt));
-  download.onclick = () => downloadFile(`${id}.txt`, [input.value + documentExample(id), ...Array.from((el.closest('.lesson-body') ?? el).querySelectorAll<HTMLTextAreaElement>('textarea[data-template-id]')).map(note => `## ${note.dataset.templateTitle}\n\n${note.value}`)].join('\n\n'), 'text/plain;charset=utf-8');
-  root.append(h('label', {}, t(strings.input), input), download); el.append(root);
+  const download = h('button', { type: 'button', class: 'btn' }, t(id.startsWith('aicontent.brief') ? strings.downloadDocumentExample : strings.downloadTxt));
+  download.onclick = () => downloadFile(`${id}.txt`, [`${id.startsWith('metrics.') ? `# ${t(strings.mainDocument)}\n\n` : ''}${input.value}${documentExample(id)}`, ...Array.from((el.closest('.lesson-body') ?? el).querySelectorAll<HTMLTextAreaElement>('textarea[data-template-id]')).map(note => `## ${note.dataset.templateId?.startsWith('metrics-') ? t(strings.cardCalculation).replace('{name}', note.dataset.templateTitle ?? '') : note.dataset.templateTitle}\n\n${note.value}`)].join('\n\n'), 'text/plain;charset=utf-8');
+  root.append(h('label', {}, t(id.startsWith('metrics.') ? strings.mainDocument : strings.input), input), download); el.append(root);
   return { dispose() { root.remove(); } };
 }

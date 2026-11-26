@@ -41,11 +41,11 @@ export function boundaryScore(rows: string[][], choices: Choice[]) {
     return s;
   }, { protests: 0, disputed: 0, fine: 0 });
 }
-export const roiDefaults = { scans: 300, target: .15, dedup: 1, contacted: .6, meeting: .25, opportunity: .3, winRate: .2, cost: 40000, profit: 50000 };
-export type RoiInput = typeof roiDefaults;
+export const roiDefaults = { scans: 300, invited: 45, target: .15, dedup: 1, contacted: .6, meeting: .25, opportunity: .3, winRate: .2, cost: 40000, profit: 50000 };
+export type RoiInput = typeof roiDefaults & { mode?: 'scans' | 'invited' };
 export function breakEven(p: RoiInput) { return { wins: p.cost / p.profit, opportunities: p.winRate === 0 ? (p.cost === 0 ? 0 : Infinity) : p.cost / (p.profit * p.winRate) }; }
 // Deduplicate contacts once; every subsequent trial represents one company.
-export const uniqueTargetAccounts = (p: RoiInput) => Math.round(p.scans * p.target * p.dedup);
+export const uniqueTargetAccounts = (p: RoiInput) => p.mode === 'invited' ? p.invited : Math.round(p.scans * p.target * p.dedup);
 export function simulate(p: RoiInput, seed = 42) {
   const random = mulberry32(seed);
   const uniform = () => Math.max(Number.EPSILON, random());

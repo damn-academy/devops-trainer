@@ -67,12 +67,13 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       root.append(h('p', {}, text('metricsFictional')), h('button', { type: 'button', class: 'btn', onclick: () => { void import('../ai/panel').then(({ openTutor }) => openTutor({ mode: 'practice', templateFile: file })); } }, t(bi('Спросить наставника о данных', 'Ask the tutor about the data'))));
     }
     root.append(h('a', { class: 'btn', href: `${import.meta.env.BASE_URL}templates/${file}${lang() === 'en' ? '-en' : ''}.${csv ? 'csv' : 'xlsx'}`, download: '' }, text(csv ? 'downloadCsv' : 'download')));
+    if (csv) root.append(h('p', {}, text('csvImport')));
     const draftId = `template.${file}`;
     const input = h('textarea', { 'data-template-id': file, 'data-template-title': text(titles[file as keyof typeof titles]) }); input.value = loadDraft(draftId, '');
     input.oninput = () => saveDraft(draftId, input.value);
     const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text('finishDraft'));
     finish.onclick = () => { clearDraft(draftId); input.value = ''; ctx.complete(); };
-    root.append(h('label', {}, text('input'), input), finish);
+    root.append(h('label', {}, csv ? text('cardCalculation').replace('{name}', text(titles[file as keyof typeof titles])) : text('input'), input), finish);
 
   } else if (kind === 'governance') {
     if (id !== 'oss.governance') { root.textContent = text('missing'); return mounted; }
@@ -182,25 +183,36 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     void svc.ready.then(sync).catch(() => { if (!disposed) status.textContent = text('error'); }); sync();
   } else if (kind === 'events.roi') {
     title(text('roi'), false);
-    root.append(h('p', {}, t(bi('Задайте число сканов бейджей, долю целевых контактов и долю уникальных целевых компаний. Затем меняйте переходы компаний к контакту, встрече, возможности сделки и покупке; сравните вероятность окупаемости.', 'Enter badge scans, target-contact share and unique target-company share. Then vary company transitions to contact, meeting, opportunity and purchase; compare the probability of breaking even.'))));
+    root.append(h('p', {}, t(bi('Выберите начало воронки: сканы бейджей или приглашённые целевые компании. Затем меняйте переходы компаний к контакту, встрече, возможности сделки и покупке; сравните вероятность окупаемости.', 'Choose the funnel starting point: badge scans or invited target companies. Then vary company transitions to contact, meeting, opportunity and purchase; compare the probability of breaking even.'))));
     const fields = h('div', { class: 'tr-fields' }), result = h('div', { 'aria-live': 'polite' });
     const accountCount = h('p', { 'aria-live': 'polite' });
-    const inputs = {} as Record<keyof RoiInput, HTMLInputElement>;
-    for (const key of Object.keys(roiDefaults) as (keyof RoiInput)[]) {
-      const share = !['cost', 'profit', 'scans'].includes(key);
-      const input = h('input', { type: 'number', min: key === 'profit' ? .01 : 0, step: share ? .01 : 'any', value: roiDefaults[key], ...(share ? { max: 1 } : key === 'scans' ? { max: 100000 } : {}) });
+    const mode = h('select', { 'data-roi-mode': '' }, h('option', { value: 'scans' }, text('badgeMode')), h('option', { value: 'invited' }, text('invitedMode')));
+    root.append(h('label', {}, text('eventMode'), mode));
+    const assumptionText = h('p');
+    const inputs = {} as Record<keyof typeof roiDefaults, HTMLInputElement>;
+    for (const key of Object.keys(roiDefaults) as (keyof typeof roiDefaults)[]) {
+      const share = !['cost', 'profit', 'scans', 'invited'].includes(key);
+      const input = h('input', { type: 'number', 'data-roi-field': key, min: key === 'profit' ? .01 : 0, step: share ? .01 : 'any', value: roiDefaults[key], ...(share ? { max: 1 } : ['scans', 'invited'].includes(key) ? { max: 100000 } : {}) });
       inputs[key] = input; input.onchange = update; fields.append(h('label', {}, text(key), input));
       if (key === 'dedup') fields.append(accountCount);
     }
     function update() {
-      const p = Object.fromEntries(Object.entries(inputs).map(([k, v]) => [k, v.valueAsNumber])) as RoiInput;
-      if (Object.values(inputs).some(v => !v.value || !Number.isFinite(v.valueAsNumber) || !v.checkValidity()) || !Number.isInteger(p.scans)) { accountCount.textContent = ''; result.textContent = text('invalid'); return; }
+      const invitedMode = mode.value === 'invited';
+      for (const [key, input] of Object.entries(inputs)) {
+        input.disabled = invitedMode ? ['scans','target','dedup'].includes(key) : key === 'invited';
+        input.parentElement!.hidden = input.disabled;
+      }
+      assumptionText.textContent = invitedMode ? `${text('invitedAssumptions')} ${text('simulationAssumptions')}` : text('assumptions');
+      const p: RoiInput = Object.fromEntries(Object.entries(inputs).map(([k, v]) => [k, v.valueAsNumber])) as typeof roiDefaults;
+      p.mode = invitedMode ? 'invited' : 'scans';
+      if (Object.values(inputs).some(v => !v.disabled && (!v.value || !Number.isFinite(v.valueAsNumber) || !v.checkValidity())) || !Number.isInteger(invitedMode ? p.invited : p.scans)) { accountCount.textContent = ''; result.textContent = text('invalid'); return; }
       accountCount.textContent = `${t(bi('Уникальные целевые компании', 'Unique target companies'))}: ${uniqueTargetAccounts(p)}`;
       const b = breakEven(p), m = simulate(p);
       const format = (n: number) => Number.isFinite(n) ? n.toLocaleString(lang(), { maximumFractionDigits: 2 }) : '∞';
       result.replaceChildren(h('p', {}, t(bi('Учебный сценарий', 'Teaching scenario'))), h('p', {}, `${t(bi('Уникальные целевые компании', 'Unique target accounts'))}: ${uniqueTargetAccounts(p)}`), ...([['wins', b.wins], ['opportunities', b.opportunities], ['median', m.median], ['probability', m.probability * 100]] as const).map(([k, v]) => h('p', {}, `${text(k)}: ${format(v)}${k === 'probability' ? '%' : ''}`)), h('p', {}, text('payoff').replace('{n}', String(Math.round(m.probability * 100)))));
     }
-    root.append(fields, h('details', {}, h('summary', {}, t(bi('Допущения модели', 'Model assumptions'))), h('p', {}, text('assumptions'))), result); update();
+    mode.onchange = update;
+    root.append(fields, h('details', {}, h('summary', {}, t(bi('Допущения модели', 'Model assumptions'))), assumptionText), result); update();
   } else {
     const data = datasets.find(d => d.id === id && d.id === (kind === 'boundary' ? 'product.boundary' : 'sales.signal-feed'));
     if (!data) { root.textContent = text('missing'); return mounted; }
