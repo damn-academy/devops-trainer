@@ -10,7 +10,7 @@
 
 import { defineModel } from '../../../core/define';
 import { fmt } from '../../../core/i18n';
-import type { DiagramEdge, ElementCard, ElementState, QText, Step } from '../../../core/types';
+import type { Diagram, DiagramEdge, DiagramNode, ElementCard, ElementState, QText, Step } from '../../../core/types';
 import { b, brokenAt, card, DOC, edge, lastMetric, node } from './kit';
 
 const XC = 140;
@@ -22,6 +22,24 @@ const DY = 38;
 function msg(id: string, dir: 'cs' | 'sc', slot: number, label: QText, c: ElementCard): DiagramEdge {
   const y = Y0 + slot * DY;
   return dir === 'cs' ? edge(id, 'client', 'server', label, c, { via: [[XC, y], [XS, y + 18]], labelAt: 0.5 }) : edge(id, 'server', 'client', label, c, { via: [[XS, y], [XC, y + 18]], labelAt: 0.5 });
+}
+
+/** Client and server columns of the phone layout: both fit a phone's window at a readable scale. */
+const NXC = 90;
+const NXS = 310;
+
+/** A sequence diagram with its phone layout: the two columns move closer, the arrows keep their rows. */
+function sequence(d: { width: number; height: number; nodes: DiagramNode[]; edges: DiagramEdge[] }): Diagram {
+  const column = (x: number) => (x === XC ? NXC : NXS);
+  return {
+    ...d,
+    narrow: {
+      width: 400,
+      height: d.height,
+      nodes: d.nodes.map((n) => ({ ...n, x: column(n.x + n.w / 2) - 75, w: 150 })),
+      edgeVia: Object.fromEntries(d.edges.map((e) => [e.id, (e.via ?? []).map(([x, y]): [number, number] => [column(x), y])])),
+    },
+  };
 }
 
 const hide = (ids: string[]): Record<string, ElementState> => Object.fromEntries(ids.map((id) => [id, 'hidden' as ElementState]));
@@ -60,7 +78,7 @@ export const tcpModel = defineModel<TP>({
   ),
   legend: seqLegend,
   stopLabel: b('Соединение не установлено', 'No connection'),
-  diagram: {
+  diagram: sequence({
     width: 960,
     height: 440,
     nodes: [clientNode('10.0.0.1:51234'), serverNode('10.0.0.2:8080')],
@@ -73,7 +91,7 @@ export const tcpModel = defineModel<TP>({
       msg('fin', 'cs', 5, 'FIN / FIN / ACK', card(['При аккуратном закрытии соединения каждая сторона сообщает, что больше ничего не отправит. Сторона, закрывшая соединение первой, держит сокет в состоянии TIME-WAIT ещё 60 секунд.', 'A polite close: each side says “I am done”. The side that closed first keeps the socket in TIME-WAIT for 60 seconds.'], ['Пакеты отправляет ядро, когда программа вызывает close().', 'The kernel, on close().'], 'ss -tan state time-wait')),
       msg('rst', 'sc', 6, 'RST', card(['Этим ответом ядро сервера сообщает, что порт никто не слушает. Клиент сразу получает отказ, и curl пишет «Connection refused».', '“Nobody here”: no one listens on the port. The client gets a refusal at once — Connection refused.'], ['Ответ отправляет ядро сервера.', 'The server’s kernel.'])),
     ],
-  },
+  }),
   params: [
     {
       id: 'port',
@@ -287,7 +305,7 @@ export const tlsModel = defineModel<LP>({
   ),
   legend: seqLegend,
   stopLabel: b('Запрос не отправлен', 'The request was not sent'),
-  diagram: {
+  diagram: sequence({
     width: 960,
     height: 440,
     nodes: [clientNode('curl, 192.168.1.23'), serverNode('shop.example:443')],
@@ -307,7 +325,7 @@ export const tlsModel = defineModel<LP>({
       msg('resp12', 'sc', 7, '{HTTP/1.1 200 OK}', card(['По этой стрелке идёт зашифрованный ответ.', 'The encrypted answer travels along this arrow.'], ['Ответ пишет приложение за nginx.', 'The application behind nginx.'])),
       msg('alert12', 'cs', 4, 'alert: bad certificate', card(['Если проверка сертификата не прошла, клиент отправляет предупреждение и закрывает соединение, так и не отправив свою часть ключа и запрос.', 'If the check fails, the client sends an alert and closes the connection without sending its key part or the request.'], ['Предупреждение отправляет curl.', 'curl.'])),
     ],
-  },
+  }),
   params: [
     { id: 'rtt', group: b('Соединение', 'The connection'), label: b('Время пути до сервера и обратно (RTT)', 'RTT to the server'), kind: 'range', min: 1, max: 300, step: 1, unit: { ru: 'мс', en: 'ms' }, default: 40, near: 'hello' },
     {
