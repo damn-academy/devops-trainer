@@ -42,19 +42,20 @@ export GOOS=linux GOARCH=riscv64 GORISCV64=rva20u64 CGO_ENABLED=0
 mkdir "$run/overlay"
 (cd "$run/overlay"; git apply --check "$patchfile"; git apply "$patchfile")
 sha256sum "$patchfile" > "$run/out/patch.sha256"
-# Kubernetes's vendor tree points to staging; explicitly use vendor mode.
 git clone --depth 1 --single-branch --branch v1.37.2 https://github.com/kubernetes/kubernetes.git "$run/kubernetes"
 (
  cd "$run/kubernetes"
  test "$(git describe --tags --exact-match)" = v1.37.2
  git rev-parse HEAD > "$run/out/kubernetes.commit"
  python3 "$run/overlay/build/client-go-tls-timeout.py" staging/src/k8s.io/client-go
- test "$(realpath vendor/k8s.io/client-go)" = "$run/kubernetes/staging/src/k8s.io/client-go"
+ # Kubernetes resolves its staging modules through go.work; make sure the
+ # patched staging client-go is the one the build will use.
+ test "$(go list -m -f '{{.Dir}}' k8s.io/client-go)" = "$run/kubernetes/staging/src/k8s.io/client-go"
  flags='-s -w'
  for pkg in k8s.io/client-go/pkg/version k8s.io/component-base/version; do
    flags="$flags -X $pkg.gitVersion=v1.37.2 -X $pkg.gitMajor=1 -X $pkg.gitMinor=37 -X $pkg.gitTreeState=archive -X $pkg.buildDate=2026-10-27T12:01:04Z"
  done
- go build -mod=vendor -buildvcs=false -trimpath -ldflags="$flags" -o "$run/out/kubectl" ./cmd/kubectl
+ go build -buildvcs=false -trimpath -ldflags="$flags" -o "$run/out/kubectl" ./cmd/kubectl
 )
 # Reclaim the first build before the larger node compile (10 Gi PVC).
 rm -rf "$run/kubernetes" "$GOCACHE" "$TMPDIR"
