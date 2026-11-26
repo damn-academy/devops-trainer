@@ -166,7 +166,7 @@ const placement: PlacementTask[] = [
       options: [
         { id: 'proc', text: bi('Из каталога /proc', 'From the /proc directory'), correct: true },
         { id: 'sys', text: bi('Из каталога /sys', 'From the /sys directory'), why: bi('Нет, в /sys собраны устройства и настройки ядра, а сведения о процессах ядро показывает в /proc.', 'No, /sys gathers devices and kernel settings, and the kernel shows the facts about processes in /proc.') },
-        { id: 'journal', text: bi('Из системного журнала', 'From the system journal'), why: bi('Нет, журнал хранит сообщения о том, что происходило, а не текущее состояние процессов.', 'No, the journal keeps messages about what happened, not the current state of processes.') },
+        { id: 'journal', text: bi('Из журнала', 'From the journal'), why: bi('Нет, журнал хранит сообщения о том, что происходило, а не текущее состояние процессов.', 'No, the journal keeps messages about what happened, not the current state of processes.') },
       ],
     },
   },
@@ -200,7 +200,7 @@ const placement: PlacementTask[] = [
       prompt: bi('В скрипте стоит строка `set -euo pipefail`, а за ней `grep foo missing.txt | wc -l`, причём файла missing.txt нет. Что произойдёт?', 'A script has `set -euo pipefail` and then `grep foo missing.txt | wc -l`, and the file missing.txt does not exist. What happens?'),
       options: [
         { id: 'stop', text: bi('Конвейер вернёт код 2, и скрипт завершится', 'The pipeline returns code 2, and the script ends'), correct: true },
-        { id: 'go', text: bi('Команда wc напечатает 0, и скрипт продолжит работу', 'wc prints 0, and the script goes on'), why: bi('Так было бы без pipefail, а с ним ошибка grep становится ошибкой всего конвейера, и флаг -e останавливает скрипт.', 'That would be so without pipefail, but with it grep’s error becomes the error of the whole pipeline, and -e stops the script.') },
+        { id: 'go', text: bi('Команда wc напечатает 0, и скрипт продолжит работу', 'The wc command prints 0, and the script keeps running'), why: bi('Так было бы без pipefail, а с ним ошибка grep становится ошибкой всего конвейера, и флаг -e останавливает скрипт.', 'That would be so without pipefail, but with it grep’s error becomes the error of the whole pipeline, and -e stops the script.') },
       ],
     },
   },

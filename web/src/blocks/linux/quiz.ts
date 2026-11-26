@@ -72,7 +72,7 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'b', text: W('Останется только b.txt, в котором будет содержимое бывшего a.txt', 'Only b.txt remains, holding the contents of the former a.txt'), correct: true },
       { id: 'both', text: W('Останутся оба файла, а b.txt никто не тронет', 'Both files remain, and nobody touches b.txt'), why: W('Нет, команда mv без флагов ничего не спрашивает и заменяет существующий файл.', 'No, mv without flags asks nothing and replaces the existing file.') },
-      { id: 'err', text: W('Команда сообщит об ошибке, потому что файл уже существует', 'The command reports an error, because the file already exists'), why: W('Нет, `mv` ничего не спрашивает и молча заменяет существующий файл. Чтобы этого не случилось, у команды есть флаг `-n`: с ним `mv -n a.txt b.txt` оставит b.txt нетронутым.', 'No, `mv` asks nothing and silently replaces the existing file. To prevent that, the command has the `-n` flag: with it `mv -n a.txt b.txt` leaves b.txt untouched.') },
+      { id: 'err', text: W('Команда сообщит об ошибке и ничего не сделает, потому что файл уже существует', 'The command reports an error and does nothing, because the file already exists'), why: W('Нет, `mv` ничего не спрашивает и молча заменяет существующий файл. Чтобы этого не случилось, у команды есть флаг `-n`: с ним `mv -n a.txt b.txt` оставит b.txt нетронутым.', 'No, `mv` asks nothing and silently replaces the existing file. To prevent that, the command has the `-n` flag: with it `mv -n a.txt b.txt` leaves b.txt untouched.') },
       { id: 'trash', text: W('Старый b.txt попадёт в корзину', 'The old b.txt goes to the trash'), why: W('Нет, корзины в Linux нет, и прежнее содержимое b.txt потеряно безвозвратно.', 'No, Linux has no trash, and the old contents of b.txt are gone for good.') },
     ],
   },
@@ -83,8 +83,8 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Кто превращает шаблон `*.log` в список имён, когда вы набираете `rm *.log`?', 'Who turns the pattern `*.log` into a list of names when you type `rm *.log`?'),
     options: [
       { id: 'shell', text: W('Оболочка, ещё до запуска rm', 'The shell, before rm starts'), correct: true },
-      { id: 'rm', text: W('Сама команда rm', 'The rm command itself'), why: W('Нет, rm получает уже готовые имена, как если бы вы напечатали их сами, и поэтому шаблоны одинаково работают у всех команд.', 'No, rm receives ready names, as if you had typed them yourself, which is why patterns work the same for every command.') },
-      { id: 'fs', text: W('Файловая система', 'The file system'), why: W('Нет, файловая система хранит имена, а подбирает их по шаблону оболочка.', 'No, the file system stores the names, and the shell picks them by the pattern.') },
+      { id: 'rm', text: W('Сама команда rm, когда разбирает свои аргументы', 'The rm command itself, as it parses its arguments'), why: W('Нет, rm получает уже готовые имена, как если бы вы напечатали их сами, и поэтому шаблоны одинаково работают у всех команд.', 'No, rm receives ready names, as if you had typed them yourself, which is why patterns work the same for every command.') },
+      { id: 'fs', text: W('Файловая система, когда rm открывает каталог', 'The file system, when rm opens the directory'), why: W('Нет, файловая система хранит имена, а подбирает их по шаблону оболочка.', 'No, the file system stores the names, and the shell picks them by the pattern.') },
     ],
     explain: W('Если ни одно имя к шаблону не подошло, оболочка передаёт шаблон как есть, и команда ищет файл, который так и называется: `*.log`.', 'If no name matches the pattern, the shell passes it as it is, and the command looks for a file literally called `*.log`.'),
   },
@@ -95,7 +95,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Чем команда `tar -xzf ~/site.tgz -C /srv/site` отличается от `cd /srv/site && tar -xzf ~/site.tgz`?', 'How does `tar -xzf ~/site.tgz -C /srv/site` differ from `cd /srv/site && tar -xzf ~/site.tgz`?'),
     options: [
       { id: 'same', text: W('Результат одинаковый, потому что -C переходит в каталог перед распаковкой', 'The result is the same, because -C changes to the directory before unpacking'), correct: true },
-      { id: 'sub', text: W('Флаг -C создаёт подкаталог с именем архива', 'The -C flag creates a subdirectory named after the archive'), why: W('Нет, подкаталоги появятся, только если они записаны в самом архиве, а увидеть это можно командой `tar -t`.', 'No, subdirectories appear only if they are recorded in the archive itself, which `tar -t` shows.') },
+      { id: 'sub', text: W('Флаг -C создаёт подкаталог с именем архива и распаковывает файлы уже в него', 'The -C flag creates a subdirectory named after the archive and unpacks the files into it'), why: W('Нет, подкаталоги появятся, только если они записаны в самом архиве, а увидеть это можно командой `tar -t`.', 'No, subdirectories appear only if they are recorded in the archive itself, which `tar -t` shows.') },
       { id: 'over', text: W('Флаг -C перезаписывает каталог целиком', 'The -C flag overwrites the whole directory'), why: W('Нет, tar добавляет и заменяет только те файлы, которые есть в архиве, а остальные файлы каталога не трогает.', 'No, tar adds and replaces only the files in the archive and leaves the rest of the directory alone.') },
     ],
   },
@@ -105,7 +105,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Вы открыли файл настроек в `vim`, что-то напечатали, и на экране творится непонятное. Как выйти из редактора, ничего не записав в файл?', 'You opened a settings file in `vim`, typed something, and the screen shows something strange. How do you leave the editor without writing anything to the file?'),
     options: [
       { id: 'q', text: W('Нажать Esc, набрать `:q!` и нажать Enter', 'Press Esc, type `:q!` and press Enter'), correct: true },
-      { id: 'ctrlc', text: W('Нажать Ctrl+C', 'Press Ctrl+C'), why: W('Нет, в `vim` сочетание Ctrl+C только прерывает текущую команду редактора и оставляет файл открытым. Выход без записи делает набор `:q!` в режиме команд, куда возвращает клавиша Esc.', 'No, in `vim` Ctrl+C only interrupts the current editor command and leaves the file open. Leaving without writing is `:q!` in command mode, to which Esc brings you back.') },
+      { id: 'ctrlc', text: W('Нажать Ctrl+C, как для любой другой программы в терминале', 'Press Ctrl+C, as with any other program in a terminal'), why: W('Нет, в `vim` сочетание Ctrl+C только прерывает текущую команду редактора и оставляет файл открытым. Выход без записи делает набор `:q!` в режиме команд, куда возвращает клавиша Esc.', 'No, in `vim` Ctrl+C only interrupts the current editor command and leaves the file open. Leaving without writing is `:q!` in command mode, to which Esc brings you back.') },
       { id: 'ctrlx', text: W('Нажать Ctrl+X', 'Press Ctrl+X'), why: W('Так закрывается редактор `nano`. В `vim` сочетание Ctrl+X ничего не закрывает, а выход без записи делает набор `:q!` после клавиши Esc.', 'That is how `nano` closes. In `vim` Ctrl+X closes nothing, and leaving without writing is `:q!` after Esc.') },
       { id: 'close', text: W('Закрыть окно терминала', 'Close the terminal window'), why: W('Файл останется прежним, но `vim` оставит рядом служебный файл с окончанием `.swp` и при следующем открытии начнёт спрашивать о нём, а на сервере вы ещё и потеряете сеанс. Чище выйти набором `:q!` после клавиши Esc.', 'The file stays as it was, but `vim` leaves a helper file ending in `.swp` next to it and asks about it the next time, and on a server you also lose the session. It is cleaner to leave with `:q!` after Esc.') },
     ],
@@ -119,8 +119,8 @@ export const QUIZ: QuizItem[] = [
     prompt: W('В разделе SYNOPSIS страницы cp написано `cp [OPTION]... SOURCE... DIRECTORY`. Можно ли скопировать два файла в каталог одной командой?', 'The SYNOPSIS of the cp page says `cp [OPTION]... SOURCE... DIRECTORY`. Can you copy two files into a directory with one command?'),
     options: [
       { id: 'yes', text: W('Да, потому что многоточие после SOURCE разрешает повторить источник', 'Yes, because the ellipsis after SOURCE lets the source repeat'), correct: true },
-      { id: 'no', text: W('Нет, потому что источник SOURCE может быть только один', 'No, because there can be only one SOURCE'), why: W('Многоточие после слова в SYNOPSIS означает, что эту часть можно повторить, поэтому источников может быть несколько.', 'An ellipsis after a word in SYNOPSIS means the part may repeat, so there may be several sources.') },
-      { id: 'flag', text: W('Можно, но только с флагом -r', 'You can, but only with the -r flag'), why: W('Нет, флаг -r нужен, когда источником служит каталог, а на число файлов он не влияет.', 'No, -r is needed when a source is a directory, and it has nothing to do with the number of files.') },
+      { id: 'no', text: W('Нет, потому что в SYNOPSIS источник SOURCE указан один раз и повторить его нельзя', 'No, because SOURCE appears once in the SYNOPSIS and cannot be repeated'), why: W('Многоточие после слова в SYNOPSIS означает, что эту часть можно повторить, поэтому источников может быть несколько.', 'An ellipsis after a word in SYNOPSIS means the part may repeat, so there may be several sources.') },
+      { id: 'flag', text: W('Можно, но только с флагом -r, который разрешает копировать несколько файлов сразу', 'You can, but only with the -r flag, which allows copying several files at once'), why: W('Нет, флаг -r нужен, когда источником служит каталог, а на число файлов он не влияет.', 'No, -r is needed when a source is a directory, and it has nothing to do with the number of files.') },
     ],
   },
   {
@@ -157,7 +157,7 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'shadow', text: W('Там хранится не пароль, а его хэш, в файле /etc/shadow, который обычный пользователь прочитать не может', 'Not the password but its hash is kept, in /etc/shadow, which an ordinary user cannot read'), correct: true },
       { id: 'x', text: W('Её пароль и есть буква x', 'Her password is the letter x'), why: W('Нет, буква `x` служит заглушкой и означает, что пароль хранится в другом месте.', 'No, the `x` is a placeholder meaning the password is kept elsewhere.') },
-      { id: 'none', text: W('Пароля у anna нет', 'anna has no password'), why: W('Нет, без пароля поле было бы пустым, а здесь в нём стоит x.', 'No, without a password the field would be empty, and here it holds x.') },
+      { id: 'none', text: W('Пароля у anna нет, и войти под её именем может кто угодно, просто набрав имя пользователя в приглашении входа', 'anna has no password, so anyone can log in under her name by typing just the user name at the login prompt'), why: W('Нет, без пароля поле было бы пустым, а здесь в нём стоит x.', 'No, without a password the field would be empty, and here it holds x.') },
     ],
   },
   {
@@ -167,8 +167,8 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Пользователя переименовали из `anna` в `anya`, а номер UID оставили прежним. Что стало с её файлами?', 'The user was renamed from `anna` to `anya`, and the UID was kept. What happened to her files?'),
     options: [
       { id: 'same', text: W('Файлы остались её, и ls покажет новое имя владельца', 'The files stay hers, and ls shows the new owner name'), correct: true },
-      { id: 'orphan', text: W('Файлы стали ничьими', 'The files belong to nobody now'), why: W('Нет, файл хранит номер владельца, а не имя, и имя команда ls подставляет по файлу /etc/passwd.', 'No, a file keeps its owner’s number, not the name, and ls fills in the name from /etc/passwd.') },
-      { id: 'root', text: W('Файлы перешли к root', 'The files went to root'), why: W('Нет, владельца никто не менял, потому что номер UID остался тем же.', 'No, nobody changed the owner, because the UID stayed the same.') },
+      { id: 'orphan', text: W('Файлы стали ничьими, и ls покажет вместо имени владельца только номер', 'The files belong to nobody now, and ls shows only a number instead of the owner'), why: W('Нет, файл хранит номер владельца, а не имя, и имя команда ls подставляет по файлу /etc/passwd.', 'No, a file keeps its owner’s number, not the name, and ls fills in the name from /etc/passwd.') },
+      { id: 'root', text: W('Файлы перешли к root, потому что прежнего пользователя anna больше нет', 'The files went to root, because the old user anna no longer exists'), why: W('Нет, владельца никто не менял, потому что номер UID остался тем же.', 'No, nobody changed the owner, because the UID stayed the same.') },
     ],
   },
   {
@@ -238,7 +238,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Пользователь хочет зайти в домашний каталог администратора и набирает `sudo cd /root`, а получает ответ `sudo: cd: command not found`. Почему так вышло?', 'A user wants to enter the administrator’s home directory and types `sudo cd /root`, but gets `sudo: cd: command not found`. Why?'),
     options: [
       { id: 'builtin', text: W('Команда `cd` встроена в оболочку, а sudo умеет запускать только отдельные программы', '`cd` is built into the shell, and sudo can start only separate programs'), correct: true },
-      { id: 'nosudo', text: W('Пользователю не разрешено пользоваться sudo', 'The user is not allowed to use sudo'), why: W('Тогда sudo ответил бы, что пользователя нет в файле sudoers. Здесь sudo запустился и не нашёл программу с именем cd, потому что такой программы нет, а есть встроенная команда оболочки.', 'Then sudo would say that the user is not in the sudoers file. Here sudo started and found no program called cd, because there is none, only a shell builtin.') },
+      { id: 'nosudo', text: W('Пользователю не разрешено пользоваться sudo, и поэтому sudo отказался выполнять даже cd', 'The user is not allowed to use sudo, and that is why sudo refused to run even cd'), why: W('Тогда sudo ответил бы, что пользователя нет в файле sudoers. Здесь sudo запустился и не нашёл программу с именем cd, потому что такой программы нет, а есть встроенная команда оболочки.', 'Then sudo would say that the user is not in the sudoers file. Here sudo started and found no program called cd, because there is none, only a shell builtin.') },
       { id: 'dirx', text: W('У каталога `/root` нет бита x для остальных', '`/root` has no x bit for others'), why: W('Бит x у `/root` для остальных снят, но root эти биты не проверяет. Мешает другое: sudo запускает программу, а каталог оболочки может сменить только сама оболочка.', 'The x bit of `/root` is indeed cleared for others, but root does not check those bits. The obstacle is different: sudo starts a program, and only the shell itself can change the shell’s directory.') },
     ],
     explain: W('Даже если бы sudo нашёл программу `cd`, а в некоторых системах, например в RHEL, файл `/usr/bin/cd` есть, она сменила бы каталог только себе и сразу завершилась, а ваша оболочка осталась бы на месте. Посмотреть, что лежит в `/root`, можно командой `sudo ls /root`, а работать там удобнее в оболочке root, которую открывает `sudo -i`.', 'Even if sudo found a `cd` program, and some systems, such as RHEL, really have `/usr/bin/cd`, it would change only its own directory and exit at once, and your shell would stay where it was. To see what is in `/root`, use `sudo ls /root`, and to work there, open a root shell with `sudo -i`.'),
@@ -251,8 +251,8 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Администратор работает под root и пытается удалить старый файл, а система ему отказывает:\n\n```\n# rm /etc/app/license.key\nrm: cannot remove \'/etc/app/license.key\': Operation not permitted\n# ls -l /etc/app/license.key\n-rw-r--r-- 1 root root 64 Nov 18 09:00 /etc/app/license.key\n```\n\nФайл принадлежит root, а каталог и биты прав в порядке. В чём, скорее всего, причина?', 'The administrator works as root and tries to delete an old file, but the system refuses:\n\n```\n# rm /etc/app/license.key\nrm: cannot remove \'/etc/app/license.key\': Operation not permitted\n# ls -l /etc/app/license.key\n-rw-r--r-- 1 root root 64 Nov 18 09:00 /etc/app/license.key\n```\n\nThe file belongs to root, and the directory and the mode bits are fine. What is the most likely cause?'),
     options: [
       { id: 'immutable', text: W('На файле стоит пометка «неизменяемый», которую показывает команда `lsattr`', 'The file carries the “immutable” mark that `lsattr` shows'), correct: true },
-      { id: 'sudo', text: W('Команду нужно было запустить через sudo', 'The command should have been run with sudo'), why: W('Знак `#` в приглашении показывает, что оболочка уже работает от имени root, и sudo ничего не добавит. Мешает не нехватка прав, а пометка, которую ставит `chattr +i` и снимает `chattr -i`.', 'The `#` in the prompt shows that the shell already runs as root, and sudo adds nothing. The obstacle is not a lack of rights but the mark that `chattr +i` sets and `chattr -i` removes.') },
-      { id: 'write', text: W('У файла нет бита w у группы и у остальных', 'The file has no w bit for the group and others'), why: W('Для удаления биты самого файла не важны, решает бит w у каталога, а root не проверяет и его. Отказ при удалении собственного файла у root чаще всего означает пометку «неизменяемый» от `chattr +i`.', 'The file’s own bits do not matter for deletion, the w bit of the directory decides, and root does not check even that. A refusal to delete root’s own file most often means the “immutable” mark set by `chattr +i`.') },
+      { id: 'sudo', text: W('Команду нужно было запустить через sudo, потому что rm не наследует права root от оболочки', 'The command should have been run with sudo, because rm does not inherit root’s rights from the shell'), why: W('Знак `#` в приглашении показывает, что оболочка уже работает от имени root, и sudo ничего не добавит. Мешает не нехватка прав, а пометка, которую ставит `chattr +i` и снимает `chattr -i`.', 'The `#` in the prompt shows that the shell already runs as root, and sudo adds nothing. The obstacle is not a lack of rights but the mark that `chattr +i` sets and `chattr -i` removes.') },
+      { id: 'write', text: W('У файла нет бита w у группы и у остальных, а без него файл не удалить даже владельцу', 'The file has no w bit for the group and others, and without it even the owner cannot delete the file'), why: W('Для удаления биты самого файла не важны, решает бит w у каталога, а root не проверяет и его. Отказ при удалении собственного файла у root чаще всего означает пометку «неизменяемый» от `chattr +i`.', 'The file’s own bits do not matter for deletion, the w bit of the directory decides, and root does not check even that. A refusal to delete root’s own file most often means the “immutable” mark set by `chattr +i`.') },
     ],
     explain: W('Биты rwx root обходит, но пометки файловой системы, диск, подключённый только для чтения, модули безопасности вроде SELinux и отнятые привилегии действуют и на него. Сначала посмотрите `lsattr /etc/app/license.key`: буква `i` в выводе означает, что файл неизменяемый, и снять пометку можно командой `chattr -i`.', 'root bypasses the rwx bits, but file system marks, a disk attached read-only, security modules such as SELinux and removed privileges apply to it too. Look at `lsattr /etc/app/license.key` first: the letter `i` in the output means the file is immutable, and `chattr -i` removes the mark.'),
     refs: { lesson: 'linux.permissions' },
@@ -266,7 +266,7 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'right', text: W('В первой оба потока попадают в файл, а во второй ошибки остаются на экране', 'In the first both streams end up in the file, and in the second the errors stay on screen'), correct: true },
       { id: 'same', text: W('Ничем не отличаются', 'They do not differ'), why: W('Нет, перенаправления выполняются по порядку, а `2>&1` копирует то направление, которое поток 1 имеет в этот момент.', 'No, redirections run in order, and `2>&1` copies whatever direction stream 1 has at that moment.') },
-      { id: 'reverse', text: W('Всё наоборот, и оба потока попадают в файл во второй команде', 'It is the other way round, and both streams end up in the file in the second command'), why: W('Нет, во второй команде поток 2 сначала скопировал направление на терминал, и только потом поток 1 направили в файл.', 'No, in the second command stream 2 first copied the direction to the terminal, and only then was stream 1 sent to the file.') },
+      { id: 'reverse', text: W('Всё наоборот, и оба потока попадают в файл во второй команде, а в первой ошибки остаются на экране', 'It is the other way round: both streams end up in the file in the second command, and in the first the errors stay on screen'), why: W('Нет, во второй команде поток 2 сначала скопировал направление на терминал, и только потом поток 1 направили в файл.', 'No, in the second command stream 2 first copied the direction to the terminal, and only then was stream 1 sent to the file.') },
     ],
   },
   {
@@ -326,8 +326,8 @@ export const QUIZ: QuizItem[] = [
     prompt: W('После команды `export PATH=/opt/tools/bin` команда `ls` отвечает `command not found`. Почему?', 'After `export PATH=/opt/tools/bin`, `ls` answers `command not found`. Why?'),
     options: [
       { id: 'replaced', text: W('Список каталогов заменили целиком, и каталог /usr/bin из него выпал', 'The list of directories was replaced as a whole, and /usr/bin dropped out of it'), correct: true },
-      { id: 'deleted', text: W('Программу ls удалили', 'The program ls was deleted'), why: W('Нет, файл /usr/bin/ls на месте, и если набрать полный путь `/usr/bin/ls`, он запустится.', 'No, /usr/bin/ls is in place, and if you type the full path `/usr/bin/ls`, it runs.') },
-      { id: 'restart', text: W('Нужно перезагрузить машину', 'The machine must be rebooted'), why: W('Нет, новое значение PATH действует сразу и только в этой оболочке.', 'No, the new PATH applies at once and only in this shell.') },
+      { id: 'deleted', text: W('Программу ls удалили, когда сменился PATH, и её нужно поставить заново из пакета coreutils', 'The program ls was deleted when PATH changed, and it must be reinstalled from the coreutils package'), why: W('Нет, файл /usr/bin/ls на месте, и если набрать полный путь `/usr/bin/ls`, он запустится.', 'No, /usr/bin/ls is in place, and if you type the full path `/usr/bin/ls`, it runs.') },
+      { id: 'restart', text: W('Нужно перезагрузить машину, потому что новое значение PATH вступает в силу только после загрузки', 'The machine must be rebooted, because a new PATH value takes effect only after the next boot'), why: W('Нет, новое значение PATH действует сразу и только в этой оболочке.', 'No, the new PATH applies at once and only in this shell.') },
     ],
     explain: W('Каталог нужно добавлять к списку, например так: `PATH="/opt/tools/bin:$PATH"`.', 'A directory must be added to the list, for example: `PATH="/opt/tools/bin:$PATH"`.'),
   },
@@ -350,7 +350,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Вы выполнили строку `LANG=C ls /nosuch`, а следующей командой `echo $LANG`. Что напечатает `echo`, если до этого переменная LANG в оболочке была равна `ru_RU.UTF-8`?', 'You ran the line `LANG=C ls /nosuch` and then `echo $LANG`. What does `echo` print if LANG in the shell was `ru_RU.UTF-8` before?'),
     options: [
       { id: 'old', text: W('`ru_RU.UTF-8`, потому что значение `C` получила только команда `ls`', '`ru_RU.UTF-8`, because only `ls` got the value `C`'), correct: true },
-      { id: 'c', text: W('`C`, потому что переменная задана в начале строки', '`C`, because the variable was set at the start of the line'), why: W('Нет, запись `ИМЯ=значение команда` кладёт переменную только в окружение этой одной команды, а в самой оболочке значение не меняется. Значение `C` осталось бы в оболочке, если бы между присваиванием и командой стояла точка с запятой.', 'No, `NAME=value command` puts the variable only into the environment of that one command, and the value in the shell itself does not change. `C` would have stayed in the shell if there had been a semicolon between the assignment and the command.') },
+      { id: 'c', text: W('`C`, потому что переменная задана в начале строки и так попала в оболочку', '`C`, because the variable was set at the start of the line and so reached the shell'), why: W('Нет, запись `ИМЯ=значение команда` кладёт переменную только в окружение этой одной команды, а в самой оболочке значение не меняется. Значение `C` осталось бы в оболочке, если бы между присваиванием и командой стояла точка с запятой.', 'No, `NAME=value command` puts the variable only into the environment of that one command, and the value in the shell itself does not change. `C` would have stayed in the shell if there had been a semicolon between the assignment and the command.') },
       { id: 'empty', text: W('Пустую строку, потому что команда `ls` завершилась ошибкой', 'An empty line, because `ls` failed'), why: W('Нет, ошибка команды не трогает переменные оболочки. Оболочка не меняла LANG, она только передала `ls` окружение со значением `C`.', 'No, a command’s failure does not touch the shell’s variables. The shell did not change LANG at all; it only handed `ls` an environment with the value `C`.') },
     ],
     explain: W('Запись `ИМЯ=значение команда` удобна, когда настройка нужна одной программе: `TZ=UTC date` показывает время по UTC, а `LANG=C` заставляет программу писать сообщения по-английски, и оболочка после этого остаётся прежней.', '`NAME=value command` is handy when one program needs a setting: `TZ=UTC date` shows the time in UTC, and `LANG=C` makes a program write in English, while the shell stays as it was.'),
@@ -401,8 +401,8 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Служба завершилась с кодом 137. Что это значит?', 'A program ended with code 137. What does that mean?'),
     options: [
       { id: 'kill', text: W('Её завершили сигналом KILL с номером 9, потому что 128 + 9 = 137', 'It was ended with KILL, number 9, because 128 + 9 = 137'), correct: true },
-      { id: 'own', text: W('Программа сама выбрала код 137', 'The program chose code 137 itself'), why: W('Такое возможно, но по соглашению код выше 128 означает, что процесс завершён сигналом с номером N − 128.', 'That is possible, but by convention a code above 128 means the process was ended by signal number N − 128.') },
-      { id: 'notfound', text: W('Команда не найдена', 'Command not found'), why: W('Нет, команде, которую не нашли, оболочка ставит код 127.', 'No, the shell gives a command that was not found code 127.') },
+      { id: 'own', text: W('Программа сама выбрала код 137, чтобы сообщить о нехватке памяти при запуске', 'The program chose code 137 itself, to report a lack of memory at start-up'), why: W('Такое возможно, но по соглашению код выше 128 означает, что процесс завершён сигналом с номером N − 128.', 'That is possible, but by convention a code above 128 means the process was ended by signal number N − 128.') },
+      { id: 'notfound', text: W('Оболочка не нашла команду и вернула код, которым помечает такой случай', 'The shell did not find the command and returned the code it uses for that case'), why: W('Нет, команде, которую не нашли, оболочка ставит код 127.', 'No, the shell gives a command that was not found code 127.') },
     ],
   },
   {
@@ -437,7 +437,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Команда `uptime` на сервере показывает `load average: 4.02, 3.95, 3.90`, а команда `nproc` печатает 4. Что это значит?', '`uptime` on a server shows `load average: 4.02, 3.95, 3.90`, and `nproc` prints 4. What does it mean?'),
     options: [
       { id: 'busy', text: W('Все четыре ядра заняты, но очереди к процессору почти нет, и нагрузка почти не меняется', 'All four cores are busy, but there is almost no queue for the CPU, and the load is steady'), correct: true },
-      { id: 'crash', text: W('Сервер перегружен в четыре раза, и нужно срочно останавливать программы', 'The server is four times overloaded, and programs must be stopped at once'), why: W('Нет, load average сравнивают с числом ядер. При четырёх ядрах нагрузка 4 означает, что каждое ядро работает, а ждать почти никому не приходится. Перегрузкой было бы число заметно больше четырёх, например 12.', 'No, the load average is compared with the number of cores. With four cores a load of 4 means every core works and almost nobody has to wait. An overload would be a number well above four, such as 12.') },
+      { id: 'crash', text: W('Сервер перегружен в четыре раза, потому что нормой считается нагрузка 1, и нужно срочно останавливать программы', 'The server is four times overloaded, because the norm is a load of 1, and programs must be stopped at once'), why: W('Нет, load average сравнивают с числом ядер. При четырёх ядрах нагрузка 4 означает, что каждое ядро работает, а ждать почти никому не приходится. Перегрузкой было бы число заметно больше четырёх, например 12.', 'No, the load average is compared with the number of cores. With four cores a load of 4 means every core works and almost nobody has to wait. An overload would be a number well above four, such as 12.') },
       { id: 'percent', text: W('Процессор загружен на 4 %', 'The CPU is 4 % busy'), why: W('Нет, load average считает не проценты, а среднее число задач, которые работают на процессоре или ждут его и диска. Проценты показывает колонка `%CPU` в `top`.', 'No, the load average counts not percent but the average number of tasks running on the CPU or waiting for it and for the disk. Percent is shown by the `%CPU` column in `top`.') },
     ],
     explain: W('Три числа показывают среднюю нагрузку за одну, пять и пятнадцать минут. Если они близки друг к другу, нагрузка ровная, а если первое заметно больше третьего, она растёт. В Linux в это число входят и процессы в состоянии `D`, которые ждут диска, поэтому при большой нагрузке смотрят в `top`, кто стоит в очереди.', 'The three numbers are the average load over one, five and fifteen minutes. When they are close, the load is steady, and when the first is clearly bigger than the third, it is growing. In Linux the number also includes processes in state `D` waiting for the disk, so with a high load you look in `top` at who is in the queue.'),
@@ -490,8 +490,8 @@ export const QUIZ: QuizItem[] = [
     prompt: W('В скрипте стоит `set -euo pipefail`, а за ним `grep foo missing.txt | wc -l`, и файла missing.txt нет. Что произойдёт?', 'A script has `set -euo pipefail` and then `grep foo missing.txt | wc -l`, and missing.txt does not exist. What happens?'),
     options: [
       { id: 'stop', text: W('Из-за pipefail конвейер вернёт код 2, и флаг -e остановит скрипт', 'Because of pipefail the pipeline returns code 2, and -e stops the script'), correct: true },
-      { id: 'zero', text: W('Команда wc напечатает 0, и скрипт пойдёт дальше', 'wc prints 0, and the script goes on'), why: W('Так было бы без pipefail, потому что тогда код конвейера равен коду последней команды wc, то есть нулю.', 'That would be so without pipefail, because then the pipeline’s code is that of the last command, wc, which is zero.') },
-      { id: 'u', text: W('Скрипт остановится с ошибкой из-за флага -u', 'The script stops with an error because of -u'), why: W('Нет, флаг -u касается незаданных переменных, а здесь их нет.', 'No, -u is about unset variables, and there are none here.') },
+      { id: 'zero', text: W('Команда wc напечатает 0, и скрипт пойдёт дальше, потому что код конвейера берётся у wc', 'wc prints 0, and the script goes on, because the pipeline takes its code from wc'), why: W('Так было бы без pipefail, потому что тогда код конвейера равен коду последней команды wc, то есть нулю.', 'That would be so without pipefail, because then the pipeline’s code is that of the last command, wc, which is zero.') },
+      { id: 'u', text: W('Скрипт остановится с ошибкой из-за флага -u, потому что файла missing.txt не существует', 'The script stops with an error because of -u, since the file missing.txt does not exist'), why: W('Нет, флаг -u касается незаданных переменных, а здесь их нет.', 'No, -u is about unset variables, and there are none here.') },
     ],
   },
   // ── packages ──
@@ -536,7 +536,7 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'journal', text: W('В журнале, командой journalctl -u <служба>', 'In the journal, with journalctl -u <service>'), correct: true },
       { id: 'tty', text: W('В терминале, из которого запускали systemctl start', 'In the terminal where systemctl start was run'), why: W('Нет, у службы нет терминала, и её вывод собирает systemd.', 'No, a service has no terminal, and systemd collects its output.') },
-      { id: 'lost', text: W('Нигде, потому что вывод служб пропадает', 'Nowhere, because the output of services is lost'), why: W('Нет, по умолчанию стоит StandardOutput=journal, и весь вывод службы попадает в журнал.', 'No, the default is StandardOutput=journal, and all of a service’s output goes to the journal.') },
+      { id: 'lost', text: W('Нигде, потому что вывод служб пропадает', 'Nowhere: the output of services is lost'), why: W('Нет, по умолчанию стоит StandardOutput=journal, и весь вывод службы попадает в журнал.', 'No, the default is StandardOutput=journal, and all of a service’s output goes to the journal.') },
     ],
   },
   {
@@ -546,8 +546,8 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Когда будет выполняться строка crontab `*/15 9-18 * * 1-5 /usr/local/bin/check`?', 'When does the crontab line `*/15 9-18 * * 1-5 /usr/local/bin/check` run?'),
     options: [
       { id: 'right', text: W('Каждые 15 минут с 9:00 до 18:45 по будним дням', 'Every 15 minutes from 9:00 to 18:45 on weekdays'), correct: true },
-      { id: 'once', text: W('Один раз в день в 9:15', 'Once a day at 9:15'), why: W('Нет, запись `*/15` в поле минут означает «каждые 15 минут», а не «в 15 минут».', 'No, `*/15` in the minutes field means “every 15 minutes”, not “at minute 15”.') },
-      { id: 'days', text: W('Каждый день с 1 по 5 число месяца', 'Every day from the 1st to the 5th of the month'), why: W('Нет, числа 1-5 стоят в пятом поле, которое задаёт дни недели, то есть с понедельника по пятницу.', 'No, 1-5 is in the fifth field, which sets the days of the week, Monday to Friday.') },
+      { id: 'once', text: W('Раз в день в 9:15, но только с понедельника по пятницу', 'Once a day at 9:15, but only from Monday to Friday'), why: W('Нет, запись `*/15` в поле минут означает «каждые 15 минут», а не «в 15 минут».', 'No, `*/15` in the minutes field means “every 15 minutes”, not “at minute 15”.') },
+      { id: 'days', text: W('Каждые 15 минут с 9:00 до 18:45, но только с 1 по 5 число месяца', 'Every 15 minutes from 9:00 to 18:45, but only on the 1st to the 5th of the month'), why: W('Нет, числа 1-5 стоят в пятом поле, которое задаёт дни недели, то есть с понедельника по пятницу.', 'No, 1-5 is in the fifth field, which sets the days of the week, Monday to Friday.') },
     ],
   },
   {
@@ -572,7 +572,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('У службы стоит `Restart=on-abnormal`, а программа завершается с кодом 1. Перезапустит ли её systemd?', 'A service has `Restart=on-abnormal`, and the program exits with code 1. Will systemd restart it?'),
     options: [
       { id: 'no', text: W('Нет, потому что для on-abnormal выход с кодом считается обычным завершением', 'No, because for on-abnormal an exit with a code is an ordinary end'), correct: true },
-      { id: 'yes', text: W('Да, потому что код не равен нулю и это сбой', 'Yes, because the code is not zero and that is a failure'), why: W('Так поступил бы on-failure, а on-abnormal реагирует только на сигналы, таймауты и срабатывание watchdog.', 'on-failure would do that, while on-abnormal reacts only to signals, timeouts and the watchdog.') },
+      { id: 'yes', text: W('Да, потому что код 1 не равен нулю, а любой ненулевой код systemd считает сбоем и перезапускает службу', 'Yes, because code 1 is not zero, and systemd treats any non-zero code as a failure and restarts the service'), why: W('Так поступил бы on-failure, а on-abnormal реагирует только на сигналы, таймауты и срабатывание watchdog.', 'on-failure would do that, while on-abnormal reacts only to signals, timeouts and the watchdog.') },
     ],
     refs: { explainer: 'linux.restart' },
   },
@@ -596,7 +596,7 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'hidden', text: W('Они скрыты под новой файловой системой и снова станут видны после umount', 'They are hidden under the new file system and become visible again after umount'), correct: true },
       { id: 'deleted', text: W('Они удалены', 'They are deleted'), why: W('Нет, монтирование ничего не удаляет, а только перекрывает содержимое каталога.', 'No, mounting deletes nothing; it only covers the directory’s contents.') },
-      { id: 'moved', text: W('Они перенесены на новый диск', 'They were moved to the new disk'), why: W('Нет, никто их не копирует, и новый диск остаётся пустым.', 'No, nobody copies them, and the new disk stays empty.') },
+      { id: 'moved', text: W('Их автоматически перенесли на новый диск, и после umount каталог /data останется пустым', 'They were moved to the new disk automatically, and after umount /data will be left empty'), why: W('Нет, никто их не копирует, и новый диск остаётся пустым.', 'No, nobody copies them, and the new disk stays empty.') },
     ],
   },
   {
@@ -605,7 +605,7 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.inode'],
     prompt: W('Команда `df -h` показывает, что `/` заполнен на 100%, а `du -sh /*` в сумме насчитывает намного меньше. Чем это чаще всего объясняется?', '`df -h` shows `/` at 100%, while `du -sh /*` adds up to far less. What explains this most often?'),
     options: [
-      { id: 'open', text: W('Удалённый файл всё ещё держит открытым какой-то процесс', 'Some process still holds a deleted file open'), correct: true },
+      { id: 'open', text: W('Удалённый файл до сих пор держит открытым процесс', 'Some process still holds a deleted file open'), correct: true },
       { id: 'bug', text: W('Команда df ошибается', 'df is wrong'), why: W('Нет, df считает занятые блоки, а du считает имена, и у удалённого открытого файла имени нет, а блоки он занимает.', 'No, df counts used blocks and du counts names, and a deleted open file has no name but still takes blocks.') },
       { id: 'hidden', text: W('Это скрытые файлы, имена которых начинаются с точки', 'These are hidden files whose names start with a dot'), why: W('Нет, du их считает, потому что обходит все имена, в том числе с точкой в начале.', 'No, du counts them, because it walks all names, those starting with a dot included.') },
     ],
@@ -640,7 +640,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Откуда команда `ps` берёт список процессов?', 'Where does `ps` get the list of processes?'),
     options: [
       { id: 'proc', text: W('Из каталога /proc', 'From the /proc directory'), correct: true },
-      { id: 'log', text: W('Из журнала systemd', 'From the systemd journal'), why: W('Нет, журнал хранит сообщения о том, что происходило, а не текущий список процессов.', 'No, the journal keeps messages about what happened, not the current list of processes.') },
+      { id: 'log', text: W('Из журнала systemd', 'From the journal kept by systemd'), why: W('Нет, журнал хранит сообщения о том, что происходило, а не текущий список процессов.', 'No, the journal keeps messages about what happened, not the current list of processes.') },
       { id: 'file', text: W('Из файла /var/run/processes', 'From the file /var/run/processes'), why: W('Нет, такого файла нет, а каталоги процессов в /proc ядро создаёт в тот момент, когда их читают.', 'No, there is no such file, and the kernel creates the process directories in /proc at the moment they are read.') },
     ],
   },
@@ -652,8 +652,8 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Команда `readlink /proc/412/ns/pid` выдаёт `pid:[4026532201]`, а `readlink /proc/1/ns/pid` выдаёт `pid:[4026531836]`. О чём это говорит?', '`readlink /proc/412/ns/pid` gives `pid:[4026532201]`, and `readlink /proc/1/ns/pid` gives `pid:[4026531836]`. What does that tell you?'),
     options: [
       { id: 'other', text: W('Процесс 412 находится в другом пространстве имён PID', 'Process 412 is in another PID namespace'), correct: true },
-      { id: 'pid', text: W('Это номера процессов внутри пространства', 'These are the process numbers inside the namespace'), why: W('Нет, число в скобках означает номер самого пространства, то есть его inode, а не номер процесса.', 'No, the number in brackets is the number of the namespace itself, its inode, not a process number.') },
-      { id: 'nothing', text: W('Ни о чём, потому что эти номера всегда разные', 'Nothing, because these numbers always differ'), why: W('Нет, у процессов одного пространства этот номер одинаковый.', 'No, processes of one namespace have the same number here.') },
+      { id: 'pid', text: W('Это номера процессов, которые они получили внутри своего пространства', 'These are the process numbers they got inside their namespace'), why: W('Нет, число в скобках означает номер самого пространства, то есть его inode, а не номер процесса.', 'No, the number in brackets is the number of the namespace itself, its inode, not a process number.') },
+      { id: 'nothing', text: W('Ни о чём, потому что эти номера у процессов не совпадают никогда', 'Nothing, because these numbers never match between processes'), why: W('Нет, у процессов одного пространства этот номер одинаковый.', 'No, processes of one namespace have the same number here.') },
     ],
   },
   {
@@ -663,7 +663,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Почему `ps` после `sudo unshare --pid --fork bash` без флага `--mount-proc` показывает все процессы машины?', 'Why does `ps` after `sudo unshare --pid --fork bash` without `--mount-proc` show every process of the machine?'),
     options: [
       { id: 'proc', text: W('Команда ps читает /proc, а смонтирован по-прежнему старый /proc машины', 'ps reads /proc, and the machine’s old /proc is still mounted'), correct: true },
-      { id: 'broken', text: W('Пространство имён не создалось', 'The namespace was not created'), why: W('Нет, пространство создалось, и `echo $$` внутри напечатает 1.', 'No, it was created, and `echo $$` inside prints 1.') },
+      { id: 'broken', text: W('Пространство имён не создалось, потому что флаг --fork без --mount-proc не работает', 'The namespace was not created, because --fork does not work without --mount-proc'), why: W('Нет, пространство создалось, и `echo $$` внутри напечатает 1.', 'No, it was created, and `echo $$` inside prints 1.') },
       { id: 'root', text: W('Пользователь root видит всё', 'root sees everything'), why: W('Нет, какие процессы видны, решает пространство имён, а не права пользователя.', 'No, which processes are visible is decided by the namespace, not by the user’s rights.') },
     ],
   },
@@ -688,7 +688,7 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'right', text: W('Ядро трижды завершало процесс группы, когда группа упиралась в лимит memory.max', 'The kernel three times ended a process of the group when the group hit memory.max'), correct: true },
       { id: 'limit', text: W('Лимит памяти группы равен трём', 'The group’s memory limit is three'), why: W('Нет, лимит хранится в файле memory.max, а в memory.events записаны счётчики событий.', 'No, the limit is in memory.max, while memory.events holds event counters.') },
-      { id: 'machine', text: W('Машине трижды не хватило памяти', 'The machine ran out of memory three times'), why: W('Нет, это счётчик группы, и остальная машина могла ничего не заметить.', 'No, this is the group’s counter, and the rest of the machine may have noticed nothing.') },
+      { id: 'machine', text: W('Машине трижды не хватило памяти, и ядро каждый раз выбирало жертву среди всех процессов системы', 'The machine ran out of memory three times, and each time the kernel picked a victim among all processes'), why: W('Нет, это счётчик группы, и остальная машина могла ничего не заметить.', 'No, this is the group’s counter, and the rest of the machine may have noticed nothing.') },
     ],
   },
   {
@@ -711,7 +711,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Что означает запись `cpu.max = 50000 100000`?', 'What does `cpu.max = 50000 100000` mean?'),
     options: [
       { id: 'half', text: W('Группе достаётся 50 мс работы процессора из каждых 100 мс, то есть половина процессора', 'The group gets 50 ms of CPU out of every 100 ms, that is, half a CPU'), correct: true },
-      { id: 'kill', text: W('Процесс завершат, если он займёт больше половины процессора', 'The process is ended if it takes more than half a CPU'), why: W('Нет, лимит процессора процесс не завершает, а только притормаживает.', 'No, a CPU limit does not end the process but only slows it down.') },
+      { id: 'kill', text: W('Процесс завершат сигналом KILL, если за любые 100 мс он займёт больше половины процессора', 'The process is ended with KILL if it takes more than half a CPU in any 100 ms'), why: W('Нет, лимит процессора процесс не завершает, а только притормаживает.', 'No, a CPU limit does not end the process but only slows it down.') },
       { id: 'mhz', text: W('Частота процессора ограничена 50 МГц', 'The CPU frequency is limited to 50 MHz'), why: W('Нет, эти числа означают квоту и период в микросекундах, а не частоту.', 'No, these numbers are the quota and the period in microseconds, not a frequency.') },
     ],
   },
@@ -722,7 +722,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Лимитов нет, и ночной отчёт занял всю память машины. Какой процесс завершит ядро?', 'There are no limits, and the nightly report took all of the machine’s memory. Which process does the kernel end?'),
     options: [
       { id: 'biggest', text: W('Самый большой процесс машины, и им может оказаться база данных', 'The biggest process of the machine, which may be the database'), correct: true },
-      { id: 'culprit', text: W('Обязательно процесс отчёта', 'The report process for sure'), why: W('Нет, ядро не знает, кто виноват, и выбирает процесс по размеру.', 'No, the kernel does not know who is to blame and picks a process by size.') },
+      { id: 'culprit', text: W('Обязательно процесс отчёта, потому что именно он попросил память последним', 'The report process for sure, because it was the last to ask for memory'), why: W('Нет, ядро не знает, кто виноват, и выбирает процесс по размеру.', 'No, the kernel does not know who is to blame and picks a process by size.') },
       { id: 'newest', text: W('Самый новый процесс', 'The newest process'), why: W('Нет, возраст процесса не важен, а важен его размер.', 'No, a process’s age does not matter; its size does.') },
     ],
   },
@@ -745,8 +745,8 @@ export const QUIZ: QuizItem[] = [
     prompt: W('В файле `/proc/PID/status` есть строка `Seccomp: 2`. Что это значит?', '`/proc/PID/status` has the line `Seccomp: 2`. What does it mean?'),
     options: [
       { id: 'filter', text: W('Процесс работает с включённым фильтром системных вызовов', 'The process runs with a system call filter switched on'), correct: true },
-      { id: 'two', text: W('Процессу разрешены два системных вызова', 'The process is allowed two system calls'), why: W('Нет, число 2 обозначает режим «фильтр», а не число вызовов.', 'No, 2 is the “filter” mode, not a number of calls.') },
-      { id: 'level', text: W('Это уровень безопасности 2 из 10', 'It is security level 2 of 10'), why: W('Нет, шкалы здесь нет: 0 означает, что фильтра нет, а 2 означает, что фильтр включён.', 'No, there is no scale: 0 means no filter, and 2 means the filter is on.') },
+      { id: 'two', text: W('Процессу разрешены только два системных вызова, а все остальные запрещены', 'The process is allowed only two system calls, and all the others are forbidden'), why: W('Нет, число 2 обозначает режим «фильтр», а не число вызовов.', 'No, 2 is the “filter” mode, not a number of calls.') },
+      { id: 'level', text: W('Это уровень безопасности 2 из 10, который задали при запуске процесса', 'It is security level 2 of 10, set when the process was started'), why: W('Нет, шкалы здесь нет: 0 означает, что фильтра нет, а 2 означает, что фильтр включён.', 'No, there is no scale: 0 means no filter, and 2 means the filter is on.') },
     ],
   },
   {
@@ -756,7 +756,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Программе выдали привилегию командой `setcap cap_net_bind_service=+ep`, а потом скопировали её командой `cp`. Есть ли эта привилегия у копии?', 'A program was given a capability with `setcap cap_net_bind_service=+ep` and then copied with `cp`. Does the copy have the capability?'),
     options: [
       { id: 'no', text: W('Нет, потому что привилегия записана на исходный файл, а у копии другой inode', 'No, because the capability is written on the original file, and the copy has another inode'), correct: true },
-      { id: 'yes', text: W('Есть, потому что cp копирует всё', 'It does, because cp copies everything'), why: W('Нет, обычный cp не переносит атрибуты файла, и setcap придётся выполнить заново.', 'No, a plain cp does not carry the file’s attributes over, and setcap has to be run again.') },
+      { id: 'yes', text: W('Есть, потому что cp вместе с содержимым копирует и все атрибуты файла, в том числе привилегии', 'It does, because cp copies all the file’s attributes along with its contents, capabilities included'), why: W('Нет, обычный cp не переносит атрибуты файла, и setcap придётся выполнить заново.', 'No, a plain cp does not carry the file’s attributes over, and setcap has to be run again.') },
     ],
   },
   // ── rootfs ──
@@ -767,7 +767,7 @@ export const QUIZ: QuizItem[] = [
     prompt: W('Что изолирует chroot? Отметьте все верные ответы.', 'What does chroot isolate? Tick every right answer.'),
     options: [
       { id: 'files', text: W('Видимый корень дерева файлов', 'The visible root of the tree of files'), correct: true },
-      { id: 'procs', text: W('Список процессов', 'The list of processes'), why: W('Нет, процессы остаются общими, и если смонтировать внутри /proc, ps покажет всю машину.', 'No, processes stay shared, and if you mount /proc inside, ps shows the whole machine.') },
+      { id: 'procs', text: W('Список процессов, которые видит программа внутри', 'The list of processes the program inside can see'), why: W('Нет, процессы остаются общими, и если смонтировать внутри /proc, ps покажет всю машину.', 'No, processes stay shared, and if you mount /proc inside, ps shows the whole machine.') },
       { id: 'net', text: W('Сеть', 'The network'), why: W('Нет, сеть остаётся той же, а для своей сети нужно пространство net.', 'No, the network stays the same, and an own network needs a net namespace.') },
       { id: 'host', text: W('Имя машины', 'The host name'), why: W('Нет, имя машины остаётся общим, а для своего имени нужно пространство uts.', 'No, the host name stays shared, and an own name needs a uts namespace.') },
     ],
