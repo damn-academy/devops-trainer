@@ -119,6 +119,8 @@ For each row, record two states, before and after the transfer, and three distin
 | Name and logo | Company | Foundation | Foundation | Foundation under its trademark policy | Trademark transfer agreement |
 | Release signing keys | Company | Foundation if keys are created under its accounts; otherwise mark “not applicable” and keys remain personal to maintainers | Held by two maintainers from different organizations | Project committee | Release rules in the project repository |
 
+For the signing key row, record three more answers: who signs each release, who revokes a key if it leaks or its holder leaves the project, and where users learn about the revocation and the new key.
+
 If any row has no answer, the project is not ready for a decision.
 
 Checklist for the company team:
