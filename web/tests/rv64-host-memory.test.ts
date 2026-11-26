@@ -29,3 +29,28 @@ it('ratchets the live JIT ceiling down under measured pressure without regrowing
   expect(pressureCeiling(ceiling, 0)).toBe(ceiling);
   expect(pressureCeiling(ceiling, HOST_BUDGET + 1)).toBe(64 * MiB);
 });
+
+it('bounds the URL/env ceiling and keeps both A/B budgets below dynamic and pressure limits', async () => {
+  const { jitCeilingBytes } = await import('../src/engine/rv64/host-memory');
+  expect(jitCeilingBytes(null)).toBe(256 * MiB);
+  expect(jitCeilingBytes(null, '384')).toBe(384 * MiB);
+  expect(jitCeilingBytes('256', '384')).toBe(256 * MiB);
+  for (const invalid of ['', '0', '-1', '257', '385', 'Infinity', 'NaN']) {
+    expect(() => jitCeilingBytes(invalid)).toThrow();
+    expect(() => jitCeilingBytes(null, invalid)).toThrow();
+  }
+  for (const value of ['256', '384']) {
+    const ceiling = jitCeilingBytes(value), shared = 1058 * MiB;
+    let previous = Infinity;
+    for (const privateBytes of [[128 * MiB, 128 * MiB], [400 * MiB, 500 * MiB], [800 * MiB, 800 * MiB]]) {
+      const budget = Math.min(ceiling, hartBudget(shared, privateBytes));
+      expect(budget).toBeLessThanOrEqual(previous);
+      expect(budget).toBeLessThanOrEqual(ceiling);
+      if (budget > 0) expect(shared + privateBytes.reduce((a,b) => a+b,0) + 2 * budget + HOST_RESERVE).toBeLessThanOrEqual(HOST_BUDGET);
+      const pressure = pressureCeiling(ceiling, HOST_BUDGET + 1);
+      expect(Math.min(pressure, hartBudget(shared, privateBytes))).toBeLessThanOrEqual(budget);
+      expect(pressureCeiling(pressure, 0)).toBe(pressure);
+      previous = budget;
+    }
+  }
+});

@@ -4,6 +4,7 @@ import { HTTPBlockDevice, type HTTPDisk } from './block';
 import { JitRuntime } from './jit';
 import { SharedHartMemory, HartMailboxes, type Amo, type FenceTicket } from './smp';
 interface Init {
+  hostBudget?: number;
   hart: number; harts: number; bytes: number; memory: WebAssembly.Memory; module: WebAssembly.Module;
   generations: WebAssembly.Memory; granules: WebAssembly.Memory; epoch: number;
   mail: SharedArrayBuffer; control: SharedArrayBuffer; kernel?: Uint8Array; initrd?: Uint8Array;
@@ -29,9 +30,14 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     if (typeof core.smp_sfence !== 'function') throw Error('Stale RV64 WASM: rebuild with scripts/rv64-dev.sh wasm (smp_sfence missing)');
     if (core.smp_jit_abi?.() !== 9) throw Error('Stale RV64 WASM: rebuild R9 (24-field JIT frame required)');
     core.smp_configure(d.hart, d.bytes);
-    const newJitRuntime = () => new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow,
+    let hostBudget = d.hostBudget;
+    const newJitRuntime = () => {
+      const runtime = new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow,
       { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) },
       { ram: d.memory, generations: d.generations, granules: d.granules, bytes: d.bytes });
+      if (hostBudget !== undefined) runtime.setHostBudget(hostBudget);
+      return runtime;
+    };
     let jitRuntime = newJitRuntime();
     core.jit_threshold(50);
     const profileInterval = d.guestProfile ?? 0;
@@ -122,7 +128,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     }
     // Input messages are processed between execution batches.
     self.onmessage = ({ data }) => {
-      if (typeof data.hostBudget === 'number') jitRuntime.setHostBudget(data.hostBudget);
+      if (typeof data.hostBudget === 'number') { hostBudget = data.hostBudget; jitRuntime.setHostBudget(data.hostBudget); }
       if (data.guestProfileStart && profileInterval && !profileActive) {
         core.profile_configure(profileInterval); core.profile_task_comm(d.guestProfileTaskCommOffset ?? 0); profileActive = true;
       }

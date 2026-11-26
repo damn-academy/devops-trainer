@@ -35,3 +35,10 @@ export class ConsoleTail {
 export function pressureCeiling(current: number, measured: number) {
   return measured > HOST_BUDGET ? Math.floor(current / 2) : current;
 }
+
+// URL wins over the Vite environment. Bound the experiment to audited ceilings.
+export function jitCeilingBytes(url: string | null, env?: string) {
+  const value = Number(url ?? env ?? '256');
+  if (value !== 256 && value !== 384) throw Error('jitBudgetMb must be 256 or 384');
+  return value * MiB;
+}

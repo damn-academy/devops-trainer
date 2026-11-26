@@ -1,4 +1,5 @@
-import { BoundedHistory, ConsoleTail, hartBudget, pressureCeiling, HOST_BUDGET, MiB } from './host-memory';
+import { sha256 } from './snapshot';
+import { BoundedHistory, ConsoleTail, jitCeilingBytes, hartBudget, pressureCeiling, HOST_BUDGET, MiB } from './host-memory';
 import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
 import { createRV64Network } from './network';
 import { fetchSource } from '../labhost/mirror';
@@ -12,6 +13,7 @@ const topologies = (params.get('harts') ?? '2,4').split(',').map(Number);
 const memoryMb = Number(params.get('memory') ?? 1024);
 const guestProfile = Number(params.get('guestProfile') ?? 0) || 0;
 try {
+  const configuredJitCeiling = jitCeilingBytes(params.get('jitBudgetMb'), import.meta.env.VITE_RV64_JIT_BUDGET_MB);
   if (!Number.isInteger(memoryMb) || memoryMb < 256 || memoryMb > 2048) throw Error('memory must be an integer from 256 to 2048 MiB');
   if (!topologies.length || topologies.some(h => h !== 2 && h !== 4)) throw Error('harts must be 2, 4 or 2,4');
   const [kernel, initrd, httpDisk] = await Promise.all([
@@ -19,6 +21,7 @@ try {
     fetch('/rv64/slim-initrd.cpio').then(r => r.arrayBuffer()).then(b => new Uint8Array(b)),
     fetch(params.get('media') ?? '/rv64/slim-recovery-media.json').then(r => r.json()),
   ]);
+  if (guestProfile && await sha256(kernel) !== 'db43c7264ee97779f9271ebb6c57e90df675d7ab768462e01115d84d4f7cd598') throw Error('task_comm offset requires the audited kernel');
   for (const harts of topologies) {
     const bytes = memoryMb * 1024 * 1024, pages = bytes / 65536 + 1;
     const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
@@ -34,10 +37,10 @@ try {
     let memoryTimer: ReturnType<typeof setInterval> | undefined;
     let memoryBusy = false, active = true;
     let uaPending: Promise<{ bytes: number }> | undefined;
-    let jitCeiling = 256 * MiB;
+    let jitCeiling = configuredJitCeiling;
     let text = '', error: string | undefined;
     let profileStartedMs: number | null = guestProfile && !startAfter ? 0 : null;
-    const capture = () => ({ harts, memoryMb, markers: Object.fromEntries(markers), metrics: history.entries, metricsDropped: history.dropped, metricsBytes: history.bytes, console: text, consoleDropped: tail.dropped, elapsedMs: performance.now() - start, profileStartedMs, profileStartAfter: startAfter, guestEpochOffsetMs: epoch - performance.timeOrigin - start, httpDisk });
+    const capture = () => ({ harts, memoryMb, configuredJitCeiling, markers: Object.fromEntries(markers), metrics: history.entries, metricsDropped: history.dropped, metricsBytes: history.bytes, console: text, consoleDropped: tail.dropped, elapsedMs: performance.now() - start, profileStartedMs, profileStartAfter: startAfter, guestEpochOffsetMs: epoch - performance.timeOrigin - start, httpDisk });
     host.rv64PartialResult = () => ({ type: 'smp-kuberoot', pass: false, samples: [...samples, capture()] });
     const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
     services.network.addPort('smp-kuberoot', { mode: 'access' }, frame => workers[0]?.postMessage({ frame }));
@@ -67,7 +70,7 @@ try {
       finally { clearTimeout(deadline); memoryBusy = false; }
       if (!active) return;
       if (uaBytes !== null) apply(uaBytes);
-      const record = { type: 'host-memory', ms: performance.now() - start, budgetBytes: HOST_BUDGET, uaBytes, uaStatus, shared, perHart, consoleLength: text.length, consoleDropped: tail.dropped, metricsBytes: history.bytes, metricsDropped: history.dropped };
+      const record = { type: 'host-memory', configuredJitCeiling, jitCeiling, ms: performance.now() - start, budgetBytes: HOST_BUDGET, uaBytes, uaStatus, shared, perHart, consoleLength: text.length, consoleDropped: tail.dropped, metricsBytes: history.bytes, metricsDropped: history.dropped };
       host.rv64HostMemory = record;
       history.push(record);
     };
@@ -95,7 +98,7 @@ try {
               if (scan.includes('\nRV64_PROBE_DONE\n')) { clearTimeout(timeout); resolve(); }
             }
           };
-          w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk, guestProfile, guestProfileDeferred: !!startAfter, guestProfileTaskCommOffset: guestProfile ? 1704 : 0,
+          w.postMessage({ hostBudget: Math.min(jitCeiling, hartBudget(memory.buffer.byteLength + generations.buffer.byteLength + granules.buffer.byteLength, Array(harts).fill(128 * MiB))), hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk, guestProfile, guestProfileDeferred: !!startAfter, guestProfileTaskCommOffset: guestProfile ? 1704 : 0,
             kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
             cmdline: 'earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000) });
         }

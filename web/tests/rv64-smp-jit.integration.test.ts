@@ -241,3 +241,55 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('publishes an inline SMP code store 
     expect(JSON.parse(cores[1].metrics()).jit_cache_clears).toBe(0);
   } finally { slots.forEach(slot=>table.set(slot,null)); cores.forEach(core=>core.free()); }
 },30000);
+
+it.skipIf(process.env.RV64_SMP_JIT !== '1')('samples nonzero comm and valid user stack words from shared SMP RAM', async () => {
+  const mod = await import(/* @vite-ignore */ new URL('../public/rv64/rv64_core.js', import.meta.url).href);
+  await mod.default({ module_or_path: readFileSync(process.env.RV64_SMP_JIT_WASM ?? new URL('../public/rv64/rv64_core_bg.wasm', import.meta.url)) });
+  const bytes = 32 * 1024 * 1024, pages = bytes / 65536 + 1;
+  const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
+  const generations = new Int32Array(new SharedArrayBuffer(bytes / 4096 * 4));
+  const ram = new SharedHartMemory(memory, atomicModule(pages), generations);
+  Object.assign(globalThis, {
+    rv64SharedAccess: (op: number, off: number, size: 1|2|4|8, value: bigint) => {
+      if (op === 0) return BigInt.asUintN(size * 8, ram.load(off + 64, size));
+      if (op === 1) { ram.store(off + 64, size, value); return 0n; }
+      throw Error(`unexpected shared operation ${op}`);
+    },
+    rv64SharedGeneration: (page: number) => Atomics.load(generations, page) >>> 0,
+  });
+  // Sv39: supervisor identity + high kernel alias, user low gigapage.
+  const pte = 0x200000cfn;
+  ram.store(64 + 0x10000, 8, pte | 16n);
+  ram.store(64 + 0x10000 + 2 * 8, 8, pte);
+  ram.store(64 + 0x10000 + 510 * 8, 8, pte);
+  const ld = (rd: number, offset: number) => (offset << 20 | 5 << 15 | 3 << 12 | rd << 7 | 3) >>> 0;
+  const csrw = (csr: number, rs: number) => (csr << 20 | rs << 15 | 1 << 12 | 0x73) >>> 0;
+  // S-mode boot: install SATP, sscratch task pointer, user SP/PC, then sret.
+  const boot = [0x00000297, ld(6, 128), csrw(0x180, 6), ld(6, 136), csrw(0x140, 6),
+    ld(2, 144), ld(6, 152), csrw(0x141, 6), csrw(0x100, 0), 0x10200073];
+  boot.forEach((word, i) => ram.store(64 + i * 4, 4, BigInt(word)));
+  [0x8000000000080010n, 0xffffffff80008000n, 0x6000n, 0x4000n].forEach((word, i) => ram.store(64 + 128 + i * 8, 8, word));
+  ram.store(64 + 0x4000, 4, 0x0000006fn); // user jal x0,0
+  const comm = 0x006c74636562756bn; // kubectl\0
+  ram.store(64 + 0x8000 + 1704, 8, comm);
+  for (let i = 0; i < 32; i++) ram.store(64 + 0x6000 + i * 8, 8, 0x12340000n + BigInt(i));
+  const before = new Uint8Array(memory.buffer).slice(), versions = generations.slice();
+  for (const hart of [0, 1]) {
+    const core = new mod.Engine(32);
+    try {
+      core.smp_configure(hart, bytes); core.smp_start(0x80000000n, 0n); core.jit_threshold(0);
+      core.profile_configure(1); core.profile_task_comm(1704); core.smp_run(64, 0, 0n);
+      const rows: string[][] = JSON.parse(core.profile_drain()).rows;
+      const user = rows.filter(row => BigInt('0x' + row[2]) === 0n);
+      expect(user.length).toBeGreaterThan(0);
+      for (const row of user) {
+        expect(row).toHaveLength(44);
+        expect(BigInt('0x' + row[7])).toBe(comm);
+        expect(BigInt('0x' + row[11])).toBe(0xffffffffn);
+        for (let i = 0; i < 32; i++) expect(BigInt('0x' + row[12 + i])).toBe(0x12340000n + BigInt(i));
+      }
+    } finally { core.free(); }
+  }
+  expect(Buffer.from(memory.buffer).equals(Buffer.from(before))).toBe(true);
+  expect(generations).toEqual(versions);
+});
