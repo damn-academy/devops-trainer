@@ -22,6 +22,7 @@ function reader(book) {
   };
   const functions={
     IF:(condition,yes,no)=>condition?yes:no,
+    ABS:Math.abs,
     MOD:(a,b)=>((a%b)+b)%b,
     MIN:(...args)=>Math.min(...args.map(Number)),
     MAX:(...args)=>Math.max(...args.map(Number)),
@@ -189,6 +190,61 @@ for(const suffix of ['', '-en']) {
   inputs.getCell('B2').value=750; const own=reader(w);
   for(let m=1;m<=18;m++) { const c=checks.getColumn(m<=12?m+1:m+2).letter; near(own(checks.name,`${c}2`),0,`own opening balance ${m}`); near(own(checks.name,`${c}3`),0,`own CFO ${m}`); }
   assert.equal(checks.getCell('D5').value,null);
+  // Split full per-person amounts, including one-off costs, without doubling cash.
+  const splitBook=new ExcelJS.Workbook();
+  await splitBook.xlsx.readFile(`${dir}/infraseed-model${suffix}.xlsx`);
+  const [,sp,sc,sb,ck,sh]=splitBook.worksheets;
+  assert.equal(sh.getCell('H1').value,suffix?'Share of cost, %':'Доля в строке, %');
+  for(let r=2;r<=31;r++) {
+    assert.equal(sh.getCell(r,8).value,100);
+    assert.deepEqual(sh.getCell(r,8).dataValidation.formulae,[0,100]);
+    assert.equal(sh.getCell(r,8).dataValidation.errorStyle,'stop');
+  }
+  assert.ok(sh.conditionalFormattings.some(rule=>rule.ref==='I2:I31'));
+  assert.ok(ck.conditionalFormattings.some(rule=>rule.ref==='B5:C5'));
+  assert.equal(reader(splitBook)(ck.name,'C5'),'OK','blank rows do not trigger warning');
+  const base=reader(splitBook), baseMonths=[];
+  for(let m=1;m<=18;m++) {
+    const c=sp.getColumn(m<=12?m+1:m+2).letter;
+    baseMonths.push([7,11,17].map(r=>base(sp.name,`${c}${r}`)).concat([base(sb.name,`${c}2`),base(sb.name,`${c}5`),base(sc.name,`${c}6`)]));
+  }
+  for(const start of [1,7,13,18]) {
+    for(const [r,role,share] of [[2,'COGS',60],[31,'R&D',40]]) {
+      sh.getCell(r,1).value='Engineer *?'; sh.getCell(r,2).value=role;
+      sh.getCell(r,4).value=start; sh.getCell(r,5).value=20;
+      sh.getCell(r,6).value=9; sh.getCell(r,7).value=36; sh.getCell(r,8).value=share;
+    }
+    const split=reader(splitBook);
+    near(split(sh.name,'I2'),100,'same person total');
+    near(split(sh.name,'I31'),100,'last row included');
+    near(split(ck.name,'B5'),0,'valid split');
+    assert.equal(split(ck.name,'C5'),'OK');
+    for(let m=1;m<=18;m++) {
+      const c=sp.getColumn(m<=12?m+1:m+2).letter;
+      const elapsed=Math.max(0,m-start+1), cost=(elapsed?20:0)+(m===start?9:0);
+      const [cogs,rd,income,money,assets,cfi]=baseMonths[m-1];
+      near(split(sp.name,`${c}7`)-cogs,cost*0.6,`split COGS ${start}/${m}`);
+      near(split(sp.name,`${c}11`)-rd,cost*0.4,`split R&D ${start}/${m}`);
+      near(split(sp.name,`${c}17`)-income,-cost-(elapsed?1:0),`split income ${start}/${m}`);
+      near(split(sb.name,`${c}2`)-money,-20*elapsed-(elapsed?45:0),`split cash ${start}/${m}`);
+      near(split(sb.name,`${c}5`)-assets,elapsed?36-elapsed:0,`split assets ${start}/${m}`);
+      near(split(sc.name,`${c}6`)-cfi,m===start?-36:0,`split CFI ${start}/${m}`);
+      near(split(ck.name,`${c}2`),0,`split balance ${start}/${m}`);
+      near(split(ck.name,`${c}3`),0,`split CFO ${start}/${m}`);
+    }
+  }
+  for(const [a,b] of [[0,0],[60,20],[60,60],[100,100]]) {
+    sh.getCell('H2').value=a; sh.getCell('H31').value=b;
+    const invalid=reader(splitBook);
+    near(invalid(ck.name,'B5'),2,'both invalid rows flagged');
+    assert.match(invalid(ck.name,'C5'),suffix?/Warning/:/Внимание/);
+  }
+  sh.getCell('H2').value=33.3333333; sh.getCell('H31').value=66.6666667;
+  near(reader(splitBook)(ck.name,'B5'),0,'decimal shares accepted');
+  sh.getCell('A31').value='Different engineer';
+  near(reader(splitBook)(ck.name,'B5'),2,'different people checked separately');
+  sh.getCell('H2').value=100; sh.getCell('H31').value=100;
+  near(reader(splitBook)(ck.name,'B5'),0,'separate full-time people accepted');
   const q=new ExcelJS.Workbook(); await q.xlsx.readFile(`${dir}/cash-13w${suffix}.xlsx`); const [events,weekly]=q.worksheets, weeklyRead=reader(q);
   const expected=[500,400,470,370,340,240,240,140,140,40,40,-60,-60];
   expected.forEach((v,i)=>near(weeklyRead(weekly.name,`${String.fromCharCode(66+i)}7`),v,`week ${i+1}`));
