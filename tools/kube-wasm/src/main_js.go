@@ -20,8 +20,18 @@ package main
 
 import (
 	"context"
+	"net"
+	"net/http"
 	"syscall/js"
 )
+
+func init() {
+	// client-go uses http.DefaultTransport for plain-HTTP configs. On
+	// GOOS=js that transport goes through the browser fetch API unless a
+	// dialer is set; with one it uses Go's HTTP stack over the in-process
+	// fake network, where the apiserver listens.
+	http.DefaultTransport.(*http.Transport).DialContext = (&net.Dialer{}).DialContext
+}
 
 // The JavaScript API, installed as globalThis.kubeWasm:
 //
