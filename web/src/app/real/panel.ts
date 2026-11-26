@@ -10,7 +10,7 @@ import { renderInline } from '../../core/markdown';
 import type { Exam, RealLab, RealTask } from '../../core/types';
 import collectorText from './trainer-check-host.sh?raw';
 import { collectorCommand, decodeHostBlob, heredoc, hostFacts, hostProblems, judgePaste, judgeReal, type MachinesFacts } from './facts';
-import { collectFacts, detectLab, mayProbeLab, vmForMachine, type LabStatus } from '../../engine/locallab/client';
+import { collectFacts, detectLab, LAB_VM_ADDR, mayProbeLab, vmForMachine, type LabStatus } from '../../engine/locallab/client';
 import './real.css';
 
 export const COLLECTOR_NAME = 'trainer-check-host.sh';
@@ -60,6 +60,9 @@ const L = {
   connectNote: bi('Если dtlab запущен на этом компьютере, браузер спросит разрешение на доступ к устройствам в локальной сети: разрешите его, и у машин появится кнопка «Забрать из dtlab».', 'If dtlab runs on this computer, the browser asks for permission to access devices on the local network: allow it, and the machines get a “Take from dtlab” button.'),
   connectNone: bi('Лаборатория не ответила. Проверьте, что выполнена команда `dtlab up`, и что доступ к локальной сети разрешён в настройках сайта.', 'The lab did not answer. Check that `dtlab up` has run and that local network access is allowed in the site settings.'),
   fromLabFound: bi('Найдена лаборатория dtlab: факты с её машин можно забрать кнопкой у каждой машины, без копирования блока.', 'A dtlab lab is running: take the facts from its machines with the button by each machine, without copying the block.'),
+  inLab: bi('Если работаете в лаборатории dtlab', 'If you work in the dtlab lab'),
+  labUp: bi('Запустите на своём компьютере машины, которые нужны этому экзамену: `{cmd}`. Если лаборатория уже запущена с другим набором машин, сначала выполните `dtlab destroy`: эта команда удалит прежние машины вместе с их дисками.', 'Start the machines this exam needs on your computer: `{cmd}`. If the lab is already running with another set of machines, run `dtlab destroy` first: it deletes the old machines with their disks.'),
+  labVm: bi('`{m}` — это машина лаборатории `{vm}` с адресом `{ip}`. Терминал на ней открывает команда `dtlab ssh {vm}`.', '`{m}` is the lab machine `{vm}` at `{ip}`. The command `dtlab ssh {vm}` opens a terminal on it.'),
   local: bi('Машины не обязательно заказывать в облаке: локальная лаборатория dtlab бесплатно запускает виртуальные машины курса на вашем компьютере, а команда `dtlab facts` снимает с них блок для поля экзамена. Как её поставить, рассказано на странице [«Лаборатория на своём компьютере»](#/local-lab).', 'The machines do not have to be ordered in a cloud: the local lab dtlab runs the course’s virtual machines on your computer for free, and the `dtlab facts` command takes the block for the exam’s box from them. How to install it is told on the page [“A lab on your own computer”](#/local-lab).'),
 };
 
@@ -176,7 +179,7 @@ export function mountRealLab(exam: Exam & { real: RealLab }, key: string, onChan
     const fromLab = h('button.btn.small', { type: 'button', hidden: true }, t(L.fromLab)) as HTMLButtonElement;
     labButtons.push({
       vm(labStatus) {
-        const vm = vmForMachine(m.id, labStatus);
+        const vm = vmForMachine(m.id, labStatus, m.dtlab);
         if (!vm) return;
         fromLab.hidden = false;
         fromLab.textContent = `${t(L.fromLab)}: ${vm}`;
@@ -185,9 +188,10 @@ export function mountRealLab(exam: Exam & { real: RealLab }, key: string, onChan
           status.textContent = `${t(L.fromLabBusy)} ${vm}…`;
           status.className = 'small muted rl-status';
           const ips = Object.fromEntries(labStatus.vms.map((v) => [v.name, v.ip]));
-          const fill = (a: string) => a.replace(/\{([a-z0-9-]+)\}/gi, (_, id: string) => addresses[id]?.trim() || ips[vmForMachine(id, labStatus) ?? ''] || `${id.toUpperCase()}_ADDR`);
+          const byId = Object.fromEntries(lab.machines.map((x) => [x.id, x.dtlab]));
+          const fill = (a: string) => a.replace(/\{([a-z0-9-]+)\}/gi, (_, id: string) => addresses[id]?.trim() || ips[vmForMachine(id, labStatus, byId[id]) ?? ''] || `${id.toUpperCase()}_ADDR`);
           try {
-            paste.value = await collectFacts({ vm, nonce, machine: m.id, track: lab.track, script: lab.collector?.name, args: m.collect.map(fill) });
+            paste.value = await collectFacts({ vm, nonce, machine: m.id, track: lab.track, script: lab.collector?.name ?? COLLECTOR_NAME, args: m.collect.map(fill) });
             await verify();
           } catch (e) {
             status.textContent = t(L.fromLabFail) + (e as Error).message;
@@ -200,13 +204,26 @@ export function mountRealLab(exam: Exam & { real: RealLab }, key: string, onChan
     });
     return h('section.rl-machine', {}, h('h3', {}, m.id, ' ', h('span.muted.small', {}, t(m.role))), box.el, paste, h('div.row', {}, h('button.btn.primary.small', { type: 'button', onclick: () => void verify() }, t(L.verify)), fromLab, h('span.small.muted', {}, t(L.privacy))), status);
   });
+  // Which lab VM plays which exam machine, and how to get into it: without
+  // this a learner in dtlab looks for an `app-01` the lab does not have.
+  const inLab = !exam.inTab && lab.dtlabUp
+    ? h(
+        'div.rl-inlab',
+        {},
+        h('h3', {}, t(L.inLab)),
+        h('p.small', {}, ...renderInline(t(L.labUp).replace('{cmd}', lab.dtlabUp))),
+        h('ul.small', {}, ...lab.machines.filter((m) => m.dtlab).map((m) => h('li', {}, ...renderInline(t(L.labVm).replaceAll('{m}', m.id).replaceAll('{vm}', m.dtlab ?? '').replace('{ip}', LAB_VM_ADDR[m.dtlab ?? ''] ?? ''))))),
+      )
+    : null;
+  // One machine has nobody to reach: its address box would only puzzle.
+  const many = lab.machines.length > 1;
   const el = h(
     'section.rl-lab',
     {},
     h('h2', {}, t(L.machines)),
-    h('details.rl-order', { open: true }, h('summary', {}, t(L.order)), h('p', {}, ...renderInline(t(lab.order))), h('p.small.rl-local', {}, ...renderInline(t(L.local))), labNote, connect, connectNote),
-    h('p.small', {}, t(L.addresses)),
-    addrInputs,
+    h('details.rl-order', { open: true }, h('summary', {}, t(L.order)), h('p', {}, ...renderInline(t(lab.order))), h('p.small.rl-local', {}, ...renderInline(t(L.local))), inLab, labNote, connect, connectNote),
+    many ? h('p.small', {}, t(L.addresses)) : null,
+    many ? addrInputs : null,
     lab.prepare?.length ? h('div', {}, h('h3', {}, t(L.prepare)), ...lab.prepare.map((s) => scriptBlock(s.name, s.on, s.note, s.text))) : null,
     h('h3', {}, t(L.collector)),
     h('p.small', {}, t(L.collectorNote), ' ', t(L.code), ': ', h('code', {}, nonce), '.'),
@@ -300,7 +317,10 @@ export function mountRealCard(task: RealTask, opts: { feedback: boolean; onScore
     };
     pasteEl = h('div.rl-paste-task', {}, h('label.small', {}, t(task.paste.label)), area, h('button.btn.small', { type: 'button', onclick: check }, t(L.verify)), st);
   }
-  const guide = h('p.task-guide', {}, t(opts.where === 'tab'
+  // A paste task takes a command's output, not the facts of a machine.
+  const guide = h('p.task-guide', {}, t(task.paste && !task.goals?.length
+    ? bi('Выполните команду, о которой сказано в задании, скопируйте всё, что она напечатала, вставьте в поле ниже и нажмите «Проверить». Зелёная галочка означает, что подтверждение принято, красный крестик — что в тексте нет ожидаемой строки.', 'Run the command the task names, copy everything it printed, paste it into the box below and press “Verify”. A green check mark means the confirmation is accepted; a red cross means the text lacks the expected line.')
+    : opts.where === 'tab'
     ? bi('Запустите машины в разделе выше и выполните задание в их терминалах. Проверка получает состояние машин автоматически. Зелёная галочка означает выполненную цель, красный крестик — неудачную проверку.', 'Start the machines above and complete the task in their terminals. Machine states are collected automatically. A green check mark means a completed goal; a red cross means a failed check.')
     : bi('После выполнения задания запустите проверочный скрипт из раздела «Ваши машины», вставьте полученный блок в поле своей машины и нажмите «Проверить». Можно также нажать «Забрать из dtlab». Зелёная галочка означает выполненную цель, красный крестик — неудачную проверку. Точка означает, что данные ещё не получены.', 'After completing the task, run the check script from “Your machines”, paste the resulting block into your machine’s field and press “Verify”. You can also press “Take from dtlab”. A green check mark means a completed goal; a red cross means a failed check. A dot means data has not arrived yet.')));
   const el = h('div.rl-card', {}, where, guide, task.goals?.length ? h('p.small.rl-checks', {}, t(L.checks)) : null, list, pasteEl);

@@ -858,6 +858,11 @@ export interface RealLab {
    * with --machine, which adds the cluster's objects and the node's probes).
    */
   collector?: { name: string; text: string };
+  /**
+   * The local lab dtlab: the command that starts the lab VMs this exam needs.
+   * Each machine names its VM in `RealMachine.dtlab`.
+   */
+  dtlabUp?: string;
 }
 
 export interface RealMachine {
@@ -870,6 +875,8 @@ export interface RealMachine {
    * '--tcp ssh,{vm1},22', '--http portal,https://www.corp.lab/,resolve=www.corp.lab:443:{vm1}'.
    */
   collect: string[];
+  /** The dtlab VM that plays this machine: learner, cp-1, worker-1, worker-2. */
+  dtlab?: string;
 }
 
 export interface RealScript {

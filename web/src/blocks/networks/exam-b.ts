@@ -9,7 +9,7 @@
 
 import { bi } from '../../core/i18n';
 import type { Exam, Facts, RealGoal } from '../../core/types';
-import { nginxLocations, nginxSeconds, type ListenFact, type WgFacts } from '../../app/real/facts';
+import { CLEANUP_ACCEPT, nginxLocations, nginxSeconds, type ListenFact, type WgFacts } from '../../app/real/facts';
 import appScript from './real/net-b-app.sh?raw';
 import partnerScript from './real/net-b-partner.sh?raw';
 import tunnelScript from './real/net-b-tunnel.sh?raw';
@@ -48,8 +48,8 @@ export const examB: Exam = {
   block: 'networks',
   title: bi('Сети на настоящих машинах', 'Networks on real machines'),
   intro: bi(
-    'Вторая часть экзамена блока проходит на трёх ваших виртуальных машинах. Тренажёр там ничего не выполняет. Вы работаете по SSH, после каждого шага запускаете на машине скрипт проверки, который только читает состояние, и вставляете его вывод сюда. Засчитывается состояние машин и ответы на проверочные запросы с других машин, а путь к этому состоянию может быть любым. Открыта только документация, то есть `man`, `--help`, nginx.org и RFC, а наставник выключен. Для среднего и опытного уровня эта часть обязательна, а новичку она будет полезна после блока контейнеров.',
-    'The second part of the block exam runs on three of your own virtual machines. The trainer runs nothing there: you work over SSH, and after each step you run the read-only check script on the machine and paste its output here. What counts is the state of the machines and the answers of probes from the other machines; any path to it is fine. Only documentation is open: `man`, `--help`, nginx.org and the RFCs; the mentor is off. For the intermediate and experienced levels this part is required; for a beginner it is worth doing after the containers block.',
+    'Вторая часть экзамена блока проходит на трёх ваших виртуальных машинах. Тренажёр там ничего не выполняет. Вы работаете по SSH, после каждого шага запускаете на машине скрипт проверки, который только читает состояние, и вставляете его вывод сюда. Засчитывается состояние машин и ответы на проверочные запросы с других машин, а путь к этому состоянию может быть любым. Открыта только документация, то есть `man`, `--help`, nginx.org и RFC, а наставник выключен. Для среднего и опытного уровня эта часть обязательна, а новичку она будет полезна после блока контейнеров. Если своих машин нет, сдайте [вариант этой части во вкладке](#/exam/networks.exam.browser): три машины с Linux работают прямо в браузере, сюжет и заявки те же, и этот вариант засчитывается вместо экзамена на своих машинах.',
+    'The second part of the block exam runs on three of your own virtual machines. The trainer runs nothing there: you work over SSH, and after each step you run the read-only check script on the machine and paste its output here. What counts is the state of the machines and the answers of probes from the other machines; any path to it is fine. Only documentation is open: `man`, `--help`, nginx.org and the RFCs; the mentor is off. For the intermediate and experienced levels this part is required; for a beginner it is worth doing after the containers block. Without machines of your own, take [the variant of this part in the tab](#/exam/networks.exam.browser): three Linux machines run right in the browser, with the same story and tickets, and this variant counts instead of the exam on your own machines.',
   ),
   story: bi(
     'Сервис заказов переезжает на отдельную машину `vm2`, к которой нет доступа снаружи, а с краевой машиной `vm1` её связывает туннель. Клиенты будут открывать `https://www.corp.lab/` через `vm1`. Платёжный партнёр пускает к своему API только адрес `vm1`, а служба безопасности хочет, чтобы снаружи на обеих машинах было открыто только необходимое. Внешний мир и партнёра изображает третья машина, `probe`.',
@@ -68,16 +68,19 @@ export const examB: Exam = {
       {
         id: 'vm1',
         role: bi('краевая машина с nginx, туннелем и выходом к партнёру', 'the edge: nginx, the tunnel, the way out to the partner'),
+        dtlab: 'cp-1',
         collect: ['--scope net', '--scope nginx', '--file /root/504.txt', '--icmp tun,10.99.0.2', '--http app,http://10.99.0.2:8080/', '--tcp exporter,10.99.0.2,9100'],
       },
       {
         id: 'vm2',
         role: bi('машина приложения за туннелем', 'the application machine behind the tunnel'),
+        dtlab: 'worker-1',
         collect: ['--scope net', '--file /etc/dt-stub/delay', '--http partner,http://{probe}:8081/'],
       },
       {
         id: 'probe',
         role: bi('внешний мир, партнёр и учебный удостоверяющий центр', 'the outside world, the partner and the training CA'),
+        dtlab: 'learner',
         collect: [
           `--http portal,https://www.corp.lab/,${TLS('vm1')}`,
           `--http report,https://www.corp.lab/report,${TLS('vm1')},timeout=100`,
@@ -89,6 +92,7 @@ export const examB: Exam = {
         ],
       },
     ],
+    dtlabUp: 'dtlab up --with learner,kubeadm-nodes',
     prepare: [
       { name: 'net-b-partner.sh', on: 'probe', note: bi('Скрипт запускает API партнёра на порту 8081, учебный удостоверяющий центр в `/root/ca` и команду `dt-ca-sign`, которая подписывает запрос на сертификат.', 'The partner API on port 8081, the training certificate authority in `/root/ca` and the command `dt-ca-sign`, which signs a certificate request.'), text: partnerScript },
       { name: 'net-b-tunnel.sh', on: 'vm1, vm2', note: bi('Скрипт запускает туннель WireGuard 10.99.0.0/24 между `vm1` (10.99.0.1) и `vm2` (10.99.0.2). Туннель работает как провод между машинами, который не зависит от того, что пропускает сеть провайдера. Запустите скрипт на обеих машинах дважды: сначала без аргументов, чтобы получить открытые ключи, а потом с адресом и ключом соседа.', 'The WireGuard tunnel 10.99.0.0/24 between `vm1` (10.99.0.1) and `vm2` (10.99.0.2): a wire between the machines that does not depend on what the provider’s network lets through. Run it twice on both machines: first without arguments to get the public keys, then with the neighbour’s address and key.'), text: tunnelScript },
@@ -256,12 +260,12 @@ export const examB: Exam = {
       kind: 'real',
       real: {
         prompt: bi(
-          'Уборка. Машины стоят денег, пока работают, поэтому без уборки экзамен не закрывается. Удалите все три машины и вставьте сюда подтверждение: вывод `terraform destroy`, если вы заказывали машины через Terraform, а если заказывали в облаке вручную, то список машин провайдера с меткой `dt-track=net-b` в формате JSON, то есть пустой список `[]`.',
-          'Cleanup. The machines cost money while they run, so the exam does not close without cleanup. Delete all three machines and paste the confirmation here: the output of `terraform destroy` if you ordered them with Terraform; in your own cloud, the provider’s list of machines with the label `dt-track=net-b` as JSON, that is, an empty list `[]`.',
+          'Уборка. Машины в облаке стоят денег, пока работают, а в лаборатории занимают память и диск, поэтому без уборки экзамен не закрывается. Удалите все три машины и вставьте сюда подтверждение. Если вы работали в лаборатории dtlab, выполните на своём компьютере `dtlab destroy` и вставьте то, что она напечатала. Если машины заказывали через Terraform, вставьте вывод `terraform destroy`, а если заказывали в облаке вручную, вставьте список машин провайдера с меткой `dt-track=net-b` в формате JSON, то есть пустой список `[]`.',
+          'Cleanup. Machines in a cloud cost money while they run, and in the lab they take memory and disk, so the exam does not close without cleanup. Delete all three machines and paste the confirmation here. If you worked in the dtlab lab, run `dtlab destroy` on your computer and paste what it printed. If you ordered the machines with Terraform, paste the output of `terraform destroy`; if you ordered them in your cloud by hand, paste the provider’s list of machines with the label `dt-track=net-b` as JSON, that is, an empty list `[]`.',
         ),
         paste: {
           label: bi('Подтверждение уборки', 'The cleanup confirmation'),
-          accept: [/Destroy complete! Resources: [1-9]\d* destroyed/, /No resources found/, /^\s*\[\s*\]\s*$/],
+          accept: CLEANUP_ACCEPT,
         },
       },
     },

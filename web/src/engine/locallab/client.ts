@@ -79,11 +79,23 @@ export async function collectFacts(req: FactsRequest, base = labBase()): Promise
   return r.block;
 }
 
+/** The fixed addresses of the lab's VMs (lab/internal/profile, Plan). */
+export const LAB_VM_ADDR: Record<string, string> = {
+  learner: '10.10.1.10',
+  'cp-1': '10.10.1.11',
+  'worker-1': '10.10.1.21',
+  'worker-2': '10.10.1.22',
+  'kr-1': '10.10.1.30',
+};
+
 /**
- * Maps an exam machine to a lab VM: kubeadm exams use the VM names of the
- * lab (cp-1, worker-1), every other exam runs on the learner VM.
+ * Maps an exam machine to a lab VM. The exam names the VM (`wanted`, from
+ * RealMachine.dtlab): then only that VM will do, and a lab started without it
+ * gives no VM rather than another machine's facts. Without a name, a VM of
+ * the same name (cp-1 of the kubeadm exam), else the learner VM.
  */
-export function vmForMachine(machine: string, status: LabStatus): string | null {
+export function vmForMachine(machine: string, status: LabStatus, wanted?: string): string | null {
+  if (wanted) return status.vms.some((v) => v.name === wanted) ? wanted : null;
   if (status.vms.some((v) => v.name === machine)) return machine;
   return status.vms.find((v) => v.kind === 'learner')?.name ?? null;
 }

@@ -9,6 +9,7 @@
 
 import { bi } from '../../core/i18n';
 import type { Exam, Facts, RealGoal } from '../../core/types';
+import { CLEANUP_ACCEPT } from '../../app/real/facts';
 import accessLaptop from './real/access-laptop.sh?raw';
 import accessServer from './real/access-server.sh?raw';
 import diskPlant from './real/disk-plant.sh?raw';
@@ -28,7 +29,6 @@ const sudoL = (f: Facts, u: string) => ((f.sudo ?? {}) as Record<string, string>
 const probe = (f: Facts, id: string) => ((f.reach ?? {}) as Record<string, { exit?: number; methods?: string }>)[id];
 const G = (id: string, label: [string, string], on: string | undefined, when: RealGoal['check']['when'], fail?: RealGoal['check']['fail']): RealGoal => ({ id, label: bi(label[0], label[1]), on, check: { when, fail } });
 
-const CLEANUP_ACCEPT = [/Destroy complete! Resources: [1-9]\d* destroyed/, /No resources found/, /^\s*\[\s*\]\s*$/];
 
 // ── linux.exam.disk ──
 
@@ -63,9 +63,11 @@ export const DISK_EXAM: Exam = {
       {
         id: 'app-01',
         role: bi('сервер магазина', 'the shop’s server'),
+        dtlab: 'learner',
         collect: ['--scope mounts', '--scope journald', `--tree ${ORDERS}`, '--file /var/lib/dt-trainer/disk.start', '--file /etc/cron.d/legacy-dump', '--file /etc/logrotate.d/legacy', '--logrotate /etc/logrotate.d/legacy', '--unit orders.service', '--unit legacy-agent.service'],
       },
     ],
+    dtlabUp: 'dtlab up',
     prepare: [{ name: 'disk-plant.sh', on: 'app-01', note: bi('Скрипт создаёт раздел магазина размером 160 МБ в файле-образе и монтирует его в `/srv/shop`, а также заводит две службы, задание cron и снимок данных для проверки. Системные разделы он не трогает.', 'The script creates the shop’s 160 MB partition in an image file and mounts it at `/srv/shop`, and also sets up two services, a cron job and a data snapshot for the check. It does not touch the system partitions.'), text: diskPlant }],
   },
   explain: [
@@ -168,7 +170,7 @@ export const DISK_EXAM: Exam = {
       critical: true,
       kind: 'real',
       real: {
-        prompt: bi('Уборка. Удалите машину и вставьте подтверждение: вывод `terraform destroy` или, если машина в вашем облаке, список машин с меткой `dt-track=linux-disk` в формате JSON, то есть `[]`.', 'Clean-up. Delete the machine and paste a confirmation: the output of `terraform destroy` or, if the machine is in your own cloud, the list of machines labelled `dt-track=linux-disk` as JSON, that is, `[]`.'),
+        prompt: bi('Уборка. Удалите машину и вставьте подтверждение. Если вы работали в лаборатории dtlab, выполните на своём компьютере `dtlab destroy` и вставьте то, что она напечатала. Если машину заказывали через Terraform, вставьте вывод `terraform destroy`, а если заказывали в облаке вручную, вставьте список машин с меткой `dt-track=linux-disk` в формате JSON, то есть `[]`.', 'Clean-up. Delete the machine and paste a confirmation. If you worked in the dtlab lab, run `dtlab destroy` on your computer and paste what it printed. If you ordered the machine with Terraform, paste the output of `terraform destroy`; if you ordered it in your cloud by hand, paste the list of machines labelled `dt-track=linux-disk` as JSON, that is, `[]`.'),
         paste: { label: bi('Подтверждение уборки', 'The cleanup confirmation'), accept: CLEANUP_ACCEPT },
       },
     },
@@ -203,9 +205,10 @@ export const ACCESS_EXAM: Exam = {
       'You need two smallest machines (1 vCPU, 1 GB of memory) with Debian 12 or Ubuntu 24.04 in one private network and with the labels `trainer=devops` and `dt-track=linux-access`. Name them `laptop` and `server`. The exam takes less than an hour, and in your own cloud it costs as much as the two cheapest machines for an hour. Enter `server`’s private address, because the setup script on `laptop` needs it.',
     ),
     machines: [
-      { id: 'server', role: bi('сервер команды', 'the team’s server'), collect: ['--scope sshd', '--scope sudoers', '--sudo-l maria', `--file ${MARIA_SSH}`, `--file ${MARIA_SSH}/authorized_keys`, '--file /srv/releases'] },
-      { id: 'laptop', role: bi('ноутбук Марии', 'Maria’s laptop'), collect: [`--file ${MARIA_SSH}/known_hosts`, '--ssh keyin,maria,server'] },
+      { id: 'server', role: bi('сервер команды', 'the team’s server'), dtlab: 'cp-1', collect: ['--scope sshd', '--scope sudoers', '--sudo-l maria', `--file ${MARIA_SSH}`, `--file ${MARIA_SSH}/authorized_keys`, '--file /srv/releases'] },
+      { id: 'laptop', role: bi('ноутбук Марии', 'Maria’s laptop'), dtlab: 'learner', collect: [`--file ${MARIA_SSH}/known_hosts`, '--ssh keyin,maria,server'] },
     ],
+    dtlabUp: 'dtlab up --with learner,kubeadm-nodes',
     prepare: [
       { name: 'access-server.sh', on: 'server', note: bi('Скрипт заводит группу `devs` с разработчиком `alex`, службу `orders` и вход по паролю через SSH, как на многих старых серверах.', 'The script sets up the group `devs` with the developer `alex`, the `orders` service and SSH password login, as on many old servers.'), text: accessServer },
       { name: 'access-laptop.sh', on: 'laptop', note: bi('Скрипт заводит учётную запись `maria` без ключей и записывает имя `server` в `/etc/hosts`. Запустите его с адресом сервера: `sudo bash access-laptop.sh АДРЕС`.', 'The script creates the account `maria` without keys and writes the name `server` into `/etc/hosts`. Run it with the server’s address: `sudo bash access-laptop.sh ADDRESS`.'), text: accessLaptop },
@@ -317,7 +320,7 @@ export const ACCESS_EXAM: Exam = {
       critical: true,
       kind: 'real',
       real: {
-        prompt: bi('Уборка. Удалите обе машины и вставьте подтверждение: вывод `terraform destroy` или, если машины в вашем облаке, список машин с меткой `dt-track=linux-access` в формате JSON, то есть `[]`.', 'Clean-up. Delete both machines and paste a confirmation: the output of `terraform destroy` or, if the machines are in your own cloud, the list of machines labelled `dt-track=linux-access` as JSON, that is, `[]`.'),
+        prompt: bi('Уборка. Удалите обе машины и вставьте подтверждение. Если вы работали в лаборатории dtlab, выполните на своём компьютере `dtlab destroy` и вставьте то, что она напечатала. Если машины заказывали через Terraform, вставьте вывод `terraform destroy`, а если заказывали в облаке вручную, вставьте список машин с меткой `dt-track=linux-access` в формате JSON, то есть `[]`.', 'Clean-up. Delete both machines and paste a confirmation. If you worked in the dtlab lab, run `dtlab destroy` on your computer and paste what it printed. If you ordered the machines with Terraform, paste the output of `terraform destroy`; if you ordered them in your cloud by hand, paste the list of machines labelled `dt-track=linux-access` as JSON, that is, `[]`.'),
         paste: { label: bi('Подтверждение уборки', 'The cleanup confirmation'), accept: CLEANUP_ACCEPT },
       },
     },

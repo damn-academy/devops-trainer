@@ -16,6 +16,7 @@ import { blobFacts, type CheckBlob } from '../../engine/kube-lite/checkblob';
 import type { K8sFacts } from '../../engine/kube-lite/facts';
 import type { Obj } from '../../engine/kube-lite/util';
 import collectorText from '../../../public/check/trainer-check.sh?raw';
+import { DTLAB_CLEANUP } from '../../app/real/facts';
 
 export const TRACK = 'k8s-2';
 export const TARGET = 'v1.37.';
@@ -139,7 +140,8 @@ export const stage2Exam: Exam = {
       'Нужны три виртуальные машины с Ubuntu 24.04, двумя ядрами и 4 ГБ памяти в одной частной сети: `cp-1` для управляющего слоя, `worker-1` и `worker-2` для приложений. Машины должны называться в точности так, потому что по именам тренажёр узнаёт узлы. Поставьте на машины метки `trainer=devops` и `dt-track=k8s-2`, чтобы потом удалить всё одним списком. Соберите кластер kubeadm версии 1.36 с Cilium, как в уроках этапа, а затем идите по карточкам сверху вниз: порядок важен для обновления и для учений с etcd.',
       'Three Ubuntu 24.04 VMs with 2 vCPU and 4 GB of memory each in one private network: `cp-1` is the control plane, `worker-1` and `worker-2` are the workers. The machines must have exactly these names: that is how the trainer recognises the nodes. Put the labels `trainer=devops` and `dt-track=k8s-2` on the VMs so that you can delete everything with one list later. Build a kubeadm cluster of version 1.36 with Cilium, as in the stage lessons, then go through the cards from top to bottom: the order matters for the upgrade and for the etcd drill.',
     ),
-    machines: [{ id: CP, role: bi('управляющий узел, на нём запускается проверка', 'control plane: the check runs here'), collect: ['--snapshot /opt/backup/etcd.db'] }],
+    machines: [{ id: CP, role: bi('управляющий узел, на нём запускается проверка', 'control plane: the check runs here'), dtlab: CP, collect: ['--snapshot /opt/backup/etcd.db'] }],
+    dtlabUp: 'dtlab up --profile full --with kubeadm-nodes',
     collector: { name: 'trainer-check.sh', text: collectorText },
   },
   tasks: [
@@ -368,11 +370,11 @@ export const stage2Exam: Exam = {
       kind: 'real',
       real: {
         prompt: bi(
-          'Последнее задание посвящено уборке. Экзамен не засчитывается, пока виртуальные машины работают и стоят денег. Удалите все машины с меткой `trainer=devops` и вставьте вывод списка по этой метке после удаления, например `hcloud server list -l trainer=devops -o json` или `yc compute instance list --format json`. Список должен быть пустым.',
-          'The last task is the cleanup. The exam does not count while the VMs run and cost money. Delete every machine labelled `trainer=devops` and paste the output of the list by that label after the deletion — for example, `hcloud server list -l trainer=devops -o json` or `yc compute instance list --format json`. The list must be empty.',
+          'Последнее задание посвящено уборке. Экзамен не засчитывается, пока виртуальные машины работают и стоят денег или занимают память. Если вы работали в лаборатории dtlab, выполните на своём компьютере `dtlab destroy` и вставьте то, что она напечатала. Если машины в облаке, удалите все машины с меткой `trainer=devops` и вставьте вывод списка по этой метке после удаления, например `hcloud server list -l trainer=devops -o json` или `yc compute instance list --format json`. Список должен быть пустым.',
+          'The last task is the cleanup. The exam does not count while the VMs run and cost money or take memory. If you worked in the dtlab lab, run `dtlab destroy` on your computer and paste what it printed. If the machines are in a cloud, delete every machine labelled `trainer=devops` and paste the output of the list by that label after the deletion — for example, `hcloud server list -l trainer=devops -o json` or `yc compute instance list --format json`. The list must be empty.',
         ),
         concepts: ['k8s.cluster'],
-        paste: { label: bi('Вывод списка машин после удаления', 'The VM list after the deletion'), accept: [/^\s*\[\s*\]\s*$/, /No resources found/, /^\s*ID\s+NAME\s+STATUS[^\n]*\n?\s*$/] },
+        paste: { label: bi('Вывод dtlab destroy или списка машин после удаления', 'The output of dtlab destroy or of the VM list after the deletion'), accept: [/^\s*\[\s*\]\s*$/, /No resources found/, /^\s*ID\s+NAME\s+STATUS[^\n]*\n?\s*$/, ...DTLAB_CLEANUP] },
       },
     },
   ],
