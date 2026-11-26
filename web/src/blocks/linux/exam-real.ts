@@ -209,7 +209,7 @@ export const ACCESS_EXAM: Exam = {
       { id: 'laptop', role: bi('ноутбук Марии', 'Maria’s laptop'), dtlab: 'learner', collect: [`--file ${MARIA_SSH}/known_hosts`, '--ssh keyin,maria,server'] },
     ],
     dtlabUp: 'dtlab up --with learner,kubeadm-nodes',
-    dtlabNote: bi('Эта команда запустит ещё и машину `worker-1`: в лаборатории узлы kubeadm запускаются вместе, а экзамену она не нужна, её можно не трогать.', 'The command also starts the VM `worker-1`: the lab starts the kubeadm nodes together, and the exam does not use it, so leave it alone.'),
+    dtlabNote: bi('Вместе с ними запустится и машина `worker-1`, потому что узлы kubeadm лаборатория запускает вместе. Экзамену она не нужна, её можно не трогать.', 'The VM `worker-1` starts with them, because the lab starts the kubeadm nodes together. The exam does not use it, so leave it alone.'),
     prepare: [
       { name: 'access-server.sh', on: 'server', note: bi('Скрипт заводит группу `devs` с разработчиком `alex`, службу `orders` и вход по паролю через SSH, как на многих старых серверах.', 'The script sets up the group `devs` with the developer `alex`, the `orders` service and SSH password login, as on many old servers.'), text: accessServer },
       { name: 'access-laptop.sh', on: 'laptop', note: bi('Скрипт заводит учётную запись `maria` без ключей и записывает имя `server` в `/etc/hosts`. Запустите его с адресом сервера: `sudo bash access-laptop.sh АДРЕС`.', 'The script creates the account `maria` without keys and writes the name `server` into `/etc/hosts`. Run it with the server’s address: `sudo bash access-laptop.sh ADDRESS`.'), text: accessLaptop },

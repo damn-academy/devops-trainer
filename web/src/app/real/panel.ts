@@ -61,7 +61,8 @@ const L = {
   connectNone: bi('Лаборатория не ответила. Проверьте, что выполнена команда `dtlab up`, и что доступ к локальной сети разрешён в настройках сайта.', 'The lab did not answer. Check that `dtlab up` has run and that local network access is allowed in the site settings.'),
   fromLabFound: bi('Найдена лаборатория dtlab: факты с её машин можно забрать кнопкой у каждой машины, без копирования блока.', 'A dtlab lab is running: take the facts from its machines with the button by each machine, without copying the block.'),
   inLab: bi('Если работаете в лаборатории dtlab', 'If you work in the dtlab lab'),
-  labUp: bi('Запустите на своём компьютере машины, которые нужны этому экзамену: `{cmd}`. Если лаборатория уже создана с другим набором машин, `dtlab up` откажется её менять. Тогда сначала выполните `dtlab destroy` и подтвердите удаление ответом `y`: эта команда удалит прежние машины вместе с их дисками.', 'Start the machines this exam needs on your computer: `{cmd}`. If the lab already exists with another set of machines, `dtlab up` refuses to change it. Then run `dtlab destroy` first and confirm with `y`: it deletes the old machines with their disks.'),
+  labUp: bi('Запустите на своём компьютере машины, которые нужны этому экзамену: `{cmd}`.', 'Start the machines this exam needs on your computer: `{cmd}`.'),
+  labRedo: bi('Если лаборатория уже создана с другим набором машин, `dtlab up` откажется её менять. Тогда сначала выполните `dtlab destroy` и подтвердите удаление ответом `y`: эта команда удалит прежние машины вместе с их дисками.', 'If the lab already exists with another set of machines, `dtlab up` refuses to change it. Then run `dtlab destroy` first and confirm with `y`: it deletes the old machines with their disks.'),
   labVm: bi('`{m}` — это машина лаборатории `{vm}` с адресом `{ip}`. Терминал на ней открывает команда `dtlab ssh {vm}`.', '`{m}` is the lab machine `{vm}` at `{ip}`. The command `dtlab ssh {vm}` opens a terminal on it.'),
   local: bi('Машины не обязательно заказывать в облаке: локальная лаборатория dtlab бесплатно запускает виртуальные машины курса на вашем компьютере, а команда `dtlab facts` снимает с них блок для поля экзамена. Как её поставить, рассказано на странице [«Лаборатория на своём компьютере»](#/local-lab).', 'The machines do not have to be ordered in a cloud: the local lab dtlab runs the course’s virtual machines on your computer for free, and the `dtlab facts` command takes the block for the exam’s box from them. How to install it is told on the page [“A lab on your own computer”](#/local-lab).'),
 };
@@ -211,7 +212,7 @@ export function mountRealLab(exam: Exam & { real: RealLab }, key: string, onChan
         'div.rl-inlab',
         {},
         h('h3', {}, t(L.inLab)),
-        h('p.small', {}, ...renderInline(t(L.labUp).replace('{cmd}', lab.dtlabUp)), ...(lab.dtlabNote ? [' ', ...renderInline(t(lab.dtlabNote))] : [])),
+        h('p.small', {}, ...renderInline(t(L.labUp).replace('{cmd}', lab.dtlabUp)), ...(lab.dtlabNote ? [' ', ...renderInline(t(lab.dtlabNote))] : []), ' ', ...renderInline(t(L.labRedo))),
         h('ul.small', {}, ...lab.machines.filter((m) => m.dtlab).map((m) => h('li', {}, ...renderInline(t(L.labVm).replaceAll('{m}', m.id).replaceAll('{vm}', m.dtlab ?? '').replace('{ip}', LAB_VM_ADDR[m.dtlab ?? ''] ?? ''))))),
       )
     : null;
