@@ -65,6 +65,20 @@ const tiny: ProcessModel = {
 };
 
 describe('explainer: a picture built from zero', () => {
+  it('announces completion on the last step, including outside a lesson host', () => {
+    const root = document.createElement('div');
+    document.body.append(root);
+    let completed = 0;
+    const mounted = mountModel(root, tiny, { ...ctx(), onComplete: () => { completed++; } });
+    const status = root.querySelector<HTMLElement>('.task-completion')!;
+    expect(status.hidden).toBe(true);
+    root.querySelector<HTMLButtonElement>('button[aria-label="В конец"], button[aria-label="To the end"]')!.click();
+    expect(status.hidden).toBe(false);
+    expect(status.textContent).toMatch(/Просмотр завершён|Walkthrough complete/);
+    expect(completed).toBe(1);
+    mounted.dispose(); root.remove();
+  });
+
   it('hidden elements appear with reveal and disappear again when scrubbing back', () => {
     const steps = tiny.run({}, new Set());
     expect(fold(steps, 0).states).toMatchObject({ b: 'hidden', ab: 'hidden' });

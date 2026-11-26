@@ -138,10 +138,12 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   });
   const canvasEl = h('div.ex-canvas', {}, viewport);
   const introBox = model.intro ? h('div.ex-intro', { role: 'note' }) : null;
+  const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: true }, t(bi('Просмотр завершён. Можно продолжить сравнивать параметры.', 'Walkthrough complete. You can continue comparing parameters.')));
   const el = h(
     'div.explainer',
     { tabindex: 0, 'data-model': model.id, 'data-frame': model.frame ?? 'fixed' },
     h('header.ex-head', {}, h('h3', {}, t(model.title))),
+    h('p.task-guide', {}, t(bi('Пройдите процесс на схеме кнопкой «Шаг вперёд» или «Проиграть». Затем измените параметры и сравните результат с подписями шагов. Если появится вопрос, выберите ответ, чтобы продолжить. Последний шаг завершает просмотр; под схемой появится «Просмотр завершён».', 'Walk through the diagram with “Step forward” or “Play”. Then change the parameters and compare the result with the step captions. If a question appears, select an answer to continue. The last step completes the walkthrough; “Walkthrough complete” appears below the diagram.'))),
     h('div.ex-controls', {}, knobBox, breakBox),
     predictBox,
     introBox,
@@ -154,6 +156,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     brokeLine,
     metricsBox,
     waterfallBox,
+    completion,
   );
   clear(root);
   root.append(el);
@@ -768,6 +771,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     }
     if (!completed && maxSeen >= steps.length - 1) {
       completed = true;
+      completion.hidden = false;
       ctx.record({ kind: 'explainer.done', explainer: model.id });
       ctx.onComplete();
     }

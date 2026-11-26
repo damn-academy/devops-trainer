@@ -21,7 +21,7 @@ export interface QuizCtx {
 }
 
 const Q = {
-  order: bi('Расставьте по порядку: кнопками ↑ ↓ или клавишами', 'Put in order: with the ↑ ↓ buttons or the keys'),
+  order: bi('Расставьте шаги по порядку кнопками «Выше» и «Ниже» или клавишами со стрелками', 'Put in order with the Up and Down buttons or arrow keys'),
   match: bi('Сопоставьте', 'Match'),
   pick: bi('— выберите —', '— choose —'),
   output: bi('Вывод на самом деле', 'The actual output'),
@@ -350,9 +350,22 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
     ctx.onAnswered?.(g, first);
   });
 
+  const actions: Record<QuizItem['kind'], Bi> = {
+    mcq: bi('Выберите один ответ ниже.', 'Select one answer below.'),
+    multi: bi('Отметьте все верные ответы ниже.', 'Select all correct answers below.'),
+    order: bi('Расставьте шаги кнопками «Выше» и «Ниже».', 'Arrange the steps with the Up and Down buttons.'),
+    match: bi('Выберите соответствие в каждом списке ниже.', 'Choose a match in every list below.'),
+    'fill-command': bi('Впишите команду или пропущенную часть команды в поле ниже.', 'Enter the command or its missing part in the field below.'),
+    'predict-output': item.kind === 'predict-output' && item.options ? bi('Выберите ожидаемый вывод команды из вариантов ниже.', 'Select the expected command output below.') : bi('Впишите ожидаемый вывод команды в поле ниже.', 'Enter the expected command output below.'),
+    bugfind: bi('Нажмите на строку кода, в которой находится ошибка.', 'Click the line of code that contains the error.'),
+    label: bi('Выберите подпись для каждого номера на схеме в списках ниже.', 'Choose a label for each diagram number in the lists below.'),
+  };
+  const guide = h('p.task-guide', {}, t(actions[item.kind]), ' ', t(showFeedback
+    ? bi('Затем нажмите «Проверить». Под ответом появятся результат и объяснение; зелёная галочка означает верный ответ, красный крестик — ошибку.', 'Then press “Check”. The result and explanation appear below; a green check mark means correct, a red cross means incorrect.')
+    : bi('Затем нажмите «Проверить». Появится «Ответ записан», после чего можно перейти дальше. Оценка появится в итогах проверки.' , 'Then press “Check”. “Answer saved” confirms submission and you can continue. Your grade appears in the final results.')));
   const prompt = h('div.q-prompt', {}, md(item.prompt));
   clear(root);
-  root.append(h('div.quiz-item', { 'data-kind': item.kind, 'data-id': item.id }, prompt, body, h('div.q-actions', {}, checkBtn), feedback));
+  root.append(h('div.quiz-item', { 'data-kind': item.kind, 'data-id': item.id }, prompt, guide, body, h('div.q-actions', {}, checkBtn), feedback));
   return {
     dispose: () => clear(root),
     describe: () => `${t(item.prompt)} (${item.kind})`,
