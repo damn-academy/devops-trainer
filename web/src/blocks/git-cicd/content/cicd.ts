@@ -79,9 +79,9 @@ export const quiz: QuizItem[] = [
     concepts: ['git.remote'],
     prompt: bi('Команда `git push` ответила `! [rejected] main -> main (fetch first)`. Что это значит?', '`git push` answered `! [rejected] main -> main (fetch first)`. What does it mean?'),
     options: [
-      { id: 'ahead', text: bi('На сервере есть коммиты, которых нет у вас, поэтому их нужно забрать командой git pull и отправить работу снова', 'The server has commits you do not have: get them (git pull) and push again'), correct: true },
-      { id: 'perm', text: bi('У вас нет прав на запись в репозиторий, поэтому сервер отклонил push, и владелец проекта должен выдать вам роль Developer', 'You have no write access, so the server refused the push, and the project owner has to give you the Developer role'), why: bi('Отказ в правах выглядит иначе, например «You are not allowed to push code» или код 403. Здесь Git сравнил истории.', 'A permission error looks different: "You are not allowed to push code" or 403. Here Git compared histories.') },
       { id: 'force', text: bi('Команду нужно повторить с флагом --force', 'Repeat it with --force'), why: bi('Флаг --force перезапишет ветку на сервере, и коммиты коллеги пропадут. А push в защищённую ветку сервер не примет и с этим флагом.', '--force would overwrite the server branch and the colleague’s commits would be lost. A protected branch would not allow it anyway.') },
+      { id: 'perm', text: bi('У вас нет прав на запись в репозиторий, поэтому сервер отклонил push, и владелец проекта должен выдать вам роль Developer', 'You have no write access, so the server refused the push, and the project owner has to give you the Developer role'), why: bi('Отказ в правах выглядит иначе, например «You are not allowed to push code» или код 403. Здесь Git сравнил истории.', 'A permission error looks different: "You are not allowed to push code" or 403. Here Git compared histories.') },
+      { id: 'ahead', text: bi('На сервере есть коммиты, которых нет у вас, поэтому их нужно забрать командой git pull и отправить работу снова', 'The server has commits you do not have: get them (git pull) and push again'), correct: true },
     ],
   },
   {
