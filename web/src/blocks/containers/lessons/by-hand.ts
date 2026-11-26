@@ -70,8 +70,8 @@ export const byHandQuiz: QuizItem[] = [
     concepts: ['docker.container'],
     prompt: bi('Зачем команде `unshare --pid` нужен флаг `--fork`?', 'Why does `unshare --pid` need the `--fork` flag?'),
     options: [
-      { id: 'child', text: bi('Сам unshare в новое пространство имён PID не попадает, туда попадают только его дочерние процессы; с --fork первым дочерним процессом и PID 1 станет sh', 'unshare itself does not enter the new pid namespace — its children do; with --fork the first child, sh, becomes PID 1'), correct: true },
       { id: 'speed', text: bi('Чтобы процесс запустился в фоне', 'To run in the background'), why: bi('Флаг `--fork` не имеет отношения к фоновым процессам, а определяет, кто станет первым процессом нового пространства.', '`--fork` is not about the background: it is about who becomes the first process of the new namespace.') },
+      { id: 'child', text: bi('Сам unshare в новое пространство имён PID не попадает, туда попадают только его дочерние процессы; с --fork первым дочерним процессом и PID 1 станет sh', 'unshare itself does not enter the new pid namespace — its children do; with --fork the first child, sh, becomes PID 1'), correct: true },
       { id: 'mount', text: bi('Чтобы смонтировать /proc', 'To mount /proc'), why: bi('/proc монтирует флаг `--mount-proc` или ваша собственная команда mount внутри пространства.', 'That is what `--mount-proc` does (or your own mount command inside).') },
     ],
     explain: bi('Без --fork первым процессом нового пространства станет первый дочерний процесс sh, а сама оболочка sh получит ошибку, когда попытается запустить второй процесс.', 'Without --fork the first process of the new namespace becomes sh’s first child, and sh gets an error when it tries to start a second one.'),
