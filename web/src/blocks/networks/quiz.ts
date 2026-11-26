@@ -57,7 +57,7 @@ export const quiz: QuizItem[] = [
     concepts: ['net.ixp'],
     prompt: bi('Два провайдера одного города перестали обмениваться трафиком через точку обмена. Что станет с задержкой между их абонентами?', 'Two providers in one city stopped exchanging traffic through the exchange point. What happens to the delay between their customers?'),
     options: [
-      { id: 'down', text: bi('Задержка уменьшится, потому что на пути станет на одно устройство меньше', 'It falls: there is one device fewer'), why: bi('Одно устройство действительно выпало, но путь стал длиннее: вместо соседнего коммутатора трафик идёт через далёкую чужую сеть.', 'A device dropped out, but the path got longer: instead of a nearby switch, a distant foreign network.') },
+      { id: 'down', text: bi('Задержка уменьшится, потому что на пути станет на одно устройство меньше и пакетам не придётся ждать в его очереди', 'It falls: there is one device fewer on the path, so packets no longer wait in its queue'), why: bi('Одно устройство действительно выпало, но путь стал длиннее: вместо соседнего коммутатора трафик идёт через далёкую чужую сеть.', 'A device dropped out, but the path got longer: instead of a nearby switch, a distant foreign network.') },
       { id: 'up', text: bi('Задержка вырастет, потому что трафик пойдёт через транзитного оператора, иногда через другую страну', 'It grows: traffic goes through a transit carrier, sometimes through another country'), correct: true },
       { id: 'same', text: bi('Задержка не изменится, потому что адреса остались прежними', 'Nothing: the addresses are the same'), why: bi('Адреса остались теми же, но пакеты пошли другой дорогой, а задержка зависит от длины дороги, а не от адресов.', 'The addresses are the same, but the road differs — the road decides the delay.') },
     ],
@@ -73,7 +73,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'b', text: bi('Только к компьютеру B', 'Only to B'), why: bi('Коммутатор пока не знает, где находится B, и узнает это только тогда, когда B что-нибудь отправит.', 'How would the switch know where B is? It learns that only once B sends something.') },
       { id: 'all', text: bi('Во все порты, кроме того, через который кадр пришёл', 'Out of every port except the one it came in on'), correct: true },
-      { id: 'drop', text: bi('Никуда, потому что кадр на неизвестный адрес выбрасывается', 'Nowhere: an unknown address is dropped'), why: bi('Коммутатор не выбрасывает кадры к неизвестным MAC-адресам, а рассылает их во все порты.', 'A switch does not drop frames to unknown MACs — it floods them to everyone.') },
+      { id: 'drop', text: bi('Никуда, потому что кадр на неизвестный адрес выбрасывается', 'Nowhere: a frame to an unknown address is dropped'), why: bi('Коммутатор не выбрасывает кадры к неизвестным MAC-адресам, а рассылает их во все порты.', 'A switch does not drop frames to unknown MACs — it floods them to everyone.') },
     ],
     refs: { explainer: 'net.switch' },
   },
@@ -198,7 +198,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'right', text: bi('Широковещательные кадры получает каждая машина подсети, а правила доступа ставят на границе между подсетями', 'Every machine of a subnet gets the broadcast frames, and access rules are placed at the borders between subnets'), correct: true },
       { id: 'speed', text: bi('В большой подсети пакеты идут медленнее, потому что адреса машин в ней длиннее', 'Packets travel slower in a big subnet, because the machines’ addresses in it are longer'), why: bi('Адрес в любой подсети занимает те же 32 бита. Мешает не длина адреса, а шум широковещательных кадров и отсутствие границ, на которых можно поставить правила.', 'An address takes the same 32 bits in any subnet. The trouble is not the length but the noise of broadcast frames and the lack of borders to put rules on.') },
-      { id: 'limit', text: bi('В подсеть /16 помещается не больше 254 машин, и 2 000 машин в неё не войдут', 'A /16 subnet holds at most 254 machines, so 2,000 do not fit'), why: bi('254 машины помещаются в подсеть /24. В подсеть /16 помещается 65 534 машины, так что дело не во вместимости.', '254 machines fit a /24. A /16 holds 65,534 machines, so capacity is not the issue.') },
+      { id: 'limit', text: bi('В подсеть /16 помещается не больше 254 машин, поэтому 2 000 машин в неё не войдут и часть останется без адреса', 'A /16 subnet holds at most 254 machines, so 2,000 machines do not fit and some of them are left without an address'), why: bi('254 машины помещаются в подсеть /24. В подсеть /16 помещается 65 534 машины, так что дело не во вместимости.', '254 machines fit a /24. A /16 holds 65,534 machines, so capacity is not the issue.') },
     ],
   },
 
@@ -209,9 +209,9 @@ export const quiz: QuizItem[] = [
     concepts: ['net.arp'],
     prompt: bi('Машина спрашивает по ARP, у кого адрес 192.168.1.20. Кто ответит?', 'A host asks over ARP: “who has 192.168.1.20?”. Who answers?'),
     options: [
-      { id: 'switch', text: bi('Коммутатор, потому что у него есть таблица MAC-адресов', 'The switch, since it has a MAC table'), why: bi('В таблице коммутатора записано, за каким портом какой MAC-адрес, а IP-адресов коммутатор не знает и в ARP не участвует.', 'The switch table is “MAC → port”; it knows no IP addresses and takes no part in ARP.') },
+      { id: 'switch', text: bi('Коммутатор, потому что у него есть таблица MAC-адресов всех подключённых машин', 'The switch, since it keeps a MAC table of every connected machine'), why: bi('В таблице коммутатора записано, за каким портом какой MAC-адрес, а IP-адресов коммутатор не знает и в ARP не участвует.', 'The switch table is “MAC → port”; it knows no IP addresses and takes no part in ARP.') },
       { id: 'owner', text: bi('Только машина с этим адресом, и ответит она своим MAC-адресом', 'Only the machine with that address, with its MAC'), correct: true },
-      { id: 'all', text: bi('Все машины локальной сети', 'Everyone on the local network'), why: bi('Вопрос слышат все, а отвечает одна машина, та, чей адрес спросили.', 'Everyone hears the question; only the one whose address was asked answers.') },
+      { id: 'all', text: bi('Все машины локальной сети, потому что вопрос ARP получает каждая из них', 'Everyone on the local network, since every machine gets the ARP question'), why: bi('Вопрос слышат все, а отвечает одна машина, та, чей адрес спросили.', 'Everyone hears the question; only the one whose address was asked answers.') },
     ],
     refs: { explainer: 'net.arp' },
   },
@@ -289,8 +289,8 @@ export const quiz: QuizItem[] = [
     prompt: bi('Ping с машины A до машины B не проходит, а захват на B показывает пришедшие эхо-запросы. Какая причина самая вероятная?', 'A ping from A to B fails, but a capture on B shows the echo requests arriving. The most likely cause?'),
     options: [
       { id: 'back', text: bi('У машины B нет маршрута обратно в сеть машины A', 'B has no route back to A’s network'), correct: true },
-      { id: 'a', text: bi('У машины A нет маршрута к машине B', 'A has no route to B'), why: bi('В этом случае запросы не дошли бы до машины B.', 'Then the requests would not reach B.') },
-      { id: 'mac', text: bi('У машины B неправильный MAC-адрес', 'B has the wrong MAC'), why: bi('Запросы пришли, значит, кадры до машины B доходят.', 'The requests arrived — frames do reach B.') },
+      { id: 'a', text: bi('У машины A нет маршрута к машине B, и её запросы уходят мимо', 'A has no route to B, so its requests go somewhere else'), why: bi('В этом случае запросы не дошли бы до машины B.', 'Then the requests would not reach B.') },
+      { id: 'mac', text: bi('У машины B неправильный MAC-адрес, и кадры с запросами от A до неё не доходят', 'B has the wrong MAC, so the frames with A’s requests never reach it'), why: bi('Запросы пришли, значит, кадры до машины B доходят.', 'The requests arrived — frames do reach B.') },
     ],
   },
 
@@ -315,7 +315,7 @@ export const quiz: QuizItem[] = [
     concepts: ['net.tcp', 'net.port'],
     prompt: bi('Команда curl к закрытому порту одного сервера получает ответ мгновенно, а к закрытому порту другого сервера висит до конца срока ожидания. Чем отличаются эти два случая?', 'curl to a closed port answers instantly on one server and hangs until a timeout on another. What is the difference?'),
     options: [
-      { id: 'load', text: bi('Второй сервер перегружен и не успевает принять соединение', 'The second server is overloaded and cannot accept the connection in time'), why: bi('Даже перегруженный сервер ответил бы на SYN силами ядра. Полная тишина означает, что пакеты выбрасывает правило DROP или сервер недоступен.', 'An overloaded server would still answer the SYN from its kernel. Total silence means a DROP or unreachability.') },
+      { id: 'load', text: bi('Второй сервер перегружен, его очередь соединений заполнена, и он не успевает принять новое', 'The second server is overloaded: its connection queue is full and it cannot accept a new one in time'), why: bi('Даже перегруженный сервер ответил бы на SYN силами ядра. Полная тишина означает, что пакеты выбрасывает правило DROP или сервер недоступен.', 'An overloaded server would still answer the SYN from its kernel. Total silence means a DROP or unreachability.') },
       { id: 'rst', text: bi('Первый ответил отказом RST, а у второго пакеты молча выбрасывает фильтр', 'The first answered with an RST refusal; on the second a filter silently drops the packets'), correct: true },
       { id: 'dns', text: bi('Имя второго сервера слишком долго превращается в адрес', 'The second server’s name takes too long to turn into an address'), why: bi('Зависание наступает, когда адрес уже известен, то есть на этапе подключения.', 'The hang comes after the address is known: at the connection stage.') },
     ],
@@ -340,9 +340,9 @@ export const quiz: QuizItem[] = [
     concepts: ['net.ephemeral'],
     prompt: bi('В выводе ss на клиенте видно соединение 10.0.0.1:51234 → 10.0.0.2:8080. Откуда взялся порт 51234?', 'In ss on the client: 10.0.0.1:51234 → 10.0.0.2:8080. Where did 51234 come from?'),
     options: [
-      { id: 'server', text: bi('Этот порт назначил сервер', 'The server assigned it'), why: bi('Сервер знает только свой порт 8080, а порт клиента узнаёт из первого же пакета SYN.', 'The server knows only its own port 8080; the client’s port arrives in the very first SYN.') },
+      { id: 'server', text: bi('Этот порт назначил сервер и сообщил его клиенту в ответе на SYN', 'The server assigned it and told the client in its reply to the SYN'), why: bi('Сервер знает только свой порт 8080, а порт клиента узнаёт из первого же пакета SYN.', 'The server knows only its own port 8080; the client’s port arrives in the very first SYN.') },
       { id: 'kernel', text: bi('Ядро клиента выбрало свободный эфемерный порт', 'The client’s kernel picked a free ephemeral port'), correct: true },
-      { id: 'cfg', text: bi('Этот порт прописан в настройках curl', 'It is set in curl’s settings'), why: bi('curl не выбирает порт отправителя, это делает ядро при вызове connect().', 'curl does not choose the source port: the kernel does at connect().') },
+      { id: 'cfg', text: bi('Этот порт прописан в настройках curl как исходящий порт по умолчанию', 'It is set in curl’s settings as the default source port'), why: bi('curl не выбирает порт отправителя, это делает ядро при вызове connect().', 'curl does not choose the source port: the kernel does at connect().') },
     ],
   },
 
@@ -422,7 +422,7 @@ export const quiz: QuizItem[] = [
     concepts: ['net.resolver', 'net.authoritative'],
     prompt: bi('Пользователь набрал shop.exmaple с опечаткой в домене верхнего уровня. Какой сервер первым скажет, что такого имени нет?', 'A user typed shop.exmaple, with a typo in the top-level domain. Which server is the first to say that the name does not exist?'),
     options: [
-      { id: 'auth', text: bi('Авторитативный сервер магазина, потому что имя похоже на его зону', 'The shop’s authoritative server, because the name looks like its zone'), why: bi('До него вопрос не дойдёт, потому что корневой сервер не знает, кому передать зону exmaple.', 'The question never reaches it: the root does not know whom to hand exmaple. to.') },
+      { id: 'auth', text: bi('Авторитативный сервер магазина, потому что имя похоже на название его зоны', 'The shop’s authoritative server, because the name looks like its zone'), why: bi('До него вопрос не дойдёт, потому что корневой сервер не знает, кому передать зону exmaple.', 'The question never reaches it: the root does not know whom to hand exmaple. to.') },
       { id: 'root', text: bi('Корневой сервер, потому что он отвечает резолверу, что зоны exmaple. нет', 'A root server: it tells the resolver that there is no zone exmaple.'), correct: true },
       { id: 'stub', text: bi('Сам ноутбук, потому что он знает, какие зоны существуют', 'The laptop itself, because it knows which zones exist'), why: bi('Системная библиотека не знает, какие имена существуют, и поэтому спрашивает сервер.', 'The stub resolver does not know which names exist: it asks a server.') },
     ],
@@ -436,7 +436,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'cant', text: bi('Резолвер не смог получить ответ, например потому, что авторитативный сервер не отвечает', 'The resolver could not get an answer — for example, the authoritative server does not respond'), correct: true },
       { id: 'nx', text: bi('Такого имени не существует', 'There is no such name'), why: bi('Такой ответ называется NXDOMAIN: сервер сообщает, что такого имени не существует. SERVFAIL означает другое: сервер не смог получить ответ и не знает, существует ли имя.', 'That is NXDOMAIN. SERVFAIL means “I don’t know”, not “no”.') },
-      { id: 'srv', text: bi('Веб-сервер сайта аварийно завершил работу', 'The site’s web server crashed'), why: bi('DNS ничего не знает о веб-сервере и отвечает только о своих записях.', 'DNS knows nothing about the web server: it answers only about records.') },
+      { id: 'srv', text: bi('Веб-сервер сайта аварийно завершил работу, и резолвер сообщает об этом вместо того, чтобы выдать адрес', 'The site’s web server crashed, and the resolver reports that instead of returning the site’s address'), why: bi('DNS ничего не знает о веб-сервере и отвечает только о своих записях.', 'DNS knows nothing about the web server: it answers only about records.') },
     ],
   },
   {
@@ -456,7 +456,7 @@ export const quiz: QuizItem[] = [
     prompt: bi('У записи shop.example был TTL 86400 секунд, то есть сутки. Сайт переехал на новый адрес. Почему у части пользователей он ещё сутки не открывается?', 'The record for shop.example had a TTL of 86400. The site moved to a new address. Why does it “not open” for some users for another day?'),
     options: [
       { id: 'cache', text: bi('Резолверы хранят старый ответ до конца TTL, то есть сутки', 'Resolvers keep the old answer until the TTL ends — a day'), correct: true },
-      { id: 'prop', text: bi('Изменения DNS сутки распространяются по интернету', 'DNS “propagates” through the internet for a day'), why: bi('Записи DNS никуда не распространяются. Каждый резолвер хранит старый ответ в кэше, пока не истечёт его TTL, и только потом спрашивает заново.', 'There is no propagation: each resolver simply keeps its cache until the TTL runs out.') },
+      { id: 'prop', text: bi('Изменения DNS сутки распространяются по интернету от сервера к серверу, пока не дойдут до всех', 'DNS changes “propagate” through the internet from server to server for a day until they reach everyone'), why: bi('Записи DNS никуда не распространяются. Каждый резолвер хранит старый ответ в кэше, пока не истечёт его TTL, и только потом спрашивает заново.', 'There is no propagation: each resolver simply keeps its cache until the TTL runs out.') },
       { id: 'browser', text: bi('Браузер хранит страницу в кэше', 'The browser caches the page'), why: bi('Даже без кэша страницы браузер пойдёт на старый адрес, который ему дал резолвер.', 'Even without a cached page the browser goes to the old address the resolver gave it.') },
     ],
     explain: bi('Поэтому перед переездом TTL заранее снижают до нескольких минут и ждут, пока истечёт старый TTL.', 'Before a move the TTL is lowered to minutes in advance — and the old TTL is waited out.'),
@@ -469,7 +469,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'right', text: bi('Первая меняет адрес внутри зоны, а вторая передаёт всю зону другим серверам', 'The first changes an address inside the zone, the second hands the whole zone to other servers'), correct: true },
       { id: 'same', text: bi('Это одна и та же правка, которую разные хостинги называют по-разному', 'It is the same edit; different hosting companies just name it differently'), why: bi('Запись A хранит адрес сайта, а записи NS называют серверы, которые хранят всю зону. Сменив NS, вы переносите зону целиком, и все её записи нужно заново завести на новых серверах.', 'An A record holds the site’s address, while NS records name the servers that hold the whole zone. Changing NS moves the zone as a whole, and all its records must be set up again on the new servers.') },
-      { id: 'resolver', text: bi('Вторая правка меняет строку nameserver в /etc/resolv.conf на машинах пользователей', 'The second edit changes the nameserver line in /etc/resolv.conf on users’ machines'), why: bi('Строка nameserver указывает резолвер, который ищет ответы для этой машины. Под серверами домена в этой просьбе имеются в виду авторитативные серверы зоны, и меняют их у регистратора, а не на машинах пользователей.', 'The nameserver line names the resolver that looks up answers for that machine. The domain’s servers are the zone’s authoritative servers, changed at the registrar, not on users’ machines.') },
+      { id: 'resolver', text: bi('Вторая правка меняет строку nameserver в /etc/resolv.conf на машинах пользователей', 'The second edit changes the nameserver line in /etc/resolv.conf on the machines of the site’s users'), why: bi('Строка nameserver указывает резолвер, который ищет ответы для этой машины. Под серверами домена в этой просьбе имеются в виду авторитативные серверы зоны, и меняют их у регистратора, а не на машинах пользователей.', 'The nameserver line names the resolver that looks up answers for that machine. The domain’s servers are the zone’s authoritative servers, changed at the registrar, not on users’ machines.') },
     ],
     refs: { explainer: 'net.dns' },
   },
@@ -481,7 +481,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'cache', text: bi('Без рекурсии резолвер отвечает только тем, что лежит в его кэше', 'Without recursion the resolver answers only with what is in its cache'), correct: true },
       { id: 'bypass', text: bi('Команда обошла кэш, а старый адрес всё ещё хранит авторитативный сервер', 'The command bypassed the cache, and the authoritative server still holds the old address'), why: bi('Ключ +norecurse не обходит кэш, а наоборот запрещает резолверу искать дальше. Чтобы пройти путь от корня мимо кэша, нужен dig +trace или вопрос прямо авторитативному серверу.', '+norecurse does not bypass the cache; on the contrary, it forbids the resolver to look further. To walk from the root past the cache you need dig +trace or a question straight to the authoritative server.') },
-      { id: 'udp', text: bi('Без рекурсии вопрос уходит по UDP, и ответ теряется по дороге', 'Without recursion the question goes over UDP, and the answer is lost on the way'), why: bi('Вопросы DNS идут по UDP и с рекурсией, и без неё. Ответ пришёл, но это ответ из кэша.', 'DNS questions go over UDP with or without recursion. An answer did arrive; it simply came from the cache.') },
+      { id: 'udp', text: bi('Без рекурсии вопрос уходит по UDP, и ответ теряется по дороге', 'Without recursion the query goes over UDP and the answer gets lost'), why: bi('Вопросы DNS идут по UDP и с рекурсией, и без неё. Ответ пришёл, но это ответ из кэша.', 'DNS questions go over UDP with or without recursion. An answer did arrive; it simply came from the cache.') },
     ],
   },
 
@@ -507,8 +507,8 @@ export const quiz: QuizItem[] = [
     prompt: bi('У ноутбука адрес 169.254.23.141/16. Что произошло?', 'A laptop has the address 169.254.23.141/16. What happened?'),
     options: [
       { id: 'nodhcp', text: bi('Сервер DHCP не ответил, и машина назначила себе адрес link-local', 'The DHCP server did not answer and the machine assigned itself a link-local address'), correct: true },
-      { id: 'isp', text: bi('Провайдер выдал ноутбуку публичный адрес', 'The provider gave out a public address'), why: bi('Адреса из 169.254.0.0/16 не маршрутизируются, и выдаёт их не сервер, а сама машина.', '169.254.0.0/16 is not routed and is not given by a server but by the machine itself.') },
-      { id: 'switch', text: bi('Сломался коммутатор', 'The switch broke'), why: bi('Коммутатор адресов не выдаёт. Адрес 169.254.x.x машина придумала сама, потому что ей никто не ответил.', 'A switch hands out no addresses: the machine made up 169.254.x.x itself because nobody answered.') },
+      { id: 'isp', text: bi('Провайдер выдал ноутбуку публичный адрес из своего диапазона в обход домашнего роутера', 'The provider gave the laptop a public address from its own range, bypassing the home router'), why: bi('Адреса из 169.254.0.0/16 не маршрутизируются, и выдаёт их не сервер, а сама машина.', '169.254.0.0/16 is not routed and is not given by a server but by the machine itself.') },
+      { id: 'switch', text: bi('Сломался коммутатор, и ноутбук не видит в сети вообще ни одной машины', 'The switch broke, so the laptop cannot see a single other machine on the network at all'), why: bi('Коммутатор адресов не выдаёт. Адрес 169.254.x.x машина придумала сама, потому что ей никто не ответил.', 'A switch hands out no addresses: the machine made up 169.254.x.x itself because nobody answered.') },
     ],
   },
   {
@@ -533,7 +533,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'ct', text: bi('У роутера нет записи о том, какой из домашних машин отдать новое входящее соединение', 'The router has no record of which home machine should get a new incoming connection'), correct: true },
       { id: 'fw', text: bi('Потому что на ноутбуке включён антивирус', 'Because the laptop runs an antivirus'), why: bi('Пакет не дойдёт даже до ноутбука, потому что остановится на роутере.', 'The packet will not even reach the laptop: it stops at the router.') },
-      { id: 'priv', text: bi('Потому что частный адрес нельзя использовать в TCP', 'A private address cannot be used with TCP'), why: bi('Внутри сети частный адрес использовать можно, а снаружи по нему нельзя обратиться.', 'It can — inside the network. From outside it simply cannot be addressed.') },
+      { id: 'priv', text: bi('Потому что частный адрес нельзя использовать в TCP, и такие соединения ядро отбрасывает ещё до приложения', 'Because a private address cannot be used with TCP, and the kernel drops such connections before the application'), why: bi('Внутри сети частный адрес использовать можно, а снаружи по нему нельзя обратиться.', 'It can — inside the network. From outside it simply cannot be addressed.') },
     ],
     refs: { explainer: 'net.nat' },
   },
@@ -568,7 +568,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'ct', text: bi('conntrack помнит соединение, которое вы открыли, и помечает ответ как ESTABLISHED', 'conntrack remembers the connection you opened and marks the reply as ESTABLISHED'), correct: true },
       { id: 'port', text: bi('Ответы приходят на порт, который уже разрешён отдельным правилом цепочки', 'Replies arrive on a port that a separate rule of the chain already allows'), why: bi('Ответ приходит на ваш эфемерный порт, и отдельного правила для этого порта нет. Пакет пропускает правило, которое смотрит на состояние соединения.', 'The reply arrives on your ephemeral port — there is no rule for it. The connection state lets it in.') },
-      { id: 'out', text: bi('Политика DROP действует только на исходящие пакеты, а входящие проходят', 'The DROP policy applies only to outgoing packets, and incoming ones pass'), why: bi('Вопрос касается входящих ответов, а они проходят через цепочку INPUT.', 'This is about incoming replies — they go through INPUT.') },
+      { id: 'out', text: bi('Политика DROP действует только на исходящие пакеты, а входящие проходят через цепочку без проверки', 'The DROP policy applies only to outgoing packets, and incoming ones pass through the chain unchecked'), why: bi('Вопрос касается входящих ответов, а они проходят через цепочку INPUT.', 'This is about incoming replies — they go through INPUT.') },
     ],
   },
   {
@@ -603,7 +603,7 @@ export const quiz: QuizItem[] = [
     prompt: bi('На машине с Linux, к которой подходит транк, интерфейсы `eth0.10` и `eth0.20` подключили портами к одному мосту `br0`. Что теперь происходит с VLAN 10 и VLAN 20?', 'On a Linux machine with a trunk, the interfaces `eth0.10` and `eth0.20` became ports of one bridge `br0`. What about VLANs 10 and 20 now?'),
     options: [
       { id: 'one', text: bi('Они стали одной сетью второго уровня, и кадры, включая ARP, ходят между ними через мост', 'They became one layer-2 network: frames and ARP pass between them through the bridge'), correct: true },
-      { id: 'routed', text: bi('Между ними работает маршрутизация, но ARP по-прежнему не проходит', 'Routing works between them, but ARP still does not pass'), why: bi('Мост работает на втором уровне и пересылает любые кадры, включая ARP. Маршрутизация относится к третьему уровню и соединяет разные подсети.', 'A bridge works at layer 2 and forwards frames, ARP included. Routing is layer 3 and different subnets.') },
+      { id: 'routed', text: bi('Между ними работает маршрутизация через ядро Linux, но широковещательные запросы ARP по-прежнему не проходят', 'Routing through the Linux kernel works between them, but broadcast ARP requests still do not pass'), why: bi('Мост работает на втором уровне и пересылает любые кадры, включая ARP. Маршрутизация относится к третьему уровню и соединяет разные подсети.', 'A bridge works at layer 2 and forwards frames, ARP included. Routing is layer 3 and different subnets.') },
       { id: 'nothing', text: bi('Ничего не изменилось, потому что VLAN разделяет коммутатор, а не Linux', 'Nothing: the switch separates VLANs, not Linux'), why: bi('Коммутатор действительно разделяет VLAN, но кадры обоих VLAN приходят к мосту по транку, и мост пересылает их из одного VLAN в другой.', 'The switch separates them, but frames of both VLANs reach the bridge over the trunk, and the bridge forwards them from one to the other.') },
     ],
   },
@@ -640,7 +640,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'allow', text: bi('Разрешить `ct state established,related` и SSH, и только после этого поставить политику `drop`', 'Allow `ct state established,related` and SSH, and only then set the policy to `drop`'), correct: true },
       { id: 'policy', text: bi('Поставить политику `drop`, а потом добавить разрешения', 'Set the `drop` policy, then add the allow rules'), why: bi('Если поставить политику `drop` без разрешений, первым же пакетом будет отрезана ваша собственная сессия SSH, и добавлять правила станет некуда.', 'With a `drop` policy and no allow rules, your own SSH session is cut with the next packet, and there is nowhere left to add rules from.') },
-      { id: 'flush', text: bi('Выполнить `nft flush ruleset`, чтобы начать с чистого листа', '`nft flush ruleset` to start from a clean slate'), why: bi('Сброс удаляет и те правила, которые уже защищают сервер. Начинать с чистого листа удобно на машине, к которой есть консоль, а не только SSH.', 'Flushing also removes what already protects the server. A clean slate is fine on a machine with a console, not only SSH.') },
+      { id: 'flush', text: bi('Выполнить `nft flush ruleset`, чтобы начать с чистого листа, и сразу после этого поставить политику `drop`', 'Run `nft flush ruleset` to start from a clean slate, and right after that set the policy to `drop`'), why: bi('Сброс удаляет и те правила, которые уже защищают сервер. Начинать с чистого листа удобно на машине, к которой есть консоль, а не только SSH.', 'Flushing also removes what already protects the server. A clean slate is fine on a machine with a console, not only SSH.') },
     ],
   },
   {
@@ -776,7 +776,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'warn', text: bi('Предупреждение, потому что подпись не ведёт ни к одному центру, которому доверяет его система', 'A warning, because the signature leads to no authority that the visitor’s system trusts'), correct: true },
       { id: 'ok', text: bi('Ничего, потому что соединение зашифровано, а значит, предупреждения не будет', 'Nothing: the connection is encrypted, so there will be no warning'), why: bi('Шифрование и проверка подлинности решают разные задачи. Самоподписанный сертификат шифрует не хуже купленного, но подписал его сам сервер, и браузер не может проверить, что на том конце shop.example. curl в таком случае пишет «self-signed certificate».', 'Encryption and authenticity are two different tasks. A self-signed certificate encrypts as well as a bought one, but the server signed it itself, and the browser cannot check that the other end really is shop.example. curl then prints “self-signed certificate”.') },
-      { id: 'import', text: bi('Ничего, если администратор добавил сертификат в хранилище доверия на сервере', 'Nothing, if the administrator added the certificate to the trust store on the server'), why: bi('Доверие проверяет клиент, и смотрит он в своё хранилище, на своей машине. Хранилище сервера на это не влияет, поэтому самоподписанный сертификат годится только там, где вы сами раздали его клиентам.', 'Trust is checked by the client, in its own store on its own machine. The server’s store does not affect it, so a self-signed certificate only works where you have handed it out to the clients yourself.') },
+      { id: 'import', text: bi('Ничего, если администратор заранее добавил свой сертификат в хранилище доверия на самом сервере', 'Nothing, if the administrator added the certificate to the trust store on the server beforehand'), why: bi('Доверие проверяет клиент, и смотрит он в своё хранилище, на своей машине. Хранилище сервера на это не влияет, поэтому самоподписанный сертификат годится только там, где вы сами раздали его клиентам.', 'Trust is checked by the client, in its own store on its own machine. The server’s store does not affect it, so a self-signed certificate only works where you have handed it out to the clients yourself.') },
     ],
   },
 
@@ -789,7 +789,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'nginx', text: bi('Сеть до nginx работает, а сам nginx не дождался ответа от сервера upstream', 'The network up to nginx works; nginx did not get an answer from the upstream in time'), correct: true },
       { id: 'net', text: bi('У пользователя проблемы с интернетом', 'The user’s internet is broken'), why: bi('Код ответа пришёл, значит, DNS, TCP и TLS до nginx в порядке.', 'A status code arrived — so DNS, TCP and TLS up to nginx are fine.') },
-      { id: 'app', text: bi('Код 504 вернуло приложение', 'The application returned 504'), why: bi('Приложение почти никогда не пишет код 504, потому что этот код пишет прокси, который не дождался ответа.', 'An application almost never writes 504: it is the code of a proxy that did not get an answer.') },
+      { id: 'app', text: bi('Код 504 вернуло само приложение, а nginx просто передал его ответ пользователю', 'The application itself returned 504, and nginx just passed its answer on to the user unchanged'), why: bi('Приложение почти никогда не пишет код 504, потому что этот код пишет прокси, который не дождался ответа.', 'An application almost never writes 504: it is the code of a proxy that did not get an answer.') },
     ],
     refs: { explainer: 'net.proxy504' },
   },
@@ -801,7 +801,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'retry', text: bi('nginx не дождался первого сервера и повторил запрос на втором', 'nginx did not get an answer from the first server and retried on the second'), correct: true },
       { id: 'twice', text: bi('Пользователь не дождался ответа и обновил страницу ещё раз', 'The user did not wait for the answer and reloaded the page'), why: bi('Тогда в access.log было бы два запроса, а здесь один запрос и две попытки его выполнить.', 'Then access.log would show two requests. Here it is one request and two attempts.') },
-      { id: 'bug', text: bi('nginx пишет в журнал по строке на каждый сервер группы', 'nginx writes one log line for every server of the group'), why: bi('nginx пишет по строке на каждую неудачную попытку, и так задумано.', 'nginx writes a line for every failed attempt — by design.') },
+      { id: 'bug', text: bi('nginx пишет в журнал отдельную строку на каждый сервер группы upstream, даже если запрос один', 'nginx writes a separate log line for every server of the upstream group, even for a single request'), why: bi('nginx пишет по строке на каждую неудачную попытку, и так задумано.', 'nginx writes a line for every failed attempt — by design.') },
     ],
     refs: { explainer: 'net.proxy504' },
   },
@@ -856,9 +856,9 @@ export const quiz: QuizItem[] = [
     concepts: ['net.vpn'],
     prompt: bi('Вы открываете страницу сервера мониторинга 10.20.3.7 через VPN из кафе. Что видит провайдер кафе?', 'You open the monitoring server page 10.20.3.7 through a VPN from a café. What does the café’s provider see?'),
     options: [
-      { id: 'outer', text: bi('Датаграммы UDP между кафе и шлюзом офиса, их размер и время', 'UDP datagrams between the café and the office gateway, their size and timing'), correct: true },
+      { id: 'outer', text: bi('Датаграммы UDP между кафе и шлюзом офиса, а также их размер и время', 'UDP datagrams between the café and the office gateway, their size and timing'), correct: true },
       { id: 'inner', text: bi('Адрес 10.20.3.7 и путь страницы, потому что они лежат в заголовке', 'The address 10.20.3.7 and the page path, because they are in the header'), why: bi('Исходный пакет с адресом 10.20.3.7 целиком зашифрован и лежит внутри датаграммы. Снаружи виден только внешний заголовок с адресами кафе и шлюза.', 'The original packet with the address 10.20.3.7 is encrypted whole and lies inside the datagram. Only the outer header with the café’s and the gateway’s addresses is visible.') },
-      { id: 'nothing', text: bi('Ничего, потому что VPN прячет даже то, что вы вообще выходили в сеть', 'Nothing, because a VPN hides even the fact that you went online'), why: bi('Датаграммы туннеля идут через сеть кафе, и их адреса, размер и время видны. Провайдер знает, что вы подключены к шлюзу офиса, но не знает, что вы передаёте.', 'The tunnel’s datagrams cross the café network, and their addresses, size and timing are visible. The provider knows you are connected to the office gateway, but not what you send.') },
+      { id: 'nothing', text: bi('Ничего, потому что VPN прячет даже то, что вы вообще выходили в сеть из этого кафе', 'Nothing, because a VPN hides even the fact that you went online from this café at all'), why: bi('Датаграммы туннеля идут через сеть кафе, и их адреса, размер и время видны. Провайдер знает, что вы подключены к шлюзу офиса, но не знает, что вы передаёте.', 'The tunnel’s datagrams cross the café network, and their addresses, size and timing are visible. The provider knows you are connected to the office gateway, but not what you send.') },
     ],
     refs: { explainer: 'net.vpn' },
   },
@@ -868,8 +868,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.vpn', 'net.route-table'],
     prompt: bi('Команда `wg show` на ноутбуке показывает свежее рукопожатие с шлюзом, а ping на 10.20.3.7 молчит. Захват на сервере видит пришедшие эхо-запросы. Что проверить?', '`wg show` on the laptop shows a fresh handshake with the gateway, but a ping to 10.20.3.7 is silent. A capture on the server sees the echo requests arrive. What should you check?'),
     options: [
-      { id: 'back', text: bi('Есть ли у сервера маршрут к адресам VPN через шлюз', 'Whether the server has a route to the VPN addresses through the gateway'), correct: true },
-      { id: 'key', text: bi('Правильный ли ключ шлюза записан в настройках ноутбука', 'Whether the right gateway key is in the laptop’s settings'), why: bi('С неправильным ключом рукопожатия не было бы, и запросы не дошли бы до сервера. Раз запросы дошли, туннель работает, а ответ теряется на обратном пути.', 'With a wrong key there would be no handshake, and the requests would not reach the server. Since they arrived, the tunnel works and the answer is lost on the way back.') },
+      { id: 'back', text: bi('Есть ли у сервера маршрут к адресам VPN через этот шлюз', 'Whether the server has a route to the VPN addresses through the gateway'), correct: true },
+      { id: 'key', text: bi('Правильный ли ключ шлюза записан в настройках ноутбука', 'Whether the right gateway key is written in the VPN settings on the laptop'), why: bi('С неправильным ключом рукопожатия не было бы, и запросы не дошли бы до сервера. Раз запросы дошли, туннель работает, а ответ теряется на обратном пути.', 'With a wrong key there would be no handshake, and the requests would not reach the server. Since they arrived, the tunnel works and the answer is lost on the way back.') },
       { id: 'udp', text: bi('Не выбрасывает ли сеть кафе датаграммы UDP на порт 51820', 'Whether the café network drops UDP datagrams to port 51820'), why: bi('Если бы сеть выбрасывала датаграммы, рукопожатие не прошло бы. Свежее рукопожатие и запросы на сервере говорят, что путь туда работает.', 'If the network dropped the datagrams, the handshake would not succeed. A fresh handshake and the requests on the server say the way there works.') },
     ],
     refs: { explainer: 'net.vpn' },
@@ -882,7 +882,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'mtu', text: bi('Пакет в 1500 байт вместе с обёрткой туннеля не помещается в кадр обычной сети', 'A 1500-byte packet with the tunnel wrapping does not fit into a frame of an ordinary network'), correct: true },
       { id: 'speed', text: bi('Туннель шифрует слишком медленно и не успевает передать большую страницу', 'The tunnel encrypts too slowly to pass a big page in time'), why: bi('Медленное шифрование замедлило бы и маленькие ответы. Зависают только большие пакеты, потому что с обёрткой в 60–80 байт они превышают MTU пути.', 'Slow encryption would slow down small answers too. Only big packets hang, because with a wrapping of 60–80 bytes they exceed the path MTU.') },
-      { id: 'tcp', text: bi('Сервер закрывает соединение TCP, когда страница длиннее одного пакета', 'The server closes the TCP connection when a page is longer than one packet'), why: bi('TCP режет длинный ответ на сегменты и доставляет их по одному, так что длина страницы сама по себе ничего не ломает. Ломает размер каждого пакета.', 'TCP cuts a long answer into segments and delivers them one by one, so the length of a page breaks nothing by itself. The size of each packet does.') },
+      { id: 'tcp', text: bi('Сервер закрывает соединение TCP, когда страница длиннее одного пакета и не помещается в первый ответ', 'The server closes the TCP connection when a page is longer than one packet and does not fit into the first reply'), why: bi('TCP режет длинный ответ на сегменты и доставляет их по одному, так что длина страницы сама по себе ничего не ломает. Ломает размер каждого пакета.', 'TCP cuts a long answer into segments and delivers them one by one, so the length of a page breaks nothing by itself. The size of each packet does.') },
     ],
   },
 
@@ -934,7 +934,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'l3', text: bi('Адреса и маршруты в порядке, а порт сайта нужно проверить отдельно, например `nc -zv`', 'Addresses and routes are fine, and the site’s port has to be checked separately, for example with `nc -zv`'), correct: true },
       { id: 'ok', text: bi('Сервер в порядке, значит, неисправность на стороне пользователя', 'The server is fine, so the fault is on the user’s side'), why: bi('ping проверяет только то, что машина получает пакеты ICMP и отвечает на них. Работает ли программа, которая слушает порт сайта, ping не знает: у ICMP нет портов.', 'ping checks only that the machine receives ICMP packets and answers them. Whether the program listening on the site’s port works, ping does not know: ICMP has no ports.') },
-      { id: 'port', text: bi('Нужно отправить ping на порт сайта, например `ping shop.example:443`', 'Send a ping to the site’s port, for example `ping shop.example:443`'), why: bi('У ping нет портов, и такую запись он прочитает как имя машины. Порт проверяют командой `nc -zv` или запросом `curl`.', 'ping has no ports and reads such a string as a host name. A port is checked with `nc -zv` or a `curl` request.') },
+      { id: 'port', text: bi('Нужно отправить ping прямо на порт сайта, например `ping shop.example:443`, и посмотреть, отвечает ли он', 'Send a ping straight to the site’s port, for example `ping shop.example:443`, and see whether that port answers'), why: bi('У ping нет портов, и такую запись он прочитает как имя машины. Порт проверяют командой `nc -zv` или запросом `curl`.', 'ping has no ports and reads such a string as a host name. A port is checked with `nc -zv` or a `curl` request.') },
     ],
   },
 
