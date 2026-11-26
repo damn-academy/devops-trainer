@@ -26,7 +26,7 @@ An example of a well-written definition: “the share of new October cloud organ
 Versions matter because definitions change. If the qualified-lead threshold was lowered in March, April's growth in lead count may reflect the new rule. The new definition gets a new number, the old and new versions are calculated in parallel for a while, and earlier periods are explicitly recalculated and labeled as restated.
 
 <!-- section: theory | Cohort conversion and immature observations -->
-The most common mistake in funnel reports is dividing current-month events by events in that same month. November payments are divided by November signups, although most payers signed up in September and October. Proper conversion is calculated by cohort: a group of entities entering the initial stage in the same period:
+A common mistake in funnel reports is dividing current-month events by events in that same month. November payments are divided by November signups, although most payers signed up in September and October. Proper conversion is calculated by cohort: a group of entities entering the initial stage in the same period:
 
 `CR(A→B; W) = number of entities in cohort A whose window W has ended and that reached B no later than W after entering A / number of entities in cohort A whose window W has already ended`.
 
