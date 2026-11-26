@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { collectFacts, detectLab, labBase, LAB_REMOVAL, vmForMachine, type LabStatus } from './client';
+import { collectFacts, detectLab, labBase, LAB_REMOVAL, vmForMachine, type LabStatus, mayProbeLab } from './client';
 
 const status: LabStatus = {
   profile: 'standard',
@@ -45,5 +45,25 @@ describe('local lab client', () => {
 
   it('explains down, destroy and uninstall', () => {
     expect(LAB_REMOVAL.map((r) => r.cmd)).toEqual(['dtlab down', 'dtlab destroy', 'dtlab uninstall']);
+  });
+});
+
+describe('mayProbeLab', () => {
+  const withPermission = async (state: string | Error, run: () => Promise<void>) => {
+    const nav = globalThis.navigator as { permissions?: unknown };
+    const saved = Object.getOwnPropertyDescriptor(nav, 'permissions');
+    Object.defineProperty(nav, 'permissions', { configurable: true, value: { query: async () => { if (state instanceof Error) throw state; return { state }; } } });
+    try { await run(); } finally {
+      if (saved) Object.defineProperty(nav, 'permissions', saved); else delete nav.permissions;
+    }
+  };
+  it('probes without asking on the copy dtlab serves', async () => {
+    await withPermission('prompt', async () => expect(await mayProbeLab('')).toBe(true));
+  });
+  it('waits for a click on a hosted copy until local network access is granted', async () => {
+    await withPermission('prompt', async () => expect(await mayProbeLab('http://127.0.0.1:7788')).toBe(false));
+    await withPermission('denied', async () => expect(await mayProbeLab('http://127.0.0.1:7788')).toBe(false));
+    await withPermission('granted', async () => expect(await mayProbeLab('http://127.0.0.1:7788')).toBe(true));
+    await withPermission(new TypeError('unknown permission'), async () => expect(await mayProbeLab('http://127.0.0.1:7788')).toBe(false));
   });
 });
