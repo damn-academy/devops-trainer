@@ -15,7 +15,7 @@ try {
     const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
     const control = new SharedArrayBuffer(harts * 64), ctl = new Int32Array(control);
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
-    const compiler = createSharedCompiler(harts * 256 * 1024 * 1024);
+    const compiler = createSharedCompiler(harts * 256 * 1024 * 1024, harts);
     const workers: Worker[] = [], start = performance.now(); let text = '', sent = false;
     try {
       await new Promise<void>((resolve, reject) => {

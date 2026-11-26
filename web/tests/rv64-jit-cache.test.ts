@@ -74,16 +74,16 @@ it('coalesces shared requests, reuses instances and unlinks Rust before acknowle
   const layout={bytes:32768,ramPages:1,generationPages:1,granulePages:1};
   const bytes=compileBatch([{id:0,pc:0x80000000n,words:[0x00700193,4]}],false,layout);
   const module=new WebAssembly.Module(bytes);
-  const reply=(id:number)=>port.onmessage!({data:{session:request.session,groups:[{serial:1,module,byteLength:bytes.length,functions:1,blocks:[{id,exportId:0,count:1}]}],sharedCodeHits:1}} as MessageEvent);
+  const reply=(id:number)=>port.onmessage!({data:{session:request.session,groups:[{serial:1,lease:id,module,byteLength:bytes.length,functions:1,blocks:[{id,exportId:0,count:1}]}],sharedCodeHits:1}} as MessageEvent);
   reply(10);enqueue(11);now=8;jit.flush();reply(11);
   expect(jit.stats().modules).toBe(1);expect(jit.stats().sharedCodeHits).toBe(2);
   for(const slot of installed.values())(table.get(slot) as Function)(0,256);
   expect(new BigUint64Array(memory.buffer)[3]).toBe(7n);
   const slots=[...installed.values()];
-  port.onmessage!({data:{evict:1}} as MessageEvent);
+  port.onmessage!({data:{evict:[1],batch:17}} as MessageEvent);
   expect(evict).toHaveBeenCalledOnce();expect(installed.size).toBe(0);
   expect(slots.every(slot=>table.get(slot)===null)).toBe(true);
-  expect(messages.at(-1)).toEqual({release:1});expect(jit.stats().evicted).toBe(2);
+  expect(messages.at(-1)).toEqual({ack:17});expect(jit.stats().evicted).toBe(2);
   jit.dispose();vi.restoreAllMocks();
 });
 

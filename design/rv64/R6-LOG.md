@@ -688,3 +688,31 @@ exports even when a hart installs only a subset. Do not reduce 8x on this probe.
 The demonstrated overcharge to remove is charging shared compiled modules per
 hart. Browser memory and several-times-more retained hot code remain R12 gates,
 not results claimed from local tests.
+
+## R12 rebuilt result and R13 latency diagnosis
+
+Operator-reported R12 (`fab4bfb`, working HEAD before R13 `94be4b7`): all gates
+passed after rebuild: cargo, ISA 173/0, arch 266/0, 63 vitest tests, six enabled
+SMP JIT integration cases and all six browser gates. The 700 s runs used two
+harts and identical media/observer. Artifacts are
+`web/public/rv64/results/R12-shared-{384,256}-a{.json,-run.log,-console.txt,-profile.json}`;
+comparators are `R11-budget-384-a` and `R11-observer-256-a`.
+
+| Metric | R12 384 | R12 256 | R11 |
+| --- | --- | --- | --- |
+| Unique retained blocks | 40,704 | 26,043 | 13–21k per hart |
+| Retained modules | 3,470 | not supplied | — |
+| Cross-hart hits | 117k | 185k | — |
+| Containerd boot | 220 s | 247 s | 94 s / 85 s |
+
+R12 evictions were approximately threefold fewer, but per-hart compile latency
+mean rose to 1.4–2.0 s and maxima to 25–36 s, versus R11 mean 14–18 ms and maxima
+about 1 s. Retired instructions per hart also fell. Sharing improved retention,
+but this is a net performance regression, not an accepted throughput result.
+
+Code inspection confirms serialized per-module revoke/ACK in `room()`, one
+pending chain including hit admission and compilation, and one compiler worker
+for the machine. Each revoke can wait for a CPU host yield (8 ms checks after
+2048-instruction runs). R13 replaces this with batch revokes, proactive trim,
+reserved concurrent compilation and lease epochs. See [R13-PLAN.md](R13-PLAN.md)
+for operator gates and acceptance; local tests cannot establish those results.

@@ -316,7 +316,19 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('runs A compiled code on B and rejec
   ram.store(64,4,0x00100293n);ram.store(68,4,0xffdff06fn);
   const cores=[0,1].map(hart=>{const core=new mod.Engine(32);expect(core.jit_share_abi?.()).toBe(12);core.smp_configure(hart,bytes);core.smp_start(0x80000000n,0n);core.jit_threshold(1);return core;});
   const table=cores[0].jit_table(),slots:number[]=[];
-  const cache=new SharedCodeCache(async()=>{throw Error('unexpected eviction');});cache.budget=1024*1024;
+  const installed = [new Map<number, { ids: number[]; slots: number[] }>(), new Map<number, { ids: number[]; slots: number[] }>()];
+  let revokeCalls = 0;
+  const cache=new SharedCodeCache(async(hart, serials)=>{
+    revokeCalls++;
+    for (const serial of serials) {
+      const batch = installed[hart]!.get(serial);
+      if (!batch) continue;
+      cores[hart].jit_evict(new Uint32Array(batch.ids));
+      for (const slot of batch.slots) table.set(slot, null);
+      installed[hart]!.delete(serial);
+    }
+    expect([...installed[hart]!.keys()].some(serial => serials.includes(serial))).toBe(false);
+  });cache.budget=1024*1024;
   const run=async(hart:number)=>{
     active=hart;const core=cores[hart],target=core.retired()+100;
     for(let tries=0;core.retired()<target&&tries<200;tries++){
@@ -325,7 +337,9 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('runs A compiled code on B and rejec
         const reply=await cache.request(hart,queues[hart]!.splice(0),layout,false);
         for(const group of reply.groups){
           const instance=new WebAssembly.Instance(structuredClone(group.module),{env:{memory:wasm.memory,ram:memory,generations,granules,slow:wasm.jit_slow}});
-          for(const b of group.blocks){const slot=table.grow(1);slots.push(slot);table.set(slot,instance.exports[`b${b.exportId}`]);core.jit_install(b.id,slot,b.count);}
+          const batch = installed[hart]!.get(group.serial) ?? { ids: [], slots: [] };
+          installed[hart]!.set(group.serial, batch);
+          for(const b of group.blocks){const slot=table.grow(1);slots.push(slot);batch.ids.push(b.id);batch.slots.push(slot);table.set(slot,instance.exports[`b${b.exportId}`]);core.jit_install(b.id,slot,b.count);}
         }
       }
     }
@@ -342,5 +356,14 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('runs A compiled code on B and rejec
     await run(0);await run(1);
     expect(cache.compiled).toBeGreaterThan(compiled);
     for(const core of cores){expect(core.register(5)).toBe(2n);expect(JSON.parse(core.metrics()).jit_cache_clears).toBe(0);}
+    cache.budget = 0; await cache.trim();
+    expect(revokeCalls).toBe(2);
+    expect(cache.stats().estimatedHostBytes).toBe(0);
+    expect(slots.every(slot => table.get(slot) === null)).toBe(true);
+    cache.budget = 1024*1024; await run(0); await run(1);
+    for (const core of cores) {
+      expect(core.register(5)).toBe(2n);
+      expect(JSON.parse(core.metrics()).jit_cache_clears).toBe(0);
+    }
   }finally{slots.forEach(slot=>table.set(slot,null));cores.forEach(core=>core.free());}
 });

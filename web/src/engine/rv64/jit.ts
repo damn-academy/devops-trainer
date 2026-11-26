@@ -19,7 +19,7 @@ export class JitRuntime {
   private hostBudget = 256 * MiB;
   setHostBudget(bytes: number) { this.hostBudget = Math.max(0, bytes); }
   private sharedLayout?: SharedJitLayout;
-  private batches: { ids: number[]; slots: number[]; bytes: number; serial?: number; functions: number; instance: WebAssembly.Instance; used: number }[] = [];
+  private batches: { ids: number[]; slots: number[]; bytes: number; serial?: number; lease?: number; functions: number; instance: WebAssembly.Instance; used: number }[] = [];
   evicted = 0;
   tailCalls?: boolean;
   compiled = 0;
@@ -49,7 +49,8 @@ export class JitRuntime {
       : undefined;
     this.worker.onmessage = ({ data }) => {
       if (data.evict !== undefined) {
-        this.dropShared(data.evict); this.port?.postMessage({ release: data.evict }); return;
+        for (const serial of data.evict) this.dropShared(serial);
+        this.port?.postMessage({ ack: data.batch }); return;
       }
       if (this.port && data.session !== this.session) return;
       this.inflight--;
@@ -63,9 +64,10 @@ export class JitRuntime {
           let batch = this.port ? this.batches.find(b => b.serial === group.serial) : undefined;
           if (!batch) {
             const instance = new WebAssembly.Instance(group.module, { env: { memory, ...sharedEnv, ...(next ? { next } : {}), ...(slow ? { slow } : {}) } });
-            batch = { ids: [], slots: [], bytes: group.byteLength ?? 0, serial: group.serial, functions: group.functions, instance, used: 0 };
+            batch = { ids: [], slots: [], bytes: group.byteLength ?? 0, serial: group.serial, lease: group.lease, functions: group.functions, instance, used: 0 };
             this.batches.push(batch);
           }
+          batch.lease = group.lease;
           for (const b of group.blocks) {
             const slot = this.freeSlots.pop() ?? table.grow(1);
             table.set(slot, batch.instance.exports[`b${b.exportId ?? b.id}`]); this.slots.push(slot);
@@ -124,7 +126,7 @@ export class JitRuntime {
         this.cache.evict(new Uint32Array(ids)); this.evicted += ids.length;
         for (const slot of slots) { this.table.set(slot, null); this.freeSlots.push(slot); }
         this.slots = this.slots.filter(slot => !slots.has(slot));
-        for (const batch of victims) if (this.port) this.port.postMessage({ release: batch.serial });
+        for (const batch of victims) if (this.port) this.port.postMessage({ release: batch.serial, lease: batch.lease });
         this.batches = this.batches.filter(batch => !victims.has(batch));
       } else {
         this.cacheClears++; this.clear(); this.release(); this.queue = []; this.queuedAt.clear();

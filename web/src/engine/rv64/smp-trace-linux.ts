@@ -20,7 +20,7 @@ try {
     const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
     const control = new SharedArrayBuffer(HARTS * 64), ctl = new Int32Array(control);
     for (let h = 0; h < HARTS; h++) ctl[h * 16] = 1;
-    const compiler = createSharedCompiler(HARTS * 256 * 1024 * 1024);
+    const compiler = createSharedCompiler(HARTS * 256 * 1024 * 1024, HARTS);
     const workers: Worker[] = [], start = performance.now();
     const traces = new Map<number, Uint32Array>(); let text = '', broughtUp = false;
     try {

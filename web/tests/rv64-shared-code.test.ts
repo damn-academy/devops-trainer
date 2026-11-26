@@ -79,3 +79,104 @@ it('drops old-session leases after an outstanding compile before serving a new s
   expect(cache.stats().instanceBytes).toBe(instanceCharge(1));
   expect(cache.stats().bodyByteHistogram.reduce((n,b)=>n+b.count,0)).toBe(1);
 });
+
+it('revokes a whole batch once per hart, hides victims immediately and keeps all charge until all ACKs', async () => {
+  const resolves: (() => void)[] = [];
+  const revoke = vi.fn((_client: number, _serials: number[]) => new Promise<void>(resolve => resolves.push(resolve)));
+  const cache = new SharedCodeCache(revoke); cache.budget = 1000000;
+  for (let i = 1; i <= 4; i++) {
+    await cache.request(0, [block(i, BigInt(i))], layout, false);
+    await cache.request(1, [block(i, BigInt(i))], layout, false);
+  }
+  await new Promise(resolve => setTimeout(resolve, 5));
+  const before = cache.stats().estimatedHostBytes;
+  cache.budget = 1; const trim = cache.trim();
+  await vi.waitFor(() => expect(revoke).toHaveBeenCalledTimes(2));
+  expect(revoke.mock.calls.map(call => call[1].length)).toEqual([4,4]);
+  const hits = cache.hits;
+  expect((await cache.request(2, [block()], layout, false)).groups).toEqual([]);
+  expect(cache.hits).toBe(hits);
+  expect(cache.stats().estimatedHostBytes).toBe(before);
+  resolves[0]!(); await Promise.resolve();
+  expect(cache.stats().estimatedHostBytes).toBe(before);
+  resolves[1]!(); await trim;
+  expect(cache.stats().estimatedHostBytes).toBe(0);
+  expect(cache.stats().revokeBatches).toBe(1);
+});
+
+it('admits below the remaining budget while an unrelated batch awaits ACK', async () => {
+  let ack!: () => void;
+  const cache = new SharedCodeCache(() => new Promise<void>(resolve => { ack = resolve; }));
+  cache.budget = 1000000;
+  await cache.request(0, [block()], layout, false);
+  await new Promise(resolve => setTimeout(resolve, 5));
+  cache.budget = 0; const trim = cache.trim();
+  await vi.waitFor(() => expect(ack).toBeDefined());
+  cache.budget = 1000000;
+  expect((await cache.request(1, [block(2,2n)], layout, false)).groups).toHaveLength(1);
+  expect(cache.stats().revokedBytes).toBeGreaterThan(0);
+  ack(); await trim;
+});
+
+it('runs independent jobs concurrently and deduplicates overlapping in-flight keys', async () => {
+  const finishes: (() => void)[] = [];
+  const compile = vi.fn(async (bytes: Uint8Array<ArrayBuffer>) => {
+    const module = await WebAssembly.compile(bytes);
+    await new Promise<void>(resolve => finishes.push(resolve)); return module;
+  });
+  const cache = new SharedCodeCache(async () => {}, compile); cache.budget = 1000000;
+  const a = cache.request(0, [block()], layout, false);
+  const b = cache.request(1, [block(2)], layout, false);
+  const c = cache.request(1, [block(3,2n)], layout, false);
+  await vi.waitFor(() => expect(finishes).toHaveLength(2));
+  expect(cache.stats().compilePoolBusy).toBe(2);
+  expect(cache.stats().compilingBytes).toBeGreaterThan(0);
+  finishes.forEach(finish => finish());
+  const [ra, rb, rc] = await Promise.all([a,b,c]);
+  expect(ra.groups[0]!.serial).toBe(rb.groups[0]!.serial);
+  expect(rc.groups[0]!.serial).not.toBe(ra.groups[0]!.serial);
+  expect(compile).toHaveBeenCalledTimes(2);
+  expect(cache.stats().compilingBytes).toBe(0);
+});
+
+it('ignores a stale release while a hit reply is pending and releases the current lease', async () => {
+  const cache = new SharedCodeCache(async () => {}); cache.budget = 1000000;
+  const old = (await cache.request(0, [block()], layout, false)).groups[0]!;
+  const pending = cache.request(0, [block(2)], layout, false);
+  cache.release(0, old.serial, old.lease);
+  const current = (await pending).groups[0]!;
+  await new Promise(resolve => setTimeout(resolve, 5));
+  expect(current.lease).toBeGreaterThan(old.lease);
+  expect(cache.stats().instanceBytes).toBe(instanceCharge(1));
+  cache.release(0, current.serial, old.lease);
+  expect(cache.stats().instanceBytes).toBe(instanceCharge(1));
+  cache.release(0, current.serial, current.lease);
+  expect(cache.stats().instanceBytes).toBe(0);
+});
+
+it('preserves encoded charge when a pool worker receives a transferred buffer', async () => {
+  let encoded = 0;
+  const cache = new SharedCodeCache(async () => {}, async bytes => {
+    encoded = bytes.byteLength;
+    const transferred = structuredClone(bytes, { transfer: [bytes.buffer] });
+    expect(bytes.byteLength).toBe(0);
+    return WebAssembly.compile(transferred);
+  });
+  cache.budget = 1000000;
+  const reply = await cache.request(0, [block()], layout, false);
+  expect(reply.groups[0]!.byteLength).toBe(encoded);
+  expect(cache.stats().estimatedHostBytes).toBe(jitCharge(encoded,1) + instanceCharge(1));
+});
+
+it('refunds failed compile reservations and allows retry of the same keys', async () => {
+  let fail = true;
+  const cache = new SharedCodeCache(async () => {}, async bytes => {
+    if (fail) throw Error('failed compilation');
+    return WebAssembly.compile(bytes);
+  });
+  cache.budget = 1000000;
+  await expect(cache.request(0, [block()], layout, false)).rejects.toThrow('failed compilation');
+  expect(cache.stats().estimatedHostBytes).toBe(0);
+  fail = false;
+  expect((await cache.request(1, [block()], layout, false)).groups).toHaveLength(1);
+});

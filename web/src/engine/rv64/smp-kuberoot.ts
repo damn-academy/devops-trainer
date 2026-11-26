@@ -33,7 +33,7 @@ try {
     const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
     const workers: Worker[] = [], start = performance.now();
-    const compiler = createSharedCompiler(harts * Math.min(configuredJitCeiling, hartBudget(memory.buffer.byteLength + generations.buffer.byteLength + granules.buffer.byteLength, Array(harts).fill(128 * MiB))));
+    const compiler = createSharedCompiler(harts * Math.min(configuredJitCeiling, hartBudget(memory.buffer.byteLength + generations.buffer.byteLength + granules.buffer.byteLength, Array(harts).fill(128 * MiB))), harts);
     let sharedJit: { ms: number; stats: ReturnType<SharedCodeCache['stats']> } | undefined;
     compiler.onmessage = ({ data }) => { sharedJit = { ms: performance.now() - start, stats: data.stats }; };
     const history = new BoundedHistory<unknown>(32 * MiB), tail = new ConsoleTail();
