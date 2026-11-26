@@ -209,8 +209,8 @@ export const PRODUCTS: Product[] = [
       "en": "How to create articles, videos, podcasts, bots and interactive content with AI: briefs, research, editing, checks and publishing on real projects."
     },
     "summary": {
-      "ru": "Как производить контент с нейросетями так, чтобы его не было стыдно публиковать: роли редактора и нейросетей, брифы и журналы, исследование до текста, редактура и проверки, иллюстрации, видео и звук, превращение записи в статью, боты и интерактивные материалы, публикация, правила площадок и инструменты. Курс построен на реальных проектах: учебной платформе, музыкальных лонгридах, техническом подкасте и статьях для Хабра.",
-      "en": "How to produce content with AI that you can be proud to publish: the roles of editors and AI, briefs and logs, research before writing, editing and checks, illustrations, video and audio, turning recordings into articles, bots and interactive material, publishing, platform rules and tools. The course is built on real projects: a learning platform, music longreads, a technical podcast and Habr articles."
+      "ru": "Как производить контент с нейросетями так, чтобы его не было стыдно публиковать: роли редактора и нейросетей, брифы и журналы, исследование до текста, редактура и проверки, иллюстрации, видео и звук, превращение записи в статью, боты и интерактивные материалы, публикация, правила площадок и инструменты. Примеры в курсе взяты из реальных проектов: учебной платформы, музыкальных лонгридов, технического подкаста и статей для Хабра.",
+      "en": "How to produce content with AI that you can be proud to publish: the roles of editors and AI, briefs and logs, research before writing, editing and checks, illustrations, video and audio, turning recordings into articles, bots and interactive material, publishing, platform rules and tools. The examples come from real projects: a learning platform, music longreads, a technical podcast and Habr articles."
     },
     "subtitle": {
       "ru": "Для редакторов, контент-маркетологов, авторов технических блогов и продюсеров видео и подкастов.",
