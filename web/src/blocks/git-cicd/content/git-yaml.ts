@@ -139,8 +139,8 @@ export const quiz: QuizItem[] = [
     prompt: bi('Что происходит на диске, когда вы создаёте ветку `git branch feature` в проекте на 2 ГБ?', 'What happens on disk when you create a branch with `git branch feature` in a 2 GB project?'),
     options: [
       { id: 'ref', text: bi('Появляется файл .git/refs/heads/feature, в котором записан один хэш', 'A file .git/refs/heads/feature with one hash appears'), correct: true },
-      { id: 'copy', text: bi('Git копирует все файлы проекта', 'Git copies all project files'), why: bi('При создании ветки Git ничего не копирует, а только записывает файл размером 41 байт, в котором лежит хэш коммита.', 'A branch copies nothing: it is a name on a commit, 41 bytes.') },
-      { id: 'diff', text: bi('Git сохраняет разницу с веткой main', 'Git saves the difference from main'), why: bi('Разницы ещё нет, потому что новая ветка указывает на тот же коммит, что и текущая.', 'There is no difference yet: the new branch points to the same commit as the current one.') },
+      { id: 'copy', text: bi('Git копирует все файлы проекта в отдельный каталог внутри .git, и на диске становится на 2 ГБ больше', 'Git copies all project files into a separate folder inside .git, and the disk holds 2 GB more'), why: bi('При создании ветки Git ничего не копирует, а только записывает файл размером 41 байт, в котором лежит хэш коммита.', 'A branch copies nothing: it is a name on a commit, 41 bytes.') },
+      { id: 'diff', text: bi('Git сохраняет разницу с веткой main, чтобы потом собрать из неё файлы новой ветки', 'Git saves the difference from main so that it can rebuild the new branch’s files from it later'), why: bi('Разницы ещё нет, потому что новая ветка указывает на тот же коммит, что и текущая.', 'There is no difference yet: the new branch points to the same commit as the current one.') },
     ],
     explain: bi('Поэтому ветки ничего не стоят: их заводят для каждой задачи и удаляют после слияния.', 'That is why branches are cheap: you make one per task and delete it after the merge.'),
   },
@@ -151,8 +151,8 @@ export const quiz: QuizItem[] = [
     prompt: bi('В main после ответвления feature не было новых коммитов. Что сделает `git merge feature` на main?', 'main had no new commits after feature branched off. What does `git merge feature` on main do?'),
     options: [
       { id: 'ff', text: bi('Git передвинет main на последний коммит feature (fast-forward)', 'Move main to the last commit of feature (fast-forward)'), correct: true },
-      { id: 'mc', text: bi('Git запишет коммит слияния с двумя родителями', 'Create a merge commit with two parents'), why: bi('Коммит слияния нужен, когда истории разошлись. Здесь ветка feature прямо продолжает main, поэтому достаточно передвинуть имя, если только вы не попросили обратного флагом --no-ff.', 'A merge commit is needed when histories diverged. Here feature directly continues main, so moving the name is enough (unless you ask for --no-ff).') },
-      { id: 'conflict', text: bi('Git остановится с конфликтом', 'Stop with a conflict'), why: bi('Конфликт возможен, только когда обе стороны изменили одни и те же строки, а в main ничего не менялось.', 'A conflict is possible only when both sides changed the same lines; main changed nothing.') },
+      { id: 'mc', text: bi('Git запишет в main новый коммит слияния с двумя родителями, последним коммитом main и последним коммитом feature', 'Create a new merge commit on main with two parents, the last commit of main and the last commit of feature'), why: bi('Коммит слияния нужен, когда истории разошлись. Здесь ветка feature прямо продолжает main, поэтому достаточно передвинуть имя, если только вы не попросили обратного флагом --no-ff.', 'A merge commit is needed when histories diverged. Here feature directly continues main, so moving the name is enough (unless you ask for --no-ff).') },
+      { id: 'conflict', text: bi('Git остановится с конфликтом, потому что обе ветки содержат одни и те же файлы', 'Stop with a conflict, because both branches contain the same files'), why: bi('Конфликт возможен, только когда обе стороны изменили одни и те же строки, а в main ничего не менялось.', 'A conflict is possible only when both sides changed the same lines; main changed nothing.') },
     ],
   },
   {
@@ -204,7 +204,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'rotate', text: bi('Сменить пароль, потому что старый навсегда останется в истории', 'Change the password: the old one stays in the history forever'), correct: true },
       { id: 'nothing', text: bi('Больше ничего, потому что файл удалён', 'Nothing: the file is removed'), why: bi('Файл удалён только из следующих коммитов, а прошлый коммит с паролем остался в истории у каждого, кто её скопировал.', 'It is removed only from the next commits. The old commit with the password is still in the history of everyone who copied it.') },
-      { id: 'ignore', text: bi('Хватит .gitignore, потому что он вычистит историю', '.gitignore is enough, it cleans the history'), why: bi('.gitignore действует только на неотслеживаемые файлы и историю никогда не трогает.', '.gitignore affects only untracked files and never touches the history.') },
+      { id: 'ignore', text: bi('Хватит .gitignore, потому что при следующей отправке Git сам вычистит из истории файлы, перечисленные в нём', '.gitignore is enough, because on the next push Git itself cleans the files it lists out of the history'), why: bi('.gitignore действует только на неотслеживаемые файлы и историю никогда не трогает.', '.gitignore affects only untracked files and never touches the history.') },
     ],
   },
   {
