@@ -34,7 +34,7 @@ export const dnsTask: Task = {
   hints: {
     H1: bi('В ответе `dig` нужна секция ANSWER SECTION: в ней стоит сама запись в кавычках. Если этой секции нет, а в заголовке ответа стоит `status: NXDOMAIN` или `ANSWER: 0`, записи с таким именем не существует.', 'Look for the ANSWER SECTION in the dig output: it holds the record in quotes. If it is missing and the header says `status: NXDOMAIN` or `ANSWER: 0`, no such record exists.'),
     H2: bi('SPF и DKIM на месте, а на запрос к `_dmarc.mail.example-cloud.test` ответа нет. Значит, не хватает политики DMARC.', 'SPF and DKIM are present; the query for `_dmarc.mail.example-cloud.test` returns nothing. The DMARC policy is missing.'),
-    H3: bi('Запишите строку в файл одной командой: `echo "v=DMARC1; p=none" > dmarc.txt`. Знак `>` создаёт файл и записывает в него текст из кавычек; проверить содержимое можно командой `cat dmarc.txt`.', 'Write the line to the file with one command: `echo "v=DMARC1; p=none" > dmarc.txt`. The `>` sign creates the file with the quoted text; check it with `cat dmarc.txt`.'),
+    H3: bi('Строку запишите в файл одной командой `echo "v=DMARC1; p=none" > dmarc.txt`. Знак `>` создаёт файл и записывает в него текст из кавычек; проверить содержимое можно командой `cat dmarc.txt`.', 'Write the line to the file with one command: `echo "v=DMARC1; p=none" > dmarc.txt`. The `>` sign creates the file with the quoted text; check it with `cat dmarc.txt`.'),
   },
   chips: 'dig TXT mail.example-cloud.test; dig TXT selector1._domainkey.mail.example-cloud.test; dig TXT _dmarc.mail.example-cloud.test',
   check: { when: facts => validDmarc(facts.files['/home/learner/dmarc.txt']?.text ?? '') },
