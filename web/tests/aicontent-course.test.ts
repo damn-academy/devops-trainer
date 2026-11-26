@@ -50,7 +50,9 @@ for (const lang of ['ru', 'en'] as const) {
     course.dispose?.();
     for (const id of ids) {
       const view = lessonPage(id);
-      expect(view.el.querySelectorAll('.task-document'), id).toHaveLength(1);
+      // One written result per lesson: a document, or the trainer's own field.
+      const own = view.el.querySelectorAll('.widget-host textarea').length;
+      expect(view.el.querySelectorAll('.task-document'), id).toHaveLength(own ? 0 : 1);
       view.dispose?.();
     }
   });

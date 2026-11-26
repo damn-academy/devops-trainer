@@ -63,7 +63,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const titles = { 'metrics-cohorts': 'metricsCohorts', 'metrics-pipeline': 'metricsPipeline', 'metrics-forecast': 'metricsForecast', 'metrics-arr': 'metricsArr', 'metrics-arr-start': 'metricsArrStart', 'metrics-ab': 'metricsAb', 'infraseed-model': 'infraseedModel', 'cash-13w': 'cash13w', dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
     if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
     title(text(titles[file as keyof typeof titles]), false);
-    root.append(h('p.task-guide', {}, t(bi('Скачайте файл и откройте его в Excel или Google Sheets на своём компьютере. Выполните расчёт по заданию урока и запишите выводы в поле ниже. Сверьте результат с условиями задания самостоятельно. Кнопка «Готово, очистить поле» отмечает раздел пройденным и удаляет черновик, поэтому сначала сохраните свою работу.', 'Download the file and open it in Excel or Google Sheets on your computer. Complete the lesson’s calculation and record your conclusions below. Review the result against the task requirements yourself. “Done, clear the field” marks this section complete and removes the draft, so save your work first.'))));
+    root.append(h('p.task-guide', {}, t(bi('Скачайте файл и откройте его в Excel или Google Sheets на своём компьютере. Выполните расчёт по заданию урока и запишите выводы в поле ниже. Сверьте результат с условиями задания самостоятельно и нажмите «Завершить самопроверку»: раздел отметится выполненным, а выводы останутся в поле и в этом браузере.', 'Download the file and open it in Excel or Google Sheets on your computer. Complete the lesson’s calculation and record your conclusions below. Review the result against the task requirements yourself and press “Finish self-review”: the section is marked done and your conclusions stay in the field and in this browser.'))));
     const csv = file.startsWith('metrics-');
     if (csv) {
       root.append(h('p', {}, text('metricsFictional')), h('button', { type: 'button', class: 'btn', onclick: () => { void import('../ai/panel').then(({ openTutor }) => openTutor({ mode: 'practice', templateFile: file })); } }, t(bi('Спросить наставника о данных', 'Ask the tutor about the data'))));
@@ -72,9 +72,9 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     if (csv) root.append(h('p', {}, text('csvImport')));
     const draftId = `template.${file}`;
     const input = h('textarea', { 'data-template-id': file, 'data-template-title': text(titles[file as keyof typeof titles]) }); input.value = loadDraft(draftId, '');
-    input.oninput = () => saveDraft(draftId, input.value);
-    const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text('finishDraft'));
-    finish.onclick = () => { clearDraft(draftId); input.value = ''; ctx.complete(); status.textContent = t(bi('Работа отмечена как завершённая. Поле очищено.', 'Work marked complete. The field has been cleared.')); };
+    const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '', disabled: !input.value.trim() }, text('finishSelfReview')) as HTMLButtonElement;
+    input.oninput = () => { saveDraft(draftId, input.value); finish.disabled = !input.value.trim(); };
+    finish.onclick = () => { if (!input.value.trim()) return; ctx.complete(); status.textContent = t(bi('Самопроверка завершена. Выводы сохранены в этом браузере.', 'Self-review complete. Your conclusions are saved in this browser.')); };
     root.append(status);
     root.append(h('label', {}, csv ? text('cardCalculation').replace('{name}', text(titles[file as keyof typeof titles])) : text('input'), input), finish);
 
@@ -184,7 +184,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     root.append(h('label', {}, text('input'), input), actions(send, ...(kind === 'roleplay' ? [debrief] : []), copy, download), status, manual, history);
     input.oninput = () => { saveDraft(trainer.id, input.value); manual.hidden = true; manual.value = ''; sync(); };
     const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text(kind === 'roleplay' ? 'nextVisitor' : 'finishDraft'));
-    finish.onclick = () => { if (busy) return; input.value = ''; manual.value = ''; manual.hidden = true; clearDraft(trainer.id); if (kind === 'roleplay') { conversations.push([...attempts]); saveDraft(`${trainer.id}.conversations`, conversations); attempts.length = 0; saveAttempts(trainer.id, attempts); showHistory(); } sync(); };
+    finish.onclick = () => { if (busy) return; if (kind !== 'roleplay' && input.value.trim() && !window.confirm(t(bi('Очистить поле? Прошлые попытки останутся в истории ниже.', 'Clear the field? Earlier attempts stay in the history below.')))) return; input.value = ''; manual.value = ''; manual.hidden = true; clearDraft(trainer.id); if (kind === 'roleplay') { conversations.push([...attempts]); saveDraft(`${trainer.id}.conversations`, conversations); attempts.length = 0; saveAttempts(trainer.id, attempts); showHistory(); } sync(); };
     root.append(...(kind === 'roleplay' ? [round] : []), finish, button('finishSelfReview', () => { ctx.complete(); status.textContent = text('selfReviewDone'); })); cleanup.push(svc.onChange(sync), () => request?.abort());
     void svc.ready.then(sync).catch(() => { if (!disposed) status.textContent = text('error'); }); sync();
   } else if (kind === 'events.roi') {

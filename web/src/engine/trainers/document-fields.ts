@@ -45,23 +45,23 @@ const fields: Record<string, [string, string]> = {
   "oss.revenue": ["Сигнал использования|Что он доказывает|Что не доказывает|Какую задачу запускает|Цепочка|Неизмеряемые шаги", "Usage signal|What it proves|What it does not prove|Triggered task|Chain|Unmeasured steps"],
 };
 
-export function documentTemplate(id: string, title: string, task: string): string {
+export function documentTemplate(id: string, _title: string, task: string): string {
   const lesson = id.split('.').slice(0, 2).join('.');
   const explicit = fields[lesson]?.[lang() === 'ru' ? 0 : 1].split('|');
   // Preserve authored list labels in other courses, including colon-separated field lists.
   const extracted = task.split('\n').filter(l => /^\s*(?:[-*]|\d+[.)])\s+/.test(l))
     .map(l => l.replace(/^\s*(?:[-*]|\d+[.)])\s+/, '').replace(/\*\*/g, ''));
   const quoted = [...task.matchAll(/«([^»]+)»/g)].map(m => m[1]);
-  const labels = explicit ?? (extracted.length ? extracted : quoted.length ? quoted : task.split(/(?<=[.!?])\s+/).filter(s => !/^Выполните задание в документе|^Complete the task in the document/.test(s)));
+  const labels = explicit ?? (extracted.length ? extracted : quoted.length ? quoted : []);
   if (lesson === 'metrics.truth') {
     const keys = ['metric','question','version','effective_from','owner','grain','cohort','start_event','window_days','numerator','denominator','exclude','unknown','dimensions','source','refresh','change_policy'];
     const names = (lang() === 'ru' ? 'Метрика|Бизнес-вопрос|Версия|Дата начала действия|Владелец|Единица|Когорта|Событие начала отсчёта|Окно в днях|Числитель|Знаменатель|Исключения|Неизвестные значения|Разрезы|Источник|Частота обновления|Правила изменения' : 'Metric|Business question|Version|Effective date|Owner|Grain|Cohort|Start event|Window in days|Numerator|Denominator|Exclusions|Unknown values|Dimensions|Source|Refresh frequency|Change policy').split('|');
-    return `${title}\n\n${task}\n\n${keys.map((key, i) => `# ${names[i]}\n${key}: \n`).join('\n')}\n${labels.slice(-3).map(label => `## ${label}\n\n`).join('')}`;
+    return `${keys.map((key, i) => `# ${names[i]}\n${key}: \n`).join('\n')}\n${labels.slice(-3).map(label => `## ${label}\n\n`).join('')}`;
   }
   if (lesson === 'oss.donation') {
     const rows = (lang() === 'ru' ? 'Имя, логотип и домен|Авторские права и лицензирование|Патенты|Репозитории и права администратора|Ключи подписи выпусков|Реагирование на уязвимости|Дорожная карта|Право принимать изменения|Сбор денег|Коммерческая упаковка' : 'Name, logo and domain|Copyright and licensing|Patents|Repositories and administrator rights|Release signing keys|Vulnerability response|Roadmap|Right to accept changes|Fundraising|Commercial packaging').split('|');
     const columns = lang() === 'ru' ? 'Право / актив | Владеет до | Владеет после | Администрирует до | Администрирует после | Решает до | Решает после | Документ-основание' : 'Right / asset | Owns before | Owns after | Administers before | Administers after | Decides before | Decides after | Governing document';
-    return `${title}\n\n${task}\n\n${labels.map((label, i) => `## ${label}\n\n${i === 2 ? `| ${columns} |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n${rows.map(row => `| ${row} | | | | | | | |`).join('\n')}\n\n` : ''}`).join('')}`;
+    return `${labels.map((label, i) => `## ${label}\n\n${i === 2 ? `| ${columns} |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n${rows.map(row => `| ${row} | | | | | | | |`).join('\n')}\n\n` : ''}`).join('')}`;
   }
-  return `${title}\n\n${task}\n\n${labels.map(s => `## ${s}\n\n`).join('')}`;
+  return labels.map(s => `## ${s}\n\n`).join('');
 }

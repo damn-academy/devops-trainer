@@ -25,12 +25,22 @@ function trainer(kind: Parameters<typeof mountTrainer>[0], id: string) {
 }
 beforeEach(() => { localStorage.clear(); setLang('en'); });
 afterEach(() => { mounts.splice(0).forEach(m => m.dispose()); document.body.replaceChildren(); vi.restoreAllMocks(); });
-it.each([['rubric', 'pr.crisis-statement'], ['roleplay', 'events.booth-visitor'], ['template', 'llm-panel']] as const)('restores %s drafts without a key and clears only on explicit finish', (kind, id) => {
+it.each([['rubric', 'pr.crisis-statement'], ['roleplay', 'events.booth-visitor']] as const)('restores %s drafts without a key and clears only on an explicit new attempt', (kind, id) => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
   const a = trainer(kind, id); change(a.el.querySelector('textarea')!, 'Unsent draft'); a.mounted.dispose();
   const b = trainer(kind, id); expect(b.el.querySelector('textarea')!.value).toBe('Unsent draft');
   expect(service.stream).not.toHaveBeenCalled();
   b.el.querySelector<HTMLButtonElement>('button[data-finish]')!.click(); b.mounted.dispose();
   expect(trainer(kind, id).el.querySelector('textarea')!.value).toBe('');
+});
+it('keeps spreadsheet notes after self-review and refuses an empty finish', () => {
+  const a = trainer('template', 'llm-panel');
+  const finish = a.el.querySelector<HTMLButtonElement>('button[data-finish]')!;
+  expect(finish.disabled).toBe(true);
+  change(a.el.querySelector('textarea')!, 'My conclusions');
+  expect(finish.disabled).toBe(false);
+  finish.click(); expect(a.context.complete).toHaveBeenCalledTimes(1); a.mounted.dispose();
+  expect(trainer('template', 'llm-panel').el.querySelector('textarea')!.value).toBe('My conclusions');
 });
 it('isolates drafts and tolerates unavailable storage', () => {
   saveDraft('a', 'A'); saveDraft('b', 'B'); expect(loadDraft('a', '')).toBe('A');
@@ -102,7 +112,7 @@ it('restores budget allocations and exposes the existing LLM workbook', async ()
 it('downloads an editable document scaffold and restores learner edits', async () => {
   const { mountTaskDocument } = await import('../src/engine/trainers/document');
   const el = host(), a = mountTaskDocument(el, 'pr.press.task', 'Title', 'Authored task'); mounts.push(a);
-  expect(el.querySelector('textarea')!.value).toContain('Authored task'); change(el.querySelector('textarea')!, 'My document'); a.dispose();
+  expect(el.querySelector('textarea')!.value).not.toContain('Authored task'); change(el.querySelector('textarea')!, 'My document'); a.dispose();
   mounts.push(mountTaskDocument(el, 'pr.press.task', 'Title', 'Authored task')); expect(el.querySelector('textarea')!.value).toBe('My document');
 });
 it('records calibration runs without confusing untouched midpoint with an answer', async () => {

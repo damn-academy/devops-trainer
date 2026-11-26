@@ -1,5 +1,8 @@
 import { PRODUCTS } from '../core/products';
 import { mountTaskDocument } from '../engine/trainers/document';
+
+/** Trainer widgets that already give the learner a field for the practice result. */
+const FIELD_WIDGETS = new Set(['rubric', 'roleplay', 'deptsim']);
 // The lesson page: sections in order (re-ordered for Experienced: the
 // challenge comes first, 08 §5.2), progress auto-saved after every section.
 
@@ -9,7 +12,7 @@ import { bi, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
 import { href } from '../core/router';
 import { store } from '../core/store';
-import type { Level, Mounted, Section } from '../core/types';
+import type { Level, Mounted, Section, TextSection } from '../core/types';
 import { emptyState, levelBadge, levelFor, setDescription, setTitle, sourcesBlock, type Page } from './common';
 import { renderSection } from './sections';
 import { blockCrumbs } from './common';
@@ -66,13 +69,23 @@ export function lessonPage(id: string, focusSection?: string): Page {
   const standaloneCourse = PRODUCTS.some(p => p.kind === 'course' && p.id === lesson.block);
   const mounts: Mounted[] = [];
   const body = h('div.lesson-body');
+  // Practice of a business course is written down once per lesson: one
+  // document after the last practice step, or nothing when a trainer widget
+  // already gives the learner a field of its own. Finishing it (or that
+  // widget) completes every practice step of the lesson.
+  const practice = sections.filter((s): s is TextSection => standaloneCourse && s.kind === 'text' && s.step === 'practice');
+  const fieldWidget = sections.some((s) => s.kind === 'widget' && FIELD_WIDGETS.has(s.widget));
+  const lastPractice = practice[practice.length - 1];
+  const donePractice = () => practice.forEach((p) => markDone(p.id));
   for (const s of sections) {
-    const r = renderSection(s, { lesson, block: lesson.block, level, index, count: total, manualTextCompletion: standaloneCourse && s.kind === 'text' && s.step === 'practice', done: markDone });
+    const widgetDone = s.kind === 'widget' && FIELD_WIDGETS.has(s.widget) ? (sid: string) => { markDone(sid); donePractice(); } : markDone;
+    const r = renderSection(s, { lesson, block: lesson.block, level, index, count: total, manualTextCompletion: standaloneCourse && s.kind === 'text' && s.step === 'practice', done: widgetDone });
     if (doneSet.has(s.id)) r.el.classList.add('seen');
     body.append(r.el);
     if (r.mounted) mounts.push(r.mounted);
-    if (s.kind === 'text' && s.step === 'practice' && standaloneCourse) {
-      mounts.push(mountTaskDocument(r.el, `${lesson.id}.${s.id}`, t(s.title ?? lesson.title), t(s.body), () => markDone(s.id)));
+    if (s === lastPractice && !fieldWidget) {
+      const task = practice.map((p) => t(p.body)).join('\n\n');
+      mounts.push(mountTaskDocument(r.el, `${lesson.id}.${s.id}`, t(s.title ?? lesson.title), task, donePractice, practice.every((p) => doneSet.has(p.id))));
     }
   }
 

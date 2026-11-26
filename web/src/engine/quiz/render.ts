@@ -87,7 +87,7 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
         });
         list.append(h('label.q-option', { 'data-id': o.id }, input, qtext(o.text)));
       }
-      body.append(h('p.q-answer-type', {}, t(multi ? bi('Выберите все верные ответы.', 'Select all correct answers.') : bi('Выберите один ответ.', 'Select one answer.'))), list);
+      body.append(list);
       answer = () => (multi ? [...picked] : [...picked][0]);
       hasAnswer = () => picked.size > 0;
       break;

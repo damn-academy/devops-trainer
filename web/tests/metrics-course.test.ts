@@ -51,7 +51,7 @@ for (const lang of ['ru', 'en'] as const) it(`renders modules and an editable ta
   for (const id of METRICS_MODULES.flatMap(m => m.lessons)) {
     const view = lessonPage(id);
     expect(view.el.querySelectorAll('.task-document textarea'), id).toHaveLength(1);
-    expect(view.el.querySelector<HTMLTextAreaElement>('.task-document textarea')!.value).toContain(lang === 'ru' ? 'Выполните задание в документе' : 'Complete the task in the document');
+    expect(view.el.querySelector<HTMLTextAreaElement>('.task-document textarea')!.value).not.toContain(lang === 'ru' ? 'Выполните задание в документе' : 'Complete the task in the document');
     view.dispose?.();
   }
   course.dispose?.();

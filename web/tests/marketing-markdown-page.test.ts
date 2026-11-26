@@ -83,6 +83,12 @@ for (const lang of ['ru', 'en'] as const) {
         for (const document of page.el.querySelectorAll('.task-document')) {
           expect(document.querySelector('textarea')).not.toBeNull();
           const finish = [...document.querySelectorAll<HTMLButtonElement>('button')].find(b => /Завершить самопроверку|Finish self-review/.test(b.textContent ?? ''))!;
+          // An untouched form is not a result: the button waits for the learner's text.
+          expect(finish.disabled).toBe(true);
+          const field = document.querySelector('textarea')!;
+          field.value += '\nМой результат';
+          field.dispatchEvent(new Event('input'));
+          expect(finish.disabled).toBe(false);
           finish.click();
           expect(document.querySelector('[role="status"]')?.textContent).toMatch(/Самопроверка завершена|Self-review complete/);
         }
