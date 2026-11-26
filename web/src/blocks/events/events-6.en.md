@@ -136,17 +136,17 @@ An online conference begins a second life after the live event. Publish talks as
 
 <!-- quiz -->
 ? An online conference had 800 registrations and 280 live attendees. How should you assess this result?
-+ As normal: between a third and half of registrants join CNCF virtual events live || KubeVirt had 841 registrations and 300 attendees in 2025, while EnvoyCon had 441 and 146.
++ As normal: at CNCF virtual events, between a third and a half of registrants join the live stream || KubeVirt had 841 registrations and 300 attendees in 2025, while EnvoyCon had 441 and 146.
 - As a failure, because more than half of registrants did not attend and will never watch the recordings || Some people who miss the live event watch recordings; typically a third to half join CNCF events live.
 - As a counting error, because almost everyone registered for a free online event attends || At the documented CNCF events, no more than half joined live.
 ? Why are online conference talks often prerecorded?
-+ A recording is not disrupted by the speaker's connection, and the speaker can answer in chat while it plays || PlatformCon uses this approach: recorded talks and live questions.
 - Platforms rank recorded talks higher in recommendations than live streams by the same speakers || Recommendation order is irrelevant here; recording protects the talk from connection failures.
++ A recording cannot break on a bad connection, and the speaker answers in chat || PlatformCon uses this approach: recorded talks and live questions.
 - YouTube Live rules prohibit live broadcasts with multiple speakers on free channels || No such rules exist; recording is chosen for reliability.
 ? Which platform should not be treated as an archive of conference recordings?
-+ Twitch || Twitch keeps past broadcasts for between a week and two months.
-- YouTube Live, because it deletes recordings more than a year old unless they are downloaded manually || YouTube automatically saves streams shorter than twelve hours.
 - The project's own website, because videos there cannot be found through search || A project website is suitable for an archive, especially when recordings sit alongside documentation.
+- YouTube Live, because it deletes recordings more than a year old unless they are downloaded manually || YouTube automatically saves streams shorter than twelve hours.
++ Twitch || Twitch keeps past broadcasts for between a week and two months.
 <!-- /quiz -->
 
 <!-- section: task | Exercise: an online conference run of show -->
