@@ -114,7 +114,7 @@ const placement: PlacementTask[] = [
 const exam: Exam = {
   id: 'methodology.exam',
   block: 'methodology',
-  title: bi('Экзамен блока «Методология»', 'Methodology block exam'),
+  title: bi('Чёрная пятница', 'Black Friday'),
   intro: bi(
     'Экзамен состоит из двадцати дней «Чёрной пятницы» в терминале, одной настройки доски, которой в курсе нет, и восьми вопросов с новыми числами и ситуациями. Пользоваться можно только документацией: страницей `man flow`, Scrum Guide, Kanban Guide и заметками к политике бюджета ошибок. Чтобы сдать экзамен, нужно набрать 70 % и обязательно выполнить часть с доской. В конце вас ждут пять вопросов, какие задают на собеседовании на должность DevOps-инженера: ответьте на них своими словами и сверьте ответ с главными мыслями, которые покажет экзамен.',
     'Twenty days of “Black Friday” in the terminal, one board setting the course does not show, and eight questions with new numbers and situations. Only the documentation is open: `man flow`, the Scrum Guide, the Kanban Guide and the notes on the error budget policy. Pass: 70% and the mandatory board part. At the end there are five questions of the kind asked at a DevOps engineer interview: answer them in your own words and compare your answer with the key points the exam shows.',

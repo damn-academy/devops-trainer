@@ -49,7 +49,7 @@ export const LINUX_EXAM: Exam = {
   id: 'linux.exam.first-day',
   block: 'linux',
   kind: 'block',
-  title: bi('Экзамен Linux: первый день на сервере', 'Linux exam: the first day on the server'),
+  title: bi('Linux: первый день на сервере', 'Linux: the first day on the server'),
   intro: bi(
     'Пять карточек из трекера задач небольшого интернет-магазина. Каждую карточку проверяют по состоянию машины, а не по набранным командам, поэтому подходит любой путь к результату. Подсказок нет, а из документации открыта только встроенная справка, то есть страницы `man` и вывод `--help`.',
     'Five cards from a small shop’s tracker. Each is checked by the state of the machine, not by the commands you type: any way works. There are no hints; only the built-in documentation is open — `man` and `--help`.',
@@ -175,7 +175,7 @@ export const GIT_EXAM: Exam = {
   id: 'git-yaml.exam.cafe',
   block: 'git-yaml',
   kind: 'block',
-  title: bi('Экзамен Git: сайт кафе', 'Git exam: the café site'),
+  title: bi('Git: сайт кафе', 'Git: the café site'),
   intro: bi(
     'Четыре карточки о репозитории сайта кафе. Проверяется состояние репозитория, то есть коммиты, ветки и файлы, а не набранные команды. Из документации открыта только встроенная справка Git.',
     'Four cards about the café site’s repository. The state of the repository is checked — commits, branches, files — not the commands you type. Only the built-in Git help is open.',
