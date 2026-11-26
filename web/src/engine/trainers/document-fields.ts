@@ -60,8 +60,8 @@ export function documentTemplate(id: string, title: string, task: string): strin
   }
   if (lesson === 'oss.donation') {
     const rows = (lang() === 'ru' ? 'Имя, логотип и домен|Авторские права и лицензирование|Патенты|Репозитории и права администратора|Ключи подписи выпусков|Реагирование на уязвимости|Дорожная карта|Право принимать изменения|Сбор денег|Коммерческая упаковка' : 'Name, logo and domain|Copyright and licensing|Patents|Repositories and administrator rights|Release signing keys|Vulnerability response|Roadmap|Right to accept changes|Fundraising|Commercial packaging').split('|');
-    const columns = lang() === 'ru' ? 'Право / актив | Владеет до | Владеет после | Администрирует после | Решает после | Документ-основание' : 'Right / asset | Owns before | Owns after | Administers after | Decides after | Governing document';
-    return `${title}\n\n${task}\n\n${labels.map((label, i) => `## ${label}\n\n${i === 2 ? `| ${columns} |\n| --- | --- | --- | --- | --- | --- |\n${rows.map(row => `| ${row} | | | | | |`).join('\n')}\n\n` : ''}`).join('')}`;
+    const columns = lang() === 'ru' ? 'Право / актив | Владеет до | Владеет после | Администрирует до | Администрирует после | Решает до | Решает после | Документ-основание' : 'Right / asset | Owns before | Owns after | Administers before | Administers after | Decides before | Decides after | Governing document';
+    return `${title}\n\n${task}\n\n${labels.map((label, i) => `## ${label}\n\n${i === 2 ? `| ${columns} |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n${rows.map(row => `| ${row} | | | | | | | |`).join('\n')}\n\n` : ''}`).join('')}`;
   }
   return `${title}\n\n${task}\n\n${labels.map(s => `## ${s}\n\n`).join('')}`;
 }

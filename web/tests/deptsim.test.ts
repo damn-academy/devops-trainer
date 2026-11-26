@@ -238,3 +238,27 @@ describe('authored scenario mounts and company configurator', () => {
     expect([...normal.host.querySelectorAll('p')].find(p => p.textContent!.includes('Some free chat plans'))!.hidden).toBe(true);
   });
 });
+
+it('auto-changes open-core when selecting a closed product and disables it', () => {
+  const scenario = scenarios.find(s => s.id === 'events.kubecon')!;
+  const m = mount(false, scenario);
+  m.host.querySelector<HTMLInputElement>('input[value=custom]')!.click();
+  const [code, business] = [...m.host.querySelectorAll<HTMLSelectElement>('.ds-company-config select')];
+  code.value = 'own-oss'; code.dispatchEvent(new Event('change'));
+  business.value = 'open-core'; business.dispatchEvent(new Event('change'));
+  code.value = 'proprietary'; code.dispatchEvent(new Event('change'));
+  expect(business.value).toBe('license');
+  expect(business.querySelector<HTMLOptionElement>('[value="open-core"]')!.disabled).toBe(true);
+  expect(loadGame(scenario)!.options.companyConfig!.business).toBe('license');
+});
+it('persists the selected CNCF starting stage in the preview and restored game', () => {
+  const scenario = scenarios.find(s => s.id === 'oss.incubation')!;
+  const m = mount(false, scenario);
+  const stage = [...m.host.querySelectorAll('select')].find(s => [...s.options].some(o => o.value === 'sandbox'))!;
+  stage.value = 'sandbox'; stage.dispatchEvent(new Event('change'));
+  expect(loadGame(scenario)!.options.cncfStart).toBe('sandbox');
+  expect(m.host.querySelector('.ds-prompt')!.textContent).not.toContain('Graduated');
+  m.instance.dispose();
+  const restored = mount(false, scenario);
+  expect([...restored.host.querySelectorAll('select')].find(s => [...s.options].some(o => o.value === 'sandbox'))!.value).toBe('sandbox');
+});

@@ -12,6 +12,7 @@ export function loadGame(scenario: SimScenario): SimGame | null {
     if (!game || game.version !== 1 || (game.lang !== 'ru' && game.lang !== 'en') || typeof game.started !== 'boolean' || typeof game.prompt !== 'string') return null;
     const o = game.options;
     if (!o || !Number.isInteger(o.seed) || o.seed < 0 || o.seed > 0xffffffff || !Number.isInteger(o.turns) || o.turns < scenario.turns.min || o.turns > scenario.turns.max) return null;
+    if (o.cncfStart !== undefined && o.cncfStart !== 'sandbox' && o.cncfStart !== 'incubating') return null;
     if (o.eventFormat !== undefined && o.eventFormat !== 'no-booth' && o.eventFormat !== 'booth') return null;
     if (o.companyMode !== undefined && o.companyMode !== 'preset' && o.companyMode !== 'custom') return null;
     if ((o.companyMode === 'custom' || o.companyConfig !== undefined) && !validCompanyConfig(o.companyConfig)) return null;

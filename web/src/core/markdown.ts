@@ -7,6 +7,8 @@ import { h } from './dom';
 import { markdownImage } from './markdown-image';
 import { lang as currentLang, type Lang } from './i18n';
 
+const mediaUrl = (path: string) => `${import.meta.env.BASE_URL}${path}`;
+
 const LINK = /\[\[([a-z0-9][\w.-]*)(?:\|([^\]]+))?\]\]/g;
 
 /** Concept ids linked in a text: [[linux.process]] or [[linux.process|процессы]]. */
@@ -57,7 +59,7 @@ function inline(src: string, o: MdOptions): Node[] {
   const out: Node[] = [];
   const l = o.lang ?? currentLang();
   // tokens: `code`, [[concept]], [text](url), **bold**, *em*
-  const re = /(`[^`]+`)|(\[\[[a-z0-9][\w.-]*(?:\|[^\]]+)?\]\])|(\[[^\]]+\]\((?:https?:\/\/|#)[^)\s]+\))|(\*\*[^*]+\*\*)|(\*[^*\s][^*]*\*)/g;
+  const re = /(`[^`]+`)|(\[\[[a-z0-9][\w.-]*(?:\|[^\]]+)?\]\])|(\[[^\]]+\]\((?:https?:\/\/|#|media\/)[^)\s]+\))|(\*\*[^*]+\*\*)|(\*[^*\s][^*]*\*)/g;
   let last = 0;
   for (const m of src.matchAll(re)) {
     if (m.index! > last) out.push(document.createTextNode(typeset(src.slice(last, m.index), l)));
@@ -69,7 +71,9 @@ function inline(src: string, o: MdOptions): Node[] {
     } else if (m[3]) {
       const mm = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(tok)!;
       const external = /^https?:/.test(mm[2]);
-      out.push(h('a', { href: mm[2], ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) }, ...inline(mm[1], o)));
+      const media = mm[2].startsWith('media/');
+      const download = media && !/\.html?(?:[?#]|$)/i.test(mm[2]);
+      out.push(h('a', { href: media ? mediaUrl(mm[2]) : mm[2], download, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) }, ...inline(mm[1], o)));
     } else if (m[4]) out.push(h('strong', {}, ...inline(tok.slice(2, -2), o)));
     else if (m[5]) out.push(h('em', {}, ...inline(tok.slice(1, -1), o)));
     last = m.index! + tok.length;
@@ -122,9 +126,11 @@ export function renderMd(md: string, o: MdOptions = {}): DocumentFragment {
     const image = markdownImage(line);
     if (image) {
       flush();
-      const src = `${import.meta.env.BASE_URL}${image.src}`;
+      const src = mediaUrl(image.src);
+      const video = /\.(mp4|webm)$/i.test(image.src);
       frag.append(h('figure.md-image', {},
-        h('a', { href: src, target: '_blank', rel: 'noopener noreferrer' },
+        video ? h('video', { src, controls: true, preload: 'metadata', playsinline: true, 'aria-label': image.alt })
+          : h('a', { href: src, target: '_blank', rel: 'noopener noreferrer' },
           h('img', { src, alt: image.alt, loading: 'lazy', decoding: 'async' })),
         image.caption !== undefined ? h('figcaption', {}, image.caption) : null));
       i++;

@@ -14,6 +14,7 @@ export interface SimScenario {
 }
 export type Difficulty = 'soft' | 'like-life' | 'hard';
 export interface SimOptions {
+  cncfStart?: 'sandbox' | 'incubating';
   eventFormat?: 'no-booth' | 'booth';
   seed: number;
   company: string;

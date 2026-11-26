@@ -31,7 +31,7 @@ export async function buildFinanceTemplates(output) {
     for (const row of [23,25]) inputs.getCell(row,2).dataValidation = {type:'decimal',operator:'greaterThanOrEqual',formulae:[0],showErrorMessage:true,errorStyle:'stop'};
     const months = en ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] : ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
     const init = (s, labels, total=true) => { s.addRow([tr('Строка, тыс. $','Line, $000'),...months,...(total?[tr('Год / на конец года','Year / year-end')]:[])]); labels.forEach(l => s.addRow([tr(...l)])); };
-    init(pnl,[['Выручка от подписок','Subscriptions'],['Выручка от потребления','Usage'],['Выручка от услуг','Services'],['Выручка всего','Revenue'],['Хостинг для клиентов','Hosting COGS'],['Поддержка','Support COGS'],['Внедрения','Services COGS'],['Себестоимость (COGS)','COGS'],['Валовая прибыль','Gross profit'],['Разработка и дополнительный найм','R&D and additional hiring'],['Продажи и маркетинг (S&M)','S&M'],['Общие расходы со страховкой и амортизацией','G&A including insurance and depreciation'],['Операционные расходы','Operating expenses'],['Операционная прибыль (EBIT)','EBIT'],['Процентный доход','Interest income'],['Чистая прибыль','Net income']]);
+    init(pnl,[['Выручка от подписок','Subscriptions'],['Выручка от потребления','Usage'],['Выручка от услуг','Services'],['Выручка всего','Revenue'],['Хостинг для клиентов','Hosting COGS'],['Поддержка','Support COGS'],['Внедрения','Services COGS'],['Себестоимость (COGS)','COGS'],['Валовая прибыль','Gross profit'],['Разработка (R&D)','R&D'],['Продажи и маркетинг (S&M)','S&M'],['Общие расходы со страховкой и амортизацией','G&A including insurance and depreciation'],['Операционные расходы','Operating expenses'],['Операционная прибыль (EBIT)','EBIT'],['Процентный доход','Interest income'],['Чистая прибыль','Net income']]);
     init(cash,[['Поступления от клиентов','Cash from customers'],['Полученные проценты','Interest received'],['Операционные выплаты','Operating payments'],['Деньги от операционной деятельности: прямой метод','CFO: direct'],['Покупка оборудования','CFI'],['Финансирование','CFF'],['Изменение денег','Net cash change'],['Чистая прибыль','Net income'],['Амортизация','Depreciation'],['Изменение дебиторской задолженности, минус','Negative change in AR'],['Изменение расходов будущих периодов, минус','Negative change in prepaids'],['Изменение кредиторской задолженности','Change in AP'],['Изменение начисленных обязательств','Change in accruals'],['Изменение отложенной выручки','Change in deferred revenue'],['Деньги от операционной деятельности: косвенный метод','CFO: indirect']]);
     init(balance,[['Деньги','Cash'],['Дебиторская задолженность','AR'],['Расходы будущих периодов','Prepaid expenses'],['Основные средства за вычетом амортизации','PP&E net'],['Активы','Assets'],['Кредиторская задолженность','AP'],['Начисленные обязательства','Accrued expenses'],['Отложенная выручка','Deferred revenue'],['Обязательства','Liabilities'],['Вложенный капитал','Contributed capital'],['Накопленный убыток','Accumulated deficit'],['Капитал','Equity'],['Активы − обязательства − капитал','Assets − liabilities − equity']]);
     init(checks,[['Баланс: должно быть 0','Balance: must be 0'],['Прямой − косвенный метод: должно быть 0','Direct − indirect CFO: must be 0']],false);
@@ -41,15 +41,16 @@ export async function buildFinanceTemplates(output) {
       const c=pnl.getColumn(col).letter, prev=pnl.getColumn(prevCol).letter;
       if(m>12) for(const sh of [pnl,cash,balance,checks]) sh.getCell(1,col).value=`${months[(m-1)%12]} 2`;
       const H=ref(hiring,hiring.getColumn(m+6).letter,32);
+      const hire = role => `SUMIFS('${hiring.name}'!${hiring.getColumn(m+6).letter}2:${hiring.getColumn(m+6).letter}31,'${hiring.name}'!$B$2:$B$31,"${role}")`;
       const P=r=>ref(pnl,c,r), B=r=>ref(balance,c,r), C=r=>ref(cash,c,r), old=(s,r)=>m===1?'0':ref(s,prev,r);
       f(pnl,18,col,`MAX(0,${m}-${inp(22)}+1)*${inp(23)}*${inp(24)}*${inp(25)}/12`);
       const depreciation = `MIN(${inp(17)}/${inp(18)},MAX(0,${inp(17)}-(${m}-1)*${inp(17)}/${inp(18)}))`;
       const receipts = `IF(${inp(21)}=1,IF(${m}>=${inp(22)},${inp(23)}*${inp(24)}*${inp(25)}*(1+IF(${m}>=${inp(22)}+12,1,0)),0),IF(MOD(${m}-1,12)=0,${inp(3)},0)+IF(MOD(${m}-7,12)=0,${inp(4)},0))`;
-      const formulas=[`IF(${inp(21)}=1,${c}18,${inp(3)}/12+IF(${m}>=7,${inp(4)}/12,0))`,`IF(${inp(21)}=1,0,${inp(5)}+${inp(6)}*(${m}-1))`,`IF(${inp(21)}=1,0,IF(MOD(${m},3)=0,${inp(7)},0))`,`SUM(${c}2:${c}4)`,`${inp(8)}+${inp(9)}*(${m}-1)`,inp(10),`IF(MOD(${m},3)=0,${inp(11)},0)`,`SUM(${c}6:${c}8)`,`${c}5-${c}9`,`${inp(12)}+${H}`,inp(13),`${inp(14)}+${inp(16)}/12+${depreciation}+IF(${m}=12,${inp(15)},0)`,`SUM(${c}11:${c}13)`,`${c}10-${c}14`,inp(19),`${c}15+${c}16`];
+      const formulas=[`IF(${inp(21)}=1,${c}18,${inp(3)}/12+IF(${m}>=7,${inp(4)}/12,0))`,`IF(${inp(21)}=1,0,${inp(5)}+${inp(6)}*(${m}-1))`,`IF(${inp(21)}=1,0,IF(MOD(${m},3)=0,${inp(7)},0))`,`SUM(${c}2:${c}4)`,`${inp(8)}+${inp(9)}*(${m}-1)`,`${inp(10)}+${hire("COGS")}`,`IF(MOD(${m},3)=0,${inp(11)},0)`,`SUM(${c}6:${c}8)`,`${c}5-${c}9`,`${inp(12)}+${hire("R&D")}`,`${inp(13)}+${hire("S&M")}`,`${inp(14)}+${hire("G&A")}+${inp(16)}/12+${depreciation}+IF(${m}=12,${inp(15)},0)`,`SUM(${c}11:${c}13)`,`${c}10-${c}14`,inp(19),`${c}15+${c}16`];
       formulas.forEach((v,i)=>f(pnl,i+2,col,v));
       [
         `${receipts}+${old(pnl,3)}+${old(pnl,4)}`,
-        inp(19),`-(${old(pnl,6)}+${P(7)}+${P(8)}+${inp(12)}+${H}+${inp(13)}+${inp(14)}+IF(MOD(${m}-1,12)=0,${inp(16)},0)+IF(${m}=13,${inp(15)},0))`,
+        inp(19),`-(${old(pnl,6)}+${inp(10)}+${P(8)}+${inp(12)}+${H}+${inp(13)}+${inp(14)}+IF(MOD(${m}-1,12)=0,${inp(16)},0)+IF(${m}=13,${inp(15)},0))`,
         `SUM(${c}2:${c}4)`,`IF(${m}=1,-${inp(17)},0)`,`IF(${m}=7,${inp(20)},0)`,`SUM(${c}5:${c}7)`,
         P(17),depreciation,`-(${B(3)}-${old(balance,3)})`,`-(${B(4)}-${old(balance,4)})`,`${B(7)}-${old(balance,7)}`,`${B(8)}-${old(balance,8)}`,`${B(9)}-${old(balance,9)}`,`SUM(${c}9:${c}15)`,
       ].forEach((v,i)=>f(cash,i+2,col,v));
@@ -65,6 +66,8 @@ export async function buildFinanceTemplates(output) {
     hiring.addRow([tr('Человек / вакансия','Person / vacancy'),tr('Роль','Role'),tr('Статус','Status'),tr('Месяц начала','Start month'),tr('Полная стоимость в месяц, тыс. $','Monthly loaded cost, $000'),tr('Примечание','Note'),...Array.from({length:18},(_,i)=>i+1)]);
     const statuses = [tr('В штате','In post'),tr('Оффер','Offer'),tr('Открыта','Open')];
     for (let r=2;r<=31;r++) {
+      hiring.getCell(r,2).value='R&D';
+      hiring.getCell(r,2).dataValidation={type:'list',allowBlank:false,formulae:['"R&D,S&M,G&A,COGS"'],showErrorMessage:true,errorStyle:'stop'};
       hiring.getCell(r,3).value=statuses[2]; hiring.getCell(r,4).value=1; hiring.getCell(r,5).value=0;
       hiring.getCell(r,3).dataValidation={type:'list',allowBlank:false,formulae:[`"${statuses.join(',')}"`],showErrorMessage:true,errorStyle:'stop'};
       hiring.getCell(r,4).dataValidation={type:'whole',operator:'between',formulae:[1,18],showErrorMessage:true,errorStyle:'stop'};
@@ -73,7 +76,7 @@ export async function buildFinanceTemplates(output) {
     }
     hiring.getCell('A32').value=tr('Всего: дополнительные расходы на найм','Total: additional hiring costs');
     for (let m=1;m<=18;m++) { const c=hiring.getColumn(m+6).letter; f(hiring,32,m+6,`SUM(${c}2:${c}31)`); }
-    hiring.getCell('A34').value=tr('Запишите каждого сотрудника и каждую вакансию: одна строка на человека или вакансию, полная стоимость и статус. Все статусы входят в план с месяца начала. Исключите эти расходы из базовых допущений, чтобы не считать их дважды.','List every employee and every vacancy: one row per person or vacancy, with loaded cost and status. All statuses enter the plan from the start month. Remove these costs from baseline inputs to avoid counting them twice.');
+    hiring.getCell('A34').value=tr('Запишите каждого сотрудника и каждую вакансию: одна строка на человека или вакансию, полная стоимость и статус. Роль задаёт строку расходов: R&D — разработка, S&M — продажи и маркетинг, G&A — общие расходы, COGS — поддержка клиентов. Все статусы входят в план с месяца начала. Исключите эти расходы из базовых допущений, чтобы не считать их дважды.','List every employee and every vacancy: one row per person or vacancy, with loaded cost and status. Role selects the expense line: R&D, S&M, G&A, or COGS (customer support). All statuses enter the plan from the start month. Remove these costs from baseline inputs to avoid counting them twice.');
     style(w); await w.xlsx.writeFile(`${output}/infraseed-model${en?'-en':''}.xlsx`);
 
     const q=wb(), events=q.addWorksheet(tr('События','Events')), weekly=q.addWorksheet(tr('Недели','Weekly'));

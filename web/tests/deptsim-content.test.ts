@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { companyGroups, companyLegends, defaultCompanyConfig } from '../src/sims/companies';
+import { companyGroups, companyLegends, defaultCompanyConfig, normalizeCompanyConfig } from '../src/sims/companies';
 import { parseCompanyConfig, parseLegends } from '../src/sims/parser';
 import configSource from '../src/sims/company-config.ru.md?raw';
 import legendSource from '../src/sims/legends.ru.md?raw';
@@ -41,14 +41,14 @@ describe('Markdown company content', () => {
     const next = mulberry32(42);
     const expected = Object.fromEntries(companyGroups.map(g => [g.key, g.options[Math.floor(next() * g.options.length)].value]));
     const before = diceTable(42);
-    expect(randomCompany(42)).toEqual(expected);
+    expect(randomCompany(42)).toEqual(normalizeCompanyConfig(expected));
     expect(randomCompany(42)).toEqual(randomCompany(42));
     expect(randomCompany(43)).not.toEqual(randomCompany(42));
     expect(diceTable(42)).toBe(before);
   });
   it('assembles custom properties as paragraphs in file order', () => {
     expect(companyText({ ...options, companyMode: 'custom', companyConfig: defaultCompanyConfig() }, 'en'))
-      .toBe('Игрок выбрал для компании такие свойства.\n\n' + companyGroups.map(g => g.options[0].text).join('\n\n'));
+      .toBe('Игрок выбрал для компании такие свойства.\n\n' + companyGroups.map(g => g.options.find(o => o.value === defaultCompanyConfig()[g.key])!.text).join('\n\n'));
   });
 });
 describe('department content assembly', () => {

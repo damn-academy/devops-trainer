@@ -135,11 +135,11 @@ Public fee schedules as of late 2026, in dollars per year unless stated otherwis
 
 | Organization | Fees | What not to promise leadership |
 |---|---|---|
-| CNCF | Silver from 2 to 50 thousand, or 7 to 70 thousand including Linux Foundation, based on the entire corporate group's headcount; Gold — 100 thousand, Platinum — 350 thousand plus Linux Foundation fees, for three years | A Platinum board seat does not grant sole technical control; a KubeCon booth is paid separately |
+| CNCF | Silver from 2 to 50 thousand, or 7 to 70 thousand including Linux Foundation, based on the entire corporate group's headcount; Gold — 100 thousand plus Linux Foundation dues, Platinum — 350 thousand plus Linux Foundation dues with a three-year commitment | A Platinum board seat does not grant sole technical control; a KubeCon booth is paid separately |
 | Linux Foundation | Silver from 5 to 20 thousand by headcount, Gold — 100 thousand, Platinum — 500 thousand | Silver does not include industry foundation fees |
-| OpenSSF | From 1 January 2026, Premier — 250 thousand, General from 5 to 50 thousand plus Linux Foundation | Membership is not a product security audit |
+| OpenSSF | From 1 January 2026, Premier — 250 thousand, General from 5 to 50 thousand, both plus Linux Foundation dues | Membership is not a product security audit |
 | LF AI & Data | Premier — 150 thousand, General from 10 to 40 thousand, both plus Linux Foundation dues | Case studies and events, not sales |
-| Agentic AI Foundation | Gold — 200 thousand, Silver from 5 to 75 thousand plus Linux Foundation; Platinum seats are unavailable on the page | Membership does not imply buyer adoption of a protocol |
+| Agentic AI Foundation | Gold — 200 thousand, Silver from 5 to 75 thousand, both tiers plus Linux Foundation dues; Platinum seats are unavailable on the page | Membership does not imply buyer adoption of a protocol |
 | Apache Software Foundation | Sponsorship rather than membership: from 6 to 125 thousand | Sponsors do not buy change acceptance, releases, or product endorsement |
 | Eclipse Foundation | In euros: from 1 500 for companies with revenue below one million euros and fewer than ten employees to 25 thousand by revenue, strategic membership from 30 to 300 thousand | Working group fees, such as Jakarta EE, are paid separately |
 | PostgreSQL (PGCA) | Since February 2026, from donations below 2 500 dollars to 40 thousand | These are donations; PostgreSQL has no participation fee |
@@ -156,6 +156,7 @@ A full three-year calculation looks like this. The assumptions are illustrative:
 | Item | Year 1 | Year 2 | Year 3 |
 |---|---:|---:|---:|
 | Dues | 10 | 10 | 10 |
+| Project funding: infrastructure, audits, travel | 0 | 0 | 0 |
 | Maintainer time, 2 × 0.5 full-time roles | 180 | 180 | 180 |
 | Security, releases, documentation, 0.25 full-time role | 45 | 45 | 45 |
 | Legal work and foundation admission | 20 | 0 | 0 |
@@ -166,7 +167,7 @@ A full three-year calculation looks like this. The assumptions are illustrative:
 The three-year total is $845,000, of which dues account for $30,000, less than 4%. If some maintainers eventually work for other companies, the company's share of the maintainer-time line shrinks, provided it does not hire replacements. That is the economic rationale for donation from the company's perspective; the project's total cost does not decrease but is shared among several participants.
 
 <!-- section: theory | How to tell whether donation succeeded -->
-The CHAOSS community offers project sustainability metrics. The contributor absence factor shows how many people account for half the project's activity, and the elephant factor shows how many organizations do. If employees of one company do half the work over the chosen period, such as half the accepted changes in a year, the elephant factor is one. This signals risk: that company's departure will stop the project even if governance rules are neutral. Check governance neutrality separately through the rules and who actually makes decisions. Add the number of maintainers outside the company, review time, the project's ability to release without its founding company, vulnerability response speed, and confirmed production users.
+The CHAOSS community offers project sustainability metrics. The contributor absence factor shows how many people account for half the project's activity, and the elephant factor shows how many organizations do. If employees of one company do half the work over the chosen period, such as half the accepted changes in a year, the elephant factor is one. This signals risk: the project may stop if that company leaves, even if governance rules are neutral; how likely that is depends on whether people can be replaced, how access is distributed, and whether the project can release without the company. Check governance neutrality separately through the rules and who actually makes decisions. Add the number of maintainers outside the company, review time, the project's ability to release without its founding company, vulnerability response speed, and confirmed production users.
 
 The company's strategy succeeds through lower adoption barriers and a sustainable project; foundation success does not necessarily mean growth in the company's sales pipeline. Record this in the memo in advance so that leadership does not judge the donation by lead count a year later.
 

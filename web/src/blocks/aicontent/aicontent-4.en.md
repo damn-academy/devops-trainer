@@ -36,6 +36,19 @@ Missing audio is the most frustrating video and podcast failure. Once, camera-re
 - Check the file size: if it is larger than expected, audio and visuals are present || File size says nothing about frame contents.
 <!-- /quiz -->
 
+<!-- section: theory | Sample video: before and after -->
+To make the audio-based timeline technique visible and audible, we made a short sample video about the platform itself: a screen recording of a lesson with a terminal, narration synthesized using a macOS system voice, and subtitles. The three-line script allowed four seconds per line, but the synthesized lines lasted 5.6, 3.7 and 5.5 seconds.
+
+In the first version, audio and subtitles follow the script, starting every four seconds. The lines overlap, and at the ninth second the third subtitle is already on screen while the voice is still speaking the second line.
+
+![Script-timed version: lines overlap and subtitles run ahead of the voice](media/aicontent/video-kit/before.mp4 "Before: script-based timeline, four seconds per line")
+
+In the second version, the timeline follows the measured audio duration: each line begins after the previous one, its subtitle stays visible as long as the line plays, and the first three seconds of the recording, while the page was loading, have been trimmed so that the words “We type the echo command” coincide with the start of typing.
+
+![Audio-timed version: voice, subtitles and command entry align](media/aicontent/video-kit/after.mp4 "After: timeline based on synthesized audio duration")
+
+Download the source files to rebuild both versions: the [script](media/aicontent/video-kit/script.txt), three voice lines — [first](media/aicontent/video-kit/line-1.m4a), [second](media/aicontent/video-kit/line-2.m4a) and [third](media/aicontent/video-kit/line-3.m4a) — and subtitles timed [by the script](media/aicontent/video-kit/subtitles-before.srt) and [by the audio](media/aicontent/video-kit/subtitles-after.srt). Compare the two subtitle files: the first takes its timestamps from the script, while the second uses each line's duration, which any audio application can show.
+
 <!-- section: task | Task: a pipeline for one video -->
 Complete the task in the document on this page. Describe the pipeline for one recurring video your team produces: an intro, product-release video or podcast episode. For each step, record what AI generates, what code renders, what is recorded live and what a human checks. Separately list three checks you will perform before publication and the cost per accepted second or minute of your last video.
 

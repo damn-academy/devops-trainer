@@ -292,5 +292,6 @@
 @media (max-width: 620px) { .catalog-item[data-size="hero"] .catalog-tile { padding: 24px 22px; } .catalog-item[data-size="hero"] .catalog-title { font-size: 1.6rem; } }
 
 .md-image { margin: 1em 0; }
-.md-image img { display: block; max-width: 100%; height: auto; border-radius: var(--radius, 8px); border: 1px solid var(--line); }
+.md-image img, .md-image video { display: block; max-width: 100%; height: auto; border-radius: var(--radius, 8px); border: 1px solid var(--line); }
+.md-image video { width: 100%; }
 .md-image figcaption { margin-top: 0.5em; color: var(--ink-2); font-size: 0.9em; }

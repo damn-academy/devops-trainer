@@ -121,7 +121,7 @@ for(const suffix of ['', '-en']) {
   inputs.getCell('B21').value=0; inputs.getCell('B22').value=1;
   // Each named person/vacancy enters expenses and cash from their own start month.
   for(const [r,start,cost,status] of [[2,7,17.7,0],[3,10,12,1],[4,13,8,2]]) {
-    hiring.getCell(r,1).value=`Person ${r}`; hiring.getCell(r,2).value='Engineer';
+    hiring.getCell(r,1).value=`Person ${r}`; hiring.getCell(r,2).value='R&D';
     hiring.getCell(r,3).value=(suffix?['In post','Offer','Open']:['В штате','Оффер','Открыта'])[status];
     hiring.getCell(r,4).value=start; hiring.getCell(r,5).value=cost;
   }
@@ -130,6 +130,14 @@ for(const suffix of ['', '-en']) {
   near(hired(pnl.name,'Q11')-read(pnl.name,'Q11'),37.7,'all three hires in month 15');
   near(hired(balance.name,'M2'),1704-17.7*6-12*3,'hiring changes cash');
   for(let m=1;m<=18;m++) { const c=checks.getColumn(m<=12?m+1:m+2).letter; near(hired(checks.name,`${c}2`),0,`hired balance ${m}`); near(hired(checks.name,`${c}3`),0,`hired CFO ${m}`); }
+  for (const [role, row] of [['R&D',11],['S&M',12],['G&A',13],['COGS',7]]) {
+    hiring.getCell('B2').value=role;
+    const routed=reader(w);
+    for (const line of [7,11,12,13]) near(routed(pnl.name,`H${line}`)-read(pnl.name,`H${line}`),line===row?17.7:0,`${role} routes to ${line}`);
+    near(routed(balance.name,'M2'),hired(balance.name,'M2'),`${role} cash unchanged`);
+    for(let m=1;m<=18;m++) { const c=checks.getColumn(m<=12?m+1:m+2).letter; near(routed(checks.name,`${c}2`),0,`${role} balance ${m}`); near(routed(checks.name,`${c}3`),0,`${role} CFO ${m}`); }
+  }
+  hiring.getCell('B2').value='R&D';
   hiring.getCell('D2').value=10; hiring.getCell('D3').value=13;
   near(reader(w)(balance.name,'M2')-hired(balance.name,'M2'),3*(17.7+12),'delaying two hires');
   for(let r=2;r<=4;r++) hiring.getCell(r,1).value=null;
