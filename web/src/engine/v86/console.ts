@@ -5,7 +5,7 @@ import { registerFeedbackSnapshot } from '../feedback/data';
 // history and Tab completion are the guest shell's own (BusyBox ash), exactly
 // as over SSH to a server.
 
-import { loadXterm, readTheme } from '../terminal/widget';
+import { fitTerminal, loadXterm, readTheme, termFontSize } from '../terminal/widget';
 import type { V86Machine } from './machine';
 
 export interface ConsoleHandle {
@@ -29,7 +29,7 @@ export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: n
   const { Terminal, FitAddon } = await loadXterm();
   const term = new Terminal({
     fontFamily: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
-    fontSize: 14,
+    fontSize: termFontSize(),
     lineHeight: 1.35,
     cursorBlink: true,
     rows: o.rows ?? 16,
@@ -43,7 +43,7 @@ export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: n
   let sized = '';
   const doFit = () => {
     try {
-      fit.fit();
+      fitTerminal(term, fit);
     } catch {
       return; /* not visible yet */
     }

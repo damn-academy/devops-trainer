@@ -266,7 +266,9 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   expandBtn.addEventListener('click', () => {
     const expanded = el.classList.toggle('lab-expanded');
     expandBtn.setAttribute('aria-pressed', String(expanded));
-    expandBtn.textContent = t(expanded ? bi('Вернуть обычную ширину', 'Restore width') : bi('Расширить терминал', 'Expand terminal'));
+    expandBtn.textContent = t(expanded ? bi('Вернуть обычный размер', 'Restore size') : bi('Расширить терминал', 'Expand terminal'));
+    // On a phone the expanded terminal covers the screen: the page under it must not scroll.
+    document.documentElement.classList.toggle('lab-fullscreen', expanded && window.matchMedia?.('(max-width: 600px)').matches);
   });
 
   resetBtn.addEventListener('click', async () => {
@@ -289,6 +291,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       unregisterSource?.();
       unsubscribeSource?.();
       disposed = true;
+      if (el.classList.contains('lab-expanded')) document.documentElement.classList.remove('lab-fullscreen');
       term?.dispose();
       machine?.dispose();
     },

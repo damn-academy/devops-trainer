@@ -66,6 +66,24 @@ export function readTheme(): Record<string, string> {
   };
 }
 
+/**
+ * On a phone a terminal of the window's width holds about 36 characters and
+ * breaks every table. There it takes a smaller font and at least 80 columns,
+ * and the box it sits in scrolls sideways.
+ */
+const NARROW_MIN_COLS = 80;
+const narrowScreen = () => window.matchMedia?.('(max-width: 600px)').matches ?? false;
+export const termFontSize = () => (narrowScreen() ? 11 : 14);
+export function fitTerminal(term: XTerm, fit: { fit(): void }) {
+  const size = termFontSize();
+  if (term.options.fontSize !== size) term.options.fontSize = size;
+  fit.fit();
+  const narrow = narrowScreen();
+  if (narrow && term.cols < NARROW_MIN_COLS) term.resize(NARROW_MIN_COLS, term.rows);
+  const box = term.element?.parentElement;
+  if (box) box.style.overflowX = narrow ? 'auto' : '';
+}
+
 const visibleLen = (s: string) => s.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').length;
 
 export async function mountTerminal(el: HTMLElement, o: TerminalOptions): Promise<TerminalHandle> {
@@ -75,7 +93,7 @@ export async function mountTerminal(el: HTMLElement, o: TerminalOptions): Promis
   const { Terminal, FitAddon } = await loadXterm();
   const term: XTerm = new Terminal({
     fontFamily: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
-    fontSize: 14,
+    fontSize: termFontSize(),
     lineHeight: 1.35,
     cursorBlink: true,
     cursorStyle: 'block',
@@ -91,7 +109,7 @@ export async function mountTerminal(el: HTMLElement, o: TerminalOptions): Promis
   const m = o.machine as Machine & { cols?: number };
   const doFit = () => {
     try {
-      fit.fit();
+      fitTerminal(term, fit);
       if ('cols' in m) m.cols = term.cols;
     } catch {
       /* not visible yet */

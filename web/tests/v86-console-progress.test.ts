@@ -3,6 +3,8 @@ import { expect, it, vi } from 'vitest';
 const ui = vi.hoisted(() => ({ write: vi.fn(), input: (_text: string) => {} }));
 vi.mock('../src/engine/terminal/widget', () => ({
   readTheme: () => ({}),
+  termFontSize: () => 14,
+  fitTerminal: (_term: unknown, fit: { fit(): void }) => fit.fit(),
   loadXterm: async () => ({
     Terminal: class {
       cols = 80; rows = 16; options = {};

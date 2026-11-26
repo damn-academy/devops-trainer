@@ -340,3 +340,9 @@
 .lab.lab-expanded { grid-template-columns: minmax(0, 1fr); }
 .lab-expanded .lab-right { max-width: none; }
 .lab-bar { flex-wrap: wrap; }
+/* On a phone "Expand terminal" opens the terminal over the whole screen. */
+@media (max-width: 600px) {
+  .lab.lab-expanded .lab-right { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; padding: 8px; background: var(--bg); }
+  .lab.lab-expanded .lab-term-box { flex: 1; min-height: 0; }
+}
+@media (max-width: 600px) { html.lab-fullscreen, html.lab-fullscreen body { overflow: hidden; } }
