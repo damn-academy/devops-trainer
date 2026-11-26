@@ -71,7 +71,7 @@ To turn the score into a decision, add three rules to the weights. First, a veto
 
 `Return on investment = (incremental gross profit − full cost) / full cost`.
 
-Worked example: full cost of 30 thousand dollars, 24 completed meetings with target accounts, a quarter becoming opportunities, and a fifth of opportunities won gives 1.2 expected deals. With 40 thousand dollars in annual revenue per deal and a 75 % gross margin, that is 36 thousand in gross profit and an expected return of 20 %. The model promises nothing: recalculate with conversion halved, account for the time until money arrives, and show existing deals separately. Revenue from deals that an event merely touched cannot all be counted as the event's incremental revenue.
+Worked example: full cost of 30 thousand dollars, 24 completed meetings with target accounts, a quarter becoming opportunities, and a fifth of opportunities won gives 1.2 expected deals. With 40 thousand dollars in annual revenue per deal and a 75 % gross margin, that is 36 thousand in gross profit and an expected return of 20 %. The model promises nothing: recalculate with conversion halved, account for the time until money arrives, and show existing deals separately. Revenue from deals that an event merely touched cannot all be counted as the event's incremental revenue. If sales are not the main goal, calculate cost against that goal: two joint integration plans at a total cost of $15,000 cost $7,500 per plan. Compare this with what the same result would cost without the event, for example through a visit to the partner.
 
 If the calculation and audience show that a booth is unnecessary, deciding “do not buy a booth” is a good analytical outcome.
 
