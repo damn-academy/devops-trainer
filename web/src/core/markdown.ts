@@ -159,7 +159,9 @@ export function renderMd(md: string, o: MdOptions = {}): DocumentFragment {
     if (/^\s*([-*]|\d+\.)\s+/.test(line)) {
       flush();
       const ordered = /^\s*\d+\./.test(line);
-      const list = h(ordered ? 'ol' : 'ul');
+      // A numbered list that continues after a paragraph keeps its authored first number.
+      const first = ordered ? Number(/^\s*(\d+)\./.exec(line)![1]) : 1;
+      const list = h(ordered ? 'ol' : 'ul', ordered && first !== 1 ? { start: first } : {});
       while (i < lines.length && /^\s*([-*]|\d+\.)\s+/.test(lines[i])) {
         let item = lines[i].replace(/^\s*([-*]|\d+\.)\s+/, '');
         i++;
