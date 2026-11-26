@@ -266,7 +266,14 @@ it('persists the selected CNCF starting stage in the preview and restored game',
 it('completes an external game only after explicit self-review', () => {
   const w = mount(false);
   expect(w.ctx.complete).not.toHaveBeenCalled();
-  w.button('Finish the simulation self-review').click();
+  const finish = w.button('Finish the simulation self-review') as HTMLButtonElement;
+  expect(finish.disabled).toBe(true);
+  finish.click();
+  expect(w.ctx.complete).not.toHaveBeenCalled();
+  const notes = w.host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Game outcome"]')!;
+  notes.value = 'Debrief from the other chat'; notes.dispatchEvent(new Event('input'));
+  expect(finish.disabled).toBe(false);
+  finish.click();
   expect(w.ctx.complete).toHaveBeenCalledOnce();
   expect(w.calls).toHaveLength(0);
   expect(w.host.textContent).toContain('Simulation self-review complete');
