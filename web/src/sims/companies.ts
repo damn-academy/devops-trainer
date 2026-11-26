@@ -3,7 +3,14 @@ import configSource from './company-config.ru.md?raw';
 import { parseLegends, parseCompanyConfig } from './parser';
 export const companyLegends = parseLegends(legendSource);
 export const companyGroups = parseCompanyConfig(configSource);
-export const defaultCompanyConfig = (): Record<string, string> => Object.fromEntries(companyGroups.map(g => [g.key, g.options[0].value]));
+export const defaultCompanyConfig = (): Record<string, string> => normalizeCompanyConfig(Object.fromEntries(companyGroups.map(g => [g.key, g.options[0].value])));
 export function validCompanyConfig(value: unknown): value is Record<string, string> {
   return !!value && typeof value === 'object' && companyGroups.every(g => g.options.some(o => o.value === (value as Record<string, unknown>)[g.key]));
+}
+
+export function normalizeCompanyConfig(config: Record<string, string>): Record<string, string> {
+  return config.code === 'proprietary' && config.business === 'open-core' ? { ...config, business: 'license' } : { ...config };
+}
+export function consistentCompanyConfig(config: Record<string, string>): boolean {
+  return !(config.code === 'proprietary' && config.business === 'open-core');
 }

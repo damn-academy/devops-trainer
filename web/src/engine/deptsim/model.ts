@@ -1,6 +1,6 @@
 import { eventDepartment } from './events';
 import type { ChatMessage, Lang } from '../../core/types';
-import { companyGroups, validCompanyConfig } from '../../sims/companies';
+import { companyGroups, validCompanyConfig, normalizeCompanyConfig, consistentCompanyConfig } from '../../sims/companies';
 import { legends } from './legends';
 import { difficultyTexts, strings } from './strings';
 import type { SimOptions, SimScenario } from './types';
@@ -27,19 +27,20 @@ export function randomSeed(): number {
 }
 export function randomCompany(seed: number): Record<string, string> {
   const next = mulberry32(seed);
-  return Object.fromEntries(companyGroups.map(g => [g.key, g.options[Math.floor(next() * g.options.length)].value]));
+  return normalizeCompanyConfig(Object.fromEntries(companyGroups.map(g => [g.key, g.options[Math.floor(next() * g.options.length)].value])));
 }
 export function companyText(opts: SimOptions, lang: Lang): string {
   if (opts.companyMode === 'custom') {
-    if (!validCompanyConfig(opts.companyConfig)) throw new Error('Invalid company configuration');
+    if (!validCompanyConfig(opts.companyConfig) || !consistentCompanyConfig(opts.companyConfig)) throw new Error('Invalid company configuration');
     return strings.customIntro.ru + '\n\n' + companyGroups.map(g => g.options.find(o => o.value === opts.companyConfig![g.key])!.text).join('\n\n');
   }
   const company = legends.find(l => l.id === opts.company);
   if (!company) throw new Error(`Unknown company: ${opts.company}`);
-  return company.text[lang];
+  return opts.cncfStart === 'sandbox' ? company.text[lang].replace('на уровне Incubating', 'на уровне Sandbox') : company.text[lang];
 }
 export function promptSize(prompt: string) { return { characters: prompt.length, tokens: Math.ceil(prompt.length / 3.5) }; }
 export function compatibleCompany(scenario: SimScenario, opts: SimOptions): boolean {
+  if (opts.companyMode === 'custom' && (!validCompanyConfig(opts.companyConfig) || !consistentCompanyConfig(opts.companyConfig))) return false;
   // This scenario has a fixed Incubating project; custom companies do not encode CNCF maturity.
   return scenario.id !== 'oss.incubation' || (opts.companyMode !== 'custom' && opts.company === 'lumenmesh');
 }
@@ -47,7 +48,7 @@ export function buildPrompt(scenario: SimScenario, opts: SimOptions, lang: Lang)
   if (!compatibleCompany(scenario, opts)) throw new Error('Scenario requires the Incubating Lumenmesh legend');
   const values: Record<string, string> = {
     SEED: String(opts.seed >>> 0), DICE: diceTable(opts.seed), DIFFICULTY: difficultyTexts[opts.difficulty][lang],
-    TURNS: String(opts.turns), TURN_UNIT: scenario.turnUnit[lang], COMPANY: companyText(opts, lang), WORLD: scenario.world ?? '', DEPARTMENT: scenario.id === 'events.kubecon' ? eventDepartment(opts) : scenario.department ?? '', LANG_RULES: strings.langRules[lang],
+    TURNS: String(opts.turns), TURN_UNIT: scenario.turnUnit[lang], COMPANY: companyText(opts, lang), WORLD: scenario.world ?? '', DEPARTMENT: scenario.id === 'events.kubecon' ? eventDepartment(opts) : scenario.id === 'oss.incubation' && opts.cncfStart === 'sandbox' ? (scenario.department ?? '').replace('Проект недавно перешёл с уровня Sandbox на уровень Incubating.', 'Проект находится на уровне Sandbox.').replace('для проектов уровня Incubating', 'для проектов уровня Sandbox').replaceAll('Graduated', 'Incubating') : scenario.department ?? '', LANG_RULES: strings.langRules[lang],
   };
   const prompt = scenario.prompt[lang].replace(/\{\{(\w+)\}\}/g, (match, key: string) => values[key] ?? match);
   if (prompt.includes('{{')) throw new Error(`Unresolved prompt placeholder in ${scenario.id}`);

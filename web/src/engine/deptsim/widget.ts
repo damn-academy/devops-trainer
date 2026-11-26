@@ -5,7 +5,7 @@ import { renderMd } from '../../core/markdown';
 import { ai, type AiService } from '../ai/service';
 import { buildPrompt, compatibleCompany, companyText, hasFence, promptSize, randomCompany, randomSeed, trimHistory } from './model';
 import { getScenario } from './registry';
-import { companyGroups, defaultCompanyConfig } from '../../sims/companies';
+import { companyGroups, defaultCompanyConfig, normalizeCompanyConfig } from '../../sims/companies';
 import { legends } from './legends';
 import { loadGame, saveGame } from './storage';
 import { strings as s } from './strings';
@@ -75,7 +75,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   const customCompany = h('div', { class: 'ds-company-config' });
   const configSelects = companyGroups.map(group => {
     const select = h('select', {}, ...group.options.map(o => h('option', { value: o.value }, o.label)));
-    select.onchange = () => { game.options.companyConfig![group.key] = select.value; updatePrompt(); };
+    select.onchange = () => { game.options.companyConfig![group.key] = select.value; syncCompany(); updatePrompt(); };
     customCompany.append(h('label', {}, group.label, select));
     return select;
   });
@@ -85,11 +85,11 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   });
   randomize.hidden = scenario.id === 'oss.incubation';
   function syncCompany() {
-    game.options.companyConfig ??= defaultCompanyConfig();
+    game.options.companyConfig = normalizeCompanyConfig(game.options.companyConfig ?? defaultCompanyConfig());
     const mode = game.options.companyMode ?? 'preset';
     companyMode.querySelectorAll<HTMLInputElement>('input').forEach(r => { r.checked = r.value === mode; });
     presetCompany.hidden = mode !== 'preset'; customCompany.hidden = mode !== 'custom';
-    configSelects.forEach((select, i) => { select.value = game.options.companyConfig![companyGroups[i].key]; });
+    configSelects.forEach((select, i) => { select.value = game.options.companyConfig![companyGroups[i].key]; Array.from(select.options).forEach(o => { o.disabled = companyGroups[i].key === 'business' && o.value === 'open-core' && game.options.companyConfig!.code === 'proprietary'; }); });
   }
   syncCompany();
   const difficulty = h('div', { class: 'ds-difficulty', role: 'radiogroup', 'aria-label': text('difficulty') });
@@ -108,6 +108,10 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   eventFormat.value = game.options.eventFormat ?? 'no-booth';
   eventFormat.onchange = () => { game.options.eventFormat = eventFormat.value as 'no-booth' | 'booth'; updatePrompt(); };
   if (scenario.id === 'events.kubecon') settings.append(h('label', {}, t(bi('Формат участия', 'Participation format')), eventFormat));
+  const cncfStart = h('select', {}, h('option', { value: 'sandbox' }, 'Sandbox → Incubating'), h('option', { value: 'incubating' }, 'Incubating → Graduated'));
+  cncfStart.value = game.options.cncfStart ?? 'incubating';
+  cncfStart.onchange = () => { game.options.cncfStart = cncfStart.value as 'sandbox' | 'incubating'; updatePrompt(); };
+  if (scenario.id === 'oss.incubation') settings.append(h('label', {}, t(bi('Переход проекта', 'Project transition')), cncfStart));
   company.onchange = () => { game.options.company = company.value; updatePrompt(); };
   turns.oninput = () => { game.options.turns = Number(turns.value); updatePrompt(); };
   seed.onchange = () => {
@@ -191,6 +195,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
     game = fresh(); completed = false; paneOpen = false;
     syncCompany();
     eventFormat.value = game.options.eventFormat ?? 'no-booth';
+    cncfStart.value = game.options.cncfStart ?? 'incubating';
     company.value = game.options.company; turns.value = String(game.options.turns); seed.value = String(game.options.seed);
     difficulty.querySelectorAll<HTMLInputElement>('input').forEach(r => { r.checked = r.value === game.options.difficulty; });
     transcript.replaceChildren(); input.value = ''; status.textContent = ''; confirmation.hidden = true;
