@@ -123,3 +123,126 @@ Not run: compilation of changed Rust, native riscv-tests/Spike signatures,
 439 fixtures against rebuilt WASM, real Linux SMP/trace/snapshot gates, or the
 3000-second kuberoot run. These require the lead's build environment. Existing
 WASM was not replaced. No cluster operation or push was performed.
+
+## R7 partial Linux evidence and R8 instruction-fence fix (2026-11-26)
+
+The lead reports ea17448 rebuilt and all R7 gates green: cargo test, test-isa,
+architecture signatures, SMP Linux shell (~25 s), smp-trace, smp-trace-linux and
+smp-snapshot. This is reported build evidence, not a local rerun. The running
+R7 log is `web/public/rv64/results/R7-smp-2h-uncompressed-1024-3000s-run.log`.
+At the reported ~800 guest-second window: ~4.3–4.9 MIPS per hart, interval JIT
+fraction 0.65–0.67 (R6b ~0.37), and ~2,200 compiled blocks/s. These are partial
+window figures, not a completed 3000-second result or an acceptance verdict.
+
+The hart-1 METRICS record at hostMonotonicMs=1795683106943.61 confirms:
+
+| Counter | Value |
+| --- | ---: |
+| retired / jitRetired | 4,330,305,805 / 3,000,094,731 |
+| interpreter_retired | 1,330,211,074 |
+| remote_fence_i / jit_cache_clears | 8,809 / 8,809 |
+| invalidations.remote_fence_i / explicit_clear / store_code_pages | 8,809 / 0 / 0 |
+| shared_generation_changes | 5,270 |
+| remote_sfence_vma / sbi_fences | 8,022 / 16,831 |
+| local fence_i / satp_changes | 9,559 / 118,525 |
+| compiler.compiled / evicted / installed | 1,772,911 / 1,712,000 / 60,911 |
+| jit_cold / jit_pending / jit_queue_full | 180,788,816 / 33,170,813 / 0 |
+| compiler.pending / inflight / queued | 61 / 1 / 0 |
+| compiler latency mean / max | 14.71 ms / 850.47 ms |
+
+The cumulative JIT fraction here is 0.693; it is not the interval fraction above.
+Single-hart kuberoot reportedly has 12,764 local fence.i and zero cache clears.
+That agrees with the code: local FENCE.I flushes translation state but retains
+JIT code; SMP `Engine::smp_fence` additionally called `jit_clear` on every serviced
+instruction request. Modern SBI RFENCE fid=0 and legacy extension 5 reach that
+same method through `HartMailboxes.service`. Thus each targeted request erased
+hotness, code keys and ready entries, although JS modules remained installed.
+
+Linux's [RISC-V cacheflush implementation](https://github.com/torvalds/linux/blob/master/arch/riscv/mm/cacheflush.c)
+connects executable-PTE cache maintenance to `flush_icache_mm`. It uses SBI or
+IPIs and defers flushes for CPUs not running the MM. Therefore “every exec sends
+to all harts” is too broad: masks and active MM matter; `flush_icache_all` does
+broadcast. The emulator's SBI counters confirm receipt, not exact Linux call-site
+attribution. Guest-version source/profile evidence would be needed for that.
+
+### Ordering and code retention
+
+R8 removes only the extra `jit_clear` from `smp_fence`, keeping the same local
+translation flush and serviced-fence counters. No worker protocol changes:
+
+1. All guest stores in shared RAM use the host bus. `SharedHartMemory.write`
+   writes bytes and atomically increments the shared physical-page generation
+   before returning. The native 64-bit AMO add/swap path does the same;
+   other AMOs, successful SC and CAS use `write`. Failed SC/CAS do not publish.
+   Device byte stores use this protocol too. All workers receive the same
+   generation buffer. Raw shared-image writes are confined to quiesced loading.
+2. The writing hart returns from its store before SBI handling publishes the
+   mailbox request with Atomics.add. The target acquires that request through
+   Atomics.load, finishes `smp_fence`, then publishes ACK with Atomics.store.
+   A write preceding the request has therefore published its generation before
+   ACK; the sender does not resume from the pending SBI until ACK is observed.
+3. Each SMP `jit_block` entry loads the shared generation and keys code by
+   `(physical PC, virtual PC, generation)`. Changed-page entries cannot match.
+   Compilation stays within one physical page and shared decoding reads live
+   bytes. Pending compilation of an old generation cannot become a new key.
+4. Shared Engine RAM length is zero: inline memory access uses helpers, and
+   the generated chain guard rejects shared RAM, returning to Rust for the next
+   generation/translation/permission check. A target may finish its current
+   bounded execution quantum before servicing the fence, but cannot ACK while
+   still running that quantum. Nothing requires eagerly deleting unchanged code.
+
+The new actual-WASM regressions warm B's compiled loop, then execute a guest
+store and modern SBI RFENCE on A. They assert generation publication before the
+request and inside the pre-ACK handler. B must publish the new instruction's
+result after ACK; a separate unrelated-page case must keep the compilation count
+unchanged. Both require zero clears. Existing shared-memory tests now cover
+store, DMA byte write, both AMO paths, SC and CAS before ACK; chain tests cover
+the zero-RAM-length rejection. These are deterministic scheduling tests, not a
+parallel throughput benchmark; real-worker/Linux gates remain mandatory.
+
+### Eviction and cold accounting
+
+There is no 28-fold capacity/accounting defect demonstrated here. `evicted_blocks`
+counts cumulative IDs passed to `jit_evict`; `compiler.installed` is the live
+host table-slot gauge. In this record, **1,772,911 = 1,712,000 + 60,911** exactly.
+Clears do not directly increment evictions. They leave host modules unreachable
+from Rust, and those modules are later counted when the bounded JS cache evicts
+them. `compiler.cacheClears=0` measures JS-triggered clears, not Rust's 8,809
+remote clears. Keep these distinctions when comparing R7 with R8.
+
+The limit remains 65,536 blocks per hart, evicting cold whole modules toward 75%
+at a quiescent flush. Inflight batches can temporarily overshoot. No evidence
+justifies increasing the capacity before removing fence-induced churn. Added
+cache-test assertions check compiled = evicted + installed across eviction and
+slot reuse. R8 must compare interval eviction/recompilation rates before tuning.
+
+`jit_cold` counts lookups below threshold 50, not retired instructions. A clear
+resets the 65,536-entry direct-mapped hotness table, so repeated fences force
+re-warmup. New PCs, hash collisions, changed physical-page generations and real
+evictions can also reset hotness. `jit_pending` separately counts waits for
+compiled blocks. Neither counter alone explains all interpreter retirement;
+unsupported instructions and other JIT exits remain. R8 measures the residual
+rather than lowering the threshold speculatively.
+
+`remote_fence_i` remains a serviced-event counter. For R8,
+`invalidations.remote_fence_i=0`, and `invalidations.explicit_clear` equals actual
+`jit_cache_clears` without subtracting remote requests. A Rust regression checks
+this distinction even when remote requests outnumber explicit clears.
+
+### Local validation and remaining gates
+
+TypeScript typecheck and all 41 ordinary RV64 tests pass (three opt-in integration
+cases skipped). Against the existing R7 WASM, the translation-fence integration
+passes; both new instruction-fence regressions reach the expected guest result
+and then fail exactly at `jit_cache_clears: expected 0, received 1`. This is a
+negative control confirming the deployed R7 behavior, not a green R8 build.
+Staged WASM SHA-256: `609f27fe3cce7d59328be3cca1c05a483ff1310ce92a4fec520da6968259b625`.
+
+This Mac has no cargo/rustc/wasm-bindgen and the cluster is unavailable. Changed
+Rust, its new metrics test, rebuilt-WASM integration, native ISA/architecture
+signatures and browser Linux/trace/snapshot gates therefore remain unverified
+for R8. No public WASM or production TypeScript was replaced, no competing
+browser measurement was launched during R7, and no cluster access or push was
+attempted. Follow `R8-PLAN.md` after R7 finishes for the full gate list and exact
+3000-host-second command with R8 result names. Do not claim all R8 gates green
+until those source-build checks complete.

@@ -42,10 +42,11 @@ impl Metrics {
         fields.push(format!("\"remote_sfence_vma\":{}", self.remote_sfence_vma));
         fields.push(format!("\"remote_ipis\":{}", self.remote_ipis));
         fields.push(format!("\"shared_generation_changes\":{}", self.shared_generation_changes));
+        // Remote instruction fences are serviced events, not invalidations.
         // Events, not discarded-block counts. Shared generations include writes
         // from other harts and DMA; they cannot be attributed by the reader.
         fields.push(format!("\"invalidations\":{{\"remote_fence_i\":{},\"explicit_clear\":{},\"evicted_blocks\":{},\"store_code_pages\":{},\"dma_code_pages\":{},\"shared_generation_changes\":{},\"translation_flushes\":{}}}",
-            self.remote_fence_i, self.jit_cache_clears.saturating_sub(self.remote_fence_i), self.jit_cache_evictions,
+            0, self.jit_cache_clears, self.jit_cache_evictions,
             self.store_code_pages, self.dma_code_pages, self.shared_generation_changes, self.tlb_flushes));
         fields.push(format!("\"jit_chains\":{}", self.jit_chains));
         fields.push(format!("\"jit_cache_evictions\":{}", self.jit_cache_evictions));
@@ -77,5 +78,18 @@ impl Metrics {
         fields.push(format!("\"exceptions\":{:?}", self.exceptions));
         fields.push(format!("\"interrupts\":{:?}", self.interrupts));
         format!("{{{}}}", fields.join(","))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Metrics;
+
+    #[test]
+    fn remote_instruction_fences_are_not_cache_clears() {
+        let metrics = Metrics { remote_fence_i: 10, jit_cache_clears: 2, jit_cache_evictions: 7, ..Metrics::default() };
+        let json = metrics.json();
+        assert!(json.contains("\"remote_fence_i\":10"));
+        assert!(json.contains("\"invalidations\":{\"remote_fence_i\":0,\"explicit_clear\":2,\"evicted_blocks\":7"));
     }
 }

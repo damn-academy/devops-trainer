@@ -72,8 +72,12 @@ impl Engine {
     pub fn smp_fence(&mut self) {
         self.cpu.memory.metrics.remote_fence_i += 1;
         self.cpu.memory.metrics.sbi_fences += 1;
+        // Like local FENCE.I, retain physical code. SharedHartMemory publishes
+        // every store's page generation before the mailbox request, and the
+        // host ACKs only after this call returns. jit_block reloads that shared
+        // generation on every SMP entry; shared RAM cannot use tail chaining
+        // (the inline RAM length is zero). Thus stale code cannot run after ACK.
         self.cpu.memory.flush();
-        self.jit_clear();
     }
     /// Remote SFENCE.VMA (including ASID/range requests) may over-flush the
     /// target TLB, but must retain physical-byte JIT code. Every JIT entry

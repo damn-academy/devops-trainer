@@ -23,6 +23,7 @@ function fixture(budget=10000, fault='') {
  if(fault==='context')view.setBigUint64(tlb+16,0n,true);
  if(fault==='satp')view.setBigUint64(tlb+24,0n,true);
  if(fault==='pmp')view.setUint8(tlb+33,0);
+ if(fault==='shared')regs[35]=0n; // SMP has no inline RAM: recheck shared generation in Rust.
  (instance.exports.b1 as Function)(0,256);
  return {regs,view};
 }
@@ -31,5 +32,5 @@ it('tail chains ten thousand blocks without growing the stack and keeps exact bu
  for(const id of [1,2,3])expect(view.getBigUint64(13000+id*8,true)).toBe(77n);
 });
 it('returns to the dispatcher on changed fetch permissions, translation, code or eviction',()=>{
- for(const reason of ['generation','slot','context','satp','pmp']){const {regs}=fixture(10000,reason);expect(regs[33]).toBe(1n);expect(regs[1]).toBe(1n);expect(regs[2]).toBe(0n);expect(regs[32]).toBe(0x4004n);}
+ for(const reason of ['generation','slot','context','satp','pmp','shared']){const {regs}=fixture(10000,reason);expect(regs[33]).toBe(1n);expect(regs[1]).toBe(1n);expect(regs[2]).toBe(0n);expect(regs[32]).toBe(0x4004n);}
 });

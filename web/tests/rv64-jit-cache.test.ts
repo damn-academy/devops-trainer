@@ -20,7 +20,10 @@ it('evicts a cold whole module before reusing slots, preserving hot code', () =>
   const queue=(ids:number[])=>{for(const id of ids)(globalThis as any).rv64Compile(id,0x80000000n,new Uint32Array([(id<<20)|(3<<7)|0x13,4]));jit.flush();worker.reply();};
   queue([1,2]);queue([3,4]);jit.flush();
   expect(evicted).toEqual([3,4]);expect(clears).toBe(0);expect(jit.stats().installed).toBe(2);
+  expect(jit.stats().evicted).toBe(2);
+  expect(jit.stats().compiled).toBe(jit.stats().evicted + jit.stats().installed);
   queue([5,6]);
+  expect(jit.stats().compiled).toBe(jit.stats().evicted + jit.stats().installed);
   for(const id of [1,2,5,6]) { (table.get(installed.get(id)!) as Function)(0,256);expect(new BigUint64Array(memory.buffer)[3]).toBe(BigInt(id)); }
   jit.dispose();vi.unstubAllGlobals();
 });

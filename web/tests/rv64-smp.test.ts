@@ -1,6 +1,6 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it } from 'vitest';
-import { atomicModule, SharedHartMemory, RESERVATION_GRANULE } from '../src/engine/rv64/smp';
+import { atomicModule, SharedHartMemory, HartMailboxes, RESERVATION_GRANULE } from '../src/engine/rv64/smp';
 function machine() {
   const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
   const module = atomicModule(1);
@@ -129,4 +129,37 @@ it('tracks shared writes only on the physical page touched, including DMA and PT
   b.store(64 + 4095, 1, 90n);
   expect(Atomics.load(generations, 0)).toBe(codeVersion + 1);
   expect(Atomics.load(generations, 1)).toBe(3);
+});
+
+it('publishes every successful shared writer before an instruction-fence ACK', () => {
+  const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
+  const generations = new Int32Array(new SharedArrayBuffer(16 * 4));
+  const module = atomicModule(1);
+  const a = new SharedHartMemory(memory, module, generations);
+  const b = new SharedHartMemory(memory, module, generations);
+  const bus = new HartMailboxes(2);
+  const writers = [
+    () => a.store(64, 4, 1n),
+    () => a.store(64, 1, 2n), // DMA byte path
+    () => a.amo(64, 8, 'add', 1n), // native atomic path
+    () => a.amo(64, 4, 'xor', 1n), // locked read/modify/write path
+    () => a.cas(64, a.load(64, 8), 4n),
+    () => { a.lr(64, 8); expect(a.sc(64, 8, 5n)).toBe(true); },
+  ];
+  for (const write of writers) {
+    const version = Atomics.load(generations, 0);
+    write();
+    expect(Atomics.load(generations, 0)).toBe(version + 1);
+    const value = a.load(64, 8), ticket = bus.remoteFence(2n, 0n, 'instruction')[0]!;
+    bus.service(1, () => {
+      expect(bus.completed(ticket)).toBe(false);
+      expect(Atomics.load(generations, 0)).toBe(version + 1);
+      expect(b.load(64, 8)).toBe(value);
+    }, () => { throw Error('unexpected translation fence'); });
+    expect(bus.completed(ticket)).toBe(true);
+  }
+  const version = Atomics.load(generations, 0);
+  a.cas(64, 999n, 0n);
+  expect(a.sc(64, 8, 0n)).toBe(false);
+  expect(Atomics.load(generations, 0)).toBe(version);
 });
