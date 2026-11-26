@@ -117,7 +117,7 @@ For each row, record two states, before and after the transfer, and three distin
 | Item | Owner before | Owner after | Administrator after | Decision-maker after | Governing document |
 |---|---|---|---|---|---|
 | Name and logo | Company | Foundation | Foundation | Foundation under its trademark policy | Trademark transfer agreement |
-| Release signing keys | Company | Project | Two maintainers from different organizations | Project committee | Release rules in the project repository |
+| Release signing keys | Company | Foundation if keys are created under its accounts; otherwise mark “not applicable” and keys remain personal to maintainers | Held by two maintainers from different organizations | Project committee | Release rules in the project repository |
 
 If any row has no answer, the project is not ready for a decision.
 
@@ -145,13 +145,13 @@ Public fee schedules as of late 2026, in dollars per year unless stated otherwis
 | PostgreSQL (PGCA) | Since February 2026, from donations below 2 500 dollars to 40 thousand | These are donations; PostgreSQL has no participation fee |
 | Software Freedom Conservancy | Usually 10 % of project income | The percentage applies to project income, excluding the vendor company's revenue |
 
-Fees cover membership only. Engineers, documentation, vulnerability response, and community support cost extra, and the three-year cost must include everything:
+When a company joins several Linux Foundation industry foundations, it pays the Linux Foundation fee once: a 40-person company joining CNCF and OpenSSF at entry levels pays $5,000 to each plus $5,000 to Linux Foundation, totaling $15,000 per year. Fees cover membership only. Engineers, documentation, vulnerability response, and community support cost extra, and the three-year cost must include everything:
 
 `Three-year cost = foundation fees + project funding + maintainer time + security, releases, and documentation + legal work and foundation admission + community work + selected events`.
 
 Worked example. Under the current schedule, a company of 40 employees pays 5 thousand to CNCF and 5 thousand to Linux Foundation, totaling 10 thousand per year for Silver. This is the minimum membership fee, not an open-source project budget: if the project has two full-time maintainers, their time costs tens of times more. For the same company, OpenSSF membership including Linux Foundation also costs 10 thousand per year, but the foundations' goals and communities differ, and an identical price does not make the routes interchangeable.
 
-A full three-year calculation looks like this. The assumptions are illustrative: two maintainers each spend half their time on the project at a fully loaded employee cost of $180,000 per year; a quarter of a full-time role goes to security, releases and documentation; legal work and foundation admission cost $20,000 once in the first year; community work costs $15,000 annually, events $25,000 and dues $10,000. “Project funding” here means money the company gives the project itself for infrastructure, audits and contributor travel; maintainer salaries are excluded from that line to avoid double-counting.
+A full three-year calculation looks like this. The assumptions are illustrative: two maintainers each spend half their time on the project at a fully loaded employee cost of $180,000 per year; a quarter of an engineering role at the same fully loaded annual cost of $180,000 goes to security, releases and documentation; legal work and foundation admission cost $20,000 once in the first year; community work costs $15,000 annually, events $25,000 and dues $10,000. “Project funding” here means money the company gives the project itself for infrastructure, audits and contributor travel; maintainer salaries are excluded from that line to avoid double-counting.
 
 | Item | Year 1 | Year 2 | Year 3 |
 |---|---:|---:|---:|

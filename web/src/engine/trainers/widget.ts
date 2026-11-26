@@ -53,6 +53,12 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   const id = props && typeof props === 'object' ? ('trainer' in props ? props.trainer : 'data' in props ? props.data : undefined) : undefined;
   if (kind === 'template') {
     const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined;
+    if (file === 'ru-intensifiers-lint') {
+      title('ru-intensifiers-lint', false);
+      root.append(h('p', {}, t(bi('Запуск: node ru-intensifiers-lint.mjs ru-intensifiers-sample.txt. Линтер отмечает кандидатов для ручной проверки; в примере есть верное замечание и ложное срабатывание.', 'Run: node ru-intensifiers-lint.mjs ru-intensifiers-sample.txt. Review each candidate manually; the sample contains a true hit and a false alarm.'))));
+      for (const name of ['ru-intensifiers-lint.mjs', 'ru-intensifiers-sample.txt', 'ru-intensifiers-expected.txt']) root.append(h('a', { class: 'btn', href: `${import.meta.env.BASE_URL}templates/${name}`, download: '' }, name));
+      return mounted;
+    }
     const titles = { 'metrics-cohorts': 'metricsCohorts', 'metrics-pipeline': 'metricsPipeline', 'metrics-forecast': 'metricsForecast', 'metrics-arr': 'metricsArr', 'metrics-arr-start': 'metricsArrStart', 'metrics-ab': 'metricsAb', 'infraseed-model': 'infraseedModel', 'cash-13w': 'cash13w', dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
     if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
     title(text(titles[file as keyof typeof titles]), false);
@@ -176,16 +182,20 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     void svc.ready.then(sync).catch(() => { if (!disposed) status.textContent = text('error'); }); sync();
   } else if (kind === 'events.roi') {
     title(text('roi'), false);
+    root.append(h('p', {}, t(bi('Задайте число сканов бейджей, долю целевых контактов и долю уникальных целевых компаний. Затем меняйте переходы компаний к контакту, встрече, возможности сделки и покупке; сравните вероятность окупаемости.', 'Enter badge scans, target-contact share and unique target-company share. Then vary company transitions to contact, meeting, opportunity and purchase; compare the probability of breaking even.'))));
     const fields = h('div', { class: 'tr-fields' }), result = h('div', { 'aria-live': 'polite' });
+    const accountCount = h('p', { 'aria-live': 'polite' });
     const inputs = {} as Record<keyof RoiInput, HTMLInputElement>;
     for (const key of Object.keys(roiDefaults) as (keyof RoiInput)[]) {
       const share = !['cost', 'profit', 'scans'].includes(key);
       const input = h('input', { type: 'number', min: key === 'profit' ? .01 : 0, step: share ? .01 : 'any', value: roiDefaults[key], ...(share ? { max: 1 } : key === 'scans' ? { max: 100000 } : {}) });
       inputs[key] = input; input.onchange = update; fields.append(h('label', {}, text(key), input));
+      if (key === 'dedup') fields.append(accountCount);
     }
     function update() {
       const p = Object.fromEntries(Object.entries(inputs).map(([k, v]) => [k, v.valueAsNumber])) as RoiInput;
-      if (Object.values(inputs).some(v => !v.value || !Number.isFinite(v.valueAsNumber) || !v.checkValidity()) || !Number.isInteger(p.scans)) { result.textContent = text('invalid'); return; }
+      if (Object.values(inputs).some(v => !v.value || !Number.isFinite(v.valueAsNumber) || !v.checkValidity()) || !Number.isInteger(p.scans)) { accountCount.textContent = ''; result.textContent = text('invalid'); return; }
+      accountCount.textContent = `${t(bi('Уникальные целевые компании', 'Unique target companies'))}: ${uniqueTargetAccounts(p)}`;
       const b = breakEven(p), m = simulate(p);
       const format = (n: number) => Number.isFinite(n) ? n.toLocaleString(lang(), { maximumFractionDigits: 2 }) : '∞';
       result.replaceChildren(h('p', {}, t(bi('Учебный сценарий', 'Teaching scenario'))), h('p', {}, `${t(bi('Уникальные целевые компании', 'Unique target accounts'))}: ${uniqueTargetAccounts(p)}`), ...([['wins', b.wins], ['opportunities', b.opportunities], ['median', m.median], ['probability', m.probability * 100]] as const).map(([k, v]) => h('p', {}, `${text(k)}: ${format(v)}${k === 'probability' ? '%' : ''}`)), h('p', {}, text('payoff').replace('{n}', String(Math.round(m.probability * 100)))));
