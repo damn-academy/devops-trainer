@@ -33,6 +33,8 @@ try {
     const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
     const workers: Worker[] = [], start = performance.now();
+    // sharedJit=0 (or VITE_RV64_SHARED_JIT=0) keeps one private compiler per hart, the R11 path.
+    const shareJit = (params.get('sharedJit') ?? import.meta.env.VITE_RV64_SHARED_JIT ?? '1') !== '0';
     const compiler = createSharedCompiler(harts * Math.min(configuredJitCeiling, hartBudget(memory.buffer.byteLength + generations.buffer.byteLength + granules.buffer.byteLength, Array(harts).fill(128 * MiB))), harts);
     let sharedJit: { ms: number; stats: ReturnType<SharedCodeCache['stats']> } | undefined;
     compiler.onmessage = ({ data }) => { sharedJit = { ms: performance.now() - start, stats: data.stats }; };
@@ -105,10 +107,10 @@ try {
               if (scan.includes('\nRV64_PROBE_DONE\n')) { clearTimeout(timeout); resolve(); }
             }
           };
-          const compilerPort = compiler.connect(hart);
+          const compilerPort = shareJit ? compiler.connect(hart) : undefined;
           w.postMessage({ compilerPort, hostBudget: Math.min(jitCeiling, hartBudget(memory.buffer.byteLength + generations.buffer.byteLength + granules.buffer.byteLength, Array(harts).fill(128 * MiB))), hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk, guestProfile, guestProfileDeferred: !!startAfter, guestProfileTaskCommOffset: guestProfile ? 1704 : 0,
             kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
-            cmdline: 'earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000) }, [compilerPort]);
+            cmdline: 'earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000) }, compilerPort ? [compilerPort] : []);
         }
       });
     } catch (e) { error = String(e); }

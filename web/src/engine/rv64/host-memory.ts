@@ -39,6 +39,6 @@ export function pressureCeiling(current: number, measured: number) {
 // URL wins over the Vite environment. Bound the experiment to audited ceilings.
 export function jitCeilingBytes(url: string | null, env?: string) {
   const value = Number(url ?? env ?? '256');
-  if (value !== 256 && value !== 384) throw Error('jitBudgetMb must be 256 or 384');
+  if (![256, 384, 512, 640, 768].includes(value)) throw Error('jitBudgetMb must be 256, 384, 512, 640 or 768');
   return value * MiB;
 }
