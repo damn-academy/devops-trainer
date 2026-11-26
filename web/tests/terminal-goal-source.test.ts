@@ -21,6 +21,8 @@ it('checks declared source goals on source commands while default terminals rema
   const independent = document.createElement('div');
   const mounts = [mountLab(consumer, options), mountLab(independent, { ...options, key: 'goals/independent', setup: {} })];
   try {
+    expect(independent.querySelector('.task-guide')?.textContent).toContain('Enter');
+    expect(consumer.querySelector('.task-guide')?.textContent).toMatch(/связанном терминале|linked terminal/);
     await vi.waitFor(() => expect(terminals).toHaveLength(2));
     await terminals[0].machine.exec('echo ready > /tmp/proof');
     terminals[0].onCommand();

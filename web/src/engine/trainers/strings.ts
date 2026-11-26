@@ -1,6 +1,8 @@
 import { bi } from '../../core/i18n';
 // TODO(prose): Russian UI drafts; content files belong to the prose owner.
 export const strings = {
+  finishSelfReview: bi('Завершить самопроверку', 'Finish self-review'),
+  selfReviewDone: bi('Самопроверка завершена.', 'Self-review complete.'),
   metricsCohorts: bi('Northwind Data: когорты', 'Northwind Data: cohorts'),
   metricsPipeline: bi('Northwind Data: сделки', 'Northwind Data: pipeline'),
   metricsForecast: bi('Northwind Data: прогноз', 'Northwind Data: forecast'),

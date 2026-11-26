@@ -37,7 +37,7 @@ const P = {
   opens: bi('повтор откроется {d}', 'retake opens {d}'),
   modules: bi('две попытки использованы: дальше — по модулям', 'both attempts used: go module by module'),
   tasks: bi('заданий', 'tasks'),
-  key: bi('ключевое', 'key'),
+  key: bi('обязательное для подтверждения уровня', 'required to confirm the level'),
   practice: bi('практика в песочнице', 'sandbox practice'),
   next: bi('Дальше', 'Next'),
   skip: bi('Пропустить', 'Skip'),
@@ -187,8 +187,9 @@ export function placementPage(id: string): Page {
           h('div.rv-progress', {}, h('span', { style: `width:${(i / tasks.length) * 100}%` })),
           h('span.small.muted', {}, `${t(UI.levels[claimed])} · ${t(P.variant)} ${variant}`),
         ),
-        h('div.pl-tags', {}, p.key ? h('span.badge.key', {}, t(P.key)) : null, p.kind === 'task' ? h('span.badge', {}, icon('term'), ' ', t(P.practice)) : null),
+        h('div.pl-tags', {}, p.key ? h('span.badge.key', {}, t(P.key)) : null, p.kind === 'task' && !p.realEvidence ? h('span.badge', {}, icon('term'), ' ', t(P.practice)) : null),
         host,
+        h('p.task-guide', {}, t(bi('После ответа или выполнения цели нажмите «Дальше», а на последнем задании — «Завершить проверку». Кнопка «Пропустить» оставляет задание без зачёта. Итоги появятся после последнего задания.', 'After answering or completing the goal, press “Next”; on the last task, press “Finish the check”. “Skip” leaves a task uncredited. Results appear after the final task.'))),
         h('div.pl-actions', {}, skipBtn, nextBtn),
       );
     };

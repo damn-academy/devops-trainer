@@ -4,7 +4,7 @@
 // its goals green, a block from another machine is refused, and the result
 // screen counts the real tasks.
 
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { MemoryBackend, store } from '../src/core/store';
 import { blob, printed } from './real-blob';
 
@@ -14,8 +14,6 @@ beforeAll(async () => {
   Element.prototype.scrollIntoView ??= function () {};
 });
 
-const tick = () => new Promise((r) => setTimeout(r, 20));
-
 describe('real-machine exam page', () => {
   it('renders the machines, judges pasted blocks and scores the attempt', async () => {
     const { examPage } = await import('../src/app/exam-page');
@@ -24,6 +22,9 @@ describe('real-machine exam page', () => {
     document.body.append(root);
     [...root.querySelectorAll<HTMLButtonElement>('button')].find((b) => /Training|Тренировка/.test(b.textContent ?? ''))!.click();
     expect(root.querySelector('.rl-lab')).toBeTruthy();
+    expect(root.querySelector('.rl-card .task-guide')?.textContent).toMatch(/Проверить|Verify/);
+    expect(root.querySelectorAll('.rl-goals .err')).toHaveLength(0);
+    expect(root.querySelectorAll('.rl-goals .wait').length).toBeGreaterThan(0);
     expect(root.textContent).toContain('disk-plant.sh');
     expect(root.textContent).toContain('trainer-check-host.sh');
     const cmd = root.querySelector('.rl-machine .rl-pre')!.textContent!;
@@ -35,14 +36,12 @@ describe('real-machine exam page', () => {
     // A block from another machine is refused.
     paste.value = printed({ ...blob('vm9', 'linux-disk', {}), nonce });
     verify.click();
-    await tick();
-    expect(root.querySelector('.rl-machine .rl-status')!.className).toContain('err');
+    await vi.waitFor(() => expect(root.querySelector('.rl-machine .rl-status')!.className).toContain('err'));
 
     const df = 'Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/loop0 159564 87564 72000 55% /srv/shop';
     paste.value = printed({ ...blob('app-01', 'linux-disk', { raw: { findmnt: '/dev/loop0 /srv/shop ext4 rw', df }, trees: { '/srv/shop/lib/orders': 'a'.repeat(64) }, files: { '/var/lib/dt-trainer/disk.start': { exists: true, type: 'f', mode: '600', text: 'a'.repeat(64) + '\n' } }, units: { 'orders.service': { show: 'ActiveState=active\nUnitFileState=enabled' } } }), nonce });
     verify.click();
-    await tick();
-    expect(root.querySelector('.rl-machine .rl-status')!.className).toContain('ok');
+    await vi.waitFor(() => expect(root.querySelector('.rl-machine .rl-status')!.className).toContain('ok'));
     const firstCard = root.querySelector('.ex2-card .rl-goals')!;
     expect(firstCard.querySelectorAll('li.ok').length).toBe(3);
 

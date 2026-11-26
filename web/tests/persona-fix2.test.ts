@@ -25,12 +25,17 @@ it('charges over-contacting through negative replies and shrinking reachable acc
 });
 it('renders all 46 English principles rather than the pending-translation notice', () => {
   expect(SALES_SCHOOL_EN.flatMap(m => m.items).map(i => i.n)).toEqual(SALES_SCHOOL.flatMap(m => m.items).map(i => i.n));
-  for (const lesson of SALES_LESSONS) {
+  for (const [index, lesson] of SALES_LESSONS.entries()) {
     const section = lesson.sections.find(s => s.id === 'principles');
     expect(section?.kind).toBe('text');
     if (section?.kind === 'text') {
       expect(section.body.en).not.toMatch(/being prepared|[а-яА-Я]/);
-      expect(section.body.en).toContain('Today:');
+      const practice = lesson.sections.find(s => s.id === 'practice');
+      expect(practice).toMatchObject({ kind: 'text', step: 'practice' });
+      if (practice?.kind === 'text') {
+        expect(practice.body.en).not.toMatch(/[а-яё]/i);
+        for (const item of SALES_SCHOOL_EN[index].items) expect(practice.body.en).toContain(item.today);
+      }
     }
   }
 });

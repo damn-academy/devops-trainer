@@ -32,7 +32,7 @@ export const CICD_TAB_EXAM: Exam = {
   id: 'cicd.exam.tab',
   block: 'cicd',
   kind: 'block',
-  title: bi('Экзамен по CI/CD на настоящих машинах', 'CI/CD on real machines: deploying the site'),
+  title: bi('CI/CD на настоящих машинах', 'CI/CD on real machines: deploying the site'),
   story: bi(
     'Сайт кофейни теперь работает на виртуальной машине `web-1`, и новую версию на неё до сих пор копируют вручную. Руководитель команды хочет, чтобы выкладку делал пайплайн, причём проверка должна идти на каждой ветке, а выкладка только из `main`.',
     'The café site now runs on the virtual machine `web-1`, and new versions are still copied there by hand. The team lead wants the pipeline to deploy: a check on every branch, a deployment only from `main`.',

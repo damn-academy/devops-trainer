@@ -126,11 +126,11 @@ const MODULE_LESSON: Record<string, LessonSpec> = {
 };
 
 function moduleBody(items: { n: number; title: string; body: string; today: string }[]): string {
-  return items.map((it) => `**${it.n}. ${it.title}** ${it.body}\n\n> Сегодня: ${it.today}`).join('\n\n');
+  return items.map((it) => `**${it.n}. ${it.title}** ${it.body}`).join('\n\n');
 }
 
 function moduleBodyEn(items: { n: number; title: string; body: string; today: string }[]): string {
-  return items.map((it) => `**${it.n}. ${it.title}** ${it.body}\n\n> Today: ${it.today}`).join('\n\n');
+  return items.map((it) => `**${it.n}. ${it.title}** ${it.body}`).join('\n\n');
 }
 
 const INTRODUCES: Record<string, string[]> = {
@@ -787,6 +787,7 @@ function lessonFor(letter: string): Lesson {
         title: bi(headingRu, headingEn),
         body: bi(moduleBody(items), moduleBodyEn(itemsEn)),
       },
+      { id: 'practice', kind: 'text', step: 'practice', title: bi('Задания по темам модуля', 'Module practice'), body: bi(items.map(it => `- ${it.today}`).join('\n'), itemsEn.map(it => `- ${it.today}`).join('\n')) },
       { id: 'honest', kind: 'callout', tone: 'note', step: 'review', body: HONEST_NOTE },
     ],
   };

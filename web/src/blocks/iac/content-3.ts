@@ -955,7 +955,7 @@ const EXAM_STATE = 'exam/terraform.tfstate';
 export const cloudExam: Exam = {
   id: 'iac.exam.cloud',
   block: 'iac',
-  title: bi('Новый сервис с нуля в облаке, которое работает во вкладке', 'A new service from scratch in a cloud that runs in the tab'),
+  title: bi('Новый сервис с нуля в облаке во вкладке', 'A new service from scratch in the in-tab cloud'),
   story: bi(
     'Команде кафе нужен сервер для нового API. Руководитель команды оставил три карточки с задачами: создать машину из кода и хранить её state в общем бакете, взять под управление DNS-запись, которую сделали вручную при запуске, и настроить пайплайн, чтобы дальше инфраструктуру меняли только через репозиторий.',
     'The café team needs a server for a new API. The team lead left three task cards: create a machine from code with its state in the shared bucket, take over the DNS record made by hand at the launch, and set up a pipeline so that from now on infrastructure changes only through the repository.',

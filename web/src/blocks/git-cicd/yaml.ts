@@ -260,8 +260,10 @@ export const yamlWidget: WidgetReg = {
       h(
         'div.yp',
         {},
-        h('div.yp-head', {}, h('h3', {}, t(W.title)), h('div.yp-modes', {}, ...radios)),
+        h('div.yp-head', {}, h('h3', {}, t(W.title))),
         p.goal ? h('p.yp-goal', {}, h('strong', {}, `${t(W.goal)}: `), t(p.goal)) : null,
+        h('p.task-guide', {}, t(bi('Редактируйте YAML в поле «Текст» ниже. Парсер проверяет изменения сразу. Зелёная галочка «Документ разобран без ошибок» подтверждает синтаксис; сообщение «Задача выполнена» подтверждает совпадение значений с заданием.', 'Edit YAML in the “Text” field below. The parser checks changes immediately. “Document parsed without errors” with a green check mark confirms valid syntax; “Done” confirms that the values match the task.'))),
+        h('div.yp-modes', {}, ...radios),
         h('div.yp-grid', {}, h('div.yp-src', {}, h('h4', {}, t(W.source)), h('div.yp-editor', {}, gutter, ta)), h('div.yp-out', {}, h('h4', {}, t(W.tree)), parsedAs, treeBox, p.expect !== undefined ? h('p.yp-legend', {}, t(W.legend)) : null, h('details', {}, h('summary', {}, t(W.json)), jsonBox))),
         status,
       ),

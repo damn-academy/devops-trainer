@@ -85,6 +85,7 @@ function mountRealCheck(root: HTMLElement, props: unknown, ctx: WidgetCtx): Moun
       'div.kx',
       {},
       h('h4.kx-h', {}, t(L.steps)),
+      h('p.task-guide', {}, t(bi('Работайте в терминале своего кластера, подготовленного по инструкции урока. Локальные машины можно подготовить по ', 'Work in the terminal of your own cluster, prepared using the lesson instructions. Local machines can be prepared with ')), h('a', { href: '#/local-lab' }, t(bi('инструкции по установке dtlab', 'the dtlab setup guide'))), t(bi('. Выполните шаги ниже, вставьте блок в поле и нажмите «Проверить». Зелёная галочка означает выполненную цель, красный крестик — цель, которая не прошла проверку. После успеха появится «Все цели выполнены на настоящем кластере».', '. Follow the steps below, paste the block and press “Verify”. A green check mark means a completed goal; a red cross means a failed check. Success shows “Every goal holds on the real cluster”.'))),
       h(
         'ol.kr-steps',
         {},

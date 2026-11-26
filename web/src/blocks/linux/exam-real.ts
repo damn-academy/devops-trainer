@@ -41,7 +41,7 @@ const cronOff = (f: Facts) => !file(f, '/etc/cron.d/legacy-dump') || text(f, '/e
 export const DISK_EXAM: Exam = {
   id: 'linux.exam.disk',
   block: 'linux',
-  title: bi('Учебный экзамен о разделе, который заполнился до конца', 'A learning exam about a partition that filled up'),
+  title: bi('Раздел, в котором не осталось места', 'A partition with no space left'),
   intro: bi(
     'Это учебная контрольная после уроков о дисках и файловых системах, и проходит она на вашей собственной машине, где тренажёр ничего не выполняет. Скрипт подготовки создаёт раздел магазина и наполняет его так, как наполняются настоящие серверы, а скрипт проверки только читает состояние. Засчитывается результат, а путь к нему может быть любым. На экзамене открыта документация машины: `man`, `--help` и страницы systemd. Если своей машины нет, можно сдать [вариант во вкладке](#/lab/linux-disk) с тем же сюжетом на настоящем Alpine Linux прямо в браузере, где службами управляет OpenRC, а не systemd.',
     'This is a learning test after the lessons on disks and file systems, and it runs on your own machine, where the trainer runs nothing. The setup script creates the shop’s partition and fills it the way real servers fill up, and the check script only reads the state. The result counts, and the way to it may be any. The machine’s documentation is open: `man`, `--help` and the systemd pages. If you have no machine of your own, take [the variant in the tab](#/lab/linux-disk) with the same story on real Alpine Linux in the browser, where OpenRC, not systemd, manages the services.',
@@ -184,7 +184,7 @@ const sudoNarrow = (s: string) => /NOPASSWD:\s*\/(usr\/)?bin\/systemctl restart 
 export const ACCESS_EXAM: Exam = {
   id: 'linux.exam.access',
   block: 'linux',
-  title: bi('Учебный экзамен о доступе для новой разработчицы', 'A learning exam about access for a new developer'),
+  title: bi('Доступ для новой разработчицы', 'Access for a new developer'),
   intro: bi(
     'Это учебная контрольная после уроков о сети машины и SSH, и проходит она на двух ваших машинах: `laptop` играет роль рабочего ноутбука Марии, а `server` служит сервером команды. Тренажёр на них ничего не выполняет. Скрипты подготовки заводят то, что на таком сервере обычно уже есть, а скрипт проверки только читает состояние. Консоль провайдера остаётся у вас на случай, если вход по SSH закроется. На экзамене открыта документация машины: `man` и `--help`. Без своих машин этот экзамен можно сдать в [варианте во вкладке](#/lab/linux-access), где работают две настоящие машины с Alpine Linux прямо в браузере.',
     'This is a learning test after the lessons on the machine’s network and SSH, and it runs on two machines of yours: `laptop` plays Maria’s work laptop, and `server` is the team’s server. The trainer runs nothing on them. The setup scripts create what such a server usually already has, and the check script only reads the state. The provider’s console stays with you in case SSH access closes. The machine’s documentation is open: `man` and `--help`. Without machines of your own you can take this exam in [the variant in the tab](#/lab/linux-access), where two real Alpine Linux machines run in the browser.',

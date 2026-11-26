@@ -55,13 +55,15 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined;
     if (file === 'ru-intensifiers-lint') {
       title('ru-intensifiers-lint', false);
-      root.append(h('p', {}, t(bi('Запуск: node ru-intensifiers-lint.mjs ru-intensifiers-sample.txt. Линтер отмечает кандидатов для ручной проверки; в примере есть верное замечание и ложное срабатывание.', 'Run: node ru-intensifiers-lint.mjs ru-intensifiers-sample.txt. Review each candidate manually; the sample contains a true hit and a false alarm.'))));
+      root.append(h('p', {}, t(bi('Скачайте три файла в одну папку на своём компьютере. Установите Node.js по инструкции на nodejs.org и откройте терминал в этой папке. Выполните node ru-intensifiers-lint.mjs ru-intensifiers-sample.txt и сравните вывод с файлом ru-intensifiers-expected.txt. Каждое замечание проверьте вручную; в примере есть верное замечание и ложное срабатывание. Проверка завершается на вашем компьютере. После сверки нажмите «Завершить самопроверку» ниже.', 'Download all three files to one folder on your computer. Install Node.js using nodejs.org and open a terminal in that folder. Run node ru-intensifiers-lint.mjs ru-intensifiers-sample.txt and compare the output with ru-intensifiers-expected.txt. Review each candidate manually; the sample includes a true hit and a false alarm. This check finishes on your computer. After comparing the output, press “Finish self-review” below.'))));
       for (const name of ['ru-intensifiers-lint.mjs', 'ru-intensifiers-sample.txt', 'ru-intensifiers-expected.txt']) root.append(h('a', { class: 'btn', href: `${import.meta.env.BASE_URL}templates/${name}`, download: '' }, name));
+      root.append(button('finishSelfReview', () => { ctx.complete(); status.textContent = text('selfReviewDone'); }), status);
       return mounted;
     }
     const titles = { 'metrics-cohorts': 'metricsCohorts', 'metrics-pipeline': 'metricsPipeline', 'metrics-forecast': 'metricsForecast', 'metrics-arr': 'metricsArr', 'metrics-arr-start': 'metricsArrStart', 'metrics-ab': 'metricsAb', 'infraseed-model': 'infraseedModel', 'cash-13w': 'cash13w', dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
     if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
     title(text(titles[file as keyof typeof titles]), false);
+    root.append(h('p.task-guide', {}, t(bi('Скачайте файл и откройте его в Excel или Google Sheets на своём компьютере. Выполните расчёт по заданию урока и запишите выводы в поле ниже. Сверьте результат с условиями задания самостоятельно. Кнопка «Готово, очистить поле» отмечает раздел пройденным и удаляет черновик, поэтому сначала сохраните свою работу.', 'Download the file and open it in Excel or Google Sheets on your computer. Complete the lesson’s calculation and record your conclusions below. Review the result against the task requirements yourself. “Done, clear the field” marks this section complete and removes the draft, so save your work first.'))));
     const csv = file.startsWith('metrics-');
     if (csv) {
       root.append(h('p', {}, text('metricsFictional')), h('button', { type: 'button', class: 'btn', onclick: () => { void import('../ai/panel').then(({ openTutor }) => openTutor({ mode: 'practice', templateFile: file })); } }, t(bi('Спросить наставника о данных', 'Ask the tutor about the data'))));
@@ -72,7 +74,8 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const input = h('textarea', { 'data-template-id': file, 'data-template-title': text(titles[file as keyof typeof titles]) }); input.value = loadDraft(draftId, '');
     input.oninput = () => saveDraft(draftId, input.value);
     const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text('finishDraft'));
-    finish.onclick = () => { clearDraft(draftId); input.value = ''; ctx.complete(); };
+    finish.onclick = () => { clearDraft(draftId); input.value = ''; ctx.complete(); status.textContent = t(bi('Работа отмечена как завершённая. Поле очищено.', 'Work marked complete. The field has been cleared.')); };
+    root.append(status);
     root.append(h('label', {}, csv ? text('cardCalculation').replace('{name}', text(titles[file as keyof typeof titles])) : text('input'), input), finish);
 
   } else if (kind === 'governance') {
@@ -138,6 +141,9 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const activeTrainer = () => kind === 'roleplay' ? eventVisitor(trainer!, venue.value, segment.value) : trainer!;
     if (kind === 'roleplay') root.append(h('label', {}, t(bi('Конференция', 'Conference')), venue), h('label', {}, t(bi('Сегмент', 'Segment')), segment));
     const svc = service ?? ai(); title(trainer.title); root.append(renderMd(trainer.rubric));
+    root.append(h('p.task-guide', {}, t(kind === 'roleplay'
+      ? bi('Напишите реплику в поле «Ваш текст» и нажмите «Отправить». Ответ собеседника появится в истории попыток; кнопка «Разбор» запрашивает оценку разговора по правилам выше.', 'Write a reply in “Your text” and press “Send”. The other person’s response appears in the attempt history; “Debrief” requests an assessment using the rules above.')
+      : bi('Впишите работу в поле «Ваш текст» и нажмите «Проверить здесь». Нейросеть оценит работу по правилам выше; ответ появится в истории попыток.', 'Enter your work in “Your text” and press “Check here”. AI assesses it using the rules above; the response appears in the attempt history.')), ' ', t(bi('Для проверки на странице подключите нейросеть в ', 'To check on this page, connect AI in ')), h('a', { href: '#/settings' }, t(bi('настройках', 'settings'))), t(bi('. Можно также скопировать запрос в отдельный чат с нейросетью. Тогда сверяйте работу с разбором в том чате; страница его не получает. После сверки нажмите «Завершить самопроверку» под заданием.', '. You can also copy the prompt to a separate AI chat. Review the feedback in that chat; this page does not receive it. After reviewing, press “Finish self-review” below the task.'))));
     const conversations = loadDraft<import('./storage').Attempt[][]>(`${trainer.id}.conversations`, []);
     const round = h('p');
     const attempts = loadAttempts(trainer.id), history = h('div');
@@ -179,7 +185,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     input.oninput = () => { saveDraft(trainer.id, input.value); manual.hidden = true; manual.value = ''; sync(); };
     const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text(kind === 'roleplay' ? 'nextVisitor' : 'finishDraft'));
     finish.onclick = () => { if (busy) return; input.value = ''; manual.value = ''; manual.hidden = true; clearDraft(trainer.id); if (kind === 'roleplay') { conversations.push([...attempts]); saveDraft(`${trainer.id}.conversations`, conversations); attempts.length = 0; saveAttempts(trainer.id, attempts); showHistory(); } sync(); };
-    root.append(...(kind === 'roleplay' ? [round] : []), finish); cleanup.push(svc.onChange(sync), () => request?.abort());
+    root.append(...(kind === 'roleplay' ? [round] : []), finish, button('finishSelfReview', () => { ctx.complete(); status.textContent = text('selfReviewDone'); })); cleanup.push(svc.onChange(sync), () => request?.abort());
     void svc.ready.then(sync).catch(() => { if (!disposed) status.textContent = text('error'); }); sync();
   } else if (kind === 'events.roi') {
     title(text('roi'), false);

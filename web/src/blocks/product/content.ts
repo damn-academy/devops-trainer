@@ -245,8 +245,8 @@ function principlesBody(ns: number[]): [string, string] {
   for (const mod of PRODUCT_PROGRAM) {
     for (const p of mod.principles) {
       if (!ns.includes(p.n)) continue;
-      ru.push(`**${p.n}. ${p.title[0]}.** ${p.body.join('\n\n')}\n\n> Задача. ${p.task[0]}`);
-      en.push(`**${p.n}. ${p.title[1]}.** ${p.bodyEn.join('\n\n')}\n\n> Task. ${p.task[1]}`);
+      ru.push(`**${p.n}. ${p.title[0]}.** ${p.body.join('\n\n')}`);
+      en.push(`**${p.n}. ${p.title[1]}.** ${p.bodyEn.join('\n\n')}`);
     }
   }
   return [ru.join('\n\n'), en.join('\n\n')];
@@ -266,7 +266,8 @@ function lessonFor(spec: LessonSpec): Lesson {
     sources: sources(...spec.src),
     sections: [
       { id: 'hook', kind: 'text', step: 'hook', body: bi(spec.hook[0], spec.hook[1]) },
-      { id: 'principles', kind: 'text', step: 'explain', title: bi('Принципы и задачи', 'Principles and tasks'), body: bi(bodyRu, bodyEn) },
+      { id: 'principles', kind: 'text', step: 'explain', title: bi('Принципы работы', 'Working principles'), body: bi(bodyRu, bodyEn) },
+      { id: 'practice', kind: 'text', step: 'practice', title: bi('Задания по темам модуля', 'Module practice'), body: bi(...([0, 1] as const).map(lang => PRODUCT_PROGRAM.flatMap(m => m.principles).filter(p => spec.principles.includes(p.n)).map(p => `- ${p.task[lang]}`).join('\n')) as [string, string]) },
       ...(spec.quiz.length
         ? [{ id: 'quiz', kind: 'quiz' as const, step: 'practice' as const, title: bi('Проверьте себя', 'Check yourself'), items: spec.quiz }]
         : []),

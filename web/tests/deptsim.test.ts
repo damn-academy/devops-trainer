@@ -262,3 +262,12 @@ it('persists the selected CNCF starting stage in the preview and restored game',
   const restored = mount(false, scenario);
   expect([...restored.host.querySelectorAll('select')].find(s => [...s.options].some(o => o.value === 'sandbox'))!.value).toBe('sandbox');
 });
+
+it('completes an external game only after explicit self-review', () => {
+  const w = mount(false);
+  expect(w.ctx.complete).not.toHaveBeenCalled();
+  w.button('Finish self-review').click();
+  expect(w.ctx.complete).toHaveBeenCalledOnce();
+  expect(w.calls).toHaveLength(0);
+  expect(w.host.textContent).toContain('Self-review complete');
+});

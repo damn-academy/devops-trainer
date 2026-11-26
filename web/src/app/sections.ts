@@ -13,6 +13,7 @@ import { ANATOMY, openDoc, renderPage } from '../engine/docs/viewer';
 import { mountQuiz } from '../engine/quiz/render';
 import { conceptLink, prose } from './common';
 import { mountLab } from './terminal-section';
+import { calculatorGuidance, selfReviewedWidgets, widgetGuidance } from './task-guidance';
 import { renderMd } from '../core/markdown';
 
 export interface SectionCtx {
@@ -22,6 +23,7 @@ export interface SectionCtx {
   /** Position of the lesson inside its block (ladder schedule). */
   index: number;
   count: number;
+  manualTextCompletion?: boolean;
   done(sectionId: string): void;
 }
 
@@ -43,7 +45,8 @@ function howtoPanel(body: Bi, title?: Bi): HTMLElement {
 
 export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mounted?: Mounted } {
   const el = h('section.lsec', { 'data-kind': s.kind, id: `s-${s.id}`, 'data-step': s.step });
-  const done = () => c.done(s.id);
+  const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: true }, t(bi('Раздел пройден. Результат сохранён в этом браузере.', 'Section complete. Progress is saved in this browser.')));
+  const done = () => { c.done(s.id); completion.hidden = false; };
   switch (s.kind) {
     case 'text': {
       if (s.role === 'howto') {
@@ -53,7 +56,7 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
       }
       if (s.title) el.append(h('h2', {}, t(s.title)));
       el.append(prose(s.body));
-      onVisible(el, done, 0.25);
+      if (!c.manualTextCompletion) onVisible(el, done, 0.25);
       return { el };
     }
     case 'callout': {
@@ -69,8 +72,10 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
         return { el };
       }
       if (s.howto) el.append(howtoPanel(s.howto));
+      if (s.explainer === 'net.envelopes') el.append(howtoPanel(bi('Пройдите схему кнопкой «Дальше» до последнего шага. Под схемой появится «Раздел пройден», после чего можно продолжить сравнивать сообщения и параметры.', 'Use “Next” to reach the last step. “Section complete” appears below the diagram; you can then continue comparing messages and parameters.')));
       const host = h('div.ex-host');
       el.append(host);
+      if (s.explainer === 'net.envelopes') el.append(completion);
       if (s.caption) el.append(h('div.figcaption', {}, md(s.caption)));
       const mounted = reg.mount(host, { level: c.level, params: s.params, onComplete: done, record: (e) => store.record(e), openDoc: (r) => openDoc(r) });
       return { el, mounted };
@@ -123,11 +128,17 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
         el.append(h('p.err', {}, `Unknown widget: ${s.widget}`));
         return { el };
       }
+      const selfReviewed = selfReviewedWidgets.has(s.widget);
+      const guide = widgetGuidance[s.widget] ?? (selfReviewed ? calculatorGuidance : undefined);
+      if (guide) el.append(howtoPanel(guide, bi('Как выполнить задание', 'How to complete the task')));
+      if (s.widget === 'career.checklist') el.append(h('a', { href: '#/local-lab' }, t(bi('Подготовить локальную лабораторию', 'Set up the local lab'))));
       const host = h('div.widget-host');
       el.append(host);
+      if (selfReviewed) el.append(h('button.btn', { type: 'button', onclick: done }, t(bi('Завершить сравнение', 'Finish comparison'))));
+      el.append(completion);
       let feedbackFacts: unknown = { unavailable: 'No facts received from widget yet' };
       const unregisterFeedback = registerFeedbackSnapshot(host, () => ({ widget: s.widget, facts: feedbackFacts }));
-      const mounted = w.mount(host, s.props, { reportFacts: facts => { feedbackFacts = facts; }, lessonId: c.lesson.id, sectionId: s.id, level: c.level, complete: done, record: (e) => store.record(e), openDoc: (r) => openDoc(r) });
+      const mounted = w.mount(host, s.props, { reportFacts: facts => { feedbackFacts = facts; }, lessonId: c.lesson.id, sectionId: s.id, level: c.level, complete: selfReviewed ? () => {} : done, record: (e) => store.record(e), openDoc: (r) => openDoc(r) });
       return { el, mounted: { ...mounted, dispose() { unregisterFeedback(); mounted.dispose(); } } };
     }
   }
@@ -136,6 +147,7 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
 function renderDocs(s: DocsSection, c: SectionCtx, el: HTMLElement, done: () => void): { el: HTMLElement; mounted?: Mounted } {
   el.append(h('p.docs-tag', {}, icon('doc'), t(bi('Документация', 'Documentation'))), prose(s.prompt));
   if (s.mode === 'anatomy') {
+    el.append(h('p.task-guide', {}, t(bi('Нажмите на нужный раздел документации ниже. Ответ проверяется сразу; под документом появится «Верно» с зелёной галочкой или пояснение, какой раздел вы выбрали.', 'Click the requested documentation section below. Your choice is checked immediately; a green check mark with “Right” or an explanation of the selected section appears below the document.'))));
     const page = s.ref.page ? corpus.get(s.ref.page) : undefined;
     if (!page) {
       el.append(h('p.err', {}, `Unknown page: ${s.ref.page}`));

@@ -67,7 +67,7 @@ for (const lang of ['ru', 'en'] as const) {
         }
         // jsdom has no IntersectionObserver, so reading sections complete on mount.
         // Quizzes and practice still require the learner to complete them.
-        const pending = lesson.sections.filter(s => !['text', 'callout'].includes(s.kind));
+        const pending = lesson.sections.filter(s => !['text', 'callout'].includes(s.kind) || s.kind === 'text' && s.step === 'practice');
         expect(page.el.querySelector<HTMLElement>('.lesson-done')!.hidden).toBe(pending.length > 0);
         expect(store.state.lessons[lesson.id]?.status === 'done').toBe(pending.length === 0);
         for (const section of pending) {
@@ -79,7 +79,14 @@ for (const lang of ['ru', 'en'] as const) {
           quiz.querySelector<HTMLInputElement>('input[type="radio"]')!.click();
           quiz.querySelector<HTMLButtonElement>('.q-actions > button')!.click();
         }
-        const practicePending = pending.some(s => s.kind !== 'quiz');
+        // Written tasks require explicit self-review; reading the prompt is insufficient.
+        for (const document of page.el.querySelectorAll('.task-document')) {
+          expect(document.querySelector('textarea')).not.toBeNull();
+          const finish = [...document.querySelectorAll<HTMLButtonElement>('button')].find(b => /Завершить самопроверку|Finish self-review/.test(b.textContent ?? ''))!;
+          finish.click();
+          expect(document.querySelector('[role="status"]')?.textContent).toMatch(/Самопроверка завершена|Self-review complete/);
+        }
+        const practicePending = pending.some(s => s.kind !== 'quiz' && s.kind !== 'text');
         await vi.waitFor(() => {
           expect(page.el.querySelector<HTMLElement>('.lesson-done')!.hidden).toBe(practicePending);
           expect(store.state.lessons[lesson.id]?.status === 'done').toBe(!practicePending);

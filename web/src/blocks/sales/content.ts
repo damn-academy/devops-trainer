@@ -75,7 +75,7 @@ const MODULE_LESSON: Record<string, { id: string; title: [string, string]; minut
 
 function moduleBody(letter: string, en = false): string {
   const mod = (en ? SALES_SCHOOL_EN : SALES_SCHOOL).find((m) => m.letter === letter)!;
-  return mod.items.map((it) => `**${it.n}. ${it.title.replace(/\.$/, '')}.** ${it.body}\n\n> ${en ? 'Today' : 'Сегодня'}: ${it.today}`).join('\n\n');
+  return mod.items.map((it) => `**${it.n}. ${it.title.replace(/\.$/, '')}.** ${it.body}`).join('\n\n');
 }
 
 const INTRODUCES: Record<string, string[]> = {
@@ -114,6 +114,7 @@ function lessonFor(letter: string): Lesson {
         title: bi(mod.title, SALES_SCHOOL_EN.find(m => m.letter === letter)!.title),
         body: bi(moduleBody(letter), moduleBody(letter, true)),
       },
+      { id: 'practice', kind: 'text', step: 'practice', title: bi('Задания по темам модуля', 'Module practice'), body: bi(mod.items.map(it => `- ${it.today}`).join('\n'), SALES_SCHOOL_EN.find(m => m.letter === letter)!.items.map(it => `- ${it.today}`).join('\n')) },
       { id: 'honest', kind: 'callout', tone: 'note', step: 'review', body: HONEST_NOTE },
     ],
   };

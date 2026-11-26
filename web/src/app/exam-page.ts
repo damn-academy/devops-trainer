@@ -22,7 +22,7 @@ import { openDoc } from '../engine/docs/viewer';
 import { examGate, newSeed, pickTasks, protocol, scoreExam, type ExamProtocol } from '../engine/quiz/exam';
 import { mountQuiz } from '../engine/quiz/render';
 import { conceptLink, emptyState, levelFor, prose, setTitle, type Page } from './common';
-import { mountRealCard, mountRealLab, type RealCardView } from './real/panel';
+import { mountRealCard, mountRealLab, realHowTo, type RealCardView } from './real/panel';
 import { mountLab } from './terminal-section';
 import './exam.css';
 import { crumbProfession } from './common';
@@ -48,7 +48,7 @@ const E = {
   soft: bi('Мягкий таймер: время пишется в протокол, но не обрывает экзамен.', 'Soft timer: the time goes into the protocol but never cuts the exam short.'),
   hard: bi('Жёсткий таймер: когда время выйдет, работа сдаётся сама.', 'Hard timer: when time is up the work is submitted automatically.'),
   pass: bi('Зачёт: {p}% и все критические задания.', 'Pass: {p}% and every critical task.'),
-  critical: bi('критическое', 'critical'),
+  critical: bi('критическое: без него экзамен не сдан', 'critical: the exam fails without it'),
   beyond: bi('вне курса', 'beyond the course'),
   pts: bi('балл.', 'pts'),
   gate: bi('Пересдача новым вариантом откроется {d}. Тренировка открыта всегда.', 'The retake with a new variant opens {d}. Training is always open.'),
@@ -99,7 +99,7 @@ function mountTabLab(exam: Exam, onFacts: (m: Record<string, Facts>) => void): {
   const el = h('div.widget-host.ex2-tablab');
   let feedbackFacts: unknown = null;
   const unregisterFeedback = registerFeedbackSnapshot(el, () => ({ facts: feedbackFacts }));
-  const mounted = w.mount(el, inTab.props ?? {}, { level: 'experienced', complete() {}, record: (e) => store.record(e), openDoc: (r) => openDoc(r, { mode: 'exam', allowed: exam.allowedDocs, via: 'exam' }), reportFacts: facts => { feedbackFacts = facts; onFacts(facts); } });
+  const mounted = w.mount(el, inTab.props ?? {}, { exam: true, level: 'experienced', complete() {}, record: (e) => store.record(e), openDoc: (r) => openDoc(r, { mode: 'exam', allowed: exam.allowedDocs, via: 'exam' }), reportFacts: facts => { feedbackFacts = facts; onFacts(facts); } });
   return { el, mounted: { ...mounted, dispose() { unregisterFeedback(); mounted.dispose(); } } };
 }
 
@@ -193,7 +193,7 @@ export function examPage(id: string): Page {
       list.append(h('li.ex2-card', { 'data-feedback-id': task.id, 'data-critical': task.critical ? 'true' : undefined }, h('p.ex2-card-head', {}, h('span', {}, `${t(E.task)} ${i + 1}`), h('span.muted', {}, tags)), host));
       if (task.kind === 'quiz') mounts.push(mountQuiz(host, task.item, { context: 'exam', feedback: mode === 'training', md: (b) => prose(b), onAnswered: (g) => setResult(task.id, g.correct ? 1 : g.score) }));
       else if (task.kind === 'real') {
-        const card = mountRealCard(task.real, { feedback: mode === 'training', onScore: (sc) => setResult(task.id, sc) });
+        const card = mountRealCard(task.real, { feedback: mode === 'training', onScore: (sc) => setResult(task.id, sc), where: exam.inTab ? 'tab' : 'own', machines: () => lab?.el ?? tabLab?.el ?? null });
         realCards.push(card);
         put(host, prose(task.real.prompt), card.el);
       } else
@@ -224,7 +224,7 @@ export function examPage(id: string): Page {
       for (const child of [...root.children]) if (!child.classList.contains('exam-head') && !child.classList.contains('exam-pause-note')) (child as HTMLElement).inert = activeTimer.paused;
       pauseBtn!.textContent = t(activeTimer.paused ? bi('Продолжить попытку', 'Resume attempt') : bi('Приостановить попытку', 'Pause attempt'));
     } }, t(bi('Приостановить попытку', 'Pause attempt'))) : null;
-    put(root, h('header.exam-head', {}, h('h1', {}, t(exam.title)), h('span.badge', {}, t(mode === 'exam' ? E.exam : E.training)), timer, docsBtn, pauseBtn), canPause ? h('p.exam-pause-note', {}, t(bi('На выполнение отведено 60 минут активной работы: попытку можно приостановить и продолжить позже, а задания во время паузы недоступны.', 'You have 60 minutes of active work: pause and resume later; tasks are unavailable while paused.'))) : null, draft ? h('p.exam-resumed', { role: 'status' }, t(bi('Вы продолжаете сохранённую попытку: выполненные задания восстановлены.', 'You are continuing a saved attempt: completed tasks have been restored.'))) : null, exam.story ? h('details.ex2-story-mini', {}, h('summary', {}, t(E.story)), prose(exam.story)) : null, lab?.el ?? null, tabLab?.el ?? null, list, submitBtn);
+    put(root, h('header.exam-head', {}, h('h1', {}, t(exam.title)), h('span.badge', {}, t(mode === 'exam' ? E.exam : E.training)), timer, docsBtn, pauseBtn), canPause ? h('p.exam-pause-note', {}, t(bi('На выполнение отведено 60 минут активной работы: попытку можно приостановить и продолжить позже, а задания во время паузы недоступны.', 'You have 60 minutes of active work: pause and resume later; tasks are unavailable while paused.'))) : null, draft ? h('p.exam-resumed', { role: 'status' }, t(bi('Вы продолжаете сохранённую попытку: выполненные задания восстановлены.', 'You are continuing a saved attempt: completed tasks have been restored.'))) : null, exam.story ? h('details.ex2-story-mini', {}, h('summary', {}, t(E.story)), prose(exam.story)) : null, lab?.el ?? null, tabLab?.el ?? null, tasks.some((x) => x.kind === 'real') ? realHowTo(exam.inTab ? 'tab' : 'own') : null, list, submitBtn);
   };
 
   const explainStep = (mode: 'exam' | 'training', seed: string, tasks: ExamTask[], results: Map<string, number>, started: Date) => {

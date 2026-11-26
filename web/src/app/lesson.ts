@@ -63,20 +63,19 @@ export function lessonPage(id: string, focusSection?: string): Page {
     }
   };
 
+  const standaloneCourse = PRODUCTS.some(p => p.kind === 'course' && p.id === lesson.block);
   const mounts: Mounted[] = [];
   const body = h('div.lesson-body');
   for (const s of sections) {
-    const r = renderSection(s, { lesson, block: lesson.block, level, index, count: total, done: markDone });
+    const r = renderSection(s, { lesson, block: lesson.block, level, index, count: total, manualTextCompletion: standaloneCourse && s.kind === 'text' && s.step === 'practice', done: markDone });
     if (doneSet.has(s.id)) r.el.classList.add('seen');
     body.append(r.el);
     if (r.mounted) mounts.push(r.mounted);
-    if (s.kind === 'text' && s.step === 'practice' &&
-        ['product.cases', 'marketing.cases', 'pr.analysts', 'pr.press', 'pr.founder', 'oss.cncf-path', 'oss.cncf-benefits', 'oss.revenue', 'scithink.final', 'events.cncf-events', 'events.own-conf', 'events.online-conf', 'aicontent.team', 'aicontent.brief', 'aicontent.research', 'aicontent.editing', 'aicontent.checks', 'aicontent.visuals', 'aicontent.video', 'aicontent.video-to-article', 'aicontent.bots', 'aicontent.interactive', 'aicontent.publishing', 'aicontent.rules', 'aicontent.tools', 'finance.statements', 'finance.cash-vs-profit', 'finance.close', 'finance.runway', 'finance.metrics', 'finance.model', 'finance.safe', 'finance.revenue', 'finance.taxes-federal', 'finance.taxes-people', 'finance.tools', 'finance.automation', 'finance.dashboard', 'metrics.contract', 'metrics.funnel', 'metrics.attribution', 'metrics.lift', 'metrics.channels', 'metrics.pipeline', 'metrics.forecast', 'metrics.arr', 'metrics.efficiency', 'metrics.activation', 'metrics.pqa', 'metrics.usage', 'metrics.dashboards', 'metrics.truth', 'metrics.stories', 'strategy.market-events', 'strategy.market-shifts', 'strategy.sovereignty', 'strategy.event-offer', 'oss.foundations', 'oss.donation', 'events.portfolio'].includes(lesson.id)) {
-      mounts.push(mountTaskDocument(r.el, `${lesson.id}.${s.id}`, t(s.title ?? lesson.title), t(s.body)));
+    if (s.kind === 'text' && s.step === 'practice' && standaloneCourse) {
+      mounts.push(mountTaskDocument(r.el, `${lesson.id}.${s.id}`, t(s.title ?? lesson.title), t(s.body), () => markDone(s.id)));
     }
   }
 
-  const standaloneCourse = PRODUCTS.some(p => p.kind === 'course' && p.id === lesson.block);
   const next = block ? registry.lessons.get(block.lessons[index + 1]) : undefined;
   const prev = block ? registry.lessons.get(block.lessons[index - 1]) : undefined;
 
