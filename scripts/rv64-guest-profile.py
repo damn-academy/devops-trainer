@@ -13,6 +13,7 @@ import collections
 import gzip
 import json
 from pathlib import Path
+from rv64_guest_capture import runs, marker as capture_marker, row_ms, tls_windows, category
 
 
 def read(path):
@@ -24,24 +25,17 @@ def report(document, symbols=(), mappings=()):
     result = document['result']
     if result.get('type') == 'smp-kuberoot':
         reports = []
-        for run in result['samples']:
-            for hart in range(run['harts']):
-                metrics = [dict(m, elapsedMs=m['ms']) for m in run['metrics'] if m.get('hart') == hart]
-                child = dict(run, samples=metrics)
-                r = report({'result': child}, symbols, mappings)
-                r.update(hart=hart, harts=run['harts'])
-                reports.append(r)
+        for hart, child in runs(document):
+            r = report({'result': child}, symbols, mappings)
+            r.update(hart=hart, harts=child['harts'])
+            reports.append(r)
         return {'schema': 'rv64.guest-profile-smp/v1', 'reports': reports}
     tables = {}
     for binary in symbols:
         ranges = sorted((int(a, 16), int(b, 16), name) for a, b, name in binary['functions'])
         tables[binary['sha256']] = ([r[0] for r in ranges], ranges)
-    events, console = result['events'], result['console']
     def marker(name):
-        offset = console.find('\n' + name + '\n')
-        if offset < 0:
-            return None
-        return next((e['ms'] for e in events if e.get('consoleEnd', 0) > offset + len(name)), None)
+        return capture_marker(result, name)
     windows = [('restore-first-40s', 0, 40000),
                ('first-get-pods', marker('RV64_GET_PODS_BEGIN'), marker('RV64_GET_PODS_END')),
                ('pod-start', marker('RV64_POD_START_BEGIN'), marker('RV64_POD_START_END'))]
@@ -52,25 +46,22 @@ def report(document, symbols=(), mappings=()):
             continue
         drops += p['dropped']
         intervals.add(p['interval'])
-        # elapsedMs starts at worker startup; console events start at request.
-        # Main/worker performance clocks share their time origin.
-        # Offset is explicitly published by kuberoot.ts for new results.
-        offset = (m['hostMonotonicMs'] - m['elapsedMs'] - result['profileRequestedAt']) if 'profileRequestedAt' in result else None
-        if offset is None:
-            offset = result.get('engineReadyMs', 0)  # bounded startup approximation
         for row in p['rows']:
             pc, satp, mode, tp, scratch, ticks, attempted = row[:7]
             comm = b''.join(int(x, 16).to_bytes(8, 'little') for x in row[7:9]).split(b'\0')[0].decode('ascii', errors='replace')
-            ms = (ticks / 10000 + result['guestEpochOffsetMs']) if 'guestEpochOffsetMs' in result else offset + m['elapsedMs'] - (m['guestTicks'] - ticks) / 10000
+            ms = row_ms(result, m, row)
             rows.append((ms, pc, satp, mode, attempted, comm))
     end_ms = result.get('elapsedMs', max((r[0] for r in rows), default=0) + 1)
+    windows += tls_windows(result)
     windows += [('all-captured', 0, end_ms), ('after-readyz', marker('RV64_READYZ_BEGIN'), end_ms)]
     output = {'schema': 'rv64.guest-profile/v1', 'hart': 0, 'weight': 'instruction attempts',
               'intervals': sorted(intervals), 'dropped': drops,
               'timestampApproximation': 'profileRequestedAt' not in result and 'guestEpochOffsetMs' not in result,
+              'metricsDropped': result.get('metricsDropped', 0), 'consoleDropped': result.get('consoleDropped', 0),
+              'categoryScope': 'exclusive resolved leaf PCs; missing categories are not evidence of zero cost; idle samples are not WFI wall time',
               'windows': []}
     for name, start, end in windows:
-        counts, processes = collections.Counter(), collections.Counter()
+        counts, processes, categories = collections.Counter(), collections.Counter(), collections.Counter()
         total = unresolved = 0
         if start is not None and end is not None:
             for ms, pc, satp, mode, _, comm in rows:
@@ -97,9 +88,11 @@ def report(document, symbols=(), mappings=()):
                         resolved = True
                 if not resolved:
                     unresolved += 1
+                categories[category(function, mode) if resolved else ('unresolved user' if mode == 0 else 'unresolved kernel')] += 1
                 counts[process, function] += 1
                 processes[process] += 1
         output['windows'].append({'name': name, 'startMs': start, 'endMs': end, 'samples': total,
+            'categories': {k: {'samples': v, 'percent': round(v * 100 / total, 3)} for k, v in sorted(categories.items())},
             'unresolved': unresolved, 'processes': processes.most_common(50),
             'top50': [{'process': p, 'function': f, 'samples': n, 'percent': round(n * 100 / total, 3)}
                       for (p, f), n in counts.most_common(50)]})

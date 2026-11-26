@@ -1,0 +1,113 @@
+{
+  "schema": "rv64.guest-callers/v2",
+  "reports": [
+    {
+      "hart": 0,
+      "window": "all-captured",
+      "startMs": 0,
+      "endMs": 700001.4950000048,
+      "eligibleUserStackSamples": 7595,
+      "missingUnwindOrMapping": 7595,
+      "sampledPCs": 0,
+      "emptyCommSamples": 7595,
+      "emptyStackBitmapSamples": 7595,
+      "chains": [],
+      "stops": {}
+    },
+    {
+      "hart": 0,
+      "window": "config-to-readyz",
+      "startMs": 73019.79000002146,
+      "endMs": 195657.10500001907,
+      "eligibleUserStackSamples": 653,
+      "missingUnwindOrMapping": 653,
+      "sampledPCs": 0,
+      "emptyCommSamples": 653,
+      "emptyStackBitmapSamples": 653,
+      "chains": [],
+      "stops": {}
+    },
+    {
+      "hart": 0,
+      "window": "readyz-loop",
+      "startMs": 195657.10500001907,
+      "endMs": 231126.51000002027,
+      "eligibleUserStackSamples": 229,
+      "missingUnwindOrMapping": 229,
+      "sampledPCs": 0,
+      "emptyCommSamples": 229,
+      "emptyStackBitmapSamples": 229,
+      "chains": [],
+      "stops": {}
+    },
+    {
+      "hart": 0,
+      "window": "after-readyz-end",
+      "startMs": 231126.51000002027,
+      "endMs": 700001.4950000048,
+      "eligibleUserStackSamples": 6713,
+      "missingUnwindOrMapping": 6713,
+      "sampledPCs": 0,
+      "emptyCommSamples": 6713,
+      "emptyStackBitmapSamples": 6713,
+      "chains": [],
+      "stops": {}
+    },
+    {
+      "hart": 1,
+      "window": "all-captured",
+      "startMs": 0,
+      "endMs": 700001.4950000048,
+      "eligibleUserStackSamples": 7281,
+      "missingUnwindOrMapping": 7281,
+      "sampledPCs": 0,
+      "emptyCommSamples": 7281,
+      "emptyStackBitmapSamples": 7281,
+      "chains": [],
+      "stops": {}
+    },
+    {
+      "hart": 1,
+      "window": "config-to-readyz",
+      "startMs": 73019.79000002146,
+      "endMs": 195657.10500001907,
+      "eligibleUserStackSamples": 657,
+      "missingUnwindOrMapping": 657,
+      "sampledPCs": 0,
+      "emptyCommSamples": 657,
+      "emptyStackBitmapSamples": 657,
+      "chains": [],
+      "stops": {}
+    },
+    {
+      "hart": 1,
+      "window": "readyz-loop",
+      "startMs": 195657.10500001907,
+      "endMs": 231126.51000002027,
+      "eligibleUserStackSamples": 292,
+      "missingUnwindOrMapping": 292,
+      "sampledPCs": 0,
+      "emptyCommSamples": 292,
+      "emptyStackBitmapSamples": 292,
+      "chains": [],
+      "stops": {}
+    },
+    {
+      "hart": 1,
+      "window": "after-readyz-end",
+      "startMs": 231126.51000002027,
+      "endMs": 700001.4950000048,
+      "eligibleUserStackSamples": 6332,
+      "missingUnwindOrMapping": 6332,
+      "sampledPCs": 0,
+      "emptyCommSamples": 6332,
+      "emptyStackBitmapSamples": 6332,
+      "chains": [],
+      "stops": {}
+    }
+  ],
+  "unwindSymbolHashes": [
+    "a87019474b1fdfbc135b35b44074a4b386276f77da19fb0d3ba46ebdb661e41c"
+  ],
+  "scope": "all user stack samples; instruction-weighted; bounded Go frames only; no inferred stack switches; SATP is not PID"
+}

@@ -72,6 +72,25 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(reports[1]['dropped'], 1)
         self.assertFalse(reports[1]['timestampApproximation'])
 
+    def test_r10_markers_and_bounded_metrics(self):
+        metrics = [{'hart': h, 'ms': 4000, 'guestTicks': 40000000,
+                    'guestProfile': {'interval': 1000003, 'dropped': 0, 'rows': [
+                        ['1000', '123', 0, '0', '0', t * 10000, 1000003]]}}
+                   for h, t in [(0, 1000), (0, 2000), (1, 3000)]]
+        doc = {'result': {'type': 'smp-kuberoot', 'samples': [{
+            'harts': 2, 'metrics': metrics + [{'type': 'host-memory', 'ms': 4000}],
+            'markers': {'RV64_CONFIG_CREATED': 1000, 'RV64_READYZ_BEGIN': 2000, 'RV64_READYZ_END': 3000},
+            'metricsDropped': 7, 'consoleDropped': 9, 'console': 'truncated tail',
+            'elapsedMs': 4000, 'guestEpochOffsetMs': 0}]}}
+        syms = [{'sha256': 'test', 'functions': [['0x1000', '0x1010', 'crypto/tls.handshake']]}]
+        maps = [{'satp': '123', 'process': 'control', 'symbolSha256': 'test'}]
+        reports = profile.report(doc, syms, maps)['reports']
+        windows = [{w['name']: w for w in r['windows']} for r in reports]
+        self.assertEqual([windows[0][n]['samples'] for n in ('config-to-readyz', 'readyz-loop', 'after-readyz-end')], [1, 1, 0])
+        self.assertEqual(windows[1]['after-readyz-end']['categories']['crypto/tls']['samples'], 1)
+        self.assertEqual(reports[0]['metricsDropped'], 7)
+        self.assertEqual(reports[0]['consoleDropped'], 9)
+
     def test_ambiguous_mapping_is_not_guessed(self):
         doc = {'result': {'console': '', 'events': [], 'samples': [{
             'elapsedMs': 100, 'guestTicks': 100, 'guestProfile': {'interval': 17, 'dropped': 0,

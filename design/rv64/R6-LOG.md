@@ -471,3 +471,139 @@ The history byte charge bounds serialization, not exact JS object overhead
 (the reserve covers that). Console DOM/string copies are likewise additional.
 The harness change is only the extra host-memory METRICS line; all sampling,
 accounting and policy live in the page/runtime.
+
+## R10 short capture: attribution gap and JIT churn (2026-11-26)
+
+Operator rebuilt `7991caa`: cargo test, ISA 173/0, architecture 266/0,
+RV64 Vitest 54, enabled SMP JIT integration 4/4 and all six browser gates passed.
+This analysis did not rebuild or change emulator/media; no push.
+Capture: `web/public/rv64/results/R10-smp-2h-tls-profile-700s.json`, with matching
+`-run.log` / `-console.txt`. No renderer crash at 700 s; readiness failed.
+Markers in request-relative host ms: CONFIG_CREATED 73019.790, DIAGNOSTICS
+132669.365, READYZ_BEGIN 195657.105, READYZ_END 231126.510, status=1.
+Later failed_or_timeout attempts at guest uptime 265..659 are included in the
+post-END window, not evidence that readiness succeeded at END.
+
+The analyzers now accept both legacy events and R10 markers/bounded metrics.
+New windows are half-open, using guestTicks/10000 + guestEpochOffsetMs;
+no startup-clock approximation here. Existing legacy windows remain available.
+Results: `R10-smp-2h-tls-profile.json`, `R10-smp-2h-tls-callers.json`, and
+`R10-smp-2h-tls-metrics.json` in the same results directory.
+1399 retained metrics = 1376 hart records + 23 host-memory records;
+1243 records contain guestProfile, 25,548 instruction samples in total.
+metricsDropped=consoleDropped=profile dropped=0; interval=1000003.
+
+### What can actually be attributed
+
+All **14,876 user-mode samples have comm=(0,0) and stack-valid bitmap=0**.
+The supplied maps map user binaries by comm, not by this run's SATP. Therefore
+all user samples are unresolved; assigning an overlapping Go text address to
+an arbitrary executable would invent evidence. The kernel map does resolve
+all 10,672 privileged samples. SATP is an address-space identity, not PID.
+Console identifies containerd PID 76 and control PID 77, but supplies no bridge
+from these PIDs to sampled SATPs. Do not reuse another run's SATP mapping.
+
+Percentages below use **all instruction-attempt samples on that hart in that
+window** as denominator. Kernel excludes sampled idle helpers. `Unknown user`
+is an upper bound on each requested user category, not an estimate of it.
+
+| Host window (s) | Hart | Samples | Kernel n (%) | Idle helper n (%) | Unknown user n (%) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 73.020–195.657 | 0 | 2009 | 1355 (67.446) | 1 (0.050) | 653 (32.504) |
+| 73.020–195.657 | 1 | 2333 | 1675 (71.796) | 1 (0.043) | 657 (28.161) |
+| 195.657–231.127 | 0 | 516 | 287 (55.620) | 0 (0) | 229 (44.380) |
+| 195.657–231.127 | 1 | 626 | 334 (53.355) | 0 (0) | 292 (46.645) |
+| 231.127–700.001 | 0 | 10085 | 3370 (33.416) | 2 (0.020) | 6713 (66.564) |
+| 231.127–700.001 | 1 | 9979 | 3647 (36.547) | 0 (0) | 6332 (63.453) |
+
+For **each** of crypto/tls, crypto/internal/fips140/nistec (P-256), bigmod/field
+math, Go GC, Go scheduler and SQLite/kine, the six per-window/per-hart shares
+are **unavailable**, bounded respectively by 0–32.504%, 0–28.161%, 0–44.380%,
+0–46.645%, 0–66.564%, 0–63.453%. They are not measured zeros and cannot all
+simultaneously take their upper bounds. The analyzer's resolved leaf buckets
+are exclusive: fiat/field/math-big/bigmod before nistec/P-256; GC and scheduler
+are name-based subsets of runtime, with runtime-other separate.
+
+Idle-helper samples are cpu_do_idle/arch_cpu_idle/default_idle_call PCs, not
+WFI residence time. Instruction sampling does not count time spent asleep.
+There is no WFI duration counter here; worker `state` is the SBI hart lifecycle
+state (1=stopped), not an idle-duration metric. WFI wall-time share is unknown
+in all six cells. The leading memcpy/SATP pair accounts for 245/2009 (12.195%) and
+270/2333 (11.573%) before READYZ_BEGIN; this is substantial
+non-crypto work, not proof about where a particular handshake spent its time.
+
+Caller coverage is explicit: 0 attributed user samples, 14,876 missing mappings.
+`all.json.gz` has no goUnwind metadata. A second exact-hash metadata input,
+`control-callers.json.gz`, was supplied; it cannot recover absent task identities
+or absent resident stack words. The caller tool now attempts all mapped user
+stacks, rather than selecting only runtime traceback PCs, and groups by hart,
+window, comm and SATP. Empty chains are a coverage failure, not absence of TLS.
+
+Static inspection explains this capture limitation: profile.rs::resident reads
+Memory.ram (private Vec), while SMP memory reads route through the shared-memory
+backend. Both task_comm and stack_word use resident; the SMP page does pass
+comm offset 1704. Fix the observer before choosing a TLS algorithm/setup based
+on this profile. **TLS CPU starvation is neither established nor excluded.**
+The timeout strings alone cannot distinguish crypto, scheduling, JIT/compiler
+pressure or delayed server progress. No restart/SIGQUIT attribution is inferred
+from the missing user identity fields.
+
+### Containerd regression and host memory
+
+Containerd reports 113.387020 s versus R9's approximately 49 s (~2.31x).
+These are daemon-reported boot durations, not host marker positions. Different
+profiling starts (R10 CONFIG_CREATED vs R9 READYZ_BEGIN) confound the comparison:
+R10 samples part of boot that R9 did not. The R10 interval is 1000003 vs 100003,
+~10x sparser while active, so increased sample frequency is not an explanation;
+neither can sparser sampling prove lower total overhead when activation differs.
+
+Budget pressure is present early: at ~30/60/120 host seconds, hart 0 R10 has
+14,133 / 21,392 / 61,680 cumulative evictions, versus R9 0 / 0 / 0 at the nearest
+~30-second logged records. At ~120 s R10 hart 0 compiled 74,750 and retained
+13,070 blocks; R9 compiled/retained 52,386. Retired counts are 1.410e9 vs 1.555e9.
+The first R9 logged hart-1 record is around 209 s, so no early hart-1 comparison
+is invented. R10 hart 1 at ~120 s compiled 88,368, evicted 73,924, retained 14,444.
+
+Rates below use differences between the first and last hart metrics **inside**
+each window, divided by their actual host-ms separation (endpoints are in the
+metrics JSON), not by nominal window length. JIT % = delta jitRetired / delta retired.
+
+| Window | Hart | Retired M/s | JIT % | Compiled delta | Evicted delta | Evictions/s |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| config-to-readyz | 0 | 16.417 | 92.745 | 148702 | 148339 | 1224.4 |
+| config-to-readyz | 1 | 19.109 | 92.397 | 164383 | 162149 | 1334.6 |
+| readyz-loop | 0 | 14.512 | 88.669 | 59725 | 57623 | 1684.0 |
+| readyz-loop | 1 | 17.790 | 90.160 | 61758 | 59258 | 1742.4 |
+| after-readyz-end | 0 | 21.551 | 90.684 | 615721 | 615935 | 1315.2 |
+| after-readyz-end | 1 | 21.328 | 90.080 | 591471 | 591316 | 1263.0 |
+
+At the last hart reports (~699.7 s), compiled=867096/866100,
+evicted=854708/852578, installed=12388/13522, modules=867/904,
+installedWasmBytes=21318182/23012312 (~20.33/21.95 MiB),
+estimatedHostBytes=227365168/243343040 (~216.83/232.07 MiB),
+hostBudget=268435456 each (256 MiB). Cache clears remain zero. R9's later
+~14.5-minute observation had 81674/68146 installed and 256512/213796 evicted;
+this is descriptive, not a same-time benchmark. R10 plainly churns far more
+code while retaining far less. Eviction count is not a CPU-time percentage,
+and does not measure the number of distinct PCs recompiled.
+
+All 23 host-memory records report UA SecurityError, uaBytes=null: actual browser
+memory was **not measured**. Shared allocation is 1057.125 MiB counted once.
+Last private wasm sizes are 469.625/33.3125 MiB. Across host records, shared +
+private + estimated JIT is 1622.31–2027.85 MiB; adding the 256 MiB reserve gives
+1878.31–2283.85 MiB, below the 2560 MiB accounting target. This is not RSS or
+proof that a larger cache is safe. The per-hart 256 MiB ceiling, rather than
+exhaustion of the aggregate accounting allowance, is the active constraint.
+
+Conclusion: small-cache recompilation is a supported explanation for some
+slowdown and a better measured tuning target than speculative TLS replacement.
+The exact 113-vs-49 causal decomposition is unavailable without a controlled
+budget comparison at identical sampling settings. First repair profiling;
+then compare bounded 256/384 MiB per-hart ceilings without raising the aggregate
+target. See R11-PLAN.md. No emulator or medium modification was made here.
+
+Validation: five guest-profile tests and two caller tests pass, including
+synthetic R10 markers, half-open window boundaries, hart filtering, dropped
+history metadata, crypto caller selection and missing-unwind coverage. Both
+CLIs completed on the actual capture. Operator gates above were not rerun for
+this Python/documentation-only change.

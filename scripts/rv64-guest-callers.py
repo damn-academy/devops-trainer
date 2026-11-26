@@ -10,6 +10,7 @@ import collections
 import gzip
 import json
 from pathlib import Path
+from rv64_guest_capture import runs, row_ms, tls_windows
 
 
 def read(path):
@@ -83,30 +84,47 @@ class GoUnwinder:
 
 def report(document, symbols, mappings):
     tables = {s['sha256']: GoUnwinder(s['goUnwind']) for s in symbols if s.get('goUnwind')}
-    chains, stops = collections.Counter(), collections.Counter()
-    total = 0
-    for sample in document['result']['samples']:
-        for row in sample.get('guestProfile', {}).get('rows', []):
-            if len(row) < 44 or row[2] != 0:
-                continue
-            comm = b''.join(int(v, 16).to_bytes(8, 'little') for v in row[7:9]).split(b'\0')[0].decode(errors='replace')
-            candidates = [m for m in mappings if m.get('comm') == comm or m.get('satp') == row[1]]
-            if len(candidates) != 1 or int(str(candidates[0].get('bias', 0)), 0) != 0:
-                continue
-            table = tables.get(candidates[0]['symbolSha256'])
-            if not table:
-                continue
-            f = table.find(int(row[0], 16))
-            if not f or not any(x in f[2] for x in ['runtime.Caller', 'runtime.callers', 'runtime.pcvalue', 'runtime.step', 'runtime.tracebackPCs', 'runtime.findfunc', 'runtime.(*unwinder)']):
-                continue
-            frames, stop = table.chain(row)
-            total += 1; chains[tuple(frames)] += 1; stops[stop] += 1
-    return {'sampledUnwinderPCs': total, 'chains': [{'frames': list(c), 'samples': n} for c, n in chains.most_common()], 'stops': stops,
-            'scope': 'instruction-weighted samples; bounded Go frames only; no inferred stack switches'}
+    reports = []
+    for hart, run in runs(document):
+        end_ms = run.get('elapsedMs', max((row_ms(run, sample, row)
+            for sample in run['samples'] for row in sample.get('guestProfile', {}).get('rows', [])), default=0) + 1)
+        for name, start, end in [('all-captured', 0, end_ms)] + tls_windows(run):
+            chains, stops = collections.Counter(), collections.Counter()
+            eligible = missing = total = empty_comm = empty_stack = 0
+            for sample in run['samples']:
+                for row in sample.get('guestProfile', {}).get('rows', []):
+                    if len(row) < 44 or row[2] != 0 or start is None or end is None:
+                        continue
+                    ms = row_ms(run, sample, row)
+                    if not start <= ms < end:
+                        continue
+                    eligible += 1
+                    empty_comm += not any(int(v, 16) for v in row[7:9])
+                    empty_stack += int(row[11], 16) == 0
+                    comm = b''.join(int(v, 16).to_bytes(8, 'little') for v in row[7:9]).split(b'\0')[0].decode(errors='replace')
+                    candidates = [m for m in mappings if (m.get('comm') == comm or m.get('satp') == row[1])
+                                  and m.get('startMs', 0) <= ms < m.get('endMs', float('inf'))]
+                    table = tables.get(candidates[0]['symbolSha256']) if len(candidates) == 1 else None
+                    if not table or int(str(candidates[0].get('bias', 0)), 0) != 0:
+                        missing += 1
+                        continue
+                    frames, stop = table.chain(row)
+                    total += 1
+                    chains[comm, row[1], tuple(frames)] += 1
+                    stops[stop] += 1
+            reports.append({'hart': hart, 'window': name, 'startMs': start, 'endMs': end,
+                'eligibleUserStackSamples': eligible, 'missingUnwindOrMapping': missing,
+                'sampledPCs': total, 'emptyCommSamples': empty_comm, 'emptyStackBitmapSamples': empty_stack,
+                'chains': [{'comm': c, 'satp': s, 'frames': list(f), 'samples': n}
+                           for (c, s, f), n in chains.most_common()], 'stops': stops})
+    return {'schema': 'rv64.guest-callers/v2', 'reports': reports,
+            'unwindSymbolHashes': sorted(tables),
+            'scope': 'all user stack samples; instruction-weighted; bounded Go frames only; no inferred stack switches; SATP is not PID'}
 
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
+    p.add_argument('--unwind-symbols', help='Supplement exact-hash symbol tables with Go unwind metadata')
     p.add_argument('result'); p.add_argument('--symbols', required=True); p.add_argument('--maps', required=True)
     args = p.parse_args()
-    print(json.dumps(report(read(args.result), read(args.symbols), read(args.maps)), indent=2))
+    print(json.dumps(report(read(args.result), read(args.symbols) + (read(args.unwind_symbols) if args.unwind_symbols else []), read(args.maps)), indent=2))
