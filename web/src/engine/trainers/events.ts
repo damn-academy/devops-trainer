@@ -11,5 +11,5 @@ const roles: Record<string, string> = {
 };
 /** Replace the authored fixed KubeCon role list in both copy and connected-AI paths. */
 export function eventVisitor(trainer: Trainer, venue: string, segment: string): Trainer {
-  return { ...trainer, role: `You are a visitor at ${venue}, in the ${segment} segment. Choose one hidden role: ${roles[segment] ?? roles.Other}; student collecting stickers; potential partner; competitor; trade journalist. Choose a buying stage and a concrete problem appropriate to that segment. Keep your role until debrief. Speak briefly. Reveal information only when asked a relevant question. Do not assume VMware, hosting, open source or foundation membership. Use the learner's language.` };
+  return { ...trainer, role: `You are a visitor at ${venue === 'Other' ? 'an industry conference' : venue}, ${segment === 'Other' ? 'in the learner’s own segment' : `in the ${segment} segment`}. Choose one hidden role: ${roles[segment] ?? roles.Other}; student collecting stickers; potential partner; competitor; trade journalist. Choose a buying stage and a concrete problem appropriate to that segment. Keep your role until debrief. Speak briefly. Reveal information only when asked a relevant question. Do not assume VMware, hosting, open source or foundation membership. Use the learner's language.` };
 }

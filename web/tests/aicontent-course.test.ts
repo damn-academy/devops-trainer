@@ -51,7 +51,8 @@ for (const lang of ['ru', 'en'] as const) {
     for (const id of ids) {
       const view = lessonPage(id);
       // One written result per lesson: a document, or the trainer's own field.
-      const own = view.el.querySelectorAll('.widget-host textarea').length;
+      // A simulator's outcome field holds the game, not the written task.
+      const own = [...view.el.querySelectorAll('.widget-host textarea')].filter(e => !e.closest('.deptsim')).length;
       expect(view.el.querySelectorAll('.task-document'), id).toHaveLength(own ? 0 : 1);
       view.dispose?.();
     }

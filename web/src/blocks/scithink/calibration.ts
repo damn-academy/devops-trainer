@@ -78,8 +78,8 @@ export const CLAIMS: CalibrationClaim[] = [
     claim: bi('Число 0,999… с бесконечной девяткой равно единице.', 'The number 0.999… with an endless nine equals one.'),
     truth: true,
     evidence: bi(
-      'Математически 0,999… и 1 — одно и то же число: их разница меньше любого положительного числа, а такой разницы не существует.',
-      'Mathematically 0.999… and 1 are the same number: the difference between them is smaller than any positive number, and no such difference exists.',
+      'Математически 0,999… и 1 — одно и то же число: их разница меньше любого положительного числа, а единственное такое неотрицательное число — ноль.',
+      'Mathematically 0.999… and 1 are the same number: the difference between them is smaller than any positive number, and the only such non-negative number is zero.',
     ),
   },
   {

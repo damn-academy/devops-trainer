@@ -13,7 +13,7 @@ import { ANATOMY, openDoc, renderPage } from '../engine/docs/viewer';
 import { mountQuiz } from '../engine/quiz/render';
 import { conceptLink, prose } from './common';
 import { mountLab } from './terminal-section';
-import { calculatorGuidance, selfReviewedWidgets, widgetGuidance } from './task-guidance';
+import { calculatorDocumentGuidance, calculatorGuidance, selfReviewedWidgets, widgetGuidance } from './task-guidance';
 import { renderMd } from '../core/markdown';
 
 export interface SectionCtx {
@@ -133,12 +133,14 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
         return { el };
       }
       const selfReviewed = selfReviewedWidgets.has(s.widget);
-      const guide = widgetGuidance[s.widget] ?? (selfReviewed ? calculatorGuidance : undefined);
+      // With a task document on the page, its finish button also completes the calculator.
+      const ownFinish = selfReviewed && !c.sharedDocument;
+      const guide = widgetGuidance[s.widget] ?? (selfReviewed ? (ownFinish ? calculatorGuidance : calculatorDocumentGuidance) : undefined);
       if (guide) el.append(howtoPanel(guide, bi('Как выполнить задание', 'How to complete the task')));
       if (s.widget === 'career.checklist') el.append(h('a', { href: '#/local-lab' }, t(bi('Подготовить локальную лабораторию', 'Set up the local lab'))));
       const host = h('div.widget-host');
       el.append(host);
-      if (selfReviewed) el.append(h('button.btn', { type: 'button', onclick: done }, t(bi('Завершить сравнение', 'Finish comparison'))));
+      if (ownFinish) el.append(h('button.btn', { type: 'button', onclick: done }, t(bi('Завершить сравнение', 'Finish comparison'))));
       el.append(completion);
       let feedbackFacts: unknown = { unavailable: 'No facts received from widget yet' };
       const unregisterFeedback = registerFeedbackSnapshot(host, () => ({ widget: s.widget, facts: feedbackFacts }));

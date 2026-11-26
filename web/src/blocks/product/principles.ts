@@ -128,16 +128,16 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         n: 6,
         title: ['Маленькая сделка, большое расширение', 'Land small, expand big'],
         body: [
-          'Зайдите в компанию маленькой сделкой: одна команда, один кластер, один месяц. Докажите ценность на малом, и расширение станет формальностью, потому что внутри клиента вы уже работаете. Так выручка растёт внутри существующих клиентов, и эту долю измеряет NRR, чистое удержание выручки.',
+          'Зайдите в компанию маленькой сделкой: одна команда, один кластер, один месяц. Докажите ценность на малом, и расширение станет формальностью, потому что внутри клиента вы уже работаете. Так выручка растёт внутри существующих клиентов, и этот рост измеряет NRR, чистое удержание выручки.',
           'NRR выше 100% означает, что компания растёт даже без новых клиентов: старые платят больше, чем в прошлом году. Привлечение нового клиента стоит в разы дороже, чем расширение старого, поэтому land-and-expand — главный двигатель экономики подписок. В бенчмарках OpenView за 2023 год и High Alpha за 2024 год медианный NRR частных SaaS-компаний был около 100–110 %, а лучшие компании выходили за 120 %; это ориентир для сравнения, а не норма для каждой категории и стадии.',
         ],
         bodyEn: [
-          'Enter a company with a small deal: one team, one cluster, one month. Prove the value on something small, and expansion becomes a formality, because you already work inside the client. This is how revenue grows inside existing customers, and the share of this growth is measured by NRR, net revenue retention.',
+          'Enter a company with a small deal: one team, one cluster, one month. Prove the value on something small, and expansion becomes a formality, because you already work inside the client. This is how revenue grows inside existing customers, and NRR, net revenue retention, measures this growth.',
           'An NRR above 100% means the company grows even without new customers: the old ones pay more than last year. Acquiring a new customer costs several times more than expanding an old one, which makes land-and-expand the main engine of subscription economics. In the OpenView 2023 and High Alpha 2024 benchmarks, private SaaS companies had median NRR around 100–110%, with the best above 120%. This is a comparison point, not a norm for every category and stage.',
         ],
         task: [
-          'Посчитайте, какую долю выручки за последний год компания получила от клиентов, которые уже платили год назад. Если эта цифра ниже 100%, найдите, где клиенты сокращают использование.',
-          'Calculate the share of this year’s revenue that came from customers who were already paying a year ago. If it is below 100%, find where customers shrink usage.',
+          'Посчитайте NRR: выручку этого месяца от клиентов, которые платили год назад, разделите на их выручку год назад. Если результат ниже 100 %, найдите, где эти клиенты сократили использование.',
+          'Calculate NRR: take this month’s revenue from the customers who were paying a year ago and divide it by their revenue a year ago. If the result is below 100%, find where these customers reduced usage.',
         ],
       },
     ],
@@ -150,7 +150,7 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         n: 8,
         title: ['Тайминг и волна', 'Timing and the wave'],
         body: [
-          'Спрос на категорию чаще создают события снаружи, чем ваш маркетинг. Смена владельца VMware и уход клиентов Broadcom, возврат нагрузок из публичных облаков в собственные центры обработки данных, требования суверенитета данных, дефицит видеокарт — каждая такая волна приводит к продуктам целой категории покупателей, которых этим продуктам не пришлось убеждать, что задача существует.',
+          'Спрос на категорию чаще создают события снаружи, чем ваш маркетинг. Смена владельца VMware и уход клиентов Broadcom, возврат нагрузок из публичных облаков в собственные центры обработки данных, требования суверенитета данных, дефицит видеокарт — каждая такая волна приводит к продуктам этой категории покупателей, которых не пришлось убеждать, что задача существует.',
           'Работа против волны превращает каждую сделку в борьбу за внимание, а на волне те же усилия приводят больше покупателей, потому что задачу им объяснили события. Поэтому вопрос «почему сейчас» стоит рядом с вопросом «почему мы».',
         ],
         bodyEn: [
@@ -453,11 +453,11 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         title: ['Метрика ценности', 'The value metric'],
         body: [
           'Цену привязывают к тому, как клиент считает свою выгоду: за узел, за пользователя, за гигабайт, за запрос. Хорошая метрика растёт вместе с успехом клиента и понятна до покупки, плохая наказывает клиента за рост или не даёт вам расти вместе с ним.',
-          'Патрик Кэмпбелл, основатель ProfitWell (компания теперь входит в Paddle), в своих публикациях о ценах утверждает, что упаковка и метрика решают не меньше, чем сам уровень цены. По его словам, компании, которые регулярно пересматривают упаковку и метрику цены, чаще растут быстрее тех, кто только повышает цену; это наблюдение по клиентам ProfitWell без открытой методики, поэтому проверяйте его на своих данных: оно не доказывает, что пересмотр сам по себе вызывает рост.',
+          'Упаковка и метрика цены определяют, кто и за что платит, поэтому их пересмотр может изменить выручку сильнее, чем повышение цены. Проверяйте это на своих данных: сравните выручку, расширения и отток до и после пересмотра. Рост сразу после пересмотра ещё не доказывает, что его вызвал пересмотр: в то же время могли измениться рынок, продукт или работа продаж.',
         ],
         bodyEn: [
           "Tie the price to how the customer measures benefit: per node, per user, per gigabyte, per request. A good metric grows with the customer’s success and is clear before purchase; a bad one punishes the customer for growth or prevents you from growing with them.", // TODO(en-review)
-          "Patrick Campbell, founder of ProfitWell (now part of Paddle), argues in his pricing publications that packaging and the metric matter as much as the price level itself. According to him, companies that regularly revisit packaging and the price metric more often grow faster than those that only raise prices. This is an observation from ProfitWell’s customers without a published method, so check it on your own data: it does not prove that revision itself causes growth.",
+          "Packaging and the price metric decide who pays and for what, so revising them can change revenue more than a price increase does. Check this on your own data: compare revenue, expansion and churn before and after the revision. Growth right after a revision does not prove the revision caused it: the market, the product or the sales work may have changed at the same time.",
         ],
         task: [
           'Выпишите, от чего клиент считает свою выгоду от продукта, и выберите единицу, которой эту выгоду можно измерить без вреда для доверия к продукту.',

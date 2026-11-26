@@ -329,7 +329,7 @@ export const PRODUCT_CONCEPTS: Concept[] = [
   {
     id: 'product.nrr',
     term: bi('чистое удержание выручки (NRR)', 'net revenue retention (NRR)'),
-    short: bi('Доля выручки от существующих клиентов в этом году по сравнению с прошлым; выше 100% значит рост внутри клиентов.', 'The share of revenue from existing customers this year compared with last; above 100% means growth inside the base.'),
+    short: bi('Текущая выручка от клиентов, которые платили год назад, делённая на их выручку год назад; выше 100 % значит рост внутри клиентов.', 'Current revenue from the customers who paid a year ago divided by their revenue a year ago; above 100% means growth inside the base.'),
     introducedIn: 'product.opencore',
     scan: false,
   },

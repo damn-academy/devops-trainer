@@ -1,6 +1,6 @@
 import { copyText, downloadFile, h } from '../../core/dom';
 import { bi, lang, t } from '../../core/i18n';
-import { productById } from '../../core/products';
+import { PRODUCTS, productById } from '../../core/products';
 import { registry } from '../../core/registry';
 import { parseRoute } from '../../core/router';
 import { store } from '../../core/store';
@@ -63,7 +63,8 @@ export function openExternalPanel(o: ExternalOptions = {}): void {
   const previous = document.activeElement as HTMLElement | null;
   const dialog = h('dialog.external-dialog', { 'aria-labelledby': 'external-title' }) as HTMLDialogElement;
   const textarea = h('textarea.external-preview', { rows: 14, 'aria-label': t(bi('Запрос для нейросети', 'Prompt for AI')) }) as HTMLTextAreaElement;
-  textarea.value = packExternalPrompt(externalContext(o));
+  const context = externalContext(o);
+  textarea.value = packExternalPrompt(context);
   const status = h('p.small', { role: 'status' });
   const close = () => { dialog.remove(); window.removeEventListener('hashchange', close); closeActive = undefined; previous?.focus(); };
   closeActive = close;
@@ -100,7 +101,8 @@ export function openExternalPanel(o: ExternalOptions = {}): void {
     openTutor({ mode: o.quiz ? 'review' : o.task ? 'practice' : 'explain', question: value, templateFile: o.templateFile });
   } }, t(bi('Спросить здесь', 'Ask here'))));
   dialog.append(h('h2', { id: 'external-title' }, t(EXTERNAL_LABEL)),
-    h('p.small', {}, t(bi('Проверьте запрос перед отправкой. Можно изменить текст, удалить разделы с черновиками карточек и написать, что вы хотите понять.', 'Review the prompt before sharing. You can edit it, remove card draft sections and describe what you want to understand.'))),
+    // Only a prompt that carries a draft has draft sections to remove.
+    h('p.small', {}, t(context.draft?.trim() ? bi('Проверьте запрос перед отправкой. Можно изменить текст, удалить разделы с черновиками карточек и написать, что вы хотите понять.', 'Review the prompt before sharing. You can edit it, remove card draft sections and describe what you want to understand.') : bi('Проверьте запрос перед отправкой. Можно изменить текст и написать, что вы хотите понять.', 'Review the prompt before sharing. You can edit it and describe what you want to understand.'))),
     textarea, buttons, status, h('button.btn.ghost', { type: 'button', onclick: close }, t(bi('Закрыть', 'Close'))));
   dialog.addEventListener('cancel', e => { e.preventDefault(); close(); });
   window.addEventListener('hashchange', close);
@@ -110,6 +112,9 @@ export function openExternalPanel(o: ExternalOptions = {}): void {
   textarea.setSelectionRange(0, 0);
   textarea.scrollTop = 0;
 }
+
+/** Standalone courses (the business track) do not prepare for a job interview. */
+const businessLesson = (id?: string) => { const block = id ? registry.lessons.get(id)?.block : undefined; return !!block && PRODUCTS.some(p => p.kind === 'course' && p.id === block); };
 
 /** Called only after grading; no quiz object is serialized into an external prompt. */
 export function answeredQuiz(item: QuizItem, answer: unknown, grade: QuizGrade, actual?: string): ExternalOptions {
@@ -131,7 +136,9 @@ export function answeredQuiz(item: QuizItem, answer: unknown, grade: QuizGrade, 
   }
   const task = [t(item.prompt), item.kind === 'bugfind' ? item.code : item.kind === 'predict-output' ? item.command : item.kind === 'fill-command' ? item.template : ''].filter(Boolean).join('\n');
   const want = right
-    ? t(bi('Мой ответ верный, но я хочу разобраться глубже: почему это так, где это встречается на практике и что спросят об этом на собеседовании.', 'I answered correctly but want to go deeper: why it is so, where it shows up in practice and what an interviewer might ask about it.'))
+    ? t(businessLesson(item.refs?.lesson)
+      ? bi('Мой ответ верный, но я хочу разобраться глубже: почему это так, где это встречается на практике и как это проверить в своей работе.', 'I answered correctly but want to go deeper: why it is so, where it shows up in practice and how to check it in my own work.')
+      : bi('Мой ответ верный, но я хочу разобраться глубже: почему это так, где это встречается на практике и что спросят об этом на собеседовании.', 'I answered correctly but want to go deeper: why it is so, where it shows up in practice and what an interviewer might ask about it.'))
     : undefined;
   return { lessonId: item.refs?.lesson, want, quiz: { task, options, response: { answered: true, learner: typeof answer === 'string' ? (options.find(v => v.startsWith(answer + ': ')) ?? answer) : JSON.stringify(answer), correct, explanation: [...new Set([...(item.explain ? [t(item.explain)] : []), ...grade.feedback.map(b => t(b))])].join('\n') } } };
 }

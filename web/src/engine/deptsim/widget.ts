@@ -7,7 +7,7 @@ import { buildPrompt, compatibleCompany, companyText, hasFence, promptSize, rand
 import { getScenario } from './registry';
 import { companyGroups, defaultCompanyConfig, normalizeCompanyConfig } from '../../sims/companies';
 import { legends } from './legends';
-import { loadGame, saveGame } from './storage';
+import { loadGame, saveGame, storageKey } from './storage';
 import { strings as s } from './strings';
 import type { Difficulty, SimGame, SimScenario } from './types';
 
@@ -147,10 +147,17 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   const confirmation = h('div', { hidden: true }, text('confirm'), h('div', { class: 'ds-actions' }, button('reset', reset), button('cancel', () => { confirmation.hidden = true; })));
   const newGame = button('newGame', () => { confirmation.hidden = false; });
   const exportButton = button('export', () => downloadFile(`${scenario.id}-${game.options.seed}.md`, exportGame(scenario, game), 'text/markdown;charset=utf-8'));
-  root.append(h('h3', {}, t(scenario.title)), premiseBox, h('p', { class: 'deptsim-note' }, text('note')), h('p.task-guide', {}, t(bi('Выберите компанию и число ходов ниже. Чтобы играть на странице, подключите нейросеть по ссылке «Настройки» и нажмите «Играть здесь», затем отправляйте решения в поле «Ваше решение». Если вы играете на странице, итоговый разбор ведущего отметит раздел пройденным. Можно скопировать запрос в отдельный чат с нейросетью; тогда партия и разбор останутся в том чате, а страница их не получит. Играйте партию в одном разговоре до конца: скрытое состояние мира ведущий держит только в нём. После сверки своих решений с разбором нажмите «Завершить самопроверку симуляции» в конце этого блока.', 'Choose a company and the number of turns below. To play on this page, connect AI using the Settings link, press “Play here”, then submit decisions in “Your decision”. When you play on the page, the host’s final debrief marks the section complete. Alternatively, copy the request to a separate AI chat; the game and its debrief then stay in that chat and this page does not receive them. Play the whole game in one conversation: the host keeps the hidden state of the world only there. After comparing your decisions with the debrief, press “Finish the simulation self-review” at the end of this block.'))), settings,
+  root.append(h('h3', {}, t(scenario.title)), premiseBox, h('p', { class: 'deptsim-note' }, text('note')), h('p.task-guide', {}, t(bi('Выберите компанию и число ходов ниже. Чтобы играть на странице, подключите нейросеть по ссылке «Настройки» и нажмите «Играть здесь», затем отправляйте решения в поле «Ваше решение». Если вы играете на странице, итоговый разбор ведущего отметит раздел пройденным. Можно скопировать запрос в отдельный чат с нейросетью; тогда партия и разбор останутся в том чате, а страница их не получит. Играйте партию в одном разговоре до конца: скрытое состояние мира ведущий держит только в нём. После сверки своих решений с разбором запишите итог партии в поле в конце этого блока и нажмите «Завершить самопроверку симуляции».', 'Choose a company and the number of turns below. To play on this page, connect AI using the Settings link, press “Play here”, then submit decisions in “Your decision”. When you play on the page, the host’s final debrief marks the section complete. Alternatively, copy the request to a separate AI chat; the game and its debrief then stay in that chat and this page does not receive them. Play the whole game in one conversation: the host keeps the hidden state of the world only there. After comparing your decisions with the debrief, write the game outcome in the field at the end of this block and press “Finish the simulation self-review”.'))), settings,
     h('div', { class: 'ds-actions' }, copy, h('button.btn', { type: 'button', onclick: () => downloadFile('prompt.txt', game.prompt, 'text/plain;charset=utf-8') }, t(bi('Скачать запрос (.txt)', 'Download the request (.txt)'))), status, size, play, newGame, exportButton), longHint, languageNotice, link, promptDetails, fallback, confirmation, pane);
   const selfReviewStatus = h('p', { role: 'status' });
-  root.append(h('button.btn', { type: 'button', onclick: () => { completed = true; ctx.complete(); selfReviewStatus.textContent = t(bi('Самопроверка симуляции завершена. Раздел пройден.', 'Simulation self-review complete. Section complete.')); } }, t(bi('Завершить самопроверку симуляции', 'Finish the simulation self-review'))), selfReviewStatus);
+  // A game played in a separate chat leaves its outcome here, so the finish button needs either a move on the page or this text.
+  const notesKey = `${storageKey(scenario.id)}.notes`;
+  const notes = h('textarea', { rows: 4, 'aria-label': t(bi('Итог партии', 'Game outcome')) }) as HTMLTextAreaElement;
+  try { notes.value = localStorage.getItem(notesKey) ?? ''; } catch { /* Storage is optional. */ }
+  const finishSim = h('button.btn', { type: 'button', onclick: () => { if (!playedOrNoted()) return; completed = true; ctx.complete(); selfReviewStatus.textContent = t(bi('Самопроверка симуляции завершена. Раздел пройден.', 'Simulation self-review complete. Section complete.')); } }, t(bi('Завершить самопроверку симуляции', 'Finish the simulation self-review'))) as HTMLButtonElement;
+  const finishHint = h('p.small.muted', {}, t(bi('Кнопка станет доступна после первого хода на странице или когда вы запишете итог партии.', 'The button becomes available after your first move on the page or once you write the game outcome.')));
+  notes.oninput = () => { try { localStorage.setItem(notesKey, notes.value); } catch { /* Storage is optional. */ } updateControls(); };
+  root.append(h('label', {}, t(bi('Итог партии: если играли в отдельном чате, вставьте сюда разбор ведущего или запишите свои выводы', 'Game outcome: if you played in a separate chat, paste the host’s debrief here or write your conclusions')), notes), finishSim, finishHint, selfReviewStatus);
   input.oninput = updateControls;
   input.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void submit(input.value); } };
 
@@ -191,7 +198,10 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
     input.disabled = busy;
     stop.hidden = !busy;
     exportButton.disabled = !game.messages.length;
+    finishSim.disabled = !playedOrNoted(); finishHint.hidden = !finishSim.disabled;
   }
+  // The first user message is the automatic start request, so a move is the second one.
+  function playedOrNoted() { return game.messages.filter(m => m.role === 'user' && m.content.trim()).length > 1 || notes.value.trim() !== ''; }
   function stopStream() {
     generation++; const active = request; request = undefined; busy = false;
     active?.abort(); status.textContent = text('stopped'); persist(); checkComplete(); updateControls();

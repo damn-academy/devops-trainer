@@ -40,7 +40,7 @@ Enter the text in the rubric field below. If no AI is connected, copy the reques
 <!-- /quiz -->
 
 <!-- section: task | Task: a crisis week in the simulator -->
-Choose a preset company in the “Crisis Week” simulator below or create your own, and play at least the first four turns, each advancing time by half a day. The simulator needs an AI: one connected in settings or your own chat, into which you copy the request. In each turn, decide whom you inform and what you say, who speaks for the company, and how you respond to a journalist. After the facilitator's review, write down one decision that worked because of its quality and one that succeeded or failed because of circumstances you could not see.
+Choose a preset company in the “Crisis Week” simulator below or create your own, and play at least the first four turns, each advancing time by half a day. The simulator needs an AI: one connected in settings or your own chat, into which you copy the request. In each turn, decide whom you inform and what you say, who speaks for the company, and how you respond to a journalist. After the facilitator's review, write in the “Game outcome” field at the end of the simulator block one decision that worked because of its quality and one that succeeded or failed because of circumstances you could not see.
 
 <!-- widget: deptsim {"scenario":"pr.crisis"} -->
 

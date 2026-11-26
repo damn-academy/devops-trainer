@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { lessonPage } from '../src/app/lesson';
+import { selfReviewedWidgets } from '../src/app/task-guidance';
 import { MARKETING_V2_LESSONS } from '../src/blocks/marketing/v2';
 import { setLang } from '../src/core/i18n';
 import { store } from '../src/core/store';
@@ -93,7 +94,8 @@ for (const lang of ['ru', 'en'] as const) {
           expect(document.querySelector('[role="status"]')?.textContent).toMatch(/Самопроверка завершена|Self-review complete/);
         }
         // A spreadsheet template is finished together with the lesson's task document.
-        const practicePending = pending.some(s => s.kind !== 'quiz' && s.kind !== 'text' && !(s.kind === 'widget' && s.widget === 'template'));
+        const withDocument = !!page.el.querySelector('.task-document');
+        const practicePending = pending.some(s => s.kind !== 'quiz' && s.kind !== 'text' && !(s.kind === 'widget' && (s.widget === 'template' || (withDocument && selfReviewedWidgets.has(s.widget)))));
         await vi.waitFor(() => {
           expect(page.el.querySelector<HTMLElement>('.lesson-done')!.hidden).toBe(practicePending);
           expect(store.state.lessons[lesson.id]?.status === 'done').toBe(!practicePending);
