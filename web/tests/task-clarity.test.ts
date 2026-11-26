@@ -27,10 +27,10 @@ it('shows widget completion only when the widget reports it', () => {
 });
 
 
-it('requires explicit confirmation for a calculator without automatic grading', () => {
+it.each(['finance.round', 'k8s.cost'])('requires explicit confirmation for %s without automatic grading', widget => {
   const done = vi.fn();
-  const lesson = registry.lessons.get('finance.safe')!;
-  const section = lesson.sections.find(s => s.kind === 'widget' && s.widget === 'finance.round')!;
+  const lesson = registry.orderedLessons().find(l => l.sections.some(s => s.kind === 'widget' && s.widget === widget))!;
+  const section = lesson.sections.find(s => s.kind === 'widget' && s.widget === widget)!;
   const view = renderSection(section, { lesson, level: 'beginner', index: 0, count: 1, done });
   expect(done).not.toHaveBeenCalled();
   expect(view.el.textContent).toContain('Выводы вы проверяете самостоятельно');

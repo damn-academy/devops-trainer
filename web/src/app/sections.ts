@@ -129,7 +129,7 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
         return { el };
       }
       const selfReviewed = selfReviewedWidgets.has(s.widget);
-      const guide = selfReviewed ? calculatorGuidance : widgetGuidance[s.widget];
+      const guide = widgetGuidance[s.widget] ?? (selfReviewed ? calculatorGuidance : undefined);
       if (guide) el.append(howtoPanel(guide, bi('Как выполнить задание', 'How to complete the task')));
       if (s.widget === 'career.checklist') el.append(h('a', { href: '#/local-lab' }, t(bi('Подготовить локальную лабораторию', 'Set up the local lab'))));
       const host = h('div.widget-host');
