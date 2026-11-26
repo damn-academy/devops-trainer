@@ -196,3 +196,8 @@ input[type='range'] { accent-color: var(--ink); width: 100%; margin-inline: 0; b
 .md-table-frame.overflowing::after { content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 20px; background: linear-gradient(to right, transparent, var(--bg)); pointer-events: none; }
 .md-table-hint { position: absolute; right: 4px; top: 4px; z-index: 3; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; pointer-events: none; }
 .md-table-scroll th:first-child, .md-table-scroll td:first-child { position: sticky; left: 0; z-index: 1; background: var(--bg); box-shadow: 2px 0 3px var(--line); }
+/* On a phone the pinned first column covers half the screen and the next column scrolls under it; scroll the whole row instead. */
+@media (max-width: 560px) {
+  .md-table-scroll th:first-child, .md-table-scroll td:first-child { position: static; box-shadow: none; }
+  .md-table-scroll th, .md-table-scroll td { min-width: 7rem; }
+}
