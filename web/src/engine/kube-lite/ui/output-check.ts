@@ -76,6 +76,7 @@ function mount(root: HTMLElement, props: unknown, ctx: WidgetCtx): Mounted {
       'div.kx',
       {},
       h('h4.kx-h', {}, t(L.run) + (p.where ? ` — ${t(p.where)}` : '')),
+      h('p.task-guide', {}, t(bi('Выполните команду в терминале своей машины, подготовленной по инструкции урока. Для локальных машин откройте ', 'Run the command in the terminal of your own machine, prepared using the lesson instructions. For local machines, open ')), h('a', { href: '#/local-lab' }, t(bi('инструкцию по установке dtlab', 'the dtlab setup guide'))), t(bi('. Вставьте вывод в поле ниже и нажмите «Сверить». Зелёные галочки покажут найденные признаки, красные крестики — те, которых не хватает. Когда все признаки найдены, появится «Все признаки на месте».', '. Paste the output below and press “Compare”. Green check marks show matching signs; red crosses show missing ones. When all match, “Every sign is in place” appears.'))),
       h('div.kr-code', {}, h('pre.kx-pre', {}, p.command), h('button.btn.ghost.small', { type: 'button', onclick: async () => toast(t((await copyText(p.command)) ? L.copied : bi('Не получилось', 'Could not copy'))) }, t(L.copy))),
       paste,
       h('div.kx-row', {}, h('button.btn.primary.small', { type: 'button', onclick: verify }, t(L.verify)), h('span.kx-note', {}, t(L.privacy))),

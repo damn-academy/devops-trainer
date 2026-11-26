@@ -5,7 +5,7 @@
 // command, and shows the switch tap: a live frame list, the .pcap download
 // and the cable knobs (loss, delay).
 //
-// In an exam (Exam.inTab, `ctx.reportFacts`) it judges nothing itself: the
+// In an exam (Exam.inTab, `ctx.exam`) it judges nothing itself: the
 // "Check" button gathers every machine's facts and reports them to the exam's goals.
 //
 // This file is loaded only when the widget mounts (see index.ts), so the
@@ -43,7 +43,7 @@ const L = {
   ready: bi('Машины работают уже {s} с', 'The machines are running: {s} s'),
   resumed: bi('Продолжаем с того места, где вы остановились', 'Continuing where you left off'),
   failed: bi('Машины не запустились из-за ошибки: {e}', 'The machines did not start: {e}'),
-  missing: bi('В этой сборке нет образа лаборатории. Его собирает команда `npm run build:lab-image`.', 'This build has no lab image. `npm run build:lab-image` builds it.'),
+  missing: bi('Файл с системой для машин недоступен, поэтому лаборатория не запустилась. Перезагрузите страницу, чтобы повторить загрузку. Если сообщение осталось, нажмите «Сообщить о проблеме». Подготовить машины на своём компьютере можно по [инструкции по установке dtlab](#/local-lab).', 'The machine system image is unavailable, so the lab has not started. Reload this page to retry. If the message remains, press “Report a problem”. To prepare machines on your computer, follow [the dtlab setup guide](#/local-lab).'),
   reset: bi('Сбросить лабораторию', 'Reset the lab'),
   resetDone: bi('Все машины возвращены к началу упражнения.', 'Every machine is back at the start of the exercise'),
   goals: bi('Цели', 'Goals'),
@@ -90,7 +90,7 @@ export function mountNetLab(root: HTMLElement, props: NetLabProps, ctx?: WidgetC
     return { dispose() {} };
   }
   const report = ctx?.reportFacts?.bind(ctx);
-  const exam = !!report;
+  const exam = ctx?.exam === true;
   const level = ctx?.level ?? 'intermediate';
   const tasks = exam ? [] : spec.tasks.filter((x) => shown(x, level));
   const key = ctx?.lessonId ? `${ctx.lessonId}/${ctx.sectionId ?? 'net'}` : `net-${spec.id}`;
@@ -126,6 +126,7 @@ export function mountNetLab(root: HTMLElement, props: NetLabProps, ctx?: WidgetC
     'div.lab-left',
     {},
     prose(spec.intro),
+    prose(bi('Запустите машины кнопкой под терминалом и дождитесь подготовки. Выбирайте машину по вкладке с её именем и выполняйте цели в терминале на этой странице. После команд проверка обновляет цели автоматически; зелёная галочка означает выполненную цель. Проверка сетевого ответа может занять несколько секунд.', 'Start the machines with the button below the terminal and wait for setup. Select a machine by its named tab and complete the goals in its terminal on this page. Checks update goals automatically after commands; a green check mark means a completed goal. Network response checks can take a few seconds.'), 'task-guide'),
     topo,
     tasks.length ? h('h4.lab-h', {}, t(L.goals)) : null,
     tasks.length ? goals : null,

@@ -300,7 +300,10 @@ export function mountRealCard(task: RealTask, opts: { feedback: boolean; onScore
     };
     pasteEl = h('div.rl-paste-task', {}, h('label.small', {}, t(task.paste.label)), area, h('button.btn.small', { type: 'button', onclick: check }, t(L.verify)), st);
   }
-  const el = h('div.rl-card', {}, where, task.goals?.length ? h('p.small.rl-checks', {}, t(L.checks)) : null, list, pasteEl);
+  const guide = h('p.task-guide', {}, t(opts.where === 'tab'
+    ? bi('Запустите машины в разделе выше и выполните задание в их терминалах. Проверка получает состояние машин автоматически. Зелёная галочка означает выполненную цель, красный крестик — неудачную проверку.', 'Start the machines above and complete the task in their terminals. Machine states are collected automatically. A green check mark means a completed goal; a red cross means a failed check.')
+    : bi('После выполнения задания запустите проверочный скрипт из раздела «Ваши машины», вставьте полученный блок в поле своей машины и нажмите «Проверить». Можно также нажать «Забрать из dtlab». Зелёная галочка означает выполненную цель, красный крестик — неудачную проверку. Точка означает, что данные ещё не получены.', 'After completing the task, run the check script from “Your machines”, paste the resulting block into your machine’s field and press “Verify”. You can also press “Take from dtlab”. A green check mark means a completed goal; a red cross means a failed check. A dot means data has not arrived yet.')));
+  const el = h('div.rl-card', {}, where, guide, task.goals?.length ? h('p.small.rl-checks', {}, t(L.checks)) : null, list, pasteEl);
   if (task.goals) update({});
   return { el, update };
 }

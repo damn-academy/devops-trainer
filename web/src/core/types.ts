@@ -1199,6 +1199,8 @@ export interface ExplainerReg {
 }
 
 export interface WidgetCtx {
+  /** Exam mode is explicit; feedback collection also uses reportFacts in lessons. */
+  exam?: boolean;
   lessonId?: LessonId;
   sectionId?: string;
   level: Level;

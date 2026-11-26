@@ -99,7 +99,7 @@ function mountTabLab(exam: Exam, onFacts: (m: Record<string, Facts>) => void): {
   const el = h('div.widget-host.ex2-tablab');
   let feedbackFacts: unknown = null;
   const unregisterFeedback = registerFeedbackSnapshot(el, () => ({ facts: feedbackFacts }));
-  const mounted = w.mount(el, inTab.props ?? {}, { level: 'experienced', complete() {}, record: (e) => store.record(e), openDoc: (r) => openDoc(r, { mode: 'exam', allowed: exam.allowedDocs, via: 'exam' }), reportFacts: facts => { feedbackFacts = facts; onFacts(facts); } });
+  const mounted = w.mount(el, inTab.props ?? {}, { exam: true, level: 'experienced', complete() {}, record: (e) => store.record(e), openDoc: (r) => openDoc(r, { mode: 'exam', allowed: exam.allowedDocs, via: 'exam' }), reportFacts: facts => { feedbackFacts = facts; onFacts(facts); } });
   return { el, mounted: { ...mounted, dispose() { unregisterFeedback(); mounted.dispose(); } } };
 }
 
