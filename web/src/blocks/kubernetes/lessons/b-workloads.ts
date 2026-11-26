@@ -67,8 +67,8 @@ export const deployQuiz: QuizItem[] = [
       'How does `kubectl rollout restart deployment/web` differ from `kubectl delete pod web-5d78b9c7f4-x2k9p`, if after either one new pods appear in the list?',
     ),
     options: [
-      { id: 'right', text: bi('Команда restart меняет шаблон пода, появляется новая ревизия, и все поды заменяются постепенно с учётом maxSurge и maxUnavailable, а команда delete убирает один под, и ReplicaSet создаёт ему замену по тому же шаблону', 'restart changes the pod template, a new revision appears, and all pods are replaced gradually by maxSurge and maxUnavailable, whereas delete removes one pod and the ReplicaSet creates a replacement from the same template'), correct: true },
       { id: 'same', text: bi('Ничем не отличается, потому что обе команды удаляют поды, а ReplicaSet создаёт новые', 'Nothing: both delete pods, and the ReplicaSet creates new ones'), why: bi('Результат похож, но путь разный. restart записывает в шаблон аннотацию `kubectl.kubernetes.io/restartedAt`, поэтому контроллер Deployment заводит новый ReplicaSet и выкладывает его постепенно, а `kubectl rollout history` покажет новую ревизию. После delete ревизия та же, и работает только контроллер ReplicaSet.', 'The result looks alike, the path differs. restart writes the annotation `kubectl.kubernetes.io/restartedAt` into the template, so the Deployment controller creates a new ReplicaSet and rolls it out gradually, and `kubectl rollout history` shows a new revision. After delete the revision is the same, and only the ReplicaSet controller works.') },
+      { id: 'right', text: bi('Команда restart меняет шаблон пода, появляется новая ревизия, и все поды заменяются постепенно с учётом maxSurge и maxUnavailable, а команда delete убирает один под, и ReplicaSet создаёт ему замену по тому же шаблону', 'restart changes the pod template, a new revision appears, and all pods are replaced gradually by maxSurge and maxUnavailable, whereas delete removes one pod and the ReplicaSet creates a replacement from the same template'), correct: true },
       { id: 'node', text: bi('restart перезапускает контейнеры на тех же узлах, а delete переносит под на другой узел', 'restart restarts the containers on the same nodes, whereas delete moves the pod to another node'), why: bi('В обоих случаях появляются новые поды, и узел для каждого заново выбирает планировщик. Контейнеры на месте перезапускает только kubelet, когда процесс в контейнере завершился.', 'Both create new pods, and the scheduler picks a node for each anew. Only the kubelet restarts containers in place, when the process in a container has exited.') },
     ],
   },
@@ -251,8 +251,8 @@ export const archQuiz: QuizItem[] = [
     concepts: ['k8s.scheduler'],
     prompt: bi('Планировщик выбрал узел для пода. Как он сообщает о своём выборе?', 'The scheduler picked a node for a pod. How does it report the choice?'),
     options: [
-      { id: 'binding', text: bi('Записывает привязку (Binding) через API-сервер, и у пода появляется nodeName', 'It writes a Binding through the API server; the pod gets nodeName'), correct: true },
       { id: 'etcd', text: bi('Записывает узел прямо в etcd', 'It writes the node straight into etcd'), why: bi('К etcd обращается только API-сервер.', 'Only the API server talks to etcd.') },
+      { id: 'binding', text: bi('Записывает привязку (Binding) через API-сервер, и у пода появляется nodeName', 'It writes a Binding through the API server; the pod gets nodeName'), correct: true },
       { id: 'kubelet', text: bi('Отправляет kubelet команду «запусти под»', 'It sends the kubelet a "start it" command'), why: bi('Планировщик ни с кем, кроме API-сервера, не обменивается запросами: kubelet сам видит, что под назначен на его узел.', 'The scheduler talks to nobody but the API: the kubelet itself sees that the pod is assigned to its node.') },
     ],
   },
@@ -262,9 +262,9 @@ export const archQuiz: QuizItem[] = [
     concepts: ['k8s.kubelet', 'k8s.node'],
     prompt: bi('У узла выключилось питание. Через какое время, если ничего не настраивать, поды с этого узла начнут создаваться на других узлах?', 'A node lost power. By default, how soon do its pods start being created on other nodes?'),
     options: [
-      { id: '350', text: bi('Примерно через 50 + 300 секунд, потому что сначала истекает срок ожидания узла, а потом tolerationSeconds пода', 'About 50 + 300 seconds: the node grace period, then the pod tolerationSeconds'), correct: true },
-      { id: 'now', text: bi('Сразу', 'At once'), why: bi('Сигнала «узел выключился» никто не получает, и молчание узла замечают, только когда истечёт срок ожидания.', 'Nobody gets a "node died" signal: the silence of the Lease is noticed only after the grace period.') },
       { id: 'never', text: bi('Никогда, пока узел не вернётся', 'Never, until the node comes back'), why: bi('Так ведёт себя StatefulSet, которому нельзя запускать два одинаковых пода, но не Deployment.', 'That is true for a StatefulSet (two identical pods are not allowed), but not for a Deployment.') },
+      { id: 'now', text: bi('Сразу', 'At once'), why: bi('Сигнала «узел выключился» никто не получает, и молчание узла замечают, только когда истечёт срок ожидания.', 'Nobody gets a "node died" signal: the silence of the Lease is noticed only after the grace period.') },
+      { id: '350', text: bi('Примерно через 50 + 300 секунд, потому что сначала истекает срок ожидания узла, а потом tolerationSeconds пода', 'About 50 + 300 seconds: the node grace period, then the pod tolerationSeconds'), correct: true },
     ],
     refs: { explainer: 'k8s.node-down' },
   },
@@ -427,8 +427,8 @@ export const operatorQuiz: QuizItem[] = [
     concepts: ['k8s.crd', 'k8s.operator'],
     prompt: bi('Вы создали CRD `Website` и объект `Website blog`, а оператора в кластере нет. Что произойдёт?', 'You created the `Website` CRD and a `Website blog` object, but there is no operator. What happens?'),
     options: [
-      { id: 'data', text: bi('Ничего не произойдёт, потому что объект хранится в API, но исполнять его некому', 'Nothing: the object is stored in the API, but nobody executes it'), correct: true },
       { id: 'deploy', text: bi('API-сервер сам создаст Deployment по схеме CRD', 'The API server creates a Deployment from the CRD schema itself'), why: bi('Схема CRD описывает только поля и правила их проверки, а поведение объекту даёт контроллер.', 'A CRD schema describes only fields and their validation. A controller provides the behaviour.') },
+      { id: 'data', text: bi('Ничего не произойдёт, потому что объект хранится в API, но исполнять его некому', 'Nothing: the object is stored in the API, but nobody executes it'), correct: true },
     ],
     explain: bi('С Deployment без controller-manager происходит то же самое, потому что объект остаётся только записью. Оператором называют контроллер, который обслуживает ваш собственный вид объектов.', 'Like a Deployment: without the controller-manager it is just a record. An operator is a controller for your own kind of object.'),
   },
@@ -438,8 +438,8 @@ export const operatorQuiz: QuizItem[] = [
     concepts: ['k8s.operator', 'k8s.owner'],
     prompt: bi('Оператор создаёт Deployment и записывает в его ownerReferences объект Website. Что произойдёт, если удалить Website?', 'The operator creates a Deployment with ownerReferences pointing to the Website. What does deleting the Website do?'),
     options: [
-      { id: 'gc', text: bi('Сборщик мусора удалит Deployment, а вслед за ним ReplicaSet и поды', 'The garbage collector deletes the Deployment, and after it the ReplicaSet and the pods'), correct: true },
       { id: 'stay', text: bi('Deployment останется, пока оператор сам его не удалит', 'The Deployment stays until the operator deletes it'), why: bi('ownerReferences для того и нужны, чтобы оператору не приходилось убирать за собой: это делает сборщик мусора.', 'ownerReferences are there precisely so that the operator does not have to clean up: the garbage collector does it.') },
+      { id: 'gc', text: bi('Сборщик мусора удалит Deployment, а вслед за ним ReplicaSet и поды', 'The garbage collector deletes the Deployment, and after it the ReplicaSet and the pods'), correct: true },
     ],
   },
 ];
