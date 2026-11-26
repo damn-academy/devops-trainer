@@ -56,7 +56,7 @@ export function manifestPlugin(): Plugin {
       cached ??= compute(root);
       this.emitFile({ type: 'asset', fileName: 'catalog-courses.json', source: (await cached).courses });
       this.emitFile({ type: 'asset', fileName: 'catalog-labels.json', source: JSON.stringify({
-        academy: { title: bi('Академия DevOps', 'DevOps Academy'), description: bi('Учебник и задания для самостоятельного изучения DevOps.', 'Textbook and exercises for learning DevOps independently.') },
+        academy: { title: bi('Все курсы damn.academy', 'All damn.academy courses'), description: bi('Профессия DevOps и деловые курсы: уроки, объяснения, задания, тесты и документация.', 'The DevOps profession and the business courses: lessons, explainers, exercises, quizzes and documentation.') },
         v86: { title: bi('Машины Linux во вкладке', 'In-tab Linux machines'), description: bi('Эмулятор, ядра и образы Linux для практических заданий.', 'Emulator, kernels and Linux images for hands-on exercises.') },
         rv64: { title: bi('Машины RISC-V во вкладке', 'In-tab RISC-V machines'), description: bi('Файлы машин RISC-V для практических заданий.', 'RISC-V machine assets for hands-on exercises.') },
       }) });
