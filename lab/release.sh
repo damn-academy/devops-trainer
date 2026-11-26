@@ -16,7 +16,11 @@ if command -v nfpm >/dev/null 2>&1; then
   for arch in amd64 arm64; do
     export DTLAB_ARCH="$arch" DTLAB_BINARY="$out/dtlab-linux-$arch"
     for format in deb rpm; do
-      nfpm package --config packaging/nfpm.yaml --packager "$format" --target "$out/dtlab-linux-$arch.$format"
+      # nfpm expands environment variables in fields, not in contents.src.
+      config=$(mktemp)
+      sed "s#\${DTLAB_BINARY}#$DTLAB_BINARY#" packaging/nfpm.yaml > "$config"
+      nfpm package --config "$config" --packager "$format" --target "$out/dtlab-linux-$arch.$format"
+      rm -f "$config"
     done
   done
 else
