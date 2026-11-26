@@ -23,7 +23,7 @@ func PackageHint(goos, exe string) string {
 	case "windows":
 		p := strings.ToLower(strings.ReplaceAll(exe, `\`, "/"))
 		if strings.HasSuffix(p, "/dtlab/dtlab.exe") && strings.Contains(p, "/program files/") {
-			return `msiexec /x "{0DD00383-AB75-4AB1-9F7B-E77BA5EA70DA}"`
+			return `"` + exe[:len(exe)-len("dtlab.exe")] + `uninstall.exe"` + ` (or Settings → Apps → dtlab → Uninstall)`
 		}
 	}
 	return ""

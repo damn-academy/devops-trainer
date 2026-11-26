@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build the ready-made dtlab files that #/local-lab links to, with checksums.
-# Usage: lab/release.sh <version> [out-dir]. Optional: nfpm, wixl, Apple packaging tools.
+# Usage: lab/release.sh <version> [out-dir]. Optional: nfpm, makensis (NSIS), Apple packaging tools.
 set -euo pipefail
 version=${1:?usage: release.sh <version> [out-dir]}
 [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "version must look like 1.2.3" >&2; exit 1; }
@@ -26,10 +26,10 @@ if command -v nfpm >/dev/null 2>&1; then
 else
   echo 'Skipping .deb/.rpm: nfpm is not installed.' >&2
 fi
-if [[ $(uname -s) == Linux ]] && command -v wixl >/dev/null 2>&1; then
-  wixl -a x64 -D "Version=$version" -D "Binary=$out/dtlab-windows-amd64.exe" -o "$out/dtlab-windows-amd64.msi" packaging/dtlab.wxs
+if command -v makensis >/dev/null 2>&1; then
+  makensis -V2 -DVERSION="$version" -DBINARY="$out/dtlab-windows-amd64.exe" -DOUT="$out/dtlab-windows-amd64-setup.exe" packaging/dtlab.nsi
 else
-  echo 'Skipping .msi: requires Linux and wixl (msitools).' >&2
+  echo 'Skipping the Windows installer: makensis (NSIS) is not installed.' >&2
 fi
 if [[ $(uname -s) == Darwin ]]; then
   stage=$(mktemp -d)

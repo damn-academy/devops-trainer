@@ -126,7 +126,7 @@ const HYPERVISOR: Record<LabOS, Bi> = {
 };
 
 const INSTALLERS: Record<LabOS, string[]> = {
-  windows: ['dtlab-windows-amd64.msi'],
+  windows: ['dtlab-windows-amd64-setup.exe'],
   macos: ['dtlab-darwin-arm64.pkg', 'dtlab-darwin-amd64.pkg'],
   linux: ['dtlab-linux-amd64.deb', 'dtlab-linux-arm64.deb', 'dtlab-linux-amd64.rpm', 'dtlab-linux-arm64.rpm', 'install.sh'],
 };

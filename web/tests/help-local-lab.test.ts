@@ -110,10 +110,10 @@ describe('local lab page', () => {
       DTLAB_RELEASE.published = true;
       setLang('en');
       Object.assign(DTLAB_RELEASE.installersPublished, { windows: false, macos: false, linux: false });
-      expect(localLabPage().el.querySelector('a[href$=".msi"]')).toBeNull();
+      expect(localLabPage().el.querySelector('a[href$="-setup.exe"]')).toBeNull();
       Object.assign(DTLAB_RELEASE.installersPublished, { windows: true, macos: true, linux: true });
       const { el } = localLabPage();
-      for (const [os, suffix] of [['windows', '.msi'], ['macos', '.pkg'], ['linux', '.deb']]) {
+      for (const [os, suffix] of [['windows', '-setup.exe'], ['macos', '.pkg'], ['linux', '.deb']]) {
         const block = el.querySelector(`[data-os="${os}"]`)!;
         expect(block.querySelector('a')!.getAttribute('href')).toMatch(new RegExp(`${suffix.replace('.', '\\.')}$$`));
         expect(text(block)).toContain('Plain binary alternative');

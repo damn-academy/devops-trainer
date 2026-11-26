@@ -10,7 +10,7 @@ Download files from the [latest release](https://github.com/damn-academy/devops-
 
 ### Windows
 
-Download `dtlab-windows-amd64.msi`, open it and follow the installer. It installs into `Program Files\dtlab` and adds that directory to PATH. Open a new terminal afterward. The MSI is unsigned. If SmartScreen says **Windows protected your PC**, select **More info**, then **Run anyway** after checking that the file came from this repository. If your organisation blocks that option, ask its administrator. See [Microsoft's SmartScreen documentation](https://learn.microsoft.com/windows/apps/package-and-deploy/smartscreen-reputation).
+Download `dtlab-windows-amd64-setup.exe`, open it and follow the installer. It installs into `Program Files\dtlab` and adds that directory to PATH. Open a new terminal afterward. The installer is unsigned. It appears in **Settings → Apps** as dtlab, and uninstalling it there removes the PATH entry. If SmartScreen says **Windows protected your PC**, select **More info**, then **Run anyway** after checking that the file came from this repository. If your organisation blocks that option, ask its administrator. See [Microsoft's SmartScreen documentation](https://learn.microsoft.com/windows/apps/package-and-deploy/smartscreen-reputation).
 
 Alternatively download `dtlab-windows-amd64.exe`, rename it to `dtlab.exe`, and run `.\dtlab.exe install` in PowerShell.
 
@@ -36,7 +36,7 @@ Alternatively download the plain `dtlab-linux-amd64` or `dtlab-linux-arm64` bina
 
 ### Verify checksums
 
-Download `SHA256SUMS` from the same release as your installer or binary. On Linux run `sha256sum dtlab-linux-amd64.deb`; on macOS run `shasum -a 256 dtlab-darwin-arm64.pkg`; in PowerShell run `Get-FileHash .\dtlab-windows-amd64.msi -Algorithm SHA256`. Compare the entire hash with the line for that filename in `SHA256SUMS`. Change the filename for your chosen asset. Course downloads verify their size and SHA256 automatically against `catalog.json`.
+Download `SHA256SUMS` from the same release as your installer or binary. On Linux run `sha256sum dtlab-linux-amd64.deb`; on macOS run `shasum -a 256 dtlab-darwin-arm64.pkg`; in PowerShell run `Get-FileHash .\dtlab-windows-amd64-setup.exe -Algorithm SHA256`. Compare the entire hash with the line for that filename in `SHA256SUMS`. Change the filename for your chosen asset. Course downloads verify their size and SHA256 automatically against `catalog.json`.
 
 ## Courses
 
@@ -54,7 +54,7 @@ Files live in `~/.dtlab/courses/<id>/<version>` on Linux/macOS or `%LOCALAPPDATA
 
 For a mirror or tests, set `DTLAB_CATALOG_URL` to the complete catalog URL, such as `https://mirror.example/releases/catalog.json`; archives are resolved beside it. `DTLAB_HOME` overrides the data directory. Catalog and download errors explain connection failures; previously installed content remains usable offline. A `.lock` directory prevents concurrent course changes; after an interrupted process, remove it only after confirming no course command is running.
 
-`dtlab uninstall` removes courses with the rest of the lab data. For a native package installation it preserves the binary and prints the removal command: `sudo apt remove dtlab`, `sudo dnf remove dtlab`, or `msiexec /x` with the installed product code. On macOS it prints `sudo rm /usr/local/bin/dtlab && sudo pkgutil --forget academy.damn.dtlab`: `pkgutil --forget` removes the receipt, not the binary. A Linux `install.sh --system` installation can be removed with `sudo rm /usr/local/bin/dtlab` after removing data.
+`dtlab uninstall` removes courses with the rest of the lab data. For a native package installation it preserves the binary and prints the removal command: `sudo apt remove dtlab`, `sudo dnf remove dtlab`, or the installer’s own `uninstall.exe` in `Program Files\dtlab` (also reachable through **Settings → Apps → dtlab**). On macOS it prints `sudo rm /usr/local/bin/dtlab && sudo pkgutil --forget academy.damn.dtlab`: `pkgutil --forget` removes the receipt, not the binary. A Linux `install.sh --system` installation can be removed with `sudo rm /usr/local/bin/dtlab` after removing data.
 
 ## What your computer needs
 
@@ -185,7 +185,7 @@ Record the results in [STATUS](../web/STATUS.md): the OS version, how long step 
 
 ## Publishing installers and courses
 
-Run `lab/release.sh 1.2.3 /path/to/release` to cross-compile the five plain binaries. Install nFPM to emit `.deb` and `.rpm` for both Linux architectures. On Linux, install `wixl` from msitools for the x64 MSI. On macOS, `pkgbuild` and `productbuild` emit two unsigned `.pkg` files. Missing platform tools are reported as skips. The script also copies `install.sh` and writes `SHA256SUMS` for binaries and installers; it does not build the web site. Use an empty output directory for each release. On Windows, uninstall an older MSI before installing a new version of this unsigned package.
+Run `lab/release.sh 1.2.3 /path/to/release` to cross-compile the five plain binaries. Install nFPM to emit `.deb` and `.rpm` for both Linux architectures. Install NSIS (`makensis`) for the Windows installer; it builds on Linux and macOS. On macOS, `pkgbuild` and `productbuild` emit two unsigned `.pkg` files. Missing platform tools are reported as skips. The script also copies `install.sh` and writes `SHA256SUMS` for binaries and installers; it does not build the web site. Use an empty output directory for each release. On Windows, uninstall an older MSI before installing a new version of this unsigned package.
 
 Build `web/dist` on the workshop cluster, then run:
 
