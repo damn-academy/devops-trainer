@@ -137,6 +137,24 @@ for(const suffix of ['', '-en']) {
     near(routed(balance.name,'M2'),hired(balance.name,'M2'),`${role} cash unchanged`);
     for(let m=1;m<=18;m++) { const c=checks.getColumn(m<=12?m+1:m+2).letter; near(routed(checks.name,`${c}2`),0,`${role} balance ${m}`); near(routed(checks.name,`${c}3`),0,`${role} CFO ${m}`); }
   }
+  for (const [role, row] of [['R&D',11],['S&M',12],['G&A',13],['COGS',7]]) {
+    hiring.getCell('B2').value=role;
+    const before=reader(w);
+    for(let m=1;m<=18;m++) { const c=pnl.getColumn(m<=12?m+1:m+2).letter; for(const line of [7,11,12,13]) before(pnl.name,`${c}${line}`); before(balance.name,`${c}2`); }
+    hiring.getCell('F2').value=23;
+    const once=reader(w);
+    for(let m=1;m<=18;m++) {
+      const c=pnl.getColumn(m<=12?m+1:m+2).letter;
+      for(const line of [7,11,12,13]) near(once(pnl.name,`${c}${line}`)-before(pnl.name,`${c}${line}`),m===7 && line===row?23:0,`one-off ${role} month ${m} line ${line}`);
+      near(once(balance.name,`${c}2`)-before(balance.name,`${c}2`),m>=7?-23:0,`one-off cash ${m}`);
+      near(once(checks.name,`${c}2`),0,`one-off balance ${m}`);
+      near(once(checks.name,`${c}3`),0,`one-off CFO ${m}`);
+    }
+    hiring.getCell('D2').value=13;
+    const moved=reader(w);
+    near(moved(pnl.name,`O${row}`)-read(pnl.name,`O${row}`),role==='R&D'?60.7:40.7,'one-off moved to year two');
+    hiring.getCell('D2').value=7; hiring.getCell('F2').value=0;
+  }
   hiring.getCell('B2').value='R&D';
   hiring.getCell('D2').value=10; hiring.getCell('D3').value=13;
   near(reader(w)(balance.name,'M2')-hired(balance.name,'M2'),3*(17.7+12),'delaying two hires');
