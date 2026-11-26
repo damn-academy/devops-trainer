@@ -34,13 +34,13 @@ AI-text detectors are unsuitable for quality checks. OpenAI withdrew its classif
 
 <!-- quiz -->
 ? Why does the fact-checker in an article pipeline only write a report and not edit the text?
-+ An author tends to confirm their own wording, while a fact-checker should check rather than rewrite || Separating roles prevents the checker from quietly introducing new errors and leaves decisions to the editor.
 - Because the fact-checker uses a weaker model that cannot be trusted with style editing || It is about role separation, not model strength.
++ An author tends to confirm their own wording, while a fact-checker should check rather than rewrite || Separating roles prevents the checker from quietly introducing new errors and leaves decisions to the editor.
 - Because editing costs more while a report costs less for the same benefit to the article || Cost is not the main point; independent checking is.
 ? A worker took a course as six fictional learners and found two blockers. How should the team report describe this check?
 + As modelling learner behaviour to find defects before testing with real people || Personas are a model, not research with real people, and must not be presented as a user survey.
-- As user research with six respondents || There were no respondents; this is modelling.
-- As an automated test guaranteeing learners will not drop out after the fixes || A model gives no guarantees; it reduces risk.
+- As user research on six respondents that can replace interviews with real learners || There were no respondents; this is modelling.
+- As an automated test that guarantees learners will not drop out after the fixes || A model gives no guarantees; it reduces risk.
 <!-- /quiz -->
 
 <!-- section: task | Task: six readers for your material -->
@@ -94,12 +94,12 @@ A generative illustration does not automatically confer exclusive copyright. The
 
 <!-- quiz -->
 ? A technical article about a new command needs to show how it works. What should you choose?
+- A tidy SVG diagram that shows the command's steps more clearly than terminal output does || A diagram does not prove the command works; technical readers need real output.
 + A terminal recording of the command actually running, converted to a GIF animation || A documentary recording confirms the command ran and produced that output.
-- A tidy SVG diagram showing the command's steps more clearly than terminal output || A diagram does not prove the command works; technical readers need real output.
 - A generated terminal illustration in the brand style || Generated “output” presents fiction as fact.
 ? Scrolling a longread reveals a hole in the background beneath a moving figure. What should change?
 + Draw the background without figures and each complete figure on its own transparent layer || Cutting figures from a combined image leaves holes; patches do not fix this.
-- Regenerate the same scene at higher resolution so the holes become invisible || Resolution does not fill the hole behind the figure.
+- Regenerate the scene at a higher resolution || Resolution does not fill the hole behind the figure.
 - Paint over the hole in an image editor after generation || This patch breaks at a different offset.
 <!-- /quiz -->
 

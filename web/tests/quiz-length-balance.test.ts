@@ -46,9 +46,7 @@ const MAX_SHARE = 0.45;
 const MIN_QUESTIONS = 8;
 // Courses written before this check, with the share they had then. They may not get worse;
 // remove an entry once its course is rebalanced below MAX_SHARE.
-const LEGACY_CEILING: Record<string, number> = {
-  aicontent: 0.62,
-};
+const LEGACY_CEILING: Record<string, number> = {};
 
 type Rank = 'longest' | 'shortest' | 'median';
 const rankOfCorrect = (len: number[], c: number): Rank | null => {

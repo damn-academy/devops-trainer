@@ -24,9 +24,9 @@ Before publication, fill in a short card: platform; a link to its rules and the 
 
 <!-- quiz -->
 ? A browser assistant inserted text and every image into a Habr draft. What happens next?
-+ The editor checks the draft on the platform and presses the Publish button themselves || The assistant prepares the draft; the human retains the publication decision.
 - The assistant publishes the article itself at the time specified in the brief || Automated publication on an external platform requires separate authorisation and checks.
-- The article can be considered published because Habr shows drafts to the author's subscribers || Only the author sees the draft.
++ The editor checks the draft on the platform and presses the Publish button themselves || The assistant prepares the draft; the human retains the publication decision.
+- The article is already published, since the author's subscribers see drafts || Only the author sees the draft.
 ? A blog is published in English and German. The editor corrected a fact in the English post. What else is needed?
 + Correct the same fact in the German version and publish both versions at once || Language versions are corrected together or they diverge.
 - Nothing; the translator will fix the German version in the next scheduled blog update || Until then, readers will see different facts in different versions.
@@ -76,13 +76,13 @@ Major newsrooms publish AI policies with recurring principles: a human is respon
 
 <!-- quiz -->
 ? A company wants to publish AI-written articles on Habr with a disclosure. What do Habr's rules since July 2026 say?
+- Habr allows such articles as long as a label at the beginning says that the text was written by AI || A label does not remove the restriction; an original article based on the author's experience is needed.
 + Habr discourages such material, and a label disclosing AI use alone does not permit it || The rules allow illustrations and small supporting fragments in an original article, not labelled AI texts.
-- Habr allows such articles if a label at the beginning says AI wrote the text || A label does not remove the restriction; an original article based on the author's experience is needed.
-- Habr allows such articles only in corporate blogs of companies paying for publication || The AI rule applies to every publication.
+- Habr allows such articles only in the corporate blogs of companies that pay for publication || The AI rule applies to every publication.
 ? An “AI-generated” label reduced reader trust in headlines in an experiment. What should an editorial team infer?
-+ Explain exactly what AI did and what a human checked in the disclosure, if true || Readers interpret a bare label as full automation, and clarification changes their reaction.
-- Do not disclose AI involvement, to preserve reader trust and publication reach || Where rules or law require disclosure, omitting it violates them.
 - Label only material where AI wrote more than half the article || No platform sets that threshold; rules vary by platform.
+- Do not disclose AI involvement, to preserve reader trust and publication reach || Where rules or law require disclosure, omitting it violates them.
++ Explain exactly what AI did and what a human checked in the disclosure, if true || Readers interpret a bare label as full automation, and clarification changes their reaction.
 <!-- /quiz -->
 
 <!-- section: task | Task: a one-page AI policy -->
@@ -130,11 +130,11 @@ To choose a tool, run a small pilot: give two tools the same real editorial task
 ? Generating a five-second video costs 20 credits. Why is that insufficient to calculate the cost of an advertising video?
 + Include all retries, editorial selection, editing and checks: the cost per accepted second || In our projects, most generations did not pass selection, and human work cost more than generation.
 - Add the subscription cost; nothing else belongs in the video price because the rest is free || Editor time and editing cost money too.
-- It is sufficient if the video was generated on the first attempt and needed no editing before publication || In our projects, first-attempt videos almost never passed selection, and editing is almost always needed.
+- It is enough if the video came out on the first attempt and needed no editing || In our projects, first-attempt videos almost never passed selection, and editing is almost always needed.
 ? A video-tool comparison table was published in 2025. Can you use it to choose in late 2026?
 + Not without checking current plans: some services closed or changed their pricing || The Sora 2 API closed in September 2026, while Pika and Kimi changed plans.
-- Yes, because generative service prices change by no more than ten percent a year || The services themselves changed, not only prices.
-- Yes, if the table links to pricing pages showing where its figures came from || Links help with checking, but the table's figures are still outdated.
+- Yes, because prices of generative services change by no more than ten percent over a year || The services themselves changed, not only prices.
+- Yes, if the table links to the pricing pages that show where its figures came from || Links help with checking, but the table's figures are still outdated.
 <!-- /quiz -->
 
 <!-- section: task | Task: pilot two tools -->

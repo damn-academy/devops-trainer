@@ -29,11 +29,11 @@ Missing audio is the most frustrating video and podcast failure. Once, camera-re
 ? A synthesised line is a second and a half longer than scripted. How do you prevent lips and subtitles falling out of sync?
 + Build the timeline from the actual duration of the synthesised audio, not from the script || The editing program places the utterance and its caption using the audio timestamps; avatar lip movement still needs visual checking, because utterance duration alone does not guarantee alignment.
 - Speed up the line in an audio editor to the duration specified in the video script || Accelerated speech sounds unnatural, and the next line will drift again.
-- Shorten the line and synthesise it repeatedly until its duration matches the script || This slow trial and error damages the script; adjusting the visuals is easier.
+- Shorten the line's text and synthesise it again and again until its duration matches the script || This slow trial and error damages the script; adjusting the visuals is easier.
 ? A video render finished without errors. What should happen before publication?
 + Watch and listen to the entire final file, from the first second to the last || A successful process does not guarantee there is no Canvas error in the frame or that the file contains audio.
 - Nothing, because render errors always appear in program output and stop execution || An error may appear in the picture without any output message.
-- Check the file size: if it is larger than expected, audio and visuals are present || File size says nothing about frame contents.
+- Check the file size: if it is bigger than expected, sound and video are in || File size says nothing about frame contents.
 <!-- /quiz -->
 
 <!-- section: theory | Sample video: before and after -->
@@ -136,8 +136,8 @@ Fifteen stages and ten roles pay off for long recordings and texts intended to l
 
 <!-- quiz -->
 ? After literary editing of a talk-based article, “this approach may help” became “this approach helps”. Which pipeline stage should catch it?
-+ The repeat fact-check of the version diff that follows literary editing || Style changes modality, and only a version comparison finds this.
 - Proofreading, because it reads the whole text || Proofreading checks spelling and typography, not meaning.
++ The repeat fact-check of the version diff that follows literary editing || Style changes modality, and only a version comparison finds this.
 - Headline selection, because the editor reads the whole article when choosing an option || Selecting a headline does not include checking every sentence's meaning.
 ? The translated fragments are 7% longer in total than the originals. What does this tell you?
 + There are probably no major omissions, but meaning and fragment completeness must be checked separately || Comparing lengths can indicate major omissions, but cannot prove their absence or catch distortions.

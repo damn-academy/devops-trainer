@@ -49,11 +49,11 @@ Deep research modes in ChatGPT, Claude, Gemini, Perplexity and Kimi suit researc
 ? A band's official video is set on an empty beach. The researcher found no two written sources confirming this. What status should the fact “the video is set on an empty beach” receive?
 + Confirmed: the official video itself serves as a primary source for what is visible in it || Two independent accounts are needed for circumstances of creation; what is visible in a primary source is confirmed by that source.
 - Disputed until two independent texts about the filming location are found || Missing texts do not make a fact disputed; opposing evidence does.
-- Unconfirmed, because video can be edited while articles undergo editorial review || The band's official video is a primary source; editing does not negate what is visible in it.
+- Unconfirmed, because video can be edited, while articles go through an editorial check first || The band's official video is a primary source; editing does not negate what is visible in it.
 ? A sample of a famous song is not listed in a recording's official credits. How should this be recorded in the fact base?
-+ Not yet confirmed: absence from the credits does not disprove the sample || Absence from the credits does not disprove a sample; credits may be incomplete.
-- Disproved, because the official credits are a primary source and do not list the sample || Absence of a mention is not evidence of the opposite.
 - Disputed: the sources and credits disagree || Positive evidence of opposing versions makes a fact disputed; silence in the credits is not such evidence.
+- Disproved by the primary source, the official credits || Absence of a mention is not evidence of the opposite.
++ Not yet confirmed: absence from the credits does not disprove the sample || Absence from the credits does not disprove a sample; credits may be incomplete.
 <!-- /quiz -->
 
 <!-- section: task | Task: a fact base for one piece of content -->
@@ -122,7 +122,7 @@ Literary editing must be followed by another fact-check of the version diff: sty
 ? After literary editing, an article reads better. What else is needed before publication?
 + Check the version diff for changes to facts, numbers, negations and the modality of claims || Style edits turn “may help” into “helps”; a repeat fact-check of the diff finds this.
 - Nothing: literary editing changes only style || Style editing strengthened two claims in a scientific article translation.
-- Run the article through an AI-text detector to make sure the editing was sufficient || Detectors are unreliable and do not check facts.
+- Run the article through a detector of AI-written text to make sure the editing was sufficient || Detectors are unreliable and do not check facts.
 <!-- /quiz -->
 
 <!-- section: task | Task: a style guide from your own feedback -->

@@ -59,9 +59,9 @@ An illustrative monthly calculation, with all figures hypothetical. Subscription
 - Nothing, provided both AIs receive the same style guide and identical brief || Even with one guide, two models write differently; one worker must own the voice.
 - Only typos, because modern AIs write with flawless grammar and identical style || Grammar is not the main problem here; style, terminology and wording diverge.
 ? How should you measure the benefit of AI in producing an article?
-+ By the time until the editor accepts it, including all checks and revisions || Time to first draft excludes revision rounds and fact-checking, which account for most of the work.
 - By draft generation time, because the remaining work would exist without AI too || Without AI, there would be fewer revisions elsewhere; compare the full cycle through acceptance.
-- By the number of words AI writes per minute multiplied by the author's rate || Generation speed says nothing about how much text will need rewriting.
++ By the time until the editor accepts it, including all checks and revisions || Time to first draft excludes revision rounds and fact-checking, which account for most of the work.
+- By the words per minute the AI writes, multiplied by the author's rate || Generation speed says nothing about how much text will need rewriting.
 <!-- /quiz -->
 
 <!-- section: task | Task: map the roles in your editorial team -->
@@ -144,11 +144,11 @@ Date: November 25, 2026, backup post.
 
 <!-- quiz -->
 ? An AI took three steps in a row: built an image, deployed it and found a configuration error. When should it update the session log?
-+ After each of the three steps, without waiting for the work to finish or the end-of-day review || An interrupted session erases the latest steps, so write the log immediately.
-- At the end of the working day, once it is clear which steps mattered || If the session ends earlier, nobody will be left to record them.
 - Only after finding the error, because successful steps are visible in commit history || Deployment and builds may leave no commit; the log covers everything significant.
+- At the end of the working day, once it is clear which steps mattered || If the session ends earlier, nobody will be left to record them.
++ After each of the three steps, not at the end of the work or day || An interrupted session erases the latest steps, so write the log immediately.
 ? The lead AI's memory says an article is not published yet. What should it do before reporting this to the editor?
-+ Check the status against the platform itself, the article's repository and the session log || Memory becomes outdated: one audit found 16 of 19 “unfinished” tasks were closed.
++ Check the status on the platform, in the article repository and the session log || Memory becomes outdated: one audit found 16 of 19 “unfinished” tasks were closed.
 - Nothing, because the lead AI's memory updates automatically after every publication || Memory updates only when something is written into it.
 - Delete the memory entry so it does not interfere with future sessions || The entry may still be needed; first check whether it is accurate.
 <!-- /quiz -->

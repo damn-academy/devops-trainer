@@ -26,12 +26,12 @@ A community chat bot operates under the platform's and chat's rules. Automated u
 <!-- quiz -->
 ? An AI fixed a bot bug and also changed an already approved line. How can this be prevented?
 + Keep approved text separate from code and export it byte for byte || When text lives in a separate file, code edits do not touch it.
-- Prohibit AI from touching the bot's code || This removes the pipeline's speed; separating text from code is enough.
+- Prohibit AI from touching the bot's code so that it cannot accidentally spoil the approved lines || This removes the pipeline's speed; separating text from code is enough.
 - Reread every season line after each bot code change before launching the tournament || This is slow and unreliable; file separation prevents the problem.
 ? How should you test a tournament bot before launching it in the community?
 + Run the whole season with accelerated time and a fake platform API || This checks votes, text and protection against sending to the main chat.
 - Start it in the main chat at night when few participants are around and watch the first battles || Participants will see errors, and fixes will have to happen live.
-- Ask AI to read the code and confirm that there are no errors || Reading code does not replace running the whole scenario.
+- Ask the AI to read the whole code carefully and confirm that there are no errors in it || Reading code does not replace running the whole scenario.
 <!-- /quiz -->
 
 <!-- section: task | Task: a game format for your community -->
