@@ -22,7 +22,7 @@ The full cost of an event exceeds the package price. The cheapest KubeCon Europe
 Event results take time. In 2026, Dreamdata calculated an average of 281 days from the first LinkedIn ad impression to revenue; equally reliable data is not available for events, but this gives a sense of the timescale. Review event results after 30, 90, and 180 days rather than declaring failure after a week. To avoid attributing a deal to an event when it was already progressing, check which opportunities were in progress before the event.
 
 <!-- section: task | Exercise: return-on-investment calculator -->
-Complete the exercise in the “Event return on investment” simulator on this page. Set the full cost of a conference booth, including all expenses from the lesson, profit per deal, and your company's opportunity win rate. Check how many opportunities you need to break even. Then vary the share of scanned attendees who match your target audience, the share contacted within the first two days, and the share of meetings that took place. See which values make the booth pay off in most runs and which make it almost never pay off.
+Complete the exercise in the “Event return on investment” simulator on this page. Set the full cost of a conference booth, including all expenses from the lesson, profit per deal, and your company's opportunity win rate. Check how many opportunities you need to break even. Then vary the share of scanned attendees who match your target audience, the share of unique target companies among them, and company transitions to contact within the first two days and to a held meeting. See which values make the booth pay off in most runs and which make it almost never pay off.
 
 <!-- widget: events.roi -->
 
@@ -65,7 +65,7 @@ To turn the score into a decision, add three rules to the weights. First, a veto
 <!-- section: theory | Event economics -->
 `Full cost = sponsorship + travel + booth and services + materials and demo + team time + follow-up`.
 
-`Expected new deals = completed target-account meetings × sales-accepted opportunity rate × win rate`.
+`Expected new deals = target companies with a held meeting × sales-accepted opportunity rate × win rate`. For an event without badge scanning, such as a partner visit or a private dinner, start directly with the number of target companies on the invitation list.
 
 `Expected gross profit = new deals × first-year revenue per deal × gross margin`.
 
@@ -106,7 +106,7 @@ The table shows possible combinations, not a recommendation for everyone to buy 
 <!-- /quiz -->
 
 <!-- section: task | Exercise: a portfolio of three events -->
-Complete the exercise in the document on this page. Describe your product's buyer roles and the main goal for next year. Build a shortlist of ten events across the lesson's four classes and score each using the weighted model, marking unknown fields. Choose three events of different types and, for each, record the participation format, full cost, expected ROI calculation, and a criterion for declining participation the following year.
+Complete the exercise in the document on this page. Describe your product's buyer roles and the main goal for next year. Build a shortlist of ten events across the lesson's four classes and score each using the weighted model, marking unknown fields. Choose up to three events: as many as your budget and team can support, and of different types if the goal allows it. For each, record the participation format, full cost, expected return based on the event’s main goal—in deals or, for partnerships and other goals outside sales, in cost per result—and a criterion for declining participation the following year.
 
 <!-- section: sources -->
 - GitLab, event request guidelines — https://handbook.gitlab.com/handbook/marketing/events/ (checked 25.11.2026)
