@@ -161,24 +161,55 @@ func fatal(err error) {
 
 // commandFlags makes the flag set of a command whose -h and --help print
 // help and do nothing else.
+// The flag package's own English error lines are not printed: parseCommand
+// returns them as an error, which dtlab prints once in the learner's language.
 func commandFlags(name, help string, out io.Writer) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
-	fs.SetOutput(out)
+	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
 		fmt.Fprintln(out, help)
-		fs.PrintDefaults()
+		printFlags(fs, out, say.Russian())
 	}
 	return fs
 }
 
-// parseCommand parses args; help is true when -h or --help asked for help.
-// Arguments that are not flags are refused: nothing runs on a typo.
-func parseCommand(fs *flag.FlagSet, args []string) (help bool, err error) {
+// printFlags lists the flags as flag.PrintDefaults does, with the defaults
+// named in the learner's language.
+func printFlags(fs *flag.FlagSet, out io.Writer, ru bool) {
+	fs.VisitAll(func(f *flag.Flag) {
+		kind, usage := flag.UnquoteUsage(f)
+		line := "  -" + f.Name
+		if kind != "" {
+			line += " " + kind
+		}
+		line += "\n    \t" + strings.ReplaceAll(usage, "\n", "\n    \t")
+		if def := f.DefValue; def != "" && def != "false" && def != "0" {
+			if ru {
+				line += fmt.Sprintf(" (по умолчанию %s)", def)
+			} else {
+				line += fmt.Sprintf(" (default %q)", def)
+			}
+		}
+		fmt.Fprintln(out, line)
+	})
+}
+
+// parseFlags parses args and leaves the arguments after the flags in fs.Args().
+func parseFlags(fs *flag.FlagSet, args []string) (help bool, err error) {
 	switch err := fs.Parse(args); {
 	case errors.Is(err, flag.ErrHelp):
 		return true, nil
 	case err != nil:
 		return false, fmt.Errorf("dtlab %s: %v", fs.Name(), err)
+	}
+	return false, nil
+}
+
+// parseCommand parses args; help is true when -h or --help asked for help.
+// Arguments that are not flags are refused: nothing runs on a typo.
+func parseCommand(fs *flag.FlagSet, args []string) (help bool, err error) {
+	if help, err := parseFlags(fs, args); help || err != nil {
+		return help, err
 	}
 	if fs.NArg() > 0 {
 		fs.Usage()
@@ -330,15 +361,18 @@ func installHint(goos string) string {
 }
 
 func up(ctx context.Context, l *lab.Lab, args []string) error {
-	fs := flag.NewFlagSet("up", flag.ExitOnError)
-	prof := fs.String("profile", "", "light, standard or full (default: what `dtlab check` recommends)")
-	with := fs.String("with", "", "the parts: learner, kuberoot, kubeadm-nodes (comma list; default: the profile's)")
-	be := fs.String("backend", "auto", "qemu or hyperv")
-	kr := fs.String("kuberoot", "", "kuberoot artifacts: URL or directory, instead of the GitHub release")
-	krv := fs.String("kuberoot-version", "latest", "kuberoot release to install: a version (1.2.3) or latest")
-	course := fs.String("course", "", "the built course (web/dist) to serve")
-	timeout := fs.Duration("timeout", 25*time.Minute, "how long to wait for the VMs")
-	_ = fs.Parse(args)
+	ru := say.Russian()
+	fs := commandFlags("up", say.T(ru, "usage: dtlab up [--profile light|standard|full] [--with parts] [flags]\n\nCreates the lab's VMs and starts them, or starts the VMs of the lab that exists, and waits until they are ready."), os.Stdout)
+	prof := fs.String("profile", "", say.T(ru, "light, standard or full (default: the lab's own, or the one dtlab check recommends)"))
+	with := fs.String("with", "", say.T(ru, "the parts: learner, kuberoot, kubeadm-nodes (comma list; default: the profile's)"))
+	be := fs.String("backend", "auto", say.T(ru, "how to run the VMs: qemu, hyperv or auto (dtlab picks)"))
+	kr := fs.String("kuberoot", "", say.T(ru, "kuberoot artifacts: URL or directory, instead of the GitHub release"))
+	krv := fs.String("kuberoot-version", "latest", say.T(ru, "kuberoot release to install: a version (1.2.3) or latest"))
+	course := fs.String("course", "", say.T(ru, "the built course (web/dist) to serve"))
+	timeout := fs.Duration("timeout", 25*time.Minute, say.T(ru, "how long to wait for the VMs"))
+	if help, err := parseCommand(fs, args); help || err != nil {
+		return err
+	}
 	if *prof == "" {
 		// A plain `dtlab up` starts the lab that exists, with its parts:
 		// the profile's defaults would differ after --with and be refused.
@@ -492,18 +526,25 @@ func (m *multi) String() string     { return strings.Join(*m, " ") }
 func (m *multi) Set(v string) error { *m = append(*m, v); return nil }
 
 func facts(ctx context.Context, l *lab.Lab, args []string) error {
+	ru := say.Russian()
+	fs := commandFlags("facts", say.T(ru, "usage: dtlab facts <vm> [flags]\n\nRuns the exam's read-only check in a VM and prints the block of facts to paste on the exam page. The exam page shows the whole command with its flags."), os.Stdout)
+	nonce := fs.String("nonce", "", say.T(ru, "the exam attempt's one-time code (shown on the exam page)"))
+	machine := fs.String("machine", "", say.T(ru, "the exam's machine id (default: the VM's name)"))
+	track := fs.String("track", "", say.T(ru, "the exam's track"))
+	script := fs.String("script", "", say.T(ru, "trainer-check-host.sh or trainer-check.sh (default by VM kind)"))
+	var extra multi
+	fs.Var(&extra, "arg", say.T(ru, "a collector argument, as on the exam page (repeat)"))
 	if len(args) == 0 || strings.HasPrefix(args[0], "-") {
-		return fmt.Errorf("usage: dtlab facts <vm> [--nonce CODE] [--machine ID] [--track T] [--script trainer-check.sh] [--arg '--scope net'] ...")
+		fs.Usage()
+		if len(args) > 0 && (args[0] == "-h" || args[0] == "--help" || args[0] == "-help") {
+			return nil
+		}
+		return errors.New("dtlab facts: name the VM first, for example dtlab facts learner")
 	}
 	vm := args[0]
-	fs := flag.NewFlagSet("facts", flag.ExitOnError)
-	nonce := fs.String("nonce", "", "the exam attempt's one-time code (shown on the exam page)")
-	machine := fs.String("machine", "", "the exam's machine id (default: the VM's name)")
-	track := fs.String("track", "", "the exam's track")
-	script := fs.String("script", "", "trainer-check-host.sh or trainer-check.sh (default by VM kind)")
-	var extra multi
-	fs.Var(&extra, "arg", "a collector argument, as on the exam page (repeat)")
-	_ = fs.Parse(args[1:])
+	if help, err := parseFlags(fs, args[1:]); help || err != nil {
+		return err
+	}
 	r := collect.Request{Script: *script, Nonce: *nonce, Machine: *machine, Track: *track, Args: append(extra, fs.Args()...)}
 	block, err := l.Facts(ctx, vm, r)
 	if err != nil {
@@ -550,11 +591,14 @@ func serve(ctx context.Context, l *lab.Lab, args []string) error {
 }
 
 func uninstallCmd(ctx context.Context, l *lab.Lab, args []string) error {
-	fs := flag.NewFlagSet("uninstall", flag.ExitOnError)
-	yes := fs.Bool("yes", false, "do not ask")
-	pre := fs.Bool("remove-preexisting", false, "also remove things that were there before dtlab (asked otherwise)")
-	keepBin := fs.Bool("keep-binary", false, "leave the dtlab program")
-	_ = fs.Parse(args)
+	ru := say.Russian()
+	fs := commandFlags("uninstall", say.T(ru, "usage: dtlab uninstall [--yes]\n\nRemoves everything the lab ever added to this computer: the VMs, their disks, the downloads, the settings and dtlab itself. Shows the list and asks first; --yes does not ask."), os.Stdout)
+	yes := fs.Bool("yes", false, say.T(ru, "do not ask"))
+	pre := fs.Bool("remove-preexisting", false, say.T(ru, "also remove things that were there before dtlab (asked otherwise)"))
+	keepBin := fs.Bool("keep-binary", false, say.T(ru, "leave the dtlab program"))
+	if help, err := parseCommand(fs, args); help || err != nil {
+		return err
+	}
 	var probe uninstall.Prober = uninstall.NoObjects{}
 	if l.GOOS == "windows" {
 		probe = backend.HyperVObjects{R: l.R}

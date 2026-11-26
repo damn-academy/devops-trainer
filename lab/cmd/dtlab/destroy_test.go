@@ -146,3 +146,62 @@ func TestRussianDestroyPrompt(t *testing.T) {
 		t.Errorf("Russian help:\n%s", out.String())
 	}
 }
+
+func TestUnknownFlagPrintsNoPackageLine(t *testing.T) {
+	l, disk, _ := testLab(t)
+	var out bytes.Buffer
+	err := destroyCmd(context.Background(), l, []string{"--bogus"}, strings.NewReader("y\n"), &out)
+	if err == nil || !strings.Contains(err.Error(), "flag provided but not defined: -bogus") {
+		t.Fatalf("dtlab destroy --bogus: %v", err)
+	}
+	if strings.Contains(out.String(), "flag provided") {
+		t.Errorf("the flag package's own line was printed as well:\n%s", out.String())
+	}
+	if !exists(disk) {
+		t.Error("dtlab destroy --bogus removed the disk")
+	}
+}
+
+func TestRussianHelpOfUpFactsUninstall(t *testing.T) {
+	t.Setenv("LC_ALL", "ru_RU.UTF-8")
+	for _, name := range []string{"up", "facts", "uninstall"} {
+		out := captureStdout(t, func() {
+			l, _, _ := testLab(t)
+			t.Setenv("LC_ALL", "ru_RU.UTF-8")
+			var err error
+			switch name {
+			case "up":
+				err = up(context.Background(), l, []string{"--help"})
+			case "facts":
+				err = facts(context.Background(), l, []string{"--help"})
+			case "uninstall":
+				err = uninstallCmd(context.Background(), l, []string{"--help"})
+			}
+			if err != nil {
+				t.Error(name, err)
+			}
+		})
+		if !strings.HasPrefix(out, "как вызывать: dtlab "+name) || strings.Contains(out, "(default") {
+			t.Errorf("dtlab %s --help is not Russian:\n%s", name, out)
+		}
+		if strings.Contains(out, "dtlab check light") || strings.Contains(out, "-profile dtlab") {
+			t.Errorf("dtlab %s --help names a value after a quoted word:\n%s", name, out)
+		}
+	}
+}
+
+func captureStdout(t *testing.T, f func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := os.Stdout
+	os.Stdout = w
+	f()
+	os.Stdout = old
+	w.Close()
+	var b bytes.Buffer
+	_, _ = b.ReadFrom(r)
+	return b.String()
+}
