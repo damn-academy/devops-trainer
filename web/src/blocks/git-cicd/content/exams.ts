@@ -23,7 +23,7 @@ export const GIT_YAML_EXAM: Exam = {
   id: 'git-yaml.exam.config',
   block: 'git-yaml',
   kind: 'block',
-  title: bi('Экзамен по Git и YAML: настройки кофейни', 'Git and YAML exam: the café configuration'),
+  title: bi('Git и YAML: настройки кофейни', 'Git and YAML: the café configuration'),
   intro: bi(
     'В экзамене четыре карточки с задачами по репозиторию, в котором хранятся настройки сайта кофейни. Проверяется состояние репозитория и файлов, а не набранные команды, поэтому подойдёт любой путь к результату. Подсказок нет, но открыты встроенная справка Git и `yamllint --help`.',
     'Four cards about the repository with the café site’s settings. The state of the repository and the files is checked, not the commands you type: any way works. There are no hints; the built-in Git help and `yamllint --help` are open.',
@@ -251,7 +251,7 @@ export const CICD_EXAM: Exam = {
   id: 'cicd.exam.release',
   block: 'cicd',
   kind: 'block',
-  title: bi('Экзамен по CI/CD: пайплайн для сайта кофейни', 'CI/CD exam: a pipeline for the café site'),
+  title: bi('CI/CD: пайплайн для сайта кофейни', 'CI/CD: a pipeline for the café site'),
   intro: bi(
     'В экзамене четыре карточки из трекера задач команды сайта. Проверяется то, что увидел forge, то есть пайплайны, джобы, переменные и выкладки, а не набранные команды. Подсказок нет, и открыт только справочник ключевых слов GitLab CI.',
     'Four cards from the site team’s tracker. What the forge saw is checked: pipelines, jobs, variables, deployments, not the commands you type. There are no hints; only the GitLab CI keyword reference is open.',

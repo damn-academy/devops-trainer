@@ -80,7 +80,7 @@ const sshHops: Lesson = {
       kind: 'callout',
       tone: 'note',
       step: 'exit',
-      title: bi('Как сдать учебный экзамен в браузере', 'How to take the learning exam in the browser'),
+      title: bi('Как сдать экзамен в браузере', 'How to take the exam in the browser'),
       body: bi(
         'Экзамен «Доступ для новой разработчицы» можно сдать и без своих машин. Для этого есть [его вариант на двух машинах во вкладке](#/lab/linux-access): сюжет в нём тот же, машины работают на Alpine Linux, а подсказок нет.',
         'The exam “Access for a new developer” can be taken without machines of your own too. There is [its variant on two machines in the tab](#/lab/linux-access): the story is the same, the machines run Alpine Linux, and there are no hints.',
@@ -221,8 +221,8 @@ const install: Lesson = {
       step: 'exit',
       title: bi('Как пройти эту установку экзаменом', 'How to take this install as an exam'),
       body: bi(
-        'На экзамене вас ждёт та же машина, но без подсказок и с другим заданием: нужно поставить сервер базы данных с отдельным томом под журналы. Экзамен открывается по ссылке [учебный экзамен «Установка»](#/lab/linux-install).',
-        'The exam gives you the same machine, but without hints and with another task: install a database server with a separate volume for logs. The exam opens from the link [the learning exam “Install”](#/lab/linux-install).',
+        'На экзамене вас ждёт та же машина, но без подсказок и с другим заданием: нужно поставить сервер базы данных с отдельным томом под журналы. Экзамен открывается по ссылке [экзамен «Установка»](#/lab/linux-install).',
+        'The exam gives you the same machine, but without hints and with another task: install a database server with a separate volume for logs. The exam opens from the link [the exam “Install”](#/lab/linux-install).',
       ),
     },
     { id: 'quiz', kind: 'quiz', step: 'exit', items: ['linux.q.install-order', 'linux.q.bios-boot', 'linux.q.initramfs-lvm'] },
@@ -278,7 +278,7 @@ const diskReal: Lesson = {
       kind: 'callout',
       tone: 'note',
       step: 'exit',
-      title: bi('Как сдать учебный экзамен в браузере', 'How to take the learning exam in the browser'),
+      title: bi('Как сдать экзамен в браузере', 'How to take the exam in the browser'),
       body: bi(
         'Экзамен «Раздел заполнен» можно сдать и без своей машины. Для этого есть [его вариант во вкладке](#/lab/linux-disk): сюжет в нём тот же, машина работает на Alpine Linux, в него добавлено задание с cron, а подсказок нет.',
         'The exam “The partition is full” can be taken without a machine of your own too. There is [its variant in the tab](#/lab/linux-disk): the story is the same, the machine runs Alpine Linux, a cron task is added, and there are no hints.',

@@ -225,7 +225,7 @@ const placement: PlacementTask[] = [
 const exam: Exam = {
   id: 'linux.exam.service',
   block: 'linux',
-  title: bi('Экзамен о службе, которая не запускается', 'An exam about a service that does not start'),
+  title: bi('Служба не запускается', 'A service that does not start'),
   intro: bi(
     'Ночная служба отчётов не работает, а журнал разросся. Почините службу, сделайте так, чтобы она запускалась и после перезагрузки, и ограничьте размер журнала. На экзамене открыта только документация самой машины, то есть `man`, `--help` и `help`.',
     'The nightly report service is down, and the journal has grown. Fix the service, make it start after a reboot too, and limit the journal’s size. During the exam only the machine’s own documentation is open, that is, `man`, `--help` and `help`.',

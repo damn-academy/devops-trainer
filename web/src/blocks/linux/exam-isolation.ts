@@ -57,7 +57,7 @@ const MiB = 1024 * 1024;
 export const ISOLATION_EXAM: Exam = {
   id: 'linux.exam.isolation',
   block: 'linux',
-  title: bi('Учебный экзамен о соседних службах, которые мешают друг другу', 'A learning exam about neighbouring services that get in each other’s way'),
+  title: bi('Соседние службы мешают друг другу', 'Neighbouring services in each other’s way'),
   intro: bi(
     'Это учебная контрольная после уроков об изоляции и лимитах. В итоговый протокол блока она не идёт, но показывает, уверенно ли вы обращаетесь с cgroups и systemd. Каждое задание начинается на своей копии сервера, и засчитывается состояние машины, то есть файлы cgroup и свойства служб, а не набранные команды. На экзамене открыта только документация машины: `man`, `--help`, `help` и страницы systemd.',
     'This is a learning test after the lessons on isolation and limits. It does not go into the block’s final record, but it shows whether you handle cgroups and systemd with confidence. Each task starts on its own copy of the server, and what counts is the state of the machine, the cgroup files and the service properties, not the commands you typed. Only the machine’s documentation is open: `man`, `--help`, `help` and the systemd pages.',

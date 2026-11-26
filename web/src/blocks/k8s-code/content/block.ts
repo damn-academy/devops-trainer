@@ -88,7 +88,7 @@ export const EXAM: Exam = {
   id: 'k8s-3.exam.rebuild',
   block: 'k8s-3',
   kind: 'block',
-  title: bi('Экзамен блока о том, как пересоздать пропавший стенд из кода', 'Block exam on rebuilding a lost lab from code'),
+  title: bi('Пропавший стенд: пересоздать из кода', 'A lost lab: rebuild it from code'),
   intro: bi(
     'Экзамен состоит из шести карточек из трекера задач, и у каждой карточки свой стенд. Проверяется не то, какие команды вы набрали, а то, в каком состоянии оказались машины, узлы, файлы ролей и объекты кластера. Подсказок нет, но открыта встроенная документация: справка `--help`, `ansible-doc`, документация Terraform, kubernetes.io и Argo CD.',
     'The exam is six cards from the task tracker, each on its own stand. What is checked is not the commands you typed but the state of the machines, the nodes, the role files and the cluster objects. There are no hints, but the built-in documentation is open: `--help`, `ansible-doc`, the Terraform docs, kubernetes.io and Argo CD.',
