@@ -1,0 +1,74 @@
+[
+ {
+  "id": "slide-01",
+  "timestamp": "2.000",
+  "alt": "Интернет как сеть из множества сетей",
+  "caption": "",
+  "file": "frames/slide-01.jpg",
+  "used_offset": 0
+ },
+ {
+  "id": "slide-02",
+  "timestamp": "146.437",
+  "alt": "Вопрос получают все, а отвечает один",
+  "caption": "",
+  "file": "frames/slide-02.jpg",
+  "used_offset": 0
+ },
+ {
+  "id": "slide-03",
+  "timestamp": "274.477",
+  "alt": "Маршрутизатор и таблица маршрутов",
+  "caption": "",
+  "file": "frames/slide-03.jpg",
+  "used_offset": 0
+ },
+ {
+  "id": "slide-04",
+  "timestamp": "405.206",
+  "alt": "Иерархия имён и два вида серверов",
+  "caption": "",
+  "file": "frames/slide-04.jpg",
+  "used_offset": 0
+ },
+ {
+  "id": "slide-05",
+  "timestamp": "577.528",
+  "alt": "Рукопожатие, отказ и тишина",
+  "caption": "",
+  "file": "frames/slide-05.jpg",
+  "used_offset": 0
+ },
+ {
+  "id": "slide-06",
+  "timestamp": "726.559",
+  "alt": "Подмена адреса и таблица соединений",
+  "caption": "",
+  "file": "frames/slide-06.jpg",
+  "used_offset": 0
+ },
+ {
+  "id": "slide-07",
+  "timestamp": "857.211",
+  "alt": "Запрос и ответ",
+  "caption": "",
+  "file": "frames/slide-07.jpg",
+  "used_offset": 0
+ },
+ {
+  "id": "slide-08",
+  "timestamp": "1007.510",
+  "alt": "Рукопожатие TLS 1.3 и то, что видно снаружи",
+  "caption": "",
+  "file": "frames/slide-08.jpg",
+  "used_offset": 0
+ },
+ {
+  "id": "slide-09",
+  "timestamp": "1143.395",
+  "alt": "Что происходит, когда вы вводите адрес сайта",
+  "caption": "",
+  "file": "frames/slide-09.jpg",
+  "used_offset": 0
+ }
+]

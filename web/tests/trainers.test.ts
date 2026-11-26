@@ -54,7 +54,7 @@ it.each([true, false])('mounts all widgets with configured=%s', async configured
   }
   expect(setup('signal-feed', { data: 'sales.signal-feed' }, configured).host.textContent).toContain('1/20');
   expect(setup('boundary', { data: 'product.boundary' }, configured).host.querySelectorAll('[role=radiogroup]')).toHaveLength(20);
-  expect(setup('events.roi', {}, configured).host.querySelectorAll('input')).toHaveLength(9);
+  expect(setup('events.roi', {}, configured).host.querySelectorAll('input:not(:disabled)')).toHaveLength(9);
 });
 it('sends roleplay history and the exact debrief command', async () => {
   const w = setup('roleplay', { trainer: 'events.booth-visitor' }); w.send('hello');

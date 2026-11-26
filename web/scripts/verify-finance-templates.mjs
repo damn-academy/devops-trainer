@@ -155,6 +155,31 @@ for(const suffix of ['', '-en']) {
     near(moved(pnl.name,`O${row}`)-read(pnl.name,`O${row}`),role==='R&D'?60.7:40.7,'one-off moved to year two');
     hiring.getCell('D2').value=7; hiring.getCell('F2').value=0;
   }
+  // Equipment is an investing payment and asset; only depreciation reaches P&L.
+  for (const start of [1, 7, 13, 18]) for (const role of ['R&D','S&M','G&A','COGS']) {
+    hiring.getCell('B2').value=role; hiring.getCell('D2').value=start;
+    hiring.getCell('F2').value=9; hiring.getCell('G2').value=0;
+    const before=reader(w), baseline=[];
+    for(let m=1;m<=18;m++) {
+      const c=pnl.getColumn(m<=12?m+1:m+2).letter;
+      baseline.push([before(pnl.name,`${c}17`),before(balance.name,`${c}2`),before(balance.name,`${c}5`),before(cash.name,`${c}6`),before(cash.name,`${c}5`),before(cash.name,`${c}10`)]);
+    }
+    hiring.getCell('G2').value=36;
+    const equipped=reader(w);
+    for(let m=1;m<=18;m++) {
+      const c=pnl.getColumn(m<=12?m+1:m+2).letter, active=m>=start, elapsed=active?m-start+1:0;
+      const [income,money,assets,cfi,cfo,dep]=baseline[m-1];
+      near(equipped(pnl.name,`${c}17`)-income,active?-1:0,`equipment income ${role}/${start}/${m}`);
+      near(equipped(balance.name,`${c}2`)-money,active?-36:0,`equipment cash ${m}`);
+      near(equipped(balance.name,`${c}5`)-assets,active?36-elapsed:0,`equipment assets ${m}`);
+      near(equipped(cash.name,`${c}6`)-cfi,m===start?-36:0,`equipment investing ${m}`);
+      near(equipped(cash.name,`${c}5`)-cfo,0,`equipment operating ${m}`);
+      near(equipped(cash.name,`${c}10`)-dep,active?1:0,`equipment depreciation ${m}`);
+      near(equipped(checks.name,`${c}2`),0,`equipment balance ${m}`);
+      near(equipped(checks.name,`${c}3`),0,`equipment CFO ${m}`);
+    }
+    hiring.getCell('G2').value=0; hiring.getCell('F2').value=0;
+  }
   hiring.getCell('B2').value='R&D';
   hiring.getCell('D2').value=10; hiring.getCell('D3').value=13;
   near(reader(w)(balance.name,'M2')-hired(balance.name,'M2'),3*(17.7+12),'delaying two hires');

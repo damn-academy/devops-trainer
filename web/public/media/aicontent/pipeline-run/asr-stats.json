@@ -1,0 +1,135 @@
+{
+  "source_words": 2797,
+  "transcript_words": 2905,
+  "substitutions": 686,
+  "deletions": 111,
+  "insertions": 219,
+  "distance": 1016,
+  "wer": 0.36324633535931355,
+  "normalization": "Unicode NFC, lowercase, Unicode letter/digit runs; punctuation removed, ё retained; no numeral or acronym expansion",
+  "timestamp_precision": "Whisper segment start; deletions use next hypothesis token or final segment",
+  "alignment": "Unit-cost Levenshtein; tie break diagonal, deletion, insertion",
+  "mismatch_rows": 1153,
+  "top_20": [
+    {
+      "source": "",
+      "transcript": "0.",
+      "category": "number",
+      "count": 69
+    },
+    {
+      "source": "",
+      "transcript": "1.",
+      "category": "number",
+      "count": 28
+    },
+    {
+      "source": "и",
+      "transcript": "",
+      "category": "other",
+      "count": 17
+    },
+    {
+      "source": "ещё",
+      "transcript": "еще",
+      "category": "other",
+      "count": 8
+    },
+    {
+      "source": "",
+      "transcript": "2",
+      "category": "number",
+      "count": 7
+    },
+    {
+      "source": "",
+      "transcript": "с",
+      "category": "other",
+      "count": 7
+    },
+    {
+      "source": "за",
+      "transcript": "на",
+      "category": "other",
+      "count": 7
+    },
+    {
+      "source": "",
+      "transcript": "на",
+      "category": "other",
+      "count": 6
+    },
+    {
+      "source": "а",
+      "transcript": "",
+      "category": "other",
+      "count": 6
+    },
+    {
+      "source": "",
+      "transcript": "отмечает",
+      "category": "other",
+      "count": 6
+    },
+    {
+      "source": "",
+      "transcript": "просившим",
+      "category": "other",
+      "count": 6
+    },
+    {
+      "source": "",
+      "transcript": "обычным",
+      "category": "other",
+      "count": 6
+    },
+    {
+      "source": "",
+      "transcript": "кадром.",
+      "category": "other",
+      "count": 6
+    },
+    {
+      "source": "",
+      "transcript": "100-",
+      "category": "number",
+      "count": 5
+    },
+    {
+      "source": "",
+      "transcript": "188.",
+      "category": "number",
+      "count": 5
+    },
+    {
+      "source": "неё",
+      "transcript": "нее",
+      "category": "other",
+      "count": 4
+    },
+    {
+      "source": "",
+      "transcript": "в",
+      "category": "other",
+      "count": 4
+    },
+    {
+      "source": "в",
+      "transcript": "",
+      "category": "other",
+      "count": 4
+    },
+    {
+      "source": "передаёт",
+      "transcript": "передает",
+      "category": "other",
+      "count": 3
+    },
+    {
+      "source": "отвечает",
+      "transcript": "отмечает",
+      "category": "other",
+      "count": 3
+    }
+  ]
+}

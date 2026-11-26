@@ -40,22 +40,24 @@ export async function buildFinanceTemplates(output) {
       const col=m<=12?m+1:m+2, prevCol=m===13?13:col-1;
       const c=pnl.getColumn(col).letter, prev=pnl.getColumn(prevCol).letter;
       if(m>12) for(const sh of [pnl,cash,balance,checks]) sh.getCell(1,col).value=`${months[(m-1)%12]} 2`;
-      const H=ref(hiring,hiring.getColumn(m+7).letter,32);
-      const hire = role => `SUMIFS('${hiring.name}'!${hiring.getColumn(m+7).letter}2:${hiring.getColumn(m+7).letter}31,'${hiring.name}'!$B$2:$B$31,"${role}")`;
+      const H=ref(hiring,hiring.getColumn(m+8).letter,32);
+      const equipment = ref(hiring,hiring.getColumn(m+8).letter,33);
+      const hireDepreciation = ref(hiring,hiring.getColumn(m+8).letter,34);
+      const hire = role => `SUMIFS('${hiring.name}'!${hiring.getColumn(m+8).letter}2:${hiring.getColumn(m+8).letter}31,'${hiring.name}'!$B$2:$B$31,"${role}")`;
       const P=r=>ref(pnl,c,r), B=r=>ref(balance,c,r), C=r=>ref(cash,c,r), old=(s,r)=>m===1?'0':ref(s,prev,r);
       f(pnl,18,col,`MAX(0,${m}-${inp(22)}+1)*${inp(23)}*${inp(24)}*${inp(25)}/12`);
-      const depreciation = `MIN(${inp(17)}/${inp(18)},MAX(0,${inp(17)}-(${m}-1)*${inp(17)}/${inp(18)}))`;
+      const depreciation = `${hireDepreciation}+MIN(${inp(17)}/${inp(18)},MAX(0,${inp(17)}-(${m}-1)*${inp(17)}/${inp(18)}))`;
       const receipts = `IF(${inp(21)}=1,IF(${m}>=${inp(22)},${inp(23)}*${inp(24)}*${inp(25)}*(1+IF(${m}>=${inp(22)}+12,1,0)),0),IF(MOD(${m}-1,12)=0,${inp(3)},0)+IF(MOD(${m}-7,12)=0,${inp(4)},0))`;
       const formulas=[`IF(${inp(21)}=1,${c}18,${inp(3)}/12+IF(${m}>=7,${inp(4)}/12,0))`,`IF(${inp(21)}=1,0,${inp(5)}+${inp(6)}*(${m}-1))`,`IF(${inp(21)}=1,0,IF(MOD(${m},3)=0,${inp(7)},0))`,`SUM(${c}2:${c}4)`,`${inp(8)}+${inp(9)}*(${m}-1)`,`${inp(10)}+${hire("COGS")}`,`IF(MOD(${m},3)=0,${inp(11)},0)`,`SUM(${c}6:${c}8)`,`${c}5-${c}9`,`${inp(12)}+${hire("R&D")}`,`${inp(13)}+${hire("S&M")}`,`${inp(14)}+${hire("G&A")}+${inp(16)}/12+${depreciation}+IF(${m}=12,${inp(15)},0)`,`SUM(${c}11:${c}13)`,`${c}10-${c}14`,inp(19),`${c}15+${c}16`];
       formulas.forEach((v,i)=>f(pnl,i+2,col,v));
       [
         `${receipts}+${old(pnl,3)}+${old(pnl,4)}`,
         inp(19),`-(${old(pnl,6)}+${inp(10)}+${P(8)}+${inp(12)}+${H}+${inp(13)}+${inp(14)}+IF(MOD(${m}-1,12)=0,${inp(16)},0)+IF(${m}=13,${inp(15)},0))`,
-        `SUM(${c}2:${c}4)`,`IF(${m}=1,-${inp(17)},0)`,`IF(${m}=7,${inp(20)},0)`,`SUM(${c}5:${c}7)`,
+        `SUM(${c}2:${c}4)`,`IF(${m}=1,-${inp(17)},0)-${equipment}`,`IF(${m}=7,${inp(20)},0)`,`SUM(${c}5:${c}7)`,
         P(17),depreciation,`-(${B(3)}-${old(balance,3)})`,`-(${B(4)}-${old(balance,4)})`,`${B(7)}-${old(balance,7)}`,`${B(8)}-${old(balance,8)}`,`${B(9)}-${old(balance,9)}`,`SUM(${c}9:${c}15)`,
       ].forEach((v,i)=>f(cash,i+2,col,v));
       [
-        `${m===1?inp(2):old(balance,2)}+${C(8)}`,`${P(3)}+${P(4)}`,`${inp(16)}*(11-MOD(${m}-1,12))/12`,`MAX(0,${inp(17)}-${m}*${inp(17)}/${inp(18)})`,`SUM(${c}2:${c}5)`,P(6),`IF(${m}=12,${inp(15)},0)`,`${old(balance,9)}+${receipts}-${P(2)}`,`SUM(${c}7:${c}9)`,`${inp(2)}+IF(${m}>=7,${inp(20)},0)`,`${old(balance,12)}+${P(17)}`,`${c}11+${c}12`,`${c}6-${c}10-${c}13`,
+        `${m===1?inp(2):old(balance,2)}+${C(8)}`,`${P(3)}+${P(4)}`,`${inp(16)}*(11-MOD(${m}-1,12))/12`,`${old(balance,5)}+IF(${m}=1,${inp(17)},0)+${equipment}-(${depreciation})`,`SUM(${c}2:${c}5)`,P(6),`IF(${m}=12,${inp(15)},0)`,`${old(balance,9)}+${receipts}-${P(2)}`,`SUM(${c}7:${c}9)`,`${inp(2)}+IF(${m}>=7,${inp(20)},0)`,`${old(balance,12)}+${P(17)}`,`${c}11+${c}12`,`${c}6-${c}10-${c}13`,
       ].forEach((v,i)=>f(balance,i+2,col,v));
       f(checks,2,col,B(14)); f(checks,3,col,`${C(5)}-${C(16)}`);
     }
@@ -63,21 +65,29 @@ export async function buildFinanceTemplates(output) {
     const demo=w.addWorksheet(tr('Сверка примера','Demo reconciliation'));
     demo.addRow([tr('Только исходный пример InfraSeed; не проверка вашей модели','Original InfraSeed example only; not a check of your model'),tr('Текущее значение','Current value'),tr('Исходный пример','Original example')]);
     [[tr('Деньги на конец','Ending cash'),ref(balance,'M',2),1704],[tr('Выручка за год','Annual revenue'),ref(pnl,'N',5),660],[tr('Чистая прибыль за год','Annual net income'),ref(pnl,'N',17),-162.8]].forEach(([name,formula,value])=>demo.addRow([name,{formula},value]));
-    hiring.addRow([tr('Человек / вакансия','Person / vacancy'),tr('Роль','Role'),tr('Статус','Status'),tr('Месяц начала','Start month'),tr('Полная стоимость в месяц, тыс. $','Monthly loaded cost, $000'),tr('Разовые расходы на найм и оборудование, тыс. $','One-off recruiting and equipment cost, $000'),tr('Примечание','Note'),...Array.from({length:18},(_,i)=>i+1)]);
+    hiring.addRow([tr('Человек / вакансия','Person / vacancy'),tr('Роль','Role'),tr('Статус','Status'),tr('Месяц начала','Start month'),tr('Полная стоимость в месяц, тыс. $','Monthly loaded cost, $000'),tr('Рекрутинг, тыс. $','Recruiting, $000'),tr('Оборудование, тыс. $','Equipment, $000'),tr('Примечание','Note'),...Array.from({length:18},(_,i)=>i+1)]);
     const statuses = [tr('В штате','In post'),tr('Оффер','Offer'),tr('Открыта','Open')];
     for (let r=2;r<=31;r++) {
       hiring.getCell(r,2).value='R&D';
       hiring.getCell(r,2).dataValidation={type:'list',allowBlank:false,formulae:['"R&D,S&M,G&A,COGS"'],showErrorMessage:true,errorStyle:'stop'};
-      hiring.getCell(r,3).value=statuses[2]; hiring.getCell(r,4).value=1; hiring.getCell(r,5).value=0; hiring.getCell(r,6).value=0;
+      hiring.getCell(r,3).value=statuses[2]; hiring.getCell(r,4).value=1; hiring.getCell(r,5).value=0; hiring.getCell(r,6).value=0; hiring.getCell(r,7).value=0;
       hiring.getCell(r,3).dataValidation={type:'list',allowBlank:false,formulae:[`"${statuses.join(',')}"`],showErrorMessage:true,errorStyle:'stop'};
       hiring.getCell(r,4).dataValidation={type:'whole',operator:'between',formulae:[1,18],showErrorMessage:true,errorStyle:'stop'};
       hiring.getCell(r,5).dataValidation={type:'decimal',operator:'greaterThanOrEqual',formulae:[0],showErrorMessage:true,errorStyle:'stop'};
       hiring.getCell(r,6).dataValidation={type:'decimal',operator:'greaterThanOrEqual',formulae:[0],showErrorMessage:true,errorStyle:'stop'};
-      for (let m=1;m<=18;m++) f(hiring,r,m+7,`IF($A${r}="",0,IF(${m}>=$D${r},$E${r},0)+IF(${m}=$D${r},$F${r},0))`);
+      hiring.getCell(r,7).dataValidation={type:'decimal',operator:'greaterThanOrEqual',formulae:[0],showErrorMessage:true,errorStyle:'stop'};
+      for (let m=1;m<=18;m++) f(hiring,r,m+8,`IF($A${r}="",0,IF(${m}>=$D${r},$E${r},0)+IF(${m}=$D${r},$F${r},0))`);
     }
     hiring.getCell('A32').value=tr('Всего: дополнительные расходы на найм','Total: additional hiring costs');
-    for (let m=1;m<=18;m++) { const c=hiring.getColumn(m+7).letter; f(hiring,32,m+7,`SUM(${c}2:${c}31)`); }
-    hiring.getCell('A34').value=tr('Запишите каждого сотрудника и каждую вакансию: одна строка на человека или вакансию, полная стоимость и статус. Роль задаёт строку расходов: R&D — разработка, S&M — продажи и маркетинг, G&A — общие расходы, COGS — поддержка клиентов. Все статусы входят в план с месяца начала. Исключите эти расходы из базовых допущений, чтобы не считать их дважды.','List every employee and every vacancy: one row per person or vacancy, with loaded cost and status. Role selects the expense line: R&D, S&M, G&A, or COGS (customer support). All statuses enter the plan from the start month. Remove these costs from baseline inputs to avoid counting them twice.');
+    for (let m=1;m<=18;m++) { const c=hiring.getColumn(m+8).letter; f(hiring,32,m+8,`SUM(${c}2:${c}31)`); }
+    hiring.getCell('A33').value=tr('Покупка оборудования','Equipment purchases');
+    hiring.getCell('A34').value=tr('Амортизация оборудования: 36 месяцев','Equipment depreciation: 36 months');
+    for (let m=1;m<=18;m++) {
+      f(hiring,33,m+8,Array.from({length:30},(_,i)=>`IF($A${i+2}="",0,IF(${m}=$D${i+2},$G${i+2},0))`).join('+'));
+      f(hiring,34,m+8,Array.from({length:30},(_,i)=>`IF($A${i+2}="",0,IF(${m}>=$D${i+2},IF(${m}<$D${i+2}+36,$G${i+2}/36,0),0))`).join('+'));
+    }
+    hiring.getCell('A36').value=tr('Рекрутинг списывается на расходы по роли в месяц начала. Оборудование оплачивается в месяц начала, включается в основные средства и амортизируется равномерно за 36 месяцев с месяца начала; амортизация входит в общие расходы.','Recruiting is expensed to the role’s line in the start month. Equipment is paid in the start month, capitalized in PP&E and depreciated straight-line over 36 months starting that month; depreciation is included in G&A.');
+    hiring.getCell('A38').value=tr('Запишите каждого сотрудника и каждую вакансию: одна строка на человека или вакансию, полная стоимость и статус. Роль задаёт строку расходов: R&D — разработка, S&M — продажи и маркетинг, G&A — общие расходы, COGS — поддержка клиентов. Все статусы входят в план с месяца начала. Исключите эти расходы из базовых допущений, чтобы не считать их дважды.','List every employee and every vacancy: one row per person or vacancy, with loaded cost and status. Role selects the expense line: R&D, S&M, G&A, or COGS (customer support). All statuses enter the plan from the start month. Remove these costs from baseline inputs to avoid counting them twice.');
     style(w); await w.xlsx.writeFile(`${output}/infraseed-model${en?'-en':''}.xlsx`);
 
     const q=wb(), events=q.addWorksheet(tr('События','Events')), weekly=q.addWorksheet(tr('Недели','Weekly'));

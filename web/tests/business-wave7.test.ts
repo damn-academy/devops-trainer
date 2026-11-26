@@ -46,7 +46,7 @@ it('puts badge scans and deduplication before company transitions', () => {
   setLang('en');
   const host = document.createElement('div');
   const mounted = mountTrainer('events.roi', host, {}, { level: 'beginner', complete() {}, record() {}, openDoc() {} });
-  const labels = [...host.querySelectorAll('label')];
+  const labels = [...host.querySelectorAll<HTMLElement>('.tr-fields label')].filter(label => !label.hidden);
   expect(labels[0].textContent).toBe('Number of badge scans');
   expect(labels[2].nextElementSibling?.textContent).toContain('Unique target companies: 45');
   const dedup = labels[2].querySelector('input')!;
