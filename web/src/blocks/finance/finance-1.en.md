@@ -3,7 +3,7 @@
 InfraSeed, a fictional US infrastructure startup, earned $660,000 in revenue and lost $162,800 in 2026. Yet its bank balance grew by $504,000 over the year. In January it made a loss but received more cash than it spent; in December it made a profit but its cash fell. To a founder without a finance background this looks like an accounting mistake, but it all reconciles: three different statements measure profit, cash and company assets, each answering a different question. This lesson works through all three, line by line, using one example and showing how they connect.
 
 <!-- section: theory | What each statement measures -->
-The profit and loss statement, or P&L / income statement, shows how much a company earned during a period and what it spent to earn it. The balance sheet shows, at a particular date, what the company owns (assets), what it owes (liabilities), and what remains for its owners (equity). The cash flow statement shows cash received and paid during a period, separating operating activities, investment in equipment, and financing. The US Securities and Exchange Commission describes these statements in its beginners’ guide for investors; US GAAP reporting is built around them.
+The profit and loss statement, or P&L / income statement, shows how much a company earned during a period and what it spent to earn it. The balance sheet shows, at a particular date, what the company owns (assets), what it owes (liabilities), and what remains for its owners (equity). The cash flow statement shows cash received and paid during a period, separating operating activities, investment in equipment, and financing. The US Securities and Exchange Commission describes these statements in its beginners’ guide for investors; US GAAP (US generally accepted accounting principles) reporting is built around them.
 
 Learn a few terms immediately: they come up in every conversation with an accountant or investor. Revenue is what the company earns by providing a service. An expense is a cost of the period. Accounts receivable (AR) is what others owe the company. Accounts payable (AP) is what the company owes. An accrual is an expense or income that has arisen but has not yet been paid. A prepaid expense means paying now for a service received later. Deferred revenue means the customer has paid but the company still owes the service.
 
@@ -79,11 +79,11 @@ Each statement answers its own question. The P&L asks whether we make money on t
 
 A founder needs one answer today, before any reports: how many months the cash will last. A rough estimate divides freely available cash in the accounts by average net cash outflow over the last three months, meaning the difference between cash paid out and cash received. With 1.2 million in the bank and average monthly outflows exceeding inflows by 60,000, cash will last about 20 months. This is a rough estimate: it misses customer prepayments, future hiring, taxes and one-off payments, which is why lesson four replaces it with a 13-week forecast using actual dates. But if even the rough estimate is below twelve months, start discussing fundraising now.
 
-After each closed month, ask one question from the table above for each line. After three months, you will read the statements faster than the accountant can explain them.
+After each closed month, ask one question from the table above for each line. After three months, you will be able to explain yourself why each line changed during the month and bring the accountant specific questions.
 
 <!-- quiz -->
 ? A customer paid $240,000 on January 1 for a year’s subscription in advance. How much revenue does the company report for January?
-+ $20,000 for January, with $220,000 remaining as deferred revenue until year-end || Revenue is recognized as the service is provided: one twelfth each month.
++ $20,000 for January; the remaining $220,000 is deferred revenue at the end of January || Revenue is recognized as the service is provided: one twelfth each month. The deferred revenue balance falls by $20,000 every month and reaches zero at the end of December.
 - $240,000, because the cash has already arrived || Bank cash does not mean earned revenue; the company still owes the service.
 - Zero, because revenue is recognized only at year-end when the entire service is delivered || Service is provided evenly, so revenue is recognized monthly.
 ? Investors contributed $600,000 to the company. How does this affect the statements?

@@ -22,6 +22,10 @@ export interface ExternalOptions {
   quiz?: Pick<ExternalContext, 'task' | 'options' | 'response'>;
   want?: string;
 }
+/** Concept links `[[id]]` and `[[id|text]]` become plain words before the text leaves the page. */
+export function plainConcepts(text: string | undefined): string | undefined {
+  return text?.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, id: string, label?: string) => label ?? (registry.concepts.get(id) ? t(registry.concepts.get(id)!.term) : id));
+}
 export function externalContext(o: ExternalOptions = {}): ExternalContext {
   const route = parseRoute(typeof location === 'undefined' ? '' : location.hash);
   const lesson = where().lesson || (o.lessonId && registry.lessons.get(o.lessonId)) || (route.name === 'explainer' ? [...registry.lessons.values()].find(l => l.sections.some(s => s.kind === 'explainer' && s.explainer === route.id)) : undefined);
@@ -42,7 +46,7 @@ export function externalContext(o: ExternalOptions = {}): ExternalContext {
     course: block ? t(productById(block)?.title ?? registry.blocks.get(block)?.title ?? bi(block, block)) : undefined,
     block: block ? t(registry.blocks.get(block)?.title ?? bi(block, block)) : undefined,
     lesson: lesson ? t(lesson.title) : undefined, introduced: vocabulary(lesson),
-    task: o.task ?? criteria,
+    task: plainConcepts(o.task ?? criteria),
     draft: o.quiz ? undefined : o.templateFile ? templateDraft(o.templateFile) : documentDraft(lesson),
     terminal: terminalTail(), screen: o.screen, ...o.quiz, want: o.want,
   };

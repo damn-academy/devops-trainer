@@ -13,6 +13,7 @@ type P = Record<string, never>;
 const card = (whatRu: string, whoRu: string, whatEn: string, whoEn: string) => ({
   what: bi(whatRu, whatEn),
   who: bi(whoRu, whoEn),
+  whoLabel: bi('Кто отвечает', 'Who owns it'),
 });
 
 export const loopModel = defineModel<P>({

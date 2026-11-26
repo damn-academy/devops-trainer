@@ -61,7 +61,7 @@ Monthly retention cannot be mechanically compared with annual retention. At a co
 <!-- section: theory | Practice with sample data -->
 The two files below describe 2025 for the fictional Northwind Data: “Starting ARR” gives annual revenue for each of 100 customers on 1 January, while “ARR movements” lists new contracts, expansions, contractions, and churn by month.
 
-Movement-file columns: `account_id` — customer, `month` — year-month, `movement` — movement type (`new`, `expansion`, `contraction`, or `churn`), and `arr_delta_usd` — the change in annual revenue in dollars, negative for contraction and churn. The starting-ARR file contains each customer and their annual revenue on January 1.
+Movement-file columns: `account_id` — customer, `month` — year-month, `movement` — movement type (`new`, `expansion`, `contraction`, or `churn`), and `arr_delta_usd` — the change in annual revenue in dollars, negative for contraction and churn. The starting-ARR file contains each customer and their annual revenue on January 1. After importing, check the control totals: the starting ARR has 100 data rows excluding the header and totals 1,000,000; the movements file has 60 rows (20 `new`, 20 `expansion`, 10 `contraction`, 10 `churn`) and an `arr_delta_usd` total of 180,000.
 
 Build the year's revenue bridge, check that the starting balance plus movements equals the ending balance, and calculate GRR, NRR, and logo churn.
 

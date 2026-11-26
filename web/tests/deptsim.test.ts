@@ -220,7 +220,7 @@ describe('authored scenario mounts and company configurator', () => {
   it('switches between presets and custom properties and rejects corrupt saved configurations', () => {
     const scenario = scenarios[1]; const m = mount(false, scenario);
     m.host.querySelector<HTMLInputElement>('input[value=custom]')!.click();
-    expect(loadGame(scenario)!.prompt).toContain('Игрок выбрал для компании такие свойства.');
+    expect(loadGame(scenario)!.prompt).toMatch(/Компания «[^»]+» вымышленная\. Игрок выбрал для неё такие свойства\./);
     m.host.querySelector<HTMLInputElement>('input[value=preset]')!.click();
     expect(loadGame(scenario)!.prompt).toContain('Компания Stratova');
     const saved = loadGame(scenario)!;
@@ -266,8 +266,8 @@ it('persists the selected CNCF starting stage in the preview and restored game',
 it('completes an external game only after explicit self-review', () => {
   const w = mount(false);
   expect(w.ctx.complete).not.toHaveBeenCalled();
-  w.button('Finish self-review').click();
+  w.button('Finish the simulation self-review').click();
   expect(w.ctx.complete).toHaveBeenCalledOnce();
   expect(w.calls).toHaveLength(0);
-  expect(w.host.textContent).toContain('Self-review complete');
+  expect(w.host.textContent).toContain('Simulation self-review complete');
 });

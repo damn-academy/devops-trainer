@@ -12,11 +12,11 @@ import * as dom from '../src/core/dom';
 afterEach(() => { setLang('ru'); localStorage.clear(); vi.restoreAllMocks(); });
 it.each(['sandbox', 'incubating'] as const)('uses stage criteria without rescaling %s counts', cncfStart => {
   const prompt = buildPrompt(scenarios.find(s => s.id === 'oss.incubation')!, { seed: 1, company: 'lumenmesh', difficulty: 'like-life', turns: 12, cncfStart }, 'ru');
-  expect(prompt).toContain('Never rescale maintainer counts');
-  expect(prompt).toContain('Use the company card counts whenever present');
+  expect(prompt).toContain('Не пересчитывайте эти числа под стадию компании');
+  expect(prompt).toContain('Если в карточке компании указаны числа мейнтейнеров');
   expect(prompt).not.toContain('пропорционально масштабируйте');
   if (cncfStart === 'sandbox') {
-    expect(prompt).toContain('maintainer lifecycle with demonstrated use');
+    expect(prompt).toContain('порядок, по которому люди становятся мейнтейнерами и перестают ими быть, с примерами');
     expect(prompt).not.toContain('мейнтейнеры минимум из двух организаций');
     expect(prompt).not.toContain('Graduated');
   } else expect(prompt).toContain('мейнтейнеры минимум из двух организаций');

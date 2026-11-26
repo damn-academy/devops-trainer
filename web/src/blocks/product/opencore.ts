@@ -8,7 +8,6 @@ import { loadDraft, saveDraft } from '../../engine/trainers/storage';
 
 import { bi, t } from '../../core/i18n';
 import type { Mounted, WidgetReg } from '../../core/types';
-import { PRODUCT_HONEST_NOTE } from './content';
 
 export interface OpencoreParams {
   /** Share of the product's capabilities kept behind the paid boundary, 0..0.8. */
@@ -134,7 +133,6 @@ export function mountOpencore(el: HTMLElement, _props: unknown): Mounted {
           h('td', '', String(row.paying)),
           h('td', '', String(row.revenue)),
           h('td', '', String(row.trust)))))),
-      h('p', 'poc-note', t(PRODUCT_HONEST_NOTE)),
       h('p', 'poc-note', t(bi('Как считается модель. Число платящих компаний округляется до целого, и выручка считается от этого целого числа, поэтому она равна числу платящих, умноженному на цену. Коэффициенты роста, доли платящих и доверия ниже — учебные допущения, а не измерения: они показывают направление влияния границы, а не его величину.', 'How the model works. Paying companies are rounded to a whole number, and revenue is computed from that number, so it equals paying companies times price. The growth, conversion and trust coefficients below are teaching assumptions, not measurements: they show the direction of the boundary effect, not its size.'))),
       h('pre', 'poc-formula', `companies₀ = 80; trust₀ = 85
 growth = max(0.005, 0.03 + 0.09 × breadth − 0.08 × boundary)

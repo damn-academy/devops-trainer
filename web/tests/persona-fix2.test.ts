@@ -43,7 +43,15 @@ it('ships linked workbook examples with consistent IDs and localized sheets', as
   for (const suffix of ['', '-en']) {
     const read = async (name: string) => { const w = new ExcelJS.Workbook(); await w.xlsx.readFile(`public/templates/${name}${suffix}.xlsx`); return w; };
     const dream = await read('dream100'); expect(dream.worksheets).toHaveLength(8);
-    for (const ws of dream.worksheets) expect(ws.getRow(2).actualCellCount).toBeGreaterThan(0);
+    // Opportunities stays empty: the example buyer has not confirmed an initiative yet.
+    for (const ws of dream.worksheets) expect(ws.getRow(2).actualCellCount > 0).toBe(ws !== dream.worksheets[6]);
+    expect(dream.worksheets[0].getCell('K2').value).toBe(suffix ? 'engaged' : 'вовлечены');
+    // The stage is backed by a two-way activity, the signal is assessed by our own seller, the do-not-contact entry is outside the deal.
+    expect(String(dream.worksheets[5].getCell('G3').value)).toMatch(/в обе стороны|two-way/);
+    expect(dream.worksheets[4].getCell('M2').value).toBe(dream.worksheets[0].getCell('G2').value);
+    const banned = String(dream.worksheets[7].getCell('A2').value);
+    for (const ws of dream.worksheets.slice(1, 6)) expect(JSON.stringify(ws.getSheetValues())).not.toContain(banned);
+    for (const row of [2, 3, 4]) expect(dream.worksheets[1].getCell(`B${row}`).value).not.toMatch(/^P\d+$/);
     expect(dream.worksheets[1].getColumn(1).values.slice(2,5)).toEqual(['P001','P002','P003']);
     expect(dream.worksheets[2].getColumn(2).values.slice(2,5)).toEqual(['A001','A001','A001']);
     expect(dream.worksheets[3].getColumn(1).values.slice(2,5)).toEqual(['A001','A001','A001']);
@@ -54,5 +62,11 @@ it('ships linked workbook examples with consistent IDs and localized sheets', as
     const signals = (await read('signals-week')).worksheets[0]; expect(signals.actualRowCount).toBe(6);
     expect(new Set(signals.getColumn(1).values.slice(2)).size).toBe(5);
     for (const name of ['pr-briefing','pr-news','pr-founder']) expect((await read(name)).worksheets[0].actualRowCount).toBe(2);
+    const briefing = (await read('pr-briefing')).worksheets[0];
+    expect(String(briefing.getCell('I1').value)).toMatch(/согласие|consent/);
+    expect(String(briefing.getCell('I2').value)).toMatch(/^(да|yes)/);
+    const founder = await read('pr-founder');
+    expect(founder.worksheets).toHaveLength(2);
+    expect(founder.worksheets[1].actualRowCount).toBe(2);
   }
 });

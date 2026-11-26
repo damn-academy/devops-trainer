@@ -28,7 +28,7 @@ Before publication, fill in a short card: platform; a link to its rules and the 
 - The assistant publishes the article itself at the time specified in the brief || Automated publication on an external platform requires separate authorisation and checks.
 - The article can be considered published because Habr shows drafts to the author's subscribers || Only the author sees the draft.
 ? A blog is published in English and German. The editor corrected a fact in the English post. What else is needed?
-+ Apply the correction to the German version in the same change, in the same commit || Language versions are corrected together or they diverge.
++ Correct the same fact in the German version and publish both versions at once || Language versions are corrected together or they diverge.
 - Nothing; the translator will fix the German version in the next scheduled blog update || Until then, readers will see different facts in different versions.
 - Remove the German version until the translator checks it against the corrected English one || Removal breaks language links and search visibility.
 <!-- /quiz -->

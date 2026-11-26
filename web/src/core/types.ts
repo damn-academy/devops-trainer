@@ -948,6 +948,8 @@ export type ColorFamily =
 export interface ElementCard {
   what: Bi;
   who: Bi;
+  /** Label of the `who` line; diagrams of roles and processes put advice there instead of an author. */
+  whoLabel?: Bi;
   /** Prose instructions for finding or inspecting the element. */
   look?: Bi;
   /** A command to look at it: 'ls -l /proc/$$/fd'. */
@@ -1215,6 +1217,8 @@ export interface WidgetCtx {
   level: Level;
   /** Mark the section done. */
   complete(): void;
+  /** The lesson collects the practice result in one task document, so a spreadsheet template needs no field of its own. */
+  sharedDocument?: boolean;
   record(ev: NewEvent): void;
   openDoc(ref: DocRef): void;
   /** Set by exam pages with `Exam.inTab`: a lab widget reports the facts of its machines by id. */

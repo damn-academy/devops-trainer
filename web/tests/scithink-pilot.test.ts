@@ -1,5 +1,5 @@
-// The public scientific-thinking course: twelve lessons with the honest note
-// and the self-check note in each, a quiz bank with explained distractors,
+// The public scientific-thinking course: twelve lessons, the honest note and
+// the self-check note stated once in the first lesson, a quiz bank with explained distractors,
 // the correlation explainer whose spurious link collapses under the
 // within-groups break, and the calibration trainer over ten balanced claims.
 import { describe, expect, it } from 'vitest';
@@ -10,12 +10,12 @@ import scithinkModule from '../src/blocks/scithink/index';
 import { PRODUCTS, visibleProducts } from '../src/core/products';
 
 describe('scientific thinking course (public)', () => {
-  it('carries twelve lessons, every one with both honest notes, sources and minutes', () => {
+  it('carries twelve lessons with sources and minutes, and the two honest notes once in the first lesson', () => {
     expect(SCITHINK_LESSONS).toHaveLength(12);
-    for (const l of SCITHINK_LESSONS) {
+    for (const [i, l] of SCITHINK_LESSONS.entries()) {
       const callouts = l.sections.filter((s) => s.kind === 'callout');
-      expect(callouts.some((s) => s.kind === 'callout' && s.body === HONEST_NOTE), l.id).toBe(true);
-      expect(callouts.some((s) => s.kind === 'callout' && s.body === SELFCHECK_NOTE), l.id).toBe(true);
+      expect(callouts.some((s) => s.kind === 'callout' && s.body === HONEST_NOTE), l.id).toBe(i === 0);
+      expect(callouts.some((s) => s.kind === 'callout' && s.body === SELFCHECK_NOTE), l.id).toBe(i === 0);
       expect(l.sources.en.length, l.id).toBeGreaterThan(0);
       expect(l.sources.ru.length, l.id).toBeGreaterThan(0);
       for (const s of [...l.sources.en, ...l.sources.ru]) expect(s.url, l.id).toMatch(/^https:\/\//);

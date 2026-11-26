@@ -22,7 +22,7 @@ The full cost of an event exceeds the package price. The cheapest KubeCon Europe
 Event results take time. In 2026, Dreamdata calculated an average of 281 days from the first LinkedIn ad impression to revenue; equally reliable data is not available for events, but this gives a sense of the timescale. Review event results after 30, 90, and 180 days rather than declaring failure after a week. To avoid attributing a deal to an event when it was already progressing, check which opportunities were in progress before the event.
 
 <!-- section: task | Exercise: return-on-investment calculator -->
-Complete the exercise in the “Event return on investment” simulator on this page. Set the full cost of a conference booth, including all expenses from the lesson, profit per deal, and your company's opportunity win rate. Check how many opportunities you need to break even. Then vary the share of scanned attendees who match your target audience, the share of unique target companies among them, and company transitions to contact within the first two days and to a held meeting. See which values make the booth pay off in most runs and which make it almost never pay off.
+Complete the exercise in the “Event ROI” calculator on this page. Set the full cost of a conference booth, including all expenses from the lesson, profit per deal, and your company's opportunity win rate. Check how many opportunities you need to break even. Then vary the share of scanned attendees who match your target audience, the share of unique target companies among them, and company transitions to contact within the first two days and to a held meeting. See which values make the booth pay off in most runs and which make it almost never pay off.
 
 <!-- widget: events.roi -->
 
@@ -65,7 +65,11 @@ To turn the score into a decision, add three rules to the weights. First, a veto
 <!-- section: theory | Event economics -->
 `Full cost = sponsorship + travel + booth and services + materials and demo + team time + follow-up`.
 
-`Expected new deals = target companies with a held meeting × sales-accepted opportunity rate × win rate`. For an event without badge scanning, such as a partner visit or a private dinner, start directly with the number of target companies on the invitation list.
+`Expected new deals = target companies with a held meeting × sales-accepted opportunity rate × win rate`. For an event without badge scanning, such as a partner visit or a private dinner, start with the number of unique target companies on the invitation list instead of booth meetings; the same transitions follow: who was contacted after the event, who met, who became an opportunity, and who bought.
+
+The two business days for the first email are counted from the last day of the event. For invited companies, for example to a private dinner, they are counted from the date of the dinner or meeting they were invited to: an invitation before the event is not yet a contact after it.
+
+A worked CRM export example. The conference ran from 14 to 16 October 2026, Wednesday to Friday; the observation date is 15 January 2027, 90 days later. The export has two records for Westhost: an engineer scanned at the booth on 14 October and the platform lead on 16 October. This is one target company, not two. The platform lead was emailed on Monday 19 October, the first business day after the event, and the meeting took place on 3 November, so the company passes the “contacted” and “meeting” steps. The other record in the export is a bank with an opportunity open since 1 September, before the conference. The booth conversation may have advanced it, but it is not a new opportunity from the event: show it on a separate line as an existing deal and keep it out of every denominator below. The denominator of each transition is the companies of the previous step as of the observation date: the contacted share is computed from unique target companies without already open deals, the meeting share from contacted companies, the opportunity share from companies with a meeting, and the win rate only from opportunities that have reached a decision by the observation date. Opportunities without a decision stay open and enter the calculation at the next observation.
 
 `Expected gross profit = new deals × first-year revenue per deal × gross margin`.
 
@@ -105,8 +109,8 @@ The table shows possible combinations, not a recommendation for everyone to buy 
 + Mark it as unknown and request data from the organizer or customers || Unknowns are explicitly marked.
 <!-- /quiz -->
 
-<!-- section: task | Exercise: a portfolio of three events -->
-Complete the exercise in the document on this page. Describe your product's buyer roles and the main goal for next year. Build a shortlist of ten events across the lesson's four classes and score each using the weighted model, marking unknown fields. Choose up to three events: as many as your budget and team can support, and of different types if the goal allows it. For each, record the participation format, full cost, for a sales-focused event the expected return using the lesson’s formula, or for partnerships and other goals outside sales the cost per result and what you compare it against, and a criterion for declining participation the following year.
+<!-- section: task | Exercise: a portfolio of up to three events -->
+Complete the exercise in the document on this page. Describe your product's buyer roles and the main goal for next year. Build a shortlist of ten events across the lesson's four classes and score each using the weighted model, marking unknown fields. Choose up to three events: as many as your budget and team can support, and of different types if the goal allows it. For each, record the participation format, full cost, for a sales-focused event the expected return using the lesson’s formula, or for partnerships and other goals outside sales the cost per result and what you compare it against, and a criterion for declining participation the following year. The time on the lesson card covers reading; searching for events for the shortlist takes separate time.
 
 <!-- section: sources -->
 - GitLab, event request guidelines — https://handbook.gitlab.com/handbook/marketing/events/ (checked 25.11.2026)

@@ -7,7 +7,7 @@ CNCF provides document templates for projects. The GOVERNANCE.md template comes 
 
 The practical advice is to choose the smallest structure that describes how the project works now, and keep evidence of it in use: nominations, votes, and decisions. A committee invented just before an application is not evidence.
 
-CONTRIBUTING describes how someone starts contributing: how to run tests locally, fix documentation, reproduce a bug, request a review, sign off a commit under the DCO, and report a vulnerability. Rules about who makes decisions belong in GOVERNANCE.md, and the two documents should not be mixed.
+CONTRIBUTING describes how someone starts contributing: how to run tests locally, fix documentation, reproduce a bug, request a review, sign off a commit under the DCO (the author’s confirmation that they have the right to submit the change under the project’s license; see the CLA and DCO section below), and report a vulnerability. Rules about who makes decisions belong in GOVERNANCE.md, and the two documents should not be mixed.
 
 <!-- section: theory | The role ladder -->
 Kubernetes distinguishes contributors, reviewers, and approvers, tying each role to responsibility for reviews and areas of code. The simplified ladder “contributor, reviewer, approver, maintainer” is useful for teaching, but CNCF does not require these four titles. What matters is that each promotion is tied to a scope of responsibility, evidence of work and sponsorship, and repository permissions. A reviewer should not silently receive merge permissions. Expectations of a maintainer should be described in terms of review quality and ongoing responsibility; commit counts say little about them.

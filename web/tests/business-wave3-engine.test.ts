@@ -16,9 +16,10 @@ for (const lang of ['ru', 'en'] as const) it(`exports every metric YAML field an
   for (const key of Object.keys(parse(yaml))) expect(template).toContain(`\n${key}: `);
   expect(template).toContain(lang === 'ru' ? 'Дата начала действия' : 'Effective date');
   const rights = documentTemplate('oss.donation.task', 'Rights', 'Task');
-  const rows = rights.split('\n').filter(line => line.startsWith('| '));
+  const rows = rights.split('\n').filter(line => line.startsWith('| ') && line.split('|').length === 10);
   expect(rows).toHaveLength(12);
-  expect(rows.every(row => row.split('|').length === 10)).toBe(true);
+  // The three-year cost table: header, divider and seven items by year.
+  expect(rights.split('\n').filter(line => line.startsWith('| ') && line.split('|').length === 6)).toHaveLength(9);
   expect(rights).toContain(lang === 'ru' ? 'Ключи подписи выпусков' : 'Release signing keys');
   expect(rights).toContain(lang === 'ru' ? 'Документ-основание' : 'Governing document');
 });

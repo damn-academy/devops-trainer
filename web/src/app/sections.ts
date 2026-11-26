@@ -24,6 +24,10 @@ export interface SectionCtx {
   index: number;
   count: number;
   manualTextCompletion?: boolean;
+  /** The section was completed earlier: its completion note is shown again after a reload. */
+  isDone?: boolean;
+  /** See WidgetCtx.sharedDocument. */
+  sharedDocument?: boolean;
   done(sectionId: string): void;
 }
 
@@ -45,7 +49,7 @@ function howtoPanel(body: Bi, title?: Bi): HTMLElement {
 
 export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mounted?: Mounted } {
   const el = h('section.lsec', { 'data-kind': s.kind, id: `s-${s.id}`, 'data-step': s.step });
-  const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: true }, t(bi('Раздел пройден. Результат сохранён в этом браузере.', 'Section complete. Progress is saved in this browser.')));
+  const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: !c.isDone }, t(bi('Раздел пройден. Результат сохранён в этом браузере.', 'Section complete. Progress is saved in this browser.')));
   const done = () => { c.done(s.id); completion.hidden = false; };
   switch (s.kind) {
     case 'text': {
@@ -138,7 +142,7 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
       el.append(completion);
       let feedbackFacts: unknown = { unavailable: 'No facts received from widget yet' };
       const unregisterFeedback = registerFeedbackSnapshot(host, () => ({ widget: s.widget, facts: feedbackFacts }));
-      const mounted = w.mount(host, s.props, { reportFacts: facts => { feedbackFacts = facts; }, lessonId: c.lesson.id, sectionId: s.id, level: c.level, complete: selfReviewed ? () => {} : done, record: (e) => store.record(e), openDoc: (r) => openDoc(r) });
+      const mounted = w.mount(host, s.props, { reportFacts: facts => { feedbackFacts = facts; }, lessonId: c.lesson.id, sectionId: s.id, level: c.level, sharedDocument: c.sharedDocument, complete: selfReviewed ? () => {} : done, record: (e) => store.record(e), openDoc: (r) => openDoc(r) });
       return { el, mounted: { ...mounted, dispose() { unregisterFeedback(); mounted.dispose(); } } };
     }
   }

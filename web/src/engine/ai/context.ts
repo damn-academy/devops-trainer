@@ -82,9 +82,10 @@ export function templateTask(l: Lesson | undefined, file?: string): ReturnType<t
   const csv = practiceCsv[`../../../public/templates/${filename}`];
   if (!csv) return null;
   const rows = csv.trim().split(/\r?\n/);
+  // Every metrics request says the data is synthetic, not only the lessons whose text happens to mention it.
   const summary = lang() === 'ru'
-    ? `Файл: ${filename}. Колонки: ${rows[0]}. Строк данных: ${rows.length - 1}.`
-    : `File: ${filename}. Columns: ${rows[0]}. Data rows: ${rows.length - 1}.`;
+    ? `Файл: ${filename}. Колонки: ${rows[0]}. Строк данных: ${rows.length - 1}. Northwind Data — вымышленная компания, данные синтетические, суммы в USD.`
+    : `File: ${filename}. Columns: ${rows[0]}. Data rows: ${rows.length - 1}. Northwind Data is fictional; the data is synthetic and amounts are in USD.`;
   const prompt = `${t(practice.body)}\n\n${summary}`;
   return { task: { id: `${l.id}.${file}`, prompt: { ru: prompt, en: prompt }, hints: [] } as unknown as Task };
 }

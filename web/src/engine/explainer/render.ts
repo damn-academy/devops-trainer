@@ -138,12 +138,16 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   });
   const canvasEl = h('div.ex-canvas', {}, viewport);
   const introBox = model.intro ? h('div.ex-intro', { role: 'note' }) : null;
-  const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: true }, t(bi('Просмотр завершён. Можно продолжить сравнивать параметры.', 'Walkthrough complete. You can continue comparing parameters.')));
+  // Diagrams without parameters (the business courses) do not talk about changing them.
+  const hasParams = model.params.some((p) => !p.levels || p.levels.includes(ctx.level));
+  const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: true }, t(hasParams ? bi('Просмотр завершён. Можно продолжить сравнивать параметры.', 'Walkthrough complete. You can continue comparing parameters.') : bi('Просмотр завершён.', 'Walkthrough complete.')));
   const el = h(
     'div.explainer',
     { tabindex: 0, 'data-model': model.id, 'data-frame': model.frame ?? 'fixed' },
     h('header.ex-head', {}, h('h3', {}, t(model.title))),
-    h('p.task-guide', {}, t(bi('Пройдите процесс на схеме кнопкой «Шаг вперёд» или «Проиграть». Затем измените параметры и сравните результат с подписями шагов. Если появится вопрос, выберите ответ, чтобы продолжить. Последний шаг завершает просмотр; под схемой появится «Просмотр завершён».', 'Walk through the diagram with “Step forward” or “Play”. Then change the parameters and compare the result with the step captions. If a question appears, select an answer to continue. The last step completes the walkthrough; “Walkthrough complete” appears below the diagram.'))),
+    h('p.task-guide', {}, t(hasParams
+      ? bi('Пройдите процесс на схеме кнопкой «Шаг вперёд» или «Проиграть». Затем измените параметры и сравните результат с подписями шагов. Если появится вопрос, выберите ответ, чтобы продолжить. Последний шаг завершает просмотр; под схемой появится «Просмотр завершён».', 'Walk through the diagram with “Step forward” or “Play”. Then change the parameters and compare the result with the step captions. If a question appears, select an answer to continue. The last step completes the walkthrough; “Walkthrough complete” appears below the diagram.')
+      : bi('Пройдите процесс на схеме кнопкой «Шаг вперёд» или «Проиграть»; клик по элементу открывает его карточку. Если появится вопрос, выберите ответ, чтобы продолжить. Последний шаг завершает просмотр; под схемой появится «Просмотр завершён».', 'Walk through the diagram with “Step forward” or “Play”; clicking an element opens its card. If a question appears, select an answer to continue. The last step completes the walkthrough; “Walkthrough complete” appears below the diagram.'))),
     h('div.ex-controls', {}, knobBox, breakBox),
     predictBox,
     introBox,
@@ -384,7 +388,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
         ),
       ),
       h('div.ex-card-what', {}, renderMd(t(c.what))),
-      h('div.ex-card-who', {}, h('span.k', {}, t(L.cardWho)), ' ', renderMd(t(c.who))),
+      t(c.who).trim() ? h('div.ex-card-who', {}, h('span.k', {}, t(c.whoLabel ?? L.cardWho)), ' ', renderMd(t(c.who))) : null,
       c.look ? h('div.ex-card-look', {}, renderMd(t(c.look))) : null,
       c.see ? h('p.ex-card-see', {}, h('span.k', {}, t(L.cardSee)), ' ', h('code', {}, c.see)) : null,
       c.doc ? h('p.ex-card-doc', {}, h('span.k', {}, t(L.cardDoc)), ' ', docChip(c.doc)) : null,

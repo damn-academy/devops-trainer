@@ -17,7 +17,7 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         title: ['Категория важнее продукта', 'The category beats the product'],
         body: [
           'Покупатель выбирает внутри категории и сравнивает вас с двумя-тремя знакомыми альтернативами; весь рынок он не перебирает. Пока вы объясняете, чем продукт лучше, конкурент, который задал категорию, уже продаёт. Поэтому работа начинается с вопроса о рамке сравнения, а список возможностей обсуждают потом: в какой категории вас должны искать.',
-          'Позиционирование в этом смысле — решение о том, против чего вас измеряют, и слоган его не заменяет. Если рамку не задали вы, её задали рынок, и тогда вас сравнивают с кем-то, кто вам невыгоден.',
+          'Позиционирование в этом смысле — решение о том, против чего вас измеряют, и слоган его не заменяет. Если рамку не задали вы, её задал рынок, и тогда вас сравнивают с кем-то, кто вам невыгоден.',
           'Эйприл Данфорд описывает позиционирование как выбор контекста, в котором продукт выигрывает, а Play Bigger превращает это в проектирование самой категории.',
         ],
         bodyEn: [
@@ -42,7 +42,7 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           'The jobs theory developed by Anthony Ulwick and Clayton Christensen says the job is stable while solutions change: yesterday a script did it, today your product, tomorrow a cloud service. Whoever understands the job survives the change of technologies.',
         ],
         task: [
-          'Выпишите три задачи, на которые реальных пользователей нанимали ваш продукт, словами самих пользователей; слова вашей команды здесь не годятся.',
+          'Выпишите три задачи, для которых реальные пользователи «нанимали» ваш продукт, словами самих пользователей; слова вашей команды здесь не годятся.',
           'Write down three jobs real users hired your product for, in the users’ own words rather than your team’s.',
         ],
       },
@@ -72,8 +72,8 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         n: 4,
         title: ['Три двигателя роста', 'Three growth engines'],
         body: [
-          'Есть три способа довести продукт до покупателя. Product-led growth: продукт сам приводит пользователей, которые пробуют его без продавца и платят без звонка. Sales-led: двери открывают продавцы и длинные циклы сделок. Community-led: продукт распространяется через сообщество и открытый код.',
-          'У инфраструктурных продуктов типичен гибрид, который описывают как open-source-led со sales-assist: инженер пробует продукт бесплатно, а крупную сделку внутри компании доводит уже человек. Двигатель определяет метрики, состав команды и даже цену, поэтому его выбирают осознанно, без оглядки на моду.',
+          'Есть три способа довести продукт до покупателя. Рост через продукт (product-led growth): продукт сам приводит пользователей, которые пробуют его без продавца и платят без звонка. Рост через продажи (sales-led): двери открывают продавцы и длинные циклы сделок. Рост через сообщество (community-led): продукт распространяется через сообщество и открытый код.',
+          'У инфраструктурных продуктов типичен гибрид: рост через открытый код с помощью продавца (open-source-led with sales-assist). Инженер пробует продукт бесплатно, а крупную сделку внутри компании доводит уже человек. Двигатель определяет метрики, состав команды и даже цену, поэтому его выбирают осознанно, без оглядки на моду.',
         ],
         bodyEn: [
           'There are three ways to bring a product to the buyer. Product-led growth: the product brings users who try it without a seller and pay without a call. Sales-led: sellers and long deal cycles open the doors. Community-led: the product spreads through the community and open source.',
@@ -86,17 +86,17 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
       },
       {
         n: 7,
-        title: ['Два нарратива', 'Two narratives'],
+        title: ['Два рассказа о продукте', 'Two narratives'],
         body: [
-          'Один продукт нуждается в двух разных рассказах. Bottom-up обращается к инженеру словами «попробуй за вечер, не спрашивая никого». Top-down обращается к подписанту бюджета словами «снимите риск простоя и верните инженерное время». Эти рассказы не должны противоречить друг другу, но обращены к разным страхам.',
-          'Инженер советует купить, а бюджет подписывает другой человек, и его волнуют не фичи, а последствия для компании. Если нарратив один, половина аудитории его не слышит.',
+          'Одному продукту нужны два разных рассказа. Рассказ снизу вверх (bottom-up) обращается к инженеру словами «попробуй за вечер, не спрашивая никого». Рассказ сверху вниз (top-down) обращается к подписанту бюджета словами «снимите риск простоя и верните инженерное время». Эти рассказы не должны противоречить друг другу, но обращены к разным страхам.',
+          'Инженер советует купить, а бюджет подписывает другой человек, и его волнуют не фичи, а последствия для компании. Если рассказ один, половина аудитории его не слышит.',
         ],
         bodyEn: [
           'One product needs two different stories. Bottom-up addresses the engineer with words like “try it tonight without asking anyone”. Top-down addresses the budget signer with words like “remove the risk of downtime and give engineering time back”. These stories must not contradict each other, but they speak to different fears.',
           'The engineer advises the purchase, but someone else signs the budget, and that person cares not about features but about consequences for the company. If there is only one narrative, half the audience does not hear it.',
         ],
         task: [
-          'Напишите по одному предложению bottom-up нарратива для инженера и top-down нарратива для подписанта бюджета. Проверьте, что они не противоречат друг другу.',
+          'Напишите по одному предложению рассказа снизу вверх для инженера и рассказа сверху вниз для подписанта бюджета. Проверьте, что они не противоречат друг другу.',
           'Write one sentence of the bottom-up narrative for the engineer and one of the top-down narrative for the budget signer. Check that they do not contradict each other.',
         ],
       },
@@ -111,15 +111,17 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         title: ['Граница open-core', 'The open-core boundary'],
         body: [
           'Open-core означает, что ядро продукта открыто, а за отдельные возможности платят. Решение о границе важнее решения о цене: бесплатная часть должна целиком решать одну задачу маленькой команды, иначе продуктом не начнут пользоваться. Платную часть обычно составляют возможности, которые нужны крупной компании и почти не нужны маленькой команде: единый вход через корпоративный каталог, журналы аудита, работа на многих кластерах, соответствие требованиям регуляторов, поддержка с гарантированным временем ответа. Безопасность так делить нельзя: исправления уязвимостей и защищённые настройки по умолчанию должны быть в открытой версии, иначе маленькие команды останутся уязвимыми, а сообщество справедливо обвинит компанию в том, что она продаёт безопасность.',
+          'Спорнее всего журнал аудита. Против платного журнала говорит то, что маленькой команде тоже нужно знать, кто удалил кластер, иначе после ошибки или взлома ей нечем разобраться. За платный — то, что крупной компании нужен другой журнал: с хранением годами, выгрузкой в её систему сбора событий и отчётами для регулятора. Правило урока разводит эти две вещи. Запись действий администраторов и её просмотр относятся к безопасности и остаются в открытой версии. Долгое хранение, выгрузка в корпоративные системы и отчёты о соответствии нужны только крупной компании и могут быть платными. Так же решают и с единым входом: вход по паролю и по ключам доступен всем, а подключение к корпоративному каталогу платное.',
           'Жадная граница провоцирует форк и сжигает доверие сообщества, щедрая превращает продукт в благотворительность. Границу держат в одном месте годами и двигают её медленно, объясняя каждый шаг сообществу.',
         ],
         bodyEn: [
           'Open-core means the product’s core is open and separate features are paid. The boundary decision matters more than the price decision: the free part must solve one job completely for a small team, or people will not start using the product. The paid part usually consists of capabilities large companies need and small teams rarely do: corporate-directory single sign-on, audit logs, multi-cluster operations, regulatory compliance and support with a guaranteed response time. Security cannot be divided this way: vulnerability fixes and secure defaults must be in the open version, or small teams remain vulnerable and the community rightly accuses the company of selling security.',
+          'The audit log is the most disputed case. Against a paid log: a small team also needs to know who deleted a cluster, or after a mistake or a breach it has nothing to investigate with. For a paid log: a large company needs a different log, kept for years, exported to its event collection system and turned into regulator reports. The lesson’s rule separates the two. Recording administrator actions and viewing them is security and stays in the open version. Long retention, export to corporate systems and compliance reports are needed only by a large company and can be paid. Single sign-on is decided the same way: password and key login is available to everyone, connecting a corporate directory is paid.',
           'A greedy boundary provokes a fork and burns the community’s trust; a generous one turns the product into charity. The boundary is kept in one place for years and moved slowly, with every step explained to the community.',
         ],
         task: [
-          'Перечислите три возможности, которые продукт отдаёт бесплатно, и три возможности, за которые компании платят без торга. Проверьте, что граница между списками совпадает с границей в вашем продукте.',
-          'List three features the product gives away free and three that companies pay for without haggling. Check that the boundary between the lists matches the boundary in your product.',
+          'Перечислите три возможности, которые продукт отдаёт бесплатно, и три возможности, за которые платят компании и которые не нужны маленькой команде для безопасной работы. Проверьте, что граница между списками совпадает с границей в вашем продукте.',
+          'List three features the product gives away free and three that companies pay for and that a small team does not need to work securely. Check that the boundary between the lists matches the boundary in your product.',
         ],
       },
       {
@@ -148,12 +150,12 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         n: 8,
         title: ['Тайминг и волна', 'Timing and the wave'],
         body: [
-          'Спрос на категорию чаще создают события снаружи, чем ваш маркетинг. Смена владельца VMware и уход клиентов Broadcom, возврат нагрузок из публичных облаков в собственные центры обработки данных, требования суверенитета данных, дефицит видеокарт — каждая такая волна выносит целые категории продуктов вверх почти без затрат.',
-          'Работа против волны превращает каждую сделку в борьбу за внимание, работа на волне даёт многократный рост при тех же усилиях. Поэтому вопрос «почему сейчас» стоит рядом с вопросом «почему мы».',
+          'Спрос на категорию чаще создают события снаружи, чем ваш маркетинг. Смена владельца VMware и уход клиентов Broadcom, возврат нагрузок из публичных облаков в собственные центры обработки данных, требования суверенитета данных, дефицит видеокарт — каждая такая волна приводит к продуктам целой категории покупателей, которых этим продуктам не пришлось убеждать, что задача существует.',
+          'Работа против волны превращает каждую сделку в борьбу за внимание, а на волне те же усилия приводят больше покупателей, потому что задачу им объяснили события. Поэтому вопрос «почему сейчас» стоит рядом с вопросом «почему мы».',
         ],
         bodyEn: [
-          "Demand for a category is more often created by outside events than by your marketing. VMware changing owners and customers leaving Broadcom, workloads returning from public clouds to private data centres, data sovereignty requirements, GPU shortages: each such wave lifts entire product categories almost without expenditure.", // TODO(en-review)
-          "Working against the wave turns every deal into a struggle for attention; riding it delivers many times the growth for the same effort. That is why the question ‘why now’ belongs alongside ‘why us’.", // TODO(en-review)
+          "Demand for a category is more often created by outside events than by your marketing. VMware changing owners and customers leaving Broadcom, workloads returning from public clouds to private data centres, data sovereignty requirements, GPU shortages: each such wave brings a whole product category buyers who did not need to be convinced that the problem exists.",
+          "Working against the wave turns every deal into a struggle for attention; riding it, the same effort brings more buyers, because events have already explained the problem to them. That is why the question ‘why now’ belongs alongside ‘why us’.",
         ],
         task: [
           'Выпишите две волны, которые сейчас идут на ваш рынок, и одно действие, которое вы сделаете в ближайший месяц, чтобы встать на каждую из них.',
@@ -218,7 +220,7 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         n: 12,
         title: ['Время до первой ценности', 'Time to value'],
         body: [
-          'Пользователь решает, оставится ли он с продуктом, в первые минуты знакомства: скачал, запустил, получил результат. Этот путь измеряют в минутах и называют временем до первой ценности, и каждый шаг, который его удлиняет, стоит части аудитории.',
+          'Пользователь решает, останется ли он с продуктом, в первые минуты знакомства: скачал, запустил, получил результат. Этот путь измеряют в минутах и называют временем до первой ценности, и каждый шаг, который его удлиняет, стоит части аудитории.',
           'Главный конкурент в этот момент не другой продукт, а привычка, которая говорит «не буду ничего менять». Поэтому первый успех должен случиться раньше первой настройки, первого звонка и первого чтения документации целиком.',
         ],
         bodyEn: [
@@ -266,7 +268,7 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         n: 15,
         title: ['API и командная строка как интерфейс', 'API and CLI as the interface'],
         body: [
-          'Для инженера интерфейс продукта — это прежде всего API и командная строка, картинки в браузере идут потом. Они должны быть предсказуемыми, обратимо совместимыми и удобными для скриптов: разработчик читает API раньше, чем маркетинговую страницу, и по нему решает, вписывается ли продукт в его работу.',
+          'Для инженера интерфейс продукта — это прежде всего API и командная строка, картинки в браузере идут потом. Они должны быть предсказуемыми, обратно совместимыми и удобными для скриптов: разработчик читает API раньше, чем маркетинговую страницу, и по нему решает, вписывается ли продукт в его работу.',
           'Неудобный API превращает каждый вызов в переговоры, удобный делает продукт частью привычки. Поэтому изменения в API планируют как изменения в публичном договоре, с версиями и миграциями.',
         ],
         bodyEn: [
@@ -304,7 +306,7 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         n: 17,
         title: ['Дерево возможностей и решений', 'The opportunity-solution tree'],
         body: [
-          'Карта продукта строится как дерево: желаемый исход ветвится в возможности, то в боли и желания пользователей, возможности ветвятся в решения, решения — в эксперименты. Сначала ищут возможность, потом придумывают решение.',
+          'Карта продукта строится как дерево: желаемый исход ветвится в возможности, то есть в боли и желания пользователей, возможности ветвятся в решения, решения — в эксперименты. Сначала ищут возможность, потом придумывают решение.',
           'Команды влюбляются в решения и начинают искать им применение, и тогда каждая фича защищается эмоциями. Дерево переворачивает порядок: обсуждают карту, и любимая идея отходит на второй план, и спор идёт о том, какая ветвь ведёт к исходу быстрее.',
         ],
         bodyEn: [
@@ -404,8 +406,8 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
           "A sudden licence change that closes what was open yesterday burns trust overnight: HashiCorp’s move to the Business Source License spawned OpenTofu, and the market gained a second product where there had been one. Remember this lesson before changing the licence, rather than afterwards.", // TODO(en-review)
         ],
         task: [
-          'Проверьте каждую платную возможность: нужна ли она компаниям и одновременно не нужна сообществу. Выпишите одно исключение и решите, что с ним делать.',
-          'Check every paid feature: is it needed by companies and at the same time not needed by the community? Write down one exception and decide what to do with it.',
+          'Проверьте каждую платную возможность: нужна ли она компаниям и может ли без неё безопасно работать маленькая команда из сообщества. Выпишите одно исключение и решите, что с ним делать, как в примере с журналом аудита из урока о границе open-core.',
+          'Check every paid feature: is it needed by companies, and can a small community team work securely without it? Write down one exception and decide what to do with it, as in the audit log example from the open-core boundary lesson.',
         ],
       },
       {
@@ -451,11 +453,11 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         title: ['Метрика ценности', 'The value metric'],
         body: [
           'Цену привязывают к тому, как клиент считает свою выгоду: за узел, за пользователя, за гигабайт, за запрос. Хорошая метрика растёт вместе с успехом клиента и понятна до покупки, плохая наказывает клиента за рост или не даёт вам расти вместе с ним.',
-          'Исследования Patrick Campbell и ProfitWell, которое теперь входит в Paddle, показывают, что упаковка и метрика решают не меньше, чем сам уровень цены. По их данным, компании, которые регулярно пересматривают упаковку и метрику цены, чаще растут быстрее тех, кто только повышает цену; это наблюдение по выборке клиентов ProfitWell, и оно не доказывает, что пересмотр сам по себе вызывает рост.',
+          'Патрик Кэмпбелл, основатель ProfitWell (компания теперь входит в Paddle), в своих публикациях о ценах утверждает, что упаковка и метрика решают не меньше, чем сам уровень цены. По его словам, компании, которые регулярно пересматривают упаковку и метрику цены, чаще растут быстрее тех, кто только повышает цену; это наблюдение по клиентам ProfitWell без открытой методики, поэтому проверяйте его на своих данных: оно не доказывает, что пересмотр сам по себе вызывает рост.',
         ],
         bodyEn: [
           "Tie the price to how the customer measures benefit: per node, per user, per gigabyte, per request. A good metric grows with the customer’s success and is clear before purchase; a bad one punishes the customer for growth or prevents you from growing with them.", // TODO(en-review)
-          "Research by Patrick Campbell and ProfitWell, now part of Paddle, shows that packaging and the metric matter as much as the price level itself. In their data, companies that regularly revisit packaging and the price metric more often grow faster than those that only raise prices. This is an observation from ProfitWell’s customer sample, not proof that revision itself causes growth.", // TODO(en-review)
+          "Patrick Campbell, founder of ProfitWell (now part of Paddle), argues in his pricing publications that packaging and the metric matter as much as the price level itself. According to him, companies that regularly revisit packaging and the price metric more often grow faster than those that only raise prices. This is an observation from ProfitWell’s customers without a published method, so check it on your own data: it does not prove that revision itself causes growth.",
         ],
         task: [
           'Выпишите, от чего клиент считает свою выгоду от продукта, и выберите единицу, которой эту выгоду можно измерить без вреда для доверия к продукту.',

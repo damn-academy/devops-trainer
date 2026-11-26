@@ -14,6 +14,7 @@ type P = Record<string, never>;
 const card = (whatRu: string, whoRu: string, whatEn: string, whoEn: string) => ({
   what: bi(whatRu, whatEn),
   who: bi(whoRu, whoEn),
+  whoLabel: bi('Как работать', 'How to approach'),
 });
 
 export const buyingModel = defineModel<P>({
@@ -180,7 +181,7 @@ export const buyingModel = defineModel<P>({
           'Once the business has decided, the CISO (risk, exit-ability) and procurement (contract) join. Coming to them first means stalling.',
         ),
         focus: ['ciso', 'proc', 'risk'],
-        say: { ciso: bi('«А если вы исчезнете?» Отвечайте, что код открыт и систему можно эксплуатировать без поставщика.', '"What if you disappear?" — the answer: the code is open, exit-ability is in the architecture.') },
+        say: { ciso: bi('«А если вы исчезнете?» Одного открытого кода мало: покажите, как систему эксплуатируют без вас.', '"What if you disappear?" Open code alone is not enough: show how the system runs without you.') },
       },
     ];
   },

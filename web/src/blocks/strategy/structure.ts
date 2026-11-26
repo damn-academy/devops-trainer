@@ -62,8 +62,8 @@ export const STRATEGY_SUMMARIES: Record<string, Bi> = {
     "en": "Four regional models of sovereign infrastructure and an eight-property dossier to check your own product against."
   },
   "strategy.event-offer": {
-    "ru": "Метод в семь шагов от новости к проверенному предложению: повод у аккаунтов, три гипотезы, карточка проверки, экономика для клиента и критерии остановки.",
-    "en": "A seven-step method from news to a tested offer: account-level triggers, three hypotheses, a test card, customer economics and stop criteria."
+    "ru": "Метод в семь шагов от новости к проверенному предложению: повод у компаний-клиентов, три гипотезы, карточка проверки, экономика для клиента и критерии остановки.",
+    "en": "A seven-step method from news to a tested offer: customer-company triggers, three hypotheses, a test card, customer economics and stop criteria."
   },
   "strategy.ecosystem": {
     "ru": "Встроенная дистрибуция, партнёры, комиссии маркетплейсов облаков и технологические альянсы.",

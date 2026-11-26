@@ -92,7 +92,8 @@ for (const lang of ['ru', 'en'] as const) {
           finish.click();
           expect(document.querySelector('[role="status"]')?.textContent).toMatch(/Самопроверка завершена|Self-review complete/);
         }
-        const practicePending = pending.some(s => s.kind !== 'quiz' && s.kind !== 'text');
+        // A spreadsheet template is finished together with the lesson's task document.
+        const practicePending = pending.some(s => s.kind !== 'quiz' && s.kind !== 'text' && !(s.kind === 'widget' && s.widget === 'template'));
         await vi.waitFor(() => {
           expect(page.el.querySelector<HTMLElement>('.lesson-done')!.hidden).toBe(practicePending);
           expect(store.state.lessons[lesson.id]?.status === 'done').toBe(!practicePending);
