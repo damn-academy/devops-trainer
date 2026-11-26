@@ -26,7 +26,7 @@ Initial sandbox Whisper attempt failed to allocate a Metal buffer (exit -11); th
 
 ## Reproduce
 
-From the repository root: run tools/build-media.py, tools/transcribe-cli.py, then the plugin chunk/frames/coverage/proofcheck commands below, tools/asr-diff.py, tools/validate-run.py, tools/write-run.py and tools/package.py (all tool paths below are explicit). Temporary section text/WAV files are recreated by build-media.py and removed after synthesis. 01-source/audio.wav is the 16 kHz ASR input and is included in the ZIP. Source and slide preparation commands are retained as historical provenance.
+From the repository root: run tools/build-media.py, tools/transcribe-cli.py, then the plugin chunk/frames/coverage/proofcheck commands below, tools/asr-diff.py, tools/validate-run.py, tools/write-run.py and tools/package.py (all tool paths below are explicit). Temporary section text/WAV files are recreated by build-media.py and removed after synthesis. 01-source/audio.wav is the 16 kHz ASR input; it is not stored in the repository or the ZIP (see the note at the end). Source and slide preparation commands are retained as historical provenance.
 
 Every external artifact command is logged with argv, cwd, UTC start, wall time and exit code. Nested wrapper durations overlap child durations and must not be summed. Read-only environment inspection was not timed. Report generation and packaging are timed separately in ../pipeline-run-delivery.json outside the archive, avoiding a self-referential archive log.
 
