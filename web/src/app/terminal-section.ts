@@ -112,7 +112,9 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
 
   const renderGoalsMini = (current: Task | undefined) => {
     goalsMiniTitle.textContent = current
-      ? t(fmt(bi('Цели: сейчас задание {i} из {n}', 'Goals: now task {i} of {n}'), { i: String(o.tasks.indexOf(current) + 1), n: String(o.tasks.length) }))
+      ? o.tasks.length === 1
+        ? t(bi('Цели задания', 'Task goals'))
+        : t(fmt(bi('Цели: сейчас задание {i} из {n}', 'Goals: now task {i} of {n}'), { i: String(o.tasks.indexOf(current) + 1), n: String(o.tasks.length) }))
       : t(bi('Цели: все выполнены', 'Goals: all done'));
     clear(goalsMiniList);
     for (const [i, task] of o.tasks.entries()) {
