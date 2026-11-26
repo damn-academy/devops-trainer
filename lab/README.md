@@ -46,7 +46,7 @@ dtlab course install academy
 dtlab serve
 ```
 
-Open http://127.0.0.1:7788/. `courses` shows each package as `available`, `installed` or `update`, plus the courses included in the base bundle. The optional `dtlab course install v86` installs the in-tab Linux machine files and resolves the `academy` dependency. `rv64` is listed only when the build contains its assets. Multiple IDs can be installed together.
+Open http://127.0.0.1:7788/. `courses` shows each package as `available`, `installed` or `update`, plus the courses included in the base bundle. `dtlab courses` and `dtlab check` answer in Russian when the system language is Russian: `LC_ALL`, `LC_MESSAGES` or `LANG` such as `ru_RU.UTF-8` on Linux and macOS, the display language on Windows. The optional `dtlab course install v86` installs the in-tab Linux machine files and resolves the `academy` dependency. `rv64` is listed only when the build contains its assets. Multiple IDs can be installed together.
 
 Run `dtlab course update` to update all installed packages. Downloads are staged and verified before the active state changes; previous versions remain on disk. `dtlab course remove v86` removes all versions of that package; remove dependent packs before `dtlab course remove academy`. Stop the local server before removing packages and restart it after updates.
 
