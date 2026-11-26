@@ -2,7 +2,8 @@
 
 import { markdownQuizItems } from '../../core/md-lessons';
 import { DREAM100_LESSONS } from './dream100';
-import { SALES_MODULES, DREAM100_SUMMARIES } from './structure';
+import { PARTNER_LESSONS } from './partners';
+import { SALES_MODULES, DREAM100_SUMMARIES, PARTNER_SUMMARIES } from './structure';
 import { defineModule } from '../../core/define';
 import { bi } from '../../core/i18n';
 import type { Block } from '../../core/types';
@@ -27,6 +28,7 @@ const last = lessons[lessons.length - 1]!;
 last.sections.splice(last.sections.length - 1, 0, { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: SALES_QUIZ.map((q) => q.id) });
 
 lessons.push(...DREAM100_LESSONS.map(l => ({ ...l, summary: DREAM100_SUMMARIES[l.id], sections: [...l.sections] })));
+lessons.push(...PARTNER_LESSONS.map(l => ({ ...l, summary: PARTNER_SUMMARIES[l.id], sections: [...l.sections] })));
 
 const block: Block = {
   id: 'sales',
@@ -34,8 +36,8 @@ const block: Block = {
   hidden: true,
   title: bi('Продажи', 'Sales'),
   summary: bi(
-    '46 принципов сложных продаж по модулю в день, со схемой закупочного центра и симулятором воронки, и модуль Dream 100 о работе с сотней целевых компаний.',
-    '46 principles of complex sales, one module a day, with the buying-center diagram, the funnel simulator and the Dream 100 module on working with a hundred target accounts.',
+    '46 принципов сложных продаж по модулю в день, со схемой закупочного центра и симулятором воронки, модуль Dream 100 о работе с сотней целевых компаний и разбор сделки через интегратора.',
+    '46 principles of complex sales, one module a day, with the buying-center diagram, the funnel simulator, the Dream 100 module on working with a hundred target accounts and a walkthrough of a deal through an integrator.',
   ),
   checklistStep: null,
   levels: {
