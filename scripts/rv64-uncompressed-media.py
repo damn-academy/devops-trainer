@@ -19,7 +19,7 @@ if not (base / 'root/usr/sbin/kinit').is_file():
     raise SystemExit('extracted root is incomplete: missing usr/sbin/kinit')
 if squash.exists() or out.exists():
     raise SystemExit('output already exists; choose/remove the old experimental output explicitly')
-subprocess.run(['mksquashfs', str(base/'root'), str(squash), '-noappend', *(['-comp', 'zstd'] if compressed else ['-noI', '-noD', '-noF', '-noX']), '-processors', '2'], check=True)
+subprocess.run(['mksquashfs', str(base/'root'), str(squash), '-noappend', *(['-comp', 'zstd'] if compressed else ['-noI', '-noD', '-noF', '-noX']), '-processors', os.environ.get('RV64_MEDIA_PROCESSORS', '2')], check=True)
 sectors = ((squash.stat().st_size + 128*1024*1024 + 1048575)//1048576)*2048
 with Path(os.environ.get('RV64_MEDIA_TEMPLATE', str(base/'media.img'))).open('rb') as f:
     mbr = bytearray(f.read(512)); header = bytearray(f.read(512)); entries = bytearray(f.read(128*128))
