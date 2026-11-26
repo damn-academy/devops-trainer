@@ -25,18 +25,27 @@ export function addExamples(templates, sheet) {
   ];
   rows(templates['event-map'][0], [['G001','Oslo PostgreSQL Meetup','Осло, английский','организатор через форму https://events.example/G001/contact','почта','2026-11-12','администраторы баз данных и разработчики','предложить доклад',next]], [['G001','Oslo PostgreSQL Meetup','Oslo, English','organizer via the form https://events.example/G001/contact','email','2026-11-12','database administrators and developers','propose a talk',next]]);
   rows(templates['event-map'][1], [['M001','G001','https://events.example/M001','https://events.example/M001/cfp','2026-12-10 12:00 UTC','митап, доклад 30 минут','площадка бесплатная, дорога за свой счёт','Как пережить отказ узла PostgreSQL без потери данных: репликация и проверка восстановления, версия 1','заявка отправлена',date,'проверить ответ организатора','2026-12-03','запись разрешена, видео выходит на канале группы']], [['M001','G001','https://events.example/M001','https://events.example/M001/cfp','2026-12-10 12:00 UTC','meetup, 30-minute talk','free venue, own travel','Surviving a PostgreSQL node failure without data loss: replication and restore checks, version 1','proposal sent',date,'check the organizer’s reply','2026-12-03','recording allowed, video published on the group’s channel']]);
+  // Quotes are the user's own words; the conclusion goes into the problem column.
   rows(templates['signals-week'][0], [
-    ['Issues','установка','P001','пробует','установка падает на одном типе сетевых карт','https://product.example/issues/1'],
-    ['Вопросы в чате сообщества','перенести виртуальные машины между кластерами','P002','рабочая среда','как перенести виртуальные машины между кластерами','https://product.example/chat/2'],
-    ['Записи звонков продаж','обновления','P003','пробует','покупатели боятся обновлений','https://product.example/calls/3'],
-    ['Обращения в поддержку платных клиентов','журнал действий администраторов для регулятора','P004','платит','банку нужен журнал действий администраторов для регулятора','https://product.example/support/4'],
-    ['Данные продукта','установка','P005','пробует','учебное событие: установка остановилась на настройке сети; слов пользователя нет','https://product.example/telemetry/5'],
+    ['Issues','поставить проект на своё оборудование','P001','пробует','«Установка падает на шаге настройки сети, у нас карты Mellanox ConnectX-4»','https://product.example/issues/1'],
+    ['Вопросы в чате сообщества','перенести виртуальные машины между кластерами','P002','рабочая среда','«Можно переехать на новый кластер, не останавливая виртуалки?»','https://product.example/chat/2'],
+    ['Записи звонков продаж','обновлять кластер без простоя','P003','рабочая среда','«В прошлый раз обновление положило нам кластер на полдня, второй раз я такого не допущу»','https://product.example/calls/3'],
+    ['Обращения в поддержку платных клиентов','обновлять кластер без простоя','P004','платит','«После обновления до 1.31 два узла не вернулись в кластер, откатывались вручную»','https://product.example/support/4'],
+    ['Данные продукта','поставить проект на своё оборудование','P005','пробует','учебное событие, слов пользователя нет: 31 % установок за неделю остановились на настройке сети','https://product.example/telemetry/5'],
   ], [
-    ['Issues','installation','P001','evaluating','Installation fails on one network card model','https://product.example/issues/1'],
-    ['Community chat','move VMs between clusters','P002','production','How can I move VMs between clusters?','https://product.example/chat/2'],
-    ['Sales call','upgrades','P003','evaluating','Buyers fear upgrades','https://product.example/calls/3'],
-    ['Paid support','administrator audit log for the regulator','P004','paying','The bank needs an administrator audit log for the regulator','https://product.example/support/4'],
-    ['Product data','installation','P005','evaluating','Synthetic event: installation stopped at network setup; no user quotation','https://product.example/telemetry/5'],
+    ['Issues','install on own hardware','P001','evaluating','“Installation fails at the network setup step, we have Mellanox ConnectX-4 cards”','https://product.example/issues/1'],
+    ['Community chat','move VMs between clusters','P002','production','“Can we move to a new cluster without stopping the VMs?”','https://product.example/chat/2'],
+    ['Sales call','upgrade without downtime','P003','production','“Last time an upgrade took our cluster down for half a day, I won’t let that happen again”','https://product.example/calls/3'],
+    ['Paid support','upgrade without downtime','P004','paying','“After upgrading to 1.31 two nodes did not rejoin the cluster, we rolled back by hand”','https://product.example/support/4'],
+    ['Product data','install on own hardware','P005','evaluating','Synthetic event, no user quotation: 31 % of this week’s installations stopped at network setup','https://product.example/telemetry/5'],
+  ]);
+  templates['signals-week'].push(sheet('Задачи недели','Weekly problems','задача пользователя, сигналы, источники, возможность в дереве, эксперимент, ответ автору issue','user problem, signals, sources, opportunity in the tree, experiment, reply to the issue author'));
+  rows(templates['signals-week'][1], [
+    ['обновлять кластер без простоя','P003, P004','звонок продаж и поддержка','пользователи боятся обновлений, потому что заранее не знают, что сломается','за две недели выпустить проверку перед обновлением, которая показывает несовместимые узлы, и предложить её пяти платящим клиентам; успех — трое запустят её перед следующим обновлением','—'],
+    ['поставить проект на своё оборудование','P001, P005','issues и данные продукта','установка не проходит на распространённых сетевых картах','добавить в установщик проверку сетевой карты с понятной ошибкой и посмотреть, снизится ли доля остановок на этом шаге за две недели','«Спасибо, воспроизвели на ConnectX-4, исправление и проверка войдут в выпуск 0.9, напишем здесь, когда он выйдет»'],
+  ], [
+    ['upgrade without downtime','P003, P004','sales call and support','users fear upgrades because they cannot tell in advance what will break','within two weeks ship a pre-upgrade check that lists incompatible nodes and offer it to five paying customers; success means three run it before their next upgrade','—'],
+    ['install on own hardware','P001, P005','issues and product data','installation fails on common network cards','add a network card check with a clear error to the installer and see whether the share of installations stopping at this step falls within two weeks','“Thanks, we reproduced it on ConnectX-4; the fix and the check ship in 0.9, we will post here when it is out”'],
   ]);
   rows(templates['llm-panel'][0], [[date,'MODEL-VERSION','', 'ru','Под какой лицензией распространяется продукт?','1','','','','','','']], [[date,'MODEL-VERSION','','en','What is the license?',1,'','','','','','']]);
   templates['pr-briefing'] = [sheet('Заявка на брифинг','Briefing request','компания, исследование, формат, автор, задача покупателя, модель развёртывания, три конкурента, клиенты, письменное согласие клиента, что нового, доказательства','company, research, format, author, buyer problem, deployment model, three competitors, customers, customer’s written consent, what is new, evidence')];
