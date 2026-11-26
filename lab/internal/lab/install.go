@@ -12,7 +12,7 @@ import (
 )
 
 // Commands, for completion.
-var Commands = []string{"check", "up", "status", "ssh", "facts", "serve", "down", "destroy", "uninstall", "install", "version"}
+var Commands = []string{"courses", "course", "check", "up", "status", "ssh", "facts", "serve", "down", "destroy", "uninstall", "install", "version"}
 
 // Install copies dtlab into <root>/bin, puts that directory on the PATH and
 // adds completion, recording each change in the manifest.

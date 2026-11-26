@@ -6,12 +6,13 @@ import { createHash } from 'node:crypto';
 import type { Plugin } from 'vite';
 import { swSource } from './sw-source.ts';
 
-/** Files the worker must not precache: source maps and the v86 engine (cached on first use). */
+/** Files the worker must not precache: source maps and optional machine packs (cached on first use). */
 export function precacheable(file: string): boolean {
   // Public lesson media can be large; fetch on demand, never precache.
   if (file.startsWith('media/')) return false;
   if (file.endsWith('.map')) return false;
-  if (/(^|\/)v86[^/]*\.(wasm|js)$/.test(file)) return false;
+  if (/^(v86|rv64)\//.test(file)) return false;
+  if (/(^|\/)(?:libv86|v86|rv64)[^/]*\.(wasm|js|bin|img)$/.test(file)) return false;
   if (file === 'sw.js' || file.startsWith('.vite/')) return false;
   return true;
 }

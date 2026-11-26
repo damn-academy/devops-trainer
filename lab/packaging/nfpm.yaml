@@ -1,0 +1,13 @@
+name: dtlab
+arch: ${DTLAB_ARCH}
+platform: linux
+version: ${DTLAB_VERSION}
+maintainer: damn.academy <https://github.com/damn-academy/devops-trainer>
+description: Offline DevOps courses and local practice labs
+homepage: https://github.com/damn-academy/devops-trainer
+license: Apache-2.0
+contents:
+  - src: ${DTLAB_BINARY}
+    dst: /usr/bin/dtlab
+    file_info:
+      mode: 0755

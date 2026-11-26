@@ -4,6 +4,66 @@
 
 `dtlab` runs the course's machines on your own computer: a Linux machine for the Linux and Networks exams, bare Ubuntu nodes on which you build Kubernetes with kubeadm, and a ready kuberoot cluster for the blocks about deploys, GitOps and monitoring. It serves the course from the same place, so everything works without the internet, takes exam facts from the machines in one step, and removes all of it with one command.
 
+## Install
+
+Download files from the [latest release](https://github.com/damn-academy/devops-trainer/releases/latest). Native installers and the course catalog appear there when published; use the plain binaries if an installer is not listed. QEMU is needed for host VMs, not for reading installed courses.
+
+### Windows
+
+Download `dtlab-windows-amd64-setup.exe`, open it and follow the installer. It installs into `Program Files\dtlab` and adds that directory to PATH. Open a new terminal afterward. The installer is unsigned. It appears in **Settings → Apps** as dtlab, and uninstalling it there removes the PATH entry. If SmartScreen says **Windows protected your PC**, select **More info**, then **Run anyway** after checking that the file came from this repository. If your organisation blocks that option, ask its administrator. See [Microsoft's SmartScreen documentation](https://learn.microsoft.com/windows/apps/package-and-deploy/smartscreen-reputation).
+
+Alternatively download `dtlab-windows-amd64.exe`, rename it to `dtlab.exe`, and run `.\dtlab.exe install` in PowerShell.
+
+### macOS
+
+Download `dtlab-darwin-arm64.pkg` for Apple Silicon (M1 or newer) or `dtlab-darwin-amd64.pkg` for Intel, then open it. The unsigned package installs `/usr/local/bin/dtlab`. If Gatekeeper reports an **unidentified developer**, try opening the package once, then open **System Settings → Privacy & Security**, scroll to the blocked package, select **Open Anyway**, confirm opening and authenticate. This approves this package without disabling Gatekeeper. See [Apple's instructions](https://support.apple.com/en-us/102445).
+
+Alternatively download the matching plain binary, rename it to `dtlab`, run `chmod +x dtlab`, then `./dtlab install`.
+
+### Linux
+
+Choose `amd64` for Intel/AMD or `arm64` for ARM. On Debian/Ubuntu download `dtlab-linux-amd64.deb` and run `sudo apt install ./dtlab-linux-amd64.deb`. On Fedora/RHEL download `dtlab-linux-amd64.rpm` and run `sudo dnf install ./dtlab-linux-amd64.rpm`. Replace `amd64` with `arm64` for ARM. Packages install `/usr/bin/dtlab`.
+
+For other distributions, this POSIX shell installer detects the architecture, downloads the binary, checks SHA256 and installs into `~/.local/bin`:
+
+```sh
+curl -fsSL https://github.com/damn-academy/devops-trainer/releases/latest/download/install.sh | sh
+```
+
+Add `~/.local/bin` to PATH with `export PATH="$HOME/.local/bin:$PATH"` and put that line in your shell's startup file for future terminals. To install for all users, download `install.sh` and run `sh install.sh --system`; it uses sudo to install into `/usr/local/bin`.
+
+Alternatively download the plain `dtlab-linux-amd64` or `dtlab-linux-arm64` binary, rename it to `dtlab`, run `chmod +x dtlab`, then `./dtlab install`.
+
+### Verify checksums
+
+Download `SHA256SUMS` from the same release as your installer or binary. On Linux run `sha256sum dtlab-linux-amd64.deb`; on macOS run `shasum -a 256 dtlab-darwin-arm64.pkg`; in PowerShell run `Get-FileHash .\dtlab-windows-amd64-setup.exe -Algorithm SHA256`. Compare the entire hash with the line for that filename in `SHA256SUMS`. Change the filename for your chosen asset. Course downloads verify their size and SHA256 automatically against `catalog.json`.
+
+## Courses
+
+```sh
+dtlab courses
+dtlab course install academy
+dtlab serve
+```
+
+Open http://127.0.0.1:7788/. `courses` shows each package as `available`, `installed` or `update`, plus the courses included in the base bundle. The optional `dtlab course install v86` installs the in-tab Linux machine files and resolves the `academy` dependency. `rv64` is listed only when the build contains its assets. Multiple IDs can be installed together.
+
+Run `dtlab course update` to update all installed packages. Downloads are staged and verified before the active state changes; previous versions remain on disk. `dtlab course remove v86` removes all versions of that package; remove dependent packs before `dtlab course remove academy`. Stop the local server before removing packages and restart it after updates.
+
+Files live in `~/.dtlab/courses/<id>/<version>` on Linux/macOS or `%LOCALAPPDATA%\dtlab\courses\<id>\<version>` on Windows. A composed site uses hard links on the same filesystem, without duplicating machine images. `dtlab serve` and `dtlab up` automatically select installed content unless `--course` specifies another built site. With no installed content their existing behavior is unchanged. `up` still starts host VMs and prints the local course URL afterward.
+
+For a mirror or tests, set `DTLAB_CATALOG_URL` to the complete catalog URL, such as `https://mirror.example/releases/catalog.json`; archives are resolved beside it. `DTLAB_HOME` overrides the data directory. Catalog and download errors explain connection failures; previously installed content remains usable offline. A `.lock` directory prevents concurrent course changes; after an interrupted process, remove it only after confirming no course command is running.
+
+`dtlab uninstall` removes courses with the rest of the lab data. For a native package installation it preserves the binary and prints the removal command: `sudo apt remove dtlab`, `sudo dnf remove dtlab`, or the installer’s own `uninstall.exe` in `Program Files\dtlab` (also reachable through **Settings → Apps → dtlab**). On macOS it prints `sudo rm /usr/local/bin/dtlab && sudo pkgutil --forget academy.damn.dtlab`: `pkgutil --forget` removes the receipt, not the binary. A Linux `install.sh --system` installation can be removed with `sudo rm /usr/local/bin/dtlab` after removing data.
+
+## Exams with the lab
+
+On an exam that runs on your own machines, each machine gets a **Take from dtlab** button beside the box for the facts block. The button runs the read-only check in the matching lab VM with this attempt's one-time code and fills the box, so nothing is copied by hand.
+
+- On the course dtlab serves (http://127.0.0.1:7788/) the page finds the lab by itself.
+- On https://damn.academy the page shows **Connect the dtlab lab**. After the click, Chrome asks whether the site may access devices on your local network: allow it once, and the buttons appear. The lab's API answers only scripts from this computer, with its own header, and the check only reads the VMs. Other hosted copies need `dtlab serve --allow-origin https://their.host` before `dtlab up`.
+- Progress lives in the browser per site, so damn.academy and http://127.0.0.1:7788/ keep separate progress. To move it, use **Settings → Transfer to another device** on one and open the link on the other.
+
 ## What your computer needs
 
 | What you do | Memory | CPU cores | Free disk | Measured |
@@ -112,11 +172,11 @@ dtlab builds for linux/amd64, linux/arm64, darwin/amd64, darwin/arm64 and window
 
 ## Status
 
-Works end to end on Linux with KVM: `check`, `up` for all parts, `status`, `ssh`, `facts` (CLI and API), `serve`, `down`, `up` again, `destroy`, `install`, `uninstall`. On Windows (Windows Server 2025, the same 24H2 base as Windows 11, in a VM with nested virtualisation, 4 vCPU and 5 GiB) `check`, `up --profile light`, `status`, `ssh`, `facts`, a reboot inside a VM and `uninstall` work with both the Windows Hypervisor Platform and Hyper-V: the light lab came up in 5 min 44 s with QEMU and WHPX and in 2 min 8 s with Hyper-V, where kuberoot boots with its own Hyper-V drivers and installs onto `sda`; `uninstall` left the registry, PATH, Hyper-V and the network as they were. Not yet: the local git server and registry, the "take facts from the lab" button on the exam page, an automated macOS run (no macOS VM can be run legally in the test cluster; the check is manual, see below), and a bundled QEMU. Known on Windows: QEMU under WHPX cannot reset a VM once Linux has run in it, so a reboot powers QEMU off and the lab agent starts it again; with Hyper-V, whose NAT passes packets as they are, a host whose uplink MTU is below 1500 (a VPN, PPPoE) can stall TLS from the VMs, which QEMU's lab switch does not. kuberoot comes from its GitHub release (the latest, or `--kuberoot-version 1.2.3`), checked against the release's manifest; `--kuberoot <url or directory>` takes a mirror, a copy of a release or a build instead. See [DESIGN.md](DESIGN.md) §11.
+Works end to end on Linux with KVM: `check`, `up` for all parts, `status`, `ssh`, `facts` (CLI and API), `serve`, `down`, `up` again, `destroy`, `install`, `uninstall`. On Windows (Windows Server 2025, the same 24H2 base as Windows 11, in a VM with nested virtualisation, 4 vCPU and 5 GiB) `check`, `up --profile light`, `status`, `ssh`, `facts`, a reboot inside a VM and `uninstall` work with both the Windows Hypervisor Platform and Hyper-V: the light lab came up in 5 min 44 s with QEMU and WHPX and in 2 min 8 s with Hyper-V, where kuberoot boots with its own Hyper-V drivers and installs onto `sda`; `uninstall` left the registry, PATH, Hyper-V and the network as they were. Not yet: the local git server and registry, an automated macOS run (no macOS VM can be run legally in the test cluster; the check is manual, see below), and a bundled QEMU. Known on Windows: QEMU under WHPX cannot reset a VM once Linux has run in it, so a reboot powers QEMU off and the lab agent starts it again; with Hyper-V, whose NAT passes packets as they are, a host whose uplink MTU is below 1500 (a VPN, PPPoE) can stall TLS from the VMs, which QEMU's lab switch does not. kuberoot comes from its GitHub release (the latest, or `--kuberoot-version 1.2.3`), checked against the release's manifest; `--kuberoot <url or directory>` takes a mirror, a copy of a release or a build instead. See [DESIGN.md](DESIGN.md) §11.
 
 ## Manual check on macOS and a real Windows 11
 
-There is no automated macOS run (a macOS VM cannot be started legally in the test cluster), so the checklist is walked through by hand. On 26.11.2026 it passed on a MacBook with an Apple M4, 16 GB and macOS 26.4.1: `check` found Hypervisor.framework and suggested `light`; `up --profile light` downloaded the arm64 images and brought the lab up in 1 min 40 s, a second `up` after `down` took 14 s; `status`, `ssh learner`, `kubectl get nodes` (node Ready), an nginx pod, `facts kr-1`, `down` and `uninstall --yes` worked, `uninstall` freed 1.9 GiB and left nothing, and the Homebrew QEMU stayed in place. Windows was checked inside a VM, and until the checklist is walked through on a real Windows 11, its support is "expected to work". It takes one computer, 30–40 minutes and 10–20 GB of disk.
+There is no automated macOS run (a macOS VM cannot be started legally in the test cluster), so the checklist is walked through by hand. On 26.11.2026 it passed on a MacBook with an Apple M4, 16 GB and macOS 26.4.1: `check` found Hypervisor.framework and suggested `light`; `up --profile light` downloaded the arm64 images and brought the lab up in 1 min 40 s, a second `up` after `down` took 14 s; `status`, `ssh learner`, `kubectl get nodes` (node Ready), an nginx pod, `facts kr-1`, `down` and `uninstall --yes` worked, `uninstall` freed 1.9 GiB and left nothing, and the Homebrew QEMU stayed in place. The same day, with a separate data directory: `courses`, `course install academy` (45.7 MB, checked size and SHA-256) and `course update` from a local mirror; a truncated archive was refused with a size mismatch; `up --profile light` took 1 min 53 s and printed the local course; on the exam page of that course **Take from dtlab: learner** filled the facts block and the exam judged the tasks. From https://damn.academy Chrome 158 holds the request to 127.0.0.1 until the learner allows local network access, which is why the hosted page asks for a click first. Windows was checked inside a VM, and until the checklist is walked through on a real Windows 11, its support is "expected to work". It takes one computer, 30–40 minutes and 10–20 GB of disk.
 
 1. `dtlab check` — finds QEMU and Hypervisor.framework (macOS) or the Windows Hypervisor Platform (Windows 11: a Windows feature, then a reboot); suggests a profile.
 2. `dtlab up --profile light` — the learner machine and `kr-1` boot, and kuberoot installs onto its disk (a Good slot appears in the output).
@@ -130,3 +190,27 @@ There is no automated macOS run (a macOS VM cannot be started legally in the tes
 10. On Windows whose main interface MTU is below 1500 (a VPN, PPPoE), run `curl -v https://github.com` from the learner machine — TLS must not stall (the Hyper-V NAT passes packets as they are).
 
 Record the results in [STATUS](../web/STATUS.md): the OS version, how long step 2 took, any deviations.
+
+## Publishing installers and courses
+
+Run `lab/release.sh 1.2.3 /path/to/release` to cross-compile the five plain binaries. Install nFPM to emit `.deb` and `.rpm` for both Linux architectures. Install NSIS (`makensis`) for the Windows installer; it builds on Linux and macOS. On macOS, `pkgbuild` and `productbuild` emit two unsigned `.pkg` files. Missing platform tools are reported as skips. The script also copies `install.sh` and writes `SHA256SUMS` for binaries and installers; it does not build the web site. Use an empty output directory for each release. On Windows, uninstall an older MSI before installing a new version of this unsigned package.
+
+Build `web/dist` on the workshop cluster, then run:
+
+```sh
+lab/release-courses.sh 1.2.3 /path/to/web/dist /path/to/release
+```
+
+The script needs Python 3.11+ and reads the existing build directly into tarballs, without a staging copy. The build's manifest plugin emits `catalog-courses.json` with visible course IDs and bilingual titles; `catalog-labels.json` supplies bilingual package labels; old builds without these files must be rebuilt on the cluster. `catalog.json` has `schemaVersion: 1` and `packages`, with `id`, `kind`, `version`, `file`, `bytes`, `sha256`, bilingual `title`/`description`, `requires`, and the base bundle's `courses`. Package versions are immutable: publish changed bytes with a new version.
+
+The split follows `web/vite.config.ts`, `scripts/fetch-v86.mjs`, `scripts/build-lab-image.mjs`, the v86 asset loader and the PWA plugin:
+
+| Package | Contents | Requires |
+|---|---|---|
+| `academy` | All built site files except the machine assets below, including lessons and media | none |
+| `v86` | `v86/**` (BIOS, kernels, lab images, filesystem blobs and snapshots), plus `assets/v86*.js`, `assets/libv86*.js`, their maps and WASM | `academy` |
+| `rv64` | `rv64/**` and `assets/rv64*` JS/WASM/bin/img files and maps | `academy` |
+
+Paths inside tarballs are relative to the same site root. Packs are optional; the base course remains readable without them. Machine files are excluded from service-worker precaching. This worktree has no rv64 engine or public assets; the splitter reserves its path convention and emits no empty pack. If a future build uses different names, update the splitter and precache exclusions together. The tarballs forbid symlinks. Installation also rejects hard links, special entries, absolute paths and traversal, limits expanded data to 64 GiB, and verifies the compressed byte count and SHA256 before extraction.
+
+Upload the catalog, tarballs, checksums and installer assets to the same GitHub release. Set `DTLAB_RELEASE.installersPublished` only for the platforms whose installer files were uploaded, and `coursesPublished` after the catalog and bundles are uploaded. The existing plain-binary release switch remains independent. Restart a running local agent after installing or updating packs so it selects the new composed site.

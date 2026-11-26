@@ -60,10 +60,10 @@ async function call<T>(path: string, init: RequestInit = {}, base = labBase()): 
 }
 
 /** The lab's state, or null when no lab answers (the course then works as before). */
-export async function detectLab(base = labBase()): Promise<LabStatus | null> {
+export async function detectLab(base = labBase(), timeoutMs = 1500): Promise<LabStatus | null> {
   try {
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 1500);
+    const timer = setTimeout(() => ctl.abort(), timeoutMs);
     const s = await call<LabStatus>('/api/v1/status', { signal: ctl.signal }, base);
     clearTimeout(timer);
     return s && Array.isArray(s.vms) ? s : null;
@@ -112,3 +112,18 @@ export const LAB_REMOVAL: { cmd: string; what: Bi }[] = [
     ),
   },
 ];
+
+/**
+ * Whether the page may look for the lab without asking: always on the copy
+ * dtlab serves; on a hosted copy only after the learner granted Chrome's
+ * local network access, because the probe itself makes Chrome ask.
+ */
+export async function mayProbeLab(base = labBase()): Promise<boolean> {
+  if (base === '') return true;
+  try {
+    const p = await navigator.permissions.query({ name: 'local-network-access' as PermissionName });
+    return p.state === 'granted';
+  } catch {
+    return false;
+  }
+}
