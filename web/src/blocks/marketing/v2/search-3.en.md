@@ -32,8 +32,8 @@ Complete this task on your project's documentation site or that of any open-sour
 
 <!-- quiz -->
 ? Which OpenAI crawler collects pages for search in ChatGPT?
-+ OAI-SearchBot || GPTBot collects training data, while ChatGPT-User visits at a user's request in a conversation.
 - GPTBot || GPTBot is associated with model training.
++ OAI-SearchBot || GPTBot collects training data, while ChatGPT-User visits at a user's request in a conversation.
 - Googlebot || This is Google's crawler.
 <!-- /quiz -->
 

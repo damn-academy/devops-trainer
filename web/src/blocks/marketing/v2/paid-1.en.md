@@ -45,14 +45,14 @@ Complete this task in the “Budget allocation” simulator on this page and rec
 
 <!-- quiz -->
 ? How does the pipeline reported in advertising success stories differ from revenue?
-+ Pipeline is the total value of potential deals, and usually only a smaller portion closes || The Plaid case reports $382,000 in pipeline; it says nothing about revenue.
-- They are the same thing || Pipeline consists of potential deals, and not all of them close.
++ Pipeline is the sum of possible deals, and usually only a smaller part of them closes || The Plaid case reports $382,000 in pipeline; it says nothing about revenue.
+- They are the same thing; pipeline is just counted earlier than revenue || Pipeline consists of potential deals, and not all of them close.
 - Pipeline is always exactly five times revenue || The ratio depends on the company's close rate.
 
 ? What happened to Reddit Ads targeting in March 2026?
-+ Reddit made automatic audience expansion to similar people mandatory for some settings || A narrow audience no longer guarantees narrow delivery.
-- Reddit banned ads in technical communities || There is no such ban.
-- Reddit started showing ads only to community subscribers || Community targeting also reaches people who visited the community in the past 28 days.
++ Reddit made audience expansion to similar people mandatory for some settings || A narrow audience no longer guarantees narrow delivery.
+- Reddit banned software ads in technical communities || There is no such ban.
+- Reddit began showing community-targeted ads only to its subscribers || Community targeting also reaches people who visited the community in the past 28 days.
 <!-- /quiz -->
 
 <!-- section: sources -->

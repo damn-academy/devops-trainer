@@ -27,9 +27,9 @@ Record the result in the field below or in your own spreadsheet: the first colum
 
 <!-- quiz -->
 ? Where should you keep installation instructions for an open-source project and the company's commercial commitments?
-+ Installation instructions in the project documentation and commitments on the company website, with links between them || Copied descriptions have to be updated in two places, and readers confuse software capabilities with contractual commitments.
-- Everything on the company website || This makes the project lose its neutrality.
-- Everything in the project documentation || One company's commercial commitments should not live on a neutral project's website.
++ Installation in the project documentation, commitments on the company website || Copied descriptions have to be updated in two places, and readers confuse software capabilities with contractual commitments.
+- Everything on the company website, with the project documentation only linking to it || This makes the project lose its neutrality.
+- Everything in the project documentation, so the reader has one place || One company's commercial commitments should not live on a neutral project's website.
 <!-- /quiz -->
 
 <!-- section: sources -->

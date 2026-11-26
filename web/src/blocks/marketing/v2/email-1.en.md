@@ -33,14 +33,14 @@ Complete this task in the terminal on this page. The practice domain `mail.examp
 
 <!-- quiz -->
 ? Why does the email open rate no longer measure readers' interest?
-+ With privacy protection enabled, Apple Mail loads messages in the background, triggering the pixel for unread emails || It is more useful to count clicks excluding bots, replies, unsubscribes, and actions taken after the email.
-- Email clients stopped displaying images || The cause is background loading of emails; images have nothing to do with it.
-- Opens are prohibited by law || The law does not prohibit them.
+- Email clients stopped showing images by default, so the tracking pixel never gets loaded at all || The cause is background loading of emails; images have nothing to do with it.
++ Apple Mail loads messages in the background, and the pixel fires even for unread ones || It is more useful to count clicks excluding bots, replies, unsubscribes, and actions taken after the email.
+- European privacy laws banned counting opens || The law does not prohibit them.
 
 ? What spam complaint rate does Google recommend staying below?
-+ Stay below 0.1% and never reach 0.3% || At 0.3% or above, Gmail applies penalties.
-- 1% || This is far above the threshold.
-- No threshold has been set || Gmail publishes thresholds in its sender requirements.
+- Below 1%, like most newsletters || This is far above the threshold.
+- There is no threshold; Gmail assesses each sender separately || Gmail publishes thresholds in its sender requirements.
++ Below 0.1%, and never reaching 0.3% || At 0.3% or above, Gmail applies penalties.
 <!-- /quiz -->
 
 <!-- section: sources -->

@@ -27,14 +27,14 @@ Complete this task on Reddit from your own account, listing your employer in you
 
 <!-- quiz -->
 ? Does Reddit have a rule of nine useful posts for every one about yourself?
-+ Reddit dropped it as a site-wide rule in 2017, but individual communities may keep their own || Each community's moderators decide on self-promotion, so read the rules on the community page.
-- Yes, it is a rule across all of Reddit || Reddit dropped the site-wide wording in 2017.
-- No, self-promotion is allowed everywhere on Reddit || Site-wide rules prohibit spam, and community moderators set their own limits on promotion.
+- Yes, it is a Reddit-wide rule, and moderators enforce it everywhere || Reddit dropped the site-wide wording in 2017.
+- No, it was dropped, and self-promotion is now allowed in every community on Reddit || Site-wide rules prohibit spam, and community moderators set their own limits on promotion.
++ The site-wide rule was dropped in 2017, but communities may keep their own || Each community's moderators decide on self-promotion, so read the rules on the community page.
 
 ? What happens if you ask employees to vote for the company's post?
-+ Reddit tracks coordinated votes, and both the account and the domain are penalized || Vote manipulation is explicitly prohibited by the site-wide spam rules.
-- The post will reach the top of the community faster || The platform detects coordinated votes and does not count them.
-- Nothing, as long as real people are voting || Real people voting by arrangement are still manipulating votes.
+- The post climbs to the top of the community faster and reaches subscribers || The platform detects coordinated votes and does not count them.
++ Reddit detects coordinated votes and penalises both the account and the domain || Vote manipulation is explicitly prohibited by the site-wide spam rules.
+- Nothing bad, as long as real people vote from their own accounts || Real people voting by arrangement are still manipulating votes.
 <!-- /quiz -->
 
 <!-- section: sources -->
@@ -73,13 +73,13 @@ Complete this task in a document. Write a Show HN headline for your project with
 <!-- quiz -->
 ? What can you submit to Show HN?
 + Something you made yourself that people can try || Blog posts, newsletters, waiting lists, and ordinary announcements are not accepted in Show HN.
-- An announcement of a future product with a waiting list || The Show HN rules explicitly exclude waiting lists.
-- A press release about a funding round || Business news is not accepted in Show HN.
+- An announcement of a future product with a waiting list for first users || The Show HN rules explicitly exclude waiting lists.
+- A press release about a funding round with a link to the product || Business news is not accepted in Show HN.
 
 ? How should you choose when to post on Hacker News?
-+ When the author is available and can spend several hours responding to comments || Timing affects responses less than people tend to think, while the author's presence in the comments always matters.
-- Only on Tuesday morning Pacific time || Syften's study does not support such a universal rule.
-- At night, when there is less competition || Nighttime hours brought slightly more responses for Show HN, but 62% of posts received none; timing is not the main factor.
+- Only on Tuesday morning Pacific time, when the most readers are online || Syften's study does not support such a universal rule.
++ When the author can spend several hours answering comments || Timing affects responses less than people tend to think, while the author's presence in the comments always matters.
+- At night American time, when fewer competing posts are on the front page || Nighttime hours brought slightly more responses for Show HN, but 62% of posts received none; timing is not the main factor.
 <!-- /quiz -->
 
 <!-- section: sources -->

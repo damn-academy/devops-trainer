@@ -35,14 +35,14 @@ The task takes longer than reading the lesson: three fifteen-minute conversation
 
 <!-- quiz -->
 ? Which technical blog post format requires describing the hardware, settings, workload, and how to reproduce the measurement?
-+ A benchmark || The PlanetScale and Xata story shows that benchmarks attract both attention and scrutiny from competitors.
 - An incident review || An incident review describes the chain of causes and the changes made; it usually does not include a reproducible measurement.
++ A benchmark || The PlanetScale and Xata story shows that benchmarks attract both attention and scrutiny from competitors.
 - A release announcement || An announcement does not contain measurements.
 
 ? How can a small company get posts from engineers without taking up their evenings?
-+ An editor interviews an engineer for half an hour and writes a draft; the engineer reviews it, and the post is published under the engineer's name || This is how PostHog's editorial process works: engineers provide the knowledge, and an editor provides the text.
-- Make every engineer write a post every week || PostHog acknowledges that this schedule runs into staffing and quality constraints.
-- Use AI to write posts under engineers' names || Readers notice this kind of writing, and the blog loses its voice.
+- Set a schedule: every engineer writes a post once a week during working hours || PostHog acknowledges that this schedule runs into staffing and quality constraints.
+- Write posts with AI from tracker tasks and publish them under engineers' names || Readers notice this kind of writing, and the blog loses its voice.
++ An editor interviews the engineer and writes a draft; the engineer checks it, and the post goes out under the engineer's name || This is how PostHog's editorial process works: engineers provide the knowledge, and an editor provides the text.
 <!-- /quiz -->
 
 <!-- section: sources -->
@@ -83,9 +83,9 @@ Complete this task in a document. Take one post topic from the calendar you crea
 
 <!-- quiz -->
 ? Why should blog subscriptions be measured relative to the people who saw the subscription form?
-+ Otherwise, bots that loaded the page drive the conversion rate down || The denominator should consist of real people who saw the form.
-- It produces higher percentages for the report || The aim of measurement is accuracy; an attractive number in a report achieves nothing.
-- GA4 requires it || This is a choice of measurement method, not something the tool imposes.
++ Otherwise bots that loaded the page drag the sign-up share down || The denominator should consist of real people who saw the form.
+- It gives higher percentages, which are easier to show to management in a report || The aim of measurement is accuracy; an attractive number in a report achieves nothing.
+- GA4 requires it: a sign-up event is counted only after the form has been shown || This is a choice of measurement method, not something the tool imposes.
 <!-- /quiz -->
 
 <!-- section: sources -->

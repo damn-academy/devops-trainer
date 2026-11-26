@@ -40,9 +40,9 @@ Record the result in the field below or in your own spreadsheet. It should conta
 
 <!-- quiz -->
 ? Why should you start a podcast with a six-episode season, with two episodes recorded before launch?
-+ More than half of the podcasts that stopped did so before the seventh episode, usually because of a shortage of people and guests || A backlog of episodes and a backup episode without a guest help you cope with cancellations.
-- Platforms show a podcast only after six episodes || There is no such rule; Spotify's partner program threshold is three episodes.
-- YouTube requires it for a podcast playlist || YouTube does not require this.
+- Podcast directories show a show in search only after six episodes || There is no such rule; Spotify's partner program threshold is three episodes.
++ More than half of the podcasts that stopped did so before their seventh episode || A backlog of episodes and a backup episode without a guest help you cope with cancellations.
+- YouTube requires it to mark a playlist as a podcast || YouTube does not require this.
 <!-- /quiz -->
 
 <!-- section: sources -->
