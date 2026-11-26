@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="0DD00383-AB75-4AB1-9F7B-E77BA5EA70DA" Name="dtlab" Language="1033" Version="$(var.Version)" Manufacturer="Damn Academy" UpgradeCode="739DD615-6F95-409F-9679-70DC149E0A96">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Platform="x64"/>
+    <Media Id="1" Cabinet="dtlab.cab" EmbedCab="yes"/>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLDIR" Name="dtlab">
+          <Component Id="Binary" Guid="9E519DCB-E57E-4614-8590-D1FC4A6A72E2" Win64="yes">
+            <File Id="DtlabExe" Source="$(var.Binary)" Name="dtlab.exe" KeyPath="yes"/>
+            <Environment Id="Path" Name="PATH" Value="[INSTALLDIR]" Action="set" Part="last" System="yes"/>
+          </Component>
+        </Directory>
+      </Directory>
+    </Directory>
+    <Feature Id="Complete" Title="dtlab" Level="1"><ComponentRef Id="Binary"/></Feature>
+  </Product>
+</Wix>

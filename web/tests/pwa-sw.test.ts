@@ -22,6 +22,7 @@ describe('service worker strategies', () => {
     expect(precacheable('assets/index-1.js.map')).toBe(false);
     expect(precacheable('assets/v86-9f.wasm')).toBe(false);
     expect(precacheable('sw.js')).toBe(false);
+    for (const file of ['v86/lab/root.bin', 'rv64/kernel.bin', 'assets/libv86-ab.js', 'assets/rv64-ab.wasm']) expect(precacheable(file)).toBe(false);
   });
 
   it('generates a worker with the version, the file list and a working strategy function', () => {
