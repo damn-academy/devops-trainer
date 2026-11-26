@@ -47,7 +47,7 @@ Each talk becomes a set of materials: a full recording, slides, exact software v
 Count registrations, attendees, substantive conversations, labs started and completed, agreed next steps, evaluations started, first contributions, and retained users separately. A GitHub star expresses interest; it is not an installation. Even CNCF writes in its Cilium project journey report that it cannot attribute every growth metric to specific actions, so do not attribute all project growth to meetups.
 
 <!-- section: task | Exercise: map a region in one week -->
-Complete this exercise in the course's “Event map” spreadsheet. Choose a region and, over a week, find at least twenty groups and events there using six sources from the lesson. Fill in the spreadsheet fields for each and mark which groups have met in the last three months. Prepare a speaker package and send two initial emails to organizers following the lesson's guidelines. At the end of the week, record how many minutes a day this work took.
+Complete this exercise in the course's “Event map” spreadsheet. Choose a region and, over a week, find at least twenty groups and events there using six sources from the lesson. Fill in the spreadsheet fields for each and mark which groups have met in the last three months. Prepare a speaker package and send two initial emails to organizers following the lesson's guidelines. At the end of the week, record how many minutes a day this work took. The time on the lesson card covers reading; finding groups and writing emails takes a week at 30–45 minutes a day, as in the routine above.
 
 <!-- widget: template {"file":"event-map"} -->
 
