@@ -146,8 +146,11 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   } else if (kind === 'rubric' || kind === 'roleplay') {
     const trainer = trainers.find(v => v.id === id && (kind === 'roleplay' ? v.id === 'events.booth-visitor' : v.id !== 'events.booth-visitor'));
     if (!trainer) { root.textContent = text('missing'); return mounted; }
-    const venue = h('select', {}, ...['KubeCon', 'PGConf', 'SREcon', 'RSAC', 'NANOG', 'Vendor user conference', 'Other'].map(v => h('option', { value: v }, v)));
-    const segment = h('select', {}, ...['Kubernetes', 'PostgreSQL', 'SRE', 'Security', 'Networking', 'Vendor users', 'Other'].map(v => h('option', { value: v }, v)));
+    // Values stay in English for the prompt; the learner sees localized category names.
+    const label: Record<string, [string, string]> = { 'Vendor user conference': ['Конференция пользователей поставщика', 'Vendor user conference'], Other: ['Другое', 'Other'], Security: ['Безопасность', 'Security'], Networking: ['Сети', 'Networking'], 'Vendor users': ['Пользователи поставщика', 'Vendor users'] };
+    const option = (v: string) => h('option', { value: v }, label[v] ? t(bi(...label[v])) : v);
+    const venue = h('select', {}, ...['KubeCon', 'PGConf', 'SREcon', 'RSAC', 'NANOG', 'Vendor user conference', 'Other'].map(option));
+    const segment = h('select', {}, ...['Kubernetes', 'PostgreSQL', 'SRE', 'Security', 'Networking', 'Vendor users', 'Other'].map(option));
     venue.value = loadDraft(`${trainer.id}.venue`, 'KubeCon');
     segment.value = loadDraft(`${trainer.id}.segment`, 'Kubernetes');
     venue.onchange = () => {
@@ -216,7 +219,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const fields = h('div', { class: 'tr-fields' }), result = h('div', { 'aria-live': 'polite' });
     const accountCount = h('p', { 'aria-live': 'polite' });
     const mode = h('select', { 'data-roi-mode': '' }, h('option', { value: 'scans' }, text('badgeMode')), h('option', { value: 'invited' }, text('invitedMode')));
-    root.append(h('label', {}, text('eventMode'), mode));
+    root.append(h('label', {}, text('eventMode'), mode), h('p', {}, text('shareFormat')));
     const assumptionText = h('p');
     const inputs = {} as Record<keyof typeof roiDefaults, HTMLInputElement>;
     for (const key of Object.keys(roiDefaults) as (keyof typeof roiDefaults)[]) {
@@ -238,7 +241,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       accountCount.textContent = `${t(bi('Уникальные целевые компании', 'Unique target companies'))}: ${uniqueTargetAccounts(p)}`;
       const b = breakEven(p), m = simulate(p);
       const format = (n: number) => Number.isFinite(n) ? n.toLocaleString(lang(), { maximumFractionDigits: 2 }) : '∞';
-      result.replaceChildren(h('p', {}, t(bi('Учебный сценарий', 'Teaching scenario'))), h('p', {}, `${t(bi('Уникальные целевые компании', 'Unique target accounts'))}: ${uniqueTargetAccounts(p)}`), ...([['wins', b.wins], ['opportunities', b.opportunities], ['median', m.median], ['probability', m.probability * 100]] as const).map(([k, v]) => h('p', {}, `${text(k)}: ${format(v)}${k === 'probability' ? '%' : ''}`)), h('p', {}, text('payoff').replace('{n}', String(Math.round(m.probability * 100)))));
+      result.replaceChildren(h('p', {}, t(bi('Учебный сценарий', 'Teaching scenario'))), h('p', {}, `${t(bi('Уникальные целевые компании', 'Unique target accounts'))}: ${uniqueTargetAccounts(p)}`), ...([['wins', b.wins], ['winsWhole', Math.ceil(b.wins)], ['opportunities', b.opportunities], ['median', m.median], ['probability', m.probability * 100]] as const).map(([k, v]) => h('p', {}, `${text(k)}: ${format(v)}${k === 'probability' ? '%' : ''}`)), h('p', {}, text('payoff').replace('{n}', String(Math.round(m.probability * 100)))));
     }
     mode.onchange = update;
     root.append(fields, h('details', {}, h('summary', {}, t(bi('Допущения модели', 'Model assumptions'))), assumptionText), result); update();
