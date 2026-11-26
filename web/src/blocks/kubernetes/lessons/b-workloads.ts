@@ -45,7 +45,7 @@ export const deployQuiz: QuizItem[] = [
     prompt: bi('Контейнеры новых подов аварийно завершаются после запуска, и выкладка стоит на месте уже десять минут. Что сделает Kubernetes, когда истечёт progressDeadlineSeconds?', 'The new pods crash and the rollout hangs for 10 minutes. What does Kubernetes do when progressDeadlineSeconds runs out?'),
     options: [
       { id: 'signal', text: bi('Поставит у Deployment условие Progressing=False с причиной ProgressDeadlineExceeded, и больше ничего', 'Set the condition Progressing=False with reason ProgressDeadlineExceeded — and that is all'), correct: true },
-      { id: 'undo', text: bi('Сам откатит Deployment на прошлую ревизию', 'Roll the Deployment back to the previous revision by itself'), why: bi('Сам Kubernetes выкладку не откатывает, а условие служит только сигналом для вас или для системы сборки. Откатывают выкладку командой `kubectl rollout undo`.', 'There is no automatic rollback: the condition is a signal for you or for CI. `kubectl rollout undo` rolls back.') },
+      { id: 'undo', text: bi('Сам откатит Deployment на прошлую рабочую ревизию и запишет в события причину ProgressDeadlineExceeded', 'Roll the Deployment back to the previous working revision by itself and record ProgressDeadlineExceeded in its events'), why: bi('Сам Kubernetes выкладку не откатывает, а условие служит только сигналом для вас или для системы сборки. Откатывают выкладку командой `kubectl rollout undo`.', 'There is no automatic rollback: the condition is a signal for you or for CI. `kubectl rollout undo` rolls back.') },
       { id: 'delete', text: bi('Удалит новый ReplicaSet', 'Delete the new ReplicaSet'), why: bi('Новый ReplicaSet остаётся на месте, и контроллер продолжает попытки.', 'The new ReplicaSet stays; the controller keeps trying.') },
     ],
   },
@@ -253,7 +253,7 @@ export const archQuiz: QuizItem[] = [
     options: [
       { id: 'etcd', text: bi('Записывает узел прямо в etcd', 'It writes the node straight into etcd'), why: bi('К etcd обращается только API-сервер.', 'Only the API server talks to etcd.') },
       { id: 'binding', text: bi('Записывает привязку (Binding) через API-сервер, и у пода появляется nodeName', 'It writes a Binding through the API server; the pod gets nodeName'), correct: true },
-      { id: 'kubelet', text: bi('Отправляет kubelet команду «запусти под»', 'It sends the kubelet a "start it" command'), why: bi('Планировщик ни с кем, кроме API-сервера, не обменивается запросами: kubelet сам видит, что под назначен на его узел.', 'The scheduler talks to nobody but the API: the kubelet itself sees that the pod is assigned to its node.') },
+      { id: 'kubelet', text: bi('Отправляет kubelet выбранного узла прямую команду «запусти под» по его собственному порту', 'It sends the kubelet of the chosen node a direct "start it" command on its own port'), why: bi('Планировщик ни с кем, кроме API-сервера, не обменивается запросами: kubelet сам видит, что под назначен на его узел.', 'The scheduler talks to nobody but the API: the kubelet itself sees that the pod is assigned to its node.') },
     ],
   },
   {
@@ -427,7 +427,7 @@ export const operatorQuiz: QuizItem[] = [
     concepts: ['k8s.crd', 'k8s.operator'],
     prompt: bi('Вы создали CRD `Website` и объект `Website blog`, а оператора в кластере нет. Что произойдёт?', 'You created the `Website` CRD and a `Website blog` object, but there is no operator. What happens?'),
     options: [
-      { id: 'deploy', text: bi('API-сервер сам создаст Deployment по схеме CRD', 'The API server creates a Deployment from the CRD schema itself'), why: bi('Схема CRD описывает только поля и правила их проверки, а поведение объекту даёт контроллер.', 'A CRD schema describes only fields and their validation. A controller provides the behaviour.') },
+      { id: 'deploy', text: bi('API-сервер сам создаст Deployment и Service по схеме CRD, как только объект будет записан', 'The API server itself creates a Deployment and a Service from the CRD schema once the object is stored'), why: bi('Схема CRD описывает только поля и правила их проверки, а поведение объекту даёт контроллер.', 'A CRD schema describes only fields and their validation. A controller provides the behaviour.') },
       { id: 'data', text: bi('Ничего не произойдёт, потому что объект хранится в API, но исполнять его некому', 'Nothing: the object is stored in the API, but nobody executes it'), correct: true },
     ],
     explain: bi('С Deployment без controller-manager происходит то же самое, потому что объект остаётся только записью. Оператором называют контроллер, который обслуживает ваш собственный вид объектов.', 'Like a Deployment: without the controller-manager it is just a record. An operator is a controller for your own kind of object.'),
@@ -438,7 +438,7 @@ export const operatorQuiz: QuizItem[] = [
     concepts: ['k8s.operator', 'k8s.owner'],
     prompt: bi('Оператор создаёт Deployment и записывает в его ownerReferences объект Website. Что произойдёт, если удалить Website?', 'The operator creates a Deployment with ownerReferences pointing to the Website. What does deleting the Website do?'),
     options: [
-      { id: 'stay', text: bi('Deployment останется, пока оператор сам его не удалит', 'The Deployment stays until the operator deletes it'), why: bi('ownerReferences для того и нужны, чтобы оператору не приходилось убирать за собой: это делает сборщик мусора.', 'ownerReferences are there precisely so that the operator does not have to clean up: the garbage collector does it.') },
+      { id: 'stay', text: bi('Deployment останется в кластере без хозяина, пока оператор при следующей сверке сам его не удалит', 'The Deployment stays in the cluster without an owner until the operator itself deletes it at its next reconciliation'), why: bi('ownerReferences для того и нужны, чтобы оператору не приходилось убирать за собой: это делает сборщик мусора.', 'ownerReferences are there precisely so that the operator does not have to clean up: the garbage collector does it.') },
       { id: 'gc', text: bi('Сборщик мусора удалит Deployment, а вслед за ним ReplicaSet и поды', 'The garbage collector deletes the Deployment, and after it the ReplicaSet and the pods'), correct: true },
     ],
   },

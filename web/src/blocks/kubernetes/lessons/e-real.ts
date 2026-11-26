@@ -27,7 +27,7 @@ export const realQuiz: QuizItem[] = [
     prompt: bi('Как kubeadm запускает kube-apiserver, если API-сервера, который мог бы создать под, ещё нет?', 'How does kubeadm start kube-apiserver when there is no API server yet to create a pod?'),
     options: [
       { id: 'static', text: bi('Кладёт манифест в /etc/kubernetes/manifests, а такие поды kubelet запускает сам', 'It puts a manifest into /etc/kubernetes/manifests: the kubelet runs such pods by itself'), correct: true },
-      { id: 'systemd', text: bi('Запускает kube-apiserver службой systemd', 'It starts kube-apiserver as a systemd service'), why: bi('Так делают некоторые установки «вручную», но kubeadm запускает управляющий слой статическими подами, и службой systemd работает только kubelet.', 'Some "the hard way" setups do, but kubeadm runs the control plane as static pods; only the kubelet is a systemd service.') },
+      { id: 'systemd', text: bi('Запускает kube-apiserver службой systemd и сам перезапускает его, если процесс упал', 'It starts kube-apiserver as a systemd service and restarts the process itself when it crashes'), why: bi('Так делают некоторые установки «вручную», но kubeadm запускает управляющий слой статическими подами, и службой systemd работает только kubelet.', 'Some "the hard way" setups do, but kubeadm runs the control plane as static pods; only the kubelet is a systemd service.') },
     ],
   },
   {
@@ -37,7 +37,7 @@ export const realQuiz: QuizItem[] = [
     prompt: bi('Вы закончили этап на облачных виртуальных машинах и закрыли ноутбук. Что будет со счётом за эти машины?', 'You finished the stage on cloud VMs and closed your laptop. What happens to the bill for those machines?'),
     options: [
       { id: 'grows', text: bi('Он растёт каждый час, пока машины не удалены', 'It grows every hour until the VMs are deleted'), correct: true },
-      { id: 'stops', text: bi('Счёт перестанет расти, потому что машины без нагрузки бесплатны', 'It stops: idle VMs are free'), why: bi('Провайдер берёт деньги за выделенные ресурсы, а не за нагрузку, и даже остановленная машина часто стоит денег за диск и адрес.', 'A provider charges for allocated resources, not for load; a stopped VM often costs money too (the disk, the address).') },
+      { id: 'stops', text: bi('Счёт перестанет расти, потому что машины без нагрузки бесплатны', 'The bill stops growing, because idle machines without load are free'), why: bi('Провайдер берёт деньги за выделенные ресурсы, а не за нагрузку, и даже остановленная машина часто стоит денег за диск и адрес.', 'A provider charges for allocated resources, not for load; a stopped VM often costs money too (the disk, the address).') },
     ],
   },
 ];

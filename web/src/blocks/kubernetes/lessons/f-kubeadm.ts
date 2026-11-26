@@ -25,7 +25,7 @@ export const prepareQuiz: QuizItem[] = [
     options: [
       { id: 'driver', text: bi('Совпадает ли драйвер cgroup у containerd (SystemdCgroup) и у kubelet', 'Whether containerd (SystemdCgroup) and the kubelet use the same cgroup driver'), correct: true },
       { id: 'cni', text: bi('Установлен ли сетевой плагин', 'Whether a network plugin is installed'), why: bi('Без сетевого плагина в Pending остаётся CoreDNS, а управляющий слой работает в сети узла и от плагина не зависит.', 'Without a CNI it is CoreDNS that sits in Pending; the control plane runs on the node network and does not depend on the CNI.') },
-      { id: 'certs', text: bi('Не истекли ли сертификаты', 'Whether the certificates have expired'), why: bi('Сертификаты только что выпущены на год, а истёкший сертификат даёт ошибку x509, а не перезапуски.', 'The certificates were just issued for a year; an expired one gives an x509 error, not restarts.') },
+      { id: 'certs', text: bi('Не истекли ли сертификаты, которые kubeadm только что выпустил для API-сервера и etcd', 'Whether the certificates that kubeadm has just issued for the API server and etcd have expired'), why: bi('Сертификаты только что выпущены на год, а истёкший сертификат даёт ошибку x509, а не перезапуски.', 'The certificates were just issued for a year; an expired one gives an x509 error, not restarts.') },
     ],
     explain: bi('Проверки preflight такую ошибку не ловят, поэтому драйвер cgroup нужно выставить одинаково ещё до init. В kubeadm по умолчанию это systemd.', 'preflight does not catch it: the cgroup driver has to match before init. With kubeadm the default is systemd.'),
     refs: { explainer: 'k8s.kubeadm-init' },
@@ -78,7 +78,7 @@ export const kubeadmQuiz: QuizItem[] = [
     prompt: bi('Кого защищает флаг `--discovery-token-ca-cert-hash` в kubeadm join?', 'What does the `--discovery-token-ca-cert-hash` flag of kubeadm join protect?'),
     options: [
       { id: 'node', text: bi('Узел, потому что он поверит только тому API-серверу, чей центр сертификации совпадает с хешем', 'The node: it trusts only an API server whose CA matches the hash'), correct: true },
-      { id: 'cluster', text: bi('Кластер, потому что чужой узел без хеша в него не войдёт', 'The cluster: a foreign node without the hash cannot get in'), why: bi('Кластер от чужого узла защищает токен. Хеш работает в обратную сторону и не даёт узлу подключиться к подставному серверу.', 'The token protects the cluster from a foreign node. The hash works the other way: it keeps the node from joining a fake server.') },
+      { id: 'cluster', text: bi('Кластер, потому что чужой узел без хеша в него не войдёт, даже если у него есть действующий токен', 'The cluster: a foreign node without the hash cannot get in, even with a valid token'), why: bi('Кластер от чужого узла защищает токен. Хеш работает в обратную сторону и не даёт узлу подключиться к подставному серверу.', 'The token protects the cluster from a foreign node. The hash works the other way: it keeps the node from joining a fake server.') },
       { id: 'etcd', text: bi('Данные etcd при передаче', 'etcd data in transit'), why: bi('Узел не обращается к etcd, потому что с etcd работает только API-сервер.', 'A node never sees etcd at all: only the API server talks to etcd.') },
     ],
     refs: { explainer: 'k8s.tls-bootstrap' },
@@ -126,7 +126,7 @@ export const cniQuiz: QuizItem[] = [
     prompt: bi('kubeadm init закончился без ошибок, а `kubectl get nodes` показывает NotReady, и CoreDNS в Pending. Что это значит?', 'kubeadm init finished without errors. `kubectl get nodes` shows NotReady, CoreDNS is Pending. What is it?'),
     options: [
       { id: 'cni', text: bi('Это нормальное состояние до установки сетевого плагина', 'The normal state before a network plugin is installed'), correct: true },
-      { id: 'broken', text: bi('init сломался, нужно выполнить kubeadm reset', 'init broke, you need kubeadm reset'), why: bi('Узел в состоянии NotReady с причиной «network plugin not ready» — это как раз то, о чём init предупреждает в конце своего вывода: «You should now deploy a pod network».', 'A node NotReady with the reason "network plugin not ready" is exactly what init promises in its output: "You should now deploy a pod network".') },
+      { id: 'broken', text: bi('init сломался на середине, и перед повторным запуском нужно выполнить kubeadm reset', 'init broke halfway, and you need kubeadm reset before running it again'), why: bi('Узел в состоянии NotReady с причиной «network plugin not ready» — это как раз то, о чём init предупреждает в конце своего вывода: «You should now deploy a pod network».', 'A node NotReady with the reason "network plugin not ready" is exactly what init promises in its output: "You should now deploy a pod network".') },
     ],
     refs: { explainer: 'k8s.kubeadm-init' },
   },
@@ -150,7 +150,7 @@ export const cniQuiz: QuizItem[] = [
     prompt: bi('Cilium установлен с `ipam.mode=kubernetes`. Откуда поды узла worker-1 получают адреса?', 'Cilium is installed with `ipam.mode=kubernetes`. Where do the pods of worker-1 get their addresses from?'),
     options: [
       { id: 'node', text: bi('Из podCIDR объекта Node, который controller-manager выдал из диапазона --pod-network-cidr', 'From the podCIDR of the Node object, handed out by the controller-manager from --pod-network-cidr'), correct: true },
-      { id: 'pool', text: bi('Из собственного пула Cilium 10.0.0.0/8', 'From Cilium’s own pool 10.0.0.0/8'), why: bi('Так работает режим cluster-pool. В режиме kubernetes Cilium берёт podCIDR узла.', 'That is the cluster-pool mode. In the kubernetes mode Cilium trusts the node’s podCIDR.') },
+      { id: 'pool', text: bi('Из собственного пула Cilium 10.0.0.0/8, который он делит между узлами сам, не глядя на настройки кластера', 'From Cilium’s own pool 10.0.0.0/8, which it splits between the nodes by itself, regardless of the cluster settings'), why: bi('Так работает режим cluster-pool. В режиме kubernetes Cilium берёт podCIDR узла.', 'That is the cluster-pool mode. In the kubernetes mode Cilium trusts the node’s podCIDR.') },
     ],
   },
 ];
@@ -228,7 +228,7 @@ export const upgradeQuiz: QuizItem[] = [
     prompt: bi('drain раз за разом повторяет «Cannot evict pod as it would violate the pod\'s disruption budget» и не заканчивается. Почему?', 'drain keeps repeating "Cannot evict pod as it would violate the pod\'s disruption budget" and never finishes. Why?'),
     options: [
       { id: 'pdb', text: bi('PodDisruptionBudget не разрешает выселить ни одного пода (например, minAvailable равен числу реплик)', 'A PodDisruptionBudget allows no pod to go (minAvailable equals the replica count, for example)'), correct: true },
-      { id: 'ds', text: bi('На узле есть поды DaemonSet', 'The node has DaemonSet pods'), why: bi('Тогда drain сразу откажется работать и подскажет флаг --ignore-daemonsets, а не будет повторять выселение.', 'Then drain refuses at once with a hint about --ignore-daemonsets, instead of retrying evictions.') },
+      { id: 'ds', text: bi('На узле есть поды DaemonSet, и drain ждёт, пока их контроллер сам перенесёт их на другие рабочие узлы кластера', 'The node has DaemonSet pods, and drain waits until their controller moves them to other worker nodes of the cluster'), why: bi('Тогда drain сразу откажется работать и подскажет флаг --ignore-daemonsets, а не будет повторять выселение.', 'Then drain refuses at once with a hint about --ignore-daemonsets, instead of retrying evictions.') },
     ],
   },
 ];
@@ -251,7 +251,7 @@ export const repairQuiz: QuizItem[] = [
     prompt: bi('На worker-2 остановили kubelet. Что будет с контейнерами, которые уже работают на этом узле, в первые минуты?', 'The kubelet on worker-2 was stopped. What happens to the containers already running there in the first minutes?'),
     options: [
       { id: 'run', text: bi('Продолжат работать, потому что их держит containerd, а kubelet только управляет ими', 'They keep running: containerd holds them, the kubelet only manages them'), correct: true },
-      { id: 'die', text: bi('Остановятся вместе с kubelet', 'They stop together with the kubelet'), why: bi('Родителем процессов контейнеров служит containerd-shim, а не kubelet. Через пять минут поды выселят из API, но процессы на узле продолжат работать, пока kubelet не вернётся и не остановит их.', 'The containers are children of containerd-shim, not of the kubelet. After 5 minutes they are evicted from the API, but the processes on the node remain until the kubelet returns and removes them.') },
+      { id: 'die', text: bi('Остановятся вместе с kubelet, потому что процессы контейнеров запущены как его дочерние процессы', 'They stop together with the kubelet, because the container processes are its child processes'), why: bi('Родителем процессов контейнеров служит containerd-shim, а не kubelet. Через пять минут поды выселят из API, но процессы на узле продолжат работать, пока kubelet не вернётся и не остановит их.', 'The containers are children of containerd-shim, not of the kubelet. After 5 minutes they are evicted from the API, but the processes on the node remain until the kubelet returns and removes them.') },
     ],
     refs: { explainer: 'k8s.node-down' },
   },

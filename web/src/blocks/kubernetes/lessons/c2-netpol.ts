@@ -57,7 +57,7 @@ export const netpolQuiz: QuizItem[] = [
     prompt: bi('В namespace pay стоит политика `from: - podSelector: {matchLabels: {role: frontend}}`. Пропустит ли она под с меткой role=frontend из namespace shop?', 'A policy in namespace pay: `from: - podSelector: {matchLabels: {role: frontend}}`. Does it let in a role=frontend pod from namespace shop?'),
     options: [
       { id: 'no', text: bi('Нет, потому что podSelector без namespaceSelector выбирает поды только в namespace самой политики', 'No, because a podSelector without a namespaceSelector selects pods in the policy’s namespace only'), correct: true },
-      { id: 'yes', text: bi('Да, потому что метка совпадает', 'Yes, because the label matches'), why: bi('Метка совпадает, а namespace нет. Чтобы выбрать поды из других namespace, нужен namespaceSelector, хотя бы пустой `{}`, который означает «любой namespace».', 'The label matches, the namespace does not. Selecting pods of other namespaces needs a namespaceSelector — at least an empty `{}` for "any".') },
+      { id: 'yes', text: bi('Да, потому что метка role=frontend совпадает, а podSelector выбирает подходящие поды во всех namespace', 'Yes, because the label role=frontend matches, and a podSelector picks matching pods in every namespace'), why: bi('Метка совпадает, а namespace нет. Чтобы выбрать поды из других namespace, нужен namespaceSelector, хотя бы пустой `{}`, который означает «любой namespace».', 'The label matches, the namespace does not. Selecting pods of other namespaces needs a namespaceSelector — at least an empty `{}` for "any".') },
     ],
   },
   {

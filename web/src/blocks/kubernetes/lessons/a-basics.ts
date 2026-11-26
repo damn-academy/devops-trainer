@@ -27,7 +27,7 @@ export const whyQuiz: QuizItem[] = [
     concepts: ['k8s.desired-state'],
     prompt: bi('Ночью выключился сервер, на котором работали два контейнера. Что нужно системе, чтобы запустить их снова без вашего участия?', 'A server with two containers went dark at night. What does a system need to bring them back without you?'),
     options: [
-      { id: 'log', text: bi('Журнал команд, которыми вы запускали контейнеры', 'The log of the commands you used to start the containers'), why: bi('Журнал рассказывает, что когда-то сделали, а не что должно работать сейчас. Повторять старые команды вслепую опасно, потому что часть из них уже не нужна.', 'A log tells what was done, not what must be. Replaying old commands blindly is risky: some of them are no longer wanted.') },
+      { id: 'log', text: bi('Журнал всех команд, которыми вы запускали контейнеры, чтобы система повторила их по порядку на других серверах', 'The log of the commands you used to start the containers, replayed in order on the other servers'), why: bi('Журнал рассказывает, что когда-то сделали, а не что должно работать сейчас. Повторять старые команды вслепую опасно, потому что часть из них уже не нужна.', 'A log tells what was done, not what must be. Replaying old commands blindly is risky: some of them are no longer wanted.') },
       { id: 'list', text: bi('Записанное желаемое состояние, то есть перечень контейнеров, которые должны работать, и их количество', 'A recorded desired state: what must run and how many'), correct: true },
       { id: 'backup', text: bi('Резервная копия выключившегося сервера', 'A backup of the server that went dark'), why: bi('Копия поможет восстановить тот же сервер, а системе нужно запустить контейнеры на других серверах. Для этого ей нужен список того, что должно работать, а не образ диска.', 'A backup helps to bring the same server back, but the system has to start the containers elsewhere — for that it needs a list, not a disk image.') },
     ],
@@ -104,7 +104,7 @@ export const podQuiz: QuizItem[] = [
     concepts: ['k8s.pod'],
     prompt: bi('В одном поде два контейнера, и оба хотят слушать порт 80. Получится ли это?', 'One pod has two containers, both want to listen on port 80. Will it work?'),
     options: [
-      { id: 'yes', text: bi('Да, потому что у каждого контейнера свой IP-адрес', 'Yes, because every container has its own IP'), why: bi('IP-адрес принадлежит поду, а не контейнеру. Поэтому второй контейнер, который попробует занять тот же порт, получит ошибку «address already in use».', 'The IP belongs to the pod, not to the container. The second bind on the same port gets "address already in use".') },
+      { id: 'yes', text: bi('Да, потому что у каждого контейнера в поде свой IP-адрес и свой собственный набор портов', 'Yes, because every container in the pod has its own IP address and its own set of ports'), why: bi('IP-адрес принадлежит поду, а не контейнеру. Поэтому второй контейнер, который попробует занять тот же порт, получит ошибку «address already in use».', 'The IP belongs to the pod, not to the container. The second bind on the same port gets "address already in use".') },
       { id: 'no', text: bi('Нет, у контейнеров одного пода общее сетевое пространство имён и общий localhost', 'No, the containers of a pod share one network namespace and one localhost'), correct: true },
     ],
   },
@@ -127,7 +127,7 @@ export const podQuiz: QuizItem[] = [
     prompt: bi('Откуда kubectl знает, к какому кластеру обращаться?', 'How does kubectl know which cluster to talk to?'),
     options: [
       { id: 'env', text: bi('Только из переменной окружения KUBERNETES_HOST', 'Only from the KUBERNETES_HOST environment variable'), why: bi('Такой переменной kubectl не читает. Переменная KUBECONFIG существует, но она только указывает другой путь к тому же файлу настроек.', 'kubectl does not read such a variable; the KUBECONFIG variable only changes the path to the same file.') },
-      { id: 'dns', text: bi('Сам находит кластер в локальной сети', 'It finds the cluster on the local network'), why: bi('kubectl ничего не ищет в сети, потому что адрес сервера явно записан в kubeconfig.', 'kubectl looks for nothing: the server address is written in kubeconfig explicitly.') },
+      { id: 'dns', text: bi('Сам находит кластер в локальной сети, рассылая широковещательный запрос всем машинам', 'It finds the cluster on the local network by sending a broadcast query to every machine'), why: bi('kubectl ничего не ищет в сети, потому что адрес сервера явно записан в kubeconfig.', 'kubectl looks for nothing: the server address is written in kubeconfig explicitly.') },
       { id: 'kc', text: bi('Из текущего контекста в файле kubeconfig (по умолчанию ~/.kube/config)', 'From the current context in kubeconfig (~/.kube/config)'), correct: true },
     ],
   },
@@ -326,7 +326,7 @@ export const reconcileQuiz: QuizItem[] = [
     options: [
       { id: 'replace', text: bi('Их по одному заменят на новые', 'They are replaced one by one'), why: bi('Так поступает Deployment, а не ReplicaSet. ReplicaSet сравнивает число подов с полем replicas, а образ работающих подов не трогает.', 'A Deployment does that, not a ReplicaSet. A ReplicaSet compares the number of pods with replicas — it does not touch the image of live pods.') },
       { id: 'nothing', text: bi('Ничего не произойдёт, потому что петля ReplicaSet считает только количество подов', 'Nothing: the ReplicaSet loop counts only the number'), correct: true },
-      { id: 'restart', text: bi('Контейнеры перезапустятся уже с новым образом', 'The containers restart with the new image'), why: bi('Шаблон пода используется только тогда, когда создаётся новый под.', 'The pod template is used only when new pods are created.') },
+      { id: 'restart', text: bi('Контейнеры во всех подах ReplicaSet перезапустятся на месте, уже с новым образом из шаблона', 'The containers in all the pods restart in place, already with the new image from the template'), why: bi('Шаблон пода используется только тогда, когда создаётся новый под.', 'The pod template is used only when new pods are created.') },
     ],
     explain: bi('Новый образ получат только поды, которые будут созданы после изменения, например взамен удалённых.', 'Only pods created after the change get the new image — for example, in place of deleted ones.'),
   },
@@ -336,7 +336,7 @@ export const reconcileQuiz: QuizItem[] = [
     concepts: ['k8s.owner', 'k8s.label'],
     prompt: bi('С одного из подов ReplicaSet `web` (селектор app=web, три реплики) сняли метку app. Что произойдёт?', 'The app label was removed from a pod of ReplicaSet `web` (app=web, 3 replicas). What happens?'),
     options: [
-      { id: 'deleted', text: bi('ReplicaSet удалит этот под', 'The ReplicaSet deletes that pod'), why: bi('ReplicaSet удаляет только свои лишние поды, а под без нужной метки уже не его. Контроллер стирает себя из ownerReferences этого пода и больше за него не отвечает.', 'A ReplicaSet deletes only its own extra pods; a pod without the label is no longer its own — the controller removes the ownerReference and lets it go.') },
+      { id: 'deleted', text: bi('ReplicaSet удалит этот под и сразу создаст вместо него новый, уже с правильной меткой', 'The ReplicaSet deletes that pod and at once creates a new one with the right label instead'), why: bi('ReplicaSet удаляет только свои лишние поды, а под без нужной метки уже не его. Контроллер стирает себя из ownerReferences этого пода и больше за него не отвечает.', 'A ReplicaSet deletes only its own extra pods; a pod without the label is no longer its own — the controller removes the ownerReference and lets it go.') },
       { id: 'orphan', text: bi('Под продолжит работать без хозяина, а ReplicaSet создаст ему замену', 'The pod lives on without an owner, the ReplicaSet creates a replacement'), correct: true },
       { id: 'nothing', text: bi('Ничего не изменится', 'Nothing changes'), why: bi('Селектор больше не выбирает этот под, поэтому своих подов у ReplicaSet стало два, и одного не хватает до трёх.', 'The selector no longer picks this pod, so there are two "own" pods — a difference of +1.') },
     ],
@@ -348,7 +348,7 @@ export const reconcileQuiz: QuizItem[] = [
     concepts: ['k8s.watch', 'k8s.controller'],
     prompt: bi('Контроллер не работал минуту, и за это время под трижды удаляли и создавали заново. Что сделает контроллер, когда снова заработает?', 'The controller was stopped for a minute, and a pod was deleted and created three times meanwhile. What will the controller do when it runs again?'),
     options: [
-      { id: 'replay', text: bi('Обработает все шесть пропущенных событий по порядку', 'Replay all six events in order'), why: bi('Контроллеры Kubernetes работают по состоянию, а не по событиям (по-английски это называют level-triggered): история событий им не нужна, нужна только разница между желаемым и фактическим сейчас.', 'Kubernetes controllers are level-triggered: they need no history of events, only the current difference.') },
+      { id: 'replay', text: bi('Обработает все шесть пропущенных событий по порядку, от самого старого к самому новому', 'Replay all six missed events in order, from the oldest to the newest'), why: bi('Контроллеры Kubernetes работают по состоянию, а не по событиям (по-английски это называют level-triggered): история событий им не нужна, нужна только разница между желаемым и фактическим сейчас.', 'Kubernetes controllers are level-triggered: they need no history of events, only the current difference.') },
       { id: 'once', text: bi('Один раз посмотрит на текущее состояние и сделает одно исправление', 'Look at the current state once and make one fix'), correct: true },
     ],
     explain: bi('Поэтому пропущенное событие не страшно, ведь при следующей сверке контроллер всё равно увидит, как обстоят дела на самом деле.', 'That is why a missed event does no harm: the next reconcile sees the truth anyway.'),

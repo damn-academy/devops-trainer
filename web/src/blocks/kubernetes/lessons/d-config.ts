@@ -32,7 +32,7 @@ export const configQuiz: QuizItem[] = [
     prompt: bi('Вы поменяли значение в ConfigMap. Контейнер получает это значение и как переменную окружения, и как файл тома. Что увидит работающий под?', 'You changed a value in a ConfigMap. The container gets it both as an environment variable and as a file in a volume. What does the running pod see?'),
     options: [
       { id: 'file', text: bi('Файл через некоторое время обновится, а переменная нет, пока под не перезапустят', 'The file updates after a while, the variable does not until the pod restarts'), correct: true },
-      { id: 'both', text: bi('Обновится и то, и другое', 'Both update'), why: bi('Окружение процесса задаётся при запуске и потом не меняется, так устроен Linux.', 'A process environment is set at start and does not change later — that is how Linux works.') },
+      { id: 'both', text: bi('Обновится и то, и другое, потому что kubelet сам пересоберёт окружение работающего контейнера', 'Both update, because the kubelet itself rebuilds the environment of the running container'), why: bi('Окружение процесса задаётся при запуске и потом не меняется, так устроен Linux.', 'A process environment is set at start and does not change later — that is how Linux works.') },
       { id: 'none', text: bi('Ничего не обновится', 'Nothing updates'), why: bi('Файлы тома kubelet обновляет при очередной синхронизации.', 'The kubelet refreshes the volume files at its next sync.') },
     ],
   },
@@ -156,7 +156,7 @@ export const healthQuiz: QuizItem[] = [
     options: [
       { id: 'out', text: bi('Уберёт под из EndpointSlice, и запросы на него перестанут идти, но перезапускать его никто не будет, и под так и останется неготовым', 'Remove the pod from the EndpointSlice so requests stop going to it, but nobody restarts it, and the pod stays not ready'), correct: true },
       { id: 'restart', text: bi('Перезапустит контейнер, потому что проверка готовности не прошла', 'Restart the container, because the readiness probe failed'), why: bi('Проверка готовности решает только, получает ли под запросы. Перезапускает контейнер проверка жизнеспособности (liveness probe), а её здесь нет, поэтому зависшее, но «живое» приложение никто не перезапустит.', 'The readiness probe decides only whether the pod gets requests. The liveness probe restarts a container, and there is none here, so a hung but “alive” application is restarted by nobody.') },
-      { id: 'enough', text: bi('Ничего особенного не случится, потому что при проверке готовности проверка жизнеспособности не нужна', 'Nothing special: with a readiness probe, a liveness probe is not needed'), why: bi('Проверки отвечают на разные вопросы. Готовность говорит, можно ли сейчас слать поду запросы, а жизнеспособность — пора ли его перезапустить. Без второй под будет висеть неготовым, пока его не удалит человек.', 'The probes answer different questions. Readiness says whether requests may go to the pod now, liveness whether it is time to restart it. Without the second the pod hangs not ready until a person deletes it.') },
+      { id: 'enough', text: bi('Ничего особенного не случится, потому что при проверке готовности проверка жизнеспособности не нужна, а неготовый под kubelet перезапустит сам', 'Nothing special: with a readiness probe a liveness probe is not needed, because the kubelet restarts a pod that stays not ready by itself'), why: bi('Проверки отвечают на разные вопросы. Готовность говорит, можно ли сейчас слать поду запросы, а жизнеспособность — пора ли его перезапустить. Без второй под будет висеть неготовым, пока его не удалит человек.', 'The probes answer different questions. Readiness says whether requests may go to the pod now, liveness whether it is time to restart it. Without the second the pod hangs not ready until a person deletes it.') },
     ],
   },
   {
@@ -306,7 +306,7 @@ export const helmQuiz: QuizItem[] = [
     prompt: bi('У релиза `blog` ревизия 1 соответствует установке, а ревизия 2 — неудачному обновлению. Что создаст команда `helm rollback blog 1`?', 'Release `blog`: revision 1 — install, revision 2 — a failed upgrade. What does `helm rollback blog 1` create?'),
     options: [
       { id: 'three', text: bi('Ревизию 3 с содержимым ревизии 1', 'Revision 3 with the contents of revision 1'), correct: true },
-      { id: 'delete', text: bi('Удалит ревизию 2 и вернёт номер 1', 'Delete revision 2 and go back to number 1'), why: bi('История в Helm только растёт, потому что откат создаёт новую ревизию, так же как у Deployment.', 'History in Helm only grows: a rollback is a new revision, as with a Deployment.') },
+      { id: 'delete', text: bi('Удалит ревизию 2 и вернёт номер 1', 'Delete revision 2 and go back to revision number 1'), why: bi('История в Helm только растёт, потому что откат создаёт новую ревизию, так же как у Deployment.', 'History in Helm only grows: a rollback is a new revision, as with a Deployment.') },
     ],
   },
   {
@@ -317,7 +317,7 @@ export const helmQuiz: QuizItem[] = [
     options: [
       { id: 'secret', text: bi('В объектах Secret с именами sh.helm.release.v1.<релиз>.v<N> в namespace релиза', 'In Secrets sh.helm.release.v1.<release>.v<N> in the release namespace'), correct: true },
       { id: 'tiller', text: bi('В сервере Tiller в namespace kube-system', 'In the Tiller server in kube-system'), why: bi('Tiller был в Helm 2 и удалён в Helm 3. Теперь Helm работает только как клиент, а состояние хранится в кластере.', 'Tiller was in Helm 2 and removed in Helm 3: Helm is now only a client, and the state lives in the cluster.') },
-      { id: 'local', text: bi('В каталоге ~/.helm на компьютере того, кто устанавливал релиз', 'In ~/.helm on the machine of whoever installed it'), why: bi('Тогда коллега не увидел бы вашего релиза, а история хранится в самом кластере.', 'Then a colleague would not see your release; the history is kept in the cluster itself.') },
+      { id: 'local', text: bi('В каталоге ~/.helm на компьютере того, кто устанавливал релиз, рядом с кэшем репозиториев чартов', 'In ~/.helm on the machine of whoever installed the release, next to the chart repository cache'), why: bi('Тогда коллега не увидел бы вашего релиза, а история хранится в самом кластере.', 'Then a colleague would not see your release; the history is kept in the cluster itself.') },
     ],
   },
   {
