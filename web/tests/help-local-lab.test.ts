@@ -103,6 +103,32 @@ describe('local lab page', () => {
     expect(assetUrl('dtlab-darwin-arm64')).toBe('https://github.com/damn-academy/devops-trainer/releases/latest/download/dtlab-darwin-arm64');
   });
 
+  it('gates native installers separately and puts them before plain binaries', () => {
+    const previous = { ...DTLAB_RELEASE.installersPublished };
+    const published = DTLAB_RELEASE.published;
+    try {
+      DTLAB_RELEASE.published = true;
+      setLang('en');
+      Object.assign(DTLAB_RELEASE.installersPublished, { windows: false, macos: false, linux: false });
+      expect(localLabPage().el.querySelector('a[href$=".msi"]')).toBeNull();
+      Object.assign(DTLAB_RELEASE.installersPublished, { windows: true, macos: true, linux: true });
+      const { el } = localLabPage();
+      for (const [os, suffix] of [['windows', '.msi'], ['macos', '.pkg'], ['linux', '.deb']]) {
+        const block = el.querySelector(`[data-os="${os}"]`)!;
+        expect(block.querySelector('a')!.getAttribute('href')).toMatch(new RegExp(`${suffix.replace('.', '\\.')}$$`));
+        expect(text(block)).toContain('Plain binary alternative');
+      }
+      expect(text(el)).toContain('dtlab course install academy');
+      expect(text(el)).toContain('dtlab serve');
+      expect(text(el)).toContain('Run anyway');
+      expect(text(el)).toContain('Open Anyway');
+    } finally {
+      Object.assign(DTLAB_RELEASE.installersPublished, previous);
+      DTLAB_RELEASE.published = published;
+      setLang('ru');
+    }
+  });
+
   it('opens the instructions of the learner’s system first', () => {
     expect(guessOS('Mozilla/5.0 (Windows NT 10.0; Win64; x64)')).toBe('windows');
     expect(guessOS('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5)')).toBe('macos');

@@ -19,6 +19,9 @@ export const DTLAB_REPO = 'https://github.com/damn-academy/devops-trainer';
  */
 export const DTLAB_RELEASE = {
   published: true,
+  // Enable each platform only after its native assets are uploaded.
+  installersPublished: { windows: false, macos: false, linux: false },
+  coursesPublished: false,
   assets: {
     windows: [{ file: 'dtlab-windows-amd64.exe', label: bi('Windows 10 и 11, процессоры Intel и AMD', 'Windows 10 and 11, Intel and AMD processors') }],
     macos: [
@@ -122,6 +125,28 @@ const HYPERVISOR: Record<LabOS, Bi> = {
   ),
 };
 
+const INSTALLERS: Record<LabOS, string[]> = {
+  windows: ['dtlab-windows-amd64.msi'],
+  macos: ['dtlab-darwin-arm64.pkg', 'dtlab-darwin-amd64.pkg'],
+  linux: ['dtlab-linux-amd64.deb', 'dtlab-linux-arm64.deb', 'dtlab-linux-amd64.rpm', 'dtlab-linux-arm64.rpm', 'install.sh'],
+};
+
+function installerSteps(os: LabOS): Bi {
+  const links = INSTALLERS[os].map(file => `[${file}](${assetUrl(file)})`).join(', ');
+  if (os === 'windows') return bi(
+    `Скачайте установщик ${links} и откройте его. Он установит dtlab в Program Files и добавит команду в PATH. Установщик не подписан: если SmartScreen показывает «Windows protected your PC», нажмите «More info», затем «Run anyway». После установки откройте новое окно терминала.`,
+    `Download and open the installer: ${links}. It installs dtlab in Program Files and adds it to PATH. The installer is unsigned: if SmartScreen shows “Windows protected your PC”, select “More info”, then “Run anyway”. Open a new terminal after installation.`,
+  );
+  if (os === 'macos') return bi(
+    `Скачайте установщик для своего процессора: ${links}. arm64 подходит для Apple Silicon, amd64 — для Intel. Откройте .pkg и следуйте шагам установки. Пакет не подписан: если Gatekeeper сообщает «unidentified developer», откройте «Системные настройки» → «Конфиденциальность и безопасность», нажмите «Всё равно открыть», подтвердите запуск и введите пароль. Программа установится в /usr/local/bin.`,
+    `Download the installer for your processor: ${links}. Choose arm64 for Apple Silicon or amd64 for Intel. Open the .pkg and follow the installer. It is unsigned: if Gatekeeper reports an “unidentified developer”, open System Settings → Privacy & Security → Open Anyway, confirm opening and authenticate. The program installs in /usr/local/bin.`,
+  );
+  return bi(
+    `Скачайте пакет для своей системы и процессора: ${links}. Для Debian и Ubuntu выполните \`sudo apt install ./dtlab-linux-amd64.deb\`, для Fedora — \`sudo dnf install ./dtlab-linux-amd64.rpm\`; на ARM замените amd64 на arm64. Для остальных дистрибутивов выполните:\n\n\`\`\`sh\ncurl -fsSL ${assetUrl('install.sh')} | sh\n\`\`\`\n\nСкрипт сверит SHA256 и установит dtlab в ~/.local/bin. Добавьте этот каталог в PATH по подсказке скрипта.`,
+    `Download a package for your distribution and processor: ${links}. On Debian or Ubuntu run \`sudo apt install ./dtlab-linux-amd64.deb\`; on Fedora run \`sudo dnf install ./dtlab-linux-amd64.rpm\`. Replace amd64 with arm64 on ARM. For other distributions run:\n\n\`\`\`sh\ncurl -fsSL ${assetUrl('install.sh')} | sh\n\`\`\`\n\nThe script verifies SHA256 and installs dtlab in ~/.local/bin. Follow its instruction to add this directory to PATH.`,
+  );
+}
+
 /** Step 2 with ready-made builds: download and put dtlab on the PATH. */
 function downloadSteps(os: LabOS): Bi {
   const [first] = DTLAB_RELEASE.assets[os];
@@ -196,6 +221,8 @@ function osBlock(os: LabOS, open: boolean): HTMLElement {
     h('h3', {}, t(bi('Шаг 1. Гипервизор и QEMU', 'Step 1. The hypervisor and QEMU'))),
     prose(HYPERVISOR[os]),
     h('h3', {}, t(bi('Шаг 2. Программа dtlab', 'Step 2. The dtlab program'))),
+    DTLAB_RELEASE.published && DTLAB_RELEASE.installersPublished[os] ? prose(installerSteps(os)) : null,
+    DTLAB_RELEASE.published && DTLAB_RELEASE.installersPublished[os] ? h('h4', {}, t(bi('Отдельный файл программы вместо установщика', 'Plain binary alternative'))) : null,
     prose(DTLAB_RELEASE.published ? downloadSteps(os) : buildSteps(os)),
     files,
   );
@@ -219,6 +246,8 @@ export function localLabPage(): Page {
       h('p', {}, t(bi('Выберите свою систему. Инструкция для системы, в которой открыт этот браузер, уже раскрыта.', 'Choose your system. The instructions for the system this browser runs on are already open.'))),
       ...order.map((os) => osBlock(os, os === mine)),
       h('h3', {}, t(bi('Шаг 3. Проверка и запуск', 'Step 3. The check and the start'))),
+      prose(bi('Чтобы читать курс без сети, скачайте его и запустите локальный сайт:\n\n```sh\ndtlab courses\ndtlab course install academy\ndtlab serve\n```\n\nОткройте http://127.0.0.1:7788/. Для чтения курса QEMU не нужен.', 'To read the course offline, download it and start the local site:\n\n```sh\ndtlab courses\ndtlab course install academy\ndtlab serve\n```\n\nOpen http://127.0.0.1:7788/. Reading the course does not require QEMU.')),
+      DTLAB_RELEASE.coursesPublished ? null : prose(bi('Эти команды установки курса станут доступны после публикации каталога в выпуске GitHub.', 'These course installation commands become available once the catalog is published in a GitHub release.')),
       prose(START),
     ),
     sec('facts', bi('Как сдать экзамен на машинах лаборатории', 'How to take an exam on the lab’s machines'), prose(FACTS)),

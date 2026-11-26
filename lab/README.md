@@ -4,6 +4,58 @@
 
 `dtlab` runs the course's machines on your own computer: a Linux machine for the Linux and Networks exams, bare Ubuntu nodes on which you build Kubernetes with kubeadm, and a ready kuberoot cluster for the blocks about deploys, GitOps and monitoring. It serves the course from the same place, so everything works without the internet, takes exam facts from the machines in one step, and removes all of it with one command.
 
+## Install
+
+Download files from the [latest release](https://github.com/damn-academy/devops-trainer/releases/latest). Native installers and the course catalog appear there when published; use the plain binaries if an installer is not listed. QEMU is needed for host VMs, not for reading installed courses.
+
+### Windows
+
+Download `dtlab-windows-amd64.msi`, open it and follow the installer. It installs into `Program Files\dtlab` and adds that directory to PATH. Open a new terminal afterward. The MSI is unsigned. If SmartScreen says **Windows protected your PC**, select **More info**, then **Run anyway** after checking that the file came from this repository. If your organisation blocks that option, ask its administrator. See [Microsoft's SmartScreen documentation](https://learn.microsoft.com/windows/apps/package-and-deploy/smartscreen-reputation).
+
+Alternatively download `dtlab-windows-amd64.exe`, rename it to `dtlab.exe`, and run `.\dtlab.exe install` in PowerShell.
+
+### macOS
+
+Download `dtlab-darwin-arm64.pkg` for Apple Silicon (M1 or newer) or `dtlab-darwin-amd64.pkg` for Intel, then open it. The unsigned package installs `/usr/local/bin/dtlab`. If Gatekeeper reports an **unidentified developer**, try opening the package once, then open **System Settings → Privacy & Security**, scroll to the blocked package, select **Open Anyway**, confirm opening and authenticate. This approves this package without disabling Gatekeeper. See [Apple's instructions](https://support.apple.com/en-us/102445).
+
+Alternatively download the matching plain binary, rename it to `dtlab`, run `chmod +x dtlab`, then `./dtlab install`.
+
+### Linux
+
+Choose `amd64` for Intel/AMD or `arm64` for ARM. On Debian/Ubuntu download `dtlab-linux-amd64.deb` and run `sudo apt install ./dtlab-linux-amd64.deb`. On Fedora/RHEL download `dtlab-linux-amd64.rpm` and run `sudo dnf install ./dtlab-linux-amd64.rpm`. Replace `amd64` with `arm64` for ARM. Packages install `/usr/bin/dtlab`.
+
+For other distributions, this POSIX shell installer detects the architecture, downloads the binary, checks SHA256 and installs into `~/.local/bin`:
+
+```sh
+curl -fsSL https://github.com/damn-academy/devops-trainer/releases/latest/download/install.sh | sh
+```
+
+Add `~/.local/bin` to PATH with `export PATH="$HOME/.local/bin:$PATH"` and put that line in your shell's startup file for future terminals. To install for all users, download `install.sh` and run `sh install.sh --system`; it uses sudo to install into `/usr/local/bin`.
+
+Alternatively download the plain `dtlab-linux-amd64` or `dtlab-linux-arm64` binary, rename it to `dtlab`, run `chmod +x dtlab`, then `./dtlab install`.
+
+### Verify checksums
+
+Download `SHA256SUMS` from the same release as your installer or binary. On Linux run `sha256sum dtlab-linux-amd64.deb`; on macOS run `shasum -a 256 dtlab-darwin-arm64.pkg`; in PowerShell run `Get-FileHash .\dtlab-windows-amd64.msi -Algorithm SHA256`. Compare the entire hash with the line for that filename in `SHA256SUMS`. Change the filename for your chosen asset. Course downloads verify their size and SHA256 automatically against `catalog.json`.
+
+## Courses
+
+```sh
+dtlab courses
+dtlab course install academy
+dtlab serve
+```
+
+Open http://127.0.0.1:7788/. `courses` shows each package as `available`, `installed` or `update`, plus the courses included in the base bundle. The optional `dtlab course install v86` installs the in-tab Linux machine files and resolves the `academy` dependency. `rv64` is listed only when the build contains its assets. Multiple IDs can be installed together.
+
+Run `dtlab course update` to update all installed packages. Downloads are staged and verified before the active state changes; previous versions remain on disk. `dtlab course remove v86` removes all versions of that package; remove dependent packs before `dtlab course remove academy`. Stop the local server before removing packages and restart it after updates.
+
+Files live in `~/.dtlab/courses/<id>/<version>` on Linux/macOS or `%LOCALAPPDATA%\dtlab\courses\<id>\<version>` on Windows. A composed site uses hard links on the same filesystem, without duplicating machine images. `dtlab serve` and `dtlab up` automatically select installed content unless `--course` specifies another built site. With no installed content their existing behavior is unchanged. `up` still starts host VMs and prints the local course URL afterward.
+
+For a mirror or tests, set `DTLAB_CATALOG_URL` to the complete catalog URL, such as `https://mirror.example/releases/catalog.json`; archives are resolved beside it. `DTLAB_HOME` overrides the data directory. Catalog and download errors explain connection failures; previously installed content remains usable offline. A `.lock` directory prevents concurrent course changes; after an interrupted process, remove it only after confirming no course command is running.
+
+`dtlab uninstall` removes courses with the rest of the lab data. For a native package installation it preserves the binary and prints the removal command: `sudo apt remove dtlab`, `sudo dnf remove dtlab`, or `msiexec /x` with the installed product code. On macOS it prints `sudo rm /usr/local/bin/dtlab && sudo pkgutil --forget academy.damn.dtlab`: `pkgutil --forget` removes the receipt, not the binary. A Linux `install.sh --system` installation can be removed with `sudo rm /usr/local/bin/dtlab` after removing data.
+
 ## What your computer needs
 
 | What you do | Memory | CPU cores | Free disk | Measured |
@@ -130,3 +182,27 @@ There is no automated macOS run (a macOS VM cannot be started legally in the tes
 10. On Windows whose main interface MTU is below 1500 (a VPN, PPPoE), run `curl -v https://github.com` from the learner machine — TLS must not stall (the Hyper-V NAT passes packets as they are).
 
 Record the results in [STATUS](../web/STATUS.md): the OS version, how long step 2 took, any deviations.
+
+## Publishing installers and courses
+
+Run `lab/release.sh 1.2.3 /path/to/release` to cross-compile the five plain binaries. Install nFPM to emit `.deb` and `.rpm` for both Linux architectures. On Linux, install `wixl` from msitools for the x64 MSI. On macOS, `pkgbuild` and `productbuild` emit two unsigned `.pkg` files. Missing platform tools are reported as skips. The script also copies `install.sh` and writes `SHA256SUMS` for binaries and installers; it does not build the web site. Use an empty output directory for each release. On Windows, uninstall an older MSI before installing a new version of this unsigned package.
+
+Build `web/dist` on the workshop cluster, then run:
+
+```sh
+lab/release-courses.sh 1.2.3 /path/to/web/dist /path/to/release
+```
+
+The script needs Python 3.11+ and reads the existing build directly into tarballs, without a staging copy. The build's manifest plugin emits `catalog-courses.json` with visible course IDs and bilingual titles; `catalog-labels.json` supplies bilingual package labels; old builds without these files must be rebuilt on the cluster. `catalog.json` has `schemaVersion: 1` and `packages`, with `id`, `kind`, `version`, `file`, `bytes`, `sha256`, bilingual `title`/`description`, `requires`, and the base bundle's `courses`. Package versions are immutable: publish changed bytes with a new version.
+
+The split follows `web/vite.config.ts`, `scripts/fetch-v86.mjs`, `scripts/build-lab-image.mjs`, the v86 asset loader and the PWA plugin:
+
+| Package | Contents | Requires |
+|---|---|---|
+| `academy` | All built site files except the machine assets below, including lessons and media | none |
+| `v86` | `v86/**` (BIOS, kernels, lab images, filesystem blobs and snapshots), plus `assets/v86*.js`, `assets/libv86*.js`, their maps and WASM | `academy` |
+| `rv64` | `rv64/**` and `assets/rv64*` JS/WASM/bin/img files and maps | `academy` |
+
+Paths inside tarballs are relative to the same site root. Packs are optional; the base course remains readable without them. Machine files are excluded from service-worker precaching. This worktree has no rv64 engine or public assets; the splitter reserves its path convention and emits no empty pack. If a future build uses different names, update the splitter and precache exclusions together. The tarballs forbid symlinks. Installation also rejects hard links, special entries, absolute paths and traversal, limits expanded data to 64 GiB, and verifies the compressed byte count and SHA256 before extraction.
+
+Upload the catalog, tarballs, checksums and installer assets to the same GitHub release. Set `DTLAB_RELEASE.installersPublished` only for the platforms whose installer files were uploaded, and `coursesPublished` after the catalog and bundles are uploaded. The existing plain-binary release switch remains independent. Restart a running local agent after installing or updating packs so it selects the new composed site.
