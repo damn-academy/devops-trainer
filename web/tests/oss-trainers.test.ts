@@ -6,7 +6,7 @@ it('parses the authored blocks without leaking sections across boundaries', () =
   expect(g.groups.map(g => g.name)).toEqual(Object.values(checkGroups));
   expect(g.facts).toHaveLength(4); expect(g.checks).toHaveLength(9);
   g.groups.forEach(group => { expect(group.options.A).toBeTruthy(); expect(group.options.B).toBeTruthy(); });
-  expect(h.metrics).toHaveLength(9); expect(h.questions).toHaveLength(5);
+  expect(h.metrics).toHaveLength(11); expect(h.questions).toHaveLength(6);
   expect(h.questions[0].question).toContain('наименьшее число людей');
   expect(h.questions[0].answer).toContain('одному: половину ревью делает Анна');
   expect(h.questions[0].answer).toContain('81 %');

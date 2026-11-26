@@ -15,7 +15,7 @@ export function mountTaskDocument(el: HTMLElement, id: string, title: string, ta
   input.dataset.documentTemplate = template;
   input.oninput = () => saveDraft(`document.${id}`, input.value);
   const download = h('button', { type: 'button', class: 'btn' }, t(strings.downloadTxt));
-  download.onclick = () => downloadFile(`${id}.txt`, input.value, 'text/plain;charset=utf-8');
+  download.onclick = () => downloadFile(`${id}.txt`, [input.value, ...Array.from((el.closest('.lesson-body') ?? el).querySelectorAll<HTMLTextAreaElement>('textarea[data-template-id]')).map(note => `## ${note.dataset.templateTitle}\n\n${note.value}`)].join('\n\n'), 'text/plain;charset=utf-8');
   root.append(h('label', {}, t(strings.input), input), download); el.append(root);
   return { dispose() { root.remove(); } };
 }

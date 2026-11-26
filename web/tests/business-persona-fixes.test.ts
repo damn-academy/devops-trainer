@@ -58,7 +58,7 @@ it('renders revised health answer and restores the next question draft', () => {
   const a = trainer('health', 'oss.health'); a.button('Show analysis').click();
   expect(a.el.textContent?.replace(/\u00a0/g, ' ')).toContain(health.questions[0].answer[0].toUpperCase() + health.questions[0].answer.slice(1));
   a.button('Next').click(); change(a.el.querySelector('textarea')!, 'Second answer'); a.mounted.dispose();
-  const b = trainer('health', 'oss.health'); expect(b.el.textContent).toContain('2/5'); expect(b.el.querySelector('textarea')!.value).toBe('Second answer');
+  const b = trainer('health', 'oss.health'); expect(b.el.textContent).toContain('2/6'); expect(b.el.querySelector('textarea')!.value).toBe('Second answer');
 });
 it('restores an in-progress signal decision and revealed state', () => {
   const a = trainer('signal-feed', 'sales.signal-feed');

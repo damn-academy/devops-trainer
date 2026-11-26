@@ -94,13 +94,13 @@ it('guards malformed and unavailable storage', () => {
  });
  it('reveals each health answer and completes only on the final question', () => {
   const w = setup('health', { data: 'oss.health' });
-  expect(w.host.querySelectorAll('li')).toHaveLength(9);
-  for (let i = 0; i < 5; i++) {
-    expect(w.host.querySelector('article')?.textContent).toContain(`${i + 1}/5`);
+  expect(w.host.querySelectorAll('li')).toHaveLength(11);
+  for (let i = 0; i < 6; i++) {
+    expect(w.host.querySelector('article')?.textContent).toContain(`${i + 1}/6`);
     expect(w.host.querySelector('[aria-live=polite]')?.hasAttribute('hidden')).toBe(true);
     expect(w.ctx.complete).not.toHaveBeenCalled();
     w.button('Show analysis').click();
-    if (i < 4) w.button('Next').click();
+    if (i < 5) w.button('Next').click();
   }
   expect(w.ctx.complete).toHaveBeenCalledOnce();
  });
