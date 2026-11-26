@@ -88,5 +88,7 @@ describe('product course (public)', () => {
     const bigger = valuemetricProject({ ...VALUEMETRIC_DEFAULTS, customers: 80 });
     expect(bigger.chosen.mrrNow).toBe(r.chosen.mrrNow * 2); // revenue follows the customer count
     expect(r.chosen.spec.id).toBe(VALUEMETRIC_DEFAULTS.metric);
+    const flat = valuemetricProject({ ...VALUEMETRIC_DEFAULTS, growth: 1 });
+    flat.rows.forEach(row => expect(row.mrrYear).toBe(row.mrrNow)); // no growth, no change in any bill
   });
 });

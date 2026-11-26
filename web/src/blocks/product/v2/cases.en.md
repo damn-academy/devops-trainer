@@ -51,8 +51,8 @@ The eight stories suggest conditions under which each choice makes sense. Sellin
 All these stories contain survivorship bias: we examine companies that grew and do not see those that closed after making the same decisions. So take conditions and questions from the cases; your results will be your own.
 
 <!-- quiz -->
-? A year after the licence change, HashiCorp's net revenue retention fell from 131% to 115%. What can be said about the link between these events?
-+ Little: retention was already 124% a month before the licence change, and the decline had begun earlier || HashiCorp's reports show a decline before August 2023 too, so it cannot be attributed to the licence.
+? From January 2023 to January 2024, HashiCorp's net revenue retention fell from 131% to 115%; the licence change in August 2023 fell within this period. What can be said about the link between these events?
++ The link is not proven: retention was already 124% a month before the licence change, and the decline had begun earlier || HashiCorp's reports show a decline before August 2023 too, so it cannot be attributed to the licence.
 - The licence change caused the decline because customers immediately switched to the OpenTofu fork || OpenTofu released its first stable version only in January 2024, while retention was declining before the licence change.
 - There is no link because enterprise customers do not follow product licences || Customers do follow them, but the reports do not allow the licence's effect to be separated from other causes.
 ? What made AWS's response to the Elasticsearch licence change dangerous for Elastic?
