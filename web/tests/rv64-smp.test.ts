@@ -110,3 +110,23 @@ it('preserves adjacent bytes and invalidates LR on byte DMA and PTE CAS', () => 
   a!.lr(64, 8); expect(b!.cas(64, 7n, 7n)).toBe(7n);
   expect(a!.sc(64, 8, 0n)).toBe(false);
 });
+
+it('tracks shared writes only on the physical page touched, including DMA and PTE CAS', () => {
+  const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
+  const generations = new Int32Array(new SharedArrayBuffer(16 * 4));
+  const module = atomicModule(1);
+  const a = new SharedHartMemory(memory, module, generations);
+  const b = new SharedHartMemory(memory, module, generations);
+  a.store(64, 4, 0x00128293n);
+  const codeVersion = Atomics.load(generations, 0);
+  b.store(64 + 4096, 8, 42n);
+  b.amo(64 + 4096, 8, 'add', 1n);
+  b.cas(64 + 4096, 43n, 44n);
+  b.store(64 + 8192, 1, 90n); // device byte-write protocol
+  expect(Atomics.load(generations, 0)).toBe(codeVersion);
+  expect(Atomics.load(generations, 1)).toBe(3);
+  expect(Atomics.load(generations, 2)).toBe(1);
+  b.store(64 + 4095, 1, 90n);
+  expect(Atomics.load(generations, 0)).toBe(codeVersion + 1);
+  expect(Atomics.load(generations, 1)).toBe(3);
+});

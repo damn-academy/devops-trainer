@@ -18,6 +18,10 @@ pub struct Metrics {
     pub sfence_vma: u64,
     pub satp_changes: u64,
     pub sbi_fences: u64,
+    pub remote_fence_i: u64,
+    pub remote_sfence_vma: u64,
+    pub remote_ipis: u64,
+    pub shared_generation_changes: u64,
     pub inline_tlb_checks: u64,
     pub inline_tlb_misses: u64,
     pub tlb_requests: u64,
@@ -34,6 +38,15 @@ pub struct Metrics {
 impl Metrics {
     pub fn json(&self) -> String {
         let mut fields = Vec::new();
+        fields.push(format!("\"remote_fence_i\":{}", self.remote_fence_i));
+        fields.push(format!("\"remote_sfence_vma\":{}", self.remote_sfence_vma));
+        fields.push(format!("\"remote_ipis\":{}", self.remote_ipis));
+        fields.push(format!("\"shared_generation_changes\":{}", self.shared_generation_changes));
+        // Events, not discarded-block counts. Shared generations include writes
+        // from other harts and DMA; they cannot be attributed by the reader.
+        fields.push(format!("\"invalidations\":{{\"remote_fence_i\":{},\"explicit_clear\":{},\"evicted_blocks\":{},\"store_code_pages\":{},\"dma_code_pages\":{},\"shared_generation_changes\":{},\"translation_flushes\":{}}}",
+            self.remote_fence_i, self.jit_cache_clears.saturating_sub(self.remote_fence_i), self.jit_cache_evictions,
+            self.store_code_pages, self.dma_code_pages, self.shared_generation_changes, self.tlb_flushes));
         fields.push(format!("\"jit_chains\":{}", self.jit_chains));
         fields.push(format!("\"jit_cache_evictions\":{}", self.jit_cache_evictions));
         fields.push(format!("\"inline_tlb_checks\":{}", self.inline_tlb_checks));

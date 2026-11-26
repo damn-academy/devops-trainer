@@ -25,7 +25,9 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     const base = d.hart * 16;
     const url = new URL('/rv64/rv64_core.js', self.location.origin).href;
     const mod = await import(/* @vite-ignore */ url); const wasm = await mod.default();
-    const core = new mod.Engine(32); core.smp_configure(d.hart, d.bytes);
+    const core = new mod.Engine(32);
+    if (typeof core.smp_sfence !== 'function') throw Error('Stale RV64 WASM: rebuild with scripts/rv64-dev.sh wasm (smp_sfence missing)');
+    core.smp_configure(d.hart, d.bytes);
     const newJitRuntime = () => new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow,
       { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) });
     let jitRuntime = newJitRuntime();
@@ -72,8 +74,9 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
       rv64SharedImage: (offset: number, bytes: Uint8Array) => new Uint8Array(d.memory.buffer, offset + 64, bytes.length).set(bytes),
       rv64SharedMmio: mmio,
     });
+    const remote = { instructionRequests: 0, translationRequests: 0, ipiRequests: 0 };
     const service = () => {
-      if (bus.service(d.hart, () => core.smp_fence(), () => core.smp_fence())) core.smp_ipi();
+      if (bus.service(d.hart, () => core.smp_fence(), () => core.smp_sfence())) core.smp_ipi();
       if (device) {
         for (let hart = 1; hart < d.harts; hart++) {
           const b = hart * 16;
@@ -196,11 +199,11 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
               } else if (fid === 1n) { ram.clearReservation(); Atomics.store(words, base, 1); }
               else if (fid === 2n) { if (a >= BigInt(d.harts)) error = -3n; else { const s = Atomics.load(words, Number(a) * 16); value = BigInt(s === 4 ? 2 : s); } }
               else error = -2n;
-            } else if (ext === 0x735049n && fid === 0n) bus.sendIpi(a, b);
-            else if (ext === 0x52464e43n && fid <= 2n) pending = bus.remoteFence(a, b, fid === 0n ? 'instruction' : 'translation');
+            } else if (ext === 0x735049n && fid === 0n) { remote.ipiRequests++; bus.sendIpi(a, b); }
+            else if (ext === 0x52464e43n && fid <= 2n) { remote[fid === 0n ? 'instructionRequests' : 'translationRequests']++; pending = bus.remoteFence(a, b, fid === 0n ? 'instruction' : 'translation'); }
             else if (ext >= 4n && ext <= 7n) {
               const mask = a === 0n ? (1n << BigInt(d.harts)) - 1n : access(0, Number(a - 0x80000000n), 8, 0n);
-              if (ext === 4n) bus.sendIpi(mask, 0n); else pending = bus.remoteFence(mask, 0n, ext === 5n ? 'instruction' : 'translation');
+              if (ext === 4n) { remote.ipiRequests++; bus.sendIpi(mask, 0n); } else { remote[ext === 5n ? 'instructionRequests' : 'translationRequests']++; pending = bus.remoteFence(mask, 0n, ext === 5n ? 'instruction' : 'translation'); }
             } else error = -2n;
           } catch (e) { if (!(e instanceof RangeError)) throw e; error = -3n; }
           if (!pending) core.smp_reply(error, value);
@@ -209,7 +212,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
       }
       if (device && performance.now() - lastEntropy > 100) { device.entropy(d.trace ? new Uint8Array(4096) : crypto.getRandomValues(new Uint8Array(4096))); lastEntropy = performance.now(); }
       if (performance.now() - lastReport > 1000) {
-        self.postMessage({ type: 'metrics', hart: d.hart, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, pc: String(core.pc()), state: Atomics.load(words, base), guestTicks: core.guest_ticks(), hostMonotonicMs: performance.timeOrigin + performance.now(), guestProfile: profileActive ? JSON.parse(core.profile_drain()) : undefined }); lastReport = performance.now();
+        self.postMessage({ type: 'metrics', hart: d.hart, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, compiler: jitRuntime.stats(), counters: JSON.parse(core.metrics()), remote: { ...remote }, pc: String(core.pc()), state: Atomics.load(words, base), guestTicks: core.guest_ticks(), hostMonotonicMs: performance.timeOrigin + performance.now(), guestProfile: profileActive ? JSON.parse(core.profile_drain()) : undefined }); lastReport = performance.now();
       }
       // Yield to host input without blocking the device server or incoming fences.
       if (performance.now() - yielded >= 8) { jitRuntime.flush(); await yieldHost(); yielded = performance.now(); }

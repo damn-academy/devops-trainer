@@ -68,8 +68,21 @@ impl Engine {
     }
     pub fn smp_request(&mut self) -> Vec<u64> { self.cpu.smp_request.take().map_or_else(Vec::new, |v| v.to_vec()) }
     pub fn smp_reply(&mut self, error: i64, value: u64) { self.cpu.x[10] = error as u64; self.cpu.x[11] = value; }
-    pub fn smp_ipi(&mut self) { self.cpu.csr[0x344] |= 2; }
-    pub fn smp_fence(&mut self) { self.cpu.memory.flush(); self.jit_clear(); }
+    pub fn smp_ipi(&mut self) { self.cpu.memory.metrics.remote_ipis += 1; self.cpu.csr[0x344] |= 2; }
+    pub fn smp_fence(&mut self) {
+        self.cpu.memory.metrics.remote_fence_i += 1;
+        self.cpu.memory.metrics.sbi_fences += 1;
+        self.cpu.memory.flush();
+        self.jit_clear();
+    }
+    /// Remote SFENCE.VMA (including ASID/range requests) may over-flush the
+    /// target TLB, but must retain physical-byte JIT code. Every JIT entry
+    /// revalidates translation/permissions with the current satp, including ASID.
+    pub fn smp_sfence(&mut self) {
+        self.cpu.memory.metrics.remote_sfence_vma += 1;
+        self.cpu.memory.metrics.sbi_fences += 1;
+        self.cpu.memory.flush();
+    }
     pub fn smp_run(&mut self, count: u32, ticks: f64, external: u64) -> u32 {
         self.cpu.time(ticks as u64);
         self.cpu.csr[0x344] = (self.cpu.csr[0x344] & !((1 << 11) | (1 << 9))) | external;

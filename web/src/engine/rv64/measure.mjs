@@ -6,7 +6,7 @@ import { chromium } from '@playwright/test';
 const port = 5198;
 const wasmSha256 = createHash('sha256').update(readFileSync('public/rv64/rv64_core_bg.wasm')).digest('hex');
 const sourceHash = createHash('sha256');
-for (const file of ['restore-clock.ts','jit-compiler.ts','jit.ts','compiler.worker.ts','worker.ts','snapshot.ts','paged-snapshot.ts','snapshot-pager.ts','snapshot-loader.worker.ts']) sourceHash.update(file).update(readFileSync(`src/engine/rv64/${file}`));
+for (const file of ['smp.ts','smp-cpu.worker.ts','smp-kuberoot.ts','restore-clock.ts','jit-compiler.ts','jit.ts','compiler.worker.ts','worker.ts','snapshot.ts','paged-snapshot.ts','snapshot-pager.ts','snapshot-loader.worker.ts']) sourceHash.update(file).update(readFileSync(`src/engine/rv64/${file}`));
 const jitSourceSha256 = sourceHash.digest('hex');
 const label = process.env.RV64_RESULT_NAME;
 if (label && !/^[A-Za-z0-9_-]+$/.test(label)) throw new Error('Invalid result name');

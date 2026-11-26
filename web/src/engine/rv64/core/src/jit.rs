@@ -73,7 +73,11 @@ impl Cpu {
         let pa = match self.memory.translate(self.pc, Access::Fetch, self.mode, self.csr[0x180], self.csr[0x300]) { Ok(p) => p, Err(_) => return 0 };
         if self.memory.shared_bytes != 0 {
             if let Some(index) = pa.checked_sub(crate::RAM_BASE).map(|off| (off >> 12) as usize) {
-                if let Some(generation) = self.memory.jit_pages.get_mut(index) { *generation = crate::wasm::shared_generation(index as u32) as u64; }
+                if let Some(generation) = self.memory.jit_pages.get_mut(index) {
+                    let observed = crate::wasm::shared_generation(index as u32) as u64;
+                    if *generation != observed { self.memory.metrics.shared_generation_changes += 1; }
+                    *generation = observed;
+                }
             }
         }
         let page = match pa.checked_sub(crate::RAM_BASE).and_then(|p| self.memory.jit_pages.get((p >> 12) as usize)) { Some(v) => *v, None => return 0 };
