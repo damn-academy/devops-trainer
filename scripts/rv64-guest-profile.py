@@ -22,6 +22,16 @@ def read(path):
 
 def report(document, symbols=(), mappings=()):
     result = document['result']
+    if result.get('type') == 'smp-kuberoot':
+        reports = []
+        for run in result['samples']:
+            for hart in range(run['harts']):
+                metrics = [dict(m, elapsedMs=m['ms']) for m in run['metrics'] if m.get('hart') == hart]
+                child = dict(run, samples=metrics)
+                r = report({'result': child}, symbols, mappings)
+                r.update(hart=hart, harts=run['harts'])
+                reports.append(r)
+        return {'schema': 'rv64.guest-profile-smp/v1', 'reports': reports}
     tables = {}
     for binary in symbols:
         ranges = sorted((int(a, 16), int(b, 16), name) for a, b, name in binary['functions'])
@@ -51,11 +61,13 @@ def report(document, symbols=(), mappings=()):
         for row in p['rows']:
             pc, satp, mode, tp, scratch, ticks, attempted = row[:7]
             comm = b''.join(int(x, 16).to_bytes(8, 'little') for x in row[7:9]).split(b'\0')[0].decode('ascii', errors='replace')
-            ms = offset + m['elapsedMs'] - (m['guestTicks'] - ticks) / 10000
+            ms = (ticks / 10000 + result['guestEpochOffsetMs']) if 'guestEpochOffsetMs' in result else offset + m['elapsedMs'] - (m['guestTicks'] - ticks) / 10000
             rows.append((ms, pc, satp, mode, attempted, comm))
+    end_ms = result.get('elapsedMs', max((r[0] for r in rows), default=0) + 1)
+    windows += [('all-captured', 0, end_ms), ('after-readyz', marker('RV64_READYZ_BEGIN'), end_ms)]
     output = {'schema': 'rv64.guest-profile/v1', 'hart': 0, 'weight': 'instruction attempts',
               'intervals': sorted(intervals), 'dropped': drops,
-              'timestampApproximation': 'profileRequestedAt' not in result,
+              'timestampApproximation': 'profileRequestedAt' not in result and 'guestEpochOffsetMs' not in result,
               'windows': []}
     for name, start, end in windows:
         counts, processes = collections.Counter(), collections.Counter()
@@ -78,7 +90,7 @@ def report(document, symbols=(), mappings=()):
                     if mode == 0:
                         process = m['process'] + '@' + satp
                     addr = int(pc, 16) - int(str(m.get('bias', '0')), 0)
-                    starts, ranges = tables[m['symbolSha256']]
+                    starts, ranges = tables.get(m['symbolSha256'], ([], []))
                     i = bisect.bisect_right(starts, addr) - 1
                     if i >= 0 and addr < ranges[i][1]:
                         function = ranges[i][2]

@@ -54,6 +54,24 @@ class ProfileTests(unittest.TestCase):
         self.assertIn({'process': 'kubectl@8000000000081234', 'function': 'runtime.init', 'samples': 1, 'percent': 33.333}, r['windows'][0]['top50'])
         self.assertIsNone(r['windows'][1]['endMs'])
 
+    def test_smp_per_hart_after_marker(self):
+        console = '\nRV64_READYZ_BEGIN\n'
+        metrics = [{'hart': h, 'ms': 2000, 'guestTicks': 20000000,
+                    'guestProfile': {'interval': 17, 'dropped': h, 'rows': [
+                        ['1000', '123', 0, '0', '0', ticks, 17]]}}
+                   for h, ticks in [(0, 5000000), (1, 15000000)]]
+        doc = {'result': {'type': 'smp-kuberoot', 'samples': [{
+            'harts': 2, 'metrics': metrics, 'console': console, 'elapsedMs': 2000,
+            'guestEpochOffsetMs': 0, 'events': [{'ms': 1000, 'consoleEnd': len(console)}]}]}}
+        syms = [{'sha256': 'test', 'functions': [['0x1000', '0x1010', 'runtime.schedule']]}]
+        maps = [{'satp': '123', 'process': 'control', 'symbolSha256': 'test'}]
+        reports = profile.report(doc, syms, maps)['reports']
+        self.assertEqual([r['hart'] for r in reports], [0, 1])
+        self.assertEqual([r['windows'][-1]['samples'] for r in reports], [0, 1])
+        self.assertEqual(reports[1]['windows'][-1]['top50'][0]['function'], 'runtime.schedule')
+        self.assertEqual(reports[1]['dropped'], 1)
+        self.assertFalse(reports[1]['timestampApproximation'])
+
     def test_ambiguous_mapping_is_not_guessed(self):
         doc = {'result': {'console': '', 'events': [], 'samples': [{
             'elapsedMs': 100, 'guestTicks': 100, 'guestProfile': {'interval': 17, 'dropped': 0,

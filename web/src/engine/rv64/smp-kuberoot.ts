@@ -1,19 +1,22 @@
 import { atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
 import { createRV64Network } from './network';
 import { fetchSource } from '../labhost/mirror';
-const host = globalThis as typeof globalThis & { rv64Result?: unknown; rv64LatestMetrics?: unknown };
+const host = globalThis as typeof globalThis & { rv64Result?: unknown; rv64LatestMetrics?: unknown; rv64PartialResult?: () => unknown };
 const output = document.querySelector('#console')!;
 const samples: unknown[] = [];
 const params = new URLSearchParams(location.search);
 const seconds = Number(params.get('seconds') ?? 900);
+const startAfter = params.get('guestProfileStartAfter') ?? '';
+const topologies = (params.get('harts') ?? '2,4').split(',').map(Number);
 const guestProfile = Number(params.get('guestProfile') ?? 0) || 0;
 try {
+  if (!topologies.length || topologies.some(h => h !== 2 && h !== 4)) throw Error('harts must be 2, 4 or 2,4');
   const [kernel, initrd, httpDisk] = await Promise.all([
     fetch('/rv64/slim-vmlinuz.efi').then(r => r.arrayBuffer()).then(b => new Uint8Array(b)),
     fetch('/rv64/slim-initrd.cpio').then(r => r.arrayBuffer()).then(b => new Uint8Array(b)),
-    fetch('/rv64/slim-recovery-media.json').then(r => r.json()),
+    fetch(params.get('media') ?? '/rv64/slim-recovery-media.json').then(r => r.json()),
   ]);
-  for (const harts of [2, 4]) {
+  for (const harts of topologies) {
     const bytes = 1024 * 1024 * 1024, pages = bytes / 65536 + 1;
     const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
     const module = atomicModule(pages), mail = new HartMailboxes(harts).words.buffer;
@@ -23,6 +26,9 @@ try {
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
     const workers: Worker[] = [], start = performance.now(), events: { ms: number; consoleEnd: number }[] = [], metrics: unknown[] = [];
     let text = '', error: string | undefined;
+    let profileStartedMs: number | null = guestProfile && !startAfter ? 0 : null;
+    const capture = () => ({ harts, events, metrics, console: text, elapsedMs: performance.now() - start, profileStartedMs, profileStartAfter: startAfter, guestEpochOffsetMs: epoch - performance.timeOrigin - start, httpDisk });
+    host.rv64PartialResult = () => ({ type: 'smp-kuberoot', pass: false, samples: [...samples, capture()] });
     const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
     services.network.addPort('smp-kuberoot', { mode: 'access' }, frame => workers[0]?.postMessage({ frame }));
     try {
@@ -38,11 +44,15 @@ try {
             if (data.type === 'console') {
               text += new TextDecoder().decode(data.bytes).replace(/\r/g, ''); output.textContent = text;
               events.push({ ms: performance.now() - start, consoleEnd: text.length });
+              if (guestProfile && profileStartedMs === null && text.includes('\n' + startAfter + '\n')) {
+                profileStartedMs = performance.now() - start;
+                workers.forEach(worker => worker.postMessage({ guestProfileStart: true }));
+              }
               if (text.includes('Kernel panic') || text.includes('\nRV64_PROBE_FAILED\n')) { clearTimeout(timeout); reject(Error('guest failed')); }
               if (text.includes('\nRV64_PROBE_DONE\n')) { clearTimeout(timeout); resolve(); }
             }
           };
-          w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk, guestProfile, guestProfileTaskCommOffset: guestProfile ? 1704 : 0,
+          w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk, guestProfile, guestProfileDeferred: !!startAfter, guestProfileTaskCommOffset: guestProfile ? 1704 : 0,
             kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
             cmdline: 'earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000) });
         }
@@ -51,9 +61,9 @@ try {
     finally { Atomics.store(ctl, 15, 1); workers.forEach(w => w.terminate()); services.network.removePort('smp-kuberoot'); services.dispose(); }
     const marker = (name: string) => { const at = text.indexOf('\n' + name + '\n'); return at < 0 ? null : events.find(e => e.consoleEnd >= at + name.length + 2)?.ms ?? null; };
     const duration = (a: string, b: string) => { const begin = marker(a), end = marker(b); return begin === null || end === null ? null : (end - begin) / 1000; };
-    samples.push({ harts, error, coldReadySeconds: marker('RV64_NODE_READY') === null ? null : marker('RV64_NODE_READY')! / 1000,
+    samples.push({ ...capture(), error, coldReadySeconds: marker('RV64_NODE_READY') === null ? null : marker('RV64_NODE_READY')! / 1000,
       restoreReadySeconds: null, firstGetPodsSeconds: duration('RV64_GET_PODS_BEGIN', 'RV64_GET_PODS_END'), podStartSeconds: duration('RV64_POD_START_BEGIN', 'RV64_POD_START_END'),
-      elapsedMs: performance.now() - start, events, metrics, console: text });
+    });
   }
   host.rv64Result = { type: 'smp-kuberoot', pass: samples.every(s => !(s as { error?: string }).error), samples, restored: false };
 } catch (e) { host.rv64Result = { type: 'smp-kuberoot', pass: false, samples, error: String(e) }; }

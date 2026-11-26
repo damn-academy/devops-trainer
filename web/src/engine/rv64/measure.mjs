@@ -86,7 +86,7 @@ try {
     else { start(); await started; }
     stopProfile = async () => { clearTimeout(startTimer); return started ? stop() : { traceEvents: events }; };
   }
-  await page.goto(`http://localhost:${port}/src/engine/rv64/${smpKuberoot ? 'smp-kuberoot' : smpSnapshot ? 'smp-snapshot' : smpTraceLinux ? 'smp-trace-linux' : smpTrace ? 'smp-trace' : smpLinux ? 'smp-linux' : smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot || smpKuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&guestProfile=${Number(process.env.RV64_GUEST_PROFILE_INTERVAL) || 0}&memory=${Number(process.env.RV64_MEMORY_MB) || 768}&jit=${jit}&clock=${process.env.RV64_RESTORE_CLOCK ?? 'elapsed'}${process.env.RV64_MEDIA_MANIFEST ? `&media=${encodeURIComponent(process.env.RV64_MEDIA_MANIFEST)}` : ''}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
+  await page.goto(`http://localhost:${port}/src/engine/rv64/${smpKuberoot ? 'smp-kuberoot' : smpSnapshot ? 'smp-snapshot' : smpTraceLinux ? 'smp-trace-linux' : smpTrace ? 'smp-trace' : smpLinux ? 'smp-linux' : smp ? 'smp-gates' : trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : "index"}.html${boot ? `?boot=1&jit=${jit}${profile ? "&profile=1" : ""}` : kuberoot || smpKuberoot ? `?seconds=${Number(process.env.RV64_PROBE_SECONDS) || 900}&harts=${encodeURIComponent(process.env.RV64_HARTS ?? '2,4')}&guestProfileStartAfter=${encodeURIComponent(process.env.RV64_GUEST_PROFILE_START_AFTER ?? '')}&guestProfile=${Number(process.env.RV64_GUEST_PROFILE_INTERVAL) || 0}&memory=${Number(process.env.RV64_MEMORY_MB) || 768}&jit=${jit}&clock=${process.env.RV64_RESTORE_CLOCK ?? 'elapsed'}${process.env.RV64_MEDIA_MANIFEST ? `&media=${encodeURIComponent(process.env.RV64_MEDIA_MANIFEST)}` : ''}${process.env.RV64_SNAPSHOT_CAPTURE === '1' ? '&capture=1' : ''}${process.env.RV64_SNAPSHOT_RESTORE ? `&restore=${encodeURIComponent(process.env.RV64_SNAPSHOT_RESTORE)}` : ''}` : trace ? `?${process.argv.includes("--single-step") ? "single=1&" : ""}${process.argv.includes("--lazy") ? "lazy=1" : ""}` : ""}`);
   let diagnosticTimer;
   if (process.env.RV64_DIAG_FILE) {
     const command = readFileSync(process.env.RV64_DIAG_FILE, 'utf8');
@@ -101,6 +101,10 @@ try {
   try {
     await page.waitForFunction(() => globalThis.rv64Result, undefined, { timeout: Number(process.env.RV64_TIMEOUT_MS) || (smpKuberoot ? 1830000 : smpSnapshot ? 900000 : smpTraceLinux ? 1200000 : smpTrace ? 250000 : smpLinux ? 1830000 : gates || trace ? 900000 : kuberoot ? 930000 : boot || integration ? 300000 : 30000) });
   } catch (error) {
+    if (smpKuberoot) {
+      const partial = await page.evaluate(() => globalThis.rv64PartialResult?.()).catch(() => null);
+      if (partial) writeFileSync(`public/rv64/results/${label ?? 'smp-kuberoot'}-partial.json`, JSON.stringify({ result: partial, wasmSha256, jitSourceSha256 }, null, 2));
+    }
     console.error(await page.locator('#console').textContent().catch(() => 'No guest console'));
     throw error;
   }
