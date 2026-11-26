@@ -1,7 +1,7 @@
 import { buildFinanceTemplates } from './finance-templates.mjs';
 import { addExamples } from './template-examples.mjs';
 import ExcelJS from 'exceljs';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 const output = fileURLToPath(new URL('../public/templates/', import.meta.url));
 const sheet = (ru, en, headers, english) => ({ ru, en, headers: headers.split(', '), english: english.split(', ') });
@@ -18,6 +18,7 @@ export const templates = {
   ],
   'event-map': [sheet('Мероприятия', 'Events', 'группа, город и язык, контакт организатора, удобный канал, последняя встреча, аудитория, ссылка на событие, ссылка на приём заявок, срок с часовым поясом, формат, расходы и помощь с поездкой, тема и версия доклада, статус, последний контакт, следующее действие, права на запись', 'group, city and language, organizer contact, preferred channel, last meetup, audience, event link, call for proposals link, deadline with time zone, format, costs and travel support, talk topic and version, status, last contact, next action, recording rights')],
   'llm-panel': [sheet('Ответы LLM', 'LLM responses', 'дата, модель и версия, поиск включён, язык, вопрос, повтор 1–3, упомянут ли продукт, верна ли категория, верна ли лицензия, верны ли возможности, ссылки в ответе, ошибка и вероятный источник', 'date, model and version, search enabled, language, question, repetition 1–3, product mentioned, correct category, correct license, correct capabilities, links in response, error and likely source')],
+  'doubt-register': [sheet('Реестр сомнений', 'Doubt register', 'утверждение, что проверил, способ, вывод', 'claim, what I checked, method, conclusion')],
   'signals-week': [sheet('Сигналы недели', 'Weekly signals', 'источник, задача пользователя, кто сообщил, тип пользователя: пробует/рабочая среда/платит, дословная цитата, ссылка', 'source, user task, reported by, user type: evaluating/production/paying, verbatim quote, link')],
 };
 addExamples(templates, sheet);
@@ -44,8 +45,18 @@ for (const [file, sheets] of Object.entries(templates)) for (const en of [false,
       list(11, en ? 'unaware,aware,engaged,meeting scheduled,meeting,opportunity,monitoring,not a fit,won,lost' : 'не знают о нас,знают,вовлечены,встреча назначена,встреча,возможность,наблюдаем,не подходит,выиграли,проиграли');
     }
     if (spec.ru === 'Закупочный центр') list(9, '0,1,2,3,4');
+    if (spec.ru === 'Реестр сомнений') { ws.columns.forEach(c => { c.width = 48; }); ws.getRow(2).font = { italic: true }; ws.getRow(2).alignment = { wrapText: true, vertical: 'top' }; }
   }
   await workbook.xlsx.writeFile(`${output}/${file}${en ? '-en' : ''}.xlsx`);
+}
+
+// The doubt register is also offered as CSV for notes apps and plain editors;
+// the byte-order mark lets Excel read the Cyrillic headers as UTF-8.
+const csvCell = value => /[",\n]/.test(String(value)) ? `"${String(value).replaceAll('"', '""')}"` : String(value);
+for (const en of [false, true]) {
+  const [spec] = templates['doubt-register'];
+  const rows = [en ? spec.english : spec.headers, ...(spec.rows?.[en ? 'en' : 'ru'] ?? [])];
+  await writeFile(`${output}/doubt-register${en ? '-en' : ''}.csv`, '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n');
 }
 
 await buildFinanceTemplates(output);

@@ -59,7 +59,7 @@ function inline(src: string, o: MdOptions): Node[] {
   const out: Node[] = [];
   const l = o.lang ?? currentLang();
   // tokens: `code`, [[concept]], [text](url), **bold**, *em*
-  const re = /(`[^`]+`)|(\[\[[a-z0-9][\w.-]*(?:\|[^\]]+)?\]\])|(\[[^\]]+\]\((?:https?:\/\/|#|media\/)[^)\s]+\))|(\*\*[^*]+\*\*)|(\*[^*\s][^*]*\*)/g;
+  const re = /(`[^`]+`)|(\[\[[a-z0-9][\w.-]*(?:\|[^\]]+)?\]\])|(\[[^\]]+\]\((?:https?:\/\/|#|media\/|templates\/)[^)\s]+\))|(\*\*[^*]+\*\*)|(\*[^*\s][^*]*\*)/g;
   let last = 0;
   for (const m of src.matchAll(re)) {
     if (m.index! > last) out.push(document.createTextNode(typeset(src.slice(last, m.index), l)));
@@ -71,7 +71,8 @@ function inline(src: string, o: MdOptions): Node[] {
     } else if (m[3]) {
       const mm = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(tok)!;
       const external = /^https?:/.test(mm[2]);
-      const media = mm[2].startsWith('media/');
+      // Lesson files (media/) and downloadable course templates (templates/) are served from the site root.
+      const media = mm[2].startsWith('media/') || mm[2].startsWith('templates/');
       const download = media && !/\.html?(?:[?#]|$)/i.test(mm[2]);
       out.push(h('a', { href: media ? mediaUrl(mm[2]) : mm[2], download, ...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {}) }, ...inline(mm[1], o)));
     } else if (m[4]) out.push(h('strong', {}, ...inline(tok.slice(2, -2), o)));
