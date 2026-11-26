@@ -939,6 +939,8 @@ export type ColorFamily =
 export interface ElementCard {
   what: Bi;
   who: Bi;
+  /** Label of the `who` line; diagrams of roles and processes put advice there instead of an author. */
+  whoLabel?: Bi;
   /** Prose instructions for finding or inspecting the element. */
   look?: Bi;
   /** A command to look at it: 'ls -l /proc/$$/fd'. */
