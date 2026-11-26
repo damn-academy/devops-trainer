@@ -48,6 +48,7 @@ export const strings = {
   // TODO(en-trainers): Replace notice once translated content is available.
   notice: bi('', "This trainer's content is in Russian for now"),
   missing: bi('Тренажёр с таким названием в курсе не найден.', 'Trainer not found.'),
+  caveat: bi('Тренажёр показывает один из способов оценить работу; законом и единственно верным ответом он не служит. Жизнь сложнее любой рубрики, поэтому проверяйте выводы на практике.', 'The trainer shows one way to assess the work; it is not a law or the only right answer. Life is more complex than any rubric, so test the conclusions in practice.'),
   input: bi('Ваш текст', 'Your text'), check: bi('Проверить здесь', 'Check here'), send: bi('Отправить', 'Send'),
   debrief: bi('Разбор', 'Debrief'), copy: bi('Скопировать запрос', 'Copy the request'), copied: bi('Запрос скопирован.', 'Request copied.'),
   fallback: bi('Не удалось скопировать. Удерживайте текст для выделения или скачайте файл.', 'Touch and hold to select the text, or download the file.'),

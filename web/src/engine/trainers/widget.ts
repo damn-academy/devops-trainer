@@ -48,6 +48,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   const title = (value: string, russian = true) => {
     root.append(h('h3', {}, ...renderInline(value)));
     if (russian && lang() === 'en') root.append(h('p', {}, text('notice')));
+    if (kind !== 'template') root.append(h('p', { class: 'tr-caveat' }, text('caveat')));
   };
   const id = props && typeof props === 'object' ? ('trainer' in props ? props.trainer : 'data' in props ? props.data : undefined) : undefined;
   if (kind === 'template') {
