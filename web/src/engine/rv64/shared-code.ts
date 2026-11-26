@@ -223,6 +223,8 @@ export class SharedCodeCache {
   }
   async trim() {
     await new Promise(resolve => setTimeout(resolve, 0));
-    await this.startTrim();
+    // A proactive batch may already be in flight; keep trimming until the
+    // remaining unpinned code fits the (possibly reduced) budget.
+    for (let batch = this.trimming ?? this.startTrim(); batch; batch = this.trimming ?? this.startTrim()) await batch;
   }
 }

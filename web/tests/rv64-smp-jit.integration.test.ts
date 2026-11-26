@@ -356,8 +356,13 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('runs A compiled code on B and rejec
     await run(0);await run(1);
     expect(cache.compiled).toBeGreaterThan(compiled);
     for(const core of cores){expect(core.register(5)).toBe(2n);expect(JSON.parse(core.metrics()).jit_cache_clears).toBe(0);}
+    // Modules unpin at different ticks, so a trim may take several batches;
+    // each batch must still send exactly one revoke per holding hart.
+    const revokesBefore = revokeCalls, batchesBefore = cache.stats().revokeBatches;
     cache.budget = 0; await cache.trim();
-    expect(revokeCalls).toBe(2);
+    const batches = cache.stats().revokeBatches - batchesBefore;
+    expect(batches).toBeGreaterThan(0);
+    expect(revokeCalls - revokesBefore).toBe(2 * batches);
     expect(cache.stats().estimatedHostBytes).toBe(0);
     expect(slots.every(slot => table.get(slot) === null)).toBe(true);
     cache.budget = 1024*1024; await run(0); await run(1);
