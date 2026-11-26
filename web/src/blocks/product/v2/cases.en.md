@@ -57,11 +57,11 @@ All these stories contain survivorship bias: we examine companies that grew and 
 - There is no link because enterprise customers do not follow product licences || Customers do follow them, but the reports do not allow the licence's effect to be separated from other causes.
 ? What made AWS's response to the Elasticsearch licence change dangerous for Elastic?
 + A competitor emerged with its own brand, roadmap and community, already sold through the AWS cloud || OpenSearch launched in 2021, and bringing back AGPL in 2024 did not undo it.
-- AWS won the trademark lawsuit and prohibited Elastic from selling its cloud service on its platform || The companies settled the dispute in 2022, and there was no prohibition.
+- AWS won a trademark lawsuit and barred Elastic from selling its cloud service on AWS || The companies settled the dispute in 2022, and there was no prohibition.
 - Elastic customers left for OpenSearch en masse, and the company's revenue halved in two years || Elastic's revenue continued to grow; it did not disclose the share of customers who left.
 ? Docker closed a free plan affecting fewer than 2% of users and reversed the decision ten days later. What does this case teach?
-+ The share of accounts affected is not the scale of the harm: many people used images that depended on them || The company itself acknowledged that both the announcement and the decision were wrong.
 - Pricing announcements need better writing because users did not understand that the decision would affect only a few || The CEO acknowledged that the decision itself was wrong, not just the announcement text.
++ The share of accounts affected is not the scale of the harm: many people used images that depended on them || The company itself acknowledged that both the announcement and the decision were wrong.
 - Free plans must never be changed because any change provokes user outrage || Docker had previously made Desktop paid for large companies, and that decision remained in place.
 <!-- /quiz -->
 
