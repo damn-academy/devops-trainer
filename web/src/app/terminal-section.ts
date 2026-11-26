@@ -78,7 +78,9 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   const el = h(
     'div.lab',
     { 'data-exam': o.exam ? 'true' : undefined },
-    h('div.lab-left', {}, o.intro ? prose(o.intro) : null, prose(sourceKey ? bi('Выполняйте цели в связанном терминале этого урока. Проверка получает состояние той машины после каждой команды; выполненная цель отмечается зелёной галочкой.', 'Complete the goals in the linked terminal in this lesson. Its machine state is checked after each command; a completed goal gets a green check mark.') : bi('Выполняйте цели в терминале этого упражнения. Наберите команду и нажмите Enter. После каждой команды тренажёр проверяет состояние машины и отмечает выполненные цели зелёной галочкой. Когда все цели выполнены, появится «Все цели выполнены».', 'Complete the goals in this exercise’s terminal. Type a command and press Enter. After every command the trainer checks the machine state and marks completed goals with a green check mark. When all goals pass, “All goals are done” appears.'), 'task-guide'), h('h4.lab-h', {}, t(UI.goals)), progress, goals, status),
+    h('div.lab-left', {}, o.intro ? prose(o.intro) : null, prose(sourceKey ? bi('Выполняйте цели в связанном терминале этого урока. Проверка получает состояние той машины после каждой команды; выполненная цель отмечается зелёной галочкой.', 'Complete the goals in the linked terminal in this lesson. Its machine state is checked after each command; a completed goal gets a green check mark.') : o.exam
+      ? bi('Выполняйте цели в терминале этой задачи. После каждой команды тренажёр проверяет состояние машины и отмечает выполненные цели зелёной галочкой.', 'Complete the goals in this task’s terminal. After every command the trainer checks the machine state and marks completed goals with a green check mark.')
+      : bi('Выполняйте цели в терминале этого упражнения. Наберите команду и нажмите Enter. После каждой команды тренажёр проверяет состояние машины и отмечает выполненные цели зелёной галочкой. Когда все цели выполнены, появится «Все цели выполнены».', 'Complete the goals in this exercise’s terminal. Type a command and press Enter. After every command the trainer checks the machine state and marks completed goals with a green check mark. When all goals pass, “All goals are done” appears.'), 'task-guide'), h('h4.lab-h', {}, t(UI.goals)), progress, goals, status),
     h('div.lab-right', {}, h('div.lab-bar', {}, h('span.lab-env', {}, icon('term'), t(TL.sim)), expandBtn, resetBtn), termBox),
   );
   clear(root);
@@ -106,6 +108,8 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     clear(goals);
     const current = o.tasks.find((x) => !passed.has(x.id));
     const idx = current ? o.tasks.indexOf(current) + 1 : o.tasks.length;
+    // With one task there is no order to tell.
+    progress.hidden = o.tasks.length === 1 && !!current;
     progress.textContent = current
       ? t(fmt(bi('Выполняются по очереди сверху вниз: сейчас задание {i} из {n}.', 'They run in order, top to bottom: now task {i} of {n}.'), { i: String(idx), n: String(o.tasks.length) }))
       : t(bi('Все задания выполнены.', 'All tasks are done.'));
