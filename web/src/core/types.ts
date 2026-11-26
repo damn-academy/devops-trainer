@@ -739,6 +739,8 @@ export interface BugfindItem extends QuizBase {
   bug: number[];
   /** Explanation per line number: for the bug and for the distractor lines. */
   why: Record<number, Bi>;
+  /** The instruction under the prompt when the item asks for another line than the buggy one (a missing line: the line after which it goes). */
+  action?: Bi;
 }
 
 /** Put labels on a schematic. Slots are boxes in a small SVG; each slot has one right label. */
@@ -858,6 +860,13 @@ export interface RealLab {
    * with --machine, which adds the cluster's objects and the node's probes).
    */
   collector?: { name: string; text: string };
+  /**
+   * The local lab dtlab: the command that starts the lab VMs this exam needs.
+   * Each machine names its VM in `RealMachine.dtlab`.
+   */
+  dtlabUp?: string;
+  /** What else to know about that command: a VM it starts that the exam does not use, a lab already fit for the exam. */
+  dtlabNote?: Bi;
 }
 
 export interface RealMachine {
@@ -870,6 +879,8 @@ export interface RealMachine {
    * '--tcp ssh,{vm1},22', '--http portal,https://www.corp.lab/,resolve=www.corp.lab:443:{vm1}'.
    */
   collect: string[];
+  /** The dtlab VM that plays this machine: learner, cp-1, worker-1, worker-2. */
+  dtlab?: string;
 }
 
 export interface RealScript {
@@ -939,6 +950,8 @@ export type ColorFamily =
 export interface ElementCard {
   what: Bi;
   who: Bi;
+  /** Label of the `who` line; diagrams of roles and processes put advice there instead of an author. */
+  whoLabel?: Bi;
   /** Prose instructions for finding or inspecting the element. */
   look?: Bi;
   /** A command to look at it: 'ls -l /proc/$$/fd'. */
@@ -1206,6 +1219,8 @@ export interface WidgetCtx {
   level: Level;
   /** Mark the section done. */
   complete(): void;
+  /** The lesson collects the practice result in one task document, so a spreadsheet template needs no field of its own. */
+  sharedDocument?: boolean;
   record(ev: NewEvent): void;
   openDoc(ref: DocRef): void;
   /** Set by exam pages with `Exam.inTab`: a lab widget reports the facts of its machines by id. */

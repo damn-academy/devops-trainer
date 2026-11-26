@@ -1,5 +1,11 @@
 import { PRODUCTS } from '../core/products';
 import { mountTaskDocument } from '../engine/trainers/document';
+
+/** Widgets that already hold the practice result: a field of their own, or a terminal that checks the work itself. */
+/** A department simulator holds game moves, not the written task, so it is not listed here. */
+const FIELD_WIDGETS = new Set(['rubric', 'roleplay', 'signal-feed', 'marketing.dns-lab']);
+/** XLSX templates are worked on in the file; CSV cards of the metrics course keep their own calculation field. */
+const isSpreadsheet = (props: unknown) => { const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined; return typeof file === 'string' && !file.startsWith('metrics-') && file !== 'ru-intensifiers-lint'; };
 // The lesson page: sections in order (re-ordered for Experienced: the
 // challenge comes first, 08 §5.2), progress auto-saved after every section.
 
@@ -9,10 +15,11 @@ import { bi, t, UI } from '../core/i18n';
 import { registry } from '../core/registry';
 import { href } from '../core/router';
 import { store } from '../core/store';
-import type { Level, Mounted, Section } from '../core/types';
+import type { Level, Mounted, Section, TextSection } from '../core/types';
 import { emptyState, levelBadge, levelFor, setDescription, setTitle, sourcesBlock, type Page } from './common';
 import { renderSection } from './sections';
 import { blockCrumbs } from './common';
+import { selfReviewedWidgets } from './task-guidance';
 
 /** Experienced learners start with the challenge: the first practice section moves up after the hook. */
 export function orderSections(sections: Section[], level: Level): Section[] {
@@ -66,13 +73,28 @@ export function lessonPage(id: string, focusSection?: string): Page {
   const standaloneCourse = PRODUCTS.some(p => p.kind === 'course' && p.id === lesson.block);
   const mounts: Mounted[] = [];
   const body = h('div.lesson-body');
+  // Practice of a business course is written down once per lesson: one
+  // document after the last practice step, or nothing when a trainer widget
+  // already gives the learner a field of its own. Finishing it (or that
+  // widget) completes every practice step of the lesson.
+  const practice = sections.filter((s): s is TextSection => standaloneCourse && s.kind === 'text' && s.step === 'practice');
+  const fieldWidget = sections.some((s) => s.kind === 'widget' && FIELD_WIDGETS.has(s.widget));
+  const lastPractice = practice[practice.length - 1];
+  const sharedDocument = !!lastPractice && !fieldWidget;
+  // A spreadsheet template is worked on in its file; with a task document on
+  // the page, finishing the document completes the template section too.
+  // A self-reviewed calculator has no finish button of its own then either.
+  const spreadsheets = sharedDocument ? sections.filter((s) => s.kind === 'widget' && ((s.widget === 'template' && isSpreadsheet(s.props)) || selfReviewedWidgets.has(s.widget))) : [];
+  const donePractice = () => [...practice, ...spreadsheets].forEach((p) => markDone(p.id));
   for (const s of sections) {
-    const r = renderSection(s, { lesson, block: lesson.block, level, index, count: total, manualTextCompletion: standaloneCourse && s.kind === 'text' && s.step === 'practice', done: markDone });
+    const widgetDone = s.kind === 'widget' && FIELD_WIDGETS.has(s.widget) ? (sid: string) => { markDone(sid); donePractice(); } : markDone;
+    const r = renderSection(s, { lesson, block: lesson.block, level, index, count: total, manualTextCompletion: standaloneCourse && s.kind === 'text' && s.step === 'practice', isDone: doneSet.has(s.id), sharedDocument, done: widgetDone });
     if (doneSet.has(s.id)) r.el.classList.add('seen');
     body.append(r.el);
     if (r.mounted) mounts.push(r.mounted);
-    if (s.kind === 'text' && s.step === 'practice' && standaloneCourse) {
-      mounts.push(mountTaskDocument(r.el, `${lesson.id}.${s.id}`, t(s.title ?? lesson.title), t(s.body), () => markDone(s.id)));
+    if (s === lastPractice && !fieldWidget) {
+      const task = practice.map((p) => t(p.body)).join('\n\n');
+      mounts.push(mountTaskDocument(r.el, `${lesson.id}.${s.id}`, t(s.title ?? lesson.title), task, donePractice, practice.every((p) => doneSet.has(p.id))));
     }
   }
 

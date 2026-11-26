@@ -27,6 +27,8 @@ const Q = {
   output: bi('Вывод на самом деле', 'The actual output'),
   yourAnswer: bi('Ваш ответ', 'Your answer'),
   bugline: bi('Нажмите на строку с ошибкой', 'Click the line with the bug'),
+  // An item with its own action (a missing line, say) asks for some other line.
+  anyLine: bi('Нажмите на нужную строку кода', 'Click the line you mean'),
   saved: bi('Ответ записан', 'Answer saved'),
   up: bi('Выше', 'Up'),
   down: bi('Ниже', 'Down'),
@@ -87,7 +89,7 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
         });
         list.append(h('label.q-option', { 'data-id': o.id }, input, qtext(o.text)));
       }
-      body.append(h('p.q-answer-type', {}, t(multi ? bi('Выберите все верные ответы.', 'Select all correct answers.') : bi('Выберите один ответ.', 'Select one answer.'))), list);
+      body.append(list);
       answer = () => (multi ? [...picked] : [...picked][0]);
       hasAnswer = () => picked.size > 0;
       break;
@@ -200,7 +202,8 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
     }
     case 'bugfind': {
       let line = 0;
-      const code = h('ol.q-code', { 'aria-label': t(Q.bugline) });
+      const caption = item.action ? Q.anyLine : Q.bugline;
+      const code = h('ol.q-code', { 'aria-label': t(caption) });
       item.code.split('\n').forEach((text, i) => {
         const b = h('button.q-codeline', { type: 'button', 'aria-pressed': 'false' }, h('span.ln', {}, String(i + 1)), h('code', {}, text || ' '));
         b.addEventListener('click', () => {
@@ -211,7 +214,8 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
         });
         code.append(h('li', {}, b));
       });
-      body.append(h('p.q-hint', {}, t(Q.bugline)), code);
+      // An item with its own action already says which line to click in the task guide.
+      body.append(...(item.action ? [] : [h('p.q-hint', {}, t(caption))]), code);
       answer = () => line;
       hasAnswer = () => line > 0;
       break;
@@ -357,7 +361,7 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
     match: bi('Выберите соответствие в каждом списке ниже.', 'Choose a match in every list below.'),
     'fill-command': bi('Впишите команду или пропущенную часть команды в поле ниже.', 'Enter the command or its missing part in the field below.'),
     'predict-output': item.kind === 'predict-output' && item.options ? bi('Выберите ожидаемый вывод команды из вариантов ниже.', 'Select the expected command output below.') : bi('Впишите ожидаемый вывод команды в поле ниже.', 'Enter the expected command output below.'),
-    bugfind: bi('Нажмите на строку кода, в которой находится ошибка.', 'Click the line of code that contains the error.'),
+    bugfind: (item.kind === 'bugfind' && item.action) || bi('Нажмите на строку кода, в которой находится ошибка.', 'Click the line of code that contains the error.'),
     label: bi('Выберите подпись для каждого номера на схеме в списках ниже.', 'Choose a label for each diagram number in the lists below.'),
   };
   const guide = h('p.task-guide', {}, t(actions[item.kind]), ' ', t(showFeedback

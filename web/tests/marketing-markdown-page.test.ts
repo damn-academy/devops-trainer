@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { lessonPage } from '../src/app/lesson';
+import { selfReviewedWidgets } from '../src/app/task-guidance';
 import { MARKETING_V2_LESSONS } from '../src/blocks/marketing/v2';
 import { setLang } from '../src/core/i18n';
 import { store } from '../src/core/store';
@@ -83,10 +84,18 @@ for (const lang of ['ru', 'en'] as const) {
         for (const document of page.el.querySelectorAll('.task-document')) {
           expect(document.querySelector('textarea')).not.toBeNull();
           const finish = [...document.querySelectorAll<HTMLButtonElement>('button')].find(b => /Завершить самопроверку|Finish self-review/.test(b.textContent ?? ''))!;
+          // An untouched form is not a result: the button waits for the learner's text.
+          expect(finish.disabled).toBe(true);
+          const field = document.querySelector('textarea')!;
+          field.value += '\nМой результат';
+          field.dispatchEvent(new Event('input'));
+          expect(finish.disabled).toBe(false);
           finish.click();
           expect(document.querySelector('[role="status"]')?.textContent).toMatch(/Самопроверка завершена|Self-review complete/);
         }
-        const practicePending = pending.some(s => s.kind !== 'quiz' && s.kind !== 'text');
+        // A spreadsheet template is finished together with the lesson's task document.
+        const withDocument = !!page.el.querySelector('.task-document');
+        const practicePending = pending.some(s => s.kind !== 'quiz' && s.kind !== 'text' && !(s.kind === 'widget' && (s.widget === 'template' || (withDocument && selfReviewedWidgets.has(s.widget)))));
         await vi.waitFor(() => {
           expect(page.el.querySelector<HTMLElement>('.lesson-done')!.hidden).toBe(practicePending);
           expect(store.state.lessons[lesson.id]?.status === 'done').toBe(!practicePending);

@@ -68,7 +68,7 @@ export const GIT_YAML_EXAM: Exam = {
       }),
       task: {
         id: 'prices',
-        prompt: bi('Карточка 1. «Бариста добавил в ветке `sizes` размеры чашек, а я в main поменял цену эспрессо на 2.8. Влейте его ветку в main так, чтобы в меню были и размеры, и новая цена, и чтобы файл остался правильным YAML».', 'Card 1. “The barista added cup sizes on the `sizes` branch, and I raised the espresso price to 2.8 on main. Merge his branch into main so that the menu has both the sizes and the new price, and the file stays valid YAML.”'),
+        prompt: bi('«Бариста добавил в ветке `sizes` размеры чашек, а я в main поменял цену эспрессо на 2.8. Влейте его ветку в main так, чтобы в меню были и размеры, и новая цена, и чтобы файл остался правильным YAML».', '“The barista added cup sizes on the `sizes` branch, and I raised the espresso price to 2.8 on main. Merge his branch into main so that the menu has both the sizes and the new price, and the file stays valid YAML.”'),
         check: {
           when: (f) => {
             const r = repo(f);
@@ -93,7 +93,7 @@ export const GIT_YAML_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add the site settings', files: { 'menu.yaml': MENU, 'site.yaml': SITE_YAML } }] }] }),
       task: {
         id: 'traps',
-        prompt: bi('Карточка 2. «Новый сервер читает `site.yaml` по правилам YAML 1.1. Страна у нас Норвегия, то есть строка `NO`, версия сайта записана строкой `1.10`, а доставка включена. Исправьте файл так, чтобы его поняли однозначно и yamllint не выдавал предупреждений, и закоммитьте его».', 'Card 2. “The new server reads `site.yaml` as YAML 1.1. Our country is Norway (the string `NO`), the site version is the string `1.10`, delivery is on. Fix the file so it is read unambiguously and yamllint has no complaints, and commit it.”'),
+        prompt: bi('«Новый сервер читает `site.yaml` по правилам YAML 1.1. Страна у нас Норвегия, то есть строка `NO`, версия сайта записана строкой `1.10`, а доставка включена. Исправьте файл так, чтобы его поняли однозначно и yamllint не выдавал предупреждений, и закоммитьте его».', '“The new server reads `site.yaml` as YAML 1.1. Our country is Norway (the string `NO`), the site version is the string `1.10`, delivery is on. Fix the file so it is read unambiguously and yamllint has no complaints, and commit it.”'),
         check: {
           when: (f) => {
             const t = tipFile(f, 'site.yaml');
@@ -114,7 +114,7 @@ export const GIT_YAML_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add the menu', files: { 'menu.yaml': MENU, 'site.yaml': SITE_YAML.replace('NO', '"NO"').replace('1.10', '"1.10"').replace('yes', 'true') } }, { message: 'Add opening hours', branch: 'feature/hours', files: { 'hours.yaml': '---\nhours:\n  weekdays: "8-20"\n  weekend: "10-18"\n' } }], checkout: 'main' }] }),
       task: {
         id: 'noff',
-        prompt: bi('Карточка 3. «Влейте ветку `feature/hours` в main. Мы договорились, что в истории main каждая влитая ветка видна отдельным коммитом слияния, даже когда Git мог бы обойтись без него».', 'Card 3. “Merge `feature/hours` into main. We agreed that in main’s history every merged branch is visible as a merge commit of its own, even when Git could do without one.”'),
+        prompt: bi('«Влейте ветку `feature/hours` в main. Мы договорились, что в истории main каждая влитая ветка видна отдельным коммитом слияния, даже когда Git мог бы обойтись без него».', '“Merge `feature/hours` into main. We agreed that in main’s history every merged branch is visible as a merge commit of its own, even when Git could do without one.”'),
         docStep: 3,
         docRef: { page: 'man/git-merge.1', anchor: 'OPTIONS', line: '--no-ff' },
         check: { when: (f) => repo(f)?.branch === 'main' && (head(f)?.parents.length ?? 0) === 2 && 'hours.yaml' in (head(f)?.files ?? {}) },
@@ -128,7 +128,7 @@ export const GIT_YAML_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add the menu', files: { 'menu.yaml': MENU } }, { message: 'Updte menu prcies', files: { 'menu.yaml': MENU_OURS } }] }] }),
       task: {
         id: 'amend',
-        prompt: bi('Карточка 4. «В сообщении последнего коммита две опечатки, `Updte menu prcies`, и этот коммит ещё никто не забирал. Исправьте сообщение на `Update menu prices` и не добавляйте при этом в историю нового коммита». В курсе такой задачи не было, и ответ нужно искать в справке Git.', 'Card 4. “The last commit message has two typos, `Updte menu prcies`, and nobody has pulled it yet. Fix the message to `Update menu prices` without adding a new commit to the history.” The course had no such task, and the answer is in the Git help.'),
+        prompt: bi('«В сообщении последнего коммита две опечатки, `Updte menu prcies`, и этот коммит ещё никто не забирал. Исправьте сообщение на `Update menu prices` и не добавляйте при этом в историю нового коммита». В курсе такой задачи не было, и ответ нужно искать в справке Git.', '“The last commit message has two typos, `Updte menu prcies`, and nobody has pulled it yet. Fix the message to `Update menu prices` without adding a new commit to the history.” The course had no such task, and the answer is in the Git help.'),
         docStep: 5,
         beyond: true,
         docRef: { page: 'man/git-commit.1' },
@@ -284,7 +284,7 @@ export const CICD_EXAM: Exam = {
       setup: projectSetup(),
       task: {
         id: 'mr',
-        prompt: bi('Карточка 1. «Хочу, чтобы на каждый merge request сами запускались тесты (`./test.sh`) и линтер (`./lint.sh`) и чтобы упавший тест не давал влить ветку. Проверьте это на ветке `feature/menu` с любой правкой».', 'Card 1. “I want the tests (`./test.sh`) and the linter (`./lint.sh`) to run by themselves on every merge request, and a failed test to block merging. Check it on a branch `feature/menu` with any edit.”'),
+        prompt: bi('«Хочу, чтобы на каждый merge request сами запускались тесты (`./test.sh`) и линтер (`./lint.sh`) и чтобы упавший тест не давал влить ветку. Проверьте это на ветке `feature/menu` с любой правкой».', '“I want the tests (`./test.sh`) and the linter (`./lint.sh`) to run by themselves on every merge request, and a failed test to block merging. Check it on a branch `feature/menu` with any edit.”'),
         check: {
           when: (f) => {
             const p = lastPipeline(f, { source: 'merge_request_event' });
@@ -305,7 +305,7 @@ export const CICD_EXAM: Exam = {
       setup: projectSetup({ '.gitlab-ci.yml': BROKEN_ARTIFACT_CI }, { forge: [{ project: 'team/site', variables: token }] }),
       task: {
         id: 'artifact',
-        prompt: bi('Карточка 2. «Выкладка на тестовый стенд завершается с ошибкой `dist/index.html not found`, хотя сборка зелёная. Почините это и не меняйте скрипты джоб».', 'Card 2. “The staging deployment fails with `dist/index.html not found`, though the build is green. Fix it without changing the job scripts.”'),
+        prompt: bi('«Выкладка на тестовый стенд завершается с ошибкой `dist/index.html not found`, хотя сборка зелёная. Почините это и не меняйте скрипты джоб».', '“The staging deployment fails with `dist/index.html not found`, though the build is green. Fix it without changing the job scripts.”'),
         check: { when: deliverOk },
       },
     },
@@ -317,7 +317,7 @@ export const CICD_EXAM: Exam = {
       setup: projectSetup({ '.gitlab-ci.yml': STUCK_CI }, { forge: [{ project: 'team/site', variables: token }] }),
       task: {
         id: 'stuck',
-        prompt: bi('Карточка 2. «Пайплайн main со вчерашнего дня висит и до выкладки не доходит. Найдите причину и добейтесь выкладки на тестовый стенд».', 'Card 2. “The main pipeline has been hanging since yesterday and never reaches the deployment. Find the cause and get the staging deployment through.”'),
+        prompt: bi('«Пайплайн main со вчерашнего дня висит и до выкладки не доходит. Найдите причину и добейтесь выкладки на тестовый стенд».', '“The main pipeline has been hanging since yesterday and never reaches the deployment. Find the cause and get the staging deployment through.”'),
         check: { when: deliverOk },
       },
     },
@@ -328,7 +328,7 @@ export const CICD_EXAM: Exam = {
       setup: projectSetup({ '.gitlab-ci.yml': RELEASE_CI }),
       task: {
         id: 'release',
-        prompt: bi('Карточка 3. «Выкладке нужен токен `edu-deploy-7Kq2`, и хранить его нужно как секрет, а не в коде. Пусть тестовый стенд обновляется сам из main, а рабочий сервер обновляется только из тегов версии вида `v1.2.3` и только по кнопке. Выпустите версию `v1.0.0`, чтобы я мог проверить».', 'Card 3. “The deployment needs the token `edu-deploy-7Kq2`: keep it as a secret, not in the code. Let staging update by itself from main, and production only from version tags like `v1.2.3` and only on a button press. Release `v1.0.0` so I can check.”'),
+        prompt: bi('«Выкладке нужен токен `edu-deploy-7Kq2`, и хранить его нужно как секрет, а не в коде. Пусть тестовый стенд обновляется сам из main, а рабочий сервер обновляется только из тегов версии вида `v1.2.3` и только по кнопке. Выпустите версию `v1.0.0`, чтобы я мог проверить».', '“The deployment needs the token `edu-deploy-7Kq2`: keep it as a secret, not in the code. Let staging update by itself from main, and production only from version tags like `v1.2.3` and only on a button press. Release `v1.0.0` so I can check.”'),
         check: {
           when: (f) => {
             const v = ci(f)?.variables.find((x) => x.key === 'DEPLOY_TOKEN');
@@ -353,7 +353,7 @@ export const CICD_EXAM: Exam = {
       setup: projectSetup({ '.gitlab-ci.yml': REPEAT_CI }),
       task: {
         id: 'default',
-        prompt: bi('Карточка 4. «Во всех джобах повторяется строка `image: node:24-alpine`. Задайте образ в одном месте так, чтобы новая джоба тоже получала его сама, а пайплайн main остался зелёным». В курсе такой задачи не было, и ответ нужно искать в справочнике GitLab.', 'Card 4. “Every job repeats `image: node:24-alpine`. Set the image in one place so that a new job gets it by itself too, and keep the main pipeline green.” The course had no such task, and the answer is in the GitLab reference.'),
+        prompt: bi('«Во всех джобах повторяется строка `image: node:24-alpine`. Задайте образ в одном месте так, чтобы новая джоба тоже получала его сама, а пайплайн main остался зелёным». В курсе такой задачи не было, и ответ нужно искать в справочнике GitLab.', '“Every job repeats `image: node:24-alpine`. Set the image in one place so that a new job gets it by itself too, and keep the main pipeline green.” The course had no such task, and the answer is in the GitLab reference.'),
         docStep: 5,
         beyond: true,
         docRef: { page: 'web/docs.gitlab.com/ci/yaml', anchor: 'default' },

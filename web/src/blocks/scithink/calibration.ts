@@ -60,7 +60,7 @@ export const CLAIMS: CalibrationClaim[] = [
     claim: bi('Память золотой рыбки длится всего несколько секунд.', 'A goldfish’s memory lasts only a few seconds.'),
     truth: false,
     evidence: bi(
-      'Опытты показывали, что золотые рыбки запоминают маршруты, сигналы кормления и звуки неделями. Секундная память — из анекдота, не из биологии.',
+      'Опыты показывали, что золотые рыбки запоминают маршруты, сигналы кормления и звуки неделями. Секундная память — из анекдота, не из биологии.',
       'Experiments showed goldfish remember routes, feeding signals and sounds for weeks. The seconds-long memory comes from a joke, not from biology.',
     ),
   },
@@ -78,8 +78,8 @@ export const CLAIMS: CalibrationClaim[] = [
     claim: bi('Число 0,999… с бесконечной девяткой равно единице.', 'The number 0.999… with an endless nine equals one.'),
     truth: true,
     evidence: bi(
-      'Математически 0,999… и 1 — одно и то же число: их разница меньше любого положительного числа, а такой разницы не существует.',
-      'Mathematically 0.999… and 1 are the same number: the difference between them is smaller than any positive number, and no such difference exists.',
+      'Математически 0,999… и 1 — одно и то же число: их разница меньше любого положительного числа, а единственное такое неотрицательное число — ноль.',
+      'Mathematically 0.999… and 1 are the same number: the difference between them is smaller than any positive number, and the only such non-negative number is zero.',
     ),
   },
   {
@@ -319,8 +319,8 @@ export function mountCalibration(el: HTMLElement, _props: unknown, ctx: WidgetCt
           h('div', '', t(bi('Доля правдивых утверждений', 'Share of true claims')), h('b', '', `${Math.round(stats.shareTrue)}%`))),
         h('div', 'scb-curve', curveSvg(stats)),
         h('p', 'scb-note', t(bi(
-          'Точки кривой показывают, какая доля утверждений с вашей уверенностью оказалась правдивой; число над точкой — сколько утверждений в этой группе. Десять утверждений — маленькая выборка, поэтому относитесь к одному прогону как к тренировке, а не к диагнозу: ценность накапливается, когда вы проходите тренажёр повторно.',
-          'The curve’s points show which share of claims at your level of confidence turned out true; the number over a point is how many claims sit in that group. Ten claims are a small sample, so treat one run as practice, not a diagnosis: the value builds up when you retake the trainer.',
+          'Точки кривой показывают, какая доля утверждений с вашей уверенностью оказалась правдивой; число над точкой — сколько утверждений в этой группе. Десять утверждений — маленькая выборка, поэтому относитесь к одному прогону как к тренировке, а не к диагнозу. Повторный проход по тем же утверждениям проверит память, а не калибровку: для неё нужны новые вопросы, например ваши рабочие прогнозы.',
+          'The curve’s points show which share of claims at your level of confidence turned out true; the number over a point is how many claims sit in that group. Ten claims are a small sample, so treat one run as practice, not a diagnosis. Retaking the same claims tests your memory, not your calibration: for that you need new questions, such as your own work forecasts.',
         ))),
         h('div', 'scb-actions', again),
       );

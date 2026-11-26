@@ -124,7 +124,17 @@ export function isTutorOpen(): boolean {
   return !!panel;
 }
 
+let listening = false;
+/** Escape closes the panel; moving to another page closes it so it never shows the previous lesson's context. */
+function listen(): void {
+  if (listening) return;
+  listening = true;
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panel) closeTutor(); });
+  window.addEventListener('hashchange', () => { if (panel && where().lesson?.id !== lastLesson) closeTutor(); });
+}
+
 export function openTutor(o: TutorOptions = {}): void {
+  listen();
   const w = where();
   if (w.lesson?.id !== lastLesson) {
     state = { ...state, history: [], hints: new Map() };

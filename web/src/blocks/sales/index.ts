@@ -32,10 +32,10 @@ const block: Block = {
   id: 'sales',
   order: 990,
   hidden: true,
-  title: bi('Школа enterprise-продаж', 'The enterprise sales school'),
+  title: bi('Продажи', 'Sales'),
   summary: bi(
-    'Пилот скрытого раздела «Курсы»: 46 принципов сложных продаж по модулю в день, с интерактивной схемой закупочного центра и симулятором воронки. Это один из способов работы, не закон.',
-    'A pilot of the hidden "Courses" section: 46 principles of complex sales, one module a day, with the interactive buying-center scheme and the funnel simulator. One way of working, not a law.',
+    '46 принципов сложных продаж по модулю в день, со схемой закупочного центра и симулятором воронки, и модуль Dream 100 о работе с сотней целевых компаний.',
+    '46 principles of complex sales, one module a day, with the buying-center diagram, the funnel simulator and the Dream 100 module on working with a hundred target accounts.',
   ),
   checklistStep: null,
   levels: {

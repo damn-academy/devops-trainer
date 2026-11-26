@@ -155,7 +155,7 @@ describe('department simulator widget', () => {
     expect(loadGame(demoScenario)!.prompt).toBe(saved.prompt); expect(loadGame(demoScenario)!.lang).toBe('en');
   });
   it('selects a read-only fallback when clipboard access fails', async () => {
-    const m = mount(false); m.button('Copy the prompt').click(); await flush();
+    const m = mount(false); m.button('Copy the request').click(); await flush();
     const fallback = m.host.querySelector<HTMLTextAreaElement>('textarea[readonly]')!;
     expect(fallback.hidden).toBe(false); expect(fallback.value).toContain('R20:');
     expect(fallback.selectionStart).toBe(0); expect(fallback.selectionEnd).toBe(fallback.value.length);
@@ -163,9 +163,9 @@ describe('department simulator widget', () => {
   it('copies the exact displayed prompt through the Clipboard API', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
-    const m = mount(); m.button('Copy the prompt').click(); await flush();
+    const m = mount(); m.button('Copy the request').click(); await flush();
     expect(writeText).toHaveBeenCalledWith(loadGame(demoScenario)!.prompt);
-    expect(m.host.textContent).toContain('Prompt copied.');
+    expect(m.host.textContent).toContain('Request copied.');
   });
   it('works with corrupt or unavailable storage and recovers after request failure', async () => {
     localStorage.setItem(storageKey(demoScenario.id), '{broken'); expect(loadGame(demoScenario)).toBeNull();
@@ -191,7 +191,7 @@ describe('authored scenario mounts and company configurator', () => {
     expect(m.host.textContent).toContain('The game master prompt is in Russian for now; the model will answer in English');
     expect(m.host.querySelector('.ds-prompt-size')!.textContent).toContain(String(loadGame(scenario)!.prompt.length));
     expect(m.host.querySelectorAll('.ds-company-config select')).toHaveLength(6);
-    m.button('Copy the prompt').click();
+    m.button('Copy the request').click();
   });
   it('randomizes all groups by the entered seed, persists edits, restores and exports custom properties', () => {
     const scenario = scenarios[0];
@@ -220,7 +220,7 @@ describe('authored scenario mounts and company configurator', () => {
   it('switches between presets and custom properties and rejects corrupt saved configurations', () => {
     const scenario = scenarios[1]; const m = mount(false, scenario);
     m.host.querySelector<HTMLInputElement>('input[value=custom]')!.click();
-    expect(loadGame(scenario)!.prompt).toContain('Игрок выбрал для компании такие свойства.');
+    expect(loadGame(scenario)!.prompt).toMatch(/Компания «[^»]+» вымышленная\. Игрок выбрал для неё такие свойства\./);
     m.host.querySelector<HTMLInputElement>('input[value=preset]')!.click();
     expect(loadGame(scenario)!.prompt).toContain('Компания Stratova');
     const saved = loadGame(scenario)!;
@@ -266,8 +266,15 @@ it('persists the selected CNCF starting stage in the preview and restored game',
 it('completes an external game only after explicit self-review', () => {
   const w = mount(false);
   expect(w.ctx.complete).not.toHaveBeenCalled();
-  w.button('Finish self-review').click();
+  const finish = w.button('Finish the simulation self-review') as HTMLButtonElement;
+  expect(finish.disabled).toBe(true);
+  finish.click();
+  expect(w.ctx.complete).not.toHaveBeenCalled();
+  const notes = w.host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Game outcome"]')!;
+  notes.value = 'Debrief from the other chat'; notes.dispatchEvent(new Event('input'));
+  expect(finish.disabled).toBe(false);
+  finish.click();
   expect(w.ctx.complete).toHaveBeenCalledOnce();
   expect(w.calls).toHaveLength(0);
-  expect(w.host.textContent).toContain('Self-review complete');
+  expect(w.host.textContent).toContain('Simulation self-review complete');
 });

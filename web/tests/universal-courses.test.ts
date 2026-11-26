@@ -44,7 +44,9 @@ for (const lang of ['ru', 'en'] as const) it(`provides editable task documents f
     try {
       const inputs = page.el.querySelectorAll<HTMLTextAreaElement>('.task-document textarea');
       expect(inputs, id).toHaveLength(1);
-      expect(inputs[0].value, id).toContain(lang === 'ru' ? 'Выполните задание в документе на этой странице.' : 'Complete the exercise in the document on this page.');
+      // A blank form with the task's fields; the task text itself stays above the field.
+      expect(inputs[0].value, id).toMatch(/^## /);
+      expect(inputs[0].value, id).not.toContain(lang === 'ru' ? 'Выполните задание в документе на этой странице.' : 'Complete the exercise in the document on this page.');
     } finally { page.dispose?.(); }
   }
 });

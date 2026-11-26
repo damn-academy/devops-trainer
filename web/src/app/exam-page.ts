@@ -187,13 +187,15 @@ export function examPage(id: string): Page {
     if (lab) mounts.push(lab);
     const tabLab = mountTabLab(exam, (m) => realCards.forEach((c) => c.update(m)));
     if (tabLab) mounts.push(tabLab.mounted);
+    // The terminal tasks share one explanation, above the first of them.
+    const firstLab = tasks.findIndex((x) => x.kind !== 'quiz' && x.kind !== 'real');
     tasks.forEach((task, i) => {
       const host = h('div');
       const tags = [count(task.weight, ['балл', 'балла', 'баллов'], ['point', 'points']), task.critical ? t(E.critical) : '', task.beyond ? t(E.beyond) : ''].filter(Boolean).join(' · ');
-      list.append(h('li.ex2-card', { 'data-feedback-id': task.id, 'data-critical': task.critical ? 'true' : undefined }, h('p.ex2-card-head', {}, h('span', {}, `${t(E.task)} ${i + 1}`), h('span.muted', {}, tags)), host));
+      list.append(h('li.ex2-card', { 'data-feedback-id': task.id, 'data-critical': task.critical ? 'true' : undefined }, h('p.ex2-card-head', {}, h('span', {}, `${t(E.task)}\u00a0${i + 1}`), h('span.muted', {}, tags)), host));
       if (task.kind === 'quiz') mounts.push(mountQuiz(host, task.item, { context: 'exam', feedback: mode === 'training', md: (b) => prose(b), onAnswered: (g) => setResult(task.id, g.correct ? 1 : g.score) }));
       else if (task.kind === 'real') {
-        const card = mountRealCard(task.real, { feedback: mode === 'training', onScore: (sc) => setResult(task.id, sc), where: exam.inTab ? 'tab' : 'own', machines: () => lab?.el ?? tabLab?.el ?? null });
+        const card = mountRealCard(task.real, { feedback: mode === 'training', onScore: (sc) => setResult(task.id, sc), where: exam.inTab ? 'tab' : 'own', machines: () => lab?.el ?? tabLab?.el ?? null, howAbove: true });
         realCards.push(card);
         put(host, prose(task.real.prompt), card.el);
       } else
@@ -207,6 +209,7 @@ export function examPage(id: string): Page {
             index: 0,
             count: 1,
             exam: mode === 'exam',
+            guide: i === firstLab,
             onTaskPass: () => setResult(task.id, 1),
           }),
         );

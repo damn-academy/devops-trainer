@@ -53,7 +53,7 @@ it.each(['ru', 'en'] as const)('labels all CSV cards and exports main and card n
     const card = document.createElement('div'); host.append(card);
     const mount = mountTrainer('template', card, { file }, ctx);
     expect(card.querySelector('a')!.nextElementSibling!.textContent).toContain('UTF-8');
-    expect(card.textContent).toContain(language === 'ru' ? 'Файл → Импорт' : 'File → Import');
+    expect(card.textContent).toContain(language === 'ru' ? '«Данные» → «Из текстового/CSV-файла»' : 'Data → From Text/CSV');
     expect(card.querySelector('label')!.textContent).toContain(language === 'ru' ? 'Расчёт по карточке:' : 'Card calculation:');
     card.querySelector('textarea')!.value = file;
     return mount;

@@ -29,8 +29,8 @@ const P = {
     'Choose the level you want to confirm. Tasks come one at a time, and the first is the easiest. There are no hints and no mentor during the check.',
   ),
   rules: bi(
-    'Зачёт — 80% заданий и все ключевые. Практика проверяется по состоянию машины, любой путь к нужному состоянию засчитывается. Время сохраняется, но на результат не влияет.',
-    'To pass: 80% of the tasks and every key one. Practice is checked by the state of the machine: any way to the right state counts. Time is recorded but never fails the check.',
+    'Зачёт — 80 % заданий и все задания с пометкой «обязательное для подтверждения уровня». Практика проверяется по состоянию машины, любой путь к нужному состоянию засчитывается. Время сохраняется, но на результат не влияет.',
+    'To pass: 80% of the tasks and every task marked “required to confirm the level”. Practice is checked by the state of the machine: any way to the right state counts. Time is recorded but never fails the check.',
   ),
   beginner: bi('Новичку проверка не нужна: блок начинается с первого урока.', 'Beginners need no check: the block starts from the first lesson.'),
   confirmed: bi('подтверждён', 'confirmed'),
@@ -215,7 +215,7 @@ export function placementPage(id: string): Page {
       {},
       h('summary', {}, t(P.details)),
       h('button.btn.ghost.small', { type: 'button', onclick: choose }, t(bi('Выбрать новую проверку', 'Choose a new check'))),
-      h('p.small', {}, `${r.counted} / ${r.total} (${Math.round(r.score * 100)}%), ${t(bi('нужно', 'needed'))} ${r.needed}; ${r.keysOk ? t(bi('все ключевые выполнены', 'every key task done')) : t(bi('не все ключевые выполнены', 'not every key task done'))}; ${t(P.time)} ${Math.max(1, Math.round(ms / 60000))} ${t(bi('мин', 'min'))}`),
+      h('p.small', {}, `${r.counted} / ${r.total} (${Math.round(r.score * 100)}%), ${t(bi('нужно', 'needed'))} ${r.needed}; ${r.keysOk ? t(bi('все обязательные выполнены', 'every required task done')) : t(bi('не все обязательные выполнены', 'not every required task done'))}; ${t(P.time)} ${Math.max(1, Math.round(ms / 60000))} ${t(bi('мин', 'min'))}`),
       r.guessed.length ? h('p.small', {}, t(P.guessedLine), ' ', r.guessed.map((x) => taskPrompt(tasks.find((y) => y.id === x)!)).join('; ')) : null,
       h('ul.placement-results', {}, ...tasks.map((x) => h('li', { class: r.failed.includes(x.id) ? 'err' : 'ok' }, h('span.st-icon', { 'aria-hidden': 'true' }, r.failed.includes(x.id) ? '·' : '✓'), h('div', {}, ...renderInline(taskPrompt(x)), x.kind === 'quiz' ? referenceAnswer(x.item) : null)))),
     );

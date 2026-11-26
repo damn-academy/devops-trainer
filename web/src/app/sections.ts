@@ -13,7 +13,7 @@ import { ANATOMY, openDoc, renderPage } from '../engine/docs/viewer';
 import { mountQuiz } from '../engine/quiz/render';
 import { conceptLink, prose } from './common';
 import { mountLab } from './terminal-section';
-import { calculatorGuidance, selfReviewedWidgets, widgetGuidance } from './task-guidance';
+import { calculatorDocumentGuidance, calculatorGuidance, selfReviewedWidgets, widgetGuidance } from './task-guidance';
 import { renderMd } from '../core/markdown';
 
 export interface SectionCtx {
@@ -24,6 +24,10 @@ export interface SectionCtx {
   index: number;
   count: number;
   manualTextCompletion?: boolean;
+  /** The section was completed earlier: its completion note is shown again after a reload. */
+  isDone?: boolean;
+  /** See WidgetCtx.sharedDocument. */
+  sharedDocument?: boolean;
   done(sectionId: string): void;
 }
 
@@ -45,7 +49,7 @@ function howtoPanel(body: Bi, title?: Bi): HTMLElement {
 
 export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mounted?: Mounted } {
   const el = h('section.lsec', { 'data-kind': s.kind, id: `s-${s.id}`, 'data-step': s.step });
-  const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: true }, t(bi('Раздел пройден. Результат сохранён в этом браузере.', 'Section complete. Progress is saved in this browser.')));
+  const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: !c.isDone }, t(bi('Раздел пройден. Результат сохранён в этом браузере.', 'Section complete. Progress is saved in this browser.')));
   const done = () => { c.done(s.id); completion.hidden = false; };
   switch (s.kind) {
     case 'text': {
@@ -129,16 +133,18 @@ export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mou
         return { el };
       }
       const selfReviewed = selfReviewedWidgets.has(s.widget);
-      const guide = widgetGuidance[s.widget] ?? (selfReviewed ? calculatorGuidance : undefined);
+      // With a task document on the page, its finish button also completes the calculator.
+      const ownFinish = selfReviewed && !c.sharedDocument;
+      const guide = widgetGuidance[s.widget] ?? (selfReviewed ? (ownFinish ? calculatorGuidance : calculatorDocumentGuidance) : undefined);
       if (guide) el.append(howtoPanel(guide, bi('Как выполнить задание', 'How to complete the task')));
       if (s.widget === 'career.checklist') el.append(h('a', { href: '#/local-lab' }, t(bi('Подготовить локальную лабораторию', 'Set up the local lab'))));
       const host = h('div.widget-host');
       el.append(host);
-      if (selfReviewed) el.append(h('button.btn', { type: 'button', onclick: done }, t(bi('Завершить сравнение', 'Finish comparison'))));
+      if (ownFinish) el.append(h('button.btn', { type: 'button', onclick: done }, t(bi('Завершить сравнение', 'Finish comparison'))));
       el.append(completion);
       let feedbackFacts: unknown = { unavailable: 'No facts received from widget yet' };
       const unregisterFeedback = registerFeedbackSnapshot(host, () => ({ widget: s.widget, facts: feedbackFacts }));
-      const mounted = w.mount(host, s.props, { reportFacts: facts => { feedbackFacts = facts; }, lessonId: c.lesson.id, sectionId: s.id, level: c.level, complete: selfReviewed ? () => {} : done, record: (e) => store.record(e), openDoc: (r) => openDoc(r) });
+      const mounted = w.mount(host, s.props, { reportFacts: facts => { feedbackFacts = facts; }, lessonId: c.lesson.id, sectionId: s.id, level: c.level, sharedDocument: c.sharedDocument, complete: selfReviewed ? () => {} : done, record: (e) => store.record(e), openDoc: (r) => openDoc(r) });
       return { el, mounted: { ...mounted, dispose() { unregisterFeedback(); mounted.dispose(); } } };
     }
   }

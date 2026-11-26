@@ -41,6 +41,8 @@ describe('local lab client', () => {
   it('maps exam machines to lab VMs', () => {
     expect(vmForMachine('cp-1', status)).toBe('cp-1');
     expect(vmForMachine('app-01', status)).toBe('learner');
+    expect(vmForMachine('server', status, 'cp-1')).toBe('cp-1');
+    expect(vmForMachine('vm2', status, 'worker-2')).toBeNull();
   });
 
   it('explains down, destroy and uninstall', () => {

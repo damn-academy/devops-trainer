@@ -1,0 +1,168 @@
+package say
+
+import (
+	"os"
+	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
+	"testing"
+
+	"github.com/damn-academy/devops-trainer/lab/internal/backend"
+	"github.com/damn-academy/devops-trainer/lab/internal/hostinfo"
+	"github.com/damn-academy/devops-trainer/lab/internal/profile"
+)
+
+var cyrillic = regexp.MustCompile(`[а-яё]`)
+
+func TestRussianLocale(t *testing.T) {
+	cases := []struct {
+		env  map[string]string
+		want bool
+	}{
+		{map[string]string{}, false},
+		{map[string]string{"LANG": "ru_RU.UTF-8"}, true},
+		{map[string]string{"LANG": "en_US.UTF-8"}, false},
+		{map[string]string{"LANG": "en_US.UTF-8", "LC_MESSAGES": "ru_RU.UTF-8"}, true},
+		{map[string]string{"LANG": "ru_RU.UTF-8", "LC_ALL": "C"}, false},
+		{map[string]string{"LC_ALL": "ru_UA.UTF-8", "LANG": "en_GB.UTF-8"}, true},
+		{map[string]string{"LANG": "C.UTF-8"}, false},
+	}
+	if !russian(func(string) string { return "" }, func() bool { return true }) {
+		t.Error("with no locale variables the system language decides")
+	}
+	if russian(func(string) string { return "en_US.UTF-8" }, func() bool { return true }) {
+		t.Error("a locale variable wins over the system language")
+	}
+	for _, c := range cases {
+		if got := russian(func(k string) string { return c.env[k] }, func() bool { return false }); got != c.want {
+			t.Errorf("%v: got %v", c.env, got)
+		}
+	}
+}
+
+func TestEnglishStaysEnglish(t *testing.T) {
+	s := "16 GB computers: the learner VM, kuberoot and two Ubuntu nodes for kubeadm"
+	if T(false, s) != s {
+		t.Fatal("English output changed")
+	}
+	if T(true, "something dtlab never says") != "something dtlab never says" {
+		t.Fatal("an unknown message must pass through")
+	}
+}
+
+func TestFormattedMessages(t *testing.T) {
+	got := Translate("4.5 GiB free disk at /home/olga/.dtlab is below the light profile's 10 GiB: free some space, or set DTLAB_HOME to a folder on a disk with more (export DTLAB_HOME=/Volumes/Data/dtlab on macOS and Linux, $env:DTLAB_HOME=\"D:\\dtlab\" in PowerShell on Windows)")
+	for _, want := range []string{"4,5 ГиБ", "/home/olga/.dtlab", "10 ГиБ", "export DTLAB_HOME=/Volumes/Data/dtlab", `$env:DTLAB_HOME="D:\dtlab"`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("%q lacks %q", got, want)
+		}
+	}
+	if got := Translate("no usable hardware virtualisation: KVM (/dev/kvm is usable)"); got != "нет аппаратной виртуализации: KVM (/dev/kvm доступен)" {
+		t.Errorf("nested message: %q", got)
+	}
+	if got := Translate("Hyper-V and the Windows Hypervisor Platform"); got != "Hyper-V и платформа низкоуровневой оболочки Windows" {
+		t.Errorf("windows detail: %q", got)
+	}
+	if got := Translate("darwin arm64 (macOS 26.4), 10 CPUs, Apple M4"); got != "darwin arm64 (macOS 26.4), ядер процессора: 10, Apple M4" {
+		t.Errorf("computer line: %q", got)
+	}
+}
+
+// Every advice `dtlab check` can give has a Russian text.
+func TestEveryCheckAdviceIsTranslated(t *testing.T) {
+	var said []string
+	hosts := []hostinfo.Info{
+		{CPUs: 1, MemMiB: 4096, DiskFreeMiB: 2048, DiskPath: "/d", Virt: hostinfo.Virt{Accel: "kvm"}},
+		{CPUs: 4, MemMiB: 8192, MemAvailMiB: 1024, DiskFreeMiB: 100 << 10, Virt: hostinfo.Virt{Accel: "hvf", Nested: true}},
+		{CPUs: 4, MemMiB: 16384, DiskFreeMiB: 100 << 10, Virt: hostinfo.Virt{Accel: "kvm"}},
+		{CPUs: 8, MemMiB: 32768, DiskFreeMiB: 100 << 10, Virt: hostinfo.Virt{Accel: "whpx"}},
+		{CPUs: 8, MemMiB: 32768, DiskFreeMiB: 100 << 10, Virt: hostinfo.Virt{Detail: "KVM (/dev/kvm is usable)"}},
+	}
+	for _, i := range hosts {
+		said = append(said, profile.Recommend(i).Reasons...)
+	}
+	for _, n := range profile.Names() {
+		said = append(said, profile.Profiles[n].Note)
+	}
+	for _, c := range []struct {
+		goos, accel string
+		hyperV      bool
+	}{{"linux", "kvm", false}, {"darwin", "hvf", false}, {"windows", "whpx", false}, {"windows", "", true}} {
+		ch, err := backend.Choose(c.goos, c.accel, c.hyperV, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		said = append(said, ch.Reason)
+	}
+	for _, f := range []string{"qemu", "hyperv"} {
+		ch, _ := backend.Choose("windows", "whpx", false, f)
+		said = append(said, ch.Reason)
+	}
+	said = append(said, hostDetails(t)...)
+	said = append(said, "none — the course in the browser alone", "light (fits: light)", "winget install SoftwareFreedomConservancy.QEMU, or turn on Hyper-V", "sudo apt install qemu-system-x86 qemu-utils ovmf, or your distribution's packages")
+	for _, s := range said {
+		if ru := Translate(s); ru == s || !cyrillic.MatchString(ru) {
+			t.Errorf("no Russian for %q", s)
+		}
+	}
+}
+
+// hostDetails reads the hypervisor messages of every system from the
+// sources of hostinfo, so a new message without a translation fails here
+// on any computer, not only on the system that prints it.
+func hostDetails(t *testing.T) []string {
+	files, _ := filepath.Glob("../hostinfo/hostinfo_*.go")
+	re := regexp.MustCompile(`i\.Virt\.Detail = ("(?:[^"\\]|\\.)*")`)
+	var out []string
+	for _, f := range files {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, m := range re.FindAllStringSubmatch(string(b), -1) {
+			s, err := strconv.Unquote(m[1])
+			if err != nil {
+				t.Fatal(err)
+			}
+			if s != "Hyper-V" && s != "Hypervisor.framework" { // names, the same in Russian
+				out = append(out, s)
+			}
+		}
+	}
+	if len(out) < 6 {
+		t.Fatalf("found only %d hypervisor messages in %v", len(out), files)
+	}
+	return out
+}
+
+func TestCourseWords(t *testing.T) {
+	for _, s := range []string{"available", "installed", "update", "No installed courses. Run: dtlab course install academy", "All installed courses are up to date."} {
+		if Translate(s) == s {
+			t.Errorf("no Russian for %q", s)
+		}
+	}
+}
+
+func TestLabCommandMessages(t *testing.T) {
+	for en, ru := range map[string]string{
+		"cp-1 stopped":  "машина cp-1 остановлена",
+		"agent stopped": "агент лаборатории остановлен",
+		`no VM "lerner" in the lab (dtlab status)`:    `в лаборатории нет машины "lerner"; какие есть, покажет dtlab status`,
+		"no lab yet: dtlab check, then dtlab up":      "лаборатории пока нет: выполните dtlab check, потом dtlab up",
+		"profile light, backend qemu, agent работает": "профиль light, запуск машин: qemu, агент лаборатории: работает",
+	} {
+		if got := Translate(en); got != ru {
+			t.Errorf("%q: got %q", en, got)
+		}
+	}
+	if got := Translate("the lab is already standard with learner,kuberoot,kubeadm-nodes; `dtlab destroy` first to change it"); !strings.Contains(got, "ничего перезапускать не нужно") || !strings.Contains(got, "learner,kuberoot,kubeadm-nodes") {
+		t.Errorf("refusal of up: %q", got)
+	}
+	// The exams' cleanup reads this line in English (DTLAB_CLEANUP in web/src/app/real/facts.ts).
+	for _, s := range []string{"VMs, their disks and the kuberoot credentials removed", "VMs, their disks and the kuberoot credentials removed; images stay in /h/.dtlab/cache/images"} {
+		if Translate(s) != s {
+			t.Errorf("%q must stay English", s)
+		}
+	}
+}

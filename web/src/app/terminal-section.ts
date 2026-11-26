@@ -36,6 +36,8 @@ export interface LabOptions {
   /** Exam mode: DL5, no hints, no mentor. */
   exam?: boolean;
   lessonStep?: DocStep;
+  /** Show how the terminal's goals are checked (default); an exam shows it above its first terminal only. */
+  guide?: boolean;
   /** Keep goals hidden until checked (placement). */
   quietGoals?: boolean;
   onAllDone?(): void;
@@ -75,11 +77,17 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   const status = h('div.lab-status', { 'aria-live': 'polite' });
   const expandBtn = h('button.btn.ghost.small', { type: 'button', 'aria-pressed': 'false' }, t(bi('Расширить терминал', 'Expand terminal')));
   const resetBtn = h('button.btn.ghost.small', { type: 'button' }, icon('repeat'), t(UI.reset));
+  // On a phone the expanded terminal covers the goals: a folded copy of them stays above it.
+  const goalsMiniTitle = h('summary');
+  const goalsMiniList = h('ol.lab-goals-mini-list');
+  const goalsMini = h('details.lab-goals-mini', {}, goalsMiniTitle, goalsMiniList);
   const el = h(
     'div.lab',
     { 'data-exam': o.exam ? 'true' : undefined },
-    h('div.lab-left', {}, o.intro ? prose(o.intro) : null, prose(sourceKey ? bi('Выполняйте цели в связанном терминале этого урока. Проверка получает состояние той машины после каждой команды; выполненная цель отмечается зелёной галочкой.', 'Complete the goals in the linked terminal in this lesson. Its machine state is checked after each command; a completed goal gets a green check mark.') : bi('Выполняйте цели в терминале этого упражнения. Наберите команду и нажмите Enter. После каждой команды тренажёр проверяет состояние машины и отмечает выполненные цели зелёной галочкой. Когда все цели выполнены, появится «Все цели выполнены».', 'Complete the goals in this exercise’s terminal. Type a command and press Enter. After every command the trainer checks the machine state and marks completed goals with a green check mark. When all goals pass, “All goals are done” appears.'), 'task-guide'), h('h4.lab-h', {}, t(UI.goals)), progress, goals, status),
-    h('div.lab-right', {}, h('div.lab-bar', {}, h('span.lab-env', {}, icon('term'), t(TL.sim)), expandBtn, resetBtn), termBox),
+    h('div.lab-left', {}, o.intro ? prose(o.intro) : null, o.guide === false ? null : prose(sourceKey ? bi('Выполняйте цели в связанном терминале этого урока. Проверка получает состояние той машины после каждой команды; выполненная цель отмечается зелёной галочкой.', 'Complete the goals in the linked terminal in this lesson. Its machine state is checked after each command; a completed goal gets a green check mark.') : o.exam
+      ? bi('Выполняйте цели в терминале этой задачи: наберите команду и нажмите Enter. После каждой команды тренажёр проверяет состояние машины и отмечает выполненные цели зелёной галочкой.', 'Complete the goals in this task’s terminal: type a command and press Enter. After every command the trainer checks the machine state and marks completed goals with a green check mark.')
+      : bi('Выполняйте цели в терминале этого упражнения. Наберите команду и нажмите Enter. После каждой команды тренажёр проверяет состояние машины и отмечает выполненные цели зелёной галочкой. Когда все цели выполнены, появится «Все цели выполнены».', 'Complete the goals in this exercise’s terminal. Type a command and press Enter. After every command the trainer checks the machine state and marks completed goals with a green check mark. When all goals pass, “All goals are done” appears.'), 'task-guide'), h('h4.lab-h', {}, t(UI.goals)), progress, goals, status),
+    h('div.lab-right', {}, h('div.lab-bar', {}, h('span.lab-env', {}, icon('term'), t(TL.sim)), expandBtn, resetBtn), goalsMini, termBox),
   );
   clear(root);
   root.append(el);
@@ -102,13 +110,32 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
     return effectiveStep({ ...base, override: task.docStep });
   };
 
+  const renderGoalsMini = (current: Task | undefined) => {
+    goalsMiniTitle.textContent = current
+      ? o.tasks.length === 1
+        ? t(bi('Цели задания', 'Task goals'))
+        : t(fmt(bi('Цели: сейчас задание {i} из {n}', 'Goals: now task {i} of {n}'), { i: String(o.tasks.indexOf(current) + 1), n: String(o.tasks.length) }))
+      : t(bi('Цели: все выполнены', 'Goals: all done'));
+    clear(goalsMiniList);
+    for (const [i, task] of o.tasks.entries()) {
+      const done = passed.has(task.id);
+      goalsMiniList.append(h('li', { class: done ? 'done' : task === current ? 'current' : undefined },
+        h('span.goal-mark', { 'aria-hidden': 'true' }, done ? '✓' : String(i + 1)),
+        prose(task.prompt, 'goal-text'),
+        done ? h('span.sr-only', {}, t(TL.passed)) : null));
+    }
+  };
+
   const renderGoals = () => {
     clear(goals);
     const current = o.tasks.find((x) => !passed.has(x.id));
     const idx = current ? o.tasks.indexOf(current) + 1 : o.tasks.length;
+    // With one task there is no order to tell.
+    progress.hidden = o.tasks.length === 1 && !!current;
     progress.textContent = current
       ? t(fmt(bi('Выполняются по очереди сверху вниз: сейчас задание {i} из {n}.', 'They run in order, top to bottom: now task {i} of {n}.'), { i: String(idx), n: String(o.tasks.length) }))
       : t(bi('Все задания выполнены.', 'All tasks are done.'));
+    renderGoalsMini(current);
     for (const [i, task] of o.tasks.entries()) {
       const done = passed.has(task.id);
       const step = stepFor(task);
@@ -260,7 +287,9 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   expandBtn.addEventListener('click', () => {
     const expanded = el.classList.toggle('lab-expanded');
     expandBtn.setAttribute('aria-pressed', String(expanded));
-    expandBtn.textContent = t(expanded ? bi('Вернуть обычную ширину', 'Restore width') : bi('Расширить терминал', 'Expand terminal'));
+    expandBtn.textContent = t(expanded ? bi('Вернуть обычный размер', 'Restore size') : bi('Расширить терминал', 'Expand terminal'));
+    // On a phone the expanded terminal covers the screen: the page under it must not scroll.
+    document.documentElement.classList.toggle('lab-fullscreen', expanded && window.matchMedia?.('(max-width: 600px)').matches);
   });
 
   resetBtn.addEventListener('click', async () => {
@@ -283,6 +312,7 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
       unregisterSource?.();
       unsubscribeSource?.();
       disposed = true;
+      if (el.classList.contains('lab-expanded')) document.documentElement.classList.remove('lab-fullscreen');
       term?.dispose();
       machine?.dispose();
     },

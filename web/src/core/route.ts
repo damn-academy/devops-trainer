@@ -120,8 +120,8 @@ export const ROUTE: RouteEntry[] = [
     segment: '4',
     title: bi('Контейнеры', 'Containers'),
     summary: bi(
-      'Вы соберёте контейнер своими руками из механизмов ядра, разберётесь, из каких слоёв состоит образ и как его собрать по Dockerfile, настроите сети и тома, узнаете, чем контейнер отделён от машины и как по этим признакам искать причину поломки, посмотрите, кто запускает контейнеры на узле после команды docker run, и запустите настоящий Docker на виртуальной машине.',
-      'You build a container by hand from the kernel’s mechanisms, see what layers an image consists of and how to build it from a Dockerfile, set up networks and volumes, learn how a container is separated from the machine and how to find the cause of a failure by these signs, see which programs start containers on the node after the docker run command, and run real Docker on a virtual machine.',
+      'Вы соберёте контейнер своими руками из механизмов ядра, разберётесь, из каких слоёв состоит образ и как его собрать по Dockerfile, настроите сети и тома, узнаете, чем контейнер отделён от машины и как по этим признакам искать причину поломки и посмотрите, кто запускает контейнеры на узле после команды docker run. Упражнения блока идут в симуляторе Docker прямо в браузере, а в первом уроке сказано, где собрать настоящий образ.',
+      'You build a container by hand from the kernel’s mechanisms, see what layers an image consists of and how to build it from a Dockerfile, set up networks and volumes, learn how a container is separated from the machine and how to find the cause of a failure by these signs and see which programs start containers on the node after the docker run command. The block’s exercises run in a Docker simulator right in the browser, and the first lesson tells where to build a real image.',
     ),
     checklistStep: '04',
     levels: {

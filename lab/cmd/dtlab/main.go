@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -30,6 +31,7 @@ import (
 	"github.com/damn-academy/devops-trainer/lab/internal/manifest"
 	"github.com/damn-academy/devops-trainer/lab/internal/paths"
 	"github.com/damn-academy/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/say"
 	"github.com/damn-academy/devops-trainer/lab/internal/uninstall"
 )
 
@@ -50,16 +52,47 @@ const usage = `dtlab — the DevOps Trainer's local lab
   dtlab facts <vm> [flags]        run the course's read-only check in a VM, print the block
   dtlab serve [--course web/dist] the course and the lab API on http://127.0.0.1:7788/
   dtlab down                      stop the VMs; their disks and your work stay
-  dtlab destroy                   delete the VMs and their disks; downloads stay
+  dtlab destroy [--yes]           delete the VMs and their disks (asks first); downloads stay
   dtlab uninstall [--yes]         remove everything the lab ever added, dtlab included
   dtlab install                   put dtlab on your PATH, with completion
 
 Everything lives in %s.
 `
 
+const usageRU = `dtlab — лаборатория курса DevOps на вашем компьютере
+
+  dtlab courses                   курсы, которые можно поставить, и их обновления
+  dtlab course install <id>...     поставить курсы и нужные им пакеты
+  dtlab course update              обновить поставленные курсы и пакеты
+  dtlab course remove <id>         удалить курс или пакет
+  dtlab check                     что потянет этот компьютер и какой профиль выбрать
+  dtlab up [--profile light|standard|full] [--with learner,kuberoot,kubeadm-nodes]
+           [--kuberoot-version 1.2.3|latest] [--kuberoot <url|папка>]
+                                  создать и запустить машины лаборатории (повторно: запустить)
+  dtlab status                    машины, их адреса и работают ли они
+  dtlab ssh <машина> [команда]    терминал на машине (learner, cp-1, worker-1…)
+  dtlab facts <машина> [флаги]    выполнить на машине проверку экзамена и напечатать блок
+  dtlab serve [--course web/dist] курс и API лаборатории на http://127.0.0.1:7788/
+  dtlab down                      остановить машины; диски и ваша работа остаются
+  dtlab destroy [--yes]           удалить машины и их диски (сначала спросит); скачанное остаётся
+  dtlab uninstall [--yes]         удалить всё, что лаборатория добавила, вместе с самой dtlab
+  dtlab install                   добавить dtlab в PATH с автодополнением команд
+
+Всё хранится в %s.
+`
+
+// printUsage prints the command list in the learner's language.
+func printUsage(w io.Writer) {
+	if say.Russian() {
+		fmt.Fprintf(w, usageRU, paths.Root())
+		return
+	}
+	fmt.Fprintf(w, usage, paths.Root())
+}
+
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Printf(usage, paths.Root())
+		printUsage(os.Stdout)
 		os.Exit(2)
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -68,6 +101,8 @@ func main() {
 	if err != nil {
 		fatal(err)
 	}
+	ru := say.Russian()
+	l.Log = func(f string, a ...any) { fmt.Println(say.T(ru, fmt.Sprintf(f, a...))) }
 	cmd, args := os.Args[1], os.Args[2:]
 	switch cmd {
 	case "courses":
@@ -93,9 +128,9 @@ func main() {
 	case "agent":
 		err = l.RunAgent(ctx, "", nil)
 	case "down":
-		err = l.Down(ctx)
+		err = downCmd(ctx, l, args, os.Stdout)
 	case "destroy":
-		err = l.Destroy(ctx)
+		err = destroyCmd(ctx, l, args, os.Stdin, os.Stdout)
 	case "uninstall":
 		err = uninstallCmd(ctx, l, args)
 	case "install":
@@ -104,10 +139,14 @@ func main() {
 	case "version", "--version":
 		fmt.Println("dtlab", version)
 	case "help", "-h", "--help":
-		fmt.Printf(usage, paths.Root())
+		printUsage(os.Stdout)
 	default:
-		fmt.Fprintf(os.Stderr, "dtlab: unknown command %q\n\n", cmd)
-		fmt.Printf(usage, paths.Root())
+		if ru {
+			fmt.Fprintf(os.Stderr, "dtlab: команды %q нет\n\n", cmd)
+		} else {
+			fmt.Fprintf(os.Stderr, "dtlab: unknown command %q\n\n", cmd)
+		}
+		printUsage(os.Stdout)
 		os.Exit(2)
 	}
 	if err != nil {
@@ -116,8 +155,121 @@ func main() {
 }
 
 func fatal(err error) {
-	fmt.Fprintln(os.Stderr, "dtlab:", err)
+	fmt.Fprintln(os.Stderr, "dtlab:", say.T(say.Russian(), err.Error()))
 	os.Exit(1)
+}
+
+// commandFlags makes the flag set of a command whose -h and --help print
+// help and do nothing else.
+// The flag package's own English error lines are not printed: parseCommand
+// returns them as an error, which dtlab prints once in the learner's language.
+func commandFlags(name, help string, out io.Writer) *flag.FlagSet {
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		fmt.Fprintln(out, help)
+		printFlags(fs, out, say.Russian())
+	}
+	return fs
+}
+
+// printFlags lists the flags as flag.PrintDefaults does, with the defaults
+// named in the learner's language.
+func printFlags(fs *flag.FlagSet, out io.Writer, ru bool) {
+	fs.VisitAll(func(f *flag.Flag) {
+		kind, usage := flag.UnquoteUsage(f)
+		line := "  -" + f.Name
+		if kind != "" {
+			line += " " + kind
+		}
+		line += "\n    \t" + strings.ReplaceAll(usage, "\n", "\n    \t")
+		if def := f.DefValue; def != "" && def != "false" && def != "0" {
+			if ru {
+				line += fmt.Sprintf(" (по умолчанию %s)", def)
+			} else {
+				line += fmt.Sprintf(" (default %q)", def)
+			}
+		}
+		fmt.Fprintln(out, line)
+	})
+}
+
+// parseFlags parses args and leaves the arguments after the flags in fs.Args().
+func parseFlags(fs *flag.FlagSet, args []string) (help bool, err error) {
+	switch err := fs.Parse(args); {
+	case errors.Is(err, flag.ErrHelp):
+		return true, nil
+	case err != nil:
+		return false, fmt.Errorf("dtlab %s: %v", fs.Name(), err)
+	}
+	return false, nil
+}
+
+// parseCommand parses args; help is true when -h or --help asked for help.
+// Arguments that are not flags are refused: nothing runs on a typo.
+func parseCommand(fs *flag.FlagSet, args []string) (help bool, err error) {
+	if help, err := parseFlags(fs, args); help || err != nil {
+		return help, err
+	}
+	if fs.NArg() > 0 {
+		fs.Usage()
+		return false, fmt.Errorf("dtlab %s: unexpected argument %q", fs.Name(), fs.Arg(0))
+	}
+	return false, nil
+}
+
+func downCmd(ctx context.Context, l *lab.Lab, args []string, out io.Writer) error {
+	ru := say.Russian()
+	fs := commandFlags("down", say.T(ru, "usage: dtlab down\n\nStops the VMs and the lab agent. Their disks and your work on them stay: dtlab up carries on where you left off."), out)
+	if help, err := parseCommand(fs, args); help || err != nil {
+		return err
+	}
+	return l.Down(ctx)
+}
+
+func destroyCmd(ctx context.Context, l *lab.Lab, args []string, in io.Reader, out io.Writer) error {
+	ru := say.Russian()
+	fs := commandFlags("destroy", say.T(ru, "usage: dtlab destroy [--yes]\n\nDeletes the VMs, their disks and everything on them. Downloaded images stay, so the next dtlab up makes clean VMs without downloading again. Asks first; --yes does not ask."), out)
+	yes := fs.Bool("yes", false, say.T(ru, "do not ask"))
+	if help, err := parseCommand(fs, args); help || err != nil {
+		return err
+	}
+	st, err := l.State()
+	if err != nil {
+		return err
+	}
+	if len(st.VMs) > 0 && !*yes {
+		var names []string
+		for _, v := range st.VMs {
+			names = append(names, v.Name)
+		}
+		fmt.Fprintln(out, say.T(ru, fmt.Sprintf("dtlab destroy will delete these VMs with their disks and everything on them: %s", strings.Join(names, ", "))))
+		fmt.Fprint(out, say.T(ru, "Delete them?")+" [y/N] ")
+		answer, _ := bufio.NewReader(in).ReadString('\n')
+		if !agreed(answer) {
+			fmt.Fprintln(out, say.T(ru, "nothing removed"))
+			return nil
+		}
+	}
+	return l.Destroy(ctx)
+}
+
+// translated is every message of msgs in the learner's language.
+func translated(ru bool, msgs []string) []string {
+	out := make([]string, len(msgs))
+	for i, m := range msgs {
+		out[i] = say.T(ru, m)
+	}
+	return out
+}
+
+// agreed is a yes to a [y/N] question, in English or Russian.
+func agreed(answer string) bool {
+	switch strings.ToLower(strings.TrimSpace(answer)) {
+	case "y", "yes", "д", "да":
+		return true
+	}
+	return false
 }
 
 func check(args []string) error {
@@ -130,12 +282,16 @@ func check(args []string) error {
 	if *asJSON {
 		return json.NewEncoder(os.Stdout).Encode(map[string]any{"host": i, "recommendation": r, "backend": ch})
 	}
-	fmt.Printf("computer:   %s %s (%s), %d CPUs, %s\n", i.OS, i.Arch, i.OSVersion, i.CPUs, i.CPUModel)
-	fmt.Printf("memory:     %d MiB, %d MiB free now\n", i.MemMiB, i.MemAvailMiB)
-	fmt.Printf("disk:       %d MiB free at %s\n", i.DiskFreeMiB, i.DiskPath)
-	fmt.Printf("hypervisor: %s\n", i.Virt.Detail)
+	ru := say.Russian()
+	line := func(label, value string) {
+		fmt.Printf("%-*s %s\n", labelWidth(ru), checkLabel(ru, label)+":", say.T(ru, value))
+	}
+	line("computer", fmt.Sprintf("%s %s (%s), %d CPUs, %s", i.OS, i.Arch, i.OSVersion, i.CPUs, i.CPUModel))
+	line("memory", fmt.Sprintf("%d MiB, %d MiB free now", i.MemMiB, i.MemAvailMiB))
+	line("disk", fmt.Sprintf("%.1f GiB free at %s", float64(i.DiskFreeMiB)/1024, i.DiskPath))
+	line("hypervisor", i.Virt.Detail)
 	if chErr == nil {
-		fmt.Printf("backend:    %s — %s\n", ch.Name, ch.Reason)
+		line("backend", ch.Name+" — "+say.T(ru, ch.Reason))
 	}
 	var missing []string
 	if ch.Name == "qemu" {
@@ -149,20 +305,42 @@ func check(args []string) error {
 		missing = append(missing, "ssh")
 	}
 	if len(missing) > 0 {
-		fmt.Printf("missing:    %s (%s)\n", strings.Join(missing, ", "), installHint(i.OS))
+		line("missing", strings.Join(missing, ", ")+" ("+say.T(ru, installHint(i.OS))+")")
 	}
 	if r.Profile == "" {
-		fmt.Println("profile:    none — the course in the browser alone")
+		line("profile", "none — the course in the browser alone")
 	} else {
-		fmt.Printf("profile:    %s (fits: %s)\n", r.Profile, strings.Join(r.Fits, ", "))
+		line("profile", fmt.Sprintf("%s (fits: %s)", r.Profile, strings.Join(r.Fits, ", ")))
 	}
 	for _, why := range r.Reasons {
-		fmt.Println("            " + why)
+		fmt.Println(strings.Repeat(" ", labelWidth(ru)+1) + say.T(ru, why))
 	}
 	if r.Profile != "" {
-		fmt.Printf("\nnext:       dtlab up --profile %s\n", r.Profile)
+		fmt.Println()
+		line("next", "dtlab up --profile "+r.Profile)
 	}
 	return nil
+}
+
+// checkLabels are the Russian names of the lines of `dtlab check`.
+var checkLabels = map[string]string{
+	"computer": "компьютер", "memory": "память", "disk": "диск", "hypervisor": "гипервизор",
+	"backend": "запуск машин", "missing": "не хватает", "profile": "профиль", "next": "дальше",
+}
+
+func checkLabel(ru bool, en string) string {
+	if ru {
+		return checkLabels[en]
+	}
+	return en
+}
+
+// labelWidth keeps the values of `dtlab check` in one column.
+func labelWidth(ru bool) int {
+	if ru {
+		return 13
+	}
+	return 11
 }
 
 func qemuName(arch string) string {
@@ -183,23 +361,31 @@ func installHint(goos string) string {
 }
 
 func up(ctx context.Context, l *lab.Lab, args []string) error {
-	fs := flag.NewFlagSet("up", flag.ExitOnError)
-	prof := fs.String("profile", "", "light, standard or full (default: what `dtlab check` recommends)")
-	with := fs.String("with", "", "the parts: learner, kuberoot, kubeadm-nodes (comma list; default: the profile's)")
-	be := fs.String("backend", "auto", "qemu or hyperv")
-	kr := fs.String("kuberoot", "", "kuberoot artifacts: URL or directory, instead of the GitHub release")
-	krv := fs.String("kuberoot-version", "latest", "kuberoot release to install: a version (1.2.3) or latest")
-	course := fs.String("course", "", "the built course (web/dist) to serve")
-	timeout := fs.Duration("timeout", 25*time.Minute, "how long to wait for the VMs")
-	_ = fs.Parse(args)
+	ru := say.Russian()
+	fs := commandFlags("up", say.T(ru, "usage: dtlab up [--profile light|standard|full] [--with parts] [flags]\n\nCreates the lab's VMs and starts them, or starts the VMs of the lab that exists, and waits until they are ready."), os.Stdout)
+	prof := fs.String("profile", "", say.T(ru, "light, standard or full (default: the lab's own, or the one dtlab check recommends)"))
+	with := fs.String("with", "", say.T(ru, "the parts: learner, kuberoot, kubeadm-nodes (comma list; default: the profile's)"))
+	be := fs.String("backend", "auto", say.T(ru, "how to run the VMs: qemu, hyperv or auto (dtlab picks)"))
+	kr := fs.String("kuberoot", "", say.T(ru, "kuberoot artifacts: URL or directory, instead of the GitHub release"))
+	krv := fs.String("kuberoot-version", "latest", say.T(ru, "kuberoot release to install: a version (1.2.3) or latest"))
+	course := fs.String("course", "", say.T(ru, "the built course (web/dist) to serve"))
+	timeout := fs.Duration("timeout", 25*time.Minute, say.T(ru, "how long to wait for the VMs"))
+	if help, err := parseCommand(fs, args); help || err != nil {
+		return err
+	}
 	if *prof == "" {
+		// A plain `dtlab up` starts the lab that exists, with its parts:
+		// the profile's defaults would differ after --with and be refused.
 		st, _ := l.State()
 		*prof = st.Profile
+		if *with == "" && len(st.VMs) > 0 {
+			*with = strings.Join(st.Parts, ",")
+		}
 	}
 	if *prof == "" {
 		r := profile.Recommend(hostinfo.Detect(paths.Root()))
 		if r.Profile == "" {
-			return fmt.Errorf("this computer cannot run the lab: %s", strings.Join(r.Reasons, "; "))
+			return fmt.Errorf("this computer cannot run the lab: %s", strings.Join(translated(say.Russian(), r.Reasons), "; "))
 		}
 		*prof = r.Profile
 	}
@@ -273,30 +459,51 @@ func status(ctx context.Context, l *lab.Lab, args []string) error {
 	if *asJSON {
 		return json.NewEncoder(os.Stdout).Encode(sv)
 	}
+	ru := say.Russian()
 	if sv.Profile == "" {
-		fmt.Println("no lab yet: dtlab check, then dtlab up")
+		fmt.Println(say.T(ru, "no lab yet: dtlab check, then dtlab up"))
 		return nil
 	}
-	fmt.Printf("profile %s, backend %s, agent %s\n", sv.Profile, sv.Backend, map[bool]string{true: "running", false: "stopped"}[sv.Agent])
+	words := statusWords(ru)
+	fmt.Println(say.T(ru, fmt.Sprintf("profile %s, backend %s, agent %s", sv.Profile, sv.Backend, words.agent[sv.Agent])))
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-	fmt.Fprintln(w, "VM\tKIND\tADDRESS\tCPU\tMEMORY\tSTATE\tACCESS")
+	fmt.Fprintln(w, words.header)
 	for _, v := range sv.VMs {
 		access := v.SSH
 		if v.Kind == string(profile.Kuberoot) {
 			access = "kubectl --kubeconfig " + l.L.Kubeconfig()
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%d MiB\t%s\t%s\n", v.Name, v.Kind, v.IP, v.CPUs, v.MemMiB, map[bool]string{true: "running", false: "stopped"}[v.Running], access)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%d %s\t%s\t%s\n", v.Name, v.Kind, v.IP, v.CPUs, v.MemMiB, words.mib, words.vm[v.Running], access)
 	}
 	w.Flush()
 	if sv.Course != "" {
-		fmt.Println("course:", sv.Course)
+		fmt.Println(words.course, sv.Course)
 	}
 	return nil
 }
 
+type statusText struct {
+	header, mib, course string
+	agent, vm           map[bool]string
+}
+
+// statusWords are the words of the `dtlab status` table.
+func statusWords(ru bool) statusText {
+	if ru {
+		return statusText{"МАШИНА\tВИД\tАДРЕС\tЯДЕР\tПАМЯТЬ\tСОСТОЯНИЕ\tВХОД", "МиБ", "курс:",
+			map[bool]string{true: "работает", false: "остановлен"}, map[bool]string{true: "работает", false: "остановлена"}}
+	}
+	return statusText{"VM\tKIND\tADDRESS\tCPU\tMEMORY\tSTATE\tACCESS", "MiB", "course:",
+		map[bool]string{true: "running", false: "stopped"}, map[bool]string{true: "running", false: "stopped"}}
+}
+
 func sshCmd(l *lab.Lab, args []string) error {
-	if len(args) == 0 {
-		return fmt.Errorf("usage: dtlab ssh <vm> [command]")
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" {
+		fmt.Println(say.T(say.Russian(), "usage: dtlab ssh <vm> [command]"))
+		if len(args) == 0 {
+			os.Exit(2)
+		}
+		return nil
 	}
 	a, err := l.SSHArgs(args[0], args[1:])
 	if err != nil {
@@ -319,18 +526,25 @@ func (m *multi) String() string     { return strings.Join(*m, " ") }
 func (m *multi) Set(v string) error { *m = append(*m, v); return nil }
 
 func facts(ctx context.Context, l *lab.Lab, args []string) error {
+	ru := say.Russian()
+	fs := commandFlags("facts", say.T(ru, "usage: dtlab facts <vm> [flags]\n\nRuns the exam's read-only check in a VM and prints the block of facts to paste on the exam page. The exam page shows the whole command with its flags."), os.Stdout)
+	nonce := fs.String("nonce", "", say.T(ru, "the exam attempt's one-time code (shown on the exam page)"))
+	machine := fs.String("machine", "", say.T(ru, "the exam's machine id (default: the VM's name)"))
+	track := fs.String("track", "", say.T(ru, "the exam's track"))
+	script := fs.String("script", "", say.T(ru, "trainer-check-host.sh or trainer-check.sh (default by VM kind)"))
+	var extra multi
+	fs.Var(&extra, "arg", say.T(ru, "a collector argument, as on the exam page (repeat)"))
 	if len(args) == 0 || strings.HasPrefix(args[0], "-") {
-		return fmt.Errorf("usage: dtlab facts <vm> [--nonce CODE] [--machine ID] [--track T] [--script trainer-check.sh] [--arg '--scope net'] ...")
+		fs.Usage()
+		if len(args) > 0 && (args[0] == "-h" || args[0] == "--help" || args[0] == "-help") {
+			return nil
+		}
+		return errors.New("dtlab facts: name the VM first, for example dtlab facts learner")
 	}
 	vm := args[0]
-	fs := flag.NewFlagSet("facts", flag.ExitOnError)
-	nonce := fs.String("nonce", "", "the exam attempt's one-time code (shown on the exam page)")
-	machine := fs.String("machine", "", "the exam's machine id (default: the VM's name)")
-	track := fs.String("track", "", "the exam's track")
-	script := fs.String("script", "", "trainer-check-host.sh or trainer-check.sh (default by VM kind)")
-	var extra multi
-	fs.Var(&extra, "arg", "a collector argument, as on the exam page (repeat)")
-	_ = fs.Parse(args[1:])
+	if help, err := parseFlags(fs, args[1:]); help || err != nil {
+		return err
+	}
 	r := collect.Request{Script: *script, Nonce: *nonce, Machine: *machine, Track: *track, Args: append(extra, fs.Args()...)}
 	block, err := l.Facts(ctx, vm, r)
 	if err != nil {
@@ -377,11 +591,14 @@ func serve(ctx context.Context, l *lab.Lab, args []string) error {
 }
 
 func uninstallCmd(ctx context.Context, l *lab.Lab, args []string) error {
-	fs := flag.NewFlagSet("uninstall", flag.ExitOnError)
-	yes := fs.Bool("yes", false, "do not ask")
-	pre := fs.Bool("remove-preexisting", false, "also remove things that were there before dtlab (asked otherwise)")
-	keepBin := fs.Bool("keep-binary", false, "leave the dtlab program")
-	_ = fs.Parse(args)
+	ru := say.Russian()
+	fs := commandFlags("uninstall", say.T(ru, "usage: dtlab uninstall [--yes]\n\nRemoves everything the lab ever added to this computer: the VMs, their disks, the downloads, the settings and dtlab itself. Shows the list and asks first; --yes does not ask."), os.Stdout)
+	yes := fs.Bool("yes", false, say.T(ru, "do not ask"))
+	pre := fs.Bool("remove-preexisting", false, say.T(ru, "also remove things that were there before dtlab (asked otherwise)"))
+	keepBin := fs.Bool("keep-binary", false, say.T(ru, "leave the dtlab program"))
+	if help, err := parseCommand(fs, args); help || err != nil {
+		return err
+	}
 	var probe uninstall.Prober = uninstall.NoObjects{}
 	if l.GOOS == "windows" {
 		probe = backend.HyperVObjects{R: l.R}
@@ -411,8 +628,7 @@ func uninstallCmd(ctx context.Context, l *lab.Lab, args []string) error {
 		}
 		fmt.Print(q + " [y/N] ")
 		s, _ := in.ReadString('\n')
-		s = strings.ToLower(strings.TrimSpace(s))
-		return s == "y" || s == "yes"
+		return agreed(s)
 	}
 	if !ask("Remove all of this?") {
 		fmt.Println("nothing removed")

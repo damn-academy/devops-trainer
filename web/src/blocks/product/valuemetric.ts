@@ -7,7 +7,6 @@ import { loadDraft, saveDraft } from '../../engine/trainers/storage';
 
 import { bi, t } from '../../core/i18n';
 import type { Mounted, WidgetReg } from '../../core/types';
-import { PRODUCT_HONEST_NOTE } from './content';
 
 export type ValueMetricId = 'node' | 'user' | 'gb' | 'request';
 
@@ -42,8 +41,8 @@ export const VALUE_METRICS: MetricSpec[] = [
     factor: (g) => g,
     predictability: 90,
     verdict: [
-      'Счёт растёт вместе с доверием клиента: чем больше он наблюдает, тем больше платит, и это понятно заранее.',
-      'The bill grows with the customer’s trust: the more they monitor, the more they pay, and it is clear in advance.',
+      'Счёт растёт вместе с объёмом инфраструктуры клиента, и клиент заранее знает, сколько заплатит.',
+      'The bill grows with the size of the customer’s infrastructure, and the customer knows in advance what they will pay.',
     ],
   },
   {
@@ -61,7 +60,7 @@ export const VALUE_METRICS: MetricSpec[] = [
     id: 'gb',
     label: ['За гигабайт данных', 'Per gigabyte of data'],
     units: 6,
-    factor: (g) => g * 1.4,
+    factor: (g) => 1 + (g - 1) * 1.4,
     predictability: 40,
     verdict: [
       'Растёт быстрее успеха клиента, но счёт становится непредсказуемым, и каждый пик превращается в разговор о деньгах.',
@@ -72,7 +71,7 @@ export const VALUE_METRICS: MetricSpec[] = [
     id: 'request',
     label: ['За миллион запросов в месяц', 'Per million requests per month'],
     units: 3,
-    factor: (g) => g * 0.85,
+    factor: (g) => 1 + (g - 1) * 0.85,
     predictability: 70,
     verdict: [
       'Связывает плату с использованием, но наказывает клиента за популярность его собственного сервиса.',
@@ -121,6 +120,14 @@ const css = `
 .pvm-table th, .pvm-table td { text-align: right; padding: 3px 8px; border-bottom: 1px solid var(--line, #d8dee9); }
 .pvm-table th:nth-child(-n+2), .pvm-table td:nth-child(-n+2) { text-align: left; }
 .pvm-table tr.on td { background: color-mix(in srgb, var(--accent, #2f6fdd) 8%, transparent); }
+@media (max-width: 560px) {
+  .pvm-table { min-width: 0; }
+  .pvm-table thead { display: none; }
+  .pvm-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; padding: 6px 0; border-bottom: 1px solid var(--line, #d8dee9); }
+  .pvm-table td { border: 0; padding: 0; text-align: left !important; }
+  .pvm-table td:first-child { grid-column: 1 / -1; font-weight: 600; }
+  .pvm-table td[data-label]::before { content: attr(data-label) ': '; color: var(--muted, #5a6577); }
+}
 .pvm-note { font-size: 13px; color: var(--muted, #5a6577); border-left: 3px solid var(--accent, #2f6fdd); padding: 6px 10px; }
 `;
 
@@ -133,6 +140,7 @@ export function mountValuemetric(el: HTMLElement, _props: unknown): Mounted {
   const params: ValuemetricParams = { ...VALUEMETRIC_DEFAULTS, ...loadDraft<Partial<ValuemetricParams>>('product.valuemetric', {}) };
   const h = (tag: string, cls: string, ...kids: (Node | string)[]) => { const e = document.createElement(tag); if (cls) e.className = cls; e.append(...kids); return e; };
   const total = (label: string, value: number | string) => { const d = document.createElement('div'); d.className = 'pvm-total'; const b = document.createElement('b'); b.textContent = String(value); d.append(label, b); return d; };
+  const cell = (label: string, value: number) => { const td = h('td', '', String(value)); td.dataset.label = label; return td; };
   const inputPrefix = `${++instance}-pvm`;
   const results = h('div', 'pvm-results');
   root.append(h('div', 'pvm-knobs', ...KNOBS.map((k) => {
@@ -174,13 +182,12 @@ export function mountValuemetric(el: HTMLElement, _props: unknown): Mounted {
           const m = VALUE_METRICS.find((x) => x.id === row.id)!;
           return h('tr', row.id === params.metric ? 'on' : '',
             h('td', '', t(bi(m.label[0], m.label[1]))),
-            h('td', '', String(row.mrrNow)),
-            h('td', '', String(row.mrrYear)),
-            h('td', '', String(row.predictability)));
+            cell(t(bi('Сейчас', 'Now')), row.mrrNow),
+            cell(t(bi('Через год', 'In a year')), row.mrrYear),
+            cell(t(bi('Предсказуемость', 'Predictability')), row.predictability));
         })))),
-      h('p', 'pvm-note', t(PRODUCT_HONEST_NOTE)),
-      h('p', 'pvm-note', t(bi('Как считается таблица. Месячная выручка — число клиентов × сколько единиц метрики у одного клиента × цена единицы; число единиц на клиента для каждой метрики задано в модели. Рост за год умножается на поправку: для оплаты по пользователям рост берётся под корнем, потому что число людей растёт медленнее нагрузки, для гигабайтов — с множителем 1,4, для запросов — 0,85. Предсказуемость счёта — постоянная учебная оценка для каждой метрики, ползунки её не меняют. Все поправки иллюстративные и не взяты из исследований.', 'How the table is computed. Monthly revenue is customers × units of the metric per customer × unit price; units per customer are fixed in the model per metric. Yearly growth is adjusted: per-user pricing takes the square root of growth because headcount grows slower than load, gigabytes use a 1.4 multiplier, requests 0.85. Bill predictability is a fixed teaching score per metric that the sliders do not change. All adjustments are illustrative, not taken from research.'))),
-      h('pre', 'pvm-formula', VALUE_METRICS.map(m => `${t(bi(...m.label))}: ${params.customers} × ${m.units} × ${params.price} = ${Math.round(params.customers * m.units * params.price)}; × ${m.id === 'user' ? '√growth' : m.id === 'gb' ? 'growth × 1.4' : m.id === 'request' ? 'growth × 0.85' : 'growth'}; ${m.predictability}/100`).join('\n')),
+      h('p', 'pvm-note', t(bi('Как считается таблица. Месячная выручка — число клиентов × сколько единиц метрики у одного клиента × цена единицы; число единиц на клиента для каждой метрики задано в модели. Через год выручка умножается на рост с поправкой, и поправка касается только прироста: при росте ×1 счёт не меняется ни у одной метрики. Для оплаты по пользователям рост берётся под корнем, потому что число людей растёт медленнее нагрузки; для гигабайтов прирост умножается на 1,4, потому что данные копятся быстрее нагрузки; для запросов — на 0,85, потому что часть роста клиента приходится на кэш и пакетную обработку. Например, при росте ×3 счёт за гигабайты вырастает в 1 + 2 × 1,4 = 3,8 раза. Предсказуемость счёта — постоянная учебная оценка для каждой метрики, ползунки её не меняют. Все поправки иллюстративные и не взяты из исследований.', 'How the table is computed. Monthly revenue is customers × units of the metric per customer × unit price; units per customer are fixed in the model per metric. Revenue in a year is multiplied by growth with an adjustment that applies only to the increase: at growth ×1 no metric’s bill changes. Per-user pricing takes the square root of growth because headcount grows slower than load; for gigabytes the increase is multiplied by 1.4 because data accumulates faster than load; for requests by 0.85 because part of the customer’s growth goes to caching and batch processing. For example, at growth ×3 the gigabyte bill grows 1 + 2 × 1.4 = 3.8 times. Bill predictability is a fixed teaching score per metric that the sliders do not change. All adjustments are illustrative, not taken from research.'))),
+      h('pre', 'pvm-formula', VALUE_METRICS.map(m => `${t(bi(...m.label))}: ${params.customers} × ${m.units} × ${params.price} = ${Math.round(params.customers * m.units * params.price)}; × ${m.id === 'user' ? '√growth' : m.id === 'gb' ? '(1 + (growth − 1) × 1.4)' : m.id === 'request' ? '(1 + (growth − 1) × 0.85)' : 'growth'}; ${m.predictability}/100`).join('\n')),
     );
   };
   render();

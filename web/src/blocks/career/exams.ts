@@ -82,7 +82,7 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'dirs',
-        prompt: bi('Карточка 1. «Приложению нужен каталог для журналов `~/shop/logs`. И сразу заведите каталог `~/shop/backup`, в котором будут храниться копии конфигурации».', 'Card 1. “The application needs a log directory: `~/shop/logs`. And create `~/shop/backup` right away — for config copies.”'),
+        prompt: bi('«Приложению нужен каталог для журналов `~/shop/logs`. И сразу заведите каталог `~/shop/backup`, в котором будут храниться копии конфигурации».', '“The application needs a log directory: `~/shop/logs`. And create `~/shop/backup` right away — for config copies.”'),
         concepts: [],
         check: { when: `files['${HOME}/shop/logs'].type=d && files['${HOME}/shop/backup'].type=d && files['${HOME}/shop/data/orders.db']` },
       },
@@ -94,7 +94,7 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'env',
-        prompt: bi('Карточка 2. «Приложение должно слушать порт 8080. Допишите строку `PORT=8080` в файл `~/shop/config/app.env` так, чтобы не потерять ничего из того, что в нём уже есть».', 'Card 2. “The application must listen on port 8080: add `PORT=8080` to `~/shop/config/app.env` without losing anything already there.”'),
+        prompt: bi('«Приложение должно слушать порт 8080. Допишите строку `PORT=8080` в файл `~/shop/config/app.env` так, чтобы не потерять ничего из того, что в нём уже есть».', '“The application must listen on port 8080: add `PORT=8080` to `~/shop/config/app.env` without losing anything already there.”'),
         check: {
           when: `files['${HOME}/shop/config/app.env'].text ~ 'PORT=8080' && files['${HOME}/shop/config/app.env'].text ~ 'DB_HOST=db' && files['${HOME}/shop/config/app.env'].text ~ 'DB_PORT=5432'`,
           fail: [{ if: `files['${HOME}/shop/config/app.env'].text ~ 'PORT=8080' && !(files['${HOME}/shop/config/app.env'].text ~ 'DB_HOST=db')`, say: bi('Строка появилась, но прежние настройки пропали, потому что файл был перезаписан.', 'The line is there, but the old settings are gone: the file was overwritten.') }],
@@ -109,7 +109,7 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'errors-a',
-        prompt: bi('Карточка 3. «Соберите в файл `~/errors.txt` все строки со словом ERROR из журнала `/var/log/shop/app.log`, и только их: я хочу показать их разработчикам».', 'Card 3. “Put every ERROR line from `/var/log/shop/app.log` into `~/errors.txt` — and only those: I want to show them to the developers.”'),
+        prompt: bi('«Соберите в файл `~/errors.txt` все строки со словом ERROR из журнала `/var/log/shop/app.log`, и только их: я хочу показать их разработчикам».', '“Put every ERROR line from `/var/log/shop/app.log` into `~/errors.txt` — and only those: I want to show them to the developers.”'),
         check: {
           when: (f) => {
             const lines = text(f, `${HOME}/errors.txt`).split('\n').filter(Boolean);
@@ -126,7 +126,7 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'errors-b',
-        prompt: bi('Карточка 3. «Соберите в файл `~/504.txt` все строки журнала доступа `/var/log/shop/access.log`, в которых сервер ответил кодом 504, и только их».', 'Card 3. “Put every line of the access log `/var/log/shop/access.log` where the server answered 504 into `~/504.txt` — and only those.”'),
+        prompt: bi('«Соберите в файл `~/504.txt` все строки журнала доступа `/var/log/shop/access.log`, в которых сервер ответил кодом 504, и только их».', '“Put every line of the access log `/var/log/shop/access.log` where the server answered 504 into `~/504.txt` — and only those.”'),
         check: {
           when: (f) => {
             const lines = text(f, `${HOME}/504.txt`).split('\n').filter(Boolean);
@@ -142,7 +142,7 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'lock',
-        prompt: bi('Карточка 4. «После вчерашнего аварийного завершения приложения остался устаревший файл блокировки `~/shop/data/.lock`. Удалите его, а данные не трогайте».', 'Card 4. “A stale lock file `~/shop/data/.lock` is left after yesterday’s crash — remove it, leave the data alone.”'),
+        prompt: bi('«После вчерашнего аварийного завершения приложения остался устаревший файл блокировки `~/shop/data/.lock`. Удалите его, а данные не трогайте».', '“A stale lock file `~/shop/data/.lock` is left after yesterday’s crash — remove it, leave the data alone.”'),
         check: {
           when: `!files['${HOME}/shop/data/.lock'] && files['${HOME}/shop/data/orders.db'].text ~ 'orders v3'`,
           fail: [{ if: `!files['${HOME}/shop/data/orders.db']`, say: bi('Вместе с файлом блокировки пропали и данные заказов.', 'The orders data is gone together with the lock.') }],
@@ -157,7 +157,7 @@ export const LINUX_EXAM: Exam = {
       setup: { files: setupFiles },
       task: {
         id: 'count',
-        prompt: bi('Карточка 5. «Сколько раз за утро не ответил платёжный шлюз? Запишите одно число в файл `~/gateway.txt`». Этой задачи не было в курсе, и ответ нужно найти в документации.', 'Card 5. “How many times did the payment gateway fail this morning? Write a single number into `~/gateway.txt`.” This task is beyond the course: the answer is in the documentation.'),
+        prompt: bi('«Сколько раз за утро не ответил платёжный шлюз? Запишите одно число в файл `~/gateway.txt`». Этой задачи не было в курсе, и ответ нужно найти в документации.', '“How many times did the payment gateway fail this morning? Write a single number into `~/gateway.txt`.” This task is beyond the course: the answer is in the documentation.'),
         docStep: 5,
         beyond: true,
         docRef: { page: 'man/grep.1', anchor: 'OPTIONS' },
@@ -208,7 +208,7 @@ export const GIT_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add pages', files: PAGES }], worktree: { 'menu.html': MENU, 'notes.txt': 'call the milk supplier\n' } }] }),
       task: {
         id: 'menu',
-        prompt: bi('Карточка 1. «Новая страница `menu.html` должна попасть в ветку main отдельным коммитом. Файл `notes.txt` — мои личные заметки: в репозиторий их класть нельзя, но и удалять не надо».', 'Card 1. “The new `menu.html` page must land in main as a commit of its own. `notes.txt` is my personal notes: it must not go into the repository, but do not delete it either.”'),
+        prompt: bi('«Новая страница `menu.html` должна попасть в ветку main отдельным коммитом. Файл `notes.txt` — мои личные заметки: в репозиторий их класть нельзя, но и удалять не надо».', '“The new `menu.html` page must land in main as a commit of its own. `notes.txt` is my personal notes: it must not go into the repository, but do not delete it either.”'),
         check: { when: (f) => repo(f)?.branch === 'main' && 'menu.html' in (head(f)?.files ?? {}) && !('notes.txt' in (head(f)?.files ?? {})) && !!f.files['/home/learner/site/notes.txt'] },
       },
     },
@@ -219,7 +219,7 @@ export const GIT_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add pages', files: { ...PAGES, 'index.html': TYPO } }] }] }),
       task: {
         id: 'branch',
-        prompt: bi('Карточка 2. «В заголовке главной страницы лишний восклицательный знак: „Edu Cafe!“. Исправьте его в отдельной ветке `fix/title` и слейте её в main, так у нас принято».', 'Card 2. “The home page heading has a stray exclamation mark: “Edu Cafe!”. Fix it in a separate `fix/title` branch and merge it into main — that is how we work.”'),
+        prompt: bi('«В заголовке главной страницы лишний восклицательный знак: „Edu Cafe!“. Исправьте его в отдельной ветке `fix/title` и слейте её в main, так у нас принято».', '“The home page heading has a stray exclamation mark: “Edu Cafe!”. Fix it in a separate `fix/title` branch and merge it into main — that is how we work.”'),
         check: { when: (f) => repo(f)?.branch === 'main' && !!repo(f)?.branches['fix/title'] && (head(f)?.files['index.html'] ?? '').includes('<h1>Edu Cafe</h1>') },
       },
     },
@@ -230,7 +230,7 @@ export const GIT_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add pages', files: PAGES }, { message: 'Add config', files: { '.env': 'DB_PASSWORD=hunter2\n' } }] }] }),
       task: {
         id: 'secret',
-        prompt: bi('Карточка 3. «Подрядчик закоммитил файл `.env` с паролем. Сделайте так, чтобы Git перестал следить за этим файлом и больше никогда не взял его в коммит, но сам файл у меня на диске остался».', 'Card 3. “The contractor committed `.env` with a password. Make Git stop tracking that file and never take it into a commit again, but keep the file on my disk.”'),
+        prompt: bi('«Подрядчик закоммитил файл `.env` с паролем. Сделайте так, чтобы Git перестал следить за этим файлом и больше никогда не взял его в коммит, но сам файл у меня на диске остался».', '“The contractor committed `.env` with a password. Make Git stop tracking that file and never take it into a commit again, but keep the file on my disk.”'),
         check: {
           when: (f) => !('.env' in (head(f)?.files ?? {})) && /(^|\n)\/?\.env\s*(\n|$)/.test(head(f)?.files['.gitignore'] ?? '') && !!f.files['/home/learner/site/.env'],
           fail: [{ if: (f) => !f.files['/home/learner/site/.env'], say: bi('Файл удалён и с диска, а он нужен приложению.', 'The file is gone from disk too, and the application needs it.') }],
@@ -245,7 +245,7 @@ export const GIT_EXAM: Exam = {
       setup: gitSetup({ repos: [{ path: '~/site', commits: [{ message: 'Add pages', files: PAGES }, { message: 'Rework the home page', files: { 'index.html': '<!doctype html>\n<title>TODO</title>\n' } }] }] }),
       task: {
         id: 'revert',
-        prompt: bi('Карточка 4. «Последний коммит сломал главную страницу, а коллеги уже забрали себе историю. Отмените этот коммит, не переписывая историю». Этой задачи не было в курсе, и ответ нужно найти в справке Git.', 'Card 4. “The last commit broke the home page, and colleagues have already pulled the history. Undo it — without rewriting the history.” This task is beyond the course: the answer is in the Git help.'),
+        prompt: bi('«Последний коммит сломал главную страницу, а коллеги уже забрали себе историю. Отмените этот коммит, не переписывая историю». Этой задачи не было в курсе, и ответ нужно найти в справке Git.', '“The last commit broke the home page, and colleagues have already pulled the history. Undo it — without rewriting the history.” This task is beyond the course: the answer is in the Git help.'),
         docStep: 5,
         beyond: true,
         docRef: { page: 'man/git-revert.1' },

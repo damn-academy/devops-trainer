@@ -26,7 +26,9 @@
 .rl-how h3 { margin: 0 0 0.5rem; font-size: 1rem; }
 .rl-how ol { margin: 0; padding-left: 1.25rem; }
 .rl-checks { margin: 0.5rem 0 0.25rem; font-weight: 600; }
-.ex2-card-head { display: flex; justify-content: space-between; gap: 1rem; margin: 0 0 0.5rem; font-family: var(--font-ui); font-size: 0.875rem; font-weight: 600; }
+.ex2-card-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; margin: 0 0 0.5rem; font-family: var(--font-ui); font-size: 0.875rem; font-weight: 600; }
+.ex2-card-head > span:first-child { white-space: nowrap; }
+@media (max-width: 600px) { .ex2-card-head { flex-direction: column; } }
 .ex2-explain { margin: 1.5rem 0; }
 .ex2-answer { width: 100%; font: inherit; padding: 0.75rem; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink); }
 .ex2-points { border: 0; padding: 0; margin: 0.75rem 0 0; }

@@ -8,6 +8,21 @@ import { eventVisitor } from './events';
 import { trainers, datasets, systemPrompt, learnerData, copyPrompt, verdict, boundaryScore, breakEven, simulate, uniqueTargetAccounts, roiDefaults, type Verdict, type Choice, type RoiInput } from './model';
 import { loadAttempts, saveAttempts, loadDraft, saveDraft, clearDraft } from './storage';
 import { strings as s } from './strings';
+/** How a template is used depends on the file: a model's formulas read the example cells, a sample only shows a filled-in row. */
+function sharedGuide(file: string) {
+  const open = bi('Скачайте шаблон и откройте его в Excel или Google Sheets на своём компьютере. ', 'Download the template and open it in Excel or Google Sheets on your computer. ');
+  const field = bi(' Итог задания и выводы по таблице запишите в поле «Ваш текст» под заданием урока: оно одно на весь урок.', ' Write the task result and your conclusions in the “Your text” field under the lesson task: it is the only field of the lesson.');
+  const work = file === 'infraseed-model'
+    ? bi('Работа идёт в файле: замените учебный пример своими данными, формулы пересчитают отчёты. Исходные значения примера показывает лист «Сверка примера».', 'You work in the file: replace the worked example with your own data and the formulas recalculate the statements. The “Demo reconciliation” sheet shows the example’s original values.')
+    : file === 'cash-13w'
+      ? bi('Работа идёт в файле: сначала удалите учебные строки на листе «События» (в столбце «Документ» у них пометка example) и поставьте свой остаток на начало в ячейку B2 листа «Недели». Иначе ваши события сложатся с учебными в одном прогнозе.', 'You work in the file: first delete the example rows on the “Events” sheet (their “Document” column starts with example) and enter your opening balance in cell B2 of the “Weekly” sheet. Otherwise your events add up with the example ones in one forecast.')
+      : file.startsWith('pr-')
+        ? bi('Файл показывает пример заполнения; свою работу запишите в поле «Ваш текст» под заданием урока: оно одно на весь урок.', 'The file shows a filled-in example; write your own work in the “Your text” field under the lesson task: it is the only field of the lesson.')
+        : bi('Работа идёт в файле: в нём уже заполнен учебный пример, ваши строки добавляйте ниже.', 'You work in the file: it already contains a worked example, add your rows below it.');
+  const tail = file.startsWith('pr-') ? bi('', '') : field;
+  return bi(open.ru + work.ru + tail.ru, open.en + work.en + tail.en);
+}
+
 export type TrainerAi = Pick<AiService, 'status' | 'ready' | 'onChange' | 'stream'>;
 import { governance, health, governanceRemedies, applicableChecks, governanceMarkdown, type Option } from './oss';
 let instance = 0;
@@ -63,20 +78,38 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const titles = { 'metrics-cohorts': 'metricsCohorts', 'metrics-pipeline': 'metricsPipeline', 'metrics-forecast': 'metricsForecast', 'metrics-arr': 'metricsArr', 'metrics-arr-start': 'metricsArrStart', 'metrics-ab': 'metricsAb', 'infraseed-model': 'infraseedModel', 'cash-13w': 'cash13w', dream100: 'dream100', 'event-map': 'eventMap', 'llm-panel': 'llmPanel', 'signals-week': 'signalsWeek', 'pr-briefing': 'prBriefing', 'pr-news': 'prNews', 'pr-founder': 'prFounder' } as const;
     if (typeof file !== 'string' || !Object.hasOwn(titles, file)) { root.textContent = text('missing'); return mounted; }
     title(text(titles[file as keyof typeof titles]), false);
-    root.append(h('p.task-guide', {}, t(bi('Скачайте файл и откройте его в Excel или Google Sheets на своём компьютере. Выполните расчёт по заданию урока и запишите выводы в поле ниже. Сверьте результат с условиями задания самостоятельно. Кнопка «Готово, очистить поле» отмечает раздел пройденным и удаляет черновик, поэтому сначала сохраните свою работу.', 'Download the file and open it in Excel or Google Sheets on your computer. Complete the lesson’s calculation and record your conclusions below. Review the result against the task requirements yourself. “Done, clear the field” marks this section complete and removes the draft, so save your work first.'))));
     const csv = file.startsWith('metrics-');
+    // A spreadsheet template is worked on in the file; its result goes into the
+    // lesson's single task document. CSV cards of the metrics course keep their
+    // own calculation field, which the document export includes.
+    const shared = !csv && !!ctx.sharedDocument;
+    root.append(h('p.task-guide', {}, t(csv
+      ? bi('Скачайте файл и импортируйте его в Excel или Google Sheets на своём компьютере, как описано под кнопкой. Выполните расчёт по заданию урока и запишите его в поле карточки. Сверьте результат с условиями задания сами и нажмите «Завершить самопроверку карточки»: раздел отметится выполненным, а расчёт останется в поле, в этом браузере и в файле, который скачивает кнопка «Скачать текст (.txt)» основного документа.', 'Download the file and import it into Excel or Google Sheets on your computer as described below the button. Do the lesson’s calculation and write it in the card field. Check the result against the task yourself and press “Finish the card self-review”: the section is marked done, and the calculation stays in the field, in this browser and in the file that the main document’s “Download text (.txt)” button saves.')
+      : shared
+        ? sharedGuide(file)
+        : bi('Скачайте шаблон и откройте его в Excel или Google Sheets на своём компьютере. Работа идёт в файле; выводы запишите в поле ниже, сверьте их с условиями задания сами и нажмите «Завершить самопроверку»: раздел отметится выполненным, а выводы останутся в поле и в этом браузере.', 'Download the template and open it in Excel or Google Sheets on your computer. You work in the file; write your conclusions below, check them against the task yourself and press “Finish self-review”: the section is marked done and your conclusions stay in the field and in this browser.'))));
     if (csv) {
       root.append(h('p', {}, text('metricsFictional')), h('button', { type: 'button', class: 'btn', onclick: () => { void import('../ai/panel').then(({ openTutor }) => openTutor({ mode: 'practice', templateFile: file })); } }, t(bi('Спросить наставника о данных', 'Ask the tutor about the data'))));
     }
     root.append(h('a', { class: 'btn', href: `${import.meta.env.BASE_URL}templates/${file}${lang() === 'en' ? '-en' : ''}.${csv ? 'csv' : 'xlsx'}`, download: '' }, text(csv ? 'downloadCsv' : 'download')));
     if (csv) root.append(h('p', {}, text('csvImport')));
     const draftId = `template.${file}`;
-    const input = h('textarea', { 'data-template-id': file, 'data-template-title': text(titles[file as keyof typeof titles]) }); input.value = loadDraft(draftId, '');
-    input.oninput = () => saveDraft(draftId, input.value);
-    const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text('finishDraft'));
-    finish.onclick = () => { clearDraft(draftId); input.value = ''; ctx.complete(); status.textContent = t(bi('Работа отмечена как завершённая. Поле очищено.', 'Work marked complete. The field has been cleared.')); };
+    const saved = loadDraft(draftId, '');
+    const fieldLabel = csv ? text('cardCalculation').replace('{name}', text(titles[file as keyof typeof titles])) : text('input');
+    const input = h('textarea', { 'data-template-id': file, 'data-template-title': text(titles[file as keyof typeof titles]) }); input.value = saved;
+    if (shared) {
+      // Notes written here by earlier versions stay visible and in the export.
+      if (saved.trim()) {
+        input.oninput = () => saveDraft(draftId, input.value);
+        root.append(h('label', {}, t(bi('Ваши прежние выводы по шаблону', 'Your earlier notes on the template')), input));
+      }
+      return mounted;
+    }
+    const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '', disabled: !input.value.trim() }, text(csv ? 'finishCard' : 'finishSelfReview')) as HTMLButtonElement;
+    input.oninput = () => { saveDraft(draftId, input.value); finish.disabled = !input.value.trim(); };
+    finish.onclick = () => { if (!input.value.trim()) return; ctx.complete(); status.textContent = t(csv ? bi('Самопроверка карточки завершена. Расчёт сохранён в этом браузере.', 'Card self-review complete. The calculation is saved in this browser.') : bi('Самопроверка завершена. Выводы сохранены в этом браузере.', 'Self-review complete. Your conclusions are saved in this browser.')); };
     root.append(status);
-    root.append(h('label', {}, csv ? text('cardCalculation').replace('{name}', text(titles[file as keyof typeof titles])) : text('input'), input), finish);
+    root.append(h('label', {}, fieldLabel, input), finish);
 
   } else if (kind === 'governance') {
     if (id !== 'oss.governance') { root.textContent = text('missing'); return mounted; }
@@ -129,8 +162,11 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
   } else if (kind === 'rubric' || kind === 'roleplay') {
     const trainer = trainers.find(v => v.id === id && (kind === 'roleplay' ? v.id === 'events.booth-visitor' : v.id !== 'events.booth-visitor'));
     if (!trainer) { root.textContent = text('missing'); return mounted; }
-    const venue = h('select', {}, ...['KubeCon', 'PGConf', 'SREcon', 'RSAC', 'NANOG', 'Vendor user conference', 'Other'].map(v => h('option', { value: v }, v)));
-    const segment = h('select', {}, ...['Kubernetes', 'PostgreSQL', 'SRE', 'Security', 'Networking', 'Vendor users', 'Other'].map(v => h('option', { value: v }, v)));
+    // Values stay in English for the prompt; the learner sees localized category names.
+    const label: Record<string, [string, string]> = { 'Vendor user conference': ['Конференция пользователей поставщика', 'Vendor user conference'], Other: ['Другое', 'Other'], Security: ['Безопасность', 'Security'], Networking: ['Сети', 'Networking'], 'Vendor users': ['Пользователи поставщика', 'Vendor users'] };
+    const option = (v: string) => h('option', { value: v }, label[v] ? t(bi(...label[v])) : v);
+    const venue = h('select', {}, ...['KubeCon', 'PGConf', 'SREcon', 'RSAC', 'NANOG', 'Vendor user conference', 'Other'].map(option));
+    const segment = h('select', {}, ...['Kubernetes', 'PostgreSQL', 'SRE', 'Security', 'Networking', 'Vendor users', 'Other'].map(option));
     venue.value = loadDraft(`${trainer.id}.venue`, 'KubeCon');
     segment.value = loadDraft(`${trainer.id}.segment`, 'Kubernetes');
     venue.onchange = () => {
@@ -143,7 +179,9 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const svc = service ?? ai(); title(trainer.title); root.append(renderMd(trainer.rubric));
     root.append(h('p.task-guide', {}, t(kind === 'roleplay'
       ? bi('Напишите реплику в поле «Ваш текст» и нажмите «Отправить». Ответ собеседника появится в истории попыток; кнопка «Разбор» запрашивает оценку разговора по правилам выше.', 'Write a reply in “Your text” and press “Send”. The other person’s response appears in the attempt history; “Debrief” requests an assessment using the rules above.')
-      : bi('Впишите работу в поле «Ваш текст» и нажмите «Проверить здесь». Нейросеть оценит работу по правилам выше; ответ появится в истории попыток.', 'Enter your work in “Your text” and press “Check here”. AI assesses it using the rules above; the response appears in the attempt history.')), ' ', t(bi('Для проверки на странице подключите нейросеть в ', 'To check on this page, connect AI in ')), h('a', { href: '#/settings' }, t(bi('настройках', 'settings'))), t(bi('. Можно также скопировать запрос в отдельный чат с нейросетью. Тогда сверяйте работу с разбором в том чате; страница его не получает. После сверки нажмите «Завершить самопроверку» под заданием.', '. You can also copy the prompt to a separate AI chat. Review the feedback in that chat; this page does not receive it. After reviewing, press “Finish self-review” below the task.'))));
+      : bi('Впишите работу в поле «Ваш текст» и нажмите «Проверить здесь». Нейросеть оценит работу по правилам выше; ответ появится в истории попыток.', 'Enter your work in “Your text” and press “Check here”. AI assesses it using the rules above; the response appears in the attempt history.')), ' ', t(bi('Для проверки на странице подключите нейросеть в ', 'To check on this page, connect AI in ')), h('a', { href: '#/settings' }, t(bi('настройках', 'settings'))), t(kind === 'roleplay'
+      ? bi('. Можно также скопировать запрос в отдельный чат с нейросетью. Тогда сверяйте работу с разбором в том чате; страница его не получает. После сверки нажмите «Завершить самопроверку разговоров» внизу этого блока.', '. You can also copy the request to a separate AI chat. Review the feedback in that chat; this page does not receive it. After reviewing, press “Finish the conversation self-review” at the bottom of this block.')
+      : bi('. Можно также скопировать запрос в отдельный чат с нейросетью. Тогда сверяйте работу с разбором в том чате; страница его не получает. После сверки нажмите «Завершить самопроверку текста» внизу этого блока.', '. You can also copy the request to a separate AI chat. Review the feedback in that chat; this page does not receive it. After reviewing, press “Finish the text self-review” at the bottom of this block.'))));
     const conversations = loadDraft<import('./storage').Attempt[][]>(`${trainer.id}.conversations`, []);
     const round = h('p');
     const attempts = loadAttempts(trainer.id), history = h('div');
@@ -181,11 +219,18 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       else if (!disposed) { manual.hidden = false; manual.value = prompt; manual.focus(); manual.select(); status.textContent = text('fallback'); }
     })(); });
     const download = button('downloadPrompt', () => downloadFile('prompt.txt', !manual.hidden ? manual.value : currentPrompt(), 'text/plain;charset=utf-8'));
+    // A rubric request without the learner's text would ask for a grade of nothing.
+    const syncPrompt = () => { if (kind === 'rubric') (copy as HTMLButtonElement).disabled = (download as HTMLButtonElement).disabled = !input.value.trim(); };
+    input.addEventListener('input', syncPrompt); syncPrompt();
     root.append(h('label', {}, text('input'), input), actions(send, ...(kind === 'roleplay' ? [debrief] : []), copy, download), status, manual, history);
     input.oninput = () => { saveDraft(trainer.id, input.value); manual.hidden = true; manual.value = ''; sync(); };
     const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text(kind === 'roleplay' ? 'nextVisitor' : 'finishDraft'));
-    finish.onclick = () => { if (busy) return; input.value = ''; manual.value = ''; manual.hidden = true; clearDraft(trainer.id); if (kind === 'roleplay') { conversations.push([...attempts]); saveDraft(`${trainer.id}.conversations`, conversations); attempts.length = 0; saveAttempts(trainer.id, attempts); showHistory(); } sync(); };
-    root.append(...(kind === 'roleplay' ? [round] : []), finish, button('finishSelfReview', () => { ctx.complete(); status.textContent = text('selfReviewDone'); })); cleanup.push(svc.onChange(sync), () => request?.abort());
+    finish.onclick = () => { if (busy) return; if (kind !== 'roleplay' && input.value.trim() && !window.confirm(t(bi('Очистить поле? Прошлые попытки останутся в истории ниже.', 'Clear the field? Earlier attempts stay in the history below.')))) return; input.value = ''; manual.value = ''; manual.hidden = true; clearDraft(trainer.id); if (kind === 'roleplay') { conversations.push([...attempts]); saveDraft(`${trainer.id}.conversations`, conversations); attempts.length = 0; saveAttempts(trainer.id, attempts); showHistory(); } sync(); };
+    const selfReview = button(kind === 'roleplay' ? 'finishRoleplay' : 'finishRubric', () => { if (!input.value.trim() && !attempts.length && !conversations.length) return; ctx.complete(); status.textContent = text('selfReviewDone'); }) as HTMLButtonElement;
+    const selfReviewHint = h('p', { class: 'small muted' }, t(bi('Кнопка станет доступна, когда в поле появится ваш текст.', 'The button becomes available once your text is in the field.')));
+    const syncSelfReview = () => { const empty = !input.value.trim() && !attempts.length && !conversations.length; selfReview.disabled = empty; selfReviewHint.hidden = !empty; };
+    input.addEventListener('input', syncSelfReview); finish.addEventListener('click', syncSelfReview); finish.addEventListener('click', syncPrompt); syncSelfReview();
+    root.append(...(kind === 'roleplay' ? [round] : []), finish, selfReview, selfReviewHint); cleanup.push(svc.onChange(sync), () => request?.abort());
     void svc.ready.then(sync).catch(() => { if (!disposed) status.textContent = text('error'); }); sync();
   } else if (kind === 'events.roi') {
     title(text('roi'), false);
@@ -193,7 +238,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const fields = h('div', { class: 'tr-fields' }), result = h('div', { 'aria-live': 'polite' });
     const accountCount = h('p', { 'aria-live': 'polite' });
     const mode = h('select', { 'data-roi-mode': '' }, h('option', { value: 'scans' }, text('badgeMode')), h('option', { value: 'invited' }, text('invitedMode')));
-    root.append(h('label', {}, text('eventMode'), mode));
+    root.append(h('label', {}, text('eventMode'), mode), h('p', {}, text('shareFormat')));
     const assumptionText = h('p');
     const inputs = {} as Record<keyof typeof roiDefaults, HTMLInputElement>;
     for (const key of Object.keys(roiDefaults) as (keyof typeof roiDefaults)[]) {
@@ -215,7 +260,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       accountCount.textContent = `${t(bi('Уникальные целевые компании', 'Unique target companies'))}: ${uniqueTargetAccounts(p)}`;
       const b = breakEven(p), m = simulate(p);
       const format = (n: number) => Number.isFinite(n) ? n.toLocaleString(lang(), { maximumFractionDigits: 2 }) : '∞';
-      result.replaceChildren(h('p', {}, t(bi('Учебный сценарий', 'Teaching scenario'))), h('p', {}, `${t(bi('Уникальные целевые компании', 'Unique target accounts'))}: ${uniqueTargetAccounts(p)}`), ...([['wins', b.wins], ['opportunities', b.opportunities], ['median', m.median], ['probability', m.probability * 100]] as const).map(([k, v]) => h('p', {}, `${text(k)}: ${format(v)}${k === 'probability' ? '%' : ''}`)), h('p', {}, text('payoff').replace('{n}', String(Math.round(m.probability * 100)))));
+      result.replaceChildren(h('p', {}, t(bi('Учебный сценарий', 'Teaching scenario'))), h('p', {}, `${t(bi('Уникальные целевые компании', 'Unique target accounts'))}: ${uniqueTargetAccounts(p)}`), ...([['wins', b.wins], ['winsWhole', Math.ceil(b.wins)], ['opportunities', b.opportunities], ['median', m.median], ['probability', m.probability * 100]] as const).map(([k, v]) => h('p', {}, `${text(k)}: ${format(v)}${k === 'probability' ? '%' : ''}`)), h('p', {}, text('payoff').replace('{n}', String(Math.round(m.probability * 100)))));
     }
     mode.onchange = update;
     root.append(fields, h('details', {}, h('summary', {}, t(bi('Допущения модели', 'Model assumptions'))), assumptionText), result); update();

@@ -5,9 +5,11 @@
 // it is one way to reason about regional markets, not a law (the honest note
 // is part of the UI, like in the sales pilot's funnel).
 
-import { bi, t } from '../../core/i18n';
+import { bi, lang, t } from '../../core/i18n';
 import type { Mounted, WidgetReg } from '../../core/types';
-import { HONEST_NOTE } from './content';
+import { loadDraft, saveDraft } from '../../engine/trainers/storage';
+/** Russian text uses a decimal comma; contacts are whole people. */
+const num = (v: number, digits: number) => new Intl.NumberFormat(lang() === 'ru' ? 'ru-RU' : 'en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(v);
 
 interface RegionsParams {
   /** Marketing budget, thousand dollars per month. */
@@ -122,10 +124,11 @@ export function mountRegions(el: HTMLElement, _props: unknown): Mounted {
   const root = document.createElement('div');
   root.className = 'sfu-root';
   el.append(style, root);
-  const params: RegionsParams = { ...DEFAULTS };
+  const params: RegionsParams = { ...DEFAULTS, ...loadDraft<Partial<RegionsParams>>('marketing.regions', {}) };
   const h = (tag: string, cls: string, ...kids: (Node | string)[]) => { const e = document.createElement(tag); if (cls) e.className = cls; e.append(...kids); return e; };
   const total = (label: string, value: number | string) => { const d = document.createElement('div'); d.className = 'sfu-total'; const b = document.createElement('b'); b.textContent = String(value); d.append(label, b); return d; };
   const render = () => {
+    saveDraft('marketing.regions', params);
     const r = regionsProject(params);
     const maxDeals = Math.max(0.01, ...r.regions.flatMap((x) => x.rows.map((row) => row.deals)));
     root.replaceChildren(
@@ -147,7 +150,7 @@ export function mountRegions(el: HTMLElement, _props: unknown): Mounted {
           return h('div', 'sfu-knob', h('label', '', h('span', '', t(bi(s.label[0], s.label[1]))), out), input);
         })),
       h('div', 'sfu-totals',
-        total(t(bi('Сделок за горизонт суммарно', 'Total deals over the horizon')), r.totalDeals),
+        total(t(bi('Сделок за горизонт суммарно', 'Total deals over the horizon')), num(r.totalDeals, 1)),
         ...r.regions.map((x) => total(`${t(bi(x.label[0], x.label[1]))}: ${t(bi('сделок', 'deals'))}`, x.totals.deals))),
       h('div', 'sfu-bars', ...r.regions.flatMap((x) => x.rows.map((row) => { const i = document.createElement('i'); i.style.height = `${Math.max(2, (row.deals / maxDeals) * 100)}%`; i.title = `${t(bi(x.label[0], x.label[1]))} · ${t(bi('месяц', 'month'))} ${row.month}: ${row.deals}`; return i; }))),
       h('table', 'sfu-table',
@@ -158,11 +161,10 @@ export function mountRegions(el: HTMLElement, _props: unknown): Mounted {
           h('th', '', t(bi('Сделок накоплено', 'Deals (cum.)'))))),
         h('tbody', '', ...r.regions.map((x) => h('tr', '',
           h('td', 'sfu-region', t(bi(x.label[0], x.label[1]))),
-          h('td', '', String(x.totals.leads)),
-          h('td', '', String(x.totals.opportunities)),
-          h('td', '', String(x.totals.deals)))))),
+          h('td', '', num(x.totals.leads, 0)),
+          h('td', '', num(x.totals.opportunities, 1)),
+          h('td', '', num(x.totals.deals, 1)))))),
       h('p', 'sfu-note', t(bi('Учебная модель, а не прогноз выручки. Контент и исходящие касания делят один бюджет. Исходящие касания дают результат сразу; контент начинает работать после третьего месяца, выходит на полную силу к двенадцатому, и каждый следующий вложенный в него доллар даёт меньше предыдущего. Месячный множитель канала равен (1 − доля контента) + 2 × √(доля контента) × зрелость контента. Коэффициенты охвата, соответствия покупателю и конверсии по регионам — постоянные допущения, а не данные о рынке.', 'Illustrative model, not a revenue forecast. Content uses the same budget as outbound. Outbound contributes immediately; content starts after month 3 and reaches full effect in month 12, with diminishing returns. Monthly channel factor = (1 − content share) + 2 × √content share × maturity. Regional reach, fit and conversion coefficients are fixed assumptions, not calibrated market data.'))),
-      h('p', 'sfu-note', t(HONEST_NOTE)),
     );
   };
   render();

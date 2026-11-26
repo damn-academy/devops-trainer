@@ -80,7 +80,7 @@ const LESSON_SPECS: LessonSpec[] = [
     minutes: 12,
     title: ['Три двигателя роста', 'Three growth engines'],
     summary: [
-      'Product-led, sales-led и community-led движения, гибрид open-source-led со sales-assist и два нарратива: снизу вверх и сверху вниз.',
+      'Три способа привлекать покупателей: через продукт, через продажи и через сообщество; гибрид, в котором открытый код приводит пользователя, а сделку доводит продавец; и два рассказа о продукте: для инженера и для подписанта бюджета.',
       'Product-led, sales-led and community-led motions, the open-source-led with sales-assist hybrid, and the two narratives: bottom-up and top-down.',
     ],
     hook: [
@@ -192,8 +192,8 @@ const LESSON_SPECS: LessonSpec[] = [
       'RICE prioritization, the roadmap as a list of what we do not do, telling signal from noise, and conversations by The Mom Test.',
     ],
     hook: [
-      'Запросов больше, чем людей, в десять раз, и каждый кажется срочным. Этот урок про то, как выбирать, что делать, без самообмана, и как говорить «нет», не разрушая отношения с клиентами.',
-      'There are ten times more requests than people, and every one feels urgent. This lesson is about choosing honestly what to do and how to say no without wrecking customer relationships.',
+      'Запросов больше, чем людей, в десять раз, и каждый кажется срочным. Этот урок про то, как выбирать, что делать, без самообмана и как отличать сигнал от шума. Как отказать конкретному клиенту и продажам, не разрушая отношений, разобрано в уроке «Сигналы сообщества как источник открытия продукта», в разделе «Как отказать клиенту и продажам».',
+      'There are ten times more requests than people, and every one feels urgent. This lesson is about choosing honestly what to do and telling signal from noise. How to turn down a specific customer and the sales team without wrecking relationships is covered in the lesson “Community signals as a source of product discovery”, in the section “Saying no to a customer and sales”.',
     ],
     principles: [18, 19, 20],
     introduces: ['product.rice'],
@@ -242,11 +242,14 @@ const LESSON_SPECS: LessonSpec[] = [
 function principlesBody(ns: number[]): [string, string] {
   const ru: string[] = [];
   const en: string[] = [];
+  // Principles are numbered inside the lesson, so a lesson never shows gaps.
+  let i = 0;
   for (const mod of PRODUCT_PROGRAM) {
     for (const p of mod.principles) {
       if (!ns.includes(p.n)) continue;
-      ru.push(`**${p.n}. ${p.title[0]}.** ${p.body.join('\n\n')}`);
-      en.push(`**${p.n}. ${p.title[1]}.** ${p.bodyEn.join('\n\n')}`);
+      i++;
+      ru.push(`**${i}. ${p.title[0]}.** ${p.body.join('\n\n')}`);
+      en.push(`**${i}. ${p.title[1]}.** ${p.bodyEn.join('\n\n')}`);
     }
   }
   return [ru.join('\n\n'), en.join('\n\n')];
@@ -326,7 +329,7 @@ export const PRODUCT_CONCEPTS: Concept[] = [
   {
     id: 'product.nrr',
     term: bi('чистое удержание выручки (NRR)', 'net revenue retention (NRR)'),
-    short: bi('Доля выручки от существующих клиентов в этом году по сравнению с прошлым; выше 100% значит рост внутри клиентов.', 'The share of revenue from existing customers this year compared with last; above 100% means growth inside the base.'),
+    short: bi('Текущая выручка от клиентов, которые платили год назад, делённая на их выручку год назад; выше 100 % значит рост внутри клиентов.', 'Current revenue from the customers who paid a year ago divided by their revenue a year ago; above 100% means growth inside the base.'),
     introducedIn: 'product.opencore',
     scan: false,
   },
@@ -496,12 +499,12 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     concepts: [],
     refs: { lesson: 'product.chasm' },
     prompt: bi(
-      'Какая волна, по данным урока на конец 2026 года, выносит вверх категорию открытых облачных платформ?',
-      "According to the lesson as of late 2026, which wave is lifting the category of open cloud platforms?",
+      'Какое из событий урок называет волной, которая приводит покупателей к открытым облачным платформам?',
+      "Which of these events does the lesson name as a wave that brings buyers to open cloud platforms?",
     ),
     options: [
       { id: 'repatriation', text: bi('Возврат нагрузок из публичных облаков и уход клиентов VMware', 'The repatriation of workloads from public clouds and the exodus of VMware customers after the ownership change'), correct: true, why: bi('Репатриация нагрузок и уход с VMware создают спрос на открытые платформы в собственных центрах обработки данных.', 'Workload repatriation and the VMware exodus create demand for open platforms in on-premise data centres.') },
-      { id: 'gpu', text: bi('Дешевеющие видеокарты, которые делают GPU доступными каждой компании', 'Cheaper GPUs making graphics cards affordable for every company'), why: bi('С рынком GPU сейчас происходит скорее дефицит, а это волна для другой категории продуктов.', 'The GPU market is seeing scarcity rather than abundance, and that wave belongs to a different category.') },
+      { id: 'gpu', text: bi('Дешевеющие видеокарты, которые делают GPU доступными каждой компании', 'Cheaper GPUs making graphics cards affordable for every company'), why: bi('Урок называет волной обратное, дефицит видеокарт, и эта волна относится к другой категории продуктов.', 'The lesson names the opposite, a GPU shortage, as a wave, and it belongs to a different product category.') },
       { id: 'micro', text: bi('Мода на микросервисы, которая заставляет всех перестраивать архитектуру', 'The microservices fashion forcing everyone to re-architect'), why: bi('Микросервисы давно стали бытовой практикой, а волна — событие, которое меняет спрос за считаные кварталы.', 'Microservices became everyday practice long ago; a wave is an event that shifts demand within a few quarters.') },
     ],
   },
@@ -624,7 +627,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
       { id: 'repeat', text: bi('Один и тот же запрос от трёх целевых клиентов за месяц', 'The same request from three target customers within a month'), correct: true },
       { id: 'metric', text: bi('Рост числа отказов после последнего релиза', 'A rise in the number of failures after the last release'), correct: true },
       { id: 'tweet', text: bi('Громкий пост нецелевой аудитории с критикой продукта', 'A loud post from a non-target audience criticising the product'), why: bi('Шум громок, но приходит не от вашего сегмента и не связан с ценностью продукта.', 'Noise is loud, but it comes from outside your segment and is unrelated to the product’s value.') },
-      { id: 'one-big', text: bi('Просьба одного крупного клиента сделать функцию только для него', 'One large customer asking for a feature only for themselves'), why: bi('Частный кастом размывает продукт: сигнал повторяется и приходит от сегмента, а здесь ни того ни другого.', 'A one-off custom build blurs the product: a signal repeats and comes from a segment, and here there is neither.') },
+      { id: 'one-big', text: bi('Просьба одного крупного клиента сделать функцию только для него, пока задачу за ней никто не исследовал', 'One large customer asking for a feature only for themselves before anyone has examined the problem behind it'), why: bi('Пока задача за просьбой не исследована, это ещё не сигнал для дорожной карты: сигнал повторяется и приходит от сегмента. Сразу считать её шумом тоже нельзя: как исследовать такой запрос и отказать, если он не подтвердился, разобрано в уроке о сигналах сообщества.', 'Until the problem behind the request is examined, it is not yet a roadmap signal: a signal repeats and comes from a segment. Nor can it be dismissed as noise at once: how to examine such a request and say no if it is not confirmed is covered in the community-signals lesson.') },
     ],
   },
   {

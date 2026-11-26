@@ -56,6 +56,8 @@ The stage age of an open opportunity is the time from its latest entry into the 
 <!-- section: theory | Practice with sample data -->
 The “Northwind Data deal pipeline” file below contains quarter-end snapshots of deals: stage, amount, expected close date, and forecast category. The target for new annual revenue in the third quarter is $1,000,000.
 
+File columns: `opp_id` — deal, `account_id` — customer, `snapshot_date` — snapshot date, `stage` — stage (`proposal`, `negotiation`, `won`, `lost`), `amount_usd` — amount in dollars, `close_date` — expected or actual close date, `category` — forecast category (`pipeline`, `best_case`, `commit`, `closed_won`, `closed_lost`). One deal appears in several snapshots. After importing, check the control totals: 144 data rows excluding the header, 48 distinct `opp_id` values, four snapshot dates (22, 32, 48 and 42 rows), and an `amount_usd` total across all rows of 9,800,000.
+
 The same opportunity appears in multiple snapshots, so snapshots must not be summed; use the appropriate snapshot for each calculation. Calculate coverage from the September 30 snapshot: wins in the third quarter and open opportunities with a third-quarter close date. This snapshot was taken on the last day of the quarter, so coverage here is diagnostic rather than a forecast at the start of the quarter. Calculate win rates from the June 30 snapshot for opportunities closed between January 1 and June 30. Calculate slippage by taking open opportunities in the March 31 snapshot with second-quarter close dates and checking which have moved past June 30 in the June 30 snapshot. In the `category` column, `pipeline` means a possible deal with little evidence that it will close, `best_case` means realistic additional volume if conditions are met, and `commit` means a deal the manager expects to close in the period; the next lesson explains these categories in detail. `closed_won` means a won opportunity and `closed_lost` a lost one. The other columns are: `opp_id` — opportunity, `account_id` — company, `snapshot_date` — snapshot date, `stage` — stage, `amount_usd` — amount in dollars, and `close_date` — expected or actual close date.
 
 Calculate coverage of the remaining third-quarter target, win rates by count and amount for deals closed in the first and second quarters, and second-quarter slippage by count and amount.
@@ -123,6 +125,8 @@ Ramp-adjusted team capacity is the sum of monthly rep quotas multiplied by each 
 
 <!-- section: theory | Practice with sample data -->
 The “Northwind Data forecast” file below contains forecasts made 30 days before quarter-end and actual results for four quarters.
+
+File columns: `quarter` — year and quarter, `forecast_d30_usd` — the forecast of new annual revenue in dollars, recorded 30 days before quarter-end, `actual_usd` — new annual revenue actually closed in the quarter. After importing, check the control totals: four data rows, forecasts totalling 1,200,000 and actuals totalling 1,200,000.
 
 Calculate bias and weighted absolute percentage error across the four quarters.
 
