@@ -18,7 +18,7 @@ export const DTLAB_REPO = 'https://github.com/damn-academy/devops-trainer';
  * page shows how to build dtlab from the sources.
  */
 export const DTLAB_RELEASE = {
-  published: false,
+  published: true,
   assets: {
     windows: [{ file: 'dtlab-windows-amd64.exe', label: bi('Windows 10 и 11, процессоры Intel и AMD', 'Windows 10 and 11, Intel and AMD processors') }],
     macos: [

@@ -387,7 +387,7 @@ func uninstallCmd(ctx context.Context, l *lab.Lab, args []string) error {
 			if err != nil || st.Backend.Name == "" {
 				return err
 			}
-			return l.Destroy(ctx)
+			return l.DestroyForUninstall(ctx)
 		},
 		Log: func(f string, a ...any) { fmt.Fprintf(os.Stderr, f+"\n", a...) },
 	})
