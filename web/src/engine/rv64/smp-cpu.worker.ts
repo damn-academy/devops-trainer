@@ -122,6 +122,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     }
     // Input messages are processed between execution batches.
     self.onmessage = ({ data }) => {
+      if (typeof data.hostBudget === 'number') jitRuntime.setHostBudget(data.hostBudget);
       if (data.guestProfileStart && profileInterval && !profileActive) {
         core.profile_configure(profileInterval); core.profile_task_comm(d.guestProfileTaskCommOffset ?? 0); profileActive = true;
       }
@@ -214,7 +215,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
       }
       if (device && performance.now() - lastEntropy > 100) { device.entropy(d.trace ? new Uint8Array(4096) : crypto.getRandomValues(new Uint8Array(4096))); lastEntropy = performance.now(); }
       if (performance.now() - lastReport > 1000) {
-        self.postMessage({ type: 'metrics', hart: d.hart, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, compiler: jitRuntime.stats(), counters: JSON.parse(core.metrics()), remote: { ...remote }, pc: String(core.pc()), state: Atomics.load(words, base), guestTicks: core.guest_ticks(), hostMonotonicMs: performance.timeOrigin + performance.now(), guestProfile: profileActive ? JSON.parse(core.profile_drain()) : undefined }); lastReport = performance.now();
+        self.postMessage({ type: 'metrics', hart: d.hart, wasmMemoryBytes: wasm.memory.buffer.byteLength, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, compiler: jitRuntime.stats(), counters: JSON.parse(core.metrics()), remote: { ...remote }, pc: String(core.pc()), state: Atomics.load(words, base), guestTicks: core.guest_ticks(), hostMonotonicMs: performance.timeOrigin + performance.now(), guestProfile: profileActive ? JSON.parse(core.profile_drain()) : undefined }); lastReport = performance.now();
       }
       // Yield to host input without blocking the device server or incoming fences.
       if (performance.now() - yielded >= 8) { jitRuntime.flush(); await yieldHost(); yielded = performance.now(); }

@@ -1,11 +1,15 @@
+import { jitCharge, MiB } from './host-memory';
 import { compileChainDispatcher, type SharedJitLayout, type Block } from './jit-compiler';
 export interface SharedJitMemory { ram: WebAssembly.Memory; generations: WebAssembly.Memory; granules: WebAssembly.Memory; bytes: number }
 const freeSlots: number[] = [];
 export class JitRuntime {
   private worker = new Worker(new URL('./compiler.worker.ts', import.meta.url), { type: 'module' });
   private queue: Block[] = [];
+  private rejected: number[] = [];
   private slots: number[] = [];
   private inflight = 0;
+  private hostBudget = 256 * MiB;
+  setHostBudget(bytes: number) { this.hostBudget = Math.max(0, bytes); }
   private sharedLayout?: SharedJitLayout;
   private batches: { ids: number[]; slots: number[]; bytes: number }[] = [];
   evicted = 0;
@@ -19,7 +23,7 @@ export class JitRuntime {
   private get byteLimit() { return this.cache?.byteLimit ?? (this.sharedLayout ? 128 * 1024 * 1024 : Infinity); }
   private get installedBytes() { return this.batches.reduce((n, b) => n + b.bytes, 0); }
   stats() { return { compiled: this.compiled, queued: this.queue.length, inflight: this.inflight,
-    pending: this.queuedAt.size, latencyMeanMs: this.compiled ? this.latencyTotalMs / this.compiled : 0,
+    pending: this.queuedAt.size, modules: this.batches.length, estimatedHostBytes: jitCharge(this.installedBytes, this.batches.length), hostBudget: this.hostBudget, latencyMeanMs: this.compiled ? this.latencyTotalMs / this.compiled : 0,
     latencyMaxMs: this.latencyMaxMs, cacheClears: this.cacheClears, evicted: this.evicted, installed: this.slots.length, installedLimit: this.limit, installedWasmBytes: this.installedBytes, installedWasmLimit: Number.isFinite(this.byteLimit) ? this.byteLimit : undefined, tailCalls: this.tailCalls }; }
   error?: string;
   constructor(memory: WebAssembly.Memory, private table: WebAssembly.Table,
@@ -52,7 +56,12 @@ export class JitRuntime {
     };
     this.worker.onerror = e => { this.error = e.message; };
     Object.assign(globalThis, {
-      rv64Compile: (id: number, pc: bigint, words: Uint32Array, raw?: Uint32Array) => { this.queuedAt.set(id, performance.now()); this.queue.push({ id, pc, words: Array.from(words), raw: raw && Array.from(raw) }); },
+      rv64Compile: (id: number, pc: bigint, words: Uint32Array, raw?: Uint32Array) => {
+        // Never re-enter Rust eviction from its compilation callback.
+        if (this.queue.length >= 1024 && this.cache) { this.rejected.push(id); return; }
+        this.queuedAt.set(id, performance.now());
+        this.queue.push({ id, pc, words: Array.from(words), raw: raw && Array.from(raw) });
+      },
     });
   }
   private release() {
@@ -60,10 +69,11 @@ export class JitRuntime {
     this.slots = []; this.batches = [];
   }
   flush() {
+    if (this.rejected.length) { this.cache?.evict(new Uint32Array(this.rejected)); this.rejected = []; }
     if (this.error) throw new Error(`JIT compiler: ${this.error}`);
     // Clear both sides only at a quiescent boundary, never recycle a live slot.
     const limit = this.limit;
-    if (this.slots.length >= limit || this.installedBytes >= this.byteLimit) {
+    if (this.slots.length >= limit || this.installedBytes >= this.byteLimit || jitCharge(this.installedBytes, this.batches.length) >= this.hostBudget) {
       if (this.inflight) return;
       if (this.cache) {
         // Evict whole modules so V8 can reclaim code, preserving recently used
@@ -75,7 +85,7 @@ export class JitRuntime {
         let bytes = this.installedBytes;
         for (const { batch } of ranked) {
           bytes -= batch.bytes; victims.add(batch); ids.push(...batch.ids); batch.slots.forEach(slot => slots.add(slot));
-          if (this.slots.length - slots.size <= limit * 0.75 && bytes <= this.byteLimit * 0.75) break;
+          if (this.slots.length - slots.size <= limit * 0.75 && bytes <= this.byteLimit * 0.75 && jitCharge(bytes, this.batches.length - victims.size) <= this.hostBudget * 0.75) break;
         }
         this.cache.evict(new Uint32Array(ids)); this.evicted += ids.length;
         for (const slot of slots) { this.table.set(slot, null); freeSlots.push(slot); }
@@ -85,7 +95,7 @@ export class JitRuntime {
         this.cacheClears++; this.clear(); this.release(); this.queue = []; this.queuedAt.clear();
       }
     }
-    while (this.queue.length && this.inflight < 2) { const blocks = this.queue.splice(0, 256); this.worker.postMessage(this.sharedLayout ? { blocks, shared: this.sharedLayout } : blocks); this.inflight++; }
+    while (this.hostBudget > 0 && this.queue.length && this.inflight < 2) { const blocks = this.queue.splice(0, 256); this.worker.postMessage(this.sharedLayout ? { blocks, shared: this.sharedLayout } : blocks); this.inflight++; }
   }
-  dispose() { this.worker.onmessage = null; this.worker.onerror = null; this.worker.terminate(); this.release(); this.queue = []; }
+  dispose() { this.worker.onmessage = null; this.worker.onerror = null; this.worker.terminate(); this.release(); this.queue = []; this.rejected = []; this.queuedAt.clear(); }
 }

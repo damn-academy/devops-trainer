@@ -1,3 +1,4 @@
+import { BoundedHistory, ConsoleTail, MiB } from './host-memory';
 import { loadSnapshot, sha256 } from './snapshot';
 import { RV64Machine } from './machine';
 import { createRV64Network } from './network';
@@ -6,8 +7,10 @@ import { fetchSource } from '../labhost/mirror';
 const result = globalThis as typeof globalThis & { rv64Result?: unknown };
 const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
 let machine: RV64Machine | undefined;
-const events: unknown[] = [];
-const samples: unknown[] = [];
+const eventHistory = new BoundedHistory<unknown>(MiB);
+const sampleHistory = new BoundedHistory<unknown>(32 * MiB);
+const events = eventHistory.entries, samples = sampleHistory.entries;
+const tail = new ConsoleTail();
 const params = new URLSearchParams(location.search);
 const memoryMB = Number(params.get('memory') ?? 768);
 let text = '';
@@ -31,7 +34,7 @@ try {
   let saved = false;
   let savedManifest: unknown;
   let saving: Promise<void> | undefined;
-  services.dhcp.on(e => events.push({ ms: performance.now() - start, dhcp: e }));
+  services.dhcp.on(e => eventHistory.push({ ms: performance.now() - start, dhcp: e }));
   machine = new RV64Machine({ id: 'kuberoot', kernel, initrd, memoryMB,
     guestProfileInterval: Number(params.get('guestProfile') ?? 0), guestProfileTaskCommOffset: profileKernel ? 1704 : 0, restoreClock: params.get('clock') === 'continuous' ? 'continuous' : 'elapsed', network: services.network, httpDisk: media, snapshot, snapshotURL: snapshotURL?.endsWith('/paged.json') ? snapshotURL : undefined, jitThreshold: Number(params.get('jit') ?? 50),
     cmdline: 'earlycon=sbi console=hvc0 nokaslr kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000) });
@@ -40,12 +43,12 @@ try {
   await new Promise<void>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('kuberoot probe timeout')), Number(params.get('seconds') ?? 900) * 1000);
     machine!.on(e => {
-      if (e.t === 'rv64.metrics') { samples.push(e.metrics); Object.assign(globalThis, { rv64LatestMetrics: e.metrics }); document.querySelector('#metrics')!.textContent = JSON.stringify(e.metrics, null, 2); return; }
+      if (e.t === 'rv64.metrics') { sampleHistory.push(e.metrics); Object.assign(globalThis, { rv64LatestMetrics: e.metrics }); document.querySelector('#metrics')!.textContent = JSON.stringify(e.metrics, null, 2); return; }
       if (e.t === 'rv64.error') { clearTimeout(timer); reject(new Error(String(e.error))); }
       if (e.t !== 'rv64.console') return;
-      const consoleStart = text.length;
-      text += String(e.text);
-      events.push({ ms: performance.now() - start, consoleStart, consoleEnd: text.length });
+      const consoleStart = tail.total;
+      tail.append(String(e.text)); text = tail.text;
+      eventHistory.push({ ms: performance.now() - start, consoleStart, consoleEnd: tail.total });
       document.querySelector('#console')!.textContent = text;
       if (readyMs === undefined && (snapshotURL
         ? text.includes('\nRV64_RECHECK_BEGIN\n') && /\nkuberoot-\S+\s+Ready\s/.test(text)
@@ -72,6 +75,6 @@ try {
     try { postProbe = await machine.exec(command); }
     catch (error) { postProbe = { error: String(error) }; }
   }
-  result.rv64Result = { type: 'kuberoot', profileRequestedAt: requestedAt, memoryMB, postProbe, snapshotManifest: savedManifest, loadedMs, engineReadyMs, restored: !!snapshotURL, execution: machine.executionStats(), bootReadyMs: readyMs, restoreReadyMs: snapshotURL ? readyMs : undefined, totalMs, events, samples, console: text };
-} catch (error) { result.rv64Result = { type: 'error', profileRequestedAt: requestedAt, memoryMB, error: String(error), execution: machine?.executionStats(), bootReadyMs: readyMs, engineReadyMs, events, samples, console: text }; }
+  result.rv64Result = { type: 'kuberoot', profileRequestedAt: requestedAt, memoryMB, postProbe, snapshotManifest: savedManifest, loadedMs, engineReadyMs, restored: !!snapshotURL, execution: machine.executionStats(), bootReadyMs: readyMs, restoreReadyMs: snapshotURL ? readyMs : undefined, totalMs, events, samples, eventsDropped: eventHistory.dropped, samplesDropped: sampleHistory.dropped, consoleDropped: tail.dropped, console: text };
+} catch (error) { result.rv64Result = { type: 'error', profileRequestedAt: requestedAt, memoryMB, error: String(error), execution: machine?.executionStats(), bootReadyMs: readyMs, engineReadyMs, events, samples, eventsDropped: eventHistory.dropped, samplesDropped: sampleHistory.dropped, consoleDropped: tail.dropped, console: text }; }
 finally { machine?.dispose(); services.dispose(); }

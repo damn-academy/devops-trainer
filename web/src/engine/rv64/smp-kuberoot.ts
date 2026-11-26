@@ -1,7 +1,8 @@
+import { BoundedHistory, ConsoleTail, hartBudget, pressureCeiling, HOST_BUDGET, MiB } from './host-memory';
 import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
 import { createRV64Network } from './network';
 import { fetchSource } from '../labhost/mirror';
-const host = globalThis as typeof globalThis & { rv64Result?: unknown; rv64LatestMetrics?: unknown; rv64PartialResult?: () => unknown };
+const host = globalThis as typeof globalThis & { rv64Result?: unknown; rv64LatestMetrics?: unknown; rv64HostMemory?: unknown; rv64PartialResult?: () => unknown };
 const output = document.querySelector('#console')!;
 const samples: unknown[] = [];
 const params = new URLSearchParams(location.search);
@@ -26,13 +27,51 @@ try {
     const generations = sharedTable(bytes / 4096 * 4), epoch = performance.timeOrigin + performance.now();
     const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
-    const workers: Worker[] = [], start = performance.now(), events: { ms: number; consoleEnd: number }[] = [], metrics: unknown[] = [];
+    const workers: Worker[] = [], start = performance.now();
+    const history = new BoundedHistory<unknown>(32 * MiB), tail = new ConsoleTail();
+    const markers = new Map<string, number>();
+    const latest = new Map<number, { wasmMemoryBytes: number; compiler: unknown }>();
+    let memoryTimer: ReturnType<typeof setInterval> | undefined;
+    let memoryBusy = false, active = true;
+    let uaPending: Promise<{ bytes: number }> | undefined;
+    let jitCeiling = 256 * MiB;
     let text = '', error: string | undefined;
     let profileStartedMs: number | null = guestProfile && !startAfter ? 0 : null;
-    const capture = () => ({ harts, memoryMb, events, metrics, console: text, elapsedMs: performance.now() - start, profileStartedMs, profileStartAfter: startAfter, guestEpochOffsetMs: epoch - performance.timeOrigin - start, httpDisk });
+    const capture = () => ({ harts, memoryMb, markers: Object.fromEntries(markers), metrics: history.entries, metricsDropped: history.dropped, metricsBytes: history.bytes, console: text, consoleDropped: tail.dropped, elapsedMs: performance.now() - start, profileStartedMs, profileStartAfter: startAfter, guestEpochOffsetMs: epoch - performance.timeOrigin - start, httpDisk });
     host.rv64PartialResult = () => ({ type: 'smp-kuberoot', pass: false, samples: [...samples, capture()] });
     const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
     services.network.addPort('smp-kuberoot', { mode: 'access' }, frame => workers[0]?.postMessage({ frame }));
+    const reportMemory = async () => {
+      if (memoryBusy || !active) return;
+      memoryBusy = true;
+      const shared = { ram: memory.buffer.byteLength, generations: generations.buffer.byteLength, granules: granules.buffer.byteLength };
+      const perHart = Array.from({ length: harts }, (_, hart) => ({ hart, ...latest.get(hart) }));
+      const privateBytes = perHart.map(h => h.wasmMemoryBytes ?? 128 * MiB);
+      // Apply accounting limits without waiting for the optional UA measurement (which may wait for GC).
+      const apply = (measured = 0) => {
+        jitCeiling = pressureCeiling(jitCeiling, measured);
+        const budget = hartBudget(shared.ram + shared.generations + shared.granules, privateBytes);
+        workers.forEach(w => w.postMessage({ hostBudget: Math.min(jitCeiling, budget) }));
+      };
+      apply();
+      const api = performance as Performance & { measureUserAgentSpecificMemory?: () => Promise<{ bytes: number }> };
+      let uaBytes: number | null = null, uaStatus = 'unavailable';
+      let deadline: ReturnType<typeof setTimeout> | undefined;
+      try {
+        if (crossOriginIsolated && api.measureUserAgentSpecificMemory) {
+          uaPending ??= api.measureUserAgentSpecificMemory().finally(() => { uaPending = undefined; });
+          const result = await Promise.race([uaPending, new Promise<null>(resolve => { deadline = setTimeout(() => resolve(null), 5000); })]);
+          uaBytes = result?.bytes ?? null; uaStatus = result ? 'ok' : 'timeout';
+        }
+      } catch (e) { uaStatus = String(e); }
+      finally { clearTimeout(deadline); memoryBusy = false; }
+      if (!active) return;
+      if (uaBytes !== null) apply(uaBytes);
+      const record = { type: 'host-memory', ms: performance.now() - start, budgetBytes: HOST_BUDGET, uaBytes, uaStatus, shared, perHart, consoleLength: text.length, consoleDropped: tail.dropped, metricsBytes: history.bytes, metricsDropped: history.dropped };
+      host.rv64HostMemory = record;
+      history.push(record);
+    };
+    memoryTimer = setInterval(() => { void reportMemory(); }, 30000);
     try {
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => reject(Error(`kuberoot ${harts}-hart timeout after ${seconds}s`)), seconds * 1000);
@@ -42,16 +81,18 @@ try {
           w.onmessage = ({ data }) => {
             if (data.type === 'error') { clearTimeout(timeout); reject(Error(data.error)); }
             if (data.type === 'net') services.network.receive('smp-kuberoot', data.frame);
-            if (data.type === 'metrics') { metrics.push({ ms: performance.now() - start, ...data }); host.rv64LatestMetrics = { harts, ...data }; }
+            if (data.type === 'metrics') { history.push({ ms: performance.now() - start, ...data }); latest.set(data.hart, { wasmMemoryBytes: data.wasmMemoryBytes, compiler: data.compiler }); host.rv64LatestMetrics = { harts, ...data }; }
             if (data.type === 'console') {
-              text += new TextDecoder().decode(data.bytes).replace(/\r/g, ''); output.textContent = text;
-              events.push({ ms: performance.now() - start, consoleEnd: text.length });
-              if (guestProfile && profileStartedMs === null && text.includes('\n' + startAfter + '\n')) {
+              const chunk = new TextDecoder().decode(data.bytes).replace(/\r/g, '');
+              const scan = text.slice(-256) + chunk;
+              for (const match of scan.matchAll(/(?:^|\n)(RV64_[A-Z_]+)\n/g)) if (!markers.has(match[1]!)) markers.set(match[1]!, performance.now() - start);
+              tail.append(chunk); text = tail.text; output.textContent = text;
+              if (guestProfile && profileStartedMs === null && scan.includes('\n' + startAfter + '\n')) {
                 profileStartedMs = performance.now() - start;
                 workers.forEach(worker => worker.postMessage({ guestProfileStart: true }));
               }
-              if (text.includes('Kernel panic') || text.includes('\nRV64_PROBE_FAILED\n')) { clearTimeout(timeout); reject(Error('guest failed')); }
-              if (text.includes('\nRV64_PROBE_DONE\n')) { clearTimeout(timeout); resolve(); }
+              if (scan.includes('Kernel panic') || scan.includes('\nRV64_PROBE_FAILED\n')) { clearTimeout(timeout); reject(Error('guest failed')); }
+              if (scan.includes('\nRV64_PROBE_DONE\n')) { clearTimeout(timeout); resolve(); }
             }
           };
           w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk, guestProfile, guestProfileDeferred: !!startAfter, guestProfileTaskCommOffset: guestProfile ? 1704 : 0,
@@ -60,8 +101,8 @@ try {
         }
       });
     } catch (e) { error = String(e); }
-    finally { Atomics.store(ctl, 15, 1); workers.forEach(w => w.terminate()); services.network.removePort('smp-kuberoot'); services.dispose(); }
-    const marker = (name: string) => { const at = text.indexOf('\n' + name + '\n'); return at < 0 ? null : events.find(e => e.consoleEnd >= at + name.length + 2)?.ms ?? null; };
+    finally { active = false; clearInterval(memoryTimer); Atomics.store(ctl, 15, 1); workers.forEach(w => w.terminate()); services.network.removePort('smp-kuberoot'); services.dispose(); }
+    const marker = (name: string) => markers.get(name) ?? null;
     const duration = (a: string, b: string) => { const begin = marker(a), end = marker(b); return begin === null || end === null ? null : (end - begin) / 1000; };
     samples.push({ ...capture(), error, coldReadySeconds: marker('RV64_NODE_READY') === null ? null : marker('RV64_NODE_READY')! / 1000,
       restoreReadySeconds: null, firstGetPodsSeconds: duration('RV64_GET_PODS_BEGIN', 'RV64_GET_PODS_END'), podStartSeconds: duration('RV64_POD_START_BEGIN', 'RV64_POD_START_END'),

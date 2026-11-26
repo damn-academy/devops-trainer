@@ -371,3 +371,103 @@ That check does not validate rebuilt R9 Rust or the R9 integration assertions.
 No cargo/rustc is installed locally. Rebuilt integration, native gates and all
 browser gates remain for the operator under `R9-PLAN.md`. No cluster/browser
 access or push was attempted; measure.mjs and public build artifacts are unchanged.
+
+## R9 rebuilt result and R10 host-memory investigation (2026-11-26)
+
+Operator rebuilt commit `16c0273`: cargo test green, ISA 173/0, arch signatures
+266/0, RV64 Vitest 48 passed, SMP JIT integration 4/4, jit-gates, smp-substrate,
+smp-trace, smp-linux, smp-trace-linux and smp-snapshot all passed. Linux shell
+samples 6.0 / 9.8 s versus R8 17.5 / 27.4 s. Containerd booted in 49 s versus
+R8 1003 s. These are operator results, not locally rerun pod/browser gates.
+
+`web/public/rv64/results/R9-smp-2h-uncompressed-1024-3000s-run.log` and
+`R9-smp-2h-uncompressed-1024-3000s-console.txt` are the retained evidence.
+At about 14.5 wall minutes, hart 0/1 retired 23.95e9 / 20.03e9; JIT share ~0.93,
+memory_helpers ~0.09e9, inline loads/stores ~4.6e9 / 2.9e9, chains ~1.7e9.
+Installed functions 81,674 / 68,146; evicted 256,512 / 213,796. Ready never
+succeeded: readyz failed repeatedly from guest uptime 213 through 834.
+At 12:00:20.616 UTC the renderer crashed (run log line 513), followed by browser
+disconnection. No result JSON exists. Guest MemAvailable ~820 MB does not
+measure host renderer memory.
+
+### Restart attribution (line numbers in the retained console)
+
+- Lines 882 and 968 repeat the **same** 11:50:37.478165 warning, PID 76;
+  the second is a diagnostic log-tail copy. Lines 1938 and 2030 similarly
+  repeat 11:58:12.316744, PID 1921. Four warnings represent two processes.
+- Line 1477: PID 76 starts serving :6443 at 11:55:28.818669. Line 1511:
+  ipallocator repair starts at 11:55:30.020520.
+- Line 1734: 11:56:29.147604, PID 76, fatal PostStartHook
+  `start-service-ip-repair-controllers`: `unable to perform initial IP and
+  Port allocation check (timeout)`. The observed interval is about 60 seconds
+  from secure serving (59.13 s from the repair-start message). The exact
+  configured constant is not printed; verify the image's patched Kubernetes
+  source before attributing a precise source default to this medium.
+- Line 1761: `[kinit] kuberoot-control exited (code 255), restarting in 1s`.
+  Line 1810 supervisor status confirms `restarts:1`, PID 1921, start
+  11:56:51.1530449Z, lastExit code 255. This is kinit restarting the combined
+  runtime after the apiserver's fatal hook, not evidence of a supervisor
+  health-check timeout or kubelet liveness kill.
+- Line 5370: diagnostic SIGQUIT to PID 1921 at uptime 844, induced_exit_expected=1.
+  `scripts/rv64-diag-probe.sh` triggers it after >=600 guest seconds of failed
+  attempts, then sleeps 10 seconds and tails 400 lines. This later induced
+  exit must not be confused with the earlier fatal hook.
+
+TLS failures alone do not prove P-256 CPU starvation. The Go runtime also
+hosts kine and other components; SQL slowness and request scheduling compete.
+Use instruction samples and caller stacks, grouped by task/SATP and pre-restart
+window, to look for crypto/tls, crypto/internal/fips140/nistec (or the version's
+nistec), p256 field/scalar operations and math/big versus runtime/GC/SQLite.
+Correlate with TLS failures and retired rates; instruction-weighted samples
+are not wall-time latency measurements or proof that the 10 s client handshake
+deadline was spent entirely in crypto. See R10-PLAN for a short capture before
+SIGQUIT, without changing guest timeouts or the retained medium.
+
+### Host accounting and mitigation
+
+Most likely crash cause from code is aggregate host memory pressure, especially
+compiled JIT code/metadata beyond the encoded-byte cap. It is a hypothesis:
+no renderer OOM dump or host-memory samples were retained in R9. Hart 0 alone
+retained 130,188,357 encoded bytes at the last report, near its 128 MiB cap.
+Each hart has a separate compiler worker, core wasm memory and module instances;
+V8 may retain optimized/native code until GC after table references are cleared.
+The 131072-function cap and 128 MiB encoded cap do not bound that native memory.
+
+Shared allocation for 1024 MiB guest RAM is 1024 MiB + 64 KiB RAM, 1 MiB
+page generations and 32 MiB + 64 KiB granule epochs, counted once. Each CPU
+worker starts Engine(32); hart 0 also owns an Engine(32) device server in the
+same private wasm memory. Private memory can grow (disk overlays, JIT state,
+Rust allocator); R10 reports its actual byteLength per hart. JIT last_used
+also grows with serial IDs (8 bytes/ID); at R9's ~338k IDs on hart 0 this is
+~2.6 MiB, not the dominant allocation. Wasm linear memories cannot shrink.
+
+R10 accounting target is **2560 MiB total**, including **256 MiB reserve** for
+compiler workers/transients, JS, DOM, network/disk and buffer copies. Remaining
+allowance after shared and private wasm memories is divided by hart count.
+Each hart additionally caps live JIT estimated memory at 256 MiB, charging
+8x encoded bytes plus 64 KiB/module. These are conservative accounting weights,
+not measured V8 expansion factors. Existing encoded/function caps remain as
+secondary ceilings. Whole modules are ranked by last use and evicted to 75%
+of all applicable caps; Rust references are removed before table slots recycle.
+Two in-flight batches (256 blocks each) can overshoot until the next quiescent
+flush. Compiler queue is limited to 1024 blocks; overflow IDs are returned to
+Rust for retry at that boundary. No wasm ABI change.
+
+Every 30 s the page reports shared/private wasm sizes, live modules, encoded
+bytes, estimated JIT cost, console length and dropped data. Optional isolated
+UA memory measurement has a 5 s reporting deadline, one outstanding request,
+and explicit unavailable/error/timeout status. Measured pressure reduces JIT
+allowances. This cannot guarantee process RSS: UA coverage, GC timing and
+non-shrinkable wasm memory remain outside application control. Validate the
+budget against actual browser memory in the operator run, and stop if pressure
+persists; do not describe the estimate as an RSS limit.
+
+SMP and single-hart kuberoot histories now retain at most 32 MiB serialized
+UTF-16-equivalent metrics (also at most 4096 records); console is a 1 Mi-character
+tail. SMP marker times survive console truncation, without unbounded event
+history. Dropped counters are in results. Rust's existing profiler already
+caps each drain at 65536 rows; previously the page retained every drain forever.
+The history byte charge bounds serialization, not exact JS object overhead
+(the reserve covers that). Console DOM/string copies are likewise additional.
+The harness change is only the extra host-memory METRICS line; all sampling,
+accounting and policy live in the page/runtime.

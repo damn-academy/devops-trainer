@@ -3,7 +3,7 @@ import { JitRuntime } from '../src/engine/rv64/jit';
 import { sharedTable } from '../src/engine/rv64/smp';
 import { compileBatch } from '../src/engine/rv64/jit-compiler';
 const cacheTable=new WebAssembly.Table({initial:0,element:'anyfunc'});
-for (const byteLimited of [false, true]) it(`evicts cold modules under the ${byteLimited ? 'byte' : 'function'} cap before reusing slots`, () => {
+for (const mode of ['functions', 'bytes', 'host']) it(`evicts cold modules under the ${mode} cap before reusing slots`, () => {
   let worker: any;
   class StubWorker {
     onmessage: any; onerror: any; pending: any;
@@ -16,9 +16,10 @@ for (const byteLimited of [false, true]) it(`evicts cold modules under the ${byt
   const memory=new WebAssembly.Memory({initial:1}), table=cacheTable;
   const installed=new Map<number,number>(); const evicted:number[]=[]; let clears=0;
   const jit=new JitRuntime(memory,table,(id,slot)=>installed.set(id,slot),()=>{clears++;},undefined,{
-    limit:byteLimited ? 100 : 4, byteLimit:byteLimited ? 350 : undefined, usage:ids=>ids.includes(1)?100:1,
+    limit:mode === 'functions' ? 4 : 100, byteLimit:mode === 'bytes' ? 350 : undefined, usage:ids=>ids.includes(1)?100:1,
     evict:ids=>{for(const id of ids){expect(table.get(installed.get(id)!)).not.toBeNull();installed.delete(id);evicted.push(id);}}
   });
+  if (mode === 'host') jit.setHostBudget(100000);
   const queue=(ids:number[])=>{for(const id of ids)(globalThis as any).rv64Compile(id,0x80000000n,new Uint32Array([(id<<20)|(3<<7)|0x13,4]));jit.flush();worker.reply();};
   queue([1,2]); const firstBytes=jit.stats().installedWasmBytes; expect(firstBytes).toBeGreaterThan(0);
   queue([3,4]); expect(jit.stats().installedWasmBytes).toBeGreaterThan(firstBytes); jit.flush();
@@ -44,5 +45,16 @@ it('uses a larger bounded SMP cache and sends the shared layout to the compiler'
   (globalThis as any).rv64Compile(1,0x4000n,new Uint32Array([0x13,4])); jit.flush();
   expect(sent.shared).toEqual({bytes:32768,ramPages:1,generationPages:1,granulePages:1});
   expect(sent.blocks).toHaveLength(1);
+  jit.dispose(); vi.unstubAllGlobals();
+});
+
+it('bounds queued blocks and rejects overflow only at the quiescent flush boundary', () => {
+  vi.stubGlobal('Worker', class { postMessage() {} terminate() {} });
+  const evict = vi.fn();
+  const jit = new JitRuntime(new WebAssembly.Memory({initial:1}), cacheTable, () => {}, () => {}, undefined, { usage: () => 0, evict });
+  for (let id = 0; id < 1100; id++) (globalThis as any).rv64Compile(id, 0n, new Uint32Array([0x13,4]));
+  expect(jit.stats().queued).toBe(1024); expect(evict).not.toHaveBeenCalled();
+  jit.flush(); expect(evict.mock.calls[0]![0]).toHaveLength(76);
+  expect(jit.stats().inflight).toBe(2); expect(jit.stats().queued).toBe(512);
   jit.dispose(); vi.unstubAllGlobals();
 });

@@ -72,7 +72,7 @@ try {
     });
   }
   if (gates || trace || kuberoot || smpLinux || smpKuberoot) {
-    const progress = setInterval(async () => { if (kuberoot || smpKuberoot) console.error('METRICS', JSON.stringify(await page.evaluate(() => globalThis.rv64LatestMetrics).catch(() => null))); const consoleText = await page.locator("#console").textContent().catch(() => "loading"); if ((kuberoot || smpKuberoot) && label && consoleText) writeFileSync(`public/rv64/results/${label}-console.txt`, consoleText); console.error(consoleText?.slice(-1500)); }, 30000);
+    const progress = setInterval(async () => { if (kuberoot || smpKuberoot) console.error('METRICS', JSON.stringify(await page.evaluate(() => globalThis.rv64LatestMetrics).catch(() => null))); if (smpKuberoot) console.error('METRICS', JSON.stringify(await page.evaluate(() => globalThis.rv64HostMemory).catch(() => null))); const consoleText = await page.locator("#console").textContent().catch(() => "loading"); if ((kuberoot || smpKuberoot) && label && consoleText) writeFileSync(`public/rv64/results/${label}-console.txt`, consoleText); console.error(consoleText?.slice(-1500)); }, 30000);
     page.once("close", () => clearInterval(progress));
   }
   let stopProfile;
