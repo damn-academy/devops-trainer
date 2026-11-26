@@ -268,7 +268,11 @@ func (lab *Lab) Up(ctx context.Context, o UpOptions) error {
 		_ = st.Save(lab.L.State())
 		lab.Log("%s ready (%s)", v.Name, time.Since(t).Round(time.Second))
 	}
-	lab.Log("lab up in %s; the course: http://127.0.0.1:%d/", time.Since(start).Round(time.Second), st.AgentPort)
+	if st.CourseDir != "" {
+		lab.Log("lab up in %s; the course: http://127.0.0.1:%d/", time.Since(start).Round(time.Second), st.AgentPort)
+	} else {
+		lab.Log("lab up in %s; the course is at https://damn.academy (to serve a local copy: dtlab serve --course <web/dist>)", time.Since(start).Round(time.Second))
+	}
 	return nil
 }
 
@@ -721,7 +725,7 @@ func (lab *Lab) Status(ctx context.Context) (StatusView, error) {
 		return StatusView{}, err
 	}
 	sv := StatusView{Profile: st.Profile, Backend: st.Backend.Name, Agent: portOpen(st.AgentPort)}
-	if sv.Agent {
+	if sv.Agent && st.CourseDir != "" {
 		sv.Course = fmt.Sprintf("http://127.0.0.1:%d/", st.AgentPort)
 	}
 	if _, err := os.Stat(lab.L.Kubeconfig()); err == nil {
@@ -812,7 +816,13 @@ func (lab *Lab) Down(ctx context.Context) error {
 
 // Destroy stops and deletes the VMs and their disks, the lab's kuberoot
 // credentials and its host network; downloaded images stay for next time.
-func (lab *Lab) Destroy(ctx context.Context) error {
+func (lab *Lab) Destroy(ctx context.Context) error { return lab.destroy(ctx, true) }
+
+// DestroyForUninstall removes the VMs like Destroy; uninstall then removes the
+// images too, so it does not say they stay.
+func (lab *Lab) DestroyForUninstall(ctx context.Context) error { return lab.destroy(ctx, false) }
+
+func (lab *Lab) destroy(ctx context.Context, keepImages bool) error {
 	if err := lab.Down(ctx); err != nil {
 		return err
 	}
@@ -843,6 +853,10 @@ func (lab *Lab) Destroy(ctx context.Context) error {
 			return err
 		}
 	}
-	lab.Log("VMs, their disks and the kuberoot credentials removed; images stay in %s", lab.L.Images())
+	if keepImages {
+		lab.Log("VMs, their disks and the kuberoot credentials removed; images stay in %s", lab.L.Images())
+	} else {
+		lab.Log("VMs, their disks and the kuberoot credentials removed")
+	}
 	return (&State{}).Save(lab.L.State())
 }
