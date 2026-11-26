@@ -219,6 +219,9 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       else if (!disposed) { manual.hidden = false; manual.value = prompt; manual.focus(); manual.select(); status.textContent = text('fallback'); }
     })(); });
     const download = button('downloadPrompt', () => downloadFile('prompt.txt', !manual.hidden ? manual.value : currentPrompt(), 'text/plain;charset=utf-8'));
+    // A rubric request without the learner's text would ask for a grade of nothing.
+    const syncPrompt = () => { if (kind === 'rubric') (copy as HTMLButtonElement).disabled = (download as HTMLButtonElement).disabled = !input.value.trim(); };
+    input.addEventListener('input', syncPrompt); syncPrompt();
     root.append(h('label', {}, text('input'), input), actions(send, ...(kind === 'roleplay' ? [debrief] : []), copy, download), status, manual, history);
     input.oninput = () => { saveDraft(trainer.id, input.value); manual.hidden = true; manual.value = ''; sync(); };
     const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text(kind === 'roleplay' ? 'nextVisitor' : 'finishDraft'));
@@ -226,7 +229,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     const selfReview = button(kind === 'roleplay' ? 'finishRoleplay' : 'finishRubric', () => { if (!input.value.trim() && !attempts.length && !conversations.length) return; ctx.complete(); status.textContent = text('selfReviewDone'); }) as HTMLButtonElement;
     const selfReviewHint = h('p', { class: 'small muted' }, t(bi('Кнопка станет доступна, когда в поле появится ваш текст.', 'The button becomes available once your text is in the field.')));
     const syncSelfReview = () => { const empty = !input.value.trim() && !attempts.length && !conversations.length; selfReview.disabled = empty; selfReviewHint.hidden = !empty; };
-    input.addEventListener('input', syncSelfReview); finish.addEventListener('click', syncSelfReview); syncSelfReview();
+    input.addEventListener('input', syncSelfReview); finish.addEventListener('click', syncSelfReview); finish.addEventListener('click', syncPrompt); syncSelfReview();
     root.append(...(kind === 'roleplay' ? [round] : []), finish, selfReview, selfReviewHint); cleanup.push(svc.onChange(sync), () => request?.abort());
     void svc.ready.then(sync).catch(() => { if (!disposed) status.textContent = text('error'); }); sync();
   } else if (kind === 'events.roi') {
