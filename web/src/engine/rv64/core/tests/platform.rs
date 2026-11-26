@@ -742,6 +742,33 @@ fn smp_hart_snapshot_round_trips_without_ram_and_rejects_mismatch() {
     let mut truncated = Cpu::new(0);
     truncated.memory.shared_bytes = 32 << 20;
     assert!(truncated.smp_restore(&blob[..blob.len() - 1]).is_err());
-    let single = Cpu::new(4096);
+    let mut single = Cpu::new(4096);
     assert!(single.smp_snapshot().is_err());
+}
+
+#[test]
+fn smp_checkpoint_keeps_dirty_disk_and_device_state_without_clean_cache() {
+    let mut cpu = Cpu::new(0);
+    cpu.memory.shared_bytes = 32 << 20;
+    cpu.memory.devices.disk_bytes = 2 * 262144;
+    cpu.memory.devices.disk_chunk(0, vec![7; 262144]).unwrap();
+    cpu.memory.devices.disk_chunk(1, vec![8; 262144]).unwrap();
+    cpu.memory.devices.disk_dirty.insert(1);
+    cpu.memory.devices.net_rx.push_back(vec![42; 64]);
+    cpu.memory.devices.write(0x0c002180, 0x16);
+    cpu.memory.devices.write(0x0c203000, 3);
+    let blob = cpu.smp_snapshot().unwrap();
+    assert_eq!(cpu.memory.devices.disk_chunks.len(), 2);
+    let mut restored = Cpu::new(0);
+    restored.memory.shared_bytes = 32 << 20;
+    restored.smp_restore(&blob).unwrap();
+    assert!(!restored.memory.devices.disk_chunks.contains_key(&0));
+    assert_eq!(restored.memory.devices.disk_chunks[&1][0], 8);
+    assert!(restored.memory.devices.disk_dirty.contains(&1));
+    assert_eq!(restored.memory.devices.read(0x0c002180), Some(0x16));
+    assert_eq!(restored.memory.devices.read(0x0c203000), Some(3));
+    assert_eq!(restored.memory.devices.net_rx.pop_front().unwrap(), vec![42; 64]);
+    let mut old_version = blob.clone();
+    old_version[7] = 2;
+    assert!(restored.smp_restore(&old_version).is_err());
 }

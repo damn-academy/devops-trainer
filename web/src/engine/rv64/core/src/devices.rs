@@ -43,9 +43,9 @@ pub struct Devices {
     threshold: [u32; 2],
     claimed: u32,
     #[serde(skip)]
-    extra_enable: [u32; 6],
+    pub(crate) extra_enable: [u32; 6],
     #[serde(skip)]
-    extra_threshold: [u32; 6],
+    pub(crate) extra_threshold: [u32; 6],
     pub console: Vec<u8>,
     pub input: VecDeque<u8>,
     pub entropy: VecDeque<u8>,

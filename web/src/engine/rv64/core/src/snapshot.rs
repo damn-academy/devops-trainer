@@ -4,7 +4,7 @@ use bincode::Options;
 const MAGIC: &[u8; 8] = b"DTRV64\0\x01";
 /// SMP envelope: per-hart CPUs, the device CPU, control words and the shared
 /// RAM page stream are assembled by the host; each Cpu blob carries this magic.
-pub const MAGIC_SMP: &[u8; 8] = b"DTRV64\0\x02";
+pub const MAGIC_SMP: &[u8; 8] = b"DTRV64\0\x03";
 impl Cpu {
     pub fn snapshot(&mut self) -> Result<Vec<u8>, String> {
         self.memory.ensure_ram(0, self.memory.ram.len());
@@ -22,14 +22,27 @@ impl Cpu {
     }
     /// One quiesced SMP hart (or the shared device engine): full CPU state,
     /// no RAM — the host owns the shared image.
-    pub fn smp_snapshot(&self) -> Result<Vec<u8>, String> {
+    pub fn smp_snapshot(&mut self) -> Result<Vec<u8>, String> {
         if self.memory.shared_bytes == 0 { return Err("not a shared CPU".into()); }
-        self.encode_with(MAGIC_SMP)
+        let d = &mut self.memory.devices;
+        let mut clean = std::collections::BTreeMap::new();
+        for (index, bytes) in std::mem::take(&mut d.disk_chunks) {
+            if d.disk_dirty.contains(&index) { d.disk_chunks.insert(index, bytes); }
+            else { clean.insert(index, bytes); }
+        }
+        // v3 adds PLIC contexts for secondary harts without changing the
+        // historical single-hart v1 encoding (those fields are serde-skipped).
+        let mut out = MAGIC_SMP.to_vec();
+        let result = bincode::DefaultOptions::new().with_fixint_encoding()
+            .serialize_into(&mut out, &(&*self, self.memory.devices.extra_enable, self.memory.devices.extra_threshold))
+            .map(|_| out).map_err(|e| e.to_string());
+        self.memory.devices.disk_chunks.append(&mut clean);
+        result
     }
     pub fn smp_restore(&mut self, data: &[u8]) -> Result<(), String> {
         if self.memory.shared_bytes == 0 { return Err("restore target is not a shared CPU".into()); }
         if !data.starts_with(MAGIC_SMP) { return Err("unsupported RV64 SMP CPU blob".into()); }
-        let mut restored: Cpu = bincode::DefaultOptions::new().with_fixint_encoding()
+        let (mut restored, enable, threshold): (Cpu, [u32; 6], [u32; 6]) = bincode::DefaultOptions::new().with_fixint_encoding()
             .with_limit(data.len() as u64).reject_trailing_bytes()
             .deserialize(&data[8..]).map_err(|e| e.to_string())?;
         if restored.pc & 1 != 0 || restored.x[0] != 0 {
@@ -40,6 +53,10 @@ impl Cpu {
         // Shared geometry is a property of the restoring runtime, not the blob:
         // shared_bytes is never serialized (see Memory), so adopt ours.
         restored.memory.shared_bytes = self.memory.shared_bytes;
+        restored.memory.devices.extra_enable = enable;
+        restored.memory.devices.extra_threshold = threshold;
+        restored.memory.devices.disk_dirty = restored.memory.devices.disk_chunks.keys().copied().collect();
+        restored.reservation = None;
         restored.memory.reset_caches();
         *self = restored;
         Ok(())

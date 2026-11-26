@@ -1,12 +1,12 @@
 // Browser-only host work: Rust/wasm must already have been built in rv64-dev.
 import { spawn } from 'node:child_process';
 import { createHash, X509Certificate } from 'node:crypto';
-import { mkdirSync, writeFileSync, readFileSync, renameSync, openSync, writeSync, closeSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, renameSync, openSync, writeSync, closeSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 const port = 5198;
 const wasmSha256 = createHash('sha256').update(readFileSync('public/rv64/rv64_core_bg.wasm')).digest('hex');
 const sourceHash = createHash('sha256');
-for (const file of ['smp.ts','smp-cpu.worker.ts','smp-kuberoot.ts','restore-clock.ts','jit-compiler.ts','jit.ts','compiler.worker.ts','worker.ts','snapshot.ts','paged-snapshot.ts','snapshot-pager.ts','snapshot-loader.worker.ts']) sourceHash.update(file).update(readFileSync(`src/engine/rv64/${file}`));
+for (const file of ['smp.ts','smp-checkpoint.ts','smp-cpu.worker.ts','smp-kuberoot.ts','restore-clock.ts','jit-compiler.ts','jit.ts','compiler.worker.ts','worker.ts','snapshot.ts','paged-snapshot.ts','snapshot-pager.ts','snapshot-loader.worker.ts']) sourceHash.update(file).update(readFileSync(`src/engine/rv64/${file}`));
 const jitSourceSha256 = sourceHash.digest('hex');
 const label = process.env.RV64_RESULT_NAME;
 if (label && !/^[A-Za-z0-9_-]+$/.test(label)) throw new Error('Invalid result name');
@@ -52,10 +52,11 @@ try {
     const snapshotName = integration ? 'integration' : process.env.RV64_SNAPSHOT_NAME ?? 'kuberoot';
     if (!/^[A-Za-z0-9_-]+$/.test(snapshotName)) throw new Error('Invalid snapshot name');
     const destination = `public/rv64/snapshots/${snapshotName}`;
+    if (smpKuberoot && existsSync(`${destination}/smp.json`)) throw Error('SMP snapshot destination already published; choose a new RV64_SNAPSHOT_NAME');
     mkdirSync(destination, { recursive: true });
     await page.route('**/snapshot-upload/*', async route => {
       const name = new URL(route.request().url()).pathname.split('/').pop();
-      if (!/^(?:[a-f0-9]{64}\.bin|manifest\.json|paged\.json|certificates\.pem)$/.test(name)) return route.abort();
+      if (!/^(?:[a-f0-9]{64}\.bin|manifest\.json|paged\.json|smp\.json|certificates\.pem)$/.test(name)) return route.abort();
       if (name === 'certificates.pem') {
         const certs = [...route.request().postData().matchAll(/-----BEGIN CERTIFICATE-----[A-Za-z0-9+/=\r\n]+-----END CERTIFICATE-----/g)]
           .flatMap(m => { try { return [new X509Certificate(m[0])]; } catch { return []; } })

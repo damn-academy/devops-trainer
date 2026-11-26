@@ -101,7 +101,7 @@ impl Engine {
     pub fn smp_devices(&mut self) { self.cpu.service_devices(); }
     pub fn smp_interrupts(&self, hart: u32) -> u64 { self.cpu.memory.devices.hart_interrupts(hart as usize) }
     /// Quiesced all-hart barrier piece: this hart's (or the device engine's) state, no RAM.
-    pub fn smp_snapshot(&self) -> Result<Vec<u8>, JsValue> { self.cpu.smp_snapshot().map_err(|e| JsValue::from_str(&e)) }
+    pub fn smp_snapshot(&mut self) -> Result<Vec<u8>, JsValue> { self.cpu.smp_snapshot().map_err(|e| JsValue::from_str(&e)) }
     pub fn smp_restore(&mut self, data: &[u8]) -> Result<(), JsValue> { self.cpu.smp_restore(data).map_err(|e| JsValue::from_str(&e)) }
     pub fn boot(&mut self, kernel: &[u8], initrd: &[u8], cmdline: &str) -> Result<(), JsValue> {
         let entry = RAM_BASE + 0x200000;
@@ -246,6 +246,10 @@ impl Engine {
     }
     pub fn take_disk(&mut self) -> Vec<u8> { std::mem::take(&mut self.cpu.memory.devices.disk) }
     pub fn lazy_disk(&mut self, bytes: f64) { self.cpu.memory.devices.disk_bytes = bytes as u64; }
+    pub fn disk_trim_clean(&mut self) {
+        let d = &mut self.cpu.memory.devices;
+        d.disk_chunks.retain(|index, _| d.disk_dirty.contains(index));
+    }
     pub fn disk_cached(&self) -> Vec<u32> { self.cpu.memory.devices.disk_chunks.keys().map(|i| *i as u32).collect() }
     pub fn disk_prune(&mut self, index: u32, base: &[u8]) -> bool {
         let d = &mut self.cpu.memory.devices;

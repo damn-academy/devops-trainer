@@ -18,6 +18,7 @@ interface Init {
   guestProfileTaskCommOffset?: number;
   /** Snapshot coordination: [0]=requestEpoch, [1]=resumeEpoch, [2+hart]=captured. */
   snap?: SharedArrayBuffer;
+  initialRestore?: { blob: Uint8Array; deviceBlob?: Uint8Array };
 }
 self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
   self.onmessage = null;
@@ -47,6 +48,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     if (profileActive) { core.profile_configure(profileInterval); core.profile_task_comm(d.guestProfileTaskCommOffset ?? 0); }
     const device = d.hart === 0 ? new mod.Engine(32) : undefined;
     device?.smp_configure(0, d.bytes);
+    if (device && (d.snap || d.initialRestore) && typeof device.disk_trim_clean !== 'function') throw Error('Rebuild R17 WASM: disk_trim_clean missing');
     const disk = device && d.httpDisk ? new HTTPBlockDevice(d.httpDisk) : undefined;
     if (disk) device.lazy_disk(disk.image.bytes);
     const diskTasks = new Map<number, Promise<void>>(); let diskError: unknown;
@@ -105,7 +107,10 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
         const out: Uint8Array = device.output(); if (out.length) self.postMessage({ type: 'console', hart: 0, bytes: out });
       }
     };
-    if (d.hart === 0) {
+    if (d.initialRestore) {
+      core.smp_restore(d.initialRestore.blob);
+      if (device && d.initialRestore.deviceBlob) device.smp_restore(d.initialRestore.deviceBlob);
+    } else if (d.hart === 0) {
       if (d.program) { core.load_program(d.program); core.smp_start(0x80000000n, 0n); }
       else core.smp_boot(d.kernel, d.initrd, d.cmdline ?? 'earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init', d.harts);
       Atomics.store(words, 0, 0); Atomics.store(words, 14, 1); Atomics.notify(words, 14);
@@ -141,20 +146,40 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     };
     const channel = new MessageChannel();
     const yieldHost = () => new Promise<void>(resolve => { channel.port1.onmessage = () => resolve(); channel.port2.postMessage(0); });
-    let yielded = performance.now();
+    let yielded = performance.now(), lastTrim = performance.now();
     const snap = d.snap ? new Int32Array(d.snap) : undefined;
     while (!Atomics.load(words, 15)) {
       // All-hart snapshot barrier: drain outstanding work, capture this hart,
       // then wait for the host to re-install the image and blobs and resume.
       if (snap && snapEpoch > 0 && Atomics.load(snap, 0) === snapEpoch && !Atomics.load(snap, 2 + d.hart)) {
-        for (let i = 0; i < 200000 && (pending || [...Array(d.harts).keys()].some(h => h !== d.hart && Atomics.load(words, h * 16 + 2) === 1)); i++) {
-          service(); await yieldHost();
+        // Stop guest execution on every hart, but continue servicing remote
+        // fences/MMIO until all participants have reached the barrier.
+        const deadline = performance.now() + 120000;
+        while (pending) {
+          service();
+          if (pending.every(t => bus.completed(t))) { core.smp_reply(0n, 0n); pending = undefined; }
+          if (performance.now() > deadline) throw Error('snapshot fence timeout');
+          await yieldHost();
         }
-        if (pending) throw Error('snapshot barrier: fences did not drain');
-        if (device) { while (diskTasks.size) await Promise.all(diskTasks.values()); service(); if (diskTasks.size) throw Error('snapshot barrier: disk did not drain'); }
+        // Old in-page gate has only captured slots; persistent checkpoints use
+        // separate quiescence slots so device serialization cannot race DMA.
+        if (snap.length >= 2 + 2 * d.harts) {
+          Atomics.store(snap, 2 + d.harts + d.hart, 1);
+          while (Array.from({ length: d.harts }, (_, h) => Atomics.load(snap, 2 + d.harts + h)).some(v => !v)) {
+            service();
+            if (performance.now() > deadline) throw Error('snapshot quiescence timeout');
+            await yieldHost();
+          }
+        }
+        service();
+        if (device) {
+          do { await Promise.all(diskTasks.values()); service(); } while (diskTasks.size);
+          if (typeof device.disk_trim_clean !== 'function') throw Error('Rebuild R17 WASM: disk_trim_clean missing');
+          device.disk_trim_clean();
+        }
         const blob = core.smp_snapshot();
         const deviceBlob = device?.smp_snapshot();
-        self.postMessage({ type: 'snapshot', hart: d.hart, blob, deviceBlob }, [blob.buffer, deviceBlob?.buffer].filter(Boolean) as Transferable[]);
+        self.postMessage({ type: 'snapshot', hart: d.hart, ticks: core.guest_ticks(), blob, deviceBlob }, [blob.buffer, deviceBlob?.buffer].filter(Boolean) as Transferable[]);
         Atomics.store(snap, 2 + d.hart, 1); Atomics.notify(snap, 2 + d.hart);
         while (Atomics.load(snap, 1) < snapEpoch) await yieldHost();
         if (restore) {
@@ -169,6 +194,10 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
         self.postMessage({ type: 'resumed', hart: d.hart });
       }
       service();
+      if (device && performance.now() - lastTrim > 1000 && diskTasks.size === 0 && device.disk_cached().length > 128) {
+        if (typeof device.disk_trim_clean !== 'function') throw Error('Rebuild R17 WASM: disk_trim_clean missing');
+        device.disk_trim_clean(); lastTrim = performance.now();
+      }
       const state = Atomics.load(words, base);
       if (state === 2) {
         core.smp_start(wide[base / 2 + 5]!, wide[base / 2 + 6]!);
