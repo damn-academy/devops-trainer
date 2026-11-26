@@ -610,7 +610,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'disease',
-        text: bi('Это болезнь, ведь тест хороший, и положительный результат почти наверняка верный', 'It is the disease, because the test is good and a positive result is almost certainly correct'),
+        text: bi('Это болезнь, ведь тест хороший, и положительный результат почти наверняка верный', 'The disease, because the test is good and a positive is almost surely correct'),
         why: bi('Качество теста говорит, как он работает у больных и здоровых по отдельности, но при редкой болезни здоровых в десятки раз больше, и их ложные тревоги перевешивают.', 'The test’s quality tells how it works among the sick and the healthy separately, but with a rare disease the healthy vastly outnumber the sick, and their false alarms outweigh.'),
       },
       {
@@ -693,13 +693,13 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'luck',
-        text: bi('В выдающемся заходе была удача, и следующий ближе к обычному уровню', 'An outstanding attempt included luck, which rarely repeats twice, so the next result is closer to the usual level'),
+        text: bi('В выдающемся заходе была удача, и следующий ближе к обычному уровню', 'The outstanding attempt had luck in it, so the next is nearer the usual level'),
         correct: true,
         why: bi('После необычно хорошего или необычно плохого замера следующий чаще ближе к среднему сам по себе, без всяких причин искать в хвале или ругани.', 'After an unusually good or unusually bad measurement the next one is usually closer to the mean on its own, with no cause to seek in praise or scolding.'),
       },
       {
         id: 'talent',
-        text: bi('Курсанты зазнаются от похвалы и на следующем заходе перестают стараться', 'Cadets get conceited from praise and stop trying'),
+        text: bi('Курсанты зазнаются от похвалы и на следующем заходе перестают стараться', 'Cadets grow conceited from praise and stop putting in effort on the next attempt'),
         why: bi('Такой механизм нужно было бы показать отдельно; наблюдение само по себе объясняется возвратом к среднему.', 'Such a mechanism would have to be shown separately; the observation itself is explained by the return to the mean.'),
       },
     ],
@@ -716,7 +716,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'effect',
-        text: bi('Эффект шоколада, ведь исследование показало, что шоколад снижает усталость', 'A chocolate effect, because the study showed that chocolate reduces tiredness'),
+        text: bi('Эффект шоколада, ведь исследование показало, что шоколад снижает усталость', 'A chocolate effect, because the study showed that eating chocolate reduces tiredness'),
         why: bi('Действие — это как раз то, что без сравнения установить нельзя; наблюдение не отделяет причину от обстановки.', 'An effect is exactly what cannot be established without comparison; observation does not separate cause from circumstances.'),
       },
       {
@@ -726,7 +726,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'observation',
-        text: bi('Лишь наблюдение: любители шоколада жалуются реже, причина неизвестна', 'Only an observation that chocolate lovers complain less often, while the cause is unknown from such data'),
+        text: bi('Лишь наблюдение: любители шоколада жалуются реже, причина неизвестна', 'Only an observation that chocolate lovers complain less, with the cause unknown'),
         correct: true,
         why: bi('Без группы сравнения возможны и другие объяснения: те, кто двигается больше, и шоколад едят, и устают иначе; новость описывает совместность, и действия шоколада она не доказывает.', 'Without a comparison group other explanations are possible: people who move more both eat chocolate and tire differently; the news describes co-occurrence, not chocolate’s effect.'),
       },
@@ -744,13 +744,13 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'drawer',
-        text: bi('Публикационное смещение: о найденном эффекте пишут чаще, чем об отсутствии эффекта', 'Publication bias: a found effect gets written about more often than a missing one, and the feed tilts toward sensations'),
+        text: bi('Публикационное смещение: о найденном эффекте пишут чаще, чем об отсутствии эффекта', 'Publication bias: a found effect is written about more often than a missing one'),
         correct: true,
         why: bi('Журналы охотнее печатают «нашли», журналисты охотнее перепечатывают сенсацию, поэтому одинокое «исследование показало» — кандидат на перепроверку.', 'Journals prefer printing "we found", journalists prefer reprinting a sensation, so a lonely "a study shows" is a candidate for re-checking.'),
       },
       {
         id: 'money',
-        text: bi('Исследования оплачивают заинтересованные компании, и поэтому их результатам нельзя доверять', 'All research is bought with money and therefore unreliable'),
+        text: bi('Исследования оплачивают заинтересованные компании, и поэтому их результатам нельзя доверять', 'Studies are paid for by interested companies, and so their results cannot be trusted'),
         why: bi('Существование спонсорских искажений не делает ложным каждое исследование; слабость одинокого заголовка объясняется смещением публикаций, и подкуп всех подряд для этого не нужен.', 'Sponsorship distortions exist, but they do not make every study false; the weakness of a lonely headline is explained by publication bias, not by everyone being bribed.'),
       },
       {
@@ -777,13 +777,13 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'emotion',
-        text: bi('Эмоциональная нагрузка: страх срабатывает раньше проверки', 'Emotional load, in which fear and outrage are meant to trigger before checking starts'),
+        text: bi('Эмоциональная нагрузка: страх срабатывает раньше проверки', 'Emotional load: fear fires before checking does'),
         correct: true,
         why: bi('Громкость и запугивание подменяют аргумент; против них работает пауза и три обычных вопроса про наблюдение, сравнение и опровержение.', 'Loudness and scare tactics substitute for an argument; a pause and the usual three questions about observation, comparison and refutation work against them.'),
       },
       {
         id: 'fake-expert',
-        text: bi('Поддельная экспертиза: «исследования доказали» без ссылки', 'Fake expertise: "studies have proven" without a reference'),
+        text: bi('Поддельная экспертиза: «исследования доказали» без ссылки на источник', 'Fake expertise: "studies have proven" without a reference to a source'),
         why: bi('Ссылок на исследования здесь нет ни одной, поэтому приём о поддельной науке не применяется; применён более грубый — эмоция.', 'There are no references to studies here at all, so the fake-science move does not apply; a cruder one is used — emotion.'),
       },
     ],
@@ -805,12 +805,12 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'numbers',
-        text: bi('Игру с цифрами: доли детей и взрослых заменены одним общим процентом', 'A numbers trick: shares replaced with percents'),
+        text: bi('Игру с цифрами: доли детей и взрослых заменены одним общим процентом для всех', 'A numbers trick: the shares of children and adults replaced with one overall percentage'),
         why: bi('Цифр в примере нет вовсе; приём чисто словесный.', 'There are no numbers in the example at all; the move is purely verbal.'),
       },
       {
         id: 'strawman',
-        text: bi('Подмену тезиса: рекомендацию сократить сахар выдали за намерение запретить его совсем', 'Replacing the thesis: a recommendation to cut sugar was credited as an intent to ban it all, and that intent was refuted'),
+        text: bi('Подмену тезиса: совет сократить сахар выдали за намерение его запретить', 'Replacing the thesis: advice to cut sugar was passed off as an intent to ban it'),
         correct: true,
         why: bi('Самый убедительный аргумент статьи разбивает утверждение, которого никто не делал; настоящий тезис скучнее и осторожнее.', 'The article’s most convincing argument demolishes a claim nobody made; the real thesis is more boring and careful.'),
       },
@@ -828,7 +828,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
     options: [
       {
         id: 'ceiling',
-        text: bi('Лучший случай, а типичного результата фраза не называет', 'A ceiling in the best case: 90% once happened with someone under some measurement; the phrase names no typical result'),
+        text: bi('Лучший случай, а типичного результата фраза не называет', 'The best case, while the phrase names no typical result'),
         correct: true,
         why: bi('«До» превращает выброс в обещание; стоит спросить, 90% какой группы, при каком замере и что стало с остальными.', '"Up to" turns an outlier into a promise; one should ask: 90% of which group, measured how, and what happened to the rest.'),
       },
@@ -839,7 +839,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'nothing',
-        text: bi('Ничего: цифры в рекламе всегда выдуманы, и проверять их бессмысленно', 'Nothing: numbers in advertising are never true'),
+        text: bi('Ничего: цифры в рекламе всегда выдуманы, и проверять их бессмысленно', 'Nothing: advertising numbers are always made up, so checking them is pointless'),
         why: bi('Проблема не в том, что цифра выдумана, а в том, что она подобрана так, чтобы ничего не значить; цифре нельзя приписывать и полную ложь.', 'The problem is not that the number is invented, but that it is chosen to mean nothing; the number cannot be credited with being a complete lie either.'),
       },
     ],
@@ -861,7 +861,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'richest',
-        text: bi('Кто самый богатый житель района в этом году и сколько он зарабатывает', 'Who the richest resident of the district is this year'),
+        text: bi('Кто самый богатый житель района в этом году и сколько именно он зарабатывает', 'Who the richest resident of the district is this year and exactly how much they earn'),
         why: bi('Судьба одного человека — это снова выборка из одного, она не показывает, что стало с большинством.', 'The fate of one person is again a sample of one; it does not show what happened to most.'),
       },
       {
@@ -889,12 +889,12 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'brighter',
-        text: bi('Померить освещённость улиц люксометром до и после замены фонарей', 'Measure the streets’ brightness with a lux meter'),
+        text: bi('Померить освещённость улиц люксометром до и после замены фонарей', 'Measure street brightness with a lux meter before and after the lamps are replaced'),
         why: bi('Яркость фонарей и влияние яркости на аварийность — разные вопросы; люксометр ответит на первый, а вывод новости — про второй.', 'The brightness of the lights and the effect of brightness on accidents are different questions; the lux meter answers the first, while the news item’s conclusion is about the second.'),
       },
       {
         id: 'compare',
-        text: bi('Сравнить с похожими улицами без новых фонарей за тот же период', 'Compare these streets with similar streets without the new lights over the same period'),
+        text: bi('Сравнить с похожими улицами без новых фонарей за тот же период', 'Compare with similar streets without new lights over the same period'),
         correct: true,
         why: bi('Без сравнения падение можно списать на случайный спад, сезонность и регрессию к среднему после неудачного периода; сравнение отделяет эффект фонарей от всего остального.', 'Without a comparison, the drop can be written off to a random decline, seasonality and regression to the mean after a bad period; the comparison separates the lights’ effect from everything else.'),
       },
@@ -923,7 +923,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'design',
-        text: bi('Сколько стоит крем по сравнению с похожими кремами других марок', 'How much the cream costs compared with similar creams of other brands'),
+        text: bi('Сколько стоит крем по сравнению с похожими кремами других марок', 'How much the cream costs next to similar creams of other brands'),
         why: bi('Цена не относится к проверке утверждения; вопросы реестра сомнений касаются наблюдения, сравнения и замера.', 'Price is irrelevant to checking the claim; the register’s questions concern observation, comparison and measurement.'),
       },
     ],
@@ -951,7 +951,7 @@ export const SCITHINK_QUIZ: QuizItem[] = [
       },
       {
         id: 'one',
-        text: bi('Около 1 %, ведь находку получил один житель из ста', 'About 1 %, because one resident in a hundred got a positive result'),
+        text: bi('Около 1 %, ведь находку получил один житель из ста', 'About 1 %, because one resident in a hundred tested positive'),
         why: bi('Один из ста показывает, какую долю жителей тест отмечает как больных. Вопрос о том, сколько из этих находок настоящие: для этого нужно разделить девять настоящих находок на все сто девять.', 'One in a hundred is the share of all finds among residents. The question is how many of those finds are genuine: divide the nine genuine finds by all one hundred and nine.'),
       },
     ],
