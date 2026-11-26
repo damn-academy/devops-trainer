@@ -163,9 +163,13 @@ it('lets learners explicitly finish the downloaded script self-review', () => {
 it.each(['rubric', 'roleplay'] as const)('completes %s after external chat self-review without deleting the draft', kind => {
   const w = setup(kind, { trainer: kind === 'rubric' ? 'events.cfp-review' : 'events.booth-visitor' }, false);
   const input = w.host.querySelector('textarea')!;
+  const finish = w.button(kind === 'rubric' ? 'Finish the text self-review' : 'Finish the conversation self-review') as HTMLButtonElement;
+  // An empty field has nothing to review yet.
+  expect(finish.disabled).toBe(true);
   input.value = 'Reviewed in my chat'; input.dispatchEvent(new Event('input'));
   expect(w.ctx.complete).not.toHaveBeenCalled();
-  w.button('Finish self-review').click();
+  expect(finish.disabled).toBe(false);
+  finish.click();
   expect(w.ctx.complete).toHaveBeenCalledOnce();
   expect(input.value).toBe('Reviewed in my chat');
   expect(w.stream).not.toHaveBeenCalled();
