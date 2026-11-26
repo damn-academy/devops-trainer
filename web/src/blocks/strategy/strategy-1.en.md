@@ -145,7 +145,7 @@ This is a teaching classification: cases have different causes and profitability
 - Cloud repatriation benefits any company with a bill above one million dollars per year || Staffing, depreciation, and networking belong in the calculation.
 - S3 compatibility is unimportant because 37signals rewrote the application anyway || The compatible interface reduced rework.
 ? What can a networking vendor sell in the accelerator cloud market?
-- Accelerators resold at prices below specialist clouds || This is someone else's business with different economics.
+- Accelerators resold at prices below those of specialist clouds || This is someone else's business with different economics.
 - A discount per accelerator hour because buyers compare only that price || Hourly price without utilization says nothing.
 + Reduced downtime and lower cost per successful training job || Value is measured in useful work.
 <!-- /quiz -->
@@ -204,9 +204,9 @@ Hosting in the country covers only the first item. For database, storage, securi
 ? A vendor's servers are located in the customer's country. Which part of the sovereignty requirements does this meet?
 + Only data location; access, keys, updates, and exit are checked separately || Sovereignty breaks down into several properties.
 - All requirements, because the data is legally under the country's jurisdiction || Jurisdiction does not resolve access and key issues.
-- None, because sovereignty depends only on who owns the vendor company || Storage location is one of the properties.
+- None, because sovereignty depends only on who the owner of the vendor company is || Storage location is one of the properties.
 ? What does the Bitkom survey say about demand for sovereign cloud in Germany?
-- Companies are moving to European providers en masse and are willing to pay more || 7 % are willing to pay more.
+- Companies are moving en masse to European providers and are willing to pay more for that || 7 % are willing to pay more.
 + Desire for independence is high, but willingness to accept disadvantages for it is low || 78 % see dependence; 65 % would accept no disadvantage.
 - There is no demand because 65 % of companies rejected sovereign cloud || Rejecting disadvantages does not mean rejecting cloud.
 ? How should you read AWS's announcement of a Saudi Arabia region for 2026?
