@@ -16,9 +16,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.argument'],
     prompt: W('В строке `echo hello world` между словами hello и world поставили не один, а пять пробелов подряд. Сколько аргументов получит команда `echo`?', 'In the line `echo hello world` five spaces in a row were put between hello and world instead of one. How many arguments does `echo` get?'),
     options: [
-      { id: '2', text: '2', correct: true },
-      { id: '6', text: '6', why: W('Пробелы оболочка аргументами не считает. Сколько бы их ни стояло подряд, они только отделяют одно слово от другого.', 'Spaces are not arguments: they only separate words, however many there are.') },
       { id: '1', text: '1', why: W('Одним аргументом фраза стала бы только в том случае, если бы её взяли в кавычки.', 'The phrase becomes one argument only if you put it in quotes.') },
+      { id: '6', text: '6', why: W('Пробелы оболочка аргументами не считает. Сколько бы их ни стояло подряд, они только отделяют одно слово от другого.', 'Spaces are not arguments: they only separate words, however many there are.') },
+      { id: '2', text: '2', correct: true },
       { id: '3', text: '3', why: W('Имя команды в число аргументов не входит. Аргументами называются только слова, которые идут после него.', 'The command name is not an argument: arguments are the words after it.') },
     ],
     explain: W('Оболочка делит строку на три слова: `echo`, `hello` и `world`. Первое слово она считает именем команды, а два остальных передаёт этой команде как аргументы.', 'The shell splits the line into words: `echo`, `hello`, `world`. The first is the command, the other two are arguments.'),
@@ -70,9 +70,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.archive'],
     prompt: W('Файл `b.txt` уже существовал, и вы выполнили `mv a.txt b.txt`. Что останется в каталоге?', 'The file `b.txt` already existed, and you ran `mv a.txt b.txt`. What is left in the directory?'),
     options: [
-      { id: 'b', text: W('Останется только b.txt, в котором будет содержимое бывшего a.txt', 'Only b.txt remains, holding the contents of the former a.txt'), correct: true },
-      { id: 'both', text: W('Останутся оба файла, а b.txt никто не тронет', 'Both files remain, and nobody touches b.txt'), why: W('Нет, команда mv без флагов ничего не спрашивает и заменяет существующий файл.', 'No, mv without flags asks nothing and replaces the existing file.') },
       { id: 'err', text: W('Команда сообщит об ошибке и ничего не сделает, потому что файл уже существует', 'The command reports an error and does nothing, because the file already exists'), why: W('Нет, `mv` ничего не спрашивает и молча заменяет существующий файл. Чтобы этого не случилось, у команды есть флаг `-n`: с ним `mv -n a.txt b.txt` оставит b.txt нетронутым.', 'No, `mv` asks nothing and silently replaces the existing file. To prevent that, the command has the `-n` flag: with it `mv -n a.txt b.txt` leaves b.txt untouched.') },
+      { id: 'both', text: W('Останутся оба файла, а b.txt никто не тронет', 'Both files remain, and nobody touches b.txt'), why: W('Нет, команда mv без флагов ничего не спрашивает и заменяет существующий файл.', 'No, mv without flags asks nothing and replaces the existing file.') },
+      { id: 'b', text: W('Останется только b.txt, в котором будет содержимое бывшего a.txt', 'Only b.txt remains, holding the contents of the former a.txt'), correct: true },
       { id: 'trash', text: W('Старый b.txt попадёт в корзину', 'The old b.txt goes to the trash'), why: W('Нет, корзины в Linux нет, и прежнее содержимое b.txt потеряно безвозвратно.', 'No, Linux has no trash, and the old contents of b.txt are gone for good.') },
     ],
   },
@@ -82,8 +82,8 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.glob'],
     prompt: W('Кто превращает шаблон `*.log` в список имён, когда вы набираете `rm *.log`?', 'Who turns the pattern `*.log` into a list of names when you type `rm *.log`?'),
     options: [
-      { id: 'shell', text: W('Оболочка, ещё до запуска rm', 'The shell, before rm starts'), correct: true },
       { id: 'rm', text: W('Сама команда rm, когда разбирает свои аргументы', 'The rm command itself, as it parses its arguments'), why: W('Нет, rm получает уже готовые имена, как если бы вы напечатали их сами, и поэтому шаблоны одинаково работают у всех команд.', 'No, rm receives ready names, as if you had typed them yourself, which is why patterns work the same for every command.') },
+      { id: 'shell', text: W('Оболочка, ещё до запуска rm', 'The shell, before rm starts'), correct: true },
       { id: 'fs', text: W('Файловая система, когда rm открывает каталог', 'The file system, when rm opens the directory'), why: W('Нет, файловая система хранит имена, а подбирает их по шаблону оболочка.', 'No, the file system stores the names, and the shell picks them by the pattern.') },
     ],
     explain: W('Если ни одно имя к шаблону не подошло, оболочка передаёт шаблон как есть, и команда ищет файл, который так и называется: `*.log`.', 'If no name matches the pattern, the shell passes it as it is, and the command looks for a file literally called `*.log`.'),
@@ -94,9 +94,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.archive'],
     prompt: W('Чем команда `tar -xzf ~/site.tgz -C /srv/site` отличается от `cd /srv/site && tar -xzf ~/site.tgz`?', 'How does `tar -xzf ~/site.tgz -C /srv/site` differ from `cd /srv/site && tar -xzf ~/site.tgz`?'),
     options: [
-      { id: 'same', text: W('Результат одинаковый, потому что -C переходит в каталог перед распаковкой', 'The result is the same, because -C changes to the directory before unpacking'), correct: true },
-      { id: 'sub', text: W('Флаг -C создаёт подкаталог с именем архива и распаковывает файлы уже в него', 'The -C flag creates a subdirectory named after the archive and unpacks the files into it'), why: W('Нет, подкаталоги появятся, только если они записаны в самом архиве, а увидеть это можно командой `tar -t`.', 'No, subdirectories appear only if they are recorded in the archive itself, which `tar -t` shows.') },
       { id: 'over', text: W('Флаг -C перезаписывает каталог целиком', 'The -C flag overwrites the whole directory'), why: W('Нет, tar добавляет и заменяет только те файлы, которые есть в архиве, а остальные файлы каталога не трогает.', 'No, tar adds and replaces only the files in the archive and leaves the rest of the directory alone.') },
+      { id: 'sub', text: W('Флаг -C создаёт подкаталог с именем архива и распаковывает файлы уже в него', 'The -C flag creates a subdirectory named after the archive and unpacks the files into it'), why: W('Нет, подкаталоги появятся, только если они записаны в самом архиве, а увидеть это можно командой `tar -t`.', 'No, subdirectories appear only if they are recorded in the archive itself, which `tar -t` shows.') },
+      { id: 'same', text: W('Результат одинаковый, потому что -C переходит в каталог перед распаковкой', 'The result is the same, because -C changes to the directory before unpacking'), correct: true },
     ],
   },
   {
@@ -104,9 +104,9 @@ export const QUIZ: QuizItem[] = [
     kind: 'mcq',
     prompt: W('Вы открыли файл настроек в `vim`, что-то напечатали, и на экране творится непонятное. Как выйти из редактора, ничего не записав в файл?', 'You opened a settings file in `vim`, typed something, and the screen shows something strange. How do you leave the editor without writing anything to the file?'),
     options: [
-      { id: 'q', text: W('Нажать Esc, набрать `:q!` и нажать Enter', 'Press Esc, type `:q!` and press Enter'), correct: true },
-      { id: 'ctrlc', text: W('Нажать Ctrl+C, как для любой другой программы в терминале', 'Press Ctrl+C, as with any other program in a terminal'), why: W('Нет, в `vim` сочетание Ctrl+C только прерывает текущую команду редактора и оставляет файл открытым. Выход без записи делает набор `:q!` в режиме команд, куда возвращает клавиша Esc.', 'No, in `vim` Ctrl+C only interrupts the current editor command and leaves the file open. Leaving without writing is `:q!` in command mode, to which Esc brings you back.') },
       { id: 'ctrlx', text: W('Нажать Ctrl+X', 'Press Ctrl+X'), why: W('Так закрывается редактор `nano`. В `vim` сочетание Ctrl+X ничего не закрывает, а выход без записи делает набор `:q!` после клавиши Esc.', 'That is how `nano` closes. In `vim` Ctrl+X closes nothing, and leaving without writing is `:q!` after Esc.') },
+      { id: 'ctrlc', text: W('Нажать Ctrl+C, как для любой другой программы в терминале', 'Press Ctrl+C, as with any other program in a terminal'), why: W('Нет, в `vim` сочетание Ctrl+C только прерывает текущую команду редактора и оставляет файл открытым. Выход без записи делает набор `:q!` в режиме команд, куда возвращает клавиша Esc.', 'No, in `vim` Ctrl+C only interrupts the current editor command and leaves the file open. Leaving without writing is `:q!` in command mode, to which Esc brings you back.') },
+      { id: 'q', text: W('Нажать Esc, набрать `:q!` и нажать Enter', 'Press Esc, type `:q!` and press Enter'), correct: true },
       { id: 'close', text: W('Закрыть окно терминала', 'Close the terminal window'), why: W('Файл останется прежним, но `vim` оставит рядом служебный файл с окончанием `.swp` и при следующем открытии начнёт спрашивать о нём, а на сервере вы ещё и потеряете сеанс. Чище выйти набором `:q!` после клавиши Esc.', 'The file stays as it was, but `vim` leaves a helper file ending in `.swp` next to it and asks about it the next time, and on a server you also lose the session. It is cleaner to leave with `:q!` after Esc.') },
     ],
     refs: { lesson: 'linux.files' },
@@ -118,9 +118,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.man-page'],
     prompt: W('В разделе SYNOPSIS страницы cp написано `cp [OPTION]... SOURCE... DIRECTORY`. Можно ли скопировать два файла в каталог одной командой?', 'The SYNOPSIS of the cp page says `cp [OPTION]... SOURCE... DIRECTORY`. Can you copy two files into a directory with one command?'),
     options: [
-      { id: 'yes', text: W('Да, потому что многоточие после SOURCE разрешает повторить источник', 'Yes, because the ellipsis after SOURCE lets the source repeat'), correct: true },
-      { id: 'no', text: W('Нет, потому что в SYNOPSIS источник SOURCE указан один раз и повторить его нельзя', 'No, because SOURCE appears once in the SYNOPSIS and cannot be repeated'), why: W('Многоточие после слова в SYNOPSIS означает, что эту часть можно повторить, поэтому источников может быть несколько.', 'An ellipsis after a word in SYNOPSIS means the part may repeat, so there may be several sources.') },
       { id: 'flag', text: W('Можно, но только с флагом -r, который разрешает копировать несколько файлов сразу', 'You can, but only with the -r flag, which allows copying several files at once'), why: W('Нет, флаг -r нужен, когда источником служит каталог, а на число файлов он не влияет.', 'No, -r is needed when a source is a directory, and it has nothing to do with the number of files.') },
+      { id: 'no', text: W('Нет, потому что в SYNOPSIS источник SOURCE указан один раз и повторить его нельзя', 'No, because SOURCE appears once in the SYNOPSIS and cannot be repeated'), why: W('Многоточие после слова в SYNOPSIS означает, что эту часть можно повторить, поэтому источников может быть несколько.', 'An ellipsis after a word in SYNOPSIS means the part may repeat, so there may be several sources.') },
+      { id: 'yes', text: W('Да, потому что многоточие после SOURCE разрешает повторить источник', 'Yes, because the ellipsis after SOURCE lets the source repeat'), correct: true },
     ],
   },
   {
@@ -129,9 +129,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.builtin'],
     prompt: W('Где подробнее всего описано поведение команды `cd`?', 'Where is the behaviour of `cd` described in the most detail?'),
     options: [
-      { id: 'help', text: 'help cd', correct: true },
-      { id: 'man', text: 'man 1 cd', why: W('Страница найдётся, но общая, потому что `cd` встроена в оболочку, и точное её поведение в этой оболочке описывает `help`.', 'A page shows up, but a generic one, because `cd` is built into the shell, and `help` describes its exact behaviour in this shell.') },
       { id: 'which', text: 'which cd', why: W('Нет, which ищет файлы программ в каталогах PATH, а у встроенной команды файла нет.', 'No, which looks for program files in the PATH directories, and a builtin is not a file.') },
+      { id: 'man', text: 'man 1 cd', why: W('Страница найдётся, но общая, потому что `cd` встроена в оболочку, и точное её поведение в этой оболочке описывает `help`.', 'A page shows up, but a generic one, because `cd` is built into the shell, and `help` describes its exact behaviour in this shell.') },
+      { id: 'help', text: 'help cd', correct: true },
     ],
     explain: W('Команда `type cd` ответит «cd is a shell builtin», то есть «cd встроена в оболочку».', '`type cd` answers “cd is a shell builtin”.'),
   },
@@ -155,8 +155,8 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.user'],
     prompt: W('В файле `/etc/passwd` есть строка `anna:x:1001:1001::/home/anna:/bin/bash`. Где хранится пароль anna?', '`/etc/passwd` has the line `anna:x:1001:1001::/home/anna:/bin/bash`. Where is anna’s password kept?'),
     options: [
-      { id: 'shadow', text: W('Там хранится не пароль, а его хэш, в файле /etc/shadow, который обычный пользователь прочитать не может', 'Not the password but its hash is kept, in /etc/shadow, which an ordinary user cannot read'), correct: true },
       { id: 'x', text: W('Её пароль и есть буква x', 'Her password is the letter x'), why: W('Нет, буква `x` служит заглушкой и означает, что пароль хранится в другом месте.', 'No, the `x` is a placeholder meaning the password is kept elsewhere.') },
+      { id: 'shadow', text: W('Там хранится не пароль, а его хэш, в файле /etc/shadow, который обычный пользователь прочитать не может', 'Not the password but its hash is kept, in /etc/shadow, which an ordinary user cannot read'), correct: true },
       { id: 'none', text: W('Пароля у anna нет, и войти под её именем может кто угодно, просто набрав имя пользователя в приглашении входа', 'anna has no password, so anyone can log in under her name by typing just the user name at the login prompt'), why: W('Нет, без пароля поле было бы пустым, а здесь в нём стоит x.', 'No, without a password the field would be empty, and here it holds x.') },
     ],
   },
@@ -166,9 +166,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.user'],
     prompt: W('Пользователя переименовали из `anna` в `anya`, а номер UID оставили прежним. Что стало с её файлами?', 'The user was renamed from `anna` to `anya`, and the UID was kept. What happened to her files?'),
     options: [
-      { id: 'same', text: W('Файлы остались её, и ls покажет новое имя владельца', 'The files stay hers, and ls shows the new owner name'), correct: true },
-      { id: 'orphan', text: W('Файлы стали ничьими, и ls покажет вместо имени владельца только номер', 'The files belong to nobody now, and ls shows only a number instead of the owner'), why: W('Нет, файл хранит номер владельца, а не имя, и имя команда ls подставляет по файлу /etc/passwd.', 'No, a file keeps its owner’s number, not the name, and ls fills in the name from /etc/passwd.') },
       { id: 'root', text: W('Файлы перешли к root, потому что прежнего пользователя anna больше нет', 'The files went to root, because the old user anna no longer exists'), why: W('Нет, владельца никто не менял, потому что номер UID остался тем же.', 'No, nobody changed the owner, because the UID stayed the same.') },
+      { id: 'orphan', text: W('Файлы стали ничьими, и ls покажет вместо имени владельца только номер', 'The files belong to nobody now, and ls shows only a number instead of the owner'), why: W('Нет, файл хранит номер владельца, а не имя, и имя команда ls подставляет по файлу /etc/passwd.', 'No, a file keeps its owner’s number, not the name, and ls fills in the name from /etc/passwd.') },
+      { id: 'same', text: W('Файлы остались её, и ls покажет новое имя владельца', 'The files stay hers, and ls shows the new owner name'), correct: true },
     ],
   },
   {
@@ -177,8 +177,8 @@ export const QUIZ: QuizItem[] = [
     concepts: ['linux.user'],
     prompt: W('Вы перенесли архив с файлами anna со старого сервера на новый и распаковали его от имени root. На новом сервере anna тоже есть, но `ls -l` показывает владельцем файлов не её имя, а число `1001`, и anna не может их изменить. Почему?', 'You moved an archive of anna’s files from the old server to a new one and unpacked it as root. anna exists on the new server too, but `ls -l` shows not her name but the number `1001` as the owner, and anna cannot change the files. Why?'),
     options: [
-      { id: 'uid', text: W('На новом сервере у anna другой номер UID, а файлы хранят номер 1001, под которым она была на старом', 'On the new server anna has another UID, while the files keep the number 1001 she had on the old one'), correct: true },
       { id: 'tar', text: W('Архив испортился при переносе', 'The archive got damaged on the way'), why: W('Нет, испорченный архив не распаковался бы, а здесь файлы на месте. Архив сохранил владельца как номер, и этот номер на новой машине никому не принадлежит или принадлежит другому человеку.', 'No, a damaged archive would not unpack, and here the files are in place. The archive kept the owner as a number, and on the new machine that number belongs to nobody or to someone else.') },
+      { id: 'uid', text: W('На новом сервере у anna другой номер UID, а файлы хранят номер 1001, под которым она была на старом', 'On the new server anna has another UID, while the files keep the number 1001 she had on the old one'), correct: true },
       { id: 'root', text: W('Файлы принадлежат root, потому что их распаковал root', 'The files belong to root, because root unpacked them'), why: W('Нет, root при распаковке сохраняет владельцев, записанных в архиве, и поэтому файлы получили номер 1001. Будь владельцем root, `ls -l` показал бы имя root.', 'No, when root unpacks it keeps the owners recorded in the archive, which is why the files got the number 1001. If root were the owner, `ls -l` would show the name root.') },
     ],
     explain: W('Система хранит владельца файла номером, а имя подставляет по файлу `/etc/passwd` той машины, на которой вы смотрите. Команда `ls -n` показывает номера вместо имён, а `id anna` показывает, какой номер у anna здесь. Владельца файлов меняет команда `chown`, о которой рассказывает урок о правах. Та же история случается, когда каталог машины подключают к программе, которая работает под другим номером пользователя: имена совпадают, а номера нет.', 'The system keeps a file’s owner as a number and fills in the name from `/etc/passwd` of the machine you are looking from. `ls -n` shows numbers instead of names, and `id anna` shows which number anna has here. The owner of files is changed with `chown`, covered in the lesson on permissions. The same story happens when a directory of the machine is given to a program that runs under another user number: the names match, the numbers do not.'),
