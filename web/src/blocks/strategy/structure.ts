@@ -50,8 +50,8 @@ export const STRATEGY_SUMMARIES: Record<string, Bi> = {
     "en": "How the market learns to name the problem your product solves and what the company can do to help."
   },
   "strategy.market-events": {
-    "ru": "Пять случаев, когда крупный поставщик поменял условия — VMware, Oracle, Terraform, Redis, Elasticsearch, — и какие предложения из этого выросли.",
-    "en": "Five cases where a major vendor changed its terms—VMware, Oracle, Terraform, Redis, Elasticsearch—and the offers that grew out of them."
+    "ru": "Четыре смены условий у крупных поставщиков — VMware, Terraform, Redis, Elasticsearch — и продление Oracle у конкретного клиента: какие предложения из этого выросли.",
+    "en": "Four major vendors changing their terms—VMware, Terraform, Redis, Elasticsearch—and one customer's Oracle renewal: the offers that grew out of them."
   },
   "strategy.market-shifts": {
     "ru": "События другого типа: стоимость наблюдаемости, возврат из облака, дефицит ускорителей, агенты и MCP, сбой CrowdStrike и Log4Shell.",
