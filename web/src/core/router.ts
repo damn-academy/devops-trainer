@@ -11,7 +11,7 @@
 //   #/course/<id>          a hidden pilot course on its own page
 //   #/lab/<id>             a standalone lab page (widget `lab:<id>`, e.g. the multi-machine lab)
 //   #/local-lab            how to install the local lab dtlab on your own computer
-//   #/about                the «Справка» section (optionally #/about/<page>: use, how, deploy, contribute)
+//   #/about                the «Справка» section (optionally #/about/<page>: use, how, deploy, contribute, projects)
 
 export type Route =
   | { name: 'home' }

@@ -52,7 +52,7 @@ describe('about pages', () => {
           expect(r.name, a.getAttribute('href')!).not.toBe('notfound');
           if (r.name === 'about' && r.page) expect(ABOUT_PAGES.map((x) => x.id)).toContain(r.page);
         }
-        for (const a of el.querySelectorAll<HTMLAnchorElement>('a[href^="http"]')) expect(a.href).toMatch(/^https:\/\/github\.com\/(tym83|damn-academy)\//);
+        for (const a of el.querySelectorAll<HTMLAnchorElement>('a[href^="http"]')) expect(a.href).toMatch(/^https:\/\/(github\.com\/(tym83|damn-academy)\/|sankofa\.black\/|dormer\.sankofa\.black\/|sncfoundation\.github\.io\/|tym83\.github\.io\/paleocomputing\/)/);
         // Cyrillic stays on the Russian side.
         if (lang === 'en') expect(text(el).replace(/«[^»]*»|“[^”]*”|`[^`]*`/g, '')).not.toMatch(/[а-яё]{4,}/i);
       }
