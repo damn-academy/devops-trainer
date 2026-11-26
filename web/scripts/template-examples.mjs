@@ -47,6 +47,18 @@ export function addExamples(templates, sheet) {
     ['upgrade without downtime','P003, P004','sales call and support','users fear upgrades because they cannot tell in advance what will break','within two weeks ship a pre-upgrade check that lists incompatible nodes and offer it to five paying customers; success means three run it before their next upgrade','—'],
     ['install on own hardware','P001, P005','issues and product data','installation fails on common network cards','add a network card check with a clear error to the installer and see whether the share of installations stopping at this step falls within two weeks','“Thanks, we reproduced it on ConnectX-4; the fix and the check ship in 0.9, we will post here when it is out”'],
   ]);
+  // The register example is the lesson's own sample line for the first text, marked so it is not taken for the learner's work.
+  rows(templates['doubt-register'][0], [[
+    'ПРИМЕР, текст первый (новость): после замены фонарей аварий на освещённых улицах стало вдвое меньше, и причина — яркий свет',
+    'было ли сравнение и хватило ли срока',
+    'чтение самого текста: в нём нет улиц, где фонари не меняли, и нет аварийности за прошлые годы, а один квартал — срок, за который аварийность может упасть и случайно',
+    'утверждение осталось открытым; чтобы подтвердить, нужны улицы без новых фонарей за тот же квартал и аварийность за несколько кварталов до замены',
+  ]], [[
+    'EXAMPLE, text one (news): after the lights were replaced, accidents on lit streets halved, and the cause is bright light',
+    'comparison and time span',
+    'the text itself: it has no streets where the lights were not replaced and no accident figures for earlier years, and one quarter is a span in which accidents can also drop by chance',
+    'still open; to confirm it, you need streets without new lights over the same quarter and accident figures for several quarters before the replacement',
+  ]]);
   rows(templates['llm-panel'][0], [[date,'MODEL-VERSION','', 'ru','Под какой лицензией распространяется продукт?','1','','','','','','']], [[date,'MODEL-VERSION','','en','What is the license?',1,'','','','','','']]);
   templates['pr-briefing'] = [sheet('Заявка на брифинг','Briefing request','компания, исследование, формат, автор, задача покупателя, модель развёртывания, три конкурента, клиенты, письменное согласие клиента, что нового, доказательства','company, research, format, author, buyer problem, deployment model, three competitors, customers, customer’s written consent, what is new, evidence')];
   rows(templates['pr-briefing'][0], [['Stratova','учебный пример: обзор рынка платформ частного облака (название вымышленное, своё найдите на сайте Gartner, Forrester или IDC)','обзор рынка','ведущий аналитик обзора','уходят с VMware','платформа частного облака','VMware, OpenStack-дистрибутивы, OpenShift','провайдер из Чехии','да, письмо от 2026-11-20: согласен разговаривать с аналитиком','за год к ней перешли двенадцать европейских хостинг-провайдеров','замеры стоимости кластера на своём оборудовании до и после перехода']], [['Stratova','worked example: a private cloud platform market overview (the title is fictional; find yours on the Gartner, Forrester or IDC site)','market overview','lead analyst of the overview','leaving VMware','private cloud platform','VMware, OpenStack distributions, OpenShift','provider in Czechia','yes, email of 2026-11-20: agrees to talk to the analyst','Twelve European hosting providers migrated in a year','Cluster cost measurements on own hardware before and after migration']]);
