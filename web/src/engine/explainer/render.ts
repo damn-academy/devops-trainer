@@ -14,6 +14,10 @@ import { changedElements, edgePoints, fold, iconInside, iconPad, keepIndex, metr
 import { bubblePath, estimate, placeCallout, wrapWords, type Run } from './callout';
 import { defaultWork, NODE_ICONS } from './icons';
 
+/** The height of the diagram's window on a phone (.ex-viewport in explainer.css). */
+const MOBILE_VIEW_H = 340;
+/** The smallest touch target, in CSS pixels. */
+const TOUCH_PX = 32;
 const L = {
   steps: bi('Шаги', 'Steps'),
   step: bi('Шаг', 'Step'),
@@ -121,9 +125,20 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     expandCaption.textContent = t(expanded ? bi('Свернуть пояснение', 'Collapse caption') : bi('Развернуть пояснение', 'Expand caption'));
   });
   let focusedStep = -1;
+  // On a phone the diagram opens at the window's width (zoom 1); the slider
+  // goes below that to see all of a tall diagram, and above it to read.
   let zoom = 1;
-  const zoomControl = h('input', { type: 'range', min: 1, max: 4, step: 0.25, value: 1, 'aria-label': t(bi('Масштаб схемы', 'Diagram zoom')) }) as HTMLInputElement;
+  let fitAllZoom = 1;
+  const zoomControl = h('input', { type: 'range', min: 0.2, max: 4, step: 0.05, value: 1, 'aria-label': t(bi('Масштаб схемы', 'Diagram zoom')) }) as HTMLInputElement;
   zoomControl.addEventListener('input', () => { zoom = Number(zoomControl.value); focusedStep = -1; paint(); });
+  const zoomLabel = h('label.ex-zoom', {}, h('span', {}, t(bi('Масштаб', 'Zoom'))), zoomControl);
+  const fitAllBtn = h('button.btn.ghost.small.ex-fit-all', { type: 'button' }, t(bi('Показать всю схему', 'Show the whole diagram')));
+  fitAllBtn.addEventListener('click', () => {
+    zoom = Math.max(Number(zoomControl.min), Math.min(1, fitAllZoom));
+    zoomControl.value = String(zoom);
+    focusedStep = -1;
+    paint();
+  });
   const mobileNotes = h('div.ex-mobile-notes');
   const mobileNodes = h('details.ex-mobile-nodes', {}, h('summary', {}, t(bi('Элементы схемы', 'Diagram elements'))), ...d.nodes.map(n => h('button.btn.ghost.small', { type: 'button', onclick: () => { selected = n.id; showCard(n.id, n.card, txt(n.label)); } }, txt(n.label))));
   const viewport = h('div.ex-viewport', { tabindex: 0, 'aria-label': t(bi('Схему можно прокручивать в любую сторону.', 'Scroll the diagram in any direction.')) }, svg);
@@ -152,7 +167,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     predictBox,
     introBox,
     // the step controls sit right above the picture, under the settings that shape it
-    h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks), h('div.ex-mobile-caption', {}, stepCaption, expandCaption, zoomControl)),
+    h('div.ex-stepper', {}, h('div.ex-buttons', {}, firstBtn, backBtn, playBtn, fwdBtn, lastBtn, counter, speedSel), h('div.ex-scrubwrap', {}, scrub, ticks), h('div.ex-mobile-caption', {}, stepCaption, h('div.ex-mobile-tools', {}, expandCaption, zoomLabel, fitAllBtn))),
     h('p.ex-hint', {}, t(L.hintClick)),
     h('div.ex-stage', {}, canvasEl, h('div.ex-side', {}, deltaBox, card), caption),
     mobileNotes,
@@ -220,8 +235,10 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       const { p } = pointAt(pts, e.labelAt ?? 0.5);
       const label = txt(e.label);
       const tx = s('text.edge-label', { x: p[0], y: p[1] - 6, 'text-anchor': 'middle' }, label);
+      // The label is a button too: on a phone its area grows to a finger's size (fitCamera).
+      const labelHit = s('rect.edge-label-hit', { width: 0, height: 0 });
       const fn = activate(e.id, e.card, label);
-      const g = s('g.edge', { 'data-id': e.id, tabindex: 0, role: 'button', 'aria-label': label, onclick: fn, onkeydown: keyActivate(fn) as never }, hit, path, tx);
+      const g = s('g.edge', { 'data-id': e.id, tabindex: 0, role: 'button', 'aria-label': label, onclick: fn, onkeydown: keyActivate(fn) as never }, hit, path, labelHit, tx);
       layerEdges.append(g);
       edgeEls.set(e.id, { g, path, pts });
     }
@@ -583,12 +600,34 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     for (const [i, tick] of [...ticks.children].entries()) tick.classList.toggle('on', i <= idx);
   }
 
+  /** Give each edge label a touch area of at least `min` diagram units around its text. */
+  function growLabelHits(min: number) {
+    for (const { g } of edgeEls.values()) {
+      const label = g.querySelector<SVGTextElement>('text.edge-label');
+      const rect = g.querySelector<SVGRectElement>('rect.edge-label-hit');
+      if (!label || !rect || typeof label.getBBox !== 'function') continue;
+      const b = label.getBBox();
+      const w = Math.max(b.width, min), hh = Math.max(b.height, min);
+      rect.setAttribute('x', String(b.x + b.width / 2 - w / 2));
+      rect.setAttribute('y', String(b.y + b.height / 2 - hh / 2));
+      rect.setAttribute('width', String(min ? w : 0));
+      rect.setAttribute('height', String(min ? hh : 0));
+    }
+  }
+
   /** Animate only the camera; the drawing retains its authored coordinates. */
   function fitCamera(tokenBoxes: Box[]) {
     const parts = [...svg.querySelectorAll<SVGGraphicsElement>('.node, .edge, .group, .say, .token')];
+    // An edge's box is its line and label: the touch area of the label is not part of the picture.
+    const bbox = (el: SVGGraphicsElement): { x: number; y: number; width: number; height: number } => {
+      if (!el.classList.contains('edge')) return el.getBBox();
+      const bs = [...el.querySelectorAll<SVGGraphicsElement>('.edge-line, .edge-label')].map((c) => c.getBBox());
+      const x0 = Math.min(...bs.map((r) => r.x)), y0 = Math.min(...bs.map((r) => r.y));
+      return { x: x0, y: y0, width: Math.max(...bs.map((r) => r.x + r.width)) - x0, height: Math.max(...bs.map((r) => r.y + r.height)) - y0 };
+    };
     const boxes = parts.flatMap((el) => {
       if (typeof el.getBBox !== 'function' || el.classList.contains('removed') || (model.frame === 'visible' && el.classList.contains('st-hidden'))) return [];
-      const b = el.getBBox();
+      const b = bbox(el);
       const transform = el.transform?.baseVal.consolidate()?.matrix;
       return [{ x: b.x + (transform?.e ?? 0), y: b.y + (transform?.f ?? 0), w: b.width, h: b.height }];
     });
@@ -600,19 +639,21 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     cancelAnimationFrame(cameraAnim);
     if (window.matchMedia?.('(max-width: 600px)').matches) {
       if (!viewport.clientWidth) return;
-      // Start with the complete diagram; the existing zoom control enables close inspection.
-      const overview = model.diagram.narrow || ['scithink.correlation', 'marketing.loop'].includes(model.id);
-      const labels = [...svg.querySelectorAll<SVGTextElement>('.node-label')];
-      const smallest = Math.min(12, ...labels.map(label => parseFloat(getComputedStyle(label).fontSize) || 12));
-      const scale = (overview ? viewport.clientWidth / target[2] : Math.max(1, 12.05 / smallest)) * zoom;
-      const businessOverview = ['scithink.correlation', 'marketing.loop'].includes(model.id) && zoom === 1;
-      if (businessOverview) viewport.style.height = 'auto';
+      // Start with the diagram at the window's width; the zoom control
+      // enlarges it to read or shrinks it to see all of a tall one.
+      const fitWidth = viewport.clientWidth / target[2];
+      fitAllZoom = Math.min(fitWidth, MOBILE_VIEW_H / target[3]) / fitWidth;
+      const scale = fitWidth * zoom;
+      // A diagram lower than the window leaves no empty field under it.
+      const fitsHeight = target[3] * scale <= MOBILE_VIEW_H;
+      if (fitsHeight) viewport.style.height = 'auto';
       else viewport.style.removeProperty('height');
       svg.style.width = `${target[2] * scale}px`;
       svg.style.height = `${target[3] * scale}px`;
       svg.setAttribute('viewBox', target.join(' '));
       svg.dataset.camera = target.join(' ');
-      if (!businessOverview && focusedStep !== idx) {
+      growLabelHits(TOUCH_PX / scale);
+      if (focusedStep !== idx) {
         const st = steps[idx];
         const ids = [...Object.keys(st?.say ?? {}), ...(st?.focus ?? [])];
         const node = ids.map(id => d.nodes.find(n => n.id === id)).find(Boolean) ?? d.nodes[0];
@@ -627,6 +668,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     viewport.style.removeProperty('height');
     svg.style.removeProperty('width');
     svg.style.removeProperty('height');
+    growLabelHits(0);
     const from = (svg.dataset.camera ?? target.join(' ')).split(' ').map(Number);
     const start = performance.now();
     const update = (now: number) => {

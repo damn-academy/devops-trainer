@@ -139,3 +139,13 @@
   .ex-stage > .ex-caption { display: none; }
 }
 .progress-transfer textarea { display: block; width: 100%; overflow-wrap: anywhere; }
+/* the label of a line is a button: its touch area grows on a phone (render.ts, growLabelHits) */
+.ex-svg .edge-label-hit { fill: transparent; stroke: none; pointer-events: all; }
+.ex-svg .edge.st-hidden .edge-label-hit { pointer-events: none; }
+@media (max-width: 600px) {
+  .ex-mobile-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 4px; }
+  .ex-zoom { display: inline-flex; align-items: center; gap: 6px; font: 500 0.85rem var(--font-ui); color: var(--ink-2); }
+  .ex-mobile-caption .ex-zoom input { width: 110px; min-height: 32px; }
+  .ex-mobile-tools .btn { min-height: 32px; }
+}
+.ex-mobile-tools .ex-fit-all, .ex-mobile-tools .ex-zoom { white-space: nowrap; }
