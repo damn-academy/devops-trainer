@@ -106,7 +106,7 @@ export const byHandLesson: Lesson = {
   id: 'containers.by-hand',
   block: 'containers',
   title: bi('Как собрать контейнер своими руками', 'A container by hand'),
-  summary: bi('В этом уроке вы соберёте контейнер без Docker из механизмов ядра, знакомых по блоку Linux, по одному механизму за шаг, а потом запустите тот же контейнер настоящим рантаймом crun.', 'We build a container without Docker: chroot, namespaces, a cgroup, overlay and pivot_root, capabilities — and the same container with the real crun runtime.'),
+  summary: bi('В этом уроке вы соберёте контейнер без Docker из механизмов ядра, знакомых по блоку Linux, по одному механизму за шаг, а потом запустите тот же контейнер рантаймом crun, той программой, которая запускает контейнеры по команде Docker. Машина урока работает в симуляторе в браузере.', 'We build a container without Docker: chroot, namespaces, a cgroup, overlay and pivot_root, capabilities — and the same container with the crun runtime, the program that starts containers when Docker asks. The lesson’s machine runs in a simulator in the browser.'),
   introduces: [],
   uses: ['docker.container', 'docker.bundle', 'docker.runtime'],
   tier: 'core',
