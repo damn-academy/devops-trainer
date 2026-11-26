@@ -2,7 +2,8 @@ import { PRODUCTS } from '../core/products';
 import { mountTaskDocument } from '../engine/trainers/document';
 
 /** Widgets that already hold the practice result: a field of their own, or a terminal that checks the work itself. */
-const FIELD_WIDGETS = new Set(['rubric', 'roleplay', 'deptsim', 'signal-feed', 'marketing.dns-lab']);
+/** A department simulator holds game moves, not the written task, so it is not listed here. */
+const FIELD_WIDGETS = new Set(['rubric', 'roleplay', 'signal-feed', 'marketing.dns-lab']);
 /** XLSX templates are worked on in the file; CSV cards of the metrics course keep their own calculation field. */
 const isSpreadsheet = (props: unknown) => { const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined; return typeof file === 'string' && !file.startsWith('metrics-') && file !== 'ru-intensifiers-lint'; };
 // The lesson page: sections in order (re-ordered for Experienced: the
@@ -18,6 +19,7 @@ import type { Level, Mounted, Section, TextSection } from '../core/types';
 import { emptyState, levelBadge, levelFor, setDescription, setTitle, sourcesBlock, type Page } from './common';
 import { renderSection } from './sections';
 import { blockCrumbs } from './common';
+import { selfReviewedWidgets } from './task-guidance';
 
 /** Experienced learners start with the challenge: the first practice section moves up after the hook. */
 export function orderSections(sections: Section[], level: Level): Section[] {
@@ -81,7 +83,8 @@ export function lessonPage(id: string, focusSection?: string): Page {
   const sharedDocument = !!lastPractice && !fieldWidget;
   // A spreadsheet template is worked on in its file; with a task document on
   // the page, finishing the document completes the template section too.
-  const spreadsheets = sharedDocument ? sections.filter((s) => s.kind === 'widget' && s.widget === 'template' && isSpreadsheet(s.props)) : [];
+  // A self-reviewed calculator has no finish button of its own then either.
+  const spreadsheets = sharedDocument ? sections.filter((s) => s.kind === 'widget' && ((s.widget === 'template' && isSpreadsheet(s.props)) || selfReviewedWidgets.has(s.widget))) : [];
   const donePractice = () => [...practice, ...spreadsheets].forEach((p) => markDone(p.id));
   for (const s of sections) {
     const widgetDone = s.kind === 'widget' && FIELD_WIDGETS.has(s.widget) ? (sid: string) => { markDone(sid); donePractice(); } : markDone;
