@@ -10,6 +10,7 @@ import { renderInline } from '../../core/markdown';
 import type { Exam, RealLab, RealTask } from '../../core/types';
 import collectorText from './trainer-check-host.sh?raw';
 import { collectorCommand, decodeHostBlob, heredoc, hostFacts, hostProblems, judgePaste, judgeReal, type MachinesFacts } from './facts';
+import { collectFacts, detectLab, vmForMachine, type LabStatus } from '../../engine/locallab/client';
 import './real.css';
 
 export const COLLECTOR_NAME = 'trainer-check-host.sh';
@@ -36,6 +37,10 @@ const L = {
   waiting: bi('ждём факты с', 'waiting for facts from'),
   privacy: bi('Блок разбирается здесь, в браузере, и никуда не уходит.', 'The block is decoded here, in the browser, and goes nowhere.'),
   code: bi('Одноразовый код этой попытки', 'The one-time code of this attempt'),
+  fromLab: bi('Забрать из dtlab', 'Take from dtlab'),
+  fromLabBusy: bi('Снимаем факты с машины', 'Taking facts from the machine'),
+  fromLabFail: bi('dtlab не смог снять факты: ', 'dtlab could not take the facts: '),
+  fromLabFound: bi('Найдена лаборатория dtlab: факты с её машин можно забрать кнопкой у каждой машины, без копирования блока.', 'A dtlab lab is running: take the facts from its machines with the button by each machine, without copying the block.'),
   local: bi('Машины не обязательно заказывать в облаке: локальная лаборатория dtlab бесплатно запускает виртуальные машины курса на вашем компьютере, а команда `dtlab facts` снимает с них блок для поля экзамена. Как её поставить, рассказано на странице [«Лаборатория на своём компьютере»](#/local-lab).', 'The machines do not have to be ordered in a cloud: the local lab dtlab runs the course’s virtual machines on your computer for free, and the `dtlab facts` command takes the block for the exam’s box from them. How to install it is told on the page [“A lab on your own computer”](#/local-lab).'),
 };
 
@@ -104,6 +109,10 @@ export function mountRealLab(exam: Exam & { real: RealLab }, key: string, onChan
   for (const m of lab.machines) addresses[m.id] = store(exam.id).get(`addr.${m.id}`);
   const machines: MachinesFacts = {};
   const boxes: { refresh(): void }[] = [];
+  // A running dtlab answers on 127.0.0.1:7788; then every machine gets a
+  // one-click button next to the paste box. Without a lab nothing changes.
+  const labButtons: { vm(status: LabStatus): void }[] = [];
+  const labNote = h('p.small.rl-local', { hidden: true }, t(L.fromLabFound));
   const addrInputs = h(
     'div.rl-addrs',
     {},
@@ -143,13 +152,38 @@ export function mountRealLab(exam: Exam & { real: RealLab }, key: string, onChan
       paste.value = '';
       onChange(machines);
     };
-    return h('section.rl-machine', {}, h('h3', {}, m.id, ' ', h('span.muted.small', {}, t(m.role))), box.el, paste, h('div.row', {}, h('button.btn.primary.small', { type: 'button', onclick: () => void verify() }, t(L.verify)), h('span.small.muted', {}, t(L.privacy))), status);
+    const fromLab = h('button.btn.small', { type: 'button', hidden: true }, t(L.fromLab)) as HTMLButtonElement;
+    labButtons.push({
+      vm(labStatus) {
+        const vm = vmForMachine(m.id, labStatus);
+        if (!vm) return;
+        fromLab.hidden = false;
+        fromLab.textContent = `${t(L.fromLab)}: ${vm}`;
+        fromLab.onclick = async () => {
+          fromLab.disabled = true;
+          status.textContent = `${t(L.fromLabBusy)} ${vm}…`;
+          status.className = 'small muted rl-status';
+          const ips = Object.fromEntries(labStatus.vms.map((v) => [v.name, v.ip]));
+          const fill = (a: string) => a.replace(/\{([a-z0-9-]+)\}/gi, (_, id: string) => addresses[id]?.trim() || ips[vmForMachine(id, labStatus) ?? ''] || `${id.toUpperCase()}_ADDR`);
+          try {
+            paste.value = await collectFacts({ vm, nonce, machine: m.id, track: lab.track, script: lab.collector?.name, args: m.collect.map(fill) });
+            await verify();
+          } catch (e) {
+            status.textContent = t(L.fromLabFail) + (e as Error).message;
+            status.className = 'small rl-status err';
+          } finally {
+            fromLab.disabled = false;
+          }
+        };
+      },
+    });
+    return h('section.rl-machine', {}, h('h3', {}, m.id, ' ', h('span.muted.small', {}, t(m.role))), box.el, paste, h('div.row', {}, h('button.btn.primary.small', { type: 'button', onclick: () => void verify() }, t(L.verify)), fromLab, h('span.small.muted', {}, t(L.privacy))), status);
   });
   const el = h(
     'section.rl-lab',
     {},
     h('h2', {}, t(L.machines)),
-    h('details.rl-order', { open: true }, h('summary', {}, t(L.order)), h('p', {}, ...renderInline(t(lab.order))), h('p.small.rl-local', {}, ...renderInline(t(L.local)))),
+    h('details.rl-order', { open: true }, h('summary', {}, t(L.order)), h('p', {}, ...renderInline(t(lab.order))), h('p.small.rl-local', {}, ...renderInline(t(L.local))), labNote),
     h('p.small', {}, t(L.addresses)),
     addrInputs,
     lab.prepare?.length ? h('div', {}, h('h3', {}, t(L.prepare)), ...lab.prepare.map((s) => scriptBlock(s.name, s.on, s.note, s.text))) : null,
@@ -158,7 +192,16 @@ export function mountRealLab(exam: Exam & { real: RealLab }, key: string, onChan
     scriptBlock(lab.collector?.name ?? COLLECTOR_NAME, '', null, lab.collector?.text ?? COLLECTOR_TEXT),
     ...perMachine,
   );
-  return { el, facts: () => machines, dispose() {} };
+  let alive = true;
+  // Exams whose machines run in this tab have nothing to take from a lab.
+  if (!exam.inTab) {
+    void detectLab().then((labStatus) => {
+      if (!alive || !labStatus) return;
+      labNote.hidden = false;
+      labButtons.forEach((b) => b.vm(labStatus));
+    });
+  }
+  return { el, facts: () => machines, dispose() { alive = false; } };
 }
 
 export interface RealCardView {

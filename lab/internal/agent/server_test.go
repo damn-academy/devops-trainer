@@ -87,6 +87,14 @@ func TestAPIGuards(t *testing.T) {
 	if w.Code != 200 || w.Header().Get("Access-Control-Allow-Origin") != "https://trainer.example" || w.Header().Get("Access-Control-Allow-Private-Network") != "true" {
 		t.Error("allowed origin:", w.Code, w.Header())
 	}
+	s.AllowOrigins = nil
+	w = do(s.Handler(), "OPTIONS", "/api/v1/facts", "127.0.0.1:7788", map[string]string{"Origin": "https://damn.academy", "Access-Control-Request-Private-Network": "true"}, "")
+	if w.Code != http.StatusNoContent || w.Header().Get("Access-Control-Allow-Origin") != "https://damn.academy" || w.Header().Get("Access-Control-Allow-Private-Network") != "true" {
+		t.Error("default origin preflight:", w.Code, w.Header())
+	}
+	if w = do(s.Handler(), "GET", "/api/v1/status", "127.0.0.1:7788", map[string]string{"X-DTLab": "1", "Origin": "https://damn.academy.evil.example"}, ""); w.Code != http.StatusForbidden {
+		t.Error("look-alike origin:", w.Code)
+	}
 }
 
 func TestSeedsAndScriptsForVMs(t *testing.T) {

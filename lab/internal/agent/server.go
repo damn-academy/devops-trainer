@@ -45,9 +45,14 @@ type Server struct {
 	Status    func(ctx context.Context) any
 	Facts     func(ctx context.Context, r FactsRequest) (string, error)
 	// AllowOrigins: a hosted copy of the course (https://...) allowed to
-	// call the API; the local copy is same-origin and needs nothing.
+	// call the API besides DefaultOrigins; the local copy is same-origin.
 	AllowOrigins []string
 }
+
+// DefaultOrigins are always allowed: the official course, so that its exam
+// pages can take facts from the lab without any flag. The API still answers
+// loopback clients only and requires the X-DTLab header.
+var DefaultOrigins = []string{"https://damn.academy"}
 
 // Handler routes the requests.
 func (s *Server) Handler() http.Handler {
@@ -87,7 +92,7 @@ func (s *Server) guard(h http.HandlerFunc) http.HandlerFunc {
 		origin := r.Header.Get("Origin")
 		self := origin == "" || origin == "http://"+r.Host
 		allowed := self
-		for _, o := range s.AllowOrigins {
+		for _, o := range append(append([]string{}, DefaultOrigins...), s.AllowOrigins...) {
 			if origin == o {
 				allowed = true
 				w.Header().Set("Access-Control-Allow-Origin", o)
