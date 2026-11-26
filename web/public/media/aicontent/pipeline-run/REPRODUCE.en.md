@@ -37,11 +37,11 @@ python3 $P/coverage.py . --mode clean
 python3 $P/proofcheck.py 04-text/01.md --lang ru
 ```
 
-`chunk.py` splits the transcript into chunks in `03-chunks/`. `coverage.py` compares each chunk's length with the text in `04-text/`: the accepted section, `01.md`, passes; the other seven are marked as missing because nobody has edited them yet. `proofcheck.py` looks for repetitions, typos and typography errors in the accepted section.
+`chunk.py` splits the transcript into chunks in `03-chunks/`. `coverage.py` compares each chunk's length with the text in `04-text/`: the accepted section, `01.md`, passes; the other seven are marked as missing because nobody has edited them yet. `proofcheck.py` looks for repetitions, typos and typography errors in the accepted section. The `proofcheck.md` file in the kit root records an earlier check of the raw transcript, `02-transcript/transcript.txt`, not of the accepted section: it has one finding, the repeated word "что что".
 
 ## 5. Your own editing
 
-Take any chunk except the second, for example `03-chunks/02_….txt`, and follow the same process we used for the second:
+Take any chunk except `03-chunks/01_00-02-43_00-04-59.txt`, which we have already turned into the section `04-text/01.md`, for example `03-chunks/02_00-05-00_00-08-00.txt`. Files are numbered from zero, so the number in the name is one less than the chunk's position. Follow the same process we used:
 
 1. Add your chunk's terms to the glossary, `05-review/glossary.md`.
 2. Write a draft from the transcript alone.
