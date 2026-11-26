@@ -32,7 +32,11 @@ async function compute(root: string): Promise<{ source: string; courses: string 
   if (await readFile(hoursPath, 'utf8').catch(() => '') !== hoursSource) await writeFile(hoursPath, hoursSource);
   const json = JSON.stringify(module.manifest);
   // JSON.parse of a string literal is faster to start than the same object literal.
-  return { source: `export default JSON.parse(${JSON.stringify(json)});\n`, courses: JSON.stringify(module.manifest.blocks.filter(b => !b.hidden).map(({ id, title }) => ({ id, title }))) };
+  return { source: `export default JSON.parse(${JSON.stringify(json)});\n`, courses: JSON.stringify([
+    // The route-map blocks form the profession; each hidden block (but the demo) is a separate business course.
+    { id: 'devops', title: bi('Профессия DevOps-инженер', 'DevOps engineer profession') },
+    ...module.manifest.blocks.filter(b => b.hidden && b.id !== 'demo').map(({ id, title }) => ({ id, title })),
+  ]) };
 }
 
 export function manifestPlugin(): Plugin {
