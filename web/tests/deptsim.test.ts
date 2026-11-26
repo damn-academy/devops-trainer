@@ -266,8 +266,8 @@ it('persists the selected CNCF starting stage in the preview and restored game',
 it('completes an external game only after explicit self-review', () => {
   const w = mount(false);
   expect(w.ctx.complete).not.toHaveBeenCalled();
-  w.button('Finish self-review').click();
+  w.button('Finish the simulation self-review').click();
   expect(w.ctx.complete).toHaveBeenCalledOnce();
   expect(w.calls).toHaveLength(0);
-  expect(w.host.textContent).toContain('Self-review complete');
+  expect(w.host.textContent).toContain('Simulation self-review complete');
 });

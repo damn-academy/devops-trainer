@@ -20,7 +20,7 @@ export const strings = {
   seed: bi('Номер партии, чтобы повторить её', 'Seed (for replay)'),
   copy: bi('Скопировать запрос', 'Copy the request'),
   copied: bi('Запрос скопирован.', 'Request copied.'),
-  show: bi('Показать промпт', 'Show the prompt'),
+  show: bi('Показать запрос', 'Show the request'),
   fallback: bi('Не удалось скопировать. Удерживайте текст для выделения или скачайте файл.', 'Copy the selected text.'),
   play: bi('Играть здесь', 'Play here'),
   settings: bi('Чтобы играть здесь, подключите нейросеть в разделе «Настройки», «Ваш ИИ».', 'Settings → Your AI'),

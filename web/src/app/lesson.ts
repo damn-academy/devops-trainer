@@ -3,6 +3,8 @@ import { mountTaskDocument } from '../engine/trainers/document';
 
 /** Trainer widgets that already give the learner a field for the practice result. */
 const FIELD_WIDGETS = new Set(['rubric', 'roleplay', 'deptsim']);
+/** XLSX templates are worked on in the file; CSV cards of the metrics course keep their own calculation field. */
+const isSpreadsheet = (props: unknown) => { const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined; return typeof file === 'string' && !file.startsWith('metrics-') && file !== 'ru-intensifiers-lint'; };
 // The lesson page: sections in order (re-ordered for Experienced: the
 // challenge comes first, 08 §5.2), progress auto-saved after every section.
 
@@ -76,10 +78,14 @@ export function lessonPage(id: string, focusSection?: string): Page {
   const practice = sections.filter((s): s is TextSection => standaloneCourse && s.kind === 'text' && s.step === 'practice');
   const fieldWidget = sections.some((s) => s.kind === 'widget' && FIELD_WIDGETS.has(s.widget));
   const lastPractice = practice[practice.length - 1];
-  const donePractice = () => practice.forEach((p) => markDone(p.id));
+  const sharedDocument = !!lastPractice && !fieldWidget;
+  // A spreadsheet template is worked on in its file; with a task document on
+  // the page, finishing the document completes the template section too.
+  const spreadsheets = sharedDocument ? sections.filter((s) => s.kind === 'widget' && s.widget === 'template' && isSpreadsheet(s.props)) : [];
+  const donePractice = () => [...practice, ...spreadsheets].forEach((p) => markDone(p.id));
   for (const s of sections) {
     const widgetDone = s.kind === 'widget' && FIELD_WIDGETS.has(s.widget) ? (sid: string) => { markDone(sid); donePractice(); } : markDone;
-    const r = renderSection(s, { lesson, block: lesson.block, level, index, count: total, manualTextCompletion: standaloneCourse && s.kind === 'text' && s.step === 'practice', done: widgetDone });
+    const r = renderSection(s, { lesson, block: lesson.block, level, index, count: total, manualTextCompletion: standaloneCourse && s.kind === 'text' && s.step === 'practice', isDone: doneSet.has(s.id), sharedDocument, done: widgetDone });
     if (doneSet.has(s.id)) r.el.classList.add('seen');
     body.append(r.el);
     if (r.mounted) mounts.push(r.mounted);

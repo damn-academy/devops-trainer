@@ -1206,6 +1206,8 @@ export interface WidgetCtx {
   level: Level;
   /** Mark the section done. */
   complete(): void;
+  /** The lesson collects the practice result in one task document, so a spreadsheet template needs no field of its own. */
+  sharedDocument?: boolean;
   record(ev: NewEvent): void;
   openDoc(ref: DocRef): void;
   /** Set by exam pages with `Exam.inTab`: a lab widget reports the facts of its machines by id. */
