@@ -3,9 +3,9 @@
 // Russian text is the source material; the English slot of every section is a
 // faithful full translation. Claude owns the prose pass per web/STYLE-RU.md.
 
-import { bi, pluralRu } from '../../core/i18n';
+import { bi, pluralRu, type Bi } from '../../core/i18n';
 import type { Concept, Lesson, QuizItem } from '../../core/types';
-import { MARKETING_SCHOOL, type SchoolModule } from './school';
+import { MARKETING_SCHOOL, type SchoolItem, type SchoolModule } from './school';
 import { MARKETING_V2_LESSONS } from './v2';
 
 /** The honest note every school lesson carries: one way, not a law. It mirrors
@@ -21,11 +21,13 @@ interface LessonSpec {
   module: string;
   /** Principle numbers to carry; the whole module when absent. */
   only?: number[];
-  /** Heading suffix for split modules, e.g. "уроки 1–6" / "lessons 1–6". */
+  /** Heading suffix for split modules, e.g. "принципы 1–6" / "principles 1–6". */
   part?: [string, string];
   title: [string, string];
   minutes: number;
   hook: [string, string];
+  /** An optional worked example shown after the principles. */
+  example?: { title: [string, string]; body: [string, string] };
 }
 
 const MODULE_LESSON: Record<string, LessonSpec> = {
@@ -33,24 +35,24 @@ const MODULE_LESSON: Record<string, LessonSpec> = {
     id: 'marketing.fundamentals',
     module: 'A',
     only: [1, 2, 3, 4, 5, 6],
-    part: ['уроки 1–6', 'lessons 1–6'],
+    part: ['принципы 1–6', 'principles 1–6'],
     title: ['Фундамент: категория, покупатель, каналы', 'The foundation: category, buyer, channels'],
     minutes: 15,
     hook: [
-      'Вы выпустили хороший продукт, а рынок сравнивает его с чужой категорией и отвечает «дорого». Этот урок — о том, как занять рамку, в которой вы сильны, и о семи принципах, из которых собирается вся дальнейшая машина маркетинга.',
-      'You shipped a good product, and the market compares it to someone else\'s category and answers "too expensive". This lesson is about taking the frame in which you are strong, and about the seven principles that the whole marketing machine is built from.',
+      'Вы выпустили хороший продукт, а рынок сравнивает его с чужой категорией и отвечает «дорого». Этот урок — о том, как занять рамку, в которой вы сильны, и о шести принципах, на которых держатся остальные уроки курса.',
+      'You shipped a good product, and the market compares it to someone else\'s category and answers "too expensive". This lesson is about taking the frame in which you are strong, and about the six principles the rest of the course builds on.',
     ],
   },
   B: {
     id: 'marketing.vaccine',
     module: 'A',
     only: [7],
-    part: ['урок 7', 'lesson 7'],
+    part: ['принцип 7', 'principle 7'],
     title: ['Вакцина: маркетинг на данных о покупателях', 'A vaccine: marketing on buyer data'],
     minutes: 8,
     hook: [
-      'Интернет полон уверенных советов про контент-маркетинг, которые звучат как наука и работают как вред: прогревайте, продавайте через пользу, копите лояльность. Этот урок — прививка против них. Опираемся на данные о покупателях, которые институт Ehrenberg-Bass собирал десятилетиями, и разбираемся, почему рост устроен иначе, чем обещают курсы.',
-      'The internet is full of confident content-marketing advice that sounds like science and works like harm: warm your audience up, sell through value, build loyalty. This lesson is a vaccine against it. We rely on buyer data that the Ehrenberg-Bass institute has collected for decades, and work out why growth works differently from what the courses promise.',
+      'В советах про контент-маркетинг часто повторяются три правила: прогревайте аудиторию, продавайте через пользу, копите лояльность. Их редко проверяют на данных. В этом уроке мы сверяем их с данными о покупателях, которые институт Ehrenberg-Bass собирал десятилетиями, и смотрим, что из этих данных переносится на инфраструктурный продукт, а что нет.',
+      'Content-marketing advice often repeats three rules: warm your audience up, sell through value, build loyalty. They are rarely checked against data. In this lesson we compare them with buyer data the Ehrenberg-Bass institute has collected for decades and see what carries over to an infrastructure product and what does not.',
     ],
   },
   C: {
@@ -59,8 +61,8 @@ const MODULE_LESSON: Record<string, LessonSpec> = {
     title: ['Контент как актив', 'Content as an asset'],
     minutes: 14,
     hook: [
-      'Команда публикует трое суток перед дедлайном, а через месяц непонятно, сработало ли. Этот урок — о контенте как об активе: технические материалы, которые работают годами, и машина «один инсайт — десять кусков», в которой [[marketing.geo|GEO]] уже меняет правила поиска.',
-      'The team publishes three days before the deadline, and a month later nobody knows whether it worked. This lesson is about content as an asset: technical materials that work for years, and the "one insight, ten pieces" machine, in which [[marketing.geo|GEO]] is already changing the rules of search.',
+      'Команда публикует трое суток перед дедлайном, а через месяц непонятно, сработало ли. Этот урок — о контенте как об активе: технические материалы, которые работают годами, и приём «одна находка — десять материалов», при котором [[marketing.geo|GEO]] уже меняет правила поиска.',
+      'The team publishes three days before the deadline, and a month later nobody knows whether it worked. This lesson is about content as an asset: technical materials that work for years, and the "one finding, ten pieces" practice, in which [[marketing.geo|GEO]] is already changing the rules of search.',
     ],
   },
   D: {
@@ -109,9 +111,16 @@ const MODULE_LESSON: Record<string, LessonSpec> = {
     title: ['Аналитика без самообмана', 'Analytics without self-deception'],
     minutes: 10,
     hook: [
-      'Бюджет отчитан по показам, а вопрос «что сработало» остаётся без ответа. Этот урок — об измерении без самообмана: [[marketing.leading-metric|опережающих метриках]], честной атрибуции и стеке инструментов, собранном по потребности.',
-      'The budget is reported in impressions, and the question "what worked" stays unanswered. This lesson is about measurement without self-deception: [[marketing.leading-metric|leading metrics]], honest attribution and a tool stack assembled for actual needs.',
+      'В отчёте о бюджете есть только показы, а на вопрос «что сработало» он не отвечает. Этот урок — об измерении без самообмана: [[marketing.leading-metric|опережающих метриках]], честной атрибуции и стеке инструментов, собранном по потребности.',
+      'The budget report shows only impressions and does not answer the question "what worked". This lesson is about measurement without self-deception: [[marketing.leading-metric|leading metrics]], honest attribution and a tool stack assembled for actual needs.',
     ],
+    example: {
+      title: ['Образец квартального отчёта по доступным данным', 'A sample quarterly report from available data'],
+      body: [
+        'Учебная компания продаёт платформу для кластеров, бюджет маркетинга за квартал — 30 000 долларов. Отчёт для совета директоров умещается на одну страницу и состоит из четырёх частей.\n\n**Что потрачено и на что.** Конференция — 18 000 долларов, реклама в рассылке — 6000, два технических поста — 6000 в часах инженеров.\n\n**Опережающие метрики против прошлого квартала.** Новых компаний из портрета покупателя, которые установили продукт: 41 против 28. Повторных визитов в документацию из этих компаний: 310 против 190. Разговоров с продажами по просьбе самих компаний: 9 против 6.\n\n**Какие касания общие у выигранных сделок.** Из четырёх сделок квартала в трёх покупатель до разговора читал разбор аварии из блога, в двух был на докладе на конференции; рекламу в рассылке не видел никто. Это наблюдение по четырём сделкам, оно показывает направление и не доказывает вклад канала.\n\n**Решение на следующий квартал.** Рекламу в рассылке остановить, деньги перенести на два разбора от инженеров и на запись доклада в документацию. Проверка через квартал: растёт ли число новых компаний из портрета и повторных визитов в документацию.\n\nЦифры здесь учебные. В свой отчёт подставьте свои данные из таблицы установок, аналитики документации и записей отдела продаж; если данных о каком-то пункте нет, так и напишите и назовите, где их начнёте собирать.',
+        'A practice company sells a cluster platform; its quarterly marketing budget is $30,000. The board report fits on one page and has four parts.\n\n**What was spent and on what.** A conference — $18,000, a newsletter ad — $6,000, two technical posts — $6,000 in engineers’ hours.\n\n**Leading metrics against last quarter.** New companies matching the buyer profile that installed the product: 41 against 28. Repeat documentation visits from those companies: 310 against 190. Sales conversations requested by the companies themselves: 9 against 6.\n\n**Touches the won deals share.** Of the quarter’s four deals, in three the buyer had read the incident analysis from the blog before talking to sales, in two they attended the conference talk; nobody saw the newsletter ad. This is an observation over four deals: it shows a direction and does not prove a channel’s contribution.\n\n**Decision for next quarter.** Stop the newsletter ad, move the money to two engineer-written analyses and to putting the talk recording into the documentation. Check after a quarter: are new profile companies and repeat documentation visits growing.\n\nThe numbers here are for practice. Put your own data into your report from the installs table, documentation analytics and sales records; if you have no data for an item, say so and name where you will start collecting it.',
+      ],
+    },
   },
   I: {
     id: 'marketing.regions',
@@ -119,8 +128,8 @@ const MODULE_LESSON: Record<string, LessonSpec> = {
     title: ['Регионы: США, DACH, Азия', 'Regions: the US, DACH, Asia'],
     minutes: 12,
     hook: [
-      'Одна и та же кампания в США, Германии и Японии даёт три разных результата — вплоть до обратного. Этот урок — о том, почему рынки покупают по-разному, и симулятор ниже показывает, как одинаковые усилия складываются в разную выручку.',
-      'The same campaign in the US, Germany and Japan gives three different results — sometimes in reverse. This lesson is about why markets buy differently, and the simulator below shows how identical efforts add up to different revenue.',
+      'Одна и та же кампания в США, Германии и Японии даёт три разных результата — вплоть до обратного. Этот урок — о том, почему рынки покупают по-разному, и симулятор ниже показывает, как одинаковые усилия дают разное число сделок.',
+      'The same campaign in the US, Germany and Japan gives three different results — sometimes in reverse. This lesson is about why markets buy differently, and the simulator below shows how identical efforts give a different number of deals.',
     ],
   },
 };
@@ -327,9 +336,9 @@ export const MARKETING_QUIZ: QuizItem[] = [
       'According to Ehrenberg-Bass data, what mainly drives a brand\'s growth within its category?',
     ),
     options: [
-      { id: 'reach', text: bi('С охвата, то есть с новых покупателей, которые легко вспомнят и купят продукт', 'From reach — from buyers who easily recall the product and easily buy it'), correct: true, why: bi('Покупатели «лёгкие»: они мало думают о категории и переключаются быстро, поэтому рынок растёт за счёт новых покупателей больше, чем за счёт глубины у старых.', 'Buyers are "light": they think little about the category and switch fast, so the market grows through new buyers, not depth with old ones.') },
-      { id: 'loyalty', text: bi('С лояльности, то есть с глубины отношений с существующими клиентами', 'From loyalty, that is from the depth of relationships with existing customers'), why: bi('Доля лояльных в категории почти не меняется; удвоить её не выходит даже у лидеров рынка.', 'The share of loyal customers in a category barely changes; even market leaders cannot double it.') },
-      { id: 'frequency', text: bi('С частоты покупок самыми активными клиентами, которые уже знают продукт', 'From how often the most active customers buy'), why: bi('Самые активные клиенты уже купили почти всё, что могут; потолок роста лежит за пределами собственной базы.', 'The most active customers have already bought almost everything they can; the growth ceiling lies outside your own base.') },
+      { id: 'reach', text: bi('За счёт охвата, то есть новых покупателей, которые легко вспомнят и купят продукт', 'From reach — from buyers who easily recall the product and easily buy it'), correct: true, why: bi('Покупатели «лёгкие»: они мало думают о категории и переключаются быстро, поэтому рынок растёт за счёт новых покупателей больше, чем за счёт глубины у старых.', 'Buyers are "light": they think little about the category and switch fast, so the market grows through new buyers, not depth with old ones.') },
+      { id: 'loyalty', text: bi('За счёт лояльности, то есть глубины отношений с существующими клиентами', 'From loyalty, that is from the depth of relationships with existing customers'), why: bi('Доля лояльных в категории почти не меняется; удвоить её не выходит даже у лидеров рынка.', 'The share of loyal customers in a category barely changes; even market leaders cannot double it.') },
+      { id: 'frequency', text: bi('За счёт частоты покупок самыми активными клиентами, которые уже знают продукт', 'From how often the most active customers buy'), why: bi('Самые активные клиенты уже купили почти всё, что могут; потолок роста лежит за пределами собственной базы.', 'The most active customers have already bought almost everything they can; the growth ceiling lies outside your own base.') },
     ],
   },
   {
@@ -468,7 +477,7 @@ export const MARKETING_SCHOOL_EN: SchoolModule[] = [
       {
         n: 7,
         title: 'A vaccine: marketing on buyer data.',
-        body: "Research by the Ehrenberg-Bass Institute, collected by Byron Sharp in “How Brands Grow”, makes an uncomfortable point: markets grow through reach more than loyalty. Category buyers are “light”: they think little about it and switch easily, so growing companies are easy to buy (physical availability) and recall (mental availability). This guards against infobusiness advice such as “warm up your audience” and “build loyalty”. Sharp’s research concerns brands within a category: brand share grows primarily through new buyers, with loyalty following share. A company spending only on people who already know it therefore grows more slowly than one expanding the pool of people who can recall and easily buy it.",
+        body: "Research by the Ehrenberg-Bass Institute, collected by Byron Sharp in “How Brands Grow”, makes an uncomfortable point: markets grow through reach more than loyalty. Category buyers are “light”: they think little about it and switch easily, so growing companies are easy to buy (physical availability) and recall (mental availability). Sharp’s research concerns brands within a category: brand share grows primarily through new buyers, with loyalty following share. A company spending only on people who already know it therefore grows more slowly than one expanding the pool of people who can recall and easily buy it. Transfer this conclusion to an infrastructure product with a correction. Sharp’s data comes mostly from consumer goods, where one person decides and purchases repeat often. Infrastructure is chosen by a group, procurement takes months and contracts renew once a year, so retaining existing customers weighs more. What carries over is the main point: new companies learn about you only through reach, and without it the funnel has nothing to retain.",
         today: "Record two numbers: how many new companies tried the product for the first time last quarter, and how many minutes pass from the first site visit to a working result. If fewer new companies tried it than in the previous quarter, work on reach: where people can first discover you. If the first result takes over an hour, work on availability: simplify installation and the first documentation step."
       }
     ]
@@ -677,7 +686,7 @@ export const MARKETING_SCHOOL_EN: SchoolModule[] = [
       },
       {
         n: 36,
-        title: 'Attribution is curved — measure direction.',
+        title: 'Attribution is imprecise, so measure direction.',
         body: 'A buyer of an infrastructure product touches you dozens of times over half a year: an article, a talk, an answer in issues, a webinar, a conference conversation. Under the last-touch model money looks as if every other channel is useless. The Reforge Marketing Attribution program is more honest about direction and dynamics: how channels grow and which touches the won deals share, rather than crediting the whole deal to one click.',
         today: 'Write down all the touches before the request for your last three deals — from memory and from correspondence — and look at what they have in common.'
       },
@@ -757,6 +766,17 @@ export const MARKETING_SCHOOL_EN: SchoolModule[] = [
   }
 ];
 
+/** One required task for this week; the remaining tasks of the module are optional. */
+function practiceBody(items: SchoolItem[], itemsEn: SchoolItem[]): Bi {
+  if (items.length === 1) return bi(items[0]!.today, itemsEn[0]!.today);
+  const rest = (list: SchoolItem[]) => list.slice(1).map(it => `- ${it.today}`).join('\n');
+  return bi(
+    `На эту неделю обязательно одно задание, к первому принципу урока: ${lowerFirst(items[0]!.today)}\n\nОстальные задания необязательны, возьмите те, что относятся к вашей текущей работе:\n\n${rest(items)}`,
+    `One task is required this week, for the lesson's first principle: ${lowerFirst(itemsEn[0]!.today)}\n\nThe other tasks are optional; take the ones that match your current work:\n\n${rest(itemsEn)}`,
+  );
+}
+const lowerFirst = (s: string) => s.charAt(0).toLocaleLowerCase() + s.slice(1);
+
 function lessonFor(letter: string): Lesson {
   const spec = MODULE_LESSON[letter]!;
   const mod = MARKETING_SCHOOL.find((m) => m.letter === spec.module)!;
@@ -787,7 +807,8 @@ function lessonFor(letter: string): Lesson {
         title: bi(headingRu, headingEn),
         body: bi(moduleBody(items), moduleBodyEn(itemsEn)),
       },
-      { id: 'practice', kind: 'text', step: 'practice', title: bi('Задания по темам модуля', 'Module practice'), body: bi(items.map(it => `- ${it.today}`).join('\n'), itemsEn.map(it => `- ${it.today}`).join('\n')) },
+      ...(spec.example ? [{ id: 'example', kind: 'text' as const, step: 'explain' as const, title: bi(spec.example.title[0], spec.example.title[1]), body: bi(spec.example.body[0], spec.example.body[1]) }] : []),
+      { id: 'practice', kind: 'text', step: 'practice', title: items.length === 1 ? bi('Задание по теме урока', 'Lesson practice') : bi('Задания по темам модуля', 'Module practice'), body: practiceBody(items, itemsEn) },
       { id: 'honest', kind: 'callout', tone: 'note', step: 'review', body: HONEST_NOTE },
     ],
   };

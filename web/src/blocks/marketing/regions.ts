@@ -8,6 +8,7 @@
 import { bi, t } from '../../core/i18n';
 import type { Mounted, WidgetReg } from '../../core/types';
 import { HONEST_NOTE } from './content';
+import { loadDraft, saveDraft } from '../../engine/trainers/storage';
 
 interface RegionsParams {
   /** Marketing budget, thousand dollars per month. */
@@ -122,10 +123,11 @@ export function mountRegions(el: HTMLElement, _props: unknown): Mounted {
   const root = document.createElement('div');
   root.className = 'sfu-root';
   el.append(style, root);
-  const params: RegionsParams = { ...DEFAULTS };
+  const params: RegionsParams = { ...DEFAULTS, ...loadDraft<Partial<RegionsParams>>('marketing.regions', {}) };
   const h = (tag: string, cls: string, ...kids: (Node | string)[]) => { const e = document.createElement(tag); if (cls) e.className = cls; e.append(...kids); return e; };
   const total = (label: string, value: number | string) => { const d = document.createElement('div'); d.className = 'sfu-total'; const b = document.createElement('b'); b.textContent = String(value); d.append(label, b); return d; };
   const render = () => {
+    saveDraft('marketing.regions', params);
     const r = regionsProject(params);
     const maxDeals = Math.max(0.01, ...r.regions.flatMap((x) => x.rows.map((row) => row.deals)));
     root.replaceChildren(
