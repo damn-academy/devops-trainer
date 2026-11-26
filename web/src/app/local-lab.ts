@@ -207,15 +207,17 @@ const OFFLINE = bi(
 const sec = (id: string, title: Bi, ...body: (Node | null)[]) => h('section.ll-sec', { id: `ll-${id}` }, h('h2', {}, t(title)), ...body);
 
 function needsTable(): HTMLElement {
-  const cell = (b: Bi | string) => h('td', {}, ...prose(typeof b === 'string' ? b : t(b), 'll-cell').childNodes);
+  const heads = [bi('Что вы делаете', 'What you do'), bi('Память', 'Memory'), bi('Ядра', 'CPU cores'), bi('Свободный диск', 'Free disk'), bi('Замерено', 'Measured')];
+  // On a phone each row becomes a card, and data-label names its values (app.css).
+  const cell = (b: Bi | string, col: number) => h('td', { 'data-label': t(heads[col]) }, ...prose(typeof b === 'string' ? b : t(b), 'll-cell').childNodes);
   return h(
     'div.ll-table-wrap',
     { tabindex: 0, role: 'region', 'aria-label': t(bi('Что нужно компьютеру', 'What your computer needs')) },
     h(
-      'table.ll-table',
+      'table.ll-table.ll-needs',
       {},
-      h('thead', {}, h('tr', {}, ...[bi('Что вы делаете', 'What you do'), bi('Память', 'Memory'), bi('Ядра', 'CPU cores'), bi('Свободный диск', 'Free disk'), bi('Замерено', 'Measured')].map((c) => h('th', { scope: 'col' }, t(c))))),
-      h('tbody', {}, ...NEEDS.map((r) => h('tr', {}, cell(r.what), cell(r.mem), cell(r.cores), cell(r.disk), cell(r.measured)))),
+      h('thead', {}, h('tr', {}, ...heads.map((c) => h('th', { scope: 'col' }, t(c))))),
+      h('tbody', {}, ...NEEDS.map((r) => h('tr', {}, cell(r.what, 0), cell(r.mem, 1), cell(r.cores, 2), cell(r.disk, 3), cell(r.measured, 4)))),
     ),
   );
 }
