@@ -42,3 +42,18 @@ it('draws accessible SVG figures with fictional-data captions', () => {
   expect(thousandLayout().falseAlarms.size).toBe(50);
   expect(dots.textContent).toContain('Вымышленная');
 });
+
+it('links the doubt register template from the final lesson as a download', async () => {
+  const { renderMd } = await import('../src/core/markdown');
+  const { existsSync } = await import('node:fs');
+  const register = lesson('scithink.final').sections.find(s => s.id === 'register');
+  if (register?.kind !== 'text') throw new Error('register section missing');
+  for (const lang of ['ru', 'en'] as const) {
+    const links = [...renderMd(register.body[lang]).querySelectorAll('a[download]')].map(a => a.getAttribute('href')!);
+    expect(links).toHaveLength(2);
+    for (const href of links) {
+      expect(href).toMatch(/templates\/doubt-register(-en)?\.(xlsx|csv)$/);
+      expect(existsSync(`public/${href.replace(/^.*templates\//, 'templates/')}`)).toBe(true);
+    }
+  }
+});
