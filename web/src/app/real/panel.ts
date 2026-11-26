@@ -35,6 +35,22 @@ const L = {
   taken: bi('Факты сняты', 'Facts taken'),
   none: bi('Фактов с машины пока нет.', 'No facts from the machine yet.'),
   waiting: bi('ждём факты с', 'waiting for facts from'),
+  whereOwn: bi('Выполняется на машине {m}, в её терминале.', 'Done on the machine {m}, in its terminal.'),
+  whereTab: bi('Выполняется на машине {m}, в терминале выше на этой странице.', 'Done on the machine {m}, in the terminal above on this page.'),
+  whereOwnMany: bi('Выполняется на машинах {m}, в их терминалах.', 'Done on the machines {m}, in their terminals.'),
+  whereTabMany: bi('Выполняется на машинах {m}, в терминалах выше на этой странице.', 'Done on the machines {m}, in the terminals above on this page.'),
+  toMachines: bi('К машинам', 'To the machines'),
+  checks: bi('Что проверим', 'What will be checked'),
+  howTitle: bi('Как сдаются эти задания', 'How these tasks are taken'),
+  howOwn: [
+    bi('Выполняйте задания в терминале своей машины: в лаборатории dtlab или заказанной в облаке. Адреса и команды — в разделе «Ваши машины».', 'Do the tasks in the terminal of your own machine, in the dtlab lab or ordered in a cloud. Addresses and commands are in “Your machines”.'),
+    bi('После каждого шага снимайте факты: кнопкой «Забрать из dtlab» или запустив проверочный скрипт и вставив его блок в поле машины.', 'After each step take the facts: with “Take from dtlab”, or run the check script and paste its block into the machine’s box.'),
+    bi('Пункты в карточках отмечаются сами. Когда закончите, нажмите «Сдать практику» внизу страницы.', 'The items on the cards tick themselves. When you are done, press “Submit the practice” at the bottom of the page.'),
+  ],
+  howTab: [
+    bi('Запустите машины выше и выполняйте задания в их терминалах на этой странице.', 'Start the machines above and do the tasks in their terminals on this page.'),
+    bi('Пункты в карточках отмечаются сами, как только машина придёт в нужное состояние. Когда закончите, нажмите «Сдать практику» внизу страницы.', 'The items on the cards tick themselves as soon as a machine reaches the required state. When you are done, press “Submit the practice” at the bottom of the page.'),
+  ],
   privacy: bi('Блок разбирается здесь, в браузере, и никуда не уходит.', 'The block is decoded here, in the browser, and goes nowhere.'),
   code: bi('Одноразовый код этой попытки', 'The one-time code of this attempt'),
   fromLab: bi('Забрать из dtlab', 'Take from dtlab'),
@@ -227,14 +243,31 @@ export function mountRealLab(exam: Exam & { real: RealLab }, key: string, onChan
   return { el, facts: () => machines, dispose() { alive = false; } };
 }
 
+/** The three steps of a real-machine exam, shown once above its tasks. */
+export function realHowTo(where: 'own' | 'tab'): HTMLElement {
+  return h('section.rl-how', {}, h('h3', {}, t(L.howTitle)), h('ol', {}, ...(where === 'tab' ? L.howTab : L.howOwn).map((b) => h('li', {}, ...renderInline(t(b))))));
+}
+
 export interface RealCardView {
   el: HTMLElement;
   update(m: MachinesFacts): void;
 }
 
 /** One real task: its goals with their state; `onScore` gets the best share of goals held so far. */
-export function mountRealCard(task: RealTask, opts: { feedback: boolean; onScore: (s: number) => void }): RealCardView {
+export function mountRealCard(task: RealTask, opts: { feedback: boolean; onScore: (s: number) => void; where?: 'own' | 'tab'; machines?: () => HTMLElement | null }): RealCardView {
   const list = h('ul.rl-goals');
+  // Say where the task is done and how its result reaches the page: without
+  // this a learner sees goals "waiting for facts" and nothing to press.
+  const on = [...new Set((task.goals ?? []).map((g) => g.on).filter((m): m is string => !!m))];
+  const where = on.length
+    ? h(
+        'p.small.rl-where',
+        {},
+        ...renderInline(t(opts.where === 'tab' ? (on.length > 1 ? L.whereTabMany : L.whereTab) : on.length > 1 ? L.whereOwnMany : L.whereOwn).replace('{m}', on.map((m) => `\`${m}\``).join(', '))),
+        opts.machines ? ' ' : null,
+        opts.machines ? h('button.btn.ghost.small', { type: 'button', onclick: () => opts.machines?.()?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, '↑ ', t(L.toMachines)) : null,
+      )
+    : null;
   const held = new Set<string>();
   let best = 0;
   const report = (score: number) => {
@@ -267,7 +300,7 @@ export function mountRealCard(task: RealTask, opts: { feedback: boolean; onScore
     };
     pasteEl = h('div.rl-paste-task', {}, h('label.small', {}, t(task.paste.label)), area, h('button.btn.small', { type: 'button', onclick: check }, t(L.verify)), st);
   }
-  const el = h('div.rl-card', {}, list, pasteEl);
+  const el = h('div.rl-card', {}, where, task.goals?.length ? h('p.small.rl-checks', {}, t(L.checks)) : null, list, pasteEl);
   if (task.goals) update({});
   return { el, update };
 }
