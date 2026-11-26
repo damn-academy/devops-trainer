@@ -5,7 +5,7 @@ export const strings = {
   preset: bi('Готовая компания', 'Preset company'),
   custom: bi('Собрать свою', 'Build your own'),
   randomCompany: bi('Случайная компания', 'Random company'),
-  customIntro: bi('Игрок выбрал для компании такие свойства.', 'Company properties chosen by the player:'),
+  customIntro: bi('Компания «{name}» вымышленная. Игрок выбрал для неё такие свойства.', 'The company {name} is fictional. Company properties chosen by the player:'),
   characters: bi('символов', 'characters'),
   tokens: bi('токенов, если считать примерно', 'approximate tokens'),
   longPrompt: bi('Бесплатные тарифы некоторых чатов обрезают такие длинные сообщения. В этом случае играйте прямо на странице со своей нейросетью.', 'Some free chat plans cut long messages. You can play here with your own AI.'),

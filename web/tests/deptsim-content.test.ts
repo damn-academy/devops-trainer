@@ -8,7 +8,7 @@ import world from '../src/sims/world.ru.md?raw';
 import languageRules from '../src/sims/lang-rules.ru.md?raw';
 import { scenarios, registerDepartmentScenarios } from '../src/sims/scenarios';
 import { getScenario } from '../src/engine/deptsim/registry';
-import { buildPrompt, compatibleCompany, companyText, diceTable, mulberry32, promptSize, randomCompany } from '../src/engine/deptsim/model';
+import { buildPrompt, compatibleCompany, companyText, diceTable, mulberry32, promptSize, randomCompany, companyName } from '../src/engine/deptsim/model';
 import { strings } from '../src/engine/deptsim/strings';
 
 const options = { seed: 42, company: 'stratova', difficulty: 'like-life' as const, turns: 6 };
@@ -48,7 +48,7 @@ describe('Markdown company content', () => {
   });
   it('assembles custom properties as paragraphs in file order', () => {
     expect(companyText({ ...options, companyMode: 'custom', companyConfig: defaultCompanyConfig() }, 'en'))
-      .toBe('Игрок выбрал для компании такие свойства.\n\n' + companyGroups.map(g => g.options.find(o => o.value === defaultCompanyConfig()[g.key])!.text).join('\n\n'));
+      .toBe(`Компания «${companyName(options.seed)}» вымышленная. Игрок выбрал для неё такие свойства.\n\n` + companyGroups.map(g => g.options.find(o => o.value === defaultCompanyConfig()[g.key])!.text).join('\n\n'));
   });
 });
 describe('department content assembly', () => {
