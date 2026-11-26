@@ -31,8 +31,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.latency', 'net.rtt'],
     prompt: bi('Почему ping из Москвы до сервера в Нью-Йорке, до которого около 7 500 км, не может показать 5 мс?', 'Why can a ping from Moscow to a server in New York (about 7,500 km) never show 5 ms?'),
     options: [
-      { id: 'light', text: bi('Потому что свет в оптоволокне тратит около 5 мкс на километр, и только в одну сторону это около 37 мс, а туда и обратно около 75 мс', 'Light in fibre travels about 5 µs per kilometre: ≈ 37 ms one way, ≈ 75 ms round trip'), correct: true },
       { id: 'slow', text: bi('Потому что у провайдера медленный тариф', 'Because the provider’s plan is slow'), why: bi('Скорость тарифа говорит, сколько данных проходит за секунду, а не сколько времени идёт один пакет, поэтому на задержку она почти не влияет.', 'A plan’s speed is how much data per second, not how long one packet travels. It barely changes delay.') },
+      { id: 'light', text: bi('Потому что свет в оптоволокне тратит около 5 мкс на километр, и только в одну сторону это около 37 мс, а туда и обратно около 75 мс', 'Light in fibre travels about 5 µs per kilometre: ≈ 37 ms one way, ≈ 75 ms round trip'), correct: true },
       { id: 'servers', text: bi('Потому что серверы в Нью-Йорке работают медленно', 'Because the servers in New York are slow'), why: bi('Даже сервер, который отвечает мгновенно, не ответит быстрее, чем свет пройдёт путь туда и обратно.', 'Even an instant server cannot answer faster than light covers the path there and back.') },
     ],
     explain: bi('Задержку распространения нельзя уменьшить, можно только сократить путь. Поэтому копии сайтов ставят ближе к пользователям.', 'Propagation delay cannot be sped up — only the path can be shortened. That is why copies of sites are placed nearer to users.'),
@@ -57,8 +57,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.ixp'],
     prompt: bi('Два провайдера одного города перестали обмениваться трафиком через точку обмена. Что станет с задержкой между их абонентами?', 'Two providers in one city stopped exchanging traffic through the exchange point. What happens to the delay between their customers?'),
     options: [
-      { id: 'up', text: bi('Задержка вырастет, потому что трафик пойдёт через транзитного оператора, иногда через другую страну', 'It grows: traffic goes through a transit carrier, sometimes through another country'), correct: true },
       { id: 'down', text: bi('Задержка уменьшится, потому что на пути станет на одно устройство меньше', 'It falls: there is one device fewer'), why: bi('Одно устройство действительно выпало, но путь стал длиннее: вместо соседнего коммутатора трафик идёт через далёкую чужую сеть.', 'A device dropped out, but the path got longer: instead of a nearby switch, a distant foreign network.') },
+      { id: 'up', text: bi('Задержка вырастет, потому что трафик пойдёт через транзитного оператора, иногда через другую страну', 'It grows: traffic goes through a transit carrier, sometimes through another country'), correct: true },
       { id: 'same', text: bi('Задержка не изменится, потому что адреса остались прежними', 'Nothing: the addresses are the same'), why: bi('Адреса остались теми же, но пакеты пошли другой дорогой, а задержка зависит от длины дороги, а не от адресов.', 'The addresses are the same, but the road differs — the road decides the delay.') },
     ],
     refs: { explainer: 'net.map' },
@@ -71,8 +71,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.switch', 'net.mac'],
     prompt: bi('Коммутатор только что включили, и его таблица пуста. Компьютер A отправляет кадр компьютеру B. Куда уйдёт этот кадр?', 'The switch has just been switched on; its table is empty. A sends a frame to B. Where does the frame go?'),
     options: [
-      { id: 'all', text: bi('Во все порты, кроме того, через который кадр пришёл', 'Out of every port except the one it came in on'), correct: true },
       { id: 'b', text: bi('Только к компьютеру B', 'Only to B'), why: bi('Коммутатор пока не знает, где находится B, и узнает это только тогда, когда B что-нибудь отправит.', 'How would the switch know where B is? It learns that only once B sends something.') },
+      { id: 'all', text: bi('Во все порты, кроме того, через который кадр пришёл', 'Out of every port except the one it came in on'), correct: true },
       { id: 'drop', text: bi('Никуда, потому что кадр на неизвестный адрес выбрасывается', 'Nowhere: an unknown address is dropped'), why: bi('Коммутатор не выбрасывает кадры к неизвестным MAC-адресам, а рассылает их во все порты.', 'A switch does not drop frames to unknown MACs — it floods them to everyone.') },
     ],
     refs: { explainer: 'net.switch' },
@@ -162,8 +162,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.cidr'],
     prompt: bi('Какая маска соответствует префиксу /20?', 'What mask does prefix /20 have?'),
     options: [
-      { id: 'a', text: '255.255.240.0', correct: true },
       { id: 'b', text: '255.255.255.240', why: bi('Это маска /28, в которой 28 единиц. У маски /20 единиц двадцать: 8 + 8 + 4.', 'That is /28: 28 ones. /20 has 20 ones — 8 + 8 + 4.') },
+      { id: 'a', text: '255.255.240.0', correct: true },
       { id: 'c', text: '255.255.20.0', why: bi('Маска означает не число 20 в третьем октете, а 20 единиц слева. В третьем октете получается 11110000, то есть 240.', 'The mask is not the number 20 in the third octet but 20 ones from the left: 11110000 in the third octet = 240.') },
     ],
   },
@@ -173,8 +173,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.subnet', 'net.cidr'],
     prompt: bi('Проекту выделили блок 10.20.0.0/22, а нужно шесть подсетей одинакового размера, как можно более крупных. Какой префикс будет у каждой?', 'A project was given the block 10.20.0.0/22 and needs six subnets of equal size, as large as possible. What prefix will each have?'),
     options: [
-      { id: '25', text: bi('/25, потому что три бита из номера машины дают 2³ = 8 подсетей, и шести из них хватит', '/25, because three bits taken from the host number give 2³ = 8 subnets, enough for six'), correct: true },
       { id: '24', text: bi('/24, потому что из блока /22 нарезают подсети /24, а две недостающие добавят потом', '/24, because a /22 block is cut into /24 subnets, and the two missing ones are added later'), why: bi('Два бита дают только 2² = 4 подсети, а нужно шесть. Добавить потом нечего, потому что весь блок /22 уже занят четырьмя подсетями /24.', 'Two bits give only 2² = 4 subnets, and six are needed. There is nothing to add later: the whole /22 is already taken by four /24 subnets.') },
+      { id: '25', text: bi('/25, потому что три бита из номера машины дают 2³ = 8 подсетей, и шести из них хватит', '/25, because three bits taken from the host number give 2³ = 8 subnets, enough for six'), correct: true },
       { id: '19', text: bi('/19, потому что по памятке префикс /19 означает восемь подсетей, а восемь больше шести', '/19, because by the cheat sheet a /19 means eight subnets, and eight is more than six'), why: bi('Памятка, в которой префиксу /19 соответствуют восемь подсетей, считает от блока /16. Префикс /19 короче /22, поэтому такая подсеть больше всего выделенного блока и в него не поместится.', 'The cheat sheet “/19 — eight subnets” counts from a /16. /19 is shorter than /22, so such a subnet is bigger than the whole block and does not fit into it.') },
     ],
     explain: bi('Число подсетей зависит от родительского блока: каждый бит, добавленный к префиксу /22, удваивает число подсетей.', 'The number of subnets depends on the parent block: every bit added to the /22 prefix doubles the number of subnets.'),
@@ -185,8 +185,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.cidr'],
     prompt: bi('У сервера адрес 192.168.5.10, а префикс вам не сообщили. Какая у него маска?', 'A server has the address 192.168.5.10, and nobody told you the prefix. What is its mask?'),
     options: [
-      { id: 'unknown', text: bi('По адресу этого не узнать: маска видна в настройках сети, например в выводе `ip a`', 'The address does not tell: the mask is in the network settings, for example in the output of `ip a`'), correct: true },
       { id: '24', text: bi('255.255.255.0, потому что адрес начинается со 192 и относится к классу C', '255.255.255.0, because the address starts with 192 and belongs to class C'), why: bi('Классы адресов отменили в 1993 году. Сегодня адрес 192.168.5.10 может стоять в подсети любого размера, а /24 в домашних сетях встречается чаще других только по привычке.', 'Address classes were abolished in 1993. Today 192.168.5.10 can sit in a subnet of any size; /24 is the most common at home only out of habit.') },
+      { id: 'unknown', text: bi('По адресу этого не узнать: маска видна в настройках сети, например в выводе `ip a`', 'The address does not tell: the mask is in the network settings, for example in the output of `ip a`'), correct: true },
       { id: '16', text: bi('255.255.0.0, потому что весь диапазон 192.168.0.0/16 отведён под частные сети', '255.255.0.0, because the whole range 192.168.0.0/16 is set aside for private networks'), why: bi('Префикс /16 описывает размер частного диапазона из RFC 1918, а не подсеть, которую из него нарезали. Подсеть внутри диапазона может быть любой.', '/16 describes the size of the RFC 1918 private range, not the subnet cut from it. The subnet inside the range can be anything.') },
     ],
   },
@@ -209,8 +209,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.arp'],
     prompt: bi('Машина спрашивает по ARP, у кого адрес 192.168.1.20. Кто ответит?', 'A host asks over ARP: “who has 192.168.1.20?”. Who answers?'),
     options: [
-      { id: 'owner', text: bi('Только машина с этим адресом, и ответит она своим MAC-адресом', 'Only the machine with that address, with its MAC'), correct: true },
       { id: 'switch', text: bi('Коммутатор, потому что у него есть таблица MAC-адресов', 'The switch, since it has a MAC table'), why: bi('В таблице коммутатора записано, за каким портом какой MAC-адрес, а IP-адресов коммутатор не знает и в ARP не участвует.', 'The switch table is “MAC → port”; it knows no IP addresses and takes no part in ARP.') },
+      { id: 'owner', text: bi('Только машина с этим адресом, и ответит она своим MAC-адресом', 'Only the machine with that address, with its MAC'), correct: true },
       { id: 'all', text: bi('Все машины локальной сети', 'Everyone on the local network'), why: bi('Вопрос слышат все, а отвечает одна машина, та, чей адрес спросили.', 'Everyone hears the question; only the one whose address was asked answers.') },
     ],
     refs: { explainer: 'net.arp' },
@@ -248,8 +248,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.lpm', 'net.route-table'],
     prompt: bi('На машине два маршрута: 10.0.0.0/8 via 10.1.1.1 и 10.20.0.0/16 via 10.1.1.2. Куда уйдёт пакет на адрес 10.20.5.5?', 'A host has two routes: 10.0.0.0/8 via 10.1.1.1 and 10.20.0.0/16 via 10.1.1.2. Where does a packet to 10.20.5.5 go?'),
     options: [
-      { id: 'b', text: bi('Через 10.1.1.2, потому что префикс /16 точнее и выигрывает', 'Via 10.1.1.2, because /16 is more specific and wins'), correct: true },
       { id: 'a', text: bi('Через 10.1.1.1, потому что эта строка стоит в таблице первой', 'Via 10.1.1.1, because that line comes first in the table'), why: bi('Порядок строк не важен, а выигрывает самый длинный подходящий префикс.', 'The order of lines does not matter: the longest matching prefix wins.') },
+      { id: 'b', text: bi('Через 10.1.1.2, потому что префикс /16 точнее и выигрывает', 'Via 10.1.1.2, because /16 is more specific and wins'), correct: true },
       { id: 'both', text: bi('По очереди через оба шлюза, потому что адресу подходят обе строки', 'Through both gateways in turn, because both lines match the address'), why: bi('Это не балансировка, потому что для одного адреса выбирается одна строка, самая точная.', 'This is not load balancing: for one address one line, the most specific, is chosen.') },
     ],
     key: true,
@@ -315,8 +315,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.tcp', 'net.port'],
     prompt: bi('Команда curl к закрытому порту одного сервера получает ответ мгновенно, а к закрытому порту другого сервера висит до конца срока ожидания. Чем отличаются эти два случая?', 'curl to a closed port answers instantly on one server and hangs until a timeout on another. What is the difference?'),
     options: [
-      { id: 'rst', text: bi('Первый ответил отказом RST, а у второго пакеты молча выбрасывает фильтр', 'The first answered with an RST refusal; on the second a filter silently drops the packets'), correct: true },
       { id: 'load', text: bi('Второй сервер перегружен и не успевает принять соединение', 'The second server is overloaded and cannot accept the connection in time'), why: bi('Даже перегруженный сервер ответил бы на SYN силами ядра. Полная тишина означает, что пакеты выбрасывает правило DROP или сервер недоступен.', 'An overloaded server would still answer the SYN from its kernel. Total silence means a DROP or unreachability.') },
+      { id: 'rst', text: bi('Первый ответил отказом RST, а у второго пакеты молча выбрасывает фильтр', 'The first answered with an RST refusal; on the second a filter silently drops the packets'), correct: true },
       { id: 'dns', text: bi('Имя второго сервера слишком долго превращается в адрес', 'The second server’s name takes too long to turn into an address'), why: bi('Зависание наступает, когда адрес уже известен, то есть на этапе подключения.', 'The hang comes after the address is known: at the connection stage.') },
     ],
     key: true,
@@ -340,8 +340,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.ephemeral'],
     prompt: bi('В выводе ss на клиенте видно соединение 10.0.0.1:51234 → 10.0.0.2:8080. Откуда взялся порт 51234?', 'In ss on the client: 10.0.0.1:51234 → 10.0.0.2:8080. Where did 51234 come from?'),
     options: [
-      { id: 'kernel', text: bi('Ядро клиента выбрало свободный эфемерный порт', 'The client’s kernel picked a free ephemeral port'), correct: true },
       { id: 'server', text: bi('Этот порт назначил сервер', 'The server assigned it'), why: bi('Сервер знает только свой порт 8080, а порт клиента узнаёт из первого же пакета SYN.', 'The server knows only its own port 8080; the client’s port arrives in the very first SYN.') },
+      { id: 'kernel', text: bi('Ядро клиента выбрало свободный эфемерный порт', 'The client’s kernel picked a free ephemeral port'), correct: true },
       { id: 'cfg', text: bi('Этот порт прописан в настройках curl', 'It is set in curl’s settings'), why: bi('curl не выбирает порт отправителя, это делает ядро при вызове connect().', 'curl does not choose the source port: the kernel does at connect().') },
     ],
   },
@@ -380,9 +380,9 @@ export const quiz: QuizItem[] = [
     concepts: ['net.mtu', 'net.encapsulation'],
     prompt: bi('MTU канала равен 1500 байт. Сколько данных TCP помещается в один сегмент без опций, то есть чему равен MSS?', 'The link MTU is 1500 bytes. How much TCP data fits into one segment without options (MSS)?'),
     options: [
-      { id: '1460', text: '1460', correct: true },
-      { id: '1500', text: '1500', why: bi('Число 1500 относится ко всему IP-пакету, в котором ещё есть 20 байт заголовка IP и 20 байт заголовка TCP.', '1500 is the whole IP packet, including 20 bytes of IP and 20 bytes of TCP.') },
       { id: '1486', text: '1486', why: bi('Заголовок Ethernet размером 14 байт в MTU не входит, потому что MTU считают от начала IP-пакета.', 'The Ethernet header (14 bytes) is not part of the MTU: MTU counts from the start of the IP packet.') },
+      { id: '1500', text: '1500', why: bi('Число 1500 относится ко всему IP-пакету, в котором ещё есть 20 байт заголовка IP и 20 байт заголовка TCP.', '1500 is the whole IP packet, including 20 bytes of IP and 20 bytes of TCP.') },
+      { id: '1460', text: '1460', correct: true },
     ],
     explain: bi('1500 − 20 (IP) − 20 (TCP) = 1460.', '1500 − 20 (IP) − 20 (TCP) = 1460.'),
   },
@@ -422,8 +422,8 @@ export const quiz: QuizItem[] = [
     concepts: ['net.resolver', 'net.authoritative'],
     prompt: bi('Пользователь набрал shop.exmaple с опечаткой в домене верхнего уровня. Какой сервер первым скажет, что такого имени нет?', 'A user typed shop.exmaple, with a typo in the top-level domain. Which server is the first to say that the name does not exist?'),
     options: [
-      { id: 'root', text: bi('Корневой сервер, потому что он отвечает резолверу, что зоны exmaple. нет', 'A root server: it tells the resolver that there is no zone exmaple.'), correct: true },
       { id: 'auth', text: bi('Авторитативный сервер магазина, потому что имя похоже на его зону', 'The shop’s authoritative server, because the name looks like its zone'), why: bi('До него вопрос не дойдёт, потому что корневой сервер не знает, кому передать зону exmaple.', 'The question never reaches it: the root does not know whom to hand exmaple. to.') },
+      { id: 'root', text: bi('Корневой сервер, потому что он отвечает резолверу, что зоны exmaple. нет', 'A root server: it tells the resolver that there is no zone exmaple.'), correct: true },
       { id: 'stub', text: bi('Сам ноутбук, потому что он знает, какие зоны существуют', 'The laptop itself, because it knows which zones exist'), why: bi('Системная библиотека не знает, какие имена существуют, и поэтому спрашивает сервер.', 'The stub resolver does not know which names exist: it asks a server.') },
     ],
     refs: { explainer: 'net.dns' },
