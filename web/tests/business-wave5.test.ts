@@ -18,7 +18,7 @@ it('downloads live notes under headings from all cards in this lesson only', () 
   document.querySelector<HTMLTextAreaElement>('[data-template-id=a]')!.value = 'Opening 100';
   document.querySelector<HTMLTextAreaElement>('[data-template-id=b]')!.value = 'Closing 118';
   host.querySelector('button')!.click();
-  expect(download.mock.calls[0][1]).toBe('Main notes\n\n## Starting ARR\n\nOpening 100\n\n## Movements\n\nClosing 118');
+  expect(download.mock.calls[0][1]).toBe('# Основной документ\n\nMain notes\n\n## Starting ARR\n\nOpening 100\n\n## Movements\n\nClosing 118');
 });
 it.each(['ru','en'] as const)('exports all six rights authorities in %s', lang => {
   setLang(lang);

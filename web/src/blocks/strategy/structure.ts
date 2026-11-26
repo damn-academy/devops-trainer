@@ -51,7 +51,7 @@ export const STRATEGY_SUMMARIES: Record<string, Bi> = {
   },
   "strategy.market-events": {
     "ru": "Четыре смены условий у крупных поставщиков — VMware, Terraform, Redis, Elasticsearch — и продление Oracle у конкретного клиента: какие предложения из этого выросли.",
-    "en": "Four major vendors changing their terms—VMware, Terraform, Redis, Elasticsearch—and one customer's Oracle renewal: the offers that grew out of them."
+    "en": "Four major vendors changing their terms—VMware, Terraform, Redis, Elasticsearch—and one customer’s Oracle renewal: the offers that grew out of them."
   },
   "strategy.market-shifts": {
     "ru": "События другого типа: стоимость наблюдаемости, возврат из облака, дефицит ускорителей, агенты и MCP, сбой CrowdStrike и Log4Shell.",
