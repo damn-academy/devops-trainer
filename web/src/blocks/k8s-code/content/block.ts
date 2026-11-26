@@ -205,7 +205,7 @@ export const block: Block = {
   order: route.order,
   title: route.title,
   summary: bi(
-    'В этом блоке вы закажете три ВМ с метками кодом Terraform, а узлы подготовите ролями Ansible. Затем вы один раз выполните kubeadm вручную и превратите его в роли с параметром creates, пересоздадите кластер с нуля одной последовательностью команд и выложите приложение из Git через Argo CD. После этого вы разберёте сроки сертификатов, расхождение версий и обновление по одному узлу, а в конце пройдёте настоящий трек и обязательно уберёте за собой машины.',
+    'В этом блоке вы закажете кодом Terraform три ВМ с метками, а узлы подготовите ролями Ansible. Затем вы один раз выполните kubeadm вручную и превратите его в роли с параметром creates, пересоздадите кластер с нуля одной последовательностью команд и выложите приложение из Git через Argo CD. После этого вы разберёте сроки сертификатов, расхождение версий и обновление по одному узлу, а в конце пройдёте настоящий трек и обязательно уберёте за собой машины.',
     'In this block you order three labelled VMs with Terraform code and prepare the nodes with Ansible roles. You walk through kubeadm once by hand and turn it into roles with creates, rebuild the cluster from scratch with one sequence of commands and release the application from Git through Argo CD. Then you go through certificate lifetimes, version skew and upgrading node by node, and at the end you do the real track and clean up the machines.',
   ),
   checklistStep: route.checklistStep,
