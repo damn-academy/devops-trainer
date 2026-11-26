@@ -201,7 +201,7 @@ export function placementPage(id: string): Page {
     const lower = LEVELS[Math.max(0, LEVELS.indexOf(claimed) - 1)];
     root.append(
       h('h1', {}, passed ? t(bi('Уровень подтверждён', 'Level confirmed')) : t(bi('Пока не подтверждён', 'Not confirmed yet'))),
-      h('p.lede', {}, `${Math.round(score * 100)}% · ${keysOk ? t(bi('все ключевые задания выполнены', 'all key tasks done')) : t(bi('не все ключевые задания выполнены', 'not all key tasks done'))}`),
+      h('p.lede', {}, `${Math.round(score * 100)}% · ${keysOk ? t(bi('все обязательные задания выполнены', 'all required tasks done')) : t(bi('не все обязательные задания выполнены', 'not all required tasks done'))}`),
       h(
         'ul.placement-results',
         {},
