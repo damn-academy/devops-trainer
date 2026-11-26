@@ -8,8 +8,10 @@ const params = new URLSearchParams(location.search);
 const seconds = Number(params.get('seconds') ?? 900);
 const startAfter = params.get('guestProfileStartAfter') ?? '';
 const topologies = (params.get('harts') ?? '2,4').split(',').map(Number);
+const memoryMb = Number(params.get('memory') ?? 1024);
 const guestProfile = Number(params.get('guestProfile') ?? 0) || 0;
 try {
+  if (!Number.isInteger(memoryMb) || memoryMb < 256 || memoryMb > 2048) throw Error('memory must be an integer from 256 to 2048 MiB');
   if (!topologies.length || topologies.some(h => h !== 2 && h !== 4)) throw Error('harts must be 2, 4 or 2,4');
   const [kernel, initrd, httpDisk] = await Promise.all([
     fetch('/rv64/slim-vmlinuz.efi').then(r => r.arrayBuffer()).then(b => new Uint8Array(b)),
@@ -17,7 +19,7 @@ try {
     fetch(params.get('media') ?? '/rv64/slim-recovery-media.json').then(r => r.json()),
   ]);
   for (const harts of topologies) {
-    const bytes = 1024 * 1024 * 1024, pages = bytes / 65536 + 1;
+    const bytes = memoryMb * 1024 * 1024, pages = bytes / 65536 + 1;
     const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
     const module = atomicModule(pages), mail = new HartMailboxes(harts).words.buffer;
     const control = new SharedArrayBuffer(harts * 64), ctl = new Int32Array(control);
@@ -27,7 +29,7 @@ try {
     const workers: Worker[] = [], start = performance.now(), events: { ms: number; consoleEnd: number }[] = [], metrics: unknown[] = [];
     let text = '', error: string | undefined;
     let profileStartedMs: number | null = guestProfile && !startAfter ? 0 : null;
-    const capture = () => ({ harts, events, metrics, console: text, elapsedMs: performance.now() - start, profileStartedMs, profileStartAfter: startAfter, guestEpochOffsetMs: epoch - performance.timeOrigin - start, httpDisk });
+    const capture = () => ({ harts, memoryMb, events, metrics, console: text, elapsedMs: performance.now() - start, profileStartedMs, profileStartAfter: startAfter, guestEpochOffsetMs: epoch - performance.timeOrigin - start, httpDisk });
     host.rv64PartialResult = () => ({ type: 'smp-kuberoot', pass: false, samples: [...samples, capture()] });
     const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
     services.network.addPort('smp-kuberoot', { mode: 'access' }, frame => workers[0]?.postMessage({ frame }));
