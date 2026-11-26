@@ -116,9 +116,9 @@ export const quiz: QuizItem[] = [
     concepts: ['obs.scrape'],
     prompt: bi('Как метрики сервиса попадают в Prometheus?', 'How do a service’s metrics get into Prometheus?'),
     options: [
-      { id: 'pull', text: bi('Prometheus сам по расписанию приходит к сервису и забирает страницу /metrics', 'Prometheus comes to the service on a schedule and fetches the /metrics page'), correct: true },
-      { id: 'push', text: bi('Сервис отправляет каждое событие в Prometheus', 'The service sends every event to Prometheus'), why: bi('Prometheus работает по модели pull, то есть сервис только показывает текущие значения, а забирает их сам Prometheus. Отправлять метрики можно лишь через отдельный сервис Pushgateway, и так поступают короткие пакетные задачи, которые завершаются раньше, чем Prometheus успел бы за ними прийти.', 'Prometheus works by pull, that is, the service only shows the current values, and Prometheus fetches them itself. Metrics can be pushed only through a separate service, the Pushgateway, and that is done by short batch jobs that finish before Prometheus would come for them.') },
       { id: 'logs', text: bi('Prometheus читает журналы сервиса', 'Prometheus reads the service logs'), why: bi('Журналы собирают другие инструменты, а Prometheus их не читает.', 'Logs are collected by other tools; Prometheus does not read them.') },
+      { id: 'push', text: bi('Сервис отправляет каждое событие в Prometheus', 'The service sends every event to Prometheus'), why: bi('Prometheus работает по модели pull, то есть сервис только показывает текущие значения, а забирает их сам Prometheus. Отправлять метрики можно лишь через отдельный сервис Pushgateway, и так поступают короткие пакетные задачи, которые завершаются раньше, чем Prometheus успел бы за ними прийти.', 'Prometheus works by pull, that is, the service only shows the current values, and Prometheus fetches them itself. Metrics can be pushed only through a separate service, the Pushgateway, and that is done by short batch jobs that finish before Prometheus would come for them.') },
+      { id: 'pull', text: bi('Prometheus сам по расписанию приходит к сервису и забирает страницу /metrics', 'Prometheus comes to the service on a schedule and fetches the /metrics page'), correct: true },
     ],
   },
   {
@@ -151,9 +151,9 @@ export const quiz: QuizItem[] = [
     concepts: ['obs.rate', 'obs.aggregation'],
     prompt: bi('Какой запрос правильно считает, сколько запросов в секунду получают все экземпляры сервиса вместе?', 'Which query correctly computes how many requests per second all instances of the service get together?'),
     options: [
-      { id: 'good', text: 'sum(rate(http_requests_total[5m]))', correct: true },
-      { id: 'bad', text: 'rate(sum(http_requests_total)[5m])', why: bi('Сначала нужно применить rate, а потом sum, потому что после сложения сброс одного счётчика уже не отличить от падения трафика. Кроме того, такой запрос не выполнится, потому что окно [5m] можно ставить только после селектора, а не после выражения.', 'rate must come first and sum second, because after adding up, one counter’s reset cannot be told from a drop in traffic. Besides, such a query will not run, because the [5m] window may follow only a selector, not an expression.') },
       { id: 'irate', text: 'sum(irate(http_requests_total[5m]))', why: bi('Функция irate считает скорость по двум последним значениям, поэтому её линия скачет. Для алертов и спокойных графиков берут rate.', 'irate computes the rate from the last two values, so its line jumps about. Alerts and calm graphs use rate.') },
+      { id: 'bad', text: 'rate(sum(http_requests_total)[5m])', why: bi('Сначала нужно применить rate, а потом sum, потому что после сложения сброс одного счётчика уже не отличить от падения трафика. Кроме того, такой запрос не выполнится, потому что окно [5m] можно ставить только после селектора, а не после выражения.', 'rate must come first and sum second, because after adding up, one counter’s reset cannot be told from a drop in traffic. Besides, such a query will not run, because the [5m] window may follow only a selector, not an expression.') },
+      { id: 'good', text: 'sum(rate(http_requests_total[5m]))', correct: true },
     ],
   },
   {
@@ -162,8 +162,8 @@ export const quiz: QuizItem[] = [
     concepts: ['obs.rate'],
     prompt: bi('Prometheus опрашивает сервис раз в 60 секунд, то есть scrape_interval равен 60 с. Что вернёт запрос `rate(http_requests_total[1m])`?', 'Prometheus scrapes the service every 60 seconds, that is, scrape_interval is 60 s. What does `rate(http_requests_total[1m])` return?'),
     options: [
-      { id: 'empty', text: bi('Чаще всего пустой результат, потому что в окно попадает одно значение счётчика', 'Usually an empty result, because the window holds one counter value'), correct: true },
       { id: 'fine', text: bi('Обычную скорость роста за минуту', 'An ordinary rate over the minute'), why: bi('Чтобы посчитать скорость, нужны хотя бы два значения. Поэтому окно берут не короче четырёх интервалов опроса.', 'A rate needs at least two values. That is why the window is taken at least four scrape intervals long.') },
+      { id: 'empty', text: bi('Чаще всего пустой результат, потому что в окно попадает одно значение счётчика', 'Usually an empty result, because the window holds one counter value'), correct: true },
     ],
   },
   {
