@@ -865,6 +865,8 @@ export interface RealLab {
    * Each machine names its VM in `RealMachine.dtlab`.
    */
   dtlabUp?: string;
+  /** What else to know about that command: a VM it starts that the exam does not use, a lab already fit for the exam. */
+  dtlabNote?: Bi;
 }
 
 export interface RealMachine {

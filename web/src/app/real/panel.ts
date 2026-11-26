@@ -45,11 +45,11 @@ const L = {
   howOwn: [
     bi('Выполняйте задания в терминале своей машины: в лаборатории dtlab или заказанной в облаке. Адреса и команды — в разделе «Ваши машины».', 'Do the tasks in the terminal of your own machine, in the dtlab lab or ordered in a cloud. Addresses and commands are in “Your machines”.'),
     bi('После каждого шага снимайте факты: кнопкой «Забрать из dtlab» или запустив проверочный скрипт и вставив его блок в поле машины.', 'After each step take the facts: with “Take from dtlab”, or run the check script and paste its block into the machine’s box.'),
-    bi('Пункты в карточках отмечаются сами. Когда закончите, нажмите «Сдать практику» внизу страницы.', 'The items on the cards tick themselves. When you are done, press “Submit the practice” at the bottom of the page.'),
+    bi('Пункты в карточках отмечаются сами: зелёная галочка означает выполненную цель, красный крестик — неудачную проверку, а точка — что факты с машины ещё не получены. Когда закончите, нажмите «Сдать практику» внизу страницы.', 'The items on the cards tick themselves: a green check mark means a completed goal, a red cross a failed check, and a dot that the machine’s facts have not arrived yet. When you are done, press “Submit the practice” at the bottom of the page.'),
   ],
   howTab: [
     bi('Запустите машины выше и выполняйте задания в их терминалах на этой странице.', 'Start the machines above and do the tasks in their terminals on this page.'),
-    bi('Пункты в карточках отмечаются сами, как только машина придёт в нужное состояние. Когда закончите, нажмите «Сдать практику» внизу страницы.', 'The items on the cards tick themselves as soon as a machine reaches the required state. When you are done, press “Submit the practice” at the bottom of the page.'),
+    bi('Пункты в карточках отмечаются сами, как только машина придёт в нужное состояние: зелёная галочка означает выполненную цель, красный крестик — неудачную проверку. Когда закончите, нажмите «Сдать практику» внизу страницы.', 'The items on the cards tick themselves as soon as a machine reaches the required state: a green check mark means a completed goal, a red cross a failed check. When you are done, press “Submit the practice” at the bottom of the page.'),
   ],
   privacy: bi('Блок разбирается здесь, в браузере, и никуда не уходит.', 'The block is decoded here, in the browser, and goes nowhere.'),
   code: bi('Одноразовый код этой попытки', 'The one-time code of this attempt'),
@@ -61,7 +61,7 @@ const L = {
   connectNone: bi('Лаборатория не ответила. Проверьте, что выполнена команда `dtlab up`, и что доступ к локальной сети разрешён в настройках сайта.', 'The lab did not answer. Check that `dtlab up` has run and that local network access is allowed in the site settings.'),
   fromLabFound: bi('Найдена лаборатория dtlab: факты с её машин можно забрать кнопкой у каждой машины, без копирования блока.', 'A dtlab lab is running: take the facts from its machines with the button by each machine, without copying the block.'),
   inLab: bi('Если работаете в лаборатории dtlab', 'If you work in the dtlab lab'),
-  labUp: bi('Запустите на своём компьютере машины, которые нужны этому экзамену: `{cmd}`. Если лаборатория уже запущена с другим набором машин, сначала выполните `dtlab destroy`: эта команда удалит прежние машины вместе с их дисками.', 'Start the machines this exam needs on your computer: `{cmd}`. If the lab is already running with another set of machines, run `dtlab destroy` first: it deletes the old machines with their disks.'),
+  labUp: bi('Запустите на своём компьютере машины, которые нужны этому экзамену: `{cmd}`. Если лаборатория уже создана с другим набором машин, `dtlab up` откажется её менять. Тогда сначала выполните `dtlab destroy` и подтвердите удаление ответом `y`: эта команда удалит прежние машины вместе с их дисками.', 'Start the machines this exam needs on your computer: `{cmd}`. If the lab already exists with another set of machines, `dtlab up` refuses to change it. Then run `dtlab destroy` first and confirm with `y`: it deletes the old machines with their disks.'),
   labVm: bi('`{m}` — это машина лаборатории `{vm}` с адресом `{ip}`. Терминал на ней открывает команда `dtlab ssh {vm}`.', '`{m}` is the lab machine `{vm}` at `{ip}`. The command `dtlab ssh {vm}` opens a terminal on it.'),
   local: bi('Машины не обязательно заказывать в облаке: локальная лаборатория dtlab бесплатно запускает виртуальные машины курса на вашем компьютере, а команда `dtlab facts` снимает с них блок для поля экзамена. Как её поставить, рассказано на странице [«Лаборатория на своём компьютере»](#/local-lab).', 'The machines do not have to be ordered in a cloud: the local lab dtlab runs the course’s virtual machines on your computer for free, and the `dtlab facts` command takes the block for the exam’s box from them. How to install it is told on the page [“A lab on your own computer”](#/local-lab).'),
 };
@@ -211,7 +211,7 @@ export function mountRealLab(exam: Exam & { real: RealLab }, key: string, onChan
         'div.rl-inlab',
         {},
         h('h3', {}, t(L.inLab)),
-        h('p.small', {}, ...renderInline(t(L.labUp).replace('{cmd}', lab.dtlabUp))),
+        h('p.small', {}, ...renderInline(t(L.labUp).replace('{cmd}', lab.dtlabUp)), ...(lab.dtlabNote ? [' ', ...renderInline(t(lab.dtlabNote))] : [])),
         h('ul.small', {}, ...lab.machines.filter((m) => m.dtlab).map((m) => h('li', {}, ...renderInline(t(L.labVm).replaceAll('{m}', m.id).replaceAll('{vm}', m.dtlab ?? '').replace('{ip}', LAB_VM_ADDR[m.dtlab ?? ''] ?? ''))))),
       )
     : null;
@@ -271,7 +271,7 @@ export interface RealCardView {
 }
 
 /** One real task: its goals with their state; `onScore` gets the best share of goals held so far. */
-export function mountRealCard(task: RealTask, opts: { feedback: boolean; onScore: (s: number) => void; where?: 'own' | 'tab'; machines?: () => HTMLElement | null }): RealCardView {
+export function mountRealCard(task: RealTask, opts: { feedback: boolean; onScore: (s: number) => void; where?: 'own' | 'tab'; machines?: () => HTMLElement | null; howAbove?: boolean }): RealCardView {
   const list = h('ul.rl-goals');
   // Say where the task is done and how its result reaches the page: without
   // this a learner sees goals "waiting for facts" and nothing to press.
@@ -317,12 +317,15 @@ export function mountRealCard(task: RealTask, opts: { feedback: boolean; onScore
     };
     pasteEl = h('div.rl-paste-task', {}, h('label.small', {}, t(task.paste.label)), area, h('button.btn.small', { type: 'button', onclick: check }, t(L.verify)), st);
   }
-  // A paste task takes a command's output, not the facts of a machine.
-  const guide = h('p.task-guide', {}, t(task.paste && !task.goals?.length
+  // A paste task takes a command's output, not the facts of a machine. The
+  // goals of the other cards are explained once, in "How these tasks are
+  // taken" above them (howAbove), or on each card where there is no such block.
+  const paste = task.paste && !task.goals?.length;
+  const guide = paste || !opts.howAbove ? h('p.task-guide', {}, t(paste
     ? bi('Выполните команду, о которой сказано в задании, скопируйте всё, что она напечатала, вставьте в поле ниже и нажмите «Проверить». Зелёная галочка означает, что подтверждение принято, красный крестик — что в тексте нет ожидаемой строки.', 'Run the command the task names, copy everything it printed, paste it into the box below and press “Verify”. A green check mark means the confirmation is accepted; a red cross means the text lacks the expected line.')
     : opts.where === 'tab'
     ? bi('Запустите машины в разделе выше и выполните задание в их терминалах. Проверка получает состояние машин автоматически. Зелёная галочка означает выполненную цель, красный крестик — неудачную проверку.', 'Start the machines above and complete the task in their terminals. Machine states are collected automatically. A green check mark means a completed goal; a red cross means a failed check.')
-    : bi('После выполнения задания запустите проверочный скрипт из раздела «Ваши машины», вставьте полученный блок в поле своей машины и нажмите «Проверить». Можно также нажать «Забрать из dtlab». Зелёная галочка означает выполненную цель, красный крестик — неудачную проверку. Точка означает, что данные ещё не получены.', 'After completing the task, run the check script from “Your machines”, paste the resulting block into your machine’s field and press “Verify”. You can also press “Take from dtlab”. A green check mark means a completed goal; a red cross means a failed check. A dot means data has not arrived yet.')));
+    : bi('После выполнения задания запустите проверочный скрипт из раздела «Ваши машины», вставьте полученный блок в поле своей машины и нажмите «Проверить». Можно также нажать «Забрать из dtlab». Зелёная галочка означает выполненную цель, красный крестик — неудачную проверку. Точка означает, что данные ещё не получены.', 'After completing the task, run the check script from “Your machines”, paste the resulting block into your machine’s field and press “Verify”. You can also press “Take from dtlab”. A green check mark means a completed goal; a red cross means a failed check. A dot means data has not arrived yet.'))) : null;
   const el = h('div.rl-card', {}, where, guide, task.goals?.length ? h('p.small.rl-checks', {}, t(L.checks)) : null, list, pasteEl);
   if (task.goals) update({});
   return { el, update };

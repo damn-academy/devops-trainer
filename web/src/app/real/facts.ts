@@ -319,9 +319,10 @@ export function judgeReal(task: RealTask, machines: MachinesFacts): { goals: Goa
 /** The cleanup paste: does any accepted pattern match? */
 /**
  * What `dtlab destroy` prints (lab/internal/lab/lab.go) and what `dtlab
- * status` says once the lab is gone: the cleanup of an exam taken in dtlab.
+ * status` says once the lab is gone, in English or Russian (lab/internal/say):
+ * the cleanup of an exam taken in dtlab.
  */
-export const DTLAB_CLEANUP: RegExp[] = [/VMs, their disks and the kuberoot credentials removed/, /no lab yet: dtlab check, then dtlab up/];
+export const DTLAB_CLEANUP: RegExp[] = [/VMs, their disks and the kuberoot credentials removed/, /no lab yet: dtlab check, then dtlab up/, /лаборатории пока нет: выполните dtlab check, потом dtlab up/];
 
 /** The cleanup confirmations of a real-machine exam: Terraform, an empty provider list, or dtlab. */
 export const CLEANUP_ACCEPT: RegExp[] = [/Destroy complete! Resources: [1-9]\d* destroyed/, /No resources found/, /^\s*\[\s*\]\s*$/, ...DTLAB_CLEANUP];

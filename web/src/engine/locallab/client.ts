@@ -112,8 +112,8 @@ export const LAB_REMOVAL: { cmd: string; what: Bi }[] = [
   {
     cmd: 'dtlab destroy',
     what: bi(
-      'Удаляет машины и их диски, а скачанные образы оставляет, чтобы следующий `dtlab up` создал чистые машины без повторной загрузки.',
-      'Deletes the machines and their disks, and keeps the downloaded images, so that the next `dtlab up` makes clean machines without downloading again.',
+      'Удаляет машины и их диски, а скачанные образы оставляет, чтобы следующий `dtlab up` создал чистые машины без повторной загрузки. Сначала показывает список машин и спрашивает подтверждение.',
+      'Deletes the machines and their disks, and keeps the downloaded images, so that the next `dtlab up` makes clean machines without downloading again. It first lists the machines and asks.',
     ),
   },
   {

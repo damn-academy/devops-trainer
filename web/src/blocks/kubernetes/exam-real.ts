@@ -142,6 +142,7 @@ export const stage2Exam: Exam = {
     ),
     machines: [{ id: CP, role: bi('управляющий узел, на нём запускается проверка', 'control plane: the check runs here'), dtlab: CP, collect: ['--snapshot /opt/backup/etcd.db'] }],
     dtlabUp: 'dtlab up --profile full --with kubeadm-nodes',
+    dtlabNote: bi('Если у вас уже работает лаборатория с профилем full, в которой есть узлы `cp-1`, `worker-1` и `worker-2`, ничего перезапускать и удалять не нужно: сдавайте экзамен на них.', 'If a lab with the full profile already runs with the nodes `cp-1`, `worker-1` and `worker-2`, there is nothing to restart or delete: take the exam on them.'),
     collector: { name: 'trainer-check.sh', text: collectorText },
   },
   tasks: [
@@ -370,8 +371,8 @@ export const stage2Exam: Exam = {
       kind: 'real',
       real: {
         prompt: bi(
-          'Последнее задание посвящено уборке. Экзамен не засчитывается, пока виртуальные машины работают и стоят денег или занимают память. Если вы работали в лаборатории dtlab, выполните на своём компьютере `dtlab destroy` и вставьте то, что она напечатала. Если машины в облаке, удалите все машины с меткой `trainer=devops` и вставьте вывод списка по этой метке после удаления, например `hcloud server list -l trainer=devops -o json` или `yc compute instance list --format json`. Список должен быть пустым.',
-          'The last task is the cleanup. The exam does not count while the VMs run and cost money or take memory. If you worked in the dtlab lab, run `dtlab destroy` on your computer and paste what it printed. If the machines are in a cloud, delete every machine labelled `trainer=devops` and paste the output of the list by that label after the deletion — for example, `hcloud server list -l trainer=devops -o json` or `yc compute instance list --format json`. The list must be empty.',
+          'Последнее задание посвящено уборке. Экзамен не засчитывается, пока виртуальные машины работают и стоят денег или занимают память. Если вы работали в лаборатории dtlab, выполните на своём компьютере `dtlab destroy`, подтвердите удаление ответом `y` и вставьте всё, что напечатала команда. Если машины в облаке, удалите все машины с меткой `trainer=devops` и вставьте вывод списка по этой метке после удаления, например `hcloud server list -l trainer=devops -o json` или `yc compute instance list --format json`. Список должен быть пустым.',
+          'The last task is the cleanup. The exam does not count while the VMs run and cost money or take memory. If you worked in the dtlab lab, run `dtlab destroy` on your computer, confirm the deletion with `y` and paste everything the command printed. If the machines are in a cloud, delete every machine labelled `trainer=devops` and paste the output of the list by that label after the deletion — for example, `hcloud server list -l trainer=devops -o json` or `yc compute instance list --format json`. The list must be empty.',
         ),
         concepts: ['k8s.cluster'],
         paste: { label: bi('Вывод dtlab destroy или списка машин после удаления', 'The output of dtlab destroy or of the VM list after the deletion'), accept: [/^\s*\[\s*\]\s*$/, /No resources found/, /^\s*ID\s+NAME\s+STATUS[^\n]*\n?\s*$/, ...DTLAB_CLEANUP] },
