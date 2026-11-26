@@ -38,9 +38,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['iac.resource-label'],
     prompt: bi('Зачем каждой ВМ курса ставят метку `trainer=devops`?', 'Why does every VM of the course carry the `trainer=devops` label?'),
     options: [
-      { id: 'find', text: bi('По этой метке находят, считают и удаляют всё, что создал курс, и по ней же проверяют, что после уборки ничего не осталось', 'By this label everything the course created is found, counted and deleted, and by it you check that nothing is left after the cleanup'), correct: true },
-      { id: 'k8s', text: bi('По этой метке Kubernetes понимает, что ВМ стала узлом кластера', 'By this label Kubernetes knows a VM has become a cluster node'), why: bi('Kubernetes ничего не знает о метках облака. Узлом кластера машину делает команда kubeadm join.', 'Kubernetes knows nothing about cloud labels. kubeadm join is what makes a machine a node.') },
-      { id: 'price', text: bi('Облако со скидкой берёт плату за учебные ВМ с такой меткой', 'The cloud bills training VMs with this label at a discount'), why: bi('Метка никак не влияет на цену. Она нужна для того, чтобы забытая машина не продолжала стоить денег.', 'A label changes nothing in the price. It is there so that a forgotten machine does not keep costing money.') },
+      { id: 'find', text: bi('По ней находят и удаляют всё, что создал курс, и проверяют, что после уборки ничего нет', 'By it everything the course created is found and deleted, and you check that nothing is left'), correct: true },
+      { id: 'k8s', text: bi('По этой метке Kubernetes понимает, что ВМ стала узлом кластера и на неё уже можно ставить поды', 'By this label Kubernetes knows that a VM has become a cluster node and pods can now be placed on it'), why: bi('Kubernetes ничего не знает о метках облака. Узлом кластера машину делает команда kubeadm join.', 'Kubernetes knows nothing about cloud labels. kubeadm join is what makes a machine a node.') },
+      { id: 'price', text: bi('Облако со скидкой берёт плату за учебные ВМ с такой меткой, и курс обходится дешевле обычного', 'The cloud bills training VMs with this label at a discount, so the course costs less than usual'), why: bi('Метка никак не влияет на цену. Она нужна для того, чтобы забытая машина не продолжала стоить денег.', 'A label changes nothing in the price. It is there so that a forgotten machine does not keep costing money.') },
     ],
   },
   // ── nodes ──
@@ -62,8 +62,8 @@ export const QUIZ: QuizItem[] = [
     concepts: ['iac.output'],
     prompt: bi('Почему инвентарь для Ansible берут из `terraform output`, а не переписывают адреса руками?', 'Why is the Ansible inventory taken from `terraform output` instead of copying the addresses by hand?'),
     options: [
-      { id: 'rebuild', text: bi('Адреса выдаёт облако, после пересоздания они другие, а output всегда отдаёт текущие адреса', 'The cloud hands out the addresses, after a rebuild they are different, and the output always gives the current ones'), correct: true },
-      { id: 'secret', text: bi('Адреса машин секретны, и показывать их нельзя', 'The machine addresses are secret and must not be shown'), why: bi('Адреса не секретны. Дело в том, что они меняются, а человек, который копирует их руками, переносит вчерашние.', 'The addresses are no secret. The point is that they change, and a person copying them by hand carries over yesterday’s.') },
+      { id: 'rebuild', text: bi('Адреса выдаёт облако, после пересоздания они другие, а output всегда отдаёт текущие адреса', 'The cloud hands out the addresses, they change after a rebuild, and the output always gives the current ones'), correct: true },
+      { id: 'secret', text: bi('Адреса машин секретны, поэтому Terraform прячет их в своём state, и показывать их в журнале нельзя', 'The machine addresses are secret, so Terraform keeps them hidden in its state, and they must never be shown in a log'), why: bi('Адреса не секретны. Дело в том, что они меняются, а человек, который копирует их руками, переносит вчерашние.', 'The addresses are no secret. The point is that they change, and a person copying them by hand carries over yesterday’s.') },
       { id: 'fast', text: bi('Ansible быстрее читает файлы, которые создал Terraform', 'Ansible reads files created by Terraform faster'), why: bi('Ansible всё равно, кто написал файл. Важно только, чтобы в нём были верные адреса.', 'Ansible does not care who wrote the file. All that matters is that it has the right addresses.') },
     ],
   },
@@ -99,7 +99,7 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'one', text: bi('У дерева cgroup должен быть один хозяин, а два менеджера, которые не знают друг о друге, под нагрузкой по-разному распределяют ресурсы', 'The cgroup tree must have one owner, and two managers unaware of each other share resources differently under load'), correct: true },
       { id: 'speed', text: bi('Драйвер systemd работает быстрее', 'The systemd driver is faster'), why: bi('Дело не в скорости, а в том, что systemd уже управляет cgroup всей машины.', 'It is not about speed but about systemd already managing the cgroups of the whole machine.') },
-      { id: 'kubeadm', text: bi('Без этого kubeadm init не запустится', 'kubeadm init will not run without it'), why: bi('kubeadm init может пройти и с другим драйвером, а несогласованность проявится позже, под нагрузкой и при перезапусках.', 'kubeadm init may pass with another driver, and the mismatch shows later, under load and on restarts.') },
+      { id: 'kubeadm', text: bi('Без этого kubeadm init не запустится: на проверках preflight он сравнивает драйверы kubelet и containerd и останавливается при расхождении', 'kubeadm init will not run without it: its preflight checks compare the drivers of the kubelet and containerd and stop on a mismatch'), why: bi('kubeadm init может пройти и с другим драйвером, а несогласованность проявится позже, под нагрузкой и при перезапусках.', 'kubeadm init may pass with another driver, and the mismatch shows later, under load and on restarts.') },
     ],
   },
   {
@@ -108,9 +108,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['k8s.version-pin'],
     prompt: bi('Роль ставит `kubelet` из репозитория `pkgs.k8s.io/core:/stable:/v1.36` и не указывает версию. Что случится, если через полгода пересоздать один узел?', 'A role installs `kubelet` from the `pkgs.k8s.io/core:/stable:/v1.36` repository without a version. What happens if one node is rebuilt half a year later?'),
     options: [
-      { id: 'patch', text: bi('Новый узел получит более позднюю патч-версию 1.36, чем старые узлы, и узлы кластера перестанут быть одинаковыми', 'The new node gets a later 1.36 patch version than the old ones, and the cluster nodes stop being identical'), correct: true },
-      { id: 'minor', text: bi('Узел получит версию 1.37', 'The node gets version 1.37'), why: bi('Репозиторий pkgs.k8s.io разделён по минорным версиям, поэтому из ветки v1.36 версия 1.37 не придёт.', 'The pkgs.k8s.io repository is split by minor version, so 1.37 does not come from the v1.36 branch.') },
-      { id: 'same', text: bi('Ничего не случится, потому что версия всегда остаётся той же', 'Nothing, because the version always stays the same'), why: bi('Внутри ветки выходят новые патч-версии, и если версия не записана в коде, apt поставит самую новую.', 'New patch versions keep coming out in the branch, and if the version is not in the code, apt installs the newest.') },
+      { id: 'patch', text: bi('Новый узел получит более позднюю патч-версию 1.36, чем остальные', 'The new node gets a later 1.36 patch version than the others'), correct: true },
+      { id: 'minor', text: bi('Узел получит версию 1.37, потому что apt ставит самую новую версию kubelet', 'The node gets version 1.37, because apt installs the newest kubelet there is'), why: bi('Репозиторий pkgs.k8s.io разделён по минорным версиям, поэтому из ветки v1.36 версия 1.37 не придёт.', 'The pkgs.k8s.io repository is split by minor version, so 1.37 does not come from the v1.36 branch.') },
+      { id: 'same', text: bi('Ничего не случится, потому что версия пакета в репозитории всегда остаётся той же', 'Nothing, because the package version in the repository always stays the same'), why: bi('Внутри ветки выходят новые патч-версии, и если версия не записана в коде, apt поставит самую новую.', 'New patch versions keep coming out in the branch, and if the version is not in the code, apt installs the newest.') },
     ],
     explain: bi('Поэтому версию записывают в коде (`kubeadm=1.36.4-1.1`), а пакет удерживают от обновления командой apt upgrade. На настоящих машинах это делает модуль `ansible.builtin.dpkg_selections` с параметром `selection: hold`.', 'That is why the version is in the code (`kubeadm=1.36.4-1.1`) and the package is held against apt upgrade. On real machines the `ansible.builtin.dpkg_selections` module with `selection: hold` does it.'),
   },
@@ -121,7 +121,7 @@ export const QUIZ: QuizItem[] = [
     concepts: ['k8s.bootstrap-token'],
     prompt: bi('Дан токен присоединения `stand1.cl0ckw0rk0range0`. Какая его часть секретна?', 'The bootstrap token `stand1.cl0ckw0rk0range0`. Which part is the secret?'),
     options: [
-      { id: 'secret', text: bi('Вторая часть, после точки, а первая часть служит открытым идентификатором токена', 'The second part, after the dot, while the first is the public token ID'), correct: true },
+      { id: 'secret', text: bi('Вторая часть, после точки, а первая служит открытым идентификатором', 'The second part, after the dot, while the first is the public token ID'), correct: true },
       { id: 'first', text: bi('Первая часть, до точки', 'The first part, before the dot'), why: bi('Первая часть служит идентификатором. По ней находят Secret с именем bootstrap-token-<id>, и её показывает команда kubeadm token list.', 'The first part is the ID. The Secret bootstrap-token-<id> is found by it, and kubeadm token list shows it.') },
       { id: 'none', text: bi('Ни одна, потому что токен действует всего 24 часа и секретом не считается', 'Neither, because the token is valid for only 24 hours and is not a secret'), why: bi('За 24 часа с этим токеном можно присоединить к кластеру чужую машину. Ограниченный срок уменьшает ущерб, но не делает токен открытым.', 'Within 24 hours anyone with it can join a foreign machine to the cluster. The limited lifetime reduces the damage but does not make the token public.') },
     ],
@@ -158,9 +158,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['iac.creates'],
     prompt: bi('В плейбуке есть задача `ansible.builtin.command: kubeadm init --config /etc/kubeadm/init.yaml`, и параметра `creates` у неё нет. Что произойдёт при втором прогоне плейбука?', 'The task `ansible.builtin.command: kubeadm init --config /etc/kubeadm/init.yaml` without `creates`. What happens on the second playbook run?'),
     options: [
-      { id: 'fail', text: bi('kubeadm init запустится снова и остановится с ошибкой на проверках preflight, потому что порты заняты, а манифесты уже есть', 'kubeadm init runs again and fails at preflight, because the ports are busy and the manifests exist'), correct: true },
-      { id: 'ok', text: bi('Ansible поймёт, что кластер уже есть, и ответит ok', 'Ansible understands the cluster exists and answers ok'), why: bi('Модуль command не знает, что делает команда. Он запускает её каждый раз и отвечает changed или failed.', 'The command module does not know what the command does. It runs it every time and answers changed or failed.') },
-      { id: 'reinit', text: bi('kubeadm пересоздаст кластер с нуля', 'kubeadm recreates the cluster from scratch'), why: bi('kubeadm init не затирает существующий control plane, и его проверки preflight существуют как раз для этого.', 'kubeadm init does not overwrite an existing control plane, and its preflight checks exist for exactly that.') },
+      { id: 'fail', text: bi('kubeadm init запустится снова и упадёт на проверках preflight: порты заняты, манифесты уже есть', 'kubeadm init runs again and fails at preflight: the ports are busy and the manifests exist'), correct: true },
+      { id: 'ok', text: bi('Ansible поймёт по файлам в /etc/kubernetes, что кластер уже создан, пропустит задачу и ответит ok', 'Ansible sees from the files in /etc/kubernetes that the cluster exists, skips the task and answers ok'), why: bi('Модуль command не знает, что делает команда. Он запускает её каждый раз и отвечает changed или failed.', 'The command module does not know what the command does. It runs it every time and answers changed or failed.') },
+      { id: 'reinit', text: bi('kubeadm сбросит старый control plane и пересоздаст кластер с нуля, с новыми сертификатами и токеном', 'kubeadm resets the old control plane and recreates the cluster from scratch with new certificates and a token'), why: bi('kubeadm init не затирает существующий control plane, и его проверки preflight существуют как раз для этого.', 'kubeadm init does not overwrite an existing control plane, and its preflight checks exist for exactly that.') },
     ],
   },
   {
@@ -197,7 +197,7 @@ export const QUIZ: QuizItem[] = [
     prompt: bi('Чем выкладка через GitOps отличается от шага `kubectl apply` в пайплайне CI?', 'How does a GitOps release differ from a `kubectl apply` step in a CI pipeline?'),
     options: [
       { id: 'pull', text: bi('Агент внутри кластера сам забирает состояние из Git и постоянно поддерживает его, а пайплайну не нужен доступ к кластеру', 'An agent inside the cluster pulls the state from Git itself and keeps it all the time, and the pipeline needs no cluster access'), correct: true },
-      { id: 'faster', text: bi('GitOps доставляет изменения в кластер быстрее', 'GitOps rolls changes out faster'), why: bi('Скорость примерно одинакова, а при опросе раз в три минуты GitOps бывает даже медленнее. GitOps выигрывает тем, что кластер сам постоянно поддерживает состояние из Git.', 'The speed is about the same, and with a three-minute poll GitOps can even be slower. The gain is elsewhere.') },
+      { id: 'faster', text: bi('GitOps доставляет изменения в кластер быстрее, потому что контроллер применяет коммит сразу, без очереди раннеров и стадий пайплайна', 'GitOps rolls changes out faster, because the controller applies a commit at once, without waiting for runners and pipeline stages'), why: bi('Скорость примерно одинакова, а при опросе раз в три минуты GitOps бывает даже медленнее. GitOps выигрывает тем, что кластер сам постоянно поддерживает состояние из Git.', 'The speed is about the same, and with a three-minute poll GitOps can even be slower. The gain is elsewhere.') },
       { id: 'once', text: bi('Ничем не отличается, потому что в обоих случаях манифесты применяются один раз', 'There is no difference, because in both cases the manifests are applied once'), why: bi('Пайплайн применяет манифесты один раз и больше о них не вспоминает. Контроллер GitOps сверяет состояние снова и снова и поэтому замечает ручную правку.', 'A pipeline applies the manifests once and forgets them. A GitOps controller compares again and again, and so it notices a manual edit.') },
     ],
   },
@@ -207,9 +207,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['k8s.sync-policy'],
     prompt: bi('У Application задано `automated: {}` без `selfHeal`. Коллега выполнил `kubectl scale deploy shop --replicas=5`, а в Git записано две реплики. Что будет дальше?', 'An Application has `automated: {}` without `selfHeal`. A colleague ran `kubectl scale deploy shop --replicas=5`, and Git says two replicas. What happens next?'),
     options: [
-      { id: 'stays', text: bi('В кластере останется пять реплик, а Application будет в состоянии OutOfSync до следующего коммита или ручной синхронизации', 'Five replicas stay in the cluster, and the Application is OutOfSync until the next commit or a manual sync'), correct: true },
-      { id: 'two', text: bi('Через три минуты реплик снова станет две', 'In three minutes there are two replicas again'), why: bi('Автоматическая синхронизация срабатывает на новую ревизию в Git. Возвращать ручную правку без нового коммита должен selfHeal.', 'Automated sync fires on a new Git revision. Undoing a manual edit without a new commit is the job of selfHeal.') },
-      { id: 'error', text: bi('Argo CD запретит команду kubectl scale', 'Argo CD forbids the kubectl scale command'), why: bi('Argo CD не запрещает правки. Он их замечает и, если ему это разрешено, отменяет, а запрещать правки должна система прав RBAC.', 'Argo CD does not forbid edits. It notices them and, if allowed, undoes them; forbidding edits is the job of RBAC.') },
+      { id: 'stays', text: bi('Останется пять реплик, и Application будет OutOfSync до нового коммита или ручной синхронизации', 'Five replicas stay, and the Application is OutOfSync until a new commit or a manual sync'), correct: true },
+      { id: 'two', text: bi('Через три минуты Argo CD снова опросит Git, заметит расхождение и уменьшит число реплик обратно до двух', 'In three minutes Argo CD polls Git, notices the drift and scales the replicas back down to two'), why: bi('Автоматическая синхронизация срабатывает на новую ревизию в Git. Возвращать ручную правку без нового коммита должен selfHeal.', 'Automated sync fires on a new Git revision. Undoing a manual edit without a new commit is the job of selfHeal.') },
+      { id: 'error', text: bi('Argo CD запретит команду kubectl scale, потому что объектами этого приложения управляет только он', 'Argo CD forbids the kubectl scale command, because only it may manage the objects of this application'), why: bi('Argo CD не запрещает правки. Он их замечает и, если ему это разрешено, отменяет, а запрещать правки должна система прав RBAC.', 'Argo CD does not forbid edits. It notices them and, if allowed, undoes them; forbidding edits is the job of RBAC.') },
     ],
   },
   {
@@ -255,9 +255,9 @@ export const QUIZ: QuizItem[] = [
     concepts: ['k8s.version-skew'],
     prompt: bi('Кластер работает на v1.36. Можно ли сначала обновить kubelet на рабочих узлах до v1.37, а control plane обновить потом?', 'The cluster is on v1.36. May you upgrade the kubelet on the workers to v1.37 first and the control plane later?'),
     options: [
-      { id: 'no', text: bi('Нельзя, потому что kubelet не может быть новее API-сервера. Сначала обновляют control plane, а потом рабочие узлы', 'No, because the kubelet must not be newer than the API server. The control plane is upgraded first, then the workers'), correct: true },
-      { id: 'yes', text: bi('Можно, потому что порядок обновления не важен', 'Yes, because the order of the upgrade does not matter'), why: bi('Правила расхождения версий запрещают kubelet, который новее kube-apiserver.', 'The version skew rules forbid a kubelet newer than kube-apiserver.') },
-      { id: 'jump', text: bi('Можно, и даже сразу до v1.38', 'Yes, and even straight to v1.38'), why: bi('kubeadm обновляет кластер только на одну минорную версию за раз.', 'kubeadm upgrades a cluster only one minor version at a time.') },
+      { id: 'no', text: bi('Нельзя: kubelet не может быть новее API-сервера, поэтому control plane обновляют первым', 'No: the kubelet must not be newer than the API server, so the control plane goes first'), correct: true },
+      { id: 'yes', text: bi('Можно, потому что kubelet и API-сервер договорятся о версии протокола, и порядок обновления не важен', 'Yes, because the kubelet and the API server agree on a protocol version, so the order of the upgrade does not matter'), why: bi('Правила расхождения версий запрещают kubelet, который новее kube-apiserver.', 'The version skew rules forbid a kubelet newer than kube-apiserver.') },
+      { id: 'jump', text: bi('Можно, и даже сразу до v1.38, если потом за один раз обновить control plane до той же версии', 'Yes, and even straight to v1.38, if the control plane is then brought to the same version in one go'), why: bi('kubeadm обновляет кластер только на одну минорную версию за раз.', 'kubeadm upgrades a cluster only one minor version at a time.') },
     ],
   },
   {
@@ -282,7 +282,7 @@ export const QUIZ: QuizItem[] = [
     options: [
       { id: 'certs', text: bi('Истекут сертификаты control plane, потому что kubeadm выдаёт их на год, а продлевает их обновление версии', 'The control-plane certificates expire, because kubeadm issues them for a year and a version upgrade renews them'), correct: true },
       { id: 'ca', text: bi('Истечёт сертификат удостоверяющего центра (CA)', 'The certificate authority (CA) expires'), why: bi('Сертификат CA kubeadm выдаёт на десять лет.', 'kubeadm issues the CA certificate for ten years.') },
-      { id: 'nothing', text: bi('Ничего не сломается, потому что кластер может работать без обновлений сколько угодно', 'Nothing breaks, because a cluster can run without upgrades forever'), why: bi('Кластер будет работать, пока не истекут сертификаты, а это случится через год после init.', 'The cluster works until the certificates expire, and that happens a year after init.') },
+      { id: 'nothing', text: bi('Ничего не сломается: кластер, в который никто не вносит изменений, может работать без обновлений версии сколько угодно', 'Nothing breaks: a cluster that nobody touches can keep running without any version upgrades for as long as you like'), why: bi('Кластер будет работать, пока не истекут сертификаты, а это случится через год после init.', 'The cluster works until the certificates expire, and that happens a year after init.') },
     ],
     explain: bi('Сроки проверяет команда `kubeadm certs check-expiration`, а вручную сертификаты продлевает `kubeadm certs renew all` с последующим перезапуском статических подов. Регулярное обновление версии решает обе задачи сразу.', '`kubeadm certs check-expiration` checks the dates; `kubeadm certs renew all` with a restart of the static pods renews them by hand. Regular version upgrades solve both at once.'),
   },
