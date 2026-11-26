@@ -346,3 +346,20 @@
   .lab.lab-expanded .lab-term-box { flex: 1; min-height: 0; }
 }
 @media (max-width: 600px) { html.lab-fullscreen, html.lab-fullscreen body { overflow: hidden; } }
+/* a phone's terminal is wider than its box: the shaded edge says there is more to the right (widget.ts, followCursor) */
+.term-edge { position: absolute; top: 0; bottom: 0; width: 24px; pointer-events: none; background: linear-gradient(to right, transparent, color-mix(in srgb, var(--term-fg) 28%, transparent)); z-index: 5; }
+.term-edge[hidden], .term-scroll-hint[hidden] { display: none; }
+.term-scroll-hint { margin: 4px 0 0; font: 0.8rem/1.35 var(--font-ui); color: var(--muted); }
+/* the goals stay reachable over a phone's full-screen terminal (terminal-section.ts) */
+.lab-goals-mini { display: none; }
+@media (max-width: 600px) {
+  .lab.lab-expanded .lab-goals-mini { display: block; margin: 0 0 6px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
+  .lab-goals-mini summary { min-height: 32px; display: flex; align-items: center; padding: 4px 10px; cursor: pointer; font: 600 0.9rem var(--font-ui); }
+  .lab-goals-mini[open] .lab-goals-mini-list { max-height: 35vh; overflow: auto; }
+  .lab-goals-mini-list { list-style: none; margin: 0; padding: 0 10px 8px; display: grid; gap: 6px; }
+  .lab-goals-mini-list li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 8px; align-items: start; }
+  .lab-goals-mini-list li.current .goal-mark { background: var(--ink); color: var(--bg); }
+  .lab-goals-mini-list li.done { opacity: 0.75; }
+  .lab-goals-mini-list li.done .goal-mark { background: var(--c-ok); color: var(--bg); }
+  .lab-goals-mini-list .goal-text { font-size: 0.95rem; }
+}

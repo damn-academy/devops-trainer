@@ -6,6 +6,7 @@ import { snapshotForFeedback } from './feedback';
 // less-like pager for `man`, so the machine only sees complete lines.
 
 import { closeDoc } from '../docs/viewer';
+import { bi, t } from '../../core/i18n';
 import type { DocRef, ExecResult, Machine } from '../../core/types';
 import { needsMore, SimMachine } from './shell';
 
@@ -72,6 +73,7 @@ export function readTheme(): Record<string, string> {
  * and the box it sits in scrolls sideways.
  */
 const NARROW_MIN_COLS = 80;
+const SCROLL_HINT = bi('Терминал шире экрана: чтобы увидеть конец строки, сдвиньте его пальцем влево.', 'The terminal is wider than the screen: swipe it left to see the end of a line.');
 const narrowScreen = () => window.matchMedia?.('(max-width: 600px)').matches ?? false;
 export const termFontSize = () => (narrowScreen() ? 11 : 14);
 export function fitTerminal(term: XTerm, fit: { fit(): void }) {
@@ -82,6 +84,54 @@ export function fitTerminal(term: XTerm, fit: { fit(): void }) {
   if (narrow && term.cols < NARROW_MIN_COLS) term.resize(NARROW_MIN_COLS, term.rows);
   const box = term.element?.parentElement;
   if (box) box.style.overflowX = narrow ? 'auto' : '';
+}
+
+/**
+ * On a phone the 80 columns are wider than the box: keep the cursor in view
+ * while a long command is typed, shade the edge that hides columns and say
+ * once, under the box, that it moves sideways. Returns the cleanup.
+ */
+export function followCursor(term: XTerm, box: HTMLElement, hintText: string): () => void {
+  const edge = document.createElement('div');
+  edge.className = 'term-edge';
+  edge.setAttribute('aria-hidden', 'true');
+  const hint = document.createElement('p');
+  hint.className = 'term-scroll-hint';
+  hint.textContent = hintText;
+  hint.hidden = true;
+  if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
+  box.append(edge);
+  box.after(hint);
+  const update = () => {
+    const hidden = narrowScreen() && box.scrollWidth - box.clientWidth > 4;
+    const right = hidden && box.scrollLeft + box.clientWidth < box.scrollWidth - 4;
+    edge.hidden = !right;
+    edge.style.left = `${box.scrollLeft + box.clientWidth - 24}px`;
+    hint.hidden = !hidden;
+  };
+  const follow = () => {
+    if (!narrowScreen()) return update();
+    const screen = term.element?.querySelector<HTMLElement>('.xterm-screen');
+    if (screen && term.cols) {
+      const cell = screen.clientWidth / term.cols;
+      const x = term.buffer.active.cursorX * cell + screen.offsetLeft;
+      const pad = cell * 4;
+      if (x + pad > box.scrollLeft + box.clientWidth) box.scrollLeft = x + pad - box.clientWidth;
+      else if (x - pad < box.scrollLeft) box.scrollLeft = Math.max(0, x - pad);
+    }
+    update();
+  };
+  const moved = term.onCursorMove(follow);
+  const resized = term.onResize(update);
+  box.addEventListener('scroll', update, { passive: true });
+  requestAnimationFrame(update);
+  return () => {
+    moved.dispose();
+    resized.dispose();
+    box.removeEventListener('scroll', update);
+    edge.remove();
+    hint.remove();
+  };
 }
 
 const visibleLen = (s: string) => s.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').length;
@@ -118,6 +168,7 @@ export async function mountTerminal(el: HTMLElement, o: TerminalOptions): Promis
   requestAnimationFrame(doFit);
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(doFit) : null;
   ro?.observe(el);
+  const unfollow = followCursor(term, el, t(SCROLL_HINT));
   const themeObs = new MutationObserver(() => (term.options.theme = readTheme()));
   themeObs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -407,6 +458,7 @@ export async function mountTerminal(el: HTMLElement, o: TerminalOptions): Promis
     dispose() {
       unregisterFeedback();
       ro?.disconnect();
+      unfollow();
       themeObs.disconnect();
       mq.removeEventListener?.('change', onMq);
       term.dispose();
