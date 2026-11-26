@@ -1,7 +1,7 @@
 // Browser-only host work: Rust/wasm must already have been built in rv64-dev.
 import { spawn } from 'node:child_process';
 import { createHash, X509Certificate } from 'node:crypto';
-import { mkdirSync, writeFileSync, readFileSync, renameSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, renameSync, openSync, writeSync, closeSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 const port = 5198;
 const wasmSha256 = createHash('sha256').update(readFileSync('public/rv64/rv64_core_bg.wasm')).digest('hex');
@@ -117,12 +117,54 @@ try {
     console.error(await page.locator('#console').textContent().catch(() => 'No guest console'));
     throw error;
   }
-  const measured = await page.evaluate(() => ({ result: globalThis.rv64Result, isolated: crossOriginIsolated, userAgent: navigator.userAgent }));
+  // A long guest profile makes the result hundreds of megabytes; one CDP message
+  // that large brings the browser down. Copy it out in bounded JSON pieces.
+  const readResult = async (path = []) => {
+    const piece = await page.evaluate(({ path, limit }) => {
+      let value = globalThis.rv64Result;
+      for (const key of path) value = value[key];
+      try { const json = JSON.stringify(value); if (json === undefined || json.length <= limit) return { json: json ?? 'null' }; } catch {}
+      return Array.isArray(value) ? { length: value.length } : { keys: Object.keys(value) };
+    }, { path, limit: 32 << 20 });
+    if ('json' in piece) return JSON.parse(piece.json);
+    if ('length' in piece) {
+      const out = [];
+      const range = async (start, end) => {
+        const part = await page.evaluate(({ path, start, end, limit }) => {
+          let value = globalThis.rv64Result;
+          for (const key of path) value = value[key];
+          try { const json = JSON.stringify(value.slice(start, end)); if (json.length <= limit) return json; } catch {}
+          return null;
+        }, { path, start, end, limit: 32 << 20 });
+        if (part !== null) for (const item of JSON.parse(part)) out.push(item);
+        else if (end - start === 1) out.push(await readResult([...path, start]));
+        else { const middle = start + Math.floor((end - start) / 2); await range(start, middle); await range(middle, end); }
+      };
+      if (piece.length) await range(0, piece.length);
+      return out;
+    }
+    const out = {}; for (const key of piece.keys) out[key] = await readResult([...path, key]); return out;
+  };
+  const measured = { result: await readResult(), ...await page.evaluate(() => ({ isolated: crossOriginIsolated, userAgent: navigator.userAgent })) };
   const result = { ...measured, wasmSha256, jitSourceSha256 };
   mkdirSync('public/rv64/results', { recursive: true });
   if (stopProfile) writeFileSync('public/rv64/results/worker-trace.json', JSON.stringify(await stopProfile()));
-  writeFileSync(`public/rv64/results/${label ?? (trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : boot ? "boot" : "smoke")}.json`, JSON.stringify(result, null, 2));
-  console.log(JSON.stringify(result));
+  // Stream the file: a long profile does not fit into one JavaScript string.
+  const writeJson = (file, value) => {
+    const fd = openSync(file, 'w');
+    let buffer = '';
+    const emit = text => { buffer += text; if (buffer.length > 1 << 20) { writeSync(fd, buffer); buffer = ''; } };
+    const put = v => {
+      const json = Array.isArray(v) || (v && typeof v === 'object') ? null : JSON.stringify(v) ?? 'null';
+      if (json !== null) return emit(json);
+      if (Array.isArray(v)) { emit('['); v.forEach((item, i) => { if (i) emit(','); put(item); }); return emit(']'); }
+      emit('{'); Object.entries(v).filter(([, item]) => item !== undefined).forEach(([key, item], i) => { emit(`${i ? ',' : ''}${JSON.stringify(key)}:`); put(item); }); emit('}');
+    };
+    try { put(value); emit('\n'); writeSync(fd, buffer); } finally { closeSync(fd); }
+  };
+  writeJson(`public/rv64/results/${label ?? (trace ? 'jit-trace' : gates ? 'jit-gates' : kuberoot ? 'kuberoot' : integration ? "integration" : boot ? "boot" : "smoke")}.json`, result);
+  if (smpKuberoot) console.log(JSON.stringify({ type: result.result.type, pass: result.result.pass, error: result.result.error, isolated: result.isolated }));
+  else console.log(JSON.stringify(result));
   if (process.argv.includes('--speed-gate')) {
     const baseline = JSON.parse(readFileSync(`public/rv64/results/${process.env.RV64_BASELINE_RESULT}.json`, 'utf8'));
     if (baseline.wasmSha256 !== wasmSha256 || baseline.jitSourceSha256 !== jitSourceSha256) throw new Error('Speed baseline must use the same build');
