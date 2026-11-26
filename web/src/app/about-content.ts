@@ -725,7 +725,7 @@ const PROJECTS: AboutPageDef = {
     sec(
       "sankofa",
       bi("Sankofa", "Sankofa"),
-      "Дистрибутив Kubernetes, который помнит, и музей семи веков чёрной культуры, который едет внутри него: музыка, кино, фотография и большие мультимедийные истории. [sankofa.black](https://sankofa.black)",
+      "Дистрибутив Kubernetes с памятью и встроенный в него музей семи веков чёрной культуры с музыкой, кино, фотографией и большими мультимедийными историями. [sankofa.black](https://sankofa.black)",
       "A Kubernetes distribution that remembers, and a museum of seven centuries of Black culture that ships inside it: music, film, photography and long multimedia stories. [sankofa.black](https://sankofa.black)",
     ),
     sec(
@@ -743,7 +743,7 @@ const PROJECTS: AboutPageDef = {
     sec(
       "paleo",
       bi("Paleocomputing", "Paleocomputing"),
-      "Экспериментальная археология вычислительных систем: компьютеры, которых больше нет, запущенные по-настоящему. Оберон на настоящем Verilog Вирта, самораскрутка компилятора, измерения и лабораторные в браузере. [tym83.github.io/paleocomputing](https://tym83.github.io/paleocomputing/)",
+      "Экспериментальная археология вычислительных систем, в которой компьютеры, которых больше нет, запускают по-настоящему. Оберон на настоящем Verilog Вирта, самораскрутка компилятора, измерения и лабораторные в браузере. [tym83.github.io/paleocomputing](https://tym83.github.io/paleocomputing/)",
       "Experimental archaeology of computing: machines that no longer exist, run for real. Oberon on Wirth's own Verilog, a self-hosting compiler, measurements and labs in the browser. [tym83.github.io/paleocomputing](https://tym83.github.io/paleocomputing/)",
     ),
   ],
