@@ -220,8 +220,13 @@ func up(ctx context.Context, l *lab.Lab, args []string) error {
 	timeout := fs.Duration("timeout", 25*time.Minute, "how long to wait for the VMs")
 	_ = fs.Parse(args)
 	if *prof == "" {
+		// A plain `dtlab up` starts the lab that exists, with its parts:
+		// the profile's defaults would differ after --with and be refused.
 		st, _ := l.State()
 		*prof = st.Profile
+		if *with == "" && len(st.VMs) > 0 {
+			*with = strings.Join(st.Parts, ",")
+		}
 	}
 	if *prof == "" {
 		r := profile.Recommend(hostinfo.Detect(paths.Root()))
