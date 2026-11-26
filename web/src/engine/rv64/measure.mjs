@@ -35,6 +35,15 @@ try {
   browser = await chromium.launch({ headless: true });
   if (integration) { mkdirSync('public/rv64', { recursive: true }); writeFileSync('public/rv64/integration-disk.bin', new Uint8Array(512).fill(90)); }
   const page = await browser.newPage();
+  // Long runs can end on an unexplained navigation; record its cause on stderr.
+  const event = (kind, detail = '') => console.error(`[rv64-measure ${new Date().toISOString()}] ${kind} ${detail}`.trimEnd());
+  vite.stdout.on('data', d => event('vite', String(d).trim()));
+  vite.on('exit', code => event('vite-exit', String(code)));
+  page.on('framenavigated', frame => { if (frame === page.mainFrame()) event('navigated', frame.url()); });
+  page.on('crash', () => event('page-crash'));
+  page.on('close', () => event('page-close'));
+  page.on('pageerror', error => event('page-error', error.stack ?? String(error)));
+  browser.on('disconnected', () => event('browser-disconnected'));
   if (process.env.RV64_POST_DIAG_FILE) {
     const command = readFileSync(process.env.RV64_POST_DIAG_FILE, 'utf8');
     await page.addInitScript(command => { globalThis.rv64PostProbeCommand = command; }, command);
