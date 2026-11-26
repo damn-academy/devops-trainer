@@ -159,3 +159,15 @@ it('lets learners explicitly finish the downloaded script self-review', () => {
   expect(ctx.complete).toHaveBeenCalledOnce();
   expect(host.querySelector('[role="status"]')?.textContent).toBe('Self-review complete.');
 });
+
+it.each(['rubric', 'roleplay'] as const)('completes %s after external chat self-review without deleting the draft', kind => {
+  const w = setup(kind, { trainer: kind === 'rubric' ? 'events.cfp-review' : 'events.booth-visitor' }, false);
+  const input = w.host.querySelector('textarea')!;
+  input.value = 'Reviewed in my chat'; input.dispatchEvent(new Event('input'));
+  expect(w.ctx.complete).not.toHaveBeenCalled();
+  w.button('Finish self-review').click();
+  expect(w.ctx.complete).toHaveBeenCalledOnce();
+  expect(input.value).toBe('Reviewed in my chat');
+  expect(w.stream).not.toHaveBeenCalled();
+  expect(w.host.textContent).toContain('Self-review complete');
+});
