@@ -81,7 +81,7 @@ The main difficulty is that AI indulges the player and produces optimistic outco
 <!-- /quiz -->
 
 
-Below is an actual simulator from the PR course: a week of crisis. You do not need an AI key to try it: choose a company and difficulty, click “Copy the request” or “Download prompt (.txt)” and paste the text into any AI chat. The host will describe Monday morning and two stories that have landed on the press team's desk, then ask what you do. After each turn, it records the game state so you can resume another day.
+Below is an actual simulator from the PR course: a week of crisis. You do not need an AI key to try it: choose a company and difficulty, click “Copy the request” or “Download prompt (.txt)” and paste the text into any AI chat. The host will describe Monday morning and two stories that have landed on the press team's desk, then ask what you do. After each turn, it records the game state the player can see, so you can resume another day in the same conversation.
 
 ![Simulator screen: company selection, difficulty, number of turns, and buttons to copy and download the prompt](media/aicontent/sim.jpg "The simulator before the game starts")
 
