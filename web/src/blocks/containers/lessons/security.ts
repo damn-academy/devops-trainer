@@ -58,7 +58,7 @@ export const securityQuiz: QuizItem[] = [
     prompt: bi('В Dockerfile написано `COPY .env /app/.env`, а затем `RUN rm /app/.env`. Попал ли пароль из .env в образ?', 'A Dockerfile: `COPY .env /app/.env`, then `RUN rm /app/.env`. Did the password from .env leak?'),
     options: [
       { id: 'yes', text: bi('Да, потому что файл лежит в слое, созданном COPY, а следующий слой только прячет его пометкой об удалении. Любой, кто скачал образ, достанет файл из этого слоя', 'Yes, because the file sits in the COPY layer; the next layer only hides it with a mark. Anyone who pulled the image can get it from the layer'), correct: true },
-      { id: 'no', text: bi('Нет, ведь файл удалён', 'No: the file was deleted'), why: bi('Слои можно только добавлять, поэтому удаление записывается пометкой (whiteout) сверху, а нижний слой не меняется.', 'Layers only add: a deletion is a whiteout on top; the lower layer does not change.') },
+      { id: 'no', text: bi('Нет, ведь файл удалён инструкцией `RUN rm`, а при сборке Docker убирает из нижних слоёв всё, что позже удалили, так что скачавший образ не найдёт его ни в одном слое', 'No: the file was deleted by `RUN rm`, and during the build Docker drops from the lower layers everything deleted later, so the image does not contain it'), why: bi('Слои можно только добавлять, поэтому удаление записывается пометкой (whiteout) сверху, а нижний слой не меняется.', 'Layers only add: a deletion is a whiteout on top; the lower layer does not change.') },
     ],
     explain: bi('Секреты не кладут в контекст сборки и вычёркивают через `.dockerignore`. При сборке их передают через `RUN --mount=type=secret`, а при запуске — переменными окружения или секретами системы оркестрации.', 'Secrets are kept out of the build context (`.dockerignore`), passed during the build through `RUN --mount=type=secret` and at run time through variables or orchestrator secrets.'),
   },
@@ -69,7 +69,7 @@ export const securityQuiz: QuizItem[] = [
     prompt: bi('В режиме rootless файл, который root в контейнере создал в bind mount, на хосте принадлежит UID 100000. Почему?', 'Rootless Docker: a file root creates in a bind mount inside a container belongs to UID 100000 on the host. Why?'),
     options: [
       { id: 'map', text: bi('Пространство имён пользователей отображает UID 0 внутри на непривилегированный диапазон снаружи (uid_map `0 100000 65536`)', 'The user namespace maps UID 0 inside onto an unprivileged range outside (uid_map `0 100000 65536`)'), correct: true },
-      { id: 'bug', text: bi('Bind mount работает с ошибкой', 'Bind mount has a bug'), why: bi('Так и задумано, потому что root внутри становится непривилегированным пользователем снаружи, и в этом состоит защита.', 'That is the design: root inside becomes nobody outside — that is the protection.') },
+      { id: 'bug', text: bi('Bind mount в режиме rootless работает с ошибкой: Docker не может записать файл от имени root и подставляет первый свободный UID хоста', 'Bind mount has a bug in rootless mode: Docker cannot write the file as root and substitutes the first free UID on the host'), why: bi('Так и задумано, потому что root внутри становится непривилегированным пользователем снаружи, и в этом состоит защита.', 'That is the design: root inside becomes nobody outside — that is the protection.') },
     ],
   },
 ];

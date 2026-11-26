@@ -31,7 +31,7 @@ export const storageQuiz: QuizItem[] = [
     options: [
       { id: 'nothing', text: bi('Ничего не останется, потому что файл лежал в записываемом слое, а слой удалён вместе с контейнером', 'Nothing, because the file was in the writable layer, which went with the container'), correct: true },
       { id: 'image', text: bi('Файл окажется в образе', 'It ends up in the image'), why: bi('Образ доступен только для чтения, и контейнер его не меняет.', 'The image is read-only; a container does not change it.') },
-      { id: 'host', text: bi('Файл останется в каталоге /tmp хоста', 'It stays in the host’s /tmp'), why: bi('У контейнера свой корень, поэтому его каталог /tmp не совпадает с /tmp хоста.', 'The container has its own root: its /tmp is not the host’s /tmp.') },
+      { id: 'host', text: bi('Файл останется в каталоге /tmp хоста, потому что Docker монтирует в контейнер общий с хостом каталог /tmp', 'It stays in the host’s /tmp, because Docker mounts the host’s /tmp into every container'), why: bi('У контейнера свой корень, поэтому его каталог /tmp не совпадает с /tmp хоста.', 'The container has its own root: its /tmp is not the host’s /tmp.') },
     ],
   },
   {

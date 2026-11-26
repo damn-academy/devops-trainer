@@ -83,8 +83,8 @@ export const byHandQuiz: QuizItem[] = [
     prompt: bi('Вы создали группу `/sys/fs/cgroup/box` и записали `16M` в файл `memory.max`, но не записали ни одного PID в `cgroup.procs`. Что произойдёт?', 'You created `/sys/fs/cgroup/box` and wrote `16M` into `memory.max`, but never wrote the PID into `cgroup.procs`. What happens?'),
     options: [
       { id: 'none', text: bi('Лимит ни на кого не подействует, потому что в группе нет процессов', 'The limit applies to nobody: the group has no processes'), correct: true },
-      { id: 'all', text: bi('Лимит распространится на все процессы машины', 'The limit applies to every process of the machine'), why: bi('Лимит группы действует только на процессы, которые в неё входят, и на процессы её подгрупп.', 'A group limit applies only to the processes in it (and in its sub-groups).') },
-      { id: 'error', text: bi('Запись в memory.max закончится ошибкой', 'Writing memory.max returns an error'), why: bi('Записать лимит в пустую группу можно, ошибки не будет.', 'You can write a limit into an empty group.') },
+      { id: 'all', text: bi('Лимит распространится на все процессы машины, потому что группа создана в корне иерархии cgroup', 'The limit applies to every process of the machine, because the group sits at the root of the cgroup tree'), why: bi('Лимит группы действует только на процессы, которые в неё входят, и на процессы её подгрупп.', 'A group limit applies only to the processes in it (and in its sub-groups).') },
+      { id: 'error', text: bi('Запись в memory.max закончится ошибкой, потому что сначала в группу нужно добавить процесс', 'Writing memory.max returns an error, because a process must be added to the group first'), why: bi('Записать лимит в пустую группу можно, ошибки не будет.', 'You can write a limit into an empty group.') },
     ],
   },
   {
