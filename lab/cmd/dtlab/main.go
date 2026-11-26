@@ -30,6 +30,7 @@ import (
 	"github.com/damn-academy/devops-trainer/lab/internal/manifest"
 	"github.com/damn-academy/devops-trainer/lab/internal/paths"
 	"github.com/damn-academy/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/say"
 	"github.com/damn-academy/devops-trainer/lab/internal/uninstall"
 )
 
@@ -130,12 +131,16 @@ func check(args []string) error {
 	if *asJSON {
 		return json.NewEncoder(os.Stdout).Encode(map[string]any{"host": i, "recommendation": r, "backend": ch})
 	}
-	fmt.Printf("computer:   %s %s (%s), %d CPUs, %s\n", i.OS, i.Arch, i.OSVersion, i.CPUs, i.CPUModel)
-	fmt.Printf("memory:     %d MiB, %d MiB free now\n", i.MemMiB, i.MemAvailMiB)
-	fmt.Printf("disk:       %d MiB free at %s\n", i.DiskFreeMiB, i.DiskPath)
-	fmt.Printf("hypervisor: %s\n", i.Virt.Detail)
+	ru := say.Russian()
+	line := func(label, value string) {
+		fmt.Printf("%-*s %s\n", labelWidth(ru), checkLabel(ru, label)+":", say.T(ru, value))
+	}
+	line("computer", fmt.Sprintf("%s %s (%s), %d CPUs, %s", i.OS, i.Arch, i.OSVersion, i.CPUs, i.CPUModel))
+	line("memory", fmt.Sprintf("%d MiB, %d MiB free now", i.MemMiB, i.MemAvailMiB))
+	line("disk", fmt.Sprintf("%d MiB free at %s", i.DiskFreeMiB, i.DiskPath))
+	line("hypervisor", i.Virt.Detail)
 	if chErr == nil {
-		fmt.Printf("backend:    %s — %s\n", ch.Name, ch.Reason)
+		line("backend", ch.Name+" — "+say.T(ru, ch.Reason))
 	}
 	var missing []string
 	if ch.Name == "qemu" {
@@ -149,20 +154,42 @@ func check(args []string) error {
 		missing = append(missing, "ssh")
 	}
 	if len(missing) > 0 {
-		fmt.Printf("missing:    %s (%s)\n", strings.Join(missing, ", "), installHint(i.OS))
+		line("missing", strings.Join(missing, ", ")+" ("+say.T(ru, installHint(i.OS))+")")
 	}
 	if r.Profile == "" {
-		fmt.Println("profile:    none — the course in the browser alone")
+		line("profile", "none — the course in the browser alone")
 	} else {
-		fmt.Printf("profile:    %s (fits: %s)\n", r.Profile, strings.Join(r.Fits, ", "))
+		line("profile", fmt.Sprintf("%s (fits: %s)", r.Profile, strings.Join(r.Fits, ", ")))
 	}
 	for _, why := range r.Reasons {
-		fmt.Println("            " + why)
+		fmt.Println(strings.Repeat(" ", labelWidth(ru)+1) + say.T(ru, why))
 	}
 	if r.Profile != "" {
-		fmt.Printf("\nnext:       dtlab up --profile %s\n", r.Profile)
+		fmt.Println()
+		line("next", "dtlab up --profile "+r.Profile)
 	}
 	return nil
+}
+
+// checkLabels are the Russian names of the lines of `dtlab check`.
+var checkLabels = map[string]string{
+	"computer": "компьютер", "memory": "память", "disk": "диск", "hypervisor": "гипервизор",
+	"backend": "запуск машин", "missing": "не хватает", "profile": "профиль", "next": "дальше",
+}
+
+func checkLabel(ru bool, en string) string {
+	if ru {
+		return checkLabels[en]
+	}
+	return en
+}
+
+// labelWidth keeps the values of `dtlab check` in one column.
+func labelWidth(ru bool) int {
+	if ru {
+		return 13
+	}
+	return 11
 }
 
 func qemuName(arch string) string {
