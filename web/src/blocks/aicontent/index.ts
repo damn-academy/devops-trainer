@@ -1,3 +1,4 @@
+import type { Section } from '../../core/types';
 import { defineModule } from '../../core/define';
 import { bi } from '../../core/i18n';
 import { loadMarkdownLessons, markdownQuizItems } from '../../core/md-lessons';
@@ -6,7 +7,7 @@ import { AICONTENT_MODULES, AICONTENT_SUMMARIES } from './structure';
 
 const lessons = loadMarkdownLessons(import.meta.glob<string>(
   ['./*.ru.md', './*.en.md'], { query: '?raw', import: 'default', eager: true },
-), 'aicontent').map(lesson => ({ ...lesson, summary: AICONTENT_SUMMARIES[lesson.id] }));
+), 'aicontent').map(lesson => ({ ...lesson, sections: [...lesson.sections, ...(lesson.id === 'aicontent.editing' ? [{ id: 'download-ru-intensifiers-lint', kind: 'widget', step: 'practice', widget: 'template', props: { file: 'ru-intensifiers-lint' } } satisfies Section] : [])], summary: AICONTENT_SUMMARIES[lesson.id] }));
 const product = productById('aicontent')!;
 
 export default defineModule({

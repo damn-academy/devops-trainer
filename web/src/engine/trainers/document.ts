@@ -1,9 +1,18 @@
 import { documentTemplate } from './document-fields';
 import { h, downloadFile } from '../../core/dom';
-import { t } from '../../core/i18n';
+import briefRu from '../../blocks/aicontent/aicontent-1.ru.md?raw';
+import briefEn from '../../blocks/aicontent/aicontent-1.en.md?raw';
+import { lang, t } from '../../core/i18n';
 import type { Mounted } from '../../core/types';
 import { strings } from './strings';
 import { loadDraft, saveDraft } from './storage';
+
+export function documentExample(id: string): string {
+  if (!id.startsWith('aicontent.brief')) return '';
+  const source = (lang() === 'ru' ? briefRu : briefEn).split('<!-- lesson: aicontent.brief')[1] ?? '';
+  const blocks = [...source.split('<!-- quiz -->')[0].matchAll(/```markdown\n([\s\S]*?)```/g)].map(match => match[1].trim());
+  return `\n\n# ${lang() === 'ru' ? 'Образец' : 'Example'}\n\n${blocks.join('\n\n')}`;
+}
 
 /** An editable local document built from the authored task, without inventing a model answer. */
 export function mountTaskDocument(el: HTMLElement, id: string, title: string, task: string): Mounted {
@@ -15,7 +24,7 @@ export function mountTaskDocument(el: HTMLElement, id: string, title: string, ta
   input.dataset.documentTemplate = template;
   input.oninput = () => saveDraft(`document.${id}`, input.value);
   const download = h('button', { type: 'button', class: 'btn' }, t(strings.downloadTxt));
-  download.onclick = () => downloadFile(`${id}.txt`, [input.value, ...Array.from((el.closest('.lesson-body') ?? el).querySelectorAll<HTMLTextAreaElement>('textarea[data-template-id]')).map(note => `## ${note.dataset.templateTitle}\n\n${note.value}`)].join('\n\n'), 'text/plain;charset=utf-8');
+  download.onclick = () => downloadFile(`${id}.txt`, [input.value + documentExample(id), ...Array.from((el.closest('.lesson-body') ?? el).querySelectorAll<HTMLTextAreaElement>('textarea[data-template-id]')).map(note => `## ${note.dataset.templateTitle}\n\n${note.value}`)].join('\n\n'), 'text/plain;charset=utf-8');
   root.append(h('label', {}, t(strings.input), input), download); el.append(root);
   return { dispose() { root.remove(); } };
 }

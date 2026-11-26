@@ -1,0 +1,5 @@
+1:8: review "невероятно"
+2:28: review "Очень"
+
+Line 1: true hit — unsupported intensifier.
+Line 2: false alarm — a verbatim customer quotation; preserve it.
