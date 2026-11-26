@@ -18,6 +18,8 @@ import { defaultWork, NODE_ICONS } from './icons';
 const MOBILE_VIEW_H = 340;
 /** The smallest touch target, in CSS pixels. */
 const TOUCH_PX = 32;
+/** The height of the smallest node label on a phone in the reading mode, in CSS pixels. */
+const READ_PX = 11;
 const L = {
   steps: bi('Шаги', 'Steps'),
   step: bi('Шаг', 'Step'),
@@ -125,17 +127,26 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     expandCaption.textContent = t(expanded ? bi('Свернуть пояснение', 'Collapse caption') : bi('Развернуть пояснение', 'Expand caption'));
   });
   let focusedStep = -1;
-  // On a phone the diagram opens at the window's width (zoom 1); the slider
-  // goes below that to see all of a tall diagram, and above it to read.
+  // On a phone the diagram opens in the reading mode: at the scale where its
+  // smallest node label is READ_PX tall, and the window follows the current
+  // step. "Show the whole diagram" switches to the overview, which fits the
+  // whole drawing in the window; the slider scales either mode.
   let zoom = 1;
-  let fitAllZoom = 1;
-  const zoomControl = h('input', { type: 'range', min: 0.2, max: 4, step: 0.05, value: 1, 'aria-label': t(bi('Масштаб схемы', 'Diagram zoom')) }) as HTMLInputElement;
+  let overview = false;
+  const zoomControl = h('input', { type: 'range', min: 0.5, max: 3, step: 0.05, value: 1, 'aria-label': t(bi('Масштаб схемы', 'Diagram zoom')) }) as HTMLInputElement;
   zoomControl.addEventListener('input', () => { zoom = Number(zoomControl.value); focusedStep = -1; paint(); });
   const zoomLabel = h('label.ex-zoom', {}, h('span', {}, t(bi('Масштаб', 'Zoom'))), zoomControl);
-  const fitAllBtn = h('button.btn.ghost.small.ex-fit-all', { type: 'button' }, t(bi('Показать всю схему', 'Show the whole diagram')));
+  const fitAllBtn = h('button.btn.ghost.small.ex-fit-all', { type: 'button', 'aria-pressed': 'false' }) as HTMLButtonElement;
+  const labelFitAll = () => {
+    fitAllBtn.textContent = t(overview ? bi('Показать крупно', 'Show it large') : bi('Показать всю схему', 'Show the whole diagram'));
+    fitAllBtn.setAttribute('aria-pressed', String(overview));
+  };
+  labelFitAll();
   fitAllBtn.addEventListener('click', () => {
-    zoom = Math.max(Number(zoomControl.min), Math.min(1, fitAllZoom));
-    zoomControl.value = String(zoom);
+    overview = !overview;
+    zoom = 1;
+    zoomControl.value = '1';
+    labelFitAll();
     focusedStep = -1;
     paint();
   });
@@ -615,6 +626,44 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     }
   }
 
+  /**
+   * On a phone, pan the diagram's window to the current step: the acting
+   * node and its callout first, then as many of the step's other elements
+   * as still fit in the window.
+   */
+  function followStep(target: number[], scale: number, tokenBoxes: Box[], smooth: boolean) {
+    const st = steps[idx];
+    const ids = [...Object.keys(st?.say ?? {}), ...(st?.focus ?? [])];
+    const origin = svg.getBoundingClientRect();
+    const rectOf = (el: Element | null): Box | null => {
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return r.width || r.height ? { x: r.left - origin.left, y: r.top - origin.top, w: r.width, h: r.height } : null;
+    };
+    const byId = (id: string) => svg.querySelector(`g.node[data-id="${CSS.escape(id)}"], g.edge[data-id="${CSS.escape(id)}"], g.group[data-id="${CSS.escape(id)}"]`);
+    const sayOf = (id: string) => layerSay.querySelector(`g.say[data-for="${CSS.escape(id)}"]`);
+    const first = ids[0] ?? d.nodes[0]?.id;
+    const wanted: (Box | null)[] = first ? [rectOf(byId(first)), rectOf(sayOf(first))] : [];
+    for (const id of ids.slice(1)) wanted.push(rectOf(byId(id)), rectOf(sayOf(id)));
+    for (const el of svg.querySelectorAll('g.node.acting, g.node.focus')) wanted.push(rectOf(el));
+    for (const b of tokenBoxes) wanted.push({ x: (b.x - target[0]) * scale, y: (b.y - target[1]) * scale, w: b.w * scale, h: b.h * scale });
+    const room = { w: viewport.clientWidth - 16, h: viewport.clientHeight - 16 };
+    let span: Box | null = null;
+    for (const b of wanted) {
+      if (!b) continue;
+      if (!span) { span = { ...b }; continue; }
+      const x0 = Math.min(span.x, b.x), y0 = Math.min(span.y, b.y);
+      const x1 = Math.max(span.x + span.w, b.x + b.w), y1 = Math.max(span.y + span.h, b.y + b.h);
+      if (x1 - x0 > room.w || y1 - y0 > room.h) continue;
+      span = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    }
+    if (!span) return;
+    // Centre what fits; when even the first element is larger, show its start.
+    const left = span.w > room.w ? span.x - 8 : span.x + span.w / 2 - viewport.clientWidth / 2;
+    const top = span.h > room.h ? span.y - 8 : span.y + span.h / 2 - viewport.clientHeight / 2;
+    viewport.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: smooth && !calm() ? 'smooth' : 'auto' });
+  }
+
   /** Animate only the camera; the drawing retains its authored coordinates. */
   function fitCamera(tokenBoxes: Box[]) {
     const parts = [...svg.querySelectorAll<SVGGraphicsElement>('.node, .edge, .group, .say, .token')];
@@ -639,11 +688,18 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     cancelAnimationFrame(cameraAnim);
     if (window.matchMedia?.('(max-width: 600px)').matches) {
       if (!viewport.clientWidth) return;
-      // Start with the diagram at the window's width; the zoom control
-      // enlarges it to read or shrinks it to see all of a tall one.
       const fitWidth = viewport.clientWidth / target[2];
-      fitAllZoom = Math.min(fitWidth, MOBILE_VIEW_H / target[3]) / fitWidth;
-      const scale = fitWidth * zoom;
+      const fitAll = Math.min(fitWidth, MOBILE_VIEW_H / target[3]);
+      // The reading scale makes the smallest shown node label READ_PX tall,
+      // and does not blow a small diagram up beyond its authored size.
+      const sizes = [...svg.querySelectorAll<SVGTextElement>('.node-label')]
+        .filter((label) => label.textContent?.trim() && !label.closest('.st-hidden, .removed'))
+        .map((label) => parseFloat(getComputedStyle(label).fontSize))
+        .filter((size) => size > 0);
+      const read = Math.max(READ_PX / Math.min(14, ...sizes), Math.min(fitWidth, 1));
+      // The toggle only shows when the overview is really smaller than reading.
+      fitAllBtn.hidden = !overview && fitAll >= read * 0.95;
+      const scale = (overview ? fitAll : read) * zoom;
       // A diagram lower than the window leaves no empty field under it.
       const fitsHeight = target[3] * scale <= MOBILE_VIEW_H;
       if (fitsHeight) viewport.style.height = 'auto';
@@ -654,13 +710,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
       svg.dataset.camera = target.join(' ');
       growLabelHits(TOUCH_PX / scale);
       if (focusedStep !== idx) {
-        const st = steps[idx];
-        const ids = [...Object.keys(st?.say ?? {}), ...(st?.focus ?? [])];
-        const node = ids.map(id => d.nodes.find(n => n.id === id)).find(Boolean) ?? d.nodes[0];
-        if (node) {
-          viewport.scrollLeft = (node.x + node.w / 2 - target[0]) * scale - viewport.clientWidth / 2;
-          viewport.scrollTop = (node.y + node.h / 2 - target[1]) * scale - viewport.clientHeight / 2;
-        }
+        followStep(target, scale, tokenBoxes, focusedStep >= 0);
         focusedStep = idx;
       }
       return;

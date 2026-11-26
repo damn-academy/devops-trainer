@@ -149,3 +149,4 @@
   .ex-mobile-tools .btn { min-height: 32px; }
 }
 .ex-mobile-tools .ex-fit-all, .ex-mobile-tools .ex-zoom { white-space: nowrap; }
+.ex-mobile-tools .ex-fit-all[hidden] { display: none; }
