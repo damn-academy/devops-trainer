@@ -8,6 +8,21 @@ import { eventVisitor } from './events';
 import { trainers, datasets, systemPrompt, learnerData, copyPrompt, verdict, boundaryScore, breakEven, simulate, uniqueTargetAccounts, roiDefaults, type Verdict, type Choice, type RoiInput } from './model';
 import { loadAttempts, saveAttempts, loadDraft, saveDraft, clearDraft } from './storage';
 import { strings as s } from './strings';
+/** How a template is used depends on the file: a model's formulas read the example cells, a sample only shows a filled-in row. */
+function sharedGuide(file: string) {
+  const open = bi('Скачайте шаблон и откройте его в Excel или Google Sheets на своём компьютере. ', 'Download the template and open it in Excel or Google Sheets on your computer. ');
+  const field = bi(' Итог задания и выводы по таблице запишите в поле «Ваш текст» под заданием урока: оно одно на весь урок.', ' Write the task result and your conclusions in the “Your text” field under the lesson task: it is the only field of the lesson.');
+  const work = file === 'infraseed-model'
+    ? bi('Работа идёт в файле: замените учебный пример своими данными, формулы пересчитают отчёты. Исходные значения примера показывает лист «Сверка примера».', 'You work in the file: replace the worked example with your own data and the formulas recalculate the statements. The “Demo reconciliation” sheet shows the example’s original values.')
+    : file === 'cash-13w'
+      ? bi('Работа идёт в файле: сначала удалите учебные строки на листе «События» (в столбце «Документ» у них пометка example) и поставьте свой остаток на начало в ячейку B2 листа «Недели». Иначе ваши события сложатся с учебными в одном прогнозе.', 'You work in the file: first delete the example rows on the “Events” sheet (their “Document” column starts with example) and enter your opening balance in cell B2 of the “Weekly” sheet. Otherwise your events add up with the example ones in one forecast.')
+      : file.startsWith('pr-')
+        ? bi('Файл показывает пример заполнения; свою работу запишите в поле «Ваш текст» под заданием урока: оно одно на весь урок.', 'The file shows a filled-in example; write your own work in the “Your text” field under the lesson task: it is the only field of the lesson.')
+        : bi('Работа идёт в файле: в нём уже заполнен учебный пример, ваши строки добавляйте ниже.', 'You work in the file: it already contains a worked example, add your rows below it.');
+  const tail = file.startsWith('pr-') ? bi('', '') : field;
+  return bi(open.ru + work.ru + tail.ru, open.en + work.en + tail.en);
+}
+
 export type TrainerAi = Pick<AiService, 'status' | 'ready' | 'onChange' | 'stream'>;
 import { governance, health, governanceRemedies, applicableChecks, governanceMarkdown, type Option } from './oss';
 let instance = 0;
@@ -71,7 +86,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     root.append(h('p.task-guide', {}, t(csv
       ? bi('Скачайте файл и импортируйте его в Excel или Google Sheets на своём компьютере, как описано под кнопкой. Выполните расчёт по заданию урока и запишите его в поле карточки. Сверьте результат с условиями задания сами и нажмите «Завершить самопроверку карточки»: раздел отметится выполненным, а расчёт останется в поле, в этом браузере и в файле, который скачивает кнопка «Скачать текст (.txt)» основного документа.', 'Download the file and import it into Excel or Google Sheets on your computer as described below the button. Do the lesson’s calculation and write it in the card field. Check the result against the task yourself and press “Finish the card self-review”: the section is marked done, and the calculation stays in the field, in this browser and in the file that the main document’s “Download text (.txt)” button saves.')
       : shared
-        ? bi('Скачайте шаблон и откройте его в Excel или Google Sheets на своём компьютере. Работа идёт в файле: в нём уже заполнен учебный пример, ваши строки добавляйте ниже. Итог задания и выводы по таблице запишите в поле «Ваш текст» под заданием урока: оно одно на весь урок.', 'Download the template and open it in Excel or Google Sheets on your computer. You work in the file: it already contains a worked example, add your rows below it. Write the task result and your conclusions in the “Your text” field under the lesson task: it is the only field of the lesson.')
+        ? sharedGuide(file)
         : bi('Скачайте шаблон и откройте его в Excel или Google Sheets на своём компьютере. Работа идёт в файле; выводы запишите в поле ниже, сверьте их с условиями задания сами и нажмите «Завершить самопроверку»: раздел отметится выполненным, а выводы останутся в поле и в этом браузере.', 'Download the template and open it in Excel or Google Sheets on your computer. You work in the file; write your conclusions below, check them against the task yourself and press “Finish self-review”: the section is marked done and your conclusions stay in the field and in this browser.'))));
     if (csv) {
       root.append(h('p', {}, text('metricsFictional')), h('button', { type: 'button', class: 'btn', onclick: () => { void import('../ai/panel').then(({ openTutor }) => openTutor({ mode: 'practice', templateFile: file })); } }, t(bi('Спросить наставника о данных', 'Ask the tutor about the data'))));

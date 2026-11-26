@@ -109,6 +109,7 @@ export async function buildFinanceTemplates(output) {
       const r=events.rowCount+1;
       events.addRow([tr('Основной банк','Main bank'),'USD',cats[k],cats[k],d,d,amount,1,tr('Основной','Base'),tr('Финансы','Finance'),null,null,`example-${i+1}-${key}`,{formula:`IF(K${r}="",F${r},K${r})`},{formula:`IF(L${r}="",G${r},L${r})`}]);
     }
+    const exampleRows=events.rowCount-1;
     const scenarios=[tr('Основной','Base'),tr('Лучший','Upside'),tr('Худший','Downside')];
     for(let r=2;r<=301;r++) {
       f(events,r,14,`IF(F${r}="",E${r},F${r})`);
@@ -117,6 +118,8 @@ export async function buildFinanceTemplates(output) {
       events.getCell(r,9).dataValidation={type:'list',allowBlank:true,formulae:[`"${scenarios.join(',')}"`],showErrorMessage:true,errorStyle:'stop'};
     }
     const guide=q.addWorksheet(tr('Как заполнять','Instructions'));
+    // Own events written below the example would add up with it, so the guide says to replace the example first.
+    guide.addRow([tr(`Учебный пример занимает строки 2–${exampleRows+1} листа «События», в столбце «Документ» у них пометка example. Перед своим прогнозом удалите эти строки и поставьте свой остаток на начало в ячейку B2 листа «Недели».`,`The worked example takes rows 2–${exampleRows+1} of the “Events” sheet; their “Document” column starts with example. Before your own forecast, delete these rows and enter your opening balance in cell B2 of the “Weekly” sheet.`)]);
     guide.addRow([tr('Заполняйте строки 2–301. Тип и сценарий выбирайте из списка. Для большего числа строк расширьте формулы.','Use rows 2–301. Choose a type and scenario from the list. Extend formulas for more rows.')]);
     guide.addRow([tr('Частичная оплата: план 100, получено 40; остаток 60 остаётся на ожидаемой дате. Факт 40 учитывается на фактической дате.','Partial payment: plan 100, received 40; 60 remains open on the expected date. Actual 40 counts on the actual date.')]);
     weekly.addRow([tr('Неделя, тыс. $','Week, $000'),...Array.from({length:13},(_,i)=>new Date(+start+i*7*86400000))]);
