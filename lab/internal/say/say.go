@@ -1,6 +1,6 @@
 // Package say gives dtlab's advice in the learner's language. dtlab speaks
 // English by default; when the locale is Russian (LC_ALL, LC_MESSAGES or
-// LANG starting with "ru"), `dtlab check` and `dtlab courses` speak Russian.
+// LANG starting with "ru"), its messages and help are Russian.
 //
 // The other packages keep producing English text, which also goes into the
 // JSON output unchanged; Translate turns a finished English message into
@@ -75,7 +75,7 @@ type pattern struct {
 var (
 	once     sync.Once
 	patterns []pattern
-	verb     = regexp.MustCompile(`%(\.\d+)?[dsf]`)
+	verb     = regexp.MustCompile(`%(\.\d+)?[dsfq]`)
 )
 
 // compiled turns each English format into an anchored regular expression.

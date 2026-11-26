@@ -37,6 +37,19 @@ var exact = map[string]string{
 	"update":    "есть обновление",
 	"No installed courses. Run: dtlab course install academy": "Курсы не установлены. Выполните: dtlab course install academy",
 	"All installed courses are up to date.":                   "Все установленные курсы обновлены.",
+
+	// dtlab status, down, destroy (cmd/dtlab, internal/lab). The line
+	// "VMs, their disks and the kuberoot credentials removed…" stays English:
+	// the exams' cleanup (DTLAB_CLEANUP in web/src/app/real/facts.ts) reads it.
+	"no lab yet: dtlab check, then dtlab up": "лаборатории пока нет: выполните dtlab check, потом dtlab up",
+	"agent stopped":                          "агент лаборатории остановлен",
+	"Delete them?":                           "Удалить их?",
+	"nothing removed":                        "ничего не удалено",
+	"do not ask":                             "не спрашивать подтверждения",
+	"usage: dtlab down\n\nStops the VMs and the lab agent. Their disks and your work on them stay: dtlab up carries on where you left off.":                                                                        "как вызывать: dtlab down\n\nОстанавливает машины и агента лаборатории. Диски машин и ваша работа на них остаются: dtlab up продолжит с того же места.",
+	"usage: dtlab destroy [--yes]\n\nDeletes the VMs, their disks and everything on them. Downloaded images stay, so the next dtlab up makes clean VMs without downloading again. Asks first; --yes does not ask.": "как вызывать: dtlab destroy [--yes]\n\nУдаляет машины, их диски и всё, что на них было. Скачанные образы остаются, поэтому следующий dtlab up создаст чистые машины без новой загрузки. Сначала спрашивает подтверждение; с флагом --yes не спрашивает.",
+	"usage: dtlab ssh <vm> [command]":             "как вызывать: dtlab ssh <машина> [команда]",
+	"no backend in the lab state: run `dtlab up`": "лаборатория ещё не запускалась: выполните `dtlab up`",
 }
 
 // formats holds the messages made with fmt; {n} is the n-th verb's value.
@@ -44,13 +57,34 @@ var formats = []struct{ en, ru string }{
 	{"%s and the Windows Hypervisor Platform", "{1} и платформа низкоуровневой оболочки Windows"},
 	{"asked for with --backend %s", "выбрано флагом --backend {1}"},
 	{"no usable hardware virtualisation: %s", "нет аппаратной виртуализации: {1}"},
-	{"%d MiB of memory is below the light profile's %d GB", "памяти {1} МиБ, а самому маленькому профилю light нужно {2} ГБ"},
+	{"%.1f GiB of memory is below the light profile's %d GiB", "памяти {1} ГиБ, а самому маленькому профилю light нужно {2} ГиБ"},
 	{"%d CPUs are below the light profile's %d", "ядер процессора {1}, а профилю light нужно {2}"},
-	{"%.1f GiB free disk at %s is below the light profile's %d GB: free some space, or set DTLAB_HOME to a folder on a disk with more",
-		"на диске с папкой {2} свободно {1} ГиБ, а профилю light нужно {3} ГБ: освободите место или перенесите лабораторию на диск, где места больше. Для этого перед командами dtlab задайте переменную окружения DTLAB_HOME, то есть настройку, которую dtlab читает при запуске, с путём к папке на том диске"},
+	{"%.1f GiB free disk at %s is below the light profile's %d GiB: free some space, or set DTLAB_HOME to a folder on a disk with more (export DTLAB_HOME=/Volumes/Data/dtlab on macOS and Linux, $env:DTLAB_HOME=\"D:\\dtlab\" in PowerShell on Windows)",
+		"на диске с папкой {2} свободно {1} ГиБ, а профилю light нужно {3} ГиБ: освободите место или перенесите лабораторию на диск, где места больше. Для этого перед командами dtlab задайте переменную окружения DTLAB_HOME, то есть настройку, которую dtlab читает при запуске, с путём к папке на том диске: например, export DTLAB_HOME=/Volumes/Data/dtlab на macOS и Linux или $env:DTLAB_HOME=\"D:\\dtlab\" в PowerShell на Windows"},
 	{"only %d MiB are free right now and the VMs take %d MiB: close other programs before `dtlab up`", "сейчас свободно только {1} МиБ, а машинам нужно {2} МиБ: закройте другие программы перед `dtlab up`"},
 	{"%s %s (%s), %d CPUs, %s", "{1} {2} ({3}), ядер процессора: {4}, {5}"},
 	{"%d MiB, %d MiB free now", "{1} МиБ, сейчас свободно {2} МиБ"},
-	{"%d MiB free at %s", "свободно {1} МиБ в {2}"},
+	{"%.1f GiB free at %s", "свободно {1} ГиБ в {2}"},
 	{"%s (fits: %s)", "{1} (подходят: {2})"},
+
+	// dtlab up, status, ssh, down, destroy (cmd/dtlab, internal/lab).
+	{"profile %s, backend %s, agent %s", "профиль {1}, запуск машин: {2}, агент лаборатории: {3}"},
+	{"the lab is already %s with %s; `dtlab destroy` first to change it",
+		"лаборатория уже создана с профилем {1} и частями {2}, а эта команда просит другой набор. Если нужные экзамену машины уже работают, ничего перезапускать не нужно. Чтобы сменить набор, сначала выполните `dtlab destroy`: эта команда удалит прежние машины вместе с их дисками"},
+	{"this computer cannot run the lab: %s", "на этом компьютере лаборатория не запустится: {1}"},
+	{"profile %s: %s; %d MiB of memory and up to %d GiB of disk for the VMs", "профиль {1}: {2}; машинам нужно {3} МиБ памяти и до {4} ГиБ диска"},
+	{"backend: %s", "запуск машин: {1}"},
+	{"warning: %d MiB of memory are free and the VMs need %d MiB; close programs or use a smaller profile", "внимание: свободно {1} МиБ памяти, а машинам нужно {2} МиБ; закройте другие программы или выберите профиль поменьше"},
+	{"%s is running", "машина {1} уже работает"},
+	{"%s started (%d vCPU, %d MiB, %s)", "машина {1} запущена (ядер: {2}, {3} МиБ, адрес {4})"},
+	{"%s ready (%s)", "машина {1} готова ({2})"},
+	{"lab up in %s; the course: http://127.0.0.1:%d/", "лаборатория запущена за {1}; курс: http://127.0.0.1:{2}/"},
+	{"lab up in %s; the course is at https://damn.academy (to serve a local copy: dtlab serve --course <web/dist>)", "лаборатория запущена за {1}; курс открывается на https://damn.academy (чтобы открыть его копию с этого компьютера: dtlab serve --course <web/dist>)"},
+	{"%s stopped", "машина {1} остановлена"},
+	{"no VM %q in the lab (dtlab status)", "в лаборатории нет машины {1}; какие есть, покажет dtlab status"},
+	{"no VM %q in the lab", "в лаборатории нет машины {1}"},
+	{"%s is kuberoot: it has no shell; use kubectl --kubeconfig %s", "{1} — кластер kuberoot, терминала на нём нет; работайте с ним через kubectl --kubeconfig {2}"},
+	{"dtlab %s: unexpected argument %q", "dtlab {1}: лишний аргумент {2}"},
+	{"dtlab %s: flag provided but not defined: %s", "dtlab {1}: такого флага нет: {2}"},
+	{"dtlab destroy will delete these VMs with their disks and everything on them: %s", "dtlab destroy удалит эти машины вместе с дисками и всем, что на них есть: {1}"},
 }

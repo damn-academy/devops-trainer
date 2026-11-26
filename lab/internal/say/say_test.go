@@ -52,8 +52,8 @@ func TestEnglishStaysEnglish(t *testing.T) {
 }
 
 func TestFormattedMessages(t *testing.T) {
-	got := Translate("4.5 GiB free disk at /home/olga/.dtlab is below the light profile's 10 GB: free some space, or set DTLAB_HOME to a folder on a disk with more")
-	for _, want := range []string{"4,5 ГиБ", "/home/olga/.dtlab", "10 ГБ", "DTLAB_HOME"} {
+	got := Translate("4.5 GiB free disk at /home/olga/.dtlab is below the light profile's 10 GiB: free some space, or set DTLAB_HOME to a folder on a disk with more (export DTLAB_HOME=/Volumes/Data/dtlab on macOS and Linux, $env:DTLAB_HOME=\"D:\\dtlab\" in PowerShell on Windows)")
+	for _, want := range []string{"4,5 ГиБ", "/home/olga/.dtlab", "10 ГиБ", "export DTLAB_HOME=/Volumes/Data/dtlab", `$env:DTLAB_HOME="D:\dtlab"`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("%q lacks %q", got, want)
 		}
@@ -140,6 +140,29 @@ func TestCourseWords(t *testing.T) {
 	for _, s := range []string{"available", "installed", "update", "No installed courses. Run: dtlab course install academy", "All installed courses are up to date."} {
 		if Translate(s) == s {
 			t.Errorf("no Russian for %q", s)
+		}
+	}
+}
+
+func TestLabCommandMessages(t *testing.T) {
+	for en, ru := range map[string]string{
+		"cp-1 stopped":  "машина cp-1 остановлена",
+		"agent stopped": "агент лаборатории остановлен",
+		`no VM "lerner" in the lab (dtlab status)`:    `в лаборатории нет машины "lerner"; какие есть, покажет dtlab status`,
+		"no lab yet: dtlab check, then dtlab up":      "лаборатории пока нет: выполните dtlab check, потом dtlab up",
+		"profile light, backend qemu, agent работает": "профиль light, запуск машин: qemu, агент лаборатории: работает",
+	} {
+		if got := Translate(en); got != ru {
+			t.Errorf("%q: got %q", en, got)
+		}
+	}
+	if got := Translate("the lab is already standard with learner,kuberoot,kubeadm-nodes; `dtlab destroy` first to change it"); !strings.Contains(got, "ничего перезапускать не нужно") || !strings.Contains(got, "learner,kuberoot,kubeadm-nodes") {
+		t.Errorf("refusal of up: %q", got)
+	}
+	// The exams' cleanup reads this line in English (DTLAB_CLEANUP in web/src/app/real/facts.ts).
+	for _, s := range []string{"VMs, their disks and the kuberoot credentials removed", "VMs, their disks and the kuberoot credentials removed; images stay in /h/.dtlab/cache/images"} {
+		if Translate(s) != s {
+			t.Errorf("%q must stay English", s)
 		}
 	}
 }

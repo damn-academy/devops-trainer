@@ -231,13 +231,13 @@ func belowLight(i hostinfo.Info) []string {
 	p := Profiles["light"]
 	var out []string
 	if i.MemMiB*100 < p.MinHostMiB*95 {
-		out = append(out, fmt.Sprintf("%d MiB of memory is below the light profile's %d GB", i.MemMiB, p.MinHostMiB/1024))
+		out = append(out, fmt.Sprintf("%.1f GiB of memory is below the light profile's %d GiB", float64(i.MemMiB)/1024, p.MinHostMiB/1024))
 	}
 	if i.CPUs < p.MinCPUs {
 		out = append(out, fmt.Sprintf("%d CPUs are below the light profile's %d", i.CPUs, p.MinCPUs))
 	}
 	if i.DiskFreeMiB < p.MinDiskGiB*1024 {
-		out = append(out, fmt.Sprintf("%.1f GiB free disk at %s is below the light profile's %d GB: free some space, or set DTLAB_HOME to a folder on a disk with more", float64(i.DiskFreeMiB)/1024, i.DiskPath, p.MinDiskGiB))
+		out = append(out, fmt.Sprintf("%.1f GiB free disk at %s is below the light profile's %d GiB: free some space, or set DTLAB_HOME to a folder on a disk with more (export DTLAB_HOME=/Volumes/Data/dtlab on macOS and Linux, $env:DTLAB_HOME=\"D:\\dtlab\" in PowerShell on Windows)", float64(i.DiskFreeMiB)/1024, i.DiskPath, p.MinDiskGiB))
 	}
 	return out
 }
