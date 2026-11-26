@@ -214,7 +214,8 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
         });
         code.append(h('li', {}, b));
       });
-      body.append(h('p.q-hint', {}, t(caption)), code);
+      // An item with its own action already says which line to click in the task guide.
+      body.append(...(item.action ? [] : [h('p.q-hint', {}, t(caption))]), code);
       answer = () => line;
       hasAnswer = () => line > 0;
       break;

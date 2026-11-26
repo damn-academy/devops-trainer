@@ -41,7 +41,7 @@ describe('DevOps v10', () => {
     const item = { id: 't', kind: 'bugfind', concepts: [], prompt: { ru: 'п', en: 'p' }, code: 'a\nb', action: { ru: 'Нажмите на строку, после которой нужно добавить недостающую.', en: 'x' }, bug: [1], why: {} } as unknown as QuizItem;
     const root = document.createElement('div');
     mountQuiz(root, item, { context: 'exam' });
-    expect(root.querySelector('.q-hint')?.textContent).not.toContain('с ошибкой');
+    expect(root.querySelector('.q-hint')?.textContent ?? '').not.toContain('с ошибкой');
   });
 
   it('the boundaries lesson fixes the breaks in the simulator', async () => {
