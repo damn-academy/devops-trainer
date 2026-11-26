@@ -1,6 +1,12 @@
 //! Non-architectural counters, excluded from snapshots. TLB requests cover Rust paths only.
 #[derive(Default)]
 pub struct Metrics {
+    pub inline_loads: u64,
+    pub inline_stores: u64,
+    pub smp_inline_loads: u64,
+    pub smp_inline_stores: u64,
+    pub smp_jit_chains: u64,
+
     pub jit_lookups: u64,
     pub jit_context_hits: u64,
     pub jit_code_reuse: u64,
@@ -38,6 +44,12 @@ pub struct Metrics {
 impl Metrics {
     pub fn json(&self) -> String {
         let mut fields = Vec::new();
+        fields.push(format!("\"inline_loads\":{}", self.inline_loads));
+        fields.push(format!("\"inline_stores\":{}", self.inline_stores));
+        fields.push(format!("\"smp_inline_loads\":{}", self.smp_inline_loads));
+        fields.push(format!("\"smp_inline_stores\":{}", self.smp_inline_stores));
+        fields.push(format!("\"smp_jit_chains\":{}", self.smp_jit_chains));
+
         fields.push(format!("\"remote_fence_i\":{}", self.remote_fence_i));
         fields.push(format!("\"remote_sfence_vma\":{}", self.remote_sfence_vma));
         fields.push(format!("\"remote_ipis\":{}", self.remote_ipis));

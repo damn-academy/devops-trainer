@@ -1,4 +1,4 @@
-import { atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
+import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown };
 const output = document.querySelector('#console')!;
 const samples: unknown[] = [];
@@ -10,8 +10,8 @@ try {
     const bytes = 256 * 1024 * 1024, pages = bytes / 65536 + 1;
     const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
     const module = atomicModule(pages), mail = new HartMailboxes(harts).words.buffer;
-    const generations = new SharedArrayBuffer(bytes / 4096 * 4), epoch = performance.timeOrigin + performance.now();
-    const granules = new SharedArrayBuffer(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
+    const generations = sharedTable(bytes / 4096 * 4), epoch = performance.timeOrigin + performance.now();
+    const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
     const control = new SharedArrayBuffer(harts * 64), ctl = new Int32Array(control);
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
     const workers: Worker[] = [], start = performance.now(); let text = '', sent = false;

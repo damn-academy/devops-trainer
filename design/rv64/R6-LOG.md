@@ -246,3 +246,128 @@ browser measurement was launched during R7, and no cluster access or push was
 attempted. Follow `R8-PLAN.md` after R7 finishes for the full gate list and exact
 3000-host-second command with R8 result names. Do not claim all R8 gates green
 until those source-build checks complete.
+
+## R8 result and R9 implementation (2026-11-26)
+
+The operator reports ef17643 rebuilt in the pod and every gate green: cargo test,
+ISA 173/0, architecture signatures 266/0, RV64 Vitest, SMP JIT integration,
+jit-gates, smp-substrate, smp-trace, smp-linux, smp-trace-linux and smp-snapshot.
+These supersede the earlier R8 pending-build notes; they are operator results,
+not gates rerun by the R9 implementer.
+
+Last hart-1 METRICS records, independently read from
+`web/public/rv64/results/R{7,8}-smp-2h-uncompressed-1024-3000s-run.log`:
+
+| Metric | R7 | R8 |
+| --- | ---: | ---: |
+| Retired | 14,762,174,379 | 19,109,337,792 |
+| JIT retired | 10,767,568,647 | 16,988,222,776 |
+| JIT share (rounded) | 0.73 | 0.89 |
+| Compiled | 4,883,785 | 967,803 |
+| Evicted (cumulative) | 4,818,254 | 918,358 |
+| Installed (live gauge) | 65,531 | 49,445 |
+| Rust jit_cache_clears | 14,791 | 0 |
+| JS compiler.cacheClears | 0 | 0 |
+| jit_dispatches | 5,337,604,160 | 8,331,497,900 |
+| jit_chains | 0 | 0 |
+| memory_helpers | 3,918,956,343 | 6,232,436,982 |
+| inline_tlb_checks | 3,918,955,968 | 6,232,436,540 |
+
+The supplied 6.23e9 equality is rounded: R8 helpers exceed checks by 442
+(accesses rejected before the TLB check). R8 retires about 2.04 guest instructions
+per JIT dispatch. Containerd completed boot for the first time, at guest-reported
+1003 seconds; kube-apiserver did not answer on :6443 before 3000 host seconds.
+These totals do not establish an interval throughput improvement by themselves.
+
+Source inspection confirms shared RAM already uses a fixed shared
+WebAssembly.Memory, with guest bytes starting at offset 64. The expensive path
+is generated code rejecting the zero private-RAM length, then Rust
+physical_read/write calling shared_access in JS. The same length guard prevents
+chaining even though tail calls are supported. The installed-function cap is
+ours, not a V8 limit. The R8 accounting identity is exact:
+967,803 = 918,358 + 49,445. The ratio 18.57 is cumulative evictions/live occupancy,
+not a cache miss rate; use interval churn to assess the capacity change.
+
+### R9 shared JIT memory and coherence
+
+Generated SMP modules import private Rust memory at index 0 and existing shared
+RAM at index 1. Generations and reservation epochs now have shared wasm-memory
+backing at indices 2 and 3, replacing their SAB-only allocations on CPU-worker
+paths. They are shared with the unchanged JS helpers, not copied per hart.
+Non-JIT substrate/trace users can still supply their existing typed-array tables.
+Node 26.9 validates and executes these multi-memory atomic modules locally.
+The operator's Chromium 159 must confirm the browser gates.
+
+Sv39/TLB/context/PMP/alignment/RAM-bound guards remain. Successful SMP integer
+loads use width-correct atomic loads and sign extension. Stores acquire the
+existing RAM writer lock, atomically store the requested width, increment the
+legacy global epoch, reservation-granule epoch and shared page generation,
+release the lock and notify waiters. All writes publish generations, matching
+helpers: a hart's private jit_code bitmap cannot identify another hart's code.
+This also preserves helper subword RMWs, LR/SC, AMO and CAS serialization.
+Atomics/LR/SC instructions themselves still use helpers. Single-hart RAM
+instructions and guards remain unchanged, with added inline-access counters.
+
+A chain checks its target physical page against an atomic load of the shared
+u32 generation, zero-extended to the cached u64, plus the existing fetch TLB,
+privilege, satp, PMP, slot and budget guards. It never trusts the Rust generation
+mirror. A concurrent rewrite may precede the next guard, but a hart cannot ACK a
+remote fence while its bounded execution quantum is running. After ACK, neither
+a stale Rust entry nor a stale chain target may run. Generation wrap is the
+existing u32 protocol, not a new unbounded counter.
+
+The JIT frame grows from 22 to 24 u64 fields. `smp_jit_abi() == 9` is required
+before starting CPU workers so an old core cannot receive writes past its frame.
+Rebuild all staged WASM consumers before testing. New counters are `inline_loads`,
+`inline_stores`, their `smp_inline_*` subsets and `smp_jit_chains`; existing
+`memory_helpers`, `atomic_helpers` and `jit_chains` retain their meanings.
+
+### R9 capacity and memory cost
+
+SMP's installed cap rises from 65,536 to 131,072 functions per hart. Single-hart
+stays at 65,536. Whole-module cold eviction still targets 75% at a quiescent
+boundary. A new SMP encoded-module budget of 128 MiB per hart also triggers
+eviction; both occupancy and byte budgets must fall to 75%. Two inflight batches
+can temporarily overshoot. Rust's 65,536-entry direct-mapped hotness/chain table
+and 8,192 pending-code bound are independent and unchanged.
+
+For 1024 MiB guest RAM, the existing RAM allocation is 1024 MiB + 64 KiB including
+its header/rounding. Shared generations occupy 1 MiB; reservation epochs occupy
+32 MiB + 64 KiB after wasm-page rounding (62 KiB more than the old SAB). This
+metadata is machine-wide. Doubling table slots adds approximately 0.5 MiB/hart
+at eight bytes/reference, excluding V8 metadata. JS index arrays, Rust maps and
+native machine code cost additional engine-dependent memory.
+
+Measured encoder sizes with 256-function batches and the 1024 MiB layout:
+
+| Synthetic block | Encoded bytes/block | 65,536 functions | 131,072 functions |
+| --- | ---: | ---: | ---: |
+| load + indirect jump | 374.61 | 23.41 MiB | 46.83 MiB |
+| store + indirect jump | 461.61 | 28.85 MiB | 57.70 MiB |
+
+These are reproducible encoder examples, not a Linux working-set estimate or
+native V8 code size. A 64-store block is ~22.25 KiB, so function count alone is
+not a reasonable memory bound; the 128 MiB encoded budget limits that case.
+`compiler.installedWasmBytes`, `installedWasmLimit` and `installedLimit` expose
+the actual encoded-module sum and budgets. Measure browser process memory and
+interval churn during R9; no measured native-memory saving/speedup is claimed.
+
+### R9 local verification
+
+Typecheck and all 48 ordinary RV64 tests pass (four opt-in integration cases
+skipped), including actual generated multi-memory
+wasm tests for all integer widths, guard failures, LR/SC interference, subword
+CAS/AMO interoperation, generation wrap, fence ACK ordering, stale target
+rejection and 10,000 cross-page chains with exact budget. Cache tests exercise
+both byte and function limits, module byte accounting and slot reuse.
+
+The new opt-in integration uses two real Engines with Sv39 identity mapping:
+A warms an inline store on unrelated data, rewrites B's code through that same
+path, then issues guest SBI RFENCE; B must execute the new bytes and resume
+chaining after ACK. The handwritten guest/bootstrap/request sequence was also
+run successfully with JIT disabled against the locally staged interpreter.
+That check does not validate rebuilt R9 Rust or the R9 integration assertions.
+
+No cargo/rustc is installed locally. Rebuilt integration, native gates and all
+browser gates remain for the operator under `R9-PLAN.md`. No cluster/browser
+access or push was attempted; measure.mjs and public build artifacts are unchanged.

@@ -1,4 +1,16 @@
-// Small wasm binary encoder. Each batch shares one imported engine memory.
+// Small wasm binary encoder. Batches import core memory and optional SMP memories.
+// Memory indices: 0 = private Rust core, 1 = shared RAM (guest starts at 64),
+// 2 = shared u32 page generations, 3 = shared u32 reservation epochs.
+export interface SharedJitLayout { bytes: number; ramPages: number; generationPages: number; granulePages: number }
+const sharedImports = (s?: SharedJitLayout) => s ? [
+  ...['ram', 'generations', 'granules'].flatMap((name, i) => {
+    const pages = [s.ramPages, s.generationPages, s.granulePages][i]!;
+    return [...str('env'), ...str(name), 2, 3, ...uleb(pages), ...uleb(pages)];
+  }),
+] : [];
+// Multi-memory memarg: bit 6 selects an explicit memory index.
+const atomic = (op: number, align: number, memory: number, offset = 0) =>
+  [0xfe, ...uleb(op), align | 64, memory, ...uleb(offset)];
 export interface Block { id: number; pc: bigint; words: number[]; raw?: number[] }
 export const uleb = (value: number): number[] => {
   const out: number[] = []; do { const b = value & 127; value >>>= 7; out.push(b | (value ? 128 : 0)); } while (value); return out;
@@ -14,7 +26,7 @@ const constant = (n: bigint) => [0x42, ...sleb(n)];
 const sx = (n: number, bits: number) => BigInt(n << (32 - bits) >> (32 - bits));
 const helper = (i: number) => [0x2f,0x07,0x27,0x43,0x47,0x4b,0x4f,0x53].includes(i&127);
 // One shared table importer avoids a per-module indirect-table mirror on older V8.
-function chainCode(): number[] {
+function chainCode(shared?: SharedJitLayout): number[] {
   const code: number[] = [];
   const emit = (...a: number[]) => code.push(...a);
   const frame = (offset: number) => [0x20,1,0x29,3,...uleb(offset)];
@@ -35,14 +47,16 @@ function chainCode(): number[] {
         ...tlb(16),...frame(144),0x52,0x72,...tlb(24),...frame(64),0x52,0x72]);
       emit(...tlb(8),...frame(0),...constant(4095n),0x83,0x84,0x21,39,
         0x20,39,...constant(0x80000000n),0x7d,0x21,40);
-      reject([0x20,40,...frame(24),0x5a]);
+      reject([0x20,40,...(shared ? constant(BigInt(shared.bytes)) : frame(24)),0x5a]);
       emit(...frame(136),0xa7,0x20,39,...constant(1n),0x88,
         0x20,39,...constant(17n),0x88,0x85,...frame(0),...constant(33n),0x88,0x85,
         ...constant(65535n),0x83,0xa7,0x41,40,0x6c,0x6a,0x21,42);
       const entry = (offset: number) => [0x20,42,0x29,3,...uleb(offset)];
       reject([...entry(0),...frame(0),0x52,...entry(8),0x20,39,0x52,0x72,
-        ...entry(16),...frame(128),0xa7,0x20,40,...constant(12n),0x88,
-        ...constant(3n),0x86,0xa7,0x6a,0x29,3,0,0x52,0x72,
+        ...entry(16),...(shared
+          ? [0x20,40,...constant(12n),0x88,0xa7,0x41,2,0x74,...atomic(0x10,2,2),0xad]
+          : [...frame(128),0xa7,0x20,40,...constant(12n),0x88,
+            ...constant(3n),0x86,0xa7,0x6a,0x29,3,0]),0x52,0x72,
         0x20,42,0x28,2,24,0x45,0x72]);
       reject([0x20,42,0x28,2,28,0xad,...frame(8),0x7c,...frame(80),0x56]);
       // Update module recency with the enclosing Rust dispatch's monotonic stamp.
@@ -52,17 +66,17 @@ function chainCode(): number[] {
       emit(0x20,0,0x20,1,0x20,42,0x28,2,24,0x13,0,0,0x0b);
   emit(0x0f); return code;
 }
-export function compileChainDispatcher(): Uint8Array<ArrayBuffer> {
-  const body = [2,39,0x7e,5,0x7f,...chainCode(),0x0b];
+export function compileChainDispatcher(shared?: SharedJitLayout): Uint8Array<ArrayBuffer> {
+  const body = [2,39,0x7e,5,0x7f,...chainCode(shared),0x0b];
   return new Uint8Array([
     0,97,115,109,1,0,0,0,
     ...section(1,[1,0x60,2,0x7f,0x7f,0]),
-    ...section(2,[2,...str('env'),...str('memory'),2,0,0,...str('env'),...str('table'),1,0x70,0,0]),
+    ...section(2,[shared ? 5 : 2,...str('env'),...str('memory'),2,0,0,...str('env'),...str('table'),1,0x70,0,0,...sharedImports(shared)]),
     ...section(3,[1,0]), ...section(7,[1,...str('next'),0,0]),
     ...section(10,[1,...uleb(body.length),...body]),
   ]);
 }
-function body(block: Block, chain: boolean, nextIndex: number): number[] {
+function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJitLayout): number[] {
   const code: number[] = []; const used = new Set<number>(), dirty = new Set<number>();
   // Backedges require values written later in a previous iteration to remain
   // live at early exits. Acyclic blocks can load/spill only their executed prefix.
@@ -128,16 +142,36 @@ function body(block: Block, chain: boolean, nextIndex: number): number[] {
         0x04,0x40,0x20,45,0x41,1,0x6a,0x21,45,0x0c,1,0x0b);
       emit(...tlb(8),0x20,38,...constant(4095n),0x83,0x7c,0x21,39,
         0x20,39,...constant(0x80000000n),0x7d,0x21,40);
-      memoryBail([0x20,40,...frame(24),0x5a]);
-      if (store) memoryBail([...frame(48),0xa7,0x20,40,...constant(12n),0x88,0xa7,0x6a,0x2d,0,0]);
-      emit(...frame(16),0xa7,0x20,40,0xa7,0x6a,0x21,42);
-      if (store) {
+      memoryBail([0x20,40,...(shared ? constant(BigInt(shared.bytes)) : frame(24)),0x5a]);
+      if (store && !shared) memoryBail([...frame(48),0xa7,0x20,40,...constant(12n),0x88,0xa7,0x6a,0x2d,0,0]);
+      emit(...(shared ? [0x41,...sleb(64n)] : [...frame(16),0xa7]),0x20,40,0xa7,0x6a,0x21,42);
+      if (shared) {
+        if (store) {
+          // Match SharedHartMemory's writer lock, including LR/SC and subword
+          // helper RMWs. Bounded execution cannot service a fence ACK mid-store.
+          emit(0x03,0x40,0x41,0,0x41,0,0x41,1,...atomic(0x48,2,1),0x0d,0,0x0b);
+          emit(0x20,42,...get(b),...atomic([0x1b,0x1c,0x1d,0x18][f]!,f,1));
+          emit(0x41,8,...constant(1n),...atomic(0x1f,3,1),0x1a);
+          emit(0x20,42,0x41,7,0x76,0x41,2,0x74,0x41,1,...atomic(0x1e,2,3),0x1a);
+          // Publish every page write, just like helpers. No private code bitmap
+          // can prove a page is not executable on another hart.
+          emit(0x20,40,0xa7,0x41,12,0x76,0x41,2,0x74,0x41,1,...atomic(0x1e,2,2),0x1a);
+          emit(0x41,0,0x41,0,...atomic(0x17,2,1));
+          emit(0x41,0,0x41,1,...atomic(0,2,1),0x1a);
+          emit(0x20,1,...constant(1n),0x37,3,72);
+        } else {
+          emit(0x20,42,...atomic([0x14,0x15,0x16,0x11,0x14,0x15,0x16][f]!,f&3,1));
+          if (f < 3) emit([0xc2,0xc3,0xc4][f]!); // i64.extend{8,16,32}_s
+        }
+      } else if (store) {
         const opcode = [0x3c,0x3d,0x3e,0x37][f]!;
         emit(0x20,42,...get(b),opcode,f,0,0x20,1,...constant(1n),0x37,3,72);
       } else {
         const opcode = [0x30,0x32,0x34,0x29,0x31,0x33,0x35][f]!;
         emit(0x20,42,opcode,f&3,0);
       }
+      const counter = store ? 184 : 176;
+      emit(0x20,1,...frame(counter),...constant(1n),0x7c,0x37,3,...uleb(counter));
       // All failing guards share one cold helper call. Successful accesses
       // bypass it, carrying the loaded i64 out of the outer block.
       emit(0x0c,1,0x0b); slow(); emit(0x0b);
@@ -214,14 +248,14 @@ function body(block: Block, chain: boolean, nextIndex: number): number[] {
   const bytes = chain ? [...prefix,0x02,0x40,0x03,0x40,...bodyCode,0x0b,0x0b,...code,0x0b]
     : [...prefix,0x03,0x40,...bodyCode,0x0b,0x0b]; return [...uleb(bytes.length), ...bytes];
 }
-export function compileBatch(blocks: Block[], chain = false): Uint8Array<ArrayBuffer> {
+export function compileBatch(blocks: Block[], chain = false, shared?: SharedJitLayout): Uint8Array<ArrayBuffer> {
   const hasHelper = blocks.some(b => b.words.some((i,k) => k%2===0 && (helper(i) || [0x03,0x23].includes(i&127))));
   return new Uint8Array([
     0, 97, 115, 109, 1, 0, 0, 0,
     ...section(1, [hasHelper?2:1, 0x60, 2, 0x7f, 0x7f, 0, ...(hasHelper ? [0x60,6,0x7f,0x7f,0x7f,0x7f,0x7e,0x7f,0] : [])]),
-    ...section(2, [(hasHelper?2:1)+(chain?1:0), ...str('env'), ...str('memory'), 2, 0, 0, ...(hasHelper ? [...str('env'),...str('slow'),0,1] : []), ...(chain ? [...str('env'),...str('next'),0,0] : [])]),
+    ...section(2, [(hasHelper?2:1)+(chain?1:0)+(shared?3:0), ...str('env'), ...str('memory'), 2, 0, 0, ...(hasHelper ? [...str('env'),...str('slow'),0,1] : []), ...(chain ? [...str('env'),...str('next'),0,0] : []), ...sharedImports(shared)]),
     ...section(3, [...uleb(blocks.length), ...blocks.map(() => 0)]),
     ...section(7, [...uleb(blocks.length), ...blocks.flatMap((b, n) => [...str(`b${b.id}`), 0, ...uleb(n+(hasHelper?1:0)+(chain?1:0))])]),
-    ...section(10, [...uleb(blocks.length), ...blocks.flatMap(block => body(block, chain, hasHelper?1:0))]),
+    ...section(10, [...uleb(blocks.length), ...blocks.flatMap(block => body(block, chain, hasHelper?1:0, shared))]),
   ]);
 }

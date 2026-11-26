@@ -40,7 +40,10 @@ impl Engine {
             profile_comm_offset: 0,
         })
     }
-    /// Experimental hart. RAM belongs to the host shared bus; JIT RAM uses helpers.
+    /// JIT frame ABI includes inline load/store counters (24 u64 fields).
+    pub fn smp_jit_abi(&self) -> u32 { 9 }
+
+    /// Experimental hart. RAM belongs to the host shared bus.
     pub fn smp_configure(&mut self, hart: u32, bytes: u32) -> Result<(), JsValue> {
         if hart >= 4 || bytes < 32 * 1024 * 1024 || bytes > 1024 * 1024 * 1024 { return Err(JsValue::from_str("invalid SMP geometry")); }
         self.cpu = Cpu::new(0);
@@ -75,8 +78,8 @@ impl Engine {
         // Like local FENCE.I, retain physical code. SharedHartMemory publishes
         // every store's page generation before the mailbox request, and the
         // host ACKs only after this call returns. jit_block reloads that shared
-        // generation on every SMP entry; shared RAM cannot use tail chaining
-        // (the inline RAM length is zero). Thus stale code cannot run after ACK.
+        // generation on every SMP entry; the shared chain dispatcher also checks
+        // the live shared generation. Thus stale code cannot run after ACK.
         self.cpu.memory.flush();
     }
     /// Remote SFENCE.VMA (including ASID/range requests) may over-flush the

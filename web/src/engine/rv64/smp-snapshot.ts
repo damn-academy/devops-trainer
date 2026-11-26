@@ -1,4 +1,4 @@
-import { atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
+import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown };
 const output = document.querySelector('#console')!;
 const HARTS = 2;
@@ -10,8 +10,8 @@ try {
   const bytes = 256 * 1024 * 1024, pages = bytes / 65536 + 1;
   const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
   const module = atomicModule(pages), mail = new HartMailboxes(HARTS).words.buffer;
-  const generations = new SharedArrayBuffer(bytes / 4096 * 4), epoch = performance.timeOrigin + performance.now();
-  const granules = new SharedArrayBuffer(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
+  const generations = sharedTable(bytes / 4096 * 4), epoch = performance.timeOrigin + performance.now();
+  const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
   const control = new SharedArrayBuffer(HARTS * 64), ctl = new Int32Array(control);
   for (let h = 0; h < HARTS; h++) ctl[h * 16] = 1;
   const snap = new SharedArrayBuffer((2 + HARTS) * 4), sv = new Int32Array(snap);
@@ -54,7 +54,7 @@ try {
   // Prove the image is sufficient: wipe the whole buffer, then reinstall only the pages.
   new Uint8Array(memory.buffer).fill(0);
   for (const [p, page] of image) view.set(page, p * 4096);
-  const gens = new Int32Array(generations);
+  const gens = new Int32Array(generations.buffer);
   for (let i = 0; i < gens.length; i++) gens[i] = gens[i]! + 1;
   for (let h = 0; h < HARTS; h++) workers[h]!.postMessage({ restore: { blob: snapshots.get(h)!.blob, deviceBlob: snapshots.get(0)!.deviceBlob } });
   Atomics.store(sv, 1, 1); Atomics.notify(sv, 1);

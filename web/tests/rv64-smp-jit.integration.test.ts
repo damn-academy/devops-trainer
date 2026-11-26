@@ -150,3 +150,94 @@ for (const modifyCode of [false, true]) it.skipIf(process.env.RV64_SMP_JIT !== '
       expect(JSON.parse(b.metrics()).invalidations.explicit_clear).toBe(1);
     } finally { slots.forEach(slot => table.set(slot, null)); cores.forEach(core => core.free()); }
   }, 30000);
+
+it.skipIf(process.env.RV64_SMP_JIT !== '1')('publishes an inline SMP code store before SBI RFENCE ACK and resumes guarded chains', async () => {
+  const { sharedTable } = await import('../src/engine/rv64/smp');
+  const { compileChainDispatcher } = await import('../src/engine/rv64/jit-compiler');
+  const mod = await import(/* @vite-ignore */ new URL('../public/rv64/rv64_core.js', import.meta.url).href);
+  const wasm = await mod.default({ module_or_path: readFileSync(process.env.RV64_SMP_JIT_WASM ?? new URL('../public/rv64/rv64_core_bg.wasm', import.meta.url)) });
+  const bytes = 32 * 1024 * 1024, pages = bytes / 65536 + 1;
+  const memory = sharedTable(pages * 65536), generations = sharedTable(bytes / 4096 * 4);
+  const granules = sharedTable(Math.ceil(memory.buffer.byteLength / 128) * 4);
+  const gens = new Int32Array(generations.buffer);
+  const ram = [0,1].map(() => new SharedHartMemory(memory, atomicModule(pages), gens, new Int32Array(granules.buffer)));
+  const layout = { bytes, ramPages: pages, generationPages: generations.buffer.byteLength / 65536, granulePages: granules.buffer.byteLength / 65536 };
+  let active = 0;
+  const queues: any[][] = [[],[]], slots: number[] = [], bus = new HartMailboxes(2);
+  Object.assign(globalThis, {
+    rv64SharedAccess: (op: number, off: number, size: 1|2|4|8, value: bigint) => {
+      if (op === 0) return BigInt.asUintN(size*8,ram[active]!.load(off+64,size));
+      if (op === 1) { ram[active]!.store(off+64,size,value); return 0n; }
+      throw Error(`unexpected shared operation ${op}`);
+    },
+    rv64SharedGeneration: (page: number) => Atomics.load(gens,page) >>> 0,
+    rv64SharedCas: (off: number, expected: bigint, value: bigint) => ram[active]!.cas(off+64,expected,value),
+    rv64Compile: (id: number, pc: bigint, words: Uint32Array, raw: Uint32Array) => queues[active]!.push({id,pc,words:[...words],raw:[...raw]}),
+  });
+  const put = (off: number, words: number[]) => words.forEach((word,i) => ram[0]!.store(64+off+i*4,4,BigInt(word>>>0)));
+  const jal = (offset: number) => ((offset>>20&1)<<31 | (offset>>1&1023)<<21 | (offset>>11&1)<<20 | (offset>>12&255)<<12 | 0x6f) >>> 0;
+  // Sv39 identity gigapage. A/D are pre-set; both supervisor harts use it.
+  ram[0]!.store(64+0x10000+2*8,8,0x200000cfn);
+  for (const [boot,target] of [[0x2000,0],[0x3000,0x4000]]) {
+    const prefix = [0x00000297,0x0202b283,0x18029073,0x12000073];
+    // Prime A's write TLB for B's page without changing B's instructions.
+    // Otherwise changing the target pointer would first take the cold helper.
+    if (boot === 0x3000) prefix.push(0xffffd317,0x0e032823); // sw zero,240(t1) at RAM+256
+    put(boot!,[...prefix,jal(target!-boot!-prefix.length*4)]);
+    ram[0]!.store(64+boot!+32,8,0x8000000000080010n);
+  }
+  // B's two blocks live on different pages and chain through the fetch TLB.
+  put(0,[0x00100293,0x00005317,0x00533223,jal(4096-12)]);
+  put(4096,[jal(-4096)]);
+  // A warms its generated store on unrelated page 7, polling control page 6.
+  // Once the host changes pointer+flag, that same inline store rewrites B and
+  // A orders it before issuing the guest SBI remote fence.i request.
+  put(0x4000,[0x00002417,0x00043283,0x00200337,0x29330313,0x0062a023,
+    0x00843383,0xfe0386e3,0x0330000f,0x00200513,0x00000593,
+    0x00000813,0x524658b7,0xe4388893,0x00000073]);
+  ram[0]!.store(64+0x6000,8,0x80007000n);
+  const cores = [0,1].map(hart => {
+    const core = new mod.Engine(32);
+    expect(core.smp_jit_abi?.(), 'rebuild R9 WASM before this gate').toBe(9);
+    core.smp_configure(hart,bytes); core.smp_start(hart ? 0x80002000n : 0x80003000n,0n); core.jit_threshold(1); return core;
+  });
+  const table = cores[0].jit_table();
+  const env = {memory:wasm.memory,ram:memory,generations,granules,table,slow:wasm.jit_slow};
+  const dispatcher = new WebAssembly.Instance(new WebAssembly.Module(compileChainDispatcher(layout)),{env});
+  const run = (hart: number) => {
+    active = hart; const core = cores[hart]; core.smp_run(128,0,0n);
+    const blocks = queues[hart]!.splice(0);
+    if (blocks.length) {
+      const instance = new WebAssembly.Instance(new WebAssembly.Module(compileBatch(blocks,true,layout)),{env:{...env,next:dispatcher.exports.next}});
+      for (const b of blocks) {
+        const slot = table.grow(1); slots.push(slot); table.set(slot,instance.exports[`b${b.id}`]); core.jit_install(b.id,slot,b.words.length/2);
+      }
+    }
+  };
+  try {
+    for (let n=0;n<50;n++) { run(0); run(1); }
+    expect(cores[1].test_read(0x80005008n)).toBe(1n);
+    const before = JSON.parse(cores[0].metrics());
+    expect(before.smp_inline_stores).toBeGreaterThan(0);
+    expect(JSON.parse(cores[1].metrics()).smp_jit_chains).toBeGreaterThan(0);
+    const generation = Atomics.load(gens,0);
+    ram[0]!.store(64+0x6000,8,0x80000000n);
+    for (let n=0;n<100 && Atomics.load(gens,0)===generation;n++) run(0);
+    expect(Atomics.load(gens,0)).toBeGreaterThan(generation);
+    ram[0]!.store(64+0x6008,8,1n);
+    let request: bigint[] = [];
+    for (let n=0;n<100 && !request.length;n++) { run(0); request = Array.from(cores[0].smp_request()); }
+    expect(request.slice(0,4)).toEqual([0x52464e43n,0n,2n,0n]);
+    expect(Atomics.load(gens,0)).toBeGreaterThan(generation);
+    expect(JSON.parse(cores[0].metrics()).smp_inline_stores).toBeGreaterThan(before.smp_inline_stores);
+    expect(JSON.parse(cores[0].metrics()).memory_helpers).toBe(before.memory_helpers);
+    const tickets = bus.remoteFence(2n,0n,'instruction');
+    bus.service(1,()=>{ expect(bus.completed(tickets[0]!)).toBe(false); cores[1].smp_fence(); },()=>{});
+    expect(bus.completed(tickets[0]!)).toBe(true); cores[0].smp_reply(0n,0n);
+    const chains = JSON.parse(cores[1].metrics()).smp_jit_chains;
+    for (let n=0;n<50;n++) run(1);
+    expect(cores[1].test_read(0x80005008n)).toBe(2n);
+    expect(JSON.parse(cores[1].metrics()).smp_jit_chains).toBeGreaterThan(chains);
+    expect(JSON.parse(cores[1].metrics()).jit_cache_clears).toBe(0);
+  } finally { slots.forEach(slot=>table.set(slot,null)); cores.forEach(core=>core.free()); }
+},30000);

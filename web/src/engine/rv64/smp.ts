@@ -4,6 +4,12 @@ import { uleb } from './jit-compiler';
 const string = (s: string) => [s.length, ...new TextEncoder().encode(s)];
 const section = (id: number, b: number[]) => [id, ...uleb(b.length), ...b];
 
+/** Fixed shared wasm metadata; pass the Memory itself through structured clone. */
+export function sharedTable(bytes: number): WebAssembly.Memory {
+  const pages = Math.ceil(bytes / 65536);
+  return new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
+}
+
 /** Small atomic wasm module: addresses are byte offsets in one shared memory. */
 export function atomicModule(pages: number): WebAssembly.Module {
   const signatures = [

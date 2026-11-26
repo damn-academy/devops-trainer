@@ -5,7 +5,7 @@ import { JitRuntime } from './jit';
 import { SharedHartMemory, HartMailboxes, type Amo, type FenceTicket } from './smp';
 interface Init {
   hart: number; harts: number; bytes: number; memory: WebAssembly.Memory; module: WebAssembly.Module;
-  generations: SharedArrayBuffer; granules: SharedArrayBuffer; epoch: number;
+  generations: WebAssembly.Memory; granules: WebAssembly.Memory; epoch: number;
   mail: SharedArrayBuffer; control: SharedArrayBuffer; kernel?: Uint8Array; initrd?: Uint8Array;
   httpDisk?: HTTPDisk;
   program?: Uint8Array; cmdline?: string;
@@ -21,15 +21,17 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
   self.onmessage = null;
   try {
     const words = new Int32Array(d.control), wide = new BigUint64Array(d.control);
-    const bus = new HartMailboxes(d.harts, d.mail), ram = new SharedHartMemory(d.memory, d.module, new Int32Array(d.generations), new Int32Array(d.granules));
+    const bus = new HartMailboxes(d.harts, d.mail), ram = new SharedHartMemory(d.memory, d.module, new Int32Array(d.generations.buffer), new Int32Array(d.granules.buffer));
     const base = d.hart * 16;
     const url = new URL('/rv64/rv64_core.js', self.location.origin).href;
     const mod = await import(/* @vite-ignore */ url); const wasm = await mod.default();
     const core = new mod.Engine(32);
     if (typeof core.smp_sfence !== 'function') throw Error('Stale RV64 WASM: rebuild with scripts/rv64-dev.sh wasm (smp_sfence missing)');
+    if (core.smp_jit_abi?.() !== 9) throw Error('Stale RV64 WASM: rebuild R9 (24-field JIT frame required)');
     core.smp_configure(d.hart, d.bytes);
     const newJitRuntime = () => new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow,
-      { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) });
+      { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) },
+      { ram: d.memory, generations: d.generations, granules: d.granules, bytes: d.bytes });
     let jitRuntime = newJitRuntime();
     core.jit_threshold(50);
     const profileInterval = d.guestProfile ?? 0;
@@ -69,7 +71,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     };
     Object.assign(globalThis, {
       rv64SharedAccess: access,
-      rv64SharedGeneration: (page: number) => Atomics.load(new Int32Array(d.generations), page) >>> 0,
+      rv64SharedGeneration: (page: number) => Atomics.load(new Int32Array(d.generations.buffer), page) >>> 0,
       rv64SharedCas: (offset: number, expected: bigint, value: bigint) => ram.cas(offset + 64, expected, value),
       rv64SharedImage: (offset: number, bytes: Uint8Array) => new Uint8Array(d.memory.buffer, offset + 64, bytes.length).set(bytes),
       rv64SharedMmio: mmio,

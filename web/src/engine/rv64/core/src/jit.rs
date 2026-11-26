@@ -131,7 +131,7 @@ impl Cpu {
             effective as u64 | (self.csr[0x300] & ((1 << 18) | (1 << 19))), self.csr[0x180], 0, budget as u64, 0, cpu_ptr, 0, 0,
             self.memory.jit_tlb_ptr(0), self.memory.jit_pages.as_ptr() as u64, self.jit.chain.as_ptr() as u64,
             self.mode as u64 | (self.csr[0x300] & ((1 << 18) | (1 << 19))), 0,
-            self.jit.last_used.as_ptr() as u64, self.memory.metrics.jit_dispatches + 1];
+            self.jit.last_used.as_ptr() as u64, self.memory.metrics.jit_dispatches + 1, 0, 0];
         if e.compiled.is_none() { e.compiled = self.jit.ready.get(&e.id).copied(); }
         let (slot, _length) = match e.compiled { Some((slot, n)) => { if n > budget { return 0; } (slot, n) }, _ => { self.memory.metrics.jit_pending += 1; return if self.jit.threshold == 1 { u32::MAX } else { 0 }; } };
         self.jit.chain[index] = ChainEntry { pc: self.pc, pa, generation: page, slot, count: _length, id: e.id, reserved: 0 };
@@ -141,6 +141,13 @@ impl Cpu {
         self.jit.last_used[e.id as usize] = self.memory.metrics.jit_dispatches;
         unsafe { function(self.x.as_mut_ptr(), frame.as_mut_ptr()); }
         self.memory.metrics.jit_chains += frame[19];
+        self.memory.metrics.inline_loads += frame[22];
+        self.memory.metrics.inline_stores += frame[23];
+        if self.memory.shared_bytes != 0 {
+            self.memory.metrics.smp_inline_loads += frame[22];
+            self.memory.metrics.smp_inline_stores += frame[23];
+            self.memory.metrics.smp_jit_chains += frame[19];
+        }
         self.memory.metrics.inline_tlb_checks += frame[13];
         self.memory.metrics.inline_tlb_misses += frame[14];
         let n = frame[1] as u32;
@@ -162,7 +169,7 @@ impl Cpu {
 pub fn jit_slow(cpu_ptr: u32, ins: u32, raw: u32, len: u32, pc: u64, frame_ptr: u32) {
     // Pointers originate exclusively in jit_block's live call frame and Cpu.
     let cpu = unsafe { &mut *(cpu_ptr as *mut Cpu) };
-    let frame = unsafe { &mut *(frame_ptr as *mut [u64; 22]) };
+    let frame = unsafe { &mut *(frame_ptr as *mut [u64; 24]) };
     if frame[9] != 0 { cpu.reservation = None; frame[9] = 0; }
     if matches!(ins & 127, 0x03|0x23) { cpu.memory.metrics.memory_helpers += 1; }
     cpu.pc = pc;
