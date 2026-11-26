@@ -1,11 +1,12 @@
 import { loadDraft, saveDraft } from '../../../engine/trainers/storage';
-import { bi, t } from '../../../core/i18n';
+import { bi, lang, t } from '../../../core/i18n';
 import type { WidgetReg } from '../../../core/types';
 import './budget.css';
 
 export const strings = {
   title: bi('Распределение бюджета по каналам', 'Channel budget'),
   note: bi('Модель построена на учебных допущениях, близких к опубликованным отраслевым данным, и прогнозом для вашей компании не служит. Распределение повторяется три месяца подряд, а последствия видны на графике за двенадцать месяцев; нераспределённые деньги остаются в резерве.', 'Teaching assumptions, not market data. Spend repeats for 3 months; consequences span 12 months. Unallocated budget stays in reserve.'),
+  budget: bi('Месячный бюджет, долларов: учебные 10 000 или свой', 'Monthly budget, USD: the course’s 10,000 or your own'),
   allocated: bi('Распределено из месячного бюджета, долларов', 'Allocated / monthly budget, USD'),
   single: bi('Показать один прогон', 'One run'), reset: bi('Вернуть исходное распределение', 'Reset'),
   legend: bi('График показывает возможности сделок по месяцам. Сплошная линия — медиана трёхсот прогонов, полоса — разброс, в который попадают восемь прогонов из десяти, пунктир — один случайный прогон.', 'Sales opportunities: median — solid line; 10–90% — band; one run — dashed line.'),
@@ -41,6 +42,8 @@ export const CHANNELS = [
   // Creator: trusted niche demos, 15% accepted; long tail shifts delivery past month 3.
   { cpl: 170, spread: .6, capSpend: 6000, lag: 2, decay: .8, activation: [3, 27], opportunity: [3, 17], incrementality: 1 },
 ] as const;
+/** Russian text uses a decimal comma and a space between thousands. */
+const num = (v: number, digits: number) => new Intl.NumberFormat(lang() === 'ru' ? 'ru-RU' : 'en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(v);
 export function seeded(seed: number): () => number {
   return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let n = Math.imul(seed ^ seed >>> 15, 1 | seed); n ^= n + Math.imul(n ^ n >>> 7, 61 | n); return ((n ^ n >>> 14) >>> 0) / 4294967296; };
 }
@@ -95,15 +98,30 @@ export const budgetWidget: WidgetReg = {
   id: 'marketing.budget',
   mount(el, props, ctx) {
     const proposed = (props as { total?: number } | null)?.total;
-    const total = typeof proposed === 'number' && Number.isFinite(proposed) && proposed >= 0 ? proposed : 10000;
+    const base = typeof proposed === 'number' && Number.isFinite(proposed) && proposed >= 0 ? proposed : 10000;
+    const key = `marketing.budget.v1.${base}`;
+    // The learner may set an own monthly budget; it is kept next to the allocation.
+    const saved = loadDraft(`${key}.total`, base);
+    let total = Number.isFinite(saved) && saved >= 1000 && saved <= 100000 ? saved : base;
     const initial = () => CHANNELS.map(() => Math.min(10000, Math.floor(total / 10 / 250) * 250));
-    const key = `marketing.budget.v1.${total}`;
     let spends = loadDraft(key, initial());
     if (spends.length !== CHANNELS.length || spends.some(v => !Number.isFinite(v) || v < 0 || v > 10000) || spends.reduce((a,b) => a+b,0) > total) spends = initial();
     let single: number[] | undefined;
     el.classList.add('mkt-budget');
     const node = <K extends keyof HTMLElementTagNameMap>(tag: K, text = '') => { const e = document.createElement(tag); e.textContent = text; return e; };
     el.append(node('h3', t(strings.title)), node('p', t(strings.note)));
+    const budgetLabel = node('label', t(strings.budget)), budget = node('input');
+    budget.type = 'number'; budget.min = '1000'; budget.max = '100000'; budget.step = '500'; budget.value = String(total);
+    budget.onchange = () => {
+      const v = Math.round(Number(budget.value) / 500) * 500;
+      if (!Number.isFinite(v) || v < 1000 || v > 100000) { budget.value = String(total); return; }
+      total = v; budget.value = String(v); saveDraft(`${key}.total`, total);
+      // A smaller budget scales the allocation down instead of discarding it.
+      const sum = spends.reduce((a, b) => a + b, 0);
+      if (sum > total) spends = spends.map(x => Math.floor(x * total / sum / 250) * 250);
+      single = undefined; draw();
+    };
+    budgetLabel.append(budget); el.append(budgetLabel);
     const allocated = node('p'); el.append(allocated);
     const inputs: HTMLInputElement[] = [], outputs: HTMLOutputElement[] = [];
     CHANNELS.forEach((_, i) => {
@@ -119,11 +137,11 @@ export const budgetWidget: WidgetReg = {
     funnel.className = 'mkt-budget-funnel';
     el.append(controls, legend, chart, node('h4', t(strings.total)), totals, node('h4', t(strings.funnel)), funnel);
     one.onclick = () => { single = runBudget(spends); draw(); ctx.complete(); };
-    reset.onclick = () => { spends = initial(); single = undefined; draw(); };
+    reset.onclick = () => { total = base; budget.value = String(base); saveDraft(`${key}.total`, total); spends = initial(); single = undefined; draw(); };
     function draw() {
       saveDraft(key, spends);
       inputs.forEach((input, i) => { input.value = String(spends[i]); outputs[i]!.value = `$${spends[i]}`; });
-      allocated.textContent = `${t(strings.allocated)}: ${spends.reduce((a, b) => a + b, 0)} / ${total}`;
+      allocated.textContent = `${t(strings.allocated)}: ${num(spends.reduce((a, b) => a + b, 0), 0)} / ${num(total, 0)}`;
       const result = simulateBudget(spends);
       const max = Math.max(1, ...result.months.map(q => q[2]!), ...(single ?? []));
       const x = (i: number) => 42 + i * 62, y = (v: number) => 206 - v / max * 175;
@@ -131,8 +149,8 @@ export const budgetWidget: WidgetReg = {
       const upper = result.months.map(q => q[2]!), lower = result.months.map(q => q[0]!);
       const band = [...upper.map((v, i) => `${x(i)},${y(v)}`), ...lower.map((v, i) => `${x(i)},${y(v)}`).reverse()].join(' ');
       chart.innerHTML = `<svg viewBox="0 0 760 250" role="img" aria-label="${t(strings.legend)}"><polygon points="${band}" fill="var(--focus)" fill-opacity=".25" stroke="var(--focus)" stroke-opacity=".55"/><polyline points="${points(result.months.map(q => q[1]!))}" fill="none" stroke="var(--link)" stroke-width="3"/>${single ? `<polyline points="${points(single)}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="7 5"/>` : ''}<g fill="var(--ink)" font-size="18"><text x="2" y="25">${max.toFixed(0)}</text><text x="15" y="211">0</text>${[0, 2, 5, 8, 11].map(i => `<text x="${x(i)}" y="230" text-anchor="middle">${i + 1}</text>`).join('')}</g></svg>`;
-      funnel.replaceChildren(...result.qualifiedVisits.map((q, i) => node('p', `${t(strings.month)} ${[3, 6, 12][i]}: ${q[1]!.toFixed(0)} → ${result.activations[i]![1]!.toFixed(1)} → ${result.totals[i]![1]!.toFixed(1)}`)));
-      totals.replaceChildren(...result.totals.map((q, i) => node('p', `${t(strings.month)} ${[3, 6, 12][i]}: ${q[1]!.toFixed(1)} (${q[0]!.toFixed(1)}–${q[2]!.toFixed(1)})`)));
+      funnel.replaceChildren(...result.qualifiedVisits.map((q, i) => node('p', `${t(strings.month)} ${[3, 6, 12][i]}: ${num(q[1]!, 0)} → ${num(result.activations[i]![1]!, 1)} → ${num(result.totals[i]![1]!, 1)}`)));
+      totals.replaceChildren(...result.totals.map((q, i) => node('p', `${t(strings.month)} ${[3, 6, 12][i]}: ${num(q[1]!, 1)} (${num(q[0]!, 1)}–${num(q[2]!, 1)})`)));
     }
     draw();
     return { dispose() { el.replaceChildren(); el.classList.remove('mkt-budget'); } };

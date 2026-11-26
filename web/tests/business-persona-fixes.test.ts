@@ -105,8 +105,8 @@ it('packs the Markdown task and title without inventing an error', () => {
 });
 it('restores budget allocations and exposes the existing LLM workbook', async () => {
   const el = host(); const a = await budgetWidget.mount(el, {}, ctx()); mounts.push(a);
-  change(el.querySelector('input')!, '0'); a.dispose(); el.replaceChildren();
-  mounts.push(await budgetWidget.mount(el, {}, ctx())); expect(el.querySelector<HTMLInputElement>('input')!.value).toBe('0');
+  change(el.querySelector<HTMLInputElement>('input[type=range]')!, '0'); a.dispose(); el.replaceChildren();
+  mounts.push(await budgetWidget.mount(el, {}, ctx())); expect(el.querySelector<HTMLInputElement>('input[type=range]')!.value).toBe('0');
   expect(MARKETING_V2_LESSONS.find(l => l.id === 'marketing.search-llm')!.sections.some(s => s.kind === 'widget' && s.widget === 'template')).toBe(true);
 });
 it('downloads an editable document scaffold and restores learner edits', async () => {
