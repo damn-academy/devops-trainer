@@ -3,10 +3,11 @@
 set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 export KUBECONFIG="${KUBECONFIG:-$HOME/workshop.txt}"
+POD="${RV64_DEV_POD:-rv64-dev}"
 k() { local sub=$1; shift; kubectl "$sub" --context admin@workshop -n tenant-kuberoot "$@"; }
 sync_core() {
   COPYFILE_DISABLE=1 tar --exclude=target --exclude=.git -C "$ROOT/web/src/engine/rv64/core" -czf - . |
-    k exec -i rv64-dev -- bash -ceu '
+    k exec -i "$POD" -- bash -ceu '
       stage=$(mktemp -d /work/src/rv64-sync.XXXXXX)
       trap "rm -rf \"$stage\"" EXIT
       tar -xzf - -C "$stage"
@@ -24,19 +25,19 @@ case "${1:-help}" in
   copy-wasm) copy_wasm ;;
   test-isa)
     sync_core
-    k exec rv64-dev -- bash -ceu 'cd /work/src/core; RV64_ISA_DIR=/work/tests/isa cargo test --release --test upstream -- --ignored --nocapture'
+    k exec "$POD" -- bash -ceu 'cd /work/src/core; RV64_ISA_DIR=/work/tests/isa cargo test --release --test upstream -- --ignored --nocapture'
     ;;
   cargo)
     shift
     sync_core
-    k exec -i rv64-dev -- bash -ceu 'cd /work/src/core; exec cargo "$@"' -- "$@"
+    k exec -i "$POD" -- bash -ceu 'cd /work/src/core; exec cargo "$@"' -- "$@"
     ;;
   bootstrap)
-    k exec -i rv64-dev -- bash -se < "$ROOT/scripts/rv64-dev-bootstrap.sh"
+    k exec -i "$POD" -- bash -se < "$ROOT/scripts/rv64-dev-bootstrap.sh"
     ;;
   wasm|build-wasm)
     sync_core
-    k exec rv64-dev -- bash -ceu '
+    k exec "$POD" -- bash -ceu '
       cd /work/src/core
       cargo build --lib --locked --release --target wasm32-unknown-unknown
       mkdir -p /work/out

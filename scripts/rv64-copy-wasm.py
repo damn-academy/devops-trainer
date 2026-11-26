@@ -9,7 +9,7 @@ env = dict(os.environ, KUBECONFIG=os.environ.get('KUBECONFIG', str(Path.home()/'
 def remote(code, *args):
     for attempt in range(5):
         try:
-            return subprocess.check_output(['kubectl','exec','--context','admin@workshop','-n','tenant-kuberoot','rv64-dev','--','python3','-c',code,*args], env=env, timeout=35)
+            return subprocess.check_output(['kubectl','exec','--context','admin@workshop','-n','tenant-kuberoot',os.environ.get('RV64_DEV_POD','rv64-dev'),'--','python3','-c',code,*args], env=env, timeout=35)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
             if attempt == 4: raise
             time.sleep(1)
