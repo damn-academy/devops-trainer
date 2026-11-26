@@ -1,7 +1,7 @@
 // Small shared pieces of the career widgets.
 
 import { h } from '../../../core/dom';
-import { t, type Bi } from '../../../core/i18n';
+import { bi, t, type Bi } from '../../../core/i18n';
 import { store } from '../../../core/store';
 import type { QText, StoreEvent } from '../../../core/types';
 import { renderMd } from '../../../core/markdown';
@@ -38,7 +38,7 @@ export function save(key: string, value: unknown): void {
 }
 
 export function scoreDots(score: number): HTMLElement {
-  return h('span.cw-dots', { 'aria-label': `${score} / 3` }, ...[1, 2, 3].map((i) => h('span', { class: i <= score ? 'on' : '' })));
+  return h('span.cw-dots', {}, h('b', { style: 'font-weight:normal;margin-right:6px' }, t(bi(`Оценка ${score} из 3`, `Score ${score} out of 3`))), ...[1, 2, 3].map((i) => h('span', { class: i <= score ? 'on' : '' })));
 }
 
 export function label(b: Bi): string {

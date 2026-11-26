@@ -149,3 +149,13 @@ it('shows success and a next step when governance checks are resolved', () => {
   expect(w.host.textContent).toContain('Copy GOVERNANCE.md');
   expect(w.ctx.complete).toHaveBeenCalled();
 });
+
+it('lets learners explicitly finish the downloaded script self-review', () => {
+  const { host, button, ctx } = setup('template', { file: 'ru-intensifiers-lint' });
+  expect(host.querySelectorAll('a[download]')).toHaveLength(3);
+  expect(host.textContent).toContain('on your computer');
+  expect(ctx.complete).not.toHaveBeenCalled();
+  button('Finish self-review').click();
+  expect(ctx.complete).toHaveBeenCalledOnce();
+  expect(host.querySelector('[role="status"]')?.textContent).toBe('Self-review complete.');
+});
