@@ -40,7 +40,9 @@ it('keeps option length from giving away the answer in business courses', () => 
 
 // Per course and per language, the correct option of a single-answer question may be the unique longest,
 // the unique shortest or the unique median-length option (odd option counts only) in at most
-// MAX_SHARE of the questions. A test-taker who always picks the same length rank should do no better
+// MAX_SHARE of the questions. A course is the first segment of the question id, as in the position test:
+// question ids are not always prefixed with a block id (Kubernetes stages use k8s.*, the networks course net.*),
+// so grouping by id prefix is the only way to see every question on the site. A test-taker who always picks the same length rank should do no better
 // than chance by much. Courses with fewer than MIN_QUESTIONS such questions are too small to judge.
 const MAX_SHARE = 0.45;
 const MIN_QUESTIONS = 8;
@@ -62,8 +64,13 @@ type CourseReport = { course: string; lang: 'ru' | 'en'; rank: Rank; ids: string
 const lengthRankReports = (): CourseReport[] => {
   const qs = allQuestions();
   const out: CourseReport[] = [];
-  for (const block of registry.orderedBlocks(true)) {
-    const bank = qs.filter(q => q.id.startsWith(block.id + '.') && 'options' in q && q.options && q.options.length >= 2 && q.options.filter(o => o.correct).length === 1);
+  const byCourse = new Map<string, QuizItem[]>();
+  for (const q of qs) {
+    if (!('options' in q) || !q.options || q.options.length < 2 || q.options.filter(o => o.correct).length !== 1) continue;
+    const course = q.id.split('.')[0]!;
+    byCourse.set(course, [...(byCourse.get(course) ?? []), q]);
+  }
+  for (const [course, bank] of byCourse) {
     if (bank.length < MIN_QUESTIONS) continue;
     for (const lang of ['ru', 'en'] as const) {
       const counts: Record<Rank, string[]> = { longest: [], shortest: [], median: [] };
@@ -73,7 +80,7 @@ const lengthRankReports = (): CourseReport[] => {
         const rank = rankOfCorrect(len, q.options.findIndex(o => o.correct));
         if (rank) counts[rank].push(`${q.id} (${len.join('/')})`);
       }
-      for (const rank of ['longest', 'shortest', 'median'] as const) out.push({ course: block.id, lang, rank, ids: counts[rank], total: bank.length });
+      for (const rank of ['longest', 'shortest', 'median'] as const) out.push({ course, lang, rank, ids: counts[rank], total: bank.length });
     }
   }
   return out;
