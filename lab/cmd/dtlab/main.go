@@ -24,6 +24,7 @@ import (
 
 	"github.com/damn-academy/devops-trainer/lab/internal/backend"
 	"github.com/damn-academy/devops-trainer/lab/internal/collect"
+	"github.com/damn-academy/devops-trainer/lab/internal/courses"
 	"github.com/damn-academy/devops-trainer/lab/internal/hostinfo"
 	"github.com/damn-academy/devops-trainer/lab/internal/lab"
 	"github.com/damn-academy/devops-trainer/lab/internal/manifest"
@@ -36,6 +37,10 @@ var version = "0.1.0-dev"
 
 const usage = `dtlab — the DevOps Trainer's local lab
 
+  dtlab courses                   list available courses and updates
+  dtlab course install <id>...     install courses and their required packs
+  dtlab course update              update installed courses and packs
+  dtlab course remove <id>         remove a course or pack
   dtlab check                     what this computer can run, and the profile to use
   dtlab up [--profile light|standard|full] [--with learner,kuberoot,kubeadm-nodes]
            [--kuberoot-version 1.2.3|latest] [--kuberoot <url|dir>]
@@ -65,6 +70,14 @@ func main() {
 	}
 	cmd, args := os.Args[1], os.Args[2:]
 	switch cmd {
+	case "courses":
+		if len(args) != 0 {
+			err = fmt.Errorf("usage: dtlab courses")
+		} else {
+			err = courseCmd(ctx, []string{"list"})
+		}
+	case "course":
+		err = courseCmd(ctx, args)
 	case "check":
 		err = check(args)
 	case "up":
@@ -195,6 +208,13 @@ func up(ctx context.Context, l *lab.Lab, args []string) error {
 			return err
 		}
 		*course = l.L.Course()
+	}
+	if *course == "" {
+		var err error
+		*course, err = courses.New(l.L.Root).Active()
+		if err != nil {
+			return err
+		}
 	}
 	return l.Up(ctx, lab.UpOptions{Profile: *prof, With: *with, Backend: *be, Kuberoot: *kr, KuberootVersion: *krv, Course: *course, Timeout: *timeout})
 }
@@ -327,6 +347,15 @@ func serve(ctx context.Context, l *lab.Lab, args []string) error {
 	fs.Var(&allow, "allow-origin", "a hosted copy of the course allowed to call the lab API (repeat)")
 	_ = fs.Parse(args)
 	st, _ := l.State()
+	if *course == "" {
+		active, err := courses.New(l.L.Root).Active()
+		if err != nil {
+			return err
+		}
+		if active != "" {
+			st.CourseDir = active
+		}
+	}
 	if *course != "" {
 		if err := copyCourse(l, *course); err != nil {
 			return err
@@ -356,6 +385,21 @@ func uninstallCmd(ctx context.Context, l *lab.Lab, args []string) error {
 	var probe uninstall.Prober = uninstall.NoObjects{}
 	if l.GOOS == "windows" {
 		probe = backend.HyperVObjects{R: l.R}
+	}
+	exe, _ := os.Executable()
+	packageHint := uninstall.PackageHint(l.GOOS, exe)
+	if packageHint != "" {
+		*keepBin = true
+	}
+	if packageHint == "" {
+		home, _ := os.UserHomeDir()
+		if exe == filepath.Join(home, ".local", "bin", "dtlab") || (l.GOOS == "linux" && exe == "/usr/local/bin/dtlab") {
+			if !l.M.Has(manifest.Binary, exe) {
+				if err := l.M.Add(manifest.Item{Kind: manifest.Binary, Path: exe, Note: "shell installer binary"}); err != nil {
+					return err
+				}
+			}
+		}
 	}
 	plan := uninstall.Plan(l.M, l.L.Root, probe)
 	fmt.Println("dtlab uninstall will remove:")
@@ -392,6 +436,9 @@ func uninstallCmd(ctx context.Context, l *lab.Lab, args []string) error {
 		Log: func(f string, a ...any) { fmt.Fprintf(os.Stderr, f+"\n", a...) },
 	})
 	fmt.Printf("freed %s\n", uninstall.Human(res.Freed))
+	if packageHint != "" {
+		fmt.Println("Data removed. To remove the installed package:", packageHint)
+	}
 	for _, e := range res.Skipped {
 		fmt.Printf("kept (was there before dtlab, or --keep-binary): %s %s\n", e.Item.Kind, e.Item.Path)
 	}
