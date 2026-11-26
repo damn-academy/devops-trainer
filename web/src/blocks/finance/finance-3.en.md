@@ -17,9 +17,9 @@ These are the definitions used in this course. They are a chosen policy, not def
 - **GRR**, gross retention, is the same calculation without expansion. (100 − 5 − 10) / 100 = 85%; it cannot exceed 100%.
 - **Logo churn** is customers lost from the starting cohort divided by starting customers. Five out of 100 means 5%.
 - **CAC** is fully loaded new-customer acquisition spending (salaries, contractors, tools and advertising) divided by new paying customers, with a chosen time lag. Spending 120 to acquire 20 customers gives CAC of 6.
-- **CAC payback** is CAC divided by new-customer monthly revenue multiplied by gross margin. 6,000 / (500 × 0.8) = 15 months.
+- **CAC payback** is CAC / (new-customer monthly revenue × gross margin). 6,000 / (500 × 0.8) = 15 months.
 - **LTV** is monthly customer revenue multiplied by gross margin and divided by monthly churn. 500 × 0.8 / 0.02 = 20,000; this is a model, not an observed customer value.
-- **Gross margin** is revenue minus the full cost of service delivery, divided by revenue. “Revenue minus the AWS bill” overstates it.
+- **Gross margin** is (revenue − full cost of service delivery) / revenue. “Revenue minus the AWS bill” overstates it.
 - **Burn multiple** is net cash burn divided by net new ARR over the same period. Burn of 600 with ARR growth of 300 gives 2.0. Do not calculate it when ARR has not grown.
 - **Rule of 40** is revenue growth in percent plus free-cash-flow or EBITDA margin. Growth of 50% with a margin of −20% gives 30.
 - **Magic number** is quarterly revenue growth multiplied by four and divided by the previous quarter’s S&M spending. (300 − 250) × 4 / 200 = 1.0.
@@ -120,7 +120,7 @@ At seed stage, investors need understandable drivers, 18–24 months of cash vis
 <!-- /quiz -->
 
 <!-- section: task | Task: a model built from hiring -->
-Complete the task in the “InfraSeed model” spreadsheet template on this page. On Hiring, list every employee and vacancy for the next 18 months with fully loaded cost and status. Build revenue from drivers: signups and conversion, or salespeople and quotas. See how minimum cash changes if you delay two hires by a quarter and simultaneously delay the product launch. Write down the verifiable next stage your next round’s cash should buy.
+Complete the task in the “InfraSeed model” spreadsheet template on this page. On Hiring, list every employee and vacancy for the next 18 months with fully loaded cost and status. If a person works on both cost of revenue and development, repeat the name in two rows with full amounts and enter each row’s share in the “Share of cost, %” column, for example 60 and 40; the Checks sheet verifies that the shares for each name add up to 100%. Build revenue from drivers: signups and conversion, or salespeople and quotas. See how minimum cash changes if you delay two hires by a quarter and simultaneously delay the product launch. Write down the verifiable next stage your next round’s cash should buy.
 
 <!-- widget: template {"file":"infraseed-model"} -->
 
