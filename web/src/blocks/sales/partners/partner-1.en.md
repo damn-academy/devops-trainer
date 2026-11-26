@@ -54,19 +54,19 @@ Check yourself before sending the terms to the partner: the registration has a t
 
 <!-- quiz -->
 ? An integrator asks the vendor for a bigger discount than the competitor gives. What should the vendor find out first?
-- Whether the integrator will commit to a minimum annual license purchase volume for three years || A volume commitment does not explain why the integrator prefers the competitor's platform.
+- Whether the integrator will commit to a three-year minimum volume || A volume commitment does not explain why the integrator prefers the competitor's platform.
 + How much the integrator will earn on services around the platform and spend on training || Most of an integrator's money comes from services, and the decision depends on them.
 - What discount the competitor gives other partners in this region || Someone else's discount does not show how much this integrator earns on the deal.
 
 ? What does an approved deal registration protect in programs like GitLab's and Sysdig's?
-- All future customers in the partner's region while its partner agreement with the vendor is in force || Registration is for one opportunity; it does not reserve a region.
-- All sales to this customer, including future flat renewals || GitLab states plainly that flat renewals are not eligible for registration.
 + One opportunity at one customer for a term the vendor may extend || That is what both vendors' terms say: 90 days at GitLab and six months at Sysdig.
+- All future customers in the partner's region while its partner agreement with the vendor is in force || Registration is for one opportunity; it does not reserve a region.
+- All sales to this customer for the whole contract term, including future flat renewals || GitLab states plainly that flat renewals are not eligible for registration.
 
 ? The customer requests three quotes, and a second reseller asks for a lower price than the partner that ran the pilot. What should the vendor do?
 + Keep the higher discount for the partner that sourced the deal, give the rest the base price || This is GitLab's rule for tenders, and it keeps the partner's reason to invest in pilots.
 - Give both partners the same price so the customer can pick the best contractor on the quality of work || Then the partner that invested in the pilot loses to one that did no work, and will not bring another deal.
-- Refuse to quote the second reseller at all || The customer must collect three quotes, and a refusal will break its procurement.
+- Refuse to quote the second reseller and tell the customer the project is already registered to the first partner || The customer must collect three quotes, and a refusal will break its procurement.
 
 ? The customer's head of infrastructure offers to buy directly from the vendor because the integrator is slow. Which answer makes more sense?
 + Decline, tell the partner about the call and propose a three-way meeting || First-line support stays with the integrator, and bypassing a partner drives away the whole channel.
@@ -74,8 +74,8 @@ Check yourself before sending the terms to the partner: the registration has a t
 - Agree and give the integrator part of the margin as compensation for the lost deal || Compensation will not restore trust, and the integrator will stop investing in your deals.
 
 ? In the CICADA8 terms a project is reserved for a partner for two months. Apart from expiry, what can remove the registration?
-- The customer gaining a second division with its own purchasing budget || The terms say nothing about this.
 + A month of partner inactivity or a customer complaint about its actions on the project || Both cases are listed explicitly in the program among the grounds for removing a registration.
+- The customer gaining a second division with its own budget for buying hardware and licences || The terms say nothing about this.
 - The partner refusing to run a pilot at its own expense || Pilots are allowed only for registered projects, but refusing a pilot does not remove the registration.
 
 ? The vendor's platform runs on the customer's own hardware. Why does the argument "buy through the Azure marketplace and burn down your cloud commitment" usually not work here?
