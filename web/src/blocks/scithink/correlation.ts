@@ -47,7 +47,7 @@ export const correlationModel = defineModel<P>({
     'The diagram shows one summer in a resort town. Ice cream sales on the left, drownings on the right, and at the bottom the heat — the third factor that drives both lines. Move the dials and switch on the same-heat comparison to see what remains of the visible link.',
   ),
   intro: bi(
-    'Листайте шаги стрелками под схемой. В «Параметрах» два ползунка: сначала «Сила связи на виду», потом «Доля связи, которую объясняет жара». Под схемой всегда два числа: совместный рост, который видно сейчас, и остаток, который останется при сравнении дней с одинаковой жарой. После первого прохода включите это сравнение в «Поломках» и посмотрите, что стало с показателями. Карточки узлов и линий открываются щелчком.',
+    'Листайте шаги стрелками под схемой. В «Параметрах» два ползунка: сначала «Сила связи на виду», потом «Доля связи, которую объясняет жара». Под схемой всегда два числа: совместный рост, который видно сейчас, и остаток, который останется при сравнении дней с одинаковой жарой. После первого прохода включите это сравнение в разделе «Сломать» и посмотрите, что стало с показателями. Карточки узлов и линий открываются щелчком.',
     'Step through with the arrows under the diagram. Under "Parameters" there are two dials: first the strength of the visible link, then the share of the link explained by heat. Under the diagram there are always two numbers: the joint rise visible now, and the remainder that survives comparing days with equal heat. After the first pass, switch that comparison on under "Breakages" and watch the metrics. Cards on nodes and lines open on click.',
   ),
   legend: [
