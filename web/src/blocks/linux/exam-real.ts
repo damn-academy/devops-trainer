@@ -99,7 +99,7 @@ export const DISK_EXAM: Exam = {
       critical: true,
       kind: 'real',
       real: {
-        prompt: bi('Карточка 1. Освободите на `/srv/shop` не меньше 40 мебибайт. Данные заказов должны остаться в точности такими, как были, а приложение должно продолжать работать.', 'Card 1. Free at least 40 MiB on `/srv/shop`. The orders data must stay exactly as it was, and the application must keep working.'),
+        prompt: bi('Освободите на `/srv/shop` не меньше 40 мебибайт. Данные заказов должны остаться в точности такими, как были, а приложение должно продолжать работать.', 'Free at least 40 MiB on `/srv/shop`. The orders data must stay exactly as it was, and the application must keep working.'),
         concepts: ['linux.filesystem', 'linux.inode', 'linux.mount', 'linux.process'],
         goals: [
           G('space', ['на `/srv/shop` свободно не меньше 40 МиБ', '`/srv/shop` has at least 40 MiB free'], 'app-01', (f) => (mount(f, SHOP)?.free ?? 0) >= 40 * MiB, [
@@ -116,7 +116,7 @@ export const DISK_EXAM: Exam = {
       weight: 15,
       kind: 'real',
       real: {
-        prompt: bi('Карточка 2. Найдите, кто продолжает заполнять раздел, и остановите это так, чтобы после перезагрузки оно не возобновилось.', 'Card 2. Find who keeps filling the partition and stop it so that it does not resume after a reboot.'),
+        prompt: bi('Найдите, кто продолжает заполнять раздел, и остановите это так, чтобы после перезагрузки оно не возобновилось.', 'Find who keeps filling the partition and stop it so that it does not resume after a reboot.'),
         concepts: ['linux.cron'],
         goals: [G('cron', ['задание cron, которое записывает файлы с выгрузкой данных, выключено', 'the job that writes the dumps is off'], 'app-01', cronOff)],
       },
@@ -126,7 +126,7 @@ export const DISK_EXAM: Exam = {
       weight: 20,
       kind: 'real',
       real: {
-        prompt: bi('Карточка 3. У журналов `legacy-agent` в `/srv/shop/log/legacy/*.log` нет ротации. Добавьте правило в `/etc/logrotate.d/legacy`, которое хранит не больше пяти старых журналов, сжимает их и не трогает пустые. Учтите, что агент открывает журнал один раз и не умеет открывать его заново.', 'Card 3. The `legacy-agent` logs in `/srv/shop/log/legacy/*.log` have no rotation. Add a rule to `/etc/logrotate.d/legacy` that keeps at most five old logs, compresses them and leaves empty ones alone. Note that the agent opens its log once and cannot reopen it.'),
+        prompt: bi('У журналов `legacy-agent` в `/srv/shop/log/legacy/*.log` нет ротации. Добавьте правило в `/etc/logrotate.d/legacy`, которое хранит не больше пяти старых журналов, сжимает их и не трогает пустые. Учтите, что агент открывает журнал один раз и не умеет открывать его заново.', 'The `legacy-agent` logs in `/srv/shop/log/legacy/*.log` have no rotation. Add a rule to `/etc/logrotate.d/legacy` that keeps at most five old logs, compresses them and leaves empty ones alone. Note that the agent opens its log once and cannot reopen it.'),
         concepts: ['linux.journal'],
         goals: [
           G('pattern', ['logrotate видит правило для `/srv/shop/log/legacy/*.log`', 'logrotate sees a rule for `/srv/shop/log/legacy/*.log`'], 'app-01', (f) => /rotating pattern: \/srv\/shop\/log\/legacy\/\*\.log/.test(((f.logrotate ?? {}) as Record<string, string>)['/etc/logrotate.d/legacy'] ?? ''), [{ if: (f) => /error/i.test(((f.logrotate ?? {}) as Record<string, string>)['/etc/logrotate.d/legacy'] ?? ''), say: bi('logrotate нашёл в правиле ошибку. Посмотрите вывод `logrotate -d /etc/logrotate.d/legacy`.', 'logrotate found a mistake in the rule. Look at the output of `logrotate -d /etc/logrotate.d/legacy`.') }]),
@@ -158,7 +158,7 @@ export const DISK_EXAM: Exam = {
       beyond: true,
       kind: 'real',
       real: {
-        prompt: bi('Карточка 4. Журнал systemd на этом сервере не должен занимать больше 50 мегабайт. В курсе не показано, как это задать, поэтому найдите способ на странице `man journald.conf`.', 'Card 4. The systemd journal on this server must not take more than 50 megabytes. The course did not show how to set this, so find it on the page `man journald.conf`.'),
+        prompt: bi('Журнал systemd на этом сервере не должен занимать больше 50 мегабайт. В курсе не показано, как это задать, поэтому найдите способ на странице `man journald.conf`.', 'The systemd journal on this server must not take more than 50 megabytes. The course did not show how to set this, so find it on the page `man journald.conf`.'),
         concepts: ['linux.journal'],
         goals: [G('max', ['итоговая настройка journald ограничивает журнал 50 МБ', 'journald’s effective settings limit the journal to 50 MB'], 'app-01', (f) => /^\s*SystemMaxUse\s*=\s*50M\s*$/m.test((f.journald ?? '') as string))],
         solutionTokens: ['SystemMaxUse', 'journald.conf.d'],
@@ -242,7 +242,7 @@ export const ACCESS_EXAM: Exam = {
       critical: true,
       kind: 'real',
       real: {
-        prompt: bi('Карточка 1. Заведите на `server` учётную запись `maria` с оболочкой `/bin/bash` в группе `devs` и настройте ей вход с `laptop` по ключу, чтобы `ssh server` от имени `maria` пускал без вопросов.', 'Card 1. Create the account `maria` on `server` with the shell `/bin/bash` in the group `devs` and set up key login for her from `laptop`, so that `ssh server` as `maria` lets her in without questions.'),
+        prompt: bi('Заведите на `server` учётную запись `maria` с оболочкой `/bin/bash` в группе `devs` и настройте ей вход с `laptop` по ключу, чтобы `ssh server` от имени `maria` пускал без вопросов.', 'Create the account `maria` on `server` with the shell `/bin/bash` in the group `devs` and set up key login for her from `laptop`, so that `ssh server` as `maria` lets her in without questions.'),
         concepts: ['linux.ssh-key', 'linux.user', 'linux.group', 'linux.mode'],
         goals: [
           G('user', ['на `server` есть пользователь `maria` с `/bin/bash` в группе `devs`', '`server` has the user `maria` with `/bin/bash` in the group `devs`'], 'server', "users[name=maria].shell='/bin/bash' && users[name=maria].groupNames has devs"),
@@ -258,7 +258,7 @@ export const ACCESS_EXAM: Exam = {
       weight: 25,
       kind: 'real',
       real: {
-        prompt: bi('Карточка 2. Создайте на `server` каталог `/srv/releases`, в который команда `devs` может писать и из которого может читать, а остальные не могут. Каждый новый файл в нём должен сразу принадлежать группе `devs`, кто бы его ни создал.', 'Card 2. Create `/srv/releases` on `server`, which the `devs` team can write to and read from and others cannot. Every new file in it must belong to the group `devs` at once, whoever creates it.'),
+        prompt: bi('Создайте на `server` каталог `/srv/releases`, в который команда `devs` может писать и из которого может читать, а остальные не могут. Каждый новый файл в нём должен сразу принадлежать группе `devs`, кто бы его ни создал.', 'Create `/srv/releases` on `server`, which the `devs` team can write to and read from and others cannot. Every new file in it must belong to the group `devs` at once, whoever creates it.'),
         concepts: ['linux.group', 'linux.mode'],
         goals: [
           G('group', ['каталог `/srv/releases` принадлежит группе `devs`, и у группы есть права `rwx`', '`/srv/releases` belongs to the group `devs`, and the group has `rwx`'], 'server', "files['/srv/releases'].type=d && files['/srv/releases'].group=devs && files['/srv/releases'].perm.g=rwx"),
@@ -273,7 +273,7 @@ export const ACCESS_EXAM: Exam = {
       critical: true,
       kind: 'real',
       real: {
-        prompt: bi('Карточка 3. Разрешите `maria` перезапускать службу `orders` через sudo без пароля и не разрешайте ей больше ничего от имени root. Пароля у неё нет, потому что она входит по ключу.', 'Card 3. Allow `maria` to restart the `orders` service through sudo without a password, and allow her nothing else as root. She has no password, because she logs in with a key.'),
+        prompt: bi('Разрешите `maria` перезапускать службу `orders` через sudo без пароля и не разрешайте ей больше ничего от имени root. Пароля у неё нет, потому что она входит по ключу.', 'Allow `maria` to restart the `orders` service through sudo without a password, and allow her nothing else as root. She has no password, because she logs in with a key.'),
         concepts: ['linux.sudo', 'linux.root'],
         goals: [
           G('rule', ['`sudo -l` для `maria` показывает только перезапуск `orders`', '`sudo -l` for `maria` shows only restarting `orders`'], 'server', (f) => sudoNarrow(sudoL(f, 'maria')), [
@@ -289,7 +289,7 @@ export const ACCESS_EXAM: Exam = {
       weight: 20,
       kind: 'real',
       real: {
-        prompt: bi('Карточка 4. Запретите на `server` вход по паролю для всех, не потеряв при этом входа по ключу. Сервер не должен предлагать пароль ни в каком виде.', 'Card 4. Switch off password login on `server` for everyone without losing key login. The server must not offer a password in any form.'),
+        prompt: bi('Запретите на `server` вход по паролю для всех, не потеряв при этом входа по ключу. Сервер не должен предлагать пароль ни в каком виде.', 'Switch off password login on `server` for everyone without losing key login. The server must not offer a password in any form.'),
         concepts: ['linux.ssh-key'],
         goals: [
           G('pw', ['итоговые настройки sshd содержат `passwordauthentication no`', 'sshd’s final settings contain `passwordauthentication no`'], 'server', "sshd.passwordauthentication=no", [{ if: "sshd.passwordauthentication=yes", say: bi('`sshd -T` всё ещё показывает yes. Настройки читаются и из файлов `/etc/ssh/sshd_config.d/*.conf`, и выигрывает первое найденное значение.', '`sshd -T` still shows yes. Settings are also read from `/etc/ssh/sshd_config.d/*.conf`, and the first value found wins.') }]),
@@ -305,7 +305,7 @@ export const ACCESS_EXAM: Exam = {
       beyond: true,
       kind: 'real',
       real: {
-        prompt: bi('Карточка 5. По SSH на `server` должны пускать только участников группы `devs`. В курсе такой директивы не было, поэтому найдите её на странице `man sshd_config` и позаботьтесь о том, чтобы не закрыть дверь перед собой.', 'Card 5. SSH on `server` must let in only members of the group `devs`. The course had no such directive, so find it in `man sshd_config`, and take care not to shut the door on yourself.'),
+        prompt: bi('По SSH на `server` должны пускать только участников группы `devs`. В курсе такой директивы не было, поэтому найдите её на странице `man sshd_config` и позаботьтесь о том, чтобы не закрыть дверь перед собой.', 'SSH on `server` must let in only members of the group `devs`. The course had no such directive, so find it in `man sshd_config`, and take care not to shut the door on yourself.'),
         concepts: ['linux.group'],
         goals: [
           G('groups', ['итоговые настройки sshd пускают группу `devs`', 'sshd’s effective settings let the group `devs` in'], 'server', (f) => /(^|\s)devs(\s|$)/.test(sshd(f).allowgroups ?? '')),
