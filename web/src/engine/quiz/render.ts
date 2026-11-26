@@ -357,7 +357,7 @@ export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Moun
     match: bi('Выберите соответствие в каждом списке ниже.', 'Choose a match in every list below.'),
     'fill-command': bi('Впишите команду или пропущенную часть команды в поле ниже.', 'Enter the command or its missing part in the field below.'),
     'predict-output': item.kind === 'predict-output' && item.options ? bi('Выберите ожидаемый вывод команды из вариантов ниже.', 'Select the expected command output below.') : bi('Впишите ожидаемый вывод команды в поле ниже.', 'Enter the expected command output below.'),
-    bugfind: bi('Нажмите на строку кода, в которой находится ошибка.', 'Click the line of code that contains the error.'),
+    bugfind: (item.kind === 'bugfind' && item.action) || bi('Нажмите на строку кода, в которой находится ошибка.', 'Click the line of code that contains the error.'),
     label: bi('Выберите подпись для каждого номера на схеме в списках ниже.', 'Choose a label for each diagram number in the lists below.'),
   };
   const guide = h('p.task-guide', {}, t(actions[item.kind]), ' ', t(showFeedback

@@ -32,6 +32,7 @@ const ALERT_BUG: QuizItem = {
   prompt: bi('Правило алерта на долю ошибок будит дежурного при каждом коротком всплеске, потому что в правиле не хватает одной строки. Нажмите на строку, после которой её нужно добавить.', 'The error-ratio alert rule wakes the on-call engineer on every short spike. Find the line the rule is missing — more exactly, the line after which it has to be added.'),
   code: 'groups:\n  - name: shop\n    rules:\n      - alert: HighErrorRate\n        expr: sum(rate(http_requests_total{code=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05\n        labels:\n          severity: page\n        annotations:\n          summary: More than 5% of requests fail',
   lang: 'yaml',
+  action: bi('Нажмите на строку, после которой нужно добавить недостающую.', 'Click the line after which the missing one goes.'),
   bug: [5],
   why: {
     5: bi('После expr нужна строка `for: 10m`: условие должно выполняться десять минут подряд, прежде чем алерт перейдёт из состояния pending в firing. Без for алерт срабатывает при первом же вычислении.', 'After expr you need `for: 10m`: the condition must hold for ten minutes before the alert moves from pending to firing. Without for it fires on the very first evaluation.'),

@@ -739,6 +739,8 @@ export interface BugfindItem extends QuizBase {
   bug: number[];
   /** Explanation per line number: for the bug and for the distractor lines. */
   why: Record<number, Bi>;
+  /** The instruction under the prompt when the item asks for another line than the buggy one (a missing line: the line after which it goes). */
+  action?: Bi;
 }
 
 /** Put labels on a schematic. Slots are boxes in a small SVG; each slot has one right label. */
