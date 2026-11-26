@@ -115,7 +115,7 @@ export const AICONTENT_SUMMARIES: Record<string, Bi> = {
     "en": "What platforms and the law require for AI texts, copyright and voice, and what research has actually measured."
   },
   "aicontent.tools": {
-    "ru": "Инструменты для текста, исследований, картинок, видео, голоса и монтажа с ценами на конец 2026 года и как считать бюджет.",
-    "en": "Tools for writing, research, images, video, voice and editing, with late-2026 prices and how to budget."
+    "ru": "Инструменты для текста, исследований, картинок, видео, голоса и монтажа с ценами на конец 2026 года и как сравнивать их по стоимости принятого результата.",
+    "en": "Tools for writing, research, images, video, voice and editing, with late-2026 prices and how to compare them by the cost of an accepted result."
   }
 };
