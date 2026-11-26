@@ -87,8 +87,8 @@ export const AICONTENT_SUMMARIES: Record<string, Bi> = {
     "en": "A fact-checker, role-based reviewers, fictional readers, a critic and mechanical checks that find what the author misses."
   },
   "aicontent.visuals": {
-    "ru": "Три способа делать иллюстрации: документальные снимки, графика из кода и генеративные слои, и права на них.",
-    "en": "Three ways to make illustrations: documentary captures, graphics from code and generative layers, and the rights to them."
+    "ru": "Три способа делать иллюстрации: документальные снимки, графика из кода и генеративные картинки, и права на них.",
+    "en": "Three ways to make illustrations: documentary captures, graphics from code and generative images, and the rights to them."
   },
   "aicontent.video": {
     "ru": "Заставки, мультфильм и ролики из кода, генераторы видео, синтез голоса, музыка, подкаст и проверка звука.",
