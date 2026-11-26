@@ -20,8 +20,8 @@ export const DTLAB_REPO = 'https://github.com/damn-academy/devops-trainer';
 export const DTLAB_RELEASE = {
   published: true,
   // Enable each platform only after its native assets are uploaded.
-  installersPublished: { windows: false, macos: false, linux: false },
-  coursesPublished: false,
+  installersPublished: { windows: true, macos: true, linux: true },
+  coursesPublished: true,
   assets: {
     windows: [{ file: 'dtlab-windows-amd64.exe', label: bi('Windows 10 и 11, процессоры Intel и AMD', 'Windows 10 and 11, Intel and AMD processors') }],
     macos: [
