@@ -79,6 +79,8 @@ for attempt in {1..40}; do
     grep -qi '^cross-origin-embedder-policy: require-corp' <<<"$headers" || { echo 'COEP header missing' >&2; exit 1; }
     grep -qi '^cross-origin-opener-policy: same-origin' <<<"$headers" || { echo 'COOP header missing' >&2; exit 1; }
     code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "https://$DT_HOST/admin")
+    # The feedback endpoints can lag the rollout by a few seconds and answer 503 meanwhile.
+    if [[ $code == 502 || $code == 503 ]]; then sleep 5; continue; fi
     [[ $code == 401 ]] || { echo "admin without credentials returned $code, want 401" >&2; exit 1; }
     echo "Deployed $short: $WEB_IMAGE, $FEEDBACK_IMAGE at https://$DT_HOST"
     [[ ${1:-} == --smoke ]] && exec "$repo/deploy/smoke.sh"
