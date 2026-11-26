@@ -1,12 +1,10 @@
 // Parametric funnel simulator for the hidden sales pilot: how touch
 // parameters add up to meetings, POCs and deals over a quarter. The model is
-// deliberately simple and openly says so: it is one way to reason about a
-// pipeline, not a law (the honest note is part of the UI, per the pilot
-// requirement).
+// deliberately simple and openly says so: the note under the table names its
+// assumptions, including the fixed conversion delay.
 
 import { bi, t } from '../../core/i18n';
 import type { Mounted, WidgetReg } from '../../core/types';
-import { HONEST_NOTE } from './content';
 
 interface FunnelParams {
   /** Target accounts in the worked set. */
@@ -31,8 +29,8 @@ const KNOBS: { key: keyof FunnelParams; min: number; max: number; step: number; 
   { key: 'touches', min: 1, max: 8, step: 1, label: ['Касаний на аккаунт в неделю', 'Touches per account per week'], fmt: (v) => String(v) },
   { key: 'respond', min: 0.02, max: 0.5, step: 0.01, label: ['Доля ответов', 'Response rate'], fmt: (v) => `${Math.round(v * 100)}%` },
   { key: 'meeting', min: 0.05, max: 0.8, step: 0.01, label: ['Ответ → встреча', 'Answer → meeting'], fmt: (v) => `${Math.round(v * 100)}%` },
-  { key: 'poc', min: 0.05, max: 0.8, step: 0.01, label: ['Встреча → POC', 'Meeting → POC'], fmt: (v) => `${Math.round(v * 100)}%` },
-  { key: 'close', min: 0.05, max: 0.8, step: 0.01, label: ['POC → сделка', 'POC → deal'], fmt: (v) => `${Math.round(v * 100)}%` },
+  { key: 'poc', min: 0.05, max: 0.8, step: 0.01, label: ['Встреча → платный пилот', 'Meeting → POC'], fmt: (v) => `${Math.round(v * 100)}%` },
+  { key: 'close', min: 0.05, max: 0.8, step: 0.01, label: ['Пилот → сделка', 'POC → deal'], fmt: (v) => `${Math.round(v * 100)}%` },
 ];
 
 export interface FunnelRow { week: number; meetings: number; pocs: number; deals: number }
@@ -51,9 +49,11 @@ export function funnelProject(p: FunnelParams): FunnelResult {
     touches += sent;
     negativeReplies += sent * p.respond * negativeRate;
     const lost = activeAccounts * unsubscribeRate;
+    // An account that answered with a refusal leaves the sequence, like an unsubscribe.
+    const refused = activeAccounts * Math.min(1, p.touches * p.respond * negativeRate);
     unsubscribes += lost;
     meetings += sent * (1 - negativeRate) * p.respond * p.meeting;
-    activeAccounts -= lost;
+    activeAccounts = Math.max(0, activeAccounts - lost - refused);
     pocs += meetings * 0.15 * p.poc; // a running pipeline converts steadily, not instantly
     const deals = pocs * p.close * 0.25;
     rows.push({ week, meetings: Math.round(meetings * 10) / 10, pocs: Math.round(pocs * 10) / 10, deals: Math.round(deals * 100) / 100 });
@@ -99,17 +99,17 @@ export function mountFunnel(el: HTMLElement, _props: unknown): Mounted {
       })),
       h('div', 'sfu-totals',
         total(t(bi('Встреч за квартал', 'Meetings per quarter')), r.totals.meetings),
-        total(t(bi('POC', 'POCs')), r.totals.pocs),
+        total(t(bi('Пилотов', 'POCs')), r.totals.pocs),
         total(t(bi('Сделок', 'Deals')), r.totals.deals),
         total(t(bi('Всего касаний', 'Total touches')), r.totals.touches),
         total(t(bi('Отрицательные ответы', 'Negative replies')), r.totals.negativeReplies),
         total(t(bi('Отписки', 'Unsubscribes')), r.totals.unsubscribes)),
       h('div', 'sfu-bars', ...r.rows.map((row) => { const i = document.createElement('i'); i.style.height = `${Math.max(2, (row.meetings / maxMeetings) * 100)}%`; i.title = `${t(bi('Неделя', 'Week'))} ${row.week}: ${row.meetings}`; return i; })),
       h('table', 'sfu-table',
-        h('thead', '', h('tr', '', h('th', '', t(bi('Неделя', 'Week'))), h('th', '', t(bi('Встреч накоплено', 'Meetings (cum.'))), h('th', '', t(bi('POC накоплено', 'POCs (cum.'))), h('th', '', t(bi('Сделок накоплено', 'Deals (cum.'))))),
+        h('thead', '', h('tr', '', h('th', '', t(bi('Неделя', 'Week'))), h('th', '', t(bi('Встреч накоплено', 'Meetings (cum.'))), h('th', '', t(bi('Пилотов накоплено', 'POCs (cum.'))), h('th', '', t(bi('Сделок накоплено', 'Deals (cum.'))))),
         h('tbody', '', ...r.rows.map((row) => h('tr', '', h('td', '', String(row.week)), h('td', '', String(row.meetings)), h('td', '', String(row.pocs)), h('td', '', String(row.deals)))))),
-      h('p', 'sfu-note', t(bi('Учебная модель на уровне компаний. Если касаний больше трёх в неделю на компанию, доля отрицательных ответов растёт на 4 % × (касаний − 3)², но не выше 80 %, а отписки за неделю — на 2 % × (касаний − 3). Компании, которые отписались, больше не получают касаний, а отрицательный ответ не превращается во встречу. Дробные числа показывают ожидаемые значения, людей дробями не считают. Этот порог не разрешает нарушать предел Dream 100: не больше трёх касаний одного человека за три недели.', 'Illustrative account-level model. Above three touches per account per week, the negative share of replies rises by 4% × (touches − 3)², capped at 80%; weekly unsubscribes rise by 2% × (touches − 3). Unsubscribed accounts receive no later touches; negative replies do not become meetings. Fractional counts are expectations, not people. This threshold is not permission to exceed the Dream 100 limit of three touches per person in three weeks.'))),
-      h('p', 'sfu-note', t(HONEST_NOTE)),
+      h('p', 'sfu-note', t(bi('Учебная модель на уровне компаний. Если касаний больше трёх в неделю на компанию, доля отрицательных ответов растёт на 4 % × (касаний − 3)², но не выше 80 %, а отписки за неделю — на 2 % × (касаний − 3). Компании, которые отписались или ответили отказом, больше не получают касаний, а отрицательный ответ не превращается во встречу. Дробные числа показывают ожидаемые значения, людей дробями не считают. Этот порог не разрешает нарушать предел Dream 100: не больше трёх касаний одного человека за три недели.', 'Illustrative account-level model. Above three touches per account per week, the negative share of replies rises by 4% × (touches − 3)², capped at 80%; weekly unsubscribes rise by 2% × (touches − 3). Accounts that unsubscribed or refused receive no later touches; negative replies do not become meetings. Fractional counts are expectations, not people. This threshold is not permission to exceed the Dream 100 limit of three touches per person in three weeks.'))),
+      h('p', 'sfu-note', t(bi('Почему сделок меньше, чем дало бы умножение долей. Встреча не становится пилотом сразу, а пилот длится дольше недели, и модель изображает эту задержку двумя постоянными числами. Каждую неделю к пилотам прибавляется 15 % от произведения накопленных встреч на долю «Встреча → платный пилот». Сделками на конец недели считается четверть накопленных пилотов, умноженная на долю «Пилот → сделка». Эти два числа — допущения модели, а не данные: в вашей воронке задержку стоит измерить по датам из таблицы действий.', 'Why there are fewer deals than multiplying the rates would give. A meeting does not become a POC at once, and a POC lasts longer than a week; the model represents this delay with two fixed numbers. Each week, POCs grow by 15% of accumulated meetings multiplied by the “Meeting → POC” rate. Deals at the end of a week are a quarter of accumulated POCs multiplied by the “POC → deal” rate. These two numbers are model assumptions, not data: measure the delay in your own funnel from the dates in your activity log.'))),
     );
   };
   const total = (label: string, value: number | string) => { const d = document.createElement('div'); d.className = 'sfu-total'; const b = document.createElement('b'); b.textContent = String(value); d.append(label, b); return d; };

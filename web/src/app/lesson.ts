@@ -2,7 +2,7 @@ import { PRODUCTS } from '../core/products';
 import { mountTaskDocument } from '../engine/trainers/document';
 
 /** Widgets that already hold the practice result: a field of their own, or a terminal that checks the work itself. */
-const FIELD_WIDGETS = new Set(['rubric', 'roleplay', 'deptsim', 'marketing.dns-lab']);
+const FIELD_WIDGETS = new Set(['rubric', 'roleplay', 'deptsim', 'signal-feed', 'marketing.dns-lab']);
 /** XLSX templates are worked on in the file; CSV cards of the metrics course keep their own calculation field. */
 const isSpreadsheet = (props: unknown) => { const file = props && typeof props === 'object' && 'file' in props ? props.file : undefined; return typeof file === 'string' && !file.startsWith('metrics-') && file !== 'ru-intensifiers-lint'; };
 // The lesson page: sections in order (re-ordered for Experienced: the

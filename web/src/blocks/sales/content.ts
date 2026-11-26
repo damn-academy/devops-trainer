@@ -4,10 +4,16 @@ import { bi } from '../../core/i18n';
 import type { Concept, Lesson, QuizItem } from '../../core/types';
 import { SALES_SCHOOL, SALES_SCHOOL_EN } from './school';
 
-/** The honest note every school lesson carries: one way, not a law. */
+/** The course-wide note, said once in the first lesson. */
 export const HONEST_NOTE = bi(
   'Это один из способов работать; законом и единственно верным решением он не служит. Жизнь сложнее любой схемы: многое зависит от контекста — продукта, рынка, людей и момента. Берите то, что применимо к вашей ситуации, и проверяйте на практике.',
   'This is one way of working, not a law and not an optimal solution. Life is more complex than any framework: much depends on context — the product, the market, the people and the moment. Take what applies to your situation and test it in practice.',
+);
+
+/** The concrete limits that every later lesson repeats instead of the general note. */
+const LIMITS_NOTE = bi(
+  'Принципы этого урока работают внутри границ модуля Dream 100: одному человеку — не больше трёх касаний за три недели, отказ и просьба не писать отменяют любую последовательность, а договорённость вернуться в определённую дату выполняется в эту дату.',
+  'The principles of this lesson work within the limits of the Dream 100 module: no more than three touches to one person in three weeks, a refusal or a request not to be contacted cancels any sequence, and an agreement to return on a particular date is kept on that date.',
 );
 
 const MODULE_LESSON: Record<string, { id: string; title: [string, string]; minutes: number; hook: [string, string]; summary?: [string, string] }> = {
@@ -57,8 +63,8 @@ const MODULE_LESSON: Record<string, { id: string; title: [string, string]; minut
     summary: ['Как поводы для разговора, частота и каналы касаний складываются во встречи и сделки, с симулятором воронки.', 'How triggers, frequency and channels of touches add up to meetings and deals, with the funnel simulator.'],
     minutes: 12,
     hook: [
-      'Письмо или звонок по поводу, который действительно произошёл у покупателя, приводит к разговору в разы чаще массовой рассылки. Симулятор воронки ниже показывает, как частота и качество касаний складываются во встречи и сделки за квартал.',
-      'A trigger-based touch converts many times better than a blast. The funnel simulator below shows how touch parameters add up to meetings and deals per quarter.',
+      'Письмо или звонок по поводу, который действительно произошёл у покупателя, обычно приводит к разговору чаще, чем массовая рассылка. Симулятор воронки ниже показывает, как частота и качество касаний складываются во встречи и сделки за квартал.',
+      'A touch tied to something that really happened at the buyer usually leads to a conversation more often than a mass mailing. The funnel simulator below shows how touch parameters add up to meetings and deals per quarter.',
     ],
   },
   F: {
@@ -72,6 +78,15 @@ const MODULE_LESSON: Record<string, { id: string; title: [string, string]; minut
     ],
   },
 };
+
+/** Each principle's task as a full sentence, with a note on how many to take this week. */
+function practiceBody(items: string[], l: 'ru' | 'en', minutes: number): string {
+  const intro = l === 'ru'
+    ? `К каждому принципу урока есть задание на вашем списке компаний. Делать все задания за один день не нужно: выберите на эту неделю одно-два задания к принципам, которые ближе всего к вашим сделкам, а к остальным вернитесь на следующих неделях. Чтение урока занимает около ${minutes} минут, каждое задание — от двадцати минут до часа.`
+    : `Each principle in this lesson comes with a task on your company list. You do not need to do them all in one day: pick one or two tasks this week for the principles closest to your deals and return to the rest in the following weeks. Reading the lesson takes about ${minutes} minutes; each task takes from twenty minutes to an hour.`;
+  const sentence = (x: string) => x.replace(/^\s*(\p{L})/u, (c) => c.toLocaleUpperCase(l));
+  return `${intro}\n\n${items.map(x => `- ${sentence(x)}`).join('\n')}`;
+}
 
 function moduleBody(letter: string, en = false): string {
   const mod = (en ? SALES_SCHOOL_EN : SALES_SCHOOL).find((m) => m.letter === letter)!;
@@ -114,8 +129,8 @@ function lessonFor(letter: string): Lesson {
         title: bi(mod.title, SALES_SCHOOL_EN.find(m => m.letter === letter)!.title),
         body: bi(moduleBody(letter), moduleBody(letter, true)),
       },
-      { id: 'practice', kind: 'text', step: 'practice', title: bi('Задания по темам модуля', 'Module practice'), body: bi(mod.items.map(it => `- ${it.today}`).join('\n'), SALES_SCHOOL_EN.find(m => m.letter === letter)!.items.map(it => `- ${it.today}`).join('\n')) },
-      { id: 'honest', kind: 'callout', tone: 'note', step: 'review', body: HONEST_NOTE },
+      { id: 'practice', kind: 'text', step: 'practice', title: bi('Задания по темам модуля', 'Module practice'), body: bi(practiceBody(mod.items.map(it => it.today), 'ru', spec.minutes), practiceBody(SALES_SCHOOL_EN.find(m => m.letter === letter)!.items.map(it => it.today), 'en', spec.minutes)) },
+      { id: 'honest', kind: 'callout', tone: 'note', step: 'review', body: letter === 'A' ? HONEST_NOTE : LIMITS_NOTE },
     ],
   };
 }
@@ -133,21 +148,21 @@ export const SALES_CONCEPTS: Concept[] = [
   {
     id: 'sales.economic-buyer',
     term: bi('экономический покупатель', 'economic buyer'),
-    short: bi('Тот, кто подписывает бюджет и говорит «да»; обычно не чемпион (CTO / Head of Infra).', 'The one who signs the budget and says yes; usually not the champion (CTO / Head of Infra).'),
+    short: bi('Тот, кто подписывает бюджет и говорит «да»; обычно это не чемпион, а технический директор или руководитель инфраструктуры.', 'The one who signs the budget and says yes; usually not the champion (CTO / Head of Infra).'),
     introducedIn: 'sales.roles',
     scan: false,
   },
   {
     id: 'sales.meddic',
     term: bi('MEDDIC', 'MEDDIC'),
-    short: bi('Карманный чеклист сделки: Metrics, Economic buyer, Decision criteria, Decision process, Identify pain, Champion.', 'A pocket deal checklist: Metrics, Economic buyer, Decision criteria, Decision process, Identify pain, Champion.'),
+    short: bi('Список проверки сделки: измеримый результат (Metrics), экономический покупатель (Economic buyer), критерии решения (Decision criteria), процесс решения (Decision process), боль (Identify pain), внутренний сторонник (Champion).', 'A pocket deal checklist: Metrics, Economic buyer, Decision criteria, Decision process, Identify pain, Champion.'),
     introducedIn: 'sales.fundamentals',
     scan: false,
   },
   {
     id: 'sales.trigger',
     term: bi('триггер «почему сейчас»', 'a "why now" trigger'),
-    short: bi('Событие, которое делает покупку актуальной: renewal, смена CTO, суверенный мандат. Без него откладывают вечно.', 'The event that makes the purchase urgent: a renewal, a CTO change, a sovereignty mandate. Without it deals stall forever.'),
+    short: bi('Событие, которое делает покупку срочной: продление контракта, новый технический директор, требование хранить данные в своей стране. Без такого события покупку откладывают.', 'The event that makes the purchase urgent: a renewal, a CTO change, a sovereignty mandate. Without it deals stall forever.'),
     introducedIn: 'sales.fundamentals',
     scan: false,
   },
@@ -160,9 +175,9 @@ export const SALES_QUIZ: QuizItem[] = [
     concepts: ['sales.champion'],
     prompt: bi('Сделка зависла: контакт в аккаунте отвечает «всё ок, двигаемся», но никакого движения нет три месяца. Чего не хватает по MEDDIC?', 'A deal is stuck: the contact says "all good, moving" but nothing has moved for three months. Which part of MEDDIC is missing?'),
     options: [
-      { id: 'champion', text: bi('Внутреннего сторонника', 'A champion with a personal stake'), correct: true, why: bi('«Всё ок» без личной выгоды контакта = вежливый отказ. Чемпион двигает, когда ему самому нужен результат.', '"All good" without the contact\'s personal stake is a polite no. A champion pushes when they need the result themselves.') },
+      { id: 'champion', text: bi('Внутреннего сторонника', 'A champion with a personal stake'), correct: true, why: bi('«Всё хорошо» без личной заинтересованности контакта обычно означает вежливый отказ. Внутренний сторонник двигает сделку, когда результат нужен ему самому.', '"All good" without the contact\'s personal stake is a polite no. A champion pushes when they need the result themselves.') },
       { id: 'price', text: bi('Скидки, которая сдвинет решение к концу квартала', 'A discount'), why: bi('Цена не двигает сделку без внутреннего продавца.', 'Price does not move a deal without an internal seller.') },
-      { id: 'demo', text: bi('Ещё одной демонстрации для инженеров, которые не были на первой', 'Another demo'), why: bi('Демо решает вопрос «что это», а не «почему они должны это купить сейчас».', 'A demo answers "what is it", not "why should they buy it now".') },
+      { id: 'demo', text: bi('Ещё одной демонстрации для инженеров, которые не были на первой', 'Another demo'), why: bi('Демонстрация отвечает на вопрос «что это», а не «почему это нужно купить сейчас».', 'A demo answers "what is it", not "why should they buy it now".') },
     ],
   },
   {
@@ -182,9 +197,9 @@ export const SALES_QUIZ: QuizItem[] = [
     concepts: ['sales.trigger'],
     prompt: bi('Какое первое касание обычно работает лучше холодного письма с просьбой о звонке?', 'Which first touch usually works better than a cold email asking for a call?'),
     options: [
-      { id: 'value', text: bi('Касание, которое что-то даёт человеку, например расчёт или наблюдение о его задаче', 'A touch with value: an insight, a calculation, an observation'), correct: true, why: bi('Обратимое касание с пользой почти невозможно испортить и не требит доверие.', 'A reversible value-first touch can hardly be spoiled and does not spend trust.') },
-      { id: 'blast', text: bi('Рассылка по базе Apollo в 500 адресов с персональным первым предложением', 'An Apollo blast to 500 addresses'), why: bi('Бласт в exec = спам-папка; Apollo — это карта закупочного центра, не рассыльщик.', 'A blast to execs lands in spam; Apollo is a map of the buying center, not a sender.') },
-      { id: 'cto', text: bi('Короткое письмо генеральному директору напрямую с предложением встречи', 'A pitch straight to the CEO'), why: bi('Холодный питч в CTO обычно мимо; к эконом-покупателю заходят через тёплого чемпиона.', 'A cold pitch to a CTO usually misses; you reach the economic buyer through a warm champion.') },
+      { id: 'value', text: bi('Касание, которое что-то даёт человеку, например расчёт или наблюдение о его задаче', 'A touch with value: an insight, a calculation, an observation'), correct: true, why: bi('Обратимое касание с пользой почти невозможно испортить и не тратит доверие.', 'A reversible value-first touch can hardly be spoiled and does not spend trust.') },
+      { id: 'blast', text: bi('Рассылка по базе Apollo в 500 адресов с персональным первым предложением', 'An Apollo blast to 500 addresses'), why: bi('Массовая рассылка руководителям попадает в спам. Apollo полезен как карта закупочного центра, а не как инструмент рассылки.', 'A blast to execs lands in spam; Apollo is a map of the buying center, not a sender.') },
+      { id: 'cto', text: bi('Короткое письмо генеральному директору напрямую с предложением встречи', 'A pitch straight to the CEO'), why: bi('Холодное письмо руководителю с просьбой о встрече обычно остаётся без ответа: к экономическому покупателю приходят через внутреннего сторонника, который вас уже знает.', 'A cold pitch to a CTO usually misses; you reach the economic buyer through a warm champion.') },
     ],
   },
   {
