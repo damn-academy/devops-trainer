@@ -1,0 +1,2 @@
+# Unified diff context prefixes precede Go indentation tabs.
+*.patch whitespace=-space-before-tab

@@ -1,0 +1,35 @@
+--- /dev/null
++++ b/build/client-go-tls-timeout.py
+@@ -0,0 +1,32 @@
++#!/usr/bin/env python3
++"""Opt-in TLS deadline for standalone clients; apply to a disposable client-go tree.
++Run BEFORE compiling kubectl or kuberoot-node. Never edits the module cache.
++The slim timing overlay already scales this deadline; do not stack overlays.
++"""
++from pathlib import Path
++import sys
++root = Path(sys.argv[1])
++cache = root / 'transport/cache.go'
++helper = root / 'transport/kuberoot_tls_timeout.go'
++old = 'TLSHandshakeTimeout: 10 * time.Second,'
++new = 'TLSHandshakeTimeout: kuberootTLSHandshakeTimeout(),'
++source = cache.read_text()
++if source.count(old) != 1 or helper.exists():
++    raise SystemExit('unsupported/already patched client-go transport')
++helper.write_text('''package transport
++
++import (
++    "os"
++    "time"
++)
++
++// Only the emulator service/probe opts in. Default clients remain unchanged.
++func kuberootTLSHandshakeTimeout() time.Duration {
++    d, err := time.ParseDuration(os.Getenv("KUBEROOT_TLS_HANDSHAKE_TIMEOUT"))
++    if err != nil || d < time.Second || d > 10*time.Minute {
++        return 10 * time.Second
++    }
++    return d
++}
++''')
++cache.write_text(source.replace(old, new, 1))

@@ -1,0 +1,34 @@
+--- a/build/kubernetes-slim/main.go.in
++++ b/build/kubernetes-slim/main.go.in
+@@ -7,6 +7,7 @@
+ 	"crypto/tls"
+ 	"encoding/json"
+ 	"fmt"
++	"io"
+ 	"log"
+ 	"net/http"
+ 	"os"
+@@ -85,12 +86,21 @@
+ 	}
+ 	if _, ok := args["kube-apiserver"]; ok {
+ 		run("kube-apiserver")
+-		client := &http.Client{Timeout: clock.Scale(time.Second), Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
++		readyTimeout := clock.Scale(time.Second)
++		if raw := os.Getenv("KUBEROOT_READYZ_TIMEOUT"); raw != "" {
++			d, err := time.ParseDuration(raw)
++			if err != nil || d < time.Second || d > 10*time.Minute {
++				log.Fatal("invalid KUBEROOT_READYZ_TIMEOUT (1s..10m)")
++			}
++			readyTimeout = d
++		}
++		client := &http.Client{Timeout: readyTimeout, Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+ 		for {
+ 			resp, err := client.Get("https://127.0.0.1:6443/readyz")
+ 			if err == nil {
++				_, drainErr := io.Copy(io.Discard, resp.Body)
+ 				resp.Body.Close()
+-				if resp.StatusCode == http.StatusOK {
++				if drainErr == nil && resp.StatusCode == http.StatusOK {
+ 					break
+ 				}
+ 			}
