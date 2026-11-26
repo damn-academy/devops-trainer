@@ -248,7 +248,7 @@ function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJi
   const bytes = chain ? [...prefix,0x02,0x40,0x03,0x40,...bodyCode,0x0b,0x0b,...code,0x0b]
     : [...prefix,0x03,0x40,...bodyCode,0x0b,0x0b]; return [...uleb(bytes.length), ...bytes];
 }
-export function compileBatch(blocks: Block[], chain = false, shared?: SharedJitLayout): Uint8Array<ArrayBuffer> {
+export function compileBatch(blocks: Block[], chain = false, shared?: SharedJitLayout, metrics?: { bodyBytes: number[] }): Uint8Array<ArrayBuffer> {
   const hasHelper = blocks.some(b => b.words.some((i,k) => k%2===0 && (helper(i) || [0x03,0x23].includes(i&127))));
   return new Uint8Array([
     0, 97, 115, 109, 1, 0, 0, 0,
@@ -256,6 +256,6 @@ export function compileBatch(blocks: Block[], chain = false, shared?: SharedJitL
     ...section(2, [(hasHelper?2:1)+(chain?1:0)+(shared?3:0), ...str('env'), ...str('memory'), 2, 0, 0, ...(hasHelper ? [...str('env'),...str('slow'),0,1] : []), ...(chain ? [...str('env'),...str('next'),0,0] : []), ...sharedImports(shared)]),
     ...section(3, [...uleb(blocks.length), ...blocks.map(() => 0)]),
     ...section(7, [...uleb(blocks.length), ...blocks.flatMap((b, n) => [...str(`b${b.id}`), 0, ...uleb(n+(hasHelper?1:0)+(chain?1:0))])]),
-    ...section(10, [...uleb(blocks.length), ...blocks.flatMap(block => body(block, chain, hasHelper?1:0, shared))]),
+    ...section(10, [...uleb(blocks.length), ...blocks.flatMap(block => { const bytes = body(block, chain, hasHelper?1:0, shared); metrics?.bodyBytes.push(bytes.length); return bytes; })]),
   ]);
 }

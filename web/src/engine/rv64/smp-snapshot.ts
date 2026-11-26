@@ -1,7 +1,9 @@
+import { createSharedCompiler } from './shared-compiler';
 import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown };
 const output = document.querySelector('#console')!;
 const HARTS = 2;
+const cleanup: Worker[] = [];
 type SnapMessage = { type: string; hart?: number; blob?: Uint8Array; deviceBlob?: Uint8Array; bytes?: Uint8Array; error?: string };
 try {
   const [kernel, initrd] = await Promise.all(['/rv64/vmlinuz.efi', '/rv64/alpine.cpio'].map(async u => {
@@ -15,11 +17,13 @@ try {
   const control = new SharedArrayBuffer(HARTS * 64), ctl = new Int32Array(control);
   for (let h = 0; h < HARTS; h++) ctl[h * 16] = 1;
   const snap = new SharedArrayBuffer((2 + HARTS) * 4), sv = new Int32Array(snap);
+  const compiler = createSharedCompiler(HARTS * 256 * 1024 * 1024); cleanup.push(compiler);
   const workers: Worker[] = []; let text = '';
   const snapshots = new Map<number, { blob: Uint8Array; deviceBlob?: Uint8Array }>();
   let shellReady = false, error: string | undefined;
+  compiler.onerror = e => { error = e.message; };
   for (let hart = 0; hart < HARTS; hart++) {
-    const w = new Worker(new URL('./smp-cpu.worker.ts', import.meta.url), { type: 'module' }); workers.push(w);
+    const w = new Worker(new URL('./smp-cpu.worker.ts', import.meta.url), { type: 'module' }); workers.push(w); cleanup.push(w);
     w.onerror = e => { error = e.message; };
     w.onmessage = ({ data }: MessageEvent<SnapMessage>) => {
       if (data.type === 'error') error = data.error;
@@ -32,9 +36,10 @@ try {
       if (data.type === 'resumed' && data.hart !== undefined) resumed.add(data.hart);
       if (data.type === 'snapshot' && data.hart !== undefined && data.blob) snapshots.set(data.hart, { blob: data.blob, deviceBlob: data.deviceBlob });
     };
-    w.postMessage({ hart, harts: HARTS, bytes, memory, module, mail, control, generations, granules, epoch, snap,
+    const compilerPort = compiler.connect(hart);
+    w.postMessage({ compilerPort, hart, harts: HARTS, bytes, memory, module, mail, control, generations, granules, epoch, snap,
       kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
-      cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init rv64.epoch=' + Math.floor(Date.now() / 1000) });
+      cmdline: 'earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init rv64.epoch=' + Math.floor(Date.now() / 1000) }, [compilerPort]);
   }
   const started = performance.now();
   while (!shellReady && !error && performance.now() - started < 480000) await new Promise(r => setTimeout(r, 250));
@@ -68,5 +73,6 @@ try {
   const result = { type: 'smp-snapshot', pass: restored && !error, error, imagePages: image.size, imageBytes: [...image.values()].reduce((n, p) => n + p.length, 0),
     snapWaitMs: performance.now() - snapBegin, restored, consoleTail: text.slice(-4000) };
   host.rv64Result = result;
-  Atomics.store(ctl, 15, 1); workers.forEach(w => w.terminate());
+  Atomics.store(ctl, 15, 1);
 } catch (e) { host.rv64Result = { type: 'smp-snapshot', pass: false, error: String(e), console: output.textContent }; }
+finally { cleanup.forEach(w => w.terminate()); }

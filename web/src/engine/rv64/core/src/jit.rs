@@ -6,7 +6,7 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = globalThis, js_name = rv64Compile)]
-    fn compile(id: u32, pc: u64, words: &[u32], raw: &[u32]);
+    fn compile(id: u32, pc: u64, words: &[u32], raw: &[u32], pa: u64, generation: u64);
 }
 #[derive(Default)]
 pub struct Jit {
@@ -119,7 +119,7 @@ impl Cpu {
             self.jit.last_used.resize(e.id as usize + 1, 0);
             e.bytes = words.chunks_exact(2).map(|w| w[1] as usize).sum();
             self.jit.code.insert((pa,self.pc,page), (e.id,e.bytes));
-            compile(e.id, self.pc, &words, &raw);
+            compile(e.id, self.pc, &words, &raw, pa, page);
         }
         if e.id == u32::MAX { return 0; }
         if self.memory.translate_size(self.pc, e.bytes, Access::Fetch, self.mode, self.csr[0x180], self.csr[0x300]).is_err() { return 0; }

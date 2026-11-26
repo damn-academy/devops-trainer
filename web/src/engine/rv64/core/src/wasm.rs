@@ -204,6 +204,7 @@ impl Engine {
             if entry.as_ref().is_some_and(|e| ids.contains(&e.id)) { *entry = None; }
         }
     }
+    pub fn jit_share_abi(&self) -> u32 { 12 }
     pub fn jit_install(&mut self, id: u32, slot: u32, count: u32) { self.cpu.jit.ready.insert(id, (slot, count)); }
     pub fn jit_table(&self) -> JsValue { wasm_bindgen::function_table() }
     pub fn jit_threshold(&mut self, threshold: u32) { self.cpu.jit.threshold = threshold; self.cpu.jit.at_entry = true; }

@@ -5,6 +5,7 @@ import { JitRuntime } from './jit';
 import { SharedHartMemory, HartMailboxes, type Amo, type FenceTicket } from './smp';
 interface Init {
   hostBudget?: number;
+  compilerPort?: MessagePort;
   hart: number; harts: number; bytes: number; memory: WebAssembly.Memory; module: WebAssembly.Module;
   generations: WebAssembly.Memory; granules: WebAssembly.Memory; epoch: number;
   mail: SharedArrayBuffer; control: SharedArrayBuffer; kernel?: Uint8Array; initrd?: Uint8Array;
@@ -29,12 +30,13 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     const core = new mod.Engine(32);
     if (typeof core.smp_sfence !== 'function') throw Error('Stale RV64 WASM: rebuild with scripts/rv64-dev.sh wasm (smp_sfence missing)');
     if (core.smp_jit_abi?.() !== 9) throw Error('Stale RV64 WASM: rebuild R9 (24-field JIT frame required)');
+    if (d.compilerPort && core.jit_share_abi?.() !== 12) throw Error('Stale RV64 WASM: rebuild R12 shared JIT ABI');
     core.smp_configure(d.hart, d.bytes);
     let hostBudget = d.hostBudget;
     const newJitRuntime = () => {
       const runtime = new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow,
       { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids) },
-      { ram: d.memory, generations: d.generations, granules: d.granules, bytes: d.bytes });
+      { ram: d.memory, generations: d.generations, granules: d.granules, bytes: d.bytes }, d.compilerPort);
       if (hostBudget !== undefined) runtime.setHostBudget(hostBudget);
       return runtime;
     };

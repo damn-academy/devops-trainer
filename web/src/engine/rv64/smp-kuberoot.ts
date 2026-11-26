@@ -1,3 +1,5 @@
+import { createSharedCompiler } from './shared-compiler';
+import type { SharedCodeCache } from './shared-code';
 import { sha256 } from './snapshot';
 import { BoundedHistory, ConsoleTail, jitCeilingBytes, hartBudget, pressureCeiling, HOST_BUDGET, MiB } from './host-memory';
 import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
@@ -31,6 +33,9 @@ try {
     const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
     const workers: Worker[] = [], start = performance.now();
+    const compiler = createSharedCompiler(harts * Math.min(configuredJitCeiling, hartBudget(memory.buffer.byteLength + generations.buffer.byteLength + granules.buffer.byteLength, Array(harts).fill(128 * MiB))));
+    let sharedJit: { ms: number; stats: ReturnType<SharedCodeCache['stats']> } | undefined;
+    compiler.onmessage = ({ data }) => { sharedJit = { ms: performance.now() - start, stats: data.stats }; };
     const history = new BoundedHistory<unknown>(32 * MiB), tail = new ConsoleTail();
     const markers = new Map<string, number>();
     const latest = new Map<number, { wasmMemoryBytes: number; compiler: unknown }>();
@@ -40,13 +45,13 @@ try {
     let jitCeiling = configuredJitCeiling;
     let text = '', error: string | undefined;
     let profileStartedMs: number | null = guestProfile && !startAfter ? 0 : null;
-    const capture = () => ({ harts, memoryMb, configuredJitCeiling, markers: Object.fromEntries(markers), metrics: history.entries, metricsDropped: history.dropped, metricsBytes: history.bytes, console: text, consoleDropped: tail.dropped, elapsedMs: performance.now() - start, profileStartedMs, profileStartAfter: startAfter, guestEpochOffsetMs: epoch - performance.timeOrigin - start, httpDisk });
+    const capture = () => ({ sharedJit, harts, memoryMb, configuredJitCeiling, markers: Object.fromEntries(markers), metrics: history.entries, metricsDropped: history.dropped, metricsBytes: history.bytes, console: text, consoleDropped: tail.dropped, elapsedMs: performance.now() - start, profileStartedMs, profileStartAfter: startAfter, guestEpochOffsetMs: epoch - performance.timeOrigin - start, httpDisk });
     host.rv64PartialResult = () => ({ type: 'smp-kuberoot', pass: false, samples: [...samples, capture()] });
     const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
     services.network.addPort('smp-kuberoot', { mode: 'access' }, frame => workers[0]?.postMessage({ frame }));
     const reportMemory = async () => {
       if (memoryBusy || !active) return;
-      memoryBusy = true;
+      memoryBusy = true; compiler.postMessage({ report: true });
       const shared = { ram: memory.buffer.byteLength, generations: generations.buffer.byteLength, granules: granules.buffer.byteLength };
       const perHart = Array.from({ length: harts }, (_, hart) => ({ hart, ...latest.get(hart) }));
       const privateBytes = perHart.map(h => h.wasmMemoryBytes ?? 128 * MiB);
@@ -54,6 +59,7 @@ try {
       const apply = (measured = 0) => {
         jitCeiling = pressureCeiling(jitCeiling, measured);
         const budget = hartBudget(shared.ram + shared.generations + shared.granules, privateBytes);
+        compiler.postMessage({ budget: harts * Math.min(jitCeiling, budget) });
         workers.forEach(w => w.postMessage({ hostBudget: Math.min(jitCeiling, budget) }));
       };
       apply();
@@ -70,7 +76,7 @@ try {
       finally { clearTimeout(deadline); memoryBusy = false; }
       if (!active) return;
       if (uaBytes !== null) apply(uaBytes);
-      const record = { type: 'host-memory', configuredJitCeiling, jitCeiling, ms: performance.now() - start, budgetBytes: HOST_BUDGET, uaBytes, uaStatus, shared, perHart, consoleLength: text.length, consoleDropped: tail.dropped, metricsBytes: history.bytes, metricsDropped: history.dropped };
+      const record = { type: 'host-memory', sharedJit, configuredJitCeiling, jitCeiling, ms: performance.now() - start, budgetBytes: HOST_BUDGET, uaBytes, uaStatus, shared, perHart, consoleLength: text.length, consoleDropped: tail.dropped, metricsBytes: history.bytes, metricsDropped: history.dropped };
       host.rv64HostMemory = record;
       history.push(record);
     };
@@ -78,6 +84,7 @@ try {
     try {
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => reject(Error(`kuberoot ${harts}-hart timeout after ${seconds}s`)), seconds * 1000);
+        compiler.onerror = e => { clearTimeout(timeout); reject(Error(e.message)); };
         for (let hart = 0; hart < harts; hart++) {
           const w = new Worker(new URL('./smp-cpu.worker.ts', import.meta.url), { type: 'module' }); workers.push(w);
           w.onerror = e => { clearTimeout(timeout); reject(Error(e.message)); };
@@ -98,13 +105,14 @@ try {
               if (scan.includes('\nRV64_PROBE_DONE\n')) { clearTimeout(timeout); resolve(); }
             }
           };
-          w.postMessage({ hostBudget: Math.min(jitCeiling, hartBudget(memory.buffer.byteLength + generations.buffer.byteLength + granules.buffer.byteLength, Array(harts).fill(128 * MiB))), hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk, guestProfile, guestProfileDeferred: !!startAfter, guestProfileTaskCommOffset: guestProfile ? 1704 : 0,
+          const compilerPort = compiler.connect(hart);
+          w.postMessage({ compilerPort, hostBudget: Math.min(jitCeiling, hartBudget(memory.buffer.byteLength + generations.buffer.byteLength + granules.buffer.byteLength, Array(harts).fill(128 * MiB))), hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk, guestProfile, guestProfileDeferred: !!startAfter, guestProfileTaskCommOffset: guestProfile ? 1704 : 0,
             kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
-            cmdline: 'earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000) });
+            cmdline: 'earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000) }, [compilerPort]);
         }
       });
     } catch (e) { error = String(e); }
-    finally { active = false; clearInterval(memoryTimer); Atomics.store(ctl, 15, 1); workers.forEach(w => w.terminate()); services.network.removePort('smp-kuberoot'); services.dispose(); }
+    finally { active = false; clearInterval(memoryTimer); Atomics.store(ctl, 15, 1); workers.forEach(w => w.terminate()); compiler.terminate(); services.network.removePort('smp-kuberoot'); services.dispose(); }
     const marker = (name: string) => markers.get(name) ?? null;
     const duration = (a: string, b: string) => { const begin = marker(a), end = marker(b); return begin === null || end === null ? null : (end - begin) / 1000; };
     samples.push({ ...capture(), error, coldReadySeconds: marker('RV64_NODE_READY') === null ? null : marker('RV64_NODE_READY')! / 1000,

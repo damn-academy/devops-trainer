@@ -293,3 +293,54 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('samples nonzero comm and valid user
   expect(Buffer.from(memory.buffer).equals(Buffer.from(before))).toBe(true);
   expect(generations).toEqual(versions);
 });
+
+it.skipIf(process.env.RV64_SMP_JIT !== '1')('runs A compiled code on B and rejects it on both after rewrite and remote fence.i', async () => {
+  const { SharedCodeCache } = await import('../src/engine/rv64/shared-code');
+  const { sharedTable } = await import('../src/engine/rv64/smp');
+  const mod = await import(/* @vite-ignore */ new URL('../public/rv64/rv64_core.js', import.meta.url).href);
+  const wasm = await mod.default({ module_or_path: readFileSync(process.env.RV64_SMP_JIT_WASM ?? new URL('../public/rv64/rv64_core_bg.wasm', import.meta.url)) });
+  const bytes=32*1024*1024, pages=bytes/65536+1;
+  const memory=sharedTable(pages*65536), generations=sharedTable(bytes/4096*4), granules=sharedTable(Math.ceil(memory.buffer.byteLength/128)*4);
+  const gens=new Int32Array(generations.buffer);
+  const ram=new SharedHartMemory(memory,atomicModule(pages),gens,new Int32Array(granules.buffer));
+  const layout={bytes,ramPages:pages,generationPages:generations.buffer.byteLength/65536,granulePages:granules.buffer.byteLength/65536};
+  const queues:any[][]=[[],[]];let active=0;
+  Object.assign(globalThis,{
+    rv64SharedAccess:(op:number,off:number,size:1|2|4|8,value:bigint)=>{
+      if(op===0)return BigInt.asUintN(size*8,ram.load(off+64,size));
+      if(op===1){ram.store(off+64,size,value);return 0n;}throw Error('unexpected shared op');
+    },
+    rv64SharedGeneration:(page:number)=>Atomics.load(gens,page)>>>0,
+    rv64Compile:(id:number,pc:bigint,words:Uint32Array,raw:Uint32Array,pa:bigint,generation:bigint)=>queues[active]!.push({id,pc,words:[...words],raw:[...raw],pa,generation}),
+  });
+  ram.store(64,4,0x00100293n);ram.store(68,4,0xffdff06fn);
+  const cores=[0,1].map(hart=>{const core=new mod.Engine(32);expect(core.jit_share_abi?.()).toBe(12);core.smp_configure(hart,bytes);core.smp_start(0x80000000n,0n);core.jit_threshold(1);return core;});
+  const table=cores[0].jit_table(),slots:number[]=[];
+  const cache=new SharedCodeCache(async()=>{throw Error('unexpected eviction');});cache.budget=1024*1024;
+  const run=async(hart:number)=>{
+    active=hart;const core=cores[hart],target=core.retired()+100;
+    for(let tries=0;core.retired()<target&&tries<200;tries++){
+      core.smp_run(Math.min(16,target-core.retired()),0,0n);
+      if(queues[hart]!.length){
+        const reply=await cache.request(hart,queues[hart]!.splice(0),layout,false);
+        for(const group of reply.groups){
+          const instance=new WebAssembly.Instance(structuredClone(group.module),{env:{memory:wasm.memory,ram:memory,generations,granules,slow:wasm.jit_slow}});
+          for(const b of group.blocks){const slot=table.grow(1);slots.push(slot);table.set(slot,instance.exports[`b${b.exportId}`]);core.jit_install(b.id,slot,b.count);}
+        }
+      }
+    }
+    expect(core.retired()).toBe(target);expect(core.jit_retired()).toBeGreaterThan(0);
+  };
+  try{
+    await run(0);const compiled=cache.compiled;await run(1);
+    expect(cache.compiled).toBe(compiled);expect(cache.hits).toBeGreaterThan(0);
+    for(const core of cores)expect(core.register(5)).toBe(1n);
+    ram.store(64,4,0x00200293n);
+    const bus=new HartMailboxes(2),tickets=bus.remoteFence(3n,0n,'instruction');
+    for(const hart of [0,1])bus.service(hart,()=>cores[hart].smp_fence(),()=>{});
+    expect(tickets.every(t=>bus.completed(t))).toBe(true);
+    await run(0);await run(1);
+    expect(cache.compiled).toBeGreaterThan(compiled);
+    for(const core of cores){expect(core.register(5)).toBe(2n);expect(JSON.parse(core.metrics()).jit_cache_clears).toBe(0);}
+  }finally{slots.forEach(slot=>table.set(slot,null));cores.forEach(core=>core.free());}
+});

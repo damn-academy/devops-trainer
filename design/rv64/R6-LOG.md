@@ -607,3 +607,84 @@ synthetic R10 markers, half-open window boundaries, hart filtering, dropped
 history metadata, crypto caller selection and missing-unwind coverage. Both
 CLIs completed on the actual capture. Operator gates above were not rerun for
 this Python/documentation-only change.
+
+## R11 rebuilt baseline (87b6453), R12 code-sharing investigation
+
+Operator reports every R11 gate passed after rebuild. The three 700 s kuberoot
+captures start profiling at RV64_CONFIG_CREATED, with the unchanged R6 medium:
+
+| Capture | Harts / per-hart ceiling | containerd | Final retired / hart | Evicted / hart | Installed / hart |
+| --- | --- | --- | --- | --- | --- |
+| R11-observer-256-a | 2 / 256 MiB | 85 s | 13.8e9 / 14.2e9 | 900,892 / 963,915 | 13,241 / 12,449 |
+| R11-budget-384-a | 2 / 384 MiB | 94 s | 14.8e9 / 15.5e9 | 652,274 / 675,506 | 18,496 / 17,670 |
+| R11-4h-384-a | 4 / 384 MiB | 145 s | approximately 6.0e9 each, 24e9 total | approximately 650k each | approximately 8k each |
+
+R9 without a budget reached approximately 24e9/hart in 14.5 min, roughly
+27 M instructions/s/hart versus approximately 21 M now, then crashed the
+renderer. It is throughput context, not a safe configuration or controlled A/B.
+After READYZ_END, both R11 budgets attribute kernel 32–38%, other 28–35%, Go
+runtime approximately 17%, bigmod + P-256 5–6%, GC approximately 5%. These are
+instruction-profile shares, not independent additive wall-time categories.
+Crypto is not the leading bottleneck in this evidence; no TLS change is justified.
+
+### What R11 actually measures
+
+R11 records encoded bytes, module count, installed functions and an accounting
+estimate: `8 * encoded bytes + 65536 * modules`. It has no V8 native-allocation,
+instance or export-wrapper measurements. Consequently an exact allocation-size
+histogram of individual R11 blocks cannot be recovered. The table below is the
+distribution of **per-snapshot averages**, pooled across harts; zero-installed
+samples are excluded, each retained hart snapshot has equal weight. All three
+captures report metricsDropped=0. Values are bytes, not KiB.
+
+| Capture | Nonzero snapshots | Encoded/block p10 / p50 / p90 | Charged/block p10 / p50 / p90 | Blocks/module p10 / p50 / p90 | Module allowance median share |
+| --- | --- | --- | --- | --- | --- |
+| 256, 2 harts | 1375 | 1658 / 1708 / 1780 | 16633 / 17296 / 18279 | 14.79 / 18.08 / 21.41 | 20.8% |
+| 384, 2 harts | 1364 | 1643 / 1687 / 1754 | 17548 / 18188 / 19321 | 11.65 / 14.13 / 15.74 | 25.7% |
+| 384, 4 harts | 2748 | 1662 / 1720 / 1798 | 17898 / 18659 / 19572 | 11.81 / 13.43 / 15.30 | 26.2% |
+
+Encoded/block min–max: 1607–1911 / 1582–2052 / 1593–2180 respectively.
+Charged/block min–max: 16130–19358 / 16915–20858 / 16848–23048.
+The median native/metadata allowance alone is 13,667 / 13,498 / 13,759 bytes
+(8x encoded); it is **not measured native code**. After READYZ_END, median
+encoded/charged bytes are 1700/17357, 1677/18187 and 1705/18617. The fixed module
+allowance matters but does not dominate total accounting. A 256-block maximum
+has not produced 256-block modules: sparse flushes compile immediately in R11.
+
+Reproduce the full per-hart/window/min/p10/p50/p90/max breakdown:
+
+```bash
+python3 scripts/rv64-jit-cost.py \
+  web/public/rv64/results/R11-observer-256-a.json \
+  web/public/rv64/results/R11-budget-384-a.json \
+  web/public/rv64/results/R11-4h-384-a.json
+```
+
+### Local V8 allocation experiment, not a Chrome calibration
+
+`scripts/rv64-jit-memory.mjs` separates retained module compilation, instantiation
+(including export wrappers), and execution, using process/heap deltas between
+explicit diagnostic GCs. Nine fresh Node v26.9.0 / V8 14.6.202.34-node.32 processes
+ran 4096 synthetic 16-instruction ALU blocks, three repetitions per batch size.
+Raw results: [R12-memory-local.json](R12-memory-local.json). These blocks encode
+to only 188–231 bytes, much smaller than the real R11 mix; allocator noise,
+tiering, platform and engine differences preclude directly substituting these
+numbers for browser costs.
+
+| Blocks/module | Compile RSS delta/module (range) | Instance heap delta/module | Retained RSS delta/block (range) |
+| --- | --- | --- | --- |
+| 1 | 21,192–21,336 B | 1,091 B | 23,092–23,300 B |
+| 16 | 30,144–43,392 B | 6,579–6,603 B | 2,488–3,376 B |
+| 256 | 45,056–101,376 B | 95,150–95,187 B | 992–1,220 B |
+
+The instance slope is approximately 369 B/exported function plus approximately
+720 B/instance in this probe; wrappers are already included, not separately
+identifiable here. `getHeapCodeStatistics()` does not track this Wasm growth
+(the observed code/metadata deltas are negative), so it is not a native-code
+meter. Compilation RSS is a composite process delta, not an exact module size.
+R12 retains the conservative 8x + 64 KiB allowance **once per shared module**,
+and additionally charges 4 KiB + 512 B/export per hart instance, including all
+exports even when a hart installs only a subset. Do not reduce 8x on this probe.
+The demonstrated overcharge to remove is charging shared compiled modules per
+hart. Browser memory and several-times-more retained hot code remain R12 gates,
+not results claimed from local tests.

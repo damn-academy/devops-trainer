@@ -1,3 +1,4 @@
+import { createSharedCompiler } from './shared-compiler';
 import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown };
 const output = document.querySelector('#console')!;
@@ -14,10 +15,12 @@ try {
     const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
     const control = new SharedArrayBuffer(harts * 64), ctl = new Int32Array(control);
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
+    const compiler = createSharedCompiler(harts * 256 * 1024 * 1024);
     const workers: Worker[] = [], start = performance.now(); let text = '', sent = false;
     try {
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => reject(Error(`Linux ${harts}-hart timeout`)), 900000);
+        compiler.onerror = e => { clearTimeout(timeout); reject(Error(e.message)); };
         for (let hart = 0; hart < harts; hart++) {
           const w = new Worker(new URL('./smp-cpu.worker.ts', import.meta.url), { type: 'module' }); workers.push(w);
           w.onerror = e => { clearTimeout(timeout); reject(Error(e.message)); };
@@ -38,10 +41,11 @@ try {
               }
             }
           };
-          w.postMessage({ hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd });
+          const compilerPort = compiler.connect(hart);
+          w.postMessage({ compilerPort, hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd }, [compilerPort]);
         }
       });
-    } finally { Atomics.store(ctl, 15, 1); workers.forEach(w => w.terminate()); }
+    } finally { Atomics.store(ctl, 15, 1); workers.forEach(w => w.terminate()); compiler.terminate(); }
   }
   host.rv64Result = { type: 'smp-linux', pass: true, samples };
 } catch (e) { host.rv64Result = { type: 'smp-linux', pass: false, samples, error: String(e), console: output.textContent }; }
