@@ -12,6 +12,21 @@ The lead AI acts as editor-in-chief and architect at once. In our projects, Clau
 
 On the learning platform, this rule grew out of a mistake. On November 19, language editing for several course blocks was assigned to a worker, and the result had to be rolled back: bureaucratic language appeared, question wording changed, and the Russian and English versions diverged. After that, only the lead AI wrote Russian text for learners, following a single style guide. Workers were later allowed to write prose, but only with mandatory linting and editing; for a course, this means a simple rule: one worker owns the voice, while the others supply drafts for it to rewrite.
 
+<!-- section: theory | A first run for people who do not write code -->
+Before examining how our editorial team works, try it yourself. There are two ways to begin.
+
+The first is a browser chat: Claude, ChatGPT or another AI that accepts file attachments. You only need an account, and a free or the cheapest plan is enough to start. You attach the source and brief, the AI replies with text, and you save the answer to a file. The limitation is that the AI cannot see your folders, run checks itself or assemble a hundred files.
+
+The second is a terminal agent: a program that works in a folder on your computer, reading files, writing new ones and running commands you have authorised. Claude Code, Codex and similar tools work this way; they require installation, account sign-in and usually a paid subscription.
+
+A minimal repeatable example for a content manager using either approach:
+
+1. Create a `first-task` folder with two files: `source.txt`, a transcript of a five-minute talk or any article you have rights to; if you have no suitable text, use the sample backup-talk transcript in the lesson on turning a recording into an article, and `brief.md`, a brief following the next lesson: “Turn source.txt into a 2,000-character company blog post, preserve every number and quotation with its source, mark uncertain passages [check], and write the result to post.md.”
+2. In chat, attach both files and paste the brief. In the terminal, open the folder and give the agent the same task.
+3. Get the `post.md` file and check it yourself: does every number appear in the source, have any unsupported claims appeared, and does the text sound like you?
+
+The human writes the brief, chooses the source and accepts the result; the AI drafts and flags uncertainty. If you find even one invented number at step three, that is a normal outcome for a first run, and the next lesson explains how a brief prevents these errors.
+
 <!-- section: theory | Workers write code and gather research -->
 The lead AI assigned code, English translations, builds, tests and research involving web searches to two workers, Codex and Kimi. Each received its brief in a file and worked in a separate repository copy so parallel tasks would not interfere. A typical command looked like this:
 
@@ -22,21 +37,6 @@ codex exec --skip-git-repo-check -s workspace-write -c tools.web_search=true -C 
 The first part allows the worker to write files in the specified folder, the second enables web search, and the task is read from `brief.md`. Coding tasks used a mode in which the worker approves its own actions; it is incompatible with the folder restriction flag, something we discovered through an error. Kimi quickly hit its limit and ended with `Prompt turn ended with reason: failed` without explaining why, so the rule was simple: if Kimi stopped responding, its task went to Codex without discussion.
 
 Research was also divided by source: one worker searched open archives and English-language material, another searched in Russian. During preparation of this course, five investigations ran simultaneously this way: finances, metrics, a tool review, dossiers on our projects and material for reworking three other courses. Meanwhile, the lead AI wrote text and waited for notifications that a worker had finished.
-
-<!-- section: theory | A first run for people who do not write code -->
-The command above is a working tool for our editorial team; you do not need to start with it. There are two ways to begin.
-
-The first is a browser chat: Claude, ChatGPT or another AI that accepts file attachments. You only need an account, and a free or the cheapest plan is enough to start. You attach the source and brief, the AI replies with text, and you save the answer to a file. The limitation is that the AI cannot see your folders, run checks itself or assemble a hundred files.
-
-The second is a terminal agent: a program that works in a folder on your computer, reading files, writing new ones and running commands you have authorised. Claude Code, Codex and similar tools work this way; they require installation, account sign-in and usually a paid subscription.
-
-A minimal repeatable example for a content manager using either approach:
-
-1. Create a `first-task` folder with two files: `source.txt`, a transcript of a five-minute talk or any article you have rights to, and `brief.md`, a brief following the next lesson: “Turn source.txt into a 2,000-character company blog post, preserve every number and quotation with its source, mark uncertain passages [check], and write the result to post.md.”
-2. In chat, attach both files and paste the brief. In the terminal, open the folder and give the agent the same task.
-3. Get the `post.md` file and check it yourself: does every number appear in the source, have any unsupported claims appeared, and does the text sound like you?
-
-The human writes the brief, chooses the source and accepts the result; the AI drafts and flags uncertainty. If you find even one invented number at step three, that is a normal outcome for a first run, and the next lesson explains how a brief prevents these errors.
 
 <!-- section: theory | Fictional readers check the finished material -->
 The fourth role belongs to readers who do not exist. For each course, we invented six people with different experience, habits and irritations, and a worker went through the built site as each one, recording where they would abandon the course. The lesson on checks explores this technique in detail; here, what matters is that it covers a weakness in the whole arrangement. AI is worst at checking text it wrote itself, while the editor gets tired and misses things. Other eyes, even fictional ones, find what both miss: an incorrect formula in the product course, contradictory advice in the sales course, quiz questions where the correct answer is always the longest.
@@ -101,6 +101,46 @@ A handover file transfers work to another AI. It contains the goal, current bran
 In our projects, a worker's task usually fitted into a paragraph like this: “Read the listed files. Do this in this folder. Save these results. Do not change neighbouring working copies. The work is done when these checks pass. Do not write Russian strings; list where they are needed separately for the editor.”
 
 An editorial rule in memory looks like this: the rule itself; what was wrong with the previous result; an example; how to check compliance; date and context. An article's media inventory contains: file, origin, associated section, caption, format, privacy check and readiness. These forms are dull, but they let you return to the work a week later without starting over.
+
+Here is a completed set for a small project: a blog post based on a recording of a backup talk.
+
+Brief:
+
+```markdown
+## Goal
+A 2,000-character company blog post for database administrators.
+## Input files
+source.txt — a timestamped talk transcript.
+## Allowed writing locations
+Only the post/ folder. Do not change source.txt.
+## Output files
+post/post.md — the post; post/facts.md — numbers with timestamps.
+## Rules
+Every number comes from the transcript, with a timestamp. Preserve “almost”, “approximately” and “about”. Mark uncertainty [check].
+## Done when
+Every number in post.md appears in facts.md, and facts.md has been checked against the transcript.
+```
+
+Session log after two steps:
+
+```markdown
+## Current state
+post.md is drafted; facts.md contains 4 numbers.
+## Next step
+Check facts.md against the transcript, then send it to the editor.
+## Log
+10:05 — post.md draft, 2,140 characters.
+10:20 — facts.md: 4 numbers; “40 minutes” had lost “approximately”; fixed.
+```
+
+Memory entry after the editor's feedback:
+
+```markdown
+Rule: approximate numbers remain approximate.
+Before: “recovery takes 40 minutes” instead of “approximately 40 minutes”.
+Check: searching for “almost”, “approximately” and “about” in the source and post produces matching numbers.
+Date: November 25, 2026, backup post.
+```
 
 <!-- quiz -->
 ? An AI took three steps in a row: built an image, deployed it and found a configuration error. When should it update the session log?
