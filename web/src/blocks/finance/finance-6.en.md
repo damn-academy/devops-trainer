@@ -26,12 +26,12 @@ A vendor demo is insufficient. Ask the vendor to process ten real contracts and 
 
 <!-- quiz -->
 ? An eight-person company is choosing finance tools. What is most important to establish first?
-+ One general ledger and a person responsible for monthly close || Without a close owner, every service provides incomplete data.
 - A financial-modeling service for investors || Dashboards without closed books show unverified numbers.
++ One general ledger and a person responsible for monthly close || Without a close owner, every service provides incomplete data.
 - Two ledgers with different accountants to reconcile against each other monthly || Two authoritative ledgers create discrepancies, not control.
 ? How should you test accounting software before purchasing?
-+ Process ten real complex contracts and check exports and change logs || Simple demo data does not show how the service handles your contracts.
 - Watch the vendor demo and choose the highest automatic-categorization rate || The categorization percentage is an unverified vendor claim.
++ Process ten real complex contracts and check exports and change logs || Simple demo data does not show how the service handles your contracts.
 - Pick the founders’ community’s most popular service and migrate if it does not fit || Historical migration is expensive; test before buying.
 <!-- /quiz -->
 
@@ -82,9 +82,9 @@ Promises such as “up to 98% automatic categorization” or “round-the-clock 
 - Revenue of $1,050 || This duplicates revenue already recognized at invoicing.
 - Revenue of 1,080 and a fee of 30 to show the customer’s full payment || Revenue and fees were already recorded at payment; payout does not repeat them.
 ? A Stripe webhook arrived twice. How do you avoid duplicating the entry?
+- Disable webhook redelivery in the Stripe settings so that every event arrives exactly once || Retries prevent lost events during failures.
 + Check a key combining system, object ID, event type and version; skip processed events || Redelivery is normal webhook behavior and the workflow must account for it.
-- Disable webhook redelivery in Stripe so every event arrives once || Retries prevent lost events during failures.
-- Delete duplicates manually at month-end when reconciling the clearing account || Manual cleanup is unreliable and late.
+- Delete duplicates by hand at month-end, when the accountant reconciles the Stripe clearing account || Manual cleanup is unreliable and late.
 <!-- /quiz -->
 
 <!-- section: task | Task: one automated flow with validation -->

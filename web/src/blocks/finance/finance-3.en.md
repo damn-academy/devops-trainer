@@ -54,13 +54,13 @@ An escalating-payment contract, for example 60 in year one, 120 in year two and 
 
 <!-- quiz -->
 ? A customer cohort started the year at 100, expanded by 20, contracted by 5 and churned by 10. What are NRR and GRR?
-+ NRR 105% and GRR 85%: expansion is included only in the first metric || NRR includes expansion; GRR includes only losses.
 - NRR 105%, GRR 105%, because both metrics use the same customer cohort || GRR excludes expansion and cannot exceed 100%.
++ NRR 105% and GRR 85%: expansion is included only in the first metric || NRR includes expansion; GRR includes only losses.
 - NRR 85%, GRR 105% || It is the reverse: only NRR includes expansion.
 ? Monthly customer churn is 2%. What is annual churn?
-+ About 21.5%: each month, 98% of the previous base remains || 1 − 0.98¹² ≈ 21.5%: each month’s churn applies to a smaller base.
 - 24%: twelve times two percent || The base shrinks each month, so this calculation is wrong.
-- About 2%, because churn is an average monthly measure and cannot be annualized || Annual churn can be calculated and is much larger than monthly churn.
++ About 21.5%: each month, 98% of the previous base remains || 1 − 0.98¹² ≈ 21.5%: each month’s churn applies to a smaller base.
+- About 2%, because churn is only measured monthly || Annual churn can be calculated and is much larger than monthly churn.
 ? Ten customers have had no churn over three months. What LTV does the churn formula produce?
 + The formula is inapplicable: ten customers over three months is too small and young a sample || Zero churn does not make LTV infinite; track cohort profit by month.
 - Infinite, which is a strong argument for investors in the next funding round || Infinite LTV indicates that the formula has broken down.
@@ -110,12 +110,12 @@ At seed stage, investors need understandable drivers, 18–24 months of cash vis
 
 <!-- quiz -->
 ? A founder delays two engineering hires by three months to save money. What else must change in the model?
-+ Revenue: the product may launch later, making savings without this adjustment fictitious || Hiring scenarios are connected to revenue drivers.
++ Revenue: the product may launch later, so savings without it are fictitious || Hiring scenarios are connected to revenue drivers.
 - Nothing, because hiring only affects company expenses and revenue is independent || Without people, product development and sales move more slowly.
-- Only payroll taxes || Taxes move with salary automatically; revenue is the key issue.
+- Only payroll taxes, because they grow together with every new person the company hires || Taxes move with salary automatically; revenue is the key issue.
 ? Unit price is cut by 20% and unit cost is 40% of the original price. How much must volume rise to preserve gross profit?
-+ By 50%: profit per unit falls from 60 to 40 || Unit profit falls from six cents to four, requiring one and a half times the volume.
 - By 20%, the same percentage as the price cut, to offset the discount || The discount consumes unit profit, which is much smaller than revenue.
++ By 50%: profit per unit falls from 60 to 40 || Unit profit falls from six cents to four, requiring one and a half times the volume.
 - By 25%, because the company must recover one fifth of its lost revenue || Calculate using unit profit.
 <!-- /quiz -->
 

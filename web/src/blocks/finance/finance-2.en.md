@@ -40,12 +40,12 @@ The Bench lesson is that access to your books must not depend on one supplier. E
 
 <!-- quiz -->
 ? A vendor emails new bank details. What should you do before the first payment to them?
+- Send a small payment to the new details and, if the vendor does not complain, transfer the rest || The test payment goes to the fraudster just like the main payment.
+- Reply to the email and ask for the details to be confirmed, then pay once the vendor confirms them || If the vendor’s email is compromised, the fraudster will provide confirmation.
 + Call the vendor on a previously known number and have a second employee confirm the change || Bank-detail substitution is a common theft scheme; verification through a known channel stops it.
-- Reply asking for confirmation, then pay if the vendor confirms || If the vendor’s email is compromised, the fraudster will provide confirmation.
-- Send a small test payment and transfer the rest if the vendor does not complain || The test payment goes to the fraudster just like the main payment.
 ? The cloud provider’s invoice has not arrived by the end of March. What should happen to March’s expense?
 + Accrue it using console data and replace the accrual with the invoice in April || March expense belongs in March; otherwise the month’s margin is wrong.
-- Nothing: record the expense in April when the invoice arrives and is paid from the bank || That makes March look better and April worse than they actually were.
+- Nothing: the expense appears in April with the invoice || That makes March look better and April worse than they actually were.
 - Record both the March expense and the April invoice || This doubles the expense; reverse the accrual when the invoice arrives.
 <!-- /quiz -->
 
@@ -101,16 +101,16 @@ If the company pays contractors in euros, FX affects both cash and profit. A €
 
 <!-- quiz -->
 ? There is $1.7 million in the bank, net burn is $5,000 monthly, and two annual prepayments arrived this year. How should runway be stated?
-+ By the month when forecast cash first falls below the minimum buffer || Dividing cash by average burn hides prepayments, seasonality and future hiring.
 - 340 months, because that is cash divided by the company’s current net burn || This relies on one-off prepayments and ignores future spending.
++ By the month when forecast cash first falls below the minimum buffer || Dividing cash by average burn hides prepayments, seasonality and future hiring.
 - Infinite, because the company barely uses cash || Prepayments require service delivery, and hiring and growth change burn.
 ? Can the base cash forecast include a round with a signed term sheet?
+- Yes, but include only half the amount to allow for the round closing late || Half the cash will not arrive: the round either closes or does not.
+- Yes, because the term sheet with the investor has already been signed by both sides || Deals fail after term sheets too; the forecast must show the risk.
 + No; until cash is received, the round remains a separate upside scenario || A term sheet does not guarantee closing, while spending decisions must be made beforehand.
-- Yes, because the term sheet is already signed || Deals fail after term sheets too; the forecast must show the risk.
-- Yes, but include only half the amount to allow for a delayed closing || Half the cash will not arrive: the round either closes or does not.
 ? A company holds $3 million across two accounts at one bank. How much is FDIC-insured?
 + Up to $250,000 for the company at that bank, regardless of account count || The limit applies by depositor, bank and ownership category.
-- Up to $500,000, with $250,000 per account || Multiple accounts at one bank do not multiply the limit.
+- Up to $500,000, because the $250,000 insurance applies separately to each account || Multiple accounts at one bank do not multiply the limit.
 - All $3 million, because authorities guarantee every startup deposit after SVB || Protecting all SVB deposits was a one-off government decision.
 <!-- /quiz -->
 
