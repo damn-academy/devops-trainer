@@ -242,7 +242,7 @@ export const runModel = defineModel<P>({
     },
     {
       id: 'no-disk',
-      label: bi('Файл программы удалили с диска, а иконка оставили', 'The program file was deleted from the disk, and the icon was kept'),
+      label: bi('Файл программы удалили с диска, а иконку оставили', 'The program file was deleted from the disk, and the icon was kept'),
       remove: ['disk', 'e-load'],
       boundary: 'storage',
       predict: {
