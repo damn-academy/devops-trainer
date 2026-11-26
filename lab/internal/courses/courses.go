@@ -235,7 +235,14 @@ type progress struct {
 func (p *progress) Write(b []byte) (int, error) {
 	p.n += int64(len(b))
 	if p.out != nil && (p.n-p.last >= 1<<20 || p.n == p.total) {
-		fmt.Fprintf(p.out, "\r%d / %d bytes", p.n, p.total)
+		pct := int64(100)
+		if p.total > 0 {
+			pct = p.n * 100 / p.total
+		}
+		fmt.Fprintf(p.out, "\r%.1f / %.1f MB (%d%%)", float64(p.n)/1e6, float64(p.total)/1e6, pct)
+		if p.n == p.total {
+			fmt.Fprintln(p.out)
+		}
 		p.last = p.n
 	}
 	return len(b), nil

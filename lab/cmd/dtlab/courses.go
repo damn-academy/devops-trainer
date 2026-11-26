@@ -44,13 +44,19 @@ func courseCmd(ctx context.Context, args []string) error {
 		}
 		return nil
 	case "update":
+		if len(m) == 0 {
+			fmt.Println("No installed courses. Run: dtlab course install academy")
+			return nil
+		}
 		var ids []string
-		for id := range m {
-			ids = append(ids, id)
+		for _, p := range c.Packages {
+			if old, ok := m[p.ID]; ok && old.Version != p.Version {
+				ids = append(ids, p.ID)
+			}
 		}
 		sort.Strings(ids)
 		if len(ids) == 0 {
-			fmt.Println("No installed courses. Run: dtlab course install academy")
+			fmt.Println("All installed courses are up to date.")
 			return nil
 		}
 		return s.Install(ctx, c, ids)
