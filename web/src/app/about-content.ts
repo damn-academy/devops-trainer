@@ -11,7 +11,7 @@ import { bi, type Bi } from '../core/i18n';
 export const REPO = 'https://github.com/damn-academy/devops-trainer';
 export const KUBEROOT_REPO = 'https://github.com/tym83/kuberoot';
 
-export type AboutPageId = 'what' | 'use' | 'how' | 'deploy' | 'contribute';
+export type AboutPageId = 'what' | 'use' | 'how' | 'deploy' | 'contribute' | 'projects';
 
 export interface AboutSection {
   id: string;
@@ -710,6 +710,45 @@ const CONTRIBUTE: AboutPageDef = {
   ],
 };
 
-export const ABOUT_PAGES: AboutPageDef[] = [WHAT, USE, HOW, DEPLOY, CONTRIBUTE];
+
+// ── Наши проекты ──
+
+const PROJECTS: AboutPageDef = {
+  id: 'projects',
+  nav: bi('Наши проекты', 'Our projects'),
+  title: bi('Другие наши проекты', 'Our other projects'),
+  lede: bi(
+    'damn.academy делают люди, у которых есть и другие проекты: серьёзные, несерьёзные и чаще всего что-то посередине. Если вам интересно, как ещё можно рассказывать о технике, музыке и истории, загляните к соседям.',
+    'damn.academy is made by people who also make other things: serious ones, silly ones, and mostly something in between. If you wonder how else one can tell stories about technology, music and history, visit the neighbours.',
+  ),
+  sections: [
+    sec(
+      "sankofa",
+      bi("Sankofa", "Sankofa"),
+      "Дистрибутив Kubernetes, который помнит, и музей семи веков чёрной культуры, который едет внутри него: музыка, кино, фотография и большие мультимедийные истории. [sankofa.black](https://sankofa.black)",
+      "A Kubernetes distribution that remembers, and a museum of seven centuries of Black culture that ships inside it: music, film, photography and long multimedia stories. [sankofa.black](https://sankofa.black)",
+    ),
+    sec(
+      "dormer",
+      bi("Dormer", "Dormer"),
+      "Большие мультимедийные истории о музыке, живописи и запахах: Sonic Youth и серый скаковой конь, Франсуаза Арди и Боб Дилан, «Девочка на шаре» Пикассо, двадцать один шаг от Terre d'Hermès до парфюмерного терроризма. [dormer.sankofa.black](https://dormer.sankofa.black)",
+      "Long multimedia stories about music, painting and smell: Sonic Youth and a grey racehorse, Françoise Hardy and Bob Dylan, Picasso's Young Acrobat on a Ball, twenty-one steps from Terre d'Hermès to perfume terrorism. [dormer.sankofa.black](https://dormer.sankofa.black)",
+    ),
+    sec(
+      "sncf",
+      bi("Sheet-Native Computing Foundation", "Sheet-Native Computing Foundation"),
+      "Независимый дом Sheet-Native Computing: Kubernetes, Prometheus, реестр контейнеров и Doom, которые работают внутри электронных таблиц. С сертификацией. [sncfoundation.github.io](https://sncfoundation.github.io)",
+      "The vendor-neutral home for Sheet-Native Computing: Kubernetes, Prometheus, a container registry and Doom, all running inside spreadsheets. With certification. [sncfoundation.github.io](https://sncfoundation.github.io)",
+    ),
+    sec(
+      "paleo",
+      bi("Paleocomputing", "Paleocomputing"),
+      "Экспериментальная археология вычислительных систем: компьютеры, которых больше нет, запущенные по-настоящему. Оберон на настоящем Verilog Вирта, самораскрутка компилятора, измерения и лабораторные в браузере. [tym83.github.io/paleocomputing](https://tym83.github.io/paleocomputing/)",
+      "Experimental archaeology of computing: machines that no longer exist, run for real. Oberon on Wirth's own Verilog, a self-hosting compiler, measurements and labs in the browser. [tym83.github.io/paleocomputing](https://tym83.github.io/paleocomputing/)",
+    ),
+  ],
+};
+
+export const ABOUT_PAGES: AboutPageDef[] = [WHAT, USE, HOW, DEPLOY, CONTRIBUTE, PROJECTS];
 
 export const ABOUT_TITLE = bi('Справка', 'Help');

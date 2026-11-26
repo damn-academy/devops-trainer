@@ -147,6 +147,8 @@ export function startApp(root: HTMLElement): void {
         h('a', { href: href({ name: 'about', page: 'deploy' }) }, t(bi('Развернуть у себя', 'Run it yourself'))),
         ' · ',
         h('a', { href: href({ name: 'about', page: 'contribute' }) }, t(bi('Как поучаствовать', 'Contributing'))),
+        ' · ',
+        h('a', { href: href({ name: 'about', page: 'projects' }) }, t(bi('Наши проекты', 'Our projects'))),
       ),
     );
     const exportBtn = h('button.btn.ghost', { type: 'button' }, icon('download'), t(UI.export));
