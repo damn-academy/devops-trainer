@@ -25,4 +25,12 @@ Spoken words including headings (whitespace): 2637.
 
 Slides use only these source headings and source terms, with original HTML/CSS layout and system sans-serif rasterized on macOS. No third-party pictures or embedded font files.
 
-Audio rights are NOT cleared by the repository license. macOS Tahoe §2F restricts System Voices to personal non-commercial use and excludes public sharing: https://www.apple.com/legal/sla/docs/macOSTahoe.pdf . Milena narration is pending a separately licensed alternative or evidence of additional permission.
+Narration was generated with Homebrew espeak-ng 1.52.0 using:
+  espeak-ng -v ru -s 160 -f INPUT.txt -w OUTPUT.wav
+The eSpeak NG engine is licensed under GPL-3.0. The engine is not bundled.
+Generated speech is not covered by the engine licence; the source text and
+original kit assets remain under the repository Apache-2.0 licence below.
+GPLv3 section 2 applies to program output only when it constitutes a covered work:
+https://github.com/espeak-ng/espeak-ng/blob/1.52.0/COPYING
+No macOS System Voices are used in these current assets. Per the lead's decision,
+System Voices are excluded because of macOS licence section 2F.

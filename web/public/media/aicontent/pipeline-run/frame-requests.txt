@@ -1,0 +1,44 @@
+> IMAGE:
+> ID: slide-01
+> TIMESTAMP: 2.000
+> ALT: Интернет как сеть из множества сетей
+
+> IMAGE:
+> ID: slide-02
+> TIMESTAMP: 146.437
+> ALT: Вопрос получают все, а отвечает один
+
+> IMAGE:
+> ID: slide-03
+> TIMESTAMP: 274.477
+> ALT: Маршрутизатор и таблица маршрутов
+
+> IMAGE:
+> ID: slide-04
+> TIMESTAMP: 405.206
+> ALT: Иерархия имён и два вида серверов
+
+> IMAGE:
+> ID: slide-05
+> TIMESTAMP: 577.528
+> ALT: Рукопожатие, отказ и тишина
+
+> IMAGE:
+> ID: slide-06
+> TIMESTAMP: 726.559
+> ALT: Подмена адреса и таблица соединений
+
+> IMAGE:
+> ID: slide-07
+> TIMESTAMP: 857.211
+> ALT: Запрос и ответ
+
+> IMAGE:
+> ID: slide-08
+> TIMESTAMP: 1007.510
+> ALT: Рукопожатие TLS 1.3 и то, что видно снаружи
+
+> IMAGE:
+> ID: slide-09
+> TIMESTAMP: 1143.395
+> ALT: Что происходит, когда вы вводите адрес сайта
