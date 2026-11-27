@@ -79,8 +79,10 @@ type Options struct {
 	Verbosity   int
 	Controllers bool
 	Scheduler   bool
-	// APIServerArgs are appended to the kube-apiserver flags.
-	APIServerArgs []string
+	// APIServerArgs and ControllerManagerArgs are appended to the flags of
+	// kube-apiserver and kube-controller-manager.
+	APIServerArgs         []string
+	ControllerManagerArgs []string
 
 	kubeconfig string
 }
@@ -287,6 +289,9 @@ func buildAPIServer(ctx context.Context, o Options) (http.Handler, func() error,
 		"--authorization-mode=Node,RBAC",
 		// Nodes join with bootstrap tokens (see join.go).
 		"--enable-bootstrap-token-auth=true",
+		// Node names do not resolve here; dial kubelets by address, which
+		// the page bridges to the emulated network.
+		"--kubelet-preferred-address-types=InternalIP",
 		// The kubelet client certificate (pki: apiserver-kubelet-client.*) is
 		// not passed by default: with it, kube.wasm dies early in about one
 		// start in four with "fatal error: found pointer to free object" (see
@@ -363,6 +368,7 @@ func startControllerManager(ctx context.Context, o Options) error {
 		"--service-cluster-ip-range=" + serviceCIDR,
 		fmt.Sprintf("--v=%d", o.Verbosity),
 	}
+	args = append(args, o.ControllerManagerArgs...)
 	if err := parseFlags("kube-controller-manager", nfs, args); err != nil {
 		return err
 	}

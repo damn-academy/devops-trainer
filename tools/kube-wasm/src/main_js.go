@@ -22,6 +22,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"runtime"
 	"syscall/js"
 )
 
@@ -35,10 +36,13 @@ func init() {
 
 // The JavaScript API, installed as globalThis.kubeWasm:
 //
-//	start(opts?: {v?: number, controllers?: boolean, scheduler?: boolean, apiserverArgs?: string[]}): Promise<void>
+//	start(opts?: {v?: number, controllers?: boolean, scheduler?: boolean,
+//	              apiserverArgs?: string[], controllerManagerArgs?: string[]}): Promise<void>
+//	memStats(): {heapAlloc, heapSys, sys, numGC}   // Go runtime, bytes
 //	ready(): Promise<{[phase: string]: number}>   // phase timings in ms
 //	kubectl(args: string[], stdin?: string): Promise<{stdout, stderr, code}>
 //	connect(addr: string, onData: (b: Uint8Array) => void, onClose: (err?: string) => void): {write, end, close}
+//	listen(addr: string, onConn: (c: {start(onData, onClose), write, end, close}) => void): string | null   // error
 //	joinMembership(nodeName: string, nodeIP: string): Promise<string>   // kuberoot Membership JSON
 //
 // The file system the Go side sees (PKI files, kubectl caches) is provided
@@ -60,11 +64,8 @@ func main() {
 			if v := args[0].Get("scheduler"); v.Type() == js.TypeBoolean {
 				o.Scheduler = v.Bool()
 			}
-			if v := args[0].Get("apiserverArgs"); v.Type() == js.TypeObject {
-				for i := 0; i < v.Length(); i++ {
-					o.APIServerArgs = append(o.APIServerArgs, v.Index(i).String())
-				}
-			}
+			o.APIServerArgs = jsStrings(args[0].Get("apiserverArgs"))
+			o.ControllerManagerArgs = jsStrings(args[0].Get("controllerManagerArgs"))
 		}
 		return promise(func() (any, error) { return nil, cluster.Start(ctx, o) })
 	}))
@@ -76,6 +77,12 @@ func main() {
 			}
 			return cluster.TimingsMillis(), nil
 		})
+	}))
+
+	api.Set("memStats", js.FuncOf(func(js.Value, []js.Value) any {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+		return map[string]any{"heapAlloc": float64(m.HeapAlloc), "heapSys": float64(m.HeapSys), "sys": float64(m.Sys), "numGC": int(m.NumGC)}
 	}))
 
 	api.Set("timings", js.FuncOf(func(js.Value, []js.Value) any {
@@ -103,6 +110,13 @@ func main() {
 		return newBridge(args[0].String(), args[1], args[2])
 	}))
 
+	api.Set("listen", js.FuncOf(func(_ js.Value, args []js.Value) any {
+		if err := listenBridge(args[0].String(), args[1]); err != nil {
+			return err.Error()
+		}
+		return nil
+	}))
+
 	api.Set("joinMembership", js.FuncOf(func(_ js.Value, args []js.Value) any {
 		name, ip := args[0].String(), args[1].String()
 		return promise(func() (any, error) {
@@ -118,6 +132,18 @@ func main() {
 		cb.Invoke()
 	}
 	select {}
+}
+
+// jsStrings converts a JavaScript array of strings (or undefined) to Go.
+func jsStrings(v js.Value) []string {
+	if v.Type() != js.TypeObject {
+		return nil
+	}
+	out := make([]string, v.Length())
+	for i := range out {
+		out[i] = v.Index(i).String()
+	}
+	return out
 }
 
 // promise runs fn on a new goroutine (JS callbacks must not block) and

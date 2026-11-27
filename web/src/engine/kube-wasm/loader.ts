@@ -17,6 +17,8 @@ export interface StartOptions {
   scheduler?: boolean;
   /** Extra kube-apiserver flags, e.g. ['--watch-cache=false']. */
   apiserverArgs?: string[];
+  /** Extra kube-controller-manager flags. */
+  controllerManagerArgs?: string[];
 }
 
 /** The API kube.wasm installs as globalThis.kubeWasm. */
@@ -25,9 +27,13 @@ export interface KubeWasm {
   /** Resolves when kube-apiserver answers /readyz; returns phase timings in ms. */
   ready(): Promise<Record<string, number>>;
   timings(): Record<string, number>;
+  /** Go runtime memory statistics in bytes. */
+  memStats(): { heapAlloc: number; heapSys: number; sys: number; numGC: number };
   kubectl(args: string[], stdin?: string): Promise<KubectlResult>;
   /** Opens a TCP stream to a listener inside kube.wasm, e.g. '127.0.0.1:6443'. */
   connect(addr: string, onData: (b: Uint8Array) => void, onClose: (err?: string) => void): BridgeConn;
+  /** Listens inside kube.wasm; onConn gets each connection, to be started once the far side is open. Returns an error or null. */
+  listen(addr: string, onConn: (c: BridgeConn & { start(onData: (b: Uint8Array) => void, onClose: (err?: string) => void): void }) => void): string | null;
   /** Creates a bootstrap token and returns a kuberoot worker Membership (JSON). */
   joinMembership(nodeName: string, nodeIP: string): Promise<string>;
 }

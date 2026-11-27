@@ -31,7 +31,11 @@ import (
 // the kubelet and kube-apiserver.
 //
 // JS API: connect(addr, onData(Uint8Array), onClose(error?)) returns
-// {write(Uint8Array), end(), close()}.
+// {write(Uint8Array), end(), close()}. listen(addr, onConn) accepts
+// connections made inside the process (for example the apiserver dialing a
+// kubelet at 10.0.0.10:10250) and calls onConn with the same object plus
+// start(onData, onClose), which the page calls once it has connected the
+// other side.
 type bridge struct {
 	out     chan []byte
 	once    sync.Once
@@ -44,7 +48,48 @@ type bridge struct {
 
 func newBridge(addr string, onData, onClose js.Value) js.Value {
 	b := &bridge{out: make(chan []byte, 1024), onData: onData, onClose: onClose, closed: make(chan struct{})}
-	go b.run(addr)
+	go func() {
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			b.finish(err.Error())
+			return
+		}
+		b.run(conn)
+	}()
+	return b.object()
+}
+
+// listenBridge serves addr inside the process and hands every accepted
+// connection to onConn.
+func listenBridge(addr string, onConn js.Value) error {
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
+	go func() {
+		for {
+			conn, err := lis.Accept()
+			if err != nil {
+				return
+			}
+			b := &bridge{out: make(chan []byte, 1024), closed: make(chan struct{}), conn: conn}
+			obj := b.object()
+			started := false
+			obj.Set("start", js.FuncOf(func(_ js.Value, args []js.Value) any {
+				if !started {
+					started = true
+					b.onData, b.onClose = args[0], args[1]
+					go b.run(conn)
+				}
+				return nil
+			}))
+			onConn.Invoke(obj)
+		}
+	}()
+	return nil
+}
+
+func (b *bridge) object() js.Value {
 	obj := js.Global().Get("Object").New()
 	obj.Set("write", js.FuncOf(func(_ js.Value, args []js.Value) any {
 		buf := make([]byte, args[0].Length())
@@ -77,20 +122,17 @@ func (b *bridge) finish(reason string) {
 			b.conn.Close()
 		}
 		b.mu.Unlock()
-		if reason == "" {
+		switch {
+		case b.onClose.IsUndefined():
+		case reason == "":
 			b.onClose.Invoke()
-		} else {
+		default:
 			b.onClose.Invoke(reason)
 		}
 	})
 }
 
-func (b *bridge) run(addr string) {
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		b.finish(err.Error())
-		return
-	}
+func (b *bridge) run(conn net.Conn) {
 	b.mu.Lock()
 	b.conn = conn
 	b.mu.Unlock()
