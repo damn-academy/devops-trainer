@@ -376,6 +376,77 @@ the kubelet took 20 s in two runs and ~10 minutes in another, and
 importing the offline images competes with the kubelet for the two
 emulated harts.
 
+### Round 4: memory, checkpoints, the crash
+
+**Memory** (renderer footprint, headless Chromium; boot from cold unless noted):
+
+| Run | Settings | Footprint | Go linear memory | Node |
+|---|---|---|---|---|
+| run9 (round 3) | defaults, guest 1 GiB | 3.7 GB at Ready, 4.2–4.5 GB later | 1.5 GiB (HeapAlloc 1.25 GB) | Ready 985 s |
+| m1 | guest 768 MiB, `GOMEMLIMIT=600MiB`, `GOGC=50`, `--watch-cache=false` | 3.0–3.3 GB | 0.71 GiB (Sys 608 MB, HeapAlloc 492 MB) | registered 269 s, not Ready by 755 s; at 12.5 min the page stopped answering (GC at the limit, the single thread starved) |
+| cap1 | defaults, checkpoint taken | 3.7–3.8 GB before, 5.2 GB while saving RAM | 1.3 GiB | Ready 929 s, pod 1074 s |
+| res3 | restore of cap1 | 2.35–2.6 GB first minutes, 3.25 GB at 10 min | 1.2 GiB after 10 min (HeapAlloc 1.0 GB) | see below |
+
+Where it goes: the guest's RAM is touched almost entirely (937 of 1024
+MiB chunks nonzero in the checkpoint); kube.wasm is ~0.45 GB of compiled
+code plus a Go heap that grows with node traffic (0.4 GiB without a
+node, 1–1.5 GiB with one); the rest (~0.5–1 GB) is the emulator's JIT and
+workers. `GOMEMLIMIT` holds the Go heap but below its live size the
+single-threaded runtime spends its time collecting and the tab freezes;
+600 MiB is too low, the live heap with a node is 0.5–1 GB. A 1.5 GB tab is
+not reachable by settings alone: it needs a smaller guest that still boots
+fast, and finding what keeps the Go heap at ~1 GB (bridged connections
+alive at the time: up to 58 after a restore).
+
+**Checkpoint of a ready node.** `node.html?capture=1` waits for the pod to
+run, stops all harts at the emulator's snapshot barrier, saves the
+control plane (`saveState`: PKI files and a memetcd snapshot) and the
+guest (`dt.rv64.smp/v1`: CPU and device blobs, nonzero RAM in 1 MiB
+objects, ~0.96 GB for a 1 GiB guest) through POST
+`/snapshot-upload/<name>`, and lets the node run on.
+`node.html?restore=<dir>/` loads both: kube.wasm starts from the saved
+store and certificates (same CA, tokens, node and pod objects) and the
+harts resume from the barrier.
+
+| Restore run | Clock | kube.wasm ready | Guest running | Node heartbeat after restore |
+|---|---|---|---|---|
+| res2 | elapsed (guest clock jumps forward) | 4.1 s | 6.0 s | none in 10 min; PLEG unhealthy, "container runtime is down" |
+| res3 | continuous | 3.7 s | 5.7 s | none in 10 min |
+
+After the restore the guest runs, its TCP reaches the lab host (HTTP to
+10.0.0.1:80 answers; 58 connections to 6443 were bridged in 10 min), but
+it runs very slowly at first (kubelet housekeeping 50 s instead of 1 s;
+every emulated block is compiled again) and the kubelet's TLS handshakes
+to the apiserver hit their 10 s timeout (`net/http: TLS handshake
+timeout`), so it never posts status and the node turns `Unknown`. The
+next steps: give the kubelet the same long handshake timeout the medium
+already gives kubectl and kuberoot-node (`KUBEROOT_TLS_HANDSHAKE_TIMEOUT`,
+which needs a kubelet built with that client overlay), and find why the
+restored guest is so much slower than a booted one.
+
+**The crash** (`found pointer to free object` with the kubelet client
+certificate). `test/run-node.mjs` reproduces it without a browser, under
+Node.js on the build host, with Node's real file system as well as with
+memfs, so neither the page nor memfs is involved:
+
+| Variant (20–24 starts each with the two flags) | Crashes |
+|---|---|
+| as built | 4/12 (real fs), 2/12 (memfs) |
+| kube-openapi's go-json-experiment marshalling off (`UseOptimizedJSON*=false`) | 4/15 |
+| kubelet client certificate loaded once (no file reloading) | 11/24 |
+| `GODEBUG=gcstoptheworld=1` | 1/20, but a different error: `invalid runtime symbol table` |
+| `-gcflags=all=-d=checkptr` | crashed, no checkptr report |
+| without the two flags | 0/20 (plus 0/20 in the browser) |
+
+A runtime overlay that prints the type of the freed object named an
+anonymous struct of kube-openapi's `spec.Schema` marshalling
+(`struct { ArbitraryKeys; SchemaProps schemaPropsOmitZero; ... }`, 576
+bytes) in the one crash it caught. Turning that marshalling path off did
+not remove the crash, and the second error under a stop-the-world GC
+points to memory corruption beyond a missed write barrier. The likely next
+step is a newer Go: the build uses go1.26.0 and go1.26.11/go1.27.4 are
+out; downloading a toolchain was not allowed in this round.
+
 ### Open problems
 
 - **Go runtime crash with the kubelet client certificate.** With
