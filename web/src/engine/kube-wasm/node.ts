@@ -80,7 +80,8 @@ const upload = async (name: string, data: Uint8Array) => {
   const r = await fetch('/snapshot-upload/' + name, { method: 'POST', body: data as Uint8Array<ArrayBuffer> });
   if (!r.ok) throw new Error(`checkpoint upload ${name}: ${r.status}`);
 };
-interface KubeState { pki: Record<string, string>; etcd: string }
+interface SavedTcp { vlan: number; local: { ip: number; port: number }; remote: { ip: number; port: number }; snd: number; rcv: number }
+interface KubeState { pki: Record<string, string>; etcd: string; tcp?: SavedTcp[] }
 
 async function main() {
   const restoreBase = params.get('restore') ? new URL(params.get('restore')!, location.href).href : null;
@@ -104,8 +105,16 @@ async function main() {
   // evicts its pods.
   const controllerManagerArgs = ['--node-monitor-grace-period=5m'];
   let restore: { pki: Record<string, Uint8Array>; etcd: Uint8Array } | undefined;
+  let savedTcp: SavedTcp[] = [];
   if (restoreBase) {
     const st = await (await fetch(new URL('kube-state.json', restoreBase))).json() as KubeState;
+    savedTcp = st.tcp ?? [];
+    // ?resetPorts=a,b: for checkpoints saved without their connections,
+    // the node's client ports (from netstat on its console). The wrong
+    // sequence number draws a challenge ACK, answered with an exact reset.
+    for (const port of (params.get('resetPorts') ?? '').split(',').filter(Boolean)) {
+      savedTcp.push({ vlan: 1, local: { ip: ipToNum('10.0.0.1'), port: 6443 }, remote: { ip: ipToNum(NODE_IP), port: Number(port) }, snd: 0, rcv: 0 });
+    }
     restore = { pki: Object.fromEntries(Object.entries(st.pki).map(([n, v]) => [n, unb64(v)])), etcd: unb64(st.etcd) };
   }
   await k.api.start({ v: Number(params.get('v') ?? 0), apiserverArgs, controllerManagerArgs, restore });
@@ -227,6 +236,15 @@ async function main() {
     }, [compilerPort]);
   }
   mark('emulator started');
+  if (savedTcp.length) {
+    // Without this the restored kubelet waits on connections whose far end
+    // is gone and sends nothing that would reveal it (measured: no
+    // heartbeat in 10 minutes, ESTABLISHED sockets in netstat).
+    setTimeout(() => {
+      for (const c of savedTcp) services.host.resetPeer(c.vlan, c.local, c.remote, c.snd, c.rcv);
+      mark(`reset ${savedTcp.length} saved connections`);
+    }, 1000);
+  }
   let restoredHeartbeat = Infinity;
   if (restore) {
     const hb = await k.api.kubectl(['get', 'node', NODE_NAME, '-o', 'jsonpath={.status.conditions[?(@.type=="Ready")].lastHeartbeatTime}']);
@@ -255,7 +273,10 @@ async function main() {
     };
     validateCheckpoint(cp, harts, bytes, wasmSha256, disk);
     Atomics.store(sv, 1, 1); // resume
-    const kubeState: KubeState = { pki: Object.fromEntries(Object.entries(state.pki).map(([n, v]) => [n, b64(v)])), etcd: b64(state.etcd) };
+    // The node's connections to the lab host survive in its RAM; the next
+    // tab resets them so that its clients reconnect at once (see restore).
+    const tcp: SavedTcp[] = services.host.connections().map((c) => ({ vlan: c.vlan, local: c.local, remote: c.remote, ...c.sequence }));
+    const kubeState: KubeState = { pki: Object.fromEntries(Object.entries(state.pki).map(([n, v]) => [n, b64(v)])), etcd: b64(state.etcd), tcp };
     await upload('kube-state.json', new TextEncoder().encode(JSON.stringify(kubeState)));
     await upload('smp.json', new TextEncoder().encode(JSON.stringify(cp)));
     mark('checkpoint saved');
@@ -301,6 +322,16 @@ async function main() {
       if (name && !cert) await kubectl(k, `certificate approve ${name}`);
     }
     if (restore) deployed = true; // the deployment came with the checkpoint
+    if (restore && 'fresh heartbeat' in marks && params.get('auto') !== '0') {
+      // A new workload after the restore: scheduled, started and reported
+      // by the restored node.
+      if (!('new deployment created' in marks)) {
+        mark('new deployment created');
+        await k.api.kubectl(['apply', '-f', '-'], WEB_DEPLOYMENT.replace(/\bweb\b/g, 'web2'));
+      }
+      const p2 = await kubectl(k, 'get pods -l app=web2 -o jsonpath={.items[*].status.phase}');
+      if (p2.stdout.split(' ').includes('Running')) mark('new pod Running');
+    }
     if ('node Ready' in marks && !deployed && params.get('auto') !== '0') {
       deployed = true;
       mark('deployment created');
