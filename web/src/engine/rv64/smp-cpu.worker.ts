@@ -110,6 +110,11 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     if (d.initialRestore) {
       core.smp_restore(d.initialRestore.blob);
       if (device && d.initialRestore.deviceBlob) device.smp_restore(d.initialRestore.deviceBlob);
+      // The restored core carries no compiled blocks and its JIT settings
+      // are reset: without a fresh runtime and threshold every block stays
+      // interpreted (measured: 6 MIPS, no compiled blocks, after a
+      // checkpoint restore). The in-page barrier restore does the same.
+      jitRuntime.dispose(); jitRuntime = newJitRuntime(); core.jit_threshold(50);
     } else if (d.hart === 0) {
       if (d.program) { core.load_program(d.program); core.smp_start(0x80000000n, 0n); }
       else core.smp_boot(d.kernel, d.initrd, d.cmdline ?? 'earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init', d.harts);
