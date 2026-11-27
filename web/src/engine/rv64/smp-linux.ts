@@ -18,6 +18,7 @@ try {
     const compiler = createSharedCompiler(harts * 256 * 1024 * 1024, harts);
     const workers: Worker[] = [], start = performance.now(); let text = '', sent = false;
     const last = new Map<number, unknown>();
+    let shellMs: number | undefined, shellMetrics: unknown;
     try {
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => reject(Error(`Linux ${harts}-hart timeout`)), 900000);
@@ -35,10 +36,17 @@ try {
                 sent = true;
                 workers[0]!.postMessage({ input: new TextEncoder().encode("cat /sys/devices/system/cpu/online; echo SMP_SHELL_OK\n") });
               }
-              if (text.includes('\nSMP_SHELL_OK\n')) {
+              if (shellMs === undefined && text.includes('\nSMP_SHELL_OK\n')) {
+                if (!text.includes(`\n0-${harts - 1}\n`)) { clearTimeout(timeout); reject(Error('unexpected online CPUs')); return; }
+                shellMs = performance.now() - start; shellMetrics = Object.fromEntries(last);
+                // Fixed CPU-bound guest work on every hart (shell arithmetic,
+                // fork/exec, gzip, kernel copies): a steadier speed signal than boot.
+                workers[0]!.postMessage({ input: new TextEncoder().encode(
+                  "for c in $(seq 1 $(nproc)); do (i=0; while [ $i -lt 20000 ]; do i=$((i+1)); done; gzip -c /bin/busybox | md5sum >/dev/null; dd if=/dev/zero of=/dev/null bs=64k count=4000 2>/dev/null) & done; wait; echo SMP_WORK_DONE\n") });
+              }
+              if (shellMs !== undefined && text.includes('\nSMP_WORK_DONE\n')) {
                 clearTimeout(timeout);
-                if (!text.includes(`\n0-${harts - 1}\n`)) reject(Error('unexpected online CPUs'));
-                else { samples.push({ harts, shellMs: performance.now() - start, metrics: Object.fromEntries(last), console: text }); resolve(); }
+                samples.push({ harts, shellMs, workMs: performance.now() - start - shellMs, shellMetrics, metrics: Object.fromEntries(last), console: text }); resolve();
               }
             }
           };
