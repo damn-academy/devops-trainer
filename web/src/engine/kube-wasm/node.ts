@@ -8,6 +8,10 @@
 // Query: ?harts=2 &memory=1024 (MiB) &v=0 &auto=0 (skip the automatic
 // deployment) &logs (component logs in the console pane) &kubeletClient=1
 // (apiserver → kubelet for logs/exec) &emulator=0 (control plane only)
+// &goenv=GOMEMLIMIT=600MiB,GOGC=50 &apiserver=--watch-cache=false
+// &capture=1 (once the pod runs, save a checkpoint of the node and the
+// control plane through POST /snapshot-upload/<name>) &restore=<base URL>
+// (start from such a checkpoint: smp.json, kube-state.json, <sha256>.bin)
 
 import { loadKubeWasm, splitArgs, type Loaded } from './loader';
 import { createRV64Network } from '../rv64/network';
@@ -16,6 +20,9 @@ import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from '.
 import { createSharedCompiler } from '../rv64/shared-compiler';
 import { hartBudget, jitCeilingBytes, MiB } from '../rv64/host-memory';
 import type { TcpConn } from '../labhost/tcp';
+import { readObject, storeObject, storeRam, validateCheckpoint, type SMPCheckpoint } from '../rv64/smp-checkpoint';
+import { restoreTimeOffset } from '../rv64/restore-clock';
+import { sha256 } from '../rv64/snapshot';
 import { ipToNum } from '../labhost/wire';
 
 const NODE_NAME = 'kuberoot-000001'; // kinit names the node after the last MAC bytes
@@ -67,10 +74,22 @@ async function kubectl(k: Loaded, line: string, stdin = '') {
   return k.api.kubectl(splitArgs(line), stdin);
 }
 
+const b64 = (b: Uint8Array) => { let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode(...b.subarray(i, i + 0x8000)); return btoa(s); };
+const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+const upload = async (name: string, data: Uint8Array) => {
+  const r = await fetch('/snapshot-upload/' + name, { method: 'POST', body: data as Uint8Array<ArrayBuffer> });
+  if (!r.ok) throw new Error(`checkpoint upload ${name}: ${r.status}`);
+};
+interface KubeState { pki: Record<string, string>; etcd: string }
+
 async function main() {
+  const restoreBase = params.get('restore') ? new URL(params.get('restore')!, location.href).href : null;
+  const capturing = params.get('capture') === '1';
   const k = await loadKubeWasm({
     wasmUrl: './dist/kube.wasm',
     wasmExecUrl: './dist/wasm_exec.js',
+    // e.g. ?goenv=GOMEMLIMIT=600MiB,GOGC=50
+    env: Object.fromEntries((params.get('goenv') ?? '').split(',').filter(Boolean).map((kv) => kv.split('=', 2) as [string, string])),
     onOutput: (fd, text) => { if (params.has('logs')) appendConsole(`[kube] ${text}\n`); else if (fd === 2 && !/^[IW]\d/.test(text)) console.warn(text); },
   });
   // ?kubeletClient=1 gives the apiserver its kubelet client certificate, for
@@ -78,22 +97,34 @@ async function main() {
   const apiserverArgs = params.get('kubeletClient') === '1'
     ? ['--kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt', '--kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key']
     : [];
+  // e.g. ?apiserver=--watch-cache=false (';'-separated)
+  apiserverArgs.push(...(params.get('apiserver') ?? '').split(';').filter(Boolean));
   // An emulated node posts its status minutes late at times; with the
   // default 50 s grace the node lifecycle controller marks it Unknown and
   // evicts its pods.
   const controllerManagerArgs = ['--node-monitor-grace-period=5m'];
-  await k.api.start({ v: Number(params.get('v') ?? 0), apiserverArgs, controllerManagerArgs });
+  let restore: { pki: Record<string, Uint8Array>; etcd: Uint8Array } | undefined;
+  if (restoreBase) {
+    const st = await (await fetch(new URL('kube-state.json', restoreBase))).json() as KubeState;
+    restore = { pki: Object.fromEntries(Object.entries(st.pki).map(([n, v]) => [n, unb64(v)])), etcd: unb64(st.etcd) };
+  }
+  await k.api.start({ v: Number(params.get('v') ?? 0), apiserverArgs, controllerManagerArgs, restore });
   await k.api.ready();
   mark('apiserver ready');
 
-  const membership = await k.api.joinMembership(NODE_NAME, NODE_IP);
   const media = await (await fetch('/rv64/r18-kubewasm-worker.json')).json() as
     { url: string; bytes: number; version: string; join: { offset: number; bytes: number } };
-  const ticket = new TextEncoder().encode(membership);
-  if (ticket.length > media.join.bytes) throw new Error('membership does not fit the placeholder');
-  const data = new Uint8Array(media.join.bytes).fill(0x20); // JSON allows trailing spaces
-  data.set(ticket);
-  const httpDisk = { url: media.url, bytes: media.bytes, version: media.version, overlay: [{ offset: media.join.offset, data }] };
+  const disk = { url: media.url, bytes: media.bytes, version: media.version };
+  let httpDisk: typeof disk & { overlay?: { offset: number; data: Uint8Array }[] } = disk;
+  if (!restore) {
+    // A restored node already has its Membership (and certificates) in RAM.
+    const membership = await k.api.joinMembership(NODE_NAME, NODE_IP);
+    const ticket = new TextEncoder().encode(membership);
+    if (ticket.length > media.join.bytes) throw new Error('membership does not fit the placeholder');
+    const data = new Uint8Array(media.join.bytes).fill(0x20); // JSON allows trailing spaces
+    data.set(ticket);
+    httpDisk = { ...disk, overlay: [{ offset: media.join.offset, data }] };
+  }
 
   const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
   let conns = 0;
@@ -122,13 +153,37 @@ async function main() {
   const generations = sharedTable(bytes / 4096 * 4);
   const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
   const snap = new SharedArrayBuffer((2 + 2 * harts) * 4);
-  for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
+  const wasmSha256 = await sha256(new Uint8Array(await (await fetch('/rv64/rv64_core_bg.wasm')).arrayBuffer()));
+  let checkpoint: SMPCheckpoint | undefined;
+  const initialBlobs: Uint8Array[] = [];
+  let initialDevice: Uint8Array | undefined;
+  let epoch = performance.timeOrigin + performance.now();
+  if (restoreBase) {
+    checkpoint = await (await fetch(new URL('smp.json', restoreBase))).json() as SMPCheckpoint;
+    validateCheckpoint(checkpoint, harts, bytes, wasmSha256, disk);
+    const view = new Uint8Array(memory.buffer, 64, bytes);
+    await Promise.all(checkpoint.ram.map(async (c) => view.set(await readObject(restoreBase, c.object), c.offset)));
+    new Uint8Array(control).set(await readObject(restoreBase, checkpoint.control));
+    new Uint8Array(mail).set(await readObject(restoreBase, checkpoint.mail));
+    for (const ref of checkpoint.cpus) initialBlobs.push(await readObject(restoreBase, ref));
+    initialDevice = await readObject(restoreBase, checkpoint.device);
+    // ?clock=continuous (default) resumes the guest clock where it stopped,
+    // so containerd and the kubelet see no jump; the node lifecycle
+    // controller times node heartbeats with its own clock. ?clock=elapsed
+    // moves the guest clock forward by the time the checkpoint lay unused.
+    const clock = params.get('clock') === 'elapsed' ? 'elapsed' : 'continuous';
+    epoch = -restoreTimeOffset(checkpoint.ticks, checkpoint.capturedAt, clock, Date.now(), performance.timeOrigin + performance.now()) / 10000;
+    mark('checkpoint loaded');
+  } else {
+    for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
+  }
   const ceiling = jitCeilingBytes(params.get('jitBudgetMb'), import.meta.env.VITE_RV64_JIT_BUDGET_MB);
   const hostBudget = Math.min(ceiling, hartBudget(memory.buffer.byteLength + generations.buffer.byteLength + granules.buffer.byteLength, Array(harts).fill(128 * MiB)));
   const compiler = createSharedCompiler(harts * hostBudget, harts);
   const workers: Worker[] = [];
   services.network.addPort('kube-wasm-node', { mode: 'access' }, (frame) => workers[0]?.postMessage({ frame }));
-  const epoch = performance.timeOrigin + performance.now();
+  const snapshots = new Map<number, { blob: Uint8Array; deviceBlob?: Uint8Array; ticks: number }>();
+  let captured: (() => void) | undefined;
   const decoder = new TextDecoder();
   for (let hart = 0; hart < harts; hart++) {
     const w = new Worker(new URL('../rv64/smp-cpu.worker.ts', import.meta.url), { type: 'module' });
@@ -136,6 +191,10 @@ async function main() {
     w.onerror = (e) => appendConsole(`\n[page] hart ${hart} worker error: ${e.message}\n`);
     w.onmessage = ({ data }) => {
       if (data.type === 'net') services.network.receive('kube-wasm-node', data.frame);
+      else if (data.type === 'snapshot') {
+        snapshots.set(data.hart, data);
+        if (snapshots.size === harts) captured?.();
+      }
       else if (data.type === 'error') appendConsole(`\n[page] hart ${hart}: ${data.error}\n`);
       else if (data.type === 'console') {
         const text = decoder.decode(data.bytes).replace(/\r/g, '');
@@ -148,6 +207,7 @@ async function main() {
     };
     const compilerPort = compiler.connect(hart);
     w.postMessage({
+      initialRestore: checkpoint ? { blob: initialBlobs[hart], deviceBlob: hart === 0 ? initialDevice : undefined } : undefined,
       snap, compilerPort, hostBudget, hart, harts, bytes, memory, module, mail, control, generations, granules, epoch, httpDisk,
       guestProfile: 0, guestProfileDeferred: false, guestProfileTaskCommOffset: 0,
       kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
@@ -155,6 +215,39 @@ async function main() {
     }, [compilerPort]);
   }
   mark('emulator started');
+  let restoredHeartbeat = Infinity;
+  if (restore) {
+    const hb = await k.api.kubectl(['get', 'node', NODE_NAME, '-o', 'jsonpath={.status.conditions[?(@.type=="Ready")].lastHeartbeatTime}']);
+    restoredHeartbeat = Date.parse(hb.stdout) || 0;
+  }
+
+  // Save the node (all harts stopped at a barrier) and, while it stands
+  // still, the control plane's state; then let the node run on.
+  async function saveCheckpoint() {
+    const sv = new Int32Array(snap);
+    const done = new Promise<void>((resolve) => { captured = resolve; });
+    Atomics.store(sv, 0, 1);
+    workers.forEach((w) => w.postMessage({ snapshot: 1 }));
+    await done;
+    const state = await k.api.saveState();
+    const capturedAt = Date.now();
+    const cpus = [];
+    for (let h = 0; h < harts; h++) cpus.push(await storeObject(snapshots.get(h)!.blob, upload));
+    const cp: SMPCheckpoint = {
+      format: 'dt.rv64.smp/v1', harts, bytes, wasmSha256, disk, capturedAt,
+      ticks: Math.max(...[...snapshots.values()].map((s) => s.ticks)), marker: 'RV64_NODE_REGISTERED_READY', cpus,
+      device: await storeObject(snapshots.get(0)!.deviceBlob!, upload),
+      control: await storeObject(new Uint8Array(control).slice(), upload),
+      mail: await storeObject(new Uint8Array(mail).slice(), upload),
+      ram: await storeRam(new Uint8Array(memory.buffer, 64, bytes), upload),
+    };
+    validateCheckpoint(cp, harts, bytes, wasmSha256, disk);
+    Atomics.store(sv, 1, 1); // resume
+    const kubeState: KubeState = { pki: Object.fromEntries(Object.entries(state.pki).map(([n, v]) => [n, b64(v)])), etcd: b64(state.etcd) };
+    await upload('kube-state.json', new TextEncoder().encode(JSON.stringify(kubeState)));
+    await upload('smp.json', new TextEncoder().encode(JSON.stringify(cp)));
+    mark('checkpoint saved');
+  }
 
   $<HTMLFormElement>('#guest').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -182,11 +275,20 @@ async function main() {
       clusterEl.textContent += `\nconditions:\n${cond.stdout}`;
     }
     if (nodes.stdout.includes(`${NODE_NAME}=True`)) mark('node Ready');
+    if (restore) {
+      // The restored store already says Ready: wait for a heartbeat that is
+      // newer than this page.
+      const hb = await k.api.kubectl(['get', 'node', NODE_NAME, '-o', 'jsonpath={.status.conditions[?(@.type=="Ready")].lastHeartbeatTime}']);
+      // With the continuous clock the guest's timestamps lag; count any
+      // heartbeat newer than the checkpoint's.
+      if (hb.code === 0 && Date.parse(hb.stdout) > restoredHeartbeat) mark('fresh heartbeat');
+    }
     const csrs = await k.api.kubectl(['get', 'csr', '-o', 'jsonpath={range .items[?(@.spec.signerName=="kubernetes.io/kubelet-serving")]}{.metadata.name}{" "}{.status.certificate}{"\\n"}{end}']);
     for (const line of csrs.stdout.split('\n')) {
       const [name, cert] = line.split(' ');
       if (name && !cert) await kubectl(k, `certificate approve ${name}`);
     }
+    if (restore) deployed = true; // the deployment came with the checkpoint
     if ('node Ready' in marks && !deployed && params.get('auto') !== '0') {
       deployed = true;
       mark('deployment created');
@@ -197,10 +299,13 @@ async function main() {
       const pods = await kubectl(k, 'get pods -l app=web -o jsonpath={.items[*].status.phase}');
       if (pods.stdout.split(' ').includes('Running')) {
         mark('pod Running');
-        if (!('logs' in marks)) {
-          const logs = await kubectl(k, 'logs deploy/web --tail=1');
+        if (capturing && !('checkpoint saved' in marks) && 'busybox image loaded' in marks) await saveCheckpoint();
+        // Without the kubelet client certificate the kubelet refuses the
+        // apiserver; do not let a hanging call stop this loop either.
+        if (params.get('kubeletClient') === '1' && !('logs' in marks)) {
+          const logs = await kubectl(k, 'logs deploy/web --tail=1 --request-timeout=30s');
           if (logs.code === 0 && logs.stdout.includes('hello')) mark('logs');
-          const exec = await kubectl(k, 'exec deploy/web -- uname -m');
+          const exec = await kubectl(k, 'exec deploy/web --request-timeout=30s -- uname -m');
           if (exec.code === 0) mark('exec');
           clusterEl.textContent += `\n$ kubectl logs deploy/web --tail=1\n${logs.stdout}${logs.stderr}\n$ kubectl exec deploy/web -- uname -m\n${exec.stdout}${exec.stderr}`;
         }

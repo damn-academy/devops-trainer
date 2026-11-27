@@ -3,7 +3,7 @@
 // starts quickly on the build host (for example to reproduce a crash).
 //
 //   node run-node.mjs --wasm kube.wasm --exec wasm_exec.js [--memfs memfs.ts]
-//                     [--apiserver-arg=--flag=value ...] [--seconds 20]
+//                     [--apiserver-arg=--flag=value ...] [--env GODEBUG=...] [--seconds 20]
 //
 // --memfs gives the Go program the page's in-memory file system instead of
 // Node's real one (Node 22.6+ strips the TypeScript types). Exit code: 0 on
@@ -18,6 +18,7 @@ const { values } = parseArgs({
     wasm: { type: 'string' }, exec: { type: 'string' }, memfs: { type: 'string' },
     'apiserver-arg': { type: 'string', multiple: true, default: [] },
     seconds: { type: 'string', default: '20' },
+    env: { type: 'string', multiple: true, default: [] },
   },
 });
 const t0 = performance.now();
@@ -35,7 +36,7 @@ vm.runInThisContext(fs.readFileSync(values.exec, 'utf8'));
 
 const go = new globalThis.Go();
 go.argv = ['kube-wasm'];
-go.env = { HOME: '/root', TMPDIR: '/tmp' };
+go.env = { HOME: '/root', TMPDIR: '/tmp', ...Object.fromEntries(values.env.map((kv) => kv.split(/=(.*)/s).slice(0, 2))) };
 let exited = false;
 const loaded = new Promise((resolve) => { globalThis.__kubeWasmLoaded = resolve; });
 const { instance } = await WebAssembly.instantiate(fs.readFileSync(values.wasm), go.importObject);
