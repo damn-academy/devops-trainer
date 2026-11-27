@@ -149,6 +149,8 @@ export function startApp(root: HTMLElement): void {
         h('a', { href: href({ name: 'about', page: 'contribute' }) }, t(bi('Как поучаствовать', 'Contributing'))),
         ' · ',
         h('a', { href: href({ name: 'about', page: 'projects' }) }, t(bi('Наши проекты', 'Our projects'))),
+        // The channel is in Russian, so only the Russian interface links to it.
+        ...(lang() === 'ru' ? [' · ', h('a', { href: 'https://t.me/damn_academy', rel: 'noopener' }, 'Телеграм-канал')] : []),
       ),
     );
     const exportBtn = h('button.btn.ghost', { type: 'button' }, icon('download'), t(UI.export));
