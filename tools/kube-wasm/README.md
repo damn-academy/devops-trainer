@@ -6,11 +6,10 @@ compiled into one `GOOS=js GOARCH=wasm` binary that runs inside a browser
 tab. It replaces running the control plane inside an emulated RISC-V
 machine, which is ~100x slower than native and never gets to Ready.
 
-Status: prototype. A dev page lives in `web/src/engine/kube-wasm/`
-(`demo.html`, `loader.ts`, `memfs.ts`); nothing in the site uses it yet.
-There are no nodes: pods are created and stay `Pending`. A kubelet and
-containerd inside an emulated Linux are meant to join later over a virtual
-network (see "Towards a node").
+Status: prototype. Dev pages live in `web/src/engine/kube-wasm/`
+(`demo.html`: control plane and kubectl; `node.html`: plus a kuberoot worker
+node in the RV64 emulator, see "A node in the tab"); nothing in the site uses
+them yet.
 
 ## Layout
 
@@ -22,6 +21,9 @@ network (see "Towards a node").
 | `src/pki.go` | Generates the CA, serving cert, service-account key, token file, kubeconfig |
 | `src/main_js.go` | JavaScript API (`globalThis.kubeWasm`) |
 | `src/main_other.go` | Native test driver for the same code |
+| `src/join.go` | Bootstrap token and kuberoot worker Membership for a node |
+| `src/bridge_js.go` | TCP streams between JavaScript and listeners in the process |
+| `node/node-media.py` | Derives the worker boot medium from the RV64 R16 medium |
 | `patches/` | Patches to the Kubernetes tree: js/wasm build (0001), size (0002, 0003) |
 | `overlay.py` | Writes the `go build -overlay` that re-enables method dead-code elimination |
 | `build.sh` | Build script (Linux build host) |
@@ -177,7 +179,14 @@ await api.start({ v: 0, controllers: true, scheduler: true });
 const phases = await api.ready();            // ms since start() per phase
 const { stdout, stderr, code } = await api.kubectl(['get', 'ns']);
 await api.kubectl(['apply', '-f', '-'], yaml); // stdin
+const membership = await api.joinMembership('kuberoot-000001', '10.0.0.10');
+const conn = api.connect('127.0.0.1:6443', onData, onClose); // {write, end, close}
+api.listen('10.0.0.10:10250', (c) => { /* open the far side, then */ c.start(onData, onClose); });
+api.memStats(); // Go heap numbers
 ```
+
+`start()` also takes `apiserverArgs` and `controllerManagerArgs`, appended
+to the components' flags.
 
 ## Measurements
 
@@ -278,7 +287,8 @@ effect.
 ## Known limitations
 
 - One tab, one cluster; state is lost on reload.
-- `kubectl exec/logs/port-forward/attach` need a kubelet; there is none.
+- `kubectl exec/logs/attach` work only with a node and the kubelet client
+  certificate (see "A node in the tab"); `port-forward` is untested.
 - kubectl plugins and `kubectl edit` (no editor) do not work.
 - kubectl's warning printer is process-wide while a command runs, so a
   controller warning could appear in that command's stderr.
@@ -288,13 +298,108 @@ effect.
   and a long CPU-bound step (for example building the OpenAPI spec) blocks
   everything else until it finishes.
 
-## Towards a node
+## A node in the tab
 
-The node (kubelet + containerd in an emulated Linux) will reach the
-apiserver over a virtual network. The apiserver already advertises
-`10.0.2.2:6443`, serves TLS with a certificate for that address and trusts
-client certificates signed by the cluster CA; the controller-manager signs
-CSRs with the same CA and allocates pod CIDRs from `10.244.0.0/16`. What is
-missing is a bridge between the emulator's network device and a
-`net.Listener` in this process (the fake network only connects goroutines
-of the same process), and a bootstrap kubeconfig for the kubelet.
+`node.html` runs kube.wasm on the main thread and a kuberoot worker node
+in the RV64 emulator (`web/src/engine/rv64`, merged from `feat/rv64-r0`) in
+its workers, in one tab.
+
+```
+ RV64 workers                    main thread
+ ┌──────────────────────┐ frames ┌────────────────────────────────────────┐
+ │ kuberoot worker      │───────▶│ L2 switch ─ lab host 10.0.0.1          │
+ │ 10.0.0.10            │◀───────│   DHCP, DNS, HTTP, TCP :6443 listener   │
+ │ kubelet, containerd, │        │        │ bridge (connect)               │
+ │ kube-proxy,          │        │        ▼                                │
+ │ kuberoot-node        │        │ kube.wasm: 127.0.0.1:6443 (TLS)         │
+ └──────────────────────┘        │   apiserver ─▶ 10.0.0.10:10250 listener │
+                                 │        │ bridge (listen) ─▶ lab host    │
+                                 │        ▼   connect to the node          │
+                                 └────────────────────────────────────────┘
+```
+
+**Joining.** kuberoot's kinit runs a node as a worker when
+`/var/lib/kuberoot/membership.json` holds a Membership (role, API server,
+cluster CA, bootstrap token, node API certificate, pod and service
+ranges). `node/node-media.py` derives the medium
+`r18-kubewasm-worker` from the pinned R16 medium with two changes: a
+32 KiB placeholder file `/kuberoot/join.json` on the boot partition, and
+a stage-two wrapper (`/usr/sbin/kinit`) that copies it to
+`membership.json` when it holds a Membership, skips the standalone probe
+and loads the medium's offline images (busybox, coredns, local-path)
+into containerd. The page asks kube.wasm for a Membership
+(`joinMembership`: a bootstrap token Secret, the kubeadm-style RBAC
+bindings for node client certificate auto-approval and kube-proxy, a node
+API certificate signed by the cluster CA) and lays it over the
+placeholder's bytes through `HTTPDisk.overlay` in the RV64 block device,
+so one medium serves every tab.
+
+**Network.** The apiserver advertises 10.0.0.1, the lab host of the
+emulated network, with a serving certificate for that address. The lab
+host listens on TCP 6443; each connection is bridged into the process
+(`connect`) to the apiserver's TLS port, so TLS is end to end between the
+kubelet and the apiserver. For logs and exec the apiserver dials the
+kubelet at its InternalIP (`--kubelet-preferred-address-types=InternalIP`);
+kube.wasm listens on 10.0.0.10:10250 in its fake network (`listen`) and
+the page opens the real connection to the node through the lab host.
+
+**Certificates.** The kubelet bootstraps with the token; the
+controller-manager approves and signs its client certificate with the
+cluster CA. Kubelet serving certificates are not auto-approved upstream;
+the page approves them. The controller-manager runs with
+`--node-monitor-grace-period=5m`: the emulated kubelet sometimes posts its
+status minutes late, and with the default 50 s the node turned `Unknown`
+and its pods were evicted.
+
+### Measurements (headless Chromium, 2 harts, 1 GiB guest RAM)
+
+Times are seconds after page load. Each run boots the node from cold; no
+checkpoint is restored.
+
+| Run | Variant | Node registered | Node Ready | Pod Running (created when Ready) | logs / exec | Tab footprint at the end |
+|---|---|---|---|---|---|---|
+| 4 | default | 243 | 264 | 552 (waited for the image import) | not tried (no kubelet client cert) | 3.75 GB |
+| 5 | `?kubeletClient=1` | 388 | 419 | 770 | 785 / 851 (`uname -m` = riscv64) | 3.9 GB |
+| 9 | default, grace 5 m, busybox imported first | 347 | 985 | 1156 | – | 4.2–4.3 GB |
+| 2 | default, grace 50 s | 492 | not within 15 min (node `Unknown`) | – | – | 3.9 GB |
+| 8 | default | ~370 | 439 | not within 18 min: busybox import never finished (`ErrImageNeverPull`) | – | 4.3 GB |
+
+Constant parts: kube.wasm is ready 3.8–4.1 s after load; the guest reads
+its Membership at 15–19 s; the kubelet gets its client certificate
+through the bootstrap token about 5 minutes in; the pod receives
+10.244.0.2 from the node's bridge CNI. In every run the Go linear memory
+ends at ~1.1 GiB (from ~380 MiB without a node).
+
+What the numbers show: the slow, variable part is the emulated node, not
+the control plane. Between registration and the first Ready status
+the kubelet took 20 s in two runs and ~10 minutes in another, and
+importing the offline images competes with the kubelet for the two
+emulated harts.
+
+### Open problems
+
+- **Go runtime crash with the kubelet client certificate.** With
+  `--kubelet-client-certificate/--kubelet-client-key`, kube.wasm dies in
+  a quarter to a third of starts within the first 30 s with `fatal error:
+  found pointer to free object` (also with `GOEXPERIMENT=nogreenteagc`,
+  and also with the endpoint reconciler and bootstrap token auth turned
+  off). Without the two flags it did not happen in 20 starts. The default
+  leaves them out, so logs and exec need `?kubeletClient=1` and a start
+  that survives. The cause is not found yet.
+- **Go heap.** During a node run the Go linear memory grows from ~380 MiB
+  to 1.1–1.5 GiB and, wasm memory never shrinking, stays there (run 9 at
+  the end: HeapAlloc 1.25 GB after 23 collections); together with the
+  emulator's 1 GiB guest and its JIT the tab reaches 3.7–4.5 GB. Not yet
+  tried: `GOMEMLIMIT`/`GOGC` for this case (`loadKubeWasm({env})`), and
+  finding what holds the heap (watch caches, memetcd history until the
+  5-minute compaction, kubelet traffic).
+- **Speed.** The emulated node registers 4–8 minutes after page load and
+  becomes Ready 20 s to 10 minutes after that; importing the offline images
+  takes several minutes more, so the first pod ran 9–19 minutes after page
+  load in the runs that got there. In one run the busybox import did not
+  finish within 18 minutes. Restoring a checkpoint of a booted node (the
+  RV64 track has SMP checkpoints) is the obvious next step.
+- Node name and address are fixed (`kuberoot-000001`, 10.0.0.10: the
+  emulator's MAC and the first DHCP lease); one node per tab.
+- No CoreDNS addon is installed and no route leads out of the tab, so
+  pods have no DNS and no network beyond the node.
