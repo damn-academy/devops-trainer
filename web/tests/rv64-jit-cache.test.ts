@@ -10,7 +10,7 @@ for (const mode of ['functions', 'bytes', 'host']) it(`evicts cold modules under
     constructor() { worker = this; }
     postMessage(blocks: any) { this.pending = blocks; }
     terminate() {}
-    reply() { const blocks=this.pending; const bytes=compileBatch(blocks,false,undefined,undefined,true); this.onmessage({data:{module:new WebAssembly.Module(bytes),byteLength:bytes.byteLength,blocks:blocks.map((b:any)=>({id:b.id,count:1}))}}); }
+    reply() { const blocks=this.pending; const bytes=compileBatch(blocks); this.onmessage({data:{module:new WebAssembly.Module(bytes),byteLength:bytes.byteLength,blocks:blocks.map((b:any)=>({id:b.id,count:1}))}}); }
   }
   vi.stubGlobal('Worker',StubWorker);
   const memory=new WebAssembly.Memory({initial:1}), table=cacheTable;
@@ -72,7 +72,7 @@ it('coalesces shared requests, reuses instances and unlinks Rust before acknowle
   enqueue(10);jit.flush();expect(messages.some(m=>m.blocks)).toBe(false);
   now=4;jit.flush();const request=messages.find(m=>m.blocks);
   const layout={bytes:32768,ramPages:1,generationPages:1,granulePages:1};
-  const bytes=compileBatch([{id:0,pc:0x80000000n,words:[0x00700193,4]}],false,layout,undefined,true);
+  const bytes=compileBatch([{id:0,pc:0x80000000n,words:[0x00700193,4]}],false,layout);
   const module=new WebAssembly.Module(bytes);
   const reply=(id:number)=>port.onmessage!({data:{session:request.session,groups:[{serial:1,lease:id,module,byteLength:bytes.length,functions:1,blocks:[{id,exportId:0,count:1}]}],sharedCodeHits:1}} as MessageEvent);
   reply(10);enqueue(11);now=8;jit.flush();reply(11);
@@ -92,7 +92,7 @@ it('never recycles a slot from another hart table', () => {
   const firstTable=new WebAssembly.Table({initial:20,element:'anyfunc'});
   const memory=new WebAssembly.Memory({initial:1});
   const a=new JitRuntime(memory,firstTable,()=>{},()=>{});
-  const bytes=compileBatch([{id:1,pc:0n,words:[0x13,4]}],false,undefined,undefined,true);
+  const bytes=compileBatch([{id:1,pc:0n,words:[0x13,4]}]);
   const data={module:new WebAssembly.Module(bytes),byteLength:bytes.length,blocks:[{id:1,count:1}]};
   (a as any).worker.onmessage({data});a.dispose();
   const secondTable=new WebAssembly.Table({initial:0,element:'anyfunc'});

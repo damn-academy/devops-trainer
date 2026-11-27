@@ -2,13 +2,11 @@ import { instanceCharge, type SharedBlock, type CodeGroup, type SharedCodeCache 
 import { jitCharge, MiB } from './host-memory';
 import { compileChainDispatcher, type SharedJitLayout } from './jit-compiler';
 export interface SharedJitMemory { ram: WebAssembly.Memory; generations: WebAssembly.Memory; granules: WebAssembly.Memory; bytes: number }
-// Free table ranges per table (start, length), sorted and merged: a batch's
-// functions occupy consecutive slots, filled by its install(base).
-const tableRanges = new WeakMap<WebAssembly.Table, [number, number][]>();
+const tableSlots = new WeakMap<WebAssembly.Table, number[]>();
 let sessionSerial = 0;
 export class JitRuntime {
   private worker: Worker | MessagePort;
-  private freeRanges: [number, number][];
+  private freeSlots: number[];
   private session = ++sessionSerial;
   private queue: SharedBlock[] = [];
   private sharedStats?: ReturnType<SharedCodeCache['stats']>;
@@ -21,7 +19,7 @@ export class JitRuntime {
   private hostBudget = 256 * MiB;
   setHostBudget(bytes: number) { this.hostBudget = Math.max(0, bytes); }
   private sharedLayout?: SharedJitLayout;
-  private batches: { ids: number[]; slots: number[]; base: number; bytes: number; serial?: number; lease?: number; functions: number; instance: WebAssembly.Instance; used: number }[] = [];
+  private batches: { ids: number[]; slots: number[]; bytes: number; serial?: number; lease?: number; functions: number; instance: WebAssembly.Instance; used: number }[] = [];
   evicted = 0;
   tailCalls?: boolean;
   compiled = 0;
@@ -42,7 +40,7 @@ export class JitRuntime {
     private cache?: { usage(ids: Uint32Array): number; evict(ids: Uint32Array): void; limit?: number; byteLimit?: number }, shared?: SharedJitMemory, private port?: MessagePort) {
     if (port && (!shared || !cache)) throw Error('shared JIT requires shared memories and eviction callbacks');
     this.worker = port ?? new Worker(new URL('./compiler.worker.ts', import.meta.url), { type: 'module' });
-    this.freeRanges = tableRanges.get(table) ?? []; tableRanges.set(table, this.freeRanges);
+    this.freeSlots = tableSlots.get(table) ?? []; tableSlots.set(table, this.freeSlots);
     if (shared) this.sharedLayout = { bytes: shared.bytes, ramPages: shared.ram.buffer.byteLength / 65536, generationPages: shared.generations.buffer.byteLength / 65536, granulePages: shared.granules.buffer.byteLength / 65536 };
     const sharedEnv: WebAssembly.ModuleImports = shared ? { ram: shared.ram, generations: shared.generations, granules: shared.granules } : {};
     const dispatcher = compileChainDispatcher(this.sharedLayout);
@@ -65,15 +63,14 @@ export class JitRuntime {
         for (const group of groups) {
           let batch = this.port ? this.batches.find(b => b.serial === group.serial) : undefined;
           if (!batch) {
-            const instance = new WebAssembly.Instance(group.module, { env: { memory, table, ...sharedEnv, ...(next ? { next } : {}), ...(slow ? { slow } : {}) } });
-            const base = this.allocate(group.functions);
-            (instance.exports.install as (base: number) => void)(base);
-            batch = { ids: [], slots: [], base, bytes: group.byteLength ?? 0, serial: group.serial, lease: group.lease, functions: group.functions, instance, used: 0 };
+            const instance = new WebAssembly.Instance(group.module, { env: { memory, ...sharedEnv, ...(next ? { next } : {}), ...(slow ? { slow } : {}) } });
+            batch = { ids: [], slots: [], bytes: group.byteLength ?? 0, serial: group.serial, lease: group.lease, functions: group.functions, instance, used: 0 };
             this.batches.push(batch);
           }
           batch.lease = group.lease;
-          for (const [position, b] of group.blocks.entries()) {
-            const slot = batch.base + (b.exportId ?? position); this.slots.push(slot);
+          for (const b of group.blocks) {
+            const slot = this.freeSlots.pop() ?? table.grow(1);
+            table.set(slot, batch.instance.exports[`b${b.exportId ?? b.id}`]); this.slots.push(slot);
             this.install(b.id, slot, b.count); this.compiled++;
             const latency = performance.now() - (this.queuedAt.get(b.id) ?? performance.now());
             this.latencyTotalMs += latency; this.latencyMaxMs = Math.max(this.latencyMaxMs, latency);
@@ -99,29 +96,13 @@ export class JitRuntime {
     if (!batch) return;
     this.cache?.evict(new Uint32Array(batch.ids)); this.evicted += batch.ids.length;
     const slots = new Set(batch.slots);
-    this.free(batch);
+    for (const slot of slots) { this.table.set(slot, null); this.freeSlots.push(slot); }
     this.slots = this.slots.filter(slot => !slots.has(slot));
     this.batches = this.batches.filter(b => b !== batch);
   }
   private release() {
-    for (const batch of this.batches) this.free(batch);
+    for (const slot of this.slots) { this.table.set(slot, null); this.freeSlots.push(slot); }
     this.slots = []; this.batches = [];
-  }
-  /** First fit among the free ranges, else grow the table. */
-  private allocate(n: number) {
-    const i = this.freeRanges.findIndex(([, length]) => length >= n);
-    if (i < 0) return this.table.grow(n);
-    const [start, length] = this.freeRanges[i]!;
-    if (length === n) this.freeRanges.splice(i, 1); else this.freeRanges[i] = [start + n, length - n];
-    return start;
-  }
-  private free(batch: { base: number; functions: number }) {
-    for (let slot = batch.base; slot < batch.base + batch.functions; slot++) this.table.set(slot, null);
-    const ranges = this.freeRanges;
-    let i = ranges.findIndex(([start]) => start > batch.base); if (i < 0) i = ranges.length;
-    ranges.splice(i, 0, [batch.base, batch.functions]);
-    if (i + 1 < ranges.length && ranges[i]![0] + ranges[i]![1] === ranges[i + 1]![0]) { ranges[i]![1] += ranges[i + 1]![1]; ranges.splice(i + 1, 1); }
-    if (i > 0 && ranges[i - 1]![0] + ranges[i - 1]![1] === ranges[i]![0]) { ranges[i - 1]![1] += ranges[i]![1]; ranges.splice(i, 1); }
   }
   flush() {
     if (this.rejected.length) { this.cache?.evict(new Uint32Array(this.rejected)); this.rejected = []; }
@@ -143,7 +124,7 @@ export class JitRuntime {
           if (this.slots.length - slots.size <= limit * 0.75 && bytes <= this.byteLimit * 0.75 && (this.port || jitCharge(bytes, this.batches.length - victims.size) <= this.hostBudget * 0.75)) break;
         }
         this.cache.evict(new Uint32Array(ids)); this.evicted += ids.length;
-        for (const batch of victims) this.free(batch);
+        for (const slot of slots) { this.table.set(slot, null); this.freeSlots.push(slot); }
         this.slots = this.slots.filter(slot => !slots.has(slot));
         for (const batch of victims) if (this.port) this.port.postMessage({ release: batch.serial, lease: batch.lease });
         this.batches = this.batches.filter(batch => !victims.has(batch));

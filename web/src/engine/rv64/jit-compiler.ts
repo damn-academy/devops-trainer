@@ -248,25 +248,14 @@ function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJi
   const bytes = chain ? [...prefix,0x02,0x40,0x03,0x40,...bodyCode,0x0b,0x0b,...code,0x0b]
     : [...prefix,0x03,0x40,...bodyCode,0x0b,0x0b]; return [...uleb(bytes.length), ...bytes];
 }
-/** install: instead of one export per block (each instantiation then makes a
- * JS function object per block), import the hart's table and export one
- * install(base) that copies the batch's functions into table slots
- * base .. base + blocks.length - 1, in block order. */
-export function compileBatch(blocks: Block[], chain = false, shared?: SharedJitLayout, metrics?: { bodyBytes: number[] }, install = false): Uint8Array<ArrayBuffer> {
+export function compileBatch(blocks: Block[], chain = false, shared?: SharedJitLayout, metrics?: { bodyBytes: number[] }): Uint8Array<ArrayBuffer> {
   const hasHelper = blocks.some(b => b.words.some((i,k) => k%2===0 && (helper(i) || [0x03,0x23].includes(i&127))));
-  const imported = (hasHelper?1:0)+(chain?1:0), installType = hasHelper?2:1;
   return new Uint8Array([
     0, 97, 115, 109, 1, 0, 0, 0,
-    ...section(1, [installType+(install?1:0), 0x60, 2, 0x7f, 0x7f, 0, ...(hasHelper ? [0x60,6,0x7f,0x7f,0x7f,0x7f,0x7e,0x7f,0] : []), ...(install ? [0x60,1,0x7f,0] : [])]),
-    ...section(2, [(hasHelper?2:1)+(chain?1:0)+(shared?3:0)+(install?1:0), ...str('env'), ...str('memory'), 2, 0, 0, ...(hasHelper ? [...str('env'),...str('slow'),0,1] : []), ...(chain ? [...str('env'),...str('next'),0,0] : []), ...sharedImports(shared),
-      ...(install ? [...str('env'), ...str('table'), 1, 0x70, 0, 0] : [])]),
-    ...section(3, [...uleb(blocks.length+(install?1:0)), ...blocks.map(() => 0), ...(install ? [installType] : [])]),
-    ...(install
-      ? section(7, [1, ...str('install'), 0, ...uleb(imported+blocks.length)])
-      : section(7, [...uleb(blocks.length), ...blocks.flatMap((b, n) => [...str(`b${b.id}`), 0, ...uleb(n+imported)])])),
-    // One passive segment holding the block functions, for table.init.
-    ...(install ? section(9, [1, 1, 0, ...uleb(blocks.length), ...blocks.flatMap((_, n) => uleb(n+imported))]) : []),
-    ...section(10, [...uleb(blocks.length+(install?1:0)), ...blocks.flatMap(block => { const bytes = body(block, chain, hasHelper?1:0, shared); metrics?.bodyBytes.push(bytes.length); return bytes; }),
-      ...(install ? (() => { const b = [0, 0x20, 0, 0x41, 0, 0x41, ...sleb(BigInt(blocks.length)), 0xfc, 12, 0, 0, 0x0b]; return [...uleb(b.length), ...b]; })() : [])]),
+    ...section(1, [hasHelper?2:1, 0x60, 2, 0x7f, 0x7f, 0, ...(hasHelper ? [0x60,6,0x7f,0x7f,0x7f,0x7f,0x7e,0x7f,0] : [])]),
+    ...section(2, [(hasHelper?2:1)+(chain?1:0)+(shared?3:0), ...str('env'), ...str('memory'), 2, 0, 0, ...(hasHelper ? [...str('env'),...str('slow'),0,1] : []), ...(chain ? [...str('env'),...str('next'),0,0] : []), ...sharedImports(shared)]),
+    ...section(3, [...uleb(blocks.length), ...blocks.map(() => 0)]),
+    ...section(7, [...uleb(blocks.length), ...blocks.flatMap((b, n) => [...str(`b${b.id}`), 0, ...uleb(n+(hasHelper?1:0)+(chain?1:0))])]),
+    ...section(10, [...uleb(blocks.length), ...blocks.flatMap(block => { const bytes = body(block, chain, hasHelper?1:0, shared); metrics?.bodyBytes.push(bytes.length); return bytes; })]),
   ]);
 }
