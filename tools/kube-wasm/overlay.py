@@ -14,6 +14,8 @@ places are reachable in kube-wasm:
     type stored in an interface.
   * go-cmp's type-name printer (patched in patches/0002, not here).
 
+It also keeps heap profiling off the system stack on wasm (see below).
+
 The overlay replaces the text/template lookup with a switch over constant
 names: every identifier that follows a '.' in the templates compiled into
 the binary. For a constant name the linker keeps only the methods of that
@@ -83,6 +85,17 @@ value_go = os.path.join(goroot, "src/reflect/value.go")
 files[value_go] = cut_body(open(value_go).read(), "func (v Value) Methods() iter.Seq2[Method, Value] {", panic_body)
 type_go = os.path.join(goroot, "src/reflect/type.go")
 files[type_go] = cut_body(open(type_go).read(), "func (t *rtype) Methods() iter.Seq[Method] {", panic_body)
+
+# Heap profiling must not unwind the system stack on wasm. An allocation
+# made on g0, such as beforeIdle's timeout event (runtime/lock_js.go) while
+# the scheduler looks for work after mcall, can be the sampled one; the
+# profiler then unwinds g0, which on wasm cannot be unwound past mcall, and
+# the program dies with "invalid runtime symbol table". Such allocations are
+# no longer sampled.
+malloc_go = os.path.join(goroot, "src/runtime/malloc.go")
+files[malloc_go] = replace(malloc_go,
+    "\tc.nextSample = nextSample()\n\tmProf_Malloc(mp, x, size)\n",
+    "\tc.nextSample = nextSample()\n\tif goarch.IsWasm == 1 && getg() == mp.g0 {\n\t\treturn\n\t}\n\tmProf_Malloc(mp, x, size)\n")
 
 replace_map = {}
 for target, content in files.items():
