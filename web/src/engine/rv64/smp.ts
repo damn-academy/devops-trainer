@@ -104,6 +104,24 @@ export class SharedHartMemory {
     Atomics.add(this.granules, Math.floor(address / 128), 1);
     if (this.generations) Atomics.add(this.generations, Math.floor((address - 64) / 4096), 1);
   }
+  /** Device DMA: one locked bus transaction, then every touched reservation
+   * granule and code page is published once, exactly as per-byte stores did. */
+  dmaWrite(address: number, bytes: Uint8Array) {
+    if (!bytes.length) return;
+    if (!Number.isInteger(address) || address < 64 || address + bytes.length > this.memory.buffer.byteLength) throw new RangeError('out-of-bounds shared DMA');
+    this.locked(() => {
+      new Uint8Array(this.memory.buffer, address, bytes.length).set(bytes);
+      this.wasm.add(8, 1n);
+      const last = address + bytes.length - 1;
+      for (let g = Math.floor(address / 128); g <= Math.floor(last / 128); g++) Atomics.add(this.granules, g, 1);
+      if (this.generations) for (let p = Math.floor((address - 64) / 4096); p <= Math.floor((last - 64) / 4096); p++) Atomics.add(this.generations, p, 1);
+    });
+  }
+  dmaRead(address: number, out: Uint8Array) {
+    if (!out.length) return;
+    if (!Number.isInteger(address) || address < 64 || address + out.length > this.memory.buffer.byteLength) throw new RangeError('out-of-bounds shared DMA');
+    out.set(new Uint8Array(this.memory.buffer, address, out.length));
+  }
   load(address: number, size: 1 | 2 | 4 | 8): bigint { this.check(address, size); return this.read(address, size); }
   store(address: number, size: 1 | 2 | 4 | 8, value: bigint) { this.check(address, size); this.locked(() => this.write(address, size, value)); }
   clearReservation() { this.reservation = undefined; }

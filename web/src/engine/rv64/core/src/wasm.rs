@@ -8,6 +8,10 @@ extern "C" {
     pub(crate) fn shared_access(op: u32, offset: u32, size: u32, value: u64) -> u64;
     #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedImage)]
     pub(crate) fn shared_image(offset: u32, bytes: &[u8]);
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedDmaWrite)]
+    pub(crate) fn shared_dma_write(offset: u32, bytes: &[u8]);
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedDmaRead)]
+    pub(crate) fn shared_dma_read(offset: u32, bytes: &mut [u8]);
     #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedCas)]
     pub(crate) fn shared_cas(offset: u32, expected: u64, value: u64) -> u64;
     #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedGeneration)]

@@ -85,6 +85,8 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
       rv64SharedCas: (offset: number, expected: bigint, value: bigint) => ram.cas(offset + 64, expected, value),
       rv64SharedImage: (offset: number, bytes: Uint8Array) => new Uint8Array(d.memory.buffer, offset + 64, bytes.length).set(bytes),
       rv64SharedMmio: mmio,
+      rv64SharedDmaWrite: (offset: number, bytes: Uint8Array) => ram.dmaWrite(offset + 64, bytes),
+      rv64SharedDmaRead: (offset: number, bytes: Uint8Array) => ram.dmaRead(offset + 64, bytes),
     });
     const remote = { instructionRequests: 0, translationRequests: 0, ipiRequests: 0 };
     const service = () => {

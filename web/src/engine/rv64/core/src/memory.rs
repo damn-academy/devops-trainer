@@ -248,6 +248,36 @@ impl Memory {
         }
         Ok(())
     }
+    /// Bulk device DMA into guest RAM. One shared-bus transaction per buffer:
+    /// SMP harts observe the same lock, reservation-granule and code-page
+    /// generation protocol as for individual stores.
+    pub fn dma_write(&mut self, addr: u64, data: &[u8]) -> Result<(), ()> {
+        if data.is_empty() { return Ok(()); }
+        let off = self.dma_offset(addr, data.len())?;
+        #[cfg(target_arch = "wasm32")]
+        if self.shared_bytes != 0 { crate::wasm::shared_dma_write(off as u32, data); return Ok(()); }
+        self.ensure_ram(off, data.len());
+        self.ram[off..off + data.len()].copy_from_slice(data);
+        for page in off / 4096..=(off + data.len() - 1) / 4096 {
+            if self.jit_code[page] != 0 { self.metrics.dma_code_pages += 1; self.jit_pages[page] = self.jit_pages[page].wrapping_add(1); self.jit_code[page] = 0; }
+            self.code[page] = None;
+        }
+        Ok(())
+    }
+    pub fn dma_read(&mut self, addr: u64, out: &mut [u8]) -> Result<(), ()> {
+        if out.is_empty() { return Ok(()); }
+        let off = self.dma_offset(addr, out.len())?;
+        #[cfg(target_arch = "wasm32")]
+        if self.shared_bytes != 0 { crate::wasm::shared_dma_read(off as u32, out); return Ok(()); }
+        self.ensure_ram(off, out.len());
+        out.copy_from_slice(&self.ram[off..off + out.len()]);
+        Ok(())
+    }
+    fn dma_offset(&self, addr: u64, len: usize) -> Result<usize, ()> {
+        let off = addr.checked_sub(RAM_BASE).ok_or(())?;
+        if off.checked_add(len as u64).ok_or(())? > self.ram_size() as u64 { return Err(()); }
+        Ok(off as usize)
+    }
     // Cache is physically indexed. Every RAM writer, including virtqueue DMA,
     // goes through physical_write/load_image and invalidates the affected page.
     pub fn decoded(&mut self, pa: u64) -> Option<Decoded> {

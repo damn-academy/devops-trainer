@@ -111,6 +111,45 @@ impl Devices {
         Ok(())
     }
 
+    /// Copy `out.len()` disk bytes at `offset`; lazy chunks must be present.
+    fn disk_read(&self, offset: u64, out: &mut [u8]) -> Result<(), ()> {
+        if self.disk_bytes == 0 {
+            let start = usize::try_from(offset).map_err(|_| ())?;
+            out.copy_from_slice(self.disk.get(start..start.checked_add(out.len()).ok_or(())?).ok_or(())?);
+            return Ok(());
+        }
+        let mut done = 0;
+        while done < out.len() {
+            let p = offset + done as u64;
+            let chunk = self.disk_chunks.get(&(p / Self::BLOCK_CHUNK)).ok_or(())?;
+            let tail = chunk.get((p % Self::BLOCK_CHUNK) as usize..).ok_or(())?;
+            let n = tail.len().min(out.len() - done);
+            if n == 0 { return Err(()); }
+            out[done..done + n].copy_from_slice(&tail[..n]);
+            done += n;
+        }
+        Ok(())
+    }
+    fn disk_write(&mut self, offset: u64, data: &[u8]) -> Result<(), ()> {
+        if self.disk_bytes == 0 {
+            let start = usize::try_from(offset).map_err(|_| ())?;
+            self.disk.get_mut(start..start.checked_add(data.len()).ok_or(())?).ok_or(())?.copy_from_slice(data);
+            return Ok(());
+        }
+        let mut done = 0;
+        while done < data.len() {
+            let p = offset + done as u64;
+            let index = p / Self::BLOCK_CHUNK;
+            let chunk = self.disk_chunks.get_mut(&index).ok_or(())?;
+            let tail = chunk.get_mut((p % Self::BLOCK_CHUNK) as usize..).ok_or(())?;
+            let n = tail.len().min(data.len() - done);
+            if n == 0 { return Err(()); }
+            tail[..n].copy_from_slice(&data[done..done + n]);
+            self.disk_dirty.insert(index);
+            done += n;
+        }
+        Ok(())
+    }
     fn features(id: u32) -> u64 {
         (1 << 32) | match id { 2 => (1 << 2) | (1 << 6) | (1 << 9), 1 => (1 << 5) | (1 << 16), _ => 0 }
     }
@@ -342,11 +381,10 @@ impl Devices {
                                     if d.flags & 2 == 0 {
                                         return Err(());
                                     }
-                                    for j in 0..d.len {
-                                        let Some(b) = source.pop_front() else { break };
-                                        write(mem, d.addr + j as u64, 1, b as u64)?;
-                                        written += 1;
-                                    }
+                                    let n = (d.len as usize).min(source.len());
+                                    let data: Vec<u8> = source.drain(..n).collect();
+                                    mem.dma_write(d.addr, &data)?;
+                                    written += n as u64;
                                 }
                             }
                             (1, 1) => {
@@ -369,14 +407,10 @@ impl Devices {
                                     if d.flags & 2 == 0 {
                                         return Err(());
                                     }
-                                    for j in 0..d.len {
-                                        if pos == data.len() {
-                                            break;
-                                        }
-                                        write(mem, d.addr + j as u64, 1, data[pos] as u64)?;
-                                        pos += 1;
-                                        written += 1;
-                                    }
+                                    let n = (d.len as usize).min(data.len() - pos);
+                                    mem.dma_write(d.addr, &data[pos..pos + n])?;
+                                    pos += n;
+                                    written += n as u64;
                                 }
                             }
                             (0, 0) => {
@@ -410,21 +444,14 @@ impl Devices {
                                             status = 1;
                                             break;
                                         }
-                                        for j in 0..d.len {
-                                            if op == 0 {
-                                                write(
-                                                    mem,
-                                                    d.addr + j as u64,
-                                                    1,
-                                                    if self.disk_bytes == 0 { self.disk[offset as usize + j as usize] as u64 }
-                                                    else { let p = offset + j as u64; self.disk_chunks[&(p / Self::BLOCK_CHUNK)][(p % Self::BLOCK_CHUNK) as usize] as u64 },
-                                                )?;
-                                                written += 1
-                                            } else {
-                                                let value = read(mem, d.addr + j as u64, 1)? as u8;
-                                                if self.disk_bytes == 0 { self.disk[offset as usize + j as usize] = value; }
-                                                else { let p = offset + j as u64; self.disk_dirty.insert(p / Self::BLOCK_CHUNK); self.disk_chunks.get_mut(&(p / Self::BLOCK_CHUNK)).ok_or(())?[(p % Self::BLOCK_CHUNK) as usize] = value; }
-                                            }
+                                        let mut buffer = vec![0u8; d.len as usize];
+                                        if op == 0 {
+                                            self.disk_read(offset, &mut buffer)?;
+                                            mem.dma_write(d.addr, &buffer)?;
+                                            written += d.len as u64;
+                                        } else {
+                                            mem.dma_read(d.addr, &mut buffer)?;
+                                            self.disk_write(offset, &buffer)?;
                                         }
                                         offset = stop;
                                     }
@@ -502,9 +529,9 @@ fn write(mem: &mut Memory, addr: u64, n: usize, v: u64) -> Result<(), ()> {
     mem.physical_write(addr, n, v).map_err(|_| ())
 }
 fn bytes(mem: &mut Memory, addr: u64, n: u32) -> Result<Vec<u8>, ()> {
-    (0..n)
-        .map(|j| read(mem, addr + j as u64, 1).map(|v| v as u8))
-        .collect()
+    let mut out = vec![0; n as usize];
+    mem.dma_read(addr, &mut out)?;
+    Ok(out)
 }
 
 fn range(mem: &Memory, addr: u64, size: u64) -> bool {

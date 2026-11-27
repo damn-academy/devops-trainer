@@ -30,6 +30,20 @@ describe('R3 shared wasm RAM substrate (not integrated CPU)', () => {
     a!.amo(64, 4, 'minu', 2n); expect(b!.load(64, 4)).toBe(2n);
     expect(b!.load(68, 4)).toBe(1n);
   });
+  it('publishes DMA to every touched reservation granule and code page once', () => {
+    const memory = new WebAssembly.Memory({ initial: 2, maximum: 2, shared: true });
+    const generations = new Int32Array(new SharedArrayBuffer(4 * 32)), granules = new Int32Array(new SharedArrayBuffer(4 * 1024));
+    const a = new SharedHartMemory(memory, atomicModule(2), generations, granules), b = new SharedHartMemory(memory, atomicModule(2), generations, granules);
+    const bytes = Uint8Array.from({ length: 4100 }, (_, i) => i & 255);
+    b.lr(64 + 4096 + 8, 8);
+    a.dmaWrite(64 + 4090, bytes);
+    expect(b.sc(64 + 4096 + 8, 8, 1n)).toBe(false);
+    expect(b.load(64 + 4090, 1)).toBe(0n); expect(b.load(64 + 4096, 2)).toBe(6n | 7n << 8n);
+    expect([...generations.slice(0, 4)]).toEqual([1, 1, 0, 0]);
+    expect(granules[Math.floor((64 + 4090) / 128)]).toBe(1); expect(granules[Math.floor((64 + 4090 + 4099) / 128)]).toBe(1);
+    const out = new Uint8Array(4100); a.dmaRead(64 + 4090, out); expect(out).toEqual(bytes);
+    expect(() => a.dmaWrite(0, bytes)).toThrow(RangeError);
+  });
   it('rejects MMIO, misalignment and overflow before touching shared RAM', () => {
     const [a] = machine();
     for (const address of [0, 65, 65536, -8, NaN]) expect(() => a!.load(address, 8)).toThrow(RangeError);
