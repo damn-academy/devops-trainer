@@ -1,0 +1,173 @@
+{
+  "windows": [
+    {
+      "hart": 0,
+      "window": "config-to-readyz",
+      "firstMs": 74010.43500000238,
+      "lastMs": 195160.3900000155,
+      "metrics": 114,
+      "retiredMips": 16.41686521468196,
+      "jitShare": 0.927445004817486,
+      "compiled": 148702,
+      "evicted": 148339,
+      "evictedPerSecond": 1224.4247222376925,
+      "installedRange": [
+        11453,
+        16201
+      ]
+    },
+    {
+      "hart": 0,
+      "window": "readyz-loop",
+      "firstMs": 196160.96500000358,
+      "lastMs": 230379.38500002027,
+      "metrics": 35,
+      "retiredMips": 14.51226094015322,
+      "jitShare": 0.8866930834063518,
+      "compiled": 59725,
+      "evicted": 57623,
+      "evictedPerSecond": 1683.9760573390556,
+      "installedRange": [
+        12216,
+        16157
+      ]
+    },
+    {
+      "hart": 0,
+      "window": "after-readyz-end",
+      "firstMs": 231379.56000000238,
+      "lastMs": 699686.1750000119,
+      "metrics": 468,
+      "retiredMips": 21.550992460355904,
+      "jitShare": 0.9068390313740735,
+      "compiled": 615721,
+      "evicted": 615935,
+      "evictedPerSecond": 1315.238735203404,
+      "installedRange": [
+        11075,
+        16178
+      ]
+    },
+    {
+      "hart": 1,
+      "window": "config-to-readyz",
+      "firstMs": 73986.625,
+      "lastMs": 195482.07500001788,
+      "metrics": 122,
+      "retiredMips": 19.10913477829547,
+      "jitShare": 0.9239728452723842,
+      "compiled": 164383,
+      "evicted": 162149,
+      "evictedPerSecond": 1334.6096499908115,
+      "installedRange": [
+        11421,
+        15472
+      ]
+    },
+    {
+      "hart": 1,
+      "window": "readyz-loop",
+      "firstMs": 196482.2350000143,
+      "lastMs": 230491.84000000358,
+      "metrics": 35,
+      "retiredMips": 17.79022449687936,
+      "jitShare": 0.9015965922618598,
+      "compiled": 61758,
+      "evicted": 59258,
+      "evictedPerSecond": 1742.3901277306425,
+      "installedRange": [
+        11788,
+        15968
+      ]
+    },
+    {
+      "hart": 1,
+      "window": "after-readyz-end",
+      "firstMs": 231492.31000000238,
+      "lastMs": 699662.4500000179,
+      "metrics": 469,
+      "retiredMips": 21.32798880125005,
+      "jitShare": 0.9007991521688233,
+      "compiled": 591471,
+      "evicted": 591316,
+      "evictedPerSecond": 1263.0365533350341,
+      "installedRange": [
+        10899,
+        15934
+      ]
+    }
+  ],
+  "memory": {
+    "records": 23,
+    "accountedMiBRange": [
+      1622.3123168945312,
+      2027.854637145996
+    ],
+    "reserveMiB": 256,
+    "last": {
+      "type": "host-memory",
+      "ms": 690001.1450000107,
+      "budgetBytes": 2684354560,
+      "uaBytes": null,
+      "uaStatus": "SecurityError: Failed to execute 'measureUserAgentSpecificMemory' on 'Performance': performance.measureUserAgentSpecificMemory is not available.",
+      "shared": {
+        "ram": 1073807360,
+        "generations": 1048576,
+        "granules": 33619968
+      },
+      "perHart": [
+        {
+          "hart": 0,
+          "wasmMemoryBytes": 492437504,
+          "compiler": {
+            "compiled": 857165,
+            "queued": 0,
+            "inflight": 1,
+            "pending": 9,
+            "modules": 727,
+            "estimatedHostBytes": 216918016,
+            "hostBudget": 268435456,
+            "latencyMeanMs": 13.90586028361343,
+            "latencyMaxMs": 1108.5699999928474,
+            "cacheClears": 0,
+            "evicted": 844594,
+            "installed": 12571,
+            "installedLimit": 131072,
+            "installedWasmBytes": 21159168,
+            "installedWasmLimit": 134217728,
+            "tailCalls": true
+          }
+        },
+        {
+          "hart": 1,
+          "wasmMemoryBytes": 34930688,
+          "compiler": {
+            "compiled": 858150,
+            "queued": 0,
+            "inflight": 0,
+            "pending": 0,
+            "modules": 791,
+            "estimatedHostBytes": 212853072,
+            "hostBudget": 268435456,
+            "latencyMeanMs": 12.645488486873731,
+            "latencyMaxMs": 797.544999986887,
+            "cacheClears": 0,
+            "evicted": 846259,
+            "installed": 11891,
+            "installedLimit": 131072,
+            "installedWasmBytes": 20126762,
+            "installedWasmLimit": 134217728,
+            "tailCalls": true
+          }
+        }
+      ],
+      "consoleLength": 141704,
+      "consoleDropped": 0,
+      "metricsBytes": 18086858,
+      "metricsDropped": 0
+    },
+    "uaStatus": {
+      "SecurityError: Failed to execute 'measureUserAgentSpecificMemory' on 'Performance': performance.measureUserAgentSpecificMemory is not available.": 23
+    }
+  }
+}

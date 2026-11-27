@@ -1,0 +1,5331 @@
+{
+  "schema": "rv64.guest-profile-smp/v1",
+  "reports": [
+    {
+      "schema": "rv64.guest-profile/v1",
+      "hart": 0,
+      "weight": "instruction attempts",
+      "intervals": [
+        1000003
+      ],
+      "dropped": 0,
+      "timestampApproximation": false,
+      "metricsDropped": 0,
+      "consoleDropped": 0,
+      "categoryScope": "exclusive resolved leaf PCs; missing categories are not evidence of zero cost; idle samples are not WFI wall time",
+      "windows": [
+        {
+          "name": "restore-first-40s",
+          "startMs": 0,
+          "endMs": 40000,
+          "samples": 0,
+          "categories": {},
+          "unresolved": 0,
+          "processes": [],
+          "top50": []
+        },
+        {
+          "name": "first-get-pods",
+          "startMs": null,
+          "endMs": null,
+          "samples": 0,
+          "categories": {},
+          "unresolved": 0,
+          "processes": [],
+          "top50": []
+        },
+        {
+          "name": "pod-start",
+          "startMs": null,
+          "endMs": null,
+          "samples": 0,
+          "categories": {},
+          "unresolved": 0,
+          "processes": [],
+          "top50": []
+        },
+        {
+          "name": "config-to-readyz",
+          "startMs": 73019.79000002146,
+          "endMs": 195657.10500001907,
+          "samples": 2009,
+          "categories": {
+            "idle": {
+              "samples": 1,
+              "percent": 0.05
+            },
+            "kernel": {
+              "samples": 1355,
+              "percent": 67.446
+            },
+            "unresolved user": {
+              "samples": 653,
+              "percent": 32.504
+            }
+          },
+          "unresolved": 653,
+          "processes": [
+            [
+              "satp:80017000000854c3",
+              393
+            ],
+            [
+              "satp:8002700000087d1e",
+              266
+            ],
+            [
+              "satp:801a7000000856f0",
+              232
+            ],
+            [
+              "satp:8001100000083343",
+              231
+            ],
+            [
+              "satp:801fa000000855bb",
+              224
+            ],
+            [
+              "satp:8000e00000088366",
+              119
+            ],
+            [
+              "satp:80012000000833b8",
+              97
+            ],
+            [
+              "satp:801cb00000087d69",
+              30
+            ],
+            [
+              "satp:801e600000087d25",
+              28
+            ],
+            [
+              "satp:800a600000085665",
+              26
+            ],
+            [
+              "satp:801c7000000855ed",
+              25
+            ],
+            [
+              "satp:801f100000087d65",
+              24
+            ],
+            [
+              "satp:800320000008556a",
+              20
+            ],
+            [
+              "satp:801090000008550e",
+              19
+            ],
+            [
+              "satp:801fd00000087df7",
+              18
+            ],
+            [
+              "satp:8016200000087db5",
+              15
+            ],
+            [
+              "satp:80019000000833b1",
+              13
+            ],
+            [
+              "satp:80190000000855fc",
+              11
+            ],
+            [
+              "satp:8020c00000087d6d",
+              11
+            ],
+            [
+              "satp:801df00000087d4a",
+              9
+            ],
+            [
+              "satp:801f60000008560d",
+              9
+            ],
+            [
+              "satp:8020500000087d15",
+              6
+            ],
+            [
+              "satp:80204000000855cc",
+              6
+            ],
+            [
+              "satp:8010100000087d25",
+              5
+            ],
+            [
+              "satp:800160000008544c",
+              4
+            ],
+            [
+              "satp:8014b00000087d6e",
+              4
+            ],
+            [
+              "satp:8000800000088399",
+              3
+            ],
+            [
+              "satp:80151000000855b3",
+              3
+            ],
+            [
+              "satp:8015a00000087da9",
+              3
+            ],
+            [
+              "satp:801d100000087d55",
+              3
+            ],
+            [
+              "satp:801e1000000855b3",
+              3
+            ],
+            [
+              "satp:801f5000000855bd",
+              3
+            ],
+            [
+              "satp:801f800000087d46",
+              3
+            ],
+            [
+              "satp:8004a0000008339f",
+              2
+            ],
+            [
+              "satp:8004f0000008560d",
+              2
+            ],
+            [
+              "satp:8005b00000085628",
+              2
+            ],
+            [
+              "satp:8006b0000008562d",
+              2
+            ],
+            [
+              "satp:8007300000085657",
+              2
+            ],
+            [
+              "satp:800c9000000856af",
+              2
+            ],
+            [
+              "satp:800d5000000856d9",
+              2
+            ],
+            [
+              "satp:800de00000085641",
+              2
+            ],
+            [
+              "satp:800e6000000856eb",
+              2
+            ],
+            [
+              "satp:800ef00000085682",
+              2
+            ],
+            [
+              "satp:800f600000085655",
+              2
+            ],
+            [
+              "satp:800fb00000085664",
+              2
+            ],
+            [
+              "satp:8011b0000008550f",
+              2
+            ],
+            [
+              "satp:8013900000087da4",
+              2
+            ],
+            [
+              "satp:801610000008560a",
+              2
+            ],
+            [
+              "satp:80167000000855d9",
+              2
+            ],
+            [
+              "satp:8002000000085451",
+              2
+            ]
+          ],
+          "top50": [
+            {
+              "process": "satp:80017000000854c3",
+              "function": "memcpy",
+              "samples": 245,
+              "percent": 12.195
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "memcpy",
+              "samples": 117,
+              "percent": 5.824
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "memcpy",
+              "samples": 97,
+              "percent": 4.828
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "memcpy",
+              "samples": 21,
+              "percent": 1.045
+            },
+            {
+              "process": "satp:801cb00000087d69",
+              "function": "memcpy",
+              "samples": 19,
+              "percent": 0.946
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "format_decode",
+              "samples": 11,
+              "percent": 0.548
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__alloc_frozen_pages_noprof",
+              "samples": 10,
+              "percent": 0.498
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "number",
+              "samples": 10,
+              "percent": 0.498
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__rmqueue_pcplist",
+              "samples": 8,
+              "percent": 0.398
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "get_page_from_freelist",
+              "samples": 7,
+              "percent": 0.348
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "vsnprintf",
+              "samples": 7,
+              "percent": 0.348
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "get_page_from_freelist",
+              "samples": 6,
+              "percent": 0.299
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "memcpy",
+              "samples": 6,
+              "percent": 0.299
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "xas_load",
+              "samples": 6,
+              "percent": 0.299
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "psi_group_change",
+              "samples": 5,
+              "percent": 0.249
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__filemap_add_folio",
+              "samples": 5,
+              "percent": 0.249
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__schedule",
+              "samples": 5,
+              "percent": 0.249
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__sbi_ecall",
+              "samples": 5,
+              "percent": 0.249
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 5,
+              "percent": 0.249
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "rcu_note_context_switch",
+              "samples": 5,
+              "percent": 0.249
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "string",
+              "samples": 5,
+              "percent": 0.249
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "xas_load",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "mod_memcg_lruvec_state",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "rcu_sched_clock_irq",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "do_raw_spin_lock",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:800a600000085665",
+              "function": "memcpy",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "do_raw_spin_lock",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "psi_group_change",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "user:0x3f973b33a0",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "kallsyms_expand_symbol.constprop.0",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "seq_read_iter",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "psi_group_change",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "__schedule",
+              "samples": 4,
+              "percent": 0.199
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "get_page_from_freelist",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__alloc_frozen_pages_noprof",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__filemap_add_folio",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "xas_find_conflict",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__sbi_ecall",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "_raw_spin_trylock",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__free_frozen_pages",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__mod_lruvec_state",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "_raw_spin_trylock",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "xas_start",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__enqueue_entity",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "rcu_sched_clock_irq",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__update_load_avg_se",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "user:0x3f973b32ea",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "user:0x3f973c0a20",
+              "samples": 3,
+              "percent": 0.149
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "user:0x3f973c0a18",
+              "samples": 3,
+              "percent": 0.149
+            }
+          ]
+        },
+        {
+          "name": "readyz-loop",
+          "startMs": 195657.10500001907,
+          "endMs": 231126.51000002027,
+          "samples": 516,
+          "categories": {
+            "kernel": {
+              "samples": 287,
+              "percent": 55.62
+            },
+            "unresolved user": {
+              "samples": 229,
+              "percent": 44.38
+            }
+          },
+          "unresolved": 229,
+          "processes": [
+            [
+              "satp:8021400000087d69",
+              135
+            ],
+            [
+              "satp:8022d000000854dd",
+              74
+            ],
+            [
+              "satp:8001100000083343",
+              48
+            ],
+            [
+              "satp:80017000000854c3",
+              46
+            ],
+            [
+              "satp:8021a00000087d52",
+              45
+            ],
+            [
+              "satp:8000e00000088366",
+              37
+            ],
+            [
+              "satp:8022800000087da6",
+              23
+            ],
+            [
+              "satp:8020c00000087d6d",
+              17
+            ],
+            [
+              "satp:80204000000855cc",
+              11
+            ],
+            [
+              "satp:801fa000000855bb",
+              9
+            ],
+            [
+              "satp:8022100000087dba",
+              6
+            ],
+            [
+              "satp:8028f00000085642",
+              4
+            ],
+            [
+              "satp:8023e000000856ee",
+              3
+            ],
+            [
+              "satp:80260000000855f1",
+              3
+            ],
+            [
+              "satp:8028b00000085636",
+              3
+            ],
+            [
+              "satp:8021c00000087dc4",
+              2
+            ],
+            [
+              "satp:80265000000856d9",
+              2
+            ],
+            [
+              "satp:802860000008339f",
+              2
+            ],
+            [
+              "satp:8028c00000085453",
+              2
+            ],
+            [
+              "satp:802a500000087df6",
+              2
+            ],
+            [
+              "satp:802de00000085538",
+              2
+            ],
+            [
+              "satp:802ea00000087d45",
+              2
+            ],
+            [
+              "satp:8020f0000008560b",
+              1
+            ],
+            [
+              "satp:802110000008560b",
+              1
+            ],
+            [
+              "satp:80219000000883a1",
+              1
+            ],
+            [
+              "satp:8022000000087d90",
+              1
+            ],
+            [
+              "satp:80223000000855a7",
+              1
+            ],
+            [
+              "satp:80224000000855a9",
+              1
+            ],
+            [
+              "satp:8022500000087d91",
+              1
+            ],
+            [
+              "satp:8022b00000087d80",
+              1
+            ],
+            [
+              "satp:8023400000087d54",
+              1
+            ],
+            [
+              "satp:8024a000000854c8",
+              1
+            ],
+            [
+              "satp:8025000000085663",
+              1
+            ],
+            [
+              "satp:80253000000856f9",
+              1
+            ],
+            [
+              "satp:8025a00000087d7d",
+              1
+            ],
+            [
+              "satp:8026200000085465",
+              1
+            ],
+            [
+              "satp:80266000000856c3",
+              1
+            ],
+            [
+              "satp:8026900000085465",
+              1
+            ],
+            [
+              "satp:8026a0000008542a",
+              1
+            ],
+            [
+              "satp:8026c000000856e6",
+              1
+            ],
+            [
+              "satp:8026f00000085566",
+              1
+            ],
+            [
+              "satp:8027100000087d23",
+              1
+            ],
+            [
+              "satp:8028d00000085652",
+              1
+            ],
+            [
+              "satp:80290000000856bf",
+              1
+            ],
+            [
+              "satp:80012000000833b8",
+              1
+            ],
+            [
+              "satp:8029800000085582",
+              1
+            ],
+            [
+              "satp:8029a0000008339e",
+              1
+            ],
+            [
+              "satp:8029c000000855d8",
+              1
+            ],
+            [
+              "satp:8029b00000085618",
+              1
+            ],
+            [
+              "satp:802a000000087d4c",
+              1
+            ]
+          ],
+          "top50": [
+            {
+              "process": "satp:8021a00000087d52",
+              "function": "memcpy",
+              "samples": 26,
+              "percent": 5.039
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "memcpy",
+              "samples": 6,
+              "percent": 1.163
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "__update_load_avg_se",
+              "samples": 3,
+              "percent": 0.581
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "do_raw_spin_lock",
+              "samples": 3,
+              "percent": 0.581
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_load_avg",
+              "samples": 3,
+              "percent": 0.581
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "sched_clock",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "__enqueue_entity",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "psi_group_change",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "set_pte_range",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "__handle_mm_fault",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "unmap_page_range",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "__dequeue_entity",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "fallback_scalar_usercopy_sum_enabled",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "sched_clock",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8021a00000087d52",
+              "function": "__sbi_ecall",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "update_curr",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "rcu_sched_clock_irq",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "psi_group_change",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8022800000087da6",
+              "function": "__schedule",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "psi_task_switch",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8022d000000854dd",
+              "function": "mod_memcg_lruvec_state",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:8022d000000854dd",
+              "function": "user:0x3d734",
+              "samples": 2,
+              "percent": 0.388
+            },
+            {
+              "process": "satp:80204000000855cc",
+              "function": "psi_group_change",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020f0000008560b",
+              "function": "unmap_page_range",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "set_next_entity",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "user:0x7ee6c",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:80204000000855cc",
+              "function": "user:0x26c64",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "user:0x1689a",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "free_pages_and_swap_cache",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "user:0x831e2",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "lru_add",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "user:0x4c86c",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "__schedule",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "prepare_kill_siginfo",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x1a1684",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:80204000000855cc",
+              "function": "user:0x52d06",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "user:0x68d22",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "arch_dup_task_struct",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "switch_mm",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "user:0x7da26",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__calc_delta.constprop.0",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "memset",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_se",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "rcu_note_context_switch",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "__task_pid_nr_ns",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "user:0x4da00",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "__dequeue_entity",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "user:0x331f42",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "ktime_get_update_offsets_now",
+              "samples": 1,
+              "percent": 0.194
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "user:0x32c63c",
+              "samples": 1,
+              "percent": 0.194
+            }
+          ]
+        },
+        {
+          "name": "after-readyz-end",
+          "startMs": 231126.51000002027,
+          "endMs": 700001.4950000048,
+          "samples": 10085,
+          "categories": {
+            "idle": {
+              "samples": 2,
+              "percent": 0.02
+            },
+            "kernel": {
+              "samples": 3370,
+              "percent": 33.416
+            },
+            "unresolved user": {
+              "samples": 6713,
+              "percent": 66.564
+            }
+          },
+          "unresolved": 6713,
+          "processes": [
+            [
+              "satp:80017000000854c3",
+              2851
+            ],
+            [
+              "satp:8001100000083343",
+              1769
+            ],
+            [
+              "satp:80012000000833b8",
+              1502
+            ],
+            [
+              "satp:8000e00000088366",
+              290
+            ],
+            [
+              "satp:80916000000855a9",
+              289
+            ],
+            [
+              "satp:806f000000088165",
+              269
+            ],
+            [
+              "satp:8058d0000008339f",
+              258
+            ],
+            [
+              "satp:806ff0000008837c",
+              258
+            ],
+            [
+              "satp:8086200000087e29",
+              253
+            ],
+            [
+              "satp:804060000008569d",
+              221
+            ],
+            [
+              "satp:803dd000000855ab",
+              219
+            ],
+            [
+              "satp:809d700000087d0d",
+              185
+            ],
+            [
+              "satp:80404000000855bb",
+              145
+            ],
+            [
+              "satp:805760000008557e",
+              142
+            ],
+            [
+              "satp:8056b00000087d1d",
+              141
+            ],
+            [
+              "satp:8086600000087ccb",
+              132
+            ],
+            [
+              "satp:8022d000000854dd",
+              120
+            ],
+            [
+              "satp:803c900000087d9c",
+              106
+            ],
+            [
+              "satp:8040200000085661",
+              91
+            ],
+            [
+              "satp:8058900000085573",
+              66
+            ],
+            [
+              "satp:80019000000833b1",
+              40
+            ],
+            [
+              "satp:8040c00000085572",
+              38
+            ],
+            [
+              "satp:8030100000088341",
+              36
+            ],
+            [
+              "satp:803f9000000854d9",
+              23
+            ],
+            [
+              "satp:803e000000087d61",
+              14
+            ],
+            [
+              "satp:8002000000085451",
+              13
+            ],
+            [
+              "satp:803d700000087d69",
+              11
+            ],
+            [
+              "satp:808730000008568d",
+              11
+            ],
+            [
+              "satp:80701000000854c5",
+              10
+            ],
+            [
+              "satp:8040a00000088371",
+              9
+            ],
+            [
+              "satp:8058500000087d24",
+              9
+            ],
+            [
+              "satp:808bd00000087d24",
+              9
+            ],
+            [
+              "satp:8037c00000087d9c",
+              5
+            ],
+            [
+              "satp:806e100000087df3",
+              5
+            ],
+            [
+              "satp:802110000008560b",
+              4
+            ],
+            [
+              "satp:80377000000855bc",
+              3
+            ],
+            [
+              "satp:803f100000087d8c",
+              3
+            ],
+            [
+              "satp:8047900000087d2a",
+              3
+            ],
+            [
+              "satp:8051900000087df4",
+              3
+            ],
+            [
+              "satp:8069f0000008543d",
+              3
+            ],
+            [
+              "satp:8081e000000856b2",
+              3
+            ],
+            [
+              "satp:8098b0000008334e",
+              3
+            ],
+            [
+              "satp:8033b00000085666",
+              2
+            ],
+            [
+              "satp:803400000008339d",
+              2
+            ],
+            [
+              "satp:8036e0000008543f",
+              2
+            ],
+            [
+              "satp:803710000008568d",
+              2
+            ],
+            [
+              "satp:8037400000085592",
+              2
+            ],
+            [
+              "satp:8037e00000085450",
+              2
+            ],
+            [
+              "satp:803830000008556d",
+              2
+            ],
+            [
+              "satp:8039e000000856f2",
+              2
+            ]
+          ],
+          "top50": [
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_se",
+              "samples": 53,
+              "percent": 0.526
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "psi_group_change",
+              "samples": 47,
+              "percent": 0.466
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "memcpy",
+              "samples": 46,
+              "percent": 0.456
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_load_avg",
+              "samples": 41,
+              "percent": 0.407
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_se",
+              "samples": 38,
+              "percent": 0.377
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "rcu_sched_clock_irq",
+              "samples": 38,
+              "percent": 0.377
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__schedule",
+              "samples": 32,
+              "percent": 0.317
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "rcu_sched_clock_irq",
+              "samples": 31,
+              "percent": 0.307
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "update_load_avg",
+              "samples": 27,
+              "percent": 0.268
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a2",
+              "samples": 25,
+              "percent": 0.248
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c502c",
+              "samples": 25,
+              "percent": 0.248
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "psi_group_change",
+              "samples": 24,
+              "percent": 0.238
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1ec",
+              "samples": 24,
+              "percent": 0.238
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c505a",
+              "samples": 24,
+              "percent": 0.238
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50bc",
+              "samples": 24,
+              "percent": 0.238
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c508e",
+              "samples": 24,
+              "percent": 0.238
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50cc",
+              "samples": 23,
+              "percent": 0.228
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50ce",
+              "samples": 23,
+              "percent": 0.228
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_curr",
+              "samples": 22,
+              "percent": 0.218
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "psi_group_change",
+              "samples": 22,
+              "percent": 0.218
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1da",
+              "samples": 22,
+              "percent": 0.218
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5052",
+              "samples": 22,
+              "percent": 0.218
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5048",
+              "samples": 22,
+              "percent": 0.218
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5024",
+              "samples": 22,
+              "percent": 0.218
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c507c",
+              "samples": 22,
+              "percent": 0.218
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_se",
+              "samples": 21,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "update_load_avg",
+              "samples": 21,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f20a",
+              "samples": 21,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f220",
+              "samples": 21,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1be",
+              "samples": 21,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5056",
+              "samples": 21,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50c4",
+              "samples": 21,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f18c",
+              "samples": 20,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f212",
+              "samples": 20,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c506a",
+              "samples": 20,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5034",
+              "samples": 20,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a8",
+              "samples": 20,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__schedule",
+              "samples": 19,
+              "percent": 0.188
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 19,
+              "percent": 0.188
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f202",
+              "samples": 19,
+              "percent": 0.188
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f19c",
+              "samples": 19,
+              "percent": 0.188
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1a0",
+              "samples": 19,
+              "percent": 0.188
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1f0",
+              "samples": 19,
+              "percent": 0.188
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f21c",
+              "samples": 19,
+              "percent": 0.188
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c509a",
+              "samples": 19,
+              "percent": 0.188
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5096",
+              "samples": 19,
+              "percent": 0.188
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50c0",
+              "samples": 19,
+              "percent": 0.188
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "rcu_sched_clock_irq",
+              "samples": 18,
+              "percent": 0.178
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "reweight_entity",
+              "samples": 18,
+              "percent": 0.178
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1c2",
+              "samples": 18,
+              "percent": 0.178
+            }
+          ]
+        },
+        {
+          "name": "all-captured",
+          "startMs": 0,
+          "endMs": 700001.4950000048,
+          "samples": 12610,
+          "categories": {
+            "idle": {
+              "samples": 3,
+              "percent": 0.024
+            },
+            "kernel": {
+              "samples": 5012,
+              "percent": 39.746
+            },
+            "unresolved user": {
+              "samples": 7595,
+              "percent": 60.23
+            }
+          },
+          "unresolved": 7595,
+          "processes": [
+            [
+              "satp:80017000000854c3",
+              3290
+            ],
+            [
+              "satp:8001100000083343",
+              2048
+            ],
+            [
+              "satp:80012000000833b8",
+              1600
+            ],
+            [
+              "satp:8000e00000088366",
+              446
+            ],
+            [
+              "satp:80916000000855a9",
+              289
+            ],
+            [
+              "satp:806f000000088165",
+              269
+            ],
+            [
+              "satp:8002700000087d1e",
+              266
+            ],
+            [
+              "satp:8058d0000008339f",
+              258
+            ],
+            [
+              "satp:806ff0000008837c",
+              258
+            ],
+            [
+              "satp:8086200000087e29",
+              253
+            ],
+            [
+              "satp:801fa000000855bb",
+              233
+            ],
+            [
+              "satp:801a7000000856f0",
+              232
+            ],
+            [
+              "satp:804060000008569d",
+              221
+            ],
+            [
+              "satp:803dd000000855ab",
+              219
+            ],
+            [
+              "satp:8022d000000854dd",
+              194
+            ],
+            [
+              "satp:809d700000087d0d",
+              185
+            ],
+            [
+              "satp:80404000000855bb",
+              145
+            ],
+            [
+              "satp:805760000008557e",
+              142
+            ],
+            [
+              "satp:8056b00000087d1d",
+              141
+            ],
+            [
+              "satp:8021400000087d69",
+              135
+            ],
+            [
+              "satp:8086600000087ccb",
+              132
+            ],
+            [
+              "satp:803c900000087d9c",
+              106
+            ],
+            [
+              "satp:8040200000085661",
+              91
+            ],
+            [
+              "satp:8058900000085573",
+              66
+            ],
+            [
+              "satp:80019000000833b1",
+              54
+            ],
+            [
+              "satp:8021a00000087d52",
+              45
+            ],
+            [
+              "satp:8040c00000085572",
+              38
+            ],
+            [
+              "satp:8030100000088341",
+              36
+            ],
+            [
+              "satp:801cb00000087d69",
+              30
+            ],
+            [
+              "satp:801e600000087d25",
+              28
+            ],
+            [
+              "satp:8020c00000087d6d",
+              28
+            ],
+            [
+              "satp:800a600000085665",
+              26
+            ],
+            [
+              "satp:801c7000000855ed",
+              25
+            ],
+            [
+              "satp:801f100000087d65",
+              24
+            ],
+            [
+              "satp:8022800000087da6",
+              23
+            ],
+            [
+              "satp:803f9000000854d9",
+              23
+            ],
+            [
+              "satp:800320000008556a",
+              20
+            ],
+            [
+              "satp:801090000008550e",
+              19
+            ],
+            [
+              "satp:801fd00000087df7",
+              18
+            ],
+            [
+              "satp:80204000000855cc",
+              18
+            ],
+            [
+              "satp:8016200000087db5",
+              15
+            ],
+            [
+              "satp:8002000000085451",
+              15
+            ],
+            [
+              "satp:803e000000087d61",
+              14
+            ],
+            [
+              "satp:80190000000855fc",
+              11
+            ],
+            [
+              "satp:803d700000087d69",
+              11
+            ],
+            [
+              "satp:808730000008568d",
+              11
+            ],
+            [
+              "satp:80701000000854c5",
+              10
+            ],
+            [
+              "satp:801df00000087d4a",
+              9
+            ],
+            [
+              "satp:801f60000008560d",
+              9
+            ],
+            [
+              "satp:8040a00000088371",
+              9
+            ]
+          ],
+          "top50": [
+            {
+              "process": "satp:80017000000854c3",
+              "function": "memcpy",
+              "samples": 297,
+              "percent": 2.355
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "memcpy",
+              "samples": 126,
+              "percent": 0.999
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "memcpy",
+              "samples": 97,
+              "percent": 0.769
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_se",
+              "samples": 55,
+              "percent": 0.436
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "psi_group_change",
+              "samples": 51,
+              "percent": 0.404
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_load_avg",
+              "samples": 45,
+              "percent": 0.357
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_se",
+              "samples": 41,
+              "percent": 0.325
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "rcu_sched_clock_irq",
+              "samples": 38,
+              "percent": 0.301
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__schedule",
+              "samples": 37,
+              "percent": 0.293
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "rcu_sched_clock_irq",
+              "samples": 34,
+              "percent": 0.27
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "psi_group_change",
+              "samples": 29,
+              "percent": 0.23
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "update_load_avg",
+              "samples": 29,
+              "percent": 0.23
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "psi_group_change",
+              "samples": 26,
+              "percent": 0.206
+            },
+            {
+              "process": "satp:8021a00000087d52",
+              "function": "memcpy",
+              "samples": 26,
+              "percent": 0.206
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "memcpy",
+              "samples": 25,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a2",
+              "samples": 25,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c502c",
+              "samples": 25,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "update_load_avg",
+              "samples": 24,
+              "percent": 0.19
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1ec",
+              "samples": 24,
+              "percent": 0.19
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c505a",
+              "samples": 24,
+              "percent": 0.19
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50bc",
+              "samples": 24,
+              "percent": 0.19
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c508e",
+              "samples": 24,
+              "percent": 0.19
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "rcu_sched_clock_irq",
+              "samples": 23,
+              "percent": 0.182
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_se",
+              "samples": 23,
+              "percent": 0.182
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_curr",
+              "samples": 23,
+              "percent": 0.182
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50cc",
+              "samples": 23,
+              "percent": 0.182
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50ce",
+              "samples": 23,
+              "percent": 0.182
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 22,
+              "percent": 0.174
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 22,
+              "percent": 0.174
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1da",
+              "samples": 22,
+              "percent": 0.174
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5052",
+              "samples": 22,
+              "percent": 0.174
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5048",
+              "samples": 22,
+              "percent": 0.174
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5024",
+              "samples": 22,
+              "percent": 0.174
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c507c",
+              "samples": 22,
+              "percent": 0.174
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "do_raw_spin_lock",
+              "samples": 21,
+              "percent": 0.167
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "reweight_entity",
+              "samples": 21,
+              "percent": 0.167
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f20a",
+              "samples": 21,
+              "percent": 0.167
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f220",
+              "samples": 21,
+              "percent": 0.167
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1be",
+              "samples": 21,
+              "percent": 0.167
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5056",
+              "samples": 21,
+              "percent": 0.167
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50c4",
+              "samples": 21,
+              "percent": 0.167
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 20,
+              "percent": 0.159
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f18c",
+              "samples": 20,
+              "percent": 0.159
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f212",
+              "samples": 20,
+              "percent": 0.159
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c506a",
+              "samples": 20,
+              "percent": 0.159
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5034",
+              "samples": 20,
+              "percent": 0.159
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a8",
+              "samples": 20,
+              "percent": 0.159
+            },
+            {
+              "process": "satp:801cb00000087d69",
+              "function": "memcpy",
+              "samples": 19,
+              "percent": 0.151
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__calc_delta.constprop.0",
+              "samples": 19,
+              "percent": 0.151
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__schedule",
+              "samples": 19,
+              "percent": 0.151
+            }
+          ]
+        },
+        {
+          "name": "after-readyz",
+          "startMs": 195657.10500001907,
+          "endMs": 700001.4950000048,
+          "samples": 10601,
+          "categories": {
+            "idle": {
+              "samples": 2,
+              "percent": 0.019
+            },
+            "kernel": {
+              "samples": 3657,
+              "percent": 34.497
+            },
+            "unresolved user": {
+              "samples": 6942,
+              "percent": 65.484
+            }
+          },
+          "unresolved": 6942,
+          "processes": [
+            [
+              "satp:80017000000854c3",
+              2897
+            ],
+            [
+              "satp:8001100000083343",
+              1817
+            ],
+            [
+              "satp:80012000000833b8",
+              1503
+            ],
+            [
+              "satp:8000e00000088366",
+              327
+            ],
+            [
+              "satp:80916000000855a9",
+              289
+            ],
+            [
+              "satp:806f000000088165",
+              269
+            ],
+            [
+              "satp:8058d0000008339f",
+              258
+            ],
+            [
+              "satp:806ff0000008837c",
+              258
+            ],
+            [
+              "satp:8086200000087e29",
+              253
+            ],
+            [
+              "satp:804060000008569d",
+              221
+            ],
+            [
+              "satp:803dd000000855ab",
+              219
+            ],
+            [
+              "satp:8022d000000854dd",
+              194
+            ],
+            [
+              "satp:809d700000087d0d",
+              185
+            ],
+            [
+              "satp:80404000000855bb",
+              145
+            ],
+            [
+              "satp:805760000008557e",
+              142
+            ],
+            [
+              "satp:8056b00000087d1d",
+              141
+            ],
+            [
+              "satp:8021400000087d69",
+              135
+            ],
+            [
+              "satp:8086600000087ccb",
+              132
+            ],
+            [
+              "satp:803c900000087d9c",
+              106
+            ],
+            [
+              "satp:8040200000085661",
+              91
+            ],
+            [
+              "satp:8058900000085573",
+              66
+            ],
+            [
+              "satp:8021a00000087d52",
+              45
+            ],
+            [
+              "satp:80019000000833b1",
+              41
+            ],
+            [
+              "satp:8040c00000085572",
+              38
+            ],
+            [
+              "satp:8030100000088341",
+              36
+            ],
+            [
+              "satp:8022800000087da6",
+              23
+            ],
+            [
+              "satp:803f9000000854d9",
+              23
+            ],
+            [
+              "satp:8020c00000087d6d",
+              17
+            ],
+            [
+              "satp:803e000000087d61",
+              14
+            ],
+            [
+              "satp:8002000000085451",
+              13
+            ],
+            [
+              "satp:80204000000855cc",
+              12
+            ],
+            [
+              "satp:803d700000087d69",
+              11
+            ],
+            [
+              "satp:808730000008568d",
+              11
+            ],
+            [
+              "satp:80701000000854c5",
+              10
+            ],
+            [
+              "satp:801fa000000855bb",
+              9
+            ],
+            [
+              "satp:8040a00000088371",
+              9
+            ],
+            [
+              "satp:8058500000087d24",
+              9
+            ],
+            [
+              "satp:808bd00000087d24",
+              9
+            ],
+            [
+              "satp:8022100000087dba",
+              6
+            ],
+            [
+              "satp:802110000008560b",
+              5
+            ],
+            [
+              "satp:8037c00000087d9c",
+              5
+            ],
+            [
+              "satp:806e100000087df3",
+              5
+            ],
+            [
+              "satp:8028f00000085642",
+              4
+            ],
+            [
+              "satp:8023e000000856ee",
+              3
+            ],
+            [
+              "satp:80260000000855f1",
+              3
+            ],
+            [
+              "satp:8028b00000085636",
+              3
+            ],
+            [
+              "satp:80377000000855bc",
+              3
+            ],
+            [
+              "satp:803f100000087d8c",
+              3
+            ],
+            [
+              "satp:8047900000087d2a",
+              3
+            ],
+            [
+              "satp:8051900000087df4",
+              3
+            ]
+          ],
+          "top50": [
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_se",
+              "samples": 54,
+              "percent": 0.509
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "memcpy",
+              "samples": 52,
+              "percent": 0.491
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "psi_group_change",
+              "samples": 47,
+              "percent": 0.443
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_load_avg",
+              "samples": 44,
+              "percent": 0.415
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_se",
+              "samples": 38,
+              "percent": 0.358
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "rcu_sched_clock_irq",
+              "samples": 38,
+              "percent": 0.358
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "rcu_sched_clock_irq",
+              "samples": 32,
+              "percent": 0.302
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__schedule",
+              "samples": 32,
+              "percent": 0.302
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "update_load_avg",
+              "samples": 27,
+              "percent": 0.255
+            },
+            {
+              "process": "satp:8021a00000087d52",
+              "function": "memcpy",
+              "samples": 26,
+              "percent": 0.245
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a2",
+              "samples": 25,
+              "percent": 0.236
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c502c",
+              "samples": 25,
+              "percent": 0.236
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "psi_group_change",
+              "samples": 24,
+              "percent": 0.226
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "psi_group_change",
+              "samples": 24,
+              "percent": 0.226
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1ec",
+              "samples": 24,
+              "percent": 0.226
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c505a",
+              "samples": 24,
+              "percent": 0.226
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50bc",
+              "samples": 24,
+              "percent": 0.226
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c508e",
+              "samples": 24,
+              "percent": 0.226
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_curr",
+              "samples": 23,
+              "percent": 0.217
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50cc",
+              "samples": 23,
+              "percent": 0.217
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50ce",
+              "samples": 23,
+              "percent": 0.217
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_se",
+              "samples": 22,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "update_load_avg",
+              "samples": 22,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1da",
+              "samples": 22,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5052",
+              "samples": 22,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5048",
+              "samples": 22,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5024",
+              "samples": 22,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c507c",
+              "samples": 22,
+              "percent": 0.208
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f20a",
+              "samples": 21,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f220",
+              "samples": 21,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1be",
+              "samples": 21,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5056",
+              "samples": 21,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50c4",
+              "samples": 21,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "rcu_sched_clock_irq",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f18c",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f212",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c506a",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5034",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a8",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "reweight_entity",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__schedule",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f202",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f19c",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1a0",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1f0",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f21c",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c509a",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5096",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50c0",
+              "samples": 19,
+              "percent": 0.179
+            }
+          ]
+        }
+      ],
+      "harts": 2
+    },
+    {
+      "schema": "rv64.guest-profile/v1",
+      "hart": 1,
+      "weight": "instruction attempts",
+      "intervals": [
+        1000003
+      ],
+      "dropped": 0,
+      "timestampApproximation": false,
+      "metricsDropped": 0,
+      "consoleDropped": 0,
+      "categoryScope": "exclusive resolved leaf PCs; missing categories are not evidence of zero cost; idle samples are not WFI wall time",
+      "windows": [
+        {
+          "name": "restore-first-40s",
+          "startMs": 0,
+          "endMs": 40000,
+          "samples": 0,
+          "categories": {},
+          "unresolved": 0,
+          "processes": [],
+          "top50": []
+        },
+        {
+          "name": "first-get-pods",
+          "startMs": null,
+          "endMs": null,
+          "samples": 0,
+          "categories": {},
+          "unresolved": 0,
+          "processes": [],
+          "top50": []
+        },
+        {
+          "name": "pod-start",
+          "startMs": null,
+          "endMs": null,
+          "samples": 0,
+          "categories": {},
+          "unresolved": 0,
+          "processes": [],
+          "top50": []
+        },
+        {
+          "name": "config-to-readyz",
+          "startMs": 73019.79000002146,
+          "endMs": 195657.10500001907,
+          "samples": 2333,
+          "categories": {
+            "idle": {
+              "samples": 1,
+              "percent": 0.043
+            },
+            "kernel": {
+              "samples": 1675,
+              "percent": 71.796
+            },
+            "unresolved user": {
+              "samples": 657,
+              "percent": 28.161
+            }
+          },
+          "unresolved": 657,
+          "processes": [
+            [
+              "satp:8002700000087d1e",
+              525
+            ],
+            [
+              "satp:80017000000854c3",
+              440
+            ],
+            [
+              "satp:8001100000083343",
+              245
+            ],
+            [
+              "satp:8000e00000088366",
+              210
+            ],
+            [
+              "satp:801a7000000856f0",
+              199
+            ],
+            [
+              "satp:80012000000833b8",
+              134
+            ],
+            [
+              "satp:801fa000000855bb",
+              77
+            ],
+            [
+              "satp:80204000000855cc",
+              64
+            ],
+            [
+              "satp:800320000008556a",
+              39
+            ],
+            [
+              "satp:8020500000087d15",
+              31
+            ],
+            [
+              "satp:801df00000087d4a",
+              27
+            ],
+            [
+              "satp:800a600000085665",
+              25
+            ],
+            [
+              "satp:801f60000008560d",
+              20
+            ],
+            [
+              "satp:8016200000087db5",
+              17
+            ],
+            [
+              "satp:801090000008550e",
+              16
+            ],
+            [
+              "satp:801c7000000855ed",
+              16
+            ],
+            [
+              "satp:800bb00000087d14",
+              14
+            ],
+            [
+              "satp:80019000000833b1",
+              13
+            ],
+            [
+              "satp:801fd00000087df7",
+              11
+            ],
+            [
+              "satp:8002100000087cfc",
+              10
+            ],
+            [
+              "satp:801cb00000087d69",
+              10
+            ],
+            [
+              "satp:80085000000855db",
+              6
+            ],
+            [
+              "satp:801e600000087d25",
+              6
+            ],
+            [
+              "satp:8016e00000087d49",
+              4
+            ],
+            [
+              "satp:8017300000085509",
+              4
+            ],
+            [
+              "satp:8010000000085463",
+              3
+            ],
+            [
+              "satp:8013f00000087d92",
+              3
+            ],
+            [
+              "satp:8015000000087d8b",
+              3
+            ],
+            [
+              "satp:801a600000087d43",
+              3
+            ],
+            [
+              "satp:8000800000088399",
+              2
+            ],
+            [
+              "satp:800160000008544c",
+              2
+            ],
+            [
+              "satp:8002000000085451",
+              2
+            ],
+            [
+              "satp:80029000000855c7",
+              2
+            ],
+            [
+              "satp:8002c00000085592",
+              2
+            ],
+            [
+              "satp:80048000000855c5",
+              2
+            ],
+            [
+              "satp:8004b00000085606",
+              2
+            ],
+            [
+              "satp:8004e000000855d4",
+              2
+            ],
+            [
+              "satp:8006700000085546",
+              2
+            ],
+            [
+              "satp:80074000000855db",
+              2
+            ],
+            [
+              "satp:8009300000085642",
+              2
+            ],
+            [
+              "satp:800a5000000855cc",
+              2
+            ],
+            [
+              "satp:800b30000008542b",
+              2
+            ],
+            [
+              "satp:800b9000000856b8",
+              2
+            ],
+            [
+              "satp:800c50000008563b",
+              2
+            ],
+            [
+              "satp:800ce000000856c0",
+              2
+            ],
+            [
+              "satp:800e70000008545b",
+              2
+            ],
+            [
+              "satp:800f700000087d20",
+              2
+            ],
+            [
+              "satp:8010600000085585",
+              2
+            ],
+            [
+              "satp:8011300000085462",
+              2
+            ],
+            [
+              "satp:8011800000085585",
+              2
+            ]
+          ],
+          "top50": [
+            {
+              "process": "satp:80017000000854c3",
+              "function": "memcpy",
+              "samples": 270,
+              "percent": 11.573
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "memcpy",
+              "samples": 164,
+              "percent": 7.03
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "memcpy",
+              "samples": 104,
+              "percent": 4.458
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "do_raw_spin_lock",
+              "samples": 42,
+              "percent": 1.8
+            },
+            {
+              "process": "satp:80204000000855cc",
+              "function": "memcpy",
+              "samples": 42,
+              "percent": 1.8
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "do_raw_spin_lock",
+              "samples": 32,
+              "percent": 1.372
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "do_raw_spin_lock",
+              "samples": 28,
+              "percent": 1.2
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "memcpy",
+              "samples": 23,
+              "percent": 0.986
+            },
+            {
+              "process": "satp:800bb00000087d14",
+              "function": "do_raw_spin_lock",
+              "samples": 14,
+              "percent": 0.6
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "do_raw_spin_lock",
+              "samples": 10,
+              "percent": 0.429
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "kallsyms_expand_symbol.constprop.0",
+              "samples": 10,
+              "percent": 0.429
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "format_decode",
+              "samples": 10,
+              "percent": 0.429
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_se",
+              "samples": 8,
+              "percent": 0.343
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "get_page_from_freelist",
+              "samples": 7,
+              "percent": 0.3
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "number",
+              "samples": 7,
+              "percent": 0.3
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "mod_memcg_lruvec_state",
+              "samples": 6,
+              "percent": 0.257
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "memcpy",
+              "samples": 6,
+              "percent": 0.257
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__free_frozen_pages",
+              "samples": 6,
+              "percent": 0.257
+            },
+            {
+              "process": "satp:800320000008556a",
+              "function": "do_mpage_readpage",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__sbi_ecall",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "get_page_from_freelist",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__dequeue_entity",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_se",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "update_curr",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "read_indexes",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "__schedule",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "vsnprintf",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:801cb00000087d69",
+              "function": "memcpy",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_se",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:8020500000087d15",
+              "function": "do_raw_spin_lock",
+              "samples": 5,
+              "percent": 0.214
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__enqueue_entity",
+              "samples": 4,
+              "percent": 0.171
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "xa_load",
+              "samples": 4,
+              "percent": 0.171
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "do_raw_spin_lock",
+              "samples": 4,
+              "percent": 0.171
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__update_load_avg_se",
+              "samples": 4,
+              "percent": 0.171
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "user:0x3f973c0430",
+              "samples": 4,
+              "percent": 0.171
+            },
+            {
+              "process": "satp:801a7000000856f0",
+              "function": "string",
+              "samples": 4,
+              "percent": 0.171
+            },
+            {
+              "process": "satp:801df00000087d4a",
+              "function": "memcpy",
+              "samples": 4,
+              "percent": 0.171
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "update_se",
+              "samples": 4,
+              "percent": 0.171
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "xas_store",
+              "samples": 3,
+              "percent": 0.129
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "xas_store",
+              "samples": 3,
+              "percent": 0.129
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__filemap_add_folio",
+              "samples": 3,
+              "percent": 0.129
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__free_frozen_pages",
+              "samples": 3,
+              "percent": 0.129
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__rmqueue_pcplist",
+              "samples": 3,
+              "percent": 0.129
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "__update_load_avg_se",
+              "samples": 3,
+              "percent": 0.129
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "psi_flags_change",
+              "samples": 3,
+              "percent": 0.129
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "select_task_rq_fair",
+              "samples": 3,
+              "percent": 0.129
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "psi_group_change",
+              "samples": 3,
+              "percent": 0.129
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "__schedule",
+              "samples": 3,
+              "percent": 0.129
+            }
+          ]
+        },
+        {
+          "name": "readyz-loop",
+          "startMs": 195657.10500001907,
+          "endMs": 231126.51000002027,
+          "samples": 626,
+          "categories": {
+            "kernel": {
+              "samples": 334,
+              "percent": 53.355
+            },
+            "unresolved user": {
+              "samples": 292,
+              "percent": 46.645
+            }
+          },
+          "unresolved": 292,
+          "processes": [
+            [
+              "satp:8021400000087d69",
+              223
+            ],
+            [
+              "satp:8000e00000088366",
+              67
+            ],
+            [
+              "satp:8001100000083343",
+              35
+            ],
+            [
+              "satp:8021a00000087d52",
+              34
+            ],
+            [
+              "satp:801fa000000855bb",
+              33
+            ],
+            [
+              "satp:80017000000854c3",
+              32
+            ],
+            [
+              "satp:8028b00000085636",
+              31
+            ],
+            [
+              "satp:8022d000000854dd",
+              29
+            ],
+            [
+              "satp:8022100000087dba",
+              19
+            ],
+            [
+              "satp:8022800000087da6",
+              13
+            ],
+            [
+              "satp:8020c00000087d6d",
+              12
+            ],
+            [
+              "satp:8021500000087d12",
+              10
+            ],
+            [
+              "satp:80204000000855cc",
+              8
+            ],
+            [
+              "satp:80019000000833b1",
+              8
+            ],
+            [
+              "satp:80012000000833b8",
+              4
+            ],
+            [
+              "satp:802320000008558c",
+              3
+            ],
+            [
+              "satp:80280000000855bf",
+              3
+            ],
+            [
+              "satp:802c700000087d14",
+              3
+            ],
+            [
+              "satp:8021000000087d87",
+              2
+            ],
+            [
+              "satp:80254000000856f1",
+              2
+            ],
+            [
+              "satp:8025900000085467",
+              2
+            ],
+            [
+              "satp:802640000008565d",
+              2
+            ],
+            [
+              "satp:802960000008566f",
+              2
+            ],
+            [
+              "satp:802b60000008568d",
+              2
+            ],
+            [
+              "satp:802dd0000008564e",
+              2
+            ],
+            [
+              "satp:802e3000000855e2",
+              2
+            ],
+            [
+              "satp:80217000000854dd",
+              1
+            ],
+            [
+              "satp:8000800000088399",
+              1
+            ],
+            [
+              "satp:8021e00000087d61",
+              1
+            ],
+            [
+              "satp:8022700000085583",
+              1
+            ],
+            [
+              "satp:8023500000085677",
+              1
+            ],
+            [
+              "satp:8023800000085705",
+              1
+            ],
+            [
+              "satp:8023900000085709",
+              1
+            ],
+            [
+              "satp:8023d0000008565c",
+              1
+            ],
+            [
+              "satp:8023f0000008568b",
+              1
+            ],
+            [
+              "satp:80246000000856e5",
+              1
+            ],
+            [
+              "satp:80248000000856ea",
+              1
+            ],
+            [
+              "satp:802440000008568b",
+              1
+            ],
+            [
+              "satp:8024f0000008565f",
+              1
+            ],
+            [
+              "satp:802520000008544f",
+              1
+            ],
+            [
+              "satp:8025000000085663",
+              1
+            ],
+            [
+              "satp:8002100000087cfc",
+              1
+            ],
+            [
+              "satp:8025e000000856cc",
+              1
+            ],
+            [
+              "satp:8026b00000087d74",
+              1
+            ],
+            [
+              "satp:80272000000856cb",
+              1
+            ],
+            [
+              "satp:802750000008553b",
+              1
+            ],
+            [
+              "satp:80274000000856aa",
+              1
+            ],
+            [
+              "satp:80279000000856c6",
+              1
+            ],
+            [
+              "satp:8027a000000856ad",
+              1
+            ],
+            [
+              "satp:8027c00000087dc2",
+              1
+            ]
+          ],
+          "top50": [
+            {
+              "process": "satp:8021a00000087d52",
+              "function": "memcpy",
+              "samples": 18,
+              "percent": 2.875
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 5,
+              "percent": 0.799
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "memcpy",
+              "samples": 3,
+              "percent": 0.479
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "__schedule",
+              "samples": 3,
+              "percent": 0.479
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "user:0x2ddb16",
+              "samples": 3,
+              "percent": 0.479
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "user:0x2ddae4",
+              "samples": 3,
+              "percent": 0.479
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "user:0x2ddaec",
+              "samples": 3,
+              "percent": 0.479
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "user:0x1975f8",
+              "samples": 3,
+              "percent": 0.479
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "psi_task_switch",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_curr",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "user:0x7f06a",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "do_raw_spin_lock",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8020c00000087d6d",
+              "function": "do_raw_spin_lock",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "place_entity",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "__update_load_avg_se",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "unmap_page_range",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "mod_memcg_lruvec_state",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "mod_memcg_lruvec_state",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8021a00000087d52",
+              "function": "_raw_spin_trylock",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "memcpy",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8022100000087dba",
+              "function": "folio_add_file_rmap_ptes",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "record_times",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "try_to_wake_up",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__enqueue_entity",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "vruntime_eligible",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "user:0x2864e",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "user:0x3d73a",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8021a00000087d52",
+              "function": "update_load_avg",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "do_raw_spin_lock",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "user:0x2ddace",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:80019000000833b1",
+              "function": "__update_load_avg_se",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8022d000000854dd",
+              "function": "__update_load_avg_se",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8021400000087d69",
+              "function": "psi_group_change",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "psi_group_change",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8028b00000085636",
+              "function": "__enqueue_entity",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:80204000000855cc",
+              "function": "__dequeue_entity",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "free_frozen_page_commit",
+              "samples": 2,
+              "percent": 0.319
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "ret_from_exception",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:8021000000087d87",
+              "function": "memcpy",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:8021000000087d87",
+              "function": "user:0x3fbf3934f2",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "dl_server_update",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "user:0x18d908",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "update_rq_clock",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "user:0x11bfc",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:8021500000087d12",
+              "function": "get_cpu_cacheinfo",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:8021500000087d12",
+              "function": "user:0x3f9f635446",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "user:0x21b94",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:801fa000000855bb",
+              "function": "sched_clock",
+              "samples": 1,
+              "percent": 0.16
+            },
+            {
+              "process": "satp:80204000000855cc",
+              "function": "user:0x27fc6",
+              "samples": 1,
+              "percent": 0.16
+            }
+          ]
+        },
+        {
+          "name": "after-readyz-end",
+          "startMs": 231126.51000002027,
+          "endMs": 700001.4950000048,
+          "samples": 9979,
+          "categories": {
+            "kernel": {
+              "samples": 3647,
+              "percent": 36.547
+            },
+            "unresolved user": {
+              "samples": 6332,
+              "percent": 63.453
+            }
+          },
+          "unresolved": 6332,
+          "processes": [
+            [
+              "satp:80017000000854c3",
+              3110
+            ],
+            [
+              "satp:80012000000833b8",
+              1865
+            ],
+            [
+              "satp:8001100000083343",
+              1759
+            ],
+            [
+              "satp:8040c00000085572",
+              324
+            ],
+            [
+              "satp:8000e00000088366",
+              272
+            ],
+            [
+              "satp:8058900000085573",
+              241
+            ],
+            [
+              "satp:8056b00000087d1d",
+              212
+            ],
+            [
+              "satp:8086600000087ccb",
+              184
+            ],
+            [
+              "satp:8022d000000854dd",
+              144
+            ],
+            [
+              "satp:809d700000087d0d",
+              142
+            ],
+            [
+              "satp:803dd000000855ab",
+              136
+            ],
+            [
+              "satp:80404000000855bb",
+              136
+            ],
+            [
+              "satp:803c900000087d9c",
+              104
+            ],
+            [
+              "satp:804060000008569d",
+              103
+            ],
+            [
+              "satp:8058d0000008339f",
+              88
+            ],
+            [
+              "satp:805760000008557e",
+              86
+            ],
+            [
+              "satp:806ff0000008837c",
+              82
+            ],
+            [
+              "satp:8040200000085661",
+              75
+            ],
+            [
+              "satp:80916000000855a9",
+              72
+            ],
+            [
+              "satp:806f000000088165",
+              50
+            ],
+            [
+              "satp:80019000000833b1",
+              45
+            ],
+            [
+              "satp:8086200000087e29",
+              41
+            ],
+            [
+              "satp:8037c00000087d9c",
+              34
+            ],
+            [
+              "satp:803ca00000087d7c",
+              31
+            ],
+            [
+              "satp:803f20000008339e",
+              31
+            ],
+            [
+              "satp:803d300000087d41",
+              25
+            ],
+            [
+              "satp:803e000000087d61",
+              18
+            ],
+            [
+              "satp:8002000000085451",
+              11
+            ],
+            [
+              "satp:803bc0000008339e",
+              9
+            ],
+            [
+              "satp:8065f00000088325",
+              9
+            ],
+            [
+              "satp:809e4000000856de",
+              9
+            ],
+            [
+              "satp:8056900000087d0d",
+              8
+            ],
+            [
+              "satp:8002100000087cfc",
+              7
+            ],
+            [
+              "satp:809cc00000087d0d",
+              7
+            ],
+            [
+              "satp:8000800000088399",
+              6
+            ],
+            [
+              "satp:8085300000085680",
+              6
+            ],
+            [
+              "satp:8085700000085703",
+              6
+            ],
+            [
+              "satp:809c800000087da1",
+              6
+            ],
+            [
+              "satp:8030100000088341",
+              5
+            ],
+            [
+              "satp:806e500000088371",
+              5
+            ],
+            [
+              "satp:803cc0000008544f",
+              4
+            ],
+            [
+              "satp:805650000008567f",
+              4
+            ],
+            [
+              "satp:8033400000087da5",
+              3
+            ],
+            [
+              "satp:803a200000087d93",
+              3
+            ],
+            [
+              "satp:803b60000008553a",
+              3
+            ],
+            [
+              "satp:803f9000000854d9",
+              3
+            ],
+            [
+              "satp:804a600000085583",
+              3
+            ],
+            [
+              "satp:804cf00000087d66",
+              3
+            ],
+            [
+              "satp:8030b00000085582",
+              2
+            ],
+            [
+              "satp:8031700000085590",
+              2
+            ]
+          ],
+          "top50": [
+            {
+              "process": "satp:80017000000854c3",
+              "function": "memcpy",
+              "samples": 67,
+              "percent": 0.671
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "psi_group_change",
+              "samples": 62,
+              "percent": 0.621
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 60,
+              "percent": 0.601
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 55,
+              "percent": 0.551
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_se",
+              "samples": 52,
+              "percent": 0.521
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_se",
+              "samples": 50,
+              "percent": 0.501
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_load_avg",
+              "samples": 41,
+              "percent": 0.411
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_se",
+              "samples": 36,
+              "percent": 0.361
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__schedule",
+              "samples": 36,
+              "percent": 0.361
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "psi_group_change",
+              "samples": 36,
+              "percent": 0.361
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a8",
+              "samples": 30,
+              "percent": 0.301
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50ac",
+              "samples": 29,
+              "percent": 0.291
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 28,
+              "percent": 0.281
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "update_load_avg",
+              "samples": 28,
+              "percent": 0.281
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50bc",
+              "samples": 27,
+              "percent": 0.271
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a6",
+              "samples": 27,
+              "percent": 0.271
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "psi_group_change",
+              "samples": 25,
+              "percent": 0.251
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "fallback_scalar_usercopy_sum_enabled",
+              "samples": 24,
+              "percent": 0.241
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5048",
+              "samples": 24,
+              "percent": 0.241
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1da",
+              "samples": 23,
+              "percent": 0.23
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f230",
+              "samples": 23,
+              "percent": 0.23
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50ce",
+              "samples": 23,
+              "percent": 0.23
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c507c",
+              "samples": 23,
+              "percent": 0.23
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5066",
+              "samples": 23,
+              "percent": 0.23
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5084",
+              "samples": 23,
+              "percent": 0.23
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "update_curr",
+              "samples": 22,
+              "percent": 0.22
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_se",
+              "samples": 22,
+              "percent": 0.22
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1b4",
+              "samples": 22,
+              "percent": 0.22
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5038",
+              "samples": 22,
+              "percent": 0.22
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5052",
+              "samples": 22,
+              "percent": 0.22
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50c0",
+              "samples": 22,
+              "percent": 0.22
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5096",
+              "samples": 22,
+              "percent": 0.22
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5030",
+              "samples": 22,
+              "percent": 0.22
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "sched_clock",
+              "samples": 21,
+              "percent": 0.21
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c503c",
+              "samples": 21,
+              "percent": 0.21
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5028",
+              "samples": 21,
+              "percent": 0.21
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f23c",
+              "samples": 20,
+              "percent": 0.2
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f212",
+              "samples": 20,
+              "percent": 0.2
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1e4",
+              "samples": 20,
+              "percent": 0.2
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1b0",
+              "samples": 20,
+              "percent": 0.2
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5080",
+              "samples": 20,
+              "percent": 0.2
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5074",
+              "samples": 20,
+              "percent": 0.2
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5044",
+              "samples": 20,
+              "percent": 0.2
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5056",
+              "samples": 20,
+              "percent": 0.2
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f202",
+              "samples": 19,
+              "percent": 0.19
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1c2",
+              "samples": 19,
+              "percent": 0.19
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c509e",
+              "samples": 19,
+              "percent": 0.19
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5034",
+              "samples": 19,
+              "percent": 0.19
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c504c",
+              "samples": 19,
+              "percent": 0.19
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c504e",
+              "samples": 19,
+              "percent": 0.19
+            }
+          ]
+        },
+        {
+          "name": "all-captured",
+          "startMs": 0,
+          "endMs": 700001.4950000048,
+          "samples": 12938,
+          "categories": {
+            "idle": {
+              "samples": 1,
+              "percent": 0.008
+            },
+            "kernel": {
+              "samples": 5656,
+              "percent": 43.716
+            },
+            "unresolved user": {
+              "samples": 7281,
+              "percent": 56.276
+            }
+          },
+          "unresolved": 7281,
+          "processes": [
+            [
+              "satp:80017000000854c3",
+              3582
+            ],
+            [
+              "satp:8001100000083343",
+              2039
+            ],
+            [
+              "satp:80012000000833b8",
+              2003
+            ],
+            [
+              "satp:8000e00000088366",
+              549
+            ],
+            [
+              "satp:8002700000087d1e",
+              525
+            ],
+            [
+              "satp:8040c00000085572",
+              324
+            ],
+            [
+              "satp:8058900000085573",
+              241
+            ],
+            [
+              "satp:8021400000087d69",
+              223
+            ],
+            [
+              "satp:8056b00000087d1d",
+              212
+            ],
+            [
+              "satp:801a7000000856f0",
+              199
+            ],
+            [
+              "satp:8086600000087ccb",
+              184
+            ],
+            [
+              "satp:8022d000000854dd",
+              173
+            ],
+            [
+              "satp:809d700000087d0d",
+              142
+            ],
+            [
+              "satp:803dd000000855ab",
+              136
+            ],
+            [
+              "satp:80404000000855bb",
+              136
+            ],
+            [
+              "satp:801fa000000855bb",
+              110
+            ],
+            [
+              "satp:803c900000087d9c",
+              104
+            ],
+            [
+              "satp:804060000008569d",
+              103
+            ],
+            [
+              "satp:8058d0000008339f",
+              88
+            ],
+            [
+              "satp:805760000008557e",
+              86
+            ],
+            [
+              "satp:806ff0000008837c",
+              82
+            ],
+            [
+              "satp:8040200000085661",
+              75
+            ],
+            [
+              "satp:80204000000855cc",
+              73
+            ],
+            [
+              "satp:80916000000855a9",
+              72
+            ],
+            [
+              "satp:80019000000833b1",
+              66
+            ],
+            [
+              "satp:806f000000088165",
+              50
+            ],
+            [
+              "satp:8086200000087e29",
+              41
+            ],
+            [
+              "satp:800320000008556a",
+              39
+            ],
+            [
+              "satp:8021a00000087d52",
+              34
+            ],
+            [
+              "satp:8037c00000087d9c",
+              34
+            ],
+            [
+              "satp:8020500000087d15",
+              31
+            ],
+            [
+              "satp:8028b00000085636",
+              31
+            ],
+            [
+              "satp:803ca00000087d7c",
+              31
+            ],
+            [
+              "satp:803f20000008339e",
+              31
+            ],
+            [
+              "satp:801df00000087d4a",
+              27
+            ],
+            [
+              "satp:800a600000085665",
+              25
+            ],
+            [
+              "satp:803d300000087d41",
+              25
+            ],
+            [
+              "satp:801f60000008560d",
+              20
+            ],
+            [
+              "satp:8022100000087dba",
+              19
+            ],
+            [
+              "satp:8002100000087cfc",
+              18
+            ],
+            [
+              "satp:803e000000087d61",
+              18
+            ],
+            [
+              "satp:8016200000087db5",
+              17
+            ],
+            [
+              "satp:801090000008550e",
+              16
+            ],
+            [
+              "satp:801c7000000855ed",
+              16
+            ],
+            [
+              "satp:800bb00000087d14",
+              14
+            ],
+            [
+              "satp:8002000000085451",
+              13
+            ],
+            [
+              "satp:8022800000087da6",
+              13
+            ],
+            [
+              "satp:8020c00000087d6d",
+              12
+            ],
+            [
+              "satp:801fd00000087df7",
+              11
+            ],
+            [
+              "satp:801cb00000087d69",
+              10
+            ]
+          ],
+          "top50": [
+            {
+              "process": "satp:80017000000854c3",
+              "function": "memcpy",
+              "samples": 340,
+              "percent": 2.628
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "memcpy",
+              "samples": 164,
+              "percent": 1.268
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "memcpy",
+              "samples": 109,
+              "percent": 0.842
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "psi_group_change",
+              "samples": 64,
+              "percent": 0.495
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 61,
+              "percent": 0.471
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 58,
+              "percent": 0.448
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_se",
+              "samples": 58,
+              "percent": 0.448
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_se",
+              "samples": 55,
+              "percent": 0.425
+            },
+            {
+              "process": "satp:8000e00000088366",
+              "function": "do_raw_spin_lock",
+              "samples": 46,
+              "percent": 0.356
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_se",
+              "samples": 44,
+              "percent": 0.34
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "do_raw_spin_lock",
+              "samples": 44,
+              "percent": 0.34
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_load_avg",
+              "samples": 43,
+              "percent": 0.332
+            },
+            {
+              "process": "satp:80204000000855cc",
+              "function": "memcpy",
+              "samples": 43,
+              "percent": 0.332
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__schedule",
+              "samples": 39,
+              "percent": 0.301
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "psi_group_change",
+              "samples": 37,
+              "percent": 0.286
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 34,
+              "percent": 0.263
+            },
+            {
+              "process": "satp:8002700000087d1e",
+              "function": "do_raw_spin_lock",
+              "samples": 32,
+              "percent": 0.247
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "update_load_avg",
+              "samples": 30,
+              "percent": 0.232
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a8",
+              "samples": 30,
+              "percent": 0.232
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50ac",
+              "samples": 29,
+              "percent": 0.224
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "psi_group_change",
+              "samples": 28,
+              "percent": 0.216
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "update_curr",
+              "samples": 27,
+              "percent": 0.209
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50bc",
+              "samples": 27,
+              "percent": 0.209
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a6",
+              "samples": 27,
+              "percent": 0.209
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "memcpy",
+              "samples": 24,
+              "percent": 0.186
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "fallback_scalar_usercopy_sum_enabled",
+              "samples": 24,
+              "percent": 0.186
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5048",
+              "samples": 24,
+              "percent": 0.186
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "do_raw_spin_lock",
+              "samples": 23,
+              "percent": 0.178
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_se",
+              "samples": 23,
+              "percent": 0.178
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1da",
+              "samples": 23,
+              "percent": 0.178
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f230",
+              "samples": 23,
+              "percent": 0.178
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50ce",
+              "samples": 23,
+              "percent": 0.178
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c507c",
+              "samples": 23,
+              "percent": 0.178
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5066",
+              "samples": 23,
+              "percent": 0.178
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5084",
+              "samples": 23,
+              "percent": 0.178
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "sched_clock",
+              "samples": 22,
+              "percent": 0.17
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1b4",
+              "samples": 22,
+              "percent": 0.17
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5038",
+              "samples": 22,
+              "percent": 0.17
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5052",
+              "samples": 22,
+              "percent": 0.17
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50c0",
+              "samples": 22,
+              "percent": 0.17
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5096",
+              "samples": 22,
+              "percent": 0.17
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5030",
+              "samples": 22,
+              "percent": 0.17
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_curr",
+              "samples": 21,
+              "percent": 0.162
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c503c",
+              "samples": 21,
+              "percent": 0.162
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5028",
+              "samples": 21,
+              "percent": 0.162
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "update_curr",
+              "samples": 20,
+              "percent": 0.155
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f23c",
+              "samples": 20,
+              "percent": 0.155
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f212",
+              "samples": 20,
+              "percent": 0.155
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1e4",
+              "samples": 20,
+              "percent": 0.155
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1b0",
+              "samples": 20,
+              "percent": 0.155
+            }
+          ]
+        },
+        {
+          "name": "after-readyz",
+          "startMs": 195657.10500001907,
+          "endMs": 700001.4950000048,
+          "samples": 10605,
+          "categories": {
+            "kernel": {
+              "samples": 3981,
+              "percent": 37.539
+            },
+            "unresolved user": {
+              "samples": 6624,
+              "percent": 62.461
+            }
+          },
+          "unresolved": 6624,
+          "processes": [
+            [
+              "satp:80017000000854c3",
+              3142
+            ],
+            [
+              "satp:80012000000833b8",
+              1869
+            ],
+            [
+              "satp:8001100000083343",
+              1794
+            ],
+            [
+              "satp:8000e00000088366",
+              339
+            ],
+            [
+              "satp:8040c00000085572",
+              324
+            ],
+            [
+              "satp:8058900000085573",
+              241
+            ],
+            [
+              "satp:8021400000087d69",
+              223
+            ],
+            [
+              "satp:8056b00000087d1d",
+              212
+            ],
+            [
+              "satp:8086600000087ccb",
+              184
+            ],
+            [
+              "satp:8022d000000854dd",
+              173
+            ],
+            [
+              "satp:809d700000087d0d",
+              142
+            ],
+            [
+              "satp:803dd000000855ab",
+              136
+            ],
+            [
+              "satp:80404000000855bb",
+              136
+            ],
+            [
+              "satp:803c900000087d9c",
+              104
+            ],
+            [
+              "satp:804060000008569d",
+              103
+            ],
+            [
+              "satp:8058d0000008339f",
+              88
+            ],
+            [
+              "satp:805760000008557e",
+              86
+            ],
+            [
+              "satp:806ff0000008837c",
+              82
+            ],
+            [
+              "satp:8040200000085661",
+              75
+            ],
+            [
+              "satp:80916000000855a9",
+              72
+            ],
+            [
+              "satp:80019000000833b1",
+              53
+            ],
+            [
+              "satp:806f000000088165",
+              50
+            ],
+            [
+              "satp:8086200000087e29",
+              41
+            ],
+            [
+              "satp:8021a00000087d52",
+              34
+            ],
+            [
+              "satp:8037c00000087d9c",
+              34
+            ],
+            [
+              "satp:801fa000000855bb",
+              33
+            ],
+            [
+              "satp:8028b00000085636",
+              31
+            ],
+            [
+              "satp:803ca00000087d7c",
+              31
+            ],
+            [
+              "satp:803f20000008339e",
+              31
+            ],
+            [
+              "satp:803d300000087d41",
+              25
+            ],
+            [
+              "satp:8022100000087dba",
+              19
+            ],
+            [
+              "satp:803e000000087d61",
+              18
+            ],
+            [
+              "satp:8022800000087da6",
+              13
+            ],
+            [
+              "satp:8020c00000087d6d",
+              12
+            ],
+            [
+              "satp:8002000000085451",
+              11
+            ],
+            [
+              "satp:8021500000087d12",
+              10
+            ],
+            [
+              "satp:80204000000855cc",
+              9
+            ],
+            [
+              "satp:803bc0000008339e",
+              9
+            ],
+            [
+              "satp:8065f00000088325",
+              9
+            ],
+            [
+              "satp:809e4000000856de",
+              9
+            ],
+            [
+              "satp:8002100000087cfc",
+              8
+            ],
+            [
+              "satp:8056900000087d0d",
+              8
+            ],
+            [
+              "satp:8000800000088399",
+              7
+            ],
+            [
+              "satp:809cc00000087d0d",
+              7
+            ],
+            [
+              "satp:8085300000085680",
+              6
+            ],
+            [
+              "satp:8085700000085703",
+              6
+            ],
+            [
+              "satp:809c800000087da1",
+              6
+            ],
+            [
+              "satp:8030100000088341",
+              5
+            ],
+            [
+              "satp:806e500000088371",
+              5
+            ],
+            [
+              "satp:803cc0000008544f",
+              4
+            ]
+          ],
+          "top50": [
+            {
+              "process": "satp:80017000000854c3",
+              "function": "memcpy",
+              "samples": 70,
+              "percent": 0.66
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "psi_group_change",
+              "samples": 62,
+              "percent": 0.585
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 60,
+              "percent": 0.566
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 56,
+              "percent": 0.528
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__update_load_avg_se",
+              "samples": 53,
+              "percent": 0.5
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "__update_load_avg_se",
+              "samples": 50,
+              "percent": 0.471
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_load_avg",
+              "samples": 41,
+              "percent": 0.387
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "__schedule",
+              "samples": 37,
+              "percent": 0.349
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_se",
+              "samples": 36,
+              "percent": 0.339
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "psi_group_change",
+              "samples": 36,
+              "percent": 0.339
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a8",
+              "samples": 30,
+              "percent": 0.283
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "__update_load_avg_cfs_rq",
+              "samples": 29,
+              "percent": 0.273
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50ac",
+              "samples": 29,
+              "percent": 0.273
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "update_load_avg",
+              "samples": 28,
+              "percent": 0.264
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "psi_group_change",
+              "samples": 27,
+              "percent": 0.255
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50bc",
+              "samples": 27,
+              "percent": 0.255
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50a6",
+              "samples": 27,
+              "percent": 0.255
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "fallback_scalar_usercopy_sum_enabled",
+              "samples": 24,
+              "percent": 0.226
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5048",
+              "samples": 24,
+              "percent": 0.226
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1da",
+              "samples": 23,
+              "percent": 0.217
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f230",
+              "samples": 23,
+              "percent": 0.217
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50ce",
+              "samples": 23,
+              "percent": 0.217
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c507c",
+              "samples": 23,
+              "percent": 0.217
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5066",
+              "samples": 23,
+              "percent": 0.217
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5084",
+              "samples": 23,
+              "percent": 0.217
+            },
+            {
+              "process": "satp:80012000000833b8",
+              "function": "update_curr",
+              "samples": 22,
+              "percent": 0.207
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_se",
+              "samples": 22,
+              "percent": 0.207
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1b4",
+              "samples": 22,
+              "percent": 0.207
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5038",
+              "samples": 22,
+              "percent": 0.207
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5052",
+              "samples": 22,
+              "percent": 0.207
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c50c0",
+              "samples": 22,
+              "percent": 0.207
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5096",
+              "samples": 22,
+              "percent": 0.207
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5030",
+              "samples": 22,
+              "percent": 0.207
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "sched_clock",
+              "samples": 21,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c503c",
+              "samples": 21,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5028",
+              "samples": 21,
+              "percent": 0.198
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "update_curr",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f23c",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f212",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1e4",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1b0",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5080",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5074",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5044",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5056",
+              "samples": 20,
+              "percent": 0.189
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f202",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:8001100000083343",
+              "function": "user:0x29f1c2",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c509e",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c5034",
+              "samples": 19,
+              "percent": 0.179
+            },
+            {
+              "process": "satp:80017000000854c3",
+              "function": "user:0x55c504c",
+              "samples": 19,
+              "percent": 0.179
+            }
+          ]
+        }
+      ],
+      "harts": 2
+    }
+  ]
+}

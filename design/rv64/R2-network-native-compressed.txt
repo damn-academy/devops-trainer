@@ -1,0 +1,675 @@
+[    0.000000] Booting Linux on hartid 0
+[    0.000000] Linux version 6.18.62-kuberoot (root@builder) (riscv64-linux-gnu-gcc (Debian 12.2.0-13) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #4 SMP Sat Nov 21 13:49:06 UTC 2026
+[    0.000000] Machine model: RV64 R1 single hart
+[    0.000000] SBI specification v2.0 detected
+[    0.000000] SBI implementation ID=0x10000000 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] SBI IPI extension detected
+[    0.000000] SBI RFENCE extension detected
+[    0.000000] SBI SRST extension detected
+[    0.000000] SBI DBCN extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x00000000bfffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x00000000bfffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x00000000bfffffff]
+[    0.000000] SBI HSM extension detected
+[    0.000000] riscv: base ISA extensions acdfim
+[    0.000000] riscv: ELF capabilities acdfim
+[    0.000000] Ticket spinlock: enabled
+[    0.000000] percpu: Embedded 30 pages/cpu s84248 r8192 d30440 u122880
+[    0.000000] Kernel command line: earlycon=sbi console=hvc0 nokaslr kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose
+[    0.000000] Unknown kernel command line parameters "nokaslr", will be passed to user space.
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 262144
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=1.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+[    0.000000] RCU Tasks Trace: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000000] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.000381] riscv-timer: Timer interrupt in S-mode is available via sstc extension
+[    0.003659] Console: colour dummy device 80x25
+[    0.004454] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)
+[    0.005370] pid_max: default: 32768 minimum: 301
+[    0.007286] LSM: initializing lsm=capability
+[    0.009651] Mount-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.010036] Mountpoint-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.051330] riscv: ELF compat mode unsupported
+[    0.051454] ASID allocator using 16 bits (65536 entries)
+[    0.054043] rcu: Hierarchical SRCU implementation.
+[    0.054279] rcu: 	Max phase no-delay instances is 1000.
+[    0.062019] EFI services will not be available.
+[    0.064495] smp: Bringing up secondary CPUs ...
+[    0.064748] smp: Brought up 1 node, 1 CPU
+[    0.066688] Memory: 966900K/1048576K available (9537K kernel code, 5353K rwdata, 4096K rodata, 2341K init, 393K bss, 77792K reserved, 0K cma-reserved)
+[    0.075489] devtmpfs: initialized
+[    0.100679] posixtimers hash table entries: 512 (order: 1, 8192 bytes, linear)
+[    0.101152] futex hash table entries: 256 (16384 bytes on 1 NUMA nodes, total 16 KiB, linear).
+[    0.104098] pinctrl core: initialized pinctrl subsystem
+[    0.107139] DMI not present or invalid.
+[    0.123918] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.130034] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    0.130518] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.130872] audit: initializing netlink subsys (disabled)
+[    0.136732] thermal_sys: Registered thermal governor 'step_wise'
+[    0.137463] audit: type=2000 audit(0.124:1): state=initialized audit_enabled=0 res=1
+[    0.138190] cpuidle: using governor menu
+[    0.162766] cpu0: rdtime lacks granularity needed to measure unaligned access speed
+[    0.247353] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.247599] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.253310] ACPI: Interpreter disabled.
+[    0.254192] iommu: Default domain type: Translated
+[    0.254433] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.299139] SCSI subsystem initialized
+[    0.322237] vgaarb: loaded
+[    0.323622] clocksource: Switched to clocksource riscv_clocksource
+[    0.333938] pnp: PnP ACPI: disabled
+[    0.814012] NET: Registered PF_INET protocol family
+[    0.818296] IP idents hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.885146] tcp_listen_portaddr_hash hash table entries: 512 (order: 1, 8192 bytes, linear)
+[    0.885622] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.885962] TCP established hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.888952] TCP bind hash table entries: 8192 (order: 6, 262144 bytes, linear)
+[    0.893604] TCP: Hash tables configured (established 8192 bind 8192)
+[    0.894727] UDP hash table entries: 512 (order: 3, 32768 bytes, linear)
+[    0.895927] UDP-Lite hash table entries: 512 (order: 3, 32768 bytes, linear)
+[    0.898868] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.899792] PCI: CLS 0 bytes, default 64
+[    0.910408] Initialise system trusted keyrings
+[    0.975284] Unpacking initramfs...
+[    1.067914] workingset: timestamp_bits=46 max_order=18 bucket_order=0
+[    1.072298] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    1.072765] fuse: init (API version 7.45)
+[    1.092259] 9p: Installing v9fs 9p2000 file system support
+[    5.498969] NET: Registered PF_ALG protocol family
+[    5.499245] Key type asymmetric registered
+[    5.499649] Asymmetric key parser 'x509' registered
+[    5.500582] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 250)
+[    6.975811] Freeing initrd memory: 20800K
+progress pc=0xffffffff80127624 retired=365827960 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[    8.995198] io scheduler mq-deadline registered
+[    8.995942] io scheduler kyber registered
+[    8.996605] io scheduler bfq registered
+[    9.003934] riscv-plic: plic@c000000: mapped 31 interrupts with 1 handlers for 2 contexts.
+[    9.989052] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[   10.043993] printk: legacy console [hvc0] enabled
+[   10.044350] printk: legacy bootconsole [sbi0] disabled
+[   10.053685] random: crng init done
+[   10.117268] loop: module loaded
+[   10.118575] virtio_blk virtio0: 1/0/0 default/read/poll queues
+[   10.122235] virtio_blk virtio0: [vda] 845824 512-byte logical blocks (433 MB/413 MiB)
+[   10.147687]  vda: vda1
+[   10.204019] tun: Universal TUN/TAP device driver, 1.6
+[   10.222031] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[   10.239401] riscv-pmu-sbi: SBI PMU extension is available
+[   10.240371] riscv-pmu-sbi: 0 firmware and 0 hardware counters
+[   10.241372] riscv-pmu-sbi: Perf sampling/filtering is not supported as sscof extension is not available
+[   10.251681] IPVS: Registered protocols (TCP, UDP)
+[   10.252680] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+[   10.256361] IPVS: ipvs loaded.
+[   10.257092] IPVS: [rr] scheduler registered.
+[   10.261464] Initializing XFRM netlink socket
+[   10.262948] NET: Registered PF_INET6 protocol family
+[   10.278549] Segment Routing with IPv6
+[   10.280029] In-situ OAM (IOAM) with IPv6
+[   10.282024] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[   10.290989] NET: Registered PF_PACKET protocol family
+[   10.292713] Bridge firewalling registered
+[   10.294950] 8021q: 802.1Q VLAN Support v1.8
+[   10.296867] 9pnet: Installing 9P2000 support
+[   10.298305] Key type dns_resolver registered
+[   10.301146] NET: Registered PF_VSOCK protocol family
+[   10.461860] Loading compiled-in X.509 certificates
+[   10.573980] Loaded X.509 cert 'Build time autogenerated kernel key: edae1ab5e37dadd23f1471322a492b2e9cb18efa'
+[   10.771980] clk: Disabling unused clocks
+[   10.772734] PM: genpd: Disabling unused power domains
+[   10.803174] Freeing unused kernel image (initmem) memory: 2340K
+[   10.805488] Run /init as init process
+[   11.694058] loop0: detected capacity change from 0 to 568064
+progress pc=0xffffffff804a113a retired=738747721 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946402 retired=1134779203 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946408 retired=1537249010 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kinit] kuberoot booting, kernel 6.18.62-kuberoot, uptime 42s
+[kinit] distribution edge
+[kinit] module drbd: open /lib/modules/6.18.62-kuberoot/extra/drbd.ko: no such file or directory
+[kinit] module drbd_transport_tcp: open /lib/modules/6.18.62-kuberoot/extra/drbd_transport_tcp.ko: no such file or directory
+[kinit] eth0: 10.0.0.10/24 via [10.0.0.1]
+progress pc=0xffffffff8049537a retired=1911926388 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946408 retired=2301689554 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946408 retired=2689626541 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+RV64_CONFIG_CREATED
+progress pc=0xffffffff80946414 retired=3072672613 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8049514a retired=3463308681 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x7d3a50 retired=3857888879 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8094640e retired=4241909552 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x7a210 retired=4615976857 scause=15 stval=0x3f58230400 mcause=0 mtval=0x0
+progress pc=0x7d3cee retired=4991140386 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+RV64_DIAGNOSTICS
+[<0>] futex_do_wait+0x34/0x6c
+[<0>] __futex_wait+0x88/0xe2
+[<0>] futex_wait+0x72/0xe0
+[<0>] do_futex+0x74/0x100
+[<0>] __riscv_sys_futex+0x74/0x14a
+[<0>] do_trap_ecall_u+0x180/0x34c
+[<0>] handle_exception+0x146/0x152
+futex_do_waitMemTotal:         993924 kB
+MemFree:          760812 kB
+MemAvailable:     935000 kB
+Buffers:             436 kB
+Cached:           205152 kB
+SwapCached:            0 kB
+Active:            30664 kB
+Inactive:         184720 kB
+Active(anon):      13184 kB
+Inactive(anon):    17696 kB
+Active(file):      17480 kB
+Inactive(file):   167024 kB
+PID   USER     TIME  COMMAND
+    1 root      0:44 /usr/sbin/kinit.real
+    2 root      0:00 [kthreadd]
+    3 root      0:00 [pool_workqueue_]
+    4 root      0:00 [kworker/R-rcu_g]
+    5 root      0:00 [kworker/R-sync_]
+    6 root      0:00 [kworker/R-kvfre]
+    7 root      0:00 [kworker/R-slub_]
+    8 root      0:00 [kworker/R-netns]
+    9 root      0:00 [kworker/0:0-eve]
+   10 root      0:00 [kworker/0:0H-ev]
+   11 root      0:00 [kworker/0:1]
+   12 root      0:03 [kworker/u4:0-lo]
+   13 root      0:00 [kworker/R-mm_pe]
+   14 root      0:00 [ksoftirqd/0]
+   15 root      0:00 [rcu_sched]
+   16 root      0:00 [rcu_exp_par_gp_]
+   17 root      0:00 [rcu_exp_gp_kthr]
+   18 root      0:00 [migration/0]
+   19 root      0:00 [cpuhp/0]
+   20 root      0:00 [kdevtmpfs]
+   21 root      0:00 [kworker/R-inet_]
+   22 root      0:00 [rcu_tasks_trace]
+   23 root      0:00 [kauditd]
+   24 root      0:00 [oom_reaper]
+   25 root      0:02 [kworker/u4:1-lo]
+   26 root      0:00 [kworker/R-write]
+   27 root      0:00 [kcompactd0]
+   28 root      0:00 [kworker/R-kbloc]
+   29 root      0:00 [kworker/u4:2-ev]
+   30 root      0:00 [kswapd0]
+   31 root      0:00 [kworker/u4:3]
+   32 root      0:00 [kworker/0:1H-kb]
+   33 root      0:00 [kworker/R-kthro]
+   34 root      0:01 [kworker/u4:4-lo]
+   36 root      0:00 [khvcd]
+   37 root      0:00 [hwrng]
+   38 root      0:00 [kworker/R-nvme-]
+   39 root      0:00 [kworker/R-nvme-]
+   40 root      0:00 [kworker/R-nvme-]
+   41 root      0:00 [kworker/R-dm_bu]
+   42 root      0:00 [kworker/R-mld]
+   43 root      0:00 [kworker/R-ipv6_]
+   44 root      0:00 [kworker/R-kstrp]
+   50 root      0:00 /bin/sh /usr/share/kuberoot/rv64-probe.sh
+   51 root      0:00 /bin/sh /usr/share/kuberoot/rv64-probe.sh
+   60 root      0:09 /usr/bin/kuberoot-node --node-name=kuberoot-000001 --adver
+   62 root      0:09 /usr/bin/containerd --config /etc/containerd/config.toml
+   65 root      0:07 /usr/bin/kine --endpoint sqlite:///var/lib/kine/state.db?_
+   66 root      0:08 /usr/bin/kube-apiserver --shutdown-delay-duration=5s --etc
+   67 root      0:00 /bin/sh /usr/share/kuberoot/rv64-probe.sh
+   69 root      0:19 kubectl --request-timeout=10s get nodes -o jsonpath={.item
+   70 root      0:00 /bin/busybox grep -q True
+  106 root      0:00 /bin/busybox ps
+  107 root      0:00 /bin/busybox sleep 2
+progress pc=0xffffffff8093d602 retired=5367558451 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8094640e retired=5729604059 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8095246a retired=6093813187 scause=13 stval=0x135be60 mcause=0 mtval=0x0
+ffffffff804a02b0 t ZSTD_initFseState
+ffffffff804a03f8 t ZSTD_buildFSETable_body_default.constprop.0
+ffffffff804a07ca t ZSTD_buildSeqTable.constprop.0
+ffffffff804a093c t ZSTD_safecopy
+ffffffff804a0c5a t ZSTD_execSequenceEndSplitLitBuffer
+ffffffff804a0d30 t ZSTD_execSequenceEnd
+ffffffff804a0e12 t ZSTD_decompressSequences_default.constprop.0
+ffffffff804a18c6 t ZSTD_decompressSequencesSplitLitBuffer_default.constprop.0
+ffffffff804a304e t ZSTD_decompressSequencesLong_default.constprop.0
+ffffffff804a5600 T ZSTD_getcBlockSize
+ffffffff804a565a T ZSTD_decodeLiteralsBlock_wrapper
+ffffffff804a5678 T ZSTD_buildFSETable
+ffffffff804a568c T ZSTD_decodeSeqHeaders
+ffffffff804a5852 t ZSTD_decompressBlock_internal.part.0
+ffffffff804a5a00 T ZSTD_decompressBlock_internal
+ffffffff804a5a34 T ZSTD_checkContinuity
+ffffffff804a5a68 T ZSTD_decompressBlock_deprecated
+ffffffff804a5ada T ZSTD_decompressBlock
+ffffffff804a5b4c t HUF_readStats_body_default
+ffffffff804a5cf0 t FSE_readNCount_body_default
+ffffffff804a6072 T FSE_versionNumber
+ffffffff804a6082 T FSE_isError
+ffffffff804a6098 T FSE_getErrorName
+ffffffff804a60c6 T HUF_isError
+ffffffff804a60dc T HUF_getErrorName
+ffffffff804a610a T FSE_readNCount_bmi2
+ffffffff804a611e T FSE_readNCount
+ffffffff804a6132 T HUF_readStats
+ffffffff804a61e2 T HUF_readStats_wksp
+ffffffff804a61fc T ERR_getErrorString
+ffffffff804a6232 t FSE_buildDTable_internal
+ffffffff804a6558 t FSE_decompress_wksp_body_default
+ffffffff804a76ac T FSE_buildDTable_wksp
+ffffffff804a76c0 T FSE_decompress_wksp_bmi2
+ffffffff804a76d4 T ZSTD_versionNumber
+ffffffff804a76e6 T ZSTD_versionString
+ffffffff804a76fa T ZSTD_isError
+ffffffff804a7710 T ZSTD_getErrorName
+ffffffff804a773e T ZSTD_getErrorCode
+ffffffff804a775e T ZSTD_getErrorString
+ffffffff804a7772 t dec_vli
+ffffffff804a77e8 t fill_temp
+ffffffff804a7864 T xz_dec_run
+ffffffff804a7f22 T xz_dec_init
+ffffffff804a7fee T xz_dec_reset
+ffffffff804a803c T xz_dec_end
+ffffffff804a8074 t dict_repeat
+ffffffff804a80fc t lzma_len
+ffffffff804a82e2 t lzma_main
+ffffffff804a8bca T xz_dec_lzma2_run
+ffffffff804a9292 T xz_dec_lzma2_create
+ffffffff804a9308 T xz_dec_lzma2_reset
+ffffffff804a9398 T xz_dec_lzma2_end
+ffffffff804a93da t bcj_flush
+ffffffff804a944e t bcj_apply
+ffffffff804a9d8a T xz_dec_bcj_run
+ffffffff804a9f1c T xz_dec_bcj_create
+ffffffff804a9f52 T xz_dec_bcj_reset
+ffffffff804a9fb0 T percpu_counter_sync
+ffffffff804aa00a t compute_batch_value
+ffffffff804aa03a T percpu_counter_set
+ffffffff804aa11c T __percpu_counter_sum
+ffffffff804aa1ea T __percpu_counter_compare
+ffffffff804aa244 T __percpu_counter_init_many
+ffffffff804aa31a T percpu_counter_destroy_many
+ffffffff804aa3e0 t percpu_counter_cpu_dead
+ffffffff804aa540 T percpu_counter_add_batch
+ffffffff804aa634 T __percpu_counter_limited_add
+ffffffff804aa866 T audit_classify_arch
+ffffffff804aa874 T audit_classify_syscall
+ffffffff804aa8ba t collect_syscall
+ffffffff804aa9a4 T task_current_syscall
+ffffffff804aaa0c T errname
+ffffffff804aaa74 T nla_policy_len
+ffffffff804aaade T nla_find
+ffffffff804aab24 T nla_strscpy
+ffffffff804aabae T nla_memcpy
+ffffffff804aac1c T nla_strdup
+ffffffff804aac82 T nla_strcmp
+ffffffff804aace6 T __nla_reserve
+ffffffff804aad40 T nla_reserve_nohdr
+ffffffff804aad9e T nla_memcmp
+ffffffff804aadd2 T nla_append
+ffffffff804aae38 T __nla_reserve_nohdr
+ffffffff804aae72 T __nla_put_nohdr
+ffffffff804aaec4 T nla_put_nohdr
+ffffffff804aaf42 T __nla_put
+ffffffff804aafb4 T nla_reserve
+ffffffff804ab032 T nla_put
+ffffffff804ab0be T __nla_reserve_64bit
+ffffffff804ab152 T __nla_put_64bit
+ffffffff804ab1fe T nla_put_64bit
+ffffffff804ab24c T nla_reserve_64bit
+ffffffff804ab2fc T nla_get_range_unsigned
+ffffffff804ab3e2 T nla_get_range_signed
+ffffffff804ab4a0 t __nla_validate_parse
+ffffffff804ac162 T __nla_validate
+ffffffff804ac17a T __nla_parse
+ffffffff804ac1b2 T csum_tcpudp_nofold
+ffffffff804ac1f0 T csum_partial
+ffffffff804ac216 T ip_compute_csum
+ffffffff804ac236 T cpu_rmap_add
+ffffffff804ac270 T alloc_cpu_rmap
+ffffffff804ac3aa t cpu_rmap_copy_neigh
+ffffffff804ac4ba T cpu_rmap_update
+ffffffff804ac7e4 T irq_cpu_rmap_remove
+ffffffff804ac800 t irq_cpu_rmap_notify
+ffffffff804ac834 T cpu_rmap_put
+ffffffff804ac882 t irq_cpu_rmap_release
+ffffffff804ac90a T free_irq_cpu_rmap
+ffffffff804ac996 T irq_cpu_rmap_add
+ffffffff804acab2 T cpu_rmap_get
+ffffffff804acb0c T dql_completed
+ffffffff804acd58 T dql_reset
+ffffffff804acda8 T dql_init
+ffffffff804ace00 t glob_match_str
+ffffffff804acfa8 T glob_match
+ffffffff804acfbe T glob_match_len
+ffffffff804acfd4 T dim_turn
+ffffffff804ad004 T dim_park_on_top
+ffffffff804ad018 T dim_park_tired
+ffffffff804ad02e T dim_on_top
+ffffffff804ad082 T dim_calc_stats
+ffffffff804ad142 T net_dim_get_rx_moderation
+ffffffff804ad184 T net_dim_get_tx_moderation
+ffffffff804ad1d0 T net_dim_setting
+ffffffff804ad21a T net_dim_get_rx_irq_moder
+ffffffff804ad25e T net_dim_get_tx_irq_moder
+ffffffff804ad2a2 T net_dim_set_rx_mode
+ffffffff804ad2ba T net_dim_set_tx_mode
+ffffffff804ad2d2 t net_dim_step
+ffffffff804ad348 T net_dim_free_irq_moder
+ffffffff804ad3b0 T net_dim_work_cancel
+ffffffff804ad3cc t net_dim_stats_compare
+ffffffff804ad46a T net_dim_init_irq_moder
+ffffffff804ad576 T net_dim
+ffffffff804ad718 T net_dim_get_def_rx_moderation
+ffffffff804ad754 T net_dim_get_def_tx_moderation
+ffffffff804ad79c T rdma_dim
+ffffffff804ad9a2 T strncpy_from_user
+ffffffff804adc3e T strnlen_user
+ffffffff804ade3c T mac_pton
+ffffffff804adef4 T sg_free_table_chained
+ffffffff804adf3e t sg_pool_alloc
+ffffffff804ae00a t sg_pool_free
+ffffffff804ae0d6 T sg_alloc_table_chained
+ffffffff804ae176 T stack_depot_set_extra_bits
+ffffffff804ae198 T stack_depot_get_extra_bits
+ffffffff804ae1a8 t depot_debugfs_init
+ffffffff804ae1b6 T stack_depot_init
+ffffffff804ae36e t depot_fetch_stack
+ffffffff804ae3d8 T stack_depot_fetch
+ffffffff804ae426 T stack_depot_put
+ffffffff804ae526 T stack_depot_save_flags
+ffffffff804aecfa T stack_depot_save
+ffffffff804aed12 T stack_depot_print
+ffffffff804aed5c T stack_depot_snprint
+ffffffff804aedcc T __stack_depot_get_stack_record
+ffffffff804aedea T asn1_ber_decoder
+ffffffff804af4c8 T find_font
+ffffffff804af4fe T get_default_font
+ffffffff804af59c T look_up_OID
+ffffffff804af6a8 T parse_OID
+ffffffff804af6ea T sprint_oid
+ffffffff804af7e0 T ucs2_strnlen
+ffffffff804af806 T ucs2_strlen
+ffffffff804af828 T ucs2_strsize
+ffffffff804af85a T ucs2_strncmp
+ffffffff804af89a T ucs2_utf8size
+ffffffff804af8de T ucs2_as_utf8
+ffffffff804af9e4 T ucs2_strscpy
+ffffffff804afa2e T sbitmap_any_bit_set
+ffffffff804afa6a T sbitmap_queue_recalculate_wake_batch
+ffffffff804afaa2 T sbitmap_queue_min_shallow_depth
+ffffffff804afada T sbitmap_del_wait_queue
+ffffffff804afb08 t __sbitmap_weight
+ffffffff804afb84 T sbitmap_weight
+ffffffff804afbb4 T sbitmap_queue_wake_up
+ffffffff804afc74 T sbitmap_queue_wake_all
+ffffffff804afcc8 T sbitmap_prepare_to_wait
+ffffffff804afd14 T sbitmap_finish_wait
+ffffffff804afd52 T sbitmap_add_wait_queue
+ffffffff804afd84 T sbitmap_queue_clear
+ffffffff804afe0c T sbitmap_resize
+ffffffff804afeba T sbitmap_queue_resize
+ffffffff804afef8 t sbitmap_find_bit
+progress pc=0xffffffff800e2fea retired=6449475058 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a1396 retired=6814429692 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+ffffffff809460a8 T do_csum
+ffffffff8094626c T __delay
+ffffffff80946298 T ndelay
+ffffffff809462c6 T udelay
+ffffffff80946324 T __memcpy
+ffffffff80946324 T __pi___memcpy
+ffffffff80946324 T __pi_memcpy
+ffffffff80946324 W memcpy
+ffffffff8094641c T __memmove
+ffffffff8094641c T __pi___memmove
+ffffffff8094641c T __pi_memmove
+ffffffff8094641c W memmove
+ffffffff809465a4 T __memset
+ffffffff809465a4 T __pi___memset
+ffffffff809465a4 T __pi_memset
+ffffffff809465a4 W memset
+ffffffff809466a2 T enter_vector_usercopy
+ffffffff80946750 T strcmp
+ffffffff80946750 T __pi_strcmp
+ffffffff80946772 t strcmp_zbb
+ffffffff809467e0 T strlen
+ffffffff809467e0 T __pi_strlen
+ffffffff809467f8 t strlen_zbb
+ffffffff80946860 T strncmp
+ffffffff80946860 T __pi_strncmp
+ffffffff8094688a t strncmp_zbb
+ffffffff80946910 T __lshrti3
+ffffffff80946944 T __ashrti3
+ffffffff80946978 T __ashlti3
+ffffffff809469ac T __asm_copy_from_user
+ffffffff809469ac T __asm_copy_to_user
+ffffffff809469c4 T fallback_scalar_usercopy
+ffffffff809469e0 T __asm_copy_from_user_sum_enabled
+ffffffff809469e0 T __asm_copy_to_user_sum_enabled
+ffffffff809469f8 T fallback_scalar_usercopy_sum_enabled
+ffffffff80946ac4 T __clear_user
+ffffffff80946b28 T __asm_vector_usercopy
+ffffffff80946b44 t loop
+ffffffff80946b44 T __asm_vector_usercopy_sum_enabled
+ffffffff80946b6c T xor_regs_2_
+ffffffff80946b8c T xor_regs_3_
+ffffffff80946bb4 T xor_regs_4_
+ffffffff80946be8 T xor_regs_5_
+ffffffff80946c28 T arch_cpu_idle
+ffffffff80946c28 T __noinstr_text_start
+ffffffff80946c3c t handle_riscv_irq
+ffffffff80946cb0 T do_trap_unknown
+ffffffff80946d8c T do_trap_insn_misaligned
+ffffffff80946e68 T do_trap_insn_fault
+ffffffff80946f44 T do_trap_insn_illegal
+progress pc=0xffffffff80946412 retired=7181652187 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8094640e retired=7556928185 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a12b6 retired=7933396370 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x3f98e324c4 retired=8312612670 scause=15 stval=0x2ad6790010 mcause=0 mtval=0x0
+progress pc=0xffffffff804952e6 retired=8689408170 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a1566 retired=9061136596 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946414 retired=9433242362 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80494d4a retired=9803901329 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x52c0e retired=10163707497 scause=15 stval=0x141e9c8 mcause=0 mtval=0x0
+progress pc=0x4d986 retired=10519063887 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a1728 retired=10887276365 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8049b72a retired=11241636368 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2bc2c retired=11593941691 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff809463fc retired=11953245443 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a1562 retired=12302334991 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x7d3bc2 retired=12661136459 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946412 retired=13024821069 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff805cb200 retired=13392444215 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8095152e retired=13749139307 scause=15 stval=0x3f51935800 mcause=0 mtval=0x0
+progress pc=0x32c64a retired=14097550481 scause=15 stval=0x3f4cda8000 mcause=0 mtval=0x0
+progress pc=0x16b2a retired=14447247282 scause=15 stval=0x3f5af7f070 mcause=0 mtval=0x0
+progress pc=0xffffffff8094640e retired=14819203552 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946412 retired=15178770183 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8094640e retired=15509846258 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8094640e retired=15862148926 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a11d4 retired=16217837175 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2e122c retired=16560587441 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x3c124 retired=16903853668 scause=8 stval=0x0 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:07:43Z" level=warning msg="Configuration migrated from version 3, use `containerd config migrate` to avoid migration" t=25.5028ms
+[containerd] time="1970-01-01T00:07:43.934284700Z" level=info msg="starting containerd" revision=b7a25261e029d68978bbf290df0a62fc819b3c51 version=v2.4.2
+[containerd] time="1970-01-01T00:07:43.956630100Z" level=info msg="loading plugin" id=io.containerd.content.v1.content type=io.containerd.content.v1
+[containerd] time="1970-01-01T00:07:43.998125700Z" level=warning msg="failed check for fsverity support" error="enable fsverity failed: inappropriate ioctl for device" path=/var/lib/containerd/io.containerd.content.v1.content
+time="1970-01-01T00:07:43.999510500Z" level=info msg="loading plugin" id=io.containerd.image-verifier.v1.bindir type=io.containerd.image-verifier.v1
+time="1970-01-01T00:07:44.014993300Z" level=info msg="loading plugin" id=io.containerd.internal.v1.opt type=io.containerd.internal.v1
+[containerd] time="1970-01-01T00:07:44.048683000Z" level=warning msg="failed to load plugin" error="mkdir /opt/containerd: read-only file system" id=io.containerd.internal.v1.opt type=io.containerd.internal.v1
+time="1970-01-01T00:07:44.049610100Z" level=info msg="loading plugin" id=io.containerd.warning.v1.deprecations type=io.containerd.warning.v1
+time="1970-01-01T00:07:44.050748700Z" level=info msg="loading plugin" id=io.containerd.event.v1.exchange type=io.containerd.event.v1
+[containerd] time="1970-01-01T00:07:44.282337400Z" level=info msg="loading plugin" id=io.containerd.mount-handler.v1.erofs type=io.containerd.mount-handler.v1
+[containerd] time="1970-01-01T00:07:44.290663900Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.blockfile type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:44.305983600Z" level=info msg="skip loading plugin" error="no scratch file generator: skip plugin" id=io.containerd.snapshotter.v1.blockfile type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:44.321852800Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.btrfs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:44.371037700Z" level=info msg="skip loading plugin" error="path /var/lib/containerd/io.containerd.snapshotter.v1.btrfs (tmpfs) must be a btrfs filesystem to be used with the btrfs snapshotter: skip plugin" id=io.containerd.snapshotter.v1.btrfs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:44.533563000Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.devmapper type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:44.539187600Z" level=info msg="skip loading plugin" error="devmapper not configured: skip plugin" id=io.containerd.snapshotter.v1.devmapper type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:44.544926300Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.native type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:44.559007500Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.overlayfs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:44.679135800Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.zfs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:44.687037600Z" level=info msg="skip loading plugin" error="lstat /var/lib/containerd/io.containerd.snapshotter.v1.zfs: no such file or directory: skip plugin" id=io.containerd.snapshotter.v1.zfs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:44.711448000Z" level=info msg="loading plugin" id=io.containerd.monitor.task.v1.cgroups type=io.containerd.monitor.task.v1
+[containerd] time="1970-01-01T00:07:45.879626000Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.erofs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:46.365597800Z" level=info msg="skip loading plugin" error="EROFS unsupported, please `modprobe erofs`: skip plugin" id=io.containerd.snapshotter.v1.erofs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:07:46.381625800Z" level=info msg="loading plugin" id=io.containerd.metadata.v1.bolt type=io.containerd.metadata.v1
+[containerd] time="1970-01-01T00:07:46.389760200Z" level=info msg="metadata content store policy set" policy=shared
+[containerd] time="1970-01-01T00:07:46.770227400Z" level=info msg="loading plugin" id=io.containerd.gc.v1.scheduler type=io.containerd.gc.v1
+[containerd] time="1970-01-01T00:07:46.805839200Z" level=info msg="loading plugin" id=io.containerd.server.v1.metrics type=io.containerd.server.v1
+time="1970-01-01T00:07:46.806992900Z" level=info msg="skip loading plugin" error="skip plugin" id=io.containerd.server.v1.metrics type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:07:46.852721800Z" level=info msg="loading plugin" id=io.containerd.tracing.processor.v1.otlp type=io.containerd.tracing.processor.v1
+time="1970-01-01T00:07:46.854180600Z" level=info msg="skip loading plugin" error="skip plugin: tracing endpoint not configured" id=io.containerd.tracing.processor.v1.otlp type=io.containerd.tracing.processor.v1
+[containerd] time="1970-01-01T00:07:46.855275900Z" level=info msg="loading plugin" id=io.containerd.internal.v1.tracing type=io.containerd.internal.v1
+time="1970-01-01T00:07:46.901112400Z" level=info msg="skip loading plugin" error="skip plugin: tracing endpoint not configured" id=io.containerd.internal.v1.tracing type=io.containerd.internal.v1
+time="1970-01-01T00:07:46.902245300Z" level=info msg="loading plugin" id=io.containerd.nri.v1.nri type=io.containerd.nri.v1
+[containerd] time="1970-01-01T00:07:47.151694400Z" level=info msg="built-in NRI default validator is disabled"
+[containerd] time="1970-01-01T00:07:47.157042600Z" level=info msg="runtime interface created"
+[containerd] time="1970-01-01T00:07:47.178021300Z" level=info msg="created NRI interface"
+[containerd] time="1970-01-01T00:07:47.182702400Z" level=info msg="loading plugin" id=io.containerd.ttrpc.v1.otelttrpc type=io.containerd.ttrpc.v1
+[containerd] time="1970-01-01T00:07:47.188722200Z" level=info msg="loading plugin" id=io.containerd.service.v1.containers-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:07:47.195801300Z" level=info msg="loading plugin" id=io.containerd.service.v1.content-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:07:47.203991900Z" level=info msg="loading plugin" id=io.containerd.differ.v1.erofs type=io.containerd.differ.v1
+[containerd] time="1970-01-01T00:07:47.215757500Z" level=info msg="skip loading plugin" error="failed to check mkfs.erofs availability: failed to run mkfs.erofs --help: exec: \"mkfs.erofs\": executable file not found in $PATH: skip plugin" id=io.containerd.differ.v1.erofs type=io.containerd.differ.v1
+[containerd] time="1970-01-01T00:07:47.230207800Z" level=info msg="loading plugin" id=io.containerd.mount-manager.v1.bolt type=io.containerd.mount-manager.v1
+[containerd] time="1970-01-01T00:07:47.443362900Z" level=info msg="loading plugin" id=io.containerd.differ.v1.walking type=io.containerd.differ.v1
+[containerd] time="1970-01-01T00:07:47.543157000Z" level=info msg="loading plugin" id=io.containerd.service.v1.diff-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:07:47.549948700Z" level=info msg="loading plugin" id=io.containerd.service.v1.images-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:07:47.557574000Z" level=info msg="loading plugin" id=io.containerd.service.v1.introspection-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:07:47.566360500Z" level=info msg="loading plugin" id=io.containerd.service.v1.namespaces-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:07:47.781539000Z" level=info msg="loading plugin" id=io.containerd.service.v1.snapshots-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:07:47.787528000Z" level=info msg="loading plugin" id=io.containerd.shim.v1.manager type=io.containerd.shim.v1
+[containerd] time="1970-01-01T00:07:47.798099100Z" level=info msg="loading plugin" id=io.containerd.runtime.v2.task type=io.containerd.runtime.v2
+[containerd] time="1970-01-01T00:07:47.815921900Z" level=info msg="loading plugin" id=io.containerd.service.v1.tasks-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:07:47.826804500Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.containers type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:47.834394900Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.content type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:47.845516200Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.diff type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:47.851680400Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.events type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:47.857426700Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.images type=io.containerd.grpc.v1
+time="1970-01-01T00:07:47.858587700Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.introspection type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:47.859991200Z" level=info msg="loading plugin" id=io.containerd.lease.v1.manager type=io.containerd.lease.v1
+[containerd] time="1970-01-01T00:07:47.877431100Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.leases type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:47.883927400Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.mounts type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:47.891039800Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.namespaces type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:47.897949800Z" level=info msg="loading plugin" id=io.containerd.sandbox.store.v1.local type=io.containerd.sandbox.store.v1
+[containerd] time="1970-01-01T00:07:47.905647400Z" level=info msg="loading plugin" id=io.containerd.transfer.v1.local type=io.containerd.transfer.v1
+[containerd] time="1970-01-01T00:07:48.010621000Z" level=info msg="loading plugin" id=io.containerd.cri.v1.images type=io.containerd.cri.v1
+[containerd] time="1970-01-01T00:07:48.039777200Z" level=info msg="Get image filesystem path \"/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs\" for snapshotter \"overlayfs\""
+[containerd] time="1970-01-01T00:07:48.048894900Z" level=info msg="Start snapshots syncer"
+time="1970-01-01T00:07:48.050171300Z" level=info msg="loading plugin" id=io.containerd.cri.v1.runtime type=io.containerd.cri.v1
+[containerd] time="1970-01-01T00:07:48.623497600Z" level=info msg="starting cri plugin" config="{\"containerd\":{\"defaultRuntimeName\":\"runc\",\"runtimes\":{\"runc\":{\"runtimeType\":\"io.containerd.runc.v2\",\"runtimePath\":\"\",\"PodAnnotations\":null,\"ContainerAnnotations\":null,\"options\":{\"BinaryName\":\"/usr/bin/runc\",\"CriuImagePath\":\"\",\"CriuWorkPath\":\"\",\"IoGid\":0,\"IoUid\":0,\"NoNewKeyring\":false,\"Root\":\"\",\"ShimCgroup\":\"\",\"SystemdCgroup\":false},\"privileged_without_host_devices\":false,\"privileged_without_host_devices_all_devices_allowed\":false,\"cgroupWritable\":false,\"baseRuntimeSpec\":\"\",\"cniConfDir\":\"\",\"cniMaxConfNum\":0,\"snapshotter\":\"\",\"sandboxer\":\"podsandbox\",\"disablePauseImagePull\":false,\"io_type\":\"\"}},\"ignoreBlockIONotEnabledErrors\":false,\"ignoreRdtNotEnabledErrors\":false},\"cni\":{\"binDirs\":[\"/usr/libexec/cni\",\"/opt/cni/bin\"],\"confDir\":\"/etc/cni/net.d\",\"maxConfNum\":1,\"setupSerially\":false,\"confTemplate\":\"/etc/cni/kuberoot.conflist.tmpl\",\"ipPref\":\"\",\"useInternalLoopback\":false},\"enableSelinux\":false,\"selinuxCategoryRange\":1024,\"maxContainerLogLineSize\":16384,\"disableApparmor\":false,\"restrictOOMScoreAdj\":false,\"disableProcMount\":false,\"unsetSeccompProfile\":\"\",\"tolerateMissingHugetlbController\":true,\"disableHugetlbController\":true,\"device_ownership_from_security_context\":true,\"ignoreImageDefinedVolumes\":false,\"netnsMountsUnderStateDir\":false,\"enableUnprivilegedPorts\":true,\"enableUnprivilegedICMP\":true,\"cdiSpecDirs\":[\"/etc/cdi\",\"/var/run/cdi\"],\"drainExecSyncIOTimeout\":\"0s\",\"ignoreDeprecationWarnings\":null,\"statsCollectPeriod\":\"\",\"statsRetentionPeriod\":\"\",\"enableCRIU\":true,\"containerdRootDir\":\"/var/lib/containerd\",\"containerdEndpoint\":\"/run/containerd/containerd.sock\",\"rootDir\":\"/var/lib/containerd/io.containerd.grpc.v1.cri\",\"stateDir\":\"/run/containerd/io.containerd.grpc.v1.cri\"}"
+[containerd] time="1970-01-01T00:07:48.637054400Z" level=info msg="loading plugin" id=io.containerd.podsandbox.controller.v1.podsandbox type=io.containerd.podsandbox.controller.v1
+[containerd] time="1970-01-01T00:07:48.656806400Z" level=info msg="loading plugin" id=io.containerd.sandbox.controller.v1.shim type=io.containerd.sandbox.controller.v1
+[containerd] time="1970-01-01T00:07:48.666683100Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.sandbox-controllers type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:48.673931800Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.sandboxes type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:48.685926000Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.snapshots type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:48.692944600Z" level=info msg="loading plugin" id=io.containerd.streaming.v1.manager type=io.containerd.streaming.v1
+[containerd] time="1970-01-01T00:07:48.698986900Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.streaming type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:48.705070100Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.tasks type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:48.710474000Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.transfer type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:48.717796000Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.version type=io.containerd.grpc.v1
+time="1970-01-01T00:07:48.718960500Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.healthcheck type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:48.728697700Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.cri type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:07:48.734439500Z" level=info msg="Connect containerd service"
+[containerd] time="1970-01-01T00:07:48.743322500Z" level=info msg="using experimental NRI integration - disable nri plugin to prevent this"
+progress pc=0xffffffff8006d64a retired=17249731463 scause=8 stval=0x0 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:07:49.785684800Z" level=warning msg="failed to load cni during init, please check CRI plugin status before setting up network for pods" error="cni config load failed: no network config found in /etc/cni/net.d: cni plugin not initialized: failed to load cni config"
+progress pc=0xffffffff80223a60 retired=17596836591 scause=13 stval=0xd9d10c mcause=0 mtval=0x0
+progress pc=0x7dace retired=17944288516 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2c314 retired=18289151695 scause=15 stval=0x3f455fb128 mcause=0 mtval=0x0
+progress pc=0xffffffff80946414 retired=18645690066 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x285f0 retired=18996508323 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8023b1ae retired=19342142085 scause=15 stval=0x3f69997600 mcause=0 mtval=0x0
+progress pc=0x3df7a retired=19686773108 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x411fe8 retired=20031867802 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x7d3a46 retired=20369256262 scause=8 stval=0x0 mcause=0 mtval=0x0
+[kine] [36mINFO[0m[1970-01-01T00:09:26.3731639Z] Configuring sqlite3 database connection pooling: maxIdle=20, maxOpen=0, maxLifetime=0s, maxIdleTime=2m0s 
+[kine] [36mINFO[0m[1970-01-01T00:09:27.9255479Z] Kine built with sqlite from github.com/mattn/go-sqlite3 version 3.53.4 
+[kine] [36mINFO[0m[1970-01-01T00:09:27.9352652Z] Configuring database table schema and indexes, this may take a moment... 
+progress pc=0x2ad0bc retired=20707347460 scause=15 stval=0x3f49262000 mcause=0 mtval=0x0
+[kine] [36mINFO[0m[1970-01-01T00:09:30.1536643Z] Database tables and indexes are up to date   
+[kine] [36mINFO[0m[1970-01-01T00:09:30.1617039Z] Running startup VACUUM to reclaim disk space, this may take a moment... 
+[kine] [36mINFO[0m[1970-01-01T00:09:31.0492737Z] Startup VACUUM completed successfully        
+[kine] [36mINFO[0m[1970-01-01T00:09:33.9398804Z] Kine available at unix:///run/kine/kine.sock 
+[kine] [36mINFO[0m[1970-01-01T00:09:34.4928693Z] metrics server is starting to listen at :8080 
+[kine] [36mINFO[0m[1970-01-01T00:09:34.6264372Z] starting metrics server path /metrics        
+progress pc=0xffffffff804a1276 retired=21051908987 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8049b3a2 retired=21403775565 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2e064e retired=21756080069 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a1494 retired=22101818374 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80061ce6 retired=22457244822 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff800ae160 retired=22808855727 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80212c30 retired=23148167601 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:10:46.828697400Z" level=info msg="Start subscribing containerd event"
+[containerd] time="1970-01-01T00:10:46.857233200Z" level=info msg="loading plugin" id=io.containerd.server.v1.ttrpc type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:10:46.879376100Z" level=info msg="Start stats collector"
+time="1970-01-01T00:10:47.267179300Z" level=info msg="Start recovering state"
+[containerd] time="1970-01-01T00:10:47.386897700Z" level=info msg="loading plugin" id=io.containerd.monitor.container.v1.restart type=io.containerd.monitor.container.v1
+time="1970-01-01T00:10:47.405517600Z" level=info msg="loading plugin" id=io.containerd.metrics.v1.grpc-prometheus type=io.containerd.metrics.v1
+time="1970-01-01T00:10:47.458919200Z" level=info msg="loading plugin" id=io.containerd.metrics.v1.grpc-otel type=io.containerd.metrics.v1
+[containerd] time="1970-01-01T00:10:47.435239200Z" level=info msg="Start event monitor"
+time="1970-01-01T00:10:47.473721000Z" level=info msg="Start cni network conf syncer for default"
+time="1970-01-01T00:10:47.474366900Z" level=info msg="Start streaming server"
+time="1970-01-01T00:10:47.475114700Z" level=info msg="Registered namespace \"k8s.io\" with NRI"
+[containerd] time="1970-01-01T00:10:47.475779300Z" level=info msg="runtime interface starting up..."
+time="1970-01-01T00:10:47.493276900Z" level=info msg="starting plugins..."
+time="1970-01-01T00:10:47.494075000Z" level=info msg="Synchronizing NRI (plugin) with current runtime state"
+[containerd] time="1970-01-01T00:10:47.530132700Z" level=info msg="loading plugin" id=io.containerd.server.v1.grpc type=io.containerd.server.v1
+progress pc=0x1073dc retired=23479125259 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8006c9c4 retired=23823392313 scause=8 stval=0x0 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:11:02.253139300Z" level=info msg="loading plugin" id=io.containerd.server.v1.grpc-tcp type=io.containerd.server.v1
+time="1970-01-01T00:11:02.261223700Z" level=info msg="skip loading plugin" error="skip plugin" id=io.containerd.server.v1.grpc-tcp type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:11:02.262129700Z" level=info msg="loading plugin" id=io.containerd.http.v1.pprof type=io.containerd.http.v1
+[containerd] time="1970-01-01T00:11:02.289095000Z" level=info msg="loading plugin" id=io.containerd.server.v1.debug type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:11:02.303839500Z" level=info msg="skip loading plugin" error="skip plugin" id=io.containerd.server.v1.debug type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:11:02.331025100Z" level=info msg=serving... address=/run/containerd/containerd.sock.ttrpc
+[containerd] time="1970-01-01T00:11:02.353411700Z" level=info msg="starting GRPC server" address=/run/containerd/containerd.sock gid=0 uid=0
+[containerd] time="1970-01-01T00:11:02.367375700Z" level=info msg=serving... address=/run/containerd/containerd.sock
+[containerd] time="1970-01-01T00:11:02.389870700Z" level=info msg="containerd successfully booted in 200.318734s"
+progress pc=0xffffffff804a11ba retired=24151999860 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a1526 retired=24499891774 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xc37dd2 retired=24834487932 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x6c0d6 retired=25176796495 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2e11f6 retired=25505839304 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x7ed46 retired=25842545242 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x3fb017e6c6 retired=26177251247 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a11b2 retired=26521673566 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x29f198 retired=26861498528 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946326 retired=27204422690 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x20432 retired=27570902923 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x3c11e retired=27919894244 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x8677e retired=28256169534 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff802cbb90 retired=28614004371 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2dd9f0 retired=28949766426 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8094640c retired=29289979448 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xc39144 retired=29641550587 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2ddb06 retired=29983015299 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a113e retired=30323449975 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x3efac retired=30664845044 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x8f9de retired=31014175372 scause=15 stval=0x3f3a70b000 mcause=0 mtval=0x0
+progress pc=0xffffffff80087076 retired=31357484715 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff804a1486 retired=31703081402 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+elapsed_ms=900000 retired=32055888745 effective_mips=35.618 shell=false
+SBI_TIME_CALLS=0 STIMECMP_WRITES=731818
+id=2 status=0xf irq=0 queues=[(1, 128, 290, Ok(290), Ok(290)), (0, 0, 0, Err(()), Err(()))]
+id=1 status=0xf irq=0 queues=[(1, 128, 2, Ok(128), Ok(2)), (1, 128, 9, Ok(9), Ok(9))]
+id=3 status=0xf irq=0 queues=[(1, 128, 0, Ok(128), Ok(0)), (1, 128, 1003, Ok(1003), Ok(1003))]
+id=4 status=0xf irq=0 queues=[(1, 128, 20, Ok(20), Ok(20)), (0, 0, 0, Err(()), Err(()))]
+Error: "shell acceptance marker not reached"

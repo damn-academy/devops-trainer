@@ -1,0 +1,78 @@
+{
+  "source": "web/public/rv64/results/R3-recovery-1024-continuous-1h.json",
+  "type": "kuberoot",
+  "error": null,
+  "wasmSha256": "27685993bf66eaad77b57e782985acc9616c5bf575e7dc9219840170c94f4f58",
+  "sourceSha256": "17f7c4c30dc066b1d582c78424bb12a0de53c11c9c740d185d35e254eb150b67",
+  "clock": "continuous",
+  "engineReadyMs": 770.0199999809265,
+  "nodeReadyMs": 41927.39999997616,
+  "getPodsSeconds": [
+    12.96,
+    7.68,
+    6.65
+  ],
+  "podStartSeconds": [
+    68.73
+  ],
+  "probeDone": true,
+  "rcuStalls": 0,
+  "expiredBookmarks": 136,
+  "samples": [
+    {
+      "elapsedMs": 1348.6800000071526,
+      "snapshotFaults": 514,
+      "snapshotFaultMs": 1210.29499989748,
+      "retiredSinceStart": 2277109,
+      "jitRetired": 1149818,
+      "busyMilliseconds": 1336.6599997282028,
+      "waitMs": 0,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 7.649999916553497
+    },
+    {
+      "elapsedMs": 5351.975000023842,
+      "snapshotFaults": 1643,
+      "snapshotFaultMs": 4023.950000345707,
+      "retiredSinceStart": 80374936,
+      "jitRetired": 71914923,
+      "busyMilliseconds": 5280.325000464916,
+      "waitMs": 0,
+      "diskActiveMs": 250.3100000023842,
+      "compilerYieldMs": 40.23499953746796
+    },
+    {
+      "elapsedMs": 10354.555000007153,
+      "snapshotFaults": 2496,
+      "snapshotFaultMs": 6273.3399990201,
+      "retiredSinceStart": 271259635,
+      "jitRetired": 247680708,
+      "busyMilliseconds": 10174.050002038479,
+      "waitMs": 0,
+      "diskActiveMs": 597.8450000286102,
+      "compilerYieldMs": 93.58999919891357
+    },
+    {
+      "elapsedMs": 30370.89500004053,
+      "snapshotFaults": 3584,
+      "snapshotFaultMs": 9377.724997282028,
+      "retiredSinceStart": 1349969369,
+      "jitRetired": 1236711992,
+      "busyMilliseconds": 29657.650011003017,
+      "waitMs": 0,
+      "diskActiveMs": 597.8450000286102,
+      "compilerYieldMs": 297.9850001335144
+    },
+    {
+      "elapsedMs": 60377.59500002861,
+      "snapshotFaults": 3655,
+      "snapshotFaultMs": 9706.204997122288,
+      "retiredSinceStart": 3964853334,
+      "jitRetired": 3695997320,
+      "busyMilliseconds": 58514.05001169443,
+      "waitMs": 0,
+      "diskActiveMs": 597.8450000286102,
+      "compilerYieldMs": 682.4599972367287
+    }
+  ]
+}

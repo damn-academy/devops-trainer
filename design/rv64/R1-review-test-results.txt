@@ -1,0 +1,699 @@
+=== review-platform.log ===
+   Compiling rv64-core v0.1.0 (/work/src/core)
+    Finished `release` profile [optimized] target(s) in 9.60s
+     Running tests/platform.rs (/work/target/release/deps/platform-83392f0288a5fe45)
+
+running 33 tests
+test compressed_lui_x0_is_a_hint ... ok
+test clint_split_registers ... ok
+test cross_page_instruction_fetch ... ok
+test device_tree_header ... ok
+test fp_saturating_overflow_sets_of_and_nx ... ok
+test invalid_instruction_is_precise ... ok
+test lazy_disk_chunks_are_bounded_and_preserve_overlay ... ok
+test decode_cache_observes_code_writes_and_image_replacement ... ok
+test malformed_virtqueue_is_bounded ... ok
+test minstret_write_suppresses_itself_only_and_trace_reports_raw ... ok
+test locked_tor_also_locks_previous_address_and_pmp_changes_flush_tlb ... ok
+test mmio_rejects_invalid_widths_without_writes ... ok
+test modern_net_header_has_one_buffer_and_preserves_ethernet ... ok
+test mprv_does_not_affect_fetch ... ok
+test physical_addresses_do_not_wrap_to_wasm32_ram ... ok
+test plic_claim_ignores_threshold_and_clears_pending ... ok
+test pmp_priority_partial_access_lock_and_mprv ... ok
+test real_time_is_independent_of_retirement ... ok
+test review_counterexamples_and_boot_contract ... ok
+test lazy_virtio_block_defers_completion_then_restores_pending_request ... ok
+test sbi_probe_and_unknown ... ok
+test reviewed_status_timer_and_adue_controls ... ok
+test sbi_reset_distinguishes_reboot_from_shutdown ... ok
+test sv39_noncanonical ... ok
+test sstc_interrupt_and_wfi ... ok
+test sv39_permissions_and_ad ... ok
+test tlb_flush_changes_mapping ... ok
+test virtio_configuration_supports_linux_mac_byte_reads ... ok
+test virtio_console_queue_and_plic ... ok
+test virtio_rng_and_network_receive ... ok
+test virtio_feature_config_flush_and_suppressed_interrupt ... ok
+test snapshot_restores_cpu_memory_devices_and_rejects_truncation ... ok
+test writable_mtime_keeps_host_delta_and_snapshot_clock ... ok
+
+test result: ok. 33 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+
+=== review-upstream.log ===
+   Compiling rv64-core v0.1.0 (/work/src/core)
+    Finished `release` profile [optimized] target(s) in 5.90s
+     Running tests/upstream.rs (/work/target/release/deps/upstream-c023f3b003363101)
+
+running 1 test
+UNSUPPORTED rv64mi-p-breakpoint: optional Sdtrig trigger CSRs are absent
+PASS rv64mi-p-csr
+PASS rv64mi-p-illegal
+PASS rv64mi-p-instret_overflow
+PASS rv64mi-p-ld-misaligned
+PASS rv64mi-p-lh-misaligned
+PASS rv64mi-p-lw-misaligned
+PASS rv64mi-p-ma_addr
+PASS rv64mi-p-ma_fetch
+PASS rv64mi-p-mcsr
+PASS rv64mi-p-pmpaddr
+PASS rv64mi-p-sbreak
+PASS rv64mi-p-scall
+PASS rv64mi-p-sd-misaligned
+PASS rv64mi-p-sh-misaligned
+PASS rv64mi-p-sw-misaligned
+PASS rv64mi-p-zicntr
+PASS rv64si-p-csr
+PASS rv64si-p-dirty
+PASS rv64si-p-icache-alias
+PASS rv64si-p-ma_fetch
+PASS rv64si-p-sbreak
+PASS rv64si-p-scall
+PASS rv64si-p-wfi
+PASS rv64ua-p-amoadd_d
+PASS rv64ua-p-amoadd_w
+PASS rv64ua-p-amoand_d
+PASS rv64ua-p-amoand_w
+PASS rv64ua-p-amomax_d
+PASS rv64ua-p-amomax_w
+PASS rv64ua-p-amomaxu_d
+PASS rv64ua-p-amomaxu_w
+PASS rv64ua-p-amomin_d
+PASS rv64ua-p-amomin_w
+PASS rv64ua-p-amominu_d
+PASS rv64ua-p-amominu_w
+PASS rv64ua-p-amoor_d
+PASS rv64ua-p-amoor_w
+PASS rv64ua-p-amoswap_d
+PASS rv64ua-p-amoswap_w
+PASS rv64ua-p-amoxor_d
+PASS rv64ua-p-amoxor_w
+PASS rv64ua-p-lrsc
+PASS rv64uc-p-rvc
+PASS rv64ud-p-fadd
+PASS rv64ud-p-fclass
+PASS rv64ud-p-fcmp
+PASS rv64ud-p-fcvt
+PASS rv64ud-p-fcvt_w
+PASS rv64ud-p-fdiv
+PASS rv64ud-p-fmadd
+PASS rv64ud-p-fmin
+PASS rv64ud-p-ldst
+PASS rv64ud-p-move
+PASS rv64ud-p-recoding
+PASS rv64ud-p-structural
+PASS rv64uf-p-fadd
+PASS rv64uf-p-fclass
+PASS rv64uf-p-fcmp
+PASS rv64uf-p-fcvt
+PASS rv64uf-p-fcvt_w
+PASS rv64uf-p-fdiv
+PASS rv64uf-p-fmadd
+PASS rv64uf-p-fmin
+PASS rv64uf-p-ldst
+PASS rv64uf-p-move
+PASS rv64uf-p-recoding
+PASS rv64ui-p-add
+PASS rv64ui-p-addi
+PASS rv64ui-p-addiw
+PASS rv64ui-p-addw
+PASS rv64ui-p-and
+PASS rv64ui-p-andi
+PASS rv64ui-p-auipc
+PASS rv64ui-p-beq
+PASS rv64ui-p-bge
+PASS rv64ui-p-bgeu
+PASS rv64ui-p-blt
+PASS rv64ui-p-bltu
+PASS rv64ui-p-bne
+PASS rv64ui-p-fence_i
+PASS rv64ui-p-jal
+PASS rv64ui-p-jalr
+PASS rv64ui-p-lb
+PASS rv64ui-p-lbu
+PASS rv64ui-p-ld
+PASS rv64ui-p-ld_st
+PASS rv64ui-p-lh
+PASS rv64ui-p-lhu
+PASS rv64ui-p-lui
+PASS rv64ui-p-lw
+PASS rv64ui-p-lwu
+PASS rv64ui-p-ma_data
+PASS rv64ui-p-or
+PASS rv64ui-p-ori
+PASS rv64ui-p-sb
+PASS rv64ui-p-sd
+PASS rv64ui-p-sh
+PASS rv64ui-p-simple
+PASS rv64ui-p-sll
+PASS rv64ui-p-slli
+PASS rv64ui-p-slliw
+PASS rv64ui-p-sllw
+PASS rv64ui-p-slt
+PASS rv64ui-p-slti
+PASS rv64ui-p-sltiu
+PASS rv64ui-p-sltu
+PASS rv64ui-p-sra
+PASS rv64ui-p-srai
+PASS rv64ui-p-sraiw
+PASS rv64ui-p-sraw
+PASS rv64ui-p-srl
+PASS rv64ui-p-srli
+PASS rv64ui-p-srliw
+PASS rv64ui-p-srlw
+PASS rv64ui-p-st_ld
+PASS rv64ui-p-sub
+PASS rv64ui-p-subw
+PASS rv64ui-p-sw
+PASS rv64ui-p-xor
+PASS rv64ui-p-xori
+PASS rv64um-p-div
+PASS rv64um-p-divu
+PASS rv64um-p-divuw
+PASS rv64um-p-divw
+PASS rv64um-p-mul
+PASS rv64um-p-mulh
+PASS rv64um-p-mulhsu
+PASS rv64um-p-mulhu
+PASS rv64um-p-mulw
+PASS rv64um-p-rem
+PASS rv64um-p-remu
+PASS rv64um-p-remuw
+PASS rv64um-p-remw
+PASS rv64uzba-p-add_uw
+PASS rv64uzba-p-sh1add
+PASS rv64uzba-p-sh1add_uw
+PASS rv64uzba-p-sh2add
+PASS rv64uzba-p-sh2add_uw
+PASS rv64uzba-p-sh3add
+PASS rv64uzba-p-sh3add_uw
+PASS rv64uzba-p-slli_uw
+PASS rv64uzbb-p-andn
+PASS rv64uzbb-p-clz
+PASS rv64uzbb-p-clzw
+PASS rv64uzbb-p-cpop
+PASS rv64uzbb-p-cpopw
+PASS rv64uzbb-p-ctz
+PASS rv64uzbb-p-ctzw
+PASS rv64uzbb-p-max
+PASS rv64uzbb-p-maxu
+PASS rv64uzbb-p-min
+PASS rv64uzbb-p-minu
+PASS rv64uzbb-p-orc_b
+PASS rv64uzbb-p-orn
+PASS rv64uzbb-p-rev8
+PASS rv64uzbb-p-rol
+PASS rv64uzbb-p-rolw
+PASS rv64uzbb-p-ror
+PASS rv64uzbb-p-rori
+PASS rv64uzbb-p-roriw
+PASS rv64uzbb-p-rorw
+PASS rv64uzbb-p-sext_b
+PASS rv64uzbb-p-sext_h
+PASS rv64uzbb-p-xnor
+PASS rv64uzbb-p-zext_h
+PASS rv64uzbs-p-bclr
+PASS rv64uzbs-p-bclri
+PASS rv64uzbs-p-bext
+PASS rv64uzbs-p-bexti
+PASS rv64uzbs-p-binv
+PASS rv64uzbs-p-binvi
+PASS rv64uzbs-p-bset
+PASS rv64uzbs-p-bseti
+UPSTREAM RESULT pass=173 fail=0 unsupported=1
+test riscv_tests ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+
+
+=== review-arch.log ===
+ARCH_SIGNATURES=266
+
+
+=== review-native-fixed.log ===
+[    0.000000] Booting Linux on hartid 0
+[    0.000000] Linux version 6.18.62-kuberoot (root@builder) (riscv64-linux-gnu-gcc (Debian 12.2.0-13) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #4 SMP Sat Nov 21 13:49:06 UTC 2026
+[    0.000000] Machine model: RV64 R1 single hart
+[    0.000000] SBI specification v2.0 detected
+[    0.000000] SBI implementation ID=0x10000000 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] SBI IPI extension detected
+[    0.000000] SBI RFENCE extension detected
+[    0.000000] SBI SRST extension detected
+[    0.000000] SBI DBCN extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000] SBI HSM extension detected
+[    0.000000] riscv: base ISA extensions acdfim
+[    0.000000] riscv: ELF capabilities acdfim
+[    0.000000] Ticket spinlock: enabled
+[    0.000000] percpu: Embedded 30 pages/cpu s84248 r8192 d30440 u122880
+[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr
+[    0.000000] Unknown kernel command line parameters "nokaslr", will be passed to user space.
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 131072
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=1.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+[    0.000000] RCU Tasks Trace: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000000] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.000332] riscv-timer: Timer interrupt in S-mode is available via sstc extension
+[    0.004660] Console: colour dummy device 80x25
+[    0.006446] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)
+[    0.007069] pid_max: default: 32768 minimum: 301
+[    0.009014] LSM: initializing lsm=capability
+[    0.011921] Mount-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.012399] Mountpoint-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.053831] riscv: ELF compat mode unsupported
+[    0.054083] ASID allocator using 16 bits (65536 entries)
+[    0.056679] rcu: Hierarchical SRCU implementation.
+[    0.056911] rcu: 	Max phase no-delay instances is 1000.
+[    0.064813] EFI services will not be available.
+[    0.067198] smp: Bringing up secondary CPUs ...
+[    0.067562] smp: Brought up 1 node, 1 CPU
+[    0.069516] Memory: 465052K/524288K available (9537K kernel code, 5353K rwdata, 4096K rodata, 2341K init, 393K bss, 56792K reserved, 0K cma-reserved)
+[    0.077296] devtmpfs: initialized
+[    0.103710] posixtimers hash table entries: 512 (order: 1, 8192 bytes, linear)
+[    0.104313] futex hash table entries: 256 (16384 bytes on 1 NUMA nodes, total 16 KiB, linear).
+[    0.108270] pinctrl core: initialized pinctrl subsystem
+[    0.111229] DMI not present or invalid.
+[    0.128145] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.134718] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    0.135320] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.135544] audit: initializing netlink subsys (disabled)
+[    0.141581] thermal_sys: Registered thermal governor 'step_wise'
+[    0.142317] audit: type=2000 audit(0.132:1): state=initialized audit_enabled=0 res=1
+[    0.143048] cpuidle: using governor menu
+[    0.169491] cpu0: rdtime lacks granularity needed to measure unaligned access speed
+[    0.253345] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.253585] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.258983] ACPI: Interpreter disabled.
+[    0.260163] iommu: Default domain type: Translated
+[    0.260278] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.304704] SCSI subsystem initialized
+[    0.327507] vgaarb: loaded
+[    0.328926] clocksource: Switched to clocksource riscv_clocksource
+[    0.339664] pnp: PnP ACPI: disabled
+[    0.802324] NET: Registered PF_INET protocol family
+[    0.806200] IP idents hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.843777] tcp_listen_portaddr_hash hash table entries: 256 (order: 0, 4096 bytes, linear)
+[    0.844249] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.844598] TCP established hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.846313] TCP bind hash table entries: 4096 (order: 5, 131072 bytes, linear)
+[    0.848567] TCP: Hash tables configured (established 4096 bind 4096)
+[    0.849572] UDP hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.850298] UDP-Lite hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.853092] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.853876] PCI: CLS 0 bytes, default 64
+[    0.864260] Initialise system trusted keyrings
+[    0.910259] Unpacking initramfs...
+[    0.973334] workingset: timestamp_bits=46 max_order=17 bucket_order=0
+[    0.977592] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.978056] fuse: init (API version 7.45)
+[    0.997908] 9p: Installing v9fs 9p2000 file system support
+[    5.413524] NET: Registered PF_ALG protocol family
+[    5.413957] Key type asymmetric registered
+[    5.414201] Asymmetric key parser 'x509' registered
+[    5.415004] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 250)
+[    7.450767] Freeing initrd memory: 8760K
+[    8.974390] io scheduler mq-deadline registered
+[    8.974731] io scheduler kyber registered
+[    8.975230] io scheduler bfq registered
+[    8.981284] riscv-plic: plic@c000000: mapped 31 interrupts with 1 handlers for 2 contexts.
+progress pc=0xffffffff80300e0a retired=376018714 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[    9.952893] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[   10.007217] printk: legacy console [hvc0] enabled
+[   10.007578] printk: legacy bootconsole [sbi0] disabled
+[   10.016783] random: crng init done
+[   10.083060] loop: module loaded
+[   10.084222] virtio_blk virtio0: 1/0/0 default/read/poll queues
+[   10.087900] virtio_blk virtio0: [vda] 0 512-byte logical blocks (0 B/0 B)
+[   10.155324] tun: Universal TUN/TAP device driver, 1.6
+[   10.173990] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[   10.191417] riscv-pmu-sbi: SBI PMU extension is available
+[   10.192152] riscv-pmu-sbi: 0 firmware and 0 hardware counters
+[   10.193279] riscv-pmu-sbi: Perf sampling/filtering is not supported as sscof extension is not available
+[   10.202693] IPVS: Registered protocols (TCP, UDP)
+[   10.203537] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+[   10.207220] IPVS: ipvs loaded.
+[   10.207948] IPVS: [rr] scheduler registered.
+[   10.212285] Initializing XFRM netlink socket
+[   10.213871] NET: Registered PF_INET6 protocol family
+[   10.229124] Segment Routing with IPv6
+[   10.230475] In-situ OAM (IOAM) with IPv6
+[   10.232434] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[   10.241665] NET: Registered PF_PACKET protocol family
+[   10.243082] Bridge firewalling registered
+[   10.245487] 8021q: 802.1Q VLAN Support v1.8
+[   10.247163] 9pnet: Installing 9P2000 support
+[   10.248618] Key type dns_resolver registered
+[   10.251221] NET: Registered PF_VSOCK protocol family
+[   10.411717] Loading compiled-in X.509 certificates
+[   10.592542] Loaded X.509 cert 'Build time autogenerated kernel key: edae1ab5e37dadd23f1471322a492b2e9cb18efa'
+[   10.785571] clk: Disabling unused clocks
+[   10.786335] PM: genpd: Disabling unused power domains
+[   10.811482] Freeing unused kernel image (initmem) memory: 2340K
+[   10.813659] Run /init as init process
+
+RV64_INIT_READY
+/bin/sh: can't access tty; job control turned off
+~ # BOOT_SHELL_MS=11917
+/bin/coremark; echo RV64_BENCH_DONE
+progress pc=0x100547c retired=780363882 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x10053d4 retired=1194946203 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+2K performance run parameters for coremark.
+CoreMark Size    : 666
+Total ticks      : 17373
+Total time (secs): 17.373000
+Iterations/Sec   : 115.121165
+Iterations       : 2000
+Compiler version : GCCHomebrew Clang 22.1.8
+Compiler flags   : -O2 zig cc riscv64 static
+Memory location  : Please put data memory location here
+			(e.g. code in flash, data on heap etc)
+seedcrc          : 0xe9f5
+[0]crclist       : 0xe714
+[0]crcmatrix     : 0x1fd7
+[0]crcstate      : 0x8e3a
+[0]crcfinal      : 0x4983
+Correct operation validated. See readme.txt for run and reporting rules.
+CoreMark 1.0 : 115.121165 / GCCHomebrew Clang 22.1.8 -O2 zig cc riscv64 static / Heap
+RV64_BENCH_DONE
+COREMARK_WALL_SECONDS=27.051360296 COREMARK_EFFECTIVE_MIPS=41.581646937227276
+elapsed_ms=38969 retired=1568351393 effective_mips=40.246 shell=true
+SBI_TIME_CALLS=0 STIMECMP_WRITES=19063
+
+
+=== review-trace.txt ===
+# tracediff v1 model=rv64-core isa=rv64imafdc_zicsr_zifencei_zicntr_zba_zbb_zbs_sstc_svadu
+i 0000000080000000 0500006f - -
+i 0000000080000050 00000093 x1=0000000000000000 -
+i 0000000080000054 00000113 x2=0000000000000000 -
+i 0000000080000058 00000193 x3=0000000000000000 -
+i 000000008000005c 00000213 x4=0000000000000000 -
+i 0000000080000060 00000293 x5=0000000000000000 -
+i 0000000080000064 00000313 x6=0000000000000000 -
+i 0000000080000068 00000393 x7=0000000000000000 -
+i 000000008000006c 00000413 x8=0000000000000000 -
+i 0000000080000070 00000493 x9=0000000000000000 -
+i 0000000080000074 00000513 x10=0000000000000000 -
+i 0000000080000078 00000593 x11=0000000000000000 -
+i 000000008000007c 00000613 x12=0000000000000000 -
+i 0000000080000080 00000693 x13=0000000000000000 -
+i 0000000080000084 00000713 x14=0000000000000000 -
+i 0000000080000088 00000793 x15=0000000000000000 -
+i 000000008000008c 00000813 x16=0000000000000000 -
+i 0000000080000090 00000893 x17=0000000000000000 -
+i 0000000080000094 00000913 x18=0000000000000000 -
+i 0000000080000098 00000993 x19=0000000000000000 -
+i 000000008000009c 00000a13 x20=0000000000000000 -
+i 00000000800000a0 00000a93 x21=0000000000000000 -
+i 00000000800000a4 00000b13 x22=0000000000000000 -
+i 00000000800000a8 00000b93 x23=0000000000000000 -
+i 00000000800000ac 00000c13 x24=0000000000000000 -
+i 00000000800000b0 00000c93 x25=0000000000000000 -
+i 00000000800000b4 00000d13 x26=0000000000000000 -
+i 00000000800000b8 00000d93 x27=0000000000000000 -
+i 00000000800000bc 00000e13 x28=0000000000000000 -
+i 00000000800000c0 00000e93 x29=0000000000000000 -
+i 00000000800000c4 00000f13 x30=0000000000000000 -
+i 00000000800000c8 00000f93 x31=0000000000000000 -
+i 00000000800000cc f1402573 x10=0000000000000000 -
+i 00000000800000d0 00051063 - -
+i 00000000800000d4 00000297 x5=00000000800000d4 -
+i 00000000800000d8 01028293 x5=00000000800000e4 -
+i 00000000800000dc 30529073 - mtvec=00000000800000e4
+t 00000000800000e0 0002 0000000074445073 00000000800000e4
+i 00000000800000e4 00000297 x5=00000000800000e4 -
+i 00000000800000e8 01028293 x5=00000000800000f4 -
+i 00000000800000ec 30529073 - mtvec=00000000800000f4
+i 00000000800000f0 18005073 - satp=0000000000000000
+i 00000000800000f4 00000297 x5=00000000800000f4 -
+i 00000000800000f8 02428293 x5=0000000080000118 -
+i 00000000800000fc 30529073 - mtvec=0000000080000118
+i 0000000080000100 0010029b x5=0000000000000001 -
+i 0000000080000104 03529293 x5=0020000000000000 -
+i 0000000080000108 fff28293 x5=001fffffffffffff -
+i 000000008000010c 3b029073 - pmpaddr0=001fffffffffffff
+i 0000000080000110 01f00293 x5=000000000000001f -
+i 0000000080000114 3a029073 - pmpcfg0=000000000000001f
+i 0000000080000118 30405073 - mie=0000000000000000
+i 000000008000011c 00000297 x5=000000008000011c -
+i 0000000080000120 01428293 x5=0000000080000130 -
+i 0000000080000124 30529073 - mtvec=0000000080000130
+i 0000000080000128 30205073 - medeleg=0000000000000000
+i 000000008000012c 30305073 - mideleg=0000000000000000
+i 0000000080000130 00000193 x3=0000000000000000 -
+i 0000000080000134 00000297 x5=0000000080000134 -
+i 0000000080000138 ed028293 x5=0000000080000004 -
+i 000000008000013c 30529073 - mtvec=0000000080000004
+i 0000000080000140 00100513 x10=0000000000000001 -
+i 0000000080000144 01f51513 x10=0000000080000000 -
+i 0000000080000148 00055c63 - -
+i 0000000080000160 00000293 x5=0000000000000000 -
+i 0000000080000164 00028a63 - -
+i 0000000080000178 30005073 - mstatus=0000000a00000000
+i 000000008000017c 00000297 x5=000000008000017c -
+i 0000000080000180 01428293 x5=0000000080000190 -
+i 0000000080000184 34129073 - mepc=0000000080000190
+i 0000000080000188 f1402573 x10=0000000000000000 -
+i 000000008000018c 30200073 - mstatus=0000000a00000080
+i 0000000080000190 00200193 x3=0000000000000002 -
+i 0000000080000194 00000693 x13=0000000000000000 -
+i 0000000080000198 00068713 x14=0000000000000000 -
+i 000000008000019c 00000393 x7=0000000000000000 -
+i 00000000800001a0 28771263 - -
+i 00000000800001a4 00300193 x3=0000000000000003 -
+i 00000000800001a8 00100693 x13=0000000000000001 -
+i 00000000800001ac 00168713 x14=0000000000000002 -
+i 00000000800001b0 00200393 x7=0000000000000002 -
+i 00000000800001b4 26771863 - -
+i 00000000800001b8 00400193 x3=0000000000000004 -
+i 00000000800001bc 00300693 x13=0000000000000003 -
+i 00000000800001c0 00768713 x14=000000000000000a -
+i 00000000800001c4 00a00393 x7=000000000000000a -
+i 00000000800001c8 24771e63 - -
+i 00000000800001cc 00500193 x3=0000000000000005 -
+i 00000000800001d0 00000693 x13=0000000000000000 -
+i 00000000800001d4 80068713 x14=fffffffffffff800 -
+i 00000000800001d8 80000393 x7=fffffffffffff800 -
+i 00000000800001dc 24771463 - -
+i 00000000800001e0 00600193 x3=0000000000000006 -
+i 00000000800001e4 800006b7 x13=ffffffff80000000 -
+i 00000000800001e8 00068713 x14=ffffffff80000000 -
+i 00000000800001ec 800003b7 x7=ffffffff80000000 -
+i 00000000800001f0 22771a63 - -
+i 00000000800001f4 00700193 x3=0000000000000007 -
+i 00000000800001f8 800006b7 x13=ffffffff80000000 -
+i 00000000800001fc 80068713 x14=ffffffff7ffff800 -
+i 0000000080000200 fff0039b x7=ffffffffffffffff -
+i 0000000080000204 01f39393 x7=ffffffff80000000 -
+i 0000000080000208 80038393 x7=ffffffff7ffff800 -
+i 000000008000020c 20771c63 - -
+i 0000000080000210 00800193 x3=0000000000000008 -
+i 0000000080000214 00000693 x13=0000000000000000 -
+i 0000000080000218 7ff68713 x14=00000000000007ff -
+i 000000008000021c 7ff00393 x7=00000000000007ff -
+i 0000000080000220 20771263 - -
+i 0000000080000224 00900193 x3=0000000000000009 -
+i 0000000080000228 800006b7 x13=ffffffff80000000 -
+i 000000008000022c fff6869b x13=000000007fffffff -
+i 0000000080000230 00068713 x14=000000007fffffff -
+i 0000000080000234 800003b7 x7=ffffffff80000000 -
+i 0000000080000238 fff3839b x7=000000007fffffff -
+i 000000008000023c 1e771463 - -
+i 0000000080000240 00a00193 x3=000000000000000a -
+i 0000000080000244 800006b7 x13=ffffffff80000000 -
+i 0000000080000248 fff6869b x13=000000007fffffff -
+i 000000008000024c 7ff68713 x14=00000000800007fe -
+i 0000000080000250 0010039b x7=0000000000000001 -
+i 0000000080000254 01f39393 x7=0000000080000000 -
+i 0000000080000258 7fe38393 x7=00000000800007fe -
+i 000000008000025c 1c771463 - -
+i 0000000080000260 00b00193 x3=000000000000000b -
+i 0000000080000264 800006b7 x13=ffffffff80000000 -
+i 0000000080000268 7ff68713 x14=ffffffff800007ff -
+i 000000008000026c 800003b7 x7=ffffffff80000000 -
+i 0000000080000270 7ff3839b x7=ffffffff800007ff -
+i 0000000080000274 1a771863 - -
+i 0000000080000278 00c00193 x3=000000000000000c -
+i 000000008000027c 800006b7 x13=ffffffff80000000 -
+i 0000000080000280 fff6869b x13=000000007fffffff -
+i 0000000080000284 80068713 x14=000000007ffff7ff -
+i 0000000080000288 7ffff3b7 x7=000000007ffff000 -
+i 000000008000028c 7ff3839b x7=000000007ffff7ff -
+i 0000000080000290 18771a63 - -
+i 0000000080000294 00d00193 x3=000000000000000d -
+i 0000000080000298 00000693 x13=0000000000000000 -
+i 000000008000029c fff68713 x14=ffffffffffffffff -
+i 00000000800002a0 fff00393 x7=ffffffffffffffff -
+i 00000000800002a4 18771063 - -
+i 00000000800002a8 00e00193 x3=000000000000000e -
+i 00000000800002ac fff00693 x13=ffffffffffffffff -
+i 00000000800002b0 00168713 x14=0000000000000000 -
+i 00000000800002b4 00000393 x7=0000000000000000 -
+i 00000000800002b8 16771663 - -
+i 00000000800002bc 00f00193 x3=000000000000000f -
+i 00000000800002c0 fff00693 x13=ffffffffffffffff -
+i 00000000800002c4 fff68713 x14=fffffffffffffffe -
+i 00000000800002c8 ffe00393 x7=fffffffffffffffe -
+i 00000000800002cc 14771c63 - -
+i 00000000800002d0 01000193 x3=0000000000000010 -
+i 00000000800002d4 800006b7 x13=ffffffff80000000 -
+i 00000000800002d8 fff6869b x13=000000007fffffff -
+i 00000000800002dc 00168713 x14=0000000080000000 -
+i 00000000800002e0 0010039b x7=0000000000000001 -
+i 00000000800002e4 01f39393 x7=0000000080000000 -
+i 00000000800002e8 12771e63 - -
+i 00000000800002ec 01100193 x3=0000000000000011 -
+i 00000000800002f0 00d00593 x11=000000000000000d -
+i 00000000800002f4 00b58593 x11=0000000000000018 -
+i 00000000800002f8 01800393 x7=0000000000000018 -
+i 00000000800002fc 12759463 - -
+i 0000000080000300 01200193 x3=0000000000000012 -
+i 0000000080000304 00000213 x4=0000000000000000 -
+i 0000000080000308 00d00093 x1=000000000000000d -
+i 000000008000030c 00b08713 x14=0000000000000018 -
+i 0000000080000310 00070313 x6=0000000000000018 -
+i 0000000080000314 00120213 x4=0000000000000001 -
+i 0000000080000318 00200293 x5=0000000000000002 -
+i 000000008000031c fe5216e3 - -
+i 0000000080000308 00d00093 x1=000000000000000d -
+i 000000008000030c 00b08713 x14=0000000000000018 -
+i 0000000080000310 00070313 x6=0000000000000018 -
+i 0000000080000314 00120213 x4=0000000000000002 -
+i 0000000080000318 00200293 x5=0000000000000002 -
+i 000000008000031c fe5216e3 - -
+i 0000000080000320 01800393 x7=0000000000000018 -
+i 0000000080000324 10731063 - -
+i 0000000080000328 01300193 x3=0000000000000013 -
+i 000000008000032c 00000213 x4=0000000000000000 -
+i 0000000080000330 00d00093 x1=000000000000000d -
+i 0000000080000334 00a08713 x14=0000000000000017 -
+i 0000000080000338 00000013 - -
+i 000000008000033c 00070313 x6=0000000000000017 -
+i 0000000080000340 00120213 x4=0000000000000001 -
+i 0000000080000344 00200293 x5=0000000000000002 -
+i 0000000080000348 fe5214e3 - -
+i 0000000080000330 00d00093 x1=000000000000000d -
+i 0000000080000334 00a08713 x14=0000000000000017 -
+i 0000000080000338 00000013 - -
+i 000000008000033c 00070313 x6=0000000000000017 -
+i 0000000080000340 00120213 x4=0000000000000002 -
+i 0000000080000344 00200293 x5=0000000000000002 -
+i 0000000080000348 fe5214e3 - -
+i 000000008000034c 01700393 x7=0000000000000017 -
+i 0000000080000350 0c731a63 - -
+i 0000000080000354 01400193 x3=0000000000000014 -
+i 0000000080000358 00000213 x4=0000000000000000 -
+i 000000008000035c 00d00093 x1=000000000000000d -
+i 0000000080000360 00908713 x14=0000000000000016 -
+i 0000000080000364 00000013 - -
+i 0000000080000368 00000013 - -
+i 000000008000036c 00070313 x6=0000000000000016 -
+i 0000000080000370 00120213 x4=0000000000000001 -
+i 0000000080000374 00200293 x5=0000000000000002 -
+i 0000000080000378 fe5212e3 - -
+i 000000008000035c 00d00093 x1=000000000000000d -
+i 0000000080000360 00908713 x14=0000000000000016 -
+i 0000000080000364 00000013 - -
+i 0000000080000368 00000013 - -
+i 000000008000036c 00070313 x6=0000000000000016 -
+i 0000000080000370 00120213 x4=0000000000000002 -
+i 0000000080000374 00200293 x5=0000000000000002 -
+i 0000000080000378 fe5212e3 - -
+i 000000008000037c 01600393 x7=0000000000000016 -
+i 0000000080000380 0a731263 - -
+i 0000000080000384 01500193 x3=0000000000000015 -
+i 0000000080000388 00000213 x4=0000000000000000 -
+i 000000008000038c 00d00093 x1=000000000000000d -
+i 0000000080000390 00b08713 x14=0000000000000018 -
+i 0000000080000394 00120213 x4=0000000000000001 -
+i 0000000080000398 00200293 x5=0000000000000002 -
+i 000000008000039c fe5218e3 - -
+i 000000008000038c 00d00093 x1=000000000000000d -
+i 0000000080000390 00b08713 x14=0000000000000018 -
+i 0000000080000394 00120213 x4=0000000000000002 -
+i 0000000080000398 00200293 x5=0000000000000002 -
+i 000000008000039c fe5218e3 - -
+i 00000000800003a0 01800393 x7=0000000000000018 -
+i 00000000800003a4 08771063 - -
+i 00000000800003a8 01600193 x3=0000000000000016 -
+i 00000000800003ac 00000213 x4=0000000000000000 -
+i 00000000800003b0 00d00093 x1=000000000000000d -
+i 00000000800003b4 00000013 - -
+i 00000000800003b8 00a08713 x14=0000000000000017 -
+i 00000000800003bc 00120213 x4=0000000000000001 -
+i 00000000800003c0 00200293 x5=0000000000000002 -
+i 00000000800003c4 fe5216e3 - -
+i 00000000800003b0 00d00093 x1=000000000000000d -
+i 00000000800003b4 00000013 - -
+i 00000000800003b8 00a08713 x14=0000000000000017 -
+i 00000000800003bc 00120213 x4=0000000000000002 -
+i 00000000800003c0 00200293 x5=0000000000000002 -
+i 00000000800003c4 fe5216e3 - -
+i 00000000800003c8 01700393 x7=0000000000000017 -
+i 00000000800003cc 04771c63 - -
+i 00000000800003d0 01700193 x3=0000000000000017 -
+i 00000000800003d4 00000213 x4=0000000000000000 -
+i 00000000800003d8 00d00093 x1=000000000000000d -
+i 00000000800003dc 00000013 - -
+i 00000000800003e0 00000013 - -
+i 00000000800003e4 00908713 x14=0000000000000016 -
+i 00000000800003e8 00120213 x4=0000000000000001 -
+i 00000000800003ec 00200293 x5=0000000000000002 -
+i 00000000800003f0 fe5214e3 - -
+i 00000000800003d8 00d00093 x1=000000000000000d -
+i 00000000800003dc 00000013 - -
+i 00000000800003e0 00000013 - -
+i 00000000800003e4 00908713 x14=0000000000000016 -
+i 00000000800003e8 00120213 x4=0000000000000002 -
+i 00000000800003ec 00200293 x5=0000000000000002 -
+i 00000000800003f0 fe5214e3 - -
+i 00000000800003f4 01600393 x7=0000000000000016 -
+i 00000000800003f8 02771663 - -
+i 00000000800003fc 01800193 x3=0000000000000018 -
+i 0000000080000400 02000093 x1=0000000000000020 -
+i 0000000080000404 02000393 x7=0000000000000020 -
+i 0000000080000408 00709e63 - -
+i 000000008000040c 01900193 x3=0000000000000019 -
+i 0000000080000410 02100093 x1=0000000000000021 -
+i 0000000080000414 03208013 - -
+i 0000000080000418 00000393 x7=0000000000000000 -
+i 000000008000041c 00701463 - -
+i 0000000080000420 02301063 - -
+i 0000000080000440 0ff0000f - -
+i 0000000080000444 00100193 x3=0000000000000001 -
+i 0000000080000448 05d00893 x17=000000000000005d -
+i 000000008000044c 00000513 x10=0000000000000000 -
+t 0000000080000450 0008 0000000000000000 0000000080000004
+i 0000000080000004 34202f73 x30=0000000000000008 -
+i 0000000080000008 00800f93 x31=0000000000000008 -
+i 000000008000000c 03ff0863 - -
+i 000000008000003c 00001f17 x30=000000008000103c -
+i 0000000080000040 fc3f2223 - -

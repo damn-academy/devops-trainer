@@ -1,0 +1,25 @@
+{
+  "result": {
+    "type": "integration",
+    "network": "ip link set eth0 up && udhcpc -i eth0 -n -q && ip -4 addr show eth0 && nsloo\nkup mirror.lab 10.0.0.1 && wget -qO- http://mirror.lab/probe.txt\nudhcpc: started, v1.37.0\nudhcpc: broadcasting discover\nudhcpc: broadcasting select for 10.0.0.10, server 10.0.0.1\nudhcpc: lease of 10.0.0.10 obtained from 10.0.0.1, lease time 3600\n3: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000\n    inet 10.0.0.10/24 brd 10.0.0.255 scope global eth0\n       valid_lft forever preferred_lft forever\nServer:\t\t10.0.0.1\nAddress:\t10.0.0.1:53\n\nName:\tmirror.lab\nAddress: 10.0.0.1\n\n\nRV64_LOCAL_HTTP_OK\n~ # printf '\\nRV64_c05f9684591141119957c48a054e1768:%s\\n' \"$?\"\n",
+    "facts": "dt.facts/v1",
+    "lazyDiskByte": 90,
+    "kernel": "6.18.62-kuberoot",
+    "snapshotBytes": 53039604,
+    "restoredFile": {
+      "exists": true,
+      "type": "f",
+      "mode": "0644",
+      "ino": 521,
+      "nlink": 1,
+      "uid": 0,
+      "gid": 0,
+      "size": 18,
+      "text": "checkpoint-before\n",
+      "owner": "root",
+      "group": "root"
+    }
+  },
+  "isolated": true,
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/159.0.8154.6 Safari/537.36"
+}

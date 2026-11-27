@@ -1,0 +1,49 @@
+{
+  "wasmSha256": "d4e6bc8b3dfc654a2645e1957f6272784203fc648c43f0b24eb548b216c427c7",
+  "jitSourceSha256": "0e3766f4827dc08b9afa82ef3c3cfe42e7721f5e76ae51b566d849919b1512af",
+  "smpSourceSha256": "990f0b1e7d1f09846aab29f0c645fc8bed5232c177010c55df48f276c73a445d",
+  "nativePlatformPassed": 36,
+  "nativeRiscvTestsPassed": 173,
+  "nativeRiscvTestsUnsupported": [
+    "Sdtrig"
+  ],
+  "forcedJitPassed": true,
+  "singleStep": {
+    "pass": true,
+    "instructions": 2000000,
+    "boundaries": 2000000,
+    "milliseconds": 21649,
+    "scope": "CPU state after every instruction with one-instruction JIT blocks; exact full RAM at end"
+  },
+  "superblock": {
+    "pass": true,
+    "instructions": 20000005,
+    "boundaries": 784815,
+    "milliseconds": 9147.379999995232,
+    "scope": "CPU state at block exits; exact full RAM at end"
+  },
+  "integrationType": "integration",
+  "smpSubstrate": {
+    "type": "smp-substrate",
+    "pass": true,
+    "samples": [
+      {
+        "workers": 2,
+        "ms": 57.30000001192093,
+        "amoIncrements": "20000",
+        "lrscIncrements": "20000",
+        "retries": 3207
+      },
+      {
+        "workers": 4,
+        "ms": 33.185000002384186,
+        "amoIncrements": "40000",
+        "lrscIncrements": "40000",
+        "retries": 7567
+      }
+    ]
+  },
+  "smpCpuIntegrated": false,
+  "smpUnitTestsPassed": 9,
+  "forcedJitCases": 439
+}

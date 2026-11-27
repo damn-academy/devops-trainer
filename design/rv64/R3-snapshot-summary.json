@@ -1,0 +1,59 @@
+{
+  "status": "partial: snapshots implemented; performance budgets and SMP not accepted",
+  "harts": 1,
+  "wasmSha256": "27685993bf66eaad77b57e782985acc9616c5bf575e7dc9219840170c94f4f58",
+  "sourceSha256": "ac8e602511c0b2e3c3ea2792fc950a46e02b6c4a16239707b1006d6f521e7120",
+  "capture": {
+    "readyMs": 746589.8700000048,
+    "totalMs": 778007.1150000095,
+    "readyToExportCompleteMs": 31417.24500000477
+  },
+  "artifact": {
+    "url": "/rv64/snapshots/kuberoot/paged.json",
+    "memoryMB": 768,
+    "ramCompressedBytes": 238185484,
+    "nonzeroPages": 186537,
+    "ramGroups": 2984,
+    "metadataRawBytes": 3088310,
+    "metadataCompressedBytes": 3067269,
+    "capturedAt": 1795301202739,
+    "validFrom": 1795296865000,
+    "validUntil": 1826836464000,
+    "allMemberHashesVerified": true,
+    "baseVersion": "ced14b4008ab18d7b57806e43bd365ad94e022328e6fe1b0f5882e060b0dc758"
+  },
+  "restore": {
+    "cache": "fresh Chromium context; cold Cache Storage; RAM assets local Vite; base media via pod range server",
+    "engineReadyMs": 517.3999999761581,
+    "nodesReadyMs": 62053.75,
+    "getPodsSeconds": [
+      9.81,
+      9.3,
+      12.72
+    ],
+    "podCreateHTTPMs": 444,
+    "podReady": false,
+    "podReadyWaitLimitSeconds": 300,
+    "probeError": "Error: kuberoot probe command failed",
+    "readyQueryRetries": 0,
+    "certificateValidityErrors": 0,
+    "lastSample": {
+      "elapsedMs": 425866.4250000119,
+      "snapshotFaults": 2886,
+      "snapshotFaultMs": 6298.3849992752075,
+      "diskActiveMs": 31951.050000190735,
+      "retiredSinceStart": 29477762354,
+      "jitRetired": 28305652525
+    }
+  },
+  "smp": {
+    "linux2Harts": "not integrated/not run",
+    "linux4Harts": "not integrated/not run",
+    "perHartTraceDiff": "not run"
+  },
+  "budgets": {
+    "restoreReady5Seconds": false,
+    "getPodsHalfSecond": false,
+    "podStart3Seconds": false
+  }
+}

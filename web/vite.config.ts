@@ -18,7 +18,7 @@ export default defineConfig({
   // virtual:dt-manifest: the light course manifest the home page paints from;
   // sw.js + manifest.webmanifest for offline use (design 09 §3.2).
   plugins: [lessonMediaPlugin(), feedbackPlugin(), publicRawPlugin(), manifestPlugin(), pwaPlugin()],
-  server: { headers: isolation },
+  server: { headers: isolation, ...(process.env.RV64_MEASURE === '1' ? { hmr: false, watch: null } : {}) },
   preview: { headers: isolation },
   build: {
     target: 'es2022',

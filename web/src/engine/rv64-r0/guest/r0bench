@@ -1,0 +1,12 @@
+#!/bin/sh
+# Guest-side part of the measurement. Guest time in TinyEMU's browser build
+# follows the host clock, so these timings are wall-clock. /proc/uptime gives
+# 10 ms resolution (busybox date has no %N).
+now() { read u _ < /proc/uptime; echo $(( ${u%.*} * 1000 + (1${u#*.} - 100) * 10 )); }
+t() { s=$(now); "$@" >/tmp/out 2>&1; rc=$?; e=$(now); echo "R0T $1 rc=$rc ms=$((e - s))"; }
+case "$1" in
+  hello) t /usr/local/bin/gohello; cat /tmp/out ;;
+  heavy) t /usr/local/bin/goheavy; cat /tmp/out ;;
+  kubectl) t /usr/bin/kubectl version --client; head -2 /tmp/out ;;
+  coremark) /usr/local/bin/coremark | grep -E "Iterations/Sec|Total time|Iterations  |Correct|ERROR" ;;
+esac

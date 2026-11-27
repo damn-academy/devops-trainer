@@ -1,0 +1,873 @@
+=== pass2-final-summary.txt ===
+FINAL_ARCH_SIGNATURES=266
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+UPSTREAM RESULT pass=174 fail=0 unsupported=0
+
+
+=== pass2-platform-final.log ===
+   Compiling rv64-core v0.1.0 (/work/src/core)
+    Finished `release` profile [optimized] target(s) in 12.91s
+     Running unittests src/lib.rs (/work/target/release/deps/rv64_core-45c7d14161a8ec1e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/boot.rs (/work/target/release/deps/boot-247ba9993fb28035)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/rv64-runner.rs (/work/target/release/deps/rv64_runner-f6e00a20e633a332)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/platform.rs (/work/target/release/deps/platform-83392f0288a5fe45)
+
+running 26 tests
+test clint_split_registers ... ok
+test compressed_lui_x0_is_a_hint ... ok
+test device_tree_header ... ok
+test cross_page_instruction_fetch ... ok
+test decode_cache_observes_code_writes_and_image_replacement ... ok
+test fp_saturating_overflow_sets_of_and_nx ... ok
+test invalid_instruction_is_precise ... ok
+test lazy_disk_chunks_are_bounded_and_preserve_overlay ... ok
+test malformed_virtqueue_is_bounded ... ok
+test mmio_rejects_invalid_widths_without_writes ... ok
+test locked_tor_also_locks_previous_address_and_pmp_changes_flush_tlb ... ok
+test physical_addresses_do_not_wrap_to_wasm32_ram ... ok
+test mprv_does_not_affect_fetch ... ok
+test pmp_priority_partial_access_lock_and_mprv ... ok
+test real_time_is_independent_of_retirement ... ok
+test sbi_probe_and_unknown ... ok
+test sbi_reset_distinguishes_reboot_from_shutdown ... ok
+test sstc_interrupt_and_wfi ... ok
+test lazy_virtio_block_defers_completion_then_restores_pending_request ... ok
+test sv39_noncanonical ... ok
+test sv39_permissions_and_ad ... ok
+test snapshot_restores_cpu_memory_devices_and_rejects_truncation ... ok
+test tlb_flush_changes_mapping ... ok
+test virtio_rng_and_network_receive ... ok
+test virtio_console_queue_and_plic ... ok
+test writable_mtime_keeps_host_delta_and_snapshot_clock ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/upstream.rs (/work/target/release/deps/upstream-c023f3b003363101)
+
+running 1 test
+test riscv_tests ... ignored, requires pod-built upstream binaries; RV64_ISA_DIR=/work/tests/isa cargo test --release --test upstream -- --ignored --nocapture
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests rv64_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+
+=== pass2-upstream-final.log ===
+    Finished `release` profile [optimized] target(s) in 0.01s
+     Running tests/upstream.rs (/work/target/release/deps/upstream-c023f3b003363101)
+
+running 1 test
+PASS rv64mi-p-breakpoint
+PASS rv64mi-p-csr
+PASS rv64mi-p-illegal
+PASS rv64mi-p-instret_overflow
+PASS rv64mi-p-ld-misaligned
+PASS rv64mi-p-lh-misaligned
+PASS rv64mi-p-lw-misaligned
+PASS rv64mi-p-ma_addr
+PASS rv64mi-p-ma_fetch
+PASS rv64mi-p-mcsr
+PASS rv64mi-p-pmpaddr
+PASS rv64mi-p-sbreak
+PASS rv64mi-p-scall
+PASS rv64mi-p-sd-misaligned
+PASS rv64mi-p-sh-misaligned
+PASS rv64mi-p-sw-misaligned
+PASS rv64mi-p-zicntr
+PASS rv64si-p-csr
+PASS rv64si-p-dirty
+PASS rv64si-p-icache-alias
+PASS rv64si-p-ma_fetch
+PASS rv64si-p-sbreak
+PASS rv64si-p-scall
+PASS rv64si-p-wfi
+PASS rv64ua-p-amoadd_d
+PASS rv64ua-p-amoadd_w
+PASS rv64ua-p-amoand_d
+PASS rv64ua-p-amoand_w
+PASS rv64ua-p-amomax_d
+PASS rv64ua-p-amomax_w
+PASS rv64ua-p-amomaxu_d
+PASS rv64ua-p-amomaxu_w
+PASS rv64ua-p-amomin_d
+PASS rv64ua-p-amomin_w
+PASS rv64ua-p-amominu_d
+PASS rv64ua-p-amominu_w
+PASS rv64ua-p-amoor_d
+PASS rv64ua-p-amoor_w
+PASS rv64ua-p-amoswap_d
+PASS rv64ua-p-amoswap_w
+PASS rv64ua-p-amoxor_d
+PASS rv64ua-p-amoxor_w
+PASS rv64ua-p-lrsc
+PASS rv64uc-p-rvc
+PASS rv64ud-p-fadd
+PASS rv64ud-p-fclass
+PASS rv64ud-p-fcmp
+PASS rv64ud-p-fcvt
+PASS rv64ud-p-fcvt_w
+PASS rv64ud-p-fdiv
+PASS rv64ud-p-fmadd
+PASS rv64ud-p-fmin
+PASS rv64ud-p-ldst
+PASS rv64ud-p-move
+PASS rv64ud-p-recoding
+PASS rv64ud-p-structural
+PASS rv64uf-p-fadd
+PASS rv64uf-p-fclass
+PASS rv64uf-p-fcmp
+PASS rv64uf-p-fcvt
+PASS rv64uf-p-fcvt_w
+PASS rv64uf-p-fdiv
+PASS rv64uf-p-fmadd
+PASS rv64uf-p-fmin
+PASS rv64uf-p-ldst
+PASS rv64uf-p-move
+PASS rv64uf-p-recoding
+PASS rv64ui-p-add
+PASS rv64ui-p-addi
+PASS rv64ui-p-addiw
+PASS rv64ui-p-addw
+PASS rv64ui-p-and
+PASS rv64ui-p-andi
+PASS rv64ui-p-auipc
+PASS rv64ui-p-beq
+PASS rv64ui-p-bge
+PASS rv64ui-p-bgeu
+PASS rv64ui-p-blt
+PASS rv64ui-p-bltu
+PASS rv64ui-p-bne
+PASS rv64ui-p-fence_i
+PASS rv64ui-p-jal
+PASS rv64ui-p-jalr
+PASS rv64ui-p-lb
+PASS rv64ui-p-lbu
+PASS rv64ui-p-ld
+PASS rv64ui-p-ld_st
+PASS rv64ui-p-lh
+PASS rv64ui-p-lhu
+PASS rv64ui-p-lui
+PASS rv64ui-p-lw
+PASS rv64ui-p-lwu
+PASS rv64ui-p-ma_data
+PASS rv64ui-p-or
+PASS rv64ui-p-ori
+PASS rv64ui-p-sb
+PASS rv64ui-p-sd
+PASS rv64ui-p-sh
+PASS rv64ui-p-simple
+PASS rv64ui-p-sll
+PASS rv64ui-p-slli
+PASS rv64ui-p-slliw
+PASS rv64ui-p-sllw
+PASS rv64ui-p-slt
+PASS rv64ui-p-slti
+PASS rv64ui-p-sltiu
+PASS rv64ui-p-sltu
+PASS rv64ui-p-sra
+PASS rv64ui-p-srai
+PASS rv64ui-p-sraiw
+PASS rv64ui-p-sraw
+PASS rv64ui-p-srl
+PASS rv64ui-p-srli
+PASS rv64ui-p-srliw
+PASS rv64ui-p-srlw
+PASS rv64ui-p-st_ld
+PASS rv64ui-p-sub
+PASS rv64ui-p-subw
+PASS rv64ui-p-sw
+PASS rv64ui-p-xor
+PASS rv64ui-p-xori
+PASS rv64um-p-div
+PASS rv64um-p-divu
+PASS rv64um-p-divuw
+PASS rv64um-p-divw
+PASS rv64um-p-mul
+PASS rv64um-p-mulh
+PASS rv64um-p-mulhsu
+PASS rv64um-p-mulhu
+PASS rv64um-p-mulw
+PASS rv64um-p-rem
+PASS rv64um-p-remu
+PASS rv64um-p-remuw
+PASS rv64um-p-remw
+PASS rv64uzba-p-add_uw
+PASS rv64uzba-p-sh1add
+PASS rv64uzba-p-sh1add_uw
+PASS rv64uzba-p-sh2add
+PASS rv64uzba-p-sh2add_uw
+PASS rv64uzba-p-sh3add
+PASS rv64uzba-p-sh3add_uw
+PASS rv64uzba-p-slli_uw
+PASS rv64uzbb-p-andn
+PASS rv64uzbb-p-clz
+PASS rv64uzbb-p-clzw
+PASS rv64uzbb-p-cpop
+PASS rv64uzbb-p-cpopw
+PASS rv64uzbb-p-ctz
+PASS rv64uzbb-p-ctzw
+PASS rv64uzbb-p-max
+PASS rv64uzbb-p-maxu
+PASS rv64uzbb-p-min
+PASS rv64uzbb-p-minu
+PASS rv64uzbb-p-orc_b
+PASS rv64uzbb-p-orn
+PASS rv64uzbb-p-rev8
+PASS rv64uzbb-p-rol
+PASS rv64uzbb-p-rolw
+PASS rv64uzbb-p-ror
+PASS rv64uzbb-p-rori
+PASS rv64uzbb-p-roriw
+PASS rv64uzbb-p-rorw
+PASS rv64uzbb-p-sext_b
+PASS rv64uzbb-p-sext_h
+PASS rv64uzbb-p-xnor
+PASS rv64uzbb-p-zext_h
+PASS rv64uzbs-p-bclr
+PASS rv64uzbs-p-bclri
+PASS rv64uzbs-p-bext
+PASS rv64uzbs-p-bexti
+PASS rv64uzbs-p-binv
+PASS rv64uzbs-p-binvi
+PASS rv64uzbs-p-bset
+PASS rv64uzbs-p-bseti
+UPSTREAM RESULT pass=174 fail=0 unsupported=0
+test riscv_tests ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+
+
+=== pass2-arch.log ===
+PASS I-add-01
+PASS I-addi-01
+PASS I-addiw-01
+PASS I-addw-01
+PASS I-and-01
+PASS I-andi-01
+PASS I-auipc-01
+PASS I-beq-01
+PASS I-bge-01
+PASS I-bgeu-01
+PASS I-blt-01
+PASS I-bltu-01
+PASS I-bne-01
+PASS I-fence-01
+PASS I-jal-01
+PASS I-jalr-01
+PASS I-lb-align-01
+PASS I-lbu-align-01
+PASS I-ld-align-01
+PASS I-lh-align-01
+PASS I-lhu-align-01
+PASS I-lui-01
+PASS I-lw-align-01
+PASS I-lwu-align-01
+PASS I-or-01
+PASS I-ori-01
+PASS I-sb-align-01
+PASS I-sd-align-01
+PASS I-sh-align-01
+PASS I-sll-01
+PASS I-slli-01
+PASS I-slliw-01
+PASS I-sllw-01
+PASS I-slt-01
+PASS I-slti-01
+PASS I-sltiu-01
+PASS I-sltu-01
+PASS I-sra-01
+PASS I-srai-01
+PASS I-sraiw-01
+PASS I-sraw-01
+PASS I-srl-01
+PASS I-srli-01
+PASS I-srliw-01
+PASS I-srlw-01
+PASS I-sub-01
+PASS I-subw-01
+PASS I-sw-align-01
+PASS I-xor-01
+PASS I-xori-01
+PASS M-div-01
+PASS M-divu-01
+PASS M-divuw-01
+PASS M-divw-01
+PASS M-mul-01
+PASS M-mulh-01
+PASS M-mulhsu-01
+PASS M-mulhu-01
+PASS M-mulw-01
+PASS M-rem-01
+PASS M-remu-01
+PASS M-remuw-01
+PASS M-remw-01
+PASS C-cadd-01
+PASS C-caddi-01
+PASS C-caddi16sp-01
+PASS C-caddi4spn-01
+PASS C-caddiw-01
+PASS C-caddw-01
+PASS C-cand-01
+PASS C-candi-01
+PASS C-cbeqz-01
+PASS C-cbnez-01
+PASS C-cebreak-01
+PASS C-cj-01
+PASS C-cjalr-01
+PASS C-cjr-01
+PASS C-cld-01
+PASS C-cldsp-01
+PASS C-cli-01
+PASS C-clui-01
+PASS C-clw-01
+PASS C-clwsp-01
+PASS C-cmv-01
+PASS C-cnop-01
+PASS C-cor-01
+PASS C-csd-01
+PASS C-csdsp-01
+PASS C-cslli-01
+PASS C-csrai-01
+PASS C-csrli-01
+PASS C-csub-01
+PASS C-csubw-01
+PASS C-csw-01
+PASS C-cswsp-01
+PASS C-cxor-01
+PASS D-d_fadd_b1-01
+PASS D-d_fadd_b10-01
+PASS D-d_fadd_b11-01
+PASS D-d_fadd_b12-01
+PASS D-d_fadd_b13-01
+PASS D-d_fadd_b2-01
+PASS D-d_fadd_b3-01
+PASS D-d_fadd_b4-01
+PASS D-d_fadd_b5-01
+PASS D-d_fadd_b7-01
+PASS D-d_fadd_b8-01
+PASS D-d_fclass_b1-01
+PASS D-d_fcvt.d.l_b25-01
+PASS D-d_fcvt.d.l_b26-01
+PASS D-d_fcvt.d.lu_b25-01
+PASS D-d_fcvt.d.lu_b26-01
+PASS D-d_fcvt.d.s_b1-01
+PASS D-d_fcvt.d.s_b22-01
+PASS D-d_fcvt.d.s_b23-01
+PASS D-d_fcvt.d.s_b24-01
+PASS D-d_fcvt.d.s_b27-01
+PASS D-d_fcvt.d.s_b28-01
+PASS D-d_fcvt.d.s_b29-01
+PASS D-d_fcvt.d.w_b25-01
+PASS D-d_fcvt.d.w_b26-01
+PASS D-d_fcvt.d.wu_b25-01
+PASS D-d_fcvt.d.wu_b26-01
+PASS D-d_fcvt.l.d_b1-01
+PASS D-d_fcvt.l.d_b22-01
+PASS D-d_fcvt.l.d_b23-01
+PASS D-d_fcvt.l.d_b24-01
+PASS D-d_fcvt.l.d_b27-01
+PASS D-d_fcvt.l.d_b28-01
+PASS D-d_fcvt.l.d_b29-01
+PASS D-d_fcvt.lu.d_b1-01
+PASS D-d_fcvt.lu.d_b22-01
+PASS D-d_fcvt.lu.d_b23-01
+PASS D-d_fcvt.lu.d_b24-01
+PASS D-d_fcvt.lu.d_b27-01
+PASS D-d_fcvt.lu.d_b28-01
+PASS D-d_fcvt.lu.d_b29-01
+PASS D-d_fcvt.s.d_b1-01
+PASS D-d_fcvt.s.d_b22-01
+PASS D-d_fcvt.s.d_b23-01
+PASS D-d_fcvt.s.d_b24-01
+PASS D-d_fcvt.s.d_b27-01
+PASS D-d_fcvt.s.d_b28-01
+PASS D-d_fcvt.s.d_b29-01
+PASS D-d_fcvt.w.d_b1-01
+PASS D-d_fcvt.w.d_b22-01
+PASS D-d_fcvt.w.d_b23-01
+PASS D-d_fcvt.w.d_b24-01
+PASS D-d_fcvt.w.d_b27-01
+PASS D-d_fcvt.w.d_b28-01
+PASS D-d_fcvt.w.d_b29-01
+PASS D-d_fcvt.wu.d_b1-01
+PASS D-d_fcvt.wu.d_b22-01
+PASS D-d_fcvt.wu.d_b23-01
+PASS D-d_fcvt.wu.d_b24-01
+PASS D-d_fcvt.wu.d_b27-01
+PASS D-d_fcvt.wu.d_b28-01
+PASS D-d_fcvt.wu.d_b29-01
+PASS D-d_fdiv_b1-01
+PASS D-d_fdiv_b2-01
+PASS D-d_fdiv_b20-01
+PASS D-d_fdiv_b21-01
+PASS D-d_fdiv_b3-01
+PASS D-d_fdiv_b4-01
+PASS D-d_fdiv_b5-01
+PASS D-d_fdiv_b6-01
+PASS D-d_fdiv_b7-01
+PASS D-d_fdiv_b8-01
+PASS D-d_fdiv_b9-01
+PASS D-d_feq_b1-01
+PASS D-d_feq_b19-01
+PASS D-d_fld-align-01
+PASS D-d_fle_b1-01
+PASS D-d_fle_b19-01
+PASS D-d_flt_b1-01
+PASS D-d_flt_b19-01
+PASS D-d_fmadd_b14-01
+PASS D-d_fmadd_b16-01
+PASS D-d_fmadd_b17-01
+PASS D-d_fmadd_b18-01
+PASS D-d_fmadd_b2-01
+PASS D-d_fmadd_b3-01
+PASS D-d_fmadd_b4-01
+PASS D-d_fmadd_b5-01
+PASS D-d_fmadd_b6-01
+PASS D-d_fmadd_b7-01
+PASS D-d_fmadd_b8-01
+PASS D-d_fmax_b1-01
+PASS D-d_fmax_b19-01
+PASS D-d_fmin_b1-01
+PASS D-d_fmin_b19-01
+PASS D-d_fmsub_b14-01
+PASS D-d_fmsub_b16-01
+PASS D-d_fmsub_b17-01
+PASS D-d_fmsub_b18-01
+PASS D-d_fmsub_b2-01
+PASS D-d_fmsub_b3-01
+PASS D-d_fmsub_b4-01
+PASS D-d_fmsub_b5-01
+PASS D-d_fmsub_b6-01
+PASS D-d_fmsub_b7-01
+PASS D-d_fmsub_b8-01
+PASS D-d_fmul_b1-01
+PASS D-d_fmul_b2-01
+PASS D-d_fmul_b3-01
+PASS D-d_fmul_b4-01
+PASS D-d_fmul_b5-01
+PASS D-d_fmul_b6-01
+PASS D-d_fmul_b7-01
+PASS D-d_fmul_b8-01
+PASS D-d_fmul_b9-01
+PASS D-d_fmv.d.x_b25-01
+PASS D-d_fmv.d.x_b26-01
+PASS D-d_fmv.x.d_b1-01
+PASS D-d_fmv.x.d_b22-01
+PASS D-d_fmv.x.d_b23-01
+PASS D-d_fmv.x.d_b24-01
+PASS D-d_fmv.x.d_b27-01
+PASS D-d_fmv.x.d_b28-01
+PASS D-d_fmv.x.d_b29-01
+PASS D-d_fnmadd_b14-01
+PASS D-d_fnmadd_b16-01
+PASS D-d_fnmadd_b17-01
+PASS D-d_fnmadd_b18-01
+PASS D-d_fnmadd_b2-01
+PASS D-d_fnmadd_b3-01
+PASS D-d_fnmadd_b4-01
+PASS D-d_fnmadd_b5-01
+PASS D-d_fnmadd_b6-01
+PASS D-d_fnmadd_b7-01
+PASS D-d_fnmadd_b8-01
+PASS D-d_fnmsub_b14-01
+PASS D-d_fnmsub_b16-01
+PASS D-d_fnmsub_b17-01
+PASS D-d_fnmsub_b18-01
+PASS D-d_fnmsub_b2-01
+PASS D-d_fnmsub_b3-01
+PASS D-d_fnmsub_b4-01
+PASS D-d_fnmsub_b5-01
+PASS D-d_fnmsub_b6-01
+PASS D-d_fnmsub_b7-01
+PASS D-d_fnmsub_b8-01
+PASS D-d_fsd-align-01
+PASS D-d_fsgnj_b1-01
+PASS D-d_fsgnjn_b1-01
+PASS D-d_fsgnjx_b1-01
+PASS D-d_fsqrt_b1-01
+PASS D-d_fsqrt_b2-01
+PASS D-d_fsqrt_b20-01
+PASS D-d_fsqrt_b3-01
+PASS D-d_fsqrt_b4-01
+PASS D-d_fsqrt_b5-01
+PASS D-d_fsqrt_b7-01
+PASS D-d_fsqrt_b8-01
+PASS D-d_fsqrt_b9-01
+PASS D-d_fsub_b1-01
+PASS D-d_fsub_b10-01
+PASS D-d_fsub_b11-01
+PASS D-d_fsub_b12-01
+PASS D-d_fsub_b13-01
+PASS D-d_fsub_b2-01
+PASS D-d_fsub_b3-01
+PASS D-d_fsub_b4-01
+PASS D-d_fsub_b5-01
+PASS D-d_fsub_b7-01
+PASS D-d_fsub_b8-01
+ARCH_SIGNATURES pass=266 fail=0 build_fail=0
+
+
+=== pass2-stack-native.log ===
+[    0.000000] Booting Linux on hartid 0
+[    0.000000] Linux version 6.18.62-kuberoot (root@builder) (riscv64-linux-gnu-gcc (Debian 12.2.0-13) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #4 SMP Sat Nov 21 13:49:06 UTC 2026
+[    0.000000] Machine model: RV64 R1 single hart
+[    0.000000] SBI specification v2.0 detected
+[    0.000000] SBI implementation ID=0xa000000 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] SBI IPI extension detected
+[    0.000000] SBI RFENCE extension detected
+[    0.000000] SBI SRST extension detected
+[    0.000000] SBI DBCN extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000] SBI HSM extension detected
+[    0.000000] Falling back to deprecated "riscv,isa"
+[    0.000000] riscv: base ISA extensions acdfim
+[    0.000000] riscv: ELF capabilities acdfim
+[    0.000000] Ticket spinlock: enabled
+[    0.000000] percpu: Embedded 30 pages/cpu s84248 r8192 d30440 u122880
+[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr
+[    0.000000] Unknown kernel command line parameters "nokaslr", will be passed to user space.
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 131072
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=1.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+[    0.000000] RCU Tasks Trace: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000000] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.000369] riscv-timer: Timer interrupt in S-mode is available via sstc extension
+[    0.003682] Console: colour dummy device 80x25
+[    0.004516] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)
+[    0.005398] pid_max: default: 32768 minimum: 301
+[    0.007022] LSM: initializing lsm=capability
+[    0.009368] Mount-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.009749] Mountpoint-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.048908] riscv: ELF compat mode unsupported
+[    0.049174] ASID allocator using 16 bits (65536 entries)
+[    0.051746] rcu: Hierarchical SRCU implementation.
+[    0.051976] rcu: 	Max phase no-delay instances is 1000.
+[    0.059635] EFI services will not be available.
+[    0.061805] smp: Bringing up secondary CPUs ...
+[    0.062035] smp: Brought up 1 node, 1 CPU
+[    0.064466] Memory: 465052K/524288K available (9537K kernel code, 5353K rwdata, 4096K rodata, 2341K init, 393K bss, 56792K reserved, 0K cma-reserved)
+[    0.071924] devtmpfs: initialized
+[    0.095425] posixtimers hash table entries: 512 (order: 1, 8192 bytes, linear)
+[    0.096015] futex hash table entries: 256 (16384 bytes on 1 NUMA nodes, total 16 KiB, linear).
+[    0.099136] pinctrl core: initialized pinctrl subsystem
+[    0.101918] DMI not present or invalid.
+[    0.118723] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.124794] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    0.125401] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.125631] audit: initializing netlink subsys (disabled)
+[    0.131550] thermal_sys: Registered thermal governor 'step_wise'
+[    0.132298] audit: type=2000 audit(0.120:1): state=initialized audit_enabled=0 res=1
+[    0.133031] cpuidle: using governor menu
+[    0.158215] cpu0: rdtime lacks granularity needed to measure unaligned access speed
+[    0.237050] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.237305] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.242550] ACPI: Interpreter disabled.
+[    0.243550] iommu: Default domain type: Translated
+[    0.243798] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.286377] SCSI subsystem initialized
+[    0.308905] vgaarb: loaded
+[    0.310323] clocksource: Switched to clocksource riscv_clocksource
+[    0.320803] pnp: PnP ACPI: disabled
+[    0.776981] NET: Registered PF_INET protocol family
+[    0.781206] IP idents hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.818951] tcp_listen_portaddr_hash hash table entries: 256 (order: 0, 4096 bytes, linear)
+[    0.819303] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.819752] TCP established hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.821155] TCP bind hash table entries: 4096 (order: 5, 131072 bytes, linear)
+[    0.823550] TCP: Hash tables configured (established 4096 bind 4096)
+[    0.824431] UDP hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.825166] UDP-Lite hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.827918] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.828707] PCI: CLS 0 bytes, default 64
+[    0.839328] Initialise system trusted keyrings
+[    0.883408] Unpacking initramfs...
+[    0.951411] workingset: timestamp_bits=46 max_order=17 bucket_order=0
+[    0.955704] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.956183] fuse: init (API version 7.45)
+[    0.989355] 9p: Installing v9fs 9p2000 file system support
+[    5.307069] NET: Registered PF_ALG protocol family
+[    5.307384] Key type asymmetric registered
+[    5.307619] Asymmetric key parser 'x509' registered
+[    5.308557] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 250)
+[    7.326745] Freeing initrd memory: 8760K
+[    8.862595] io scheduler mq-deadline registered
+[    8.862922] io scheduler kyber registered
+[    8.863543] io scheduler bfq registered
+[    8.869231] riscv-plic: plic@c000000: mapped 31 interrupts with 1 handlers for 2 contexts.
+progress pc=0xffffffff80926f5e retired=380344081 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[    9.864490] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    9.918391] printk: legacy console [hvc0] enabled
+[    9.918745] printk: legacy bootconsole [sbi0] disabled
+[    9.927792] random: crng init done
+[    9.994472] loop: module loaded
+[    9.995769] virtio_blk virtio0: 1/0/0 default/read/poll queues
+[    9.999461] virtio_blk virtio0: [vda] 0 512-byte logical blocks (0 B/0 B)
+[   10.067081] tun: Universal TUN/TAP device driver, 1.6
+[   10.070778] virtio_net virtio1: Assigned random MAC address 72:83:f4:d2:09:77
+[   10.086447] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[   10.108473] IPVS: Registered protocols (TCP, UDP)
+[   10.109383] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+[   10.112969] IPVS: ipvs loaded.
+[   10.113594] IPVS: [rr] scheduler registered.
+[   10.117718] Initializing XFRM netlink socket
+[   10.119280] NET: Registered PF_INET6 protocol family
+[   10.134637] Segment Routing with IPv6
+[   10.135836] In-situ OAM (IOAM) with IPv6
+[   10.137801] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[   10.146817] NET: Registered PF_PACKET protocol family
+[   10.148415] Bridge firewalling registered
+[   10.150820] 8021q: 802.1Q VLAN Support v1.8
+[   10.152484] 9pnet: Installing 9P2000 support
+[   10.154050] Key type dns_resolver registered
+[   10.156732] NET: Registered PF_VSOCK protocol family
+[   10.318759] Loading compiled-in X.509 certificates
+[   10.490514] Loaded X.509 cert 'Build time autogenerated kernel key: edae1ab5e37dadd23f1471322a492b2e9cb18efa'
+[   10.712604] Legacy PMU implementation is available
+[   10.716595] clk: Disabling unused clocks
+[   10.717284] PM: genpd: Disabling unused power domains
+[   10.746680] Freeing unused kernel image (initmem) memory: 2340K
+[   10.748730] Run /init as init process
+
+RV64_INIT_READY
+/bin/sh: can't access tty; job control turned off
+~ # BOOT_SHELL_MS=11828
+/bin/coremark; echo RV64_BENCH_DONE
+progress pc=0x1005b2a retired=780367962 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x10053e8 retired=1193840271 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+2K performance run parameters for coremark.
+CoreMark Size    : 666
+Total ticks      : 17530
+Total time (secs): 17.530000
+Iterations/Sec   : 114.090131
+Iterations       : 2000
+Compiler version : GCCHomebrew Clang 22.1.8
+Compiler flags   : -O2 zig cc riscv64 static
+Memory location  : Please put data memory location here
+			(e.g. code in flash, data on heap etc)
+seedcrc          : 0xe9f5
+[0]crclist       : 0xe714
+[0]crcmatrix     : 0x1fd7
+[0]crcstate      : 0x8e3a
+[0]crcfinal      : 0x4983
+Correct operation validated. See readme.txt for run and reporting rules.
+CoreMark 1.0 : 114.090131 / GCCHomebrew Clang 22.1.8 -O2 zig cc riscv64 static / Heap
+RV64_BENCH_DONE
+COREMARK_WALL_SECONDS=27.275381652 COREMARK_EFFECTIVE_MIPS=41.24778066735152
+elapsed_ms=39103 retired=1568064633 effective_mips=40.100 shell=true
+SBI_TIME_CALLS=0 STIMECMP_WRITES=19143
+
+
+=== pass2-kuberoot-final.log ===
+[    0.000000] Booting Linux on hartid 0
+[    0.000000] Linux version 6.18.62-kuberoot (root@builder) (riscv64-linux-gnu-gcc (Debian 12.2.0-13) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #4 SMP Sat Nov 21 13:49:06 UTC 2026
+[    0.000000] Machine model: RV64 R1 single hart
+[    0.000000] SBI specification v2.0 detected
+[    0.000000] SBI implementation ID=0xa000000 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] SBI IPI extension detected
+[    0.000000] SBI RFENCE extension detected
+[    0.000000] SBI SRST extension detected
+[    0.000000] SBI DBCN extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000] SBI HSM extension detected
+[    0.000000] Falling back to deprecated "riscv,isa"
+[    0.000000] riscv: base ISA extensions acdfim
+[    0.000000] riscv: ELF capabilities acdfim
+[    0.000000] Ticket spinlock: enabled
+[    0.000000] percpu: Embedded 30 pages/cpu s84248 r8192 d30440 u122880
+[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.mode=install kuberoot.dev kuberoot.verbose
+[    0.000000] Unknown kernel command line parameters "nokaslr", will be passed to user space.
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 131072
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=1.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+[    0.000000] RCU Tasks Trace: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000000] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.000398] riscv-timer: Timer interrupt in S-mode is available via sstc extension
+[    0.003701] Console: colour dummy device 80x25
+[    0.004608] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)
+[    0.005503] pid_max: default: 32768 minimum: 301
+[    0.007159] LSM: initializing lsm=capability
+[    0.009588] Mount-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.009979] Mountpoint-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.050677] riscv: ELF compat mode unsupported
+[    0.050952] ASID allocator using 16 bits (65536 entries)
+[    0.053607] rcu: Hierarchical SRCU implementation.
+[    0.053724] rcu: 	Max phase no-delay instances is 1000.
+[    0.061813] EFI services will not be available.
+[    0.064222] smp: Bringing up secondary CPUs ...
+[    0.064631] smp: Brought up 1 node, 1 CPU
+[    0.066666] Memory: 453012K/524288K available (9537K kernel code, 5353K rwdata, 4096K rodata, 2341K init, 393K bss, 68832K reserved, 0K cma-reserved)
+[    0.074262] devtmpfs: initialized
+[    0.099449] posixtimers hash table entries: 512 (order: 1, 8192 bytes, linear)
+[    0.100065] futex hash table entries: 256 (16384 bytes on 1 NUMA nodes, total 16 KiB, linear).
+[    0.103050] pinctrl core: initialized pinctrl subsystem
+[    0.106200] DMI not present or invalid.
+[    0.123675] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.129912] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    0.130549] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.130774] audit: initializing netlink subsys (disabled)
+[    0.136697] thermal_sys: Registered thermal governor 'step_wise'
+[    0.137440] audit: type=2000 audit(0.124:1): state=initialized audit_enabled=0 res=1
+[    0.138246] cpuidle: using governor menu
+[    0.165943] cpu0: rdtime lacks granularity needed to measure unaligned access speed
+[    0.246442] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.246726] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.252330] ACPI: Interpreter disabled.
+[    0.253398] iommu: Default domain type: Translated
+[    0.253517] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.298097] SCSI subsystem initialized
+[    0.323248] vgaarb: loaded
+[    0.325173] clocksource: Switched to clocksource riscv_clocksource
+[    0.335856] pnp: PnP ACPI: disabled
+[    0.802564] NET: Registered PF_INET protocol family
+[    0.806589] IP idents hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.844651] tcp_listen_portaddr_hash hash table entries: 256 (order: 0, 4096 bytes, linear)
+[    0.845268] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.845625] TCP established hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.847141] TCP bind hash table entries: 4096 (order: 5, 131072 bytes, linear)
+[    0.849504] TCP: Hash tables configured (established 4096 bind 4096)
+[    0.850385] UDP hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.851137] UDP-Lite hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.854166] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.854843] PCI: CLS 0 bytes, default 64
+[    0.866222] Initialise system trusted keyrings
+[    0.905600] Unpacking initramfs...
+[    0.973511] workingset: timestamp_bits=46 max_order=17 bucket_order=0
+[    0.977722] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.978351] fuse: init (API version 7.45)
+[    0.997832] 9p: Installing v9fs 9p2000 file system support
+[    5.333583] NET: Registered PF_ALG protocol family
+[    5.334019] Key type asymmetric registered
+[    5.334134] Asymmetric key parser 'x509' registered
+[    5.335074] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 250)
+[    6.865546] Freeing initrd memory: 20800K
+[    8.631078] io scheduler mq-deadline registered
+[    8.631412] io scheduler kyber registered
+[    8.631904] io scheduler bfq registered
+[    8.637698] riscv-plic: plic@c000000: mapped 31 interrupts with 1 handlers for 2 contexts.
+progress pc=0xffffffff80300848 retired=377554714 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[    9.605916] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    9.660382] printk: legacy console [hvc0] enabled
+[    9.660737] printk: legacy bootconsole [sbi0] disabled
+[    9.669743] random: crng init done
+[    9.732157] loop: module loaded
+[    9.733428] virtio_blk virtio0: 1/0/0 default/read/poll queues
+[    9.736843] virtio_blk virtio0: [vda] 845824 512-byte logical blocks (433 MB/413 MiB)
+[    9.762365]  vda: vda1
+[    9.818408] tun: Universal TUN/TAP device driver, 1.6
+[    9.821977] virtio_net virtio1: Assigned random MAC address 22:87:bc:5d:3e:0e
+[    9.838095] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[    9.862042] IPVS: Registered protocols (TCP, UDP)
+[    9.863018] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+[    9.866591] IPVS: ipvs loaded.
+[    9.867195] IPVS: [rr] scheduler registered.
+[    9.871391] Initializing XFRM netlink socket
+[    9.872839] NET: Registered PF_INET6 protocol family
+[    9.888448] Segment Routing with IPv6
+[    9.889793] In-situ OAM (IOAM) with IPv6
+[    9.891737] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[    9.900597] NET: Registered PF_PACKET protocol family
+[    9.902261] Bridge firewalling registered
+[    9.904480] 8021q: 802.1Q VLAN Support v1.8
+[    9.906371] 9pnet: Installing 9P2000 support
+[    9.907700] Key type dns_resolver registered
+[    9.910367] NET: Registered PF_VSOCK protocol family
+[   10.069347] Loading compiled-in X.509 certificates
+[   10.183831] Loaded X.509 cert 'Build time autogenerated kernel key: edae1ab5e37dadd23f1471322a492b2e9cb18efa'
+[   10.378575] Legacy PMU implementation is available
+[   10.381972] clk: Disabling unused clocks
+[   10.382588] PM: genpd: Disabling unused power domains
+[   10.412384] Freeing unused kernel image (initmem) memory: 2340K
+[   10.414621] Run /init as init process
+[   11.398862] loop0: detected capacity change from 0 to 559336
+progress pc=0xffffffff8049509c retired=757348360 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8006b53c retired=1159814408 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946408 retired=1564704579 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kinit] kuberoot booting, kernel 6.18.62-kuberoot, uptime 42s
+[kinit] distribution edge
+[kinit] module drbd: open /lib/modules/6.18.62-kuberoot/extra/drbd.ko: no such file or directory
+[kinit] module drbd_transport_tcp: open /lib/modules/6.18.62-kuberoot/extra/drbd_transport_tcp.ko: no such file or directory
+progress pc=0xffffffff80946c36 retired=1692665730 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946c36 retired=1693867202 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946c36 retired=1694920685 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kinit] network failed (attempt 1), retrying in 2s: dhcp on eth0: unable to receive an offer: got an error while the discovery request: context deadline exceeded
+progress pc=0xffffffff80946c36 retired=1699130476 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+elapsed_ms=90000 retired=1700171354 effective_mips=18.891 shell=false
+SBI_TIME_CALLS=0 STIMECMP_WRITES=25866
+id=2 status=0xf irq=0 queues=[(1, 128, 2807, Ok(2807), Ok(2807)), (0, 0, 0, Err(()), Err(()))]
+id=1 status=0xf irq=0 queues=[(1, 128, 0, Ok(128), Ok(0)), (1, 128, 12, Ok(12), Ok(12))]
+id=3 status=0xf irq=0 queues=[(1, 128, 0, Ok(128), Ok(0)), (1, 128, 140, Ok(140), Ok(140))]
+id=4 status=0xf irq=0 queues=[(1, 128, 7, Ok(7), Ok(7)), (0, 0, 0, Err(()), Err(()))]
+Error: "shell acceptance marker not reached"
