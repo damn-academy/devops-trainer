@@ -35,7 +35,7 @@ func init() {
 
 // The JavaScript API, installed as globalThis.kubeWasm:
 //
-//	start(opts?: {v?: number, controllers?: boolean, scheduler?: boolean}): Promise<void>
+//	start(opts?: {v?: number, controllers?: boolean, scheduler?: boolean, apiserverArgs?: string[]}): Promise<void>
 //	ready(): Promise<{[phase: string]: number}>   // phase timings in ms
 //	kubectl(args: string[], stdin?: string): Promise<{stdout, stderr, code}>
 //
@@ -57,6 +57,11 @@ func main() {
 			}
 			if v := args[0].Get("scheduler"); v.Type() == js.TypeBoolean {
 				o.Scheduler = v.Bool()
+			}
+			if v := args[0].Get("apiserverArgs"); v.Type() == js.TypeObject {
+				for i := 0; i < v.Length(); i++ {
+					o.APIServerArgs = append(o.APIServerArgs, v.Index(i).String())
+				}
 			}
 		}
 		return promise(func() (any, error) { return nil, cluster.Start(ctx, o) })

@@ -53,9 +53,11 @@ async function memory(): Promise<Record<string, number>> {
   if (crossOriginIsolated && perf.measureUserAgentSpecificMemory) {
     try {
       out.userAgentSpecificMemory = (await perf.measureUserAgentSpecificMemory()).bytes;
-    } catch {
-      // not available in this browser configuration
+    } catch (e) {
+      out.uasmError = String(e) as unknown as number;
     }
+  } else {
+    out.uasmError = `crossOriginIsolated=${crossOriginIsolated}` as unknown as number;
   }
   return out;
 }
@@ -67,13 +69,17 @@ async function boot() {
   loaded = await loadKubeWasm({
     wasmUrl: params.get('wasm') ?? './dist/kube.wasm',
     wasmExecUrl: params.get('exec') ?? './dist/wasm_exec.js',
+    // e.g. ?env=GOGC=50,GOMEMLIMIT=256MiB
+    env: Object.fromEntries((params.get('env') ?? '').split(',').filter(Boolean).map((kv) => kv.split('=', 2) as [string, string])),
     onOutput: (fd, text) => {
       if (params.has('logs')) print(text, 'log');
       else (fd === 2 ? console.warn : console.log)(text);
     },
   });
   status.textContent = `compiled in ${Math.round(loaded.timings.compileMs)} ms; starting control plane...`;
-  await loaded.api.start({ v: Number(params.get('v') ?? 0) });
+  // e.g. ?apiserver=--watch-cache=false;--runtime-config=api/beta=false (';'-separated)
+  const apiserverArgs = (params.get('apiserver') ?? '').split(';').filter(Boolean);
+  await loaded.api.start({ v: Number(params.get('v') ?? 0), apiserverArgs });
   const phases = await loaded.api.ready();
   const total = performance.now() - t0;
   status.textContent = `apiserver ready ${Math.round(total)} ms after page start`;

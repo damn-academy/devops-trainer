@@ -74,6 +74,8 @@ type Options struct {
 	Verbosity   int
 	Controllers bool
 	Scheduler   bool
+	// APIServerArgs are appended to the kube-apiserver flags.
+	APIServerArgs []string
 
 	kubeconfig string
 }
@@ -284,6 +286,7 @@ func buildAPIServer(ctx context.Context, o Options) (http.Handler, func() error,
 		"--allow-privileged=true",
 		fmt.Sprintf("--v=%d", o.Verbosity),
 	}
+	args = append(args, o.APIServerArgs...)
 	if err := parseFlags("kube-apiserver", nfs, args); err != nil {
 		return nil, nil, err
 	}

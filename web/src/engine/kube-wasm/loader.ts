@@ -15,6 +15,8 @@ export interface StartOptions {
   v?: number;
   controllers?: boolean;
   scheduler?: boolean;
+  /** Extra kube-apiserver flags, e.g. ['--watch-cache=false']. */
+  apiserverArgs?: string[];
 }
 
 /** The API kube.wasm installs as globalThis.kubeWasm. */
@@ -29,6 +31,8 @@ export interface KubeWasm {
 export interface LoadOptions {
   wasmUrl: string;
   wasmExecUrl: string;
+  /** Extra environment for the Go program, e.g. GOGC or GOMEMLIMIT. */
+  env?: Record<string, string>;
   /** Receives the Go process stdout (fd 1) and stderr (fd 2), line by line. */
   onOutput?: (fd: number, text: string) => void;
 }
@@ -82,7 +86,7 @@ export async function loadKubeWasm(o: LoadOptions): Promise<Loaded> {
   if (!g.Go) await loadScript(o.wasmExecUrl);
   const go = new g.Go!();
   go.argv = ['kube-wasm'];
-  go.env = { HOME: '/root', USER: 'root', PATH: '/usr/bin' };
+  go.env = { HOME: '/root', USER: 'root', PATH: '/usr/bin', ...o.env };
 
   const t0 = performance.now();
   const module = await WebAssembly.compileStreaming(fetch(o.wasmUrl));
