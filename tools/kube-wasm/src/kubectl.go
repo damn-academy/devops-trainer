@@ -23,7 +23,10 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	_ "unsafe" // go:linkname
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/client-go/rest"
@@ -36,6 +39,23 @@ import (
 var kubectlMu sync.Mutex
 
 type kubectlExit struct{ code int }
+
+// cobra keeps every flag that has a completion function in a process-wide
+// map, never cleared. A kubectl binary exits after one command; here every
+// call built a new command tree, and the map kept all of them alive, with
+// the factory and REST mapper their completion functions capture.
+//
+//go:linkname cobraFlagCompletions github.com/spf13/cobra.flagCompletionFunctions
+var cobraFlagCompletions map[*pflag.Flag]cobra.CompletionFunc
+
+//go:linkname cobraFlagCompletionMu github.com/spf13/cobra.flagCompletionMutex
+var cobraFlagCompletionMu *sync.RWMutex
+
+func forgetFlagCompletions() {
+	cobraFlagCompletionMu.Lock()
+	clear(cobraFlagCompletions)
+	cobraFlagCompletionMu.Unlock()
+}
 
 // Kubectl runs one kubectl command line against the in-process apiserver.
 func Kubectl(kubeconfig string, args []string, stdin string) (stdout, stderr string, code int) {
@@ -71,6 +91,7 @@ func Kubectl(kubeconfig string, args []string, stdin string) (stdout, stderr str
 	// which the controller-manager and scheduler clients share. Silence it
 	// again afterwards, as those components do at start.
 	defer rest.SetDefaultWarningHandler(rest.NoWarnings{})
+	defer forgetFlagCompletions()
 
 	func() {
 		defer func() {
