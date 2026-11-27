@@ -86,16 +86,19 @@ export function createMemFs(onOutput: (fd: number, text: string) => void): MemFs
       d.buf = d.buf.slice(nl + 1);
     }
   }
-  // Runs a synchronous body and reports through a Node-style callback.
+  // Runs a synchronous body and reports through a Node-style callback, as
+  // Node does: later, never from inside the call. Go's syscall/js waits for
+  // the callback after the call returns; a callback made during the call
+  // enters the Go program while it is still inside the call to JavaScript.
   const wrap = <T>(cb: Cb<T>, body: () => T) => {
     let v: T;
     try {
       v = body();
     } catch (e) {
-      cb(e as Error);
+      queueMicrotask(() => cb(e as Error));
       return;
     }
-    cb(null, v);
+    queueMicrotask(() => cb(null, v));
   };
 
   function write(fd: number, buf: Uint8Array, off: number, len: number, pos: number | null): number {
@@ -247,9 +250,9 @@ export function createMemFs(onOutput: (fd: number, text: string) => void): MemFs
         f.node.mode = mode & 0o777;
       });
     },
-    chown: (_p: string, _u: number, _g: number, cb: Cb) => cb(null),
-    fchown: (_fd: number, _u: number, _g: number, cb: Cb) => cb(null),
-    lchown: (_p: string, _u: number, _g: number, cb: Cb) => cb(null),
+    chown: (_p: string, _u: number, _g: number, cb: Cb) => queueMicrotask(() => cb(null)),
+    fchown: (_fd: number, _u: number, _g: number, cb: Cb) => queueMicrotask(() => cb(null)),
+    lchown: (_p: string, _u: number, _g: number, cb: Cb) => queueMicrotask(() => cb(null)),
     utimes(path: string, _a: number, m: number, cb: Cb) {
       wrap(cb, () => {
         const n = lookup(path);
@@ -257,10 +260,10 @@ export function createMemFs(onOutput: (fd: number, text: string) => void): MemFs
         n.mtimeMs = m * 1000;
       });
     },
-    fsync: (_fd: number, cb: Cb) => cb(null),
-    readlink: (path: string, cb: Cb) => cb(fsError('EINVAL', path)),
-    symlink: (_t: string, path: string, cb: Cb) => cb(fsError('ENOSYS', path)),
-    link: (_t: string, path: string, cb: Cb) => cb(fsError('ENOSYS', path)),
+    fsync: (_fd: number, cb: Cb) => queueMicrotask(() => cb(null)),
+    readlink: (path: string, cb: Cb) => queueMicrotask(() => cb(fsError('EINVAL', path))),
+    symlink: (_t: string, path: string, cb: Cb) => queueMicrotask(() => cb(fsError('ENOSYS', path))),
+    link: (_t: string, path: string, cb: Cb) => queueMicrotask(() => cb(fsError('ENOSYS', path))),
   };
 
   return {

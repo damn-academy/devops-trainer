@@ -142,11 +142,11 @@ Nothing in the control plane itself was patched.
 
 ## Build
 
-On the build host (the workshop pod `rv64-dev-b` was used), with Go
-1.26.11 or newer (1.26.0 corrupts the heap of kube.wasm, see "The crash"):
+On the build host (the workshop pod `rv64-dev-b` was used), with Go 1.27.4
+(1.26.11 works too; 1.26.0 corrupts the heap of kube.wasm, see "The crash"):
 
 ```bash
-WORK=/work/kube-wasm PATH=/work/tools/go-1.26.11/go/bin:/work/tools/node-r17/bin:$PATH \
+WORK=/work/kube-wasm PATH=/work/tools/go-1.27.4/go/bin:/work/tools/node-r17/bin:$PATH \
   tools/kube-wasm/build.sh          # -> $WORK/out/kube.wasm{,.gz,.br}, wasm_exec.js
 tools/kube-wasm/build.sh native     # -> $WORK/out/kube-wasm-native (test driver)
 ```

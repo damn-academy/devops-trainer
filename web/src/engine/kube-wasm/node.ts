@@ -64,7 +64,9 @@ const appendConsole = (s: string) => {
 /** Forwards one guest TCP connection into kube.wasm. */
 function bridge(k: Loaded, c: TcpConn, target: string) {
   let open = true;
-  const g = k.api.connect(target, (b) => { if (open) c.write(b); }, () => { if (open) c.end(); });
+  // Go calls these from inside its own call into JavaScript: act on them
+  // later, so that nothing they trigger enters the Go program meanwhile.
+  const g = k.api.connect(target, (b) => queueMicrotask(() => { if (open) c.write(b); }), () => queueMicrotask(() => { if (open) c.end(); }));
   c.onData((b) => g.write(b));
   c.onEnd(() => g.end());
   c.onClose(() => { open = false; g.close(); });
@@ -140,15 +142,15 @@ async function main() {
   services.host.listen({ port: 6443, onConn: (c) => { conns++; bridge(k, c, '127.0.0.1:6443'); } });
   // apiserver → kubelet (logs, exec): kube.wasm dials 10.0.0.10:10250, the
   // page opens that connection on the emulated network.
-  const listenErr = k.api.listen(`${NODE_IP}:10250`, (g) => {
+  const listenErr = k.api.listen(`${NODE_IP}:10250`, (g) => queueMicrotask(() => {
     services.host.connect(ipToNum(NODE_IP), 10250, { timeoutMs: 60000 }).then((c) => {
       let open = true;
-      g.start((b) => { if (open) c.write(b); }, () => { if (open) c.end(); });
+      g.start((b) => queueMicrotask(() => { if (open) c.write(b); }), () => queueMicrotask(() => { if (open) c.end(); }));
       c.onData((b) => g.write(b));
       c.onEnd(() => g.end());
       c.onClose(() => { open = false; g.close(); });
     }, () => g.close());
-  });
+  }));
   if (listenErr) throw new Error(`listen ${NODE_IP}:10250: ${listenErr}`);
 
   if (params.get('emulator') === '0') { mark('emulator skipped'); return; }
