@@ -125,6 +125,13 @@ export class TcpConn {
     this.state = mode === 'active' ? 'SYN_SENT' : 'SYN_RCVD';
   }
 
+  /** Next sequence number to send and to receive: what a peer that
+   * outlives this connection (a machine restored from a checkpoint)
+   * expects, so that the host can reset it. */
+  get sequence(): { snd: number; rcv: number } {
+    return { snd: this.sndNxt, rcv: this.rcvNxt };
+  }
+
   // ── application side ──
 
   onData(fn: (b: Uint8Array) => void): void {
