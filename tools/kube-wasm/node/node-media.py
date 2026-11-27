@@ -15,8 +15,12 @@ placeholder's bytes in the HTTP block device (HTTPDisk.overlay), so one medium
 serves every tab, each with its own cluster CA and token. The placeholder's
 offset and size are written to the manifest.
 
+The stage-two wrapper also switches the root's loop device to direct I/O,
+so that the root image is not cached twice (see loop-direct-io/main.go).
+
 Run on the build pod (needs mtools and squashfs-tools; writes only under OUT):
-  node-media.py --source r16.img --out /work/kube-wasm/node/r18
+  GOOS=linux GOARCH=riscv64 CGO_ENABLED=0 go build -ldflags='-s -w' -o loop-direct-io loop-direct-io/main.go
+  node-media.py --source r16.img --loop-direct-io loop-direct-io --out /work/kube-wasm/node/r20
 """
 import argparse
 import hashlib
@@ -27,13 +31,18 @@ import subprocess
 from pathlib import Path
 
 R16 = 'd2f8e658c74a8c4b2d132783eb80030a3f5334f6251cc1f188588da50fb58f95'
-NAME = 'r19-kubewasm-worker'
+NAME = 'r20-kubewasm-worker'
 JOIN_BYTES = 32 * 1024
 PLACEHOLDER = b'{"kubewasm":"join placeholder; the page lays a Membership over these bytes"}'
 FAT = '@@1048576'  # the boot partition starts at 1 MiB
 
 PROBE_LINE = '/bin/sh /usr/share/kuberoot/rv64-probe.sh >/dev/console 2>&1 &\n'
-JOIN_BLOCK = '''join=/run/kuberoot/media/kuberoot/join.json
+JOIN_BLOCK = '''# kube-wasm: read the root image past the page cache of the FAT file that
+# holds it (loop-direct-io/main.go), so that its blocks are cached once.
+if /usr/lib/kuberoot/loop-direct-io /dev/loop0 >/dev/console 2>&1; then
+  echo 1 >/proc/sys/vm/drop_caches
+fi
+join=/run/kuberoot/media/kuberoot/join.json
 if /bin/busybox grep -q '"role"' "$join" 2>/dev/null; then
   # kube-wasm: join the control plane that runs in the browser tab.
   /bin/busybox mkdir -p /var/lib/kuberoot
@@ -86,6 +95,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--source', type=Path, required=True)
     p.add_argument('--out', type=Path, required=True)
+    p.add_argument('--loop-direct-io', type=Path, required=True,
+                   help='loop-direct-io built for linux/riscv64 (go build ./loop-direct-io)')
     a = p.parse_args()
     if sha(a.source) != R16:
         raise SystemExit('source is not the pinned R16 medium')
@@ -116,6 +127,8 @@ def main():
     kubelet.unlink()
     (root / 'usr/lib/kuberoot').mkdir(parents=True, exist_ok=True)
     os.symlink('/usr/bin/kuberoot-control.real', root / 'usr/lib/kuberoot/kubelet')
+    shutil.copyfile(a.loop_direct_io, root / 'usr/lib/kuberoot/loop-direct-io')
+    (root / 'usr/lib/kuberoot/loop-direct-io').chmod(0o755)
     kubelet.write_text(KUBELET_WRAPPER)
     kubelet.chmod(0o755)
     subprocess.run(['sh', '-n'], input=KUBELET_WRAPPER, text=True, check=True)
