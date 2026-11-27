@@ -20,6 +20,8 @@ interface Init {
   snap?: SharedArrayBuffer;
   initialRestore?: { blob: Uint8Array; deviceBlob?: Uint8Array };
 }
+// ES2024 Atomics.waitAsync (Chrome 87+); the project's TypeScript lib is ES2022.
+const waitAsync = (Atomics as unknown as { waitAsync(a: Int32Array, i: number, v: number, ms: number): { async: boolean; value: Promise<string> | string } }).waitAsync;
 self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
   self.onmessage = null;
   try {
@@ -282,7 +284,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
         const deadline = core.deadline_ms(), ms = deadline > 0 ? Math.min(deadline, limit) : limit;
         if (ms >= 0.05) {
           jitRuntime.flush();
-          const wait = Atomics.waitAsync(bus.words, d.hart * HartMailboxes.stride, idleSequence, ms);
+          const wait = waitAsync(bus.words, d.hart * HartMailboxes.stride, idleSequence, ms);
           if (wait.async) await wait.value; else await yieldHost();
           yielded = performance.now(); continue;
         }
