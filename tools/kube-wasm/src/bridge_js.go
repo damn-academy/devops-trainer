@@ -91,7 +91,12 @@ func listenBridge(addr string, onConn js.Value) error {
 
 func (b *bridge) object() js.Value {
 	obj := js.Global().Get("Object").New()
-	obj.Set("write", js.FuncOf(func(_ js.Value, args []js.Value) any {
+	var funcs []js.Func
+	set := func(name string, f js.Func) {
+		funcs = append(funcs, f)
+		obj.Set(name, f)
+	}
+	set("write", js.FuncOf(func(_ js.Value, args []js.Value) any {
 		buf := make([]byte, args[0].Length())
 		js.CopyBytesToGo(buf, args[0])
 		select {
@@ -100,15 +105,20 @@ func (b *bridge) object() js.Value {
 		}
 		return nil
 	}))
-	obj.Set("end", js.FuncOf(func(js.Value, []js.Value) any {
+	set("end", js.FuncOf(func(js.Value, []js.Value) any {
 		select {
 		case b.out <- nil: // nil marks the end of the stream
 		case <-b.closed:
 		}
 		return nil
 	}))
-	obj.Set("close", js.FuncOf(func(js.Value, []js.Value) any {
+	// close is the page's last call on this object: release the functions,
+	// which otherwise keep the bridge and its buffers alive for good.
+	set("close", js.FuncOf(func(js.Value, []js.Value) any {
 		b.finish("")
+		for _, f := range funcs {
+			f.Release()
+		}
 		return nil
 	}))
 	return obj

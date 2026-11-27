@@ -4,6 +4,7 @@
 //
 //   node run-node.mjs --wasm kube.wasm --exec wasm_exec.js [--memfs memfs.ts]
 //                     [--apiserver-arg=--flag=value ...] [--env GODEBUG=...] [--seconds 20]
+//                     [--kubectl-loop N]
 //
 // --memfs gives the Go program the page's in-memory file system instead of
 // Node's real one (Node 22.6+ strips the TypeScript types). Exit code: 0 on
@@ -19,6 +20,7 @@ const { values } = parseArgs({
     'apiserver-arg': { type: 'string', multiple: true, default: [] },
     seconds: { type: 'string', default: '20' },
     env: { type: 'string', multiple: true, default: [] },
+    'kubectl-loop': { type: 'string', default: '0' },
   },
 });
 const t0 = performance.now();
@@ -50,6 +52,19 @@ try {
   await api.start({ apiserverArgs: values['apiserver-arg'] });
   const phases = await api.ready();
   console.log(`ready at ${ms()} ms`, JSON.stringify(phases));
+  // --kubectl-loop N: run N kubectl commands and print the live Go heap
+  // (after a collection) every N/10 calls, to see what a command retains.
+  const loops = Number(values['kubectl-loop']);
+  for (let i = 1; i <= loops; i++) {
+    const r = await api.kubectl(['get', 'ns']);
+    if (r.code !== 0) throw new Error(r.stderr);
+    if (i % Math.max(1, Math.floor(loops / 10)) === 0) {
+      await api.heapProfile(); // collects garbage first
+      const m = api.memStats();
+      console.log(`kubectl ${i}: heapAlloc ${Math.round(m.heapAlloc / 2 ** 20)} MiB, goroutines ${m.goroutines}`);
+      if (i === loops) fs.writeFileSync('goroutines.txt', api.goroutineProfile());
+    }
+  }
   const until = performance.now() + Number(values.seconds) * 1000;
   while (performance.now() < until) {
     const r = await api.kubectl(['get', 'ns']);

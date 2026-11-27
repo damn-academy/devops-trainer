@@ -19,10 +19,12 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"context"
 	"net"
 	"net/http"
 	"runtime"
+	"runtime/pprof"
 	"syscall/js"
 )
 
@@ -41,6 +43,8 @@ func init() {
 //	              restore?: {pki: {[file]: Uint8Array}, etcd: Uint8Array}}   // from saveState
 //	saveState(): Promise<{pki: {[file]: Uint8Array}, etcd: Uint8Array}>
 //	memStats(): {heapAlloc, heapSys, sys, numGC}   // Go runtime, bytes
+//	heapProfile(): Promise<Uint8Array>   // pprof heap profile (after a GC)
+//	goroutineProfile(): string  // goroutine stacks, grouped (pprof debug=1)
 //	ready(): Promise<{[phase: string]: number}>   // phase timings in ms
 //	kubectl(args: string[], stdin?: string): Promise<{stdout, stderr, code}>
 //	connect(addr: string, onData: (b: Uint8Array) => void, onClose: (err?: string) => void): {write, end, close}
@@ -107,10 +111,31 @@ func main() {
 		})
 	}))
 
+	// Collecting inside a JavaScript callback can wait forever on goroutines
+	// that never run, so the profile is a promise.
+	api.Set("heapProfile", js.FuncOf(func(js.Value, []js.Value) any {
+		return promise(func() (any, error) {
+			var buf bytes.Buffer
+			runtime.GC()
+			if err := pprof.WriteHeapProfile(&buf); err != nil {
+				return nil, err
+			}
+			return toJSBytes(buf.Bytes()), nil
+		})
+	}))
+
+	api.Set("goroutineProfile", js.FuncOf(func(js.Value, []js.Value) any {
+		var buf bytes.Buffer
+		if err := pprof.Lookup("goroutine").WriteTo(&buf, 1); err != nil {
+			return err.Error()
+		}
+		return buf.String()
+	}))
+
 	api.Set("memStats", js.FuncOf(func(js.Value, []js.Value) any {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
-		return map[string]any{"heapAlloc": float64(m.HeapAlloc), "heapSys": float64(m.HeapSys), "sys": float64(m.Sys), "numGC": int(m.NumGC)}
+		return map[string]any{"heapAlloc": float64(m.HeapAlloc), "heapSys": float64(m.HeapSys), "sys": float64(m.Sys), "numGC": int(m.NumGC), "goroutines": runtime.NumGoroutine()}
 	}))
 
 	api.Set("timings", js.FuncOf(func(js.Value, []js.Value) any {
