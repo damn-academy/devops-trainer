@@ -205,6 +205,8 @@ export class HartMailboxes {
   }
   private wake(base: number) { Atomics.add(this.words, base, 1); Atomics.notify(this.words, base); }
   wakeSequence(hart: number) { return Atomics.load(this.words, this.base(hart)); }
+  /** Wake a hart idling in WFI so it rechecks device requests and interrupts. */
+  kick(hart: number) { this.wake(this.base(hart)); }
   ipi(hart: number) { const b = this.base(hart); Atomics.store(this.words, b + 1, 1); this.wake(b); }
   fence(hart: number, kind: FenceTicket['kind']): FenceTicket {
     const b = this.base(hart), slot = b + (kind === 'instruction' ? 2 : 4);

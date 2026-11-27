@@ -98,7 +98,17 @@ impl Engine {
         self.cpu.time(ticks as u64);
         self.cpu.csr[0x344] = (self.cpu.csr[0x344] & !((1 << 11) | (1 << 9))) | external;
         self.profiled_run_once(count);
-        if self.cpu.stopped { 2 } else if self.cpu.waiting { 1 } else { 0 }
+        // Bits 0-1: 0 running, 1 waiting (WFI), 2 stopped. Bit 2: an SBI request
+        // is queued for smp_request(). Bit 3: console bytes are queued for output().
+        (if self.cpu.stopped { 2 } else if self.cpu.waiting { 1 } else { 0 })
+            | (self.cpu.smp_request.is_some() as u32) << 2
+            | ((!self.cpu.console.is_empty() || !self.cpu.memory.devices.console.is_empty()) as u32) << 3
+    }
+    /// Device-engine work queued for the host: bit 0 transmit frames, bit 1
+    /// console bytes, bit 2 missing disk chunks.
+    pub fn smp_device_pending(&self) -> u32 {
+        let d = &self.cpu.memory.devices;
+        (!d.net_tx.is_empty() as u32) | (!d.console.is_empty() as u32) << 1 | (!d.disk_missing.is_empty() as u32) << 2
     }
     pub fn smp_device_read(&mut self, address: u64) -> u64 { self.cpu.memory.devices.read(address).unwrap_or(0) }
     pub fn smp_device_write(&mut self, address: u64, value: u32) { self.cpu.memory.devices.write(address, value); }
