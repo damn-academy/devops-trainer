@@ -447,6 +447,50 @@ points to memory corruption beyond a missed write barrier. The likely next
 step is a newer Go: the build uses go1.26.0 and go1.26.11/go1.27.4 are
 out; downloading a toolchain was not allowed in this round.
 
+### Round 5: restore to a working node
+
+Three things kept a restored node silent; all are fixed:
+
+1. **No JIT after a restore** (`web/src/engine/rv64/smp-cpu.worker.ts`).
+   A hart restored at worker start kept its pre-restore JIT runtime and
+   never compiled a block: 6 MIPS per hart, all interpreted (a booted node
+   runs 85–95 % of its instructions from compiled blocks). The worker now
+   starts a fresh JIT runtime after `smp_restore`, as the barrier restore
+   did; the node page shows MIPS and JIT share per hart.
+2. **Stale TCP connections.** The restored guest keeps its connections to
+   10.0.0.1:6443 (`netstat` on the node: ESTABLISHED, idle); the new tab's
+   lab host has none, and an idle kubelet never sends anything that would
+   reveal it. The checkpoint now records the lab host's connections and
+   the restored page resets them (`LabHost.resetPeer`: a reset plus a bare
+   ACK, so that a peer expecting another sequence number answers and gets
+   an exact reset). The clients reconnect at once.
+3. **Ten-minute heartbeats.** Under the emulator profile kinit scales the
+   kubelet's periods by 60: node lease 2400 s, status every 10 minutes,
+   report every 5 hours, which also explains the node turning `Unknown`
+   between updates in rounds 3–4. The r19 medium wraps the kubelet to
+   renew its lease every 30 s (lease 120 s, status 30 s, report 5 min).
+
+The kubelet needed no rebuild for its TLS handshake: it is the combined
+slim binary, and its environment (read on the node console) has
+`KUBEROOT_TIMESCALE=60`, which scales client-go's handshake deadline to
+600 s.
+
+Restore of a checkpoint taken from an r19 boot (node Ready 396 s, pod
+580 s, checkpoint saved at 662 s, 1 bridged connection recorded); times in
+seconds after page load:
+
+| Run | kube.wasm ready | Harts running | Fresh lease renewal | New deployment's pod Running | Tab footprint | Go linear memory at the end |
+|---|---|---|---|---|---|---|
+| r19b | 3.6 | 5.5 | 67 | – (kube.wasm died at 127 s: `invalid runtime symbol table`) | – | – |
+| r19c | 3.6 | 5.4 | 31 | 212 | 1.94 → 3.23 GB | 0.64 GiB |
+| r19d | 4.1 | 6.0 | 47 | 255 | 2.15 → 3.28 GB | 0.66 GiB |
+
+The node is back within 30–70 s of the page load; a new pod then takes
+another 3–3.5 minutes (sandbox and container creation in the emulated
+guest). The tab starts at ~2 GB and grows with the emulator's JIT. The
+Go runtime crash now also occurs without the kubelet client certificate
+under node traffic (r19b), so a newer Go remains the next step.
+
 ### Open problems
 
 - **Go runtime crash with the kubelet client certificate.** With

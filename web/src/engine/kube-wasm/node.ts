@@ -245,10 +245,13 @@ async function main() {
       mark(`reset ${savedTcp.length} saved connections`);
     }, 1000);
   }
+  const leaseRenewed = async () => {
+    const r = await k.api.kubectl(['get', 'lease', NODE_NAME, '-n', 'kube-node-lease', '-o', 'jsonpath={.spec.renewTime}']);
+    return Date.parse(r.stdout) || 0;
+  };
   let restoredHeartbeat = Infinity;
   if (restore) {
-    const hb = await k.api.kubectl(['get', 'node', NODE_NAME, '-o', 'jsonpath={.status.conditions[?(@.type=="Ready")].lastHeartbeatTime}']);
-    restoredHeartbeat = Date.parse(hb.stdout) || 0;
+    restoredHeartbeat = await leaseRenewed();
   }
 
   // Save the node (all harts stopped at a barrier) and, while it stands
@@ -309,12 +312,11 @@ async function main() {
     }
     if (nodes.stdout.includes(`${NODE_NAME}=True`)) mark('node Ready');
     if (restore) {
-      // The restored store already says Ready: wait for a heartbeat that is
-      // newer than this page.
-      const hb = await k.api.kubectl(['get', 'node', NODE_NAME, '-o', 'jsonpath={.status.conditions[?(@.type=="Ready")].lastHeartbeatTime}']);
-      // With the continuous clock the guest's timestamps lag; count any
-      // heartbeat newer than the checkpoint's.
-      if (hb.code === 0 && Date.parse(hb.stdout) > restoredHeartbeat) mark('fresh heartbeat');
+      // The restored store already says Ready: wait for the kubelet to renew
+      // its node lease (its heartbeat; the Ready condition's timestamp only
+      // moves with status reports, every 5 minutes). With the continuous
+      // clock the guest's timestamps lag, so compare with the saved lease.
+      if (await leaseRenewed() > restoredHeartbeat) mark('fresh heartbeat');
     }
     const csrs = await k.api.kubectl(['get', 'csr', '-o', 'jsonpath={range .items[?(@.spec.signerName=="kubernetes.io/kubelet-serving")]}{.metadata.name}{" "}{.status.certificate}{"\\n"}{end}']);
     for (const line of csrs.stdout.split('\n')) {
