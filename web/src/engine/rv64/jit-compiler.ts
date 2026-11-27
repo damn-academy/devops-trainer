@@ -24,7 +24,10 @@ const section = (id: number, bytes: number[]) => [id, ...uleb(bytes.length), ...
 const get = (r: number) => r ? [0x20, ...uleb(r + 2)] : [0x42, 0];
 const constant = (n: bigint) => [0x42, ...sleb(n)];
 const sx = (n: number, bits: number) => BigInt(n << (32 - bits) >> (32 - bits));
-const helper = (i: number) => [0x2f,0x07,0x27,0x43,0x47,0x4b,0x4f,0x53].includes(i&127);
+// Exact Rust helper, then the block ends: A/F/D, Zicsr and FENCE.I (jit.rs
+// supported() admits only CSRs whose effect does not depend on the
+// not-yet-retired block prefix).
+const helper = (i: number) => [0x2f,0x07,0x27,0x43,0x47,0x4b,0x4f,0x53,0x73].includes(i&127) || (i&127) === 0x0f && (i>>>12&7) === 1;
 // One shared table importer avoids a per-module indirect-table mirror on older V8.
 function chainCode(shared?: SharedJitLayout): number[] {
   const code: number[] = [];
@@ -228,6 +231,9 @@ function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJi
         expr = [...left, ...right, ops[f]!, ...(!word && (f === 2 || f === 3) ? [0xad] : [])];
       }
       if (word) expr.push(0xac);
+    } else if (op === 0x0f) {
+      // FENCE: shared RAM is only accessed with sequentially consistent
+      // atomics, and private RAM belongs to this hart, so it orders nothing more.
     } else throw new Error(`unsupported JIT encoding ${i.toString(16)}`);
     if (expr.length) {
       if (rd) { emit(...expr, 0x21, rd + 2); dirty.add(rd); used.add(rd); } else emit(...expr, 0x1a);

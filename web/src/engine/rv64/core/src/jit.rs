@@ -65,6 +65,11 @@ fn supported(i: u32) -> bool {
         0x2f => matches!(f,2|3),
         0x07 | 0x27 => matches!(f,2|3),
         0x43 | 0x47 | 0x4b | 0x4f | 0x53 => true,
+        // FENCE is a no-op in generated code; FENCE.I runs in the helper.
+        0x0f => f <= 1,
+        // Zicsr through the helper, except counters that would miss the
+        // retired-but-uncommitted block prefix (and their inhibit control).
+        0x73 => f != 0 && f != 4 && !matches!(i >> 20, 0xb00 | 0xb02 | 0xc00 | 0xc02 | 0x320),
         0x03 => f < 7,
         0x23 => f < 4,
         0x37 | 0x17 | 0x6f => true,
@@ -142,7 +147,7 @@ impl Cpu {
                     if target > pc && target >> 12 == self.pc >> 12 { p = (pa & !4095) | (target & 4095); pc = target; continue; }
                 }
                 p += d.len; pc = pc.wrapping_add(d.len);
-                if matches!(d.ins & 127, 0x67|0x6f|0x2f|0x07|0x27|0x43|0x47|0x4b|0x4f|0x53) { break; }
+                if matches!(d.ins & 127, 0x67|0x6f|0x2f|0x07|0x27|0x43|0x47|0x4b|0x4f|0x53|0x73) || d.ins & 0x707f == 0x100f { break; }
             }
             if words.is_empty() { e.id = u32::MAX; return 0; }
             // Fetch span checked on entry: from the block PC to the end of its
