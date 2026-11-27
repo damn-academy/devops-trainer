@@ -16,6 +16,7 @@ import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from '.
 import { createSharedCompiler } from '../rv64/shared-compiler';
 import { hartBudget, jitCeilingBytes, MiB } from '../rv64/host-memory';
 import type { TcpConn } from '../labhost/tcp';
+import { ipToNum } from '../labhost/wire';
 
 const NODE_NAME = 'kuberoot-000001'; // kinit names the node after the last MAC bytes
 const NODE_IP = '10.0.0.10'; // the first DHCP lease of the lab network
@@ -77,7 +78,11 @@ async function main() {
   const apiserverArgs = params.get('kubeletClient') === '1'
     ? ['--kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt', '--kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key']
     : [];
-  await k.api.start({ v: Number(params.get('v') ?? 0), apiserverArgs });
+  // An emulated node posts its status minutes late at times; with the
+  // default 50 s grace the node lifecycle controller marks it Unknown and
+  // evicts its pods.
+  const controllerManagerArgs = ['--node-monitor-grace-period=5m'];
+  await k.api.start({ v: Number(params.get('v') ?? 0), apiserverArgs, controllerManagerArgs });
   await k.api.ready();
   mark('apiserver ready');
 
@@ -93,6 +98,18 @@ async function main() {
   const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
   let conns = 0;
   services.host.listen({ port: 6443, onConn: (c) => { conns++; bridge(k, c, '127.0.0.1:6443'); } });
+  // apiserver → kubelet (logs, exec): kube.wasm dials 10.0.0.10:10250, the
+  // page opens that connection on the emulated network.
+  const listenErr = k.api.listen(`${NODE_IP}:10250`, (g) => {
+    services.host.connect(ipToNum(NODE_IP), 10250, { timeoutMs: 60000 }).then((c) => {
+      let open = true;
+      g.start((b) => { if (open) c.write(b); }, () => { if (open) c.end(); });
+      c.onData((b) => g.write(b));
+      c.onEnd(() => g.end());
+      c.onClose(() => { open = false; g.close(); });
+    }, () => g.close());
+  });
+  if (listenErr) throw new Error(`listen ${NODE_IP}:10250: ${listenErr}`);
 
   if (params.get('emulator') === '0') { mark('emulator skipped'); return; }
   // The emulator, as in rv64/smp-kuberoot.ts, without checkpoints or profiling.
@@ -123,6 +140,8 @@ async function main() {
       else if (data.type === 'console') {
         const text = decoder.decode(data.bytes).replace(/\r/g, '');
         if (text.includes('RV64_KUBEWASM_JOIN')) mark('membership read');
+        if (text.includes('RV64_KUBEWASM_IMAGE busybox.tar')) mark('busybox image loaded');
+        if (text.includes('RV64_KUBEWASM_IMAGE_FAILED')) mark('image import failed');
         if (text.includes('RV64_KUBEWASM_IMAGES')) mark('images loaded');
         appendConsole(text);
       }
@@ -187,7 +206,7 @@ async function main() {
         }
       }
     }
-    (window as unknown as { kubeNode: unknown }).kubeNode = { marks, conns, wasmMemoryBytes: k.wasmMemoryBytes() };
+    (window as unknown as { kubeNode: unknown }).kubeNode = { marks, conns, wasmMemoryBytes: k.wasmMemoryBytes(), go: k.api.memStats() };
     await new Promise((r) => setTimeout(r, 5000));
   }
 }

@@ -41,8 +41,13 @@ if /bin/busybox grep -q '"role"' "$join" 2>/dev/null; then
   # No registry is reachable: load the offline images, as the standalone probe does.
   (
     while [ ! -S /run/containerd/containerd.sock ]; do /bin/busybox sleep 5; done
-    for archive in /usr/share/kuberoot/rv64-images/*.tar; do
-      /usr/bin/ctr -n k8s.io images import --digests "$archive" >/dev/null 2>&1 || echo "RV64_KUBEWASM_IMAGE_FAILED $archive"
+    # busybox first: it is what the first exercises run; then the others.
+    for archive in /usr/share/kuberoot/rv64-images/busybox.tar /usr/share/kuberoot/rv64-images/coredns.tar /usr/share/kuberoot/rv64-images/local-path.tar; do
+      if /usr/bin/ctr -n k8s.io images import --digests "$archive" >/dev/null 2>&1; then
+        echo "RV64_KUBEWASM_IMAGE ${archive##*/}"
+      else
+        echo "RV64_KUBEWASM_IMAGE_FAILED ${archive##*/}"
+      fi
     done
     echo RV64_KUBEWASM_IMAGES
   ) >/dev/console 2>&1 &
