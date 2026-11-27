@@ -731,7 +731,7 @@ const PROJECTS: AboutPageDef = {
     sec(
       "dormer",
       bi("Dormer", "Dormer"),
-      "Большие мультимедийные истории о музыке, живописи и запахах: Sonic Youth и серый скаковой конь, Франсуаза Арди и Боб Дилан, «Девочка на шаре» Пикассо, двадцать один шаг от Terre d'Hermès до парфюмерного терроризма. [dormer.sankofa.black](https://dormer.sankofa.black)",
+      "Большие мультимедийные истории о музыке, живописи и ароматах: Sonic Youth и серый скаковой конь, Франсуаза Арди и Боб Дилан, «Девочка на шаре» Пикассо, двадцать один шаг от Terre d'Hermès до парфюмерного терроризма. [dormer.sankofa.black](https://dormer.sankofa.black)",
       "Long multimedia stories about music, painting and smell: Sonic Youth and a grey racehorse, Françoise Hardy and Bob Dylan, Picasso's Young Acrobat on a Ball, twenty-one steps from Terre d'Hermès to perfume terrorism. [dormer.sankofa.black](https://dormer.sankofa.black)",
     ),
     sec(
