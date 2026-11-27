@@ -151,7 +151,6 @@ function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJi
           // helper RMWs. Bounded execution cannot service a fence ACK mid-store.
           emit(0x03,0x40,0x41,0,0x41,0,0x41,1,...atomic(0x48,2,1),0x0d,0,0x0b);
           emit(0x20,42,...get(b),...atomic([0x1b,0x1c,0x1d,0x18][f]!,f,1));
-          emit(0x41,8,...constant(1n),...atomic(0x1f,3,1),0x1a);
           emit(0x20,42,0x41,7,0x76,0x41,2,0x74,0x41,1,...atomic(0x1e,2,3),0x1a);
           // Publish every page write, just like helpers. No private code bitmap
           // can prove a page is not executable on another hart.

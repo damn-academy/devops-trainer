@@ -41,8 +41,8 @@ export function atomicModule(pages: number): WebAssembly.Module {
 /** Direct shared-bus access for the Rust core, imported as module
  * `rv64shared`, so interpreter loads, stores, fetches and page walks never
  * leave wasm. Stores follow the SharedHartMemory writer protocol exactly:
- * lock word at 0, write counter at 8, then the reservation granule and the
- * code-page generation of the stored byte. Offsets are guest-physical RAM
+ * lock word at 0, then the reservation granule and the code-page
+ * generation of the stored byte. Offsets are guest-physical RAM
  * offsets (guest data starts at byte 64); callers bound and align them.
  * Memories: 0 = RAM, 1 = page generations, 2 = reservation granules. */
 export function sharedAccessModule(ramPages: number, generationPages: number, granulePages: number): WebAssembly.Module {
@@ -66,9 +66,8 @@ export function sharedAccessModule(ramPages: number, generationPages: number, gr
       ...i32(0), ...i32(2), ...i64(100000), ...at(0x01, 2), 0x1a, 0x0c, 1, 0x0b, 0x0b, 0x0b]],
     // 1 unlock(): wake a sleeper only if the lock was marked contended.
     [[], [...i32(0), ...i32(0), ...at(0x41, 2), ...i32(2), 0x46, 0x04, 0x40, ...i32(0), ...i32(1), ...at(0x00, 2), 0x1a, 0x0b]],
-    // 2 publish(offset): write counter, reservation granule, code-page generation.
-    [[], [...i32(8), ...i64(1), ...at(0x1f, 3), 0x1a,
-      ...address, ...i32(7), 0x76, ...i32(2), 0x74, ...i32(1), ...at(0x1e, 2, 2), 0x1a,
+    // 2 publish(offset): reservation granule, then code-page generation.
+    [[], [...address, ...i32(7), 0x76, ...i32(2), 0x74, ...i32(1), ...at(0x1e, 2, 2), 0x1a,
       ...get(0), ...i32(12), 0x76, ...i32(2), 0x74, ...i32(1), ...at(0x1e, 2, 1), 0x1a]],
     // 3 load(offset, size) -> zero-extended i64
     [[1, 1, 0x7f], [...address, ...set(2), ...bySize(0x7e, n => [...get(2), ...loadOp[n]!])]],
@@ -121,8 +120,8 @@ export type Amo = 'swap' | 'add' | 'xor' | 'and' | 'or' | 'min' | 'max' | 'minu'
 // which cannot happen inside one scheduler quantum.
 // No unlocked stores, including JIT stores and DMA, may bypass this protocol;
 // ordinary reads use atomic wasm loads and do not require the writer lock.
-// Layout: lock at 0, legacy global epoch at 8 (kept for metrics, no longer
-// gates SC), guest data starts at 64.
+// Layout: lock at 0, bytes 4..63 unused (formerly a global write counter that
+// every store bumped; nothing read it), guest data starts at 64.
 export const RESERVATION_GRANULE = 128;
 const fallbackGranuleTables = new WeakMap<WebAssembly.Memory, Int32Array>();
 export class SharedHartMemory {
@@ -166,7 +165,6 @@ export class SharedHartMemory {
       const aligned = address - address % 8, shift = BigInt(address % 8 * 8), bits = (1n << BigInt(size * 8)) - 1n, mask = bits << shift;
       this.wasm.store(aligned, (this.wasm.load(aligned) & ~mask) | ((value & bits) << shift));
     }
-    this.wasm.add(8, 1n);
     Atomics.add(this.granules, Math.floor(address / 128), 1);
     if (this.generations) Atomics.add(this.generations, Math.floor((address - 64) / 4096), 1);
   }
@@ -177,7 +175,6 @@ export class SharedHartMemory {
     if (!Number.isInteger(address) || address < 64 || address + bytes.length > this.memory.buffer.byteLength) throw new RangeError('out-of-bounds shared DMA');
     this.locked(() => {
       new Uint8Array(this.memory.buffer, address, bytes.length).set(bytes);
-      this.wasm.add(8, 1n);
       const last = address + bytes.length - 1;
       for (let g = Math.floor(address / 128); g <= Math.floor(last / 128); g++) Atomics.add(this.granules, g, 1);
       if (this.generations) for (let p = Math.floor((address - 64) / 4096); p <= Math.floor((last - 64) / 4096); p++) Atomics.add(this.generations, p, 1);
@@ -220,7 +217,6 @@ export class SharedHartMemory {
     return this.locked(() => {
       if (size === 8 && (op === 'add' || op === 'swap')) {
         const old = this.wasm[op](address, value);
-        this.wasm.add(8, 1n);
         Atomics.add(this.granules, Math.floor(address / 128), 1);
         if (this.generations) Atomics.add(this.generations, Math.floor((address - 64) / 4096), 1);
         return old;

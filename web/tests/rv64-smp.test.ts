@@ -59,7 +59,7 @@ describe('R3 shared wasm RAM substrate (not integrated CPU)', () => {
     expect(BigInt.asUintN(64, js.load(64 + 0x1000, 8))).toBe(0xffff6655f1020304n);
     expect(bus.generation(1)).toBe(4); expect(gens[1]).toBe(4);
     expect(grans[Math.floor((64 + 0x1000) / 128)]).toBe(4);
-    expect(new BigInt64Array(memory.buffer, 8, 1)[0]).toBe(4n);
+    expect(new BigInt64Array(memory.buffer, 8, 1)[0]).toBe(0n);
     // LR on the JS path observes direct-bus stores and CAS.
     js.lr(64 + 0x1000, 8); bus.store(0x1000, 8, 0xffff6655f1020304n);
     expect(js.sc(64 + 0x1000, 8, 1n)).toBe(false);
