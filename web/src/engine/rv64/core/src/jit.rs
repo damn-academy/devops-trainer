@@ -1,7 +1,25 @@
 //! Browser JIT bridge with precise helpers for faulting slow paths.
 //! Unsupported instructions retain the precise interpreter path.
 use crate::{Access, Cpu};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::hash::{BuildHasherDefault, Hasher};
+/// Multiply-rotate hash for small integer keys (block ids, physical/virtual
+/// PCs). The default SipHash showed up in block dispatch and eviction profiles;
+/// these keys are produced by the emulator, not by an adversary.
+#[derive(Default, Clone, Copy)]
+pub struct FastHasher(u64);
+impl FastHasher {
+    #[inline] fn add(&mut self, v: u64) { self.0 = (self.0.rotate_left(5) ^ v).wrapping_mul(0x517c_c1b7_2722_0a95); }
+}
+impl Hasher for FastHasher {
+    #[inline] fn finish(&self) -> u64 { self.0 }
+    #[inline] fn write(&mut self, bytes: &[u8]) { for b in bytes { self.add(*b as u64); } }
+    #[inline] fn write_u32(&mut self, v: u32) { self.add(v as u64); }
+    #[inline] fn write_u64(&mut self, v: u64) { self.add(v); }
+    #[inline] fn write_usize(&mut self, v: usize) { self.add(v as u64); }
+}
+pub type FastMap<K, V> = HashMap<K, V, BuildHasherDefault<FastHasher>>;
+pub type FastSet<K> = HashSet<K, BuildHasherDefault<FastHasher>>;
 use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 extern "C" {
@@ -18,8 +36,11 @@ pub struct Jit {
     pub single_step: bool,
     pub at_entry: bool,
     serial: u32,
-    pub code: HashMap<(u64,u64,u64), (u32,usize)>,
-    pub ready: HashMap<u32, (u32, u32)>,
+    pub code: FastMap<(u64,u64,u64), (u32,usize)>,
+    pub ready: FastMap<u32, (u32, u32)>,
+    /// Per block id: its code key and its entry/chain table index (one key
+    /// always hashes to one index), so eviction never scans the tables.
+    pub owners: FastMap<u32, ((u64,u64,u64), u32)>,
     pub entries: Vec<Option<Entry>>,
 }
 // Stable ABI for guarded generated-wasm tail-chain lookup. Slot zero is invalid.
@@ -119,6 +140,7 @@ impl Cpu {
             self.jit.last_used.resize(e.id as usize + 1, 0);
             e.bytes = words.chunks_exact(2).map(|w| w[1] as usize).sum();
             self.jit.code.insert((pa,self.pc,page), (e.id,e.bytes));
+            self.jit.owners.insert(e.id, ((pa,self.pc,page), index as u32));
             compile(e.id, self.pc, &words, &raw, pa, page);
         }
         if e.id == u32::MAX { return 0; }
