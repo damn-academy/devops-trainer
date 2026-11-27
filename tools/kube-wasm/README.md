@@ -142,10 +142,11 @@ Nothing in the control plane itself was patched.
 
 ## Build
 
-On the build host (the workshop pod `rv64-dev-b` was used):
+On the build host (the workshop pod `rv64-dev-b` was used), with Go
+1.26.11 or newer (1.26.0 corrupts the heap of kube.wasm, see "The crash"):
 
 ```bash
-WORK=/work/kube-wasm PATH=/work/rel021/go/bin:/work/tools/node-r17/bin:$PATH \
+WORK=/work/kube-wasm PATH=/work/tools/go-1.26.11/go/bin:/work/tools/node-r17/bin:$PATH \
   tools/kube-wasm/build.sh          # -> $WORK/out/kube.wasm{,.gz,.br}, wasm_exec.js
 tools/kube-wasm/build.sh native     # -> $WORK/out/kube-wasm-native (test driver)
 ```
@@ -537,6 +538,31 @@ deadlines and the node does not come back. The next steps: the zeroed
 768 MiB checkpoint (needs disk space), a newer Go so that the
 concurrent collector can return, and fixing the per-call kubectl
 retention.
+
+### Round 7: Go 1.26.11
+
+Built with Go 1.26.11 and no GODEBUG settings, kube.wasm did not crash in
+80 starts under Node.js (all with the kubelet client certificate) nor in a
+100-call kubectl loop; the same tests crashed about a third of the time
+with Go 1.26.0. The loader no longer sets the stop-the-world collector.
+
+kubectl calls no longer accumulate memory: cobra kept every flag with a
+completion function in a global map, which retained each call's command
+tree, factory and REST mapper. Over 100 calls the live heap now stays at
+107 MiB (it grew from 115 to 175 MiB before).
+
+Restores (seconds after page load, JIT budget 256 MiB):
+
+| Run | Guest RAM | Node heartbeat | exec | logs | New pod Running | Footprint | Go linear memory |
+|---|---|---|---|---|---|---|---|
+| r7a | 1 GiB | 66 | 61 | 32 | 201 | 2.71 → 3.24 GB | 0.36 GiB |
+| r7b | 1 GiB | 77 | 72 | 84 | 265 | 2.68 → 3.09 GB | 0.35 GiB |
+| r7za | 768 MiB (zeroed) | 105 | 100 | 116 | 395 | 2.50 → 3.08 GB | 0.37 GiB |
+| r7zb | 768 MiB (zeroed) | 121 | 116 | 133 | 317 | 2.44 → 3.05 GB | 0.37 GiB |
+
+The zeroed 768 MiB checkpoint has 673 nonzero MiB chunks (684 MB on
+disk). Most of the footprint is the emulator, its JIT and its workers,
+not the control plane.
 
 ### Open problems
 
