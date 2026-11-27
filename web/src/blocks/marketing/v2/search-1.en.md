@@ -33,14 +33,14 @@ Complete this task in your website's Google Search Console, if you have access, 
 
 <!-- quiz -->
 ? What does Ahrefs' finding that queries with an AI Overview received 58% fewer clicks than expected mean?
-+ Out of a hundred expected clicks on the top position, about forty-two arrived || This figure does not represent a loss of 58% of a site's total traffic.
-- Websites lost 58% of all their traffic || The study measured the click-through rate for the top position in specific queries.
-- The click-through rate fell by 58 percentage points || The click-through rate was about seven per hundred impressions, so it could not fall by 58 points.
+- Sites lost 58% of all their Google search traffic on average || The study measured the click-through rate for the top position in specific queries.
+- The click-through rate on the top position fell by 58 percentage points || The click-through rate was about seven per hundred impressions, so it could not fall by 58 points.
++ Out of a hundred expected clicks on the top position in such queries, about 42 arrived || This figure does not represent a loss of 58% of a site's total traffic.
 
 ? Does a page need special markup to appear in a Google AI Overview?
-+ No, it needs normal indexing and eligibility to display a snippet || Google says no special optimization for AI is required.
-- Yes, it needs an llms.txt file || Google explicitly says llms.txt does not affect ranking.
-- Yes, it needs FAQ markup || Google stopped showing FAQ rich results in May 2026.
++ No, it needs ordinary indexing in Google and eligibility to show a snippet || Google says no special optimization for AI is required.
+- Yes, it needs an llms.txt file in the site root listing the pages || Google explicitly says llms.txt does not affect ranking.
+- Yes, it needs FAQ markup on pages with questions and answers || Google stopped showing FAQ rich results in May 2026.
 <!-- /quiz -->
 
 <!-- section: sources -->

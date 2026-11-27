@@ -8,14 +8,14 @@ A community game format is a system with a script and state, rather than a colle
 The editor intervened in game content just as in an article. They rejected the calculation questions AI proposed for season three: they are boring to solve in chat, and the answer depends on who calculates fastest. Short cases with precise incident descriptions and video briefings replaced them. The rules must be explainable in a minute: elaborate bonuses and multipliers, which AI readily adds, obscure how to win.
 
 <!-- section: theory | The bot as a stateful program -->
-The tournament bot publishes battles, accepts votes, calculates results and advances to the next battle. Its most important component is state: if the bot restarts mid-season or you replace one video's text, the tournament must resume from the same place. The transferable idea is simple: bot code, media and tournament state are stored separately, so replacing text or video does not reset scores. In a typical bot, this means code lives in a repository, videos in a folder or file storage, and state in a database or at least a separate spreadsheet. In our tournament, the bot ran in an unusual environment: the author's experimental layer on top of Google Sheets and Apps Script that simulates Kubernetes containers and volumes. You do not need to recreate it to apply the same idea.
+The tournament bot publishes battles, accepts votes, calculates results and advances to the next battle. Its most important component is state: if the bot restarts mid-season or you replace one video's text, the tournament must resume from the same place. The transferable idea is simple: bot code, media and tournament state are stored separately, so replacing text or video does not reset scores. In a typical bot, this means code lives in a repository, videos in a folder or file storage, and state in a database or at least a separate spreadsheet. The KUBER KOMBAT bot ran in an unusual environment: an experimental layer on top of Google Sheets and Apps Script that simulates Kubernetes containers and volumes. You do not need to recreate it to apply the same idea.
 
 A separate script exports season text and media into one `season.json` file, preserving them byte for byte as the editor approved them. This prevents a common error: AI “improving” an already approved line while editing the bot's code.
 
 <!-- section: theory | Test the entire season before launch -->
 Do not test the bot in a live chat. A test with a fake Telegram API accelerates time, runs the entire season, checks vote counting and text against approved versions, and verifies that the bot cannot send a message to the main chat during the test. Only after this run is the tournament launched in the community.
 
-Bot work invites endless trials: start it, look, fix a small detail, ask a person to check manually, start again. In our projects, the editor stopped this with a rule: incorporate each trial's result into the implementation immediately, and test the entire target scenario. Trials for their own sake do not bring launch closer.
+Bot work invites endless trials: start it, look, fix a small detail, ask a person to check manually, start again. A rule stops this: incorporate each trial's result into the implementation immediately, and test the entire target scenario. Trials for their own sake do not bring launch closer.
 
 <!-- section: theory | Environment-specific behaviour -->
 Every bot environment has traps worth recording. Ordinary Apps Script, without the extra layer, had three. First, the bot answered Telegram's message with a redirect instead of a confirmation, so Telegram sent the same message again; another way of answering helped (`HtmlService` instead of `ContentService`), but duplicates still had to be filtered out. Second, the script needs the user's permission to access spreadsheets and external addresses, Apps Script did not always work out which permissions it needed, and they had to be listed by hand in the project settings file. Third, deferred operations did not work, so the bot processed each command to the end before answering. Record such findings in the lead AI's memory so the next bot does not repeat the same mistakes.
@@ -26,12 +26,12 @@ A community chat bot operates under the platform's and chat's rules. Automated u
 <!-- quiz -->
 ? An AI fixed a bot bug and also changed an already approved line. How can this be prevented?
 + Keep approved text separate from code and export it byte for byte || When text lives in a separate file, code edits do not touch it.
-- Prohibit AI from touching the bot's code || This removes the pipeline's speed; separating text from code is enough.
+- Prohibit AI from touching the bot's code so that it cannot accidentally spoil the approved lines || This removes the pipeline's speed; separating text from code is enough.
 - Reread every season line after each bot code change before launching the tournament || This is slow and unreliable; file separation prevents the problem.
 ? How should you test a tournament bot before launching it in the community?
 + Run the whole season with accelerated time and a fake platform API || This checks votes, text and protection against sending to the main chat.
 - Start it in the main chat at night when few participants are around and watch the first battles || Participants will see errors, and fixes will have to happen live.
-- Ask AI to read the code and confirm that there are no errors || Reading code does not replace running the whole scenario.
+- Ask the AI to read the whole code carefully and confirm that there are no errors in it || Reading code does not replace running the whole scenario.
 <!-- /quiz -->
 
 <!-- section: task | Task: a game format for your community -->
@@ -44,10 +44,10 @@ Complete the task in the document on this page. Invent a game format for your co
 
 <!-- lesson: aicontent.interactive | Interactive material: longreads, courses and simulators | 26 -->
 <!-- section: hook -->
-Our most labour-intensive AI projects were interactive: music longreads in the Sankofa museum, where scenes come alive on scroll; a horizontal horse-racing story in the Dormer feature; and the damn.academy learning platform with diagrams, trainers and department simulators. One longread has 16 scenes and 52 art layers, the racing story has 140 graphics files, and the platform accumulated nearly four hundred commits in eight days. This lesson examines their production, from storyboard to browser acceptance review.
+The most labour-intensive materials made with AI are interactive. This lesson's examples are music longreads in the Sankofa museum, where scenes come alive on scroll; a horizontal horse-racing story in the Dormer feature; and the damn.academy learning platform with diagrams, trainers and department simulators. One longread has 16 scenes, the racing story has 140 graphics files, and the platform accumulated nearly four hundred commits in eight days. This lesson examines how such materials are made, from storyboard to browser acceptance review.
 
 <!-- section: theory | The longread workflow -->
-Interactive longread work followed this order: source research; independent fact-checking; a storyboard by the lead AI; Russian prose; an illustrator brief; layer generation; scene assembly; proofreading; browser checks; critic rounds; release. The editor saw the storyboard before anything was drawn or programmed: revising a storyboard is cheaper than reworking a finished scene. Each scene was judged both on narrative clarity and how it worked.
+Interactive longread work follows this order: source research; independent fact-checking; a storyboard by the lead AI; Russian prose; an illustrator brief; illustration generation; scene assembly; proofreading; browser checks; critic rounds; release. The editor sees the storyboard before anything is drawn or programmed: revising a storyboard is cheaper than reworking a finished scene. Each scene is judged both on narrative clarity and on how it works.
 
 Each longread has its own mechanics on a shared engine. In one, a song's rhythm plays through WebAudio while its chain of versions unfolds interactively. In another, eleven album tracks receive their own imagery, with visual distortions increasing chapter by chapter. In the horizontal racing story, the page pauses while a chapter is read; the pause length depends on measured text height, and distance is recalculated when the window, fonts or expanded sources change. The artistic horse trajectories are not presented as an exact reconstruction of the race.
 
@@ -62,16 +62,16 @@ Interactive material is checked in a browser at several widths, scrolling forwar
 A worker takes screenshots with a Playwright script, and the lead AI inspects them for things tests miss: an icon silhouette overlapping text, an empty half of a large card, an arrow stuck to a word. The platform catalogue went through four screenshot rounds in light and dark themes at widths of 1440 and 390 pixels before the editor accepted it.
 
 <!-- section: theory | Learning courses -->
-The learning platform is our largest interactive project, and its production is covered in a separate article. Here are the practices transferable to any learning material. Start with role-based design and cross-reviews, then reference lessons that guide the rest. Use a style guide and linters. Create six fictional learners per course and revise from their reports. Research fresh sources before every course. Make diagrams learners can manipulate and break, and tasks that check the outcome of work rather than comparing typed text with a sample.
+The damn.academy learning platform is the largest interactive material among this lesson's examples. Here are the practices transferable to any learning material. Start with role-based design and cross-reviews, then reference lessons that guide the rest. Use a style guide and linters. Create six fictional learners per course and revise from their reports. Research fresh sources before every course. Make diagrams learners can manipulate and break, and tasks that check the outcome of work rather than comparing typed text with a sample.
 
 <!-- section: theory | A simulator hosted by AI -->
-For the platform's business courses, we built department simulators: a quarter in marketing, a week of PR crisis, a year of a project in the CNCF incubator. The learner's AI hosts the simulator, while the platform assembles one large prompt from shared game rules, a world description with hidden circumstances, the company the learner built in a configurator and the department scenario. Learners can play on the page using their own AI key or copy the prompt into any chat.
+The platform's business courses include department simulators: a quarter in marketing, a week of PR crisis, a year of a project in the CNCF incubator. The learner's AI hosts the simulator, while the platform assembles one large prompt from shared game rules, a world description with hidden circumstances, the company the learner built in a configurator and the department scenario. Learners can play on the page using their own AI key or copy the prompt into any chat.
 
 The main difficulty is that AI indulges the player and produces optimistic outcomes. To counter this, the platform generates a table of 400 random numbers from a recorded seed, and the host must consume them in order and state which it used. An outcome depends on decision quality, buyer fit, competitors, market conditions and hidden circumstances that may or may not emerge. After each turn, the host records game state in a separate block so play can resume. The first trainers were deterministic calculators, and the editor sent them back: in real life, the same decision can have different outcomes.
 
 <!-- quiz -->
 ? When should the editor see an interactive longread's storyboard?
-+ Before drawing layers and programming scenes, so revisions are inexpensive || Revising a storyboard is cheaper than reworking a finished scene.
++ Before drawing illustrations and programming scenes, so revisions are inexpensive || Revising a storyboard is cheaper than reworking a finished scene.
 - After the first scene is assembled, so there is something to show || If the storyboard is wrong, the assembled scene will have to be discarded.
 - At the end, with the whole longread, to avoid distracting the editor with intermediate versions || Late storyboard revisions are the most expensive.
 ? An AI simulator host almost always gives the player successful outcomes. How can this be fixed?

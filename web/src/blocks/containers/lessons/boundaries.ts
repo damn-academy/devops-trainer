@@ -48,7 +48,7 @@ export const boundaryQuiz: QuizItem[] = [
     prompt: bi('К кому обращается `nslookup db` внутри контейнера в пользовательской сети?', 'Where does `nslookup db` inside a container on a user-defined network go?'),
     options: [
       { id: '11', text: bi('К встроенному DNS Docker на адресе 127.0.0.11', 'To Docker’s embedded DNS at 127.0.0.11'), correct: true },
-      { id: 'host', text: bi('К DNS-серверу из файла /etc/resolv.conf хоста', 'To the DNS server from the host’s /etc/resolv.conf'), why: bi('Внешние имена встроенный DNS передаст дальше, но имена контейнеров знает только он сам.', 'The embedded DNS forwards outside names, but only it knows container names.') },
+      { id: 'host', text: bi('К DNS-серверу из файла /etc/resolv.conf хоста напрямую', 'To the DNS server from the host’s /etc/resolv.conf'), why: bi('Внешние имена встроенный DNS передаст дальше, но имена контейнеров знает только он сам.', 'The embedded DNS forwards outside names, but only it knows container names.') },
       { id: 'hosts', text: bi('К файлу /etc/hosts контейнера', 'To the container’s /etc/hosts'), why: bi('В /etc/hosts записаны только сам контейнер и localhost, а соседних контейнеров там нет.', '/etc/hosts holds only the container itself and localhost; the neighbours are not there.') },
     ],
   },

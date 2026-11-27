@@ -1,9 +1,9 @@
 <!-- lesson: aicontent.video | Video and audio: intros, animation, podcasts and voice | 26 -->
 <!-- section: hook -->
-We assembled a short cartoon with two speaking characters without a single hand-drawn frame. A program synthesised their lines in two voices, built a timeline from their actual durations, drew the scene on Canvas and captured it with Playwright as MP4. Podcast intros and battle videos for a chatbot were made the same way, while a podcast recording was once lost entirely because the program recorded digital silence despite a working microphone. This lesson covers video and audio production with AI and code: what to generate, what to render from code, how to work with voice and which checks prevent a broken video from being published.
+A short cartoon with two speaking characters can be assembled without a single hand-drawn frame. In this lesson's example, a program synthesised their lines in two voices, built a timeline from their actual durations, drew the scene on Canvas and captured it with Playwright as MP4. Podcast intros and battle videos for a chatbot were made the same way, while a podcast recording was once lost entirely because the program recorded digital silence despite a working microphone. This lesson covers video and audio production with AI and code: what to generate, what to render from code, how to work with voice and which checks prevent a broken video from being published.
 
 <!-- section: theory | Video from code -->
-The most reliable way to make repeatable video is to draw it in code. A scene is described on Canvas in an HTML page, Playwright plays it and captures frames, and ffmpeg joins them and adds audio. The cartoon pipeline worked as follows: `build.py` synthesises lines, measures their duration and writes `timeline.js` and the combined `audio.wav`; `scene.html` draws characters according to the timeline; `render.js` captures it as MP4. Piper supplied two voices, and drawing functions came from the podcast graphics kit.
+The most reliable way to make repeatable video is to draw it in code. A scene is described on Canvas in an HTML page, Playwright plays it and captures frames, and ffmpeg joins them and adds audio. The cartoon pipeline had three steps. First, a program synthesises the lines, measures their duration and writes a timeline and a combined audio track from them. Then an HTML page with the scene draws the characters according to that timeline. Finally, Playwright plays the page and captures it as MP4. Piper supplied two voices, and drawing functions came from the podcast graphics kit.
 
 A useful technique is to build the timeline from actual audio duration: a synthesised line almost never lasts as long as the scriptwriter expected. Building visuals and subtitles from audio timestamps rather than the script removes the need for manual alignment: the editing program places each line and its caption where it actually plays. A second technique is to render individual frames first, such as frames five and forty, and inspect them before starting a lengthy full render. In the chatbot's battle videos, a character's mouth moved with the voice's amplitude envelope, different characters had different voice pitches, and audio received eight-bit processing to match the visual style.
 
@@ -23,21 +23,21 @@ Each weekly Kubernetes Community Podcast episode was assembled from several auto
 News collection has its own traps. Feeds can return status 200 without data, so check the number of parsed entries as well as the response status. Dates without time zones silently fall outside the time window. One Habr article arrives under several URLs, which are normalised by article number. Some sites block datacentre requests or return 429 to parallel requests, so an empty collection does not mean there is no news.
 
 <!-- section: theory | Recording and checking audio -->
-Missing audio is the most frustrating video and podcast failure. Once, camera-recording software captured digital silence despite a working microphone: the mixer's master output was disabled. Since then, a five-second test precedes every long recording, with volume checked using `ffmpeg -i test.mov -af volumedetect -f null -`. The same rule applies to all renders: a process ending without errors does not mean the file contains what it should. A Canvas error may appear inside the frame, and audio may be absent despite a successful render, so watch and listen to the final video.
+Missing audio is the most frustrating video and podcast failure. Once, camera-recording software captured digital silence despite a working microphone: the mixer's master output was disabled. Since then, a five-second test precedes every long recording, with volume checked using `ffmpeg -i test.mov -af volumedetect -f null -`. If the file contains digital silence, the command output shows `mean_volume: -91.0 dB` and `max_volume: -91.0 dB`; for the first line of this lesson's sample video, the same lines show −21.5 and −1.8 dB. The same rule applies to all renders: a process ending without errors does not mean the file contains what it should. A Canvas error may appear inside the frame, and audio may be absent despite a successful render, so watch and listen to the final video.
 
 <!-- quiz -->
 ? A synthesised line is a second and a half longer than scripted. How do you prevent lips and subtitles falling out of sync?
 + Build the timeline from the actual duration of the synthesised audio, not from the script || The editing program places the utterance and its caption using the audio timestamps; avatar lip movement still needs visual checking, because utterance duration alone does not guarantee alignment.
 - Speed up the line in an audio editor to the duration specified in the video script || Accelerated speech sounds unnatural, and the next line will drift again.
-- Shorten the line and synthesise it repeatedly until its duration matches the script || This slow trial and error damages the script; adjusting the visuals is easier.
+- Shorten the line's text and synthesise it again and again until its duration matches the script || This slow trial and error damages the script; adjusting the visuals is easier.
 ? A video render finished without errors. What should happen before publication?
 + Watch and listen to the entire final file, from the first second to the last || A successful process does not guarantee there is no Canvas error in the frame or that the file contains audio.
 - Nothing, because render errors always appear in program output and stop execution || An error may appear in the picture without any output message.
-- Check the file size: if it is larger than expected, audio and visuals are present || File size says nothing about frame contents.
+- Check the file size: if it is bigger than expected, sound and video are in || File size says nothing about frame contents.
 <!-- /quiz -->
 
 <!-- section: theory | Sample video: before and after -->
-To make the audio-based timeline technique visible and audible, we made a short sample video about the platform itself: a screen recording of a lesson with a terminal, narration synthesized using the free software eSpeak NG, and subtitles. macOS system voices are unsuitable for this: the macOS license permits listening on your own computer but prohibits publicly distributing recordings made with them. The three-line script allowed four seconds per line, but the synthesized audio files lasted 5.6, 3.7 and 5.5 seconds.
+Here is what the audio-based timeline technique looks like in a finished video. It is a short sample video about the damn.academy platform: a screen recording of a lesson with a terminal, narration synthesized using the free software eSpeak NG, and subtitles. macOS system voices are unsuitable for this: the macOS license permits listening on your own computer but prohibits publicly distributing recordings made with them. The three-line script allowed four seconds per line, but the synthesized audio files lasted 5.6, 3.7 and 5.5 seconds.
 
 In the first version, audio and subtitles follow the script, starting every four seconds. The lines overlap, and at the ninth second the third subtitle is already on screen while the voice is still speaking the second line.
 
@@ -47,7 +47,15 @@ In the second version, the timeline follows the measured audio duration: each li
 
 ![Audio-timed version: voice, subtitles and command entry align](media/aicontent/video-kit/after.mp4 "After: timeline based on synthesized audio duration")
 
-Download the source files to rebuild both versions: the [script](media/aicontent/video-kit/script.txt), three voice lines — [first](media/aicontent/video-kit/line-1.m4a), [second](media/aicontent/video-kit/line-2.m4a) and [third](media/aicontent/video-kit/line-3.m4a) — and subtitles timed [by the script](media/aicontent/video-kit/subtitles-before.srt) and [by the audio](media/aicontent/video-kit/subtitles-after.srt). Compare the two subtitle files: the first takes its timestamps from the script, while the second uses each line's duration, which any audio application can show.
+The two versions differ only in their timestamps. In the first, subtitles follow the script: 0–4, 4–8 and 8–12 seconds. In the second, they come from each line's duration, which any audio application can show:
+
+```text
+00:00:00,300 --> 00:00:05,920  line 1
+00:00:06,200 --> 00:00:09,950  line 2
+00:00:10,400 --> 00:00:15,910  line 3
+```
+
+Do the same with your own video: measure each synthesised line and place audio and subtitles by those durations, using the script's timestamps only as a draft.
 
 <!-- section: task | Task: a pipeline for one video -->
 Complete the task in the document on this page. Describe the pipeline for one recurring video your team produces: an intro, product-release video or podcast episode. For each step, record what AI generates, what code renders, what is recorded live and what a human checks. Separately list three checks you will perform before publication and the cost per accepted second or minute of your last video.
@@ -65,7 +73,7 @@ Complete the task in the document on this page. Describe the pipeline for one re
 
 <!-- lesson: aicontent.video-to-article | From video to article, and translating a long text | 22 -->
 <!-- section: hook -->
-A conference talk lives on in a recording watched by a few hundred people, while an article based on it can be found through search for years. Turning a recording into a good article takes time: transcription, removing repetition, reconstructing the logic, finding frames and checking facts. We packaged this process into an open-source Claude Code plugin, then applied it to translating a sixty-thousand-character scientific article. This lesson examines the pipeline's stages, the roles it needs and the checks that prevent meaning from being lost.
+A conference talk lives on in a recording watched by a few hundred people, while an article based on it can be found through search for years. Turning a recording into a good article takes time: transcription, removing repetition, reconstructing the logic, finding frames and checking facts. This process is packaged as an open-source Claude Code plugin, and the same pipeline suits translating a long text, such as a sixty-thousand-character scientific article. This lesson examines the pipeline's stages, the roles it needs and the checks that prevent meaning from being lost.
 
 <!-- section: theory | Fifteen stages -->
 The video-to-article plugin follows fifteen stages numbered zero through fourteen: environment check; obtaining a file from a link or disk; identifying language and task; transcription; gathering context and a glossary; splitting into fragments and processing them; assembly; fact-checking; literary editing and repeat fact-checking; proofreading; optional search optimisation; headline alternatives; extracting frames; final article; delivery to the chosen channel. Scripts handle downloading, transcription, splitting, frames, completeness checks and Habr export; Whisper transcribes, using `large-v3` by default and `large-v3-turbo` for long recordings.
@@ -78,7 +86,7 @@ The pipeline is designed to stop errors passing unnoticed. After assembly, block
 Delivery to a site ends with a CMS draft or a prepared change request; the editor retains the publication decision.
 
 <!-- section: theory | Translating a scientific article -->
-We applied the same pipeline to a Russian translation of the scientific article Keeping CALM. First we prepared the written source and a shared terminology glossary, then translated 28 fragments, checked completeness, assembled the text without rearranging the author's argument, compared it with the source, performed literary editing, a repeat fact-check of the diff, proofreading, Habr export and separate terminology and style checks. The final file contained 60,000 characters.
+Here is how the same pipeline works on a Russian translation of the scientific article Keeping CALM. First the team prepared the written source and a shared terminology glossary, then translated 28 fragments, checked completeness, assembled the text without rearranging the author's argument, compared it with the source, performed literary editing, a repeat fact-check of the diff, proofreading, Habr export and separate terminology and style checks. The final file contained 60,000 characters.
 
 Quantitative checks showed that the translated fragments were 7% longer in total than the originals, with each of the 28 within the allowed range, so major omissions are unlikely; this check does not catch distortions of meaning. Fact-checking preserved the sequence of all 48 citations, 48 bibliography entries, 30 formulas and the footnotes. “Ready to publish” meant no blocking errors remained, but there were still 2 major issues, 8 minor ones and 5 nitpicks for the editor to address.
 
@@ -129,15 +137,15 @@ The transcript differed from the talk text in roughly one word in three: ignorin
 
 One fragment, 2:43–4:59 on ARP, was brought to an accepted article section as the pipeline requires. First, the slide, speaker notes and command documentation were used to compile a nine-term glossary; for a live talk, slides and questions to the speaker take the place of notes. A first draft was then built from the transcript alone: it reads smoothly but repeats the hallucination, retains the wrong address and loses three details of meaning. Checks found ten discrepancies: one hallucination, a wrong address, distorted command output, four terms and three losses of meaning; each records how it was found. The accepted section passed the completeness check with a length ratio of 0.64 against an allowed range of 0.60–1.30 and passed proofreading without remarks. The other seven fragments in the package remain at the transcript stage, and the completeness check correctly marks them as missing.
 
-The run package: [the talk](media/aicontent/pipeline-run/talk.mp4) and [an archive of everything else](media/aicontent/pipeline-run/pipeline-run-kit.zip)—audio, talk text and its source, transcript in three formats, fragments, frames, discrepancy table, glossary, draft, check log, accepted section and [the log of the authors’ run](media/aicontent/pipeline-run/RUN.md), which records the commands used to build the talk. To repeat the transcription and checks locally, follow the [English instructions](media/aicontent/pipeline-run/REPRODUCE.en.md): they start with the ready-made talk and do not require rebuilding it. Open the draft and accepted section side by side and find all ten discrepancies before reading the check log.
+The run package: [the talk](media/aicontent/pipeline-run/talk.mp4) and [an archive of everything else](media/aicontent/pipeline-run/pipeline-run-kit.zip)—audio, talk text and its source, transcript in three formats, fragments, frames, discrepancy table, glossary, draft, check log, accepted section and [the run log](media/aicontent/pipeline-run/RUN.md), which records the commands used to build the talk. To repeat the transcription and checks locally, follow the [English instructions](media/aicontent/pipeline-run/REPRODUCE.en.md): they start with the ready-made talk and do not require rebuilding it. Open the draft and accepted section side by side and find all ten discrepancies before reading the check log.
 
 <!-- section: theory | When this pipeline is unnecessary -->
-Fifteen stages and ten roles pay off for long recordings and texts intended to last. A short post based on video needs only transcription, one draft and a read-through. At release, the plugin passed 28 regression tests, but tests of the mechanics do not show what text a real recording will produce. We therefore ran one complete talk through it, and you can download and repeat that run.
+Fifteen stages and ten roles pay off for long recordings and texts intended to last. A short post based on video needs only transcription, one draft and a read-through. At release, the plugin passed 28 regression tests, but tests of the mechanics do not show what text a real recording will produce. One complete talk has therefore been run through it, and you can download and repeat that run.
 
 <!-- quiz -->
 ? After literary editing of a talk-based article, “this approach may help” became “this approach helps”. Which pipeline stage should catch it?
-+ The repeat fact-check of the version diff that follows literary editing || Style changes modality, and only a version comparison finds this.
 - Proofreading, because it reads the whole text || Proofreading checks spelling and typography, not meaning.
++ The repeat fact-check of the version diff that follows literary editing || Style changes modality, and only a version comparison finds this.
 - Headline selection, because the editor reads the whole article when choosing an option || Selecting a headline does not include checking every sentence's meaning.
 ? The translated fragments are 7% longer in total than the originals. What does this tell you?
 + There are probably no major omissions, but meaning and fragment completeness must be checked separately || Comparing lengths can indicate major omissions, but cannot prove their absence or catch distortions.

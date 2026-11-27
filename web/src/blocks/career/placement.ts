@@ -96,9 +96,9 @@ const method2: QuizItem = {
   kind: 'mcq',
   prompt: bi('В 14:05 выложили новую версию приложения, в 14:08 ввели новые правила межсетевого экрана, а с 14:10 сайт отвечает ошибкой 504. В журнале ошибок nginx строка кончается словами «while connecting to upstream». Что вы откатите первым?', 'A release went out at 14:05, new firewall rules at 14:08; 504s since 14:10. The nginx log: “while connecting to upstream”. What do you roll back first?'),
   options: [
-    { id: 'rule', text: bi('Правила межсетевого экрана, потому что nginx не может даже соединиться с приложением', 'The firewall rules: nginx cannot even connect'), correct: true },
-    { id: 'release', text: bi('Новую версию приложения, потому что её выложили раньше', 'The release: it came first'), why: bi('Решает не порядок изменений, а улика, и слова «while connecting» в журнале указывают на сеть.', 'What decides is not the order of the changes but the evidence, and the words “while connecting” in the log point at the network.') },
-    { id: 'both', text: bi('Откатить всё сразу, а потом всё перезапустить', 'Roll back everything at once and then restart everything'), why: bi('Так вы не узнаете причину, а улики пропадут.', 'That way you never learn the cause, and the evidence is lost.') },
+    { id: 'rule', text: bi('Правила межсетевого экрана, потому что nginx даже не соединяется с приложением', 'The firewall rules: nginx cannot even connect'), correct: true },
+    { id: 'release', text: bi('Новую версию приложения, потому что её выложили раньше, чем правила межсетевого экрана', 'The release, because it went out earlier than the firewall rules'), why: bi('Решает не порядок изменений, а улика, и слова «while connecting» в журнале указывают на сеть.', 'What decides is not the order of the changes but the evidence, and the words “while connecting” in the log point at the network.') },
+    { id: 'both', text: bi('Откатить всё сразу, и версию, и правила экрана, а потом перезапустить все службы', 'Roll back everything at once, both the release and the rules, then restart every service'), why: bi('Так вы не узнаете причину, а улики пропадут.', 'That way you never learn the cause, and the evidence is lost.') },
   ],
 };
 
@@ -108,7 +108,7 @@ const vm: QuizItem = {
   prompt: bi('Какая фраза точнее всего описывает контейнер?', 'Which sentence describes a container most precisely?'),
   options: [
     { id: 'proc', text: bi('Процесс хоста в собственных пространствах имён, ресурсы которого ограничены cgroups, а ядро общее с хостом', 'A host process in its own namespaces with cgroup limits; the kernel is shared'), correct: true },
-    { id: 'lightvm', text: bi('Лёгкая виртуальная машина', 'A lightweight virtual machine'), why: bi('У контейнера нет ни своего ядра, ни гипервизора.', 'A container has no kernel or hypervisor of its own.') },
+    { id: 'lightvm', text: bi('Лёгкая виртуальная машина со своим урезанным ядром, которая загружается быстрее обычной, потому что у неё гипервизор попроще', 'A lightweight virtual machine with its own trimmed-down kernel that boots faster than a normal one'), why: bi('У контейнера нет ни своего ядра, ни гипервизора.', 'A container has no kernel or hypervisor of its own.') },
     { id: 'image', text: bi('Образ Docker', 'A Docker image'), why: bi('Образ состоит из файлов, а контейнер работает как процесс, запущенный из этих файлов.', 'An image consists of files, and a container runs as a process started from those files.') },
   ],
 };

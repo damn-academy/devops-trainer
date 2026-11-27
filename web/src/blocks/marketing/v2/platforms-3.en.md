@@ -31,9 +31,9 @@ Complete this task in drafts on three platforms. Take one observation from your 
 
 <!-- quiz -->
 ? What had Buffer found about posts with links on X by August 2025?
-+ For accounts without Premium, median engagement on posts with links had fallen to zero || More than half of these posts received no reactions at all; they could still have had impressions and clicks.
-- X banned links in posts || There is no ban; engagement changed.
-- Posts with links began getting more reach || Buffer's data shows the opposite for accounts without a subscription.
+- X banned links in posts from accounts without a paid subscription and hides such posts || There is no ban; engagement changed.
++ For accounts without Premium, median engagement on such posts fell to zero || More than half of these posts received no reactions at all; they could still have had impressions and clicks.
+- Posts with links began getting more reach than posts without them, for all accounts || Buffer's data shows the opposite for accounts without a subscription.
 <!-- /quiz -->
 
 <!-- section: sources -->
@@ -76,14 +76,14 @@ Complete this task in a document. List the five questions new users most often a
 
 <!-- quiz -->
 ? Why does a technical demonstration on YouTube accumulate views slowly over a long time?
-+ People find it by searching for a specific task, and engineers keep entering those queries for years || Recommendations bring a spike, while search brings a long tail.
-- YouTube deliberately slows the distribution of technical videos || There is no such rule.
-- Technical videos are shown only to subscribers || People find videos through search and recommendations; a subscription is not required.
++ People find it by searching for a specific task, and such queries are typed for years || Recommendations bring a spike, while search brings a long tail.
+- YouTube first shows long technical videos to a narrow test group of viewers before everyone else || There is no such rule.
+- Technical videos are first shown only to the channel's subscribers || People find videos through search and recommendations; a subscription is not required.
 
 ? Why could Shorts views jump after March 31, 2025 without any improvement to the videos?
-+ YouTube began counting every start and replay as a view, with no minimum watch time || The previous counting method was retained as “engaged views.”
-- YouTube began promoting infrastructure companies' Shorts || There was no such announcement.
-- Shorts became longer || Length affects the format, but does not explain the jump in views.
++ YouTube began counting every start and every replay of a Short as a view || The previous counting method was retained as “engaged views.”
+- YouTube began promoting Shorts in long-video recommendations || There was no such announcement.
+- Shorts were allowed to run longer, up to three minutes || Length affects the format, but does not explain the jump in views.
 <!-- /quiz -->
 
 <!-- section: sources -->

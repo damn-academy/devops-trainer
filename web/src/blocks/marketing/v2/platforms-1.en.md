@@ -26,14 +26,14 @@ Complete this task in a spreadsheet, a document, or on paper. List four roles fr
 
 <!-- quiz -->
 ? A marketer wants to choose platforms for an infrastructure product. Where should they start?
-+ With the roles in the buyer profile and where people in each role spend time every week || The audience matters more than the platform's size: engineers and executives read different places, so choose a platform for a specific person.
-- With the platform that has the most users || Pew's survey says 84% of Americans use YouTube, but that represents the country's population; the survey did not study platform engineers and infrastructure leaders separately.
-- With platforms where the company already has an account || A company account on a platform says nothing about whether your buyer is there.
++ With the roles in the buyer profile and where each role spends time every week || The audience matters more than the platform's size: engineers and executives read different places, so choose a platform for a specific person.
+- With the platform that has the most users and the cheapest reach per thousand impressions || Pew's survey says 84% of Americans use YouTube, but that represents the country's population; the survey did not study platform engineers and infrastructure leaders separately.
+- With platforms where the company already has an account and followers || A company account on a platform says nothing about whether your buyer is there.
 
 ? Why does the same release announcement, posted in eight places in one evening, underperform almost everywhere?
-+ Platforms have different audiences, rules, and distribution mechanisms, so one announcement does not fit them all || On Hacker News and Reddit, a release announcement looks like advertising, while newsletter subscribers expect it.
-- Platforms penalize posting on the same day || There is no universal rule about posting on the same day; the problem is that the format does not fit each platform.
-- Release announcements never interest anyone || In a newsletter and release notes, a release announcement is appropriate and useful.
++ The platforms have different audiences and rules, and one announcement does not fit all || On Hacker News and Reddit, a release announcement looks like advertising, while newsletter subscribers expect it.
+- Platforms notice identical text on the same day and demote it || There is no universal rule about posting on the same day; the problem is that the format does not fit each platform.
+- A release announcement interests nobody except people who already know the product and are waiting for it || In a newsletter and release notes, a release announcement is appropriate and useful.
 <!-- /quiz -->
 
 <!-- section: sources -->
@@ -75,13 +75,13 @@ Complete this task on LinkedIn or in a draft. Take one technical problem your te
 <!-- quiz -->
 ? What did LinkedIn announce it would demote in the feed in March 2026?
 + Generic recycled posts, engagement bait, automated comments, and engagement pods || LinkedIn's announcement of March 12, 2026 states this explicitly.
-- All posts with links || Metricool's study found that links on company pages even correlated with greater reach; there is no blanket ban on links.
-- Posts longer than a thousand characters || The announcement says nothing about post length.
+- All posts with links to external sites, including the company blog and documentation pages || Metricool's study found that links on company pages even correlated with greater reach; there is no blanket ban on links.
+- Posts longer than a thousand characters and document carousels || The announcement says nothing about post length.
 
 ? What does the claim that employees have ten times the reach of a company page show?
-+ It is a figure from a 2016 LinkedIn publication, and there are no recent measurements for infrastructure companies || It is repeated as fact, but it does not serve as current evidence.
-- It is a finding from Metricool's 2026 study || Metricool compared engagement: 2.6 reactions per hundred impressions for personal profiles versus 1.6 for company pages.
-- It is an official rule of the LinkedIn feed || LinkedIn does not publish multipliers for employees.
+- It is a finding of Metricool's 2026 study of personal profiles and company pages || Metricool compared engagement: 2.6 reactions per hundred impressions for personal profiles versus 1.6 for company pages.
++ It is a figure from a 2016 LinkedIn publication, with no recent measurements || It is repeated as fact, but it does not serve as current evidence.
+- It is the official multiplier the LinkedIn feed applies when it shows employees' posts || LinkedIn does not publish multipliers for employees.
 <!-- /quiz -->
 
 <!-- section: sources -->

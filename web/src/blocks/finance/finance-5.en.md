@@ -47,12 +47,12 @@ Claim the credit on Form 6765 with the income-tax return, then apply it on Form 
 
 <!-- quiz -->
 ? Delaware sent an $85,000 franchise-tax notice. The company has ten million authorized shares, eight million issued shares and two million in assets. What should it do?
+- Pay $85,000 because the state calculated the amount in the notice under its own rules || The notice shows one method; the company pays the lower of two.
 + Calculate the assumed par value capital method and pay the smaller amount || The second method gives about $1,250, and the company may choose it.
-- Pay $85,000 because the state calculated the notice under its own rules || The notice shows one method; the company pays the lower of two.
-- Reduce issued shares before year-end to lower the authorized-shares tax || The first method uses authorized shares; issued shares do not affect it.
+- Reduce the number of issued shares before year-end so the per-share tax becomes smaller || The first method uses authorized shares; issued shares do not affect it.
 ? Can a company reporting a US GAAP loss owe federal income tax?
-+ Yes, if taxable income differs, for example because foreign development is amortized || Tax is based on taxable income, which can be positive despite a book loss.
 - No, only companies with US GAAP book profits pay income tax || Financial reporting and tax use different rules.
++ Yes, if taxable income differs, for example because foreign development is amortized || Tax is based on taxable income, which can be positive despite a book loss.
 - No, startups are exempt from federal income tax until Series B || No such exemption exists.
 ? In November 2026, can a company elect retroactive Section 174A treatment for 2022–2024 costs?
 + No, the deadline for electing retroactive application expired July 6, 2026 || The September 2026 procedure does not extend it; check what was elected on time.
@@ -120,16 +120,16 @@ FinCEN’s August 2026 final rule exempted US-created entities and their owners 
 
 <!-- quiz -->
 ? A Delaware company hires its first employee, who lives and works in California. What changes?
+- Nothing, because the company is incorporated in Delaware || Delaware incorporation does not remove other states’ obligations.
 + California registration, state franchise tax and state payroll taxes may arise || An employee creates state presence regardless of incorporation location.
-- Nothing, because the company is incorporated in Delaware and pays taxes only there || Delaware incorporation does not remove other states’ obligations.
-- The company must reincorporate in California because it cannot operate in two states || It registers in California as an out-of-state company without reincorporating.
+- The company must reincorporate in California || It registers in California as an out-of-state company without reincorporating.
 ? A Portuguese freelance designer works remotely from Lisbon. Which form should you collect?
-+ W-8BEN, recording that the work occurs outside the US || A foreign individual needs W-8BEN; service income sourcing follows work location.
-- W-9, because the company pays dollars from a US bank account || Currency and payer bank do not determine the form.
 - 1099-NEC, as for any contractor || 1099 reporting is for US contractors.
+- W-9, because payment comes from the US || Currency and payer bank do not determine the form.
++ W-8BEN, recording that the work occurs outside the US || A foreign individual needs W-8BEN; service income sourcing follows work location.
 ? A founder receives shares vesting over four years and does not file 83(b). What may happen?
 + Each vesting can create taxable income at the shares’ current value || Without the election, appreciation is taxed as shares vest.
-- Nothing, because QSBS exempts founders from tax on their shares || QSBS concerns stock sales and does not replace 83(b).
+- Nothing, because founders are exempt from tax on their own shares under the QSBS rules || QSBS concerns stock sales and does not replace 83(b).
 - The election can be filed with the first return after vesting ends || The deadline is thirty days after receiving shares and is not extended.
 <!-- /quiz -->
 

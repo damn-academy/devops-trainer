@@ -20,9 +20,9 @@ Complete this task in a document. List three technical stories from your team th
 
 <!-- quiz -->
 ? Why did a press release about a new product version fail to interest any publication?
-+ An ordinary product release is not news for a publication's readers unless it comes with a result, a market event, or figures || Journalists receive dozens of these emails a day.
-- It should have been sent through a paid agency || Distribution through an agency guarantees republication, but not editorial interest.
-- Publications do not cover open-source projects || They do when there is a story for their readers.
++ A product release is not news for readers without a result, a market event or figures || Journalists receive dozens of these emails a day.
+- It should have been sent through a paid agency that knows the editors || Distribution through an agency guarantees republication, but not editorial interest.
+- Trade publications only write about large vendors || They do when there is a story for their readers.
 <!-- /quiz -->
 
 <!-- section: sources -->
@@ -56,9 +56,9 @@ Record the result in the field below or in your own spreadsheet with the columns
 
 <!-- quiz -->
 ? What does Habr consider advertising under its June 2026 rules?
-+ Content written primarily to generate sales, collect contacts, or build an audience || Such content is allowed in corporate blogs and once in the “I'm promoting myself” section.
-- Any content that mentions a product || Useful links related to the topic are allowed.
-- Only paid placements || The rules assess the purpose of the content.
++ Content written primarily to sell, collect contacts or build an audience || Such content is allowed in corporate blogs and once in the “I'm promoting myself” section.
+- Any content that mentions the company's product or contains even one link to it || Useful links related to the topic are allowed.
+- Only paid placements in corporate blogs and banners || The rules assess the purpose of the content.
 <!-- /quiz -->
 
 <!-- section: sources -->

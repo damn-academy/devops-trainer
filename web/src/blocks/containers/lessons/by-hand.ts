@@ -70,8 +70,8 @@ export const byHandQuiz: QuizItem[] = [
     concepts: ['docker.container'],
     prompt: bi('Зачем команде `unshare --pid` нужен флаг `--fork`?', 'Why does `unshare --pid` need the `--fork` flag?'),
     options: [
-      { id: 'child', text: bi('Сам unshare в новое пространство имён PID не попадает, туда попадают только его дочерние процессы; с --fork первым дочерним процессом и PID 1 станет sh', 'unshare itself does not enter the new pid namespace — its children do; with --fork the first child, sh, becomes PID 1'), correct: true },
       { id: 'speed', text: bi('Чтобы процесс запустился в фоне', 'To run in the background'), why: bi('Флаг `--fork` не имеет отношения к фоновым процессам, а определяет, кто станет первым процессом нового пространства.', '`--fork` is not about the background: it is about who becomes the first process of the new namespace.') },
+      { id: 'child', text: bi('Сам unshare в новое пространство имён PID не попадает, туда попадают только его дочерние процессы; с --fork первым дочерним процессом и PID 1 станет sh', 'unshare itself does not enter the new pid namespace — its children do; with --fork the first child, sh, becomes PID 1'), correct: true },
       { id: 'mount', text: bi('Чтобы смонтировать /proc', 'To mount /proc'), why: bi('/proc монтирует флаг `--mount-proc` или ваша собственная команда mount внутри пространства.', 'That is what `--mount-proc` does (or your own mount command inside).') },
     ],
     explain: bi('Без --fork первым процессом нового пространства станет первый дочерний процесс sh, а сама оболочка sh получит ошибку, когда попытается запустить второй процесс.', 'Without --fork the first process of the new namespace becomes sh’s first child, and sh gets an error when it tries to start a second one.'),
@@ -83,8 +83,8 @@ export const byHandQuiz: QuizItem[] = [
     prompt: bi('Вы создали группу `/sys/fs/cgroup/box` и записали `16M` в файл `memory.max`, но не записали ни одного PID в `cgroup.procs`. Что произойдёт?', 'You created `/sys/fs/cgroup/box` and wrote `16M` into `memory.max`, but never wrote the PID into `cgroup.procs`. What happens?'),
     options: [
       { id: 'none', text: bi('Лимит ни на кого не подействует, потому что в группе нет процессов', 'The limit applies to nobody: the group has no processes'), correct: true },
-      { id: 'all', text: bi('Лимит распространится на все процессы машины', 'The limit applies to every process of the machine'), why: bi('Лимит группы действует только на процессы, которые в неё входят, и на процессы её подгрупп.', 'A group limit applies only to the processes in it (and in its sub-groups).') },
-      { id: 'error', text: bi('Запись в memory.max закончится ошибкой', 'Writing memory.max returns an error'), why: bi('Записать лимит в пустую группу можно, ошибки не будет.', 'You can write a limit into an empty group.') },
+      { id: 'all', text: bi('Лимит распространится на все процессы машины, потому что группа создана в корне иерархии cgroup', 'The limit applies to every process of the machine, because the group sits at the root of the cgroup tree'), why: bi('Лимит группы действует только на процессы, которые в неё входят, и на процессы её подгрупп.', 'A group limit applies only to the processes in it (and in its sub-groups).') },
+      { id: 'error', text: bi('Запись в memory.max закончится ошибкой, потому что сначала в группу нужно добавить процесс', 'Writing memory.max returns an error, because a process must be added to the group first'), why: bi('Записать лимит в пустую группу можно, ошибки не будет.', 'You can write a limit into an empty group.') },
     ],
   },
   {

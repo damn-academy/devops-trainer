@@ -26,14 +26,14 @@ Complete this task in a document. Choose one tutorial from the company's blog. R
 
 <!-- quiz -->
 ? Why should you specify a canonical link when republishing an article on dev.to or Medium?
-+ So search engines understand where the original is and do not rank the copy above the company website || Without a canonical link, a strong platform will almost certainly outrank the site.
-- So the article appears in the platform's recommendations || The canonical link is for search engines; it does not affect the platform's recommendations.
-- Copyright law requires it || This is a mechanism for search engines, and the law does not require it.
+- So the article gets into the platform's recommendations and its weekly newsletter || The canonical link is for search engines; it does not affect the platform's recommendations.
++ So search engines see the original and do not rank the copy above it || Without a canonical link, a strong platform will almost certainly outrank the site.
+- Copyright law requires it when a text is republished on someone else's platform || This is a mechanism for search engines, and the law does not require it.
 
 ? Can you connect a company blog's RSS feed to daily.dev as a source in 2026?
-+ No, since July 2024 daily.dev has stopped adding company blogs as sources and offers Squads instead || The advice to connect your RSS feed to daily.dev is outdated.
-- Yes, it is free and automatic || That was the case before July 2024.
-- Yes, if the blog is in English || The language does not change the rule.
+- Yes, the source is added free of charge after a moderator of the platform reviews it || That was the case before July 2024.
+- Yes, if the blog is in English, covers development and publishes at least weekly || Neither the language, the topic nor the frequency changes the rule.
++ No, company blogs have not been added since July 2024; there are Squads || The advice to connect your RSS feed to daily.dev is outdated.
 <!-- /quiz -->
 
 <!-- section: sources -->
@@ -77,14 +77,14 @@ Complete this task in your project's repository or that of any open-source proje
 
 <!-- quiz -->
 ? What should the first screen of a README tell an engineer arriving from Hacker News?
-+ What the project does, who needs it, and how to run it in a few minutes || An engineer decides in half a minute whether the project is worth an evening.
-- The company's history and a list of investors || This does not help them decide whether to try the project.
-- A link to a “request a demo” form || An engineer from Hacker News wants to run the project themselves.
++ What the project does, who needs it and how to run it in minutes || An engineer decides in half a minute whether the project is worth an evening.
+- The company's history, its investors and customer logos || This does not help them decide whether to try the project.
+- A link to a “request a demo” form and direct contacts of the company's sales team || An engineer from Hacker News wants to run the project themselves.
 
 ? Can you message members of the Kubernetes community Slack with a product offer?
-+ No, the rules prohibit unsolicited direct messages and commercial promotion outside designated channels || A member contacted by a salesperson reports it to the moderators, and the account is blocked.
-- Yes, if they belong to a channel related to the product || Channel membership does not constitute consent to sales outreach.
-- Yes, if the message is short || Message length does not change the rules.
+- Yes, if they are in a channel about your product's topic || Channel membership does not constitute consent to sales outreach.
+- Yes, if the message is short and has no payment link || Message length does not change the rules.
++ No, the rules prohibit unsolicited direct messages and promotion || A member contacted by a salesperson reports it to the moderators, and the account is blocked.
 <!-- /quiz -->
 
 <!-- section: sources -->

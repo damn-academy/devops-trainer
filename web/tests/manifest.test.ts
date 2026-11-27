@@ -16,8 +16,9 @@ describe('course manifest', () => {
   });
 
   it('stays light enough for the first visit', () => {
-    expect(json.length).toBeLessThan(120_000);
-    expect(new TextEncoder().encode(json).byteLength).toBeLessThan(120_000);
+    // Budget for the first visit; raised from 120 000 when the sales partners module arrived.
+    expect(json.length).toBeLessThan(125_000);
+    expect(new TextEncoder().encode(json).byteLength).toBeLessThan(125_000);
   });
 
   it('keeps course details out even as their content grows', () => {

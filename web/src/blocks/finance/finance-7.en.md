@@ -45,13 +45,13 @@ If company finances are disorganized, you can put them in order within a month.
 
 <!-- quiz -->
 ? A dashboard metric is green, but bank data has not updated for three days. What does this mean?
-+ An interface error: a metric backed by stale data cannot be trusted || Show source update times alongside every metric.
 - Everything is fine; the data is almost fresh || Payroll or a large refund can occur in three days.
-- Recolor the metric yellow and wait for the week-end data update || Data failures should be fixed immediately.
++ An interface error: a metric backed by stale data cannot be trusted || Show source update times alongside every metric.
+- Recolor the metric yellow and wait for the data to update by the end of the week || Data failures should be fixed immediately.
 ? Downside runway without another round is eight months. What do the dashboard rules call for?
 + Prepare financing or spending cuts because runway is below twelve months || Eight months leaves little time for a round that takes several months.
 - Nothing, because investor discussions are underway and the round will likely close on time || Unsigned rounds do not belong in the downside case.
-- Immediately announce a survival plan with layoffs because less than a year remains || The survival-plan threshold is below six months.
+- Immediately announce a survival plan with layoffs || The survival-plan threshold is below six months.
 <!-- /quiz -->
 
 <!-- section: task | Task: the founder’s dashboard -->

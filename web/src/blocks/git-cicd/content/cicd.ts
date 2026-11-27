@@ -79,9 +79,9 @@ export const quiz: QuizItem[] = [
     concepts: ['git.remote'],
     prompt: bi('Команда `git push` ответила `! [rejected] main -> main (fetch first)`. Что это значит?', '`git push` answered `! [rejected] main -> main (fetch first)`. What does it mean?'),
     options: [
-      { id: 'ahead', text: bi('На сервере есть коммиты, которых нет у вас, поэтому их нужно забрать командой git pull и отправить работу снова', 'The server has commits you do not have: get them (git pull) and push again'), correct: true },
-      { id: 'perm', text: bi('У вас нет прав на запись в репозиторий', 'You have no write access'), why: bi('Отказ в правах выглядит иначе, например «You are not allowed to push code» или код 403. Здесь Git сравнил истории.', 'A permission error looks different: "You are not allowed to push code" or 403. Here Git compared histories.') },
       { id: 'force', text: bi('Команду нужно повторить с флагом --force', 'Repeat it with --force'), why: bi('Флаг --force перезапишет ветку на сервере, и коммиты коллеги пропадут. А push в защищённую ветку сервер не примет и с этим флагом.', '--force would overwrite the server branch and the colleague’s commits would be lost. A protected branch would not allow it anyway.') },
+      { id: 'perm', text: bi('У вас нет прав на запись в репозиторий, поэтому сервер отклонил push, и владелец проекта должен выдать вам роль Developer', 'You have no write access, so the server refused the push, and the project owner has to give you the Developer role'), why: bi('Отказ в правах выглядит иначе, например «You are not allowed to push code» или код 403. Здесь Git сравнил истории.', 'A permission error looks different: "You are not allowed to push code" or 403. Here Git compared histories.') },
+      { id: 'ahead', text: bi('На сервере есть коммиты, которых нет у вас, поэтому их нужно забрать командой git pull и отправить работу снова', 'The server has commits you do not have: get them (git pull) and push again'), correct: true },
     ],
   },
   {
@@ -102,9 +102,9 @@ export const quiz: QuizItem[] = [
     concepts: ['git.remote'],
     prompt: bi('Вы стоите на ветке `feature/hours` и выполняете `git rebase main`. Что произойдёт?', 'You are on the `feature/hours` branch and run `git rebase main`. What happens?'),
     options: [
-      { id: 'onto', text: bi('Ваши коммиты из feature/hours будут записаны заново поверх последнего коммита main и получат новые хэши', 'Your commits from feature/hours are recorded again on top of the last commit of main and get new hashes'), correct: true },
-      { id: 'reverse', text: bi('Коммиты main будут перенесены в ветку feature/hours, а ветка main передвинется', 'The commits of main move into feature/hours, and main moves'), why: bi('Перебазируется всегда текущая ветка. Ветка main, названная в команде, служит основанием и остаётся на месте.', 'It is always the current branch that is rebased. main, named in the command, is the base and stays in place.') },
-      { id: 'merge', text: bi('Git запишет коммит слияния с двумя родителями', 'Git records a merge commit with two parents'), why: bi('Так поступает git merge main. Перебазирование коммита слияния не создаёт, и история остаётся прямой.', 'That is what git merge main does. A rebase creates no merge commit, and the history stays straight.') },
+      { id: 'onto', text: bi('Ваши коммиты будут записаны заново поверх main и получат новые хэши', 'Your commits are rewritten on top of main and get new hashes'), correct: true },
+      { id: 'reverse', text: bi('Коммиты main будут перенесены в ветку feature/hours, а ветка main передвинется', 'The commits of main move into feature/hours, and main itself moves forward'), why: bi('Перебазируется всегда текущая ветка. Ветка main, названная в команде, служит основанием и остаётся на месте.', 'It is always the current branch that is rebased. main, named in the command, is the base and stays in place.') },
+      { id: 'merge', text: bi('Git запишет коммит слияния с двумя родителями, а хэши ваших коммитов не изменятся', 'Git records a merge commit with two parents, and your commits keep their hashes'), why: bi('Так поступает git merge main. Перебазирование коммита слияния не создаёт, и история остаётся прямой.', 'That is what git merge main does. A rebase creates no merge commit, and the history stays straight.') },
     ],
   },
   {
@@ -114,7 +114,7 @@ export const quiz: QuizItem[] = [
     prompt: bi('Вы отправили в защищённую ветку `main` коммит с ошибкой, и коллеги уже забрали его к себе. Как отменить этот коммит?', 'You pushed a broken commit to the protected `main` branch, and colleagues have already fetched it. How do you undo the commit?'),
     options: [
       { id: 'revert', text: bi('Записать коммит с обратными изменениями командой git revert и отправить его обычным git push', 'Record a commit with the reverse changes with git revert and send it with an ordinary git push'), correct: true },
-      { id: 'force', text: bi('Выполнить git reset --hard HEAD~1 и отправить ветку командой git push --force', 'Run git reset --hard HEAD~1 and push the branch with git push --force'), why: bi('Защищённая ветка не примет push с --force. Даже если бы приняла, у коллег коммит остался бы, и при следующем pull он вернулся бы в историю.', 'A protected branch does not accept a push with --force. Even if it did, colleagues would keep the commit, and the next pull would bring it back into the history.') },
+      { id: 'force', text: bi('Выполнить git reset --hard HEAD~1, чтобы убрать коммит из истории, и отправить ветку командой git push --force', 'Run git reset --hard HEAD~1 to remove the commit from the history and push the branch with git push --force'), why: bi('Защищённая ветка не примет push с --force. Даже если бы приняла, у коллег коммит остался бы, и при следующем pull он вернулся бы в историю.', 'A protected branch does not accept a push with --force. Even if it did, colleagues would keep the commit, and the next pull would bring it back into the history.') },
       { id: 'delete', text: bi('Удалить коммит на странице проекта в GitLab', 'Delete the commit on the project page in GitLab'), why: bi('Кнопки, которая удаляет коммит, в GitLab нет. Отменить коммит можно только новым коммитом или перезаписью ветки, а перезапись защищённой ветки запрещена.', 'GitLab has no button that deletes a commit. You can undo it only with a new commit or by overwriting the branch, and overwriting a protected branch is forbidden.') },
     ],
   },
@@ -125,8 +125,8 @@ export const quiz: QuizItem[] = [
     prompt: bi('Кто выполняет команды, записанные в `script:` джобы?', 'Who executes the `script:` lines of a job?'),
     options: [
       { id: 'runner', text: bi('Раннер на отдельной машине, который сам забрал джобу', 'A runner on a separate machine that picked up the job by itself'), correct: true },
-      { id: 'forge', text: bi('Сам forge, то есть GitLab', 'The forge (GitLab) itself'), why: bi('Forge только хранит код, создаёт джобы и показывает журналы. Без раннера джоба повиснет в состоянии pending.', 'The forge only stores code, creates jobs and shows logs. Without a runner a job hangs in pending.') },
-      { id: 'dev', text: bi('Компьютер разработчика во время git push', 'The developer’s computer during git push'), why: bi('Команда git push завершается сразу, а пайплайн выполняется на сервере, даже если ноутбук уже закрыт.', 'git push ends at once; the pipeline runs on the server even with the laptop closed.') },
+      { id: 'forge', text: bi('Сам forge, то есть GitLab, на том же сервере, где хранится репозиторий', 'The forge (GitLab) itself, on the same server that stores the repository'), why: bi('Forge только хранит код, создаёт джобы и показывает журналы. Без раннера джоба повиснет в состоянии pending.', 'The forge only stores code, creates jobs and shows logs. Without a runner a job hangs in pending.') },
+      { id: 'dev', text: bi('Компьютер разработчика, пока команда git push отправляет коммиты', 'The developer’s computer, while git push is still sending the commits'), why: bi('Команда git push завершается сразу, а пайплайн выполняется на сервере, даже если ноутбук уже закрыт.', 'git push ends at once; the pipeline runs on the server even with the laptop closed.') },
     ],
   },
   {
@@ -172,7 +172,7 @@ export const quiz: QuizItem[] = [
     options: [
       { id: 'clean', text: bi('Каждая джоба начинается с чистой копии репозитория, поэтому dist/ нужно объявить в artifacts', 'Every job starts from a clean copy of the repository; dist/ must be declared in artifacts'), correct: true },
       { id: 'race', text: bi('deploy запустилась раньше build', 'deploy started before build'), why: bi('Джоба deploy стоит в следующей стадии и стартует только после успешной build.', 'deploy is in the next stage: it starts only after build succeeds.') },
-      { id: 'cache', text: bi('Нужно было положить dist/ в кэш', 'dist/ should have been put into the cache'), why: bi('Кэш доставку не гарантирует, и если кэш не найдётся, deploy снова завершится с ошибкой. Результат передают артефактом.', 'A cache does not guarantee delivery: on a miss deploy fails again. Results are passed as artifacts.') },
+      { id: 'cache', text: bi('Каталог dist/ нужно было объявить в cache: раз раннер один, deploy нашла бы его там с первого раза', 'dist/ should have been declared in cache: with a single runner, deploy would have found it there on the first try'), why: bi('Кэш доставку не гарантирует, и если кэш не найдётся, deploy снова завершится с ошибкой. Результат передают артефактом.', 'A cache does not guarantee delivery: on a miss deploy fails again. Results are passed as artifacts.') },
     ],
   },
   {

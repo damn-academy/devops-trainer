@@ -45,12 +45,12 @@ If the company that created a project holds its own event about it, it must cons
 <!-- quiz -->
 ? A company is a Gold CNCF member, and its project is in Sandbox. Which online event opportunity is available to the project?
 + A foundation-supported virtual summit, if it applies six months ahead and forms a program committee from three organizations || Summits are available to projects at any level; Gold webinars belong to the company, while Cloud Native Live becomes available to the project at the Incubating level.
-- A Cloud Native Live broadcast on behalf of the project, because Gold membership unlocks all the foundation's online programs for it || Project broadcasts are available from the Incubating level; company membership does not raise project maturity.
+- A Cloud Native Live broadcast for the project, because Gold membership unlocks all of the foundation's online programs || Project broadcasts are available from the Incubating level; company membership does not raise project maturity.
 - Nothing until the project reaches Incubating and gains access to the foundation's marketing services || Virtual summits, five-minute KubeCon talks, and kiosks are also available to Sandbox projects.
 ? Six hundred people registered for a virtual project summit. Based on CNCF reports, how many will attend live?
 + Between two hundred and three hundred people || At documented summits, between a third and half of registrants joined live.
 - Five hundred to six hundred, because registering for a free event means deciding to attend || At documented summits, between a third and half of registrants attended.
-- No more than fifty, because almost nobody watches online events live || EnvoyCon, with the lowest attendance in the sample, had 146 attendees.
+- No more than fifty people || EnvoyCon, with the lowest attendance in the sample, had 146 attendees.
 ? The founding company wants to run its own event about a project donated to CNCF. Which name does Linux Foundation policy allow?
 + “Infrastructure Day featuring <Project>” || The policy gives this as an acceptable example; using the logo still requires written permission.
 - “<Project> Day by <Company>”, because the company openly identifies itself as the organizer || The policy lists this name as unacceptable: it presents a company event as a project event.

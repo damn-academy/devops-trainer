@@ -32,8 +32,8 @@ export const networkQuiz: QuizItem[] = [
     concepts: ['k8s.cni'],
     prompt: bi('Почему внешний сервис видит в запросах от пода адрес узла, а не адрес вида 10.42.x.x?', 'Why does an external service see the node address in requests from a pod, not 10.42.x.x?'),
     options: [
-      { id: 'masq', text: bi('Пакеты, которые уходят за пределы сети подов, проходят на узле подмену адреса отправителя (MASQUERADE)', 'Traffic leaving the pod network is MASQUERADEd on the node'), correct: true },
-      { id: 'proxy', text: bi('Все запросы наружу идут через kube-proxy', 'All outgoing requests go through kube-proxy'), why: bi('kube-proxy занимается только адресами Service. Адрес отправителя подменяет правило NAT, которое пишет плагин сети.', 'kube-proxy handles only Service addresses. The source rewrite is a NAT rule the CNI writes.') },
+      { id: 'proxy', text: bi('Все запросы наружу идут через kube-proxy, и он отправляет их дальше от имени узла', 'All outgoing requests go through kube-proxy, which sends them on from the node address'), why: bi('kube-proxy занимается только адресами Service. Адрес отправителя подменяет правило NAT, которое пишет плагин сети.', 'kube-proxy handles only Service addresses. The source rewrite is a NAT rule the CNI writes.') },
+      { id: 'masq', text: bi('Когда пакет уходит из сети подов, узел подменяет адрес отправителя (MASQUERADE)', 'Traffic leaving the pod network is MASQUERADEd on the node'), correct: true },
       { id: 'dns', text: bi('Так настроен DNS кластера', 'The cluster DNS is configured that way'), why: bi('DNS превращает имена в адреса и к адресу отправителя пакета отношения не имеет.', 'DNS turns names into addresses and has nothing to do with the source address of a packet.') },
     ],
     explain: bi('Адреса 10.42.0.0/16 существуют только внутри кластера, и ответ на такой адрес снаружи не нашёл бы дороги назад. Поэтому узел подменяет адрес отправителя своим.', 'The 10.42.0.0/16 addresses exist only inside the cluster; a reply to them from outside would never come back. So the node rewrites the source to its own IP.'),
@@ -44,9 +44,9 @@ export const networkQuiz: QuizItem[] = [
     concepts: ['k8s.cni', 'k8s.podcidr'],
     prompt: bi('Узлы стоят в разных подсетях облака, а плагин сети работает в режиме host-gw. Пинг между подами одного узла проходит, а между подами разных узлов нет. Почему?', 'The nodes are in different cloud subnets, the CNI is in host-gw mode. Ping between pods on one node works, between nodes it does not. Why?'),
     options: [
-      { id: 'hop', text: bi('При host-gw следующим шагом пакета назначен другой узел, а он не сосед в той же сети', 'host-gw makes the other node the next hop, and it is not an L2 neighbour'), correct: true },
-      { id: 'mtu', text: bi('Слишком маленький MTU', 'The MTU is too small'), why: bi('MTU мешал бы только большим пакетам, а маленький пакет ping прошёл бы.', 'The MTU would only hurt big packets; a small ping would pass.') },
       { id: 'dns', text: bi('Не работает CoreDNS', 'CoreDNS does not work'), why: bi('Пинг по IP-адресу DNS не использует.', 'A ping by IP does not use DNS.') },
+      { id: 'mtu', text: bi('Слишком маленький MTU', 'The MTU is too small'), why: bi('MTU мешал бы только большим пакетам, а маленький пакет ping прошёл бы.', 'The MTU would only hurt big packets; a small ping would pass.') },
+      { id: 'hop', text: bi('При host-gw следующим шагом пакета назначен другой узел, а он не сосед в той же сети', 'host-gw makes the other node the next hop, and it is not an L2 neighbour'), correct: true },
     ],
     explain: bi('Узлам в разных подсетях нужен «конверт в конверте», то есть VXLAN: пакет пода идёт между узлами внутри обычного UDP-пакета.', 'Nodes in different subnets need an "envelope in an envelope" — VXLAN: the pod packet rides inside ordinary UDP between the nodes.'),
     refs: { explainer: 'k8s.pod-network' },
@@ -172,7 +172,7 @@ export const serviceQuiz: QuizItem[] = [
     options: [
       { id: 'none', text: bi('Ни на каком, потому что этот адрес существует только в правилах, которые kube-proxy записал в ядро узла', 'None: it is an address in kube-proxy’s rules in the node kernel'), correct: true },
       { id: 'cni0', text: bi('На мосте cni0', 'On the cni0 bridge'), why: bi('На мосте cni0 находится шлюз подов узла (10.42.N.1). ClusterIP нет ни на одном интерфейсе, и команда `ip a` его не покажет.', 'cni0 holds the node’s pod gateway (10.42.N.1). The ClusterIP is on no interface — `ip a` does not show it.') },
-      { id: 'pod', text: bi('На интерфейсе одного из подов Service', 'On the interface of one of the Service pods'), why: bi('У подов свои адреса вида 10.42.x.x, а адрес Service заменяется на один из них уже в ядре узла, где работает клиент.', 'Pods have their own 10.42.x.x addresses; the Service address is replaced with one of them in the client node’s kernel.') },
+      { id: 'pod', text: bi('На сетевом интерфейсе одного из подов Service, который kube-proxy выбрал главным при создании объекта Service', 'On the network interface of one of the Service pods, the one kube-proxy picked as primary'), why: bi('У подов свои адреса вида 10.42.x.x, а адрес Service заменяется на один из них уже в ядре узла, где работает клиент.', 'Pods have their own 10.42.x.x addresses; the Service address is replaced with one of them in the client node’s kernel.') },
     ],
     explain: bi('Пакет на ClusterIP перехватывает цепочка KUBE-SERVICES ещё до маршрутизации и заменяет адрес назначения на IP пода. Исключение — устаревший режим IPVS, в котором адрес находится на служебном интерфейсе kube-ipvs0.', 'A packet to the ClusterIP is caught by the KUBE-SERVICES chain before routing and DNATed to a pod IP. The exception is the deprecated IPVS mode, where the address sits on the dummy kube-ipvs0.'),
     refs: { explainer: 'k8s.service-path' },
@@ -197,8 +197,8 @@ export const serviceQuiz: QuizItem[] = [
     concepts: ['k8s.kube-proxy', 'k8s.endpointslice'],
     prompt: bi('За Service стоят три готовых пода. Какие вероятности у правил KUBE-SEP в iptables?', 'A Service has three ready pods. What probabilities do the KUBE-SEP rules have in iptables?'),
     options: [
-      { id: 'right', text: '0.33333, 0.50000, (no condition)', correct: true },
       { id: 'equal', text: '0.33333, 0.33333, 0.33333', why: bi('Правила проверяются по очереди, и второе правило видит только две трети пакетов, поэтому ему нужна половина от остатка. Третье правило забирает всё, что осталось.', 'The rules are tried in turn: the second sees only two thirds of the packets, so it needs half of what is left; the third takes everything that remains.') },
+      { id: 'right', text: '0.33333, 0.50000, (no condition)', correct: true },
     ],
     explain: bi('Первое правило берёт 1/3, второе — половину от оставшихся 2/3, то есть тоже 1/3, а третье — оставшуюся 1/3. Доли получаются равными.', '1/3, then 1/2 of the remaining 2/3 = 1/3, then the rest 1/3 — the shares are equal.'),
   },
@@ -208,8 +208,8 @@ export const serviceQuiz: QuizItem[] = [
     concepts: ['k8s.service'],
     prompt: bi('За Service стоят пять подов, а почти весь трафик клиента приходит на один под. Какая причина встречается чаще всего?', 'A Service has five pods, yet almost all of a client’s traffic lands on one. The most common reason?'),
     options: [
+      { id: 'broken', text: bi('kube-proxy сломан на узле клиента и записал в ядро правило только для одного из пяти подов', 'kube-proxy is broken on the client’s node and wrote a kernel rule for only one of the five pods'), why: bi('Сломанный kube-proxy не оставил бы правил вовсе, и Service не отвечал бы. Здесь правила для всех пяти подов на месте, а перекос даёт одно долгое соединение клиента.', 'A broken kube-proxy would leave no rules at all, and the Service would not answer. The rules for all five pods are in place; the skew comes from one long-lived client connection.') },
       { id: 'keepalive', text: bi('Клиент держит одно соединение (keep-alive), а под выбирается при открытии соединения', 'The client keeps its connection (keep-alive): the pod is chosen when the connection is set up'), correct: true },
-      { id: 'broken', text: bi('kube-proxy сломан', 'kube-proxy is broken'), why: bi('Если бы kube-proxy был сломан, Service не отвечал бы вовсе, а не перекашивал доли.', 'A broken kube-proxy would stop answers altogether, not skew the shares.') },
     ],
   },
   {
@@ -222,7 +222,7 @@ export const serviceQuiz: QuizItem[] = [
     ),
     options: [
       { id: 'label', text: bi('Service выбирает поды по меткам, и под селектор `app: web` больше не подходит ни один под, поэтому EndpointSlice пуст', 'A Service picks pods by labels, no pod matches `app: web` any more, so the EndpointSlice is empty'), correct: true },
-      { id: 'name', text: bi('Service ищет поды по имени, а имена новых подов изменились вместе с хешем ReplicaSet', 'A Service finds pods by name, and the new pods got new names with the ReplicaSet hash'), why: bi('Имена подов Service не интересуют: поды каждый раз получают новые имена, и если бы Service искал по имени, он ломался бы при каждой выкладке. Проверьте `kubectl get endpointslices -l kubernetes.io/service-name=web`: адресов там нет.', 'A Service does not care about pod names: pods get new names every time, and a Service searching by name would break with every rollout. Check `kubectl get endpointslices -l kubernetes.io/service-name=web`: there are no addresses.') },
+      { id: 'name', text: bi('Service ищет поды по имени, которое запомнил при создании, а имена всех новых подов изменились вместе с хешем ReplicaSet', 'A Service finds pods by the names it remembered when it was created, and the new pods got new names with the ReplicaSet hash'), why: bi('Имена подов Service не интересуют: поды каждый раз получают новые имена, и если бы Service искал по имени, он ломался бы при каждой выкладке. Проверьте `kubectl get endpointslices -l kubernetes.io/service-name=web`: адресов там нет.', 'A Service does not care about pod names: pods get new names every time, and a Service searching by name would break with every rollout. Check `kubectl get endpointslices -l kubernetes.io/service-name=web`: there are no addresses.') },
       { id: 'port', text: bi('Service ищет поды по номеру порта, и порт 80 у новых подов занят', 'A Service finds pods by port number, and port 80 is taken in the new pods'), why: bi('Порт говорит, куда отправить пакет уже выбранному поду, а сам выбор делает селектор. Порт здесь не менялся.', 'The port says where to send a packet to a pod already chosen; the choice itself is made by the selector. The port did not change here.') },
     ],
   },
@@ -400,8 +400,8 @@ export const dnsQuiz: QuizItem[] = [
     concepts: ['k8s.cluster-dns'],
     prompt: bi('Под с ndots:5 ищет адрес api.github.com. Почему запросов к CoreDNS так много?', 'With ndots:5 a pod resolves api.github.com. Why are there so many queries to CoreDNS?'),
     options: [
+      { id: 'cache', text: bi('У CoreDNS выключен кэш, поэтому каждое имя он заново спрашивает у внешнего DNS-сервера', 'The CoreDNS cache is off, so it asks the upstream DNS server about every single name all over again'), why: bi('Кэш экономит работу CoreDNS, но варианты имени перебирает резолвер пода, а не сервер.', 'The cache saves CoreDNS work, but the walk over candidates is done by the pod resolver, not the server.') },
       { id: 'search', text: bi('В имени меньше пяти точек, и резолвер сначала пробует его с каждым доменом из search', 'The name has fewer than five dots, so the resolver first tries it with every search domain'), correct: true },
-      { id: 'cache', text: bi('У CoreDNS выключен кэш', 'The CoreDNS cache is off'), why: bi('Кэш экономит работу CoreDNS, но варианты имени перебирает резолвер пода, а не сервер.', 'The cache saves CoreDNS work, but the walk over candidates is done by the pod resolver, not the server.') },
     ],
     explain: bi('Имя с точкой на конце (api.github.com.) абсолютное: домены search к нему не дописываются, и уходит всего два запроса, A и AAAA.', 'A name with a trailing dot (api.github.com.) is absolute: search does not apply, two queries go out — A and AAAA.'),
     refs: { explainer: 'k8s.ndots' },
@@ -516,8 +516,8 @@ export const ingressQuiz: QuizItem[] = [
     concepts: ['k8s.ingress', 'k8s.gateway-api'],
     prompt: bi('Браузер получил 504 Gateway Timeout от сайта, который стоит за Gateway. Кто составил этот ответ?', 'The browser got 504 Gateway Timeout from a site behind a Gateway. Who produced that reply?'),
     options: [
+      { id: 'app', text: bi('Приложение в поде, которое само составило ответ 504, потому что не успело обработать запрос', 'The application in the pod, which wrote the 504 itself because it could not process the request in time'), why: bi('Приложение, возможно, ещё работает над ответом. Код 504 означает «тот, кто стоит за мной, не ответил вовремя», и так говорит прокси.', 'The application may still be working on the answer. 504 means "whoever is behind me did not answer in time" — that is the proxy speaking.') },
       { id: 'proxy', text: bi('Обратный прокси контроллера входа, которому под не ответил за отведённое время', 'The reverse proxy of the ingress controller: the pod did not answer within its timeout'), correct: true },
-      { id: 'app', text: bi('Приложение в поде', 'The application in the pod'), why: bi('Приложение, возможно, ещё работает над ответом. Код 504 означает «тот, кто стоит за мной, не ответил вовремя», и так говорит прокси.', 'The application may still be working on the answer. 504 means "whoever is behind me did not answer in time" — that is the proxy speaking.') },
       { id: 'proxyk', text: 'kube-proxy', why: bi('kube-proxy не видит HTTP и ответов не пишет, потому что он только переписывает адреса пакетов.', 'kube-proxy does not see HTTP and writes no replies: it only rewrites packet addresses.') },
     ],
     refs: { explainer: 'k8s.ingress-path' },
@@ -528,8 +528,8 @@ export const ingressQuiz: QuizItem[] = [
     concepts: ['k8s.ingress'],
     prompt: bi('Почему в новых кластерах в 2026 году не ставят ingress-nginx?', 'Why do new clusters in 2026 not install ingress-nginx?'),
     options: [
+      { id: 'removed', text: bi('Объект Ingress удалён из Kubernetes, и манифесты с kind: Ingress API-сервер больше не принимает', 'The Ingress object was removed from Kubernetes, and the API server no longer accepts kind: Ingress manifests'), why: bi('API Ingress остался, но заморожен. Закрылся один из контроллеров, а новые возможности появляются в Gateway API.', 'The Ingress API stays, frozen; one of the controllers closed, and new features go into the Gateway API.') },
       { id: 'retired', text: bi('Проект снят с поддержки в марте 2026 года, и обновлений безопасности больше не будет', 'The project was retired in March 2026: no more security updates'), correct: true },
-      { id: 'removed', text: bi('Объект Ingress удалён из Kubernetes', 'The Ingress object was removed from Kubernetes'), why: bi('API Ingress остался, но заморожен. Закрылся один из контроллеров, а новые возможности появляются в Gateway API.', 'The Ingress API stays, frozen; one of the controllers closed, and new features go into the Gateway API.') },
     ],
   },
   {
@@ -538,8 +538,8 @@ export const ingressQuiz: QuizItem[] = [
     concepts: ['k8s.nodeport'],
     prompt: bi('Service типа NodePort получил порт 30080. Где этот порт открыт?', 'A NodePort Service got port 30080. Where is it open?'),
     options: [
-      { id: 'all', text: bi('На каждом узле кластера', 'On every node of the cluster'), correct: true },
       { id: 'pod', text: bi('Только на узле, где работает под', 'Only on the node where the pod runs'), why: bi('kube-proxy записывает правило KUBE-NODEPORTS на всех узлах. Если на узле нет пода, пакет уйдёт к поду на соседнем узле (при externalTrafficPolicy: Cluster).', 'kube-proxy writes the KUBE-NODEPORTS rule on every node; with no pod on the node the packet goes to a pod on another one (with externalTrafficPolicy: Cluster).') },
+      { id: 'all', text: bi('На каждом узле кластера', 'On every node of the cluster'), correct: true },
     ],
   },
   {
@@ -551,8 +551,8 @@ export const ingressQuiz: QuizItem[] = [
       'In a new cluster you created an Ingress for `blog.example`, and `kubectl apply` said "created". There is no ingress controller in the cluster. What does the browser see?',
     ),
     options: [
-      { id: 'nothing', text: bi('Ничего не откроется: Ingress лежит в API как заявка, а исполнять его некому, и порт 80 на узлах никто не слушает', 'Nothing opens: the Ingress sits in the API as a request, nobody executes it, and nobody listens on port 80 of the nodes'), correct: true },
       { id: 'port', text: bi('Сайт откроется, потому что Ingress сам открывает порт 80 на узлах', 'The site opens, because an Ingress opens port 80 on the nodes by itself'), why: bi('Объект Ingress только записывает правила. Порт открывает и запросы ведёт контроллер входа, обычный под с обратным прокси, а без него это поле в etcd, как Website без оператора.', 'An Ingress object is only a record of rules. The ingress controller, an ordinary pod with a reverse proxy, opens the port and routes requests; without it this is a field in etcd, like a Website without its operator.') },
+      { id: 'nothing', text: bi('Ничего не откроется: Ingress лежит в API как заявка, а исполнять его некому, и порт 80 на узлах никто не слушает', 'Nothing opens: the Ingress sits in the API as a request, nobody executes it, and nobody listens on port 80 of the nodes'), correct: true },
       { id: 'proxy', text: bi('Сайт откроется, потому что запрос обработает kube-proxy', 'The site opens, because kube-proxy handles the request'), why: bi('kube-proxy знает адреса и порты сервисов, а имён сайтов и путей в HTTP не видит, поэтому правила Ingress он не исполняет.', 'kube-proxy knows Service addresses and ports but does not see host names and paths in HTTP, so it does not execute Ingress rules.') },
     ],
   },
@@ -741,7 +741,7 @@ export const troubleQuiz: QuizItem[] = [
     prompt: bi('NetworkPolicy создана, API её принял, а трафик не блокируется. Какая причина вероятнее всего?', 'A NetworkPolicy is created, the API accepted it, yet traffic is not blocked. The most likely reason?'),
     options: [
       { id: 'cni', text: bi('Плагин сети кластера не применяет NetworkPolicy (например, чистый flannel)', 'The cluster CNI does not enforce NetworkPolicy (plain flannel, for example)'), correct: true },
-      { id: 'kp', text: bi('Политику должен применить kube-proxy, а он не успел', 'kube-proxy has to apply the policy and it lags behind'), why: bi('Политиками занимается не kube-proxy, а сетевой плагин.', 'kube-proxy has nothing to do with policies: the network plugin enforces them.') },
+      { id: 'kp', text: bi('Политику должен применить kube-proxy на каждом узле, а он ещё не успел перечитать новые объекты', 'kube-proxy has to apply the policy on every node, and it has not yet re-read the new objects'), why: bi('Политиками занимается не kube-proxy, а сетевой плагин.', 'kube-proxy has nothing to do with policies: the network plugin enforces them.') },
     ],
     explain: bi('API хранит любые объекты, но исполняет их тот, кто за ними следит. Calico, Cilium и встроенный в k3s kube-router политики применяют, а чистый flannel нет.', 'The API stores any object, but it is executed by whoever watches it. Calico, Cilium and the kube-router built into k3s enforce policies, plain flannel does not.'),
   },

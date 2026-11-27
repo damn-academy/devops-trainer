@@ -36,14 +36,14 @@ Ask the questions in four AI systems your buyers use, such as ChatGPT, Claude, G
 
 <!-- quiz -->
 ? Why do you need to repeat each question several times when checking how AI systems describe a product?
-+ Answers vary greatly between repetitions: in SparkToro's study, the recommendation list repeated in fewer than one case out of a hundred || Only the frequency of mentions across many repetitions is reliable.
-- AI systems give identical answers; repetition is only needed for the report || The study showed the opposite.
-- An AI system's first answer is always wrong || The first answer is no worse than the others; the problem is variation between answers.
+- AI systems answer identically; repeats are only needed to make the report look more reliable || The study showed the opposite.
+- An AI system's first answer is more often wrong, and later ones get refined || The first answer is no worse than the others; the problem is variation between answers.
++ Answers vary a lot between repeats, and only the frequency of mentions is reliable || Only the frequency of mentions across many repetitions is reliable.
 
 ? Can a company employee write an article about the company on English Wikipedia themselves?
-+ Wikipedia asks employees with a conflict of interest not to edit articles about their organization directly, but to propose changes on the talk page with independent sources || Notability comes from independent reliable sources, not the company's own writing.
-- Yes, if the article is neutral || The conflict of interest remains even if the text is neutral.
-- Yes, if the company belongs to the CNCF || Foundation membership does not establish notability.
++ No, the employee proposes edits on the talk page, backed by independent sources || Notability comes from independent reliable sources, not the company's own writing.
+- Yes, if the article is neutral and cites the company's press releases || The conflict of interest remains even if the text is neutral.
+- Yes, CNCF membership makes a company notable for Wikipedia || Foundation membership does not establish notability.
 <!-- /quiz -->
 
 <!-- section: sources -->

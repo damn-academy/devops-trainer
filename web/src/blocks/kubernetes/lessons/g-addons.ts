@@ -28,7 +28,7 @@ export const addonsQuiz: QuizItem[] = [
     options: [
       { id: 'cni', text: bi('Сетевой плагин кластера не применяет NetworkPolicy, например это flannel без отдельного контроллера политик', 'The network plugin does not enforce NetworkPolicy, for example plain flannel'), correct: true },
       { id: 'restart', text: bi('Политика начнёт действовать только после перезапуска подов', 'The policy takes effect only after the pods restart'), why: bi('Плагин, который поддерживает политики, применяет их к уже работающим подам сразу, без перезапуска.', 'A plugin that supports policies applies them to running pods at once, without a restart.') },
-      { id: 'api', text: bi('Политику должен применить API-сервер, а он ещё не успел', 'The API server has to apply the policy and has not done it yet'), why: bi('API-сервер только хранит политику. Пакеты фильтрует сетевой плагин на узлах, и если он политик не умеет, их не применяет никто.', 'The API server only stores the policy. The network plugin on the nodes filters packets, and if it cannot, nobody does.') },
+      { id: 'api', text: bi('Политику должен применить API-сервер, а он ещё не успел разослать её на все узлы кластера вместе с другими изменениями', 'The API server has to apply the policy and has not yet sent it out to all the nodes'), why: bi('API-сервер только хранит политику. Пакеты фильтрует сетевой плагин на узлах, и если он политик не умеет, их не применяет никто.', 'The API server only stores the policy. The network plugin on the nodes filters packets, and if it cannot, nobody does.') },
     ],
   },
   {
@@ -41,7 +41,7 @@ export const addonsQuiz: QuizItem[] = [
     ),
     options: [
       { id: 'drift', text: bi('При следующей сверке Flux вернул число реплик, записанное в Git, потому что источник правды — репозиторий, а не кластер', 'At the next reconciliation Flux restored the replica count from Git, because the source of truth is the repository, not the cluster'), correct: true },
-      { id: 'hpa', text: bi('Реплики убрал HorizontalPodAutoscaler, потому что ночью нагрузка спала', 'The HorizontalPodAutoscaler removed them because the load fell at night'), why: bi('HPA мог бы так сделать, но в условии его нет. Здесь число вернул агент выкладки из Git, и чтобы реплик осталось шесть, менять число нужно коммитом в репозиторий.', 'An HPA could do that, but there is none here. The Git deploy agent brought the number back, and to keep six replicas the change has to be a commit to the repository.') },
+      { id: 'hpa', text: bi('Реплики убрал HorizontalPodAutoscaler, потому что ночью нагрузка спала и средняя загрузка процессора опустилась намного ниже цели', 'The HorizontalPodAutoscaler removed the replicas, because the load fell at night and the average CPU use dropped far below its target value'), why: bi('HPA мог бы так сделать, но в условии его нет. Здесь число вернул агент выкладки из Git, и чтобы реплик осталось шесть, менять число нужно коммитом в репозиторий.', 'An HPA could do that, but there is none here. The Git deploy agent brought the number back, and to keep six replicas the change has to be a commit to the repository.') },
       { id: 'rs', text: bi('Контроллер ReplicaSet удалил лишние поды', 'The ReplicaSet controller deleted the extra pods'), why: bi('Контроллер ReplicaSet держит то число, которое ему записали. Число изменил кто-то выше по цепочке, и в этом кластере это Flux.', 'The ReplicaSet controller keeps whatever number it was given. Someone higher up the chain changed the number, and in this cluster it is Flux.') },
     ],
   },

@@ -11,8 +11,8 @@ export const imageQuiz: QuizItem[] = [
     concepts: ['docker.registry'],
     prompt: bi('Означает ли тег `latest` самую новую версию образа?', 'Does the `latest` tag mean the newest version of an image?'),
     options: [
+      { id: 'yes', text: bi('Да, реестр сам переносит его на свежую сборку, как только в репозиторий приходит новый образ с любым тегом', 'Yes, the registry moves it to the freshest build itself whenever a new image with any tag arrives'), why: bi('Реестр сам ничего не переносит. Тег `latest` передвигает тот, кто публикует образ, а может и вовсе не передвигать.', 'The registry moves nothing: whoever publishes moves `latest` — or never does.') },
       { id: 'no', text: bi('Нет, это всего лишь имя тега по умолчанию, и указывает он туда, куда его повесили в последний раз', 'No, it is just the default tag name; it points wherever it was last put'), correct: true },
-      { id: 'yes', text: bi('Да, реестр сам переносит его на свежую сборку', 'Yes, the registry moves it to the freshest build itself'), why: bi('Реестр сам ничего не переносит. Тег `latest` передвигает тот, кто публикует образ, а может и вовсе не передвигать.', 'The registry moves nothing: whoever publishes moves `latest` — or never does.') },
     ],
     explain: bi('На рабочих серверах образы указывают конкретным тегом, а надёжнее всего указывать digest, потому что по адресу `nginx@sha256:…` всегда приходят те же самые байты.', 'In production images are referenced by a specific tag, and most reliably by digest: `nginx@sha256:…` always gives exactly the same bytes.'),
   },
@@ -23,9 +23,9 @@ export const imageQuiz: QuizItem[] = [
     concepts: ['docker.digest', 'docker.layer'],
     prompt: bi('У слоя образа два отпечатка. Какие это отпечатки и где записан каждый из них?', 'An image layer has two hashes. Which, and where is each written?'),
     options: [
-      { id: 'right', text: bi('digest сжатого архива записан в манифесте, а diff_id несжатого архива tar — в настройках образа (rootfs.diff_ids)', 'The digest of the compressed archive — in the manifest; the diff_id of the uncompressed tar — in the config (rootfs.diff_ids)'), correct: true },
-      { id: 'swap', text: bi('diff_id записан в манифесте, а digest — в настройках образа', 'diff_id in the manifest, digest in the config'), why: bi('Всё наоборот, потому что манифест описывает то, что скачивается, то есть сжатые части образа, а настройки описывают то, что уже распаковано.', 'The other way round: the manifest describes what is downloaded (compressed blobs), the config what is unpacked.') },
       { id: 'tag', text: bi('И тег, и digest записаны в манифесте', 'The tag and the digest — both in the manifest'), why: bi('Тег служит не отпечатком слоя, а ярлыком в реестре, и в манифесте его нет.', 'A tag is not a layer hash but a label in the registry; it is not in the manifest.') },
+      { id: 'swap', text: bi('diff_id сжатого архива записан в манифесте, а digest несжатого архива tar — в настройках образа, в разделе rootfs', 'The diff_id of the compressed archive — in the manifest; the digest of the uncompressed tar — in the config, in its rootfs section'), why: bi('Всё наоборот, потому что манифест описывает то, что скачивается, то есть сжатые части образа, а настройки описывают то, что уже распаковано.', 'The other way round: the manifest describes what is downloaded (compressed blobs), the config what is unpacked.') },
+      { id: 'right', text: bi('digest сжатого архива записан в манифесте, а diff_id несжатого архива tar — в настройках образа (rootfs.diff_ids)', 'The digest of the compressed archive — in the manifest; the diff_id of the uncompressed tar — in the config (rootfs.diff_ids)'), correct: true },
     ],
   },
   {
@@ -34,8 +34,8 @@ export const imageQuiz: QuizItem[] = [
     concepts: ['docker.digest', 'docker.layer'],
     prompt: bi('Вы скачали `nginx:1.30-alpine`, а потом `postgres:17-alpine`. Почему при втором скачивании у одного из слоёв написано `Already exists`?', 'You pulled `nginx:1.30-alpine` and then `postgres:17-alpine`. Why does the second pull say `Already exists` for one of the layers?'),
     options: [
+      { id: 'cache', text: bi('Docker помнит, что недавно скачивал образ с похожим именем, и берёт его слои из кэша по имени репозитория', 'Docker remembers it recently pulled an image with a similar name and reuses its layers from a cache keyed by repository name'), why: bi('Совпадение определяет не время, а адрес по содержимому, и одинаковый отпечаток sha256 означает один и тот же слой.', 'A match is decided not by time but by the content address: the same sha256 means the same layer.') },
       { id: 'shared', text: bi('Оба образа построены на одном и том же слое alpine с тем же digest, и этот слой уже лежит на машине', 'Both images are built on the same alpine layer with the same digest — it is already here'), correct: true },
-      { id: 'cache', text: bi('Docker помнит, что недавно что-то скачивал', 'Docker remembers it downloaded something recently'), why: bi('Совпадение определяет не время, а адрес по содержимому, и одинаковый отпечаток sha256 означает один и тот же слой.', 'A match is decided not by time but by the content address: the same sha256 means the same layer.') },
     ],
   },
   {
@@ -44,8 +44,8 @@ export const imageQuiz: QuizItem[] = [
     concepts: ['docker.layer'],
     prompt: bi('При сборке образа один шаг скачал архив на 200 МБ и сохранил его в своём слое, а следующий шаг удалил этот архив. Насколько вырос образ?', 'While an image was built, one step downloaded a 200 MB archive and saved it in its layer, and the next step deleted the archive. How much did the image grow?'),
     options: [
+      { id: '0', text: bi('Ни на сколько, потому что `rm` в следующей инструкции убирает архив из образа, и в итоговых слоях его нет', 'Not at all, because the `rm` in the next instruction takes the archive out of the image, so no final layer holds it'), why: bi('Слои можно только добавлять. Удаление записывается пометкой (whiteout) в новом слое, а байты нижнего слоя по-прежнему скачиваются.', 'Layers only add. A deletion is a whiteout in a new layer; the bytes of the lower layer are still downloaded.') },
       { id: '200', text: bi('На 200 МБ, потому что архив остался в нижнем слое, а сверху легла только пометка об удалении', 'By 200 MB, because the archive stays in the lower layer; on top there is only a deletion mark'), correct: true },
-      { id: '0', text: bi('Ни на сколько, ведь файл удалён', 'Not at all: the file was deleted'), why: bi('Слои можно только добавлять. Удаление записывается пометкой (whiteout) в новом слое, а байты нижнего слоя по-прежнему скачиваются.', 'Layers only add. A deletion is a whiteout in a new layer; the bytes of the lower layer are still downloaded.') },
     ],
     explain: bi('Удалять файл нужно на том же шаге сборки, где он появился. Как это записать, рассказывает следующий урок, о Dockerfile.', 'A file has to be deleted in the same build step that created it. The next lesson, on the Dockerfile, shows how to write that down.'),
   },

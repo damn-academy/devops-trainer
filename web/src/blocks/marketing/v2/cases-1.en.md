@@ -34,17 +34,17 @@ All these stories contain survivorship bias: we see companies that grew and do n
 
 <!-- quiz -->
 ? Before its IPO GitLab spent more than its entire revenue on sales and marketing. What follows from this for a small company?
-+ The path from a free product to a deal costs money, and those expenses need to be planned in advance || GitLab and HashiCorp were unprofitable for years and lived on outside funding.
++ Getting from a free product to a deal costs money, so plan that spending in advance || GitLab and HashiCorp were unprofitable for years and lived on outside funding.
 - An open product does not pay off, so a small company needs to close its code and sell licences from day one || Both companies grew to hundreds of millions of dollars in revenue; the expensive part was the path to the buyer, not open source.
-- A small company must spend as much on sales as GitLab or it will never grow to the same size || A public company's expenses cannot be treated as the norm for a small one; GitLab lived on outside funding.
+- A small company must spend as much on sales as GitLab did, or it will never grow to the same size || A public company's expenses cannot be treated as the norm for a small one; GitLab lived on outside funding.
 ? A post about Supabase on Hacker News brought 30,000 visitors in a week. What went wrong, and what did the company do?
-+ The platform could not handle the load, and the team openly examined what broke || The public analysis of the failure became material engineers trust.
-- Visitors did not sign up because the post was not published by the company itself || There were more than 1,400 signups in a week, followed by more than a thousand databases.
++ The platform could not take the load, and the team openly analysed what broke || The public analysis of the failure became material engineers trust.
+- Visitors did not sign up, because the post was not published by the company itself || There were more than 1,400 signups in a week, followed by more than a thousand databases.
 - Hacker News moderators removed the post for self-promotion, and the company had to launch again || The post was not removed; an outside user published it.
 ? Docker closed a free plan and reversed the decision ten days later. What follows from this for marketing?
-+ Marketing cannot fix a decision that is bad for the community, and this must be checked before the announcement || The CEO acknowledged that the decision itself was wrong, not just the announcement.
++ Marketing cannot fix a decision that is bad for the community; check that before announcing || The CEO acknowledged that the decision itself was wrong, not just the announcement.
 - Announcements of paid changes should be released on Friday evening so the reaction has time to die down by Monday || The timing of the announcement does not change the fact that the decision harms dependent users.
-- Plan changes should be kept secret until they take effect so users have no time to protest || A concealed change creates even greater distrust when it is discovered.
+- Plan changes should be kept secret until they take effect, so that users have no time to protest || A concealed change creates even greater distrust when it is discovered.
 <!-- /quiz -->
 
 <!-- section: task | Task: examine one competitor's decision -->

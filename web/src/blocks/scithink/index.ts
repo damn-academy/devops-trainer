@@ -12,6 +12,7 @@ import { bi } from '../../core/i18n';
 import type { Block } from '../../core/types';
 import { fromModel } from '../../engine/explainer/render';
 import { calibrationWidget } from './calibration';
+import { axisWidget, thousandWidget } from './charts';
 import { correlationModel } from './correlation';
 import { SCITHINK_CONCEPTS, SCITHINK_LESSONS, SCITHINK_QUIZ } from './content';
 
@@ -42,5 +43,5 @@ export default defineModule({
   concepts: SCITHINK_CONCEPTS,
   quiz: SCITHINK_QUIZ,
   explainers: [fromModel(correlationModel)],
-  widgets: [calibrationWidget],
+  widgets: [calibrationWidget, axisWidget, thousandWidget],
 });

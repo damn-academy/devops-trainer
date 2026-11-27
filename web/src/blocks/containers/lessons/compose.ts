@@ -36,7 +36,7 @@ export const composeQuiz: QuizItem[] = [
     prompt: bi('Гарантирует ли короткая форма `depends_on: [db]`, что к моменту запуска api база уже принимает соединения?', 'Does the short form `depends_on: [db]` guarantee that the database accepts connections when api starts?'),
     options: [
       { id: 'no', text: bi('Нет, Compose ждёт только запуска контейнера db, а не готовности базы', 'No, Compose waits only for the db container to start, not for the database to be ready'), correct: true },
-      { id: 'yes', text: bi('Да, Compose ждёт, пока сервис заработает', 'Yes, Compose waits until the service works'), why: bi('Сервис может быть уже запущен, но ещё не готов, потому что после запуска процесса postgres ещё секунды две готовит базу.', '“Started” and “ready” are different: postgres initialises for a couple of seconds after its process starts.') },
+      { id: 'yes', text: bi('Да, Compose ждёт, пока сервис db заработает и начнёт принимать подключения к базе', 'Yes, Compose waits until the db service works and starts accepting connections to the database'), why: bi('Сервис может быть уже запущен, но ещё не готов, потому что после запуска процесса postgres ещё секунды две готовит базу.', '“Started” and “ready” are different: postgres initialises for a couple of seconds after its process starts.') },
     ],
     explain: bi('Готовность определяет проверка готовности (healthcheck), а ждать её заставляет условие `depends_on: db: condition: service_healthy`.', 'Readiness is checked by a healthcheck, and `depends_on: db: condition: service_healthy` says to wait for it.'),
   },

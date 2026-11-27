@@ -2,11 +2,19 @@ import type { Bi } from '../../core/i18n';
 import type { CourseModule } from '../../core/types';
 import { SALES_LESSONS } from './content';
 
-// Preserve the six approved pilot modules, then append Dream 100.
+// Preserve the six approved pilot modules, then append Dream 100 and the partner module.
 export const SALES_MODULES: CourseModule[] = [
   ...SALES_LESSONS.map(l => ({ title: l.title, lessons: [l.id] })),
   { title: { ru: 'Dream 100', en: 'Dream 100' }, lessons: ["sales.d100-tracking", "sales.d100-signals", "sales.d100-sequence", "sales.d100-presence", "sales.d100-inperson", "sales.d100-us"] },
+  { title: { ru: 'Партнёры и интеграторы', en: 'Partners and integrators' }, lessons: ['sales.partner-deal'] },
 ];
+
+export const PARTNER_SUMMARIES: Record<string, Bi> = {
+  'sales.partner-deal': {
+    ru: 'Разбор сделки поставщик — интегратор — заказчик по шагам: деньги интегратора, регистрация сделки, второй партнёр, звонок заказчика напрямую и разделение поддержки; в конце — план вашей сделки через партнёра.',
+    en: 'A vendor–integrator–customer deal walked through step by step: the integrator’s money, deal registration, a second partner, a direct call from the customer and the split of support; ends with the plan for your own deal through a partner.',
+  },
+};
 
 export const DREAM100_SUMMARIES: Record<string, Bi> = {
   "sales.d100-tracking": {

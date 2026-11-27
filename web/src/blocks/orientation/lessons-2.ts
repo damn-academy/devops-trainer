@@ -18,7 +18,7 @@ export const rentQuiz: QuizItem[] = [
     prompt: bi('Что на самом деле стоит за словами «запустим это в облаке»?', 'What really stands behind the words “let us run it in the cloud”?'),
     options: [
       { id: 'rent', text: bi('Чужие серверы в чужом дата-центре, которые берут напрокат и оплачивают по часам', 'Somebody else’s servers in somebody else’s data centre, hired and paid for by the hour'), correct: true },
-      { id: 'air', text: bi('Программы, которые работают в интернете сами по себе, без всяких компьютеров', 'Programs that run without any computers, right in the internet'), why: bi('Любая программа работает на чьём-то компьютере. В облаке этот компьютер не ваш и стоит не у вас.', 'Every program runs on someone’s computer. In the cloud it is simply not yours and stands somewhere else.') },
+      { id: 'air', text: bi('Программы, которые работают в интернете сами по себе, без всяких компьютеров, серверов и дата-центров', 'Programs that run right in the internet by themselves, without any computers, servers or data centres'), why: bi('Любая программа работает на чьём-то компьютере. В облаке этот компьютер не ваш и стоит не у вас.', 'Every program runs on someone’s computer. In the cloud it is simply not yours and stands somewhere else.') },
       { id: 'disk', text: bi('Только хранилище для фотографий', 'Only a store for photos'), why: bi('Хранилище составляет лишь одну из услуг облака. Главная его услуга состоит в том, что провайдер сдаёт напрокат машины, на которых можно запустить что угодно.', 'Storage is only one of the cloud’s services. Its main service is that the provider hires out machines that can run anything.') },
     ],
     explain: bi('Облако устроено как аренда. Провайдер покупает железо, строит здание и следит за ним, а вы платите за небольшую часть этого хозяйства и только за то время, пока она вам нужна.', 'The cloud is renting: the provider buys the hardware, puts up the building and looks after it, and you pay for a slice and only for as long as you need it.'),
@@ -31,7 +31,7 @@ export const rentQuiz: QuizItem[] = [
     prompt: bi('Машина в облаке включена, но ничего не делает, потому что проект закончился неделю назад. Что происходит со счётом?', 'A cloud machine is on but does nothing, because the project ended a week ago. What happens to the bill?'),
     options: [
       { id: 'ticks', text: bi('Счёт растёт, потому что платят за то, что машина существует, а не за пользу от неё', 'The bill grows, because you pay for the machine existing, not for the use you get from it'), correct: true },
-      { id: 'zero', text: bi('Счёт не растёт, потому что машина простаивает', 'It does not grow: the machine is idle'), why: bi('Провайдер держит для вас процессор и память, даже когда вы ими не пользуетесь, и берёт за это деньги.', 'The provider keeps a processor and memory for you even when you do not use them, and charges for it.') },
+      { id: 'zero', text: bi('Счёт не растёт, потому что машина простаивает, а провайдер берёт деньги только за работу процессора', 'It does not grow: the machine is idle, and the provider charges only for the work its processor does'), why: bi('Провайдер держит для вас процессор и память, даже когда вы ими не пользуетесь, и берёт за это деньги.', 'The provider keeps a processor and memory for you even when you do not use them, and charges for it.') },
     ],
     explain: bi('Поэтому в этом курсе каждый урок с облачными машинами заканчивается шагом «Уборка», на котором всё созданное удаляют.', 'That is why every lesson with cloud machines in this course has a “Cleanup” step: everything created is deleted at the end.'),
     refs: { explainer: 'orient.rent' },
@@ -152,8 +152,8 @@ export const releaseQuiz: QuizItem[] = [
     prompt: bi('Чем исходный код отличается от программы, которую запускают?', 'How does source code differ from the program that is run?'),
     options: [
       { id: 'ok', text: bi('Исходный код написан для людей, а сборка превращает его в то, что запускает машина', 'Source code is text for people; the build turns it into what the machine runs'), correct: true },
-      { id: 'same', text: bi('Ничем, это два названия одного и того же файла', 'Nothing, these are two names for one file'), why: bi('У скриптовых языков код и программа почти совпадают, но и там сборка добавляет всё, что нужно программе для работы. А у компилируемых языков сборка даёт другой файл, составленный из инструкций процессора.', 'For scripting languages they are indeed close, but even there the build adds everything the program needs, and for compiled languages the result is a quite different file of processor instructions.') },
-      { id: 'secret', text: bi('Исходный код представляет собой зашифрованную программу', 'Source code is an encrypted program'), why: bi('Никакого шифра здесь нет, потому что исходный код пишут люди, чтобы его читали люди.', 'There is no cipher here, because source code is written by people for people to read.') },
+      { id: 'same', text: bi('Ничем: это два названия одного и того же файла, которые используют в разных компаниях', 'Nothing: these are two names for one and the same file, used in different companies'), why: bi('У скриптовых языков код и программа почти совпадают, но и там сборка добавляет всё, что нужно программе для работы. А у компилируемых языков сборка даёт другой файл, составленный из инструкций процессора.', 'For scripting languages they are indeed close, but even there the build adds everything the program needs, and for compiled languages the result is a quite different file of processor instructions.') },
+      { id: 'secret', text: bi('Исходный код представляет собой зашифрованную программу, которую машина расшифровывает при запуске', 'Source code is an encrypted program, which the machine decrypts each time it starts it'), why: bi('Никакого шифра здесь нет, потому что исходный код пишут люди, чтобы его читали люди.', 'There is no cipher here, because source code is written by people for people to read.') },
     ],
     explain: bi('Исходный код читают и правят, а запускают результат сборки. Между ними всегда есть шаг, и на этом шаге ловят часть ошибок.', 'Source code is read and edited, the build output is run. There is always a step between them, and some errors are caught at it.'),
     refs: { explainer: 'orient.release' },
@@ -189,7 +189,7 @@ export const releaseQuiz: QuizItem[] = [
     prompt: bi('В программе на Python опечатка в имени функции, в редко используемой части кода. Когда её заметят, если тестов нет?', 'A Python program has a typo in a function name, in a rarely used branch. When will it be noticed if there are no tests?'),
     options: [
       { id: 'users', text: bi('Когда пользователь дойдёт до этого места программы', 'When a user reaches that spot'), correct: true },
-      { id: 'build', text: bi('На сборке, как это было бы с программой на Go', 'At the build, as in Go'), why: bi('Сборка программы на Python упаковывает код, но не проверяет каждое имя. Сборка программы на Go проверила бы.', 'The build of a scripting language packs the code but does not check every name. The Go compiler would.') },
+      { id: 'build', text: bi('На сборке, как это было бы с программой на Go, потому что сборщик проверяет каждую строчку', 'At the build, as it would be with a Go program, because the builder checks every line'), why: bi('Сборка программы на Python упаковывает код, но не проверяет каждое имя. Сборка программы на Go проверила бы.', 'The build of a scripting language packs the code but does not check every name. The Go compiler would.') },
     ],
     explain: bi('Поэтому код проверяют до релиза тестами, которые машина запускает при каждой правке. Подробно о тестах рассказывает блок методологии.', 'That is why code is checked before release by tests, which a machine runs on every edit. More on this in the methodology block.'),
     refs: { explainer: 'orient.release' },
@@ -359,7 +359,7 @@ export const placesQuiz: QuizItem[] = [
     prompt: bi('Сайт работает, заказы идут, но деньги на счёт магазина не приходят. Что проверить первым?', 'The site works and orders come in, but no money reaches the shop’s account. What should be checked first?'),
     options: [
       { id: 'conf', text: bi('Какой файл настроек прочитала программа в рабочем окружении', 'Which settings file the program in production has read'), correct: true },
-      { id: 'code', text: bi('Исходный код корзины', 'The source code of the cart'), why: bi('На стенде та же сборка работала правильно, значит, отличается не код, а то, что лежит рядом с ним.', 'On the stand the same build worked correctly, so it is not the code that differs but what is next to it.') },
+      { id: 'code', text: bi('Исходный код корзины, начиная с последних изменений перед релизом', 'The source code of the cart, starting with the latest changes before the release'), why: bi('На стенде та же сборка работала правильно, значит, отличается не код, а то, что лежит рядом с ним.', 'On the stand the same build worked correctly, so it is not the code that differs but what is next to it.') },
       { id: 'disk', text: bi('Хватает ли места на диске', 'Whether there is enough disk space'), why: bi('Тогда сайт не принимал бы заказы. Здесь всё работает, только платежи уходят не туда.', 'Then the site would not take orders. Here everything works, the payments just go to the wrong place.') },
     ],
     refs: { explainer: 'orient.places' },
@@ -371,8 +371,8 @@ export const placesQuiz: QuizItem[] = [
     prompt: bi('Что в IT-командах называют продом?', 'What is production?'),
     options: [
       { id: 'live', text: bi('Окружение, которым пользуются настоящие покупатели', 'The environment real customers use'), correct: true },
-      { id: 'fast', text: bi('Самый мощный сервер компании', 'The company’s most powerful server'), why: bi('Мощность здесь ни при чём, потому что рабочее окружение может работать и на маленьких машинах. Рабочим его делает то, кто им пользуется.', 'Power has nothing to do with it: production can run on small machines. It is defined by who uses it.') },
-      { id: 'dev', text: bi('Ноутбук ведущего разработчика', 'The lead developer’s laptop'), why: bi('Ноутбук разработчика служит окружением разработки, и это окружение дальше всех от рабочего.', 'A developer’s laptop is the development environment, the furthest from production.') },
+      { id: 'fast', text: bi('Самый мощный сервер компании, на котором собирают и проверяют программы', 'The company’s most powerful server, where programs are built and checked'), why: bi('Мощность здесь ни при чём, потому что рабочее окружение может работать и на маленьких машинах. Рабочим его делает то, кто им пользуется.', 'Power has nothing to do with it: production can run on small machines. It is defined by who uses it.') },
+      { id: 'dev', text: bi('Ноутбук ведущего разработчика, где лежит самая свежая версия кода', 'The lead developer’s laptop, which holds the freshest version of the code'), why: bi('Ноутбук разработчика служит окружением разработки, и это окружение дальше всех от рабочего.', 'A developer’s laptop is the development environment, the furthest from production.') },
     ],
     explain: bi('Слово «прод» сокращено от английского production, а по-русски это окружение называют рабочим. Ошибка в рабочем окружении стоит денег, а ошибка на стенде — только времени.', 'The word is short for production. A mistake in production costs money, a mistake on the stand only time.'),
   },
@@ -527,8 +527,8 @@ export const togetherQuiz: QuizItem[] = [
     prompt: bi('Анна и Борис по-разному изменили одну и ту же строчку. Что сделает программа совместной работы?', 'Anna and Boris changed the same line in different ways. What does the collaboration program do?'),
     options: [
       { id: 'ask', text: bi('Покажет обе версии строчки и попросит человека решить', 'It shows both versions and asks a person to decide'), correct: true },
-      { id: 'last', text: bi('Оставит ту правку, которая пришла позже', 'It keeps the one that came later'), why: bi('Тогда чья-то правка пропала бы молча, а такие программы как раз от этого и защищают.', 'Then someone’s edit would vanish silently, exactly what such programs protect against.') },
-      { id: 'both', text: bi('Оставит обе строчки, одну под другой', 'It keeps both lines one under the other'), why: bi('Тогда в меню появились бы две цены одного чая. Программа не знает, какая из них правильная, поэтому решает человек.', 'The menu would then have two prices for one tea. The machine does not know which is right; a person decides.') },
+      { id: 'last', text: bi('Оставит ту правку, которая пришла позже, а более раннюю молча выбросит', 'It keeps the one that came later and silently throws away the earlier one'), why: bi('Тогда чья-то правка пропала бы молча, а такие программы как раз от этого и защищают.', 'Then someone’s edit would vanish silently, exactly what such programs protect against.') },
+      { id: 'both', text: bi('Оставит обе строчки, одну под другой, и пометит каждую именем автора', 'It keeps both lines one under the other and marks each with its author’s name'), why: bi('Тогда в меню появились бы две цены одного чая. Программа не знает, какая из них правильная, поэтому решает человек.', 'The menu would then have two prices for one tea. The machine does not know which is right; a person decides.') },
     ],
     refs: { explainer: 'orient.together' },
   },
@@ -669,9 +669,9 @@ export const reviewQuiz: QuizItem[] = [
     concepts: ['orient.computer'],
     prompt: bi('Утром вы сохранили документ, а потом дописали к нему абзац и сохранить не успели. Батареи в ноутбуке нет, и он выключился, когда в доме пропал свет. Что вы найдёте, когда включите его снова?', 'In the morning you saved a document, then added a paragraph to it and did not save again. The laptop has no battery, and it switched off when the power went in the house. What will you find after switching it on?'),
     options: [
-      { id: 'morning', text: bi('Документ в утреннем виде, без нового абзаца', 'The document as it was in the morning, without the new paragraph'), correct: true },
+      { id: 'morning', text: bi('Документ в утреннем виде, без нового абзаца', 'The morning version, without the new paragraph'), correct: true },
       { id: 'all', text: bi('Документ вместе с новым абзацем', 'The document together with the new paragraph'), why: bi('Новый абзац был только в памяти, а память пустеет, как только пропадает питание. На диске осталось то, что вы сохранили утром.', 'The new paragraph was only in memory, and memory empties as soon as the power goes. The disk holds what you saved in the morning.') },
-      { id: 'none', text: bi('Ничего, потому что документ испортился целиком', 'Nothing, because the whole document is spoilt'), why: bi('Утренняя копия была записана на диск, а диску выключение не страшно.', 'The morning copy was written to the disk, and the disk does not mind a power-off.') },
+      { id: 'none', text: bi('Ничего, потому что документ испортился целиком и навсегда', 'Nothing, because the whole document is spoilt for good'), why: bi('Утренняя копия была записана на диск, а диску выключение не страшно.', 'The morning copy was written to the disk, and the disk does not mind a power-off.') },
     ],
     explain: bi('Кнопка «Сохранить» копирует текст из памяти на диск. Всё, что вы изменили после последнего сохранения, хранится только в памяти и пропадает вместе с питанием.', 'The “Save” button copies the text from memory to the disk. Everything changed after the last save is held only in memory and vanishes with the power.'),
   },
@@ -683,7 +683,7 @@ export const reviewQuiz: QuizItem[] = [
     options: [
       { id: 'quarter', text: bi('Около четверти, потому что система по очереди даёт процессор каждой программе', 'About a quarter, because the system gives the processor to each program in turn'), correct: true },
       { id: 'full', text: bi('Каждая получит всё время процессора', 'Each will get all of the processor’s time'), why: bi('В каждый момент одно ядро выполняет одну программу, поэтому время ядра делится между четырьмя программами.', 'At any moment one core runs one program, so the core’s time is divided among the four programs.') },
-      { id: 'first', text: bi('Первая программа получит всё, а остальные будут ждать, пока она закончит', 'The first program will get everything, and the others will wait until it finishes'), why: bi('Тогда при одном ядре музыка не играла бы, пока вы пишете письмо. Система переключает процессор между программами каждые несколько миллисекунд.', 'Then, with one core, music would not play while you write a letter. The system switches the processor between programs every few milliseconds.') },
+      { id: 'first', text: bi('Первая программа получит всё время процессора, а остальные будут ждать, пока она закончит', 'The first program will get everything, and the others will wait until it finishes'), why: bi('Тогда при одном ядре музыка не играла бы, пока вы пишете письмо. Система переключает процессор между программами каждые несколько миллисекунд.', 'Then, with one core, music would not play while you write a letter. The system switches the processor between programs every few milliseconds.') },
     ],
     explain: bi('Операционная система делит время ядра на короткие отрезки и раздаёт их по очереди. Четыре программы на одном ядре работают каждая примерно вчетверо медленнее, чем работала бы одна.', 'The operating system cuts the core’s time into short slices and hands them out in turn. Four programs on one core each run about four times slower than one alone would.'),
     refs: { explainer: 'orient.system' },
@@ -694,9 +694,9 @@ export const reviewQuiz: QuizItem[] = [
     concepts: ['orient.client-request', 'orient.network'],
     prompt: bi('Команда `curl https://shop.example/` печатает `Could not resolve host: shop.example`. На каком звене искать неисправность?', 'The command `curl https://shop.example/` prints `Could not resolve host: shop.example`. At which link should the fault be looked for?'),
     options: [
-      { id: 'name', text: bi('Имя не превратилось в адрес, поэтому запрос даже не ушёл к серверу', 'The name did not turn into an address, so the request did not even leave for the server'), correct: true },
-      { id: 'stopped', text: bi('Программа магазина на сервере остановлена', 'The shop program on the server is stopped'), why: bi('Тогда `curl` сразу получил бы отказ в соединении, Connection refused. Для отказа запрос должен дойти до машины, а здесь клиент даже не узнал её адреса.', 'Then `curl` would at once get a refusal, Connection refused. For a refusal the request has to reach the machine, and here the client did not even learn its address.') },
-      { id: 'busy', text: bi('Сервер перегружен покупателями', 'The server is overloaded with shoppers'), why: bi('Перегруженный сервер отвечает числом 503, но для этого запрос тоже должен до него дойти.', 'An overloaded server answers with 503, but for that, too, the request has to reach it.') },
+      { id: 'name', text: bi('Имя не превратилось в адрес, поэтому запрос даже не ушёл к серверу', 'The name did not turn into an address, so the request never left for the server'), correct: true },
+      { id: 'stopped', text: bi('Программа магазина на сервере остановлена, поэтому сервер не отвечает на запросы', 'The shop program on the server is stopped, so the server does not answer requests at all'), why: bi('Тогда `curl` сразу получил бы отказ в соединении, Connection refused. Для отказа запрос должен дойти до машины, а здесь клиент даже не узнал её адреса.', 'Then `curl` would at once get a refusal, Connection refused. For a refusal the request has to reach the machine, and here the client did not even learn its address.') },
+      { id: 'busy', text: bi('Сервер перегружен покупателями и отбрасывает новые запросы, пока не освободится', 'The server is overloaded with shoppers and drops every new request until it frees up'), why: bi('Перегруженный сервер отвечает числом 503, но для этого запрос тоже должен до него дойти.', 'An overloaded server answers with 503, but for that, too, the request has to reach it.') },
     ],
     explain: bi('Каждое из трёх сообщений указывает на своё звено. Ненайденное имя означает, что запрос не ушёл, отказ означает, что машина на связи, а программа нет, а 503 означает, что запрос дошёл, но сервер не справляется.', 'Each of the three messages points to its own link. An unresolved name means the request never left, a refusal means the machine is reachable and the program is not, and 503 means the request arrived but the server cannot cope.'),
   },
@@ -744,7 +744,7 @@ export const reviewQuiz: QuizItem[] = [
     options: [
       { id: 'join', text: bi('Сама соединит обе правки, и в общей копии окажутся обе новые цены', 'Join both edits by itself, and the shared copy will have both new prices'), correct: true },
       { id: 'ask', text: bi('Попросит человека выбрать одну из правок', 'Ask a person to choose one of the edits'), why: bi('Человека зовут, только когда одну и ту же строчку изменили по-разному. Правки в разных строчках друг другу не мешают.', 'A person is called only when one and the same line was changed in different ways. Edits on different lines do not get in each other’s way.') },
-      { id: 'last', text: bi('Оставит правку того, кто прислал её последним', 'Keep the edit of whoever sent it last'), why: bi('Так ведёт себя пересылка файла почтой, от которой программа слияния и защищает.', 'That is how sending the file by email behaves, which is exactly what the merge program protects against.') },
+      { id: 'last', text: bi('Оставит правку того, кто прислал её последним, а первую правку молча выбросит', 'Keep the edit of whoever sent it last and silently throw the first one away'), why: bi('Так ведёт себя пересылка файла почтой, от которой программа слияния и защищает.', 'That is how sending the file by email behaves, which is exactly what the merge program protects against.') },
     ],
     refs: { explainer: 'orient.together' },
   },

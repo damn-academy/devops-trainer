@@ -85,7 +85,7 @@ After each closed month, ask one question from the table above for each line. Af
 ? A customer paid $240,000 on January 1 for a year’s subscription in advance. How much revenue does the company report for January?
 + $20,000 for January; the remaining $220,000 is deferred revenue at the end of January || Revenue is recognized as the service is provided: one twelfth each month. The deferred revenue balance falls by $20,000 every month and reaches zero at the end of December.
 - $240,000, because the cash has already arrived || Bank cash does not mean earned revenue; the company still owes the service.
-- Zero, because revenue is recognized only at year-end when the entire service is delivered || Service is provided evenly, so revenue is recognized monthly.
+- Zero, because revenue is recognized only at year-end || Service is provided evenly, so revenue is recognized monthly.
 ? Investors contributed $600,000 to the company. How does this affect the statements?
 + Cash and equity rise by 600, with no increase in revenue or profit || Investor contributions are financing, unrelated to business operations.
 - Revenue rises by 600 because the company received money from outside parties for its shares || Selling shares is financing, not selling services.
@@ -150,11 +150,11 @@ Track departments, products, customers, states and currencies as dimensions inst
 <!-- quiz -->
 ? A company is losing money, yet its cash increased this month. What is the most likely explanation for a subscription business?
 + A customer paid a year in advance, so cash arrived before revenue || Prepayment increases deferred revenue and cash; revenue appears monthly.
-- The accountant made a mistake, because a loss always reduces bank cash in the same month || Losses and cash flow differ in timing; that is normal.
+- The accountant made a mistake, since a loss reduces cash || Losses and cash flow differ in timing; that is normal.
 - The company sold equipment || Selling equipment belongs in investing cash flow.
 ? An engineer spends half their time on call for customers’ production cloud service and half building the next version. How should their salary be allocated?
+- All to R&D, as with all the engineers who write code for the new version || This understates COGS and makes margins look better than they are.
 + Half to COGS and half to R&D, based on time records || On-call work delivers the customer service; the new version is development.
-- All to R&D, as with all engineers || This understates COGS and makes margins look better than they are.
 - All to COGS, because the cloud service cannot work without this engineer || Developing the next version is not necessary to deliver the current service.
 <!-- /quiz -->
 

@@ -98,10 +98,10 @@ The table shows possible combinations, not a recommendation for everyone to buy 
 ? A PostgreSQL tools vendor is choosing between a booth at a major cloud conference and a table at PGConf.EU. What determines the choice?
 - Attendance: a major conference has more people, so it has more buyers || High traffic does not outweigh zero profile fit.
 + Where database administrators gather and how many meetings with them can be arranged in advance || Profile fit and access to the role carry the most weight.
-- Price: choose the cheapest option because event ROI cannot be calculated || ROI is calculated using a model.
+- Price: you have to choose the cheapest option, because the return on events cannot be calculated || ROI is calculated using a model.
 ? The model predicts 1.2 expected deals and a 20 % return. What should you do before buying the package?
 + Recalculate with conversion halved and separate existing deals || Test the model's robustness.
-- Buy the package because the return is positive and the decision is obvious to any executive || The model promises nothing.
+- Buy the package because the return is positive || The model promises nothing.
 - Decline because 1.2 deals is too few for any conference || Deal count is assessed together with deal value.
 ? When evaluating an event, “access to the right role” is still unknown. How should you fill it in?
 - Assign the average score to avoid understating or overstating the event's overall score || An average score hides the gap.

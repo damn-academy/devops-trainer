@@ -1,6 +1,6 @@
 <!-- lesson: aicontent.publishing | Publishing: Habr, a blog, Telegram and several languages | 20 -->
 <!-- section: hook -->
-We published the same article on Habr, on the company blog in English and German, and as an announcement on Telegram, and each platform has its own requirements for the same text. On Habr, the title goes in a separate field and sections start with one hash; on a Hugo blog, the title comes from metadata and sections start with two; on Telegram, text is pasted without quotation markers. During one blog migration, 411 pages lacked link-preview images and German words ended up in English text. This lesson examines preparing material for each platform and avoiding a broken publication at the final step.
+The same article is often published in several places at once: on Habr, on the company blog in English and German, and as an announcement on Telegram, and each platform has its own requirements for the same text. On Habr, the title goes in a separate field and sections start with one hash; on a Hugo blog, the title comes from metadata and sections start with two; on Telegram, text is pasted without quotation markers. During one blog migration, 411 pages lacked link-preview images and German words ended up in English text. This lesson examines preparing material for each platform and avoiding a broken publication at the final step.
 
 <!-- section: theory | Platform formats -->
 For Habr, write the article title on a separate line without a hash, use level-one headings for sections and level-two headings for subsections. Prepare images as PNG or GIF and decide in advance after which paragraph each belongs. A saved draft is not a publication: after insertion, check that every image loaded and every link works. Remember that since July 2026 Habr's rules have discouraged AI-created or AI-edited material, except illustrations and small supporting fragments within a substantive original article, so a technical Habr article must rest on the author's own experience.
@@ -24,9 +24,9 @@ Before publication, fill in a short card: platform; a link to its rules and the 
 
 <!-- quiz -->
 ? A browser assistant inserted text and every image into a Habr draft. What happens next?
-+ The editor checks the draft on the platform and presses the Publish button themselves || The assistant prepares the draft; the human retains the publication decision.
 - The assistant publishes the article itself at the time specified in the brief || Automated publication on an external platform requires separate authorisation and checks.
-- The article can be considered published because Habr shows drafts to the author's subscribers || Only the author sees the draft.
++ The editor checks the draft on the platform and presses the Publish button themselves || The assistant prepares the draft; the human retains the publication decision.
+- The article is already published, since the author's subscribers see drafts || Only the author sees the draft.
 ? A blog is published in English and German. The editor corrected a fact in the English post. What else is needed?
 + Correct the same fact in the German version and publish both versions at once || Language versions are corrected together or they diverge.
 - Nothing; the translator will fix the German version in the next scheduled blog update || Until then, readers will see different facts in different versions.
@@ -76,13 +76,13 @@ Major newsrooms publish AI policies with recurring principles: a human is respon
 
 <!-- quiz -->
 ? A company wants to publish AI-written articles on Habr with a disclosure. What do Habr's rules since July 2026 say?
+- Habr allows such articles as long as a label at the beginning says that the text was written by AI || A label does not remove the restriction; an original article based on the author's experience is needed.
 + Habr discourages such material, and a label disclosing AI use alone does not permit it || The rules allow illustrations and small supporting fragments in an original article, not labelled AI texts.
-- Habr allows such articles if a label at the beginning says AI wrote the text || A label does not remove the restriction; an original article based on the author's experience is needed.
-- Habr allows such articles only in corporate blogs of companies paying for publication || The AI rule applies to every publication.
+- Habr allows such articles only in the corporate blogs of companies that pay for publication || The AI rule applies to every publication.
 ? An “AI-generated” label reduced reader trust in headlines in an experiment. What should an editorial team infer?
-+ Explain exactly what AI did and what a human checked in the disclosure, if true || Readers interpret a bare label as full automation, and clarification changes their reaction.
-- Do not disclose AI involvement, to preserve reader trust and publication reach || Where rules or law require disclosure, omitting it violates them.
 - Label only material where AI wrote more than half the article || No platform sets that threshold; rules vary by platform.
+- Do not disclose AI involvement, to preserve reader trust and publication reach || Where rules or law require disclosure, omitting it violates them.
++ Explain exactly what AI did and what a human checked in the disclosure, if true || Readers interpret a bare label as full automation, and clarification changes their reaction.
 <!-- /quiz -->
 
 <!-- section: task | Task: a one-page AI policy -->
@@ -105,9 +105,9 @@ Complete the task in the document on this page. Write a one-page editorial polic
 - Ahrefs, AI text and Google rankings — https://ahrefs.com/blog/ai-generated-content-does-not-hurt-your-google-rankings/ (07.07.2025)
 - Semrush, does AI content rank — https://www.semrush.com/blog/does-ai-content-rank-in-search-data-study/ (01.04.2026)
 
-<!-- lesson: aicontent.tools | Tools as of late 2026 and budgeting | 18 -->
+<!-- lesson: aicontent.tools | Tools as of late 2026 and the cost of results | 18 -->
 <!-- section: hook -->
-Almost everything about content tools changed during 2026: the Sora 2 API closed, Kimi adopted new plans and a new client, Suno released its sixth model, and OpenAI announced shutdowns for older speech-synthesis models and cloud Whisper. Year-old comparison tables mislead. This lesson groups tools by task, with late-November 2026 prices, and shows how to budget without fooling yourself with the price of one generation.
+Almost everything about content tools changed during 2026: the Sora 2 API closed, Kimi adopted new plans and a new client, Suno released its sixth model, and OpenAI announced shutdowns for older speech-synthesis models and cloud Whisper. Year-old comparison tables mislead. This lesson groups tools by task, with late-November 2026 prices, and shows how to compare two tools by the cost of an accepted result, because the price of one generation says almost nothing about it.
 
 <!-- section: theory | Agents for pipelines -->
 Terminal agents underpin the pipelines discussed throughout the course. Claude Code is included in Claude Pro at $20 per month, with higher plans at $100 and $200. Codex CLI is included in ChatGPT Plus at $20 and Pro at $100–500, while API-key access is billed separately. Kimi moved from an archived Python client to Kimi Code CLI; Plus, Pro, Max and Ultra plans cost $19–199 per month, with a shared credit pool and a rolling five-hour limit. Gemini CLI offers up to a thousand requests daily for free when signed in with a Google account, though one agent cycle can use several requests.
@@ -121,24 +121,26 @@ For video: Veo 3.1, Runway from $15, Pika from $10, avatars and dubbing from Hey
 
 These prices are from November 2026 and age quickly. Before buying, check the pricing page and do not apply subscription terms to APIs or vice versa: they are different products with different limits.
 
-<!-- section: theory | How to budget -->
-The full cost of an accepted unit of content includes subscriptions allocated by volume, generations and retries, source licences, author, fact-checker and editor time, editing and design, and post-publication corrections. One generation's price is only one component, often not the main one: in our projects, revision rounds and checks cost the most.
+<!-- section: theory | How to compare tools by the cost of an accepted result -->
+One generation's price is only one component, often not the main one: revision rounds and checks usually account for most of a piece's cost. Two tools are therefore compared in a small pilot. Take five real tasks from your editorial team, give them to both tools with the same source material, and record four numbers for each: what generations cost including retries, how much time the editor spent before acceptance, how many errors the editor found and how many results were accepted. The cost per accepted unit equals generation and retry charges plus the editor's time at their rate, divided by the number of accepted results. Subscriptions, licences and the rest of the team's work are the same in both options, so they do not affect the choice between two tools.
 
-To choose a tool, run a small pilot: give two tools the same real editorial tasks and source material, then measure editor time to acceptance, errors, retry costs and the share accepted without rework. Do not buy an annual subscription just because it looks cheaper in a table: calculate two scenarios, an ordinary month and a one-off major project. A teaching example with hypothetical numbers: in an ordinary month, the team uses 200 video generations, so a $100 monthly plan with that limit is cheaper than paying $1.50 each, which would cost $300. A one-off project needs 2,000 generations in a month: pay-as-you-go costs $3,000, while upgrading to a $500 plan with a 2,500-generation limit is cheaper. Calculate annual billing the same way. Suppose the higher plan costs $400 per month billed annually, or $4,800 per year. With major projects in k months, monthly billing costs `100 × (12 − k) + 500 × k = 1,200 + 400 × k` dollars. Annual billing is cheaper only when `1,200 + 400 × k` exceeds 4,800: ten or more major-project months per year. At nine months the options are equal; at three months, monthly upgrades cost $2,400, half the annual subscription. Only generation charges are compared: labour, licences and shared editorial subscriptions are identical in both options and excluded.
+A teaching example with hypothetical numbers. On five tasks, the first tool made 30 generations at 4 cents, or $1.20; the editor spent 2.5 hours on checks and revisions at $40, or $100, and accepted four results out of five. An accepted unit costs `(1.2 + 100) / 4 ≈ 25` dollars. The second tool costs twice as much per generation, 8 cents, but needed only 15 generations for the same $1.20; the editor spent 1.5 hours, or $60, and accepted all five results. An accepted unit costs `(1.2 + 60) / 5 ≈ 12` dollars, half as much, even though the second tool is more expensive on the price list. Editor time made the difference; the generation price barely affected the result.
+
+Choose a plan after the pilot, once you know how many generations an accepted result takes. A teaching example with hypothetical numbers: in an ordinary month, the team uses 200 video generations, so a $100 monthly plan with that limit is cheaper than paying $1.50 each, which would cost $300. A one-off project needs 2,000 generations in a month: pay-as-you-go costs $3,000, while upgrading to a $500 plan with a 2,500-generation limit for that month is cheaper. If the higher plan costs $400 per month billed annually, or $4,800 per year, it beats monthly upgrades only when major projects run ten or more months a year.
 
 <!-- quiz -->
 ? Generating a five-second video costs 20 credits. Why is that insufficient to calculate the cost of an advertising video?
-+ Include all retries, editorial selection, editing and checks: the cost per accepted second || In our projects, most generations did not pass selection, and human work cost more than generation.
++ Include all retries, editorial selection, editing and checks: the cost per accepted second || Most generations usually fail selection, and human work costs more than generation.
 - Add the subscription cost; nothing else belongs in the video price because the rest is free || Editor time and editing cost money too.
-- It is sufficient if the video was generated on the first attempt and needed no editing before publication || In our projects, first-attempt videos almost never passed selection, and editing is almost always needed.
+- It is sufficient if the video was generated on the first attempt and needed no editing before publication || First-attempt videos rarely pass selection, and editing is almost always needed.
 ? A video-tool comparison table was published in 2025. Can you use it to choose in late 2026?
 + Not without checking current plans: some services closed or changed their pricing || The Sora 2 API closed in September 2026, while Pika and Kimi changed plans.
-- Yes, because generative service prices change by no more than ten percent a year || The services themselves changed, not only prices.
-- Yes, if the table links to pricing pages showing where its figures came from || Links help with checking, but the table's figures are still outdated.
+- Yes, because prices of generative services change by no more than ten percent over a year || The services themselves changed, not only prices.
+- Yes, if the table links to the pricing pages that show where its figures came from || Links help with checking, but the table's figures are still outdated.
 <!-- /quiz -->
 
 <!-- section: task | Task: pilot two tools -->
-Complete the task in the document on this page. Choose a task for which you need a tool: article images, transcription, intros or research. Pick two tools from the lesson and five real tasks from your editorial team. Record how you will compare editor time to acceptance, errors, retry costs and the share of accepted results, and calculate the full cost of one accepted unit for both.
+Complete the task in the document on this page. Choose a task for which you need a tool: article images, transcription, intros or research. Pick two tools from the lesson and five real tasks from your editorial team. Record how you will compare editor time to acceptance, errors, retry costs and the share of accepted results. Then calculate the cost of one accepted unit for both tools: generation and retry charges plus the editor's time at their rate, divided by the number of accepted results.
 
 <!-- section: sources -->
 - Anthropic, Claude pricing — https://claude.com/pricing (checked 25.11.2026)
