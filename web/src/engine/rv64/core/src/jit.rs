@@ -77,6 +77,10 @@ fn supported(i: u32) -> bool {
         _ => false,
     }
 }
+fn jal_offset(i: u32) -> u64 {
+    let off = ((i >> 31) << 20) | (((i >> 12) & 255) << 12) | (((i >> 20) & 1) << 11) | (((i >> 21) & 1023) << 1);
+    ((off << 11) as i32 >> 11) as i64 as u64
+}
 #[inline]
 pub(crate) fn ends_block(i: u32) -> bool {
     matches!(i & 127, 0x63|0x67|0x6f|0x73|0x0f|0x2f|0x07|0x27|0x43|0x47|0x4b|0x4f|0x53) || !supported(i)
@@ -131,14 +135,23 @@ impl Cpu {
                 let d = match self.memory.decoded(p) { Some(d) => d, None => break };
                 if !supported(d.ins) || self.memory.translate_size(pc, d.len as usize, Access::Fetch, self.mode, self.csr[0x180], self.csr[0x300]).is_err() { break; }
                 words.extend_from_slice(&[d.ins, d.len as u32]); raw.push(d.raw);
+                // Trace through a direct forward jal inside this page: the code
+                // generator continues at its target (see jit-compiler.ts).
+                if d.ins & 127 == 0x6f && !self.jit.single_step {
+                    let target = pc.wrapping_add(jal_offset(d.ins));
+                    if target > pc && target >> 12 == self.pc >> 12 { p = (pa & !4095) | (target & 4095); pc = target; continue; }
+                }
                 p += d.len; pc = pc.wrapping_add(d.len);
                 if matches!(d.ins & 127, 0x67|0x6f|0x2f|0x07|0x27|0x43|0x47|0x4b|0x4f|0x53) { break; }
             }
             if words.is_empty() { e.id = u32::MAX; return 0; }
+            // Fetch span checked on entry: from the block PC to the end of its
+            // last instruction (trace targets only move forward in the page).
+            let span = pc.wrapping_sub(self.pc) as usize;
             self.jit.serial = self.jit.serial.checked_add(1).expect("JIT id exhausted");
             e.id = self.jit.serial;
             self.jit.last_used.resize(e.id as usize + 1, 0);
-            e.bytes = words.chunks_exact(2).map(|w| w[1] as usize).sum();
+            e.bytes = span;
             self.jit.code.insert((pa,self.pc,page), (e.id,e.bytes));
             self.jit.owners.insert(e.id, ((pa,self.pc,page), index as u32));
             compile(e.id, self.pc, &words, &raw, pa, page);
