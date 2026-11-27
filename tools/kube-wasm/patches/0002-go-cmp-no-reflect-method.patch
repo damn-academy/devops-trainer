@@ -1,0 +1,29 @@
+diff --git a/vendor/github.com/google/go-cmp/cmp/internal/value/name.go b/vendor/github.com/google/go-cmp/cmp/internal/value/name.go
+index 7b498bb2..4f38094f 100644
+--- a/vendor/github.com/google/go-cmp/cmp/internal/value/name.go
++++ b/vendor/github.com/google/go-cmp/cmp/internal/value/name.go
+@@ -137,19 +137,11 @@ func appendTypeName(b []byte, t reflect.Type, qualified, elideFunc bool) []byte
+ 		b = appendTypeName(b, t.Elem(), qualified, false)
+ 	case reflect.Interface:
+ 		b = append(b, "interface{ "...)
+-		for i := 0; i < t.NumMethod(); i++ {
+-			if i > 0 {
+-				b = append(b, "; "...)
+-			}
+-			m := t.Method(i)
+-			if qualified && m.PkgPath != "" {
+-				b = append(b, '"')
+-				b = append(b, m.PkgPath...)
+-				b = append(b, '"')
+-				b = append(b, '.')
+-			}
+-			b = append(b, m.Name...)
+-			b = appendTypeName(b, m.Type, qualified, true)
++		// kube-wasm: method names are not printed. reflect.Type.Method with a
++		// variable index makes the Go linker keep every exported method of
++		// every reachable type, which costs megabytes in a wasm build.
++		if t.NumMethod() > 0 {
++			b = append(b, "..."...)
+ 		}
+ 		if b[len(b)-1] == ' ' {
+ 			b = b[:len(b)-1]

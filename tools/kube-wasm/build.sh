@@ -12,6 +12,8 @@
 #   NODE        node binary used to measure brotli size (node from PATH)
 #   WASM_OPT=1  also run wasm-opt -Oz if it is installed
 #   BROTLI=0    skip the brotli measurement (quality 11 takes ~8 min)
+#   GOTAGS      build tags (default kubewasm_lite: trimmed controller-manager,
+#               see patches/0003; set GOTAGS= for every upstream controller)
 set -euo pipefail
 
 K8S_VERSION=${K8S_VERSION:-v1.37.2}
@@ -22,6 +24,7 @@ NODE=${NODE:-node}
 SRC=$WORK/kubernetes
 OUT=$WORK/out
 MODE=${1:-wasm}
+GOTAGS=${GOTAGS-kubewasm_lite}
 
 mkdir -p "$WORK/gopath" "$WORK/gocache" "$WORK/tmp" "$OUT"
 export GOPATH=$WORK/gopath GOCACHE=$WORK/gocache GOTMPDIR=$WORK/tmp TMPDIR=$WORK/tmp
@@ -53,8 +56,12 @@ if [ "$MODE" = native ]; then
 	exit 0
 fi
 
+# Re-enable the linker's method dead-code elimination (see overlay.py).
+OVERLAY=$(python3 "$HERE/overlay.py" "$("$GO" env GOROOT)" "$SRC" "$WORK/overlay")
+
 start=$(date +%s)
-GOOS=js GOARCH=wasm "$GO" build -p 2 -trimpath -ldflags='-s -w' -o "$OUT/kube.wasm" ./cmd/kube-wasm
+GOOS=js GOARCH=wasm "$GO" build -p 2 -trimpath -overlay="$OVERLAY" -ldflags='-s -w' \
+	${GOTAGS:+-tags "$GOTAGS"} -o "$OUT/kube.wasm" ./cmd/kube-wasm
 echo "go build: $(($(date +%s) - start))s"
 cp "$("$GO" env GOROOT)/lib/wasm/wasm_exec.js" "$OUT/wasm_exec.js"
 
