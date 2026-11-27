@@ -59,11 +59,13 @@ export function sharedAccessModule(ramPages: number, generationPages: number, gr
   const loadOp: Record<number, number[]> = { 8: at(0x11, 3), 4: at(0x16, 2), 2: at(0x15, 1), 1: at(0x14, 0) };
   const storeOp: Record<number, number[]> = { 8: at(0x18, 3), 4: at(0x1d, 2), 2: at(0x1c, 1), 1: at(0x1b, 0) };
   const bodies: [number[], number[]][] = [
-    // 0 lock(): spin on the writer lock, sleeping briefly under contention.
-    [[], [0x03, 0x40, ...i32(0), ...i32(0), ...i32(1), ...at(0x48, 2), 0x04, 0x40,
-      ...i32(0), ...i32(1), ...i64(100000), ...at(0x01, 2), 0x1a, 0x0c, 1, 0x0b, 0x0b]],
-    // 1 unlock()
-    [[], [...i32(0), ...i32(0), ...at(0x17, 2), ...i32(0), ...i32(1), ...at(0x00, 2), 0x1a]],
+    // 0 lock(): 0 -> 1 when free; otherwise mark the lock contended (2) and
+    // sleep until the holder releases it (the futex mutex of SharedHartMemory).
+    [[], [...i32(0), ...i32(0), ...i32(1), ...at(0x48, 2), 0x04, 0x40, 0x03, 0x40,
+      ...i32(0), ...i32(2), ...at(0x41, 2), 0x04, 0x40,
+      ...i32(0), ...i32(2), ...i64(100000), ...at(0x01, 2), 0x1a, 0x0c, 1, 0x0b, 0x0b, 0x0b]],
+    // 1 unlock(): wake a sleeper only if the lock was marked contended.
+    [[], [...i32(0), ...i32(0), ...at(0x41, 2), ...i32(2), 0x46, 0x04, 0x40, ...i32(0), ...i32(1), ...at(0x00, 2), 0x1a, 0x0b]],
     // 2 publish(offset): write counter, reservation granule, code-page generation.
     [[], [...i32(8), ...i64(1), ...at(0x1f, 3), 0x1a,
       ...address, ...i32(7), 0x76, ...i32(2), 0x74, ...i32(1), ...at(0x1e, 2, 2), 0x1a,
@@ -147,9 +149,12 @@ export class SharedHartMemory {
   private check(address: number, size: number) {
     if (!Number.isInteger(address) || address < 64 || address % size || address + size > this.memory.buffer.byteLength) throw new RangeError('unaligned/out-of-bounds shared RAM');
   }
+  // Writer lock word: 0 free, 1 held, 2 held with possible sleepers. Only a
+  // release of a contended lock pays for Atomics.notify; JIT stores spin on 0 -> 1.
   private locked<T>(body: () => T): T {
-    while (Atomics.compareExchange(this.words, 0, 0, 1) !== 0) Atomics.wait(this.words, 0, 1, 10);
-    try { return body(); } finally { Atomics.store(this.words, 0, 0); Atomics.notify(this.words, 0, 1); }
+    if (Atomics.compareExchange(this.words, 0, 0, 1) !== 0)
+      while (Atomics.exchange(this.words, 0, 2) !== 0) Atomics.wait(this.words, 0, 2, 10);
+    try { return body(); } finally { if (Atomics.exchange(this.words, 0, 0) === 2) Atomics.notify(this.words, 0, 1); }
   }
   private read(address: number, size: 1 | 2 | 4 | 8): bigint {
     const value = this.wasm.load(address - address % 8);

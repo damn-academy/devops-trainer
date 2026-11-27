@@ -156,8 +156,8 @@ function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJi
           // Publish every page write, just like helpers. No private code bitmap
           // can prove a page is not executable on another hart.
           emit(0x20,40,0xa7,0x41,12,0x76,0x41,2,0x74,0x41,1,...atomic(0x1e,2,2),0x1a);
-          emit(0x41,0,0x41,0,...atomic(0x17,2,1));
-          emit(0x41,0,0x41,1,...atomic(0,2,1),0x1a);
+          // Release; notify only if a JS/helper writer marked the lock contended (2).
+          emit(0x41,0,0x41,0,...atomic(0x41,2,1),0x41,2,0x46,0x04,0x40,0x41,0,0x41,1,...atomic(0,2,1),0x1a,0x0b);
           emit(0x20,1,...constant(1n),0x37,3,72);
         } else {
           emit(0x20,42,...atomic([0x14,0x15,0x16,0x11,0x14,0x15,0x16][f]!,f&3,1));
