@@ -651,6 +651,45 @@ each hart. Larger blocks (traces) or installation without wrappers
 need changes in the core and the code generator; not done in this
 round.
 
+### Round 10: root cache, JIT installation, zero file
+
+**The zero file.** Captures since round 6 fill the guest's free memory
+with a zero file in `/run` and then remove it, but the console shell has
+no applet links: `rm` failed, and the file stayed in that tmpfs, up to
+half of the guest's RAM (Shmem 508 MB on a 1 GiB guest). Captures now
+use `busybox rm`, and a restore removes the file from older checkpoints.
+
+**Root cached once (r20 medium).** The root is a squashfs file on FAT,
+mounted through a loop device by the initramfs (`kuberoot/cmd/kinit`).
+The r20 worker medium switches that loop device to direct I/O from the
+stage-two wrapper (`node/loop-direct-io`) and drops the page cache. The
+guest then holds 487 instead of ~890 MiB, but the reads move to the
+emulator's disk chunk cache (+100 MiB) and the renderer's small malloc
+(+90 MiB), and the node gets much slower (every page-in of a binary
+goes through the HTTP disk). The node page keeps the r19 medium.
+
+**JIT installation with `table.init`** (one `install(base)` export per
+module instead of one export per block): the workers' heaps did not
+shrink noticeably and the restored node got slower (new pod after 397
+instead of 242 s); reverted. Traces in the Rust core were not tried: a
+core change changes `rv64_core_bg.wasm`, which every checkpoint is
+bound to.
+
+| Run | Footprint start / end / peak | Heartbeat | New pod | Notes |
+|---|---|---|---|---|
+| r20, 1 GiB | 2.29 / 2.77 / 2.83 GB | 276 | none in 10 min | guest 487 MiB, device memory 162 MiB |
+| r19, 768 MiB, zero file removed | 1.98 / 2.80 / 2.90 GB | 146 | 477 | small malloc still 485 MiB |
+| r19, 1 GiB, `table.init` JIT | 2.41 / 2.85 / 2.96 GB | 69 | 397 | reverted |
+| r19, 768 MiB, `table.init` JIT, Go limit | 1.95 / 2.88 / 2.93 GB | 226 | – | Go crashed: invalid runtime symbol table |
+
+Go 1.26.11 still crashes now and then in the browser: 2 of 12 runs with
+`GOGC=50 GOMEMLIMIT=300MiB`, 0 of 10 without (and 0 of 170 starts under
+Node.js). The limit is no longer the node page's default.
+
+Removing API groups and versions from kube.wasm was not attempted: it
+needs patches to the API installation of each group and a test suite
+for the course's kubectl scenarios, for ~10 % of the code.
+
 ### Open problems
 
 - **Go runtime crash with the kubelet client certificate.** With
