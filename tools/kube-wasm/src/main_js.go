@@ -38,6 +38,8 @@ func init() {
 //
 //	start(opts?: {v?: number, controllers?: boolean, scheduler?: boolean,
 //	              apiserverArgs?: string[], controllerManagerArgs?: string[]}): Promise<void>
+//	              restore?: {pki: {[file]: Uint8Array}, etcd: Uint8Array}}   // from saveState
+//	saveState(): Promise<{pki: {[file]: Uint8Array}, etcd: Uint8Array}>
 //	memStats(): {heapAlloc, heapSys, sys, numGC}   // Go runtime, bytes
 //	ready(): Promise<{[phase: string]: number}>   // phase timings in ms
 //	kubectl(args: string[], stdin?: string): Promise<{stdout, stderr, code}>
@@ -65,6 +67,15 @@ func main() {
 				o.Scheduler = v.Bool()
 			}
 			o.APIServerArgs = jsStrings(args[0].Get("apiserverArgs"))
+			if r := args[0].Get("restore"); r.Type() == js.TypeObject {
+				o.Restore = &State{PKI: map[string][]byte{}, Etcd: jsBytes(r.Get("etcd"))}
+				files := r.Get("pki")
+				keys := js.Global().Get("Object").Call("keys", files)
+				for i := 0; i < keys.Length(); i++ {
+					name := keys.Index(i).String()
+					o.Restore.PKI[name] = jsBytes(files.Get(name))
+				}
+			}
 			o.ControllerManagerArgs = jsStrings(args[0].Get("controllerManagerArgs"))
 		}
 		return promise(func() (any, error) { return nil, cluster.Start(ctx, o) })
@@ -76,6 +87,23 @@ func main() {
 				return nil, err
 			}
 			return cluster.TimingsMillis(), nil
+		})
+	}))
+
+	api.Set("saveState", js.FuncOf(func(js.Value, []js.Value) any {
+		return promise(func() (any, error) {
+			st, err := cluster.SaveState()
+			if err != nil {
+				return nil, err
+			}
+			files := js.Global().Get("Object").New()
+			for name, data := range st.PKI {
+				files.Set(name, toJSBytes(data))
+			}
+			out := js.Global().Get("Object").New()
+			out.Set("pki", files)
+			out.Set("etcd", toJSBytes(st.Etcd))
+			return out, nil
 		})
 	}))
 
@@ -132,6 +160,18 @@ func main() {
 		cb.Invoke()
 	}
 	select {}
+}
+
+func jsBytes(v js.Value) []byte {
+	b := make([]byte, v.Length())
+	js.CopyBytesToGo(b, v)
+	return b
+}
+
+func toJSBytes(b []byte) js.Value {
+	v := js.Global().Get("Uint8Array").New(len(b))
+	js.CopyBytesToJS(v, b)
+	return v
 }
 
 // jsStrings converts a JavaScript array of strings (or undefined) to Go.

@@ -25,6 +25,7 @@ package memetcd
 
 import (
 	"bytes"
+	"encoding/json"
 	"sort"
 	"sync"
 	"time"
@@ -634,4 +635,45 @@ func inRange(k, key, end []byte) bool {
 	default:
 		return bytes.Compare(k, key) >= 0 && bytes.Compare(k, end) < 0
 	}
+}
+
+// snapshot is the serialised form of a Store: the newest revision of every
+// live key. History, leases and watchers are not kept.
+type snapshot struct {
+	Rev int64              `json:"rev"`
+	KVs []*mvccpb.KeyValue `json:"kvs"`
+}
+
+// Snapshot serialises the current contents of the store.
+func (s *Store) Snapshot() ([]byte, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	snap := snapshot{Rev: s.rev}
+	s.keys.Ascend(func(h *keyHistory) bool {
+		if kv := h.latest(); kv != nil {
+			snap.KVs = append(snap.KVs, kv)
+		}
+		return true
+	})
+	return json.Marshal(snap)
+}
+
+// NewStoreFrom returns a store holding a Snapshot. Keys lose their leases
+// (the leases are gone), and history before the snapshot revision reads as
+// compacted, so watchers from older revisions relist.
+func NewStoreFrom(data []byte) (*Store, error) {
+	var snap snapshot
+	if err := json.Unmarshal(data, &snap); err != nil {
+		return nil, err
+	}
+	s := NewStore()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, kv := range snap.KVs {
+		kv.Lease = 0
+		s.keys.ReplaceOrInsert(&keyHistory{key: kv.Key, revs: []*mvccpb.KeyValue{kv}})
+		s.bytes += int64(len(kv.Value))
+	}
+	s.rev, s.compactRev = snap.Rev, snap.Rev
+	return s, nil
 }

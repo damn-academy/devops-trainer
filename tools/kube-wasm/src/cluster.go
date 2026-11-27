@@ -79,6 +79,8 @@ type Options struct {
 	Verbosity   int
 	Controllers bool
 	Scheduler   bool
+	// Restore starts from a State saved by SaveState instead of a new cluster.
+	Restore *State
 	// APIServerArgs and ControllerManagerArgs are appended to the flags of
 	// kube-apiserver and kube-controller-manager.
 	APIServerArgs         []string
@@ -94,6 +96,7 @@ type Cluster struct {
 	ready   chan struct{}
 	err     error
 	opts    Options
+	store   *memetcd.Store
 	// Kubeconfig is the admin kubeconfig written at start.
 	Kubeconfig string
 	Timings    map[string]time.Duration
@@ -155,13 +158,25 @@ func (c *Cluster) Start(ctx context.Context, o Options) error {
 	if err != nil {
 		return fail(fmt.Errorf("etcd listen: %w", err))
 	}
-	memetcd.Serve(memetcd.NewStore(), lis)
+	store := memetcd.NewStore()
+	if o.Restore != nil {
+		if store, err = memetcd.NewStoreFrom(o.Restore.Etcd); err != nil {
+			return fail(fmt.Errorf("restore etcd: %w", err))
+		}
+	}
+	c.store = store
+	memetcd.Serve(store, lis)
 	c.mark("etcd")
 
-	if err := writePKI(o.PKIDir, []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("10.96.0.1"), net.ParseIP(advertiseAddr)}); err != nil {
-		return fail(fmt.Errorf("pki: %w", err))
+	var kubeconfig, token string
+	if o.Restore != nil {
+		kubeconfig, token, err = restorePKI(o.PKIDir, o.Restore.PKI)
+	} else {
+		if err := writePKI(o.PKIDir, []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("10.96.0.1"), net.ParseIP(advertiseAddr)}); err != nil {
+			return fail(fmt.Errorf("pki: %w", err))
+		}
+		kubeconfig, token, err = writeAuth(o.PKIDir, "http://"+plainAddr)
 	}
-	kubeconfig, token, err := writeAuth(o.PKIDir, "http://"+plainAddr)
 	if err != nil {
 		return fail(fmt.Errorf("auth: %w", err))
 	}

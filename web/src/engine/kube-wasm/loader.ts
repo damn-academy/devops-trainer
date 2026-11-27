@@ -19,6 +19,8 @@ export interface StartOptions {
   apiserverArgs?: string[];
   /** Extra kube-controller-manager flags. */
   controllerManagerArgs?: string[];
+  /** Start from a saved state (see KubeWasm.saveState) instead of a new cluster. */
+  restore?: ClusterState;
 }
 
 /** The API kube.wasm installs as globalThis.kubeWasm. */
@@ -27,6 +29,8 @@ export interface KubeWasm {
   /** Resolves when kube-apiserver answers /readyz; returns phase timings in ms. */
   ready(): Promise<Record<string, number>>;
   timings(): Record<string, number>;
+  /** Saves the PKI files and the store's contents. */
+  saveState(): Promise<ClusterState>;
   /** Go runtime memory statistics in bytes. */
   memStats(): { heapAlloc: number; heapSys: number; sys: number; numGC: number };
   kubectl(args: string[], stdin?: string): Promise<KubectlResult>;
@@ -36,6 +40,11 @@ export interface KubeWasm {
   listen(addr: string, onConn: (c: BridgeConn & { start(onData: (b: Uint8Array) => void, onClose: (err?: string) => void): void }) => void): string | null;
   /** Creates a bootstrap token and returns a kuberoot worker Membership (JSON). */
   joinMembership(nodeName: string, nodeIP: string): Promise<string>;
+}
+
+export interface ClusterState {
+  pki: Record<string, Uint8Array>;
+  etcd: Uint8Array;
 }
 
 export interface BridgeConn {
