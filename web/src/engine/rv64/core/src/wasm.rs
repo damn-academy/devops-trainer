@@ -12,13 +12,25 @@ extern "C" {
     pub(crate) fn shared_dma_write(offset: u32, bytes: &[u8]);
     #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedDmaRead)]
     pub(crate) fn shared_dma_read(offset: u32, bytes: &mut [u8]);
-    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedCas)]
-    pub(crate) fn shared_cas(offset: u32, expected: u64, value: u64) -> u64;
-    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedGeneration)]
-    pub(crate) fn shared_generation(page: u32) -> u32;
     #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedMmio)]
     pub(crate) fn shared_mmio(write: bool, address: u64, size: u32, value: u64) -> u64;
 }
+// Direct shared-bus imports, provided by smp.ts sharedAccessModule() as wasm
+// functions: no JS frame, no BigInt. Offsets are guest-physical RAM offsets,
+// bounded and aligned by the callers; stores follow the shared write protocol.
+#[link(wasm_import_module = "rv64shared")]
+extern "C" {
+    #[link_name = "load"] fn bus_load(offset: u32, size: u32) -> u64;
+    #[link_name = "store"] fn bus_store(offset: u32, size: u32, value: u64);
+    #[link_name = "fetch"] fn bus_fetch(offset: u32) -> u32;
+    #[link_name = "generation"] fn bus_generation(page: u32) -> u32;
+    #[link_name = "cas"] fn bus_cas(offset: u32, expected: u64, value: u64) -> u64;
+}
+#[inline] pub(crate) fn shared_load(offset: u32, size: u32) -> u64 { unsafe { bus_load(offset, size) } }
+#[inline] pub(crate) fn shared_store(offset: u32, size: u32, value: u64) { unsafe { bus_store(offset, size, value) } }
+#[inline] pub(crate) fn shared_fetch(offset: u32) -> u32 { unsafe { bus_fetch(offset) } }
+#[inline] pub(crate) fn shared_generation(page: u32) -> u32 { unsafe { bus_generation(page) } }
+#[inline] pub(crate) fn shared_cas(offset: u32, expected: u64, value: u64) -> u64 { unsafe { bus_cas(offset, expected, value) } }
 #[wasm_bindgen]
 pub struct Engine {
     cpu: Cpu,

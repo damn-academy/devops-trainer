@@ -1,6 +1,6 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it } from 'vitest';
-import { atomicModule, SharedHartMemory, HartMailboxes, RESERVATION_GRANULE } from '../src/engine/rv64/smp';
+import { atomicModule, SharedHartMemory, HartMailboxes, RESERVATION_GRANULE, sharedAccessModule, type SharedAccessExports } from '../src/engine/rv64/smp';
 function machine() {
   const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
   const module = atomicModule(1);
@@ -43,6 +43,30 @@ describe('R3 shared wasm RAM substrate (not integrated CPU)', () => {
     expect(granules[Math.floor((64 + 4090) / 128)]).toBe(1); expect(granules[Math.floor((64 + 4090 + 4099) / 128)]).toBe(1);
     const out = new Uint8Array(4100); a.dmaRead(64 + 4090, out); expect(out).toEqual(bytes);
     expect(() => a.dmaWrite(0, bytes)).toThrow(RangeError);
+  });
+  it('direct wasm bus access follows the SharedHartMemory store protocol', () => {
+    const memory = new WebAssembly.Memory({ initial: 2, maximum: 2, shared: true });
+    const generations = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true }), granules = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
+    const gens = new Int32Array(generations.buffer), grans = new Int32Array(granules.buffer);
+    const js = new SharedHartMemory(memory, atomicModule(2), gens, grans);
+    const bus = new WebAssembly.Instance(sharedAccessModule(2, 1, 1), { env: { ram: memory, generations, granules } }).exports as unknown as SharedAccessExports;
+    bus.store(0x1000, 8, 0x8877665544332211n);
+    expect(BigInt.asUintN(64, js.load(64 + 0x1000, 8))).toBe(0x8877665544332211n);
+    expect(bus.load(0x1000, 4)).toBe(0x44332211n); expect(bus.load(0x1004, 4)).toBe(0x88776655n);
+    expect(bus.load(0x1002, 2)).toBe(0x4433n); expect(bus.load(0x1007, 1)).toBe(0x88n);
+    expect(bus.fetch(0x1002)).toBe(0x66554433);
+    bus.store(0x1006, 2, 0xffffn); bus.store(0x1001, 1, 0xabn); bus.store(0x1000, 4, 0x0102_0304n | 0xf0000000n);
+    expect(BigInt.asUintN(64, js.load(64 + 0x1000, 8))).toBe(0xffff6655f1020304n);
+    expect(bus.generation(1)).toBe(4); expect(gens[1]).toBe(4);
+    expect(grans[Math.floor((64 + 0x1000) / 128)]).toBe(4);
+    expect(new BigInt64Array(memory.buffer, 8, 1)[0]).toBe(4n);
+    // LR on the JS path observes direct-bus stores and CAS.
+    js.lr(64 + 0x1000, 8); bus.store(0x1000, 8, 0xffff6655f1020304n);
+    expect(js.sc(64 + 0x1000, 8, 1n)).toBe(false);
+    const old = BigInt.asIntN(64, 0xffff6655f1020304n);
+    expect(bus.cas(0x1000, 1n, 2n)).toBe(old); expect(bus.generation(1)).toBe(5);
+    expect(bus.cas(0x1000, old, 7n)).toBe(old); expect(bus.load(0x1000, 8)).toBe(7n); expect(bus.generation(1)).toBe(6);
+    expect(new Int32Array(memory.buffer, 0, 1)[0]).toBe(0);
   });
   it('rejects MMIO, misalignment and overflow before touching shared RAM', () => {
     const [a] = machine();

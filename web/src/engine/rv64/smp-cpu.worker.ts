@@ -2,7 +2,7 @@
 // only its hart state. Worker 0 owns a separate device Engine and services RPCs.
 import { HTTPBlockDevice, type HTTPDisk } from './block';
 import { JitRuntime } from './jit';
-import { SharedHartMemory, HartMailboxes, type Amo, type FenceTicket } from './smp';
+import { SharedHartMemory, HartMailboxes, sharedAccessModule, type Amo, type FenceTicket } from './smp';
 interface Init {
   hostBudget?: number;
   compilerPort?: MessagePort;
@@ -26,6 +26,11 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     const words = new Int32Array(d.control), wide = new BigUint64Array(d.control);
     const bus = new HartMailboxes(d.harts, d.mail), ram = new SharedHartMemory(d.memory, d.module, new Int32Array(d.generations.buffer), new Int32Array(d.granules.buffer));
     const base = d.hart * 16;
+    // The core imports these wasm functions directly (module `rv64shared`).
+    const pages = (m: WebAssembly.Memory) => m.buffer.byteLength / 65536;
+    (globalThis as { rv64SharedImports?: WebAssembly.Exports }).rv64SharedImports = new WebAssembly.Instance(
+      sharedAccessModule(pages(d.memory), pages(d.generations), pages(d.granules)),
+      { env: { ram: d.memory, generations: d.generations, granules: d.granules } }).exports;
     const url = new URL('/rv64/rv64_core.js', self.location.origin).href;
     const mod = await import(/* @vite-ignore */ url); const wasm = await mod.default();
     const core = new mod.Engine(32);
@@ -81,8 +86,6 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     };
     Object.assign(globalThis, {
       rv64SharedAccess: access,
-      rv64SharedGeneration: (page: number) => Atomics.load(new Int32Array(d.generations.buffer), page) >>> 0,
-      rv64SharedCas: (offset: number, expected: bigint, value: bigint) => ram.cas(offset + 64, expected, value),
       rv64SharedImage: (offset: number, bytes: Uint8Array) => new Uint8Array(d.memory.buffer, offset + 64, bytes.length).set(bytes),
       rv64SharedMmio: mmio,
       rv64SharedDmaWrite: (offset: number, bytes: Uint8Array) => ram.dmaWrite(offset + 64, bytes),

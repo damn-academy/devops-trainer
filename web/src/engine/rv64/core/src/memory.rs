@@ -180,7 +180,7 @@ impl Memory {
         if self.shared_bytes != 0 {
             if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| off.checked_add(size as u64).is_some_and(|end| end <= self.shared_bytes as u64)) {
                 if !matches!(size, 1 | 2 | 4 | 8) { return Err(access.fault(addr)); }
-                return Ok(crate::wasm::shared_access(0, off as u32, size as u32, 0));
+                return Ok(crate::wasm::shared_load(off as u32, size as u32));
             }
         }
         if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| *off <= self.ram_size() as u64) {
@@ -215,7 +215,7 @@ impl Memory {
         if self.shared_bytes != 0 {
             if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| off.checked_add(size as u64).is_some_and(|end| end <= self.shared_bytes as u64)) {
                 if !matches!(size, 1 | 2 | 4 | 8) { return Err(Access::Write.fault(addr)); }
-                crate::wasm::shared_access(1, off as u32, size as u32, value);
+                crate::wasm::shared_store(off as u32, size as u32, value);
                 return Ok(());
             }
         }
@@ -285,8 +285,7 @@ impl Memory {
         if self.shared_bytes != 0 {
             let off = pa.checked_sub(RAM_BASE)?;
             if off & 1 != 0 || off & 4095 == 4094 || off + 4 > self.shared_bytes as u64 { return None; }
-            let raw = (crate::wasm::shared_access(0, off as u32, 2, 0) as u32) |
-                ((crate::wasm::shared_access(0, off as u32 + 2, 2, 0) as u32) << 16);
+            let raw = crate::wasm::shared_fetch(off as u32);
             return if raw & 3 == 3 { Some(Decoded::new(raw, raw, 4)) }
                 else { Some(Decoded::new(raw & 65535, crate::compressed::expand(raw as u16)?, 2)) };
         }

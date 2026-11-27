@@ -1,7 +1,19 @@
 // Uses the locally staged wasm; rebuild it before running the fixed regression.
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import { atomicModule, SharedHartMemory, HartMailboxes } from '../src/engine/rv64/smp';
+import { atomicModule, SharedHartMemory, HartMailboxes, sharedAccessModule, sharedTable, type SharedAccessExports } from '../src/engine/rv64/smp';
+
+// The core binds its `rv64shared` imports once per module instance, while each
+// test builds new memories; forward to the bus of the current test.
+let bus: SharedAccessExports | undefined;
+(globalThis as { rv64SharedImports?: unknown }).rv64SharedImports = {
+  load: (o: number, n: number) => bus!.load(o, n), store: (o: number, n: number, v: bigint) => bus!.store(o, n, v),
+  fetch: (o: number) => bus!.fetch(o), generation: (p: number) => bus!.generation(p), cas: (o: number, e: bigint, v: bigint) => bus!.cas(o, e, v),
+};
+function attachBus(memory: WebAssembly.Memory, generations: WebAssembly.Memory, granules: WebAssembly.Memory) {
+  const pages = (m: WebAssembly.Memory) => m.buffer.byteLength / 65536;
+  bus = new WebAssembly.Instance(sharedAccessModule(pages(memory), pages(generations), pages(granules)), { env: { ram: memory, generations, granules } }).exports as unknown as SharedAccessExports;
+}
 import { compileBatch } from '../src/engine/rv64/jit-compiler';
 
 it.skipIf(process.env.RV64_SMP_JIT !== '1')('retains hot physical code across remote translation fences', async () => {
@@ -12,8 +24,10 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('retains hot physical code across re
   for (const harts of [1, 2]) {
     const bytes = 32 * 1024 * 1024, pages = bytes / 65536 + 1;
     const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
-    const generations = new Int32Array(new SharedArrayBuffer(bytes / 4096 * 4));
-    const ram = new SharedHartMemory(memory, atomicModule(pages), generations);
+    const generationTable = sharedTable(bytes / 4096 * 4), generations = new Int32Array(generationTable.buffer);
+    const granuleTable = sharedTable(Math.ceil(memory.buffer.byteLength / 128) * 4), granules = new Int32Array(granuleTable.buffer);
+    attachBus(memory, generationTable, granuleTable);
+    const ram = new SharedHartMemory(memory, atomicModule(pages), generations, granules);
     const bus = new HartMailboxes(harts);
     Object.assign(globalThis, {
       rv64SharedAccess: (op: number, off: number, size: 1|2|4|8, value: bigint) => {
@@ -21,7 +35,6 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('retains hot physical code across re
         if (op === 1) { ram.store(off + 64, size, value); return 0n; }
         throw Error(`unexpected shared operation ${op}`);
       },
-      rv64SharedGeneration: (page: number) => Atomics.load(generations, page) >>> 0,
     });
     // addi t0,t0,1; jal x0,-4. No OS, clocks, data stores or external compiler.
     ram.store(64, 4, 0x00128293n); ram.store(68, 4, 0xffdff06fn);
@@ -71,9 +84,11 @@ for (const modifyCode of [false, true]) it.skipIf(process.env.RV64_SMP_JIT !== '
     const wasm = await mod.default({ module_or_path: readFileSync(process.env.RV64_SMP_JIT_WASM ?? new URL('../public/rv64/rv64_core_bg.wasm', import.meta.url)) });
     const bytes = 32 * 1024 * 1024, pages = bytes / 65536 + 1;
     const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
-    const generations = new Int32Array(new SharedArrayBuffer(bytes / 4096 * 4));
+    const generationTable = sharedTable(bytes / 4096 * 4), generations = new Int32Array(generationTable.buffer);
+    const granuleTable = sharedTable(Math.ceil(memory.buffer.byteLength / 128) * 4), granules = new Int32Array(granuleTable.buffer);
+    attachBus(memory, generationTable, granuleTable);
     const module = atomicModule(pages);
-    const ram = [new SharedHartMemory(memory, module, generations), new SharedHartMemory(memory, module, generations)];
+    const ram = [new SharedHartMemory(memory, module, generations, granules), new SharedHartMemory(memory, module, generations, granules)];
     const bus = new HartMailboxes(2);
     let active = 0;
     const queue: any[] = [];
@@ -83,7 +98,6 @@ for (const modifyCode of [false, true]) it.skipIf(process.env.RV64_SMP_JIT !== '
         if (op === 1) { ram[active]!.store(off + 64, size, value); return 0n; }
         throw Error(`unexpected shared operation ${op}`);
       },
-      rv64SharedGeneration: (page: number) => Atomics.load(generations, page) >>> 0,
       rv64Compile: (id: number, pc: bigint, words: Uint32Array, raw: Uint32Array) => queue.push({ id, pc, words: [...words], raw: [...raw] }),
     });
     const put = (off: number, words: number[]) => words.forEach((word, i) => ram[0]!.store(64 + off + i * 4, 4, BigInt(word)));
@@ -152,13 +166,13 @@ for (const modifyCode of [false, true]) it.skipIf(process.env.RV64_SMP_JIT !== '
   }, 30000);
 
 it.skipIf(process.env.RV64_SMP_JIT !== '1')('publishes an inline SMP code store before SBI RFENCE ACK and resumes guarded chains', async () => {
-  const { sharedTable } = await import('../src/engine/rv64/smp');
   const { compileChainDispatcher } = await import('../src/engine/rv64/jit-compiler');
   const mod = await import(/* @vite-ignore */ new URL('../public/rv64/rv64_core.js', import.meta.url).href);
   const wasm = await mod.default({ module_or_path: readFileSync(process.env.RV64_SMP_JIT_WASM ?? new URL('../public/rv64/rv64_core_bg.wasm', import.meta.url)) });
   const bytes = 32 * 1024 * 1024, pages = bytes / 65536 + 1;
   const memory = sharedTable(pages * 65536), generations = sharedTable(bytes / 4096 * 4);
   const granules = sharedTable(Math.ceil(memory.buffer.byteLength / 128) * 4);
+  attachBus(memory, generations, granules);
   const gens = new Int32Array(generations.buffer);
   const ram = [0,1].map(() => new SharedHartMemory(memory, atomicModule(pages), gens, new Int32Array(granules.buffer)));
   const layout = { bytes, ramPages: pages, generationPages: generations.buffer.byteLength / 65536, granulePages: granules.buffer.byteLength / 65536 };
@@ -170,8 +184,6 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('publishes an inline SMP code store 
       if (op === 1) { ram[active]!.store(off+64,size,value); return 0n; }
       throw Error(`unexpected shared operation ${op}`);
     },
-    rv64SharedGeneration: (page: number) => Atomics.load(gens,page) >>> 0,
-    rv64SharedCas: (off: number, expected: bigint, value: bigint) => ram[active]!.cas(off+64,expected,value),
     rv64Compile: (id: number, pc: bigint, words: Uint32Array, raw: Uint32Array) => queues[active]!.push({id,pc,words:[...words],raw:[...raw]}),
   });
   const put = (off: number, words: number[]) => words.forEach((word,i) => ram[0]!.store(64+off+i*4,4,BigInt(word>>>0)));
@@ -247,15 +259,16 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('samples nonzero comm and valid user
   await mod.default({ module_or_path: readFileSync(process.env.RV64_SMP_JIT_WASM ?? new URL('../public/rv64/rv64_core_bg.wasm', import.meta.url)) });
   const bytes = 32 * 1024 * 1024, pages = bytes / 65536 + 1;
   const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
-  const generations = new Int32Array(new SharedArrayBuffer(bytes / 4096 * 4));
-  const ram = new SharedHartMemory(memory, atomicModule(pages), generations);
+  const generationTable = sharedTable(bytes / 4096 * 4), generations = new Int32Array(generationTable.buffer);
+  const granuleTable = sharedTable(Math.ceil(memory.buffer.byteLength / 128) * 4), granules = new Int32Array(granuleTable.buffer);
+  attachBus(memory, generationTable, granuleTable);
+  const ram = new SharedHartMemory(memory, atomicModule(pages), generations, granules);
   Object.assign(globalThis, {
     rv64SharedAccess: (op: number, off: number, size: 1|2|4|8, value: bigint) => {
       if (op === 0) return BigInt.asUintN(size * 8, ram.load(off + 64, size));
       if (op === 1) { ram.store(off + 64, size, value); return 0n; }
       throw Error(`unexpected shared operation ${op}`);
     },
-    rv64SharedGeneration: (page: number) => Atomics.load(generations, page) >>> 0,
   });
   // Sv39: supervisor identity + high kernel alias, user low gigapage.
   const pte = 0x200000cfn;
@@ -296,11 +309,11 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('samples nonzero comm and valid user
 
 it.skipIf(process.env.RV64_SMP_JIT !== '1')('runs A compiled code on B and rejects it on both after rewrite and remote fence.i', async () => {
   const { SharedCodeCache } = await import('../src/engine/rv64/shared-code');
-  const { sharedTable } = await import('../src/engine/rv64/smp');
   const mod = await import(/* @vite-ignore */ new URL('../public/rv64/rv64_core.js', import.meta.url).href);
   const wasm = await mod.default({ module_or_path: readFileSync(process.env.RV64_SMP_JIT_WASM ?? new URL('../public/rv64/rv64_core_bg.wasm', import.meta.url)) });
   const bytes=32*1024*1024, pages=bytes/65536+1;
   const memory=sharedTable(pages*65536), generations=sharedTable(bytes/4096*4), granules=sharedTable(Math.ceil(memory.buffer.byteLength/128)*4);
+  attachBus(memory,generations,granules);
   const gens=new Int32Array(generations.buffer);
   const ram=new SharedHartMemory(memory,atomicModule(pages),gens,new Int32Array(granules.buffer));
   const layout={bytes,ramPages:pages,generationPages:generations.buffer.byteLength/65536,granulePages:granules.buffer.byteLength/65536};
@@ -310,7 +323,6 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('runs A compiled code on B and rejec
       if(op===0)return BigInt.asUintN(size*8,ram.load(off+64,size));
       if(op===1){ram.store(off+64,size,value);return 0n;}throw Error('unexpected shared op');
     },
-    rv64SharedGeneration:(page:number)=>Atomics.load(gens,page)>>>0,
     rv64Compile:(id:number,pc:bigint,words:Uint32Array,raw:Uint32Array,pa:bigint,generation:bigint)=>queues[active]!.push({id,pc,words:[...words],raw:[...raw],pa,generation}),
   });
   ram.store(64,4,0x00100293n);ram.store(68,4,0xffdff06fn);

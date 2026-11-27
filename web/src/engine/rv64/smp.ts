@@ -38,6 +38,67 @@ export function atomicModule(pages: number): WebAssembly.Module {
     ...section(10, [operations.length, ...bodies.flat()]),
   ]));
 }
+/** Direct shared-bus access for the Rust core, imported as module
+ * `rv64shared`, so interpreter loads, stores, fetches and page walks never
+ * leave wasm. Stores follow the SharedHartMemory writer protocol exactly:
+ * lock word at 0, write counter at 8, then the reservation granule and the
+ * code-page generation of the stored byte. Offsets are guest-physical RAM
+ * offsets (guest data starts at byte 64); callers bound and align them.
+ * Memories: 0 = RAM, 1 = page generations, 2 = reservation granules. */
+export function sharedAccessModule(ramPages: number, generationPages: number, granulePages: number): WebAssembly.Module {
+  const sleb = (v: number) => { const out: number[] = []; for (;;) { const b = v & 127; v >>= 7; if (v === 0 && !(b & 64) || v === -1 && b & 64) { out.push(b); return out; } out.push(b | 128); } };
+  const i32 = (v: number) => [0x41, ...sleb(v)], i64 = (v: number) => [0x42, ...sleb(v)];
+  const get = (i: number) => [0x20, i], set = (i: number) => [0x21, i];
+  const at = (op: number, align: number, memory = 0) => memory ? [0xfe, op, align | 64, memory, 0] : [0xfe, op, align, 0];
+  const address = [...get(0), ...i32(64), 0x6a];
+  // Dispatch on access size 8/4/2/1 (param 1); `pick` emits one arm.
+  const bySize = (type: number, pick: (size: number) => number[]) => [
+    ...get(1), ...i32(8), 0x46, 0x04, type, ...pick(8), 0x05,
+    ...get(1), ...i32(4), 0x46, 0x04, type, ...pick(4), 0x05,
+    ...get(1), ...i32(2), 0x46, 0x04, type, ...pick(2), 0x05, ...pick(1), 0x0b, 0x0b, 0x0b];
+  const loadOp: Record<number, number[]> = { 8: at(0x11, 3), 4: at(0x16, 2), 2: at(0x15, 1), 1: at(0x14, 0) };
+  const storeOp: Record<number, number[]> = { 8: at(0x18, 3), 4: at(0x1d, 2), 2: at(0x1c, 1), 1: at(0x1b, 0) };
+  const bodies: [number[], number[]][] = [
+    // 0 lock(): spin on the writer lock, sleeping briefly under contention.
+    [[], [0x03, 0x40, ...i32(0), ...i32(0), ...i32(1), ...at(0x48, 2), 0x04, 0x40,
+      ...i32(0), ...i32(1), ...i64(100000), ...at(0x01, 2), 0x1a, 0x0c, 1, 0x0b, 0x0b]],
+    // 1 unlock()
+    [[], [...i32(0), ...i32(0), ...at(0x17, 2), ...i32(0), ...i32(1), ...at(0x00, 2), 0x1a]],
+    // 2 publish(offset): write counter, reservation granule, code-page generation.
+    [[], [...i32(8), ...i64(1), ...at(0x1f, 3), 0x1a,
+      ...address, ...i32(7), 0x76, ...i32(2), 0x74, ...i32(1), ...at(0x1e, 2, 2), 0x1a,
+      ...get(0), ...i32(12), 0x76, ...i32(2), 0x74, ...i32(1), ...at(0x1e, 2, 1), 0x1a]],
+    // 3 load(offset, size) -> zero-extended i64
+    [[1, 1, 0x7f], [...address, ...set(2), ...bySize(0x7e, n => [...get(2), ...loadOp[n]!])]],
+    // 4 store(offset, size, value)
+    [[1, 1, 0x7f], [0x10, 0, ...address, ...set(3), ...bySize(0x40, n => [...get(3), ...get(2), ...storeOp[n]!]), ...get(0), 0x10, 2, 0x10, 1]],
+    // 5 generation(page) -> i32
+    [[], [...get(0), ...i32(2), 0x74, ...at(0x10, 2, 1)]],
+    // 6 cas(offset, expected, value) -> old (PTE A/D updates)
+    [[1, 1, 0x7e], [0x10, 0, ...address, ...at(0x11, 3), 0x22, 3, ...get(1), 0x51, 0x04, 0x40,
+      ...address, ...get(2), ...at(0x18, 3), ...get(0), 0x10, 2, 0x0b, 0x10, 1, ...get(3)]],
+    // 7 fetch(offset) -> 32 instruction bits (2-byte aligned, page-internal)
+    [[], [...address, 0x28, 1, 0]],
+  ];
+  const code = bodies.map(([locals, body]) => { const b = [...(locals.length ? locals : [0]), ...body, 0x0b]; return [...uleb(b.length), ...b]; });
+  const memory = (name: string, pages: number) => [...string('env'), ...string(name), 2, 3, ...uleb(pages), ...uleb(pages)];
+  const exports = [['load', 3], ['store', 4], ['generation', 5], ['cas', 6], ['fetch', 7]] as const;
+  return new WebAssembly.Module(new Uint8Array([
+    0,97,115,109,1,0,0,0,
+    ...section(1, [6, 0x60,0,0, 0x60,1,0x7f,0, 0x60,2,0x7f,0x7f,1,0x7e, 0x60,3,0x7f,0x7f,0x7e,0, 0x60,1,0x7f,1,0x7f, 0x60,3,0x7f,0x7e,0x7e,1,0x7e]),
+    ...section(2, [3, ...memory('ram', ramPages), ...memory('generations', generationPages), ...memory('granules', granulePages)]),
+    ...section(3, [8, 0, 0, 1, 2, 3, 4, 5, 4]),
+    ...section(7, [exports.length, ...exports.flatMap(([name, index]) => [...string(name), 0, index])]),
+    ...section(10, [code.length, ...code.flat()]),
+  ]));
+}
+export interface SharedAccessExports {
+  load(offset: number, size: number): bigint;
+  store(offset: number, size: number, value: bigint): void;
+  generation(page: number): number;
+  cas(offset: number, expected: bigint, value: bigint): bigint;
+  fetch(offset: number): number;
+}
 interface AtomicExports {
   load(address: number): bigint;
   store(address: number, value: bigint): void;
