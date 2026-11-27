@@ -287,8 +287,10 @@ func buildAPIServer(ctx context.Context, o Options) (http.Handler, func() error,
 		"--authorization-mode=Node,RBAC",
 		// Nodes join with bootstrap tokens (see join.go).
 		"--enable-bootstrap-token-auth=true",
-		"--kubelet-client-certificate=" + pki("apiserver-kubelet-client.crt"),
-		"--kubelet-client-key=" + pki("apiserver-kubelet-client.key"),
+		// The kubelet client certificate (pki: apiserver-kubelet-client.*) is
+		// not passed by default: with it, kube.wasm dies early in about one
+		// start in four with "fatal error: found pointer to free object" (see
+		// README). Pages that need logs/exec pass the two flags themselves.
 		"--enable-priority-and-fairness=false",
 		"--profiling=false",
 		"--allow-privileged=true",

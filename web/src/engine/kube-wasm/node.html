@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kube.wasm node (dev)</title>
+  <style>
+    :root { color-scheme: light dark; --bg: #fafafa; --fg: #1d1d1f; --dim: #6e6e73; --line: #d2d2d7; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #161618; --fg: #e8e8ea; --dim: #8e8e93; --line: #3a3a3c; } }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.4 ui-monospace, "IBM Plex Mono", Menlo, monospace; }
+    main { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr auto; gap: 8px; height: 100vh; padding: 12px; box-sizing: border-box; }
+    #status { grid-column: 1 / 3; color: var(--dim); }
+    pre { margin: 0; padding: 8px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; white-space: pre-wrap; word-break: break-word; }
+    form { display: flex; gap: 6px; }
+    input { flex: 1; font: inherit; padding: 4px 6px; background: transparent; color: inherit; border: 1px solid var(--line); border-radius: 6px; }
+    section { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+    section > pre { flex: 1; }
+    @media (max-width: 800px) { main { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; } #status { grid-column: 1; } section > pre { height: 45vh; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div id="status">loading kube.wasm…</div>
+    <section>
+      <pre id="cluster">kubectl get nodes,pods -A -o wide</pre>
+      <form id="kubectl"><span>$ kubectl</span><input id="kubectl-input" autocomplete="off" spellcheck="false" placeholder="get nodes -o wide"></form>
+      <pre id="kubectl-out" style="flex: 0 0 25%"></pre>
+    </section>
+    <section>
+      <pre id="console"></pre>
+      <form id="guest"><span>node #</span><input id="guest-input" autocomplete="off" spellcheck="false" placeholder="shell command on the node console"></form>
+    </section>
+  </main>
+  <script type="module" src="./node.ts"></script>
+</body>
+</html>

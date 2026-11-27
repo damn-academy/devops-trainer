@@ -26,6 +26,17 @@ export interface KubeWasm {
   ready(): Promise<Record<string, number>>;
   timings(): Record<string, number>;
   kubectl(args: string[], stdin?: string): Promise<KubectlResult>;
+  /** Opens a TCP stream to a listener inside kube.wasm, e.g. '127.0.0.1:6443'. */
+  connect(addr: string, onData: (b: Uint8Array) => void, onClose: (err?: string) => void): BridgeConn;
+  /** Creates a bootstrap token and returns a kuberoot worker Membership (JSON). */
+  joinMembership(nodeName: string, nodeIP: string): Promise<string>;
+}
+
+export interface BridgeConn {
+  write(b: Uint8Array): void;
+  /** Half-closes: no more data from this side. */
+  end(): void;
+  close(): void;
 }
 
 export interface LoadOptions {
