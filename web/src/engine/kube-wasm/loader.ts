@@ -31,6 +31,8 @@ export interface KubeWasm {
   timings(): Record<string, number>;
   /** Saves the PKI files and the store's contents. */
   saveState(): Promise<ClusterState>;
+  /** Go heap profile in pprof format, after a collection. */
+  heapProfile(): Promise<Uint8Array>;
   /** Go runtime memory statistics in bytes. */
   memStats(): { heapAlloc: number; heapSys: number; sys: number; numGC: number };
   kubectl(args: string[], stdin?: string): Promise<KubectlResult>;
@@ -112,7 +114,13 @@ export async function loadKubeWasm(o: LoadOptions): Promise<Loaded> {
   if (!g.Go) await loadScript(o.wasmExecUrl);
   const go = new g.Go!();
   go.argv = ['kube-wasm'];
-  go.env = { HOME: '/root', USER: 'root', PATH: '/usr/bin', ...o.env };
+  // GODEBUG: with Go 1.26.0's concurrent collector and stack shrinking,
+  // kube.wasm corrupted its heap or stacks in about a third of starts
+  // under load ("found pointer to free object", "invalid runtime symbol
+  // table"). Stop-the-world collection without stack shrinking: 0 crashes
+  // in 40 starts (tools/kube-wasm/README.md). The runtime is single-threaded
+  // here, so the concurrent collector bought no parallelism anyway.
+  go.env = { HOME: '/root', USER: 'root', PATH: '/usr/bin', GODEBUG: 'gcstoptheworld=1,gcshrinkstackoff=1', ...o.env };
 
   const t0 = performance.now();
   const module = await WebAssembly.compileStreaming(fetch(o.wasmUrl));

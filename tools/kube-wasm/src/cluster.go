@@ -307,10 +307,11 @@ func buildAPIServer(ctx context.Context, o Options) (http.Handler, func() error,
 		// Node names do not resolve here; dial kubelets by address, which
 		// the page bridges to the emulated network.
 		"--kubelet-preferred-address-types=InternalIP",
-		// The kubelet client certificate (pki: apiserver-kubelet-client.*) is
-		// not passed by default: with it, kube.wasm dies early in about one
-		// start in four with "fatal error: found pointer to free object" (see
-		// README). Pages that need logs/exec pass the two flags themselves.
+		// The apiserver's client certificate towards kubelets (logs, exec).
+		// With it, kube.wasm needs the GODEBUG settings the page loader sets
+		// (see README, "The crash").
+		"--kubelet-client-certificate=" + pki("apiserver-kubelet-client.crt"),
+		"--kubelet-client-key=" + pki("apiserver-kubelet-client.key"),
 		"--enable-priority-and-fairness=false",
 		"--profiling=false",
 		"--allow-privileged=true",
