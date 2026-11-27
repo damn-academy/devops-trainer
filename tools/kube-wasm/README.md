@@ -690,6 +690,24 @@ Removing API groups and versions from kube.wasm was not attempted: it
 needs patches to the API installation of each group and a test suite
 for the course's kubectl scenarios, for ~10 % of the code.
 
+### Round 11: Go 1.27.4, a fresh 768 MiB checkpoint
+
+Built with Go 1.27.4, kube.wasm is 228.6 MB (5 MB smaller). Under
+Node.js: 60 of 60 starts (30 with `GOGC=50 GOMEMLIMIT=300MiB`) and a
+200-call kubectl loop without a crash. In the browser it crashed once
+in 12 restores (without the Go limit), with the same error as Go
+1.26.11: `invalid runtime symbol table`. A newer Go does not remove the
+crash; it shows only with the emulated node running, which points to
+the page's calls into Go (the bridge's callbacks arrive while Go is
+inside a JavaScript call) rather than to the Go runtime alone.
+
+A fresh 768 MiB checkpoint without the zero file (`kube-node-cp768f`,
+704 MB; Shmem 11 MB after capture): footprint 2.54–2.82 GB at the end,
+heartbeat after 144–410 s in the runs where the node came back. The
+Mac swapped 7.2 of 8 GB during the 12 runs, and the later ones did not
+bring the node back at all, so these timings are not comparable with
+earlier rounds.
+
 ### Open problems
 
 - **Go runtime crash with the kubelet client certificate.** With
