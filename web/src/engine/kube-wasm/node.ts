@@ -121,7 +121,7 @@ async function main() {
   await k.api.ready();
   mark('apiserver ready');
 
-  const media = await (await fetch('/rv64/r18-kubewasm-worker.json')).json() as
+  const media = await (await fetch(params.get('media') ?? '/rv64/r19-kubewasm-worker.json')).json() as
     { url: string; bytes: number; version: string; join: { offset: number; bytes: number } };
   const disk = { url: media.url, bytes: media.bytes, version: media.version };
   let httpDisk: typeof disk & { overlay?: { offset: number; data: Uint8Array }[] } = disk;

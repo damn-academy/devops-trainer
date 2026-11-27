@@ -21,12 +21,13 @@ Run on the build pod (needs mtools and squashfs-tools; writes only under OUT):
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
 
 R16 = 'd2f8e658c74a8c4b2d132783eb80030a3f5334f6251cc1f188588da50fb58f95'
-NAME = 'r18-kubewasm-worker'
+NAME = 'r19-kubewasm-worker'
 JOIN_BYTES = 32 * 1024
 PLACEHOLDER = b'{"kubewasm":"join placeholder; the page lays a Membership over these bytes"}'
 FAT = '@@1048576'  # the boot partition starts at 1 MiB
@@ -53,6 +54,22 @@ if /bin/busybox grep -q '"role"' "$join" 2>/dev/null; then
   ) >/dev/console 2>&1 &
 else
   ''' + PROBE_LINE + '''fi
+'''
+
+
+KUBELET_WRAPPER = '''#!/bin/sh
+# kube-wasm worker: report status and renew the node lease about every 30 s.
+for arg in "$@"; do
+  case "$arg" in --config=*) cfg=${arg#--config=};; esac
+done
+if [ -n "$cfg" ] && [ -f "$cfg" ]; then
+  /bin/busybox sed -i \\
+    -e 's/^nodeStatusUpdateFrequency:.*/nodeStatusUpdateFrequency: 30s/' \\
+    -e 's/^nodeStatusReportFrequency:.*/nodeStatusReportFrequency: 5m/' \\
+    -e 's/^nodeLeaseDurationSeconds:.*/nodeLeaseDurationSeconds: 120/' \\
+    "$cfg"
+fi
+exec /usr/lib/kuberoot/kubelet "$@"
 '''
 
 
@@ -86,6 +103,22 @@ def main():
     text = text.replace(PROBE_LINE, JOIN_BLOCK)
     subprocess.run(['sh', '-n'], input=text, text=True, check=True)
     wrapper.write_text(text)
+
+    # The worker kubelet: kinit scales its status and lease periods by the
+    # emulator timescale (60: lease 2400 s, status every 10 min), which
+    # makes the node look lost for minutes and a restored node silent for
+    # up to ten. kube.wasm's controller-manager already allows 5 minutes,
+    # so report about every 30 s. The combined binary picks its component
+    # by the name it was started under, hence the link outside /usr/bin.
+    kubelet = root / 'usr/bin/kubelet'
+    if not kubelet.is_symlink() or os.readlink(kubelet) != 'kuberoot-control.real':
+        raise SystemExit('unexpected kubelet link')
+    kubelet.unlink()
+    (root / 'usr/lib/kuberoot').mkdir(parents=True, exist_ok=True)
+    os.symlink('/usr/bin/kuberoot-control.real', root / 'usr/lib/kuberoot/kubelet')
+    kubelet.write_text(KUBELET_WRAPPER)
+    kubelet.chmod(0o755)
+    subprocess.run(['sh', '-n'], input=KUBELET_WRAPPER, text=True, check=True)
 
     # Uncompressed, like R16: the emulator reads it through 256 KiB HTTP chunks.
     run('mksquashfs', str(root), str(squash), '-noappend', '-noI', '-noD', '-noF', '-noX',
