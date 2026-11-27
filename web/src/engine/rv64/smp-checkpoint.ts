@@ -35,6 +35,19 @@ export async function readObject(base: string, ref: ObjectRef): Promise<Uint8Arr
   if (data.length !== ref.bytes || await sha256(data) !== ref.sha256) throw Error('SMP object checksum mismatch');
   return data;
 }
+const PAGE = 4096;
+/** Guest memory starts zeroed: writing a zero page would only make the host
+ * commit it. A 1 MiB chunk is nonzero if any byte is, and a captured guest's
+ * free pages are scattered, so a third of a chunk's pages are often zero. */
+function writeNonzeroPages(view: Uint8Array, data: Uint8Array, offset: number) {
+  const words = new Uint32Array(data.buffer, data.byteOffset, data.byteLength >> 2);
+  for (let page = 0; page < data.length; page += PAGE) {
+    const end = Math.min(page + PAGE, data.length) >> 2;
+    for (let w = page >> 2; w < end; w++) {
+      if (words[w]) { view.set(data.subarray(page, page + PAGE), offset + page); break; }
+    }
+  }
+}
 /** Writes the checkpoint's RAM chunks into guest memory, a few at a time.
  * Fetching every chunk at once kept up to the whole RAM in transient
  * buffers, and the allocator keeps such a high-water mark for good. */
@@ -43,7 +56,7 @@ export async function restoreRam(base: string, ram: SMPCheckpoint['ram'], view: 
   const lane = async () => {
     while (next < ram.length) {
       const chunk = ram[next++]!;
-      view.set(await readObject(base, chunk.object), chunk.offset);
+      writeNonzeroPages(view, await readObject(base, chunk.object), chunk.offset);
     }
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, ram.length) }, lane));

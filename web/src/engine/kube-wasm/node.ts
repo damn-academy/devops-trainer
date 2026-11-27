@@ -121,7 +121,8 @@ async function main() {
 
   const media = await (await fetch(params.get('media') ?? '/rv64/r19-kubewasm-worker.json')).json() as
     { url: string; bytes: number; version: string; join: { offset: number; bytes: number } };
-  const disk = { url: media.url, bytes: media.bytes, version: media.version };
+  // ?diskCache=0: read the medium over HTTP only, without Cache Storage.
+  const disk = { url: media.url, bytes: media.bytes, version: media.version, ...(params.get('diskCache') === '0' ? { noCache: true } : {}) };
   let httpDisk: typeof disk & { overlay?: { offset: number; data: Uint8Array }[] } = disk;
   if (!restore) {
     // A restored node already has its Membership (and certificates) in RAM.
@@ -370,6 +371,15 @@ async function main() {
           clusterEl.textContent += `\n$ kubectl logs deploy/web --tail=1\n${logs.stdout}${logs.stderr}\n$ kubectl exec deploy/web -- uname -m\n${exec.stdout}${exec.stderr}`;
         }
       }
+    }
+    // ?guestInfo=1: once the node runs its pod, print what holds the guest's
+    // memory on its console (meminfo, file systems, containerd, processes).
+    if (params.get('guestInfo') === '1' && 'pod Running' in marks && (!restore || 'fresh heartbeat' in marks) && !('guest info' in marks)) {
+      mark('guest info');
+      workers[0].postMessage({ input: new TextEncoder().encode(
+        'echo GUEST_INFO_BEGIN; busybox free -m; busybox grep -E "^(MemTotal|MemFree|Buffers|Cached|Shmem|AnonPages|Mapped|Slab|SReclaimable|SUnreclaim|KernelStack|PageTables|Percpu):" /proc/meminfo; ' +
+        'busybox df -m; busybox du -sm /var/lib/containerd/* /var/lib/kubelet /run/* /tmp /var/log 2>/dev/null | busybox sort -n | busybox tail -20; ' +
+        'for p in /proc/[0-9]*; do echo "$(busybox awk \'/VmRSS/ {print $2}\' $p/status 2>/dev/null) $(cat $p/comm 2>/dev/null)"; done | busybox sort -n | busybox tail -12; echo GUEST_INFO_END\n') });
     }
     // ?heapAt=120,300: upload Go heap profiles (heap-<s>.pprof) at those
     // seconds after page load, through the same endpoint as checkpoints.

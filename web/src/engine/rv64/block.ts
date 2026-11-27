@@ -5,6 +5,8 @@ export interface HTTPDisk {
   /** Bytes laid over the image after it is read, e.g. a join ticket the page
    * writes into a placeholder file of the boot medium. Never cached. */
   overlay?: { offset: number; data: Uint8Array }[];
+  /** Skip Cache Storage: read every chunk over HTTP. */
+  noCache?: boolean;
 }
 export const CHUNK_BYTES = 256 * 1024;
 export class HTTPBlockDevice {
@@ -27,7 +29,7 @@ export class HTTPBlockDevice {
     const key = new URL(url);
     key.searchParams.set('dt-rv64-version', this.image.version);
     key.searchParams.set('dt-rv64-chunk', String(index));
-    const cache = typeof caches !== 'undefined' ? await caches.open('dt-rv64-block-v1').catch(() => undefined) : undefined;
+    const cache = typeof caches !== 'undefined' && !this.image.noCache ? await caches.open('dt-rv64-block-v1').catch(() => undefined) : undefined;
     const cached = await cache?.match(key.href);
     if (cached) {
       const bytes = new Uint8Array(await cached.arrayBuffer());
