@@ -163,7 +163,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     };
     const channel = new MessageChannel();
     const yieldHost = () => new Promise<void>(resolve => { channel.port1.onmessage = () => resolve(); channel.port2.postMessage(0); });
-    let yielded = performance.now(), lastTrim = performance.now();
+    let yielded = performance.now(), lastTrim = performance.now(), idleMs = 0;
     const snap = d.snap ? new Int32Array(d.snap) : undefined;
     while (!Atomics.load(words, 15)) {
       // All-hart snapshot barrier: drain outstanding work, capture this hart,
@@ -273,7 +273,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
       }
       if (device && now - lastEntropy > 100) { device.entropy(d.trace ? new Uint8Array(4096) : crypto.getRandomValues(new Uint8Array(4096))); lastEntropy = now; }
       if (now - lastReport > 1000) {
-        self.postMessage({ type: 'metrics', hart: d.hart, wasmMemoryBytes: wasm.memory.buffer.byteLength, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, compiler: jitRuntime.stats(), counters: JSON.parse(core.metrics()), remote: { ...remote }, pc: String(core.pc()), state: Atomics.load(words, base), guestTicks: core.guest_ticks(), hostMonotonicMs: performance.timeOrigin + performance.now(), guestProfile: profileActive ? JSON.parse(core.profile_drain()) : undefined }); lastReport = performance.now();
+        self.postMessage({ type: 'metrics', hart: d.hart, wasmMemoryBytes: wasm.memory.buffer.byteLength, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, compiler: jitRuntime.stats(), counters: JSON.parse(core.metrics()), remote: { ...remote }, pc: String(core.pc()), state: Atomics.load(words, base), idleMs, guestTicks: core.guest_ticks(), hostMonotonicMs: performance.timeOrigin + performance.now(), guestProfile: profileActive ? JSON.parse(core.profile_drain()) : undefined }); lastReport = performance.now();
       }
       // A hart in WFI sleeps until its timer deadline, an IPI/fence/start
       // request, an external interrupt change, a device request (hart 0) or a
@@ -284,9 +284,10 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
         const deadline = core.deadline_ms(), ms = deadline > 0 ? Math.min(deadline, limit) : limit;
         if (ms >= 0.05) {
           jitRuntime.flush();
+          const slept = performance.now();
           const wait = waitAsync(bus.words, d.hart * HartMailboxes.stride, idleSequence, ms);
           if (wait.async) await wait.value; else await yieldHost();
-          yielded = performance.now(); continue;
+          yielded = performance.now(); idleMs += yielded - slept; continue;
         }
       }
       // Yield to host input without blocking the device server or incoming fences.

@@ -27,7 +27,7 @@ try {
           w.onerror = e => { clearTimeout(timeout); reject(Error(e.message)); };
           w.onmessage = ({ data }) => {
             if (data.type === 'error') { clearTimeout(timeout); reject(Error(data.error)); }
-            if (data.type === 'metrics') { last.set(data.hart, { ms: performance.now() - start, retired: data.retired, jitRetired: data.jitRetired, counters: data.counters, compiler: data.compiler }); output.textContent = text + '\n' + JSON.stringify(data); }
+            if (data.type === 'metrics') { last.set(data.hart, { ms: performance.now() - start, retired: data.retired, jitRetired: data.jitRetired, idleMs: data.idleMs, counters: data.counters, compiler: data.compiler }); output.textContent = text + '\n' + JSON.stringify(data); }
             if (data.type === 'console') {
               text += new TextDecoder().decode(data.bytes).replace(/\r/g, ''); output.textContent = text;
               if (text.includes('Kernel panic')) { clearTimeout(timeout); reject(Error('Kernel panic')); }
