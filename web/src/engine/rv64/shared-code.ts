@@ -153,7 +153,7 @@ export class SharedCodeCache {
       const job = Promise.resolve().then(async () => {
         const canonical = [...missing.values()].map((b, id) => ({ ...b, id }));
         const metrics = { bodyBytes: [] as number[] };
-        const bytes = compileBatch(canonical, tailCalls, layout, metrics);
+        const bytes = compileBatch(canonical, tailCalls, layout, metrics, true);
         const byteLength = bytes.byteLength; // pool transfers and detaches the buffer
         const charge = jitCharge(byteLength, 1);
         if (!await this.reserve(charge)) return;

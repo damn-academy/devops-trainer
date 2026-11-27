@@ -4,7 +4,7 @@ self.onmessage = async ({ data }: MessageEvent<Block[] | { blocks: Block[]; shar
   try {
     const blocks = Array.isArray(data) ? data : data.blocks;
     const shared = Array.isArray(data) ? undefined : data.shared;
-    const bytes = compileBatch(blocks, tailCalls, shared);
+    const bytes = compileBatch(blocks, tailCalls, shared, undefined, true);
     const module = await WebAssembly.compile(bytes);
     self.postMessage({ module, byteLength: bytes.byteLength, tailCalls, blocks: blocks.map(b => ({ id: b.id, count: b.words.length / 2 })) });
   } catch (error) { self.postMessage({ error: String(error) }); }
