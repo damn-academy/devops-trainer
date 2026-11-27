@@ -90,9 +90,10 @@ async function main() {
     wasmUrl: params.get('wasm') ?? './dist/kube.wasm', // e.g. ?wasm=./dist/kube.opt.wasm
     wasmExecUrl: './dist/wasm_exec.js',
     // e.g. ?goenv=GOGC=200;GODEBUG=gcstoptheworld=1,gcshrinkstackoff=1
-    // The Go linear memory never shrinks: a soft limit keeps its peak at
-    // ~0.31 instead of ~0.37 GiB with a node (twice as many collections).
-    env: Object.fromEntries((params.get('goenv') ?? 'GOGC=50;GOMEMLIMIT=300MiB').split(';').filter(Boolean).map((kv) => { const i = kv.indexOf('='); return [kv.slice(0, i), kv.slice(i + 1)] as [string, string]; })),
+    // GOGC=50;GOMEMLIMIT=300MiB keeps the Go memory at ~0.31 instead of
+    // ~0.37 GiB, but both browser crashes of Go 1.26.11 (invalid runtime
+    // symbol table) happened with it (2 of 12 runs, 0 of 10 without).
+    env: Object.fromEntries((params.get('goenv') ?? '').split(';').filter(Boolean).map((kv) => { const i = kv.indexOf('='); return [kv.slice(0, i), kv.slice(i + 1)] as [string, string]; })),
     onOutput: (fd, text) => { if (params.has('logs')) appendConsole(`[kube] ${text}\n`); else if (fd === 2 && !/^[IW]\d/.test(text)) console.warn(text); },
   });
   const apiserverArgs: string[] = [];
@@ -241,6 +242,11 @@ async function main() {
     }, hart === 0 && kernel && initrd ? [compilerPort, kernel.buffer, initrd.buffer] : [compilerPort]);
   }
   mark('emulator started');
+  if (checkpoint) {
+    // Checkpoints taken before the zero file was removed keep it in /run, a
+    // tmpfs: up to half of the guest's RAM. Free it; its pages are zero.
+    workers[0].postMessage({ input: new TextEncoder().encode('busybox rm -f /run/kubewasm-zero\n') });
+  }
   if (savedTcp.length) {
     // Without this the restored kubelet waits on connections whose far end
     // is gone and sends nothing that would reveal it (measured: no
@@ -270,7 +276,8 @@ async function main() {
     workers[0].postMessage({ input: new TextEncoder().encode(
       'sync; echo 3 > /proc/sys/vm/drop_caches; ' +
       'busybox dd if=/dev/zero of=/run/kubewasm-zero bs=1M count=$(busybox awk \'/MemFree/ {print int($2/1024) - 48}\' /proc/meminfo) 2>/dev/null; ' +
-      "rm -f /run/kubewasm-zero; echo KUBEWASM_ZER''OED\n") });
+      // The console shell has no applet links: rm needs its busybox prefix.
+      "busybox rm -f /run/kubewasm-zero; echo KUBEWASM_ZER''OED\n") });
     await zeroed;
     onConsole = undefined;
     mark('guest memory zeroed');
