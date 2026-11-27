@@ -564,6 +564,54 @@ The zeroed 768 MiB checkpoint has 673 nonzero MiB chunks (684 MB on
 disk). Most of the footprint is the emulator, its JIT and its workers,
 not the control plane.
 
+### Round 8: where the restored tab's memory goes
+
+Measured with `footprint -v` of the renderer process (headless Chromium
+on macOS, 16 KiB pages), grouping dirty memory by address range and VM
+tag (V8 = tag 255, PartitionAlloc = tag 253), and comparing with a
+control-plane-only run (`?emulator=0`, 0.77 GB). The page's own V8 heap
+(`Runtime.getHeapUsage`) holds only 16–39 MB, ArrayBuffers included.
+`performance.measureUserAgentSpecificMemory` is not available in the
+headless shell.
+
+Restored 1 GiB node, after the new pod runs (2.99 GB):
+
+| Part | MiB | Notes |
+|---|---|---|
+| Guest RAM (shared memory) and its tables | ~980 | every nonzero checkpoint chunk is written, so ~950 MiB is touched at once |
+| kube.wasm linear memory | 367 | Go heap 0.16–0.24 GiB live; the memory never shrinks |
+| WebAssembly code | 326 | kube.wasm ~116, the rest the emulator's JIT blocks; grows with the block count |
+| Large malloc (module bytes etc.) | 467 | kube.wasm's 223 MiB module bytes; the rest the JIT modules, kernel and initrd copies |
+| Small malloc (Blink, messages, V8 off-heap) | 294 | 84 without the emulator |
+| JS heaps of the workers and the page | ~305 | 116 without the emulator; grows with the JIT block count |
+| Other | ~250 | thread stacks, fixed V8 reservations |
+
+The checkpoint is not held twice: RAM chunks were fetched all at once
+but each was freed after it was written.
+
+Steps (1 GiB guest unless noted; footprint at the end / peak, seconds
+after page load):
+
+| Step | Footprint | Heartbeat | New pod Running | Notes |
+|---|---|---|---|---|
+| baseline (round 7) | 2.99 / 3.10 GB | 72 | 242 | |
+| RAM restored 4 chunks at a time | 2.98 / 3.07 GB | 68 | 234 | kept |
+| + no kernel/initrd on restore | 2.91 / 2.96 GB | 68 | 243 | kept |
+| JIT total 128 MiB (`jitBudgetMb=64`) | 2.74 / 2.90 GB | none in 9 min | – | blocks evicted and recompiled in a loop (1.5 M compilations) |
+| JIT total 256 MiB (`jitBudgetMb=128`) | 2.76 / 2.83 GB | none in 9 min | – | same |
+| V8 `--liftoff-only` | 2.93 / 2.94 GB | 278 | – | slower; a browser flag, not available to a page |
+| + 1 compile worker, `GOGC=50`, `GOMEMLIMIT=300MiB` | 2.80 / 2.95 GB | 84 | 281 | Go memory 325 instead of 390 MB; the Go limit is kept |
+| + `wasm-opt -Oz` kube.wasm | 2.71–2.81 / 2.84–2.98 GB | 69–78 | 246–268 | module bytes −40 MiB; one Go crash (`invalid runtime symbol table`) in 4 browser runs, none in 30 starts under Node.js; not in the default build |
+| same, zeroed 768 MiB guest | 2.81 / 3.01 GB | 116 | 336 | guest RAM 720 instead of 930 MiB, but small malloc grew by 200 MiB in that run |
+
+Where this leaves the 2 GB goal: the guest (0.7–0.95 GiB), the Go
+memory (0.3), kube.wasm's code and module bytes (0.35) and the JIT the
+node needs (a shared cache of 512 MiB accounted; less does not keep the
+node alive) already come to ~2.2 GB before the workers' heaps and
+Blink. Reaching 2 GB needs a smaller JIT working set (fewer, larger
+blocks or cheaper per-block bookkeeping in the workers), a smaller
+kube.wasm, or a smaller guest.
+
 ### Open problems
 
 - **Go runtime crash with the kubelet client certificate.** With
