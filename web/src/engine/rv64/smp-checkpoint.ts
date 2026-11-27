@@ -35,6 +35,19 @@ export async function readObject(base: string, ref: ObjectRef): Promise<Uint8Arr
   if (data.length !== ref.bytes || await sha256(data) !== ref.sha256) throw Error('SMP object checksum mismatch');
   return data;
 }
+/** Writes the checkpoint's RAM chunks into guest memory, a few at a time.
+ * Fetching every chunk at once kept up to the whole RAM in transient
+ * buffers, and the allocator keeps such a high-water mark for good. */
+export async function restoreRam(base: string, ram: SMPCheckpoint['ram'], view: Uint8Array, concurrency = 4) {
+  let next = 0;
+  const lane = async () => {
+    while (next < ram.length) {
+      const chunk = ram[next++]!;
+      view.set(await readObject(base, chunk.object), chunk.offset);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, ram.length) }, lane));
+}
 /** Stream one MiB at a time; never duplicate the guest's entire RAM. */
 export async function storeRam(ram: Uint8Array, write: (name: string, data: Uint8Array) => Promise<void>) {
   const chunks: SMPCheckpoint['ram'] = [];

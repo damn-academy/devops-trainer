@@ -20,7 +20,7 @@ import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from '.
 import { createSharedCompiler } from '../rv64/shared-compiler';
 import { hartBudget, jitCeilingBytes, MiB } from '../rv64/host-memory';
 import type { TcpConn } from '../labhost/tcp';
-import { readObject, storeObject, storeRam, validateCheckpoint, type SMPCheckpoint } from '../rv64/smp-checkpoint';
+import { readObject, restoreRam, storeObject, storeRam, validateCheckpoint, type SMPCheckpoint } from '../rv64/smp-checkpoint';
 import { restoreTimeOffset } from '../rv64/restore-clock';
 import { sha256 } from '../rv64/snapshot';
 import { ipToNum } from '../labhost/wire';
@@ -87,7 +87,7 @@ async function main() {
   const restoreBase = params.get('restore') ? new URL(params.get('restore')!, location.href).href : null;
   const capturing = params.get('capture') === '1';
   const k = await loadKubeWasm({
-    wasmUrl: './dist/kube.wasm',
+    wasmUrl: params.get('wasm') ?? './dist/kube.wasm', // e.g. ?wasm=./dist/kube.opt.wasm
     wasmExecUrl: './dist/wasm_exec.js',
     // e.g. ?goenv=GOGC=200;GODEBUG=gcstoptheworld=1,gcshrinkstackoff=1
     env: Object.fromEntries((params.get('goenv') ?? '').split(';').filter(Boolean).map((kv) => { const i = kv.indexOf('='); return [kv.slice(0, i), kv.slice(i + 1)] as [string, string]; })),
@@ -149,7 +149,9 @@ async function main() {
 
   if (params.get('emulator') === '0') { mark('emulator skipped'); return; }
   // The emulator, as in rv64/smp-kuberoot.ts, without checkpoints or profiling.
-  const [kernel, initrd] = await Promise.all(['/rv64/slim-vmlinuz.efi', '/rv64/slim-initrd.cpio']
+  // A restored node never boots: no kernel or initrd. A booting one hands
+  // them to hart 0 (transferred, not copied).
+  const [kernel, initrd] = restoreBase ? [undefined, undefined] : await Promise.all(['/rv64/slim-vmlinuz.efi', '/rv64/slim-initrd.cpio']
     .map((u) => fetch(u).then((r) => r.arrayBuffer()).then((b) => new Uint8Array(b))));
   const bytes = memoryMb * MiB, pages = bytes / 65536 + 1;
   const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
@@ -167,7 +169,7 @@ async function main() {
     checkpoint = await (await fetch(new URL('smp.json', restoreBase))).json() as SMPCheckpoint;
     validateCheckpoint(checkpoint, harts, bytes, wasmSha256, disk);
     const view = new Uint8Array(memory.buffer, 64, bytes);
-    await Promise.all(checkpoint.ram.map(async (c) => view.set(await readObject(restoreBase, c.object), c.offset)));
+    await restoreRam(restoreBase, checkpoint.ram, view);
     new Uint8Array(control).set(await readObject(restoreBase, checkpoint.control));
     new Uint8Array(mail).set(await readObject(restoreBase, checkpoint.mail));
     for (const ref of checkpoint.cpus) initialBlobs.push(await readObject(restoreBase, ref));
@@ -184,7 +186,9 @@ async function main() {
   }
   const ceiling = jitCeilingBytes(params.get('jitBudgetMb'), import.meta.env.VITE_RV64_JIT_BUDGET_MB);
   const hostBudget = Math.min(ceiling, hartBudget(memory.buffer.byteLength + generations.buffer.byteLength + granules.buffer.byteLength, Array(harts).fill(128 * MiB)));
-  const compiler = createSharedCompiler(harts * hostBudget, harts);
+  // One code cache for all harts (blocks are shared between them, least
+  // recently used ones evicted); ?compilePool=N sets its compile workers.
+  const compiler = createSharedCompiler(harts * hostBudget, harts, Number(params.get('compilePool') ?? harts));
   const workers: Worker[] = [];
   services.network.addPort('kube-wasm-node', { mode: 'access' }, (frame) => workers[0]?.postMessage({ frame }));
   const snapshots = new Map<number, { blob: Uint8Array; deviceBlob?: Uint8Array; ticks: number }>();
@@ -231,7 +235,7 @@ async function main() {
       guestProfile: 0, guestProfileDeferred: false, guestProfileTaskCommOffset: 0,
       kernel: hart ? undefined : kernel, initrd: hart ? undefined : initrd,
       cmdline: 'earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=' + Math.floor(Date.now() / 1000),
-    }, [compilerPort]);
+    }, hart === 0 && kernel && initrd ? [compilerPort, kernel.buffer, initrd.buffer] : [compilerPort]);
   }
   mark('emulator started');
   if (savedTcp.length) {
