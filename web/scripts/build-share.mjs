@@ -96,7 +96,6 @@ for (const lang of ['ru', 'en']) {
 <meta name="twitter:image" content="${img}">
 <meta name="robots" content="noindex, follow">
 <script>try{localStorage.setItem('dt.lang','${lang}')}catch(e){}location.replace('/${route}')</script>
-<meta http-equiv="refresh" content="1;url=/${route}">
 </head>
 <body><p><a href="/${route}">${esc(info.h1)}</a></p></body>
 </html>
