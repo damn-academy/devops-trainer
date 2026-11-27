@@ -38,6 +38,8 @@ func init() {
 //	start(opts?: {v?: number, controllers?: boolean, scheduler?: boolean, apiserverArgs?: string[]}): Promise<void>
 //	ready(): Promise<{[phase: string]: number}>   // phase timings in ms
 //	kubectl(args: string[], stdin?: string): Promise<{stdout, stderr, code}>
+//	connect(addr: string, onData: (b: Uint8Array) => void, onClose: (err?: string) => void): {write, end, close}
+//	joinMembership(nodeName: string, nodeIP: string): Promise<string>   // kuberoot Membership JSON
 //
 // The file system the Go side sees (PKI files, kubectl caches) is provided
 // by the page loader; see web/src/engine/kube-wasm/loader.ts.
@@ -94,6 +96,20 @@ func main() {
 		return promise(func() (any, error) {
 			out, errOut, code := Kubectl(cluster.Kubeconfig, argv, stdin)
 			return map[string]any{"stdout": out, "stderr": errOut, "code": code}, nil
+		})
+	}))
+
+	api.Set("connect", js.FuncOf(func(_ js.Value, args []js.Value) any {
+		return newBridge(args[0].String(), args[1], args[2])
+	}))
+
+	api.Set("joinMembership", js.FuncOf(func(_ js.Value, args []js.Value) any {
+		name, ip := args[0].String(), args[1].String()
+		return promise(func() (any, error) {
+			if err := cluster.Ready(ctx); err != nil {
+				return nil, err
+			}
+			return cluster.JoinMembership(name, ip)
 		})
 	}))
 

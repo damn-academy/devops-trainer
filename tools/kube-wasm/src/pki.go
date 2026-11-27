@@ -83,6 +83,23 @@ func writePKI(dir string, ips []net.IP) error {
 		return err
 	}
 
+	// The apiserver's client certificate towards kubelets (logs, exec).
+	kcKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return err
+	}
+	kcDER, err := x509.CreateCertificate(rand.Reader, &x509.Certificate{
+		SerialNumber: big.NewInt(3),
+		Subject:      pkix.Name{CommonName: "kube-apiserver-kubelet-client", Organization: []string{"system:masters"}},
+		NotBefore:    now.Add(-time.Hour),
+		NotAfter:     now.Add(365 * 24 * time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}, caCert, &kcKey.PublicKey, caKey)
+	if err != nil {
+		return err
+	}
+
 	saKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return err
@@ -96,8 +113,10 @@ func writePKI(dir string, ips []net.IP) error {
 		"ca.crt":        {Type: "CERTIFICATE", Bytes: caDER},
 		"apiserver.crt": {Type: "CERTIFICATE", Bytes: srvDER},
 		"sa.pub":        {Type: "PUBLIC KEY", Bytes: saPub},
+
+		"apiserver-kubelet-client.crt": {Type: "CERTIFICATE", Bytes: kcDER},
 	}
-	for name, key := range map[string]*ecdsa.PrivateKey{"ca.key": caKey, "apiserver.key": srvKey, "sa.key": saKey} {
+	for name, key := range map[string]*ecdsa.PrivateKey{"ca.key": caKey, "apiserver.key": srvKey, "sa.key": saKey, "apiserver-kubelet-client.key": kcKey} {
 		der, err := x509.MarshalECPrivateKey(key)
 		if err != nil {
 			return err

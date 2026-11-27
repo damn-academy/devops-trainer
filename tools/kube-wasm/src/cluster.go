@@ -63,9 +63,14 @@ const (
 	// clients (kubectl, controller-manager, scheduler). Like the insecure
 	// port of old Kubernetes releases, requests on it act as the admin user.
 	plainAddr = "127.0.0.1:8080"
-	// advertiseAddr is where a node on the future virtual network will
-	// reach the apiserver. Nothing listens on it yet.
-	advertiseAddr = "10.0.2.2"
+	// advertiseAddr is the address of the tab's lab host on the emulated
+	// network (web/src/engine/rv64/network.ts): a node reaches the
+	// apiserver at advertiseAddr:6443 there, and the page forwards those
+	// connections to the TLS port through Bridge (bridge_js.go).
+	advertiseAddr = "10.0.0.1"
+
+	podCIDR     = "10.244.0.0/16"
+	serviceCIDR = "10.96.0.0/12"
 )
 
 // Options select what Start runs.
@@ -86,6 +91,7 @@ type Cluster struct {
 	started bool
 	ready   chan struct{}
 	err     error
+	opts    Options
 	// Kubeconfig is the admin kubeconfig written at start.
 	Kubeconfig string
 	Timings    map[string]time.Duration
@@ -133,6 +139,7 @@ func (c *Cluster) Start(ctx context.Context, o Options) error {
 		return nil
 	}
 	c.started = true
+	c.opts = o
 	c.t0 = time.Now()
 	c.mu.Unlock()
 
@@ -275,12 +282,13 @@ func buildAPIServer(ctx context.Context, o Options) (http.Handler, func() error,
 		"--service-account-issuer=https://kubernetes.default.svc.cluster.local",
 		"--service-account-key-file=" + pki("sa.pub"),
 		"--service-account-signing-key-file=" + pki("sa.key"),
-		"--service-cluster-ip-range=10.96.0.0/12",
+		"--service-cluster-ip-range=" + serviceCIDR,
 		"--token-auth-file=" + pki("tokens.csv"),
 		"--authorization-mode=Node,RBAC",
-		// No reachable advertise address yet: do not publish endpoints for
-		// the kubernetes service.
-		"--endpoint-reconciler-type=none",
+		// Nodes join with bootstrap tokens (see join.go).
+		"--enable-bootstrap-token-auth=true",
+		"--kubelet-client-certificate=" + pki("apiserver-kubelet-client.crt"),
+		"--kubelet-client-key=" + pki("apiserver-kubelet-client.key"),
 		"--enable-priority-and-fairness=false",
 		"--profiling=false",
 		"--allow-privileged=true",
@@ -348,9 +356,9 @@ func startControllerManager(ctx context.Context, o Options) error {
 		"--root-ca-file=" + pki("ca.crt"),
 		"--cluster-signing-cert-file=" + pki("ca.crt"),
 		"--cluster-signing-key-file=" + pki("ca.key"),
-		"--cluster-cidr=10.244.0.0/16",
+		"--cluster-cidr=" + podCIDR,
 		"--allocate-node-cidrs=true",
-		"--service-cluster-ip-range=10.96.0.0/12",
+		"--service-cluster-ip-range=" + serviceCIDR,
 		fmt.Sprintf("--v=%d", o.Verbosity),
 	}
 	if err := parseFlags("kube-controller-manager", nfs, args); err != nil {

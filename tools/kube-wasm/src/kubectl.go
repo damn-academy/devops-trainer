@@ -19,6 +19,8 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -42,6 +44,16 @@ func Kubectl(kubeconfig string, args []string, stdin string) (stdout, stderr str
 
 	var out, errOut bytes.Buffer
 	streams := genericiooptions.IOStreams{In: strings.NewReader(stdin), Out: &out, ErrOut: &errOut}
+	// kubectl reads "-f -" from os.Stdin, not from its IOStreams: hand it the
+	// input as a file instead.
+	if stdin != "" {
+		path, cleanup, err := stdinFile(stdin)
+		if err != nil {
+			return "", err.Error() + "\n", 1
+		}
+		defer cleanup()
+		args = replaceStdinArg(args, path)
+	}
 
 	// kubectl reports fatal errors through os.Exit; turn that into a
 	// panic carrying the exit code and recover it below.
@@ -91,4 +103,38 @@ func Kubectl(kubeconfig string, args []string, stdin string) (stdout, stderr str
 		}
 	}()
 	return out.String(), errOut.String(), code
+}
+
+func stdinFile(data string) (string, func(), error) {
+	dir := filepath.Join(os.TempDir(), "kubectl-stdin")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", nil, err
+	}
+	f, err := os.CreateTemp(dir, "stdin-*.yaml")
+	if err != nil {
+		return "", nil, err
+	}
+	defer f.Close()
+	if _, err := f.WriteString(data); err != nil {
+		return "", nil, err
+	}
+	return f.Name(), func() { _ = os.Remove(f.Name()) }, nil
+}
+
+// replaceStdinArg points -f - / --filename=- at path.
+func replaceStdinArg(args []string, path string) []string {
+	out := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		switch {
+		case (a == "-f" || a == "--filename") && i+1 < len(args) && args[i+1] == "-":
+			out = append(out, a, path)
+			i++
+		case a == "-f=-" || a == "--filename=-":
+			out = append(out, "--filename="+path)
+		default:
+			out = append(out, a)
+		}
+	}
+	return out
 }
