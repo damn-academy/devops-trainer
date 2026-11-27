@@ -725,8 +725,8 @@ const PROJECTS: AboutPageDef = {
     sec(
       "sankofa",
       bi("Sankofa", "Sankofa"),
-      "Дистрибутив Kubernetes с памятью и встроенный в него музей семи веков чёрной культуры с музыкой, кино, фотографией и большими мультимедийными историями. [sankofa.black](https://sankofa.black)",
-      "A Kubernetes distribution that remembers, and a museum of seven centuries of Black culture that ships inside it: music, film, photography and long multimedia stories. [sankofa.black](https://sankofa.black)",
+      "Музей семи веков чёрной культуры и большие мультимедийные спецпроекты о ней: музыка, кино, фотография. А ещё Sankofa — дистрибутив Kubernetes, на котором этот музей и работает. [sankofa.black](https://sankofa.black)",
+      "A museum of seven centuries of Black culture and long multimedia special projects about it: music, film, photography. Sankofa is also a Kubernetes distribution, and the museum runs on it. [sankofa.black](https://sankofa.black)",
     ),
     sec(
       "dormer",
