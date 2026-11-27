@@ -90,7 +90,9 @@ async function main() {
     wasmUrl: params.get('wasm') ?? './dist/kube.wasm', // e.g. ?wasm=./dist/kube.opt.wasm
     wasmExecUrl: './dist/wasm_exec.js',
     // e.g. ?goenv=GOGC=200;GODEBUG=gcstoptheworld=1,gcshrinkstackoff=1
-    env: Object.fromEntries((params.get('goenv') ?? '').split(';').filter(Boolean).map((kv) => { const i = kv.indexOf('='); return [kv.slice(0, i), kv.slice(i + 1)] as [string, string]; })),
+    // The Go linear memory never shrinks: a soft limit keeps its peak at
+    // ~0.31 instead of ~0.37 GiB with a node (twice as many collections).
+    env: Object.fromEntries((params.get('goenv') ?? 'GOGC=50;GOMEMLIMIT=300MiB').split(';').filter(Boolean).map((kv) => { const i = kv.indexOf('='); return [kv.slice(0, i), kv.slice(i + 1)] as [string, string]; })),
     onOutput: (fd, text) => { if (params.has('logs')) appendConsole(`[kube] ${text}\n`); else if (fd === 2 && !/^[IW]\d/.test(text)) console.warn(text); },
   });
   const apiserverArgs: string[] = [];
