@@ -185,12 +185,24 @@ async function main() {
   const snapshots = new Map<number, { blob: Uint8Array; deviceBlob?: Uint8Array; ticks: number }>();
   let captured: (() => void) | undefined;
   const decoder = new TextDecoder();
+  const emu: Record<number, { retired: number; jit: number; host: number; ticks: number; mips?: number; jitShare?: number; clock?: number; compiled?: unknown }> = {};
   for (let hart = 0; hart < harts; hart++) {
     const w = new Worker(new URL('../rv64/smp-cpu.worker.ts', import.meta.url), { type: 'module' });
     workers.push(w);
     w.onerror = (e) => appendConsole(`\n[page] hart ${hart} worker error: ${e.message}\n`);
     w.onmessage = ({ data }) => {
       if (data.type === 'net') services.network.receive('kube-wasm-node', data.frame);
+      else if (data.type === 'metrics') {
+        // Emulator speed per hart: millions of guest instructions per host
+        // second, the share run by compiled blocks, and guest vs host time.
+        const prev = emu[data.hart];
+        const now = { retired: Number(data.retired), jit: Number(data.jitRetired), host: Number(data.hostMonotonicMs), ticks: Number(data.guestTicks) };
+        if (prev) {
+          const dt = (now.host - prev.host) / 1000, dr = now.retired - prev.retired;
+          emu[data.hart] = { ...now, mips: Math.round(dr / dt / 1e6), jitShare: dr ? Math.round((now.jit - prev.jit) / dr * 100) / 100 : 0,
+            clock: Math.round((now.ticks - prev.ticks) / 1e7 / dt * 100) / 100, compiled: data.compiled };
+        } else emu[data.hart] = now;
+      }
       else if (data.type === 'snapshot') {
         snapshots.set(data.hart, data);
         if (snapshots.size === harts) captured?.();
@@ -311,7 +323,7 @@ async function main() {
         }
       }
     }
-    (window as unknown as { kubeNode: unknown }).kubeNode = { marks, conns, wasmMemoryBytes: k.wasmMemoryBytes(), go: k.api.memStats() };
+    (window as unknown as { kubeNode: unknown }).kubeNode = { marks, conns, wasmMemoryBytes: k.wasmMemoryBytes(), go: k.api.memStats(), emu: Object.values(emu).map(({ mips, jitShare, clock, compiled }) => ({ mips, jitShare, clock, compiled })) };
     await new Promise((r) => setTimeout(r, 5000));
   }
 }
