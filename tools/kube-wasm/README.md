@@ -491,6 +491,53 @@ guest). The tab starts at ~2 GB and grows with the emulator's JIT. The
 Go runtime crash now also occurs without the kubelet client certificate
 under node traffic (r19b), so a newer Go remains the next step.
 
+### Round 6: memory in the restore scenario
+
+**The crash.** `GODEBUG=gcstoptheworld=1,gcshrinkstackoff=1` (set by the
+loader) removed it: 0 crashes in 60 starts under Node.js, 20 of them with
+the kubelet client certificate built in (each setting alone: 1/20 and
+3/50). The apiserver gets its kubelet client certificate by default
+again, so `logs` and `exec` work after a restore. The price is
+responsiveness under node traffic (below). Downloading a newer Go was not
+permitted from this session.
+
+**The Go heap.** Heap profiles (`heapProfile()`, `?heapAt=` on the node
+page) after a restore show 106–115 MB live; the Go linear memory is now
+0.36–0.45 GiB, down from 0.64–1.5 GiB. Two retention sources were found:
+bridged connections were never freed (their JavaScript functions were
+never released; fixed: `close` releases them), and every kubectl call
+keeps ~0.67 MiB (its command tree's flags and REST mapper; measured with
+`run-node.mjs --kubectl-loop`; not fixed yet). The ~4300 goroutines are
+the informers of the controller-manager and the apiserver, not a leak.
+
+**Restores** (seconds after page load):
+
+| Run | Guest RAM | GODEBUG | JIT budget | Node heartbeat | New pod Running | logs / exec | Footprint | Go linear memory |
+|---|---|---|---|---|---|---|---|---|
+| r19c (round 5) | 1 GiB | none, no kubelet client cert | 256 MiB | 31 | 212 | – | 1.94 → 3.23 GB | 0.64 GiB |
+| m19g | 1 GiB | stop-the-world, no shrinking | 256 MiB | 387 | – | 402 / 382 | 2.45 → 3.01 GB | 0.40 GiB |
+| m19t | 1 GiB | same, `GOGC=300` | 256 MiB | 147 | – | – / 142 | 2.72 → 2.98 GB | 0.42 GiB |
+| m19s | 1 GiB | no shrinking only | 256 MiB | 146 | – | 155 / 141 | 2.70 → 2.99 GB | 0.36 GiB |
+| m768a | 768 MiB | stop-the-world, no shrinking | 256 MiB | none in 7 min (kubelet: TLS handshake timeouts, 214 connections) | – | – | 2.36 → 2.93 GB | 0.40 GiB |
+| j64 | 768 MiB | stop-the-world, no shrinking | 64 MiB | none in 9 min (JIT share 0.7, 5–7 MIPS) | – | – | 1.79 → 2.70 GB | 0.40 GiB |
+
+**Guest RAM in the checkpoint.** A 768 MiB guest still had 755 nonzero
+MiB chunks, because freed pages keep old data. Before capturing, the
+page now drops the guest's page cache and fills its free memory once
+with zeros (a tmpfs file, removed again): the next capture had ~426
+nonzero MiB, and zero chunks are never written on restore. That capture
+did not finish, because the Mac ran out of disk space while saving it.
+
+Where this leaves the 1.5–2 GB goal: the control plane is now ~0.4 GiB
+of Go memory plus ~0.45 GB of compiled code; the rest is the emulator
+(guest RAM touched, its JIT, its workers). A 768 MiB guest and a small
+JIT budget lower the footprint by 0.3–0.6 GB but, with the
+stop-the-world collector, the restored kubelet then misses its TLS
+deadlines and the node does not come back. The next steps: the zeroed
+768 MiB checkpoint (needs disk space), a newer Go so that the
+concurrent collector can return, and fixing the per-call kubectl
+retention.
+
 ### Open problems
 
 - **Go runtime crash with the kubelet client certificate.** With

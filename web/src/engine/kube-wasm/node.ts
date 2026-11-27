@@ -6,9 +6,9 @@
 // the lab host accepts those connections and bridges them into kube.wasm.
 //
 // Query: ?harts=2 &memory=1024 (MiB) &v=0 &auto=0 (skip the automatic
-// deployment) &logs (component logs in the console pane) &kubeletClient=1
-// (apiserver → kubelet for logs/exec) &emulator=0 (control plane only)
-// &goenv=GOMEMLIMIT=600MiB,GOGC=50 &apiserver=--watch-cache=false
+// deployment) &logs (component logs in the console pane) &emulator=0
+// (control plane only)
+// &goenv=GOGC=200;GOMEMLIMIT=900MiB &apiserver=--watch-cache=false
 // &capture=1 (once the pod runs, save a checkpoint of the node and the
 // control plane through POST /snapshot-upload/<name>) &restore=<base URL>
 // (start from such a checkpoint: smp.json, kube-state.json, <sha256>.bin)
@@ -89,15 +89,11 @@ async function main() {
   const k = await loadKubeWasm({
     wasmUrl: './dist/kube.wasm',
     wasmExecUrl: './dist/wasm_exec.js',
-    // e.g. ?goenv=GOMEMLIMIT=600MiB,GOGC=50
-    env: Object.fromEntries((params.get('goenv') ?? '').split(',').filter(Boolean).map((kv) => kv.split('=', 2) as [string, string])),
+    // e.g. ?goenv=GOGC=200;GODEBUG=gcstoptheworld=1,gcshrinkstackoff=1
+    env: Object.fromEntries((params.get('goenv') ?? '').split(';').filter(Boolean).map((kv) => { const i = kv.indexOf('='); return [kv.slice(0, i), kv.slice(i + 1)] as [string, string]; })),
     onOutput: (fd, text) => { if (params.has('logs')) appendConsole(`[kube] ${text}\n`); else if (fd === 2 && !/^[IW]\d/.test(text)) console.warn(text); },
   });
-  // ?kubeletClient=1 gives the apiserver its kubelet client certificate, for
-  // logs and exec; see the README about the crash it can cause.
-  const apiserverArgs = params.get('kubeletClient') === '1'
-    ? ['--kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt', '--kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key']
-    : [];
+  const apiserverArgs: string[] = [];
   // e.g. ?apiserver=--watch-cache=false (';'-separated)
   apiserverArgs.push(...(params.get('apiserver') ?? '').split(';').filter(Boolean));
   // An emulated node posts its status minutes late at times; with the
@@ -194,6 +190,7 @@ async function main() {
   const snapshots = new Map<number, { blob: Uint8Array; deviceBlob?: Uint8Array; ticks: number }>();
   let captured: (() => void) | undefined;
   const decoder = new TextDecoder();
+  let onConsole: ((text: string) => void) | undefined;
   const emu: Record<number, { retired: number; jit: number; host: number; ticks: number; mips?: number; jitShare?: number; clock?: number; compiled?: unknown }> = {};
   for (let hart = 0; hart < harts; hart++) {
     const w = new Worker(new URL('../rv64/smp-cpu.worker.ts', import.meta.url), { type: 'module' });
@@ -219,6 +216,7 @@ async function main() {
       else if (data.type === 'error') appendConsole(`\n[page] hart ${hart}: ${data.error}\n`);
       else if (data.type === 'console') {
         const text = decoder.decode(data.bytes).replace(/\r/g, '');
+        onConsole?.(text);
         if (text.includes('RV64_KUBEWASM_JOIN')) mark('membership read');
         if (text.includes('RV64_KUBEWASM_IMAGE busybox.tar')) mark('busybox image loaded');
         if (text.includes('RV64_KUBEWASM_IMAGE_FAILED')) mark('image import failed');
@@ -257,6 +255,18 @@ async function main() {
   // Save the node (all harts stopped at a barrier) and, while it stands
   // still, the control plane's state; then let the node run on.
   async function saveCheckpoint() {
+    // Free guest memory still holds old data, so nearly every MiB of RAM is
+    // nonzero and a restore touches all of it. Drop the page cache and
+    // fill the free memory once with zeros (a tmpfs file, then removed):
+    // zero MiB chunks are left out of the checkpoint and never written.
+    const zeroed = new Promise<void>((resolve) => { onConsole = (t) => { if (t.includes('KUBEWASM_ZEROED')) resolve(); }; });
+    workers[0].postMessage({ input: new TextEncoder().encode(
+      'sync; echo 3 > /proc/sys/vm/drop_caches; ' +
+      'busybox dd if=/dev/zero of=/run/kubewasm-zero bs=1M count=$(busybox awk \'/MemFree/ {print int($2/1024) - 48}\' /proc/meminfo) 2>/dev/null; ' +
+      "rm -f /run/kubewasm-zero; echo KUBEWASM_ZER''OED\n") });
+    await zeroed;
+    onConsole = undefined;
+    mark('guest memory zeroed');
     const sv = new Int32Array(snap);
     const done = new Promise<void>((resolve) => { captured = resolve; });
     Atomics.store(sv, 0, 1);
@@ -345,15 +355,22 @@ async function main() {
       if (pods.stdout.split(' ').includes('Running')) {
         mark('pod Running');
         if (capturing && !('checkpoint saved' in marks) && 'busybox image loaded' in marks) await saveCheckpoint();
-        // Without the kubelet client certificate the kubelet refuses the
-        // apiserver; do not let a hanging call stop this loop either.
-        if (params.get('kubeletClient') === '1' && !('logs' in marks)) {
+        // Bounded, so that an unreachable kubelet cannot stop this loop.
+        if (!('logs' in marks)) {
           const logs = await kubectl(k, 'logs deploy/web --tail=1 --request-timeout=30s');
           if (logs.code === 0 && logs.stdout.includes('hello')) mark('logs');
           const exec = await kubectl(k, 'exec deploy/web --request-timeout=30s -- uname -m');
           if (exec.code === 0) mark('exec');
           clusterEl.textContent += `\n$ kubectl logs deploy/web --tail=1\n${logs.stdout}${logs.stderr}\n$ kubectl exec deploy/web -- uname -m\n${exec.stdout}${exec.stderr}`;
         }
+      }
+    }
+    // ?heapAt=120,300: upload Go heap profiles (heap-<s>.pprof) at those
+    // seconds after page load, through the same endpoint as checkpoints.
+    for (const at of (params.get('heapAt') ?? '').split(',').filter(Boolean).map(Number)) {
+      if (performance.now() - t0 > at * 1000 && !(`heap ${at}` in marks)) {
+        mark(`heap ${at}`);
+        await upload(`heap-${at}.pprof`, await k.api.heapProfile());
       }
     }
     (window as unknown as { kubeNode: unknown }).kubeNode = { marks, conns, wasmMemoryBytes: k.wasmMemoryBytes(), go: k.api.memStats(), emu: Object.values(emu).map(({ mips, jitShare, clock, compiled }) => ({ mips, jitShare, clock, compiled })) };
