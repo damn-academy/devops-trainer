@@ -612,6 +612,45 @@ Blink. Reaching 2 GB needs a smaller JIT working set (fewer, larger
 blocks or cheaper per-block bookkeeping in the workers), a smaller
 kube.wasm, or a smaller guest.
 
+### Round 9: guest, kube.wasm and JIT
+
+**Guest RAM.** A restore wrote whole 1 MiB checkpoint chunks, committing
+the zero pages in them; it now writes only nonzero 4 KiB pages (the
+768 MiB checkpoint: 668 chunks, 463 MiB of nonzero 16 KiB host pages).
+What the guest holds after Ready (`?guestInfo=1`, 1 GiB guest): 727 MB
+page cache, 112 MB anonymous memory, 15 MB slab. The page cache is
+mostly the 473 MB squashfs root file system, cached twice (as a file on
+the medium and as the files decompressed from it). containerd's content
+store holds 7 MB and the tmpfs mounts 11 MB, so there were no image
+blobs worth removing. A restored guest fills its RAM again with page
+cache within minutes.
+
+| Run | Footprint start / end / peak | Heartbeat | New pod Running | Notes |
+|---|---|---|---|---|
+| 1 GiB, nonzero pages only | 2.47 / 2.78 / 2.90 GB | 78 | 242 | |
+| 768 MiB zeroed, nonzero pages only | 1.98 / 2.76 / 2.92 GB | 88 | 285 | was 2.30 at the start |
+| same, disk without Cache Storage | 2.07 / 2.66 / 2.82 GB | 83 | 285 | small malloc unchanged (456 MiB) |
+| 640 MiB zeroed (2 runs) | 2.12–2.20 / 2.71–2.72 / 2.78 GB | none in 11 min | – | boots and runs a pod (Ready 412 s, pod 678 s), but after a restore ~200 reconnections and no heartbeat |
+
+With a smaller guest the renderer's small malloc is ~150–190 MiB larger
+(456–502 against 290–305 MiB with 1 GiB); not Cache Storage, cause
+unknown. The two effects cancel: 768 MiB ends about where 1 GiB does.
+
+**kube.wasm.** Code 131 MB (137 052 functions), data 101 MB (copied into
+the linear memory at start). The code is spread over generated API code
+(`pkg/apis` 12 MiB, `api/core/v1` 5.3, generated OpenAPI 5.2, registry
+4.7, apiextensions 3.6, CEL 3.6, scheduler 3.4, controllers 2.9,
+kubectl 2.7 MiB, every API group version under 1.1 MiB). `-s -w` is
+already set, and 1.37 has no `providerless` tag. Removing API versions
+would take patches to the API installation of every group, for a few
+MiB each.
+
+**JIT.** Blocks are formed by the Rust core, one WebAssembly function
+per block, each installed into a table through a JS export wrapper on
+each hart. Larger blocks (traces) or installation without wrappers
+need changes in the core and the code generator; not done in this
+round.
+
 ### Open problems
 
 - **Go runtime crash with the kubelet client certificate.** With
