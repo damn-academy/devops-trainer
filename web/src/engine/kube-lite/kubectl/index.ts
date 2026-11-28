@@ -1703,7 +1703,7 @@ export async function runKubectl(m: SimMachineApi, cluster: Cluster | null, argv
         x.out([...new Set(c.kinds.all().map(apiVersionOf))].sort().join('\n') + '\n');
         break;
       case 'version':
-        x.out(`Client Version: v1.37.1\nKustomize Version: v5.7.1\nServer Version: ${K8S_VERSION}\n`);
+        x.out(`Client Version: v1.37.1\nKustomize Version: v5.7.1\nServer Version: ${c.nodes[0]?.kubeadmVersion ?? K8S_VERSION}\n`);
         break;
       case 'cluster-info':
         x.out(`\x1b[0;32mKubernetes control plane\x1b[0m is running at \x1b[0;33mhttps://127.0.0.1:6443\x1b[0m\n${c.get('Service', 'kube-system', 'kube-dns') ? '\x1b[0;32mCoreDNS\x1b[0m is running at \x1b[0;33mhttps://127.0.0.1:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy\x1b[0m\n' : ''}\nTo further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.\n`);

@@ -3,7 +3,7 @@
 // start a lab at the point the previous lessons left it.
 
 import type { TerminalSetup } from '../../../core/types';
-import type { KcodeSetup } from '../stand';
+import { K8S_VERSION, type KcodeSetup } from '../stand';
 
 export const HOME = '/home/learner';
 export const INFRA = `${HOME}/infra`;
@@ -336,7 +336,8 @@ export function gitopsStand(o: { files?: Record<string, string>; apps?: string[]
     cwd: '~/shop-deploy',
     files: o.extraFiles,
     ext: {
-      k8s: {},
+      // The cluster of the stand is built with kubeadm, so its nodes look like kubeadm's.
+      k8s: { kubeadmVersion: K8S_VERSION },
       git: {
         identity: { name: 'Learner', email: 'learner@forge.edu' },
         repos: [{ path: DEPLOY_REPO, commits: [{ message: 'shop: first release', files: o.files ?? DEPLOY_FILES() }, ...(o.later ?? [])], remote: 'team/shop-deploy' }],

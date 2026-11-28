@@ -8,7 +8,7 @@ import { registry } from '../src/core/registry';
 import { evaluateCheck } from '../src/core/check';
 import type { Lesson, PlacementTask, QuizItem, Task, TerminalSection } from '../src/core/types';
 import { createSimMachine, type SimMachine } from '../src/engine/terminal/shell';
-import { INFRA, OPS, ROLE_INIT, ROLE_JOIN, TF_CP, TF_HEAD, TF_INVENTORY, TF_WORKERS } from '../src/blocks/k8s-code/content/setups';
+import { gitopsStand, INFRA, OPS, ROLE_INIT, ROLE_JOIN, TF_CP, TF_HEAD, TF_INVENTORY, TF_WORKERS } from '../src/blocks/k8s-code/content/setups';
 import { humanAge, parseNodesQuery } from '../src/blocks/k8s-code/kubectl';
 
 const lesson = (id: string) => registry.lessons.get(id) as Lesson;
@@ -83,8 +83,13 @@ describe('kubectl on the kubeadm stand', () => {
   it('leaves kubectl of other clusters to kube-lite', async () => {
     const m = await createSimMachine({ ext: { k8s: {} } } as Parameters<typeof createSimMachine>[0]);
     expect(await sh(m, 'kubectl get nodes')).toMatch(/cp-1|NAME/);
+  });
 
-
+  it('shows the GitOps stand cluster as kubeadm built it, not as k3s', async () => {
+    const m = await createSimMachine({ ext: { k8s: gitopsStand().ext!.k8s } } as Parameters<typeof createSimMachine>[0]);
+    const out = await sh(m, 'kubectl get nodes', 'kubectl version', 'kubectl get node cp-1 -o yaml');
+    expect(out).toMatch(/cp-1\s+Ready\s+control-plane\s+\S+\s+v1\.36\.4\n/);
+    expect(out).not.toMatch(/k3s|master/);
   });
 });
 

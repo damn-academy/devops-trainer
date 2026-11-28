@@ -58,6 +58,8 @@ export interface NodeSim {
   cpu: string;
   memory: string;
   labels: Record<string, string>;
+  /** Set on a kubeadm cluster: the plain kubelet version; unset, a k3s node at K8S_VERSION. */
+  kubeadmVersion?: string;
 }
 
 export interface Change {
@@ -82,6 +84,8 @@ export interface ClusterOptions {
   addons?: AddonId[];
   /** The CNI replaces kube-proxy (Cilium with kubeProxyReplacement). */
   proxyReplacement?: boolean;
+  /** The nodes come from kubeadm at this version, not from k3s (versions, roles, runtime). */
+  kubeadmVersion?: string;
 }
 
 export interface ClusterState {
@@ -194,6 +198,7 @@ export class Cluster {
       cpu: '2',
       memory: '4015948Ki',
       labels: {},
+      ...(o.kubeadmVersion ? { kubeadmVersion: o.kubeadmVersion } : {}),
     }));
     if (o.addons || o.proxyReplacement) this.addons = newAddonState(o.addons ?? [], !!o.proxyReplacement);
     bootstrapRbac(this);
@@ -214,14 +219,14 @@ export class Cluster {
         'kubernetes.io/arch': 'amd64',
         'kubernetes.io/hostname': n.name,
         'kubernetes.io/os': 'linux',
-        ...(n.role === 'control-plane' ? { 'node-role.kubernetes.io/control-plane': 'true', 'node-role.kubernetes.io/master': 'true' } : {}),
+        ...(n.role === 'control-plane' ? { 'node-role.kubernetes.io/control-plane': n.kubeadmVersion ? '' : 'true', ...(n.kubeadmVersion ? {} : { 'node-role.kubernetes.io/master': 'true' }) } : {}),
         ...n.labels,
       };
       this.sysCreate({
         apiVersion: 'v1',
         kind: 'Node',
         metadata: { name: n.name, labels, annotations: { 'flannel.alpha.coreos.com/public-ip': n.ip, 'node.alpha.kubernetes.io/ttl': '0', 'trainer.dev/simulated': 'true' } },
-        spec: { podCIDR: n.podCIDR, podCIDRs: [n.podCIDR], providerID: `k3s://${n.name}`, ...(n.role === 'control-plane' && o.controlPlaneTaint ? { taints: [{ key: 'node-role.kubernetes.io/control-plane', effect: 'NoSchedule' }] } : {}) },
+        spec: { podCIDR: n.podCIDR, podCIDRs: [n.podCIDR], ...(n.kubeadmVersion ? {} : { providerID: `k3s://${n.name}` }), ...(n.role === 'control-plane' && o.controlPlaneTaint ? { taints: [{ key: 'node-role.kubernetes.io/control-plane', effect: 'NoSchedule' }] } : {}) },
         status: nodeStatus(n, true, this.now),
       });
       this.sysCreate({ apiVersion: 'coordination.k8s.io/v1', kind: 'Lease', metadata: { name: n.name, namespace: 'kube-node-lease' }, spec: { holderIdentity: n.name, leaseDurationSeconds: 40, renewTime: iso(this.now) } });
@@ -822,10 +827,10 @@ export function nodeStatus(n: NodeSim, ready: boolean | 'unknown', now: number, 
     daemonEndpoints: { kubeletEndpoint: { Port: 10250 } },
     nodeInfo: {
       architecture: 'amd64',
-      containerRuntimeVersion: 'containerd://2.1.4-k3s1',
+      containerRuntimeVersion: n.kubeadmVersion ? 'containerd://2.1.4' : 'containerd://2.1.4-k3s1',
       kernelVersion: '6.8.0-88-generic',
-      kubeProxyVersion: K8S_VERSION,
-      kubeletVersion: K8S_VERSION,
+      kubeProxyVersion: n.kubeadmVersion ?? K8S_VERSION,
+      kubeletVersion: n.kubeadmVersion ?? K8S_VERSION,
       operatingSystem: 'linux',
       osImage: 'Ubuntu 24.04.3 LTS',
       machineID: (n.name + '0000000000000000000000000000').slice(0, 32).replace(/[^0-9a-f]/g, 'a'),
