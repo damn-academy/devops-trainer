@@ -90,7 +90,8 @@ function practiceBody(items: string[], l: 'ru' | 'en', minutes: number): string 
 
 function moduleBody(letter: string, en = false): string {
   const mod = (en ? SALES_SCHOOL_EN : SALES_SCHOOL).find((m) => m.letter === letter)!;
-  return mod.items.map((it) => `**${it.n}. ${it.title.replace(/\.$/, '')}.** ${it.body}`).join('\n\n');
+  // Numbered within the lesson: a lesson opened on its own should not start at 11.
+  return mod.items.map((it, i) => `**${i + 1}. ${it.title.replace(/\.$/, '')}.** ${it.body}`).join('\n\n');
 }
 
 const INTRODUCES: Record<string, string[]> = {
@@ -176,7 +177,7 @@ export const SALES_QUIZ: QuizItem[] = [
     prompt: bi('Сделка зависла: контакт в аккаунте отвечает «всё ок, двигаемся», но никакого движения нет три месяца. Чего не хватает по MEDDIC?', 'A deal is stuck: the contact says "all good, moving" but nothing has moved for three months. Which part of MEDDIC is missing?'),
     options: [
       { id: 'champion', text: bi('Внутреннего сторонника', 'A champion with a personal stake'), correct: true, why: bi('«Всё хорошо» без личной заинтересованности контакта обычно означает вежливый отказ. Внутренний сторонник двигает сделку, когда результат нужен ему самому.', '"All good" without the contact\'s personal stake is a polite no. A champion pushes when they need the result themselves.') },
-      { id: 'price', text: bi('Скидки, которая сдвинет решение к концу квартала', 'A discount'), why: bi('Цена не двигает сделку без внутреннего продавца.', 'Price does not move a deal without an internal seller.') },
+      { id: 'price', text: bi('Скидки, которая сдвинет решение к концу квартала', 'A discount'), why: bi('Цена не двигает сделку без внутреннего сторонника.', 'Price does not move a deal without a champion.') },
       { id: 'demo', text: bi('Ещё одной демонстрации для инженеров, которые не были на первой', 'Another demo'), why: bi('Демонстрация отвечает на вопрос «что это», а не «почему это нужно купить сейчас».', 'A demo answers "what is it", not "why should they buy it now".') },
     ],
   },

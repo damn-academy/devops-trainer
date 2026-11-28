@@ -69,7 +69,7 @@ Check yourself before sending the terms to the partner: the registration has a t
 - Refuse to quote the second reseller and tell the customer the project is already registered to the first partner || The customer must collect three quotes, and a refusal will break its procurement.
 
 ? The customer's head of infrastructure offers to buy directly from the vendor because the integrator is slow. Which answer makes more sense?
-+ Decline, tell the partner about the call and propose a three-way meeting || First-line support stays with the integrator, and bypassing a partner drives away the whole channel.
++ Decline and immediately tell the partner about the conversation with the customer || First-line support stays with the integrator, and bypassing a partner drives away the whole channel.
 - Agree, if the customer finds an exception in its procurement rules itself || The partner will keep supporting the customer's hardware and will learn about the bypass.
 - Agree and give the integrator part of the margin as compensation for the lost deal || Compensation will not restore trust, and the integrator will stop investing in your deals.
 
