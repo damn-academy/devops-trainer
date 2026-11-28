@@ -57,9 +57,14 @@ const DIR = '/run/dt';
 // `case` patterns over /proc/<pid>/stat: "<pid> (<comm>) <state> <ppid> …"
 const STAT_CASE = '*" (vim) "*|*" (view) "*|*" (vimdiff) "*|*" (rvim) "*|*" (rview) "*|*" (ex) "*|*" (vimtutor) "*|*" (nvim) "*|*" (emacs"*';
 
-/** Running editors and the agents' stamps; only shell builtins, so it costs no fork beyond the frame. */
-export function editorProbeScript(): string {
-  return `for p in /proc/[0-9]*; do read -r st < "$p/stat" 2>/dev/null || continue; case "$st" in ${STAT_CASE}) echo "P $st";; esac; done
+/**
+ * Running editors and the agents' stamps; only shell builtins, so it costs no
+ * fork beyond the frame. `V` is the service shell: its session holds the
+ * trainer's own editor clients, which are not the learner's editors.
+ */
+export function editorProbeScript(svcPidFile = '/tmp/.dt-svc'): string {
+  return `[ -r ${svcPidFile} ] && read -r v < ${svcPidFile} && echo "V $v"
+for p in /proc/[0-9]*; do read -r st < "$p/stat" 2>/dev/null || continue; case "$st" in ${STAT_CASE}) echo "P $st";; esac; done
 for f in ${DIR}/*.stamp; do [ -e "$f" ] && read -r s < "$f" && echo "T \${f#${DIR}/} $s"; done; :`;
 }
 
@@ -74,8 +79,8 @@ export function editorStateScript(): string {
 for f in ${DIR}/*.stamp; do [ -e "$f" ] || continue; n=\${f%.stamp}; b=\${n##*/}; k=\${b%%.*}; p=\${b#*.}; [ -r /proc/$p/stat ] || continue
 read -r st < /proc/$p/stat; set -- $st; : > ${o}
 if [ "$3" != T ] && [ -S "$n.sock" ]; then case $k in
-vim) timeout 3 vim --clientserver socket --servername "$n.sock" --remote-expr 'DtState()' > ${o} 2>/dev/null ;;
-nvim) timeout 3 nvim --server "$n.sock" --remote-expr 'luaeval("DtState()")' > ${o} 2>/dev/null ;;
+vim) timeout 3 vim --clientserver socket --servername "$n.sock" --remote-expr 'DtState()' < /dev/null > ${o} 2>/dev/null ;;
+nvim) timeout 5 nvim --server "$n.sock" --remote-expr 'luaeval("DtState()")' < /dev/null > ${o} 2>/dev/null ;;
 emacs) echo state | socat -T 3 -t 3 - "UNIX-CONNECT:$n.sock" > ${o} 2>/dev/null ;;
 esac; fi
 if [ -s ${o} ]; then printf '\\036S%s %s socket\\n' "$k" "$p"; cat ${o}; elif [ -s "$n.json" ]; then printf '\\036S%s %s file\\n' "$k" "$p"; cat "$n.json"; else printf '\\036S%s %s none\\n' "$k" "$p"; fi; echo
@@ -101,17 +106,25 @@ export interface EditorProbe {
 export function parseEditorProbe(out: string): EditorProbe {
   const procs: EditorProc[] = [];
   const stamps: Record<string, string> = {};
+  let svc = 0;
+  const sessions = new Map<number, number>();
   for (const ln of out.replace(/\r/g, '').split('\n')) {
-    if (ln.startsWith('P ')) {
-      const m = /^P (\d+) \((.*)\) (\S) (-?\d+)/.exec(ln);
+    if (ln.startsWith('V ')) svc = Number(ln.slice(2)) || 0;
+    else if (ln.startsWith('P ')) {
+      // "<pid> (<comm>) <state> <ppid> <pgrp> <session> …"
+      const m = /^P (\d+) \((.*)\) (\S) (-?\d+)(?: (-?\d+) (-?\d+))?/.exec(ln);
       const kind = m ? editorKindOf(m[2]) : undefined;
-      if (m && kind) procs.push({ kind, pid: Number(m[1]), ppid: Number(m[4]), state: m[3], comm: m[2] });
+      if (m && kind) {
+        procs.push({ kind, pid: Number(m[1]), ppid: Number(m[4]), state: m[3], comm: m[2] });
+        if (m[6]) sessions.set(Number(m[1]), Number(m[6]));
+      }
     } else if (ln.startsWith('T ')) {
       const m = /^T (\S+\.stamp) ?(.*)$/.exec(ln);
       if (m) stamps[m[1]] = m[2];
     }
   }
-  return { procs, stamps };
+  // The trainer's own clients (`nvim --server …`) run in the service shell's session.
+  return { procs: svc ? procs.filter((p) => sessions.get(p.pid) !== svc) : procs, stamps };
 }
 
 export interface EditorInstance {

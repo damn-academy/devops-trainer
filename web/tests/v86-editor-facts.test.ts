@@ -48,6 +48,11 @@ describe('editor probe', () => {
     expect(probeSignature(parseEditorProbe('P 120 (vim) S 100\nT vim.120.stamp 4 2 6 1 n  1 1 0 0'))).not.toBe(sig);
   });
 
+  it('leaves out the trainer\'s own editor clients', () => {
+    const p = parseEditorProbe('V 900\nP 120 (nvim) S 100 120 100 34816\nP 121 (nvim) S 120 120 100 34816\nP 950 (nvim) S 940 940 900 0\nT nvim.121.stamp 1 x');
+    expect(editorInstances(p).map((i) => i.pid)).toEqual([120]);
+  });
+
   it('knows the editors by process name', () => {
     expect(['vim', 'view', 'vimdiff', 'nvim', 'emacs', 'emacs-30.2', 'vi', 'nano'].map(editorKindOf)).toEqual(['vim', 'vim', 'vim', 'nvim', 'emacs', 'emacs', undefined, undefined]);
   });
