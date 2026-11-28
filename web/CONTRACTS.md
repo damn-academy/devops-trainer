@@ -295,6 +295,18 @@ files in `/srv/train`. A lesson places the widget:
   editor area alone (cheaper than `facts()`).
 - Demo: `#/lab/editors`. End-to-end run: `node scripts/check-editors-lab.mjs`
   (on a build host).
+- Behaviour probes: `props.probes: EditorProbeSpec[]` (`editor-probes.ts`) run
+  the learner's macro (`{ macro: 'a' }`, Emacs `{ macro: 'last' }`), keys
+  through their config (`{ keys, config? }`) or an Emacs command from their
+  init file (`{ call }`) on a hidden `input` in a fresh batch editor; a goal
+  reads `probe['id'].{ok,text,error}`. Results are cached by macro and input.
+- Cost: goals reading only `files[...]`, editor scopes and `probe[...]` are
+  judged on `m.focusedFacts()` (one round trip, no process list).
+- The widget always shows how to leave the editor in front, warns about a
+  non-Latin layout (Vim/Neovim agents count non-Latin letters in Normal and
+  Visual mode; Emacs: Meta, C-x, C-c chords), and while an editor is open the
+  tutor gets the rendered screen and a compact editor state instead of the
+  command tail (`registerTerminalContext` in `engine/ai/context.ts`).
 
 ### Cross-terminal goal source
 
