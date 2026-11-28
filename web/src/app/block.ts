@@ -73,8 +73,8 @@ export function blockPage(id: string): Page {
         ? h(
             'section.placement-entry',
             {},
-            h('p', {}, t(bi('Выберите уровень проверки. На следующей странице указано число заданий для каждого уровня.', 'A short check confirms your choice: 5–10 tasks; practice is checked by the state of the machine.'))),
-            h('p.small.muted', {}, t(bi('Не знаете, какой уровень выбрать? Пройдите проверку, и курс подскажет подходящий.', 'Not sure which level to choose? Take the check and we will recommend one.'))),
+            h('p', {}, t(bi('Если тема знакома, подтвердите уровень короткой проверкой: число заданий для каждого уровня указано на следующей странице.', 'If you know the topic, confirm your level with a short check: the next page shows the number of tasks for each level.'))),
+            h('p.small.muted', {}, t(UI.checkLevelHint)),
             last ? h('p.muted.small', {}, `${t(bi('Последняя проверка', 'Last check'))}: ${t(UI.levels[last.claimed])} — ${last.passed ? t(bi('пройдена', 'passed')) : t(bi('не пройдена', 'not passed'))}, ${Math.round(last.score * 100)}%`) : null,
             h('a.btn.ghost', { href: href({ name: 'placement', id: b.id }) }, icon('check'), t(UI.checkLevel)),
           )

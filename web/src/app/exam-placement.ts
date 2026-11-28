@@ -56,6 +56,8 @@ const P = {
   time: bi('время', 'Time'),
   variant: bi('вариант', 'variant'),
   ofN: bi('из', 'of'),
+  allSkipped: bi('Все задания пропущены', 'Every task was skipped'),
+  allSkippedLine: bi('Уровень не подтверждён, и эта попытка не записана. Проверку можно пройти заново.', 'The level is not confirmed, and this attempt is not recorded. You can take the check again.'),
 };
 
 function fmtDate(iso: string): string {
@@ -199,7 +201,18 @@ export function placementPage(id: string): Page {
   const done = (claimed: Level, tasks: PlacementTask[], answers: PlacementAnswer[], ms: number, replay = false) => {
     disposeAll();
     clearDraft(`placement/${b.id}`);
-    if (!answers.some(a => a.right || a.guessed !== undefined)) { choose(); return; }
+    if (!answers.some(a => a.right || a.guessed !== undefined)) {
+      clear(root);
+      put(root,
+        h('h1', {}, t(P.allSkipped)),
+        h('p.lede', {}, t(P.allSkippedLine)),
+        h('div.placement-choice', {},
+          h('button.btn', { type: 'button', onclick: choose }, t(bi('Выбрать уровень проверки', 'Choose the check level'))),
+          h('a.btn.ghost', { href: href({ name: 'block', id: b.id }) }, t(bi('Вернуться к блоку', 'Back to the block'))),
+        ),
+      );
+      return;
+    }
     const r = scorePlacement(tasks, answers);
     const prior = history().filter((x) => x.claimed === claimed && !x.passed).length;
     if (!replay) {

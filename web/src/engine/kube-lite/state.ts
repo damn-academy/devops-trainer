@@ -33,6 +33,8 @@ export interface K8sSetup {
   addons?: AddonId[];
   /** The CNI replaces kube-proxy (Cilium). */
   proxyReplacement?: boolean;
+  /** A kubeadm cluster of this version instead of the default k3s one. */
+  kubeadmVersion?: string;
   seed?: number;
 }
 
@@ -88,7 +90,7 @@ export function kubeconfigYaml(namespace: string | undefined, contexts: Record<s
 export async function applyK8sSetup(m: SimMachineApi, value: unknown): Promise<void> {
   const v = (value ?? {}) as K8sSetup;
   const st = k8sState(m);
-  const c = new Cluster({ nodes: v.nodes, components: v.bare ? { ...v.components, coredns: false } : v.components, controlPlaneTaint: v.controlPlaneTaint, bare: v.bare, seed: v.seed, addons: v.addons, proxyReplacement: v.proxyReplacement });
+  const c = new Cluster({ nodes: v.nodes, components: v.bare ? { ...v.components, coredns: false } : v.components, controlPlaneTaint: v.controlPlaneTaint, bare: v.bare, seed: v.seed, addons: v.addons, proxyReplacement: v.proxyReplacement, kubeadmVersion: v.kubeadmVersion });
   st.cluster = c;
   const login = m.users.find((u) => u.name === 'learner') ?? m.users.find((u) => u.uid >= 1000);
   for (const u of [login, m.users.find((x) => x.name === 'root')]) {

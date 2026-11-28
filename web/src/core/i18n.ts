@@ -145,7 +145,7 @@ export const UI = {
   },
   tiers: { core: bi('Основной урок', 'Core lesson'), plus: bi('Необязательный урок', 'Optional lesson'), pro: bi('Углублённый урок', 'Advanced lesson') },
   checkLevel: bi('Определить уровень', 'Check your level'),
-  checkLevelHint: bi('Не понимаете, какой уровень выбрать? Проверьте себя — и мы порекомендуем.', 'Not sure which level to pick? Check yourself — we will recommend one.'),
+  checkLevelHint: bi('Не знаете, какой уровень выбрать? Пройдите проверку, и курс подскажет подходящий.', 'Not sure which level to choose? Take the check and we will recommend one.'),
   chooseLevel: bi('Выберите уровень для этого блока', 'Choose your level for this block'),
   levelChosen: bi('Ваш уровень', 'Your level'),
   checklistStep: bi('Шаг чек-листа', 'Checklist step'),

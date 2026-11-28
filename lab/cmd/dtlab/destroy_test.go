@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/damn-academy/devops-trainer/lab/internal/lab"
 	"github.com/damn-academy/devops-trainer/lab/internal/profile"
+	"github.com/damn-academy/devops-trainer/lab/internal/say"
 )
 
 // testLab is a lab with two VMs in its state and a disk on the host; it
@@ -151,7 +153,7 @@ func TestUnknownFlagPrintsNoPackageLine(t *testing.T) {
 	l, disk, _ := testLab(t)
 	var out bytes.Buffer
 	err := destroyCmd(context.Background(), l, []string{"--bogus"}, strings.NewReader("y\n"), &out)
-	if err == nil || !strings.Contains(err.Error(), "flag provided but not defined: -bogus") {
+	if err == nil || !strings.Contains(err.Error(), "flag provided but not defined: --bogus") {
 		t.Fatalf("dtlab destroy --bogus: %v", err)
 	}
 	if strings.Contains(out.String(), "flag provided") {
@@ -204,4 +206,35 @@ func captureStdout(t *testing.T, f func()) string {
 	var b bytes.Buffer
 	_, _ = b.ReadFrom(r)
 	return b.String()
+}
+
+func TestFlagMistakesPointToHelp(t *testing.T) {
+	l, _, _ := testLab(t)
+	t.Setenv("LC_ALL", "ru_RU.UTF-8")
+	var err error
+	out := captureStdout(t, func() { err = up(context.Background(), l, []string{"--timeout", "abc"}) })
+	if out != "" {
+		t.Errorf("a wrong value printed the help:\n%s", out)
+	}
+	var ue usageError
+	if !errors.As(err, &ue) || ue.cmd != "up" {
+		t.Fatalf("dtlab up --timeout abc: %v", err)
+	}
+	if got := say.Translate(err.Error()); got != `dtlab up: неверное значение "abc" у флага --timeout: ожидается длительность, например 30m` {
+		t.Errorf("translated: %s", got)
+	}
+	help := captureStdout(t, func() { _ = up(context.Background(), l, []string{"--help"}) })
+	if !strings.Contains(help, "  --timeout\n") || !strings.Contains(help, "(по умолчанию 25 мин)") || strings.Contains(help, "duration") || strings.Contains(help, "\n  -profile") {
+		t.Errorf("help of dtlab up:\n%s", help)
+	}
+}
+
+func TestRussianValueErrors(t *testing.T) {
+	_, err := profile.Get("huge")
+	if got := say.Translate(err.Error()); got != `профиля "huge" нет: выберите light, standard или full` {
+		t.Errorf("profile: %s", got)
+	}
+	if got := say.Translate("Help: dtlab up --help"); got != "Справка: dtlab up --help" {
+		t.Errorf("help line: %s", got)
+	}
 }

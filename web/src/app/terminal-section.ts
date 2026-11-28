@@ -80,7 +80,8 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   // On a phone the expanded terminal covers the goals: a folded copy of them stays above it.
   const goalsMiniTitle = h('summary');
   const goalsMiniList = h('ol.lab-goals-mini-list');
-  const goalsMini = h('details.lab-goals-mini', {}, goalsMiniTitle, goalsMiniList);
+  // A single goal is short: show it at once instead of behind a tap.
+  const goalsMini = h('details.lab-goals-mini', { open: o.tasks.length === 1 }, goalsMiniTitle, goalsMiniList);
   const el = h(
     'div.lab',
     { 'data-exam': o.exam ? 'true' : undefined },
@@ -113,9 +114,9 @@ export function mountLab(root: HTMLElement, o: LabOptions): Mounted {
   const renderGoalsMini = (current: Task | undefined) => {
     goalsMiniTitle.textContent = current
       ? o.tasks.length === 1
-        ? t(bi('Цели задания', 'Task goals'))
+        ? t(bi('Цель задания', 'Task goal'))
         : t(fmt(bi('Цели: сейчас задание {i} из {n}', 'Goals: now task {i} of {n}'), { i: String(o.tasks.indexOf(current) + 1), n: String(o.tasks.length) }))
-      : t(bi('Цели: все выполнены', 'Goals: all done'));
+      : o.tasks.length === 1 ? t(bi('Цель выполнена', 'Goal done')) : t(bi('Цели: все выполнены', 'Goals: all done'));
     clear(goalsMiniList);
     for (const [i, task] of o.tasks.entries()) {
       const done = passed.has(task.id);

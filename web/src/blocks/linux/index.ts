@@ -239,8 +239,8 @@ const exam: Exam = {
   block: 'linux',
   title: bi('Служба не запускается', 'A service that does not start'),
   intro: bi(
-    'Ночная служба отчётов не работает, а журнал разросся. Почините службу, сделайте так, чтобы она запускалась и после перезагрузки, и ограничьте размер журнала. На экзамене открыта только документация самой машины, то есть `man`, `--help` и `help`.',
-    'The nightly report service is down, and the journal has grown. Fix the service, make it start after a reboot too, and limit the journal’s size. During the exam only the machine’s own documentation is open, that is, `man`, `--help` and `help`.',
+    'Ночная служба отчётов не работает, а журнал разросся. Почините службу, сделайте так, чтобы она запускалась и после перезагрузки, и ограничьте размер журнала. Каждая задача начинается на своей копии машины, поэтому то, что вы сделали в одной, в другой не видно. На экзамене открыта только документация самой машины, то есть `man`, `--help` и `help`.',
+    'The nightly report service is down, and the journal has grown. Fix the service, make it start after a reboot too, and limit the journal’s size. Each task starts on its own copy of the machine, so what you did in one is not seen in another. During the exam only the machine’s own documentation is open, that is, `man`, `--help` and `help`.',
   ),
   minutes: 30,
   pass: 0.7,
@@ -265,7 +265,7 @@ const exam: Exam = {
       setup: REPORT_BROKEN,
       task: {
         id: 'boot',
-        prompt: bi('Служба должна запускаться при загрузке и перезапускаться после сбоя.', 'The service must start at boot and restart after a failure.'),
+        prompt: bi('Служба `report.service` должна запускаться при загрузке и перезапускаться после сбоя. На этой машине она снова сломана, но чинить её здесь не нужно.', '`report.service` must start at boot and restart after a failure. On this machine it is broken again, but you do not need to fix it here.'),
         check: { when: (f) => units(f)['report.service']?.enabled === 'enabled' && /on-failure|always/.test(units(f)['report.service']?.props.Restart ?? '') },
       },
     },

@@ -633,7 +633,7 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
    */
   function followStep(target: number[], scale: number, tokenBoxes: Box[], smooth: boolean) {
     const st = steps[idx];
-    const ids = [...Object.keys(st?.say ?? {}), ...(st?.focus ?? [])];
+    const ids = [...Object.keys(st?.say ?? {}), ...leadFirst(st)];
     const origin = svg.getBoundingClientRect();
     const rectOf = (el: Element | null): Box | null => {
       if (!el) return null;
@@ -662,6 +662,26 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
     const left = span.w > room.w ? span.x - 8 : span.x + span.w / 2 - viewport.clientWidth / 2;
     const top = span.h > room.h ? span.y - 8 : span.y + span.h / 2 - viewport.clientHeight / 2;
     viewport.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: smooth && !calm() ? 'smooth' : 'auto' });
+  }
+
+  /**
+   * The focus with the element the caption names first, so that it stays in
+   * the window right after the speaking node; a step without a callout and
+   * without a named element leads with the element it changes.
+   */
+  function leadFirst(st: Step | undefined): string[] {
+    const focus = st?.focus ?? [];
+    if (!st || focus.length < 2) return focus;
+    const caption = t(st.caption);
+    const names = (id: string) => {
+      const label = d.nodes.find((n) => n.id === id)?.label;
+      const text = label ? txt(label).replace(/\s+/g, ' ').trim() : '';
+      return text && new RegExp(`(^|[^\\p{L}\\p{N}])${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}\\p{N}])`, 'u').test(caption) ? text.length : 0;
+    };
+    const changed = new Set([...(st.reveal ?? []), ...Object.keys(st.states ?? {}), ...Object.keys(st.values ?? {}), ...Object.keys(st.fill ?? {})]);
+    const named = focus.map((id) => [id, names(id)] as const).filter(([, n]) => n > 0).sort((x, y) => y[1] - x[1])[0]?.[0];
+    const lead = named ?? (Object.keys(st.say ?? {}).length ? undefined : [...focus].reverse().find((id) => changed.has(id)));
+    return lead ? [lead, ...focus.filter((id) => id !== lead)] : focus;
   }
 
   /** Animate only the camera; the drawing retains its authored coordinates. */
