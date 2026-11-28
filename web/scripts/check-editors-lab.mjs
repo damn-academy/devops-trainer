@@ -116,6 +116,15 @@ try {
     await waitArea((a) => (a.vim.buf?.text ?? '').split(';').length > 4, 10000).catch(() => null);
     step('vim.macro', await judge('vim-macro'));
     raw.vimMacro = (await m.exec(editorStateScript())).out;
+    // A behaviour probe: the macro of register a on a hidden file, in a fresh batch Vim.
+    {
+      const { probeScript, parseProbe } = await import('/src/engine/v86/editor-probes.ts');
+      const spec = { id: 'macro-a', editor: 'vim', input: 'one\ntwo\nthree\nfour\nfive\n', run: { macro: 'a' } };
+      const facts = await m.facts();
+      const ps = performance.now();
+      const r = parseProbe((await m.exec(probeScript(spec, facts))).out);
+      step('vim.probe', { ms: Math.round(performance.now() - ps), ok: r.ok, text: r.text, error: r.error });
+    }
     await keys(':qa!\r', 1500);
     // Honesty: Vim without plugins.
     await keys('vim -u NONE /srv/train/app.conf\r', 0);

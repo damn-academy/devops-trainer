@@ -5,6 +5,7 @@
 import { bi, type Bi } from '../../core/i18n';
 import type { Task } from '../../core/types';
 import { EDITOR_SCOPES, type EditorArea, type EditorFacts, type EditorKind } from './editor-facts';
+import type { EditorProbeSpec } from './editor-probes';
 
 export interface PanelKey {
   /** What the button says: the key in the editors' own notation. */
@@ -180,6 +181,8 @@ export interface EditorLabProps {
   memoryMB?: number;
   autostart?: boolean;
   rows?: number;
+  /** Behaviour probes (editor-probes.ts): a goal reads `probe['id']`. */
+  probes?: EditorProbeSpec[];
 }
 
 /** Predicates of a task, strings only. */
@@ -187,7 +190,7 @@ export function predicates(task: Task): string[] {
   return [task.check.when, ...(task.check.fail ?? []).map((f) => f.if)].filter((x): x is string => typeof x === 'string');
 }
 
-/** A predicate that reads only the editor area can skip the machine's general facts (seconds in emulation). */
+/** A predicate that reads only the editor area (and behaviour probes, which need only the editor's facts) can skip the machine's general facts (seconds in emulation). */
 export function editorOnly(task: Task): boolean {
   const all = [task.check.when, ...(task.check.fail ?? []).map((f) => f.if)].filter((x) => x !== undefined);
   const preds = predicates(task);
@@ -195,7 +198,7 @@ export function editorOnly(task: Task): boolean {
   return preds.every((p) => {
     const code = p.replace(/'(?:\\.|[^'])*'|"(?:\\.|[^"])*"/g, "''");
     const scopes = [...code.matchAll(/(?:^|[\s(!&|#])(?:@start\.)?([a-z]+)(?=[.[#])/g)].map((m) => m[1]);
-    return scopes.length > 0 && scopes.every((s) => (EDITOR_SCOPES as readonly string[]).includes(s));
+    return scopes.length > 0 && scopes.every((s) => s === 'probe' || (EDITOR_SCOPES as readonly string[]).includes(s));
   });
 }
 

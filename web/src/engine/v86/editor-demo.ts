@@ -56,6 +56,25 @@ export const EDITOR_DEMO_TASKS: Task[] = [
     solutionTokens: ['qa', '@a'],
   },
   {
+    id: 'vim-macro-hidden',
+    prompt: bi(
+      'Макрос должен работать на любом списке, а не только на этом. Тренажёр сам выполнит макрос из регистра `a` на другом файле из пяти строк, которого вы не видите, и посмотрит, что получилось. Если макрос из прошлой цели добавляет `;` в конец строки и переходит на следующую, эта цель засчитается без ваших действий.',
+      'The macro has to work on any list, not only this one. The trainer itself runs the macro from register `a` on another file of five lines that you do not see and looks at the result. If the macro from the previous goal appends `;` and moves to the next line, this goal passes without anything more from you.',
+    ),
+    hints: {
+      H1: bi('Макрос, который ищет конкретное слово (`/beta`) или прыгает на номер строки, на другом файле сделает не то. Запишите его заново: `qa`, `A;`, Esc, `j`, `q`.', 'A macro that searches for a particular word (`/beta`) or jumps to a line number does something else on another file. Record it again: `qa`, `A;`, Esc, `j`, `q`.'),
+    },
+    check: {
+      when: "probe['macro-a'].text = 'one;\ntwo;\nthree;\nfour;\nfive;\n'",
+      fail: [
+        { if: "probe['macro-a'].text ~ ';;'", say: bi('На другом файле макрос ставит две точки с запятой в одной строке: в нём, видимо, нет перехода `j` на следующую строку.', 'On another file the macro puts two semicolons on one line: it probably lacks the `j` that moves to the next line.') },
+        { if: "probe['macro-a'].ok = true", say: bi('На другом файле макрос дал другой результат. Проверьте, что он не зависит от слов и номеров строк именно этого списка.', 'On another file the macro gives a different result. Make sure it does not depend on the words or line numbers of this list.') },
+        { if: 'vim.running && !(vim.reg.a)', say: bi('В регистре `a` пусто: запишите макрос, начав с `qa`.', 'Register `a` is empty: record the macro, starting with `qa`.') },
+      ],
+    },
+    solutionTokens: ['qa', '@a'],
+  },
+  {
     id: 'emacs-yank',
     prompt: bi(
       `Откройте \`${NOTES}\` в Emacs, удалите строку \`beta\` целиком в кольцо удалений и вставьте её дважды в конец буфера, чтобы получилось \`alpha\`, \`gamma\`, \`beta\`, \`beta\`.`,
@@ -85,5 +104,7 @@ export const EDITOR_DEMO: EditorLabProps = {
   ),
   editors: ['vim', 'emacs'],
   tasks: EDITOR_DEMO_TASKS,
+  // The macro of register a, run in a fresh Vim on a list the learner never sees.
+  probes: [{ id: 'macro-a', editor: 'vim', input: 'one\ntwo\nthree\nfour\nfive\n', run: { macro: 'a' } }],
   rows: 22,
 };

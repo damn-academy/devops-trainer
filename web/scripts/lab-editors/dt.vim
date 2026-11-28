@@ -73,15 +73,21 @@ function! DtState() abort
   let l:s.cursor = {'lnum': l:pos[1], 'col': l:pos[2]}
   let l:reg = {}
   let l:regtype = {}
+  let l:regkeys = {}
   for l:r in split(s:REGS, '\zs')
     let l:v = getreg(l:r)
     if l:v !=# ''
       let l:reg[l:r] = strpart(l:v, 0, 4096)
       let l:regtype[l:r] = getregtype(l:r)
+      " Macros in key notation (`A;<Esc>j`): raw bytes of special keys do not survive JSON.
+      if l:r =~# '^[a-z]$' && exists('*keytrans')
+        let l:regkeys[l:r] = keytrans(l:v)
+      endif
     endif
   endfor
   let l:s.reg = l:reg
   let l:s.regtype = l:regtype
+  let l:s.regkeys = l:regkeys
   let l:s.marks = map(getmarklist() + getmarklist(l:cur), {_, m -> s:Mark(m)})
   let l:j = getjumplist()
   let l:s.jumps = {'count': len(l:j[0]), 'idx': l:j[1]}

@@ -26,6 +26,7 @@ try {
   await page.locator('.ed-lab .xterm').waitFor({ timeout: 60000 });
   await page.waitForTimeout(3000);
   log({ step: 'ready', ms: Date.now() - t0 });
+  await page.evaluate(() => document.querySelector('.ed-lab')?.parentElement?.addEventListener('dt:editor-check', (e) => { if (e.detail.probe) window.__dtProbe = e.detail.probe; }));
   const term = page.locator('.ed-lab .xterm-helper-textarea');
   const type = async (s, wait = 300) => { await term.focus(); await page.keyboard.type(s, { delay: 40 }); await page.waitForTimeout(wait); };
   const press = async (k, wait = 300) => { await term.focus(); await page.keyboard.press(k); await page.waitForTimeout(wait); };
@@ -63,10 +64,13 @@ try {
   await type('qaA;');
   await press('Escape');
   await type('jq', 1500);
-  log({ step: 'vim.recorded', mode: await modeLine() });
+  await page.waitForTimeout(2000);
+  log({ step: 'vim.recorded', mode: await modeLine(), tutor: (await page.evaluate(async () => (await import('/src/engine/ai/context.ts')).terminalTail())).at(-1) });
   t = Date.now();
   await type('3@a');
   log({ step: 'vim-macro', done: await done('vim-macro'), ms: Date.now() - t });
+  // The macro of register a, run by the trainer on a hidden file (behaviour probe).
+  log({ step: 'vim-macro-hidden', done: await done('vim-macro-hidden'), ms: Date.now() - t, probe: await page.evaluate(() => window.__dtProbe) });
   // The key panel: Esc from the panel, then quit.
   await page.locator('.ed-key', { hasText: 'Esc' }).first().click();
   await type(':qa!\n', 2000);

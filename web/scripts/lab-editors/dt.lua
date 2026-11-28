@@ -71,12 +71,14 @@ function DtState()
   end
   local pos = vim.fn.getcurpos()
   s.cursor = { lnum = pos[2], col = pos[3] }
-  s.reg, s.regtype = vim.empty_dict(), vim.empty_dict()
+  s.reg, s.regtype, s.regkeys = vim.empty_dict(), vim.empty_dict(), vim.empty_dict()
   for r in REGS:gmatch('.') do
     local v = vim.fn.getreg(r)
     if v ~= '' then
       s.reg[r] = v:sub(1, 4096)
       s.regtype[r] = vim.fn.getregtype(r)
+      -- Macros in key notation (`A;<Esc>j`): raw bytes of special keys do not survive JSON.
+      if r:match('^[a-z]$') then s.regkeys[r] = vim.fn.keytrans(v) end
     end
   end
   s.marks = {}

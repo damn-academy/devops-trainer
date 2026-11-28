@@ -31,6 +31,7 @@ import { registerTerminalContext } from '../ai/context';
 import { editorOnly, exitHint, mentorEditorContext, isMac, keyboardLockSupport, nonLatinChord, nonLatinNotice, PANEL_KEYS, panelsFor, predicates, statusLine, type EditorLabProps } from './editor-keys';
 
 export type { EditorLabProps };
+import { parseProbe, probeKey, probeScript, probesNamed, type ProbeResult } from './editor-probes';
 import type { BootPhase, V86Machine } from './machine';
 import { PROFILES } from './profiles';
 import './v86.css';
@@ -259,6 +260,28 @@ export function mountEditorLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx)
     return lastFull;
   };
 
+  // Behaviour probes: run once per macro (or config) and input, then served from the cache.
+  const probeCache = new Map<string, ProbeResult>();
+  const withProbes = async (m: V86Machine, open: Task[], facts: Facts): Promise<Facts> => {
+    const named = new Set(open.flatMap((x) => probesNamed(predicates(x))));
+    const specs = (props.probes ?? []).filter((p) => named.has(p.id));
+    if (!specs.length) return facts;
+    const probe: Record<string, ProbeResult> = {};
+    for (const spec of specs) {
+      const k = probeKey(spec, facts);
+      const script = k ? probeScript(spec, facts) : null;
+      if (!k || !script) continue;
+      let r = probeCache.get(k);
+      if (!r) {
+        const t0 = performance.now();
+        r = { ...parseProbe((await m.exec(script)).out), ms: Math.round(performance.now() - t0) };
+        probeCache.set(k, r);
+      }
+      probe[spec.id] = r;
+    }
+    return { ...facts, probe } as Facts;
+  };
+
   const check = async (light = false) => {
     const m = machine;
     if (!m || m.phase !== 'ready') return;
@@ -266,7 +289,7 @@ export function mountEditorLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx)
     checking = true;
     try {
       const open = tasks.filter((x) => !passed.has(x.id));
-      const facts = await factsFor(m, open, light && open.every(editorOnly));
+      const facts = await withProbes(m, open, await factsFor(m, open, light && open.every(editorOnly)));
       drawMode(facts as unknown as EditorArea);
       let changed = false;
       let say: string | null = null;
@@ -288,7 +311,7 @@ export function mountEditorLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx)
           ctx?.complete();
         }
       }
-      root.dispatchEvent(new CustomEvent('dt:editor-check', { detail: { passed: [...passed], area: lastArea && { editor: lastArea.editor } } }));
+      root.dispatchEvent(new CustomEvent('dt:editor-check', { detail: { passed: [...passed], area: lastArea && { editor: lastArea.editor }, probe: (facts as { probe?: unknown }).probe } }));
     } catch {
       /* the machine went away mid-check: the next event checks again */
     } finally {
