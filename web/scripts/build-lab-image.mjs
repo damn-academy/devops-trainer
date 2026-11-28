@@ -112,6 +112,26 @@ const INSTALLER_WORLD = [
   'openssh', 'curl', 'iproute2', 'man-pages', 'mandoc',
 ];
 
+/**
+ * The editors' machine (courses Vim/Neovim and GNU Emacs): lab-node's toolbox
+ * plus the editors and what their lessons lean on. `EDITORS_OPTIONAL` are
+ * taken when the release has them for x86 and reported otherwise.
+ */
+const EDITORS_WORLD = [...NODE_WORLD, 'neovim', 'vim-tutor', 'xxd', 'emacs-nox', 'tmux', 'ripgrep', 'make'];
+const EDITORS_OPTIONAL = ['universal-ctags', 'shellcheck', 'yq-go'];
+
+/** The editors' agents and training files (scripts/lab-editors), installed by the editors profile. */
+const EDITORS_DIR = join(here, 'lab-editors');
+function editorsOverlay(put) {
+  const src = (name) => readFileSync(join(EDITORS_DIR, name));
+  put('usr/share/vim/vimfiles/plugin/dt.vim', src('dt.vim'));
+  put('usr/share/nvim/site/plugin/dt.lua', src('dt.lua'));
+  put('usr/share/emacs/site-lisp/dt-agent.el', src('dt-agent.el'));
+  put('usr/share/emacs/site-lisp/site-start.el', src('site-start.el'));
+  for (const f of readdirSync(join(EDITORS_DIR, 'train')).sort()) put(`srv/train/${f}`, src(`train/${f}`));
+  put('etc/profile.d/editors.sh', 'export EDITOR=vim VISUAL=vim\n');
+}
+
 /** Packages never installed on the 9p root (firmware blobs are useless in v86). */
 const EXCLUDE = ['linux-firmware', 'linux-firmware-any'];
 
@@ -122,6 +142,9 @@ const PROFILES = {
   // iac: OpenTofu (official release) and the provider `lab` in a filesystem mirror, see iac.mjs.
   'lab-node': { world: NODE_WORLD, hostname: 'lab', motd: '', sshd: true, iac: true },
   'lab-installer': { world: INSTALLER_WORLD, hostname: 'localhost', motd: null /* Alpine's own */, sshd: false },
+  // repo: false — its packages stay out of the local repository at /media/cdrom/apks of the
+  // other profiles, so adding this profile leaves their images (and boot snapshots) unchanged.
+  'lab-editors': { world: EDITORS_WORLD, optional: EDITORS_OPTIONAL, hostname: 'editors', motd: '', sshd: false, repo: false, overlay: editorsOverlay },
 };
 
 // ── downloads ─────────────────────────────────────────────────────────────
@@ -293,6 +316,7 @@ function buildTree(profile, pkgs, repoPkgs, apkBytes) {
   put('etc/ssh/sshd_config.d/10-lab.conf', '# Lab machines: root may log in with a key, users with a password or a key.\nPermitRootLogin prohibit-password\nUseDNS no\n');
   put('etc/sudoers.d/wheel', '%wheel ALL=(ALL:ALL) ALL\n', 0o440);
   put('etc/profile.d/lab.sh', 'export PAGER=less\nexport EDITOR=nano\n');
+  conf.overlay?.(put);
 
   // OpenRC runlevels: what a freshly installed Alpine enables, minus hardware-only services.
   const runlevels = {
@@ -469,10 +493,21 @@ async function main() {
   }
 
   const closures = {};
-  for (const [name, conf] of Object.entries(PROFILES)) closures[name] = resolve(index, conf.world, { exclude: EXCLUDE });
+  const missing = {};
+  for (const [name, conf] of Object.entries(PROFILES)) {
+    // Optional packages the release does not have for this architecture are reported, not fatal.
+    const optional = conf.optional ?? [];
+    missing[name] = optional.filter((n) => !index.provider(n));
+    if (missing[name].length) console.warn(`lab-image: ${name}: not in ${RELEASE}/${ARCH}, left out: ${missing[name].join(', ')}`);
+    closures[name] = resolve(index, [...conf.world, ...optional.filter((n) => !missing[name].includes(n))], { exclude: EXCLUDE });
+  }
   const extra = resolve(index, ['busybox-static'], { exclude: EXCLUDE });
   const all = new Map();
   for (const list of [...Object.values(closures), extra]) for (const p of list) all.set(p.name, p);
+  // The local repository of the images: packages of the profiles that share it.
+  const inRepo = new Map();
+  for (const [name, list] of Object.entries(closures)) if (PROFILES[name].repo !== false) for (const p of list) inRepo.set(p.name, p);
+  for (const p of extra) inRepo.set(p.name, p);
 
   const apkBytes = new Map();
   const units = new Map();
@@ -497,7 +532,7 @@ async function main() {
   downloaded.push(...IAC.downloads);
   console.log(`lab-image: OpenTofu ${IAC.tofu.version} and provider ${IAC.providers.map((x) => `${x.name} ${x.version}`).join(', ')} verified`);
 
-  const repoPkgs = [...all.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const repoPkgs = [...inRepo.values()].sort((a, b) => a.name.localeCompare(b.name));
   const profiles = {};
   for (const [name, list] of Object.entries(closures)) {
     const pkgs = list.map((p) => units.get(p.name));
@@ -508,6 +543,7 @@ async function main() {
       fsJson: `${name}.fs.json`,
       packages: list.map((p) => `${p.name}-${p.version}`),
       world: PROFILES[name].world,
+      ...(missing[name].length ? { missing: missing[name] } : {}),
       rootBytes: tree.size(),
       entries: tree.nodes.size,
     };
