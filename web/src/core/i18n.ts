@@ -51,13 +51,22 @@ export function detectLang(stored?: string | null, browser?: readonly string[]):
   return 'ru';
 }
 
+/** The language a shared link asks for: `?lang=en` or `?lang=ru` in the query string. */
+export function langFromQuery(search: string): Lang | null {
+  const v = new URLSearchParams(search).get('lang');
+  return isLang(v) ? v : null;
+}
+
 export function initLang(): Lang {
   let stored: string | null = null;
+  const asked = typeof location !== 'undefined' ? langFromQuery(location.search) : null;
   try {
+    if (asked) localStorage.setItem(KEY, asked);
     stored = localStorage.getItem(KEY);
   } catch {
     /* ignore */
   }
+  if (asked) stored = asked;
   const nav = typeof navigator !== 'undefined' ? navigator.languages : [];
   current = detectLang(stored, nav);
   if (typeof document !== 'undefined') document.documentElement.lang = current;
