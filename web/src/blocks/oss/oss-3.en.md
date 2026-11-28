@@ -62,6 +62,6 @@ Complete the exercise in your project's community. Find ten questions from the p
 - GitHub Discussions — https://docs.github.com/en/discussions/collaborating-with-your-community-using-discussions/about-discussions
 - OpenTofu 1.10 — https://opentofu.org/blog/opentofu-1-10-0/ (23.06.2025)
 - Cilium, 2025 annual report — https://www.cncf.io/wp-content/uploads/2025/12/cilium-annual-report-2025-final.pdf
-- CNCF, DB Schenker — https://www.cncf.io/case-studies/db-schenker/ (07.03.2025); Michelin — https://www.cncf.io/case-studies/michelin-2/
+- CNCF, DB Schenker — https://www.cncf.io/case-studies/db-schenker/ (07.03.2025); CNCF, Michelin — https://www.cncf.io/case-studies/michelin-2/
 - GrafanaCON 2025, opening keynote — https://grafana.com/events/grafanacon/2025/keynote-grafana-12/
 - CNCF, blog guidelines — https://github.com/cncf/foundation/blob/main/policies-guidance/blog-guidelines.md

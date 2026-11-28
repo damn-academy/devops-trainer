@@ -57,10 +57,10 @@ PostHog называет длинные видео на YouTube у авторо�
 
 <!-- section: sources -->
 - PostHog, платный маркетинг — https://posthog.com/handbook/marketing/paid; реклама в рассылках — https://posthog.com/handbook/content/newsletter-ads; маркетинговый бюджет 2026 года — https://posthog.com/founders/actual-marketing-budget-2026 (24.06.2026)
-- TLDR, случаи Plaid и ThreatSpike — https://advertise.tldr.tech/case-studies/plaid-adds-382k-in-pipeline-with-tldr-campaign-their-best-direct-buy-yet/ (16.09.2025), https://advertise.tldr.tech/case-studies/threatspike-adds-up-to-75000-in-net-new-business-pipeline-per-campaign-with-tldr/ (10.06.2025)
+- TLDR, случай Plaid — https://advertise.tldr.tech/case-studies/plaid-adds-382k-in-pipeline-with-tldr-campaign-their-best-direct-buy-yet/ (16.09.2025); TLDR, случай ThreatSpike — https://advertise.tldr.tech/case-studies/threatspike-adds-up-to-75000-in-net-new-business-pipeline-per-campaign-with-tldr/ (10.06.2025)
 - Cooper Press, медиакит Q4 2026 — https://cooperpress.com/files/cooperpress-media-kit-q4-2026.pdf
 - The Changelog, цены спонсорства — https://changelog.com/sponsor/pricing (проверено 25.11.2026)
-- Reddit Ads, аудитории и автоматический таргетинг — https://business.reddithelp.com/articles/Knowledge/Overview-Reddit-Ads-Audience-and-Targeting, https://business.reddithelp.com/articles/Knowledge/automated-targeting (проверено 25.11.2026)
+- Reddit Ads, аудитории и таргетинг — https://business.reddithelp.com/articles/Knowledge/Overview-Reddit-Ads-Audience-and-Targeting; Reddit Ads, автоматический таргетинг — https://business.reddithelp.com/articles/Knowledge/automated-targeting (проверено 25.11.2026)
 - Metadata, сколько стоит LinkedIn — https://metadata.io/resources/blog/what-linkedin-ads-cost (25.08.2026)
 - Dreamdata, LinkedIn Ads Benchmarks 2026 — https://dreamdata.io/blog/announcing-linkedin-ads-benchmarks-report-2026 (10.03.2026)
 - LinkedIn, Thought Leader Ads — https://business.linkedin.com/advertise/ads/sponsored-content/thought-leader-ads/specs (проверено 25.11.2026)

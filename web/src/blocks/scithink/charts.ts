@@ -136,8 +136,8 @@ export function mountAxis(el: HTMLElement, _props: unknown, ctx: WidgetCtx): Mou
     panel(0, bi('Ось начинается с нуля', 'The axis starts at zero')),
   );
   const caption = h('p', 'sct-caption', t(bi(
-    'Данные вымышленные: средняя оценка белизны зубов по шкале до 100 баллов у старой пасты 80, у новой 82. На обоих рисунках одни и те же два числа. Слева ось начинается с 79, и столбик новой пасты выглядит втрое выше старого; справа ось начинается с нуля, и видно, что разница составляет два балла, то есть два с половиной процента. Сравните подписи у основания осей: только они выдают приём.',
-    'The data is fictional: the average tooth-whiteness score on a 100-point scale is 80 for the old toothpaste and 82 for the new one. Both pictures show the same two numbers. On the left the axis starts at 79, and the new bar looks three times as tall as the old one; on the right the axis starts at zero, and you can see the difference is two points, that is two and a half percent. Compare the labels at the bottom of the axes: they alone give the trick away.',
+    'Данные вымышленные: средняя оценка белизны зубов по шкале до 100 баллов у старой пасты 80, у новой 82. На обоих рисунках одни и те же два числа. На первом рисунке ось начинается с 79, и столбик новой пасты выглядит втрое выше старого; на втором ось начинается с нуля, и видно, что разница составляет два балла, то есть два с половиной процента. Сравните подписи у основания осей: только они выдают приём.',
+    'The data is fictional: the average tooth-whiteness score on a 100-point scale is 80 for the old toothpaste and 82 for the new one. Both pictures show the same two numbers. In the first picture the axis starts at 79, and the new bar looks three times as tall as the old one; in the second the axis starts at zero, and you can see the difference is two points, that is two and a half percent. Compare the labels at the bottom of the axes: they alone give the trick away.',
   )));
   pair.append(h('figcaption', '', caption));
 

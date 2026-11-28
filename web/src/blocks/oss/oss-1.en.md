@@ -33,7 +33,7 @@ Complete the exercise in the “Boundary Between Open Source and Paid Versions�
 - Grafana Labs, 400 million dollars in revenue — https://grafana.com/press/2025/09/30/grafana-labs-surpasses-400m-arr-and-7000-customers-gains-new-investors-to-accelerate-global-expansion/ (30.09.2025)
 - HashiCorp, move to BSL — https://www.hashicorp.com/en/blog/hashicorp-adopts-business-source-license (10.08.2023)
 - OpenTofu 1.10 — https://opentofu.org/blog/opentofu-1-10-0/ (23.06.2025)
-- Redis, license change — https://redis.io/blog/redis-adopts-dual-source-available-licensing/ (20.03.2024); AGPL option — https://redis.io/blog/agplv3/ (01.05.2025)
+- Redis, license change — https://redis.io/blog/redis-adopts-dual-source-available-licensing/ (20.03.2024); Redis, AGPL option — https://redis.io/blog/agplv3/ (01.05.2025)
 - Linux Foundation, a year of Valkey — https://www.linuxfoundation.org/blog/a-year-of-valkey (22.04.2025)
 - Elastic, open source again — https://www.elastic.co/blog/elasticsearch-is-open-source-again (29.08.2024)
 - Grafana, licensing — https://grafana.com/licensing/

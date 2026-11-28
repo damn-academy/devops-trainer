@@ -21,7 +21,7 @@ Gartner не разрешает придуманные цитаты аналит
 - Gartner, брифинги вендоров — https://www.gartner.com/en/contact/vendor-briefings
 - Gartner, как аналитики работают с вендорами — https://www.gartner.com/en/about/ombuds/news/how-gartner-experts-work-with-vendors (30.06.2025)
 - Gartner, Magic Quadrant — https://www.gartner.com/en/research/magic-quadrant
-- Gartner, правила использования материалов — https://www.gartner.com/en/about/policies/content-compliance; правила для PR — https://www.gartner.com/en/newsroom/media-resources/public-relations-policy
+- Gartner, правила использования материалов — https://www.gartner.com/en/about/policies/content-compliance; Gartner, правила для PR — https://www.gartner.com/en/newsroom/media-resources/public-relations-policy
 - Grafana, пресс-релизы — https://grafana.com/press/2025/07/10/grafana-labs-named-a-leader-in-2025-gartner-magic-quadrant-for-observability-platforms/
 
 <!-- lesson: pr.press | PR: когда пресс-релиз работает и как говорить с журналистами | 20 -->
@@ -67,4 +67,4 @@ CNCF помогает проектам с объявлениями по уров
 - InfoWorld, контакты — https://www.infoworld.com/contact-us/
 - Heise, контакты — https://www.heise.de/kontakt/
 - SDxCentral, команда — https://www.sdxcentral.com/our-sdx-team/
-- CNCF, услуги проектам — https://contribute.cncf.io/resources/services/; членство — https://www.cncf.io/about/join/
+- CNCF, услуги проектам — https://contribute.cncf.io/resources/services/; CNCF, членство — https://www.cncf.io/about/join/

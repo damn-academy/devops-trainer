@@ -33,7 +33,7 @@ Complete the exercise in the “Three minutes at the booth” simulator on this 
 - Snowflake Summit 2025, partner prospectus — https://www.snowflake.com/wp-content/uploads/2024/12/Snowflake-Summit-25_Partnership-Prospectus-1.pdf
 - CNCF, 2026 sponsorship packages — https://events.linuxfoundation.org/wp-content/uploads/2025/12/sponsor-cncf-2026_120425.pdf (04.12.2025)
 - Flagship event sponsorship terms — https://www.lfopensource.cn/kubecon-cloudnativecon-openinfra-summit-pytorch-conference-china/sponsor/ (2026)
-- KubeCon Europe 2025 and 2026, transparency reports — https://www.cncf.io/wp-content/uploads/2025/06/KubeCon_EU_25_TransparencyReport.pdf, https://www.cncf.io/wp-content/uploads/2026/04/KCEU26-Transparency-Report.pdf
+- KubeCon Europe 2025, transparency report — https://www.cncf.io/wp-content/uploads/2025/06/KubeCon_EU_25_TransparencyReport.pdf; KubeCon Europe 2026, transparency report — https://www.cncf.io/wp-content/uploads/2026/04/KCEU26-Transparency-Report.pdf
 - Dash0, KubeCon booth — https://www.linkedin.com/feed/update/urn:li:share:7434598506889207808/ (2026)
 - Daniel Bryant, KubeCon EU 2024 recap — https://danielbryantuk.medium.com/kubecon-eu-2024-paris-key-takeaways-ad4c1bb7fbfe (27.03.2024)
 - CNCF, KubeCon branding guidelines — https://www.cncf.io/kubecon-cloudnativecon-branding-guidelines/
@@ -61,8 +61,8 @@ Complete this exercise in the document on this page. Choose an upcoming conferen
 <!-- widget: deptsim {"scenario":"events.kubecon"} -->
 
 <!-- section: sources -->
-- CNCF, 2026 sponsorship packages — https://events.linuxfoundation.org/wp-content/uploads/2025/12/sponsor-cncf-2026_120425.pdf (04.12.2025); 2025 packages — https://events.linuxfoundation.org/wp-content/uploads/2025/01/lf-global-sponsorship_2025_010925.pdf (09.01.2025)
-- KubeCon Europe 2025 and 2026, transparency reports — https://www.cncf.io/wp-content/uploads/2025/06/KubeCon_EU_25_TransparencyReport.pdf, https://www.cncf.io/wp-content/uploads/2026/04/KCEU26-Transparency-Report.pdf
+- CNCF, 2026 sponsorship packages — https://events.linuxfoundation.org/wp-content/uploads/2025/12/sponsor-cncf-2026_120425.pdf (04.12.2025); CNCF, 2025 sponsorship packages — https://events.linuxfoundation.org/wp-content/uploads/2025/01/lf-global-sponsorship_2025_010925.pdf (09.01.2025)
+- KubeCon Europe 2025, transparency report — https://www.cncf.io/wp-content/uploads/2025/06/KubeCon_EU_25_TransparencyReport.pdf; KubeCon Europe 2026, transparency report — https://www.cncf.io/wp-content/uploads/2026/04/KCEU26-Transparency-Report.pdf
 - Dash0, KubeCon booth — https://www.linkedin.com/feed/update/urn:li:share:7434598506889207808/ (2026)
 - Daniel Bryant, KubeCon EU 2024 recap — https://danielbryantuk.medium.com/kubecon-eu-2024-paris-key-takeaways-ad4c1bb7fbfe (27.03.2024)
 - CNCF, KubeCon branding guidelines — https://www.cncf.io/kubecon-cloudnativecon-branding-guidelines/

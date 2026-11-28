@@ -51,7 +51,7 @@ export function askBox(o: AskOptions): HTMLElement {
           '.',
         ),
       );
-      panel.append(externalButton({ lessonId: o.lessonId, level: o.level, task: o.task?.prompt, screen: o.screen?.() }));
+      panel.append(externalButton({ lessonId: o.lessonId, level: o.level, task: o.task?.prompt, screen: o.screen?.() }, bi('Открыть запрос для чата', 'Open the prompt for a chat')));
       if (docs) panel.append(h('p', {}, t(UI.whereDidYouLook)));
       return;
     }

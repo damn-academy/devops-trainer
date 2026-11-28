@@ -69,7 +69,7 @@ Check yourself before sending the terms to the partner: the registration has a t
 - Refuse to quote the second reseller and tell the customer the project is already registered to the first partner || The customer must collect three quotes, and a refusal will break its procurement.
 
 ? The customer's head of infrastructure offers to buy directly from the vendor because the integrator is slow. Which answer makes more sense?
-+ Decline, tell the partner about the call and propose a three-way meeting || First-line support stays with the integrator, and bypassing a partner drives away the whole channel.
++ Decline and immediately tell the partner about the conversation with the customer || First-line support stays with the integrator, and bypassing a partner drives away the whole channel.
 - Agree, if the customer finds an exception in its procurement rules itself || The partner will keep supporting the customer's hardware and will learn about the bypass.
 - Agree and give the integrator part of the margin as compensation for the lost deal || Compensation will not restore trust, and the integrator will stop investing in your deals.
 
@@ -104,6 +104,6 @@ Check yourself before sending the terms to the partner: the registration has a t
 - Broadcom, Advantage program for VMware partners — https://www.broadcom.com/company/news/articles/partners/building-a-simplified-stronger-advantage-program-for-vmware-by-broadcom (07.02.2024)
 - The Register, Broadcom hands customers back to partners — https://www.theregister.com/2024/12/05/vmware_user_migration_plans/ (05.12.2024)
 - IT Channel Oxygen, Nutanix and VMware partners — https://itchanneloxygen.com/were-here-for-you-nutanix-makes-play-for-vmware-partners (30.01.2024)
-- AWS Marketplace, Channel Partner Private Offers — https://docs.aws.amazon.com/marketplace/latest/userguide/channel-partner-offers.html and https://docs.aws.amazon.com/marketplace/latest/userguide/listing-fees.html (checked 26.11.2026)
+- AWS Marketplace, Channel Partner Private Offers — https://docs.aws.amazon.com/marketplace/latest/userguide/channel-partner-offers.html; AWS Marketplace, listing fees — https://docs.aws.amazon.com/marketplace/latest/userguide/listing-fees.html (checked 26.11.2026)
 - Google Cloud, private offers through partners — https://cloud.google.com/blog/topics/partners/announcing-google-cloud-marketplace-private-offers/ (26.06.2024)
 - Microsoft, Azure consumption commitment — https://learn.microsoft.com/en-us/partner-center/marketplace-offers/azure-consumption-commitment-enrollment (01.10.2026)

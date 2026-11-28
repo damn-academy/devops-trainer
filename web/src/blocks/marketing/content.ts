@@ -361,11 +361,11 @@ export const MARKETING_QUIZ: QuizItem[] = [
     kind: 'order',
     concepts: ['marketing.growth-loop'],
     prompt: bi(
-      'Расставьте этапы машины «один инсайт — десять кусков» в том порядке, в котором она работает.',
-      'Put the stages of the "one insight, ten pieces" machine in the order it actually works.',
+      'Расставьте этапы работы по правилу «один инсайт — десять кусков» в том порядке, в котором они идут.',
+      'Put the stages of the "one insight, ten pieces" practice in the order they happen.',
     ),
     steps: [
-      { id: 'insight', text: bi('Инсайт из практики записан и проверен цифрами', 'An insight from practice is written down and checked with numbers'), why: bi('Машина начинается с наблюдения; тема из календаря её не запускает.', 'The machine starts with an observation, not a topic from the calendar.') },
+      { id: 'insight', text: bi('Инсайт из практики записан и проверен цифрами', 'An insight from practice is written down and checked with numbers'), why: bi('Работа начинается с наблюдения, а не с темы из календаря.', 'The work starts with an observation, not a topic from the calendar.') },
       { id: 'deep', text: bi('Из инсайта собран большой материал', 'A big material is built from the insight'), why: bi('Большой материал несёт инсайт целиком и служит сырьём для всего остального.', 'The big material carries the insight whole and serves as raw material for everything else.') },
       { id: 'pieces', text: bi('Большой материал нарезан на десять кусков', 'The big material is cut into ten pieces'), why: bi('Куски по форматам дают десять каналов без десяти тем.', 'Pieces in different formats give ten channels without ten topics.') },
       { id: 'publish', text: bi('Куски опубликованы на платформах', 'The pieces are published on the platforms'), why: bi('Опубликованный материал начинает распространяться, а распространение важнее производства.', 'A published material starts to spread, and distribution matters more than production.') },
@@ -513,7 +513,7 @@ export const MARKETING_SCHOOL_EN: SchoolModule[] = [
       {
         n: 12,
         title: 'One insight, ten pieces.',
-        body: 'Regularity built on a new topic every day kills quality: demanding a fresh topic daily means getting water. Build the machine the other way round: once a week one real insight from practice, from it a big material, from the big one — a post, a short video, slides, an answer in the community and a paragraph in the newsletter. Ten pieces from one insight is ten channels without ten topics.',
+        body: 'Regularity built on a new topic every day kills quality: demanding a fresh topic daily means getting water. Do the opposite: once a week one real insight from practice, from it a big material, from the big one — a post, a short video, slides, an answer in the community and a paragraph in the newsletter. Ten pieces from one insight is ten channels without ten topics.',
         today: 'Pick an insight from the past week and lay out ten pieces across the channels you actually run.'
       },
       {

@@ -24,7 +24,9 @@
 - platformengineering.org, о сообществе — https://platformengineering.org/about
 - platformengineering.org, отчёт State of Platform Engineering, том 4 — https://platformengineering.org/blog/announcing-the-state-of-platform-engineering-vol-4
 - Gartner, Market Guide for Internal Developer Portals — https://www.gartner.com/en/documents/6306515 (31.03.2025)
+- Gartner, Hype Cycle for Platform Engineering, 2025 — https://www.gartner.com/en/documents/6586902 (25.06.2025)
 - CNCF TOC, модель зрелости платформ — https://github.com/cncf/toc/issues/1679
+- CNCF, объявление о модели зрелости платформ, авторы Эбби Бэнгсер (Syntasso) и Джош Гавант — https://www.cncf.io/blog/2023/11/20/announcing-the-platform-engineering-maturity-model/
 - FinOps Foundation, рамка FinOps — https://www.finops.org/framework/
 
 

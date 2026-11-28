@@ -145,8 +145,11 @@ export function renderMd(md: string, o: MdOptions = {}): DocumentFragment {
       const row = (cells: string[], header = false) => h('tr', {}, ...headers.map((_, col) =>
         h(header ? 'th' : 'td', { ...(header ? { scope: 'col' } : {}), style: `text-align:${align[col]}` }, ...inline(cells[col] ?? '', o))));
       const body = h('tbody'); i += 2;
-      while (i < lines.length && lines[i].trim() && lines[i].includes('|')) body.append(row(tableCells(lines[i++])));
-      frag.append(h('div.md-table-scroll', { tabindex: 0, role: 'region', 'aria-label': (o.lang ?? currentLang()) === 'ru' ? 'Таблица: прокрутка по горизонтали' : 'Table: scroll horizontally' },
+      const leads: string[] = [];
+      while (i < lines.length && lines[i].trim() && lines[i].includes('|')) { const cells = tableCells(lines[i++]); leads.push(cells[0] ?? ''); body.append(row(cells)); }
+      // Short row labels (a weekly cash table) stay pinned even on a phone; long ones would cover the screen.
+      const shortLead = headers.length > 3 && [headers[0] ?? '', ...leads].every(c => c.length <= 16);
+      frag.append(h(shortLead ? 'div.md-table-scroll.short-lead' : 'div.md-table-scroll', { tabindex: 0, role: 'region', 'aria-label': (o.lang ?? currentLang()) === 'ru' ? 'Таблица: прокрутка по горизонтали' : 'Table: scroll horizontally' },
         h('table', {}, h('thead', {}, row(headers, true)), body)));
       continue;
     }

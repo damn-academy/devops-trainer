@@ -84,9 +84,9 @@ Lobsters — небольшое сообщество о программиров
 
 <!-- section: sources -->
 - Hacker News, правила Show HN — https://news.ycombinator.com/showhn.html (проверено 25.11.2026)
-- Hacker News Guidelines и FAQ — https://news.ycombinator.com/newsguidelines.html, https://news.ycombinator.com/newsfaq.html (проверено 25.11.2026)
+- Hacker News Guidelines — https://news.ycombinator.com/newsguidelines.html; Hacker News FAQ — https://news.ycombinator.com/newsfaq.html (проверено 25.11.2026)
 - Watermelon, запуск на Hacker News и Product Hunt — https://medium.com/@baristaGeek/lessons-launching-a-developer-tool-on-hacker-news-vs-product-hunt-and-other-channels-27be8784338b (04.01.2024)
 - Mailhub, опыт первой страницы — https://www.reddit.com/r/SaaS/comments/1eq5gxs (12.08.2024)
 - Исследование звёзд после продвижения на Hacker News — https://arxiv.org/abs/2511.04453 (06.11.2025)
 - Syften, лучшее время для публикации на Hacker News — https://syften.com/blog/best-time-to-post-on-hacker-news/ (23.10.2026)
-- Lobsters, About и журнал модерации — https://lobste.rs/about, https://lobste.rs/moderations (проверено 25.11.2026)
+- Lobsters, About — https://lobste.rs/about; Lobsters, журнал модерации — https://lobste.rs/moderations (проверено 25.11.2026)

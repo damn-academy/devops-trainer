@@ -125,7 +125,7 @@ FinCEN’s August 2026 final rule exempted US-created entities and their owners 
 - The company must reincorporate in California || It registers in California as an out-of-state company without reincorporating.
 ? A Portuguese freelance designer works remotely from Lisbon. Which form should you collect?
 - 1099-NEC, as for any contractor || 1099 reporting is for US contractors.
-- W-9, because payment comes from the US || Currency and payer bank do not determine the form.
+- W-9, because payment comes from the US || The payer’s country does not determine the form: W-9 is for US citizens and residents, while a foreign individual fills in W-8BEN.
 + W-8BEN, recording that the work occurs outside the US || A foreign individual needs W-8BEN; service income sourcing follows work location.
 ? A founder receives shares vesting over four years and does not file 83(b). What may happen?
 + Each vesting can create taxable income at the shares’ current value || Without the election, appreciation is taxed as shares vest.

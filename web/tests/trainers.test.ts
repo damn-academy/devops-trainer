@@ -155,7 +155,8 @@ it('lets learners explicitly finish the downloaded script self-review', () => {
   expect(host.querySelectorAll('a[download]')).toHaveLength(3);
   expect(host.textContent).toContain('on your computer');
   expect(ctx.complete).not.toHaveBeenCalled();
-  button('Finish self-review').click();
+  expect(host.querySelector('a[href$="ru-intensifiers-expected.en.txt"]')).not.toBeNull();
+  button('Finish comparing the output').click();
   expect(ctx.complete).toHaveBeenCalledOnce();
   expect(host.querySelector('[role="status"]')?.textContent).toBe('Self-review complete.');
 });
@@ -168,6 +169,12 @@ it.each(['rubric', 'roleplay'] as const)('completes %s after external chat self-
   expect(finish.disabled).toBe(true);
   input.value = 'Reviewed in my chat'; input.dispatchEvent(new Event('input'));
   expect(w.ctx.complete).not.toHaveBeenCalled();
+  if (kind === 'roleplay') {
+    // An unsent reply is not a conversation; the summary of a game played elsewhere is.
+    expect(finish.disabled).toBe(true);
+    const summary = w.host.querySelectorAll('textarea')[2];
+    summary.value = 'Met a DBA, agreed on a follow-up call'; summary.dispatchEvent(new Event('input'));
+  }
   expect(finish.disabled).toBe(false);
   finish.click();
   expect(w.ctx.complete).toHaveBeenCalledOnce();

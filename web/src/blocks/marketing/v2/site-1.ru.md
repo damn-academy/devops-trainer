@@ -34,5 +34,5 @@ A/B-тест, в котором половина посетителей види
 
 <!-- section: sources -->
 - CNCF, нейтральность проектов — https://contribute.cncf.io/projects/best-practices/community/vendor-neutrality/ (проверено 25.11.2026)
-- Similarweb, kubernetes.io и tailscale.com — https://www.similarweb.com/website/kubernetes.io/, https://www.similarweb.com/website/tailscale.com/ (октябрь 2026)
+- Similarweb, kubernetes.io — https://www.similarweb.com/website/kubernetes.io/; Similarweb, tailscale.com — https://www.similarweb.com/website/tailscale.com/ (октябрь 2026)
 - Google Analytics, измерение между доменами — https://support.google.com/analytics/answer/10071811 (проверено 25.11.2026)

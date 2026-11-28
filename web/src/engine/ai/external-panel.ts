@@ -8,6 +8,7 @@ import type { Level, QText, QuizGrade, QuizItem } from '../../core/types';
 import { currentTask, templateTask, templateDraft, documentDraft, terminalTail, vocabulary, where } from './context';
 import { chatLink, EXTERNAL_CHATS, packExternalPrompt, type ExternalContext } from './external-prompt';
 import { maskSecrets } from './prompt';
+import { shuffle } from '../quiz/shuffle';
 import './ai.css';
 
 let closeActive: (() => void) | undefined;
@@ -21,14 +22,24 @@ export interface ExternalOptions {
   screen?: string;
   quiz?: Pick<ExternalContext, 'task' | 'options' | 'response'>;
   want?: string;
+  /** Names the downloaded prompt file, e.g. a quiz item id; the lesson id is used otherwise. */
+  promptId?: string;
 }
 /** Concept links `[[id]]` and `[[id|text]]` become plain words before the text leaves the page. */
 export function plainConcepts(text: string | undefined): string | undefined {
   return text?.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, id: string, label?: string) => label ?? (registry.concepts.get(id) ? t(registry.concepts.get(id)!.term) : id));
 }
-export function externalContext(o: ExternalOptions = {}): ExternalContext {
+function contextLesson(o: ExternalOptions) {
   const route = parseRoute(typeof location === 'undefined' ? '' : location.hash);
-  const lesson = where().lesson || (o.lessonId && registry.lessons.get(o.lessonId)) || (route.name === 'explainer' ? [...registry.lessons.values()].find(l => l.sections.some(s => s.kind === 'explainer' && s.explainer === route.id)) : undefined);
+  return where().lesson || (o.lessonId && registry.lessons.get(o.lessonId)) || (route.name === 'explainer' ? [...registry.lessons.values()].find(l => l.sections.some(s => s.kind === 'explainer' && s.explainer === route.id)) : undefined) || undefined;
+}
+/** Named like the task document (`finance.runway.task-1.txt`) so prompts from different lessons and questions do not pile up as `prompt.txt`. */
+export function promptFileName(o: ExternalOptions = {}): string {
+  const base = o.promptId ?? [contextLesson(o)?.id, o.templateFile?.replace(/\.[^.]+$/, '')].filter(Boolean).join('.');
+  return `${base || 'prompt'}${base ? '.prompt' : ''}.txt`;
+}
+export function externalContext(o: ExternalOptions = {}): ExternalContext {
+  const lesson = contextLesson(o);
   const block = lesson?.block;
   const task = (templateTask(lesson, o.templateFile) ?? currentTask(lesson))?.task;
   const dataTasks = o.templateFile ? [] : (lesson?.sections ?? []).flatMap(section => {
@@ -51,8 +62,8 @@ export function externalContext(o: ExternalOptions = {}): ExternalContext {
     terminal: terminalTail(), screen: o.screen, ...o.quiz, want: o.want,
   };
 }
-export function externalButton(o: ExternalOptions | (() => ExternalOptions) = {}): HTMLButtonElement {
-  const b = h('button.btn.ghost.small.external-help', { type: 'button', hidden: where().exam }, t(EXTERNAL_LABEL)) as HTMLButtonElement;
+export function externalButton(o: ExternalOptions | (() => ExternalOptions) = {}, label = EXTERNAL_LABEL): HTMLButtonElement {
+  const b = h('button.btn.ghost.small.external-help', { type: 'button', hidden: where().exam }, t(label)) as HTMLButtonElement;
   b.addEventListener('click', () => openExternalPanel(typeof o === 'function' ? o() : o));
   return b;
 }
@@ -83,8 +94,8 @@ export function openExternalPanel(o: ExternalOptions = {}): void {
     return ok;
   };
   const buttons = h('div.external-chats');
-  buttons.append(h('button.btn.primary', { type: 'button', onclick: () => { const value = sanitized(); if (value !== null) void copy(value); } }, t(bi('Копировать', 'Copy'))));
-  buttons.append(h('button.btn', { type: 'button', onclick: () => { const value = sanitized(); if (value !== null) downloadFile('prompt.txt', value, 'text/plain;charset=utf-8'); } }, t(bi('Скачать запрос (.txt)', 'Download prompt (.txt)'))));
+  buttons.append(h('button.btn.primary', { type: 'button', onclick: () => { const value = sanitized(); if (value !== null) void copy(value); } }, t(bi('Скопировать запрос', 'Copy the prompt'))));
+  buttons.append(h('button.btn', { type: 'button', onclick: () => { const value = sanitized(); if (value !== null) downloadFile(promptFileName(o), value, 'text/plain;charset=utf-8'); } }, t(bi('Скачать запрос (.txt)', 'Download prompt (.txt)'))));
   for (const chat of EXTERNAL_CHATS) buttons.append(h('button.btn.ghost.small', { type: 'button', onclick: () => {
     const value = sanitized();
     if (value === null || where().exam) return;
@@ -120,17 +131,47 @@ const businessLesson = (id?: string) => { const block = id ? registry.lessons.ge
 export function answeredQuiz(item: QuizItem, answer: unknown, grade: QuizGrade, actual?: string): ExternalOptions {
   const right = grade.correct;
   const text = (v: QText) => typeof v === 'string' ? v : t(v);
+  // Options are numbered in the order the learner saw them: the quiz shuffles them with the item id as the seed.
+  const numbered = <T extends { id: string }>(list: T[], show: (v: T) => string) => {
+    const shown = shuffle(list, item.id);
+    const line = (v: T) => `${shown.indexOf(v) + 1}. ${show(v)}`;
+    return { lines: shown.map(line), byId: (id: unknown) => { const v = shown.find(x => x.id === id); return v ? line(v) : String(id); } };
+  };
+  const slot = (i: number) => `${t(bi('Место', 'Slot'))} ${i + 1}`;
   let options: string[] = [];
   let correct = '';
+  let learner = typeof answer === 'string' ? answer : JSON.stringify(answer);
   if ('options' in item && item.options) {
-    options = item.options.map(v => `${v.id}: ${text(v.text)}`);
-    correct = item.options.filter(v => v.correct).map(v => `${v.id}: ${text(v.text)}`).join('\n');
+    const list = numbered(item.options, v => text(v.text));
+    options = list.lines;
+    correct = item.options.filter(v => v.correct).map(v => list.byId(v.id)).join('\n');
+    learner = (Array.isArray(answer) ? answer : [answer]).map(list.byId).join('\n');
   }
   switch (item.kind) {
-    case 'order': options = item.steps.map(v => `${v.id}: ${text(v.text)}`).sort(); correct = item.steps.map(v => v.id).join(' → '); break;
-    case 'match': options = item.pairs.map(v => `${v.id}: ${text(v.left)} → ${text(v.right)}`); correct = options.join('\n'); break;
-    case 'label': options = item.labels.map(v => `${v.id}: ${text(v.text)}`); correct = item.diagram.slots.map(v => `${v.id}: ${v.answer}`).join('\n'); break;
-    case 'bugfind': correct = item.bug.join(', '); break;
+    case 'order': {
+      const step = (id: unknown) => { const v = item.steps.find(x => x.id === id); return v ? text(v.text) : String(id); };
+      options = numbered(item.steps, v => text(v.text)).lines;
+      correct = item.steps.map(v => text(v.text)).join(' → ');
+      if (Array.isArray(answer)) learner = answer.map(step).join(' → ');
+      break;
+    }
+    case 'match': {
+      const right = (id: unknown) => { const v = item.pairs.find(x => x.id === id); return v ? text(v.right) : '—'; };
+      options = numbered(item.pairs, v => text(v.right)).lines;
+      correct = item.pairs.map(v => `${text(v.left)} → ${text(v.right)}`).join('\n');
+      const chosen = (answer ?? {}) as Record<string, string>;
+      learner = item.pairs.map(v => `${text(v.left)} → ${right(chosen[v.id])}`).join('\n');
+      break;
+    }
+    case 'label': {
+      const label = (id: unknown) => { const v = item.labels.find(x => x.id === id); return v ? text(v.text) : '—'; };
+      options = numbered(item.labels, v => text(v.text)).lines;
+      correct = item.diagram.slots.map((v, i) => `${slot(i)}: ${label(v.answer)}`).join('\n');
+      const placed = (answer ?? {}) as Record<string, string>;
+      learner = item.diagram.slots.map((v, i) => `${slot(i)}: ${label(placed[v.id])}`).join('\n');
+      break;
+    }
+    case 'bugfind': correct = item.bug.join(', '); learner = String(answer); break;
     case 'fill-command': correct = item.answers?.join('\n') ?? ''; break;
     case 'predict-output': correct = actual ?? correct; break;
   }
@@ -140,7 +181,7 @@ export function answeredQuiz(item: QuizItem, answer: unknown, grade: QuizGrade, 
       ? bi('Мой ответ верный, но я хочу разобраться глубже: почему это так, где это встречается на практике и как это проверить в своей работе.', 'I answered correctly but want to go deeper: why it is so, where it shows up in practice and how to check it in my own work.')
       : bi('Мой ответ верный, но я хочу разобраться глубже: почему это так, где это встречается на практике и что спросят об этом на собеседовании.', 'I answered correctly but want to go deeper: why it is so, where it shows up in practice and what an interviewer might ask about it.'))
     : undefined;
-  return { lessonId: item.refs?.lesson, want, quiz: { task, options, response: { answered: true, learner: typeof answer === 'string' ? (options.find(v => v.startsWith(answer + ': ')) ?? answer) : JSON.stringify(answer), correct, explanation: [...new Set([...(item.explain ? [t(item.explain)] : []), ...grade.feedback.map(b => t(b))])].join('\n') } } };
+  return { lessonId: item.refs?.lesson, promptId: item.id, want, quiz: { task, options, response: { answered: true, learner, correct, explanation: [...new Set([...(item.explain ? [t(item.explain)] : []), ...grade.feedback.map(b => t(b))])].join('\n') } } };
 }
 
 /** AI-owned integration keeps shared explainer rendering independent of AI. */

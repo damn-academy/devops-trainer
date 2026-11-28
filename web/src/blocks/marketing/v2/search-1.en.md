@@ -45,7 +45,7 @@ Complete this task in your website's Google Search Console, if you have access, 
 
 <!-- section: sources -->
 - Google, core algorithm and spam policy update — https://developers.google.com/search/blog/2024/03/core-update-spam-policies (05.03.2024)
-- Google, site reputation abuse — https://developers.google.com/search/blog/2024/11/site-reputation-abuse (19.11.2024); EEA change — https://developers.google.com/search/blog/2026/08/update-site-reputation-policy (28.08.2026)
+- Google, site reputation abuse — https://developers.google.com/search/blog/2024/11/site-reputation-abuse (19.11.2024); Google, EEA change — https://developers.google.com/search/blog/2026/08/update-site-reputation-policy (28.08.2026)
 - Google, AI features in search — https://developers.google.com/search/docs/appearance/ai-features (10.12.2025)
 - Google, generative search optimization guide — https://developers.google.com/search/docs/fundamentals/ai-optimization-guide (10.07.2026)
 - Google, AI answer impression reports — https://developers.google.com/search/blog/2026/06/gen-ai-performance-reports (03.06.2026)

@@ -33,7 +33,7 @@ Linux Foundation публикует цены спонсорских пакето
 - Snowflake Summit 2025, материалы для партнёров — https://www.snowflake.com/wp-content/uploads/2024/12/Snowflake-Summit-25_Partnership-Prospectus-1.pdf
 - CNCF, пакеты спонсорства 2026 года — https://events.linuxfoundation.org/wp-content/uploads/2025/12/sponsor-cncf-2026_120425.pdf (04.12.2025)
 - Условия спонсорства флагманских событий — https://www.lfopensource.cn/kubecon-cloudnativecon-openinfra-summit-pytorch-conference-china/sponsor/ (2026)
-- KubeCon Europe 2025 и 2026, отчёты о прозрачности — https://www.cncf.io/wp-content/uploads/2025/06/KubeCon_EU_25_TransparencyReport.pdf, https://www.cncf.io/wp-content/uploads/2026/04/KCEU26-Transparency-Report.pdf
+- KubeCon Europe 2025, отчёт о прозрачности — https://www.cncf.io/wp-content/uploads/2025/06/KubeCon_EU_25_TransparencyReport.pdf; KubeCon Europe 2026, отчёт о прозрачности — https://www.cncf.io/wp-content/uploads/2026/04/KCEU26-Transparency-Report.pdf
 - Dash0, стенд на KubeCon — https://www.linkedin.com/feed/update/urn:li:share:7434598506889207808/ (2026)
 - Daniel Bryant, итоги KubeCon EU 2024 — https://danielbryantuk.medium.com/kubecon-eu-2024-paris-key-takeaways-ad4c1bb7fbfe (27.03.2024)
 - CNCF, правила символики KubeCon — https://www.cncf.io/kubecon-cloudnativecon-branding-guidelines/
@@ -61,8 +61,8 @@ Linux Foundation публикует цены спонсорских пакето
 <!-- widget: deptsim {"scenario":"events.kubecon"} -->
 
 <!-- section: sources -->
-- CNCF, пакеты спонсорства 2026 года — https://events.linuxfoundation.org/wp-content/uploads/2025/12/sponsor-cncf-2026_120425.pdf (04.12.2025); 2025 года — https://events.linuxfoundation.org/wp-content/uploads/2025/01/lf-global-sponsorship_2025_010925.pdf (09.01.2025)
-- KubeCon Europe 2025 и 2026, отчёты о прозрачности — https://www.cncf.io/wp-content/uploads/2025/06/KubeCon_EU_25_TransparencyReport.pdf, https://www.cncf.io/wp-content/uploads/2026/04/KCEU26-Transparency-Report.pdf
+- CNCF, пакеты спонсорства 2026 года — https://events.linuxfoundation.org/wp-content/uploads/2025/12/sponsor-cncf-2026_120425.pdf (04.12.2025); CNCF, пакеты спонсорства 2025 года — https://events.linuxfoundation.org/wp-content/uploads/2025/01/lf-global-sponsorship_2025_010925.pdf (09.01.2025)
+- KubeCon Europe 2025, отчёт о прозрачности — https://www.cncf.io/wp-content/uploads/2025/06/KubeCon_EU_25_TransparencyReport.pdf; KubeCon Europe 2026, отчёт о прозрачности — https://www.cncf.io/wp-content/uploads/2026/04/KCEU26-Transparency-Report.pdf
 - Dash0, стенд на KubeCon — https://www.linkedin.com/feed/update/urn:li:share:7434598506889207808/ (2026)
 - Daniel Bryant, итоги KubeCon EU 2024 — https://danielbryantuk.medium.com/kubecon-eu-2024-paris-key-takeaways-ad4c1bb7fbfe (27.03.2024)
 - CNCF, правила символики KubeCon — https://www.cncf.io/kubecon-cloudnativecon-branding-guidelines/

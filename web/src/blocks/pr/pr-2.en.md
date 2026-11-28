@@ -46,7 +46,7 @@ Choose a preset company in the “Crisis Week” simulator below or create your 
 
 <!-- section: sources -->
 - Tukaani, the xz backdoor — https://tukaani.org/xz-backdoor/
-- Okta, incident root cause — https://sec.okta.com/articles/2023/11/unauthorized-access-oktas-support-case-management-system-root-cause/ (03.11.2023); recommendations — https://sec.okta.com/articles/october-security-incident-recommended-actions/ (29.11.2023)
+- Okta, incident root cause — https://sec.okta.com/articles/2023/11/unauthorized-access-oktas-support-case-management-system-root-cause/ (03.11.2023); Okta, recommendations — https://sec.okta.com/articles/october-security-incident-recommended-actions/ (29.11.2023)
 - Grafana, security update — https://grafana.com/blog/grafana-labs-security-update-latest-on-tanstack-npm-supply-chain-ransomware-incident/ (19.05.2026)
 - Redis, AGPLv3 — https://redis.io/blog/agplv3/ (01.05.2025)
 

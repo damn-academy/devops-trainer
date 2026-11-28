@@ -34,7 +34,7 @@ NVIDIA Partner Network различает облачных провайдеро�
 Выполните задание в документе. Выберите один тип партнёра для вашей платформы: хостинг-провайдера, интегратора или производителя оборудования. Опишите пакет для него по образцу «Вестхоста» из урока, для каждого условия записав, почему вы его выбрали: что получает партнёр, что делает он и что делаете вы, как делится выручка, кто отвечает за инциденты, как проходит первая совместная сделка. Затем посчитайте, сколько вы отдадите маркетплейсу AWS при новом частном предложении на 400 000 долларов, которое вы продаёте клиенту сами, без партнёра по каналу, и при публичном предложении в виде контейнера на ту же сумму. Считайте от суммы контракта без налогов. Для проверки по стандартной сетке без региональных надбавок: 12 000 и 80 000 долларов.
 
 <!-- section: sources -->
-- Supabase for Platforms — https://supabase.com/blog/introducing-supabase-for-platforms (05.12.2025); случай Lovable — https://supabase.com/customers/lovable
+- Supabase for Platforms — https://supabase.com/blog/introducing-supabase-for-platforms (05.12.2025); Supabase, случай Lovable — https://supabase.com/customers/lovable
 - Vercel, интеграции — https://vercel.com/docs/integrations (04.12.2025)
 - Sidero, партнёры — https://www.siderolabs.com/partners
 - Vates, суверенная ИТ-инфраструктура и Exodata — https://vates.tech/blog/what-sovereign-it-looks-like-in-practice-the-exodata-use-case-with-vates/
@@ -73,14 +73,14 @@ MongoDB в феврале 2026 года рассказала о программ
 Два учебных фрагмента требований для тех, у кого под рукой нет открытой закупки. Банк: «Платформа должна быть сертифицированным дистрибутивом Kubernetes для текущей версии, поставщик предоставляет отчёт SOC 2 типа II, криптографические модули проверены по FIPS 140-3». Хостинг-провайдер: «Совместимость с API S3 по списку операций в приложении, реестр образов проходит тесты соответствия OCI, поставщик раскрывает список собираемой телеметрии».
 
 <!-- section: task | Задание: карта стандартов для своего продукта -->
-Выполните задание в поле ниже. Запишите, какие программы соответствия и сертификации относятся к вашему продукту, какие у вас уже есть, для какой версии и когда истекают. Найдите в двух открытых закупках или тендерах вашего сегмента требования к сертификации и для каждого заполните строку «требование, доказательство, статус, срок следующей проверки», как в примере урока; если закупок под рукой нет, возьмите требования «Сертифицированный дистрибутив Kubernetes для текущей поддерживаемой версии» и «Отчёт SOC 2 типа II не старше 12 месяцев» из примера урока и заполните доказательство, статус и срок для своего продукта. Затем запишите один учебный результат, которым мог бы заканчиваться бесплатный курс по вашему продукту.
+Выполните задание в поле ниже. Запишите, какие программы соответствия и сертификации относятся к вашему продукту, какие у вас уже есть, для какой версии и когда истекают. Найдите в двух открытых закупках или тендерах вашего сегмента требования к сертификации и для каждого заполните строку «требование, доказательство, статус, срок следующей проверки», как в примере урока; если закупок под рукой нет, возьмите один из двух учебных фрагментов требований выше, банка или хостинг-провайдера, выберите в нём два требования и заполните для своего продукта доказательство, статус и срок. Затем запишите один учебный результат, которым мог бы заканчиваться бесплатный курс по вашему продукту.
 
 <!-- section: sources -->
 - CNCF, жизненный цикл проектов — https://contribute.cncf.io/projects/lifecycle/
 - Anthropic, передача MCP фонду — https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation (декабрь 2025)
 - CNCF, годовой отчёт 2025 — https://www.cncf.io/reports/cncf-annual-report-2025/ (24.02.2026)
 - CNCF, проверка Certified Kubernetes — https://github.com/cncf/k8s-conformance/blob/master/reviewing.md
-- CNCF, запуск Kubernetes AI Conformance — https://www.cncf.io/announcements/2025/11/11/cncf-launches-certified-kubernetes-ai-conformance-program-to-standardize-ai-workloads-on-kubernetes/ (11.11.2025); рост программы — https://www.cncf.io/announcements/2026/03/24/cncf-nearly-doubles-certified-kubernetes-ai-platforms/ (24.03.2026)
+- CNCF, запуск Kubernetes AI Conformance — https://www.cncf.io/announcements/2025/11/11/cncf-launches-certified-kubernetes-ai-conformance-program-to-standardize-ai-workloads-on-kubernetes/ (11.11.2025); CNCF, рост программы Kubernetes AI Conformance — https://www.cncf.io/announcements/2026/03/24/cncf-nearly-doubles-certified-kubernetes-ai-platforms/ (24.03.2026)
 - CNCF, новая программа продления сертификаций — https://www.cncf.io/blog/2026/03/23/cncf-introduces-a-new-recertification-program-as-kubestronaut-community-surpasses-3500/ (23.03.2026)
 - O'Reilly, спонсорство — https://www.oreilly.com/content-marketing/available-products.html
 - ScyllaDB University — https://university.scylladb.com/courses/

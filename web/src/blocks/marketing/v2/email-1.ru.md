@@ -48,7 +48,7 @@ CNCF в мае 2025 года объединил свои рассылки в о�
 - PostHog, руководство по рассылке — https://posthog.com/handbook/content/newsletter (проверено 25.11.2026)
 - MailerLite, отраслевые показатели рассылок — https://www.mailerlite.com/blog/compare-your-email-performance-metrics-industry-benchmarks (03.12.2025)
 - Apple, защита приватности в Почте — https://www.apple.com/legal/privacy/data/en/mail-privacy-protection/ (проверено 25.11.2026)
-- Gmail, требования к отправителям — https://support.google.com/mail/answer/81126 и https://support.google.com/mail/answer/14229414 (проверено 25.11.2026)
+- Gmail, требования к отправителям — https://support.google.com/mail/answer/81126; Gmail, вопросы и ответы о требованиях к отправителям — https://support.google.com/mail/answer/14229414 (проверено 25.11.2026)
 - Yahoo, рекомендации отправителям — https://senders.yahooinc.com/best-practices/ (проверено 25.11.2026)
 - Европейская комиссия, законные основания обработки данных — https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/legal-grounds-processing-data_en (проверено 25.11.2026)
 - ICO, маркетинг между компаниями — https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/business-to-business-marketing/ (проверено 25.11.2026)

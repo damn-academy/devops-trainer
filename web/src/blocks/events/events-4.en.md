@@ -37,6 +37,6 @@ Complete the exercise in the “Talk proposal for the program committee” simul
 - CNCF, KubeCon London 2025 recap — https://www.cncf.io/blog/2025/05/09/tea-peaches-kubecon-cloudnativecon-london-recap-atlanta-sneak-peek/ (09.05.2025)
 - KubeCon North America 2025, transparency report — https://www.cncf.io/wp-content/uploads/2025/12/KCNA25_TransparencyReport.pdf (19.12.2025)
 - KubeCon Europe 2026, transparency report — https://www.cncf.io/wp-content/uploads/2026/04/KCEU26-Transparency-Report.pdf (28.04.2026)
-- KubeCon North America 2026, reviewer guidelines and call for proposals — https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/program/submission-reviewer-guidelines/, https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/program/cfp/
+- KubeCon North America 2026, reviewer guidelines — https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/program/submission-reviewer-guidelines/; KubeCon North America 2026, call for proposals — https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/program/cfp/
 - KubeCon, project opportunities — https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/features-add-ons/project-opportunities/
 - PostHog, speaker guide — https://posthog.com/handbook/marketing/speaker-guide (checked 25.11.2026)

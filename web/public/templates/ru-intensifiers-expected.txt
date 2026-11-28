@@ -5,8 +5,3 @@
 Строка 2: ложное срабатывание — дословная цитата клиента, её нужно оставить как есть.
 
 Скрипт ищет только три слова: «очень», «невероятно» и «чрезвычайно». Остальные правила урока, например канцелярит, кальки и пустые обобщения, он не проверяет: их редактор сверяет вручную.
-
-Line 1: true hit — an intensifier with no fact behind it.
-Line 2: false alarm — a verbatim customer quotation; keep it as is.
-
-The script looks for three words only: «очень», «невероятно» and «чрезвычайно». It does not check the other rules of the lesson, such as bureaucratic phrasing, calques and empty generalizations: the editor checks those by hand.

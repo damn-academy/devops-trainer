@@ -6,7 +6,9 @@ import './budget.css';
 export const strings = {
   title: bi('Распределение бюджета по каналам', 'Channel budget'),
   note: bi('Модель построена на учебных допущениях, близких к опубликованным отраслевым данным, и прогнозом для вашей компании не служит. Распределение повторяется три месяца подряд, а последствия видны на графике за двенадцать месяцев; нераспределённые деньги остаются в резерве.', 'Teaching assumptions, not market data. Spend repeats for 3 months; consequences span 12 months. Unallocated budget stays in reserve.'),
-  budget: bi('Месячный бюджет, долларов: учебные 10 000 или свой', 'Monthly budget, USD: the course’s 10,000 or your own'),
+  budget: bi('Месячный бюджет, долларов: учебные 10 000 или свой, от 1 000 до 100 000 с шагом 500', 'Monthly budget, USD: the course’s 10,000 or your own, from 1,000 to 100,000 in steps of 500'),
+  rounded: bi('Бюджет округлён до {v}: поле принимает суммы с шагом 500.', 'The budget is rounded to {v}: the field accepts amounts in steps of 500.'),
+  outOfRange: bi('Поле принимает от 1 000 до 100 000 долларов, поэтому остался прежний бюджет {v}.', 'The field accepts 1,000 to 100,000 USD, so the previous budget of {v} stays.'),
   allocated: bi('Распределено из месячного бюджета, долларов', 'Allocated / monthly budget, USD'),
   single: bi('Показать один прогон', 'One run'), reset: bi('Вернуть исходное распределение', 'Reset'),
   legend: bi('График показывает возможности сделок по месяцам. Сплошная линия — медиана трёхсот прогонов, полоса — разброс, в который попадают восемь прогонов из десяти, пунктир — один случайный прогон.', 'Sales opportunities: median — solid line; 10–90% — band; one run — dashed line.'),
@@ -112,16 +114,19 @@ export const budgetWidget: WidgetReg = {
     el.append(node('h3', t(strings.title)), node('p', t(strings.note)));
     const budgetLabel = node('label', t(strings.budget)), budget = node('input');
     budget.type = 'number'; budget.min = '1000'; budget.max = '100000'; budget.step = '500'; budget.value = String(total);
+    // The field says why a typed amount changed instead of silently replacing it.
+    const budgetNote = node('p'); budgetNote.setAttribute('role', 'status');
     budget.onchange = () => {
-      const v = Math.round(Number(budget.value) / 500) * 500;
-      if (!Number.isFinite(v) || v < 1000 || v > 100000) { budget.value = String(total); return; }
+      const typed = Number(budget.value), v = Math.round(typed / 500) * 500;
+      if (!Number.isFinite(v) || v < 1000 || v > 100000) { budget.value = String(total); budgetNote.textContent = t(strings.outOfRange).replace('{v}', num(total, 0)); return; }
+      budgetNote.textContent = v !== typed ? t(strings.rounded).replace('{v}', num(v, 0)) : '';
       total = v; budget.value = String(v); saveDraft(`${key}.total`, total);
       // A smaller budget scales the allocation down instead of discarding it.
       const sum = spends.reduce((a, b) => a + b, 0);
       if (sum > total) spends = spends.map(x => Math.floor(x * total / sum / 250) * 250);
       single = undefined; draw();
     };
-    budgetLabel.append(budget); el.append(budgetLabel);
+    budgetLabel.append(budget); el.append(budgetLabel, budgetNote);
     const allocated = node('p'); el.append(allocated);
     const inputs: HTMLInputElement[] = [], outputs: HTMLOutputElement[] = [];
     CHANNELS.forEach((_, i) => {

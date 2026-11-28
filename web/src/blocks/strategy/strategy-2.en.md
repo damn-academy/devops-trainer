@@ -34,7 +34,7 @@ Explain each term: why a 40% discount instead of 20%, why a second-line response
 Complete this task in a document. Choose one partner type for your platform: a hosting provider, an integrator, or a hardware manufacturer. Describe its package using the Westhost example, explaining why you chose each term: what the partner receives, what they do and what you do, how revenue is shared, who owns incidents, and how the first joint deal works. Then calculate how much you would pay the AWS marketplace on a new private offer worth 400 000 dollars sold directly to the customer without a channel partner, and on a public container offer for the same amount. Calculate from the pretax contract value. Check using the standard schedule without regional surcharges: 12 000 and 80 000 dollars.
 
 <!-- section: sources -->
-- Supabase for Platforms — https://supabase.com/blog/introducing-supabase-for-platforms (05.12.2025); Lovable case — https://supabase.com/customers/lovable
+- Supabase for Platforms — https://supabase.com/blog/introducing-supabase-for-platforms (05.12.2025); Supabase, Lovable case — https://supabase.com/customers/lovable
 - Vercel, integrations — https://vercel.com/docs/integrations (04.12.2025)
 - Sidero, partners — https://www.siderolabs.com/partners
 - Vates, sovereign IT infrastructure and Exodata — https://vates.tech/blog/what-sovereign-it-looks-like-in-practice-the-exodata-use-case-with-vates/
@@ -73,14 +73,14 @@ The example above is illustrative: its product and pull request are not real. A 
 Two illustrative requirement excerpts for those without a public procurement notice at hand. A bank: “The platform must be a certified Kubernetes distribution for the current version, the vendor must provide a SOC 2 Type II report, and cryptographic modules must be validated against FIPS 140-3”. A hosting provider: “S3 API compatibility for the operations listed in the appendix, an image registry that passes OCI conformance tests, and vendor disclosure of the telemetry collected”.
 
 <!-- section: task | Task: map the standards for your product -->
-Complete this task in the field below. List the conformance and certification programs relevant to your product, which ones you already hold, for which version, and when they expire. Find certification requirements in two public procurement notices or tenders in your segment and fill in a row for each with “requirement, evidence, status, next review date”, as in the lesson's example; if you have no procurement notices at hand, take the requirements “Certified Kubernetes distribution for the current supported version” and “SOC 2 Type II report no older than 12 months” from the lesson's example and fill in the evidence, status and date for your own product. Then write down one learning outcome that could conclude a free course on your product.
+Complete this task in the field below. List the conformance and certification programs relevant to your product, which ones you already hold, for which version, and when they expire. Find certification requirements in two public procurement notices or tenders in your segment and fill in a row for each with “requirement, evidence, status, next review date”, as in the lesson's example; if you have no procurement notices at hand, take one of the two illustrative requirement excerpts above, the bank or the hosting provider, pick two requirements from it and fill in the evidence, status and date for your own product. Then write down one learning outcome that could conclude a free course on your product.
 
 <!-- section: sources -->
 - CNCF, project lifecycle — https://contribute.cncf.io/projects/lifecycle/
 - Anthropic, donating MCP to a foundation — https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation (December 2025)
 - CNCF, 2025 annual report — https://www.cncf.io/reports/cncf-annual-report-2025/ (24.02.2026)
 - CNCF, Certified Kubernetes review — https://github.com/cncf/k8s-conformance/blob/master/reviewing.md
-- CNCF, Kubernetes AI Conformance launch — https://www.cncf.io/announcements/2025/11/11/cncf-launches-certified-kubernetes-ai-conformance-program-to-standardize-ai-workloads-on-kubernetes/ (11.11.2025); program growth — https://www.cncf.io/announcements/2026/03/24/cncf-nearly-doubles-certified-kubernetes-ai-platforms/ (24.03.2026)
+- CNCF, Kubernetes AI Conformance launch — https://www.cncf.io/announcements/2025/11/11/cncf-launches-certified-kubernetes-ai-conformance-program-to-standardize-ai-workloads-on-kubernetes/ (11.11.2025); CNCF, Kubernetes AI Conformance program growth — https://www.cncf.io/announcements/2026/03/24/cncf-nearly-doubles-certified-kubernetes-ai-platforms/ (24.03.2026)
 - CNCF, new recertification program — https://www.cncf.io/blog/2026/03/23/cncf-introduces-a-new-recertification-program-as-kubestronaut-community-surpasses-3500/ (23.03.2026)
 - O'Reilly, sponsorship — https://www.oreilly.com/content-marketing/available-products.html
 - ScyllaDB University — https://university.scylladb.com/courses/

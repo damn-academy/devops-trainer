@@ -36,7 +36,8 @@ it.each(['ru', 'en'] as const)('downloads authored examples after live notes in 
 it('registers linter downloads and reproduces expected candidates', () => {
   expect(aicontent.lessons?.find(l => l.id === 'aicontent.editing')!.sections.some(s => s.kind === 'widget' && s.widget === 'template' && (s.props as {file: string}).file === 'ru-intensifiers-lint')).toBe(true);
   const output = execFileSync(process.execPath, ['public/templates/ru-intensifiers-lint.mjs', 'public/templates/ru-intensifiers-sample.txt'], { encoding: 'utf8' });
-  expect(output.trim()).toBe(readFileSync('public/templates/ru-intensifiers-expected.txt', 'utf8').split('\n\n')[0]);
+  for (const file of ['ru-intensifiers-expected.txt', 'ru-intensifiers-expected.en.txt']) expect(output.trim()).toBe(readFileSync(`public/templates/${file}`, 'utf8').split('\n\n')[0]);
+  expect(readFileSync('public/templates/ru-intensifiers-expected.txt', 'utf8')).not.toMatch(/Line \d/);
   const host = document.createElement('div');
   const mounted = mountTrainer('template', host, { file: 'ru-intensifiers-lint' }, { level: 'beginner', complete() {}, record() {}, openDoc() {} });
   expect(host.querySelectorAll('a[download]')).toHaveLength(3);

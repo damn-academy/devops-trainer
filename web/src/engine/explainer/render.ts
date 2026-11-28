@@ -166,14 +166,18 @@ export function mountModel(root: HTMLElement, model: ProcessModel<Record<string,
   const introBox = model.intro ? h('div.ex-intro', { role: 'note' }) : null;
   // Diagrams without parameters (the business courses) do not talk about changing them.
   const hasParams = model.params.some((p) => !p.levels || p.levels.includes(ctx.level));
+  // Questions come only from knob predictions and breaks; without them the guide does not promise any.
+  const asks = model.params.some((p) => p.predict) || model.breaks.length > 0;
+  const question = asks ? bi(' Если появится вопрос, выберите ответ, чтобы продолжить.', ' If a question appears, select an answer to continue.') : bi('', '');
+  const finish = bi(' Последний шаг завершает просмотр; под схемой появится «Просмотр завершён».', ' The last step completes the walkthrough; “Walkthrough complete” appears below the diagram.');
   const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: true }, t(hasParams ? bi('Просмотр завершён. Можно продолжить сравнивать параметры.', 'Walkthrough complete. You can continue comparing parameters.') : bi('Просмотр завершён.', 'Walkthrough complete.')));
   const el = h(
     'div.explainer',
     { tabindex: 0, 'data-model': model.id, 'data-frame': model.frame ?? 'fixed' },
     h('header.ex-head', {}, h('h3', {}, t(model.title))),
     h('p.task-guide', {}, t(hasParams
-      ? bi('Пройдите процесс на схеме кнопкой «Шаг вперёд» или «Проиграть». Затем измените параметры и сравните результат с подписями шагов. Если появится вопрос, выберите ответ, чтобы продолжить. Последний шаг завершает просмотр; под схемой появится «Просмотр завершён».', 'Walk through the diagram with “Step forward” or “Play”. Then change the parameters and compare the result with the step captions. If a question appears, select an answer to continue. The last step completes the walkthrough; “Walkthrough complete” appears below the diagram.')
-      : bi('Пройдите процесс на схеме кнопкой «Шаг вперёд» или «Проиграть»; клик по элементу открывает его карточку. Если появится вопрос, выберите ответ, чтобы продолжить. Последний шаг завершает просмотр; под схемой появится «Просмотр завершён».', 'Walk through the diagram with “Step forward” or “Play”; clicking an element opens its card. If a question appears, select an answer to continue. The last step completes the walkthrough; “Walkthrough complete” appears below the diagram.'))),
+      ? bi('Пройдите процесс на схеме кнопкой «Шаг вперёд» или «Проиграть». Затем измените параметры и сравните результат с подписями шагов.' + question.ru + finish.ru, 'Walk through the diagram with “Step forward” or “Play”. Then change the parameters and compare the result with the step captions.' + question.en + finish.en)
+      : bi('Пройдите процесс на схеме кнопкой «Шаг вперёд» или «Проиграть»; клик по элементу открывает его карточку.' + question.ru + finish.ru, 'Walk through the diagram with “Step forward” or “Play”; clicking an element opens its card.' + question.en + finish.en))),
     h('div.ex-controls', {}, knobBox, breakBox),
     predictBox,
     introBox,

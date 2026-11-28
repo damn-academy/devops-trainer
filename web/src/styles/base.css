@@ -200,4 +200,5 @@ input[type='range'] { accent-color: var(--ink); width: 100%; margin-inline: 0; b
 @media (max-width: 560px) {
   .md-table-scroll th:first-child, .md-table-scroll td:first-child { position: static; box-shadow: none; }
   .md-table-scroll th, .md-table-scroll td { min-width: 7rem; }
+  .md-table-scroll.short-lead :is(th, td):first-child { position: sticky; min-width: 0; box-shadow: 2px 0 3px var(--line); }
 }

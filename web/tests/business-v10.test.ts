@@ -49,5 +49,17 @@ it('says the field is empty when a finished document was cleared', () => {
   mountTaskDocument(host, 'sales.d100-sequence.task', 'T', 'Task', () => {}, true);
   const field = host.querySelector('textarea')!;
   field.value = ''; field.dispatchEvent(new Event('input'));
-  expect(host.querySelector('[role=status]')!.textContent).toContain('поле сейчас пустое');
+  expect(host.querySelector('[role=status]')!.textContent).toContain('результата в поле сейчас нет');
+});
+
+it('waits for the first email before the d100-sequence self-review', () => {
+  setLang('ru');
+  const host = document.createElement('div'); document.body.append(host);
+  mountTaskDocument(host, 'sales.d100-sequence.task', 'Задание', taskOf('sales.d100-sequence'));
+  const input = host.querySelector('textarea')!, finish = [...host.querySelectorAll('button')].find(b => b.textContent === 'Завершить самопроверку')!;
+  input.value = input.value.replace('## 1. Откуда адрес\n', '## 1. Откуда адрес\nСтраница команды на сайте компании\n'); input.dispatchEvent(new Event('input'));
+  expect(finish.disabled).toBe(true);
+  expect(host.textContent).toContain('хотя бы первое письмо');
+  input.value = input.value.replace('## Первое письмо\n', '## Первое письмо\nЗдравствуйте, Анна.\n'); input.dispatchEvent(new Event('input'));
+  expect(finish.disabled).toBe(false);
 });

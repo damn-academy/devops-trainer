@@ -55,7 +55,7 @@ it('packs live and restored drafts with complete criteria, distinguishes untouch
   expect(context.draft).toContain(draft.trim());
   const prompt = packExternalPrompt(context);
   expect(prompt).toContain(draft.trim()); expect(prompt).toContain(t(task.body));
-  expect(prompt).toContain('Мой черновик'); expect(prompt).not.toContain('Я ещё не ответил');
+  expect(prompt).toContain('Мой черновик'); expect(prompt).not.toContain('Ответа на задание у меня пока нет');
   mounted.dispose(); expect(documentDraft(lesson)).toContain(draft.trim());
   mountTaskDocument(host, id, title, t(task.body));
   host.querySelector('textarea')!.value = '';
@@ -71,7 +71,7 @@ it('offers an editable preview, reports copy failure next to controls and downlo
   const input = document.querySelector<HTMLTextAreaElement>('.external-preview')!;
   input.value = 'Edited prompt';
   const buttons = [...document.querySelectorAll('button')];
-  buttons.find(b => b.textContent === 'Копировать')!.click();
+  buttons.find(b => b.textContent === 'Скопировать запрос')!.click();
   await vi.waitFor(() => expect(document.querySelector('[role=status]')?.textContent).toContain('скачайте файл'));
   buttons.find(b => b.textContent === 'Скачать запрос (.txt)')!.click();
   expect(create).toHaveBeenCalledOnce();
