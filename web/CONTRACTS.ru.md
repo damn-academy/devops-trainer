@@ -185,6 +185,15 @@ export default defineModule({ blocks, lessons, concepts, quiz, explainers, comma
 - `Block.placement: PlacementTask[]` — отрисовывается по `#/block/<id>/placement`
   (без подсказок, без обратной связи, «угадываю» никогда не засчитывается,
   80% + все `key`).
+- **Тренажёр клавиш** (`src/engine/editor-drill`, курсы Vim и Emacs):
+  `{ kind: 'widget', widget: 'editor.drill', props: { drill } | { drills } | { set: 'vim' | 'emacs' } }`.
+  Упражнение (`types.ts`) — начальный текст с курсором, целевое состояние и
+  решение в нотации самого редактора, с меткой `engine: 'cm-vim' | 'cm-emacs'`.
+  Проверка сравнивает состояние (текст, курсор, регистры, кольцо удалений), а
+  не нажатия. `applyDrill(engine, start, keys)` (`session.ts`) проигрывает
+  нажатия без экрана — для тестов и для сверки с настоящими Vim и Emacs.
+  CodeMirror грузится только вместе с виджетом. Образцы упражнений —
+  `#/lab/editor-keys`.
 
 ## Хранилище прогресса
 
