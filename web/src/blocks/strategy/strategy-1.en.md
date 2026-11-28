@@ -24,7 +24,9 @@ A worked example on the training phrases. The five phrases share leaving Oracle 
 - platformengineering.org, about the community — https://platformengineering.org/about
 - platformengineering.org, State of Platform Engineering, volume 4 — https://platformengineering.org/blog/announcing-the-state-of-platform-engineering-vol-4
 - Gartner, Market Guide for Internal Developer Portals — https://www.gartner.com/en/documents/6306515 (31.03.2025)
+- Gartner, Hype Cycle for Platform Engineering, 2025 — https://www.gartner.com/en/documents/6586902 (25.06.2025)
 - CNCF TOC, platform maturity model — https://github.com/cncf/toc/issues/1679
+- CNCF, announcing the platform maturity model, by Abby Bangser (Syntasso) and Josh Gavant — https://www.cncf.io/blog/2023/11/20/announcing-the-platform-engineering-maturity-model/
 - FinOps Foundation, FinOps framework — https://www.finops.org/framework/
 
 
