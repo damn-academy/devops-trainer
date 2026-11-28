@@ -19,7 +19,7 @@ js = js.replace(star.group(0), "")
 use = re.compile(r"imports\[['\"]rv64shared['\"]\] = " + name + ";")
 if len(use.findall(js)) != 1:
     sys.exit(f"{path}: unexpected rv64shared import wiring")
-stub = ("globalThis.rv64SharedImports ?? Object.fromEntries(['load', 'store', 'fetch', 'generation', 'cas']"
+stub = ("globalThis.rv64SharedImports ?? Object.fromEntries(['load', 'store', 'fetch', 'generation', 'cas', 'mark']"
         ".map(n => [n, () => { throw new Error('rv64shared.' + n + ' requires an SMP worker'); }]))")
 js = use.sub(lambda _: "imports['rv64shared'] = " + stub + ";", js)
 open(path, "w").write(js)

@@ -95,7 +95,12 @@ impl Cpu {
         if self.memory.shared_bytes != 0 {
             if let Some(index) = pa.checked_sub(crate::RAM_BASE).map(|off| (off >> 12) as usize) {
                 if let Some(generation) = self.memory.jit_pages.get_mut(index) {
-                    let observed = crate::wasm::shared_generation(index as u32) as u64;
+                    let mut observed = crate::wasm::shared_generation(index as u32);
+                    // Generated stores bump only generations flagged as code
+                    // (bit 31). Flag the page before any of its bytes are
+                    // decoded for compilation; the flag itself is a change.
+                    if observed & 0x8000_0000 == 0 { crate::wasm::shared_mark_code(index as u32); observed = crate::wasm::shared_generation(index as u32); }
+                    let observed = observed as u64;
                     if *generation != observed { self.memory.metrics.shared_generation_changes += 1; }
                     *generation = observed;
                 }

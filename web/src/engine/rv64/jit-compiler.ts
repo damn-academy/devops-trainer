@@ -151,10 +151,13 @@ function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJi
           // helper RMWs. Bounded execution cannot service a fence ACK mid-store.
           emit(0x03,0x40,0x41,0,0x41,0,0x41,1,...atomic(0x48,2,1),0x0d,0,0x0b);
           emit(0x20,42,...get(b),...atomic([0x1b,0x1c,0x1d,0x18][f]!,f,1));
-          emit(0x20,42,0x41,7,0x76,0x41,2,0x74,0x41,1,...atomic(0x1e,2,3),0x1a);
-          // Publish every page write, just like helpers. No private code bitmap
-          // can prove a page is not executable on another hart.
-          emit(0x20,40,0xa7,0x41,12,0x76,0x41,2,0x74,0x41,1,...atomic(0x1e,2,2),0x1a);
+          // Publish the write to its reservation granule and code page only
+          // if they carry the bit-31 flag (set under this lock by LR, and by
+          // jit.rs before decoding a page). Plain data stores skip both RMWs.
+          const flagged = (index: number[], memory: number) => emit(...index,0x22,41,...atomic(0x10,2,memory),0x41,0,0x48,
+            0x04,0x40,0x20,41,0x41,1,...atomic(0x1e,2,memory),0x1a,0x0b);
+          flagged([0x20,42,0x41,7,0x76,0x41,2,0x74],3);
+          flagged([0x20,40,0xa7,0x41,12,0x76,0x41,2,0x74],2);
           // Release; notify only if a JS/helper writer marked the lock contended (2).
           emit(0x41,0,0x41,0,...atomic(0x41,2,1),0x41,2,0x46,0x04,0x40,0x41,0,0x41,1,...atomic(0,2,1),0x1a,0x0b);
           emit(0x20,1,...constant(1n),0x37,3,72);

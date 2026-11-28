@@ -8,7 +8,7 @@ import { atomicModule, SharedHartMemory, HartMailboxes, sharedAccessModule, shar
 let bus: SharedAccessExports | undefined;
 (globalThis as { rv64SharedImports?: unknown }).rv64SharedImports = {
   load: (o: number, n: number) => bus!.load(o, n), store: (o: number, n: number, v: bigint) => bus!.store(o, n, v),
-  fetch: (o: number) => bus!.fetch(o), generation: (p: number) => bus!.generation(p), cas: (o: number, e: bigint, v: bigint) => bus!.cas(o, e, v),
+  fetch: (o: number) => bus!.fetch(o), generation: (p: number) => bus!.generation(p), cas: (o: number, e: bigint, v: bigint) => bus!.cas(o, e, v), mark: (p: number) => bus!.mark(p),
 };
 function attachBus(memory: WebAssembly.Memory, generations: WebAssembly.Memory, granules: WebAssembly.Memory) {
   const pages = (m: WebAssembly.Memory) => m.buffer.byteLength / 65536;

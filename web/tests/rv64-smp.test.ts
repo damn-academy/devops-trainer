@@ -40,7 +40,7 @@ describe('R3 shared wasm RAM substrate (not integrated CPU)', () => {
     expect(b.sc(64 + 4096 + 8, 8, 1n)).toBe(false);
     expect(b.load(64 + 4090, 1)).toBe(0n); expect(b.load(64 + 4096, 2)).toBe(6n | 7n << 8n);
     expect([...generations.slice(0, 4)]).toEqual([1, 1, 0, 0]);
-    expect(granules[Math.floor((64 + 4090) / 128)]).toBe(1); expect(granules[Math.floor((64 + 4090 + 4099) / 128)]).toBe(1);
+    expect(granules[Math.floor((64 + 4090) / 128)]! & 0x7fffffff).toBe(1); expect(granules[Math.floor((64 + 4090 + 4099) / 128)]).toBe(1);
     const out = new Uint8Array(4100); a.dmaRead(64 + 4090, out); expect(out).toEqual(bytes);
     expect(() => a.dmaWrite(0, bytes)).toThrow(RangeError);
   });
@@ -67,6 +67,9 @@ describe('R3 shared wasm RAM substrate (not integrated CPU)', () => {
     expect(bus.cas(0x1000, 1n, 2n)).toBe(old); expect(bus.generation(1)).toBe(5);
     expect(bus.cas(0x1000, old, 7n)).toBe(old); expect(bus.load(0x1000, 8)).toBe(7n); expect(bus.generation(1)).toBe(6);
     expect(new Int32Array(memory.buffer, 0, 1)[0]).toBe(0);
+    // Code-page and reservation flags live in bit 31 of the counters.
+    bus.mark(2); expect(gens[2]).toBe(-0x80000000); bus.store(0x2000, 8, 1n); expect(gens[2]).toBe(-0x80000000 + 1);
+    js.lr(64 + 0x3000, 8); expect(grans[Math.floor((64 + 0x3000) / 128)]! < 0).toBe(true);
   });
   it('rejects MMIO, misalignment and overflow before touching shared RAM', () => {
     const [a] = machine();

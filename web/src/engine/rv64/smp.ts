@@ -80,15 +80,18 @@ export function sharedAccessModule(ramPages: number, generationPages: number, gr
       ...address, ...get(2), ...at(0x18, 3), ...get(0), 0x10, 2, 0x0b, 0x10, 1, ...get(3)]],
     // 7 fetch(offset) -> 32 instruction bits (2-byte aligned, page-internal)
     [[], [...address, 0x28, 1, 0]],
+    // 8 mark(page): flag a page generation as code, under the writer lock so
+    // every later store (in lock order) sees the flag and bumps it.
+    [[], [0x10, 0, ...get(0), ...i32(2), 0x74, ...i32(-0x80000000), ...at(0x33, 2, 1), 0x1a, 0x10, 1]],
   ];
   const code = bodies.map(([locals, body]) => { const b = [...(locals.length ? locals : [0]), ...body, 0x0b]; return [...uleb(b.length), ...b]; });
   const memory = (name: string, pages: number) => [...string('env'), ...string(name), 2, 3, ...uleb(pages), ...uleb(pages)];
-  const exports = [['load', 3], ['store', 4], ['generation', 5], ['cas', 6], ['fetch', 7]] as const;
+  const exports = [['load', 3], ['store', 4], ['generation', 5], ['cas', 6], ['fetch', 7], ['mark', 8]] as const;
   return new WebAssembly.Module(new Uint8Array([
     0,97,115,109,1,0,0,0,
     ...section(1, [6, 0x60,0,0, 0x60,1,0x7f,0, 0x60,2,0x7f,0x7f,1,0x7e, 0x60,3,0x7f,0x7f,0x7e,0, 0x60,1,0x7f,1,0x7f, 0x60,3,0x7f,0x7e,0x7e,1,0x7e]),
     ...section(2, [3, ...memory('ram', ramPages), ...memory('generations', generationPages), ...memory('granules', granulePages)]),
-    ...section(3, [8, 0, 0, 1, 2, 3, 4, 5, 4]),
+    ...section(3, [9, 0, 0, 1, 2, 3, 4, 5, 4, 1]),
     ...section(7, [exports.length, ...exports.flatMap(([name, index]) => [...string(name), 0, index])]),
     ...section(10, [code.length, ...code.flat()]),
   ]));
@@ -99,6 +102,7 @@ export interface SharedAccessExports {
   generation(page: number): number;
   cas(offset: number, expected: bigint, value: bigint): bigint;
   fetch(offset: number): number;
+  mark(page: number): void;
 }
 interface AtomicExports {
   load(address: number): bigint;
@@ -199,7 +203,11 @@ export class SharedHartMemory {
   lr(address: number, size: 4 | 8): bigint {
     this.check(address, size);
     return this.locked(() => {
-      this.reservation = { address, size, epoch: Atomics.load(this.granules, Math.floor(address / 128)) };
+      // Flag the granule as reserved (bit 31): generated stores bump only
+      // flagged granules. Under the writer lock, so every later store sees it.
+      const granule = Math.floor(address / 128);
+      Atomics.or(this.granules, granule, -0x80000000);
+      this.reservation = { address, size, epoch: Atomics.load(this.granules, granule) };
       return this.read(address, size);
     });
   }

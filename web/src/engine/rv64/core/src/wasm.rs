@@ -25,11 +25,13 @@ extern "C" {
     #[link_name = "fetch"] fn bus_fetch(offset: u32) -> u32;
     #[link_name = "generation"] fn bus_generation(page: u32) -> u32;
     #[link_name = "cas"] fn bus_cas(offset: u32, expected: u64, value: u64) -> u64;
+    #[link_name = "mark"] fn bus_mark(page: u32);
 }
 #[inline] pub(crate) fn shared_load(offset: u32, size: u32) -> u64 { unsafe { bus_load(offset, size) } }
 #[inline] pub(crate) fn shared_store(offset: u32, size: u32, value: u64) { unsafe { bus_store(offset, size, value) } }
 #[inline] pub(crate) fn shared_fetch(offset: u32) -> u32 { unsafe { bus_fetch(offset) } }
 #[inline] pub(crate) fn shared_generation(page: u32) -> u32 { unsafe { bus_generation(page) } }
+#[inline] pub(crate) fn shared_mark_code(page: u32) { unsafe { bus_mark(page) } }
 #[inline] pub(crate) fn shared_cas(offset: u32, expected: u64, value: u64) -> u64 { unsafe { bus_cas(offset, expected, value) } }
 #[wasm_bindgen]
 pub struct Engine {
