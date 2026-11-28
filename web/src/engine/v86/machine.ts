@@ -23,7 +23,7 @@ import { editorInstances, editorProbeScript, editorScopesOf, editorStateScript, 
 import { labFactsScript, parseLabFacts, scopesOf, LAB_SCOPES } from './lab-facts';
 import type { BootConfig, DiskConfig, WorkerIn, WorkerOut } from './messages';
 import { profile as profileOf, type DiskSpec, type MachineProfile, type ProfileId } from './profiles';
-import { factsScript, frameCommand, hideService, parseFacts, PromptTracker, ServiceParser, shq, watchedPaths, type PromptMark } from './protocol';
+import { factsScript, filesScript, frameCommand, hideService, parseFacts, PromptTracker, ServiceParser, shq, watchedPaths, type PromptMark } from './protocol';
 import type { SparseDiskData } from './sparse-disk';
 import { loadState, saveCompressedState, saveState } from './state-cache';
 
@@ -219,7 +219,7 @@ export class V86Machine implements Machine {
   private markedAt = 0;
   private disposed = false;
   /** Round trip of the last editor probe and state query on the service channel, ms (for measurements). */
-  editorTiming = { probeMs: 0, stateMs: 0 };
+  editorTiming = { probeMs: 0, stateMs: 0, focusedMs: 0 };
 
   constructor(o: V86MachineOptions = {}) {
     this.id = o.id ?? `v86-${++seq}`;
@@ -671,6 +671,37 @@ export class V86Machine implements Machine {
     const r = await this.svcRun(editorStateScript());
     this.editorTiming.stateMs = Math.round(performance.now() - t0);
     return parseEditorState(r.out);
+  }
+
+  /**
+   * Named files and the editor area in one service-channel round trip: no
+   * process list (it forks per process), no lab scopes. For checks whose
+   * predicates read only `files[...]` and editor facts; `procs` stays empty
+   * and `user` is root (the lab's terminal user). Accounts are read with
+   * shell builtins so file owners keep their names.
+   */
+  async focusedFacts(paths?: string[]): Promise<Facts> {
+    this.requireService();
+    const t0 = performance.now();
+    const accounts = 'echo W; while IFS= read -r l; do echo "$l"; done < /etc/passwd; echo .; echo G; while IFS= read -r l; do echo "$l"; done < /etc/group; echo .';
+    const editor = this.lab && this.editorScopes.size > 0;
+    const out = (await this.svcRun([accounts, filesScript(paths ?? [...this.watch]), editor ? editorStateScript() : ''].filter(Boolean).join('\n'))).out;
+    const r = parseFacts(out.split('\x1e')[0]);
+    this.editorTiming.focusedMs = Math.round(performance.now() - t0);
+    return {
+      schema: 'dt.facts/v1',
+      env: { kind: 'v86', machine: this.id, kernel: '', at: new Date().toISOString(), boot: this.boot, profile: this.profile.id, bootFrom: this.bootFrom, focused: true },
+      user: { name: 'root', uid: 0, gid: 0 },
+      cwd: this.tracker.last?.cwd ?? '/',
+      hostname: this.identity.hostname,
+      vars: { '?': String(this.tracker.last?.exit ?? 0) },
+      procs: [],
+      files: r.files,
+      term: { main: this.tracker.snapshot().records },
+      users: r.users,
+      groups: r.groups,
+      ...(editor ? parseEditorState(out) : {}),
+    } as Facts;
   }
 
   /** A command runs in the learner's terminal: typed Enter, no prompt since. */

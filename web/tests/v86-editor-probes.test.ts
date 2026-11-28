@@ -72,3 +72,12 @@ describe('the hidden-file goal of the demo', () => {
     expect(evaluateCheck(task.check, facts({ vim: { running: true, instrumented: true, reg: {} } })).say?.en).toMatch(/is empty/);
   });
 });
+
+describe('focused facts', () => {
+  it('goals reading named files and editor facts skip the general facts', async () => {
+    const { focusedOnly } = await import('../src/engine/v86/editor-keys');
+    expect(EDITOR_DEMO_TASKS.every(focusedOnly)).toBe(true);
+    expect(focusedOnly({ id: 'p', prompt: { ru: '', en: '' }, check: { when: "procs[cmd=vim] && files['/x'].text ~ 'y'" } })).toBe(false);
+    expect(focusedOnly({ id: 'f', prompt: { ru: '', en: '' }, check: { when: () => true } })).toBe(false);
+  });
+});

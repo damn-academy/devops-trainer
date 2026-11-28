@@ -206,18 +206,23 @@ export class ServiceParser {
  * serial line.
  */
 export function factsScript(paths: string[], shellPidFile = '/tmp/.dt-shell'): string {
-  const files = paths.length
-    ? `for f in ${paths.map(shq).join(' ')}; do
-if [ -e "$f" ] || [ -h "$f" ]; then echo "F $f"; ls -ldin "$f" 2>/dev/null; [ -h "$f" ] && echo "L $(readlink "$f")"
-if [ -f "$f" ] && [ ! -h "$f" ] && [ -r "$f" ] && [ "$(wc -c < "$f")" -le 65536 ]; then echo "C"; base64 "$f"; echo "."; fi
-else echo "N $f"; fi; done`
-    : '';
+  const files = filesScript(paths);
   return `echo "K $(uname -r)"; echo "H $(hostname)"; [ -r ${shellPidFile} ] && read -r sp < ${shellPidFile} && echo "S $sp" && echo "D $(readlink /proc/$sp/cwd)"
 for p in /proc/[0-9]*; do [ -r "$p/stat" ] || continue; read -r st < "$p/stat" 2>/dev/null || continue; u=0
 while read -r k v r; do [ "$k" = "Uid:" ] && { u=$v; break; }; done < "$p/status"
 echo "P $u $st"; printf 'A %s ' "\${p#/proc/}"; tr '\\0' ' ' < "$p/cmdline" 2>/dev/null; echo; done
 echo "W"; cat /etc/passwd; echo "."; echo "G"; cat /etc/group; echo "."
 ${files}`;
+}
+
+/** The `F`/`C`/`N` part of factsScript alone: metadata and contents of these paths (parseFacts reads it). */
+export function filesScript(paths: string[]): string {
+  return paths.length
+    ? `for f in ${paths.map(shq).join(' ')}; do
+if [ -e "$f" ] || [ -h "$f" ]; then echo "F $f"; ls -ldin "$f" 2>/dev/null; [ -h "$f" ] && echo "L $(readlink "$f")"
+if [ -f "$f" ] && [ ! -h "$f" ] && [ -r "$f" ] && [ "$(wc -c < "$f")" -le 65536 ]; then echo "C"; base64 "$f"; echo "."; fi
+else echo "N $f"; fi; done`
+    : '';
 }
 
 export interface RawFacts {

@@ -28,7 +28,7 @@ import { shouldAutostart } from './component';
 import type { ConsoleHandle } from './console';
 import { editorScopesOf, type EditorArea, type EditorKind } from './editor-facts';
 import { registerTerminalContext } from '../ai/context';
-import { editorOnly, exitHint, mentorEditorContext, isMac, keyboardLockSupport, nonLatinChord, nonLatinNotice, PANEL_KEYS, panelsFor, predicates, statusLine, type EditorLabProps } from './editor-keys';
+import { editorOnly, exitHint, focusedOnly, mentorEditorContext, isMac, keyboardLockSupport, nonLatinChord, nonLatinNotice, PANEL_KEYS, panelsFor, predicates, statusLine, type EditorLabProps } from './editor-keys';
 
 export type { EditorLabProps };
 import { parseProbe, probeKey, probeScript, probesNamed, type ProbeResult } from './editor-probes';
@@ -250,12 +250,17 @@ export function mountEditorLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx)
     }
   };
 
-  /** Facts for the open goals: the editor area alone when that is all they read. */
+  /**
+   * Facts for the open goals, as cheap as they allow: the editor area alone
+   * when that is all they read; named files and the editor area in one round
+   * trip when they read files too; the general facts otherwise.
+   */
   const factsFor = async (m: V86Machine, open: Task[], light: boolean): Promise<Facts> => {
     if (light && lastFull) {
       const area = await m.editorFacts();
       return { ...lastFull, ...area, env: { ...lastFull.env, at: new Date().toISOString() } } as Facts;
     }
+    if (open.length && open.every(focusedOnly)) return m.focusedFacts();
     lastFull = await m.facts(open.length ? undefined : ['editor']);
     return lastFull;
   };

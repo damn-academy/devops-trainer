@@ -105,6 +105,13 @@ try {
     const changeLatency = await waitEvent(since);
     await keys(':w\r', 800);
     step('vim.word', { changeEventMs: changeLatency, ...(await judge('vim-word')) });
+    // The same goal on focused facts: named files and the editor area in one round trip.
+    {
+      const fs = performance.now();
+      const f = await m.focusedFacts();
+      const r = evaluateCheck(EDITOR_DEMO_TASKS.find((t) => t.id === 'vim-word').check, f);
+      step('vim.word.focused', { pass: r.pass, factsMs: Math.round(performance.now() - fs) });
+    }
     raw.vimSaved = (await m.exec(editorStateScript())).out;
 
     // (b) Vim: a macro into register a.

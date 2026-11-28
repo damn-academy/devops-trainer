@@ -190,6 +190,24 @@ export function predicates(task: Task): string[] {
   return [task.check.when, ...(task.check.fail ?? []).map((f) => f.if)].filter((x): x is string => typeof x === 'string');
 }
 
+/** Scopes of the string predicates of a task, or null when a check is a function or reads the output. */
+function scopesOfTask(task: Task): string[] | null {
+  const all = [task.check.when, ...(task.check.fail ?? []).map((f) => f.if)].filter((x) => x !== undefined);
+  const preds = predicates(task);
+  if (preds.length !== all.length || task.check.stdout !== undefined) return null;
+  return preds.flatMap((p) => [...p.replace(/'(?:\\.|[^'])*'|"(?:\\.|[^"])*"/g, "''").matchAll(/(?:^|[\s(!&|#])(?:@start\.)?([a-z]+)(?=[.[#])/g)].map((m) => m[1]));
+}
+
+/**
+ * A goal that reads only named files, the editor area and probes can be
+ * judged on `focusedFacts()`: one service-channel round trip instead of the
+ * general facts (the process list forks per process, seconds in emulation).
+ */
+export function focusedOnly(task: Task): boolean {
+  const scopes = scopesOfTask(task);
+  return !!scopes && scopes.every((s) => s === 'files' || s === 'probe' || (EDITOR_SCOPES as readonly string[]).includes(s));
+}
+
 /** A predicate that reads only the editor area (and behaviour probes, which need only the editor's facts) can skip the machine's general facts (seconds in emulation). */
 export function editorOnly(task: Task): boolean {
   const all = [task.check.when, ...(task.check.fail ?? []).map((f) => f.if)].filter((x) => x !== undefined);
