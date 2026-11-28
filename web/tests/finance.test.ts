@@ -143,3 +143,10 @@ it('uses only franchise fields in franchise validation feedback', () => {
   expect(host.querySelector('.finance-result')?.textContent).not.toMatch(/SAFE|pool|founder/);
   mounted.dispose();
 });
+it('keeps the row labels of the 13-week table pinned on a phone', async () => {
+  const { renderMd } = await import('../src/core/markdown');
+  const table = (lead: string) => renderMd(`| Неделя | 1 | 2 | 3 |\n|---|---:|---:|---:|\n| ${lead} | 30 | 30 | 100 |\n`);
+  const wrap = (lead: string) => { const host = document.createElement('div'); host.append(table(lead)); return host.querySelector('.md-table-scroll')!; };
+  expect(wrap('На конец').classList.contains('short-lead')).toBe(true);
+  expect(wrap('Длинное описание строки, которое на телефоне закрыло бы экран').classList.contains('short-lead')).toBe(false);
+});
