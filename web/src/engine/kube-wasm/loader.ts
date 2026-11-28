@@ -145,7 +145,7 @@ export async function loadKubeWasm(o: LoadOptions): Promise<Loaded> {
 
 async function compileObject(w: NonNullable<LoadOptions['wasmObject']>): Promise<WebAssembly.Module> {
   // zstd has no streaming decoder in the browser: decode whole, verify, compile.
-  if (w.encoding === 'zstd') return WebAssembly.compile(await (w.read ?? fetchObject)(w.base, w, { encoding: w.encoding, cache: true }) as Uint8Array<ArrayBuffer>);
+  if (w.encoding === 'zstd') return WebAssembly.compile(await (w.read ?? fetchObject)(w.base, { sha256: w.sha256, bytes: w.bytes }, { encoding: w.encoding, cache: true }) as Uint8Array<ArrayBuffer>);
   const url = new URL(objectName(w.sha256, w.encoding), w.base).href;
   const cache = typeof caches !== 'undefined' ? await caches.open(OBJECT_CACHE).catch(() => undefined) : undefined;
   const encoding = w.encoding;
