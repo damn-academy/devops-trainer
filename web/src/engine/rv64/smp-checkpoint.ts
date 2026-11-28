@@ -1,6 +1,7 @@
 import { sha256 } from './snapshot';
 import type { HTTPDisk } from './block';
 import { fetchObject, isEncoding, type Encoding, type ObjectRef } from './objects';
+import type { ObjectPool } from './object-pool';
 export type { ObjectRef } from './objects';
 export interface SMPCheckpoint {
   format: 'dt.rv64.smp/v1'; harts: number; bytes: number; wasmSha256: string;
@@ -11,8 +12,9 @@ export interface SMPCheckpoint {
    * is stored encoded, as `<sha256>.gzip`, in `objects` (relative to smp.json). */
   encoding?: Encoding; objects?: string;
 }
-/** Where a checkpoint's objects are and how they are stored. */
-export interface ObjectStore { base: string; encoding?: Encoding }
+/** Where a checkpoint's objects are and how they are stored; `pool` reads
+ * them in workers (object-pool.ts) instead of on the calling thread. */
+export interface ObjectStore { base: string; encoding?: Encoding; pool?: ObjectPool }
 export function checkpointStore(m: SMPCheckpoint, smpUrl: string): ObjectStore {
   return { base: new URL(m.objects ?? '', smpUrl).href, encoding: m.encoding };
 }
@@ -42,8 +44,9 @@ export function validateCheckpoint(m: SMPCheckpoint, harts: number, bytes: numbe
 /** Reads one object; `base` is a URL in the store's directory, or a store.
  * Encoded (published) objects are kept in Cache Storage for the next visit. */
 export async function readObject(base: string | ObjectStore, ref: ObjectRef): Promise<Uint8Array> {
-  const store = typeof base === 'string' ? { base } : base;
-  return fetchObject(store.base, ref, { encoding: store.encoding, cache: !!store.encoding });
+  const store: ObjectStore = typeof base === 'string' ? { base } : base;
+  const o = { encoding: store.encoding, cache: !!store.encoding };
+  return store.pool ? store.pool.read(store.base, ref, o) : fetchObject(store.base, ref, o);
 }
 const PAGE = 4096;
 /** Guest memory starts zeroed: writing a zero page would only make the host
@@ -61,7 +64,8 @@ function writeNonzeroPages(view: Uint8Array, data: Uint8Array, offset: number) {
 /** Writes the checkpoint's RAM chunks into guest memory, a few at a time.
  * Fetching every chunk at once kept up to the whole RAM in transient
  * buffers, and the allocator keeps such a high-water mark for good. */
-export async function restoreRam(base: string | ObjectStore, ram: SMPCheckpoint['ram'], view: Uint8Array, concurrency = 4) {
+export async function restoreRam(base: string | ObjectStore, ram: SMPCheckpoint['ram'], view: Uint8Array,
+  concurrency = typeof base === 'string' || !base.pool ? 4 : 2 * base.pool.size) {
   let next = 0;
   const lane = async () => {
     while (next < ram.length) {
