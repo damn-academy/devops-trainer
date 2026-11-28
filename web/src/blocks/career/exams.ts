@@ -51,8 +51,8 @@ export const LINUX_EXAM: Exam = {
   kind: 'block',
   title: bi('Linux: первый день на сервере', 'Linux: the first day on the server'),
   intro: bi(
-    'Пять карточек из трекера задач небольшого интернет-магазина. Каждую карточку проверяют по состоянию машины, а не по набранным командам, поэтому подходит любой путь к результату. Подсказок нет, а из документации открыта только встроенная справка, то есть страницы `man` и вывод `--help`.',
-    'Five cards from a small shop’s tracker. Each is checked by the state of the machine, not by the commands you type: any way works. There are no hints; only the built-in documentation is open — `man` and `--help`.',
+    'Пять карточек из трекера задач небольшого интернет-магазина. Каждая карточка начинается на своей копии машины, поэтому то, что вы сделали в одной, в другой не видно. Каждую карточку проверяют по состоянию машины, а не по набранным командам, поэтому подходит любой путь к результату. Подсказок нет, а из документации открыта только встроенная справка, то есть страницы `man` и вывод `--help`.',
+    'Five cards from a small shop’s tracker. Each card starts on its own copy of the machine, so what you did in one is not seen in another. Each is checked by the state of the machine, not by the commands you type: any way works. There are no hints; only the built-in documentation is open — `man` and `--help`.',
   ),
   story: bi(
     'Сегодня ваш первый день в интернет-магазине «Ларёк». Сайт и база данных кое-как работают на одном сервере, а утром покупатели жаловались, что не проходит оплата. Руководитель команды оставил в трекере пять карточек и ушёл на встречу.',
@@ -177,8 +177,8 @@ export const GIT_EXAM: Exam = {
   kind: 'block',
   title: bi('Git: сайт кафе', 'Git: the café site'),
   intro: bi(
-    'Четыре карточки о репозитории сайта кафе. Проверяется состояние репозитория, то есть коммиты, ветки и файлы, а не набранные команды. Из документации открыта только встроенная справка Git.',
-    'Four cards about the café site’s repository. The state of the repository is checked — commits, branches, files — not the commands you type. Only the built-in Git help is open.',
+    'Четыре карточки о репозитории сайта кафе. Каждая карточка начинается на своей копии репозитория, поэтому то, что вы сделали в одной, в другой не видно. Проверяется состояние репозитория, то есть коммиты, ветки и файлы, а не набранные команды. Из документации открыта только встроенная справка Git.',
+    'Four cards about the café site’s repository. Each card starts on its own copy of the repository, so what you did in one is not seen in another. The state of the repository is checked — commits, branches, files — not the commands you type. Only the built-in Git help is open.',
   ),
   story: bi(
     'Небольшая кофейня хранит свой сайт в Git. Прежний подрядчик ушёл и оставил репозиторий в беспорядке, и владелица просит навести порядок до завтрашней выкладки.',

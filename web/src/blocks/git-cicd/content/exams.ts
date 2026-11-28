@@ -25,8 +25,8 @@ export const GIT_YAML_EXAM: Exam = {
   kind: 'block',
   title: bi('Git и YAML: настройки кофейни', 'Git and YAML: the café configuration'),
   intro: bi(
-    'В экзамене четыре карточки с задачами по репозиторию, в котором хранятся настройки сайта кофейни. Проверяется состояние репозитория и файлов, а не набранные команды, поэтому подойдёт любой путь к результату. Подсказок нет, но открыты встроенная справка Git и `yamllint --help`.',
-    'Four cards about the repository with the café site’s settings. The state of the repository and the files is checked, not the commands you type: any way works. There are no hints; the built-in Git help and `yamllint --help` are open.',
+    'В экзамене четыре карточки с задачами по репозиторию, в котором хранятся настройки сайта кофейни. Каждая карточка начинается на своей копии репозитория, поэтому то, что вы сделали в одной, в другой не видно. Проверяется состояние репозитория и файлов, а не набранные команды, поэтому подойдёт любой путь к результату. Подсказок нет, но открыты встроенная справка Git и `yamllint --help`.',
+    'Four cards about the repository with the café site’s settings. Each card starts on its own copy of the repository, so what you did in one is not seen in another. The state of the repository and the files is checked, not the commands you type: any way works. There are no hints; the built-in Git help and `yamllint --help` are open.',
   ),
   story: bi(
     'Настройки сайта кофейни лежат в YAML-файлах в репозитории Git. С ними работают двое, вы и бариста, который правит меню, и за неделю в репозитории накопились недоделки. Завтра сайт переезжает на новый сервер, и администратор просит навести порядок.',
@@ -253,8 +253,8 @@ export const CICD_EXAM: Exam = {
   kind: 'block',
   title: bi('CI/CD: пайплайн для сайта кофейни', 'CI/CD: a pipeline for the café site'),
   intro: bi(
-    'В экзамене четыре карточки из трекера задач команды сайта. Проверяется то, что увидел forge, то есть пайплайны, джобы, переменные и выкладки, а не набранные команды. Подсказок нет, и открыт только справочник ключевых слов GitLab CI.',
-    'Four cards from the site team’s tracker. What the forge saw is checked: pipelines, jobs, variables, deployments, not the commands you type. There are no hints; only the GitLab CI keyword reference is open.',
+    'В экзамене четыре карточки из трекера задач команды сайта. Каждая карточка начинается на своей копии проекта, поэтому то, что вы сделали в одной, в другой не видно. Проверяется то, что увидел forge, то есть пайплайны, джобы, переменные и выкладки, а не набранные команды. Подсказок нет, и открыт только справочник ключевых слов GitLab CI.',
+    'Four cards from the site team’s tracker. Each card starts on its own copy of the project, so what you did in one is not seen in another. What the forge saw is checked: pipelines, jobs, variables, deployments, not the commands you type. There are no hints; only the GitLab CI keyword reference is open.',
   ),
   story: bi(
     'Сайт кофейни переехал на forge, но пайплайна у него почти нет. Проверки запускают вручную, выкладка через раз завершается с ошибкой, а на рабочий сервер версия попадает с каждым коммитом. Руководитель команды оставил четыре карточки и уехал за поставкой зерна.',

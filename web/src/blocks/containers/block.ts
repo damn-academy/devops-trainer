@@ -156,12 +156,12 @@ const placement: PlacementTask[] = [
 const exam: Exam = {
   id: 'exam-docker-duty',
   block: 'containers',
-  title: bi('Четыре сообщения про одну машину', 'Four messages about one machine'),
+  title: bi('Четыре сообщения из чата команды', 'Four messages from the team chat'),
   story: bi(
     'Вы дежурите по серверу, на котором в контейнерах работают сайт магазина, фоновый обработчик заказов, база данных и nginx. За утро в чат команды пришли четыре сообщения: сайт не открывается, обработчик постоянно перезапускается, на диске кончилось место, а журнал одного контейнера занял весь диск. Базу данных и её том трогать нельзя, потому что в них заказы покупателей.',
     'You are on duty for a server where the shop’s site, a background order worker, a database and nginx run in containers. This morning four messages arrived in the team chat: the site does not open, the worker keeps restarting, the disk is full, and one container’s log took the whole disk. The database and its volume must not be touched, because they hold the customers’ orders.',
   ),
-  intro: bi('Вам приходят четыре сообщения из чата команды, и все они про одну машину. Для каждого сначала найдите границу контейнера, на которой находится поломка, а потом почините её. Открыты только справка `--help` и документация docs.docker.com, а ИИ-наставник выключен.', 'Four messages “from the team chat”, one machine. For each, find the boundary first, then fix it. Only `--help` and docs.docker.com are open; the AI is off.'),
+  intro: bi('Вам приходят четыре сообщения из чата команды. Каждая задача начинается на своей копии сервера, поэтому то, что вы сделали в одной, в другой не видно. Для каждого сначала найдите границу контейнера, на которой находится поломка, а потом почините её. Открыты только справка `--help` и документация docs.docker.com, а ИИ-наставник выключен.', 'Four messages from the team chat. Each task starts on its own copy of the server, so what you did in one is not seen in another. For each, find the boundary first, then fix it. Only `--help` and docs.docker.com are open; the AI is off.'),
   minutes: 40,
   pass: 0.75,
   allowedDocs: ['help', 'docs.docker.com', 'man'],
