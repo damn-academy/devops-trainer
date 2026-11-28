@@ -70,10 +70,6 @@ web/      the application (Vite + TypeScript): src/core, src/app, src/engine, sr
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to run the tests, how lessons, diagrams and labs are built, and how to send a change.
 - [`deploy/README.md`](deploy/README.md) and [`service/feedback/README.md`](service/feedback/README.md) — how to run the course and the feedback service yourself. The course has the same in its help section, `#/about`.
 
-## Credits
-
-The course structure follows the public devops413 checklist for beginner DevOps engineers. Only the order of topics and the list of areas are taken from it; no texts or materials from the checklist are used or redistributed.
-
 ## License
 
 [Apache-2.0](LICENSE)

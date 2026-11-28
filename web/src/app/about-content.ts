@@ -100,11 +100,9 @@ const WHAT: AboutPageDef = {
       bi('Лицензия и исходный код', 'Licence and source code'),
       p(
         `Исходный код платформы, профессий и курсов открыт и лежит на GitHub в репозитории [damn-academy/devops-trainer](${REPO}). Он распространяется по лицензии Apache-2.0, поэтому платформу можно бесплатно ставить у себя, менять и использовать в компании или школе, в том числе в коммерческих целях, если сохранить текст лицензии и уведомления об авторстве. Как развернуть платформу, рассказано на странице [«Развернуть у себя»](#/about/deploy), а как предложить исправление, рассказано на странице [«Как поучаствовать»](#/about/contribute).`,
-        'Порядок тем профессии DevOps-инженера следует открытому чек-листу devops413 для начинающих DevOps-инженеров. Из чек-листа взяты только порядок тем и список областей, а все тексты, схемы и задания написаны заново.',
       ),
       p(
         'The source code of the platform, professions and courses is open and available on GitHub in the [damn-academy/devops-trainer](https://github.com/damn-academy/devops-trainer) repository. It is distributed under Apache-2.0, so you can install, modify and use the platform in a company or school for free, including commercially, provided you preserve the licence text and copyright notices. The [“Run it yourself”](#/about/deploy) page explains how to deploy the platform, and [“Contributing”](#/about/contribute) explains how to propose a fix.',
-        'The topic order in the DevOps engineer profession follows the open devops413 checklist for beginning DevOps engineers. Only the order of topics and list of areas were taken from the checklist; all texts, diagrams and tasks were written from scratch.',
       ),
     ),
   ],
