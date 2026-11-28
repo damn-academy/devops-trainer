@@ -14,6 +14,8 @@ export interface ConsoleHandle {
   type(text: string): void;
   write(text: string): void;
   dispose(): void;
+  /** The xterm.js terminal itself (the editor widget sets options and key handlers on it). */
+  terminal: { options: { macOptionIsMeta?: boolean }; focus(): void; attachCustomKeyEventHandler(fn: (ev: KeyboardEvent) => boolean): void; buffer: { active: { length: number; getLine(i: number): { translateToString(trim?: boolean): string } | undefined } } };
 }
 
 /** A previous successful start is an estimate, never a deadline. */
@@ -23,7 +25,7 @@ export function bootProgress(elapsedMs: number, previousMs?: number): { elapsed:
   return { elapsed, remaining: expected === undefined ? undefined : Math.max(0, expected - elapsed), overdue: expected !== undefined && elapsed > expected };
 }
 
-export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: number; inputReady?: () => boolean } = {}): Promise<ConsoleHandle> {
+export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: number; inputReady?: () => boolean; macOptionIsMeta?: boolean } = {}): Promise<ConsoleHandle> {
   el.dataset.feedbackLab = m.id;
   const unregisterFeedback = registerFeedbackSnapshot(el, () => m.snapshotForFeedback());
   const { Terminal, FitAddon } = await loadXterm();
@@ -36,6 +38,7 @@ export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: n
     scrollback: 4000,
     theme: readTheme(),
     convertEol: false,
+    ...(o.macOptionIsMeta ? { macOptionIsMeta: true } : {}),
   });
   const fit = new FitAddon();
   term.loadAddon(fit);
@@ -121,6 +124,7 @@ export async function mountConsole(el: HTMLElement, m: V86Machine, o: { rows?: n
   });
 
   return {
+    terminal: term,
     focus: () => term.focus(),
     type(text: string) {
       if (m.phase !== 'ready' || o.inputReady?.() === false) return;

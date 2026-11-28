@@ -2,6 +2,9 @@
 //
 // Widgets (code loads on first mount):
 //   v86.linux      — one real machine with goals checked by state (RealLinuxProps)
+//   v86.editor     — a lab-editors machine with a terminal for fullscreen editors and
+//                    goals checked by the editor's state (EditorLabProps)
+//   lab:editors    — the demo of v86.editor, page #/lab/editors
 //   lab:multinode  — 2–3 machines on dt-switch, page #/lab/multinode
 //   lab:linux      — a sandbox on one real machine, page #/lab/linux
 // Settings: the list of saved machine states in this browser, with sizes.
@@ -15,6 +18,11 @@ export default defineModule({
   widgets: [
     lazyWidget('v86.linux', async () => (await import('./component')).mountRealLinux as never),
     lazyWidget('lab:multinode', async () => (await import('./multinode')).mountMultiNode),
+    lazyWidget('v86.editor', async () => (await import('./editor-widget')).mountEditorLab),
+    lazyWidget('lab:editors', async () => {
+      const [{ mountEditorLab }, { EDITOR_DEMO }] = await Promise.all([import('./editor-widget'), import('./editor-demo')]);
+      return (el, _props, ctx) => mountEditorLab(el, EDITOR_DEMO, ctx);
+    }),
     // #/lab/linux: a free sandbox on one real machine, outside any lesson.
     lazyWidget('lab:linux', async () => {
       const { mountRealLinux } = await import('./component');
