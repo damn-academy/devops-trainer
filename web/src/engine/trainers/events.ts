@@ -1,15 +1,20 @@
 import type { Trainer } from './model';
 
+// The trainer rubric and output are Russian, so the visitor role is written in Russian too.
 const roles: Record<string, string> = {
-  Kubernetes: 'platform engineer choosing cluster tooling; platform team lead evaluating support',
-  PostgreSQL: 'DBA investigating slow queries; database lead planning a PostgreSQL migration',
-  SRE: 'on-call engineer investigating alerts; reliability lead evaluating observability costs',
-  Security: 'security engineer investigating supply-chain risk; security director evaluating compliance evidence',
-  Networking: 'network engineer investigating routing failures; network operator planning peering capacity',
-  'Vendor users': 'current customer with an upgrade problem; team lead evaluating a renewal',
-  Other: 'technical user with an installation problem; buyer evaluating a pilot in the learner’s segment',
+  Kubernetes: 'инженер платформы, который выбирает инструменты для кластеров; руководитель платформенной команды, который оценивает поддержку',
+  PostgreSQL: 'администратор баз данных (DBA), который разбирается с медленными запросами; руководитель группы баз данных, который планирует переход на PostgreSQL',
+  SRE: 'дежурный инженер, который разбирает оповещения; руководитель службы надёжности, который считает расходы на мониторинг',
+  Security: 'инженер по безопасности, который проверяет риски в цепочке поставки ПО; директор по безопасности, который собирает доказательства соответствия требованиям',
+  Networking: 'сетевой инженер, который разбирает сбои маршрутизации; оператор сети, который планирует ёмкость стыков с другими сетями',
+  'Vendor users': 'нынешний клиент, у которого не получается обновление; руководитель команды, который решает, продлевать ли договор',
+  Other: 'технический пользователь, у которого не получается установка; покупатель, который оценивает пилот в сегменте ученика',
 };
+const venues: Record<string, string> = { Other: 'отраслевой конференции', 'Vendor user conference': 'конференции пользователей поставщика' };
+const segments: Record<string, string> = { Security: 'безопасность', Networking: 'сети', 'Vendor users': 'пользователи поставщика' };
 /** Replace the authored fixed KubeCon role list in both copy and connected-AI paths. */
 export function eventVisitor(trainer: Trainer, venue: string, segment: string): Trainer {
-  return { ...trainer, role: `You are a visitor at ${venue === 'Other' ? 'an industry conference' : venue}, ${segment === 'Other' ? 'in the learner’s own segment' : `in the ${segment} segment`}. Choose one hidden role: ${roles[segment] ?? roles.Other}; student collecting stickers; potential partner; competitor; trade journalist. Choose a buying stage and a concrete problem appropriate to that segment. Keep your role until debrief. Speak briefly. Reveal information only when asked a relevant question. Do not assume VMware, hosting, open source or foundation membership. Use the learner's language.` };
+  const where = `на ${venues[venue] ?? venue}`;
+  const field = segment === 'Other' ? 'из того же сегмента, что и ученик' : `сегмент — ${segments[segment] ?? segment}`;
+  return { ...trainer, role: `Вы играете посетителя ${where}, ${field}. Перед началом про себя выберите одну скрытую роль: ${roles[segment] ?? roles.Other}; студент, который собирает наклейки; возможный партнёр; конкурент; журналист отраслевого издания. Выберите также стадию выбора и конкретную проблему, подходящую этому сегменту. Держите роль до разбора. Говорите коротко. Сведения раскрывайте только в ответ на подходящий вопрос. Не считайте заранее, что речь идёт о VMware, хостинге, открытом коде или членстве в фонде.` };
 }

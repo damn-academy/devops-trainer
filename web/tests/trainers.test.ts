@@ -168,6 +168,12 @@ it.each(['rubric', 'roleplay'] as const)('completes %s after external chat self-
   expect(finish.disabled).toBe(true);
   input.value = 'Reviewed in my chat'; input.dispatchEvent(new Event('input'));
   expect(w.ctx.complete).not.toHaveBeenCalled();
+  if (kind === 'roleplay') {
+    // An unsent reply is not a conversation; the summary of a game played elsewhere is.
+    expect(finish.disabled).toBe(true);
+    const summary = w.host.querySelectorAll('textarea')[2];
+    summary.value = 'Met a DBA, agreed on a follow-up call'; summary.dispatchEvent(new Event('input'));
+  }
   expect(finish.disabled).toBe(false);
   finish.click();
   expect(w.ctx.complete).toHaveBeenCalledOnce();

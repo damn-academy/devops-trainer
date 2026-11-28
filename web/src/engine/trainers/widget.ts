@@ -180,7 +180,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     root.append(h('p.task-guide', {}, t(kind === 'roleplay'
       ? bi('Напишите реплику в поле «Ваш текст» и нажмите «Отправить». Ответ собеседника появится в истории попыток; кнопка «Разбор» запрашивает оценку разговора по правилам выше.', 'Write a reply in “Your text” and press “Send”. The other person’s response appears in the attempt history; “Debrief” requests an assessment using the rules above.')
       : bi('Впишите работу в поле «Ваш текст» и нажмите «Проверить здесь». Нейросеть оценит работу по правилам выше; ответ появится в истории попыток.', 'Enter your work in “Your text” and press “Check here”. AI assesses it using the rules above; the response appears in the attempt history.')), ' ', t(bi('Для проверки на странице подключите нейросеть в ', 'To check on this page, connect AI in ')), h('a', { href: '#/settings' }, t(bi('настройках', 'settings'))), t(kind === 'roleplay'
-      ? bi('. Можно также скопировать запрос в отдельный чат с нейросетью. Тогда сверяйте работу с разбором в том чате; страница его не получает. После сверки нажмите «Завершить самопроверку разговоров» внизу этого блока.', '. You can also copy the request to a separate AI chat. Review the feedback in that chat; this page does not receive it. After reviewing, press “Finish the conversation self-review” at the bottom of this block.')
+      ? bi('. Можно также скопировать запрос в отдельный чат с нейросетью. Тогда сверяйте работу с разбором в том чате; страница его не получает. После сверки запишите итог в поле «Итог разговоров» и нажмите «Завершить самопроверку разговоров» внизу этого блока.', '. You can also copy the request to a separate AI chat. Review the feedback in that chat; this page does not receive it. After reviewing, write the outcome in the “Conversation summary” field and press “Finish the conversation self-review” at the bottom of this block.')
       : bi('. Можно также скопировать запрос в отдельный чат с нейросетью. Тогда сверяйте работу с разбором в том чате; страница его не получает. После сверки нажмите «Завершить самопроверку текста» внизу этого блока.', '. You can also copy the request to a separate AI chat. Review the feedback in that chat; this page does not receive it. After reviewing, press “Finish the text self-review” at the bottom of this block.'))));
     const conversations = loadDraft<import('./storage').Attempt[][]>(`${trainer.id}.conversations`, []);
     const round = h('p');
@@ -206,7 +206,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
         request = svc.stream({ messages, maxTokens: 2400, temperature: kind === 'roleplay' ? .7 : .3 }, () => {});
         const answer = await request.done;
         if (disposed) return;
-        attempts.push({ input: value, answer }); saveAttempts(trainer!.id, attempts); showHistory(); ctx.complete();
+        attempts.push({ input: value, answer }); saveAttempts(trainer!.id, attempts); showHistory(); syncSelfReview(); ctx.complete();
       } catch { failed = true; }
       finally { busy = false; request = undefined; if (!disposed) { sync(); if (failed) status.textContent = text('error'); } }
     }
@@ -218,7 +218,7 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
       if (await copyText(prompt)) { if (!disposed) status.textContent = text('copied'); }
       else if (!disposed) { manual.hidden = false; manual.value = prompt; manual.focus(); manual.select(); status.textContent = text('fallback'); }
     })(); });
-    const download = button('downloadPrompt', () => downloadFile('prompt.txt', !manual.hidden ? manual.value : currentPrompt(), 'text/plain;charset=utf-8'));
+    const download = button('downloadPrompt', () => downloadFile(`${trainer.id}.prompt.txt`, !manual.hidden ? manual.value : currentPrompt(), 'text/plain;charset=utf-8'));
     // A rubric request without the learner's text would ask for a grade of nothing.
     const syncPrompt = () => { if (kind === 'rubric') (copy as HTMLButtonElement).disabled = (download as HTMLButtonElement).disabled = !input.value.trim(); };
     input.addEventListener('input', syncPrompt); syncPrompt();
@@ -226,11 +226,18 @@ export function mountTrainer(kind: Kind, el: HTMLElement, props: unknown, ctx: W
     input.oninput = () => { saveDraft(trainer.id, input.value); manual.hidden = true; manual.value = ''; sync(); };
     const finish = h('button', { type: 'button', class: 'btn', 'data-finish': '' }, text(kind === 'roleplay' ? 'nextVisitor' : 'finishDraft'));
     finish.onclick = () => { if (busy) return; if (kind !== 'roleplay' && input.value.trim() && !window.confirm(t(bi('Очистить поле? Прошлые попытки останутся в истории ниже.', 'Clear the field? Earlier attempts stay in the history below.')))) return; input.value = ''; manual.value = ''; manual.hidden = true; clearDraft(trainer.id); if (kind === 'roleplay') { conversations.push([...attempts]); saveDraft(`${trainer.id}.conversations`, conversations); attempts.length = 0; saveAttempts(trainer.id, attempts); showHistory(); } sync(); };
-    const selfReview = button(kind === 'roleplay' ? 'finishRoleplay' : 'finishRubric', () => { if (!input.value.trim() && !attempts.length && !conversations.length) return; ctx.complete(); status.textContent = text('selfReviewDone'); }) as HTMLButtonElement;
-    const selfReviewHint = h('p', { class: 'small muted' }, t(bi('Кнопка станет доступна, когда в поле появится ваш текст.', 'The button becomes available once your text is in the field.')));
-    const syncSelfReview = () => { const empty = !input.value.trim() && !attempts.length && !conversations.length; selfReview.disabled = empty; selfReviewHint.hidden = !empty; };
+    // A roleplay is reviewed by sent replies or, when it was played in a separate chat, by a written summary; an unsent reply does not count.
+    const summary = h('textarea') as HTMLTextAreaElement;
+    if (kind === 'roleplay') { summary.value = loadDraft(`${trainer.id}.summary`, ''); summary.oninput = () => { saveDraft(`${trainer.id}.summary`, summary.value); syncSelfReview(); }; }
+    const empty = () => kind === 'roleplay' ? !attempts.length && !conversations.length && !summary.value.trim() : !input.value.trim() && !attempts.length && !conversations.length;
+    const selfReview = button(kind === 'roleplay' ? 'finishRoleplay' : 'finishRubric', () => { if (empty()) return; ctx.complete(); status.textContent = text('selfReviewDone'); }) as HTMLButtonElement;
+    const selfReviewHint = h('p', { class: 'small muted' }, t(kind === 'roleplay'
+      ? bi('Кнопка станет доступна после первой отправленной реплики или когда в поле «Итог разговоров» появится текст.', 'The button becomes available after the first sent reply or once there is text in the “Conversation summary” field.')
+      : bi('Кнопка станет доступна, когда в поле появится ваш текст.', 'The button becomes available once your text is in the field.')));
+    function syncSelfReview() { const none = empty(); selfReview.disabled = none; selfReviewHint.hidden = !none; }
     input.addEventListener('input', syncSelfReview); finish.addEventListener('click', syncSelfReview); finish.addEventListener('click', syncPrompt); syncSelfReview();
-    root.append(...(kind === 'roleplay' ? [round] : []), finish, selfReview, selfReviewHint); cleanup.push(svc.onChange(sync), () => request?.abort());
+    const summaryField = h('label', {}, t(bi('Итог разговоров: если играли в отдельном чате, запишите, кого вы встретили и о каком шаге договорились', 'Conversation summary: if you played in a separate chat, write down whom you met and which next step you agreed on')), summary);
+    root.append(...(kind === 'roleplay' ? [round] : []), finish, ...(kind === 'roleplay' ? [summaryField] : []), selfReview, selfReviewHint); cleanup.push(svc.onChange(sync), () => request?.abort());
     void svc.ready.then(sync).catch(() => { if (!disposed) status.textContent = text('error'); }); sync();
   } else if (kind === 'events.roi') {
     title(text('roi'), false);

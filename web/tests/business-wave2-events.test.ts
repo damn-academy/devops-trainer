@@ -15,7 +15,7 @@ it('deduplicates target accounts before simulation and preserves deterministic b
 });
 it('uses venue and segment roles and removes the fixed paid booth and CNCF entitlement', () => {
   const trainer = trainers.find(t => t.id === 'events.booth-visitor')!;
-  for (const [venue,segment,role] of [['PGConf','PostgreSQL','DBA'],['RSAC','Security','security'],['NANOG','Networking','network'],['SREcon','SRE','on-call']]) {
+  for (const [venue,segment,role] of [['PGConf','PostgreSQL','DBA'],['RSAC','Security','безопасност'],['NANOG','Networking','сетевой'],['SREcon','SRE','дежурный']]) {
     const prompt = eventVisitor(trainer,venue,segment).role;
     expect(prompt).toContain(venue); expect(prompt).toContain(role); expect(prompt).not.toContain('на KubeCon');
   }
