@@ -772,6 +772,137 @@ shim and the pause container, 30 s), creating the container 4 s and
 starting it 26 s. The one kernel step that looked like a timer (the
 veth port's blocking → forwarding) takes 3.3–5.7 s from run to run.
 
+### Round 15: what a student downloads
+
+Bytes the server sent (counted in the dev server for every response,
+`web/kube-wasm-node-measure-net.mjs`, untracked), restores on rv64-bench,
+up to the node's fresh heartbeat, the new pod Running and the end of a
+5-minute session:
+
+| | Heartbeat | New pod | 5 minutes |
+|---|---|---|---|
+| Before: `?restore=` raw files (kube.wasm counted gzip -9, 38.2 MB) | 801 MB | 874 MB | 880 MB |
+| Published, gzip, first visit | 216.5 MB | 236.4 MB | 246.5 MB |
+| Published, zstd, first visit | 176.2 MB | 198.5 MB | 208.3 MB |
+| Published, second visit (same browser profile), gzip / zstd | 1.3 / 0.2 MB | 2.3 / 1.2 MB | 7.9 / 2.7 MB |
+
+One session each. Over the 24 first visits of each series below: gzip
+214.9–222.1 MB by the heartbeat (median 217.5) and 239.1–254.6 MB by the new
+pod (248.3); zstd 176.4–184.5 MB (179.4) and 197.7–213.0 MB (206.5). The
+rest of a second visit is medium chunks the first session had not read.
+The counts are bodies as the dev server sent them: in production nginx also
+compresses the JSON manifests (0.6 MB), and the bundled page code is
+smaller than Vite's dev modules (1.2 MB).
+
+Before: the checkpoint is read whole (710.8 MB: 672 objects of 1 MiB,
+cpu and device state), the medium by 256 KiB byte ranges (190 chunks,
+49.8 MB, by the heartbeat; 494 chunks, 129.5 MB of 630 MB, in 5 minutes),
+kube.wasm 228.6 MB uncompressed by the dev server. The guest RAM in the
+checkpoint is 697 MB in nonzero MiB chunks, of which 38.6 % are zero 4 KiB
+pages and 1.9 % duplicates of another page; only 2.5 % of the nonzero pages
+(10 MB) also occur in the medium. The device state is 12.9 MB, almost all
+of it disk chunks the guest wrote (they do not compress).
+
+Compression, each object on its own (Node.js zlib): guest RAM gzip -9
+137 MB, brotli q9 119 MB, zstd -19 114 MB; the medium gzip -9 278 MB, zstd
+-19 248 MB; kube.wasm gzip -9 38.2 MB, zstd -19 24.2 MB, brotli q11 22.2 MB.
+Chromium's `DecompressionStream` decodes gzip and deflate only, so zstd
+needs a decoder in the page (`web/src/engine/rv64/zstd.ts`, RFC 8878 without
+dictionaries; checked against libzstd on 826 inputs and settings; ~360 MB/s
+on an Apple M4, ~195 MB/s on the workshop's EPYC in Node.js; native gunzip
+is 3–4 times faster). Not done, by the numbers: lazy guest RAM (the JIT
+reads and writes the shared memory directly, without a fault path, and a
+core change would invalidate every checkpoint), page deduplication (2 %),
+loading RAM pages from the medium (2.5 %).
+
+What the published node does:
+
+- Every object is named by the SHA-256 of its decoded bytes and stored
+  encoded, `<sha256>.zstd` (zstd -19) or `<sha256>.gzip` (gzip -9; not `.gz`,
+  which Vite's static server sends with `Content-Encoding: gzip`); the page
+  decodes it and checks the checksum (`web/src/engine/rv64/objects.ts`).
+- The medium is one object per 256 KiB chunk, listed in its manifest
+  (`HTTPDisk.chunks`), and still read only when the guest asks for it.
+- Cache Storage (`dt-rv64-objects-v1`) keeps the encoded objects and
+  kube.wasm; the names are the content, so an entry never goes stale and a
+  new checkpoint or medium shares whatever did not change. Objects that go
+  there skip the HTTP cache (`cache: 'no-store'`), otherwise the profile
+  held each of them twice (481 MB after one gzip visit; 213 MB now with
+  zstd).
+- Three workers (`object-pool.ts`) fetch, decode and hash the checkpoint
+  and kube.wasm from page load on, so the guest RAM is restored while
+  kube.wasm downloads and starts, not after the apiserver is ready.
+- gzip kube.wasm is decoded while it compiles (`compileStreaming`); zstd
+  kube.wasm is decoded whole in a worker, checked and then compiled.
+
+Restores on rv64-bench, 12 with `GOGC=50 GOMEMLIMIT=300MiB` and 12 with Go's
+defaults each, every run a first visit (empty profile); seconds after page
+load, min / median / max:
+
+| | Crashes | Checkpoint loaded | Heartbeat | logs | exec | New pod Running | Renderer memory at the end / peak |
+|---|---|---|---|---|---|---|---|
+| Round 14, raw files, Go limit | 0 / 12 | – | 52 / 54 / 56 | 19 / 21 / 57 | 47 / 49 / 50 | 161 / 168 / 177 | 2.63–2.86 / 2.67–3.02 GB |
+| same, Go defaults | 0 / 12 | – | 51 / 54 / 56 | 18 / 21 / 23 | 45 / 49 / 51 | 162 / 168 / 173 | 2.66–2.80 / 2.75–2.92 GB |
+| gzip, RAM read after the apiserver is ready, Go limit | 0 / 12 | 11.4 / 11.8 / 12.6 | 53.2 / 56.2 / 59.7 | 19.0 / 21.2 / 23.7 | 48.0 / 50.9 / 54.5 | 161.3 / 170.9 / 188.1 | 2.57–2.79 / 2.62–2.81 GB |
+| same, Go defaults | 0 / 12 | 11.0 / 11.6 / 12.3 | 52.2 / 55.0 / 60.8 | 17.6 / 21.3 / 23.9 | 47.1 / 49.8 / 55.6 | 163.3 / 172.0 / 186.4 | 2.60–3.03 / 2.70–3.03 GB |
+| zstd, RAM in workers from page load (the default now), Go limit | 0 / 12 | 9.4 / 9.8 / 10.4 | 51.5 / 53.4 / 54.7 | 18.3 / 21.4 / 56.5 | 46.2 / 48.2 / 49.5 | 158.3 / 166.9 / 172.0 | 2.34–2.52 / 2.46–2.66 GB |
+| same, Go defaults | 0 / 12 | 8.8 / 9.4 / 10.0 | 50.9 / 53.2 / 54.5 | 17.8 / 20.3 / 56.0 | 45.7 / 48.0 / 49.4 | 157.8 / 165.2 / 175.7 | 2.38–2.63 / 2.48–2.77 GB |
+
+The node came back and ran the new pod in all 48 runs. With zstd the
+apiserver is ready ~1 s later (7.5–8.0 s instead of 6.4–6.8 s: kube.wasm is
+decoded whole before it compiles), but the guest RAM is in place before
+that, so the harts start ~2 s earlier and the node is a little sooner.
+`logs` took 56 s in 2 of the 24 zstd runs: the page's first `kubectl logs`,
+sent as soon as the restored pod is listed, waited for its 30 s timeout
+while the just-resumed guest did not answer yet; the next try worked.
+The renderer's memory at the end is ~0.2 GB lower in the zstd runs; where
+the difference comes from was not measured.
+
+### Publishing a node
+
+```bash
+node tools/kube-wasm/publish-node.mjs --checkpoint web/public/rv64/kube-node-perf \
+  --media web/public/rv64/r19-kubewasm-worker.json --image web/public/rv64/r19-kubewasm-worker.img \
+  --kube-wasm web/src/engine/kube-wasm/dist/kube.wasm --wasm-exec web/src/engine/kube-wasm/dist/wasm_exec.js \
+  --core web/public/rv64/rv64_core_bg.wasm --out <dir>
+```
+
+It refuses a checkpoint taken with another core or medium, checks every
+object against its recorded checksum and the medium against its version,
+and writes:
+
+| File | What | Cache |
+|---|---|---|
+| `objects/<sha256>.zstd` | checkpoint objects, medium chunks, kube.wasm (zstd -19; `--encoding gzip`: `.gzip`, gzip -9) | immutable |
+| `objects/<sha256>.js` | wasm_exec.js of the same Go build | immutable |
+| `kube-node-<id>/smp.json`, `kube-state.json` | the checkpoint; `<id>` is the start of the SHA-256 of the captured smp.json | immutable |
+| `disk-<version>.json` | the medium's identity, join placeholder and chunk index | immutable |
+| `node.json` | what `node.html?node=<url>` loads: the names above and the core's SHA-256 | revalidated |
+| `SHA256SUMS` | every file except node.json (`sha256sum -c SHA256SUMS`) | – |
+
+The checkpoint of round 14 (`kube-node-perf`, core f583d5c2…) gives 389 MB:
+checkpoint 127.2 MB, medium 248.3 MB (2404 chunks), kube.wasm 24.2 MB (with
+gzip 453 MB: 150.1, 278.4 and 38.2 MB). Publishing again into the same
+directory keeps the objects that are already there (a new checkpoint on the
+same medium adds ~130 MB). With `--jobs 3` in rv64-perf it takes 3.5
+minutes (gzip: 42 s). zstd needs Node.js 22.15 or newer.
+
+**Deployment.** The site serves the directory at `/rv64/node/`
+(`deploy/nginx.conf`: objects and versioned manifests immutable, node.json
+revalidated, `.zstd` and `.gzip` sent as they are), and the page opens
+`node.html?node=/rv64/node/node.json`. The files are not in git and the
+build Job (`deploy/build/build.sh`) clones the repository, so they have to
+come from outside it, as the v86 assets come from `fetch-v86.mjs`: put the
+published directory where the build Job can download it (for example a
+release asset or the stand's registry as an OCI artifact), check it there
+with `sha256sum -c SHA256SUMS`, and copy it to
+`$stage/node/usr/share/nginx/html/rv64/node/` as its own image layer (next to
+`v86` and `site`, so an unchanged node is stored once). `deploy.sh` and the
+stand checkout (`SANKOFA_ROOT`, default `~/projects/sankofa-int`) need no
+change for this: they build and roll out what the Job assembles. The core
+(`/rv64/rv64_core_bg.wasm`) and node.html have to be deployed with it; the
+checkpoint only restores on the core named in node.json.
+
 ### Open problems
 
 - **Go runtime crash with the kubelet client certificate.** With
