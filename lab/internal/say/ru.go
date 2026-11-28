@@ -68,6 +68,7 @@ var exact = map[string]string{
 	"leave the dtlab program":                     "оставить саму программу dtlab",
 	"usage: dtlab ssh <vm> [command]":             "как вызывать: dtlab ssh <машина> [команда]",
 	"no backend in the lab state: run `dtlab up`": "лаборатория ещё не запускалась: выполните `dtlab up`",
+	"expected a duration such as 30m":             "ожидается длительность, например 30m",
 }
 
 // formats holds the messages made with fmt; {n} is the n-th verb's value.
@@ -105,5 +106,10 @@ var formats = []struct{ en, ru string }{
 	{"dtlab %s: unexpected argument %q", "dtlab {1}: лишний аргумент {2}"},
 	{"dtlab %s: flag provided but not defined: %s", "dtlab {1}: такого флага нет: {2}"},
 	{"dtlab %s: invalid value %q for flag %s: %s", "dtlab {1}: неверное значение {2} у флага {3}: {4}"},
+	{"Help: dtlab %s --help", "Справка: dtlab {1} --help"},
+	{"unknown profile %q (light, standard or full)", "профиля {1} нет: выберите light, standard или full"},
+	{"unknown part %q (learner, kuberoot, kubeadm-nodes)", "части {1} нет: выберите learner, kuberoot или kubeadm-nodes"},
+	{"unknown backend %q (qemu or hyperv)", "способа запуска машин {1} нет: выберите qemu или hyperv"},
+	{"unknown check script %q", "скрипта проверки {1} нет"},
 	{"dtlab destroy will delete these VMs with their disks and everything on them: %s", "dtlab destroy удалит эти машины вместе с дисками и всем, что на них есть: {1}"},
 }

@@ -18,6 +18,8 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 	"text/tabwriter"
@@ -155,9 +157,24 @@ func main() {
 }
 
 func fatal(err error) {
-	fmt.Fprintln(os.Stderr, "dtlab:", say.T(say.Russian(), err.Error()))
+	ru := say.Russian()
+	fmt.Fprintln(os.Stderr, "dtlab:", say.T(ru, err.Error()))
+	var ue usageError
+	if errors.As(err, &ue) {
+		fmt.Fprintln(os.Stderr, say.T(ru, fmt.Sprintf("Help: dtlab %s --help", ue.cmd)))
+	}
 	os.Exit(1)
 }
+
+// usageError is a mistake on a command's line: dtlab prints it and points to
+// the command's help instead of printing the whole help before the error.
+type usageError struct {
+	cmd string
+	err error
+}
+
+func (e usageError) Error() string { return e.err.Error() }
+func (e usageError) Unwrap() error { return e.err }
 
 // commandFlags makes the flag set of a command whose -h and --help print
 // help and do nothing else.
@@ -173,34 +190,87 @@ func commandFlags(name, help string, out io.Writer) *flag.FlagSet {
 	return fs
 }
 
-// printFlags lists the flags as flag.PrintDefaults does, with the defaults
-// named in the learner's language.
+// printFlags lists the flags as the usage line writes them, with two dashes
+// and without Go's type names, and the defaults in the learner's language.
 func printFlags(fs *flag.FlagSet, out io.Writer, ru bool) {
 	fs.VisitAll(func(f *flag.Flag) {
-		kind, usage := flag.UnquoteUsage(f)
-		line := "  -" + f.Name
-		if kind != "" {
-			line += " " + kind
-		}
-		line += "\n    \t" + strings.ReplaceAll(usage, "\n", "\n    \t")
+		_, usage := flag.UnquoteUsage(f)
+		line := "  --" + f.Name + "\n    \t" + strings.ReplaceAll(usage, "\n", "\n    \t")
 		if def := f.DefValue; def != "" && def != "false" && def != "0" {
+			if d, ok := durationOf(f); ok {
+				def = humanDuration(d, ru)
+			} else if !ru {
+				def = strconv.Quote(def)
+			}
 			if ru {
 				line += fmt.Sprintf(" (по умолчанию %s)", def)
 			} else {
-				line += fmt.Sprintf(" (default %q)", def)
+				line += fmt.Sprintf(" (default %s)", def)
 			}
 		}
 		fmt.Fprintln(out, line)
 	})
 }
 
+// durationOf returns the default of a duration flag.
+func durationOf(f *flag.Flag) (time.Duration, bool) {
+	g, ok := f.Value.(flag.Getter)
+	if !ok {
+		return 0, false
+	}
+	d, ok := g.Get().(time.Duration)
+	return d, ok
+}
+
+// humanDuration writes whole minutes as "25 мин" or "25m", anything else as Go does.
+func humanDuration(d time.Duration, ru bool) string {
+	if d <= 0 || d%time.Minute != 0 {
+		return d.String()
+	}
+	if ru {
+		return fmt.Sprintf("%d мин", d/time.Minute)
+	}
+	return fmt.Sprintf("%dm", d/time.Minute)
+}
+
+var (
+	invalidValue = regexp.MustCompile(`^invalid value (".*") for flag -(\S+): parse error$`)
+	unknownFlag  = regexp.MustCompile(`^flag provided but not defined: -+(\S+)$`)
+)
+
+// explainValue names flags with two dashes, as the help does, and replaces
+// the flag package's bare "parse error" for a duration flag with what the
+// value should look like.
+func explainValue(fs *flag.FlagSet, err error) error {
+	if m := unknownFlag.FindStringSubmatch(err.Error()); m != nil {
+		return fmt.Errorf("flag provided but not defined: --%s", m[1])
+	}
+	m := invalidValue.FindStringSubmatch(err.Error())
+	if m == nil {
+		return err
+	}
+	if f := fs.Lookup(m[2]); f != nil {
+		if _, ok := durationOf(f); ok {
+			return fmt.Errorf("invalid value %s for flag --%s: expected a duration such as 30m", m[1], m[2])
+		}
+	}
+	return err
+}
+
 // parseFlags parses args and leaves the arguments after the flags in fs.Args().
+// On a mistake the flag package would print the whole help: only -h and
+// --help print it here.
 func parseFlags(fs *flag.FlagSet, args []string) (help bool, err error) {
-	switch err := fs.Parse(args); {
+	usage := fs.Usage
+	fs.Usage = func() {}
+	err = fs.Parse(args)
+	fs.Usage = usage
+	switch {
 	case errors.Is(err, flag.ErrHelp):
+		usage()
 		return true, nil
 	case err != nil:
-		return false, fmt.Errorf("dtlab %s: %v", fs.Name(), err)
+		return false, usageError{fs.Name(), fmt.Errorf("dtlab %s: %v", fs.Name(), explainValue(fs, err))}
 	}
 	return false, nil
 }
@@ -212,8 +282,7 @@ func parseCommand(fs *flag.FlagSet, args []string) (help bool, err error) {
 		return help, err
 	}
 	if fs.NArg() > 0 {
-		fs.Usage()
-		return false, fmt.Errorf("dtlab %s: unexpected argument %q", fs.Name(), fs.Arg(0))
+		return false, usageError{fs.Name(), fmt.Errorf("dtlab %s: unexpected argument %q", fs.Name(), fs.Arg(0))}
 	}
 	return false, nil
 }
