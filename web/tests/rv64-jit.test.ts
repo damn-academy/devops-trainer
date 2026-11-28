@@ -43,17 +43,6 @@ describe('RV64 wasm compiler', () => {
       expect(run([R(0x33,f,1)],a,b).value).toBe(BigInt.asIntN(64,(left*right)>>64n));
     }
   });
-  it('continues a trace at a forward jal target with the exact link and PC', () => {
-    // addi x3,x1,1; jal x5,+12; (skipped) addi x3,x3,100 x2; addi x3,x3,2; addi x6,x0,7
-    const jal = (rd: number, offset: number) => ((offset>>20&1)<<31 | (offset>>1&1023)<<21 | (offset>>11&1)<<20 | (offset>>12&255)<<12 | rd<<7 | 0x6f) >>> 0;
-    const memory = new WebAssembly.Memory({ initial: 1 }); const regs = new BigUint64Array(memory.buffer);
-    regs[1] = 10n; const frame = new BigUint64Array(memory.buffer, 256, 24);
-    const words = [0x00108193, 4, jal(5, 12), 4, 0x00218193, 4, 0x00700313, 4];
-    const instance = new WebAssembly.Instance(new WebAssembly.Module(compileBatch([{ id: 1, pc: 0x80000000n, words }])), { env: { memory } });
-    (instance.exports.b1 as (r: number, p: number) => void)(0, 256);
-    expect(regs[3]).toBe(13n); expect(regs[5]).toBe(0x80000008n); expect(regs[6]).toBe(7n);
-    expect(frame[0]).toBe(0x80000018n); expect(frame[1]).toBe(4n);
-  });
   it('branches relative to the exact guest PC and reads JALR before writing its source', () => {
     expect(run([0x00208463],4n,4n).pc).toBe(0x80000008n);
     expect(run([0x00208463],4n,5n).pc).toBe(0x80000004n);

@@ -86,7 +86,7 @@ function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJi
     const offset = op===0x63 ? sx((i>>>31<<12)|((i>>>7&1)<<11)|((i>>>25&63)<<5)|((i>>>8&15)<<1),13)
       : op===0x6f ? sx((i>>>31<<20)|((i>>>12&255)<<12)|((i>>>20&1)<<11)|((i>>>21&1023)<<1),21) : undefined;
     if (offset!==undefined && BigInt.asUintN(64,scanPC+offset)===block.pc) looping=true;
-    scanPC=BigInt.asUintN(64,scanPC+(op===0x6f && k+2<block.words.length ? offset! : BigInt(block.words[k+1]!)));
+    scanPC=BigInt.asUintN(64,scanPC+BigInt(block.words[k+1]!));
   }
   if (looping) for (let k=0;k<block.words.length;k+=2) { const i=block.words[k]!, rd=i>>>7&31; if (rd && ![0x23,0x63].includes(i&127)) { used.add(rd); dirty.add(rd); } }
   const emit = (...a: number[]) => code.push(...a);
@@ -233,10 +233,7 @@ function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJi
       if (rd) { emit(...expr, 0x21, rd + 2); dirty.add(rd); used.add(rd); } else emit(...expr, 0x1a);
     }
     if (jumpBack) backedge(k/2+1,1);
-    // A jal that is not the last instruction is a trace edge: the block
-    // continues at its target (jit.rs collects forward same-page targets).
-    pc = BigInt.asUintN(64, pc + (op === 0x6f && k + 2 < block.words.length
-      ? sx((i >>> 31 << 20) | ((i >>> 12 & 255) << 12) | ((i >>> 20 & 1) << 11) | ((i >>> 21 & 1023) << 1), 21) : len));
+    pc = BigInt.asUintN(64, pc + len);
   }
   const last = block.words[block.words.length - 2]! & 127;
   if (![0x63, 0x67, 0x6f].includes(last)) emit(...constant(pc), 0x21, 34);
