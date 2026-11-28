@@ -237,7 +237,7 @@ export const ROUTE: RouteEntry[] = [
     checklistStep: '05',
     requires: ['iac', 'k8s-2'],
     levels: {
-      beginner: bi('Полный чеклист с готовыми ролями', 'Full checklist with ready-made roles'),
+      beginner: bi('Пошаговый план с готовыми ролями', 'A step-by-step plan with ready-made roles'),
       intermediate: bi('Каркас, остальное сам', 'A skeleton, the rest on your own'),
       experienced: bi('С нуля', 'From scratch'),
     },

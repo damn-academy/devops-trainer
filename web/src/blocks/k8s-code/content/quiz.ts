@@ -22,7 +22,7 @@ export const QUIZ: QuizItem[] = [
     id: 'k8s-3.q.chain',
     kind: 'order',
     concepts: ['k8s.rebuildable'],
-    prompt: bi('Расставьте по порядку звенья, которые собирают кластер через Terraform и Ansible.', 'Put the links of building a cluster built with Terraform and Ansible in order.'),
+    prompt: bi('Расставьте по порядку звенья, которые собирают кластер через Terraform и Ansible.', 'Put in order the links that build a cluster with Terraform and Ansible.'),
     steps: [
       { id: 'tf', text: bi('Terraform создаёт сеть и ВМ с метками', 'Terraform creates the network and the VMs with labels') },
       { id: 'out', text: bi('terraform output отдаёт инвентарь для Ansible', 'terraform output hands the inventory to Ansible') },

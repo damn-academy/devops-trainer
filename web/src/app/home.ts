@@ -143,7 +143,7 @@ export function professionPage(id: string): Page {
           {},
           t(bi('Порядок тем в профессии опирается на открытый чек-лист начинающего DevOps-инженера ', 'The order of topics in this profession follows the open checklist for beginner DevOps engineers at ')),
           h('a', { href: 'https://devops413.io/', target: '_blank', rel: 'noopener' }, 'devops413.io'),
-          t(bi('. Из него взяты только порядок тем и список областей, а тексты, схемы и задания написаны заново.', '. Only the order of topics and the list of areas come from it; the texts, diagrams and tasks were written from scratch.')),
+          t(bi('. Из него взяли только последовательность и список областей, а тексты, схемы и задания написали заново.', '. Only the order of topics and the list of areas come from it; the texts, diagrams and tasks were written from scratch.')),
         ),
         paceControl(),
         anyProgress ? null : h('p.small.muted', {}, t(bi('Регистрация не нужна: прогресс сохраняется в этом браузере после каждого действия.', 'No sign-up: progress is saved in this browser after every action.'))),
