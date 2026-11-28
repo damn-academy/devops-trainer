@@ -275,3 +275,33 @@ up/down; живая схема). Любой движок может добави
 предзагружаются; движок и образы v86 кэшируются при первом использовании или
 через «Настройки → Офлайн»; новая версия ждёт и применяется по кнопке или при
 переходе к другому уроку.
+
+### Редакторы на настоящей машине (lab-editors, v86.editor)
+
+Профиль `lab-editors` (256 МБ): набор lab-node, а к нему Neovim, Emacs без X,
+tmux, ripgrep и make, агенты только для чтения в `scripts/lab-editors`
+(`dt.vim`, `dt.lua`, `dt-agent.el`, который загружает `site-start.el`) и
+учебные файлы в `/srv/train`. Урок ставит виджет:
+
+```ts
+{ kind: 'widget', id: 'vim-lab', widget: 'v86.editor', props: {
+    editors: ['vim'],
+    tasks: [{ id: 'm', prompt: bi('…', '…'), check: { when: "vim.reg.a ~ ';' && vim.recording = ''" } }],
+} }
+```
+
+- Факты собираются, только если их называет предикат: `vim`, `nvim`,
+  `emacs` — `running`, `instrumented`, `source` (`socket` | `file` | `none`),
+  `buf` (текущий буфер), `buffers[]{file,name,modified,text,…}`; у Vim и
+  Neovim ещё `mode`, `recording`, `reg`, `regtype`, `marks`, `qf`, `windows`,
+  `layout`, `undo`, `opt`; у Emacs `killhead`, `killring[]`, `point`, `mark`,
+  `major`, `minor`, `registers`. Есть и `editor.{active,running,instrumented}`.
+  У редактора, запущенного без плагинов (`vim -u NONE`, `nvim --clean`,
+  `emacs -Q`), `instrumented=false`: тогда проверяются файлы, а в `fail[]`
+  об этом честно говорится.
+- Повод для проверки: `new V86Machine({ editorWatch: true })` опрашивает ttyS1
+  раз в 400 мс, пока работает редактор (раз в секунду, пока идёт другая
+  команда), и посылает `editor.change`; проверка по приглашению остаётся.
+  `m.editorFacts()` возвращает одни факты редактора, это дешевле `facts()`.
+- Демонстрация: `#/lab/editors`. Сквозной прогон:
+  `node scripts/check-editors-lab.mjs` (на сборочной машине).
