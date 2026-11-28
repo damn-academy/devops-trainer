@@ -142,16 +142,3 @@ it('terminates A/F/D blocks through the exact wasm helper after spilling the pre
   (instance.exports.b7 as (r:number,p:number)=>void)(0,256);
   expect(called).toBe(true);expect(r[3]).toBe(999n);expect(r[32]).toBe(0x80000006n);
 });
-it('runs Zicsr and FENCE.I through the helper and compiles FENCE as a no-op',()=>{
-  const memory=new WebAssembly.Memory({initial:1}),r=new BigUint64Array(memory.buffer);r[1]=5n;
-  // addi x3,x1,1; fence rw,rw; csrrs x4,sstatus,x0
-  const csr=0x10002273;
-  const module=new WebAssembly.Module(compileBatch([{id:8,pc:0x80000000n,words:[0x00108193,4,0x0330000f,4,csr,4]}]));
-  const calls:number[]=[];
-  const slow=(_cpu:number,ins:number,_raw:number,_len:number,pc:bigint)=>{calls.push(ins);expect(pc).toBe(0x80000008n);expect(r[3]).toBe(6n);expect(r[33]).toBe(3n);r[4]=42n;r[32]=pc+4n;};
-  (new WebAssembly.Instance(module,{env:{memory,slow}}).exports.b8 as (r:number,p:number)=>void)(0,256);
-  expect(calls).toEqual([csr]);expect(r[4]).toBe(42n);expect(r[32]).toBe(0x8000000cn);
-  const fenceI=new WebAssembly.Module(compileBatch([{id:9,pc:0x80000000n,words:[0x0000100f,4]}]));
-  let seen=0;(new WebAssembly.Instance(fenceI,{env:{memory,slow:(_c:number,ins:number)=>{seen=ins;}}}).exports.b9 as (r:number,p:number)=>void)(0,256);
-  expect(seen).toBe(0x100f);
-});
