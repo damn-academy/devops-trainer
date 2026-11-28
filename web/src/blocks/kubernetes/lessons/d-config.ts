@@ -138,6 +138,7 @@ export const configLesson: Lesson = {
         },
       },
     },
+    { id: 'real-cluster', kind: 'widget', step: 'practice', widget: 'k8s.real-cluster' },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: configQuiz.map((q) => q.id) },
   ],
 };
@@ -280,6 +281,7 @@ export const healthLesson: Lesson = {
         },
       ],
     },
+    { id: 'real-cluster', kind: 'widget', step: 'practice', widget: 'k8s.real-cluster' },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: healthQuiz.map((q) => q.id) },
   ],
 };

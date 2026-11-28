@@ -194,6 +194,7 @@ export const scalingLesson: Lesson = {
         'Besides CPU and memory the HPA can take custom metrics, such as requests per second or queue length, if an adapter such as Prometheus Adapter serves them. For queues and events KEDA is handier: it can bring replicas down to zero when there is no work and creates an HPA for what it scales itself. The VerticalPodAutoscaler changes not the pod count but their requests, and it is not combined with an HPA on the same CPU metric, because the two would fight each other.\n\nIf the cluster is deployed from Git, do not write `replicas` into the manifest of a Deployment the HPA manages. Otherwise every reconciliation brings back the number from Git, the HPA changes it again, and pods keep appearing and disappearing. Scale-down and scale-up behaviour is tuned in `spec.behavior`: the stabilization window, 300 seconds for scale-down by default, and the largest step per period.',
       ),
     },
+    { id: 'real-cluster', kind: 'widget', step: 'practice', widget: 'k8s.real-cluster' },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: scalingQuiz.map((q) => q.id) },
   ],
 };

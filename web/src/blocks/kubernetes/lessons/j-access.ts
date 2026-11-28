@@ -478,6 +478,7 @@ export const accessLesson: Lesson = {
         },
       ],
     },
+    { id: 'real-cluster', kind: 'widget', step: 'practice', widget: 'k8s.real-cluster' },
     { id: 'quiz', kind: 'quiz', step: 'exit', title: bi('Проверьте себя', 'Check yourself'), items: accessQuiz.filter((q) => q.id !== 'k8s.q.acc.parts').map((q) => q.id) },
   ],
 };
