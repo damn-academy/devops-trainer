@@ -708,6 +708,43 @@ Mac swapped 7.2 of 8 GB during the 12 runs, and the later ones did not
 bring the node back at all, so these timings are not comparable with
 earlier rounds.
 
+### Rounds 12–13: the crash's cause, browser runs in pods
+
+**The crash** (`invalid runtime symbol table`, about 1 in 12 browser
+restores with Go 1.26.11 and 1.27.4) is a Go runtime problem on wasm:
+when the allocation picked for the heap profile is made on the system
+stack (g0), the profiler unwinds g0, which cannot be unwound past
+`mcall` on wasm. The scheduler's `beforeIdle` (runtime/lock_js.go)
+allocates a timeout event exactly there whenever the program goes
+idle, which in a browser tab is all the time. The failing stack in the
+browser shows that path (`mcall → park_m → schedule → findRunnable →
+beforeIdle → newobject → profilealloc → mProf_Malloc → callers`).
+`GODEBUG=memprofilerate=1` (every allocation sampled) makes it
+deterministic: 5 of 5 starts crash under Node.js. The overlay
+(`overlay.py`) now leaves allocations made on g0 out of the heap
+profile on wasm. After that: 10 of 10 starts with
+`memprofilerate=1` under Node.js, and 0 crashes in 28 browser restores
+(4 with `memprofilerate=1`, 12 with `GOGC=50 GOMEMLIMIT=300MiB`); the
+same 24-restore series before the fix: 2 crashes.
+
+Not the cause: synchronous memfs callbacks (40 of 40 starts with the
+synchronous memfs under Node.js), and stale views of the Go memory
+(memfs copies data in and out within each call). memfs now answers in a
+microtask and the page defers the bridge's callbacks anyway, as Node.js
+does.
+
+**Browser runs in pods.** Headless Chromium runs in the workshop pods
+(`web/kube-wasm-node-measure.mjs` measures the renderer's private dirty
+plus swapped memory from `/proc/<pid>/smaps_rollup` on Linux). In
+rv64-dev-b (3 CPUs) and rv64-bench (4 CPUs, 8 GiB, AMD EPYC 9454P) the
+restored node mostly does not come back: 3 of 24 and 0 of 3 runs. In
+rv64-bench the pod is not throttled (1 of 600 periods), the page's main
+thread is idle 97.7 % of a 40 s profile (kube.wasm 1.6 %), and the two
+emulator workers run at ~100 %: the guest is too slow (8–12 MIPS per
+hart against 15–25 on an Apple M4), its kubelet reports housekeeping
+taking 23–59 s instead of 1 s and its TLS handshakes to the apiserver
+time out. Renderer memory there: 2.6–2.8 GB after 6–10 minutes.
+
 ### Open problems
 
 - **Go runtime crash with the kubelet client certificate.** With
