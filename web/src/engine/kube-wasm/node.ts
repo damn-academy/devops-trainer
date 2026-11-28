@@ -12,6 +12,8 @@
 // &capture=1 (once the pod runs, save a checkpoint of the node and the
 // control plane through POST /snapshot-upload/<name>) &restore=<base URL>
 // (start from such a checkpoint: smp.json, kube-state.json, <sha256>.bin)
+// &node=<URL of node.json> (a published node, tools/kube-wasm/publish-node.mjs:
+// kube.wasm, checkpoint and medium as content-addressed objects; implies the restore)
 
 import { loadKubeWasm, splitArgs, type Loaded } from './loader';
 import { createRV64Network } from '../rv64/network';
@@ -20,10 +22,12 @@ import { sharedTable, atomicModule, HartMailboxes, granuleTableBytes } from '../
 import { createSharedCompiler } from '../rv64/shared-compiler';
 import { hartBudget, jitCeilingBytes, MiB } from '../rv64/host-memory';
 import type { TcpConn } from '../labhost/tcp';
-import { readObject, restoreRam, storeObject, storeRam, validateCheckpoint, type SMPCheckpoint } from '../rv64/smp-checkpoint';
+import { checkpointStore, readObject, restoreRam, storeObject, storeRam, validateCheckpoint, type SMPCheckpoint } from '../rv64/smp-checkpoint';
+import { isEncoding, type Encoding } from '../rv64/objects';
 import { restoreTimeOffset } from '../rv64/restore-clock';
 import { sha256 } from '../rv64/snapshot';
 import { ipToNum } from '../labhost/wire';
+import type { HTTPDisk } from '../rv64/block';
 
 const NODE_NAME = 'kuberoot-000001'; // kinit names the node after the last MAC bytes
 const NODE_IP = '10.0.0.10'; // the first DHCP lease of the lab network
@@ -83,14 +87,25 @@ const upload = async (name: string, data: Uint8Array) => {
   if (!r.ok) throw new Error(`checkpoint upload ${name}: ${r.status}`);
 };
 interface SavedTcp { vlan: number; local: { ip: number; port: number }; remote: { ip: number; port: number }; snd: number; rcv: number }
+/** node.json of a published node; paths are relative to it. */
+interface NodeBundle {
+  format: 'dt.kube-node/v1'; objects: string; encoding?: Encoding;
+  kubeWasm: { sha256: string; bytes: number }; wasmExec: { sha256: string };
+  checkpoint: string; media: string; coreSha256: string;
+}
 interface KubeState { pki: Record<string, string>; etcd: string; tcp?: SavedTcp[] }
 
 async function main() {
-  const restoreBase = params.get('restore') ? new URL(params.get('restore')!, location.href).href : null;
+  const bundleUrl = params.get('node') ? new URL(params.get('node')!, location.href).href : null;
+  const bundle = bundleUrl ? await (await fetch(bundleUrl)).json() as NodeBundle : undefined;
+  if (bundle && (bundle.format !== 'dt.kube-node/v1' || (bundle.encoding !== undefined && !isEncoding(bundle.encoding)))) throw new Error('unsupported node.json');
+  const inBundle = (path: string) => new URL(path, bundleUrl!).href;
+  const restoreBase = bundle ? inBundle(bundle.checkpoint) : params.get('restore') ? new URL(params.get('restore')!, location.href).href : null;
   const capturing = params.get('capture') === '1';
   const k = await loadKubeWasm({
     wasmUrl: params.get('wasm') ?? './dist/kube.wasm', // e.g. ?wasm=./dist/kube.opt.wasm
-    wasmExecUrl: './dist/wasm_exec.js',
+    wasmObject: bundle && { base: inBundle(bundle.objects), sha256: bundle.kubeWasm.sha256, encoding: bundle.encoding },
+    wasmExecUrl: bundle ? inBundle(`${bundle.objects}${bundle.wasmExec.sha256}.js`) : './dist/wasm_exec.js',
     // e.g. ?goenv=GOGC=200;GODEBUG=gcstoptheworld=1,gcshrinkstackoff=1
     // The Go linear memory never shrinks: a soft limit keeps it at ~0.31
     // instead of ~0.37 GiB with a node (twice as many collections).
@@ -121,11 +136,14 @@ async function main() {
   await k.api.ready();
   mark('apiserver ready');
 
-  const media = await (await fetch(params.get('media') ?? '/rv64/r19-kubewasm-worker.json')).json() as
-    { url: string; bytes: number; version: string; join: { offset: number; bytes: number } };
+  const mediaUrl = new URL(bundle ? inBundle(bundle.media) : params.get('media') ?? '/rv64/r19-kubewasm-worker.json', location.href).href;
+  const media = await (await fetch(mediaUrl)).json() as
+    { url: string; bytes: number; version: string; join: { offset: number; bytes: number }; chunks?: string[]; encoding?: Encoding };
   // ?diskCache=0: read the medium over HTTP only, without Cache Storage.
-  const disk = { url: media.url, bytes: media.bytes, version: media.version, ...(params.get('diskCache') === '0' ? { noCache: true } : {}) };
-  let httpDisk: typeof disk & { overlay?: { offset: number; data: Uint8Array }[] } = disk;
+  const disk = { url: media.chunks ? new URL(media.url, mediaUrl).href : media.url, bytes: media.bytes, version: media.version, ...(params.get('diskCache') === '0' ? { noCache: true } : {}) };
+  // A published medium is read by chunk objects (see HTTPDisk.chunks); the
+  // checkpoint records only the medium's identity.
+  let httpDisk: HTTPDisk = media.chunks ? { ...disk, chunks: media.chunks, encoding: media.encoding } : disk;
   if (!restore) {
     // A restored node already has its Membership (and certificates) in RAM.
     const membership = await k.api.joinMembership(NODE_NAME, NODE_IP);
@@ -133,7 +151,7 @@ async function main() {
     if (ticket.length > media.join.bytes) throw new Error('membership does not fit the placeholder');
     const data = new Uint8Array(media.join.bytes).fill(0x20); // JSON allows trailing spaces
     data.set(ticket);
-    httpDisk = { ...disk, overlay: [{ offset: media.join.offset, data }] };
+    httpDisk = { ...httpDisk, overlay: [{ offset: media.join.offset, data }] };
   }
 
   const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
@@ -171,14 +189,16 @@ async function main() {
   let initialDevice: Uint8Array | undefined;
   let epoch = performance.timeOrigin + performance.now();
   if (restoreBase) {
-    checkpoint = await (await fetch(new URL('smp.json', restoreBase))).json() as SMPCheckpoint;
+    const smpUrl = new URL('smp.json', restoreBase).href;
+    checkpoint = await (await fetch(smpUrl)).json() as SMPCheckpoint;
     validateCheckpoint(checkpoint, harts, bytes, wasmSha256, disk);
+    const store = checkpointStore(checkpoint, smpUrl);
     const view = new Uint8Array(memory.buffer, 64, bytes);
-    await restoreRam(restoreBase, checkpoint.ram, view);
-    new Uint8Array(control).set(await readObject(restoreBase, checkpoint.control));
-    new Uint8Array(mail).set(await readObject(restoreBase, checkpoint.mail));
-    for (const ref of checkpoint.cpus) initialBlobs.push(await readObject(restoreBase, ref));
-    initialDevice = await readObject(restoreBase, checkpoint.device);
+    await restoreRam(store, checkpoint.ram, view);
+    new Uint8Array(control).set(await readObject(store, checkpoint.control));
+    new Uint8Array(mail).set(await readObject(store, checkpoint.mail));
+    for (const ref of checkpoint.cpus) initialBlobs.push(await readObject(store, ref));
+    initialDevice = await readObject(store, checkpoint.device);
     // ?clock=continuous (default) resumes the guest clock where it stopped,
     // so containerd and the kubelet see no jump; the node lifecycle
     // controller times node heartbeats with its own clock. ?clock=elapsed

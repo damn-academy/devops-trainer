@@ -3,6 +3,7 @@
 // demo page uses it; nothing in the site imports it yet.
 
 import { createMemFs } from './memfs';
+import { OBJECT_CACHE, objectName, type Encoding } from '../rv64/objects';
 
 export interface KubectlResult {
   stdout: string;
@@ -58,6 +59,11 @@ export interface BridgeConn {
 
 export interface LoadOptions {
   wasmUrl: string;
+  /** A published kube.wasm (tools/kube-wasm/publish-node.mjs) instead of
+   * wasmUrl: the object `<sha256>.<encoding>` in the directory `base`, kept
+   * in Cache Storage. The encoding's own checksum (gzip: CRC-32) and the
+   * WebAssembly validation catch a damaged copy; a cached one is fetched again. */
+  wasmObject?: { base: string; sha256: string; encoding?: Encoding };
   wasmExecUrl: string;
   /** Extra environment for the Go program, e.g. GOGC or GOMEMLIMIT. */
   env?: Record<string, string>;
@@ -117,7 +123,7 @@ export async function loadKubeWasm(o: LoadOptions): Promise<Loaded> {
   go.env = { HOME: '/root', USER: 'root', PATH: '/usr/bin', ...o.env };
 
   const t0 = performance.now();
-  const module = await WebAssembly.compileStreaming(fetch(o.wasmUrl));
+  const module = o.wasmObject ? await compileObject(o.wasmObject) : await WebAssembly.compileStreaming(fetch(o.wasmUrl));
   const t1 = performance.now();
   const instance = await WebAssembly.instantiate(module, go.importObject);
   const loaded = new Promise<void>((resolve) => { g.__kubeWasmLoaded = resolve; });
@@ -133,6 +139,24 @@ export async function loadKubeWasm(o: LoadOptions): Promise<Loaded> {
     wasmMemoryBytes: () => mem.buffer.byteLength,
     timings: { compileMs: t1 - t0, initMs: t2 - t1 },
   };
+}
+
+async function compileObject(w: NonNullable<LoadOptions['wasmObject']>): Promise<WebAssembly.Module> {
+  const url = new URL(objectName(w.sha256, w.encoding), w.base).href;
+  const cache = typeof caches !== 'undefined' ? await caches.open(OBJECT_CACHE).catch(() => undefined) : undefined;
+  const compile = (r: Response) => WebAssembly.compileStreaming(new Response(w.encoding ? r.body!.pipeThrough(new DecompressionStream(w.encoding)) : r.body,
+    { headers: { 'Content-Type': 'application/wasm' } }));
+  const hit = await cache?.match(url).catch(() => undefined);
+  if (hit?.body) {
+    try { return await compile(hit); } catch { await cache?.delete(url).catch(() => undefined); }
+  }
+  const r = await fetch(url);
+  if (!r.ok || !r.body) throw new Error(`${url}: HTTP ${r.status}`);
+  const [toCache, toCompile] = r.body.tee();
+  const module = await compile(new Response(toCompile));
+  // Stored only once it compiled: a damaged download never enters the cache.
+  await cache?.put(url, new Response(toCache)).catch(() => undefined);
+  return module;
 }
 
 /** Splits a command line like a POSIX shell would, minus expansions. */
