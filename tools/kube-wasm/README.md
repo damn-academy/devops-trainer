@@ -745,6 +745,33 @@ hart against 15–25 on an Apple M4), its kubelet reports housekeeping
 taking 23–59 s instead of 1 s and its TLS handshakes to the apiserver
 time out. Renderer memory there: 2.6–2.8 GB after 6–10 minutes.
 
+### Round 14: the faster emulator
+
+feat/rv64-perf (core `rv64_core_bg.wasm` f583d5c2…) is merged. The node
+page sizes its granule table with `granuleTableBytes()`, which leaves
+room for the core's per-hart store locks. tsc, vitest (1764 passed; one
+add-on scenario timed out under the full run and passes alone), the
+rv64 tests against the built core (`RV64_SMP_JIT=1`, 80 passed) and the
+browser gates (`--jit-gates`, `--smp-substrate`) pass.
+
+24 restores of `kube-node-perf` (1 GiB guest) on rv64-bench (4 CPUs,
+8 GiB), 12 with `GOGC=50 GOMEMLIMIT=300MiB` (the default) and 12 with
+Go's defaults; seconds after page load, min / median / max:
+
+| | Crashes | Heartbeat | logs | exec | New pod Running | Deployment → pod | Renderer memory at the end / peak |
+|---|---|---|---|---|---|---|---|
+| Go limit | 0 / 12 | 52 / 54 / 56 | 19 / 21 / 57 | 47 / 49 / 50 | 161 / 168 / 177 | 107 / 112 / 123 | 2.63–2.86 / 2.67–3.02 GB |
+| Go defaults | 0 / 12 | 51 / 54 / 56 | 18 / 21 / 23 | 45 / 49 / 51 | 162 / 168 / 173 | 107 / 117 / 117 | 2.66–2.80 / 2.75–2.92 GB |
+
+The node came back and ran the new pod in all 24 runs (19–25 MIPS per
+hart). The ~110 s from the deployment to the running pod are the
+guest's own work, not a timer: in the guest's log the kubelet takes
+about 4 s to the sandbox request, the sandbox 67 s (CNI setup with the
+bridge, host-local, loopback and portmap plugins, 37 s; containerd's
+shim and the pause container, 30 s), creating the container 4 s and
+starting it 26 s. The one kernel step that looked like a timer (the
+veth port's blocking → forwarding) takes 3.3–5.7 s from run to run.
+
 ### Open problems
 
 - **Go runtime crash with the kubelet client certificate.** With
