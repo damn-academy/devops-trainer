@@ -27,6 +27,11 @@ it('shows cumulative funnel totals and updates them when the allocation changes'
     const budget = el.querySelector<HTMLInputElement>('input[type=number]')!;
     budget.value = '5000'; budget.dispatchEvent(new Event('change'));
     expect(el.textContent).toMatch(/Allocated \/ monthly budget, USD: [\d,]+ \/ 5,000/);
+    // A changed or rejected amount is explained next to the field.
+    budget.value = '41667'; budget.dispatchEvent(new Event('change'));
+    expect(budget.value).toBe('41500'); expect(el.textContent).toContain('rounded to 41,500');
+    budget.value = '250000'; budget.dispatchEvent(new Event('change'));
+    expect(budget.value).toBe('41500'); expect(el.textContent).toContain('previous budget of 41,500 stays');
   } finally { widget.dispose?.(); }
   expect(el.children).toHaveLength(0);
 });
