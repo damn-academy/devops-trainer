@@ -154,7 +154,7 @@ export function mountDeptSim(el: HTMLElement, props: unknown, ctx: WidgetCtx, se
   const notesKey = `${storageKey(scenario.id)}.notes`;
   const notes = h('textarea', { rows: 4, 'aria-label': t(bi('Итог партии', 'Game outcome')) }) as HTMLTextAreaElement;
   try { notes.value = localStorage.getItem(notesKey) ?? ''; } catch { /* Storage is optional. */ }
-  const finishSim = h('button.btn', { type: 'button', onclick: () => { if (!playedOrNoted()) return; completed = true; ctx.complete(); selfReviewStatus.textContent = t(bi('Самопроверка симуляции завершена. Раздел пройден.', 'Simulation self-review complete. Section complete.')); } }, t(bi('Завершить самопроверку симуляции', 'Finish the simulation self-review'))) as HTMLButtonElement;
+  const finishSim = h('button.btn', { type: 'button', onclick: () => { if (!playedOrNoted()) return; completed = true; ctx.complete(); selfReviewStatus.textContent = t(bi('Самопроверка симуляции завершена.', 'Simulation self-review complete.')); } }, t(bi('Завершить самопроверку симуляции', 'Finish the simulation self-review'))) as HTMLButtonElement;
   const finishHint = h('p.small.muted', {}, t(bi('Кнопка станет доступна после первого хода на странице или когда вы запишете итог партии.', 'The button becomes available after your first move on the page or once you write the game outcome.')));
   notes.oninput = () => { try { localStorage.setItem(notesKey, notes.value); } catch { /* Storage is optional. */ } updateControls(); };
   root.append(h('label', {}, t(bi('Итог партии: если играли в отдельном чате, вставьте сюда разбор ведущего или запишите свои выводы', 'Game outcome: if you played in a separate chat, paste the host’s debrief here or write your conclusions')), notes), finishSim, finishHint, selfReviewStatus);

@@ -49,5 +49,5 @@ it('says the field is empty when a finished document was cleared', () => {
   mountTaskDocument(host, 'sales.d100-sequence.task', 'T', 'Task', () => {}, true);
   const field = host.querySelector('textarea')!;
   field.value = ''; field.dispatchEvent(new Event('input'));
-  expect(host.querySelector('[role=status]')!.textContent).toContain('поле сейчас пустое');
+  expect(host.querySelector('[role=status]')!.textContent).toContain('результата в поле сейчас нет');
 });

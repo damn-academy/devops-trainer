@@ -31,7 +31,8 @@ export function mountTaskDocument(el: HTMLElement, id: string, title: string, ta
   let done = alreadyDone;
   const status = h('p', { role: 'status' });
   // The status speaks about the text in the field now, so a cleared field is not called saved.
-  const showStatus = () => { status.textContent = !done ? '' : t(edited() ? bi('Самопроверка завершена. Текст сохранён в этом браузере.', 'Self-review complete. The text is saved in this browser.') : bi('Самопроверка была завершена, но поле сейчас пустое.', 'Self-review was completed, but the field is empty now.')); };
+  // A cleared field shows the blank form again, so the status does not call it empty.
+  const showStatus = () => { status.textContent = !done ? '' : t(edited() ? bi('Самопроверка завершена. Текст сохранён в этом браузере.', 'Self-review complete. The text is saved in this browser.') : bi('Самопроверка была завершена, но результата в поле сейчас нет.', 'Self-review was completed, but the field has no result now.')); };
   const finish = h('button.btn', { type: 'button', disabled: !edited(), onclick: () => { if (!edited()) return; complete?.(); done = true; showStatus(); } }, t(bi('Завершить самопроверку', 'Finish self-review'))) as HTMLButtonElement;
   const hint = h('p.small.muted', { hidden: edited() }, t(bi('Кнопка станет доступна, когда вы запишете результат.', 'The button becomes available once you write the result.')));
   input.oninput = () => { saveDraft(`document.${id}`, input.value); finish.disabled = !edited(); hint.hidden = edited(); showStatus(); };
