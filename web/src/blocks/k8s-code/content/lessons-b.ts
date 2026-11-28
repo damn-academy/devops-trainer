@@ -394,7 +394,7 @@ const realChecks = [
 export const L_REAL: Lesson = {
   id: 'k8s-3.real',
   block: 'k8s-3',
-  title: bi('Как собрать кластер через Terraform и Ansible в настоящем облаке', 'How to build a cluster built with Terraform and Ansible in a real cloud'),
+  title: bi('Как собрать кластер через Terraform и Ansible в настоящем облаке', 'How to build a cluster with Terraform and Ansible in a real cloud'),
   summary: bi('Тот же код в настоящем облаке: провайдер Terraform, группа безопасности, роли и Argo CD. Результат вы проверяете сами по выводу команд и снимку кластера, а в конце обязательно убираете все машины.', 'The same code on a real cloud: a provider, a security group, the roles, Argo CD; a self-check by command output and a cluster snapshot, a mandatory cleanup.'),
   introduces: [],
   uses: ['k8s.rebuildable', 'iac.resource-label', 'iac.count', 'iac.output', 'iac.creates', 'cicd.gitops-pull', 'k8s.argocd-app', 'iac.provider'],

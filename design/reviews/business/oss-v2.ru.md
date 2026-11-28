@@ -12,7 +12,7 @@
 
 ## Что и как проверено
 
-Персоны взяты из раздела «Open source» файла `/Users/tym83/projects/devops-trainer/scratchpad/trainers/personas-business.ru.md`; метод — из `design/personas.ru.md` основной рабочей копии. Прочитаны предыдущий `design/reviews/business/oss.ru.md`, пример рецензии `design/reviews/01-andragogy--by-08-multimedia-engine.ru.md` основной копии и её `scratchpad/feedback-round3-claude.md`. Критерии языка — `web/STYLE-RU.md`. Численные бюджеты, устройства и конкретные проекты ниже — явные допущения: краткие бизнес-персоны их не задают. Время занятий модельное, не секундомер Playwright.
+Персоны взяты из раздела «Open source» файла `~/projects/devops-trainer/scratchpad/trainers/personas-business.ru.md`; метод — из `design/personas.ru.md` основной рабочей копии. Прочитаны предыдущий `design/reviews/business/oss.ru.md`, пример рецензии `design/reviews/01-andragogy--by-08-multimedia-engine.ru.md` основной копии и её `scratchpad/feedback-round3-claude.md`. Критерии языка — `web/STYLE-RU.md`. Численные бюджеты, устройства и конкретные проекты ниже — явные допущения: краткие бизнес-персоны их не задают. Время занятий модельное, не секундомер Playwright.
 
 Один Chromium, один контекст и одна вкладка Playwright. Сервер уже работал: сборка и управление сервером не выполнялись. После выбора RU за каждую персону открыта карта курса, затем все десять уроков в порядке:
 

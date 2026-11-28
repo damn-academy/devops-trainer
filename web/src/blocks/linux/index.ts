@@ -65,6 +65,18 @@ const REPORT_BROKEN = {
   script: ['systemctl start report'],
 };
 
+/** journald reads journald.conf and then the drop-ins in journald.conf.d/ by name; the last SystemMaxUse wins. */
+export function journalMaxUse(files: Record<string, { text?: unknown } | undefined>): string | null {
+  const dropIns = Object.keys(files)
+    .filter((p) => /^\/etc\/systemd\/journald\.conf\.d\/[^/]+\.conf$/.test(p))
+    .sort();
+  let value: string | null = null;
+  for (const p of ['/etc/systemd/journald.conf', ...dropIns]) {
+    for (const m of String(files[p]?.text ?? '').matchAll(/^\s*SystemMaxUse\s*=\s*(\S*)\s*$/gm)) value = m[1];
+  }
+  return value;
+}
+
 const units = (f: Facts) => (f.units ?? {}) as Record<string, { active: string; enabled: string; props: Record<string, string> }>;
 
 const placement: PlacementTask[] = [
@@ -266,7 +278,7 @@ const exam: Exam = {
       task: {
         id: 'journal',
         prompt: bi('Журнал systemd не должен занимать больше 50 мегабайт.', 'The systemd journal must not take more than 50 megabytes.'),
-        check: { when: (f) => /^\s*SystemMaxUse=50M\s*$/m.test((f.files['/etc/systemd/journald.conf']?.text ?? '') as string) },
+        check: { when: (f) => journalMaxUse(f.files as Record<string, { text?: unknown }>) === '50M' },
         docStep: 5,
         solutionTokens: ['SystemMaxUse', 'journald.conf'],
       },

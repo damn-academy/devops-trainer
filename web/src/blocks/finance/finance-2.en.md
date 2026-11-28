@@ -83,7 +83,7 @@ Example: opening cash 500 and a floor of 150, in thousands. Customers pay 30 wee
 | Other | 10 | 10 | 10 | 10 | 40 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
 | Closing | 500 | 400 | 470 | 370 | 340 | 240 | 240 | 140 | 140 | 40 | 40 | −60 | −60 |
 
-Cash falls below the floor in week eight and cannot cover payroll in week twelve. If the 100 due in week three slips to week six, the intra-period shortfall deepens by another 100. An annual P&L will not show this. Act before week eight: accelerate collections, postpone optional spending and review hiring. An unclosed round belongs in a separate upside scenario, not something to rely on.
+Cash falls below the floor in week eight and cannot cover payroll in week twelve. If the 100 due in week three slips to week six, weeks three to five end 70 lower but stay above the floor, and from week six the table is unchanged. A delay past the low point is what hurts: if the 100 arrives only after week twelve, the shortfall in week twelve grows to 130. An annual P&L will not show this. Act before week eight: accelerate collections, postpone optional spending and review hiring. An unclosed round belongs in a separate upside scenario, not something to rely on.
 
 Update the forecast every Friday: freeze the previous version, replace the elapsed week with bank actuals, explain variances (timing, amount or omitted payment), add week fourteen, and have every AR owner confirm expected dates. Record forecast accuracy separately: actual versus forecast closing cash. Do not rewrite the old forecast retrospectively.
 

@@ -49,7 +49,7 @@ function howtoPanel(body: Bi, title?: Bi): HTMLElement {
 
 export function renderSection(s: Section, c: SectionCtx): { el: HTMLElement; mounted?: Mounted } {
   const el = h('section.lsec', { 'data-kind': s.kind, id: `s-${s.id}`, 'data-step': s.step });
-  const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: !c.isDone }, t(bi('Раздел пройден. Результат сохранён в этом браузере.', 'Section complete. Progress is saved in this browser.')));
+  const completion = h('p.task-completion.lab-ok', { role: 'status', hidden: !c.isDone }, t(bi('Раздел пройден. Браузер запомнил, что вы его прошли.', 'Section complete. Progress is saved in this browser.')));
   const done = () => { c.done(s.id); completion.hidden = false; };
   switch (s.kind) {
     case 'text': {
