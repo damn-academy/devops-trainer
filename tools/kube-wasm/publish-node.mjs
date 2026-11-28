@@ -6,7 +6,8 @@
 //   node tools/kube-wasm/publish-node.mjs --checkpoint <dir> --media <json> --image <img> \
 //     --kube-wasm <kube.wasm> --wasm-exec <wasm_exec.js> --core <rv64_core_bg.wasm> --out <dir>
 //
-// <out>/objects/<sha256>.gzip every object, gzip -9; the name is the SHA-256
+// <out>/objects/<sha256>.gzip every object, gzip -9 (--encoding zstd: .zstd,
+//                             zstd -19 with its checksum); the name is the SHA-256
 //                             of the decoded bytes (checkpoint objects, 256 KiB
 //                             medium chunks, kube.wasm); wasm_exec.js as
 //                             <sha256>.js. Not .gz: some static servers send
@@ -27,11 +28,12 @@ import { promisify } from 'node:util';
 
 const CHUNK_BYTES = 256 * 1024; // web/src/engine/rv64/block.ts
 const gzip = promisify(zlib.gzip);
+const zstd = zlib.zstdCompress && promisify(zlib.zstdCompress);
 const args = {};
 for (let i = 2; i < process.argv.length; i += 2) {
   const key = process.argv[i].replace(/^--/, '');
-  if (!['checkpoint', 'media', 'image', 'kube-wasm', 'wasm-exec', 'core', 'out', 'jobs'].includes(key) || process.argv[i + 1] === undefined) {
-    console.error(`usage: ${path.basename(process.argv[1])} --checkpoint <dir> --media <json> --image <img> --kube-wasm <file> --wasm-exec <file> --core <file> --out <dir> [--jobs N]`);
+  if (!['checkpoint', 'media', 'image', 'kube-wasm', 'wasm-exec', 'core', 'out', 'jobs', 'encoding'].includes(key) || process.argv[i + 1] === undefined) {
+    console.error(`usage: ${path.basename(process.argv[1])} --checkpoint <dir> --media <json> --image <img> --kube-wasm <file> --wasm-exec <file> --core <file> --out <dir> [--encoding gzip|zstd] [--jobs N]`);
     process.exit(2);
   }
   args[key] = process.argv[i + 1];
@@ -40,18 +42,24 @@ for (const key of ['checkpoint', 'media', 'image', 'kube-wasm', 'wasm-exec', 'co
 const jobs = Number(args.jobs ?? 4);
 const sha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const fail = (msg) => { console.error(`publish-node: ${msg}`); process.exit(1); };
+const encoding = args.encoding ?? 'gzip';
+if (!['gzip', 'zstd'].includes(encoding)) fail(`unknown encoding ${encoding}`);
+if (encoding === 'zstd' && !zstd) fail('zstd needs Node.js 22.15 or newer');
+/** gzip -9 or zstd -19; the extension is the encoding's name (see objects.ts). */
+const encode = (data) => encoding === 'gzip' ? gzip(data, { level: 9 })
+  : zstd(data, { params: { [zlib.constants.ZSTD_c_compressionLevel]: 19, [zlib.constants.ZSTD_c_checksumFlag]: 1 } });
 const out = path.resolve(args.out);
 const objects = path.join(out, 'objects');
 fs.mkdirSync(objects, { recursive: true });
 
 let added = 0, kept = 0, encodedBytes = 0, decodedBytes = 0;
-/** Stores one object (gzip -9 unless ext is given) and returns its reference. */
-async function put(data, ext = 'gzip') {
+/** Stores one object (encoded, unless ext is given) and returns its reference. */
+async function put(data, ext = encoding) {
   const sha = sha256(data);
   const file = path.join(objects, `${sha}.${ext}`);
   decodedBytes += data.length;
   if (fs.existsSync(file)) { kept++; encodedBytes += fs.statSync(file).size; return { sha256: sha, bytes: data.length }; }
-  const body = ext === 'gzip' ? await gzip(data, { level: 9 }) : data;
+  const body = ext === encoding ? await encode(data) : data;
   // Written under a temporary name first: an interrupted run never leaves a
   // truncated object that a later run would keep.
   fs.writeFileSync(`${file}.tmp`, body);
@@ -92,7 +100,7 @@ await pool(refs, async (ref) => {
 const id = sha256(smpText).slice(0, 16);
 const cpOut = path.join(out, `kube-node-${id}`);
 fs.mkdirSync(cpOut, { recursive: true });
-fs.writeFileSync(path.join(cpOut, 'smp.json'), JSON.stringify({ ...smp, encoding: 'gzip', objects: '../objects/' }));
+fs.writeFileSync(path.join(cpOut, 'smp.json'), JSON.stringify({ ...smp, encoding, objects: '../objects/' }));
 fs.copyFileSync(path.join(cpDir, 'kube-state.json'), path.join(cpOut, 'kube-state.json'));
 const cpStats = { encoded: encodedBytes, decoded: decodedBytes };
 
@@ -116,7 +124,7 @@ for (let i = 0, f = fs.openSync(args.image, 'r'), b = Buffer.alloc(1 << 24); ; i
 imageHash = imageHash.digest('hex');
 if (imageHash !== media.version) fail(`${args.image} hashes to ${imageHash}, the medium says ${media.version}`);
 const mediaName = `disk-${media.version.slice(0, 16)}.json`;
-fs.writeFileSync(path.join(out, mediaName), JSON.stringify({ url: 'objects/', bytes: media.bytes, version: media.version, join: media.join, source: media.source, encoding: 'gzip', chunks }));
+fs.writeFileSync(path.join(out, mediaName), JSON.stringify({ url: 'objects/', bytes: media.bytes, version: media.version, join: media.join, source: media.source, encoding, chunks }));
 const diskStats = { encoded: encodedBytes - cpStats.encoded, decoded: decodedBytes - cpStats.decoded };
 
 // 4. kube.wasm and its wasm_exec.js (they belong to one Go build).
@@ -124,7 +132,7 @@ const kubeWasm = await put(fs.readFileSync(args['kube-wasm']));
 const wasmExec = await put(fs.readFileSync(args['wasm-exec']), 'js');
 
 // 5. The pointer and the checksums.
-const bundle = { format: 'dt.kube-node/v1', objects: 'objects/', encoding: 'gzip', kubeWasm, wasmExec: { sha256: wasmExec.sha256 },
+const bundle = { format: 'dt.kube-node/v1', objects: 'objects/', encoding, kubeWasm, wasmExec: { sha256: wasmExec.sha256 },
   checkpoint: `kube-node-${id}/`, media: mediaName, coreSha256: coreSha };
 fs.writeFileSync(path.join(out, 'node.json'), JSON.stringify(bundle, null, 1) + '\n');
 const sums = [];
@@ -141,5 +149,5 @@ console.log(JSON.stringify({
   objects: { added, kept },
   checkpointObjects: `${MB(cpStats.decoded)} -> ${MB(cpStats.encoded)}`,
   mediumChunks: `${chunks.length}: ${MB(diskStats.decoded)} -> ${MB(diskStats.encoded)}`,
-  kubeWasm: `${MB(kubeWasm.bytes)} -> ${MB(fs.statSync(path.join(objects, `${kubeWasm.sha256}.gzip`)).size)}`,
+  kubeWasm: `${MB(kubeWasm.bytes)} -> ${MB(fs.statSync(path.join(objects, `${kubeWasm.sha256}.${encoding}`)).size)}`,
 }, null, 1));
