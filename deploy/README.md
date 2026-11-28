@@ -16,10 +16,11 @@ nginx sends `Cross-Origin-Opener-Policy: same-origin` and
 content-addressed lab files and boot snapshots are cached for a year;
 `index.html`, `sw.js`, manifests and the kernel are revalidated by ETag. Text
 files are precompressed with gzip; the stock nginx image has no brotli module.
-`/rv64/node/` is reserved for a published kube-wasm node (content-addressed
-objects the page decodes itself, immutable; `node.json` revalidated); the
-build does not add one yet, see "Publishing a node" in
-`tools/kube-wasm/README.md`.
+`/rv64/node/` serves the published kube-wasm node (content-addressed objects
+the page decodes itself, immutable; `node.json` revalidated) and `/rv64/` the
+RV64 core it was captured on. They are not in git: `deploy/kube-node.ref`
+names a one-layer image in the stand registry and the build appends that
+layer to the site image; see "Publishing a node" in `tools/kube-wasm/README.md`.
 
 ## Requirements
 

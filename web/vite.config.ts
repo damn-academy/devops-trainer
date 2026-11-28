@@ -25,6 +25,9 @@ export default defineConfig({
     assetsInlineLimit: 0,
     chunkSizeWarningLimit: 700,
     rollupOptions: {
+      // node.html: kube.wasm with an RV64 worker node, opened as
+      // src/engine/kube-wasm/node.html?node=/rv64/node/node.json.
+      input: { index: 'index.html', 'kube-node': 'src/engine/kube-wasm/node.html' },
       output: {
         // The lab definitions of the Linux block (~76 kB of exam and machine
         // data) stay out of the block chunk: they are only needed together

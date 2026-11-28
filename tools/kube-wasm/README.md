@@ -889,19 +889,22 @@ minutes (gzip: 42 s). zstd needs Node.js 22.15 or newer.
 
 **Deployment.** The site serves the directory at `/rv64/node/`
 (`deploy/nginx.conf`: objects and versioned manifests immutable, node.json
-revalidated, `.zstd` and `.gzip` sent as they are), and the page opens
-`node.html?node=/rv64/node/node.json`. The files are not in git and the
-build Job (`deploy/build/build.sh`) clones the repository, so they have to
-come from outside it, as the v86 assets come from `fetch-v86.mjs`: put the
-published directory where the build Job can download it (for example a
-release asset or the stand's registry as an OCI artifact), check it there
-with `sha256sum -c SHA256SUMS`, and copy it to
-`$stage/node/usr/share/nginx/html/rv64/node/` as its own image layer (next to
-`v86` and `site`, so an unchanged node is stored once). `deploy.sh` and the
-stand checkout (`SANKOFA_ROOT`, default `~/projects/sankofa-int`) need no
-change for this: they build and roll out what the Job assembles. The core
-(`/rv64/rv64_core_bg.wasm`) and node.html have to be deployed with it; the
-checkpoint only restores on the core named in node.json.
+revalidated, `.zstd` and `.gzip` sent as they are) and the core at `/rv64/`;
+the page is `src/engine/kube-wasm/node.html?node=/rv64/node/node.json`. The
+files are not in git. `pack-node.sh` packs the published directory and the
+core into one reproducible image layer, refusing a core other than the one
+named in node.json:
+
+```bash
+tools/kube-wasm/pack-node.sh <published dir> web/public/rv64 kube-node-layer.tar
+crane append --insecure -f kube-node-layer.tar -t <registry>:5000/sankofa/devops-trainer-node:<checkpoint id>
+```
+
+Push the image to every replica of the stand registry and write
+`sankofa/devops-trainer-node@<digest>` to `deploy/kube-node.ref`. The build
+Job (`deploy/build/build.sh`) appends that layer to the site image between
+`v86` and `site`, so an unchanged node is stored once; without the file the
+site is built without a node.
 
 ### Open problems
 
