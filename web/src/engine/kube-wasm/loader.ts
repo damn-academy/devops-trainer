@@ -150,7 +150,7 @@ async function compileObject(w: NonNullable<LoadOptions['wasmObject']>): Promise
   if (hit?.body) {
     try { return await compile(hit); } catch { await cache?.delete(url).catch(() => undefined); }
   }
-  const r = await fetch(url);
+  const r = await fetch(url, cache ? { cache: 'no-store' } : undefined);
   if (!r.ok || !r.body) throw new Error(`${url}: HTTP ${r.status}`);
   const [toCache, toCompile] = r.body.tee();
   const module = await compile(new Response(toCompile));

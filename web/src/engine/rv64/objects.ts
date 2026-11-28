@@ -46,7 +46,9 @@ export async function fetchObject(base: string | URL, ref: ObjectRef, o: { encod
     try { return await decodeVerified(new Uint8Array(await hit.arrayBuffer()), ref, o.encoding); }
     catch { await cache?.delete(key).catch(() => undefined); }
   }
-  const response = await fetch(url);
+  // Kept in Cache Storage: a copy in the HTTP cache too would double the
+  // space the node takes on the student's disk.
+  const response = await fetch(url, cache ? { cache: 'no-store' } : undefined);
   if (!response.ok) throw Error(`object ${ref.sha256}: HTTP ${response.status}`);
   const encoded = new Uint8Array(await response.arrayBuffer());
   const data = await decodeVerified(encoded, ref, o.encoding);
