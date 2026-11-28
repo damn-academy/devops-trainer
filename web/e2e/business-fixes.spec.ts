@@ -58,7 +58,7 @@ for (const width of [1440, 390]) {
       await expect(preview).not.toHaveValue(/я ошибся/);
       await expect(preview).toHaveValue(/Задание и критерии: .+/);
       if (mode !== 'explain') await expect(preview).toHaveValue(new RegExp(`Question for ${mode}`));
-      await page.getByRole('button', { name: 'Копировать', exact: true }).click();
+      await page.getByRole('button', { name: 'Скопировать запрос', exact: true }).click();
       const copied = await page.evaluate(() => navigator.clipboard.readText()); expect(copied).toContain('Задание и критерии:');
       await page.locator('.external-dialog').screenshot({ path: `/tmp/fix-helper-${mode}-${width}.png` });
       await page.getByRole('button', { name: 'Закрыть', exact: true }).last().click();

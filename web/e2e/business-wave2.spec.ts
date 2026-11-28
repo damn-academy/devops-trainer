@@ -44,12 +44,12 @@ test('mentor previews the current draft and downloads edits when copying is deni
   await expect(draft).toHaveValue('Наш черновик: сравнить два редактора за неделю.');
   await page.locator('.tutor-launch').click(); await page.locator('.tutor .external-help').click();
   const preview=page.locator('.external-preview'); await expect(preview).toHaveValue(/Наш черновик/); await expect(preview).toHaveValue(/Задание и критерии/);
-  await expect(preview).not.toHaveValue(/Я ещё не ответил/); await preview.fill('Проверить этот черновик.');
+  await expect(preview).not.toHaveValue(/Ответа на задание у меня пока нет/); await preview.fill('Проверить этот черновик.');
   // execCommand may provide the browser fallback even when Clipboard API is denied.
   await page.evaluate(()=>{document.execCommand=()=>false;});
-  await page.getByRole('button',{name:'Копировать',exact:true}).click();
+  await page.getByRole('button',{name:'Скопировать запрос',exact:true}).click();
   await expect(page.locator('.external-dialog [role=status]')).toContainText('скачайте файл');
   const download=page.waitForEvent('download'); await page.getByRole('button',{name:'Скачать запрос (.txt)',exact:true}).click();
-  const file=await download; expect(file.suggestedFilename()).toBe('prompt.txt');
+  const file=await download; expect(file.suggestedFilename()).toBe('aicontent.brief.prompt.txt');
   expect(readFileSync((await file.path())!,'utf8')).toBe('Проверить этот черновик.');
 });

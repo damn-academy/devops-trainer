@@ -4,6 +4,8 @@
 // what goes into progress.
 
 import { answeredQuiz, externalButton } from '../ai/external-panel';
+import { shuffle } from './shuffle';
+export { shuffle };
 import { clear, h, icon } from '../../core/dom';
 import { bi, t, UI, type Bi } from '../../core/i18n';
 import { renderInline, renderMd } from '../../core/markdown';
@@ -37,25 +39,6 @@ const Q = {
 };
 
 const qtext = (q: QText, cls = ''): HTMLElement => (typeof q === 'string' ? h(`code.qcode${cls}`, {}, q) : h(`span${cls}`, {}, ...renderInline(t(q))));
-
-/** Deterministic shuffle by a string seed, never returning the original order for n ≥ 2. */
-export function shuffle<T>(arr: T[], seed: string): T[] {
-  let x = 0;
-  for (const c of seed) x = (x * 31 + c.charCodeAt(0)) >>> 0;
-  const rnd = () => {
-    x ^= x << 13;
-    x ^= x >>> 17;
-    x ^= x << 5;
-    return ((x >>> 0) % 10000) / 10000;
-  };
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rnd() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  if (out.length >= 2 && out.every((v, i) => v === arr[i])) [out[0], out[1]] = [out[1], out[0]];
-  return out;
-}
 
 export function mountQuiz(root: HTMLElement, item: QuizItem, ctx: QuizCtx): Mounted {
   const md = ctx.md ?? ((b: Bi) => renderMd(t(b)));
