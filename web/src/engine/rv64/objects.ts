@@ -1,12 +1,13 @@
 import { sha256 } from './snapshot';
+import { zstdDecompress } from './zstd';
 /** Published node assets (tools/kube-wasm/publish-node.mjs) are content
  * addressed: `<sha256 of the decoded bytes>.<encoding>`. The page decodes
  * them itself and Cache Storage keeps the encoded bytes. The extension is
  * not `.gz`: static servers such as Vite's (sirv) send `.gz` files with
  * Content-Encoding: gzip, and the browser would decode them first. */
-export type Encoding = 'gzip';
-export const ENCODINGS: readonly Encoding[] = ['gzip'];
-const EXTENSION: Record<Encoding, string> = { gzip: 'gzip' };
+export type Encoding = 'gzip' | 'zstd';
+export const ENCODINGS: readonly Encoding[] = ['gzip', 'zstd'];
+const EXTENSION: Record<Encoding, string> = { gzip: 'gzip', zstd: 'zstd' };
 export const OBJECT_CACHE = 'dt-rv64-objects-v1';
 export interface ObjectRef { sha256: string; bytes: number }
 export function objectName(sha: string, encoding?: Encoding) {
@@ -15,9 +16,14 @@ export function objectName(sha: string, encoding?: Encoding) {
 export function isEncoding(value: unknown): value is Encoding {
   return ENCODINGS.includes(value as Encoding);
 }
-/** Decodes into a buffer of the expected size, never past it. */
+/** Decodes into a buffer of the expected size, never past it. gzip goes
+ * through the browser's DecompressionStream, zstd through ./zstd.ts. */
 export async function decode(data: Uint8Array, encoding: Encoding, bytes: number): Promise<Uint8Array> {
   const out = new Uint8Array(bytes);
+  if (encoding === 'zstd') {
+    if (zstdDecompress(data, out) !== bytes) throw Error('Truncated object');
+    return out;
+  }
   const reader = new Blob([data as Uint8Array<ArrayBuffer>]).stream().pipeThrough(new DecompressionStream(encoding)).getReader();
   let count = 0;
   for (;;) {

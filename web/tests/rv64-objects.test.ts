@@ -1,4 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest';
+import zlib from 'node:zlib';
 import { decode, fetchObject, objectName, OBJECT_CACHE } from '../src/engine/rv64/objects';
 import { HTTPBlockDevice, CHUNK_BYTES } from '../src/engine/rv64/block';
 import { checkpointStore, readObject, restoreRam, validateCheckpoint, type SMPCheckpoint } from '../src/engine/rv64/smp-checkpoint';
@@ -38,6 +39,14 @@ test('encoded objects are decoded, verified, cached encoded and fetched once', a
   await expect(fetchObject('https://t.invalid/objects/', ref, { encoding: 'gzip' })).rejects.toThrow('checksum');
   await expect(decode(encoded, 'gzip', data.length - 1)).rejects.toThrow('Oversized');
   await expect(decode(encoded, 'gzip', data.length + 1)).rejects.toThrow('Truncated');
+});
+test('zstd objects are decoded by the bundled decoder and verified', async () => {
+  const data = new Uint8Array(300000).map((_, i) => (i * i) % 253);
+  const ref = { sha256: await sha256(data), bytes: data.length };
+  const files = new Map([[`/o/${objectName(ref.sha256, 'zstd')}`, new Uint8Array(zlib.zstdCompressSync(data))]]);
+  stubs(files);
+  expect(await fetchObject('https://t.invalid/o/', ref, { encoding: 'zstd', cache: true })).toEqual(data);
+  await expect(fetchObject('https://t.invalid/o/', { ...ref, bytes: ref.bytes + 1 }, { encoding: 'zstd' })).rejects.toThrow();
 });
 test('a published checkpoint reads its objects from the store it names', async () => {
   const ram = new Uint8Array(1048576); ram.fill(5, 4096, 8192);
