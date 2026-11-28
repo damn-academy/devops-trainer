@@ -138,6 +138,13 @@ export function professionPage(id: string): Page {
           {},
           t(bi('Обучение идёт на трёх уровнях — «Новичок», «Средний» и «Опытный»: выберите свой в каждом блоке. Сначала вы работаете в собранных окружениях по готовым рецептам, со временем — всё чаще самостоятельно, по документации. Виртуальный наставник отвечает прямо на страницах курса, на вашем собственном ключе. Для экспериментов поднимите локальное окружение у себя на машине или, что предпочтительнее, арендуйте виртуальные машины в облаке.', 'The course runs at three levels — Beginner, Intermediate and Experienced: pick yours in each block. At first you work in prepared environments following ready recipes; over time, more and more on your own, reading the documentation. A virtual mentor answers right on the course pages, using your own API key. For experiments, set up a local environment on your machine or, preferably, rent virtual machines in the cloud.')),
         ),
+        h(
+          'p.small.muted',
+          {},
+          t(bi('Порядок тем в профессии опирается на открытый чек-лист начинающего DevOps-инженера ', 'The order of topics in this profession follows the open checklist for beginner DevOps engineers at ')),
+          h('a', { href: 'https://devops413.io/', target: '_blank', rel: 'noopener' }, 'devops413.io'),
+          t(bi('. Из него взяты только порядок тем и список областей, а тексты, схемы и задания написаны заново.', '. Only the order of topics and the list of areas come from it; the texts, diagrams and tasks were written from scratch.')),
+        ),
         paceControl(),
         anyProgress ? null : h('p.small.muted', {}, t(bi('Регистрация не нужна: прогресс сохраняется в этом браузере после каждого действия.', 'No sign-up: progress is saved in this browser after every action.'))),
       ),
