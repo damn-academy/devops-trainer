@@ -45,7 +45,7 @@ Similarweb в июне 2026 года сообщил, что 68 % поисков 
 
 <!-- section: sources -->
 - Google, обновление основного алгоритма и правил о спаме — https://developers.google.com/search/blog/2024/03/core-update-spam-policies (05.03.2024)
-- Google, злоупотребление репутацией сайта — https://developers.google.com/search/blog/2024/11/site-reputation-abuse (19.11.2024); изменение для ЕЭЗ — https://developers.google.com/search/blog/2026/08/update-site-reputation-policy (28.08.2026)
+- Google, злоупотребление репутацией сайта — https://developers.google.com/search/blog/2024/11/site-reputation-abuse (19.11.2024); Google, изменение для ЕЭЗ — https://developers.google.com/search/blog/2026/08/update-site-reputation-policy (28.08.2026)
 - Google, функции нейросети в поиске — https://developers.google.com/search/docs/appearance/ai-features (10.12.2025)
 - Google, руководство по оптимизации для генеративного поиска — https://developers.google.com/search/docs/fundamentals/ai-optimization-guide (10.07.2026)
 - Google, отчёты о показах в ответах нейросети — https://developers.google.com/search/blog/2026/06/gen-ai-performance-reports (03.06.2026)

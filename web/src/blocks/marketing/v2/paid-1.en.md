@@ -57,10 +57,10 @@ Complete this task in the “Budget allocation” simulator on this page and rec
 
 <!-- section: sources -->
 - PostHog, paid marketing — https://posthog.com/handbook/marketing/paid; newsletter advertising — https://posthog.com/handbook/content/newsletter-ads; 2026 marketing budget — https://posthog.com/founders/actual-marketing-budget-2026 (24.06.2026)
-- TLDR, Plaid and ThreatSpike case studies — https://advertise.tldr.tech/case-studies/plaid-adds-382k-in-pipeline-with-tldr-campaign-their-best-direct-buy-yet/ (16.09.2025), https://advertise.tldr.tech/case-studies/threatspike-adds-up-to-75000-in-net-new-business-pipeline-per-campaign-with-tldr/ (10.06.2025)
+- TLDR, Plaid case study — https://advertise.tldr.tech/case-studies/plaid-adds-382k-in-pipeline-with-tldr-campaign-their-best-direct-buy-yet/ (16.09.2025); TLDR, ThreatSpike case study — https://advertise.tldr.tech/case-studies/threatspike-adds-up-to-75000-in-net-new-business-pipeline-per-campaign-with-tldr/ (10.06.2025)
 - Cooper Press, Q4 2026 media kit — https://cooperpress.com/files/cooperpress-media-kit-q4-2026.pdf
 - The Changelog, sponsorship pricing — https://changelog.com/sponsor/pricing (checked 25.11.2026)
-- Reddit Ads, audiences and automated targeting — https://business.reddithelp.com/articles/Knowledge/Overview-Reddit-Ads-Audience-and-Targeting, https://business.reddithelp.com/articles/Knowledge/automated-targeting (checked 25.11.2026)
+- Reddit Ads, audiences and targeting — https://business.reddithelp.com/articles/Knowledge/Overview-Reddit-Ads-Audience-and-Targeting; Reddit Ads, automated targeting — https://business.reddithelp.com/articles/Knowledge/automated-targeting (checked 25.11.2026)
 - Metadata, what LinkedIn costs — https://metadata.io/resources/blog/what-linkedin-ads-cost (25.08.2026)
 - Dreamdata, LinkedIn Ads Benchmarks 2026 — https://dreamdata.io/blog/announcing-linkedin-ads-benchmarks-report-2026 (10.03.2026)
 - LinkedIn, Thought Leader Ads — https://business.linkedin.com/advertise/ads/sponsored-content/thought-leader-ads/specs (checked 25.11.2026)

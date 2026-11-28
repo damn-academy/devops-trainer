@@ -50,7 +50,7 @@ Record the result in the field below or in your own spreadsheet. It should conta
 - Edison Research, The Infinite Dial 2025 — https://www.edisonresearch.com/wp-content/uploads/2025/03/The-Infinite-Dial-2025-Presentation.pdf (20.03.2025)
 - Cumulus Media and Signal Hill, fall 2025 — https://www.westwoodone.com/wp-content/uploads/2025/11/Cumulus-Media-and-Signal-Hill-Insights-Podcast-Download-Fall-2025_WWO.pdf (November 2025)
 - Buzzsprout, statistics — https://www.buzzsprout.com/stats (October 2026)
-- YouTube Help, podcasts and RSS import — https://support.google.com/youtube/answer/12751636, https://support.google.com/youtube/answer/13525207 (checked 25.11.2026)
+- YouTube Help, podcasts — https://support.google.com/youtube/answer/12751636; YouTube Help, RSS import — https://support.google.com/youtube/answer/13525207 (checked 25.11.2026)
 - Spotify, Partner Program updates — https://newsroom.spotify.com/2026-01-07/spotify-partner-program-updates/ (07.01.2026)
 - Apple, video on Apple Podcasts — https://www.apple.com/newsroom/2026/02/apple-introduces-a-new-video-podcast-experience-on-apple-podcasts/ (16.02.2026)
 - The Changelog, guest guide — https://changelog.com/guest; a new era for Changelog podcasts — https://changelog.com/posts/a-new-era-for-the-changelog-podcast-universe (05.12.2024)

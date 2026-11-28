@@ -104,6 +104,6 @@ Check yourself before sending the terms to the partner: the registration has a t
 - Broadcom, Advantage program for VMware partners — https://www.broadcom.com/company/news/articles/partners/building-a-simplified-stronger-advantage-program-for-vmware-by-broadcom (07.02.2024)
 - The Register, Broadcom hands customers back to partners — https://www.theregister.com/2024/12/05/vmware_user_migration_plans/ (05.12.2024)
 - IT Channel Oxygen, Nutanix and VMware partners — https://itchanneloxygen.com/were-here-for-you-nutanix-makes-play-for-vmware-partners (30.01.2024)
-- AWS Marketplace, Channel Partner Private Offers — https://docs.aws.amazon.com/marketplace/latest/userguide/channel-partner-offers.html and https://docs.aws.amazon.com/marketplace/latest/userguide/listing-fees.html (checked 26.11.2026)
+- AWS Marketplace, Channel Partner Private Offers — https://docs.aws.amazon.com/marketplace/latest/userguide/channel-partner-offers.html; AWS Marketplace, listing fees — https://docs.aws.amazon.com/marketplace/latest/userguide/listing-fees.html (checked 26.11.2026)
 - Google Cloud, private offers through partners — https://cloud.google.com/blog/topics/partners/announcing-google-cloud-marketplace-private-offers/ (26.06.2024)
 - Microsoft, Azure consumption commitment — https://learn.microsoft.com/en-us/partner-center/marketplace-offers/azure-consumption-commitment-enrollment (01.10.2026)

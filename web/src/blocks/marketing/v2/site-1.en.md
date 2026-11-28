@@ -34,5 +34,5 @@ Record the result in the field below or in your own spreadsheet: the first colum
 
 <!-- section: sources -->
 - CNCF, project neutrality — https://contribute.cncf.io/projects/best-practices/community/vendor-neutrality/ (checked 25.11.2026)
-- Similarweb, kubernetes.io and tailscale.com — https://www.similarweb.com/website/kubernetes.io/, https://www.similarweb.com/website/tailscale.com/ (October 2026)
+- Similarweb, kubernetes.io — https://www.similarweb.com/website/kubernetes.io/; Similarweb, tailscale.com — https://www.similarweb.com/website/tailscale.com/ (October 2026)
 - Google Analytics, cross-domain measurement — https://support.google.com/analytics/answer/10071811 (checked 25.11.2026)

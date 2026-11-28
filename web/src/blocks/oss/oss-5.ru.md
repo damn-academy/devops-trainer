@@ -43,7 +43,7 @@ Okta в ноябре 2023 года в отчёте о причинах инци�
 
 <!-- section: sources -->
 - Tukaani, бэкдор в xz — https://tukaani.org/xz-backdoor/ (записи март–май 2024)
-- Okta, причины инцидента — https://sec.okta.com/articles/2023/11/unauthorized-access-oktas-support-case-management-system-root-cause/ (03.11.2023); рекомендации — https://sec.okta.com/articles/october-security-incident-recommended-actions/ (29.11.2023)
+- Okta, причины инцидента — https://sec.okta.com/articles/2023/11/unauthorized-access-oktas-support-case-management-system-root-cause/ (03.11.2023); Okta, рекомендации — https://sec.okta.com/articles/october-security-incident-recommended-actions/ (29.11.2023)
 - Grafana, обновление о безопасности — https://grafana.com/blog/grafana-labs-security-update-latest-on-tanstack-npm-supply-chain-ransomware-incident/ (19.05.2026, обновления 01.06 и 23.06.2026)
 - Redis, AGPLv3 — https://redis.io/blog/agplv3/ (01.05.2025)
 - Valkey, итоги 2025 года — https://valkey.io/blog/2025-year-end/ (22.01.2026)

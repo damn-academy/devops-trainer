@@ -21,7 +21,7 @@ Reading the lesson takes about fifteen minutes, the request about another hour. 
 - Gartner, vendor briefings — https://www.gartner.com/en/contact/vendor-briefings
 - Gartner, how analysts work with vendors — https://www.gartner.com/en/about/ombuds/news/how-gartner-experts-work-with-vendors (30.06.2025)
 - Gartner, Magic Quadrant — https://www.gartner.com/en/research/magic-quadrant
-- Gartner, content usage policy — https://www.gartner.com/en/about/policies/content-compliance; PR policy — https://www.gartner.com/en/newsroom/media-resources/public-relations-policy
+- Gartner, content usage policy — https://www.gartner.com/en/about/policies/content-compliance; Gartner, PR policy — https://www.gartner.com/en/newsroom/media-resources/public-relations-policy
 - Grafana, press releases — https://grafana.com/press/2025/07/10/grafana-labs-named-a-leader-in-2025-gartner-magic-quadrant-for-observability-platforms/
 
 <!-- lesson: pr.press | PR: when a press release works and how to speak to journalists | 20 -->
@@ -67,4 +67,4 @@ Reading the lesson takes about twenty minutes, the task about an hour because it
 - InfoWorld, contacts — https://www.infoworld.com/contact-us/
 - Heise, contacts — https://www.heise.de/kontakt/
 - SDxCentral, team — https://www.sdxcentral.com/our-sdx-team/
-- CNCF, project services — https://contribute.cncf.io/resources/services/; membership — https://www.cncf.io/about/join/
+- CNCF, project services — https://contribute.cncf.io/resources/services/; CNCF, membership — https://www.cncf.io/about/join/

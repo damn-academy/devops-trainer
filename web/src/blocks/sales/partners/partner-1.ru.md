@@ -104,6 +104,6 @@ GitLab в открытом справочнике пишет, что одобр�
 - Broadcom, программа Advantage для партнёров VMware — https://www.broadcom.com/company/news/articles/partners/building-a-simplified-stronger-advantage-program-for-vmware-by-broadcom (07.02.2024)
 - The Register, Broadcom возвращает клиентов партнёрам — https://www.theregister.com/2024/12/05/vmware_user_migration_plans/ (05.12.2024)
 - IT Channel Oxygen, Nutanix и партнёры VMware — https://itchanneloxygen.com/were-here-for-you-nutanix-makes-play-for-vmware-partners (30.01.2024)
-- AWS Marketplace, Channel Partner Private Offers — https://docs.aws.amazon.com/marketplace/latest/userguide/channel-partner-offers.html и https://docs.aws.amazon.com/marketplace/latest/userguide/listing-fees.html (проверено 26.11.2026)
+- AWS Marketplace, частные предложения через партнёров — https://docs.aws.amazon.com/marketplace/latest/userguide/channel-partner-offers.html; AWS Marketplace, комиссии за листинг — https://docs.aws.amazon.com/marketplace/latest/userguide/listing-fees.html (проверено 26.11.2026)
 - Google Cloud, частные предложения через партнёров — https://cloud.google.com/blog/topics/partners/announcing-google-cloud-marketplace-private-offers/ (26.06.2024)
 - Microsoft, обязательство по расходам на Azure — https://learn.microsoft.com/en-us/partner-center/marketplace-offers/azure-consumption-commitment-enrollment (01.10.2026)

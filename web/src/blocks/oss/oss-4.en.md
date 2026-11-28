@@ -77,7 +77,7 @@ Complete the exercise in the document on this page. Record four decisions separa
 
 <!-- section: sources -->
 - TODO Group, starting an open-source project — https://todogroup.org/resources/guides/starting-an-open-source-project/ (checked 25.11.2026)
-- Apache Software Foundation, project proposals — https://incubator.apache.org/guides/proposal.html; graduation from the incubator — https://incubator.apache.org/guides/graduation.html; trademarks — https://www.apache.org/foundation/marks/naming.html
+- Apache Software Foundation, project proposals — https://incubator.apache.org/guides/proposal.html; Apache Software Foundation, graduation from the incubator — https://incubator.apache.org/guides/graduation.html; Apache Software Foundation, trademarks — https://www.apache.org/foundation/marks/naming.html
 - Linux Foundation, project hosting — https://www.linuxfoundation.org/projects/hosting
 - CNCF, project lifecycle — https://github.com/cncf/toc/blob/main/process/README.md
 - OpenSSF, technical initiative funding — https://openssf.org/about/tac/technical-initiative-funding/
@@ -88,7 +88,7 @@ Complete the exercise in the document on this page. Record four decisions separa
 - OpenInfra joins Linux Foundation — https://openinfra.org/blog/openinfra-joins-linux-foundation/ (03.06.2025)
 - Eclipse Foundation, project handbook — https://www.eclipse.org/projects/handbook/
 - NumFOCUS, project models — https://numfocus.org/projects-overview
-- Software Freedom Conservancy, application — https://sfconservancy.org/projects/apply/; agreement — https://handbook.sfconservancy.org/fiscal-sponsorship-agreement.html
+- Software Freedom Conservancy, application — https://sfconservancy.org/projects/apply/; Software Freedom Conservancy, agreement — https://handbook.sfconservancy.org/fiscal-sponsorship-agreement.html
 - PostgreSQL, financial sponsors — https://www.postgresql.org/about/financial/
 - Rust Foundation, Rust Innovation Lab — https://rustfoundation.org/rust-innovation-lab/
 - CNCF, OpenTofu project page — https://www.cncf.io/projects/opentofu/
@@ -272,10 +272,10 @@ Complete the task in the document on this page. Record your company's membership
 - CNCF, membership benefits — https://www.cncf.io/about/join/ (checked 25.11.2026)
 - CNCF, end user community — https://www.cncf.io/enduser/
 - CNCF, blog guidelines — https://github.com/cncf/foundation/blob/main/policies-guidance/blog-guidelines.md; online program guidelines — https://github.com/cncf/foundation/blob/main/policies-guidance/online-programs-guidelines.md
-- CNCF, project marketing services — https://contribute.cncf.io/resources/services/marketing/; service catalog — https://contribute.cncf.io/resources/services/
+- CNCF, project marketing services — https://contribute.cncf.io/resources/services/marketing/; CNCF, service catalog — https://contribute.cncf.io/resources/services/
 - CNCF, project pavilion — https://contribute.cncf.io/events/project-pavilion/; project lightning talks — https://contribute.cncf.io/events/project-lightning-talks/
 - KubeCon NA 2025, transparency report — https://www.cncf.io/wp-content/uploads/2025/12/KCNA25_TransparencyReport.pdf
 - CNCF, training — https://www.cncf.io/training/
-- LFX Crowdfunding — https://crowdfunding.linuxfoundation.org/for-projects; statistics — https://crowdfunding.linuxfoundation.org/statistics
+- LFX Crowdfunding — https://crowdfunding.linuxfoundation.org/for-projects; LFX Crowdfunding, statistics — https://crowdfunding.linuxfoundation.org/statistics
 - CNCF, Membership Hub — https://www.cncf.io/membership-hub/
 - Cloud Native Glossary, Vietnamese version — https://www.cncf.io/blog/2025/06/26/cloud-native-glossary-the-vietnamese-version-is-live/ (26.06.2025)

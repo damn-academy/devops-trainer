@@ -77,7 +77,7 @@
 
 <!-- section: sources -->
 - TODO Group, запуск открытого проекта — https://todogroup.org/resources/guides/starting-an-open-source-project/ (проверено 25.11.2026)
-- Apache Software Foundation, предложение проекта — https://incubator.apache.org/guides/proposal.html; выпуск из инкубатора — https://incubator.apache.org/guides/graduation.html; товарные знаки — https://www.apache.org/foundation/marks/naming.html
+- Apache Software Foundation, предложение проекта — https://incubator.apache.org/guides/proposal.html; Apache Software Foundation, выпуск из инкубатора — https://incubator.apache.org/guides/graduation.html; Apache Software Foundation, товарные знаки — https://www.apache.org/foundation/marks/naming.html
 - Linux Foundation, размещение проектов — https://www.linuxfoundation.org/projects/hosting
 - CNCF, жизненный цикл проектов — https://github.com/cncf/toc/blob/main/process/README.md
 - OpenSSF, финансирование технических инициатив — https://openssf.org/about/tac/technical-initiative-funding/
@@ -88,7 +88,7 @@
 - OpenInfra в составе Linux Foundation — https://openinfra.org/blog/openinfra-joins-linux-foundation/ (03.06.2025)
 - Eclipse Foundation, руководство по проектам — https://www.eclipse.org/projects/handbook/
 - NumFOCUS, модели проектов — https://numfocus.org/projects-overview
-- Software Freedom Conservancy, заявка — https://sfconservancy.org/projects/apply/; соглашение — https://handbook.sfconservancy.org/fiscal-sponsorship-agreement.html
+- Software Freedom Conservancy, заявка — https://sfconservancy.org/projects/apply/; Software Freedom Conservancy, соглашение — https://handbook.sfconservancy.org/fiscal-sponsorship-agreement.html
 - PostgreSQL, финансовые спонсоры — https://www.postgresql.org/about/financial/
 - Rust Foundation, Rust Innovation Lab — https://rustfoundation.org/rust-innovation-lab/
 - CNCF, карточка OpenTofu — https://www.cncf.io/projects/opentofu/
@@ -272,10 +272,10 @@ Landscape, карта облачных технологий CNCF, принима
 - CNCF, преимущества членства — https://www.cncf.io/about/join/ (проверено 25.11.2026)
 - CNCF, пользовательское сообщество — https://www.cncf.io/enduser/
 - CNCF, правила блога — https://github.com/cncf/foundation/blob/main/policies-guidance/blog-guidelines.md; правила онлайн-программ — https://github.com/cncf/foundation/blob/main/policies-guidance/online-programs-guidelines.md
-- CNCF, маркетинговые услуги проектам — https://contribute.cncf.io/resources/services/marketing/; каталог услуг — https://contribute.cncf.io/resources/services/
+- CNCF, маркетинговые услуги проектам — https://contribute.cncf.io/resources/services/marketing/; CNCF, каталог услуг — https://contribute.cncf.io/resources/services/
 - CNCF, зона проектов — https://contribute.cncf.io/events/project-pavilion/; молниеносные доклады — https://contribute.cncf.io/events/project-lightning-talks/
 - KubeCon NA 2025, отчёт о прозрачности — https://www.cncf.io/wp-content/uploads/2025/12/KCNA25_TransparencyReport.pdf
 - CNCF, обучение — https://www.cncf.io/training/
-- LFX Crowdfunding — https://crowdfunding.linuxfoundation.org/for-projects; статистика — https://crowdfunding.linuxfoundation.org/statistics
+- LFX Crowdfunding — https://crowdfunding.linuxfoundation.org/for-projects; LFX Crowdfunding, статистика — https://crowdfunding.linuxfoundation.org/statistics
 - CNCF, Membership Hub — https://www.cncf.io/membership-hub/
 - Cloud Native Glossary, вьетнамская версия — https://www.cncf.io/blog/2025/06/26/cloud-native-glossary-the-vietnamese-version-is-live/ (26.06.2025)

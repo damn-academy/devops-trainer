@@ -34,7 +34,7 @@ DCO, Developer Certificate of Origin, — это подтверждение уч
 <!-- widget: governance {"data":"oss.governance"} -->
 
 <!-- section: sources -->
-- CNCF, шаблон GOVERNANCE.md — https://github.com/cncf/project-template/blob/main/GOVERNANCE.md; управление под руководством мейнтейнеров — https://github.com/cncf/project-template/blob/main/GOVERNANCE-maintainer.md; CONTRIBUTING — https://github.com/cncf/project-template/blob/main/CONTRIBUTING.md (проверено 25.11.2026)
+- CNCF, шаблон GOVERNANCE.md — https://github.com/cncf/project-template/blob/main/GOVERNANCE.md; CNCF, шаблон управления под руководством мейнтейнеров — https://github.com/cncf/project-template/blob/main/GOVERNANCE-maintainer.md; CNCF, шаблон CONTRIBUTING.md — https://github.com/cncf/project-template/blob/main/CONTRIBUTING.md (проверено 25.11.2026)
 - Kubernetes, роли участников — https://github.com/kubernetes/community/blob/main/community-membership.md
 - CNCF, путь проекта Cilium — https://www.cncf.io/reports/cilium-project-journey-report/ (11.11.2024)
 - CNCF, нейтральность к вендорам — https://contribute.cncf.io/projects/best-practices/community/vendor-neutrality/

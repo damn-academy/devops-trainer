@@ -34,7 +34,7 @@ Complete the exercise in the “GOVERNANCE.md in an Evening” simulator on this
 <!-- widget: governance {"data":"oss.governance"} -->
 
 <!-- section: sources -->
-- CNCF, GOVERNANCE.md template — https://github.com/cncf/project-template/blob/main/GOVERNANCE.md; maintainer-led governance — https://github.com/cncf/project-template/blob/main/GOVERNANCE-maintainer.md; CONTRIBUTING — https://github.com/cncf/project-template/blob/main/CONTRIBUTING.md (checked 25.11.2026)
+- CNCF, GOVERNANCE.md template — https://github.com/cncf/project-template/blob/main/GOVERNANCE.md; CNCF, maintainer-led governance template — https://github.com/cncf/project-template/blob/main/GOVERNANCE-maintainer.md; CNCF, CONTRIBUTING.md template — https://github.com/cncf/project-template/blob/main/CONTRIBUTING.md (checked 25.11.2026)
 - Kubernetes, contributor roles — https://github.com/kubernetes/community/blob/main/community-membership.md
 - CNCF, Cilium project journey — https://www.cncf.io/reports/cilium-project-journey-report/ (11.11.2024)
 - CNCF, vendor neutrality — https://contribute.cncf.io/projects/best-practices/community/vendor-neutrality/

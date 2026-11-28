@@ -37,6 +37,6 @@
 - CNCF, итоги KubeCon London 2025 — https://www.cncf.io/blog/2025/05/09/tea-peaches-kubecon-cloudnativecon-london-recap-atlanta-sneak-peek/ (09.05.2025)
 - KubeCon North America 2025, отчёт о прозрачности — https://www.cncf.io/wp-content/uploads/2025/12/KCNA25_TransparencyReport.pdf (19.12.2025)
 - KubeCon Europe 2026, отчёт о прозрачности — https://www.cncf.io/wp-content/uploads/2026/04/KCEU26-Transparency-Report.pdf (28.04.2026)
-- KubeCon North America 2026, правила рецензентов и приём заявок — https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/program/submission-reviewer-guidelines/, https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/program/cfp/
+- KubeCon North America 2026, правила рецензентов — https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/program/submission-reviewer-guidelines/; KubeCon North America 2026, приём заявок — https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/program/cfp/
 - KubeCon, возможности для проектов — https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/features-add-ons/project-opportunities/
 - PostHog, руководство докладчика — https://posthog.com/handbook/marketing/speaker-guide (проверено 25.11.2026)

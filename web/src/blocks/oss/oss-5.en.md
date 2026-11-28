@@ -43,7 +43,7 @@ Complete the exercise in a document. Imagine that a remote code execution vulner
 
 <!-- section: sources -->
 - Tukaani, xz backdoor — https://tukaani.org/xz-backdoor/ (entries March–May 2024)
-- Okta, root cause — https://sec.okta.com/articles/2023/11/unauthorized-access-oktas-support-case-management-system-root-cause/ (03.11.2023); recommendations — https://sec.okta.com/articles/october-security-incident-recommended-actions/ (29.11.2023)
+- Okta, root cause — https://sec.okta.com/articles/2023/11/unauthorized-access-oktas-support-case-management-system-root-cause/ (03.11.2023); Okta, recommendations — https://sec.okta.com/articles/october-security-incident-recommended-actions/ (29.11.2023)
 - Grafana, security update — https://grafana.com/blog/grafana-labs-security-update-latest-on-tanstack-npm-supply-chain-ransomware-incident/ (19.05.2026, updates 01.06 and 23.06.2026)
 - Redis, AGPLv3 — https://redis.io/blog/agplv3/ (01.05.2025)
 - Valkey, 2025 review — https://valkey.io/blog/2025-year-end/ (22.01.2026)

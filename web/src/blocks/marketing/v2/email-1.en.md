@@ -48,7 +48,7 @@ Complete this task in the terminal on this page. The practice domain `mail.examp
 - PostHog, newsletter handbook — https://posthog.com/handbook/content/newsletter (checked 25.11.2026)
 - MailerLite, email industry benchmarks — https://www.mailerlite.com/blog/compare-your-email-performance-metrics-industry-benchmarks (03.12.2025)
 - Apple, Mail Privacy Protection — https://www.apple.com/legal/privacy/data/en/mail-privacy-protection/ (checked 25.11.2026)
-- Gmail, sender requirements — https://support.google.com/mail/answer/81126 and https://support.google.com/mail/answer/14229414 (checked 25.11.2026)
+- Gmail, sender requirements — https://support.google.com/mail/answer/81126; Gmail, sender requirements FAQ — https://support.google.com/mail/answer/14229414 (checked 25.11.2026)
 - Yahoo, sender best practices — https://senders.yahooinc.com/best-practices/ (checked 25.11.2026)
 - European Commission, legal grounds for processing data — https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/legal-grounds-processing-data_en (checked 25.11.2026)
 - ICO, business-to-business marketing — https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/business-to-business-marketing/ (checked 25.11.2026)

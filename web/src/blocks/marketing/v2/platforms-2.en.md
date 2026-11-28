@@ -84,9 +84,9 @@ Complete this task in a document. Write a Show HN headline for your project with
 
 <!-- section: sources -->
 - Hacker News, Show HN rules — https://news.ycombinator.com/showhn.html (checked 25.11.2026)
-- Hacker News Guidelines and FAQ — https://news.ycombinator.com/newsguidelines.html, https://news.ycombinator.com/newsfaq.html (checked 25.11.2026)
+- Hacker News Guidelines — https://news.ycombinator.com/newsguidelines.html; Hacker News FAQ — https://news.ycombinator.com/newsfaq.html (checked 25.11.2026)
 - Watermelon, launching on Hacker News and Product Hunt — https://medium.com/@baristaGeek/lessons-launching-a-developer-tool-on-hacker-news-vs-product-hunt-and-other-channels-27be8784338b (04.01.2024)
 - Mailhub, front page experience — https://www.reddit.com/r/SaaS/comments/1eq5gxs (12.08.2024)
 - Study of stars following promotion on Hacker News — https://arxiv.org/abs/2511.04453 (06.11.2025)
 - Syften, best time to post on Hacker News — https://syften.com/blog/best-time-to-post-on-hacker-news/ (23.10.2026)
-- Lobsters, About and moderation log — https://lobste.rs/about, https://lobste.rs/moderations (checked 25.11.2026)
+- Lobsters, About — https://lobste.rs/about; Lobsters, moderation log — https://lobste.rs/moderations (checked 25.11.2026)

@@ -57,8 +57,8 @@ Grafana в мае 2025 года провела после главной кон�
 - BSides Las Vegas 2026, договор спонсора — https://bsideslv.org/assets/BSidesLV_2026_Sponsor_Agreement.pdf (13.02.2026)
 - Meetup Pro, модели владения и спонсорства — https://help.meetup.com/hc/en-us/articles/360035453952-Meetup-Pro-Ownership-and-sponsorship-models
 - CNCF, годовой отчёт 2025 — https://www.cncf.io/reports/cncf-annual-report-2025/ (24.02.2026)
-- CNCF, KCD 2025 — https://www.cncf.io/blog/2024/10/30/mark-your-calendars-here-come-the-2025-kubernetes-community-days/ (30.10.2024); правила KCD — https://www.cncf.io/kcds/faq/ (проверено 25.11.2026)
-- CNCF, правила групп сообщества — https://github.com/cncf/communitygroups/blob/main/README.md, https://github.com/cncf/communitygroups/blob/main/organizers.md, https://github.com/cncf/communitygroups/blob/main/best_practices.md (проверено 25.11.2026)
+- CNCF, KCD 2025 — https://www.cncf.io/blog/2024/10/30/mark-your-calendars-here-come-the-2025-kubernetes-community-days/ (30.10.2024); CNCF, правила KCD — https://www.cncf.io/kcds/faq/ (проверено 25.11.2026)
+- CNCF, правила групп сообщества — https://github.com/cncf/communitygroups/blob/main/README.md; CNCF, памятка организаторам групп сообщества — https://github.com/cncf/communitygroups/blob/main/organizers.md; CNCF, советы группам сообщества — https://github.com/cncf/communitygroups/blob/main/best_practices.md (проверено 25.11.2026)
 - CNCF, переезд групп на Open Community Groups — https://github.com/cncf/contribute-site/blob/main/blog/2026-05-29-cloud-native-project-monthly-may-2026.md (29.05.2026)
 - KCD Lima, опыт организатора — https://www.cncf.io/blog/2026/09/15/what-i-learned-organizing-kcd-lima-2026/ (15.09.2026)
 - KCD Gujarat, спонсорство — https://www.kcdgujarat.com/sponsorship (2026)

@@ -50,7 +50,7 @@ Spotify с января 2025 года платит авторам видеопо
 - Edison Research, The Infinite Dial 2025 — https://www.edisonresearch.com/wp-content/uploads/2025/03/The-Infinite-Dial-2025-Presentation.pdf (20.03.2025)
 - Cumulus Media и Signal Hill, осень 2025 — https://www.westwoodone.com/wp-content/uploads/2025/11/Cumulus-Media-and-Signal-Hill-Insights-Podcast-Download-Fall-2025_WWO.pdf (ноябрь 2025)
 - Buzzsprout, статистика — https://www.buzzsprout.com/stats (октябрь 2026)
-- YouTube Help, подкасты и импорт RSS — https://support.google.com/youtube/answer/12751636, https://support.google.com/youtube/answer/13525207 (проверено 25.11.2026)
+- YouTube Help, подкасты — https://support.google.com/youtube/answer/12751636; YouTube Help, импорт RSS — https://support.google.com/youtube/answer/13525207 (проверено 25.11.2026)
 - Spotify, изменения Partner Program — https://newsroom.spotify.com/2026-01-07/spotify-partner-program-updates/ (07.01.2026)
 - Apple, видео в Apple Podcasts — https://www.apple.com/newsroom/2026/02/apple-introduces-a-new-video-podcast-experience-on-apple-podcasts/ (16.02.2026)
 - The Changelog, руководство для гостей — https://changelog.com/guest; новая эпоха подкастов Changelog — https://changelog.com/posts/a-new-era-for-the-changelog-podcast-universe (05.12.2024)
