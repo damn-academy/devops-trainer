@@ -211,7 +211,7 @@ export const ROUTE: RouteEntry[] = [
     order: 80,
     folder: 'iac',
     segment: '8',
-    title: bi('IaC: Ansible и Terraform', 'IaC: Ansible and Terraform'),
+    title: bi('Инфраструктура как код на Ansible и Terraform', 'Infrastructure as code with Ansible and Terraform'),
     summary: bi(
       'Ansible: инвентарь, модули, идемпотентность, роли. Terraform: провайдеры, state, plan и apply, дрейф. Четыре исполнителя сверки.',
       'Ansible: inventory, modules, idempotence, roles. Terraform: providers, state, plan and apply, drift. Four reconcilers side by side.',
