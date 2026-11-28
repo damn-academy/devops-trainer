@@ -57,9 +57,25 @@ images)
   set -- $REGISTRIES
   first=$1
   shift
+  # The kube-wasm node and its RV64 core (tools/kube-wasm/pack-node.sh) are
+  # not in git: deploy/kube-node.ref names a one-layer image in the registry,
+  # and its layer goes in as it is, so an unchanged node is stored once.
+  layers=(-f "$stage/v86.tar")
+  if [[ -s $src/deploy/kube-node.ref ]]; then
+    ref=$(tr -d '[:space:]' < "$src/deploy/kube-node.ref")
+    [[ $ref =~ ^sankofa/devops-trainer-node@sha256:[0-9a-f]{64}$ ]] || { echo "bad deploy/kube-node.ref: $ref" >&2; exit 1; }
+    blob=$(crane manifest "$first:5000/$ref" | node -e '
+      const m = JSON.parse(require("fs").readFileSync(0, "utf8"));
+      if (m.layers?.length !== 1) throw new Error("the node image must have one layer");
+      console.log(m.layers[0].digest);')
+    crane blob "$first:5000/${ref%@*}@$blob" > "$stage/node.tar.gz"
+    [[ sha256:$(sha256sum "$stage/node.tar.gz" | cut -d' ' -f1) == "$blob" ]] || { echo "node layer digest mismatch" >&2; exit 1; }
+    layers+=(-f "$stage/node.tar.gz")
+  fi
+  layers+=(-f "$stage/site.tar")
   web="$first:5000/sankofa/devops-trainer-web"
   crane append --platform linux/amd64 -b nginxinc/nginx-unprivileged:1.29-alpine \
-    -f "$stage/v86.tar" -f "$stage/site.tar" -t "$web:dev" >/dev/null
+    "${layers[@]}" -t "$web:dev" >/dev/null
   fb="$first:5000/sankofa/devops-trainer-feedback"
   crane append --platform linux/amd64 -b gcr.io/distroless/static-debian12:nonroot \
     -f "$work/feedback/layer.tar" -t "$fb:base" >/dev/null
