@@ -6,12 +6,12 @@
 //   node tools/kube-wasm/publish-node.mjs --checkpoint <dir> --media <json> --image <img> \
 //     --kube-wasm <kube.wasm> --wasm-exec <wasm_exec.js> --core <rv64_core_bg.wasm> --out <dir>
 //
-// <out>/objects/<sha256>.gzip every object, gzip -9 (--encoding zstd: .zstd,
-//                             zstd -19 with its checksum); the name is the SHA-256
+// <out>/objects/<sha256>.zstd every object, zstd -19 with its checksum
+//                             (--encoding gzip: .gzip, gzip -9); the name is the SHA-256
 //                             of the decoded bytes (checkpoint objects, 256 KiB
 //                             medium chunks, kube.wasm); wasm_exec.js as
-//                             <sha256>.js. Not .gz: some static servers send
-//                             .gz files with Content-Encoding: gzip
+//                             <sha256>.js. Not .gz: Vite's static server
+//                             sends .gz files with Content-Encoding: gzip
 // <out>/kube-node-<id>/       smp.json (+ "encoding", "objects"), kube-state.json;
 //                             <id>: the first 16 hex digits of the SHA-256 of smp.json
 // <out>/disk-<version>.json   the medium's identity, join placeholder and chunk index
@@ -19,7 +19,8 @@
 // <out>/SHA256SUMS            of every other file, for `sha256sum -c`
 //
 // Objects already in <out>/objects are kept, so publishing into the same
-// directory again only adds what changed. Needs Node.js 20 or newer.
+// directory again only adds what changed. Needs Node.js 22.15 or newer
+// (zlib's zstd; gzip works with 20).
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -33,7 +34,7 @@ const args = {};
 for (let i = 2; i < process.argv.length; i += 2) {
   const key = process.argv[i].replace(/^--/, '');
   if (!['checkpoint', 'media', 'image', 'kube-wasm', 'wasm-exec', 'core', 'out', 'jobs', 'encoding'].includes(key) || process.argv[i + 1] === undefined) {
-    console.error(`usage: ${path.basename(process.argv[1])} --checkpoint <dir> --media <json> --image <img> --kube-wasm <file> --wasm-exec <file> --core <file> --out <dir> [--encoding gzip|zstd] [--jobs N]`);
+    console.error(`usage: ${path.basename(process.argv[1])} --checkpoint <dir> --media <json> --image <img> --kube-wasm <file> --wasm-exec <file> --core <file> --out <dir> [--encoding zstd|gzip] [--jobs N]`);
     process.exit(2);
   }
   args[key] = process.argv[i + 1];
@@ -42,7 +43,7 @@ for (const key of ['checkpoint', 'media', 'image', 'kube-wasm', 'wasm-exec', 'co
 const jobs = Number(args.jobs ?? 4);
 const sha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const fail = (msg) => { console.error(`publish-node: ${msg}`); process.exit(1); };
-const encoding = args.encoding ?? 'gzip';
+const encoding = args.encoding ?? 'zstd';
 if (!['gzip', 'zstd'].includes(encoding)) fail(`unknown encoding ${encoding}`);
 if (encoding === 'zstd' && !zstd) fail('zstd needs Node.js 22.15 or newer');
 /** gzip -9 or zstd -19; the extension is the encoding's name (see objects.ts). */
