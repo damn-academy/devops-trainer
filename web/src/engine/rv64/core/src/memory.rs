@@ -63,6 +63,9 @@ pub struct Memory {
     /// Experimental external shared RAM; never serialized as a single-hart snapshot.
     #[serde(skip)]
     pub shared_bytes: usize,
+    /// SMP: byte offset of this hart's store lock in the granule memory.
+    #[serde(skip)]
+    pub(crate) smp_lock: u64,
     #[serde(skip)]
     pub metrics: crate::metrics::Metrics,
     #[serde(skip)]
@@ -105,6 +108,7 @@ impl Memory {
     pub fn new(bytes: usize) -> Self {
         Self {
             shared_bytes: 0,
+            smp_lock: 0,
             metrics: Default::default(),
             jit_epoch: 0,
             jit_code: vec![0; (bytes + 4095) / 4096],

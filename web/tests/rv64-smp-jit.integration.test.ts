@@ -1,7 +1,7 @@
 // Uses the locally staged wasm; rebuild it before running the fixed regression.
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import { atomicModule, SharedHartMemory, HartMailboxes, sharedAccessModule, sharedTable, type SharedAccessExports } from '../src/engine/rv64/smp';
+import { atomicModule, SharedHartMemory, HartMailboxes, sharedAccessModule, sharedTable, lockBase, LOCK_STRIDE, type SharedAccessExports } from '../src/engine/rv64/smp';
 
 // The core binds its `rv64shared` imports once per module instance, while each
 // test builds new memories; forward to the bus of the current test.
@@ -10,8 +10,14 @@ let bus: SharedAccessExports | undefined;
   load: (o: number, n: number) => bus!.load(o, n), store: (o: number, n: number, v: bigint) => bus!.store(o, n, v),
   fetch: (o: number) => bus!.fetch(o), generation: (p: number) => bus!.generation(p), cas: (o: number, e: bigint, v: bigint) => bus!.cas(o, e, v), mark: (p: number) => bus!.mark(p),
 };
+let locks = 0;
+// smp_configure plus the hart's store lock, as smp-cpu.worker does.
+function configure(core: { smp_configure(h: number, b: number): void; smp_store_lock(o: number): void }, hart: number, bytes: number) {
+  core.smp_configure(hart, bytes); core.smp_store_lock(locks + hart * LOCK_STRIDE);
+}
 function attachBus(memory: WebAssembly.Memory, generations: WebAssembly.Memory, granules: WebAssembly.Memory) {
   const pages = (m: WebAssembly.Memory) => m.buffer.byteLength / 65536;
+  locks = lockBase(granules.buffer.byteLength, memory.buffer.byteLength);
   bus = new WebAssembly.Instance(sharedAccessModule(pages(memory), pages(generations), pages(granules)), { env: { ram: memory, generations, granules } }).exports as unknown as SharedAccessExports;
 }
 import { compileBatch } from '../src/engine/rv64/jit-compiler';
@@ -39,7 +45,7 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('retains hot physical code across re
     // addi t0,t0,1; jal x0,-4. No OS, clocks, data stores or external compiler.
     ram.store(64, 4, 0x00128293n); ram.store(68, 4, 0xffdff06fn);
     const cores = Array.from({ length: harts }, (_, hart) => {
-      const core = new mod.Engine(32); core.smp_configure(hart, bytes);
+      const core = new mod.Engine(32); configure(core, hart, bytes);
       core.smp_start(0x80000000n, 0n); core.jit_threshold(1); return core;
     });
     const counts = cores.map(() => 0), busy = cores.map(() => 0);
@@ -109,7 +115,7 @@ for (const modifyCode of [false, true]) it.skipIf(process.env.RV64_SMP_JIT !== '
       0x0062a023, 0x0330000f, 0x00200513, 0x00000593, 0x00000813,
       0x524658b7, 0xe4388893, 0x00000073]);
     const cores = [0, 1].map(hart => {
-      const core = new mod.Engine(32); core.smp_configure(hart, bytes);
+      const core = new mod.Engine(32); configure(core, hart, bytes);
       core.smp_start(hart ? 0x80000000n : 0x80002000n, 0n);
       core.jit_threshold(hart ? 1 : 0); return core;
     });
@@ -211,7 +217,7 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('publishes an inline SMP code store 
   const cores = [0,1].map(hart => {
     const core = new mod.Engine(32);
     expect(core.smp_jit_abi?.(), 'rebuild R9 WASM before this gate').toBe(9);
-    core.smp_configure(hart,bytes); core.smp_start(hart ? 0x80002000n : 0x80003000n,0n); core.jit_threshold(1); return core;
+    configure(core, hart, bytes); core.smp_start(hart ? 0x80002000n : 0x80003000n,0n); core.jit_threshold(1); return core;
   });
   const table = cores[0].jit_table();
   const env = {memory:wasm.memory,ram:memory,generations,granules,table,slow:wasm.jit_slow};
@@ -290,7 +296,7 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('samples nonzero comm and valid user
   for (const hart of [0, 1]) {
     const core = new mod.Engine(32);
     try {
-      core.smp_configure(hart, bytes); core.smp_start(0x80000000n, 0n); core.jit_threshold(0);
+      configure(core, hart, bytes); core.smp_start(0x80000000n, 0n); core.jit_threshold(0);
       core.profile_configure(1); core.profile_task_comm(1704); core.smp_run(64, 0, 0n);
       const rows: string[][] = JSON.parse(core.profile_drain()).rows;
       const user = rows.filter(row => BigInt('0x' + row[2]) === 0n);
@@ -326,7 +332,7 @@ it.skipIf(process.env.RV64_SMP_JIT !== '1')('runs A compiled code on B and rejec
     rv64Compile:(id:number,pc:bigint,words:Uint32Array,raw:Uint32Array,pa:bigint,generation:bigint)=>queues[active]!.push({id,pc,words:[...words],raw:[...raw],pa,generation}),
   });
   ram.store(64,4,0x00100293n);ram.store(68,4,0xffdff06fn);
-  const cores=[0,1].map(hart=>{const core=new mod.Engine(32);expect(core.jit_share_abi?.()).toBe(12);core.smp_configure(hart,bytes);core.smp_start(0x80000000n,0n);core.jit_threshold(1);return core;});
+  const cores=[0,1].map(hart=>{const core=new mod.Engine(32);expect(core.jit_share_abi?.()).toBe(12);configure(core, hart, bytes);core.smp_start(0x80000000n,0n);core.jit_threshold(1);return core;});
   const table=cores[0].jit_table(),slots:number[]=[];
   const installed = [new Map<number, { ids: number[]; slots: number[] }>(), new Map<number, { ids: number[]; slots: number[] }>()];
   let revokeCalls = 0;

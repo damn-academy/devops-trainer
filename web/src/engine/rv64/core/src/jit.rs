@@ -154,7 +154,8 @@ impl Cpu {
         // ABI: next PC, executed count, RAM base/length, read/write TLBs,
         // code bitmap, privilege context, satp, store flag, budget, fault flag, Cpu.
         let mut frame = [self.pc, 0, self.memory.ram.as_ptr() as u64, self.memory.ram.len() as u64,
-            self.memory.jit_tlb_ptr(1), self.memory.jit_tlb_ptr(2), self.memory.jit_code.as_ptr() as u64,
+            // Slot 6: private code bitmap, or under SMP this hart's lock offset.
+            self.memory.jit_tlb_ptr(1), self.memory.jit_tlb_ptr(2), if self.memory.shared_bytes != 0 { self.memory.smp_lock } else { self.memory.jit_code.as_ptr() as u64 },
             effective as u64 | (self.csr[0x300] & ((1 << 18) | (1 << 19))), self.csr[0x180], 0, budget as u64, 0, cpu_ptr, 0, 0,
             self.memory.jit_tlb_ptr(0), self.memory.jit_pages.as_ptr() as u64, self.jit.chain.as_ptr() as u64,
             self.mode as u64 | (self.csr[0x300] & ((1 << 18) | (1 << 19))), 0,

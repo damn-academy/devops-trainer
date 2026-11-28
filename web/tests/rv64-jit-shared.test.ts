@@ -9,7 +9,8 @@ function fixture() {
   const env = { memory, ram, generations, granules };
   const regs = new BigUint64Array(memory.buffer), view = new DataView(memory.buffer);
   const satp = 0x8000000000000001n;
-  const frame = [0x4000n,0n,0n,0n,1024n,2048n,0n,1n,satp,0n,10000n,0n,0n,0n,0n,3072n,12000n,65536n,1n,0n,13000n,77n,0n,0n];
+  // Slot 6 under SMP: this hart's store lock (hart 0) in the granule memory.
+  const frame = [0x4000n,0n,0n,0n,1024n,2048n,BigInt(65536-256),1n,satp,0n,10000n,0n,0n,0n,0n,3072n,12000n,65536n,1n,0n,13000n,77n,0n,0n];
   frame.forEach((n,i) => regs[32+i] = n);
   for (const base of [1024,2048,3072]) for (let page = 4; page < 6; page++) {
     const entry = base + page * 40;

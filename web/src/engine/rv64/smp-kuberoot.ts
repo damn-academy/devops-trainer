@@ -4,7 +4,7 @@ import { createSharedCompiler } from './shared-compiler';
 import type { SharedCodeCache } from './shared-code';
 import { sha256 } from './snapshot';
 import { BoundedHistory, ConsoleTail, jitCeilingBytes, hartBudget, pressureCeiling, HOST_BUDGET, MiB } from './host-memory';
-import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
+import { sharedTable, atomicModule, HartMailboxes, granuleTableBytes } from './smp';
 import { createRV64Network } from './network';
 import { fetchSource } from '../labhost/mirror';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown; rv64LatestMetrics?: unknown; rv64HostMemory?: unknown; rv64PartialResult?: () => unknown };
@@ -64,7 +64,7 @@ try {
       const r = await fetch('/snapshot-upload/' + name, { method: 'POST', body: data as Uint8Array<ArrayBuffer> });
       if (!r.ok) throw Error(`snapshot upload ${r.status}`);
     };
-    const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
+    const granules = sharedTable(granuleTableBytes(memory.buffer.byteLength));
     if (!restored) for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
     const workers: Worker[] = [], start = performance.now();
     // sharedJit=0 (or VITE_RV64_SHARED_JIT=0) keeps one private compiler per hart, the R11 path.

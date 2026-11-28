@@ -1,4 +1,4 @@
-import { SharedHartMemory, sharedAccessModule } from './smp';
+import { SharedHartMemory, sharedAccessModule, lockBase, LOCK_STRIDE } from './smp';
 import { JitRuntime } from './jit';
 self.onmessage = async ({ data: d }) => {
   self.onmessage = null;
@@ -6,7 +6,7 @@ self.onmessage = async ({ data: d }) => {
   try {
     const pages = (m: WebAssembly.Memory) => m.buffer.byteLength / 65536;
     (globalThis as { rv64SharedImports?: WebAssembly.Exports }).rv64SharedImports = new WebAssembly.Instance(
-      sharedAccessModule(pages(d.memory), pages(d.generations), pages(d.granules)),
+      sharedAccessModule(pages(d.memory), pages(d.generations), pages(d.granules), d.hart),
       { env: { ram: d.memory, generations: d.generations, granules: d.granules } }).exports;
     const mod = await import(/* @vite-ignore */ new URL('/rv64/rv64_core.js', self.location.origin).href), wasm = await mod.default();
     const ram = new SharedHartMemory(d.memory, d.module, new Int32Array(d.generations.buffer), new Int32Array(d.granules.buffer));
@@ -24,6 +24,7 @@ self.onmessage = async ({ data: d }) => {
     });
     const core = new mod.Engine(32), reference = new mod.Engine(32);
     core.smp_configure(d.hart, 32 << 20); reference.test_hart(d.hart);
+    core.smp_store_lock(lockBase(d.granules.buffer.byteLength, d.memory.buffer.byteLength) + d.hart * LOCK_STRIDE);
     // Each hart has a disjoint data page; the instruction stream is common.
     // AMO contention is tested separately; here the scheduling-independent oracle
     // can compare exact state after every generated/interpreted instruction.

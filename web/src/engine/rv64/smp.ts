@@ -40,17 +40,20 @@ export function atomicModule(pages: number): WebAssembly.Module {
 }
 /** Direct shared-bus access for the Rust core, imported as module
  * `rv64shared`, so interpreter loads, stores, fetches and page walks never
- * leave wasm. Stores follow the SharedHartMemory writer protocol exactly:
- * lock word at 0, then the reservation granule and the code-page
- * generation of the stored byte. Offsets are guest-physical RAM
- * offsets (guest data starts at byte 64); callers bound and align them.
- * Memories: 0 = RAM, 1 = page generations, 2 = reservation granules. */
-export function sharedAccessModule(ramPages: number, generationPages: number, granulePages: number): WebAssembly.Module {
+ * leave wasm. Stores follow the SharedHartMemory protocol: a plain store
+ * holds this hart's lock, CAS and code marking hold every hart's lock, and
+ * each write then bumps its reservation granule and code-page generation.
+ * Offsets are guest-physical RAM offsets (guest data starts at byte 64);
+ * callers bound and align them. `hart` selects the lock of the instance.
+ * Memories: 0 = RAM, 1 = page generations, 2 = reservation granules + locks. */
+export function sharedAccessModule(ramPages: number, generationPages: number, granulePages: number, hart = 0): WebAssembly.Module {
+  if (!Number.isInteger(hart) || hart < 0 || hart >= MAX_HARTS) throw new RangeError('invalid hart');
   const sleb = (v: number) => { const out: number[] = []; for (;;) { const b = v & 127; v >>= 7; if (v === 0 && !(b & 64) || v === -1 && b & 64) { out.push(b); return out; } out.push(b | 128); } };
   const i32 = (v: number) => [0x41, ...sleb(v)], i64 = (v: number) => [0x42, ...sleb(v)];
   const get = (i: number) => [0x20, i], set = (i: number) => [0x21, i];
   const at = (op: number, align: number, memory = 0) => memory ? [0xfe, op, align | 64, memory, 0] : [0xfe, op, align, 0];
   const address = [...get(0), ...i32(64), 0x6a];
+  const locks = lockBase(granulePages * 65536, ramPages * 65536), own = locks + hart * LOCK_STRIDE;
   // Dispatch on access size 8/4/2/1 (param 1); `pick` emits one arm.
   const bySize = (type: number, pick: (size: number) => number[]) => [
     ...get(1), ...i32(8), 0x46, 0x04, type, ...pick(8), 0x05,
@@ -58,31 +61,38 @@ export function sharedAccessModule(ramPages: number, generationPages: number, gr
     ...get(1), ...i32(2), 0x46, 0x04, type, ...pick(2), 0x05, ...pick(1), 0x0b, 0x0b, 0x0b];
   const loadOp: Record<number, number[]> = { 8: at(0x11, 3), 4: at(0x16, 2), 2: at(0x15, 1), 1: at(0x14, 0) };
   const storeOp: Record<number, number[]> = { 8: at(0x18, 3), 4: at(0x1d, 2), 2: at(0x1c, 1), 1: at(0x1b, 0) };
+  const call = (f: number) => [0x10, f];
+  const all = (f: number, order: number[]) => order.flatMap(h => [...i32(locks + h * LOCK_STRIDE), ...call(f)]);
+  const harts = [...Array(MAX_HARTS).keys()];
   const bodies: [number[], number[]][] = [
-    // 0 lock(): 0 -> 1 when free; otherwise mark the lock contended (2) and
-    // sleep until the holder releases it (the futex mutex of SharedHartMemory).
-    [[], [...i32(0), ...i32(0), ...i32(1), ...at(0x48, 2), 0x04, 0x40, 0x03, 0x40,
-      ...i32(0), ...i32(2), ...at(0x41, 2), 0x04, 0x40,
-      ...i32(0), ...i32(2), ...i64(100000), ...at(0x01, 2), 0x1a, 0x0c, 1, 0x0b, 0x0b, 0x0b]],
-    // 1 unlock(): wake a sleeper only if the lock was marked contended.
-    [[], [...i32(0), ...i32(0), ...at(0x41, 2), ...i32(2), 0x46, 0x04, 0x40, ...i32(0), ...i32(1), ...at(0x00, 2), 0x1a, 0x0b]],
+    // 0 lock(word): 0 -> 1 when free; otherwise mark it contended (2) and
+    // sleep until the holder releases it.
+    [[], [...get(0), ...i32(0), ...i32(1), ...at(0x48, 2, 2), 0x04, 0x40, 0x03, 0x40,
+      ...get(0), ...i32(2), ...at(0x41, 2, 2), 0x04, 0x40,
+      ...get(0), ...i32(2), ...i64(100000), ...at(0x01, 2, 2), 0x1a, 0x0c, 1, 0x0b, 0x0b, 0x0b]],
+    // 1 unlock(word): wake a sleeper only if the lock was marked contended.
+    [[], [...get(0), ...i32(0), ...at(0x41, 2, 2), ...i32(2), 0x46, 0x04, 0x40, ...get(0), ...i32(1), ...at(0x00, 2, 2), 0x1a, 0x0b]],
     // 2 publish(offset): reservation granule, then code-page generation.
     [[], [...address, ...i32(7), 0x76, ...i32(2), 0x74, ...i32(1), ...at(0x1e, 2, 2), 0x1a,
       ...get(0), ...i32(12), 0x76, ...i32(2), 0x74, ...i32(1), ...at(0x1e, 2, 1), 0x1a]],
     // 3 load(offset, size) -> zero-extended i64
     [[1, 1, 0x7f], [...address, ...set(2), ...bySize(0x7e, n => [...get(2), ...loadOp[n]!])]],
-    // 4 store(offset, size, value)
-    [[1, 1, 0x7f], [0x10, 0, ...address, ...set(3), ...bySize(0x40, n => [...get(3), ...get(2), ...storeOp[n]!]), ...get(0), 0x10, 2, 0x10, 1]],
+    // 4 store(offset, size, value) under this hart's lock
+    [[1, 1, 0x7f], [...i32(own), ...call(0), ...address, ...set(3), ...bySize(0x40, n => [...get(3), ...get(2), ...storeOp[n]!]),
+      ...get(0), ...call(2), ...i32(own), ...call(1)]],
     // 5 generation(page) -> i32
     [[], [...get(0), ...i32(2), 0x74, ...at(0x10, 2, 1)]],
-    // 6 cas(offset, expected, value) -> old (PTE A/D updates)
-    [[1, 1, 0x7e], [0x10, 0, ...address, ...at(0x11, 3), 0x22, 3, ...get(1), 0x51, 0x04, 0x40,
-      ...address, ...get(2), ...at(0x18, 3), ...get(0), 0x10, 2, 0x0b, 0x10, 1, ...get(3)]],
+    // 6 cas(offset, expected, value) -> old (PTE A/D updates), exclusive
+    [[1, 1, 0x7e], [...call(9), ...address, ...at(0x11, 3), 0x22, 3, ...get(1), 0x51, 0x04, 0x40,
+      ...address, ...get(2), ...at(0x18, 3), ...get(0), ...call(2), 0x0b, ...call(10), ...get(3)]],
     // 7 fetch(offset) -> 32 instruction bits (2-byte aligned, page-internal)
     [[], [...address, 0x28, 1, 0]],
-    // 8 mark(page): flag a page generation as code, under the writer lock so
-    // every later store (in lock order) sees the flag and bumps it.
-    [[], [0x10, 0, ...get(0), ...i32(2), 0x74, ...i32(-0x80000000), ...at(0x33, 2, 1), 0x1a, 0x10, 1]],
+    // 8 mark(page): flag a page generation as code (bit 31), exclusive, so
+    // every later store sees the flag and bumps it.
+    [[], [...call(9), ...get(0), ...i32(2), 0x74, ...i32(-0x80000000), ...at(0x33, 2, 1), 0x1a, ...call(10)]],
+    // 9 lockAll(), 10 unlockAll(): every hart's lock in hart order.
+    [[], all(0, harts)],
+    [[], all(1, [...harts].reverse())],
   ];
   const code = bodies.map(([locals, body]) => { const b = [...(locals.length ? locals : [0]), ...body, 0x0b]; return [...uleb(b.length), ...b]; });
   const memory = (name: string, pages: number) => [...string('env'), ...string(name), 2, 3, ...uleb(pages), ...uleb(pages)];
@@ -91,7 +101,7 @@ export function sharedAccessModule(ramPages: number, generationPages: number, gr
     0,97,115,109,1,0,0,0,
     ...section(1, [6, 0x60,0,0, 0x60,1,0x7f,0, 0x60,2,0x7f,0x7f,1,0x7e, 0x60,3,0x7f,0x7f,0x7e,0, 0x60,1,0x7f,1,0x7f, 0x60,3,0x7f,0x7e,0x7e,1,0x7e]),
     ...section(2, [3, ...memory('ram', ramPages), ...memory('generations', generationPages), ...memory('granules', granulePages)]),
-    ...section(3, [9, 0, 0, 1, 2, 3, 4, 5, 4, 1]),
+    ...section(3, [11, 1, 1, 1, 2, 3, 4, 5, 4, 1, 0, 0]),
     ...section(7, [exports.length, ...exports.flatMap(([name, index]) => [...string(name), 0, index])]),
     ...section(10, [code.length, ...code.flat()]),
   ]));
@@ -123,41 +133,64 @@ export type Amo = 'swap' | 'add' | 'xor' | 'and' | 'or' | 'min' | 'max' | 'minu'
 // tests. Int32 wraparound needs ~4G writes to one granule between LR and SC,
 // which cannot happen inside one scheduler quantum.
 // No unlocked stores, including JIT stores and DMA, may bypass this protocol;
-// ordinary reads use atomic wasm loads and do not require the writer lock.
-// Layout: lock at 0, bytes 4..63 unused (formerly a global write counter that
-// every store bumped; nothing read it), guest data starts at 64.
+// ordinary reads use atomic wasm loads and do not require a lock.
+// Locks: one word per hart in its own cache line at the end of the granule
+// memory (lockBase()). A plain store from a hart's generated code or direct
+// bus holds only that hart's lock, so harts storing concurrently never share
+// a lock line. LR/SC, AMOs, CAS, code-page marking, JS stores and DMA hold
+// every hart's lock (in hart order), which excludes all stores. Each word is
+// 0 free, 1 held, 2 held with possible sleepers.
+// RAM layout: bytes 0..63 unused (formerly the global lock and write
+// counter), guest data starts at 64.
 export const RESERVATION_GRANULE = 128;
+export const MAX_HARTS = 4, LOCK_STRIDE = 64;
+/** Byte offset of hart 0's lock in the granule memory (after the table). */
+export function lockBase(granuleBytes: number, ramBytes: number) {
+  const base = granuleBytes - MAX_HARTS * LOCK_STRIDE;
+  if (base < Math.ceil(ramBytes / RESERVATION_GRANULE) * 4) throw new RangeError('granule memory leaves no room for hart locks');
+  return base;
+}
+export const granuleTableBytes = (ramBytes: number) => Math.ceil(ramBytes / RESERVATION_GRANULE) * 4 + MAX_HARTS * LOCK_STRIDE;
 const fallbackGranuleTables = new WeakMap<WebAssembly.Memory, Int32Array>();
 export class SharedHartMemory {
   private reservation?: Reservation;
-  private words: Int32Array;
+  private locks: number;
   private wasm: AtomicExports;
   private granules: Int32Array;
   constructor(readonly memory: WebAssembly.Memory, module: WebAssembly.Module, private generations?: Int32Array, granules?: Int32Array) {
     if (!(memory.buffer instanceof SharedArrayBuffer)) throw new Error('SMP requires shared wasm memory');
     const buffer: SharedArrayBuffer = memory.buffer;
-    this.words = new Int32Array(buffer);
     this.wasm = new WebAssembly.Instance(module, { env: { memory } }).exports as unknown as AtomicExports;
     if (granules) {
       this.granules = granules;
     } else {
       let table = fallbackGranuleTables.get(memory);
       if (!table) {
-        table = new Int32Array(new SharedArrayBuffer(Math.ceil(buffer.byteLength / 128) * 4));
+        table = new Int32Array(new SharedArrayBuffer(granuleTableBytes(buffer.byteLength)));
         fallbackGranuleTables.set(memory, table);
       }
       this.granules = table;
     }
+    this.locks = lockBase(this.granules.byteLength, buffer.byteLength) / 4;
   }
   private check(address: number, size: number) {
     if (!Number.isInteger(address) || address < 64 || address % size || address + size > this.memory.buffer.byteLength) throw new RangeError('unaligned/out-of-bounds shared RAM');
   }
-  // Writer lock word: 0 free, 1 held, 2 held with possible sleepers. Only a
-  // release of a contended lock pays for Atomics.notify; JIT stores spin on 0 -> 1.
+  // Every hart's lock, in hart order (futex mutexes; only a release of a
+  // contended lock pays for Atomics.notify, and JIT stores spin on 0 -> 1).
   private locked<T>(body: () => T): T {
-    if (Atomics.compareExchange(this.words, 0, 0, 1) !== 0)
-      while (Atomics.exchange(this.words, 0, 2) !== 0) Atomics.wait(this.words, 0, 2, 10);
-    try { return body(); } finally { if (Atomics.exchange(this.words, 0, 0) === 2) Atomics.notify(this.words, 0, 1); }
+    const g = this.granules;
+    for (let h = 0; h < MAX_HARTS; h++) {
+      const i = this.locks + h * LOCK_STRIDE / 4;
+      if (Atomics.compareExchange(g, i, 0, 1) !== 0)
+        while (Atomics.exchange(g, i, 2) !== 0) Atomics.wait(g, i, 2, 10);
+    }
+    try { return body(); } finally {
+      for (let h = MAX_HARTS - 1; h >= 0; h--) {
+        const i = this.locks + h * LOCK_STRIDE / 4;
+        if (Atomics.exchange(g, i, 0) === 2) Atomics.notify(g, i, 1);
+      }
+    }
   }
   private read(address: number, size: 1 | 2 | 4 | 8): bigint {
     const value = this.wasm.load(address - address % 8);

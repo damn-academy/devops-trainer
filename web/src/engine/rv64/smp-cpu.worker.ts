@@ -2,7 +2,7 @@
 // only its hart state. Worker 0 owns a separate device Engine and services RPCs.
 import { HTTPBlockDevice, type HTTPDisk } from './block';
 import { JitRuntime } from './jit';
-import { SharedHartMemory, HartMailboxes, sharedAccessModule, type Amo, type FenceTicket } from './smp';
+import { SharedHartMemory, HartMailboxes, sharedAccessModule, lockBase, LOCK_STRIDE, type Amo, type FenceTicket } from './smp';
 interface Init {
   hostBudget?: number;
   compilerPort?: MessagePort;
@@ -31,7 +31,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     // The core imports these wasm functions directly (module `rv64shared`).
     const pages = (m: WebAssembly.Memory) => m.buffer.byteLength / 65536;
     (globalThis as { rv64SharedImports?: WebAssembly.Exports }).rv64SharedImports = new WebAssembly.Instance(
-      sharedAccessModule(pages(d.memory), pages(d.generations), pages(d.granules)),
+      sharedAccessModule(pages(d.memory), pages(d.generations), pages(d.granules), d.hart),
       { env: { ram: d.memory, generations: d.generations, granules: d.granules } }).exports;
     const url = new URL('/rv64/rv64_core.js', self.location.origin).href;
     const mod = await import(/* @vite-ignore */ url); const wasm = await mod.default();
@@ -40,6 +40,9 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     if (core.smp_jit_abi?.() !== 9) throw Error('Stale RV64 WASM: rebuild R9 (24-field JIT frame required)');
     if (d.compilerPort && core.jit_share_abi?.() !== 12) throw Error('Stale RV64 WASM: rebuild R12 shared JIT ABI');
     core.smp_configure(d.hart, d.bytes);
+    if (typeof core.smp_store_lock !== 'function') throw Error('Stale RV64 WASM: rebuild (smp_store_lock missing)');
+    const storeLock = lockBase(d.granules.buffer.byteLength, d.memory.buffer.byteLength) + d.hart * LOCK_STRIDE;
+    core.smp_store_lock(storeLock);
     let hostBudget = d.hostBudget;
     const newJitRuntime = () => {
       const runtime = new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow,

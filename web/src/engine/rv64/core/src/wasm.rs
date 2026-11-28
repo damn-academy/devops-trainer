@@ -87,6 +87,8 @@ impl Engine {
         self.cpu.csr[0x300] &= !(1 << 1);
         self.cpu.memory.flush();
     }
+    /// Offset of this hart's store lock in the granule memory (smp.ts lockBase).
+    pub fn smp_store_lock(&mut self, offset: u32) { self.cpu.memory.smp_lock = offset as u64; }
     pub fn smp_request(&mut self) -> Vec<u64> { self.cpu.smp_request.take().map_or_else(Vec::new, |v| v.to_vec()) }
     pub fn smp_reply(&mut self, error: i64, value: u64) { self.cpu.x[10] = error as u64; self.cpu.x[11] = value; }
     pub fn smp_ipi(&mut self) { self.cpu.memory.metrics.remote_ipis += 1; self.cpu.csr[0x344] |= 2; }
