@@ -129,7 +129,9 @@ function editorsOverlay(put) {
   put('usr/share/emacs/site-lisp/dt-agent.el', src('dt-agent.el'));
   put('usr/share/emacs/site-lisp/site-start.el', src('site-start.el'));
   for (const f of readdirSync(join(EDITORS_DIR, 'train')).sort()) put(`srv/train/${f}`, src(`train/${f}`));
-  put('etc/profile.d/editors.sh', 'export EDITOR=vim VISUAL=vim\n');
+  // Neovim's terminal front end and Emacs open the tty again; without CLOCAL that open waits for
+  // a modem carrier the emulated serial port never raises. xterm.js is an xterm with 256 colours.
+  put('etc/profile.d/editors.sh', 'export EDITOR=vim VISUAL=vim TERM=xterm-256color\nstty clocal 2>/dev/null\n');
 }
 
 /** Packages never installed on the 9p root (firmware blobs are useless in v86). */
