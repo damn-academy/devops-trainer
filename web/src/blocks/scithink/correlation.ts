@@ -185,7 +185,7 @@ export const correlationModel = defineModel<P>({
         id: 'data', label: bi('данные', 'data'),
         caption: fmt(
           bi(
-            'Смотрим одно лето. Когда растут продажи мороженого, растёт и число утоплений, и их совместный рост оценивается в {r} баллов из 100. На глаз это выглядит как настоящая зависимость одного от другого.',
+            'Смотрим одно лето. Когда растут продажи мороженого, растёт и число утоплений, и их совместный рост оценивается в {r} из 100 баллов. На глаз это выглядит как настоящая зависимость одного от другого.',
             'We look at one summer. When ice cream sales rise, the number of drownings rises too, and their joint rise is rated {r} points out of 100. To the eye it looks like a real dependence of one on the other.',
           ),
           { r: observed },
@@ -220,7 +220,7 @@ export const correlationModel = defineModel<P>({
         id: 'verdict', label: bi('вывод', 'verdict'),
         caption: fmt(
           bi(
-            'Видимая связь — {r} баллов из 100, и жара объясняет {share}% этой динамики. Если сравнивать дни с одинаковой жарой, совместный рост опустится до {left} баллов из 100. Совместный рост — наблюдение, а не механизм: он сам по себе не говорит, что мороженое влияет на случаи на воде.',
+            'Видимая связь — {r} из 100 баллов, и жара объясняет {share}% этой динамики. Если сравнивать дни с одинаковой жарой, совместный рост опустится до {left} из 100 баллов. Совместный рост — наблюдение, а не механизм: он сам по себе не говорит, что мороженое влияет на случаи на воде.',
             'The visible link is {r} points out of 100, and heat explains {share}% of that dynamics. Comparing days with equal heat drops the joint rise to {left} points out of 100. A joint rise is an observation, not a mechanism: by itself it does not say that ice cream affects water accidents.',
           ),
           { r: observed, share: explained, left },
@@ -245,14 +245,14 @@ export const correlationModel = defineModel<P>({
     const b = finalR(next);
     if (change.kind === 'break') {
       return change.on
-        ? fmt(bi('Сравнение внутри одинаковой жары убрало влияние третьего фактора: совместный рост изменился с {a} до {b} баллов из 100.', 'The within-groups comparison removed the third factor’s influence: the joint rise changed from {a} to {b} points out of 100.'), { a, b })
-        : fmt(bi('Прямая связь вернулась на уровень всего лета целиком: совместный рост снова {b} баллов из 100.', 'The direct link returned to the level of the whole summer: the joint rise is {b} points out of 100 again.'), { a, b });
+        ? fmt(bi('Сравнение внутри одинаковой жары убрало влияние третьего фактора: совместный рост изменился с {a} до {b} из 100 баллов.', 'The within-groups comparison removed the third factor’s influence: the joint rise changed from {a} to {b} points out of 100.'), { a, b })
+        : fmt(bi('Прямая связь вернулась на уровень всего лета целиком: совместный рост снова {b} из 100 баллов.', 'The direct link returned to the level of the whole summer: the joint rise is {b} points out of 100 again.'), { a, b });
     }
     if (change.id === 'strength') {
-      return fmt(bi('Сила видимой связи изменилась, и совместный рост стал {b} вместо {a} баллов из 100.', 'The strength of the visible link changed, and the joint rise is now {b} instead of {a} points out of 100.'), { a, b });
+      return fmt(bi('Сила видимой связи изменилась, и совместный рост стал {b} вместо {a} из 100 баллов.', 'The strength of the visible link changed, and the joint rise is now {b} instead of {a} points out of 100.'), { a, b });
     }
     const p = nextParams;
-    return fmt(bi('Доля связи, которую объясняет жара, теперь {share}%, поэтому при сравнении внутри одинаковой жары останется {left} баллов из 100.', 'The share of the link explained by heat is now {share}%, so within-groups comparison leaves {left} points out of 100.'), {
+    return fmt(bi('Доля связи, которую объясняет жара, теперь {share}%, поэтому при сравнении внутри одинаковой жары останется {left} из 100 баллов.', 'The share of the link explained by heat is now {share}%, so within-groups comparison leaves {left} points out of 100.'), {
       share: Math.round(p.confounder),
       left: residualOf(p),
     });
