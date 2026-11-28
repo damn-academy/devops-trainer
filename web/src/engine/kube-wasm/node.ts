@@ -16,7 +16,7 @@
 import { loadKubeWasm, splitArgs, type Loaded } from './loader';
 import { createRV64Network } from '../rv64/network';
 import { fetchSource } from '../labhost/mirror';
-import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from '../rv64/smp';
+import { sharedTable, atomicModule, HartMailboxes, granuleTableBytes } from '../rv64/smp';
 import { createSharedCompiler } from '../rv64/shared-compiler';
 import { hartBudget, jitCeilingBytes, MiB } from '../rv64/host-memory';
 import type { TcpConn } from '../labhost/tcp';
@@ -163,7 +163,7 @@ async function main() {
   const module = atomicModule(pages), mail = new HartMailboxes(harts).words.buffer;
   const control = new SharedArrayBuffer(harts * 64), ctl = new Int32Array(control);
   const generations = sharedTable(bytes / 4096 * 4);
-  const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
+  const granules = sharedTable(granuleTableBytes(memory.buffer.byteLength));
   const snap = new SharedArrayBuffer((2 + 2 * harts) * 4);
   const wasmSha256 = await sha256(new Uint8Array(await (await fetch('/rv64/rv64_core_bg.wasm')).arrayBuffer()));
   let checkpoint: SMPCheckpoint | undefined;
@@ -326,9 +326,10 @@ async function main() {
   // Watch the cluster; approve kubelet serving certificates (they are not
   // approved automatically) so that logs and exec can reach the kubelet.
   let deployed = false;
+  let eventsText = '';
   for (;;) {
     const view = await kubectl(k, 'get nodes,pods -A -o wide');
-    clusterEl.textContent = `${new Date().toLocaleTimeString()}  bridged connections: ${conns}\n${view.stdout}${view.stderr}`;
+    clusterEl.textContent = `${new Date().toLocaleTimeString()}  bridged connections: ${conns}\n${view.stdout}${view.stderr}${eventsText}`;
     const nodes = await k.api.kubectl(['get', 'nodes', '-o', 'jsonpath={range .items[*]}{.metadata.name}={.status.conditions[?(@.type=="Ready")].status}{"\\n"}{end}']);
     if (nodes.stdout.includes(NODE_NAME)) {
       mark('node registered');
@@ -358,6 +359,12 @@ async function main() {
       }
       const p2 = await kubectl(k, 'get pods -l app=web2 -o jsonpath={.items[*].status.phase}');
       if (p2.stdout.split(' ').includes('Running')) mark('new pod Running');
+      // ?events=1: keep the cluster's events once the new pod runs, to see
+      // where the time between the deployment and the running pod goes.
+      if (params.get('events') === '1' && 'new pod Running' in marks && !eventsText) {
+        const ev = await kubectl(k, 'get events -A -o custom-columns=FIRST:.firstTimestamp,LAST:.lastTimestamp,COUNT:.count,OBJECT:.involvedObject.name,REASON:.reason,MESSAGE:.message --sort-by=.lastTimestamp');
+        eventsText = `\n$ kubectl get events -A\n${ev.stdout}${ev.stderr}`;
+      }
     }
     if ('node Ready' in marks && !deployed && params.get('auto') !== '0') {
       deployed = true;
