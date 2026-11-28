@@ -16,13 +16,13 @@ export const QUIZ: QuizItem[] = [
       { id: 'slow', text: bi('Такой кластер медленнее работает', 'Such a cluster runs slower'), why: bi('Скорость кластера не зависит от способа установки, потому что компоненты в нём те же самые.', 'The speed of a cluster does not depend on how it was installed, because the components are the same.') },
       { id: 'unsafe', text: bi('Кластер, собранный руками, всегда небезопасен', 'A cluster put together by hand is always insecure'), why: bi('Кластер, собранный руками, можно настроить так же безопасно. Беда в том, что никто точно не знает, как он настроен, и никто не может повторить эту настройку.', 'A hand-made cluster can be configured just as securely. The trouble is different: nobody knows exactly how it is configured and nobody can repeat it.') },
     ],
-    explain: bi('Кластер из кода выигрывает не в первый раз, а в каждый следующий: при пересоздании, при сборке второго окружения и при восстановлении после аварии.', 'A cluster from code wins not the first time but every next time: on a rebuild, for a second environment and on recovery after a disaster.'),
+    explain: bi('Кластер, описанный в коде Terraform и Ansible, выигрывает не в первый раз, а в каждый следующий: при пересоздании, при сборке второго окружения и при восстановлении после аварии.', 'A cluster described in Terraform and Ansible code wins not the first time but every next time: on a rebuild, for a second environment and on recovery after a disaster.'),
   },
   {
     id: 'k8s-3.q.chain',
     kind: 'order',
     concepts: ['k8s.rebuildable'],
-    prompt: bi('Расставьте по порядку звенья, которые собирают кластер из кода.', 'Put the links of building a cluster from code in order.'),
+    prompt: bi('Расставьте по порядку звенья, которые собирают кластер через Terraform и Ansible.', 'Put the links of building a cluster built with Terraform and Ansible in order.'),
     steps: [
       { id: 'tf', text: bi('Terraform создаёт сеть и ВМ с метками', 'Terraform creates the network and the VMs with labels') },
       { id: 'out', text: bi('terraform output отдаёт инвентарь для Ansible', 'terraform output hands the inventory to Ansible') },
