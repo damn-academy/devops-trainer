@@ -63,6 +63,9 @@ pub struct Memory {
     /// Experimental external shared RAM; never serialized as a single-hart snapshot.
     #[serde(skip)]
     pub shared_bytes: usize,
+    /// SMP: byte offset of this hart's store lock in the granule memory.
+    #[serde(skip)]
+    pub(crate) smp_lock: u64,
     #[serde(skip)]
     pub metrics: crate::metrics::Metrics,
     #[serde(skip)]
@@ -105,6 +108,7 @@ impl Memory {
     pub fn new(bytes: usize) -> Self {
         Self {
             shared_bytes: 0,
+            smp_lock: 0,
             metrics: Default::default(),
             jit_epoch: 0,
             jit_code: vec![0; (bytes + 4095) / 4096],
@@ -180,7 +184,7 @@ impl Memory {
         if self.shared_bytes != 0 {
             if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| off.checked_add(size as u64).is_some_and(|end| end <= self.shared_bytes as u64)) {
                 if !matches!(size, 1 | 2 | 4 | 8) { return Err(access.fault(addr)); }
-                return Ok(crate::wasm::shared_access(0, off as u32, size as u32, 0));
+                return Ok(crate::wasm::shared_load(off as u32, size as u32));
             }
         }
         if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| *off <= self.ram_size() as u64) {
@@ -215,7 +219,7 @@ impl Memory {
         if self.shared_bytes != 0 {
             if let Some(off) = addr.checked_sub(RAM_BASE).filter(|off| off.checked_add(size as u64).is_some_and(|end| end <= self.shared_bytes as u64)) {
                 if !matches!(size, 1 | 2 | 4 | 8) { return Err(Access::Write.fault(addr)); }
-                crate::wasm::shared_access(1, off as u32, size as u32, value);
+                crate::wasm::shared_store(off as u32, size as u32, value);
                 return Ok(());
             }
         }
@@ -248,6 +252,36 @@ impl Memory {
         }
         Ok(())
     }
+    /// Bulk device DMA into guest RAM. One shared-bus transaction per buffer:
+    /// SMP harts observe the same lock, reservation-granule and code-page
+    /// generation protocol as for individual stores.
+    pub fn dma_write(&mut self, addr: u64, data: &[u8]) -> Result<(), ()> {
+        if data.is_empty() { return Ok(()); }
+        let off = self.dma_offset(addr, data.len())?;
+        #[cfg(target_arch = "wasm32")]
+        if self.shared_bytes != 0 { crate::wasm::shared_dma_write(off as u32, data); return Ok(()); }
+        self.ensure_ram(off, data.len());
+        self.ram[off..off + data.len()].copy_from_slice(data);
+        for page in off / 4096..=(off + data.len() - 1) / 4096 {
+            if self.jit_code[page] != 0 { self.metrics.dma_code_pages += 1; self.jit_pages[page] = self.jit_pages[page].wrapping_add(1); self.jit_code[page] = 0; }
+            self.code[page] = None;
+        }
+        Ok(())
+    }
+    pub fn dma_read(&mut self, addr: u64, out: &mut [u8]) -> Result<(), ()> {
+        if out.is_empty() { return Ok(()); }
+        let off = self.dma_offset(addr, out.len())?;
+        #[cfg(target_arch = "wasm32")]
+        if self.shared_bytes != 0 { crate::wasm::shared_dma_read(off as u32, out); return Ok(()); }
+        self.ensure_ram(off, out.len());
+        out.copy_from_slice(&self.ram[off..off + out.len()]);
+        Ok(())
+    }
+    fn dma_offset(&self, addr: u64, len: usize) -> Result<usize, ()> {
+        let off = addr.checked_sub(RAM_BASE).ok_or(())?;
+        if off.checked_add(len as u64).ok_or(())? > self.ram_size() as u64 { return Err(()); }
+        Ok(off as usize)
+    }
     // Cache is physically indexed. Every RAM writer, including virtqueue DMA,
     // goes through physical_write/load_image and invalidates the affected page.
     pub fn decoded(&mut self, pa: u64) -> Option<Decoded> {
@@ -255,8 +289,7 @@ impl Memory {
         if self.shared_bytes != 0 {
             let off = pa.checked_sub(RAM_BASE)?;
             if off & 1 != 0 || off & 4095 == 4094 || off + 4 > self.shared_bytes as u64 { return None; }
-            let raw = (crate::wasm::shared_access(0, off as u32, 2, 0) as u32) |
-                ((crate::wasm::shared_access(0, off as u32 + 2, 2, 0) as u32) << 16);
+            let raw = crate::wasm::shared_fetch(off as u32);
             return if raw & 3 == 3 { Some(Decoded::new(raw, raw, 4)) }
                 else { Some(Decoded::new(raw & 65535, crate::compressed::expand(raw as u16)?, 2)) };
         }

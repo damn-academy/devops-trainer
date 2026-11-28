@@ -4,7 +4,8 @@
 set -euo pipefail
 [[ ${CARGO_HOME:-} == /work/cargo ]]
 root=/work/tests/arch-test
-out=/work/tests/arch-results
+out=${RV64_ARCH_OUT:-/work/tests/arch-results}
+runner=${RV64_RUNNER:-/work/target/release/rv64-runner}
 mkdir -p "$out"
 pass=0; fail=0; build_fail=0
 for group in I M C D; do
@@ -16,7 +17,7 @@ for group in I M C D; do
       echo "BUILD_FAIL $name"; build_fail=$((build_fail+1)); continue
     fi
     if timeout 30 /work/tools/bin/spike --isa=rv64imafdc_zicsr_zifencei_zicntr_zba_zbb_zbs +signature="$out/$name.spike" "$out/$name.elf" > "$out/$name.spike.log" 2>&1 &&
-       /work/target/release/rv64-runner --elf "$out/$name.elf" --signature "$out/$name.engine" > "$out/$name.engine.log" 2>&1 &&
+       "$runner" --elf "$out/$name.elf" --signature "$out/$name.engine" > "$out/$name.engine.log" 2>&1 &&
        cmp -s "$out/$name.spike" "$out/$name.engine"; then
       echo "PASS $name"; pass=$((pass+1))
     else echo "FAIL $name"; fail=$((fail+1))

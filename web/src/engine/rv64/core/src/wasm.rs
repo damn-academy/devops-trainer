@@ -8,13 +8,31 @@ extern "C" {
     pub(crate) fn shared_access(op: u32, offset: u32, size: u32, value: u64) -> u64;
     #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedImage)]
     pub(crate) fn shared_image(offset: u32, bytes: &[u8]);
-    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedCas)]
-    pub(crate) fn shared_cas(offset: u32, expected: u64, value: u64) -> u64;
-    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedGeneration)]
-    pub(crate) fn shared_generation(page: u32) -> u32;
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedDmaWrite)]
+    pub(crate) fn shared_dma_write(offset: u32, bytes: &[u8]);
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedDmaRead)]
+    pub(crate) fn shared_dma_read(offset: u32, bytes: &mut [u8]);
     #[wasm_bindgen(js_namespace = globalThis, js_name = rv64SharedMmio)]
     pub(crate) fn shared_mmio(write: bool, address: u64, size: u32, value: u64) -> u64;
 }
+// Direct shared-bus imports, provided by smp.ts sharedAccessModule() as wasm
+// functions: no JS frame, no BigInt. Offsets are guest-physical RAM offsets,
+// bounded and aligned by the callers; stores follow the shared write protocol.
+#[link(wasm_import_module = "rv64shared")]
+extern "C" {
+    #[link_name = "load"] fn bus_load(offset: u32, size: u32) -> u64;
+    #[link_name = "store"] fn bus_store(offset: u32, size: u32, value: u64);
+    #[link_name = "fetch"] fn bus_fetch(offset: u32) -> u32;
+    #[link_name = "generation"] fn bus_generation(page: u32) -> u32;
+    #[link_name = "cas"] fn bus_cas(offset: u32, expected: u64, value: u64) -> u64;
+    #[link_name = "mark"] fn bus_mark(page: u32);
+}
+#[inline] pub(crate) fn shared_load(offset: u32, size: u32) -> u64 { unsafe { bus_load(offset, size) } }
+#[inline] pub(crate) fn shared_store(offset: u32, size: u32, value: u64) { unsafe { bus_store(offset, size, value) } }
+#[inline] pub(crate) fn shared_fetch(offset: u32) -> u32 { unsafe { bus_fetch(offset) } }
+#[inline] pub(crate) fn shared_generation(page: u32) -> u32 { unsafe { bus_generation(page) } }
+#[inline] pub(crate) fn shared_mark_code(page: u32) { unsafe { bus_mark(page) } }
+#[inline] pub(crate) fn shared_cas(offset: u32, expected: u64, value: u64) -> u64 { unsafe { bus_cas(offset, expected, value) } }
 #[wasm_bindgen]
 pub struct Engine {
     cpu: Cpu,
@@ -69,6 +87,8 @@ impl Engine {
         self.cpu.csr[0x300] &= !(1 << 1);
         self.cpu.memory.flush();
     }
+    /// Offset of this hart's store lock in the granule memory (smp.ts lockBase).
+    pub fn smp_store_lock(&mut self, offset: u32) { self.cpu.memory.smp_lock = offset as u64; }
     pub fn smp_request(&mut self) -> Vec<u64> { self.cpu.smp_request.take().map_or_else(Vec::new, |v| v.to_vec()) }
     pub fn smp_reply(&mut self, error: i64, value: u64) { self.cpu.x[10] = error as u64; self.cpu.x[11] = value; }
     pub fn smp_ipi(&mut self) { self.cpu.memory.metrics.remote_ipis += 1; self.cpu.csr[0x344] |= 2; }
@@ -94,7 +114,17 @@ impl Engine {
         self.cpu.time(ticks as u64);
         self.cpu.csr[0x344] = (self.cpu.csr[0x344] & !((1 << 11) | (1 << 9))) | external;
         self.profiled_run_once(count);
-        if self.cpu.stopped { 2 } else if self.cpu.waiting { 1 } else { 0 }
+        // Bits 0-1: 0 running, 1 waiting (WFI), 2 stopped. Bit 2: an SBI request
+        // is queued for smp_request(). Bit 3: console bytes are queued for output().
+        (if self.cpu.stopped { 2 } else if self.cpu.waiting { 1 } else { 0 })
+            | (self.cpu.smp_request.is_some() as u32) << 2
+            | ((!self.cpu.console.is_empty() || !self.cpu.memory.devices.console.is_empty()) as u32) << 3
+    }
+    /// Device-engine work queued for the host: bit 0 transmit frames, bit 1
+    /// console bytes, bit 2 missing disk chunks.
+    pub fn smp_device_pending(&self) -> u32 {
+        let d = &self.cpu.memory.devices;
+        (!d.net_tx.is_empty() as u32) | (!d.console.is_empty() as u32) << 1 | (!d.disk_missing.is_empty() as u32) << 2
     }
     pub fn smp_device_read(&mut self, address: u64) -> u64 { self.cpu.memory.devices.read(address).unwrap_or(0) }
     pub fn smp_device_write(&mut self, address: u64, value: u32) { self.cpu.memory.devices.write(address, value); }
@@ -187,21 +217,21 @@ impl Engine {
     pub fn test_cycles(&self) -> f64 { self.cpu.cycles as f64 }
     pub fn jit_retired(&self) -> f64 { self.cpu.jit.retired as f64 }
     pub fn metrics(&self) -> String { self.cpu.memory.metrics.json() }
-    pub fn jit_clear(&mut self) { self.cpu.memory.metrics.jit_cache_clears += 1; self.cpu.jit.entries.clear(); self.cpu.jit.chain.clear(); self.cpu.jit.ready.clear(); self.cpu.jit.code.clear(); }
+    pub fn jit_clear(&mut self) { self.cpu.memory.metrics.jit_cache_clears += 1; self.cpu.jit.entries.clear(); self.cpu.jit.chain.clear(); self.cpu.jit.ready.clear(); self.cpu.jit.code.clear(); self.cpu.jit.owners.clear(); }
     // Called only at a host quiescent boundary, before recycling table slots.
     pub fn jit_usage(&self, ids: &[u32]) -> f64 {
         ids.iter().map(|id| self.cpu.jit.last_used.get(*id as usize).copied().unwrap_or(0)).max().unwrap_or(0) as f64
     }
     pub fn jit_evict(&mut self, ids: &[u32]) {
-        let ids: std::collections::HashSet<u32> = ids.iter().copied().collect();
+        let ids: crate::jit::FastSet<u32> = ids.iter().copied().collect();
         self.cpu.memory.metrics.jit_cache_evictions += ids.len() as u64;
-        self.cpu.jit.ready.retain(|id, _| !ids.contains(id));
-        self.cpu.jit.code.retain(|_, (id, _)| !ids.contains(id));
-        for entry in &mut self.cpu.jit.chain {
-            if ids.contains(&entry.id) { entry.slot = 0; }
-        }
-        for entry in &mut self.cpu.jit.entries {
-            if entry.as_ref().is_some_and(|e| ids.contains(&e.id)) { *entry = None; }
+        let jit = &mut self.cpu.jit;
+        for id in &ids {
+            jit.ready.remove(id);
+            let Some((key, index)) = jit.owners.remove(id) else { continue };
+            if jit.code.get(&key).is_some_and(|(owner, _)| owner == id) { jit.code.remove(&key); }
+            if let Some(entry) = jit.chain.get_mut(index as usize) { if entry.id == *id { entry.slot = 0; } }
+            if let Some(entry) = jit.entries.get_mut(index as usize) { if entry.as_ref().is_some_and(|e| e.id == *id) { *entry = None; } }
         }
     }
     pub fn jit_share_abi(&self) -> u32 { 12 }

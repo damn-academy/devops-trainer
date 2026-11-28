@@ -147,17 +147,22 @@ function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJi
       emit(...(shared ? [0x41,...sleb(64n)] : [...frame(16),0xa7]),0x20,40,0xa7,0x6a,0x21,42);
       if (shared) {
         if (store) {
-          // Match SharedHartMemory's writer lock, including LR/SC and subword
-          // helper RMWs. Bounded execution cannot service a fence ACK mid-store.
-          emit(0x03,0x40,0x41,0,0x41,0,0x41,1,...atomic(0x48,2,1),0x0d,0,0x0b);
+          // Hold this hart's lock (frame[6] in SMP: its offset in the granule
+          // memory), which excludes LR/SC, AMOs and other all-hart writers
+          // but not other harts' plain stores. Bounded execution cannot
+          // service a fence ACK mid-store, so spin rather than sleep.
+          emit(...frame(48),0xa7,0x21,46);
+          emit(0x03,0x40,0x20,46,0x41,0,0x41,1,...atomic(0x48,2,3),0x0d,0,0x0b);
           emit(0x20,42,...get(b),...atomic([0x1b,0x1c,0x1d,0x18][f]!,f,1));
-          emit(0x41,8,...constant(1n),...atomic(0x1f,3,1),0x1a);
-          emit(0x20,42,0x41,7,0x76,0x41,2,0x74,0x41,1,...atomic(0x1e,2,3),0x1a);
-          // Publish every page write, just like helpers. No private code bitmap
-          // can prove a page is not executable on another hart.
-          emit(0x20,40,0xa7,0x41,12,0x76,0x41,2,0x74,0x41,1,...atomic(0x1e,2,2),0x1a);
-          emit(0x41,0,0x41,0,...atomic(0x17,2,1));
-          emit(0x41,0,0x41,1,...atomic(0,2,1),0x1a);
+          // Publish the write to its reservation granule and code page only
+          // if they carry the bit-31 flag (set under this lock by LR, and by
+          // jit.rs before decoding a page). Plain data stores skip both RMWs.
+          const flagged = (index: number[], memory: number) => emit(...index,0x22,41,...atomic(0x10,2,memory),0x41,0,0x48,
+            0x04,0x40,0x20,41,0x41,1,...atomic(0x1e,2,memory),0x1a,0x0b);
+          flagged([0x20,42,0x41,7,0x76,0x41,2,0x74],3);
+          flagged([0x20,40,0xa7,0x41,12,0x76,0x41,2,0x74],2);
+          // Release; notify only if an all-hart writer marked it contended (2).
+          emit(0x20,46,0x41,0,...atomic(0x41,2,3),0x41,2,0x46,0x04,0x40,0x20,46,0x41,1,...atomic(0,2,3),0x1a,0x0b);
           emit(0x20,1,...constant(1n),0x37,3,72);
         } else {
           emit(0x20,42,...atomic([0x14,0x15,0x16,0x11,0x14,0x15,0x16][f]!,f&3,1));
@@ -238,7 +243,7 @@ function body(block: Block, chain: boolean, nextIndex: number, shared?: SharedJi
   }
   const last = block.words[block.words.length - 2]! & 127;
   if (![0x63, 0x67, 0x6f].includes(last)) emit(...constant(pc), 0x21, 34);
-  const prefix: number[] = [2, 39, 0x7e, 5, 0x7f]; // 2..33: x registers; 34: PC; 35..40: i64 scratch; 41..43: TLB/address/count
+  const prefix: number[] = [2, 39, 0x7e, 6, 0x7f]; // 2..33: x registers; 34: PC; 35..40: i64 scratch; 41..45: TLB/address/count/TLB counters; 46: SMP lock
   if (looping) for (const r of used) if (r) prefix.push(0x20, 0, 0x29, 3, ...uleb(r * 8), 0x21, r + 2);
   if (chain) prefix.push(...frame(8),0xa7,0x21,43,...frame(104),0xa7,0x21,44,...frame(112),0xa7,0x21,45);
   spill(); count(block.words.length/2);

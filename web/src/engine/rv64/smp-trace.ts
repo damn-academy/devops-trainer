@@ -1,11 +1,11 @@
-import { atomicModule, RESERVATION_GRANULE } from './smp';
+import { atomicModule, sharedTable, granuleTableBytes } from './smp';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown };
 const samples: unknown[] = [];
 try {
   for (const harts of [2, 4]) {
     const bytes = 32 << 20, pages = bytes / 65536 + 1;
     const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
-    const module = atomicModule(pages), generations = new SharedArrayBuffer(bytes / 4096 * 4), granules = new SharedArrayBuffer(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4), barrier = new SharedArrayBuffer(4);
+    const module = atomicModule(pages), generations = sharedTable(bytes / 4096 * 4), granules = sharedTable(granuleTableBytes(memory.buffer.byteLength)), barrier = new SharedArrayBuffer(4);
     const workers: Worker[] = [];
     try {
       const rows = await Promise.all(Array.from({ length: harts }, (_, hart) => new Promise((resolve, reject) => {

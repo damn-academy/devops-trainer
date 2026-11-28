@@ -42,6 +42,7 @@ case "${1:-help}" in
       cargo build --lib --locked --release --target wasm32-unknown-unknown
       mkdir -p /work/out
       /work/tools/bin/wasm-bindgen /work/target/wasm32-unknown-unknown/release/rv64_core.wasm --target web --keep-debug --out-dir /work/out --out-name rv64_core
+      python3 tools/bind-shared.py /work/out/rv64_core.js
       /work/tools/binaryen-version_123/bin/wasm-opt -O3 -g /work/out/rv64_core_bg.wasm -o /work/out/rv64_core_bg.wasm
     '
     if [[ $1 == wasm ]]; then copy_wasm; fi

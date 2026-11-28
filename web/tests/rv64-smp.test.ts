@@ -1,6 +1,6 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it } from 'vitest';
-import { atomicModule, SharedHartMemory, HartMailboxes, RESERVATION_GRANULE } from '../src/engine/rv64/smp';
+import { atomicModule, SharedHartMemory, HartMailboxes, sharedAccessModule, granuleTableBytes, lockBase, MAX_HARTS, LOCK_STRIDE, RESERVATION_GRANULE, type SharedAccessExports } from '../src/engine/rv64/smp';
 function machine() {
   const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
   const module = atomicModule(1);
@@ -30,6 +30,53 @@ describe('R3 shared wasm RAM substrate (not integrated CPU)', () => {
     a!.amo(64, 4, 'minu', 2n); expect(b!.load(64, 4)).toBe(2n);
     expect(b!.load(68, 4)).toBe(1n);
   });
+  it('publishes DMA to every touched reservation granule and code page once', () => {
+    const memory = new WebAssembly.Memory({ initial: 2, maximum: 2, shared: true });
+    const generations = new Int32Array(new SharedArrayBuffer(4 * 32)), granules = new Int32Array(new SharedArrayBuffer(granuleTableBytes(memory.buffer.byteLength)));
+    const a = new SharedHartMemory(memory, atomicModule(2), generations, granules), b = new SharedHartMemory(memory, atomicModule(2), generations, granules);
+    const bytes = Uint8Array.from({ length: 4100 }, (_, i) => i & 255);
+    b.lr(64 + 4096 + 8, 8);
+    a.dmaWrite(64 + 4090, bytes);
+    expect(b.sc(64 + 4096 + 8, 8, 1n)).toBe(false);
+    expect(b.load(64 + 4090, 1)).toBe(0n); expect(b.load(64 + 4096, 2)).toBe(6n | 7n << 8n);
+    expect([...generations.slice(0, 4)]).toEqual([1, 1, 0, 0]);
+    expect(granules[Math.floor((64 + 4090) / 128)]! & 0x7fffffff).toBe(1); expect(granules[Math.floor((64 + 4090 + 4099) / 128)]).toBe(1);
+    const out = new Uint8Array(4100); a.dmaRead(64 + 4090, out); expect(out).toEqual(bytes);
+    expect(() => a.dmaWrite(0, bytes)).toThrow(RangeError);
+  });
+  it('direct wasm bus access follows the SharedHartMemory store protocol', () => {
+    const memory = new WebAssembly.Memory({ initial: 2, maximum: 2, shared: true });
+    const generations = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true }), granules = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
+    const gens = new Int32Array(generations.buffer), grans = new Int32Array(granules.buffer);
+    const js = new SharedHartMemory(memory, atomicModule(2), gens, grans);
+    const bus = new WebAssembly.Instance(sharedAccessModule(2, 1, 1), { env: { ram: memory, generations, granules } }).exports as unknown as SharedAccessExports;
+    bus.store(0x1000, 8, 0x8877665544332211n);
+    expect(BigInt.asUintN(64, js.load(64 + 0x1000, 8))).toBe(0x8877665544332211n);
+    expect(bus.load(0x1000, 4)).toBe(0x44332211n); expect(bus.load(0x1004, 4)).toBe(0x88776655n);
+    expect(bus.load(0x1002, 2)).toBe(0x4433n); expect(bus.load(0x1007, 1)).toBe(0x88n);
+    expect(bus.fetch(0x1002)).toBe(0x66554433);
+    bus.store(0x1006, 2, 0xffffn); bus.store(0x1001, 1, 0xabn); bus.store(0x1000, 4, 0x0102_0304n | 0xf0000000n);
+    expect(BigInt.asUintN(64, js.load(64 + 0x1000, 8))).toBe(0xffff6655f1020304n);
+    expect(bus.generation(1)).toBe(4); expect(gens[1]).toBe(4);
+    expect(grans[Math.floor((64 + 0x1000) / 128)]).toBe(4);
+    expect(new BigInt64Array(memory.buffer, 8, 1)[0]).toBe(0n);
+    // LR on the JS path observes direct-bus stores and CAS.
+    js.lr(64 + 0x1000, 8); bus.store(0x1000, 8, 0xffff6655f1020304n);
+    expect(js.sc(64 + 0x1000, 8, 1n)).toBe(false);
+    const old = BigInt.asIntN(64, 0xffff6655f1020304n);
+    expect(bus.cas(0x1000, 1n, 2n)).toBe(old); expect(bus.generation(1)).toBe(5);
+    expect(bus.cas(0x1000, old, 7n)).toBe(old); expect(bus.load(0x1000, 8)).toBe(7n); expect(bus.generation(1)).toBe(6);
+    expect(new Int32Array(memory.buffer, 0, 1)[0]).toBe(0);
+    // Code-page and reservation flags live in bit 31 of the counters.
+    bus.mark(2); expect(gens[2]).toBe(-0x80000000); bus.store(0x2000, 8, 1n); expect(gens[2]).toBe(-0x80000000 + 1);
+    js.lr(64 + 0x3000, 8); expect(grans[Math.floor((64 + 0x3000) / 128)]! < 0).toBe(true);
+    // Every lock is released, and a plain bus store uses only its hart's lock.
+    const locks = lockBase(granules.buffer.byteLength, memory.buffer.byteLength) / 4;
+    expect([0, 1, 2, 3].map(h => grans[locks + h * 16])).toEqual([0, 0, 0, 0]);
+    Atomics.store(grans, locks + 16, 1); bus.store(0x2000, 8, 2n); expect(bus.load(0x2000, 8)).toBe(2n);
+    Atomics.store(grans, locks + 16, 0);
+    expect(() => sharedAccessModule(2, 1, 1, 4)).toThrow(RangeError);
+  });
   it('rejects MMIO, misalignment and overflow before touching shared RAM', () => {
     const [a] = machine();
     for (const address of [0, 65, 65536, -8, NaN]) expect(() => a!.load(address, 8)).toThrow(RangeError);
@@ -39,12 +86,15 @@ describe('R3 shared wasm RAM substrate (not integrated CPU)', () => {
 for (const harts of [2, 4]) it(`${harts} actual Workers contend on one wasm memory without lost AMOs`, async () => {
   const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
   const module = atomicModule(1), barrier = new SharedArrayBuffer(4);
-  const granules = new SharedArrayBuffer(Math.ceil(65536 / RESERVATION_GRANULE) * 4);
+  const granules = new SharedArrayBuffer(granuleTableBytes(65536));
   const workers: Worker[] = [];
   try {
     await Promise.all(Array.from({ length: harts }, () => new Promise<void>((resolve, reject) => {
       const worker = new Worker(`
         const { parentPort, workerData } = require('node:worker_threads');
+        const MAX_HARTS = ${MAX_HARTS}, LOCK_STRIDE = ${LOCK_STRIDE}, RESERVATION_GRANULE = ${RESERVATION_GRANULE};
+        ${lockBase.toString()}
+        const granuleTableBytes = ${granuleTableBytes.toString()};
         const Hart = (${SharedHartMemory.toString()});
         const h = new Hart(workerData.memory, workerData.module, undefined, new Int32Array(workerData.granules));
         const gate = new Int32Array(workerData.barrier);

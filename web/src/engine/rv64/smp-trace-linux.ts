@@ -1,5 +1,5 @@
 import { createSharedCompiler } from './shared-compiler';
-import { sharedTable, atomicModule, HartMailboxes, RESERVATION_GRANULE } from './smp';
+import { sharedTable, atomicModule, HartMailboxes, granuleTableBytes } from './smp';
 const host = globalThis as typeof globalThis & { rv64Result?: unknown };
 const output = document.querySelector('#console')!;
 const TRACE_STEPS = 1_000_000;
@@ -17,7 +17,7 @@ try {
     const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
     const module = atomicModule(pages), mail = new HartMailboxes(HARTS).words.buffer;
     const generations = sharedTable(bytes / 4096 * 4), epoch = performance.timeOrigin + performance.now();
-    const granules = sharedTable(Math.ceil(memory.buffer.byteLength / RESERVATION_GRANULE) * 4);
+    const granules = sharedTable(granuleTableBytes(memory.buffer.byteLength));
     const control = new SharedArrayBuffer(HARTS * 64), ctl = new Int32Array(control);
     for (let h = 0; h < HARTS; h++) ctl[h * 16] = 1;
     const compiler = createSharedCompiler(HARTS * 256 * 1024 * 1024, HARTS);

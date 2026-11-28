@@ -2,7 +2,7 @@
 // only its hart state. Worker 0 owns a separate device Engine and services RPCs.
 import { HTTPBlockDevice, type HTTPDisk } from './block';
 import { JitRuntime } from './jit';
-import { SharedHartMemory, HartMailboxes, type Amo, type FenceTicket } from './smp';
+import { SharedHartMemory, HartMailboxes, sharedAccessModule, lockBase, LOCK_STRIDE, type Amo, type FenceTicket } from './smp';
 interface Init {
   hostBudget?: number;
   compilerPort?: MessagePort;
@@ -20,12 +20,19 @@ interface Init {
   snap?: SharedArrayBuffer;
   initialRestore?: { blob: Uint8Array; deviceBlob?: Uint8Array };
 }
+// ES2024 Atomics.waitAsync (Chrome 87+); the project's TypeScript lib is ES2022.
+const waitAsync = (Atomics as unknown as { waitAsync(a: Int32Array, i: number, v: number, ms: number): { async: boolean; value: Promise<string> | string } }).waitAsync;
 self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
   self.onmessage = null;
   try {
     const words = new Int32Array(d.control), wide = new BigUint64Array(d.control);
     const bus = new HartMailboxes(d.harts, d.mail), ram = new SharedHartMemory(d.memory, d.module, new Int32Array(d.generations.buffer), new Int32Array(d.granules.buffer));
     const base = d.hart * 16;
+    // The core imports these wasm functions directly (module `rv64shared`).
+    const pages = (m: WebAssembly.Memory) => m.buffer.byteLength / 65536;
+    (globalThis as { rv64SharedImports?: WebAssembly.Exports }).rv64SharedImports = new WebAssembly.Instance(
+      sharedAccessModule(pages(d.memory), pages(d.generations), pages(d.granules), d.hart),
+      { env: { ram: d.memory, generations: d.generations, granules: d.granules } }).exports;
     const url = new URL('/rv64/rv64_core.js', self.location.origin).href;
     const mod = await import(/* @vite-ignore */ url); const wasm = await mod.default();
     const core = new mod.Engine(32);
@@ -33,6 +40,9 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     if (core.smp_jit_abi?.() !== 9) throw Error('Stale RV64 WASM: rebuild R9 (24-field JIT frame required)');
     if (d.compilerPort && core.jit_share_abi?.() !== 12) throw Error('Stale RV64 WASM: rebuild R12 shared JIT ABI');
     core.smp_configure(d.hart, d.bytes);
+    if (typeof core.smp_store_lock !== 'function') throw Error('Stale RV64 WASM: rebuild (smp_store_lock missing)');
+    const storeLock = lockBase(d.granules.buffer.byteLength, d.memory.buffer.byteLength) + d.hart * LOCK_STRIDE;
+    core.smp_store_lock(storeLock);
     let hostBudget = d.hostBudget;
     const newJitRuntime = () => {
       const runtime = new JitRuntime(wasm.memory, core.jit_table(), (id, slot, count) => core.jit_install(id, slot, count), () => core.jit_clear(), wasm.jit_slow,
@@ -72,7 +82,7 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
       }
       wide[base / 2 + 2] = address; wide[base / 2 + 3] = value;
       Atomics.store(words, base + 3, Number(write)); Atomics.store(words, base + 8, size);
-      Atomics.store(words, base + 2, 1);
+      Atomics.store(words, base + 2, 1); bus.kick(0);
       while (Atomics.load(words, base + 2) !== 2) {
         if (Atomics.load(words, 15)) throw Error('machine stopped during MMIO');
         Atomics.wait(words, base + 2, 1, 10);
@@ -81,10 +91,10 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
     };
     Object.assign(globalThis, {
       rv64SharedAccess: access,
-      rv64SharedGeneration: (page: number) => Atomics.load(new Int32Array(d.generations.buffer), page) >>> 0,
-      rv64SharedCas: (offset: number, expected: bigint, value: bigint) => ram.cas(offset + 64, expected, value),
       rv64SharedImage: (offset: number, bytes: Uint8Array) => new Uint8Array(d.memory.buffer, offset + 64, bytes.length).set(bytes),
       rv64SharedMmio: mmio,
+      rv64SharedDmaWrite: (offset: number, bytes: Uint8Array) => ram.dmaWrite(offset + 64, bytes),
+      rv64SharedDmaRead: (offset: number, bytes: Uint8Array) => ram.dmaRead(offset + 64, bytes),
     });
     const remote = { instructionRequests: 0, translationRequests: 0, ipiRequests: 0 };
     const service = () => {
@@ -99,12 +109,16 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
         }
         device.smp_devices();
         if (diskError) throw diskError;
-        if (disk) for (const index of device.disk_missing()) {
+        const work = device.smp_device_pending();
+        if (disk && work & 4) for (const index of device.disk_missing()) {
           if (!diskTasks.has(index)) diskTasks.set(index, disk.chunk(index).then(bytes => device.disk_chunk(index, bytes)).catch(e => { diskError = e; }).finally(() => { diskTasks.delete(index); }));
         }
-        for (let frame: Uint8Array = device.net_take(); frame.length; frame = device.net_take()) self.postMessage({ type: 'net', frame });
-        for (let hart = 0; hart < d.harts; hart++) Atomics.store(words, hart * 16 + 1, Number(device.smp_interrupts(hart)));
-        const out: Uint8Array = device.output(); if (out.length) self.postMessage({ type: 'console', hart: 0, bytes: out });
+        if (work & 1) for (let frame: Uint8Array = device.net_take(); frame.length; frame = device.net_take()) self.postMessage({ type: 'net', frame });
+        for (let hart = 0; hart < d.harts; hart++) {
+          const irq = Number(device.smp_interrupts(hart));
+          if (Atomics.exchange(words, hart * 16 + 1, irq) !== irq && irq && hart !== d.hart) bus.kick(hart);
+        }
+        if (work & 2) { const out: Uint8Array = device.output(); if (out.length) self.postMessage({ type: 'console', hart: 0, bytes: out }); }
       }
     };
     if (d.initialRestore) {
@@ -148,10 +162,11 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
       if (data.restore) restore = data.restore;
       if (data.input && device) device.input(data.input);
       if (data.frame && device) device.net_receive(data.frame);
+      bus.kick(d.hart);
     };
     const channel = new MessageChannel();
     const yieldHost = () => new Promise<void>(resolve => { channel.port1.onmessage = () => resolve(); channel.port2.postMessage(0); });
-    let yielded = performance.now(), lastTrim = performance.now();
+    let yielded = performance.now(), lastTrim = performance.now(), idleMs = 0;
     const snap = d.snap ? new Int32Array(d.snap) : undefined;
     while (!Atomics.load(words, 15)) {
       // All-hart snapshot barrier: drain outstanding work, capture this hart,
@@ -198,8 +213,9 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
         snapEpoch = 0;
         self.postMessage({ type: 'resumed', hart: d.hart });
       }
+      const now = performance.now();
       service();
-      if (device && performance.now() - lastTrim > 1000 && diskTasks.size === 0 && device.disk_cached().length > 128) {
+      if (device && now - lastTrim > 1000 && diskTasks.size === 0 && device.disk_cached().length > 128) {
         if (typeof device.disk_trim_clean !== 'function') throw Error('Rebuild R17 WASM: disk_trim_clean missing');
         device.disk_trim_clean(); lastTrim = performance.now();
       }
@@ -209,12 +225,14 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
         ram.clearReservation(); Atomics.store(words, base, 0);
       }
       if (pending && pending.every(t => bus.completed(t))) { core.smp_reply(0n, 0n); pending = undefined; }
+      let idleSequence: number | undefined;
       if (Atomics.load(words, base) === 0 && !pending) {
         let status: number;
+        const sequence = bus.wakeSequence(d.hart);
         if (stream) {
           status = core.smp_run(1, traceTicks, BigInt(Atomics.load(words, base + 1)));
           traceTicks += 10;
-          if (status === 0) {
+          if ((status & 3) === 0) {
             const ev = core.test_last_trace();
             if (ev.length >= 7) {
               for (let w = 0; w < 7; w++) stream[traced * 7 + w] = Number(ev[w]);
@@ -227,9 +245,10 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
             }
           }
         } else {
-          status = core.smp_run(2048, (performance.timeOrigin + performance.now() - d.epoch) * 10000, BigInt(Atomics.load(words, base + 1)));
+          status = core.smp_run(2048, (performance.timeOrigin + now - d.epoch) * 10000, BigInt(Atomics.load(words, base + 1)));
+          if ((status & 7) === 1) idleSequence = sequence;
         }
-        const request: BigUint64Array = core.smp_request();
+        const request: BigUint64Array = status & 4 ? core.smp_request() : new BigUint64Array();
         if (request.length) {
           const [ext, fid, a, b, c] = Array.from(request) as [bigint, bigint, bigint, bigint, bigint];
           let error = 0n, value = 0n;
@@ -252,15 +271,30 @@ self.onmessage = async ({ data: d }: MessageEvent<Init>) => {
             } else error = -2n;
           } catch (e) { if (!(e instanceof RangeError)) throw e; error = -3n; }
           if (!pending) core.smp_reply(error, value);
-        } else if (status === 2) { Atomics.store(words, 15, 1); self.postMessage({ type: 'stopped', hart: d.hart }); }
-        const out: Uint8Array = core.output(); if (out.length) self.postMessage({ type: 'console', hart: d.hart, bytes: out });
+        } else if ((status & 3) === 2) { Atomics.store(words, 15, 1); self.postMessage({ type: 'stopped', hart: d.hart }); }
+        if (status & 8) { const out: Uint8Array = core.output(); if (out.length) self.postMessage({ type: 'console', hart: d.hart, bytes: out }); }
       }
-      if (device && performance.now() - lastEntropy > 100) { device.entropy(d.trace ? new Uint8Array(4096) : crypto.getRandomValues(new Uint8Array(4096))); lastEntropy = performance.now(); }
-      if (performance.now() - lastReport > 1000) {
-        self.postMessage({ type: 'metrics', hart: d.hart, wasmMemoryBytes: wasm.memory.buffer.byteLength, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, compiler: jitRuntime.stats(), counters: JSON.parse(core.metrics()), remote: { ...remote }, pc: String(core.pc()), state: Atomics.load(words, base), guestTicks: core.guest_ticks(), hostMonotonicMs: performance.timeOrigin + performance.now(), guestProfile: profileActive ? JSON.parse(core.profile_drain()) : undefined }); lastReport = performance.now();
+      if (device && now - lastEntropy > 100) { device.entropy(d.trace ? new Uint8Array(4096) : crypto.getRandomValues(new Uint8Array(4096))); lastEntropy = now; }
+      if (now - lastReport > 1000) {
+        self.postMessage({ type: 'metrics', hart: d.hart, wasmMemoryBytes: wasm.memory.buffer.byteLength, retired: core.retired(), jitRetired: core.jit_retired(), compiled: jitRuntime.compiled, compiler: jitRuntime.stats(), counters: JSON.parse(core.metrics()), remote: { ...remote }, pc: String(core.pc()), state: Atomics.load(words, base), idleMs, guestTicks: core.guest_ticks(), hostMonotonicMs: performance.timeOrigin + performance.now(), guestProfile: profileActive ? JSON.parse(core.profile_drain()) : undefined }); lastReport = performance.now();
+      }
+      // A hart in WFI sleeps until its timer deadline, an IPI/fence/start
+      // request, an external interrupt change, a device request (hart 0) or a
+      // host message; a bounded timeout covers snapshot and stop requests.
+      if (idleSequence !== undefined) {
+        const limit = device ? (diskTasks.size ? 1 : 4) : 10;
+        // A WFI hart past its deadline has the timer interrupt masked.
+        const deadline = core.deadline_ms(), ms = deadline > 0 ? Math.min(deadline, limit) : limit;
+        if (ms >= 0.05) {
+          jitRuntime.flush();
+          const slept = performance.now();
+          const wait = waitAsync(bus.words, d.hart * HartMailboxes.stride, idleSequence, ms);
+          if (wait.async) await wait.value; else await yieldHost();
+          yielded = performance.now(); idleMs += yielded - slept; continue;
+        }
       }
       // Yield to host input without blocking the device server or incoming fences.
-      if (performance.now() - yielded >= 8) { jitRuntime.flush(); await yieldHost(); yielded = performance.now(); }
+      if (now - yielded >= 8) { jitRuntime.flush(); await yieldHost(); yielded = performance.now(); }
     }
   } catch (e) { self.postMessage({ type: 'error', hart: d.hart, error: String(e) }); }
 };

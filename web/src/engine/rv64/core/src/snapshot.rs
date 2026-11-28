@@ -53,6 +53,7 @@ impl Cpu {
         // Shared geometry is a property of the restoring runtime, not the blob:
         // shared_bytes is never serialized (see Memory), so adopt ours.
         restored.memory.shared_bytes = self.memory.shared_bytes;
+        restored.memory.smp_lock = self.memory.smp_lock;
         restored.memory.devices.extra_enable = enable;
         restored.memory.devices.extra_threshold = threshold;
         restored.memory.devices.disk_dirty = restored.memory.devices.disk_chunks.keys().copied().collect();
