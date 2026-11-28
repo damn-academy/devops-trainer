@@ -43,13 +43,18 @@ try {
   await press('Escape', 2500);
   const falseAlarm = await layoutShown();
   await type('u', 1500);
-  await type('цц', 2500);
-  log({ step: 'layout.vim', insertModeAlarm: falseAlarm, normalModeNotice: await layoutShown(), text: await page.locator('.ed-layout span').textContent() });
+  const tl = Date.now();
+  await type('цц', 0);
+  const noticed = await page.locator('.ed-layout').waitFor({ state: 'visible', timeout: 15000 }).then(() => true, () => false);
+  log({ step: 'layout.vim', insertModeAlarm: falseAlarm, normalModeNotice: noticed, ms: Date.now() - tl, text: await page.locator('.ed-layout span').textContent() });
   await hideLayout();
   await type('/debug\n');
   await type('cwrelease');
   await press('Escape');
   log({ step: 'vim.mode', mode: await modeLine() });
+  // What the tutor would get now: the rendered screen and the editor state.
+  const tutor = await page.evaluate(async () => (await import('/src/engine/ai/context.ts')).terminalTail());
+  log({ step: 'tutor.vim', lines: tutor.length, chars: tutor.join('\n').length, head: tutor[0], state: tutor.at(-1) });
   let t = Date.now();
   await type(':w\n');
   log({ step: 'vim-word', done: await done('vim-word'), ms: Date.now() - t });
@@ -75,6 +80,8 @@ try {
   await press('Control+g', 500);
   await hideLayout();
   log({ step: 'layout.emacs', chordNotice: emacsNotice });
+  const tutorE = await page.evaluate(async () => (await import('/src/engine/ai/context.ts')).terminalTail());
+  log({ step: 'tutor.emacs', lines: tutorE.length, state: tutorE.at(-1) });
   await press('Control+n');
   await press('Control+a');
   await press('Control+k');

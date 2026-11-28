@@ -36,7 +36,31 @@ export function pushTerminal(line: string, out: string, exit: number): void {
   if (lines.length > MAX_LINES) lines.splice(0, lines.length - MAX_LINES);
 }
 
+/**
+ * A widget whose terminal holds a fullscreen program (an editor) can give the
+ * tutor a better picture than the command tail: the rendered screen and the
+ * program's state. Providers return null when they have nothing to say.
+ */
+export type TerminalContextProvider = () => string[] | null;
+const providers = new Set<TerminalContextProvider>();
+/** Lines and characters a provider may hand over, whatever it returns. */
+export const PROVIDER_LIMITS = { lines: 60, chars: 200 } as const;
+
+export function registerTerminalContext(fn: TerminalContextProvider): () => void {
+  providers.add(fn);
+  return () => providers.delete(fn);
+}
+
 export function terminalTail(): string[] {
+  for (const fn of providers) {
+    let got: string[] | null = null;
+    try {
+      got = fn();
+    } catch {
+      got = null;
+    }
+    if (got?.length) return got.slice(-PROVIDER_LIMITS.lines).map((l) => maskSecrets(l).slice(0, PROVIDER_LIMITS.chars));
+  }
   return [...lines];
 }
 

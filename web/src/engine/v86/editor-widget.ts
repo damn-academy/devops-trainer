@@ -27,7 +27,8 @@ import { formatMB, labDownloadBytes, loadLabManifest } from './assets';
 import { shouldAutostart } from './component';
 import type { ConsoleHandle } from './console';
 import { editorScopesOf, type EditorArea, type EditorKind } from './editor-facts';
-import { editorOnly, exitHint, isMac, keyboardLockSupport, nonLatinChord, nonLatinNotice, PANEL_KEYS, panelsFor, predicates, statusLine, type EditorLabProps } from './editor-keys';
+import { registerTerminalContext } from '../ai/context';
+import { editorOnly, exitHint, mentorEditorContext, isMac, keyboardLockSupport, nonLatinChord, nonLatinNotice, PANEL_KEYS, panelsFor, predicates, statusLine, type EditorLabProps } from './editor-keys';
 
 export type { EditorLabProps };
 import type { BootPhase, V86Machine } from './machine';
@@ -167,6 +168,14 @@ export function mountEditorLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx)
       layoutSeen.set(id, n.count);
     }
   };
+  // The tutor: while an editor is open it sees the rendered screen and the editor state, not the command tail.
+  const unregisterTutor = registerTerminalContext(() => {
+    if (!con || !lastArea?.editor.active) return null;
+    const b = con.terminal.buffer.active;
+    const screen = Array.from({ length: con.terminal.rows }, (_, i) => b.getLine(b.viewportY + i)?.translateToString(true) ?? '');
+    return mentorEditorContext(screen, lastArea);
+  });
+
   const drawExit = (active: EditorKind | null) => {
     clear(exitLine);
     exitLine.append(...renderInline(t(exitHint(active, editors))));
@@ -377,6 +386,7 @@ export function mountEditorLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx)
       disposed = true;
       clearTimeout(checkTimer);
       clearTimeout(layoutTimer);
+      unregisterTutor();
       window.removeEventListener('beforeunload', onBeforeUnload);
       document.removeEventListener('fullscreenchange', onFullscreen);
       con?.dispose();

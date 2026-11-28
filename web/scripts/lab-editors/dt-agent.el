@@ -68,6 +68,17 @@
               ((numberp v) (push (cons (intern k) (number-to-string v)) out)))))
     (or (nreverse out) :null)))
 
+(defun dt-agent--last-message ()
+  "The last line of *Messages* (errors land there too), or :null."
+  (let ((b (get-buffer "*Messages*")))
+    (if (not b) :null
+      (with-current-buffer b
+        (save-excursion
+          (goto-char (point-max))
+          (skip-chars-backward "\n")
+          (let ((line (buffer-substring-no-properties (line-beginning-position) (point))))
+            (if (string-empty-p line) :null (dt-agent--str line 300))))))))
+
 (defun dt-agent-state ()
   "The editor state as an alist, ready for `json-serialize'."
   (let* ((win (selected-window))
@@ -91,6 +102,7 @@
       (minibuffer . ,(dt-agent--bool (active-minibuffer-window)))
       (windows . ,(vconcat (mapcar (lambda (w) `((buffer . ,(buffer-name (window-buffer w))) (point . ,(window-point w)) (start . ,(window-start w)) (height . ,(window-height w)) (width . ,(window-width w)))) (window-list nil 'no-minibuf))))
       (lastcommand . ,(if (symbolp last-command) (symbol-name last-command) :null))
+      (message . ,(dt-agent--last-message))
       (cwd . ,(expand-file-name default-directory)))))
 
 (defun dt-agent-json ()

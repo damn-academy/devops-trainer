@@ -199,3 +199,55 @@ export function editorOnly(task: Task): boolean {
   });
 }
 
+// ── what the tutor sees while an editor is open ───────────────────────────
+
+const cutLine = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
+
+/**
+ * The compact state of the editor in front for the tutor: mode, buffer,
+ * cursor, a few lines around it, registers or the kill ring head, the last
+ * error message. Bounded to about 1.5 KB.
+ */
+export function mentorEditorState(area: EditorArea | null): Record<string, unknown> | null {
+  const kind = area?.editor.active;
+  if (!area || !kind) return null;
+  const f = area[kind];
+  if (!f.instrumented || f.source === 'none') return { editor: kind, instrumented: false };
+  const buf = (f.buf ?? {}) as Record<string, unknown>;
+  const text = typeof buf.text === 'string' ? buf.text.split('\n') : [];
+  const cursor = kind === 'emacs' ? { line: Number(buf.line) || 1, col: Number(buf.column) || 0 } : { line: Number((f.cursor as { lnum?: number })?.lnum) || 1, col: Number((f.cursor as { col?: number })?.col) || 1 };
+  const from = Math.max(0, cursor.line - 6);
+  const around = text.slice(from, cursor.line + 5).map((l, i) => `${from + i + 1}${from + i + 1 === cursor.line ? '>' : ':'} ${cutLine(l, 120)}`);
+  const out: Record<string, unknown> = {
+    editor: kind,
+    buffer: buf.file || buf.name || '',
+    modified: buf.modified === true,
+    cursor,
+    around,
+  };
+  if (kind === 'emacs') {
+    out.major = f.major;
+    out.killhead = typeof f.killhead === 'string' ? cutLine(f.killhead, 120) : null;
+    out.minibuffer = f.minibuffer;
+    if (typeof f.message === 'string') out.message = cutLine(f.message, 200);
+  } else {
+    out.mode = f.mode;
+    if (f.recording) out.recording = f.recording;
+    const reg = (f.reg ?? {}) as Record<string, string>;
+    const regs: Record<string, string> = {};
+    for (const r of ['"', '0', '.', '/', ...'abcdefghijklmnopqrstuvwxyz']) if (reg[r]) regs[r] = cutLine(reg[r], 60);
+    out.registers = regs;
+    if (typeof f.errmsg === 'string' && f.errmsg) out.error = cutLine(f.errmsg, 200);
+  }
+  return out;
+}
+
+/** The tutor's terminal context while an editor is open: the rendered screen, then the state line. */
+export function mentorEditorContext(screen: string[], area: EditorArea | null): string[] | null {
+  const state = mentorEditorState(area);
+  if (!state) return null;
+  const rows = screen.map((l) => cutLine(l.replace(/\s+$/, ''), 160));
+  while (rows.length && !rows[rows.length - 1]) rows.pop();
+  const json = JSON.stringify(state);
+  return ['[editor screen]', ...rows.slice(-40), '[editor state]', json.length > 1600 ? json.slice(0, 1599) + '…' : json];
+}
