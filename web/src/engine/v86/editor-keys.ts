@@ -104,6 +104,53 @@ function short(s: string): string {
   return one.length > 24 ? one.slice(0, 23) + '…' : one;
 }
 
+/** How to leave the editor in front, shown under the terminal at every step (no hint level hides it). */
+export function exitHint(active: EditorKind | null, editors: readonly EditorKind[]): Bi {
+  const vim = bi('Выйти из Vim без сохранения: Esc, затем `:q!` и Enter; с сохранением: `:wq`.', 'Leave Vim without saving: Esc, then `:q!` and Enter; with saving: `:wq`.');
+  const nvim = bi('Выйти из Neovim без сохранения: Esc, затем `:q!` и Enter; с сохранением: `:wq`.', 'Leave Neovim without saving: Esc, then `:q!` and Enter; with saving: `:wq`.');
+  const emacs = bi('Выйти из Emacs: `C-x C-c`; на вопрос о сохранении ответьте `y` или `n`. Отменить начатую команду: `C-g`.', 'Leave Emacs: `C-x C-c`, then answer `y` or `n` to the question about saving. Cancel a command in progress: `C-g`.');
+  if (active === 'vim') return vim;
+  if (active === 'nvim') return nvim;
+  if (active === 'emacs') return emacs;
+  const parts = [...new Set(editors)].map((e) => (e === 'emacs' ? emacs : e === 'nvim' ? nvim : vim));
+  return bi(parts.map((x) => x.ru).join(' '), parts.map((x) => x.en).join(' '));
+}
+
+/** A letter outside ASCII: what a Russian (or another non-Latin) layout sends instead of a command key. */
+const NON_LATIN = /[^\x00-\x7f]/u;
+
+/**
+ * Emacs takes non-Latin letters as text, so only chords give a wrong layout
+ * away: Meta (ESC) or the C-x and C-c prefixes followed by a non-Latin letter
+ * (`M-ч` for `M-x`, `C-x л` for `C-x k`). `prev` is the last character of the
+ * previous input chunk. Returns the chord, or null.
+ */
+export function nonLatinChord(prev: string, data: string): string | null {
+  const s = [...(prev + data)];
+  for (let i = 1; i < s.length; i++) {
+    if (!NON_LATIN.test(s[i]) || !/\p{L}/u.test(s[i])) continue;
+    const before = s[i - 1];
+    if (before === '\x1b') return `M-${s[i]}`;
+    if (before === '\x18') return `C-x ${s[i]}`;
+    if (before === '\x03') return `C-c ${s[i]}`;
+  }
+  return null;
+}
+
+/** The gentle notice about the layout. */
+export function nonLatinNotice(kind: EditorKind, key: string): Bi {
+  if (kind === 'emacs')
+    return bi(
+      `Похоже, включена русская или другая нелатинская раскладка: Emacs получил \`${key}\`, а сочетания клавиш в нём набираются латинскими буквами. Переключите раскладку на английскую и повторите сочетание.`,
+      `It looks like a Russian or another non-Latin layout is on: Emacs received \`${key}\`, while its key bindings use Latin letters. Switch the layout to English and repeat the keys.`,
+    );
+  const name = kind === 'nvim' ? 'Neovim' : 'Vim';
+  return bi(
+    `Похоже, включена русская или другая нелатинская раскладка: ${name} получил \`${key}\` в нормальном режиме, а команды в нём набираются латинскими буквами. Переключите раскладку на английскую. Текст на русском можно набирать в режиме вставки.`,
+    `It looks like a Russian or another non-Latin layout is on: ${name} received \`${key}\` in Normal mode, while its commands use Latin letters. Switch the layout to English. Russian text can be typed in Insert mode.`,
+  );
+}
+
 export interface KeyboardLockSupport {
   fullscreen: boolean;
   lock: boolean;

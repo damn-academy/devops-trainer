@@ -12,3 +12,9 @@
 .ed-shell:fullscreen .ed-mode { color: var(--term-fg, var(--ink-2)); }
 .ed-honest:empty, .ed-lock:empty { display: none; }
 .ed-meta { display: inline-flex; gap: 4px; align-items: center; margin: 4px 0; }
+.ed-exit { margin: 0; color: var(--ink-2); }
+.ed-shell:fullscreen .ed-exit { color: var(--term-fg, var(--ink-2)); }
+.ed-layout { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--surface); color: var(--ink); }
+.ed-layout[hidden] { display: none; }
+.ed-layout .ic { flex: none; }
+.ed-layout span { flex: 1 1 260px; }

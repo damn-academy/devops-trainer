@@ -10,7 +10,7 @@ import { evaluateCheck } from '../src/core/check';
 import type { Facts } from '../src/core/types';
 import { EDITOR_DEMO_TASKS } from '../src/engine/v86/editor-demo';
 import { editorInstances, editorKindOf, editorProbeScript, editorScopesOf, editorStateScript, parseEditorProbe, parseEditorState, probeSignature } from '../src/engine/v86/editor-facts';
-import { editorOnly, keyboardLockSupport, PANEL_KEYS, panelsFor, statusLine } from '../src/engine/v86/editor-keys';
+import { editorOnly, exitHint, keyboardLockSupport, nonLatinChord, nonLatinNotice, PANEL_KEYS, panelsFor, statusLine } from '../src/engine/v86/editor-keys';
 
 const fixture = (name: string) => {
   const p = fileURLToPath(new URL(`./fixtures/editors/${name}.txt`, import.meta.url));
@@ -187,5 +187,31 @@ describe('editor terminal', () => {
   it('feature-detects Keyboard Lock', () => {
     expect(keyboardLockSupport({ keyboard: { lock: () => Promise.resolve() } }, { fullscreenEnabled: true })).toEqual({ fullscreen: true, lock: true });
     expect(keyboardLockSupport({}, {})).toEqual({ fullscreen: false, lock: false });
+  });
+});
+
+describe('exit hint and keyboard layout', () => {
+  it('names the way out of the editor in front, or of every editor of the lab', () => {
+    expect(exitHint('vim', ['vim']).ru).toContain(':q!');
+    expect(exitHint('emacs', ['vim', 'emacs']).en).toContain('C-x C-c');
+    expect(exitHint('nvim', ['nvim']).en).toContain('Neovim');
+    const both = exitHint(null, ['vim', 'emacs']);
+    expect(both.ru).toContain(':q!');
+    expect(both.ru).toContain('C-x C-c');
+  });
+
+  it('catches Emacs chords typed in a non-Latin layout, not plain Russian text', () => {
+    expect(nonLatinChord('', '\x1bч')).toBe('M-ч');
+    expect(nonLatinChord('\x18', 'л')).toBe('C-x л');
+    expect(nonLatinChord('', '\x03ц')).toBe('C-c ц');
+    expect(nonLatinChord('', 'привет')).toBeNull();
+    expect(nonLatinChord('', '\x1bx')).toBeNull();
+    expect(nonLatinChord('', '\x1b[A')).toBeNull();
+  });
+
+  it('reads the agent counter of non-Latin letters in Normal mode', () => {
+    const a = parseEditorState(`P 120 (vim) S 100\nT vim.120.stamp 2 x\n\x1eSvim 120 socket\n${vimState({ nonlatin: { count: 2, last: 'ц', mode: 'n' } })}\n`);
+    expect(a.vim.nonlatin).toEqual({ count: 2, last: 'ц', mode: 'n' });
+    expect(nonLatinNotice('vim', 'ц').ru).toContain('режиме вставки');
   });
 });

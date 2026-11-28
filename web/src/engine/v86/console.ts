@@ -15,7 +15,7 @@ export interface ConsoleHandle {
   write(text: string): void;
   dispose(): void;
   /** The xterm.js terminal itself (the editor widget sets options and key handlers on it). */
-  terminal: { options: { macOptionIsMeta?: boolean }; focus(): void; attachCustomKeyEventHandler(fn: (ev: KeyboardEvent) => boolean): void; buffer: { active: { length: number; getLine(i: number): { translateToString(trim?: boolean): string } | undefined } } };
+  terminal: { options: { macOptionIsMeta?: boolean }; focus(): void; attachCustomKeyEventHandler(fn: (ev: KeyboardEvent) => boolean): void; onData(fn: (data: string) => void): { dispose(): void }; buffer: { active: { length: number; getLine(i: number): { translateToString(trim?: boolean): string } | undefined } } };
 }
 
 /** A previous successful start is an estimate, never a deadline. */

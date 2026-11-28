@@ -28,6 +28,8 @@ if vim.fn.filewritable(dir) ~= 2 then
 end
 
 local base = dir .. '/nvim.' .. vim.fn.getpid()
+-- Letters of a non-Latin layout typed where Neovim expects commands (Normal and Visual mode).
+local nonlatin = { count = 0, last = '', mode = '' }
 local MAXTEXT = 65536
 local REGS = '"0123456789abcdefghijklmnopqrstuvwxyz-.:/'
 local OPTS = { 'number', 'relativenumber', 'hlsearch', 'incsearch', 'ignorecase', 'smartcase', 'expandtab', 'shiftwidth', 'tabstop', 'softtabstop', 'autoindent', 'wrap', 'list', 'spell', 'spelllang', 'textwidth', 'fileformat', 'fileencoding', 'filetype', 'undofile', 'hidden', 'wrapscan', 'magic', 'iskeyword', 'nrformats', 'foldmethod', 'foldlevel', 'clipboard', 'mouse', 'virtualedit', 'scrolloff', 'modified' }
@@ -102,6 +104,8 @@ function DtState()
     local ok, v = pcall(function() return vim.o[o] end)
     if ok then s.opt[o] = v end
   end
+  s.nonlatin = nonlatin
+  s.errmsg = vim.v.errmsg
   s.lsp = {}
   for _, c in ipairs(vim.lsp.get_clients and vim.lsp.get_clients() or {}) do table.insert(s.lsp, { name = c.name, id = c.id }) end
   s.diagnostics = #vim.diagnostic.get()
@@ -127,7 +131,7 @@ end
 local last, tick = nil, 0
 local function signature()
   local q = vim.fn.getqflist({ size = 0 })
-  return table.concat({ vim.fn.changenr(), vim.b.changedtick, vim.api.nvim_get_current_buf(), vim.api.nvim_get_mode().mode, vim.fn.reg_recording(), vim.fn.winnr('$'), vim.bo.modified and 1 or 0, #vim.fn.getreg('"'), q.size or 0 }, ' ')
+  return table.concat({ nonlatin.count, vim.fn.changenr(), vim.b.changedtick, vim.api.nvim_get_current_buf(), vim.api.nvim_get_mode().mode, vim.fn.reg_recording(), vim.fn.winnr('$'), vim.bo.modified and 1 or 0, #vim.fn.getreg('"'), q.size or 0 }, ' ')
 end
 
 local server = pcall(vim.fn.serverstart, base .. '.sock')
@@ -139,6 +143,20 @@ local function bump()
   write(base .. '.stamp', tick .. ' ' .. sig)
   if not server then vim.defer_fn(write_state, 150) end
 end
+
+-- Keys before Neovim acts on them: a non-Latin letter in Normal or Visual mode is almost always
+-- a layout left on Russian. Keys that take a character argument (f, t, r, m, q, @, quotes) accept any letter.
+local prevkey = ''
+vim.on_key(function(_, typed)
+  if not typed or typed == '' then return end
+  local after = prevkey
+  prevkey = typed
+  local m = vim.api.nvim_get_mode().mode
+  if not (m == 'n' or m == 'v' or m == 'V' or m == '\22') or after:match('^[fFtTrm`\'"@q]$') then return end
+  if typed:byte(1) == 0x80 or vim.fn.strcharlen(typed) ~= 1 or typed:byte(1) < 128 then return end
+  nonlatin = { count = nonlatin.count + 1, last = typed, mode = m }
+  vim.schedule(function() pcall(bump) end)
+end, vim.api.nvim_create_namespace('dt_agent_keys'))
 
 vim.api.nvim_create_user_command('DtDone', function() write_state(); bump() end, {})
 

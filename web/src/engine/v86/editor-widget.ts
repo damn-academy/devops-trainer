@@ -27,7 +27,7 @@ import { formatMB, labDownloadBytes, loadLabManifest } from './assets';
 import { shouldAutostart } from './component';
 import type { ConsoleHandle } from './console';
 import { editorScopesOf, type EditorArea, type EditorKind } from './editor-facts';
-import { editorOnly, isMac, keyboardLockSupport, PANEL_KEYS, panelsFor, predicates, statusLine, type EditorLabProps } from './editor-keys';
+import { editorOnly, exitHint, isMac, keyboardLockSupport, nonLatinChord, nonLatinNotice, PANEL_KEYS, panelsFor, predicates, statusLine, type EditorLabProps } from './editor-keys';
 
 export type { EditorLabProps };
 import type { BootPhase, V86Machine } from './machine';
@@ -71,7 +71,7 @@ const T = {
   meta: bi('Option работает как Meta', 'Option acts as Meta'),
   metaWhy: bi('Нужно для команд Emacs вроде `M-x`. Пока переключатель включён, символы, которые набираются с Option, не вводятся.', 'Needed for Emacs commands like `M-x`. While it is on, characters typed with Option are not entered.'),
   leave: bi('Редактор ещё открыт, и несохранённые изменения пропадут.', 'An editor is still open; unsaved changes will be lost.'),
-  exitHow: bi('Выйти из Vim: Esc, затем `:q!` и Enter. Выйти из Emacs: `C-x C-c`.', 'To leave Vim: Esc, then `:q!` and Enter. To leave Emacs: `C-x C-c`.'),
+  gotIt: bi('Понятно', 'Got it'),
 };
 
 const sec = (ms: number) => (ms / 1000).toFixed(1).replace('.', t(bi(',', '.')));
@@ -109,12 +109,16 @@ export function mountEditorLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx)
   const panel = h('div.ed-keys', { role: 'toolbar', 'aria-label': t(T.keys) });
   const mode = h('div.ed-mode.small', { 'aria-live': 'polite' });
   const honest = h('p.ed-honest.small.muted');
+  const exitLine = h('p.ed-exit.small');
+  const layoutText = h('span');
+  const layoutBtn = h('button.btn.ghost.small', { type: 'button' }, t(T.gotIt));
+  const layoutNote = h('p.ed-layout.small', { role: 'status', hidden: true }, icon('warn'), layoutText, layoutBtn);
   const lockLine = h('p.ed-lock.small.muted', {}, support.lock ? '' : t(T.noLock));
   const termBox = h('div.lab-term-box.v86-term.ed-term');
-  const shell = h('div.ed-shell', {}, panel, termBox, mode);
+  const shell = h('div.ed-shell', {}, panel, layoutNote, termBox, mode, exitLine);
   const goals = h('ol.lab-goals');
   const checkLine = h('div.lab-status', { 'aria-live': 'polite' });
-  const left = h('div.lab-left', {}, props.intro ? prose(props.intro) : null, tasks.length ? h('h4.lab-h', {}, t(T.goals)) : null, tasks.length ? goals : null, checkLine, prose(T.exitHow, 'small muted'));
+  const left = h('div.lab-left', {}, props.intro ? prose(props.intro) : null, tasks.length ? h('h4.lab-h', {}, t(T.goals)) : null, tasks.length ? goals : null, checkLine);
   const right = h('div.lab-right', {}, h('div.lab-bar', {}, h('span.lab-env.v86-env', {}, icon('bolt'), t(T.env), bootLine), h('span.rl-actions', {}, checkBtn, fullBtn, resetBtn)), metaRow, shell, honest, lockLine, status);
   clear(root);
   root.append(h('div.lab.v86-lab.ed-lab', {}, left, right));
@@ -138,7 +142,40 @@ export function mountEditorLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx)
   };
   drawPanel(null);
 
+  // The layout notice: shown when a non-Latin letter arrives where commands are expected; it fades out on its own.
+  let layoutTimer = 0;
+  const showLayout = (text: Bi) => {
+    clear(layoutText);
+    layoutText.append(...renderInline(t(text)));
+    layoutNote.hidden = false;
+    clearTimeout(layoutTimer);
+    layoutTimer = window.setTimeout(() => (layoutNote.hidden = true), 15000);
+  };
+  layoutBtn.addEventListener('click', () => {
+    layoutNote.hidden = true;
+    con?.focus();
+  });
+  /** Non-Latin letters each Vim or Neovim process has reported (its agent counts them in Normal and Visual mode). */
+  const layoutSeen = new Map<string, number>();
+  const checkLayout = (area: EditorArea | null) => {
+    for (const kind of ['vim', 'nvim'] as const) {
+      const f = area?.[kind];
+      const n = f?.nonlatin as { count?: number; last?: string } | undefined;
+      if (!f?.running || !n?.count) continue;
+      const id = `${kind}:${f.pid}`;
+      if (n.count > (layoutSeen.get(id) ?? 0)) showLayout(nonLatinNotice(kind, n.last ?? ''));
+      layoutSeen.set(id, n.count);
+    }
+  };
+  const drawExit = (active: EditorKind | null) => {
+    clear(exitLine);
+    exitLine.append(...renderInline(t(exitHint(active, editors))));
+  };
+  drawExit(null);
+
   const drawMode = (area: EditorArea | null) => {
+    checkLayout(area);
+    drawExit(area?.editor.active ?? null);
     lastArea = area;
     const s = statusLine(area);
     mode.textContent = s ? t(s.text) : '';
@@ -277,6 +314,15 @@ export function mountEditorLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx)
     if (!tasks.some((x) => editorScopesOf(predicates(x)).length)) m.watchPredicates(['editor.active']);
     m.onPhase(showPhase);
     con = await mountConsole(termBox, m, { rows: props.rows ?? 20, macOptionIsMeta: metaBox.checked });
+    // Emacs takes non-Latin letters as text: only chords (M-, C-x, C-c + a non-Latin letter) give the layout away.
+    let tail = '';
+    con.terminal.onData((d) => {
+      if (lastArea?.editor.active === 'emacs') {
+        const chord = nonLatinChord(tail, d);
+        if (chord) showLayout(nonLatinNotice('emacs', chord));
+      }
+      tail = d.slice(-1);
+    });
     m.on((ev) => {
       if (ev.t === 'cmd.done') schedule(150);
       else if (ev.t === 'editor.change') schedule(50, true);
@@ -330,6 +376,7 @@ export function mountEditorLab(root: HTMLElement, raw: unknown, ctx?: WidgetCtx)
     dispose() {
       disposed = true;
       clearTimeout(checkTimer);
+      clearTimeout(layoutTimer);
       window.removeEventListener('beforeunload', onBeforeUnload);
       document.removeEventListener('fullscreenchange', onFullscreen);
       con?.dispose();

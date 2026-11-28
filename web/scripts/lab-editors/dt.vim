@@ -33,6 +33,9 @@ endif
 
 let s:base = s:dir . '/vim.' . getpid()
 let s:tick = 0
+" Letters of a non-Latin layout typed where Vim expects commands (Normal and Visual mode).
+let s:nonlatin = {'count': 0, 'last': '', 'mode': ''}
+let s:prevkey = ''
 let s:server = 0
 let s:MAXTEXT = 65536
 let s:REGS = '"0123456789abcdefghijklmnopqrstuvwxyz-.:/'
@@ -96,6 +99,8 @@ function! DtState() abort
     endif
   endfor
   let l:s.opt = l:opt
+  let l:s.nonlatin = s:nonlatin
+  let l:s.errmsg = v:errmsg
   if exists('*maplist')
     let l:s.maps = map(filter(maplist(), {_, m -> m.lhs !~# '^<Plug>' && m.sid > 0 && get(getscriptinfo({'sid': m.sid}), 0, {'name': ''}).name !~# '^' . escape($VIMRUNTIME, '\.')})[:199], {_, m -> {'mode': m.mode, 'lhs': m.lhs, 'rhs': m.rhs, 'noremap': s:Bool(m.noremap)}})
   endif
@@ -108,7 +113,7 @@ endfunction
 
 " A short signature of what goal checks look at; the stamp is written only when it changes.
 function! s:Signature() abort
-  return changenr() . ' ' . b:changedtick . ' ' . bufnr('%') . ' ' . mode(1) . ' ' . reg_recording() . ' ' . winnr('$') . ' ' . &modified . ' ' . len(getreg('"')) . ' ' . getqflist({'size': 0}).size
+  return s:nonlatin.count . ' ' . changenr() . ' ' . b:changedtick . ' ' . bufnr('%') . ' ' . mode(1) . ' ' . reg_recording() . ' ' . winnr('$') . ' ' . &modified . ' ' . len(getreg('"')) . ' ' . getqflist({'size': 0}).size
 endfunction
 
 function! s:Bump(...) abort
@@ -143,6 +148,27 @@ if has('clientserver') && v:servername ==# ''
   endtry
 endif
 
+" A typed key, before Vim acts on it. A non-Latin letter in Normal or Visual
+" mode is almost always a keyboard layout left on Russian (or another
+" non-Latin script). Keys that take a character argument (f, t, r, m, q, @,
+" quotes) legitimately accept any letter, so the key after them is skipped.
+function! s:KeyIn() abort
+  if !get(v:event, 'typed', 1)
+    return
+  endif
+  let l:c = v:char
+  let l:m = mode()
+  let l:after = s:prevkey
+  let s:prevkey = l:c
+  if l:m !~# '^[nvV\x16]$' || l:after =~# '^[fFtTrm`''"@q]$'
+    return
+  endif
+  if strcharlen(l:c) == 1 && char2nr(l:c) > 127 && l:c[0] !=# "\x80" && l:c =~# '\a\|[^\x00-\x7f]'
+    let s:nonlatin = {'count': s:nonlatin.count + 1, 'last': l:c, 'mode': l:m}
+    call timer_start(0, function('s:Bump'))
+  endif
+endfunction
+
 command! DtDone call s:WriteState() | call s:Bump()
 
 augroup dt_agent
@@ -151,6 +177,9 @@ augroup dt_agent
   autocmd SafeState,ModeChanged,BufWritePost,BufEnter,WinNew,WinClosed,QuickFixCmdPost * call s:Bump()
   autocmd BufWritePost,CursorHold * call s:WriteState()
   autocmd VimLeavePre * call s:Leave()
+  if exists('##KeyInputPre')
+    autocmd KeyInputPre * call s:KeyIn()
+  endif
 augroup END
 
 call s:Bump()

@@ -32,8 +32,20 @@ try {
   const done = (id, timeout = 60000) => page.locator(`.ed-lab li.goal.done[data-task="${id}"]`).waitFor({ timeout }).then(() => true, () => false);
   const modeLine = () => page.locator('.ed-mode').textContent();
 
+  const layoutShown = () => page.locator('.ed-layout').isVisible();
+  const hideLayout = async () => { if (await layoutShown()) await page.locator('.ed-layout button').click(); };
+  log({ step: 'exit.idle', exit: await page.locator('.ed-exit').textContent() });
   // (a)
   await type('vim /srv/train/app.conf\n', 6000);
+  log({ step: 'exit.vim', exit: await page.locator('.ed-exit').textContent() });
+  // Layout: Russian text in Insert mode is fine; Russian letters in Normal mode get a notice.
+  await type('Oпривет', 300);
+  await press('Escape', 2500);
+  const falseAlarm = await layoutShown();
+  await type('u', 1500);
+  await type('цц', 2500);
+  log({ step: 'layout.vim', insertModeAlarm: falseAlarm, normalModeNotice: await layoutShown(), text: await page.locator('.ed-layout span').textContent() });
+  await hideLayout();
   await type('/debug\n');
   await type('cwrelease');
   await press('Escape');
@@ -55,6 +67,14 @@ try {
   await type(':qa!\n', 2000);
   // (c)
   await type('emacs /srv/train/notes.txt\n', 12000);
+  log({ step: 'exit.emacs', exit: await page.locator('.ed-exit').textContent() });
+  await hideLayout();
+  await press('Escape');
+  await type('ч', 800);
+  const emacsNotice = await layoutShown();
+  await press('Control+g', 500);
+  await hideLayout();
+  log({ step: 'layout.emacs', chordNotice: emacsNotice });
   await press('Control+n');
   await press('Control+a');
   await press('Control+k');
