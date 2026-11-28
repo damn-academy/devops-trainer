@@ -110,6 +110,7 @@ Answers. In the control group, 78 accounts purchased, or 2%; in the treatment gr
 Complete the task in the document on this page. Choose one marketing or sales action whose effect you are unsure about: an email campaign, an offer of engineering help, a webinar or advertising in one region. Write an experiment plan: randomization unit, group sizes, outcome, duration, minimum effect of interest and stopping rule. Then use the rule from the lesson to estimate how many accounts each group needs for an 80% chance of detecting the expected effect.
 
 <!-- section: sources -->
+- Robert Lehr, “Sixteen S-squared over D-squared: A relation for crude sample size estimates”, Statistics in Medicine, 1992 — https://doi.org/10.1002/sim.4780110811
 - Google Meridian, model specification — https://developers.google.com/meridian/docs/advanced-modeling/model-spec
 - statsmodels, confidence interval for the difference between two proportions, Newcombe method — https://www.statsmodels.org/stable/generated/statsmodels.stats.proportion.confint_proportions_2indep.html
 - Google Meridian, introduction — https://developers.google.com/meridian/docs/basics/meridian-introduction

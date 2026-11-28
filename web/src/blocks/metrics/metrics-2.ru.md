@@ -110,6 +110,7 @@
 Выполните задание в документе на этой странице. Выберите одно маркетинговое или продажное действие, в эффекте которого вы не уверены: рассылку, предложение помощи инженера, вебинар, рекламу в одном регионе. Запишите план эксперимента: единицу случайного деления, размер групп, результат, срок, минимальный интересный эффект и правило остановки. Затем прикиньте по правилу из урока, сколько аккаунтов нужно в каждой группе, чтобы с вероятностью 80 % заметить ожидаемый эффект.
 
 <!-- section: sources -->
+- Роберт Лер, «Sixteen S-squared over D-squared: A relation for crude sample size estimates», Statistics in Medicine, 1992 (статья на английском) — https://doi.org/10.1002/sim.4780110811
 - Google Meridian, спецификация модели — https://developers.google.com/meridian/docs/advanced-modeling/model-spec
 - statsmodels, интервал для разности двух долей, метод Ньюкомба — https://www.statsmodels.org/stable/generated/statsmodels.stats.proportion.confint_proportions_2indep.html
 - Google Meridian, введение — https://developers.google.com/meridian/docs/basics/meridian-introduction
