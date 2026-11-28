@@ -2,12 +2,12 @@
 
 .ed-shell { display: grid; gap: 6px; min-width: 0; }
 .ed-shell:fullscreen { padding: 12px; background: var(--term-bg, var(--bg)); grid-template-rows: auto minmax(0, 1fr) auto; }
-.ed-shell:fullscreen .ed-term { min-height: 0; height: 100%; }
+.ed-shell:fullscreen .ed-term { min-height: 0; height: auto; }
 .ed-keys { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
 .ed-group { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .ed-group-name { margin-right: 2px; }
 .ed-key { font-family: var(--font-mono); font-size: 0.82rem; }
-.ed-term { min-height: 360px; }
+.ed-term { height: min(70vh, 560px); min-height: 320px; } /* a fixed height: the fit addon sizes rows from it (an auto height grows with every fit) */
 .ed-mode { min-height: 1.4em; font-family: var(--font-mono); color: var(--ink-2); }
 .ed-shell:fullscreen .ed-mode { color: var(--term-fg, var(--ink-2)); }
 .ed-honest:empty, .ed-lock:empty { display: none; }
