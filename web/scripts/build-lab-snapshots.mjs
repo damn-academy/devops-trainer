@@ -1,6 +1,7 @@
 // Boot the product in headless Chromium and store compressed, portable states.
 // Gzip bytes use .bin to avoid servers transparently decoding .gz responses.
 // No raw RAM dumps on disk. Re-run after build:lab-image or a v86 upgrade.
+// `--only lab-editors:256[,profile:MB…]` rebuilds only these and keeps the other entries.
 import { createServer } from 'vite';
 import { chromium } from '@playwright/test';
 import { readFileSync, writeFileSync, appendFileSync, renameSync, rmSync } from 'node:fs';
@@ -15,12 +16,18 @@ let browser;
 let temp;
 let published = false;
 const generated = [];
-const previous = Object.values(manifest.bootSnapshots ?? {}).map((entry) => entry.file);
+const ALL = [['lab-node', 128], ['lab-installer', 160], ['lab-node', 512], ['lab-editors', 256]];
+const onlyArg = process.argv.indexOf('--only');
+const only = onlyArg > 0 ? process.argv[onlyArg + 1].split(',').map((x) => { const [p, mb] = x.split(':'); return [p, Number(mb)]; }) : null;
+const builds = only ?? ALL.filter(([p]) => manifest.profiles[p]);
+// With --only, entries of other profiles and sizes stay as they are.
+const kept = only ? Object.fromEntries(Object.entries(manifest.bootSnapshots ?? {}).filter(([key]) => !only.some(([p, mb]) => key.includes(`-${p}-`) && key.includes(`-${mb}m-`)))) : {};
+const previous = Object.values(manifest.bootSnapshots ?? {}).map((entry) => entry.file).filter((f) => !Object.values(kept).some((e) => e.file === f));
 try {
   await server.listen();
   browser = await chromium.launch({ headless: true });
-  const entries = {};
-  for (const [profile, memoryMB] of [['lab-node', 128], ['lab-installer', 160], ['lab-node', 512]]) {
+  const entries = { ...kept };
+  for (const [profile, memoryMB] of builds) {
     const context = await browser.newContext();
     const page = await context.newPage();
     temp = `${out}boot-${profile}-${memoryMB}.tmp`;

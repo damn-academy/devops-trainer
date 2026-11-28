@@ -19,6 +19,7 @@ import type { ExecResult, Facts, Machine, SimEvent } from '../../core/types';
 import { assetUrl, IMAGE, labAssetUrl, loadLabManifest, loadManifest, wasmAssetUrl } from './assets';
 import { fetchBootSnapshot, imageHash, V86_VERSION, type BootSnapshot } from './boot-snapshot';
 import { cloneIdentity, type CloneIdentity } from './clone-identity';
+import { editorInstances, editorProbeScript, editorScopesOf, editorStateScript, EDITOR_SCOPES, parseEditorProbe, parseEditorState, probeSignature, type EditorArea } from './editor-facts';
 import { labFactsScript, parseLabFacts, scopesOf, LAB_SCOPES } from './lab-facts';
 import type { BootConfig, DiskConfig, WorkerIn, WorkerOut } from './messages';
 import { profile as profileOf, type DiskSpec, type MachineProfile, type ProfileId } from './profiles';
@@ -128,7 +129,17 @@ export interface V86MachineOptions {
   scopes?: string[];
   /** Installer machines: what `reboot` in the guest does once the disk is bootable. Default 'disk'. */
   onReboot?: 'disk' | 'media';
+  /**
+   * Lab images with editor agents (lab-editors): while a command runs in the
+   * learner's terminal, poll the service channel for running editors and
+   * their agents' stamps and emit `editor.change` when they move, so checks
+   * run while a fullscreen editor is open (no prompt comes back then). Off by default.
+   */
+  editorWatch?: boolean;
 }
+
+/** Poll intervals of the editor watch, ms: while an editor runs, while some other command runs. */
+export const EDITOR_POLL_MS = { editor: 400, busy: 1000 } as const;
 
 export type BootPhase = 'download' | 'boot' | 'setup' | 'ready' | 'error';
 
@@ -198,6 +209,17 @@ export class V86Machine implements Machine {
   bootSaved: Promise<void> = Promise.resolve();
   private downloaded = 0;
   private nextId = 1;
+  private editorScopes = new Set<string>();
+  private editorWatch: boolean;
+  private editorTimer: ReturnType<typeof setTimeout> | undefined;
+  private editorPolling = false;
+  private editorSig = '';
+  private editorAlive = false;
+  private submittedAt = 0;
+  private markedAt = 0;
+  private disposed = false;
+  /** Round trip of the last editor probe and state query on the service channel, ms (for measurements). */
+  editorTiming = { probeMs: 0, stateMs: 0 };
 
   constructor(o: V86MachineOptions = {}) {
     this.id = o.id ?? `v86-${++seq}`;
@@ -217,6 +239,7 @@ export class V86Machine implements Machine {
     this.onReboot = o.onReboot ?? 'disk';
     for (const p of o.watch ?? []) this.watch.add(p);
     for (const s of o.scopes ?? []) this.scopes.add(s);
+    this.editorWatch = o.editorWatch ?? false;
   }
 
   private get lab(): boolean {
@@ -329,6 +352,8 @@ export class V86Machine implements Machine {
       this.boot = { kind: this.bootFrom === 'disk' ? 'disk' : r.restored ? 'restored' : 'cold', ms: Math.round(performance.now() - t0), downloaded: this.downloaded };
       this.setPhase('ready');
       this.emit('machine.ready', { boot: this.boot });
+      // A resumed machine may have been saved with an editor open: look once.
+      if (this.editorWatch) this.pollEditorsSoon(0, true);
       return this.boot;
     } catch (e) {
       this.fail((e as Error).message);
@@ -410,6 +435,7 @@ export class V86Machine implements Machine {
     if (this.forwarding) {
       if (clean) this.print(clean);
       const record = this.tracker.count > before ? this.tracker.records.at(-1) : undefined;
+      if (marks.length) this.markedAt = performance.now();
       for (const mk of marks) this.emit('cmd.done', { exit: mk.exit, cwd: mk.cwd, record });
       if (this.lab && /reboot: Restarting system/.test(this.consoleTail)) void this.onGuestReboot();
       return;
@@ -573,6 +599,10 @@ export class V86Machine implements Machine {
   write(data: string, track = true): void {
     if (track) this.tracker.input(data);
     this.send({ op: 'serial', port: 0, bytes: enc.encode(data) });
+    if (track && data.includes('\r')) {
+      this.submittedAt = performance.now();
+      if (this.editorWatch) this.pollEditorsSoon(600);
+    }
   }
 
   /** The guest draws its own prompt; the widget prints nothing itself. */
@@ -622,6 +652,66 @@ export class V86Machine implements Machine {
   watchPredicates(predicates: (string | undefined)[]): void {
     this.watchPaths(watchedPaths(predicates));
     if (this.lab) for (const s of scopesOf(predicates)) this.scopes.add(s);
+    if (this.lab) for (const s of editorScopesOf(predicates)) this.editorScopes.add(s);
+  }
+
+  // ── editors (lab-editors image) ─────────────────────────────────────────
+
+  /** Turn the editor watch on or off (see V86MachineOptions.editorWatch). */
+  watchEditors(on = true): void {
+    this.editorWatch = on;
+    if (on) this.pollEditorsSoon(0, true);
+    else clearTimeout(this.editorTimer);
+  }
+
+  /** The editor area alone (no processes, users or files): cheap enough to run on every editor change. */
+  async editorFacts(): Promise<EditorArea> {
+    this.requireService();
+    const t0 = performance.now();
+    const r = await this.svcRun(editorStateScript());
+    this.editorTiming.stateMs = Math.round(performance.now() - t0);
+    return parseEditorState(r.out);
+  }
+
+  /** A command runs in the learner's terminal: typed Enter, no prompt since. */
+  private get foreground(): boolean {
+    return this.submittedAt > this.markedAt;
+  }
+
+  private pollEditorsSoon(ms: number, force = false): void {
+    if (this.disposed || !this.editorWatch) return;
+    if (this.editorTimer !== undefined && !force) return;
+    clearTimeout(this.editorTimer);
+    this.editorTimer = setTimeout(() => {
+      this.editorTimer = undefined;
+      void this.pollEditors(force);
+    }, ms);
+  }
+
+  private async pollEditors(force: boolean): Promise<void> {
+    if (this.disposed || !this.editorWatch) return;
+    if (this.phase !== 'ready' || this.bootFrom !== 'image' || this.editorPolling) return this.pollEditorsSoon(EDITOR_POLL_MS.busy);
+    // Nothing runs and no editor was seen: the prompt marker (cmd.done) is the trigger.
+    if (!force && !this.foreground && !this.editorAlive) return;
+    this.editorPolling = true;
+    try {
+      const t0 = performance.now();
+      const probe = parseEditorProbe((await this.svcRun(editorProbeScript())).out);
+      this.editorTiming.probeMs = Math.round(performance.now() - t0);
+      const sig = probeSignature(probe);
+      const editors = editorInstances(probe);
+      this.editorAlive = editors.length > 0;
+      if (sig !== this.editorSig) {
+        this.editorSig = sig;
+        this.emit('editor.change', { editors, probeMs: this.editorTiming.probeMs });
+      }
+    } catch {
+      /* the channel went away (reboot, dispose): try again later */
+    } finally {
+      this.editorPolling = false;
+    }
+    if (this.editorAlive) this.pollEditorsSoon(EDITOR_POLL_MS.editor);
+    else if (this.foreground) this.pollEditorsSoon(EDITOR_POLL_MS.busy);
   }
 
   /**
@@ -634,6 +724,8 @@ export class V86Machine implements Machine {
     const scopes = this.lab ? [...new Set([...this.scopes, ...(scope ?? [])])].filter((s) => (LAB_SCOPES as readonly string[]).includes(s)) : [];
     const lab = scopes.length ? parseLabFacts((await this.svcRun(labFactsScript(scopes))).out) : {};
     const r = parseFacts((await this.svcRun(factsScript([...this.watch]))).out);
+    const wantsEditor = this.lab && (this.editorScopes.size > 0 || (scope ?? []).some((s) => (EDITOR_SCOPES as readonly string[]).includes(s)));
+    const editor = wantsEditor ? await this.editorFacts() : {};
     const procs = hideService(r.procs, svcPid);
     const shell = procs.find((p) => p.pid === r.shellPid);
     const uid = shell?.uid ?? 0;
@@ -654,6 +746,7 @@ export class V86Machine implements Machine {
       users: r.users,
       groups: r.groups,
       ...lab,
+      ...editor,
     } as Facts;
   }
 
@@ -708,6 +801,7 @@ export class V86Machine implements Machine {
     this.svc = new ServiceParser();
     if (this.bootFrom === 'image') await this.svcRun(`date -s @${Math.floor(Date.now() / 1000)} >/dev/null`);
     this.write('\r', false);
+    if (this.editorWatch) this.pollEditorsSoon(300, true);
   }
 
   /** Save the whole machine to OPFS under this lab's key (after a passed goal, on leaving). */
@@ -737,6 +831,8 @@ export class V86Machine implements Machine {
   }
 
   dispose(): void {
+    this.disposed = true;
+    clearTimeout(this.editorTimer);
     this.send({ op: 'destroy' });
     setTimeout(() => this.worker?.terminate(), 500);
     this.outListeners.clear();

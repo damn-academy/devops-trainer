@@ -259,6 +259,35 @@ engine/images cached on first use or by Settings → Offline; a new version
 waits and is applied on the button or on moving to another lesson.
 
 
+### Editors in a real machine (lab-editors, v86.editor)
+
+Profile `lab-editors` (256 MB): lab-node's toolbox plus Neovim, Emacs (no X),
+tmux, ripgrep and make, with read-only agents in `scripts/lab-editors`
+(`dt.vim`, `dt.lua`, `dt-agent.el` loaded by `site-start.el`) and training
+files in `/srv/train`. A lesson places the widget:
+
+```ts
+{ kind: 'widget', id: 'vim-lab', widget: 'v86.editor', props: {
+    editors: ['vim'],
+    tasks: [{ id: 'm', prompt: bi('…', '…'), check: { when: "vim.reg.a ~ ';' && vim.recording = ''" } }],
+} }
+```
+
+- Facts (only when a predicate names them): `vim`, `nvim`, `emacs` —
+  `running`, `instrumented`, `source` (`socket` | `file` | `none`), `buf`
+  (current buffer), `buffers[]{file,name,modified,text,…}`; Vim/Neovim also
+  `mode`, `recording`, `reg`, `regtype`, `marks`, `qf`, `windows`, `layout`,
+  `undo`, `opt`; Emacs `killhead`, `killring[]`, `point`, `mark`, `major`,
+  `minor`, `registers`. `editor.{active,running,instrumented}`. An editor
+  started without plugins (`vim -u NONE`, `nvim --clean`, `emacs -Q`) has
+  `instrumented=false`: judge files and say so in `fail[]`.
+- Trigger: `new V86Machine({ editorWatch: true })` polls ttyS1 every 400 ms
+  while an editor runs (1 s while another command runs) and emits
+  `editor.change`; the prompt trigger stays. `m.editorFacts()` returns the
+  editor area alone (cheaper than `facts()`).
+- Demo: `#/lab/editors`. End-to-end run: `node scripts/check-editors-lab.mjs`
+  (on a build host).
+
 ### Cross-terminal goal source
 
 A simulator terminal may declare `setup.ext.goalSource: "<mountLab key>"`.

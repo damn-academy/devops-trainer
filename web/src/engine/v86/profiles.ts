@@ -8,12 +8,15 @@
 //                  system, the package repository at /media/cdrom/apks and a
 //                  blank disk to install onto; after `reboot` the machine
 //                  starts from that disk through its own boot loader
+//   lab-editors    lab-node's toolbox plus Vim, Neovim, Emacs (no X), tmux and
+//                  ripgrep, with the trainer's read-only editor agents
+//                  (scripts/lab-editors) and the training files in /srv/train
 //
 // Lessons pick a profile by id; the files come from public/v86/lab/manifest.json.
 
 import { bi, type Bi } from '../../core/i18n';
 
-export type ProfileId = 'buildroot' | 'lab-node' | 'lab-installer';
+export type ProfileId = 'buildroot' | 'lab-node' | 'lab-installer' | 'lab-editors';
 
 export interface DiskSpec {
   /** IDE slot: hda is /dev/sda in the guest, hdb is /dev/sdb. */
@@ -68,6 +71,18 @@ export const PROFILES: Record<ProfileId, MachineProfile> = {
     nic: 'virtio',
     disks: [{ slot: 'hda', sizeMB: 2048 }],
     hostname: 'localhost',
+    sshd: false,
+    version: 1,
+  },
+  'lab-editors': {
+    id: 'lab-editors',
+    title: bi('Alpine Linux: Vim, Neovim и Emacs', 'Alpine Linux: Vim, Neovim and Emacs'),
+    image: 'alpine',
+    // Neovim and Emacs need more than the 128 MB of lab-node (design: start at 256, measure 128 and 384).
+    memoryMB: 256,
+    nic: 'virtio',
+    disks: [],
+    hostname: 'editors',
     sshd: false,
     version: 1,
   },
