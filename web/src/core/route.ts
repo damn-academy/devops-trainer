@@ -229,7 +229,7 @@ export const ROUTE: RouteEntry[] = [
     order: 90,
     folder: 'k8s-code',
     segment: '9',
-    title: bi('Кластер из кода', 'A cluster from code'),
+    title: bi('Кластер через Terraform и Ansible', 'A cluster with Terraform and Ansible'),
     summary: bi(
       'Terraform заказывает три ВМ, Ansible готовит узлы, kubeadm один раз руками, затем ролью; Cilium, хранилище, сертификаты, обновление, etcd snapshot, обязательная уборка.',
       'Terraform orders three VMs, Ansible prepares the nodes, kubeadm once by hand, then as a role; Cilium, storage, certificates, upgrades, etcd snapshots, mandatory cleanup.',
