@@ -1403,7 +1403,7 @@ logging implementation before its Caller call, retaining needed diagnostics.
 No claim is made yet that TLS reuse/session tickets, certificates, gettext/cache,
 or RAM/GOGC/zram tuning has improved any of the three requested kuberoot metrics.
 Any required kuberoot source patch belongs in a separate experimental build;
-`/Users/tym83/projects/kuberoot` has not been edited.
+`~/projects/kuberoot` has not been edited.
 
 Additional source evidence: current kuberoot `pkg/pki/pki.go`, `pkg/pki/reissue.go`
 and `cmd/kinit/pki.go` already generate ECDSA P-256 keys, including service-account

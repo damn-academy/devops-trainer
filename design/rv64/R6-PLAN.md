@@ -14,7 +14,7 @@ and kinit binary strings `/var/log/kuberoot`, `/run/kuberoot/kinit.sock`,
 pod PATH. A tiny read-only Go HTTP client is cross-compiled on the Mac and
 uploaded; it has no external modules. The medium itself is built in the pod.
 
-Local source inspection: `/Users/tym83/projects/kuberoot-pr59`, commit
+Local source inspection: `~/projects/kuberoot-pr59`, commit
 `4253fad65d9d861bc247d4a1d1af25c947a0ae11`:
 
 - `cmd/kinit/services.go`: `logPath(name)` is

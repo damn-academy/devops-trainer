@@ -118,7 +118,7 @@ I начинается с нуля в каждой сессии; обычное 
 **X1. Сквозной, все уроки: на телефоне сайт показывается в десктопной раскладке.**
 
 - Где: `web/index.html` на `origin/main` (коммиты `ff06f3d`, `e831892` от 25.11). Второй блок `<script type="application/ld+json">` (Organization) не закрыт. Внутрь скрипта попадают `<meta name="viewport">`, `color-scheme`, `description`, `theme-color`, `<title>` и OG-теги.
-- Доказательство: в контексте `isMobile: true` шириной 390 px `innerWidth = 980`, `document.querySelector('meta[name=viewport]')` возвращает `null`, страница `scithink.fakes` уменьшена примерно до 40 %. Снимки `/private/tmp/claude-501/-Users-tym83/23bd6b98-a108-45a9-b33b-7bee00d0bd35/scratchpad/v9/scithink-walk/igor-fakes-ismobile.png` и `…/scratchpad/v9/viewport-bug-390.png`.
+- Доказательство: в контексте `isMobile: true` шириной 390 px `innerWidth = 980`, `document.querySelector('meta[name=viewport]')` возвращает `null`, страница `scithink.fakes` уменьшена примерно до 40 %. Снимки `<scratch>/v9/scithink-walk/igor-fakes-ismobile.png` и `…/scratchpad/v9/viewport-bug-390.png`.
 - Кого затрагивает: Веру, Игоря и Константина — всех, кто по модели занимается с телефона. Остальные проверки на 390 px в этом отчёте выполнены в контексте без мобильной эмуляции и показывают страницу такой, какой она будет после исправления.
 - Исправление: закрыть объект Organization и `</script>` перед мета-тегами. Добавить тест, что в `document.head` есть `meta[name=viewport]` и что после загрузки `innerWidth` на мобильном профиле равен ширине устройства.
 
@@ -163,7 +163,7 @@ I начинается с нуля в каждой сессии; обычное 
 | `final`, 390 | В поле видна копия шаблона, работа начинается после прокрутки внутри textarea; `final-field-390.png` | S-new-1 |
 | `story`, 390 | Поле, «Скачать текст (.txt)», «Завершить самопроверку» помещаются; `vera-story-390.png` | Вёрстка в порядке, проблема в содержимом поля |
 
-Снимки лежат в `/private/tmp/claude-501/-Users-tym83/23bd6b98-a108-45a9-b33b-7bee00d0bd35/scratchpad/v9/scithink-walk/` и в репозиторий не добавляются.
+Снимки лежат в `<scratch>/v9/scithink-walk/` и в репозиторий не добавляются.
 
 ## Недостающее содержание
 
