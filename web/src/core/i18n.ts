@@ -57,6 +57,14 @@ export function langFromQuery(search: string): Lang | null {
   return isLang(v) ? v : null;
 }
 
+/** The query string with `lang` removed, so the header switch is not overridden on reload. */
+export function searchWithoutLang(search: string): string {
+  const params = new URLSearchParams(search);
+  params.delete('lang');
+  const rest = params.toString();
+  return rest ? `?${rest}` : '';
+}
+
 export function initLang(): Lang {
   let stored: string | null = null;
   const asked = typeof location !== 'undefined' ? langFromQuery(location.search) : null;
@@ -66,7 +74,14 @@ export function initLang(): Lang {
   } catch {
     /* ignore */
   }
-  if (asked) stored = asked;
+  if (asked) {
+    stored = asked;
+    try {
+      history.replaceState(history.state, '', location.pathname + searchWithoutLang(location.search) + location.hash);
+    } catch {
+      /* ignore */
+    }
+  }
   const nav = typeof navigator !== 'undefined' ? navigator.languages : [];
   current = detectLang(stored, nav);
   if (typeof document !== 'undefined') document.documentElement.lang = current;
