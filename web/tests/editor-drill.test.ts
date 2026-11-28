@@ -10,6 +10,7 @@ import { DRILLS, EMACS_DRILLS, VIM_DRILLS, drillById } from '../src/engine/edito
 import { chordFromEvent } from '../src/engine/editor-drill/emacs';
 import { parseEmacsKeys, parseVimKeys } from '../src/engine/editor-drill/keys';
 import { applyDrill } from '../src/engine/editor-drill/session';
+import { registry } from '../src/core/registry';
 
 beforeAll(() => {
   // CodeMirror asks for layout boxes; jsdom has none.
@@ -142,5 +143,25 @@ describe('known differences from the real editors', () => {
     // Real Vim: getreg('a') == "I- \x1bj". The trainer keeps the inserted text
     // aside and replays it, so the macro works, but its register reads "Ij".
     expect(run('vim.macro', d('vim.macro').solution).registers.a).toBe('Ij');
+  });
+});
+
+describe('registration', () => {
+  it('registers the lesson widget and the dev page lazily', () => {
+    expect(registry.widgets.get('editor.drill')).toBeTruthy();
+    expect(registry.widgets.get('lab:editor-keys')).toBeTruthy();
+  });
+
+  it('mounts the trainer with its honest label', async () => {
+    const el = document.createElement('div');
+    document.body.append(el);
+    const done: string[] = [];
+    const m = registry.widgets.get('editor.drill')!.mount(el, { drill: 'vim.d2w' }, { level: 'beginner', complete: () => done.push('done'), record: () => {}, openDoc: () => {} });
+    await new Promise((r) => setTimeout(r, 50));
+    for (let i = 0; i < 20 && !el.querySelector('.cm-editor'); i++) await new Promise((r) => setTimeout(r, 50));
+    expect(el.textContent).toContain('Тренажёр клавиш, не настоящий Vim');
+    expect(el.querySelector('.cm-editor')).toBeTruthy();
+    expect(el.querySelector('.ed-bar')?.textContent).toBe('EscCtrl');
+    m.dispose();
   });
 });

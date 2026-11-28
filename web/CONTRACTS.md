@@ -173,6 +173,14 @@ Pages come from commands (`man`, `help`) and from `docs: DocPage[]` (ids like
   modes, DL5 doc reader limited to `allowedDocs`, soft timer).
 - `Block.placement: PlacementTask[]` — rendered at `#/block/<id>/placement`
   (no hints, no feedback, "guessing" never counts, 80% + all `key`).
+- **Key trainer** (`src/engine/editor-drill`, Vim and Emacs courses):
+  `{ kind: 'widget', widget: 'editor.drill', props: { drill } | { drills } | { set: 'vim' | 'emacs' } }`.
+  A drill (`types.ts`) is a start text and cursor, a target state and a
+  solution in the editor's own notation, tagged `engine: 'cm-vim' | 'cm-emacs'`.
+  The check compares the state (text, cursor, registers, kill ring), never the
+  keys. `applyDrill(engine, start, keys)` (`session.ts`) replays keys headless
+  for tests and for the comparison with the real Vim and Emacs. CodeMirror
+  loads only with the widget. Sample drills: `#/lab/editor-keys`.
 
 ## Progress store
 
