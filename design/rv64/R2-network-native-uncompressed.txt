@@ -1,0 +1,677 @@
+[    0.000000] Booting Linux on hartid 0
+[    0.000000] Linux version 6.18.62-kuberoot (root@builder) (riscv64-linux-gnu-gcc (Debian 12.2.0-13) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #4 SMP Sat Nov 21 13:49:06 UTC 2026
+[    0.000000] Machine model: RV64 R1 single hart
+[    0.000000] SBI specification v2.0 detected
+[    0.000000] SBI implementation ID=0x10000000 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] SBI IPI extension detected
+[    0.000000] SBI RFENCE extension detected
+[    0.000000] SBI SRST extension detected
+[    0.000000] SBI DBCN extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x00000000bfffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x00000000bfffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x00000000bfffffff]
+[    0.000000] SBI HSM extension detected
+[    0.000000] riscv: base ISA extensions acdfim
+[    0.000000] riscv: ELF capabilities acdfim
+[    0.000000] Ticket spinlock: enabled
+[    0.000000] percpu: Embedded 30 pages/cpu s84248 r8192 d30440 u122880
+[    0.000000] Kernel command line: earlycon=sbi console=hvc0 nokaslr kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose
+[    0.000000] Unknown kernel command line parameters "nokaslr", will be passed to user space.
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 262144
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=1.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+[    0.000000] RCU Tasks Trace: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000000] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.000378] riscv-timer: Timer interrupt in S-mode is available via sstc extension
+[    0.003640] Console: colour dummy device 80x25
+[    0.005281] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)
+[    0.005635] pid_max: default: 32768 minimum: 301
+[    0.007771] LSM: initializing lsm=capability
+[    0.010181] Mount-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.010564] Mountpoint-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.052732] riscv: ELF compat mode unsupported
+[    0.052997] ASID allocator using 16 bits (65536 entries)
+[    0.056054] rcu: Hierarchical SRCU implementation.
+[    0.056171] rcu: 	Max phase no-delay instances is 1000.
+[    0.064015] EFI services will not be available.
+[    0.066220] smp: Bringing up secondary CPUs ...
+[    0.066630] smp: Brought up 1 node, 1 CPU
+[    0.068677] Memory: 966900K/1048576K available (9537K kernel code, 5353K rwdata, 4096K rodata, 2341K init, 393K bss, 77792K reserved, 0K cma-reserved)
+[    0.078269] devtmpfs: initialized
+[    0.105332] posixtimers hash table entries: 512 (order: 1, 8192 bytes, linear)
+[    0.105675] futex hash table entries: 256 (16384 bytes on 1 NUMA nodes, total 16 KiB, linear).
+[    0.108779] pinctrl core: initialized pinctrl subsystem
+[    0.111626] DMI not present or invalid.
+[    0.128448] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.135023] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    0.135495] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.135718] audit: initializing netlink subsys (disabled)
+[    0.141871] thermal_sys: Registered thermal governor 'step_wise'
+[    0.142702] audit: type=2000 audit(0.128:1): state=initialized audit_enabled=0 res=1
+[    0.143443] cpuidle: using governor menu
+[    0.171664] cpu0: rdtime lacks granularity needed to measure unaligned access speed
+[    0.257367] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.257609] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.263003] ACPI: Interpreter disabled.
+[    0.264032] iommu: Default domain type: Translated
+[    0.264149] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.307004] SCSI subsystem initialized
+[    0.332635] vgaarb: loaded
+[    0.334002] clocksource: Switched to clocksource riscv_clocksource
+[    0.344314] pnp: PnP ACPI: disabled
+[    0.800834] NET: Registered PF_INET protocol family
+[    0.804977] IP idents hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.874160] tcp_listen_portaddr_hash hash table entries: 512 (order: 1, 8192 bytes, linear)
+[    0.874746] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.875095] TCP established hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.878040] TCP bind hash table entries: 8192 (order: 6, 262144 bytes, linear)
+[    0.882631] TCP: Hash tables configured (established 8192 bind 8192)
+[    0.883768] UDP hash table entries: 512 (order: 3, 32768 bytes, linear)
+[    0.884831] UDP-Lite hash table entries: 512 (order: 3, 32768 bytes, linear)
+[    0.888145] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.888824] PCI: CLS 0 bytes, default 64
+[    0.899798] Initialise system trusted keyrings
+[    0.965748] Unpacking initramfs...
+[    1.074449] workingset: timestamp_bits=46 max_order=18 bucket_order=0
+[    1.078621] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    1.079092] fuse: init (API version 7.45)
+[    1.094896] 9p: Installing v9fs 9p2000 file system support
+[    5.481611] NET: Registered PF_ALG protocol family
+[    5.482159] Key type asymmetric registered
+[    5.482401] Asymmetric key parser 'x509' registered
+[    5.483217] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 250)
+[    7.005627] Freeing initrd memory: 20800K
+progress pc=0xffffffff801274ec retired=371074937 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[    8.882502] io scheduler mq-deadline registered
+[    8.882827] io scheduler kyber registered
+[    8.883354] io scheduler bfq registered
+[    8.889442] riscv-plic: plic@c000000: mapped 31 interrupts with 1 handlers for 2 contexts.
+[    9.870293] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    9.927343] printk: legacy console [hvc0] enabled
+[    9.927704] printk: legacy bootconsole [sbi0] disabled
+[    9.936834] random: crng init done
+[   10.001502] loop: module loaded
+[   10.002966] virtio_blk virtio0: 1/0/0 default/read/poll queues
+[   10.006697] virtio_blk virtio0: [vda] 2267136 512-byte logical blocks (1.16 GB/1.08 GiB)
+[   10.034185]  vda: vda1
+[   10.091575] tun: Universal TUN/TAP device driver, 1.6
+[   10.110521] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[   10.127928] riscv-pmu-sbi: SBI PMU extension is available
+[   10.128770] riscv-pmu-sbi: 0 firmware and 0 hardware counters
+[   10.129802] riscv-pmu-sbi: Perf sampling/filtering is not supported as sscof extension is not available
+[   10.140129] IPVS: Registered protocols (TCP, UDP)
+[   10.141044] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+[   10.144749] IPVS: ipvs loaded.
+[   10.145479] IPVS: [rr] scheduler registered.
+[   10.149744] Initializing XFRM netlink socket
+[   10.151339] NET: Registered PF_INET6 protocol family
+[   10.167185] Segment Routing with IPv6
+[   10.168435] In-situ OAM (IOAM) with IPv6
+[   10.170583] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[   10.179683] NET: Registered PF_PACKET protocol family
+[   10.181303] Bridge firewalling registered
+[   10.183770] 8021q: 802.1Q VLAN Support v1.8
+[   10.185467] 9pnet: Installing 9P2000 support
+[   10.187043] Key type dns_resolver registered
+[   10.190165] NET: Registered PF_VSOCK protocol family
+[   10.351255] Loading compiled-in X.509 certificates
+[   10.462632] Loaded X.509 cert 'Build time autogenerated kernel key: edae1ab5e37dadd23f1471322a492b2e9cb18efa'
+[   10.660089] clk: Disabling unused clocks
+[   10.660729] PM: genpd: Disabling unused power domains
+[   10.686201] Freeing unused kernel image (initmem) memory: 2340K
+[   10.688375] Run /init as init process
+[   12.033281] loop0: detected capacity change from 0 to 2003344
+progress pc=0xffffffff8094326a retired=727590265 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kinit] kuberoot booting, kernel 6.18.62-kuberoot, uptime 19s
+[kinit] distribution edge
+[kinit] module drbd: open /lib/modules/6.18.62-kuberoot/extra/drbd.ko: no such file or directory
+[kinit] module drbd_transport_tcp: open /lib/modules/6.18.62-kuberoot/extra/drbd_transport_tcp.ko: no such file or directory
+[kinit] eth0: 10.0.0.10/24 via [10.0.0.1]
+progress pc=0xffffffff80034954 retired=1077156327 scause=9223372036854775817 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8094640e retired=1446309824 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8094640e retired=1811199544 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946610 retired=2192399036 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80417240 retired=2569693666 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+RV64_CONFIG_CREATED
+progress pc=0xffffffff80214508 retired=2931958610 scause=15 stval=0x3ffff9b6f8 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:01:27Z" level=warning msg="Configuration migrated from version 3, use `containerd config migrate` to avoid migration" t=8.4923ms
+[containerd] time="1970-01-01T00:01:28.323446600Z" level=info msg="starting containerd" revision=b7a25261e029d68978bbf290df0a62fc819b3c51 version=v2.4.2
+[containerd] time="1970-01-01T00:01:28.410994600Z" level=info msg="loading plugin" id=io.containerd.content.v1.content type=io.containerd.content.v1
+[containerd] time="1970-01-01T00:01:28.686632600Z" level=warning msg="failed check for fsverity support" error="enable fsverity failed: inappropriate ioctl for device" path=/var/lib/containerd/io.containerd.content.v1.content
+progress pc=0x1465c retired=3293049328 scause=8 stval=0x0 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:01:28.716619200Z" level=info msg="loading plugin" id=io.containerd.image-verifier.v1.bindir type=io.containerd.image-verifier.v1
+[containerd] time="1970-01-01T00:01:28.791948600Z" level=info msg="loading plugin" id=io.containerd.internal.v1.opt type=io.containerd.internal.v1
+[containerd] time="1970-01-01T00:01:28.833026500Z" level=warning msg="failed to load plugin" error="mkdir /opt/containerd: read-only file system" id=io.containerd.internal.v1.opt type=io.containerd.internal.v1
+[containerd] time="1970-01-01T00:01:28.841178500Z" level=info msg="loading plugin" id=io.containerd.warning.v1.deprecations type=io.containerd.warning.v1
+[containerd] time="1970-01-01T00:01:28.853512200Z" level=info msg="loading plugin" id=io.containerd.event.v1.exchange type=io.containerd.event.v1
+[containerd] time="1970-01-01T00:01:28.966014500Z" level=info msg="loading plugin" id=io.containerd.mount-handler.v1.erofs type=io.containerd.mount-handler.v1
+time="1970-01-01T00:01:28.967092300Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.blockfile type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:01:29.135257800Z" level=info msg="skip loading plugin" error="no scratch file generator: skip plugin" id=io.containerd.snapshotter.v1.blockfile type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:01:29.218834800Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.btrfs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:01:29.871242800Z" level=info msg="skip loading plugin" error="path /var/lib/containerd/io.containerd.snapshotter.v1.btrfs (tmpfs) must be a btrfs filesystem to be used with the btrfs snapshotter: skip plugin" id=io.containerd.snapshotter.v1.btrfs type=io.containerd.snapshotter.v1
+time="1970-01-01T00:01:29.938134500Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.devmapper type=io.containerd.snapshotter.v1
+time="1970-01-01T00:01:29.939405100Z" level=info msg="skip loading plugin" error="devmapper not configured: skip plugin" id=io.containerd.snapshotter.v1.devmapper type=io.containerd.snapshotter.v1
+time="1970-01-01T00:01:29.946850700Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.native type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:01:29.998328200Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.overlayfs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:01:30.043068800Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.zfs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:01:30.138924700Z" level=info msg="skip loading plugin" error="lstat /var/lib/containerd/io.containerd.snapshotter.v1.zfs: no such file or directory: skip plugin" id=io.containerd.snapshotter.v1.zfs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:01:30.155978800Z" level=info msg="loading plugin" id=io.containerd.monitor.task.v1.cgroups type=io.containerd.monitor.task.v1
+[containerd] time="1970-01-01T00:01:30.830664300Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.erofs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:01:31.149408500Z" level=info msg="skip loading plugin" error="EROFS unsupported, please `modprobe erofs`: skip plugin" id=io.containerd.snapshotter.v1.erofs type=io.containerd.snapshotter.v1
+time="1970-01-01T00:01:31.174952900Z" level=info msg="loading plugin" id=io.containerd.metadata.v1.bolt type=io.containerd.metadata.v1
+[containerd] time="1970-01-01T00:01:31.309461100Z" level=info msg="metadata content store policy set" policy=shared
+[containerd] time="1970-01-01T00:01:31.763378100Z" level=info msg="loading plugin" id=io.containerd.gc.v1.scheduler type=io.containerd.gc.v1
+[containerd] time="1970-01-01T00:01:31.837379400Z" level=info msg="loading plugin" id=io.containerd.server.v1.metrics type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:01:32.017465000Z" level=info msg="skip loading plugin" error="skip plugin" id=io.containerd.server.v1.metrics type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:01:32.057493100Z" level=info msg="loading plugin" id=io.containerd.tracing.processor.v1.otlp type=io.containerd.tracing.processor.v1
+time="1970-01-01T00:01:32.058616900Z" level=info msg="skip loading plugin" error="skip plugin: tracing endpoint not configured" id=io.containerd.tracing.processor.v1.otlp type=io.containerd.tracing.processor.v1
+[containerd] time="1970-01-01T00:01:32.059601200Z" level=info msg="loading plugin" id=io.containerd.internal.v1.tracing type=io.containerd.internal.v1
+[containerd] time="1970-01-01T00:01:32.369284300Z" level=info msg="skip loading plugin" error="skip plugin: tracing endpoint not configured" id=io.containerd.internal.v1.tracing type=io.containerd.internal.v1
+time="1970-01-01T00:01:32.370303400Z" level=info msg="loading plugin" id=io.containerd.nri.v1.nri type=io.containerd.nri.v1
+[containerd] time="1970-01-01T00:01:32.699282600Z" level=info msg="built-in NRI default validator is disabled"
+[containerd] time="1970-01-01T00:01:32.739349300Z" level=info msg="runtime interface created"
+[containerd] time="1970-01-01T00:01:32.743924100Z" level=info msg="created NRI interface"
+time="1970-01-01T00:01:32.744938800Z" level=info msg="loading plugin" id=io.containerd.ttrpc.v1.otelttrpc type=io.containerd.ttrpc.v1
+time="1970-01-01T00:01:32.746235600Z" level=info msg="loading plugin" id=io.containerd.service.v1.containers-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:01:32.747537600Z" level=info msg="loading plugin" id=io.containerd.service.v1.content-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:01:32.803077200Z" level=info msg="loading plugin" id=io.containerd.differ.v1.erofs type=io.containerd.differ.v1
+[containerd] time="1970-01-01T00:01:32.881725700Z" level=info msg="skip loading plugin" error="failed to check mkfs.erofs availability: failed to run mkfs.erofs --help: exec: \"mkfs.erofs\": executable file not found in $PATH: skip plugin" id=io.containerd.differ.v1.erofs type=io.containerd.differ.v1
+[containerd] time="1970-01-01T00:01:32.948514800Z" level=info msg="loading plugin" id=io.containerd.mount-manager.v1.bolt type=io.containerd.mount-manager.v1
+[containerd] time="1970-01-01T00:01:33.137605200Z" level=info msg="loading plugin" id=io.containerd.differ.v1.walking type=io.containerd.differ.v1
+[containerd] time="1970-01-01T00:01:33.166589400Z" level=info msg="loading plugin" id=io.containerd.service.v1.diff-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:01:33.215665800Z" level=info msg="loading plugin" id=io.containerd.service.v1.images-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:01:33.369475500Z" level=info msg="loading plugin" id=io.containerd.service.v1.introspection-service type=io.containerd.service.v1
+time="1970-01-01T00:01:33.371281500Z" level=info msg="loading plugin" id=io.containerd.service.v1.namespaces-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:01:33.453683300Z" level=info msg="loading plugin" id=io.containerd.service.v1.snapshots-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:01:33.554911700Z" level=info msg="loading plugin" id=io.containerd.shim.v1.manager type=io.containerd.shim.v1
+[containerd] time="1970-01-01T00:01:33.613324600Z" level=info msg="loading plugin" id=io.containerd.runtime.v2.task type=io.containerd.runtime.v2
+[containerd] time="1970-01-01T00:01:33.639939500Z" level=info msg="loading plugin" id=io.containerd.service.v1.tasks-service type=io.containerd.service.v1
+[containerd] time="1970-01-01T00:01:33.832652800Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.containers type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:33.857554900Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.content type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:33.905192600Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.diff type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:33.993475200Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.events type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:34.008398400Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.images type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:34.014463500Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.introspection type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:34.038646800Z" level=info msg="loading plugin" id=io.containerd.lease.v1.manager type=io.containerd.lease.v1
+[containerd] time="1970-01-01T00:01:34.109519500Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.leases type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:34.122898800Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.mounts type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:34.205999200Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.namespaces type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:34.218686200Z" level=info msg="loading plugin" id=io.containerd.sandbox.store.v1.local type=io.containerd.sandbox.store.v1
+[containerd] time="1970-01-01T00:01:34.347570900Z" level=info msg="loading plugin" id=io.containerd.transfer.v1.local type=io.containerd.transfer.v1
+[containerd] time="1970-01-01T00:01:34.395473800Z" level=info msg="loading plugin" id=io.containerd.cri.v1.images type=io.containerd.cri.v1
+[containerd] time="1970-01-01T00:01:34.683146000Z" level=info msg="Get image filesystem path \"/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs\" for snapshotter \"overlayfs\""
+[containerd] time="1970-01-01T00:01:34.719825700Z" level=info msg="Start snapshots syncer"
+[containerd] time="1970-01-01T00:01:34.931683400Z" level=info msg="loading plugin" id=io.containerd.cri.v1.runtime type=io.containerd.cri.v1
+[containerd] time="1970-01-01T00:01:35.942051600Z" level=info msg="starting cri plugin" config="{\"containerd\":{\"defaultRuntimeName\":\"runc\",\"runtimes\":{\"runc\":{\"runtimeType\":\"io.containerd.runc.v2\",\"runtimePath\":\"\",\"PodAnnotations\":null,\"ContainerAnnotations\":null,\"options\":{\"BinaryName\":\"/usr/bin/runc\",\"CriuImagePath\":\"\",\"CriuWorkPath\":\"\",\"IoGid\":0,\"IoUid\":0,\"NoNewKeyring\":false,\"Root\":\"\",\"ShimCgroup\":\"\",\"SystemdCgroup\":false},\"privileged_without_host_devices\":false,\"privileged_without_host_devices_all_devices_allowed\":false,\"cgroupWritable\":false,\"baseRuntimeSpec\":\"\",\"cniConfDir\":\"\",\"cniMaxConfNum\":0,\"snapshotter\":\"\",\"sandboxer\":\"podsandbox\",\"disablePauseImagePull\":false,\"io_type\":\"\"}},\"ignoreBlockIONotEnabledErrors\":false,\"ignoreRdtNotEnabledErrors\":false},\"cni\":{\"binDirs\":[\"/usr/libexec/cni\",\"/opt/cni/bin\"],\"confDir\":\"/etc/cni/net.d\",\"maxConfNum\":1,\"setupSerially\":false,\"confTemplate\":\"/etc/cni/kuberoot.conflist.tmpl\",\"ipPref\":\"\",\"useInternalLoopback\":false},\"enableSelinux\":false,\"selinuxCategoryRange\":1024,\"maxContainerLogLineSize\":16384,\"disableApparmor\":false,\"restrictOOMScoreAdj\":false,\"disableProcMount\":false,\"unsetSeccompProfile\":\"\",\"tolerateMissingHugetlbController\":true,\"disableHugetlbController\":true,\"device_ownership_from_security_context\":true,\"ignoreImageDefinedVolumes\":false,\"netnsMountsUnderStateDir\":false,\"enableUnprivilegedPorts\":true,\"enableUnprivilegedICMP\":true,\"cdiSpecDirs\":[\"/etc/cdi\",\"/var/run/cdi\"],\"drainExecSyncIOTimeout\":\"0s\",\"ignoreDeprecationWarnings\":null,\"statsCollectPeriod\":\"\",\"statsRetentionPeriod\":\"\",\"enableCRIU\":true,\"containerdRootDir\":\"/var/lib/containerd\",\"containerdEndpoint\":\"/run/containerd/containerd.sock\",\"rootDir\":\"/var/lib/containerd/io.containerd.grpc.v1.cri\",\"stateDir\":\"/run/containerd/io.containerd.grpc.v1.cri\"}"
+[containerd] time="1970-01-01T00:01:36.225361600Z" level=info msg="loading plugin" id=io.containerd.podsandbox.controller.v1.podsandbox type=io.containerd.podsandbox.controller.v1
+[containerd] time="1970-01-01T00:01:36.544781300Z" level=info msg="loading plugin" id=io.containerd.sandbox.controller.v1.shim type=io.containerd.sandbox.controller.v1
+[containerd] time="1970-01-01T00:01:36.919733200Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.sandbox-controllers type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:37.427878300Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.sandboxes type=io.containerd.grpc.v1
+time="1970-01-01T00:01:37.451159900Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.snapshots type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:37.497640400Z" level=info msg="loading plugin" id=io.containerd.streaming.v1.manager type=io.containerd.streaming.v1
+time="1970-01-01T00:01:37.499221000Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.streaming type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:37.649210000Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.tasks type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:37.887712700Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.transfer type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:38.125886000Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.version type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:38.203184500Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.healthcheck type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:01:38.419458500Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.cri type=io.containerd.grpc.v1
+progress pc=0xffffffff802c2b22 retired=3649795098 scause=9223372036854775817 stval=0x0 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:01:38.773872000Z" level=info msg="Connect containerd service"
+time="1970-01-01T00:01:38.778855500Z" level=info msg="using experimental NRI integration - disable nri plugin to prevent this"
+[containerd] time="1970-01-01T00:01:43.230289800Z" level=warning msg="failed to load cni during init, please check CRI plugin status before setting up network for pods" error="cni config load failed: no network config found in /etc/cni/net.d: cni plugin not initialized: failed to load cni config"
+progress pc=0xffffffff80946412 retired=4004412804 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80078258 retired=4352157662 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946414 retired=4686380775 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kine] [36mINFO[0m[1970-01-01T00:02:10.1782788Z] Configuring sqlite3 database connection pooling: maxIdle=20, maxOpen=0, maxLifetime=0s, maxIdleTime=2m0s 
+[kine] [36mINFO[0m[1970-01-01T00:02:12.731143Z] Kine built with sqlite from github.com/mattn/go-sqlite3 version 3.53.4 
+[kine] [36mINFO[0m[1970-01-01T00:02:12.740564Z] Configuring database table schema and indexes, this may take a moment... 
+RV64_DIAGNOSTICS
+[<0>] futex_do_wait+0x34/0x6c
+[<0>] __futex_wait+0x88/0xe2
+[<0>] futex_wait+0x72/0xe0
+[<0>] do_futex+0x74/0x100
+[<0>] __riscv_sys_futex+0x74/0x14a
+[<0>] do_trap_ecall_u+0x180/0x34c
+[<0>] handle_exception+0x146/0x152
+futex_do_waitMemTotal:         993924 kB
+MemFree:          220600 kB
+MemAvailable:     905180 kB
+Buffers:            1116 kB
+Cached:           714284 kB
+SwapCached:            0 kB
+Active:            40684 kB
+Inactive:         712404 kB
+Active(anon):      13224 kB
+Inactive(anon):    45644 kB
+Active(file):      27460 kB
+Inactive(file):   666760 kB
+PID   USER     TIME  COMMAND
+    1 root      0:28 /usr/sbin/kinit.real
+    2 root      0:00 [kthreadd]
+    3 root      0:00 [pool_workqueue_]
+    4 root      0:00 [kworker/R-rcu_g]
+    5 root      0:00 [kworker/R-sync_]
+    6 root      0:00 [kworker/R-kvfre]
+    7 root      0:00 [kworker/R-slub_]
+    8 root      0:00 [kworker/R-netns]
+    9 root      0:00 [kworker/0:0-eve]
+   10 root      0:00 [kworker/0:0H-ev]
+   11 root      0:00 [kworker/0:1-eve]
+   12 root      0:08 [kworker/u4:0-kv]
+   13 root      0:00 [kworker/R-mm_pe]
+   14 root      0:00 [ksoftirqd/0]
+   15 root      0:00 [rcu_sched]
+   16 root      0:00 [rcu_exp_par_gp_]
+   17 root      0:00 [rcu_exp_gp_kthr]
+   18 root      0:00 [migration/0]
+   19 root      0:00 [cpuhp/0]
+   20 root      0:00 [kdevtmpfs]
+   21 root      0:00 [kworker/R-inet_]
+   22 root      0:00 [rcu_tasks_trace]
+   23 root      0:00 [kauditd]
+   24 root      0:00 [oom_reaper]
+   25 root      0:04 [kworker/u4:1-lo]
+   26 root      0:00 [kworker/R-write]
+   27 root      0:00 [kcompactd0]
+   28 root      0:00 [kworker/R-kbloc]
+   29 root      0:05 [kworker/u4:2-lo]
+   30 root      0:00 [kswapd0]
+   31 root      0:00 [kworker/u4:3-ev]
+   32 root      0:00 [kworker/0:1H-kb]
+   33 root      0:00 [kworker/R-kthro]
+   34 root      0:01 [kworker/u4:4-lo]
+   36 root      0:00 [khvcd]
+   37 root      0:00 [hwrng]
+   38 root      0:00 [kworker/R-nvme-]
+   39 root      0:00 [kworker/R-nvme-]
+   40 root      0:00 [kworker/R-nvme-]
+   41 root      0:00 [kworker/R-dm_bu]
+   42 root      0:00 [kworker/R-mld]
+   43 root      0:00 [kworker/R-ipv6_]
+   44 root      0:00 [kworker/R-kstrp]
+   50 root      0:00 /bin/sh /usr/share/kuberoot/rv64-probe.sh
+   51 root      0:00 /bin/sh /usr/share/kuberoot/rv64-probe.sh
+   60 root      0:10 /usr/bin/kuberoot-node --node-name=kuberoot-000001 --adver
+   62 root      0:08 /usr/bin/containerd --config /etc/containerd/config.toml
+   65 root      0:10 /usr/bin/kine --endpoint sqlite:///var/lib/kine/state.db?_
+   66 root      0:10 /usr/bin/kube-apiserver --shutdown-delay-duration=5s --etc
+   67 root      0:02 [kworker/u4:5-lo]
+  112 root      0:00 /bin/sh /usr/share/kuberoot/rv64-probe.sh
+  116 root      0:17 kubectl --request-timeout=10s get nodes -o jsonpath={.item
+  118 root      0:00 /bin/busybox grep -q True
+  156 root      0:01 /usr/bin/containerd-shim-runc-v2 -info
+  190 root      0:00 /usr/bin/runc features
+  199 root      0:00 /bin/busybox sleep 2
+  202 root      0:00 /bin/busybox ps
+[kine] [36mINFO[0m[1970-01-01T00:02:15.892565Z] Database tables and indexes are up to date   
+[36mINFO[0m[1970-01-01T00:02:15.8933125Z] Running startup VACUUM to reclaim disk space, this may take a moment... 
+[kine] [36mINFO[0m[1970-01-01T00:02:18.4207974Z] Startup VACUUM completed successfully        
+progress pc=0xffffffff8004ae88 retired=5014071999 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kine] [36mINFO[0m[1970-01-01T00:02:21.7536806Z] Kine available at unix:///run/kine/kine.sock 
+[kine] [36mINFO[0m[1970-01-01T00:02:22.0991001Z] metrics server is starting to listen at :8080 
+[kine] [36mINFO[0m[1970-01-01T00:02:22.8021519Z] starting metrics server path /metrics        
+[36mINFO[0m[1970-01-01T00:02:22.9536342Z] Slow SQL: SELECT current_rev, compact_rev, id, name, created, deleted, create_revision, prev_revision, lease FROM (SELECT MAX(id) AS current_rev FROM kine) AS current_rev, (SELECT MAX(prev_revision) AS compact_rev FROM kine WHERE name = 'compact_rev_key') AS compact_rev, kine INNER JOIN (SELECT MAX(id) AS id FROM kine GROUP BY name) AS mkv USING (id) WHERE (deleted = 0 OR false) ORDER BY name ASC  [36mduration[0m=1.4632568s [36mname[0m=AllCurrent [36mstarted[0m="1970-01-01T00:02:20.746425Z"
+progress pc=0x5a084 retired=5349323752 scause=8 stval=0x0 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:02:30.961449100Z" level=info msg="loading plugin" id=io.containerd.server.v1.ttrpc type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:02:31.100727400Z" level=info msg="Start subscribing containerd event"
+[containerd] time="1970-01-01T00:02:31.109943200Z" level=info msg="Start stats collector"
+[containerd] time="1970-01-01T00:02:31.151431700Z" level=info msg="Start recovering state"
+[containerd] time="1970-01-01T00:02:31.120088400Z" level=info msg="loading plugin" id=io.containerd.monitor.container.v1.restart type=io.containerd.monitor.container.v1
+[containerd] time="1970-01-01T00:02:31.638168100Z" level=info msg="loading plugin" id=io.containerd.metrics.v1.grpc-prometheus type=io.containerd.metrics.v1
+[containerd] time="1970-01-01T00:02:31.726895600Z" level=info msg="loading plugin" id=io.containerd.metrics.v1.grpc-otel type=io.containerd.metrics.v1
+[containerd] time="1970-01-01T00:02:31.930824600Z" level=info msg="Start event monitor"
+[containerd] time="1970-01-01T00:02:32.070116300Z" level=info msg="loading plugin" id=io.containerd.server.v1.grpc type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:02:32.068900900Z" level=info msg="Start cni network conf syncer for default"
+[containerd] time="1970-01-01T00:02:32.355015300Z" level=info msg="Start streaming server"
+[containerd] time="1970-01-01T00:02:32.741451000Z" level=info msg="Registered namespace \"k8s.io\" with NRI"
+[containerd] time="1970-01-01T00:02:32.742144200Z" level=info msg="runtime interface starting up..."
+[containerd] time="1970-01-01T00:02:33.500476300Z" level=info msg="starting plugins..."
+[containerd] time="1970-01-01T00:02:33.752802000Z" level=info msg="Synchronizing NRI (plugin) with current runtime state"
+progress pc=0x3fbba9c64c retired=5672143865 scause=8 stval=0x0 mcause=0 mtval=0x0
+ffffffff804a02b0 t ZSTD_initFseState
+ffffffff804a03f8 t ZSTD_buildFSETable_body_default.constprop.0
+ffffffff804a07ca t ZSTD_buildSeqTable.constprop.0
+ffffffff804a093c t ZSTD_safecopy
+ffffffff804a0c5a t ZSTD_execSequenceEndSplitLitBuffer
+ffffffff804a0d30 t ZSTD_execSequenceEnd
+ffffffff804a0e12 t ZSTD_decompressSequences_default.constprop.0
+ffffffff804a18c6 t ZSTD_decompressSequencesSplitLitBuffer_default.constprop.0
+ffffffff804a304e t ZSTD_decompressSequencesLong_default.constprop.0
+ffffffff804a5600 T ZSTD_getcBlockSize
+ffffffff804a565a T ZSTD_decodeLiteralsBlock_wrapper
+ffffffff804a5678 T ZSTD_buildFSETable
+ffffffff804a568c T ZSTD_decodeSeqHeaders
+ffffffff804a5852 t ZSTD_decompressBlock_internal.part.0
+ffffffff804a5a00 T ZSTD_decompressBlock_internal
+ffffffff804a5a34 T ZSTD_checkContinuity
+ffffffff804a5a68 T ZSTD_decompressBlock_deprecated
+ffffffff804a5ada T ZSTD_decompressBlock
+ffffffff804a5b4c t HUF_readStats_body_default
+ffffffff804a5cf0 t FSE_readNCount_body_default
+ffffffff804a6072 T FSE_versionNumber
+ffffffff804a6082 T FSE_isError
+ffffffff804a6098 T FSE_getErrorName
+ffffffff804a60c6 T HUF_isError
+ffffffff804a60dc T HUF_getErrorName
+ffffffff804a610a T FSE_readNCount_bmi2
+ffffffff804a611e T FSE_readNCount
+ffffffff804a6132 T HUF_readStats
+ffffffff804a61e2 T HUF_readStats_wksp
+ffffffff804a61fc T ERR_getErrorString
+ffffffff804a6232 t FSE_buildDTable_internal
+ffffffff804a6558 t FSE_decompress_wksp_body_default
+ffffffff804a76ac T FSE_buildDTable_wksp
+ffffffff804a76c0 T FSE_decompress_wksp_bmi2
+ffffffff804a76d4 T ZSTD_versionNumber
+ffffffff804a76e6 T ZSTD_versionString
+ffffffff804a76fa T ZSTD_isError
+ffffffff804a7710 T ZSTD_getErrorName
+ffffffff804a773e T ZSTD_getErrorCode
+ffffffff804a775e T ZSTD_getErrorString
+ffffffff804a7772 t dec_vli
+ffffffff804a77e8 t fill_temp
+ffffffff804a7864 T xz_dec_run
+ffffffff804a7f22 T xz_dec_init
+ffffffff804a7fee T xz_dec_reset
+ffffffff804a803c T xz_dec_end
+ffffffff804a8074 t dict_repeat
+ffffffff804a80fc t lzma_len
+ffffffff804a82e2 t lzma_main
+ffffffff804a8bca T xz_dec_lzma2_run
+ffffffff804a9292 T xz_dec_lzma2_create
+ffffffff804a9308 T xz_dec_lzma2_reset
+ffffffff804a9398 T xz_dec_lzma2_end
+ffffffff804a93da t bcj_flush
+ffffffff804a944e t bcj_apply
+ffffffff804a9d8a T xz_dec_bcj_run
+ffffffff804a9f1c T xz_dec_bcj_create
+ffffffff804a9f52 T xz_dec_bcj_reset
+ffffffff804a9fb0 T percpu_counter_sync
+ffffffff804aa00a t compute_batch_value
+ffffffff804aa03a T percpu_counter_set
+ffffffff804aa11c T __percpu_counter_sum
+ffffffff804aa1ea T __percpu_counter_compare
+ffffffff804aa244 T __percpu_counter_init_many
+ffffffff804aa31a T percpu_counter_destroy_many
+ffffffff804aa3e0 t percpu_counter_cpu_dead
+ffffffff804aa540 T percpu_counter_add_batch
+ffffffff804aa634 T __percpu_counter_limited_add
+ffffffff804aa866 T audit_classify_arch
+ffffffff804aa874 T audit_classify_syscall
+ffffffff804aa8ba t collect_syscall
+ffffffff804aa9a4 T task_current_syscall
+ffffffff804aaa0c T errname
+ffffffff804aaa74 T nla_policy_len
+ffffffff804aaade T nla_find
+ffffffff804aab24 T nla_strscpy
+ffffffff804aabae T nla_memcpy
+ffffffff804aac1c T nla_strdup
+ffffffff804aac82 T nla_strcmp
+ffffffff804aace6 T __nla_reserve
+ffffffff804aad40 T nla_reserve_nohdr
+ffffffff804aad9e T nla_memcmp
+ffffffff804aadd2 T nla_append
+ffffffff804aae38 T __nla_reserve_nohdr
+ffffffff804aae72 T __nla_put_nohdr
+ffffffff804aaec4 T nla_put_nohdr
+ffffffff804aaf42 T __nla_put
+ffffffff804aafb4 T nla_reserve
+ffffffff804ab032 T nla_put
+ffffffff804ab0be T __nla_reserve_64bit
+ffffffff804ab152 T __nla_put_64bit
+ffffffff804ab1fe T nla_put_64bit
+ffffffff804ab24c T nla_reserve_64bit
+ffffffff804ab2fc T nla_get_range_unsigned
+ffffffff804ab3e2 T nla_get_range_signed
+ffffffff804ab4a0 t __nla_validate_parse
+ffffffff804ac162 T __nla_validate
+ffffffff804ac17a T __nla_parse
+ffffffff804ac1b2 T csum_tcpudp_nofold
+ffffffff804ac1f0 T csum_partial
+ffffffff804ac216 T ip_compute_csum
+ffffffff804ac236 T cpu_rmap_add
+ffffffff804ac270 T alloc_cpu_rmap
+ffffffff804ac3aa t cpu_rmap_copy_neigh
+ffffffff804ac4ba T cpu_rmap_update
+ffffffff804ac7e4 T irq_cpu_rmap_remove
+ffffffff804ac800 t irq_cpu_rmap_notify
+ffffffff804ac834 T cpu_rmap_put
+ffffffff804ac882 t irq_cpu_rmap_release
+ffffffff804ac90a T free_irq_cpu_rmap
+ffffffff804ac996 T irq_cpu_rmap_add
+ffffffff804acab2 T cpu_rmap_get
+ffffffff804acb0c T dql_completed
+ffffffff804acd58 T dql_reset
+ffffffff804acda8 T dql_init
+ffffffff804ace00 t glob_match_str
+ffffffff804acfa8 T glob_match
+ffffffff804acfbe T glob_match_len
+ffffffff804acfd4 T dim_turn
+ffffffff804ad004 T dim_park_on_top
+ffffffff804ad018 T dim_park_tired
+ffffffff804ad02e T dim_on_top
+ffffffff804ad082 T dim_calc_stats
+ffffffff804ad142 T net_dim_get_rx_moderation
+ffffffff804ad184 T net_dim_get_tx_moderation
+ffffffff804ad1d0 T net_dim_setting
+ffffffff804ad21a T net_dim_get_rx_irq_moder
+ffffffff804ad25e T net_dim_get_tx_irq_moder
+ffffffff804ad2a2 T net_dim_set_rx_mode
+ffffffff804ad2ba T net_dim_set_tx_mode
+ffffffff804ad2d2 t net_dim_step
+ffffffff804ad348 T net_dim_free_irq_moder
+ffffffff804ad3b0 T net_dim_work_cancel
+ffffffff804ad3cc t net_dim_stats_compare
+ffffffff804ad46a T net_dim_init_irq_moder
+ffffffff804ad576 T net_dim
+ffffffff804ad718 T net_dim_get_def_rx_moderation
+ffffffff804ad754 T net_dim_get_def_tx_moderation
+ffffffff804ad79c T rdma_dim
+ffffffff804ad9a2 T strncpy_from_user
+ffffffff804adc3e T strnlen_user
+ffffffff804ade3c T mac_pton
+ffffffff804adef4 T sg_free_table_chained
+ffffffff804adf3e t sg_pool_alloc
+ffffffff804ae00a t sg_pool_free
+ffffffff804ae0d6 T sg_alloc_table_chained
+ffffffff804ae176 T stack_depot_set_extra_bits
+ffffffff804ae198 T stack_depot_get_extra_bits
+ffffffff804ae1a8 t depot_debugfs_init
+ffffffff804ae1b6 T stack_depot_init
+ffffffff804ae36e t depot_fetch_stack
+ffffffff804ae3d8 T stack_depot_fetch
+ffffffff804ae426 T stack_depot_put
+ffffffff804ae526 T stack_depot_save_flags
+ffffffff804aecfa T stack_depot_save
+ffffffff804aed12 T stack_depot_print
+ffffffff804aed5c T stack_depot_snprint
+ffffffff804aedcc T __stack_depot_get_stack_record
+ffffffff804aedea T asn1_ber_decoder
+ffffffff804af4c8 T find_font
+ffffffff804af4fe T get_default_font
+ffffffff804af59c T look_up_OID
+ffffffff804af6a8 T parse_OID
+ffffffff804af6ea T sprint_oid
+ffffffff804af7e0 T ucs2_strnlen
+ffffffff804af806 T ucs2_strlen
+ffffffff804af828 T ucs2_strsize
+ffffffff804af85a T ucs2_strncmp
+ffffffff804af89a T ucs2_utf8size
+ffffffff804af8de T ucs2_as_utf8
+ffffffff804af9e4 T ucs2_strscpy
+ffffffff804afa2e T sbitmap_any_bit_set
+ffffffff804afa6a T sbitmap_queue_recalculate_wake_batch
+ffffffff804afaa2 T sbitmap_queue_min_shallow_depth
+ffffffff804afada T sbitmap_del_wait_queue
+ffffffff804afb08 t __sbitmap_weight
+ffffffff804afb84 T sbitmap_weight
+ffffffff804afbb4 T sbitmap_queue_wake_up
+ffffffff804afc74 T sbitmap_queue_wake_all
+ffffffff804afcc8 T sbitmap_prepare_to_wait
+ffffffff804afd14 T sbitmap_finish_wait
+ffffffff804afd52 T sbitmap_add_wait_queue
+ffffffff804afd84 T sbitmap_queue_clear
+ffffffff804afe0c T sbitmap_resize
+ffffffff804afeba T sbitmap_queue_resize
+ffffffff804afef8 t sbitmap_find_bit
+progress pc=0x2ab4d049cc retired=5994958279 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2cf4a retired=6307887670 scause=8 stval=0x0 mcause=0 mtval=0x0
+ffffffff809460a8 T do_csum
+ffffffff8094626c T __delay
+ffffffff80946298 T ndelay
+ffffffff809462c6 T udelay
+ffffffff80946324 T __memcpy
+ffffffff80946324 T __pi___memcpy
+ffffffff80946324 T __pi_memcpy
+ffffffff80946324 W memcpy
+ffffffff8094641c T __memmove
+ffffffff8094641c T __pi___memmove
+ffffffff8094641c T __pi_memmove
+ffffffff8094641c W memmove
+ffffffff809465a4 T __memset
+ffffffff809465a4 T __pi___memset
+ffffffff809465a4 T __pi_memset
+ffffffff809465a4 W memset
+ffffffff809466a2 T enter_vector_usercopy
+ffffffff80946750 T strcmp
+ffffffff80946750 T __pi_strcmp
+ffffffff80946772 t strcmp_zbb
+ffffffff809467e0 T strlen
+ffffffff809467e0 T __pi_strlen
+ffffffff809467f8 t strlen_zbb
+ffffffff80946860 T strncmp
+ffffffff80946860 T __pi_strncmp
+ffffffff8094688a t strncmp_zbb
+ffffffff80946910 T __lshrti3
+ffffffff80946944 T __ashrti3
+ffffffff80946978 T __ashlti3
+ffffffff809469ac T __asm_copy_from_user
+ffffffff809469ac T __asm_copy_to_user
+ffffffff809469c4 T fallback_scalar_usercopy
+ffffffff809469e0 T __asm_copy_from_user_sum_enabled
+ffffffff809469e0 T __asm_copy_to_user_sum_enabled
+ffffffff809469f8 T fallback_scalar_usercopy_sum_enabled
+ffffffff80946ac4 T __clear_user
+ffffffff80946b28 T __asm_vector_usercopy
+ffffffff80946b44 t loop
+ffffffff80946b44 T __asm_vector_usercopy_sum_enabled
+ffffffff80946b6c T xor_regs_2_
+ffffffff80946b8c T xor_regs_3_
+ffffffff80946bb4 T xor_regs_4_
+ffffffff80946be8 T xor_regs_5_
+ffffffff80946c28 T arch_cpu_idle
+ffffffff80946c28 T __noinstr_text_start
+ffffffff80946c3c t handle_riscv_irq
+ffffffff80946cb0 T do_trap_unknown
+ffffffff80946d8c T do_trap_insn_misaligned
+ffffffff80946e68 T do_trap_insn_fault
+ffffffff80946f44 T do_trap_insn_illegal
+progress pc=0xffffffff80012f72 retired=6628709804 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:03:13.701674700Z" level=info msg="loading plugin" id=io.containerd.server.v1.grpc-tcp type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:03:13.725645800Z" level=info msg="skip loading plugin" error="skip plugin" id=io.containerd.server.v1.grpc-tcp type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:03:13.764998300Z" level=info msg="loading plugin" id=io.containerd.http.v1.pprof type=io.containerd.http.v1
+[containerd] time="1970-01-01T00:03:13.912674300Z" level=info msg="loading plugin" id=io.containerd.server.v1.debug type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:03:13.922572700Z" level=info msg="skip loading plugin" error="skip plugin" id=io.containerd.server.v1.debug type=io.containerd.server.v1
+[containerd] time="1970-01-01T00:03:13.943768700Z" level=info msg=serving... address=/run/containerd/containerd.sock.ttrpc
+[containerd] time="1970-01-01T00:03:14.021524100Z" level=info msg="starting GRPC server" address=/run/containerd/containerd.sock gid=0 uid=0
+[containerd] time="1970-01-01T00:03:14.043211100Z" level=info msg=serving... address=/run/containerd/containerd.sock
+[containerd] time="1970-01-01T00:03:14.071782400Z" level=info msg="containerd successfully booted in 106.871781s"
+progress pc=0x105430 retired=6950237707 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2dda7c retired=7268222225 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x19762a retired=7606549187 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x19a7b0 retired=7933051629 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff802cbcf4 retired=8262035913 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x197de8 retired=8594662347 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x3d968 retired=8923108510 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x5f9f8 retired=9262820023 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x29f242 retired=9595471897 scause=8 stval=0x0 mcause=0 mtval=0x0
+[kube-apiserver] I0101 00:04:43.658793      66 options.go:261] external host was not specified, using 10.0.0.10
+progress pc=0xc39f6e retired=9928394132 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kube-apiserver] I0101 00:04:56.273399      66 server.go:151] Version: v1.37.2
+I0101 00:04:56.274430      66 server.go:153] "Golang settings" GOGC="25" GOMAXPROCS="" GOTRACEBACK=""
+progress pc=0x294463e retired=10262180341 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x1a142f8 retired=10605897148 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff809503c4 retired=10948138584 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x86a98 retired=11292875695 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xc385dc retired=11652553495 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2947956 retired=12024434633 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x661dc retired=12390797069 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x6e06e retired=12762062447 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80069688 retired=13126532818 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x2c28a retired=13476801849 scause=15 stval=0x3f48c60000 mcause=0 mtval=0x0
+progress pc=0xfe1030 retired=13821272308 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x1d7de0 retired=14174190410 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80096984 retired=14543687088 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x6bff4 retired=14907085240 scause=8 stval=0x0 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:07:16.158616800Z" level=error msg="failed to cleanup \"extract-351380700-1al3 sha256:f897b809ad3e7ec12d819e52ec3cec5b1722fc08ed05e66dd93859c889f0a135\"" error="snapshot extract-351380700-1al3 sha256:f897b809ad3e7ec12d819e52ec3cec5b1722fc08ed05e66dd93859c889f0a135 does not exist: not found"
+progress pc=0x29f194 retired=15259444731 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80078556 retired=15618339283 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8007ee44 retired=15971383955 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80079b10 retired=16320489617 scause=8 stval=0x0 mcause=0 mtval=0x0
+[kine] [36mINFO[0m[1970-01-01T00:07:55.2517189Z] Slow SQL: SELECT current_rev, compact_rev, id, name, created, deleted, create_revision, prev_revision, lease, value, old_value FROM (SELECT MAX(id) AS current_rev FROM kine) AS current_rev, (SELECT MAX(prev_revision) AS compact_rev FROM kine WHERE name = 'compact_rev_key') AS compact_rev, kine WHERE id > 2 ORDER BY id ASC LIMIT 500  [36mduration[0m=1.1356126s [36mname[0m=AfterAllOldVal [36mstarted[0m="1970-01-01T00:07:53.6700205Z"
+progress pc=0x2946424 retired=16665360056 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80067d9e retired=17009551676 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x7c1004 retired=17374632351 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff80946414 retired=17736698385 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xffffffff8094a236 retired=18088195000 scause=8 stval=0x0 mcause=0 mtval=0x0
+[kuberoot-node] I0101 00:08:45.375893      60 handler.go:309] Adding GroupVersion node.kuberoot.dev v1alpha1 to ResourceManager
+progress pc=0xffffffff800c4f72 retired=18438970990 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[containerd] time="1970-01-01T00:08:51.212758800Z" level=info msg="No images store for sha256:62bf31c4372c2b5d5ddc35acf3794fc7f9955d3a8e1047671765f333682c843b"
+[containerd] time="1970-01-01T00:08:51.885933000Z" level=info msg="ImageCreate event name:\"localhost/kuberoot/pause:1\""
+[kinit] image pause.tar imported
+[containerd] time="1970-01-01T00:08:55.783619000Z" level=info msg="ImageCreate event name:\"sha256:eec5031e8cf385681699e9a79f1114579d19e15e2b3d2a0d6b4df3950b0cffdb\" labels:{key:\"io.cri-containerd.image\" value:\"managed\"} labels:{key:\"io.cri-containerd.pinned\" value:\"pinned\"}"
+[containerd] time="1970-01-01T00:08:56.601960100Z" level=info msg="ImageUpdate event name:\"localhost/kuberoot/pause:1\" labels:{key:\"io.cri-containerd.image\" value:\"managed\"} labels:{key:\"io.cri-containerd.pinned\" value:\"pinned\"}"
+[kuberoot-node] E0101 00:08:58.145714      60 alternatives.go:31] alternative labels: Get "https://127.0.0.1:6443/api/v1/nodes/kuberoot-000001": net/http: TLS handshake timeout
+progress pc=0xffffffff8006c166 retired=18775061272 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x413c24 retired=19116380803 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0xfe3712 retired=19453978693 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kuberoot-node] E0101 00:09:19.535183      60 alternatives.go:31] alternative labels: Get "https://127.0.0.1:6443/api/v1/nodes/kuberoot-000001": net/http: TLS handshake timeout
+progress pc=0xaea50 retired=19783707018 scause=8 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x1d7e44 retired=20138097601 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[kuberoot-node] E0101 00:09:40.215824      60 alternatives.go:31] alternative labels: Get "https://127.0.0.1:6443/api/v1/nodes/kuberoot-000001": net/http: TLS handshake timeout
+[kuberoot-node] I0101 00:09:42.385457      60 dynamic_cafile_content.go:161] "Starting controller" name="front-proxy-ca::/var/lib/kuberoot/pki/front-proxy-ca.crt"
+[kuberoot-node] I0101 00:09:42.406621      60 dynamic_cafile_content.go:161] "Starting controller" name="node-client-ca::/var/lib/kuberoot/pki/node-client-ca.crt"
+[kuberoot-node] I0101 00:09:42.714116      60 dynamic_serving_content.go:135] "Starting controller" name="serving-cert::/var/lib/kuberoot/pki/node-api.crt::/var/lib/kuberoot/pki/node-api.key"
+[kuberoot-node] I0101 00:09:43.047082      60 dynamic_serving_content.go:135] "Starting controller" name="cluster-serving::/var/lib/kuberoot/pki/node-api-cluster.crt::/var/lib/kuberoot/pki/node-api-cluster.key"
+[kuberoot-node] I0101 00:09:44.471139      60 secure_serving.go:216] Serving securely on [::]:50000
+[kuberoot-node] I0101 00:09:44.492512      60 tlsconfig.go:243] "Starting DynamicServingCertificateController"
+[containerd] time="1970-01-01T00:09:45.533730800Z" level=info msg="No images store for sha256:109542e1e71ab7e884f52c52701665aeccf2f1b286b3569cc5d7e2fcb8d658bc"
+[containerd] time="1970-01-01T00:09:45.632516300Z" level=info msg="ImageCreate event name:\"docker.io/library/busybox:1.37.0\""
+docker.io/library/busybox:1.37.0        	saved	
+application/vnd.docker.distribution.manifest.v2+json sha256:964eb26c029e1032da6dfdd435c66493f8ffd6ecdc88484fb49fdb166e34b5e4
+Importing	elapsed: 387.1s	total:   0.0 B	(0.0 B/s)	
+[containerd] time="1970-01-01T00:09:48.138620300Z" level=info msg="ImageCreate event name:\"sha256:dc21c3df04f9af7a0dd70fd78ba09a624d1db9ff1daf0b4e51fcb529d9b33c25\" labels:{key:\"io.cri-containerd.image\" value:\"managed\"}"
+[kuberoot-node] E0101 00:09:48.157011      60 statebackup.go:452] state backups: read kube-system/kuberoot-state-backup: Get "https://127.0.0.1:6443/api/v1/namespaces/kube-system/secrets/kuberoot-state-backup": net/http: TLS handshake timeout
+[containerd] time="1970-01-01T00:09:48.570935700Z" level=info msg="ImageUpdate event name:\"docker.io/library/busybox:1.37.0\" labels:{key:\"io.cri-containerd.image\" value:\"managed\"}"
+progress pc=0x1d7e0c retired=20468283474 scause=8 stval=0x0 mcause=0 mtval=0x0
+elapsed_ms=600000 retired=20811947539 effective_mips=34.687 shell=false probe_complete=false
+SBI_TIME_CALLS=0 STIMECMP_WRITES=740641
+id=2 status=0xf irq=0 queues=[(1, 128, 422, Ok(422), Ok(422)), (0, 0, 0, Err(()), Err(()))]
+id=1 status=0xf irq=0 queues=[(1, 128, 2, Ok(128), Ok(2)), (1, 128, 9, Ok(9), Ok(9))]
+id=3 status=0xf irq=0 queues=[(1, 128, 0, Ok(128), Ok(0)), (1, 128, 1077, Ok(1077), Ok(1077))]
+id=4 status=0xf irq=0 queues=[(1, 128, 16, Ok(16), Ok(16)), (0, 0, 0, Err(()), Err(()))]
+Error: "guest acceptance marker not reached"

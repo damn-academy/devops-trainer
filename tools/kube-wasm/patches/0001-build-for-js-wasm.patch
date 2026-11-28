@@ -1,0 +1,696 @@
+diff --git a/pkg/probe/dialer_js.go b/pkg/probe/dialer_js.go
+new file mode 100644
+index 00000000..aebc5230
+--- /dev/null
++++ b/pkg/probe/dialer_js.go
+@@ -0,0 +1,24 @@
++//go:build js
++
++/*
++Copyright 2026 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package probe
++
++import "net"
++
++// ProbeDialer returns a plain dialer: GOOS=js has no socket options.
++func ProbeDialer() *net.Dialer { return &net.Dialer{} }
+diff --git a/pkg/probe/dialer_others.go b/pkg/probe/dialer_others.go
+index 63a529a4..5ae80f67 100644
+--- a/pkg/probe/dialer_others.go
++++ b/pkg/probe/dialer_others.go
+@@ -1,4 +1,4 @@
+-//go:build !windows
++//go:build !windows && !js
+ 
+ /*
+ Copyright 2023 The Kubernetes Authors.
+diff --git a/pkg/scheduler/backend/cache/debugger/signal.go b/pkg/scheduler/backend/cache/debugger/signal.go
+index 78acf3ac..c6816511 100644
+--- a/pkg/scheduler/backend/cache/debugger/signal.go
++++ b/pkg/scheduler/backend/cache/debugger/signal.go
+@@ -1,4 +1,4 @@
+-//go:build !windows
++//go:build !windows && !js
+ 
+ /*
+ Copyright 2018 The Kubernetes Authors.
+diff --git a/pkg/scheduler/backend/cache/debugger/signal_js.go b/pkg/scheduler/backend/cache/debugger/signal_js.go
+new file mode 100644
+index 00000000..69799bb6
+--- /dev/null
++++ b/pkg/scheduler/backend/cache/debugger/signal_js.go
+@@ -0,0 +1,25 @@
++/*
++Copyright 2018 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++//go:build js
++
++package debugger
++
++import "os"
++
++// compareSignal is the signal to trigger cache compare. For windows,
++// it's SIGINT.
++var compareSignal = os.Interrupt
+diff --git a/pkg/securitycontext/util_js.go b/pkg/securitycontext/util_js.go
+new file mode 100644
+index 00000000..a5032293
+--- /dev/null
++++ b/pkg/securitycontext/util_js.go
+@@ -0,0 +1,23 @@
++/*
++Copyright 2025 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++//go:build js
++
++package securitycontext
++
++func possibleCPUs() []int {
++	return nil
++}
+diff --git a/pkg/util/filesystem/util_unix.go b/pkg/util/filesystem/util_unix.go
+index 351f9fff..9163e980 100644
+--- a/pkg/util/filesystem/util_unix.go
++++ b/pkg/util/filesystem/util_unix.go
+@@ -1,4 +1,4 @@
+-//go:build freebsd || linux || darwin
++//go:build freebsd || linux || darwin || js
+ 
+ /*
+ Copyright 2023 The Kubernetes Authors.
+diff --git a/staging/src/k8s.io/apiserver/pkg/server/options/serving_js.go b/staging/src/k8s.io/apiserver/pkg/server/options/serving_js.go
+new file mode 100644
+index 00000000..e83bdae5
+--- /dev/null
++++ b/staging/src/k8s.io/apiserver/pkg/server/options/serving_js.go
+@@ -0,0 +1,27 @@
++//go:build js
++
++/*
++Copyright 2026 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package options
++
++import "syscall"
++
++// GOOS=js uses Go's in-process fake network, which has no socket options:
++// address and port reuse are no-ops there.
++func permitPortReuse(network, addr string, conn syscall.RawConn) error { return nil }
++
++func permitAddressReuse(network, addr string, conn syscall.RawConn) error { return nil }
+diff --git a/staging/src/k8s.io/apiserver/pkg/server/options/serving_unix.go b/staging/src/k8s.io/apiserver/pkg/server/options/serving_unix.go
+index 6f484ac3..db32298a 100644
+--- a/staging/src/k8s.io/apiserver/pkg/server/options/serving_unix.go
++++ b/staging/src/k8s.io/apiserver/pkg/server/options/serving_unix.go
+@@ -1,4 +1,4 @@
+-//go:build !windows
++//go:build !windows && !js
+ 
+ /*
+ Copyright 2020 The Kubernetes Authors.
+diff --git a/staging/src/k8s.io/kubectl/pkg/cmd/plugin.go b/staging/src/k8s.io/kubectl/pkg/cmd/plugin.go
+index 360fd957..2150fc40 100644
+--- a/staging/src/k8s.io/kubectl/pkg/cmd/plugin.go
++++ b/staging/src/k8s.io/kubectl/pkg/cmd/plugin.go
+@@ -23,7 +23,6 @@ import (
+ 	"path/filepath"
+ 	"runtime"
+ 	"strings"
+-	"syscall"
+ )
+ 
+ // PluginHandler is capable of parsing command line arguments
+@@ -84,7 +83,7 @@ func (h *DefaultPluginHandler) Execute(executablePath string, cmdArgs, environme
+ 
+ 	// invoke cmd binary relaying the environment and args given
+ 	// append executablePath to cmdArgs, as execve will make first argument the "binary name".
+-	return syscall.Exec(executablePath, append([]string{executablePath}, cmdArgs...), environment)
++	return syscallExec(executablePath, append([]string{executablePath}, cmdArgs...), environment)
+ }
+ 
+ func command(name string, arg ...string) *exec.Cmd {
+diff --git a/staging/src/k8s.io/kubectl/pkg/cmd/plugin_exec.go b/staging/src/k8s.io/kubectl/pkg/cmd/plugin_exec.go
+new file mode 100644
+index 00000000..35123894
+--- /dev/null
++++ b/staging/src/k8s.io/kubectl/pkg/cmd/plugin_exec.go
+@@ -0,0 +1,23 @@
++//go:build !js
++
++/*
++Copyright 2026 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package cmd
++
++import "syscall"
++
++var syscallExec = syscall.Exec
+diff --git a/staging/src/k8s.io/kubectl/pkg/cmd/plugin_exec_js.go b/staging/src/k8s.io/kubectl/pkg/cmd/plugin_exec_js.go
+new file mode 100644
+index 00000000..a24dfa02
+--- /dev/null
++++ b/staging/src/k8s.io/kubectl/pkg/cmd/plugin_exec_js.go
+@@ -0,0 +1,24 @@
++/*
++Copyright 2026 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package cmd
++
++import "errors"
++
++// GOOS=js cannot replace the process image: plugins are unsupported.
++func syscallExec(argv0 string, argv []string, envv []string) error {
++	return errors.ErrUnsupported
++}
+diff --git a/staging/src/k8s.io/kubectl/pkg/util/interrupt/interrupt.go b/staging/src/k8s.io/kubectl/pkg/util/interrupt/interrupt.go
+index 0265b9fb..44fe65a9 100644
+--- a/staging/src/k8s.io/kubectl/pkg/util/interrupt/interrupt.go
++++ b/staging/src/k8s.io/kubectl/pkg/util/interrupt/interrupt.go
+@@ -25,7 +25,7 @@ import (
+ 
+ // terminationSignals are signals that cause the program to exit in the
+ // supported platforms (linux, darwin, windows).
+-var terminationSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT}
++var terminationSignals = append([]os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT}, hangupSignals...)
+ 
+ // Handler guarantees execution of notifications after a critical section (the function passed
+ // to a Run method), even in the presence of process termination. It guarantees exactly once
+diff --git a/staging/src/k8s.io/kubectl/pkg/util/interrupt/signals_hangup.go b/staging/src/k8s.io/kubectl/pkg/util/interrupt/signals_hangup.go
+new file mode 100644
+index 00000000..cc91af23
+--- /dev/null
++++ b/staging/src/k8s.io/kubectl/pkg/util/interrupt/signals_hangup.go
+@@ -0,0 +1,26 @@
++//go:build !js
++
++/*
++Copyright 2026 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package interrupt
++
++import (
++	"os"
++	"syscall"
++)
++
++var hangupSignals = []os.Signal{syscall.SIGHUP}
+diff --git a/staging/src/k8s.io/kubectl/pkg/util/interrupt/signals_js.go b/staging/src/k8s.io/kubectl/pkg/util/interrupt/signals_js.go
+new file mode 100644
+index 00000000..58844822
+--- /dev/null
++++ b/staging/src/k8s.io/kubectl/pkg/util/interrupt/signals_js.go
+@@ -0,0 +1,24 @@
++//go:build js
++
++/*
++Copyright 2026 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package interrupt
++
++import "os"
++
++// GOOS=js has no SIGHUP.
++var hangupSignals []os.Signal
+diff --git a/staging/src/k8s.io/kubectl/pkg/util/term/resizeevents.go b/staging/src/k8s.io/kubectl/pkg/util/term/resizeevents.go
+index 2c99cc9a..143c563d 100644
+--- a/staging/src/k8s.io/kubectl/pkg/util/term/resizeevents.go
++++ b/staging/src/k8s.io/kubectl/pkg/util/term/resizeevents.go
+@@ -1,4 +1,4 @@
+-//go:build !windows
++//go:build !windows && !js
+ 
+ /*
+ Copyright 2016 The Kubernetes Authors.
+diff --git a/staging/src/k8s.io/kubectl/pkg/util/term/resizeevents_js.go b/staging/src/k8s.io/kubectl/pkg/util/term/resizeevents_js.go
+new file mode 100644
+index 00000000..dd06e6bf
+--- /dev/null
++++ b/staging/src/k8s.io/kubectl/pkg/util/term/resizeevents_js.go
+@@ -0,0 +1,62 @@
++/*
++Copyright 2016 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++// GOOS=js has no SIGWINCH: poll the size like on Windows.
++package term
++
++import (
++	"time"
++
++	"k8s.io/apimachinery/pkg/util/runtime"
++)
++
++// monitorResizeEvents spawns a goroutine that periodically gets the terminal size and tries to send
++// it to the resizeEvents channel if the size has changed. The goroutine stops when the stop channel
++// is closed.
++func monitorResizeEvents(fd uintptr, resizeEvents chan<- TerminalSize, stop chan struct{}) {
++	go func() {
++		defer runtime.HandleCrash()
++
++		size := GetSize(fd)
++		if size == nil {
++			return
++		}
++		lastSize := *size
++
++		for {
++			// see if we need to stop running
++			select {
++			case <-stop:
++				return
++			default:
++			}
++
++			size := GetSize(fd)
++			if size == nil {
++				return
++			}
++
++			if size.Height != lastSize.Height || size.Width != lastSize.Width {
++				lastSize.Height = size.Height
++				lastSize.Width = size.Width
++				resizeEvents <- *size
++			}
++
++			// sleep to avoid hot looping
++			time.Sleep(250 * time.Millisecond)
++		}
++	}()
++}
+diff --git a/staging/src/k8s.io/kubectl/pkg/util/umask.go b/staging/src/k8s.io/kubectl/pkg/util/umask.go
+index 3b4b06c4..99559aef 100644
+--- a/staging/src/k8s.io/kubectl/pkg/util/umask.go
++++ b/staging/src/k8s.io/kubectl/pkg/util/umask.go
+@@ -1,4 +1,4 @@
+-//go:build !windows
++//go:build !windows && !js
+ 
+ /*
+ Copyright 2014 The Kubernetes Authors.
+diff --git a/staging/src/k8s.io/kubectl/pkg/util/umask_js.go b/staging/src/k8s.io/kubectl/pkg/util/umask_js.go
+new file mode 100644
+index 00000000..1d256586
+--- /dev/null
++++ b/staging/src/k8s.io/kubectl/pkg/util/umask_js.go
+@@ -0,0 +1,29 @@
++
++/*
++Copyright 2014 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++//go:build js
++
++package util
++
++import (
++	"errors"
++)
++
++// Umask returns an error on Windows
++func Umask(mask int) (int, error) {
++	return 0, errors.New("platform and architecture is not supported")
++}
+diff --git a/staging/src/k8s.io/mount-utils/mount_helper_js.go b/staging/src/k8s.io/mount-utils/mount_helper_js.go
+new file mode 100644
+index 00000000..3a963f45
+--- /dev/null
++++ b/staging/src/k8s.io/mount-utils/mount_helper_js.go
+@@ -0,0 +1,41 @@
++//go:build js
++
++/*
++Copyright 2026 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++// Stubs for GOOS=js (kube-wasm): there are no mounts in a browser tab.
++package mount
++
++import (
++	"errors"
++	"io/fs"
++	"os"
++)
++
++func IsCorruptedMnt(err error) bool { return false }
++
++func isMountPointMatch(mp MountPoint, dir string) bool { return mp.Path == dir }
++
++func PathExists(path string) (bool, error) {
++	_, err := os.Stat(path)
++	if err == nil {
++		return true, nil
++	}
++	if errors.Is(err, fs.ErrNotExist) {
++		return false, nil
++	}
++	return false, err
++}
+diff --git a/staging/src/k8s.io/mount-utils/mount_helper_unix.go b/staging/src/k8s.io/mount-utils/mount_helper_unix.go
+index 8b2a4d6f..17b9e06f 100644
+--- a/staging/src/k8s.io/mount-utils/mount_helper_unix.go
++++ b/staging/src/k8s.io/mount-utils/mount_helper_unix.go
+@@ -1,4 +1,4 @@
+-//go:build !windows
++//go:build !windows && !js
+ 
+ /*
+ Copyright 2019 The Kubernetes Authors.
+diff --git a/vendor/github.com/coreos/go-systemd/v22/journal/journal_js.go b/vendor/github.com/coreos/go-systemd/v22/journal/journal_js.go
+new file mode 100644
+index 00000000..0e320320
+--- /dev/null
++++ b/vendor/github.com/coreos/go-systemd/v22/journal/journal_js.go
+@@ -0,0 +1,46 @@
++// Copyright 2015 CoreOS, Inc.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++// Package journal provides write bindings to the local systemd journal.
++// It is implemented in pure Go and connects to the journal directly over its
++// unix socket.
++//
++// To read from the journal, see the "sdjournal" package, which wraps the
++// sd-journal a C API.
++//
++// http://www.freedesktop.org/software/systemd/man/systemd-journald.service.html
++//go:build js
++
++// Stubs for GOOS=js (kube-wasm): there is no journald in a browser.
++package journal
++
++import (
++	"errors"
++)
++
++func Enabled() bool {
++	return false
++}
++
++func Send(message string, priority Priority, vars map[string]string) error {
++	return errors.New("could not initialize socket to journald")
++}
++
++func StderrIsJournalStream() (bool, error) {
++	return false, nil
++}
++
++func StdoutIsJournalStream() (bool, error) {
++	return false, nil
++}
+diff --git a/vendor/github.com/coreos/go-systemd/v22/journal/journal_unix.go b/vendor/github.com/coreos/go-systemd/v22/journal/journal_unix.go
+index 55cb9eb2..dfdbe965 100644
+--- a/vendor/github.com/coreos/go-systemd/v22/journal/journal_unix.go
++++ b/vendor/github.com/coreos/go-systemd/v22/journal/journal_unix.go
+@@ -12,7 +12,7 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
+-//go:build !windows
++//go:build !windows && !js
+ 
+ // Package journal provides write bindings to the local systemd journal.
+ // It is implemented in pure Go and connects to the journal directly over its
+diff --git a/vendor/github.com/moby/term/term_js.go b/vendor/github.com/moby/term/term_js.go
+new file mode 100644
+index 00000000..e341894e
+--- /dev/null
++++ b/vendor/github.com/moby/term/term_js.go
+@@ -0,0 +1,47 @@
++//go:build js
++
++// Stubs for GOOS=js (kube-wasm): a browser tab has no terminal devices.
++package term
++
++import (
++	"errors"
++	"io"
++	"os"
++)
++
++var ErrInvalidState = errors.New("Invalid terminal state")
++
++type terminalState struct{}
++
++type Termios struct{}
++
++func stdStreams() (stdIn io.ReadCloser, stdOut, stdErr io.Writer) {
++	return os.Stdin, os.Stdout, os.Stderr
++}
++
++func getFdInfo(in interface{}) (uintptr, bool) {
++	var inFd uintptr
++	var isTerminalIn bool
++	if file, ok := in.(*os.File); ok {
++		inFd = file.Fd()
++	}
++	return inFd, isTerminalIn
++}
++
++func getWinsize(fd uintptr) (*Winsize, error) { return nil, errors.ErrUnsupported }
++
++func setWinsize(fd uintptr, ws *Winsize) error { return errors.ErrUnsupported }
++
++func isTerminal(fd uintptr) bool { return false }
++
++func restoreTerminal(fd uintptr, state *State) error { return nil }
++
++func saveState(fd uintptr) (*State, error) { return &State{}, nil }
++
++func disableEcho(fd uintptr, state *State) error { return nil }
++
++func setRawTerminal(fd uintptr) (*State, error) { return &State{}, nil }
++
++func setRawTerminalOutput(uintptr) (*State, error) { return &State{}, nil }
++
++func makeRaw(fd uintptr) (*State, error) { return &State{}, nil }
+diff --git a/vendor/github.com/moby/term/term_unix.go b/vendor/github.com/moby/term/term_unix.go
+index 579ce553..7f7c39d0 100644
+--- a/vendor/github.com/moby/term/term_unix.go
++++ b/vendor/github.com/moby/term/term_unix.go
+@@ -1,4 +1,4 @@
+-//go:build !windows
++//go:build !windows && !js
+ // +build !windows
+ 
+ package term
+diff --git a/vendor/github.com/moby/term/termios_nonbsd.go b/vendor/github.com/moby/term/termios_nonbsd.go
+index 88b7b215..9a80a95b 100644
+--- a/vendor/github.com/moby/term/termios_nonbsd.go
++++ b/vendor/github.com/moby/term/termios_nonbsd.go
+@@ -1,4 +1,4 @@
+-//go:build !darwin && !freebsd && !netbsd && !openbsd && !windows
++//go:build !darwin && !freebsd && !netbsd && !openbsd && !windows && !js
+ // +build !darwin,!freebsd,!netbsd,!openbsd,!windows
+ 
+ package term
+diff --git a/vendor/github.com/moby/term/termios_unix.go b/vendor/github.com/moby/term/termios_unix.go
+index 60c82378..80c21475 100644
+--- a/vendor/github.com/moby/term/termios_unix.go
++++ b/vendor/github.com/moby/term/termios_unix.go
+@@ -1,4 +1,4 @@
+-//go:build !windows
++//go:build !windows && !js
+ // +build !windows
+ 
+ package term
+diff --git a/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_flock.go b/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_flock.go
+index 178c987a..671810b3 100644
+--- a/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_flock.go
++++ b/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_flock.go
+@@ -12,7 +12,7 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
+-//go:build !windows && !plan9 && !solaris
++//go:build !windows && !plan9 && !solaris && !js
+ 
+ package fileutil
+ 
+diff --git a/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_js.go b/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_js.go
+new file mode 100644
+index 00000000..bd7f9cd2
+--- /dev/null
++++ b/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_js.go
+@@ -0,0 +1,18 @@
++//go:build js
++
++// Stubs for GOOS=js (kube-wasm): file locks are not available in a browser.
++package fileutil
++
++import "os"
++
++func TryLockFile(path string, flag int, perm os.FileMode) (*LockedFile, error) {
++	f, err := os.OpenFile(path, flag, perm)
++	if err != nil {
++		return nil, err
++	}
++	return &LockedFile{f}, nil
++}
++
++func LockFile(path string, flag int, perm os.FileMode) (*LockedFile, error) {
++	return TryLockFile(path, flag, perm)
++}
+diff --git a/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_unix.go b/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_unix.go
+index 05db5367..3340bd54 100644
+--- a/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_unix.go
++++ b/vendor/go.etcd.io/etcd/client/pkg/v3/fileutil/lock_unix.go
+@@ -12,7 +12,7 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
+-//go:build !windows && !plan9 && !solaris && !linux
++//go:build !windows && !plan9 && !solaris && !linux && !js
+ 
+ package fileutil
+ 

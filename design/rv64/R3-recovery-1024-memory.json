@@ -1,0 +1,9 @@
+{
+  "result": {
+    "type": "object",
+    "value": {
+      "out": "/bin/busybox cat /proc/meminfo /proc/pressure/memory /proc/sys/vm/swappiness\n /etc/resolv.conf\nMemTotal:         993924 kB\nMemFree:           37280 kB\nMemAvailable:     574508 kB\nBuffers:             312 kB\nCached:           637404 kB\nSwapCached:            0 kB\nActive:            97028 kB\nInactive:         833556 kB\nActive(anon):      33160 kB\nInactive(anon):   350696 kB\nActive(file):      63868 kB\nInactive(file):   482860 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:        496956 kB\nSwapFree:         496956 kB\nDirty:                 0 kB\nWriteback:             0 kB\nAnonPages:        292844 kB\nMapped:           234652 kB\nShmem:             90988 kB\nKReclaimable:       2916 kB\nSlab:              12636 kB\nSReclaimable:       2916 kB\nSUnreclaim:         9720 kB\nKernelStack:        1360 kB\nPageTables:         2100 kB\nSecPageTables:         0 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:      993916 kB\nCommitted_AS:     913620 kB\nVmallocTotal:   67108864 kB\nVmallocUsed:        4604 kB\nVmallocChunk:          0 kB\nPercpu:              144 kB\nBalloon:               0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nsome avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n180\nnameserver 10.0.0.1\n~ # \n~ # printf '\\nRV64_8b39e69988454e2f8ecf4d18c1f67517:%s\\n' \"$?\"\n",
+      "exit": 0
+    }
+  }
+}

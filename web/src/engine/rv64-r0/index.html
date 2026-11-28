@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RV64 R0 bench</title>
+  <style>
+    :root { color-scheme: light dark; --bg: #fff; --fg: #1d1d1f; --muted: #6e6e73; --line: #d2d2d7; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #141416; --fg: #f2f2f4; --muted: #a1a1a6; --line: #3a3a3e; } }
+    body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, sans-serif; }
+    h1 { font-size: 18px; margin: 0 0 8px; }
+    p { color: var(--muted); margin: 0 0 12px; max-width: 70ch; }
+    form { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 12px; }
+    pre { white-space: pre-wrap; word-break: break-all; border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin: 0 0 12px; max-height: 40vh; overflow: auto; font: 12px/1.35 ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+  <h1>RV64 track, stage R0: TinyEMU baseline</h1>
+  <p>Boots riscv64 Linux in TinyEMU inside this tab and times boot, a shell round trip,
+     a CPU-bound loop, CoreMark, Go start-up, kubectl and (optionally) etcd with kube-apiserver.
+     Images come from <code>web/public/rv64-r0/</code>; see <code>design/rv64/R0-MEASUREMENTS.md</code>.</p>
+  <form id="form">
+    <label>Engine
+      <select name="engine">
+        <option value="r0">TinyEMU 2019-12-21, rebuilt with current Emscripten</option>
+        <option value="r0slice">The same, 30 million instructions per main-thread slice</option>
+        <option value="bellard">TinyEMU, precompiled JSLinux build (2019)</option>
+      </select></label>
+    <label>Disk
+      <select name="disk">
+        <option value="alpine">Alpine 3.24 riscv64 + Kubernetes binaries</option>
+        <option value="busybox">TinyEMU busybox image</option>
+      </select></label>
+    <label>RAM, MB <input name="mem" type="number" value="1024" min="128" max="3072" step="128"></label>
+    <label><input name="k8s" type="checkbox" value="1"> etcd + kube-apiserver</label>
+    <button>Run</button>
+  </form>
+  <pre id="results">Press Run.</pre>
+  <pre id="console"></pre>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

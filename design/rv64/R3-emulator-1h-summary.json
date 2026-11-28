@@ -1,0 +1,22 @@
+{
+  "resultType": "error",
+  "error": "Error: kuberoot probe timeout",
+  "readyObservedSeconds": 743.0712049999834,
+  "getPodsSeconds": [
+    20.61,
+    35.96,
+    24.75
+  ],
+  "podStartSeconds": [],
+  "probeDone": false,
+  "observedSeconds": 1799.4644750000239,
+  "busyMips": 122.67054277817792,
+  "effectiveMips": 96.76950732411524,
+  "tlsTimeoutLines": 8,
+  "postStartFailures": [],
+  "restarts": [
+    "[kinit] kuberoot-control exited (code 1), restarting in 1s"
+  ],
+  "wasmSha256": "d4e6bc8b3dfc654a2645e1957f6272784203fc648c43f0b24eb548b216c427c7",
+  "jitSourceSha256": "0e3766f4827dc08b9afa82ef3c3cfe42e7721f5e76ae51b566d849919b1512af"
+}

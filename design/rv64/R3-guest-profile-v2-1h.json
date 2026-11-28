@@ -1,0 +1,1545 @@
+{
+  "schema": "rv64.guest-profile/v1",
+  "hart": 0,
+  "weight": "instruction attempts",
+  "intervals": [
+    100003
+  ],
+  "dropped": 0,
+  "timestampApproximation": false,
+  "windows": [
+    {
+      "name": "restore-first-40s",
+      "startMs": 0,
+      "endMs": 40000,
+      "samples": 15977,
+      "unresolved": 689,
+      "processes": [
+        [
+          "kuberoot-control@80017000000836a7",
+          6169
+        ],
+        [
+          "kubectl@8015e0000008f7f5",
+          3019
+        ],
+        [
+          "containerd@8001200000083676",
+          1719
+        ],
+        [
+          "containerd-shim@800fc00000080ca4",
+          1170
+        ],
+        [
+          "containerd-shim@800fb00000080d79",
+          1154
+        ],
+        [
+          "kuberoot-node@800110000008365c",
+          861
+        ],
+        [
+          "coredns@8011200000082a13",
+          776
+        ],
+        [
+          "local-path-prov@801140000008f7ea",
+          319
+        ],
+        [
+          "kube-proxy@800bb0000008f573",
+          139
+        ],
+        [
+          "kinit.real@8000b00000083244",
+          105
+        ],
+        [
+          "portmap@801600000008266e",
+          86
+        ],
+        [
+          "loopback@8015f00000082765",
+          64
+        ],
+        [
+          "bridge@8016100000082a43",
+          57
+        ],
+        [
+          "kcompactd0@8015e0000008f7f5",
+          56
+        ],
+        [
+          "kcompactd0@8011200000082a13",
+          30
+        ],
+        [
+          "busybox@8015a00000080c30",
+          10
+        ],
+        [
+          "kworker/u4:1@80017000000836a7",
+          10
+        ],
+        [
+          "satp:8001200000083676",
+          9
+        ],
+        [
+          "busybox@8015800000080c30",
+          8
+        ],
+        [
+          "rcu_sched@8011200000082a13",
+          8
+        ],
+        [
+          "rcu_sched@80017000000836a7",
+          8
+        ],
+        [
+          "busybox@8015c00000080d94",
+          7
+        ],
+        [
+          "satp:800fb00000080d79",
+          7
+        ],
+        [
+          "kworker/0:0@80017000000836a7",
+          7
+        ],
+        [
+          "kcompactd0@80017000000836a7",
+          6
+        ],
+        [
+          "kuberoot-control@8001200000083676",
+          6
+        ],
+        [
+          "containerd@80017000000836a7",
+          6
+        ],
+        [
+          "satp:80017000000836a7",
+          6
+        ],
+        [
+          "sh@800090000008333e",
+          5
+        ],
+        [
+          "kcompactd0@8000b00000083244",
+          5
+        ],
+        [
+          "kuberoot-control@800fb00000080d79",
+          5
+        ],
+        [
+          "containerd-shim@80017000000836a7",
+          5
+        ],
+        [
+          "kworker/u4:1@8001200000083676",
+          5
+        ],
+        [
+          "satp:800fc00000080ca4",
+          4
+        ],
+        [
+          "kcompactd0@800110000008365c",
+          4
+        ],
+        [
+          "containerd@8011200000082a13",
+          4
+        ],
+        [
+          "rcu_sched@8001200000083676",
+          4
+        ],
+        [
+          "kuberoot-control@800fc00000080ca4",
+          4
+        ],
+        [
+          "kworker/u4:1@800110000008365c",
+          4
+        ],
+        [
+          "portmap@8011200000082a13",
+          4
+        ],
+        [
+          "satp:8011200000082a13",
+          3
+        ],
+        [
+          "kworker/0:0@800110000008365c",
+          3
+        ],
+        [
+          "satp:800110000008365c",
+          3
+        ],
+        [
+          "satp:8015e0000008f7f5",
+          3
+        ],
+        [
+          "coredns@800fb00000080d79",
+          3
+        ],
+        [
+          "kuberoot-node@80017000000836a7",
+          3
+        ],
+        [
+          "kworker/u4:1@800fc00000080ca4",
+          2
+        ],
+        [
+          "sh@8015b00000080c30",
+          2
+        ],
+        [
+          "sh@8015d00000080d94",
+          2
+        ],
+        [
+          "kuberoot-control@8015e0000008f7f5",
+          2
+        ]
+      ],
+      "top50": [
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.pcvalue",
+          "samples": 403,
+          "percent": 2.522
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.step",
+          "samples": 321,
+          "percent": 2.009
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "memcpy",
+          "samples": 287,
+          "percent": 1.796
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "regexp.(*Regexp).tryBacktrack",
+          "samples": 253,
+          "percent": 1.584
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Mul",
+          "samples": 235,
+          "percent": 1.471
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "memcpy",
+          "samples": 224,
+          "percent": 1.402
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "compress/flate.(*compressor).deflate",
+          "samples": 221,
+          "percent": 1.383
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "compress/flate.(*compressor).findMatch",
+          "samples": 217,
+          "percent": 1.358
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.selectgo",
+          "samples": 143,
+          "percent": 0.895
+        },
+        {
+          "process": "kuberoot-node@800110000008365c",
+          "function": "memcpy",
+          "samples": 140,
+          "percent": 0.876
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.tracebackPCs",
+          "samples": 124,
+          "percent": 0.776
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.(*moduledata).textAddr",
+          "samples": 121,
+          "percent": 0.757
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.unlock2",
+          "samples": 112,
+          "percent": 0.701
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "psi_group_change",
+          "samples": 91,
+          "percent": 0.57
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "update_load_avg",
+          "samples": 91,
+          "percent": 0.57
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "ZSTD_decompressSequences_default.constprop.0",
+          "samples": 88,
+          "percent": 0.551
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "__update_load_avg_se",
+          "samples": 84,
+          "percent": 0.526
+        },
+        {
+          "process": "kuberoot-node@800110000008365c",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Mul",
+          "samples": 83,
+          "percent": 0.519
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.(*unwinder).resolveInternal",
+          "samples": 82,
+          "percent": 0.513
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "internal/runtime/atomic.Xchg8",
+          "samples": 80,
+          "percent": 0.501
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "runtime.tryDeferToSpanScan",
+          "samples": 74,
+          "percent": 0.463
+        },
+        {
+          "process": "containerd@8001200000083676",
+          "function": "psi_group_change",
+          "samples": 71,
+          "percent": 0.444
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "runtime.scanObject",
+          "samples": 71,
+          "percent": 0.444
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "__update_load_avg_cfs_rq",
+          "samples": 70,
+          "percent": 0.438
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "runtime.scanObjectsSmall",
+          "samples": 70,
+          "percent": 0.438
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.findfunc",
+          "samples": 70,
+          "percent": 0.438
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "runtime.mallocgcSmallScanNoHeader",
+          "samples": 64,
+          "percent": 0.401
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.mallocgcSmallScanNoHeader",
+          "samples": 63,
+          "percent": 0.394
+        },
+        {
+          "process": "containerd@8001200000083676",
+          "function": "__update_load_avg_se",
+          "samples": 62,
+          "percent": 0.388
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Add",
+          "samples": 61,
+          "percent": 0.382
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "regexp.(*inputString).step",
+          "samples": 55,
+          "percent": 0.344
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Selectznz",
+          "samples": 55,
+          "percent": 0.344
+        },
+        {
+          "process": "coredns@8011200000082a13",
+          "function": "psi_group_change",
+          "samples": 54,
+          "percent": 0.338
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Square",
+          "samples": 54,
+          "percent": 0.338
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.memmove",
+          "samples": 53,
+          "percent": 0.332
+        },
+        {
+          "process": "containerd@8001200000083676",
+          "function": "__schedule",
+          "samples": 52,
+          "percent": 0.325
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "runtime.memmove",
+          "samples": 52,
+          "percent": 0.325
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "hash/crc32.slicingUpdate",
+          "samples": 52,
+          "percent": 0.325
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.(*unwinder).next",
+          "samples": 51,
+          "percent": 0.319
+        },
+        {
+          "process": "kubectl@8015e0000008f7f5",
+          "function": "ZSTD_decompressSequences_default.constprop.0",
+          "samples": 50,
+          "percent": 0.313
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.lock2",
+          "samples": 48,
+          "percent": 0.3
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/bigmod.(*Nat).montgomeryMul",
+          "samples": 45,
+          "percent": 0.282
+        },
+        {
+          "process": "containerd-shim@800fb00000080d79",
+          "function": "psi_group_change",
+          "samples": 43,
+          "percent": 0.269
+        },
+        {
+          "process": "containerd@8001200000083676",
+          "function": "update_load_avg",
+          "samples": 43,
+          "percent": 0.269
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "update_curr",
+          "samples": 42,
+          "percent": 0.263
+        },
+        {
+          "process": "containerd-shim@800fb00000080d79",
+          "function": "runtime.scanObjectsSmall",
+          "samples": 42,
+          "percent": 0.263
+        },
+        {
+          "process": "containerd-shim@800fc00000080ca4",
+          "function": "psi_group_change",
+          "samples": 41,
+          "percent": 0.257
+        },
+        {
+          "process": "containerd-shim@800fc00000080ca4",
+          "function": "runtime.scanObjectsSmall",
+          "samples": 41,
+          "percent": 0.257
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "regexp.(*Regexp).tryBacktrack",
+          "samples": 41,
+          "percent": 0.257
+        },
+        {
+          "process": "kuberoot-node@800110000008365c",
+          "function": "ZSTD_decompressSequences_default.constprop.0",
+          "samples": 40,
+          "percent": 0.25
+        }
+      ]
+    },
+    {
+      "name": "first-get-pods",
+      "startMs": 81881.97999995947,
+      "endMs": 91698.01999998093,
+      "samples": 8779,
+      "unresolved": 174,
+      "processes": [
+        [
+          "kuberoot-control@80017000000836a7",
+          3256
+        ],
+        [
+          "kubectl@8016e00000082be5",
+          3095
+        ],
+        [
+          "kuberoot-node@800110000008365c",
+          612
+        ],
+        [
+          "containerd@8001200000083676",
+          503
+        ],
+        [
+          "containerd-shim@800fc00000080ca4",
+          386
+        ],
+        [
+          "containerd-shim@800fb00000080d79",
+          346
+        ],
+        [
+          "coredns@8011200000082a13",
+          213
+        ],
+        [
+          "local-path-prov@801140000008f7ea",
+          78
+        ],
+        [
+          "kubectl@80017000000836a7",
+          73
+        ],
+        [
+          "kubectl@8017400000082bf0",
+          68
+        ],
+        [
+          "kinit.real@8000b00000083244",
+          31
+        ],
+        [
+          "kube-proxy@800bb0000008f573",
+          26
+        ],
+        [
+          "kubectl@800110000008365c",
+          8
+        ],
+        [
+          "busybox@8017000000082a33",
+          7
+        ],
+        [
+          "busybox@801720000008f4a3",
+          7
+        ],
+        [
+          "rcu_sched@80017000000836a7",
+          5
+        ],
+        [
+          "sh@800090000008333e",
+          5
+        ],
+        [
+          "kworker/u4:1@800110000008365c",
+          4
+        ],
+        [
+          "rcu_sched@8016e00000082be5",
+          3
+        ],
+        [
+          "kuberoot-control@800110000008365c",
+          3
+        ],
+        [
+          "rcu_sched@800110000008365c",
+          3
+        ],
+        [
+          "ksoftirqd/0@80017000000836a7",
+          3
+        ],
+        [
+          "satp:8011200000082a13",
+          3
+        ],
+        [
+          "containerd@800fb00000080d79",
+          2
+        ],
+        [
+          "kuberoot-node@8001200000083676",
+          2
+        ],
+        [
+          "containerd-shim@8016e00000082be5",
+          2
+        ],
+        [
+          "satp:800fb00000080d79",
+          2
+        ],
+        [
+          "satp:80017000000836a7",
+          2
+        ],
+        [
+          "satp:8001200000083676",
+          2
+        ],
+        [
+          "sh@8016f00000082be5",
+          2
+        ],
+        [
+          "sh@8017100000082a33",
+          2
+        ],
+        [
+          "kworker/0:0@800110000008365c",
+          1
+        ],
+        [
+          "kuberoot-node@8016e00000082be5",
+          1
+        ],
+        [
+          "kworker/0:0@8016e00000082be5",
+          1
+        ],
+        [
+          "containerd@800fc00000080ca4",
+          1
+        ],
+        [
+          "containerd-shim@800110000008365c",
+          1
+        ],
+        [
+          "kworker/u4:1@80017000000836a7",
+          1
+        ],
+        [
+          "containerd@8011200000082a13",
+          1
+        ],
+        [
+          "satp:800fc00000080ca4",
+          1
+        ],
+        [
+          "ksoftirqd/0@8016e00000082be5",
+          1
+        ],
+        [
+          "kuberoot-node@800fb00000080d79",
+          1
+        ],
+        [
+          "coredns@800110000008365c",
+          1
+        ],
+        [
+          "kuberoot-control@8001200000083676",
+          1
+        ],
+        [
+          "satp:8016e00000082be5",
+          1
+        ],
+        [
+          "containerd@8016e00000082be5",
+          1
+        ],
+        [
+          "kinit.real@800fb00000080d79",
+          1
+        ],
+        [
+          "containerd-shim@80017000000836a7",
+          1
+        ],
+        [
+          "coredns@8001200000083676",
+          1
+        ],
+        [
+          "kworker/u4:1@8001200000083676",
+          1
+        ],
+        [
+          "khvcd@8000b00000083244",
+          1
+        ]
+      ],
+      "top50": [
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "regexp.(*Regexp).tryBacktrack",
+          "samples": 267,
+          "percent": 3.041
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.pcvalue",
+          "samples": 242,
+          "percent": 2.757
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "compress/flate.(*compressor).deflate",
+          "samples": 229,
+          "percent": 2.608
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.step",
+          "samples": 225,
+          "percent": 2.563
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "compress/flate.(*compressor).findMatch",
+          "samples": 208,
+          "percent": 2.369
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Mul",
+          "samples": 156,
+          "percent": 1.777
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.scanObjectsSmall",
+          "samples": 108,
+          "percent": 1.23
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.tryDeferToSpanScan",
+          "samples": 107,
+          "percent": 1.219
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.selectgo",
+          "samples": 101,
+          "percent": 1.15
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.tracebackPCs",
+          "samples": 90,
+          "percent": 1.025
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.scanObject",
+          "samples": 87,
+          "percent": 0.991
+        },
+        {
+          "process": "kuberoot-node@800110000008365c",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Mul",
+          "samples": 87,
+          "percent": 0.991
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "vendor/golang.org/x/crypto/chacha20.(*Cipher).xorKeyStreamBlocksGeneric",
+          "samples": 83,
+          "percent": 0.945
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.memmove",
+          "samples": 72,
+          "percent": 0.82
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.findObject",
+          "samples": 64,
+          "percent": 0.729
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.mallocgcSmallScanNoHeader",
+          "samples": 58,
+          "percent": 0.661
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.unlock2",
+          "samples": 57,
+          "percent": 0.649
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.memhashFallback",
+          "samples": 56,
+          "percent": 0.638
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.(*moduledata).textAddr",
+          "samples": 54,
+          "percent": 0.615
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Add",
+          "samples": 54,
+          "percent": 0.615
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.findfunc",
+          "samples": 52,
+          "percent": 0.592
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.(*unwinder).resolveInternal",
+          "samples": 48,
+          "percent": 0.547
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "hash/crc32.slicingUpdate",
+          "samples": 45,
+          "percent": 0.513
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "regexp.(*inputString).step",
+          "samples": 44,
+          "percent": 0.501
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Square",
+          "samples": 42,
+          "percent": 0.478
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/bigmod.(*Nat).montgomeryMul",
+          "samples": 41,
+          "percent": 0.467
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "encoding/json.unquoteBytes",
+          "samples": 40,
+          "percent": 0.456
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "internal/runtime/atomic.Xchg8",
+          "samples": 39,
+          "percent": 0.444
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.lock2",
+          "samples": 39,
+          "percent": 0.444
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.memmove",
+          "samples": 39,
+          "percent": 0.444
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "crypto/internal/fips140/sha256.block",
+          "samples": 39,
+          "percent": 0.444
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Selectznz",
+          "samples": 38,
+          "percent": 0.433
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.mallocgcSmallScanNoHeader",
+          "samples": 37,
+          "percent": 0.421
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Mul",
+          "samples": 37,
+          "percent": 0.421
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.nextFreeFast",
+          "samples": 34,
+          "percent": 0.387
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "__update_load_avg_se",
+          "samples": 33,
+          "percent": 0.376
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "encoding/json.checkValid",
+          "samples": 33,
+          "percent": 0.376
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "github.com/chai2010/gettext-go/po.decodePoString",
+          "samples": 33,
+          "percent": 0.376
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "compress/flate.(*huffmanBitWriter).writeTokens",
+          "samples": 31,
+          "percent": 0.353
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.(*mspan).writeHeapBitsSmall",
+          "samples": 30,
+          "percent": 0.342
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.scanblock",
+          "samples": 30,
+          "percent": 0.342
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "internal/bytealg.Count",
+          "samples": 29,
+          "percent": 0.33
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.(*unwinder).next",
+          "samples": 28,
+          "percent": 0.319
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "runtime.typePointers.next",
+          "samples": 28,
+          "percent": 0.319
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "psi_group_change",
+          "samples": 27,
+          "percent": 0.308
+        },
+        {
+          "process": "kubectl@8016e00000082be5",
+          "function": "compress/flate.(*huffmanBitWriter).writeCode",
+          "samples": 26,
+          "percent": 0.296
+        },
+        {
+          "process": "kuberoot-node@800110000008365c",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Add",
+          "samples": 25,
+          "percent": 0.285
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.memhashFallback",
+          "samples": 24,
+          "percent": 0.273
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.memclrNoHeapPointers",
+          "samples": 24,
+          "percent": 0.273
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.mallocgc",
+          "samples": 24,
+          "percent": 0.273
+        }
+      ]
+    },
+    {
+      "name": "pod-start",
+      "startMs": 120972.81000000238,
+      "endMs": 204657.8899999857,
+      "samples": 67898,
+      "unresolved": 2976,
+      "processes": [
+        [
+          "kuberoot-control@80017000000836a7",
+          29391
+        ],
+        [
+          "containerd@8001200000083676",
+          7038
+        ],
+        [
+          "kuberoot-node@800110000008365c",
+          5020
+        ],
+        [
+          "kubectl@801820000008f52f",
+          3390
+        ],
+        [
+          "kubectl@801840000008f7c6",
+          3204
+        ],
+        [
+          "containerd-shim@800fb00000080d79",
+          3165
+        ],
+        [
+          "containerd-shim@800fc00000080ca4",
+          3039
+        ],
+        [
+          "coredns@8011200000082a13",
+          1469
+        ],
+        [
+          "kswapd0@80017000000836a7",
+          1100
+        ],
+        [
+          "containerd-shim@8018f00000082b72",
+          1046
+        ],
+        [
+          "runc@8019000000082765",
+          893
+        ],
+        [
+          "runc:[2:INIT]@8019300000082471",
+          838
+        ],
+        [
+          "runc:[2:INIT]@801990000008242b",
+          825
+        ],
+        [
+          "local-path-prov@801140000008f7ea",
+          816
+        ],
+        [
+          "kube-proxy@800bb0000008f573",
+          614
+        ],
+        [
+          "runc@8019600000082774",
+          402
+        ],
+        [
+          "kswapd0@8011200000082a13",
+          400
+        ],
+        [
+          "kswapd0@8019300000082471",
+          361
+        ],
+        [
+          "kinit.real@8000b00000083244",
+          337
+        ],
+        [
+          "loopback@801860000008269f",
+          327
+        ],
+        [
+          "kswapd0@800fc00000080ca4",
+          303
+        ],
+        [
+          "kswapd0@800fb00000080d79",
+          303
+        ],
+        [
+          "bridge@8018700000082b1b",
+          299
+        ],
+        [
+          "kswapd0@800110000008365c",
+          269
+        ],
+        [
+          "containerd-shim@8018e000000827c5",
+          254
+        ],
+        [
+          "runc@8019400000082765",
+          253
+        ],
+        [
+          "runc@8019a00000082403",
+          191
+        ],
+        [
+          "kswapd0@8019000000082765",
+          180
+        ],
+        [
+          "kswapd0@8001200000083676",
+          176
+        ],
+        [
+          "host-local@8018800000082737",
+          102
+        ],
+        [
+          "nft@8018c0000008272f",
+          97
+        ],
+        [
+          "nft@8018a0000008272f",
+          96
+        ],
+        [
+          "portmap@8018d0000008f606",
+          88
+        ],
+        [
+          "nft@8018b00000082720",
+          73
+        ],
+        [
+          "kubectl@800110000008365c",
+          71
+        ],
+        [
+          "rcu_sched@80017000000836a7",
+          62
+        ],
+        [
+          "kubectl@801a00000008f7e7",
+          62
+        ],
+        [
+          "kswapd0@8018a0000008272f",
+          54
+        ],
+        [
+          "kswapd0@8018c0000008272f",
+          47
+        ],
+        [
+          "nft@8018900000082718",
+          46
+        ],
+        [
+          "pause@8019500000082765",
+          42
+        ],
+        [
+          "kubectl@80017000000836a7",
+          37
+        ],
+        [
+          "kubectl@800fc00000080ca4",
+          37
+        ],
+        [
+          "satp:80017000000836a7",
+          36
+        ],
+        [
+          "kswapd0@800bb0000008f573",
+          36
+        ],
+        [
+          "kcompactd0@8019300000082471",
+          28
+        ],
+        [
+          "kworker/0:0@80017000000836a7",
+          27
+        ],
+        [
+          "containerd-shim@8001200000083676",
+          26
+        ],
+        [
+          "kuberoot-control@8001200000083676",
+          26
+        ],
+        [
+          "containerd-shim@80017000000836a7",
+          26
+        ]
+      ],
+      "top50": [
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.pcvalue",
+          "samples": 2187,
+          "percent": 3.221
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.step",
+          "samples": 1710,
+          "percent": 2.518
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Mul",
+          "samples": 1088,
+          "percent": 1.602
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.selectgo",
+          "samples": 906,
+          "percent": 1.334
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.tracebackPCs",
+          "samples": 627,
+          "percent": 0.923
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.(*moduledata).textAddr",
+          "samples": 617,
+          "percent": 0.909
+        },
+        {
+          "process": "kswapd0@80017000000836a7",
+          "function": "LZ4_compress_fast_extState",
+          "samples": 611,
+          "percent": 0.9
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.unlock2",
+          "samples": 484,
+          "percent": 0.713
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.mallocgcSmallScanNoHeader",
+          "samples": 479,
+          "percent": 0.705
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "vendor/golang.org/x/crypto/chacha20.(*Cipher).xorKeyStreamBlocksGeneric",
+          "samples": 453,
+          "percent": 0.667
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.findfunc",
+          "samples": 427,
+          "percent": 0.629
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.memmove",
+          "samples": 422,
+          "percent": 0.622
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Add",
+          "samples": 414,
+          "percent": 0.61
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "internal/runtime/atomic.Xchg8",
+          "samples": 387,
+          "percent": 0.57
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.(*unwinder).resolveInternal",
+          "samples": 356,
+          "percent": 0.524
+        },
+        {
+          "process": "kuberoot-node@800110000008365c",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Mul",
+          "samples": 317,
+          "percent": 0.467
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Square",
+          "samples": 316,
+          "percent": 0.465
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.lock2",
+          "samples": 305,
+          "percent": 0.449
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "encoding/json.unquoteBytes",
+          "samples": 301,
+          "percent": 0.443
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "psi_group_change",
+          "samples": 297,
+          "percent": 0.437
+        },
+        {
+          "process": "containerd@8001200000083676",
+          "function": "runtime.scanObjectsSmall",
+          "samples": 284,
+          "percent": 0.418
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.(*unwinder).next",
+          "samples": 280,
+          "percent": 0.412
+        },
+        {
+          "process": "kubectl@801820000008f52f",
+          "function": "regexp.(*Regexp).tryBacktrack",
+          "samples": 270,
+          "percent": 0.398
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "__update_load_avg_se",
+          "samples": 266,
+          "percent": 0.392
+        },
+        {
+          "process": "kuberoot-node@800110000008365c",
+          "function": "memcpy",
+          "samples": 266,
+          "percent": 0.392
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "update_load_avg",
+          "samples": 256,
+          "percent": 0.377
+        },
+        {
+          "process": "kubectl@801840000008f7c6",
+          "function": "regexp.(*Regexp).tryBacktrack",
+          "samples": 254,
+          "percent": 0.374
+        },
+        {
+          "process": "containerd@8001200000083676",
+          "function": "runtime.tryDeferToSpanScan",
+          "samples": 250,
+          "percent": 0.368
+        },
+        {
+          "process": "kubectl@801840000008f7c6",
+          "function": "compress/flate.(*compressor).deflate",
+          "samples": 234,
+          "percent": 0.345
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.memhashFallback",
+          "samples": 233,
+          "percent": 0.343
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/bigmod.(*Nat).montgomeryMul",
+          "samples": 232,
+          "percent": 0.342
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.nextFreeFast",
+          "samples": 231,
+          "percent": 0.34
+        },
+        {
+          "process": "kswapd0@8019300000082471",
+          "function": "LZ4_compress_fast_extState",
+          "samples": 231,
+          "percent": 0.34
+        },
+        {
+          "process": "kubectl@801820000008f52f",
+          "function": "compress/flate.(*compressor).findMatch",
+          "samples": 229,
+          "percent": 0.337
+        },
+        {
+          "process": "kswapd0@8011200000082a13",
+          "function": "LZ4_compress_fast_extState",
+          "samples": 227,
+          "percent": 0.334
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.mallocgc",
+          "samples": 224,
+          "percent": 0.33
+        },
+        {
+          "process": "containerd@8001200000083676",
+          "function": "psi_group_change",
+          "samples": 222,
+          "percent": 0.327
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.(*mspan).writeHeapBitsSmall",
+          "samples": 221,
+          "percent": 0.325
+        },
+        {
+          "process": "kswapd0@80017000000836a7",
+          "function": "memcpy",
+          "samples": 211,
+          "percent": 0.311
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "crypto/internal/fips140/nistec/fiat.p256Selectznz",
+          "samples": 210,
+          "percent": 0.309
+        },
+        {
+          "process": "kubectl@801820000008f52f",
+          "function": "compress/flate.(*compressor).deflate",
+          "samples": 207,
+          "percent": 0.305
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "__update_load_avg_cfs_rq",
+          "samples": 206,
+          "percent": 0.303
+        },
+        {
+          "process": "kubectl@801840000008f7c6",
+          "function": "compress/flate.(*compressor).findMatch",
+          "samples": 205,
+          "percent": 0.302
+        },
+        {
+          "process": "containerd@8001200000083676",
+          "function": "__update_load_avg_se",
+          "samples": 194,
+          "percent": 0.286
+        },
+        {
+          "process": "runc@8019000000082765",
+          "function": "memcpy",
+          "samples": 194,
+          "percent": 0.286
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "encoding/json.checkValid",
+          "samples": 190,
+          "percent": 0.28
+        },
+        {
+          "process": "kswapd0@800fb00000080d79",
+          "function": "LZ4_compress_fast_extState",
+          "samples": 185,
+          "percent": 0.272
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.newInlineUnwinder",
+          "samples": 183,
+          "percent": 0.27
+        },
+        {
+          "process": "containerd@8001200000083676",
+          "function": "update_load_avg",
+          "samples": 176,
+          "percent": 0.259
+        },
+        {
+          "process": "kuberoot-control@80017000000836a7",
+          "function": "runtime.sellock",
+          "samples": 170,
+          "percent": 0.25
+        }
+      ]
+    }
+  ]
+}

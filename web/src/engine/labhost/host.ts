@@ -479,6 +479,18 @@ export class LabHost {
     this.sendIp(vlan, local.ip, remote.ip, PROTO_TCP, buildTcp(local.ip, remote.ip, { sport: local.port, dport: remote.port, seq, ack, flags: RST | ACK, window: 0 }));
   }
 
+  /** Reset a connection the peer still has but this host does not, such as
+   * one a machine restored from a checkpoint carries. Besides a reset at
+   * seq, it sends a bare ACK: a peer whose expected sequence number differs
+   * answers that with an ACK of its own, and this host answers any segment
+   * of an unknown connection with a reset at exactly that number. */
+  resetPeer(vlan: number, local: Endpoint, remote: Endpoint, seq: number, ack: number): void {
+    const send = (flags: number) => this.sendIp(vlan, local.ip, remote.ip, PROTO_TCP,
+      buildTcp(local.ip, remote.ip, { sport: local.port, dport: remote.port, seq, ack, flags, window: 0 }));
+    send(RST | ACK);
+    send(ACK);
+  }
+
   /** Open a connection to a machine. Rejects on RST or timeout. */
   connect(ip: number, port: number, o: { vlan?: number; src?: number; timeoutMs?: number } = {}): Promise<TcpConn> {
     const iface = o.vlan !== undefined ? this.ifaces.get(o.vlan) : this.routeTo(ip);

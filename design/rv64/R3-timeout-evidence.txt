@@ -1,0 +1,62 @@
+
+PostStartHook: 11 matches
+[kube-apiserver] F0101 00:09:58.305350      66 hooks.go:203] PostStartHook "scheduling/bootstrap-system-priority-classes" failed: unable to add default system priority classes: timed out waiting for the condition
+[kube-apiserver] F0101 00:10:09.785445      66 hooks.go:203] PostStartHook "start-service-ip-repair-controllers" failed: unable to perform initial IP and Port allocation check (timeout)
+[kube-apiserver] F0101 00:16:19.226825     222 hooks.go:203] PostStartHook "scheduling/bootstrap-system-priority-classes" failed: unable to add default system priority classes: timed out waiting for the condition
+[kube-apiserver] F0101 00:16:25.365650     222 hooks.go:203] PostStartHook "start-service-ip-repair-controllers" failed: unable to perform initial IP and Port allocation check (timeout)
+
+exited (code: 5 matches
+[kinit] kube-apiserver exited (code 255), restarting in 1s
+[kinit] kube-apiserver exited (code 255), restarting in 2s
+[kinit] kube-apiserver exited (code 255), restarting in 2s
+[kinit] kube-apiserver exited (code 255), restarting in 2s
+
+health check: 0 matches
+
+
+keepalive ping: 22 matches
+[kube-apiserver] {"level":"warn","ts":"1970-01-01T00:10:13.892585Z","logger":"etcd-client","caller":"v3@v3.7.0/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x3f7162ae00//run/kine/kine.sock","peer":"Peer{Addr: '/run/kine/kine.sock', LocalAddr: '@', AuthInfo: 'insecure'}","method":"/etcdserverpb.KV/Range","attempt":0,"error":"rpc error: code = Unavailable desc = keepalive ping failed to receive ACK within timeout"}
+[kube-apiserver] {"level":"warn","ts":"1970-01-01T00:10:24.534880Z","logger":"etcd-client","caller":"v3@v3.7.0/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x3f72165a00//run/kine/kine.sock","peer":"Peer{Addr: '/run/kine/kine.sock', LocalAddr: '@', AuthInfo: 'insecure'}","method":"/etcdserverpb.KV/Range","attempt":0,"error":"rpc error: code = Unavailable desc = keepalive ping failed to receive ACK within timeout"}
+[kube-apiserver] {"level":"warn","ts":"1970-01-01T00:10:32.348650Z","logger":"etcd-client","caller":"v3@v3.7.0/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x3f719d0200//run/kine/kine.sock","peer":"Peer{Addr: '/run/kine/kine.sock', LocalAddr: '@', AuthInfo: 'insecure'}","method":"/etcdserverpb.KV/Range","attempt":0,"error":"rpc error: code = Unavailable desc = keepalive ping failed to receive ACK within timeout"}
+[kube-apiserver] {"level":"warn","ts":"1970-01-01T00:10:37.462385Z","logger":"etcd-client","caller":"v3@v3.7.0/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x3f7290d800//run/kine/kine.sock","peer":"Peer{Addr: '/run/kine/kine.sock', LocalAddr: '@', AuthInfo: 'insecure'}","method":"/etcdserverpb.KV/Range","attempt":0,"error":"rpc error: code = Unavailable desc = keepalive ping failed to receive ACK within timeout"}
+
+lease: 97 matches
+[containerd] time="1970-01-01T00:02:03.930485000Z" level=info msg="skip loading plugin" error="EROFS unsupported, please `modprobe erofs`: skip plugin" id=io.containerd.snapshotter.v1.erofs type=io.containerd.snapshotter.v1
+[containerd] time="1970-01-01T00:02:04.141650000Z" level=info msg="loading plugin" id=io.containerd.lease.v1.manager type=io.containerd.lease.v1
+[containerd] time="1970-01-01T00:02:04.143990000Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.leases type=io.containerd.grpc.v1
+[containerd] time="1970-01-01T00:02:04.431460000Z" level=warning msg="failed to load cni during init, please check CRI plugin status before setting up network for pods" error="cni config load failed: no network config found in /etc/cni/net.d: cni plugin not initialized: failed to load cni config"
+
+Liveness: 0 matches
+
+
+liveness: 0 matches
+
+
+TLS handshake: 244 matches
+[kuberoot-node] E0101 00:05:28.176855      61 alternatives.go:31] alternative labels: Get "https://127.0.0.1:6443/api/v1/nodes/kuberoot-3d2fa0": net/http: TLS handshake timeout
+[kube-apiserver] E0101 00:05:44.335040      66 typeconverter.go:83] "Unhandled Error" err="failed to fetch openapi paths: Get \"https://[::1]:6443/openapi/v3\": net/http: TLS handshake timeout" logger="UnhandledError"
+[kuberoot-node] E0101 00:05:48.343490      61 alternatives.go:31] alternative labels: Get "https://127.0.0.1:6443/api/v1/nodes/kuberoot-3d2fa0": net/http: TLS handshake timeout
+[kube-apiserver] E0101 00:05:54.666295      66 typeconverter.go:83] "Unhandled Error" err="failed to fetch openapi paths: Get \"https://[::1]:6443/openapi/v3\": net/http: TLS handshake timeout" logger="UnhandledError"
+
+SLIM baseline: R3-slim-1h-console.txt
+
+kine_deadline: 32 lines
+[kuberoot-control] {"level":"warn","ts":"1970-01-01T00:04:49.757970Z","logger":"etcd-client","caller":"v3@v3.7.2/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x3f489e2600//run/kine/kine.sock","peer":"Peer{Addr: '/run/kine/kine.sock', LocalAddr: '@', AuthInfo: 'insecure'}","method":"/etcdserverpb.KV/Range","attempt":0,"error":"rpc error: code = DeadlineExceeded desc = context deadline exceeded"}
+[kuberoot-control] {"level":"warn","ts":"1970-01-01T00:04:53.607065Z","logger":"etcd-client","caller":"v3@v3.7.2/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x3f489e2800//run/kine/kine.sock","peer":"Peer{Addr: '/run/kine/kine.sock', LocalAddr: '@', AuthInfo: 'insecure'}","method":"/etcdserverpb.KV/Range","attempt":0,"error":"rpc error: code = DeadlineExceeded desc = context deadline exceeded"}
+[kuberoot-control] {"level":"warn","ts":"1970-01-01T00:05:02.783730Z","logger":"etcd-client","caller":"v3@v3.7.2/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x3f489e2600//run/kine/kine.sock","peer":"Peer{Addr: '/run/kine/kine.sock', LocalAddr: '@', AuthInfo: 'insecure'}","method":"/etcdserverpb.KV/Range","attempt":0,"error":"rpc error: code = DeadlineExceeded desc = context deadline exceeded"}
+
+readyz_timeout: 40 lines
+[kuberoot-control] E0101 00:04:32.907915      65 timeout.go:140] "Post-timeout activity" logger="UnhandledError" timeElapsed="3.3893451s" method="GET" path="/readyz" result=null
+[kuberoot-control] E0101 00:04:32.851320      65 timeout.go:140] "Post-timeout activity" logger="UnhandledError" timeElapsed="1.22044s" method="GET" path="/readyz" result=null
+[kuberoot-control] E0101 00:04:39.307375      65 timeout.go:140] "Post-timeout activity" logger="UnhandledError" timeElapsed="3.8727899s" method="GET" path="/readyz" result=null
+
+node_lease: 2 lines
+[kuberoot-control] E0101 00:10:41.093775     196 nodelease.go:50] "Failed to get node when trying to set owner ref to the node lease" err="nodes \"kuberoot-3d2fa0\" not found" node="kuberoot-3d2fa0"
+[kuberoot-control] E0101 00:10:57.616980     196 nodelease.go:50] "Failed to get node when trying to set owner ref to the node lease" err="nodes \"kuberoot-3d2fa0\" not found" node="kuberoot-3d2fa0"
+
+fatal_hook: 1 lines
+[kuberoot-control] F0101 00:05:14.335410      65 hooks.go:203] PostStartHook "start-service-ip-repair-controllers" failed: unable to perform initial IP and Port allocation check (timeout)
+
+restart: 2 lines
+[kinit] kuberoot-control exited (code 255), restarting in 1s
+[kinit] kuberoot-control exited (code 1), restarting in 2s

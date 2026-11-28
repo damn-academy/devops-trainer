@@ -1,0 +1,88 @@
+{
+  "result": {
+    "type": "smp-trace-linux",
+    "pass": true,
+    "runs": [
+      {
+        "ms": 4587.259999990463,
+        "hartWords": [
+          7000000,
+          7000000
+        ],
+        "hartFnv": [
+          2359275194,
+          3380554491
+        ],
+        "consoleTail": "000000] SBI HSM extension detected\n[    0.000000] riscv: base ISA extensions acdfim\n[    0.000000] riscv: ELF capabilities acdfim\n[    0.000000] Ticket spinlock: enabled\n[    0.000000] percpu: Embedded 30 pages/cpu s84248 r8192 d30440 u122880\n[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init rv64.epoch=1800000000\n[    0.000000] Unknown kernel command line parameters \"nokaslr\", will be passed to user space.\n[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes\n[    0.000000] Dentry cache hash table entries: 32768 (order: 6, 262144 bytes, linear)\n[    0.000000] Inode-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)\n[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 65536\n[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off\n[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1\n[    0.000000] rcu: Hierarchical RCU implementation.\n[    0.000000] rcu: \tRCU event tracing is enabled.\n[    0.000000] rcu: \tRCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=2.\n[    0.000000] \tTracing variant of Tasks RCU enabled.\n[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.\n[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2\n[    0.000000] RCU Tasks Trace: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.\n[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0\n[    0.000000] riscv-intc: 64 local interrupts mapped\n[    0.000000] riscv: providing IPIs using SBI IPI extension\n[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.\n[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns\n[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns\n[    0.000000] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns\n[    0.001450] riscv-timer: Timer interrupt in S-mode is available via sstc extension\n[    0.018760] Console: colour dummy device 80x25\n[    0.023030] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)\n[    0.025130] pid_max: default: 32768 minimum: 301\n[    0.031445] LSM: initializing lsm=capability\n[    0.042190] Mount-cache hash table entries: 512 (order: 0, 4096 bytes, linear)\n[    0.044795] Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes, linear)\n[    0.258870] riscv: ELF compat mode unsupported\n[    0.260595] ASID allocator using 16 bits (65536 entries)\n[    0.282545] rcu: Hierarchical SRCU implementation.\n[    0.283335] rcu: \tMax phase no-delay instances is 1000.\n[    0.328740] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level\n[    0.348095] EFI services will not be available.\n[    0.367100] smp: Bringing up secondary CPUs ...\n[    0.487755] smp: Brought up 1 node, 2 CPUs\n[    0.502505] Memory: 207240K/262144K available (9537K kernel code, 5353K rwdata, 4096K rodata, 2341K init, 393K bss, 52440K reserved, 0K cma-reserved)\n[    0.632230] devtmpfs: initialized\n[    0.855825] posixtimers hash table entries: 1024 (order: 2, 16384 bytes, linear)\n[    0.860055] futex hash table entries: 512 (32768 bytes on 1 NUMA nodes, total 32 KiB, linear).\n[    0.880145] pinctrl core: initialized pinctrl subsystem\n[    0.894590] DMI not present or invalid.\n[    0.980755] NET: Registered PF_NETLINK/PF_ROUTE protocol family\n[    1.007905] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations\n[    1.013210] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations\n[    1.014860] audit: initializing netlink subsys (disabled)\n[ 8793.854208] audit: type=2000 audit(0.908:1): state=initialized audit_enabled=0 res=1\n[    1.094455] thermal_sys: Registered thermal governor 'step_wise'\n[ 8793.897315] cpuidle: using governor menu\n",
+        "ramFnv": 2534914505,
+        "broughtUp": true
+      },
+      {
+        "ms": 4487.979999989271,
+        "hartWords": [
+          7000000,
+          7000000
+        ],
+        "hartFnv": [
+          2359275194,
+          3315118035
+        ],
+        "consoleTail": "0] printk: legacy bootconsole [sbi0] enabled\n[    0.000000] efi: UEFI not found.\n[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT\n[    0.000000] Zone ranges:\n[    0.000000]   DMA32    [mem 0x0000000080000000-0x000000008fffffff]\n[    0.000000]   Normal   empty\n[    0.000000] Movable zone start for each node\n[    0.000000] Early memory node ranges\n[    0.000000]   node   0: [mem 0x0000000080000000-0x000000008fffffff]\n[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x000000008fffffff]\n[    0.000000] SBI HSM extension detected\n[    0.000000] riscv: base ISA extensions acdfim\n[    0.000000] riscv: ELF capabilities acdfim\n[    0.000000] Ticket spinlock: enabled\n[    0.000000] percpu: Embedded 30 pages/cpu s84248 r8192 d30440 u122880\n[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr initcall_blacklist=jent_mod_init rv64.epoch=1800000000\n[    0.000000] Unknown kernel command line parameters \"nokaslr\", will be passed to user space.\n[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes\n[    0.000000] Dentry cache hash table entries: 32768 (order: 6, 262144 bytes, linear)\n[    0.000000] Inode-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)\n[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 65536\n[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off\n[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1\n[    0.000000] rcu: Hierarchical RCU implementation.\n[    0.000000] rcu: \tRCU event tracing is enabled.\n[    0.000000] rcu: \tRCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=2.\n[    0.000000] \tTracing variant of Tasks RCU enabled.\n[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.\n[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2\n[    0.000000] RCU Tasks Trace: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.\n[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0\n[    0.000000] riscv-intc: 64 local interrupts mapped\n[    0.000000] riscv: providing IPIs using SBI IPI extension\n[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.\n[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns\n[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns\n[    0.000000] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns\n[    0.001505] riscv-timer: Timer interrupt in S-mode is available via sstc extension\n[    0.016625] Console: colour dummy device 80x25\n[    0.020574] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)\n[    0.021949] pid_max: default: 32768 minimum: 301\n[    0.029130] LSM: initializing lsm=capability\n[    0.039515] Mount-cache hash table entries: 512 (order: 0, 4096 bytes, linear)\n[    0.041810] Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes, linear)\n[    0.252824] riscv: ELF compat mode unsupported\n[    0.254880] ASID allocator using 16 bits (65536 entries)\n[    0.273175] rcu: Hierarchical SRCU implementation.\n[    0.274040] rcu: \tMax phase no-delay instances is 1000.\n[    0.317875] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level\n[    0.345025] EFI services will not be available.\n[    0.363725] smp: Bringing up secondary CPUs ...\n[    0.486959] smp: Brought up 1 node, 2 CPUs\n[    0.501350] Memory: 207240K/262144K available (9537K kernel code, 5353K rwdata, 4096K rodata, 2341K init, 393K bss, 52440K reserved, 0K cma-reserved)\n[    0.632500] devtmpfs: initialized\n[ 8793.603301] posixtimers hash table entries: 1024 (order: 2, 16384 bytes, linear)\n[ 8793.634432] futex hash table entries: 512 (32768 bytes on 1 NUMA nodes, total 32 KiB, linear).\n[ 8793.916427] pinctrl core: initialized pinctrl subsystem\n",
+        "ramFnv": 2916177302,
+        "broughtUp": true
+      }
+    ],
+    "comparison": [
+      {
+        "hart": 0,
+        "commonPrefixWords": 7000000,
+        "equalLength": true,
+        "firstDivergenceEvent": null,
+        "runA": [],
+        "runB": []
+      },
+      {
+        "hart": 1,
+        "commonPrefixWords": 55294,
+        "equalLength": true,
+        "firstDivergenceEvent": 7899,
+        "runA": [
+          0,
+          2148304916,
+          4294967295,
+          34064307,
+          0,
+          0,
+          0,
+          0,
+          2148304920,
+          4294967295,
+          16777231,
+          0,
+          0,
+          0
+        ],
+        "runB": [
+          0,
+          2148304840,
+          4294967295,
+          25736,
+          0,
+          0,
+          0,
+          0,
+          2148304842,
+          4294967295,
+          50641155,
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "isolated": true,
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/159.0.8154.6 Safari/537.36",
+  "wasmSha256": "3de38f33927931f7b3dd001de5b66c50ece6e3b5597136daea7d6f4d23dd1f95",
+  "jitSourceSha256": "f50b9be8e8f9b72289bd6672ab72fc240143fdfa1c034ca3d03a2a07778e04c9"
+}

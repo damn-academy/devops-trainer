@@ -1,0 +1,134 @@
+diff --git a/cmd/kube-controller-manager/app/controller_descriptor.go b/cmd/kube-controller-manager/app/controller_descriptor.go
+index e8f717f1..348b15cb 100644
+--- a/cmd/kube-controller-manager/app/controller_descriptor.go
++++ b/cmd/kube-controller-manager/app/controller_descriptor.go
+@@ -184,45 +184,28 @@ func NewControllerDescriptors() map[string]*ControllerDescriptor {
+ 	register(newGarbageCollectorControllerDescriptor())
+ 	register(newDaemonSetControllerDescriptor())
+ 	register(newJobControllerDescriptor())
+-	register(newPodGroupProtectionControllerDescriptor())
+ 	register(newDeploymentControllerDescriptor())
+ 	register(newReplicaSetControllerDescriptor())
+-	register(newHorizontalPodAutoscalerControllerDescriptor())
+-	register(newDisruptionControllerDescriptor())
+ 	register(newStatefulSetControllerDescriptor())
+ 	register(newCronJobControllerDescriptor())
+ 	register(newCertificateSigningRequestSigningControllerDescriptor())
+ 	register(newCertificateSigningRequestApprovingControllerDescriptor())
+ 	register(newCertificateSigningRequestCleanerControllerDescriptor())
+-	register(newPodCertificateRequestCleanerControllerDescriptor())
+ 	register(newTTLControllerDescriptor())
+ 	register(newBootstrapSignerControllerDescriptor())
+ 	register(newTokenCleanerControllerDescriptor())
+ 	register(newNodeIpamControllerDescriptor())
+ 	register(newNodeLifecycleControllerDescriptor())
+-	register(newPersistentVolumeBinderControllerDescriptor())
+-	register(newPersistentVolumeAttachDetachControllerDescriptor())
+-	register(newPersistentVolumeExpanderControllerDescriptor())
+ 	register(newClusterRoleAggregrationControllerDescriptor())
+-	register(newPersistentVolumeClaimProtectionControllerDescriptor())
+-	register(newPersistentVolumeProtectionControllerDescriptor())
+-	register(newVolumeAttributesClassProtectionControllerDescriptor())
+ 	register(newTTLAfterFinishedControllerDescriptor())
+ 	register(newRootCACertificatePublisherControllerDescriptor())
+-	register(newKubeAPIServerSignerClusterTrustBundledPublisherDescriptor())
+-	register(newEphemeralVolumeControllerDescriptor())
+ 
+ 	// feature gated
+-	register(newStorageVersionGarbageCollectorControllerDescriptor())
+-	register(newResourceClaimControllerDescriptor())
+-	register(newResourcePoolStatusRequestControllerDescriptor())
+-	register(newDeviceTaintEvictionControllerDescriptor())
+-	register(newLegacyServiceAccountTokenCleanerControllerDescriptor())
+-	register(newValidatingAdmissionPolicyStatusControllerDescriptor())
+ 	register(newTaintEvictionControllerDescriptor())
+ 	register(newServiceCIDRsControllerDescriptor())
+-	register(newStorageVersionMigratorControllerDescriptor())
+-	register(newSELinuxWarningControllerDescriptor())
++
++	// Controllers left out of kube-wasm lite builds (controller_descriptor_full.go).
++	registerOptionalControllers(register)
+ 
+ 	for _, alias := range aliases.UnsortedList() {
+ 		if _, ok := controllers[alias]; ok {
+diff --git a/cmd/kube-controller-manager/app/controller_descriptor_full.go b/cmd/kube-controller-manager/app/controller_descriptor_full.go
+new file mode 100644
+index 00000000..afbe9016
+--- /dev/null
++++ b/cmd/kube-controller-manager/app/controller_descriptor_full.go
+@@ -0,0 +1,44 @@
++//go:build !kubewasm_lite
++
++/*
++Copyright 2026 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package app
++
++// registerOptionalControllers registers the controllers that kube-wasm lite
++// builds (-tags kubewasm_lite) leave out to make the binary smaller.
++func registerOptionalControllers(register func(*ControllerDescriptor)) {
++	register(newHorizontalPodAutoscalerControllerDescriptor())
++	register(newDisruptionControllerDescriptor())
++	register(newPodGroupProtectionControllerDescriptor())
++	register(newPodCertificateRequestCleanerControllerDescriptor())
++	register(newPersistentVolumeBinderControllerDescriptor())
++	register(newPersistentVolumeAttachDetachControllerDescriptor())
++	register(newPersistentVolumeExpanderControllerDescriptor())
++	register(newPersistentVolumeClaimProtectionControllerDescriptor())
++	register(newPersistentVolumeProtectionControllerDescriptor())
++	register(newVolumeAttributesClassProtectionControllerDescriptor())
++	register(newKubeAPIServerSignerClusterTrustBundledPublisherDescriptor())
++	register(newEphemeralVolumeControllerDescriptor())
++	register(newStorageVersionGarbageCollectorControllerDescriptor())
++	register(newResourceClaimControllerDescriptor())
++	register(newResourcePoolStatusRequestControllerDescriptor())
++	register(newDeviceTaintEvictionControllerDescriptor())
++	register(newLegacyServiceAccountTokenCleanerControllerDescriptor())
++	register(newValidatingAdmissionPolicyStatusControllerDescriptor())
++	register(newStorageVersionMigratorControllerDescriptor())
++	register(newSELinuxWarningControllerDescriptor())
++}
+diff --git a/cmd/kube-controller-manager/app/controller_descriptor_lite.go b/cmd/kube-controller-manager/app/controller_descriptor_lite.go
+new file mode 100644
+index 00000000..7c23b5b5
+--- /dev/null
++++ b/cmd/kube-controller-manager/app/controller_descriptor_lite.go
+@@ -0,0 +1,25 @@
++//go:build kubewasm_lite
++
++/*
++Copyright 2026 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package app
++
++// registerOptionalControllers registers nothing in kube-wasm lite builds:
++// autoscaling, disruption budgets, persistent volumes, dynamic resource
++// allocation, storage version and admission policy status controllers are
++// left out to make the binary smaller.
++func registerOptionalControllers(func(*ControllerDescriptor)) {}

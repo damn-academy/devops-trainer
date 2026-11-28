@@ -1,0 +1,16 @@
+#!/bin/sh
+# PID 1 of the R0 measurement guest: mount the basics and hand the console to a shell.
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev 2>/dev/null
+mkdir -p /dev/pts && mount -t devpts devpts /dev/pts
+mount -t tmpfs tmpfs /tmp
+mount -t tmpfs tmpfs /run
+hostname r0
+# no RTC in the guest: the page passes the host clock as r0epoch= on the kernel command line
+for a in $(cat /proc/cmdline); do case $a in r0epoch=*) date -s "@${a#r0epoch=}" >/dev/null ;; esac; done
+ip link set lo up
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin HOME=/root PS1='r0# '
+cd /root
+echo "R0-BOOTED uptime=$(cut -d' ' -f1 /proc/uptime)"
+exec /bin/sh

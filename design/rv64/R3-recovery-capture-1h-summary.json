@@ -1,0 +1,72 @@
+{
+  "source": "web/public/rv64/results/R3-recovery-capture-1h.json",
+  "type": "error",
+  "error": "Error: Diagnostic stop: 768 MiB memory pressure confirmed before Ready; testing 1024 MiB separately",
+  "wasmSha256": "27685993bf66eaad77b57e782985acc9616c5bf575e7dc9219840170c94f4f58",
+  "sourceSha256": "17f7c4c30dc066b1d582c78424bb12a0de53c11c9c740d185d35e254eb150b67",
+  "clock": "continuous",
+  "engineReadyMs": 489.2649999856949,
+  "nodeReadyMs": null,
+  "getPodsSeconds": [],
+  "podStartSeconds": [],
+  "probeDone": false,
+  "rcuStalls": 0,
+  "expiredBookmarks": 0,
+  "samples": [
+    {
+      "elapsedMs": 620.6049999594688,
+      "snapshotFaults": 0,
+      "snapshotFaultMs": 0,
+      "retiredSinceStart": 45936597,
+      "jitRetired": 32514408,
+      "busyMilliseconds": 588.875000834465,
+      "waitMs": 0,
+      "diskActiveMs": 0,
+      "compilerYieldMs": 12.244999766349792
+    },
+    {
+      "elapsedMs": 4620.925000011921,
+      "snapshotFaults": 0,
+      "snapshotFaultMs": 0,
+      "retiredSinceStart": 583371622,
+      "jitRetired": 524251527,
+      "busyMilliseconds": 3887.310004591942,
+      "waitMs": 481.5799997448921,
+      "diskActiveMs": 980.5349998474121,
+      "compilerYieldMs": 93.25499910116196
+    },
+    {
+      "elapsedMs": 9621.089999973774,
+      "snapshotFaults": 0,
+      "snapshotFaultMs": 0,
+      "retiredSinceStart": 1733017507,
+      "jitRetired": 1627573639,
+      "busyMilliseconds": 7979.630011618137,
+      "waitMs": 1007.5049993395805,
+      "diskActiveMs": 2526.0049998164177,
+      "compilerYieldMs": 203.96499860286713
+    },
+    {
+      "elapsedMs": 29640.00499999523,
+      "snapshotFaults": 0,
+      "snapshotFaultMs": 0,
+      "retiredSinceStart": 8166196394,
+      "jitRetired": 7876375999,
+      "busyMilliseconds": 26095.340006947517,
+      "waitMs": 1113.694999396801,
+      "diskActiveMs": 8142.189999699593,
+      "compilerYieldMs": 599.8799976706505
+    },
+    {
+      "elapsedMs": 59703.22999995947,
+      "snapshotFaults": 0,
+      "snapshotFaultMs": 0,
+      "retiredSinceStart": 16619840640,
+      "jitRetired": 16010916228,
+      "busyMilliseconds": 53754.12498295307,
+      "waitMs": 1113.694999396801,
+      "diskActiveMs": 9153.924999654293,
+      "compilerYieldMs": 1037.2099974751472
+    }
+  ]
+}

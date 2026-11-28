@@ -1,0 +1,486 @@
+[    0.000000] Booting Linux on hartid 0
+[    0.000000] Linux version 6.18.62-kuberoot (root@builder) (riscv64-linux-gnu-gcc (Debian 12.2.0-13) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #1 SMP Sat Nov 21 16:29:31 UTC 2026
+[    0.000000] Machine model: RV64 R3 SMP
+[    0.000000] SBI specification v2.0 detected
+[    0.000000] SBI implementation ID=0x10000000 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] SBI IPI extension detected
+[    0.000000] SBI RFENCE extension detected
+[    0.000000] SBI SRST extension detected
+[    0.000000] SBI DBCN extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x00000000bfffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x00000000bfffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x00000000bfffffff]
+[    0.000000] SBI HSM extension detected
+[    0.000000] riscv: base ISA extensions acdfim
+[    0.000000] riscv: ELF capabilities acdfim
+[    0.000000] Ticket spinlock: enabled
+[    0.000000] percpu: Embedded 30 pages/cpu s84248 r8192 d30440 u122880
+[    0.000000] Kernel command line: earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=1795387156
+[    0.000000] Unknown kernel command line parameters "nokaslr", will be passed to user space.
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 262144
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=2.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+[    0.000000] RCU Tasks Trace: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000000] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.001645] riscv-timer: Timer interrupt in S-mode is available via sstc extension
+[    0.024010] Console: colour dummy device 80x25
+[    0.029425] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)
+[    0.032650] pid_max: default: 32768 minimum: 301
+[    0.043145] LSM: initializing lsm=capability
+[    0.058905] Mount-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.062239] Mountpoint-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.370200] riscv: ELF compat mode unsupported
+[    0.372680] ASID allocator using 16 bits (65536 entries)
+[    0.409215] rcu: Hierarchical SRCU implementation.
+[    0.410440] rcu: 	Max phase no-delay instances is 1000.
+[    0.465229] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.494260] EFI services will not be available.
+[    0.522510] smp: Bringing up secondary CPUs ...
+[    0.645080] smp: Brought up 1 node, 2 CPUs
+[    0.670354] Memory: 966516K/1048576K available (9578K kernel code, 5354K rwdata, 4096K rodata, 2341K init, 393K bss, 77916K reserved, 0K cma-reserved)
+[    0.749450] devtmpfs: initialized
+[    1.053354] posixtimers hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    1.058840] futex hash table entries: 512 (32768 bytes on 1 NUMA nodes, total 32 KiB, linear).
+[    1.094885] pinctrl core: initialized pinctrl subsystem
+[    1.120400] DMI not present or invalid.
+[    1.269045] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    1.323670] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    1.328350] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    1.331265] audit: initializing netlink subsys (disabled)
+[    1.351670] audit: type=2000 audit(1.032:1): state=initialized audit_enabled=0 res=1
+[    1.396460] thermal_sys: Registered thermal governor 'step_wise'
+[    1.404415] cpuidle: using governor menu
+[    1.487235] cpu1: Ratio of byte access time to unaligned word access is 2.75, unaligned accesses are fast
+[    1.531120] cpu0: Ratio of byte access time to unaligned word access is 3.16, unaligned accesses are fast
+[    1.896570] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    1.898590] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    1.954610] ACPI: Interpreter disabled.
+[    1.965570] iommu: Default domain type: Translated
+[    1.967084] iommu: DMA domain TLB invalidation policy: strict mode
+[    2.044560] SCSI subsystem initialized
+[    2.253805] vgaarb: loaded
+[    2.805455] clocksource: Switched to clocksource riscv_clocksource
+[    2.930175] pnp: PnP ACPI: disabled
+[    4.577725] NET: Registered PF_INET protocol family
+[    4.612570] IP idents hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    4.852135] tcp_listen_portaddr_hash hash table entries: 512 (order: 1, 8192 bytes, linear)
+[    4.856920] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    4.860380] TCP established hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    4.886500] TCP bind hash table entries: 8192 (order: 6, 262144 bytes, linear)
+[    4.932354] TCP: Hash tables configured (established 8192 bind 8192)
+[    4.943594] UDP hash table entries: 512 (order: 3, 32768 bytes, linear)
+[    4.954375] UDP-Lite hash table entries: 512 (order: 3, 32768 bytes, linear)
+[    4.985390] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    4.993350] PCI: CLS 0 bytes, default 64
+[    5.096620] Initialise system trusted keyrings
+[    5.140915] Unpacking initramfs...
+[    5.182520] workingset: timestamp_bits=46 max_order=18 bucket_order=0
+[    5.248680] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    5.256125] fuse: init (API version 7.45)
+[    5.404965] 9p: Installing v9fs 9p2000 file system support
+[    5.479710] NET: Registered PF_ALG protocol family
+[    5.482535] Key type asymmetric registered
+[    5.486170] Asymmetric key parser 'x509' registered
+[    5.498675] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 250)
+[    5.692405] io scheduler mq-deadline registered
+[    5.696515] io scheduler kyber registered
+[    5.704185] io scheduler bfq registered
+[    6.317710] riscv-plic: plic@c000000: mapped 31 interrupts with 2 handlers for 4 contexts.
+[   19.157209] Freeing initrd memory: 20800K
+[   23.582260] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[   24.116810] printk: legacy console [hvc0] enabled
+[   24.121055] printk: legacy bootconsole [sbi0] disabled
+[   24.191600] random: crng init done
+[   25.245015] loop: module loaded
+[   25.272640] virtio_blk virtio0: 1/0/0 default/read/poll queues
+[   25.332385] virtio_blk virtio0: [vda] 598016 512-byte logical blocks (306 MB/292 MiB)
+[   25.750645]  vda: vda1
+[   25.960900] zram: Added device: zram0
+[   26.896740] tun: Universal TUN/TAP device driver, 1.6
+[   27.273715] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[   27.657475] riscv-pmu-sbi: SBI PMU extension is available
+[   27.673205] riscv-pmu-sbi: 0 firmware and 0 hardware counters
+[   27.689960] riscv-pmu-sbi: Perf sampling/filtering is not supported as sscof extension is not available
+[   28.005225] IPVS: Registered protocols (TCP, UDP)
+[   28.021435] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+[   28.097350] IPVS: ipvs loaded.
+[   28.109650] IPVS: [rr] scheduler registered.
+[   28.180070] Initializing XFRM netlink socket
+[   28.209115] NET: Registered PF_INET6 protocol family
+[   28.490360] Segment Routing with IPv6
+[   28.520705] In-situ OAM (IOAM) with IPv6
+[   28.554535] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[   28.741834] NET: Registered PF_PACKET protocol family
+[   28.760050] Bridge firewalling registered
+[   28.797410] 8021q: 802.1Q VLAN Support v1.8
+[   28.821500] 9pnet: Installing 9P2000 support
+[   28.851885] Key type dns_resolver registered
+[   28.905085] NET: Registered PF_VSOCK protocol family
+[   30.720070] Loading compiled-in X.509 certificates
+[   31.162489] Loaded X.509 cert 'Build time autogenerated kernel key: d36c5da8bcde6ab52a1b481383a54a6416e7004b'
+[   32.799979] clk: Disabling unused clocks
+[   32.806450] PM: genpd: Disabling unused power domains
+[   33.254545] Freeing unused kernel image (initmem) memory: 2340K
+[   33.294635] Run /init as init process
+[   39.511160] hrtimer: interrupt took 15195100 ns
+[   53.424340] loop0: detected capacity change from 0 to 334208
+Sun Nov 22 22:39:16 UTC 2026
+sh: can't access tty; job control turned off
+~ # [6nRV64_CONFIG_PENDING
+[<0>] handle_page_fault+0xc2/0x514
+[<0>] do_page_fault+0x1e/0x36
+[<0>] handle_exception+0x146/0x152
+0
+ls: /var/lib/kuberoot/pki: No such file or directory
+RV64_CONFIG_PENDING
+0
+ls: /var/lib/kuberoot/pki: No such file or directory
+RV64_DIAGNOSTICS
+0MemTotal:         993800 kB
+MemFree:          932216 kB
+MemAvailable:     959392 kB
+Buffers:             308 kB
+Cached:            37404 kB
+SwapCached:            0 kB
+Active:             1516 kB
+Inactive:          36752 kB
+Active(anon):         16 kB
+Inactive(anon):      540 kB
+Active(file):       1500 kB
+Inactive(file):    36212 kB
+PID   USER     TIME  COMMAND
+    1 root      3:11 /usr/sbin/kinit.real
+    2 root      0:00 [kthreadd]
+    3 root      0:00 [pool_workqueue_]
+    4 root      0:00 [kworker/R-rcu_g]
+    5 root      0:00 [kworker/R-sync_]
+    6 root      0:00 [kworker/R-kvfre]
+    7 root      0:00 [kworker/R-slub_]
+    8 root      0:00 [kworker/R-netns]
+    9 root      0:00 [kworker/0:0-eve]
+   10 root      0:00 [kworker/0:0H-ev]
+   11 root      0:02 [kworker/0:1-eve]
+   12 root      0:12 [kworker/u8:0-ev]
+   13 root      0:00 [kworker/R-mm_pe]
+   14 root      0:01 [ksoftirqd/0]
+   15 root      0:07 [rcu_sched]
+   16 root      0:00 [rcu_exp_par_gp_]
+   17 root      0:00 [rcu_exp_gp_kthr]
+   18 root      0:00 [migration/0]
+   19 root      0:00 [cpuhp/0]
+   20 root      0:00 [cpuhp/1]
+   21 root      0:00 [migration/1]
+   22 root      0:01 [ksoftirqd/1]
+   23 root      0:00 [kworker/1:0-eve]
+   24 root      0:00 [kworker/1:0H-kb]
+   25 root      0:06 [kdevtmpfs]
+   26 root      0:00 [kworker/R-inet_]
+   27 root      0:00 [rcu_tasks_trace]
+   28 root      0:00 [kauditd]
+   29 root      0:10 [kworker/u8:1-lo]
+   30 root      0:00 [oom_reaper]
+   31 root      0:00 [kworker/R-write]
+   32 root      0:01 [kcompactd0]
+   33 root      0:00 [kworker/R-kbloc]
+   34 root      0:01 [kworker/1:1-mm_]
+   35 root      0:00 [kworker/u8:2-ev]
+   36 root      0:10 [kworker/u8:3-ev]
+   37 root      0:00 [kswapd0]
+   38 root      0:00 [kworker/0:1H-kb]
+   39 root      0:00 [kworker/R-kthro]
+   41 root      0:00 [kworker/u8:4]
+   42 root      0:00 [khvcd]
+   43 root      0:00 [hwrng]
+   44 root      0:00 [kworker/R-nvme-]
+   45 root      0:00 [kworker/R-nvme-]
+   46 root      0:00 [kworker/R-nvme-]
+   47 root      0:00 [kworker/R-dm_bu]
+   48 root      0:00 [kworker/R-mld]
+   49 root      0:00 [kworker/1:1H]
+   50 root      0:00 [kworker/R-ipv6_]
+   51 root      0:00 [kworker/R-kstrp]
+   61 root      0:02 /bin/sh /usr/share/kuberoot/rv64-probe.sh
+   62 root      0:00 /bin/busybox sh -i
+   63 root      0:00 /bin/sh /usr/share/kuberoot/rv64-probe.sh
+   73 root      0:00 /bin/busybox sleep 30
+   76 root      0:04 /bin/busybox ps
+RV64_CONFIG_PENDING
+0
+ls: /var/lib/kuberoot/pki: No such file or directory
+RV64_CONFIG_PENDING
+0
+hrtimer_nanosleep
+futex_do_wait
+futex_do_wait
+ls: /var/lib/kuberoot/pki: No such file or directory
+ffffffff804a1876 t HUF_decompress4X2_usingDTable_internal
+ffffffff804a18cc t HUF_decompress4X1_usingDTable_internal_default.part.0
+ffffffff804a30a0 t HUF_decompress4X1_usingDTable_internal
+ffffffff804a30f6 T HUF_readDTableX1_wksp
+ffffffff804a3650 T HUF_readDTableX2_wksp
+ffffffff804a3d0a T HUF_decompress1X2_DCtx_wksp
+ffffffff804a3d6a T HUF_selectDecoder
+ffffffff804a3dc4 T HUF_decompress1X_DCtx_wksp
+ffffffff804a3ea4 T HUF_decompress1X_usingDTable
+ffffffff804a3eca T HUF_decompress1X1_DCtx_wksp
+ffffffff804a3f2a T HUF_decompress4X_usingDTable
+ffffffff804a3f52 T HUF_decompress4X_hufOnly_wksp
+ffffffff804a4008 T ZSTD_DDict_dictContent
+ffffffff804a4016 T ZSTD_DDict_dictSize
+ffffffff804a4024 T ZSTD_copyDDictParameters
+ffffffff804a40b0 T ZSTD_createDDict
+ffffffff804a40be T ZSTD_createDDict_byReference
+ffffffff804a40cc T ZSTD_initStaticDDict
+ffffffff804a41f8 T ZSTD_freeDDict
+ffffffff804a4242 T ZSTD_createDDict_advanced
+ffffffff804a43e6 T ZSTD_estimateDDictSize
+ffffffff804a440c T ZSTD_sizeof_DDict
+ffffffff804a443c T ZSTD_getDictID_fromDDict
+ffffffff804a445a t ZSTD_frameHeaderSize_internal
+ffffffff804a44b4 t ZSTD_DDictHashSet_emplaceDDict
+ffffffff804a4578 t ZSTD_DCtx_refDDict.part.0
+ffffffff804a46ec t ZSTD_DCtx_selectFrameDDict.part.0
+ffffffff804a47a8 T ZSTD_sizeof_DCtx
+ffffffff804a47e4 T ZSTD_estimateDCtxSize
+ffffffff804a47f6 T ZSTD_initStaticDCtx
+ffffffff804a487e T ZSTD_createDCtx_advanced
+ffffffff804a4928 T ZSTD_createDCtx
+ffffffff804a4936 T ZSTD_freeDCtx
+ffffffff804a49fe T ZSTD_copyDCtx
+ffffffff804a4a1c T ZSTD_isFrame
+ffffffff804a4a72 T ZSTD_isSkippableFrame
+ffffffff804a4aba T ZSTD_frameHeaderSize
+ffffffff804a4b10 T ZSTD_getFrameHeader_advanced
+ffffffff804a4e12 t ZSTD_findFrameSizeInfo
+ffffffff804a4ff6 t ZSTD_decodeFrameHeader
+ffffffff804a50b2 t ZSTD_decompressContinue.part.0
+ffffffff804a5452 t ZSTD_decompressContinueStream
+ffffffff804a5554 T ZSTD_getFrameHeader
+ffffffff804a556a T ZSTD_getFrameContentSize
+ffffffff804a55d4 T ZSTD_readSkippableFrame
+ffffffff804a56e0 T ZSTD_findDecompressedSize
+ffffffff804a5822 T ZSTD_getDecompressedSize
+ffffffff804a5896 T ZSTD_findFrameCompressedSize
+ffffffff804a58d8 T ZSTD_decompressBound
+ffffffff804a595a T ZSTD_decompressionMargin
+ffffffff804a5a54 T ZSTD_insertBlock
+ffffffff804a5a86 T ZSTD_nextSrcSizeToDecompress
+ffffffff804a5a9a T ZSTD_nextInputType
+ffffffff804a5ad0 T ZSTD_decompressContinue
+ffffffff804a5b20 T ZSTD_loadDEntropy
+ffffffff804a5d94 T ZSTD_decompressBegin
+ffffffff804a5e8e T ZSTD_decompressBegin_usingDict
+ffffffff804a6054 T ZSTD_decompressBegin_usingDDict
+ffffffff804a618c t ZSTD_decompressMultiFrame
+ffffffff804a65a2 T ZSTD_decompress_usingDict
+ffffffff804a65b8 T ZSTD_decompressDCtx
+ffffffff804a6636 T ZSTD_decompress
+ffffffff804a6646 T ZSTD_getDictID_fromDict
+ffffffff804a66b4 T ZSTD_getDictID_fromFrame
+ffffffff804a6706 T ZSTD_decompress_usingDDict
+ffffffff804a6720 T ZSTD_createDStream
+ffffffff804a672e T ZSTD_initStaticDStream
+ffffffff804a67b6 T ZSTD_createDStream_advanced
+ffffffff804a6860 T ZSTD_freeDStream
+ffffffff804a6874 T ZSTD_DStreamInSize
+ffffffff804a6886 T ZSTD_DStreamOutSize
+ffffffff804a6896 T ZSTD_DCtx_loadDictionary_advanced
+ffffffff804a6932 T ZSTD_DCtx_loadDictionary_byReference
+ffffffff804a69c2 T ZSTD_DCtx_loadDictionary
+ffffffff804a6a52 T ZSTD_DCtx_refPrefix_advanced
+ffffffff804a6af0 T ZSTD_DCtx_refPrefix
+ffffffff804a6b96 T ZSTD_initDStream_usingDict
+ffffffff804a6c54 T ZSTD_initDStream
+ffffffff804a6c9a T ZSTD_initDStream_usingDDict
+ffffffff804a6ce2 T ZSTD_resetDStream
+ffffffff804a6d0a T ZSTD_DCtx_refDDict
+ffffffff804a6d2e T ZSTD_DCtx_setMaxWindowSize
+ffffffff804a6d62 T ZSTD_DCtx_setFormat
+ffffffff804a6d8c T ZSTD_dParam_getBounds
+ffffffff804a6e08 T ZSTD_DCtx_getParameter
+ffffffff804a6eba T ZSTD_DCtx_setParameter
+ffffffff804a6fe2 T ZSTD_DCtx_reset
+ffffffff804a707c T ZSTD_sizeof_DStream
+ffffffff804a70b8 T ZSTD_decodingBufferSize_min
+ffffffff804a70e0 T ZSTD_estimateDStreamSize
+ffffffff804a7108 T ZSTD_estimateDStreamSize_fromFrame
+ffffffff804a7198 T ZSTD_decompressStream
+ffffffff804a7a60 T ZSTD_decompressStream_simpleArgs
+ffffffff804a7ad8 t ZSTD_allocateLiteralsBuffer
+ffffffff804a7b8c t ZSTD_safecopyDstBeforeSrc
+ffffffff804a7ca6 t ZSTD_decodeLiteralsBlock
+ffffffff804a819a t ZSTD_initFseState
+ffffffff804a82e2 t ZSTD_buildFSETable_body_default.constprop.0
+ffffffff804a86b4 t ZSTD_buildSeqTable.constprop.0
+ffffffff804a8826 t ZSTD_safecopy
+ffffffff804a8b44 t ZSTD_execSequenceEndSplitLitBuffer
+ffffffff804a8c1a t ZSTD_execSequenceEnd
+ffffffff804a8cfc t ZSTD_decompressSequences_default.constprop.0
+ffffffff804a97b0 t ZSTD_decompressSequencesSplitLitBuffer_default.constprop.0
+ffffffff804aaf38 t ZSTD_decompressSequencesLong_default.constprop.0
+ffffffff804ad4ea T ZSTD_getcBlockSize
+ffffffff804ad544 T ZSTD_decodeLiteralsBlock_wrapper
+ffffffff804ad562 T ZSTD_buildFSETable
+ffffffff804ad576 T ZSTD_decodeSeqHeaders
+ffffffff804ad73c t ZSTD_decompressBlock_internal.part.0
+ffffffff804ad8ea T ZSTD_decompressBlock_internal
+ffffffff804ad91e T ZSTD_checkContinuity
+ffffffff804ad952 T ZSTD_decompressBlock_deprecated
+ffffffff804ad9c4 T ZSTD_decompressBlock
+ffffffff804ada36 t HUF_readStats_body_default
+ffffffff804adbda t FSE_readNCount_body_default
+ffffffff804adf5c T FSE_versionNumber
+ffffffff804adf6c T FSE_isError
+ffffffff804adf82 T FSE_getErrorName
+ffffffff804adfb0 T HUF_isError
+ffffffff804adfc6 T HUF_getErrorName
+ffffffff804adff4 T FSE_readNCount_bmi2
+ffffffff804ae008 T FSE_readNCount
+ffffffff804ae01c T HUF_readStats
+ffffffff804ae0cc T HUF_readStats_wksp
+ffffffff804ae0e6 T ERR_getErrorString
+ffffffff804ae11c t FSE_buildDTable_internal
+ffffffff804ae442 t FSE_decompress_wksp_body_default
+ffffffff804af596 T FSE_buildDTable_wksp
+ffffffff804af5aa T FSE_decompress_wksp_bmi2
+ffffffff804af5be T ZSTD_versionNumber
+ffffffff804af5d0 T ZSTD_versionString
+ffffffff804af5e4 T ZSTD_isError
+ffffffff804af5fa T ZSTD_getErrorName
+ffffffff804af628 T ZSTD_getErrorCode
+ffffffff804af648 T ZSTD_getErrorString
+ffffffff804af65c t dec_vli
+ffffffff804af6d2 t fill_temp
+ffffffff804af74e T xz_dec_run
+ffffffff804afe0c T xz_dec_init
+ffffffff804afed8 T xz_dec_reset
+ffffffff804aff26 T xz_dec_end
+ffffffff804aff5e t dict_repeat
+ffffffff804affe6 t lzma_len
+RV64_CONFIG_PENDING
+[<0>] irqentry_exit_to_user_mode+0x124/0x210
+[<0>] irqentry_exit+0x24/0x50
+[<0>] do_irq+0x38/0x7a
+[<0>] handle_exception+0x146/0x152
+0
+0
+futex_do_wait
+0
+ls: /var/lib/kuberoot/pki: No such file or directory
+[kinit] kuberoot booting, kernel 6.18.62-kuberoot, uptime 5m28s
+[  328.793180] zram0: detected capacity change from 0 to 993800
+[  328.941405] Adding 496896k swap on /dev/zram0.  Priority:-2 extents:1 across:496896k SS
+[kinit] zram swap: 485 MiB, compressed RAM cap 242 MiB
+[kinit] timing profile: emulator=true timescale=60
+[kinit] distribution slim
+[kinit] eth0: 10.0.0.10/24 via [10.0.0.1]
+RV64_CONFIG_PENDING
+[<0>] irqentry_exit_to_user_mode+0x124/0x210
+[<0>] irqentry_exit+0x24/0x50
+[<0>] do_irq+0x30/0x7a
+[<0>] handle_exception+0x124/0x152
+0
+0
+do_epoll_wait
+futex_do_wait
+futex_do_wait
+total 8
+-rw-------    1 root     root           611 Nov 22 22:43 [0;0mnode-ca.crt[m
+-rw-------    1 root     root           241 Nov 22 22:43 [0;0mnode-ca.key[m
+RV64_CONFIG_PENDING
+[<0>] do_epoll_wait+0x42a/0x508
+[<0>] do_compat_epoll_pwait.part.0+0xe/0x6c
+[<0>] __riscv_sys_epoll_pwait+0x6c/0xe8
+[<0>] do_trap_ecall_u+0x180/0x34c
+[<0>] handle_exception+0x146/0x152
+do_epoll_wait
+hrtimer_nanosleep
+0
+0
+0
+total 120
+-rw-------    1 root     root           599 Nov 22 22:44 [0;0madmin.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0madmin.key[m
+-rw-------    1 root     root           566 Nov 22 22:44 [0;0magent.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0magent.key[m
+-rw-------    1 root     root           623 Nov 22 22:44 [0;0mapiserver-kubelet-client.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0mapiserver-kubelet-client.key[m
+-rw-------    1 root     root           778 Nov 22 22:44 [0;0mapiserver.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0mapiserver.key[m
+-rw-------    1 root     root           554 Nov 22 22:44 [0;0mca.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0mca.key[m
+-rw-------    1 root     root           587 Nov 22 22:44 [0;0mcontroller-manager.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0mcontroller-manager.key[m
+-rw-------    1 root     root           570 Nov 22 22:44 [0;0mintents.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0mintents.key[m
+-rw-------    1 root     root           570 Nov 22 22:44 [0;0mkube-proxy.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0mkube-proxy.key[m
+-rw-------    1 root     root           615 Nov 22 22:44 [0;0mkubelet-client.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0mkubelet-client.key[m
+-rw-------    1 root     root           644 Nov 22 22:44 [0;0mnode-admin.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0mnode-admin.key[m
+-rw-------    1 root     root           688 Nov 22 22:43 [0;0mnode-api.crt[m
+-rw-------    1 root     root           241 Nov 22 22:43 [0;0mnode-api.key[m
+-rw-------    1 root     root           611 Nov 22 22:43 [0;0mnode-ca.crt[m
+-rw-------    1 root     root           241 Nov 22 22:43 [0;0mnode-ca.key[m
+-rw-------    1 root     root           611 Nov 22 22:44 [0;0mnode-client-ca.crt[m
+-rw-------    1 root     root           611 Nov 22 22:44 [0;0mnode-serving-ca.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0msa.key[m
+-rw-------    1 root     root           178 Nov 22 22:44 [0;0msa.pub[m
+-rw-------    1 root     root           574 Nov 22 22:44 [0;0mscheduler.crt[m
+-rw-------    1 root     root           241 Nov 22 22:44 [0;0mscheduler.key[m
+ffffffff809461e6 T __hsiphash_unaligned
+ffffffff80946486 T hsiphash_1u32
+ffffffff8094660a T hsiphash_2u32
+ffffffff809467da T hsiphash_3u32
+ffffffff809469b8 T hsiphash_4u32
+ffffffff80946bf0 T strcasecmp
+ffffffff80946c46 T strcpy
+ffffffff80946c62 T strncpy
+ffffffff80946c88 T stpcpy
+ffffffff80946ca6 T strcat
+ffffffff80946ce2 T strchr
+ffffffff80946d0a T strchrnul
+ffffffff80946d2c T strrchr
+ffffffff80946d4e T strnchr
+ffffffff80946d72 T strnlen
+ffffffff80946da6 T strspn
+ffffffff80946de8 T strcspn
+ffffffff80946e32 T strpbrk
+ffffffff80946e74 T memset16
+ffffffff80946e96 T memset32
+ffffffff80946eb6 T memset64
+ffffffff80946ed6 T memcmp
+ffffffff80946f02 T bcmp
+ffffffff80946f2e T memscan
+ffffffff80946f52 T memchr
+ffffffff80946f7c T memchr_inv
+RV64_CONFIG_CREATED
+[kuberoot-control] RV64_RECOVERY_PROFILE_COMPACT_5M_STATUS_10S_SYNC_1M
+RV64_READYZ_BEGIN
+568.15 120.68
+earlycon=sbi console=hvc0 nokaslr initcall_blacklist=jent_mod_init kuberoot.root=PARTLABEL=KUBEROOT-MEDIA:/kuberoot/rootfs.squashfs kuberoot.verbose kuberoot.profile=emulator rv64.epoch=1795387156

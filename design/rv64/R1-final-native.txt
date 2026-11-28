@@ -1,0 +1,173 @@
+[    0.000000] Booting Linux on hartid 0
+[    0.000000] Linux version 6.18.62-kuberoot (root@builder) (riscv64-linux-gnu-gcc (Debian 12.2.0-13) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #4 SMP Sat Nov 21 13:49:06 UTC 2026
+[    0.000000] Machine model: RV64 R1 single hart
+[    0.000000] SBI specification v2.0 detected
+[    0.000000] SBI implementation ID=0xa000000 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] SBI IPI extension detected
+[    0.000000] SBI RFENCE extension detected
+[    0.000000] SBI SRST extension detected
+[    0.000000] SBI DBCN extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x000000009fffffff]
+[    0.000000] SBI HSM extension detected
+[    0.000000] Falling back to deprecated "riscv,isa"
+[    0.000000] riscv: base ISA extensions acdfim
+[    0.000000] riscv: ELF capabilities acdfim
+[    0.000000] Ticket spinlock: enabled
+[    0.000000] percpu: Embedded 30 pages/cpu s84248 r8192 d30440 u122880
+[    0.000000] Kernel command line: earlycon=sbi console=hvc0 rdinit=/init nokaslr
+[    0.000000] Unknown kernel command line parameters "nokaslr", will be passed to user space.
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 131072
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=1.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+[    0.000000] RCU Tasks Trace: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] riscv: providing IPIs using SBI IPI extension
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000000] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.000373] riscv-timer: Timer interrupt in S-mode is available via sstc extension
+[    0.003589] Console: colour dummy device 80x25
+[    0.004418] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=40000)
+[    0.005534] pid_max: default: 32768 minimum: 301
+[    0.007193] LSM: initializing lsm=capability
+[    0.009561] Mount-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.009943] Mountpoint-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.049557] riscv: ELF compat mode unsupported
+[    0.049825] ASID allocator using 16 bits (65536 entries)
+[    0.052396] rcu: Hierarchical SRCU implementation.
+[    0.052627] rcu: 	Max phase no-delay instances is 1000.
+[    0.060429] EFI services will not be available.
+[    0.062711] smp: Bringing up secondary CPUs ...
+[    0.062954] smp: Brought up 1 node, 1 CPU
+[    0.064900] Memory: 465052K/524288K available (9537K kernel code, 5353K rwdata, 4096K rodata, 2341K init, 393K bss, 56792K reserved, 0K cma-reserved)
+[    0.072351] devtmpfs: initialized
+[    0.096340] posixtimers hash table entries: 512 (order: 1, 8192 bytes, linear)
+[    0.096820] futex hash table entries: 256 (16384 bytes on 1 NUMA nodes, total 16 KiB, linear).
+[    0.099894] pinctrl core: initialized pinctrl subsystem
+[    0.102761] DMI not present or invalid.
+[    0.119704] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.125770] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    0.126239] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.126576] audit: initializing netlink subsys (disabled)
+[    0.132486] thermal_sys: Registered thermal governor 'step_wise'
+[    0.133334] audit: type=2000 audit(0.120:1): state=initialized audit_enabled=0 res=1
+[    0.134053] cpuidle: using governor menu
+[    0.162096] cpu0: rdtime lacks granularity needed to measure unaligned access speed
+[    0.240298] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.240543] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.246075] ACPI: Interpreter disabled.
+[    0.246939] iommu: Default domain type: Translated
+[    0.247172] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.289753] SCSI subsystem initialized
+[    0.312542] vgaarb: loaded
+[    0.314089] clocksource: Switched to clocksource riscv_clocksource
+[    0.324729] pnp: PnP ACPI: disabled
+[    0.787936] NET: Registered PF_INET protocol family
+[    0.792261] IP idents hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.829888] tcp_listen_portaddr_hash hash table entries: 256 (order: 0, 4096 bytes, linear)
+[    0.830486] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.830820] TCP established hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.832241] TCP bind hash table entries: 4096 (order: 5, 131072 bytes, linear)
+[    0.834556] TCP: Hash tables configured (established 4096 bind 4096)
+[    0.835422] UDP hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.836149] UDP-Lite hash table entries: 256 (order: 2, 16384 bytes, linear)
+[    0.838889] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.839666] PCI: CLS 0 bytes, default 64
+[    0.850185] Initialise system trusted keyrings
+[    0.892699] Unpacking initramfs...
+[    0.958528] workingset: timestamp_bits=46 max_order=17 bucket_order=0
+[    0.962749] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.963214] fuse: init (API version 7.45)
+[    0.974756] 9p: Installing v9fs 9p2000 file system support
+[    5.255656] NET: Registered PF_ALG protocol family
+[    5.255921] Key type asymmetric registered
+[    5.256204] Asymmetric key parser 'x509' registered
+[    5.257118] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 250)
+[    7.412612] Freeing initrd memory: 8760K
+[    8.803626] io scheduler mq-deadline registered
+[    8.803959] io scheduler kyber registered
+[    8.804465] io scheduler bfq registered
+[    8.810233] riscv-plic: plic@c000000: mapped 31 interrupts with 1 handlers for 2 contexts.
+progress pc=0xffffffff80242034 retired=382404371 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+[    9.771144] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    9.824366] printk: legacy console [hvc0] enabled
+[    9.824720] printk: legacy bootconsole [sbi0] disabled
+[    9.833663] random: crng init done
+[    9.899035] loop: module loaded
+[    9.900285] virtio_blk virtio0: 1/0/0 default/read/poll queues
+[    9.903891] virtio_blk virtio0: [vda] 0 512-byte logical blocks (0 B/0 B)
+[    9.969822] tun: Universal TUN/TAP device driver, 1.6
+[    9.973411] virtio_net virtio1: Assigned random MAC address a6:81:63:16:5d:ef
+[    9.988666] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[   10.009877] IPVS: Registered protocols (TCP, UDP)
+[   10.010966] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+[   10.014538] IPVS: ipvs loaded.
+[   10.015142] IPVS: [rr] scheduler registered.
+[   10.019545] Initializing XFRM netlink socket
+[   10.020970] NET: Registered PF_INET6 protocol family
+[   10.036502] Segment Routing with IPv6
+[   10.037709] In-situ OAM (IOAM) with IPv6
+[   10.040019] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[   10.048744] NET: Registered PF_PACKET protocol family
+[   10.050430] Bridge firewalling registered
+[   10.052701] 8021q: 802.1Q VLAN Support v1.8
+[   10.054477] 9pnet: Installing 9P2000 support
+[   10.055912] Key type dns_resolver registered
+[   10.058544] NET: Registered PF_VSOCK protocol family
+[   10.215733] Loading compiled-in X.509 certificates
+[   10.377663] Loaded X.509 cert 'Build time autogenerated kernel key: edae1ab5e37dadd23f1471322a492b2e9cb18efa'
+[   10.571072] Legacy PMU implementation is available
+[   10.574420] clk: Disabling unused clocks
+[   10.575013] PM: genpd: Disabling unused power domains
+[   10.599818] Freeing unused kernel image (initmem) memory: 2340K
+[   10.601814] Run /init as init process
+
+RV64_INIT_READY
+/bin/sh: can't access tty; job control turned off
+~ # BOOT_SHELL_MS=11682
+/bin/coremark; echo RV64_BENCH_DONE
+progress pc=0x1005f68 retired=792701030 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+progress pc=0x10042ce retired=1216618135 scause=9223372036854775813 stval=0x0 mcause=0 mtval=0x0
+2K performance run parameters for coremark.
+CoreMark Size    : 666
+Total ticks      : 16964
+Total time (secs): 16.964000
+Iterations/Sec   : 117.896722
+Iterations       : 2000
+Compiler version : GCCHomebrew Clang 22.1.8
+Compiler flags   : -O2 zig cc riscv64 static
+Memory location  : Please put data memory location here
+			(e.g. code in flash, data on heap etc)
+seedcrc          : 0xe9f5
+[0]crclist       : 0xe714
+[0]crcmatrix     : 0x1fd7
+[0]crcstate      : 0x8e3a
+[0]crcfinal      : 0x4983
+Correct operation validated. See readme.txt for run and reporting rules.
+CoreMark 1.0 : 117.896722 / GCCHomebrew Clang 22.1.8 -O2 zig cc riscv64 static / Heap
+RV64_BENCH_DONE
+COREMARK_WALL_SECONDS=26.541060574 COREMARK_EFFECTIVE_MIPS=42.36462106949412
+elapsed_ms=38223 retired=1567155548 effective_mips=40.999 shell=true
+SBI_TIME_CALLS=0 STIMECMP_WRITES=18707

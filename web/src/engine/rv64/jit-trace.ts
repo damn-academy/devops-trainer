@@ -1,0 +1,54 @@
+// Differential CPU state at every generated-block/interpreter-instruction exit.
+// Host time and device polling are deterministic; full RAM is compared at the end.
+import { JitRuntime } from './jit';
+const host = globalThis as typeof globalThis & { rv64Result?: unknown };
+try {
+  const url = new URL('/rv64/rv64_core.js', location.origin).href, mod = await import(/* @vite-ignore */ url), wasm = await mod.default();
+  const [kernel, initrd] = await Promise.all(['/rv64/vmlinuz.efi','/rv64/alpine.cpio'].map(async u => new Uint8Array(await (await fetch(u)).arrayBuffer())));
+  const core = new mod.Engine(256), reference = new mod.Engine(256);
+  for (const c of [core,reference]) c.boot(kernel,initrd,'earlycon=sbi console=hvc0 rdinit=/init nokaslr');
+  const lazy = new URLSearchParams(location.search).has('lazy');
+  const pages = new Map<number, Uint8Array>();
+  let pageFaults = 0;
+  if (lazy) {
+    const present = new Uint8Array(256 * 4);
+    for (let i = 0; i < present.length; i++) {
+      const bytes = reference.snapshot_ram(i);
+      if (bytes.some((b: number) => b !== 0)) { pages.set(i, bytes); present[i] = 1; }
+    }
+    Object.assign(globalThis, { rv64SnapshotPage: (i: number, target: Uint8Array) => {
+      const bytes = pages.get(i); if (!bytes) throw new Error(`Unexpected lazy trace page ${i}`);
+      target.set(bytes); pageFaults++;
+    } });
+    core.restore_paged(reference.snapshot_metadata(), present);
+  }
+  core.jit_threshold(1);
+  const singleStep = new URLSearchParams(location.search).has("single");
+  if (singleStep) core.test_single_step();
+  const jit = new JitRuntime(wasm.memory, core.jit_table(), (id,slot,count) => core.jit_install(id,slot,count), () => core.jit_clear(), wasm.jit_slow, { usage: ids => core.jit_usage(ids), evict: ids => core.jit_evict(ids), limit: 1024 });
+  const channel = new MessageChannel();
+  const yieldTask = () => new Promise<void>(resolve => { channel.port1.onmessage=()=>resolve(); channel.port2.postMessage(0); });
+  let instructions = 0, boundaries = 0, tickAt = 0, yieldAt = performance.now();
+  const start = performance.now();
+  try {
+    while (instructions < (singleStep ? 2000000 : 20000000)) {
+      if (instructions >= tickAt) { for (const c of [core,reference]) c.test_time(BigInt(Math.floor(instructions/10))); tickAt = instructions+4096; }
+      const n = core.test_block();
+      if (n) {
+        reference.test_steps(n); instructions += n; boundaries++;
+        if (!core.test_equal(reference,false)) throw new Error(`state divergence at ${instructions}, JIT pc=${core.pc().toString(16)} reference pc=${reference.pc().toString(16)}`);
+      }
+      jit.flush();
+      if (!n || performance.now()-yieldAt > 8) {
+        await yieldTask(); yieldAt = performance.now();
+        document.querySelector('#console')!.textContent = JSON.stringify({instructions,boundaries,jitRetired:core.jit_retired()});
+      }
+    }
+    const executionFaults = pageFaults;
+    if (lazy) for (const i of pages.keys()) core.snapshot_ram(i);
+    if (!core.test_equal(reference,true)) throw new Error('final RAM divergence');
+    const counters = JSON.parse(core.metrics());
+    if (!singleStep && jit.tailCalls && !counters.jit_chains) throw new Error('trace did not exercise tail chaining');
+    host.rv64Result = { counters, lazy, executionFaults, type:'jit-trace', pass:true, instructions, boundaries, jitRetired:core.jit_retired(), compiled:jit.compiled, cache:jit.stats(), milliseconds:performance.now()-start, singleStep, scope:singleStep ? 'CPU state after every instruction with one-instruction JIT blocks; exact full RAM at end' : 'CPU state at block exits; exact full RAM at end' };
+  } finally { channel.port1.close(); channel.port2.close(); jit.dispose(); core.free(); reference.free(); }
+} catch(error) { host.rv64Result = { type:'error', error:String(error) }; }

@@ -1,0 +1,32 @@
+[    8.242995] Adding 367932k swap on /dev/zram0.  Priority:-2 extents:1 across:367932k SS
+[containerd] time="2026-11-21T23:35:14.944295000Z" level=warning msg="failed to load cni during init, please check CRI plugin status before setting up network for pods" error="cni config load failed: no network config found in /etc/cni/net.d: cni plugin not initialized: failed to load cni config"
+RV64_IMAGES_IMPORTED
+	/dev/zram0                              partition	367932		247096		-2
+[kuberoot-control] I1121 23:49:17.349900      66 node.go:209] "NodeIPs changed for the node" node="kuberoot-3d2fa0" newNodeIPs=["10.0.0.10"] oldNodeIPs=null
+[kinit] kuberoot-control exited (code 1), restarting in 1s
+	/dev/zram0                              partition	367932		205484		-2
+[kuberoot-control] I1121 23:57:27.628925     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:57:32.815425     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:57:40.364390     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:57:45.541615     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:57:50.636595     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:57:56.774195     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:58:01.914760     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:58:08.464165     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:58:15.410670     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:58:25.186870     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:58:28.834365     340 range_allocator.go:433] "Set node PodCIDR" node="kuberoot-3d2fa0" podCIDRs=["10.200.0.0/24"]
+[kuberoot-control] I1121 23:58:31.394655     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:58:41.034995     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:58:47.248180     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:58:56.630380     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:59:07.106250     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:59:23.649834     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:59:38.458769     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+I1121 23:59:45.917045     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:59:51.675215     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1121 23:59:58.642519     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] I1122 00:00:06.413590     340 kubelet.go:3343] "Container runtime network not ready" networkReady="NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
+[kuberoot-control] [31mFATA[0m[2026-11-22T00:00:14.623555Z] Transaction commit failed: sql: transaction has already been committed or rolled back 
+[kinit] kuberoot-control exited (code 1), restarting in 2s
+	/dev/zram0                              partition	367932		214216		-2

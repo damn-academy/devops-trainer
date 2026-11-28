@@ -1,0 +1,24 @@
+{
+  "result": {
+    "type": "integration",
+    "facts": "dt.facts/v1",
+    "lazyDiskByte": 90,
+    "kernel": "6.18.62-kuberoot",
+    "snapshotBytes": 52533621,
+    "restoredFile": {
+      "exists": true,
+      "type": "f",
+      "mode": "0644",
+      "ino": 520,
+      "nlink": 1,
+      "uid": 0,
+      "gid": 0,
+      "size": 18,
+      "text": "checkpoint-before\n",
+      "owner": "root",
+      "group": "root"
+    }
+  },
+  "isolated": true,
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/159.0.8154.6 Safari/537.36"
+}

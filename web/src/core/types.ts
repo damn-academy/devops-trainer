@@ -411,7 +411,7 @@ export interface Facts {
 
 // ── Machines (09 §1.5, tier A subset) ──────────────────────────────────────
 
-export type MachineKind = 'sim' | 'v86' | 'vm';
+export type MachineKind = 'sim' | 'v86' | 'vm' | 'rv64';
 
 export type TermEffect =
   | { kind: 'clear' }

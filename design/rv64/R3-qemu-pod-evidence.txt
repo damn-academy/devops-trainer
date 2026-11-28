@@ -1,0 +1,29 @@
+QEMU diagnostic, 1536 MiB, 1 hart; NOT a Chromium measurement.
+[kuberoot-control] I1122 00:36:41.403871      67 pod_startup_latency_tracker.go:144] "Observed pod startup duration" pod="kube-system/coredns-568bd95658-zzkp6" podStartSLOduration=19.4034708 podStartE2EDuration="19.4034708s" totalImagesPullingTime="0s" totalInitContainerRuntime="0s" isStatefulPod=false podCreationTimestamp="2026-11-22 00:36:22 +0000 UTC" imagePullSessionsCount=0 imagePullSessionsStartsCount=0 observedRunningTime="2026-11-22 00:36:41.3662126 +0000 UTC m=+121.817533101" watchObservedRunningTime="2026-11-22 00:36:41.4034708 +0000 UTC m=+121.854790701"
+[kuberoot-control] I1122 00:36:45.079597      67 pod_startup_latency_tracker.go:144] "Observed pod startup duration" pod="local-path-storage/local-path-provisioner-7fbfff9db4-t84jk" podStartSLOduration=23.0795219 podStartE2EDuration="23.0795219s" totalImagesPullingTime="0s" totalInitContainerRuntime="0s" isStatefulPod=false podCreationTimestamp="2026-11-22 00:36:22 +0000 UTC" imagePullSessionsCount=0 imagePullSessionsStartsCount=0 observedRunningTime="2026-11-22 00:36:45.0754208 +0000 UTC m=+125.526741101" watchObservedRunningTime="2026-11-22 00:36:45.0795219 +0000 UTC m=+125.530841801"
+some avg10=0.00 avg60=0.00 avg300=0.00 total=0
+full avg10=0.00 avg60=0.00 avg300=0.00 total=0
+        periodSeconds: 600
+        timeoutSeconds: 60
+        periodSeconds: 600
+        timeoutSeconds: 60
+        periodSeconds: 600
+        timeoutSeconds: 60
+        initialDelaySeconds: 300
+        periodSeconds: 300
+        timeoutSeconds: 60
+        initialDelaySeconds: 300
+        periodSeconds: 300
+        timeoutSeconds: 60
+[kuberoot-control] I1122 00:43:48.995518      67 pod_startup_latency_tracker.go:144] "Observed pod startup duration" pod="kube-system/coredns-6496b577dc-5xvk6" podStartSLOduration=13.9954429 podStartE2EDuration="13.9954429s" totalImagesPullingTime="0s" totalInitContainerRuntime="0s" isStatefulPod=false podCreationTimestamp="2026-11-22 00:43:35 +0000 UTC" imagePullSessionsCount=0 imagePullSessionsStartsCount=0 observedRunningTime="2026-11-22 00:43:46.9504098 +0000 UTC m=+547.401729901" watchObservedRunningTime="2026-11-22 00:43:48.9954429 +0000 UTC m=+549.446762801"
+[kuberoot-control] I1122 00:43:56.375999      67 pod_startup_latency_tracker.go:144] "Observed pod startup duration" pod="local-path-storage/local-path-provisioner-6f867c6f66-cpzzw" podStartSLOduration=18.3759277 podStartE2EDuration="18.3759277s" totalImagesPullingTime="0s" totalInitContainerRuntime="0s" isStatefulPod=false podCreationTimestamp="2026-11-22 00:43:38 +0000 UTC" imagePullSessionsCount=0 imagePullSessionsStartsCount=0 observedRunningTime="2026-11-22 00:43:51.2702063 +0000 UTC m=+551.721526501" watchObservedRunningTime="2026-11-22 00:43:56.3759277 +0000 UTC m=+556.827247601"
+deployment "coredns" successfully rolled out
+deployment "local-path-provisioner" successfully rolled out
+~ # echo RV64_LARGE_BUSYBOX_BEGIN; /bin/busybox cat /proc/uptime; kubectl --requ
+=300s; /bin/busybox cat /proc/uptime; echo RV64_LARGE_BUSYBOX_END
+RV64_LARGE_BUSYBOX_BEGIN
+627.52 272.34
+[kuberoot-control] I1122 00:45:02.198540      67 pod_startup_latency_tracker.go:144] "Observed pod startup duration" pod="default/rv64-cadence-check" podStartSLOduration=7.1930691 podStartE2EDuration="7.1930691s" totalImagesPullingTime="0s" totalInitContainerRuntime="0s" isStatefulPod=false podCreationTimestamp="2026-11-22 00:44:55 +0000 UTC" imagePullSessionsCount=0 imagePullSessionsStartsCount=0 observedRunningTime="2026-11-22 00:45:02.1920643 +0000 UTC m=+622.643384601" watchObservedRunningTime="2026-11-22 00:45:02.1930691 +0000 UTC m=+622.644389001"
+pod/rv64-cadence-check condition met
+635.44 272.34
+RV64_LARGE_BUSYBOX_END
