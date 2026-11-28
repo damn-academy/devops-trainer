@@ -129,15 +129,15 @@ export const PRODUCT_PROGRAM: ProductModule[] = [
         title: ['Маленькая сделка, большое расширение', 'Land small, expand big'],
         body: [
           'Зайдите в компанию маленькой сделкой: одна команда, один кластер, один месяц. Докажите ценность на малом, и расширение станет формальностью, потому что внутри клиента вы уже работаете. Так выручка растёт внутри существующих клиентов, и этот рост измеряет NRR, чистое удержание выручки.',
-          'NRR выше 100% означает, что компания растёт даже без новых клиентов: старые платят больше, чем в прошлом году. Привлечение нового клиента стоит в разы дороже, чем расширение старого, поэтому land-and-expand — главный двигатель экономики подписок. В бенчмарках OpenView за 2023 год и High Alpha за 2024 год медианный NRR частных SaaS-компаний был около 100–110 %, а лучшие компании выходили за 120 %; это ориентир для сравнения, а не норма для каждой категории и стадии.',
+          'NRR выше 100 % означает, что компания растёт даже без новых клиентов: старые платят больше, чем в прошлом году. Привлечение нового клиента стоит в разы дороже, чем расширение старого, поэтому land-and-expand — главный двигатель экономики подписок. В бенчмарках OpenView за 2023 год и High Alpha за 2024 год медианный NRR частных SaaS-компаний был около 100–110 %, а лучшие компании выходили за 120 %; это ориентир для сравнения, а не норма для каждой категории и стадии.',
         ],
         bodyEn: [
           'Enter a company with a small deal: one team, one cluster, one month. Prove the value on something small, and expansion becomes a formality, because you already work inside the client. This is how revenue grows inside existing customers, and NRR, net revenue retention, measures this growth.',
           'An NRR above 100% means the company grows even without new customers: the old ones pay more than last year. Acquiring a new customer costs several times more than expanding an old one, which makes land-and-expand the main engine of subscription economics. In the OpenView 2023 and High Alpha 2024 benchmarks, private SaaS companies had median NRR around 100–110%, with the best above 120%. This is a comparison point, not a norm for every category and stage.',
         ],
         task: [
-          'Посчитайте NRR: выручку этого месяца от клиентов, которые платили год назад, разделите на их выручку год назад. Если результат ниже 100 %, найдите, где эти клиенты сократили использование.',
-          'Calculate NRR: take this month’s revenue from the customers who were paying a year ago and divide it by their revenue a year ago. If the result is below 100%, find where these customers reduced usage.',
+          'Посчитайте NRR: выручку этого месяца от клиентов, которые платили год назад, разделите на их выручку за тот же месяц год назад. Если результат ниже 100 %, найдите, где эти клиенты сократили использование.',
+          'Calculate NRR: take this month’s revenue from the customers who were paying a year ago and divide it by their revenue in the same month a year ago. If the result is below 100%, find where these customers reduced usage.',
         ],
       },
     ],

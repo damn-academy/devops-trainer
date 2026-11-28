@@ -329,7 +329,7 @@ export const PRODUCT_CONCEPTS: Concept[] = [
   {
     id: 'product.nrr',
     term: bi('чистое удержание выручки (NRR)', 'net revenue retention (NRR)'),
-    short: bi('Текущая выручка от клиентов, которые платили год назад, делённая на их выручку год назад; выше 100 % значит рост внутри клиентов.', 'Current revenue from the customers who paid a year ago divided by their revenue a year ago; above 100% means growth inside the base.'),
+    short: bi('Выручка этого месяца от клиентов, которые платили год назад, делённая на их выручку за тот же месяц год назад; выше 100 % значит рост внутри клиентов.', 'This month’s revenue from the customers who paid a year ago divided by their revenue in the same month a year ago; above 100% means growth inside the base.'),
     introducedIn: 'product.opencore',
     scan: false,
   },
@@ -438,7 +438,7 @@ export const PRODUCT_QUIZ: QuizItem[] = [
     concepts: ['product.plg'],
     refs: { lesson: 'product.gtm' },
     prompt: bi(
-      'Что из перечисленного верно для движения open-source-led со sales-assist?',
+      'Что из перечисленного верно для роста через открытый код с помощью продавца?',
       'Which of the following is true for the open-source-led with sales-assist motion?',
     ),
     options: [
