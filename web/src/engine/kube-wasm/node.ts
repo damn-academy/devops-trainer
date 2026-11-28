@@ -12,6 +12,8 @@
 // &capture=1 (once the pod runs, save a checkpoint of the node and the
 // control plane through POST /snapshot-upload/<name>) &restore=<base URL>
 // (start from such a checkpoint: smp.json, kube-state.json, <sha256>.bin)
+// &node=<URL of node.json> (a published node, tools/kube-wasm/publish-node.mjs:
+// kube.wasm, checkpoint and medium as content-addressed objects; implies the restore)
 
 import { loadKubeWasm, splitArgs, type Loaded } from './loader';
 import { createRV64Network } from '../rv64/network';
@@ -20,10 +22,13 @@ import { sharedTable, atomicModule, HartMailboxes, granuleTableBytes } from '../
 import { createSharedCompiler } from '../rv64/shared-compiler';
 import { hartBudget, jitCeilingBytes, MiB } from '../rv64/host-memory';
 import type { TcpConn } from '../labhost/tcp';
-import { readObject, restoreRam, storeObject, storeRam, validateCheckpoint, type SMPCheckpoint } from '../rv64/smp-checkpoint';
+import { checkpointStore, readObject, restoreRam, storeObject, storeRam, validateCheckpoint, type SMPCheckpoint } from '../rv64/smp-checkpoint';
+import { isEncoding, type Encoding } from '../rv64/objects';
+import { ObjectPool } from '../rv64/object-pool';
 import { restoreTimeOffset } from '../rv64/restore-clock';
 import { sha256 } from '../rv64/snapshot';
 import { ipToNum } from '../labhost/wire';
+import type { HTTPDisk } from '../rv64/block';
 
 const NODE_NAME = 'kuberoot-000001'; // kinit names the node after the last MAC bytes
 const NODE_IP = '10.0.0.10'; // the first DHCP lease of the lab network
@@ -83,14 +88,48 @@ const upload = async (name: string, data: Uint8Array) => {
   if (!r.ok) throw new Error(`checkpoint upload ${name}: ${r.status}`);
 };
 interface SavedTcp { vlan: number; local: { ip: number; port: number }; remote: { ip: number; port: number }; snd: number; rcv: number }
+/** node.json of a published node; paths are relative to it. */
+interface NodeBundle {
+  format: 'dt.kube-node/v1'; objects: string; encoding?: Encoding;
+  kubeWasm: { sha256: string; bytes: number }; wasmExec: { sha256: string };
+  checkpoint: string; media: string; coreSha256: string;
+}
+interface Media { url: string; bytes: number; version: string; join: { offset: number; bytes: number }; chunks?: string[]; encoding?: Encoding }
 interface KubeState { pki: Record<string, string>; etcd: string; tcp?: SavedTcp[] }
 
 async function main() {
-  const restoreBase = params.get('restore') ? new URL(params.get('restore')!, location.href).href : null;
+  const bundleUrl = params.get('node') ? new URL(params.get('node')!, location.href).href : null;
+  const bundle = bundleUrl ? await (await fetch(bundleUrl)).json() as NodeBundle : undefined;
+  if (bundle && (bundle.format !== 'dt.kube-node/v1' || (bundle.encoding !== undefined && !isEncoding(bundle.encoding)))) throw new Error('unsupported node.json');
+  const inBundle = (path: string) => new URL(path, bundleUrl!).href;
+  const restoreBase = bundle ? inBundle(bundle.checkpoint) : params.get('restore') ? new URL(params.get('restore')!, location.href).href : null;
   const capturing = params.get('capture') === '1';
+  const mediaUrl = new URL(bundle ? inBundle(bundle.media) : params.get('media') ?? '/rv64/r19-kubewasm-worker.json', location.href).href;
+  const mediaLoaded = fetch(mediaUrl).then((r) => r.json()) as Promise<Media>;
+  const coreSha256 = () => fetch('/rv64/rv64_core_bg.wasm').then((r) => r.arrayBuffer()).then((b) => sha256(new Uint8Array(b)));
+  const emulated = params.get('emulator') !== '0';
+  const bytes = memoryMb * MiB, pages = bytes / 65536 + 1;
+  // A published node is read by workers (fetch, decode, checksum), and its
+  // guest RAM is restored while kube.wasm downloads and starts.
+  const pool = bundle && emulated ? new ObjectPool() : undefined;
+  const guest = restoreBase && emulated ? loadGuest(restoreBase) : undefined;
+  guest?.catch(() => undefined); // awaited below; not an unhandled rejection meanwhile
+  async function loadGuest(base: string) {
+    const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
+    const smpUrl = new URL('smp.json', base).href;
+    const [media, wasmSha256, checkpoint] = await Promise.all([mediaLoaded, coreSha256(), fetch(smpUrl).then((r) => r.json() as Promise<SMPCheckpoint>)]);
+    validateCheckpoint(checkpoint, harts, bytes, wasmSha256, { url: media.url, bytes: media.bytes, version: media.version });
+    const store = { ...checkpointStore(checkpoint, smpUrl), pool };
+    await restoreRam(store, checkpoint.ram, new Uint8Array(memory.buffer, 64, bytes));
+    const [control, mail, device, ...cpus] = await Promise.all([checkpoint.control, checkpoint.mail, checkpoint.device, ...checkpoint.cpus].map((ref) => readObject(store, ref)));
+    mark('checkpoint loaded');
+    return { memory, checkpoint, wasmSha256, control: control!, mail: mail!, device: device!, cpus };
+  }
   const k = await loadKubeWasm({
     wasmUrl: params.get('wasm') ?? './dist/kube.wasm', // e.g. ?wasm=./dist/kube.opt.wasm
-    wasmExecUrl: './dist/wasm_exec.js',
+    wasmObject: bundle && { base: inBundle(bundle.objects), sha256: bundle.kubeWasm.sha256, bytes: bundle.kubeWasm.bytes, encoding: bundle.encoding,
+      read: pool && ((b, ref, o) => pool.read(b, ref, o)) },
+    wasmExecUrl: bundle ? inBundle(`${bundle.objects}${bundle.wasmExec.sha256}.js`) : './dist/wasm_exec.js',
     // e.g. ?goenv=GOGC=200;GODEBUG=gcstoptheworld=1,gcshrinkstackoff=1
     // The Go linear memory never shrinks: a soft limit keeps it at ~0.31
     // instead of ~0.37 GiB with a node (twice as many collections).
@@ -121,11 +160,12 @@ async function main() {
   await k.api.ready();
   mark('apiserver ready');
 
-  const media = await (await fetch(params.get('media') ?? '/rv64/r19-kubewasm-worker.json')).json() as
-    { url: string; bytes: number; version: string; join: { offset: number; bytes: number } };
+  const media = await mediaLoaded;
   // ?diskCache=0: read the medium over HTTP only, without Cache Storage.
-  const disk = { url: media.url, bytes: media.bytes, version: media.version, ...(params.get('diskCache') === '0' ? { noCache: true } : {}) };
-  let httpDisk: typeof disk & { overlay?: { offset: number; data: Uint8Array }[] } = disk;
+  const disk = { url: media.chunks ? new URL(media.url, mediaUrl).href : media.url, bytes: media.bytes, version: media.version, ...(params.get('diskCache') === '0' ? { noCache: true } : {}) };
+  // A published medium is read by chunk objects (see HTTPDisk.chunks); the
+  // checkpoint records only the medium's identity.
+  let httpDisk: HTTPDisk = media.chunks ? { ...disk, chunks: media.chunks, encoding: media.encoding } : disk;
   if (!restore) {
     // A restored node already has its Membership (and certificates) in RAM.
     const membership = await k.api.joinMembership(NODE_NAME, NODE_IP);
@@ -133,7 +173,7 @@ async function main() {
     if (ticket.length > media.join.bytes) throw new Error('membership does not fit the placeholder');
     const data = new Uint8Array(media.join.bytes).fill(0x20); // JSON allows trailing spaces
     data.set(ticket);
-    httpDisk = { ...disk, overlay: [{ offset: media.join.offset, data }] };
+    httpDisk = { ...httpDisk, overlay: [{ offset: media.join.offset, data }] };
   }
 
   const services = createRV64Network(fetchSource(new URL('/mirror/', location.href).href));
@@ -152,40 +192,37 @@ async function main() {
   }));
   if (listenErr) throw new Error(`listen ${NODE_IP}:10250: ${listenErr}`);
 
-  if (params.get('emulator') === '0') { mark('emulator skipped'); return; }
+  if (!emulated) { mark('emulator skipped'); return; }
   // The emulator, as in rv64/smp-kuberoot.ts, without checkpoints or profiling.
   // A restored node never boots: no kernel or initrd. A booting one hands
   // them to hart 0 (transferred, not copied).
   const [kernel, initrd] = restoreBase ? [undefined, undefined] : await Promise.all(['/rv64/slim-vmlinuz.efi', '/rv64/slim-initrd.cpio']
     .map((u) => fetch(u).then((r) => r.arrayBuffer()).then((b) => new Uint8Array(b))));
-  const bytes = memoryMb * MiB, pages = bytes / 65536 + 1;
-  const memory = new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
+  const restored = await guest;
+  pool?.dispose();
+  const memory = restored?.memory ?? new WebAssembly.Memory({ initial: pages, maximum: pages, shared: true });
   const module = atomicModule(pages), mail = new HartMailboxes(harts).words.buffer;
   const control = new SharedArrayBuffer(harts * 64), ctl = new Int32Array(control);
   const generations = sharedTable(bytes / 4096 * 4);
   const granules = sharedTable(granuleTableBytes(memory.buffer.byteLength));
   const snap = new SharedArrayBuffer((2 + 2 * harts) * 4);
-  const wasmSha256 = await sha256(new Uint8Array(await (await fetch('/rv64/rv64_core_bg.wasm')).arrayBuffer()));
+  const wasmSha256 = restored?.wasmSha256 ?? await coreSha256();
   let checkpoint: SMPCheckpoint | undefined;
   const initialBlobs: Uint8Array[] = [];
   let initialDevice: Uint8Array | undefined;
   let epoch = performance.timeOrigin + performance.now();
-  if (restoreBase) {
-    checkpoint = await (await fetch(new URL('smp.json', restoreBase))).json() as SMPCheckpoint;
-    validateCheckpoint(checkpoint, harts, bytes, wasmSha256, disk);
-    const view = new Uint8Array(memory.buffer, 64, bytes);
-    await restoreRam(restoreBase, checkpoint.ram, view);
-    new Uint8Array(control).set(await readObject(restoreBase, checkpoint.control));
-    new Uint8Array(mail).set(await readObject(restoreBase, checkpoint.mail));
-    for (const ref of checkpoint.cpus) initialBlobs.push(await readObject(restoreBase, ref));
-    initialDevice = await readObject(restoreBase, checkpoint.device);
+  if (restored) {
+    checkpoint = restored.checkpoint;
+    new Uint8Array(control).set(restored.control);
+    new Uint8Array(mail).set(restored.mail);
+    initialBlobs.push(...restored.cpus);
+    initialDevice = restored.device;
     // ?clock=continuous (default) resumes the guest clock where it stopped,
     // so containerd and the kubelet see no jump; the node lifecycle
     // controller times node heartbeats with its own clock. ?clock=elapsed
     // moves the guest clock forward by the time the checkpoint lay unused.
     const clock = params.get('clock') === 'elapsed' ? 'elapsed' : 'continuous';
     epoch = -restoreTimeOffset(checkpoint.ticks, checkpoint.capturedAt, clock, Date.now(), performance.timeOrigin + performance.now()) / 10000;
-    mark('checkpoint loaded');
   } else {
     for (let h = 0; h < harts; h++) ctl[h * 16] = 1;
   }

@@ -1,11 +1,22 @@
 import { sha256 } from './snapshot';
 import type { HTTPDisk } from './block';
-export interface ObjectRef { sha256: string; bytes: number }
+import { fetchObject, isEncoding, type Encoding, type ObjectRef } from './objects';
+import type { ObjectPool } from './object-pool';
+export type { ObjectRef } from './objects';
 export interface SMPCheckpoint {
   format: 'dt.rv64.smp/v1'; harts: number; bytes: number; wasmSha256: string;
   disk: HTTPDisk; capturedAt: number; ticks: number; marker: string;
   cpus: ObjectRef[]; device: ObjectRef; control: ObjectRef; mail: ObjectRef;
   ram: { offset: number; object: ObjectRef }[];
+  /** Published checkpoints (tools/kube-wasm/publish-node.mjs): every object
+   * is stored encoded, as `<sha256>.gzip`, in `objects` (relative to smp.json). */
+  encoding?: Encoding; objects?: string;
+}
+/** Where a checkpoint's objects are and how they are stored; `pool` reads
+ * them in workers (object-pool.ts) instead of on the calling thread. */
+export interface ObjectStore { base: string; encoding?: Encoding; pool?: ObjectPool }
+export function checkpointStore(m: SMPCheckpoint, smpUrl: string): ObjectStore {
+  return { base: new URL(m.objects ?? '', smpUrl).href, encoding: m.encoding };
 }
 export async function storeObject(data: Uint8Array, write: (name: string, data: Uint8Array) => Promise<void>): Promise<ObjectRef> {
   const ref = { sha256: await sha256(data), bytes: data.length };
@@ -27,13 +38,15 @@ export function validateCheckpoint(m: SMPCheckpoint, harts: number, bytes: numbe
     if (!/^[a-f0-9]{64}$/.test(ref.sha256) || !Number.isSafeInteger(ref.bytes) || ref.bytes <= 0 || ref.bytes > 128 * 1048576) throw Error('Invalid SMP object');
   }
   if (m.control.bytes !== harts * 64 || m.mail.bytes !== harts * 32) throw Error('Invalid SMP host state');
+  if ((m.encoding !== undefined && !isEncoding(m.encoding)) ||
+    (m.objects !== undefined && (typeof m.objects !== 'string' || /^[a-z]+:|^\/\//i.test(m.objects)))) throw Error('Invalid SMP object store');
 }
-export async function readObject(base: string, ref: ObjectRef): Promise<Uint8Array> {
-  const r = await fetch(new URL(`${ref.sha256}.bin`, base));
-  if (!r.ok) throw Error(`SMP object HTTP ${r.status}`);
-  const data = new Uint8Array(await r.arrayBuffer());
-  if (data.length !== ref.bytes || await sha256(data) !== ref.sha256) throw Error('SMP object checksum mismatch');
-  return data;
+/** Reads one object; `base` is a URL in the store's directory, or a store.
+ * Encoded (published) objects are kept in Cache Storage for the next visit. */
+export async function readObject(base: string | ObjectStore, ref: ObjectRef): Promise<Uint8Array> {
+  const store: ObjectStore = typeof base === 'string' ? { base } : base;
+  const o = { encoding: store.encoding, cache: !!store.encoding };
+  return store.pool ? store.pool.read(store.base, ref, o) : fetchObject(store.base, ref, o);
 }
 const PAGE = 4096;
 /** Guest memory starts zeroed: writing a zero page would only make the host
@@ -51,7 +64,8 @@ function writeNonzeroPages(view: Uint8Array, data: Uint8Array, offset: number) {
 /** Writes the checkpoint's RAM chunks into guest memory, a few at a time.
  * Fetching every chunk at once kept up to the whole RAM in transient
  * buffers, and the allocator keeps such a high-water mark for good. */
-export async function restoreRam(base: string, ram: SMPCheckpoint['ram'], view: Uint8Array, concurrency = 4) {
+export async function restoreRam(base: string | ObjectStore, ram: SMPCheckpoint['ram'], view: Uint8Array,
+  concurrency = typeof base === 'string' || !base.pool ? 4 : 2 * base.pool.size) {
   let next = 0;
   const lane = async () => {
     while (next < ram.length) {
