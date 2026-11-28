@@ -155,7 +155,8 @@ it('lets learners explicitly finish the downloaded script self-review', () => {
   expect(host.querySelectorAll('a[download]')).toHaveLength(3);
   expect(host.textContent).toContain('on your computer');
   expect(ctx.complete).not.toHaveBeenCalled();
-  button('Finish self-review').click();
+  expect(host.querySelector('a[href$="ru-intensifiers-expected.en.txt"]')).not.toBeNull();
+  button('Finish comparing the output').click();
   expect(ctx.complete).toHaveBeenCalledOnce();
   expect(host.querySelector('[role="status"]')?.textContent).toBe('Self-review complete.');
 });

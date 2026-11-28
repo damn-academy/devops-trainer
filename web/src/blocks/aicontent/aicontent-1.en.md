@@ -11,11 +11,12 @@ The second is a terminal agent: a program that works in a folder on your compute
 
 A minimal repeatable example for a content manager using either approach:
 
-1. Create a `first-task` folder with two files: `source.txt`, a transcript of a five-minute talk or any article you have rights to; if you have no suitable text, download the [sample transcript](media/aicontent/pipeline-run/03-chunks/00_00-00-00_00-02-43.txt) of the first three minutes of the talk on how the internet works, from the lesson on turning a recording into an article (the talk is in Russian), and save it under this name. It is raw machine speech recognition with errors, left that way on purpose: for example, the line [00:01:44] says “From Moscow to Frankfurt is about 200,000 kilometres”, while the speaker said 2,000 kilometres. The AI should mark such places [check], and you should find them yourself; the second file is `brief.md` with this brief: “Turn source.txt into a 1,500-character company blog post, preserve every number and quotation with its source, mark uncertain passages [check], and write the result to post.md.”
-2. In chat, attach both files and paste the brief. In the terminal, open the folder and give the agent the same task.
-3. Get the `post.md` file and check it yourself: does every number appear in the source, did the AI carry a source error such as the 200,000 kilometres into the post, have any unsupported claims appeared, and does the text sound like you?
+1. Create a `first-task` folder and put a `source.txt` file in it: a transcript of a five-minute talk or any article you have rights to; if you have no suitable text, download the [sample transcript](media/aicontent/pipeline-run/03-chunks/00_00-00-00_00-02-43.txt) of the first three minutes of the talk on how the internet works, from the lesson on turning a recording into an article (the talk is in Russian), and save it under this name. It is raw machine speech recognition with errors, left that way on purpose: for example, the line [00:01:44] says “From Moscow to Frankfurt is about 200,000 kilometres”, while the speaker said 2,000 kilometres. The AI should mark such places [check], and you should find them yourself.
+2. Next to it, create a second file, `brief.md`, with this brief: “Turn source.txt into a 1,500-character company blog post, preserve every number and quotation with its source, mark uncertain passages [check], and write the result to post.md.”
+3. In chat, attach both files and paste the brief. In the terminal, open the folder and give the agent the same task.
+4. Get the `post.md` file and check it yourself: does every number appear in the source, did the AI carry a source error such as the 200,000 kilometres into the post, have any unsupported claims appeared, and does the text sound like you?
 
-The human writes the brief, chooses the source and accepts the result; the AI drafts and flags uncertainty. If you find even one invented number at step three, that is a normal outcome for a first run, and the next lesson explains how a brief prevents these errors.
+The human writes the brief, chooses the source and accepts the result; the AI drafts and flags uncertainty. If you find even one invented number at step four, that is a normal outcome for a first run, and the next lesson explains how a brief prevents these errors.
 
 <!-- section: theory | The editor decides and accepts -->
 AI writes quickly and confidently, but it does not know what you want until you tell it, and readily invents things you never asked for. This became apparent in the platform's first few days. The project acquired a broker that handed virtual machines to learners, along with a calculation of their cost; the editor stopped this with a single remark that the platform did not sell cloud services and nobody received machines from it. A day later, the AI proposed running training Kubernetes clusters on the most popular lightweight distribution, and the editor chose another. The AI recorded both decisions in memory files it reads at the start of each session and removed the rejected approaches from all documents.
@@ -124,6 +125,8 @@ Every number in post.md appears in facts.md, and facts.md has been checked again
 Session log after two steps:
 
 ```markdown
+## Goal
+A 2,000-character company blog post on backups for database administrators.
 ## Current state
 post.md is drafted; facts.md contains 4 numbers.
 ## Next step

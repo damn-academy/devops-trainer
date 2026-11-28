@@ -39,7 +39,7 @@ Missing audio is the most frustrating video and podcast failure. Once, camera-re
 <!-- section: theory | Sample video: before and after -->
 Here is what the audio-based timeline technique looks like in a finished video. It is a short sample video about the damn.academy platform: a screen recording of a lesson with a terminal, narration synthesized using the free software eSpeak NG, and subtitles. macOS system voices are unsuitable for this: the macOS license permits listening on your own computer but prohibits publicly distributing recordings made with them. The three-line script allowed four seconds per line, but the synthesized audio files lasted 5.6, 3.7 and 5.5 seconds.
 
-In the first version, audio and subtitles follow the script, starting every four seconds. The lines overlap, and at the ninth second the third subtitle is already on screen while the voice is still speaking the second line.
+In the first version, audio and subtitles follow the script, starting every four seconds. The lines overlap: from the fourth second the second subtitle is on screen while the voice spends another second and a half finishing the first line, and for that time both lines play at once.
 
 ![Script-timed version: lines overlap and subtitles run ahead of the voice](media/aicontent/video-kit/before.mp4 "Before: script-based timeline, four seconds per line")
 
